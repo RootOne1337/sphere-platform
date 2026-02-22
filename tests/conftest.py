@@ -166,7 +166,7 @@ async def authenticated_client(
     """
     from backend.core.security import create_access_token
 
-    token = create_access_token(
+    token, _jti = create_access_token(
         subject=str(test_user.id),
         org_id=str(test_org.id),
         role=test_user.role,

@@ -1,6 +1,27 @@
 # backend/core/exceptions.py
-# ВЛАДЕЛЕЦ: TZ-01. Stub в TZ-00 для единой обработки ошибок.
+# ВЛАДЕЛЕЦ: TZ-01. Единая обработка ошибок платформы (TZ-00 stub + TZ-01 расширение).
 from fastapi import HTTPException, status
+
+
+# ── TZ-01 Auth-specific exceptions ──────────────────────────────────────────
+class TooManyAttemptsError(Exception):
+    """Rate-limit превышен (login bruteforce protection)."""
+    def __init__(self, msg: str = "Too many attempts. Try again later."):
+        super().__init__(msg)
+
+
+class InvalidCredentialsError(Exception):
+    """Неверные учётные данные (email/password)."""
+    pass
+
+
+class InvalidTokenError(Exception):
+    """Невалидный, истёкший или отозванный токен."""
+    def __init__(self, msg: str = "Invalid or expired token"):
+        super().__init__(msg)
+
+
+# ── Generic platform exceptions ─────────────────────────────────────────────
 
 
 class SphereException(Exception):

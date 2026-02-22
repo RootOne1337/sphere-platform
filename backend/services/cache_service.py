@@ -91,4 +91,20 @@ class CacheService:
         return allowed, current
 
 
+    async def set(self, key: str, value: str, ttl: int) -> None:
+        """Универсальный SET с TTL. Используется для MFA state tokens и прочего."""
+        redis = await get_redis()
+        await redis.set(key, value, ex=ttl)
+
+    async def get(self, key: str) -> str | None:
+        """Универсальный GET."""
+        redis = await get_redis()
+        return await redis.get(key)
+
+    async def delete(self, key: str) -> None:
+        """Удалить ключ."""
+        redis = await get_redis()
+        await redis.delete(key)
+
+
 cache_service = CacheService()
