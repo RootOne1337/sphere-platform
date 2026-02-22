@@ -1,0 +1,113 @@
+package com.sphereplatform.agent.service
+
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.Service
+import android.content.Context
+import android.content.Intent
+import android.os.Binder
+import android.os.IBinder
+import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
+import com.sphereplatform.agent.R
+import com.sphereplatform.agent.commands.DeviceCommandHandler
+import com.sphereplatform.agent.providers.DeviceInfoProvider
+import com.sphereplatform.agent.ws.SphereWebSocketClient
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+import javax.inject.Inject
+
+/**
+ * SphereAgentService — основной Foreground Service агента.
+ *
+ * Жизненный цикл:
+ * - onCreate: стартует foreground-нотификацию + инициирует WS-подключение
+ * - onStartCommand: START_STICKY — перезапуск после kill системой
+ * - onDestroy: корректное отключение от WebSocket
+ *
+ * OOM-killer avoidance: foreground service с нотификацией PRIORITY_MIN.
+ */
+@AndroidEntryPoint
+class SphereAgentService : Service() {
+
+    companion object {
+        const val NOTIFICATION_ID = 1
+        private const val CHANNEL_ID = "sphere_agent"
+
+        fun start(context: Context) {
+            ContextCompat.startForegroundService(
+                context,
+                Intent(context, SphereAgentService::class.java)
+            )
+        }
+
+        fun stop(context: Context) {
+            context.stopService(Intent(context, SphereAgentService::class.java))
+        }
+    }
+
+    @Inject
+    lateinit var wsClient: SphereWebSocketClient
+
+    @Inject
+    lateinit var commandHandler: DeviceCommandHandler
+
+    @Inject
+    lateinit var deviceInfo: DeviceInfoProvider
+
+    @Inject
+    lateinit var appScope: CoroutineScope
+
+    private val binder = LocalBinder()
+
+    override fun onCreate() {
+        super.onCreate()
+        startForeground(NOTIFICATION_ID, buildNotification())
+        appScope.launch {
+            wsClient.connect(deviceInfo.getDeviceId())
+        }
+    }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        // START_STICKY: Android перезапустит сервис с null intent если будет убит системой
+        return START_STICKY
+    }
+
+    private fun buildNotification(): Notification {
+        val manager = getSystemService(NotificationManager::class.java)
+        if (manager.getNotificationChannel(CHANNEL_ID) == null) {
+            val channel = NotificationChannel(
+                CHANNEL_ID,
+                "Sphere Platform Agent",
+                NotificationManager.IMPORTANCE_MIN
+            ).apply {
+                description = "Работа агента в фоне"
+                setShowBadge(false)
+            }
+            manager.createNotificationChannel(channel)
+        }
+
+        return NotificationCompat.Builder(this, CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_sphere)
+            .setContentTitle("Sphere Platform")
+            .setContentText("Agent running")
+            .setOngoing(true)
+            .setPriority(NotificationCompat.PRIORITY_MIN)
+            .setCategory(NotificationCompat.CATEGORY_SERVICE)
+            .setSilent(true)
+            .build()
+    }
+
+    override fun onBind(intent: Intent?): IBinder = binder
+
+    override fun onDestroy() {
+        appScope.launch { wsClient.disconnect() }
+        super.onDestroy()
+    }
+
+    inner class LocalBinder : Binder() {
+        fun getService(): SphereAgentService = this@SphereAgentService
+    }
+}
