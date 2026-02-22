@@ -26,7 +26,7 @@ class ScriptVersion(Base, UUIDMixin, TimestampMixin):
     created_by_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id"), nullable=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
 
-    script: Mapped["Script"] = relationship(back_populates="versions")
+    script: Mapped["Script"] = relationship(back_populates="versions", foreign_keys=[script_id])
 
 
 class Script(Base, UUIDMixin, TimestampMixin):

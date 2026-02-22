@@ -157,6 +157,7 @@ async def assign_vpn(
             peer_id=assignment.peer_id,
             device_id=assignment.device_id,
             assigned_ip=assignment.assigned_ip,
+            public_key=assignment.public_key,
             config=assignment.config,
             qr_code=assignment.qr_code,
         )
@@ -204,7 +205,20 @@ async def list_peers(
         query = query.where(VPNPeer.device_id == uuid.UUID(device_id))
 
     result = await db.execute(query)
-    return result.scalars().all()
+    stale_threshold = datetime.now(timezone.utc) - timedelta(seconds=180)
+    return [
+        VPNPeerResponse(
+            id=p.id,
+            device_id=p.device_id,
+            tunnel_ip=p.tunnel_ip,
+            status=p.status.value if isinstance(p.status, VPNPeerStatus) else p.status,
+            vpn_active=bool(p.is_active and p.last_handshake_at and p.last_handshake_at > stale_threshold),
+            public_key=p.public_key,
+            last_handshake_at=p.last_handshake_at,
+            created_at=p.created_at,
+        )
+        for p in result.scalars().all()
+    ]
 
 
 @router.get(

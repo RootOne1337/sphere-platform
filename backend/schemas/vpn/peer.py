@@ -29,14 +29,14 @@ class VPNAssignResponse(BaseModel):
 class VPNPeerResponse(BaseModel):
     id: uuid.UUID
     device_id: uuid.UUID | None
-    tunnel_ip: str | None = None
+    assigned_ip: str | None = Field(None, validation_alias="tunnel_ip")
     status: str
-    vpn_active: bool = False
+    is_active: bool = False
     public_key: str
     last_handshake_at: datetime | None
     created_at: datetime
 
-    model_config = {"from_attributes": True}
+    model_config = {"from_attributes": True, "populate_by_name": True}
 
 
 # ── Pool stats ────────────────────────────────────────────────────────────────

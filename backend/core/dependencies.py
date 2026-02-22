@@ -1,6 +1,6 @@
-# backend/core/dependencies.py
+﻿# backend/core/dependencies.py
 # ВЛАДЕЛЕЦ: TZ-01. Stub в TZ-00 для FastAPI dependencies.
-# Полная реализация JWT-валидации — TZ-01 SPLIT-1.
+# Полная реализация JWT-валидации  TZ-01 SPLIT-1.
 from typing import TYPE_CHECKING
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -19,8 +19,8 @@ async def get_current_user(
     db: AsyncSession = Depends(get_db),
 ) -> "User":
     """
-    FastAPI dependency: извлечь и проверить текущего пользователя из JWT.
-    Полная реализация — TZ-01 SPLIT-1.
+    FastAPI dependency: extract and validate current user from JWT.
+    Full implementation: TZ-01 SPLIT-1.
     """
     if credentials is None:
         raise HTTPException(
@@ -28,11 +28,29 @@ async def get_current_user(
             detail="Authentication required",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    # TZ-01 SPLIT-1 реализует полную JWT-валидацию здесь
+    # TZ-01 SPLIT-1 implements full JWT validation here
     raise HTTPException(
         status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail="Auth not implemented yet — TZ-01 SPLIT-1",
+        detail="Auth not implemented yet  TZ-01 SPLIT-1",
     )
+
+
+def require_role(*roles: str):
+    """
+    Dependency factory: ensure the current user has one of the required roles.
+
+    Usage:
+        current_user = Depends(require_role("org_admin"))
+        current_user = Depends(require_role("org_admin", "device_manager"))
+    """
+    async def _check_role(user=Depends(get_current_user)):
+        if user.role not in roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Required role(s): {', '.join(roles)}",
+            )
+        return user
+    return _check_role
 
 
 async def get_tenant_db(
@@ -40,8 +58,8 @@ async def get_tenant_db(
     current_user: "User" = Depends(get_current_user),
 ) -> AsyncSession:
     """
-    Session с активным RLS-контекстом арендатора.
-    Используй вместо get_db во всех endpoints с бизнес-данными.
+    Session with active tenant RLS context.
+    Use instead of get_db for all endpoints with business data.
     """
     from sqlalchemy import text
     await db.execute(

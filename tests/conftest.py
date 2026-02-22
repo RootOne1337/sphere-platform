@@ -17,12 +17,28 @@ import pytest
 import pytest_asyncio
 from fakeredis.aioredis import FakeRedis
 from httpx import ASGITransport, AsyncClient
+from sqlalchemy import event
+from sqlalchemy.dialects.sqlite.base import SQLiteTypeCompiler
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from backend.database.engine import Base, get_db
 from backend.database.redis_client import get_redis
 from backend.main import app
 from backend.models import *  # noqa: F401,F403 — side-effect: registers all mappers
+
+
+# ---------------------------------------------------------------------------
+# SQLite compat: render PostgreSQL-only types as TEXT
+# ---------------------------------------------------------------------------
+
+def _visit_text_compat(self, type_, **kw):
+    return "TEXT"
+
+
+SQLiteTypeCompiler.visit_JSONB = _visit_text_compat  # type: ignore[attr-defined]
+SQLiteTypeCompiler.visit_TSVECTOR = _visit_text_compat  # type: ignore[attr-defined]
+SQLiteTypeCompiler.visit_INET = _visit_text_compat  # type: ignore[attr-defined]
+SQLiteTypeCompiler.visit_ARRAY = _visit_text_compat  # type: ignore[attr-defined]
 
 
 # ---------------------------------------------------------------------------
@@ -56,13 +72,24 @@ async def async_engine():
 async def db_session(async_engine) -> AsyncGenerator[AsyncSession, None]:
     """
     Изолированная сессия БД с rollback после каждого теста.
-    Использует SAVEPOINT для вложенных транзакций.
+    Использует SAVEPOINT (begin_nested) чтобы session.commit() внутри тестируемого
+    кода не делал постоянный COMMIT — всё откатывается на уровне соединения.
     """
-    session_factory = async_sessionmaker(async_engine, expire_on_commit=False)
-    async with session_factory() as session:
-        async with session.begin():
-            yield session
-            await session.rollback()
+    conn = await async_engine.connect()
+    await conn.begin()
+    await conn.begin_nested()  # SAVEPOINT
+    session = AsyncSession(bind=conn, expire_on_commit=False)
+
+    # Re-create SAVEPOINT after every session.commit() so the pattern stays intact
+    @event.listens_for(session.sync_session, "after_transaction_end")
+    def _restart_savepoint(session_obj, transaction):
+        if not conn.closed and not conn.sync_connection.in_nested_transaction():
+            conn.sync_connection.begin_nested()
+
+    yield session
+    await session.close()
+    await conn.rollback()
+    await conn.close()
 
 
 # ---------------------------------------------------------------------------
@@ -167,9 +194,11 @@ async def authenticated_client(
     from backend.core.security import create_access_token
 
     token = create_access_token(
-        subject=str(test_user.id),
-        org_id=str(test_org.id),
-        role=test_user.role,
+        data={
+            "sub": str(test_user.id),
+            "org_id": str(test_org.id),
+            "role": test_user.role,
+        }
     )
 
     async def _override_get_db():
