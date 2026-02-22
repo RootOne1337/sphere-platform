@@ -1,0 +1,133 @@
+{
+  "name": "Sphere Platform — Suspend/Resume Pattern",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 * * 1-5"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [200, 300],
+      "id": "trigger",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "operation": "getByTags",
+        "tags": "farm",
+        "limit": 50,
+        "outputMode": "each"
+      },
+      "type": "n8n-nodes-sphereplatform.sphereDevicePool",
+      "typeVersion": 1,
+      "position": [420, 300],
+      "id": "get-devices",
+      "name": "Get Devices",
+      "credentials": {
+        "spherePlatformApi": {
+          "id": "sphere-creds",
+          "name": "Sphere Platform API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "deviceId": "={{ $json.id }}",
+        "scriptId": "REPLACE_WITH_SCRIPT_UUID",
+        "priority": 5,
+        "waitForResult": false,
+        "webhookUrl": "={{ $execution.resumeUrl }}"
+      },
+      "type": "n8n-nodes-sphereplatform.sphereExecuteScript",
+      "typeVersion": 1,
+      "position": [640, 300],
+      "id": "execute-script",
+      "name": "Execute Script (fire & forget)",
+      "credentials": {
+        "spherePlatformApi": {
+          "id": "sphere-creds",
+          "name": "Sphere Platform API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resume": "webhook",
+        "options": {
+          "webhookSuffix": "/result"
+        }
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [860, 300],
+      "id": "wait-webhook",
+      "name": "Wait for Webhook"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "task-status",
+              "name": "task_status",
+              "value": "={{ $json.data.status }}",
+              "type": "string"
+            },
+            {
+              "id": "device-id",
+              "name": "device_id",
+              "value": "={{ $json.data.device_id }}",
+              "type": "string"
+            },
+            {
+              "id": "result",
+              "name": "result",
+              "value": "={{ $json.data.result }}",
+              "type": "object"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [1080, 300],
+      "id": "process-result",
+      "name": "Process Result"
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [{ "node": "Get Devices", "type": "main", "index": 0 }]
+      ]
+    },
+    "Get Devices": {
+      "main": [
+        [{ "node": "Execute Script (fire & forget)", "type": "main", "index": 0 }]
+      ]
+    },
+    "Execute Script (fire & forget)": {
+      "main": [
+        [{ "node": "Wait for Webhook", "type": "main", "index": 0 }]
+      ]
+    },
+    "Wait for Webhook": {
+      "main": [
+        [{ "node": "Process Result", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateId": "sphere-suspend-resume-v1"
+  }
+}

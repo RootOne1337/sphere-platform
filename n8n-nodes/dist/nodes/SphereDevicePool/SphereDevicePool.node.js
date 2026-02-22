@@ -1,27 +1,21 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SphereDevicePool = void 0;
+const n8n_workflow_1 = require("n8n-workflow");
 const BaseNode_1 = require("../BaseNode");
 class SphereDevicePool {
     constructor() {
         this.description = {
-            displayName: 'Sphere Device Pool',
+            displayName: 'Sphere Platform Device Pool',
             name: 'sphereDevicePool',
             group: ['transform'],
             version: 1,
             subtitle: '={{$parameter["operation"]}}',
-            description: 'Manage Sphere Platform device pools and acquire/release devices',
-            defaults: {
-                name: 'Sphere Device Pool',
-            },
+            description: 'Query devices from Sphere Platform fleet',
+            defaults: { name: 'Device Pool' },
             inputs: ['main'],
             outputs: ['main'],
-            credentials: [
-                {
-                    name: 'spherePlatformApi',
-                    required: true,
-                },
-            ],
+            credentials: [{ name: 'spherePlatformApi', required: true }],
             properties: [
                 {
                     displayName: 'Operation',
@@ -29,83 +23,82 @@ class SphereDevicePool {
                     type: 'options',
                     noDataExpression: true,
                     options: [
-                        {
-                            name: 'Acquire Device',
-                            value: 'acquire',
-                            description: 'Acquire a device from the pool',
-                            action: 'Acquire a device from the pool',
-                        },
-                        {
-                            name: 'Release Device',
-                            value: 'release',
-                            description: 'Release a previously acquired device back to the pool',
-                            action: 'Release a device back to the pool',
-                        },
-                        {
-                            name: 'List Devices',
-                            value: 'list',
-                            description: 'List all devices in the pool',
-                            action: 'List all devices in the pool',
-                        },
+                        { name: 'Get All Devices', value: 'getAll' },
+                        { name: 'Get by Tags', value: 'getByTags' },
+                        { name: 'Get Online Only', value: 'getOnline' },
+                        { name: 'Get by Group', value: 'getByGroup' },
                     ],
-                    default: 'list',
+                    default: 'getAll',
+                },
+                {
+                    displayName: 'Tags',
+                    name: 'tags',
+                    type: 'string',
+                    default: '',
+                    placeholder: 'farm1,automation',
+                    description: 'Comma-separated tags filter',
+                    displayOptions: { show: { operation: ['getByTags'] } },
                 },
                 {
                     displayName: 'Group ID',
                     name: 'groupId',
                     type: 'string',
                     default: '',
-                    description: 'Device group ID to filter by',
-                    displayOptions: {
-                        show: {
-                            operation: ['acquire', 'list'],
-                        },
-                    },
+                    displayOptions: { show: { operation: ['getByGroup'] } },
                 },
                 {
-                    displayName: 'Device ID',
-                    name: 'deviceId',
-                    type: 'string',
-                    default: '',
-                    required: true,
-                    description: 'Device ID to release',
-                    displayOptions: {
-                        show: {
-                            operation: ['release'],
-                        },
-                    },
+                    displayName: 'Limit',
+                    name: 'limit',
+                    type: 'number',
+                    default: 100,
+                    description: 'Max devices to return',
+                },
+                {
+                    displayName: 'Output Mode',
+                    name: 'outputMode',
+                    type: 'options',
+                    options: [
+                        { name: 'One Item per Device', value: 'each' },
+                        { name: 'All Devices in One Item', value: 'all' },
+                    ],
+                    default: 'each',
+                    description: 'Whether to output each device as a separate item or bundle all into one item',
                 },
             ],
         };
     }
     async execute() {
-        const items = this.getInputData();
-        const returnData = [];
+        var _a;
         const operation = this.getNodeParameter('operation', 0);
-        for (let i = 0; i < items.length; i++) {
-            let responseData;
-            if (operation === 'list') {
-                const groupId = this.getNodeParameter('groupId', i, '');
-                const qs = {};
-                if (groupId)
-                    qs.group_id = groupId;
-                responseData = await BaseNode_1.sphereApiRequest.call(this, 'GET', '/devices', undefined, qs);
+        const limit = this.getNodeParameter('limit', 0);
+        const qs = {
+            limit: String(limit),
+        };
+        if (operation === 'getByTags') {
+            const tags = this.getNodeParameter('tags', 0);
+            if (!tags) {
+                throw new n8n_workflow_1.NodeOperationError(this.getNode(), 'Tags are required for "Get by Tags" operation');
             }
-            else if (operation === 'acquire') {
-                const groupId = this.getNodeParameter('groupId', i, '');
-                const body = {};
-                if (groupId)
-                    body.group_id = groupId;
-                responseData = await BaseNode_1.sphereApiRequest.call(this, 'POST', '/devices/acquire', body);
-            }
-            else if (operation === 'release') {
-                const deviceId = this.getNodeParameter('deviceId', i);
-                responseData = await BaseNode_1.sphereApiRequest.call(this, 'POST', `/devices/${deviceId}/release`, undefined);
-            }
-            const executionData = this.helpers.constructExecutionMetaData(this.helpers.returnJsonArray(responseData), { itemData: { item: i } });
-            returnData.push(...executionData);
+            qs.tags = tags;
         }
-        return [returnData];
+        if (operation === 'getByGroup') {
+            const groupId = this.getNodeParameter('groupId', 0);
+            if (!groupId) {
+                throw new n8n_workflow_1.NodeOperationError(this.getNode(), 'Group ID is required for "Get by Group" operation');
+            }
+            qs.group_id = groupId;
+        }
+        if (operation === 'getOnline') {
+            qs.status = 'online';
+        }
+        const response = await BaseNode_1.sphereApiRequest.call(this, 'GET', '/devices', undefined, qs);
+        const devices = ((_a = response.items) !== null && _a !== void 0 ? _a : (Array.isArray(response) ? response : []));
+        const outputMode = this.getNodeParameter('outputMode', 0);
+        if (outputMode === 'all') {
+            return [[{ json: { devices, count: devices.length } }]];
+        }
+        // each: один item на устройство; пустой список → пустой output (не ошибка)
+        return [devices.map((device) => ({ json: device }))];
     }
 }
 exports.SphereDevicePool = SphereDevicePool;

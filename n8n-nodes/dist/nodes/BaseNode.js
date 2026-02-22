@@ -4,8 +4,7 @@ exports.sphereApiRequest = sphereApiRequest;
 const n8n_workflow_1 = require("n8n-workflow");
 /**
  * Shared HTTP helper for all Sphere Platform nodes.
- * Reads credentials (serverUrl, apiKey, orgId) from SpherePlatformApi
- * and attaches the required X-API-Key / X-Org-ID headers automatically.
+ * Accepts both IExecuteFunctions and IHookFunctions (structural duck-typing).
  */
 async function sphereApiRequest(method, path, body, qs) {
     const creds = await this.getCredentials('spherePlatformApi');

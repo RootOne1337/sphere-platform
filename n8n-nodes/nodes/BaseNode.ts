@@ -1,12 +1,32 @@
-import { IExecuteFunctions, IHttpRequestMethods, NodeApiError } from 'n8n-workflow';
+import {
+    ICredentialDataDecryptedObject,
+    INode,
+    IRequestOptions,
+    IHttpRequestMethods,
+    NodeApiError,
+} from 'n8n-workflow';
+
+/**
+ * Minimal structural type shared by IExecuteFunctions and IHookFunctions.
+ * Allows sphereApiRequest to be called from both execute() and webhookMethods.
+ */
+export interface SphereFunctionContext {
+    getCredentials<T extends object = ICredentialDataDecryptedObject>(
+        type: string,
+        itemIndex?: number,
+    ): Promise<T>;
+    getNode(): INode;
+    helpers: {
+        request(options: IRequestOptions): Promise<unknown>;
+    };
+}
 
 /**
  * Shared HTTP helper for all Sphere Platform nodes.
- * Reads credentials (serverUrl, apiKey, orgId) from SpherePlatformApi
- * and attaches the required X-API-Key / X-Org-ID headers automatically.
+ * Accepts both IExecuteFunctions and IHookFunctions (structural duck-typing).
  */
 export async function sphereApiRequest(
-    this: IExecuteFunctions,
+    this: SphereFunctionContext,
     method: IHttpRequestMethods,
     path: string,
     body?: object,

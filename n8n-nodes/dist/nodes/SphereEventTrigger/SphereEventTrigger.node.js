@@ -1,102 +1,137 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SphereEventTrigger = void 0;
+const crypto_1 = require("crypto");
+const BaseNode_1 = require("../BaseNode");
 class SphereEventTrigger {
     constructor() {
         this.description = {
-            displayName: 'Sphere Event Trigger',
+            displayName: 'Sphere Platform Event Trigger',
             name: 'sphereEventTrigger',
             group: ['trigger'],
             version: 1,
-            subtitle: '={{$parameter["eventType"]}}',
-            description: 'Triggers when a Sphere Platform event occurs (device status change, script completion, etc.)',
-            defaults: {
-                name: 'Sphere Event Trigger',
-            },
+            description: 'Triggers when Sphere Platform events occur',
+            defaults: { name: 'Sphere Event' },
             inputs: [],
             outputs: ['main'],
-            credentials: [
-                {
-                    name: 'spherePlatformApi',
-                    required: true,
-                },
-            ],
+            credentials: [{ name: 'spherePlatformApi', required: true }],
             webhooks: [
                 {
                     name: 'default',
                     httpMethod: 'POST',
                     responseMode: 'onReceived',
-                    path: 'sphere-event',
+                    path: 'webhook',
                 },
             ],
             properties: [
                 {
-                    displayName: 'Event Type',
-                    name: 'eventType',
-                    type: 'options',
+                    displayName: 'Event Types',
+                    name: 'eventTypes',
+                    type: 'multiOptions',
                     options: [
-                        {
-                            name: 'Device Status Changed',
-                            value: 'device.status_changed',
-                            description: 'Triggers when a device comes online or goes offline',
-                        },
-                        {
-                            name: 'Script Completed',
-                            value: 'script.completed',
-                            description: 'Triggers when a script finishes execution',
-                        },
-                        {
-                            name: 'Script Failed',
-                            value: 'script.failed',
-                            description: 'Triggers when a script execution fails',
-                        },
-                        {
-                            name: 'Device Discovered',
-                            value: 'device.discovered',
-                            description: 'Triggers when a new device is discovered',
-                        },
+                        { name: 'All Events', value: 'all' },
+                        { name: 'Task Completed', value: 'task_completed' },
+                        { name: 'Task Failed', value: 'task_failed' },
+                        { name: 'Device Offline', value: 'device_offline' },
+                        { name: 'Device Online', value: 'device_online' },
+                        { name: 'VPN Connected', value: 'vpn_connected' },
+                        { name: 'VPN Disconnected', value: 'vpn_disconnected' },
+                        { name: 'OTA Update Complete', value: 'ota_complete' },
                     ],
-                    default: 'device.status_changed',
-                    required: true,
+                    default: ['task_completed'],
                 },
                 {
-                    displayName: 'Device Group ID',
-                    name: 'groupId',
+                    displayName: 'Device Tags Filter',
+                    name: 'tagsFilter',
                     type: 'string',
                     default: '',
-                    description: 'Filter events to a specific device group (leave empty for all groups)',
+                    description: 'Only receive events for devices with these tags (comma-separated, leave empty for all)',
+                },
+                {
+                    displayName: 'Validate HMAC Signature',
+                    name: 'validateHmac',
+                    type: 'boolean',
+                    default: true,
+                    description: 'Whether to verify X-Sphere-Signature header (recommended)',
+                },
+                {
+                    displayName: 'Webhook Secret',
+                    name: 'webhookSecret',
+                    type: 'string',
+                    typeOptions: { password: true },
+                    default: '',
+                    displayOptions: { show: { validateHmac: [true] } },
+                    description: 'Secret provided by Sphere Platform when webhook was registered',
                 },
             ],
         };
         this.webhookMethods = {
             default: {
                 async checkExists() {
-                    // TODO (SPLIT-3): implement webhook registration check via Sphere API
-                    return false;
+                    const webhookData = this.getWorkflowStaticData('node');
+                    return !!webhookData.webhookId;
                 },
                 async create() {
-                    // TODO (SPLIT-3): register webhook with Sphere Platform
-                    // POST /api/v1/webhooks { url: webhookUrl, events: [eventType] }
+                    const webhookUrl = this.getNodeWebhookUrl('default');
+                    const eventTypes = this.getNodeParameter('eventTypes');
+                    const tagsFilter = this.getNodeParameter('tagsFilter');
+                    const body = {
+                        url: webhookUrl,
+                        events: eventTypes.includes('all') ? ['*'] : eventTypes,
+                    };
+                    if (tagsFilter) {
+                        body.tags = tagsFilter.split(',').map((t) => t.trim()).filter(Boolean);
+                    }
+                    const result = await BaseNode_1.sphereApiRequest.call(this, 'POST', '/webhooks', body);
+                    const webhookData = this.getWorkflowStaticData('node');
+                    webhookData.webhookId = result.id;
                     return true;
                 },
                 async delete() {
-                    // TODO (SPLIT-3): deregister webhook from Sphere Platform
-                    // DELETE /api/v1/webhooks/{webhookId}
+                    const webhookData = this.getWorkflowStaticData('node');
+                    if (webhookData.webhookId) {
+                        try {
+                            await BaseNode_1.sphereApiRequest.call(this, 'DELETE', `/webhooks/${webhookData.webhookId}`);
+                        }
+                        catch {
+                            // Webhook may already be gone; proceed with cleanup
+                        }
+                        delete webhookData.webhookId;
+                    }
                     return true;
                 },
             },
         };
     }
     async webhook() {
-        const bodyData = this.getBodyData();
+        const validateHmac = this.getNodeParameter('validateHmac');
+        const body = this.getBodyData();
+        const headers = this.getHeaderData();
+        if (validateHmac) {
+            const secret = this.getNodeParameter('webhookSecret');
+            const signature = headers['x-sphere-signature'];
+            if (!signature) {
+                return {
+                    webhookResponse: { status: 401, body: 'Missing X-Sphere-Signature header' },
+                };
+            }
+            const rawBody = JSON.stringify(body);
+            const expected = (0, crypto_1.createHmac)('sha256', secret).update(rawBody).digest('hex');
+            const provided = signature.replace('sha256=', '');
+            // FIX 9.3: constant-time comparison via crypto.timingSafeEqual
+            // Prevents timing side-channel attacks on HMAC verification
+            const expectedBuf = Buffer.from(expected, 'utf-8');
+            const providedBuf = Buffer.from(provided, 'utf-8');
+            const valid = expectedBuf.length === providedBuf.length &&
+                (0, crypto_1.timingSafeEqual)(expectedBuf, providedBuf);
+            if (!valid) {
+                return {
+                    webhookResponse: { status: 401, body: 'Invalid signature' },
+                };
+            }
+        }
         return {
-            workflowData: [
-                [
-                    {
-                        json: bodyData,
-                    },
-                ],
-            ],
+            workflowData: [[{ json: body }]],
         };
     }
 }
