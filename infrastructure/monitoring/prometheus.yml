@@ -1,0 +1,54 @@
+# infrastructure/monitoring/prometheus.yml
+# Конфигурация Prometheus для Sphere Platform.
+# Подключается в docker-compose через volume mount.
+global:
+  scrape_interval: 15s          # Как часто собирать метрики (совпадает с DB pool collector)
+  evaluation_interval: 15s      # Как часто вычислять alert rules
+  scrape_timeout: 10s
+
+# Alertmanager (TZ-11 SPLIT-3)
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - alertmanager:9093
+
+# Rule files (TZ-11 SPLIT-3)
+rule_files:
+  - "rules/*.yml"
+
+scrape_configs:
+  # ── Backend FastAPI ──────────────────────────────────────────────────────────
+  - job_name: "sphere-backend"
+    metrics_path: /metrics
+    static_configs:
+      - targets:
+          - backend:8000
+    relabel_configs:
+      # Добавляем label service для Grafana dashboards
+      - target_label: service
+        replacement: sphere-backend
+
+  # ── Prometheus self-monitoring ───────────────────────────────────────────────
+  - job_name: "prometheus"
+    static_configs:
+      - targets:
+          - localhost:9090
+
+  # ── Node Exporter (host metrics) ─────────────────────────────────────────────
+  - job_name: "node-exporter"
+    static_configs:
+      - targets:
+          - node-exporter:9100
+
+  # ── PostgreSQL Exporter ───────────────────────────────────────────────────────
+  - job_name: "postgres-exporter"
+    static_configs:
+      - targets:
+          - postgres-exporter:9187
+
+  # ── Redis Exporter ────────────────────────────────────────────────────────────
+  - job_name: "redis-exporter"
+    static_configs:
+      - targets:
+          - redis-exporter:9121

@@ -6,8 +6,10 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI
+from starlette_exporter import PrometheusMiddleware as _StarlettePrometheus, handle_metrics
 
 from backend.core.cors import setup_cors
+from backend.middleware.metrics import PrometheusMiddleware
 
 
 @asynccontextmanager
@@ -19,6 +21,7 @@ async def lifespan(app: FastAPI):
     # Импортируем redis_client для регистрации хуков (register_startup/register_shutdown)
     # Остальные модули регистрируют свои хуки при импорте router.py
     import backend.database.redis_client  # noqa: F401
+    import backend.monitoring.pool_metrics  # noqa: F401 — регистрирует DB pool collector
 
     from backend.core.lifespan_registry import run_all_startup, run_all_shutdown
 
@@ -43,6 +46,13 @@ app = FastAPI(
 )
 
 setup_cors(app)
+
+# TZ-11 SPLIT-1: Prometheus metrics middleware + /metrics endpoint
+# PrometheusMiddleware (наш) — timing/labeling; starlette_exporter — exposition format.
+# Порядок важен: наш middleware оборачивает запрос ДО exception handlers → 5xx тоже трекаются.
+app.add_middleware(_StarlettePrometheus, app_name="sphere", group_paths=True)
+app.add_middleware(PrometheusMiddleware)
+app.add_route("/metrics", handle_metrics)
 
 # ── Авто-дискавери роутеров ───────────────────────────────────────────────────
 # Подключает backend/api/v1/<subdir>/router.py для каждой поддиректории.
