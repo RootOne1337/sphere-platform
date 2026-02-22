@@ -42,6 +42,13 @@ class Settings(BaseSettings):
     # Server
     VPN_SERVER_HOSTNAME: str = "adb.leetpc.com"
 
+    # VPN (TZ-06 SPLIT-1: AWG Config Builder)
+    WG_SERVER_PUBLIC_KEY: str = ""                        # Public key WG сервера
+    WG_SERVER_ENDPOINT: str = "vpn.example.com:51820"    # WG endpoint для клиентов
+    WG_PSK_ENABLED: bool = True                           # Pre-Shared Key
+    VPN_KEY_ENCRYPTION_KEY: str = ""                      # Fernet key (Fernet.generate_key())
+    VPN_POOL_SUBNET: str = "10.100.0.0/16"                # Подсеть для пула IP
+
     # App
     DEBUG: bool = False
     LOG_LEVEL: str = "INFO"
