@@ -55,6 +55,7 @@ class Device(Base, UUIDMixin, TimestampMixin):
     meta: Mapped[dict] = mapped_column(JSONB, server_default="{}", nullable=False)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
 
+    org: Mapped["Organization"] = relationship(back_populates="devices")
     groups: Mapped[list["DeviceGroup"]] = relationship(
         secondary="device_group_members",
         back_populates="devices",
