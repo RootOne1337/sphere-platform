@@ -18,14 +18,16 @@ jobs:
           java-version: "17"
           distribution: temurin
       - uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: "8.2"
 
       - name: Build debug APK
         working-directory: android
-        run: ./gradlew assembleDebug
+        run: gradle assembleDebug
 
       - name: Run unit tests
         working-directory: android
-        run: ./gradlew test
+        run: gradle test
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
