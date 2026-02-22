@@ -65,24 +65,6 @@ async def get_current_user(
     return user
 
 
-def require_role(*roles: str):
-    """
-    Dependency factory: ensure the current user has one of the required roles.
-
-    Usage:
-        current_user = Depends(require_role("org_admin"))
-        current_user = Depends(require_role("org_admin", "device_manager"))
-    """
-    async def _check_role(user=Depends(get_current_user)):
-        if user.role not in roles:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Required role(s): {', '.join(roles)}",
-            )
-        return user
-    return _check_role
-
-
 async def get_tenant_db(
     db: AsyncSession = Depends(get_db),
     current_user: "User" = Depends(get_current_user),
@@ -140,8 +122,20 @@ def require_roles(roles: list[str]):
     return Depends(dependency)
 
 
-# Алиас для обратной совместимости
-require_role = require_roles
+def require_role(*roles: str):
+    """
+    Dependency-фабрика: ВОЗВРАЩАЕТ callable.
+    Используется как: current_user = Depends(require_role("org_admin"))
+                  или: current_user = Depends(require_role("org_admin", "device_manager"))
+    """
+    async def _check(current_user: "User" = Depends(get_current_user)) -> "User":
+        if current_user.role not in roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Required role(s): {', '.join(roles)}. Your role: {current_user.role}",
+            )
+        return current_user
+    return _check
 
 
 def require_permission(permission: str):
