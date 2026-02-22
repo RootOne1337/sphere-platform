@@ -1,0 +1,981 @@
+# 🏗️ SphereADB — Enterprise Project Walkthrough
+
+> **Версия:** 2.0 | **Дата:** 2026-02-22  
+> **Проект:** Управление Android-фермой через облако  
+> **Объём:** 12 TZ · 60 SPLIT · ~54 person-days · 5 команд
+
+---
+
+## 📋 Содержание
+
+## 📋 Содержание
+
+1. [Архитектура и Vision](#1-архитектура)
+2. [Объем кода проекта](#2-объем-кода)
+3. [Команды и роли](#3-команды)
+4. [Git Workflow и Worktree-изоляция](#4-git-workflow)
+5. [Порядок разработки — 60 SPLIT по дням](#5-порядок-разработки)
+6. [Контракты между компонентами](#6-контракты)
+7. [Стратегия merge — 6 фаз](#7-merge-стратегия)
+8. [Тестирование — 5 уровней](#8-тестирование)
+9. [CI/CD Pipeline](#9-cicd)
+10. [Запуск в Production](#10-запуск)
+11. [Мониторинг и пост-запуск](#11-мониторинг)
+12. [Контракты между компонентами](#5-контракты)
+13. [Стратегия merge — 6 фаз](#6-merge-стратегия)
+14. [Тестирование — 5 уровней](#7-тестирование)
+15. [CI/CD Pipeline](#8-cicd)
+16. [Запуск в Production](#9-запуск)
+17. [Мониторинг и пост-запуск](#10-мониторинг)
+
+---
+
+## 1. Архитектура
+
+### Общая схема системы
+
+```mermaid
+graph TB
+    subgraph "🌐 Frontend"
+        FE["Next.js 14<br/>Dashboard + Stream"]
+    end
+    
+    subgraph "⚡ Backend"
+        API["FastAPI<br/>REST + WebSocket"]
+        Redis["Redis 7<br/>PubSub + Cache"]
+        PG["PostgreSQL 15<br/>+ Alembic"]
+    end
+    
+    subgraph "🤖 Agents"
+        Android["Android Agent<br/>Kotlin + ADB"]
+        PC["PC Agent<br/>Python + LDPlayer"]
+    end
+    
+    subgraph "🔗 Integration"
+        N8N["n8n<br/>Workflow Automation"]
+        VPN["AmneziaWG<br/>VPN Overlay"]
+    end
+    
+    subgraph "📊 Observability"
+        Prom["Prometheus"]
+        Graf["Grafana"]
+        Alert["Alertmanager"]
+    end
+    
+    FE <-->|"REST + WS"| API
+    API <--> Redis
+    API <--> PG
+    API <-->|"WebSocket"| Android
+    API <-->|"WebSocket"| PC
+    API -->|"Webhooks"| N8N
+    Android -.->|"WireGuard"| VPN
+    API --> Prom --> Graf
+    Prom --> Alert
+```
+
+### Технологический стек
+
+| Слой | Технологии | Зачем |
+|------|-----------|-------|
+| **Database** | PostgreSQL 15 + SQLAlchemy 2.0 + Alembic | ACID, миграции, ORM |
+| **Cache** | Redis 7 (PubSub + Key/Val + ZSet) | Real-time статус, очереди, каналы |
+| **Backend** | FastAPI + Pydantic v2 + structlog | Async API, валидация, логи |
+| **WebSocket** | FastAPI WS + async queues | Bidirectional, backpressure |
+| **Streaming** | MediaCodec → H.264 → WebCodecs | Real-time видео 720p@30fps |
+| **VPN** | AmneziaWG + Kill Switch | Обход блокировок, защита |
+| **Android Agent** | Kotlin + Coroutines + OkHttp | ADB, Lua, OTA, DAG |
+| **PC Agent** | Python + asyncio + psutil | LDPlayer, ADB Bridge, telemetry |
+| **Automation** | n8n + TypeScript nodes | Low-code workflow |
+| **Frontend** | Next.js 14 + TanStack Query + Zustand | SSR, реактивность, стейт |
+| **Monitoring** | Prometheus + Grafana + Alertmanager | Метрики, дашборды, алерты |
+| **CI/CD** | GitHub Actions + Docker Compose | Автоматизация, деплой |
+
+---
+
+## Выполненные архитектурные улучшения
+
+В рамках инициативы по оптимизации параллельной работы разработчиков внедрены следующие механизмы (Enterprise-уровень):
+
+1. **Phase 0: Contract Merge**. Внедрено правило опережающего мерджа контрактов (Pydantic-схемы + `openapi.json`) для минимизации блокировок FrontEnd (TZ-10).
+2. **Port Offsetting для Worktrees**. Решена проблема конфликта портов на localhost с помощью динамической формулы (`BACKEND_PORT=8000 + STAGE_ID`, `FRONTEND_PORT=3000 + STAGE_ID`) и изоляции сетей через `COMPOSE_PROJECT_NAME=stage_N` в файле [TZ-00-Constitution/SPLIT-1-Repo-Docker.md](file:///c:/Users/dimas/Documents/SphereADB-TZ/TZ-00-Constitution/SPLIT-1-Repo-Docker.md).
+3. **Ежедневная синхронизация 24h Sync**. Добавлено обязательное требование для всех ворктри `git fetch origin develop && git merge origin/develop` для предотвращения использования устаревшего контекста (Stale Context).
+4. **Android 14+ Doze Mode (WorkManager)**. В `TZ-03` и `TZ-07` явно прописана необходимость использования `WorkManager` (или Foreground Service + Wakelock) для поддержки фоновых Heartbeat-пингов и защиты WebSocket соединений от принудительного закрытия системой.
+
+| Затронутые TZ | Компоненты |
+| :--- | :--- |
+| **TZ-00** | Makefile, docker-compose.yml, .env генератор |
+| **TZ-03 / TZ-07** | HeartbeatHandler, WebSocket Client |
+| **TZ-10** | Next.js версии (уточнена 15 версия с App Router) |
+
+---
+
+## 2. Объем кода
+
+> Общий объем кодовой базы и технической спецификации, которая является прямой инфраструктурой для автоматизированной разработки (AI-driven), составляет **~19 096 строк**.
+
+### 📊 Визуализация распределения кода
+
+```mermaid
+pie title Распределение разработки по слоям (в строках)
+    "DevOps & Infrastructure (TZ-00)" : 4026
+    "Frontend (TZ-10)" : 1575
+    "Monitoring (TZ-11)" : 1527
+    "Android Agent (TZ-07)" : 1502
+    "VPN Infrastructure (TZ-06)" : 1420
+    "WebSocket Layer (TZ-03)" : 1296
+    "Script Engine (TZ-04)" : 1259
+    "Streaming (TZ-05)" : 1174
+    "Auth Service (TZ-01)" : 1141
+    "PC Agent (TZ-08)" : 1122
+    "Device Registry (TZ-02)" : 1083
+    "n8n Integration (TZ-09)" : 1045
+    "Project Walkthrough" : 926
+```
+
+### 📈 Сводка по модулям (TZ)
+
+| Модуль | Раздел | Кол-во файлов | Кол-во строк |
+| :--- | :--- | :---: | :---: |
+| **TZ-00** | Платформенная база, БД, CI/CD, Docker | 5 | `4 026` |
+| **TZ-01** | Сервис авторизации, RBAC, API Ключи | 5 | `1 141` |
+| **TZ-02** | Реестр устройств, Redis Status | 5 | `1 083` |
+| **TZ-03** | WebSocket ядро, Пулы, Backpressure | 5 | `1 296` |
+| **TZ-04** | Движок скриптов, Очереди, DAG | 5 | `1 259` |
+| **TZ-05** | H.264 Стриминг, MediaCodec | 5 | `1 174` |
+| **TZ-06** | Модуль VPN (AmneziaWG) | 5 | `1 420` |
+| **TZ-07** | Android Агент | 5 | `1 502` |
+| **TZ-08** | PC Агент (LDPlayer) | 5 | `1 122` |
+| **TZ-09** | n8n Интеграция | 5 | `1 045` |
+| **TZ-10** | Web Frontend (Next.js) | 5 | `1 575` |
+| **TZ-11** | Данные мониторинга (Prometheus, Grafana) | 5 | `1 527` |
+| **Docs** | Enterprise Walkthrough (этот документ) | 1 | `926` |
+| | **🔥 ИТОГО ПО ПРОЕКТУ** | **61** | **`19 096`** |
+
+> **Примечание:** Объем каждого микромодуля (SPLIT) сбалансирован и в среднем составляет от `150` до `350` строк. Крупные модули, такие как `docker-compose` (TZ-00 SPLIT-1) или `CI/CD` pipeline (TZ-00 SPLIT-5), выделены в самостоятельные файлы объемом ~1100 строк для полного контроля системной архитектуры.
+
+---
+
+## 3. Команды и роли
+
+### 5 параллельных команд
+
+```mermaid
+graph LR
+    subgraph "👷 DevOps Team"
+        D1["TZ-00 Foundation"]
+        D2["TZ-11 Monitoring"]
+    end
+    
+    subgraph "🐍 Backend Team"
+        B1["TZ-01 Auth"]
+        B2["TZ-02 Devices"]
+        B3["TZ-03 WebSocket"]
+        B4["TZ-04 Scripts"]
+        B5["TZ-05 Streaming"]
+        B6["TZ-06 VPN"]
+    end
+    
+    subgraph "🤖 Android Team"
+        A1["TZ-07 Android Agent"]
+    end
+    
+    subgraph "🖥️ Node.js Team"
+        N1["TZ-08 PC Agent"]
+        N2["TZ-09 n8n"]
+    end
+    
+    subgraph "🎨 Frontend Team"
+        F1["TZ-10 Web Frontend"]
+    end
+```
+
+| Команда | TZ | Разработчиков | Дней |
+|---------|-----|--------------|------|
+| DevOps | TZ-00, TZ-11 | 1 | 5.5 |
+| Backend | TZ-01..06 | 2 | 25 |
+| Android | TZ-07 | 1 | 8 |
+| Node.js | TZ-08, TZ-09 | 1 | 8 |
+| Frontend | TZ-10 | 1 | 8 |
+| **Итого** | **12 TZ** | **6** | **54.5** |
+
+### Матрица ответственности RACI
+
+| Действие | DevOps | Backend | Android | Node.js | Frontend |
+|----------|--------|---------|---------|---------|----------|
+| PostgreSQL Schema | A | R | I | I | I |
+| Redis Config | R | A | I | I | I |
+| WebSocket Protocol | I | R/A | C | C | I |
+| DAG JSON Schema | I | R/A | R | C | C |
+| H.264 Pipeline | I | R | R | I | R |
+| VPN Infrastructure | R | R/A | R | I | I |
+| CI/CD Pipeline | R/A | C | C | C | C |
+| Docker Compose | R/A | C | I | I | I |
+| Monitoring Setup | R/A | C | I | I | I |
+
+> R = Responsible, A = Accountable, C = Consulted, I = Informed
+
+---
+
+## 3. Git Workflow и Worktree-изоляция
+
+### Стратегия веток
+
+```mermaid
+gitGraph
+    commit id:"init"
+    branch develop
+    commit id:"foundation"
+    
+    branch "stage/1-auth"
+    commit id:"jwt"
+    commit id:"rbac"
+    
+    checkout develop
+    branch "stage/2-device-registry"
+    commit id:"crud"
+    commit id:"redis-cache"
+    
+    checkout develop
+    branch "stage/3-websocket"
+    commit id:"conn-mgr"
+    commit id:"pubsub"
+    
+    checkout develop
+    merge "stage/1-auth" id:"Phase 2 merge"
+    merge "stage/2-device-registry"
+    merge "stage/3-websocket" id:"Phase 3 merge"
+    
+    branch release/1.0
+    commit id:"rc1"
+    
+    checkout main
+    merge release/1.0 id:"v1.0"
+```
+
+### Правила (железные!)
+
+| ✅ Разрешено | ❌ Запрещено |
+|-------------|------------|
+| `git add` + `commit` + `push origin stage/*` | `git checkout другая-ветка` |
+| PR `stage/*` → `develop` (после review + CI) | `git merge` / `git rebase` вручную |
+| Работа ТОЛЬКО в своей worktree-папке | `git push --force` |
+| Правка ТОЛЬКО своих файлов | Правка чужих файлов (🔴 ownership) |
+
+### Worktree Setup (DevOps выполняет ОДИН раз)
+
+```bash
+# Из корня sphere-platform/
+git worktree add ../sphere-stage-0  stage/0-foundation
+git worktree add ../sphere-stage-1  stage/1-auth
+git worktree add ../sphere-stage-2  stage/2-device-registry
+git worktree add ../sphere-stage-3  stage/3-websocket
+git worktree add ../sphere-stage-4  stage/4-scripts
+git worktree add ../sphere-stage-5  stage/5-streaming
+git worktree add ../sphere-stage-6  stage/6-vpn
+git worktree add ../sphere-stage-7  stage/7-android
+git worktree add ../sphere-stage-8  stage/8-pc-agent
+git worktree add ../sphere-stage-9  stage/9-n8n
+git worktree add ../sphere-stage-10 stage/10-frontend
+git worktree add ../sphere-stage-11 stage/11-monitoring
+
+# Или одной командой:
+make worktree-setup
+```
+
+### Верификация для каждого разработчика
+
+```bash
+# КАЖДЫЙ разработчик проверяет ПЕРЕД работой:
+cd ~/Documents/sphere-stage-{N}
+git branch --show-current   # ОБЯЗАН показать: stage/{N}-xxx
+pwd                          # ОБЯЗАНА содержать: sphere-stage-{N}
+```
+
+---
+
+## 4. Порядок разработки — 60 SPLIT по дням
+
+### 📅 Полное расписание
+
+```mermaid
+gantt
+    title SphereADB — Параллельная разработка
+    dateFormat YYYY-MM-DD
+    axisFormat %d.%m
+
+    section DevOps
+    TZ-00 S1 Docker:done, d00s1, 2026-02-24, 1d
+    TZ-00 S2 DB Schema:done, d00s2, after d00s1, 1d
+    TZ-00 S3 Redis:done, d00s3, after d00s2, 0.5d
+    TZ-00 S4 CI/CD:done, d00s4, after d00s3, 1d
+    TZ-00 S5 Secrets:done, d00s5, after d00s4, 0.5d
+    TZ-11 S1 Prometheus: d11s1, after d00s5, 1d
+    TZ-11 S2 Grafana: d11s2, after d11s1, 1d
+    TZ-11 S3 Alertmanager: d11s3, after d11s2, 0.5d
+    TZ-11 S4 Logging: d11s4, after d11s3, 0.5d
+    TZ-11 S5 Health: d11s5, after d11s4, 0.5d
+
+    section Backend-1
+    TZ-01 S1 JWT:active, t01s1, 2026-02-24, 1d
+    TZ-01 S2 RBAC: t01s2, after t01s1, 0.5d
+    TZ-01 S3 API Keys: t01s3, after t01s2, 0.5d
+    TZ-01 S4 Orgs: t01s4, after t01s3, 0.5d
+    TZ-01 S5 Sessions: t01s5, after t01s4, 0.5d
+    TZ-03 S1 ConnMgr: t03s1, after t01s5, 1d
+    TZ-03 S2 PubSub: t03s2, after t03s1, 1d
+    TZ-03 S3 Backpressure: t03s3, after t03s2, 1d
+    TZ-03 S4 Heartbeat: t03s4, after t03s3, 0.5d
+    TZ-03 S5 Events: t03s5, after t03s4, 0.5d
+    TZ-05 S1 MediaCodec: t05s1, after t03s5, 1d
+    TZ-05 S2 Encoder: t05s2, after t05s1, 1d
+    TZ-05 S3 StreamMgr: t05s3, after t05s2, 1d
+    TZ-05 S4 FrameDrop: t05s4, after t05s3, 0.5d
+    TZ-05 S5 WebCodecs: t05s5, after t05s4, 1.5d
+
+    section Backend-2
+    TZ-02 S1 CRUD:active, t02s1, 2026-02-24, 1d
+    TZ-02 S2 Groups: t02s2, after t02s1, 0.5d
+    TZ-02 S3 Redis Status: t02s3, after t02s2, 0.5d
+    TZ-02 S4 Bulk: t02s4, after t02s3, 0.5d
+    TZ-02 S5 Discovery: t02s5, after t02s4, 0.5d
+    TZ-04 S1 DAG Schema: t04s1, after t02s5, 1d
+    TZ-04 S2 Script CRUD: t04s2, after t04s1, 0.5d
+    TZ-04 S3 Dispatch: t04s3, after t04s2, 1d
+    TZ-04 S4 Batch: t04s4, after t04s3, 0.5d
+    TZ-04 S5 Progress: t04s5, after t04s4, 0.5d
+    TZ-06 S1 AWG Config: t06s1, after t04s5, 1d
+    TZ-06 S2 Pool: t06s2, after t06s1, 0.5d
+    TZ-06 S3 Self-Heal: t06s3, after t06s2, 1d
+    TZ-06 S4 Kill Switch: t06s4, after t06s3, 0.5d
+    TZ-06 S5 VPN API: t06s5, after t06s4, 0.5d
+
+    section Android
+    TZ-07 S1 Bootstrap: t07s1, 2026-02-24, 1d
+    TZ-07 S2 WS Client: t07s2, after t07s1, 2d
+    TZ-07 S3 Cmd Handler: t07s3, after t07s2, 2d
+    TZ-07 S4 Lua Engine: t07s4, after t07s3, 1.5d
+    TZ-07 S5 OTA: t07s5, after t07s4, 1.5d
+
+    section Node.js
+    TZ-08 S1 Architecture: t08s1, 2026-02-24, 1d
+    TZ-08 S2 WS Client: t08s2, after t08s1, 1d
+    TZ-08 S3 Telemetry: t08s3, after t08s2, 0.5d
+    TZ-08 S4 ADB Bridge: t08s4, after t08s3, 1.5d
+    TZ-08 S5 Topology: t08s5, after t08s4, 0.5d
+    TZ-09 S1 n8n Base: t09s1, after t08s5, 1d
+    TZ-09 S2 Credentials: t09s2, after t09s1, 0.5d
+    TZ-09 S3 Execute: t09s3, after t09s2, 1.5d
+    TZ-09 S4 EventTrigger: t09s4, after t09s3, 1d
+    TZ-09 S5 DevicePool: t09s5, after t09s4, 0.5d
+
+    section Frontend
+    TZ-10 S1 Auth UI: t10s1, 2026-02-24, 1.5d
+    TZ-10 S2 Dashboard: t10s2, after t10s1, 2d
+    TZ-10 S3 Remote View: t10s3, after t10s2, 2d
+    TZ-10 S4 VPN Mgmt: t10s4, after t10s3, 1d
+    TZ-10 S5 Script Builder: t10s5, after t10s4, 1.5d
+
+    section 🔗 Merge Phases
+    Фаза 1 Foundation:milestone, m1, 2026-03-01, 0d
+    Фаза 2 Backend Core:milestone, m2, 2026-03-03, 0d
+    Фаза 3 Business Logic:milestone, m3, 2026-03-07, 0d
+    Фаза 4 Agents:milestone, m4, 2026-03-10, 0d
+    Фаза 5 Integration:milestone, m5, 2026-03-12, 0d
+    Фаза 6 UI:milestone, m6, 2026-03-15, 0d
+```
+
+---
+
+### Детальный план по дням
+
+#### 📆 Неделя 1 (Дни 1-5) — Фундамент + Core
+
+| День | DevOps | Backend-1 | Backend-2 | Android | Node.js | Frontend |
+|------|--------|-----------|-----------|---------|---------|----------|
+| Пн | TZ-00 S1 Docker | TZ-01 S1 JWT | TZ-02 S1 CRUD | TZ-07 S1 Bootstrap | TZ-08 S1 Arch | TZ-10 S1 Auth |
+| Вт | TZ-00 S2 DB | TZ-01 S2+S3 | TZ-02 S2+S3 | TZ-07 S2 WS Client | TZ-08 S2 WS | TZ-10 S1 Auth |
+| Ср | TZ-00 S3+S4 | TZ-01 S4+S5 | TZ-02 S4+S5 | TZ-07 S2 WS Client | TZ-08 S3 Telemetry | TZ-10 S2 Dashboard |
+| Чт | TZ-00 S4+S5 | TZ-03 S1 ConnMgr | TZ-04 S1 DAG | TZ-07 S3 CmdHandler | TZ-08 S4 ADB Bridge | TZ-10 S2 Dashboard |
+| Пт | ✅ **TZ-00 ГОТОВ** | TZ-03 S2 PubSub | TZ-04 S2+S3 | TZ-07 S3 CmdHandler | TZ-08 S4+S5 | TZ-10 S3 Remote |
+
+#### 📆 Неделя 2 (Дни 6-10) — Business Logic + Agents
+
+| День | DevOps | Backend-1 | Backend-2 | Android | Node.js | Frontend |
+|------|--------|-----------|-----------|---------|---------|----------|
+| Пн | TZ-11 S1 Prometheus | TZ-03 S3 Backpress | TZ-04 S3+S4 | TZ-07 S4 Lua | TZ-09 S1 n8n Base | TZ-10 S3 Remote |
+| Вт | TZ-11 S2 Grafana | TZ-03 S4+S5 | TZ-04 S5 | TZ-07 S4 Lua | TZ-09 S2+S3 | TZ-10 S4 VPN |
+| Ср | TZ-11 S3+S4 | TZ-05 S1 MediaCodec | TZ-06 S1 AWG | TZ-07 S5 OTA | TZ-09 S3 Execute | TZ-10 S5 Builder |
+| Чт | TZ-11 S5 | TZ-05 S2+S3 | TZ-06 S2+S3 | TZ-07 S5 OTA | TZ-09 S4 EventTrig | TZ-10 S5 Builder |
+| Пт | ✅ **TZ-11 ГОТОВ** | TZ-05 S4+S5 | TZ-06 S4+S5 | ✅ **TZ-07 ГОТОВ** | TZ-09 S5 | ✅ **TZ-10 ГОТОВ** |
+
+> **К концу Недели 2:** Все 12 TZ разработаны. Начинается фаза merge.
+
+---
+
+### Что делать внутри каждого SPLIT
+
+Каждый SPLIT содержит пошаговую инструкцию. Вот стандартный workflow:
+
+```
+┌──────────────────────────────────────┐
+│  1. Открыть ПРАВИЛЬНУЮ worktree      │
+│     cd ~/Documents/sphere-stage-{N}  │
+│     git branch --show-current         │
+├──────────────────────────────────────┤
+│  2. Прочитать SPLIT-файл от начала   │
+│     до конца                          │
+├──────────────────────────────────────┤
+│  3. Реализовать Шаг за Шагом         │
+│     • Шаг 1 → код + commit           │
+│     • Шаг 2 → код + commit           │
+│     • ...                             │
+├──────────────────────────────────────┤
+│  4. Написать тесты (раздел «Тесты»)  │
+│     pytest / JUnit / vitest           │
+├──────────────────────────────────────┤
+│  5. Проверить Критерии Готовности     │
+│     (чеклист в конце SPLIT)           │
+├──────────────────────────────────────┤
+│  6. Push + создать PR (если готов)     │
+│     git push origin stage/{N}-xxx     │
+└──────────────────────────────────────┘
+```
+
+---
+
+## 5. Контракты между компонентами
+
+> **Контракт** — соглашение между TZ, нарушение которого приведёт к runtime-ошибкам при merge.
+
+### 🔴 Heartbeat Contract (TZ-03 ↔ TZ-07)
+
+```
+Server (backend/websocket/heartbeat.py):
+  HEARTBEAT_INTERVAL = 30.0с    ← ping каждые 30 секунд
+  HEARTBEAT_TIMEOUT  = 15.0с    ← ждём pong 15 секунд
+  → Итого: закрытие WS через 45с без pong
+
+Android Agent (DagRunner.kt):
+  PONG_TIMEOUT_MS = 45_000L     ← ОБЯЗАН совпадать!
+  → Если Android не ответит за 45с — сервер закроет WS
+```
+
+> [!CAUTION]
+> Если Android использует другое значение (например 60с) — сервер закроет WS раньше, чем Android пошлёт pong. Соединение будет «мигать».
+
+### 🔴 DAG JSON Contract (TZ-04 ↔ TZ-07 ↔ TZ-09)
+
+| Поле | Тип | Нарушение = |
+|------|-----|------------|
+| `node.id` | `string` (UUID) | Runtime crash в DagRunner |
+| `node.action.type` | Literal enum (`tap`, `swipe`, `sleep`...) | Validation error |
+| `node.next` | `list[str]` (не single string!) | TypeError в Kotlin |
+| `dag.nodes` | `list[Node]` (не dict!) | Deserialization fail |
+
+### 🔴 Redis Keyspace Contract (все TZ)
+
+| Префикс | TZ | Тип | Назначение |
+|---------|-----|------|-----------|
+| `sphere:agent:cmd:*` | TZ-03 | PubSub | Команды к агенту |
+| `sphere:org:events:*` | TZ-03 | PubSub | Broadcast событий |
+| `sphere:stream:video:*` | TZ-03 | PubSub | Видеопоток |
+| `sphere:agent:result:*` | TZ-03 | PubSub | Ответы на команды |
+| `device:status:*` | TZ-02 | Key/Val | Live статус (msgpack) |
+| `task:queue:*` | TZ-04 | ZSet | Очередь задач |
+| `vpn:pool:*` | TZ-06 | Hash | VPN конфигурации |
+| `session:*` | TZ-01 | Key/Val | Refresh token |
+
+> **Правило:** `sphere:*` = PubSub каналы, остальные = data keys.
+
+### 🟡 Backpressure Pipeline (TZ-03 + TZ-05)
+
+```
+[Android FrameThrottle] → WS → [Backend VideoStreamQueue] → WS → [Browser WebCodecs]
+       L1: fps cap                  L2: drop stale P-frames
+       (TZ-05 SPLIT-4)             (TZ-03 SPLIT-3)
+```
+
+> Это **двухуровневый pipeline**, НЕ дублирование. Оба компонента остаются при merge.
+
+---
+
+## 6. Стратегия Merge — 6 фаз
+
+### Общий порядок
+
+```mermaid
+graph LR
+    P1["Фаза 1<br/>Foundation"] --> P2["Фаза 2<br/>Backend Core"]
+    P2 --> P3["Фаза 3<br/>Business Logic"]
+    P3 --> P4["Фаза 4<br/>Agents"]
+    P4 --> P5["Фаза 5<br/>Integration"]
+    P5 --> P6["Фаза 6<br/>UI"]
+    
+    style P1 fill:#2d5016,color:#fff
+    style P2 fill:#1a3a5c,color:#fff
+    style P3 fill:#5c1a3a,color:#fff
+    style P4 fill:#4a3a1a,color:#fff
+    style P5 fill:#1a4a3a,color:#fff
+    style P6 fill:#3a1a5c,color:#fff
+```
+
+---
+
+### Фаза 1 — Foundation (День 11)
+
+| Ветка | PR → | Merge-риски | Чеклист |
+|-------|------|------------|---------|
+| `stage/0-foundation` | `develop` | Нет | ✅ Docker up, DB migrate, Redis ping |
+| `stage/11-monitoring` | `develop` | Нет | ✅ Prometheus scrape, Grafana login |
+
+**Порядок:**
+
+1. PR `stage/0-foundation` → `develop` → Code Review → Merge
+2. PR `stage/11-monitoring` → `develop` → Code Review → Merge
+3. **Верификация:**
+
+   ```bash
+   docker compose -f docker-compose.dev.yml up -d
+   curl http://localhost:8000/health   # → 200
+   curl http://localhost:9090/-/ready  # → 200
+   ```
+
+---
+
+### Фаза 2 — Backend Core (День 12-13)
+
+| Ветка | PR → | Merge-риски | Чеклист |
+|-------|------|------------|---------|
+| `stage/1-auth` | `develop` | MERGE-7 | Подключить реальный `rbac.py` |
+| `stage/2-device-registry` | `develop` | MERGE-9 | Проверить пагинацию `PagedResponse` |
+
+**Порядок:**
+
+1. Сначала merge `stage/1-auth` (от него зависят все)
+2. Затем merge `stage/2-device-registry`
+3. **Верификация:**
+
+   ```bash
+   # Auth
+   curl -X POST localhost:8000/api/v1/auth/login \
+     -d '{"email":"admin@test.com","password":"test"}' 
+   # → {"access_token":"...","refresh_token":"..."}
+
+   # Devices
+   curl -H "Authorization: Bearer $TOKEN" \
+     localhost:8000/api/v1/devices
+   # → {"items":[],"total":0,"page":1}
+   ```
+
+---
+
+### Фаза 3 — Business Logic (День 14-16) ⚠️ Самая сложная
+
+| Ветка | PR → | Merge-риски | Действие |
+|-------|------|------------|---------|
+| `stage/3-websocket` | `develop` | **MERGE-1, 2, 4** | Проверить heartbeat contract, Redis keyspace |
+| `stage/4-scripts` | `develop` | **MERGE-3, 10** | DAG Schema contract тест |
+| `stage/5-streaming` | `develop` | **MERGE-1** | L1+L2 pipeline сохранить |
+| `stage/6-vpn` | `develop` | **MERGE-11, 12** | VPN config real endpoints |
+
+**Порядок (КРИТИЧНО!):**
+
+1. `stage/3-websocket` → ПЕРВЫМ (от него зависят все WS клиенты)
+2. `stage/4-scripts` → после WS (DAG dispatch по WS)
+3. `stage/5-streaming` → после WS (video frame routing)
+4. `stage/6-vpn` → последним (наименьше зависимостей)
+
+**Верификация Фазы 3:**
+
+```bash
+# WebSocket
+python -c "
+import asyncio, websockets
+async def test():
+    async with websockets.connect('ws://localhost:8000/ws/agent/test-device') as ws:
+        await ws.send('{\"type\":\"auth\",\"token\":\"...\"}')
+        msg = await asyncio.wait_for(ws.recv(), timeout=5)
+        print('OK:', msg)
+asyncio.run(test())
+"
+
+# DAG Schema Contract
+pytest tests/test_dag_contract.py -v
+
+# Redis Keyspace — проверить нет коллизий
+redis-cli KEYS '*' | sort
+```
+
+---
+
+### Фаза 4 — Agents (День 17-18)
+
+| Ветка | PR → | Merge-риски | Действие |
+|-------|------|------------|---------|
+| `stage/7-android` | `develop` | **MERGE-2, 3** | Heartbeat + DAG contract check |
+| `stage/8-pc-agent` | `develop` | **MERGE-13** | Telemetry WS message type |
+
+**Верификация:**
+
+```bash
+# Android — собрать APK и подключить
+./gradlew assembleDebug
+adb install app/build/outputs/apk/debug/app-debug.apk
+# Лог: "WebSocket connected to ws://server:8000/ws/agent/{device_id}"
+# Лог: "Heartbeat pong sent, battery=87"
+
+# PC Agent
+cd pc-agent && python main.py --server ws://localhost:8000
+# Лог: "Connected, sending telemetry..."
+```
+
+---
+
+### Фаза 5 — Integration (День 19-20)
+
+| Ветка | PR → | Merge-риски | Действие |
+|-------|------|------------|---------|
+| `stage/9-n8n` | `develop` | **MERGE-8, 10, 13** | API Key real, DAG import, telemetry |
+
+**Верификация:**
+
+```bash
+# n8n nodes видимы
+docker exec n8n n8n execute --nodes | grep -i sphere
+# → SphereExecuteScript, SphereEventTrigger, SphereDevicePool
+
+# Webhook test
+curl -X POST http://localhost:5678/webhook/sphere-test \
+  -H "X-Sphere-Signature: $(echo -n '{}' | openssl dgst -sha256 -hmac 'SECRET')" \
+  -d '{}'
+```
+
+---
+
+### Фаза 6 — UI (День 21-22) — Финальный merge
+
+| Ветка | PR → | Merge-риски | Действие |
+|-------|------|------------|---------|
+| `stage/10-frontend` | `develop` | **MERGE-5, 6, 9, 12** | WebCodecs, auth, CRUD, VPN UI |
+
+**Критичные действия при merge TZ-10:**
+
+```diff
+# 1. Удалить дубль decoder (MERGE-5)
+- frontend/src/lib/h264-decoder.ts        ← УДАЛИТЬ
++ frontend/src/lib/streaming/H264Decoder.ts ← использовать TZ-05 версию
+
+# 2. Обновить импорты
+- import { H264Decoder } from '@/lib/h264-decoder';
++ import { H264Decoder } from '@/lib/streaming/H264Decoder';
+
+# 3. Запустить генерацию типов (MERGE-9)
+npm run gen:types
+
+# 4. Проверить auth flow (MERGE-6)
+# → Login → получить token → silent refresh → cookie
+```
+
+**Верификация:**
+
+```bash
+cd frontend && npm run build   # → No errors
+npm run dev
+# Открыть http://localhost:3000
+# → Login → Dashboard → Devices → Stream → VPN → Scripts
+```
+
+---
+
+## 7. Тестирование — 5 уровней
+
+### Пирамида тестов
+
+```
+         ╔═══════════╗
+         ║   E2E     ║  ← Browser + Real API + Agents
+         ╠═══════════╣
+        ║ Integration ║  ← API + DB + Redis (docker)
+        ╠═════════════╣
+       ║  Contract     ║  ← JSON Schema matching
+       ╠═══════════════╣
+      ║  Component      ║  ← Service + Repository unit
+      ╠═════════════════╣
+     ║  Unit             ║  ← Pure functions, utils
+     ╚═══════════════════╝
+```
+
+### Уровень 1 — Unit Tests
+
+```bash
+# Backend
+pytest tests/unit/ -v --cov=backend --cov-report=term-missing
+
+# Android
+./gradlew testDebugUnitTest
+
+# Frontend
+npm run test -- --coverage
+```
+
+### Уровень 2 — Component Tests
+
+```bash
+# Backend service тесты с mock DB
+pytest tests/component/ -v
+```
+
+### Уровень 3 — Contract Tests ⭐
+
+```bash
+# DAG Schema contract (TZ-04 ↔ TZ-07)
+pytest tests/test_dag_contract.py -v
+
+# Heartbeat contract (TZ-03 ↔ TZ-07)
+pytest tests/test_heartbeat_contract.py -v
+
+# API contract (OpenAPI spec)
+npm run gen:types && npx tsc --noEmit   # TypeScript type check
+```
+
+### Уровень 4 — Integration Tests
+
+```bash
+# Полный стек в Docker
+docker compose -f docker-compose.test.yml up -d
+pytest tests/integration/ -v --timeout=60
+```
+
+### Уровень 5 — E2E Tests
+
+```bash
+# Playwright + Real backend
+npx playwright test --headed
+```
+
+---
+
+## 8. CI/CD Pipeline
+
+### GitHub Actions Workflow
+
+```mermaid
+graph LR
+    PR["PR Created"] --> Lint["Lint + Format"]
+    Lint --> Unit["Unit Tests"]
+    Unit --> Build["Docker Build"]
+    Build --> Integration["Integration Tests"]
+    Integration --> Review["Code Review"]
+    Review --> Merge["Merge to develop"]
+    Merge --> Deploy["Deploy Staging"]
+    Deploy --> E2E["E2E Tests"]
+    E2E --> Promote["Promote to main"]
+    
+    style PR fill:#1a3a5c,color:#fff
+    style Merge fill:#2d5016,color:#fff
+    style Promote fill:#5c1a3a,color:#fff
+```
+
+### Файлы CI/CD
+
+```
+.github/workflows/
+├── ci-backend.yml        # pytest + mypy + ruff
+├── ci-frontend.yml       # vitest + tsc + eslint
+├── ci-android.yml        # gradle test + lint
+├── ci-pc-agent.yml       # pytest + mypy
+├── ci-n8n.yml            # npm test + tsc
+├── deploy-staging.yml    # docker compose up
+└── deploy-production.yml # k8s apply
+```
+
+### Что проверяет CI при каждом PR
+
+| Проверка | Инструмент | Обязательно |
+|----------|-----------|------------|
+| Python lint | `ruff check` | ✅ |
+| Python types | `mypy --strict` | ✅ |
+| Python tests | `pytest --cov=80` | ✅ |
+| Kotlin lint | `ktlint` | ✅ |
+| Kotlin tests | `./gradlew test` | ✅ |
+| TS/JS lint | `eslint` | ✅ |
+| TS types | `tsc --noEmit` | ✅ |
+| Frontend tests | `vitest` | ✅ |
+| Docker build | `docker build` | ✅ |
+| Security scan | `trivy image` | ⚠️ Warning |
+
+---
+
+## 9. Запуск в Production
+
+### Чеклист перед деплоем
+
+| # | Пункт | Ответственный |
+|---|-------|--------------|
+| 1 | Все 60 SPLIT реализованы | Tech Lead |
+| 2 | Все 6 фаз merge завершены | DevOps |
+| 3 | CI зелёный на `develop` | CI/CD |
+| 4 | E2E тесты пройдены | QA |
+| 5 | Security audit пройден | Security |
+| 6 | Performance тест (100 устройств) | Backend |
+| 7 | VPN tunnel стабилен (24h тест) | Network |
+| 8 | Бэкап PostgreSQL настроен | DevOps |
+| 9 | Alertmanager → Telegram/Slack | DevOps |
+| 10 | Документация обновлена | All |
+
+### Порядок деплоя
+
+```bash
+# 1. Создать release branch
+git checkout develop
+git checkout -b release/1.0.0
+
+# 2. Bump версии
+sed -i 's/version = .*/version = "1.0.0"/' pyproject.toml
+git commit -am "chore: bump version to 1.0.0"
+
+# 3. Deploy staging
+docker compose -f docker-compose.staging.yml up -d
+
+# 4. Smoke tests на staging
+pytest tests/smoke/ -v --base-url=https://staging.sphere.example.com
+
+# 5. Promote to production
+git checkout main
+git merge release/1.0.0 --no-ff
+git tag v1.0.0
+git push origin main --tags
+
+# 6. Deploy production
+docker compose -f docker-compose.prod.yml up -d
+
+# 7. Post-deploy verification
+curl https://sphere.example.com/health
+# → {"status":"ok","version":"1.0.0","db":"connected","redis":"connected"}
+```
+
+### Docker Compose Production
+
+```yaml
+# docker-compose.prod.yml — ключевые параметры
+services:
+  backend:
+    image: sphere-backend:1.0.0
+    deploy:
+      replicas: 2          # Минимум 2 для HA
+      resources:
+        limits: { memory: 2G, cpus: "2.0" }
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://sphere:***@db:5432/sphere
+      - REDIS_URL=redis://redis:6379/0
+      - JWT_SECRET_KEY=${JWT_SECRET}
+      - ALLOWED_ORIGINS=https://sphere.example.com
+    
+  frontend:
+    image: sphere-frontend:1.0.0
+    deploy:
+      replicas: 2
+
+  db:
+    image: postgres:15
+    volumes: [pgdata:/var/lib/postgresql/data]
+    environment:
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+```
+
+---
+
+## 10. Мониторинг и пост-запуск
+
+### Ключевые дашборды Grafana
+
+| Дашборд | Метрики | Алерт при |
+|---------|---------|----------|
+| **Fleet Overview** | online/offline/busy устройства | Offline > 20% |
+| **WebSocket Health** | connections, latency, errors | Errors > 5/min |
+| **Streaming Quality** | FPS, bitrate, frame drops | FPS < 15 |
+| **Database Pool** | active/idle/waiting connections | Waiting > 5 |
+| **VPN Status** | tunnels active, handshake age | Handshake > 5min |
+| **API Latency** | p50/p95/p99 response time | p99 > 2s |
+
+### Алерты Alertmanager
+
+```yaml
+# Критичные алерты (PagerDuty/Telegram)
+- alert: HighAgentOfflineRate
+  expr: sum(sphere_devices_total{status="offline"}) 
+        / sum(sphere_devices_total) > 0.2
+  for: 2m
+  labels: { severity: critical }
+
+- alert: DatabasePoolExhausted
+  expr: sphere_db_pool_waiting > 5
+  for: 1m
+  labels: { severity: critical }
+
+- alert: WebSocketErrors
+  expr: rate(sphere_ws_errors_total[5m]) > 0.1
+  labels: { severity: warning }
+```
+
+### Пост-запуск рутина (первые 7 дней)
+
+| День | Действие | Кто |
+|------|---------|-----|
+| 1 | Мониторить дашборды каждые 2 часа | DevOps |
+| 2 | Подключить 10 реальных устройств | Android |
+| 3 | Прогнать DAG-сценарии на 10 устройствах | QA |
+| 4 | VPN нагрузочный тест (50 tunnels) | Network |
+| 5 | Streaming нагрузочный тест (10 viewers) | Backend |
+| 6 | n8n workflow интеграция (5 сценариев) | Node.js |
+| 7 | **Code freeze**, фиксировать v1.0.1 hotfix branch | All |
+
+---
+
+## 📎 Приложения
+
+### A. Файловое владение (CODEOWNERS)
+
+```
+# .github/CODEOWNERS
+backend/api/v1/auth/          @backend-team
+backend/api/v1/devices/       @backend-team
+backend/api/v1/scripts/       @backend-team
+backend/api/v1/vpn/           @backend-team
+backend/websocket/            @backend-team
+backend/services/             @backend-team
+backend/core/                 @devops-team
+backend/database/             @devops-team
+AndroidAgent/                 @android-team
+pc-agent/                     @nodejs-team
+n8n-nodes/                    @nodejs-team
+frontend/                     @frontend-team
+docker-compose*.yml           @devops-team
+.github/                      @devops-team
+monitoring/                   @devops-team
+```
+
+### B. Ссылки на SPLIT документы
+
+| TZ | SPLIT-1 | SPLIT-2 | SPLIT-3 | SPLIT-4 | SPLIT-5 |
+|----|---------|---------|---------|---------|---------|
+| 00 | [Docker](file:///c:/Users/dimas/Documents/SphereADB-TZ/TZ-00-Constitution/SPLIT-1-Docker-Git-Flow.md) | [DB Schema](file:///c:/Users/dimas/Documents/SphereADB-TZ/TZ-00-Constitution/SPLIT-2-PostgreSQL-Schema.md) | [Redis](file:///c:/Users/dimas/Documents/SphereADB-TZ/TZ-00-Constitution/SPLIT-3-Redis-Nginx-Env.md) | [CI/CD](file:///c:/Users/dimas/Documents/SphereADB-TZ/TZ-00-Constitution/SPLIT-4-CI-CD-Hooks.md) | [Secrets](file:///c:/Users/dimas/Documents/SphereADB-TZ/TZ-00-Constitution/SPLIT-5-Secrets-RBAC-Bootstrap.md) |
+| 01 | [JWT](file:///c:/Users/dimas/Documents/SphereADB-TZ/TZ-01-Auth-Service/SPLIT-1-JWT-Login.md) | [RBAC](file:///c:/Users/dimas/Documents/SphereADB-TZ/TZ-01-Auth-Service/SPLIT-2-RBAC.md) | [API Keys](file:///c:/Users/dimas/Documents/SphereADB-TZ/TZ-01-Auth-Service/SPLIT-3-API-Keys.md) | [Orgs](file:///c:/Users/dimas/Documents/SphereADB-TZ/TZ-01-Auth-Service/SPLIT-4-Org-Management.md) | [Sessions](file:///c:/Users/dimas/Documents/SphereADB-TZ/TZ-01-Auth-Service/SPLIT-5-Session-Management.md) |
+| 02 | [CRUD](file:///c:/Users/dimas/Documents/SphereADB-TZ/TZ-02-Device-Registry/SPLIT-1-Device-CRUD.md) | [Groups](file:///c:/Users/dimas/Documents/SphereADB-TZ/TZ-02-Device-Registry/SPLIT-2-Device-Groups.md) | [Redis](file:///c:/Users/dimas/Documents/SphereADB-TZ/TZ-02-Device-Registry/SPLIT-3-Device-Status-Redis.md) | [Bulk](file:///c:/Users/dimas/Documents/SphereADB-TZ/TZ-02-Device-Registry/SPLIT-4-Bulk-Actions.md) | [Discovery](file:///c:/Users/dimas/Documents/SphereADB-TZ/TZ-02-Device-Registry/SPLIT-5-Network-Discovery.md) |
+| 03 | [ConnMgr](file:///c:/Users/dimas/Documents/SphereADB-TZ/TZ-03-WebSocket-Layer/SPLIT-1-ConnectionManager.md) | [PubSub](file:///c:/Users/dimas/Documents/SphereADB-TZ/TZ-03-WebSocket-Layer/SPLIT-2-Redis-PubSub.md) | [Backpres](file:///c:/Users/dimas/Documents/SphereADB-TZ/TZ-03-WebSocket-Layer/SPLIT-3-Backpressure.md) | [Heartbeat](file:///c:/Users/dimas/Documents/SphereADB-TZ/TZ-03-WebSocket-Layer/SPLIT-4-Heartbeat.md) | [Events](file:///c:/Users/dimas/Documents/SphereADB-TZ/TZ-03-WebSocket-Layer/SPLIT-5-Events-WS.md) |
+| 04 | [DAG](file:///c:/Users/dimas/Documents/SphereADB-TZ/TZ-04-Script-Engine/SPLIT-1-DAG-Schema.md) | [CRUD](file:///c:/Users/dimas/Documents/SphereADB-TZ/TZ-04-Script-Engine/SPLIT-2-Script-CRUD.md) | [Dispatch](file:///c:/Users/dimas/Documents/SphereADB-TZ/TZ-04-Script-Engine/SPLIT-3-Task-Dispatch.md) | [Batch](file:///c:/Users/dimas/Documents/SphereADB-TZ/TZ-04-Script-Engine/SPLIT-4-Batch-Execution.md) | [Progress](file:///c:/Users/dimas/Documents/SphereADB-TZ/TZ-04-Script-Engine/SPLIT-5-Progress-API.md) |
+| 05 | [MediaCodec](file:///c:/Users/dimas/Documents/SphereADB-TZ/TZ-05-H264-Streaming/SPLIT-1-MediaCodec-Capture.md) | [Encoder](file:///c:/Users/dimas/Documents/SphereADB-TZ/TZ-05-H264-Streaming/SPLIT-2-H264-Encoder.md) | [StreamMgr](file:///c:/Users/dimas/Documents/SphereADB-TZ/TZ-05-H264-Streaming/SPLIT-3-StreamingManager.md) | [FrameDrop](file:///c:/Users/dimas/Documents/SphereADB-TZ/TZ-05-H264-Streaming/SPLIT-4-Frame-Drop.md) | [WebCodecs](file:///c:/Users/dimas/Documents/SphereADB-TZ/TZ-05-H264-Streaming/SPLIT-5-WebCodecs.md) |
+| 06 | [AWG](file:///c:/Users/dimas/Documents/SphereADB-TZ/TZ-06-VPN-AmneziaWG/SPLIT-1-AWG-Config.md) | [Pool](file:///c:/Users/dimas/Documents/SphereADB-TZ/TZ-06-VPN-AmneziaWG/SPLIT-2-Pool-Manager.md) | [SelfHeal](file:///c:/Users/dimas/Documents/SphereADB-TZ/TZ-06-VPN-AmneziaWG/SPLIT-3-Self-Healing.md) | [KillSwitch](file:///c:/Users/dimas/Documents/SphereADB-TZ/TZ-06-VPN-AmneziaWG/SPLIT-4-Kill-Switch.md) | [API](file:///c:/Users/dimas/Documents/SphereADB-TZ/TZ-06-VPN-AmneziaWG/SPLIT-5-VPN-API.md) |
+| 07 | [Bootstrap](file:///c:/Users/dimas/Documents/SphereADB-TZ/TZ-07-Android-Agent/SPLIT-1-Agent-Bootstrap.md) | [WS Client](file:///c:/Users/dimas/Documents/SphereADB-TZ/TZ-07-Android-Agent/SPLIT-2-WebSocket-Client.md) | [CmdHandler](file:///c:/Users/dimas/Documents/SphereADB-TZ/TZ-07-Android-Agent/SPLIT-3-Command-Handler.md) | [Lua](file:///c:/Users/dimas/Documents/SphereADB-TZ/TZ-07-Android-Agent/SPLIT-4-Lua-Engine.md) | [OTA](file:///c:/Users/dimas/Documents/SphereADB-TZ/TZ-07-Android-Agent/SPLIT-5-OTA-Updates.md) |
+| 08 | [Arch](file:///c:/Users/dimas/Documents/SphereADB-TZ/TZ-08-PC-Agent/SPLIT-1-Architecture.md) | [WS Client](file:///c:/Users/dimas/Documents/SphereADB-TZ/TZ-08-PC-Agent/SPLIT-2-WebSocket-Service.md) | [Telemetry](file:///c:/Users/dimas/Documents/SphereADB-TZ/TZ-08-PC-Agent/SPLIT-3-Telemetry.md) | [ADB Bridge](file:///c:/Users/dimas/Documents/SphereADB-TZ/TZ-08-PC-Agent/SPLIT-4-ADB-Bridge.md) | [Topology](file:///c:/Users/dimas/Documents/SphereADB-TZ/TZ-08-PC-Agent/SPLIT-5-Topology-API.md) |
+| 09 | [Base](file:///c:/Users/dimas/Documents/SphereADB-TZ/TZ-09-n8n-Integration/SPLIT-1-n8n-SphereBase.md) | [Creds](file:///c:/Users/dimas/Documents/SphereADB-TZ/TZ-09-n8n-Integration/SPLIT-2-Credentials-Node.md) | [Execute](file:///c:/Users/dimas/Documents/SphereADB-TZ/TZ-09-n8n-Integration/SPLIT-3-ExecuteScript-Node.md) | [Trigger](file:///c:/Users/dimas/Documents/SphereADB-TZ/TZ-09-n8n-Integration/SPLIT-4-EventTrigger-Node.md) | [Pool](file:///c:/Users/dimas/Documents/SphereADB-TZ/TZ-09-n8n-Integration/SPLIT-5-DevicePool-Node.md) |
+| 10 | [Auth UI](file:///c:/Users/dimas/Documents/SphereADB-TZ/TZ-10-Web-Frontend/SPLIT-1-Setup-Auth.md) | [Dashboard](file:///c:/Users/dimas/Documents/SphereADB-TZ/TZ-10-Web-Frontend/SPLIT-2-Dashboard-Devices.md) | [Remote](file:///c:/Users/dimas/Documents/SphereADB-TZ/TZ-10-Web-Frontend/SPLIT-3-Remote-Fleet.md) | [VPN UI](file:///c:/Users/dimas/Documents/SphereADB-TZ/TZ-10-Web-Frontend/SPLIT-4-VPN-Management.md) | [Builder](file:///c:/Users/dimas/Documents/SphereADB-TZ/TZ-10-Web-Frontend/SPLIT-5-Script-Builder.md) |
+| 11 | [Prometheus](file:///c:/Users/dimas/Documents/SphereADB-TZ/TZ-11-Monitoring/SPLIT-1-Prometheus.md) | [Grafana](file:///c:/Users/dimas/Documents/SphereADB-TZ/TZ-11-Monitoring/SPLIT-2-Grafana.md) | [Alert](file:///c:/Users/dimas/Documents/SphereADB-TZ/TZ-11-Monitoring/SPLIT-3-Alertmanager.md) | [Logging](file:///c:/Users/dimas/Documents/SphereADB-TZ/TZ-11-Monitoring/SPLIT-4-Logging.md) | [Health](file:///c:/Users/dimas/Documents/SphereADB-TZ/TZ-11-Monitoring/SPLIT-5-Health-Checks.md) |
+
+---
+
+> **📌 Итого:** 12 TZ · 60 SPLIT · 6 фаз merge · 5 команд · ~3 недели до v1.0.0 🚀

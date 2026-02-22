@@ -1,0 +1,119 @@
+# backend/websocket/stream_bridge.py
+# ВЛАДЕЛЕЦ: TZ-03 SPLIT-3. StreamBridge: Android agent → browser viewer.
+# FIX-3.1: Separate Task per viewer prevents slow viewer from blocking agent read loop.
+from __future__ import annotations
+
+import asyncio
+
+import structlog
+from fastapi import WebSocket
+
+from backend.websocket.connection_manager import ConnectionManager
+from backend.websocket.frames import VideoFrame
+from backend.websocket.video_queue import VideoStreamQueue
+
+logger = structlog.get_logger()
+
+
+class VideoStreamBridge:
+    """Мост от Android агента к viewer'у (браузер)."""
+
+    def __init__(self, manager: ConnectionManager) -> None:
+        self.manager = manager
+        self._queues: dict[str, VideoStreamQueue] = {}
+        self._viewer_sockets: dict[str, WebSocket] = {}
+        self._viewer_tasks: dict[str, asyncio.Task] = {}
+
+    async def register_viewer(
+        self,
+        device_id: str,
+        viewer_ws: WebSocket,
+        session_id: str,
+    ) -> None:
+        """Зарегистрировать viewer для получения потока."""
+        self._queues[device_id] = VideoStreamQueue(device_id)
+        self._viewer_sockets[device_id] = viewer_ws
+
+        # FIX-3.1: Спавним отдельную Task для каждого viewer.
+        # Эта Task в цикле читает из очереди и шлёт фреймы — медленный viewer
+        # НЕ блокирует чтение от агента.
+        task = asyncio.create_task(self._viewer_send_loop(device_id))
+        self._viewer_tasks[device_id] = task
+
+        # Запросить агента начать стриминг
+        await self.manager.send_to_device(device_id, {
+            "type": "start_stream",
+            "quality": "720p",
+            "bitrate": 2_000_000,
+        })
+        logger.info("Viewer registered", device_id=device_id, session_id=session_id)
+
+    async def unregister_viewer(self, device_id: str) -> None:
+        """Отменить viewer и остановить поток."""
+        task = self._viewer_tasks.pop(device_id, None)
+        if task:
+            task.cancel()
+        self._queues.pop(device_id, None)
+        self._viewer_sockets.pop(device_id, None)
+
+        # Попросить агента остановить стриминг
+        await self.manager.send_to_device(device_id, {"type": "stop_stream"})
+        logger.info("Viewer unregistered", device_id=device_id)
+
+    async def handle_agent_frame(self, device_id: str, frame_data: bytes) -> None:
+        """
+        Принять фрейм от агента. ТОЛЬКО кладёт в очередь — НЕ шлёт напрямую!
+        FIX-3.1: Прямая отправка блокировала цикл поллинга агента.
+        """
+        queue = self._queues.get(device_id)
+        if not queue:
+            return  # Нет viewer'а
+
+        frame = VideoFrame(frame_data, device_id)
+        await queue.put(frame)
+
+    async def _viewer_send_loop(self, device_id: str) -> None:
+        """
+        FIX-3.1: Фоновая задача — читает из очереди и шлёт viewer'у.
+        Полностью развязывает Producer (агент) и Consumer (браузер).
+        """
+        queue = self._queues.get(device_id)
+        viewer_ws = self._viewer_sockets.get(device_id)
+        if not queue or not viewer_ws:
+            return
+
+        try:
+            while True:
+                frame = await queue.get()
+                if frame is None:
+                    # Пустая очередь — подождать немного, не грузить CPU
+                    await asyncio.sleep(0.005)  # 5ms
+                    continue
+                try:
+                    await viewer_ws.send_bytes(frame.data)
+                except Exception:
+                    await self.unregister_viewer(device_id)
+                    return
+        except asyncio.CancelledError:
+            pass  # Нормальное завершение при unregister
+
+    def is_streaming(self, device_id: str) -> bool:
+        return device_id in self._queues
+
+    def get_drop_ratio(self, device_id: str) -> float:
+        queue = self._queues.get(device_id)
+        return queue.drop_ratio if queue else 0.0
+
+
+# Синглтон
+_stream_bridge: VideoStreamBridge | None = None
+
+
+def get_stream_bridge() -> VideoStreamBridge | None:
+    return _stream_bridge
+
+
+def init_stream_bridge(manager: ConnectionManager) -> VideoStreamBridge:
+    global _stream_bridge
+    _stream_bridge = VideoStreamBridge(manager)
+    return _stream_bridge
