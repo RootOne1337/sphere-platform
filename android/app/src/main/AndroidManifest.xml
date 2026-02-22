@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- ------------------------------------------------------------------ -->
+    <!-- Permissions                                                         -->
+    <!-- ------------------------------------------------------------------ -->
+
+    <!-- Basic foreground service (all APIs) -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <!-- Screen capture foreground service type (API 34+) -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
+    <!-- Required to post the persistent capture notification (API 33+) -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- ------------------------------------------------------------------ -->
+    <!-- Application                                                         -->
+    <!-- ------------------------------------------------------------------ -->
+
+    <application
+        android:name=".SphereApplication"
+        android:allowBackup="false"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.AppCompat">
+
+        <!-- Screen capture foreground service.
+             foregroundServiceType="mediaProjection" required by Android 10+ rule
+             that mandates the type to match what the service actually does.    -->
+        <service
+            android:name=".streaming.ScreenCaptureService"
+            android:foregroundServiceType="mediaProjection"
+            android:exported="false" />
+
+        <!-- Transparent Activity that triggers the MediaProjection permission
+             dialog. Declared with a translucent theme so the user only sees
+             the system dialog, not this Activity.                              -->
+        <activity
+            android:name=".streaming.ScreenCaptureRequestActivity"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar"
+            android:exported="false" />
+
+    </application>
+
+</manifest>

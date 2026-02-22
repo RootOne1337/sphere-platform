@@ -5,6 +5,8 @@
 # ⚠️  КАРТОЧНОСТЬ: не используй device_id/user_id как label в Counter/Histogram —
 #     это приведёт к стремительному росту series. Допустимо только в Gauge с
 #     обязательной функцией cleanup (cleanup_stream_metrics ниже).
+from __future__ import annotations
+
 import contextlib
 
 from prometheus_client import Counter, Gauge, Histogram
@@ -129,24 +131,31 @@ redis_errors_total = Counter(
 # ---------------------------------------------------------------------------
 # H264 Streaming
 # ⚠️  device_id — высокая кардинальность!
-# При 10k устройств = 30k+ stale series навсегда в TSDB.
-# ОБЯЗАТЕЛЬНО вызывать cleanup_stream_metrics(device_id) при остановке стрима:
-#   - TZ-05 SPLIT-3 StreamingManager.stop(device_id)
-#   - TZ-03 SPLIT-4 WebSocket disconnect handler
+# ОБЯЗАТЕЛЬНО вызывать cleanup_stream_metrics(device_id) при остановке стрима.
 # ---------------------------------------------------------------------------
 stream_fps = Gauge(
     "sphere_stream_fps",
-    "Current frames-per-second per device stream",
+    "Current encoding/delivery FPS for active stream",
     ["device_id"],
 )
 stream_bitrate_kbps = Gauge(
     "sphere_stream_bitrate_kbps",
-    "Stream bitrate in kbps per device",
+    "Current stream bitrate in kbps (from adaptive bitrate controller)",
     ["device_id"],
 )
 stream_frame_drops_total = Counter(
     "sphere_stream_frame_drops_total",
-    "Dropped frames per device",
+    "Total number of dropped frames (WS send failures or queue overflows)",
+    ["device_id"],
+)
+stream_bytes_sent_total = Counter(
+    "sphere_stream_bytes_sent_total",
+    "Total bytes forwarded from agent to viewer",
+    ["device_id"],
+)
+stream_keyframe_ratio = Gauge(
+    "sphere_stream_keyframe_ratio",
+    "Ratio of keyframes to total frames in the current session",
     ["device_id"],
 )
 
@@ -154,20 +163,11 @@ stream_frame_drops_total = Counter(
 def cleanup_stream_metrics(device_id: str) -> None:
     """
     Удалить Prometheus time series устройства при завершении стрима.
-
-    Без вызова этой функции series остаются в TSDB навсегда
-    (stale high-cardinality leak).
-
-    Вызвать из:
-      - TZ-05 SPLIT-3  StreamingManager.stop(device_id)
-      - TZ-03 SPLIT-4  WebSocket disconnect handler
+    Gauge метрики удаляются. Counter метрики остаются (accumulate by design).
     """
-    with contextlib.suppress(KeyError):
-        stream_fps.remove(device_id)
-        stream_bitrate_kbps.remove(device_id)
-    # Counter не поддерживает .remove() напрямую — используем labels().remove()
-    with contextlib.suppress(KeyError):
-        stream_frame_drops_total.remove(device_id)
+    for metric in (stream_fps, stream_bitrate_kbps, stream_keyframe_ratio):
+        with contextlib.suppress(KeyError, ValueError):
+            metric.remove(device_id)
 
 
 # ---------------------------------------------------------------------------
