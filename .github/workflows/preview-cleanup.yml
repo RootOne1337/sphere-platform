@@ -1,0 +1,50 @@
+name: Preview — Stale Cleanup
+
+on:
+  schedule:
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    outputs:
+      enabled: ${{ steps.chk.outputs.enabled }}
+    steps:
+      - id: chk
+        run: echo "enabled=${{ vars.PREVIEW_ENVIRONMENTS_ENABLED }}" >> $GITHUB_OUTPUT
+
+  cleanup:
+    needs: guard
+    if: needs.guard.outputs.enabled == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Remove stale preview environments (> 24 h)
+        uses: appleboy/ssh-action@v1
+        with:
+          host:     ${{ secrets.PREVIEW_HOST }}
+          username: deploy
+          key:      ${{ secrets.PREVIEW_SSH_KEY }}
+          script: |
+            set -euo pipefail
+            PREVIEW_ROOT="/srv/sphere-previews"
+            MAX_AGE_HOURS=24
+            CLEANED=0
+            [ -d "${PREVIEW_ROOT}" ] || { echo "Nothing to clean"; exit 0; }
+            NOW=$(date +%s)
+            for DIR in "${PREVIEW_ROOT}"/pr-*; do
+              [ -d "${DIR}" ] || continue
+              MTIME=$(stat -c %Y "${DIR}")
+              AGE=$(( (NOW - MTIME) / 3600 ))
+              if [ "${AGE}" -ge "${MAX_AGE_HOURS}" ]; then
+                PR_NUM=$(basename "${DIR}" | sed 's/pr-//')
+                echo "Removing stale pr-${PR_NUM} (${AGE}h old)…"
+                cd "${DIR}"
+                docker compose -f docker-compose.preview.yml down -v --remove-orphans --timeout 30 || true
+                cd /
+                rm -rf "${DIR}"
+                CLEANED=$((CLEANED + 1))
+              fi
+            done
+            echo "✅ Stale cleanup done. Removed: ${CLEANED}"

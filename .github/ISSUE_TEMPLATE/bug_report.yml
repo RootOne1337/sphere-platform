@@ -1,0 +1,34 @@
+name: 🐛 Bug Report
+description: Сообщить об ошибке
+labels: [bug]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Описание бага
+      placeholder: Что произошло?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Шаги воспроизведения
+      value: |
+        1. Перейти на '...'
+        2. Нажать '...'
+        3. Результат: ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Ожидаемое поведение
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Серьёзность
+      options:
+        - P0 — Critical (production down)
+        - P1 — High (major feature broken)
+        - P2 — Medium (workaround exists)
+        - P3 — Low (cosmetic)

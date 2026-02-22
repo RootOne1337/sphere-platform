@@ -1,0 +1,66 @@
+name: Merge Guard — Stage Branch Dependencies
+
+on:
+  pull_request:
+    branches: [develop]
+
+jobs:
+  check-dependencies:
+    name: Проверка зависимостей ТЗ
+    runs-on: ubuntu-latest
+    if: startsWith(github.head_ref, 'stage/')
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Проверить merge order
+        run: |
+          set -euo pipefail
+          BRANCH="${{ github.head_ref }}"
+          echo "Проверяем merge-order для: ${BRANCH}"
+
+          # Функция: проверка что ветка уже смержена в develop
+          check_merged() {
+            local branch="$1"
+            # Если ветки нет в remote — значит уже смержена и удалена
+            if ! git ls-remote --heads origin "${branch}" | grep -q "${branch}"; then
+              echo "  ✅ ${branch} — смержена (ветка удалена)"
+              return 0
+            fi
+            # Если ветка есть и полностью содержится в develop
+            if git merge-base --is-ancestor "origin/${branch}" origin/develop 2>/dev/null; then
+              echo "  ✅ ${branch} — смержена"
+              return 0
+            fi
+            echo "  ❌ ${branch} — НЕ смержена в develop"
+            return 1
+          }
+
+          ERRORS=0
+
+          # Все ветки Wave 1+ зависят от TZ-00
+          if [[ "${BRANCH}" != "stage/0-constitution" ]]; then
+            echo "Проверяем TZ-00 (Wave 0 зависимость)..."
+            check_merged "stage/0-constitution" || ERRORS=$((ERRORS + 1))
+          fi
+
+          # TZ-10 (frontend) зависит от всех backend ТЗ
+          if [[ "${BRANCH}" == "stage/10-frontend" ]]; then
+            echo "Проверяем backend ТЗ (Wave 1 зависимости для TZ-10)..."
+            for dep in stage/1-auth stage/2-device-registry stage/3-websocket \
+                       stage/4-scripts stage/5-streaming stage/6-vpn stage/9-n8n; do
+              check_merged "${dep}" || ERRORS=$((ERRORS + 1))
+            done
+          fi
+
+          if [ "${ERRORS}" -gt 0 ]; then
+            echo ""
+            echo "🔴 Merge заблокирован: ${ERRORS} зависимость(ей) не выполнена."
+            echo "   Сначала смержи зависимые ТЗ в develop."
+            exit 1
+          fi
+
+          echo ""
+          echo "✅ Все зависимости выполнены. Merge разрешён."

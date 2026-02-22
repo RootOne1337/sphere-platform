@@ -1,0 +1,73 @@
+# docker-compose.production.yml — production стек
+# NOTE: поле version устарело в Docker Compose v2+ и убрано намеренно
+# Запуск: docker compose -f docker-compose.yml -f docker-compose.production.yml up -d
+
+services:
+  postgres:
+    # Production: порт НЕ прокидывается наружу
+    ports: []
+    environment:
+      POSTGRES_DB: sphereplatform
+      POSTGRES_USER: ${POSTGRES_USER:-sphere}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 2G
+
+  redis:
+    # Production: порт НЕ прокидывается наружу
+    ports: []
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+
+  backend:
+    image: ghcr.io/${GITHUB_OWNER}/sphere-platform-backend:${IMAGE_TAG:-latest}
+    environment:
+      - POSTGRES_URL=postgresql+asyncpg://${POSTGRES_USER:-sphere}:${POSTGRES_PASSWORD}@postgres:5432/sphereplatform
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - WG_ROUTER_URL=${WG_ROUTER_URL}
+      - WG_ROUTER_API_KEY=${WG_ROUTER_API_KEY}
+      - AWG_H1=${AWG_H1}
+      - AWG_H2=${AWG_H2}
+      - AWG_H3=${AWG_H3}
+      - AWG_H4=${AWG_H4}
+      - DEBUG=false
+      - LOG_LEVEL=INFO
+      - ENVIRONMENT=production
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - frontend-net
+      - backend-net
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 2G
+
+  frontend:
+    image: ghcr.io/${GITHUB_OWNER}/sphere-platform-frontend:${IMAGE_TAG:-latest}
+    environment:
+      - NEXT_PUBLIC_API_URL=https://${SERVER_HOSTNAME}
+      - NEXT_PUBLIC_WS_URL=wss://${SERVER_HOSTNAME}
+    networks:
+      - frontend-net
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1.5G

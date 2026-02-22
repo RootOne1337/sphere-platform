@@ -1,0 +1,230 @@
+name: Preview — Deploy
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main, develop]
+
+# Новый пуш в PR отменяет предыдущий незавершённый деплой того же PR
+concurrency:
+  group: preview-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    outputs:
+      enabled: ${{ steps.chk.outputs.enabled }}
+    steps:
+      - id: chk
+        run: echo "enabled=${{ vars.PREVIEW_ENVIRONMENTS_ENABLED }}" >> $GITHUB_OUTPUT
+
+  deploy:
+    needs: guard
+    if: needs.guard.outputs.enabled == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents:      read
+      deployments:   write
+      pull-requests: write
+      packages:      write
+    environment:
+      name: preview-pr-${{ github.event.pull_request.number }}
+      url: https://pr-${{ github.event.pull_request.number }}.preview.${{ vars.PREVIEW_DOMAIN }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check preview slot availability
+        uses: appleboy/ssh-action@v1
+        with:
+          host:     ${{ secrets.PREVIEW_HOST }}
+          username: deploy
+          key:      ${{ secrets.PREVIEW_SSH_KEY }}
+          script: |
+            set -euo pipefail
+            PR_NUMBER=${{ github.event.pull_request.number }}
+            PR_DIR="/srv/sphere-previews/pr-${PR_NUMBER}"
+            TOTAL=$(find /srv/sphere-previews -maxdepth 1 -mindepth 1 -type d 2>/dev/null | wc -l)
+            [ -d "${PR_DIR}" ] && TOTAL=$((TOTAL - 1))
+            if [ "${TOTAL}" -ge 5 ]; then
+              echo "::error::Достигнут лимит 5 одновременных preview-окружений. Закройте или смержите другие PRs."
+              exit 1
+            fi
+            echo "Slots: ${TOTAL}/5 used. OK."
+
+      - name: Create GitHub Deployment
+        id: create_deployment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data } = await github.rest.repos.createDeployment({
+              owner:                  context.repo.owner,
+              repo:                   context.repo.repo,
+              ref:                    context.sha,
+              environment:            `preview-pr-${context.payload.pull_request.number}`,
+              auto_merge:             false,
+              required_contexts:      [],
+              description:            `PR #${context.payload.pull_request.number}: ${context.payload.pull_request.title}`,
+              transient_environment:  true,
+              production_environment: false,
+            });
+            core.setOutput('id', data.id);
+
+      - name: Deployment status → in_progress
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.repos.createDeploymentStatus({
+              owner:         context.repo.owner,
+              repo:          context.repo.repo,
+              deployment_id: ${{ steps.create_deployment.outputs.id }},
+              state:         'in_progress',
+              description:   'Building Docker images…',
+            });
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build & push backend
+        uses: docker/build-push-action@v6
+        with:
+          context:    backend
+          push:       true
+          tags:       ghcr.io/${{ github.repository_owner }}/sphere-platform-backend:pr-${{ github.event.pull_request.number }}
+          cache-from: type=registry,ref=ghcr.io/${{ github.repository_owner }}/sphere-platform-backend:buildcache
+          cache-to:   type=registry,ref=ghcr.io/${{ github.repository_owner }}/sphere-platform-backend:buildcache,mode=max
+          build-args: BUILD_SHA=${{ github.sha }}
+
+      - name: Build & push frontend
+        uses: docker/build-push-action@v6
+        with:
+          context:    frontend
+          push:       true
+          tags:       ghcr.io/${{ github.repository_owner }}/sphere-platform-frontend:pr-${{ github.event.pull_request.number }}
+          cache-from: type=registry,ref=ghcr.io/${{ github.repository_owner }}/sphere-platform-frontend:buildcache
+          cache-to:   type=registry,ref=ghcr.io/${{ github.repository_owner }}/sphere-platform-frontend:buildcache,mode=max
+
+      - name: Deploy preview environment
+        uses: appleboy/ssh-action@v1
+        env:
+          PR_NUMBER:           ${{ github.event.pull_request.number }}
+          PREVIEW_DB_PASSWORD: ${{ secrets.PREVIEW_DB_PASSWORD }}
+          PREVIEW_JWT_SECRET:  ${{ secrets.PREVIEW_JWT_SECRET }}
+          PREVIEW_DOMAIN:      ${{ vars.PREVIEW_DOMAIN }}
+          GITHUB_OWNER:        ${{ github.repository_owner }}
+          GHCR_PULL_TOKEN:     ${{ secrets.GHCR_PULL_TOKEN }}
+        with:
+          host:     ${{ secrets.PREVIEW_HOST }}
+          username: deploy
+          key:      ${{ secrets.PREVIEW_SSH_KEY }}
+          envs:     PR_NUMBER,PREVIEW_DB_PASSWORD,PREVIEW_JWT_SECRET,PREVIEW_DOMAIN,GITHUB_OWNER,GHCR_PULL_TOKEN
+          script: |
+            set -euo pipefail
+            DEPLOY_DIR="/srv/sphere-previews/pr-${PR_NUMBER}"
+            mkdir -p "${DEPLOY_DIR}"
+            cp /srv/sphere-platform/docker-compose.preview.yml "${DEPLOY_DIR}/"
+            cat > "${DEPLOY_DIR}/.env" <<EOF
+            PR_NUMBER=${PR_NUMBER}
+            PREVIEW_DB_PASSWORD=${PREVIEW_DB_PASSWORD}
+            PREVIEW_JWT_SECRET=${PREVIEW_JWT_SECRET}
+            PREVIEW_DOMAIN=${PREVIEW_DOMAIN}
+            GITHUB_OWNER=${GITHUB_OWNER}
+            EOF
+            chmod 600 "${DEPLOY_DIR}/.env"
+            echo "${GHCR_PULL_TOKEN}" | docker login ghcr.io -u pullbot --password-stdin 2>/dev/null || true
+            cd "${DEPLOY_DIR}"
+            docker compose -f docker-compose.preview.yml pull --quiet
+            docker compose -f docker-compose.preview.yml up -d --remove-orphans
+            docker compose -f docker-compose.preview.yml exec -T backend \
+              bash -c "until pg_isready -h postgres -U sphere 2>/dev/null; do sleep 2; done; alembic upgrade head"
+            echo "✅ Preview pr-${PR_NUMBER} deployed"
+
+      - name: Wait for /api/v1/health/ready
+        run: |
+          URL="https://pr-${{ github.event.pull_request.number }}.preview.${{ vars.PREVIEW_DOMAIN }}/api/v1/health/ready"
+          echo "Polling: ${URL}"
+          for i in $(seq 1 30); do
+            HTTP=$(curl -sk -o /dev/null -w "%{http_code}" "${URL}" || echo "000")
+            echo "[${i}/30] HTTP ${HTTP}"
+            [ "${HTTP}" = "200" ] && { echo "✅ Preview healthy!"; exit 0; }
+            sleep 10
+          done
+          echo "❌ Preview не прошёл health check за 5 минут"
+          exit 1
+
+      - name: Deployment status → success
+        if: success()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.repos.createDeploymentStatus({
+              owner:           context.repo.owner,
+              repo:            context.repo.repo,
+              deployment_id:   ${{ steps.create_deployment.outputs.id }},
+              state:           'success',
+              environment_url: `https://pr-${{ github.event.pull_request.number }}.preview.${{ vars.PREVIEW_DOMAIN }}`,
+              description:     'Preview environment is live!',
+            });
+
+      - name: Deployment status → failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.repos.createDeploymentStatus({
+              owner:         context.repo.owner,
+              repo:          context.repo.repo,
+              deployment_id: ${{ steps.create_deployment.outputs.id }},
+              state:         'failure',
+              description:   'Deployment failed — check workflow logs.',
+            });
+
+      - name: Post / update PR comment
+        if: success()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const MARKER  = '<!-- sphere-preview-env -->';
+            const prNum   = context.payload.pull_request.number;
+            const baseUrl = `https://pr-${prNum}.preview.${{ vars.PREVIEW_DOMAIN }}`;
+            const sha7    = context.sha.substring(0, 7);
+            const body = [
+              MARKER,
+              '## 🚀 Preview Environment',
+              '',
+              '| | |',
+              '|:---|:---|',
+              `| **Frontend** | [${baseUrl}](${baseUrl}) |`,
+              `| **API Docs** | [${baseUrl}/api/v1/docs](${baseUrl}/api/v1/docs) |`,
+              `| **Commit**   | \`${sha7}\` |`,
+              `| **Updated**  | ${new Date().toISOString()} |`,
+              '',
+              '> ⚠️ Окружение **автоматически удаляется** при закрытии или мердже PR.',
+            ].join('\n');
+            const { data: comments } = await github.rest.issues.listComments({
+              owner:        context.repo.owner,
+              repo:         context.repo.repo,
+              issue_number: prNum,
+            });
+            const existing = comments.find(c => c.body && c.body.includes(MARKER));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner:      context.repo.owner,
+                repo:       context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner:        context.repo.owner,
+                repo:         context.repo.repo,
+                issue_number: prNum,
+                body,
+              });
+            }

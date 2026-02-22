@@ -1,0 +1,76 @@
+# .github/CODEOWNERS
+# Каждый PR автоматически назначает ревьюера по файлам.
+# Правила ниже УПОРЯДОЧЕНЫ: более конкретные — внизу, переопределяют общие.
+
+# ━━━ Общие (fallback) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+/backend/                              @backend-lead
+/android/                              @android-lead
+/pc-agent/                             @backend-lead
+/frontend/                             @frontend-lead
+/n8n-nodes/                            @frontend-lead @backend-lead
+/infrastructure/                       @devops-lead
+/docker-compose*.yml                   @devops-lead
+/.github/workflows/                    @devops-lead @backend-lead
+/Makefile                              @devops-lead
+
+# ━━━ TZ-00 Foundation (ЗАМОРОЖЕННЫЕ файлы — 2 approvals) ━━━━━━━━━━━━
+/backend/main.py                       @backend-lead @devops-lead
+/backend/database/engine.py            @backend-lead
+/backend/core/config.py                @backend-lead
+/backend/core/lifespan_registry.py     @backend-lead
+/backend/models/__init__.py            @backend-lead
+/alembic/                              @backend-lead
+
+# ━━━ TZ-01 Auth ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+/backend/api/v1/auth/                  @tz01-lead
+/backend/services/auth_service.py      @tz01-lead
+/backend/core/security.py              @tz01-lead @security-lead
+/backend/middleware/tenant_middleware.py @tz01-lead
+
+# ━━━ TZ-02 Device Registry ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+/backend/api/v1/devices/               @tz02-lead
+/backend/services/device_service.py    @tz02-lead
+/backend/services/device_discovery.py  @tz02-lead
+
+# ━━━ TZ-03 WebSocket Layer ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+/backend/api/ws/                       @tz03-lead
+/backend/websocket/                    @tz03-lead
+
+# ━━━ TZ-04 Script Engine ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+/backend/api/v1/scripts/               @tz04-lead
+/backend/services/task_service.py      @tz04-lead
+/backend/services/task_queue.py        @tz04-lead
+/backend/services/screenshot_storage.py @tz04-lead
+
+# ━━━ TZ-05 H264 Streaming ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+/backend/api/v1/streaming/             @tz05-lead
+/android/streaming/                    @tz05-lead @android-lead
+/frontend/lib/h264/                    @tz05-lead @frontend-lead
+
+# ━━━ TZ-06 VPN AmneziaWG ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+/backend/api/v1/vpn/                   @tz06-lead
+/backend/services/vpn/                 @tz06-lead
+/android/vpn/                          @tz06-lead @android-lead
+
+# ━━━ TZ-07 Android Agent ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+/android/                              @tz07-lead @android-lead
+
+# ━━━ TZ-08 PC Agent ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+/pc-agent/                             @tz08-lead
+
+# ━━━ TZ-09 n8n Integration ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+/n8n-nodes/                            @tz09-lead
+/backend/services/webhook_service.py   @tz04-lead @tz09-lead
+
+# ━━━ TZ-10 Web Frontend ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+/frontend/                             @tz10-lead @frontend-lead
+
+# ━━━ TZ-11 Monitoring ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+/infrastructure/monitoring/            @tz11-lead @devops-lead
+/backend/metrics.py                    @tz11-lead
+/backend/api/v1/metrics/               @tz11-lead
+
+# ━━━ Security-sensitive (2 approvals обязательны) ━━━━━━━━━━━━━━━━━━━
+/.env*                                 @security-lead @backend-lead
+/infrastructure/postgres/rls_policies.sql @backend-lead @security-lead
+/scripts/check_rls.py                  @backend-lead @security-lead

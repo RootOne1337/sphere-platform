@@ -1,0 +1,133 @@
+name: CI — Backend
+
+on:
+  push:
+    branches: [main, develop, "stage/*"]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  lint:
+    name: Lint (ruff + mypy)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install ruff mypy
+      - run: ruff check backend/ tests/
+      - run: mypy backend/ --ignore-missing-imports
+
+  security:
+    name: Security (bandit + pip-audit)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install bandit pip-audit
+      - run: bandit -r backend/ -c .bandit -ll
+      - run: pip-audit -r backend/requirements.txt
+
+  rls-check:
+    name: RLS Policy Coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python scripts/check_rls.py
+
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_DB: sphereplatform_test
+          POSTGRES_USER: sphere
+          POSTGRES_PASSWORD: test_password
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      redis:
+        image: redis:7.2-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+        ports:
+          - 6379:6379
+    env:
+      POSTGRES_URL: postgresql+asyncpg://sphere:test_password@localhost:5432/sphereplatform_test
+      REDIS_URL: redis://localhost:6379/0
+      REDIS_PASSWORD: ""
+      JWT_SECRET_KEY: test_jwt_secret_key_at_least_32_chars_long
+      WG_ROUTER_URL: http://mock-wg-router
+      WG_ROUTER_API_KEY: test_key
+      AWG_H1: 1111111111
+      AWG_H2: 2222222222
+      AWG_H3: 3333333333
+      AWG_H4: 4444444444
+      VPN_SERVER_HOSTNAME: localhost
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r backend/requirements.txt
+      - run: alembic upgrade head
+        working-directory: backend
+      - run: pytest tests/ -v --cov=backend --cov-report=xml --cov-fail-under=80
+      - uses: codecov/codecov-action@v4
+        with:
+          file: ./coverage.xml
+
+  alembic-check:
+    name: Alembic Single Head
+    runs-on: ubuntu-latest
+    needs: [test]
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_DB: sphereplatform_test
+          POSTGRES_USER: sphere
+          POSTGRES_PASSWORD: test_password
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    env:
+      POSTGRES_URL: postgresql+asyncpg://sphere:test_password@localhost:5432/sphereplatform_test
+      REDIS_URL: redis://localhost:6379/0
+      REDIS_PASSWORD: ""
+      JWT_SECRET_KEY: test_jwt_secret_key_at_least_32_chars_long
+      WG_ROUTER_URL: http://mock-wg-router
+      WG_ROUTER_API_KEY: test_key
+      AWG_H1: 1111111111
+      AWG_H2: 2222222222
+      AWG_H3: 3333333333
+      AWG_H4: 4444444444
+      VPN_SERVER_HOSTNAME: localhost
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r backend/requirements.txt
+      - run: make alembic-check

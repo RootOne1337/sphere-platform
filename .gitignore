@@ -1,0 +1,57 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+
+# Node
+node_modules/
+.next/
+dist/
+build/
+
+# Android
+android/.gradle/
+android/app/build/
+android/*.keystore
+android/local.properties
+
+# Secrets — НИКОГДА не коммитить
+.env
+.env.local
+.env.production
+*.pem
+*.key
+*.p12
+secrets/
+
+# IDE
+.idea/
+.vscode/settings.json
+*.swp
+
+# Docker
+volumes/
+postgres_data/
+redis_data/
+
+# Coverage
+coverage.xml
+.coverage
+htmlcov/
+
+# Build artifacts
+*.pyc
+*.pyo
+dist/
+build/
+*.egg-info/
+
+# OS
+.DS_Store
+Thumbs.db

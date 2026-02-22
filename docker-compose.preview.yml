@@ -1,0 +1,159 @@
+# docker-compose.preview.yml   (корень репозитория)
+# ИЗОЛИРОВАНО: не касается docker-compose.yml / docker-compose.production.yml
+# Обязательные env: PR_NUMBER, PREVIEW_DB_PASSWORD, PREVIEW_JWT_SECRET, PREVIEW_DOMAIN
+
+name: preview-${PR_NUMBER}
+
+services:
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: preview-${PR_NUMBER}-postgres
+    environment:
+      POSTGRES_DB:       sphere_preview
+      POSTGRES_USER:     sphere
+      POSTGRES_PASSWORD: ${PREVIEW_DB_PASSWORD}
+    volumes:
+      - preview-${PR_NUMBER}-pgdata:/var/lib/postgresql/data
+    networks:
+      - preview-${PR_NUMBER}-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sphere -d sphere_preview"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    restart: "no"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 768M
+
+  redis:
+    image: redis:7.2-alpine
+    container_name: preview-${PR_NUMBER}-redis
+    networks:
+      - preview-${PR_NUMBER}-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 6
+    restart: "no"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 128M
+
+  backend:
+    image: ghcr.io/${GITHUB_OWNER}/sphere-platform-backend:pr-${PR_NUMBER}
+    container_name: preview-${PR_NUMBER}-backend
+    environment:
+      DATABASE_URL:    postgresql+asyncpg://sphere:${PREVIEW_DB_PASSWORD}@postgres:5432/sphere_preview
+      REDIS_URL:       redis://redis:6379/0
+      REDIS_PASSWORD:  ""
+      JWT_SECRET_KEY:  ${PREVIEW_JWT_SECRET}
+      ENV:             preview
+      ALLOWED_ORIGINS: "https://pr-${PR_NUMBER}.preview.${PREVIEW_DOMAIN}"
+      AWG_H1: "1111111111"
+      AWG_H2: "2222222222"
+      AWG_H3: "3333333333"
+      AWG_H4: "4444444444"
+      WG_ROUTER_URL: "http://mock-wg-router"
+      WG_ROUTER_API_KEY: "preview-key"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - preview-${PR_NUMBER}-net
+      - traefik-net
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: "traefik-net"
+      traefik.http.routers.prev-${PR_NUMBER}-api.rule: >
+        Host(`pr-${PR_NUMBER}.preview.${PREVIEW_DOMAIN}`) && PathPrefix(`/api`)
+      traefik.http.routers.prev-${PR_NUMBER}-api.entrypoints: "websecure"
+      traefik.http.routers.prev-${PR_NUMBER}-api.tls.certresolver: "letsencrypt"
+      traefik.http.services.prev-${PR_NUMBER}-api.loadbalancer.server.port: "8000"
+    restart: "no"
+    deploy:
+      resources:
+        limits:
+          cpus: "1.00"
+          memory: 1G
+
+  frontend:
+    image: ghcr.io/${GITHUB_OWNER}/sphere-platform-frontend:pr-${PR_NUMBER}
+    container_name: preview-${PR_NUMBER}-frontend
+    environment:
+      NEXT_PUBLIC_API_URL: "https://pr-${PR_NUMBER}.preview.${PREVIEW_DOMAIN}/api"
+      NEXT_PUBLIC_WS_URL:  "wss://pr-${PR_NUMBER}.preview.${PREVIEW_DOMAIN}/api/v1/ws"
+      NODE_OPTIONS: "--max-old-space-size=1280"
+    networks:
+      - preview-${PR_NUMBER}-net
+      - traefik-net
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: "traefik-net"
+      traefik.http.routers.prev-${PR_NUMBER}-fe.rule: >
+        Host(`pr-${PR_NUMBER}.preview.${PREVIEW_DOMAIN}`)
+      traefik.http.routers.prev-${PR_NUMBER}-fe.entrypoints: "websecure"
+      traefik.http.routers.prev-${PR_NUMBER}-fe.tls.certresolver: "letsencrypt"
+      traefik.http.services.prev-${PR_NUMBER}-fe.loadbalancer.server.port: "3000"
+    restart: "no"
+    deploy:
+      resources:
+        limits:
+          cpus: "1.00"
+          memory: 1.5G
+
+  n8n:
+    image: n8nio/n8n:1.70.2
+    container_name: preview-${PR_NUMBER}-n8n
+    environment:
+      DB_TYPE:                 postgresdb
+      DB_POSTGRESDB_HOST:      postgres
+      DB_POSTGRESDB_PORT:      5432
+      DB_POSTGRESDB_DATABASE:  n8n_preview
+      DB_POSTGRESDB_USER:      sphere
+      DB_POSTGRESDB_PASSWORD:  ${PREVIEW_DB_PASSWORD}
+      N8N_HOST:                pr-${PR_NUMBER}.preview.${PREVIEW_DOMAIN}
+      N8N_PROTOCOL:            https
+      WEBHOOK_URL:             https://pr-${PR_NUMBER}.preview.${PREVIEW_DOMAIN}/n8n/
+      N8N_EDITOR_BASE_URL:     https://pr-${PR_NUMBER}.preview.${PREVIEW_DOMAIN}/n8n/
+      N8N_PATH:                /n8n/
+      N8N_DIAGNOSTICS_ENABLED: "false"
+      N8N_PERSONALIZATION_ENABLED: "false"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - preview-${PR_NUMBER}-net
+      - traefik-net
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: "traefik-net"
+      traefik.http.routers.prev-${PR_NUMBER}-n8n.rule: >
+        Host(`pr-${PR_NUMBER}.preview.${PREVIEW_DOMAIN}`) && PathPrefix(`/n8n`)
+      traefik.http.routers.prev-${PR_NUMBER}-n8n.entrypoints: "websecure"
+      traefik.http.routers.prev-${PR_NUMBER}-n8n.tls.certresolver: "letsencrypt"
+      traefik.http.services.prev-${PR_NUMBER}-n8n.loadbalancer.server.port: "5678"
+    restart: "no"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 512M
+
+networks:
+  preview-${PR_NUMBER}-net:
+    name: preview-${PR_NUMBER}-net
+  traefik-net:
+    name: traefik-net
+    external: true
+
+volumes:
+  preview-${PR_NUMBER}-pgdata:
+    name: preview-${PR_NUMBER}-pgdata

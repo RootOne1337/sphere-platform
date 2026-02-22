@@ -1,0 +1,32 @@
+name: traefik-proxy
+
+services:
+  traefik:
+    image: traefik:v3.2
+    container_name: traefik
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "127.0.0.1:8080:8080"   # dashboard (только localhost)
+    environment:
+      CF_DNS_API_TOKEN: ${CF_DNS_API_TOKEN}   # wildcard TLS via Cloudflare DNS
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik-data:/traefik
+      - ./traefik.yml:/traefik/traefik.yml:ro
+    networks:
+      - traefik-net
+    healthcheck:
+      test: ["CMD", "traefik", "healthcheck", "--ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  traefik-net:
+    name: traefik-net
+
+volumes:
+  traefik-data:
+    name: traefik-data

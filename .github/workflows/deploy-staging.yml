@@ -1,0 +1,32 @@
+name: Deploy — Staging
+
+on:
+  push:
+    branches: [develop]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker images
+        run: docker compose -f docker-compose.production.yml build
+
+      - name: Push to registry
+        run: |
+          echo ${{ secrets.REGISTRY_PASSWORD }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          docker push ghcr.io/${{ github.repository_owner }}/sphere-platform-backend:staging
+
+      - name: Deploy to staging server
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.STAGING_HOST }}
+          username: deploy
+          key: ${{ secrets.STAGING_SSH_KEY }}
+          script: |
+            cd /srv/sphere-platform
+            docker compose pull
+            docker compose up -d --no-deps backend
+            docker compose exec backend alembic upgrade head

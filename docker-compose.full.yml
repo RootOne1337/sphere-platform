@@ -1,0 +1,55 @@
+# docker-compose.full.yml — добавляем backend + frontend
+# NOTE: поле version устарело в Docker Compose v2+ и убрано намеренно
+
+# Включает всё из docker-compose.yml + добавляет backend и frontend.
+# Запуск: docker compose -f docker-compose.yml -f docker-compose.full.yml up -d
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      - POSTGRES_URL=postgresql+asyncpg://${POSTGRES_USER:-sphere}:${POSTGRES_PASSWORD}@postgres:5432/sphereplatform
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - WG_ROUTER_URL=${WG_ROUTER_URL}
+      - WG_ROUTER_API_KEY=${WG_ROUTER_API_KEY}
+      - AWG_H1=${AWG_H1}
+      - AWG_H2=${AWG_H2}
+      - AWG_H3=${AWG_H3}
+      - AWG_H4=${AWG_H4}
+      - DEBUG=true
+      - LOG_LEVEL=DEBUG
+      - ENVIRONMENT=development
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app           # hot reload в dev
+      - ./backend/updates:/app/updates  # OTA APK файлы
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    networks:
+      - frontend-net
+      - backend-net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - NEXT_PUBLIC_WS_URL=ws://localhost:8000
+    ports:
+      - "3002:3002"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules         # анонимный volume для node_modules
+    command: npm run dev -- -p 3002
+    networks:
+      - frontend-net

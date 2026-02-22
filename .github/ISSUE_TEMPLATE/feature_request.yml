@@ -1,0 +1,17 @@
+name: ✨ Feature Request
+description: Предложить новую функцию
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Проблема
+      placeholder: Какую проблему это решает?
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Предлагаемое решение
+    validations:
+      required: true
