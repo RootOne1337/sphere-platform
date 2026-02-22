@@ -76,4 +76,10 @@ dependencies {
 
     // Encrypted SharedPreferences
     implementation(libs.security.crypto)
+
+    // Logging
+    implementation(libs.timber)
+
+    // Lua Engine
+    implementation(libs.luaj)
 }

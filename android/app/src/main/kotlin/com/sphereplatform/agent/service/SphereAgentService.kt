@@ -11,7 +11,9 @@ import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.sphereplatform.agent.R
+import com.sphereplatform.agent.commands.AdbActionExecutor
 import com.sphereplatform.agent.commands.DeviceCommandHandler
+import com.sphereplatform.agent.network.NetworkChangeHandler
 import com.sphereplatform.agent.providers.DeviceInfoProvider
 import com.sphereplatform.agent.ws.SphereWebSocketClient
 import dagger.hilt.android.AndroidEntryPoint
@@ -23,11 +25,9 @@ import javax.inject.Inject
  * SphereAgentService — основной Foreground Service агента.
  *
  * Жизненный цикл:
- * - onCreate: стартует foreground-нотификацию + инициирует WS-подключение
+ * - onCreate: регистрирует CommandDispatcher, NetworkChangeHandler, запускает WS
  * - onStartCommand: START_STICKY — перезапуск после kill системой
- * - onDestroy: корректное отключение от WebSocket
- *
- * OOM-killer avoidance: foreground service с нотификацией PRIORITY_MIN.
+ * - onDestroy: корректный stop WS + root session
  */
 @AndroidEntryPoint
 class SphereAgentService : Service() {
@@ -48,23 +48,26 @@ class SphereAgentService : Service() {
         }
     }
 
-    @Inject
-    lateinit var wsClient: SphereWebSocketClient
-
-    @Inject
-    lateinit var commandHandler: DeviceCommandHandler
-
-    @Inject
-    lateinit var deviceInfo: DeviceInfoProvider
-
-    @Inject
-    lateinit var appScope: CoroutineScope
+    @Inject lateinit var wsClient: SphereWebSocketClient
+    @Inject lateinit var commandHandler: DeviceCommandHandler
+    @Inject lateinit var networkChangeHandler: NetworkChangeHandler
+    @Inject lateinit var adbActions: AdbActionExecutor
+    @Inject lateinit var deviceInfo: DeviceInfoProvider
+    @Inject lateinit var appScope: CoroutineScope
 
     private val binder = LocalBinder()
 
     override fun onCreate() {
         super.onCreate()
         startForeground(NOTIFICATION_ID, buildNotification())
+
+        // 1. Регистрируем callbacks ПЕРЕД подключением (иначе пропустим onConnected)
+        commandHandler.start()
+
+        // 2. Мониторинг сети
+        networkChangeHandler.register()
+
+        // 3. Запускаем WS-подключение (reconnect loop)
         appScope.launch {
             wsClient.connect(deviceInfo.getDeviceId())
         }
@@ -103,7 +106,8 @@ class SphereAgentService : Service() {
     override fun onBind(intent: Intent?): IBinder = binder
 
     override fun onDestroy() {
-        appScope.launch { wsClient.disconnect() }
+        wsClient.disconnect()
+        adbActions.closeRootSession()
         super.onDestroy()
     }
 

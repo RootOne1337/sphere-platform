@@ -4,10 +4,14 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * DeviceCommandHandler — stub для SPLIT-1.
- * Полная реализация в TZ-07 SPLIT-3 (Command Handler).
+ * DeviceCommandHandler — фасад для обратной совместимости с SphereAgentService.
+ * Реальная диспетчеризация команд выполняется через [CommandDispatcher].
+ * @see CommandDispatcher
  */
 @Singleton
-class DeviceCommandHandler @Inject constructor() {
-    // TODO: SPLIT-3 — обработка команд от бэкенда (tap, swipe, screenshot, etc.)
+class DeviceCommandHandler @Inject constructor(
+    val dispatcher: CommandDispatcher,
+) {
+    fun start() = dispatcher.start()
 }
+

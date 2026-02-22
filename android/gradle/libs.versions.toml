@@ -14,6 +14,10 @@ appcompat = "1.7.0"
 material = "1.12.0"
 activityKtx = "1.9.0"
 lifecycleRuntime = "2.8.1"
+timber = "5.0.1"
+luaj = "3.0.1"
+timber = "5.0.1"
+luaj = "3.0.1"
 
 [libraries]
 # AndroidX Core
@@ -45,6 +49,12 @@ security-crypto = { group = "androidx.security", name = "security-crypto", versi
 work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "workManager" }
 hilt-work = { group = "androidx.hilt", name = "hilt-work", version.ref = "hiltNavigationCompose" }
 hilt-work-compiler = { group = "androidx.hilt", name = "hilt-compiler", version.ref = "hiltNavigationCompose" }
+
+# Logging
+timber = { group = "com.jakewharton.timber", name = "timber", version.ref = "timber" }
+
+# Lua Engine (LuaJ — чистая Java реализация Lua 5.2, без native code)
+luaj = { group = "org.luaj", name = "luaj-jse", version.ref = "luaj" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
