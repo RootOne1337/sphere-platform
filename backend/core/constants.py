@@ -11,4 +11,11 @@ METRICS_SKIP_PATHS: frozenset[str] = frozenset({
     "/favicon.ico",
     "/api/v1/health",
     "/api/v1/health/ready",
+    # TZ-11 SPLIT-5: новые health check endpoints
+    "/api/v1/health/healthz",
+    "/api/v1/health/readyz",
+    "/api/v1/health/full",
 })
+
+# Версия приложения (единый источник истины)
+APP_VERSION = "4.0.0"

@@ -1,0 +1,87 @@
+# tests/alert_test.yml
+# promtool test rules для Sphere Platform alert rules.
+# Запуск: promtool test rules tests/alert_test.yml
+# Требует: promtool (из образа prom/prometheus или бинарника)
+
+rule_files:
+  - ../infrastructure/monitoring/alert-rules.yml
+
+evaluation_interval: 1m
+
+tests:
+  # ── HighAgentOfflineRate ───────────────────────────────────────────────────
+
+  - interval: 1m
+    input_series:
+      - series: 'sphere_devices_total{org_id="test"}'
+        values: "100 100 100 100 100"
+      - series: 'sphere_devices_online{org_id="test"}'
+        values: "100 80 80 80 80"    # 20% оффлайн с t=1
+    alert_rule_test:
+      # t=3m — алерт должен сработать (for: 2m)
+      - eval_time: 3m
+        alertname: HighAgentOfflineRate
+        exp_alerts:
+          - exp_labels:
+              severity: critical
+              team: platform
+            exp_annotations:
+              runbook: "https://wiki.sphere.internal/runbooks/agent-offline"
+
+  - interval: 1m
+    input_series:
+      # FIX 11.4: пустой fleet НЕ должен триггерить алерт
+      - series: 'sphere_devices_total{org_id="test"}'
+        values: "0 0 0 0"
+      - series: 'sphere_devices_online{org_id="test"}'
+        values: "0 0 0 0"
+    alert_rule_test:
+      - eval_time: 3m
+        alertname: HighAgentOfflineRate
+        exp_alerts: []    # ← должно быть пусто (guard срабатывает)
+
+  # ── DatabasePoolExhausted ─────────────────────────────────────────────────
+
+  - interval: 1m
+    input_series:
+      - series: 'sphere_db_pool_size'
+        values: "20 20 20"
+      - series: 'sphere_db_pool_checked_out'
+        values: "5 18 18"    # 90% заполнено с t=1
+    alert_rule_test:
+      - eval_time: 2m
+        alertname: DatabasePoolExhausted
+        exp_alerts:
+          - exp_labels:
+              severity: critical
+              team: backend
+
+  # ── HighTaskQueueDepth ────────────────────────────────────────────────────
+
+  - interval: 1m
+    input_series:
+      - series: 'sphere_task_queue_depth'
+        values: "10 600 600 600 600 600 600"
+    alert_rule_test:
+      - eval_time: 6m
+        alertname: HighTaskQueueDepth
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              team: backend
+
+  # ── VPNPoolLow ────────────────────────────────────────────────────────────
+
+  - interval: 1m
+    input_series:
+      - series: 'sphere_vpn_pool_total'
+        values: "100 100 100 100 100 100 100"
+      - series: 'sphere_vpn_pool_allocated'
+        values: "10 92 92 92 92 92 92"    # 8% свободных с t=1
+    alert_rule_test:
+      - eval_time: 6m
+        alertname: VPNPoolLow
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              team: platform

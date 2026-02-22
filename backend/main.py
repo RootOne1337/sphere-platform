@@ -5,11 +5,14 @@ import json
 from contextlib import asynccontextmanager
 from pathlib import Path
 
+import backend.core.logging_config  # noqa: F401 — TZ-11 SPLIT-4: module-level structlog init
+
 from fastapi import FastAPI
 from starlette_exporter import PrometheusMiddleware as _StarlettePrometheus, handle_metrics
 
 from backend.core.cors import setup_cors
 from backend.middleware.metrics import PrometheusMiddleware
+from backend.middleware.request_id import RequestIdMiddleware
 
 
 @asynccontextmanager
@@ -48,10 +51,14 @@ app = FastAPI(
 setup_cors(app)
 
 # TZ-11 SPLIT-1: Prometheus metrics middleware + /metrics endpoint
-# PrometheusMiddleware (наш) — timing/labeling; starlette_exporter — exposition format.
-# Порядок важен: наш middleware оборачивает запрос ДО exception handlers → 5xx тоже трекаются.
+# TZ-11 SPLIT-4: RequestIdMiddleware — X-Request-ID на каждый ответ + structlog context
+# Порядок (add_middleware в Starlette применяется в обратном порядке LIFO):
+#   1) RequestIdMiddleware  — самый внешний (запускается первым)
+#   2) PrometheusMiddleware — timing после request_id
+#   3) StarlettePrometheus  — exposition
 app.add_middleware(_StarlettePrometheus, app_name="sphere", group_paths=True)
 app.add_middleware(PrometheusMiddleware)
+app.add_middleware(RequestIdMiddleware)
 app.add_route("/metrics", handle_metrics)
 
 # ── Авто-дискавери роутеров ───────────────────────────────────────────────────
