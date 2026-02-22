@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Sphere Agent</string>
+    <string name="notification_channel_name">Sphere Platform Agent</string>
+    <string name="notification_content">Agent running</string>
 </resources>
