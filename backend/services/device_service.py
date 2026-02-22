@@ -306,6 +306,56 @@ class DeviceService:
 
     # ── Screenshot ───────────────────────────────────────────────────────────
 
+    # ── Ownership helpers (used by SPLIT-3 fleet + SPLIT-4 bulk) ────────────
+
+    async def filter_owned(
+        self, device_ids: list[str], org_id: uuid.UUID
+    ) -> list[str]:
+        """Return subset of device_ids that belong to org_id."""
+        uuids: list[uuid.UUID] = []
+        for did in device_ids:
+            try:
+                uuids.append(uuid.UUID(did))
+            except ValueError:
+                continue
+        if not uuids:
+            return []
+        stmt = select(Device.id).where(
+            Device.id.in_(uuids), Device.org_id == org_id
+        )
+        rows = (await self.db.execute(stmt)).scalars().all()
+        return [str(r) for r in rows]
+
+    async def get_all_device_ids(self, org_id: uuid.UUID) -> list[str]:
+        """Return all device IDs for the given org."""
+        stmt = select(Device.id).where(Device.org_id == org_id, Device.is_active.is_(True))
+        rows = (await self.db.execute(stmt)).scalars().all()
+        return [str(r) for r in rows]
+
+    async def bulk_soft_delete(
+        self, device_ids: list[str], org_id: uuid.UUID
+    ) -> int:
+        """Delete all owned devices from the list. Returns count deleted."""
+        uuids: list[uuid.UUID] = []
+        for did in device_ids:
+            try:
+                uuids.append(uuid.UUID(did))
+            except ValueError:
+                continue
+        if not uuids:
+            return 0
+        stmt = (
+            select(Device)
+            .where(Device.id.in_(uuids), Device.org_id == org_id)
+        )
+        devices = (await self.db.execute(stmt)).scalars().all()
+        for device in devices:
+            await self.db.delete(device)
+        await self.db.flush()
+        return len(devices)
+
+    # ── Screenshot ───────────────────────────────────────────────────────────
+
     async def request_screenshot(self, device_id: uuid.UUID, org_id: uuid.UUID) -> dict:
         """
         Запросить скриншот устройства через PC Agent.
