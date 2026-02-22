@@ -26,7 +26,7 @@ from backend.models.task_batch import TaskBatch, TaskBatchStatus  # noqa: F401
 from backend.models.task import Task, TaskStatus  # noqa: F401
 
 # --- VPN (TZ-06) ---
-from backend.models.vpn_peer import VPNPeer  # noqa: F401
+from backend.models.vpn_peer import VPNPeer, VPNPeerStatus  # noqa: F401
 
 # --- PC Agent (TZ-08) ---
 from backend.models.workstation import Workstation  # noqa: F401
@@ -54,6 +54,7 @@ __all__ = [
     "Task",
     "TaskStatus",
     "VPNPeer",
+    "VPNPeerStatus",
     "Workstation",
     "LDPlayerInstance",
     "Webhook",

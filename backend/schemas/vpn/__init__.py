@@ -5,10 +5,30 @@ from backend.schemas.vpn.config import (
     AWGConfigPreviewRequest,
     AWGConfigPreviewResponse,
 )
+from backend.schemas.vpn.peer import (
+    VPNAssignRequest,
+    VPNAssignResponse,
+    VPNPeerResponse,
+    VPNPoolStats,
+    VPNBulkRotateRequest,
+    VPNBulkRotateResponse,
+    RotateDetail,
+    KillSwitchRequest,
+    KillSwitchResponse,
+)
 
 __all__ = [
     "AWGObfuscationParamsSchema",
     "AWGKeypairResponse",
     "AWGConfigPreviewRequest",
     "AWGConfigPreviewResponse",
+    "VPNAssignRequest",
+    "VPNAssignResponse",
+    "VPNPeerResponse",
+    "VPNPoolStats",
+    "VPNBulkRotateRequest",
+    "VPNBulkRotateResponse",
+    "RotateDetail",
+    "KillSwitchRequest",
+    "KillSwitchResponse",
 ]

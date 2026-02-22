@@ -1,13 +1,16 @@
-# backend/services/vpn/dependencies.py — TZ-06 SPLIT-1
-# FastAPI Depends-фабрики для AWGConfigBuilder и Fernet cipher.
+# backend/services/vpn/dependencies.py — TZ-06 SPLIT-1..4
+# FastAPI Depends-фабрики для VPN сервисов.
 from __future__ import annotations
 
 from functools import lru_cache
 
 from cryptography.fernet import Fernet
-from fastapi import HTTPException, status
+from fastapi import Depends, HTTPException, status
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.config import settings
+from backend.database.engine import get_db
+from backend.database.redis_client import get_redis
 from backend.services.vpn.awg_config import AWGConfigBuilder
 
 
@@ -44,3 +47,41 @@ def encrypt_private_key(private_key: str, cipher: Fernet) -> bytes:
 def decrypt_private_key(encrypted: bytes, cipher: Fernet) -> str:
     """Расшифровать Fernet token → private_key строка."""
     return cipher.decrypt(encrypted).decode()
+
+
+# ── Pool Service DI ──────────────────────────────────────────────────────────
+
+async def get_ip_pool_allocator(redis=Depends(get_redis)):
+    """DI: IPPoolAllocator с Redis клиентом и настройками подсети."""
+    from backend.services.vpn.ip_pool import IPPoolAllocator
+    return IPPoolAllocator(redis, subnet=settings.VPN_POOL_SUBNET)
+
+
+async def get_vpn_pool_service(
+    db: AsyncSession = Depends(get_db),
+    ip_pool=Depends(get_ip_pool_allocator),
+    builder: AWGConfigBuilder = Depends(get_awg_config_builder),
+):
+    """DI: VPNPoolService — yield для корректного закрытия httpx.AsyncClient."""
+    from backend.services.vpn.pool_service import VPNPoolService
+    service = VPNPoolService(
+        db=db,
+        ip_pool=ip_pool,
+        config_builder=builder,
+        key_cipher=get_key_cipher(),
+        wg_router_url=settings.WG_ROUTER_URL,
+        wg_router_api_key=settings.WG_ROUTER_API_KEY,
+    )
+    try:
+        yield service
+    finally:
+        await service.aclose()
+
+
+# ── Kill Switch DI ───────────────────────────────────────────────────────────
+
+async def get_killswitch_service():
+    """DI: KillSwitchService (использует NoopCommandPublisher до TZ-03 merge)."""
+    from backend.services.vpn.health_monitor import NoopCommandPublisher
+    from backend.services.vpn.killswitch_service import KillSwitchService
+    return KillSwitchService(publisher=NoopCommandPublisher())
