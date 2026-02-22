@@ -1,0 +1,31 @@
+{
+  "name": "n8n-nodes-sphereplatform",
+  "version": "1.0.0",
+  "description": "Custom n8n nodes for Sphere Platform integration",
+  "license": "MIT",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "watch": "tsc --project tsconfig.json --watch",
+    "prepublishOnly": "npm run build"
+  },
+  "n8n": {
+    "n8nNodesApiVersion": 1,
+    "credentials": [
+      "dist/credentials/SpherePlatformApi.credentials.js"
+    ],
+    "nodes": [
+      "dist/nodes/SphereDevicePool/SphereDevicePool.node.js",
+      "dist/nodes/SphereExecuteScript/SphereExecuteScript.node.js",
+      "dist/nodes/SphereEventTrigger/SphereEventTrigger.node.js"
+    ]
+  },
+  "devDependencies": {
+    "n8n-workflow": "^1.24.0",
+    "typescript": "^5.3.3",
+    "@types/node": "^20.0.0"
+  },
+  "peerDependencies": {
+    "n8n-workflow": ">=1.0.0"
+  }
+}

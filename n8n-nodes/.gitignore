@@ -1,0 +1,5 @@
+# Override repo-level gitignore: dist is needed at runtime by Docker volume mount
+!dist/
+
+# Still ignore node_modules
+node_modules/
