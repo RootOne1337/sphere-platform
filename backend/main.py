@@ -5,9 +5,14 @@ import json
 from contextlib import asynccontextmanager
 from pathlib import Path
 
+import backend.core.logging_config  # noqa: F401 — TZ-11 SPLIT-4: module-level structlog init
+
 from fastapi import FastAPI
+from starlette_exporter import PrometheusMiddleware as _StarlettePrometheus, handle_metrics
 
 from backend.core.cors import setup_cors
+from backend.middleware.metrics import PrometheusMiddleware
+from backend.middleware.request_id import RequestIdMiddleware
 
 
 @asynccontextmanager
@@ -19,6 +24,7 @@ async def lifespan(app: FastAPI):
     # Импортируем redis_client для регистрации хуков (register_startup/register_shutdown)
     # Остальные модули регистрируют свои хуки при импорте router.py
     import backend.database.redis_client  # noqa: F401
+    import backend.monitoring.pool_metrics  # noqa: F401 — регистрирует DB pool collector
 
     from backend.core.lifespan_registry import run_all_startup, run_all_shutdown
 
@@ -43,6 +49,17 @@ app = FastAPI(
 )
 
 setup_cors(app)
+
+# TZ-11 SPLIT-1: Prometheus metrics middleware + /metrics endpoint
+# TZ-11 SPLIT-4: RequestIdMiddleware — X-Request-ID на каждый ответ + structlog context
+# Порядок (add_middleware в Starlette применяется в обратном порядке LIFO):
+#   1) RequestIdMiddleware  — самый внешний (запускается первым)
+#   2) PrometheusMiddleware — timing после request_id
+#   3) StarlettePrometheus  — exposition
+app.add_middleware(_StarlettePrometheus, app_name="sphere", group_paths=True)
+app.add_middleware(PrometheusMiddleware)
+app.add_middleware(RequestIdMiddleware)
+app.add_route("/metrics", handle_metrics)
 
 # ── Авто-дискавери роутеров ───────────────────────────────────────────────────
 # Подключает backend/api/v1/<subdir>/router.py для каждой поддиректории.
