@@ -1,7 +1,9 @@
 package com.sphereplatform.agent.di
 
 import com.sphereplatform.agent.streaming.StreamingManager
-import com.sphereplatform.agent.streaming.StreamingManagerStub
+import com.sphereplatform.agent.streaming.StreamingManagerImpl
+import com.sphereplatform.agent.ws.SphereWebSocketClientContract
+import com.sphereplatform.agent.ws.SphereWebSocketClientStub
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -12,11 +14,15 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 abstract class StreamingModule {
 
+    @Binds
+    @Singleton
+    abstract fun bindStreamingManager(impl: StreamingManagerImpl): StreamingManager
+
     /**
-     * Binds the stub implementation until SPLIT-2 (H264Encoder + VirtualDisplay)
-     * provides the real [StreamingManagerImpl].
+     * Binds a no-op WS client until TZ-07 SPLIT-2 provides the real
+     * [SphereWebSocketClient] implementation.
      */
     @Binds
     @Singleton
-    abstract fun bindStreamingManager(impl: StreamingManagerStub): StreamingManager
+    abstract fun bindWsClient(stub: SphereWebSocketClientStub): SphereWebSocketClientContract
 }

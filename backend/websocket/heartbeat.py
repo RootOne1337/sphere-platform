@@ -118,3 +118,12 @@ class HeartbeatManager:
                 setattr(current, key, val)
             current.last_heartbeat = datetime.now(timezone.utc)
             await self.status_cache.set_status(self.device_id, current)
+
+        # TZ-05 SPLIT-4: обновить Prometheus stream-метрики из pong телеметрии
+        stream_data = msg.get("stream")
+        if stream_data and isinstance(stream_data, dict):
+            try:
+                from backend.websocket.stream_metrics import StreamMetrics
+                StreamMetrics(self.device_id).update_from_pong(stream_data)
+            except Exception as e:
+                logger.debug("stream_metrics update failed", error=str(e))
