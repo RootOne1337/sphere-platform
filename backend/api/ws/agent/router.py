@@ -2,13 +2,18 @@
 # ВЛАДЕЛЕЦ: TZ-03 SPLIT-1 (stub для TZ-08 PC Agent).
 # PC Agent использует agent_token (долгоживущий API-ключ), а не JWT.
 # Полная реализация обработчиков команд — TZ-08.
+#
+# TZ-08 SPLIT-5: добавлены обработчики workstation_register, workstation_telemetry.
+# FIX 8.1: дублирующий WS endpoint УДАЛЁН — обработка через case в едином handler.
 from __future__ import annotations
 
 import json
 import asyncio
+from datetime import datetime, timezone
 
 import structlog
 from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.database.engine import get_db
@@ -44,29 +49,152 @@ async def authenticate_agent_token(token: str, db: AsyncSession) -> APIKey:
     return api_key
 
 
+async def handle_workstation_register(
+    workstation_id: str,
+    payload: dict,
+    org_id: str,
+    db: AsyncSession,
+) -> None:
+    """
+    TZ-08 SPLIT-5: Upsert воркстанции + инстансов при регистрации агента.
+    Кэширует топологию в Redis TTL 1h.
+    """
+    try:
+        # Upsert workstation
+        await db.execute(
+            text("""
+                UPDATE workstations
+                SET hostname       = :hostname,
+                    os_version     = :os_version,
+                    ip_address     = :ip_address,
+                    agent_version  = :agent_ver,
+                    last_seen      = now()
+                WHERE id::text = :wid
+            """),
+            {
+                "wid": workstation_id,
+                "hostname": payload.get("hostname", ""),
+                "os_version": payload.get("os_version", ""),
+                "ip_address": payload.get("ip_address", ""),
+                "agent_ver": payload.get("agent_version", ""),
+            },
+        )
+
+        # Upsert ldplayer_instances
+        for inst in payload.get("instances", []):
+            await db.execute(
+                text("""
+                    UPDATE ldplayer_instances
+                    SET instance_name = :name,
+                        adb_port      = :port,
+                        android_serial = :serial
+                    WHERE workstation_id::text = :wid
+                      AND instance_index = :idx
+                """),
+                {
+                    "wid": workstation_id,
+                    "idx": inst["index"],
+                    "name": inst["name"],
+                    "port": inst["adb_port"],
+                    "serial": inst.get("android_serial"),
+                },
+            )
+
+        await db.commit()
+
+        # Кэшируем топологию в Redis TTL 1h
+        try:
+            redis = get_redis()
+            if redis:
+                topology_key = f"topology:workstation:{workstation_id}"
+                await redis.setex(topology_key, 3600, json.dumps(payload))
+        except Exception as exc:
+            logger.warning("Redis topology cache failed", error=str(exc))
+
+        logger.info(
+            "Workstation registered",
+            workstation_id=workstation_id,
+            instances=len(payload.get("instances", [])),
+        )
+    except Exception as exc:
+        logger.error(
+            "workstation_register error",
+            workstation_id=workstation_id,
+            error=str(exc),
+        )
+        await db.rollback()
+
+
+async def handle_workstation_telemetry(
+    workstation_id: str,
+    payload: dict,
+    org_id: str,
+) -> None:
+    """
+    TZ-08 SPLIT-3: Сохранить телеметрию воркстанции в Redis TTL 120s.
+    FIX 8.1: обработка здесь, в едином WS handler — не в отдельном endpoint.
+    """
+    try:
+        redis = get_redis()
+        if redis:
+            key = f"workstation:telemetry:{workstation_id}"
+            await redis.setex(key, 120, json.dumps(payload))
+            # Публикуем событие для дашборда
+            await redis.publish(
+                f"sphere:org:events:{org_id}",
+                json.dumps({"type": "workstation_telemetry", "data": payload}),
+            )
+    except Exception as exc:
+        logger.warning(
+            "Failed to store workstation telemetry",
+            workstation_id=workstation_id,
+            error=str(exc),
+        )
+
+
 async def handle_agent_message(
     workstation_id: str,
+    org_id: str,
     msg: dict,
     manager: ConnectionManager,
+    db: AsyncSession,
 ) -> None:
-    """Обработать входящее сообщение от PC агента. Полная реализация — TZ-08."""
+    """
+    Обработать входящее сообщение от PC агента.
+    TZ-08 SPLIT-2/3/5: полная маршрутизация по type.
+    """
     msg_type = msg.get("type")
-    if msg_type == "command_result":
-        command_id = msg.get("command_id") or msg.get("id")
-        if command_id:
-            try:
-                from backend.database.redis_client import redis
-                if redis:
-                    result_channel = f"sphere:agent:result:{workstation_id}:{command_id}"
-                    await redis.publish(result_channel, json.dumps(msg))
-            except Exception as e:
-                logger.warning(
-                    "Failed to publish PC agent command result",
-                    workstation_id=workstation_id,
-                    error=str(e),
-                )
-    else:
-        logger.debug("PC agent message", workstation_id=workstation_id, type=msg_type)
+
+    match msg_type:
+        case "command_result":
+            command_id = msg.get("command_id") or msg.get("id")
+            if command_id:
+                try:
+                    redis = get_redis()
+                    if redis:
+                        channel = f"sphere:agent:result:{workstation_id}:{command_id}"
+                        await redis.publish(channel, json.dumps(msg))
+                except Exception as exc:
+                    logger.warning(
+                        "Failed to publish PC agent command result",
+                        workstation_id=workstation_id,
+                        error=str(exc),
+                    )
+
+        case "workstation_register":
+            payload = msg.get("payload", {})
+            await handle_workstation_register(workstation_id, payload, org_id, db)
+
+        case "workstation_telemetry":
+            payload = msg.get("payload", {})
+            await handle_workstation_telemetry(workstation_id, payload, org_id)
+
+        case _:
+            logger.debug(
+                "PC agent message",
+                workstation_id=workstation_id,
+                type=msg_type,
+            )
 
 
 @router.websocket("/ws/agent/{workstation_id}")
@@ -100,11 +228,12 @@ async def pc_agent_ws(
         await ws.close(code=4001, reason="invalid_agent_token")
         return
 
-    session_id = await manager.connect(ws, workstation_id, "pc", str(api_key.org_id))
+    org_id = str(api_key.org_id)
+    session_id = await manager.connect(ws, workstation_id, "pc", org_id)
     logger.info(
         "PC agent connected",
         workstation_id=workstation_id,
-        org_id=str(api_key.org_id),
+        org_id=org_id,
         session=session_id,
     )
 
@@ -113,7 +242,7 @@ async def pc_agent_ws(
             data = await ws.receive()
             if "text" in data:
                 msg = json.loads(data["text"])
-                await handle_agent_message(workstation_id, msg, manager)
+                await handle_agent_message(workstation_id, org_id, msg, manager, db)
     except WebSocketDisconnect:
         pass
     finally:
