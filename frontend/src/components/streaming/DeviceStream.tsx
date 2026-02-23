@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { H264Decoder } from "@/lib/streaming/H264Decoder";
+import { H264Decoder } from "@/src/lib/streaming/H264Decoder";
 
 interface DeviceStreamProps {
   deviceId: string;

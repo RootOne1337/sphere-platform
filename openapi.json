@@ -163,7 +163,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/LoginRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/LoginRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           },
@@ -213,7 +218,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/MFALoginRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/MFALoginRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           },
@@ -407,7 +417,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/MFAVerifySetupRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/MFAVerifySetupRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           },
@@ -501,7 +516,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateAPIKeyRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/CreateAPIKeyRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           },
@@ -590,7 +610,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/BatchExecutionRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/BatchExecutionRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           },
@@ -724,7 +749,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/BulkActionRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/BulkActionRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           },
@@ -771,7 +801,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/BulkDeleteRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/BulkDeleteRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           },
@@ -947,7 +982,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateDeviceRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/CreateDeviceRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           }
@@ -988,7 +1028,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/BulkStatusRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/BulkStatusRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           },
@@ -1125,7 +1170,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateDeviceRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/UpdateDeviceRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           }
@@ -1343,7 +1393,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/DiscoverRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/DiscoverRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           },
@@ -1417,7 +1472,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateGroupRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/CreateGroupRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           },
@@ -1481,7 +1541,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateGroupRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/UpdateGroupRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           }
@@ -1578,7 +1643,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/MoveDevicesRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/MoveDevicesRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           }
@@ -1666,7 +1736,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/SetTagsRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/SetTagsRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           }
@@ -1762,7 +1837,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/AlertmanagerPayload"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/AlertmanagerPayload"
+                  }
+                ],
+                "title": "Payload"
               }
             }
           },
@@ -1829,7 +1909,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/WebhookCreate"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/WebhookCreate"
+                  }
+                ],
+                "title": "Body"
               }
             }
           },
@@ -1939,7 +2024,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/WebhookUpdate"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/WebhookUpdate"
+                  }
+                ],
+                "title": "Body"
               }
             }
           }
@@ -2019,7 +2109,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/N8nTaskCreate"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/N8nTaskCreate"
+                  }
+                ],
+                "title": "Body"
               }
             }
           },
@@ -2195,7 +2290,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateScriptRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/CreateScriptRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           }
@@ -2311,7 +2411,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateScriptRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/UpdateScriptRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           }
@@ -2839,7 +2944,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateTaskRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/CreateTaskRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           }
@@ -3133,7 +3243,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateUserRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/CreateUserRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           }
@@ -3241,7 +3356,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateRoleRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/UpdateRoleRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           }
@@ -3344,7 +3464,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/AWGConfigPreviewRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/AWGConfigPreviewRequest"
+                  }
+                ],
+                "title": "Request"
               }
             }
           },
@@ -3385,7 +3510,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/VPNAssignRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/VPNAssignRequest"
+                  }
+                ],
+                "title": "Req"
               }
             }
           },
@@ -3601,7 +3731,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/VPNBulkRotateRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/VPNBulkRotateRequest"
+                  }
+                ],
+                "title": "Req"
               }
             }
           },
@@ -3647,7 +3782,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/KillSwitchRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/KillSwitchRequest"
+                  }
+                ],
+                "title": "Req"
               }
             }
           },

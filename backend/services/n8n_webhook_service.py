@@ -12,7 +12,7 @@ import uuid
 from typing import TYPE_CHECKING
 
 import httpx
-from loguru import logger
+import structlog
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -20,6 +20,8 @@ from backend.models.webhook import Webhook
 
 if TYPE_CHECKING:
     pass
+
+logger = structlog.get_logger()
 
 # Background task registry — prevents GC of fire-and-forget tasks
 _background_tasks: set[asyncio.Task] = set()

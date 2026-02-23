@@ -6,7 +6,7 @@ import { api } from './api';
 
 interface AuthState {
   accessToken: string | null;
-  user: { id: string; email: string; role: string; org_id: string } | null;
+  user: { id: string; email: string; role: string; org_id: string; mfa_enabled?: boolean } | null;
 
   setAccessToken: (token: string) => void;
   setUser: (user: AuthState['user']) => void;

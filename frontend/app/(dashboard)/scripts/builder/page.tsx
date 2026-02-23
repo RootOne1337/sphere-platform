@@ -39,8 +39,8 @@ const INITIAL_NODES: Node[] = [
 
 const NODE_TYPES_LIST = ['Tap', 'Swipe', 'Sleep', 'Lua', 'Condition', 'Screenshot'] as const;
 
-function getDefaultData(type: string) {
-  const defaults: Record<string, object> = {
+function getDefaultData(type: string): Record<string, unknown> {
+  const defaults: Record<string, Record<string, unknown>> = {
     Tap: { type: 'Tap', x: 540, y: 960 },
     Swipe: { type: 'Swipe', x1: 100, y1: 500, x2: 900, y2: 500, duration_ms: 300 },
     Sleep: { type: 'Sleep', duration_ms: 1000 },
