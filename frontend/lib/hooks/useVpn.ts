@@ -11,12 +11,11 @@ export interface VpnPeer {
 }
 
 export interface PoolStats {
-  // FIX: выровнено с backend PoolStatsResponse (TZ-06 SPLIT-5)
-  total_capacity: number;
-  used: number;
+  total_ips: number;
+  allocated: number;
   free: number;
   active_tunnels: number;
-  stale_tunnels: number;
+  stale_handshakes: number;
 }
 
 export function useVpnPeers() {

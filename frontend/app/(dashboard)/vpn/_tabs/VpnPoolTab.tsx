@@ -5,9 +5,8 @@ import { Progress } from '@/components/ui/progress';
 
 export function VpnPoolTab() {
   const { data: stats } = usePoolStats();
-  // FIX: вычисляем allocation_percent на фронте — поля нет в backend ответе
   const allocationPercent = stats
-    ? Math.round((stats.used / stats.total_capacity) * 100)
+    ? Math.round((stats.allocated / stats.total_ips) * 100)
     : 0;
 
   return (
@@ -17,8 +16,7 @@ export function VpnPoolTab() {
           <CardTitle className="text-sm text-muted-foreground">Total IPs</CardTitle>
         </CardHeader>
         <CardContent>
-          {/* FIX: правильное поле total_capacity */}
-          <p className="text-3xl font-bold">{stats?.total_capacity ?? '—'}</p>
+          <p className="text-3xl font-bold">{stats?.total_ips ?? '—'}</p>
         </CardContent>
       </Card>
       <Card>
@@ -26,8 +24,7 @@ export function VpnPoolTab() {
           <CardTitle className="text-sm text-muted-foreground">Allocated</CardTitle>
         </CardHeader>
         <CardContent>
-          {/* FIX: правильное поле used */}
-          <p className="text-3xl font-bold text-orange-400">{stats?.used ?? '—'}</p>
+          <p className="text-3xl font-bold text-orange-400">{stats?.allocated ?? '—'}</p>
         </CardContent>
       </Card>
       <Card>
@@ -35,7 +32,7 @@ export function VpnPoolTab() {
           <CardTitle className="text-sm text-muted-foreground">Available</CardTitle>
         </CardHeader>
         <CardContent>
-          {/* FIX: правильное поле free */}
+
           <p className="text-3xl font-bold text-green-400">{stats?.free ?? '—'}</p>
         </CardContent>
       </Card>
@@ -52,7 +49,7 @@ export function VpnPoolTab() {
           <CardTitle className="text-sm text-muted-foreground">Stale Tunnels</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-3xl font-bold text-yellow-400">{stats?.stale_tunnels ?? '—'}</p>
+          <p className="text-3xl font-bold text-yellow-400">{stats?.stale_handshakes ?? '—'}</p>
         </CardContent>
       </Card>
       <Card>

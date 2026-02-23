@@ -16,21 +16,34 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // MFA flow state
+  const [mfaRequired, setMfaRequired] = useState(false);
+  const [stateToken, setStateToken] = useState('');
+  const [mfaCode, setMfaCode] = useState('');
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
     try {
-      // withCredentials: true — сервер установит HTTPOnly cookie с refresh token
       const { data } = await api.post(
         '/auth/login',
         { email, password },
         { withCredentials: true },
       );
+
+      // Check if MFA is required
+      if (data.mfa_required) {
+        setMfaRequired(true);
+        setStateToken(data.state_token);
+        setLoading(false);
+        return;
+      }
+
       setAccessToken(data.access_token);
       setUser(data.user);
-      router.push('/devices');
+      router.push('/dashboard');
     } catch (err: unknown) {
       const msg =
         (err as { response?: { data?: { detail?: string } } })?.response?.data
@@ -40,6 +53,74 @@ export default function LoginPage() {
       setLoading(false);
     }
   };
+
+  const handleMfaSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    try {
+      const { data } = await api.post(
+        '/auth/login/mfa',
+        { state_token: stateToken, code: mfaCode },
+        { withCredentials: true },
+      );
+      setAccessToken(data.access_token);
+      setUser(data.user);
+      router.push('/dashboard');
+    } catch (err: unknown) {
+      const msg =
+        (err as { response?: { data?: { detail?: string } } })?.response?.data
+          ?.detail ?? 'Invalid MFA code';
+      setError(typeof msg === 'string' ? msg : JSON.stringify(msg));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (mfaRequired) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-950">
+        <Card className="w-full max-w-sm">
+          <CardHeader>
+            <CardTitle className="text-2xl">Two-Factor Auth</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleMfaSubmit} className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Enter the 6-digit code from your authenticator app.
+              </p>
+              <div>
+                <Label htmlFor="mfa-code">TOTP Code</Label>
+                <Input
+                  id="mfa-code"
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  maxLength={8}
+                  value={mfaCode}
+                  onChange={(e) => setMfaCode(e.target.value)}
+                  required
+                />
+              </div>
+              {error && <p className="text-sm text-red-500">{error}</p>}
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? 'Verifying…' : 'Verify'}
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                className="w-full"
+                onClick={() => { setMfaRequired(false); setMfaCode(''); setError(''); }}
+              >
+                Back to login
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-950">

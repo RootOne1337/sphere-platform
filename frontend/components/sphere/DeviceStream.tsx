@@ -68,7 +68,7 @@ export function DeviceStream({
       const y = Math.round((e.clientY - rect.top) * scaleY);
 
       onTap?.(x, y);
-      wsRef.current?.send(JSON.stringify({ type: 'tap', x, y }));
+      wsRef.current?.send(JSON.stringify({ type: 'click', x, y }));
     },
     [onTap],
   );

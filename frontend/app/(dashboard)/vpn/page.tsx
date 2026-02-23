@@ -3,6 +3,8 @@ import { VpnPoolTab } from './_tabs/VpnPoolTab';
 import { VpnAgentsTab } from './_tabs/VpnAgentsTab';
 import { VpnBatchTab } from './_tabs/VpnBatchTab';
 import { VpnHealthTab } from './_tabs/VpnHealthTab';
+import { VpnRotateTab } from './_tabs/VpnRotateTab';
+import { VpnKillSwitchTab } from './_tabs/VpnKillSwitchTab';
 
 export default function VpnPage() {
   return (
@@ -13,6 +15,8 @@ export default function VpnPage() {
           <TabsTrigger value="pool">IP Pool</TabsTrigger>
           <TabsTrigger value="agents">Agents</TabsTrigger>
           <TabsTrigger value="batch">Batch Ops</TabsTrigger>
+          <TabsTrigger value="rotate">IP Rotation</TabsTrigger>
+          <TabsTrigger value="killswitch">Kill Switch</TabsTrigger>
           <TabsTrigger value="health">Health</TabsTrigger>
         </TabsList>
         <TabsContent value="pool">
@@ -23,6 +27,12 @@ export default function VpnPage() {
         </TabsContent>
         <TabsContent value="batch">
           <VpnBatchTab />
+        </TabsContent>
+        <TabsContent value="rotate">
+          <VpnRotateTab />
+        </TabsContent>
+        <TabsContent value="killswitch">
+          <VpnKillSwitchTab />
         </TabsContent>
         <TabsContent value="health">
           <VpnHealthTab />

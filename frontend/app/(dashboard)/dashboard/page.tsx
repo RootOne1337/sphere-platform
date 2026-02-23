@@ -141,8 +141,8 @@ function VpnOverview() {
   const { data: pool } = usePoolStats();
   const { data: health } = useVpnHealth();
   const utilization =
-    pool && pool.total_capacity > 0
-      ? Math.round(((pool.used ?? 0) / pool.total_capacity) * 100)
+    pool && pool.total_ips > 0
+      ? Math.round(((pool.allocated ?? 0) / pool.total_ips) * 100)
       : 0;
 
   return (
@@ -180,7 +180,7 @@ function VpnOverview() {
           <div>
             <p className="text-xs text-muted-foreground">Stale Tunnels</p>
             <p className="text-xl font-bold text-amber-500">
-              {pool?.stale_tunnels ?? 0}
+              {pool?.stale_handshakes ?? 0}
             </p>
           </div>
         </div>

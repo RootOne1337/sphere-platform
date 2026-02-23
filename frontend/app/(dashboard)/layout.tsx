@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/store';
+import { useFleetEvents } from '@/lib/hooks/useFleetEvents';
 import { api } from '@/lib/api';
 import {
   Monitor,
@@ -10,21 +11,38 @@ import {
   LayoutDashboard,
   LogOut,
   BarChart3,
+  Users,
+  ListTodo,
+  FolderOpen,
+  ScrollText,
+  Radar,
+  Webhook,
+  Settings,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Dashboard', icon: BarChart3 },
   { href: '/devices', label: 'Devices', icon: LayoutDashboard },
+  { href: '/groups', label: 'Groups', icon: FolderOpen },
   { href: '/stream', label: 'Remote View', icon: Monitor },
-  { href: '/vpn', label: 'VPN', icon: Wifi },
+  { href: '/tasks', label: 'Tasks', icon: ListTodo },
   { href: '/scripts', label: 'Scripts', icon: Code2 },
+  { href: '/vpn', label: 'VPN', icon: Wifi },
+  { href: '/discovery', label: 'Discovery', icon: Radar },
+  { href: '/users', label: 'Users', icon: Users },
+  { href: '/audit', label: 'Audit Log', icon: ScrollText },
+  { href: '/webhooks', label: 'Webhooks', icon: Webhook },
+  { href: '/settings', label: 'Settings', icon: Settings },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { logout } = useAuthStore();
+
+  // Real-time fleet events — auto-invalidates queries on device/task/vpn changes
+  useFleetEvents();
 
   const handleLogout = async () => {
     try {
