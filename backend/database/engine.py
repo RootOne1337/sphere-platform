@@ -8,7 +8,6 @@ from sqlalchemy.orm import DeclarativeBase
 
 from backend.core.config import settings
 
-
 engine = create_async_engine(
     settings.POSTGRES_URL,
     pool_size=settings.DB_POOL_SIZE,

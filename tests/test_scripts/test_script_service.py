@@ -3,12 +3,10 @@
 from __future__ import annotations
 
 import pytest
-import pytest_asyncio
-from fakeredis.aioredis import FakeRedis
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.schemas.script import CreateScriptRequest, UpdateScriptRequest
-from backend.services.script_service import ScriptService, _compute_dag_hash
+from backend.services.script_service import ScriptService
 from tests.test_scripts.conftest import SAMPLE_DAG
 
 
@@ -134,6 +132,7 @@ class TestScriptServiceRollback:
         self, db_session: AsyncSession, test_org, test_user, sample_script
     ):
         import uuid
+
         from fastapi import HTTPException
 
         script, _ = sample_script

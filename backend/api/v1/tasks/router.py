@@ -13,7 +13,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.dependencies import require_permission
-from backend.core.lifespan_registry import register_startup, register_shutdown
+from backend.core.lifespan_registry import register_startup
 from backend.database.engine import AsyncSessionLocal, get_db
 from backend.database.redis_client import get_redis
 from backend.models.task import TaskStatus

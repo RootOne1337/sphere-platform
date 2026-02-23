@@ -12,11 +12,10 @@ from fakeredis.aioredis import FakeRedis
 from httpx import ASGITransport, AsyncClient
 
 from backend.services.vpn.awg_config import AWGConfigBuilder
-from backend.services.vpn.dependencies import get_awg_config_builder, get_key_cipher
+from backend.services.vpn.dependencies import get_key_cipher
 from backend.services.vpn.event_publisher import EventPublisher
 from backend.services.vpn.ip_pool import IPPoolAllocator
 from backend.services.vpn.pool_service import VPNPoolService
-
 
 # ---------------------------------------------------------------------------
 # SPLIT-1 fixtures (unchanged)
@@ -96,7 +95,6 @@ async def vpn_admin_client(db_session, pool_redis, fernet_cipher, test_org) -> A
     from backend.core.dependencies import get_current_user
     from backend.database.engine import get_db
     from backend.database.redis_client import get_redis
-    from backend.services.vpn.dependencies import get_key_cipher
     from backend.main import app
 
     mock_user = SimpleNamespace(
@@ -129,7 +127,6 @@ async def vpn_manager_client(db_session, pool_redis, fernet_cipher, test_org) ->
     from backend.core.dependencies import get_current_user
     from backend.database.engine import get_db
     from backend.database.redis_client import get_redis
-    from backend.services.vpn.dependencies import get_key_cipher
     from backend.main import app
 
     mock_user = SimpleNamespace(

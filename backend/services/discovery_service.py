@@ -14,8 +14,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.models.device import Device
 from backend.schemas.devices import CreateDeviceRequest
 from backend.schemas.discovery import (
-    DiscoverRequest,
     DiscoveredDevice,
+    DiscoverRequest,
     DiscoverResponse,
 )
 from backend.services.device_service import DeviceService

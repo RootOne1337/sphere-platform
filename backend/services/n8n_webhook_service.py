@@ -213,7 +213,6 @@ class N8nWebhookService:
     async def _record_failure(
         self, webhook: Webhook, db: AsyncSession, error: str
     ) -> None:
-        from datetime import datetime, timezone
         webhook.failure_count = (webhook.failure_count or 0) + 1
         webhook.last_error = error
         db.add(webhook)

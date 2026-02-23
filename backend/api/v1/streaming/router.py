@@ -32,7 +32,6 @@ async def get_stream_status(
     bridge = get_stream_bridge()
     is_streaming = bridge.is_streaming(device_id) if bridge else False
     drop_ratio = bridge.get_drop_ratio(device_id) if bridge else 0.0
-    manager = get_connection_manager()
 
     return StreamStatusResponse(
         device_id=device_id,

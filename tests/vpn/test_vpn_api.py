@@ -5,7 +5,6 @@ import uuid
 from unittest.mock import AsyncMock, patch
 
 import pytest
-import pytest_asyncio
 
 from backend.models.vpn_peer import VPNPeer, VPNPeerStatus
 from backend.services.vpn.pool_service import VPNAssignment
@@ -53,6 +52,7 @@ class TestVPNAssignEndpoint:
     @pytest.mark.asyncio
     async def test_assign_unauthenticated_returns_401(self, test_device):
         from httpx import ASGITransport, AsyncClient
+
         from backend.main import app
 
         async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as client:
@@ -94,7 +94,6 @@ class TestVPNPeersEndpoint:
         self, vpn_admin_client, db_session, test_org, test_device
     ):
         # Create a peer in DB
-        from backend.services.vpn.dependencies import get_key_cipher
         from cryptography.fernet import Fernet
         cipher = Fernet(Fernet.generate_key())
         peer = VPNPeer(

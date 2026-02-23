@@ -2,8 +2,6 @@
 # Unit-тесты для IPPoolAllocator (FakeRedis).
 from __future__ import annotations
 
-import time
-
 import pytest
 import pytest_asyncio
 from fakeredis.aioredis import FakeRedis
@@ -90,7 +88,7 @@ async def test_pool_isolated_by_org(pool):
     assert await pool.pool_size("org-a") == 3
     assert await pool.pool_size("org-b") == 2
 
-    ip_a = await pool.allocate_ip("org-a")
+    _ = await pool.allocate_ip("org-a")
     assert await pool.pool_size("org-a") == 2
     assert await pool.pool_size("org-b") == 2  # не затронут
 

@@ -1,20 +1,20 @@
 # backend/schemas/vpn/__init__.py — TZ-06 VPN schemas
 from backend.schemas.vpn.config import (
-    AWGObfuscationParamsSchema,
-    AWGKeypairResponse,
     AWGConfigPreviewRequest,
     AWGConfigPreviewResponse,
+    AWGKeypairResponse,
+    AWGObfuscationParamsSchema,
 )
 from backend.schemas.vpn.peer import (
-    VPNAssignRequest,
-    VPNAssignResponse,
-    VPNPeerResponse,
-    VPNPoolStats,
-    VPNBulkRotateRequest,
-    VPNBulkRotateResponse,
-    RotateDetail,
     KillSwitchRequest,
     KillSwitchResponse,
+    RotateDetail,
+    VPNAssignRequest,
+    VPNAssignResponse,
+    VPNBulkRotateRequest,
+    VPNBulkRotateResponse,
+    VPNPeerResponse,
+    VPNPoolStats,
 )
 
 __all__ = [

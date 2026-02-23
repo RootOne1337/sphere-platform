@@ -18,10 +18,9 @@ from __future__ import annotations
 
 import asyncio
 import importlib
-from unittest.mock import AsyncMock, MagicMock, patch, call
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-
 
 # ---------------------------------------------------------------------------
 # Env fixtures (required для AgentConfig)
@@ -121,12 +120,12 @@ class TestLDPlayerActions:
     async def test_reboot_is_quit_then_launch(self, ldplayer):
         with (
             patch.object(ldplayer, "quit", AsyncMock()) as q,
-            patch.object(ldplayer, "launch", AsyncMock()) as l,
+            patch.object(ldplayer, "launch", AsyncMock()) as launch_mock,
             patch("asyncio.sleep", AsyncMock()),
         ):
             await ldplayer.reboot(1)
         q.assert_called_once_with(1)
-        l.assert_called_once_with(1)
+        launch_mock.assert_called_once_with(1)
 
     async def test_create_returns_index(self, ldplayer):
         from agent.models import InstanceStatus, LDPlayerInstance
@@ -155,11 +154,10 @@ class TestLDPlayerActions:
     async def test_run_app(self, ldplayer):
         with patch.object(ldplayer, "_run", AsyncMock()) as mock_run:
             await ldplayer.run_app(0, "com.example.app")
-        args = mock_run.call_args[0]
-        assert "runapp" in args
+        assert "runapp" in mock_run.call_args[0]
 
     async def test_exec_command_returns_output(self, ldplayer):
-        with patch.object(ldplayer, "_run", AsyncMock(return_value="OK")) as mock_run:
+        with patch.object(ldplayer, "_run", AsyncMock(return_value="OK")):
             out = await ldplayer.exec_command(0, "shell pm list packages")
         assert out == "OK"
 

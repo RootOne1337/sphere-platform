@@ -8,14 +8,13 @@ Unit-тесты для:
 from __future__ import annotations
 
 import asyncio
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 
 from backend.services.health_service import HealthService
-
 
 # ── Fixtures ──────────────────────────────────────────────────────────────────
 
@@ -205,8 +204,8 @@ async def test_readyz_503_when_db_down():
 @pytest.mark.asyncio
 async def test_readyz_200_when_healthy():
     """Если PG + Redis доступны — readyz возвращает 200."""
-    from backend.services.health_service import get_health_service
     from backend.main import app
+    from backend.services.health_service import get_health_service
 
     mock_svc = MagicMock()
     mock_svc.check_readiness = AsyncMock(return_value=True)
@@ -227,8 +226,8 @@ async def test_readyz_200_when_healthy():
 @pytest.mark.asyncio
 async def test_full_health_503_when_unhealthy():
     """Если хотя бы одна компонента down — /full возвращает 503."""
-    from backend.services.health_service import HealthService, SystemHealth, ComponentHealth, get_health_service
     from backend.main import app
+    from backend.services.health_service import ComponentHealth, SystemHealth, get_health_service
 
     mock_svc = MagicMock()
     mock_svc.check_all = AsyncMock(return_value=SystemHealth(

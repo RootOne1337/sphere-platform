@@ -7,9 +7,6 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from backend.models.task import TaskStatus
-
-
 # ── Запросы ──────────────────────────────────────────────────────────────────
 
 class CreateTaskRequest(BaseModel):

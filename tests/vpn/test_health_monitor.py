@@ -6,7 +6,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from backend.models.vpn_peer import VPNPeer, VPNPeerStatus
+from backend.models.vpn_peer import VPNPeer
 from backend.services.vpn.health_monitor import NoopCommandPublisher, VPNHealthMonitor
 
 

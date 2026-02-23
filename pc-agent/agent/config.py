@@ -2,7 +2,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class AgentConfig(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", env_prefix="SPHERE_")
+    model_config = SettingsConfigDict(env_file=".env", env_prefix="SPHERE_", extra="ignore")
 
     server_url: str = "ws://localhost:8000"  # wss://api.sphere.local
     agent_token: str = "changeme"            # токен агента (не пользовательский JWT)

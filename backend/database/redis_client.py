@@ -2,7 +2,7 @@
 import redis.asyncio as aioredis
 
 from backend.core.config import settings
-from backend.core.lifespan_registry import register_startup, register_shutdown
+from backend.core.lifespan_registry import register_shutdown, register_startup
 
 # Основной клиент (строки: JWT blacklist, rate-limit, статусы устройств)
 redis: aioredis.Redis | None = None
@@ -14,22 +14,18 @@ redis: aioredis.Redis | None = None
 redis_binary: aioredis.Redis | None = None
 
 
-async def get_redis() -> aioredis.Redis:
+async def get_redis() -> aioredis.Redis | None:
     """FastAPI dependency для Redis (строки: JWT blacklist, rate-limit, статусы устройств)."""
     return redis
 
 
-async def get_redis_binary() -> aioredis.Redis:
+async def get_redis_binary() -> aioredis.Redis | None:
     """FastAPI dependency для бинарного Redis (Pub/Sub H.264 NAL units, video stream)."""
     return redis_binary
 
 
 async def connect_redis() -> None:
     global redis, redis_binary
-
-    redis_kwargs = {
-        "encoding": "utf-8" if not settings.REDIS_PASSWORD else None,
-    }
 
     redis = aioredis.from_url(
         settings.REDIS_URL,
@@ -47,16 +43,16 @@ async def connect_redis() -> None:
         socket_connect_timeout=5.0,
     )
     # Проверяем соединение
-    await redis.ping()
-    await redis_binary.ping()
+    await redis.ping()  # type: ignore[misc]
+    await redis_binary.ping()  # type: ignore[misc]
 
 
 async def disconnect_redis() -> None:
     global redis, redis_binary
     if redis:
-        await redis.aclose()
+        await redis.aclose()  # type: ignore[misc]
     if redis_binary:
-        await redis_binary.aclose()
+        await redis_binary.aclose()  # type: ignore[misc]
 
 
 # Регистрируем хуки автоматически при импорте модуля

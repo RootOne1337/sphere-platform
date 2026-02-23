@@ -15,7 +15,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.config import settings
-from backend.core.dependencies import get_current_user, require_permission, require_role
+from backend.core.dependencies import require_permission, require_role
 from backend.database.engine import get_db
 from backend.database.redis_client import get_redis
 from backend.models.vpn_peer import VPNPeer, VPNPeerStatus
@@ -46,8 +46,7 @@ from backend.services.vpn.pool_service import VPNPoolService
 router = APIRouter(prefix="/vpn", tags=["vpn"])
 
 # Register background health loop (SPLIT-3) — side-effect on import
-import backend.tasks.vpn_health  # noqa: F401
-
+import backend.tasks.vpn_health  # noqa: F401, E402
 
 # ---------------------------------------------------------------------------
 # DI factories for SPLIT-2..5
@@ -148,14 +147,14 @@ async def assign_vpn(
 ) -> VPNAssignResponse:
     try:
         assignment = await pool_service.assign_vpn(
-            device_id=req.device_id,
+            device_id=str(req.device_id),
             org_id=current_user.org_id,
             split_tunnel=req.split_tunnel,
         )
         await db.commit()
         return VPNAssignResponse(
-            peer_id=assignment.peer_id,
-            device_id=assignment.device_id,
+            peer_id=uuid.UUID(assignment.peer_id),
+            device_id=uuid.UUID(assignment.device_id),
             assigned_ip=assignment.assigned_ip,
             public_key=assignment.public_key,
             config=assignment.config,
@@ -225,9 +224,9 @@ async def list_peers(
         VPNPeerResponse(
             id=p.id,
             device_id=p.device_id,
-            tunnel_ip=p.tunnel_ip,
+            assigned_ip=p.tunnel_ip,
             status=p.status.value if isinstance(p.status, VPNPeerStatus) else p.status,
-            vpn_active=bool(p.is_active and p.last_handshake_at and p.last_handshake_at > stale_threshold),
+            is_active=bool(p.is_active and p.last_handshake_at and p.last_handshake_at > stale_threshold),
             public_key=p.public_key,
             last_handshake_at=p.last_handshake_at,
             created_at=p.created_at,
@@ -318,9 +317,9 @@ async def bulk_rotate(
             )
             old_ip = peer.tunnel_ip if peer else None
 
-            await pool_service.revoke_vpn(dev_id, current_user.org_id)
+            await pool_service.revoke_vpn(str(dev_id), current_user.org_id)
             assignment = await pool_service.assign_vpn(
-                dev_id, current_user.org_id, split_tunnel=True
+                str(dev_id), current_user.org_id, split_tunnel=True
             )
             details.append(RotateDetail(
                 device_id=dev_id,

@@ -86,7 +86,6 @@ class HeartbeatManager:
     async def handle_pong(self, msg: dict) -> None:
         """Вызвать при получении pong от агента."""
         now = time.monotonic()
-        latency_ms = (now - self._last_pong) * 1000 if self._last_pong else None
         self._last_pong = now
 
         # Логировать latency для мониторинга

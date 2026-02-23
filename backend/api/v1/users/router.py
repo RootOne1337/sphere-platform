@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.core.dependencies import get_audit_service, get_current_user, require_roles
+from backend.core.dependencies import get_audit_service, require_roles
 from backend.core.security import hash_password
 from backend.database.engine import get_db
 from backend.models.user import User
@@ -46,20 +46,20 @@ async def list_users(
     db: AsyncSession = Depends(get_db),
 ):
     """Список пользователей org текущего пользователя (постраничный)."""
-    base_filter = (
+    base_filter = (  # type: ignore[assignment]
         (User.org_id == current_user.org_id)
         if current_user.role != "super_admin"
         else True
     )
 
     total_result = await db.execute(
-        select(func.count()).select_from(User).where(base_filter)
+        select(func.count()).select_from(User).where(base_filter)  # type: ignore[arg-type]
     )
     total = total_result.scalar_one()
 
     stmt = (
         select(User)
-        .where(base_filter)
+        .where(base_filter)  # type: ignore[arg-type]
         .order_by(User.created_at.desc())
         .offset((page - 1) * per_page)
         .limit(per_page)

@@ -1,5 +1,6 @@
 skips:
   - B101  # assert_used (OK в тестах)
+  - B104  # hardcoded_bind_all_interfaces (false-positive: "0.0.0.0" used as placeholder IP, not bind addr)
   - B601  # paramiko_calls (не используем)
 exclude_dirs:
   - tests/

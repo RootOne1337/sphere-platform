@@ -9,9 +9,9 @@ import secrets
 import structlog
 from fastapi import HTTPException
 
+from backend.core.lifespan_registry import register_shutdown, register_startup
 from backend.websocket.channels import ChannelPattern
 from backend.websocket.connection_manager import ConnectionManager, get_connection_manager
-from backend.core.lifespan_registry import register_startup, register_shutdown
 
 logger = structlog.get_logger()
 
@@ -70,6 +70,8 @@ class PubSubRouter:
 
     async def _listen_loop(self) -> None:
         """Основной цикл прослушивания Redis."""
+        if self._pubsub is None:
+            return
         try:
             async for message in self._pubsub.listen():
                 if message["type"] != "message":

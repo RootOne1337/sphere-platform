@@ -4,11 +4,8 @@ from __future__ import annotations
 
 import base64
 
-import pytest
-
 from backend.services.vpn.awg_config import AWGConfigBuilder, AWGObfuscationParams
 from backend.services.vpn.dependencies import decrypt_private_key, encrypt_private_key
-
 
 # ---------------------------------------------------------------------------
 # AWGObfuscationParams
@@ -177,7 +174,6 @@ def test_to_qr_code_is_non_empty(awg_builder: AWGConfigBuilder):
 # ---------------------------------------------------------------------------
 
 def test_encrypt_decrypt_private_key_roundtrip(fernet_cipher):
-    from cryptography.fernet import Fernet
 
     original = "dGVzdF9wcml2YXRlX2tleV9iYXNlNjRfcGFkZGluZz0="
     encrypted = encrypt_private_key(original, fernet_cipher)

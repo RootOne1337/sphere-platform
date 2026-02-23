@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisco
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.database.engine import get_db
-from backend.schemas.events import EventType, FleetEvent
+from backend.schemas.events import FleetEvent
 
 logger = structlog.get_logger()
 
@@ -79,6 +79,7 @@ def get_events_manager() -> EventsManager:
 async def authenticate_ws_token(token: str, db: AsyncSession):
     """Проверить JWT токен из first-message авторизации."""
     import uuid
+
     import jwt as pyjwt
 
     from backend.core.security import decode_access_token

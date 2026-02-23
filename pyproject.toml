@@ -1,0 +1,39 @@
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+ignore = [
+    "E501",   # line too long — handled by formatter
+]
+
+[tool.ruff.lint.per-file-ignores]
+# SQLAlchemy models use string-quoted forward references for relationships.
+# Ruff cannot resolve cross-model names without a full import graph; the
+# actual runtime behaviour is correct because SQLAlchemy resolves them lazily.
+"backend/models/*.py" = ["F821"]
+# Test files use assert (B101 parity) and pattern-match variables
+"tests/**" = ["E741", "F811"]
+
+[tool.mypy]
+python_version = "3.12"
+ignore_missing_imports = true
+explicit_package_bases = true
+
+[[tool.mypy.overrides]]
+module = "backend.models.*"
+ignore_errors = true   # SQLAlchemy forward-ref Mapped["ModelName"] — resolved at runtime
+
+[[tool.mypy.overrides]]
+module = "backend.services.discovery_service"
+ignore_errors = true  # send_command_wait_result exists but mypy can't resolve dynamically-added method
+
+[[tool.mypy.overrides]]
+module = ["backend.services.cache_service", "backend.services.health_service"]
+ignore_errors = true  # Redis | None false positives — Redis guaranteed at startup
+warn_unused_ignores = false
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import asyncio
 import secrets
+
 import structlog
-from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
-from fastapi import HTTPException
+from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.database.engine import get_db
@@ -20,8 +20,10 @@ router = APIRouter(tags=["streaming"])
 
 async def _authenticate_viewer(token: str, db: AsyncSession):
     """Re-use the JWT auth logic from ws/android router."""
-    import jwt as pyjwt
     import uuid
+
+    import jwt as pyjwt
+
     from backend.core.security import decode_access_token
     from backend.models.user import User
     from backend.services.cache_service import CacheService
@@ -86,6 +88,7 @@ async def stream_viewer_ws(
 
     # Verify device ownership
     import uuid as _uuid
+
     from backend.models.device import Device
     try:
         device_uuid = _uuid.UUID(device_id)

@@ -28,8 +28,8 @@ async def _collect_pool_metrics() -> None:
     while True:
         try:
             pool = engine.pool
-            db_pool_size.set(pool.size())
-            db_pool_checked_out.set(pool.checkedout())
+            db_pool_size.set(pool.size())  # type: ignore[attr-defined]
+            db_pool_checked_out.set(pool.checkedout())  # type: ignore[attr-defined]
         except Exception:
             logger.exception("pool_metrics.collect_error")
         await asyncio.sleep(_POLL_INTERVAL_SECONDS)

@@ -25,6 +25,9 @@ async def vpn_health_loop() -> None:
     while True:
         try:
             lock_value = str(uuid.uuid4())
+            if _redis is None:
+                await asyncio.sleep(60)
+                continue
             acquired = await _redis.set(
                 HEALTH_LOCK_KEY, lock_value, nx=True, ex=HEALTH_LOCK_TTL
             )
@@ -57,7 +60,6 @@ async def _run_health_checks() -> None:
     from backend.database.engine import get_db_session
     from backend.database.redis_client import redis as _redis
     from backend.models.organization import Organization
-    from backend.services.vpn.awg_config import AWGConfigBuilder
     from backend.services.vpn.dependencies import get_awg_config_builder, get_key_cipher
     from backend.services.vpn.event_publisher import EventPublisher
     from backend.services.vpn.health_monitor import VPNHealthMonitor

@@ -7,9 +7,8 @@
 # FIX 8.1: дублирующий WS endpoint УДАЛЁН — обработка через case в едином handler.
 from __future__ import annotations
 
-import json
 import asyncio
-from datetime import datetime, timezone
+import json
 
 import structlog
 from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
@@ -33,6 +32,7 @@ async def authenticate_agent_token(token: str, db: AsyncSession) -> APIKey:
     Отличие от JWT: не истекает через 15 мин, не нужен refresh-цикл.
     """
     import hashlib
+
     from sqlalchemy import select
 
     key_hash = hashlib.sha256(token.encode()).hexdigest()
@@ -104,7 +104,7 @@ async def handle_workstation_register(
 
         # Кэшируем топологию в Redis TTL 1h
         try:
-            redis = get_redis()
+            redis = await get_redis()
             if redis:
                 topology_key = f"topology:workstation:{workstation_id}"
                 await redis.setex(topology_key, 3600, json.dumps(payload))
@@ -135,7 +135,7 @@ async def handle_workstation_telemetry(
     FIX 8.1: обработка здесь, в едином WS handler — не в отдельном endpoint.
     """
     try:
-        redis = get_redis()
+        redis = await get_redis()
         if redis:
             key = f"workstation:telemetry:{workstation_id}"
             await redis.setex(key, 120, json.dumps(payload))
@@ -170,7 +170,7 @@ async def handle_agent_message(
             command_id = msg.get("command_id") or msg.get("id")
             if command_id:
                 try:
-                    redis = get_redis()
+                    redis = await get_redis()
                     if redis:
                         channel = f"sphere:agent:result:{workstation_id}:{command_id}"
                         await redis.publish(channel, json.dumps(msg))

@@ -125,7 +125,6 @@ class TestFleetEndpoints:
         self, status_client, status_devices, mock_redis
     ):
         # Pre-populate one device as online
-        import msgpack
         from fakeredis.aioredis import FakeRedis
 
         # Use a binary FakeRedis to write msgpack data
@@ -151,8 +150,8 @@ class TestFleetEndpoints:
         self, status_client, status_devices, db_session
     ):
         """Devices from other orgs should be silently excluded."""
-        from backend.models.organization import Organization
         from backend.models.device import Device
+        from backend.models.organization import Organization
 
         other_org = Organization(name="Other Status Org", slug="other-status-org")
         db_session.add(other_org)
@@ -179,7 +178,8 @@ class TestFleetEndpoints:
         assert data["total"] == len(status_devices)
 
     async def test_fleet_unauthenticated_401(self, status_devices):
-        from httpx import AsyncClient, ASGITransport
+        from httpx import ASGITransport, AsyncClient
+
         from backend.main import app
         async with AsyncClient(
             transport=ASGITransport(app=app), base_url="http://testserver"

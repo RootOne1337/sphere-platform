@@ -58,7 +58,7 @@ class HealthService:
 
         components: list[ComponentHealth] = []
         for i, result in enumerate(results):
-            if isinstance(result, Exception):
+            if isinstance(result, BaseException):
                 name = ("postgresql", "redis", "disk")[i]
                 components.append(ComponentHealth(
                     name=name,
@@ -67,7 +67,7 @@ class HealthService:
                     details={"error": str(result)},
                 ))
             else:
-                components.append(result)
+                components.append(result)  # type: ignore[arg-type]
 
         if any(c.status == "down" for c in components):
             overall = "unhealthy"

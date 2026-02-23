@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 import structlog
+
 from backend.metrics import (
-    stream_fps,
-    stream_bitrate_kbps,
-    stream_frame_drops_total,
-    stream_bytes_sent_total,
-    stream_keyframe_ratio,
     cleanup_stream_metrics,
+    stream_bytes_sent_total,
+    stream_fps,
+    stream_frame_drops_total,
+    stream_keyframe_ratio,
 )
 
 logger = structlog.get_logger()

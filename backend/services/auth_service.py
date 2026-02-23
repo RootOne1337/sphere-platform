@@ -165,7 +165,7 @@ class AuthService:
 
         from backend.services.mfa_service import MFAService
         mfa_svc = MFAService()
-        if not mfa_svc.verify_totp(user.mfa_secret, totp_code):
+        if not mfa_svc.verify_totp(user.mfa_secret or "", totp_code):
             raise InvalidCredentialsError()
 
         # Очистить state и выдать токены

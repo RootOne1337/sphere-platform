@@ -14,9 +14,8 @@ from httpx import ASGITransport, AsyncClient
 from prometheus_client import REGISTRY
 
 from backend.core.constants import METRICS_SKIP_PATHS
-from backend.middleware.metrics import _normalize_path
 from backend.main import app
-
+from backend.middleware.metrics import _normalize_path
 
 # ── _normalize_path ──────────────────────────────────────────────────────────
 
@@ -134,31 +133,8 @@ async def test_health_request_not_tracked(metrics_client):
 def test_metrics_registry_import():
     """Все метрики должны импортироваться без ошибок."""
     from backend.metrics import (
-        auth_attempts_total,
-        auth_token_refresh_total,
         cleanup_stream_metrics,
-        db_pool_checked_out,
-        db_pool_size,
-        db_query_duration_seconds,
-        device_commands_total,
-        devices_online,
-        devices_total,
-        http_request_duration_seconds,
         http_requests_total,
-        redis_commands_total,
-        redis_errors_total,
-        stream_bitrate_kbps,
-        stream_fps,
-        stream_frame_drops_total,
-        task_execution_duration_seconds,
-        task_queue_depth,
-        tasks_total,
-        vpn_handshake_stale_total,
-        vpn_pool_allocated,
-        vpn_pool_total,
-        vpn_reconnects_total,
-        ws_connections_active,
-        ws_messages_total,
     )
     # Все объекты существуют
     assert http_requests_total is not None

@@ -16,7 +16,6 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any
 
-import httpx
 import structlog
 from fastapi import HTTPException
 from sqlalchemy import select

@@ -12,17 +12,17 @@ from backend.core.dependencies import require_permission
 from backend.database.engine import get_db
 from backend.database.redis_client import get_redis
 from backend.models.user import User
+from backend.schemas.device_status import (
+    BulkStatusRequest,
+    FleetStatusResponse,
+    FleetSummaryResponse,
+)
 from backend.schemas.devices import (
     CreateDeviceRequest,
     DeviceListResponse,
     DeviceResponse,
     DeviceStatusResponse,
     UpdateDeviceRequest,
-)
-from backend.schemas.device_status import (
-    BulkStatusRequest,
-    FleetStatusResponse,
-    FleetSummaryResponse,
 )
 from backend.services.cache_service import CacheService
 from backend.services.device_service import DeviceService

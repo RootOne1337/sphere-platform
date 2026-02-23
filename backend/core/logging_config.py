@@ -33,7 +33,7 @@ def setup_logging() -> None:
     ]
 
     if settings.DEBUG:
-        renderer = structlog.dev.ConsoleRenderer(colors=True)
+        renderer: structlog.dev.ConsoleRenderer | structlog.processors.JSONRenderer = structlog.dev.ConsoleRenderer(colors=True)
     else:
         renderer = structlog.processors.JSONRenderer()
 

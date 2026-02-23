@@ -5,7 +5,7 @@ from __future__ import annotations
 import enum
 import uuid
 
-from sqlalchemy import ARRAY, Boolean, Enum, ForeignKey, String, Text
+from sqlalchemy import ARRAY, Boolean, Column, Enum, ForeignKey, String, Table, Text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -21,8 +21,7 @@ class DeviceStatus(str, enum.Enum):
     MAINTENANCE = "maintenance"
 
 
-# M2M: device <-> device_group
-from sqlalchemy import Table, Column
+# M2M association table: device <-> device_group
 device_group_members = Table(
     "device_group_members",
     Base.metadata,

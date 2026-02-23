@@ -5,10 +5,9 @@ from __future__ import annotations
 from unittest.mock import AsyncMock
 
 import pytest
-import pytest_asyncio
 
-from backend.schemas.events import EventType, FleetEvent
 from backend.api.ws.events.router import EventsManager, FrontendConnection
+from backend.schemas.events import EventType, FleetEvent
 from backend.websocket.event_publisher import EventPublisher
 
 

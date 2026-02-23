@@ -2,10 +2,9 @@
 # TZ-09 SPLIT-5 — Pydantic schemas for webhook CRUD API
 from __future__ import annotations
 
-import re
 from datetime import datetime
 
-from pydantic import BaseModel, HttpUrl, field_validator, model_validator
+from pydantic import BaseModel, HttpUrl, field_validator
 
 
 class WebhookCreate(BaseModel):

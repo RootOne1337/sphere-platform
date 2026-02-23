@@ -2,7 +2,8 @@
 # CRIT-3: lifespan_registry — решает проблему frozen main.py.
 # Каждый модуль регистрирует свои startup/shutdown хуки самостоятельно.
 # main.py не меняется при добавлении новых сервисов.
-from typing import Callable, Awaitable
+from typing import Awaitable, Callable
+
 import structlog
 
 logger = structlog.get_logger()

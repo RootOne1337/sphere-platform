@@ -3,14 +3,13 @@
 from __future__ import annotations
 
 import json
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock
 
-import pytest
 import pytest_asyncio
 
 from backend.websocket.channels import ChannelPattern
-from backend.websocket.pubsub_router import PubSubPublisher, PubSubRouter
 from backend.websocket.connection_manager import ConnectionManager
+from backend.websocket.pubsub_router import PubSubPublisher, PubSubRouter
 
 
 class TestChannelPattern:

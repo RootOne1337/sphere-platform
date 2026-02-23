@@ -13,15 +13,13 @@ import asyncio
 
 import pytest
 
-
 # ── lifespan_registry registration ──────────────────────────────────────────
 
 def test_pool_metrics_registers_startup_hook():
     """Импорт pool_metrics должен зарегистрировать startup hook."""
-    from backend.core.lifespan_registry import _startup_hooks  # noqa: PLC2701
-
     # Импортируем модуль (он регистрирует хуки при импорте)
     import backend.monitoring.pool_metrics  # noqa: F401
+    from backend.core.lifespan_registry import _startup_hooks  # noqa: PLC2701
 
     hook_names = [name for name, _ in _startup_hooks]
     assert "pool_metrics_collector" in hook_names
@@ -29,9 +27,8 @@ def test_pool_metrics_registers_startup_hook():
 
 def test_pool_metrics_registers_shutdown_hook():
     """Импорт pool_metrics должен зарегистрировать shutdown hook."""
-    from backend.core.lifespan_registry import _shutdown_hooks  # noqa: PLC2701
-
     import backend.monitoring.pool_metrics  # noqa: F401
+    from backend.core.lifespan_registry import _shutdown_hooks  # noqa: PLC2701
 
     hook_names = [name for name, _ in _shutdown_hooks]
     assert "pool_metrics_collector" in hook_names
@@ -64,7 +61,6 @@ async def test_collect_updates_gauges(monkeypatch):
             except asyncio.CancelledError:
                 pass
 
-    from backend.metrics import db_pool_checked_out, db_pool_size
 
     # После одной итерации Gauges должны быть обновлены
     collected = {m.name: list(m.samples) for m in __import__("prometheus_client").REGISTRY.collect()}

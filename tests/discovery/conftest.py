@@ -5,7 +5,6 @@ from __future__ import annotations
 from collections.abc import AsyncGenerator
 from unittest.mock import patch
 
-import pytest
 import pytest_asyncio
 from fakeredis.aioredis import FakeRedis
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
@@ -17,6 +16,7 @@ from backend.models import *  # noqa: F401,F403
 
 def _patch_missing_relationships() -> None:
     from sqlalchemy import inspect as sa_inspect
+
     from backend.models.device import Device
 
     try:
@@ -29,8 +29,9 @@ def _patch_missing_relationships() -> None:
             back_populates="devices",
         )
 
-    from backend.models.script import ScriptVersion
     from sqlalchemy.orm import RelationshipProperty
+
+    from backend.models.script import ScriptVersion
 
     for prop in ScriptVersion.__mapper__._props.values():  # type: ignore[attr-defined]
         if isinstance(prop, RelationshipProperty) and prop.key == "script":
@@ -117,6 +118,7 @@ async def disc_client(
     disc_org,
 ):
     from httpx import ASGITransport, AsyncClient
+
     from backend.core.security import create_access_token
     from backend.main import app
 

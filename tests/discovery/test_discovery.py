@@ -118,12 +118,14 @@ class TestDiscoveryScanEndpoint:
 
     async def test_viewer_cannot_scan(self, disc_org, db_session, mock_redis):
         """discovery requires device:write."""
-        from backend.models.user import User
-        from httpx import ASGITransport, AsyncClient
-        from backend.core.security import create_access_token
-        from backend.main import app
         from collections.abc import AsyncGenerator
         from unittest.mock import patch
+
+        from httpx import ASGITransport, AsyncClient
+
+        from backend.core.security import create_access_token
+        from backend.main import app
+        from backend.models.user import User
 
         viewer = User(
             org_id=disc_org.id,
@@ -169,7 +171,8 @@ class TestDiscoveryScanEndpoint:
         assert resp.status_code == 403
 
     async def test_unauthenticated_401(self):
-        from httpx import AsyncClient, ASGITransport
+        from httpx import ASGITransport, AsyncClient
+
         from backend.main import app
         async with AsyncClient(
             transport=ASGITransport(app=app), base_url="http://testserver"
@@ -187,8 +190,10 @@ class TestDiscoveryScanEndpoint:
         self, disc_client, disc_workstation, db_session, disc_org
     ):
         """If a device with matching serial exists, already_registered=True."""
+        from unittest.mock import AsyncMock
+        from unittest.mock import patch as mock_patch
+
         from backend.models.device import Device
-        from unittest.mock import AsyncMock, patch as mock_patch
 
         serial = "192.168.99.50:5555"
         existing = Device(
@@ -204,7 +209,7 @@ class TestDiscoveryScanEndpoint:
         mock_devices = [{"ip": "192.168.99.50", "port": 5555, "model": "Pixel", "android_version": "12"}]
 
         with mock_patch(
-            "backend.services.discovery_service.DiscoveryService._stub_discover_devices",
+            "backend.services.discovery_service.DiscoveryService._discover_devices_via_agent",
             new=AsyncMock(return_value=mock_devices),
         ):
             resp = await disc_client.post(
@@ -225,5 +230,5 @@ class TestDiscoveryScanEndpoint:
 
 
 # Fix missing import in viewer test
-from backend.database.engine import get_db
-from backend.database.redis_client import get_redis
+from backend.database.engine import get_db  # noqa: E402
+from backend.database.redis_client import get_redis  # noqa: E402

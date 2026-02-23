@@ -21,7 +21,6 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
@@ -52,9 +51,9 @@ def ws_client(_patch_env):
 
 @pytest.fixture()
 def dispatcher():
+    from agent.adb_bridge import AdbBridgeManager
     from agent.dispatcher import CommandDispatcher
     from agent.ldplayer import LDPlayerManager
-    from agent.adb_bridge import AdbBridgeManager
 
     ldp = LDPlayerManager()
     adb = AdbBridgeManager(ldp)

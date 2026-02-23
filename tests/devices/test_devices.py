@@ -7,12 +7,10 @@ import time
 import uuid
 
 import pytest
-import pytest_asyncio
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.schemas.devices import CreateDeviceRequest, UpdateDeviceRequest
-
+from backend.schemas.devices import CreateDeviceRequest
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # Unit tests: Schema validation (без БД)
@@ -269,6 +267,7 @@ class TestDevicesCRUD:
     async def test_unauthenticated_request_401(self):
         """Без токена → 401."""
         from httpx import ASGITransport, AsyncClient
+
         from backend.main import app
 
         async with AsyncClient(

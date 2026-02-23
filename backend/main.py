@@ -5,11 +5,11 @@ import json
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-import backend.core.logging_config  # noqa: F401 — TZ-11 SPLIT-4: module-level structlog init
-
 from fastapi import FastAPI
-from starlette_exporter import PrometheusMiddleware as _StarlettePrometheus, handle_metrics
+from starlette_exporter import PrometheusMiddleware as _StarlettePrometheus
+from starlette_exporter import handle_metrics
 
+import backend.core.logging_config  # noqa: F401 — TZ-11 SPLIT-4: module-level structlog init
 from backend.core.cors import setup_cors
 from backend.middleware.metrics import PrometheusMiddleware
 from backend.middleware.request_id import RequestIdMiddleware
@@ -25,8 +25,7 @@ async def lifespan(app: FastAPI):
     # Остальные модули регистрируют свои хуки при импорте router.py
     import backend.database.redis_client  # noqa: F401
     import backend.monitoring.pool_metrics  # noqa: F401 — регистрирует DB pool collector
-
-    from backend.core.lifespan_registry import run_all_startup, run_all_shutdown
+    from backend.core.lifespan_registry import run_all_shutdown, run_all_startup
 
     await run_all_startup()
 

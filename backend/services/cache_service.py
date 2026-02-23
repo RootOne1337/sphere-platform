@@ -3,9 +3,6 @@
 # TZ-03 WebSocket Layer и TZ-02 Device Registry расширяют этот модуль.
 from __future__ import annotations
 
-import json
-from typing import Any
-
 from backend.database.redis_client import get_redis
 
 

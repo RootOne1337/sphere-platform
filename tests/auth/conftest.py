@@ -19,6 +19,7 @@ def _patch_missing_relationships() -> None:
     Без этого pytest падает с InvalidRequestError при первом создании ORM-объекта.
     """
     from sqlalchemy import inspect as sa_inspect
+
     from backend.models.device import Device
 
     try:

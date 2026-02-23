@@ -3,8 +3,8 @@
 # ВАЖНО: Этот модуль — папка android/router.py (авто-дискавери main.py требует структуру пакета)
 from __future__ import annotations
 
-import json
 import asyncio
+import json
 
 import structlog
 from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
@@ -27,11 +27,13 @@ async def authenticate_ws_token(token: str, db: AsyncSession):
     Проверить JWT токен из first-message WebSocket авторизации.
     Не использует OAuth2 Bearer в URL (безопасно от логирования).
     """
+    import uuid
+
     import jwt as pyjwt
+    from fastapi import HTTPException
+
     from backend.core.security import decode_access_token
     from backend.models.user import User
-    import uuid
-    from fastapi import HTTPException
 
     try:
         payload = decode_access_token(token)
@@ -111,7 +113,7 @@ async def handle_device_event(device_id: str, msg: dict) -> None:
         from backend.websocket.event_publisher import get_event_publisher
         publisher = get_event_publisher()
         if publisher:
-            from backend.schemas.events import FleetEvent, EventType
+            from backend.schemas.events import EventType, FleetEvent
             await publisher.emit(FleetEvent(
                 event_type=EventType.DEVICE_STATUS_CHANGE,
                 device_id=device_id,
@@ -201,8 +203,8 @@ async def android_agent_ws(
 
     # Опубликовать device.online событие (SPLIT-5)
     try:
+        from backend.schemas.events import EventType, FleetEvent
         from backend.websocket.event_publisher import get_event_publisher
-        from backend.schemas.events import FleetEvent, EventType
         publisher = get_event_publisher()
         if publisher:
             await publisher.emit(FleetEvent(
@@ -245,8 +247,8 @@ async def android_agent_ws(
 
         # Опубликовать device.offline событие
         try:
+            from backend.schemas.events import EventType, FleetEvent
             from backend.websocket.event_publisher import get_event_publisher
-            from backend.schemas.events import FleetEvent, EventType
             publisher = get_event_publisher()
             if publisher:
                 await publisher.emit(FleetEvent(

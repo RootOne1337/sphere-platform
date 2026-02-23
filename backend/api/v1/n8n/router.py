@@ -3,13 +3,11 @@
 from __future__ import annotations
 
 import uuid
-from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.core.dependencies import get_db, get_current_user
+from backend.core.dependencies import get_current_user, get_db
 from backend.models.task import Task, TaskStatus
 from backend.models.webhook import Webhook
 from backend.schemas.webhook import (

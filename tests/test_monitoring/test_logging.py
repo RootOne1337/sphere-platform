@@ -7,17 +7,14 @@ Unit-тесты для:
 """
 from __future__ import annotations
 
-import io
-import json
 import logging
+from unittest.mock import MagicMock
 
 import pytest
 import structlog
 from httpx import ASGITransport, AsyncClient
-from unittest.mock import MagicMock
 
 from backend.main import app
-
 
 # ── setup_logging ─────────────────────────────────────────────────────────────
 
@@ -62,7 +59,6 @@ def test_context_vars_appear_in_log(capsys):
 
 @pytest.fixture
 def anon_client():
-    import httpx
     return AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver")
 
 
@@ -105,6 +101,7 @@ async def test_request_id_generated_when_absent():
 def test_bind_user_context_binds_fields():
     """bind_user_context должна добавлять org_id, user_id, role в structlog context."""
     import uuid
+
     from backend.middleware.logging_context import bind_user_context
 
     user = MagicMock()

@@ -4,10 +4,8 @@ from __future__ import annotations
 
 import re
 import uuid
-from typing import Any
 
 from pydantic import BaseModel, Field, field_validator
-
 
 COLOR_PATTERN = re.compile(r"^#[0-9A-Fa-f]{6}$")
 

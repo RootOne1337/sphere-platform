@@ -61,10 +61,7 @@ class VPNPoolService:
     async def close(self) -> None:
         await self._http.aclose()
 
-    async def aclose(self) -> None:
-        await self.close()
-
-    # alias for asyncio/httpx convention
+    # aclose is an alias for close — supports both asyncio and httpx teardown conventions
     aclose = close
 
     # ------------------------------------------------------------------

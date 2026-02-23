@@ -2,7 +2,6 @@
 # ВЛАДЕЛЕЦ: TZ-02 SPLIT-3. Redis-backed device status cache with msgpack serialization.
 from __future__ import annotations
 
-import uuid
 from typing import Any
 
 import msgpack

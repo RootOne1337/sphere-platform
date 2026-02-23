@@ -11,8 +11,6 @@
 #   dag.nodes        — list[DAGNode], НЕ dict/map
 from __future__ import annotations
 
-import re
-import sys
 from typing import Annotated, Literal, Union
 
 from pydantic import BaseModel, Field, model_validator

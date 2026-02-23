@@ -10,8 +10,6 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import AsyncGenerator
-from typing import Any
-from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 import pytest_asyncio
@@ -19,13 +17,12 @@ from fakeredis.aioredis import FakeRedis
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy import event
 from sqlalchemy.dialects.sqlite.base import SQLiteTypeCompiler
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
 from backend.database.engine import Base, get_db
 from backend.database.redis_client import get_redis
 from backend.main import app
 from backend.models import *  # noqa: F401,F403 — side-effect: registers all mappers
-
 
 # ---------------------------------------------------------------------------
 # SQLite compat: render PostgreSQL-only types as TEXT

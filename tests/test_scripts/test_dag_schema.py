@@ -2,7 +2,6 @@
 # SPLIT-1 критерии готовности + MERGE-3 DAG contract tests.
 from __future__ import annotations
 
-import json
 import time
 
 import pytest
@@ -13,12 +12,10 @@ from backend.schemas.dag import (
     ConditionAction,
     DAGNode,
     DAGScript,
-    EndAction,
     StartAction,
     TapAction,
 )
 from backend.services.lua_safety import check_lua_safety
-
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -204,7 +201,7 @@ class TestLuaSafety:
         assert violations
 
     def test_load_is_blocked(self):
-        violations = check_lua_safety("load('return os.execute()')") 
+        violations = check_lua_safety("load('return os.execute()')")
         assert violations
 
     def test_safe_lua_code_passes(self):

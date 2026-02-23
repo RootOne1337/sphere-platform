@@ -1,17 +1,11 @@
 ﻿# tests/vpn/test_pool_service.py  TZ-06 SPLIT-2
 from __future__ import annotations
 
-import uuid
 from unittest.mock import AsyncMock
 
 import pytest
-import pytest_asyncio
-from cryptography.fernet import Fernet
 
 from backend.models.vpn_peer import VPNPeer, VPNPeerStatus
-from backend.services.vpn.ip_pool import IPPoolAllocator
-from backend.services.vpn.pool_service import VPNPoolService
-
 
 # ---------------------------------------------------------------------------
 # IPPoolAllocator unit tests
