@@ -9,10 +9,12 @@ import {
   Code2,
   LayoutDashboard,
   LogOut,
+  BarChart3,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const NAV_ITEMS = [
+  { href: '/dashboard', label: 'Dashboard', icon: BarChart3 },
   { href: '/devices', label: 'Devices', icon: LayoutDashboard },
   { href: '/stream', label: 'Remote View', icon: Monitor },
   { href: '/vpn', label: 'VPN', icon: Wifi },

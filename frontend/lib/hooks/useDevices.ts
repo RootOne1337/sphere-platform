@@ -32,10 +32,15 @@ export function useDevices(params: {
   group_id?: string;
   search?: string;
 }) {
+  const apiParams = {
+    ...params,
+    per_page: params.page_size,
+    page_size: undefined,
+  };
   return useQuery<DevicesResponse>({
     queryKey: ['devices', params],
     queryFn: async () => {
-      const { data } = await api.get('/devices', { params });
+      const { data } = await api.get('/devices', { params: apiParams });
       return data;
     },
     staleTime: 15_000,

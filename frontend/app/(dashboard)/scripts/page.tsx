@@ -19,7 +19,7 @@ export default function ScriptsPage() {
     queryKey: ['scripts'],
     queryFn: async () => {
       const { data } = await api.get('/scripts');
-      return data;
+      return Array.isArray(data) ? data : (data.items ?? []);
     },
   });
 
