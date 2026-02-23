@@ -44,9 +44,24 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     # === ENUMs ===
-    op.execute("CREATE TYPE device_status_enum AS ENUM ('online', 'offline', 'busy', 'error', 'maintenance')")
-    op.execute("CREATE TYPE task_status_enum AS ENUM ('queued', 'assigned', 'running', 'completed', 'failed', 'timeout', 'cancelled')")
-    op.execute("CREATE TYPE task_batch_status_enum AS ENUM ('pending', 'running', 'completed', 'partial', 'failed', 'cancelled')")
+    op.execute("""
+        DO $$ BEGIN
+            CREATE TYPE device_status_enum AS ENUM ('online', 'offline', 'busy', 'error', 'maintenance');
+        EXCEPTION WHEN duplicate_object THEN NULL;
+        END $$;
+    """)
+    op.execute("""
+        DO $$ BEGIN
+            CREATE TYPE task_status_enum AS ENUM ('queued', 'assigned', 'running', 'completed', 'failed', 'timeout', 'cancelled');
+        EXCEPTION WHEN duplicate_object THEN NULL;
+        END $$;
+    """)
+    op.execute("""
+        DO $$ BEGIN
+            CREATE TYPE task_batch_status_enum AS ENUM ('pending', 'running', 'completed', 'partial', 'failed', 'cancelled');
+        EXCEPTION WHEN duplicate_object THEN NULL;
+        END $$;
+    """)
 
     # === organizations ===
     op.create_table(
@@ -203,7 +218,7 @@ def upgrade() -> None:
         sa.Column("model", sa.String(255), nullable=True),
         sa.Column("tags", postgresql.ARRAY(sa.String()), server_default="{}"),
         sa.Column("is_active", sa.Boolean(), nullable=False, server_default="true"),
-        sa.Column("last_status", sa.Enum("online", "offline", "busy", "error", "maintenance", name="device_status_enum"), nullable=False, server_default="offline"),
+        sa.Column("last_status", postgresql.ENUM("online", "offline", "busy", "error", "maintenance", name="device_status_enum", create_type=False), nullable=False, server_default="offline"),
         sa.Column("meta", postgresql.JSONB(), server_default="{}", nullable=False),
         sa.Column("notes", sa.Text(), nullable=True),
         sa.ForeignKeyConstraint(["org_id"], ["organizations.id"]),
@@ -297,7 +312,7 @@ def upgrade() -> None:
         sa.Column("org_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("script_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("name", sa.String(255), nullable=True),
-        sa.Column("status", sa.Enum("pending", "running", "completed", "partial", "failed", "cancelled", name="task_batch_status_enum"), nullable=False, server_default="pending"),
+        sa.Column("status", postgresql.ENUM("pending", "running", "completed", "partial", "failed", "cancelled", name="task_batch_status_enum", create_type=False), nullable=False, server_default="pending"),
         sa.Column("wave_config", postgresql.JSONB(), server_default="{}", nullable=False),
         sa.Column("total", sa.Integer(), nullable=False, server_default="0"),
         sa.Column("succeeded", sa.Integer(), nullable=False, server_default="0"),
@@ -323,7 +338,7 @@ def upgrade() -> None:
         sa.Column("script_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("batch_id", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("script_version_id", postgresql.UUID(as_uuid=True), nullable=True),
-        sa.Column("status", sa.Enum("queued", "assigned", "running", "completed", "failed", "timeout", "cancelled", name="task_status_enum"), nullable=False, server_default="queued"),
+        sa.Column("status", postgresql.ENUM("queued", "assigned", "running", "completed", "failed", "timeout", "cancelled", name="task_status_enum", create_type=False), nullable=False, server_default="queued"),
         sa.Column("priority", sa.Integer(), nullable=False, server_default="5"),
         sa.Column("started_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("finished_at", sa.DateTime(timezone=True), nullable=True),

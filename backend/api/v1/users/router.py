@@ -188,6 +188,7 @@ async def update_user_role(
 @router.patch(
     "/{user_id}/deactivate",
     status_code=status.HTTP_204_NO_CONTENT,
+    response_model=None,
     summary="Деактивировать пользователя",
 )
 async def deactivate_user(

@@ -178,6 +178,7 @@ async def update_device(
 @router.delete(
     "/{device_id}",
     status_code=204,
+    response_model=None,
     summary="Удалить устройство",
 )
 async def delete_device(
@@ -210,6 +211,7 @@ async def get_device_status(
 @router.post(
     "/{device_id}/connect",
     status_code=204,
+    response_model=None,
     summary="Инициировать ADB подключение через PC Agent (TZ-03 stub)",
 )
 async def connect_device(

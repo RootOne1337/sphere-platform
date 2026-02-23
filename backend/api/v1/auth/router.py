@@ -165,6 +165,7 @@ async def refresh(
 @router.post(
     "/logout",
     status_code=status.HTTP_204_NO_CONTENT,
+    response_model=None,
     summary="Logout: инвалидировать токены",
 )
 async def logout(
@@ -274,6 +275,7 @@ async def mfa_verify_setup(
 @router.delete(
     "/mfa",
     status_code=status.HTTP_204_NO_CONTENT,
+    response_model=None,
     summary="SPLIT-2: Отключить MFA",
 )
 async def mfa_disable(
@@ -345,6 +347,7 @@ async def list_api_keys(
 @router.delete(
     "/api-keys/{key_id}",
     status_code=status.HTTP_204_NO_CONTENT,
+    response_model=None,
     summary="SPLIT-4: Отозвать API ключ",
 )
 async def revoke_api_key(
