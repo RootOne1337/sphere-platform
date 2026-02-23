@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     REDIS_PASSWORD: str = ""
 
     # Auth
-    JWT_SECRET_KEY: str = Field(default="changeme_jwt_secret_key_at_least_32_chars")
+    JWT_SECRET_KEY: str = Field(...)  # Required — no default; set via env/secrets
     JWT_ALGORITHM: str = "HS256"
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     JWT_REFRESH_TOKEN_EXPIRE_DAYS: int = 7
@@ -60,8 +60,11 @@ class Settings(BaseSettings):
     @field_validator("JWT_SECRET_KEY")
     @classmethod
     def validate_jwt_secret(cls, v: str) -> str:
-        if v.startswith("CHANGE_ME") or len(v) < 32:
-            raise ValueError("JWT_SECRET_KEY must be set to a secure random value of at least 32 chars")
+        insecure_patterns = ("change_me", "changeme", "default", "example", "secret", "password")
+        if len(v) < 32:
+            raise ValueError("JWT_SECRET_KEY must be at least 32 characters")
+        if any(v.lower().startswith(pat) for pat in insecure_patterns):
+            raise ValueError("JWT_SECRET_KEY must be set to a secure random value — do not use default/example values")
         return v
 
     @field_validator("REDIS_PASSWORD", mode="before")

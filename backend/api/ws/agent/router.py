@@ -32,10 +32,12 @@ async def authenticate_agent_token(token: str, db: AsyncSession) -> APIKey:
     Отличие от JWT: не истекает через 15 мин, не нужен refresh-цикл.
     """
     import hashlib
+    from datetime import datetime, timezone
 
     from sqlalchemy import select
 
     key_hash = hashlib.sha256(token.encode()).hexdigest()
+    now = datetime.now(timezone.utc)
     result = await db.execute(
         select(APIKey).where(
             APIKey.key_hash == key_hash,
@@ -46,6 +48,9 @@ async def authenticate_agent_token(token: str, db: AsyncSession) -> APIKey:
     api_key = result.scalar_one_or_none()
     if not api_key:
         raise ValueError("Invalid or inactive agent token")
+    # F-04: проверка срока действия токена
+    if api_key.expires_at is not None and api_key.expires_at < now:
+        raise ValueError("Agent token has expired")
     return api_key
 
 

@@ -104,20 +104,33 @@ async def authenticate_ws_token(token: str, db: AsyncSession):
 
 
 async def get_fleet_snapshot(org_id: str) -> dict:
-    """Получить текущий снапшот fleet для первичной отправки при подключении."""
+    """Получить текущий снапшот fleet только для устройств данной организации."""
     try:
+        from sqlalchemy import select
+
+        from backend.database.engine import AsyncSessionLocal
         from backend.database.redis_client import redis
+        from backend.models.device import Device
         from backend.services.device_status_cache import DeviceStatusCache
+
         if not redis:
             return {}
         cache = DeviceStatusCache(redis)
-        device_ids = await cache.get_all_tracked_device_ids()
-        # Отфильтровать только устройства организации через bulk_get
-        # (упрощённо — в реальной системе нужна фильтрация по org_id через DB)
-        statuses = await cache.bulk_get_status(device_ids)
+
+        # Получаем только device_ids, принадлежащие данной org (tenant-safe)
+        async with AsyncSessionLocal() as db:
+            result = await db.execute(
+                select(Device.id).where(Device.org_id == org_id)
+            )
+            org_device_ids = [str(row[0]) for row in result.all()]
+
+        if not org_device_ids:
+            return {"total": 0, "online": 0, "devices": {}}
+
+        statuses = await cache.bulk_get_status(org_device_ids)
         online = sum(1 for s in statuses.values() if s and s.status == "online")
         return {
-            "total": len(device_ids),
+            "total": len(org_device_ids),
             "online": online,
             "devices": {
                 did: s.model_dump(mode="json") if s else None

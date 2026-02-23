@@ -2509,6 +2509,11 @@
         "summary": "Get Stream Status",
         "description": "Returns current streaming status for a device.",
         "operationId": "get_stream_status_api_v1_streaming__device_id__status_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "device_id",
@@ -2552,6 +2557,11 @@
         "summary": "Request Stream Start",
         "description": "Send start_stream command to the Android agent.\nNormally the viewer WS endpoint triggers this automatically;\nthis REST endpoint is for manual/testing purposes.",
         "operationId": "request_stream_start_api_v1_streaming__device_id__start_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "device_id",
@@ -2596,6 +2606,11 @@
         "summary": "Request Stream Stop",
         "description": "Send stop_stream command to the Android agent.",
         "operationId": "request_stream_stop_api_v1_streaming__device_id__stop_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "device_id",
@@ -2640,6 +2655,11 @@
         "summary": "Request Keyframe",
         "description": "Request an immediate I-frame (for viewer reconnect recovery).",
         "operationId": "request_keyframe_api_v1_streaming__device_id__keyframe_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "device_id",

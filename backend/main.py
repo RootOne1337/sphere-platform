@@ -29,6 +29,10 @@ async def lifespan(app: FastAPI):
 
     await run_all_startup()
 
+    # F-02: fail-fast if backend DB user is a PostgreSQL superuser (bypasses RLS)
+    from backend.core.startup_checks import check_db_role_not_superuser
+    await check_db_role_not_superuser()
+
     # PROC-4: экспорт OpenAPI schema для TZ-10 (frontend типы через openapi-typescript)
     Path("openapi.json").write_text(
         json.dumps(app.openapi(), indent=2, ensure_ascii=False)
