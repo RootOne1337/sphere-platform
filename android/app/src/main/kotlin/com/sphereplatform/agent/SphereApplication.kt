@@ -1,15 +1,5 @@
 package com.sphereplatform.agent
 
-import android.app.Application
-import dagger.hilt.android.HiltAndroidApp
-import timber.log.Timber
-
-@HiltAndroidApp
-class SphereApplication : Application() {
-    override fun onCreate() {
-        super.onCreate()
-        if (BuildConfig.DEBUG) {
-            Timber.plant(Timber.DebugTree())
-        }
-    }
-}
+// This file is intentionally left empty.
+// The Application class is SphereApp.kt (with WorkManager + Hilt integration).
+// See SphereApp.kt for the canonical @HiltAndroidApp entry point.

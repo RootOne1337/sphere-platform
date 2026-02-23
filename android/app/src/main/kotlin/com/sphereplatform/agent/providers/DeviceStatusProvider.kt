@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.BatteryManager
 import android.os.PowerManager
+import com.sphereplatform.agent.vpn.SphereVpnManager
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -18,6 +19,7 @@ import javax.inject.Singleton
 @Singleton
 class DeviceStatusProvider @Inject constructor(
     @ApplicationContext private val context: Context,
+    private val vpnManager: SphereVpnManager,
 ) {
     /** Уровень заряда 0–100, -1 если недоступно. */
     fun getBatteryLevel(): Int {
@@ -61,6 +63,6 @@ class DeviceStatusProvider @Inject constructor(
         return pm.isInteractive
     }
 
-    /** VPN активен? (SphereVpnManager предоставляет реальное значение после интеграции TZ-06) */
-    fun isVpnActive(): Boolean = false
+    /** VPN активен? Делегируется в SphereVpnManager. */
+    fun isVpnActive(): Boolean = vpnManager.isActive()
 }
