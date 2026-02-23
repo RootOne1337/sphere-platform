@@ -146,6 +146,15 @@ class DagRunner @Inject constructor(
             luaEngine.executeWithTimeout(code, ctx)
         }
 
+        // Evaluates a Lua expression; result is used by resolveNextNode to pick true/false branch.
+        // The Lua code must return a boolean (truthy/falsy values are coerced).
+        "Condition" -> {
+            val code = node["code"]!!.jsonPrimitive.content
+            val result = luaEngine.executeWithTimeout(code, ctx)
+            // Normalise to Boolean: null/false → false, anything else → true
+            result as? Boolean ?: (result != null && result != false)
+        }
+
         "End" -> null
 
         else -> throw UnsupportedOperationException("Node type '$type' not implemented")

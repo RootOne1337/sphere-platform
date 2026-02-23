@@ -30,6 +30,13 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <!-- QR-code / deep-link enrollment: sphere://enroll?server=…&key=…&device=… -->
+            <intent-filter android:autoVerify="false">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="sphere" android:host="enroll" />
+            </intent-filter>
         </activity>
 
         <!-- ─── Foreground Service ───────────────────────────────────────── -->

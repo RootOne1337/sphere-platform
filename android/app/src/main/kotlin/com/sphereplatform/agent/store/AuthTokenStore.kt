@@ -113,6 +113,18 @@ class AuthTokenStore @Inject constructor(
             .apply()
     }
 
+    /**
+     * Saves a static API key as the agent's auth token (no expiry / no refresh).
+     * Used during device enrollment from [com.sphereplatform.agent.ui.SetupActivity].
+     */
+    fun saveApiKey(apiKey: String) {
+        prefs.edit()
+            .putString(KEY_ACCESS_TOKEN, apiKey)
+            .remove(KEY_REFRESH_TOKEN)
+            .putLong(KEY_ACCESS_TOKEN_EXPIRES_AT, Long.MAX_VALUE)
+            .apply()
+    }
+
     fun clearTokens() {
         prefs.edit()
             .remove(KEY_ACCESS_TOKEN)

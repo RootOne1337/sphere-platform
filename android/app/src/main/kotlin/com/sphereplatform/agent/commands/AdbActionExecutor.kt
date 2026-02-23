@@ -35,6 +35,7 @@ class AdbActionExecutor @Inject constructor(
     companion object {
         // Запрещаем: ; | & $ ` ( ) { } < > \ ! # ~ и переводы строк
         private val SHELL_INJECTION_PATTERN = Regex("""[;|&${'$'}`(){}\\<>!\n\r#~]""")
+        private const val SHELL_TIMEOUT_SECONDS = 30L
     }
 
     private val rootProcess: Process by lazy {
@@ -120,6 +121,11 @@ class AdbActionExecutor @Inject constructor(
         }
         return withContext(Dispatchers.IO) {
             val process = Runtime.getRuntime().exec(arrayOf("su", "-c", command))
+            val finished = process.waitFor(SHELL_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+            if (!finished) {
+                process.destroyForcibly()
+                error("Shell command timed out after ${SHELL_TIMEOUT_SECONDS}s: $command")
+            }
             process.inputStream.bufferedReader().readText()
         }
     }
