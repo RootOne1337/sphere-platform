@@ -4,8 +4,8 @@
 
 **Enterprise Android Device Management & Remote Control Platform**
 
-[![CI Backend](https://github.com/your-org/sphere-platform/actions/workflows/ci-backend.yml/badge.svg)](https://github.com/your-org/sphere-platform/actions)
-[![CI Android](https://github.com/your-org/sphere-platform/actions/workflows/ci-android.yml/badge.svg)](https://github.com/your-org/sphere-platform/actions)
+[![CI Backend](https://github.com/RootOne1337/sphere-platform/actions/workflows/ci-backend.yml/badge.svg)](https://github.com/RootOne1337/sphere-platform/actions)
+[![CI Android](https://github.com/RootOne1337/sphere-platform/actions/workflows/ci-android.yml/badge.svg)](https://github.com/RootOne1337/sphere-platform/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/version-4.0.0-brightgreen.svg)](VERSION)
 
@@ -91,7 +91,7 @@ Android Agent                      PC Agent
 ### 1 — Clone and generate secrets
 
 ```bash
-git clone https://github.com/your-org/sphere-platform.git
+git clone https://github.com/RootOne1337/sphere-platform.git
 cd sphere-platform
 python scripts/generate_secrets.py          # writes .env.local
 ```
@@ -183,7 +183,7 @@ sphere-platform/
 | ORM | SQLAlchemy 2.0 async |
 | Database | PostgreSQL 15 |
 | Cache / Broker | Redis 7.2 |
-| Auth | JWT (HS256) + TOTP MFA |
+| Auth | JWT HS256 (access + refresh) + TOTP MFA |
 | Task Queue | Celery + Redis |
 | Metrics | Prometheus + structlog |
 | Migrations | Alembic |
@@ -233,6 +233,8 @@ sphere-platform/
 | [Contributing](CONTRIBUTING.md) | How to contribute, branch strategy, PR process |
 | [Security Policy](SECURITY.md) | Vulnerability reporting process |
 | [Changelog](CHANGELOG.md) | Release history |
+| [ADR](docs/adr/) | Architecture Decision Records |
+| [Runbooks](docs/runbooks/) | Operational incident response runbooks |
 
 ---
 

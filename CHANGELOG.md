@@ -6,11 +6,17 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [Unreleased] — develop → main
+## [Unreleased]
+
+_No unreleased changes yet._
+
+---
+
+## [4.0.0] — 2026-02-23
 
 ### Summary
-Gap-analysis response pass: 255 files changed, 25 779 insertions, 119 deletions.
-All TZ-00 … TZ-11 technical specifications implemented and integrated into `develop`.
+Initial v4.0.0 platform release: full TZ-00 … TZ-11 implementation integrated into `develop`.
+255 files changed, 25 779 insertions, 119 deletions across all subsystems.
 
 ---
 
@@ -26,9 +32,9 @@ All TZ-00 … TZ-11 technical specifications implemented and integrated into `de
 - `CODEOWNERS` and branch-protection rules
 
 #### TZ-01 — Auth Service
-- JWT access + refresh token pair (RS256)
+- JWT access + refresh token pair (HS256) with 15-min access / 7-day refresh TTL
 - TOTP-based MFA (`/auth/mfa/setup`, `/auth/mfa/verify`)
-- RBAC: roles `super_admin`, `org_admin`, `device_manager`, `viewer` with permission matrix
+- RBAC: 7 roles — `super_admin`, `org_admin`, `operator`, `developer`, `viewer`, `api_key`, `pc_agent` — with PostgreSQL RLS enforcement
 - API Key management (`/api-keys` CRUD)
 - Audit log with RLS policies
 
@@ -130,4 +136,6 @@ Docker images — rebuild all services after merge (`docker compose build`).
 
 ## Previous releases
 
-See `docs/merge_log.md` and `walkthrough.md.resolved` for full integration history.
+See `docs/merge_log.md` and [walkthrough.md.resolved](walkthrough.md.resolved) for full branch-by-branch integration history.
+
+[4.0.0]: https://github.com/RootOne1337/sphere-platform/releases/tag/v4.0.0
