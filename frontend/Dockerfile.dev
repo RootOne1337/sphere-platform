@@ -1,0 +1,13 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Install deps first (cached layer)
+COPY package.json ./
+RUN npm install
+
+# Source code is mounted via volume (./frontend:/app)
+# node_modules kept in container via anonymous volume overlay
+
+EXPOSE 3000
+CMD ["npm", "run", "dev"]

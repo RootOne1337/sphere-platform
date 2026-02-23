@@ -1,0 +1,75 @@
+﻿# docker-compose.override.yml
+# Автоматически применяется к docker-compose.yml при `docker compose up`.
+# ТОЛЬКО dev-переопределения. НЕ коммитить production secrets.
+
+services:
+
+  #  Nginx: HTTP-only для разработки (нет SSL-сертификатов) 
+  nginx:
+    depends_on:
+      - backend
+      - frontend
+    volumes:
+      - ./infrastructure/nginx/nginx.dev.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "80:80"
+
+  #  n8n: подключается к postgres через sphere-пользователя 
+  n8n:
+    environment:
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=postgres
+      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_DATABASE=n8n
+      - DB_POSTGRESDB_USER=${POSTGRES_USER:-sphere}
+      - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD}
+
+  #  Frontend: dev-режим с hot reload 
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost/api/v1
+      - NEXT_PUBLIC_WS_URL=ws://localhost
+    command: ["npm", "run", "dev"]
+
+  #  Backend: монтируем весь проект, PYTHONPATH=/app  from backend.* 
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile.dev
+    volumes:
+      - .:/app
+      - /app/backend/__pycache__
+    environment:
+      - PYTHONPATH=/app
+      - POSTGRES_URL=postgresql+asyncpg://${POSTGRES_USER:-sphere}:${POSTGRES_PASSWORD}@postgres:5432/sphereplatform
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - WG_ROUTER_URL=${WG_ROUTER_URL:-http://localhost:8001}
+      - WG_ROUTER_API_KEY=${WG_ROUTER_API_KEY:-dev_key}
+      - AWG_JC=${AWG_JC:-4}
+      - AWG_JMIN=${AWG_JMIN:-40}
+      - AWG_JMAX=${AWG_JMAX:-70}
+      - AWG_S1=${AWG_S1:-51}
+      - AWG_S2=${AWG_S2:-45}
+      - AWG_H1=${AWG_H1:-2545529037}
+      - AWG_H2=${AWG_H2:-1767770215}
+      - AWG_H3=${AWG_H3:-2031675751}
+      - AWG_H4=${AWG_H4:-3699611814}
+      - DEBUG=true
+      - LOG_LEVEL=DEBUG
+      - ENVIRONMENT=development
+    working_dir: /app
+    command: uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload --reload-dir /app/backend

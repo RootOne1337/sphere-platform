@@ -17,9 +17,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from backend.database.engine import Base  # noqa: F401
 import backend.models  # noqa: F401 — side-effect import, регистрирует все mapper-ы
 
-from backend.core.config import get_settings
-
-settings = get_settings()
+from backend.core.config import settings
 
 # Alembic config object (alembic.ini)
 config = context.config
@@ -35,7 +33,7 @@ target_metadata = Base.metadata
 config.set_main_option(
     "sqlalchemy.url",
     # asyncpg не поддерживает sync-режим, для Alembic нужен postgresql+asyncpg
-    settings.DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://"),
+    settings.POSTGRES_URL.replace("postgresql://", "postgresql+asyncpg://"),
 )
 
 
