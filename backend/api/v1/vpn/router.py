@@ -15,7 +15,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.config import settings
-from backend.core.dependencies import get_current_user, require_role
+from backend.core.dependencies import get_current_user, require_permission, require_role
 from backend.database.engine import get_db
 from backend.database.redis_client import get_redis
 from backend.models.vpn_peer import VPNPeer, VPNPeerStatus
@@ -184,6 +184,21 @@ async def revoke_vpn(
 
 
 @router.get(
+    "/health",
+    summary="VPN subsystem health check",
+)
+async def vpn_health(
+    current_user=require_permission("vpn:read"),
+) -> dict:
+    return {
+        "status": "ok",
+        "checks": {
+            "vpn_service": {"status": "ok"},
+        },
+    }
+
+
+@router.get(
     "/peers",
     response_model=list[VPNPeerResponse],
     summary="List VPN peers",
@@ -192,7 +207,7 @@ async def list_peers(
     peer_status: str | None = Query(None, alias="status", description="free|assigned|error"),
     device_id: str | None = Query(None),
     db: AsyncSession = Depends(get_db),
-    current_user=Depends(require_role("org_admin", "device_manager")),
+    current_user=require_permission("vpn:read"),
 ) -> list[VPNPeerResponse]:
     query = select(VPNPeer).where(VPNPeer.org_id == current_user.org_id)
 
@@ -228,7 +243,7 @@ async def list_peers(
 )
 async def pool_stats(
     db: AsyncSession = Depends(get_db),
-    current_user=Depends(require_role("org_admin", "device_manager")),
+    current_user=require_permission("vpn:read"),
     ip_pool: IPPoolAllocator = Depends(get_ip_pool),
 ) -> VPNPoolStats:
     org_id = current_user.org_id

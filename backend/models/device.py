@@ -48,7 +48,7 @@ class Device(Base, UUIDMixin, TimestampMixin):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     # Last known status — source of truth is Redis; this column updated async via WebSocket events
     last_status: Mapped[str] = mapped_column(
-        Enum(DeviceStatus, name="device_status_enum"),
+        Enum(DeviceStatus, name="device_status_enum", values_callable=lambda x: [e.value for e in x]),
         default=DeviceStatus.OFFLINE,
         nullable=False,
     )
