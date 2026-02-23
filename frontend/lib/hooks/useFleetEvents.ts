@@ -70,8 +70,11 @@ export function useFleetEvents(onEvent?: EventHandler) {
   useEffect(() => {
     if (!accessToken) return;
 
-    const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
-    const wsUrl = apiBase.replace(/^http/, 'ws') + '/ws/events';
+    // WS endpoint is at /ws/events (not under /api/v1 prefix) — use page origin
+    const origin = typeof window !== 'undefined'
+      ? window.location.origin
+      : (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost').replace(/\/api.*$/, '');
+    const wsUrl = origin.replace(/^http/, 'ws') + '/ws/events';
     const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
 

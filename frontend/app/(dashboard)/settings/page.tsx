@@ -168,7 +168,7 @@ function ApiKeysTab() {
                 <Plus className="w-4 h-4 mr-1" /> New Key
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent aria-describedby={undefined}>
               <DialogHeader>
                 <DialogTitle>Create API Key</DialogTitle>
               </DialogHeader>

@@ -88,7 +88,7 @@ export default function WebhooksPage() {
               New Webhook
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent aria-describedby={undefined}>
             <DialogHeader>
               <DialogTitle>Register Webhook</DialogTitle>
             </DialogHeader>

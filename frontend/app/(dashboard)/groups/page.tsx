@@ -42,7 +42,7 @@ export default function GroupsPage() {
               New Group
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent aria-describedby={undefined}>
             <DialogHeader>
               <DialogTitle>Create Group</DialogTitle>
             </DialogHeader>
