@@ -384,6 +384,7 @@ def upgrade() -> None:
         sa.Column("endpoint", sa.String(255), nullable=True),
         sa.Column("listen_port", sa.Integer(), nullable=True),
         sa.Column("is_active", sa.Boolean(), nullable=False, server_default="true"),
+        sa.Column("status", sa.String(20), nullable=False, server_default="ASSIGNED"),
         sa.Column("last_handshake_at", sa.DateTime(timezone=True), nullable=True),
         sa.ForeignKeyConstraint(["org_id"], ["organizations.id"]),
         sa.ForeignKeyConstraint(["device_id"], ["devices.id"]),
