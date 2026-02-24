@@ -162,7 +162,8 @@ class TestPubSubRouterRouting:
 
     async def test_route_video_stream_channel(self, router):
         """Video stream channel routes frame to stream bridge."""
-        from unittest.mock import patch, AsyncMock as _AM
+        from unittest.mock import AsyncMock as _AM
+        from unittest.mock import patch
 
         bridge_mock = _AM()
         bridge_mock.handle_agent_frame = _AM()
@@ -184,7 +185,8 @@ class TestPubSubRouterRouting:
 
     async def test_forward_video_exceptions_are_swallowed(self, router):
         """_forward_video_to_viewers catches and logs exceptions."""
-        from unittest.mock import patch, AsyncMock as _AM
+        from unittest.mock import AsyncMock as _AM
+        from unittest.mock import patch
 
         failing_bridge = _AM()
         failing_bridge.handle_agent_frame = _AM(side_effect=Exception("test error"))
@@ -300,6 +302,7 @@ class TestPubSubModuleHooks:
         """If redis is None, _startup_pubsub logs a warning and returns early."""
         import logging
         from unittest.mock import patch
+
         import backend.websocket.pubsub_router as _mod
 
         with patch("backend.database.redis_client.redis", None), \
@@ -313,7 +316,8 @@ class TestPubSubModuleHooks:
     @pytest.mark.asyncio
     async def test_startup_pubsub_with_redis_creates_instances(self):
         """If redis is available, _startup_pubsub creates router and publisher."""
-        from unittest.mock import MagicMock, patch, AsyncMock
+        from unittest.mock import AsyncMock, MagicMock, patch
+
         import backend.websocket.pubsub_router as _mod
 
         fake_redis = AsyncMock()
@@ -340,6 +344,7 @@ class TestPubSubModuleHooks:
     async def test_shutdown_pubsub_when_router_exists(self):
         """_shutdown_pubsub stops and clears _pubsub_router_instance."""
         from unittest.mock import AsyncMock, patch
+
         import backend.websocket.pubsub_router as _mod
 
         fake_router = AsyncMock()
@@ -353,6 +358,7 @@ class TestPubSubModuleHooks:
     async def test_shutdown_pubsub_when_no_router(self):
         """_shutdown_pubsub is a no-op when _pubsub_router_instance is None."""
         from unittest.mock import patch
+
         import backend.websocket.pubsub_router as _mod
 
         with patch.object(_mod, "_pubsub_router_instance", None):
@@ -361,6 +367,7 @@ class TestPubSubModuleHooks:
     def test_get_pubsub_router_returns_instance(self):
         """get_pubsub_router reflects the current module-level instance."""
         from unittest.mock import patch
+
         import backend.websocket.pubsub_router as _mod
         from backend.websocket.pubsub_router import get_pubsub_router
 
@@ -371,6 +378,7 @@ class TestPubSubModuleHooks:
     def test_get_pubsub_publisher_returns_instance(self):
         """get_pubsub_publisher reflects the current module-level instance."""
         from unittest.mock import patch
+
         import backend.websocket.pubsub_router as _mod
         from backend.websocket.pubsub_router import get_pubsub_publisher
 

@@ -2,7 +2,7 @@
 # Tests for backend/websocket/startup.py — WS component initialization hook.
 from __future__ import annotations
 
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 

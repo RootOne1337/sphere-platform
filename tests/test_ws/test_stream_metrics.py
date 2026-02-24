@@ -2,8 +2,6 @@
 # Tests for StreamMetrics — Prometheus metric updates from heartbeat pong data.
 from __future__ import annotations
 
-import pytest
-
 from backend.websocket.stream_metrics import StreamMetrics
 
 

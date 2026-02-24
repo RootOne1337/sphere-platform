@@ -169,7 +169,7 @@ async def create_release(
 async def delete_release(
     release_id: str,
     _user=require_permission("device:delete"),
-) -> None:
+) -> Response:
     releases = _load_releases()
     filtered = [r for r in releases if r.get("id") != release_id]
     if len(filtered) == len(releases):

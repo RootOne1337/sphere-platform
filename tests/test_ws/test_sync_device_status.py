@@ -47,6 +47,7 @@ class TestSyncDeviceStatusFull:
 
         # mget returns msgpack-encoded status for the device
         import msgpack
+
         from backend.schemas.device_status import DeviceLiveStatus
         live = DeviceLiveStatus(device_id=device_id, status="online")
         mock_redis.mget = AsyncMock(
@@ -78,6 +79,7 @@ class TestSyncDeviceStatusFull:
         mock_redis.scan_iter = _scan
 
         import msgpack
+
         from backend.schemas.device_status import DeviceLiveStatus
         live = DeviceLiveStatus(device_id="not-valid", status="offline")
         mock_redis.mget = AsyncMock(
@@ -107,6 +109,7 @@ class TestSyncDeviceStatusFull:
         mock_redis.scan_iter = _scan
 
         import msgpack
+
         from backend.schemas.device_status import DeviceLiveStatus
         live = DeviceLiveStatus(device_id=device_id, status="online")
         mock_redis.mget = AsyncMock(

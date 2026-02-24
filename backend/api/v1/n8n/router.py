@@ -115,7 +115,7 @@ async def delete_webhook(
     webhook_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
     current_user=Depends(get_current_user),
-) -> None:
+) -> Response:
     deleted = await n8n_webhook_service.delete_webhook(db, webhook_id, current_user.org_id)
     if not deleted:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Webhook not found")
