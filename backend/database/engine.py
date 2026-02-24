@@ -14,7 +14,7 @@ engine = create_async_engine(
     max_overflow=settings.DB_MAX_OVERFLOW,
     pool_timeout=settings.DB_POOL_TIMEOUT,
     pool_pre_ping=True,       # проверять соединение перед использованием
-    echo=settings.DEBUG,      # SQL логи только в dev
+    echo=False,               # SQL echo off — use pgAdmin/Jaeger for query tracing
 )
 
 AsyncSessionLocal = async_sessionmaker(

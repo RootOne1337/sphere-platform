@@ -352,13 +352,12 @@ class TaskService:
 _dispatcher_task: asyncio.Task | None = None   # global ref — защита от GC
 
 
-async def _task_dispatcher_loop(get_service_fn) -> None:
-    """Цикл диспетчеризации. get_service_fn() создаёт TaskService с новой сессией."""
+async def _task_dispatcher_loop(dispatch_fn) -> None:
+    """Dispatcher loop. dispatch_fn() handles its own session lifecycle."""
     logger.info("task_dispatcher.started", interval_s=5)
     while True:
         try:
-            svc = await get_service_fn()
-            await svc.dispatch_pending_tasks()
+            await dispatch_fn()
         except Exception as exc:
             logger.error("task_dispatcher.error", error=str(exc), exc_info=True)
         await asyncio.sleep(5)

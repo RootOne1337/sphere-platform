@@ -21,14 +21,14 @@ async def sync_device_status_to_db() -> None:
     (чтобы не затирать их статус при перезапуске кэша).
     """
     from backend.database.engine import AsyncSessionLocal
-    from backend.database.redis_client import redis as _redis
+    from backend.database.redis_client import redis_binary as _redis_bin
     from backend.models.device import Device
     from backend.services.device_status_cache import DeviceStatusCache
 
-    if _redis is None:
+    if _redis_bin is None:
         return
 
-    cache = DeviceStatusCache(_redis)
+    cache = DeviceStatusCache(_redis_bin)
     device_ids = await cache.get_all_tracked_device_ids()
     if not device_ids:
         return

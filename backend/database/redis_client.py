@@ -34,6 +34,8 @@ async def connect_redis() -> None:
         max_connections=50,
         socket_timeout=5.0,
         socket_connect_timeout=5.0,
+        retry_on_timeout=True,
+        health_check_interval=30,
     )
     redis_binary = aioredis.from_url(
         settings.REDIS_URL,
@@ -41,6 +43,8 @@ async def connect_redis() -> None:
         max_connections=20,
         socket_timeout=5.0,
         socket_connect_timeout=5.0,
+        retry_on_timeout=True,
+        health_check_interval=30,
     )
     # Проверяем соединение
     await redis.ping()  # type: ignore[misc]

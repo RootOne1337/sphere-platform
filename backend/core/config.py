@@ -5,15 +5,20 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=".env.local",
+        # Приоритет: .env.local > .env > переменные окружения ОС
+        # .env.local — локальные секреты разработчика (gitignored)
+        # .env      — базовые значения для dev/test (gitignored, содержит реальные ключи)
+        env_file=[".env", ".env.local"],
         env_file_encoding="utf-8",
         case_sensitive=False,
+        extra="ignore",  # .env содержит поля для других сервисов (n8n, minio и т.д.)
     )
 
-    # Database
+    # Database — per-worker pool. With 4 gunicorn workers:
+    # total connections = 4 × (pool_size + max_overflow) = 4 × 15 = 60 (within PG default 100)
     POSTGRES_URL: str = "postgresql+asyncpg://sphere:sphere@localhost:5432/sphereplatform"
-    DB_POOL_SIZE: int = 20
-    DB_MAX_OVERFLOW: int = 10
+    DB_POOL_SIZE: int = 10
+    DB_MAX_OVERFLOW: int = 5
     DB_POOL_TIMEOUT: int = 30
 
     # Redis
