@@ -87,6 +87,8 @@ jobs:
           cache: pip
       - run: pip install -r backend/requirements.txt
       - run: alembic -c alembic/alembic.ini upgrade head
+        env:
+          PYTHONPATH: "."
       - run: pytest tests/ -v --cov=backend --cov-report=xml --cov-fail-under=65
       - uses: codecov/codecov-action@v4
         with:
@@ -130,3 +132,5 @@ jobs:
           cache: pip
       - run: pip install -r backend/requirements.txt
       - run: make alembic-check
+        env:
+          PYTHONPATH: "."
