@@ -5,7 +5,8 @@ from __future__ import annotations
 
 import uuid
 
-from fastapi import APIRouter, Depends, Header, Query, status as http_status
+from fastapi import APIRouter, Depends, Header, Query
+from fastapi import status as http_status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.dependencies import require_permission

@@ -194,8 +194,9 @@ async def android_agent_ws(
         return
 
     # Auth phase: DB session scoped to auth only — not held for WS lifetime
-    from fastapi import HTTPException
     import uuid
+
+    from fastapi import HTTPException
 
     org_id_str: str = ""
     try:

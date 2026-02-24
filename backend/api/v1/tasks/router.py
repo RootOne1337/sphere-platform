@@ -58,7 +58,8 @@ async def _startup_dispatcher() -> None:
     dispatcher tick and closes it properly after dispatch completes.
     """
     async def _dispatch_once() -> None:
-        from backend.database.redis_client import redis as _redis, redis_binary as _redis_bin
+        from backend.database.redis_client import redis as _redis
+        from backend.database.redis_client import redis_binary as _redis_bin
         async with AsyncSessionLocal() as db:
             queue = TaskQueue(_redis)
             cache = DeviceStatusCache(_redis_bin)
