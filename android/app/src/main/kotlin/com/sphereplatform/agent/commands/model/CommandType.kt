@@ -16,4 +16,6 @@ enum class CommandType {
     OTA_UPDATE,
     // Агент
     PING, UPDATE_CONFIG, REQUEST_STATUS,
+    // Логирование (по требованию)
+    REQUEST_LOGS, UPLOAD_LOGCAT,
 }

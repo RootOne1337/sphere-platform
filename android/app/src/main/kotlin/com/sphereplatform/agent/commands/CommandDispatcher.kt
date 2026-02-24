@@ -1,20 +1,36 @@
 package com.sphereplatform.agent.commands
 
+import android.content.Context
+import android.content.Intent
 import com.sphereplatform.agent.commands.model.CommandAck
 import com.sphereplatform.agent.commands.model.CommandType
 import com.sphereplatform.agent.commands.model.IncomingCommand
+import com.sphereplatform.agent.logging.FileLoggingTree
+import com.sphereplatform.agent.logging.LogcatCollector
 import com.sphereplatform.agent.ota.OtaUpdatePayload
 import com.sphereplatform.agent.ota.OtaUpdateService
 import com.sphereplatform.agent.providers.DeviceStatusProvider
+import com.sphereplatform.agent.store.AuthTokenStore
+import com.sphereplatform.agent.streaming.ScreenCaptureRequestActivity
+import com.sphereplatform.agent.streaming.ScreenCaptureService
+import com.sphereplatform.agent.streaming.StreamingManager
+import com.sphereplatform.agent.streaming.StreamingManagerImpl
+import com.sphereplatform.agent.vpn.KillSwitchManager
 import com.sphereplatform.agent.vpn.SphereVpnManager
 import com.sphereplatform.agent.ws.SphereWebSocketClient
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.decodeFromJsonElement
+import kotlinx.serialization.json.int
+import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
@@ -28,14 +44,24 @@ class CommandDispatcher @Inject constructor(
     private val adbActions: AdbActionExecutor,
     private val dagRunner: DagRunner,
     private val vpnManager: SphereVpnManager,
+    private val killSwitchManager: KillSwitchManager,
+    private val authStore: AuthTokenStore,
     private val otaUpdateService: OtaUpdateService,
     private val deviceStatusProvider: DeviceStatusProvider,
+    private val fileLoggingTree: FileLoggingTree,
+    private val logcatCollector: LogcatCollector,
     private val scope: CoroutineScope,
+    private val streamingManager: StreamingManager,
+    @ApplicationContext private val appContext: Context,
 ) {
     private val json = Json {
         ignoreUnknownKeys = true
         coerceInputValues = true
     }
+
+    // Serialises concurrent EXECUTE_DAG commands: only 1 DAG runs per device at a time.
+    // If a second DAG arrives while one is running, it queues and waits.
+    private val dagMutex = Mutex()
 
     fun start() {
         wsClient.onJsonMessage = { msg ->
@@ -74,6 +100,50 @@ class CommandDispatcher @Inject constructor(
     }
 
     private suspend fun handleMessage(msg: JsonObject) {
+        // System streaming messages — NOT IncomingCommand format, handle first
+        when (msg["type"]?.jsonPrimitive?.contentOrNull) {
+            "start_stream" -> {
+                Timber.i("Received start_stream — launching screen capture permission dialog")
+                val intent = Intent(appContext, ScreenCaptureRequestActivity::class.java).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                appContext.startActivity(intent)
+                return
+            }
+            "stop_stream" -> {
+                Timber.i("Received stop_stream — stopping screen capture")
+                val stopIntent = Intent(appContext, ScreenCaptureService::class.java).apply {
+                    action = ScreenCaptureService.ACTION_STOP
+                }
+                appContext.startService(stopIntent)
+                return
+            }
+            "viewer_connected" -> {
+                Timber.i("Received viewer_connected — requesting keyframe")
+                (streamingManager as? StreamingManagerImpl)?.onViewerConnected()
+                return
+            }
+            "touch_tap" -> {
+                val x = msg["x"]?.jsonPrimitive?.intOrNull ?: return
+                val y = msg["y"]?.jsonPrimitive?.intOrNull ?: return
+                scope.launch { adbActions.tap(x, y) }
+                return
+            }
+            "touch_swipe" -> {
+                val x1 = msg["x1"]?.jsonPrimitive?.intOrNull ?: return
+                val y1 = msg["y1"]?.jsonPrimitive?.intOrNull ?: return
+                val x2 = msg["x2"]?.jsonPrimitive?.intOrNull ?: return
+                val y2 = msg["y2"]?.jsonPrimitive?.intOrNull ?: return
+                val duration = msg["duration_ms"]?.jsonPrimitive?.intOrNull ?: 300
+                scope.launch { adbActions.swipe(x1, y1, x2, y2, duration) }
+                return
+            }
+            "request_keyframe" -> {
+                (streamingManager as? StreamingManagerImpl)?.onViewerConnected()
+                return
+            }
+        }
+
         val cmd = try {
             json.decodeFromJsonElement<IncomingCommand>(msg)
         } catch (e: Exception) {
@@ -144,16 +214,28 @@ class CommandDispatcher @Inject constructor(
 
         CommandType.EXECUTE_DAG -> {
             val dagJson = cmd.payload["dag"]!!.jsonObject
-            dagRunner.execute(cmd.command_id, dagJson)
+            // Mutex ensures at most one DAG runs at a time on this device
+            dagMutex.withLock {
+                dagRunner.execute(cmd.command_id, dagJson)
+            }
         }
 
         CommandType.VPN_CONNECT -> {
             val config = cmd.payload["config"]!!.jsonPrimitive.content
             vpnManager.connect(config)
+            // Enable kill switch with management server carve-out
+            val vpnEndpoint = cmd.payload["endpoint"]?.jsonPrimitive?.content
+            if (vpnEndpoint != null) {
+                val mgmtHost = authStore.getServerUrl()
+                    .removePrefix("https://").removePrefix("http://")
+                    .substringBefore("/").substringBefore(":")
+                killSwitchManager.enable(vpnEndpoint, listOf(mgmtHost))
+            }
             null
         }
 
         CommandType.VPN_DISCONNECT -> {
+            killSwitchManager.disable()
             vpnManager.disconnect()
             null
         }
@@ -161,6 +243,31 @@ class CommandDispatcher @Inject constructor(
         CommandType.VPN_RECONNECT -> {
             vpnManager.reconnect()
             null
+        }
+
+        CommandType.WAKE_SCREEN -> {
+            adbActions.wakeScreen()
+            null
+        }
+
+        CommandType.LOCK_SCREEN -> {
+            adbActions.lockScreen()
+            null
+        }
+
+        CommandType.REBOOT -> {
+            adbActions.reboot()
+            null
+        }
+
+        CommandType.UPDATE_CONFIG -> {
+            val serverUrl = cmd.payload["server_url"]?.jsonPrimitive?.contentOrNull
+            val apiKey = cmd.payload["api_key"]?.jsonPrimitive?.contentOrNull
+            val deviceId = cmd.payload["device_id"]?.jsonPrimitive?.contentOrNull
+            if (serverUrl != null) authStore.saveServerUrl(serverUrl)
+            if (apiKey != null) authStore.saveApiKey(apiKey)
+            if (deviceId != null) authStore.saveDeviceId(deviceId)
+            buildJsonObject { put("updated", true) }
         }
 
         CommandType.SHELL -> {
@@ -183,6 +290,23 @@ class CommandDispatcher @Inject constructor(
                 put("screen_on", deviceStatusProvider.isScreenOn())
                 put("vpn_active", deviceStatusProvider.isVpnActive())
             }
+        }
+
+        CommandType.REQUEST_LOGS -> {
+            val maxBytes = cmd.payload["max_bytes"]?.jsonPrimitive?.intOrNull ?: (64 * 1024)
+            val content = fileLoggingTree.readRecentLogs(maxBytes)
+            buildJsonObject { put("logs", content) }
+        }
+
+        CommandType.UPLOAD_LOGCAT -> {
+            val lines = cmd.payload["lines"]?.jsonPrimitive?.intOrNull ?: 500
+            val mode = cmd.payload["mode"]?.jsonPrimitive?.content ?: "sphere"
+            val content = when (mode) {
+                "full"   -> logcatCollector.collectSystemFull(lines)
+                "sphere" -> logcatCollector.collectSphereOnly(lines)
+                else     -> logcatCollector.collect(lines)
+            }
+            buildJsonObject { put("logcat", content) }
         }
 
         else -> {

@@ -50,6 +50,9 @@ class LuaEngine @Inject constructor(
         private val BLOCKED_LIBS = setOf(
             "os", "io", "require", "dofile", "loadfile", "load",
             "debug", "package", "collectgarbage",
+            // coroutine — Lua coroutines не прерываются withTimeout корректно;
+            // бесконечный coroutine.wrap зависает JVM IO-поток на весь timeout
+            "coroutine",
         )
         private val BLOCKED_FUNCTIONS = setOf(
             "load", "loadstring", "rawget", "rawset", "rawlen", "rawequal",
@@ -116,7 +119,7 @@ class LuaEngine @Inject constructor(
         // type_text(text)
         globals.set("type_text", object : OneArgFunction() {
             override fun call(text: LuaValue): LuaValue {
-                adbActions.typeText(text.checkjstring())
+                runBlocking { adbActions.typeText(text.checkjstring()) }
                 return LuaValue.TRUE
             }
         })
@@ -152,6 +155,49 @@ class LuaEngine @Inject constructor(
             override fun call(): LuaValue {
                 val path = runBlocking { adbActions.takeScreenshot() }
                 return LuaValue.valueOf(path)
+            }
+        })
+
+        // find_element(selector [, strategy [, timeout_ms]]) → "cx,cy" | false
+        // Returns "x,y" string on success, false on timeout/not found.
+        // strategy: "text" (default), "id", "desc"
+        globals.set("find_element", object : VarArgFunction() {
+            override fun invoke(args: Varargs): Varargs {
+                val selector = args.checkjstring(1)
+                val strategy = if (args.narg() >= 2) args.checkjstring(2) else "text"
+                val timeoutMs = if (args.narg() >= 3) args.checkint(3) else 10_000
+                val result = runBlocking { adbActions.findElement(selector, strategy, timeoutMs) }
+                return if (result != null) LuaValue.valueOf(result) else LuaValue.FALSE
+            }
+        })
+
+        // wake_screen() / lock_screen()
+        globals.set("wake_screen", object : ZeroArgFunction() {
+            override fun call(): LuaValue {
+                adbActions.wakeScreen()
+                return LuaValue.TRUE
+            }
+        })
+        globals.set("lock_screen", object : ZeroArgFunction() {
+            override fun call(): LuaValue {
+                adbActions.lockScreen()
+                return LuaValue.TRUE
+            }
+        })
+
+        // launch_app(package_name) — запустить приложение через Launcher intent
+        globals.set("launch_app", object : OneArgFunction() {
+            override fun call(pkg: LuaValue): LuaValue {
+                adbActions.launchApp(pkg.checkjstring())
+                return LuaValue.TRUE
+            }
+        })
+
+        // stop_app(package_name) — принудительно остановить приложение
+        globals.set("stop_app", object : OneArgFunction() {
+            override fun call(pkg: LuaValue): LuaValue {
+                adbActions.stopApp(pkg.checkjstring())
+                return LuaValue.TRUE
             }
         })
     }
