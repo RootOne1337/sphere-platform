@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from unittest.mock import AsyncMock
 
+import pytest
 import pytest_asyncio
 
 from backend.websocket.channels import ChannelPattern
@@ -158,3 +159,222 @@ class TestPubSubRouterRouting:
         await router._route_message(channel, json.dumps(msg))
 
         ws.send_json.assert_called_once_with(msg)
+
+    async def test_route_video_stream_channel(self, router):
+        """Video stream channel routes frame to stream bridge."""
+        from unittest.mock import patch, AsyncMock as _AM
+
+        bridge_mock = _AM()
+        bridge_mock.handle_agent_frame = _AM()
+
+        with patch("backend.websocket.stream_bridge.get_stream_bridge", return_value=bridge_mock):
+            await router._route_message(
+                "sphere:stream:video:device-1",
+                b"\x00\xFF\x00\xFF",
+            )
+            bridge_mock.handle_agent_frame.assert_called_once_with("device-1", b"\x00\xFF\x00\xFF")
+
+    async def test_route_video_no_bridge_is_noop(self, router):
+        """When no stream bridge, video route should not raise."""
+        from unittest.mock import patch
+
+        with patch("backend.websocket.stream_bridge.get_stream_bridge", return_value=None):
+            await router._route_message("sphere:stream:video:device-2", b"\xAA")
+            # No exception
+
+    async def test_forward_video_exceptions_are_swallowed(self, router):
+        """_forward_video_to_viewers catches and logs exceptions."""
+        from unittest.mock import patch, AsyncMock as _AM
+
+        failing_bridge = _AM()
+        failing_bridge.handle_agent_frame = _AM(side_effect=Exception("test error"))
+
+        with patch("backend.websocket.stream_bridge.get_stream_bridge", return_value=failing_bridge):
+            # Should NOT raise
+            await router._forward_video_to_viewers("dev-1", b"\x00")
+
+
+class TestPubSubRouterLifecycle:
+    """Unit tests for PubSubRouter start/stop/subscribe/unsubscribe."""
+
+    @pytest_asyncio.fixture
+    async def mock_redis(self):
+        from unittest.mock import MagicMock
+        redis = AsyncMock()
+        pubsub = AsyncMock()
+        pubsub.subscribe = AsyncMock()
+        pubsub.unsubscribe = AsyncMock()
+        pubsub.aclose = AsyncMock()
+        pubsub.subscribed = False
+        # pubsub() is a synchronous call that returns a pubsub object
+        redis.pubsub = MagicMock(return_value=pubsub)
+        return redis, pubsub
+
+    async def test_subscribe_device_no_pubsub_is_noop(self, mock_redis):
+        redis, _ = mock_redis
+        manager = ConnectionManager()
+        router = PubSubRouter(redis, manager)
+        # _pubsub is None initially — should return without raising
+        await router.subscribe_device("dev-1", "org-1")
+
+    async def test_unsubscribe_device_no_pubsub_is_noop(self, mock_redis):
+        redis, _ = mock_redis
+        manager = ConnectionManager()
+        router = PubSubRouter(redis, manager)
+        await router.unsubscribe_device("dev-1")
+
+    async def test_subscribe_device_subscribes_channels(self, mock_redis):
+        redis, pubsub_mock = mock_redis
+        manager = ConnectionManager()
+        router = PubSubRouter(redis, manager)
+        router._pubsub = pubsub_mock
+
+        await router.subscribe_device("dev-1", "org-1")
+
+        calls = [c.args[0] for c in pubsub_mock.subscribe.call_args_list]
+        assert "sphere:agent:cmd:dev-1" in calls
+        assert "sphere:org:events:org-1" in calls
+
+    async def test_subscribe_device_deduplicates_channels(self, mock_redis):
+        redis, pubsub_mock = mock_redis
+        manager = ConnectionManager()
+        router = PubSubRouter(redis, manager)
+        router._pubsub = pubsub_mock
+
+        await router.subscribe_device("dev-1", "org-1")
+        await router.subscribe_device("dev-2", "org-1")  # same org — should not re-subscribe
+
+        org_subs = [
+            c for c in pubsub_mock.subscribe.call_args_list
+            if c.args[0] == "sphere:org:events:org-1"
+        ]
+        assert len(org_subs) == 1  # only subscribed once
+
+    async def test_unsubscribe_device_removes_channel(self, mock_redis):
+        redis, pubsub_mock = mock_redis
+        manager = ConnectionManager()
+        router = PubSubRouter(redis, manager)
+        router._pubsub = pubsub_mock
+        router._subscribed_channels.add("sphere:agent:cmd:dev-1")
+
+        await router.unsubscribe_device("dev-1")
+
+        pubsub_mock.unsubscribe.assert_called_once_with("sphere:agent:cmd:dev-1")
+        assert "sphere:agent:cmd:dev-1" not in router._subscribed_channels
+
+    async def test_start_creates_pubsub_and_task(self, mock_redis):
+        import asyncio as _asyncio
+        redis, pubsub_mock = mock_redis
+        manager = ConnectionManager()
+        router = PubSubRouter(redis, manager)
+
+        await router.start()
+        assert router._pubsub is pubsub_mock
+        assert router._task is not None
+
+        # Cleanup background task
+        router._task.cancel()
+        try:
+            await router._task
+        except (_asyncio.CancelledError, Exception):
+            pass
+
+    async def test_stop_cancels_task(self, mock_redis):
+        redis, pubsub_mock = mock_redis
+        manager = ConnectionManager()
+        router = PubSubRouter(redis, manager)
+        await router.start()
+
+        task = router._task
+        await router.stop()
+
+        assert task.cancelled() or task.done()
+        pubsub_mock.aclose.assert_called_once()
+
+
+class TestPubSubModuleHooks:
+    """Tests for _startup_pubsub and _shutdown_pubsub module-level hooks."""
+
+    @pytest.mark.asyncio
+    async def test_startup_pubsub_no_redis_logs_warning(self, caplog):
+        """If redis is None, _startup_pubsub logs a warning and returns early."""
+        import logging
+        from unittest.mock import patch
+        import backend.websocket.pubsub_router as _mod
+
+        with patch("backend.database.redis_client.redis", None), \
+             patch.object(_mod, "_pubsub_router_instance", None), \
+             patch.object(_mod, "_pubsub_publisher_instance", None):
+            with caplog.at_level(logging.WARNING, logger="backend.websocket.pubsub_router"):
+                await _mod._startup_pubsub()
+            assert "Redis not available" in caplog.text
+            assert _mod._pubsub_router_instance is None
+
+    @pytest.mark.asyncio
+    async def test_startup_pubsub_with_redis_creates_instances(self):
+        """If redis is available, _startup_pubsub creates router and publisher."""
+        from unittest.mock import MagicMock, patch, AsyncMock
+        import backend.websocket.pubsub_router as _mod
+
+        fake_redis = AsyncMock()
+        fake_pubsub = AsyncMock()
+        fake_pubsub.subscribe = AsyncMock()
+        fake_redis.pubsub = MagicMock(return_value=fake_pubsub)
+
+        fake_router = AsyncMock()
+        fake_router.start = AsyncMock()
+
+        with patch("backend.database.redis_client.redis", fake_redis), \
+             patch.object(_mod, "_pubsub_router_instance", None), \
+             patch.object(_mod, "_pubsub_publisher_instance", None), \
+             patch("backend.websocket.pubsub_router.PubSubPublisher") as MockPublisher, \
+             patch("backend.websocket.pubsub_router.PubSubRouter") as MockRouter, \
+             patch("backend.websocket.pubsub_router.get_connection_manager"):
+            MockRouter.return_value = fake_router
+            await _mod._startup_pubsub()
+            MockPublisher.assert_called_once_with(fake_redis)
+            MockRouter.assert_called_once()
+            fake_router.start.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_shutdown_pubsub_when_router_exists(self):
+        """_shutdown_pubsub stops and clears _pubsub_router_instance."""
+        from unittest.mock import AsyncMock, patch
+        import backend.websocket.pubsub_router as _mod
+
+        fake_router = AsyncMock()
+        fake_router.stop = AsyncMock()
+
+        with patch.object(_mod, "_pubsub_router_instance", fake_router):
+            await _mod._shutdown_pubsub()
+            fake_router.stop.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_shutdown_pubsub_when_no_router(self):
+        """_shutdown_pubsub is a no-op when _pubsub_router_instance is None."""
+        from unittest.mock import patch
+        import backend.websocket.pubsub_router as _mod
+
+        with patch.object(_mod, "_pubsub_router_instance", None):
+            await _mod._shutdown_pubsub()  # should not raise
+
+    def test_get_pubsub_router_returns_instance(self):
+        """get_pubsub_router reflects the current module-level instance."""
+        from unittest.mock import patch
+        import backend.websocket.pubsub_router as _mod
+        from backend.websocket.pubsub_router import get_pubsub_router
+
+        sentinel = object()
+        with patch.object(_mod, "_pubsub_router_instance", sentinel):
+            assert get_pubsub_router() is sentinel
+
+    def test_get_pubsub_publisher_returns_instance(self):
+        """get_pubsub_publisher reflects the current module-level instance."""
+        from unittest.mock import patch
+        import backend.websocket.pubsub_router as _mod
+        from backend.websocket.pubsub_router import get_pubsub_publisher
+
+        sentinel = object()
+        with patch.object(_mod, "_pubsub_publisher_instance", sentinel):
+            assert get_pubsub_publisher() is sentinel
+

@@ -17,17 +17,17 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response, status
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, HttpUrl
+from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.core.dependencies import get_current_principal, require_permission
+from backend.core.dependencies import require_permission
 from backend.database.engine import get_db
 
 router = APIRouter(prefix="/updates", tags=["updates"])
 
 # Релизы хранятся в JSON-файле (нет нужды в отдельной таблице)
 # В production заменяется на путь из env-переменной SPHERE_UPDATES_PATH
-_UPDATES_PATH = Path(os.environ.get("SPHERE_UPDATES_PATH", "/tmp/sphere_updates.json"))
+_UPDATES_PATH = Path(os.environ.get("SPHERE_UPDATES_PATH", "/tmp/sphere_updates.json"))  # nosec B108
 
 
 # ── In-memory store backed by JSON file ──────────────────────────────────────

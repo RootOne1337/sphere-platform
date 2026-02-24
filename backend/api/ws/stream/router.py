@@ -7,6 +7,7 @@ import secrets
 
 import structlog
 from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.database.engine import AsyncSessionLocal
 from backend.websocket.connection_manager import get_connection_manager
@@ -80,6 +81,7 @@ async def stream_viewer_ws(
 
     # Auth phase: DB session opened and closed immediately — not held for WS lifetime
     import uuid as _uuid
+
     from backend.models.device import Device
 
     user = None
@@ -104,7 +106,6 @@ async def stream_viewer_ws(
 
             # Extract needed values before DB session closes
             user_id_str = str(user.id)
-            org_id_str = str(user.org_id)
     except Exception:
         await ws.close(code=1011, reason="auth_error")
         return

@@ -15,18 +15,18 @@ from pathlib import Path
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request, status
-from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.responses import JSONResponse
+from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.responses import Response
 
-from backend.core.dependencies import get_current_principal, require_permission
+from backend.core.dependencies import require_permission
 from backend.database.engine import get_db
-from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/logs", tags=["logs"])
 
 # Лог-файлы хранятся на диске в /tmp/sphere_device_logs/<device_id>/
 # В production заменяется на путь из env-переменной SPHERE_LOGS_DIR
-_LOGS_DIR = Path(os.environ.get("SPHERE_LOGS_DIR", "/tmp/sphere_device_logs"))
+_LOGS_DIR = Path(os.environ.get("SPHERE_LOGS_DIR", "/tmp/sphere_device_logs"))  # nosec B108
 _MAX_LOG_SIZE_BYTES = 50 * 1024 * 1024   # 50 MB per device
 _MAX_ENTRY_BYTES = 512 * 1024             # 512 KB per upload
 _LOG_TTL_DAYS = 30                        # rotate logs older than N days

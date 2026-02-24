@@ -152,6 +152,6 @@ async def _startup_offline_queue() -> None:
         _offline_queue = OfflineCommandQueue(redis)
 
 
-from backend.core.lifespan_registry import register_startup
+from backend.core.lifespan_registry import register_startup  # noqa: E402
 
 register_startup("offline_queue", _startup_offline_queue)

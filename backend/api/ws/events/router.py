@@ -193,7 +193,7 @@ async def _shutdown_events_manager() -> None:
     await mgr.stop()
 
 
-from backend.core.lifespan_registry import register_shutdown, register_startup
+from backend.core.lifespan_registry import register_shutdown, register_startup  # noqa: E402
 
 register_startup("events_manager", _startup_events_manager)
 register_shutdown("events_manager", _shutdown_events_manager)
