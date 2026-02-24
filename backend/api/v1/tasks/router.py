@@ -15,7 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.core.dependencies import require_permission
 from backend.core.lifespan_registry import register_startup
 from backend.database.engine import AsyncSessionLocal, get_db
-from backend.database.redis_client import get_redis
+from backend.database.redis_client import get_redis, get_redis_binary
 from backend.models.task import TaskStatus
 from backend.models.user import User
 from backend.schemas.task import (
@@ -44,8 +44,9 @@ def get_task_service(
     db: AsyncSession = Depends(get_db),
     queue: TaskQueue = Depends(get_task_queue),
     redis=Depends(get_redis),
+    redis_bin=Depends(get_redis_binary),
 ) -> TaskService:
-    status_cache = DeviceStatusCache(redis)
+    status_cache = DeviceStatusCache(redis_bin)
     return TaskService(db, queue, status_cache=status_cache)
 
 
@@ -53,17 +54,18 @@ def get_task_service(
 
 async def _startup_dispatcher() -> None:
     """
-    Создаёт фабрику сессий для диспетчера.
-    Диспетчер получает изолированную сессию — не зависит от HTTP-запросов.
+    Creates a dispatch function that opens a fresh DB session for each
+    dispatcher tick and closes it properly after dispatch completes.
     """
-    async def _make_task_service() -> TaskService:
-        from backend.database.redis_client import redis as _redis
+    async def _dispatch_once() -> None:
+        from backend.database.redis_client import redis as _redis, redis_binary as _redis_bin
         async with AsyncSessionLocal() as db:
             queue = TaskQueue(_redis)
-            cache = DeviceStatusCache(_redis)
-            return TaskService(db, queue, status_cache=cache)
+            cache = DeviceStatusCache(_redis_bin)
+            svc = TaskService(db, queue, status_cache=cache)
+            await svc.dispatch_pending_tasks()
 
-    start_dispatcher(_make_task_service)
+    start_dispatcher(_dispatch_once)
     logger.info("task_dispatcher.registered")
 
 

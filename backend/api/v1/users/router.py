@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -187,7 +187,6 @@ async def update_user_role(
 
 @router.patch(
     "/{user_id}/deactivate",
-    status_code=status.HTTP_204_NO_CONTENT,
     response_model=None,
     summary="Деактивировать пользователя",
 )
@@ -216,3 +215,4 @@ async def deactivate_user(
         resource_id=str(user.id),
     )
     await db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

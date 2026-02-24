@@ -5,12 +5,12 @@ from __future__ import annotations
 
 import uuid
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Header, Query, status as http_status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.dependencies import require_permission
 from backend.database.engine import get_db
-from backend.database.redis_client import get_redis
+from backend.database.redis_client import get_redis_binary
 from backend.models.user import User
 from backend.schemas.device_status import (
     BulkStatusRequest,
@@ -41,12 +41,49 @@ def get_device_service(db: AsyncSession = Depends(get_db)) -> DeviceService:
 
 
 async def get_status_cache(
-    redis=Depends(get_redis),
+    redis=Depends(get_redis_binary),
 ) -> DeviceStatusCache:
     return DeviceStatusCache(redis)
 
 
 # ── List ──────────────────────────────────────────────────────────────────────
+
+
+@router.get(
+    "/me",
+    response_model=DeviceResponse | None,
+    summary="Информация об устройстве по X-API-Key (для агента)",
+    tags=["devices"],
+)
+async def get_device_me(
+    x_api_key: str | None = Header(default=None, alias="X-API-Key"),
+    x_device_id: str | None = Header(default=None, alias="X-Device-Id"),
+    db: AsyncSession = Depends(get_db),
+    svc: DeviceService = Depends(get_device_service),
+) -> DeviceResponse | None:
+    """
+    Аутентификация по X-API-Key. Возвращает устройство или 404 если не найдено.
+    Используется агентом при zero-touch enrollment для верификации ключа.
+    """
+    from fastapi import HTTPException
+    if not x_api_key:
+        raise HTTPException(status_code=http_status.HTTP_401_UNAUTHORIZED, detail="X-API-Key required")
+    from backend.services.api_key_service import APIKeyService
+    api_key_svc = APIKeyService(db)
+    key = await api_key_svc.authenticate(x_api_key)
+    if not key:
+        raise HTTPException(status_code=http_status.HTTP_401_UNAUTHORIZED, detail="Invalid API key")
+    # Key is valid — try to find the device by X-Device-Id header
+    if x_device_id:
+        try:
+            device_uuid = uuid.UUID(x_device_id)
+            device = await svc.get_device(device_uuid, key.org_id)
+            if device:
+                return DeviceResponse.model_validate(device)
+        except (ValueError, Exception):
+            pass
+    return None
+
 
 @router.get(
     "",
@@ -62,6 +99,7 @@ async def list_devices(
     per_page: int = Query(50, ge=1, le=200),
     current_user: User = require_permission("device:read"),
     svc: DeviceService = Depends(get_device_service),
+    status_cache: DeviceStatusCache = Depends(get_status_cache),
 ) -> DeviceListResponse:
     devices, total = await svc.list_devices(
         org_id=current_user.org_id,
@@ -72,6 +110,17 @@ async def list_devices(
         page=page,
         per_page=per_page,
     )
+    # Обогащаем live-статус из Redis (один MGET на все устройства)
+    if devices:
+        device_ids = [str(d.id) for d in devices]
+        live_statuses = await status_cache.bulk_get_status(device_ids)
+        enriched = []
+        for d in devices:
+            live = live_statuses.get(str(d.id))
+            if live:
+                d.status = live.status
+            enriched.append(d)
+        devices = enriched
     pages = (total + per_page - 1) // per_page if total > 0 else 0
     return DeviceListResponse(
         items=devices, total=total, page=page, per_page=per_page, pages=pages
@@ -150,8 +199,13 @@ async def get_device(
     device_id: uuid.UUID,
     current_user: User = require_permission("device:read"),
     svc: DeviceService = Depends(get_device_service),
+    status_cache: DeviceStatusCache = Depends(get_status_cache),
 ) -> DeviceResponse:
-    return await svc.get_device(device_id, current_user.org_id)
+    device = await svc.get_device(device_id, current_user.org_id)
+    live = await status_cache.get_status(str(device_id))
+    if live:
+        device.status = live.status
+    return device
 
 
 # ── Update ────────────────────────────────────────────────────────────────────

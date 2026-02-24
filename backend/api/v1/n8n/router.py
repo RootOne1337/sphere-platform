@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.dependencies import get_current_user, get_db
@@ -108,7 +108,6 @@ async def update_webhook(
 
 @router.delete(
     "/webhooks/{webhook_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
     response_model=None,
     summary="Delete webhook",
 )
@@ -120,6 +119,7 @@ async def delete_webhook(
     deleted = await n8n_webhook_service.delete_webhook(db, webhook_id, current_user.org_id)
     if not deleted:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Webhook not found")
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 # ── Task creation (n8n → Sphere) ─────────────────────────────────────────────
