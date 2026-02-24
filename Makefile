@@ -80,10 +80,10 @@ security:      ## Безопасность: bandit + pip-audit
 	pip-audit -r backend/requirements.txt
 
 migrate:       ## Применить миграции
-	alembic upgrade head
+	alembic -c alembic/alembic.ini upgrade head
 
 migrate-new:   ## Создать миграцию (name=описание)
-	alembic revision --autogenerate -m "$(name)"
+	alembic -c alembic/alembic.ini revision --autogenerate -m "$(name)"
 
 build:         ## Собрать production Docker образы
 	docker compose -f docker-compose.production.yml build
@@ -97,7 +97,7 @@ logs:          ## Логи backend
 alembic-check: ## Проверить наличие множественных Alembic heads (CI)
 	@python -c "\
 import subprocess, sys; \
-r = subprocess.run(['alembic', 'heads'], capture_output=True, text=True); \
+r = subprocess.run(['alembic', '-c', 'alembic/alembic.ini', 'heads'], capture_output=True, text=True); \
 heads = [l.strip() for l in r.stdout.strip().split('\n') if l.strip()]; \
 print(f'Alembic heads: {len(heads)}'); \
 [print(f'  {h}') for h in heads]; \
@@ -105,13 +105,13 @@ sys.exit(1 if len(heads) > 1 else 0)"
 
 alembic-merge-heads: ## Автослияние множественных Alembic heads после merge stage-веток
 	@echo "Проверяем количество Alembic heads..."
-	@HEADS=$$(alembic heads 2>/dev/null | wc -l); \
+	@HEADS=$$(alembic -c alembic/alembic.ini heads 2>/dev/null | wc -l); \
 	if [ "$$HEADS" -le 1 ]; then \
 		echo "✅ Одна head — merge не нужен"; \
 	else \
 		echo "⚠️  Найдено $$HEADS heads — выполняем merge..."; \
-		alembic merge heads -m "merge_parallel_stage_migrations"; \
-		echo "✅ Heads объединены. Запусти: alembic upgrade head"; \
+		alembic -c alembic/alembic.ini merge heads -m "merge_parallel_stage_migrations"; \
+		echo "✅ Heads объединены. Запусти: alembic -c alembic/alembic.ini upgrade head"; \
 	fi
 
 rls-lint:      ## Проверить что все таблицы с org_id имеют RLS policy
