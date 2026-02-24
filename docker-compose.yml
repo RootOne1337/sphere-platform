@@ -4,6 +4,17 @@
 services:
   postgres:
     image: postgres:15-alpine
+    command: >
+      postgres
+      -c max_connections=200
+      -c shared_buffers=256MB
+      -c work_mem=8MB
+      -c maintenance_work_mem=128MB
+      -c effective_cache_size=512MB
+      -c checkpoint_completion_target=0.9
+      -c wal_buffers=16MB
+      -c idle_in_transaction_session_timeout=60000
+      -c statement_timeout=30000
     environment:
       POSTGRES_DB: sphereplatform
       POSTGRES_USER: ${POSTGRES_USER:-sphere}
@@ -18,6 +29,10 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 1G
     networks:
       - backend-net
 
@@ -30,9 +45,15 @@ services:
       --maxmemory-policy allkeys-lru
       --appendonly yes
       --appendfsync everysec
-      --save ""
+      --save 900 1
+      --save 300 10
+      --save 60 10000
+      --tcp-backlog 511
+      --tcp-keepalive 300
     ports:
       - "6379:6379"          # только в dev!
+    volumes:
+      - redis_data:/data
     healthcheck:
       # FIX: пароль через REDISCLI_AUTH — не виден в docker inspect
       test: ["CMD-SHELL", "REDISCLI_AUTH=\"$$REDIS_PASSWORD\" redis-cli ping"]
@@ -70,8 +91,8 @@ services:
       - DB_POSTGRESDB_HOST=postgres
       - DB_POSTGRESDB_PORT=5432
       - DB_POSTGRESDB_DATABASE=n8n
-      - DB_POSTGRESDB_USER=n8n
-      - DB_POSTGRESDB_PASSWORD=${N8N_DB_PASSWORD}
+      - DB_POSTGRESDB_USER=${POSTGRES_USER:-sphere}
+      - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD}
       # Custom nodes — mount compiled package
       - N8N_CUSTOM_EXTENSIONS=/home/node/.n8n/custom
       - NODE_PATH=/home/node/.n8n/custom/node_modules
