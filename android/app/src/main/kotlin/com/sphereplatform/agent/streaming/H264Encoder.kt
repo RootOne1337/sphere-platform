@@ -31,10 +31,10 @@ class H264Encoder(
 ) {
 
     data class EncoderConfig(
-        val width: Int = 1280,
-        val height: Int = 720,
+        val width: Int = 720,
+        val height: Int = 1280,
         val fps: Int = 30,
-        val bitrateBps: Int = 2_000_000,
+        val bitrateBps: Int = 1_500_000,
         val iFrameIntervalSec: Int = 1,
     ) {
         // LOW-3: validate at construction time, not silently at encode time
@@ -201,24 +201,58 @@ class H264Encoder(
         val data = ByteArray(info.size)
         buffer.position(info.offset)
         buffer.get(data)
-        // Distinguish SPS (NAL type 7) from PPS (NAL type 8) using start-code scan
-        val nalType = findFirstNalType(data)
-        when (nalType) {
-            7 -> cachedSps = data.copyOf()
-            8 -> cachedPps = data.copyOf()
-            else -> {
-                // Combined SPS+PPS in single config buffer (common on some devices)
-                cachedSps = data.copyOf()
+        
+        // Split the buffer into individual NAL units
+        val nals = splitNalUnits(data)
+        for (nal in nals) {
+            val nalType = findFirstNalType(nal)
+            when (nalType) {
+                7 -> cachedSps = nal
+                8 -> cachedPps = nal
             }
+            // Send SPS/PPS immediately so the frontend gets them even if onViewerConnected was called too early
+            onFrameReady(
+                nal,
+                FrameMetadata(
+                    isKeyFrame = true,
+                    presentationTimeUs = info.presentationTimeUs,
+                    sizeBytes = nal.size,
+                )
+            )
         }
     }
 
+    private fun splitNalUnits(data: ByteArray): List<ByteArray> {
+        val nals = mutableListOf<ByteArray>()
+        var start = -1
+        var i = 0
+        while (i < data.size - 2) {
+            if (data[i] == 0.toByte() && data[i + 1] == 0.toByte() && data[i + 2] == 1.toByte()) {
+                val isFourByte = (i > 0 && data[i - 1] == 0.toByte())
+                val actualStart = if (isFourByte) i - 1 else i
+                if (start != -1) {
+                    nals.add(data.copyOfRange(start, actualStart))
+                }
+                start = actualStart
+                i += 3
+            } else {
+                i++
+            }
+        }
+        if (start != -1) {
+            nals.add(data.copyOfRange(start, data.size))
+        } else if (data.isNotEmpty()) {
+            nals.add(data)
+        }
+        return nals
+    }
+
     private fun findFirstNalType(data: ByteArray): Int {
-        for (i in 0..data.size - 5) {
-            if (data[i] == 0.toByte() && data[i + 1] == 0.toByte() &&
-                data[i + 2] == 0.toByte() && data[i + 3] == 1.toByte()
-            ) {
-                return data[i + 4].toInt() and 0x1F
+        for (i in 0..data.size - 3) {
+            if (data[i] == 0.toByte() && data[i + 1] == 0.toByte() && data[i + 2] == 1.toByte()) {
+                if (i + 3 < data.size) {
+                    return data[i + 3].toInt() and 0x1F
+                }
             }
         }
         return -1

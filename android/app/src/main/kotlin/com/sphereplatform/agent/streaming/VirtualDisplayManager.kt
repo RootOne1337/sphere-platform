@@ -18,10 +18,21 @@ class VirtualDisplayManager(
     private val mediaProjection: MediaProjection,
 ) {
     data class DisplayConfig(
-        val width: Int = 1280,
-        val height: Int = 720,
-        val dpi: Int = 320,
+        val width: Int,
+        val height: Int,
+        val dpi: Int = 240,
     )
+
+    companion object {
+        fun createConfig(context: Context): DisplayConfig {
+            val metrics = android.content.res.Resources.getSystem().displayMetrics
+            val isLandscape = metrics.widthPixels > metrics.heightPixels
+            val width = if (isLandscape) 1280 else 720
+            val height = if (isLandscape) 720 else 1280
+            
+            return DisplayConfig(width = width, height = height)
+        }
+    }
 
     private var virtualDisplay: VirtualDisplay? = null
 

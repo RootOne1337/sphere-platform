@@ -2,6 +2,8 @@ package com.sphereplatform.agent.streaming
 
 import android.os.SystemClock
 import java.util.ArrayDeque
+import javax.inject.Inject
+import javax.inject.Singleton
 
 /**
  * Collects per-frame metrics with a 1-second sliding window for FPS calculation.
@@ -9,7 +11,8 @@ import java.util.ArrayDeque
  * Thread-safe via [synchronized] — called from the MediaCodec encoder callback
  * thread and read from the heartbeat coroutine.
  */
-class StreamQualityMonitor {
+@Singleton
+class StreamQualityMonitor @Inject constructor() {
 
     private val frameTimestamps = ArrayDeque<Long>()
     private var bytesSentTotal = 0L

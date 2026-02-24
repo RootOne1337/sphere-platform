@@ -1,5 +1,8 @@
 package com.sphereplatform.agent.streaming
 
+import javax.inject.Inject
+import javax.inject.Singleton
+
 /**
  * Token-bucket style frame throttle to cap output FPS before frames enter
  * the WebSocket pipeline (L1 agent-side backpressure — MERGE-1 TZ-05 SPLIT-4).
@@ -9,9 +12,11 @@ package com.sphereplatform.agent.streaming
  *
  * L2 server-side backpressure is handled by [VideoStreamQueue] (TZ-03 SPLIT-3).
  */
-class FrameThrottle(
-    val targetFps: Int = 30,
-) {
+@Singleton
+class FrameThrottle @Inject constructor() {
+
+    val targetFps: Int = 30
+
     private val frameDurationNs = 1_000_000_000L / targetFps
     private var lastFrameTimeNs = 0L
 

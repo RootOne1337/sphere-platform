@@ -59,6 +59,7 @@ class ScreenCaptureService : Service() {
         if (streamingManager.isActive()) {
             Timber.d("ScreenCaptureService: restart requested while active — stopping first")
             streamingManager.stop()
+            mediaProjection?.unregisterCallback(projectionCallback)
             mediaProjection?.stop()
             mediaProjection = null
         }
@@ -83,6 +84,7 @@ class ScreenCaptureService : Service() {
 
     private fun handleStop() {
         streamingManager.stop()
+        mediaProjection?.unregisterCallback(projectionCallback)
         mediaProjection?.stop()
         mediaProjection = null
         stopForeground(STOP_FOREGROUND_REMOVE)
