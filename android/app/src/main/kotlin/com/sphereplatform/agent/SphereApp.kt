@@ -4,6 +4,9 @@ import android.app.Application
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import com.sphereplatform.agent.BuildConfig
+import com.sphereplatform.agent.logging.FileLoggingTree
+import com.sphereplatform.agent.workers.LogUploadWorker
+import com.sphereplatform.agent.workers.UpdateCheckWorker
 import dagger.hilt.android.HiltAndroidApp
 import timber.log.Timber
 import javax.inject.Inject
@@ -18,11 +21,19 @@ class SphereApp : Application(), Configuration.Provider {
     @Inject
     lateinit var workerFactory: HiltWorkerFactory
 
+    @Inject
+    lateinit var fileLoggingTree: FileLoggingTree
+
     override fun onCreate() {
         super.onCreate()
+        // Always plant file tree first so logs are never lost
+        Timber.plant(fileLoggingTree)
         if (BuildConfig.DEBUG) {
             Timber.plant(Timber.DebugTree())
         }
+        // Schedule background workers (KEEP policy — idempotent)
+        LogUploadWorker.schedule(this)
+        UpdateCheckWorker.schedule(this)
     }
 
     override val workManagerConfiguration: Configuration

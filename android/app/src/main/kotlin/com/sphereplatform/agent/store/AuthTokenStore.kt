@@ -1,6 +1,7 @@
 package com.sphereplatform.agent.store
 
 import androidx.security.crypto.EncryptedSharedPreferences
+import dagger.Lazy
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.Json
@@ -27,7 +28,7 @@ import javax.inject.Singleton
 @Singleton
 class AuthTokenStore @Inject constructor(
     private val prefs: EncryptedSharedPreferences,
-    private val httpClient: OkHttpClient,
+    private val lazyHttpClient: Lazy<OkHttpClient>,
 ) {
     companion object {
         private const val KEY_ACCESS_TOKEN = "access_token"
@@ -44,7 +45,7 @@ class AuthTokenStore @Inject constructor(
     fun getServerUrl(): String = prefs.getString(KEY_SERVER_URL, "") ?: ""
 
     fun saveServerUrl(url: String) {
-        prefs.edit().putString(KEY_SERVER_URL, url).apply()
+        prefs.edit().putString(KEY_SERVER_URL, url.trimEnd('/')).apply()
     }
 
     /** Возвращает текущий access token без проверки срока истечения (для заголовков HTTP). */
@@ -83,7 +84,7 @@ class AuthTokenStore @Inject constructor(
             .post(ByteArray(0).toRequestBody("application/json".toMediaType()))
             .build()
 
-        httpClient.newCall(request).execute().use { response ->
+        lazyHttpClient.get().newCall(request).execute().use { response ->
             check(response.isSuccessful) { "Refresh failed: ${response.code}" }
             val bodyStr = response.body?.string() ?: error("Empty refresh response")
             val json = Json.parseToJsonElement(bodyStr).jsonObject
@@ -130,6 +131,17 @@ class AuthTokenStore @Inject constructor(
             .remove(KEY_ACCESS_TOKEN)
             .remove(KEY_REFRESH_TOKEN)
             .remove(KEY_ACCESS_TOKEN_EXPIRES_AT)
+            .apply()
+    }
+
+    /**
+     * Force next getFreshToken() to refresh via refresh endpoint.
+     * Только сбрасывает expiry — не удаляет refresh_token (позволяет обновить access).
+     * Вызывается при AUTH_REJECTED (4001) от сервера.
+     */
+    fun clearTokenCache() {
+        prefs.edit()
+            .putLong(KEY_ACCESS_TOKEN_EXPIRES_AT, 0L)
             .apply()
     }
 

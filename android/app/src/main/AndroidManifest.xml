@@ -13,19 +13,24 @@
     <!-- OTA -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <uses-permission android:name="android.permission.INSTALL_PACKAGES" />
+    <!-- Log collection -->
+    <uses-permission android:name="android.permission.READ_LOGS" />
 
     <application
         android:name=".SphereApp"
         android:allowBackup="false"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@drawable/ic_sphere"
+        android:roundIcon="@drawable/ic_sphere"
         android:label="@string/app_name"
         android:supportsRtl="true"
+        android:networkSecurityConfig="@xml/network_security_config"
         android:theme="@style/Theme.SphereAgent">
 
         <!-- ─── Entry point ──────────────────────────────────────────────── -->
         <activity
             android:name=".ui.SetupActivity"
-            android:exported="true">
+            android:exported="true"
+            android:theme="@style/Theme.SphereAgent.Splash">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -54,7 +59,7 @@
 
         <activity
             android:name=".streaming.ScreenCaptureRequestActivity"
-            android:theme="@android:style/Theme.Translucent.NoTitleBar"
+            android:theme="@style/Theme.SphereAgent.Transparent"
             android:exported="false" />
 
         <!-- ─── Boot Receiver ────────────────────────────────────────────── -->
@@ -71,6 +76,13 @@
         <receiver
             android:name=".ota.InstallReceiver"
             android:exported="false" />
+
+        <!-- ─── Android Enterprise Managed Config (MDM/EMM zero-touch) ──── -->
+        <!-- Keys: sphere_server_url, sphere_api_key, sphere_device_id         -->
+        <meta-data
+            android:name="android.content.APP_RESTRICTIONS"
+            android:resource="@xml/app_restrictions" />
+
     </application>
 
 </manifest>

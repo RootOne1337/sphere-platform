@@ -22,7 +22,8 @@ import javax.inject.Singleton
 /**
  * SphereWebSocketClient — надёжный WS-клиент с:
  * - Exponential backoff: 1s → 2s → 4s → 8s → 16s → 30s
- * - Circuit breaker: 10 последовательных ошибок → 5 минут паузы
+ * - Smart circuit breaker: 10 NETWORK ошибок → 5 минут паузы
+ *   AUTH ошибки (4001) НЕ считаются — вместо этого запрашивается новый токен
  * - First-message auth (JWT в первом сообщении после onOpen, не в URL)
  * - Network change detection через [forceReconnectNow]
  * - Безопасная остановка через [disconnect]
@@ -40,11 +41,19 @@ class SphereWebSocketClient @Inject constructor(
     var isConnected = false
         private set
 
-    // Circuit breaker
+    // Smart circuit breaker — only counts NETWORK failures, not auth
     private var consecutiveFailures = 0
     private val CIRCUIT_OPEN_THRESHOLD = 10
     private var circuitOpenUntil = 0L
     private val CIRCUIT_COOL_DOWN_MS = 5 * 60 * 1000L
+
+    // Server close codes that indicate auth/permission problems (don't circuit break)
+    companion object {
+        private const val CODE_INVALID_TOKEN = 4001
+        private const val CODE_AUTH_TIMEOUT = 4003
+        private const val CODE_DEVICE_NOT_FOUND = 4004
+        private const val CODE_HEARTBEAT_TIMEOUT = 4008
+    }
 
     // Управление reconnect loop
     @Volatile
@@ -90,7 +99,21 @@ class SphereWebSocketClient @Inject constructor(
                 attempt = 0
             } catch (e: CancellationException) {
                 throw e
+            } catch (e: AuthRejectedException) {
+                // Auth rejected by server — DON'T circuit break.
+                // Clear token cache so next attempt gets a fresh token.
+                Timber.w("Auth rejected (code=${e.code}), clearing token cache")
+                authStore.clearTokenCache()
+                attempt++
+                // Short delay before retry with fresh token
+                withTimeoutOrNull(2000L) { reconnectTrigger.receive() }
+            } catch (e: AuthException) {
+                // No token available locally — DON'T circuit break
+                Timber.w(e, "No auth token — waiting for enrollment")
+                attempt++
+                withTimeoutOrNull(10_000L) { reconnectTrigger.receive() }
             } catch (e: Exception) {
+                // Network/unknown failure — circuit breaker applies
                 Timber.w(e, "WS connect failed (attempt=$attempt)")
                 consecutiveFailures++
                 attempt++
@@ -112,11 +135,13 @@ class SphereWebSocketClient @Inject constructor(
     private suspend fun connectOnce() {
         val token = authStore.getFreshToken()
             ?: throw AuthException("No auth token stored")
-        val wsUrl = "${authStore.getServerUrl()}/ws/android/$deviceId"
+        val wsUrl = "${authStore.getServerUrl().trimEnd('/')}/ws/android/$deviceId"
         val request = Request.Builder().url(wsUrl).build()
 
         val connected = CompletableDeferred<Unit>()
         val disconnected = CompletableDeferred<Unit>()
+        var closeCode = 0
+        var closeReason = ""
 
         val listener = object : WebSocketListener() {
             override fun onOpen(ws: WebSocket, response: Response) {
@@ -152,6 +177,8 @@ class SphereWebSocketClient @Inject constructor(
             override fun onClosed(ws: WebSocket, code: Int, reason: String) {
                 isConnected = false
                 webSocket = null
+                closeCode = code
+                closeReason = reason
                 disconnected.complete(Unit)
                 onDisconnected?.invoke(code, reason)
             }
@@ -160,6 +187,11 @@ class SphereWebSocketClient @Inject constructor(
         httpClient.newWebSocket(request, listener)
         connected.await()     // Ждём успешного onOpen
         disconnected.await()  // Ждём закрытия или сбоя
+
+        // After connection closed — check close code for auth rejection
+        if (closeCode == CODE_INVALID_TOKEN || closeCode == CODE_AUTH_TIMEOUT) {
+            throw AuthRejectedException(closeCode, closeReason)
+        }
     }
 
     private fun calculateBackoff(attempt: Int): Long =
@@ -193,3 +225,4 @@ class SphereWebSocketClient @Inject constructor(
 }
 
 class AuthException(message: String) : Exception(message)
+class AuthRejectedException(val code: Int, reason: String) : Exception("Auth rejected: code=$code reason=$reason")

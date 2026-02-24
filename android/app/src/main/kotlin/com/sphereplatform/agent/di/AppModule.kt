@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 import com.sphereplatform.agent.store.AuthTokenStore
+import dagger.Lazy
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -41,7 +42,7 @@ object AppModule {
     @Provides
     @Singleton
     fun provideOkHttpClient(
-        authStore: AuthTokenStore,
+        lazyAuthStore: Lazy<AuthTokenStore>,
         @ApplicationContext ctx: Context,
     ): OkHttpClient {
         val builder = OkHttpClient.Builder()
@@ -49,7 +50,7 @@ object AppModule {
             .writeTimeout(30, TimeUnit.SECONDS)
             .pingInterval(0, TimeUnit.MILLISECONDS)  // Свой heartbeat поверх WS (TZ-03)
             .addInterceptor { chain ->
-                val token = authStore.getToken()
+                val token = lazyAuthStore.get().getToken()
                 val request = if (token != null) {
                     chain.request().newBuilder()
                         .addHeader("Authorization", "Bearer $token")
@@ -61,7 +62,7 @@ object AppModule {
             }
 
         // Certificate pinning — loaded from res/raw/pinned_certs.txt
-        buildCertificatePinner(ctx, authStore)?.let { pinner ->
+        buildCertificatePinner(ctx, lazyAuthStore.get())?.let { pinner ->
             builder.certificatePinner(pinner)
         }
 

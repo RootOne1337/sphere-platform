@@ -2,19 +2,25 @@ package com.sphereplatform.agent.ui
 
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.PowerManager
 import android.provider.Settings
 import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.Button
-import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
+import com.google.android.material.card.MaterialCardView
+import com.google.android.material.chip.Chip
+import com.google.android.material.progressindicator.LinearProgressIndicator
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
+import com.sphereplatform.agent.BuildConfig
 import com.sphereplatform.agent.R
+import com.sphereplatform.agent.provisioning.ZeroTouchProvisioner
 import com.sphereplatform.agent.service.SphereAgentService
 import com.sphereplatform.agent.store.AuthTokenStore
 import dagger.hilt.android.AndroidEntryPoint
@@ -47,6 +53,7 @@ class SetupActivity : AppCompatActivity() {
 
     @Inject lateinit var authStore: AuthTokenStore
     @Inject lateinit var httpClient: OkHttpClient
+    @Inject lateinit var provisioner: ZeroTouchProvisioner
 
     private lateinit var tilServerUrl: TextInputLayout
     private lateinit var tilApiKey: TextInputLayout
@@ -56,9 +63,13 @@ class SetupActivity : AppCompatActivity() {
     private lateinit var etDeviceId: TextInputEditText
     private lateinit var btnEnroll: Button
     private lateinit var tvStatus: TextView
-    private lateinit var progressBar: ProgressBar
+    private lateinit var progressBar: LinearProgressIndicator
+    private lateinit var cardStatus: MaterialCardView
+    private lateinit var chipVersion: Chip
+    private lateinit var tvDeviceInfo: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        installSplashScreen()
         super.onCreate(savedInstanceState)
 
         // Already enrolled → launch service immediately
@@ -69,6 +80,15 @@ class SetupActivity : AppCompatActivity() {
 
         setContentView(R.layout.activity_setup)
         bindViews()
+
+        // Zero-touch: discover config automatically before showing manual form
+        val autoConfig = provisioner.discoverConfig()
+        if (autoConfig != null) {
+            showStatus("Auto-provision via ${autoConfig.source}…", isError = false)
+            setLoading(true)
+            lifecycleScope.launch { performAutoEnroll(autoConfig) }
+            return
+        }
 
         // Check for deep-link / QR enrollment data in the launching Intent
         handleEnrollIntent(intent)
@@ -91,8 +111,38 @@ class SetupActivity : AppCompatActivity() {
         btnEnroll    = findViewById(R.id.btnEnroll)
         tvStatus     = findViewById(R.id.tvStatus)
         progressBar  = findViewById(R.id.progressBar)
+        cardStatus   = findViewById(R.id.cardStatus)
+        chipVersion  = findViewById(R.id.chipVersion)
+        tvDeviceInfo = findViewById(R.id.tvDeviceInfo)
+
+        chipVersion.text = "v${BuildConfig.VERSION_NAME}"
+        tvDeviceInfo.text = "${Build.MANUFACTURER} ${Build.MODEL} \u00b7 Android ${Build.VERSION.RELEASE}"
 
         btnEnroll.setOnClickListener { onEnrollClicked() }
+    }
+
+    // ── Zero-touch auto-enrollment ─────────────────────────────────────────
+
+    private suspend fun performAutoEnroll(config: ZeroTouchProvisioner.ProvisionConfig) {
+        val deviceId = config.deviceId ?: UUID.randomUUID().toString()
+        val result = runCatching { verifyCredentials(config.serverUrl, config.apiKey, deviceId) }
+        setLoading(false)
+        if (result.isSuccess) {
+            authStore.saveServerUrl(config.serverUrl)
+            authStore.saveApiKey(config.apiKey)
+            authStore.saveDeviceId(deviceId)
+            showStatus("Auto-enrolled successfully", isError = false)
+            requestIgnoreBatteryOptimization()
+            launchAgent()
+        } else {
+            val msg = result.exceptionOrNull()?.message ?: "unknown"
+            Timber.w("Zero-touch enrollment failed: $msg")
+            showStatus(
+                "Auto-provision failed (${config.source}): $msg. Enter credentials manually.",
+                isError = true,
+            )
+            // Fall back to manual form — already inflated
+        }
     }
 
     // ── Deep-link (sphere://enroll?server=…&key=…&device=…) ───────────────
@@ -140,7 +190,7 @@ class SetupActivity : AppCompatActivity() {
             if (apiKey.isEmpty())    tilApiKey.error    = getString(R.string.setup_error_empty_fields)
             return
         }
-        if (!serverUrl.startsWith("https://")) {
+        if (!BuildConfig.ALLOW_HTTP && !serverUrl.startsWith("https://")) {
             tilServerUrl.error = getString(R.string.setup_error_invalid_url)
             return
         }
@@ -213,15 +263,15 @@ class SetupActivity : AppCompatActivity() {
     // ── UI helpers ────────────────────────────────────────────────────────
 
     private fun setLoading(loading: Boolean) {
-        btnEnroll.isEnabled  = !loading
+        btnEnroll.isEnabled = !loading
         progressBar.visibility = if (loading) View.VISIBLE else View.GONE
     }
 
     private fun showStatus(msg: String, isError: Boolean) {
-        tvStatus.visibility = View.VISIBLE
+        cardStatus.visibility = View.VISIBLE
         tvStatus.text = msg
         tvStatus.setTextColor(
-            if (isError) 0xFFFF5252.toInt() else getColor(R.color.teal_200)
+            if (isError) getColor(R.color.brand_error) else getColor(R.color.brand_primary_light)
         )
     }
 

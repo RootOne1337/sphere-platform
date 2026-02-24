@@ -1,11 +1,41 @@
 <resources>
-    <style name="Theme.SphereAgent" parent="Theme.MaterialComponents.DayNight.NoActionBar">
-        <item name="colorPrimary">@color/purple_500</item>
-        <item name="colorPrimaryVariant">@color/purple_700</item>
-        <item name="colorOnPrimary">@color/white</item>
-        <item name="colorSecondary">@color/teal_200</item>
-        <item name="colorSecondaryVariant">@color/teal_700</item>
-        <item name="colorOnSecondary">@color/black</item>
-        <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
+
+    <!-- Main app theme — Material 3 dark enterprise -->
+    <style name="Theme.SphereAgent" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/brand_primary</item>
+        <item name="colorOnPrimary">@color/brand_on_primary</item>
+        <item name="colorPrimaryContainer">@color/brand_primary_container</item>
+        <item name="colorOnPrimaryContainer">@color/brand_primary_light</item>
+        <item name="colorSecondary">@color/brand_primary_light</item>
+        <item name="colorSurface">@color/brand_surface</item>
+        <item name="colorSurfaceVariant">@color/brand_surface_container</item>
+        <item name="colorOnSurface">@color/brand_on_surface</item>
+        <item name="colorOnSurfaceVariant">@color/brand_on_surface_muted</item>
+        <item name="android:colorBackground">@color/brand_background</item>
+        <item name="colorOutline">@color/brand_outline</item>
+        <item name="colorError">@color/brand_error</item>
+        <item name="colorErrorContainer">@color/brand_error_container</item>
+        <item name="android:statusBarColor">@color/brand_background</item>
+        <item name="android:navigationBarColor">@color/brand_background</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
     </style>
+
+    <!-- Transparent Activity theme for ScreenCaptureRequestActivity.
+         Must extend an AppCompat/Material3 descendant — plain platform
+         Theme.Translucent causes IllegalStateException on AppCompatActivity. -->
+    <style name="Theme.SphereAgent.Transparent" parent="Theme.SphereAgent">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:backgroundDimEnabled">false</item>
+    </style>
+
+    <!-- Splash screen theme (Android 12+ SplashScreen API) -->
+    <style name="Theme.SphereAgent.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/brand_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_sphere</item>
+        <item name="postSplashScreenTheme">@style/Theme.SphereAgent</item>
+    </style>
+
 </resources>

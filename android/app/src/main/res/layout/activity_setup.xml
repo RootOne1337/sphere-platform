@@ -1,134 +1,223 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas://schemas.android.com/apk/res-auto"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/black"
+    android:background="@color/brand_background"
     android:fillViewport="true">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="32dp"
-        android:gravity="center_horizontal">
+        android:paddingHorizontal="24dp"
+        android:paddingBottom="32dp">
 
-        <!-- Logo / Title -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="48dp"
-            android:layout_marginBottom="8dp"
-            android:text="Sphere Platform"
-            android:textColor="@color/white"
-            android:textSize="28sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="48dp"
-            android:text="@string/setup_subtitle"
-            android:textColor="#AAFFFFFF"
-            android:textSize="14sp" />
-
-        <!-- Status message (shown during connecting / errors) -->
-        <TextView
-            android:id="@+id/tvStatus"
+        <!-- ── Header: logo + title + version chip ──────────────────── -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:gravity="center"
-            android:minLines="2"
-            android:textColor="@color/teal_200"
-            android:textSize="14sp"
-            android:visibility="gone" />
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
+            android:layout_marginTop="60dp"
+            android:layout_marginBottom="28dp">
 
-        <!-- Server URL -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/tilServerUrl"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            <ImageView
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:layout_marginBottom="20dp"
+                android:src="@drawable/ic_sphere"
+                android:contentDescription="@string/cd_sphere_logo"
+                android:scaleType="fitCenter" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/setup_title"
+                android:textColor="@color/brand_on_surface"
+                android:textSize="30sp"
+                android:letterSpacing="0.12"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="@string/setup_subtitle"
+                android:textColor="@color/brand_on_surface_muted"
+                android:textSize="13sp"
+                android:letterSpacing="0.04" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipVersion"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:text="v1.0.0"
+                android:textColor="@color/brand_primary_light"
+                android:textSize="12sp"
+                android:clickable="false"
+                android:focusable="false"
+                app:chipBackgroundColor="@color/brand_surface_container"
+                app:chipStrokeColor="@color/brand_outline"
+                app:chipStrokeWidth="1dp"
+                app:chipMinHeight="28dp" />
+
+        </LinearLayout>
+
+        <!-- ── Status card (shown on connect / error) ────────────────── -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardStatus"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:hint="@string/setup_server_url_hint"
-            app:boxStrokeColor="@color/teal_200"
-            app:hintTextColor="@color/teal_200">
+            android:layout_marginBottom="20dp"
+            android:visibility="gone"
+            app:cardBackgroundColor="@color/brand_surface"
+            app:cardCornerRadius="12dp"
+            app:strokeColor="@color/brand_outline"
+            app:strokeWidth="1dp"
+            tools:visibility="visible">
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etServerUrl"
+            <TextView
+                android:id="@+id/tvStatus"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="textUri"
-                android:textColor="@color/white"
-                android:imeOptions="actionNext" />
+                android:padding="14dp"
+                android:gravity="center"
+                android:textSize="14sp"
+                android:lineSpacingMultiplier="1.35"
+                tools:text="Verifying credentials…"
+                tools:textColor="@color/brand_primary_light" />
 
-        </com.google.android.material.textfield.TextInputLayout>
+        </com.google.android.material.card.MaterialCardView>
 
-        <!-- API Key -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/tilApiKey"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        <!-- ── Enrollment form card ───────────────────────────────────── -->
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:hint="@string/setup_api_key_hint"
-            app:boxStrokeColor="@color/teal_200"
-            app:hintTextColor="@color/teal_200"
-            app:passwordToggleEnabled="true">
+            app:cardBackgroundColor="@color/brand_surface"
+            app:cardCornerRadius="16dp"
+            app:strokeColor="@color/brand_outline"
+            app:strokeWidth="1dp">
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etApiKey"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="textVisiblePassword"
-                android:textColor="@color/white"
-                android:fontFamily="monospace"
-                android:imeOptions="actionNext" />
+                android:orientation="vertical"
+                android:padding="20dp">
 
-        </com.google.android.material.textfield.TextInputLayout>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="18dp"
+                    android:text="@string/setup_form_title"
+                    android:textColor="@color/brand_on_surface"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.02" />
 
-        <!-- Device ID (optional — auto-generated if blank) -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/tilDeviceId"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                <!-- Server URL -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/tilServerUrl"
+                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
+                    android:hint="@string/setup_server_url_hint">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etServerUrl"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="textUri"
+                        android:textColor="@color/brand_on_surface"
+                        android:imeOptions="actionNext"
+                        android:autofillHints="noAutoFill" />
+
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- API Key -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/tilApiKey"
+                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
+                    android:hint="@string/setup_api_key_hint"
+                    app:endIconMode="password_toggle">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etApiKey"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="textVisiblePassword"
+                        android:textColor="@color/brand_on_surface"
+                        android:fontFamily="monospace"
+                        android:imeOptions="actionNext"
+                        android:autofillHints="noAutoFill" />
+
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- Device ID (optional) -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/tilDeviceId"
+                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="24dp"
+                    android:hint="@string/setup_device_id_hint"
+                    app:helperText="@string/setup_device_id_helper">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etDeviceId"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="text"
+                        android:textColor="@color/brand_on_surface"
+                        android:fontFamily="monospace"
+                        android:imeOptions="actionDone"
+                        android:autofillHints="noAutoFill" />
+
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- Enroll button -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnEnroll"
+                    style="@style/Widget.Material3.Button"
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:text="@string/setup_enroll_button"
+                    android:textSize="15sp"
+                    android:letterSpacing="0.03"
+                    app:cornerRadius="10dp" />
+
+                <!-- Progress indicator -->
+                <com.google.android.material.progressindicator.LinearProgressIndicator
+                    android:id="@+id/progressBar"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:visibility="gone"
+                    app:indicatorColor="@color/brand_primary"
+                    app:trackColor="@color/brand_surface_container"
+                    app:trackCornerRadius="4dp"
+                    android:indeterminate="true" />
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- ── Footer: device info ────────────────────────────────────── -->
+        <TextView
+            android:id="@+id/tvDeviceInfo"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="32dp"
-            android:hint="@string/setup_device_id_hint"
-            app:boxStrokeColor="@color/teal_200"
-            app:hintTextColor="@color/teal_200"
-            app:helperText="@string/setup_device_id_helper"
-            app:helperTextTextColor="#AAFFFFFF">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etDeviceId"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:inputType="text"
-                android:textColor="@color/white"
-                android:fontFamily="monospace"
-                android:imeOptions="actionDone" />
-
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <!-- Enroll Button -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnEnroll"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:text="@string/setup_enroll_button"
-            android:textSize="16sp"
-            app:backgroundTint="@color/teal_700"
-            app:cornerRadius="8dp" />
-
-        <!-- Progress -->
-        <ProgressBar
-            android:id="@+id/progressBar"
-            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
-            android:visibility="gone" />
+            android:gravity="center"
+            android:textColor="@color/brand_on_surface_muted"
+            android:textSize="11sp"
+            tools:text="samsung SM-G991B · Android 14" />
 
     </LinearLayout>
 

@@ -17,8 +17,10 @@ import javax.inject.Singleton
  * Chain: SPHERE_KILLSWITCH
  *  - Allow loopback
  *  - Allow traffic through VPN interface (sphere0)
+ *  - Allow management server(s) — prevents deadlock when VPN drops
  *  - Allow DHCP (UDP 67-68) for initial connectivity
- *  - Allow DNS to VPN server for tunnel re-establishment
+ *  - Allow DNS (UDP/TCP 53) for hostname resolution
+ *  - Allow traffic to VPN server for tunnel re-establishment
  *  - DROP everything else
  */
 @Singleton
@@ -37,8 +39,13 @@ class KillSwitchManager @Inject constructor(
     /**
      * Enable kill switch — blocks all non-VPN traffic.
      * @param vpnServerEndpoint WireGuard server endpoint (host:port) to allow through.
+     * @param managementHosts Management server hosts that must remain reachable even
+     *        when VPN is down (prevents deadlock where agent can't receive VPN_CONNECT).
      */
-    suspend fun enable(vpnServerEndpoint: String) = withContext(Dispatchers.IO) {
+    suspend fun enable(
+        vpnServerEndpoint: String,
+        managementHosts: List<String> = emptyList(),
+    ) = withContext(Dispatchers.IO) {
         try {
             val serverHost = vpnServerEndpoint.substringBefore(":")
 
@@ -57,6 +64,20 @@ class KillSwitchManager @Inject constructor(
             // Allow traffic to VPN server (for tunnel establishment/maintenance)
             iptables("-A $CHAIN_NAME -d $serverHost -j ACCEPT")
 
+            // Allow management server(s) — CRITICAL: prevents deadlock
+            // Without this, VPN drop = no WS = no VPN_CONNECT command = permanent brick
+            for (host in managementHosts) {
+                val cleanHost = host.trim().substringBefore(":")
+                if (cleanHost.isNotEmpty()) {
+                    iptables("-A $CHAIN_NAME -d $cleanHost -j ACCEPT")
+                    Timber.i("Kill switch: allowing management host $cleanHost")
+                }
+            }
+
+            // Allow DNS (needed to resolve VPN server & management server hostnames)
+            iptables("-A $CHAIN_NAME -p udp --dport 53 -j ACCEPT")
+            iptables("-A $CHAIN_NAME -p tcp --dport 53 -j ACCEPT")
+
             // Allow DHCP
             iptables("-A $CHAIN_NAME -p udp --dport 67:68 -j ACCEPT")
 
@@ -68,7 +89,7 @@ class KillSwitchManager @Inject constructor(
             iptables("-I FORWARD 1 -j $CHAIN_NAME")
 
             isEnabled = true
-            Timber.i("Kill switch enabled, allowing only $serverHost + $VPN_INTERFACE")
+            Timber.i("Kill switch enabled, allowing VPN=$serverHost + mgmt=$managementHosts + $VPN_INTERFACE")
         } catch (e: Exception) {
             Timber.e(e, "Failed to enable kill switch")
             // Attempt cleanup on failure

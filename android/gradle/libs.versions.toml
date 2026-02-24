@@ -2,6 +2,7 @@
 agp = "8.3.2"
 kotlin = "1.9.23"
 ksp = "1.9.23-1.0.19"
+splashscreen = "1.0.1"
 hilt = "2.51.1"
 hiltNavigationCompose = "1.2.0"
 okhttp = "4.12.0"
@@ -50,6 +51,9 @@ hilt-work-compiler = { group = "androidx.hilt", name = "hilt-compiler", version.
 
 # Logging
 timber = { group = "com.jakewharton.timber", name = "timber", version.ref = "timber" }
+
+# Splash Screen
+core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "splashscreen" }
 
 # Lua Engine (LuaJ — чистая Java реализация Lua 5.2, без native code)
 luaj = { group = "org.luaj", name = "luaj-jse", version.ref = "luaj" }

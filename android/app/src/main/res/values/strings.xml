@@ -1,19 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Sphere Agent</string>
-    <string name="notification_channel_name">Sphere Platform Agent</string>
-    <string name="notification_content">Agent running</string>
 
-    <!-- Setup / Enrollment -->
-    <string name="setup_subtitle">Device Agent Enrollment</string>
-    <string name="setup_server_url_hint">Server URL (https://…)</string>
-    <string name="setup_api_key_hint">API Key</string>
+    <!-- Setup screen -->
+    <string name="setup_title">SPHERE</string>
+    <string name="setup_subtitle">Device Management Platform</string>
+    <string name="setup_form_title">Device Enrollment</string>
+    <string name="setup_server_url_hint">Server URL</string>
+    <string name="setup_api_key_hint">API Key / Enrollment Token</string>
     <string name="setup_device_id_hint">Device ID (optional)</string>
-    <string name="setup_device_id_helper">Leave blank to use a generated ID</string>
+    <string name="setup_device_id_helper">Leave blank — ID will be auto-generated</string>
     <string name="setup_enroll_button">Enroll Device</string>
+
+    <!-- Validation / status -->
     <string name="setup_error_empty_fields">Server URL and API Key are required</string>
-    <string name="setup_error_invalid_url">Server URL must start with https://</string>
+    <string name="setup_error_invalid_url">Production URL must use HTTPS</string>
+    <string name="setup_error_empty_url">Server URL is required</string>
+    <string name="setup_error_empty_key">API key is required</string>
     <string name="setup_status_connecting">Verifying credentials…</string>
     <string name="setup_status_success">Enrolled! Starting agent…</string>
     <string name="setup_error_connect">Connection failed: %1$s</string>
+
+    <!-- Notification -->
+    <string name="notification_channel_name">Sphere Agent</string>
+    <string name="notification_content">Device agent is running</string>
+    <string name="notif_text_vpn">Secure VPN tunnel active</string>
+
+    <!-- Content descriptions -->
+    <string name="cd_sphere_logo">Sphere Platform logo</string>
+
+    <!-- Managed Config (AppRestrictions) — shown in MDM/EMM console -->
+    <string name="restriction_server_url_title">Sphere Platform Server URL</string>
+    <string name="restriction_server_url_desc">HTTPS URL of the Sphere management backend</string>
+    <string name="restriction_api_key_title">Sphere API Key</string>
+    <string name="restriction_api_key_desc">Device API key generated in the Sphere management console</string>
+    <string name="restriction_device_id_title">Sphere Device ID (optional)</string>
+    <string name="restriction_device_id_desc">Stable device identifier (UUID). Leave blank to auto-generate</string>
 </resources>

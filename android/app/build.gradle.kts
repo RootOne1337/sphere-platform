@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -6,29 +8,79 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
 }
 
+// ── Version management ────────────────────────────────────────────────────
+val versionProps = Properties()
+val versionFile = rootProject.file("version.properties")
+if (versionFile.exists()) versionProps.load(versionFile.inputStream())
+val appVersionCode = versionProps.getProperty("VERSION_CODE", "10001").toInt()
+val appVersionName: String = versionProps.getProperty("VERSION_NAME", "1.0.0")
+
 android {
     namespace = "com.sphereplatform.agent"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.sphereplatform.agent"
         minSdk = 26
-        targetSdk = 34
-        versionCode = 1
-        versionName = "1.0.0"
+        targetSdk = 35
+        versionCode = appVersionCode
+        versionName = appVersionName
+
+        // Enterprise build metadata
+        buildConfigField("String", "GIT_SHA", "\"${System.getenv("GIT_SHA") ?: "local"}\"")
+        buildConfigField("String", "BUILD_TIME", "\"${System.currentTimeMillis()}\"")
+    }
+
+    // ── Signing (env-var driven, never commit keys to VCS) ───────────────────
+    signingConfigs {
+        create("release") {
+            storeFile = System.getenv("SPHERE_KEYSTORE_PATH")?.let { file(it) }
+            storePassword = System.getenv("SPHERE_KEYSTORE_PASSWORD") ?: ""
+            keyAlias = System.getenv("SPHERE_KEY_ALIAS") ?: "sphere"
+            keyPassword = System.getenv("SPHERE_KEY_PASSWORD") ?: ""
+        }
+    }
+
+    // ── Build flavors ───────────────────────────────────────────────────
+    flavorDimensions += "env"
+    productFlavors {
+        create("dev") {
+            dimension = "env"
+            applicationIdSuffix = ".dev"
+            versionNameSuffix = "-dev"
+            buildConfigField("boolean", "ALLOW_HTTP", "true")
+            buildConfigField("String", "FLAVOR_LABEL", "\"dev\"")
+            // Emulator defaults: 10.0.2.2 = host-machine loopback from Android emulator
+            buildConfigField("String", "DEFAULT_SERVER_URL", "\"http://10.0.2.2\"")
+            buildConfigField("String", "DEFAULT_API_KEY", "\"\"")
+            buildConfigField("String", "DEFAULT_DEVICE_ID", "\"\"")
+        }
+        create("enterprise") {
+            dimension = "env"
+            buildConfigField("boolean", "ALLOW_HTTP", "false")
+            buildConfigField("String", "FLAVOR_LABEL", "\"enterprise\"")
+            // Enterprise: baked-in defaults are blank — provisioned via MDM or config file
+            buildConfigField("String", "DEFAULT_SERVER_URL", "\"\"")
+            buildConfigField("String", "DEFAULT_API_KEY", "\"\"")
+            buildConfigField("String", "DEFAULT_DEVICE_ID", "\"\"")
+        }
     }
 
     buildTypes {
         release {
             isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            val rel = signingConfigs.findByName("release")
+            if (rel?.storeFile?.exists() == true) signingConfig = rel
         }
         debug {
             isMinifyEnabled = false
             applicationIdSuffix = ".debug"
+            buildConfigField("boolean", "VERBOSE_LOGGING", "true")
         }
     }
 
@@ -53,6 +105,9 @@ dependencies {
     implementation(libs.material)
     implementation(libs.androidx.activity.ktx)
     implementation(libs.androidx.lifecycle.runtime)
+
+    // Splash Screen API
+    implementation(libs.core.splashscreen)
 
     // Hilt DI
     implementation(libs.hilt.android)
