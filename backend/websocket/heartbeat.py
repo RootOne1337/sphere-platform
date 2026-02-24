@@ -71,7 +71,10 @@ class HeartbeatManager:
                         device_id=self.device_id,
                         since_pong_s=round(since_pong, 1),
                     )
-                    await self.ws.close(code=4008, reason="heartbeat_timeout")
+                    try:
+                        await self.ws.close(code=4008, reason="heartbeat_timeout")
+                    except Exception:
+                        pass  # WS уже закрыт — игнорируем double-close
                     return
 
                 # Отправить ping
@@ -80,7 +83,15 @@ class HeartbeatManager:
                     "type": "ping",
                     "ts": ping_ts,
                 })
-            except (WebSocketDisconnect, Exception):
+            except (WebSocketDisconnect, asyncio.CancelledError):
+                return
+            except Exception as e:
+                logger.error(
+                    "Heartbeat loop unexpected error",
+                    device_id=self.device_id,
+                    error=str(e),
+                    error_type=type(e).__name__,
+                )
                 return
 
     async def handle_pong(self, msg: dict) -> None:

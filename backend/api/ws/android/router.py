@@ -7,11 +7,11 @@ import asyncio
 import json
 
 import structlog
-from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.database.engine import get_db
-from backend.database.redis_client import get_redis
+from backend.database.engine import AsyncSessionLocal
+from backend.database.redis_client import get_redis_binary
 from backend.models.device import Device
 from backend.schemas.device_status import DeviceLiveStatus
 from backend.services.device_status_cache import DeviceStatusCache
@@ -24,14 +24,31 @@ router = APIRouter(tags=["websocket"])
 
 async def authenticate_ws_token(token: str, db: AsyncSession):
     """
-    Проверить JWT токен из first-message WebSocket авторизации.
+    Проверить JWT токен или API ключ из first-message WebSocket авторизации.
     Не использует OAuth2 Bearer в URL (безопасно от логирования).
+
+    Возвращает объект с атрибутом org_id (User или _ApiKeyPrincipal).
     """
     import uuid
 
     import jwt as pyjwt
     from fastapi import HTTPException
 
+    # API key path — токены вида sphr_<env>_<hex>
+    if token.startswith("sphr_"):
+        from backend.services.api_key_service import APIKeyService
+        svc = APIKeyService(db)
+        api_key = await svc.authenticate(token)
+        if not api_key:
+            raise HTTPException(status_code=401, detail="Invalid or expired API key")
+
+        class _ApiKeyPrincipal:
+            def __init__(self, org_id: uuid.UUID) -> None:
+                self.org_id = org_id
+
+        return _ApiKeyPrincipal(api_key.org_id)
+
+    # JWT path
     from backend.core.security import decode_access_token
     from backend.models.user import User
 
@@ -143,53 +160,72 @@ async def handle_agent_binary(
 async def android_agent_ws(
     ws: WebSocket,
     device_id: str,
-    db: AsyncSession = Depends(get_db),
 ) -> None:
     await ws.accept()
 
     manager = get_connection_manager()
 
-    # Redis для status cache
-    redis = await get_redis()
+    # Redis для status cache (binary — msgpack, не строки)
+    redis = await get_redis_binary()
     status_cache = DeviceStatusCache(redis)
+
+    async def _close(code: int, reason: str) -> None:
+        """Безопасное закрытие WS — игнорирует double-close RuntimeError."""
+        try:
+            await ws.close(code=code, reason=reason)
+        except Exception:
+            pass
 
     # Шаг 1: First-message auth (НЕ JWT в URL — чтобы не засветить в логах)
     try:
         first_msg = await asyncio.wait_for(ws.receive_json(), timeout=10.0)
     except asyncio.TimeoutError:
-        await ws.close(code=4003, reason="auth_timeout")
+        await _close(4003, "auth_timeout")
         return
+    except WebSocketDisconnect:
+        return  # Клиент уже отключился — ничего закрывать не нужно
     except Exception:
-        await ws.close(code=4001, reason="receive_error")
+        await _close(4001, "receive_error")
         return
 
     token = first_msg.get("token")
     if not token:
-        await ws.close(code=4001, reason="no_token")
+        await _close(4001, "no_token")
         return
 
-    # Валидация JWT
+    # Auth phase: DB session scoped to auth only — not held for WS lifetime
     from fastapi import HTTPException
-    try:
-        user = await authenticate_ws_token(token, db)
-    except HTTPException:
-        await ws.close(code=4001, reason="invalid_token")
-        return
-
-    # Проверить что device принадлежит организации
     import uuid
+
+    org_id_str: str = ""
     try:
-        device_uuid = uuid.UUID(device_id)
-    except ValueError:
-        await ws.close(code=4004, reason="invalid_device_id")
-        return
+        async with AsyncSessionLocal() as db:
+            try:
+                user = await authenticate_ws_token(token, db)
+            except HTTPException:
+                await _close(4001, "invalid_token")
+                return
 
-    device = await db.get(Device, device_uuid)
-    if not device or str(device.org_id) != str(user.org_id):
-        await ws.close(code=4004, reason="device_not_found")
-        return
+            try:
+                device_uuid = uuid.UUID(device_id)
+            except ValueError:
+                await _close(4004, "invalid_device_id")
+                return
 
-    session_id = await manager.connect(ws, device_id, "android", str(user.org_id))
+            device = await db.get(Device, device_uuid)
+            if not device or str(device.org_id) != str(user.org_id):
+                await _close(4004, "device_not_found")
+                return
+
+            org_id_str = str(user.org_id)
+    except HTTPException:
+        raise
+    except Exception:
+        await _close(1011, "auth_error")
+        return
+    # DB session is now CLOSED — safe to enter long-lived WS loop
+
+    session_id = await manager.connect(ws, device_id, "android", org_id_str)
     await status_cache.set_status(device_id, DeviceLiveStatus(
         device_id=device_id,
         status="online",
@@ -201,6 +237,15 @@ async def android_agent_ws(
     heartbeat = HeartbeatManager(ws, device_id, status_cache)
     await heartbeat.start()
 
+    # Подписать PubSub router на командный канал этого устройства
+    try:
+        from backend.websocket.pubsub_router import get_pubsub_router
+        pubsub_router = get_pubsub_router()
+        if pubsub_router:
+            await pubsub_router.subscribe_device(device_id, org_id_str)
+    except Exception:
+        pass
+
     # Опубликовать device.online событие (SPLIT-5)
     try:
         from backend.schemas.events import EventType, FleetEvent
@@ -210,40 +255,75 @@ async def android_agent_ws(
             await publisher.emit(FleetEvent(
                 event_type=EventType.DEVICE_ONLINE,
                 device_id=device_id,
-                org_id=str(user.org_id),
+                org_id=org_id_str,
                 payload={"status": "online", "session_id": session_id},
             ))
     except Exception:
         pass
 
+    # Flush offline command queue — deliver pending commands
+    try:
+        from backend.websocket.offline_queue import get_offline_queue
+        offline_q = get_offline_queue()
+        if offline_q:
+            await offline_q.flush(
+                device_id,
+                send_fn=lambda cmd: manager.send_to_device(device_id, cmd),
+            )
+    except Exception as e:
+        logger.debug("Offline queue flush skipped", device_id=device_id, error=str(e))
+
     try:
         while True:
             data = await ws.receive()
             if "text" in data:
-                msg = json.loads(data["text"])
-                match msg.get("type"):
-                    case "pong":
-                        await heartbeat.handle_pong(msg)
-                    case "telemetry":
-                        await handle_telemetry(device_id, msg, status_cache)
-                    case "command_result":
-                        await handle_command_result(device_id, msg)
-                    case "event":
-                        await handle_device_event(device_id, msg)
-                    case _:
-                        logger.debug(
-                            "Unknown message type",
-                            device_id=device_id,
-                            type=msg.get("type"),
-                        )
+                try:
+                    msg = json.loads(data["text"])
+                except json.JSONDecodeError:
+                    logger.debug("Malformed JSON from agent", device_id=device_id)
+                    continue
+                try:
+                    match msg.get("type"):
+                        case "pong":
+                            await heartbeat.handle_pong(msg)
+                        case "telemetry":
+                            await handle_telemetry(device_id, msg, status_cache)
+                        case "command_result":
+                            await handle_command_result(device_id, msg)
+                        case "event":
+                            await handle_device_event(device_id, msg)
+                        case _:
+                            logger.debug(
+                                "Unknown message type",
+                                device_id=device_id,
+                                type=msg.get("type"),
+                            )
+                except Exception as e:
+                    logger.warning(
+                        "Error handling agent message",
+                        device_id=device_id,
+                        msg_type=msg.get("type"),
+                        error=str(e),
+                    )
             elif "bytes" in data:
                 await handle_agent_binary(device_id, data["bytes"], manager)
     except WebSocketDisconnect:
         pass
+    except Exception as e:
+        logger.warning("WS receive loop error", device_id=device_id, error=str(e))
     finally:
         await heartbeat.stop()
         await manager.disconnect(device_id)
         await status_cache.mark_offline(device_id)
+
+        # Отписать PubSub router от канала устройства
+        try:
+            from backend.websocket.pubsub_router import get_pubsub_router
+            pubsub_router = get_pubsub_router()
+            if pubsub_router:
+                await pubsub_router.unsubscribe_device(device_id)
+        except Exception:
+            pass
 
         # Опубликовать device.offline событие
         try:
@@ -254,7 +334,7 @@ async def android_agent_ws(
                 await publisher.emit(FleetEvent(
                     event_type=EventType.DEVICE_OFFLINE,
                     device_id=device_id,
-                    org_id=str(user.org_id),
+                org_id=org_id_str,
                     payload={"status": "offline"},
                 ))
         except Exception:

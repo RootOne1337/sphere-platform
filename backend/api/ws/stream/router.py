@@ -6,10 +6,9 @@ import asyncio
 import secrets
 
 import structlog
-from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
 
-from backend.database.engine import get_db
+from backend.database.engine import AsyncSessionLocal
 from backend.websocket.connection_manager import get_connection_manager
 from backend.websocket.stream_bridge import get_stream_bridge
 
@@ -49,7 +48,6 @@ async def _authenticate_viewer(token: str, db: AsyncSession):
 async def stream_viewer_ws(
     ws: WebSocket,
     device_id: str,
-    db: AsyncSession = Depends(get_db),
 ) -> None:
     """
     Browser viewer endpoint.
@@ -80,26 +78,37 @@ async def stream_viewer_ws(
         await ws.close(code=4001, reason="no_token")
         return
 
-    try:
-        user = await _authenticate_viewer(token, db)
-    except HTTPException:
-        await ws.close(code=4001, reason="invalid_token")
-        return
-
-    # Verify device ownership
+    # Auth phase: DB session opened and closed immediately — not held for WS lifetime
     import uuid as _uuid
-
     from backend.models.device import Device
-    try:
-        device_uuid = _uuid.UUID(device_id)
-    except ValueError:
-        await ws.close(code=4004, reason="invalid_device_id")
-        return
 
-    device = await db.get(Device, device_uuid)
-    if not device or str(device.org_id) != str(user.org_id):
-        await ws.close(code=4004, reason="device_not_found")
+    user = None
+    try:
+        async with AsyncSessionLocal() as db:
+            try:
+                user = await _authenticate_viewer(token, db)
+            except HTTPException:
+                await ws.close(code=4001, reason="invalid_token")
+                return
+
+            try:
+                device_uuid = _uuid.UUID(device_id)
+            except ValueError:
+                await ws.close(code=4004, reason="invalid_device_id")
+                return
+
+            device = await db.get(Device, device_uuid)
+            if not device or str(device.org_id) != str(user.org_id):
+                await ws.close(code=4004, reason="device_not_found")
+                return
+
+            # Extract needed values before DB session closes
+            user_id_str = str(user.id)
+            org_id_str = str(user.org_id)
+    except Exception:
+        await ws.close(code=1011, reason="auth_error")
         return
+    # DB session is now CLOSED — safe to enter long-lived WS loop
 
     bridge = get_stream_bridge()
     if not bridge:
@@ -116,7 +125,7 @@ async def stream_viewer_ws(
         "Stream viewer connected",
         device_id=device_id,
         session_id=session_id,
-        user_id=str(user.id),
+        user_id=user_id_str,
     )
 
     # Notify agent → triggers SPS/PPS replay + I-frame request
@@ -137,6 +146,19 @@ async def stream_viewer_ws(
                         "type": "touch_tap",
                         "x": x,
                         "y": y,
+                        "session_id": session_id,
+                    })
+                case "swipe":
+                    x1 = int(data.get("x1", 0))
+                    y1 = int(data.get("y1", 0))
+                    x2 = int(data.get("x2", 0))
+                    y2 = int(data.get("y2", 0))
+                    duration_ms = int(data.get("duration_ms", 300))
+                    await manager.send_to_device(device_id, {
+                        "type": "touch_swipe",
+                        "x1": x1, "y1": y1,
+                        "x2": x2, "y2": y2,
+                        "duration_ms": duration_ms,
                         "session_id": session_id,
                     })
                 case "request_keyframe":

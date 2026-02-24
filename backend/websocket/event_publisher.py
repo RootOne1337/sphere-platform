@@ -21,20 +21,24 @@ class EventPublisher:
         self.events_manager = events_manager
 
     async def emit(self, event: FleetEvent) -> None:
-        # Опубликовать в Redis → другие воркеры получат и доставят своим клиентам
+        # Опубликовать в Redis → EventsManager на каждом воркере получит через PubSub
+        pubsub_ok = False
         try:
             if self.pubsub:
                 await self.pubsub.broadcast_org_event(
                     event.org_id, event.model_dump(mode="json")
                 )
+                pubsub_ok = True
         except Exception as e:
             logger.warning("PubSub emit failed", error=str(e))
 
-        # Доставить локальным клиентам напрямую
-        try:
-            await self.events_manager.publish_event(event)
-        except Exception as e:
-            logger.warning("Local event publish failed", error=str(e))
+        # Доставить локально ТОЛЬКО если PubSub не работает (fallback).
+        # Когда PubSub работает, EventsManager получит событие через _listen_loop.
+        if not pubsub_ok:
+            try:
+                await self.events_manager.publish_event(event)
+            except Exception as e:
+                logger.warning("Local event publish failed", error=str(e))
 
     async def device_online(self, device_id: str, org_id: str) -> None:
         await self.emit(FleetEvent(
