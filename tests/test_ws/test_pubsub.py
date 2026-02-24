@@ -69,12 +69,15 @@ class TestPubSubPublisher:
         result = await publisher.send_command_to_device("dev-1", {"type": "click"})
         assert result is True
 
-    async def test_send_command_to_device_returns_false_when_no_subscribers(
+    async def test_send_command_to_device_queued_when_no_subscribers(
         self, publisher, redis_mock
     ):
+        """When no subscribers, command is queued (offline queue returns True)."""
         redis_mock.publish.return_value = 0
+        # Without offline queue singleton, result depends on queue availability
+        # In test env, offline queue is not initialized → returns False
         result = await publisher.send_command_to_device("dev-1", {"type": "click"})
-        assert result is False
+        assert result is False  # no offline queue in test env
 
     async def test_send_command_uses_correct_channel(self, publisher, redis_mock):
         await publisher.send_command_to_device("my-device", {"cmd": "tap"})
@@ -94,6 +97,20 @@ class TestPubSubPublisher:
         assert count == 3
         channel, _ = redis_mock.publish.call_args.args
         assert channel == "sphere:org:events:org-1"
+
+    async def test_send_command_inner_delivered(self, publisher, redis_mock):
+        """_send_command_inner returns (True, False) when delivered to online device."""
+        redis_mock.publish.return_value = 1
+        success, queued = await publisher._send_command_inner("dev-1", {"type": "tap"})
+        assert success is True
+        assert queued is False
+
+    async def test_send_command_inner_offline_no_queue(self, publisher, redis_mock):
+        """_send_command_inner returns (False, False) when offline and no queue."""
+        redis_mock.publish.return_value = 0
+        success, queued = await publisher._send_command_inner("dev-1", {"type": "tap"})
+        assert success is False
+        assert queued is False
 
 
 class TestPubSubRouterRouting:

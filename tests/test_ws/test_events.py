@@ -166,32 +166,37 @@ class TestEventPublisher:
     def publisher(self, pubsub_mock, events_manager_mock):
         return EventPublisher(pubsub_mock, events_manager_mock)
 
-    async def test_emit_publishes_to_both_pubsub_and_local(
+    async def test_emit_publishes_to_pubsub_only_when_available(
         self, publisher, pubsub_mock, events_manager_mock
     ):
+        """When PubSub is available, events go only via PubSub (EventsManager gets it via PubSub listener)."""
         event = FleetEvent(event_type=EventType.DEVICE_ONLINE, org_id="org-1")
         await publisher.emit(event)
 
         pubsub_mock.broadcast_org_event.assert_called_once()
-        events_manager_mock.publish_event.assert_called_once_with(event)
+        events_manager_mock.publish_event.assert_not_called()
 
     async def test_device_online_helper(self, publisher, pubsub_mock, events_manager_mock):
         await publisher.device_online("dev-1", "org-1")
-        events_manager_mock.publish_event.assert_called_once()
-        call_event = events_manager_mock.publish_event.call_args.args[0]
-        assert call_event.event_type == EventType.DEVICE_ONLINE
-        assert call_event.device_id == "dev-1"
+        pubsub_mock.broadcast_org_event.assert_called_once()
+        call_args = pubsub_mock.broadcast_org_event.call_args
+        assert call_args.args[0] == "org-1"  # org_id
+        event_data = call_args.args[1]
+        assert event_data["event_type"] == EventType.DEVICE_ONLINE
+        assert event_data["device_id"] == "dev-1"
 
     async def test_device_offline_helper(self, publisher, pubsub_mock, events_manager_mock):
         await publisher.device_offline("dev-2", "org-1")
-        call_event = events_manager_mock.publish_event.call_args.args[0]
-        assert call_event.event_type == EventType.DEVICE_OFFLINE
+        call_args = pubsub_mock.broadcast_org_event.call_args
+        event_data = call_args.args[1]
+        assert event_data["event_type"] == EventType.DEVICE_OFFLINE
 
     async def test_command_completed_helper(self, publisher, pubsub_mock, events_manager_mock):
         await publisher.command_completed("dev-1", "org-1", "cmd-123", {"result": "ok"})
-        call_event = events_manager_mock.publish_event.call_args.args[0]
-        assert call_event.event_type == EventType.COMMAND_COMPLETED
-        assert call_event.payload["command_id"] == "cmd-123"
+        call_args = pubsub_mock.broadcast_org_event.call_args
+        event_data = call_args.args[1]
+        assert event_data["event_type"] == EventType.COMMAND_COMPLETED
+        assert event_data["payload"]["command_id"] == "cmd-123"
 
     async def test_emit_continues_on_pubsub_failure(
         self, publisher, pubsub_mock, events_manager_mock
@@ -204,8 +209,9 @@ class TestEventPublisher:
 
         events_manager_mock.publish_event.assert_called_once()
 
-    async def test_task_progress_helper(self, publisher, events_manager_mock):
+    async def test_task_progress_helper(self, publisher, pubsub_mock, events_manager_mock):
         await publisher.task_progress("dev-1", "org-1", "task-xyz", 75)
-        call_event = events_manager_mock.publish_event.call_args.args[0]
-        assert call_event.event_type == EventType.TASK_PROGRESS
-        assert call_event.payload["progress"] == 75
+        call_args = pubsub_mock.broadcast_org_event.call_args
+        event_data = call_args.args[1]
+        assert event_data["event_type"] == EventType.TASK_PROGRESS
+        assert event_data["payload"]["progress"] == 75
