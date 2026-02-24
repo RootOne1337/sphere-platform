@@ -18,6 +18,8 @@ import {
   Radar,
   Webhook,
   Settings,
+  FileText,
+  RefreshCw,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -32,6 +34,8 @@ const NAV_ITEMS = [
   { href: '/discovery', label: 'Discovery', icon: Radar },
   { href: '/users', label: 'Users', icon: Users },
   { href: '/audit', label: 'Audit Log', icon: ScrollText },
+  { href: '/logs', label: 'Device Logs', icon: FileText },
+  { href: '/updates', label: 'Updates', icon: RefreshCw },
   { href: '/webhooks', label: 'Webhooks', icon: Webhook },
   { href: '/settings', label: 'Settings', icon: Settings },
 ];

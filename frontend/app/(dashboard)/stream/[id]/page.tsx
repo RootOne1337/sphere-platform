@@ -11,8 +11,8 @@ export default function DeviceStreamPage({ params }: Props) {
   return (
     <div className="p-4 space-y-4">
       <h1 className="text-xl font-bold">Remote View — {id}</h1>
-      <div className="max-w-sm">
-        <DeviceStream deviceId={id} width={720} height={1280} />
+      <div className="max-w-3xl">
+        <DeviceStream deviceId={id} />
       </div>
     </div>
   );

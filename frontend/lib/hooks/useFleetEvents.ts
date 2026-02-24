@@ -28,10 +28,16 @@ export interface FleetEvent {
 
 type EventHandler = (event: FleetEvent) => void;
 
+const WS_RECONNECT_BASE_MS = 1000;
+const WS_RECONNECT_MAX_MS = 30000;
+const WS_MAX_RETRIES = Infinity; // never stop trying
+
 export function useFleetEvents(onEvent?: EventHandler) {
   const { accessToken } = useAuthStore();
   const wsRef = useRef<WebSocket | null>(null);
   const qc = useQueryClient();
+  const attemptRef = useRef(0);
+  const unmountedRef = useRef(false);
 
   const handleMessage = useCallback(
     (evt: MessageEvent) => {
@@ -69,32 +75,70 @@ export function useFleetEvents(onEvent?: EventHandler) {
 
   useEffect(() => {
     if (!accessToken) return;
+    unmountedRef.current = false;
+    attemptRef.current = 0;
 
-    // WS endpoint is at /ws/events (not under /api/v1 prefix) — use page origin
-    const origin = typeof window !== 'undefined'
-      ? window.location.origin
-      : (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost').replace(/\/api.*$/, '');
-    const wsUrl = origin.replace(/^http/, 'ws') + '/ws/events';
-    const ws = new WebSocket(wsUrl);
-    wsRef.current = ws;
-
-    ws.onopen = () => {
-      ws.send(JSON.stringify({ token: accessToken }));
-    };
-
-    ws.onmessage = handleMessage;
-
-    // Reconnect on close
     let reconnectTimer: ReturnType<typeof setTimeout>;
-    ws.onclose = () => {
-      reconnectTimer = setTimeout(() => {
-        // Component will re-render via useEffect deps if token changes
-      }, 5000);
+    let currentWs: WebSocket | null = null;
+
+    const buildWsUrl = (): string => {
+      const origin = typeof window !== 'undefined'
+        ? window.location.origin
+        : (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost').replace(/\/api.*$/, '');
+      return origin.replace(/^http/, 'ws') + '/ws/events';
     };
+
+    const connectWs = () => {
+      if (unmountedRef.current) return;
+
+      const wsUrl = buildWsUrl();
+      const ws = new WebSocket(wsUrl);
+      currentWs = ws;
+      wsRef.current = ws;
+
+      ws.onopen = () => {
+        ws.send(JSON.stringify({ token: accessToken }));
+        attemptRef.current = 0; // reset backoff on success
+      };
+
+      ws.onmessage = handleMessage;
+
+      ws.onerror = () => {
+        // onclose will fire after onerror — reconnect handled there
+      };
+
+      ws.onclose = (ev) => {
+        wsRef.current = null;
+        currentWs = null;
+
+        // Don't reconnect on intentional close (unmount) or auth rejection
+        if (unmountedRef.current) return;
+        if (ev.code === 4001) return; // invalid_token — reconnect won't help
+
+        // Exponential backoff with jitter
+        const attempt = attemptRef.current++;
+        const baseDelay = Math.min(
+          WS_RECONNECT_BASE_MS * Math.pow(2, attempt),
+          WS_RECONNECT_MAX_MS,
+        );
+        const jitter = baseDelay * 0.2 * Math.random();
+        const delay = baseDelay + jitter;
+
+        reconnectTimer = setTimeout(connectWs, delay);
+      };
+    };
+
+    // Defer the initial connect by one tick so React StrictMode's fake
+    // mount→cleanup→remount doesn't create a WS that is immediately closed.
+    reconnectTimer = setTimeout(connectWs, 0);
 
     return () => {
+      unmountedRef.current = true;
       clearTimeout(reconnectTimer);
-      ws.close();
+      if (currentWs) {
+        currentWs.onclose = null; // prevent reconnect from cleanup close
+        currentWs.close();
+      }
     };
   }, [accessToken, handleMessage]);
 

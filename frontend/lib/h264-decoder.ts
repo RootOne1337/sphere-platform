@@ -3,7 +3,7 @@
 // import { H264Decoder } from "@/lib/streaming/H264Decoder";  // из TZ-05 SPLIT-5
 export type FrameCallback = (frame: VideoFrame) => void;
 
-const FRAME_HEADER_SIZE = 10; // version(1) + flags(1) + ts(4) + size(4)
+const FRAME_HEADER_SIZE = 14; // version(1) + flags(1) + ts(8:Int64) + size(4) — FIX-5.1
 
 export class H264Decoder {
   private decoder: VideoDecoder | null = null;
@@ -33,8 +33,14 @@ export class H264Decoder {
     // AVC Decoder Configuration Record
     const extradata = buildAVCCExtradata(spsNal, ppsNal);
 
+    // Dynamically construct codec string from SPS
+    const profile = spsNal[1].toString(16).padStart(2, '0').toUpperCase();
+    const compat = spsNal[2].toString(16).padStart(2, '0').toUpperCase();
+    const level = spsNal[3].toString(16).padStart(2, '0').toUpperCase();
+    const codecStr = `avc1.${profile}${compat}${level}`;
+
     this.decoder.configure({
-      codec: 'avc1.42E01F', // Level 3.1 — соответствует encoder TZ-05 SPLIT-2
+      codec: codecStr,
       hardwareAcceleration: 'prefer-hardware',
       optimizeForLatency: true,
       description: extradata,
@@ -53,20 +59,28 @@ export class H264Decoder {
     const version = view.getUint8(0);
     if (version !== 1) return;
 
-    const nalData = new Uint8Array(data, FRAME_HEADER_SIZE);
-    const nalType = nalData[0] & 0x1f;
+    // Strip Annex-B start codes (0x00 0x00 0x00 0x01 or 0x00 0x00 0x01)
+    // MediaCodec Surface encoder outputs Annex-B format; WebCodecs needs raw NAL.
+    let rawNal = new Uint8Array(data, FRAME_HEADER_SIZE);
+    if (rawNal[0] === 0 && rawNal[1] === 0 && rawNal[2] === 0 && rawNal[3] === 1) {
+      rawNal = rawNal.subarray(4);
+    } else if (rawNal[0] === 0 && rawNal[1] === 0 && rawNal[2] === 1) {
+      rawNal = rawNal.subarray(3);
+    }
+
+    const nalType = rawNal[0] & 0x1f;
 
     if (nalType === 7 || nalType === 8) {
-      this.handleSPSPPS(nalType, nalData);
+      this.handleSPSPPS(nalType, rawNal);
       return;
     }
 
     if (!this.configured) {
-      this.pendingFrames.push(nalData);
+      this.pendingFrames.push(rawNal);
       return;
     }
 
-    this.decodeFrame(nalData);
+    this.decodeFrame(rawNal);
   }
 
   private handleSPSPPS(nalType: number, nal: Uint8Array) {
@@ -80,10 +94,13 @@ export class H264Decoder {
   private decodeFrame(nal: Uint8Array) {
     if (!this.decoder || !this.configured) return;
 
-    // Обернуть в Annex B (добавить start code 0x00000001)
-    const annexB = new Uint8Array(4 + nal.length);
-    annexB[3] = 1;
-    annexB.set(nal, 4);
+    // AVCC format: 4-byte big-endian NAL unit length prefix.
+    // The decoder is configured with `description` (AVCDecoderConfigurationRecord),
+    // which means AVCC mode — NOT Annex-B.  Sending [0,0,0,1] start code here
+    // causes the decoder to silently discard every frame → black screen.
+    const avcc = new Uint8Array(4 + nal.length);
+    new DataView(avcc.buffer).setUint32(0, nal.length, false); // big-endian
+    avcc.set(nal, 4);
 
     const isKeyFrame = (nal[0] & 0x1f) === 5;
 
@@ -91,7 +108,7 @@ export class H264Decoder {
       new EncodedVideoChunk({
         type: isKeyFrame ? 'key' : 'delta',
         timestamp: performance.now() * 1000,
-        data: annexB,
+        data: avcc,
       }),
     );
   }
