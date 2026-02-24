@@ -2,12 +2,10 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Install deps first (cached layer)
-COPY package.json ./
-RUN npm install
-
-# Source code is mounted via volume (./frontend:/app)
-# node_modules kept in container via anonymous volume overlay
+# Dev image — source code and node_modules are provided via volumes.
+# npm install runs at container START (not build time) — keeps `docker build` instant,
+# preventing resource spikes that crash VS Code.
+# Turbopack replaces webpack: no eval() → no Edge runtime CSP errors.
 
 EXPOSE 3000
-CMD ["npm", "run", "dev"]
+CMD ["sh", "-c", "npm install && npx next dev --turbopack"]
