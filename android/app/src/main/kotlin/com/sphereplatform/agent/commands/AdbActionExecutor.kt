@@ -48,11 +48,13 @@ class AdbActionExecutor @Inject constructor(
     companion object {
         // Запрещаем shell metacharacters для shell() метода
         private val SHELL_INJECTION_PATTERN = Regex("""[;|&${'$'}`(){}\\<>!\n\r#~]""")
-        private const val SHELL_TIMEOUT_SECONDS = 30L
 
         // UI dump poll interval for findElement
         private const val FIND_ELEMENT_POLL_MS = 500L
         private const val UI_DUMP_PATH = "/sdcard/sphere_ui_dump.xml"
+        // Таймаут одного uiautomator dump: 4s достаточно на LDPlayer.
+        // 12s → каждый зависший dump блокировал IO-поток на 12 секунд!
+        private const val UI_DUMP_TIMEOUT_SECONDS = 4L
     }
 
     private var rootProcess: Process = createRootProcess()
@@ -334,12 +336,12 @@ class AdbActionExecutor @Inject constructor(
                     "killall uiautomator 2>/dev/null; " +
                     "uiautomator dump $UI_DUMP_PATH >/dev/null 2>&1 && cat $UI_DUMP_PATH")
             )
-            val finished = proc.waitFor(12, TimeUnit.SECONDS)
+            val finished = proc.waitFor(UI_DUMP_TIMEOUT_SECONDS, TimeUnit.SECONDS)
             if (!finished) {
                 proc.destroyForcibly()
                 // Also try to kill the stuck uiautomator via root session
                 executeRootCommand("killall uiautomator 2>/dev/null")
-                Timber.w("[FindElement] UI dump timed out (12s)")
+                Timber.w("[FindElement] UI dump timed out (${UI_DUMP_TIMEOUT_SECONDS}s)")
                 return@withContext null
             }
             val xml = proc.inputStream.bufferedReader().readText()
@@ -465,6 +467,9 @@ class AdbActionExecutor @Inject constructor(
         }
         return withContext(Dispatchers.IO) {
             val process = Runtime.getRuntime().exec(arrayOf("su", "-c", command))
+            // 5s достаточно для быстрых команд (pidof, cat, dumpsys).
+            // Prежнее значение 30s приводило к утечке IO потоков при coroutine cancellation.
+            val SHELL_TIMEOUT_SECONDS = 5L
             val finished = process.waitFor(SHELL_TIMEOUT_SECONDS, TimeUnit.SECONDS)
             if (!finished) {
                 process.destroyForcibly()

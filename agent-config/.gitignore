@@ -1,0 +1,6 @@
+# Сгенерированные конфиги — не коммитим (содержат enrollment keys)
+output/
+
+# IDE
+.idea/
+*.iml

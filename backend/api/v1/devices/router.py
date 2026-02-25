@@ -13,6 +13,10 @@ from backend.core.dependencies import require_permission
 from backend.database.engine import get_db
 from backend.database.redis_client import get_redis_binary
 from backend.models.user import User
+from backend.schemas.device_register import (
+    DeviceRegisterRequest,
+    DeviceRegisterResponse,
+)
 from backend.schemas.device_status import (
     BulkStatusRequest,
     FleetStatusResponse,
@@ -25,7 +29,9 @@ from backend.schemas.devices import (
     DeviceStatusResponse,
     UpdateDeviceRequest,
 )
+from backend.services.api_key_service import APIKeyService
 from backend.services.cache_service import CacheService
+from backend.services.device_registration_service import DeviceRegistrationService
 from backend.services.device_service import DeviceService
 from backend.services.device_status_cache import DeviceStatusCache
 
@@ -168,6 +174,60 @@ async def get_fleet_status(
         busy=summary["busy"],
         offline=summary["offline"],
     )
+
+
+# ── Auto-register (TZ-12 Agent Discovery) ────────────────────────────────────
+
+
+@router.post(
+    "/register",
+    response_model=DeviceRegisterResponse,
+    status_code=201,
+    summary="Автоматическая регистрация устройства (для агентов)",
+    description=(
+        "Автоматическая регистрация нового устройства. "
+        "Аутентификация по enrollment API-ключу (X-API-Key с правом device:register). "
+        "Идемпотентна: если fingerprint уже зарегистрирован — re-enrollment с новыми токенами."
+    ),
+)
+async def register_device(
+    body: DeviceRegisterRequest,
+    x_api_key: str = Header(alias="X-API-Key"),
+    db: AsyncSession = Depends(get_db),
+) -> DeviceRegisterResponse:
+    """
+    Автоматическая регистрация устройства при первом подключении.
+
+    Требования к API-ключу:
+    - Право 'device:register' в permissions
+    - Активный, не истёкший
+
+    Идемпотентность:
+    - Повторный вызов с тем же fingerprint → возвращает существующее устройство + новые токены
+    """
+    from fastapi import HTTPException
+
+    # Аутентификация API-ключа
+    api_key_svc = APIKeyService(db)
+    key = await api_key_svc.authenticate(x_api_key)
+    if not key:
+        raise HTTPException(
+            status_code=http_status.HTTP_401_UNAUTHORIZED,
+            detail="Невалидный или истёкший API-ключ",
+        )
+
+    # Проверка права device:register
+    if "device:register" not in (key.permissions or []):
+        raise HTTPException(
+            status_code=http_status.HTTP_403_FORBIDDEN,
+            detail="API-ключ не имеет права device:register",
+        )
+
+    # Регистрация
+    reg_svc = DeviceRegistrationService(db)
+    result = await reg_svc.register_device(org_id=key.org_id, data=body)
+    await db.commit()
+    return result
 
 
 # ── Create ────────────────────────────────────────────────────────────────────

@@ -20,6 +20,8 @@ import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.sphereplatform.agent.BuildConfig
 import com.sphereplatform.agent.R
+import com.sphereplatform.agent.provisioning.DeviceRegistrationClient
+import com.sphereplatform.agent.provisioning.RegistrationException
 import com.sphereplatform.agent.provisioning.ZeroTouchProvisioner
 import com.sphereplatform.agent.service.SphereAgentService
 import com.sphereplatform.agent.store.AuthTokenStore
@@ -29,7 +31,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import org.json.JSONObject
 import timber.log.Timber
 import java.util.UUID
 import javax.inject.Inject
@@ -38,15 +39,17 @@ import javax.inject.Inject
  * SetupActivity — первоначальная настройка и энролмент агента.
  *
  * Flows:
- * 1. **Already enrolled**: token in AuthTokenStore → start service immediately.
- * 2. **Manual enroll**: Server URL + API Key + optional Device ID form.
- * 3. **QR / deep link**: `sphere://enroll?server=<url>&key=<api_key>&device=<id>`
- *    — parsed from incoming Intent in [onCreate] and [onNewIntent].
+ * 1. **Already enrolled**: токен в AuthTokenStore → сразу запуск сервиса.
+ * 2. **Auto-register**: ZeroTouchProvisioner обнаружил конфиг с autoRegister=true
+ *    → DeviceRegistrationClient автоматически регистрирует устройство.
+ * 3. **Manual enroll**: Server URL + API Key + optional Device ID форма.
+ * 4. **QR / deep link**: `sphere://enroll?server=<url>&key=<api_key>&device=<id>`
+ *    — парсится из Intent в [onCreate] и [onNewIntent].
  *
- * After enrollment:
- * - Saves server URL, API key (as access_token), device ID to [AuthTokenStore].
- * - Requests battery optimization exemption for 24/7 operation.
- * - Starts [SphereAgentService].
+ * После энролмента:
+ * - Сохраняет server URL, device_id, JWT (access + refresh) в [AuthTokenStore].
+ * - Запрашивает exemption от battery optimization для 24/7 работы.
+ * - Запускает [SphereAgentService].
  */
 @AndroidEntryPoint
 class SetupActivity : AppCompatActivity() {
@@ -54,6 +57,7 @@ class SetupActivity : AppCompatActivity() {
     @Inject lateinit var authStore: AuthTokenStore
     @Inject lateinit var httpClient: OkHttpClient
     @Inject lateinit var provisioner: ZeroTouchProvisioner
+    @Inject lateinit var registrationClient: DeviceRegistrationClient
 
     private lateinit var tilServerUrl: TextInputLayout
     private lateinit var tilApiKey: TextInputLayout
@@ -124,6 +128,125 @@ class SetupActivity : AppCompatActivity() {
     // ── Zero-touch auto-enrollment ─────────────────────────────────────────
 
     private suspend fun performAutoEnroll(config: ZeroTouchProvisioner.ProvisionConfig) {
+        // Если autoRegister включён и API-ключ пуст (config_endpoint) → авто-регистрация
+        if (config.autoRegisterEnabled && config.apiKey.isBlank()) {
+            performAutoRegistration(config.serverUrl)
+            return
+        }
+
+        // Классический flow: API-ключ есть → verify + save
+        if (config.apiKey.isNotBlank()) {
+            performAutoEnrollWithApiKey(config)
+            return
+        }
+
+        // Есть server_url но нет API-ключа и нет autoRegister → ручной ввод
+        setLoading(false)
+        showStatus("Server found (${config.source}), enter API key manually.", isError = false)
+    }
+
+    /**
+     * Авто-регистрация через POST /api/v1/devices/register.
+     * Не требует API-ключ от пользователя — используется enrollment key из конфига.
+     */
+    private suspend fun performAutoRegistration(serverUrl: String) {
+        showStatus("Auto-registering device…", isError = false)
+
+        // Получаем enrollment API key из конфига (config endpoint или файл)
+        val enrollmentKey = getEnrollmentKeyFromConfig(serverUrl)
+        if (enrollmentKey == null) {
+            setLoading(false)
+            showStatus("Auto-register: enrollment key not found. Enter credentials manually.", isError = true)
+            return
+        }
+
+        val result = runCatching {
+            registrationClient.register(
+                serverUrl = serverUrl,
+                enrollmentApiKey = enrollmentKey,
+            )
+        }
+
+        setLoading(false)
+        if (result.isSuccess) {
+            val reg = result.getOrThrow()
+            showStatus(
+                "Registered: ${reg.name} (${if (reg.isNew) "new" else "re-enrolled"})",
+                isError = false,
+            )
+            requestIgnoreBatteryOptimization()
+            launchAgent()
+        } else {
+            val ex = result.exceptionOrNull()
+            val msg = if (ex is RegistrationException) {
+                "HTTP ${ex.httpCode}: ${ex.message}"
+            } else {
+                ex?.message ?: "unknown"
+            }
+            Timber.w("Auto-registration failed: $msg")
+            showStatus("Auto-register failed: $msg. Enter credentials manually.", isError = true)
+        }
+    }
+
+    /**
+     * Получает enrollment API key из server config endpoint (с аутентификацией нет — bootstrap).
+     * Если config endpoint возвращает enrollment_allowed=true,
+     * пробуем прочитать ключ из локального конфиг-файла или BuildConfig.
+     */
+    private fun getEnrollmentKeyFromConfig(serverUrl: String): String? {
+        // Пробуем из локального конфиг-файла (adb push)
+        val localConfig = provisioner.discoverConfig()
+        if (localConfig != null && localConfig.apiKey.isNotBlank()) {
+            return localConfig.apiKey
+        }
+        // BuildConfig fallback
+        return BuildConfig.DEFAULT_API_KEY.takeIf { it.isNotBlank() }
+    }
+
+    /**
+     * Классический auto-enroll: API-ключ уже есть (из конфиг-файла/MDM).
+     * Сначала пробуем авто-регистрацию через DeviceRegistrationClient,
+     * если не получится — fallback на простую проверку credentials.
+     */
+    private suspend fun performAutoEnrollWithApiKey(config: ZeroTouchProvisioner.ProvisionConfig) {
+        // Сначала пробуем авто-регистрацию (серверу нужен enrollment key)
+        val regResult = runCatching {
+            registrationClient.register(
+                serverUrl = config.serverUrl,
+                enrollmentApiKey = config.apiKey,
+            )
+        }
+
+        setLoading(false)
+        if (regResult.isSuccess) {
+            val reg = regResult.getOrThrow()
+            showStatus(
+                "Auto-enrolled: ${reg.name} (${if (reg.isNew) "new" else "existing"})",
+                isError = false,
+            )
+            requestIgnoreBatteryOptimization()
+            launchAgent()
+            return
+        }
+
+        // Fallback: ключ может быть не enrollment (нет device:register) → старый flow
+        val ex = regResult.exceptionOrNull()
+        if (ex is RegistrationException && ex.httpCode == 403) {
+            Timber.d("Auto-register: API key lacks device:register, falling back to legacy enroll")
+            performLegacyAutoEnroll(config)
+            return
+        }
+
+        val msg = ex?.message ?: "unknown"
+        Timber.w("Auto-enrollment failed: $msg")
+        showStatus("Auto-provision failed (${config.source}): $msg. Enter credentials manually.", isError = true)
+    }
+
+    /**
+     * Legacy auto-enroll: сохраняем API-ключ как токен (без JWT).
+     * Совместимость с текущими deployment'ами, где enrollment отсутствует.
+     */
+    private suspend fun performLegacyAutoEnroll(config: ZeroTouchProvisioner.ProvisionConfig) {
         val deviceId = config.deviceId ?: UUID.randomUUID().toString()
         val result = runCatching { verifyCredentials(config.serverUrl, config.apiKey, deviceId) }
         setLoading(false)
@@ -131,17 +254,13 @@ class SetupActivity : AppCompatActivity() {
             authStore.saveServerUrl(config.serverUrl)
             authStore.saveApiKey(config.apiKey)
             authStore.saveDeviceId(deviceId)
-            showStatus("Auto-enrolled successfully", isError = false)
+            showStatus("Auto-enrolled successfully (legacy)", isError = false)
             requestIgnoreBatteryOptimization()
             launchAgent()
         } else {
             val msg = result.exceptionOrNull()?.message ?: "unknown"
-            Timber.w("Zero-touch enrollment failed: $msg")
-            showStatus(
-                "Auto-provision failed (${config.source}): $msg. Enter credentials manually.",
-                isError = true,
-            )
-            // Fall back to manual form — already inflated
+            Timber.w("Legacy auto-enrollment failed: $msg")
+            showStatus("Auto-provision failed (${config.source}): $msg.", isError = true)
         }
     }
 
@@ -178,7 +297,7 @@ class SetupActivity : AppCompatActivity() {
         val serverUrl = etServerUrl.text?.toString()?.trim() ?: ""
         val apiKey    = etApiKey.text?.toString()?.trim() ?: ""
         val deviceId  = etDeviceId.text?.toString()?.trim().let {
-            if (it.isNullOrBlank()) UUID.randomUUID().toString() else it
+            if (it.isNullOrBlank()) null else it
         }
 
         // Validation
@@ -200,23 +319,54 @@ class SetupActivity : AppCompatActivity() {
         showStatus(getString(R.string.setup_status_connecting), isError = false)
 
         lifecycleScope.launch {
-            val result = runCatching {
-                verifyCredentials(serverUrl, apiKey, deviceId)
+            // Пробуем авто-регистрацию через DeviceRegistrationClient
+            val regResult = runCatching {
+                registrationClient.register(
+                    serverUrl = serverUrl,
+                    enrollmentApiKey = apiKey,
+                )
             }
-            setLoading(false)
-            if (result.isSuccess) {
-                showStatus(getString(R.string.setup_status_success), isError = false)
-                // Persist enrollment data
-                authStore.saveServerUrl(serverUrl)
-                authStore.saveApiKey(apiKey)
-                authStore.saveDeviceId(deviceId)
+
+            if (regResult.isSuccess) {
+                setLoading(false)
+                val reg = regResult.getOrThrow()
+                showStatus(
+                    getString(R.string.setup_status_success) + " (${reg.name})",
+                    isError = false,
+                )
                 requestIgnoreBatteryOptimization()
                 launchAgent()
-            } else {
-                val msg = result.exceptionOrNull()?.message ?: "unknown error"
-                Timber.w("Enrollment failed: $msg")
-                showStatus(getString(R.string.setup_error_connect, msg), isError = true)
+                return@launch
             }
+
+            // Fallback: если 403 (нет device:register) → legacy enroll
+            val ex = regResult.exceptionOrNull()
+            if (ex is RegistrationException && ex.httpCode == 403) {
+                Timber.d("Manual enroll: API key lacks device:register, using legacy flow")
+                val legacyDeviceId = deviceId ?: UUID.randomUUID().toString()
+                val legacyResult = runCatching {
+                    verifyCredentials(serverUrl, apiKey, legacyDeviceId)
+                }
+                setLoading(false)
+                if (legacyResult.isSuccess) {
+                    showStatus(getString(R.string.setup_status_success), isError = false)
+                    authStore.saveServerUrl(serverUrl)
+                    authStore.saveApiKey(apiKey)
+                    authStore.saveDeviceId(legacyDeviceId)
+                    requestIgnoreBatteryOptimization()
+                    launchAgent()
+                } else {
+                    val msg = legacyResult.exceptionOrNull()?.message ?: "unknown error"
+                    Timber.w("Legacy enrollment failed: $msg")
+                    showStatus(getString(R.string.setup_error_connect, msg), isError = true)
+                }
+                return@launch
+            }
+
+            setLoading(false)
+            val msg = ex?.message ?: "unknown error"
+            Timber.w("Enrollment failed: $msg")
+            showStatus(getString(R.string.setup_error_connect, msg), isError = true)
         }
     }
 

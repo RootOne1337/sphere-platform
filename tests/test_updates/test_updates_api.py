@@ -19,11 +19,11 @@ Enterprise rationale
 """
 from __future__ import annotations
 
+from unittest.mock import patch
+
 import pytest
 import pytest_asyncio
-from fakeredis.aioredis import FakeRedis
 from httpx import ASGITransport, AsyncClient
-from unittest.mock import patch
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import backend.api.v1.updates.router as updates_module
@@ -172,7 +172,6 @@ async def anon_client(db_session, mock_redis):
 @pytest.fixture(autouse=True)
 def isolate_updates_file(tmp_path, monkeypatch):
     """Redirect all release storage to a per-test temp file."""
-    from pathlib import Path
     test_path = tmp_path / "test_updates.json"
     monkeypatch.setattr(updates_module, "_UPDATES_PATH", test_path)
     yield test_path

@@ -9,13 +9,19 @@
 from __future__ import annotations
 
 import asyncio
+
+# ---------------------------------------------------------------------------
+# SQLite compat: render PostgreSQL-only types as TEXT
+# ---------------------------------------------------------------------------
 from collections.abc import AsyncGenerator
 
 import pytest
 import pytest_asyncio
 from fakeredis.aioredis import FakeRedis
 from httpx import ASGITransport, AsyncClient
+from sqlalchemy import ARRAY as _SA_ARRAY
 from sqlalchemy import event
+from sqlalchemy.dialects.postgresql import ARRAY as _PG_ARRAY
 from sqlalchemy.dialects.sqlite.base import SQLiteTypeCompiler
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
@@ -24,9 +30,6 @@ from backend.database.redis_client import get_redis
 from backend.main import app
 from backend.models import *  # noqa: F401,F403 — side-effect: registers all mappers
 
-# ---------------------------------------------------------------------------
-# SQLite compat: render PostgreSQL-only types as TEXT
-# ---------------------------------------------------------------------------
 
 def _visit_text_compat(self, type_, **kw):
     return "TEXT"
@@ -36,6 +39,53 @@ SQLiteTypeCompiler.visit_JSONB = _visit_text_compat  # type: ignore[attr-defined
 SQLiteTypeCompiler.visit_TSVECTOR = _visit_text_compat  # type: ignore[attr-defined]
 SQLiteTypeCompiler.visit_INET = _visit_text_compat  # type: ignore[attr-defined]
 SQLiteTypeCompiler.visit_ARRAY = _visit_text_compat  # type: ignore[attr-defined]
+
+
+# ---------------------------------------------------------------------------
+# SQLite bind/result processors для ARRAY и JSONB
+# ---------------------------------------------------------------------------
+# Модели используют sqlalchemy.sql.sqltypes.ARRAY (generic), а НЕ
+# sqlalchemy.dialects.postgresql.ARRAY. Патчим ОБА класса.
+# ---------------------------------------------------------------------------
+
+def _make_array_bind_processor(original_bp):
+    """Фабрика: обёртка над оригинальным bind_processor для ARRAY → SQLite TEXT."""
+    def patched_bind_processor(self, dialect):
+        if dialect.name == "sqlite":
+            def process(value):
+                if value is None:
+                    return None
+                if isinstance(value, list):
+                    return "{" + ",".join(str(v) for v in value) + "}"
+                return value
+            return process
+        return original_bp(self, dialect)
+    return patched_bind_processor
+
+
+def _make_array_result_processor(original_rp):
+    """Фабрика: обёртка над оригинальным result_processor для SQLite TEXT → list."""
+    def patched_result_processor(self, dialect, coltype):
+        if dialect.name == "sqlite":
+            def process(value):
+                if value is None:
+                    return None
+                if isinstance(value, str) and value.startswith("{") and value.endswith("}"):
+                    inner = value[1:-1]
+                    return inner.split(",") if inner else []
+                return value
+            return process
+        return original_rp(self, dialect, coltype)
+    return patched_result_processor
+
+
+# Патчим generic ARRAY (sqlalchemy.sql.sqltypes.ARRAY)
+_SA_ARRAY.bind_processor = _make_array_bind_processor(_SA_ARRAY.bind_processor)  # type: ignore[assignment]
+_SA_ARRAY.result_processor = _make_array_result_processor(_SA_ARRAY.result_processor)  # type: ignore[assignment]
+
+# Патчим PostgreSQL ARRAY (sqlalchemy.dialects.postgresql.ARRAY) на случай прямого использования
+_PG_ARRAY.bind_processor = _make_array_bind_processor(_PG_ARRAY.bind_processor)  # type: ignore[assignment]
+_PG_ARRAY.result_processor = _make_array_result_processor(_PG_ARRAY.result_processor)  # type: ignore[assignment]
 
 
 # ---------------------------------------------------------------------------

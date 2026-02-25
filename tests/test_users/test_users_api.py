@@ -19,9 +19,7 @@ from __future__ import annotations
 
 import uuid
 
-import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
-
 
 # ===========================================================================
 # List users
@@ -44,8 +42,8 @@ class TestListUsers:
         assert resp.status_code == 403
 
     async def test_unauthenticated_returns_401(self):
-        from httpx import AsyncClient
-        from httpx import ASGITransport
+        from httpx import ASGITransport, AsyncClient
+
         from backend.main import app
 
         async with AsyncClient(
@@ -133,9 +131,9 @@ class TestGetUser:
         self, owner_client, db_session: AsyncSession
     ):
         """Tenant isolation: seeing a user from another org returns 404."""
+        from backend.core.security import hash_password
         from backend.models.organization import Organization
         from backend.models.user import User
-        from backend.core.security import hash_password
 
         other_org = Organization(name="Alien Org", slug="alien-org")
         db_session.add(other_org)
@@ -257,8 +255,6 @@ class TestDeactivateUser:
         assert deact_resp.status_code == 204
 
         # Refresh the object to confirm DB state
-        from sqlalchemy import select
-        from backend.models.user import User as UserModel
 
         # We can't easily re-query via the session fixture, but we can verify
         # via the GET endpoint that the user still exists (but is_active=False)

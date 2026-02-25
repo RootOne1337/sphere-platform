@@ -5,7 +5,6 @@ from __future__ import annotations
 from unittest.mock import patch
 
 import pytest_asyncio
-from fakeredis.aioredis import FakeRedis
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -21,6 +20,7 @@ from backend.models.user import User
 def _patch_pg_types_for_sqlite() -> None:
     """JSONB → JSON, INET → String(45), ARRAY → JSON, gen_random_uuid → uuid4."""
     import uuid as _uuid
+
     from sqlalchemy import JSON, String
     from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 

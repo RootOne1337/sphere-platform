@@ -856,6 +856,72 @@
         ]
       }
     },
+    "/api/v1/config/agent": {
+      "get": {
+        "tags": [
+          "config"
+        ],
+        "summary": "Конфигурация для агента (zero-touch provisioning)",
+        "description": "Возвращает актуальный конфиг для Android/PC агента. Аутентификация по X-API-Key (enrollment или device key). Агент вызывает этот эндпоинт при первом запуске и периодически для обнаружения смены server_url.",
+        "operationId": "get_agent_config_api_v1_config_agent_get",
+        "parameters": [
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Api-Key"
+            }
+          },
+          {
+            "name": "X-Agent-Fingerprint",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Agent-Fingerprint"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentConfigResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/devices/me": {
       "get": {
         "tags": [
@@ -1183,6 +1249,64 @@
             "HTTPBearer": []
           }
         ]
+      }
+    },
+    "/api/v1/devices/register": {
+      "post": {
+        "tags": [
+          "devices"
+        ],
+        "summary": "Автоматическая регистрация устройства (для агентов)",
+        "description": "Автоматическая регистрация нового устройства. Аутентификация по enrollment API-ключу (X-API-Key с правом device:register). Идемпотентна: если fingerprint уже зарегистрирован — re-enrollment с новыми токенами.",
+        "operationId": "register_device_api_v1_devices_register_post",
+        "parameters": [
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "X-Api-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/DeviceRegisterRequest"
+                  }
+                ],
+                "title": "Body"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceRegisterResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/v1/devices/{device_id}": {
@@ -4831,6 +4955,77 @@
         "title": "AWGObfuscationParamsSchema",
         "description": "Параметры обфускации AmneziaWG (read-only, возвращается в ответе)."
       },
+      "AgentConfigResponse": {
+        "properties": {
+          "server_url": {
+            "type": "string",
+            "title": "Server Url",
+            "description": "Актуальный URL бэкенда. Агент использует для WS-подключения."
+          },
+          "ws_path": {
+            "type": "string",
+            "title": "Ws Path",
+            "description": "Путь WebSocket эндпоинта.",
+            "default": "/ws/android"
+          },
+          "config_version": {
+            "type": "integer",
+            "title": "Config Version",
+            "description": "Версия формата конфига. Агент игнорирует если > поддерживаемой.",
+            "default": 1
+          },
+          "environment": {
+            "type": "string",
+            "title": "Environment",
+            "description": "Текущее окружение сервера.",
+            "default": "production"
+          },
+          "config_poll_interval_seconds": {
+            "type": "integer",
+            "title": "Config Poll Interval Seconds",
+            "description": "Рекомендуемый интервал повторного запроса конфига (секунды).",
+            "default": 86400
+          },
+          "features": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "type": "object",
+            "title": "Features",
+            "description": "Feature flags для агента."
+          },
+          "min_agent_version": {
+            "type": "string",
+            "title": "Min Agent Version",
+            "description": "Минимальная поддерживаемая версия агента. Ниже — принудительный OTA.",
+            "default": "1.0.0"
+          },
+          "enrollment_allowed": {
+            "type": "boolean",
+            "title": "Enrollment Allowed",
+            "description": "Имеет ли предъявленный API-ключ право на device:register.",
+            "default": false
+          },
+          "org_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Org Id",
+            "description": "UUID организации (если аутентифицирован по API-ключу)."
+          }
+        },
+        "type": "object",
+        "required": [
+          "server_url"
+        ],
+        "title": "AgentConfigResponse",
+        "description": "Ответ эндпоинта GET /api/v1/config/agent.\n\nАгент использует этот конфиг для:\n- Определения актуального server_url\n- Получения feature flags\n- Проверки необходимости обновления (min_agent_version)"
+      },
       "Alert": {
         "properties": {
           "status": {
@@ -5921,6 +6116,175 @@
           "device_id"
         ],
         "title": "DeviceLiveStatus"
+      },
+      "DeviceRegisterRequest": {
+        "properties": {
+          "fingerprint": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 8,
+            "title": "Fingerprint",
+            "description": "Уникальный отпечаток устройства (SHA-256 composite fingerprint)."
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name",
+            "description": "Имя устройства. Если null — автогенерация по шаблону."
+          },
+          "workstation_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Workstation Id",
+            "description": "ID воркстанции (PC-хоста). Для LDPlayer клонов."
+          },
+          "instance_index": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Instance Index",
+            "description": "Индекс LDPlayer инстанса (0-based)."
+          },
+          "android_version": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 50
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Android Version"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 50
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location",
+            "description": "Код локации (msk-office-1)."
+          },
+          "device_type": {
+            "type": "string",
+            "title": "Device Type",
+            "description": "Тип устройства: ldplayer, physical, remote.",
+            "default": "ldplayer"
+          },
+          "meta": {
+            "type": "object",
+            "title": "Meta",
+            "description": "Дополнительные метаданные (ldplayer_name, clone_source и т.д.)."
+          }
+        },
+        "type": "object",
+        "required": [
+          "fingerprint"
+        ],
+        "title": "DeviceRegisterRequest",
+        "description": "Запрос автоматической регистрации устройства.\n\nВызывается Android/PC агентом при первом подключении.\nAPI-ключ с правом device:register передаётся в заголовке X-API-Key."
+      },
+      "DeviceRegisterResponse": {
+        "properties": {
+          "device_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Device Id",
+            "description": "UUID зарегистрированного устройства."
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Имя устройства (автоматическое или пользовательское)."
+          },
+          "access_token": {
+            "type": "string",
+            "title": "Access Token",
+            "description": "JWT access token для WS-аутентификации."
+          },
+          "refresh_token": {
+            "type": "string",
+            "title": "Refresh Token",
+            "description": "JWT refresh token."
+          },
+          "expires_in": {
+            "type": "integer",
+            "title": "Expires In",
+            "description": "Время жизни access_token в секундах."
+          },
+          "server_url": {
+            "type": "string",
+            "title": "Server Url",
+            "description": "Актуальный server_url для WS-подключения."
+          },
+          "is_new": {
+            "type": "boolean",
+            "title": "Is New",
+            "description": "true — новое устройство, false — re-enrollment существующего.",
+            "default": true
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At",
+            "description": "Дата создания устройства."
+          }
+        },
+        "type": "object",
+        "required": [
+          "device_id",
+          "name",
+          "access_token",
+          "refresh_token",
+          "expires_in",
+          "server_url"
+        ],
+        "title": "DeviceRegisterResponse",
+        "description": "Ответ на успешную регистрацию устройства.\n\nСодержит device_id + JWT-токены для немедленного WS-подключения."
       },
       "DeviceResponse": {
         "properties": {
