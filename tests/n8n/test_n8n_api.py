@@ -15,7 +15,6 @@ from __future__ import annotations
 
 import uuid
 
-import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
 _WEBHOOK_BODY = {
@@ -54,8 +53,8 @@ class TestWebhookCreate:
         assert resp.status_code == 201
 
     async def test_unauthenticated_returns_401(self, n8n_client):
-        from httpx import AsyncClient
-        from httpx import ASGITransport
+        from httpx import ASGITransport, AsyncClient
+
         from backend.main import app
 
         async with AsyncClient(

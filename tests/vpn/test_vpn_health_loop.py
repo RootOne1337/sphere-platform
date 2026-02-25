@@ -26,11 +26,9 @@ from __future__ import annotations
 import asyncio
 from unittest.mock import AsyncMock, patch
 
-import pytest
 from fakeredis.aioredis import FakeRedis
 
 from backend.tasks.vpn_health import HEALTH_LOCK_KEY, vpn_health_loop
-
 
 # ---------------------------------------------------------------------------
 # Helpers

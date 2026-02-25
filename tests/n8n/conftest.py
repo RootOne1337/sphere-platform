@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from unittest.mock import patch
 
-import pytest
 import pytest_asyncio
 from fakeredis.aioredis import FakeRedis
 from httpx import ASGITransport, AsyncClient
