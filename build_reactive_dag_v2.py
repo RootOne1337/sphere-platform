@@ -1,15 +1,19 @@
 """
-Build reactive DAG v6 — ONE smart scan per cycle.
+Build reactive DAG v7 — оптимизированные тайминги.
 
-FIXES vs v5:
-  - REMOVED check_game_pid (Lua condition was broken — ctx vars need ctx.xxx prefix)
-    Shell pidof success/failure is sufficient: success = game running, failure = not running
-  - FIXED watchdog counter: uses new increment_variable action (atomic Kotlin ctx update)
-    instead of broken Lua increment (Lua ctx changes don't persist back to Kotlin)
-  - ONE tap_first_visible scan with ALL candidates (was 3 separate UI dumps per cycle)
-  - Conditional routing based on tapped_label for password/name special handling
+FIXES vs v6:
+  - dumpUiXml timeout: 12s → 4s  (главная причина 3-минутных зависаний)
+  - shell SHELL_TIMEOUT_SECONDS: 30s → 5s  (утечка IO-потоков)
+  - check_game_alive timeout: 3000 → 6000  (su-процесс занимает 1-3s — не фолить зря)
+  - scan_all action timeout: 3000 → 5000   (один dump + паузa должны укладываться)
+  - sleep_ok: 2000 → 500ms               (не ждать 2s после тапа — экономим ~1.5s/цикл)
+  - sleep_wait: 3000 → 1000ms            (ждём меньше когда ничего не нашли)
+  - launch_game_wait: 8000 → 4000ms      (LDPlayer запускает игру за 3-4s)
+  - restart_wait: 8000 → 4000ms          (то же)
+  - tap_play_login action timeout: 2000 → 5000  (один dump >= 2s + запас)
+  - tap_surname action timeout: 2000 → 5000
 
-FLOW:
+FLOW (без изменений):
   check_game_alive (pidof)
     success -> increment_counter -> check_watchdog -> scan_all
     failure -> launch_game -> wait -> scan_all
@@ -109,7 +113,7 @@ def build_dag():
         },
         "on_success": "increment_counter",
         "on_failure": "launch_game",
-        "timeout_ms": 3000
+        "timeout_ms": 6000   # su-процесф1-3s; 3000 было мало → ложный launch_game каждый цикл
     })
 
     # ═══════════════════════════════════════════════════════════════════════
@@ -154,10 +158,10 @@ def build_dag():
     nodes.append({
         "id": "launch_game_wait",
         "retry": 0,
-        "action": {"type": "sleep", "ms": 8000},
+        "action": {"type": "sleep", "ms": 4000},
         "on_success": "scan_all",
         "on_failure": None,
-        "timeout_ms": 12000
+        "timeout_ms": 6000
     })
 
     # ═══════════════════════════════════════════════════════════════════════
@@ -193,10 +197,10 @@ def build_dag():
     nodes.append({
         "id": "restart_wait",
         "retry": 0,
-        "action": {"type": "sleep", "ms": 8000},
+        "action": {"type": "sleep", "ms": 4000},
         "on_success": "reset_counter",
         "on_failure": None,
-        "timeout_ms": 12000
+        "timeout_ms": 6000
     })
 
     nodes.append({
@@ -217,11 +221,11 @@ def build_dag():
         "action": {
             "type": "tap_first_visible",
             "candidates": ALL_CANDIDATES,
-            "timeout_ms": 3000
+            "timeout_ms": 5000   # 1 dump = 2-3s + ~500ms поллинг; 3000 было мало
         },
         "on_success": "route_pw",
         "on_failure": "sleep_wait",
-        "timeout_ms": 8000
+        "timeout_ms": 10000
     })
 
     # ── Route: was it the password field? ─────────────────────────────────
@@ -254,10 +258,10 @@ def build_dag():
     nodes.append({
         "id": "sleep_before_type",
         "retry": 0,
-        "action": {"type": "sleep", "ms": 500},
+        "action": {"type": "sleep", "ms": 150},
         "on_success": "type_pw",
         "on_failure": None,
-        "timeout_ms": 3000
+        "timeout_ms": 2000
     })
 
     nodes.append({
@@ -276,10 +280,10 @@ def build_dag():
     nodes.append({
         "id": "sleep_after_type",
         "retry": 0,
-        "action": {"type": "sleep", "ms": 500},
+        "action": {"type": "sleep", "ms": 150},
         "on_success": "tap_play_login",
         "on_failure": None,
-        "timeout_ms": 3000
+        "timeout_ms": 2000
     })
 
     nodes.append({
@@ -289,11 +293,11 @@ def build_dag():
             "type": "tap_element",
             "selector": "com.br.top:id/play_but",
             "strategy": "id",
-            "timeout_ms": 2000
+            "timeout_ms": 5000   # 1 dump = 2-3s; 2000 могло не успеть
         },
         "on_success": "sleep_ok",
         "on_failure": "sleep_ok",
-        "timeout_ms": 5000
+        "timeout_ms": 8000
     })
 
     # ═══════════════════════════════════════════════════════════════════════
@@ -333,11 +337,11 @@ def build_dag():
             "type": "tap_element",
             "selector": "com.br.top:id/edit_text_surname",
             "strategy": "id",
-            "timeout_ms": 2000
+            "timeout_ms": 5000   # 1 dump = 2-3s; 2000 могло не успеть
         },
         "on_success": "type_surname",
         "on_failure": "sleep_ok",
-        "timeout_ms": 5000
+        "timeout_ms": 8000
     })
 
     nodes.append({
@@ -359,19 +363,19 @@ def build_dag():
     nodes.append({
         "id": "sleep_ok",
         "retry": 0,
-        "action": {"type": "sleep", "ms": 2000},
+        "action": {"type": "sleep", "ms": 500},  # было 2000 — лишних 1.5s/цикл не надо
         "on_success": "check_game_alive",
         "on_failure": None,
-        "timeout_ms": 5000
+        "timeout_ms": 3000
     })
 
     nodes.append({
         "id": "sleep_wait",
         "retry": 0,
-        "action": {"type": "sleep", "ms": 3000},
+        "action": {"type": "sleep", "ms": 1000},  # было 3000 — не нашли элемент, ждём меньше
         "on_success": "check_game_alive",
         "on_failure": None,
-        "timeout_ms": 5000
+        "timeout_ms": 3000
     })
 
     # ═══════════════════════════════════════════════════════════════════════
