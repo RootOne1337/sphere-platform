@@ -189,11 +189,15 @@ class SetupActivity : AppCompatActivity() {
     }
 
     /**
-     * Получает enrollment API key из server config endpoint (с аутентификацией нет — bootstrap).
-     * Если config endpoint возвращает enrollment_allowed=true,
-     * пробуем прочитать ключ из локального конфиг-файла или BuildConfig.
+     * Получает enrollment API key из server config endpoint или локальных источников.
+     * Prioritет: config endpoint → локальный файл → BuildConfig.DEFAULT_API_KEY.
      */
     private fun getEnrollmentKeyFromConfig(serverUrl: String): String? {
+        // Пробуем получить ключ из config endpoint (server возвращает enrollment_api_key)
+        val serverConfig = provisioner.fetchServerConfig()
+        if (serverConfig?.enrollmentApiKey != null) {
+            return serverConfig.enrollmentApiKey
+        }
         // Пробуем из локального конфиг-файла (adb push)
         val localConfig = provisioner.discoverConfig()
         if (localConfig != null && localConfig.apiKey.isNotBlank()) {

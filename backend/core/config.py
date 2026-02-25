@@ -59,6 +59,18 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = "INFO"
     ENVIRONMENT: str = "development"
 
+    # Публичный URL сервера для агентов (WS-подключение, auto-register response).
+    # В dev: http://10.0.2.2:8000 (Android эмулятор loopback к хосту).
+    # В production: https://api.sphere.example.com (задаётся через env / .env).
+    SERVER_PUBLIC_URL: str = "http://10.0.2.2:8000"
+
+    # Путь к директории agent-config/ (относительно корня проекта или абсолютный).
+    AGENT_CONFIG_DIR: str = "agent-config"
+    # Имя окружения для загрузки конфига (development / staging / production).
+    AGENT_CONFIG_ENV: str = "development"
+    # TTL кэша agent-config в Redis (секунды). 0 = без кэша.
+    AGENT_CONFIG_CACHE_TTL: int = 300
+
     # OTA
     APK_SIGNING_CERT_SHA256: str = ""
 

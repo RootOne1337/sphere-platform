@@ -188,8 +188,10 @@ class SphereWebSocketClient @Inject constructor(
         connected.await()     // Ждём успешного onOpen
         disconnected.await()  // Ждём закрытия или сбоя
 
-        // After connection closed — check close code for auth rejection
-        if (closeCode == CODE_INVALID_TOKEN || closeCode == CODE_AUTH_TIMEOUT) {
+        // After connection closed — check close code for auth/heartbeat rejection
+        if (closeCode == CODE_INVALID_TOKEN || closeCode == CODE_AUTH_TIMEOUT
+            || closeCode == CODE_HEARTBEAT_TIMEOUT || closeCode == CODE_DEVICE_NOT_FOUND
+        ) {
             throw AuthRejectedException(closeCode, closeReason)
         }
     }

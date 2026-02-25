@@ -46,6 +46,14 @@ class AgentConfigResponse(BaseModel):
         default=False,
         description="Имеет ли предъявленный API-ключ право на device:register.",
     )
+    enrollment_api_key: str | None = Field(
+        default=None,
+        description=(
+            "Enrollment API-ключ для автоматической регистрации устройства. "
+            "Загружается из agent-config/environments/{env}.json. "
+            "Агент использует этот ключ для POST /api/v1/devices/register."
+        ),
+    )
     org_id: str | None = Field(
         default=None,
         description="UUID организации (если аутентифицирован по API-ключу).",

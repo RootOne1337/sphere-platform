@@ -2,7 +2,6 @@
 # ВЛАДЕЛЕЦ: TZ-12 Agent Discovery. Автоматическая регистрация устройств.
 from __future__ import annotations
 
-import os
 import uuid
 from typing import Any
 
@@ -131,14 +130,8 @@ class DeviceRegistrationService:
         )
         refresh_token = create_refresh_token()
 
-        # Определяем server_url
-        server_url = os.environ.get("SERVER_PUBLIC_URL", "").strip().rstrip("/")
-        if not server_url:
-            server_url = (
-                "http://10.0.2.2:8000"
-                if settings.ENVIRONMENT == "development"
-                else "http://localhost:8000"
-            )
+        # server_url из единого источника: Settings.SERVER_PUBLIC_URL
+        server_url = settings.SERVER_PUBLIC_URL.rstrip("/")
 
         return DeviceRegisterResponse(
             device_id=device.id,
