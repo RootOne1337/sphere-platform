@@ -3,6 +3,7 @@
 # Записывает все mutating HTTP запросы после отправки ответа клиенту (BackgroundTask).
 from __future__ import annotations
 
+import inspect
 import re
 import time
 
@@ -138,7 +139,9 @@ async def audit_middleware(request: Request, call_next):
 
         async def _chained() -> None:
             if callable(prev):
-                await prev() if hasattr(prev, "__await__") else prev()
+                result = prev()
+                if inspect.iscoroutine(result):
+                    await result
             await _write_audit()
 
         response.background = BackgroundTask(_chained)

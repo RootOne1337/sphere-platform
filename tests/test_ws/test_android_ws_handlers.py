@@ -40,6 +40,7 @@ from backend.schemas.device_status import DeviceLiveStatus
 from backend.services.device_status_cache import DeviceStatusCache
 
 DEVICE_ID = "550e8400-e29b-41d4-a716-446655440000"
+ORG_ID = "org-00000000-0000-0000-0000-000000000001"
 
 
 # ---------------------------------------------------------------------------
@@ -165,6 +166,7 @@ class TestHandleCommandResult:
         with patch("backend.database.redis_client.redis", mock_redis):
             await handle_command_result(
                 DEVICE_ID,
+                ORG_ID,
                 {"type": "command_result", "command_id": "cmd-abc", "status": "completed"},
             )
 
@@ -185,7 +187,7 @@ class TestHandleCommandResult:
 
         msg = {"type": "command_result", "command_id": "cmd-1", "status": "completed", "result": {"exit_code": 0}}
         with patch("backend.database.redis_client.redis", mock_redis):
-            await handle_command_result(DEVICE_ID, msg)
+            await handle_command_result(DEVICE_ID, ORG_ID, msg)
 
         assert len(payload_received) == 1
         decoded = json.loads(payload_received[0])
@@ -206,6 +208,7 @@ class TestHandleCommandResult:
         with patch("backend.database.redis_client.redis", mock_redis):
             await handle_command_result(
                 DEVICE_ID,
+                ORG_ID,
                 {"type": "command_result", "id": "fallback-99"},
             )
 
@@ -217,7 +220,7 @@ class TestHandleCommandResult:
         mock_redis = AsyncMock()
 
         with patch("backend.database.redis_client.redis", mock_redis):
-            await handle_command_result(DEVICE_ID, {"type": "command_result"})
+            await handle_command_result(DEVICE_ID, ORG_ID, {"type": "command_result"})
 
         mock_redis.publish.assert_not_called()
 
@@ -227,9 +230,10 @@ class TestHandleCommandResult:
         mock_redis.publish = AsyncMock(side_effect=ConnectionError("Redis down"))
 
         with patch("backend.database.redis_client.redis", mock_redis):
-            # Must not raise — WS receive loop must stay alive
+            # Соединение должно оставаться живым — Redis outage не должен роняться
             await handle_command_result(
                 DEVICE_ID,
+                ORG_ID,
                 {"type": "command_result", "command_id": "cmd-fail"},
             )
 
@@ -238,6 +242,7 @@ class TestHandleCommandResult:
         with patch("backend.database.redis_client.redis", None):
             await handle_command_result(
                 DEVICE_ID,
+                ORG_ID,
                 {"type": "command_result", "command_id": "cmd-1"},
             )
 

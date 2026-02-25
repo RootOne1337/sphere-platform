@@ -137,7 +137,7 @@ async def handle_task_progress(device_id: str, org_id: str, msg: dict) -> None:
             import time as _time
             key = f"task_progress:{task_id}"
             # Set started_at only once (first progress message)
-            existing_started = await _redis.hget(key, "started_at")
+            existing_started = await _redis.hget(key, "started_at")  # type: ignore[misc]
             mapping = {
                 "nodes_done": str(nodes_done),
                 "total_nodes": str(total_nodes),
@@ -147,8 +147,8 @@ async def handle_task_progress(device_id: str, org_id: str, msg: dict) -> None:
             }
             if not existing_started:
                 mapping["started_at"] = str(_time.time())
-            await _redis.hset(key, mapping=mapping)
-            await _redis.expire(key, 600)  # TTL 10 min
+            await _redis.hset(key, mapping=mapping)  # type: ignore[misc]
+            await _redis.expire(key, 600)  # type: ignore[misc]  # TTL 10 min
             # Store live log entry for running task visibility
             import json as _json
             log_entry = _json.dumps({
@@ -157,9 +157,9 @@ async def handle_task_progress(device_id: str, org_id: str, msg: dict) -> None:
                 "ts": _time.time(),
             })
             log_key = f"task_progress_log:{task_id}"
-            await _redis.rpush(log_key, log_entry)
-            await _redis.ltrim(log_key, -200, -1)  # keep last 200
-            await _redis.expire(log_key, 600)
+            await _redis.rpush(log_key, log_entry)  # type: ignore[misc]
+            await _redis.ltrim(log_key, -200, -1)  # type: ignore[misc]  # keep last 200
+            await _redis.expire(log_key, 600)  # type: ignore[misc]
     except Exception:
         pass
     try:
@@ -196,8 +196,8 @@ async def handle_command_result(device_id: str, org_id: str, msg: dict) -> None:
         error_msg = msg.get("error")
         try:
             from backend.database.engine import AsyncSessionLocal
-            from backend.services.task_queue import TaskQueue
             from backend.database.redis_client import redis as _redis
+            from backend.services.task_queue import TaskQueue
             async with AsyncSessionLocal() as db:
                 queue = TaskQueue(_redis)
                 from backend.services.task_service import TaskService

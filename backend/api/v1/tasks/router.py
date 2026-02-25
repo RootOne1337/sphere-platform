@@ -63,14 +63,17 @@ async def _startup_dispatcher() -> None:
     from backend.database.redis_client import redis as _redis
     from backend.database.redis_client import redis_binary as _redis_bin
 
+    if _redis is None:
+        return
+
     # Recovery: find task_running:* keys where DB task is still queued (not running)
     # This handles the case where backend restarted mid-dispatch
     try:
         running_keys = await _redis.keys("task_running:*")
         if running_keys:
             async with AsyncSessionLocal() as db:
-                from sqlalchemy import select
-                from backend.models.task import Task as _Task, TaskStatus as _TS
+                from backend.models.task import Task as _Task
+                from backend.models.task import TaskStatus as _TS
                 queue_tmp = TaskQueue(_redis)
                 for key in running_keys:
                     key_str = key if isinstance(key, str) else key.decode()
@@ -100,7 +103,6 @@ async def _startup_dispatcher() -> None:
 
     async def _dispatch_once() -> None:
         from backend.database.redis_client import redis as _redis
-        from backend.database.redis_client import redis_binary as _redis_bin
         from backend.websocket.pubsub_router import get_pubsub_publisher
         async with AsyncSessionLocal() as db:
             queue = TaskQueue(_redis)
