@@ -167,6 +167,20 @@ class PubSubPublisher:
         _success, _queued = await self._send_command_inner(device_id, command)
         return _success
 
+    async def send_command_live(
+        self,
+        device_id: str,
+        command: dict,
+    ) -> bool:
+        """
+        Отправить команду ТОЛЬКО если устройство online (есть подписчик PubSub).
+        Возвращает False если устройство offline — НЕ ставит в offline queue.
+        """
+        channel = ChannelPattern.agent_cmd(device_id)
+        payload = json.dumps(command)
+        subscribers = await self.redis.publish(channel, payload)
+        return subscribers > 0
+
     async def _send_command_inner(
         self,
         device_id: str,

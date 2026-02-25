@@ -87,13 +87,22 @@ async def audit_middleware(request: Request, call_next):
     if not principal:
         return response
 
-    # Определить user_id по типу principal (User vs APIKey)
-    is_user = hasattr(principal, "password_hash")
-    user_id = principal.id if is_user else None
+    # Определить user_id по типу principal (User vs APIKey).
+    # ВАЖНО: не использовать hasattr() — он вызывает SQLAlchemy дескриптор,
+    # который падает с DetachedInstanceError если сессия уже закрыта.
+    # isinstance() безопасен — использует Python type system, а не ORM атрибуты.
+    from backend.models.user import User as _UserModel
+    is_user = isinstance(principal, _UserModel)
+
+    # Читаем значения атрибутов напрямую из __dict__ (без lazy load через дескриптор).
+    # Если атрибут expired/detached — получаем None вместо исключения.
+    p_vars = vars(principal)
+    user_id = p_vars.get("id") if is_user else None
+    org_id_val = p_vars.get("org_id")
 
     # Фиксируем данные ДО возврата response (state может быть очищен)
     audit_data = {
-        "org_id": getattr(principal, "org_id", None),
+        "org_id": org_id_val,
         "user_id": user_id,
         "ip_address": request.client.host if request.client else None,
         "user_agent": request.headers.get("user-agent"),
