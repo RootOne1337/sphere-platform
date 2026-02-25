@@ -55,14 +55,24 @@ class AdbActionExecutor @Inject constructor(
         private const val UI_DUMP_PATH = "/sdcard/sphere_ui_dump.xml"
     }
 
-    private val rootProcess: Process by lazy {
+    private var rootProcess: Process = createRootProcess()
+
+    private var rootStream: java.io.DataOutputStream = java.io.DataOutputStream(rootProcess.outputStream)
+
+    private val rootLock = Any()
+
+    private fun createRootProcess(): Process =
         Runtime.getRuntime().exec("su").also {
             Timber.i("Root session opened")
         }
-    }
 
-    private val rootStream: java.io.DataOutputStream by lazy {
-        java.io.DataOutputStream(rootProcess.outputStream)
+    /** Re-create the root process if it has died. */
+    private fun ensureRootAlive() {
+        if (!rootProcess.isAlive) {
+            Timber.w("Root process died — restarting")
+            rootProcess = createRootProcess()
+            rootStream = java.io.DataOutputStream(rootProcess.outputStream)
+        }
     }
 
     private val physicalSize: android.graphics.Point
@@ -91,16 +101,26 @@ class AdbActionExecutor @Inject constructor(
      * synchronized — защита от конкурентного доступа.
      */
     private fun executeRootCommand(cmd: String) {
-        synchronized(rootStream) {
-            rootStream.writeBytes("$cmd\n")
-            rootStream.flush()
+        synchronized(rootLock) {
+            ensureRootAlive()
+            try {
+                rootStream.writeBytes("$cmd\n")
+                rootStream.flush()
+            } catch (e: java.io.IOException) {
+                Timber.w("Root stream write failed — reopening: ${e.message}")
+                rootProcess.destroyForcibly()
+                rootProcess = createRootProcess()
+                rootStream = java.io.DataOutputStream(rootProcess.outputStream)
+                rootStream.writeBytes("$cmd\n")
+                rootStream.flush()
+            }
         }
     }
 
     /** Закрыть root-сессию при уничтожении сервиса. */
     fun closeRootSession() {
         try {
-            synchronized(rootStream) {
+            synchronized(rootLock) {
                 rootStream.writeBytes("exit\n")
                 rootStream.flush()
             }
@@ -116,6 +136,11 @@ class AdbActionExecutor @Inject constructor(
 
     fun tap(x: Int, y: Int) {
         executeRootCommand("input tap ${scaleX(x)} ${scaleY(y)}")
+    }
+
+    /** Tap using raw physical pixel coordinates (no stream→physical scaling). */
+    fun tapRaw(x: Int, y: Int) {
+        executeRootCommand("input tap $x $y")
     }
 
     fun swipe(x1: Int, y1: Int, x2: Int, y2: Int, durationMs: Int) {
@@ -141,23 +166,13 @@ class AdbActionExecutor @Inject constructor(
      * HTML-символы и все прочие спецсимволы одновременно.
      */
     suspend fun typeText(text: String) = withContext(Dispatchers.IO) {
-        // Escape text for use in shell single-quote context.
-        // Single-quote wrapping handles all shell metacharacters except single-quote itself.
-        // Single-quotes inside are replaced with: '\''
-        val safe = text.replace("'", "'\\''")
-        // Use am broadcast with ClipData to set clipboard safely
-        executeRootCommand(
-            "am broadcast -a clipper.set -e text '$safe' --user 0 2>/dev/null || true"
-        )
-        delay(100)
-        // Use service call clipboard as fallback if clipper not installed
-        executeRootCommand(
-            "service call clipboard 2 i32 1 i32 0 2>/dev/null || true"
-        )
-        delay(100)
-        // Paste via KEYCODE_PASTE (279) or Ctrl+V
-        executeRootCommand("input keyevent 279")
-        delay(50)
+        // 'input text' is the most reliable method for emulators (no clipboard app needed).
+        // Spaces must be encoded as %s for Android's input text command.
+        val encoded = text.replace(" ", "%s")
+        val safe = encoded.replace("'", "'\\''")
+        Timber.d("typeText: typing '${text}' (encoded='$safe')")
+        executeRootCommand("input text '$safe'")
+        delay(150)
     }
 
     /** Сделать скриншот, вернуть путь к файлу на устройстве. */
@@ -306,17 +321,35 @@ class AdbActionExecutor @Inject constructor(
         null
     }
 
+    /**
+     * UI-дамп: kill zombie uiautomator → dump → wait → cat.
+     * Убиваем зомби uiautomator перед каждым вызовом чтобы не было конфликтов.
+     * dump и cat идут в ОДНОМ su-процессе (атомарно).
+     */
     private suspend fun dumpUiXml(): String? = withContext(Dispatchers.IO) {
         try {
-            executeRootCommand("uiautomator dump $UI_DUMP_PATH 2>/dev/null")
-            delay(200)
-            val proc = Runtime.getRuntime().exec(arrayOf("su", "-c", "cat $UI_DUMP_PATH"))
-            val finished = proc.waitFor(5, TimeUnit.SECONDS)
+            // Kill any stuck uiautomator from previous call, then dump + cat
+            val proc = Runtime.getRuntime().exec(
+                arrayOf("su", "-c",
+                    "killall uiautomator 2>/dev/null; " +
+                    "uiautomator dump $UI_DUMP_PATH >/dev/null 2>&1 && cat $UI_DUMP_PATH")
+            )
+            val finished = proc.waitFor(12, TimeUnit.SECONDS)
             if (!finished) {
                 proc.destroyForcibly()
+                // Also try to kill the stuck uiautomator via root session
+                executeRootCommand("killall uiautomator 2>/dev/null")
+                Timber.w("[FindElement] UI dump timed out (12s)")
                 return@withContext null
             }
-            proc.inputStream.bufferedReader().readText().takeIf { it.contains("<hierarchy") }
+            val xml = proc.inputStream.bufferedReader().readText()
+            if (xml.contains("<hierarchy")) {
+                Timber.d("[FindElement] UI dump OK: ${xml.length} chars")
+                xml
+            } else {
+                Timber.w("[FindElement] UI dump: no <hierarchy> in ${xml.length} chars")
+                null
+            }
         } catch (e: Exception) {
             Timber.w(e, "[FindElement] UI dump failed")
             null
