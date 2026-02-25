@@ -73,6 +73,7 @@ async def authenticate_ws_token(token: str, db: AsyncSession):
 
 async def handle_agent_message(
     device_id: str,
+    org_id: str,
     msg: dict,
     manager: ConnectionManager,
     status_cache: DeviceStatusCache,
@@ -81,8 +82,10 @@ async def handle_agent_message(
     msg_type = msg.get("type")
     if msg_type == "telemetry":
         await handle_telemetry(device_id, msg, status_cache)
+    elif msg_type == "task_progress":
+        await handle_task_progress(device_id, org_id, msg)
     elif msg_type == "command_result":
-        await handle_command_result(device_id, msg)
+        await handle_command_result(device_id, org_id, msg)
     elif msg_type == "event":
         await handle_device_event(device_id, msg)
     else:
@@ -110,11 +113,76 @@ async def handle_telemetry(
         await status_cache.set_status(device_id, current)
 
 
-async def handle_command_result(device_id: str, msg: dict) -> None:
-    """Опубликовать результат команды в Redis для ожидающего запроса."""
+async def handle_task_progress(device_id: str, org_id: str, msg: dict) -> None:
+    """Обработать прогресс выполнения DAG от агента."""
+    task_id = msg.get("task_id")
+    nodes_done = msg.get("nodes_done", 0)
+    total_nodes = msg.get("total_nodes", 1)
+    current_node = msg.get("current_node", "")
+    # For cyclic DAGs: cap progress at 100%, track cycles
+    progress = min(int(nodes_done / max(total_nodes, 1) * 100), 100)
+    cycles = nodes_done // max(total_nodes, 1)
+    logger.debug(
+        "task.progress",
+        device_id=device_id,
+        task_id=task_id,
+        nodes_done=nodes_done,
+        total_nodes=total_nodes,
+        cycles=cycles,
+    )
+    # Cache progress in Redis for frontend polling
+    try:
+        from backend.database.redis_client import redis as _redis
+        if _redis and task_id:
+            import time as _time
+            key = f"task_progress:{task_id}"
+            # Set started_at only once (first progress message)
+            existing_started = await _redis.hget(key, "started_at")
+            mapping = {
+                "nodes_done": str(nodes_done),
+                "total_nodes": str(total_nodes),
+                "current_node": current_node,
+                "progress": str(progress),
+                "cycles": str(cycles),
+            }
+            if not existing_started:
+                mapping["started_at"] = str(_time.time())
+            await _redis.hset(key, mapping=mapping)
+            await _redis.expire(key, 600)  # TTL 10 min
+            # Store live log entry for running task visibility
+            import json as _json
+            log_entry = _json.dumps({
+                "node_id": current_node,
+                "nodes_done": nodes_done,
+                "ts": _time.time(),
+            })
+            log_key = f"task_progress_log:{task_id}"
+            await _redis.rpush(log_key, log_entry)
+            await _redis.ltrim(log_key, -200, -1)  # keep last 200
+            await _redis.expire(log_key, 600)
+    except Exception:
+        pass
+    try:
+        from backend.websocket.event_publisher import get_event_publisher
+        publisher = get_event_publisher()
+        if publisher and task_id:
+            await publisher.task_progress(
+                device_id=device_id,
+                org_id=org_id,
+                task_id=task_id,
+                progress=progress,
+            )
+    except Exception as e:
+        logger.debug("task_progress publish skipped", device_id=device_id, error=str(e))
+
+
+async def handle_command_result(device_id: str, org_id: str, msg: dict) -> None:
+    """Обработать результат команды/задачи от агента."""
     command_id = msg.get("command_id") or msg.get("id")
     if not command_id:
         return
+    status = msg.get("status")
+    # Publish to Redis result channel (for any waiting HTTP-request polls)
     try:
         from backend.database.redis_client import redis
         if redis:
@@ -122,6 +190,30 @@ async def handle_command_result(device_id: str, msg: dict) -> None:
             await redis.publish(result_channel, json.dumps(msg))
     except Exception as e:
         logger.warning("Failed to publish command result", device_id=device_id, error=str(e))
+    # Persist task result to DB on final status (completed or failed)
+    if status in ("completed", "failed"):
+        result_payload = msg.get("result")
+        error_msg = msg.get("error")
+        try:
+            from backend.database.engine import AsyncSessionLocal
+            from backend.services.task_queue import TaskQueue
+            from backend.database.redis_client import redis as _redis
+            async with AsyncSessionLocal() as db:
+                queue = TaskQueue(_redis)
+                from backend.services.task_service import TaskService
+                svc = TaskService(db=db, queue=queue)
+                final_result = result_payload if isinstance(result_payload, dict) else {}
+                if error_msg:
+                    final_result["error"] = error_msg
+                final_result["success"] = (status == "completed")
+                await svc.handle_task_result(
+                    task_id=command_id,
+                    device_id=device_id,
+                    result=final_result,
+                )
+                await db.commit()
+        except Exception as e:
+            logger.error("Failed to persist task result", command_id=command_id, device_id=device_id, error=str(e))
 
 
 async def handle_device_event(device_id: str, msg: dict) -> None:
@@ -289,16 +381,22 @@ async def android_agent_ws(
                             await heartbeat.handle_pong(msg)
                         case "telemetry":
                             await handle_telemetry(device_id, msg, status_cache)
+                        case "task_progress":
+                            await handle_task_progress(device_id, org_id_str, msg)
                         case "command_result":
-                            await handle_command_result(device_id, msg)
+                            await handle_command_result(device_id, org_id_str, msg)
                         case "event":
                             await handle_device_event(device_id, msg)
                         case _:
-                            logger.debug(
-                                "Unknown message type",
-                                device_id=device_id,
-                                type=msg.get("type"),
-                            )
+                            # CommandAck from APK has no "type" field — detect by command_id + status
+                            if msg.get("command_id") and msg.get("status") in ("completed", "failed", "running", "received"):
+                                await handle_command_result(device_id, org_id_str, msg)
+                            else:
+                                logger.debug(
+                                    "Unknown message type",
+                                    device_id=device_id,
+                                    type=msg.get("type"),
+                                )
                 except Exception as e:
                     logger.warning(
                         "Error handling agent message",
