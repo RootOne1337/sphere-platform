@@ -19,7 +19,6 @@ import re
 import sys
 from pathlib import Path
 
-
 # Таблицы из models/__init__.py с полем org_id
 # Поддерживается автоопределение через importlib, но для CI без asyncpg
 # используется статичный список (обновляй при добавлении новых моделей с org_id)

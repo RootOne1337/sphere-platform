@@ -3,7 +3,9 @@ Build NEW reactive DAG: scan screen → see element → tap it → loop.
 Uses tap_first_visible (one dump, all candidates, auto-tap).
 Uses find_first_element + condition(Lua) for special routing (password, game-loaded).
 """
-import json, subprocess, sys
+import json
+import subprocess
+import sys
 
 DOCKER = r"C:\Program Files\Docker\Docker\resources\bin\docker.exe"
 SCRIPT_ID = "770bf806-6fb6-4e44-abc6-dc20b53c32ef"
@@ -32,7 +34,7 @@ TAP_CANDIDATES = [
     {"selector": "com.android.packageinstaller:id/permission_allow_button", "strategy": "id", "label": "perm_allow"},
     # OK button (various dialogs)
     {"selector": "com.br.top:id/button_ok", "strategy": "id", "label": "button_ok"},
-    # "YES, LOAD" button 
+    # "YES, LOAD" button
     {"selector": "com.br.top:id/button_repeat", "strategy": "id", "label": "button_repeat"},
     # SKIP button (registration)
     {"selector": "com.br.top:id/but_skip", "strategy": "id", "label": "but_skip"},
@@ -61,7 +63,7 @@ TAP_CANDIDATES = [
     {"selector": "//*[@text='\u0417\u0410\u041a\u0420\u042b\u0422\u042c']", "strategy": "xpath", "label": "text_close"},
     # "Нажмите, чтобы продолжить"
     {"selector": "//*[@text='\u041d\u0430\u0436\u043c\u0438\u0442\u0435, \u0447\u0442\u043e\u0431\u044b \u043f\u0440\u043e\u0434\u043e\u043b\u0436\u0438\u0442\u044c']", "strategy": "xpath", "label": "text_tap_continue"},
-    # "Открыть ×1" 
+    # "Открыть ×1"
     {"selector": "//*[@text='\u041e\u0442\u043a\u0440\u044b\u0442\u044c \u00d71']", "strategy": "xpath", "label": "text_open"},
     # play_but (login screen PLAY)
     {"selector": "com.br.top:id/play_but", "strategy": "id", "label": "play_but_login"},

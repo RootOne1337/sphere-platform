@@ -30,10 +30,10 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import subprocess
 import sys
 import time
-import re
 from dataclasses import dataclass
 from typing import Optional
 
@@ -283,7 +283,7 @@ def step_launch_app(package: str) -> None:
     if pid:
         print(f"  ✓ Running, PID={pid}")
     else:
-        print(f"  ✗ Not running — check package name", file=sys.stderr)
+        print("  ✗ Not running — check package name", file=sys.stderr)
         sys.exit(1)
 
 
@@ -307,7 +307,7 @@ def step_round(round_def: dict, round_num: int) -> bool:
         return False
 
     print(f"\n  ✓  Найден: [{match.label}]  coords={match.coords}  strategy={match.strategy}")
-    print(f"     Тапаем...")
+    print("     Тапаем...")
     cx, cy = match.coords.split(",")
     adb("input", "tap", cx, cy)
     time.sleep(1.0)
@@ -342,11 +342,11 @@ def main() -> None:
     # Проверяем ADB
     try:
         devs = subprocess.run(["adb", "devices"], capture_output=True, text=True, timeout=5)
-        online = [l for l in devs.stdout.splitlines()[1:] if l.strip() and "offline" not in l]
+        online = [ln for ln in devs.stdout.splitlines()[1:] if ln.strip() and "offline" not in ln]
         if not online:
             print("✗ Нет подключённых устройств", file=sys.stderr)
             sys.exit(1)
-        print(f"\n═══ test_tap_first_visible ═══")
+        print("\n═══ test_tap_first_visible ═══")
         print(f"Устройство : {online[0].split()[0]}")
         print(f"Пакет      : {args.package}")
     except FileNotFoundError:
@@ -383,7 +383,7 @@ def main() -> None:
 
     # Итоговая сводка
     print(f"\n{'═' * 55}")
-    print(f"  РЕЗУЛЬТАТЫ")
+    print("  РЕЗУЛЬТАТЫ")
     print(f"{'═' * 55}")
     for name, hit in results:
         status = "✓ HIT " if hit else "– miss"

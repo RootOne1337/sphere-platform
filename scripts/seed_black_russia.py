@@ -398,7 +398,7 @@ async def seed(org_id_override: uuid.UUID | None = None) -> None:
         print("   Дальше:")
         print(f"   1. Открой в Visual Builder: /scripts/builder?id={script.id}")
         print("   2. Проверь и скорректируй координаты tap-узлов.")
-        print(f"   3. Запусти со страницы Scripts (/scripts) — кнопка Run.")
+        print("   3. Запусти со страницы Scripts (/scripts) — кнопка Run.")
 
 
 def parse_args() -> argparse.Namespace:

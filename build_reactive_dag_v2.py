@@ -23,7 +23,10 @@ FLOW (без изменений):
     tapped anything else  -> sleep -> loop (tap already done)
   watchdog: 28 cycles without password -> restart (stop + launch)
 """
-import json, asyncio, asyncpg
+import asyncio
+import json
+
+import asyncpg
 
 DB_DSN = "postgresql://sphere:A80fXnwMLNmwa-ebjhUm5RV_2evs1BLq@localhost:5432/sphereplatform"
 SCRIPT_VERSION_ID = "21e7f39a-f1ea-4b16-bbe0-c20f1f611e61"
