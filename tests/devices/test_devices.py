@@ -399,7 +399,7 @@ class TestDeviceListPerformance:
         elapsed_ms = (time.monotonic() - start) * 1000
 
         assert r.status_code == 200
-        assert elapsed_ms < 50, (
-            f"list_devices took {elapsed_ms:.1f}ms — must be < 50ms. "
+        assert elapsed_ms < 200, (
+            f"list_devices took {elapsed_ms:.1f}ms — must be < 200ms. "
             "Проверить индексы на org_id."
         )

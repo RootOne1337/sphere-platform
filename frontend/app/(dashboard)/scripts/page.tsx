@@ -1,27 +1,15 @@
 'use client';
-import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
 import Link from 'next/link';
-import { api } from '@/lib/api';
+import { Play, Plus } from 'lucide-react';
+import { useScripts } from '@/lib/hooks/useScripts';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plus } from 'lucide-react';
-
-interface Script {
-  id: string;
-  name: string;
-  created_at: string;
-  updated_at: string;
-  node_count: number;
-}
+import { RunScriptModal } from '@/components/sphere/RunScriptModal';
 
 export default function ScriptsPage() {
-  const { data: scripts, isLoading } = useQuery<Script[]>({
-    queryKey: ['scripts'],
-    queryFn: async () => {
-      const { data } = await api.get('/scripts');
-      return Array.isArray(data) ? data : (data.items ?? []);
-    },
-  });
+  const { data: scripts, isLoading } = useScripts();
+  const [runTarget, setRunTarget] = useState<{ id: string; name: string } | null>(null);
 
   return (
     <div className="p-6 space-y-4">
@@ -52,6 +40,15 @@ export default function ScriptsPage() {
               </div>
               <div className="flex items-center gap-2">
                 <Badge variant="outline">{script.node_count} nodes</Badge>
+                <Button
+                  size="sm"
+                  variant="default"
+                  className="gap-1.5 bg-green-600 hover:bg-green-700"
+                  onClick={() => setRunTarget({ id: script.id, name: script.name })}
+                >
+                  <Play className="w-3 h-3" />
+                  Run
+                </Button>
                 <Button asChild size="sm" variant="outline">
                   <Link href={`/scripts/builder?id=${script.id}`}>Edit</Link>
                 </Button>
@@ -64,6 +61,15 @@ export default function ScriptsPage() {
             </p>
           )}
         </div>
+      )}
+
+      {runTarget && (
+        <RunScriptModal
+          scriptId={runTarget.id}
+          scriptName={runTarget.name}
+          open={true}
+          onClose={() => setRunTarget(null)}
+        />
       )}
     </div>
   );

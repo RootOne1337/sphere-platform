@@ -92,6 +92,15 @@ if _ws_path.exists():
                 app.include_router(_mod.router)
 
 
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request, exc: Exception):
+    """Catch-all handler so 5xx errors pass through CORSMiddleware (inside ExceptionMiddleware)."""
+    import structlog as _structlog
+    _structlog.get_logger().error("unhandled_exception", error=str(exc))
+    from fastapi.responses import JSONResponse
+    return JSONResponse(status_code=500, content={"detail": "Internal server error"})
+
+
 @app.get("/api/v1/health", tags=["health"])
 async def health_check():
     return {"status": "ok", "version": "4.0.0"}

@@ -12,6 +12,7 @@ async def _startup_ws_components() -> None:
     from backend.api.ws.events.router import get_events_manager
     from backend.websocket.connection_manager import get_connection_manager
     from backend.websocket.event_publisher import init_event_publisher
+    from backend.websocket.offline_queue import _startup_offline_queue
     from backend.websocket.pubsub_router import get_pubsub_publisher
     from backend.websocket.stream_bridge import init_stream_bridge
 
@@ -21,6 +22,8 @@ async def _startup_ws_components() -> None:
     pubsub_publisher = get_pubsub_publisher()
     events_manager = get_events_manager()
     init_event_publisher(pubsub_publisher, events_manager)
+
+    await _startup_offline_queue()
 
 
 register_startup("ws_components", _startup_ws_components)

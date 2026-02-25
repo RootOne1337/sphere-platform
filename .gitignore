@@ -59,3 +59,26 @@ Thumbs.db
 tmp_env.txt
 tmp_*.txt
 *.tmp
+
+# Debug/dev artifacts (не коммитятся)
+*.bak
+build-errors.txt
+install_result.txt
+dag_dump*.json
+dag_pretty.json
+dag_dump_latest.json
+screen*.png
+task_payload.json
+task_result*.json
+ui_dump*.xml
+
+# Ad-hoc debug scripts (временные)
+fix_dag*.py
+fix_dag.py
+parse_dag*.py
+parse_dag.py
+show_result.py
+test_task*.py
+test_task.py
+verify_dag.py
+reset_pw.py

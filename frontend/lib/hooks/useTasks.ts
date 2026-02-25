@@ -25,10 +25,10 @@ export interface TaskDetail extends Task {
 
 export interface NodeExecutionLog {
   node_id: string;
-  node_type: string;
-  status: string;
+  action_type: string;
+  success: boolean;
+  duration_ms: number;
   started_at: string | null;
-  finished_at: string | null;
   screenshot_key: string | null;
   error: string | null;
   output: unknown;
@@ -80,6 +80,46 @@ export function useTaskLogs(taskId: string) {
       return data;
     },
     enabled: !!taskId,
+    refetchInterval: 5_000,
+  });
+}
+
+export interface TaskProgress {
+  nodes_done: number;
+  total_nodes: number;
+  current_node: string;
+  progress: number;
+  cycles: number;
+  started_at: number | null;
+}
+
+export function useTaskProgress(taskId: string, enabled: boolean) {
+  return useQuery<TaskProgress>({
+    queryKey: ['tasks', taskId, 'progress'],
+    queryFn: async () => {
+      const { data } = await api.get(`/tasks/${taskId}/progress`);
+      return data;
+    },
+    enabled: enabled && !!taskId,
+    refetchInterval: 2_000,
+  });
+}
+
+export interface LiveLogEntry {
+  node_id: string;
+  nodes_done: number;
+  ts: number;
+}
+
+export function useTaskLiveLogs(taskId: string, enabled: boolean) {
+  return useQuery<LiveLogEntry[]>({
+    queryKey: ['tasks', taskId, 'live-logs'],
+    queryFn: async () => {
+      const { data } = await api.get(`/tasks/${taskId}/live-logs`);
+      return data;
+    },
+    enabled: enabled && !!taskId,
+    refetchInterval: 3_000,
   });
 }
 
@@ -103,6 +143,17 @@ export function useCancelTask() {
   return useMutation({
     mutationFn: async (taskId: string) => {
       await api.delete(`/tasks/${taskId}`);
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['tasks'] }),
+  });
+}
+
+export function useStopTask() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (taskId: string) => {
+      const { data } = await api.post(`/tasks/${taskId}/stop`);
+      return data;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['tasks'] }),
   });

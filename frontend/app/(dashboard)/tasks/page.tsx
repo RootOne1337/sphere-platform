@@ -1,18 +1,18 @@
 'use client';
 import { useState } from 'react';
-import { useTasks, useCancelTask } from '@/lib/hooks/useTasks';
+import { useTasks, useCancelTask, useStopTask } from '@/lib/hooks/useTasks';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Link from 'next/link';
 
 const STATUS_COLORS: Record<string, string> = {
-  QUEUED: 'bg-yellow-500/20 text-yellow-400',
-  ASSIGNED: 'bg-blue-500/20 text-blue-400',
-  RUNNING: 'bg-cyan-500/20 text-cyan-400',
-  SUCCESS: 'bg-green-500/20 text-green-400',
-  FAILED: 'bg-red-500/20 text-red-400',
-  CANCELLED: 'bg-gray-500/20 text-gray-400',
+  queued: 'bg-yellow-500/20 text-yellow-400',
+  assigned: 'bg-blue-500/20 text-blue-400',
+  running: 'bg-cyan-500/20 text-cyan-400',
+  completed: 'bg-green-500/20 text-green-400',
+  failed: 'bg-red-500/20 text-red-400',
+  cancelled: 'bg-gray-500/20 text-gray-400',
 };
 
 export default function TasksPage() {
@@ -24,6 +24,7 @@ export default function TasksPage() {
     status: statusFilter || undefined,
   });
   const cancelTask = useCancelTask();
+  const stopTask = useStopTask();
 
   return (
     <div className="p-6 space-y-4">
@@ -36,12 +37,12 @@ export default function TasksPage() {
             className="rounded border bg-background px-3 py-1.5 text-sm"
           >
             <option value="">All statuses</option>
-            <option value="QUEUED">Queued</option>
-            <option value="ASSIGNED">Assigned</option>
-            <option value="RUNNING">Running</option>
-            <option value="SUCCESS">Success</option>
-            <option value="FAILED">Failed</option>
-            <option value="CANCELLED">Cancelled</option>
+            <option value="queued">Queued</option>
+            <option value="assigned">Assigned</option>
+            <option value="running">Running</option>
+            <option value="completed">Completed</option>
+            <option value="failed">Failed</option>
+            <option value="cancelled">Cancelled</option>
           </select>
         </div>
       </div>
@@ -80,7 +81,19 @@ export default function TasksPage() {
                       <Button asChild size="sm" variant="outline">
                         <Link href={`/tasks/${task.id}`}>Details</Link>
                       </Button>
-                      {['QUEUED', 'ASSIGNED'].includes(task.status) && (
+                      {task.status === 'running' && (
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => stopTask.mutate(task.id)}
+                          disabled={stopTask.isPending}
+                          className="gap-1.5 shadow-sm shadow-red-500/20"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="none"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+                          Stop
+                        </Button>
+                      )}
+                      {['queued', 'assigned'].includes(task.status) && (
                         <Button
                           size="sm"
                           variant="destructive"

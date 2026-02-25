@@ -35,3 +35,11 @@
     @apply bg-background text-foreground;
   }
 }
+
+@keyframes indeterminate {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(350%); }
+}
+.animate-indeterminate {
+  animation: indeterminate 1.5s ease-in-out infinite;
+}

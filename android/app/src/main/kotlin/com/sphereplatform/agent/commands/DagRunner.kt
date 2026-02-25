@@ -63,9 +63,20 @@ class DagRunner @Inject constructor(
 ) {
     private val json = Json { ignoreUnknownKeys = true }
 
+    @Volatile
+    private var cancelRequested = false
+
+    /** Called from CommandDispatcher when CANCEL_DAG arrives. */
+    fun requestCancel() {
+        cancelRequested = true
+        Timber.i("[DAG] Cancel requested by user")
+    }
+
     // ── Public API ────────────────────────────────────────────────────────────
 
     suspend fun execute(commandId: String, dagJson: JsonObject): JsonObject {
+        cancelRequested = false  // reset on new execution
+
         val entryNodeId = dagJson["entry_node"]!!.jsonPrimitive.content
         val nodesArray = dagJson["nodes"]!!.jsonArray          // LIST, не map!
         val globalTimeoutMs = dagJson["timeout_ms"]?.jsonPrimitive?.longOrNull ?: 3_600_000L
@@ -86,6 +97,13 @@ class DagRunner @Inject constructor(
             var currentNodeId: String? = entryNodeId
 
             while (currentNodeId != null) {
+                // ── Check for cancel request from backend ──────────────
+                if (cancelRequested) {
+                    Timber.i("[DAG] Cancelled by user at node '$currentNodeId'")
+                    success = false
+                    failedNode = currentNodeId
+                    break
+                }
                 val nodeId = currentNodeId
                 val node = nodeMap[nodeId]
                     ?: throw IllegalArgumentException("Node '$nodeId' not found in DAG")
@@ -380,7 +398,8 @@ class DagRunner @Inject constructor(
                     "tap_first_visible: none of ${candidates.size} candidates found within ${timeoutMs}ms"
                 )
             val parts = match.coords.split(",")
-            adbActions.tap(parts[0].toInt(), parts[1].toInt())
+            // coords from uiautomator dump are already in physical pixels — use tapRaw
+            adbActions.tapRaw(parts[0].toInt(), parts[1].toInt())
             mapOf("tapped_label" to match.label, "tapped_index" to match.index, "coords" to match.coords)
         }
 
@@ -452,7 +471,8 @@ class DagRunner @Inject constructor(
             val coords = adbActions.findElement(selector, strategy, timeoutMs)
                 ?: throw RuntimeException("tap_element: element not found: '$selector'")
             val parts = coords.split(",")
-            adbActions.tap(parts[0].toInt(), parts[1].toInt())
+            // coords from uiautomator dump are already in physical pixels — use tapRaw
+            adbActions.tapRaw(parts[0].toInt(), parts[1].toInt())
             null
         }
 
@@ -494,6 +514,15 @@ class DagRunner @Inject constructor(
         "get_variable" -> {
             val key = action["key"]!!.jsonPrimitive.content
             ctx[key]
+        }
+
+        "increment_variable" -> {
+            val key = action["key"]!!.jsonPrimitive.content
+            val step = action["step"]?.jsonPrimitive?.intOrNull ?: 1
+            val current = (ctx[key] as? String)?.toIntOrNull() ?: 0
+            val newVal = current + step
+            ctx[key] = newVal.toString()
+            newVal.toString()
         }
 
         // ── Network ───────────────────────────────────────────────────────────
