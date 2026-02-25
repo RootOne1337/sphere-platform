@@ -54,6 +54,8 @@ android {
             buildConfigField("String", "DEFAULT_SERVER_URL", "\"http://10.0.2.2\"")
             buildConfigField("String", "DEFAULT_API_KEY", "\"\"")
             buildConfigField("String", "DEFAULT_DEVICE_ID", "\"\"")
+            // TZ-12: HTTP Config Endpoint для auto-discovery (GET /api/v1/config/agent)
+            buildConfigField("String", "CONFIG_URL", "\"http://10.0.2.2:8000/api/v1/config/agent\"")
         }
         create("enterprise") {
             dimension = "env"
@@ -63,6 +65,8 @@ android {
             buildConfigField("String", "DEFAULT_SERVER_URL", "\"\"")
             buildConfigField("String", "DEFAULT_API_KEY", "\"\"")
             buildConfigField("String", "DEFAULT_DEVICE_ID", "\"\"")
+            // TZ-12: HTTP Config Endpoint — задаётся при сборке через CI/CD
+            buildConfigField("String", "CONFIG_URL", "\"${System.getenv("SPHERE_CONFIG_URL") ?: ""}\"")
         }
     }
 
