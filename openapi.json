@@ -3411,6 +3411,107 @@
         }
       }
     },
+    "/api/v1/tasks/{task_id}/progress": {
+      "get": {
+        "tags": [
+          "tasks"
+        ],
+        "summary": "Live-прогресс выполнения задачи (из Redis кэша)",
+        "operationId": "get_task_progress_api_v1_tasks__task_id__progress_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Task Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Get Task Progress Api V1 Tasks  Task Id  Progress Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tasks/{task_id}/live-logs": {
+      "get": {
+        "tags": [
+          "tasks"
+        ],
+        "summary": "Live node execution log entries (from Redis, for running tasks)",
+        "operationId": "get_task_live_logs_api_v1_tasks__task_id__live_logs_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Task Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object"
+                  },
+                  "title": "Response Get Task Live Logs Api V1 Tasks  Task Id  Live Logs Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/tasks/{task_id}/screenshots": {
       "get": {
         "tags": [
@@ -3443,6 +3544,55 @@
                 "schema": {
                   "type": "object",
                   "title": "Response Get Task Screenshots Api V1 Tasks  Task Id  Screenshots Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tasks/{task_id}/stop": {
+      "post": {
+        "tags": [
+          "tasks"
+        ],
+        "summary": "Принудительно остановить задачу (QUEUED/ASSIGNED/RUNNING)",
+        "operationId": "force_stop_task_api_v1_tasks__task_id__stop_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Task Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Force Stop Task Api V1 Tasks  Task Id  Stop Post"
                 }
               }
             }
@@ -6639,20 +6789,30 @@
           },
           "action_type": {
             "type": "string",
-            "title": "Action Type"
+            "title": "Action Type",
+            "default": ""
           },
           "started_at": {
-            "type": "string",
-            "format": "date-time",
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Started At"
           },
           "duration_ms": {
             "type": "integer",
-            "title": "Duration Ms"
+            "title": "Duration Ms",
+            "default": 0
           },
           "success": {
             "type": "boolean",
-            "title": "Success"
+            "title": "Success",
+            "default": true
           },
           "error": {
             "anyOf": [
@@ -6669,6 +6829,9 @@
             "anyOf": [
               {
                 "type": "object"
+              },
+              {
+                "type": "string"
               },
               {
                 "type": "null"
@@ -6690,11 +6853,7 @@
         },
         "type": "object",
         "required": [
-          "node_id",
-          "action_type",
-          "started_at",
-          "duration_ms",
-          "success"
+          "node_id"
         ],
         "title": "NodeExecutionLog",
         "description": "Лог выполнения одного узла DAG."
@@ -8140,6 +8299,7 @@
         "properties": {
           "id": {
             "type": "string",
+            "format": "uuid",
             "title": "Id"
           },
           "name": {
