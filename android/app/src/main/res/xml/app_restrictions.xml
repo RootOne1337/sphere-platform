@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Android Enterprise Managed Configuration (AppRestrictions).
+  Deploy via MDM/EMM console (Google Workspace, Microsoft Intune, etc.)
+  to push zero-touch enrollment config to managed devices.
+-->
+<restrictions xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <restriction
+        android:key="sphere_server_url"
+        android:title="@string/restriction_server_url_title"
+        android:description="@string/restriction_server_url_desc"
+        android:restrictionType="string"
+        android:defaultValue="" />
+
+    <restriction
+        android:key="sphere_api_key"
+        android:title="@string/restriction_api_key_title"
+        android:description="@string/restriction_api_key_desc"
+        android:restrictionType="string"
+        android:defaultValue="" />
+
+    <restriction
+        android:key="sphere_device_id"
+        android:title="@string/restriction_device_id_title"
+        android:description="@string/restriction_device_id_desc"
+        android:restrictionType="string"
+        android:defaultValue="" />
+
+</restrictions>

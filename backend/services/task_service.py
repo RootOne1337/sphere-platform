@@ -16,7 +16,6 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any
 
-import httpx
 import structlog
 from fastapi import HTTPException
 from sqlalchemy import select
@@ -158,11 +157,14 @@ class TaskService:
         if not self.status_cache:
             return
 
-        online_device_ids = await self.status_cache.get_all_tracked_device_ids()
+        all_device_ids = await self.status_cache.get_all_tracked_device_ids()
 
-        for device_id_str in online_device_ids:
-            # Получить org_id из Redis meta (если доступно) или брать из БД
-            # Упрощённая версия: итерируем по всем устройствам из кэша
+        for device_id_str in all_device_ids:
+            # Проверяем что устройство действительно ONLINE перед диспетчеризацией
+            device_status = await self.status_cache.get_status(device_id_str)
+            if not device_status or device_status.status != "online":
+                continue
+
             try:
                 device_uuid = uuid.UUID(device_id_str)
             except ValueError:
@@ -187,29 +189,34 @@ class TaskService:
 
                 version = await self.db.get(ScriptVersion, task.script_version_id)
                 if not version:
-                    # version пропала — вернуть в очередь невозможно, помечаем failed
                     task.status = TaskStatus.FAILED
                     task.error_message = "Script version not found"
                     continue
 
-                sent = False
+                delivered = False
                 if self.publisher:
-                    sent = await self.publisher.send_command_to_device(
+                    delivered = await self.publisher.send_command_live(
                         device_id_str,
                         {
-                            "type": "execute_dag",
-                            "task_id": task_id_str,
-                            "dag": version.dag,
-                            "timeout_ms": task.timeout_seconds * 1000,
+                            "command_id": task_id_str,
+                            "type": "EXECUTE_DAG",
+                            "signed_at": int(datetime.now(timezone.utc).timestamp()),
+                            "ttl_seconds": task.timeout_seconds,
+                            "payload": {
+                                "task_id": task_id_str,
+                                "dag": version.dag,
+                                "timeout_ms": task.timeout_seconds * 1000,
+                            },
                         },
                     )
 
-                if sent:
+                if delivered:
                     task.status = TaskStatus.RUNNING
                     task.started_at = datetime.now(timezone.utc)
                     logger.info("task.dispatched", task_id=task_id_str, device_id=device_id_str)
                 else:
-                    # Агент оффлайн — вернуть в очередь
+                    # Агент оффлайн — освободить lock и вернуть задачу в очередь
+                    await self.queue.mark_completed(task_id_str, device_id_str)
                     await self.queue.enqueue(
                         task_id_str,
                         device_id_str,
@@ -303,6 +310,60 @@ class TaskService:
         )
         return task
 
+    # ── Force Stop (running task) ─────────────────────────────────────────
+
+    async def force_stop_task(
+        self, task_id: uuid.UUID, org_id: uuid.UUID
+    ) -> Task:
+        """
+        Принудительная остановка RUNNING задачи:
+        1. Отправляет CANCEL_DAG через WebSocket агенту
+        2. Освобождает Redis lock
+        3. Обновляет статус в БД
+        """
+        task = await self._get_task(task_id, org_id)
+
+        if task.status not in (TaskStatus.RUNNING, TaskStatus.QUEUED, TaskStatus.ASSIGNED):
+            raise HTTPException(
+                status_code=409,
+                detail=f"Cannot stop task in status '{task.status}'",
+            )
+
+        # Если задача QUEUED/ASSIGNED — просто отменяем через обычный путь
+        if task.status in (TaskStatus.QUEUED, TaskStatus.ASSIGNED):
+            await self.queue.cancel_task(str(task_id), str(org_id))
+            task.status = TaskStatus.CANCELLED
+            task.finished_at = datetime.now(timezone.utc)
+            logger.info("task.force_stopped.queued", task_id=str(task_id))
+            return task
+
+        # RUNNING — отправляем CANCEL_DAG агенту через WebSocket
+        device_id_str = str(task.device_id)
+        if self.publisher:
+            await self.publisher.send_command_live(
+                device_id_str,
+                {
+                    "command_id": str(task_id),
+                    "type": "CANCEL_DAG",
+                    "signed_at": int(datetime.now(timezone.utc).timestamp()),
+                    "payload": {"task_id": str(task_id)},
+                },
+            )
+
+        # Освобождаем Redis lock
+        await self.queue.mark_completed(str(task_id), device_id_str)
+
+        task.status = TaskStatus.CANCELLED
+        task.finished_at = datetime.now(timezone.utc)
+        task.error_message = "Force stopped by user"
+
+        logger.info(
+            "task.force_stopped",
+            task_id=str(task_id),
+            device_id=device_id_str,
+        )
+        return task
+
     # ── Query ─────────────────────────────────────────────────────────────────
 
     async def list_tasks(
@@ -353,13 +414,12 @@ class TaskService:
 _dispatcher_task: asyncio.Task | None = None   # global ref — защита от GC
 
 
-async def _task_dispatcher_loop(get_service_fn) -> None:
-    """Цикл диспетчеризации. get_service_fn() создаёт TaskService с новой сессией."""
+async def _task_dispatcher_loop(dispatch_fn) -> None:
+    """Dispatcher loop. dispatch_fn() handles its own session lifecycle."""
     logger.info("task_dispatcher.started", interval_s=5)
     while True:
         try:
-            svc = await get_service_fn()
-            await svc.dispatch_pending_tasks()
+            await dispatch_fn()
         except Exception as exc:
             logger.error("task_dispatcher.error", error=str(exc), exc_info=True)
         await asyncio.sleep(5)

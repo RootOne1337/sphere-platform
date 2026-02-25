@@ -1,0 +1,123 @@
+{
+  "title": "Sphere Platform — VPN Dashboard",
+  "uid": "sphere-vpn",
+  "tags": ["sphere", "vpn"],
+  "timezone": "browser",
+  "refresh": "30s",
+  "schemaVersion": 38,
+  "time": {"from": "now-3h", "to": "now"},
+  "panels": [
+    {
+      "id": 1,
+      "title": "VPN Pool Status",
+      "type": "stat",
+      "gridPos": {"h": 6, "w": 8, "x": 0, "y": 0},
+      "datasource": {"type": "prometheus", "uid": "${datasource}"},
+      "targets": [
+        {"expr": "sphere_vpn_pool_total", "legendFormat": "Total"},
+        {"expr": "sphere_vpn_pool_allocated", "legendFormat": "Allocated"},
+        {"expr": "sphere_vpn_pool_total - sphere_vpn_pool_allocated", "legendFormat": "Free"}
+      ],
+      "fieldConfig": {"defaults": {"unit": "short"}}
+    },
+    {
+      "id": 2,
+      "title": "VPN Pool Free %",
+      "type": "gauge",
+      "gridPos": {"h": 6, "w": 8, "x": 8, "y": 0},
+      "datasource": {"type": "prometheus", "uid": "${datasource}"},
+      "targets": [
+        {
+          "expr": "(sphere_vpn_pool_total - sphere_vpn_pool_allocated) / sphere_vpn_pool_total * 100",
+          "legendFormat": "Free %"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "steps": [
+              {"value": null, "color": "red"},
+              {"value": 10, "color": "yellow"},
+              {"value": 30, "color": "green"}
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 3,
+      "title": "VPN Pool (Allocated vs Free) Pie",
+      "type": "piechart",
+      "gridPos": {"h": 6, "w": 8, "x": 16, "y": 0},
+      "datasource": {"type": "prometheus", "uid": "${datasource}"},
+      "targets": [
+        {"expr": "sphere_vpn_pool_allocated", "legendFormat": "Allocated"},
+        {"expr": "sphere_vpn_pool_total - sphere_vpn_pool_allocated", "legendFormat": "Free"}
+      ]
+    },
+    {
+      "id": 4,
+      "title": "VPN Reconnects/s",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 6},
+      "datasource": {"type": "prometheus", "uid": "${datasource}"},
+      "targets": [
+        {
+          "expr": "rate(sphere_vpn_reconnects_total[5m])",
+          "legendFormat": "Reconnects/s"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "thresholds": {
+            "steps": [
+              {"value": null, "color": "green"},
+              {"value": 0.5, "color": "yellow"},
+              {"value": 1, "color": "red"}
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 5,
+      "title": "Stale Handshakes/s",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 6},
+      "datasource": {"type": "prometheus", "uid": "${datasource}"},
+      "targets": [
+        {
+          "expr": "rate(sphere_vpn_handshake_stale_total[5m])",
+          "legendFormat": "Stale/s"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "color": {"mode": "fixed", "fixedColor": "orange"}
+        }
+      }
+    },
+    {
+      "id": 6,
+      "title": "VPN Reconnects (cumulative)",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 14},
+      "datasource": {"type": "prometheus", "uid": "${datasource}"},
+      "targets": [
+        {"expr": "sphere_vpn_reconnects_total", "legendFormat": "Total Reconnects"},
+        {"expr": "sphere_vpn_handshake_stale_total", "legendFormat": "Total Stale Handshakes"}
+      ],
+      "fieldConfig": {"defaults": {"unit": "short"}}
+    }
+  ],
+  "templating": {
+    "list": [
+      {"name": "datasource", "type": "datasource", "query": "prometheus", "hide": 0}
+    ]
+  }
+}

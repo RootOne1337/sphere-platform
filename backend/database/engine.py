@@ -8,14 +8,13 @@ from sqlalchemy.orm import DeclarativeBase
 
 from backend.core.config import settings
 
-
 engine = create_async_engine(
     settings.POSTGRES_URL,
     pool_size=settings.DB_POOL_SIZE,
     max_overflow=settings.DB_MAX_OVERFLOW,
     pool_timeout=settings.DB_POOL_TIMEOUT,
     pool_pre_ping=True,       # проверять соединение перед использованием
-    echo=settings.DEBUG,      # SQL логи только в dev
+    echo=False,               # SQL echo off — use pgAdmin/Jaeger for query tracing
 )
 
 AsyncSessionLocal = async_sessionmaker(

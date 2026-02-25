@@ -164,7 +164,7 @@ async def refresh(
 
 @router.post(
     "/logout",
-    status_code=status.HTTP_204_NO_CONTENT,
+    response_model=None,
     summary="Logout: инвалидировать токены",
 )
 async def logout(
@@ -196,6 +196,7 @@ async def logout(
         secure=True,
         samesite="strict",
     )
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 # ── Me ────────────────────────────────────────────────────────────────────────
@@ -273,7 +274,7 @@ async def mfa_verify_setup(
 
 @router.delete(
     "/mfa",
-    status_code=status.HTTP_204_NO_CONTENT,
+    response_model=None,
     summary="SPLIT-2: Отключить MFA",
 )
 async def mfa_disable(
@@ -284,6 +285,7 @@ async def mfa_disable(
     current_user.mfa_enabled = False
     current_user.mfa_secret = None
     await db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 # ── API Keys (SPLIT-4) ────────────────────────────────────────────────────────
@@ -344,7 +346,7 @@ async def list_api_keys(
 
 @router.delete(
     "/api-keys/{key_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
+    response_model=None,
     summary="SPLIT-4: Отозвать API ключ",
 )
 async def revoke_api_key(
@@ -358,3 +360,4 @@ async def revoke_api_key(
     revoked = await svc.revoke(key_id, current_user.org_id)
     if not revoked:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="API key not found")
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

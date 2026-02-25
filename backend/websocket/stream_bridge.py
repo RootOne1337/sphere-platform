@@ -49,16 +49,28 @@ class VideoStreamBridge:
         logger.info("Viewer registered", device_id=device_id, session_id=session_id)
 
     async def unregister_viewer(self, device_id: str) -> None:
-        """Отменить viewer и остановить поток."""
+        """Отменить viewer и остановить поток.
+
+        stop_stream задержан на 2 секунды для обработки rapid reconnect (React StrictMode).
+        В dev-режиме StrictMode делает cleanup+remount немедленно.
+        Если viewer переподключается в течение 2s — stop_stream НЕ отправляется.
+        """
         task = self._viewer_tasks.pop(device_id, None)
         if task:
             task.cancel()
         self._queues.pop(device_id, None)
         self._viewer_sockets.pop(device_id, None)
-
-        # Попросить агента остановить стриминг
-        await self.manager.send_to_device(device_id, {"type": "stop_stream"})
         logger.info("Viewer unregistered", device_id=device_id)
+
+        # Debounce stop_stream: ждём 2s перед отправкой агенту
+        async def _delayed_stop() -> None:
+            await asyncio.sleep(2.0)
+            # Если viewer переподключился — не останавливаем стрим
+            if device_id not in self._viewer_sockets:
+                await self.manager.send_to_device(device_id, {"type": "stop_stream"})
+                logger.info("Stream stopped (no reconnect in 2s)", device_id=device_id)
+
+        asyncio.create_task(_delayed_stop())
 
     async def handle_agent_frame(self, device_id: str, frame_data: bytes) -> None:
         """

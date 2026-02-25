@@ -1,8 +1,6 @@
 # backend/models/organization.py
 from __future__ import annotations
 
-import uuid
-
 from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 

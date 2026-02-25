@@ -9,9 +9,9 @@ import secrets
 import structlog
 from fastapi import HTTPException
 
+from backend.core.lifespan_registry import register_shutdown, register_startup
 from backend.websocket.channels import ChannelPattern
 from backend.websocket.connection_manager import ConnectionManager, get_connection_manager
-from backend.core.lifespan_registry import register_startup, register_shutdown
 
 logger = structlog.get_logger()
 
@@ -69,23 +69,52 @@ class PubSubRouter:
             self._subscribed_channels.discard(cmd_channel)
 
     async def _listen_loop(self) -> None:
-        """Основной цикл прослушивания Redis."""
-        try:
-            async for message in self._pubsub.listen():
-                if message["type"] != "message":
+        """Основной цикл прослушивания Redis с auto-restart при падении."""
+        if self._pubsub is None:
+            return
+        backoff = 1.0
+        max_backoff = 30.0
+        while True:
+            try:
+                # FIX: если нет подписок — ждём, иначе listen() вернётся немедленно
+                # и while True образует CPU spinloop без единого await, блокируя event loop.
+                if not self._pubsub.subscribed:
+                    await asyncio.sleep(1.0)
                     continue
 
-                channel: str = message["channel"]
-                data = message["data"]
+                async for message in self._pubsub.listen():
+                    if message["type"] != "message":
+                        continue
 
+                    channel: str = message["channel"]
+                    data = message["data"]
+
+                    try:
+                        await self._route_message(channel, data)
+                    except Exception as e:
+                        logger.error("PubSub route error", channel=channel, error=str(e))
+                    backoff = 1.0  # reset on successful message processing
+            except asyncio.CancelledError:
+                return
+            except Exception as e:
+                logger.error(
+                    "PubSub listen loop crashed — restarting",
+                    error=str(e),
+                    backoff_s=backoff,
+                )
+                await asyncio.sleep(backoff)
+                backoff = min(backoff * 2, max_backoff)
+                # Re-create pubsub connection after crash
                 try:
-                    await self._route_message(channel, data)
-                except Exception as e:
-                    logger.error("PubSub route error", channel=channel, error=str(e))
-        except asyncio.CancelledError:
-            pass
-        except Exception as e:
-            logger.error("PubSub listen loop crashed", error=str(e))
+                    if self._pubsub:
+                        await self._pubsub.aclose()
+                    self._pubsub = self.redis.pubsub()
+                    # Re-subscribe to all channels
+                    for ch in list(self._subscribed_channels):
+                        await self._pubsub.subscribe(ch)
+                    logger.info("PubSub listen loop restarted", channels=len(self._subscribed_channels))
+                except Exception as re_err:
+                    logger.error("PubSub reconnect failed", error=str(re_err))
 
     async def _route_message(self, channel: str, data: bytes | str) -> None:
         # MED-7: removeprefix() вместо split(":")[-1] — безопасно для device_id вида "192.168.1.1:5555"
@@ -132,12 +161,50 @@ class PubSubPublisher:
         """
         Отправить команду агенту через Redis PubSub.
         Команда будет доставлена воркеру, у которого есть подключение.
-        Returns True если есть хотя бы один подписчик.
+        Если устройство offline — команда ставится в offline queue (Redis Streams).
+        Returns True если отправлено или поставлено в очередь.
+        """
+        _success, _queued = await self._send_command_inner(device_id, command)
+        return _success
+
+    async def send_command_live(
+        self,
+        device_id: str,
+        command: dict,
+    ) -> bool:
+        """
+        Отправить команду ТОЛЬКО если устройство online (есть подписчик PubSub).
+        Возвращает False если устройство offline — НЕ ставит в offline queue.
         """
         channel = ChannelPattern.agent_cmd(device_id)
         payload = json.dumps(command)
         subscribers = await self.redis.publish(channel, payload)
         return subscribers > 0
+
+    async def _send_command_inner(
+        self,
+        device_id: str,
+        command: dict,
+    ) -> tuple[bool, bool]:
+        """
+        Internal: returns (success, was_queued).
+        - (True, False):  delivered to online device
+        - (True, True):   device offline, queued for later delivery
+        - (False, False): failed entirely
+        """
+        channel = ChannelPattern.agent_cmd(device_id)
+        payload = json.dumps(command)
+        subscribers = await self.redis.publish(channel, payload)
+        if subscribers > 0:
+            return (True, False)
+
+        # Device is offline — enqueue for delivery on reconnect
+        from backend.websocket.offline_queue import get_offline_queue
+        queue = get_offline_queue()
+        if queue:
+            queued = await queue.enqueue(device_id, command)
+            return (queued, True)
+        return (False, False)
 
     async def broadcast_org_event(self, org_id: str, event: dict) -> int:
         channel = ChannelPattern.org_events(org_id)
@@ -152,6 +219,7 @@ class PubSubPublisher:
     ) -> dict:
         """
         Отправить команду и ждать ответ.
+        Если устройство offline — возвращает 503, не ждёт timeout впустую.
         Использует временный канал sphere:agent:result:{device_id}:{command_id}.
         """
         command_id = command.setdefault("id", secrets.token_hex(8))
@@ -162,9 +230,14 @@ class PubSubPublisher:
         await ps.subscribe(result_channel)
 
         try:
-            sent = await self.send_command_to_device(device_id, command)
-            if not sent:
-                raise HTTPException(503, f"Device '{device_id}' is offline")
+            success, was_queued = await self._send_command_inner(device_id, command)
+            if not success:
+                raise HTTPException(503, f"Device '{device_id}' is offline and queue unavailable")
+            if was_queued:
+                raise HTTPException(
+                    503,
+                    f"Device '{device_id}' is offline — command queued for delivery on reconnect",
+                )
 
             loop = asyncio.get_running_loop()
             deadline = loop.time() + timeout

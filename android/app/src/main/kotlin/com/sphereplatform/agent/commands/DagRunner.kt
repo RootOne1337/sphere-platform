@@ -1,0 +1,760 @@
+package com.sphereplatform.agent.commands
+
+import androidx.security.crypto.EncryptedSharedPreferences
+import com.sphereplatform.agent.lua.LuaEngine
+import com.sphereplatform.agent.ws.SphereWebSocketClient
+import com.sphereplatform.agent.lua.executeWithTimeout
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonArray
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.int
+import kotlinx.serialization.json.intOrNull
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.long
+import kotlinx.serialization.json.longOrNull
+import kotlinx.serialization.json.put
+import timber.log.Timber
+import javax.inject.Inject
+import javax.inject.Singleton
+
+/**
+ * DagRunner — исполняет DAG-скрипты команд.
+ *
+ * ## DAG JSON Contract (TZ-04 SPLIT-1 MERGE-3)
+ * - `nodes` — **array** (не map) объектов Node
+ * - Каждый Node: `id`, `action.type`, `on_success`, `on_failure`, `retry`, `timeout_ms`
+ * - `action.type` — lowercase. Базовые: "tap", "swipe", "type_text", "sleep", "key_event",
+ *   "screenshot", "lua", "find_element", "condition", "launch_app", "stop_app".
+ *   Жесты: "long_press", "double_tap", "scroll", "scroll_to".
+ *   Ожидание: "wait_for_element_gone".
+ *   Элементы: "tap_element", "find_first_element", "tap_first_visible", "get_element_text", "input_clear".
+ *   Переменные: "set_variable", "get_variable".
+ *   Сеть: "http_request".
+ *   Система: "open_url", "clear_app_data", "get_device_info", "shell".
+ *   QA: "assert".
+ *   Управление: "loop", "start", "end".
+ *
+ * ## Что реализовано
+ * - Per-node retry с exponential backoff (50ms / 150ms / 450ms / …)
+ * - Per-node timeout через withTimeout
+ * - Global DAG timeout
+ * - Подробные NodeExecutionLog (duration_ms, error, output) в финальном результате
+ * - Realtime task_progress по WS после каждого узла
+ * - Pending results в EncryptedSharedPreferences при потере WS
+ */
+@Singleton
+class DagRunner @Inject constructor(
+    private val luaEngine: LuaEngine,
+    private val adbActions: AdbActionExecutor,
+    private val wsClient: SphereWebSocketClient,
+    private val prefs: EncryptedSharedPreferences,
+) {
+    private val json = Json { ignoreUnknownKeys = true }
+
+    @Volatile
+    private var cancelRequested = false
+
+    /** Called from CommandDispatcher when CANCEL_DAG arrives. */
+    fun requestCancel() {
+        cancelRequested = true
+        Timber.i("[DAG] Cancel requested by user")
+    }
+
+    // ── Public API ────────────────────────────────────────────────────────────
+
+    suspend fun execute(commandId: String, dagJson: JsonObject): JsonObject {
+        cancelRequested = false  // reset on new execution
+
+        val entryNodeId = dagJson["entry_node"]!!.jsonPrimitive.content
+        val nodesArray = dagJson["nodes"]!!.jsonArray          // LIST, не map!
+        val globalTimeoutMs = dagJson["timeout_ms"]?.jsonPrimitive?.longOrNull ?: 3_600_000L
+
+        // Build id → node object map for O(1) lookup
+        val nodeMap: Map<String, JsonObject> = nodesArray.associate { el ->
+            val obj = el.jsonObject
+            obj["id"]!!.jsonPrimitive.content to obj
+        }
+
+        val nodeLogs = mutableListOf<JsonObject>()
+        val ctx = mutableMapOf<String, Any?>()   // execution context passed to Lua
+
+        var success = true
+        var failedNode: String? = null
+
+        withTimeout(globalTimeoutMs) {
+            var currentNodeId: String? = entryNodeId
+
+            while (currentNodeId != null) {
+                // ── Check for cancel request from backend ──────────────
+                if (cancelRequested) {
+                    Timber.i("[DAG] Cancelled by user at node '$currentNodeId'")
+                    success = false
+                    failedNode = currentNodeId
+                    break
+                }
+                val nodeId = currentNodeId
+                val node = nodeMap[nodeId]
+                    ?: throw IllegalArgumentException("Node '$nodeId' not found in DAG")
+
+                val action = node["action"]!!.jsonObject
+                val actionType = action["type"]!!.jsonPrimitive.content
+                val retryMax = node["retry"]?.jsonPrimitive?.intOrNull ?: 0
+                val nodeTimeoutMs = node["timeout_ms"]?.jsonPrimitive?.longOrNull ?: 30_000L
+                val onSuccess = node["on_success"]?.jsonPrimitive?.contentOrNull
+                val onFailure = node["on_failure"]?.jsonPrimitive?.contentOrNull
+
+                // stop node terminates loop
+                if (actionType == "end" || actionType == "start") {
+                    nodeLogs.add(makeLog(nodeId, actionType, 0L, true, null, null))
+                    currentNodeId = onSuccess
+                    continue
+                }
+
+                val startTs = System.currentTimeMillis()
+                var nodeResult: Any? = null
+                var nodeError: String? = null
+                var nodeSuccess = false
+
+                // Per-node retry loop with exponential backoff
+                for (attempt in 0..retryMax) {
+                    if (attempt > 0) {
+                        val backoffMs = (50L * (1L shl (attempt - 1))).coerceAtMost(5_000L)
+                        delay(backoffMs)
+                        Timber.d("[DAG] Retry $attempt for node '$nodeId'")
+                    }
+                    try {
+                        nodeResult = withTimeout(nodeTimeoutMs) {
+                            executeNode(actionType, action, ctx)
+                        }
+                        nodeSuccess = true
+                        nodeError = null
+                        break
+                    } catch (e: TimeoutCancellationException) {
+                        nodeError = "timeout after ${nodeTimeoutMs}ms (attempt $attempt)"
+                        Timber.w("[DAG] Node '$nodeId' timed out")
+                        break   // no retry on timeout
+                    } catch (e: Exception) {
+                        nodeError = e.message ?: "unknown error"
+                        Timber.w(e, "[DAG] Node '$nodeId' failed attempt $attempt")
+                    }
+                }
+
+                val durationMs = System.currentTimeMillis() - startTs
+                nodeLogs.add(makeLog(nodeId, actionType, durationMs, nodeSuccess, nodeError, nodeResult))
+
+                if (nodeSuccess) {
+                    ctx[nodeId] = nodeResult
+                } else {
+                    success = false
+                    failedNode = nodeId
+                }
+
+                // Realtime progress
+                trySendProgress(commandId, nodeId, nodeLogs.size, nodeMap.size)
+
+                // Route to next node
+                currentNodeId = when {
+                    actionType == "condition" -> {
+                        // condition routes via action.on_true / action.on_false (TZ-04 SPLIT-1)
+                        if (nodeResult as? Boolean == true)
+                            action["on_true"]?.jsonPrimitive?.contentOrNull ?: onSuccess
+                        else
+                            action["on_false"]?.jsonPrimitive?.contentOrNull ?: onFailure
+                    }
+                    nodeSuccess -> onSuccess
+                    else -> onFailure    // null = DAG stops
+                }
+
+                if (!nodeSuccess && onFailure == null) {
+                    // No error handler configured — surface error to caller
+                    throw RuntimeException("DAG failed at node '$nodeId': $nodeError")
+                }
+            }
+        }
+
+        val nodeLogsArray: JsonArray = buildJsonArray { nodeLogs.forEach { add(it) } }
+        val finalResult = buildJsonObject {
+            put("nodes_executed", nodeLogs.size)
+            put("success", success)
+            failedNode?.let { put("failed_node", it) }
+            put("node_logs", nodeLogsArray)
+        }
+
+        if (!wsClient.isConnected) {
+            savePendingResult(commandId, finalResult)
+        }
+
+        return finalResult
+    }
+
+    /**
+     * Отправить накопленные результаты DAG при reconnect.
+     * Вызывается из CommandDispatcher → wsClient.onConnected.
+     */
+    suspend fun flushPendingResults() {
+        val pending = prefs.getStringSet("pending_dag_results", emptySet())
+            ?.toList() ?: return
+        if (pending.isEmpty()) return
+
+        Timber.i("[DAG] Flushing ${pending.size} pending results")
+        for (entry in pending) {
+            try {
+                val obj = json.parseToJsonElement(entry).jsonObject
+                val cmdId = obj["command_id"]!!.jsonPrimitive.content
+                val result = obj["result"]!!.jsonObject
+                wsClient.sendJson(buildJsonObject {
+                    put("command_id", cmdId)
+                    put("status", "completed")
+                    put("result", result)
+                })
+            } catch (e: Exception) {
+                Timber.w(e, "[DAG] Error flushing pending result")
+            }
+        }
+        prefs.edit().remove("pending_dag_results").apply()
+    }
+
+    // ── Node executor ─────────────────────────────────────────────────────────
+
+    private suspend fun executeNode(
+        type: String,
+        action: JsonObject,
+        ctx: MutableMap<String, Any?>,
+    ): Any? = when (type) {
+
+        "tap" -> {
+            adbActions.tap(action["x"]!!.jsonPrimitive.int, action["y"]!!.jsonPrimitive.int)
+            null
+        }
+
+        "swipe" -> {
+            adbActions.swipe(
+                action["x1"]!!.jsonPrimitive.int,
+                action["y1"]!!.jsonPrimitive.int,
+                action["x2"]!!.jsonPrimitive.int,
+                action["y2"]!!.jsonPrimitive.int,
+                action["duration_ms"]?.jsonPrimitive?.intOrNull ?: 300,
+            )
+            null
+        }
+
+        "type_text" -> {
+            val text = action["text"]!!.jsonPrimitive.content
+            val clearFirst = action["clear_first"]?.jsonPrimitive?.content?.toBoolean() ?: false
+            if (clearFirst) {
+                adbActions.keyEvent(277)  // KEYCODE_CTRL_A — select all
+                delay(80)
+                adbActions.keyEvent(67)   // KEYCODE_DEL — delete selection
+                delay(80)
+            }
+            adbActions.typeText(text)
+            null
+        }
+
+        "sleep" -> {
+            delay(action["ms"]!!.jsonPrimitive.long)
+            null
+        }
+
+        "key_event" -> {
+            adbActions.keyEvent(action["keycode"]!!.jsonPrimitive.int)
+            null
+        }
+
+        "screenshot" -> {
+            val path = adbActions.takeScreenshot()
+            mapOf("path" to path)
+        }
+
+        "lua" -> {
+            val code = action["code"]!!.jsonPrimitive.content
+            luaEngine.executeWithTimeout(code, ctx)
+        }
+
+        // Native condition checks (no Lua required)
+        "condition" -> {
+            val check = action["check"]?.jsonPrimitive?.contentOrNull
+            val params = action["params"]?.jsonObject
+            when (check) {
+                "element_exists" -> {
+                    val selector = params?.get("selector")?.jsonPrimitive?.content ?: ""
+                    val strategy = params?.get("strategy")?.jsonPrimitive?.contentOrNull ?: "text"
+                    val timeoutMs = params?.get("timeout_ms")?.jsonPrimitive?.intOrNull ?: 5_000
+                    adbActions.findElement(selector, strategy, timeoutMs) != null
+                }
+                "text_contains" -> {
+                    val selector = params?.get("selector")?.jsonPrimitive?.content ?: ""
+                    val text = params?.get("text")?.jsonPrimitive?.content ?: ""
+                    val strategy = params?.get("strategy")?.jsonPrimitive?.contentOrNull ?: "text"
+                    val element = adbActions.findElement(selector, strategy, 5_000)
+                    element != null && element.contains(text, ignoreCase = true)
+                }
+                "battery_above" -> {
+                    // Can be read from shell without additional deps
+                    val threshold = params?.get("level")?.jsonPrimitive?.intOrNull ?: 20
+                    val level = adbActions.shell("cat /sys/class/power_supply/battery/capacity")
+                        .trim().toIntOrNull() ?: 100
+                    level > threshold
+                }
+                else -> {
+                    // Fallback: Lua expression in "code" field
+                    val code = action["code"]?.jsonPrimitive?.contentOrNull
+                        ?: throw IllegalArgumentException("condition node has no 'check' or 'code'")
+                    val result = luaEngine.executeWithTimeout(code, ctx)
+                    result as? Boolean ?: (result != null && result != false)
+                }
+            }
+        }
+
+        "find_element" -> {
+            val selector = action["selector"]!!.jsonPrimitive.content
+            val strategy = action["strategy"]?.jsonPrimitive?.contentOrNull ?: "text"
+            val timeoutMs = action["timeout_ms"]?.jsonPrimitive?.intOrNull ?: 10_000
+            val failIfNotFound = action["fail_if_not_found"]?.jsonPrimitive?.content?.toBoolean() ?: true
+            val result = adbActions.findElement(selector, strategy, timeoutMs)
+            if (result == null && failIfNotFound) {
+                throw RuntimeException("Element not found: strategy=$strategy selector='$selector'")
+            }
+            result  // null or "x,y" string
+        }
+
+        // ── Multi-candidate element search (one dump per poll cycle) ──────────
+        //
+        // find_first_element — проверяет N кандидатов против одного XML-дампа.
+        // Один uiautomator dump на итерацию, не N dumps. O(1 dump) вместо O(N dumps).
+        //
+        // Пример DAG action:
+        // {
+        //   "type": "find_first_element",
+        //   "candidates": [
+        //     { "selector": "//Button[@text='OK']",     "strategy": "xpath", "label": "ok" },
+        //     { "selector": "//Button[@text='Accept']", "strategy": "xpath", "label": "accept" },
+        //     { "selector": "close",                    "strategy": "text",  "label": "close" }
+        //   ],
+        //   "timeout_ms": 10000,
+        //   "save_to": "found_btn",   // сохранить результат в ctx
+        //   "fail_if_not_found": true
+        // }
+        // Результат в ctx["found_btn"]: { coords, selector, strategy, label, index }
+
+        "find_first_element" -> {
+            val candidates = action["candidates"]!!.jsonArray.mapIndexed { idx, el ->
+                val obj      = el.jsonObject
+                val selector = obj["selector"]!!.jsonPrimitive.content
+                val strategy = obj["strategy"]?.jsonPrimitive?.contentOrNull ?: "xpath"
+                val label    = obj["label"]?.jsonPrimitive?.contentOrNull ?: "candidate_$idx"
+                AdbActionExecutor.SelectorCandidate(selector, strategy, label)
+            }
+            val timeoutMs      = action["timeout_ms"]?.jsonPrimitive?.intOrNull ?: 10_000
+            val failIfNotFound = action["fail_if_not_found"]?.jsonPrimitive?.content?.toBoolean() ?: true
+            val key            = action["save_to"]?.jsonPrimitive?.contentOrNull
+
+            val match = adbActions.findFirstElement(candidates, timeoutMs)
+            if (match == null && failIfNotFound) {
+                throw RuntimeException(
+                    "find_first_element: none of ${candidates.size} candidates found within ${timeoutMs}ms"
+                )
+            }
+            val result = match?.let {
+                mapOf("coords" to it.coords, "selector" to it.selector,
+                      "strategy" to it.strategy, "label" to it.label, "index" to it.index)
+            }
+            if (key != null) ctx[key] = result
+            result
+        }
+
+        // tap_first_visible — find_first_element + tap в одном узле.
+        // Самый частый паттерн: "вижу кнопку из набора — нажимаю", всё за один дамп.
+        //
+        // {
+        //   "type": "tap_first_visible",
+        //   "candidates": [ { "selector": "//Button[@text='OK']", "strategy": "xpath" }, ... ],
+        //   "timeout_ms": 8000
+        // }
+
+        "tap_first_visible" -> {
+            val candidates = action["candidates"]!!.jsonArray.mapIndexed { idx, el ->
+                val obj      = el.jsonObject
+                val selector = obj["selector"]!!.jsonPrimitive.content
+                val strategy = obj["strategy"]?.jsonPrimitive?.contentOrNull ?: "xpath"
+                val label    = obj["label"]?.jsonPrimitive?.contentOrNull ?: "candidate_$idx"
+                AdbActionExecutor.SelectorCandidate(selector, strategy, label)
+            }
+            val timeoutMs = action["timeout_ms"]?.jsonPrimitive?.intOrNull ?: 8_000
+            val match = adbActions.findFirstElement(candidates, timeoutMs)
+                ?: throw RuntimeException(
+                    "tap_first_visible: none of ${candidates.size} candidates found within ${timeoutMs}ms"
+                )
+            val parts = match.coords.split(",")
+            // coords from uiautomator dump are already in physical pixels — use tapRaw
+            adbActions.tapRaw(parts[0].toInt(), parts[1].toInt())
+            mapOf("tapped_label" to match.label, "tapped_index" to match.index, "coords" to match.coords)
+        }
+
+        // ── App lifecycle ─────────────────────────────────────────────────────
+        "launch_app" -> {
+            val pkg = action["package"]!!.jsonPrimitive.content
+            adbActions.launchApp(pkg)
+            delay(1_500)  // дать приложению время запуститься
+            null
+        }
+
+        "stop_app" -> {
+            val pkg = action["package"]!!.jsonPrimitive.content
+            adbActions.stopApp(pkg)
+            null
+        }
+
+        // ── Extended gestures ─────────────────────────────────────────────────
+
+        "long_press" -> {
+            val x = action["x"]!!.jsonPrimitive.int
+            val y = action["y"]!!.jsonPrimitive.int
+            val dur = action["duration_ms"]?.jsonPrimitive?.intOrNull ?: 800
+            adbActions.longPress(x, y, dur)
+            null
+        }
+
+        "double_tap" -> {
+            val x = action["x"]!!.jsonPrimitive.int
+            val y = action["y"]!!.jsonPrimitive.int
+            adbActions.doubleTap(x, y)
+            null
+        }
+
+        "scroll" -> {
+            val dir = action["direction"]?.jsonPrimitive?.contentOrNull ?: "down"
+            val pct = action["percent"]?.jsonPrimitive?.content?.toFloatOrNull() ?: 0.45f
+            val dur = action["duration_ms"]?.jsonPrimitive?.intOrNull ?: 350
+            adbActions.scroll(dir, pct, dur)
+            null
+        }
+
+        "scroll_to" -> {
+            val selector  = action["selector"]!!.jsonPrimitive.content
+            val strategy  = action["strategy"]?.jsonPrimitive?.contentOrNull ?: "xpath"
+            val dir       = action["direction"]?.jsonPrimitive?.contentOrNull ?: "down"
+            val maxScrolls = action["max_scrolls"]?.jsonPrimitive?.intOrNull ?: 10
+            val dur       = action["duration_ms"]?.jsonPrimitive?.intOrNull ?: 400
+            val found = adbActions.scrollUntilVisible(selector, strategy, dir, maxScrolls, dur)
+            if (!found) throw RuntimeException("scroll_to: element not found after $maxScrolls scrolls: '$selector'")
+            null
+        }
+
+        "wait_for_element_gone" -> {
+            val selector  = action["selector"]!!.jsonPrimitive.content
+            val strategy  = action["strategy"]?.jsonPrimitive?.contentOrNull ?: "xpath"
+            val timeoutMs = action["timeout_ms"]?.jsonPrimitive?.intOrNull ?: 15_000
+            val gone = adbActions.waitForElementGone(selector, strategy, timeoutMs)
+            if (!gone) throw RuntimeException("wait_for_element_gone: element still visible after ${timeoutMs}ms")
+            null
+        }
+
+        // ── Element helpers ────────────────────────────────────────────────────
+
+        "tap_element" -> {
+            val selector  = action["selector"]!!.jsonPrimitive.content
+            val strategy  = action["strategy"]?.jsonPrimitive?.contentOrNull ?: "xpath"
+            val timeoutMs = action["timeout_ms"]?.jsonPrimitive?.intOrNull ?: 8_000
+            val coords = adbActions.findElement(selector, strategy, timeoutMs)
+                ?: throw RuntimeException("tap_element: element not found: '$selector'")
+            val parts = coords.split(",")
+            // coords from uiautomator dump are already in physical pixels — use tapRaw
+            adbActions.tapRaw(parts[0].toInt(), parts[1].toInt())
+            null
+        }
+
+        "get_element_text" -> {
+            val selector  = action["selector"]!!.jsonPrimitive.content
+            val strategy  = action["strategy"]?.jsonPrimitive?.contentOrNull ?: "xpath"
+            val timeoutMs = action["timeout_ms"]?.jsonPrimitive?.intOrNull ?: 5_000
+            val attribute = action["attribute"]?.jsonPrimitive?.contentOrNull ?: "text"
+            val key       = action["save_to"]?.jsonPrimitive?.contentOrNull
+            val text = adbActions.readElementText(selector, strategy, timeoutMs, attribute)
+            if (key != null) ctx[key] = text
+            text
+        }
+
+        "input_clear" -> {
+            adbActions.keyEvent(277)   // KEYCODE_CTRL_A — select all
+            delay(80)
+            adbActions.keyEvent(67)    // KEYCODE_DEL — delete selection
+            null
+        }
+
+        // ── Variables (server-driven context) ─────────────────────────────────
+
+        "set_variable" -> {
+            val key = action["key"]!!.jsonPrimitive.content
+            val value: Any? = when {
+                action.containsKey("value")            -> action["value"]!!.jsonPrimitive.content
+                action.containsKey("from_node")        -> ctx[action["from_node"]!!.jsonPrimitive.content]
+                action.containsKey("from_device_info") -> {
+                    val infoKey = action["from_device_info"]!!.jsonPrimitive.content
+                    adbActions.getDeviceInfo()[infoKey]
+                }
+                else -> null
+            }
+            ctx[key] = value
+            value
+        }
+
+        "get_variable" -> {
+            val key = action["key"]!!.jsonPrimitive.content
+            ctx[key]
+        }
+
+        "increment_variable" -> {
+            val key = action["key"]!!.jsonPrimitive.content
+            val step = action["step"]?.jsonPrimitive?.intOrNull ?: 1
+            val current = (ctx[key] as? String)?.toIntOrNull() ?: 0
+            val newVal = current + step
+            ctx[key] = newVal.toString()
+            newVal.toString()
+        }
+
+        // ── Network ───────────────────────────────────────────────────────────
+
+        "http_request" -> {
+            val url = action["url"]!!.jsonPrimitive.content
+            require(url.startsWith("http://") || url.startsWith("https://")) {
+                "http_request: only http/https schemes allowed"
+            }
+            val method    = action["method"]?.jsonPrimitive?.contentOrNull?.uppercase() ?: "GET"
+            val body      = action["body"]?.jsonPrimitive?.contentOrNull
+            val headers   = action["headers"]?.jsonObject
+            val timeoutMs = action["timeout_ms"]?.jsonPrimitive?.intOrNull ?: 15_000
+            val key       = action["save_to"]?.jsonPrimitive?.contentOrNull
+            val result = performHttpRequest(url, method, body, headers, timeoutMs)
+            if (key != null) ctx[key] = result["body"]
+            result
+        }
+
+        // ── App / System extended ─────────────────────────────────────────────
+
+        "open_url" -> {
+            val url = action["url"]!!.jsonPrimitive.content
+            adbActions.openUrl(url)
+            delay(1_000)
+            null
+        }
+
+        "clear_app_data" -> {
+            val pkg = action["package"]!!.jsonPrimitive.content
+            adbActions.clearAppData(pkg)
+            delay(500)
+            null
+        }
+
+        "get_device_info" -> {
+            val info = adbActions.getDeviceInfo()
+            val key = action["save_to"]?.jsonPrimitive?.contentOrNull
+            if (key != null) ctx[key] = info
+            info
+        }
+
+        "shell" -> {
+            val command = action["command"]!!.jsonPrimitive.content
+            val key     = action["save_to"]?.jsonPrimitive?.contentOrNull
+            val output  = adbActions.shell(command)
+            if (key != null) ctx[key] = output.trim()
+            output
+        }
+
+        // ── QA / Assertions ───────────────────────────────────────────────────
+
+        "assert" -> {
+            val check   = action["check"]!!.jsonPrimitive.content
+            val params  = action["params"]?.jsonObject
+            val message = action["message"]?.jsonPrimitive?.contentOrNull ?: "Assertion failed: $check"
+            val passed = when (check) {
+                "element_exists" -> {
+                    val sel   = params?.get("selector")?.jsonPrimitive?.content ?: ""
+                    val strat = params?.get("strategy")?.jsonPrimitive?.contentOrNull ?: "xpath"
+                    val tms   = params?.get("timeout_ms")?.jsonPrimitive?.intOrNull ?: 5_000
+                    adbActions.findElement(sel, strat, tms) != null
+                }
+                "element_gone" -> {
+                    val sel   = params?.get("selector")?.jsonPrimitive?.content ?: ""
+                    val strat = params?.get("strategy")?.jsonPrimitive?.contentOrNull ?: "xpath"
+                    val tms   = params?.get("timeout_ms")?.jsonPrimitive?.intOrNull ?: 5_000
+                    adbActions.waitForElementGone(sel, strat, tms)
+                }
+                "text_equals" -> {
+                    val sel      = params?.get("selector")?.jsonPrimitive?.content ?: ""
+                    val strat    = params?.get("strategy")?.jsonPrimitive?.contentOrNull ?: "id"
+                    val expected = params?.get("value")?.jsonPrimitive?.content ?: ""
+                    val tms      = params?.get("timeout_ms")?.jsonPrimitive?.intOrNull ?: 5_000
+                    adbActions.readElementText(sel, strat, tms) == expected
+                }
+                "text_contains" -> {
+                    val sel   = params?.get("selector")?.jsonPrimitive?.content ?: ""
+                    val strat = params?.get("strategy")?.jsonPrimitive?.contentOrNull ?: "id"
+                    val sub   = params?.get("value")?.jsonPrimitive?.content ?: ""
+                    val tms   = params?.get("timeout_ms")?.jsonPrimitive?.intOrNull ?: 5_000
+                    val txt   = adbActions.readElementText(sel, strat, tms) ?: ""
+                    txt.contains(sub, ignoreCase = true)
+                }
+                "variable_equals" -> {
+                    val key      = params?.get("key")?.jsonPrimitive?.content ?: ""
+                    val expected = params?.get("value")?.jsonPrimitive?.content ?: ""
+                    ctx[key]?.toString() == expected
+                }
+                "variable_contains" -> {
+                    val key = params?.get("key")?.jsonPrimitive?.content ?: ""
+                    val sub = params?.get("value")?.jsonPrimitive?.content ?: ""
+                    ctx[key]?.toString()?.contains(sub, ignoreCase = true) ?: false
+                }
+                "http_status" -> {
+                    val nodeRef = params?.get("node_id")?.jsonPrimitive?.content ?: ""
+                    @Suppress("UNCHECKED_CAST")
+                    val resp = ctx[nodeRef] as? Map<String, Any?> ?: emptyMap<String, Any?>()
+                    val expected = params?.get("value")?.jsonPrimitive?.intOrNull ?: 200
+                    resp["status_code"] as? Int == expected
+                }
+                else -> throw IllegalArgumentException("assert: unknown check '$check'")
+            }
+            if (!passed) throw AssertionError(message)
+            true
+        }
+
+        // ── Loop / repeat ─────────────────────────────────────────────────────
+
+        "loop" -> {
+            val count         = action["count"]?.jsonPrimitive?.intOrNull
+            val whileXpath    = action["while_xpath"]?.jsonPrimitive?.contentOrNull
+            val whileStrategy = action["while_strategy"]?.jsonPrimitive?.contentOrNull ?: "xpath"
+            val maxIterations = action["max_iterations"]?.jsonPrimitive?.intOrNull ?: 100
+            val pollMs        = action["poll_ms"]?.jsonPrimitive?.longOrNull ?: 500L
+            val bodyArray     = action["body"]?.jsonArray
+                ?: throw IllegalArgumentException("loop node requires 'body' array")
+
+            var iterations = 0
+            val iterLogs   = mutableListOf<Map<String, Any?>>()
+
+            suspend fun shouldContinue(): Boolean = when {
+                count != null      -> iterations < count
+                whileXpath != null -> adbActions.findElement(whileXpath, whileStrategy, 800) != null
+                else               -> false
+            }
+
+            while (shouldContinue() && iterations < maxIterations) {
+                for (bodyEl in bodyArray) {
+                    val bodyNode = bodyEl.jsonObject
+                    val bNodeId  = bodyNode["id"]?.jsonPrimitive?.contentOrNull ?: "loop_body_$iterations"
+                    val bAction  = bodyNode["action"]?.jsonObject
+                        ?: throw IllegalArgumentException("loop body node '$bNodeId' missing 'action'")
+                    val bType = bAction["type"]!!.jsonPrimitive.content
+                    val bTs   = System.currentTimeMillis()
+                    try {
+                        val bResult = executeNode(bType, bAction, ctx)
+                        ctx[bNodeId] = bResult
+                        iterLogs.add(mapOf("id" to bNodeId, "iter" to iterations, "ok" to true, "ms" to System.currentTimeMillis() - bTs))
+                    } catch (e: Exception) {
+                        iterLogs.add(mapOf("id" to bNodeId, "iter" to iterations, "ok" to false, "error" to e.message, "ms" to System.currentTimeMillis() - bTs))
+                        Timber.w(e, "[DAG][loop] Body '$bNodeId' failed at iter $iterations")
+                        if (bodyNode["abort_on_failure"]?.jsonPrimitive?.content?.toBoolean() == true) {
+                            throw RuntimeException("loop aborted at iter $iterations node '$bNodeId': ${e.message}")
+                        }
+                    }
+                }
+                iterations++
+                if (whileXpath != null) delay(pollMs)
+            }
+            mapOf("iterations" to iterations, "logs" to iterLogs)
+        }
+
+        "start" -> null
+        "end"   -> null
+
+        else -> throw UnsupportedOperationException("Node type '$type' not implemented")
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    private fun trySendProgress(commandId: String, currentNode: String, done: Int, total: Int) {
+        if (!wsClient.isConnected) return
+        wsClient.sendJson(buildJsonObject {
+            put("type", "task_progress")
+            put("task_id", commandId)
+            put("current_node", currentNode)
+            put("nodes_done", done)
+            put("total_nodes", total)
+        })
+    }
+
+    private fun makeLog(
+        nodeId: String,
+        actionType: String,
+        durationMs: Long,
+        success: Boolean,
+        error: String?,
+        output: Any?,
+    ): JsonObject = buildJsonObject {
+        put("node_id", nodeId)
+        put("action_type", actionType)
+        put("duration_ms", durationMs)
+        put("success", success)
+        error?.let { put("error", it) }
+        output?.let { put("output", it.toString()) }
+    }
+
+    private fun savePendingResult(commandId: String, result: JsonObject) {
+        val pending = prefs.getStringSet("pending_dag_results", mutableSetOf())
+            ?.toMutableSet() ?: mutableSetOf()
+        pending.add(json.encodeToString(buildJsonObject {
+            put("command_id", commandId)
+            put("result", result)
+            put("saved_at", System.currentTimeMillis())
+        }))
+        prefs.edit().putStringSet("pending_dag_results", pending).apply()
+        Timber.i("[DAG] Result saved locally, command=$commandId")
+    }
+
+    // ── HTTP helper ───────────────────────────────────────────────────────────
+
+    private suspend fun performHttpRequest(
+        url: String,
+        method: String,
+        body: String?,
+        headers: JsonObject?,
+        timeoutMs: Int,
+    ): Map<String, Any?> = withContext(Dispatchers.IO) {
+        val conn = java.net.URL(url).openConnection() as java.net.HttpURLConnection
+        try {
+            conn.requestMethod = method
+            conn.connectTimeout = timeoutMs
+            conn.readTimeout = timeoutMs
+            conn.setRequestProperty("Content-Type", "application/json")
+            conn.setRequestProperty("User-Agent", "SphereAgent/1.0")
+            headers?.forEach { (k, v) ->
+                conn.setRequestProperty(k, v.jsonPrimitive.contentOrNull ?: "")
+            }
+            if (body != null && method in listOf("POST", "PUT", "PATCH")) {
+                conn.doOutput = true
+                conn.outputStream.bufferedWriter().use { it.write(body) }
+            }
+            val statusCode   = conn.responseCode
+            val responseBody = try {
+                conn.inputStream.bufferedReader().readText()
+            } catch (e: Exception) {
+                conn.errorStream?.bufferedReader()?.readText() ?: ""
+            }
+            mapOf("status_code" to statusCode, "body" to responseBody)
+        } finally {
+            conn.disconnect()
+        }
+    }
+}

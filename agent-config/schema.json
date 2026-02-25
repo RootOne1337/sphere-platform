@@ -1,0 +1,99 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://sphere-platform.dev/agent-config/schema.json",
+  "title": "Sphere Agent Config",
+  "description": "Схема конфигурации для автоматического provisioning Sphere Platform агентов. Версионируется — агент проверяет config_version для обратной совместимости.",
+  "type": "object",
+  "required": ["config_version", "server_url", "enrollment_api_key"],
+  "properties": {
+    "config_version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Версия формата конфига. Агент игнорирует конфиг если config_version > его поддерживаемой."
+    },
+    "server_url": {
+      "type": "string",
+      "format": "uri",
+      "pattern": "^https?://",
+      "description": "URL бэкенда Sphere Platform. Для LDPlayer эмулятора: http://10.0.2.2:8000 (host loopback)."
+    },
+    "ws_path": {
+      "type": "string",
+      "default": "/ws/android",
+      "description": "Путь WebSocket эндпоинта. По умолчанию /ws/android."
+    },
+    "enrollment_api_key": {
+      "type": "string",
+      "pattern": "^sphr_",
+      "description": "API-ключ для enrollment. Должен начинаться с 'sphr_'. Право: device:register."
+    },
+    "device_id": {
+      "type": ["string", "null"],
+      "default": null,
+      "description": "Явный device_id. Если null — агент генерирует уникальный ID автоматически (рекомендуется для клонов)."
+    },
+    "workstation_id": {
+      "type": ["string", "null"],
+      "default": null,
+      "pattern": "^[a-zA-Z0-9_\\-]{1,100}$",
+      "description": "Идентификатор воркстанции (PC-хоста). Задаётся PC-Agent при генерации конфига."
+    },
+    "instance_index": {
+      "type": ["integer", "null"],
+      "minimum": 0,
+      "default": null,
+      "description": "Индекс LDPlayer инстанса (0-based). Уникален в пределах workstation. Критичен для clone detection."
+    },
+    "location": {
+      "type": ["string", "null"],
+      "default": null,
+      "pattern": "^[a-zA-Z0-9_\\-]{1,50}$",
+      "description": "Код локации (msk-office-1, fra-dc-2). Используется для auto-assign в группы."
+    },
+    "environment": {
+      "type": "string",
+      "enum": ["production", "staging", "development"],
+      "default": "production",
+      "description": "Целевое окружение. Определяет поведение агента (логирование, HTTP/HTTPS)."
+    },
+    "config_poll_interval_seconds": {
+      "type": "integer",
+      "minimum": 300,
+      "default": 86400,
+      "description": "Интервал проверки обновлений конфига (секунды). По умолчанию 24 часа."
+    },
+    "features": {
+      "type": "object",
+      "description": "Feature flags для агента.",
+      "properties": {
+        "telemetry_enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Отправка телеметрии (CPU, RAM, battery)."
+        },
+        "streaming_enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "H.264 стриминг экрана."
+        },
+        "ota_enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "OTA-обновления APK."
+        },
+        "auto_register": {
+          "type": "boolean",
+          "default": true,
+          "description": "Автоматическая регистрация устройства при первом подключении."
+        }
+      },
+      "additionalProperties": false
+    },
+    "meta": {
+      "type": "object",
+      "default": {},
+      "description": "Произвольные метаданные. Передаются на сервер при регистрации."
+    }
+  },
+  "additionalProperties": false
+}

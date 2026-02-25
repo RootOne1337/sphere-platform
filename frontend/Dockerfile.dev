@@ -1,0 +1,11 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Dev image — source code and node_modules are provided via volumes.
+# npm install runs at container START (not build time) — keeps `docker build` instant,
+# preventing resource spikes that crash VS Code.
+# Turbopack replaces webpack: no eval() → no Edge runtime CSP errors.
+
+EXPOSE 3000
+CMD ["sh", "-c", "npm install && npx next dev --turbopack"]

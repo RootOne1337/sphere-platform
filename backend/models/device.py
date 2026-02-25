@@ -5,7 +5,7 @@ from __future__ import annotations
 import enum
 import uuid
 
-from sqlalchemy import ARRAY, Boolean, Enum, ForeignKey, String, Text
+from sqlalchemy import ARRAY, Boolean, Column, Enum, ForeignKey, String, Table, Text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -21,8 +21,7 @@ class DeviceStatus(str, enum.Enum):
     MAINTENANCE = "maintenance"
 
 
-# M2M: device <-> device_group
-from sqlalchemy import Table, Column
+# M2M association table: device <-> device_group
 device_group_members = Table(
     "device_group_members",
     Base.metadata,
@@ -48,13 +47,14 @@ class Device(Base, UUIDMixin, TimestampMixin):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     # Last known status — source of truth is Redis; this column updated async via WebSocket events
     last_status: Mapped[str] = mapped_column(
-        Enum(DeviceStatus, name="device_status_enum"),
+        Enum(DeviceStatus, name="device_status_enum", values_callable=lambda x: [e.value for e in x]),
         default=DeviceStatus.OFFLINE,
         nullable=False,
     )
     meta: Mapped[dict] = mapped_column(JSONB, server_default="{}", nullable=False)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
 
+    org: Mapped["Organization"] = relationship(back_populates="devices")
     groups: Mapped[list["DeviceGroup"]] = relationship(
         secondary="device_group_members",
         back_populates="devices",

@@ -1,0 +1,18 @@
+{
+  "node": "n8n-nodes-sphereplatform.SphereExecuteScript",
+  "nodeVersion": "1.0",
+  "codexVersion": "1.0",
+  "categories": ["Miscellaneous"],
+  "resources": {
+    "credentialDocumentation": [
+      {
+        "url": "https://docs.sphere.local"
+      }
+    ],
+    "primaryDocumentation": [
+      {
+        "url": "https://docs.sphere.local/nodes/execute-script"
+      }
+    ]
+  }
+}

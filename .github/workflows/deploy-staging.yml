@@ -3,11 +3,14 @@ name: Deploy — Staging
 on:
   push:
     branches: [develop]
+  workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     environment: staging
+    # Skip deploy if staging secrets are not configured
+    if: ${{ vars.STAGING_ENABLED == 'true' }}
     steps:
       - uses: actions/checkout@v4
 

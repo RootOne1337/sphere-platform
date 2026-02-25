@@ -5,7 +5,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 
-from sqlalchemy import ARRAY, Boolean, DateTime, ForeignKey, String, Text
+from sqlalchemy import ARRAY, Boolean, DateTime, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from backend.database.engine import Base

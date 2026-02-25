@@ -1,0 +1,32 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+    <!-- Deep shadow base -->
+    <path
+        android:fillColor="#0D1F4F"
+        android:pathData="M24,5C13.51,5 5,13.51 5,24s8.51,19 19,19 19,-8.51 19,-19S34.49,5 24,5z" />
+    <!-- Primary brand blue sphere -->
+    <path
+        android:fillColor="#2563EB"
+        android:pathData="M24,7C14.61,7 7,14.61 7,24s7.61,17 17,17 17,-7.61 17,-17S33.39,7 24,7z" />
+    <!-- Specular highlight (top-left) -->
+    <path
+        android:fillColor="#60A5FA"
+        android:fillAlpha="0.55"
+        android:pathData="M16.5,12.5Q13,17 13,22Q13,25.5 15.5,27Q20,20 22,15.5Z" />
+    <!-- Inner depth ring -->
+    <path
+        android:fillColor="#1D4ED8"
+        android:pathData="M24,14c-5.52,0 -10,4.48 -10,10s4.48,10 10,10 10,-4.48 10,-10S29.52,14 24,14z" />
+    <!-- Core bright dot -->
+    <path
+        android:fillColor="#BFDBFE"
+        android:pathData="M24,20.5c-1.93,0 -3.5,1.57 -3.5,3.5s1.57,3.5 3.5,3.5 3.5,-1.57 3.5,-3.5S25.93,20.5 24,20.5z" />
+    <!-- Micro highlight -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:fillAlpha="0.7"
+        android:pathData="M22,21.5c0.83,0 1.5,-0.67 1.5,-1.5s-0.67,-1.5 -1.5,-1.5 -1.5,0.67 -1.5,1.5 0.67,1.5 1.5,1.5z" />
+</vector>

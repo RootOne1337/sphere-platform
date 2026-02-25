@@ -1,0 +1,131 @@
+# infrastructure/monitoring/alert-rules.yml
+# Prometheus alert rules для Sphere Platform
+# Валидация: promtool check rules alert-rules.yml
+# Тестирование: promtool test rules tests/alert_test.yml
+
+groups:
+  # ━━━ КРИТИЧЕСКИЕ (P0) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  - name: sphere.critical
+    rules:
+      - alert: HighAgentOfflineRate
+        # FIX 11.4: Добавлен guard `and sum(...) > 0` — без этого при пустом fleet
+        # PromQL возвращает +Inf → ложный P0 алерт при старте платформы.
+        expr: |
+          (sum(sphere_devices_total) - sum(sphere_devices_online))
+          / sum(sphere_devices_total) > 0.2
+          and sum(sphere_devices_total) > 0
+        for: 2m
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "{{ $value | humanizePercentage }} устройств оффлайн"
+          description: "Более 20% устройств потеряли связь за последние 2 минуты"
+          runbook: "https://wiki.sphere.internal/runbooks/agent-offline"
+
+      - alert: DatabasePoolExhausted
+        expr: sphere_db_pool_checked_out >= sphere_db_pool_size * 0.9
+        for: 1m
+        labels:
+          severity: critical
+          team: backend
+        annotations:
+          summary: "DB pool заполнен на {{ $value | humanize }} соединений"
+          description: "Пул БД ≥ 90% — риск каскадного отказа всех API запросов"
+          runbook: "https://wiki.sphere.internal/runbooks/db-pool-exhausted"
+
+      - alert: BackendDown
+        expr: up{job="sphere-backend"} == 0
+        for: 30s
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "Backend API недоступен"
+          description: "Prometheus не может достучаться до /metrics endpoint backend:8000"
+          runbook: "https://wiki.sphere.internal/runbooks/backend-down"
+
+  # ━━━ ВЫСОКИЕ (P1) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  - name: sphere.high
+    rules:
+      - alert: HighAPILatency
+        expr: |
+          histogram_quantile(
+            0.95,
+            sum by (le) (rate(sphere_http_request_duration_seconds_bucket[5m]))
+          ) > 2.0
+        for: 5m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "API p95 latency = {{ $value | humanizeDuration }} (> 2s)"
+          description: "95-й перцентиль времени ответа превысил 2 секунды"
+
+      - alert: HighTaskQueueDepth
+        expr: sphere_task_queue_depth > 500
+        for: 5m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "Очередь задач: {{ $value | humanize }} (порог: 500)"
+          description: "Задачи накапливаются — устройства не успевают обрабатывать команды"
+
+      - alert: VPNPoolLow
+        expr: |
+          (sphere_vpn_pool_total - sphere_vpn_pool_allocated)
+          / sphere_vpn_pool_total < 0.1
+          and sphere_vpn_pool_total > 0
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "VPN пул < 10% свободных IP"
+          description: "Осталось {{ $value | humanizePercentage }} свободных VPN адресов"
+
+      - alert: HighVPNReconnectRate
+        expr: rate(sphere_vpn_reconnects_total[5m]) > 1
+        for: 3m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "Частые VPN reconnect: {{ $value | humanize }}/s"
+          description: "VPN туннели нестабильны — проверить WG Router, сеть провайдера"
+
+      - alert: HighErrorRate
+        expr: |
+          rate(sphere_http_requests_total{status_code=~"5.."}[5m])
+          / rate(sphere_http_requests_total[5m]) > 0.05
+        for: 2m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "HTTP 5xx > 5% ({{ $value | humanizePercentage }})"
+          description: "Высокая доля серверных ошибок за последние 2 минуты"
+
+  # ━━━ СРЕДНИЕ / ИНФО (P2) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  - name: sphere.medium
+    rules:
+      - alert: HighRedisErrorRate
+        expr: rate(sphere_redis_errors_total[5m]) > 0.5
+        for: 5m
+        labels:
+          severity: info
+          team: platform
+        annotations:
+          summary: "Redis ошибки: {{ $value | humanize }}/s"
+          description: "Повышенная частота ошибок Redis — проверить состояние кластера"
+
+      - alert: StreamQualityDegraded
+        expr: sphere_stream_fps < 15
+        for: 1m
+        labels:
+          severity: info
+          team: backend
+        annotations:
+          summary: "Низкий FPS стрима ({{ $value }} fps) у device {{ $labels.device_id }}"
+          description: "FPS ниже 15 — возможны проблемы с NetworkCodec или нагрузкой CPU устройства"

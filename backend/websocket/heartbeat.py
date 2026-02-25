@@ -71,7 +71,10 @@ class HeartbeatManager:
                         device_id=self.device_id,
                         since_pong_s=round(since_pong, 1),
                     )
-                    await self.ws.close(code=4008, reason="heartbeat_timeout")
+                    try:
+                        await self.ws.close(code=4008, reason="heartbeat_timeout")
+                    except Exception:
+                        pass  # WS уже закрыт — игнорируем double-close
                     return
 
                 # Отправить ping
@@ -80,13 +83,20 @@ class HeartbeatManager:
                     "type": "ping",
                     "ts": ping_ts,
                 })
-            except (WebSocketDisconnect, Exception):
+            except (WebSocketDisconnect, asyncio.CancelledError):
+                return
+            except Exception as e:
+                logger.error(
+                    "Heartbeat loop unexpected error",
+                    device_id=self.device_id,
+                    error=str(e),
+                    error_type=type(e).__name__,
+                )
                 return
 
     async def handle_pong(self, msg: dict) -> None:
         """Вызвать при получении pong от агента."""
         now = time.monotonic()
-        latency_ms = (now - self._last_pong) * 1000 if self._last_pong else None
         self._last_pong = now
 
         # Логировать latency для мониторинга
@@ -118,3 +128,12 @@ class HeartbeatManager:
                 setattr(current, key, val)
             current.last_heartbeat = datetime.now(timezone.utc)
             await self.status_cache.set_status(self.device_id, current)
+
+        # TZ-05 SPLIT-4: обновить Prometheus stream-метрики из pong телеметрии
+        stream_data = msg.get("stream")
+        if stream_data and isinstance(stream_data, dict):
+            try:
+                from backend.websocket.stream_metrics import StreamMetrics
+                StreamMetrics(self.device_id).update_from_pong(stream_data)
+            except Exception as e:
+                logger.debug("stream_metrics update failed", error=str(e))

@@ -8,7 +8,6 @@ from pydantic import ValidationError
 from backend.schemas.groups import (
     CreateGroupRequest,
     SetTagsRequest,
-    UpdateGroupRequest,
 )
 
 
@@ -112,8 +111,9 @@ class TestGroupCRUD:
 
     async def test_list_groups_with_stats(self, dm_client, sample_group, group_device, db_session):
         # Add device to group via the DB directly
-        from sqlalchemy.orm import selectinload
         from sqlalchemy import select
+        from sqlalchemy.orm import selectinload
+
         from backend.models.device import Device
 
         stmt = select(Device).options(selectinload(Device.groups)).where(Device.id == group_device.id)

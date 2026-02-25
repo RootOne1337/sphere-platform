@@ -1,19 +1,24 @@
 # backend/core/config.py
-from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import Field, field_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=".env.local",
+        # Приоритет: .env.local > .env > переменные окружения ОС
+        # .env.local — локальные секреты разработчика (gitignored)
+        # .env      — базовые значения для dev/test (gitignored, содержит реальные ключи)
+        env_file=[".env", ".env.local"],
         env_file_encoding="utf-8",
         case_sensitive=False,
+        extra="ignore",  # .env содержит поля для других сервисов (n8n, minio и т.д.)
     )
 
-    # Database
+    # Database — per-worker pool. With 4 gunicorn workers:
+    # total connections = 4 × (pool_size + max_overflow) = 4 × 15 = 60 (within PG default 100)
     POSTGRES_URL: str = "postgresql+asyncpg://sphere:sphere@localhost:5432/sphereplatform"
-    DB_POOL_SIZE: int = 20
-    DB_MAX_OVERFLOW: int = 10
+    DB_POOL_SIZE: int = 10
+    DB_MAX_OVERFLOW: int = 5
     DB_POOL_TIMEOUT: int = 30
 
     # Redis
@@ -21,7 +26,7 @@ class Settings(BaseSettings):
     REDIS_PASSWORD: str = ""
 
     # Auth
-    JWT_SECRET_KEY: str = Field(default="changeme_jwt_secret_key_at_least_32_chars")
+    JWT_SECRET_KEY: str = Field(...)  # Required — no default; set via env/secrets
     JWT_ALGORITHM: str = "HS256"
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     JWT_REFRESH_TOKEN_EXPIRE_DAYS: int = 7
@@ -42,6 +47,13 @@ class Settings(BaseSettings):
     # Server
     VPN_SERVER_HOSTNAME: str = "adb.leetpc.com"
 
+    # VPN (TZ-06 SPLIT-1: AWG Config Builder)
+    WG_SERVER_PUBLIC_KEY: str = ""                        # Public key WG сервера
+    WG_SERVER_ENDPOINT: str = "vpn.example.com:51820"    # WG endpoint для клиентов
+    WG_PSK_ENABLED: bool = True                           # Pre-Shared Key
+    VPN_KEY_ENCRYPTION_KEY: str = ""                      # Fernet key (Fernet.generate_key())
+    VPN_POOL_SUBNET: str = "10.100.0.0/16"                # Подсеть для пула IP
+
     # App
     DEBUG: bool = False
     LOG_LEVEL: str = "INFO"
@@ -53,8 +65,11 @@ class Settings(BaseSettings):
     @field_validator("JWT_SECRET_KEY")
     @classmethod
     def validate_jwt_secret(cls, v: str) -> str:
-        if v.startswith("CHANGE_ME") or len(v) < 32:
-            raise ValueError("JWT_SECRET_KEY must be set to a secure random value of at least 32 chars")
+        insecure_patterns = ("change_me", "changeme", "default", "example", "secret", "password")
+        if len(v) < 32:
+            raise ValueError("JWT_SECRET_KEY must be at least 32 characters")
+        if any(v.lower().startswith(pat) for pat in insecure_patterns):
+            raise ValueError("JWT_SECRET_KEY must be set to a secure random value — do not use default/example values")
         return v
 
     @field_validator("REDIS_PASSWORD", mode="before")
@@ -65,4 +80,4 @@ class Settings(BaseSettings):
         return v
 
 
-settings = Settings()
+settings = Settings()  # type: ignore[call-arg]

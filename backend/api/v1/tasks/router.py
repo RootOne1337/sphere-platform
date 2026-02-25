@@ -13,9 +13,9 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.dependencies import require_permission
-from backend.core.lifespan_registry import register_startup, register_shutdown
+from backend.core.lifespan_registry import register_startup
 from backend.database.engine import AsyncSessionLocal, get_db
-from backend.database.redis_client import get_redis
+from backend.database.redis_client import get_redis, get_redis_binary
 from backend.models.task import TaskStatus
 from backend.models.user import User
 from backend.schemas.task import (
@@ -44,26 +44,75 @@ def get_task_service(
     db: AsyncSession = Depends(get_db),
     queue: TaskQueue = Depends(get_task_queue),
     redis=Depends(get_redis),
+    redis_bin=Depends(get_redis_binary),
 ) -> TaskService:
-    status_cache = DeviceStatusCache(redis)
-    return TaskService(db, queue, status_cache=status_cache)
+    from backend.websocket.pubsub_router import get_pubsub_publisher
+    status_cache = DeviceStatusCache(redis_bin)
+    publisher = get_pubsub_publisher()
+    return TaskService(db, queue, status_cache=status_cache, publisher=publisher)
 
 
 # ── Startup: запустить диспетчер задач ───────────────────────────────────────
 
 async def _startup_dispatcher() -> None:
     """
-    Создаёт фабрику сессий для диспетчера.
-    Диспетчер получает изолированную сессию — не зависит от HTTP-запросов.
+    Creates a dispatch function that opens a fresh DB session for each
+    dispatcher tick and closes it properly after dispatch completes.
+    On startup, recovers orphaned task_running locks (task stuck after restart).
     """
-    async def _make_task_service() -> TaskService:
+    from backend.database.redis_client import redis as _redis
+    from backend.database.redis_client import redis_binary as _redis_bin
+
+    if _redis is None:
+        return
+
+    # Recovery: find task_running:* keys where DB task is still queued (not running)
+    # This handles the case where backend restarted mid-dispatch
+    try:
+        running_keys = await _redis.keys("task_running:*")
+        if running_keys:
+            async with AsyncSessionLocal() as db:
+                from backend.models.task import Task as _Task
+                from backend.models.task import TaskStatus as _TS
+                queue_tmp = TaskQueue(_redis)
+                for key in running_keys:
+                    key_str = key if isinstance(key, str) else key.decode()
+                    task_id_bytes = await _redis.get(key_str)
+                    if not task_id_bytes:
+                        continue
+                    task_id_str = task_id_bytes if isinstance(task_id_bytes, str) else task_id_bytes.decode()
+                    device_id_str = key_str.removeprefix("task_running:")
+                    try:
+                        import uuid as _uuid
+                        task = await db.get(_Task, _uuid.UUID(task_id_str))
+                        if task and task.status in (_TS.QUEUED, _TS.ASSIGNED):
+                            # Orphaned lock: task not actually running, requeue
+                            await queue_tmp.mark_completed(task_id_str, device_id_str)
+                            await queue_tmp.enqueue(
+                                task_id_str, device_id_str, str(task.org_id), task.priority
+                            )
+                            logger.warning(
+                                "task.orphaned_lock_recovered",
+                                task_id=task_id_str,
+                                device_id=device_id_str,
+                            )
+                    except Exception as exc:
+                        logger.error("task.recovery_error", key=key_str, error=str(exc))
+    except Exception as exc:
+        logger.error("task.startup_recovery_failed", error=str(exc))
+
+    async def _dispatch_once() -> None:
         from backend.database.redis_client import redis as _redis
+        from backend.websocket.pubsub_router import get_pubsub_publisher
         async with AsyncSessionLocal() as db:
             queue = TaskQueue(_redis)
-            cache = DeviceStatusCache(_redis)
-            return TaskService(db, queue, status_cache=cache)
+            cache = DeviceStatusCache(_redis_bin)
+            publisher = get_pubsub_publisher()
+            svc = TaskService(db, queue, status_cache=cache, publisher=publisher)
+            await svc.dispatch_pending_tasks()
+            await db.commit()
 
-    start_dispatcher(_make_task_service)
+    start_dispatcher(_dispatch_once)
     logger.info("task_dispatcher.registered")
 
 
@@ -166,6 +215,48 @@ async def get_task_logs(
     return [NodeExecutionLog.model_validate(log) for log in task.result["node_logs"]]
 
 
+# ── Live Progress ─────────────────────────────────────────────────────────────
+
+@router.get(
+    "/{task_id}/progress",
+    summary="Live-прогресс выполнения задачи (из Redis кэша)",
+)
+async def get_task_progress(
+    task_id: uuid.UUID,
+    current_user: User = require_permission("script:read"),
+    redis=Depends(get_redis),
+) -> dict:
+    data = await redis.hgetall(f"task_progress:{task_id}")
+    if not data:
+        return {"nodes_done": 0, "total_nodes": 0, "current_node": "", "progress": 0, "cycles": 0, "started_at": None}
+    return {
+        "nodes_done": int(data.get("nodes_done", 0)),
+        "total_nodes": int(data.get("total_nodes", 0)),
+        "current_node": data.get("current_node", ""),
+        "progress": int(data.get("progress", 0)),
+        "cycles": int(data.get("cycles", 0)),
+        "started_at": float(data["started_at"]) if data.get("started_at") else None,
+    }
+
+
+# ── Live Logs (running task) ─────────────────────────────────────────────────
+
+@router.get(
+    "/{task_id}/live-logs",
+    summary="Live node execution log entries (from Redis, for running tasks)",
+)
+async def get_task_live_logs(
+    task_id: uuid.UUID,
+    current_user: User = require_permission("script:read"),
+    redis=Depends(get_redis),
+) -> list[dict]:
+    import json as _json
+    entries = await redis.lrange(f"task_progress_log:{task_id}", 0, -1)
+    if not entries:
+        return []
+    return [_json.loads(e) for e in entries]
+
+
 # ── Screenshots ───────────────────────────────────────────────────────────────
 
 @router.get(
@@ -218,3 +309,21 @@ async def cancel_task(
 ) -> None:
     await svc.cancel_task(task_id, current_user.org_id)
     await db.commit()
+
+
+# ── Force Stop (running task) ─────────────────────────────────────────────────
+
+@router.post(
+    "/{task_id}/stop",
+    status_code=200,
+    summary="Принудительно остановить задачу (QUEUED/ASSIGNED/RUNNING)",
+)
+async def force_stop_task(
+    task_id: uuid.UUID,
+    current_user: User = require_permission("script:execute"),
+    svc: TaskService = Depends(get_task_service),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    task = await svc.force_stop_task(task_id, current_user.org_id)
+    await db.commit()
+    return {"status": "stopped", "task_id": str(task.id)}

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Brand palette — Sphere Platform -->
+    <color name="brand_primary">#2563EB</color>
+    <color name="brand_primary_light">#3B82F6</color>
+    <color name="brand_primary_dark">#1D4ED8</color>
+    <color name="brand_primary_container">#1E3A8A</color>
+
+    <!-- Backgrounds (zinc scale) -->
+    <color name="brand_background">#09090B</color>
+    <color name="brand_surface">#18181B</color>
+    <color name="brand_surface_container">#27272A</color>
+    <color name="brand_outline">#3F3F46</color>
+    <color name="brand_outline_variant">#52525B</color>
+
+    <!-- Foreground -->
+    <color name="brand_on_surface">#FAFAFA</color>
+    <color name="brand_on_surface_muted">#A1A1AA</color>
+    <color name="brand_on_primary">#FFFFFF</color>
+
+    <!-- Semantic -->
+    <color name="brand_error">#EF4444</color>
+    <color name="brand_error_container">#450A0A</color>
+    <color name="brand_success">#22C55E</color>
+    <color name="brand_warning">#F59E0B</color>
+
+    <!-- Base -->
+    <color name="white">#FFFFFFFF</color>
+    <color name="black">#FF000000</color>
+    <color name="transparent">#00000000</color>
+</resources>

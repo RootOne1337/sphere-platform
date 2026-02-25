@@ -2,15 +2,12 @@
 # TZ-03 SPLIT-3: Tests for VideoStreamQueue backpressure and frame drop strategy.
 from __future__ import annotations
 
-import asyncio
 import time
 
 import pytest
-import pytest_asyncio
 
 from backend.websocket.frames import FrameType, VideoFrame, detect_nal_type
 from backend.websocket.video_queue import VideoStreamQueue
-
 
 # ── Helper factories ─────────────────────────────────────────────────────────
 

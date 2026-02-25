@@ -14,7 +14,6 @@ from backend.models.device import Device, DeviceStatus
 from backend.models.device_group import DeviceGroup
 from backend.schemas.devices import (
     CreateDeviceRequest,
-    DeviceListResponse,
     DeviceResponse,
     DeviceStatusResponse,
     UpdateDeviceRequest,

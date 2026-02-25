@@ -1,0 +1,74 @@
+# infrastructure/monitoring/alertmanager.yml
+# Конфигурация Alertmanager: маршрутизация, группировка, уведомления.
+# Секреты (токены) инжектируются как env vars через docker-compose.
+
+global:
+  resolve_timeout: 5m
+  # SMTP fallback (если нет Telegram)
+  # smtp_smarthost: 'smtp.example.com:587'
+  # smtp_from: 'alertmanager@sphere.internal'
+
+route:
+  # Группировать по имени алерта + серьёзности
+  group_by: ['alertname', 'severity', 'team']
+  group_wait: 30s         # Ждать 30с перед первой нотификацией группы
+  group_interval: 5m      # Интервал между нотификациями одной группы
+  repeat_interval: 4h     # Повтор нерешённого алерта
+  receiver: 'default'
+
+  routes:
+    # Критические → Telegram + Webhook, минимальная задержка
+    - matchers:
+        - severity = "critical"
+      receiver: 'critical-telegram'
+      group_wait: 10s
+      repeat_interval: 15m
+      continue: false
+
+    # Предупреждения → только Webhook
+    - matchers:
+        - severity = "warning"
+      receiver: 'warning-webhook'
+      repeat_interval: 1h
+      continue: false
+
+receivers:
+  # Дефолтный — webhook в backend
+  - name: 'default'
+    webhook_configs:
+      - url: 'http://backend:8000/api/v1/monitoring/alerts'
+        send_resolved: true
+
+  # Критические алерты → Telegram + webhook
+  - name: 'critical-telegram'
+    telegram_configs:
+      - bot_token: '${TELEGRAM_BOT_TOKEN}'
+        chat_id: ${TELEGRAM_CHAT_ID:-0}
+        parse_mode: 'HTML'
+        message: |
+          🔴 <b>CRITICAL: {{ .GroupLabels.alertname }}</b>
+          Team: {{ .GroupLabels.team }}
+          {{ range .Alerts }}
+          <b>{{ .Annotations.summary }}</b>
+          {{ if .Annotations.description }}{{ .Annotations.description }}{{ end }}
+          {{ if .Annotations.runbook }}Runbook: {{ .Annotations.runbook }}{{ end }}
+          Status: {{ .Status }}
+          {{ end }}
+    webhook_configs:
+      - url: 'http://backend:8000/api/v1/monitoring/alerts'
+        send_resolved: true
+
+  # Warning алерты → webhook
+  - name: 'warning-webhook'
+    webhook_configs:
+      - url: 'http://backend:8000/api/v1/monitoring/alerts'
+        send_resolved: true
+
+# Подавление шума: если BackendDown активен → подавить все остальные алерты
+# Это предотвращает лавину фальшивых алертов при падении backend
+inhibit_rules:
+  - source_matchers:
+      - alertname = "BackendDown"
+    target_matchers:
+      - alertname != "BackendDown"
+    equal: ['job']

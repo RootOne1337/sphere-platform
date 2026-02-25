@@ -11,12 +11,12 @@ from pydantic import BaseModel
 class NodeExecutionLog(BaseModel):
     """Лог выполнения одного узла DAG."""
     node_id: str
-    action_type: str
-    started_at: datetime
-    duration_ms: int
-    success: bool
+    action_type: str = ""
+    started_at: datetime | None = None
+    duration_ms: int = 0
+    success: bool = True
     error: str | None = None
-    output: dict | None = None          # Результат (позиция элемента, текст и т.п.)
+    output: dict | str | None = None    # Результат (позиция элемента, текст и т.п.)
     screenshot_key: str | None = None   # S3/MinIO ключ скриншота (если action=screenshot)
 
 

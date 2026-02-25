@@ -6,7 +6,6 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from datetime import datetime, timezone
 
 from sqlalchemy import update
 
@@ -21,23 +20,22 @@ async def sync_device_status_to_db() -> None:
     Паттерн: не трогаем устройства, у которых нет записи в Redis
     (чтобы не затирать их статус при перезапуске кэша).
     """
-    from backend.database.engine import async_session_factory
-    from backend.database.redis_client import redis as _redis
+    from backend.database.engine import AsyncSessionLocal
+    from backend.database.redis_client import redis_binary as _redis_bin
     from backend.models.device import Device
     from backend.services.device_status_cache import DeviceStatusCache
 
-    if _redis is None:
+    if _redis_bin is None:
         return
 
-    cache = DeviceStatusCache(_redis)
+    cache = DeviceStatusCache(_redis_bin)
     device_ids = await cache.get_all_tracked_device_ids()
     if not device_ids:
         return
 
     statuses = await cache.bulk_get_status(device_ids)
-    now = datetime.now(timezone.utc)
 
-    async with async_session_factory() as db:
+    async with AsyncSessionLocal() as db:
         try:
             for device_id, live in statuses.items():
                 if live is None:

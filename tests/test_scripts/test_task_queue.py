@@ -2,7 +2,6 @@
 # SPLIT-3 критерии готовности: очередь задач, приоритеты, атомарность.
 from __future__ import annotations
 
-import pytest
 import pytest_asyncio
 from fakeredis.aioredis import FakeRedis
 

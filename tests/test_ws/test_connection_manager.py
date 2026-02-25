@@ -2,10 +2,8 @@
 # TZ-03 SPLIT-1: Tests for ConnectionManager in-memory registry.
 from __future__ import annotations
 
-import asyncio
 from unittest.mock import AsyncMock
 
-import pytest
 import pytest_asyncio
 
 from backend.websocket.connection_manager import ConnectionManager, get_connection_manager

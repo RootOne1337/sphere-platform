@@ -1,0 +1,23 @@
+{
+  "$comment": "Шаблон для PC-Agent при клонировании LDPlayer инстансов. Поля workstation_id и instance_index заполняются PC-Agent автоматически.",
+  "config_version": 1,
+  "server_url": "${SERVER_URL}",
+  "ws_path": "/ws/android",
+  "enrollment_api_key": "${ENROLLMENT_API_KEY}",
+  "device_id": null,
+  "workstation_id": "${WORKSTATION_ID}",
+  "instance_index": "${INSTANCE_INDEX}",
+  "location": "${LOCATION}",
+  "environment": "${ENVIRONMENT}",
+  "config_poll_interval_seconds": 86400,
+  "features": {
+    "telemetry_enabled": true,
+    "streaming_enabled": true,
+    "ota_enabled": true,
+    "auto_register": true
+  },
+  "meta": {
+    "ldplayer_name": "${LDPLAYER_INSTANCE_NAME}",
+    "clone_source": "${CLONE_SOURCE}"
+  }
+}

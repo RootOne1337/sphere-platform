@@ -1,0 +1,21 @@
+{
+  "config_version": 1,
+  "server_url": "http://10.0.2.2:8000",
+  "ws_path": "/ws/android",
+  "enrollment_api_key": "sphr_dev_enrollment_key",
+  "device_id": null,
+  "workstation_id": null,
+  "instance_index": null,
+  "location": "local-dev",
+  "environment": "development",
+  "config_poll_interval_seconds": 3600,
+  "features": {
+    "telemetry_enabled": true,
+    "streaming_enabled": true,
+    "ota_enabled": false,
+    "auto_register": true
+  },
+  "meta": {
+    "note": "Локальная разработка. 10.0.2.2 — loopback Android эмулятора к host."
+  }
+}

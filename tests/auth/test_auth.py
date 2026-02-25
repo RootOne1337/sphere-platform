@@ -19,7 +19,6 @@ from backend.core.security import create_access_token, hash_password, verify_pas
 from backend.database.redis_client import get_redis
 from backend.main import app
 
-
 # ── HTTP test client (no real DB — services are mocked) ─────────────────────
 
 @pytest_asyncio.fixture

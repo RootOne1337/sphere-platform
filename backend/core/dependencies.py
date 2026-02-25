@@ -70,8 +70,8 @@ async def get_tenant_db(
     current_user: "User" = Depends(get_current_user),
 ) -> AsyncSession:
     """
-    Session с активным RLS-контекстом арендатора.
-    Используй вместо get_db во всех endpoints с бизнес-данными.
+    Session with active tenant RLS context.
+    Use instead of get_db for all endpoints with business data.
     """
     from sqlalchemy import text
     await db.execute(
@@ -122,8 +122,20 @@ def require_roles(roles: list[str]):
     return Depends(dependency)
 
 
-# Алиас для обратной совместимости
-require_role = require_roles
+def require_role(*roles: str):
+    """
+    Dependency-фабрика: ВОЗВРАЩАЕТ callable.
+    Используется как: current_user = Depends(require_role("org_admin"))
+                  или: current_user = Depends(require_role("org_admin", "device_manager"))
+    """
+    async def _check(current_user: "User" = Depends(get_current_user)) -> "User":
+        if current_user.role not in roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Required role(s): {', '.join(roles)}. Your role: {current_user.role}",
+            )
+        return current_user
+    return _check
 
 
 def require_permission(permission: str):

@@ -138,7 +138,8 @@ class TestBulkAction:
         assert "success" in result
 
     async def test_unauthenticated_bulk_401(self, bulk_devices):
-        from httpx import AsyncClient, ASGITransport
+        from httpx import ASGITransport, AsyncClient
+
         from backend.main import app
         async with AsyncClient(
             transport=ASGITransport(app=app), base_url="http://testserver"

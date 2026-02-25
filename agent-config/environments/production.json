@@ -1,0 +1,19 @@
+{
+  "config_version": 1,
+  "server_url": "https://api.sphere.example.com",
+  "ws_path": "/ws/android",
+  "enrollment_api_key": "sphr_prod_enrollment_CHANGE_ME",
+  "device_id": null,
+  "workstation_id": null,
+  "instance_index": null,
+  "location": null,
+  "environment": "production",
+  "config_poll_interval_seconds": 86400,
+  "features": {
+    "telemetry_enabled": true,
+    "streaming_enabled": true,
+    "ota_enabled": true,
+    "auto_register": true
+  },
+  "meta": {}
+}

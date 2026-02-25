@@ -2,7 +2,6 @@
 # ВЛАДЕЛЕЦ: TZ-02 SPLIT-3. Redis-backed device status cache with msgpack serialization.
 from __future__ import annotations
 
-import uuid
 from typing import Any
 
 import msgpack
@@ -35,16 +34,24 @@ class DeviceStatusCache:
     # ── Single device ─────────────────────────────────────────────────────────
 
     async def set_status(self, device_id: str, status: DeviceLiveStatus) -> None:
+        if self.redis is None:
+            return
         key = self._key(device_id)
         data = msgpack.packb(status.model_dump(mode="json"), use_bin_type=True)
         ttl = self.TTL_ONLINE if status.status == "online" else self.TTL_OFFLINE
         await self.redis.set(key, data, ex=ttl)
 
     async def get_status(self, device_id: str) -> DeviceLiveStatus | None:
+        if self.redis is None:
+            return None
         raw = await self.redis.get(self._key(device_id))
         if raw is None:
             return None
-        unpacked = msgpack.unpackb(raw, raw=False)
+        try:
+            unpacked = msgpack.unpackb(raw, raw=False)
+        except Exception:
+            # Stale or corrupted Redis entry — treat as missing
+            return None
         return DeviceLiveStatus.model_validate(unpacked)
 
     async def mark_offline(self, device_id: str) -> None:
@@ -68,13 +75,18 @@ class DeviceStatusCache:
         """O(1) RTT — fetch N statuses with a single MGET."""
         if not device_ids:
             return {}
+        if self.redis is None:
+            return {did: None for did in device_ids}
         keys = [self._key(did) for did in device_ids]
         values = await self.redis.mget(*keys)
         result: dict[str, DeviceLiveStatus | None] = {}
         for device_id, raw in zip(device_ids, values):
             if raw is not None:
-                unpacked = msgpack.unpackb(raw, raw=False)
-                result[device_id] = DeviceLiveStatus.model_validate(unpacked)
+                try:
+                    unpacked = msgpack.unpackb(raw, raw=False)
+                    result[device_id] = DeviceLiveStatus.model_validate(unpacked)
+                except Exception:
+                    result[device_id] = None
             else:
                 result[device_id] = None
         return result

@@ -82,9 +82,9 @@ def main() -> None:
         print(f"ERROR: RLS file not found: {rls_path}", file=sys.stderr)
         sys.exit(1)
 
-    rls_sql = rls_path.read_text()
+    rls_sql = rls_path.read_text(encoding="utf-8")
     if audit_path.exists():
-        rls_sql += "\n" + audit_path.read_text()
+        rls_sql += "\n" + audit_path.read_text(encoding="utf-8")
 
     covered = extract_covered_tables(rls_sql)
     required = TABLES_WITH_ORG_ID - EXEMPT_TABLES

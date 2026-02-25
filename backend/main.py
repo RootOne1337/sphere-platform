@@ -6,8 +6,13 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI
+from starlette_exporter import PrometheusMiddleware as _StarlettePrometheus
+from starlette_exporter import handle_metrics
 
+import backend.core.logging_config  # noqa: F401 — TZ-11 SPLIT-4: module-level structlog init
 from backend.core.cors import setup_cors
+from backend.middleware.metrics import PrometheusMiddleware
+from backend.middleware.request_id import RequestIdMiddleware
 
 
 @asynccontextmanager
@@ -19,10 +24,14 @@ async def lifespan(app: FastAPI):
     # Импортируем redis_client для регистрации хуков (register_startup/register_shutdown)
     # Остальные модули регистрируют свои хуки при импорте router.py
     import backend.database.redis_client  # noqa: F401
-
-    from backend.core.lifespan_registry import run_all_startup, run_all_shutdown
+    import backend.monitoring.pool_metrics  # noqa: F401 — регистрирует DB pool collector
+    from backend.core.lifespan_registry import run_all_shutdown, run_all_startup
 
     await run_all_startup()
+
+    # F-02: fail-fast if backend DB user is a PostgreSQL superuser (bypasses RLS)
+    from backend.core.startup_checks import check_db_role_not_superuser
+    await check_db_role_not_superuser()
 
     # PROC-4: экспорт OpenAPI schema для TZ-10 (frontend типы через openapi-typescript)
     Path("openapi.json").write_text(
@@ -43,6 +52,17 @@ app = FastAPI(
 )
 
 setup_cors(app)
+
+# TZ-11 SPLIT-1: Prometheus metrics middleware + /metrics endpoint
+# TZ-11 SPLIT-4: RequestIdMiddleware — X-Request-ID на каждый ответ + structlog context
+# Порядок (add_middleware в Starlette применяется в обратном порядке LIFO):
+#   1) RequestIdMiddleware  — самый внешний (запускается первым)
+#   2) PrometheusMiddleware — timing после request_id
+#   3) StarlettePrometheus  — exposition
+app.add_middleware(_StarlettePrometheus, app_name="sphere", group_paths=True)
+app.add_middleware(PrometheusMiddleware)
+app.add_middleware(RequestIdMiddleware)
+app.add_route("/metrics", handle_metrics)
 
 # ── Авто-дискавери роутеров ───────────────────────────────────────────────────
 # Подключает backend/api/v1/<subdir>/router.py для каждой поддиректории.
@@ -70,6 +90,15 @@ if _ws_path.exists():
             _mod = importlib.import_module(f"backend.api.ws.{_sub.name}.router")
             if hasattr(_mod, "router"):
                 app.include_router(_mod.router)
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request, exc: Exception):
+    """Catch-all handler so 5xx errors pass through CORSMiddleware (inside ExceptionMiddleware)."""
+    import structlog as _structlog
+    _structlog.get_logger().error("unhandled_exception", error=str(exc))
+    from fastapi.responses import JSONResponse
+    return JSONResponse(status_code=500, content={"detail": "Internal server error"})
 
 
 @app.get("/api/v1/health", tags=["health"])

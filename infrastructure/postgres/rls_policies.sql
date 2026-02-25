@@ -83,6 +83,27 @@ CREATE POLICY ldplayer_instances_tenant_isolation ON ldplayer_instances
 CREATE POLICY ldplayer_instances_insert ON ldplayer_instances
     FOR INSERT WITH CHECK (org_id = current_org_id());
 
+-- ── API Keys ──────────────────────────────────────────────────────────────────
+ALTER TABLE api_keys ENABLE ROW LEVEL SECURITY;
+CREATE POLICY api_keys_tenant_isolation ON api_keys
+    USING (org_id = current_org_id());
+CREATE POLICY api_keys_insert ON api_keys
+    FOR INSERT WITH CHECK (org_id = current_org_id());
+
+-- ── Organizations ─────────────────────────────────────────────────────────────
+-- Organizations isolate by their own id (super_admin bypass via DB role)
+ALTER TABLE organizations ENABLE ROW LEVEL SECURITY;
+CREATE POLICY organizations_tenant_isolation ON organizations
+    USING (id = current_org_id());
+
+-- ── Refresh Tokens ─────────────────────────────────────────────────────────────
+-- Refresh tokens are scoped by user → org; org_id is stored directly for fast lookup
+ALTER TABLE refresh_tokens ENABLE ROW LEVEL SECURITY;
+CREATE POLICY refresh_tokens_tenant_isolation ON refresh_tokens
+    USING (org_id = current_org_id());
+CREATE POLICY refresh_tokens_insert ON refresh_tokens
+    FOR INSERT WITH CHECK (org_id = current_org_id());
+
 -- ВАЖНО: Superuser (роль sphere) обходит RLS.
 -- Application user должен быть НЕ superuser.
 -- В FastAPI middleware перед query:

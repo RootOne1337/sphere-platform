@@ -2,12 +2,10 @@
 # Фикстуры для TZ-04 Script Engine тестов.
 from __future__ import annotations
 
-import pytest
 import pytest_asyncio
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.models.script import Script, ScriptVersion
-
 
 # ── Фикстуры Script Engine ────────────────────────────────────────────────────
 

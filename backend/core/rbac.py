@@ -69,6 +69,15 @@ PERMISSIONS: dict[str, list[Role]] = {
 
     # ── Аудит ───────────────────────────────────────────────────────────────
     "audit:read": [Role.ORG_ADMIN, Role.ORG_OWNER, Role.SUPER_ADMIN],
+
+    # ── Стриминг (H.264 / WebRTC) ────────────────────────────────────────────
+    "stream:read": [
+        Role.VIEWER, Role.SCRIPT_RUNNER, Role.DEVICE_MANAGER,
+        Role.ORG_ADMIN, Role.ORG_OWNER, Role.SUPER_ADMIN,
+    ],
+    "stream:control": [
+        Role.DEVICE_MANAGER, Role.ORG_ADMIN, Role.ORG_OWNER, Role.SUPER_ADMIN,
+    ],
 }
 
 

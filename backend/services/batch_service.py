@@ -18,7 +18,6 @@ from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from backend.database.engine import get_db_session
 from backend.models.script import Script
 from backend.models.task import Task, TaskStatus
 from backend.models.task_batch import TaskBatch, TaskBatchStatus

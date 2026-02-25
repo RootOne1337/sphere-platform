@@ -1,31 +1,36 @@
 # backend/services/discovery_service.py
-# ВЛАДЕЛЕЦ: TZ-02 SPLIT-5. ADB network discovery via PC Agent (TZ-08 stub).
+# ВЛАДЕЛЕЦ: TZ-02 SPLIT-5. ADB network discovery via PC Agent (TZ-08).
 from __future__ import annotations
 
+import asyncio
 import ipaddress
 import time
 import uuid
 
+import structlog
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.models.device import Device
 from backend.schemas.devices import CreateDeviceRequest
 from backend.schemas.discovery import (
-    DiscoverRequest,
     DiscoveredDevice,
+    DiscoverRequest,
     DiscoverResponse,
 )
 from backend.services.device_service import DeviceService
+from backend.websocket.pubsub_router import get_pubsub_router
+
+logger = structlog.get_logger()
 
 
 class DiscoveryService:
     """
     Обнаружение ADB устройств через PC Agent.
 
-    TZ-08 stub: `pc_agent_svc.send_command_wait()` возвращает пустой список
-    до тех пор пока TZ-08 (PC Agent) не реализован. При merge TZ-08 заменить
-    _stub_discover_devices на реальный вызов PC Agent.
+    Отправляет команду `discover_adb` на указанную воркстанцию через
+    WebSocket RPC (PubSubRouter.send_command_wait_result) и получает
+    список найденных устройств.
     """
 
     def __init__(self, db: AsyncSession, device_svc: DeviceService) -> None:
@@ -39,8 +44,8 @@ class DiscoveryService:
     ) -> DiscoverResponse:
         start = time.monotonic()
 
-        # TZ-08 stub: in production this calls PC Agent via WebSocket RPC
-        raw_devices: list[dict] = await self._stub_discover_devices(request)
+        # Call PC Agent for ADB device discovery via WebSocket RPC
+        raw_devices: list[dict] = await self._discover_devices_via_agent(request)
 
         # Map serial → existing device_id for already-registered check
         serials = [f"{d['ip']}:{d['port']}" for d in raw_devices]
@@ -108,23 +113,53 @@ class DiscoveryService:
         rows = (await self.db.execute(stmt)).all()
         return {row.serial: str(row.id) for row in rows}
 
-    async def _stub_discover_devices(
+    async def _discover_devices_via_agent(
         self, request: DiscoverRequest
     ) -> list[dict]:
         """
-        TZ-08 stub: returns empty list.
-        Replace with real PC Agent call when TZ-08 is implemented:
-
-            response = await self.pc_agent_svc.send_command_wait(
-                workstation_id=str(request.workstation_id),
-                command={
-                    "type": "discover_adb",
-                    "subnet": request.subnet,
-                    "port_range": request.port_range,
-                    "timeout_ms": request.timeout_ms,
-                },
-                timeout=60.0,
-            )
-            return response.get("devices", [])
+        Send discover_adb command to PC Agent via WebSocket RPC.
+        Falls back to empty list if agent is offline or no PubSubRouter.
         """
-        return []
+        pubsub = get_pubsub_router()
+        if pubsub is None:
+            logger.warning("PubSubRouter not initialized, skipping discovery")
+            return []
+
+        workstation_id = str(request.workstation_id) if request.workstation_id else None
+        if not workstation_id:
+            logger.warning("No workstation_id provided for discovery")
+            return []
+
+        command = {
+            "type": "discover_adb",
+            "subnet": request.subnet,
+            "port_range": list(request.port_range),
+            "timeout_ms": request.timeout_ms,
+        }
+
+        try:
+            response = await pubsub.send_command_wait_result(
+                device_id=workstation_id,
+                command=command,
+                timeout=max(60.0, (request.timeout_ms or 30000) / 1000 + 10),
+            )
+            devices = response.get("devices", [])
+            logger.info(
+                "Discovery completed via PC Agent",
+                workstation_id=workstation_id,
+                found=len(devices),
+            )
+            return devices
+        except asyncio.TimeoutError:
+            logger.warning(
+                "Discovery timeout from PC Agent",
+                workstation_id=workstation_id,
+            )
+            return []
+        except Exception as exc:
+            logger.warning(
+                "Discovery via PC Agent failed",
+                workstation_id=workstation_id,
+                error=str(exc),
+            )
+            return []

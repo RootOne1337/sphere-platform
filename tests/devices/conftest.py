@@ -4,16 +4,14 @@
 from __future__ import annotations
 
 from collections.abc import AsyncGenerator
-
-import pytest
-import pytest_asyncio
 from unittest.mock import patch
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+
+import pytest_asyncio
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
 from backend.database.engine import Base, get_db
 from backend.database.redis_client import get_redis
 from backend.models import *  # noqa: F401,F403 — side-effect: registers all mappers
-
 
 # ---------------------------------------------------------------------------
 # Patch PostgreSQL-specific types → SQLite equivalents (same as auth/conftest.py)
@@ -27,6 +25,7 @@ def _patch_missing_relationships() -> None:
     Вызывается до любой инициализации ORM-объектов.
     """
     from sqlalchemy import inspect as sa_inspect
+
     from backend.models.device import Device
 
     # Patch 1: Device.org — adding missing back_populates
@@ -46,8 +45,9 @@ def _patch_missing_relationships() -> None:
     #   script_versions.script_id → scripts.id        (what ScriptVersion.script should use)
     #   scripts.current_version_id → script_versions.id (circular back-ref)
     # We set _init_args.foreign_keys.argument before mapper configuration.
-    from backend.models.script import ScriptVersion
     from sqlalchemy.orm import RelationshipProperty
+
+    from backend.models.script import ScriptVersion
 
     for prop in ScriptVersion.__mapper__._props.values():  # type: ignore[attr-defined]
         if isinstance(prop, RelationshipProperty) and prop.key == "script":

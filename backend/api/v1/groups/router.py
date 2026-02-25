@@ -83,6 +83,7 @@ async def update_group(
 @router.delete(
     "/{group_id}",
     status_code=204,
+    response_model=None,
     summary="Удалить группу устройств",
 )
 async def delete_group(
@@ -132,6 +133,7 @@ async def list_tags(
 @router.put(
     "/devices/{device_id}/tags",
     status_code=204,
+    response_model=None,
     summary="Заменить теги устройства (идемпотентно)",
 )
 async def set_device_tags(

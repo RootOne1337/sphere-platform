@@ -38,7 +38,7 @@ class Task(Base, UUIDMixin, TimestampMixin):
     batch_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("task_batches.id"), nullable=True, index=True)
     script_version_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("script_versions.id"), nullable=True)
     status: Mapped[str] = mapped_column(
-        Enum(TaskStatus, name="task_status_enum"),
+        Enum(TaskStatus, name="task_status_enum", values_callable=lambda obj: [e.value for e in obj]),
         default=TaskStatus.QUEUED,
         nullable=False,
         index=True,
