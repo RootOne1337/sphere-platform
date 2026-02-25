@@ -63,10 +63,13 @@ class LuaEngine @Inject constructor(
     suspend fun execute(code: String, ctx: Map<String, Any?> = emptyMap()): Any? {
         // Dispatchers.IO: LuaJ блокирует поток, IO-пул не ограничен = CPU-пул не голодает
         return withContext(Dispatchers.IO) {
+            Timber.d("[Lua] execute: ctx keys=${ctx.keys}, types=${ctx.mapValues { it.value?.let { v -> v::class.simpleName } }}")
             val globals = buildSandbox(ctx)
             val chunk = globals.load(code, "script")
             val result = chunk.call()
-            luaToKotlin(result)
+            val kotlinResult = luaToKotlin(result)
+            Timber.d("[Lua] result: $kotlinResult (luaType=${result.typename()})")
+            kotlinResult
         }
     }
 
@@ -209,6 +212,16 @@ class LuaEngine @Inject constructor(
         is Long -> LuaValue.valueOf(v.toDouble())
         is Double -> LuaValue.valueOf(v)
         is String -> LuaValue.valueOf(v)
+        is Map<*, *> -> {
+            val table = LuaTable()
+            v.forEach { (key, value) -> table.set(key.toString(), kotlinToLua(value)) }
+            table
+        }
+        is List<*> -> {
+            val table = LuaTable()
+            v.forEachIndexed { i, item -> table.set(i + 1, kotlinToLua(item)) }
+            table
+        }
         else -> LuaValue.valueOf(v.toString())
     }
 
