@@ -82,9 +82,20 @@ export function useFleetEvents(onEvent?: EventHandler) {
     let currentWs: WebSocket | null = null;
 
     const buildWsUrl = (): string => {
+      // 1) Dedicated WS env var
+      const wsEnv = process.env.NEXT_PUBLIC_WS_URL;
+      if (wsEnv) return wsEnv + '/ws/events';
+
+      // 2) Derive from API URL (strip /api/... suffix, swap http→ws)
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+      if (apiUrl) {
+        return apiUrl.replace(/\/api.*$/, '').replace(/^http/, 'ws') + '/ws/events';
+      }
+
+      // 3) Fallback: current origin (works when accessed via Nginx on same port)
       const origin = typeof window !== 'undefined'
         ? window.location.origin
-        : (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost').replace(/\/api.*$/, '');
+        : 'http://localhost:8000';
       return origin.replace(/^http/, 'ws') + '/ws/events';
     };
 
