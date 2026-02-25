@@ -142,6 +142,14 @@ class CommandDispatcher @Inject constructor(
                 (streamingManager as? StreamingManagerImpl)?.onViewerConnected()
                 return
             }
+            // ── CANCEL_DAG: bypass dagMutex, cancel running DAG immediately ──
+            "CANCEL_DAG" -> {
+                val cmdId = msg["command_id"]?.jsonPrimitive?.contentOrNull ?: ""
+                Timber.i("[CANCEL_DAG] Received cancel for command=$cmdId")
+                dagRunner.requestCancel()
+                ack(cmdId, "completed")
+                return
+            }
         }
 
         val cmd = try {
