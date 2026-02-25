@@ -1,6 +1,6 @@
 # API Reference
 
-> **Sphere Platform v4.0** — REST API
+> **Sphere Platform v4.1** — REST API
 
 **Base URL:** `https://yourdomain.com/api/v1`
 **Interactive docs:** `https://yourdomain.com/api/v1/docs` (Swagger UI)
@@ -10,7 +10,7 @@
 
 ## Authentication
 
-All endpoints (except `/auth/login` and `/health`) require a Bearer token.
+All endpoints (except `/auth/login`, `/health`, and `/config/agent`) require a Bearer token.
 
 ```http
 Authorization: Bearer <access_token>
@@ -143,6 +143,109 @@ Authorization: Bearer <token>
   "created_at": "2026-01-01T00:00:00Z"
 }
 ```
+
+---
+
+## Agent Config — `/config`
+
+> Добавлено в v4.1.0 (TZ-12)
+
+### GET /config/agent
+
+Получение конфигурации для агента. **Не требует авторизации** (soft-auth: если передан токен — используется `org_id` из JWT, иначе — конфиг по умолчанию).
+
+```http
+GET /config/agent
+```
+
+**Response 200:**
+```json
+{
+  "server": {
+    "wsUrl": "wss://sphere.example.com/ws",
+    "apiUrl": "https://sphere.example.com/api/v1",
+    "environment": "production"
+  },
+  "agent": {
+    "heartbeatIntervalMs": 30000,
+    "reconnectMaxRetries": 10,
+    "logLevel": "INFO"
+  },
+  "features": {
+    "autoRegister": true,
+    "autoUpdate": true,
+    "telemetryEnabled": true,
+    "vpnAutoConnect": false
+  },
+  "provisioning": {
+    "namingPattern": "sphere-{org}-{seq}",
+    "defaultTags": ["auto-registered"],
+    "defaultGroupId": null
+  }
+}
+```
+
+Конфигурация загружается из `agent-config/environments/{env}.json` и кэшируется в Redis (TTL 300s).
+
+---
+
+## Device Registration — `/devices/register`
+
+> Добавлено в v4.1.0 (TZ-12)
+
+### POST /devices/register
+
+Идемпотентная авторегистрация устройства по composite fingerprint. При повторном вызове с тем же fingerprint возвращает существующее устройство.
+
+```http
+POST /devices/register
+Content-Type: application/json
+
+{
+  "fingerprint": "a1b2c3d4e5f6...sha256hash",
+  "device_info": {
+    "model": "sdk_gphone64_x86_64",
+    "android_version": "13",
+    "sdk_version": 33,
+    "manufacturer": "Google",
+    "display": "TP1A.220624.014"
+  },
+  "agent_version": "1.2.0"
+}
+```
+
+**Response 200 (существующее устройство):**
+```json
+{
+  "device_id": "uuid",
+  "name": "sphere-dev-0042",
+  "is_new": false,
+  "access_token": "eyJ...",
+  "refresh_token": "eyJ...",
+  "token_type": "bearer",
+  "expires_in": 1800
+}
+```
+
+**Response 201 (новое устройство):**
+```json
+{
+  "device_id": "uuid",
+  "name": "sphere-dev-0043",
+  "is_new": true,
+  "access_token": "eyJ...",
+  "refresh_token": "eyJ...",
+  "token_type": "bearer",
+  "expires_in": 1800
+}
+```
+
+**Логика дедупликации:**
+- Поиск по `device.fingerprint @> '{"hash": "<fingerprint>"}'` (JSONB containment)
+- Если устройство найдено — обновляет `device_info`, генерирует новые токены
+- Если не найдено — создаёт устройство с авто-именем `sphere-{org_prefix}-{sequence}`
+
+**Не требует авторизации** (создаёт токены в процессе регистрации).
 
 ---
 
@@ -642,7 +745,7 @@ No auth required.
 ```json
 {
   "status": "ok",
-  "version": "4.0.0",
+  "version": "4.1.0",
   "environment": "production",
   "checks": {
     "database": {

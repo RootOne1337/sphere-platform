@@ -1,6 +1,6 @@
 # Architecture
 
-> **Sphere Platform v4.0** — System Design Reference
+> **Sphere Platform v4.1** — System Design Reference
 
 ---
 
@@ -18,6 +18,7 @@
 10. [Multi-tenancy & Isolation](#10-multi-tenancy--isolation)
 11. [Observability](#11-observability)
 12. [Deployment Topology](#12-deployment-topology)
+13. [Agent Discovery & Auto-Registration](#13-agent-discovery--auto-registration)
 
 ---
 
@@ -559,3 +560,95 @@ Load Balancer (HAProxy/AWS ALB)
 ```
 
 > For deployment instructions see [docs/deployment.md](deployment.md).
+
+---
+
+## 13. Agent Discovery & Auto-Registration
+
+> Добавлено в v4.1.0 (TZ-12)
+
+Модуль Agent Discovery решает проблему массового разворачивания агентов на LDPlayer-клонах:
+все клоны делят одни и те же `ANDROID_ID`, `Build.SERIAL` и MAC-адрес, что делает невозможной
+стандартную идентификацию. Решение — **composite fingerprint + zero-touch provisioning**.
+
+### 13.1 Архитектура
+
+```
+┌──────────────────────────────────────────────────────┐
+│                  agent-config/                         │
+│  environments/  schema/  tools/                       │
+│  (dev.json,     (v1/)   (batch_generate.py)           │
+│   staging.json,                                       │
+│   production.json)                                    │
+└──────────────────────┬───────────────────────────────┘
+                       │ загружается при старте
+                       ▼
+┌──────────────────────────────────────────────────────┐
+│  Backend: GET /api/v1/config/agent                    │
+│  (soft-auth — без обязательной авторизации)           │
+│  AgentConfigService → Redis кэш (TTL 300s)           │
+└──────────────────────┬───────────────────────────────┘
+                       │ ServerConfig JSON
+                       ▼
+┌──────────────────────────────────────────────────────┐
+│  Android Agent: ZeroTouchProvisioner                  │
+│  Source #6: HTTP Config Endpoint                      │
+│  1. Получить ServerConfig                             │
+│  2. Если autoRegister=true → зарегистрироваться       │
+└──────────────────────┬───────────────────────────────┘
+                       │ fingerprint + device_info
+                       ▼
+┌──────────────────────────────────────────────────────┐
+│  Backend: POST /api/v1/devices/register               │
+│  DeviceRegistrationService:                           │
+│   - JSONB fingerprint search (дедупликация)           │
+│   - Авто-нейминг: sphere-{org_prefix}-{seq}          │
+│   - Генерация JWT access + refresh токенов            │
+│   - Возврат device_id + tokens → агент готов          │
+└──────────────────────────────────────────────────────┘
+```
+
+### 13.2 CloneDetector — Composite Fingerprint
+
+Android-агент вычисляет SHA-256 fingerprint из 7 компонентов:
+
+| # | Компонент | Описание | Clone-safe |
+|---|-----------|----------|------------|
+| 1 | `/proc/self/cgroup` hash | Уникален для каждого контейнера LDPlayer | ✓ |
+| 2 | `/proc/uptime` boot time | Время загрузки инстанса | ✓ |
+| 3 | `ActivityManager` task list hash | Набор запущенных задач | ✓ |
+| 4 | Allocated memory pages | Физическая раскладка памяти | ✓ |
+| 5 | `Build.DISPLAY` | Build fingerprint (shared на клонах) | ✗ |
+| 6 | Random UUID (fallback) | Генерируется при первом запуске | ✓ |
+| 7 | Canvas rendering hash | GPU fingerprint | ~ |
+
+Итоговый fingerprint: `SHA-256(component1 + component2 + ... + component7)`
+
+Даже на идентичных LDPlayer-клонах компоненты 1–4 гарантируют уникальность.
+
+### 13.3 Конфигурационный репозиторий
+
+Структура `agent-config/`:
+
+```
+agent-config/
+├── schema/v1/agent-config.schema.json   # JSON Schema валидации
+├── environments/
+│   ├── dev.json           # Локальная разработка (autoRegister: true)
+│   ├── staging.json       # Staging (autoRegister: true, restrictedMode)
+│   └── production.json    # Продакшн (autoRegister: false по умолчанию)
+├── tools/
+│   └── batch_generate.py  # Генератор batch-конфигов для массовых деплоев
+└── README.md
+```
+
+Конфигурация кэшируется в Redis (TTL = `AGENT_CONFIG_CACHE_TTL`, по умолчанию 300s).
+`AGENT_CONFIG_ENV` определяет активное окружение (dev / staging / production).
+
+### 13.4 Безопасность
+
+- **Soft-auth**: `GET /config/agent` доступен без токена, но rate-limited (10 req/min per IP)
+- **Fingerprint в JSONB**: позволяет эффективный поиск по `@>` оператору PostgreSQL
+- **Идемпотентная регистрация**: повторный вызов с тем же fingerprint возвращает существующее устройство
+- **JWT токены**: регистрация возвращает полноценную пару access/refresh, агент сразу готов к работе
+- **Нет секретов в конфиге**: agent-config не содержит ключей, только URL + policy флаги

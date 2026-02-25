@@ -8,7 +8,83 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-_No unreleased changes yet._
+_Нет нереализованных изменений._
+
+---
+
+## [4.1.0] — 2026-02-25
+
+### Краткое описание
+TZ-12 Agent Discovery & Auto-Registration, DAG v6/v7 performance, расширение фронтенда задач, enterprise-тесты.
+18+ коммитов на ветке `feature/dag-v6-task-execution-2025-02-25`, интегрировано через PR #4 → main → PR #5 → develop.
+
+---
+
+### Добавлено
+
+#### TZ-12 — Agent Discovery & Auto-Registration
+- `agent-config/` — конфигурационный репозиторий: JSON Schema v1, 3 окружения (dev, staging, production), batch-генератор
+- `GET /api/v1/config/agent` — soft-auth эндпоинт конфигурации агента (отдаёт `ServerConfig` без обязательной авторизации)
+- `POST /api/v1/devices/register` — идемпотентная авторегистрация устройств по fingerprint (JSONB-поиск)
+- `DeviceRegistrationService` — авто-нейминг, генерация JWT-токенов, дедупликация по fingerprint
+- `CloneDetector.kt` — clone-safe SHA-256 composite fingerprint (7 компонентов, безопасен для LDPlayer-клонов)
+- `DeviceRegistrationClient.kt` — HTTP-клиент авторегистрации с авто-сохранением токенов
+- `ZeroTouchProvisioner` source #6 — HTTP Config Endpoint
+- `SetupActivity` — интеграция авторегистрации с legacy fallback
+
+#### DAG v6/v7 — Движок автоматизации
+- DAG v6: reactive smart scan, XPath-элементы, watchdog-оптимизация (`152d146`)
+- DAG v7: устранение 3-минутных зависаний, оптимизация таймингов (`48e5081`)
+- Расширен DAG-движок Android: `cancelRequested`, `increment_variable`, `find_first_element`, `tap_first_visible`
+- `CANCEL_DAG` обработчик в `CommandDispatcher`
+
+#### Backend — Task Execution
+- Поля прогресса на модели Task: `cycles`, `started_at` (`0b99c35`)
+- Эндпоинты `/progress`, `/live-logs`, `/stop` для задач (`6271665`)
+- WebSocket progress handler для live execution logs (`bc9c996`)
+- Расширен `TaskService`: dispatch `CANCEL_DAG`, bulk operations (`65ea409`)
+- Улучшения WebSocket layer и middleware (`b0ff6ef`)
+
+#### Frontend — Task Management UI
+- `useTasks` расширен: `TaskProgress` с циклами + `useTaskLiveLogs` (`2f652cf`)
+- Live Execution Dashboard — страница деталей задачи (`adaba59`)
+- `RunScriptModal` + улучшены страницы Scripts и Tasks (`8efae3e`)
+- OpenAPI 3.1 спецификация обновлена (`b95a907`)
+
+#### Тестирование
+- 17 тестов Agent Discovery (config endpoint + device register) (`4ab3eb3`)
+- Enterprise-тесты: WS handlers, VPN health loop, n8n integration, user management, OTA updates (`609740f`)
+- Service-layer unit-тесты, покрытие ≥ 70% (`5c5b05b`)
+- Итого: **743 теста PASSED** (ruff 0 ошибок, mypy 0 ошибок)
+
+---
+
+### Исправлено
+
+| # | Компонент | Проблема | Решение |
+|---|-----------|----------|---------|
+| 1 | Tests | SQLite не поддерживает ARRAY-тип | `SQLiteArrayType` bind/result processor (`e3722e8`) |
+| 2 | Scripts | ruff E741 + import sorting в dev-скриптах | ruff auto-fix 23 ошибки → 0 (`e3c8ddd`) |
+| 3 | CI | lint (ruff + mypy) и падающие тесты | Комплексное исправление (`177a961`) |
+| 4 | Frontend | WebSocket URL определение в `useFleetEvents` | Исправлено (`2c562af`) |
+| 5 | Android | Документация `LuaEngine` — ctx доступен как Lua-таблица | Исправлено (`a123404`) |
+| 6 | CI | `PYTHONPATH`, alembic config path, gradlew +x | Серия фиксов (`befea81`, `a5b5692`, `425ec2d`) |
+| 7 | Backend | `vpn_peers.status` отсутствовал в базовой миграции | Добавлен в baseline (`b25b49d`) |
+
+---
+
+### Deployment Notes
+
+Новых обязательных переменных окружения нет.
+Docker-образы: пересобрать backend и Android APK после merge.
+
+```bash
+# Пересборка backend
+docker compose build backend
+
+# Миграции (если обновлялись)
+docker compose exec backend alembic upgrade head
+```
 
 ---
 
@@ -138,4 +214,5 @@ Docker images — rebuild all services after merge (`docker compose build`).
 
 See `docs/merge_log.md` and [walkthrough.md.resolved](walkthrough.md.resolved) for full branch-by-branch integration history.
 
+[4.1.0]: https://github.com/RootOne1337/sphere-platform/compare/v4.0.0...v4.1.0
 [4.0.0]: https://github.com/RootOne1337/sphere-platform/releases/tag/v4.0.0
