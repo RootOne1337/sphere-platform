@@ -1,0 +1,20 @@
+{
+  "$comment": "Шаблон для реальных физических устройств. Пушится через adb push или QR-code deep link.",
+  "config_version": 1,
+  "server_url": "${SERVER_URL}",
+  "ws_path": "/ws/android",
+  "enrollment_api_key": "${ENROLLMENT_API_KEY}",
+  "device_id": null,
+  "workstation_id": null,
+  "instance_index": null,
+  "location": "${LOCATION}",
+  "environment": "${ENVIRONMENT}",
+  "config_poll_interval_seconds": 86400,
+  "features": {
+    "telemetry_enabled": true,
+    "streaming_enabled": true,
+    "ota_enabled": true,
+    "auto_register": true
+  },
+  "meta": {}
+}
