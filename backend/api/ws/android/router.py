@@ -65,6 +65,24 @@ async def authenticate_ws_token(token: str, db: AsyncSession):
     if await cache.is_token_blacklisted(payload["jti"]):
         raise HTTPException(status_code=401, detail="Token revoked")
 
+    # Устройства получают JWT с role="device" и sub=device_id.
+    # Для них ищем в таблице devices, а не users.
+    role = payload.get("role", "")
+    if role == "device":
+        device_subject = await db.get(Device, uuid.UUID(payload["sub"]))
+        if not device_subject:
+            raise HTTPException(
+                status_code=401, detail="Device not found",
+            )
+
+        class _DevicePrincipal:
+            """Принципал для устройства — совместим с user.org_id проверкой."""
+
+            def __init__(self, org_id: uuid.UUID) -> None:
+                self.org_id = org_id
+
+        return _DevicePrincipal(device_subject.org_id)
+
     user = await db.get(User, uuid.UUID(payload["sub"]))
     if not user or not user.is_active:
         raise HTTPException(status_code=401, detail="User not found or inactive")
