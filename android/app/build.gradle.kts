@@ -50,12 +50,14 @@ android {
             versionNameSuffix = "-dev"
             buildConfigField("boolean", "ALLOW_HTTP", "true")
             buildConfigField("String", "FLAVOR_LABEL", "\"dev\"")
-            // Emulator defaults: 10.0.2.2 = host-machine loopback from Android emulator
-            buildConfigField("String", "DEFAULT_SERVER_URL", "\"http://10.0.2.2\"")
-            buildConfigField("String", "DEFAULT_API_KEY", "\"\"")
+            // Emulator defaults: server URL через Serveo tunnel (для WS/REST)
+            buildConfigField("String", "DEFAULT_SERVER_URL", "\"https://sphere.serveousercontent.com\"")
+            // Enrollment key из agent-config/environments/development.json
+            buildConfigField("String", "DEFAULT_API_KEY", "\"sphr_dev_enrollment_key_2025\"")
             buildConfigField("String", "DEFAULT_DEVICE_ID", "\"\"")
-            // TZ-12: HTTP Config Endpoint для auto-discovery (GET /api/v1/config/agent)
-            buildConfigField("String", "CONFIG_URL", "\"http://10.0.2.2:8000/api/v1/config/agent\"")
+            // TZ-12: Config endpoint через ADB reverse (adb reverse tcp:8080 tcp:80)
+            // LDPlayer localhost:8080 → host nginx:80 → backend
+            buildConfigField("String", "CONFIG_URL", "\"http://127.0.0.1:8080/api/v1/config/agent\"")
         }
         create("enterprise") {
             dimension = "env"
