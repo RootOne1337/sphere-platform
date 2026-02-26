@@ -252,6 +252,41 @@ class TestConfigFromAgentConfigFile:
         assert "enrollment_api_key" in data
 
     @pytest.mark.asyncio
+    async def test_config_empty_server_url_fallback_to_settings(
+        self, anon_client: AsyncClient, tmp_path: Path,
+    ):
+        """Если server_url в JSON пустой — fallback на SERVER_PUBLIC_URL (production сценарий)."""
+        env_dir = tmp_path / "environments"
+        env_dir.mkdir()
+        # Production: server_url пустой, enrollment_api_key задан
+        prod_config = {
+            "config_version": 2,
+            "server_url": "",
+            "ws_path": "/ws/android",
+            "enrollment_api_key": "sphr_prod_enrollment_key_2025",
+            "environment": "production",
+            "features": {"auto_register": True},
+        }
+        (env_dir / "production.json").write_text(json.dumps(prod_config))
+
+        with patch("backend.api.v1.config.router.settings") as mock_settings:
+            mock_settings.AGENT_CONFIG_DIR = str(tmp_path)
+            mock_settings.AGENT_CONFIG_ENV = "production"
+            mock_settings.ENVIRONMENT = "production"
+            mock_settings.SERVER_PUBLIC_URL = "https://adb.leetpc.com"
+            mock_settings.AGENT_CONFIG_CACHE_TTL = 0
+
+            resp = await anon_client.get("/api/v1/config/agent")
+
+        assert resp.status_code == 200
+        data = resp.json()
+        # server_url должен взяться из SERVER_PUBLIC_URL, а не из пустого JSON
+        assert data["server_url"] == "https://adb.leetpc.com"
+        # enrollment_api_key должен прийти из файла
+        assert data["enrollment_api_key"] == "sphr_prod_enrollment_key_2025"
+        assert data["features"]["auto_register"] is True
+
+    @pytest.mark.asyncio
     async def test_config_redis_cache_used(
         self, anon_client: AsyncClient, mock_redis: FakeRedis, tmp_path: Path,
     ):

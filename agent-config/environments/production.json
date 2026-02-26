@@ -1,8 +1,8 @@
 {
   "config_version": 2,
-  "server_url": "https://api.sphere.example.com",
+  "server_url": "",
   "ws_path": "/ws/android",
-  "enrollment_api_key": null,
+  "enrollment_api_key": "sphr_prod_enrollment_key_2025",
   "device_id": null,
   "workstation_id": null,
   "instance_index": null,
@@ -17,6 +17,6 @@
     "auto_register": true
   },
   "meta": {
-    "note": "Production: enrollment_api_key задаётся через admin panel и прописывается сюда при деплое."
+    "note": "Production. server_url пустой — берётся из SERVER_PUBLIC_URL env var бэкенда. enrollment_api_key зашит для zero-touch, seed скрипт регистрирует его в БД."
   }
 }
