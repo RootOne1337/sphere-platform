@@ -1,6 +1,6 @@
 .DEFAULT_GOAL := help
 
-.PHONY: help setup dev full down test lint security migrate migrate-new build monitoring logs alembic-check alembic-merge-heads rls-lint branches worktree-setup seed-enrollment build-apk deploy-prod
+.PHONY: help setup dev full down test lint security migrate migrate-new build monitoring logs alembic-check alembic-merge-heads rls-lint branches worktree-setup seed-enrollment build-apk deploy-prod ssl-init ssl-renew
 
 help:          ## Показать помощь
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-24s\033[0m %s\n", $$1, $$2}'
@@ -141,3 +141,12 @@ deploy-prod:   ## Полный деплой production: build → migrate → se
 	AGENT_CONFIG_ENV=production docker compose exec backend python -m scripts.seed_enrollment_key
 	@echo "✅ Production деплой завершён"
 	@echo "   Теперь собери APK: SPHERE_CONFIG_URL=https://$${SERVER_HOSTNAME}/api/v1/config/agent make build-apk"
+
+
+ssl-init:      ## Получить Let's Encrypt сертификат (первый раз на сервере)
+	@bash scripts/init_ssl.sh
+
+ssl-renew:     ## Принудительное обновление Let's Encrypt сертификата
+	docker compose exec certbot certbot renew --webroot -w /var/www/certbot --force-renewal
+	docker compose exec nginx nginx -s reload
+	@echo 'Сертификат обновлён, nginx перезагружен'
