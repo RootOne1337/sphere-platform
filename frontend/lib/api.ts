@@ -1,14 +1,19 @@
 import axios, { AxiosError } from 'axios';
 import { useAuthStore } from './store';
+import { getRefreshToken, saveRefreshToken, clearRefreshToken } from './store';
 
 export const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000/api/v1',
+  baseURL: process.env.NEXT_PUBLIC_API_URL ?? '/api/v1',
   timeout: 30_000,
   withCredentials: true,
 });
 
+// ⚠️ АВТОРИЗАЦИЯ ОТКЛЮЧЕНА НА ВРЕМЯ РАЗРАБОТКИ
+const _DEV_SKIP_AUTH = true;
+
 // Request: добавить Authorization
 api.interceptors.request.use((config) => {
+  if (_DEV_SKIP_AUTH) return config;
   const token = useAuthStore.getState().accessToken;
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -16,7 +21,7 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Response: refresh при 401
+// Response: refresh при 401 (отключен при DEV_SKIP_AUTH)
 let isRefreshing = false;
 let failedQueue: Array<{
   resolve: (token: string) => void;
@@ -26,9 +31,14 @@ let failedQueue: Array<{
 api.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
+    // DEV_SKIP_AUTH: не пытаемся refresh, не редиректим
+    if (_DEV_SKIP_AUTH) return Promise.reject(error);
+
     const original = error.config as typeof error.config & { _retry?: boolean };
 
-    if (error.response?.status === 401 && !original._retry) {
+    // Не перехватывать 401 от auth endpoints (логин, refresh, logout)
+    const isAuthEndpoint = original.url?.includes('/auth/');
+    if (error.response?.status === 401 && !original._retry && !isAuthEndpoint) {
       if (isRefreshing) {
         // Ставим в очередь — ждём завершения текущего refresh
         return new Promise((resolve, reject) => {
@@ -46,15 +56,26 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        // Refresh token отправляется автоматически как HTTPOnly cookie
+        const storedRefresh = getRefreshToken();
+        const headers: Record<string, string> = {};
+        if (storedRefresh) {
+          headers['X-Refresh-Token'] = storedRefresh;
+        }
+
+        // Refresh token отправляется через cookie + header (dual mode)
         const { data } = await axios.post(
           `${api.defaults.baseURL}/auth/refresh`,
           {},
-          { withCredentials: true },
+          { withCredentials: true, headers },
         );
 
         const newAccess = data.access_token as string;
         useAuthStore.getState().setAccessToken(newAccess);
+
+        // Сохраняем новый refresh_token (ротация)
+        if (data.refresh_token) {
+          saveRefreshToken(data.refresh_token);
+        }
 
         failedQueue.forEach(({ resolve }) => resolve(newAccess));
         failedQueue = [];

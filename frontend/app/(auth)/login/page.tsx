@@ -1,15 +1,20 @@
 'use client';
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { api } from '@/lib/api';
-import { useAuthStore } from '@/lib/store';
+import axios from 'axios';
+import { useAuthStore, saveRefreshToken } from '@/lib/store';
+
+// Используем сырой axios (без interceptors) для login — иначе interceptor перехватывает 401
+const authApi = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_API_URL ?? '/api/v1',
+  timeout: 30_000,
+  withCredentials: true,
+});
 
 export default function LoginPage() {
-  const router = useRouter();
   const { setAccessToken, setUser } = useAuthStore();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -27,10 +32,9 @@ export default function LoginPage() {
     setError('');
 
     try {
-      const { data } = await api.post(
+      const { data } = await authApi.post(
         '/auth/login',
         { email, password },
-        { withCredentials: true },
       );
 
       // Check if MFA is required
@@ -43,7 +47,12 @@ export default function LoginPage() {
 
       setAccessToken(data.access_token);
       setUser(data.user);
-      router.push('/dashboard');
+      // Сохраняем refresh_token в localStorage (fallback для tunnel/proxy)
+      if (data.refresh_token) {
+        saveRefreshToken(data.refresh_token);
+      }
+      // Полная перезагрузка — гарантирует чистый init auth через useInitAuth с localStorage
+      window.location.href = '/dashboard';
     } catch (err: unknown) {
       const msg =
         (err as { response?: { data?: { detail?: string } } })?.response?.data
@@ -60,14 +69,18 @@ export default function LoginPage() {
     setError('');
 
     try {
-      const { data } = await api.post(
+      const { data } = await authApi.post(
         '/auth/login/mfa',
         { state_token: stateToken, code: mfaCode },
-        { withCredentials: true },
       );
       setAccessToken(data.access_token);
       setUser(data.user);
-      router.push('/dashboard');
+      // Сохраняем refresh_token в localStorage (fallback для tunnel/proxy)
+      if (data.refresh_token) {
+        saveRefreshToken(data.refresh_token);
+      }
+      // Полная перезагрузка для чистого init
+      window.location.href = '/dashboard';
     } catch (err: unknown) {
       const msg =
         (err as { response?: { data?: { detail?: string } } })?.response?.data
