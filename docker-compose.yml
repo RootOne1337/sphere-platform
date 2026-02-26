@@ -69,8 +69,18 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./infrastructure/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./infrastructure/nginx/nginx.conf:/tmp/nginx.conf.template:ro
       - ./infrastructure/nginx/ssl:/etc/nginx/ssl:ro
+    environment:
+      # Домен подставляется в nginx.conf через envsubst при старте контейнера.
+      # Меняй только здесь (в .env) — не нужно трогать nginx.conf
+      SERVER_HOSTNAME: ${SERVER_HOSTNAME:-adb.leetpc.com}
+    # envsubst заменяет ТОЛЬКО ${SERVER_HOSTNAME}, остальные nginx-переменные
+    # ($host, $request_uri, $proxy_add_x_forwarded_for и т.д.) остаются нетронутыми.
+    command:
+      - /bin/sh
+      - -c
+      - "envsubst '$${SERVER_HOSTNAME}' < /tmp/nginx.conf.template > /etc/nginx/nginx.conf && exec nginx -g 'daemon off;'"
     # FIX: зависимость nginx от postgres была бессмысленной (nginx не работает с PG напрямую).
     # nginx стартует сразу и ждёт бэкенд по сети — backend задаётся в docker-compose.full.yml.
     networks:

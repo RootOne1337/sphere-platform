@@ -44,8 +44,8 @@ class Settings(BaseSettings):
     AWG_H3: int = 2031675751
     AWG_H4: int = 3699611814
 
-    # Server
-    VPN_SERVER_HOSTNAME: str = "adb.leetpc.com"
+    # Server — берётся из env VPN_SERVER_HOSTNAME (задаётся в .env / docker-compose)
+    VPN_SERVER_HOSTNAME: str = ""
 
     # VPN (TZ-06 SPLIT-1: AWG Config Builder)
     WG_SERVER_PUBLIC_KEY: str = ""                        # Public key WG сервера
