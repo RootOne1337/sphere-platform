@@ -258,8 +258,8 @@
         "tags": [
           "auth"
         ],
-        "summary": "Обновить access token по refresh cookie",
-        "description": "Обновить access token по HTTPOnly refresh_token cookie.\nРотация: старый refresh token инвалидируется, выпускается новый.",
+        "summary": "Обновить access token по refresh cookie или header",
+        "description": "Обновить access token.\nИсточники refresh_token (приоритет):\n1. HTTPOnly cookie (стандартный путь)\n2. Header X-Refresh-Token (fallback для tunnel/proxy)\n3. JSON body {\"refresh_token\": \"...\"} (fallback)\nРотация: старый refresh token инвалидируется, выпускается новый.",
         "operationId": "refresh_api_v1_auth_refresh_post",
         "parameters": [
           {
@@ -862,7 +862,7 @@
           "config"
         ],
         "summary": "Конфигурация для агента (zero-touch provisioning)",
-        "description": "Возвращает актуальный конфиг для Android/PC агента. Аутентификация по X-API-Key (enrollment или device key). Агент вызывает этот эндпоинт при первом запуске и периодически для обнаружения смены server_url.",
+        "description": "Возвращает актуальный конфиг для Android/PC агента. Загружает настройки из agent-config/environments/{env}.json с Redis-кэшированием. Аутентификация по X-API-Key (enrollment или device key) — опционально. Агент вызывает этот эндпоинт при первом запуске и периодически для обнаружения смены server_url.",
         "operationId": "get_agent_config_api_v1_config_agent_get",
         "parameters": [
           {
@@ -5006,6 +5006,18 @@
             "description": "Имеет ли предъявленный API-ключ право на device:register.",
             "default": false
           },
+          "enrollment_api_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Enrollment Api Key",
+            "description": "Enrollment API-ключ для автоматической регистрации устройства. Загружается из agent-config/environments/{env}.json. Агент использует этот ключ для POST /api/v1/devices/register."
+          },
           "org_id": {
             "anyOf": [
               {
@@ -7984,6 +7996,27 @@
               }
             ],
             "title": "Expires In"
+          },
+          "refresh_token": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Refresh Token"
+          },
+          "user": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "type": "object",

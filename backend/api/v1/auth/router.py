@@ -39,13 +39,20 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 bearer_scheme = HTTPBearer(auto_error=False)
 
+from backend.core.config import settings
+
 REFRESH_COOKIE_NAME = "refresh_token"
-_COOKIE_SETTINGS: dict = {
-    "httponly": True,
-    "secure": True,
-    "samesite": "strict",
-    "max_age": 7 * 24 * 3600,  # 7 дней
-}
+
+
+def _cookie_settings() -> dict:
+    """Cookie настройки с учётом окружения (Secure через config)."""
+    return {
+        "httponly": True,
+        "secure": True, # Force True for Serveo HTTPS tunnel
+        "samesite": "none", # Required for cross-site cookies over HTTPS tunnel
+        "path": "/",
+        "max_age": 7 * 24 * 3600,  # 7 дней
+    }
 
 mfa_service = MFAService()
 
@@ -83,12 +90,18 @@ async def login(
     if result.get("mfa_required"):
         return MFARequiredResponse(state_token=result["state_token"])
 
-    # Refresh token — HTTPOnly Secure cookie (НЕ в теле ответа — безопасность SPLIT-1)
-    response.set_cookie(REFRESH_COOKIE_NAME, result["refresh_token"], **_COOKIE_SETTINGS)
+    # Refresh token — cookie + тело ответа (dual mode для tunnel/proxy совместимости)
+    response.set_cookie(REFRESH_COOKIE_NAME, result["refresh_token"], **_cookie_settings())
+    user_resp = None
+    if result.get("user"):
+        from backend.schemas.auth import UserResponse
+        user_resp = UserResponse.model_validate(result["user"])
     return TokenResponse(
         access_token=result["access_token"],
         token_type="bearer",
         expires_in=result["expires_in"],
+        refresh_token=result["refresh_token"],
+        user=user_resp,
     )
 
 
@@ -114,11 +127,17 @@ async def login_mfa(
             detail=str(exc) or "Invalid MFA code or session expired",
         )
 
-    response.set_cookie(REFRESH_COOKIE_NAME, result["refresh_token"], **_COOKIE_SETTINGS)
+    response.set_cookie(REFRESH_COOKIE_NAME, result["refresh_token"], **_cookie_settings())
+    user_resp = None
+    if result.get("user"):
+        from backend.schemas.auth import UserResponse
+        user_resp = UserResponse.model_validate(result["user"])
     return TokenResponse(
         access_token=result["access_token"],
         token_type="bearer",
         expires_in=result["expires_in"],
+        refresh_token=result["refresh_token"],
+        user=user_resp,
     )
 
 
@@ -127,24 +146,43 @@ async def login_mfa(
 @router.post(
     "/refresh",
     response_model=TokenResponse,
-    summary="Обновить access token по refresh cookie",
+    summary="Обновить access token по refresh cookie или header",
 )
 async def refresh(
+    request: Request,
     response: Response,
     refresh_token: str | None = Cookie(default=None, alias=REFRESH_COOKIE_NAME),
     auth_svc: AuthService = Depends(get_auth_service),
 ):
     """
-    Обновить access token по HTTPOnly refresh_token cookie.
+    Обновить access token.
+    Источники refresh_token (приоритет):
+    1. HTTPOnly cookie (стандартный путь)
+    2. Header X-Refresh-Token (fallback для tunnel/proxy)
+    3. JSON body {"refresh_token": "..."} (fallback)
     Ротация: старый refresh token инвалидируется, выпускается новый.
     """
-    if not refresh_token:
+    token = refresh_token
+
+    # Fallback 1: header X-Refresh-Token
+    if not token:
+        token = request.headers.get("x-refresh-token")
+
+    # Fallback 2: JSON body
+    if not token:
+        try:
+            body = await request.json()
+            token = body.get("refresh_token") if isinstance(body, dict) else None
+        except Exception:
+            pass
+
+    if not token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="No refresh token provided",
         )
     try:
-        result = await auth_svc.refresh(refresh_token)
+        result = await auth_svc.refresh(token)
     except InvalidTokenError as exc:
         response.delete_cookie(REFRESH_COOKIE_NAME)
         raise HTTPException(
@@ -152,11 +190,17 @@ async def refresh(
             detail=str(exc),
         )
 
-    response.set_cookie(REFRESH_COOKIE_NAME, result["refresh_token"], **_COOKIE_SETTINGS)
+    response.set_cookie(REFRESH_COOKIE_NAME, result["refresh_token"], **_cookie_settings())
+    user_resp = None
+    if result.get("user"):
+        from backend.schemas.auth import UserResponse
+        user_resp = UserResponse.model_validate(result["user"])
     return TokenResponse(
         access_token=result["access_token"],
         token_type="bearer",
         expires_in=result["expires_in"],
+        refresh_token=result["refresh_token"],
+        user=user_resp,
     )
 
 

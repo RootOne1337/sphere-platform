@@ -25,6 +25,7 @@ services:
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - ENVIRONMENT=${ENVIRONMENT:-production}
       - WEB_CONCURRENCY=${WEB_CONCURRENCY:-4}
+      - CORS_EXTRA_ORIGINS=${CORS_EXTRA_ORIGINS:-}
     ports:
       - "${BACKEND_PORT:-8000}:8000"
     depends_on:
@@ -70,8 +71,8 @@ services:
       dockerfile: Dockerfile
     user: "0"                    # root — нужно для записи в .next/ под Windows bind mount
     environment:
-      - NEXT_PUBLIC_API_URL=http://localhost/api/v1
-      - NEXT_PUBLIC_WS_URL=ws://localhost
+      - NEXT_PUBLIC_API_URL=/api/v1
+      - NEXT_PUBLIC_WS_URL=
     ports:
       - "3002:3002"
     volumes:

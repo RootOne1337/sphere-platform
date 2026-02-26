@@ -54,6 +54,9 @@ class Settings(BaseSettings):
     VPN_KEY_ENCRYPTION_KEY: str = ""                      # Fernet key (Fernet.generate_key())
     VPN_POOL_SUBNET: str = "10.100.0.0/16"                # Подсеть для пула IP
 
+    # Cookie
+    COOKIE_SECURE: bool = False  # True в production (HTTPS напрямую), False через tunnel/dev
+
     # App
     DEBUG: bool = False
     LOG_LEVEL: str = "INFO"
