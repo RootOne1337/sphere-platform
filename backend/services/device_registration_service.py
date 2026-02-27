@@ -71,7 +71,7 @@ class DeviceRegistrationService:
         data: DeviceRegisterRequest,
     ) -> Device:
         """Создать новое устройство в БД."""
-        name = data.name or self._generate_device_name(data)
+        name = data.name or await self._generate_device_name(org_id, data)
 
         meta: dict[str, Any] = {
             "type": data.device_type,
@@ -144,14 +144,16 @@ class DeviceRegistrationService:
             created_at=device.created_at,
         )
 
-    @staticmethod
-    def _generate_device_name(data: DeviceRegisterRequest) -> str:
+    async def _generate_device_name(self, org_id: uuid.UUID, data: DeviceRegisterRequest) -> str:
         """
-        Автоматическая генерация имени устройства.
+        Уникальная автогенерация имени устройства.
 
         Шаблон: {location}-{type_short}-{index:03d}
-        Например: msk-ld-042, fra-ph-001
+        index = количество уже существующих устройств с тем же префиксом в org.
+        Например: auto-ph-000, auto-ph-001, msk-ld-000, msk-ld-001
         """
+        from sqlalchemy import func
+
         type_short = {
             "ldplayer": "ld",
             "physical": "ph",
@@ -161,6 +163,17 @@ class DeviceRegistrationService:
         }.get(data.device_type, "dv")
 
         location = data.location or "auto"
-        index = data.instance_index if data.instance_index is not None else 0
+        prefix = f"{location}-{type_short}-"
 
-        return f"{location}-{type_short}-{index:03d}"
+        # Если instance_index явно задан — используем его (для LDPlayer клонов)
+        if data.instance_index is not None:
+            return f"{prefix}{data.instance_index:03d}"
+
+        # Иначе — берём следующий свободный индекс по счётчику в БД
+        count = await self.db.scalar(
+            select(func.count(Device.id)).where(
+                Device.org_id == org_id,
+                Device.name.like(f"{prefix}%"),
+            )
+        )
+        return f"{prefix}{(count or 0):03d}"
