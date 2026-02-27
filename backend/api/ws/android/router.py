@@ -287,51 +287,75 @@ async def android_agent_ws(
             pass
 
     # Шаг 1: First-message auth (НЕ JWT в URL — чтобы не засветить в логах)
+    logger.debug("android_ws: ожидаю first message", device_id=device_id)
     try:
         first_msg = await asyncio.wait_for(ws.receive_json(), timeout=10.0)
     except asyncio.TimeoutError:
+        logger.warning("android_ws: auth_timeout — клиент не прислал first message за 10с", device_id=device_id)
         await _close(4003, "auth_timeout")
         return
     except WebSocketDisconnect:
-        return  # Клиент уже отключился — ничего закрывать не нужно
-    except Exception:
+        logger.info("android_ws: клиент отключился до first message", device_id=device_id)
+        return
+    except Exception as exc:
+        logger.warning("android_ws: receive_error при first message", device_id=device_id, error=str(exc))
         await _close(4001, "receive_error")
         return
 
     token = first_msg.get("token")
-    if not token:
-        await _close(4001, "no_token")
-        return
+    logger.debug("android_ws: first message получен", device_id=device_id, has_token=bool(token), token_prefix=str(token)[:20] if token else "")
 
     # Auth phase: DB session scoped to auth only — not held for WS lifetime
     import uuid
 
     from fastapi import HTTPException
 
+    from backend.core.dependencies import _DEV_SKIP_AUTH
+
     org_id_str: str = ""
     try:
         async with AsyncSessionLocal() as db:
             try:
-                user = await authenticate_ws_token(token, db)
-            except HTTPException:
-                await _close(4001, "invalid_token")
-                return
-
-            try:
                 device_uuid = uuid.UUID(device_id)
             except ValueError:
+                logger.warning("android_ws: invalid_device_id", device_id=device_id)
                 await _close(4004, "invalid_device_id")
                 return
 
             device = await db.get(Device, device_uuid)
-            if not device or str(device.org_id) != str(user.org_id):
+            if not device:
+                logger.warning("android_ws: device_not_found", device_id=device_id)
                 await _close(4004, "device_not_found")
                 return
 
-            org_id_str = str(user.org_id)
+            if _DEV_SKIP_AUTH:
+                # DEV-режим: пропускаем валидацию токена, берём org из устройства
+                org_id_str = str(device.org_id)
+                logger.info("android_ws: DEV_SKIP_AUTH — auth bypassed", device_id=device_id, org_id=org_id_str)
+            else:
+                if not token:
+                    logger.warning("android_ws: no_token в first message", device_id=device_id)
+                    await _close(4001, "no_token")
+                    return
+
+                try:
+                    user = await authenticate_ws_token(token, db)
+                except HTTPException as http_exc:
+                    logger.warning("android_ws: invalid_token", device_id=device_id, detail=http_exc.detail)
+                    await _close(4001, "invalid_token")
+                    return
+
+                if str(device.org_id) != str(user.org_id):
+                    logger.warning("android_ws: org mismatch", device_id=device_id)
+                    await _close(4004, "device_not_found")
+                    return
+
+                org_id_str = str(user.org_id)
+                logger.info("android_ws: auth passed", device_id=device_id, org_id=org_id_str)
     except HTTPException:
         raise
-    except Exception:
+    except Exception as exc:
+        logger.error("android_ws: auth_error (unhandled)", device_id=device_id, error=str(exc), exc_info=True)
         await _close(1011, "auth_error")
         return
     # DB session is now CLOSED — safe to enter long-lived WS loop
