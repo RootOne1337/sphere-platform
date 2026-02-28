@@ -17,6 +17,7 @@ import {
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
 import { Plus, Trash2, Shield, Key } from 'lucide-react';
+import { TeamTab } from './TeamTab';
 
 /* ── MFA Tab ────────────────────────────────────────────────────────────── */
 function MfaTab() {
@@ -272,10 +273,12 @@ export default function SettingsPage() {
       <Tabs defaultValue="profile">
         <TabsList>
           <TabsTrigger value="profile">Profile</TabsTrigger>
+          <TabsTrigger value="team">Team</TabsTrigger>
           <TabsTrigger value="mfa">MFA</TabsTrigger>
           <TabsTrigger value="api-keys">API Keys</TabsTrigger>
         </TabsList>
         <TabsContent value="profile"><ProfileTab /></TabsContent>
+        <TabsContent value="team"><TeamTab /></TabsContent>
         <TabsContent value="mfa"><MfaTab /></TabsContent>
         <TabsContent value="api-keys"><ApiKeysTab /></TabsContent>
       </Tabs>
