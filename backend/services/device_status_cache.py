@@ -23,7 +23,7 @@ class DeviceStatusCache:
 
     KEY_PREFIX = "device:status:"
     TTL_ONLINE = 120
-    TTL_OFFLINE = 3600
+    TTL_OFFLINE = 120
 
     def __init__(self, redis: Any) -> None:
         self.redis = redis

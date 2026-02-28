@@ -9,11 +9,8 @@ from pydantic import ValidationError
 
 from backend.schemas.dag import (
     VALID_ACTION_TYPES,
-    ConditionAction,
     DAGNode,
     DAGScript,
-    StartAction,
-    TapAction,
 )
 from backend.services.lua_safety import check_lua_safety
 
@@ -46,7 +43,7 @@ class TestDagContract:
         """MERGE-3: node.action.type — из VALID_ACTION_TYPES."""
         dag = DAGScript.model_validate(_minimal_dag())
         for node in dag.nodes:
-            assert node.action.type in VALID_ACTION_TYPES
+            assert node.action["type"] in VALID_ACTION_TYPES
 
     def test_on_success_is_str_or_none(self):
         """MERGE-3: node.on_success — str | None, не list."""
@@ -61,8 +58,21 @@ class TestDagContract:
 
     def test_valid_action_types_contains_all_expected(self):
         expected = {
+            # Базовые действия (v1)
             "tap", "swipe", "type_text", "sleep", "find_element",
             "key_event", "lua", "screenshot", "condition", "start", "end",
+            # Жизненный цикл приложений
+            "launch_app", "stop_app", "clear_app_data",
+            # Расширенные UI-элементы
+            "find_first_element", "tap_first_visible", "tap_element",
+            "get_element_text", "wait_for_element_gone", "scroll_to",
+            # Жесты
+            "long_press", "double_tap", "scroll",
+            # Переменные контекста
+            "set_variable", "get_variable", "increment_variable",
+            # Системные
+            "shell", "input_clear", "http_request", "open_url",
+            "get_device_info", "assert",
         }
         assert VALID_ACTION_TYPES == expected
 
@@ -70,8 +80,8 @@ class TestDagContract:
 # ── SPLIT-1: Критерии готовности ─────────────────────────────────────────────
 
 class TestCycleDetection:
-    def test_dag_with_cycle_raises_value_error(self):
-        """DAG с циклом → ValueError: Cycle detected."""
+    def test_dag_with_cycle_allowed_by_timeout(self):
+        """DAG с циклом разрешён — защита через timeout_ms."""
         dag_dict = {
             "version": "1.0",
             "name": "Cyclic",
@@ -79,13 +89,11 @@ class TestCycleDetection:
                 {"id": "start", "action": {"type": "start"}, "on_success": "a"},
                 {"id": "a", "action": {"type": "tap", "x": 100, "y": 200}, "on_success": "b"},
                 {"id": "b", "action": {"type": "tap", "x": 100, "y": 200}, "on_success": "a"},  # cycle!
-                {"id": "end", "action": {"type": "end"}},
             ],
             "entry_node": "start",
         }
-        with pytest.raises(ValidationError) as exc_info:
-            DAGScript.model_validate(dag_dict)
-        assert "Cycle" in str(exc_info.value)
+        dag = DAGScript.model_validate(dag_dict)
+        assert len(dag.nodes) == 3
 
 
 class TestUnreachableNodes:
@@ -154,9 +162,9 @@ class TestConditionAction:
         }
         dag = DAGScript.model_validate(dag_dict)
         condition_node = next(n for n in dag.nodes if n.id == "check")
-        assert isinstance(condition_node.action, ConditionAction)
-        assert condition_node.action.on_true == "tap_btn"
-        assert condition_node.action.on_false == "end"
+        assert condition_node.action["type"] == "condition"
+        assert condition_node.action["on_true"] == "tap_btn"
+        assert condition_node.action["on_false"] == "end"
 
     def test_condition_with_unknown_on_true_raises(self):
         dag_dict = {
@@ -272,12 +280,12 @@ class TestDagPerformance:
 
 
 class TestActionValidation:
-    def test_tap_action_coordinates_bounds(self):
-        """Координаты Tap ограничены 0..3840 x 0..2160."""
+    def test_unknown_action_type_rejected(self):
+        """Неизвестный тип action отклоняется."""
         with pytest.raises(ValidationError):
             DAGNode(
                 id="node1",
-                action=TapAction(type="tap", x=9999, y=0),
+                action={"type": "nonexistent_action", "x": 100},
             )
 
     def test_minimal_valid_dag(self):
@@ -301,5 +309,5 @@ class TestActionValidation:
         with pytest.raises(ValidationError):
             DAGNode(
                 id="123invalid",  # starts with digit
-                action=StartAction(type="start"),
+                action={"type": "start"},
             )

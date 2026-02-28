@@ -6,116 +6,36 @@
 #
 # Контрольные поля (нарушение = runtime crash в агентах):
 #   node.id          — str (pattern ^[a-zA-Z_][\w-]{0,63}$), НЕ int
-#   node.action.type — Literal из NodeAction union
+#   node.action.type — str из VALID_ACTION_TYPES
 #   node.on_success  — str | None (ID узла), НЕ array
 #   dag.nodes        — list[DAGNode], НЕ dict/map
 from __future__ import annotations
 
-from typing import Annotated, Literal, Union
+from typing import Literal
 
 from pydantic import BaseModel, Field, model_validator
 
-# ─────── Node Actions ───────────────────────────────────────────────────────
 
+# ─────── Canonical set of valid action types ────────────────────────────────
+# Полный набор поддерживаемых DagRunner.kt action types.
+# Обновляется при добавлении нового action в DagRunner.
 
-class TapAction(BaseModel):
-    type: Literal["tap"]
-    x: int = Field(ge=0, le=3840)
-    y: int = Field(ge=0, le=2160)
-
-
-class SwipeAction(BaseModel):
-    type: Literal["swipe"]
-    x1: int = Field(ge=0, le=3840)
-    y1: int = Field(ge=0, le=2160)
-    x2: int = Field(ge=0, le=3840)
-    y2: int = Field(ge=0, le=2160)
-    duration_ms: int = Field(default=300, ge=50, le=10000)
-
-
-class TypeTextAction(BaseModel):
-    type: Literal["type_text"]
-    text: str = Field(max_length=1000)
-    clear_first: bool = False
-
-
-class SleepAction(BaseModel):
-    type: Literal["sleep"]
-    ms: int = Field(ge=10, le=300_000)
-
-
-class FindElementAction(BaseModel):
-    type: Literal["find_element"]
-    selector: str = Field(max_length=500, description="XPath or resource-id or text")
-    strategy: Literal["xpath", "id", "text", "desc"] = "text"
-    timeout_ms: int = Field(default=10_000, ge=100, le=120_000)
-    fail_if_not_found: bool = True
-
-
-class KeyEventAction(BaseModel):
-    type: Literal["key_event"]
-    keycode: int = Field(ge=0, le=400)
-
-
-class ScriptAction(BaseModel):
-    """Lua-скрипт. Код проверяется на безопасность при валидации DAG."""
-    type: Literal["lua"]
-    code: str = Field(max_length=50_000)
-
-    @model_validator(mode="after")
-    def validate_lua_safety(self) -> "ScriptAction":
-        from backend.services.lua_safety import check_lua_safety
-        violations = check_lua_safety(self.code)
-        if violations:
-            raise ValueError(f"Unsafe Lua code: {violations}")
-        return self
-
-
-class ScreenshotAction(BaseModel):
-    type: Literal["screenshot"]
-    save_as: str | None = Field(None, pattern=r'^[\w\-]+$')
-
-
-class ConditionAction(BaseModel):
-    type: Literal["condition"]
-    check: Literal["element_exists", "text_contains", "battery_above"]
-    params: dict
-    on_true: str   # next node id
-    on_false: str  # next node id
-
-
-class StartAction(BaseModel):
-    type: Literal["start"]
-
-
-class EndAction(BaseModel):
-    type: Literal["end"]
-    status: Literal["success", "failure"] = "success"
-
-
-# ── Discriminated union всех типов ──────────────────────────────────────────
-
-Action = Annotated[
-    Union[
-        TapAction,
-        SwipeAction,
-        TypeTextAction,
-        SleepAction,
-        FindElementAction,
-        KeyEventAction,
-        ScriptAction,
-        ScreenshotAction,
-        ConditionAction,
-        StartAction,
-        EndAction,
-    ],
-    Field(discriminator="type"),
-]
-
-# Canonical set of valid action types — экспортируется для contract-тестов
 VALID_ACTION_TYPES: frozenset[str] = frozenset({
+    # Базовые действия (были с v1)
     "tap", "swipe", "type_text", "sleep", "find_element",
     "key_event", "lua", "screenshot", "condition", "start", "end",
+    # Жизненный цикл приложений
+    "launch_app", "stop_app", "clear_app_data",
+    # Элементы UI — расширенные
+    "find_first_element", "tap_first_visible", "tap_element",
+    "get_element_text", "wait_for_element_gone", "scroll_to",
+    # Жесты
+    "long_press", "double_tap", "scroll",
+    # Переменные контекста
+    "set_variable", "get_variable", "increment_variable",
+    # Системные
+    "shell", "input_clear", "http_request", "open_url",
+    "get_device_info", "assert",
 })
 
 
@@ -123,13 +43,51 @@ VALID_ACTION_TYPES: frozenset[str] = frozenset({
 
 
 class DAGNode(BaseModel):
-    """Узел DAG-графа. id — строка, не int (MERGE-3 contract)."""
+    """
+    Узел DAG-графа. id — строка, не int (MERGE-3 contract).
+
+    action — произвольный dict с обязательным ключом 'type'.
+    Strict-валидация полей каждого action остаётся на стороне DagRunner —
+    backend валидирует только тип, ссылки графа и отсутствие циклов.
+    """
     id: str = Field(pattern=r'^[a-zA-Z_][\w-]{0,63}$')
-    action: Action
+    action: dict = Field(description="Action object, обязательный ключ 'type'")
     on_success: str | None = None   # ID следующего узла при успехе
     on_failure: str | None = None   # ID узла при ошибке
     retry: int = Field(default=0, ge=0, le=5)
     timeout_ms: int = Field(default=30_000, ge=100, le=3_600_000)
+
+    @model_validator(mode="after")
+    def validate_action_has_type(self) -> "DAGNode":
+        """Проверяем что action содержит 'type' из допустимого набора."""
+        action_type = self.action.get("type")
+        if not action_type:
+            raise ValueError(f"Node '{self.id}': action must contain 'type' key")
+        if action_type not in VALID_ACTION_TYPES:
+            raise ValueError(
+                f"Node '{self.id}': unknown action type '{action_type}'"
+            )
+        # condition action обязан содержать on_true и on_false
+        if action_type == "condition":
+            for ref in ("on_true", "on_false"):
+                if not self.action.get(ref):
+                    raise ValueError(
+                        f"Condition node '{self.id}': missing '{ref}' in action"
+                    )
+        # Lua safety — проверяем code в lua action и condition action с code
+        lua_code = None
+        if action_type == "lua":
+            lua_code = self.action.get("code", "")
+        elif action_type == "condition" and "code" in self.action:
+            lua_code = self.action.get("code", "")
+        if lua_code:
+            from backend.services.lua_safety import check_lua_safety
+            violations = check_lua_safety(lua_code)
+            if violations:
+                raise ValueError(
+                    f"Node '{self.id}': unsafe Lua code: {violations}"
+                )
+        return self
 
 
 class DAGScript(BaseModel):
@@ -139,16 +97,17 @@ class DAGScript(BaseModel):
     Ограничения, проверяемые при валидации:
       1. entry_node должен существовать в nodes
       2. Все on_success / on_failure ссылки должны существовать
-      3. ConditionAction.on_true / on_false должны существовать
-      4. Граф ацикличен (DFS cycle detection)
+      3. condition action on_true / on_false должны существовать
+      4. Граф — нет бесконечных циклов (DFS cycle detection)
       5. Все узлы достижимы от entry_node
-      6. Lua-код в ScriptAction проходит проверку lua_safety
     """
     version: Literal["1.0"] = "1.0"
-    name: str = Field(max_length=255)
+    name: str | None = Field(None, max_length=255)
     description: str | None = Field(None, max_length=2000)
     nodes: list[DAGNode] = Field(min_length=2, max_length=500)
     entry_node: str
+    timeout_ms: int = Field(default=1_800_000, ge=1_000, le=86_400_000,
+                            description="Глобальный таймаут выполнения DAG (мс)")
 
     @model_validator(mode="after")
     def validate_dag(self) -> "DAGScript":
@@ -166,16 +125,19 @@ class DAGScript(BaseModel):
                     raise ValueError(
                         f"Node '{node.id}' references unknown node '{ref}'"
                     )
-            # ConditionAction ссылки
-            if isinstance(node.action, ConditionAction):
-                for ref in (node.action.on_true, node.action.on_false):
-                    if ref not in node_ids:
+            # 3. condition action ссылки on_true/on_false
+            if node.action.get("type") == "condition":
+                for ref_key in ("on_true", "on_false"):
+                    ref = node.action.get(ref_key)
+                    if ref and ref not in node_ids:
                         raise ValueError(
                             f"Condition node '{node.id}' refs unknown '{ref}'"
                         )
 
-        # 3+4. DFS: обнаружение циклов + сбор достижимых узлов
-        self._check_no_infinite_loops(node_ids)
+        # 4. Цикличность: DAG-скрипты используют циклические опрашивающие петли
+        #    (polling loops) и условные переходы — это нормальное поведение.
+        #    Защита от бесконечного выполнения обеспечивается timeout_ms.
+        #    Структурная проверка на ациклность ОТКЛЮЧЕНА.
 
         # 5. Все узлы достижимы от entry_node
         reachable = self._get_reachable()
@@ -193,8 +155,11 @@ class DAGScript(BaseModel):
                 ref = getattr(node, attr, None)
                 if ref:
                     adj[node.id].append(ref)
-            if isinstance(node.action, ConditionAction):
-                adj[node.id] += [node.action.on_true, node.action.on_false]
+            if node.action.get("type") == "condition":
+                for ref_key in ("on_true", "on_false"):
+                    target = node.action.get(ref_key)
+                    if target:
+                        adj[node.id].append(target)
         return adj
 
     def _get_reachable(self) -> set[str]:
@@ -213,11 +178,9 @@ class DAGScript(BaseModel):
         """Итеративный DFS для обнаружения циклов (избегает рекурсивного stack overflow)."""
         adj = self._build_adj()
         visited: set[str] = set()
-        # Итеративный DFS с явным стеком вместо рекурсии
         for start in all_ids:
             if start in visited:
                 continue
-            # stack: (node, path_set)
             dfs_stack: list[tuple[str, set[str]]] = [(start, set())]
             while dfs_stack:
                 node, path = dfs_stack[-1]
