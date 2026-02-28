@@ -494,3 +494,80 @@ async def request_logcat(
     finally:
         await pubsub.unsubscribe(result_channel)
         await pubsub.aclose()
+
+
+# ── Reboot ────────────────────────────────────────────────────────────────────
+
+@router.post(
+    "/{device_id}/reboot",
+    summary="Перезагрузить устройство через агент",
+)
+async def reboot_device(
+    device_id: uuid.UUID,
+    current_user: User = require_permission("device:write"),
+    db: AsyncSession = Depends(get_db),
+    svc: DeviceService = Depends(get_device_service),
+) -> dict:
+    import asyncio
+    import json
+    import time
+
+    from fastapi import HTTPException
+
+    from backend.database.redis_client import get_redis_binary
+    from backend.websocket.connection_manager import get_connection_manager
+
+    device = await svc.get_device(device_id, current_user.org_id)
+    if not device:
+        raise HTTPException(status_code=404, detail="Device not found")
+
+    manager = get_connection_manager()
+    if not manager.is_connected(str(device_id)):
+        raise HTTPException(status_code=400, detail="Device is offline")
+
+    command_id = str(uuid.uuid4())
+    send_ok = await manager.send_to_device(str(device_id), {
+        "type": "REBOOT",
+        "command_id": command_id,
+        "payload": {},
+        "signed_at": int(time.time()),
+        "ttl_seconds": 15,
+    })
+    if not send_ok:
+        raise HTTPException(
+            status_code=504,
+            detail=f"Failed to send reboot command to device {device_id}",
+        )
+
+    redis = await get_redis_binary()
+    if not redis:
+        raise HTTPException(status_code=500, detail="Redis unavailable")
+
+    pubsub = redis.pubsub()
+    result_channel = f"sphere:agent:result:{device_id}:{command_id}"
+    await pubsub.subscribe(result_channel)
+
+    try:
+        async def wait_for_result():
+            async for message in pubsub.listen():
+                if message["type"] == "message":
+                    data = json.loads(message["data"])
+                    if data.get("status") in ("completed", "received", "running"):
+                        return {
+                            "status": "reboot_initiated",
+                            "device_id": str(device_id),
+                        }
+                    elif data.get("status") == "failed":
+                        return {"error": data.get("error", "Reboot failed")}
+
+        return await asyncio.wait_for(wait_for_result(), timeout=10.0)
+    except asyncio.TimeoutError:
+        # Устройство могло перезагрузиться до отправки ACK — это нормально
+        return {
+            "status": "reboot_initiated",
+            "device_id": str(device_id),
+            "note": "Device may have rebooted before acknowledging",
+        }
+    finally:
+        await pubsub.unsubscribe(result_channel)
+        await pubsub.aclose()
