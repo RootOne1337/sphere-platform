@@ -47,8 +47,20 @@ async def _startup_scheduler_engine() -> None:
     from backend.services.scheduler.scheduler_engine import SchedulerEngine
 
     engine = SchedulerEngine()
-    asyncio.create_task(engine.start())
+    task = asyncio.create_task(engine.start())
     logger.info("scheduler_engine.registered")
+
+    async def _shutdown_scheduler_engine() -> None:
+        """Graceful-остановка loop расписаний."""
+        task.cancel()
+        await engine.stop()
+        try:
+            await task
+        except asyncio.CancelledError:
+            pass
+        logger.info("scheduler_engine.stopped")
+
+    register_shutdown("scheduler_engine", _shutdown_scheduler_engine)
 
 
 register_startup("scheduler_engine", _startup_scheduler_engine)

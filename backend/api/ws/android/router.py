@@ -303,7 +303,7 @@ async def android_agent_ws(
         return
 
     token = first_msg.get("token")
-    logger.debug("android_ws: first message получен", device_id=device_id, has_token=bool(token), token_prefix=str(token)[:20] if token else "")
+    logger.debug("android_ws: first message получен", device_id=device_id, has_token=bool(token))
 
     # Auth phase: DB session scoped to auth only — not held for WS lifetime
     import uuid
