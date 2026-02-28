@@ -23,6 +23,7 @@ import com.sphereplatform.agent.R
 import com.sphereplatform.agent.provisioning.DeviceRegistrationClient
 import com.sphereplatform.agent.provisioning.RegistrationException
 import com.sphereplatform.agent.provisioning.ZeroTouchProvisioner
+import com.sphereplatform.agent.service.ServiceWatchdog
 import com.sphereplatform.agent.service.SphereAgentService
 import com.sphereplatform.agent.store.AuthTokenStore
 import dagger.hilt.android.AndroidEntryPoint
@@ -410,6 +411,10 @@ class SetupActivity : AppCompatActivity() {
     }
 
     private fun launchAgent() {
+        // Отмечаем enrollment для ServiceWatchdog (гарантия перезапуска после kill)
+        ServiceWatchdog.markEnrolled(this)
+        ServiceWatchdog.schedule(this)
+
         SphereAgentService.start(this)
         finish()
     }
