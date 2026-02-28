@@ -22,8 +22,8 @@ import javax.inject.Singleton
  *  2. Файл /sdcard/sphere-agent-config.json     — лёгкий adb push target
  *  3. Файл <appExternalFiles>/sphere-agent-config.json
  *  4. Файл <appInternalFiles>/sphere-agent-config.json
- *  5. BuildConfig.DEFAULT_SERVER_URL + DEFAULT_API_KEY — baked-in defaults
- *  6. HTTP Config Endpoint (GET BuildConfig.CONFIG_URL) — server auto-discovery
+ *  5. HTTP Config Endpoint (GET BuildConfig.CONFIG_URL) — server auto-discovery
+ *  6. BuildConfig.DEFAULT_SERVER_URL + DEFAULT_API_KEY — baked-in defaults (fallback)
  *
  * Для эмулятора:
  *   server_url = "http://10.0.2.2"  (Android эмулятор → host-машина loopback)
@@ -96,12 +96,15 @@ class ZeroTouchProvisioner @Inject constructor(
             Timber.i("ZeroTouch: enrolled from local file [${it.source}]")
             return it
         }
-        discoverFromBuildConfig()?.let {
-            Timber.i("ZeroTouch: enrolled from BuildConfig (flavor=${BuildConfig.FLAVOR_LABEL})")
-            return it
-        }
+        // HTTP Config Endpoint проверяется ПЕРЕД BuildConfig:
+        // Cloudflare Quick Tunnel даёт новый URL при каждом рестарте,
+        // поэтому динамический конфиг всегда приоритетнее захардкоженных defaults.
         discoverFromConfigEndpoint()?.let {
             Timber.i("ZeroTouch: discovered server via HTTP Config Endpoint")
+            return it
+        }
+        discoverFromBuildConfig()?.let {
+            Timber.i("ZeroTouch: enrolled from BuildConfig (flavor=${BuildConfig.FLAVOR_LABEL})")
             return it
         }
         Timber.d("ZeroTouch: no auto-provision config found — manual enrollment required")

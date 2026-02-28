@@ -15,6 +15,18 @@ if (versionFile.exists()) versionProps.load(versionFile.inputStream())
 val appVersionCode = versionProps.getProperty("VERSION_CODE", "10001").toInt()
 val appVersionName: String = versionProps.getProperty("VERSION_NAME", "1.0.0")
 
+// ── Динамический server URL из корневого .env ─────────────────────────────
+// sync-tunnel-url.sh обновляет SERVER_PUBLIC_URL → Gradle подхватывает при каждой сборке
+val dotEnvFile = rootProject.file("../.env")
+val serverPublicUrl: String = if (dotEnvFile.exists()) {
+    dotEnvFile.readLines()
+        .firstOrNull { it.startsWith("SERVER_PUBLIC_URL=") }
+        ?.substringAfter("=")?.trim()?.removeSurrounding("\"")
+        ?: "http://10.0.2.2:8000"
+} else {
+    "http://10.0.2.2:8000"
+}
+
 android {
     namespace = "com.sphereplatform.agent"
     compileSdk = 35
@@ -50,8 +62,8 @@ android {
             versionNameSuffix = "-dev"
             buildConfigField("boolean", "ALLOW_HTTP", "true")
             buildConfigField("String", "FLAVOR_LABEL", "\"dev\"")
-            // Emulator defaults: server URL через Serveo tunnel (для WS/REST)
-            buildConfigField("String", "DEFAULT_SERVER_URL", "\"https://sphere.serveousercontent.com\"")
+            // Server URL из .env (обновляется sync-tunnel-url.sh при смене Cloudflare-туннеля)
+            buildConfigField("String", "DEFAULT_SERVER_URL", "\"$serverPublicUrl\"")
             // Enrollment key из agent-config/environments/development.json
             buildConfigField("String", "DEFAULT_API_KEY", "\"sphr_dev_enrollment_key_2025\"")
             buildConfigField("String", "DEFAULT_DEVICE_ID", "\"\"")
