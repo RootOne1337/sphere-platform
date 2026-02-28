@@ -7,7 +7,7 @@
 [![CI Backend](https://github.com/RootOne1337/sphere-platform/actions/workflows/ci-backend.yml/badge.svg)](https://github.com/RootOne1337/sphere-platform/actions)
 [![CI Android](https://github.com/RootOne1337/sphere-platform/actions/workflows/ci-android.yml/badge.svg)](https://github.com/RootOne1337/sphere-platform/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-4.1.0-brightgreen.svg)](VERSION)
+[![Version](https://img.shields.io/badge/version-4.2.0-brightgreen.svg)](VERSION)
 
 [Документация](docs/) · [API Reference](docs/api-reference.md) · [Deployment Guide](docs/deployment.md) · [Changelog](CHANGELOG.md)
 
@@ -26,6 +26,8 @@ Sphere Platform — production-ready система для управления,
 | **Управление флотом** | Регистрация, группировка, тегирование и мониторинг 1000+ Android-устройств |
 | **Удалённое управление** | H.264 видеопоток в реальном времени + выполнение ADB-команд |
 | **Автоматизация скриптов** | DAG-based скрипты v7 с wave/batch исполнением по группам устройств |
+| **Pipeline Orchestrator** | Цепочки скриптов (Pipeline) с параллельными/последовательными шагами, условной логикой и 9 типами step-обработчиков |
+| **Cron Scheduler** | Собственный DB-backed планировщик с croniter, конфликт-политиками (skip/queue) и SKIP LOCKED |
 | **VPN-туннелирование** | AmneziaWG (обфусцированный WireGuard) per-device туннели с IP-пулом |
 | **Agent Discovery** | Zero-touch автообнаружение и авторегистрация 1000+ эмуляторов LDPlayer |
 | **n8n интеграция** | Нативные n8n-ноды для no-code автоматизации |
@@ -93,6 +95,35 @@ LDPlayer Clone N ──► ZeroTouchProvisioner
                     Device(fingerprint, JWT tokens) → готов к работе
 ```
 
+### Pipeline Orchestrator (TZ-12)
+
+```
+REST API
+  │
+  POST /api/v1/pipelines/{id}/execute
+  │
+  ▼
+PipelineService ──► PipelineExecutor ──► StepHandlers (9 типов)
+  │                      │                   ├── run_script
+  │                      │                   ├── run_pipeline (вложенные)
+  │                      │                   ├── http_request
+  │                      │                   ├── condition (if/else)
+  │                      │                   ├── delay
+  │                      │                   ├── parallel
+  │                      │                   ├── set_variable
+  │                      │                   ├── notify
+  │                      │                   └── approval (ручной)
+  │                      │
+  ▼                      ▼
+Pipeline (ORM)     PipelineRun (ORM) ── состояние каждого шага
+  │
+  ▼
+SchedulerEngine ──► croniter ──► периодический запуск по расписанию
+  │                               (FOR UPDATE SKIP LOCKED)
+  ▼
+Schedule (ORM) ──► ScheduleExecution (история)
+```
+
 > Полная документация по архитектуре: [docs/architecture.md](docs/architecture.md)
 
 ---
@@ -149,19 +180,19 @@ docker compose exec backend python scripts/create_admin.py
 ```
 sphere-platform/
 ├── backend/                # FastAPI-приложение (Python 3.12)
-│   ├── api/v1/             # REST-эндпоинты (auth, config, devices, scripts, vpn, …)
+│   ├── api/v1/             # REST-эндпоинты (21 модуль: auth, devices, pipelines, schedules, …)
 │   ├── api/ws/             # WebSocket-маршруты (подключение устройств, стриминг)
 │   ├── core/               # Конфигурация, RBAC, JWT, зависимости
-│   ├── models/             # SQLAlchemy ORM модели (13+ таблиц)
+│   ├── models/             # SQLAlchemy ORM модели (17 таблиц + Alembic миграции)
 │   ├── schemas/            # Pydantic request/response схемы
-│   ├── services/           # Бизнес-логика (DeviceRegistrationService, ScriptEngine, …)
-│   ├── tasks/              # Celery async-задачи
+│   ├── services/           # Бизнес-логика (orchestrator/, scheduler/, vpn/, …)
+│   ├── tasks/              # Фоновые asyncio-задачи (sync_device_status, scheduler_engine)
 │   ├── websocket/          # ConnectionManager + PubSubRouter
 │   └── monitoring/         # Prometheus-метрики, healthcheck
 │
 ├── frontend/               # Next.js 15 App Router (React 19)
 │   ├── app/(auth)/         # Страница авторизации
-│   ├── app/(dashboard)/    # Dashboard, Devices, Scripts, Stream, VPN
+│   ├── app/(dashboard)/    # Dashboard, Devices, Scripts, Stream, VPN, Tasks, Fleet, Monitoring
 │   ├── components/         # UI-компоненты (shadcn/ui)
 │   ├── hooks/              # TanStack Query data hooks
 │   └── lib/                # Axios-клиент, Zustand auth store
@@ -190,7 +221,7 @@ sphere-platform/
 ├── alembic/                # Миграции базы данных
 │   └── versions/           # Скрипты миграций
 │
-├── tests/                  # Pytest-тесты (743+ тестов)
+├── tests/                  # Pytest-тесты (779 тестов, 100% pass rate)
 ├── scripts/                # Утилиты (генерация секретов, создание admin)
 ├── .github/                # CI/CD workflows, PR шаблон, CODEOWNERS
 └── docs/                   # Документация проекта
@@ -203,12 +234,12 @@ sphere-platform/
 ### Backend
 | Компонент | Технология |
 |-----------|------------|
-| Фреймворк | FastAPI 0.115.0 + Uvicorn |
+| Фреймворк | FastAPI 0.115+ + Uvicorn |
 | ORM | SQLAlchemy 2.0 (async) |
 | БД | PostgreSQL 15 (RLS-политики) |
 | Кэш / Брокер | Redis 7.2 (pub/sub, кэш конфигов, очередь задач) |
 | Аутентификация | JWT HS256 (access + refresh) + TOTP MFA |
-| Задачи | Celery + Redis |
+| Задачи | asyncio Tasks + Redis PubSub |
 | Метрики | Prometheus + structlog |
 | Миграции | Alembic |
 
@@ -254,6 +285,7 @@ sphere-platform/
 | [Android Agent](docs/android-agent.md) | Сборка APK, развёртывание, обновления |
 | [PC Agent](docs/pc-agent.md) | Установка, ADB-мост, интеграция с LDPlayer |
 | [Agent Config](agent-config/README.md) | Конфигурационный репозиторий zero-touch provisioning |
+| [TZ-12 Orchestrator](TZ-12-Orchestrator/) | Pipeline Engine, Scheduler, Event Model (5 SPLITs) |
 | [ADR](docs/adr/) | Architecture Decision Records |
 | [Runbooks](docs/runbooks/) | Процедуры реагирования на инциденты |
 | [Contributing](CONTRIBUTING.md) | Руководство по контрибуции, стратегия ветвления |

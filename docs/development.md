@@ -1,6 +1,6 @@
 # Developer Guide
 
-> **Sphere Platform v4.0** — Local Development Setup & Coding Standards
+> **Sphere Platform v4.2** — Local Development Setup & Coding Standards
 
 ---
 
@@ -101,8 +101,11 @@ backend/
 │   └── tenant_middleware.py # Sets app.current_org_id in PG session
 ├── models/                  # SQLAlchemy ORM models (one file per table)
 ├── schemas/                 # Pydantic v2 request/response schemas
-├── services/                # Business logic (called from routers)
-├── tasks/                   # Celery async task functions
+├── services/                # Бизнес-логика (called from routers)
+│   ├── orchestrator/        # PipelineService, PipelineExecutor, StepHandler-ы
+│   ├── scheduler/           # ScheduleService, SchedulerEngine (croniter + pytz)
+│   └── vpn/                 # VPN-сервисы (IP pool, config, health)
+├── tasks/                   # Фоновые asyncio-задачи
 ├── websocket/
 │   ├── connection_manager.py
 │   └── pubsub_router.py
@@ -285,6 +288,10 @@ tests/
 ├── devices/
 │   ├── test_crud.py
 │   └── test_bulk.py
+├── test_scripts/
+│   └── test_pipeline_*.py   # Pipeline CRUD, executor, step handlers
+├── test_scripts/
+│   └── test_schedule_*.py   # Schedule CRUD, engine, dry-run
 ├── vpn/
 │   └── test_vpn_api.py
 └── test_ws/
@@ -432,7 +439,7 @@ All commits must follow [Conventional Commits v1.0](https://www.conventionalcomm
 | `perf` | Performance improvement |
 | `security` | Security fix |
 
-**Scopes:** `auth`, `devices`, `vpn`, `scripts`, `ws`, `frontend`, `android`, `pc-agent`, `infra`, `ci`
+**Scopes:** `auth`, `devices`, `vpn`, `scripts`, `ws`, `frontend`, `android`, `pc-agent`, `infra`, `ci`, `pipelines`, `schedules`
 
 **Examples:**
 ```
