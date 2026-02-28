@@ -42,30 +42,27 @@ export default function VPNManagerPage() {
           uptime: d.last_handshake_at ? 'Active' : 'N/A'
         }));
       } catch (e) {
-        console.error('Failed to fetch VPN peers', e);
+        console.warn('Failed to fetch VPN peers (backend might be offline)', e);
         return [];
       }
     }
   });
 
-  // Демонстрационные данные для графиков скорости
+  // Placeholder chart data — stable, no Math.random() re-renders
   const aggregateChartData = useMemo(() => {
     return Array.from({ length: 24 }).map((_, i) => ({
       time: `${i}:00`,
-      rx: Math.floor(Math.random() * 800) + 200,
-      tx: Math.floor(Math.random() * 400) + 50,
+      rx: 0,
+      tx: 0,
     }));
   }, []);
 
-  const generateNodeData = (id: string) => {
-    return Array.from({ length: 15 }).map((_, i) => {
-      const isDown = id === 'T-003';
-      return {
-        time: `${i}m`,
-        rx: isDown ? 0 : Math.floor(Math.random() * 100) + 10,
-        tx: isDown ? 0 : Math.floor(Math.random() * 50) + 5,
-      };
-    });
+  const generateNodeData = (_id: string) => {
+    return Array.from({ length: 15 }).map((_, i) => ({
+      time: `${i}m`,
+      rx: 0,
+      tx: 0,
+    }));
   };
 
   return (
@@ -89,19 +86,19 @@ export default function VPNManagerPage() {
                 <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold flex items-center gap-1">
                   <ArrowDown className="w-3 h-3" /> Global RX
                 </span>
-                <span className="text-sm text-foreground font-mono font-bold">21.7 GB</span>
+                <span className="text-sm text-foreground font-mono font-bold">{tunnels.length > 0 ? tunnels.reduce((sum, t) => sum + parseFloat(t.rx) || 0, 0).toFixed(1) + ' B' : '—'}</span>
               </div>
               <div className="flex flex-col border-l border-border pl-6">
                 <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold flex items-center gap-1">
                   <ArrowUp className="w-3 h-3" /> Global TX
                 </span>
-                <span className="text-sm text-foreground font-mono font-bold">6.9 GB</span>
+                <span className="text-sm text-foreground font-mono font-bold">{tunnels.length > 0 ? tunnels.reduce((sum, t) => sum + parseFloat(t.tx) || 0, 0).toFixed(1) + ' B' : '—'}</span>
               </div>
               <div className="flex flex-col border-l border-border pl-6">
                 <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold flex items-center gap-1">
-                  <Lock className="w-3 h-3" /> Encrypt
+                  <Lock className="w-3 h-3" /> Peers
                 </span>
-                <span className="text-sm text-success font-mono font-bold">AES-256</span>
+                <span className="text-sm text-success font-mono font-bold">{tunnels.length}</span>
               </div>
             </div>
           </div>

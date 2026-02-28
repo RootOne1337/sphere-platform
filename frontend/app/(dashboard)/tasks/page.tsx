@@ -1,15 +1,16 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { ListTodo, Play, Clock, CalendarClock, ShieldAlert, CheckCircle2, AlertTriangle, Workflow } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { ListTodo, Play, Clock, CalendarClock, ShieldAlert, CheckCircle2, Workflow } from 'lucide-react';
 import { Button } from '@/src/shared/ui/button';
 import { Input } from '@/src/shared/ui/input';
 import { Badge } from '@/src/shared/ui/badge';
 import { TaskGanttChart } from '@/src/features/tasks/TaskGanttChart';
-import { WorkflowVisualizer } from '@/src/features/tasks/WorkflowVisualizer';
 
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
+import { toast } from 'sonner';
 
 interface TaskItem {
   id: string;
@@ -23,15 +24,10 @@ interface TaskItem {
   durationMs: number | null;
 }
 
-const MOCK_WORKFLOW_STEPS: any[] = [
-  { id: 's1', name: 'Cron Trigger', type: 'TRIGGER', status: 'SUCCESS', duration: '12ms' },
-  { id: 's2', name: 'Fetch Active Devices', type: 'ACTION', status: 'SUCCESS', duration: '245ms' },
-  { id: 's3', name: 'Check Battery Level', type: 'CONDITION', status: 'SUCCESS', duration: '41ms' },
-  { id: 's4', name: 'Send Reboot Signal via RabbitMQ', type: 'ACTION', status: 'RUNNING', duration: 'Running...' },
-  { id: 's5', name: 'Wait For Reconnect', type: 'ACTION', status: 'PENDING' },
-];
+
 
 export default function TaskEnginePage() {
+  const router = useRouter();
   const [search, setSearch] = useState('');
 
   const { data: rawTasks = [], isLoading } = useQuery({
@@ -42,7 +38,7 @@ export default function TaskEnginePage() {
         // Backend returns { items: [...] }
         return data.items || [];
       } catch (e) {
-        console.error('Failed to fetch tasks', e);
+        console.warn('Failed to fetch tasks (backend might be offline)', e);
         return [];
       }
     },
@@ -57,14 +53,14 @@ export default function TaskEnginePage() {
 
       return {
         id: t.id,
-        name: `Script Task [${t.script_id?.split('-')[0] || 'Unknown'}]`,
+        name: t.name || `Task ${t.id.slice(0, 8)}`,
         type: t.priority > 0 ? 'CRON' : 'SCRIPT',
         schedule: 'Manual',
         status: t.status,
         lastRun: created.toLocaleString(),
         nextRun: isRunning ? 'In Progress...' : '-',
         startTimeMs: created.getTime(),
-        durationMs: isRunning ? null : 15000 // mock final duration if not running
+        durationMs: isRunning ? null : (t.finished_at && t.started_at ? new Date(t.finished_at).getTime() - new Date(t.started_at).getTime() : null)
       };
     });
   }, [rawTasks]);
@@ -110,25 +106,29 @@ export default function TaskEnginePage() {
 
       <div className="p-6 flex-1 overflow-auto">
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
-          {/* Quick Stats */}
+          {/* Quick Stats — computed from real data */}
           <div className="border border-border bg-muted rounded-sm p-4 flex items-center justify-between">
             <div>
-              <div className="text-[10px] uppercase text-muted-foreground font-bold tracking-widest mb-1">Active Schedules</div>
-              <div className="text-2xl font-mono font-bold text-foreground">12</div>
+              <div className="text-[10px] uppercase text-muted-foreground font-bold tracking-widest mb-1">Total Tasks</div>
+              <div className="text-2xl font-mono font-bold text-foreground">{tasks.length}</div>
             </div>
             <CalendarClock className="w-8 h-8 text-primary/30" strokeWidth={1} />
           </div>
           <div className="border border-border bg-muted rounded-sm p-4 flex items-center justify-between">
             <div>
-              <div className="text-[10px] uppercase text-muted-foreground font-bold tracking-widest mb-1">24h Success Rate</div>
-              <div className="text-2xl font-mono font-bold text-success">98.2%</div>
+              <div className="text-[10px] uppercase text-muted-foreground font-bold tracking-widest mb-1">Success Rate</div>
+              <div className="text-2xl font-mono font-bold text-success">
+                {tasks.length > 0
+                  ? `${((tasks.filter(t => t.status === 'COMPLETED' || t.status === 'SUCCESS').length / tasks.length) * 100).toFixed(1)}%`
+                  : '—'}
+              </div>
             </div>
             <CheckCircle2 className="w-8 h-8 text-success/30" strokeWidth={1} />
           </div>
           <div className="border border-border bg-muted rounded-sm p-4 flex items-center justify-between">
             <div>
               <div className="text-[10px] uppercase text-muted-foreground font-bold tracking-widest mb-1">Failed Tasks</div>
-              <div className="text-2xl font-mono font-bold text-destructive">1</div>
+              <div className="text-2xl font-mono font-bold text-destructive">{tasks.filter(t => t.status === 'FAILED' || t.status === 'ERROR').length}</div>
             </div>
             <ShieldAlert className="w-8 h-8 text-destructive/30" strokeWidth={1} />
           </div>
@@ -148,10 +148,10 @@ export default function TaskEnginePage() {
 
           <div className="flex flex-col">
             <h2 className="text-xs font-mono font-bold tracking-widest text-muted-foreground mb-3 uppercase flex items-center gap-2">
-              <Workflow className="w-4 h-4" /> Active Pipeline (Farm Auto-Reboot)
+              <Workflow className="w-4 h-4" /> Active Pipeline
             </h2>
-            <div className="flex-1 rounded-sm relative border-t border-border min-h-[150px]">
-              <WorkflowVisualizer steps={MOCK_WORKFLOW_STEPS} />
+            <div className="flex-1 rounded-sm relative border-t border-border min-h-[150px] flex items-center justify-center">
+              <div className="text-xs text-muted-foreground font-mono">No active pipeline running</div>
             </div>
           </div>
         </div>
@@ -176,7 +176,7 @@ export default function TaskEnginePage() {
                 </tr>
               )}
               {!isLoading && tasks.filter(t => t.name.toLowerCase().includes(search.toLowerCase()) || t.id.includes(search)).map((task) => (
-                <tr key={task.id} className="hover:bg-muted transition-colors border-l-2 border-l-transparent group cursor-pointer">
+                <tr key={task.id} onClick={() => router.push(`/tasks/${task.id}`)} className="hover:bg-muted transition-colors border-l-2 border-l-transparent group cursor-pointer">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
                       {(task.status === 'ACTIVE' || task.status === 'RUNNING') && <div className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />}

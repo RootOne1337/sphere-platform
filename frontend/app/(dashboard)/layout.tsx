@@ -56,12 +56,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       />
 
       {/* Основная рабочая область (Multi-Pane Layout Ready) */}
-      <main className="flex-1 overflow-auto flex flex-col relative bg-[#121212]">
+      <main className="flex-1 overflow-auto flex flex-col relative bg-background">
 
         {/* Мобильная шапка (только на маленьких экранах) */}
         <div className="lg:hidden flex items-center justify-between h-14 px-4 bg-card border-b border-border shrink-0">
           <div className="flex items-center gap-2 text-primary font-mono font-bold tracking-wider">
-            <div className="w-6 h-6 bg-primary rounded-sm text-black flex items-center justify-center">S</div>
+            <div className="w-6 h-6 bg-primary rounded-sm text-primary-foreground flex items-center justify-center">S</div>
             SPHERE<span className="text-muted-foreground font-normal text-xs">NOC</span>
           </div>
           <Button variant="ghost" size="icon" onClick={() => setIsMobileSidebarOpen(true)}>

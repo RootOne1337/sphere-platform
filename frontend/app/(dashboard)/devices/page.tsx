@@ -14,10 +14,10 @@ export default function DevicesPage() {
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
 
-  // For NOC scale we might want 1000 items per page or infinite loading
+  // Backend ограничивает per_page до 200 — используем максимум
   const { data, isLoading, refetch } = useDevices({
     page: 1,
-    page_size: 1000,
+    page_size: 200,
     search: search || undefined,
   });
   const bulkMutation = useBulkAction();
