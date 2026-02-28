@@ -23,6 +23,8 @@ class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     expires_in: int | None = None
+    refresh_token: str | None = None  # Возвращается в теле для сред без cookie (tunnel/proxy)
+    user: UserResponse | None = None
 
 
 class MFARequiredResponse(BaseModel):
@@ -54,6 +56,10 @@ class UserResponse(BaseModel):
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+# Forward reference в TokenResponse → UserResponse: пересборка модели после определения UserResponse
+TokenResponse.model_rebuild()
 
 
 class CreateUserRequest(BaseModel):

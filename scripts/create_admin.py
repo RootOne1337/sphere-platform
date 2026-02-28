@@ -28,8 +28,8 @@ async def main() -> None:
         if row is None:
             org = await conn.execute(
                 text(
-                    "INSERT INTO organizations (name, slug, plan) "
-                    "VALUES ('Default', 'default', 'enterprise') RETURNING id"
+                    "INSERT INTO organizations (name, slug) "
+                    "VALUES ('Default', 'default') RETURNING id"
                 )
             )
             org_id = org.fetchone()[0]

@@ -1,6 +1,6 @@
 .DEFAULT_GOAL := help
 
-.PHONY: help setup dev full down test lint security migrate migrate-new build monitoring logs alembic-check alembic-merge-heads rls-lint branches worktree-setup
+.PHONY: help setup dev full down test lint security migrate migrate-new build monitoring logs alembic-check alembic-merge-heads rls-lint branches worktree-setup seed-enrollment build-apk deploy-prod ssl-init ssl-renew
 
 help:          ## Показать помощь
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-24s\033[0m %s\n", $$1, $$2}'
@@ -116,3 +116,37 @@ alembic-merge-heads: ## Автослияние множественных Alembi
 
 rls-lint:      ## Проверить что все таблицы с org_id имеют RLS policy
 	@python scripts/check_rls.py
+
+seed-enrollment: ## Создать enrollment API-ключ в БД (AGENT_CONFIG_ENV=production|staging|development)
+	@echo "Запуск seed enrollment key (env=$${AGENT_CONFIG_ENV:-development})..."
+	AGENT_CONFIG_ENV=$${AGENT_CONFIG_ENV:-development} python -m scripts.seed_enrollment_key
+
+build-apk:     ## Собрать enterprise APK с зашитым CONFIG_URL (требует SPHERE_CONFIG_URL env)
+	@if [ -z "$$SPHERE_CONFIG_URL" ]; then \
+		echo "❌ Задай SPHERE_CONFIG_URL. Пример:"; \
+		echo "   SPHERE_CONFIG_URL=https://adb.leetpc.com/api/v1/config/agent make build-apk"; \
+		exit 1; \
+	fi
+	@echo "Сборка enterprise APK с CONFIG_URL=$$SPHERE_CONFIG_URL"
+	cd android && ./gradlew assembleEnterpriseRelease
+	@echo "✅ APK: android/app/build/outputs/apk/enterprise/release/"
+
+deploy-prod:   ## Полный деплой production: build → migrate → seed → up
+	@echo "═══ Production Deploy ═══"
+	docker compose -f docker-compose.yml -f docker-compose.production.yml build
+	docker compose -f docker-compose.yml -f docker-compose.production.yml up -d
+	@echo "Ожидание старта backend..."
+	@sleep 5
+	docker compose exec backend alembic -c alembic/alembic.ini upgrade head
+	AGENT_CONFIG_ENV=production docker compose exec backend python -m scripts.seed_enrollment_key
+	@echo "✅ Production деплой завершён"
+	@echo "   Теперь собери APK: SPHERE_CONFIG_URL=https://$${SERVER_HOSTNAME}/api/v1/config/agent make build-apk"
+
+
+ssl-init:      ## Получить Let's Encrypt сертификат (первый раз на сервере)
+	@bash scripts/init_ssl.sh
+
+ssl-renew:     ## Принудительное обновление Let's Encrypt сертификата
+	docker compose exec certbot certbot renew --webroot -w /var/www/certbot --force-renewal
+	docker compose exec nginx nginx -s reload
+	@echo 'Сертификат обновлён, nginx перезагружен'

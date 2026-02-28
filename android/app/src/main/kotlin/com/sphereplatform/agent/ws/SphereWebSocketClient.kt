@@ -66,6 +66,13 @@ class SphereWebSocketClient @Inject constructor(
     var onConnected: (() -> Unit)? = null
     var onDisconnected: ((code: Int, reason: String) -> Unit)? = null
 
+    /**
+     * Вызывается при открытии circuit breaker (после N последовательных ошибок).
+     * Используется [ConfigWatchdog] для немедленной проверки конфига из Git —
+     * возможно server_url сменился и нужно переподключиться на новый адрес.
+     */
+    var onCircuitBreakerOpen: (() -> Unit)? = null
+
     suspend fun connect(deviceId: String) {
         shouldStop = false
         this.deviceId = deviceId
@@ -117,10 +124,20 @@ class SphereWebSocketClient @Inject constructor(
                 Timber.w(e, "WS connect failed (attempt=$attempt)")
                 consecutiveFailures++
                 attempt++
+
+                // При первом обрыве — немедленно чекаем конфиг из Git
+                // (server_url мог смениться → агент должен переподключиться мгновенно)
+                if (consecutiveFailures == 1) {
+                    Timber.i("Первый обрыв связи — запрашиваем проверку конфига")
+                    onCircuitBreakerOpen?.invoke()
+                }
+
                 if (consecutiveFailures >= CIRCUIT_OPEN_THRESHOLD) {
                     circuitOpenUntil = System.currentTimeMillis() + CIRCUIT_COOL_DOWN_MS
                     consecutiveFailures = 0
                     Timber.e("Circuit OPEN after $CIRCUIT_OPEN_THRESHOLD failures, cool-down ${CIRCUIT_COOL_DOWN_MS / 1000}s")
+                    // Повторный чек конфига при полном размыкании circuit breaker
+                    onCircuitBreakerOpen?.invoke()
                 }
             }
         }
@@ -188,8 +205,10 @@ class SphereWebSocketClient @Inject constructor(
         connected.await()     // Ждём успешного onOpen
         disconnected.await()  // Ждём закрытия или сбоя
 
-        // After connection closed — check close code for auth rejection
-        if (closeCode == CODE_INVALID_TOKEN || closeCode == CODE_AUTH_TIMEOUT) {
+        // After connection closed — check close code for auth/heartbeat rejection
+        if (closeCode == CODE_INVALID_TOKEN || closeCode == CODE_AUTH_TIMEOUT
+            || closeCode == CODE_HEARTBEAT_TIMEOUT || closeCode == CODE_DEVICE_NOT_FOUND
+        ) {
             throw AuthRejectedException(closeCode, closeReason)
         }
     }

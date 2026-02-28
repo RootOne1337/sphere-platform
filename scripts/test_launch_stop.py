@@ -86,7 +86,7 @@ def step_stop_app() -> None:
 
     pid_after = adb("pidof", PACKAGE)
     if not pid_after:
-        print(f"  ✓ Приложение остановлено (PID не найден)")
+        print("  ✓ Приложение остановлено (PID не найден)")
     else:
         print(f"  ⚠ PID ещё активен: {pid_after}  (возможно activity manager не успел)")
 
@@ -101,7 +101,7 @@ def main() -> None:
     # Проверяем наличие ADB
     try:
         devices = subprocess.run(["adb", "devices"], capture_output=True, text=True, timeout=5)
-        lines = [l for l in devices.stdout.splitlines()[1:] if l.strip() and "offline" not in l]
+        lines = [ln for ln in devices.stdout.splitlines()[1:] if ln.strip() and "offline" not in ln]
         if not lines:
             print("✗ Нет подключённых устройств (adb devices пуст)", file=sys.stderr)
             sys.exit(1)

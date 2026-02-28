@@ -2,6 +2,7 @@
 # ВЛАДЕЛЕЦ: TZ-01. Полная реализация FastAPI dependencies: JWT-валидация, RBAC, service factories.
 from __future__ import annotations
 
+import os as _os
 import uuid
 from typing import TYPE_CHECKING
 
@@ -21,6 +22,12 @@ if TYPE_CHECKING:
 security = HTTPBearer(auto_error=False)
 
 
+def _is_dev_skip_auth() -> bool:
+    """Ленивая проверка DEV_SKIP_AUTH через pydantic Settings (читает .env корректно)."""
+    from backend.core.config import settings
+    return settings.DEV_SKIP_AUTH
+
+
 async def get_current_user(
     request: Request,
     credentials: HTTPAuthorizationCredentials | None = Depends(security),
@@ -29,7 +36,20 @@ async def get_current_user(
     """
     FastAPI dependency: извлечь и проверить текущего пользователя из JWT Bearer token.
     Прокидывает user в request.state.principal для audit middleware (FIX-1.3).
+
+    Если DEV_SKIP_AUTH=true — возвращает первого активного пользователя из БД (dev-bypass).
     """
+    if _is_dev_skip_auth():
+        from backend.models.user import User as _User
+        result = await db.execute(
+            __import__('sqlalchemy').select(_User).where(_User.is_active.is_(True)).limit(1)
+        )
+        dev_user = result.scalar_one_or_none()
+        if dev_user:
+            request.state.principal = dev_user
+            return dev_user
+        # Если в БД нет пользователей — fallback на обычную авторизацию
+
     if credentials is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

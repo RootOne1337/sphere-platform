@@ -75,13 +75,14 @@ class ZeroTouchProvisioner @Inject constructor(
 
     /**
      * Результат запроса к HTTP Config Endpoint.
-     * Содержит server_url для дальнейшего обнаружения.
+     * Содержит server_url и enrollment_api_key для дальнейшего обнаружения.
      */
     data class ServerConfig(
         val serverUrl: String,
         val environment: String,
         val autoRegister: Boolean,
         val enrollmentAllowed: Boolean,
+        val enrollmentApiKey: String?,
         val wsPath: String,
         val configPollIntervalSeconds: Int,
     )
@@ -133,6 +134,7 @@ class ZeroTouchProvisioner @Inject constructor(
                     environment = json.optString("environment", "unknown"),
                     autoRegister = json.optJSONObject("features")?.optBoolean("auto_register", false) ?: false,
                     enrollmentAllowed = json.optBoolean("enrollment_allowed", false),
+                    enrollmentApiKey = json.optString("enrollment_api_key", "").takeIf { it.isNotBlank() },
                     wsPath = json.optString("ws_path", "/ws/android"),
                     configPollIntervalSeconds = json.optInt("config_poll_interval_seconds", 86400),
                 )
@@ -220,11 +222,12 @@ class ZeroTouchProvisioner @Inject constructor(
      */
     private fun discoverFromConfigEndpoint(): ProvisionConfig? {
         val serverConfig = fetchServerConfig() ?: return null
-        // Config endpoint без API-ключа даёт только server_url + feature flags.
-        // API-ключ не нужен: SetupActivity сам выполнит авто-регистрацию.
+        // Config endpoint возвращает enrollment_api_key для zero-touch регистрации.
+        // Если ключ есть — агент может сразу вызвать POST /devices/register.
+        val apiKey = serverConfig.enrollmentApiKey ?: ""
         return ProvisionConfig(
             serverUrl = serverConfig.serverUrl,
-            apiKey = "", // Пустой — SetupActivity вызовет DeviceRegistrationClient
+            apiKey = apiKey,
             source = "config_endpoint",
             autoRegisterEnabled = serverConfig.autoRegister,
         )

@@ -1,116 +1,27 @@
 'use client';
-import { useState, useEffect } from 'react';
-import {
-  ColumnDef,
-  flexRender,
-  getCoreRowModel,
-  useReactTable,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  RowSelectionState,
-} from '@tanstack/react-table';
-import { useDevices, useBulkAction, Device } from '@/lib/hooks/useDevices';
-import { DeviceStatusBadge } from '@/components/sphere/DeviceStatusBadge';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Checkbox } from '@/components/ui/checkbox';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
 
-const columns: ColumnDef<Device>[] = [
-  {
-    id: 'select',
-    header: ({ table }) => (
-      <Checkbox
-        checked={table.getIsAllPageRowsSelected()}
-        onCheckedChange={(v) => table.toggleAllPageRowsSelected(!!v)}
-      />
-    ),
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(v) => row.toggleSelected(!!v)}
-      />
-    ),
-    enableSorting: false,
-  },
-  { accessorKey: 'name', header: 'Name' },
-  { accessorKey: 'model', header: 'Model' },
-  {
-    accessorKey: 'status',
-    header: 'Status',
-    cell: ({ row }) => <DeviceStatusBadge status={row.original.status} />,
-  },
-  {
-    accessorKey: 'tags',
-    header: 'Tags',
-    cell: ({ row }) => (
-      <div className="flex gap-1 flex-wrap">
-        {row.original.tags.map((tag) => (
-          <Badge key={tag} variant="outline" className="text-xs">
-            {tag}
-          </Badge>
-        ))}
-      </div>
-    ),
-  },
-  {
-    accessorKey: 'battery_level',
-    header: 'Battery',
-    cell: ({ row }) => {
-      const lvl = row.original.battery_level;
-      if (lvl === null) return '—';
-      return <span className={lvl < 20 ? 'text-red-500' : ''}>{lvl}%</span>;
-    },
-  },
-  {
-    accessorKey: 'last_seen',
-    header: 'Last Seen',
-    cell: ({ row }) => {
-      const ts = row.original.last_seen;
-      if (!ts) return '—';
-      return new Date(ts).toLocaleString();
-    },
-  },
-];
+import { useState, useEffect } from 'react';
+import { RowSelectionState } from '@tanstack/react-table';
+import { useDevices, useBulkAction } from '@/lib/hooks/useDevices';
+import { FleetMatrix } from '@/src/features/devices/FleetMatrix';
+import { MultiStreamGrid } from '@/src/features/devices/MultiStreamGrid';
+import { Button } from '@/src/shared/ui/button';
+import { Input } from '@/components/ui/input';
+import { Cpu, RefreshCcw, ShieldOff, LayoutGrid, List } from 'lucide-react';
 
 export default function DevicesPage() {
   const [search, setSearch] = useState('');
-  const [page, setPage] = useState(1);
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+  const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
 
-  // FIX 10.2: сбрасываем выделение при смене страницы
-  useEffect(() => {
-    setRowSelection({});
-  }, [page]);
-
-  const { data, isLoading } = useDevices({
-    page,
-    page_size: 50,
+  // Backend ограничивает per_page до 200 — используем максимум
+  const { data, isLoading, refetch } = useDevices({
+    page: 1,
+    page_size: 200,
     search: search || undefined,
   });
   const bulkMutation = useBulkAction();
 
-  const table = useReactTable({
-    data: data?.items ?? [],
-    columns,
-    state: { rowSelection },
-    onRowSelectionChange: setRowSelection,
-    getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    // FIX 10.2: стабильные ID (row.id), не array index
-    getRowId: (row) => row.id,
-  });
-
-  // FIX 10.2: rowSelection использует стабильные device.id
   const selectedIds = Object.keys(rowSelection).filter(Boolean);
 
   const handleBulkReboot = () => {
@@ -118,97 +29,93 @@ export default function DevicesPage() {
     setRowSelection({});
   };
 
+  const handleBulkRevokeVpn = () => {
+    bulkMutation.mutate({ device_ids: selectedIds, action: 'vpn_revoke' });
+    setRowSelection({});
+  };
+
   return (
-    <div className="p-6 space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Devices</h1>
-        <div className="flex gap-2">
+    <div className="flex flex-col h-full p-6 space-y-4">
+      {/* Header Area */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between shrink-0 gap-4">
+        <div>
+          <h1 className="text-xl font-bold font-mono tracking-widest text-primary flex items-center gap-2 uppercase">
+            <Cpu className="w-5 h-5 text-primary" />
+            Fleet_Matrix
+          </h1>
+          <p className="text-[11px] text-muted-foreground mt-1 uppercase tracking-wider font-mono">
+            {data?.total ?? 0} Global Endpoints Registered
+          </p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+
+          {/* View Toggles */}
+          <div className="flex items-center p-1 bg-muted border border-border rounded-sm mr-2 select-none">
+            <div
+              onClick={() => setViewMode('table')}
+              className={`p-1.5 rounded-sm cursor-pointer transition-colors ${viewMode === 'table' ? 'bg-primary/20 text-primary' : 'text-muted-foreground hover:text-foreground'}`}
+              title="Data Grid View"
+            >
+              <List className="w-4 h-4" />
+            </div>
+            <div
+              onClick={() => setViewMode('grid')}
+              className={`p-1.5 rounded-sm cursor-pointer transition-colors ${viewMode === 'grid' ? 'bg-primary/20 text-primary' : 'text-muted-foreground hover:text-foreground'}`}
+              title="Multi-Stream Grid (Select devices to monitor)"
+            >
+              <LayoutGrid className="w-4 h-4" />
+            </div>
+          </div>
+
           <Input
-            placeholder="Search devices…"
+            placeholder="[ SEARCH IDENTIFIER ]"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-64"
+            className="w-full sm:w-[250px] lg:w-[300px] h-9 bg-card border-border font-mono text-xs rounded-sm focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary placeholder:text-[#555]"
           />
-          {selectedIds.length > 0 && (
-            <>
-              <Button variant="outline" onClick={handleBulkReboot}>
-                Reboot ({selectedIds.length})
+          {selectedIds.length > 0 && viewMode === 'table' && (
+            <div className="flex items-center gap-2 border-l border-border pl-2 ml-2">
+              <span className="text-[10px] text-warning font-mono mr-1">
+                {selectedIds.length} SEL
+              </span>
+              <Button variant="outline" size="sm" onClick={handleBulkReboot} className="h-9 hover:border-warning hover:text-warning" title="Reboot Selected">
+                <RefreshCcw className="w-3.5 h-3.5 mr-1.5" />
+                RBT
               </Button>
               <Button
                 variant="destructive"
-                onClick={() =>
-                  bulkMutation.mutate({
-                    device_ids: selectedIds,
-                    action: 'vpn_revoke',
-                  })
-                }
+                size="sm"
+                onClick={handleBulkRevokeVpn}
+                className="h-9"
+                title="Revoke VPN"
               >
-                Revoke VPN ({selectedIds.length})
+                <ShieldOff className="w-3.5 h-3.5 mr-1.5" />
+                NO_VPN
               </Button>
-            </>
+            </div>
           )}
+          <Button variant="noc" onClick={() => refetch()} className="ml-2 h-9">
+            SYNC
+          </Button>
         </div>
       </div>
 
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((hg) => (
-              <TableRow key={hg.id}>
-                {hg.headers.map((h) => (
-                  <TableHead key={h.id}>
-                    {flexRender(h.column.columnDef.header, h.getContext())}
-                  </TableHead>
-                ))}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={columns.length} className="text-center py-10">
-                  Loading…
-                </TableCell>
-              </TableRow>
-            ) : (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() ? 'selected' : undefined}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
-
-      <div className="flex items-center justify-between text-sm text-muted-foreground">
-        <span>{data?.total ?? 0} total devices</span>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={page <= 1}
-          >
-            Previous
-          </Button>
-          <span className="self-center">Page {page}</span>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setPage((p) => p + 1)}
-            disabled={(data?.total ?? 0) <= page * 50}
-          >
-            Next
-          </Button>
-        </div>
+      {/* Main Content Area */}
+      <div className="flex-1 overflow-hidden flex flex-col pt-2">
+        {viewMode === 'table' ? (
+          <FleetMatrix
+            data={data?.items ?? []}
+            isLoading={isLoading}
+            rowSelection={rowSelection}
+            onRowSelectionChange={setRowSelection}
+          />
+        ) : (
+          <MultiStreamGrid
+            devices={data?.items ?? []}
+            selectedIds={selectedIds}
+          />
+        )}
       </div>
     </div>
   );

@@ -69,7 +69,10 @@ class ScriptService:
         try:
             dag_obj = DAGScript.model_validate(dag_raw)
         except ValidationError as e:
-            raise HTTPException(status_code=422, detail=e.errors())
+            # Pydantic V2 errors() может содержать не-сериализуемые объекты в ctx
+            import json as _json
+            safe_errors = _json.loads(e.json())
+            raise HTTPException(status_code=422, detail=safe_errors)
 
         dag_dict = dag_obj.model_dump()
         dag_hash = _compute_dag_hash(dag_dict)

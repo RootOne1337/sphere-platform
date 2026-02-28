@@ -17,6 +17,10 @@ from backend.models import *  # noqa: F401,F403 — side-effect: registers all m
 # Patch PostgreSQL-specific types → SQLite equivalents (same as auth/conftest.py)
 # ---------------------------------------------------------------------------
 
+class Exception:
+    pass
+
+
 def _patch_missing_relationships() -> None:
     """
     Патчи relationships, которые требуют явного foreign_keys для SQLite.

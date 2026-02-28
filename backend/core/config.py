@@ -44,8 +44,8 @@ class Settings(BaseSettings):
     AWG_H3: int = 2031675751
     AWG_H4: int = 3699611814
 
-    # Server
-    VPN_SERVER_HOSTNAME: str = "adb.leetpc.com"
+    # Server — берётся из env VPN_SERVER_HOSTNAME (задаётся в .env / docker-compose)
+    VPN_SERVER_HOSTNAME: str = ""
 
     # VPN (TZ-06 SPLIT-1: AWG Config Builder)
     WG_SERVER_PUBLIC_KEY: str = ""                        # Public key WG сервера
@@ -54,10 +54,28 @@ class Settings(BaseSettings):
     VPN_KEY_ENCRYPTION_KEY: str = ""                      # Fernet key (Fernet.generate_key())
     VPN_POOL_SUBNET: str = "10.100.0.0/16"                # Подсеть для пула IP
 
+    # Cookie
+    COOKIE_SECURE: bool = False  # True в production (HTTPS напрямую), False через tunnel/dev
+
+    # Dev
+    DEV_SKIP_AUTH: bool = False  # Пропуск JWT-проверки в dev-режиме (NEVER в production)
+
     # App
     DEBUG: bool = False
     LOG_LEVEL: str = "INFO"
     ENVIRONMENT: str = "development"
+
+    # Публичный URL сервера для агентов (WS-подключение, auto-register response).
+    # В dev: http://10.0.2.2:8000 (Android эмулятор loopback к хосту).
+    # В production: https://api.sphere.example.com (задаётся через env / .env).
+    SERVER_PUBLIC_URL: str = "http://10.0.2.2:8000"
+
+    # Путь к директории agent-config/ (относительно корня проекта или абсолютный).
+    AGENT_CONFIG_DIR: str = "agent-config"
+    # Имя окружения для загрузки конфига (development / staging / production).
+    AGENT_CONFIG_ENV: str = "development"
+    # TTL кэша agent-config в Redis (секунды). 0 = без кэша.
+    AGENT_CONFIG_CACHE_TTL: int = 300
 
     # OTA
     APK_SIGNING_CERT_SHA256: str = ""

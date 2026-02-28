@@ -28,6 +28,8 @@ mypy==1.8.0
 msgpack>=1.0.7          # TZ-02 DeviceStatusCache (бинарная сериализация 5x компактнее JSON)
 circuitbreaker>=2.0.0   # TZ-06 WG Router circuit breaker
 qrcode[pil]>=7.4        # TZ-06 генерация VPN QR-кода
+croniter>=2.0.0         # TZ-12 парсинг cron-выражений для расписаний
+pytz>=2024.1            # TZ-12 таймзоны для cron-расписаний
 pyotp>=2.9.0            # TZ-01 MFA TOTP
 minio>=7.2.0            # TZ-04 хранение скриншотов устройств
 cryptography>=42.0.0    # TZ-06 Fernet шифрование private key + X25519 fallback

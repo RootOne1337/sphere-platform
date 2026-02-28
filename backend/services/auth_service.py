@@ -117,6 +117,7 @@ class AuthService:
             "token_type": "bearer",
             "expires_in": settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES * 60,
             "refresh_token": new_refresh_raw,
+            "user": user,
         }
 
     # ── Logout ───────────────────────────────────────────────────────────────
@@ -202,6 +203,7 @@ class AuthService:
             "token_type": "bearer",
             "expires_in": settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES * 60,
             "refresh_token": refresh_token_raw,
+            "user": user,
         }
 
     async def _get_user_by_email(self, email: str) -> User | None:

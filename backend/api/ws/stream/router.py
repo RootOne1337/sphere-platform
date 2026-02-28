@@ -9,6 +9,7 @@ import structlog
 from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from backend.core.dependencies import _is_dev_skip_auth
 from backend.database.engine import AsyncSessionLocal
 from backend.websocket.connection_manager import get_connection_manager
 from backend.websocket.stream_bridge import get_stream_bridge
@@ -19,7 +20,25 @@ router = APIRouter(tags=["streaming"])
 
 
 async def _authenticate_viewer(token: str, db: AsyncSession):
-    """Re-use the JWT auth logic from ws/android router."""
+    """
+    Аутентификация зрителя стрима по JWT.
+    При DEV_SKIP_AUTH — возвращает первого активного пользователя без валидации токена.
+    """
+    # DEV_SKIP_AUTH: вернуть первого активного пользователя без JWT валидации
+    if _is_dev_skip_auth():
+        import sqlalchemy as sa
+
+        from backend.models.user import User
+
+        result = await db.execute(
+            sa.select(User).where(User.is_active.is_(True)).limit(1)
+        )
+        dev_user = result.scalar_one_or_none()
+        if dev_user:
+            logger.warning("stream_viewer: DEV_SKIP_AUTH — авторизация пропущена", user_id=str(dev_user.id))
+            return dev_user
+        # Если пользователей нет в БД — fallback на обычную JWT авторизацию
+
     import uuid
 
     import jwt as pyjwt
@@ -75,7 +94,7 @@ async def stream_viewer_ws(
         return
 
     token = first.get("token", "")
-    if not token:
+    if not token and not _is_dev_skip_auth():
         await ws.close(code=4001, reason="no_token")
         return
 
@@ -165,6 +184,18 @@ async def stream_viewer_ws(
                 case "request_keyframe":
                     await manager.send_to_device(device_id, {
                         "type": "request_keyframe",
+                    })
+                case "keyevent":
+                    await manager.send_to_device(device_id, {
+                        "type": "keyevent",
+                        "code": int(data.get("code", 0)),
+                        "session_id": session_id,
+                    })
+                case "text":
+                    await manager.send_to_device(device_id, {
+                        "type": "text",
+                        "text": str(data.get("text", "")),
+                        "session_id": session_id,
                     })
                 case _:
                     logger.debug(

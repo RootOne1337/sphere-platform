@@ -25,6 +25,7 @@ async def lifespan(app: FastAPI):
     # Остальные модули регистрируют свои хуки при импорте router.py
     import backend.database.redis_client  # noqa: F401
     import backend.monitoring.pool_metrics  # noqa: F401 — регистрирует DB pool collector
+    import backend.tasks.sync_device_status  # noqa: F401 — синхронизация статусов Redis → PostgreSQL
     from backend.core.lifespan_registry import run_all_shutdown, run_all_startup
 
     await run_all_startup()
@@ -35,7 +36,8 @@ async def lifespan(app: FastAPI):
 
     # PROC-4: экспорт OpenAPI schema для TZ-10 (frontend типы через openapi-typescript)
     Path("openapi.json").write_text(
-        json.dumps(app.openapi(), indent=2, ensure_ascii=False)
+        json.dumps(app.openapi(), indent=2, ensure_ascii=False),
+        encoding="utf-8",
     )
 
     yield   # приложение работает

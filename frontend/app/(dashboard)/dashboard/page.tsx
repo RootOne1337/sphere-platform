@@ -3,9 +3,9 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { usePoolStats, useVpnHealth } from '@/lib/hooks/useVpn';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
+import { Card, CardContent, CardHeader, CardTitle } from '@/src/shared/ui/card';
+import { Badge } from '@/src/shared/ui/badge';
+import { Progress } from '@/src/shared/ui/progress';
 import {
   Smartphone,
   Wifi,
@@ -59,7 +59,7 @@ function useFleetStats() {
   });
 }
 
-/* ── Stat card ── */
+/* ── Stat card (High-Density) ── */
 function StatCard({
   title,
   value,
@@ -74,69 +74,68 @@ function StatCard({
   color?: string;
 }) {
   return (
-    <Card>
-      <CardContent className="p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm text-muted-foreground">{title}</p>
-            <p className="text-3xl font-bold mt-1">{value}</p>
-            {subtitle && (
-              <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>
-            )}
-          </div>
-          <Icon className={`w-8 h-8 ${color} opacity-60`} />
+    <Card className="bg-card border-border rounded-sm overflow-hidden group">
+      <CardContent className="p-4 flex items-center justify-between relative">
+        <div className="z-10">
+          <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold mb-1">{title}</p>
+          <p className="text-3xl font-mono font-bold tracking-tight text-foreground">{value}</p>
+          {subtitle && (
+            <p className="text-[10px] text-muted-foreground mt-1 tracking-wide">{subtitle}</p>
+          )}
         </div>
+        <Icon className={`w-10 h-10 ${color} opacity-20 absolute -right-2 -bottom-2 group-hover:opacity-40 transition-opacity z-0`} />
       </CardContent>
     </Card>
   );
 }
 
-/* ── Device status distribution ── */
+/* ── Device status distribution (High-Density) ── */
 function DeviceDistribution({ stats }: { stats: FleetStats }) {
   const pctOnline = stats.total > 0 ? (stats.online / stats.total) * 100 : 0;
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base">Device Fleet</CardTitle>
+    <Card className="bg-card border-border rounded-sm">
+      <CardHeader className="p-4 pb-2 border-b border-border">
+        <CardTitle className="text-xs uppercase tracking-widest font-bold font-mono">Fleet Matrix</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex items-center gap-3">
-          <Badge variant="default" className="bg-green-600">
-            Online
-          </Badge>
-          <Progress value={pctOnline} className="flex-1" />
-          <span className="text-sm font-mono w-12 text-right">
-            {stats.online}
-          </span>
+      <CardContent className="p-4 space-y-4">
+        <div className="flex items-center justify-between text-xs">
+          <div className="flex items-center gap-2 w-24">
+            <span className="w-2 h-2 rounded-full bg-success"></span>
+            <span className="font-medium text-muted-foreground uppercase tracking-wider text-[10px]">Online</span>
+          </div>
+          <Progress value={pctOnline} className="flex-1 mx-4 h-1 bg-border [&>div]:bg-success" />
+          <span className="font-mono font-bold w-12 text-right">{stats.online}</span>
         </div>
-        <div className="flex items-center gap-3">
-          <Badge variant="secondary">Offline</Badge>
+
+        <div className="flex items-center justify-between text-xs">
+          <div className="flex items-center gap-2 w-24">
+            <span className="w-2 h-2 rounded-full bg-destructive"></span>
+            <span className="font-medium text-muted-foreground uppercase tracking-wider text-[10px]">Offline</span>
+          </div>
           <Progress
-            value={
-              stats.total > 0 ? (stats.offline / stats.total) * 100 : 0
-            }
-            className="flex-1"
+            value={stats.total > 0 ? (stats.offline / stats.total) * 100 : 0}
+            className="flex-1 mx-4 h-1 bg-border [&>div]:bg-destructive"
           />
-          <span className="text-sm font-mono w-12 text-right">
-            {stats.offline}
-          </span>
+          <span className="font-mono font-bold w-12 text-right">{stats.offline}</span>
         </div>
-        <div className="flex items-center gap-3">
-          <Badge variant="outline">Busy</Badge>
+
+        <div className="flex items-center justify-between text-xs">
+          <div className="flex items-center gap-2 w-24">
+            <span className="w-2 h-2 rounded-full bg-warning"></span>
+            <span className="font-medium text-muted-foreground uppercase tracking-wider text-[10px]">Busy</span>
+          </div>
           <Progress
             value={stats.total > 0 ? (stats.busy / stats.total) * 100 : 0}
-            className="flex-1"
+            className="flex-1 mx-4 h-1 bg-border [&>div]:bg-warning"
           />
-          <span className="text-sm font-mono w-12 text-right">
-            {stats.busy}
-          </span>
+          <span className="font-mono font-bold w-12 text-right">{stats.busy}</span>
         </div>
       </CardContent>
     </Card>
   );
 }
 
-/* ── VPN stats card ── */
+/* ── VPN stats card (High-Density) ── */
 function VpnOverview() {
   const { data: pool } = usePoolStats();
   const { data: health } = useVpnHealth();
@@ -146,51 +145,49 @@ function VpnOverview() {
       : 0;
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-base">VPN Network</CardTitle>
-          {health?.status === 'ok' ? (
-            <Badge variant="default" className="bg-green-600 gap-1">
-              <ShieldCheck className="w-3 h-3" />
-              Healthy
-            </Badge>
-          ) : (
-            <Badge variant="destructive" className="gap-1">
-              <ShieldAlert className="w-3 h-3" />
-              {health?.status ?? 'Unknown'}
-            </Badge>
-          )}
-        </div>
+    <Card className="bg-card border-border rounded-sm">
+      <CardHeader className="p-4 pb-2 border-b border-border flex flex-row items-center space-y-0">
+        <CardTitle className="text-xs flex-1 uppercase tracking-widest font-bold font-mono">VPN Tunneling</CardTitle>
+        {health?.status === 'ok' ? (
+          <Badge variant="outline" className="border-success text-success bg-success/10 text-[10px] tracking-wide rounded-sm py-0 h-5">
+            <ShieldCheck className="w-3 h-3 mr-1" />
+            OK
+          </Badge>
+        ) : (
+          <Badge variant="outline" className="border-destructive text-destructive bg-destructive/10 text-[10px] tracking-wide rounded-sm py-0 h-5">
+            <ShieldAlert className="w-3 h-3 mr-1" />
+            {health?.status ?? 'ERR'}
+          </Badge>
+        )}
       </CardHeader>
-      <CardContent className="space-y-3">
-        <div className="grid grid-cols-2 gap-4">
+      <CardContent className="p-4 space-y-4">
+        <div className="grid grid-cols-2 gap-y-4 gap-x-2">
           <div>
-            <p className="text-xs text-muted-foreground">Active Tunnels</p>
-            <p className="text-xl font-bold">{pool?.active_tunnels ?? 0}</p>
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Active Tunnels</p>
+            <p className="text-lg font-mono font-bold">{pool?.active_tunnels ?? 0}</p>
           </div>
           <div>
-            <p className="text-xs text-muted-foreground">Pool Usage</p>
-            <p className="text-xl font-bold">{utilization}%</p>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Free IPs</p>
-            <p className="text-xl font-bold">{pool?.free ?? 0}</p>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Stale Tunnels</p>
-            <p className="text-xl font-bold text-amber-500">
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Stale Tunnels</p>
+            <p className="text-lg font-mono font-bold text-warning">
               {pool?.stale_handshakes ?? 0}
             </p>
           </div>
+          <div>
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Pool Usage</p>
+            <p className="text-lg font-mono font-bold text-success">{utilization}%</p>
+          </div>
+          <div>
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Free IPs</p>
+            <p className="text-lg font-mono font-bold">{pool?.free ?? 0}</p>
+          </div>
         </div>
-        <Progress value={utilization} />
+        <Progress value={utilization} className="h-1 bg-border [&>div]:bg-success" />
       </CardContent>
     </Card>
   );
 }
 
-/* ── System health card ── */
+/* ── System health card (High-Density) ── */
 function SystemHealth() {
   const { data } = useQuery({
     queryKey: ['dashboard', 'health'],
@@ -202,29 +199,33 @@ function SystemHealth() {
   });
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base">System</CardTitle>
+    <Card className="bg-card border-border rounded-sm">
+      <CardHeader className="p-4 pb-2 border-b border-border">
+        <CardTitle className="text-xs uppercase tracking-widest font-bold font-mono">Core Health</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
-        <div className="flex items-center gap-3">
-          <Server className="w-4 h-4 text-muted-foreground" />
-          <span className="text-sm">Backend</span>
+      <CardContent className="p-4 space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Server className="w-4 h-4 text-muted-foreground" />
+            <span className="text-[11px] uppercase tracking-wider text-muted-foreground">Backend API</span>
+          </div>
           <Badge
-            variant="default"
+            variant="outline"
             className={
               data?.status === 'ok'
-                ? 'bg-green-600 ml-auto'
-                : 'bg-red-600 ml-auto'
+                ? 'border-success text-success bg-success/10 text-[10px] rounded-sm py-0 h-5'
+                : 'border-destructive text-destructive bg-destructive/10 text-[10px] rounded-sm py-0 h-5'
             }
           >
-            {data?.status ?? 'checking...'}
+            {data?.status ?? 'CHK'}
           </Badge>
         </div>
-        <div className="flex items-center gap-3">
-          <Zap className="w-4 h-4 text-muted-foreground" />
-          <span className="text-sm">Version</span>
-          <span className="text-sm font-mono ml-auto text-muted-foreground">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Zap className="w-4 h-4 text-muted-foreground" />
+            <span className="text-[11px] uppercase tracking-wider text-muted-foreground">Version</span>
+          </div>
+          <span className="text-[11px] font-mono font-bold text-foreground">
             {data?.version ?? '—'}
           </span>
         </div>
@@ -240,9 +241,12 @@ export default function DashboardPage() {
   return (
     <div className="p-6 space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Dashboard</h1>
-        <p className="text-sm text-muted-foreground">
-          Platform overview and analytics
+        <h1 className="text-lg font-mono font-bold tracking-widest text-primary flex items-center gap-2">
+          <Activity className="w-5 h-5 text-primary" />
+          NOC_OVERVIEW
+        </h1>
+        <p className="text-[11px] text-muted-foreground mt-1 tracking-wider uppercase font-mono">
+          Global infrastructure analytics
         </p>
       </div>
 

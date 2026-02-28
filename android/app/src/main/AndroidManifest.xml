@@ -77,6 +77,11 @@
             android:name=".ota.InstallReceiver"
             android:exported="false" />
 
+        <!-- ─── Service Watchdog (AlarmManager — гарантия 100% uptime) ──── -->
+        <receiver
+            android:name=".service.ServiceWatchdog"
+            android:exported="false" />
+
         <!-- ─── Android Enterprise Managed Config (MDM/EMM zero-touch) ──── -->
         <!-- Keys: sphere_server_url, sphere_api_key, sphere_device_id         -->
         <meta-data

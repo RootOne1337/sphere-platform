@@ -1,4 +1,5 @@
-import os, subprocess, sys
+import os
+import subprocess
 
 adb = r"C:\Users\dimas\AppData\Local\Android\Sdk\platform-tools\adb.exe"
 

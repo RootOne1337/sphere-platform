@@ -43,6 +43,8 @@ services:
       - DEBUG=false
       - LOG_LEVEL=INFO
       - ENVIRONMENT=production
+      - SERVER_PUBLIC_URL=https://${SERVER_HOSTNAME}
+      - AGENT_CONFIG_ENV=production
     depends_on:
       postgres:
         condition: service_healthy

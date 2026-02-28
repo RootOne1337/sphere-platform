@@ -1,4 +1,5 @@
 import type { Config } from 'tailwindcss';
+import defaultTheme from 'tailwindcss/defaultTheme';
 
 const config: Config = {
   darkMode: ['class'],
@@ -6,10 +7,15 @@ const config: Config = {
     './pages/**/*.{ts,tsx}',
     './components/**/*.{ts,tsx}',
     './app/**/*.{ts,tsx}',
+    './src/**/*.{ts,tsx}',
     './lib/**/*.{ts,tsx}',
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['Inter', ...defaultTheme.fontFamily.sans],
+        mono: ['JetBrains Mono', 'Fira Code', ...defaultTheme.fontFamily.mono],
+      },
       colors: {
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
@@ -27,6 +33,12 @@ const config: Config = {
         destructive: {
           DEFAULT: 'hsl(var(--destructive))',
           foreground: 'hsl(var(--destructive-foreground))',
+        },
+        warning: {
+          DEFAULT: 'hsl(var(--warning))',
+        },
+        success: {
+          DEFAULT: 'hsl(var(--success))',
         },
         muted: {
           DEFAULT: 'hsl(var(--muted))',
@@ -49,6 +61,10 @@ const config: Config = {
         lg: 'var(--radius)',
         md: 'calc(var(--radius) - 2px)',
         sm: 'calc(var(--radius) - 4px)',
+      },
+      boxShadow: {
+        'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
+        'glow': '0 0 15px rgba(var(--primary), 0.3)',
       },
       keyframes: {
         'accordion-down': {

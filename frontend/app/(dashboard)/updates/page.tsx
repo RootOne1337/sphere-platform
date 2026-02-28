@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useDevices } from '@/lib/hooks/useDevices';
+import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -55,11 +56,8 @@ function useReleases(platform?: string, flavor?: string) {
       const params = new URLSearchParams();
       if (platform) params.set('platform', platform);
       if (flavor) params.set('flavor', flavor);
-      const res = await fetch(`/api/v1/updates/?${params}`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('access_token') ?? ''}` },
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      setData(await res.json());
+      const { data } = await api.get(`/updates/?${params}`);
+      setData(data);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Failed to load');
     } finally {
@@ -75,25 +73,17 @@ function useReleases(platform?: string, flavor?: string) {
 // ── Push OTA command to device/group ─────────────────────────────────────────
 
 async function pushOtaUpdate(deviceId: string, release: Release) {
-  const res = await fetch(`/api/v1/tasks/`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${localStorage.getItem('access_token') ?? ''}`,
+  const { data } = await api.post('/tasks/', {
+    device_id: deviceId,
+    type: 'OTA_UPDATE',
+    payload: {
+      download_url: release.download_url,
+      version: release.version_name,
+      sha256: release.sha256,
+      force: release.mandatory,
     },
-    body: JSON.stringify({
-      device_id: deviceId,
-      type: 'OTA_UPDATE',
-      payload: {
-        download_url: release.download_url,
-        version: release.version_name,
-        sha256: release.sha256,
-        force: release.mandatory,
-      },
-    }),
   });
-  if (!res.ok) throw new Error(`HTTP ${res.status}: ${await res.text()}`);
-  return res.json();
+  return data;
 }
 
 // ── Create Release Form ───────────────────────────────────────────────────────
@@ -116,25 +106,15 @@ function CreateReleaseDialog({ onCreated }: { onCreated: () => void }) {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await fetch('/api/v1/updates/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('access_token') ?? ''}`,
-        },
-        body: JSON.stringify({
+      const res = await api.post('/updates/', {
           ...form,
           version_code: parseInt(form.version_code, 10),
-        }),
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.detail ?? `HTTP ${res.status}`);
-      }
+        });
       setOpen(false);
       onCreated();
     } catch (e: unknown) {
-      alert(e instanceof Error ? e.message : 'Error creating release');
+      const msg = (e as any)?.response?.data?.detail ?? (e instanceof Error ? e.message : 'Error creating release');
+      alert(msg);
     } finally {
       setLoading(false);
     }
@@ -258,11 +238,7 @@ export default function UpdatesPage() {
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this release?')) return;
     try {
-      const res = await fetch(`/api/v1/updates/${id}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${localStorage.getItem('access_token') ?? ''}` },
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      await api.delete(`/updates/${id}`);
       refetch();
     } catch (e: unknown) {
       alert(e instanceof Error ? e.message : 'Failed to delete');

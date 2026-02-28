@@ -1,11 +1,18 @@
-import asyncio, datetime, jwt, secrets, sys, os
+import asyncio
+import datetime
+import secrets
+import sys
+
+import jwt
+
 sys.path.insert(0, '/app')
 
 async def main():
+    from sqlalchemy import select
+
+    from backend.core.config import settings
     from backend.database.engine import AsyncSessionLocal
     from backend.models.user import User
-    from sqlalchemy import select
-    from backend.core.config import settings
     async with AsyncSessionLocal() as db:
         user = (await db.execute(select(User).limit(1))).scalar_one()
         payload = {

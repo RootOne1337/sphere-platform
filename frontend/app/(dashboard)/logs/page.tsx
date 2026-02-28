@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useDevices } from '@/lib/hooks/useDevices';
+import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -85,11 +86,7 @@ export default function LogsPage() {
     try {
       const params = new URLSearchParams({ lines: '1000' });
       if (search) params.set('search', search);
-      const res = await fetch(`/api/v1/logs/${deviceId}?${params}`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('access_token') ?? ''}` },
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data: LogsResponse = await res.json();
+      const { data } = await api.get(`/logs/${deviceId}?${params}`);
       const parsed = data.lines.map(parseLine);
       setLines(parsed);
       setTotalLines(data.total);
@@ -131,10 +128,7 @@ export default function LogsPage() {
   const handleClear = async () => {
     if (!selectedDevice) return;
     if (!confirm('Clear all logs for this device?')) return;
-    await fetch(`/api/v1/logs/${selectedDevice}`, {
-      method: 'DELETE',
-      headers: { Authorization: `Bearer ${localStorage.getItem('access_token') ?? ''}` },
-    });
+    await api.delete(`/logs/${selectedDevice}`);
     setLines([]);
     setTotalLines(0);
   };

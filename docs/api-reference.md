@@ -1,6 +1,6 @@
 # API Reference
 
-> **Sphere Platform v4.0** — REST API
+> **Sphere Platform v4.2** — REST API
 
 **Base URL:** `https://yourdomain.com/api/v1`
 **Interactive docs:** `https://yourdomain.com/api/v1/docs` (Swagger UI)
@@ -10,7 +10,7 @@
 
 ## Authentication
 
-All endpoints (except `/auth/login` and `/health`) require a Bearer token.
+All endpoints (except `/auth/login`, `/health`, and `/config/agent`) require a Bearer token.
 
 ```http
 Authorization: Bearer <access_token>
@@ -143,6 +143,109 @@ Authorization: Bearer <token>
   "created_at": "2026-01-01T00:00:00Z"
 }
 ```
+
+---
+
+## Agent Config — `/config`
+
+> Добавлено в v4.1.0 (TZ-12)
+
+### GET /config/agent
+
+Получение конфигурации для агента. **Не требует авторизации** (soft-auth: если передан токен — используется `org_id` из JWT, иначе — конфиг по умолчанию).
+
+```http
+GET /config/agent
+```
+
+**Response 200:**
+```json
+{
+  "server": {
+    "wsUrl": "wss://sphere.example.com/ws",
+    "apiUrl": "https://sphere.example.com/api/v1",
+    "environment": "production"
+  },
+  "agent": {
+    "heartbeatIntervalMs": 30000,
+    "reconnectMaxRetries": 10,
+    "logLevel": "INFO"
+  },
+  "features": {
+    "autoRegister": true,
+    "autoUpdate": true,
+    "telemetryEnabled": true,
+    "vpnAutoConnect": false
+  },
+  "provisioning": {
+    "namingPattern": "sphere-{org}-{seq}",
+    "defaultTags": ["auto-registered"],
+    "defaultGroupId": null
+  }
+}
+```
+
+Конфигурация загружается из `agent-config/environments/{env}.json` и кэшируется в Redis (TTL 300s).
+
+---
+
+## Device Registration — `/devices/register`
+
+> Добавлено в v4.1.0 (TZ-12)
+
+### POST /devices/register
+
+Идемпотентная авторегистрация устройства по composite fingerprint. При повторном вызове с тем же fingerprint возвращает существующее устройство.
+
+```http
+POST /devices/register
+Content-Type: application/json
+
+{
+  "fingerprint": "a1b2c3d4e5f6...sha256hash",
+  "device_info": {
+    "model": "sdk_gphone64_x86_64",
+    "android_version": "13",
+    "sdk_version": 33,
+    "manufacturer": "Google",
+    "display": "TP1A.220624.014"
+  },
+  "agent_version": "1.2.0"
+}
+```
+
+**Response 200 (существующее устройство):**
+```json
+{
+  "device_id": "uuid",
+  "name": "sphere-dev-0042",
+  "is_new": false,
+  "access_token": "eyJ...",
+  "refresh_token": "eyJ...",
+  "token_type": "bearer",
+  "expires_in": 1800
+}
+```
+
+**Response 201 (новое устройство):**
+```json
+{
+  "device_id": "uuid",
+  "name": "sphere-dev-0043",
+  "is_new": true,
+  "access_token": "eyJ...",
+  "refresh_token": "eyJ...",
+  "token_type": "bearer",
+  "expires_in": 1800
+}
+```
+
+**Логика дедупликации:**
+- Поиск по `device.fingerprint @> '{"hash": "<fingerprint>"}'` (JSONB containment)
+- Если устройство найдено — обновляет `device_info`, генерирует новые токены
+- Если не найдено — создаёт устройство с авто-именем `sphere-{org_prefix}-{sequence}`
+
+**Не требует авторизации** (создаёт токены в процессе регистрации).
 
 ---
 
@@ -642,7 +745,7 @@ No auth required.
 ```json
 {
   "status": "ok",
-  "version": "4.0.0",
+  "version": "4.2.0",
   "environment": "production",
   "checks": {
     "database": {
@@ -692,6 +795,414 @@ Rate limit errors return `429 Too Many Requests` with header:
 ```
 Retry-After: 60
 X-RateLimit-Reset: 1740308400
+```
+
+---
+
+## Pipelines — `/pipelines`
+
+> Добавлено в v4.2.0 (TZ-12)
+
+Пайплайны объединяют скрипты, условия, задержки и HTTP-вызовы в управляемые
+цепочки с персистенцией состояния и возможностью вложенного запуска.
+
+**Требуемые разрешения:** `pipeline:read`, `pipeline:write`, `pipeline:execute`.
+
+### GET /pipelines
+
+Список пайплайнов организации с пагинацией.
+
+```http
+GET /pipelines?status=active&page=1&per_page=50
+Authorization: Bearer <token>
+```
+
+**Query parameters:**
+
+| Param | Type | Description |
+|-------|------|-------------|
+| `status` | `draft\|active\|archived` | Фильтр по статусу |
+| `search` | string | Поиск по имени |
+| `page` | int | Номер страницы (default: 1) |
+| `per_page` | int | Элементов на странице (default: 50) |
+
+**Response 200:**
+```json
+{
+  "items": [
+    {
+      "id": "uuid",
+      "name": "Onboarding Pipeline",
+      "description": "Автоматическая настройка устройства",
+      "status": "active",
+      "version": 3,
+      "steps": [...],
+      "created_at": "2026-02-28T10:00:00Z",
+      "updated_at": "2026-02-28T12:00:00Z"
+    }
+  ],
+  "total": 8,
+  "page": 1,
+  "per_page": 50
+}
+```
+
+---
+
+### POST /pipelines
+
+Создание нового пайплайна.
+
+```http
+POST /pipelines
+Authorization: Bearer <token>
+
+{
+  "name": "Onboarding Pipeline",
+  "description": "Автоматическая настройка нового устройства",
+  "steps": [
+    {
+      "id": "s1",
+      "type": "run_script",
+      "config": { "script_id": "uuid", "timeout_seconds": 300 }
+    },
+    {
+      "id": "s2",
+      "type": "condition",
+      "config": { "expression": "steps.s1.exit_code == 0", "on_true": "s3", "on_false": "s5" }
+    },
+    {
+      "id": "s3",
+      "type": "delay",
+      "config": { "seconds": 10 }
+    },
+    {
+      "id": "s4",
+      "type": "http_request",
+      "config": { "method": "POST", "url": "https://hooks.example.com/done", "body": {} }
+    },
+    {
+      "id": "s5",
+      "type": "notify",
+      "config": { "channel": "webhook", "url": "https://hooks.example.com/fail" }
+    }
+  ]
+}
+```
+
+**Response 201:**
+```json
+{ "id": "uuid", "name": "Onboarding Pipeline", "status": "draft", "version": 1, ... }
+```
+
+**Requires:** `pipeline:write`
+
+---
+
+### GET /pipelines/{id}
+
+Получение пайплайна по ID.
+
+---
+
+### PATCH /pipelines/{id}
+
+Обновление пайплайна. Автоматически инкрементирует `version`.
+
+```http
+PATCH /pipelines/{id}
+{ "name": "Updated Name", "steps": [...] }
+```
+
+**Requires:** `pipeline:write`
+
+---
+
+### DELETE /pipelines/{id}
+
+Удаление пайплайна. Returns `204 No Content`.
+
+**Requires:** `pipeline:write`
+
+---
+
+### POST /pipelines/{id}/execute
+
+Запуск пайплайна на устройствах.
+
+```http
+POST /pipelines/{id}/execute
+Authorization: Bearer <token>
+
+{
+  "device_ids": ["uuid1", "uuid2"],
+  "group_id": "uuid",
+  "variables": { "env": "staging" }
+}
+```
+
+**Response 202:**
+```json
+{
+  "run_id": "uuid",
+  "pipeline_id": "uuid",
+  "status": "running",
+  "total_devices": 2,
+  "started_at": "2026-02-28T10:00:00Z"
+}
+```
+
+**Requires:** `pipeline:execute`
+
+---
+
+### POST /pipelines/{id}/stop
+
+Принудительная остановка выполнения пайплайна.
+
+---
+
+### POST /pipelines/{id}/clone
+
+Клонирование пайплайна (создаёт копию со всеми шагами).
+
+**Response 201:**
+```json
+{ "id": "new-uuid", "name": "Onboarding Pipeline (копия)", "status": "draft", "version": 1 }
+```
+
+---
+
+### GET /pipelines/{id}/runs
+
+История запусков пайплайна.
+
+**Response 200:**
+```json
+{
+  "items": [
+    {
+      "id": "uuid",
+      "pipeline_id": "uuid",
+      "status": "completed",
+      "total_devices": 50,
+      "success_count": 48,
+      "fail_count": 2,
+      "started_at": "2026-02-28T10:00:00Z",
+      "finished_at": "2026-02-28T10:05:00Z",
+      "duration_ms": 300000
+    }
+  ],
+  "total": 12
+}
+```
+
+---
+
+### GET /pipelines/{id}/runs/{run_id}
+
+Детали конкретного запуска с пошаговыми результатами.
+
+---
+
+### GET /pipelines/{id}/stats
+
+Статистика запусков пайплайна (success rate, avg duration).
+
+**Response 200:**
+```json
+{
+  "total_runs": 45,
+  "success_rate": 0.96,
+  "avg_duration_ms": 180000,
+  "last_run_at": "2026-02-28T10:05:00Z"
+}
+```
+
+---
+
+### POST /pipelines/{id}/validate
+
+Валидация конфигурации пайплайна без запуска.
+
+**Response 200:**
+```json
+{ "valid": true, "warnings": [] }
+```
+
+**Response 422:**
+```json
+{ "valid": false, "errors": ["Step s3 references non-existent step s99"] }
+```
+
+---
+
+### Типы шагов (Step Types)
+
+| Type | Config | Description |
+|------|--------|-------------|
+| `run_script` | `script_id`, `timeout_seconds` | Запуск DAG-скрипта на устройстве |
+| `run_pipeline` | `pipeline_id` | Вложенный запуск другого пайплайна |
+| `http_request` | `method`, `url`, `headers`, `body` | HTTP-вызов внешнего API |
+| `condition` | `expression`, `on_true`, `on_false` | Условная логика (if/else) |
+| `delay` | `seconds` | Задержка между шагами |
+| `parallel` | `steps[]` | Параллельное исполнение подшагов |
+| `set_variable` | `key`, `value` | Установка переменной контекста |
+| `notify` | `channel`, `url`, `message` | Отправка уведомления (webhook/email) |
+| `approval` | `approvers[]`, `timeout_hours` | Ожидание ручного подтверждения |
+
+---
+
+## Schedules — `/schedules`
+
+> Добавлено в v4.2.0 (TZ-12)
+
+Cron-планировщик для автоматического запуска пайплайнов по расписанию.
+Поддерживает стандартные cron-выражения, таймзоны и политики конфликтов.
+
+**Требуемые разрешения:** `schedule:read`, `schedule:write`.
+
+### GET /schedules
+
+Список расписаний организации.
+
+```http
+GET /schedules?enabled=true&page=1&per_page=50
+Authorization: Bearer <token>
+```
+
+**Response 200:**
+```json
+{
+  "items": [
+    {
+      "id": "uuid",
+      "name": "Nightly Cleanup",
+      "pipeline_id": "uuid",
+      "cron_expression": "0 3 * * *",
+      "timezone": "Europe/Moscow",
+      "enabled": true,
+      "conflict_policy": "skip",
+      "next_run_at": "2026-03-01T03:00:00+03:00",
+      "last_run_at": "2026-02-28T03:00:00+03:00"
+    }
+  ],
+  "total": 5
+}
+```
+
+---
+
+### POST /schedules
+
+Создание расписания.
+
+```http
+POST /schedules
+Authorization: Bearer <token>
+
+{
+  "name": "Nightly Cleanup",
+  "pipeline_id": "uuid",
+  "cron_expression": "0 3 * * *",
+  "timezone": "Europe/Moscow",
+  "conflict_policy": "skip",
+  "variables": { "env": "production" },
+  "device_ids": ["uuid1"],
+  "group_id": "uuid"
+}
+```
+
+**Conflict policies:**
+
+| Policy | Описание |
+|--------|----------|
+| `skip` | Пропустить запуск, если предыдущий ещё выполняется |
+| `queue` | Поставить в очередь и запустить после завершения текущего |
+
+**Response 201:**
+```json
+{ "id": "uuid", "name": "Nightly Cleanup", "enabled": true, ... }
+```
+
+**Requires:** `schedule:write`
+
+---
+
+### GET /schedules/{id}
+
+Получение расписания по ID.
+
+---
+
+### PATCH /schedules/{id}
+
+Обновление расписания (cron, timezone, pipeline, conflict_policy).
+
+**Requires:** `schedule:write`
+
+---
+
+### DELETE /schedules/{id}
+
+Удаление расписания. Returns `204 No Content`.
+
+---
+
+### POST /schedules/{id}/toggle
+
+Включение/отключение расписания.
+
+```http
+POST /schedules/{id}/toggle
+{ "enabled": false }
+```
+
+---
+
+### GET /schedules/{id}/executions
+
+История выполнений расписания.
+
+**Response 200:**
+```json
+{
+  "items": [
+    {
+      "id": "uuid",
+      "schedule_id": "uuid",
+      "pipeline_run_id": "uuid",
+      "status": "completed",
+      "triggered_at": "2026-02-28T03:00:00Z",
+      "finished_at": "2026-02-28T03:05:00Z"
+    }
+  ],
+  "total": 30
+}
+```
+
+---
+
+### POST /schedules/{id}/dry-run
+
+Предварительный расчёт следующих N запусков без реального выполнения.
+
+```http
+POST /schedules/{id}/dry-run
+{ "count": 5 }
+```
+
+**Response 200:**
+```json
+{
+  "next_runs": [
+    "2026-03-01T03:00:00+03:00",
+    "2026-03-02T03:00:00+03:00",
+    "2026-03-03T03:00:00+03:00",
+    "2026-03-04T03:00:00+03:00",
+    "2026-03-05T03:00:00+03:00"
+  ]
+}
 ```
 
 ---

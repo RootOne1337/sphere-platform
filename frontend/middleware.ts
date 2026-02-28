@@ -1,35 +1,10 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-const PUBLIC_PATHS = ['/login'];
-
-export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-
-  // Allow public paths
-  if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) {
-    return NextResponse.next();
-  }
-
-  // Allow Next.js internals
-  if (
-    pathname.startsWith('/_next') ||
-    pathname.startsWith('/api') ||
-    pathname.includes('.')
-  ) {
-    return NextResponse.next();
-  }
-
-  // Check for refresh token cookie — if missing, redirect to login
-  // The actual access token validation happens server-side;
-  // here we just gate on the presence of the refresh cookie.
-  const refreshCookie = request.cookies.get('refresh_token');
-  if (!refreshCookie) {
-    const loginUrl = new URL('/login', request.url);
-    loginUrl.searchParams.set('next', pathname);
-    return NextResponse.redirect(loginUrl);
-  }
-
+// Auth redirect убран из middleware — переведён на client-side guard (providers.tsx).
+// Причина: middleware redirect кэшируется в Next.js Router Cache и вызывает
+// бесконечный цикл redirect после login через tunnel (Serveo/Cloudflare).
+export function middleware(_request: NextRequest) {
   return NextResponse.next();
 }
 

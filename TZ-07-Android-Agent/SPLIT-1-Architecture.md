@@ -234,9 +234,14 @@ fun requestIgnoreBatteryOptimization() {
 
 ## Критерии готовности
 
-- [ ] Foreground Service запускается при boot через BroadcastReceiver
-- [ ] `START_STICKY`: перезапускается после принудительного kill
-- [ ] Запрос на игнорирование battery optimization при первом запуске
-- [ ] EncryptedSharedPreferences: ключи никогда не хранятся в plaintext
-- [ ] Notification: `PRIORITY_MIN` — не мешает пользователю (tray icon)
-- [ ] HiltAndroidApp в Application class объявлен
+- [x] Foreground Service запускается при boot через BroadcastReceiver
+- [x] `START_STICKY`: перезапускается после принудительного kill
+- [x] Запрос на игнорирование battery optimization при первом запуске
+- [x] EncryptedSharedPreferences: ключи никогда не хранятся в plaintext
+- [x] Notification: `PRIORITY_MIN` — не мешает пользователю (tray icon)
+- [x] HiltAndroidApp в Application class объявлен
+- [x] **v4.3.0:** ConfigWatchdog — remote config polling из Git (CONFIG_URL)
+- [x] **v4.3.0:** ServiceWatchdog — AlarmManager keepalive каждые 5 мин
+- [x] **v4.3.0:** Тройная защита: BootReceiver + START_STICKY + AlarmManager = 100% uptime
+- [x] **v4.3.0:** Circuit breaker → ConfigWatchdog.forceCheck() при 10+ failures
+- [x] **v4.3.0:** Enrollment gating — сервис НЕ стартует до enrollment
