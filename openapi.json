@@ -163,7 +163,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/LoginRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/LoginRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           },
@@ -213,7 +218,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/MFALoginRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/MFALoginRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           },
@@ -412,7 +422,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/MFAVerifySetupRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/MFAVerifySetupRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           },
@@ -511,7 +526,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateAPIKeyRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/CreateAPIKeyRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           },
@@ -605,7 +625,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/BatchExecutionRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/BatchExecutionRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           },
@@ -739,7 +764,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/BulkActionRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/BulkActionRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           },
@@ -786,7 +816,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/BulkDeleteRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/BulkDeleteRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           },
@@ -1103,7 +1138,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateDeviceRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/CreateDeviceRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           }
@@ -1144,7 +1184,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/BulkStatusRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/BulkStatusRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           },
@@ -1230,7 +1275,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/DeviceRegisterRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/DeviceRegisterRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           }
@@ -1334,7 +1384,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateDeviceRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/UpdateDeviceRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           }
@@ -1569,7 +1624,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ExecuteShellRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/ExecuteShellRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           }
@@ -1628,7 +1688,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/RequestLogcatRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/RequestLogcatRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           }
@@ -1658,6 +1723,55 @@
         }
       }
     },
+    "/api/v1/devices/{device_id}/reboot": {
+      "post": {
+        "tags": [
+          "devices"
+        ],
+        "summary": "Перезагрузить устройство через агент",
+        "operationId": "reboot_device_api_v1_devices__device_id__reboot_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "device_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Device Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Reboot Device Api V1 Devices  Device Id  Reboot Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/discovery/scan": {
       "post": {
         "tags": [
@@ -1670,7 +1784,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/DiscoverRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/DiscoverRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           },
@@ -1744,7 +1863,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateGroupRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/CreateGroupRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           },
@@ -1808,7 +1932,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateGroupRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/UpdateGroupRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           }
@@ -1905,7 +2034,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/MoveDevicesRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/MoveDevicesRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           }
@@ -1993,7 +2127,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/SetTagsRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/SetTagsRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           }
@@ -2288,7 +2427,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/AlertmanagerPayload"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/AlertmanagerPayload"
+                  }
+                ],
+                "title": "Payload"
               }
             }
           },
@@ -2404,7 +2548,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/WebhookCreate"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/WebhookCreate"
+                  }
+                ],
+                "title": "Body"
               }
             }
           },
@@ -2514,7 +2663,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/WebhookUpdate"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/WebhookUpdate"
+                  }
+                ],
+                "title": "Body"
               }
             }
           }
@@ -2599,7 +2753,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/N8nTaskCreate"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/N8nTaskCreate"
+                  }
+                ],
+                "title": "Body"
               }
             }
           },
@@ -2791,7 +2950,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreatePipelineRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/CreatePipelineRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           }
@@ -2895,7 +3059,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdatePipelineRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/UpdatePipelineRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           }
@@ -2992,7 +3161,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/RunPipelineRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/RunPipelineRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           }
@@ -3050,7 +3224,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/RunPipelineBatchRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/RunPipelineBatchRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           }
@@ -3490,7 +3669,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateScheduleRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/CreateScheduleRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           }
@@ -3594,7 +3778,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateScheduleRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/UpdateScheduleRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           }
@@ -3932,7 +4121,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateScriptRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/CreateScriptRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           }
@@ -4048,7 +4242,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateScriptRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/UpdateScriptRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           }
@@ -4576,7 +4775,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateTaskRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/CreateTaskRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           }
@@ -5105,7 +5309,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateReleaseRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/CreateReleaseRequest"
+                  }
+                ],
+                "title": "Payload"
               }
             }
           }
@@ -5254,7 +5463,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateUserRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/CreateUserRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           }
@@ -5362,7 +5576,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateRoleRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/UpdateRoleRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           }
@@ -5470,7 +5689,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/AWGConfigPreviewRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/AWGConfigPreviewRequest"
+                  }
+                ],
+                "title": "Request"
               }
             }
           },
@@ -5511,7 +5735,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/VPNAssignRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/VPNAssignRequest"
+                  }
+                ],
+                "title": "Req"
               }
             }
           },
@@ -5727,7 +5956,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/VPNBulkRotateRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/VPNBulkRotateRequest"
+                  }
+                ],
+                "title": "Req"
               }
             }
           },
@@ -5773,7 +6007,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/KillSwitchRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/KillSwitchRequest"
+                  }
+                ],
+                "title": "Req"
               }
             }
           },
@@ -6227,7 +6466,11 @@
             "default": {}
           },
           "annotations": {
-            "$ref": "#/components/schemas/AlertAnnotations",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AlertAnnotations"
+              }
+            ],
             "default": {
               "summary": "",
               "description": "",
@@ -8190,6 +8433,8 @@
         "properties": {
           "command": {
             "type": "string",
+            "maxLength": 4096,
+            "minLength": 1,
             "title": "Command"
           }
         },
@@ -9176,6 +9421,8 @@
         "properties": {
           "lines": {
             "type": "integer",
+            "maximum": 10000.0,
+            "minimum": 1.0,
             "title": "Lines",
             "default": 500
           },

@@ -124,12 +124,19 @@ class SphereWebSocketClient @Inject constructor(
                 Timber.w(e, "WS connect failed (attempt=$attempt)")
                 consecutiveFailures++
                 attempt++
+
+                // При первом обрыве — немедленно чекаем конфиг из Git
+                // (server_url мог смениться → агент должен переподключиться мгновенно)
+                if (consecutiveFailures == 1) {
+                    Timber.i("Первый обрыв связи — запрашиваем проверку конфига")
+                    onCircuitBreakerOpen?.invoke()
+                }
+
                 if (consecutiveFailures >= CIRCUIT_OPEN_THRESHOLD) {
                     circuitOpenUntil = System.currentTimeMillis() + CIRCUIT_COOL_DOWN_MS
                     consecutiveFailures = 0
                     Timber.e("Circuit OPEN after $CIRCUIT_OPEN_THRESHOLD failures, cool-down ${CIRCUIT_COOL_DOWN_MS / 1000}s")
-                    // Уведомляем ConfigWatchdog — проверить конфиг из Git
-                    // (возможно server_url сменился и нужно переподключиться)
+                    // Повторный чек конфига при полном размыкании circuit breaker
                     onCircuitBreakerOpen?.invoke()
                 }
             }

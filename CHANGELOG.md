@@ -12,6 +12,91 @@ _Нет нереализованных изменений._
 
 ---
 
+## [4.4.0] — 2026-03-01
+
+### Краткое описание
+Device Inspector полная интеграция с API (6 кнопок → реальные команды через WS),
+страница Оркестрация (Pipeline/Runs/Schedules), Tasks page glass-morphism редизайн,
+GridSparkline SVG перформанс-оптимизация, MultiStreamGrid реальный H.264 стриминг,
+Android Agent hardening (Android 12+ ForegroundService fix), H264Decoder keyframe fix.
+9 атомарных коммитов.
+
+---
+
+### Добавлено
+
+#### Backend — POST /devices/{id}/reboot Endpoint
+- Новый REST endpoint для управления перезагрузкой устройства через WebSocket Command Manager
+- Timeout-fallback: устройство может перезагрузиться до ACK (3с grace period)
+- Проверка наличия WS-соединения; 404 если устройство не найдено, 503 если агент оффлайн
+
+#### Frontend — Device Inspector (все 6 кнопок через API)
+- **Stream**: WebSocket `/ws/stream/{id}` → H.264 DeviceStream (реальный видеопоток)
+- **Terminal**: `POST /devices/{id}/shell` → Shell API (adbActions.shell)
+- **Logcat**: `POST /devices/{id}/logcat` → UPLOAD_LOGCAT → logcatCollector
+- **Reboot**: `POST /devices/{id}/reboot` → REBOOT с confirm-dialog
+- **Run Script**: `RunScriptTab.tsx` — многострочный редактор (Ctrl+Enter, Tab, copy-to-clipboard)
+- **Screenshot**: `GET /devices/{id}/screenshot` → локальное сохранение на устройство
+- Toast-уведомления (sonner), Loading-спиннеры, disabled при offline, цветовая индикация ошибок
+
+#### Frontend — Страница Оркестрация (/orchestration)
+- 3 таба с live polling (5-8 сек): Pipelines, Pipeline Runs, Schedules
+- Pipeline: таблица шаблонов + раскрывающийся DAG-граф шагов с цветовой маркировкой типов
+- Runs: управление в реалтайме (Pause/Cancel/Resume) + лог шагов с таймингами и ошибками
+- Schedules: CRON/INTERVAL/ONE-SHOT визуализация, toggle вкл/выкл, Fire Now
+- 6 статистических карточек (Pipelines, Active Runs, Completed, Failed, Success Rate, Schedules Active)
+- NOCSidebar: пункт навигации Orchestration добавлен
+
+#### Frontend — Tasks [id] Page Редизайн (Enterprise Glass-Morphism 2026)
+- Live Telemetry для running задач: неоновая пульсация, анимированный прогресс-бар, elapsed time
+- MetricCard: отображение current_node, количества циклов и узлов
+- Live Feed: поток логов с группировкой повторов (Repeated Nx), sticky-интерфейс сбоку
+- Execution Timeline: вертикальная лента с иконками операций (🚀, 📸, 👆)
+- Рендер скриншотов из screenshot_key с zoom-hover эффектом
+- input_params в терминально-подобном блоке, результаты под складным UI
+- Градиентные фоны (Cyan/Emerald/Red) по статусу задачи
+
+#### Frontend — MultiStreamGrid — Реальный H.264 Стриминг
+- Кнопка START/STOP BROADCAST для управления вещанием
+- DeviceStream компонент при broadcastActive=true (реальный WS H.264 поток)
+- Ready/Offline состояния вместо заглушки TCP/UDP
+- Экономия ресурсов: стримы не открываются автоматически при 1К+ устройствах
+
+### Улучшено
+
+#### Frontend — GridSparkline SVG (Перформанс 10с → мгновенно)
+- Замена Recharts ResponsiveContainer на нативный SVG `<polyline>` с `React.memo`
+- Устранение 400+ ResizeObserver + recursivelyTraversePassiveMountEffects при 200+ устройствах
+- Ликвидация варнингов width(-1) height(-1)
+
+### Исправлено
+
+| # | Компонент | Проблема | Решение |
+|---|-----------|----------|---------|
+| 1 | Android | ForegroundServiceStartNotAllowedException (Android 12+) | try-catch в BootReceiver.kt + ServiceWatchdog.kt |
+| 2 | Android | Агент ждал 10 обрывов перед проверкой конфига | forceCheck при первом обрыве WS (onCircuitBreakerOpen) |
+| 3 | Frontend | H264Decoder: «key frame required after configure()» | needsKeyFrame флаг + поиск последнего IDR в pendingFrames |
+| 4 | Frontend | MultiStreamGrid: TCP/UDP заглушка вместо стрима | Интеграция DeviceStream с broadcastActive toggle |
+| 5 | Infra | nginx proxy с host.docker.internal (DNS resolution fail) | Возврат на Docker DNS имена (backend:8000, frontend:3000) |
+| 6 | Infra | Frontend Docker контейнер на порту 3002 | Унификация на порт 3000 (nginx.dev.conf + docker-compose.full.yml) |
+| 7 | Frontend | Auth guard редиректил на /login | DEV_SKIP_AUTH = true в providers.tsx |
+
+---
+
+### Deployment Notes
+
+**APK:** Пересобрать после merge: `cd android && ./gradlew assembleDevDebug`
+
+**Новые файлы:**
+```
+frontend/app/(dashboard)/orchestration/page.tsx
+frontend/src/features/devices/RunScriptTab.tsx
+```
+
+**Docker:** Frontend контейнер теперь на порту 3000 (был 3002).
+
+---
+
 ## [4.3.0] — 2026-03-01
 
 ### Краткое описание

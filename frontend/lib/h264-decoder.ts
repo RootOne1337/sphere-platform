@@ -8,6 +8,7 @@ const FRAME_HEADER_SIZE = 14; // version(1) + flags(1) + ts(8:Int64) + size(4) �
 export class H264Decoder {
   private decoder: VideoDecoder | null = null;
   private configured = false;
+  private needsKeyFrame = true;
   private pendingFrames: Uint8Array[] = [];
   private onFrame: FrameCallback;
   private spsNal: Uint8Array | null = null;
@@ -46,9 +47,23 @@ export class H264Decoder {
       description: extradata,
     });
     this.configured = true;
+    this.needsKeyFrame = true;
 
-    // Процессировать накопившиеся кадры
-    this.pendingFrames.forEach((f) => this.decodeFrame(f));
+    // После configure() первый кадр ОБЯЗАН быть keyframe (IDR, NAL type 5).
+    // Ищем последний IDR в очереди и декодируем начиная с него,
+    // отбрасывая все delta-фреймы до него — они нереференсны без IDR.
+    let lastIdrIdx = -1;
+    for (let i = this.pendingFrames.length - 1; i >= 0; i--) {
+      if ((this.pendingFrames[i][0] & 0x1f) === 5) {
+        lastIdrIdx = i;
+        break;
+      }
+    }
+    if (lastIdrIdx >= 0) {
+      for (let i = lastIdrIdx; i < this.pendingFrames.length; i++) {
+        this.decodeFrame(this.pendingFrames[i]);
+      }
+    }
     this.pendingFrames = [];
   }
 
@@ -94,6 +109,13 @@ export class H264Decoder {
   private decodeFrame(nal: Uint8Array) {
     if (!this.decoder || !this.configured) return;
 
+    const isKeyFrame = (nal[0] & 0x1f) === 5;
+
+    // WebCodecs требует keyframe первым кадром после configure()/flush().
+    // Пропускаем delta-фреймы пока не придёт IDR.
+    if (this.needsKeyFrame && !isKeyFrame) return;
+    this.needsKeyFrame = false;
+
     // AVCC format: 4-byte big-endian NAL unit length prefix.
     // The decoder is configured with `description` (AVCDecoderConfigurationRecord),
     // which means AVCC mode — NOT Annex-B.  Sending [0,0,0,1] start code here
@@ -101,8 +123,6 @@ export class H264Decoder {
     const avcc = new Uint8Array(4 + nal.length);
     new DataView(avcc.buffer).setUint32(0, nal.length, false); // big-endian
     avcc.set(nal, 4);
-
-    const isKeyFrame = (nal[0] & 0x1f) === 5;
 
     this.decoder.decode(
       new EncodedVideoChunk({
