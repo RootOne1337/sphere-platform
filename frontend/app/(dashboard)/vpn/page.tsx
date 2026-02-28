@@ -8,15 +8,45 @@ import { Badge } from '@/src/shared/ui/badge';
 import { VPNMap } from '@/src/features/vpn/VPNMap';
 import { ThroughputChart } from '@/src/features/vpn/ThroughputChart';
 
-const MOCK_TUNNELS = [
-  { id: 'T-001', name: 'EU-Frankfurt-1', endpoint: '10.8.0.1', clients: 450, rx: '12.4 GB', tx: '4.1 GB', status: 'ACTIVE', uptime: '14d 2h' },
-  { id: 'T-002', name: 'US-East-Core', endpoint: '10.8.0.2', clients: 120, rx: '8.2 GB', tx: '2.4 GB', status: 'ACTIVE', uptime: '5d 11h' },
-  { id: 'T-003', name: 'ASIA-Singapore-2', endpoint: '10.8.0.3', clients: 0, rx: '0 B', tx: '0 B', status: 'DOWN', uptime: '0s' },
-  { id: 'T-004', name: 'RU-Moscow-Edge', endpoint: '10.8.0.4', clients: 85, rx: '1.1 GB', tx: '450 MB', status: 'DEGRADED', uptime: '1d 4h' },
-];
+import { useQuery } from '@tanstack/react-query';
+import { api } from '@/lib/api';
+
+interface Tunnel {
+  id: string;
+  name: string;
+  endpoint: string;
+  clients: number;
+  rx: string;
+  tx: string;
+  status: string;
+  uptime: string;
+}
 
 export default function VPNManagerPage() {
   const [search, setSearch] = useState('');
+
+  // Fetch real VPN peers from backend
+  const { data: tunnels = [], isLoading } = useQuery<Tunnel[]>({
+    queryKey: ['vpn-peers'],
+    queryFn: async () => {
+      try {
+        const { data } = await api.get('/vpn/peers');
+        return data.map((d: any) => ({
+          id: d.id,
+          name: `Tunnel ${d.assigned_ip}`,
+          endpoint: d.assigned_ip,
+          clients: d.is_active ? 1 : 0,
+          rx: '0 B',
+          tx: '0 B',
+          status: d.status.toUpperCase(),
+          uptime: d.last_handshake_at ? 'Active' : 'N/A'
+        }));
+      } catch (e) {
+        console.error('Failed to fetch VPN peers', e);
+        return [];
+      }
+    }
+  });
 
   // Демонстрационные данные для графиков скорости
   const aggregateChartData = useMemo(() => {
@@ -39,9 +69,9 @@ export default function VPNManagerPage() {
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#0A0A0A]">
+    <div className="flex flex-col h-full bg-card">
       {/* Header Area */}
-      <div className="px-6 py-5 border-b border-[#222] bg-[#111] shrink-0">
+      <div className="px-6 py-5 border-b border-border bg-muted shrink-0">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
             <div className="flex items-center gap-2 mb-1">
@@ -53,7 +83,7 @@ export default function VPNManagerPage() {
             </p>
           </div>
 
-          <div className="flex items-center gap-4 bg-black/40 p-3 rounded-sm border border-[#333]">
+          <div className="flex items-center gap-4 bg-black/40 p-3 rounded-sm border border-border">
             <div className="flex space-x-6">
               <div className="flex flex-col">
                 <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold flex items-center gap-1">
@@ -61,13 +91,13 @@ export default function VPNManagerPage() {
                 </span>
                 <span className="text-sm text-foreground font-mono font-bold">21.7 GB</span>
               </div>
-              <div className="flex flex-col border-l border-[#333] pl-6">
+              <div className="flex flex-col border-l border-border pl-6">
                 <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold flex items-center gap-1">
                   <ArrowUp className="w-3 h-3" /> Global TX
                 </span>
                 <span className="text-sm text-foreground font-mono font-bold">6.9 GB</span>
               </div>
-              <div className="flex flex-col border-l border-[#333] pl-6">
+              <div className="flex flex-col border-l border-border pl-6">
                 <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold flex items-center gap-1">
                   <Lock className="w-3 h-3" /> Encrypt
                 </span>
@@ -83,13 +113,13 @@ export default function VPNManagerPage() {
           <div className="flex items-center gap-3">
             <Input
               placeholder="Search endpoints or IPs..."
-              className="w-72 h-9 bg-black/50 border-[#333] font-mono text-xs focus-visible:ring-primary/50"
+              className="w-72 h-9 bg-black/50 border-border font-mono text-xs focus-visible:ring-primary/50"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
           <div className="flex gap-3">
-            <Button variant="outline" size="sm" className="h-9 border-[#333] hover:bg-[#222]">
+            <Button variant="outline" size="sm" className="h-9 border-border hover:bg-border">
               <Settings className="w-4 h-4 mr-2" /> Global Policy
             </Button>
             <Button variant="default" size="sm" className="h-9">
@@ -101,17 +131,17 @@ export default function VPNManagerPage() {
         {/* Top Dashboards: Map & Flow */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
           <div className="col-span-2 flex flex-col">
-            <h2 className="text-xs font-mono font-bold tracking-widest text-[#888] mb-3 uppercase flex items-center gap-2">
+            <h2 className="text-xs font-mono font-bold tracking-widest text-muted-foreground mb-3 uppercase flex items-center gap-2">
               <Globe className="w-4 h-4" /> Global Tunnel Topology
             </h2>
-            <VPNMap tunnels={MOCK_TUNNELS} />
+            <VPNMap tunnels={tunnels} />
           </div>
 
           <div className="flex flex-col">
-            <h2 className="text-xs font-mono font-bold tracking-widest text-[#888] mb-3 uppercase flex items-center gap-2">
+            <h2 className="text-xs font-mono font-bold tracking-widest text-muted-foreground mb-3 uppercase flex items-center gap-2">
               <Activity className="w-4 h-4" /> Aggregate Throughput
             </h2>
-            <div className="bg-[#0A0A0A] border border-[#222] rounded-sm p-4 flex-1 shadow-2xl relative overflow-hidden">
+            <div className="bg-card border border-border rounded-sm p-4 flex-1 shadow-2xl relative overflow-hidden">
               <div className="absolute top-2 right-4 flex items-center gap-3 z-10">
                 <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-success"></div><span className="text-[10px] text-muted-foreground font-mono">RX</span></div>
                 <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-blue-500"></div><span className="text-[10px] text-muted-foreground font-mono">TX</span></div>
@@ -122,11 +152,12 @@ export default function VPNManagerPage() {
         </div>
 
         {/* VPN Nodes Grid */}
-        <h2 className="text-xs font-mono font-bold tracking-widest text-[#888] mb-3 uppercase mt-6 border-b border-[#222] pb-2">Active Provider Nodes</h2>
+        <h2 className="text-xs font-mono font-bold tracking-widest text-muted-foreground mb-3 uppercase mt-6 border-b border-border pb-2">Active Provider Nodes</h2>
 
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-          {MOCK_TUNNELS.filter(t => t.name.toLowerCase().includes(search.toLowerCase()) || t.endpoint.includes(search)).map(tunnel => (
-            <div key={tunnel.id} className="bg-[#111] border border-[#222] rounded-sm flex flex-col hover:border-[#444] transition-colors relative overflow-hidden group">
+          {isLoading && <div className="col-span-1 xl:col-span-2 text-center text-muted-foreground p-10">Fetching secure tunnels from backend...</div>}
+          {!isLoading && tunnels.filter(t => t.name.toLowerCase().includes(search.toLowerCase()) || t.endpoint.includes(search)).map(tunnel => (
+            <div key={tunnel.id} className="bg-muted border border-border rounded-sm flex flex-col hover:border-[#444] transition-colors relative overflow-hidden group">
               {/* Background Graphic */}
               <Globe className="absolute -right-8 -bottom-8 w-48 h-48 text-[#ffffff03] pointer-events-none group-hover:scale-110 transition-transform duration-700" strokeWidth={1} />
 
@@ -154,7 +185,7 @@ export default function VPNManagerPage() {
                 </div>
 
                 <div className="grid grid-cols-4 gap-4 mb-2">
-                  <div className="col-span-1 border-r border-[#222]">
+                  <div className="col-span-1 border-r border-border">
                     <div className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground mb-1">Active Fleet</div>
                     <div className="text-xl font-mono font-bold text-foreground flex items-center gap-2">
                       {tunnel.clients}
@@ -172,9 +203,9 @@ export default function VPNManagerPage() {
                 </div>
               </div>
 
-              <div className="border-t border-[#222] bg-[#151515] p-3 px-5 flex items-center justify-between relative z-10 mt-auto">
+              <div className="border-t border-border bg-[#151515] p-3 px-5 flex items-center justify-between relative z-10 mt-auto">
                 <div className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground flex items-center gap-2">
-                  <Zap className="w-3.5 h-3.5 text-warning" /> Uptime: <span className="text-[#888] font-mono">{tunnel.uptime}</span>
+                  <Zap className="w-3.5 h-3.5 text-warning" /> Uptime: <span className="text-muted-foreground font-mono">{tunnel.uptime}</span>
                 </div>
                 <div className="flex gap-2">
                   <Button variant="ghost" size="sm" className="h-8 text-[10px] uppercase font-bold tracking-widest text-muted-foreground hover:text-foreground">Reboot</Button>

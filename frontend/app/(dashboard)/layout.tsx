@@ -8,12 +8,15 @@ import { ContextInspector } from '@/src/features/inspector/ContextInspector';
 import { GlobalCommandPalette } from '@/src/features/navigation/GlobalCommandPalette';
 import { AppearanceDrawer } from '@/src/features/preferences/AppearanceDrawer';
 import { useUIStore } from '@/src/shared/store/useUIStore';
+import { Menu } from 'lucide-react';
+import { Button } from '@/src/shared/ui/button';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   // Real-time fleet events — auto-invalidates queries on device/task/vpn changes
   useFleetEvents();
 
   const [isAppearanceOpen, setIsAppearanceOpen] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const { fontSize, accentColor, density } = useUIStore();
 
   // CSS Variable Injection for Real-time Theming
@@ -46,10 +49,26 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <div className="flex h-screen bg-background text-foreground overflow-hidden">
       {/* Схлопывающийся NOC Сайдбар */}
-      <NOCSidebar onOpenAppearance={() => setIsAppearanceOpen(true)} />
+      <NOCSidebar
+        onOpenAppearance={() => setIsAppearanceOpen(true)}
+        isMobileOpen={isMobileSidebarOpen}
+        onMobileClose={() => setIsMobileSidebarOpen(false)}
+      />
 
       {/* Основная рабочая область (Multi-Pane Layout Ready) */}
       <main className="flex-1 overflow-auto flex flex-col relative bg-[#121212]">
+
+        {/* Мобильная шапка (только на маленьких экранах) */}
+        <div className="lg:hidden flex items-center justify-between h-14 px-4 bg-card border-b border-border shrink-0">
+          <div className="flex items-center gap-2 text-primary font-mono font-bold tracking-wider">
+            <div className="w-6 h-6 bg-primary rounded-sm text-black flex items-center justify-center">S</div>
+            SPHERE<span className="text-muted-foreground font-normal text-xs">NOC</span>
+          </div>
+          <Button variant="ghost" size="icon" onClick={() => setIsMobileSidebarOpen(true)}>
+            <Menu className="w-5 h-5 text-foreground" />
+          </Button>
+        </div>
+
         {children}
 
         {/* Глобальная панель настроек внешнего вида (Themes, Scaling) */}

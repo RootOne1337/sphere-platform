@@ -74,7 +74,7 @@ function StatCard({
   color?: string;
 }) {
   return (
-    <Card className="bg-[#0A0A0A] border-[#222] rounded-sm shadow-none overflow-hidden group">
+    <Card className="bg-card border-border rounded-sm overflow-hidden group">
       <CardContent className="p-4 flex items-center justify-between relative">
         <div className="z-10">
           <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold mb-1">{title}</p>
@@ -93,8 +93,8 @@ function StatCard({
 function DeviceDistribution({ stats }: { stats: FleetStats }) {
   const pctOnline = stats.total > 0 ? (stats.online / stats.total) * 100 : 0;
   return (
-    <Card className="bg-[#0A0A0A] border-[#222] rounded-sm shadow-none">
-      <CardHeader className="p-4 pb-2 border-b border-[#222]">
+    <Card className="bg-card border-border rounded-sm">
+      <CardHeader className="p-4 pb-2 border-b border-border">
         <CardTitle className="text-xs uppercase tracking-widest font-bold font-mono">Fleet Matrix</CardTitle>
       </CardHeader>
       <CardContent className="p-4 space-y-4">
@@ -103,7 +103,7 @@ function DeviceDistribution({ stats }: { stats: FleetStats }) {
             <span className="w-2 h-2 rounded-full bg-success"></span>
             <span className="font-medium text-muted-foreground uppercase tracking-wider text-[10px]">Online</span>
           </div>
-          <Progress value={pctOnline} className="flex-1 mx-4 h-1 bg-[#222] [&>div]:bg-success" />
+          <Progress value={pctOnline} className="flex-1 mx-4 h-1 bg-border [&>div]:bg-success" />
           <span className="font-mono font-bold w-12 text-right">{stats.online}</span>
         </div>
 
@@ -114,7 +114,7 @@ function DeviceDistribution({ stats }: { stats: FleetStats }) {
           </div>
           <Progress
             value={stats.total > 0 ? (stats.offline / stats.total) * 100 : 0}
-            className="flex-1 mx-4 h-1 bg-[#222] [&>div]:bg-destructive"
+            className="flex-1 mx-4 h-1 bg-border [&>div]:bg-destructive"
           />
           <span className="font-mono font-bold w-12 text-right">{stats.offline}</span>
         </div>
@@ -126,7 +126,7 @@ function DeviceDistribution({ stats }: { stats: FleetStats }) {
           </div>
           <Progress
             value={stats.total > 0 ? (stats.busy / stats.total) * 100 : 0}
-            className="flex-1 mx-4 h-1 bg-[#222] [&>div]:bg-warning"
+            className="flex-1 mx-4 h-1 bg-border [&>div]:bg-warning"
           />
           <span className="font-mono font-bold w-12 text-right">{stats.busy}</span>
         </div>
@@ -145,8 +145,8 @@ function VpnOverview() {
       : 0;
 
   return (
-    <Card className="bg-[#0A0A0A] border-[#222] rounded-sm shadow-none">
-      <CardHeader className="p-4 pb-2 border-b border-[#222] flex flex-row items-center space-y-0">
+    <Card className="bg-card border-border rounded-sm">
+      <CardHeader className="p-4 pb-2 border-b border-border flex flex-row items-center space-y-0">
         <CardTitle className="text-xs flex-1 uppercase tracking-widest font-bold font-mono">VPN Tunneling</CardTitle>
         {health?.status === 'ok' ? (
           <Badge variant="outline" className="border-success text-success bg-success/10 text-[10px] tracking-wide rounded-sm py-0 h-5">
@@ -181,7 +181,7 @@ function VpnOverview() {
             <p className="text-lg font-mono font-bold">{pool?.free ?? 0}</p>
           </div>
         </div>
-        <Progress value={utilization} className="h-1 bg-[#222] [&>div]:bg-success" />
+        <Progress value={utilization} className="h-1 bg-border [&>div]:bg-success" />
       </CardContent>
     </Card>
   );
@@ -199,8 +199,8 @@ function SystemHealth() {
   });
 
   return (
-    <Card className="bg-[#0A0A0A] border-[#222] rounded-sm shadow-none">
-      <CardHeader className="p-4 pb-2 border-b border-[#222]">
+    <Card className="bg-card border-border rounded-sm">
+      <CardHeader className="p-4 pb-2 border-b border-border">
         <CardTitle className="text-xs uppercase tracking-widest font-bold font-mono">Core Health</CardTitle>
       </CardHeader>
       <CardContent className="p-4 space-y-4">

@@ -28,7 +28,7 @@ export function VPNMap({ tunnels }: VPNMapProps) {
     }, []);
 
     return (
-        <div className="relative w-full h-[350px] bg-[#0A0A0A] rounded-sm overflow-hidden border border-[#222]">
+        <div className="relative w-full h-[350px] bg-card rounded-sm overflow-hidden border border-border">
 
             {/* Decorative Grid Background */}
             <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
@@ -84,11 +84,11 @@ export function VPNMap({ tunnels }: VPNMapProps) {
 
             {/* Overlay Stats */}
             <div className="absolute bottom-4 left-4 flex gap-4 pointer-events-none">
-                <div className="bg-black/80 border border-[#333] px-3 py-2 rounded-sm backdrop-blur-md">
+                <div className="bg-black/80 border border-border px-3 py-2 rounded-sm backdrop-blur-md">
                     <div className="text-[9px] uppercase font-bold tracking-widest text-muted-foreground">Active Tunnels</div>
                     <div className="text-xl font-mono text-primary animate-pulse">{arcs.filter(a => a.active).length}</div>
                 </div>
-                <div className="bg-black/80 border border-[#333] px-3 py-2 rounded-sm backdrop-blur-md">
+                <div className="bg-black/80 border border-border px-3 py-2 rounded-sm backdrop-blur-md">
                     <div className="text-[9px] uppercase font-bold tracking-widest text-[#555]">Global Latency</div>
                     <div className="text-xl font-mono text-foreground">{'< 45ms'}</div>
                 </div>

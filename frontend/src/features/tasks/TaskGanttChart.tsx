@@ -36,12 +36,12 @@ export function TaskGanttChart({ tasks, windowTimeMs = 60000 }: TaskGanttChartPr
             case 'SUCCESS': return 'bg-success/20 border-success/50';
             case 'FAILED': return 'bg-destructive/20 border-destructive/50';
             case 'RUNNING': return 'bg-primary/20 border-primary/50 overflow-hidden relative';
-            default: return 'bg-[#222] border-[#333] opacity-50';
+            default: return 'bg-border border-border opacity-50';
         }
     };
 
     return (
-        <div className="w-full bg-[#0A0A0A] border border-[#222] rounded-sm p-4 overflow-x-auto relative min-w-[600px]">
+        <div className="w-full bg-card border border-border rounded-sm p-4 overflow-x-auto relative min-w-[600px]">
 
             {/* Timeline Grid Background */}
             <div className="absolute top-0 bottom-0 left-[200px] right-4 flex justify-between pointer-events-none opacity-20 z-0">
@@ -64,10 +64,10 @@ export function TaskGanttChart({ tasks, windowTimeMs = 60000 }: TaskGanttChartPr
                     if (leftPercent + widthPercent > 100) widthPercent = 100 - leftPercent; // clamp
 
                     return (
-                        <div key={task.id} className="flex items-center h-8 hover:bg-[#111] transition-colors group rounded-sm p-1">
+                        <div key={task.id} className="flex items-center h-8 hover:bg-muted transition-colors group rounded-sm p-1">
 
                             {/* Task Meta (Left Sidebar) */}
-                            <div className="w-[180px] shrink-0 flex items-center gap-2 border-r border-[#222] mr-4 pr-2">
+                            <div className="w-[180px] shrink-0 flex items-center gap-2 border-r border-border mr-4 pr-2">
                                 {getStatusIcon(task.status)}
                                 <span className="text-xs font-mono font-bold text-foreground truncate">{task.name}</span>
                             </div>

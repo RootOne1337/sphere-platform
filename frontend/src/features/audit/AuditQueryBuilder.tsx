@@ -32,8 +32,8 @@ export function AuditQueryBuilder({ value, onChange }: AuditQueryBuilderProps) {
 
     return (
         <div className="relative w-[450px]">
-            <div className={`flex items-center bg-[#0A0A0A] border rounded-sm transition-colors ${isFocused ? 'border-primary ring-1 ring-primary/30' : 'border-[#333]'}`}>
-                <div className="pl-3 pr-2 py-2 flex items-center justify-center text-muted-foreground shrink-0 border-r border-[#222]">
+            <div className={`flex items-center bg-card border rounded-sm transition-colors ${isFocused ? 'border-primary ring-1 ring-primary/30' : 'border-border'}`}>
+                <div className="pl-3 pr-2 py-2 flex items-center justify-center text-muted-foreground shrink-0 border-r border-border">
                     <Search className="w-4 h-4" />
                 </div>
                 <input
@@ -54,7 +54,7 @@ export function AuditQueryBuilder({ value, onChange }: AuditQueryBuilderProps) {
 
             {/* Suggestions Dropdown */}
             {isFocused && (
-                <div className="absolute top-full left-0 w-full mt-1 bg-[#111] border border-[#333] rounded-sm shadow-2xl z-50 py-1">
+                <div className="absolute top-full left-0 w-full mt-1 bg-muted border border-border rounded-sm shadow-2xl z-50 py-1">
                     <div className="px-3 py-1.5 text-[10px] uppercase font-bold tracking-widest text-[#555] flex items-center gap-1.5">
                         <History className="w-3 h-3" /> Filters & Suggestions
                     </div>

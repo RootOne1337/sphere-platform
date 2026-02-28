@@ -33,13 +33,13 @@ export function WorkflowVisualizer({ steps }: WorkflowVisualizerProps) {
             case 'SUCCESS': return 'border-success bg-success/10 text-success';
             case 'FAILED': return 'border-destructive bg-destructive/10 text-destructive';
             case 'RUNNING': return 'border-primary bg-primary/10 text-primary';
-            case 'SKIPPED': return 'border-[#333] bg-[#111] text-[#666]';
+            case 'SKIPPED': return 'border-border bg-muted text-muted-foreground';
             default: return 'border-[#555] bg-black text-muted-foreground';
         }
     };
 
     return (
-        <div className="w-full bg-[#0A0A0A] border border-[#222] rounded-sm p-6 overflow-x-auto relative">
+        <div className="w-full bg-card border border-border rounded-sm p-6 overflow-x-auto relative">
             {/* N8N Watermark */}
             <div className="absolute top-4 right-4 opacity-10 pointer-events-none flex items-center gap-2">
                 <div className="w-6 h-6 rounded-sm bg-destructive rotate-45" />
@@ -58,7 +58,7 @@ export function WorkflowVisualizer({ steps }: WorkflowVisualizerProps) {
                             <div className={`absolute top-0 left-0 w-full h-1 ${step.status === 'SUCCESS' ? 'bg-success' : step.status === 'FAILED' ? 'bg-destructive' : step.status === 'RUNNING' ? 'bg-primary animate-pulse' : 'bg-transparent'}`} />
 
                             <div className="flex justify-between items-start mb-3 pt-1">
-                                <Badge variant="outline" className={`text-[8px] bg-black border-[#444] px-1.5 py-0 ${step.status === 'RUNNING' ? 'text-primary border-primary/50' : 'text-[#888]'}`}>{step.type}</Badge>
+                                <Badge variant="outline" className={`text-[8px] bg-black border-[#444] px-1.5 py-0 ${step.status === 'RUNNING' ? 'text-primary border-primary/50' : 'text-muted-foreground'}`}>{step.type}</Badge>
                                 {getStepIcon(step.status)}
                             </div>
 
@@ -74,7 +74,7 @@ export function WorkflowVisualizer({ steps }: WorkflowVisualizerProps) {
                         {index < steps.length - 1 && (
                             <div className="flex flex-col items-center justify-center w-12 shrink-0">
                                 <div className={`h-[2px] w-full ${step.status === 'SUCCESS' ? 'bg-success' : step.status === 'FAILED' ? 'bg-destructive' : step.status === 'RUNNING' ? 'bg-primary/50 bg-[linear-gradient(90deg,transparent,theme(colors.primary.DEFAULT),transparent)] bg-[length:200%_100%] animate-gradient-x' : 'bg-[#333]'}`} />
-                                <ArrowRight className={`w-3 h-3 mt-1 ${step.status === 'SUCCESS' ? 'text-success' : step.status === 'FAILED' ? 'text-destructive' : step.status === 'RUNNING' ? 'text-primary animate-pulse' : 'text-[#444]'}`} />
+                                <ArrowRight className={`w-3 h-3 mt-1 ${step.status === 'SUCCESS' ? 'text-success' : step.status === 'FAILED' ? 'text-destructive' : step.status === 'RUNNING' ? 'text-primary animate-pulse' : 'text-muted-foreground'}`} />
                             </div>
                         )}
                     </div>

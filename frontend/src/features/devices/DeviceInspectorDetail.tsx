@@ -20,7 +20,7 @@ export function DeviceInspectorDetail({ device }: DeviceInspectorDetailProps) {
         return (
             <div className="flex flex-col h-full animate-in fade-in slide-in-from-right-2 duration-200">
                 <div className="flex items-center gap-2 mb-4 shrink-0">
-                    <Button variant="ghost" size="sm" onClick={() => setActiveTab("info")} className="px-2 hover:bg-[#222]">
+                    <Button variant="ghost" size="sm" onClick={() => setActiveTab("info")} className="px-2 hover:bg-border">
                         <ArrowLeft className="w-4 h-4 mr-2" /> back
                     </Button>
                     <div className="flex-1">
@@ -38,7 +38,7 @@ export function DeviceInspectorDetail({ device }: DeviceInspectorDetailProps) {
         return (
             <div className="flex flex-col h-full animate-in fade-in slide-in-from-right-2 duration-200">
                 <div className="flex items-center gap-2 mb-4 shrink-0">
-                    <Button variant="ghost" size="sm" onClick={() => setActiveTab("info")} className="px-2 hover:bg-[#222]">
+                    <Button variant="ghost" size="sm" onClick={() => setActiveTab("info")} className="px-2 hover:bg-border">
                         <ArrowLeft className="w-4 h-4 mr-2" /> back
                     </Button>
                     <div className="flex-1">
@@ -66,7 +66,7 @@ export function DeviceInspectorDetail({ device }: DeviceInspectorDetailProps) {
 
                 <div className="flex flex-wrap gap-2">
                     {device.tags.map((tag) => (
-                        <Badge key={tag} variant="outline" className="bg-[#111] px-2 py-0.5" title={tag}>
+                        <Badge key={tag} variant="outline" className="bg-muted px-2 py-0.5" title={tag}>
                             {tag}
                         </Badge>
                     ))}
@@ -76,14 +76,14 @@ export function DeviceInspectorDetail({ device }: DeviceInspectorDetailProps) {
 
             {/* Quick Actions Grid */}
             <div className="grid grid-cols-2 gap-2 shrink-0">
-                <Button variant="outline" className="h-10 border-[#333] hover:border-primary hover:text-primary justify-start px-3 bg-[#111]">
+                <Button variant="outline" className="h-10 border-border hover:border-primary hover:text-primary justify-start px-3 bg-muted">
                     <MonitorPlay className="w-4 h-4 mr-2" />
                     Stream
                 </Button>
                 <Button
                     variant="outline"
                     onClick={() => setActiveTab("terminal")}
-                    className="h-10 border-[#333] hover:border-success hover:text-success justify-start px-3 bg-[#111] text-success/80"
+                    className="h-10 border-border hover:border-success hover:text-success justify-start px-3 bg-muted text-success/80"
                 >
                     <Terminal className="w-4 h-4 mr-2" />
                     Terminal
@@ -91,16 +91,16 @@ export function DeviceInspectorDetail({ device }: DeviceInspectorDetailProps) {
                 <Button
                     variant="outline"
                     onClick={() => setActiveTab("logcat")}
-                    className="h-10 border-[#333] hover:border-primary hover:text-primary justify-start px-3 bg-[#111]"
+                    className="h-10 border-border hover:border-primary hover:text-primary justify-start px-3 bg-muted"
                 >
                     <FileText className="w-4 h-4 mr-2" />
                     Logcat
                 </Button>
-                <Button variant="outline" className="h-10 border-[#333] hover:border-warning hover:text-warning justify-start px-3 bg-[#111]">
+                <Button variant="outline" className="h-10 border-border hover:border-warning hover:text-warning justify-start px-3 bg-muted">
                     <RefreshCcw className="w-4 h-4 mr-2" />
                     Reboot
                 </Button>
-                <Button variant="outline" className="col-span-2 h-10 border-[#333] hover:border-primary hover:text-primary justify-start px-3 bg-[#111]">
+                <Button variant="outline" className="col-span-2 h-10 border-border hover:border-primary hover:text-primary justify-start px-3 bg-muted">
                     <Code2 className="w-4 h-4 mr-2" />
                     Run Script
                 </Button>
@@ -110,7 +110,7 @@ export function DeviceInspectorDetail({ device }: DeviceInspectorDetailProps) {
             <div className="flex-1 overflow-y-auto custom-scrollbar space-y-6 pr-2">
                 {/* Telemetry & System */}
                 <div className="space-y-3">
-                    <h4 className="text-[10px] uppercase font-bold tracking-widest text-[#555] font-mono border-b border-[#222] pb-1">Telemetry & System</h4>
+                    <h4 className="text-[10px] uppercase font-bold tracking-widest text-[#555] font-mono border-b border-border pb-1">Telemetry & System</h4>
 
                     <div className="grid grid-cols-2 gap-4">
                         {/* Model */}
@@ -145,25 +145,25 @@ export function DeviceInspectorDetail({ device }: DeviceInspectorDetailProps) {
 
                 {/* Networking */}
                 <div className="space-y-3">
-                    <h4 className="text-[10px] uppercase font-bold tracking-widest text-[#555] font-mono border-b border-[#222] pb-1">Networking</h4>
+                    <h4 className="text-[10px] uppercase font-bold tracking-widest text-[#555] font-mono border-b border-border pb-1">Networking</h4>
 
                     <div className="space-y-2">
-                        <div className="flex items-center justify-between bg-[#111] p-2 rounded-sm border border-[#222]">
+                        <div className="flex items-center justify-between bg-muted p-2 rounded-sm border border-border">
                             <div className="flex items-center gap-2">
-                                <Wifi className={`w-4 h-4 ${device.adb_connected ? 'text-success' : 'text-[#444]'}`} />
+                                <Wifi className={`w-4 h-4 ${device.adb_connected ? 'text-success' : 'text-muted-foreground'}`} />
                                 <span className="text-xs font-mono text-muted-foreground uppercase">ADB Daemon</span>
                             </div>
-                            <Badge variant="outline" className={`text-[9px] ${device.adb_connected ? 'border-success text-success bg-success/10' : 'border-[#444] text-[#888]'}`}>
+                            <Badge variant="outline" className={`text-[9px] ${device.adb_connected ? 'border-success text-success bg-success/10' : 'border-[#444] text-muted-foreground'}`}>
                                 {device.adb_connected ? "CONNECTED" : "OFFLINE"}
                             </Badge>
                         </div>
 
-                        <div className="flex items-center justify-between bg-[#111] p-2 rounded-sm border border-[#222]">
+                        <div className="flex items-center justify-between bg-muted p-2 rounded-sm border border-border">
                             <div className="flex items-center gap-2">
-                                <Shield className={`w-4 h-4 ${device.vpn_assigned ? 'text-primary' : 'text-[#444]'}`} />
+                                <Shield className={`w-4 h-4 ${device.vpn_assigned ? 'text-primary' : 'text-muted-foreground'}`} />
                                 <span className="text-xs font-mono text-muted-foreground uppercase">VPN Tunneling</span>
                             </div>
-                            <Badge variant="outline" className={`text-[9px] ${device.vpn_assigned ? 'border-primary text-primary bg-primary/10' : 'border-[#444] text-[#888]'}`}>
+                            <Badge variant="outline" className={`text-[9px] ${device.vpn_assigned ? 'border-primary text-primary bg-primary/10' : 'border-[#444] text-muted-foreground'}`}>
                                 {device.vpn_assigned ? "ACTIVE" : "UNASSIGNED"}
                             </Badge>
                         </div>

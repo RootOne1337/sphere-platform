@@ -108,24 +108,24 @@ function NodeSidebar({ node, onUpdate, onClose }: NodeSidebarProps) {
         type="number"
         value={Number(d[key] ?? 0)}
         onChange={(e) => set(key, Number(e.target.value))}
-        className="h-8 text-xs font-mono bg-[#111] border-[#333] focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary rounded-sm"
+        className="h-8 text-xs font-mono bg-muted border-border focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary rounded-sm"
       />
     </div>
   );
 
   return (
-    <div className="w-80 border-l border-[#222] bg-[#0A0A0A] p-5 flex flex-col shadow-2xl z-20 transition-all duration-300 transform translate-x-0">
-      <div className="flex items-center justify-between mb-6 pb-4 border-b border-[#222]">
+    <div className="w-80 border-l border-border bg-card p-5 flex flex-col shadow-2xl z-20 transition-all duration-300 transform translate-x-0">
+      <div className="flex items-center justify-between mb-6 pb-4 border-b border-border">
         <div className="flex items-center gap-2">
           <Settings2 className="w-4 h-4 text-primary" />
           <h3 className="font-bold text-xs uppercase tracking-widest text-foreground">{nodeType} Config</h3>
         </div>
-        <Button size="icon" variant="ghost" className="h-6 w-6 hover:bg-[#1A1A1A] hover:text-white rounded-sm" onClick={onClose}>
+        <Button size="icon" variant="ghost" className="h-6 w-6 hover:bg-secondary hover:text-white rounded-sm" onClick={onClose}>
           <X className="w-4 h-4" />
         </Button>
       </div>
 
-      <div className="mb-6 bg-[#111] p-3 border border-[#333] rounded-sm">
+      <div className="mb-6 bg-muted p-3 border border-border rounded-sm">
         <p className="text-[9px] uppercase text-muted-foreground tracking-widest mb-1">Node Identifier</p>
         <p className="text-xs font-mono text-primary truncate" title={node.id}>{node.id}</p>
       </div>
@@ -140,7 +140,7 @@ function NodeSidebar({ node, onUpdate, onClose }: NodeSidebarProps) {
               <Input
                 value={String(d.description ?? '')}
                 onChange={(e) => set('description', e.target.value)}
-                className="h-8 text-xs font-mono bg-[#111] border-[#333] focus-visible:border-primary rounded-sm"
+                className="h-8 text-xs font-mono bg-muted border-border focus-visible:border-primary rounded-sm"
                 placeholder="Optional tap desc..."
               />
             </div>
@@ -169,7 +169,7 @@ function NodeSidebar({ node, onUpdate, onClose }: NodeSidebarProps) {
         {nodeType === 'Lua' && (
           <div className="space-y-1.5 flex flex-col h-[450px]">
             <Label className="text-[10px] uppercase font-bold tracking-widest text-[#555]">Lua Execution Block</Label>
-            <div className="flex-1 rounded-sm border border-[#333] overflow-hidden">
+            <div className="flex-1 rounded-sm border border-border overflow-hidden">
               <Editor
                 height="100%"
                 defaultLanguage="lua"
@@ -196,14 +196,14 @@ function NodeSidebar({ node, onUpdate, onClose }: NodeSidebarProps) {
             <Input
               value={String(d.condition_expr ?? '')}
               onChange={(e) => set('condition_expr', e.target.value)}
-              className="h-8 text-xs font-mono bg-[#111] border-[#333] focus-visible:border-primary rounded-sm text-cyan-300"
+              className="h-8 text-xs font-mono bg-muted border-border focus-visible:border-primary rounded-sm text-cyan-300"
               placeholder="e.g. ctx['prev'] == true"
             />
           </div>
         )}
 
         {nodeType === 'Screenshot' && (
-          <div className="flex justify-between items-center bg-[#111] p-3 border border-[#333] rounded-sm">
+          <div className="flex justify-between items-center bg-muted p-3 border border-border rounded-sm">
             <Label className="text-[10px] uppercase font-bold tracking-widest text-foreground">Retain Artifacts</Label>
             <input
               type="checkbox"
@@ -311,7 +311,7 @@ function BuilderInner() {
 
   if (!loaded) {
     return (
-      <div className="flex items-center justify-center h-screen bg-[#0A0A0A]">
+      <div className="flex items-center justify-center h-screen bg-card">
         <div className="flex flex-col items-center">
           <Fingerprint className="w-8 h-8 text-primary animate-pulse mb-4" />
           <p className="text-xs font-mono font-bold tracking-widest text-[#555] uppercase animate-pulse">Initializing Workflow Canvas...</p>
@@ -321,11 +321,11 @@ function BuilderInner() {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-[#0A0A0A]">
+    <div className="h-screen flex flex-col bg-card">
       {/* Heavy Duty Toolbar */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-[#222] bg-[#111] z-10 shadow-xl shrink-0">
+      <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-muted z-10 shadow-xl shrink-0">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:bg-[#222] hover:text-white" onClick={() => router.push('/scripts')}>
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:bg-border hover:text-white" onClick={() => router.push('/scripts')}>
             <ArrowLeft className="w-4 h-4" />
           </Button>
           <div className="flex flex-col">
@@ -333,15 +333,15 @@ function BuilderInner() {
             <input
               value={scriptName}
               onChange={(e) => setScriptName(e.target.value)}
-              className="text-sm font-bold font-mono text-primary bg-transparent border-b border-transparent hover:border-[#333] focus:border-primary outline-none transition-colors w-[250px]"
+              className="text-sm font-bold font-mono text-primary bg-transparent border-b border-transparent hover:border-border focus:border-primary outline-none transition-colors w-[250px]"
             />
           </div>
         </div>
 
         <div className="flex gap-2.5 items-center">
-          <div className="flex gap-1.5 mr-4 border-r border-[#333] pr-4">
+          <div className="flex gap-1.5 mr-4 border-r border-border pr-4">
             {NODE_TYPES_LIST.map(({ type, icon }) => (
-              <Button key={type} size="sm" variant="outline" className="h-8 bg-[#151515] border-[#333] hover:border-primary hover:text-primary px-2" onClick={() => addNode(type)} title={`Add ${type} Node`}>
+              <Button key={type} size="sm" variant="outline" className="h-8 bg-[#151515] border-border hover:border-primary hover:text-primary px-2" onClick={() => addNode(type)} title={`Add ${type} Node`}>
                 {icon}
               </Button>
             ))}
@@ -406,7 +406,7 @@ function BuilderInner() {
 export default function ScriptBuilderPage() {
   return (
     <Suspense fallback={
-      <div className="flex items-center justify-center h-screen bg-[#0A0A0A]">
+      <div className="flex items-center justify-center h-screen bg-card">
         <Fingerprint className="w-8 h-8 text-primary animate-pulse" />
       </div>
     }>

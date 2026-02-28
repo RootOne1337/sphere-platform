@@ -20,9 +20,9 @@ export function MultiStreamGrid({ devices, selectedIds, onClose }: MultiStreamGr
     const columns = Math.ceil(Math.sqrt(gridSize));
 
     return (
-        <div className="flex flex-col h-full bg-[#0A0A0A] border rounded-sm border-[#222]">
+        <div className="flex flex-col h-full bg-card border rounded-sm border-border">
             {/* Toolbar */}
-            <div className="flex items-center gap-2 overflow-x-auto custom-scrollbar justify-between p-3 border-b border-[#222] bg-[#111]">
+            <div className="flex items-center gap-2 overflow-x-auto custom-scrollbar justify-between p-3 border-b border-border bg-muted">
                 <div className="flex items-center gap-4 shrink-0">
                     <div className="flex items-center gap-2">
                         <MonitorPlay className="w-4 h-4 text-primary" />
@@ -43,7 +43,7 @@ export function MultiStreamGrid({ devices, selectedIds, onClose }: MultiStreamGr
 
                         <Button variant="ghost" size="sm" onClick={toggleHUD} className={`h-6 text-[10px] px-2 ${showHUD ? 'bg-primary/20 text-primary border border-primary/30' : 'bg-transparent text-muted-foreground'}`}>HUD</Button>
                         <Button variant="ghost" size="sm" onClick={toggleStats} className={`h-6 text-[10px] px-2 ${showStats ? 'bg-primary/20 text-primary border border-primary/30' : 'bg-transparent text-muted-foreground'}`}>STATS</Button>
-                        <Button variant="ghost" size="sm" onClick={() => setObjectFit(objectFit === 'contain' ? 'cover' : 'contain')} className="h-6 text-[10px] px-2 text-muted-foreground hover:bg-[#222]">FIT: {objectFit.toUpperCase()}</Button>
+                        <Button variant="ghost" size="sm" onClick={() => setObjectFit(objectFit === 'contain' ? 'cover' : 'contain')} className="h-6 text-[10px] px-2 text-muted-foreground hover:bg-border">FIT: {objectFit.toUpperCase()}</Button>
                     </div>
                 </div>
 
@@ -60,7 +60,7 @@ export function MultiStreamGrid({ devices, selectedIds, onClose }: MultiStreamGr
                 style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
             >
                 {devices.slice(0, gridSize).map((device) => (
-                    <div key={device.id} className="relative bg-[#111] border border-[#222] rounded-sm overflow-hidden group flex flex-col min-h-[150px] aspect-video">
+                    <div key={device.id} className="relative bg-muted border border-border rounded-sm overflow-hidden group flex flex-col min-h-[150px] aspect-video">
 
                         {/* Video Layer */}
                         <div className="flex-1 relative bg-black/50 flex flex-col items-center justify-center overflow-hidden">
@@ -91,7 +91,7 @@ export function MultiStreamGrid({ devices, selectedIds, onClose }: MultiStreamGr
                         </div>
 
                         {/* Bottom Telemetry Bar */}
-                        <div className="h-6 shrink-0 bg-[#0A0A0A] border-t border-[#222] px-2 flex items-center justify-between">
+                        <div className="h-6 shrink-0 bg-card border-t border-border px-2 flex items-center justify-between">
                             <span className="text-[9px] font-mono text-muted-foreground font-bold tracking-widest truncate">{device.model || 'GENERIC'}</span>
 
                             {showStats && device.status.toLowerCase() === 'online' && (
@@ -111,7 +111,7 @@ export function MultiStreamGrid({ devices, selectedIds, onClose }: MultiStreamGr
 
                 {/* Empty Placeholders if fewer devices than grid slots */}
                 {Array.from({ length: Math.max(0, gridSize - Math.min(devices.length, gridSize)) }).map((_, i) => (
-                    <div key={`empty-${i}`} className="bg-[#111]/30 border border-[#222] border-dashed rounded-sm aspect-video flex items-center justify-center min-h-[150px]">
+                    <div key={`empty-${i}`} className="bg-muted/30 border border-border border-dashed rounded-sm aspect-video flex items-center justify-center min-h-[150px]">
                         <span className="text-[10px] font-mono text-[#555] uppercase tracking-widest">No Signal</span>
                     </div>
                 ))}

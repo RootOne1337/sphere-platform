@@ -164,12 +164,12 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
                     return (
                         <div className="flex gap-1.5 items-center flex-wrap h-full overflow-hidden content-center py-1">
                             {tags.slice(0, 3).map((tag) => (
-                                <Badge key={tag} variant="outline" className="text-[9px] bg-[#111] px-1.5 py-0 border-[#333]">
+                                <Badge key={tag} variant="outline" className="text-[9px] bg-muted px-1.5 py-0 border-border">
                                     {tag}
                                 </Badge>
                             ))}
                             {tags.length > 3 && (
-                                <Badge variant="outline" className="text-[9px] bg-[#111] px-1.5 py-0 border-[#333] text-muted-foreground">
+                                <Badge variant="outline" className="text-[9px] bg-muted px-1.5 py-0 border-border text-muted-foreground">
                                     +{tags.length - 3}
                                 </Badge>
                             )}
@@ -222,7 +222,7 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
 
     if (isLoading) {
         return (
-            <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground font-mono text-xs border border-[#222] bg-[#0A0A0A] rounded-sm relative overflow-hidden">
+            <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground font-mono text-xs border border-border bg-card rounded-sm relative overflow-hidden">
                 <Activity className="w-6 h-6 animate-pulse mb-3 opacity-50" />
                 <p className="tracking-widest uppercase">Initializing Fleet Matrix...</p>
 
@@ -236,13 +236,13 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
     const totalWidth = table.getTotalSize();
 
     return (
-        <div className="flex-1 flex flex-col border border-[#222] bg-[#0A0A0A] rounded-sm overflow-hidden relative shadow-2xl">
+        <div className="flex-1 flex flex-col border border-border bg-card rounded-sm overflow-x-auto overflow-y-hidden custom-scrollbar relative shadow-2xl">
             {/* Dynamic Header (Sticky) */}
-            <div className="flex bg-[#111] border-b border-[#333] z-10 sticky top-0 uppercase tracking-widest text-[9px] font-bold text-muted-foreground h-8 relative pr-8">
+            <div className="flex min-w-max bg-muted border-b border-border z-10 sticky top-0 uppercase tracking-widest text-[9px] font-bold text-muted-foreground h-8 pr-8">
                 {table.getFlatHeaders().map((header) => (
                     <div
                         key={header.id}
-                        className="flex items-center px-3 truncate border-r border-[#222] last:border-r-0"
+                        className="flex items-center px-3 truncate border-r border-border last:border-r-0"
                         style={{ width: header.getSize() }}
                     >
                         {header.isPlaceholder
@@ -252,16 +252,16 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
                 ))}
 
                 {/* Column Visibility Toggle */}
-                <div className="absolute right-0 top-0 h-full w-8 border-l border-[#222] bg-[#111] flex items-center justify-center">
+                <div className="absolute right-0 top-0 h-full w-8 border-l border-border bg-muted flex items-center justify-center">
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon" className="h-6 w-6 rounded-sm text-muted-foreground hover:text-primary">
                                 <Columns3 className="w-3.5 h-3.5" />
                             </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-40 bg-[#0A0A0A] border-[#222]">
+                        <DropdownMenuContent align="end" className="w-40 bg-card border-border">
                             <DropdownMenuLabel className="font-mono text-[10px] uppercase text-muted-foreground">Toggle Columns</DropdownMenuLabel>
-                            <DropdownMenuSeparator className="bg-[#222]" />
+                            <DropdownMenuSeparator className="bg-border" />
                             {table
                                 .getAllColumns()
                                 .filter((column) => typeof column.accessorFn !== "undefined" && column.getCanHide())
@@ -285,7 +285,7 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
             {/* Virtualized Body */}
             <div
                 ref={parentRef}
-                className="flex-1 overflow-auto custom-scrollbar relative bg-[#0A0A0A]"
+                className="flex-1 overflow-y-auto overflow-x-hidden min-w-max custom-scrollbar relative bg-card"
             >
                 <div
                     style={{
@@ -313,7 +313,7 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
                                 {row.getVisibleCells().map((cell) => (
                                     <div
                                         key={cell.id}
-                                        className="px-3 truncate border-r border-transparent group-hover:border-[#222] transition-colors last:border-r-0"
+                                        className="px-3 truncate border-r border-transparent group-hover:border-border transition-colors last:border-r-0"
                                         style={{ width: cell.column.getSize() }}
                                     >
                                         {flexRender(cell.column.columnDef.cell, cell.getContext())}

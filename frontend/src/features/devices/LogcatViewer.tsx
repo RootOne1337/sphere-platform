@@ -41,9 +41,9 @@ export function LogcatViewer({ deviceId }: LogcatViewerProps) {
     }, [deviceId]);
 
     return (
-        <div className="flex flex-col h-full border border-[#222] rounded-sm overflow-hidden bg-[#050505] animate-in fade-in zoom-in-95 duration-200">
+        <div className="flex flex-col h-full border border-border rounded-sm overflow-hidden bg-background animate-in fade-in zoom-in-95 duration-200">
             {/* Header */}
-            <div className="flex items-center justify-between px-3 py-1.5 bg-[#111] border-b border-[#333]">
+            <div className="flex items-center justify-between px-3 py-1.5 bg-muted border-b border-border">
                 <div className="flex items-center gap-2">
                     <FileText className="w-3.5 h-3.5 text-primary" />
                     <span className="text-[10px] font-mono font-bold tracking-widest uppercase text-primary">System Logcat</span>
@@ -53,7 +53,7 @@ export function LogcatViewer({ deviceId }: LogcatViewerProps) {
                     <Button
                         variant="ghost"
                         size="icon"
-                        className="h-6 w-6 hover:bg-[#222] text-muted-foreground hover:text-white"
+                        className="h-6 w-6 hover:bg-border text-muted-foreground hover:text-white"
                         onClick={fetchLogcat}
                         disabled={isLoading}
                         title="Refresh Logs"
@@ -69,18 +69,18 @@ export function LogcatViewer({ deviceId }: LogcatViewerProps) {
                     <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-3">
                         <AlertCircle className="w-8 h-8 text-destructive opacity-80" />
                         <span className="text-sm font-mono text-destructive">{error}</span>
-                        <Button variant="outline" size="sm" onClick={fetchLogcat} className="mt-2 bg-[#111] border-[#333]">
+                        <Button variant="outline" size="sm" onClick={fetchLogcat} className="mt-2 bg-muted border-border">
                             Retry
                         </Button>
                     </div>
                 ) : (
                     <pre className="text-[11px] font-mono leading-tight text-gray-300 whitespace-pre-wrap break-all">
                         {isLoading && !logcat ? (
-                            <span className="text-[#666] animate-pulse">Requesting logs from agent...</span>
+                            <span className="text-muted-foreground animate-pulse">Requesting logs from agent...</span>
                         ) : logcat ? (
                             logcat
                         ) : (
-                            <span className="text-[#666]">No logs available.</span>
+                            <span className="text-muted-foreground">No logs available.</span>
                         )}
                     </pre>
                 )}

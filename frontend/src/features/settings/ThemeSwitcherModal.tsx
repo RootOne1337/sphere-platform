@@ -6,7 +6,7 @@ import { Button } from '@/src/shared/ui/button';
 import { Badge } from '@/src/shared/ui/badge';
 
 const THEMES: { id: ThemeType; label: string; icon: React.ReactNode; color: string }[] = [
-    { id: 'neo-dark', label: 'Neo Dark', icon: <Moon className="w-4 h-4" />, color: 'bg-[#111] border-[#333]' },
+    { id: 'neo-dark', label: 'Neo Dark', icon: <Moon className="w-4 h-4" />, color: 'bg-muted border-border' },
     { id: 'matrix-green', label: 'Matrix', icon: <TerminalIcon />, color: 'bg-[#001100] border-[#00FF00]' },
     { id: 'deep-space', label: 'Deep Space', icon: <Monitor className="w-4 h-4" />, color: 'bg-[#050511] border-[#3366FF]' },
     { id: 'light-corporate', label: 'Corporate', icon: <Sun className="w-4 h-4" />, color: 'bg-[#F0F0F0] border-[#CCC] text-black' },

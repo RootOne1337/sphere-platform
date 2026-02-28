@@ -8,20 +8,20 @@ import { Badge } from '@/src/shared/ui/badge';
 import { TaskGanttChart } from '@/src/features/tasks/TaskGanttChart';
 import { WorkflowVisualizer } from '@/src/features/tasks/WorkflowVisualizer';
 
-const MOCK_TASKS = [
-  { id: 'TSK-9921', name: 'Nightly Config Backup', type: 'CRON', schedule: '0 2 * * *', status: 'ACTIVE', lastRun: '2 hours ago', nextRun: 'in 22 hours', successRate: 100 },
-  { id: 'TSK-9922', name: 'Farm Auto-Reboot', type: 'WORKFLOW', schedule: 'Weekly (Sun)', status: 'ACTIVE', lastRun: '3 days ago', nextRun: 'in 4 days', successRate: 98 },
-  { id: 'TSK-9923', name: 'Dormant Node Sweep', type: 'SCRIPT', schedule: 'Manual', status: 'PAUSED', lastRun: '15 days ago', nextRun: '-', successRate: 75 },
-  { id: 'TSK-9924', name: 'VPN Certificate Rotation', type: 'CRON', schedule: '0 0 1 * *', status: 'ERROR', lastRun: 'Failed (OOM)', nextRun: 'Pending Retry', successRate: 40 },
-];
+import { useQuery } from '@tanstack/react-query';
+import { api } from '@/lib/api';
 
-const MOCK_RUNNING_TASKS: any[] = [
-  { id: 'RUN-1', name: 'Sync DB Replicas (EU)', status: 'SUCCESS', startTimeMs: Date.now() - 50000, durationMs: 15000 },
-  { id: 'RUN-2', name: 'Fetch Analytics', status: 'SUCCESS', startTimeMs: Date.now() - 40000, durationMs: 12000 },
-  { id: 'RUN-3', name: 'WebHook Handler [GitHub]', status: 'FAILED', startTimeMs: Date.now() - 35000, durationMs: 5000 },
-  { id: 'RUN-4', name: 'Farm Auto-Reboot [N8N]', status: 'RUNNING', startTimeMs: Date.now() - 15000, durationMs: null },
-  { id: 'RUN-5', name: 'Device Config Push', status: 'RUNNING', startTimeMs: Date.now() - 5000, durationMs: null },
-];
+interface TaskItem {
+  id: string;
+  name: string;
+  type: string;
+  schedule: string;
+  status: string;
+  lastRun: string;
+  nextRun: string;
+  startTimeMs: number;
+  durationMs: number | null;
+}
 
 const MOCK_WORKFLOW_STEPS: any[] = [
   { id: 's1', name: 'Cron Trigger', type: 'TRIGGER', status: 'SUCCESS', duration: '12ms' },
@@ -34,9 +34,55 @@ const MOCK_WORKFLOW_STEPS: any[] = [
 export default function TaskEnginePage() {
   const [search, setSearch] = useState('');
 
+  const { data: rawTasks = [], isLoading } = useQuery({
+    queryKey: ['tasks-list'],
+    queryFn: async () => {
+      try {
+        const { data } = await api.get('/tasks?per_page=100');
+        // Backend returns { items: [...] }
+        return data.items || [];
+      } catch (e) {
+        console.error('Failed to fetch tasks', e);
+        return [];
+      }
+    },
+    refetchInterval: 5000
+  });
+
+  const tasks: TaskItem[] = useMemo(() => {
+    return rawTasks.map((t: any) => {
+      const isRunning = t.status === 'RUNNING' || t.status === 'ASSIGNED';
+      const created = new Date(t.created_at);
+      const isFailed = t.status === 'FAILED';
+
+      return {
+        id: t.id,
+        name: `Script Task [${t.script_id?.split('-')[0] || 'Unknown'}]`,
+        type: t.priority > 0 ? 'CRON' : 'SCRIPT',
+        schedule: 'Manual',
+        status: t.status,
+        lastRun: created.toLocaleString(),
+        nextRun: isRunning ? 'In Progress...' : '-',
+        startTimeMs: created.getTime(),
+        durationMs: isRunning ? null : 15000 // mock final duration if not running
+      };
+    });
+  }, [rawTasks]);
+
+  const runningTasks = useMemo(() => {
+    return tasks
+      .filter(t => t.status === 'RUNNING' || t.status === 'ASSIGNED' || t.status === 'QUEUED')
+      .map(t => ({
+        ...t,
+        status: (t.status === 'FAILED' || t.status === 'ERROR') ? 'FAILED' :
+          (t.status === 'COMPLETED' || t.status === 'SUCCESS') ? 'SUCCESS' :
+            (t.status === 'RUNNING') ? 'RUNNING' : 'PENDING' as any
+      }));
+  }, [tasks]);
+
   return (
-    <div className="flex flex-col h-full bg-[#0A0A0A]">
-      <div className="px-6 py-5 border-b border-[#222] bg-[#111] shrink-0">
+    <div className="flex flex-col h-full bg-card">
+      <div className="px-6 py-5 border-b border-border bg-muted shrink-0">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
             <div className="flex items-center gap-2 mb-1">
@@ -48,10 +94,10 @@ export default function TaskEnginePage() {
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
             <Input
               placeholder="Filter tasks..."
-              className="w-64 h-9 bg-black/50 border-[#333] font-mono text-xs focus-visible:ring-primary/50"
+              className="w-full sm:w-64 h-9 bg-black/50 border-border font-mono text-xs focus-visible:ring-primary/50"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -65,21 +111,21 @@ export default function TaskEnginePage() {
       <div className="p-6 flex-1 overflow-auto">
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
           {/* Quick Stats */}
-          <div className="border border-[#222] bg-[#111] rounded-sm p-4 flex items-center justify-between">
+          <div className="border border-border bg-muted rounded-sm p-4 flex items-center justify-between">
             <div>
               <div className="text-[10px] uppercase text-muted-foreground font-bold tracking-widest mb-1">Active Schedules</div>
               <div className="text-2xl font-mono font-bold text-foreground">12</div>
             </div>
             <CalendarClock className="w-8 h-8 text-primary/30" strokeWidth={1} />
           </div>
-          <div className="border border-[#222] bg-[#111] rounded-sm p-4 flex items-center justify-between">
+          <div className="border border-border bg-muted rounded-sm p-4 flex items-center justify-between">
             <div>
               <div className="text-[10px] uppercase text-muted-foreground font-bold tracking-widest mb-1">24h Success Rate</div>
               <div className="text-2xl font-mono font-bold text-success">98.2%</div>
             </div>
             <CheckCircle2 className="w-8 h-8 text-success/30" strokeWidth={1} />
           </div>
-          <div className="border border-[#222] bg-[#111] rounded-sm p-4 flex items-center justify-between">
+          <div className="border border-border bg-muted rounded-sm p-4 flex items-center justify-between">
             <div>
               <div className="text-[10px] uppercase text-muted-foreground font-bold tracking-widest mb-1">Failed Tasks</div>
               <div className="text-2xl font-mono font-bold text-destructive">1</div>
@@ -91,27 +137,28 @@ export default function TaskEnginePage() {
         {/* Top Dashboards: Gantt & Pipelines */}
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6">
           <div className="flex flex-col">
-            <h2 className="text-xs font-mono font-bold tracking-widest text-[#888] mb-3 uppercase flex items-center gap-2">
+            <h2 className="text-xs font-mono font-bold tracking-widest text-muted-foreground mb-3 uppercase flex items-center gap-2">
               <Clock className="w-4 h-4" /> Live Execution Queue (Next 60s)
             </h2>
-            <div className="flex-1 bg-[#0A0A0A] rounded-sm relative max-h-[250px] overflow-y-auto custom-scrollbar border-t border-[#222]">
-              <TaskGanttChart tasks={MOCK_RUNNING_TASKS} />
+            <div className="flex-1 bg-card rounded-sm relative max-h-[250px] overflow-y-auto custom-scrollbar border-t border-border">
+              {isLoading && <div className="p-4 text-center text-xs text-muted-foreground animate-pulse">Loading execution queue...</div>}
+              {!isLoading && <TaskGanttChart tasks={runningTasks} />}
             </div>
           </div>
 
           <div className="flex flex-col">
-            <h2 className="text-xs font-mono font-bold tracking-widest text-[#888] mb-3 uppercase flex items-center gap-2">
+            <h2 className="text-xs font-mono font-bold tracking-widest text-muted-foreground mb-3 uppercase flex items-center gap-2">
               <Workflow className="w-4 h-4" /> Active Pipeline (Farm Auto-Reboot)
             </h2>
-            <div className="flex-1 rounded-sm relative border-t border-[#222] min-h-[150px]">
+            <div className="flex-1 rounded-sm relative border-t border-border min-h-[150px]">
               <WorkflowVisualizer steps={MOCK_WORKFLOW_STEPS} />
             </div>
           </div>
         </div>
 
-        <div className="rounded-sm border border-[#222] bg-[#0f0f0f] shadow-2xl overflow-hidden mt-6">
-          <table className="w-full text-left whitespace-nowrap table-fixed">
-            <thead className="bg-[#151515]/90 border-b border-[#222] text-[10px] uppercase font-mono tracking-widest font-bold text-muted-foreground sticky top-0 backdrop-blur-sm z-10">
+        <div className="rounded-sm border border-border bg-card shadow-2xl overflow-x-auto custom-scrollbar mt-6">
+          <table className="w-full min-w-[950px] text-left whitespace-nowrap table-fixed">
+            <thead className="bg-[#151515]/90 border-b border-border text-[10px] uppercase font-mono tracking-widest font-bold text-muted-foreground sticky top-0 backdrop-blur-sm z-10">
               <tr>
                 <th className="px-4 py-3 w-[120px]">Status</th>
                 <th className="px-4 py-3 w-[250px]">Task Name</th>
@@ -123,15 +170,20 @@ export default function TaskEnginePage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-[#222]/50 font-mono text-xs text-foreground/80">
-              {MOCK_TASKS.filter(t => t.name.toLowerCase().includes(search.toLowerCase())).map((task) => (
-                <tr key={task.id} className="hover:bg-[#151515] transition-colors border-l-2 border-l-transparent group cursor-pointer">
+              {isLoading && (
+                <tr>
+                  <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">Loading tasks...</td>
+                </tr>
+              )}
+              {!isLoading && tasks.filter(t => t.name.toLowerCase().includes(search.toLowerCase()) || t.id.includes(search)).map((task) => (
+                <tr key={task.id} className="hover:bg-muted transition-colors border-l-2 border-l-transparent group cursor-pointer">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
-                      {task.status === 'ACTIVE' && <div className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />}
-                      {task.status === 'PAUSED' && <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground" />}
-                      {task.status === 'ERROR' && <div className="w-1.5 h-1.5 rounded-full bg-destructive animate-pulse" />}
-                      <span className={`text-[10px] font-bold tracking-widest ${task.status === 'ACTIVE' ? 'text-success' :
-                        task.status === 'ERROR' ? 'text-destructive' : 'text-[#888]'
+                      {(task.status === 'ACTIVE' || task.status === 'RUNNING') && <div className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />}
+                      {(task.status === 'PAUSED' || task.status === 'QUEUED') && <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground" />}
+                      {(task.status === 'ERROR' || task.status === 'FAILED') && <div className="w-1.5 h-1.5 rounded-full bg-destructive animate-pulse" />}
+                      <span className={`text-[10px] font-bold tracking-widest ${(task.status === 'ACTIVE' || task.status === 'RUNNING') ? 'text-success' :
+                        (task.status === 'ERROR' || task.status === 'FAILED') ? 'text-destructive' : 'text-muted-foreground'
                         }`}>{task.status}</span>
                     </div>
                   </td>

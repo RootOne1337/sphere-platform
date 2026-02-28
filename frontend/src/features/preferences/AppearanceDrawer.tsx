@@ -21,15 +21,15 @@ export function AppearanceDrawer({ open, onClose }: AppearanceDrawerProps) {
                 onClick={onClose}
             />
 
-            <div className="fixed top-0 right-0 bottom-0 w-[350px] bg-[#0A0A0A] border-l border-[#222] z-[110] flex flex-col shadow-2xl animate-in slide-in-from-right duration-300">
+            <div className="fixed top-0 right-0 bottom-0 w-[350px] bg-card border-l border-border z-[110] flex flex-col shadow-2xl animate-in slide-in-from-right duration-300">
 
                 {/* Header */}
-                <div className="flex items-center justify-between p-4 border-b border-[#222] bg-[#111]">
+                <div className="flex items-center justify-between p-4 border-b border-border bg-muted">
                     <div className="flex items-center gap-2">
                         <Paintbrush className="w-4 h-4 text-primary" />
                         <span className="font-mono font-bold tracking-widest text-xs uppercase uppercase pt-1">Preferences</span>
                     </div>
-                    <Button variant="ghost" size="icon" className="h-6 w-6 rounded-sm text-muted-foreground hover:text-foreground hover:bg-[#222]" onClick={onClose}>
+                    <Button variant="ghost" size="icon" className="h-6 w-6 rounded-sm text-muted-foreground hover:text-foreground hover:bg-border" onClick={onClose}>
                         <X className="w-4 h-4" />
                     </Button>
                 </div>
@@ -67,7 +67,7 @@ export function AppearanceDrawer({ open, onClose }: AppearanceDrawerProps) {
                             <Type className="w-3.5 h-3.5" />
                             <span className="text-[10px] font-bold uppercase tracking-widest">Interface Scaling</span>
                         </div>
-                        <div className="flex bg-[#111] border border-[#222] rounded-sm p-1">
+                        <div className="flex bg-muted border border-border rounded-sm p-1">
                             {['sm', 'base', 'lg'].map((size) => (
                                 <button
                                     key={size}
@@ -91,7 +91,7 @@ export function AppearanceDrawer({ open, onClose }: AppearanceDrawerProps) {
                                 <button
                                     key={d}
                                     onClick={() => setDensity(d as any)}
-                                    className={`p-3 text-left border rounded-sm transition-colors flex flex-col gap-1 ${density === d ? 'border-primary bg-primary/5' : 'border-[#333] bg-[#111] hover:border-[#444]'}`}
+                                    className={`p-3 text-left border rounded-sm transition-colors flex flex-col gap-1 ${density === d ? 'border-primary bg-primary/5' : 'border-border bg-muted hover:border-[#444]'}`}
                                 >
                                     <span className={`font-mono text-xs font-bold ${density === d ? 'text-primary' : 'text-foreground'}`}>{d.charAt(0).toUpperCase() + d.slice(1)}</span>
                                     <span className="text-[10px] text-muted-foreground block text-xs">

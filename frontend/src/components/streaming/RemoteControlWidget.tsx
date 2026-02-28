@@ -34,7 +34,7 @@ export function RemoteControlWidget({ onSendKey, onSendText }: RemoteControlWidg
 
             {/* Keyboard Input Popover */}
             {showKeyboard && (
-                <form onSubmit={handleSendText} className="flex items-center gap-1 bg-[#111]/90 backdrop-blur-md p-1.5 rounded-sm border border-[#333] mb-1 animate-in slide-in-from-right-2">
+                <form onSubmit={handleSendText} className="flex items-center gap-1 bg-muted/90 backdrop-blur-md p-1.5 rounded-sm border border-border mb-1 animate-in slide-in-from-right-2">
                     <Input
                         autoFocus
                         value={textInput}
@@ -49,7 +49,7 @@ export function RemoteControlWidget({ onSendKey, onSendText }: RemoteControlWidg
             )}
 
             {/* Main KVM Toolbar */}
-            <div className="flex flex-col gap-1 bg-[#111]/80 backdrop-blur-md p-1.5 rounded-sm border border-[#333] shadow-lg">
+            <div className="flex flex-col gap-1 bg-muted/80 backdrop-blur-md p-1.5 rounded-sm border border-border shadow-lg">
                 <Button
                     variant="ghost"
                     size="icon"

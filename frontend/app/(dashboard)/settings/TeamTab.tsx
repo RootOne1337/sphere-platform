@@ -147,7 +147,7 @@ export function TeamTab() {
                 ) : (
                     <div className="space-y-2">
                         {users.map((u) => (
-                            <div key={u.id} className="flex items-center justify-between p-3 border border-[#333] rounded-sm bg-[#111]">
+                            <div key={u.id} className="flex items-center justify-between p-3 border border-border rounded-sm bg-muted">
                                 <div className="flex flex-col gap-1">
                                     <div className="flex items-center gap-2">
                                         <p className="font-semibold text-sm text-foreground">{u.email}</p>
@@ -179,7 +179,7 @@ export function TeamTab() {
                                     <Button
                                         size="sm"
                                         variant="outline"
-                                        className="h-8 border-[#333] text-destructive hover:bg-destructive/10 hover:border-destructive/30"
+                                        className="h-8 border-border text-destructive hover:bg-destructive/10 hover:border-destructive/30"
                                         disabled={u.id === currentUser?.id || !u.is_active || deactivateUser.isPending}
                                         onClick={() => {
                                             if (confirm(`Deactivate ${u.email}?`)) {

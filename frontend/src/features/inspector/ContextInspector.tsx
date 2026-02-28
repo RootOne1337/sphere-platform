@@ -11,12 +11,12 @@ export function ContextInspector() {
     return (
         <aside
             className={cn(
-                "absolute right-0 top-0 h-full w-[400px] bg-[#0A0A0A] border-l border-[#222] shadow-2xl transition-transform duration-300 z-40 flex flex-col",
+                "absolute right-0 top-0 h-full w-[400px] bg-card border-l border-border shadow-2xl transition-transform duration-300 z-40 flex flex-col",
                 isOpen ? "translate-x-0" : "translate-x-full"
             )}
         >
             {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-[#222]">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border">
                 <div>
                     <h2 className="text-sm font-bold text-foreground">
                         {contentType === "device" && "Device Inspector"}
@@ -33,7 +33,7 @@ export function ContextInspector() {
                 </div>
                 <button
                     onClick={closeInspector}
-                    className="p-1 rounded-sm text-muted-foreground hover:bg-[#1A1A1A] hover:text-white transition-colors"
+                    className="p-1 rounded-sm text-muted-foreground hover:bg-secondary hover:text-white transition-colors"
                 >
                     <X className="w-4 h-4" />
                 </button>

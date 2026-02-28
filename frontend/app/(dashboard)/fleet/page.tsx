@@ -15,8 +15,8 @@ export default function FleetGroupsPage() {
     const [search, setSearch] = useState('');
 
     return (
-        <div className="flex flex-col h-full bg-[#0A0A0A]">
-            <div className="px-6 py-5 border-b border-[#222] bg-[#111] flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex flex-col h-full bg-card">
+            <div className="px-6 py-5 border-b border-border bg-muted flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <div className="flex items-center gap-2 mb-1">
                         <FolderOpen className="w-5 h-5 text-primary" />
@@ -30,7 +30,7 @@ export default function FleetGroupsPage() {
                 <div className="flex items-center gap-3">
                     <Input
                         placeholder="Filter by group or tag..."
-                        className="w-64 h-9 bg-black/50 border-[#333] font-mono text-xs focus-visible:ring-primary/50"
+                        className="w-64 h-9 bg-black/50 border-border font-mono text-xs focus-visible:ring-primary/50"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                     />
@@ -43,7 +43,7 @@ export default function FleetGroupsPage() {
 
             <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {MOCK_GROUPS.filter(g => g.name.toLowerCase().includes(search.toLowerCase()) || g.tag.includes(search)).map(group => (
-                    <div key={group.id} className="bg-[#111] border border-[#222] rounded-sm p-4 hover:border-primary/50 transition-colors group cursor-pointer relative overflow-hidden flex flex-col justify-between min-h-[160px]">
+                    <div key={group.id} className="bg-muted border border-border rounded-sm p-4 hover:border-primary/50 transition-colors group cursor-pointer relative overflow-hidden flex flex-col justify-between min-h-[160px]">
                         <div className="absolute top-0 right-0 w-16 h-16 bg-primary/5 rounded-bl-[100px] pointer-events-none transition-transform group-hover:scale-110" />
 
                         <div className="flex justify-between items-start mb-4 relative z-10">

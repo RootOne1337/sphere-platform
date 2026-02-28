@@ -5,24 +5,44 @@ import { Badge } from '@/src/shared/ui/badge';
 
 import { ClusterHeatmap } from '@/src/features/monitoring/ClusterHeatmap';
 
-// Mock Data for NOC Dashboard
-const MOCK_METRICS = {
-    cpu: { current: 42, history: [22, 25, 30, 45, 60, 42, 38, 41, 42, 39, 45, 42] },
-    ram: { current: 16.4, total: 32, history: [14, 14.5, 15, 16.2, 16.4, 16.4, 16.3, 16.4] },
-    redis: { ops: 1240, memory: '1.2 GB', clients: 450 },
-    network: { tx: '450 Mbps', rx: '120 Mbps', activeTunnels: 1205 },
+import { useQuery } from '@tanstack/react-query';
+import { api } from '@/lib/api';
+
+const DEFAULT_METRICS = {
+    cpu: { current: 0, history: Array(12).fill(0) },
+    ram: { current: 0, total: 32, history: Array(8).fill(0) },
+    redis: { ops: 0, memory: '0 MB', clients: 0 },
+    network: { tx: '0 Mbps', rx: '0 Mbps', activeTunnels: 0 },
 };
 
-const MOCK_NODES: any[] = [
-    ...Array.from({ length: 4 }).map((_, i) => ({ id: `API-${i + 1}`, name: `Gateway Node ${i + 1}`, type: 'API', cpu: 20 + Math.random() * 40, ram: 40 + Math.random() * 20, status: 'HEALTHY' })),
-    ...Array.from({ length: 12 }).map((_, i) => ({ id: `WK-${i + 1}`, name: `Task Worker ${i + 1}`, type: 'WORKER', cpu: 40 + Math.random() * 55, ram: 60 + Math.random() * 30, status: Math.random() > 0.9 ? 'WARNING' : 'HEALTHY' })),
-    ...Array.from({ length: 3 }).map((_, i) => ({ id: `DB-${i + 1}`, name: `Postgres Node ${i + 1}`, type: 'DB', cpu: 60 + Math.random() * 35, ram: 80 + Math.random() * 15, status: i === 2 ? 'CRITICAL' : 'HEALTHY' })),
-    ...Array.from({ length: 2 }).map((_, i) => ({ id: `RD-${i + 1}`, name: `Redis Cache ${i + 1}`, type: 'CACHE', cpu: 10 + Math.random() * 10, ram: 70 + Math.random() * 10, status: 'HEALTHY' })),
-    ...Array.from({ length: 6 }).map((_, i) => ({ id: `EDGE-${i + 1}`, name: `CDN Edge ${i + 1}`, type: 'EDGE', cpu: Math.random() * 30, ram: Math.random() * 20, status: i === 4 ? 'OFFLINE' : 'HEALTHY' })),
-];
-
 export default function MonitoringPage() {
-    const [metrics, setMetrics] = useState(MOCK_METRICS);
+    const { data: metrics = DEFAULT_METRICS, isLoading: metricsLoading } = useQuery({
+        queryKey: ['monitoring-metrics'],
+        queryFn: async () => {
+            try {
+                const { data } = await api.get('/monitoring/metrics');
+                return data;
+            } catch (e) {
+                console.error('Failed to fetch metrics', e);
+                return DEFAULT_METRICS;
+            }
+        },
+        refetchInterval: 10000
+    });
+
+    const { data: nodes = [], isLoading: nodesLoading } = useQuery({
+        queryKey: ['monitoring-nodes'],
+        queryFn: async () => {
+            try {
+                const { data } = await api.get('/monitoring/nodes');
+                return data;
+            } catch (e) {
+                console.error('Failed to fetch nodes', e);
+                return [];
+            }
+        },
+        refetchInterval: 10000
+    });
 
     // Simple sparkline generator for NOC feel
     const renderSparkline = (data: number[], colorClass: string) => {
@@ -41,9 +61,9 @@ export default function MonitoringPage() {
     };
 
     return (
-        <div className="flex flex-col h-full bg-[#0A0A0A] overflow-y-auto custom-scrollbar">
+        <div className="flex flex-col h-full bg-card overflow-y-auto custom-scrollbar">
             {/* Header */}
-            <div className="px-6 py-5 border-b border-[#222] bg-[#111] shrink-0">
+            <div className="px-6 py-5 border-b border-border bg-muted shrink-0">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
                         <div className="flex items-center gap-2 mb-1">
@@ -55,7 +75,7 @@ export default function MonitoringPage() {
                         </p>
                     </div>
 
-                    <div className="flex items-center gap-4 bg-black/40 px-4 py-2 rounded-sm border border-[#333]">
+                    <div className="flex items-center gap-4 bg-black/40 px-4 py-2 rounded-sm border border-border">
                         <div className="flex flex-col hidden sm:flex">
                             <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">System Status</span>
                             <span className="text-xs text-warning font-mono font-bold flex items-center gap-2">
@@ -73,7 +93,7 @@ export default function MonitoringPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
 
                     {/* CPU Widget */}
-                    <div className="bg-[#111] border border-[#222] p-4 rounded-sm flex flex-col relative overflow-hidden group">
+                    <div className="bg-muted border border-border p-4 rounded-sm flex flex-col relative overflow-hidden group">
                         <div className="flex justify-between items-start mb-2 relative z-10">
                             <div className="flex items-center gap-2 text-muted-foreground">
                                 <Cpu className="w-4 h-4" />
@@ -89,7 +109,7 @@ export default function MonitoringPage() {
                     </div>
 
                     {/* RAM Widget */}
-                    <div className="bg-[#111] border border-[#222] p-4 rounded-sm flex flex-col relative overflow-hidden">
+                    <div className="bg-muted border border-border p-4 rounded-sm flex flex-col relative overflow-hidden">
                         <div className="flex justify-between items-start mb-2 relative z-10">
                             <div className="flex items-center gap-2 text-muted-foreground">
                                 <HardDrive className="w-4 h-4" />
@@ -105,7 +125,7 @@ export default function MonitoringPage() {
                     </div>
 
                     {/* Redis State */}
-                    <div className="bg-[#111] border border-[#222] p-4 rounded-sm flex flex-col justify-between">
+                    <div className="bg-muted border border-border p-4 rounded-sm flex flex-col justify-between">
                         <div className="flex justify-between items-start mb-4">
                             <div className="flex items-center gap-2 text-muted-foreground">
                                 <Database className="w-4 h-4" />
@@ -130,7 +150,7 @@ export default function MonitoringPage() {
                     </div>
 
                     {/* Network / VPN */}
-                    <div className="bg-[#111] border border-[#222] p-4 rounded-sm flex flex-col justify-between">
+                    <div className="bg-muted border border-border p-4 rounded-sm flex flex-col justify-between">
                         <div className="flex justify-between items-start mb-4">
                             <div className="flex items-center gap-2 text-muted-foreground">
                                 <Wifi className="w-4 h-4" />
@@ -157,8 +177,8 @@ export default function MonitoringPage() {
                 </div>
 
                 {/* Node Topology Matrix */}
-                <div className="border border-[#222] bg-[#111] rounded-sm p-4">
-                    <div className="flex items-center justify-between mb-4 border-b border-[#222] pb-4">
+                <div className="border border-border bg-muted rounded-sm p-4">
+                    <div className="flex items-center justify-between mb-4 border-b border-border pb-4">
                         <div className="flex items-center gap-2 text-muted-foreground">
                             <Server className="w-4 h-4" />
                             <span className="text-xs uppercase font-bold tracking-widest text-foreground">Cluster Topology & Nodes</span>
@@ -171,7 +191,13 @@ export default function MonitoringPage() {
                         </div>
                     </div>
 
-                    <ClusterHeatmap nodes={MOCK_NODES} />
+                    {nodesLoading ? (
+                        <div className="py-10 text-center text-xs text-muted-foreground animate-pulse">
+                            Fetching cluster topology...
+                        </div>
+                    ) : (
+                        <ClusterHeatmap nodes={nodes} />
+                    )}
                 </div>
 
             </div>

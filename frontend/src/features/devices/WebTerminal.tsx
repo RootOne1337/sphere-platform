@@ -106,9 +106,9 @@ export function WebTerminal({ deviceId }: WebTerminalProps) {
     }, [deviceId]);
 
     return (
-        <div className="flex flex-col h-full border border-[#222] rounded-sm overflow-hidden bg-[#050505]">
+        <div className="flex flex-col h-full border border-border rounded-sm overflow-hidden bg-background">
             {/* Terminal Title Bar */}
-            <div className="flex items-center justify-between px-3 py-1.5 bg-[#111] border-b border-[#333]">
+            <div className="flex items-center justify-between px-3 py-1.5 bg-muted border-b border-border">
                 <div className="flex items-center gap-2">
                     <Activity className="w-3.5 h-3.5 text-success animate-pulse" />
                     <span className="text-[10px] font-mono font-bold tracking-widest uppercase text-success">Secure Shell Active</span>
