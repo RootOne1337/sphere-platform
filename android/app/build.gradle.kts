@@ -55,9 +55,9 @@ android {
             // Enrollment key из agent-config/environments/development.json
             buildConfigField("String", "DEFAULT_API_KEY", "\"sphr_dev_enrollment_key_2025\"")
             buildConfigField("String", "DEFAULT_DEVICE_ID", "\"\"")
-            // TZ-12: Config endpoint через ADB reverse (adb reverse tcp:8080 tcp:80)
-            // LDPlayer localhost:8080 → host nginx:80 → backend
-            buildConfigField("String", "CONFIG_URL", "\"http://127.0.0.1:8080/api/v1/config/agent\"")
+            // TZ-12: HTTP Config Endpoint через GitHub Raw — публичный репо с конфигами
+            // https://github.com/RootOne1337/sphere-agent-config
+            buildConfigField("String", "CONFIG_URL", "\"https://raw.githubusercontent.com/RootOne1337/sphere-agent-config/main/environments/development.json\"")
         }
         create("enterprise") {
             dimension = "env"
