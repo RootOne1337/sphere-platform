@@ -40,7 +40,7 @@ export function RemoteControlWidget({ onSendKey, onSendText }: RemoteControlWidg
                         value={textInput}
                         onChange={(e) => setTextInput(e.target.value)}
                         placeholder="[ TYPE TO DEVICE ]"
-                        className="h-7 text-[10px] uppercase font-mono bg-black border-[#444] min-w-[150px] placeholder:text-[#555]"
+                        className="h-7 text-[10px] uppercase font-mono bg-background border-border min-w-[150px] placeholder:text-muted-foreground"
                     />
                     <Button type="submit" size="icon" className="h-7 w-7 bg-primary/20 text-primary hover:bg-primary/40 rounded-sm shrink-0">
                         <Send className="w-3.5 h-3.5" />
@@ -93,14 +93,14 @@ export function RemoteControlWidget({ onSendKey, onSendText }: RemoteControlWidg
                     <Type className="w-4 h-4" />
                 </Button>
 
-                <div className="w-full h-px bg-[#333] my-1" />
+                <div className="w-full h-px bg-border my-1" />
 
                 <div className="flex flex-col gap-0.5">
                     <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => onSendKey(KEYCODE_MENU)}
-                        className="h-8 w-8 text-muted-foreground hover:bg-[#333] hover:text-foreground rounded-sm"
+                        className="h-8 w-8 text-muted-foreground hover:bg-background hover:text-foreground rounded-sm"
                         title="Menu"
                     >
                         <MoreVertical className="w-4 h-4" />
@@ -109,7 +109,7 @@ export function RemoteControlWidget({ onSendKey, onSendText }: RemoteControlWidg
                         variant="ghost"
                         size="icon"
                         onClick={() => onSendKey(KEYCODE_HOME)}
-                        className="h-8 w-8 text-muted-foreground hover:bg-[#333] hover:text-foreground rounded-sm"
+                        className="h-8 w-8 text-muted-foreground hover:bg-background hover:text-foreground rounded-sm"
                         title="Home"
                     >
                         <Home className="w-4 h-4" />
@@ -118,7 +118,7 @@ export function RemoteControlWidget({ onSendKey, onSendText }: RemoteControlWidg
                         variant="ghost"
                         size="icon"
                         onClick={() => onSendKey(KEYCODE_BACK)}
-                        className="h-8 w-8 text-muted-foreground hover:bg-[#333] hover:text-foreground rounded-sm"
+                        className="h-8 w-8 text-muted-foreground hover:bg-background hover:text-foreground rounded-sm"
                         title="Back"
                     >
                         <ArrowLeft className="w-4 h-4" />
