@@ -26,7 +26,7 @@ if [ ! -f "${CERT_DIR}/fullchain.pem" ]; then
 fi
 
 # Подставляем ТОЛЬКО ${SERVER_HOSTNAME} — nginx-переменные ($host и т.д.) не трогаем
-envsubst '${SERVER_HOSTNAME}' < /tmp/nginx.conf.template > /etc/nginx/nginx.conf
+envsubst '${SERVER_HOSTNAME}' < /tmp/nginx.conf.template > /tmp/nginx.generated.conf
 
 echo "[nginx-init] Запуск nginx | домен=${HOSTNAME}"
-exec nginx -g 'daemon off;'
+exec nginx -c /tmp/nginx.generated.conf -g 'daemon off;'

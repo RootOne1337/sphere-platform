@@ -26,6 +26,7 @@ services:
       - ENVIRONMENT=${ENVIRONMENT:-production}
       - WEB_CONCURRENCY=${WEB_CONCURRENCY:-4}
       - CORS_EXTRA_ORIGINS=${CORS_EXTRA_ORIGINS:-}
+      - DEV_SKIP_AUTH=${DEV_SKIP_AUTH:-}
     ports:
       - "${BACKEND_PORT:-8000}:8000"
     depends_on:
@@ -73,6 +74,7 @@ services:
     environment:
       - NEXT_PUBLIC_API_URL=/api/v1
       - NEXT_PUBLIC_WS_URL=
+      - NEXT_PUBLIC_DEV_SKIP_AUTH=${DEV_SKIP_AUTH:-}
     ports:
       - "3002:3002"
     volumes:
