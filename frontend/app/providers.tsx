@@ -8,8 +8,7 @@ import { useInitAuth, useAuthStore } from '@/lib/store';
 const PUBLIC_PATHS = ['/login'];
 
 // ⚠️ АВТОРИЗАЦИЯ ОТКЛЮЧЕНА НА ВРЕМЯ РАЗРАБОТКИ
-// TODO: вернуть обратно: const DEV_SKIP_AUTH = process.env.NEXT_PUBLIC_DEV_SKIP_AUTH === 'true';
-const DEV_SKIP_AUTH = true;
+const DEV_SKIP_AUTH = process.env.NEXT_PUBLIC_DEV_SKIP_AUTH === 'true';
 
 /**
  * Client-side auth guard.

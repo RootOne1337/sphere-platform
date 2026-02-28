@@ -9,7 +9,7 @@ export const api = axios.create({
 });
 
 // ⚠️ АВТОРИЗАЦИЯ ОТКЛЮЧЕНА НА ВРЕМЯ РАЗРАБОТКИ
-const _DEV_SKIP_AUTH = true;
+const _DEV_SKIP_AUTH = process.env.NEXT_PUBLIC_DEV_SKIP_AUTH === 'true';
 
 // Request: добавить Authorization
 api.interceptors.request.use((config) => {

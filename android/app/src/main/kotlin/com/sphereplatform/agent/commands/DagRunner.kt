@@ -93,9 +93,10 @@ class DagRunner @Inject constructor(
         var success = true
         var failedNode: String? = null
 
-        withTimeout(globalTimeoutMs) {
-            var currentNodeId: String? = entryNodeId
+        var currentNodeId: String? = entryNodeId
 
+        try {
+        withTimeout(globalTimeoutMs) {
             while (currentNodeId != null) {
                 // ── Check for cancel request from backend ──────────────
                 if (cancelRequested) {
@@ -104,14 +105,23 @@ class DagRunner @Inject constructor(
                     failedNode = currentNodeId
                     break
                 }
-                val nodeId = currentNodeId
+                val nodeId = currentNodeId ?: break
                 val node = nodeMap[nodeId]
                     ?: throw IllegalArgumentException("Node '$nodeId' not found in DAG")
 
                 val action = node["action"]!!.jsonObject
                 val actionType = action["type"]!!.jsonPrimitive.content
                 val retryMax = node["retry"]?.jsonPrimitive?.intOrNull ?: 0
-                val nodeTimeoutMs = node["timeout_ms"]?.jsonPrimitive?.longOrNull ?: 30_000L
+                val rawTimeoutMs = node["timeout_ms"]?.jsonPrimitive?.longOrNull ?: 30_000L
+
+                // Защита: для sleep-нод timeout должен быть >= action.ms + буфер
+                val nodeTimeoutMs = if (actionType == "sleep") {
+                    val sleepMs = action["ms"]?.jsonPrimitive?.longOrNull ?: 0L
+                    maxOf(rawTimeoutMs, sleepMs + 3_000L)
+                } else {
+                    rawTimeoutMs
+                }
+
                 val onSuccess = node["on_success"]?.jsonPrimitive?.contentOrNull
                 val onFailure = node["on_failure"]?.jsonPrimitive?.contentOrNull
 
@@ -145,6 +155,9 @@ class DagRunner @Inject constructor(
                         nodeError = "timeout after ${nodeTimeoutMs}ms (attempt $attempt)"
                         Timber.w("[DAG] Node '$nodeId' timed out")
                         break   // no retry on timeout
+                    } catch (e: kotlinx.coroutines.CancellationException) {
+                        // Не глотаем отмену корутины (глобальный таймаут или cancel)
+                        throw e
                     } catch (e: Exception) {
                         nodeError = e.message ?: "unknown error"
                         Timber.w(e, "[DAG] Node '$nodeId' failed attempt $attempt")
@@ -182,6 +195,17 @@ class DagRunner @Inject constructor(
                     throw RuntimeException("DAG failed at node '$nodeId': $nodeError")
                 }
             }
+        }
+        } catch (e: TimeoutCancellationException) {
+            // Глобальный таймаут DAG — не нодовый
+            val elapsedSec = globalTimeoutMs / 1000
+            Timber.w("[DAG] Global DAG timeout after ${elapsedSec}s at node '$currentNodeId'")
+            success = false
+            failedNode = currentNodeId
+            nodeLogs.add(makeLog(
+                currentNodeId ?: "unknown", "GLOBAL_TIMEOUT", globalTimeoutMs, false,
+                "Global DAG timeout after ${elapsedSec}s (limit: ${elapsedSec}s)", null
+            ))
         }
 
         val nodeLogsArray: JsonArray = buildJsonArray { nodeLogs.forEach { add(it) } }
@@ -275,12 +299,18 @@ class DagRunner @Inject constructor(
 
         "screenshot" -> {
             val path = adbActions.takeScreenshot()
-            mapOf("path" to path)
+            val key = action["save_to"]?.jsonPrimitive?.contentOrNull
+            val result = mapOf("path" to path)
+            if (key != null) ctx[key] = result
+            result
         }
 
         "lua" -> {
             val code = action["code"]!!.jsonPrimitive.content
-            luaEngine.executeWithTimeout(code, ctx)
+            val key = action["save_to"]?.jsonPrimitive?.contentOrNull
+            val result = luaEngine.executeWithTimeout(code, ctx)
+            if (key != null) ctx[key] = result
+            result
         }
 
         // Native condition checks (no Lua required)
@@ -323,11 +353,13 @@ class DagRunner @Inject constructor(
             val strategy = action["strategy"]?.jsonPrimitive?.contentOrNull ?: "text"
             val timeoutMs = action["timeout_ms"]?.jsonPrimitive?.intOrNull ?: 10_000
             val failIfNotFound = action["fail_if_not_found"]?.jsonPrimitive?.content?.toBoolean() ?: true
+            val key = action["save_to"]?.jsonPrimitive?.contentOrNull
             val result = adbActions.findElement(selector, strategy, timeoutMs)
             if (result == null && failIfNotFound) {
                 throw RuntimeException("Element not found: strategy=$strategy selector='$selector'")
             }
-            result  // null or "x,y" string
+            if (key != null) ctx[key] = result
+            result
         }
 
         // ── Multi-candidate element search (one dump per poll cycle) ──────────
@@ -393,27 +425,41 @@ class DagRunner @Inject constructor(
                 AdbActionExecutor.SelectorCandidate(selector, strategy, label)
             }
             val timeoutMs = action["timeout_ms"]?.jsonPrimitive?.intOrNull ?: 8_000
+            val failIfNotFound = action["fail_if_not_found"]?.jsonPrimitive?.content?.toBoolean() ?: true
             val match = adbActions.findFirstElement(candidates, timeoutMs)
-                ?: throw RuntimeException(
+            val key = action["save_to"]?.jsonPrimitive?.contentOrNull
+            if (match != null) {
+                val parts = match.coords.split(",")
+                // coords from uiautomator dump are already in physical pixels — use tapRaw
+                adbActions.tapRaw(parts[0].toInt(), parts[1].toInt())
+                val result = mapOf("tapped_label" to match.label, "tapped_index" to match.index, "coords" to match.coords)
+                if (key != null) ctx[key] = result
+                result
+            } else if (failIfNotFound) {
+                throw RuntimeException(
                     "tap_first_visible: none of ${candidates.size} candidates found within ${timeoutMs}ms"
                 )
-            val parts = match.coords.split(",")
-            // coords from uiautomator dump are already in physical pixels — use tapRaw
-            adbActions.tapRaw(parts[0].toInt(), parts[1].toInt())
-            mapOf("tapped_label" to match.label, "tapped_index" to match.index, "coords" to match.coords)
+            } else {
+                // Ни один кандидат не найден, но fail_if_not_found = false — возвращаем null (SUCCESS)
+                Timber.d("[DAG] tap_first_visible: none of ${candidates.size} candidates found, continuing")
+                null
+            }
         }
 
         // ── App lifecycle ─────────────────────────────────────────────────────
         "launch_app" -> {
             val pkg = action["package"]!!.jsonPrimitive.content
+            val delayMs = action["delay_ms"]?.jsonPrimitive?.longOrNull ?: 1_500L
             adbActions.launchApp(pkg)
-            delay(1_500)  // дать приложению время запуститься
+            delay(delayMs)
             null
         }
 
         "stop_app" -> {
             val pkg = action["package"]!!.jsonPrimitive.content
+            val delayMs = action["delay_ms"]?.jsonPrimitive?.longOrNull ?: 0L
             adbActions.stopApp(pkg)
+            if (delayMs > 0) delay(delayMs)
             null
         }
 
@@ -448,18 +494,24 @@ class DagRunner @Inject constructor(
             val dir       = action["direction"]?.jsonPrimitive?.contentOrNull ?: "down"
             val maxScrolls = action["max_scrolls"]?.jsonPrimitive?.intOrNull ?: 10
             val dur       = action["duration_ms"]?.jsonPrimitive?.intOrNull ?: 400
+            val failIfNotFound = action["fail_if_not_found"]?.jsonPrimitive?.content?.toBoolean() ?: true
             val found = adbActions.scrollUntilVisible(selector, strategy, dir, maxScrolls, dur)
-            if (!found) throw RuntimeException("scroll_to: element not found after $maxScrolls scrolls: '$selector'")
-            null
+            if (!found && failIfNotFound) {
+                throw RuntimeException("scroll_to: element not found after $maxScrolls scrolls: '$selector'")
+            }
+            found
         }
 
         "wait_for_element_gone" -> {
             val selector  = action["selector"]!!.jsonPrimitive.content
             val strategy  = action["strategy"]?.jsonPrimitive?.contentOrNull ?: "xpath"
             val timeoutMs = action["timeout_ms"]?.jsonPrimitive?.intOrNull ?: 15_000
+            val failIfNotGone = action["fail_if_not_found"]?.jsonPrimitive?.content?.toBoolean() ?: true
             val gone = adbActions.waitForElementGone(selector, strategy, timeoutMs)
-            if (!gone) throw RuntimeException("wait_for_element_gone: element still visible after ${timeoutMs}ms")
-            null
+            if (!gone && failIfNotGone) {
+                throw RuntimeException("wait_for_element_gone: element still visible after ${timeoutMs}ms")
+            }
+            gone
         }
 
         // ── Element helpers ────────────────────────────────────────────────────
@@ -468,12 +520,19 @@ class DagRunner @Inject constructor(
             val selector  = action["selector"]!!.jsonPrimitive.content
             val strategy  = action["strategy"]?.jsonPrimitive?.contentOrNull ?: "xpath"
             val timeoutMs = action["timeout_ms"]?.jsonPrimitive?.intOrNull ?: 8_000
+            val failIfNotFound = action["fail_if_not_found"]?.jsonPrimitive?.content?.toBoolean() ?: true
+            val key = action["save_to"]?.jsonPrimitive?.contentOrNull
             val coords = adbActions.findElement(selector, strategy, timeoutMs)
-                ?: throw RuntimeException("tap_element: element not found: '$selector'")
-            val parts = coords.split(",")
-            // coords from uiautomator dump are already in physical pixels — use tapRaw
-            adbActions.tapRaw(parts[0].toInt(), parts[1].toInt())
-            null
+            if (coords == null) {
+                if (failIfNotFound) throw RuntimeException("tap_element: element not found: '$selector'")
+                null
+            } else {
+                val parts = coords.split(",")
+                // coords from uiautomator dump are already in physical pixels — use tapRaw
+                adbActions.tapRaw(parts[0].toInt(), parts[1].toInt())
+                if (key != null) ctx[key] = coords
+                coords
+            }
         }
 
         "get_element_text" -> {
@@ -519,7 +578,11 @@ class DagRunner @Inject constructor(
         "increment_variable" -> {
             val key = action["key"]!!.jsonPrimitive.content
             val step = action["step"]?.jsonPrimitive?.intOrNull ?: 1
-            val current = (ctx[key] as? String)?.toIntOrNull() ?: 0
+            val current = when (val v = ctx[key]) {
+                is Number -> v.toInt()
+                is String -> v.toIntOrNull() ?: 0
+                else -> 0
+            }
             val newVal = current + step
             ctx[key] = newVal.toString()
             newVal.toString()
@@ -546,15 +609,17 @@ class DagRunner @Inject constructor(
 
         "open_url" -> {
             val url = action["url"]!!.jsonPrimitive.content
+            val delayMs = action["delay_ms"]?.jsonPrimitive?.longOrNull ?: 1_000L
             adbActions.openUrl(url)
-            delay(1_000)
+            if (delayMs > 0) delay(delayMs)
             null
         }
 
         "clear_app_data" -> {
             val pkg = action["package"]!!.jsonPrimitive.content
+            val delayMs = action["delay_ms"]?.jsonPrimitive?.longOrNull ?: 500L
             adbActions.clearAppData(pkg)
-            delay(500)
+            if (delayMs > 0) delay(delayMs)
             null
         }
 
@@ -568,7 +633,14 @@ class DagRunner @Inject constructor(
         "shell" -> {
             val command = action["command"]!!.jsonPrimitive.content
             val key     = action["save_to"]?.jsonPrimitive?.contentOrNull
-            val output  = adbActions.shell(command)
+            val failOnError = action["fail_on_error"]?.jsonPrimitive?.content?.toBoolean() ?: true
+            val output = try {
+                adbActions.shell(command)
+            } catch (e: Exception) {
+                if (failOnError) throw e
+                Timber.d("[DAG] shell: command failed (fail_on_error=false): ${e.message}")
+                ""
+            }
             if (key != null) ctx[key] = output.trim()
             output
         }

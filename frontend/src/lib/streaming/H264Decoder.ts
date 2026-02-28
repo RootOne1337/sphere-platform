@@ -236,6 +236,37 @@ export class H264Decoder {
     this.ws?.send(JSON.stringify({ type: "click", x: deviceX, y: deviceY }));
   }
 
+  /**
+   * Send a swipe gesture from (x1,y1) to (x2,y2) over a duration (ms).
+   */
+  sendSwipe(canvasX1: number, canvasY1: number, canvasX2: number, canvasY2: number, durationMs: number = 300): void {
+    const deviceX1 = Math.round((canvasX1 / this.canvas.clientWidth) * this.canvas.width);
+    const deviceY1 = Math.round((canvasY1 / this.canvas.clientHeight) * this.canvas.height);
+    const deviceX2 = Math.round((canvasX2 / this.canvas.clientWidth) * this.canvas.width);
+    const deviceY2 = Math.round((canvasY2 / this.canvas.clientHeight) * this.canvas.height);
+
+    this.ws?.send(JSON.stringify({
+      type: "swipe",
+      x1: deviceX1, y1: deviceY1,
+      x2: deviceX2, y2: deviceY2,
+      duration: durationMs
+    }));
+  }
+
+  /**
+   * Send a hardware key event (e.g. KEYCODE_HOME = 3, KEYCODE_BACK = 4, KEYCODE_POWER = 26)
+   */
+  sendKeyEvent(keyCode: number): void {
+    this.ws?.send(JSON.stringify({ type: "keyevent", code: keyCode }));
+  }
+
+  /**
+   * Send a string of text to the device
+   */
+  sendText(text: string): void {
+    this.ws?.send(JSON.stringify({ type: "text", text }));
+  }
+
   // ── Lifecycle ─────────────────────────────────────────────────────────────
 
   destroy(): void {

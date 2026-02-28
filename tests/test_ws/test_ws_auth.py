@@ -12,7 +12,6 @@ import uuid
 from unittest.mock import AsyncMock, patch
 
 import pytest
-import pytest_asyncio
 from fastapi import HTTPException
 
 from backend.api.ws.android.router import authenticate_ws_token

@@ -18,7 +18,23 @@ from backend.models.ldplayer_instance import LDPlayerInstance  # noqa: F401
 
 # --- Auth (TZ-01) ---
 from backend.models.organization import Organization  # noqa: F401
+
+# --- Orchestrator + Scheduler (TZ-12) ---
+from backend.models.pipeline import (  # noqa: F401
+    Pipeline,
+    PipelineBatch,
+    PipelineRun,
+    PipelineRunStatus,
+    StepType,
+)
 from backend.models.refresh_token import RefreshToken  # noqa: F401
+from backend.models.schedule import (  # noqa: F401
+    Schedule,
+    ScheduleConflictPolicy,
+    ScheduleExecution,
+    ScheduleExecutionStatus,
+    ScheduleTargetType,
+)
 
 # --- Script Engine (TZ-04) ---
 from backend.models.script import Script, ScriptVersion  # noqa: F401
@@ -58,4 +74,15 @@ __all__ = [
     "Workstation",
     "LDPlayerInstance",
     "Webhook",
+    # TZ-12 Orchestrator
+    "Pipeline",
+    "PipelineRun",
+    "PipelineBatch",
+    "PipelineRunStatus",
+    "StepType",
+    "Schedule",
+    "ScheduleExecution",
+    "ScheduleConflictPolicy",
+    "ScheduleTargetType",
+    "ScheduleExecutionStatus",
 ]

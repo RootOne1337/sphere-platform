@@ -39,7 +39,6 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 bearer_scheme = HTTPBearer(auto_error=False)
 
-from backend.core.config import settings
 
 REFRESH_COOKIE_NAME = "refresh_token"
 

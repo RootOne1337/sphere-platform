@@ -21,14 +21,22 @@ class DeviceStatusProvider @Inject constructor(
     @ApplicationContext private val context: Context,
     private val vpnManager: SphereVpnManager,
 ) {
-    /** Уровень заряда 0–100, -1 если недоступно. */
+    // Кеш уровня заряда — обновляем не чаще раз в 30с.
+    // registerReceiver() лёгкий, но создаёт IntentFilter на каждый ping (~15с).
+    @Volatile private var cachedBattery = -1
+    @Volatile private var batteryExpireAt = 0L
+
+    /** Уровень заряда 0–100, -1 если недоступно. Результат кешируется на 30 секунд. */
     fun getBatteryLevel(): Int {
+        val now = System.currentTimeMillis()
+        if (now < batteryExpireAt) return cachedBattery
         val filter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
-        val intent = context.registerReceiver(null, filter) ?: return -1
+        val intent = context.registerReceiver(null, filter) ?: return cachedBattery.also { batteryExpireAt = now + 30_000L }
         val level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
         val scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1)
-        if (level == -1 || scale == -1) return -1
-        return (level * 100 / scale)
+        cachedBattery = if (level == -1 || scale == -1) -1 else (level * 100 / scale)
+        batteryExpireAt = now + 30_000L
+        return cachedBattery
     }
 
     /** Приближённая загрузка CPU (первая строка /proc/stat), 0–100. */

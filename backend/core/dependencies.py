@@ -2,6 +2,7 @@
 # ВЛАДЕЛЕЦ: TZ-01. Полная реализация FastAPI dependencies: JWT-валидация, RBAC, service factories.
 from __future__ import annotations
 
+import os as _os
 import uuid
 from typing import TYPE_CHECKING
 
@@ -20,10 +21,7 @@ if TYPE_CHECKING:
 
 security = HTTPBearer(auto_error=False)
 
-# ⚠️ АВТОРИЗАЦИЯ ОТКЛЮЧЕНА НА ВРЕМЯ РАЗРАБОТКИ
-# TODO: вернуть обратно: _DEV_SKIP_AUTH = _os.environ.get("DEV_SKIP_AUTH", "").lower() in ("1", "true", "yes")
-import os as _os
-_DEV_SKIP_AUTH = True
+_DEV_SKIP_AUTH = _os.environ.get("DEV_SKIP_AUTH", "").lower() in ("1", "true", "yes")
 
 
 async def get_current_user(

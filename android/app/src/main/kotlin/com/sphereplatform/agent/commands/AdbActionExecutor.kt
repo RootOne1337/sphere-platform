@@ -55,6 +55,17 @@ class AdbActionExecutor @Inject constructor(
         // Таймаут одного uiautomator dump: 4s достаточно на LDPlayer.
         // 12s → каждый зависший dump блокировал IO-поток на 12 секунд!
         private const val UI_DUMP_TIMEOUT_SECONDS = 4L
+
+        // Ленивые синглтоны XML-фабрик: DocumentBuilderFactory.newInstance() и
+        // XPathFactory.newInstance() выполняют тяжёлый service discovery через
+        // рефлексию при первом вызове (~30–80ms). Кешируем фабрики — builder и
+        // XPath всё равно создаются каждый раз (не потокобезопасны), но фабрики — нет.
+        private val DOC_BUILDER_FACTORY: DocumentBuilderFactory by lazy {
+            DocumentBuilderFactory.newInstance()
+        }
+        private val XPATH_FACTORY: XPathFactory by lazy {
+            XPathFactory.newInstance()
+        }
     }
 
     private var rootProcess: Process = createRootProcess()
@@ -393,9 +404,9 @@ class AdbActionExecutor @Inject constructor(
      * Находит первый узел с непустым атрибутом bounds и возвращает координаты центра.
      */
     private fun parseUiXmlXPath(xml: String, xpath: String): String? {
-        val docBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder()
+        val docBuilder = DOC_BUILDER_FACTORY.newDocumentBuilder()
         val doc = docBuilder.parse(InputSource(StringReader(xml)))
-        val xpathExpr = XPathFactory.newInstance().newXPath().compile(xpath)
+        val xpathExpr = XPATH_FACTORY.newXPath().compile(xpath)
         val nodeList = xpathExpr.evaluate(doc, XPathConstants.NODESET)
             as org.w3c.dom.NodeList
         for (i in 0 until nodeList.length) {
@@ -468,14 +479,20 @@ class AdbActionExecutor @Inject constructor(
         return withContext(Dispatchers.IO) {
             val process = Runtime.getRuntime().exec(arrayOf("su", "-c", command))
             // 5s достаточно для быстрых команд (pidof, cat, dumpsys).
-            // Prежнее значение 30s приводило к утечке IO потоков при coroutine cancellation.
+            // Прежнее значение 30s приводило к утечке IO потоков при coroutine cancellation.
             val SHELL_TIMEOUT_SECONDS = 5L
             val finished = process.waitFor(SHELL_TIMEOUT_SECONDS, TimeUnit.SECONDS)
             if (!finished) {
                 process.destroyForcibly()
                 error("Shell command timed out after ${SHELL_TIMEOUT_SECONDS}s: $command")
             }
-            process.inputStream.bufferedReader().readText()
+            val exitCode = process.exitValue()
+            val stdout = process.inputStream.bufferedReader().readText()
+            if (exitCode != 0) {
+                val stderr = process.errorStream.bufferedReader().readText()
+                error("Shell exit=$exitCode cmd=[$command]: ${stderr.take(200).ifEmpty { "no stderr" }}")
+            }
+            stdout
         }
     }
 
@@ -588,9 +605,9 @@ class AdbActionExecutor @Inject constructor(
     ): String? {
         return try {
             if (strategy == "xpath") {
-                val doc = DocumentBuilderFactory.newInstance().newDocumentBuilder()
+                val doc = DOC_BUILDER_FACTORY.newDocumentBuilder()
                     .parse(InputSource(StringReader(xml)))
-                val nodeList = XPathFactory.newInstance().newXPath().compile(selector)
+                val nodeList = XPATH_FACTORY.newXPath().compile(selector)
                     .evaluate(doc, XPathConstants.NODESET) as org.w3c.dom.NodeList
                 for (i in 0 until nodeList.length) {
                     val v = (nodeList.item(i) as? Element)?.getAttribute(attribute)
