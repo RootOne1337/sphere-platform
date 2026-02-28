@@ -69,37 +69,37 @@ export function TeamTab() {
 
     if (!isAdmin) {
         return (
-            <Card>
+            <Card className="border-border bg-muted rounded-sm">
                 <CardContent className="p-10 text-center text-muted-foreground flex flex-col items-center gap-3">
                     <ShieldAlert className="w-8 h-8 text-destructive opacity-80" />
-                    <p className="text-sm font-semibold">Access Denied</p>
-                    <p className="text-xs">You do not have administrative permissions to manage the team.</p>
+                    <p className="text-sm font-bold font-mono uppercase tracking-widest">Доступ запрещён</p>
+                    <p className="text-xs">У вас нет административных прав для управления командой.</p>
                 </CardContent>
             </Card>
         );
     }
 
     return (
-        <Card>
-            <CardHeader>
+        <Card className="border-border bg-muted rounded-sm">
+            <CardHeader className="pb-3 border-b border-border">
                 <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center gap-2">
-                        <Users className="w-5 h-5" />
-                        Team & RBAC Management
+                    <CardTitle className="flex items-center gap-2 text-[10px] uppercase tracking-widest font-mono font-bold text-muted-foreground">
+                        <Users className="w-4 h-4 text-primary" />
+                        Управление командой &amp; RBAC
                     </CardTitle>
                     <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                         <DialogTrigger asChild>
-                            <Button size="sm" className="bg-primary text-primary-foreground">
-                                <UserPlus className="w-4 h-4 mr-1.5" /> Invite User
+                            <Button size="sm" className="font-mono text-xs uppercase tracking-wider h-8">
+                                <UserPlus className="w-3.5 h-3.5 mr-1.5" /> Добавить
                             </Button>
                         </DialogTrigger>
                         <DialogContent>
                             <DialogHeader>
-                                <DialogTitle>Add New Team Member</DialogTitle>
+                                <DialogTitle className="font-mono text-sm uppercase tracking-widest">Новый участник</DialogTitle>
                             </DialogHeader>
                             <div className="space-y-4 pt-2">
                                 <div className="space-y-1">
-                                    <Label>Email Address</Label>
+                                    <Label className="text-[10px] uppercase tracking-widest font-mono font-bold text-muted-foreground">Email</Label>
                                     <Input
                                         type="email"
                                         placeholder="user@example.com"
@@ -108,7 +108,7 @@ export function TeamTab() {
                                     />
                                 </div>
                                 <div className="space-y-1">
-                                    <Label>Initial Password</Label>
+                                    <Label className="text-[10px] uppercase tracking-widest font-mono font-bold text-muted-foreground">Пароль</Label>
                                     <Input
                                         type="password"
                                         placeholder="Temporary password"
@@ -117,7 +117,7 @@ export function TeamTab() {
                                     />
                                 </div>
                                 <div className="space-y-1">
-                                    <Label>System Role</Label>
+                                    <Label className="text-[10px] uppercase tracking-widest font-mono font-bold text-muted-foreground">Роль</Label>
                                     <Select value={form.role} onValueChange={(v) => setForm({ ...form, role: v })}>
                                         <SelectTrigger><SelectValue /></SelectTrigger>
                                         <SelectContent>
@@ -130,27 +130,30 @@ export function TeamTab() {
                                 <Button
                                     onClick={() => createUser.mutate()}
                                     disabled={createUser.isPending || !form.email || !form.password}
-                                    className="w-full mt-2"
+                                    className="w-full mt-2 font-mono text-xs uppercase tracking-wider"
                                 >
-                                    {createUser.isPending ? 'Creating...' : 'Create Member'}
+                                    {createUser.isPending ? 'Создание…' : 'Создать участника'}
                                 </Button>
                             </div>
                         </DialogContent>
                     </Dialog>
                 </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-4">
                 {isLoading ? (
-                    <p className="text-sm text-muted-foreground">Loading team members...</p>
+                    <p className="text-xs text-muted-foreground font-mono py-4 text-center animate-pulse">Загрузка команды…</p>
                 ) : !users || users.length === 0 ? (
-                    <p className="text-sm text-muted-foreground text-center py-6">No users found.</p>
+                    <div className="text-center py-8 text-muted-foreground">
+                        <Users className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                        <p className="text-[10px] font-mono uppercase tracking-widest font-bold">Пользователи не найдены</p>
+                    </div>
                 ) : (
-                    <div className="space-y-2">
+                    <div className="space-y-1.5">
                         {users.map((u) => (
-                            <div key={u.id} className="flex items-center justify-between p-3 border border-border rounded-sm bg-muted">
-                                <div className="flex flex-col gap-1">
+                            <div key={u.id} className="flex items-center justify-between p-3 rounded-sm bg-card border border-border hover:border-primary/30 transition-colors group">
+                                <div className="flex flex-col gap-1 min-w-0 flex-1">
                                     <div className="flex items-center gap-2">
-                                        <p className="font-semibold text-sm text-foreground">{u.email}</p>
+                                        <p className="font-medium text-sm truncate">{u.email}</p>
                                         {u.id === currentUser?.id && <Badge variant="outline" className="text-[9px] h-4">YOU</Badge>}
                                         {!u.is_active && <Badge variant="destructive" className="text-[9px] h-4">INACTIVE</Badge>}
                                     </div>
