@@ -35,6 +35,22 @@ from backend.models.webhook import Webhook  # noqa: F401
 # --- PC Agent (TZ-08) ---
 from backend.models.workstation import Workstation  # noqa: F401
 
+# --- Orchestrator + Scheduler (TZ-12) ---
+from backend.models.pipeline import (  # noqa: F401
+    Pipeline,
+    PipelineBatch,
+    PipelineRun,
+    PipelineRunStatus,
+    StepType,
+)
+from backend.models.schedule import (  # noqa: F401
+    Schedule,
+    ScheduleConflictPolicy,
+    ScheduleExecution,
+    ScheduleExecutionStatus,
+    ScheduleTargetType,
+)
+
 __all__ = [
     "TimestampMixin",
     "UUIDMixin",
@@ -58,4 +74,15 @@ __all__ = [
     "Workstation",
     "LDPlayerInstance",
     "Webhook",
+    # TZ-12 Orchestrator
+    "Pipeline",
+    "PipelineRun",
+    "PipelineBatch",
+    "PipelineRunStatus",
+    "StepType",
+    "Schedule",
+    "ScheduleExecution",
+    "ScheduleConflictPolicy",
+    "ScheduleTargetType",
+    "ScheduleExecutionStatus",
 ]
