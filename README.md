@@ -7,7 +7,7 @@
 [![CI Backend](https://github.com/RootOne1337/sphere-platform/actions/workflows/ci-backend.yml/badge.svg)](https://github.com/RootOne1337/sphere-platform/actions)
 [![CI Android](https://github.com/RootOne1337/sphere-platform/actions/workflows/ci-android.yml/badge.svg)](https://github.com/RootOne1337/sphere-platform/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-4.2.0-brightgreen.svg)](VERSION)
+[![Version](https://img.shields.io/badge/version-4.3.0-brightgreen.svg)](VERSION)
 
 [Документация](docs/) · [API Reference](docs/api-reference.md) · [Deployment Guide](docs/deployment.md) · [Changelog](CHANGELOG.md)
 
@@ -30,6 +30,7 @@ Sphere Platform — production-ready система для управления,
 | **Cron Scheduler** | Собственный DB-backed планировщик с croniter, конфликт-политиками (skip/queue) и SKIP LOCKED |
 | **VPN-туннелирование** | AmneziaWG (обфусцированный WireGuard) per-device туннели с IP-пулом |
 | **Agent Discovery** | Zero-touch автообнаружение и авторегистрация 1000+ эмуляторов LDPlayer |
+| **Agent Resilience** | ConfigWatchdog (remote config polling из Git) + ServiceWatchdog (AlarmManager 100% uptime) + Circuit Breaker → auto-reconnect |
 | **n8n интеграция** | Нативные n8n-ноды для no-code автоматизации |
 | **PC Agent** | Host-side ADB-мост для обнаружения USB-устройств |
 | **Мониторинг** | Prometheus + Grafana дашборды, структурированное логирование, алертинг |
@@ -124,6 +125,31 @@ SchedulerEngine ──► croniter ──► периодический запу
 Schedule (ORM) ──► ScheduleExecution (история)
 ```
 
+### Agent Resilience Architecture (v4.3.0)
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                    Android Agent Watchdog System                      │
+│                                                                      │
+│   6-Level Restart Guarantee:                                         │
+│                                                                      │
+│   1. BootReceiver         → BOOT_COMPLETED / QUICKBOOT_POWERON       │
+│   2. START_STICKY          → OS auto-restart after OOM kill          │
+│   3. ServiceWatchdog       → AlarmManager every 5 min                │
+│   4. Application.onCreate  → watchdog scheduling on app start        │
+│   5. ConfigWatchdog        → remote config polling (GitHub Raw)      │
+│   6. NetworkChangeHandler  → instant reconnect on network change     │
+│                                                                      │
+│   Config Auto-Discovery:                                             │
+│   GitHub Raw ──► ZeroTouchProvisioner.fetchServerConfig()            │
+│         │                                                            │
+│         ├─ server_url changed? → authStore.saveServerUrl()           │
+│         │                       → wsClient.forceReconnectNow()       │
+│         │                                                            │
+│         └─ Circuit Breaker (10 failures) → forceCheck() → Git poll  │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
 > Полная документация по архитектуре: [docs/architecture.md](docs/architecture.md)
 
 ---
@@ -197,8 +223,8 @@ sphere-platform/
 │   ├── hooks/              # TanStack Query data hooks
 │   └── lib/                # Axios-клиент, Zustand auth store
 │
-├── android/                # Android Agent (Kotlin + Hilt, APK v1.2.0)
-│   └── app/src/main/       # Services, VPN, Streaming, Commands, DI, CloneDetector
+├── android/                # Android Agent (Kotlin + Hilt, APK v1.3.0)
+│   └── app/src/main/       # Services, VPN, Streaming, Commands, DI, ConfigWatchdog, ServiceWatchdog
 │
 ├── pc-agent/               # PC Agent (Python asyncio)
 │   └── modules/            # ADB bridge, device discovery, telemetry, WS client
@@ -261,6 +287,7 @@ sphere-platform/
 | VPN | AmneziaWG (wg-quick) |
 | Транспорт | OkHttp3 WebSocket |
 | Discovery | CloneDetector (SHA-256 fingerprint) + ZeroTouchProvisioner |
+| Resilience | ConfigWatchdog (Git config polling) + ServiceWatchdog (AlarmManager) + Circuit Breaker hook |
 
 ### Инфраструктура
 | Компонент | Технология |
