@@ -1,0 +1,33 @@
+# docker-compose.tunnel.yml
+# Cloudflare Quick Tunnel — HTTPS без регистрации, restart: always
+# Запуск: make tunnel-up
+# Остановка: make tunnel-down
+# Логи: make tunnel-logs  (в логах будет HTTPS URL)
+#
+# Важно: URL меняется при каждом рестарте.
+# Для постоянного URL — зарегистрируйся на cloudflare.com и используй Named Tunnel.
+
+services:
+  tunnel:
+    build:
+      context: ./infrastructure/tunnel
+      dockerfile: Dockerfile
+    image: sphere-tunnel:latest
+    container_name: sphere-tunnel
+    restart: always           # Ключевое: docker всегда перезапускает при падении
+    command: ["--url", "http://nginx:80"]
+    networks:
+      - frontend-net
+    depends_on:
+      - nginx
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "3"
+
+# Используем уже существующую сеть из docker-compose.yml
+networks:
+  frontend-net:
+    external: true
+    name: sphere-platform_frontend-net

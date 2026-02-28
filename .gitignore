@@ -30,6 +30,12 @@ android/local.properties
 *.p12
 secrets/
 
+# SSH ключи туннеля — генерируются локально командой make tunnel-keygen
+infrastructure/tunnel/keys/
+
+# Временные файлы
+.tunnel-url
+
 # IDE
 .idea/
 .vscode/settings.json
