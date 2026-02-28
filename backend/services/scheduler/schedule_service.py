@@ -14,9 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.models.schedule import (
     Schedule,
-    ScheduleConflictPolicy,
     ScheduleExecution,
-    ScheduleTargetType,
 )
 
 logger = structlog.get_logger()

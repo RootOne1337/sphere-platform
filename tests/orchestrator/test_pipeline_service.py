@@ -8,8 +8,7 @@ import pytest
 import pytest_asyncio
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.models.pipeline import Pipeline, PipelineBatch, PipelineRun, PipelineRunStatus
-
+from backend.models.pipeline import Pipeline, PipelineRun, PipelineRunStatus
 
 # ── Фикстуры ─────────────────────────────────────────────────────────────────
 

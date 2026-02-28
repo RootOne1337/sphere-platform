@@ -15,7 +15,6 @@ from typing import Literal
 
 from pydantic import BaseModel, Field, model_validator
 
-
 # ─────── Canonical set of valid action types ────────────────────────────────
 # Полный набор поддерживаемых DagRunner.kt action types.
 # Обновляется при добавлении нового action в DagRunner.

@@ -61,6 +61,7 @@ async def sync_device_status_to_db() -> None:
             # 2. Помечаем stale ONLINE → OFFLINE
             # Устройства с last_status=ONLINE в БД, но без online-записи в Redis
             from sqlalchemy import select as sa_select
+
             from backend.models.device import DeviceStatus
             stale_online = (await db.execute(
                 sa_select(Device.id).where(

@@ -7,6 +7,7 @@ import uuid
 
 from fastapi import APIRouter, Depends, Header, Query
 from fastapi import status as http_status
+from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.dependencies import require_permission
@@ -355,7 +356,6 @@ async def take_screenshot(
 
 # ── Shell (TTY over HTTP) ─────────────────────────────────────────────────────
 
-from pydantic import BaseModel
 
 class ExecuteShellRequest(BaseModel):
     command: str
@@ -371,12 +371,14 @@ async def execute_shell(
     db: AsyncSession = Depends(get_db),
     svc: DeviceService = Depends(get_device_service),
 ) -> dict:
-    from fastapi import HTTPException
-    import time
-    import json
     import asyncio
-    from backend.websocket.connection_manager import get_connection_manager
+    import json
+    import time
+
+    from fastapi import HTTPException
+
     from backend.database.redis_client import get_redis_binary
+    from backend.websocket.connection_manager import get_connection_manager
 
     device = await svc.get_device(device_id, current_user.org_id)
     if not device:
@@ -387,7 +389,7 @@ async def execute_shell(
         raise HTTPException(status_code=400, detail="Device is offline")
 
     command_id = str(uuid.uuid4())
-    manager.send_to_device(str(device_id), {
+    await manager.send_to_device(str(device_id), {
         "type": "SHELL",
         "command_id": command_id,
         "payload": {"cmd": body.command},
@@ -412,7 +414,7 @@ async def execute_shell(
                         return {"output": data.get("result", {}).get("output", "")}
                     elif data.get("status") == "failed":
                         return {"error": data.get("error", "Unknown error")}
-        
+
         return await asyncio.wait_for(wait_for_result(), timeout=10.0)
     except asyncio.TimeoutError:
         raise HTTPException(status_code=504, detail="Shell command timeout")
@@ -438,12 +440,14 @@ async def request_logcat(
     db: AsyncSession = Depends(get_db),
     svc: DeviceService = Depends(get_device_service),
 ) -> dict:
-    from fastapi import HTTPException
-    import time
-    import json
     import asyncio
-    from backend.websocket.connection_manager import get_connection_manager
+    import json
+    import time
+
+    from fastapi import HTTPException
+
     from backend.database.redis_client import get_redis_binary
+    from backend.websocket.connection_manager import get_connection_manager
 
     device = await svc.get_device(device_id, current_user.org_id)
     if not device:
@@ -454,7 +458,7 @@ async def request_logcat(
         raise HTTPException(status_code=400, detail="Device is offline")
 
     command_id = str(uuid.uuid4())
-    manager.send_to_device(str(device_id), {
+    await manager.send_to_device(str(device_id), {
         "type": "UPLOAD_LOGCAT",
         "command_id": command_id,
         "payload": {"lines": body.lines, "mode": body.mode},
@@ -479,7 +483,7 @@ async def request_logcat(
                         return {"logcat": data.get("result", {}).get("logcat", "")}
                     elif data.get("status") == "failed":
                         return {"error": data.get("error", "Unknown error")}
-        
+
         return await asyncio.wait_for(wait_for_result(), timeout=15.0)
     except asyncio.TimeoutError:
         raise HTTPException(status_code=504, detail="Logcat request timeout")

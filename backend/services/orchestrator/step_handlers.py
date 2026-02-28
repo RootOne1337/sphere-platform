@@ -12,8 +12,7 @@ from __future__ import annotations
 import asyncio
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from typing import Any, Callable, Awaitable
+from typing import Any, Awaitable, Callable
 
 import structlog
 from sqlalchemy import select
@@ -403,7 +402,7 @@ async def handle_parallel(
     successes = 0
     failures = 0
     for i, res in enumerate(results):
-        if isinstance(res, Exception):
+        if isinstance(res, BaseException):
             failures += 1
             outputs.append({"step_id": sub_step_ids[i], "status": "failure", "error": str(res)})
         else:

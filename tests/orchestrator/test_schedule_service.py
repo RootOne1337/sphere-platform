@@ -11,7 +11,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.models.schedule import Schedule, ScheduleConflictPolicy, ScheduleTargetType
 
-
 # ── Фикстуры ─────────────────────────────────────────────────────────────────
 
 

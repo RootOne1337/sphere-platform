@@ -47,6 +47,7 @@ def get_pipeline_service(db: AsyncSession = Depends(get_db)) -> PipelineService:
 async def _startup_pipeline_executor() -> None:
     """Запуск фонового loop исполнения pipeline."""
     import asyncio
+
     from backend.services.orchestrator.pipeline_executor import PipelineExecutor
 
     executor = PipelineExecutor()

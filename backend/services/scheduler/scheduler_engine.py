@@ -14,7 +14,6 @@ from __future__ import annotations
 import asyncio
 import uuid
 from datetime import datetime, timezone
-from typing import Any
 
 import structlog
 from sqlalchemy import func, select
@@ -209,8 +208,7 @@ class SchedulerEngine:
         db: AsyncSession,
     ) -> list[uuid.UUID]:
         """Резолвить устройства на основе device_ids / group_id / device_tags."""
-        from backend.models.device import Device
-        from backend.models.device import device_group_members
+        from backend.models.device import Device, device_group_members
 
         result: set[uuid.UUID] = set()
 
@@ -253,7 +251,7 @@ class SchedulerEngine:
                     online_ids = set()
                     for did in result:
                         status = await cache.get_status(str(did))
-                        if status and status.get("online"):
+                        if status and status.status == "online":
                             online_ids.add(did)
                     return list(online_ids)
             except Exception as exc:

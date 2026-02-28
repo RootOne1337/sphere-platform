@@ -14,15 +14,12 @@ import asyncio
 import time
 import uuid
 from datetime import datetime, timezone
-from typing import Any
 
 import structlog
-from sqlalchemy import select, text
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 
 from backend.database.engine import AsyncSessionLocal
 from backend.models.pipeline import PipelineRun, PipelineRunStatus
-from backend.models.task import Task, TaskStatus
 from backend.services.orchestrator.step_handlers import StepHandlerRegistry
 
 logger = structlog.get_logger()

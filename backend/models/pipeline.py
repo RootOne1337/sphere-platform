@@ -24,7 +24,6 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from backend.database.engine import Base
 from backend.models.base_model import TimestampMixin, UUIDMixin
 
-
 # ── Перечисления ──────────────────────────────────────────────────────────────
 
 

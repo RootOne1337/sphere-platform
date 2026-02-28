@@ -57,7 +57,10 @@ class TestSyncDeviceStatusFull:
         mock_db = AsyncMock()
         mock_db.__aenter__ = AsyncMock(return_value=mock_db)
         mock_db.__aexit__ = AsyncMock(return_value=False)
-        mock_db.execute = AsyncMock()
+        # execute возвращает MagicMock (синхронный) чтобы .scalars().all() работал
+        mock_execute_result = MagicMock()
+        mock_execute_result.scalars.return_value.all.return_value = []
+        mock_db.execute = AsyncMock(return_value=mock_execute_result)
         mock_db.commit = AsyncMock()
 
         mock_session_local = MagicMock(return_value=mock_db)
@@ -89,7 +92,9 @@ class TestSyncDeviceStatusFull:
         mock_db = AsyncMock()
         mock_db.__aenter__ = AsyncMock(return_value=mock_db)
         mock_db.__aexit__ = AsyncMock(return_value=False)
-        mock_db.execute = AsyncMock()
+        mock_execute_result = MagicMock()
+        mock_execute_result.scalars.return_value.all.return_value = []
+        mock_db.execute = AsyncMock(return_value=mock_execute_result)
         mock_db.commit = AsyncMock()
 
         mock_session_local = MagicMock(return_value=mock_db)

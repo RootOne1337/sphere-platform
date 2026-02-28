@@ -11,8 +11,7 @@ from fastapi import HTTPException
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.models.device import Device
-from backend.models.device import device_group_members
+from backend.models.device import Device, device_group_members
 from backend.models.device_group import DeviceGroup
 from backend.models.pipeline import (
     Pipeline,

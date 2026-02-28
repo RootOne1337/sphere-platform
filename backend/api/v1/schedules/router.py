@@ -43,6 +43,7 @@ def get_schedule_service(db: AsyncSession = Depends(get_db)) -> ScheduleService:
 async def _startup_scheduler_engine() -> None:
     """Запуск фонового loop расписаний."""
     import asyncio
+
     from backend.services.scheduler.scheduler_engine import SchedulerEngine
 
     engine = SchedulerEngine()
