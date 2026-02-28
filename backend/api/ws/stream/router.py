@@ -185,6 +185,18 @@ async def stream_viewer_ws(
                     await manager.send_to_device(device_id, {
                         "type": "request_keyframe",
                     })
+                case "keyevent":
+                    await manager.send_to_device(device_id, {
+                        "type": "keyevent",
+                        "code": int(data.get("code", 0)),
+                        "session_id": session_id,
+                    })
+                case "text":
+                    await manager.send_to_device(device_id, {
+                        "type": "text",
+                        "text": str(data.get("text", "")),
+                        "session_id": session_id,
+                    })
                 case _:
                     logger.debug(
                         "Unknown viewer message",
