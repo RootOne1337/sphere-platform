@@ -56,7 +56,7 @@ export const useAuthStore = create<AuthState>()((set) => ({
 // 401 → токен протух → пользователь не залогинен
 // ──────────────────────────────────────────────────────────────────
 // ⚠️ АВТОРИЗАЦИЯ ОТКЛЮЧЕНА НА ВРЕМЯ РАЗРАБОТКИ
-const _DEV_SKIP_AUTH = true;
+const _DEV_SKIP_AUTH = process.env.NEXT_PUBLIC_DEV_SKIP_AUTH === 'true';
 
 export function useInitAuth(): boolean {
   const [ready, setReady] = useState(!_DEV_SKIP_AUTH ? false : true);
@@ -90,7 +90,7 @@ export function useInitAuth(): boolean {
         clearRefreshToken();
       })
       .finally(() => setReady(true));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return ready;
