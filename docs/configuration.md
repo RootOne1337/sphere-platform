@@ -1,6 +1,6 @@
 # Configuration Reference
 
-> **Sphere Platform v4.0** — All environment variables
+> **Sphere Platform v4.2** — All environment variables
 
 ---
 
@@ -111,6 +111,7 @@ print(Fernet.generate_key().decode())
 | `LOG_LEVEL` | | `INFO` | Logging level: `DEBUG`, `INFO`, `WARNING`, `ERROR` |
 | `ENVIRONMENT` | | `development` | `development`, `staging`, `production` |
 | `SERVER_HOSTNAME` | | — | Public hostname (used in CORS and redirects) |
+| `DEV_SKIP_AUTH` | | `""` (отключено) | `true` для отключения JWT-проверки в dev-режиме (**NEVER** в production) |
 
 ---
 
@@ -202,7 +203,7 @@ NEW_SECRET=$(python -c "import secrets; print(secrets.token_hex(32))")
 sed -i "s/^JWT_SECRET_KEY=.*/JWT_SECRET_KEY=${NEW_SECRET}/" .env.local
 
 # Rolling restart
-docker compose restart backend celery-worker
+docker compose restart backend
 ```
 
 ---

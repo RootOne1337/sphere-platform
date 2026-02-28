@@ -21,7 +21,13 @@ if TYPE_CHECKING:
 
 security = HTTPBearer(auto_error=False)
 
-_DEV_SKIP_AUTH = _os.environ.get("DEV_SKIP_AUTH", "").lower() in ("1", "true", "yes")
+# DEV_SKIP_AUTH разрешён только если APP_ENV не равен "production".
+# Это гарантирует, что bypass невозможен в production независимо от значения флага.
+_APP_ENV = _os.environ.get("APP_ENV", "development")
+_DEV_SKIP_AUTH = (
+    _APP_ENV != "production"
+    and _os.environ.get("DEV_SKIP_AUTH", "").lower() in ("1", "true", "yes")
+)
 
 
 async def get_current_user(

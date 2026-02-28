@@ -23,7 +23,8 @@ import {
     RefreshCw,
     ChevronRight,
     ChevronLeft,
-    X
+    X,
+    UserCog
 } from "lucide-react";
 
 const NAV_ITEMS = [
@@ -41,6 +42,7 @@ const NAV_ITEMS = [
     { href: "/logs", label: "Sys Logs", icon: FileText },
     { href: "/updates", label: "Updates", icon: RefreshCw },
     { href: "/webhooks", label: "Webhooks", icon: Webhook },
+    { href: "/settings", label: "Sys Config", icon: UserCog },
 ];
 
 interface NOCSidebarProps {
@@ -65,7 +67,7 @@ export function NOCSidebar({ onOpenAppearance, isMobileOpen, onMobileClose }: NO
             {/* Overlay для мобильного меню */}
             {isMobileOpen && (
                 <div
-                    className="fixed inset-0 bg-black/60 z-40 lg:hidden backdrop-blur-sm"
+                    className="fixed inset-0 bg-foreground/30 z-40 lg:hidden backdrop-blur-sm"
                     onClick={onMobileClose}
                 />
             )}
@@ -85,7 +87,7 @@ export function NOCSidebar({ onOpenAppearance, isMobileOpen, onMobileClose }: NO
             >
                 <div className="flex h-12 shrink-0 items-center justify-between lg:justify-center px-4 lg:px-0 border-b border-border">
                     {isCollapsed && !isMobileOpen ? (
-                        <div className="w-6 h-6 bg-primary rounded-sm flex items-center justify-center font-bold text-black text-xs">
+                        <div className="w-6 h-6 bg-primary rounded-sm flex items-center justify-center font-bold text-primary-foreground text-xs">
                             S
                         </div>
                     ) : (

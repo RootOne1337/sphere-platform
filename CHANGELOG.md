@@ -12,6 +12,112 @@ _Нет нереализованных изменений._
 
 ---
 
+## [4.2.0] — 2026-02-28
+
+### Краткое описание
+TZ-12 Pipeline Orchestrator + Cron Scheduler — полная реализация серверного оркестратора
+для цепочек скриптов с 9 типами step-обработчиков и DB-backed планировщика расписаний.
+23 атомарных коммита в ветке `feature/tz12-orchestrator-scheduler-2026-02-28`, PR #6.
+
+---
+
+### Добавлено
+
+#### TZ-12 — Pipeline Orchestrator Engine (SPLIT-4)
+- **ORM-модели:** `Pipeline`, `PipelineRun`, `PipelineBatch` с полным lifecycle (draft → active → archived)
+- **Pydantic-схемы:** `PipelineCreate`, `PipelineUpdate`, `PipelineResponse`, `PipelineRunResponse` с валидаторами
+- **PipelineService:** CRUD + клонирование + управление версиями пайплайнов
+- **PipelineExecutor:** Движок исполнения — обход шагов графа с персистенцией состояния в `PipelineRun`
+- **9 StepHandler-ов:**
+  - `run_script` — запуск DAG-скрипта на устройстве
+  - `run_pipeline` — вложенный запуск другого пайплайна
+  - `http_request` — HTTP-вызов внешних API
+  - `condition` — условная логика (if/else по выражению)
+  - `delay` — задержка выполнения
+  - `parallel` — параллельное исполнение подшагов
+  - `set_variable` — установка переменных контекста
+  - `notify` — отправка уведомлений (webhook, email)
+  - `approval` — ручное подтверждение оператором
+- **REST API (12 эндпоинтов):** CRUD пайплайнов, execute, stop, runs list, run detail, clone
+
+#### TZ-12 — Cron Scheduler (SPLIT-5)
+- **ORM-модели:** `Schedule`, `ScheduleExecution` с конфликт-политиками (skip/queue)
+- **Pydantic-схемы:** `ScheduleCreate`, `ScheduleUpdate`, `ScheduleResponse`, `ScheduleExecutionResponse`
+- **ScheduleService:** CRUD + валидация cron-выражений + расчёт следующих N запусков
+- **SchedulerEngine:** Фоновый движок — проверяет расписания раз в 60с, `FOR UPDATE SKIP LOCKED`
+- **REST API (8 эндпоинтов):** CRUD расписаний, toggle enable/disable, history, dry-run
+- **Зависимости:** `croniter` (cron-парсер), `pytz` (таймзоны)
+
+#### TZ-12 — Спецификации
+- `TZ-12-Orchestrator/SPLIT-1-Script-Lifecycle.md` — жизненный цикл скриптов
+- `TZ-12-Orchestrator/SPLIT-2-Script-Caching.md` — кэширование и версионирование
+- `TZ-12-Orchestrator/SPLIT-3-Agent-Event-Model.md` — модель событий агента
+- `TZ-12-Orchestrator/SPLIT-4-Orchestrator-Engine.md` — ядро оркестратора
+- `TZ-12-Orchestrator/SPLIT-5-Scheduling-System.md` — система расписаний
+
+#### База данных
+- Alembic-миграция `20260224`: 5 таблиц (`pipelines`, `pipeline_runs`, `pipeline_batches`, `schedules`, `schedule_executions`), 4 enum-типа, RLS-политики
+
+#### RBAC
+- Разрешения `pipeline:read`, `pipeline:write`, `pipeline:execute`, `schedule:read`, `schedule:write`
+- Интеграция в RBAC-матрицу для всех ролей
+
+#### Тестирование
+- **27 unit-тестов** для PipelineService, StepHandlers (9 типов), ScheduleService
+- Итого: **779 тестов PASSED** (было 743 → 758 → 779), ruff 0 ошибок, mypy 0 ошибок
+
+#### Frontend
+- Обновление UI-компонентов: Dashboard, Tasks, Audit, VPN, Monitoring, Fleet
+- NOCSidebar и GlobalCommandPalette — переработка навигации
+- ThemeProvider, shadcn/ui компоненты — обновления
+- Script Builder и streaming модули — улучшения
+
+#### Android Agent
+- DagRunner.kt: аудит и 14 исправлений
+- AdbActionExecutor, DeviceStatusProvider — обновления
+
+---
+
+### Исправлено
+
+| # | Компонент | Проблема | Решение |
+|---|-----------|----------|---------|
+| 1 | Auth | `_DEV_SKIP_AUTH = True` хардкод — авторизация полностью отключена | Восстановлена проверка через env `DEV_SKIP_AUTH` |
+| 2 | Devices | `send_to_device()` async без await — команды shell/logcat не отправлялись | Добавлен `await` (реальный production баг) |
+| 3 | Cache | `TTL_OFFLINE = 120` вместо `3600` — offline-статусы устаревали через 2 мин | Исправлено на 3600с согласно документации |
+| 4 | Scheduler | `DeviceLiveStatus.get("online")` — Pydantic модель не dict | Исправлено на `status.status == "online"` |
+| 5 | Orchestrator | `isinstance(res, Exception)` — не сужает union-тип для mypy | Исправлено на `isinstance(res, BaseException)` |
+| 6 | Lint | 33 ruff-ошибки (I001, F401, E402, W293) в 15+ файлах | Авто-фикс + ручное исправление |
+| 7 | Mypy | 6 ошибок типизации (unused-coroutine, union-attr, attr-defined) | Все исправлены |
+| 8 | Tests | 21 тест провален из-за DEV_SKIP_AUTH bypass | Все 21 починены |
+| 9 | Tests | `AsyncMock` делал `.scalars().all()` корутиной | Использован `MagicMock` для синхронных цепочек |
+| 10 | DAG Schema | union types → generic action model | Рефакторинг для упрощения |
+
+---
+
+### Deployment Notes
+
+**Новые зависимости:**
+```bash
+pip install croniter pytz
+```
+
+**Новые переменные окружения:**
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `DEV_SKIP_AUTH` | Нет | `""` (отключено) | `true` для отключения JWT-проверки в dev-режиме |
+
+**Миграции:**
+```bash
+docker compose exec backend alembic upgrade head
+# Создаёт 5 таблиц: pipelines, pipeline_runs, pipeline_batches, schedules, schedule_executions
+```
+
+**Docker-образы:** пересобрать backend после merge.
+
+---
+
 ## [4.1.0] — 2026-02-25
 
 ### Краткое описание

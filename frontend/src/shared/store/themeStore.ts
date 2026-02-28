@@ -20,7 +20,7 @@ export const useThemeStore = create<ThemeState>()(
             setDensity: (density) => set({ density }),
         }),
         {
-            name: 'sphere-ui-preferences',
+            name: 'sphere-theme-preferences',
         }
     )
 );

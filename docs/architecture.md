@@ -1,6 +1,6 @@
 # Architecture
 
-> **Sphere Platform v4.1** — System Design Reference
+> **Sphere Platform v4.2** — System Design Reference
 
 ---
 
@@ -19,13 +19,15 @@
 11. [Observability](#11-observability)
 12. [Deployment Topology](#12-deployment-topology)
 13. [Agent Discovery & Auto-Registration](#13-agent-discovery--auto-registration)
+14. [Pipeline Orchestrator Engine](#14-pipeline-orchestrator-engine)
+15. [Cron Scheduler](#15-cron-scheduler)
 
 ---
 
 ## 1. High-Level Overview
 
 Sphere Platform is structured as a **multi-tier, event-driven microservice monolith**:
-the backend is a single FastAPI process augmented with Celery workers and a Redis-backed
+the backend is a single FastAPI process augmented with asyncio background tasks and a Redis-backed
 WebSocket pub/sub layer. This design avoids the operational overhead of microservices
 while retaining horizontal scalability through stateless API workers.
 
@@ -47,10 +49,10 @@ while retaining horizontal scalability through stateless API workers.
               │
     ┌─────────┼──────────┐
     ▼         ▼          ▼
-PostgreSQL  Redis     Celery
-(SQLAlchemy) (cache,  Worker
-             pub/sub,  (async
-             rate-lim)  tasks)
+PostgreSQL  Redis     asyncio
+(SQLAlchemy) (cache,  Tasks
+             pub/sub,  (фоновые
+             rate-lim)  задачи)
 ```
 
 ---
@@ -70,8 +72,12 @@ PostgreSQL  Redis     Celery
 | Streaming | `api/v1/streaming/` | Stream session lifecycle |
 | Monitoring | `api/v1/monitoring/` | Health, metrics, pool stats |
 | Audit | `api/v1/audit/` | Immutable audit log queries |
-| Tasks | `backend/tasks/` | Celery async task definitions |
-| Services | `backend/services/` | Business logic (discovery, VPN, streaming) |
+| Tasks | `backend/tasks/` | Фоновые asyncio-задачи |
+| Services | `backend/services/` | Бизнес-логика (discovery, VPN, streaming, orchestrator, scheduler) |
+| Orchestrator | `backend/services/orchestrator/` | PipelineService, PipelineExecutor, 9 StepHandler-ов |
+| Scheduler | `backend/services/scheduler/` | ScheduleService, SchedulerEngine (croniter) |
+| Pipelines API | `api/v1/pipelines/` | CRUD + execute + clone + runs + stats |
+| Schedules API | `api/v1/schedules/` | CRUD + toggle + executions + dry-run |
 | WebSocket | `backend/websocket/` | `ConnectionManager`, `PubSubRouter` |
 | Core | `backend/core/` | Config, RBAC, security, dependencies |
 | Models | `backend/models/` | SQLAlchemy ORM models |
@@ -196,6 +202,13 @@ organizations
     │     └── task_batches (script_id FK)
     │           └── tasks (batch_id FK)
     │
+    ├── pipelines (org_id FK)
+    │     └── pipeline_runs (pipeline_id FK)
+    │           └── pipeline_batches (run_id FK)
+    │
+    ├── schedules (org_id FK, pipeline_id FK)
+    │     └── schedule_executions (schedule_id FK, pipeline_run_id FK)
+    │
     └── workstations (org_id FK)
           └── ldplayer_instances
 ```
@@ -216,6 +229,11 @@ organizations
 | `audit_logs` | UUID | `org_id` | Immutable audit trail |
 | `api_keys` | UUID | `user_id` | API key credentials |
 | `refresh_tokens` | UUID | `user_id` | JWT refresh tokens |
+| `pipelines` | UUID | `org_id` | Определения пайплайнов (steps, версионирование) |
+| `pipeline_runs` | UUID | `org_id` | История запусков пайплайнов |
+| `pipeline_batches` | UUID | `org_id` | Batch-группы устройств в run |
+| `schedules` | UUID | `org_id` | Cron-расписания |
+| `schedule_executions` | UUID | `org_id` | История срабатываний расписаний |
 
 ### Row-Level Security
 
@@ -268,6 +286,11 @@ Token claims:
 | user:read | | | | ✓ | ✓ | ✓ |
 | user:write | | | | | ✓ | ✓ |
 | audit:read | | | | ✓ | ✓ | ✓ |
+| pipeline:read | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| pipeline:write | | | ✓ | ✓ | ✓ | ✓ |
+| pipeline:execute | | ✓ | ✓ | ✓ | ✓ | ✓ |
+| schedule:read | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| schedule:write | | | | ✓ | ✓ | ✓ |
 
 ### MFA (TOTP)
 
@@ -434,7 +457,7 @@ POST /scripts/{id}/execute
   ├── Validate DAG (cycle detection, schema check)
   ├── Create TaskBatch record (status=PENDING)
   ├── Fan-out: for each device in target group
-  │     └── Celery task: execute_dag(script, device_id)
+  │     └── asyncio task: execute_dag(script, device_id)
   │           ├── Walk DAG nodes topologically
   │           ├── For each action node: send WS command, await result
   │           ├── For each condition node: evaluate Python expr safely
@@ -486,7 +509,10 @@ every mutating API call.
 | `stream_keyframe_ratio` | Gauge | device_id |
 | `vpn_pool_utilization` | Gauge | org_id |
 | `task_queue_depth` | Gauge | queue_name |
-| `celery_task_duration_seconds` | Histogram | task_name |
+| `pipeline_runs_total` | Counter | pipeline_id, status |
+| `pipeline_run_duration_seconds` | Histogram | pipeline_id |
+| `schedule_executions_total` | Counter | schedule_id, status |
+| `scheduler_tick_duration_seconds` | Histogram | — |
 
 Endpoint: `GET /metrics` (internal only, not exposed through nginx)
 
@@ -553,7 +579,7 @@ Load Balancer (HAProxy/AWS ALB)
   │
   ├── Frontend CDN (Vercel / CloudFront)
   │
-  ├── Celery Worker cluster (M × workers)
+  ├── asyncio Task Workers (встроены в backend-процесс)
   │
   └── Monitoring stack (dedicated host)
         Prometheus + Grafana + Alertmanager + Loki
@@ -652,3 +678,116 @@ agent-config/
 - **Идемпотентная регистрация**: повторный вызов с тем же fingerprint возвращает существующее устройство
 - **JWT токены**: регистрация возвращает полноценную пару access/refresh, агент сразу готов к работе
 - **Нет секретов в конфиге**: agent-config не содержит ключей, только URL + policy флаги
+
+---
+
+## 14. Pipeline Orchestrator Engine
+
+> Добавлено в v4.2.0 (TZ-12 SPLIT-4)
+
+Pipeline Orchestrator объединяет скрипты, условия, HTTP-вызовы, задержки и уведомления
+в управляемые цепочки с персистенцией состояния и поддержкой вложенного запуска.
+
+### 14.1 Архитектура
+
+```
+REST API (/pipelines)
+  │
+  ├── PipelineService          ← CRUD, клонирование, версионирование
+  │     └── Pipeline ORM model ← steps (JSONB), status lifecycle: draft → active → archived
+  │
+  └── PipelineExecutor         ← движок исполнения
+        ├── StepRouter         ← маршрутизатор по step.type
+        │     ├── run_script   ← запуск DAG-скрипта через WS
+        │     ├── run_pipeline ← вложенный запуск Pipeline (рекурсия с лимитом)
+        │     ├── http_request ← HTTP-вызов внешнего API
+        │     ├── condition    ← if/else по выражению
+        │     ├── delay        ← asyncio.sleep()
+        │     ├── parallel     ← asyncio.gather() подшагов
+        │     ├── set_variable ← запись в контекст выполнения
+        │     ├── notify       ← webhook / email
+        │     └── approval     ← ручное подтверждение оператором
+        │
+        └── PipelineRun ORM    ← персистенция: state, step_results, timing
+              └── PipelineBatch ← группировка устройств в run
+```
+
+### 14.2 Модель данных
+
+| Таблица | Описание | Ключевые поля |
+|---------|----------|---------------|
+| `pipelines` | Определения пайплайнов | `name`, `steps` (JSONB), `status`, `version`, `org_id` |
+| `pipeline_runs` | Запуски | `pipeline_id`, `status`, `variables`, `step_results`, `started_at`, `finished_at` |
+| `pipeline_batches` | Batch группировка устройств | `run_id`, `device_ids`, `status` |
+
+### 14.3 Lifecycle пайплайна
+
+```
+draft ──(activate)──► active ──(archive)──► archived
+  ▲                     │
+  └──(clone)────────────┘
+```
+
+- **draft**: редактируемый, нельзя запустить
+- **active**: можно запускать (execute)
+- **archived**: только чтение, нельзя запустить
+
+### 14.4 Исполнение
+
+1. `POST /pipelines/{id}/execute` → создаёт `PipelineRun` (status=running)
+2. `PipelineExecutor` обходит steps последовательно (или parallel для `parallel` типа)
+3. Каждый step записывает результат в `step_results` JSONB
+4. При ошибке — run переходит в `failed`, context сохраняется для отладки
+5. `condition` step может разветвить поток на `on_true` / `on_false`
+
+---
+
+## 15. Cron Scheduler
+
+> Добавлено в v4.2.0 (TZ-12 SPLIT-5)
+
+DB-backed планировщик для автоматического запуска пайплайнов по cron-расписанию
+с поддержкой таймзон и политик конфликтов.
+
+### 15.1 Архитектура
+
+```
+SchedulerEngine (фоновый asyncio-цикл, тик = 60с)
+  │
+  ├── SELECT ... WHERE enabled = true AND next_run_at <= NOW()
+  │   FOR UPDATE SKIP LOCKED   ← конкурентная безопасность
+  │
+  ├── Для каждого сработавшего Schedule:
+  │     ├── Проверка conflict_policy (skip / queue)
+  │     ├── Вызов PipelineExecutor.execute()
+  │     ├── Создание ScheduleExecution записи
+  │     └── Пересчёт next_run_at через croniter
+  │
+  └── ScheduleService  ← CRUD, валидация cron, toggle, dry-run
+        └── Schedule ORM model
+```
+
+### 15.2 Модель данных
+
+| Таблица | Описание | Ключевые поля |
+|---------|----------|---------------|
+| `schedules` | Определения расписаний | `cron_expression`, `timezone`, `pipeline_id`, `enabled`, `conflict_policy`, `next_run_at` |
+| `schedule_executions` | История срабатываний | `schedule_id`, `pipeline_run_id`, `status`, `triggered_at`, `finished_at` |
+
+### 15.3 Политики конфликтов
+
+| Policy | Поведение |
+|--------|-----------|
+| `skip` | Если предыдущий run ещё выполняется — пропустить текущий тик |
+| `queue` | Поставить в очередь и запустить после завершения текущего run |
+
+### 15.4 Зависимости
+
+- **croniter** — парсинг и итерация cron-выражений (включая 5-полевый формат)
+- **pytz** — поддержка IANA таймзон (Europe/Moscow, America/New_York, etc.)
+
+### 15.5 Безопасность
+
+- `FOR UPDATE SKIP LOCKED` предотвращает double-execute при горизонтальном масштабировании
+- Все расписания привязаны к `org_id` — RLS обеспечивает tenant-изоляцию
+- Валидация cron-выражений на уровне API (невалидный cron = 422)

@@ -187,8 +187,11 @@ class Schedule(Base, UUIDMixin, TimestampMixin):
         Index("ix_schedules_next_fire", "is_active", "next_fire_at"),
         Index("ix_schedules_org_active", "org_id", "is_active"),
         CheckConstraint(
-            "(cron_expression IS NOT NULL) OR (interval_seconds IS NOT NULL) "
-            "OR (one_shot_at IS NOT NULL)",
+            "("
+            "  (CASE WHEN cron_expression IS NOT NULL THEN 1 ELSE 0 END) + "
+            "  (CASE WHEN interval_seconds IS NOT NULL THEN 1 ELSE 0 END) + "
+            "  (CASE WHEN one_shot_at IS NOT NULL THEN 1 ELSE 0 END)"
+            ") = 1",
             name="ck_schedules_has_trigger",
         ),
     )

@@ -6,10 +6,14 @@ const nextConfig: NextConfig = {
     typedRoutes: false,
   },
   async rewrites() {
+    // Прокси только в dev-окружении — в production используется NEXT_PUBLIC_API_BASE_URL
+    if (process.env.NODE_ENV === 'production') {
+      return [];
+    }
     return [
       {
         source: '/api/:path*',
-        destination: 'http://localhost:8000/api/:path*',
+        destination: `${process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8000'}/api/:path*`,
       },
     ];
   },
