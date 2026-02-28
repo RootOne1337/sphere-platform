@@ -66,6 +66,13 @@ class SphereWebSocketClient @Inject constructor(
     var onConnected: (() -> Unit)? = null
     var onDisconnected: ((code: Int, reason: String) -> Unit)? = null
 
+    /**
+     * Вызывается при открытии circuit breaker (после N последовательных ошибок).
+     * Используется [ConfigWatchdog] для немедленной проверки конфига из Git —
+     * возможно server_url сменился и нужно переподключиться на новый адрес.
+     */
+    var onCircuitBreakerOpen: (() -> Unit)? = null
+
     suspend fun connect(deviceId: String) {
         shouldStop = false
         this.deviceId = deviceId
@@ -121,6 +128,9 @@ class SphereWebSocketClient @Inject constructor(
                     circuitOpenUntil = System.currentTimeMillis() + CIRCUIT_COOL_DOWN_MS
                     consecutiveFailures = 0
                     Timber.e("Circuit OPEN after $CIRCUIT_OPEN_THRESHOLD failures, cool-down ${CIRCUIT_COOL_DOWN_MS / 1000}s")
+                    // Уведомляем ConfigWatchdog — проверить конфиг из Git
+                    // (возможно server_url сменился и нужно переподключиться)
+                    onCircuitBreakerOpen?.invoke()
                 }
             }
         }
