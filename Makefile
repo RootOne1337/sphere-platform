@@ -1,6 +1,6 @@
 .DEFAULT_GOAL := help
 
-.PHONY: help setup dev full down test lint security migrate migrate-new build monitoring logs alembic-check alembic-merge-heads rls-lint branches worktree-setup seed-enrollment build-apk deploy-prod ssl-init ssl-renew start tunnel-keygen tunnel-build tunnel-up tunnel-down tunnel-logs rebuild-backend rebuild-frontend
+.PHONY: help setup dev full down test lint security migrate migrate-new build monitoring logs alembic-check alembic-merge-heads rls-lint branches worktree-setup seed-enrollment build-apk deploy-prod ssl-init ssl-renew start tunnel-keygen tunnel-build tunnel-up tunnel-down tunnel-sync tunnel-logs rebuild-backend rebuild-frontend
 
 help:          ## Показать помощь
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-24s\033[0m %s\n", $$1, $$2}'
@@ -168,7 +168,7 @@ tunnel-build:  ## Собрать Docker образ туннеля
 	docker compose -f docker-compose.tunnel.yml build
 	@echo '✅ Образ sphere-tunnel собран'
 
-tunnel-up:     ## Поднять туннель (restart: always — живёт без IDE!)
+tunnel-up:     ## Поднять туннель + автосинхронизация URL в .env и agent-config
 	docker build -t sphere-tunnel:latest -f infrastructure/tunnel/Dockerfile infrastructure/tunnel/
 	-docker stop sphere-tunnel 2>/dev/null; docker rm sphere-tunnel 2>/dev/null
 	docker run -d \
@@ -177,14 +177,13 @@ tunnel-up:     ## Поднять туннель (restart: always — живёт 
 	  --network sphere-platform_frontend-net \
 	  sphere-tunnel:latest \
 	  --url http://nginx:80
-	@sleep 6
-	@echo '================================='
-	@echo ' TUNNEL URL:'
-	@docker logs sphere-tunnel 2>&1 | grep -o 'https://[^ ]*trycloudflare[^ ]*' || echo '  (ещё запускается, подожди 5 сек и проверь: make tunnel-url)'
-	@echo '================================='
+	@bash scripts/sync-tunnel-url.sh
 
 tunnel-down:   ## Остановить туннель
 	-docker stop sphere-tunnel 2>/dev/null; docker rm sphere-tunnel 2>/dev/null
+
+tunnel-sync:   ## Синхронизировать текущий URL туннеля в .env + agent-config + рестарт бэкенда
+	@bash scripts/sync-tunnel-url.sh
 
 tunnel-url:    ## Показать текущий URL туннеля
 	@docker logs sphere-tunnel 2>&1 | grep -o 'https://[^ ]*trycloudflare[^ ]*' | tail -1 || echo 'Туннель не запущен. Запусти: make tunnel-up'
@@ -217,5 +216,5 @@ start:         ## 🚀 Запустить весь стек + туннель (г
 	@echo '║  Frontend:  http://localhost:3000          ║'
 	@echo '║  Backend:   http://localhost:8000          ║'
 	@echo '║  API Docs:  http://localhost:8000/docs     ║'
-	@echo '║  🌐 Public: https://sphere.serveousercontent.com ║'
+	@printf '║  🌐 Public: %s\n' "$$(cat .tunnel-url 2>/dev/null || echo 'make tunnel-url')"
 	@echo '╚═══════════════════════════════════════════╝'

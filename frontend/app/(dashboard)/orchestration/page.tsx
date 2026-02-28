@@ -353,16 +353,20 @@ export default function OrchestrationPage() {
                 {tab === 'schedules' && <SchedulesTab schedules={schedules} pipelines={pipelines} loading={sLoading} search={search} onCreateSchedule={() => setShowCreateSchedule(true)} />}
             </div>
 
-            {/* ── МОДАЛКИ ────────────────────────────────────────────────────── */}
-            <CreatePipelineDialog open={showCreatePipeline} onOpenChange={setShowCreatePipeline} />
+            {/* ── МОДАЛКИ (mount only when open — avoids controlled-mode issues) ── */}
+            {showCreatePipeline && (
+                <CreatePipelineDialog open onOpenChange={setShowCreatePipeline} />
+            )}
             {runPipelineTarget && (
                 <RunPipelineDialog
                     pipeline={runPipelineTarget}
-                    open={!!runPipelineTarget}
+                    open
                     onOpenChange={(open) => { if (!open) setRunPipelineTarget(null); }}
                 />
             )}
-            <CreateScheduleDialog open={showCreateSchedule} onOpenChange={setShowCreateSchedule} pipelines={pipelines} />
+            {showCreateSchedule && (
+                <CreateScheduleDialog open onOpenChange={setShowCreateSchedule} pipelines={pipelines} />
+            )}
         </div>
     );
 }
