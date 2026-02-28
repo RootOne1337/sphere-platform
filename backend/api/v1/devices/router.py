@@ -7,7 +7,7 @@ import uuid
 
 from fastapi import APIRouter, Depends, Header, Query
 from fastapi import status as http_status
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.dependencies import require_permission
@@ -358,7 +358,7 @@ async def take_screenshot(
 
 
 class ExecuteShellRequest(BaseModel):
-    command: str
+    command: str = Field(..., min_length=1, max_length=4096)
 
 @router.post(
     "/{device_id}/shell",
@@ -389,13 +389,15 @@ async def execute_shell(
         raise HTTPException(status_code=400, detail="Device is offline")
 
     command_id = str(uuid.uuid4())
-    await manager.send_to_device(str(device_id), {
+    send_ok = await manager.send_to_device(str(device_id), {
         "type": "SHELL",
         "command_id": command_id,
         "payload": {"cmd": body.command},
         "signed_at": int(time.time()),
-        "ttl_seconds": 15
+        "ttl_seconds": 15,
     })
+    if not send_ok:
+        raise HTTPException(status_code=504, detail=f"Failed to send shell command to device {device_id}")
 
     redis = await get_redis_binary()
     if not redis:
@@ -426,7 +428,7 @@ async def execute_shell(
 # ── Logcat Viewer ─────────────────────────────────────────────────────────────
 
 class RequestLogcatRequest(BaseModel):
-    lines: int = 500
+    lines: int = Field(500, ge=1, le=10000)
     mode: str = "sphere"
 
 @router.post(
@@ -458,13 +460,15 @@ async def request_logcat(
         raise HTTPException(status_code=400, detail="Device is offline")
 
     command_id = str(uuid.uuid4())
-    await manager.send_to_device(str(device_id), {
+    send_ok = await manager.send_to_device(str(device_id), {
         "type": "UPLOAD_LOGCAT",
         "command_id": command_id,
         "payload": {"lines": body.lines, "mode": body.mode},
         "signed_at": int(time.time()),
-        "ttl_seconds": 15
+        "ttl_seconds": 15,
     })
+    if not send_ok:
+        raise HTTPException(status_code=504, detail=f"Failed to send logcat request to device {device_id}")
 
     redis = await get_redis_binary()
     if not redis:

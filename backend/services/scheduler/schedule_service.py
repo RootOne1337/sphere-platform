@@ -206,8 +206,8 @@ class ScheduleService:
         now = datetime.now(timezone.utc)
 
         if schedule.cron_expression:
+            import pytz
             try:
-                import pytz
                 tz = pytz.timezone(schedule.timezone or "UTC")
             except Exception:
                 tz = pytz.UTC

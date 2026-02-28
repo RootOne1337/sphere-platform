@@ -56,7 +56,9 @@ android {
             buildConfigField("String", "DEFAULT_API_KEY", "\"sphr_dev_enrollment_key_2025\"")
             buildConfigField("String", "DEFAULT_DEVICE_ID", "\"\"")
             // TZ-12: HTTP Config Endpoint через GitHub Raw — публичный репо с конфигами
-            // https://github.com/RootOne1337/sphere-agent-config
+            // БЕЗОПАСНОСТЬ: укажи pinned commit hash вместо mutable ветки `main`
+            // для устранения supply-chain риска (зависимость от изменяемого ref).
+            // Пример: https://raw.githubusercontent.com/RootOne1337/sphere-agent-config/<PINNED_COMMIT_HASH>/environments/development.json
             buildConfigField("String", "CONFIG_URL", "\"https://raw.githubusercontent.com/RootOne1337/sphere-agent-config/main/environments/development.json\"")
         }
         create("enterprise") {
