@@ -1595,6 +1595,134 @@
         }
       }
     },
+    "/api/v1/devices/{device_id}/shell": {
+      "post": {
+        "tags": [
+          "devices"
+        ],
+        "summary": "Выполнить команду shell на устройстве",
+        "operationId": "execute_shell_api_v1_devices__device_id__shell_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "device_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Device Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/ExecuteShellRequest"
+                  }
+                ],
+                "title": "Body"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Execute Shell Api V1 Devices  Device Id  Shell Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/devices/{device_id}/logcat": {
+      "post": {
+        "tags": [
+          "devices"
+        ],
+        "summary": "Запросить logcat устройства",
+        "operationId": "request_logcat_api_v1_devices__device_id__logcat_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "device_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Device Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/RequestLogcatRequest"
+                  }
+                ],
+                "title": "Body"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Request Logcat Api V1 Devices  Device Id  Logcat Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/discovery/scan": {
       "post": {
         "tags": [
@@ -6756,6 +6884,19 @@
         ],
         "title": "DiscoveredDevice"
       },
+      "ExecuteShellRequest": {
+        "properties": {
+          "command": {
+            "type": "string",
+            "title": "Command"
+          }
+        },
+        "type": "object",
+        "required": [
+          "command"
+        ],
+        "title": "ExecuteShellRequest"
+      },
       "FleetStatusResponse": {
         "properties": {
           "total": {
@@ -7267,6 +7408,22 @@
           "pages"
         ],
         "title": "PaginatedResponse"
+      },
+      "RequestLogcatRequest": {
+        "properties": {
+          "lines": {
+            "type": "integer",
+            "title": "Lines",
+            "default": 500
+          },
+          "mode": {
+            "type": "string",
+            "title": "Mode",
+            "default": "sphere"
+          }
+        },
+        "type": "object",
+        "title": "RequestLogcatRequest"
       },
       "RotateDetail": {
         "properties": {
