@@ -38,7 +38,7 @@ export function AuditQueryBuilder({ value, onChange }: AuditQueryBuilderProps) {
                 </div>
                 <input
                     type="text"
-                    className="w-full bg-transparent border-none outline-none text-xs font-mono px-3 py-2 text-foreground placeholder:text-[#555]"
+                    className="w-full bg-transparent border-none outline-none text-xs font-mono px-3 py-2 text-foreground placeholder:text-muted-foreground/60"
                     placeholder="e.g. status:FAILED action:VPN_DROP user:admin"
                     value={value}
                     onChange={(e) => onChange(e.target.value)}
@@ -55,7 +55,7 @@ export function AuditQueryBuilder({ value, onChange }: AuditQueryBuilderProps) {
             {/* Suggestions Dropdown */}
             {isFocused && (
                 <div className="absolute top-full left-0 w-full mt-1 bg-muted border border-border rounded-sm shadow-2xl z-50 py-1">
-                    <div className="px-3 py-1.5 text-[10px] uppercase font-bold tracking-widest text-[#555] flex items-center gap-1.5">
+                    <div className="px-3 py-1.5 text-[10px] uppercase font-bold tracking-widest text-muted-foreground/60 flex items-center gap-1.5">
                         <History className="w-3 h-3" /> Filters & Suggestions
                     </div>
                     {SUGGESTIONS.map(s => (

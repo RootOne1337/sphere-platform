@@ -30,16 +30,16 @@ export function MultiStreamGrid({ devices, selectedIds, onClose }: MultiStreamGr
                     </div>
                     <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-[10px] animate-pulse">LIVE BROADCAST</Badge>
 
-                    <div className="h-4 w-px bg-[#333] hidden md:block" />
+                    <div className="h-4 w-px bg-border hidden md:block" />
 
                     {/* View Options */}
                     <div className="flex items-center gap-1 hidden md:flex">
-                        <Button variant="ghost" size="sm" onClick={() => setGridSize(1)} className={`h-6 text-[10px] px-2 ${gridSize === 1 ? 'bg-[#333] text-foreground' : 'text-muted-foreground'}`}>1x1</Button>
-                        <Button variant="ghost" size="sm" onClick={() => setGridSize(4)} className={`h-6 text-[10px] px-2 ${gridSize === 4 ? 'bg-[#333] text-foreground' : 'text-muted-foreground'}`}>2x2</Button>
-                        <Button variant="ghost" size="sm" onClick={() => setGridSize(9)} className={`h-6 text-[10px] px-2 ${gridSize === 9 ? 'bg-[#333] text-foreground' : 'text-muted-foreground'}`}>3x3</Button>
-                        <Button variant="ghost" size="sm" onClick={() => setGridSize(16)} className={`h-6 text-[10px] px-2 ${gridSize === 16 ? 'bg-[#333] text-foreground' : 'text-muted-foreground'}`}>4x4</Button>
+                        <Button variant="ghost" size="sm" onClick={() => setGridSize(1)} className={`h-6 text-[10px] px-2 ${gridSize === 1 ? 'bg-background text-foreground' : 'text-muted-foreground'}`}>1x1</Button>
+                        <Button variant="ghost" size="sm" onClick={() => setGridSize(4)} className={`h-6 text-[10px] px-2 ${gridSize === 4 ? 'bg-background text-foreground' : 'text-muted-foreground'}`}>2x2</Button>
+                        <Button variant="ghost" size="sm" onClick={() => setGridSize(9)} className={`h-6 text-[10px] px-2 ${gridSize === 9 ? 'bg-background text-foreground' : 'text-muted-foreground'}`}>3x3</Button>
+                        <Button variant="ghost" size="sm" onClick={() => setGridSize(16)} className={`h-6 text-[10px] px-2 ${gridSize === 16 ? 'bg-background text-foreground' : 'text-muted-foreground'}`}>4x4</Button>
 
-                        <div className="h-3 w-px bg-[#333] mx-1" />
+                        <div className="h-3 w-px bg-border mx-1" />
 
                         <Button variant="ghost" size="sm" onClick={toggleHUD} className={`h-6 text-[10px] px-2 ${showHUD ? 'bg-primary/20 text-primary border border-primary/30' : 'bg-transparent text-muted-foreground'}`}>HUD</Button>
                         <Button variant="ghost" size="sm" onClick={toggleStats} className={`h-6 text-[10px] px-2 ${showStats ? 'bg-primary/20 text-primary border border-primary/30' : 'bg-transparent text-muted-foreground'}`}>STATS</Button>
@@ -56,14 +56,14 @@ export function MultiStreamGrid({ devices, selectedIds, onClose }: MultiStreamGr
 
             {/* Matrix Grid */}
             <div
-                className="flex-1 p-2 bg-black overflow-y-auto custom-scrollbar grid gap-2"
+                className="flex-1 p-2 bg-background overflow-y-auto overflow-x-hidden min-w-max custom-scrollbar grid gap-2"
                 style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
             >
                 {devices.slice(0, gridSize).map((device) => (
                     <div key={device.id} className="relative bg-muted border border-border rounded-sm overflow-hidden group flex flex-col min-h-[150px] aspect-video">
 
                         {/* Video Layer */}
-                        <div className="flex-1 relative bg-black/50 flex flex-col items-center justify-center overflow-hidden">
+                        <div className="flex-1 relative bg-black/80 flex flex-col items-center justify-center overflow-hidden">
                             {device.status.toLowerCase() === 'online' ? (
                                 <div className="absolute inset-0 flex items-center justify-center">
                                     <div className="w-16 h-16 rounded-full border-2 border-primary/20 border-t-primary animate-spin" />

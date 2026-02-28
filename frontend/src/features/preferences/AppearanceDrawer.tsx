@@ -2,6 +2,7 @@
 
 import { Paintbrush, X, MonitorPlay, Palette, Type, LayoutGrid } from 'lucide-react';
 import { useUIStore } from '@/src/shared/store/useUIStore';
+import { useThemeStore } from '@/src/shared/store/themeStore';
 import { Button } from '@/src/shared/ui/button';
 
 interface AppearanceDrawerProps {
@@ -10,14 +11,15 @@ interface AppearanceDrawerProps {
 }
 
 export function AppearanceDrawer({ open, onClose }: AppearanceDrawerProps) {
-    const { theme, setTheme, accentColor, setAccentColor, fontSize, setFontSize, density, setDensity } = useUIStore();
+    const { theme: uiTheme, setTheme: setUiTheme, accentColor, setAccentColor, fontSize, setFontSize, density, setDensity } = useUIStore();
+    const { theme, setTheme } = useThemeStore();
 
     if (!open) return null;
 
     return (
         <>
             <div
-                className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] transition-opacity animate-in fade-in"
+                className="fixed inset-0 bg-foreground/30 backdrop-blur-sm z-[100] transition-opacity animate-in fade-in"
                 onClick={onClose}
             />
 
@@ -35,6 +37,33 @@ export function AppearanceDrawer({ open, onClose }: AppearanceDrawerProps) {
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-5 space-y-8 custom-scrollbar">
+
+                    {/* Base Theme */}
+                    <div className="space-y-3">
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                            <MonitorPlay className="w-3.5 h-3.5" />
+                            <span className="text-[10px] font-bold uppercase tracking-widest">Base Theme</span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                            {[
+                                { id: 'neo-dark', label: 'Neo Dark', dark: true },
+                                { id: 'deep-space', label: 'Deep Space', dark: true },
+                                { id: 'matrix-green', label: 'Matrix', dark: true },
+                                { id: 'light-corporate', label: 'Corporate Light', dark: false },
+                            ].map((t) => (
+                                <button
+                                    key={t.id}
+                                    onClick={() => setTheme(t.id as any)}
+                                    className={`p-2 border rounded-sm transition-all text-xs font-mono font-bold flex items-center justify-center ${theme === t.id
+                                        ? 'border-primary bg-primary/10 text-primary shadow-sm'
+                                        : 'border-border bg-card text-muted-foreground hover:border-foreground/30 hover:text-foreground'
+                                        }`}
+                                >
+                                    {t.label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
 
                     {/* Accent Colors */}
                     <div className="space-y-3">
@@ -72,7 +101,7 @@ export function AppearanceDrawer({ open, onClose }: AppearanceDrawerProps) {
                                 <button
                                     key={size}
                                     onClick={() => setFontSize(size as any)}
-                                    className={`flex-1 py-1.5 text-xs font-mono font-bold rounded-sm transition-colors ${fontSize === size ? 'bg-[#333] text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+                                    className={`flex-1 py-1.5 text-xs font-mono font-bold rounded-sm transition-colors ${fontSize === size ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
                                 >
                                     {size.toUpperCase()}
                                 </button>
@@ -91,7 +120,7 @@ export function AppearanceDrawer({ open, onClose }: AppearanceDrawerProps) {
                                 <button
                                     key={d}
                                     onClick={() => setDensity(d as any)}
-                                    className={`p-3 text-left border rounded-sm transition-colors flex flex-col gap-1 ${density === d ? 'border-primary bg-primary/5' : 'border-border bg-muted hover:border-[#444]'}`}
+                                    className={`p-3 text-left border rounded-sm transition-colors flex flex-col gap-1 ${density === d ? 'border-primary bg-primary/5' : 'border-border bg-muted hover:border-foreground/30'}`}
                                 >
                                     <span className={`font-mono text-xs font-bold ${density === d ? 'text-primary' : 'text-foreground'}`}>{d.charAt(0).toUpperCase() + d.slice(1)}</span>
                                     <span className="text-[10px] text-muted-foreground block text-xs">

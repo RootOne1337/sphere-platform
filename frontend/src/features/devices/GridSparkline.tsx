@@ -14,7 +14,7 @@ export function GridSparkline({ data, color = '#22c55e', height = 24 }: GridSpar
 
     return (
         <div style={{ height, width: '100%' }}>
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
                 <LineChart data={chartData}>
                     <YAxis domain={['dataMin - 10', 'dataMax + 10']} hide />
                     <Line

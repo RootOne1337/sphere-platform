@@ -32,7 +32,7 @@ export function ClusterHeatmap({ nodes }: ClusterHeatmapProps) {
     }, [nodes]);
 
     const getColorClass = (status: string, usage: number) => {
-        if (status === 'OFFLINE') return 'bg-[#333] border-[#444] text-muted-foreground';
+        if (status === 'OFFLINE') return 'bg-muted/50 border-border text-muted-foreground';
         if (status === 'CRITICAL' || usage > 90) return 'bg-destructive/20 border-destructive/50 text-destructive animate-pulse shadow-[0_0_15px_rgba(239,68,68,0.2)]';
         if (status === 'WARNING' || usage > 75) return 'bg-warning/20 border-warning/50 text-warning';
 
@@ -83,7 +83,7 @@ export function ClusterHeatmap({ nodes }: ClusterHeatmapProps) {
                             <div>
                                 <h2 className="text-lg font-bold font-mono text-foreground tracking-tight">{hoveredNode.name}</h2>
                                 <p className="text-xs text-muted-foreground font-mono mt-1 flex items-center gap-2">
-                                    <span className="text-muted-foreground border border-border px-1.5 py-0.5 rounded-sm bg-black">{hoveredNode.id}</span>
+                                    <span className="text-muted-foreground border border-border px-1.5 py-0.5 rounded-sm bg-background">{hoveredNode.id}</span>
                                     <span>•</span>
                                     <span className="uppercase tracking-widest">{hoveredNode.type} Node</span>
                                 </p>
@@ -92,14 +92,14 @@ export function ClusterHeatmap({ nodes }: ClusterHeatmapProps) {
 
                         <div className="flex gap-8">
                             <div className="flex flex-col">
-                                <span className="text-[10px] uppercase font-bold tracking-widest text-[#555] mb-2 flex items-center gap-1"><Cpu className="w-3 h-3" /> CPU Load</span>
+                                <span className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground/60 mb-2 flex items-center gap-1"><Cpu className="w-3 h-3" /> CPU Load</span>
                                 <div className="w-32 h-2 bg-border rounded-full overflow-hidden">
                                     <div className={`h-full ${hoveredNode.cpu > 80 ? 'bg-destructive' : hoveredNode.cpu > 50 ? 'bg-warning' : 'bg-success'}`} style={{ width: `${hoveredNode.cpu}%` }}></div>
                                 </div>
                                 <span className="text-xs mt-1 font-mono text-right">{hoveredNode.cpu}%</span>
                             </div>
                             <div className="flex flex-col">
-                                <span className="text-[10px] uppercase font-bold tracking-widest text-[#555] mb-2 flex items-center gap-1"><HardDrive className="w-3 h-3" /> Memory</span>
+                                <span className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground/60 mb-2 flex items-center gap-1"><HardDrive className="w-3 h-3" /> Memory</span>
                                 <div className="w-32 h-2 bg-border rounded-full overflow-hidden">
                                     <div className={`h-full ${hoveredNode.ram > 80 ? 'bg-destructive' : hoveredNode.ram > 50 ? 'bg-warning' : 'bg-success'}`} style={{ width: `${hoveredNode.ram}%` }}></div>
                                 </div>
@@ -115,7 +115,7 @@ export function ClusterHeatmap({ nodes }: ClusterHeatmapProps) {
                 )}
 
                 {/* Decorative background logo */}
-                <Server className="w-64 h-64 text-[#ffffff02] absolute -right-10 -bottom-20 pointer-events-none" />
+                <Server className="w-64 h-64 text-foreground/5 absolute -right-10 -bottom-20 pointer-events-none" />
             </div>
 
         </div>

@@ -35,7 +35,7 @@ export function GlobalCommandPalette() {
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex items-start justify-center pt-[15vh]">
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-[100] flex items-start justify-center pt-[15vh]">
             <div className="w-full max-w-2xl bg-card border border-border rounded-sm shadow-2xl overflow-hidden relative min-h-[400px]">
 
                 {/* Главное меню команд */}
