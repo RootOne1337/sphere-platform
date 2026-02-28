@@ -65,23 +65,23 @@ const THEMES: Record<ThemeType, Record<string, string>> = {
         '--destructive': '350 80% 60%',
     },
     'light-corporate': {
-        '--background': '210 40% 98%', // Slate 50
-        '--foreground': '222 47% 11%', // Slate 900
-        '--card': '0 0% 100%', // Pure White
+        '--background': '210 40% 98%', // Slate 50 - Very light blue-gray background
+        '--foreground': '222 47% 11%', // Slate 900 - Deep crisp text
+        '--card': '0 0% 100%', // Pure White for cards
         '--card-foreground': '222 47% 11%',
         '--popover': '0 0% 100%',
         '--popover-foreground': '222 47% 11%',
-        '--primary': '220 90% 50%', // Corporate Blue
-        '--primary-foreground': '0 0% 100%',
-        '--secondary': '210 40% 96%', // Slate 100
+        '--primary': '221 83% 53%', // Rich corporate blue
+        '--primary-foreground': '210 40% 98%',
+        '--secondary': '214 32% 91%', // Slate 200 - subtle contrast for sidebar/hover
         '--secondary-foreground': '222 47% 11%',
-        '--muted': '210 40% 96%', // Slate 100
-        '--muted-foreground': '215 16% 47%', // Slate 500
-        '--border': '214 32% 91%', // Slate 200
-        '--input': '214 32% 91%',
-        '--ring': '220 90% 50%',
+        '--muted': '214 32% 91%', // Slate 200 - stronger than background for inputs/badges
+        '--muted-foreground': '215 16% 47%', // Slate 500 - legible gray text
+        '--border': '214 32% 80%', // Slate 300 - Visible but subtle borders
+        '--input': '214 32% 91%', // Slate 200 input backgrounds
+        '--ring': '221 83% 53%', // Link outline ring to primary
         '--success': '142 70% 35%',
-        '--warning': '38 92% 50%',
+        '--warning': '38 92% 45%', // Darker warning for light theme
         '--destructive': '0 84% 50%',
     }
 };
