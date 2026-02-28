@@ -9,7 +9,7 @@ import { AuditDrawer } from '@/src/features/audit/AuditDrawer';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 
-// Mock interface for now, will connect to /api/v1/audit/
+/** Формат строки в таблице audit-логов */
 interface AuditEvent {
   id: string;
   timestamp: string;
@@ -26,9 +26,18 @@ export default function AuditLogsPage() {
     queryFn: async () => {
       try {
         const { data } = await api.get('/audit/logs');
-        return data.items ? data.items : data;
+        const items = data.items ? data.items : (Array.isArray(data) ? data : []);
+        return items.map((item: any) => ({
+          id: item.id,
+          timestamp: item.created_at || item.timestamp,
+          user: item.user_id || item.user || 'system',
+          action: item.action,
+          resource: item.resource_type || item.resource || '',
+          status: item.status || 'SUCCESS',
+          ip: item.ip_address || item.ip || '',
+        }));
       } catch (e) {
-        console.error('Failed to fetch audit logs', e);
+        console.warn('Failed to fetch audit logs (backend might be offline)', e);
         return [];
       }
     }
@@ -99,11 +108,34 @@ export default function AuditLogsPage() {
       <div className="flex-1 overflow-auto p-6 relative">
         <div className="rounded-sm border border-border bg-black shadow-2xl overflow-hidden h-full flex flex-col relative">
 
-          {/* Timeline Bar Mock */}
+          {/* Timeline Bar — реальное распределение событий по времени */}
           <div className="h-12 border-b border-border bg-muted flex items-end px-4 gap-1 pt-4 overflow-hidden shrink-0 pointer-events-none opacity-50">
-            {Array.from({ length: 120 }).map((_, i) => (
-              <div key={i} className={`w-1 rounded-t-sm ${Math.random() > 0.9 ? 'bg-destructive h-8' : Math.random() > 0.7 ? 'bg-warning h-4' : 'bg-[#333] h-2'}`} />
-            ))}
+            {(() => {
+              if (!filteredEvents.length) return Array.from({ length: 120 }).map((_, i) => (
+                <div key={i} className="w-1 rounded-t-sm bg-[#222] h-1" />
+              ));
+              // Собираем 120 бакетов из реальных событий
+              const buckets = Array(120).fill(0);
+              const statusBuckets: string[][] = Array.from({ length: 120 }, () => []);
+              const now = Date.now();
+              const range = 24 * 60 * 60 * 1000; // 24 часа
+              filteredEvents.forEach(e => {
+                const t = new Date(e.timestamp).getTime();
+                const idx = Math.floor(((now - t) / range) * 120);
+                if (idx >= 0 && idx < 120) {
+                  buckets[119 - idx]++;
+                  statusBuckets[119 - idx].push(e.status);
+                }
+              });
+              const maxB = Math.max(...buckets, 1);
+              return buckets.map((count, i) => {
+                const h = count > 0 ? Math.max(4, (count / maxB) * 32) : 1;
+                const hasFailed = statusBuckets[i].includes('FAILED');
+                const hasWarning = statusBuckets[i].includes('WARNING');
+                const color = hasFailed ? 'bg-destructive' : hasWarning ? 'bg-warning' : count > 0 ? 'bg-primary/60' : 'bg-[#222]';
+                return <div key={i} className={`w-1 rounded-t-sm ${color}`} style={{ height: `${h}px` }} />;
+              });
+            })()}
           </div>
 
           <div className="flex-1 overflow-auto custom-scrollbar relative">

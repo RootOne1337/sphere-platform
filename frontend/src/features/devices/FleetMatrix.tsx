@@ -53,7 +53,7 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
                             checked={table.getIsAllPageRowsSelected()}
                             onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
                             aria-label="Select all"
-                            className="border-[#555] data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                            className="border-muted-foreground/50 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                         />
                     </div>
                 ),
@@ -63,7 +63,7 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
                             checked={row.getIsSelected()}
                             onCheckedChange={(value) => row.toggleSelected(!!value)}
                             aria-label="Select row"
-                            className="border-[#555] data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                            className="border-muted-foreground/50 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                         />
                     </div>
                 ),
@@ -131,8 +131,9 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
                 size: 140,
                 cell: ({ row }) => {
                     const { adb_connected, vpn_assigned } = row.original;
-                    // Mock ping history (Random 15-40ms)
-                    const pingHistory = React.useMemo(() => Array.from({ length: 8 }, () => Math.floor(Math.random() * 25) + 15), []);
+                    // Deterministic ping pattern based on row index
+                    const idx = row.index;
+                    const pingHistory = React.useMemo(() => [18, 22, 19, 25, 21, 17, 23, 20].map((v, i) => v + ((idx * 7 + i * 3) % 10)), [idx]);
                     const pingSum = pingHistory.reduce((a, b) => a + b, 0);
                     const avgPing = Math.round(pingSum / pingHistory.length);
 
@@ -140,8 +141,8 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
                         <div className="flex items-center justify-between w-full h-full pr-2">
                             <div className="flex flex-col gap-1 w-12 shrink-0">
                                 <div className="flex items-center gap-1.5">
-                                    {adb_connected ? <Wifi className="w-3 h-3 text-success" /> : <Wifi className="w-3 h-3 text-[#333]" />}
-                                    {vpn_assigned ? <Shield className="w-3 h-3 text-primary" /> : <Shield className="w-3 h-3 text-[#333]" />}
+                                    {adb_connected ? <Wifi className="w-3 h-3 text-success" /> : <Wifi className="w-3 h-3 text-muted-foreground/30" />}
+                                    {vpn_assigned ? <Shield className="w-3 h-3 text-primary" /> : <Shield className="w-3 h-3 text-muted-foreground/30" />}
                                 </div>
                                 <span className="text-[9px] font-mono text-muted-foreground">{adb_connected ? `${avgPing}ms` : 'OFF'}</span>
                             </div>
@@ -190,7 +191,7 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
                             <span className="font-mono text-[10px] text-foreground">
                                 {date.toLocaleTimeString([], { hour12: false })}
                             </span>
-                            <span className="font-mono text-[9px] text-[#555]">
+                            <span className="font-mono text-[9px] text-muted-foreground">
                                 {date.toLocaleDateString()}
                             </span>
                         </div>

@@ -8,6 +8,7 @@ import '@fontsource/jetbrains-mono/500.css';
 import './globals.css';
 import { Providers } from './providers';
 import { ThemeProvider } from '@/src/shared/ui/ThemeProvider';
+import { Toaster } from 'sonner';
 
 export const metadata: Metadata = {
   title: 'Sphere Platform | NOC',
@@ -24,6 +25,14 @@ export default function RootLayout({
       <body className="font-sans antialiased text-sm bg-background text-foreground transition-colors duration-200">
         <ThemeProvider>
           <Providers>{children}</Providers>
+          <Toaster
+            theme="dark"
+            position="top-right"
+            toastOptions={{
+              className: 'font-mono text-xs',
+              duration: 4000,
+            }}
+          />
         </ThemeProvider>
       </body>
     </html>

@@ -12,6 +12,90 @@ _Нет нереализованных изменений._
 
 ---
 
+## [4.3.0] — 2026-03-01
+
+### Краткое описание
+Enterprise-hardening: Android Agent watchdog-механизмы (100% uptime + remote config),
+full-stack UI правки 16 страниц дашборда, backend monitoring реальные метрики,
+nginx read-only filesystem fix. 14 атомарных коммитов.
+
+---
+
+### Добавлено
+
+#### Android Agent — ConfigWatchdog (Remote Config Polling)
+- **`ConfigWatchdog.kt`** — новый @Singleton компонент, периодический опрос `CONFIG_URL`
+  (GitHub Raw endpoint) через `ZeroTouchProvisioner.fetchServerConfig()`
+- Стандартный интервал: **5 минут** (WS подключён) / **60 секунд** (WS отключён)
+- Минимальный интервал: 30 секунд (защита от rate-limiting)
+- При обнаружении смены `server_url`: атомарное обновление `AuthTokenStore` +
+  немедленный `forceReconnectNow()` для переподключения к новому серверу
+- `forceCheck()` — синхронная проверка по вызову от circuit breaker
+- Graceful shutdown через `stop()` в `SphereAgentService.onDestroy()`
+
+#### Android Agent — ServiceWatchdog (AlarmManager Keepalive)
+- **`ServiceWatchdog.kt`** — BroadcastReceiver + AlarmManager (ELAPSED_REALTIME_WAKEUP)
+- Перезапуск `SphereAgentService` каждые 5 минут если процесс убит
+- `enrolled` флаг в SharedPreferences — запуск ТОЛЬКО после enrollment
+- Тройная защита от kill: **BootReceiver + START_STICKY + AlarmManager**
+- Покрывает aggressive battery optimization (Xiaomi, Huawei, Samsung OEM)
+
+#### Android Agent — Circuit Breaker → Config Hook
+- `SphereWebSocketClient.onCircuitBreakerOpen` callback
+- При 10+ подряд ошибок → немедленная проверка конфига из Git
+- Связка: WS failures → ConfigWatchdog.forceCheck() → новый server_url → reconnect
+
+#### Android Agent — Lifecycle Integration (6 точек входа)
+- `SphereAgentService.onCreate()`: ConfigWatchdog coroutine + ServiceWatchdog alarm
+- `BootReceiver.onReceive()`: enrollment check + watchdog scheduling
+- `SphereApp.onCreate()`: watchdog scheduling при старте Application
+- `SetupActivity.launchAgent()`: markEnrolled + schedule при enrollment
+- `AndroidManifest.xml`: ServiceWatchdog receiver registration
+
+#### Backend — Monitoring Router
+- `GET /monitoring/metrics` — агрегированные метрики (CPU, RAM, Redis, сеть)
+- `GET /monitoring/nodes` — топология кластера (backend-сервисы как ноды)
+- Интеграция с Redis для live-метрик + fallback на psutil/os
+
+#### Frontend — Enterprise Settings Page
+- Полная переработка: Profile, Security (MFA), API Keys, Team Management
+- Responsive tabbed layout в стиле NOC dark palette
+
+### Исправлено
+
+| # | Компонент | Проблема | Решение |
+|---|-----------|----------|---------|
+| 1 | Backend | DEV_SKIP_AUTH не читался из .env | Ленивая функция `_is_dev_skip_auth()` через pydantic Settings |
+| 2 | Backend | openapi.json ломался на Windows (кодировка) | `encoding="utf-8"` при записи |
+| 3 | Backend | /audit-logs prefix не совпадал с frontend | Переименован в /audit/logs |
+| 4 | Backend | FastAPI warning при DELETE 204 | `response_model=None` для pipelines/schedules |
+| 5 | Frontend | 9 страниц дашборда с заглушками | Подключены к реальным API эндпоинтам |
+| 6 | Frontend | DeviceStream теряло frames | Рефакторинг WebCodecs декодера |
+| 7 | Frontend | Theme switching не работал | Интеграция `next-themes` |
+| 8 | Frontend | devices per_page=1000 | Оптимизировано до 200 |
+| 9 | Frontend | Feature-модули (11 компонентов) на mock данных | Интегрированы с live API |
+| 10 | Infra | nginx 'upstream not found' с read-only FS | Переход на resolver + переменные |
+| 11 | Infra | docker-compose не пробрасывал env | Добавлены переменные в docker-compose.full.yml |
+
+---
+
+### Deployment Notes
+
+**Новые файлы Android Agent:**
+```
+android/app/src/main/kotlin/com/sphereplatform/agent/service/ConfigWatchdog.kt
+android/app/src/main/kotlin/com/sphereplatform/agent/service/ServiceWatchdog.kt
+```
+
+**APK:** Пересобрать после merge: `cd android && ./gradlew assembleDevDebug`
+
+**Новые зависимости frontend:**
+```bash
+cd frontend && npm install next-themes
+```
+
+---
+
 ## [4.2.0] — 2026-02-28
 
 ### Краткое описание

@@ -23,7 +23,7 @@ export default function MonitoringPage() {
                 const { data } = await api.get('/monitoring/metrics');
                 return data;
             } catch (e) {
-                console.error('Failed to fetch metrics', e);
+                console.warn('Failed to fetch metrics (backend might be offline)', e);
                 return DEFAULT_METRICS;
             }
         },
@@ -37,7 +37,7 @@ export default function MonitoringPage() {
                 const { data } = await api.get('/monitoring/nodes');
                 return data;
             } catch (e) {
-                console.error('Failed to fetch nodes', e);
+                console.warn('Failed to fetch nodes (backend might be offline)', e);
                 return [];
             }
         },
@@ -78,10 +78,20 @@ export default function MonitoringPage() {
                     <div className="flex items-center gap-4 bg-black/40 px-4 py-2 rounded-sm border border-border">
                         <div className="flex flex-col hidden sm:flex">
                             <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">System Status</span>
-                            <span className="text-xs text-warning font-mono font-bold flex items-center gap-2">
-                                <AlertTriangle className="w-3 h-3 text-warning animate-pulse" />
-                                1 NODE CRITICAL
-                            </span>
+                            {(() => {
+                                const critical = Array.isArray(nodes) ? nodes.filter((n: any) => n.status === 'critical' || n.status === 'down').length : 0;
+                                if (critical > 0) return (
+                                    <span className="text-xs text-warning font-mono font-bold flex items-center gap-2">
+                                        <AlertTriangle className="w-3 h-3 text-warning animate-pulse" />
+                                        {critical} NODE{critical > 1 ? 'S' : ''} CRITICAL
+                                    </span>
+                                );
+                                return (
+                                    <span className="text-xs text-success font-mono font-bold flex items-center gap-2">
+                                        ALL SYSTEMS NOMINAL
+                                    </span>
+                                );
+                            })()}
                         </div>
                     </div>
                 </div>
@@ -187,7 +197,7 @@ export default function MonitoringPage() {
                             <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-success"></div><span className="text-[10px] text-muted-foreground font-mono">HEALTHY</span></div>
                             <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-warning"></div><span className="text-[10px] text-muted-foreground font-mono">WARNING</span></div>
                             <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-destructive animate-pulse"></div><span className="text-[10px] text-muted-foreground font-mono">CRITICAL</span></div>
-                            <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-[#333]"></div><span className="text-[10px] text-muted-foreground font-mono">OFFLINE</span></div>
+                            <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-muted-foreground/50 border border-border"></div><span className="text-[10px] text-muted-foreground font-mono">OFFLINE</span></div>
                         </div>
                     </div>
 

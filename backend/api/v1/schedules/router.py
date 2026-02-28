@@ -159,6 +159,7 @@ async def update_schedule(
 @router.delete(
     "/{schedule_id}",
     status_code=204,
+    response_model=None,
     summary="Деактивировать расписание",
 )
 async def delete_schedule(

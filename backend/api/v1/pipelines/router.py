@@ -157,6 +157,7 @@ async def update_pipeline(
 @router.delete(
     "/{pipeline_id}",
     status_code=204,
+    response_model=None,
     summary="Деактивировать pipeline",
 )
 async def delete_pipeline(

@@ -119,7 +119,7 @@ export function DeviceStream({
       )}
 
       {status !== "streaming" && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/60 text-white text-sm select-none">
+        <div className="absolute inset-0 flex items-center justify-center bg-background/80 text-foreground text-sm select-none">
           {status === "connecting" ? "Подключение..." : "Нет сигнала"}
         </div>
       )}

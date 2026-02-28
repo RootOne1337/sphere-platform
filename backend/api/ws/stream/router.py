@@ -9,7 +9,7 @@ import structlog
 from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.core.dependencies import _DEV_SKIP_AUTH
+from backend.core.dependencies import _is_dev_skip_auth
 from backend.database.engine import AsyncSessionLocal
 from backend.websocket.connection_manager import get_connection_manager
 from backend.websocket.stream_bridge import get_stream_bridge
@@ -22,10 +22,10 @@ router = APIRouter(tags=["streaming"])
 async def _authenticate_viewer(token: str, db: AsyncSession):
     """
     Аутентификация зрителя стрима по JWT.
-    При _DEV_SKIP_AUTH — возвращает первого активного пользователя без валидации токена.
+    При DEV_SKIP_AUTH — возвращает первого активного пользователя без валидации токена.
     """
     # DEV_SKIP_AUTH: вернуть первого активного пользователя без JWT валидации
-    if _DEV_SKIP_AUTH:
+    if _is_dev_skip_auth():
         import sqlalchemy as sa
 
         from backend.models.user import User
@@ -94,7 +94,7 @@ async def stream_viewer_ws(
         return
 
     token = first.get("token", "")
-    if not token and not _DEV_SKIP_AUTH:
+    if not token and not _is_dev_skip_auth():
         await ws.close(code=4001, reason="no_token")
         return
 

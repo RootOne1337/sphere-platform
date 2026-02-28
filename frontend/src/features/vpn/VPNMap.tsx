@@ -6,25 +6,44 @@ interface VPNMapProps {
     tunnels: any[];
 }
 
+// Simple seeded pseudo-random for deterministic rendering
+function seededRandom(seed: number) {
+    let s = seed;
+    return () => {
+        s = (s * 16807 + 0) % 2147483647;
+        return (s - 1) / 2147483646;
+    };
+}
+
 export function VPNMap({ tunnels }: VPNMapProps) {
-    // Простая SVG карта мира (демонстрационная) со случайными "дугами"
     const arcs = useMemo(() => {
+        const rng = seededRandom(42);
         return Array.from({ length: 8 }).map((_, i) => {
-            const startX = 400 + (Math.random() * 50 - 25);
-            const startY = 150 + (Math.random() * 30 - 15);
-            const endX = Math.random() * 800;
-            const endY = Math.random() * 400;
+            const startX = 400 + (rng() * 50 - 25);
+            const startY = 150 + (rng() * 30 - 15);
+            const endX = rng() * 800;
+            const endY = rng() * 400;
 
             const cx = (startX + endX) / 2;
-            const cy = (startY + endY) / 2 - 100; // Curve
+            const cy = (startY + endY) / 2 - 100;
 
             return {
                 id: i,
                 d: `M ${startX} ${startY} Q ${cx} ${cy} ${endX} ${endY}`,
-                opacity: Math.random() * 0.5 + 0.2,
-                active: Math.random() > 0.3
+                opacity: rng() * 0.5 + 0.2,
+                active: rng() > 0.3
             };
         });
+    }, []);
+
+    const dots = useMemo(() => {
+        const rng = seededRandom(123);
+        return Array.from({ length: 150 }).map((_, i) => ({
+            cx: rng() * 800,
+            cy: rng() * 400,
+            r: rng() * 1.5 + 0.5,
+            opacity: rng() * 0.5 + 0.1,
+        }));
     }, []);
 
     return (
@@ -43,14 +62,14 @@ export function VPNMap({ tunnels }: VPNMapProps) {
                 </defs>
 
                 {/* Abstract World Map Dotted Pattern (simplified) */}
-                {Array.from({ length: 150 }).map((_, i) => (
+                {dots.map((dot, i) => (
                     <circle
                         key={`dot-${i}`}
-                        cx={Math.random() * 800}
-                        cy={Math.random() * 400}
-                        r={Math.random() * 1.5 + 0.5}
+                        cx={dot.cx}
+                        cy={dot.cy}
+                        r={dot.r}
                         fill="#333"
-                        opacity={Math.random() * 0.5 + 0.1}
+                        opacity={dot.opacity}
                     />
                 ))}
 

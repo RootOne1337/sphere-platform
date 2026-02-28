@@ -310,7 +310,7 @@ async def android_agent_ws(
 
     from fastapi import HTTPException
 
-    from backend.core.dependencies import _DEV_SKIP_AUTH
+    from backend.core.dependencies import _is_dev_skip_auth
 
     org_id_str: str = ""
     try:
@@ -328,7 +328,7 @@ async def android_agent_ws(
                 await _close(4004, "device_not_found")
                 return
 
-            if _DEV_SKIP_AUTH:
+            if _is_dev_skip_auth():
                 # DEV-режим: пропускаем валидацию токена, берём org из устройства
                 org_id_str = str(device.org_id)
                 logger.info("android_ws: DEV_SKIP_AUTH — auth bypassed", device_id=device_id, org_id=org_id_str)

@@ -18,6 +18,7 @@ import com.sphereplatform.agent.providers.DeviceInfoProvider
 import com.sphereplatform.agent.ws.SphereWebSocketClient
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -54,6 +55,7 @@ class SphereAgentService : Service() {
     @Inject lateinit var adbActions: AdbActionExecutor
     @Inject lateinit var deviceInfo: DeviceInfoProvider
     @Inject lateinit var appScope: CoroutineScope
+    @Inject lateinit var configWatchdog: ConfigWatchdog
 
     private val binder = LocalBinder()
 
@@ -67,10 +69,24 @@ class SphereAgentService : Service() {
         // 2. Мониторинг сети
         networkChangeHandler.register()
 
-        // 3. Запускаем WS-подключение (reconnect loop)
+        // 3. Circuit breaker hook — при открытии CB проверяем конфиг из Git
+        wsClient.onCircuitBreakerOpen = {
+            appScope.launch(Dispatchers.IO) { configWatchdog.forceCheck() }
+        }
+
+        // 4. Запускаем WS-подключение (reconnect loop)
         appScope.launch {
             wsClient.connect(deviceInfo.getDeviceId())
         }
+
+        // 5. ConfigWatchdog — периодический опрос конфига из GitHub (CONFIG_URL)
+        //    Если server_url сменился → обновляет store и форсирует reconnect
+        appScope.launch(Dispatchers.IO) {
+            configWatchdog.run()
+        }
+
+        // 6. ServiceWatchdog — AlarmManager гарантирует перезапуск после OOM kill
+        ServiceWatchdog.schedule(this)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -106,6 +122,7 @@ class SphereAgentService : Service() {
     override fun onBind(intent: Intent?): IBinder = binder
 
     override fun onDestroy() {
+        configWatchdog.stop()
         wsClient.disconnect()
         adbActions.closeRootSession()
         super.onDestroy()

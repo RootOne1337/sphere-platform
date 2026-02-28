@@ -59,21 +59,21 @@ export function AuditDrawer({ event, onClose }: AuditDrawerProps) {
             <div className="flex-1 overflow-auto custom-scrollbar p-5 space-y-6">
 
                 {/* Metadata Section */}
-                <div className="grid grid-cols-2 gap-4 border border-border rounded-sm p-4 bg-black/40">
+                <div className="grid grid-cols-2 gap-4 border border-border rounded-sm p-4 bg-background">
                     <div>
-                        <span className="text-[10px] uppercase font-bold tracking-widest text-[#555] block mb-1">Actor (User)</span>
+                        <span className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground/60 block mb-1">Actor (User)</span>
                         <span className="text-sm font-mono text-primary/80">{event.user}</span>
                     </div>
                     <div>
-                        <span className="text-[10px] uppercase font-bold tracking-widest text-[#555] block mb-1">Timestamp</span>
+                        <span className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground/60 block mb-1">Timestamp</span>
                         <span className="text-sm font-mono text-muted-foreground">{new Date(event.timestamp).toLocaleString()}</span>
                     </div>
                     <div>
-                        <span className="text-[10px] uppercase font-bold tracking-widest text-[#555] block mb-1">Action Triggered</span>
+                        <span className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground/60 block mb-1">Action Triggered</span>
                         <Badge variant="outline" className="text-[10px] border-border mt-1">{event.action}</Badge>
                     </div>
                     <div>
-                        <span className="text-[10px] uppercase font-bold tracking-widest text-[#555] block mb-1">Source IP</span>
+                        <span className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground/60 block mb-1">Source IP</span>
                         <span className="text-sm font-mono text-muted-foreground">{event.ip}</span>
                     </div>
                 </div>
@@ -94,12 +94,12 @@ export function AuditDrawer({ event, onClose }: AuditDrawerProps) {
                 {/* JSON Payload Section */}
                 <div>
                     <div className="flex items-center gap-2 mb-3">
-                        <Code2 className="w-4 h-4 text-[#555]" />
+                        <Code2 className="w-4 h-4 text-muted-foreground/60" />
                         <span className="text-xs uppercase font-bold tracking-widest text-muted-foreground">JSON Payload & Metadata</span>
                     </div>
 
                     <div className="bg-muted border border-border rounded-sm p-4 overflow-x-auto relative group">
-                        <pre className="text-[11px] font-mono leading-relaxed text-[#00FF00]/80">
+                        <pre className="text-[11px] font-mono leading-relaxed text-success/80">
                             {JSON.stringify(details, null, 2)}
                         </pre>
 

@@ -287,11 +287,14 @@ class NetworkChangeHandler @Inject constructor(
 
 ## Критерии готовности
 
-- [ ] `getFreshToken()` проверяет expiry и обновляет токен, если осталось < 5 мин
-- [ ] First-message auth: token в первом сообщении, не в URL
-- [ ] Backoff: 1s → 2s → 4s → 8s → 16s → 30s (не растёт выше 30)
-- [ ] 10 последовательных ошибок → circuit open 5 минут
-- [ ] Circuit breaker сбрасывается при успешном подключении
-- [ ] Network change detection: reconnect запускается при восстановлении сети
-- [ ] `sendBinary()` возвращает false если WS закрыт (не крашится)
-- [ ] Агент работает 24/7 без отвалов — JWT обновляется автоматически при каждом reconnect
+- [x] `getFreshToken()` проверяет expiry и обновляет токен, если осталось < 5 мин
+- [x] First-message auth: token в первом сообщении, не в URL
+- [x] Backoff: 1s → 2s → 4s → 8s → 16s → 30s (не растёт выше 30)
+- [x] 10 последовательных ошибок → circuit open 5 минут
+- [x] Circuit breaker сбрасывается при успешном подключении
+- [x] Network change detection: reconnect запускается при восстановлении сети
+- [x] `sendBinary()` возвращает false если WS закрыт (не крашится)
+- [x] Агент работает 24/7 без отвалов — JWT обновляется автоматически при каждом reconnect
+- [x] **v4.3.0:** `onCircuitBreakerOpen` callback → ConfigWatchdog.forceCheck()
+- [x] **v4.3.0:** `forceReconnectNow()` вызывается при смене server_url из remote config
+- [x] **v4.3.0:** AUTH failures (4001, 4003, 4008, 4004) НЕ инкрементируют circuit breaker counter

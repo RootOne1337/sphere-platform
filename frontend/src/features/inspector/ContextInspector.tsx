@@ -49,7 +49,7 @@ export function ContextInspector() {
                                 {/* Fallback */}
                                 <p>Content Type: {contentType}</p>
                                 <p>Associated ID: {contentId}</p>
-                                <p className="mt-4 text-[#555]">Awaiting module initialization...</p>
+                                <p className="mt-4 text-muted-foreground/50">Awaiting module initialization...</p>
                             </div>
                         )}
                     </>

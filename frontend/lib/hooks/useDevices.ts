@@ -56,7 +56,7 @@ export function useBulkAction() {
       action: string;
       params?: object;
     }) => {
-      const { data } = await api.post('/devices/bulk', body);
+      const { data } = await api.post('/devices/bulk/action', body);
       return data;
     },
     onSuccess: () => {

@@ -16,11 +16,11 @@ from backend.models.audit_log import AuditLog
 from backend.models.user import User
 from backend.schemas.auth import AuditLogResponse, PaginatedResponse
 
-router = APIRouter(prefix="/audit-logs", tags=["audit"])
+router = APIRouter(prefix="/audit", tags=["audit"])
 
 
 @router.get(
-    "",
+    "/logs",
     response_model=PaginatedResponse,
     summary="SPLIT-5: Журнал аудита",
 )
