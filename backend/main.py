@@ -36,7 +36,8 @@ async def lifespan(app: FastAPI):
 
     # PROC-4: экспорт OpenAPI schema для TZ-10 (frontend типы через openapi-typescript)
     Path("openapi.json").write_text(
-        json.dumps(app.openapi(), indent=2, ensure_ascii=False)
+        json.dumps(app.openapi(), indent=2, ensure_ascii=False),
+        encoding="utf-8",
     )
 
     yield   # приложение работает

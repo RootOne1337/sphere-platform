@@ -57,6 +57,9 @@ class Settings(BaseSettings):
     # Cookie
     COOKIE_SECURE: bool = False  # True в production (HTTPS напрямую), False через tunnel/dev
 
+    # Dev
+    DEV_SKIP_AUTH: bool = False  # Пропуск JWT-проверки в dev-режиме (NEVER в production)
+
     # App
     DEBUG: bool = False
     LOG_LEVEL: str = "INFO"

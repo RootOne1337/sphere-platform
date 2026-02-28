@@ -21,13 +21,11 @@ if TYPE_CHECKING:
 
 security = HTTPBearer(auto_error=False)
 
-# DEV_SKIP_AUTH разрешён только если APP_ENV не равен "production".
-# Это гарантирует, что bypass невозможен в production независимо от значения флага.
-_APP_ENV = _os.environ.get("APP_ENV", "development")
-_DEV_SKIP_AUTH = (
-    _APP_ENV != "production"
-    and _os.environ.get("DEV_SKIP_AUTH", "").lower() in ("1", "true", "yes")
-)
+
+def _is_dev_skip_auth() -> bool:
+    """Ленивая проверка DEV_SKIP_AUTH через pydantic Settings (читает .env корректно)."""
+    from backend.core.config import settings
+    return settings.DEV_SKIP_AUTH
 
 
 async def get_current_user(
@@ -41,7 +39,7 @@ async def get_current_user(
 
     Если DEV_SKIP_AUTH=true — возвращает первого активного пользователя из БД (dev-bypass).
     """
-    if _DEV_SKIP_AUTH:
+    if _is_dev_skip_auth():
         from backend.models.user import User as _User
         result = await db.execute(
             __import__('sqlalchemy').select(_User).where(_User.is_active.is_(True)).limit(1)
