@@ -7,7 +7,7 @@
 [![CI Backend](https://github.com/RootOne1337/sphere-platform/actions/workflows/ci-backend.yml/badge.svg)](https://github.com/RootOne1337/sphere-platform/actions)
 [![CI Android](https://github.com/RootOne1337/sphere-platform/actions/workflows/ci-android.yml/badge.svg)](https://github.com/RootOne1337/sphere-platform/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-4.3.0-brightgreen.svg)](VERSION)
+[![Version](https://img.shields.io/badge/version-4.4.0-brightgreen.svg)](VERSION)
 
 [Документация](docs/) · [API Reference](docs/api-reference.md) · [Deployment Guide](docs/deployment.md) · [Changelog](CHANGELOG.md)
 
@@ -24,7 +24,7 @@ Sphere Platform — production-ready система для управления,
 | Возможность | Описание |
 |-------------|----------|
 | **Управление флотом** | Регистрация, группировка, тегирование и мониторинг 1000+ Android-устройств |
-| **Удалённое управление** | H.264 видеопоток в реальном времени + выполнение ADB-команд |
+| **Удалённое управление** | H.264 видеопоток в реальном времени + выполнение ADB-команд + Device Inspector (6 кнопок) |
 | **Автоматизация скриптов** | DAG-based скрипты v7 с wave/batch исполнением по группам устройств |
 | **Pipeline Orchestrator** | Цепочки скриптов (Pipeline) с параллельными/последовательными шагами, условной логикой и 9 типами step-обработчиков |
 | **Cron Scheduler** | Собственный DB-backed планировщик с croniter, конфликт-политиками (skip/queue) и SKIP LOCKED |
@@ -125,7 +125,7 @@ SchedulerEngine ──► croniter ──► периодический запу
 Schedule (ORM) ──► ScheduleExecution (история)
 ```
 
-### Agent Resilience Architecture (v4.3.0)
+### Agent Resilience Architecture (v4.4.0)
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
@@ -146,7 +146,7 @@ Schedule (ORM) ──► ScheduleExecution (история)
 │         ├─ server_url changed? → authStore.saveServerUrl()           │
 │         │                       → wsClient.forceReconnectNow()       │
 │         │                                                            │
-│         └─ Circuit Breaker (10 failures) → forceCheck() → Git poll  │
+│         └─ Circuit Breaker (10 failures) → instant forceCheck() → Git poll │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -218,7 +218,7 @@ sphere-platform/
 │
 ├── frontend/               # Next.js 15 App Router (React 19)
 │   ├── app/(auth)/         # Страница авторизации
-│   ├── app/(dashboard)/    # Dashboard, Devices, Scripts, Stream, VPN, Tasks, Fleet, Monitoring
+│   ├── app/(dashboard)/    # Dashboard, Devices, Scripts, Stream, VPN, Tasks, Fleet, Monitoring, Orchestration
 │   ├── components/         # UI-компоненты (shadcn/ui)
 │   ├── hooks/              # TanStack Query data hooks
 │   └── lib/                # Axios-клиент, Zustand auth store
