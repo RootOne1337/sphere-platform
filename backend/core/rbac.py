@@ -78,6 +78,28 @@ PERMISSIONS: dict[str, list[Role]] = {
     "stream:control": [
         Role.DEVICE_MANAGER, Role.ORG_ADMIN, Role.ORG_OWNER, Role.SUPER_ADMIN,
     ],
+
+    # ── Pipelines (TZ-12) ──────────────────────────────────────────────────
+    "pipeline:read": [
+        Role.VIEWER, Role.SCRIPT_RUNNER, Role.DEVICE_MANAGER,
+        Role.ORG_ADMIN, Role.ORG_OWNER, Role.SUPER_ADMIN,
+    ],
+    "pipeline:write": [
+        Role.DEVICE_MANAGER, Role.ORG_ADMIN, Role.ORG_OWNER, Role.SUPER_ADMIN,
+    ],
+    "pipeline:execute": [
+        Role.SCRIPT_RUNNER, Role.DEVICE_MANAGER,
+        Role.ORG_ADMIN, Role.ORG_OWNER, Role.SUPER_ADMIN,
+    ],
+
+    # ── Расписания (TZ-12) ──────────────────────────────────────────────────
+    "schedule:read": [
+        Role.VIEWER, Role.SCRIPT_RUNNER, Role.DEVICE_MANAGER,
+        Role.ORG_ADMIN, Role.ORG_OWNER, Role.SUPER_ADMIN,
+    ],
+    "schedule:write": [
+        Role.DEVICE_MANAGER, Role.ORG_ADMIN, Role.ORG_OWNER, Role.SUPER_ADMIN,
+    ],
 }
 
 
