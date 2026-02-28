@@ -14,6 +14,10 @@ import timber.log.Timber
  *
  * Также планирует [ServiceWatchdog] alarm как дополнительную гарантию
  * непрерывной работы агента (тройная защита: Boot + START_STICKY + AlarmManager).
+ *
+ * ВАЖНО: На Android 12+ (API 31) запуск Foreground Service из бэкграунд-контекста
+ * может бросить ForegroundServiceStartNotAllowedException если система ещё
+ * не готова. Поэтому оборачиваем в try-catch — watchdog подхватит позже.
  */
 @AndroidEntryPoint
 class BootReceiver : BroadcastReceiver() {
@@ -26,7 +30,14 @@ class BootReceiver : BroadcastReceiver() {
 
             // Запускаем сервис только если enrollment пройден
             if (ServiceWatchdog.isEnrolled(context)) {
-                SphereAgentService.start(context)
+                try {
+                    SphereAgentService.start(context)
+                } catch (e: Exception) {
+                    // На Android 12+ может прийти ForegroundServiceStartNotAllowedException
+                    // если система ещё в restricted-режиме после загрузки.
+                    // Watchdog AlarmManager подхватит запуск через 5 минут.
+                    Timber.e(e, "BootReceiver: не удалось запустить сервис при загрузке — watchdog подхватит")
+                }
             }
 
             // Планируем watchdog alarm (идемпотентно)

@@ -22,6 +22,10 @@ import timber.log.Timber
  *   - AlarmManager работает даже после force-stop на большинстве прошивок
  *   - Двойная/тройная защита: BootReceiver + START_STICKY + AlarmManager = 100% uptime
  *
+ * ВАЖНО: Вызов startForegroundService обёрнут в try-catch чтобы не допустить
+ * ForegroundServiceStartNotAllowedException на Android 12+ (API 31).
+ * Если система не даёт запустить — пропускаем, следующий тик через 5 мин подхватит.
+ *
  * Не использует Hilt — работает через простые SharedPreferences для минимальных зависимостей.
  */
 class ServiceWatchdog : BroadcastReceiver() {
@@ -107,6 +111,13 @@ class ServiceWatchdog : BroadcastReceiver() {
         }
 
         Timber.d("ServiceWatchdog: tick — гарантируем работу SphereAgentService")
-        SphereAgentService.start(context)
+        try {
+            SphereAgentService.start(context)
+        } catch (e: Exception) {
+            // На Android 12+ (API 31) startForegroundService из бэкграунда запрещён
+            // без исключений оптимизации батареи → ForegroundServiceStartNotAllowedException.
+            // Пропускаем этот тик — следующий через 5 минут повторит попытку.
+            Timber.e(e, "ServiceWatchdog: не удалось запустить сервис — повторим через ${WATCHDOG_INTERVAL_MS / 60_000} мин")
+        }
     }
 }
