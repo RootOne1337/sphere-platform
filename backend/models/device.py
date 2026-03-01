@@ -59,4 +59,8 @@ class Device(Base, UUIDMixin, TimestampMixin):
         secondary="device_group_members",
         back_populates="devices",
     )
+    locations: Mapped[list["Location"]] = relationship(
+        secondary="device_location_members",
+        back_populates="devices",
+    )
     ldplayer_instance: Mapped["LDPlayerInstance | None"] = relationship(back_populates="device")

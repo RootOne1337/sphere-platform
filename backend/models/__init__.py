@@ -15,6 +15,7 @@ from backend.models.device import Device, DeviceStatus, device_group_members  # 
 # --- Device Registry (TZ-02) ---
 from backend.models.device_group import DeviceGroup  # noqa: F401
 from backend.models.ldplayer_instance import LDPlayerInstance  # noqa: F401
+from backend.models.location import Location, device_location_members  # noqa: F401
 
 # --- Auth (TZ-01) ---
 from backend.models.organization import Organization  # noqa: F401
@@ -63,6 +64,8 @@ __all__ = [
     "Device",
     "DeviceStatus",
     "device_group_members",
+    "Location",
+    "device_location_members",
     "Script",
     "ScriptVersion",
     "TaskBatch",

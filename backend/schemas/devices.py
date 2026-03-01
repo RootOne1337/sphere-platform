@@ -136,6 +136,7 @@ class DeviceResponse(BaseModel):
     device_model: str | None = None  # model column
     workstation_id: uuid.UUID | None = None   # из meta["workstation_id"]
     group_ids: list[uuid.UUID] = Field(default_factory=list)  # M2M groups
+    location_ids: list[uuid.UUID] = Field(default_factory=list)  # M2M locations
     tags: list[str] = Field(default_factory=list)
     notes: str | None = None
     created_at: datetime

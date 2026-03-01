@@ -46,6 +46,7 @@ import {
     ArrowDown,
     Loader2,
 } from 'lucide-react';
+import { DeviceSelector } from '@/components/sphere/DeviceSelector';
 
 // ============================================================================
 //  ТИПЫ
@@ -1223,22 +1224,32 @@ function CreatePipelineButton() {
 
 function RunPipelineDialog({ pipeline, open, onOpenChange }: { pipeline: Pipeline | null; open: boolean; onOpenChange: (v: boolean) => void }) {
     const queryClient = useQueryClient();
-    const [deviceId, setDeviceId] = useState('');
+    const [selectedDeviceIds, setSelectedDeviceIds] = useState<string[]>([]);
     const [inputParams, setInputParams] = useState('{}');
 
     const runMut = useMutation({
         mutationFn: async () => {
             if (!pipeline) return;
-            const { data } = await api.post(`/pipelines/${pipeline.id}/run`, {
-                device_id: deviceId.trim(),
-                input_params: JSON.parse(inputParams || '{}'),
-            });
-            return data;
+            if (selectedDeviceIds.length === 1) {
+                // Одно устройство → прямой запуск
+                const { data } = await api.post(`/pipelines/${pipeline.id}/run`, {
+                    device_id: selectedDeviceIds[0],
+                    input_params: JSON.parse(inputParams || '{}'),
+                });
+                return data;
+            } else {
+                // Массовый запуск через batch
+                const { data } = await api.post(`/pipelines/${pipeline.id}/run-batch`, {
+                    device_ids: selectedDeviceIds,
+                    input_params: JSON.parse(inputParams || '{}'),
+                });
+                return data;
+            }
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['pipeline-runs'] });
-            toast.success(`Pipeline "${pipeline?.name}" запущен`);
-            setDeviceId('');
+            toast.success(`Pipeline "${pipeline?.name}" запущен на ${selectedDeviceIds.length} устройствах`);
+            setSelectedDeviceIds([]);
             setInputParams('{}');
             onOpenChange(false);
         },
@@ -1248,11 +1259,11 @@ function RunPipelineDialog({ pipeline, open, onOpenChange }: { pipeline: Pipelin
         },
     });
 
-    const canSubmit = deviceId.trim().length > 0;
+    const canSubmit = selectedDeviceIds.length > 0;
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-lg bg-card border-border">
+            <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col bg-card border-border">
                 <DialogHeader>
                     <DialogTitle className="font-mono tracking-tight flex items-center gap-2">
                         <Play className="w-5 h-5 text-success" />
@@ -1263,16 +1274,10 @@ function RunPipelineDialog({ pipeline, open, onOpenChange }: { pipeline: Pipelin
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="space-y-4">
-                    <div className="space-y-1.5">
-                        <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Device ID (UUID) *</Label>
-                        <Input
-                            placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-                            value={deviceId}
-                            onChange={e => setDeviceId(e.target.value)}
-                            className="h-9 bg-black/30 border-border font-mono text-xs"
-                        />
-                    </div>
+                <div className="flex-1 overflow-y-auto space-y-4 pr-2">
+                    {/* Выбор устройств */}
+                    <DeviceSelector value={selectedDeviceIds} onChange={setSelectedDeviceIds} />
+
                     <div className="space-y-1.5">
                         <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Входные параметры (JSON)</Label>
                         <textarea
@@ -1310,7 +1315,7 @@ function RunPipelineDialog({ pipeline, open, onOpenChange }: { pipeline: Pipelin
                         className="font-mono text-xs bg-success hover:bg-success/90 text-success-foreground"
                     >
                         {runMut.isPending && <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />}
-                        <Play className="w-3.5 h-3.5 mr-1.5" /> Запустить
+                        <Play className="w-3.5 h-3.5 mr-1.5" /> Запустить ({selectedDeviceIds.length})
                     </Button>
                 </DialogFooter>
             </DialogContent>
@@ -1336,6 +1341,7 @@ function CreateScheduleDialog({ open, onOpenChange, pipelines }: { open: boolean
     const [scriptId, setScriptId] = useState('');
     const [conflictPolicy, setConflictPolicy] = useState<'skip' | 'queue' | 'cancel_previous'>('skip');
     const [timezone, setTimezone] = useState('UTC');
+    const [targetDeviceIds, setTargetDeviceIds] = useState<string[]>([]);
 
     const createMut = useMutation({
         mutationFn: async () => {
@@ -1346,6 +1352,7 @@ function CreateScheduleDialog({ open, onOpenChange, pipelines }: { open: boolean
                 conflict_policy: conflictPolicy,
                 timezone,
                 is_active: true,
+                device_ids: targetDeviceIds.length > 0 ? targetDeviceIds : undefined,
             };
             if (targetType === 'pipeline') payload.pipeline_id = pipelineId;
             else payload.script_id = scriptId;
@@ -1538,6 +1545,12 @@ function CreateScheduleDialog({ open, onOpenChange, pipelines }: { open: boolean
                             />
                         </div>
                     )}
+
+                    {/* Целевые устройства */}
+                    <div className="space-y-1.5">
+                        <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Целевые устройства</Label>
+                        <DeviceSelector value={targetDeviceIds} onChange={setTargetDeviceIds} />
+                    </div>
                 </div>
 
                 <DialogFooter className="mt-4 pt-4 border-t border-border">

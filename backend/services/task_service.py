@@ -12,6 +12,8 @@
 from __future__ import annotations
 
 import asyncio
+import hashlib
+import json
 import uuid
 from datetime import datetime, timezone
 from typing import Any
@@ -24,6 +26,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.models.device import Device
 from backend.models.script import Script, ScriptVersion
 from backend.models.task import Task, TaskStatus
+from backend.models.task_batch import TaskBatch, TaskBatchStatus
 from backend.services.task_queue import TaskQueue
 
 logger = structlog.get_logger()
@@ -193,6 +196,14 @@ class TaskService:
                     task.error_message = "Script version not found"
                     continue
 
+                # Загрузить скрипт для имени (ScriptCacheManager на APK использует dag_name)
+                script = await self.db.get(Script, task.script_id)
+                dag_name = script.name if script else f"script_{task.script_id}"
+
+                # Content-addressable hash для ScriptCacheManager на APK
+                dag_json_str = json.dumps(version.dag, sort_keys=True, ensure_ascii=False)
+                dag_hash = hashlib.sha256(dag_json_str.encode("utf-8")).hexdigest()
+
                 delivered = False
                 if self.publisher:
                     delivered = await self.publisher.send_command_live(
@@ -205,6 +216,8 @@ class TaskService:
                             "payload": {
                                 "task_id": task_id_str,
                                 "dag": version.dag,
+                                "dag_name": dag_name,
+                                "dag_hash": dag_hash,
                                 "timeout_ms": task.timeout_seconds * 1000,
                             },
                         },
@@ -285,6 +298,46 @@ class TaskService:
             # HIGH-5: глобальный set — GC не удалит задачу до завершения
             _pending_webhook_tasks.add(_t)
             _t.add_done_callback(_pending_webhook_tasks.discard)
+
+        # ── TaskBatch авто-агрегация: обновить счётчики succeeded/failed/status ──
+        if task.batch_id:
+            await self._aggregate_batch(task.batch_id, success)
+
+    # ── TaskBatch авто-агрегация ────────────────────────────────────────────
+
+    async def _aggregate_batch(self, batch_id: uuid.UUID, success: bool) -> None:
+        """
+        Инкрементально обновить счётчики батча.
+        Когда все задачи завершены — вычислить финальный статус.
+        """
+        batch = await self.db.get(TaskBatch, batch_id)
+        if not batch:
+            return
+
+        if success:
+            batch.succeeded = (batch.succeeded or 0) + 1
+        else:
+            batch.failed = (batch.failed or 0) + 1
+
+        completed_count = (batch.succeeded or 0) + (batch.failed or 0)
+
+        if completed_count >= batch.total:
+            # Все задачи завершены — вычисляем финальный статус
+            if batch.failed == 0:
+                batch.status = TaskBatchStatus.COMPLETED
+            elif batch.succeeded == 0:
+                batch.status = TaskBatchStatus.FAILED
+            else:
+                batch.status = TaskBatchStatus.PARTIAL
+            logger.info(
+                "batch.auto_aggregated",
+                batch_id=str(batch_id),
+                status=batch.status,
+                succeeded=batch.succeeded,
+                failed=batch.failed,
+            )
+        elif batch.status == TaskBatchStatus.PENDING:
+            batch.status = TaskBatchStatus.RUNNING
 
     # ── Cancel ───────────────────────────────────────────────────────────────
 

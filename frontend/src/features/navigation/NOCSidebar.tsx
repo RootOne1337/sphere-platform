@@ -25,7 +25,8 @@ import {
     ChevronLeft,
     X,
     UserCog,
-    GitBranch
+    GitBranch,
+    MapPin
 } from "lucide-react";
 
 const NAV_ITEMS = [
@@ -38,6 +39,7 @@ const NAV_ITEMS = [
     { href: "/vpn", label: "Tunneling", icon: Wifi },
     { href: "/scripts", label: "Scripts", icon: Code2 },
     { href: "/groups", label: "Groups", icon: FolderOpen },
+    { href: "/locations", label: "Locations", icon: MapPin },
     { href: "/discovery", label: "Discovery", icon: Radar },
     { href: "/users", label: "Users", icon: Users },
     { href: "/audit", label: "Audit Log", icon: ScrollText },

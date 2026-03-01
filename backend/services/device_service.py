@@ -29,10 +29,10 @@ class DeviceService:
     # ── Internal helpers ─────────────────────────────────────────────────────
 
     async def _get_device(self, device_id: uuid.UUID, org_id: uuid.UUID) -> Device:
-        """Загрузить устройство + groups; бросить 404 если не найдено или другой org."""
+        """Загрузить устройство + groups + locations; бросить 404 если не найдено или другой org."""
         stmt = (
             select(Device)
-            .options(selectinload(Device.groups))
+            .options(selectinload(Device.groups), selectinload(Device.locations))
             .where(Device.id == device_id, Device.org_id == org_id)
         )
         device = (await self.db.execute(stmt)).scalar_one_or_none()
@@ -47,6 +47,7 @@ class DeviceService:
         ws_id = uuid.UUID(ws_id_raw) if ws_id_raw else None
 
         group_ids = [g.id for g in (device.groups or [])]
+        location_ids = [loc.id for loc in (device.locations or [])]
 
         db_status = device.last_status
         status_str = db_status.value if isinstance(db_status, DeviceStatus) else str(db_status)
@@ -64,6 +65,7 @@ class DeviceService:
             device_model=device.model,
             workstation_id=ws_id,
             group_ids=group_ids,
+            location_ids=location_ids,
             tags=device.tags or [],
             notes=device.notes,
             created_at=device.created_at,
@@ -71,10 +73,10 @@ class DeviceService:
         )
 
     async def _reload_with_groups(self, device_id: uuid.UUID) -> Device:
-        """Перезагрузить устройство из БД вместе с группами."""
+        """Перезагрузить устройство из БД вместе с группами и локациями."""
         stmt = (
             select(Device)
-            .options(selectinload(Device.groups))
+            .options(selectinload(Device.groups), selectinload(Device.locations))
             .where(Device.id == device_id)
         )
         return (await self.db.execute(stmt)).scalar_one()
@@ -154,7 +156,7 @@ class DeviceService:
 
         stmt = (
             select(Device)
-            .options(selectinload(Device.groups))
+            .options(selectinload(Device.groups), selectinload(Device.locations))
             .where(*base_conditions)
         )
         count_stmt = (
