@@ -91,7 +91,12 @@ class ConnectionManager:
         return info
 
     async def send_to_device(self, device_id: str, message: dict) -> bool:
-        """Отправить JSON сообщение конкретному агенту. Returns True если отправлено."""
+        """Отправить JSON сообщение конкретному агенту. Returns True если отправлено.
+
+        ВАЖНО: НЕ вызывает disconnect() при ошибке отправки — disconnect
+        управляется ТОЛЬКО receive loop'ом (finally-блок WS handler'а).
+        Иначе ошибка при отправке команды (stop_stream и т.п.) крешит agent WS.
+        """
         info = self._connections.get(device_id)
         if not info:
             return False
@@ -99,12 +104,14 @@ class ConnectionManager:
             await info.ws.send_json(message)
             return True
         except Exception as e:
-            logger.warning("Send failed", device_id=device_id, error=str(e))
-            await self.disconnect(device_id)
+            logger.warning("Send failed (non-fatal)", device_id=device_id, error=str(e))
             return False
 
     async def send_bytes_to_device(self, device_id: str, data: bytes) -> bool:
-        """Отправить бинарные данные (видеофрейм и т.п.)"""
+        """Отправить бинарные данные (видеофрейм и т.п.)
+
+        ВАЖНО: НЕ вызывает disconnect() при ошибке — аналогично send_to_device.
+        """
         info = self._connections.get(device_id)
         if not info:
             return False
@@ -112,8 +119,7 @@ class ConnectionManager:
             await info.ws.send_bytes(data)
             return True
         except Exception as e:
-            logger.warning("Send bytes failed", device_id=device_id, error=str(e))
-            await self.disconnect(device_id)
+            logger.warning("Send bytes failed (non-fatal)", device_id=device_id, error=str(e))
             return False
 
     async def broadcast_to_org(self, org_id: str, message: dict) -> int:

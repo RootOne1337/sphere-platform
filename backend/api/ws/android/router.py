@@ -411,6 +411,12 @@ async def android_agent_ws(
     try:
         while True:
             data = await ws.receive()
+            # Graceful disconnect detection — предотвращает race condition
+            # когда ws.receive() возвращает disconnect frame вместо данных
+            ws_type = data.get("type", "")
+            if ws_type == "websocket.disconnect":
+                logger.info("WS graceful disconnect received", device_id=device_id)
+                break
             if "text" in data:
                 try:
                     msg = json.loads(data["text"])
@@ -450,6 +456,8 @@ async def android_agent_ws(
                 await handle_agent_binary(device_id, data["bytes"], manager)
     except WebSocketDisconnect:
         pass
+    except asyncio.CancelledError:
+        logger.info("WS receive loop cancelled", device_id=device_id)
     except Exception as e:
         logger.warning("WS receive loop error", device_id=device_id, error=str(e))
     finally:
