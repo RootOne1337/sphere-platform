@@ -43,6 +43,7 @@ class CommandDispatcher @Inject constructor(
     private val wsClient: SphereWebSocketClient,
     private val adbActions: AdbActionExecutor,
     private val dagRunner: DagRunner,
+    private val scriptCache: ScriptCacheManager,
     private val vpnManager: SphereVpnManager,
     private val killSwitchManager: KillSwitchManager,
     private val authStore: AuthTokenStore,
@@ -142,11 +143,27 @@ class CommandDispatcher @Inject constructor(
                 (streamingManager as? StreamingManagerImpl)?.onViewerConnected()
                 return
             }
-            // ── CANCEL_DAG: bypass dagMutex, cancel running DAG immediately ──
+            // ── CANCEL_DAG: bypass dagMutex ──
             "CANCEL_DAG" -> {
                 val cmdId = msg["command_id"]?.jsonPrimitive?.contentOrNull ?: ""
                 Timber.i("[CANCEL_DAG] Received cancel for command=$cmdId")
                 dagRunner.requestCancel()
+                ack(cmdId, "completed")
+                return
+            }
+            // ── PAUSE_DAG: bypass dagMutex, пауза работающего DAG между нодами ──
+            "PAUSE_DAG" -> {
+                val cmdId = msg["command_id"]?.jsonPrimitive?.contentOrNull ?: ""
+                Timber.i("[PAUSE_DAG] Received pause for command=$cmdId")
+                dagRunner.requestPause()
+                ack(cmdId, "completed")
+                return
+            }
+            // ── RESUME_DAG: bypass dagMutex, снятие паузы ──
+            "RESUME_DAG" -> {
+                val cmdId = msg["command_id"]?.jsonPrimitive?.contentOrNull ?: ""
+                Timber.i("[RESUME_DAG] Received resume for command=$cmdId")
+                dagRunner.requestResume()
                 ack(cmdId, "completed")
                 return
             }
@@ -221,8 +238,41 @@ class CommandDispatcher @Inject constructor(
         }
 
         CommandType.EXECUTE_DAG -> {
-            val dagJson = cmd.payload["dag"]!!.jsonObject
-            // Mutex ensures at most one DAG runs at a time on this device
+            val dagName = cmd.payload["dag_name"]?.jsonPrimitive?.contentOrNull
+            val dagHash = cmd.payload["dag_hash"]?.jsonPrimitive?.contentOrNull
+
+            // Контент-адресабльный кеш: если имя + hash присланы — ищем в кеше
+            val dagJson: JsonObject = if (dagName != null && dagHash != null) {
+                when (val cacheResult = scriptCache.get(dagName, dagHash)) {
+                    is ScriptCacheManager.CacheResult.Hit -> {
+                        // Кеш-хит: DAG актуален, запускаем без пердачи по WS
+                        Timber.i("[EXECUTE_DAG] Кеш-хит 'скрипт $dagName' — запуск без загрузки")
+                        cacheResult.dag
+                    }
+                    is ScriptCacheManager.CacheResult.HashMismatch -> {
+                        // Скрипт изменился — обновляем кеш из payload
+                        val fresh = cmd.payload["dag"]?.jsonObject
+                            ?: error("Скрипт 'скрипт $dagName' изменился (hash не совпадает), но DAG не передан в payload")
+                        scriptCache.put(dagName, dagHash, fresh)
+                        Timber.i("[EXECUTE_DAG] Обновлён кеш 'скрипт $dagName' (hash изменился)")
+                        fresh
+                    }
+                    ScriptCacheManager.CacheResult.Miss -> {
+                        // Первый запуск: кешируем из payload
+                        val fresh = cmd.payload["dag"]?.jsonObject
+                            ?: error("Кеш-мисс для 'скрипт $dagName': DAG не передан в payload")
+                        scriptCache.put(dagName, dagHash, fresh)
+                        Timber.i("[EXECUTE_DAG] Кеш-мисс 'скрипт $dagName' — скеширован")
+                        fresh
+                    }
+                }
+            } else {
+                // Классический путь (без кеширования): dag обязателен
+                cmd.payload["dag"]?.jsonObject
+                    ?: error("Поле 'dag' обязательно в payload EXECUTE_DAG")
+            }
+
+            // Mutex гарантирует не более одного активного DAG за раз
             dagMutex.withLock {
                 dagRunner.execute(cmd.command_id, dagJson)
             }

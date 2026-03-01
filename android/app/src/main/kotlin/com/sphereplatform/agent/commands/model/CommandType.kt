@@ -10,6 +10,10 @@ enum class CommandType {
     TAP, SWIPE, TYPE_TEXT, KEY_EVENT, SCREENSHOT,
     // DAG-скрипт
     EXECUTE_DAG,
+    /** Команда постановки на паузу текущего выполняющегося DAG. */
+    PAUSE_DAG,
+    /** Команда снятия с паузы (возобновление) выполняющегося DAG. */
+    RESUME_DAG,
     // VPN
     VPN_CONNECT, VPN_DISCONNECT, VPN_RECONNECT,
     // OTA обновления (реализация в SPLIT-5)
