@@ -1,5 +1,6 @@
 package com.sphereplatform.agent.providers
 
+import android.app.ActivityManager
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
@@ -55,11 +56,13 @@ class DeviceStatusProvider @Inject constructor(
         }
     }
 
-    /** RAM занято в MiB. */
+    /** Используемая системная RAM в MiB (через ActivityManager.MemoryInfo). */
     fun getRamUsageMb(): Long {
         return try {
-            val runtime = Runtime.getRuntime()
-            (runtime.totalMemory() - runtime.freeMemory()) / (1024 * 1024)
+            val am = context.getSystemService(ActivityManager::class.java)
+            val memInfo = ActivityManager.MemoryInfo()
+            am.getMemoryInfo(memInfo)
+            (memInfo.totalMem - memInfo.availMem) / (1024 * 1024)
         } catch (_: Exception) {
             0L
         }

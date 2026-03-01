@@ -118,7 +118,7 @@ async def list_devices(
         page=page,
         per_page=per_page,
     )
-    # Обогащаем live-статус из Redis (один MGET на все устройства)
+    # Обогащаем live-статус и телеметрию из Redis (один MGET на все устройства)
     if devices:
         device_ids = [str(d.id) for d in devices]
         live_statuses = await status_cache.bulk_get_status(device_ids)
@@ -127,6 +127,13 @@ async def list_devices(
             live = live_statuses.get(str(d.id))
             if live:
                 d.status = live.status
+                d.battery_level = live.battery
+                d.cpu_usage = live.cpu_usage
+                d.ram_usage_mb = live.ram_usage_mb
+                d.screen_on = live.screen_on
+                d.adb_connected = live.adb_connected
+                d.vpn_active = live.vpn_active
+                d.last_heartbeat = live.last_heartbeat
             enriched.append(d)
         devices = enriched
     pages = (total + per_page - 1) // per_page if total > 0 else 0

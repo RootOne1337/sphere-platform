@@ -28,3 +28,6 @@
 
 # Encrypted SharedPreferences
 -keep class androidx.security.crypto.** { *; }
+
+# LuaJ — javax.script недоступен на Android, подавляем предупреждение R8
+-dontwarn javax.script.ScriptEngineFactory

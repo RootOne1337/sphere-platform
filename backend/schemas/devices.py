@@ -122,7 +122,7 @@ class UpdateDeviceRequest(BaseModel):
 # ── Response ──────────────────────────────────────────────────────────────────
 
 class DeviceResponse(BaseModel):
-    """Ответ на GET/POST/PUT device — все поля из DB + meta."""
+    """Ответ на GET/POST/PUT device — все поля из DB + meta + live-телеметрия из Redis."""
 
     id: uuid.UUID
     name: str
@@ -140,6 +140,15 @@ class DeviceResponse(BaseModel):
     notes: str | None = None
     created_at: datetime
     updated_at: datetime
+
+    # Live-телеметрия из Redis (обогащается в list/get endpoints)
+    battery_level: int | None = None
+    cpu_usage: float | None = None
+    ram_usage_mb: int | None = None
+    screen_on: bool | None = None
+    adb_connected: bool = False
+    vpn_active: bool | None = None
+    last_heartbeat: datetime | None = None
 
     model_config = ConfigDict(from_attributes=False)
 

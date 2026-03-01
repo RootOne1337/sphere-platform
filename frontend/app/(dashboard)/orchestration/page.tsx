@@ -15,6 +15,7 @@ import {
     DialogTitle,
     DialogDescription,
     DialogFooter,
+    DialogTrigger,
 } from '@/components/ui/dialog';
 import {
     GitBranch,
@@ -242,7 +243,6 @@ type TabKey = 'pipelines' | 'schedules' | 'runs';
 export default function OrchestrationPage() {
     const [tab, setTab] = useState<TabKey>('pipelines');
     const [search, setSearch] = useState('');
-    const [showCreatePipeline, setShowCreatePipeline] = useState(false);
     const [runPipelineTarget, setRunPipelineTarget] = useState<Pipeline | null>(null);
     const [showCreateSchedule, setShowCreateSchedule] = useState(false);
 
@@ -304,9 +304,7 @@ export default function OrchestrationPage() {
                                 onChange={(e) => setSearch(e.target.value)}
                             />
                         </div>
-                        <Button variant="default" size="sm" className="h-9" onClick={() => setShowCreatePipeline(true)}>
-                            <Plus className="w-4 h-4 mr-2" /> Новый Pipeline
-                        </Button>
+                        <CreatePipelineButton />
                     </div>
                 </div>
             </div>
@@ -353,20 +351,17 @@ export default function OrchestrationPage() {
                 {tab === 'schedules' && <SchedulesTab schedules={schedules} pipelines={pipelines} loading={sLoading} search={search} onCreateSchedule={() => setShowCreateSchedule(true)} />}
             </div>
 
-            {/* ── МОДАЛКИ (mount only when open — avoids controlled-mode issues) ── */}
-            {showCreatePipeline && (
-                <CreatePipelineDialog open onOpenChange={setShowCreatePipeline} />
-            )}
-            {runPipelineTarget && (
-                <RunPipelineDialog
-                    pipeline={runPipelineTarget}
-                    open
-                    onOpenChange={(open) => { if (!open) setRunPipelineTarget(null); }}
-                />
-            )}
-            {showCreateSchedule && (
-                <CreateScheduleDialog open onOpenChange={setShowCreateSchedule} pipelines={pipelines} />
-            )}
+            {/* ── МОДАЛКИ (controlled mode — Dialog всегда в DOM, Portal рендерится по open) ── */}
+            <RunPipelineDialog
+                pipeline={runPipelineTarget}
+                open={!!runPipelineTarget}
+                onOpenChange={(v) => { if (!v) setRunPipelineTarget(null); }}
+            />
+            <CreateScheduleDialog
+                open={showCreateSchedule}
+                onOpenChange={setShowCreateSchedule}
+                pipelines={pipelines}
+            />
         </div>
     );
 }
@@ -914,8 +909,9 @@ function emptyStep(index: number): StepDraft {
     };
 }
 
-function CreatePipelineDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
+function CreatePipelineButton() {
     const queryClient = useQueryClient();
+    const [open, setOpen] = useState(false);
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
     const [tags, setTags] = useState('');
@@ -959,7 +955,7 @@ function CreatePipelineDialog({ open, onOpenChange }: { open: boolean; onOpenCha
             queryClient.invalidateQueries({ queryKey: ['pipelines'] });
             toast.success('Pipeline создан');
             resetForm();
-            onOpenChange(false);
+            setOpen(false);
         },
         onError: (err: any) => {
             const detail = err?.response?.data?.detail;
@@ -997,7 +993,12 @@ function CreatePipelineDialog({ open, onOpenChange }: { open: boolean; onOpenCha
     };
 
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
+        <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+                <Button variant="default" size="sm" className="h-9">
+                    <Plus className="w-4 h-4 mr-2" /> Новый Pipeline
+                </Button>
+            </DialogTrigger>
             <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col bg-card border-border">
                 <DialogHeader>
                     <DialogTitle className="font-mono tracking-tight flex items-center gap-2">
@@ -1199,7 +1200,7 @@ function CreatePipelineDialog({ open, onOpenChange }: { open: boolean; onOpenCha
                 </div>
 
                 <DialogFooter className="mt-4 pt-4 border-t border-border">
-                    <Button variant="outline" onClick={() => onOpenChange(false)} className="font-mono text-xs">
+                    <Button variant="outline" onClick={() => setOpen(false)} className="font-mono text-xs">
                         Отмена
                     </Button>
                     <Button
@@ -1221,13 +1222,14 @@ function CreatePipelineDialog({ open, onOpenChange }: { open: boolean; onOpenCha
 //  ДИАЛОГ: ЗАПУСК PIPELINE НА УСТРОЙСТВЕ
 // ============================================================================
 
-function RunPipelineDialog({ pipeline, open, onOpenChange }: { pipeline: Pipeline; open: boolean; onOpenChange: (v: boolean) => void }) {
+function RunPipelineDialog({ pipeline, open, onOpenChange }: { pipeline: Pipeline | null; open: boolean; onOpenChange: (v: boolean) => void }) {
     const queryClient = useQueryClient();
     const [deviceId, setDeviceId] = useState('');
     const [inputParams, setInputParams] = useState('{}');
 
     const runMut = useMutation({
         mutationFn: async () => {
+            if (!pipeline) return;
             const { data } = await api.post(`/pipelines/${pipeline.id}/run`, {
                 device_id: deviceId.trim(),
                 input_params: JSON.parse(inputParams || '{}'),
@@ -1236,7 +1238,7 @@ function RunPipelineDialog({ pipeline, open, onOpenChange }: { pipeline: Pipelin
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['pipeline-runs'] });
-            toast.success(`Pipeline "${pipeline.name}" запущен`);
+            toast.success(`Pipeline "${pipeline?.name}" запущен`);
             setDeviceId('');
             setInputParams('{}');
             onOpenChange(false);
@@ -1258,7 +1260,7 @@ function RunPipelineDialog({ pipeline, open, onOpenChange }: { pipeline: Pipelin
                         Запустить Pipeline
                     </DialogTitle>
                     <DialogDescription className="text-xs text-muted-foreground font-mono">
-                        <span className="text-primary font-bold">{pipeline.name}</span> — {pipeline.steps.length} шагов, v{pipeline.version}
+                        <span className="text-primary font-bold">{pipeline?.name}</span> — {pipeline?.steps.length ?? 0} шагов, v{pipeline?.version}
                     </DialogDescription>
                 </DialogHeader>
 
@@ -1287,12 +1289,12 @@ function RunPipelineDialog({ pipeline, open, onOpenChange }: { pipeline: Pipelin
                     <div className="border border-border rounded-sm p-3 bg-muted/30">
                         <div className="text-[9px] uppercase font-bold tracking-widest text-muted-foreground mb-2">Шаги исполнения</div>
                         <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
-                            {pipeline.steps.map((s, i) => (
+                            {pipeline?.steps.map((s, i) => (
                                 <div key={s.id} className="flex items-center gap-1.5 shrink-0">
                                     <Badge variant="outline" className={`text-[8px] whitespace-nowrap ${STEP_TYPE_COLORS[s.type] || ''}`}>
                                         {s.name}
                                     </Badge>
-                                    {i < pipeline.steps.length - 1 && <ChevronRight className="w-2.5 h-2.5 text-muted-foreground/40" />}
+                                    {i < (pipeline?.steps.length ?? 0) - 1 && <ChevronRight className="w-2.5 h-2.5 text-muted-foreground/40" />}
                                 </div>
                             ))}
                         </div>
