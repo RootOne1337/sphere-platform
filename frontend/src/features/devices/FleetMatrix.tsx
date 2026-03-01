@@ -18,25 +18,29 @@ import { Badge } from "@/src/shared/ui/badge";
 import { Button } from "@/src/shared/ui/button";
 import { cn } from "@/src/shared/lib/utils";
 import { useInspectorStore } from "@/src/features/inspector/inspectorStore";
-import { Activity, Wifi, Battery, Tag, Hash, Shield, Columns3 } from "lucide-react";
+import { Activity, Wifi, Battery, Tag, Hash, Shield, Columns3, MoreHorizontal, Pencil, FolderOpen, MapPin, Trash2 } from "lucide-react";
 import { GridSparkline } from "./GridSparkline";
 import {
     DropdownMenu,
     DropdownMenuCheckboxItem,
     DropdownMenuContent,
+    DropdownMenuItem,
     DropdownMenuLabel,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+
+export type DeviceAction = 'rename' | 'assign_group' | 'assign_location' | 'delete';
 
 interface FleetMatrixProps {
     data: Device[];
     isLoading: boolean;
     rowSelection: RowSelectionState;
     onRowSelectionChange: OnChangeFn<RowSelectionState>;
+    onDeviceAction?: (deviceId: string, action: DeviceAction) => void;
 }
 
-export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChange }: FleetMatrixProps) {
+export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChange, onDeviceAction }: FleetMatrixProps) {
     const { openInspector } = useInspectorStore();
     const parentRef = React.useRef<HTMLDivElement>(null);
     const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
@@ -198,8 +202,55 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
                     );
                 },
             },
+            {
+                id: "actions",
+                size: 48,
+                enableHiding: false,
+                header: () => null,
+                cell: ({ row }) => {
+                    const device = row.original;
+                    return (
+                        <div className="flex items-center justify-center h-full" onClick={(e) => e.stopPropagation()}>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-6 w-6 rounded-sm text-muted-foreground hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <MoreHorizontal className="w-3.5 h-3.5" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-44 bg-card border-border">
+                                    <DropdownMenuItem
+                                        className="text-xs font-mono cursor-pointer"
+                                        onClick={() => onDeviceAction?.(device.id, 'rename')}
+                                    >
+                                        <Pencil className="w-3 h-3 mr-2" /> Переименовать
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                        className="text-xs font-mono cursor-pointer"
+                                        onClick={() => onDeviceAction?.(device.id, 'assign_group')}
+                                    >
+                                        <FolderOpen className="w-3 h-3 mr-2" /> В группу
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                        className="text-xs font-mono cursor-pointer"
+                                        onClick={() => onDeviceAction?.(device.id, 'assign_location')}
+                                    >
+                                        <MapPin className="w-3 h-3 mr-2" /> В локацию
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator className="bg-border" />
+                                    <DropdownMenuItem
+                                        className="text-xs font-mono cursor-pointer text-destructive focus:text-destructive"
+                                        onClick={() => onDeviceAction?.(device.id, 'delete')}
+                                    >
+                                        <Trash2 className="w-3 h-3 mr-2" /> Удалить
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </div>
+                    );
+                },
+            },
         ],
-        []
+        [onDeviceAction]
     );
 
     const table = useReactTable({

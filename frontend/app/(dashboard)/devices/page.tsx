@@ -1,18 +1,42 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { RowSelectionState } from '@tanstack/react-table';
-import { useDevices, useBulkAction } from '@/lib/hooks/useDevices';
-import { FleetMatrix } from '@/src/features/devices/FleetMatrix';
+import { useDevices, useBulkAction, useDeleteDevice, useUpdateDevice } from '@/lib/hooks/useDevices';
+import { useGroups, useMoveDevices } from '@/lib/hooks/useGroups';
+import { useLocations, useAssignDevicesToLocation, useRemoveDevicesFromLocation } from '@/lib/hooks/useLocations';
+import { FleetMatrix, type DeviceAction } from '@/src/features/devices/FleetMatrix';
 import { MultiStreamGrid } from '@/src/features/devices/MultiStreamGrid';
 import { Button } from '@/src/shared/ui/button';
 import { Input } from '@/components/ui/input';
-import { Cpu, RefreshCcw, ShieldOff, LayoutGrid, List } from 'lucide-react';
+import { Label } from '@/components/ui/label';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Cpu, RefreshCcw, ShieldOff, LayoutGrid, List, Trash2, Pencil, MapPin, FolderOpen } from 'lucide-react';
 
 export default function DevicesPage() {
   const [search, setSearch] = useState('');
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
+
+  // Диалоги
+  const [renameDialog, setRenameDialog] = useState<{ open: boolean; deviceId: string; currentName: string }>({ open: false, deviceId: '', currentName: '' });
+  const [newName, setNewName] = useState('');
+  const [assignGroupDialog, setAssignGroupDialog] = useState(false);
+  const [assignLocationDialog, setAssignLocationDialog] = useState(false);
+  const [selectedGroupId, setSelectedGroupId] = useState<string>('');
+  const [selectedLocationId, setSelectedLocationId] = useState<string>('');
 
   // Backend ограничивает per_page до 200 — используем максимум
   const { data, isLoading, refetch } = useDevices({
@@ -21,8 +45,41 @@ export default function DevicesPage() {
     search: search || undefined,
   });
   const bulkMutation = useBulkAction();
+  const deleteDevice = useDeleteDevice();
+  const updateDevice = useUpdateDevice();
+  const { data: groups } = useGroups();
+  const { data: locations } = useLocations();
+  const moveDevices = useMoveDevices();
+  const assignToLocation = useAssignDevicesToLocation();
 
   const selectedIds = Object.keys(rowSelection).filter(Boolean);
+
+  // Обработчик действий из контекстного меню FleetMatrix (для одного устройства)
+  const handleDeviceAction = useCallback((deviceId: string, action: DeviceAction) => {
+    const device = data?.items.find(d => d.id === deviceId);
+    if (!device) return;
+
+    switch (action) {
+      case 'rename':
+        setRenameDialog({ open: true, deviceId: device.id, currentName: device.name });
+        setNewName(device.name);
+        break;
+      case 'assign_group':
+        // Выбираем только одно устройство и открываем диалог
+        setRowSelection({ [deviceId]: true });
+        setAssignGroupDialog(true);
+        break;
+      case 'assign_location':
+        setRowSelection({ [deviceId]: true });
+        setAssignLocationDialog(true);
+        break;
+      case 'delete':
+        if (confirm(`Удалить устройство "${device.name}"? Это действие необратимо.`)) {
+          deleteDevice.mutate(deviceId);
+        }
+        break;
+    }
+  }, [data?.items, deleteDevice]);
 
   const handleBulkReboot = () => {
     bulkMutation.mutate({ device_ids: selectedIds, action: 'reboot' });
@@ -31,6 +88,35 @@ export default function DevicesPage() {
 
   const handleBulkRevokeVpn = () => {
     bulkMutation.mutate({ device_ids: selectedIds, action: 'vpn_revoke' });
+    setRowSelection({});
+  };
+
+  const handleBulkDelete = () => {
+    if (!confirm(`Удалить ${selectedIds.length} устройств? Это действие необратимо.`)) return;
+    selectedIds.forEach(id => deleteDevice.mutate(id));
+    setRowSelection({});
+  };
+
+  const handleRename = async () => {
+    if (!newName.trim()) return;
+    await updateDevice.mutateAsync({ id: renameDialog.deviceId, name: newName.trim() });
+    setRenameDialog({ open: false, deviceId: '', currentName: '' });
+    setNewName('');
+  };
+
+  const handleAssignGroup = async () => {
+    if (!selectedGroupId) return;
+    await moveDevices.mutateAsync({ groupId: selectedGroupId, deviceIds: selectedIds });
+    setAssignGroupDialog(false);
+    setSelectedGroupId('');
+    setRowSelection({});
+  };
+
+  const handleAssignLocation = async () => {
+    if (!selectedLocationId) return;
+    await assignToLocation.mutateAsync({ locationId: selectedLocationId, deviceIds: selectedIds });
+    setAssignLocationDialog(false);
+    setSelectedLocationId('');
     setRowSelection({});
   };
 
@@ -83,6 +169,32 @@ export default function DevicesPage() {
                 <RefreshCcw className="w-3.5 h-3.5 mr-1.5" />
                 RBT
               </Button>
+              <Button variant="outline" size="sm" onClick={() => setAssignGroupDialog(true)} className="h-9 hover:border-primary hover:text-primary" title="Assign to Group">
+                <FolderOpen className="w-3.5 h-3.5 mr-1.5" />
+                GRP
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => setAssignLocationDialog(true)} className="h-9 hover:border-primary hover:text-primary" title="Assign to Location">
+                <MapPin className="w-3.5 h-3.5 mr-1.5" />
+                LOC
+              </Button>
+              {selectedIds.length === 1 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const d = data?.items.find(d => d.id === selectedIds[0]);
+                    if (d) {
+                      setRenameDialog({ open: true, deviceId: d.id, currentName: d.name });
+                      setNewName(d.name);
+                    }
+                  }}
+                  className="h-9 hover:border-primary hover:text-primary"
+                  title="Rename Device"
+                >
+                  <Pencil className="w-3.5 h-3.5 mr-1.5" />
+                  REN
+                </Button>
+              )}
               <Button
                 variant="destructive"
                 size="sm"
@@ -92,6 +204,16 @@ export default function DevicesPage() {
               >
                 <ShieldOff className="w-3.5 h-3.5 mr-1.5" />
                 NO_VPN
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={handleBulkDelete}
+                className="h-9"
+                title="Delete Selected"
+              >
+                <Trash2 className="w-3.5 h-3.5 mr-1.5" />
+                DEL
               </Button>
             </div>
           )}
@@ -109,6 +231,7 @@ export default function DevicesPage() {
             isLoading={isLoading}
             rowSelection={rowSelection}
             onRowSelectionChange={setRowSelection}
+            onDeviceAction={handleDeviceAction}
           />
         ) : (
           <MultiStreamGrid
@@ -117,6 +240,96 @@ export default function DevicesPage() {
           />
         )}
       </div>
+
+      {/* Диалог переименования */}
+      <Dialog open={renameDialog.open} onOpenChange={(open) => { if (!open) setRenameDialog({ open: false, deviceId: '', currentName: '' }); }}>
+        <DialogContent aria-describedby={undefined}>
+          <DialogHeader>
+            <DialogTitle>Переименовать устройство</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <div className="space-y-1">
+              <Label>Новое имя</Label>
+              <Input
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleRename()}
+                autoFocus
+              />
+            </div>
+            <Button onClick={handleRename} disabled={updateDevice.isPending || !newName.trim()} className="w-full">
+              {updateDevice.isPending ? 'Сохранение…' : 'Сохранить'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Диалог назначения группы */}
+      <Dialog open={assignGroupDialog} onOpenChange={setAssignGroupDialog}>
+        <DialogContent aria-describedby={undefined}>
+          <DialogHeader>
+            <DialogTitle>Назначить в группу</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <div className="space-y-1">
+              <Label>Группа</Label>
+              <Select value={selectedGroupId} onValueChange={setSelectedGroupId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Выбери группу" />
+                </SelectTrigger>
+                <SelectContent>
+                  {groups?.map((g) => (
+                    <SelectItem key={g.id} value={g.id}>
+                      <span className="flex items-center gap-2">
+                        {g.color && <span className="w-3 h-3 rounded-full inline-block" style={{ backgroundColor: g.color }} />}
+                        {g.name}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <p className="text-xs text-muted-foreground">{selectedIds.length} устройств будут назначены в группу</p>
+            <Button onClick={handleAssignGroup} disabled={moveDevices.isPending || !selectedGroupId} className="w-full">
+              {moveDevices.isPending ? 'Назначение…' : 'Назначить'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Диалог назначения локации */}
+      <Dialog open={assignLocationDialog} onOpenChange={setAssignLocationDialog}>
+        <DialogContent aria-describedby={undefined}>
+          <DialogHeader>
+            <DialogTitle>Назначить в локацию</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <div className="space-y-1">
+              <Label>Локация</Label>
+              <Select value={selectedLocationId} onValueChange={setSelectedLocationId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Выбери локацию" />
+                </SelectTrigger>
+                <SelectContent>
+                  {locations?.map((l) => (
+                    <SelectItem key={l.id} value={l.id}>
+                      <span className="flex items-center gap-2">
+                        {l.color && <span className="w-3 h-3 rounded-full inline-block" style={{ backgroundColor: l.color }} />}
+                        {l.name}
+                        {l.address && <span className="text-muted-foreground text-xs ml-1">— {l.address}</span>}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <p className="text-xs text-muted-foreground">{selectedIds.length} устройств будут добавлены в локацию (аддитивно)</p>
+            <Button onClick={handleAssignLocation} disabled={assignToLocation.isPending || !selectedLocationId} className="w-full">
+              {assignToLocation.isPending ? 'Назначение…' : 'Назначить'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

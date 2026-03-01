@@ -45,7 +45,8 @@ class SphereWebSocketClient @Inject constructor(
     private var consecutiveFailures = 0
     private val CIRCUIT_OPEN_THRESHOLD = 10
     private var circuitOpenUntil = 0L
-    private val CIRCUIT_COOL_DOWN_MS = 5 * 60 * 1000L
+    // FIX-RECONNECT: 60s вместо 5 мин — при смене tunnel URL агент не должен ждать долго
+    private val CIRCUIT_COOL_DOWN_MS = 60 * 1000L
 
     // Server close codes that indicate auth/permission problems (don't circuit break)
     companion object {
@@ -227,10 +228,14 @@ class SphereWebSocketClient @Inject constructor(
     }
 
     /**
-     * Форсированный immediate reconnect — вызывается при восстановлении сети.
-     * Прерывает текущий backoff delay без ожидания его истечения.
+     * Форсированный immediate reconnect — вызывается при восстановлении сети
+     * или при обнаружении нового server_url из ConfigWatchdog.
+     * Прерывает текущий backoff delay и сбрасывает circuit breaker.
      */
     fun forceReconnectNow() {
+        // FIX-RECONNECT: Сбрасываем circuit breaker — ConfigWatchdog подтвердил новый URL
+        circuitOpenUntil = 0L
+        consecutiveFailures = 0
         reconnectTrigger.trySend(Unit)
     }
 

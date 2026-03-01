@@ -154,6 +154,22 @@ async def stream_viewer_ws(
         "session_id": session_id,
     })
 
+    # FIX-KEEPALIVE: Периодический ping каждые 10 секунд — предотвращает
+    # закрытие WS Cloudflare tunnel'ом при отсутствии upstream трафика.
+    # Cloudflare Quick Tunnel агрессивно дропает idle WS (замечено через ~5-25 сек).
+    async def _viewer_ping_loop() -> None:
+        try:
+            while True:
+                await asyncio.sleep(10)
+                try:
+                    await ws.send_json({"type": "ping"})
+                except Exception:
+                    break
+        except asyncio.CancelledError:
+            pass
+
+    ping_task = asyncio.create_task(_viewer_ping_loop())
+
     try:
         while True:
             data = await ws.receive_json()
@@ -197,17 +213,31 @@ async def stream_viewer_ws(
                         "text": str(data.get("text", "")),
                         "session_id": session_id,
                     })
+                case "pong":
+                    pass  # Ответ на наш keepalive ping — просто игнорируем
                 case _:
                     logger.debug(
                         "Unknown viewer message",
                         type=data.get("type"),
                         device_id=device_id,
                     )
-    except WebSocketDisconnect:
-        pass
-    except Exception:
-        pass
+    except WebSocketDisconnect as exc:
+        logger.info(
+            "Stream viewer WS disconnect",
+            device_id=device_id,
+            session_id=session_id,
+            code=exc.code,
+            reason=getattr(exc, "reason", ""),
+        )
+    except Exception as exc:
+        logger.warning(
+            "Stream viewer WS error",
+            device_id=device_id,
+            session_id=session_id,
+            error=str(exc),
+        )
     finally:
+        ping_task.cancel()
         await bridge.unregister_viewer(device_id)
         logger.info(
             "Stream viewer disconnected",

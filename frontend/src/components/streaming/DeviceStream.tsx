@@ -10,7 +10,7 @@ interface DeviceStreamProps {
   className?: string;
 }
 
-type StreamStatus = "connecting" | "streaming" | "offline";
+type StreamStatus = "connecting" | "streaming" | "reconnecting" | "offline";
 
 /**
  * Renders a live H.264 stream from an Android device onto a canvas element.
@@ -38,6 +38,8 @@ export function DeviceStream({
     decoderRef.current = decoder;
 
     decoder.onDisconnect = () => setStatus("offline");
+    // FIX-RECONNECT: обновляем статус при успешном reconnect
+    decoder.onReconnect = () => setStatus("streaming");
 
     decoder
       .init(deviceId, authToken)
@@ -120,7 +122,11 @@ export function DeviceStream({
 
       {status !== "streaming" && (
         <div className="absolute inset-0 flex items-center justify-center bg-background/80 text-foreground text-sm select-none">
-          {status === "connecting" ? "Подключение..." : "Нет сигнала"}
+          {status === "connecting"
+            ? "Подключение..."
+            : status === "reconnecting"
+              ? "Переподключение..."
+              : "Нет сигнала"}
         </div>
       )}
     </div>

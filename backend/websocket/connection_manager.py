@@ -61,10 +61,19 @@ class ConnectionManager:
                     device_id=device_id,
                     old_session=old.session_id,
                 )
-                try:
-                    await old.ws.close(code=4001, reason="replaced_by_new_connection")
-                except Exception:
-                    pass
+                # FIX-CLOUDFLARE: Не блокируем на close() — через Cloudflare tunnel
+                # await ws.close() может висеть 10+ секунд (TCP timeout). За это время
+                # новый WS простаивает без данных и тоже дропается tunnel'ом.
+                # Fire-and-forget с таймаутом 1 секунда — достаточно для graceful close.
+                async def _evict_old(old_ws: WebSocket) -> None:
+                    try:
+                        await asyncio.wait_for(
+                            old_ws.close(code=4001, reason="replaced_by_new_connection"),
+                            timeout=1.0,
+                        )
+                    except Exception:
+                        pass
+                asyncio.create_task(_evict_old(old.ws))
 
             info = ConnectionInfo(ws, device_id, agent_type, org_id, session_id)
             self._connections[device_id] = info
@@ -81,26 +90,53 @@ class ConnectionManager:
         )
         return session_id
 
-    async def disconnect(self, device_id: str) -> ConnectionInfo | None:
+    async def disconnect(self, device_id: str, session_id: str | None = None) -> ConnectionInfo | None:
+        """Отключить агента. Если session_id передан — удалить ТОЛЬКО если текущая сессия совпадает.
+
+        Это предотвращает race condition: старый handler вызывает disconnect() после того,
+        как новая сессия уже зарегистрирована через connect(). Без проверки session_id
+        старый handler удаляет НОВУЮ сессию из реестра → все send_to_device ломаются.
+        """
         async with self._lock:
-            info = self._connections.pop(device_id, None)
-            if info:
-                self._org_index.get(info.org_id, set()).discard(device_id)
-        if info:
-            logger.info("Agent disconnected", device_id=device_id, session=info.session_id)
+            current = self._connections.get(device_id)
+            if current is None:
+                return None
+            # Если session_id передан и не совпадает — НЕ удаляем (новая сессия уже заменила старую)
+            if session_id and current.session_id != session_id:
+                logger.debug(
+                    "disconnect: пропущено — сессия уже заменена",
+                    device_id=device_id,
+                    old_session=session_id,
+                    current_session=current.session_id,
+                )
+                return None
+            info = self._connections.pop(device_id)
+            self._org_index.get(info.org_id, set()).discard(device_id)
+        logger.info("Agent disconnected", device_id=device_id, session=info.session_id)
         return info
 
     async def send_to_device(self, device_id: str, message: dict) -> bool:
         """Отправить JSON сообщение конкретному агенту. Returns True если отправлено."""
         info = self._connections.get(device_id)
         if not info:
+            msg_type = message.get("type", "unknown")
+            logger.warning("send_to_device: устройство не подключено", device_id=device_id, msg_type=msg_type)
             return False
         try:
             await info.ws.send_json(message)
+            msg_type = message.get("type", "unknown")
+            # Логируем доставку stream-команд для диагностики
+            if msg_type in ("start_stream", "stop_stream", "viewer_connected", "request_keyframe"):
+                logger.info("send_to_device: доставлено", device_id=device_id, msg_type=msg_type)
             return True
         except Exception as e:
-            logger.warning("Send failed", device_id=device_id, error=str(e))
-            await self.disconnect(device_id)
+            logger.warning(
+                "send_to_device failed",
+                device_id=device_id,
+                msg_type=message.get("type", "unknown"),
+                error=str(e),
+            )
+            await self.disconnect(device_id, session_id=info.session_id)
             return False
 
     async def send_bytes_to_device(self, device_id: str, data: bytes) -> bool:
@@ -113,7 +149,7 @@ class ConnectionManager:
             return True
         except Exception as e:
             logger.warning("Send bytes failed", device_id=device_id, error=str(e))
-            await self.disconnect(device_id)
+            await self.disconnect(device_id, session_id=info.session_id)
             return False
 
     async def broadcast_to_org(self, org_id: str, message: dict) -> int:

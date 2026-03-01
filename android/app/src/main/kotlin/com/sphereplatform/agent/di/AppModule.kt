@@ -48,7 +48,13 @@ object AppModule {
         val builder = OkHttpClient.Builder()
             .readTimeout(0, TimeUnit.MILLISECONDS)   // WS: бесконечный timeout
             .writeTimeout(30, TimeUnit.SECONDS)
-            .pingInterval(0, TimeUnit.MILLISECONDS)  // Свой heartbeat поверх WS (TZ-03)
+            // FIX-PING: WebSocket-level RFC 6455 ping каждые 15 секунд.
+            // Cloudflare/nginx прозрачно пропускают WS ping/pong фреймы.
+            // Это держит TCP-соединение живым через все прокси и NAT,
+            // а также быстро детектирует мёртвые соединения (OkHttp закроет WS
+            // если pong не придёт в течение readTimeout, который у нас infinite →
+            // значит при потере связи WS умрёт по TCP keepalive/OS timeout).
+            .pingInterval(15, TimeUnit.SECONDS)
             .addInterceptor { chain ->
                 val token = lazyAuthStore.get().getToken()
                 val request = if (token != null) {

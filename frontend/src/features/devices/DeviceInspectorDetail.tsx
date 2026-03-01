@@ -304,12 +304,12 @@ export function DeviceInspectorDetail({ device }: DeviceInspectorDetailProps) {
                         {/* Модель */}
                         <div className="flex flex-col">
                             <span className="text-[10px] text-muted-foreground uppercase flex items-center gap-1.5"><Smartphone className="w-3 h-3" /> Model</span>
-                            <span className="text-xs font-mono font-bold mt-1 text-foreground truncate">{device.model}</span>
+                            <span className="text-xs font-mono font-bold mt-1 text-foreground truncate">{device.device_model || device.model}</span>
                         </div>
 
                         {/* Версия Android */}
                         <div className="flex flex-col">
-                            <span className="text-[10px] text-muted-foreground uppercase flex items-center gap-1.5"><Cpu className="w-3 h-3" /> Android</span>
+                            <span className="text-[10px] text-muted-foreground uppercase flex items-center gap-1.5"><Smartphone className="w-3 h-3" /> Android</span>
                             <span className="text-xs font-mono font-bold mt-1 text-foreground">{device.android_version}</span>
                         </div>
 
@@ -321,11 +321,27 @@ export function DeviceInspectorDetail({ device }: DeviceInspectorDetailProps) {
                             </span>
                         </div>
 
+                        {/* CPU */}
+                        <div className="flex flex-col">
+                            <span className="text-[10px] text-muted-foreground uppercase flex items-center gap-1.5"><Cpu className="w-3 h-3" /> CPU</span>
+                            <span className={`text-xs font-mono font-bold mt-1 ${device.cpu_usage !== null && device.cpu_usage !== undefined && device.cpu_usage > 80 ? 'text-warning' : 'text-foreground'}`}>
+                                {device.cpu_usage !== null && device.cpu_usage !== undefined ? `${device.cpu_usage.toFixed(1)}%` : 'N/A'}
+                            </span>
+                        </div>
+
+                        {/* RAM */}
+                        <div className="flex flex-col">
+                            <span className="text-[10px] text-muted-foreground uppercase flex items-center gap-1.5"><Cpu className="w-3 h-3" /> RAM</span>
+                            <span className="text-xs font-mono font-bold mt-1 text-foreground">
+                                {device.ram_usage_mb !== null && device.ram_usage_mb !== undefined ? `${device.ram_usage_mb} MB` : 'N/A'}
+                            </span>
+                        </div>
+
                         {/* Последняя активность */}
                         <div className="flex flex-col">
                             <span className="text-[10px] text-muted-foreground uppercase flex items-center gap-1.5"><Clock className="w-3 h-3" /> Last Seen</span>
                             <span className="text-[11px] font-mono font-bold mt-1 text-foreground">
-                                {device.last_seen ? new Date(device.last_seen).toLocaleString() : 'NEVER'}
+                                {device.last_heartbeat ? new Date(device.last_heartbeat).toLocaleString() : device.last_seen ? new Date(device.last_seen).toLocaleString() : 'NEVER'}
                             </span>
                         </div>
                     </div>
@@ -348,11 +364,22 @@ export function DeviceInspectorDetail({ device }: DeviceInspectorDetailProps) {
 
                         <div className="flex items-center justify-between bg-muted p-2 rounded-sm border border-border">
                             <div className="flex items-center gap-2">
-                                <Shield className={`w-4 h-4 ${device.vpn_assigned ? 'text-primary' : 'text-muted-foreground'}`} />
+                                <Shield className={`w-4 h-4 ${device.vpn_active || device.vpn_assigned ? 'text-primary' : 'text-muted-foreground'}`} />
                                 <span className="text-xs font-mono text-muted-foreground uppercase">VPN Tunneling</span>
                             </div>
-                            <Badge variant="outline" className={`text-[9px] ${device.vpn_assigned ? 'border-primary text-primary bg-primary/10' : 'border-[#444] text-muted-foreground'}`}>
-                                {device.vpn_assigned ? "ACTIVE" : "UNASSIGNED"}
+                            <Badge variant="outline" className={`text-[9px] ${device.vpn_active || device.vpn_assigned ? 'border-primary text-primary bg-primary/10' : 'border-[#444] text-muted-foreground'}`}>
+                                {device.vpn_active ? "ACTIVE" : device.vpn_assigned ? "ASSIGNED" : "UNASSIGNED"}
+                            </Badge>
+                        </div>
+
+                        {/* Экран */}
+                        <div className="flex items-center justify-between bg-muted p-2 rounded-sm border border-border">
+                            <div className="flex items-center gap-2">
+                                <Smartphone className={`w-4 h-4 ${device.screen_on ? 'text-success' : 'text-muted-foreground'}`} />
+                                <span className="text-xs font-mono text-muted-foreground uppercase">Screen</span>
+                            </div>
+                            <Badge variant="outline" className={`text-[9px] ${device.screen_on ? 'border-success text-success bg-success/10' : 'border-[#444] text-muted-foreground'}`}>
+                                {device.screen_on === null || device.screen_on === undefined ? 'N/A' : device.screen_on ? "ON" : "OFF"}
                             </Badge>
                         </div>
                     </div>

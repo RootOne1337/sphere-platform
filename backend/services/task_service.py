@@ -12,8 +12,10 @@
 from __future__ import annotations
 
 import asyncio
+import hashlib
+import json
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 import structlog
@@ -24,6 +26,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.models.device import Device
 from backend.models.script import Script, ScriptVersion
 from backend.models.task import Task, TaskStatus
+from backend.models.task_batch import TaskBatch, TaskBatchStatus
 from backend.services.task_queue import TaskQueue
 
 logger = structlog.get_logger()
@@ -103,9 +106,13 @@ class TaskService:
 
         await self._get_device(device_id, org_id)
 
-        # Идемпотентность: защита от дублирующих вызовов
+        # Идемпотентность: защита от дублирующих вызовов.
+        # Задача считается зависшей (stale) в двух случаях:
+        #   1. Устройство ОФФЛАЙН — агент отключился, задача никогда не завершится
+        #   2. Абсолютный предохранитель: задача висит >24 часов (баг на агенте)
+        # Во всех остальных случаях — 409, задача реально работает.
         duplicate = await self.db.scalar(
-            select(Task.id).where(
+            select(Task).where(
                 Task.device_id == device_id,
                 Task.org_id == org_id,
                 Task.script_version_id == script.current_version_id,
@@ -113,10 +120,45 @@ class TaskService:
             ).limit(1)
         )
         if duplicate:
-            raise HTTPException(
-                status_code=409,
-                detail=f"Task already queued/running for device (task_id={duplicate})",
-            )
+            is_stale = False
+            stale_reason = ""
+
+            # Проверка 1: устройство оффлайн — задача точно зависла
+            if self.status_cache:
+                device_live = await self.status_cache.get_status(str(device_id))
+                if not device_live or device_live.status not in ("online", "busy"):
+                    is_stale = True
+                    stale_reason = (
+                        f"Устройство оффлайн (status="
+                        f"{device_live.status if device_live else 'нет в кэше'}), "
+                        f"задача не может завершиться"
+                    )
+
+            # Проверка 2: абсолютный таймаут 24 часа — защита от забытых задач
+            if not is_stale:
+                task_age = duplicate.updated_at or duplicate.created_at
+                absolute_cutoff = datetime.now(timezone.utc) - timedelta(hours=24)
+                if task_age < absolute_cutoff:
+                    is_stale = True
+                    stale_reason = f"Задача висит >24ч (с {task_age.isoformat()})"
+
+            if is_stale:
+                logger.warning(
+                    "task.stale_auto_timeout",
+                    stale_task_id=str(duplicate.id),
+                    device_id=str(device_id),
+                    old_status=duplicate.status,
+                    reason=stale_reason,
+                )
+                duplicate.status = TaskStatus.TIMEOUT
+                duplicate.finished_at = datetime.now(timezone.utc)
+                duplicate.error_message = f"Автоматический таймаут: {stale_reason}"
+                await self.db.flush()
+            else:
+                raise HTTPException(
+                    status_code=409,
+                    detail=f"Task already queued/running for device (task_id={duplicate.id})",
+                )
 
         input_params: dict = {"priority": priority}
         if webhook_url:
@@ -193,6 +235,14 @@ class TaskService:
                     task.error_message = "Script version not found"
                     continue
 
+                # Загрузить скрипт для имени (ScriptCacheManager на APK использует dag_name)
+                script = await self.db.get(Script, task.script_id)
+                dag_name = script.name if script else f"script_{task.script_id}"
+
+                # Content-addressable hash для ScriptCacheManager на APK
+                dag_json_str = json.dumps(version.dag, sort_keys=True, ensure_ascii=False)
+                dag_hash = hashlib.sha256(dag_json_str.encode("utf-8")).hexdigest()
+
                 delivered = False
                 if self.publisher:
                     delivered = await self.publisher.send_command_live(
@@ -205,6 +255,8 @@ class TaskService:
                             "payload": {
                                 "task_id": task_id_str,
                                 "dag": version.dag,
+                                "dag_name": dag_name,
+                                "dag_hash": dag_hash,
                                 "timeout_ms": task.timeout_seconds * 1000,
                             },
                         },
@@ -285,6 +337,46 @@ class TaskService:
             # HIGH-5: глобальный set — GC не удалит задачу до завершения
             _pending_webhook_tasks.add(_t)
             _t.add_done_callback(_pending_webhook_tasks.discard)
+
+        # ── TaskBatch авто-агрегация: обновить счётчики succeeded/failed/status ──
+        if task.batch_id:
+            await self._aggregate_batch(task.batch_id, success)
+
+    # ── TaskBatch авто-агрегация ────────────────────────────────────────────
+
+    async def _aggregate_batch(self, batch_id: uuid.UUID, success: bool) -> None:
+        """
+        Инкрементально обновить счётчики батча.
+        Когда все задачи завершены — вычислить финальный статус.
+        """
+        batch = await self.db.get(TaskBatch, batch_id)
+        if not batch:
+            return
+
+        if success:
+            batch.succeeded = (batch.succeeded or 0) + 1
+        else:
+            batch.failed = (batch.failed or 0) + 1
+
+        completed_count = (batch.succeeded or 0) + (batch.failed or 0)
+
+        if completed_count >= batch.total:
+            # Все задачи завершены — вычисляем финальный статус
+            if batch.failed == 0:
+                batch.status = TaskBatchStatus.COMPLETED
+            elif batch.succeeded == 0:
+                batch.status = TaskBatchStatus.FAILED
+            else:
+                batch.status = TaskBatchStatus.PARTIAL
+            logger.info(
+                "batch.auto_aggregated",
+                batch_id=str(batch_id),
+                status=batch.status,
+                succeeded=batch.succeeded,
+                failed=batch.failed,
+            )
+        elif batch.status == TaskBatchStatus.PENDING:
+            batch.status = TaskBatchStatus.RUNNING
 
     # ── Cancel ───────────────────────────────────────────────────────────────
 

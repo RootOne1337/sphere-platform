@@ -12,6 +12,120 @@ _Нет нереализованных изменений._
 
 ---
 
+## [4.5.0] — 2026-03-02
+
+### Краткое описание
+WebSocket стабильность и H264 стриминг hardening: неблокирующий disconnect,
+SPS/PPS/IDR кэширование для мгновенного воспроизведения, persistent WebCodecs декодер,
+Serveo SSH tunnel (замена Cloudflare Quick Tunnel), интеллектуальное определение
+зависших задач (stale task detection по статусу устройства), Android agent dynamic
+server URL через ConfigWatchdog. 10 атомарных коммитов.
+
+---
+
+### Добавлено
+
+#### Backend — SPS/PPS/IDR кэширование в StreamBridge
+- `stream_bridge.py`: кэширует последние SPS/PPS NAL-юниты и IDR-фрейм
+- При подключении нового viewer мгновенно отправляет кэшированные параметры —
+  инициализация декодера без ожидания следующего keyframe (до 10с ранее)
+- Логирование первого фрейма и каждого 100-го для мониторинга потока
+
+#### Backend — Viewer keepalive ping 10с
+- `stream/router.py`: WebSocket ping каждые 10с для viewer'ов
+- Предотвращает idle timeout на reverse-proxy (Serveo, Cloudflare, nginx)
+
+#### Backend — Интеллектуальная stale-task защита
+- `task_service.py`: двухуровневое определение зависших задач вместо жёсткого 409:
+  1. **Устройство оффлайн** — агент отключился → задача автоматически `TIMEOUT`
+  2. **Абсолютный предохранитель 24ч** — защита от забытых задач при баге агента
+- Легитимные длительные скрипты (часы) НЕ прерываются при онлайн-устройстве
+- Загрузка полного объекта Task для записи нового статуса и причины таймаута
+
+#### Infrastructure — Serveo SSH Tunnel (замена Cloudflare Quick Tunnel)
+- `infrastructure/tunnel/Dockerfile`: Alpine 3.19 + openssh-client (без autossh)
+- `infrastructure/tunnel/entrypoint.sh`: ssh -N reconnect loop,
+  ServerAliveInterval=30, ExitOnForwardFailure=yes, 5с между реконнектами
+- `docker-compose.tunnel.yml`: конфигурация tunnel-сервиса с env-переменными
+- Домен: `sphere.serveousercontent.com` (зарегистрирован через console.serveo.net)
+- **Причина замены:** Cloudflare дропал idle WebSocket через 5-50с,
+  ломая H264 стриминг и команды агента
+
+#### Frontend — Persistent WebCodecs H264 декодер
+- `DeviceStream.tsx`: персистентный декодер не пересоздаётся при reconnect WS
+- `H264Decoder.ts`: полная реализация WebCodecs декодера с автодетекцией SPS/PPS,
+  canvas 2D fallback, статистикой fps/frames, graceful error recovery
+
+#### Android — AutoEnrollmentWorker + деплой-скрипты для ферм
+- `AutoEnrollmentWorker.kt`: фоновая авторегистрация через WorkManager
+- `android/scripts/`: deploy-farm.sh, deploy-ldplayer.bat, deploy-waydroid.sh,
+  install-init-script.sh, install-system-app.sh
+
+### Улучшено
+
+#### Backend — Неблокирующий WebSocket disconnect
+- `connection_manager.py`: `ws.close()` через `asyncio.wait_for` с таймаутом 3с
+- `send_to_device`/`send_bytes_to_device` не вызывают `disconnect()` при ошибке —
+  логируют и возвращают `False`, предотвращая каскадный разрыв соединения
+- `heartbeat.py`: отказ ping не убивает heartbeat loop — ожидает следующий цикл
+
+#### Backend — Android WS router graceful handling
+- Receive loop обрабатывает `WebSocketDisconnect` и `asyncio.CancelledError` штатно
+- Keepalive noop-фрейм каждые 10с для reverse-proxy idle timeout
+
+#### Frontend — Aggressive reconnect 500ms
+- `DeviceStream.tsx`: минимальная задержка при разрыве WS для быстрого восстановления
+
+#### Android — Динамический server URL
+- `AppModule.kt`: DI использует `ConfigWatchdog` вместо `BuildConfig.SERVER_URL`
+- `ConfigWatchdog.kt`: периодическая проверка config из GitHub Raw
+- `SphereWebSocketClient.kt`: graceful reconnect при смене сервера
+
+### Исправлено
+
+| # | Компонент | Проблема | Решение |
+|---|-----------|----------|---------|
+| 1 | Backend | Viewer disconnect убивал WS-соединение агента (race condition) | Неблокирующий send + отдельный disconnect flow |
+| 2 | Backend | Heartbeat ping failure убивал heartbeat loop навсегда | Ловим исключение, ждём следующий цикл |
+| 3 | Backend | H264 стрим: чёрный экран при подключении viewer | SPS/PPS/IDR кэширование в StreamBridge |
+| 4 | Backend | POST /tasks 409 Conflict при зависшей задаче | Stale detection: оффлайн-устройство → auto-timeout |
+| 5 | Infra | Cloudflare дропал idle WS через 5-50с | Замена на Serveo SSH tunnel |
+| 6 | Frontend | Декодер пересоздавался при каждом reconnect (мерцание) | Persistent WebCodecs инстанс |
+| 7 | Android | Смена tunnel-провайдера требовала пересборки APK | Dynamic server URL через ConfigWatchdog |
+
+---
+
+### Deployment Notes
+
+**Tunnel переключение:**
+```bash
+# Остановить Cloudflare (если используется)
+docker compose -f docker-compose.tunnel.yml down
+
+# Положить SSH-ключ
+mkdir -p infrastructure/tunnel/keys
+ssh-keygen -t ed25519 -f infrastructure/tunnel/keys/id_ed25519 -N ""
+# Зарегистрировать ключ: https://console.serveo.net
+
+# Запустить Serveo tunnel
+docker compose -f docker-compose.tunnel.yml up -d
+```
+
+**Переменные окружения (.env):**
+```bash
+SERVER_PUBLIC_URL=https://sphere.serveousercontent.com
+CORS_EXTRA_ORIGINS=https://sphere.serveousercontent.com
+```
+
+**Agent config (sphere-agent-config repo):**
+```json
+{ "server_url": "https://sphere.serveousercontent.com" }
+```
+
+**APK:** Не требуется пересборка — ConfigWatchdog подхватит новый URL автоматически.
+
+---
+
 ## [4.4.0] — 2026-03-01
 
 ### Краткое описание

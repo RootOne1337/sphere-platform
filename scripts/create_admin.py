@@ -1,6 +1,8 @@
 """Create or update admin user with given credentials."""
 import asyncio
+import getpass
 import os
+import sys
 
 import bcrypt
 from sqlalchemy import text
@@ -11,8 +13,21 @@ DATABASE_URL = os.getenv(
     os.getenv("DATABASE_URL", "postgresql+asyncpg://sphere:spherepass@postgres:5432/sphereplatform"),
 )
 
-EMAIL = "NIFILIM1337@gmail.com"
-PASSWORD = "dimas123321d"
+# Читаем из env-переменных (для CI / Docker) или запрашиваем интерактивно
+EMAIL = os.getenv("ADMIN_EMAIL", "")
+PASSWORD = os.getenv("ADMIN_PASSWORD", "")
+
+if not EMAIL:
+    EMAIL = input("Admin email: ").strip()
+    if not EMAIL:
+        print("Error: email is required", file=sys.stderr)
+        sys.exit(1)
+
+if not PASSWORD:
+    PASSWORD = getpass.getpass("Admin password: ").strip()
+    if len(PASSWORD) < 8:
+        print("Error: password must be at least 8 characters", file=sys.stderr)
+        sys.exit(1)
 
 
 async def main() -> None:
