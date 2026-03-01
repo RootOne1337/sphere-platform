@@ -6,7 +6,16 @@
 # ВАЖНО: тесты используют SQLite in-memory (aiosqlite) чтобы не требовать
 # запущенного PostgreSQL в CI. RLS-политики НЕ тестируются здесь —
 # для них есть отдельный job `rls-check` в ci-backend.yml.
+
 from __future__ import annotations
+
+# ---------------------------------------------------------------------------
+# КРИТИЧНО: Принудительно отключаем DEV_SKIP_AUTH ДО импорта Settings.
+# Без этого pydantic_settings подхватит DEV_SKIP_AUTH=true из .env файла,
+# и 19 тестов на авторизацию / RBAC / org-isolation будут ложно проходить.
+# ---------------------------------------------------------------------------
+import os as _os
+_os.environ["DEV_SKIP_AUTH"] = "false"
 
 import asyncio
 

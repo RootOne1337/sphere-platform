@@ -2,6 +2,7 @@
 # TZ-03 SPLIT-1: Tests for ConnectionManager in-memory registry.
 from __future__ import annotations
 
+import asyncio
 from unittest.mock import AsyncMock
 
 import pytest_asyncio
@@ -48,6 +49,10 @@ class TestConnectionManager:
 
         await manager.connect(ws1, "dev-1", "android", "org-1")
         await manager.connect(ws2, "dev-1", "android", "org-1")
+
+        # FIX: eviction выполняется через asyncio.create_task (fire-and-forget),
+        # нужно уступить event loop чтобы задача успела выполниться.
+        await asyncio.sleep(0)
 
         # Старое соединение должно было получить close с code 4001
         ws1.close.assert_called_once_with(code=4001, reason="replaced_by_new_connection")

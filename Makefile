@@ -5,13 +5,13 @@
 help:          ## Показать помощь
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-24s\033[0m %s\n", $$1, $$2}'
 
-setup:         ## Первоначальная настройка: создать .env, pre-commit
-	@cp -n .env.example .env.local || true
+setup:         ## Первоначальная настройка: сгенерировать секреты, установить pre-commit
+	@test -f .env.local && echo "⚠️  .env.local уже существует — пропускаем генерацию секретов" || python scripts/generate_secrets.py --output .env.local
 	@pip install pre-commit
 	@pre-commit install --install-hooks
 	# Windows: без longpaths Kotlin-пути android/app/src/main/kotlin/... > 260 символов не создадутся
 	git config core.longpaths true
-	@echo "✅ Настройка завершена. Заполни .env.local и запусти 'make branches' затем 'make worktree-setup'"
+	@echo "✅ Настройка завершена. Запусти 'make dev' для старта инфраструктуры"
 
 branches:      ## Создать все stage-ветки в удалённом репозитории (выполнить один раз)
 	@echo "Создаём все stage-ветки от develop..."
