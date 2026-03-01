@@ -251,6 +251,10 @@ async def handle_device_event(device_id: str, msg: dict) -> None:
         logger.debug("Fleet event publish skipped", device_id=device_id, error=str(e))
 
 
+# Счётчик бинарных фреймов для периодического логирования (не спамить на каждый фрейм)
+_frame_counters: dict[str, int] = {}
+
+
 async def handle_agent_binary(
     device_id: str,
     data: bytes,
@@ -260,10 +264,33 @@ async def handle_agent_binary(
     try:
         from backend.websocket.stream_bridge import get_stream_bridge
         bridge = get_stream_bridge()
-        if bridge:
-            await bridge.handle_agent_frame(device_id, data)
+        if not bridge:
+            logger.warning("handle_agent_binary: stream_bridge не инициализирован", device_id=device_id)
+            return
+
+        count = _frame_counters.get(device_id, 0) + 1
+        _frame_counters[device_id] = count
+
+        # Логируем первый фрейм и далее каждый 100-й
+        if count == 1:
+            logger.info(
+                "Binary frame: ПЕРВЫЙ фрейм от агента",
+                device_id=device_id,
+                size_bytes=len(data),
+                has_viewer=bridge.is_streaming(device_id),
+            )
+        elif count % 100 == 0:
+            logger.debug(
+                "Binary frames stats",
+                device_id=device_id,
+                total_frames=count,
+                size_bytes=len(data),
+                has_viewer=bridge.is_streaming(device_id),
+            )
+
+        await bridge.handle_agent_frame(device_id, data)
     except Exception as e:
-        logger.debug("Stream bridge unavailable", device_id=device_id, error=str(e))
+        logger.warning("handle_agent_binary error", device_id=device_id, error=str(e))
 
 
 @router.websocket("/ws/android/{device_id}")

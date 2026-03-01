@@ -99,12 +99,23 @@ class ConnectionManager:
         """
         info = self._connections.get(device_id)
         if not info:
+            msg_type = message.get("type", "unknown")
+            logger.warning("send_to_device: устройство не подключено", device_id=device_id, msg_type=msg_type)
             return False
         try:
             await info.ws.send_json(message)
+            msg_type = message.get("type", "unknown")
+            # Логируем доставку stream-команд для диагностики
+            if msg_type in ("start_stream", "stop_stream", "viewer_connected", "request_keyframe"):
+                logger.info("send_to_device: доставлено", device_id=device_id, msg_type=msg_type)
             return True
         except Exception as e:
-            logger.warning("Send failed (non-fatal)", device_id=device_id, error=str(e))
+            logger.warning(
+                "send_to_device: ошибка отправки (non-fatal)",
+                device_id=device_id,
+                msg_type=message.get("type", "unknown"),
+                error=str(e),
+            )
             return False
 
     async def send_bytes_to_device(self, device_id: str, data: bytes) -> bool:

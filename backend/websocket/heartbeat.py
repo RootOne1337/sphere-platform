@@ -77,13 +77,24 @@ class HeartbeatManager:
                         pass  # WS уже закрыт — игнорируем double-close
                     return
 
-                # Отправить ping
+                # Отправить ping — через try/except чтобы сбой ping
+                # НЕ ломал receive loop (WS остаётся alive для receive).
                 ping_ts = time.time()
-                await self.ws.send_json({
-                    "type": "ping",
-                    "ts": ping_ts,
-                })
-            except (WebSocketDisconnect, asyncio.CancelledError):
+                try:
+                    await self.ws.send_json({
+                        "type": "ping",
+                        "ts": ping_ts,
+                    })
+                except Exception as ping_err:
+                    # Ping не доставлен — WS может быть в плохом состоянии.
+                    # НЕ выходим сразу — ждём следующий цикл, возможно connection восстановится.
+                    # Если pong не придёт — heartbeat timeout в следующем цикле закроет WS корректно.
+                    logger.warning(
+                        "Heartbeat ping send failed",
+                        device_id=self.device_id,
+                        error=str(ping_err),
+                    )
+            except asyncio.CancelledError:
                 return
             except Exception as e:
                 logger.error(

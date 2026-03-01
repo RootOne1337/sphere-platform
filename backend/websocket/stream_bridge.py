@@ -92,8 +92,10 @@ class VideoStreamBridge:
         queue = self._queues.get(device_id)
         viewer_ws = self._viewer_sockets.get(device_id)
         if not queue or not viewer_ws:
+            logger.warning("_viewer_send_loop: queue или viewer_ws не найдены", device_id=device_id)
             return
 
+        frames_sent = 0
         try:
             while True:
                 frame = await queue.get()
@@ -103,10 +105,35 @@ class VideoStreamBridge:
                     continue
                 try:
                     await viewer_ws.send_bytes(frame.data)
-                except Exception:
+                    frames_sent += 1
+                    if frames_sent == 1:
+                        logger.info(
+                            "viewer_send_loop: ПЕРВЫЙ фрейм отправлен viewer'у",
+                            device_id=device_id,
+                            size_bytes=len(frame.data),
+                        )
+                    elif frames_sent % 100 == 0:
+                        logger.debug(
+                            "viewer_send_loop: stats",
+                            device_id=device_id,
+                            frames_sent=frames_sent,
+                            queue_size=queue.size,
+                        )
+                except Exception as e:
+                    logger.warning(
+                        "viewer_send_loop: ошибка отправки фрейма viewer'у",
+                        device_id=device_id,
+                        frames_sent=frames_sent,
+                        error=str(e),
+                    )
                     await self.unregister_viewer(device_id)
                     return
         except asyncio.CancelledError:
+            logger.debug(
+                "viewer_send_loop: cancelled",
+                device_id=device_id,
+                frames_sent=frames_sent,
+            )
             pass  # Нормальное завершение при unregister
 
     def is_streaming(self, device_id: str) -> bool:
