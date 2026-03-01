@@ -21,7 +21,7 @@
 
 **Управляй тысячами Android-устройств. В реальном времени. Без компромиссов.**
 
-[Документация](docs/) · [API Reference](docs/api-reference.md) · [Deployment](docs/deployment.md) · [Changelog](CHANGELOG.md) · [Contributing](CONTRIBUTING.md)
+[Документация](docs/) · [Web UI Guide](docs/web-ui-guide.md) · [API Reference](docs/api-reference.md) · [Deployment](docs/deployment.md) · [Changelog](CHANGELOG.md) · [Contributing](CONTRIBUTING.md)
 
 ---
 
@@ -526,7 +526,8 @@ graph LR
 | ⚙️ [Configuration](docs/configuration.md) | Справочник переменных окружения |
 | 🔒 [Security](docs/security.md) | Auth, RBAC, шифрование, модель угроз |
 | 🛠️ [Developer Guide](docs/development.md) | Локальная настройка, тестирование, стандарты |
-| 📱 [Android Agent](docs/android-agent.md) | Сборка APK, развёртывание, обновления |
+| �️ [Web UI Guide](docs/web-ui-guide.md) | Полный гайд по веб-интерфейсу — все страницы, кнопки, модальные окна |
+| �📱 [Android Agent](docs/android-agent.md) | Сборка APK, развёртывание, обновления |
 | 🖥️ [PC Agent](docs/pc-agent.md) | Установка, ADB-мост, LDPlayer |
 | ⚙️ [Agent Config](agent-config/README.md) | Zero-touch provisioning |
 | 📋 [Technical Specs](specs/) | 14 модулей технических спецификаций (70+ SPLIT-документов) |
