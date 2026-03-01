@@ -267,7 +267,19 @@ graph TD
 | CPU | 2 cores | 4+ cores |
 | Порты | 80, 443 | + 5432, 6379 (dev) |
 
-### 1 — Клонирование и настройка
+### Развёртывание одной командой
+
+```bash
+git clone https://github.com/RootOne1337/sphere-platform.git
+cd sphere-platform
+bash scripts/full-deploy.sh
+```
+
+> **Windows:** `powershell -ExecutionPolicy Bypass -File scripts\full-deploy.ps1`
+>
+> Подробнее: **[Full Deploy Guide](FULL-DEPLOYMENT-GUIDE.md)** (15 секций, от нуля до продакшна)
+
+### 1 — Клонирование и настройка (ручной режим)
 
 ```bash
 git clone https://github.com/RootOne1337/sphere-platform.git
@@ -373,6 +385,13 @@ sphere-platform/
 ├── alembic/                    # 🗃️ Миграции базы данных
 ├── tests/                      # 🧪 Pytest-тесты (80 файлов)
 ├── scripts/                    # 🛠️ Утилиты и деплой-скрипты
+│   ├── full-deploy.sh          #    Полное развёртывание Linux/macOS (8 шагов)
+│   ├── full-deploy.ps1         #    Полное развёртывание Windows PowerShell
+│   ├── health-check.sh         #    Проверка здоровья всех сервисов
+│   ├── backup-database.sh      #    Бэкап PostgreSQL + Redis с ротацией
+│   ├── generate_secrets.py     #    Генерация криптографических секретов
+│   └── create_admin.py         #    Создание суперадминистратора
+│
 ├── docs/                       # 📖 Документация проекта
 └── .github/                    # 🔄 CI/CD workflows
 ```
