@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
@@ -1671,10 +1671,9 @@ function EditScheduleDialog({ schedule, open, onOpenChange, pipelines }: {
 
     // Заполняем форму данными расписания при открытии
     const scheduleId = schedule?.id;
-    useState(() => { /* noop — useEffect ниже обрабатывает синхронизацию */ });
 
     // Синхронизация состояния формы при смене расписания
-    useMemo(() => {
+    useEffect(() => {
         if (!schedule) return;
         setName(schedule.name);
         setDescription(schedule.description || '');
@@ -1693,7 +1692,6 @@ function EditScheduleDialog({ schedule, open, onOpenChange, pipelines }: {
             setTriggerType('one_shot');
             setOneShotAt(schedule.one_shot_at || '');
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [scheduleId]);
 
     const updateMut = useMutation({
