@@ -47,6 +47,7 @@ import {
     Loader2,
 } from 'lucide-react';
 import { DeviceSelector } from '@/components/sphere/DeviceSelector';
+import { useScripts, Script } from '@/lib/hooks/useScripts';
 
 // ============================================================================
 //  ТИПЫ
@@ -894,6 +895,7 @@ interface StepDraft {
     retries: number;
     on_success: string;
     on_failure: string;
+    script_id: string;
 }
 
 function emptyStep(index: number): StepDraft {
@@ -906,11 +908,13 @@ function emptyStep(index: number): StepDraft {
         retries: 0,
         on_success: '',
         on_failure: '',
+        script_id: '',
     };
 }
 
 function CreatePipelineButton() {
     const queryClient = useQueryClient();
+    const { data: scripts = [] } = useScripts();
     const [open, setOpen] = useState(false);
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
@@ -937,16 +941,23 @@ function CreatePipelineButton() {
             const payload = {
                 name: name.trim(),
                 description: description.trim() || null,
-                steps: steps.map(s => ({
-                    id: s.id.trim(),
-                    name: s.name.trim(),
-                    type: s.type,
-                    params: JSON.parse(s.params || '{}'),
-                    on_success: s.on_success.trim() || null,
-                    on_failure: s.on_failure.trim() || null,
-                    timeout_ms: s.timeout_ms,
-                    retries: s.retries,
-                })),
+                steps: steps.map(s => {
+                    let parsedParams = JSON.parse(s.params || '{}');
+                    // Для execute_script автоматически подставляем script_id
+                    if (s.type === 'execute_script' && s.script_id) {
+                        parsedParams = { ...parsedParams, script_id: s.script_id };
+                    }
+                    return {
+                        id: s.id.trim(),
+                        name: s.name.trim(),
+                        type: s.type,
+                        params: parsedParams,
+                        on_success: s.on_success.trim() || null,
+                        on_failure: s.on_failure.trim() || null,
+                        timeout_ms: s.timeout_ms,
+                        retries: s.retries,
+                    };
+                }),
                 input_schema: {},
                 global_timeout_ms: globalTimeout,
                 max_retries: maxRetries,
@@ -1206,6 +1217,31 @@ function CreatePipelineButton() {
                                             />
                                         </div>
                                     </div>
+                                    {/* Выбор скрипта для execute_script */}
+                                    {step.type === 'execute_script' && (
+                                        <div className="space-y-1 mb-2">
+                                            <Label className="text-[9px] uppercase font-bold tracking-widest text-muted-foreground">Скрипт *</Label>
+                                            <select
+                                                value={step.script_id}
+                                                onChange={e => {
+                                                    const sid = e.target.value;
+                                                    const scr = scripts.find(s => s.id === sid);
+                                                    updateStep(idx, {
+                                                        script_id: sid,
+                                                        name: step.name || scr?.name || '',
+                                                    });
+                                                }}
+                                                className="w-full h-7 rounded-sm border border-border bg-black/30 px-2 text-[11px] font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
+                                            >
+                                                <option value="">Выбери скрипт...</option>
+                                                {scripts.filter(s => !s.is_archived).map(s => (
+                                                    <option key={s.id} value={s.id}>
+                                                        {s.name} ({s.node_count} нод)
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    )}
                                     <div className="space-y-1">
                                         <Label className="text-[9px] uppercase font-bold tracking-widest text-muted-foreground">Параметры (JSON)</Label>
                                         <textarea
@@ -1380,11 +1416,211 @@ function RunPipelineDialog({ pipeline, open, onOpenChange }: { pipeline: Pipelin
 
 
 // ============================================================================
+//  CRON ВИЗУАЛЬНЫЙ БИЛДЕР
+// ============================================================================
+
+const CRON_PRESETS = [
+    { label: 'Каждые 5 мин', cron: '*/5 * * * *' },
+    { label: 'Каждые 15 мин', cron: '*/15 * * * *' },
+    { label: 'Каждые 30 мин', cron: '*/30 * * * *' },
+    { label: 'Каждый час', cron: '0 * * * *' },
+    { label: 'Каждые 2 часа', cron: '0 */2 * * *' },
+    { label: 'Каждые 6 часов', cron: '0 */6 * * *' },
+    { label: 'Ежедневно 00:00', cron: '0 0 * * *' },
+    { label: 'Ежедневно 09:00', cron: '0 9 * * *' },
+    { label: 'Пн-Пт 09:00', cron: '0 9 * * 1-5' },
+] as const;
+
+function CronBuilder({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+    const [mode, setMode] = useState<'preset' | 'custom' | 'manual'>('preset');
+    const [selectedMinutes, setSelectedMinutes] = useState<number[]>([]);
+    const [selectedHours, setSelectedHours] = useState<number[]>([]);
+    const [dayOfWeek, setDayOfWeek] = useState('*');
+    const [dayOfMonth, setDayOfMonth] = useState('*');
+
+    const updateCustomCron = useCallback((mins: number[], hrs: number[], dow: string, dom: string) => {
+        const minutePart = mins.length === 0 ? '*' : mins.sort((a, b) => a - b).join(',');
+        const hourPart = hrs.length === 0 ? '*' : hrs.sort((a, b) => a - b).join(',');
+        onChange(`${minutePart} ${hourPart} ${dom} * ${dow}`);
+    }, [onChange]);
+
+    const toggleMinute = (m: number) => {
+        const next = selectedMinutes.includes(m)
+            ? selectedMinutes.filter(x => x !== m)
+            : [...selectedMinutes, m];
+        setSelectedMinutes(next);
+        updateCustomCron(next, selectedHours, dayOfWeek, dayOfMonth);
+    };
+
+    const toggleHour = (h: number) => {
+        const next = selectedHours.includes(h)
+            ? selectedHours.filter(x => x !== h)
+            : [...selectedHours, h];
+        setSelectedHours(next);
+        updateCustomCron(selectedMinutes, next, dayOfWeek, dayOfMonth);
+    };
+
+    const MINUTE_OPTIONS = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55];
+    const HOUR_OPTIONS = Array.from({ length: 24 }, (_, i) => i);
+    const DOW_OPTIONS = [
+        { value: '*', label: 'Все' },
+        { value: '1-5', label: 'Пн-Пт' },
+        { value: '6,0', label: 'Сб-Вс' },
+        { value: '1', label: 'Пн' }, { value: '2', label: 'Вт' }, { value: '3', label: 'Ср' },
+        { value: '4', label: 'Чт' }, { value: '5', label: 'Пт' }, { value: '6', label: 'Сб' }, { value: '0', label: 'Вс' },
+    ];
+
+    return (
+        <div className="space-y-3">
+            <div className="flex items-center gap-2">
+                <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">CRON</Label>
+                <div className="flex gap-1 ml-auto">
+                    {(['preset', 'custom', 'manual'] as const).map(m => (
+                        <Button
+                            key={m}
+                            variant={mode === m ? 'default' : 'outline'}
+                            size="sm"
+                            className="h-6 text-[9px] font-mono px-2"
+                            onClick={() => setMode(m)}
+                        >
+                            {m === 'preset' ? 'Пресеты' : m === 'custom' ? 'Конструктор' : 'Ручной'}
+                        </Button>
+                    ))}
+                </div>
+            </div>
+
+            {mode === 'preset' && (
+                <div className="grid grid-cols-3 gap-1.5">
+                    {CRON_PRESETS.map(p => (
+                        <Button
+                            key={p.cron}
+                            variant={value === p.cron ? 'default' : 'outline'}
+                            size="sm"
+                            className="h-7 text-[10px] font-mono justify-start"
+                            onClick={() => onChange(p.cron)}
+                        >
+                            {p.label}
+                        </Button>
+                    ))}
+                </div>
+            )}
+
+            {mode === 'custom' && (
+                <div className="space-y-3">
+                    <div className="space-y-1">
+                        <Label className="text-[9px] uppercase font-bold tracking-widest text-muted-foreground">
+                            Минуты {selectedMinutes.length > 0 && `(${selectedMinutes.sort((a, b) => a - b).join(', ')})`}
+                        </Label>
+                        <div className="flex flex-wrap gap-1">
+                            {MINUTE_OPTIONS.map(m => (
+                                <Button
+                                    key={m}
+                                    variant={selectedMinutes.includes(m) ? 'default' : 'outline'}
+                                    size="sm"
+                                    className="h-6 w-10 text-[10px] font-mono p-0"
+                                    onClick={() => toggleMinute(m)}
+                                >
+                                    :{String(m).padStart(2, '0')}
+                                </Button>
+                            ))}
+                        </div>
+                    </div>
+                    <div className="space-y-1">
+                        <Label className="text-[9px] uppercase font-bold tracking-widest text-muted-foreground">
+                            Часы {selectedHours.length > 0 && `(${selectedHours.sort((a, b) => a - b).join(', ')})`}
+                        </Label>
+                        <div className="flex flex-wrap gap-1">
+                            {HOUR_OPTIONS.map(h => (
+                                <Button
+                                    key={h}
+                                    variant={selectedHours.includes(h) ? 'default' : 'outline'}
+                                    size="sm"
+                                    className="h-6 w-9 text-[10px] font-mono p-0"
+                                    onClick={() => toggleHour(h)}
+                                >
+                                    {String(h).padStart(2, '0')}
+                                </Button>
+                            ))}
+                        </div>
+                    </div>
+                    <div className="space-y-1">
+                        <Label className="text-[9px] uppercase font-bold tracking-widest text-muted-foreground">День недели</Label>
+                        <div className="flex flex-wrap gap-1">
+                            {DOW_OPTIONS.map(d => (
+                                <Button
+                                    key={d.value}
+                                    variant={dayOfWeek === d.value ? 'default' : 'outline'}
+                                    size="sm"
+                                    className="h-6 text-[10px] font-mono px-2"
+                                    onClick={() => {
+                                        setDayOfWeek(d.value);
+                                        updateCustomCron(selectedMinutes, selectedHours, d.value, dayOfMonth);
+                                    }}
+                                >
+                                    {d.label}
+                                </Button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {mode === 'manual' && (
+                <div className="space-y-1.5">
+                    <Input
+                        placeholder="5,25,45 * * * * (5, 25 и 45 мин каждого часа)"
+                        value={value}
+                        onChange={e => onChange(e.target.value)}
+                        className="h-9 bg-black/30 border-border font-mono text-xs"
+                    />
+                    <div className="text-[9px] text-muted-foreground font-mono">
+                        Формат: мин час день_мес месяц день_нед · Примеры: <span className="text-primary">5,25,45 * * * *</span> · <span className="text-primary">0 9,18 * * 1-5</span>
+                    </div>
+                </div>
+            )}
+
+            {value && (
+                <div className="flex items-center gap-2 p-2 rounded-sm border border-border bg-muted/30">
+                    <Clock className="w-3.5 h-3.5 text-primary shrink-0" />
+                    <code className="text-[11px] font-mono text-primary font-bold">{value}</code>
+                    <span className="text-[9px] text-muted-foreground ml-auto">{describeCron(value)}</span>
+                </div>
+            )}
+        </div>
+    );
+}
+
+function describeCron(cron: string): string {
+    const parts = cron.trim().split(/\s+/);
+    if (parts.length !== 5) return 'невалидный cron';
+    const [min, hour, , , dow] = parts;
+
+    let desc = '';
+    if (min === '*') desc += 'каждую минуту';
+    else if (min.startsWith('*/')) desc += `каждые ${min.slice(2)} мин`;
+    else if (min.includes(',')) desc += `в ${min} мин`;
+    else desc += `в :${min.padStart(2, '0')}`;
+
+    if (hour === '*') desc += ', каждый час';
+    else if (hour.startsWith('*/')) desc += `, каждые ${hour.slice(2)} ч`;
+    else if (hour.includes(',')) desc += `, в ${hour} ч`;
+    else if (hour !== '*') desc += `, в ${hour}:00`;
+
+    if (dow === '1-5') desc += ', Пн-Пт';
+    else if (dow === '6,0' || dow === '0,6') desc += ', Сб-Вс';
+    else if (dow !== '*') desc += `, дн.нед: ${dow}`;
+
+    return desc;
+}
+
+
+// ============================================================================
 //  ДИАЛОГ: СОЗДАНИЕ РАСПИСАНИЯ
 // ============================================================================
 
 function CreateScheduleDialog({ open, onOpenChange, pipelines }: { open: boolean; onOpenChange: (v: boolean) => void; pipelines: Pipeline[] }) {
     const queryClient = useQueryClient();
+    const { data: scripts = [] } = useScripts();
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
     const [triggerType, setTriggerType] = useState<'cron' | 'interval' | 'one_shot'>('cron');
@@ -1503,15 +1739,7 @@ function CreateScheduleDialog({ open, onOpenChange, pipelines }: { open: boolean
                     </div>
 
                     {triggerType === 'cron' && (
-                        <div className="space-y-1.5">
-                            <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">CRON выражение *</Label>
-                            <Input
-                                placeholder="0 */2 * * * (каждые 2 часа)"
-                                value={cronExpression}
-                                onChange={e => setCronExpression(e.target.value)}
-                                className="h-9 bg-black/30 border-border font-mono text-xs"
-                            />
-                        </div>
+                        <CronBuilder value={cronExpression} onChange={setCronExpression} />
                     )}
                     {triggerType === 'interval' && (
                         <div className="space-y-1.5">
@@ -1591,13 +1819,19 @@ function CreateScheduleDialog({ open, onOpenChange, pipelines }: { open: boolean
                     )}
                     {targetType === 'script' && (
                         <div className="space-y-1.5">
-                            <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Script ID (UUID) *</Label>
-                            <Input
-                                placeholder="UUID скрипта"
+                            <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Скрипт *</Label>
+                            <select
                                 value={scriptId}
                                 onChange={e => setScriptId(e.target.value)}
-                                className="h-9 bg-black/30 border-border font-mono text-xs"
-                            />
+                                className="w-full h-9 rounded-sm border border-border bg-black/30 px-2 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
+                            >
+                                <option value="">Выбери скрипт...</option>
+                                {scripts.filter(s => !s.is_archived).map(s => (
+                                    <option key={s.id} value={s.id}>
+                                        {s.name} ({s.node_count} нод)
+                                    </option>
+                                ))}
+                            </select>
                         </div>
                     )}
 
