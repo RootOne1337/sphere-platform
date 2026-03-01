@@ -15,7 +15,6 @@ import {
     DialogTitle,
     DialogDescription,
     DialogFooter,
-    DialogTrigger,
 } from '@/components/ui/dialog';
 import {
     GitBranch,
@@ -993,13 +992,12 @@ function CreatePipelineButton() {
     };
 
     return (
-        <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-                <Button variant="default" size="sm" className="h-9">
-                    <Plus className="w-4 h-4 mr-2" /> Новый Pipeline
-                </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col bg-card border-border">
+        <>
+            <Button variant="default" size="sm" className="h-9" onClick={() => setOpen(true)}>
+                <Plus className="w-4 h-4 mr-2" /> Новый Pipeline
+            </Button>
+            <Dialog open={open} onOpenChange={setOpen}>
+                <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col bg-card border-border">
                 <DialogHeader>
                     <DialogTitle className="font-mono tracking-tight flex items-center gap-2">
                         <GitBranch className="w-5 h-5 text-primary" />
@@ -1214,6 +1212,7 @@ function CreatePipelineButton() {
                 </DialogFooter>
             </DialogContent>
         </Dialog>
+        </>
     );
 }
 
