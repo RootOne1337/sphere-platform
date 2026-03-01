@@ -168,16 +168,18 @@ tunnel-build:  ## Собрать Docker образ туннеля
 	docker compose -f docker-compose.tunnel.yml build
 	@echo '✅ Образ sphere-tunnel собран'
 
-tunnel-up:     ## Поднять туннель + автосинхронизация URL в .env и agent-config
+tunnel-up:     ## Поднять Serveo SSH-туннель (фиксированный URL sphere.serveousercontent.com)
 	docker build -t sphere-tunnel:latest -f infrastructure/tunnel/Dockerfile infrastructure/tunnel/
 	-docker stop sphere-tunnel 2>/dev/null; docker rm sphere-tunnel 2>/dev/null
 	docker run -d \
 	  --name sphere-tunnel \
 	  --restart always \
 	  --network sphere-platform_frontend-net \
-	  sphere-tunnel:latest \
-	  --url http://nginx:80
-	@bash scripts/sync-tunnel-url.sh
+	  -e TUNNEL_SUBDOMAIN=sphere \
+	  -e TUNNEL_LOCAL_HOST=nginx \
+	  -e TUNNEL_LOCAL_PORT=80 \
+	  sphere-tunnel:latest
+	@echo '✅ Serveo туннель запущен: https://sphere.serveousercontent.com'
 
 tunnel-down:   ## Остановить туннель
 	-docker stop sphere-tunnel 2>/dev/null; docker rm sphere-tunnel 2>/dev/null
@@ -186,7 +188,7 @@ tunnel-sync:   ## Синхронизировать текущий URL тунне
 	@bash scripts/sync-tunnel-url.sh
 
 tunnel-url:    ## Показать текущий URL туннеля
-	@docker logs sphere-tunnel 2>&1 | grep -o 'https://[^ ]*trycloudflare[^ ]*' | tail -1 || echo 'Туннель не запущен. Запусти: make tunnel-up'
+	@echo 'https://sphere.serveousercontent.com'
 
 tunnel-logs:   ## Логи туннеля в реальном времени
 	docker compose -f docker-compose.tunnel.yml logs -f tunnel
