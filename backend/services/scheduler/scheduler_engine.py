@@ -141,6 +141,15 @@ class SchedulerEngine:
                 self._advance_fire_time(schedule)
                 return
 
+        if schedule.conflict_policy == ScheduleConflictPolicy.CANCEL_PREVIOUS:
+            cancelled = await self._cancel_previous_tasks(schedule, db)
+            if cancelled > 0:
+                logger.info(
+                    "schedule.cancelled_previous",
+                    schedule_id=str(schedule.id),
+                    cancelled_count=cancelled,
+                )
+
         # Резолвить устройства
         device_ids = await self._resolve_devices(schedule, db)
         if not device_ids:
@@ -265,9 +274,19 @@ class SchedulerEngine:
         device_ids: list[uuid.UUID],
         db: AsyncSession,
     ) -> tuple[int, uuid.UUID | None]:
-        """Создать задачи (Task) для script-расписания."""
+        """Создать задачи (Task) для script-расписания с enqueue в Redis."""
+        from backend.models.script import Script
         from backend.models.task import Task, TaskStatus
         from backend.models.task_batch import TaskBatch
+
+        # Получить script_version_id для корректного исполнения
+        script = await db.get(Script, schedule.script_id)
+        if not script or not script.current_version_id:
+            logger.error(
+                "scheduler.script_not_found_or_no_version",
+                script_id=str(schedule.script_id),
+            )
+            return 0, None
 
         batch = TaskBatch(
             org_id=schedule.org_id,
@@ -278,10 +297,12 @@ class SchedulerEngine:
         db.add(batch)
         await db.flush()
 
+        created_tasks: list[Task] = []
         for did in device_ids:
             task = Task(
                 org_id=schedule.org_id,
                 script_id=schedule.script_id,
+                script_version_id=script.current_version_id,
                 device_id=did,
                 batch_id=batch.id,
                 status=TaskStatus.QUEUED,
@@ -289,8 +310,26 @@ class SchedulerEngine:
                 input_params=schedule.input_params or {},
             )
             db.add(task)
+            created_tasks.append(task)
 
         await db.flush()
+
+        # Enqueue в Redis для диспетчеризации TaskService.dispatch_pending_tasks
+        try:
+            from backend.database.redis_client import redis_binary
+            if redis_binary:
+                from backend.services.task_queue import TaskQueue
+                queue = TaskQueue(redis_binary)
+                for task in created_tasks:
+                    await queue.enqueue(
+                        str(task.id),
+                        str(task.device_id),
+                        str(task.org_id),
+                        task.priority,
+                    )
+        except Exception as exc:
+            logger.error("scheduler.enqueue_failed", error=str(exc))
+
         return len(device_ids), batch.id
 
     async def _create_pipeline_runs(
@@ -382,6 +421,125 @@ class SchedulerEngine:
             return (running_count or 0) > 0
 
         return False
+
+    async def _cancel_previous_tasks(
+        self,
+        schedule: Schedule,
+        db: AsyncSession,
+    ) -> int:
+        """
+        Отменить все незавершённые задачи предыдущего запуска расписания.
+
+        Для RUNNING задач отправляет CANCEL_DAG через WebSocket агенту.
+        Для QUEUED/ASSIGNED — отменяет из Redis-очереди.
+        Возвращает количество отменённых задач.
+        """
+        cancelled = 0
+
+        # Найти последнее triggered execution
+        last_exec = await db.scalar(
+            select(ScheduleExecution)
+            .where(
+                ScheduleExecution.schedule_id == schedule.id,
+                ScheduleExecution.status == ScheduleExecutionStatus.TRIGGERED,
+            )
+            .order_by(ScheduleExecution.fire_time.desc())
+            .limit(1)
+        )
+        if not last_exec:
+            return 0
+
+        now = datetime.now(timezone.utc)
+
+        if last_exec.batch_id:
+            from backend.models.task import Task, TaskStatus
+
+            running_tasks = (
+                await db.scalars(
+                    select(Task).where(
+                        Task.batch_id == last_exec.batch_id,
+                        Task.status.in_([
+                            TaskStatus.QUEUED,
+                            TaskStatus.RUNNING,
+                            TaskStatus.ASSIGNED,
+                        ]),
+                    )
+                )
+            ).all()
+
+            # Получить publisher и queue для отмены
+            publisher = None
+            queue = None
+            try:
+                from backend.database.redis_client import redis_binary
+                if redis_binary:
+                    from backend.websocket.pubsub_router import get_pubsub_publisher
+                    from backend.services.task_queue import TaskQueue
+                    publisher = get_pubsub_publisher()
+                    queue = TaskQueue(redis_binary)
+            except Exception as exc:
+                logger.warning("scheduler.cancel_deps_failed", error=str(exc))
+
+            for task in running_tasks:
+                try:
+                    if task.status == TaskStatus.RUNNING and publisher:
+                        # Отправить CANCEL_DAG агенту через WebSocket
+                        await publisher.send_command_live(
+                            str(task.device_id),
+                            {
+                                "command_id": str(task.id),
+                                "type": "CANCEL_DAG",
+                                "signed_at": int(now.timestamp()),
+                                "payload": {"task_id": str(task.id)},
+                            },
+                        )
+
+                    if task.status in (TaskStatus.QUEUED, TaskStatus.ASSIGNED) and queue:
+                        await queue.cancel_task(str(task.id), str(task.org_id))
+
+                    # Освободить running lock
+                    if queue:
+                        await queue.mark_completed(str(task.id), str(task.device_id))
+
+                    task.status = TaskStatus.CANCELLED
+                    task.finished_at = now
+                    task.error_message = "Отменено планировщиком (conflict_policy=cancel)"
+                    cancelled += 1
+
+                    logger.info(
+                        "scheduler.task_cancelled",
+                        task_id=str(task.id),
+                        device_id=str(task.device_id),
+                    )
+                except Exception as exc:
+                    logger.error(
+                        "scheduler.cancel_task_error",
+                        task_id=str(task.id),
+                        error=str(exc),
+                    )
+
+        if last_exec.pipeline_batch_id:
+            from backend.models.pipeline import PipelineRun, PipelineRunStatus
+
+            running_runs = (
+                await db.scalars(
+                    select(PipelineRun).where(
+                        PipelineRun.context["batch_id"].astext == str(last_exec.pipeline_batch_id),
+                        PipelineRun.status.in_([
+                            PipelineRunStatus.QUEUED,
+                            PipelineRunStatus.RUNNING,
+                            PipelineRunStatus.WAITING,
+                        ]),
+                    )
+                )
+            ).all()
+
+            for run in running_runs:
+                run.status = PipelineRunStatus.CANCELLED
+                run.finished_at = now
+                cancelled += 1
+
+        return cancelled
 
     @staticmethod
     def _advance_fire_time(schedule: Schedule) -> None:

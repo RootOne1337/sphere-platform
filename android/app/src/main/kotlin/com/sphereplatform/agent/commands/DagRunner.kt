@@ -72,10 +72,33 @@ class DagRunner @Inject constructor(
         Timber.i("[DAG] Cancel requested by user")
     }
 
+    @Volatile
+    private var pauseRequested = false
+
+    /**
+     * Ставит текущий DAG на паузу: выполнение нод прерывается между шагами
+     * и возобновляется только при вызове [requestResume] или [requestCancel].
+     * Called from CommandDispatcher when PAUSE_DAG arrives.
+     */
+    fun requestPause() {
+        pauseRequested = true
+        Timber.i("[DAG] Pause requested by user")
+    }
+
+    /**
+     * Снимает DAG с паузы — выполнение продолжается с той ноды, на которой остановились.
+     * Called from CommandDispatcher when RESUME_DAG arrives.
+     */
+    fun requestResume() {
+        pauseRequested = false
+        Timber.i("[DAG] Resume requested by user")
+    }
+
     // ── Public API ────────────────────────────────────────────────────────────
 
     suspend fun execute(commandId: String, dagJson: JsonObject): JsonObject {
         cancelRequested = false  // reset on new execution
+        pauseRequested  = false  // reset on new execution
 
         val entryNodeId = dagJson["entry_node"]!!.jsonPrimitive.content
         val nodesArray = dagJson["nodes"]!!.jsonArray          // LIST, не map!
@@ -104,6 +127,21 @@ class DagRunner @Inject constructor(
                     success = false
                     failedNode = currentNodeId
                     break
+                }
+                // ── Пауза: ждём снятия паузы или отмены ────────────────
+                if (pauseRequested) {
+                    Timber.i("[DAG] Paused at node '$currentNodeId' — waiting for resume")
+                    while (pauseRequested) {
+                        if (cancelRequested) break
+                        delay(200L)
+                    }
+                    if (cancelRequested) {
+                        Timber.i("[DAG] Cancelled during pause at node '$currentNodeId'")
+                        success = false
+                        failedNode = currentNodeId
+                        break
+                    }
+                    Timber.i("[DAG] Resumed at node '$currentNodeId'")
                 }
                 val nodeId = currentNodeId ?: break
                 val node = nodeMap[nodeId]
@@ -794,6 +832,8 @@ class DagRunner @Inject constructor(
         prefs.edit().putStringSet("pending_dag_results", pending).apply()
         Timber.i("[DAG] Result saved locally, command=$commandId")
     }
+
+    // Кеширование скриптов вынесено в ScriptCacheManager (content-addressable, LRU)
 
     // ── HTTP helper ───────────────────────────────────────────────────────────
 

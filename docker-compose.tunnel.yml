@@ -1,0 +1,35 @@
+# docker-compose.tunnel.yml
+# Serveo SSH-туннель — стабильный HTTPS с фиксированным субдоменом
+# Запуск: make tunnel-up
+# Остановка: make tunnel-down
+# URL: https://sphere.serveousercontent.com
+
+services:
+  tunnel:
+    build:
+      context: ./infrastructure/tunnel
+      dockerfile: Dockerfile
+    image: sphere-tunnel:latest
+    container_name: sphere-tunnel
+    restart: always
+    environment:
+      - TUNNEL_SUBDOMAIN=sphere
+      - TUNNEL_LOCAL_HOST=nginx
+      - TUNNEL_LOCAL_PORT=80
+      - TUNNEL_REMOTE_HOST=serveo.net
+      - TUNNEL_REMOTE_PORT=443
+    networks:
+      - frontend-net
+    depends_on:
+      - nginx
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "3"
+
+# Используем уже существующую сеть из docker-compose.yml
+networks:
+  frontend-net:
+    external: true
+    name: sphere-platform_frontend-net

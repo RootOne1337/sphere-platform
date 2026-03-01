@@ -4,7 +4,11 @@ import com.sphereplatform.agent.BuildConfig
 import com.sphereplatform.agent.provisioning.ZeroTouchProvisioner
 import com.sphereplatform.agent.store.AuthTokenStore
 import com.sphereplatform.agent.ws.SphereWebSocketClient
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -29,16 +33,17 @@ class ConfigWatchdog @Inject constructor(
     private val provisioner: ZeroTouchProvisioner,
     private val authStore: AuthTokenStore,
     private val wsClient: SphereWebSocketClient,
+    private val scope: CoroutineScope,
 ) {
     companion object {
         /** Минимальный интервал опроса (защита от слишком частых запросов) */
-        private const val MIN_POLL_INTERVAL_MS = 30_000L
+        private const val MIN_POLL_INTERVAL_MS = 15_000L
 
-        /** Стандартный интервал когда WS подключён (5 минут) */
-        private const val DEFAULT_POLL_INTERVAL_MS = 300_000L
+        /** Стандартный интервал когда WS подключён (2 минуты) */
+        private const val DEFAULT_POLL_INTERVAL_MS = 120_000L
 
-        /** Ускоренный интервал когда WS отключён (60 секунд) */
-        private const val DISCONNECTED_POLL_INTERVAL_MS = 60_000L
+        /** Ускоренный интервал когда WS отключён (30 секунд) */
+        private const val DISCONNECTED_POLL_INTERVAL_MS = 30_000L
     }
 
     @Volatile
@@ -58,7 +63,8 @@ class ConfigWatchdog @Inject constructor(
         Timber.i("ConfigWatchdog: запущен, CONFIG_URL=${BuildConfig.CONFIG_URL.take(80)}…")
 
         // Первичная задержка — даём WS-клиенту установить начальное соединение
-        delay(15_000L)
+        // FIX-CONFIG: 5с вместо 15с — быстрее обнаруживаем новый URL при смене туннеля
+        delay(5_000L)
 
         while (running) {
             try {
@@ -85,13 +91,17 @@ class ConfigWatchdog @Inject constructor(
     /**
      * Принудительная проверка конфига — вызывается при circuit breaker open
      * или при длительном отсутствии соединения.
+     *
+     * FIX-RECONNECT: Запускается через IO dispatcher чтобы не блокировать WS reconnect loop.
      */
     fun forceCheck() {
         Timber.d("ConfigWatchdog: принудительная проверка конфига")
-        try {
-            checkAndUpdate()
-        } catch (e: Exception) {
-            Timber.w(e, "ConfigWatchdog: ошибка принудительной проверки")
+        scope.launch(Dispatchers.IO) {
+            try {
+                checkAndUpdate()
+            } catch (e: Exception) {
+                Timber.w(e, "ConfigWatchdog: ошибка принудительной проверки")
+            }
         }
     }
 

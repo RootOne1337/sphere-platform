@@ -120,6 +120,110 @@ async def create_pipeline(
     return PipelineResponse.model_validate(pipeline)
 
 
+# ══════════════════════════════════════════════════════════════════════════════
+#  Pipeline Runs — СТАТИЧЕСКИЕ ПУТИ (должны быть выше /{pipeline_id})
+# ══════════════════════════════════════════════════════════════════════════════
+
+
+@router.get(
+    "/runs",
+    response_model=PipelineRunListResponse,
+    summary="Список pipeline runs с фильтрацией",
+)
+async def list_pipeline_runs(
+    pipeline_id: uuid.UUID | None = None,
+    device_id: uuid.UUID | None = None,
+    status: PipelineRunStatus | None = None,
+    page: int = Query(1, ge=1),
+    per_page: int = Query(50, ge=1, le=200),
+    current_user: User = require_permission("pipeline:read"),
+    svc: PipelineService = Depends(get_pipeline_service),
+) -> PipelineRunListResponse:
+    items, total = await svc.list_runs(
+        org_id=current_user.org_id,
+        pipeline_id=pipeline_id,
+        device_id=device_id,
+        status=status,
+        page=page,
+        per_page=per_page,
+    )
+    pages = (total + per_page - 1) // per_page if total > 0 else 0
+    return PipelineRunListResponse(
+        items=[PipelineRunResponse.model_validate(r) for r in items],
+        total=total,
+        page=page,
+        per_page=per_page,
+        pages=pages,
+    )
+
+
+@router.get(
+    "/runs/{run_id}",
+    response_model=PipelineRunResponse,
+    summary="Получить pipeline run по ID",
+)
+async def get_pipeline_run(
+    run_id: uuid.UUID,
+    current_user: User = require_permission("pipeline:read"),
+    svc: PipelineService = Depends(get_pipeline_service),
+) -> PipelineRunResponse:
+    run = await svc.get_run(run_id, current_user.org_id)
+    return PipelineRunResponse.model_validate(run)
+
+
+@router.post(
+    "/runs/{run_id}/cancel",
+    response_model=PipelineRunResponse,
+    summary="Отменить pipeline run",
+)
+async def cancel_pipeline_run(
+    run_id: uuid.UUID,
+    current_user: User = require_permission("pipeline:execute"),
+    svc: PipelineService = Depends(get_pipeline_service),
+    db: AsyncSession = Depends(get_db),
+) -> PipelineRunResponse:
+    run = await svc.cancel_run(run_id, current_user.org_id)
+    await db.commit()
+    return PipelineRunResponse.model_validate(run)
+
+
+@router.post(
+    "/runs/{run_id}/pause",
+    response_model=PipelineRunResponse,
+    summary="Приостановить pipeline run",
+)
+async def pause_pipeline_run(
+    run_id: uuid.UUID,
+    current_user: User = require_permission("pipeline:execute"),
+    svc: PipelineService = Depends(get_pipeline_service),
+    db: AsyncSession = Depends(get_db),
+) -> PipelineRunResponse:
+    run = await svc.pause_run(run_id, current_user.org_id)
+    await db.commit()
+    return PipelineRunResponse.model_validate(run)
+
+
+@router.post(
+    "/runs/{run_id}/resume",
+    response_model=PipelineRunResponse,
+    summary="Возобновить pipeline run",
+)
+async def resume_pipeline_run(
+    run_id: uuid.UUID,
+    current_user: User = require_permission("pipeline:execute"),
+    svc: PipelineService = Depends(get_pipeline_service),
+    db: AsyncSession = Depends(get_db),
+) -> PipelineRunResponse:
+    run = await svc.resume_run(run_id, current_user.org_id)
+    await db.commit()
+    return PipelineRunResponse.model_validate(run)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  Pipeline CRUD — параметризованные пути /{pipeline_id}
+# ══════════════════════════════════════════════════════════════════════════════
+
+
 @router.get(
     "/{pipeline_id}",
     response_model=PipelineResponse,
@@ -224,97 +328,3 @@ async def run_pipeline_batch(
     )
     await db.commit()
     return PipelineBatchResponse.model_validate(batch)
-
-
-@router.get(
-    "/runs",
-    response_model=PipelineRunListResponse,
-    summary="Список pipeline runs с фильтрацией",
-)
-async def list_pipeline_runs(
-    pipeline_id: uuid.UUID | None = None,
-    device_id: uuid.UUID | None = None,
-    status: PipelineRunStatus | None = None,
-    page: int = Query(1, ge=1),
-    per_page: int = Query(50, ge=1, le=200),
-    current_user: User = require_permission("pipeline:read"),
-    svc: PipelineService = Depends(get_pipeline_service),
-) -> PipelineRunListResponse:
-    items, total = await svc.list_runs(
-        org_id=current_user.org_id,
-        pipeline_id=pipeline_id,
-        device_id=device_id,
-        status=status,
-        page=page,
-        per_page=per_page,
-    )
-    pages = (total + per_page - 1) // per_page if total > 0 else 0
-    return PipelineRunListResponse(
-        items=[PipelineRunResponse.model_validate(r) for r in items],
-        total=total,
-        page=page,
-        per_page=per_page,
-        pages=pages,
-    )
-
-
-@router.get(
-    "/runs/{run_id}",
-    response_model=PipelineRunResponse,
-    summary="Получить pipeline run по ID",
-)
-async def get_pipeline_run(
-    run_id: uuid.UUID,
-    current_user: User = require_permission("pipeline:read"),
-    svc: PipelineService = Depends(get_pipeline_service),
-) -> PipelineRunResponse:
-    run = await svc.get_run(run_id, current_user.org_id)
-    return PipelineRunResponse.model_validate(run)
-
-
-@router.post(
-    "/runs/{run_id}/cancel",
-    response_model=PipelineRunResponse,
-    summary="Отменить pipeline run",
-)
-async def cancel_pipeline_run(
-    run_id: uuid.UUID,
-    current_user: User = require_permission("pipeline:execute"),
-    svc: PipelineService = Depends(get_pipeline_service),
-    db: AsyncSession = Depends(get_db),
-) -> PipelineRunResponse:
-    run = await svc.cancel_run(run_id, current_user.org_id)
-    await db.commit()
-    return PipelineRunResponse.model_validate(run)
-
-
-@router.post(
-    "/runs/{run_id}/pause",
-    response_model=PipelineRunResponse,
-    summary="Приостановить pipeline run",
-)
-async def pause_pipeline_run(
-    run_id: uuid.UUID,
-    current_user: User = require_permission("pipeline:execute"),
-    svc: PipelineService = Depends(get_pipeline_service),
-    db: AsyncSession = Depends(get_db),
-) -> PipelineRunResponse:
-    run = await svc.pause_run(run_id, current_user.org_id)
-    await db.commit()
-    return PipelineRunResponse.model_validate(run)
-
-
-@router.post(
-    "/runs/{run_id}/resume",
-    response_model=PipelineRunResponse,
-    summary="Возобновить pipeline run",
-)
-async def resume_pipeline_run(
-    run_id: uuid.UUID,
-    current_user: User = require_permission("pipeline:execute"),
-    svc: PipelineService = Depends(get_pipeline_service),
-    db: AsyncSession = Depends(get_db),
-) -> PipelineRunResponse:
-    run = await svc.resume_run(run_id, current_user.org_id)
-    await db.commit()
-    return PipelineRunResponse.model_validate(run)

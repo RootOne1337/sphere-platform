@@ -40,6 +40,10 @@ class SphereApp : Application(), Configuration.Provider {
         // Тройная защита: BootReceiver + START_STICKY + AlarmManager = 100% uptime.
         if (ServiceWatchdog.isEnrolled(this)) {
             ServiceWatchdog.schedule(this)
+        } else {
+            // Если мы не зарегистрированы, попробуем найти Zero-Touch конфиг в фоне.
+            // Это решает проблему ферм эмуляторов: при клонировании образ готов к авторегистрации.
+            com.sphereplatform.agent.workers.AutoEnrollmentWorker.schedule(this)
         }
     }
 
