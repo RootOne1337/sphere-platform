@@ -1,11 +1,19 @@
-FROM cloudflare/cloudflared:latest
+FROM alpine:3.19
 
-# cloudflared quick tunnel — не требует аккаунта, даёт HTTPS автоматически
-# Документация: https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/do-more-with-tunnels/trycloudflare/
+# Serveo SSH-туннель — стабильный HTTPS с фиксированным поддоменом
+# В отличие от Cloudflare Quick Tunnel, Serveo НЕ дропает idle WebSocket
+# Документация: https://serveo.net
 
-# Healthcheck: проверяем что процесс живой
+RUN apk add --no-cache openssh-client bash && \
+    mkdir -p /root/.ssh && chmod 700 /root/.ssh
+
+# Копируем SSH ключи и entrypoint
+COPY keys/id_ed25519 /root/.ssh/id_ed25519
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod 600 /root/.ssh/id_ed25519 && chmod +x /entrypoint.sh
+
+# Healthcheck: проверяем что autossh жив
 HEALTHCHECK --interval=30s --timeout=10s --start-period=20s --retries=3 \
-    CMD pgrep cloudflared > /dev/null || exit 1
+    CMD pgrep ssh > /dev/null || exit 1
 
-# Точка входа переопределяется в docker run / compose
-ENTRYPOINT ["cloudflared", "tunnel", "--no-autoupdate"]
+ENTRYPOINT ["/entrypoint.sh"]

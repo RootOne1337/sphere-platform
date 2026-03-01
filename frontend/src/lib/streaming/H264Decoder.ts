@@ -49,17 +49,6 @@ function parseHeader(data: ArrayBuffer): FrameHeader | null {
   };
 }
 
-function isSpsOrPps(data: ArrayBuffer): boolean {
-  const bytes = new Uint8Array(data);
-  if (bytes.length < 5) return false;
-  // Look for Annex-B start code 0x00 0x00 0x00 0x01
-  if (bytes[0] !== 0 || bytes[1] !== 0 || bytes[2] !== 0 || bytes[3] !== 1) {
-    return false;
-  }
-  const nalType = bytes[4] & 0x1f;
-  return nalType === 7 /* SPS */ || nalType === 8 /* PPS */;
-}
-
 export interface StreamStats {
   framesDecoded: number;
   frameDrops: number;
@@ -76,9 +65,28 @@ export class H264Decoder {
   private configured = false;
   private framesDecoded = 0;
   private frameDrops = 0;
+  private needsKeyFrame = true;
 
-  /** Called when the WebSocket connection closes unexpectedly. */
+  // FIX-AVCC: кешируем SPS и PPS — configure() вызывается ТОЛЬКО когда оба есть
+  private _spsNal: Uint8Array | null = null;
+  private _ppsNal: Uint8Array | null = null;
+  // Буфер фреймов, пришедших до configure()
+  private _pendingFrames: Uint8Array[] = [];
+
+  // FIX-RECONNECT: автоматический reconnect при потере WS
+  private _deviceId = "";
+  private _authToken = "";
+  private _destroyed = false;
+  private _reconnecting = false;
+  private _reconnectAttempts = 0;
+  private _reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  private static readonly MAX_RECONNECT_ATTEMPTS = 15;
+  private static readonly MAX_BACKOFF_MS = 30_000;
+
+  /** Вызывается когда WS закрылся и все попытки reconnect исчерпаны. */
   onDisconnect?: () => void;
+  /** Вызывается при успешном reconnect. */
+  onReconnect?: () => void;
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -93,6 +101,11 @@ export class H264Decoder {
         "WebCodecs API not supported. Use Chrome 94+, Edge 94+ or Safari 15.4+",
       );
     }
+
+    this._deviceId = deviceId;
+    this._authToken = authToken;
+    this._destroyed = false;
+    this._reconnectAttempts = 0;
 
     this.decoder = new VideoDecoder({
       output: (frame: VideoFrame) => this.renderFrame(frame),
@@ -144,12 +157,109 @@ export class H264Decoder {
 
       this.ws.onclose = (event: CloseEvent) => {
         console.log(`[H264Decoder] Stream closed: ${event.code} ${event.reason}`);
-        this.onDisconnect?.();
+        // FIX-RECONNECT: автоматический reconnect при неожиданном закрытии
+        // 1000 = нормальное закрытие (destroy() пользователем), 4001/4003/4004 = ошибка авторизации
+        const isAuthError = [4001, 4003, 4004].includes(event.code);
+        if (!this._destroyed && event.code !== 1000 && !isAuthError) {
+          void this.scheduleReconnect();
+        } else {
+          this.onDisconnect?.();
+        }
       };
     });
   }
 
+  // ── Reconnect логика ─────────────────────────────────────────────────────────
+
+  private async scheduleReconnect(): Promise<void> {
+    if (this._destroyed || this._reconnecting) return;
+    if (this._reconnectAttempts >= H264Decoder.MAX_RECONNECT_ATTEMPTS) {
+      console.error(`[H264Decoder] Исчерпаны все ${H264Decoder.MAX_RECONNECT_ATTEMPTS} попыток reconnect`);
+      this.onDisconnect?.();
+      return;
+    }
+
+    this._reconnecting = true;
+    const backoffMs = Math.min(
+      1000 * Math.pow(2, this._reconnectAttempts),
+      H264Decoder.MAX_BACKOFF_MS,
+    );
+    this._reconnectAttempts++;
+    console.log(`[H264Decoder] Reconnect #${this._reconnectAttempts} через ${backoffMs}ms`);
+
+    await new Promise<void>((resolve) => {
+      this._reconnectTimer = setTimeout(resolve, backoffMs);
+    });
+
+    if (this._destroyed) {
+      this._reconnecting = false;
+      return;
+    }
+
+    // Сбросить декодер для получения свежего SPS/PPS
+    this.configured = false;
+    this.needsKeyFrame = true;
+    this._spsNal = null;
+    this._ppsNal = null;
+    this._pendingFrames = [];
+    try {
+      this.decoder?.reset();
+    } catch {
+      // Игнорируем ошибки reset
+    }
+
+    try {
+      await this.connectWebSocket(this._deviceId, this._authToken);
+      this._reconnectAttempts = 0;
+      this._reconnecting = false;
+      console.log("[H264Decoder] Reconnect успешен");
+      this.onReconnect?.();
+    } catch (e) {
+      console.warn("[H264Decoder] Reconnect неудачен:", e);
+      this._reconnecting = false;
+      void this.scheduleReconnect();
+    }
+  }
+
   // ── Frame handling ─────────────────────────────────────────────────────────
+
+  /**
+   * Strip Annex-B start codes (0x00000001 or 0x000001) from NAL data.
+   * MediaCodec Surface encoder outputs Annex-B; WebCodecs AVCC needs raw NAL.
+   */
+  private static stripStartCode(nal: Uint8Array): Uint8Array {
+    if (nal[0] === 0 && nal[1] === 0 && nal[2] === 0 && nal[3] === 1) {
+      return nal.subarray(4);
+    }
+    if (nal[0] === 0 && nal[1] === 0 && nal[2] === 1) {
+      return nal.subarray(3);
+    }
+    return nal;
+  }
+
+  /**
+   * Build AVCDecoderConfigurationRecord from SPS + PPS (ISO/IEC 14496-15).
+   * WebCodecs H.264 requires this format in `description`, not raw Annex-B.
+   */
+  private static buildAVCC(sps: Uint8Array, pps: Uint8Array): Uint8Array {
+    const buf = new Uint8Array(11 + sps.length + pps.length);
+    let off = 0;
+    buf[off++] = 1;                              // configurationVersion
+    buf[off++] = sps[1];                         // AVCProfileIndication
+    buf[off++] = sps[2];                         // profile_compatibility
+    buf[off++] = sps[3];                         // AVCLevelIndication
+    buf[off++] = 0xff;                           // lengthSizeMinusOne = 3 (4-byte lengths)
+    buf[off++] = 0xe1;                           // numSequenceParameterSets = 1
+    buf[off++] = (sps.length >> 8) & 0xff;
+    buf[off++] = sps.length & 0xff;
+    buf.set(sps, off);
+    off += sps.length;
+    buf[off++] = 1;                              // numPictureParameterSets = 1
+    buf[off++] = (pps.length >> 8) & 0xff;
+    buf[off++] = pps.length & 0xff;
+    buf.set(pps, off);
+    return buf;
+  }
 
   private handleVideoFrame(data: ArrayBuffer): void {
     const header = parseHeader(data);
@@ -157,25 +267,51 @@ export class H264Decoder {
 
     if (header.frameSize !== data.byteLength - FRAME_HEADER_SIZE) return;
 
-    const nalData = data.slice(FRAME_HEADER_SIZE);
+    // Strip Annex-B start code from NAL payload
+    const rawNal = H264Decoder.stripStartCode(new Uint8Array(data, FRAME_HEADER_SIZE));
+    const nalType = rawNal[0] & 0x1f;
 
-    // SPS/PPS arrives before the first frame — configure decoder from it
-    if (!this.configured && isSpsOrPps(nalData)) {
-      this.configureDecoder(nalData);
+    // SPS (7) / PPS (8) → cache and configure decoder when both collected
+    if (nalType === 7 || nalType === 8) {
+      if (nalType === 7) this._spsNal = rawNal;
+      if (nalType === 8) this._ppsNal = rawNal;
+      if (this._spsNal && this._ppsNal) {
+        this.configureDecoder(this._spsNal, this._ppsNal);
+      }
       return;
     }
 
-    if (!this.configured) return;
+    // Not configured yet — buffer frame for replay after configure
+    if (!this.configured) {
+      this._pendingFrames.push(rawNal);
+      return;
+    }
 
-    const chunk = new EncodedVideoChunk({
-      type: header.isKeyFrame ? "key" : "delta",
-      // EncodedVideoChunk.timestamp is in microseconds
-      timestamp: header.timestampMs * 1_000,
-      data: nalData,
-    });
+    this.decodeNal(rawNal, header.timestampMs);
+  }
+
+  private decodeNal(nal: Uint8Array, timestampMs: number): void {
+    if (!this.decoder || !this.configured) return;
+
+    const isKeyFrame = (nal[0] & 0x1f) === 5;
+
+    // WebCodecs requires keyframe first after configure/flush — skip deltas until IDR
+    if (this.needsKeyFrame && !isKeyFrame) return;
+    this.needsKeyFrame = false;
+
+    // AVCC format: 4-byte big-endian NAL unit length prefix (NOT Annex-B start code)
+    const avcc = new Uint8Array(4 + nal.length);
+    new DataView(avcc.buffer).setUint32(0, nal.length, false);
+    avcc.set(nal, 4);
 
     try {
-      this.decoder!.decode(chunk);
+      this.decoder.decode(
+        new EncodedVideoChunk({
+          type: isKeyFrame ? "key" : "delta",
+          timestamp: timestampMs * 1_000,
+          data: avcc,
+        }),
+      );
       this.framesDecoded++;
     } catch {
       this.frameDrops++;
@@ -185,15 +321,35 @@ export class H264Decoder {
     }
   }
 
-  private configureDecoder(spsData: ArrayBuffer): void {
+  private configureDecoder(sps: Uint8Array, pps: Uint8Array): void {
+    // Dynamic codec string from SPS profile/compat/level
+    const profile = sps[1].toString(16).padStart(2, "0").toUpperCase();
+    const compat = sps[2].toString(16).padStart(2, "0").toUpperCase();
+    const level = sps[3].toString(16).padStart(2, "0").toUpperCase();
+
     this.decoder!.configure({
-      // H.264 Baseline Profile Level 3.1 — matches encoder config in H264Encoder.kt
-      codec: "avc1.42E01F",
-      description: new Uint8Array(spsData),
+      codec: `avc1.${profile}${compat}${level}`,
+      description: H264Decoder.buildAVCC(sps, pps),
       optimizeForLatency: true,
       hardwareAcceleration: "prefer-hardware",
     });
     this.configured = true;
+    this.needsKeyFrame = true;
+
+    // Replay buffered frames — find last IDR and decode from there
+    let lastIdrIdx = -1;
+    for (let i = this._pendingFrames.length - 1; i >= 0; i--) {
+      if ((this._pendingFrames[i][0] & 0x1f) === 5) {
+        lastIdrIdx = i;
+        break;
+      }
+    }
+    if (lastIdrIdx >= 0) {
+      for (let i = lastIdrIdx; i < this._pendingFrames.length; i++) {
+        this.decodeNal(this._pendingFrames[i], performance.now());
+      }
+    }
+    this._pendingFrames = [];
   }
 
   private renderFrame(frame: VideoFrame): void {
@@ -206,6 +362,10 @@ export class H264Decoder {
 
   private async reconfigure(): Promise<void> {
     this.configured = false;
+    this.needsKeyFrame = true;
+    this._spsNal = null;
+    this._ppsNal = null;
+    this._pendingFrames = [];
     try {
       this.decoder?.reset();
     } catch {
@@ -270,6 +430,11 @@ export class H264Decoder {
   // ── Lifecycle ─────────────────────────────────────────────────────────────
 
   destroy(): void {
+    this._destroyed = true;
+    if (this._reconnectTimer) {
+      clearTimeout(this._reconnectTimer);
+      this._reconnectTimer = null;
+    }
     try {
       this.decoder?.close();
     } catch {

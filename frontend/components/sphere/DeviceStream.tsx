@@ -48,18 +48,58 @@ export function DeviceStream({
           ? `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}`
           : 'ws://localhost');
       const wsUrl = `${wsBase}/ws/stream/${deviceId}`;
-      ws = new WebSocket(wsUrl);
-      ws.binaryType = 'arraybuffer';
-      wsRef.current = ws;
 
-      ws.onopen = () => {
-        ws!.send(JSON.stringify({ token: accessToken }));
+      // FIX-CLOUDFLARE: Общая функция создания WS (для initial и reconnect).
+      // Decoder НЕ пересоздаётся при reconnect — сохраняет SPS/PPS конфигурацию.
+      // Бэкенд шлёт кэшированные SPS→PPS→IDR при register_viewer, что позволяет
+      // декодеру показать картинку без ожидания нового IDR от агента.
+      const createWs = () => {
+        if (ignore) return;
+        const newWs = new WebSocket(wsUrl);
+        newWs.binaryType = 'arraybuffer';
+        ws = newWs;
+        wsRef.current = newWs;
+
+        newWs.onopen = () => {
+          newWs.send(JSON.stringify({ token: accessToken }));
+        };
+        newWs.onmessage = (evt) => {
+          if (evt.data instanceof ArrayBuffer) {
+            decoder?.handleBinary(evt.data);
+          }
+          // Сервер шлёт JSON ping — отвечаем pong для keepalive через Cloudflare
+          if (typeof evt.data === 'string') {
+            try {
+              const msg = JSON.parse(evt.data);
+              if (msg.type === 'ping') {
+                newWs.send(JSON.stringify({ type: 'pong' }));
+              }
+            } catch { /* не JSON binary — игнорируем */ }
+          }
+        };
+        newWs.onclose = (event) => {
+          const isAuthError = [4001, 4003, 4004].includes(event.code);
+          if (!ignore && event.code !== 1000 && !isAuthError) {
+            // FIX-CLOUDFLARE: Aggressive reconnect — Cloudflare Quick Tunnel дропает
+            // WS через 5-50 секунд. Быстрый backoff: 500ms → 1s → 2s → ... → max 5s.
+            let attempt = 0;
+            const maxAttempts = 100; // Бесконечный reconnect пока компонент жив
+            const tryReconnect = () => {
+              if (ignore || attempt >= maxAttempts) return;
+              const backoff = Math.min(500 * Math.pow(1.5, attempt), 5000);
+              attempt++;
+              setTimeout(() => {
+                if (ignore) return;
+                createWs();
+              }, backoff);
+            };
+            tryReconnect();
+          }
+        };
+        newWs.onerror = () => {};
       };
-      ws.onmessage = (evt) => {
-        if (evt.data instanceof ArrayBuffer) {
-          decoder!.handleBinary(evt.data);
-        }
-      };
+
+      createWs();
     }, 0);
 
     return () => {
