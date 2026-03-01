@@ -40,6 +40,7 @@ import {
     Workflow,
     Repeat,
     Trash2,
+    Pencil,
     GripVertical,
     Copy,
     ArrowUp,
@@ -246,6 +247,7 @@ export default function OrchestrationPage() {
     const [search, setSearch] = useState('');
     const [runPipelineTarget, setRunPipelineTarget] = useState<Pipeline | null>(null);
     const [showCreateSchedule, setShowCreateSchedule] = useState(false);
+    const [editingSchedule, setEditingSchedule] = useState<Schedule | null>(null);
 
     const { data: pipelines = [], isLoading: pLoading } = usePipelines();
     const { data: runs = [], isLoading: rLoading } = usePipelineRuns();
@@ -349,7 +351,7 @@ export default function OrchestrationPage() {
             <div className="flex-1 overflow-auto p-6">
                 {tab === 'pipelines' && <PipelinesTab pipelines={pipelines} loading={pLoading} search={search} onRunPipeline={setRunPipelineTarget} />}
                 {tab === 'runs' && <RunsTab runs={runs} pipelines={pipelines} loading={rLoading} search={search} />}
-                {tab === 'schedules' && <SchedulesTab schedules={schedules} pipelines={pipelines} loading={sLoading} search={search} onCreateSchedule={() => setShowCreateSchedule(true)} />}
+                {tab === 'schedules' && <SchedulesTab schedules={schedules} pipelines={pipelines} loading={sLoading} search={search} onCreateSchedule={() => setShowCreateSchedule(true)} onEditSchedule={setEditingSchedule} />}
             </div>
 
             {/* ── МОДАЛКИ (controlled mode — Dialog всегда в DOM, Portal рендерится по open) ── */}
@@ -361,6 +363,12 @@ export default function OrchestrationPage() {
             <CreateScheduleDialog
                 open={showCreateSchedule}
                 onOpenChange={setShowCreateSchedule}
+                pipelines={pipelines}
+            />
+            <EditScheduleDialog
+                schedule={editingSchedule}
+                open={!!editingSchedule}
+                onOpenChange={(v) => { if (!v) setEditingSchedule(null); }}
                 pipelines={pipelines}
             />
         </div>
@@ -735,7 +743,7 @@ function RunRow({
 //  TAB: SCHEDULES
 // ============================================================================
 
-function SchedulesTab({ schedules, pipelines, loading, search, onCreateSchedule }: { schedules: Schedule[]; pipelines: Pipeline[]; loading: boolean; search: string; onCreateSchedule: () => void }) {
+function SchedulesTab({ schedules, pipelines, loading, search, onCreateSchedule, onEditSchedule }: { schedules: Schedule[]; pipelines: Pipeline[]; loading: boolean; search: string; onCreateSchedule: () => void; onEditSchedule: (s: Schedule) => void }) {
     const queryClient = useQueryClient();
 
     const toggleMut = useMutation({
@@ -749,6 +757,12 @@ function SchedulesTab({ schedules, pipelines, loading, search, onCreateSchedule 
         mutationFn: (id: string) => api.post(`/schedules/${id}/fire-now`),
         onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['schedules'] }); toast.success('Расписание запущено!'); },
         onError: () => toast.error('Ошибка запуска'),
+    });
+
+    const deleteMut = useMutation({
+        mutationFn: (id: string) => api.delete(`/schedules/${id}`),
+        onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['schedules'] }); toast.success('Расписание удалено'); },
+        onError: () => toast.error('Ошибка удаления'),
     });
 
     const filtered = useMemo(() => {
@@ -854,8 +868,25 @@ function SchedulesTab({ schedules, pipelines, loading, search, onCreateSchedule 
                                         >
                                             <Zap className="w-3 h-3" />
                                         </Button>
-                                        <Button variant="ghost" size="tiny" className="text-muted-foreground hover:text-primary hover:bg-primary/10" title="Подробности">
-                                            <Eye className="w-3 h-3" />
+                                        <Button
+                                            variant="ghost" size="tiny"
+                                            className="text-muted-foreground hover:text-primary hover:bg-primary/10"
+                                            title="Редактировать"
+                                            onClick={() => onEditSchedule(s)}
+                                        >
+                                            <Pencil className="w-3 h-3" />
+                                        </Button>
+                                        <Button
+                                            variant="ghost" size="tiny"
+                                            className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                            title="Удалить"
+                                            onClick={() => {
+                                                if (confirm(`Удалить расписание «${s.name}»?`)) {
+                                                    deleteMut.mutate(s.id);
+                                                }
+                                            }}
+                                        >
+                                            <Trash2 className="w-3 h-3" />
                                         </Button>
                                     </div>
                                 </td>
@@ -1615,6 +1646,287 @@ function describeCron(cron: string): string {
 
 
 // ============================================================================
+//  ДИАЛОГ: РЕДАКТИРОВАНИЕ РАСПИСАНИЯ
+// ============================================================================
+
+function EditScheduleDialog({ schedule, open, onOpenChange, pipelines }: {
+    schedule: Schedule | null;
+    open: boolean;
+    onOpenChange: (v: boolean) => void;
+    pipelines: Pipeline[];
+}) {
+    const queryClient = useQueryClient();
+    const { data: scripts = [] } = useScripts();
+    const [name, setName] = useState('');
+    const [description, setDescription] = useState('');
+    const [triggerType, setTriggerType] = useState<'cron' | 'interval' | 'one_shot'>('cron');
+    const [cronExpression, setCronExpression] = useState('');
+    const [intervalSeconds, setIntervalSeconds] = useState(3600);
+    const [oneShotAt, setOneShotAt] = useState('');
+    const [targetType, setTargetType] = useState<'script' | 'pipeline'>('pipeline');
+    const [pipelineId, setPipelineId] = useState('');
+    const [scriptId, setScriptId] = useState('');
+    const [conflictPolicy, setConflictPolicy] = useState<'skip' | 'queue' | 'cancel'>('skip');
+    const [timezone, setTimezone] = useState('UTC');
+
+    // Заполняем форму данными расписания при открытии
+    const scheduleId = schedule?.id;
+    useState(() => { /* noop — useEffect ниже обрабатывает синхронизацию */ });
+
+    // Синхронизация состояния формы при смене расписания
+    useMemo(() => {
+        if (!schedule) return;
+        setName(schedule.name);
+        setDescription(schedule.description || '');
+        setTimezone(schedule.timezone || 'UTC');
+        setTargetType(schedule.target_type as 'script' | 'pipeline');
+        setPipelineId(schedule.pipeline_id || '');
+        setScriptId(schedule.script_id || '');
+        setConflictPolicy(schedule.conflict_policy as 'skip' | 'queue' | 'cancel');
+        if (schedule.cron_expression) {
+            setTriggerType('cron');
+            setCronExpression(schedule.cron_expression);
+        } else if (schedule.interval_seconds) {
+            setTriggerType('interval');
+            setIntervalSeconds(schedule.interval_seconds);
+        } else {
+            setTriggerType('one_shot');
+            setOneShotAt(schedule.one_shot_at || '');
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [scheduleId]);
+
+    const updateMut = useMutation({
+        mutationFn: async () => {
+            if (!schedule) return;
+            const payload: Record<string, any> = {
+                name: name.trim(),
+                description: description.trim() || null,
+                target_type: targetType,
+                conflict_policy: conflictPolicy,
+                timezone,
+            };
+            if (targetType === 'pipeline') { payload.pipeline_id = pipelineId; payload.script_id = null; }
+            else { payload.script_id = scriptId; payload.pipeline_id = null; }
+
+            if (triggerType === 'cron') {
+                payload.cron_expression = cronExpression.trim();
+                payload.interval_seconds = null;
+                payload.one_shot_at = null;
+            } else if (triggerType === 'interval') {
+                payload.interval_seconds = intervalSeconds;
+                payload.cron_expression = null;
+                payload.one_shot_at = null;
+            } else {
+                payload.one_shot_at = oneShotAt;
+                payload.cron_expression = null;
+                payload.interval_seconds = null;
+            }
+
+            const { data } = await api.patch(`/schedules/${schedule.id}`, payload);
+            return data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['schedules'] });
+            toast.success('Расписание обновлено');
+            onOpenChange(false);
+        },
+        onError: (err: any) => {
+            const detail = err?.response?.data?.detail;
+            toast.error(typeof detail === 'string' ? detail : 'Ошибка обновления расписания');
+        },
+    });
+
+    const canSubmit = name.trim().length > 0 && (
+        (triggerType === 'cron' && cronExpression.trim()) ||
+        (triggerType === 'interval' && intervalSeconds > 0) ||
+        (triggerType === 'one_shot' && oneShotAt)
+    ) && (
+        (targetType === 'pipeline' && pipelineId) ||
+        (targetType === 'script' && scriptId)
+    );
+
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="max-w-2xl bg-card border-border">
+                <DialogHeader>
+                    <DialogTitle className="font-mono tracking-tight flex items-center gap-2">
+                        <Pencil className="w-5 h-5 text-primary" />
+                        Редактировать расписание
+                    </DialogTitle>
+                    <DialogDescription className="text-xs text-muted-foreground font-mono">
+                        Измени параметры существующего расписания. Бэкенд пересчитает <code>next_fire_at</code> автоматически.
+                    </DialogDescription>
+                </DialogHeader>
+
+                <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                            <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Название *</Label>
+                            <Input
+                                placeholder="Ежечасный health-check"
+                                value={name}
+                                onChange={e => setName(e.target.value)}
+                                className="h-9 bg-black/30 border-border font-mono text-xs"
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Timezone</Label>
+                            <Input
+                                value={timezone}
+                                onChange={e => setTimezone(e.target.value)}
+                                className="h-9 bg-black/30 border-border font-mono text-xs"
+                                placeholder="UTC"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="space-y-1.5">
+                        <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Описание</Label>
+                        <Input
+                            placeholder="Описание расписания..."
+                            value={description}
+                            onChange={e => setDescription(e.target.value)}
+                            className="h-9 bg-black/30 border-border font-mono text-xs"
+                        />
+                    </div>
+
+                    {/* Тип триггера */}
+                    <div className="space-y-1.5">
+                        <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Тип триггера</Label>
+                        <div className="flex gap-2">
+                            {(['cron', 'interval', 'one_shot'] as const).map(t => (
+                                <Button
+                                    key={t}
+                                    variant={triggerType === t ? 'default' : 'outline'}
+                                    size="sm"
+                                    className="h-7 text-[10px] font-mono"
+                                    onClick={() => setTriggerType(t)}
+                                >
+                                    {t === 'cron' ? 'CRON' : t === 'interval' ? 'INTERVAL' : 'ONE-SHOT'}
+                                </Button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {triggerType === 'cron' && (
+                        <CronBuilder value={cronExpression} onChange={setCronExpression} />
+                    )}
+                    {triggerType === 'interval' && (
+                        <div className="space-y-1.5">
+                            <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Интервал (секунды) *</Label>
+                            <Input
+                                type="number"
+                                value={intervalSeconds}
+                                onChange={e => setIntervalSeconds(Number(e.target.value))}
+                                className="h-9 bg-black/30 border-border font-mono text-xs"
+                                min={10}
+                            />
+                        </div>
+                    )}
+                    {triggerType === 'one_shot' && (
+                        <div className="space-y-1.5">
+                            <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Дата/время запуска (ISO) *</Label>
+                            <Input
+                                type="datetime-local"
+                                value={oneShotAt}
+                                onChange={e => setOneShotAt(e.target.value)}
+                                className="h-9 bg-black/30 border-border font-mono text-xs"
+                            />
+                        </div>
+                    )}
+
+                    {/* Цель */}
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                            <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Тип цели</Label>
+                            <div className="flex gap-2">
+                                <Button
+                                    variant={targetType === 'pipeline' ? 'default' : 'outline'}
+                                    size="sm"
+                                    className="h-7 text-[10px] font-mono"
+                                    onClick={() => setTargetType('pipeline')}
+                                >
+                                    Pipeline
+                                </Button>
+                                <Button
+                                    variant={targetType === 'script' ? 'default' : 'outline'}
+                                    size="sm"
+                                    className="h-7 text-[10px] font-mono"
+                                    onClick={() => setTargetType('script')}
+                                >
+                                    Script
+                                </Button>
+                            </div>
+                        </div>
+                        <div className="space-y-1.5">
+                            <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Конфликт-политика</Label>
+                            <select
+                                value={conflictPolicy}
+                                onChange={e => setConflictPolicy(e.target.value as any)}
+                                className="w-full h-9 rounded-sm border border-border bg-black/30 px-2 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
+                            >
+                                <option value="skip">SKIP</option>
+                                <option value="queue">QUEUE</option>
+                                <option value="cancel">CANCEL PREVIOUS</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    {targetType === 'pipeline' && (
+                        <div className="space-y-1.5">
+                            <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Pipeline *</Label>
+                            <select
+                                value={pipelineId}
+                                onChange={e => setPipelineId(e.target.value)}
+                                className="w-full h-9 rounded-sm border border-border bg-black/30 px-2 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
+                            >
+                                <option value="">Выбери pipeline...</option>
+                                {pipelines.map(p => (
+                                    <option key={p.id} value={p.id}>{p.name} (v{p.version})</option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
+                    {targetType === 'script' && (
+                        <div className="space-y-1.5">
+                            <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Скрипт *</Label>
+                            <select
+                                value={scriptId}
+                                onChange={e => setScriptId(e.target.value)}
+                                className="w-full h-9 rounded-sm border border-border bg-black/30 px-2 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
+                            >
+                                <option value="">Выбери скрипт...</option>
+                                {scripts.filter(s => !s.is_archived).map(s => (
+                                    <option key={s.id} value={s.id}>
+                                        {s.name} ({s.node_count} нод)
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
+                </div>
+
+                <DialogFooter className="mt-4 pt-4 border-t border-border">
+                    <Button variant="outline" onClick={() => onOpenChange(false)} className="font-mono text-xs">
+                        Отмена
+                    </Button>
+                    <Button
+                        onClick={() => updateMut.mutate()}
+                        disabled={!canSubmit || updateMut.isPending}
+                        className="font-mono text-xs"
+                    >
+                        {updateMut.isPending && <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />}
+                        Сохранить изменения
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
+
+// ============================================================================
 //  ДИАЛОГ: СОЗДАНИЕ РАСПИСАНИЯ
 // ============================================================================
 
@@ -1630,7 +1942,7 @@ function CreateScheduleDialog({ open, onOpenChange, pipelines }: { open: boolean
     const [targetType, setTargetType] = useState<'script' | 'pipeline'>('pipeline');
     const [pipelineId, setPipelineId] = useState('');
     const [scriptId, setScriptId] = useState('');
-    const [conflictPolicy, setConflictPolicy] = useState<'skip' | 'queue' | 'cancel_previous'>('skip');
+    const [conflictPolicy, setConflictPolicy] = useState<'skip' | 'queue' | 'cancel'>('skip');
     const [timezone, setTimezone] = useState('UTC');
     const [targetDeviceIds, setTargetDeviceIds] = useState<string[]>([]);
 
@@ -1797,7 +2109,7 @@ function CreateScheduleDialog({ open, onOpenChange, pipelines }: { open: boolean
                             >
                                 <option value="skip">SKIP</option>
                                 <option value="queue">QUEUE</option>
-                                <option value="cancel_previous">CANCEL PREVIOUS</option>
+                                <option value="cancel">CANCEL PREVIOUS</option>
                             </select>
                         </div>
                     </div>
