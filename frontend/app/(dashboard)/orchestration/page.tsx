@@ -918,6 +918,8 @@ function CreatePipelineButton() {
     const [globalTimeout, setGlobalTimeout] = useState(86400000);
     const [maxRetries, setMaxRetries] = useState(0);
     const [steps, setSteps] = useState<StepDraft[]>([emptyStep(0)]);
+    const [targetDeviceIds, setTargetDeviceIds] = useState<string[]>([]);
+    const [showDeviceSelector, setShowDeviceSelector] = useState(false);
 
     const resetForm = useCallback(() => {
         setName('');
@@ -926,6 +928,8 @@ function CreatePipelineButton() {
         setGlobalTimeout(86400000);
         setMaxRetries(0);
         setSteps([emptyStep(0)]);
+        setTargetDeviceIds([]);
+        setShowDeviceSelector(false);
     }, []);
 
     const createMut = useMutation({
@@ -951,9 +955,31 @@ function CreatePipelineButton() {
             const { data } = await api.post('/pipelines', payload);
             return data;
         },
-        onSuccess: () => {
+        onSuccess: async (pipeline: any) => {
             queryClient.invalidateQueries({ queryKey: ['pipelines'] });
-            toast.success('Pipeline создан');
+            // Если выбраны устройства — сразу batch-запуск
+            if (targetDeviceIds.length > 0 && pipeline?.id) {
+                try {
+                    if (targetDeviceIds.length === 1) {
+                        await api.post(`/pipelines/${pipeline.id}/run`, {
+                            device_id: targetDeviceIds[0],
+                            input_params: {},
+                        });
+                    } else {
+                        await api.post(`/pipelines/${pipeline.id}/run-batch`, {
+                            device_ids: targetDeviceIds,
+                            input_params: {},
+                        });
+                    }
+                    queryClient.invalidateQueries({ queryKey: ['pipeline-runs'] });
+                    toast.success(`Pipeline создан и запущен на ${targetDeviceIds.length} устройствах`);
+                } catch (err: any) {
+                    toast.success('Pipeline создан');
+                    toast.error('Не удалось запустить: ' + (err?.response?.data?.detail || 'ошибка'));
+                }
+            } else {
+                toast.success('Pipeline создан');
+            }
             resetForm();
             setOpen(false);
         },
@@ -1203,14 +1229,43 @@ function CreatePipelineButton() {
                         Отмена
                     </Button>
                     <Button
-                        onClick={() => createMut.mutate()}
+                        onClick={() => {
+                            setShowDeviceSelector(false);
+                            createMut.mutate();
+                        }}
                         disabled={!canSubmit || createMut.isPending}
                         className="font-mono text-xs"
                     >
                         {createMut.isPending && <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />}
                         Создать Pipeline
                     </Button>
+                    <Button
+                        variant={showDeviceSelector ? 'default' : 'outline'}
+                        onClick={() => {
+                            if (showDeviceSelector && targetDeviceIds.length > 0) {
+                                createMut.mutate();
+                            } else {
+                                setShowDeviceSelector(!showDeviceSelector);
+                            }
+                        }}
+                        disabled={(!canSubmit || createMut.isPending) || (showDeviceSelector && targetDeviceIds.length === 0)}
+                        className="font-mono text-xs bg-success hover:bg-success/90 text-success-foreground"
+                    >
+                        {createMut.isPending && <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />}
+                        <Play className="w-3.5 h-3.5 mr-1.5" />
+                        {showDeviceSelector
+                            ? `Создать и запустить (${targetDeviceIds.length})`
+                            : 'Создать и запустить'
+                        }
+                    </Button>
                 </DialogFooter>
+
+                {showDeviceSelector && (
+                    <div className="mt-3 pt-3 border-t border-border">
+                        <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground mb-2 block">Целевые устройства</Label>
+                        <DeviceSelector value={targetDeviceIds} onChange={setTargetDeviceIds} />
+                    </div>
+                )}
             </DialogContent>
         </Dialog>
         </>

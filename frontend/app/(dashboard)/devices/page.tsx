@@ -1,11 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { RowSelectionState } from '@tanstack/react-table';
 import { useDevices, useBulkAction, useDeleteDevice, useUpdateDevice } from '@/lib/hooks/useDevices';
 import { useGroups, useMoveDevices } from '@/lib/hooks/useGroups';
 import { useLocations, useAssignDevicesToLocation, useRemoveDevicesFromLocation } from '@/lib/hooks/useLocations';
-import { FleetMatrix } from '@/src/features/devices/FleetMatrix';
+import { FleetMatrix, type DeviceAction } from '@/src/features/devices/FleetMatrix';
 import { MultiStreamGrid } from '@/src/features/devices/MultiStreamGrid';
 import { Button } from '@/src/shared/ui/button';
 import { Input } from '@/components/ui/input';
@@ -53,6 +53,33 @@ export default function DevicesPage() {
   const assignToLocation = useAssignDevicesToLocation();
 
   const selectedIds = Object.keys(rowSelection).filter(Boolean);
+
+  // Обработчик действий из контекстного меню FleetMatrix (для одного устройства)
+  const handleDeviceAction = useCallback((deviceId: string, action: DeviceAction) => {
+    const device = data?.items.find(d => d.id === deviceId);
+    if (!device) return;
+
+    switch (action) {
+      case 'rename':
+        setRenameDialog({ open: true, deviceId: device.id, currentName: device.name });
+        setNewName(device.name);
+        break;
+      case 'assign_group':
+        // Выбираем только одно устройство и открываем диалог
+        setRowSelection({ [deviceId]: true });
+        setAssignGroupDialog(true);
+        break;
+      case 'assign_location':
+        setRowSelection({ [deviceId]: true });
+        setAssignLocationDialog(true);
+        break;
+      case 'delete':
+        if (confirm(`Удалить устройство "${device.name}"? Это действие необратимо.`)) {
+          deleteDevice.mutate(deviceId);
+        }
+        break;
+    }
+  }, [data?.items, deleteDevice]);
 
   const handleBulkReboot = () => {
     bulkMutation.mutate({ device_ids: selectedIds, action: 'reboot' });
@@ -204,6 +231,7 @@ export default function DevicesPage() {
             isLoading={isLoading}
             rowSelection={rowSelection}
             onRowSelectionChange={setRowSelection}
+            onDeviceAction={handleDeviceAction}
           />
         ) : (
           <MultiStreamGrid
