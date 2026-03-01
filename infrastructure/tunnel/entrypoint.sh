@@ -1,7 +1,6 @@
 #!/bin/bash
-# entrypoint.sh — запуск autossh туннеля к Serveo
-# Перезапускается автоматически при разрыве. restart: always в compose держит
-# контейнер живым даже если Serveo временно недоступен.
+# entrypoint.sh — SSH туннель к Serveo с автопереподключением
+# restart: always в compose держит контейнер живым
 
 set -e
 
@@ -9,49 +8,43 @@ SUBDOMAIN="${TUNNEL_SUBDOMAIN:-sphere}"
 LOCAL_HOST="${TUNNEL_LOCAL_HOST:-nginx}"
 LOCAL_PORT="${TUNNEL_LOCAL_PORT:-80}"
 REMOTE_HOST="${TUNNEL_REMOTE_HOST:-serveo.net}"
-REMOTE_PORT="${TUNNEL_REMOTE_PORT:-443}"
 
 echo "================================================"
 echo " Sphere Platform — SSH Tunnel Service"
-echo " Subdomain : ${SUBDOMAIN}.serveousercontent.com"
 echo " Forward   : ${SUBDOMAIN}:80 -> ${LOCAL_HOST}:${LOCAL_PORT}"
 echo " Remote    : ${REMOTE_HOST}"
 echo "================================================"
 
-# Загружаем приватный ключ из base64-переменной окружения (если задан)
-if [ -n "${SSH_PRIVATE_KEY}" ]; then
-    echo "Загружаю SSH ключ из переменной окружения..."
-    echo "${SSH_PRIVATE_KEY}" | base64 -d > /tmp/id_rsa_decoded
-    cp /tmp/id_rsa_decoded /root/.ssh/id_rsa
-    chmod 600 /root/.ssh/id_rsa
-    rm /tmp/id_rsa_decoded
-fi
-
-# Добавляем serveo.net в known_hosts чтобы не было интерактивного подтверждения
+# Добавляем serveo.net в known_hosts
 ssh-keyscan -T 10 "${REMOTE_HOST}" >> /root/.ssh/known_hosts 2>/dev/null || true
 
-# Если ключ смонтирован как read-only — копируем в tmp с правильными правами
-if [ -f /root/.ssh/id_rsa ]; then
-    cp /root/.ssh/id_rsa /tmp/id_rsa_work
-    chmod 600 /tmp/id_rsa_work
-    SSH_KEY_FILE=/tmp/id_rsa_work
+# Находим SSH ключ (ed25519 приоритетнее rsa)
+if [ -f /root/.ssh/id_ed25519 ]; then
+    cp /root/.ssh/id_ed25519 /tmp/ssh_key
+elif [ -f /root/.ssh/id_rsa ]; then
+    cp /root/.ssh/id_rsa /tmp/ssh_key
 else
-    echo "ОШИБКА: SSH ключ не найден (/root/.ssh/id_rsa)."
-    echo "Сгенерируй ключ командой: make tunnel-keygen"
+    echo "ОШИБКА: SSH ключ не найден."
     exit 1
 fi
+chmod 600 /tmp/ssh_key
 
-echo "Запускаю autossh туннель..."
+echo "Запускаю SSH туннель..."
 
-# AUTOSSH_POLL — интервал проверки соединения (секунды)
-# -M 0 — отключить monitoring port (autossh использует ServerAlive* вместо)
-exec autossh -M 0 -N \
-    -i /tmp/id_rsa_work \
-    -o "ServerAliveInterval=30" \
-    -o "ServerAliveCountMax=3" \
-    -o "ExitOnForwardFailure=yes" \
-    -o "StrictHostKeyChecking=no" \
-    -o "BatchMode=yes" \
-    -o "ConnectTimeout=15" \
-    -R "${SUBDOMAIN}:80:${LOCAL_HOST}:${LOCAL_PORT}" \
-    "${REMOTE_HOST}"
+while true; do
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] Подключаюсь к ${REMOTE_HOST}..."
+    ssh -N \
+        -i /tmp/ssh_key \
+        -o "ServerAliveInterval=30" \
+        -o "ServerAliveCountMax=3" \
+        -o "ExitOnForwardFailure=yes" \
+        -o "StrictHostKeyChecking=no" \
+        -o "ConnectTimeout=15" \
+        -R "${SUBDOMAIN}:80:${LOCAL_HOST}:${LOCAL_PORT}" \
+        "${REMOTE_HOST}"
+    EXIT_CODE=$?
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] SSH завершился с кодом ${EXIT_CODE}. Переподключение через 5 сек..."
+    sleep 5
+done
+    sleep 5
+done
