@@ -271,21 +271,30 @@ async def handle_agent_binary(
         count = _frame_counters.get(device_id, 0) + 1
         _frame_counters[device_id] = count
 
-        # Логируем первый фрейм и далее каждый 100-й
-        if count == 1:
+        # FIX-LOGGING: логируем КАЖДЫЙ фрейм (первые 50) для debug Cloudflare tunnel issues.
+        # После отладки — вернуть порог на 100.
+        has_viewer = bridge.is_streaming(device_id)
+        if count <= 50 or count % 100 == 0:
+            # Определяем NAL type из payload (после 14-byte Sphere header)
+            nal_info = "unknown"
+            if len(data) > 18:  # 14 header + 4 start code
+                # Ищем NAL type после Annex-B start code в payload
+                payload = data[14:] if len(data) > 14 else data
+                if len(payload) >= 5 and payload[0:4] == b"\x00\x00\x00\x01":
+                    nal_type = payload[4] & 0x1F
+                    nal_names = {1: "P-frame", 5: "IDR", 6: "SEI", 7: "SPS", 8: "PPS"}
+                    nal_info = nal_names.get(nal_type, f"NAL-{nal_type}")
+                elif len(payload) >= 4 and payload[0:3] == b"\x00\x00\x01":
+                    nal_type = payload[3] & 0x1F
+                    nal_names = {1: "P-frame", 5: "IDR", 6: "SEI", 7: "SPS", 8: "PPS"}
+                    nal_info = nal_names.get(nal_type, f"NAL-{nal_type}")
             logger.info(
-                "Binary frame: ПЕРВЫЙ фрейм от агента",
+                "Binary frame from agent",
                 device_id=device_id,
+                frame_num=count,
                 size_bytes=len(data),
-                has_viewer=bridge.is_streaming(device_id),
-            )
-        elif count % 100 == 0:
-            logger.debug(
-                "Binary frames stats",
-                device_id=device_id,
-                total_frames=count,
-                size_bytes=len(data),
-                has_viewer=bridge.is_streaming(device_id),
+                nal_type=nal_info,
+                has_viewer=has_viewer,
             )
 
         await bridge.handle_agent_frame(device_id, data)
@@ -388,6 +397,10 @@ async def android_agent_ws(
     # DB session is now CLOSED — safe to enter long-lived WS loop
 
     session_id = await manager.connect(ws, device_id, "android", org_id_str)
+
+    # Сброс счётчика фреймов при новом подключении — для корректного логирования
+    _frame_counters[device_id] = 0
+
     await status_cache.set_status(device_id, DeviceLiveStatus(
         device_id=device_id,
         status="online",
@@ -435,15 +448,36 @@ async def android_agent_ws(
     except Exception as e:
         logger.debug("Offline queue flush skipped", device_id=device_id, error=str(e))
 
+    # FIX-RECONNECT: Если viewer ожидает фреймы — возобновить стрим для переподключённого агента.
+    # Без этого при потере и восстановлении WS агента viewer получает 0 фреймов (чёрный экран).
+    try:
+        from backend.websocket.stream_bridge import get_stream_bridge
+        bridge = get_stream_bridge()
+        if bridge and bridge.is_streaming(device_id):
+            await bridge.resume_stream_for_device(device_id)
+            logger.info("android_ws: stream resumed for reconnected agent", device_id=device_id)
+    except Exception as e:
+        logger.debug("Stream resume skipped", device_id=device_id, error=str(e))
+
+    # FIX-CLOUDFLARE: Lightweight keepalive ping каждые 10 секунд.
+    # Cloudflare Quick Tunnel дропает WebSocket при отсутствии upstream трафика.
+    # Heartbeat (30s) слишком редкий. Этот ping — просто empty JSON для поддержания TCP.
+    async def _agent_keepalive_loop() -> None:
+        try:
+            while True:
+                await asyncio.sleep(10)
+                try:
+                    await ws.send_json({"type": "noop"})
+                except Exception:
+                    break
+        except asyncio.CancelledError:
+            pass
+
+    keepalive_task = asyncio.create_task(_agent_keepalive_loop())
+
     try:
         while True:
             data = await ws.receive()
-            # Graceful disconnect detection — предотвращает race condition
-            # когда ws.receive() возвращает disconnect frame вместо данных
-            ws_type = data.get("type", "")
-            if ws_type == "websocket.disconnect":
-                logger.info("WS graceful disconnect received", device_id=device_id)
-                break
             if "text" in data:
                 try:
                     msg = json.loads(data["text"])
@@ -483,35 +517,44 @@ async def android_agent_ws(
                 await handle_agent_binary(device_id, data["bytes"], manager)
     except WebSocketDisconnect:
         pass
-    except asyncio.CancelledError:
-        logger.info("WS receive loop cancelled", device_id=device_id)
     except Exception as e:
         logger.warning("WS receive loop error", device_id=device_id, error=str(e))
     finally:
+        keepalive_task.cancel()
         await heartbeat.stop()
-        await manager.disconnect(device_id)
-        await status_cache.mark_offline(device_id)
+        # FIX-SESSION: Передаём session_id — disconnect() удалит запись ТОЛЬКО если
+        # текущая сессия совпадает. Если агент уже переподключился (новая сессия),
+        # старый handler НЕ удалит новую сессию из реестра.
+        removed = await manager.disconnect(device_id, session_id=session_id)
+        if removed:
+            await status_cache.mark_offline(device_id)
 
-        # Отписать PubSub router от канала устройства
-        try:
-            from backend.websocket.pubsub_router import get_pubsub_router
-            pubsub_router = get_pubsub_router()
-            if pubsub_router:
-                await pubsub_router.unsubscribe_device(device_id)
-        except Exception:
-            pass
+            # Отписать PubSub router от канала устройства
+            try:
+                from backend.websocket.pubsub_router import get_pubsub_router
+                pubsub_router = get_pubsub_router()
+                if pubsub_router:
+                    await pubsub_router.unsubscribe_device(device_id)
+            except Exception:
+                pass
 
-        # Опубликовать device.offline событие
-        try:
-            from backend.schemas.events import EventType, FleetEvent
-            from backend.websocket.event_publisher import get_event_publisher
-            publisher = get_event_publisher()
-            if publisher:
-                await publisher.emit(FleetEvent(
-                    event_type=EventType.DEVICE_OFFLINE,
-                    device_id=device_id,
-                org_id=org_id_str,
-                    payload={"status": "offline"},
-                ))
-        except Exception:
-            pass
+            # Опубликовать device.offline событие
+            try:
+                from backend.schemas.events import EventType, FleetEvent
+                from backend.websocket.event_publisher import get_event_publisher
+                publisher = get_event_publisher()
+                if publisher:
+                    await publisher.emit(FleetEvent(
+                        event_type=EventType.DEVICE_OFFLINE,
+                        device_id=device_id,
+                        org_id=org_id_str,
+                        payload={"status": "offline"},
+                    ))
+            except Exception:
+                pass
+        else:
+            logger.debug(
+                "android_ws: cleanup skipped — сессия уже заменена новой",
+                device_id=device_id,
+                session_id=session_id,
+            )
