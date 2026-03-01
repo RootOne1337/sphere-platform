@@ -1,6 +1,6 @@
 # Architecture
 
-> **Sphere Platform v4.2** — System Design Reference
+> **Sphere Platform v4.5** — System Design Reference
 
 ---
 
@@ -347,6 +347,24 @@ The `ConnectionManager` lives in-process. For multi-instance deployments, the
 - Frame drop policy: streaming frames are marked `DROPPABLE` — skipped if backlogged
 - Heartbeat interval: 30s ping, 60s max silence before disconnect
 
+### Non-Blocking Disconnect (v4.5)
+
+- `send_to_device()` / `send_bytes_to_device()` no longer call `disconnect()` on send failure —
+  they log the error and return `False`, preventing cascading disconnects
+- `ws.close()` wrapped in `asyncio.wait_for(timeout=3s)` — prevents hang on broken TCP
+- Heartbeat ping failure does NOT kill the heartbeat loop — waits for next cycle
+- Only heartbeat timeout (missing pong) triggers proper WS close
+
+### Stale Task Detection (v4.5)
+
+Task idempotency guard (`TaskService.create_task`) prevents duplicate QUEUED/RUNNING/ASSIGNED
+tasks per device+script. A task is considered **stale** when:
+1. **Device is offline** (not in Redis or status ≠ online/busy) — agent disconnected, task can never complete
+2. **Absolute safeguard: 24 hours** — protects against agent bugs (legitimate scripts may run for hours)
+
+Stale tasks are automatically moved to `TIMEOUT` status with a descriptive reason.
+Online devices with active tasks are never interrupted.
+
 ---
 
 ## 7. VPN Architecture
@@ -420,12 +438,24 @@ WebSocket binary frame
                               └──► canvas.drawImage()
 ```
 
-### Backend Relay
+### Backend Relay (StreamBridge)
 
-The backend acts as a relay only:
-- Backend receives binary WS from agent → PUBLISH to Redis `stream:{id}` channel
-- Frontend subscribes via WS → backend reads from Redis → forwards binary
-- No transcoding, no buffering — zero-copy relay
+The backend acts as a relay with SPS/PPS/IDR caching:
+- Backend receives binary WS from agent → `StreamBridge` parses NAL unit types
+- SPS (Sequence Parameter Set) and PPS (Picture Parameter Set) NAL units are cached
+- Last IDR (keyframe) is cached for instant viewer initialization
+- When a new viewer connects: cached SPS → PPS → IDR sent immediately → instant playback
+- Subsequent frames forwarded as zero-copy relay (no transcoding, no buffering)
+- Viewer WebSocket ping every 10s to prevent idle timeout on reverse-proxy
+
+### Keepalive Strategy
+
+| Component | Interval | Purpose |
+|-----------|----------|---------|
+| Agent → Backend | Heartbeat 30s ping/pong | Detect agent disconnect |
+| Agent → Backend | Noop frame 10s | Prevent reverse-proxy idle timeout |
+| Backend → Viewer | WS ping 10s | Keep viewer connection alive |
+| Backend | `asyncio.wait_for(ws.close(), 3s)` | Non-blocking disconnect |
 
 ---
 
@@ -563,10 +593,31 @@ Host machine (8+ GB RAM, 4+ cores)
         ├── n8n            (port 5678, internal)
         ├── postgres       (port 5432, dev only)
         ├── redis          (port 6379, dev only)
+        ├── tunnel         (Serveo SSH, optional)
         ├── prometheus     (port 9090, internal)
         ├── grafana        (port 3001, internal)
         └── alertmanager   (port 9093, internal)
 ```
+
+### Serveo SSH Tunnel (v4.5)
+
+Для разработки без статического IP используется Serveo SSH tunnel:
+
+```
+Internet                              Docker Host
+   │                                     │
+   │  HTTPS / WSS                        │
+   ▼                                     │
+serveo.net ──SSH reverse tunnel──► nginx:80 ──► backend:8000
+   │                                            frontend:3000
+   │
+   └── sphere.serveousercontent.com
+```
+
+- **Протокол:** SSH -N (no shell) с ServerAliveInterval=30
+- **Reconnect:** бесконечный цикл с 5с задержкой между попытками
+- **Healthcheck:** `pgrep ssh` для Docker оркестратора
+- **Причина:** Cloudflare Quick Tunnel дропал idle WebSocket через 5-50с
 
 ### Multi-Host (Enterprise Production)
 

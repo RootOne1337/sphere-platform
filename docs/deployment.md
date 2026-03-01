@@ -1,6 +1,6 @@
 # Deployment Guide
 
-> **Sphere Platform v4.0** — Production Deployment Reference
+> **Sphere Platform v4.5** — Production Deployment Reference
 
 ---
 
@@ -489,6 +489,67 @@ docker compose exec redis redis-cli PUBSUB CHANNELS "*"
 
 # Check backend WS logs
 docker compose logs backend | grep "websocket"
+```
+
+### Tunnel Setup (Serveo SSH)
+
+Serveo используется как SSH tunnel для проброса HTTPS/WSS трафика без
+статического IP-адреса. Заменяет Cloudflare Quick Tunnel, который дропал
+idle WebSocket через 5-50 секунд.
+
+```bash
+# 1. Сгенерировать SSH-ключ
+mkdir -p infrastructure/tunnel/keys
+ssh-keygen -t ed25519 -f infrastructure/tunnel/keys/id_ed25519 -N ""
+
+# 2. Зарегистрировать ключ для кастомного субдомена
+# Перейти на https://console.serveo.net → Add SSH Key → ваш публичный ключ
+
+# 3. Запустить tunnel
+docker compose -f docker-compose.tunnel.yml up -d
+
+# 4. Проверить
+curl https://sphere.serveousercontent.com/api/v1/health
+# → {"status":"ok","version":"4.5.0"}
+```
+
+**Переменные окружения (.env):**
+```bash
+SERVER_PUBLIC_URL=https://sphere.serveousercontent.com
+CORS_EXTRA_ORIGINS=https://sphere.serveousercontent.com
+```
+
+**Agent config (sphere-agent-config repo):**
+```json
+{ "server_url": "https://sphere.serveousercontent.com" }
+```
+
+### H264 стрим не работает (чёрный экран)
+
+```bash
+# Проверить что SPS/PPS/IDR кэш заполнен
+docker compose logs backend | grep "sps_pps_cached\|idr_cached"
+
+# Проверить viewer ping
+docker compose logs backend | grep "viewer.*ping"
+
+# Проверить keepalive noop от агента
+docker compose logs backend | grep "noop\|keepalive"
+```
+
+### Задачи (Tasks) возвращают 409 Conflict
+
+```bash
+# Проверить зависшие задачи
+docker compose exec postgres psql -U sphere sphereplatform \
+  -c "SELECT id, status, device_id, created_at FROM tasks
+      WHERE status IN ('queued', 'running', 'assigned')
+      ORDER BY created_at;"
+
+# Бэкенд автоматически протухает задачи если устройство оффлайн.
+# Для ручной отмены:
+docker compose exec postgres psql -U sphere sphereplatform \
+  -c "UPDATE tasks SET status='failed' WHERE id='<task_id>';"
 ```
 
 ### VPN peer can't connect
