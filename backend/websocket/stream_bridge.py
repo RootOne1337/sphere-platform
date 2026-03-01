@@ -23,6 +23,16 @@ class VideoStreamBridge:
         self._queues: dict[str, VideoStreamQueue] = {}
         self._viewer_sockets: dict[str, WebSocket] = {}
         self._viewer_tasks: dict[str, asyncio.Task] = {}
+        # FIX-RECONNECT: трекинг delayed_stop задач для корректной отмены при быстром reconnect
+        self._delayed_stop_tasks: dict[str, asyncio.Task] = {}
+        # FIX-STOP: pending stop_stream для устройств, где агент был отключён в момент stop
+        self._pending_stops: set[str] = set()
+        # FIX-CACHE: Кэш последних SPS/PPS/IDR фреймов по device_id.
+        # При reconnect viewer'а — немедленная отправка кэшированных фреймов.
+        # Без этого viewer после реконнекта ждёт нового IDR от агента (может не дождаться).
+        self._cached_sps: dict[str, bytes] = {}
+        self._cached_pps: dict[str, bytes] = {}
+        self._cached_idr: dict[str, bytes] = {}
 
     async def register_viewer(
         self,
@@ -31,8 +41,48 @@ class VideoStreamBridge:
         session_id: str,
     ) -> None:
         """Зарегистрировать viewer для получения потока."""
+        # FIX-RECONNECT: Отменить pending delayed_stop — viewer вернулся
+        old_stop = self._delayed_stop_tasks.pop(device_id, None)
+        if old_stop:
+            old_stop.cancel()
+            logger.debug("register_viewer: отменён delayed_stop", device_id=device_id)
+
+        # FIX-STOP: viewer вернулся — убрать из pending stops
+        self._pending_stops.discard(device_id)
+
+        # FIX-RECONNECT: Если viewer уже зарегистрирован — очистить старую сессию
+        old_task = self._viewer_tasks.pop(device_id, None)
+        if old_task:
+            old_task.cancel()
+            logger.debug("register_viewer: отменён старый viewer_send_loop", device_id=device_id)
+        self._queues.pop(device_id, None)
+
         self._queues[device_id] = VideoStreamQueue(device_id)
         self._viewer_sockets[device_id] = viewer_ws
+
+        # FIX-CACHE: Немедленно отправить кэшированные SPS→PPS→IDR новому viewer'у.
+        # Это позволяет декодеру сконфигурироваться и показать картинку без ожидания
+        # нового IDR от агента (который может прийти через секунды или не прийти вовсе
+        # из-за реконнектов Cloudflare tunnel).
+        cached_frames_sent = 0
+        for frame_key, label in [
+            ("sps", "SPS"),
+            ("pps", "PPS"),
+            ("idr", "IDR"),
+        ]:
+            cached = getattr(self, f"_cached_{frame_key}").get(device_id)
+            if cached:
+                try:
+                    await viewer_ws.send_bytes(cached)
+                    cached_frames_sent += 1
+                except Exception:
+                    break
+        if cached_frames_sent:
+            logger.info(
+                "register_viewer: отправлен кэш фреймов",
+                device_id=device_id,
+                cached_frames_sent=cached_frames_sent,
+            )
 
         # FIX-3.1: Спавним отдельную Task для каждого viewer.
         # Эта Task в цикле читает из очереди и шлёт фреймы — медленный viewer
@@ -67,16 +117,54 @@ class VideoStreamBridge:
             await asyncio.sleep(2.0)
             # Если viewer переподключился — не останавливаем стрим
             if device_id not in self._viewer_sockets:
-                await self.manager.send_to_device(device_id, {"type": "stop_stream"})
-                logger.info("Stream stopped (no reconnect in 2s)", device_id=device_id)
+                sent = await self.manager.send_to_device(device_id, {"type": "stop_stream"})
+                if sent:
+                    logger.info("Stream stopped (no reconnect in 2s)", device_id=device_id)
+                    self._pending_stops.discard(device_id)
+                else:
+                    # FIX-STOP: агент не подключён — запомнить pending stop.
+                    # При reconnect агента stop_stream будет доставлен.
+                    self._pending_stops.add(device_id)
+                    logger.warning(
+                        "stop_stream не доставлен (агент offline) — добавлен в pending",
+                        device_id=device_id,
+                    )
+            # Очистить себя из трекинга
+            self._delayed_stop_tasks.pop(device_id, None)
 
-        asyncio.create_task(_delayed_stop())
+        # FIX-RECONNECT: Отменить предыдущий delayed_stop если есть
+        old_stop = self._delayed_stop_tasks.pop(device_id, None)
+        if old_stop:
+            old_stop.cancel()
+
+        stop_task = asyncio.create_task(_delayed_stop())
+        self._delayed_stop_tasks[device_id] = stop_task
 
     async def handle_agent_frame(self, device_id: str, frame_data: bytes) -> None:
         """
-        Принять фрейм от агента. ТОЛЬКО кладёт в очередь — НЕ шлёт напрямую!
+        Принять фрейм от агента. Кэширует SPS/PPS/IDR и кладёт в очередь.
         FIX-3.1: Прямая отправка блокировала цикл поллинга агента.
+        FIX-CACHE: Кэширование ключевых NAL units для instant replay при reconnect viewer'а.
         """
+        # FIX-CACHE: Определяем NAL type из payload (после 14-byte Sphere header).
+        # Кэшируем SPS (7), PPS (8), IDR (5) — они нужны viewer'у для декодирования.
+        if len(frame_data) > 18:
+            payload = frame_data[14:]
+            # Пропускаем Annex-B start code
+            nal_byte_offset = 0
+            if len(payload) >= 5 and payload[0:4] == b"\x00\x00\x00\x01":
+                nal_byte_offset = 4
+            elif len(payload) >= 4 and payload[0:3] == b"\x00\x00\x01":
+                nal_byte_offset = 3
+            if nal_byte_offset < len(payload):
+                nal_type = payload[nal_byte_offset] & 0x1F
+                if nal_type == 7:
+                    self._cached_sps[device_id] = frame_data
+                elif nal_type == 8:
+                    self._cached_pps[device_id] = frame_data
+                elif nal_type == 5:
+                    self._cached_idr[device_id] = frame_data
+
         queue = self._queues.get(device_id)
         if not queue:
             return  # Нет viewer'а
@@ -135,6 +223,33 @@ class VideoStreamBridge:
                 frames_sent=frames_sent,
             )
             pass  # Нормальное завершение при unregister
+
+    async def resume_stream_for_device(self, device_id: str) -> None:
+        """FIX-RECONNECT: Вызывается при reconnect агента.
+
+        Если viewer активен — повторно отправляет start_stream и viewer_connected,
+        чтобы агент возобновил MediaProjection → H264Encoder → бинарные фреймы.
+        Без этого при потере и восстановлении WS агента viewer получает 0 фреймов.
+        """
+        # FIX-STOP: Если есть pending stop — доставляем его вместо возобновления стрима
+        if device_id in self._pending_stops:
+            self._pending_stops.discard(device_id)
+            await self.manager.send_to_device(device_id, {"type": "stop_stream"})
+            logger.info("Pending stop_stream delivered on reconnect", device_id=device_id)
+            return
+
+        if device_id not in self._viewer_sockets:
+            return
+
+        await self.manager.send_to_device(device_id, {
+            "type": "start_stream",
+            "quality": "720p",
+            "bitrate": 2_000_000,
+        })
+        await self.manager.send_to_device(device_id, {
+            "type": "viewer_connected",
+        })
+        logger.info("Stream resumed for reconnected agent", device_id=device_id)
 
     def is_streaming(self, device_id: str) -> bool:
         return device_id in self._queues
