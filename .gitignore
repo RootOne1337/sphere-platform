@@ -18,6 +18,7 @@ build/
 # Android
 android/.gradle/
 android/app/build/
+android/app/bin/
 android/*.keystore
 android/local.properties
 
@@ -73,10 +74,17 @@ install_result.txt
 dag_dump*.json
 dag_pretty.json
 dag_dump_latest.json
+dag_payload.json
 screen*.png
 task_payload.json
 task_result*.json
 ui_dump*.xml
+*_dev.log
+*_dev2.log
+*.log
+gunicorn.ctl
+nginx_diff.txt
+tunnel_debug.txt
 
 # Ad-hoc debug scripts (временные)
 fix_dag*.py
