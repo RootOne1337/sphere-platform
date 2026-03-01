@@ -78,6 +78,11 @@ dag_payload.json
 screen*.png
 task_payload.json
 task_result*.json
+
+# Deployment artifacts (генерируются скриптами развёртывания)
+.admin-credentials
+.deploy.log
+backups/
 ui_dump*.xml
 *_dev.log
 *_dev2.log

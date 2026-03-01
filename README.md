@@ -21,7 +21,7 @@
 
 **Управляй тысячами Android-устройств. В реальном времени. Без компромиссов.**
 
-[Документация](docs/) · [Web UI Guide](docs/web-ui-guide.md) · [API Reference](docs/api-reference.md) · [Deployment](docs/deployment.md) · [Changelog](CHANGELOG.md) · [Contributing](CONTRIBUTING.md)
+[Документация](docs/) · [Web UI Guide](docs/web-ui-guide.md) · [API Reference](docs/api-reference.md) · [**Full Deploy Guide**](FULL-DEPLOYMENT-GUIDE.md) · [Deployment](docs/deployment.md) · [Changelog](CHANGELOG.md) · [Contributing](CONTRIBUTING.md)
 
 ---
 
@@ -522,6 +522,7 @@ graph LR
 |----------|----------|
 | 📐 [Architecture](docs/architecture.md) | Дизайн системы, потоки данных, компонентные диаграммы |
 | 📖 [API Reference](docs/api-reference.md) | REST-эндпоинты, схемы запросов/ответов |
+| 🚀 [**Full Deploy Guide**](FULL-DEPLOYMENT-GUIDE.md) | **Полный гайд развёртывания — от нуля до продакшна за 15 минут** |
 | 🚀 [Deployment Guide](docs/deployment.md) | Docker, продакшн, staging, tunnel setup |
 | ⚙️ [Configuration](docs/configuration.md) | Справочник переменных окружения |
 | 🔒 [Security](docs/security.md) | Auth, RBAC, шифрование, модель угроз |
