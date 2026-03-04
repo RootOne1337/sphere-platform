@@ -17,6 +17,13 @@ activityKtx = "1.9.0"
 lifecycleRuntime = "2.8.1"
 timber = "5.0.1"
 luaj = "3.0.1"
+# Testing
+junit = "4.13.2"
+mockk = "1.13.10"
+coroutinesTest = "1.8.0"
+mockwebserver = "4.12.0"
+robolectric = "4.12.2"
+turbine = "1.1.0"
 
 [libraries]
 # AndroidX Core
@@ -57,6 +64,14 @@ core-splashscreen = { group = "androidx.core", name = "core-splashscreen", versi
 
 # Lua Engine (LuaJ — чистая Java реализация Lua 5.2, без native code)
 luaj = { group = "org.luaj", name = "luaj-jse", version.ref = "luaj" }
+
+# Testing
+junit = { group = "junit", name = "junit", version.ref = "junit" }
+mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
+kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutinesTest" }
+mockwebserver = { group = "com.squareup.okhttp3", name = "mockwebserver", version.ref = "mockwebserver" }
+robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
+turbine = { group = "app.cash.turbine", name = "turbine", version.ref = "turbine" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

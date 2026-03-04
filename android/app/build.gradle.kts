@@ -132,7 +132,6 @@ dependencies {
     // Hilt DI
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
-    implementation(libs.hilt.navigation.compose)
 
     // WorkManager + Hilt integration
     implementation(libs.work.runtime.ktx)
@@ -157,4 +156,12 @@ dependencies {
 
     // Lua Engine
     implementation(libs.luaj)
+
+    // ── Testing ────────────────────────────────────────────────────────────
+    testImplementation(libs.junit)
+    testImplementation(libs.mockk)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.mockwebserver)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.turbine)
 }
