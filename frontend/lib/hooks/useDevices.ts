@@ -91,3 +91,15 @@ export function useDeleteDevice() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['devices'] }),
   });
 }
+
+/** Массовое удаление устройств одним запросом. Бекенд: DELETE /devices/bulk */
+export function useBulkDeleteDevices() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (deviceIds: string[]) => {
+      const { data } = await api.delete('/devices/bulk', { data: { device_ids: deviceIds } });
+      return data as { deleted: number };
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['devices'] }),
+  });
+}

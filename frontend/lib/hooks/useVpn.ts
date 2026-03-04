@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 
+// ── Типы ────────────────────────────────────────────────────────────────────
+
 export interface VpnPeer {
   id: string;
   device_id: string;
@@ -18,17 +20,26 @@ export interface PoolStats {
   stale_handshakes: number;
 }
 
-export function useVpnPeers() {
+export interface VpnHealthResponse {
+  status: string;
+  checks: Record<string, { status: string; detail?: string }>;
+}
+
+// ── Запросы (Query) ─────────────────────────────────────────────────────────
+
+/** Список VPN-пиров с опциональной фильтрацией */
+export function useVpnPeers(params?: { status?: string; device_id?: string }) {
   return useQuery<VpnPeer[]>({
-    queryKey: ['vpn', 'peers'],
+    queryKey: ['vpn', 'peers', params],
     queryFn: async () => {
-      const { data } = await api.get('/vpn/peers');
+      const { data } = await api.get('/vpn/peers', { params });
       return data;
     },
     refetchInterval: 30_000,
   });
 }
 
+/** Статистика пула IP-адресов */
 export function usePoolStats() {
   return useQuery<PoolStats>({
     queryKey: ['vpn', 'pool-stats'],
@@ -40,63 +51,61 @@ export function usePoolStats() {
   });
 }
 
-export function useAssignVpn() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (deviceId: string) => api.post(`/vpn/devices/${deviceId}/assign`),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['vpn'] }),
-  });
-}
-
-export function useRevokeVpn() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (deviceId: string) => api.delete(`/vpn/devices/${deviceId}/revoke`),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['vpn'] }),
-  });
-}
-
-export function useBatchAssign() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (deviceIds: string[]) =>
-      api.post('/vpn/batch/assign', { device_ids: deviceIds }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['vpn'] }),
-  });
-}
-
-export function useBatchRevoke() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (deviceIds: string[]) =>
-      api.post('/vpn/batch/revoke', { device_ids: deviceIds }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['vpn'] }),
-  });
-}
-
-export function useVpnQr(deviceId: string, enabled: boolean) {
-  return useQuery({
-    queryKey: ['vpn', 'qr', deviceId],
-    queryFn: async () => {
-      // FIX: правильный URL /vpn/devices/{id}/config/qr
-      const { data } = await api.get(`/vpn/devices/${deviceId}/config/qr`);
-      return data as { qr_code: string }; // base64 PNG
-    },
-    enabled,
-    staleTime: Infinity, // QR не меняется без ротации
-  });
-}
-
+/** Здоровье VPN-подсистемы */
 export function useVpnHealth() {
-  return useQuery({
+  return useQuery<VpnHealthResponse>({
     queryKey: ['vpn', 'health'],
     queryFn: async () => {
       const { data } = await api.get('/vpn/health');
-      return data as {
-        status: string;
-        checks: Record<string, { status: string; detail?: string }>;
-      };
+      return data;
     },
     refetchInterval: 30_000,
+  });
+}
+
+// ── Мутации ─────────────────────────────────────────────────────────────────
+
+/** Назначить VPN-пир устройству. Бекенд: POST /vpn/assign */
+export function useAssignVpn() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (params: { device_id: string; split_tunnel?: boolean }) =>
+      api.post('/vpn/assign', params),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['vpn'] });
+      qc.invalidateQueries({ queryKey: ['devices'] });
+    },
+  });
+}
+
+/** Отозвать VPN-пир у устройства. Бекенд: DELETE /vpn/revoke/{device_id} */
+export function useRevokeVpn() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (deviceId: string) => api.delete(`/vpn/revoke/${deviceId}`),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['vpn'] });
+      qc.invalidateQueries({ queryKey: ['devices'] });
+    },
+  });
+}
+
+/** Массовая ротация VPN-адресов. Бекенд: POST /vpn/rotate */
+export function useVpnRotate() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: { device_ids: string[] }) =>
+      api.post('/vpn/rotate', body),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['vpn'] }),
+  });
+}
+
+/** Управление Kill Switch на устройствах. Бекенд: POST /vpn/killswitch */
+export function useVpnKillSwitch() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: { device_ids: string[]; enabled: boolean }) =>
+      api.post('/vpn/killswitch', body),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['vpn'] }),
   });
 }

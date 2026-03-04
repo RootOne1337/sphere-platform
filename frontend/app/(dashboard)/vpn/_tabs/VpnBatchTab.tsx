@@ -1,15 +1,16 @@
 'use client';
-import { useState } from 'react';
-import { useBatchAssign, useBatchRevoke } from '@/lib/hooks/useVpn';
+import { useState, useCallback } from 'react';
+import { useAssignVpn, useRevokeVpn } from '@/lib/hooks/useVpn';
 import { useDevices } from '@/lib/hooks/useDevices';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 
 export function VpnBatchTab() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [processing, setProcessing] = useState(false);
   const { data } = useDevices({ page_size: 100 });
-  const batchAssign = useBatchAssign();
-  const batchRevoke = useBatchRevoke();
+  const assignVpn = useAssignVpn();
+  const revokeVpn = useRevokeVpn();
 
   const devices = data?.items ?? [];
 
@@ -22,24 +23,41 @@ export function VpnBatchTab() {
     });
   };
 
-  const selectedArr = Array.from(selected);
+  // Бекенд не имеет batch VPN assign/revoke — выполняем последовательно
+  const handleBatchAssign = useCallback(async () => {
+    setProcessing(true);
+    for (const deviceId of selected) {
+      await assignVpn.mutateAsync({ device_id: deviceId });
+    }
+    setSelected(new Set());
+    setProcessing(false);
+  }, [selected, assignVpn]);
+
+  const handleBatchRevoke = useCallback(async () => {
+    setProcessing(true);
+    for (const deviceId of selected) {
+      await revokeVpn.mutateAsync(deviceId);
+    }
+    setSelected(new Set());
+    setProcessing(false);
+  }, [selected, revokeVpn]);
 
   return (
     <div className="mt-4 space-y-4">
       <div className="flex gap-2">
         <Button
           variant="outline"
-          disabled={selected.size === 0 || batchAssign.isPending}
-          onClick={() => batchAssign.mutate(selectedArr)}
+          disabled={selected.size === 0 || processing}
+          onClick={handleBatchAssign}
         >
-          Assign VPN ({selected.size})
+          {processing ? 'Processing…' : `Assign VPN (${selected.size})`}
         </Button>
         <Button
           variant="destructive"
-          disabled={selected.size === 0 || batchRevoke.isPending}
-          onClick={() => batchRevoke.mutate(selectedArr)}
+          disabled={selected.size === 0 || processing}
+          onClick={handleBatchRevoke}
         >
-          Revoke VPN ({selected.size})
+          {processing ? 'Processing…' : `Revoke VPN (${selected.size})`}
         </Button>
       </div>
 

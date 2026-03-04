@@ -1,21 +1,11 @@
 'use client';
-import { useState } from 'react';
-import { useVpnPeers, useVpnQr, useRevokeVpn } from '@/lib/hooks/useVpn';
+import { useVpnPeers, useRevokeVpn } from '@/lib/hooks/useVpn';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 
 export function VpnAgentsTab() {
   const { data: peers } = useVpnPeers();
-  const [qrDeviceId, setQrDeviceId] = useState<string | null>(null);
   const revoke = useRevokeVpn();
-
-  const { data: qrData } = useVpnQr(qrDeviceId ?? '', !!qrDeviceId);
 
   return (
     <div className="mt-4 space-y-2">
@@ -29,9 +19,6 @@ export function VpnAgentsTab() {
             <Badge variant={peer.status === 'active' ? 'default' : 'secondary'}>
               {peer.status}
             </Badge>
-            <Button size="sm" variant="outline" onClick={() => setQrDeviceId(peer.device_id)}>
-              QR
-            </Button>
             <Button
               size="sm"
               variant="destructive"
@@ -42,22 +29,6 @@ export function VpnAgentsTab() {
           </div>
         </div>
       ))}
-
-      <Dialog open={!!qrDeviceId} onOpenChange={() => setQrDeviceId(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>WireGuard QR Code</DialogTitle>
-          </DialogHeader>
-          {qrData?.qr_code && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={`data:image/png;base64,${qrData.qr_code}`}
-              alt="WireGuard QR"
-              className="w-64 h-64 mx-auto"
-            />
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

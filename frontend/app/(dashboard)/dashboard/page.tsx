@@ -32,27 +32,8 @@ function useFleetStats() {
   return useQuery<FleetStats>({
     queryKey: ['dashboard', 'fleet'],
     queryFn: async () => {
-      // Fetch all devices (lightweight)
-      const { data } = await api.get('/devices', {
-        params: { per_page: 1 },
-      });
-      const total = data.total ?? 0;
-
-      // Fetch per-status counts in parallel
-      const [onlineRes, offlineRes] = await Promise.all([
-        api.get('/devices', { params: { status: 'online', per_page: 1 } }),
-        api.get('/devices', { params: { status: 'offline', per_page: 1 } }),
-      ]);
-      const online = onlineRes.data.total ?? 0;
-      const offline = offlineRes.data.total ?? 0;
-
-      return {
-        total,
-        online,
-        offline,
-        busy: Math.max(0, total - online - offline),
-        vpn_active: 0,
-      };
+      const { data } = await api.get('/devices/status/fleet');
+      return data;
     },
     refetchInterval: 30_000,
     staleTime: 10_000,

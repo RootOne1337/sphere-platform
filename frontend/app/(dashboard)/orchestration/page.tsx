@@ -945,7 +945,8 @@ function emptyStep(index: number): StepDraft {
 
 function CreatePipelineButton() {
     const queryClient = useQueryClient();
-    const { data: scripts = [] } = useScripts();
+    const { data: scriptsData } = useScripts();
+    const scripts = scriptsData?.items ?? [];
     const [open, setOpen] = useState(false);
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
@@ -1656,7 +1657,8 @@ function EditScheduleDialog({ schedule, open, onOpenChange, pipelines }: {
     pipelines: Pipeline[];
 }) {
     const queryClient = useQueryClient();
-    const { data: scripts = [] } = useScripts();
+    const { data: scriptsData } = useScripts();
+    const scripts = scriptsData?.items ?? [];
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
     const [triggerType, setTriggerType] = useState<'cron' | 'interval' | 'one_shot'>('cron');
@@ -1930,7 +1932,8 @@ function EditScheduleDialog({ schedule, open, onOpenChange, pipelines }: {
 
 function CreateScheduleDialog({ open, onOpenChange, pipelines }: { open: boolean; onOpenChange: (v: boolean) => void; pipelines: Pipeline[] }) {
     const queryClient = useQueryClient();
-    const { data: scripts = [] } = useScripts();
+    const { data: scriptsData } = useScripts();
+    const scripts = scriptsData?.items ?? [];
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
     const [triggerType, setTriggerType] = useState<'cron' | 'interval' | 'one_shot'>('cron');

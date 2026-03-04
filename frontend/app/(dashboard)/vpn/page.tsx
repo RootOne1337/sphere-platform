@@ -8,8 +8,7 @@ import { Badge } from '@/src/shared/ui/badge';
 import { VPNMap } from '@/src/features/vpn/VPNMap';
 import { ThroughputChart } from '@/src/features/vpn/ThroughputChart';
 
-import { useQuery } from '@tanstack/react-query';
-import { api } from '@/lib/api';
+import { useVpnPeers } from '@/lib/hooks/useVpn';
 
 interface Tunnel {
   id: string;
@@ -25,28 +24,22 @@ interface Tunnel {
 export default function VPNManagerPage() {
   const [search, setSearch] = useState('');
 
-  // Fetch real VPN peers from backend
-  const { data: tunnels = [], isLoading } = useQuery<Tunnel[]>({
-    queryKey: ['vpn-peers'],
-    queryFn: async () => {
-      try {
-        const { data } = await api.get('/vpn/peers');
-        return data.map((d: any) => ({
-          id: d.id,
-          name: `Tunnel ${d.assigned_ip}`,
-          endpoint: d.assigned_ip,
-          clients: d.is_active ? 1 : 0,
-          rx: '0 B',
-          tx: '0 B',
-          status: d.status.toUpperCase(),
-          uptime: d.last_handshake_at ? 'Active' : 'N/A'
-        }));
-      } catch (e) {
-        console.warn('Failed to fetch VPN peers (backend might be offline)', e);
-        return [];
-      }
-    }
-  });
+  // Используем хук вместо инлайн-запроса для единообразия и корректного кеширования
+  const { data: rawPeers = [], isLoading } = useVpnPeers();
+
+  const tunnels: Tunnel[] = useMemo(() =>
+    rawPeers.map((d) => ({
+      id: d.id,
+      name: `Tunnel ${d.assigned_ip}`,
+      endpoint: d.assigned_ip,
+      clients: d.status === 'active' ? 1 : 0,
+      rx: '0 B',
+      tx: '0 B',
+      status: d.status.toUpperCase(),
+      uptime: d.last_handshake ? 'Active' : 'N/A',
+    })),
+    [rawPeers],
+  );
 
   // Placeholder chart data — stable, no Math.random() re-renders
   const aggregateChartData = useMemo(() => {

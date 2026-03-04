@@ -8,8 +8,7 @@ import { Input } from '@/src/shared/ui/input';
 import { Badge } from '@/src/shared/ui/badge';
 import { TaskGanttChart } from '@/src/features/tasks/TaskGanttChart';
 
-import { useQuery } from '@tanstack/react-query';
-import { api } from '@/lib/api';
+import { useTasks } from '@/lib/hooks/useTasks';
 import { toast } from 'sonner';
 
 interface TaskItem {
@@ -30,20 +29,8 @@ export default function TaskEnginePage() {
   const router = useRouter();
   const [search, setSearch] = useState('');
 
-  const { data: rawTasks = [], isLoading } = useQuery({
-    queryKey: ['tasks-list'],
-    queryFn: async () => {
-      try {
-        const { data } = await api.get('/tasks?per_page=100');
-        // Backend returns { items: [...] }
-        return data.items || [];
-      } catch (e) {
-        console.warn('Failed to fetch tasks (backend might be offline)', e);
-        return [];
-      }
-    },
-    refetchInterval: 5000
-  });
+  const { data: tasksData, isLoading } = useTasks({ per_page: 100 });
+  const rawTasks = tasksData?.items ?? [];
 
   const tasks: TaskItem[] = useMemo(() => {
     return rawTasks.map((t: any) => {
