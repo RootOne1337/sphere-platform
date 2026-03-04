@@ -5,6 +5,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import org.luaj.vm2.Globals
 import org.luaj.vm2.LuaTable
 import org.luaj.vm2.LuaValue
@@ -58,6 +59,8 @@ class LuaEngine @Inject constructor(
             "load", "loadstring", "rawget", "rawset", "rawlen", "rawequal",
             "getmetatable", "setmetatable",
         )
+        /** FIX M2: Таймаут для блокирующих биндингов (find_element, screenshot, type_text). */
+        private const val BINDING_TIMEOUT_MS = 30_000L
     }
 
     suspend fun execute(code: String, ctx: Map<String, Any?> = emptyMap()): Any? {
@@ -122,7 +125,8 @@ class LuaEngine @Inject constructor(
         // type_text(text)
         globals.set("type_text", object : OneArgFunction() {
             override fun call(text: LuaValue): LuaValue {
-                runBlocking { adbActions.typeText(text.checkjstring()) }
+                // FIX M2: withTimeout защищает от зависания IO-потока
+                runBlocking { withTimeout(BINDING_TIMEOUT_MS) { adbActions.typeText(text.checkjstring()) } }
                 return LuaValue.TRUE
             }
         })
@@ -156,7 +160,8 @@ class LuaEngine @Inject constructor(
         // screenshot() → path
         globals.set("screenshot", object : ZeroArgFunction() {
             override fun call(): LuaValue {
-                val path = runBlocking { adbActions.takeScreenshot() }
+                // FIX M2: withTimeout защищает от зависания IO-потока
+                val path = runBlocking { withTimeout(BINDING_TIMEOUT_MS) { adbActions.takeScreenshot() } }
                 return LuaValue.valueOf(path)
             }
         })
@@ -169,7 +174,12 @@ class LuaEngine @Inject constructor(
                 val selector = args.checkjstring(1)
                 val strategy = if (args.narg() >= 2) args.checkjstring(2) else "text"
                 val timeoutMs = if (args.narg() >= 3) args.checkint(3) else 10_000
-                val result = runBlocking { adbActions.findElement(selector, strategy, timeoutMs) }
+                // FIX M2: withTimeout ограничивает время захвата IO-потока
+                val result = runBlocking {
+                    withTimeout(BINDING_TIMEOUT_MS) {
+                        adbActions.findElement(selector, strategy, timeoutMs)
+                    }
+                }
                 return if (result != null) LuaValue.valueOf(result) else LuaValue.FALSE
             }
         })

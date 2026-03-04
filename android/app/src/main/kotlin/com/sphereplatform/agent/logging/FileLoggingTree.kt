@@ -80,12 +80,23 @@ class FileLoggingTree @Inject constructor(
         for (file in files.reversed()) {
             if (remaining <= 0) break
             try {
-                val content = file.readText(Charsets.UTF_8)
-                if (content.length <= remaining) {
+                // FIX H5: Читаем только нужную часть файла, а не весь целиком.
+                // Файлы до 2MB — readText() грузит всё в память. На 1GB эмуляторе
+                // при 5 файлах × 2MB = 10MB UTF-16 String = 20MB heap pressure.
+                val fileLen = file.length().toInt()
+                if (fileLen <= remaining) {
+                    val content = file.readText(Charsets.UTF_8)
                     result.insert(0, content)
                     remaining -= content.length
                 } else {
-                    result.insert(0, content.takeLast(remaining))
+                    // Читаем только хвост файла (самые свежие записи)
+                    file.reader(Charsets.UTF_8).use { reader ->
+                        val skip = (fileLen - remaining).toLong().coerceAtLeast(0)
+                        reader.skip(skip)
+                        val tail = CharArray(remaining)
+                        val read = reader.read(tail)
+                        if (read > 0) result.insert(0, String(tail, 0, read))
+                    }
                     remaining = 0
                 }
             } catch (_: Exception) {}

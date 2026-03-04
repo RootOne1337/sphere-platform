@@ -2,8 +2,11 @@ package com.sphereplatform.agent.store
 
 import androidx.security.crypto.EncryptedSharedPreferences
 import dagger.Lazy
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -69,7 +72,14 @@ class AuthTokenStore @Inject constructor(
         }
 
         return@withLock try {
-            refreshTokenRequest(refreshToken)
+            // FIX M3: Таймаут 10с на refresh внутри Mutex — ранее зависший HTTP
+            // блокировал ВСЕ getFreshToken() вызовы на 60с (OkHttp readTimeout).
+            // Каскад: WS auth → heartbeat → reconnect → снова Mutex death.
+            withTimeout(10_000L) {
+                withContext(Dispatchers.IO) {
+                    refreshTokenRequest(refreshToken)
+                }
+            }
         } catch (e: Exception) {
             Timber.w(e, "Token refresh failed, using existing token")
             accessToken

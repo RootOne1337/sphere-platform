@@ -42,8 +42,11 @@ class ConfigWatchdog @Inject constructor(
         /** Стандартный интервал когда WS подключён (2 минуты) */
         private const val DEFAULT_POLL_INTERVAL_MS = 120_000L
 
-        /** Ускоренный интервал когда WS отключён (30 секунд) */
-        private const val DISCONNECTED_POLL_INTERVAL_MS = 30_000L
+        /** Ускоренный интервал когда WS отключён.
+         * FIX M4: 60с вместо 30с — на слабых эмуляторах 30с polling
+         * вместе с WS reconnect loop создаёт избыточный network/CPU pressure.
+         */
+        private const val DISCONNECTED_POLL_INTERVAL_MS = 60_000L
     }
 
     @Volatile

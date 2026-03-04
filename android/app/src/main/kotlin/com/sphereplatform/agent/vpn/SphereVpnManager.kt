@@ -11,6 +11,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 import java.io.File
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -33,13 +34,6 @@ class SphereVpnManager @Inject constructor(
 
     @Volatile
     private var tunnelActive = false
-
-    private companion object {
-        const val TUNNEL_NAME = "sphere0"
-        const val CONFIG_FILE = "sphere0.conf"
-        const val MAX_RECONNECT_ATTEMPTS = 5
-        const val RECONNECT_BASE_DELAY_MS = 2000L
-    }
 
     init {
         configDir.mkdirs()
@@ -159,11 +153,33 @@ class SphereVpnManager @Inject constructor(
         } catch (_: Exception) {}
     }
 
+    private companion object {
+        const val TUNNEL_NAME = "sphere0"
+        const val CONFIG_FILE = "sphere0.conf"
+        const val MAX_RECONNECT_ATTEMPTS = 5
+        const val RECONNECT_BASE_DELAY_MS = 2000L
+        /** Таймаут на root-команду (wg-quick). На слабых эмуляторах может зависнуть. */
+        const val ROOT_CMD_TIMEOUT_SECONDS = 60L
+        /** Максимальный размер stdout/stderr для чтения (защита от OOM). */
+        const val MAX_OUTPUT_CHARS = 8_192
+    }
+
     private fun executeRoot(command: String): ShellResult {
         val process = Runtime.getRuntime().exec(arrayOf("su", "-c", command))
-        val stdout = process.inputStream.bufferedReader().readText()
-        val stderr = process.errorStream.bufferedReader().readText()
-        val exitCode = process.waitFor()
+        // FIX C1+H5: Читаем stdout/stderr с лимитом, timeout на waitFor
+        val stdout = process.inputStream.bufferedReader().use {
+            it.readText().take(MAX_OUTPUT_CHARS)
+        }
+        val stderr = process.errorStream.bufferedReader().use {
+            it.readText().take(MAX_OUTPUT_CHARS)
+        }
+        val finished = process.waitFor(ROOT_CMD_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+        if (!finished) {
+            process.destroyForcibly()
+            Timber.e("Root command timed out after ${ROOT_CMD_TIMEOUT_SECONDS}s: $command")
+            return ShellResult(-1, stdout, "TIMEOUT: process killed after ${ROOT_CMD_TIMEOUT_SECONDS}s")
+        }
+        val exitCode = process.exitValue()
         return ShellResult(exitCode, stdout, stderr)
     }
 

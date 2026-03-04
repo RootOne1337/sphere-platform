@@ -20,6 +20,8 @@ import com.sphereplatform.agent.vpn.SphereVpnManager
 import com.sphereplatform.agent.ws.SphereWebSocketClient
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -64,11 +66,13 @@ class CommandDispatcher @Inject constructor(
     // If a second DAG arrives while one is running, it queues and waits.
     private val dagMutex = Mutex()
 
+    // FIX AUDIT-2.5: Application-level heartbeat watchdog
+    // Если сервер не шлёт ping >90с — WS, скорее всего, мёртв
+    @Volatile private var lastPingAt = System.currentTimeMillis()
+    private val HEARTBEAT_TIMEOUT_MS = 90_000L // 90с (ping приходит каждые ~15-30с)
+
     fun start() {
         wsClient.onJsonMessage = { msg ->
-            // FIX ARCH-4: ping обрабатываем НЕМЕДЛЕННО в потоке callback'а,
-            // не через scope.launch. DagRunner может блокировать Dispatchers.IO,
-            // а pong ДОЛЖЕН уйти в рамках heartbeat timeout (TZ-03 SPLIT-4: 45s).
             val type = msg["type"]?.jsonPrimitive?.contentOrNull
             if (type == "ping") {
                 handlePingImmediate(msg)
@@ -77,17 +81,42 @@ class CommandDispatcher @Inject constructor(
             }
         }
 
-        // При reconnect — отправляем накопленные результаты DAG
+        // При reconnect — отправляем накопленные результаты DAG и сбрасываем heartbeat
         wsClient.onConnected = {
+            lastPingAt = System.currentTimeMillis()
             scope.launch { dagRunner.flushPendingResults() }
+        }
+
+        // FIX AUDIT-2.5: Heartbeat watchdog — если сервер не шлёт ping > 90с,
+        // принудительный reconnect. Компенсирует кейс когда readTimeout
+        // не срабатывает (данные шли, но ping прекратился).
+        scope.launch(Dispatchers.Default) {
+            while (true) {
+                delay(30_000L) // Проверяем каждые 30с
+                if (wsClient.isConnected) {
+                    val elapsed = System.currentTimeMillis() - lastPingAt
+                    if (elapsed > HEARTBEAT_TIMEOUT_MS) {
+                        Timber.w("Heartbeat watchdog: no ping for ${elapsed/1000}s — forcing reconnect")
+                        wsClient.forceReconnectNow()
+                        lastPingAt = System.currentTimeMillis() // Сброс чтобы не спамить
+                    }
+                }
+            }
         }
     }
 
     /**
      * Обрабатывает ping синхронно, без корутинного пула.
      * Критично для длинных DAG: executor потоки заняты, но pong ДОЛЖЕН уйти.
+     *
+     * FIX M5: Метрики берутся из кэша DeviceStatusProvider (5с TTL),
+     * поэтому блокировка WS reader thread минимальна (<1ms если кэш горячий).
+     * При холодном кэше getCpuUsage() парсит /proc/stat (procfs, ~5ms),
+     * что приемлемо для WS reader thread.
      */
     private fun handlePingImmediate(msg: JsonObject) {
+        // FIX AUDIT-2.5: Обновляем heartbeat timestamp
+        lastPingAt = System.currentTimeMillis()
         val ts = msg["ts"]?.jsonPrimitive?.doubleOrNull ?: 0.0
         wsClient.sendJson(buildJsonObject {
             put("type", "pong")

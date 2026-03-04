@@ -13,6 +13,7 @@ import okhttp3.Request
 import timber.log.Timber
 import java.io.File
 import java.security.MessageDigest
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -141,8 +142,16 @@ class OtaUpdateService @Inject constructor(
             val process = Runtime.getRuntime().exec(
                 arrayOf("su", "-c", "pm install -r -t ${apkFile.absolutePath}")
             )
-            val exitCode = process.waitFor()
-            val output = process.inputStream.bufferedReader().readText()
+            // FIX C1: Таймаут 120с — pm install может быть долгим на слабых эмуляторах,
+            // но бесконечное ожидание недопустимо (su может зависнуть)
+            val finished = process.waitFor(120, TimeUnit.SECONDS)
+            if (!finished) {
+                process.destroyForcibly()
+                Timber.e("OTA: root install timed out after 120s")
+                return false
+            }
+            val exitCode = process.exitValue()
+            val output = process.inputStream.bufferedReader().use { it.readText().take(1024) }
             Timber.d("Root install exit=$exitCode output=$output")
             exitCode == 0 && output.contains("Success")
         } catch (e: Exception) {

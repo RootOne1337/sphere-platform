@@ -66,6 +66,11 @@ class AdbActionExecutor @Inject constructor(
         private val XPATH_FACTORY: XPathFactory by lazy {
             XPathFactory.newInstance()
         }
+        // FIX AUDIT-2.2: Кеш XmlPullParserFactory — newInstance() делает service discovery
+        // через рефлексию (~5-10ms). Parser создаётся каждый раз (не потокобезопасен).
+        private val XMLPULL_FACTORY: XmlPullParserFactory by lazy {
+            XmlPullParserFactory.newInstance()
+        }
     }
 
     private var rootProcess: Process = createRootProcess()
@@ -335,27 +340,35 @@ class AdbActionExecutor @Inject constructor(
     }
 
     /**
-     * UI-дамп: kill zombie uiautomator → dump → wait → cat.
-     * Убиваем зомби uiautomator перед каждым вызовом чтобы не было конфликтов.
-     * dump и cat идут в ОДНОМ su-процессе (атомарно).
+     * UI-дамп: kill zombie uiautomator → dump → wait → read.
+     *
+     * FIX H1: Убийство zombie uiautomator теперь через persistent root session
+     * (без fork). Сам dump + cat всё ещё через отдельный процесс (нужен stdout).
+     * FIX H5: Чтение XML ограничено 512KB для защиты от OOM.
      */
     private suspend fun dumpUiXml(): String? = withContext(Dispatchers.IO) {
         try {
-            // Kill any stuck uiautomator from previous call, then dump + cat
+            // FIX H1: Убиваем зомби через persistent session (нет fork overhead)
+            executeRootCommand("killall uiautomator 2>/dev/null")
+
+            // dump + cat — нужен stdout, поэтому отдельный процесс с timeout
             val proc = Runtime.getRuntime().exec(
                 arrayOf("su", "-c",
-                    "killall uiautomator 2>/dev/null; " +
                     "uiautomator dump $UI_DUMP_PATH >/dev/null 2>&1 && cat $UI_DUMP_PATH")
             )
             val finished = proc.waitFor(UI_DUMP_TIMEOUT_SECONDS, TimeUnit.SECONDS)
             if (!finished) {
                 proc.destroyForcibly()
-                // Also try to kill the stuck uiautomator via root session
                 executeRootCommand("killall uiautomator 2>/dev/null")
                 Timber.w("[FindElement] UI dump timed out (${UI_DUMP_TIMEOUT_SECONDS}s)")
                 return@withContext null
             }
-            val xml = proc.inputStream.bufferedReader().readText()
+            // FIX H5: Лимит на размер XML — защита от OOM при раздутом UI-дереве
+            val xml = proc.inputStream.bufferedReader().use { reader ->
+                val buf = CharArray(512 * 1024) // 512KB макс
+                val read = reader.read(buf)
+                if (read > 0) String(buf, 0, read) else ""
+            }
             if (xml.contains("<hierarchy")) {
                 Timber.d("[FindElement] UI dump OK: ${xml.length} chars")
                 xml
@@ -420,8 +433,7 @@ class AdbActionExecutor @Inject constructor(
 
     /** Быстрый поиск через XmlPullParser для стратегий text / id / desc / class. */
     private fun parseUiXmlSimple(xml: String, selector: String, strategy: String): String? {
-        val factory = XmlPullParserFactory.newInstance()
-        val parser = factory.newPullParser()
+        val parser = XMLPULL_FACTORY.newPullParser()
         parser.setInput(StringReader(xml))
 
         val attribute = when (strategy) {
@@ -476,6 +488,18 @@ class AdbActionExecutor @Inject constructor(
         require(command.all { it.code in 32..126 }) {
             "Non-printable characters in shell command"
         }
+        return shellExec(command)
+    }
+
+    /**
+     * FIX AUDIT-2.4: Внутренний batch shell для предопределённых команд.
+     * НЕ выполняет injection-проверку — использовать ТОЛЬКО для hardcoded команд,
+     * НИКОГДА для пользовательского ввода!
+     */
+    private suspend fun shellBatch(command: String): String = shellExec(command)
+
+    /** Общая реализация shell exec (su -c) с таймаутом. */
+    private suspend fun shellExec(command: String): String {
         return withContext(Dispatchers.IO) {
             val process = Runtime.getRuntime().exec(arrayOf("su", "-c", command))
             // 5s достаточно для быстрых команд (pidof, cat, dumpsys).
@@ -487,10 +511,11 @@ class AdbActionExecutor @Inject constructor(
                 error("Shell command timed out after ${SHELL_TIMEOUT_SECONDS}s: $command")
             }
             val exitCode = process.exitValue()
-            val stdout = process.inputStream.bufferedReader().readText()
+            // FIX H5: Лимит на чтение stdout — защита от OOM на слабых эмуляторах
+            val stdout = process.inputStream.bufferedReader().use { it.readText().take(256 * 1024) }
             if (exitCode != 0) {
-                val stderr = process.errorStream.bufferedReader().readText()
-                error("Shell exit=$exitCode cmd=[$command]: ${stderr.take(200).ifEmpty { "no stderr" }}")
+                val stderr = process.errorStream.bufferedReader().use { it.readText().take(1024) }
+                error("Shell exit=$exitCode cmd=[$command]: ${stderr.ifEmpty { "no stderr" }}")
             }
             stdout
         }
@@ -621,8 +646,7 @@ class AdbActionExecutor @Inject constructor(
                     "class" -> "class"
                     else    -> "text"
                 }
-                val factory = XmlPullParserFactory.newInstance()
-                val parser = factory.newPullParser()
+                val parser = XMLPULL_FACTORY.newPullParser()
                 parser.setInput(StringReader(xml))
                 var ev = parser.eventType
                 while (ev != XmlPullParser.END_DOCUMENT) {
@@ -667,18 +691,43 @@ class AdbActionExecutor @Inject constructor(
 
     /**
      * Возвращает ключевые параметры устройства для использования в DAG-узле get_device_info.
-     * Все значения считываются через shell — не требует доп. пермиссий на рутованном устройстве.
+     * FIX AUDIT-2.4: Batch-запрос через одну shell-команду вместо 6 отдельных fork+exec.
+     * На слабом эмуляторе один fork ~50-150ms, 6 = 300-900ms. Теперь ~50-150ms total.
      */
     suspend fun getDeviceInfo(): Map<String, Any?> = withContext(Dispatchers.IO) {
-        mapOf(
-            "model"           to shell("getprop ro.product.model").trim(),
-            "manufacturer"    to shell("getprop ro.product.manufacturer").trim(),
-            "android_version" to shell("getprop ro.build.version.release").trim(),
-            "sdk_int"         to shell("getprop ro.build.version.sdk").trim().toIntOrNull(),
-            "battery_level"   to shell("cat /sys/class/power_supply/battery/capacity").trim().toIntOrNull(),
-            "screen_width"    to physicalSize.x,
-            "screen_height"   to physicalSize.y,
-            "serial"          to shell("getprop ro.serialno").trim().ifEmpty { "unknown" },
-        )
+        try {
+            // Все getprop в одной команде, разделены маркерами для парсинга
+            val SEPARATOR = "|||"
+            val batchCmd = "getprop ro.product.model && echo '$SEPARATOR' && " +
+                "getprop ro.product.manufacturer && echo '$SEPARATOR' && " +
+                "getprop ro.build.version.release && echo '$SEPARATOR' && " +
+                "getprop ro.build.version.sdk && echo '$SEPARATOR' && " +
+                "cat /sys/class/power_supply/battery/capacity 2>/dev/null && echo '$SEPARATOR' && " +
+                "getprop ro.serialno"
+            val raw = shellBatch(batchCmd)
+            val parts = raw.split(SEPARATOR).map { it.trim() }
+            mapOf(
+                "model"           to (parts.getOrNull(0) ?: ""),
+                "manufacturer"    to (parts.getOrNull(1) ?: ""),
+                "android_version" to (parts.getOrNull(2) ?: ""),
+                "sdk_int"         to parts.getOrNull(3)?.toIntOrNull(),
+                "battery_level"   to parts.getOrNull(4)?.toIntOrNull(),
+                "screen_width"    to physicalSize.x,
+                "screen_height"   to physicalSize.y,
+                "serial"          to (parts.getOrNull(5)?.ifEmpty { "unknown" } ?: "unknown"),
+            )
+        } catch (e: Exception) {
+            Timber.w(e, "getDeviceInfo batch failed — fallback")
+            mapOf(
+                "model" to "unknown",
+                "manufacturer" to "unknown",
+                "android_version" to "unknown",
+                "sdk_int" to null,
+                "battery_level" to null,
+                "screen_width" to physicalSize.x,
+                "screen_height" to physicalSize.y,
+                "serial" to "unknown",
+            )
+        }
     }
 }
