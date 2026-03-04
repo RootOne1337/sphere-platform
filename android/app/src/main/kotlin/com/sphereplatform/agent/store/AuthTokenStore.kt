@@ -41,6 +41,8 @@ class AuthTokenStore @Inject constructor(
         private const val KEY_DEVICE_ID = "device_id"
 
         private const val REFRESH_THRESHOLD_MS = 5 * 60 * 1000L  // 5 минут
+        /** FIX E2: Лимит на размер response body при token refresh — защита от OOM. */
+        private const val MAX_RESPONSE_CHARS = 64 * 1024
     }
 
     private val tokenMutex = Mutex()
@@ -96,7 +98,9 @@ class AuthTokenStore @Inject constructor(
 
         lazyHttpClient.get().newCall(request).execute().use { response ->
             check(response.isSuccessful) { "Refresh failed: ${response.code}" }
-            val bodyStr = response.body?.string() ?: error("Empty refresh response")
+            // FIX E2: Ограничиваем размер body — защита от OOM при огромном ответе
+            val bodyStr = response.body?.string()?.take(MAX_RESPONSE_CHARS)
+                ?: error("Empty refresh response")
             val json = Json.parseToJsonElement(bodyStr).jsonObject
             val newAccessToken = json["access_token"]!!.jsonPrimitive.content
             val expiresIn = json["expires_in"]?.jsonPrimitive?.long ?: 900L

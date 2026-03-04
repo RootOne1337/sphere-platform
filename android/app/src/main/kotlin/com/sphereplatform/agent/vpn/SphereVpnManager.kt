@@ -92,7 +92,7 @@ class SphereVpnManager @Inject constructor(
             Timber.w("Cannot reconnect: no saved config")
             return
         }
-        val config = configFile.readText()
+        val config = configFile.readText().take(MAX_CONFIG_CHARS)
         var attempt = 0
         while (attempt < MAX_RECONNECT_ATTEMPTS) {
             try {
@@ -158,6 +158,8 @@ class SphereVpnManager @Inject constructor(
         const val CONFIG_FILE = "sphere0.conf"
         const val MAX_RECONNECT_ATTEMPTS = 5
         const val RECONNECT_BASE_DELAY_MS = 2000L
+        /** FIX E4: Лимит на размер конфига — защита от OOM при повреждённом файле. */
+        const val MAX_CONFIG_CHARS = 64 * 1024
         /** Таймаут на root-команду (wg-quick). На слабых эмуляторах может зависнуть. */
         const val ROOT_CMD_TIMEOUT_SECONDS = 60L
         /** Максимальный размер stdout/stderr для чтения (защита от OOM). */

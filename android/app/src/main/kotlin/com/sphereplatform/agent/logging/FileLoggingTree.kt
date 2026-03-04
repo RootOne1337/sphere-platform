@@ -37,7 +37,15 @@ class FileLoggingTree @Inject constructor(
     }
 
     private val logDir: File = File(context.filesDir, LOG_DIR).also { it.mkdirs() }
-    private val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS", Locale.US)
+    /**
+     * FIX E1: ThreadLocal вместо shared SimpleDateFormat.
+     * SimpleDateFormat НЕ потокобезопасен — format() мутирует внутренний Calendar.
+     * Timber.log() вызывается из любого потока (WS, coroutine, MediaCodec callback),
+     * конкурентный format() → ArrayIndexOutOfBoundsException или garbled timestamps.
+     */
+    private val dateFormat = ThreadLocal.withInitial {
+        SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS", Locale.US)
+    }
     private val queue = LinkedBlockingQueue<String>(MAX_QUEUE_SIZE)
 
     @Volatile private var currentFile: File = resolveCurrentFile()
@@ -61,7 +69,7 @@ class FileLoggingTree @Inject constructor(
 
     override fun log(priority: Int, tag: String?, message: String, t: Throwable?) {
         val level = priorityChar(priority)
-        val ts = dateFormat.format(Date())
+        val ts = dateFormat.get()!!.format(Date())
         val tagPart = if (tag != null) "$tag" else "?"
         val entry = buildString {
             append("$ts $level/$tagPart: $message")

@@ -32,7 +32,17 @@ class KillSwitchManager @Inject constructor(
     var isEnabled = false
         private set
 
+    /**
+     * FIX E3: Валидация hostname/IP перед вставкой в iptables.
+     * Без проверки: payload `"endpoint": "1.1.1.1; rm -rf /"` → command injection через su.
+     */
+    private val SAFE_HOST_PATTERN = Regex("^[a-zA-Z0-9._\\-]+$")
 
+    private fun requireSafeHost(host: String) {
+        require(host.isNotBlank() && host.length < 256 && SAFE_HOST_PATTERN.matches(host)) {
+            "KillSwitch: невалидный hostname/IP: '$host'"
+        }
+    }
 
     /**
      * Enable kill switch — blocks all non-VPN traffic.
@@ -46,6 +56,7 @@ class KillSwitchManager @Inject constructor(
     ) = withContext(Dispatchers.IO) {
         try {
             val serverHost = vpnServerEndpoint.substringBefore(":")
+            requireSafeHost(serverHost)
 
             // Create chain
             iptables("-N $CHAIN_NAME 2>/dev/null || true")
@@ -67,6 +78,7 @@ class KillSwitchManager @Inject constructor(
             for (host in managementHosts) {
                 val cleanHost = host.trim().substringBefore(":")
                 if (cleanHost.isNotEmpty()) {
+                    requireSafeHost(cleanHost)
                     iptables("-A $CHAIN_NAME -d $cleanHost -j ACCEPT")
                     Timber.i("Kill switch: allowing management host $cleanHost")
                 }
