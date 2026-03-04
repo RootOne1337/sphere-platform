@@ -84,7 +84,9 @@ class LogUploadWorker @AssistedInject constructor(
                 append(logcatCollector.collectSphereOnly(lines = 300))
             }
 
-            val url = "$serverUrl/api/v1/logs/upload?device_id=$deviceId"
+            // FIX D3: device_id вынесен из URL в заголовок X-Device-Id.
+            // В URL он логируется nginx access log, Cloudflare dashboard — утечка.
+            val url = "$serverUrl/api/v1/logs/upload"
             val body = logs.toRequestBody("text/plain; charset=utf-8".toMediaType())
             val request = Request.Builder()
                 .url(url)

@@ -71,6 +71,9 @@ class CommandDispatcher @Inject constructor(
     @Volatile private var lastPingAt = System.currentTimeMillis()
     private val HEARTBEAT_TIMEOUT_MS = 90_000L // 90с (ping приходит каждые ~15-30с)
 
+    /** FIX D1: Job heartbeat watchdog — отменяется в stop(). */
+    private var heartbeatJob: kotlinx.coroutines.Job? = null
+
     fun start() {
         wsClient.onJsonMessage = { msg ->
             val type = msg["type"]?.jsonPrimitive?.contentOrNull
@@ -90,7 +93,10 @@ class CommandDispatcher @Inject constructor(
         // FIX AUDIT-2.5: Heartbeat watchdog — если сервер не шлёт ping > 90с,
         // принудительный reconnect. Компенсирует кейс когда readTimeout
         // не срабатывает (данные шли, но ping прекратился).
-        scope.launch(Dispatchers.Default) {
+        // FIX D1: Сохраняем Job для отмены в stop(). Без этого при рестарте
+        // сервиса создавалось N дублирующих watchdog-циклов.
+        heartbeatJob?.cancel()
+        heartbeatJob = scope.launch(Dispatchers.Default) {
             while (true) {
                 delay(30_000L) // Проверяем каждые 30с
                 if (wsClient.isConnected) {
@@ -103,6 +109,37 @@ class CommandDispatcher @Inject constructor(
                 }
             }
         }
+    }
+
+    /**
+     * FIX D1: Останавливает heartbeat watchdog и сбрасывает callbacks.
+     * Вызывается из SphereAgentService.onDestroy() перед отменой serviceScope.
+     */
+    fun stop() {
+        heartbeatJob?.cancel()
+        heartbeatJob = null
+        wsClient.onJsonMessage = null
+        wsClient.onConnected = null
+    }
+
+    /**
+     * FIX D7: TTL-проверка для управляющих команд (CANCEL/PAUSE/RESUME_DAG).
+     * Эти команды обходят IncomingCommand десериализацию, поэтому TTL
+     * проверяется вручную. Защита от replay attack: повторная отправка
+     * устаревшей CANCEL_DAG не должна останавливать новый DAG.
+     *
+     * @return true если команда просрочена и был отправлен failed ack.
+     */
+    private fun isControlCommandExpired(msg: JsonObject, cmdId: String): Boolean {
+        val signedAt = msg["signed_at"]?.jsonPrimitive?.longOrNull ?: return false
+        val ttl = msg["ttl_seconds"]?.jsonPrimitive?.intOrNull ?: 60
+        val ageSeconds = System.currentTimeMillis() / 1000 - signedAt
+        if (ageSeconds > ttl) {
+            Timber.w("[$cmdId] Control command expired (age=${ageSeconds}s > ttl=${ttl}s)")
+            ack(cmdId, "failed", error = "expired")
+            return true
+        }
+        return false
     }
 
     /**
@@ -175,6 +212,8 @@ class CommandDispatcher @Inject constructor(
             // ── CANCEL_DAG: bypass dagMutex ──
             "CANCEL_DAG" -> {
                 val cmdId = msg["command_id"]?.jsonPrimitive?.contentOrNull ?: ""
+                // FIX D7: TTL-проверка для управляющих команд (защита от replay attack)
+                if (isControlCommandExpired(msg, cmdId)) return
                 Timber.i("[CANCEL_DAG] Received cancel for command=$cmdId")
                 dagRunner.requestCancel()
                 ack(cmdId, "completed")
@@ -183,6 +222,7 @@ class CommandDispatcher @Inject constructor(
             // ── PAUSE_DAG: bypass dagMutex, пауза работающего DAG между нодами ──
             "PAUSE_DAG" -> {
                 val cmdId = msg["command_id"]?.jsonPrimitive?.contentOrNull ?: ""
+                if (isControlCommandExpired(msg, cmdId)) return
                 Timber.i("[PAUSE_DAG] Received pause for command=$cmdId")
                 dagRunner.requestPause()
                 ack(cmdId, "completed")
@@ -191,6 +231,7 @@ class CommandDispatcher @Inject constructor(
             // ── RESUME_DAG: bypass dagMutex, снятие паузы ──
             "RESUME_DAG" -> {
                 val cmdId = msg["command_id"]?.jsonPrimitive?.contentOrNull ?: ""
+                if (isControlCommandExpired(msg, cmdId)) return
                 Timber.i("[RESUME_DAG] Received resume for command=$cmdId")
                 dagRunner.requestResume()
                 ack(cmdId, "completed")
@@ -421,3 +462,6 @@ private val kotlinx.serialization.json.JsonPrimitive.doubleOrNull: Double?
 
 private val kotlinx.serialization.json.JsonPrimitive.intOrNull: Int?
     get() = runCatching { this.content.toInt() }.getOrNull()
+
+private val kotlinx.serialization.json.JsonPrimitive.longOrNull: Long?
+    get() = runCatching { this.content.toLong() }.getOrNull()

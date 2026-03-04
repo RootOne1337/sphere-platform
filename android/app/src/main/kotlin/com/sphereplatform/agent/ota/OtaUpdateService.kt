@@ -41,6 +41,15 @@ class OtaUpdateService @Inject constructor(
 ) {
     private val apkDir = File(context.filesDir, "ota")
 
+    companion object {
+        /**
+         * FIX D6: Максимальный размер APK (200MB).
+         * Защита от злоумышленного/взломанного сервера, который может вернуть
+         * произвольно большой файл и заполнить /data на эмуляторе.
+         */
+        private const val MAX_APK_SIZE_BYTES = 200L * 1024 * 1024
+    }
+
     suspend fun performUpdate(payload: OtaUpdatePayload) {
         Timber.i("OTA: starting update → version=${payload.version}")
         val apkFile = downloadApk(payload)
@@ -75,12 +84,30 @@ class OtaUpdateService @Inject constructor(
 
         withContext(Dispatchers.IO) {
             // FIX 7.2: response.use {} гарантирует закрытие при ошибках HTTP
-            // (без use была утечка TCP-соединений в OkHttp connection pool)
             httpClient.newCall(request).execute().use { response ->
                 check(response.isSuccessful) { "OTA download failed: ${response.code}" }
+                // FIX D6: Проверяем Content-Length перед скачиванием — защита от переполнения /data
+                val contentLength = response.body!!.contentLength()
+                if (contentLength > MAX_APK_SIZE_BYTES) {
+                    throw IllegalStateException(
+                        "OTA APK слишком большой: ${contentLength / (1024 * 1024)}MB > ${MAX_APK_SIZE_BYTES / (1024 * 1024)}MB"
+                    )
+                }
                 response.body!!.byteStream().use { input ->
                     dest.outputStream().use { output ->
-                        input.copyTo(output)
+                        // FIX D6: Контроль размера при копировании (Content-Length может быть -1)
+                        val buffer = ByteArray(8192)
+                        var totalRead = 0L
+                        var read: Int
+                        while (input.read(buffer).also { read = it } != -1) {
+                            totalRead += read
+                            if (totalRead > MAX_APK_SIZE_BYTES) {
+                                throw IllegalStateException(
+                                    "OTA APK превысил лимит ${MAX_APK_SIZE_BYTES / (1024 * 1024)}MB при скачивании"
+                                )
+                            }
+                            output.write(buffer, 0, read)
+                        }
                     }
                 }
             }

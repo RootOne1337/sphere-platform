@@ -40,6 +40,13 @@ class StreamingManagerImpl @Inject constructor(
 
     @Volatile private var streaming = false
 
+    /**
+     * FIX D4: MediaProjection сохраняется в поле вместо захвата через closure.
+     * Android 14+ может автоматически отозвать projection — при restart
+     * из onEncoderError callback нужна актуальная ссылка, а не stale capture.
+     */
+    private var currentProjection: MediaProjection? = null
+
     // -------------------------------------------------------------------------
     // StreamingManager interface
     // -------------------------------------------------------------------------
@@ -51,6 +58,8 @@ class StreamingManagerImpl @Inject constructor(
         }
 
         streamStartMs = System.currentTimeMillis()
+        // FIX D4: Сохраняем projection в поле
+        currentProjection = projection
 
         val captureConfig = VirtualDisplayManager.createConfig(context)
         val encoderConfig = H264Encoder.EncoderConfig(
@@ -67,12 +76,19 @@ class StreamingManagerImpl @Inject constructor(
         // FIX AUDIT-1.4: Подписка на ошибку кодека для автоматического restart.
         // На x86 эмуляторах (LDPlayer) софтверный H.264 кодек может упасть.
         // Restart через Handler.post() — избегаем re-entrant MediaCodec deadlock.
+        // FIX D4: Используем поле currentProjection вместо closure-захвата.
+        // При длительном стриме projection из closure может быть отозвана (Android 14+).
         enc.onEncoderError = { error ->
             Timber.e(error, "StreamingManagerImpl: encoder error — restarting stream")
             android.os.Handler(android.os.Looper.getMainLooper()).post {
                 try {
-                    stop()
-                    start(projection)
+                    val proj = currentProjection
+                    if (proj != null) {
+                        stop()
+                        start(proj)
+                    } else {
+                        Timber.e("StreamingManagerImpl: cannot restart — no active projection")
+                    }
                 } catch (e: Exception) {
                     Timber.e(e, "StreamingManagerImpl: failed to restart after encoder error")
                 }
@@ -221,6 +237,7 @@ class StreamingManagerImpl @Inject constructor(
             imageReaderThread = null
             encoder = null
             adaptiveBitrate = null
+            currentProjection = null
         }
         Timber.i("StreamingManagerImpl: stopped")
     }
