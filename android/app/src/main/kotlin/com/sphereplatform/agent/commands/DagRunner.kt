@@ -73,6 +73,12 @@ class DagRunner @Inject constructor(
         private const val MAX_EXECUTE_DEPTH = 10
         /** FIX H5: Макс размер HTTP response body в DAG http_request */
         private const val MAX_HTTP_RESPONSE_CHARS = 256 * 1024  // 256KB
+        /**
+         * FIX F5: Макс размер одного сериализованного pending result.
+         * DAG с сотнями нод может сгенерировать огромный node_logs → раздувание
+         * EncryptedSharedPreferences → долгие I/O при каждом commit().
+         */
+        private const val MAX_PENDING_RESULT_CHARS = 128 * 1024  // 128KB
     }
 
     private val json = Json { ignoreUnknownKeys = true }
@@ -870,7 +876,7 @@ class DagRunner @Inject constructor(
             put("command_id", commandId)
             put("result", result)
             put("saved_at", System.currentTimeMillis())
-        }))
+        }).take(MAX_PENDING_RESULT_CHARS))
         prefs.edit().putStringSet("pending_dag_results", pending).apply()
         Timber.i("[DAG] Result saved locally, command=$commandId (pending: ${pending.size})")
     }

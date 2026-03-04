@@ -238,6 +238,8 @@ class StreamingManagerImpl @Inject constructor(
             encoder = null
             adaptiveBitrate = null
             currentProjection = null
+            // FIX F3: Сброс счётчиков метрик — новая сессия начинается с нуля
+            qualityMonitor.reset()
         }
         Timber.i("StreamingManagerImpl: stopped")
     }

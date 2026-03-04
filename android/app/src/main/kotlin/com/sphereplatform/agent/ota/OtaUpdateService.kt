@@ -166,8 +166,12 @@ class OtaUpdateService @Inject constructor(
 
     private fun tryRootInstall(apkFile: File): Boolean {
         return try {
+            // FIX F4: Экранирование пути — одинарные кавычки предотвращают
+            // неожиданный shell splitting/globbing если путь содержит пробелы.
+            // Путь контролируется агентом, но defensive coding обязателен.
+            val safePath = apkFile.absolutePath.replace("'", "'\\''")
             val process = Runtime.getRuntime().exec(
-                arrayOf("su", "-c", "pm install -r -t ${apkFile.absolutePath}")
+                arrayOf("su", "-c", "pm install -r -t '$safePath'")
             )
             // FIX C1: Таймаут 120с — pm install может быть долгим на слабых эмуляторах,
             // но бесконечное ожидание недопустимо (su может зависнуть)
