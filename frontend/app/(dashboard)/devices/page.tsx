@@ -40,10 +40,10 @@ export default function DevicesPage() {
   const [selectedGroupId, setSelectedGroupId] = useState<string>('');
   const [selectedLocationId, setSelectedLocationId] = useState<string>('');
 
-  // Backend ограничивает per_page до 200 — используем максимум
+  // Backend поддерживает до 5000 — запрашиваем все устройства одной страницей
   const { data, isLoading, refetch } = useDevices({
     page: 1,
-    page_size: 200,
+    page_size: 5000,
     search: debouncedSearch || undefined,
   });
   const bulkMutation = useBulkAction();

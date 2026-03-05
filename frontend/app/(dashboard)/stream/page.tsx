@@ -16,7 +16,7 @@ export default function FleetStreamPage() {
   const [listPage, setListPage] = useState(1);
 
   // Загружаем все онлайн-устройства (до 500)
-  const { data } = useDevices({ status: 'online', page_size: 200 });
+  const { data } = useDevices({ status: 'online', page_size: 5000 });
   const allDevices = data?.items ?? [];
   const totalOnline = data?.total ?? 0;
 

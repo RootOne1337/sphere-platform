@@ -8,7 +8,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 export function VpnBatchTab() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [processing, setProcessing] = useState(false);
-  const { data } = useDevices({ page_size: 100 });
+  const { data } = useDevices({ page_size: 5000 });
   const assignVpn = useAssignVpn();
   const revokeVpn = useRevokeVpn();
 
