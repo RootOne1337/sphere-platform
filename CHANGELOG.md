@@ -12,6 +12,109 @@ _Нет нереализованных изменений._
 
 ---
 
+## [4.6.0] — 2026-03-04
+
+### Краткое описание
+Синтетическое нагрузочное тестирование (фреймворк + 1 024 виртуальных агента на реальном
+бэкенде — FA 100%), пагинация до 5 000 записей на страницу (backend + frontend + OpenAPI),
+Android Agent hardening (wsLock, CPU delta debounce, encoder callback guard).
+9 атомарных коммитов в PR #17.
+
+---
+
+### Добавлено
+
+#### Нагрузочный фреймворк — `tests/load/` (33 файла, 6 030 строк)
+- **VirtualAgent** — полный FSM: CREATED → REGISTERING → CONNECTING → ONLINE → EXECUTING → DEAD
+- **AgentPool** — ramp-up с anti-stampede jitter, Fleet Availability мониторинг
+- **Orchestrator** — YAML-конфигурации сценариев, пошаговое исполнение
+- **MockServer** — полная эмуляция REST + WS Sphere Platform (FastAPI + websockets)
+- **MessageFactory** — 12 типов WS-сообщений (auth, ping, telemetry, task, vpn, stream)
+- **MetricsCollector** — HdrHistogram latency (p50/p95/p99), счётчики, gauges, JSON-экспорт
+- **ReportGenerator** — HTML-отчёт с Chart.js графиками
+- **H.264 NAL-эмулятор** — SPS/PPS/IDR генерация для стриминг-тестов
+
+#### 6 бизнес-сценариев
+- **S1** DeviceRegistration — массовая регистрация с дедупликацией
+- **S3** TaskExecution — DAG-исполнение с прогрессом
+- **S4** VpnEnrollment — VPN peer provisioning
+- **S5** VideoStreaming — H.264 binary frames
+- **S6** ReconnectStorm — массовые reconnect под нагрузкой
+- **Mixed** — комбинированный сценарий
+
+#### 4 YAML-конфигурации нагрузки
+- `scenario_quick.yml` — 32 → 128 агентов
+- `scenario_scalability.yml` — 32 → 10 000 агентов
+- `scenario_soak.yml` — 512 × 30 мин
+- `scenario_spike.yml` — 64 → 1 024 → 64
+
+#### Тестовые сьюты — 68 тестов
+- 30 юнит-тестов ядра (IdentityFactory, MetricsCollector, MessageFactory, CriteriaEvaluator)
+- 10 интеграционных тестов (REST + WS через MockServer)
+- 17 E2E тестов (mock-загрузка 256 → 512 → 1 024 агентов, FA 100%)
+- 11 тестов реального бэкенда (1 024 агента + 639 DAG-задач)
+
+#### Нагрузочный тест реального бэкенда — 1 024 агента
+- REST регистрация 1 024 устройств — 100% успех
+- WebSocket подключение + first-message auth — 100%
+- 639 DAG-задач исполнены параллельно — 0 ошибок
+- Fleet Availability = **100%** при 1 024 онлайн-агентах
+
+#### Документация нагрузочного тестирования
+- `docs/load-test/01-ARCHITECTURE.md` — архитектура фреймворка
+- `docs/load-test/02-SCENARIOS.md` — описание сценариев
+- `docs/load-test/03-METRICS-AND-CRITERIA.md` — метрики и критерии pass/fail
+- `docs/load-test/04-EXECUTION-REPORT.md` — отчёт о прогонах
+
+### Улучшено
+
+#### Backend — Пагинация до 5 000 записей
+- `per_page` max увеличен с 200 до 5 000 (все list-эндпоинты)
+- OpenAPI спецификация обновлена
+
+#### Frontend — Пагинация 5 000
+- `page_size=5000` в 5 компонентах: DevicesPage, GroupsPage, ScriptsPage,
+  TasksPage, FleetManagementPage
+- Axios lock для предотвращения параллельных запросов при быстрой навигации
+
+#### Backend — API Key приоритет
+- При наличии и Bearer JWT, и `X-API-Key` — API-ключ имеет приоритет
+- Формат ключа: `sphr_{env}_{64hex}` (256-bit энтропия)
+
+### Исправлено
+
+| # | Компонент | Проблема | Решение |
+|---|-----------|----------|---------|
+| 1 | Backend | `per_page` ограничен 200 — frontend не мог загрузить весь список | Увеличен до 5 000 |
+| 2 | Frontend | Параллельные запросы при быстрой навигации | Axios lock |
+| 3 | Android | WebSocket race condition при отправке из нескольких потоков | `wsLock` (ReentrantLock) |
+| 4 | Android | CPU usage скачки из-за частого опроса | CPU delta debounce (игнорировать <3%) |
+| 5 | Android | Шторм reconnect событий | Debounce 5с для reconnect |
+| 6 | Android | MediaCodec callback на disposed encoder | Guard `isEncoding` перед обращением |
+| 7 | Infra | CRLF line endings в Docker entrypoint.sh (exec format error) | Конвертация LF |
+
+---
+
+### Deployment Notes
+
+**Новые зависимости (нагрузочные тесты):**
+```bash
+pip install websockets aiohttp hdrhistogram pyyaml jinja2
+```
+
+**Запуск нагрузочных тестов:**
+```bash
+# Юнит + интеграционные + mock-загрузка
+pytest tests/load/ -v
+
+# Реальный бэкенд (требует Docker stack)
+pytest tests/load/test_real_backend.py -v --tb=short
+```
+
+**APK:** Пересобрать после merge: `cd android && ./gradlew assembleDevDebug`
+
+---
+
 ## [4.5.0] — 2026-03-02
 
 ### Краткое описание

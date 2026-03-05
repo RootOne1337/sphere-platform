@@ -86,17 +86,21 @@ class SetupActivity : AppCompatActivity() {
         setContentView(R.layout.activity_setup)
         bindViews()
 
-        // Zero-touch: discover config automatically before showing manual form
-        val autoConfig = provisioner.discoverConfig()
-        if (autoConfig != null) {
-            showStatus("Auto-provision via ${autoConfig.source}…", isError = false)
-            setLoading(true)
-            lifecycleScope.launch { performAutoEnroll(autoConfig) }
-            return
-        }
+        // FIX D2: discoverConfig() может вызвать HTTP на config endpoint (5s timeout).
+        // Синхронный вызов из onCreate() = ANR на main thread.
+        // Выносим в IO-корутину через lifecycleScope.
+        lifecycleScope.launch {
+            val autoConfig = withContext(Dispatchers.IO) { provisioner.discoverConfig() }
+            if (autoConfig != null) {
+                showStatus("Auto-provision via ${autoConfig.source}…", isError = false)
+                setLoading(true)
+                performAutoEnroll(autoConfig)
+                return@launch
+            }
 
-        // Check for deep-link / QR enrollment data in the launching Intent
-        handleEnrollIntent(intent)
+            // Check for deep-link / QR enrollment data in the launching Intent
+            handleEnrollIntent(intent)
+        }
     }
 
     override fun onNewIntent(intent: Intent) {

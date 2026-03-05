@@ -15,6 +15,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.serialization.json.Json
 import okhttp3.CertificatePinner
+import okhttp3.ConnectionPool
 import okhttp3.OkHttpClient
 import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
@@ -46,8 +47,14 @@ object AppModule {
         @ApplicationContext ctx: Context,
     ): OkHttpClient {
         val builder = OkHttpClient.Builder()
-            .readTimeout(0, TimeUnit.MILLISECONDS)   // WS: бесконечный timeout
+            // FIX AUDIT-1.1: readTimeout=60s вместо бесконечного.
+            // OkHttp WS ping (15s) + readTimeout(60s) = детектирование мёртвого
+            // соединения за ~60с. Раньше при readTimeout=0 зависшие WS жили часами.
+            .readTimeout(60, TimeUnit.SECONDS)
             .writeTimeout(30, TimeUnit.SECONDS)
+            // FIX AUDIT-1.1: Один idle connection, 30s keep-alive.
+            // Агент использует только одно WS-соединение, лишние TCP в пуле — waste.
+            .connectionPool(ConnectionPool(1, 30, TimeUnit.SECONDS))
             // FIX-PING: WebSocket-level RFC 6455 ping каждые 15 секунд.
             // Cloudflare/nginx прозрачно пропускают WS ping/pong фреймы.
             // Это держит TCP-соединение живым через все прокси и NAT,

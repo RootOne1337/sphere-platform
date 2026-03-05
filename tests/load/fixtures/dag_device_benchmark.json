@@ -1,0 +1,134 @@
+{
+  "version": "1.0",
+  "nodes": [
+    {
+      "id": "n1",
+      "action": {
+        "type": "get_device_info",
+        "save_to": "device_info"
+      },
+      "next": "n2",
+      "timeout_ms": 5000,
+      "retry": 0
+    },
+    {
+      "id": "n2",
+      "action": {
+        "type": "condition",
+        "check": "battery_above",
+        "params": {"level": 20}
+      },
+      "on_true": "n3",
+      "on_false": "n_low_bat",
+      "timeout_ms": 3000,
+      "retry": 0
+    },
+    {
+      "id": "n_low_bat",
+      "action": {
+        "type": "shell",
+        "command": "echo 'Battery too low for benchmark'",
+        "save_to": "low_bat_msg"
+      },
+      "next": null,
+      "timeout_ms": 3000,
+      "retry": 0
+    },
+    {
+      "id": "n3",
+      "action": {
+        "type": "shell",
+        "command": "cat /proc/cpuinfo | head -20",
+        "save_to": "cpu_info"
+      },
+      "next": "n4",
+      "timeout_ms": 5000,
+      "retry": 1
+    },
+    {
+      "id": "n4",
+      "action": {
+        "type": "shell",
+        "command": "cat /proc/meminfo | head -5",
+        "save_to": "mem_info"
+      },
+      "next": "n5",
+      "timeout_ms": 5000,
+      "retry": 1
+    },
+    {
+      "id": "n5",
+      "action": {
+        "type": "shell",
+        "command": "df -h /data",
+        "save_to": "disk_info"
+      },
+      "next": "n6",
+      "timeout_ms": 5000,
+      "retry": 1
+    },
+    {
+      "id": "n6",
+      "action": {
+        "type": "shell",
+        "command": "getprop ro.build.display.id",
+        "save_to": "build_id"
+      },
+      "next": "n7",
+      "timeout_ms": 3000,
+      "retry": 0
+    },
+    {
+      "id": "n7",
+      "action": {
+        "type": "http_request",
+        "url": "https://api.ipify.org?format=json",
+        "method": "GET",
+        "timeout_ms": 10000,
+        "save_to": "public_ip"
+      },
+      "next": "n8",
+      "timeout_ms": 15000,
+      "retry": 2
+    },
+    {
+      "id": "n8",
+      "action": {
+        "type": "loop",
+        "count": 3,
+        "body": [
+          {
+            "id": "bench_shell",
+            "action": {
+              "type": "shell",
+              "command": "dd if=/dev/zero of=/data/local/tmp/bench_test bs=1M count=10 2>&1",
+              "save_to": "bench_result"
+            }
+          },
+          {
+            "id": "bench_cleanup",
+            "action": {
+              "type": "shell",
+              "command": "rm -f /data/local/tmp/bench_test"
+            }
+          }
+        ]
+      },
+      "next": "n9",
+      "timeout_ms": 60000,
+      "retry": 0
+    },
+    {
+      "id": "n9",
+      "action": {
+        "type": "screenshot",
+        "save_to": "final_screenshot"
+      },
+      "next": null,
+      "timeout_ms": 5000,
+      "retry": 0
+    }
+  ],
+  "entry_node": "n1",
+  "timeout_ms": 300000
+}

@@ -1,6 +1,6 @@
 # Android Agent
 
-> **Sphere Platform v4.0** — Android Agent (APK) Developer & Operator Guide
+> **Sphere Platform v4.6** — Android Agent (APK) Developer & Operator Guide
 
 ---
 
@@ -17,6 +17,7 @@
 9. [H.264 Streaming](#9-h264-streaming)
 10. [Troubleshooting](#10-troubleshooting)
 11. [Security Notes](#11-security-notes)
+12. [v4.3–4.6 Enhancements](#12-v43-46-enhancements)
 
 ---
 
@@ -25,7 +26,7 @@
 The Android Agent is a native Kotlin application that runs as a **persistent foreground service** on managed Android devices. It connects to the Sphere Platform backend over a secure WebSocket, executes commands, streams H.264 video, and manages AmneziaWG VPN tunnels.
 
 **Minimum Android version:** API 26 (Android 8.0)
-**Target SDK:** API 34 (Android 14)
+**Target SDK:** API 35 (Android 15) *(compileSdk 35, обновлено в v4.3)*
 
 ---
 
@@ -42,6 +43,8 @@ SphereApp (@HiltAndroidApp)
         │     WebSocket connection to wss://<host>/ws/device/<id>
         │     Reconnect: exponential backoff (1s, 2s, 4s … 120s)
         │     Auth: JWT in query param ?token=<access_token>
+        │     wsLock: ReentrantLock для потокобезопасной отправки (v4.6)
+        │     Reconnect debounce 5с (v4.6)
         │
         ├── CommandHandler
         │     Receives typed command objects from WS
@@ -59,6 +62,19 @@ SphereApp (@HiltAndroidApp)
         │     MediaProjection.createVirtualDisplay()
         │     MediaCodec (video/avc) encoder
         │     NAL unit relay → SphereWebSocketClientLive → WS binary
+        │     isEncoding guard перед callback (v4.6)
+        │
+        ├── ConfigWatchdog (v4.3)
+        │     Периодический опрос config из GitHub Raw
+        │     5 мин (онлайн) / 60с (оффлайн)
+        │     При смене server_url → атомарный reconnect
+        │
+        ├── ServiceWatchdog (v4.3)
+        │     AlarmManager keepalive каждые 5 мин
+        │     Тройная защита: BootReceiver + START_STICKY + AlarmManager
+        │
+        ├── AutoEnrollmentWorker (v4.5)
+        │     Фоновая авторегистрация через WorkManager
         │
         ├── SphereVpnManager
         │     wg-quick connect/disconnect
@@ -497,3 +513,56 @@ adb shell iptables -L SPHERE_KILLSWITCH
 - Config files containing VPN private keys are stored in app-private storage
   with `0600` permissions — not accessible to other apps without root
 - OTA updates require certificate fingerprint match — prevents untrusted APK installation
+- **wsLock (v4.6):** ReentrantLock защищает от race condition при отправке WS-сообщений из разных потоков
+- **MediaCodec guard (v4.6):** `isEncoding` флаг предотвращает callback на disposed encoder
+
+---
+
+## 12. v4.3–4.6 Enhancements
+
+### v4.3 — Watchdog механизмы (100% uptime)
+
+#### ConfigWatchdog (удалённая конфигурация)
+- `@Singleton` компонент, периодический опрос `CONFIG_URL` (напр. GitHub Raw)
+- Интервал: 5 мин (онлайн) / 60с (оффлайн), минимум 30с
+- При смене `server_url`: атомарное обновление `AuthTokenStore` + `forceReconnectNow()`
+- `forceCheck()` — вызывается CircuitBreaker при 10+ ошибках WS
+
+#### ServiceWatchdog (AlarmManager keepalive)
+- BroadcastReceiver + AlarmManager (ELAPSED_REALTIME_WAKEUP)
+- Перезапуск `SphereAgentService` каждые 5 мин
+- `enrolled` флаг в SharedPreferences — запуск только после enrollment
+- Покрывает aggressive battery optimization (Xiaomi, Huawei, Samsung)
+
+#### Жизненный цикл (6 точек входа)
+1. `SphereAgentService.onCreate()` — ConfigWatchdog coroutine + ServiceWatchdog alarm
+2. `BootReceiver.onReceive()` — enrollment check + watchdog scheduling
+3. `SphereApp.onCreate()` — watchdog scheduling при старте Application
+4. `SetupActivity.launchAgent()` — markEnrolled + schedule при enrollment
+5. `AndroidManifest.xml` — ServiceWatchdog receiver registration
+6. `ForegroundServiceStartNotAllowedException` (Android 12+) — try-catch в BootReceiver
+
+### v4.4 — Dynamic server URL
+- `AppModule.kt`: DI использует `ConfigWatchdog` вместо `BuildConfig.SERVER_URL`
+- Пересборка APK не требуется при смене сервера
+
+### v4.5 — AutoEnrollmentWorker + деплой-скрипты
+- `AutoEnrollmentWorker.kt` — фоновая авторегистрация через WorkManager
+- `android/scripts/` — деплой-скрипты:
+  - `deploy-farm.sh` — развёртывание на ферму через ADB
+  - `deploy-ldplayer.bat` — LDPlayer эмуляторы (Windows)
+  - `deploy-waydroid.sh` — Waydroid контейнеры
+  - `install-init-script.sh` — инициализация при загрузке
+  - `install-system-app.sh` — установка как системное приложение
+
+### v4.6 — Android Hardening
+
+| Проблема | Решение | Файл |
+|----------|---------|------|
+| WS race condition при отправке из нескольких потоков | `wsLock` (ReentrantLock) | SphereWebSocketClient.kt |
+| CPU usage скачки при телеметрии | CPU delta debounce (<3% игнорируется) | TelemetryCollector.kt |
+| Reconnect storm | Debounce 5с | SphereWebSocketClient.kt |
+| MediaCodec callback на disposed encoder | Guard `isEncoding` | StreamingModule.kt |
+| ForegroundServiceStartNotAllowedException | try-catch в BootReceiver | BootReceiver.kt |
+
+**Тесты**: 272 теста в 16 файлах (JUnit, MockK, Turbine, Robolectric).

@@ -43,7 +43,7 @@ export function DeviceSelector({ value, onChange, mode: externalMode, onModeChan
     else setInternalMode(m);
   };
 
-  const { data: devicesData } = useDevices({ page: 1, page_size: 200 });
+  const { data: devicesData } = useDevices({ page: 1, page_size: 5000 });
   const { data: groups } = useGroups();
   const { data: locations } = useLocations();
 

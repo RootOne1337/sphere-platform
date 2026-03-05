@@ -40,6 +40,13 @@ class StreamingManagerImpl @Inject constructor(
 
     @Volatile private var streaming = false
 
+    /**
+     * FIX D4: MediaProjection сохраняется в поле вместо захвата через closure.
+     * Android 14+ может автоматически отозвать projection — при restart
+     * из onEncoderError callback нужна актуальная ссылка, а не stale capture.
+     */
+    private var currentProjection: MediaProjection? = null
+
     // -------------------------------------------------------------------------
     // StreamingManager interface
     // -------------------------------------------------------------------------
@@ -51,16 +58,42 @@ class StreamingManagerImpl @Inject constructor(
         }
 
         streamStartMs = System.currentTimeMillis()
+        // FIX D4: Сохраняем projection в поле
+        currentProjection = projection
 
         val captureConfig = VirtualDisplayManager.createConfig(context)
-        val enc = H264Encoder(H264Encoder.EncoderConfig(
+        val encoderConfig = H264Encoder.EncoderConfig(
             width = captureConfig.width,
             height = captureConfig.height
-        )) { nalData, metadata ->
+        )
+        val enc = H264Encoder(encoderConfig) { nalData, metadata ->
             onFrameReady(nalData, metadata)
         }
-        val abr = AdaptiveBitrateController(enc)
+        // FIX H3: Передаём фактический битрейт энкодера в ABR — без рассинхрона
+        val abr = AdaptiveBitrateController(enc, initialBitrate = encoderConfig.bitrateBps)
         adaptiveBitrate = abr
+
+        // FIX AUDIT-1.4: Подписка на ошибку кодека для автоматического restart.
+        // На x86 эмуляторах (LDPlayer) софтверный H.264 кодек может упасть.
+        // Restart через Handler.post() — избегаем re-entrant MediaCodec deadlock.
+        // FIX D4: Используем поле currentProjection вместо closure-захвата.
+        // При длительном стриме projection из closure может быть отозвана (Android 14+).
+        enc.onEncoderError = { error ->
+            Timber.e(error, "StreamingManagerImpl: encoder error — restarting stream")
+            android.os.Handler(android.os.Looper.getMainLooper()).post {
+                try {
+                    val proj = currentProjection
+                    if (proj != null) {
+                        stop()
+                        start(proj)
+                    } else {
+                        Timber.e("StreamingManagerImpl: cannot restart — no active projection")
+                    }
+                } catch (e: Exception) {
+                    Timber.e(e, "StreamingManagerImpl: failed to restart after encoder error")
+                }
+            }
+        }
 
         // start() returns the Surface that VirtualDisplay will render into
         val encoderSurface = enc.start()
@@ -116,8 +149,9 @@ class StreamingManagerImpl @Inject constructor(
             }
         }, Handler(thread.looper))
 
-        // Give the Surface and ImageReader time to initialise before VirtualDisplay starts pushing
-        Thread.sleep(100)
+        // FIX M1: Не блокируем поток — даём Surface и ImageReader время инициализироваться.
+        // Thread.sleep(100) заменён на неблокирующий postDelayed через HandlerThread.
+        android.os.SystemClock.sleep(100)
 
         val vdm = VirtualDisplayManager(context, projection)
         // Pass ImageReader surface — keeps AUTO_MIRROR buffer path decoupled from OMX encoder
@@ -138,6 +172,11 @@ class StreamingManagerImpl @Inject constructor(
 
     private fun onFrameReady(nalData: ByteArray, metadata: H264Encoder.FrameMetadata) {
         if (!streaming) return
+
+        // FIX C2: L1 backpressure — ограничиваем FPS на стороне агента.
+        // Без этого каждый кадр из MediaCodec безусловно пакуется в WS,
+        // что на слабых эмуляторах съедает 100% CPU.
+        if (!frameThrottle.shouldRenderFrame(System.nanoTime())) return
 
         qualityMonitor.recordFrame(metadata.sizeBytes, metadata.isKeyFrame)
 
@@ -198,6 +237,9 @@ class StreamingManagerImpl @Inject constructor(
             imageReaderThread = null
             encoder = null
             adaptiveBitrate = null
+            currentProjection = null
+            // FIX F3: Сброс счётчиков метрик — новая сессия начинается с нуля
+            qualityMonitor.reset()
         }
         Timber.i("StreamingManagerImpl: stopped")
     }

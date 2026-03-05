@@ -64,6 +64,11 @@ class ZeroTouchProvisioner @Inject constructor(
             .build()
     }
 
+    companion object {
+        /** FIX D5: Максимальный размер конфиг-файла/HTTP-ответа (защита от OOM). */
+        private const val MAX_CONFIG_CHARS = 64 * 1024  // 64KB
+    }
+
     data class ProvisionConfig(
         val serverUrl: String,
         val apiKey: String,
@@ -130,7 +135,7 @@ class ZeroTouchProvisioner @Inject constructor(
                     Timber.w("ZeroTouch: config endpoint HTTP ${response.code}")
                     return@runCatching null
                 }
-                val body = response.body?.string() ?: return@runCatching null
+                val body = response.body?.string()?.take(MAX_CONFIG_CHARS) ?: return@runCatching null
                 val json = JSONObject(body)
                 ServerConfig(
                     serverUrl = json.getString("server_url"),
@@ -181,7 +186,8 @@ class ZeroTouchProvisioner @Inject constructor(
         for (file in searchPaths) {
             if (!file.exists()) continue
             runCatching {
-                val json = JSONObject(file.readText(Charsets.UTF_8))
+                // FIX D5: Ограничиваем размер чтения файла (злонамеренный файл на /sdcard → OOM)
+                val json = JSONObject(file.readText(Charsets.UTF_8).take(MAX_CONFIG_CHARS))
                 val serverUrl = json.getString("server_url").takeIf { it.isNotBlank() }
                     ?: return@runCatching null
                 val apiKey = json.getString("api_key").takeIf { it.isNotBlank() }

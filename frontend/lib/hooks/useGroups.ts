@@ -41,6 +41,24 @@ export function useDeleteGroup() {
   });
 }
 
+/** Обновить группу (имя, описание, цвет, родительская группа). Бекенд: PUT /groups/{id} */
+export function useUpdateGroup() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ groupId, ...body }: {
+      groupId: string;
+      name?: string;
+      description?: string;
+      color?: string;
+      parent_group_id?: string | null;
+    }) => {
+      const { data } = await api.put(`/groups/${groupId}`, body);
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['groups'] }),
+  });
+}
+
 export function useMoveDevices() {
   const qc = useQueryClient();
   return useMutation({

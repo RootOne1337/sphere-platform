@@ -1,0 +1,46 @@
+# Sphere Platform — Быстрый smoke-тест
+# 32 → 64 → 128 агентов, ~5 минут
+# Для CI/CD и быстрой проверки перед деплоем
+
+name: quick-smoke
+base_url: http://localhost:8000
+ws_url: ws://localhost:8000
+api_key: ""
+seed: 42
+
+heartbeat_interval: 30.0
+telemetry_interval: 10.0
+task_success_rate: 0.80
+task_failure_rate: 0.15
+task_duration_min: 2.0
+task_duration_max: 15.0
+enable_vpn: true
+enable_video: false
+random_disconnect_rate: 0.0001
+
+report_dir: reports/quick
+
+steps:
+  - name: "smoke-32"
+    target_agents: 32
+    ramp_up_sec: 8
+    hold_sec: 30
+    ramp_down_sec: 5
+    pass_criteria:
+      fleet_availability_gte: 99.0
+
+  - name: "smoke-64"
+    target_agents: 64
+    ramp_up_sec: 15
+    hold_sec: 30
+    ramp_down_sec: 5
+    pass_criteria:
+      fleet_availability_gte: 98.0
+
+  - name: "smoke-128"
+    target_agents: 128
+    ramp_up_sec: 20
+    hold_sec: 60
+    ramp_down_sec: 10
+    pass_criteria:
+      fleet_availability_gte: 97.0

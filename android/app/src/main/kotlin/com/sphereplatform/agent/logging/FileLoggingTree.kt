@@ -37,7 +37,15 @@ class FileLoggingTree @Inject constructor(
     }
 
     private val logDir: File = File(context.filesDir, LOG_DIR).also { it.mkdirs() }
-    private val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS", Locale.US)
+    /**
+     * FIX E1: ThreadLocal вместо shared SimpleDateFormat.
+     * SimpleDateFormat НЕ потокобезопасен — format() мутирует внутренний Calendar.
+     * Timber.log() вызывается из любого потока (WS, coroutine, MediaCodec callback),
+     * конкурентный format() → ArrayIndexOutOfBoundsException или garbled timestamps.
+     */
+    private val dateFormat = ThreadLocal.withInitial {
+        SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS", Locale.US)
+    }
     private val queue = LinkedBlockingQueue<String>(MAX_QUEUE_SIZE)
 
     @Volatile private var currentFile: File = resolveCurrentFile()
@@ -61,7 +69,7 @@ class FileLoggingTree @Inject constructor(
 
     override fun log(priority: Int, tag: String?, message: String, t: Throwable?) {
         val level = priorityChar(priority)
-        val ts = dateFormat.format(Date())
+        val ts = dateFormat.get()!!.format(Date())
         val tagPart = if (tag != null) "$tag" else "?"
         val entry = buildString {
             append("$ts $level/$tagPart: $message")
@@ -80,12 +88,23 @@ class FileLoggingTree @Inject constructor(
         for (file in files.reversed()) {
             if (remaining <= 0) break
             try {
-                val content = file.readText(Charsets.UTF_8)
-                if (content.length <= remaining) {
+                // FIX H5: Читаем только нужную часть файла, а не весь целиком.
+                // Файлы до 2MB — readText() грузит всё в память. На 1GB эмуляторе
+                // при 5 файлах × 2MB = 10MB UTF-16 String = 20MB heap pressure.
+                val fileLen = file.length().toInt()
+                if (fileLen <= remaining) {
+                    val content = file.readText(Charsets.UTF_8)
                     result.insert(0, content)
                     remaining -= content.length
                 } else {
-                    result.insert(0, content.takeLast(remaining))
+                    // Читаем только хвост файла (самые свежие записи)
+                    file.reader(Charsets.UTF_8).use { reader ->
+                        val skip = (fileLen - remaining).toLong().coerceAtLeast(0)
+                        reader.skip(skip)
+                        val tail = CharArray(remaining)
+                        val read = reader.read(tail)
+                        if (read > 0) result.insert(0, String(tail, 0, read))
+                    }
                     remaining = 0
                 }
             } catch (_: Exception) {}

@@ -1,6 +1,6 @@
 # Security
 
-> **Sphere Platform v4.0** — Security Architecture & Hardening Guide
+> **Sphere Platform v4.6** — Security Architecture & Hardening Guide
 
 ---
 
@@ -17,6 +17,7 @@
 9. [Dependency Security](#9-dependency-security)
 10. [Security Checklist](#10-security-checklist)
 11. [Vulnerability Response](#11-vulnerability-response)
+12. [v4.3–4.6 Security Enhancements](#12-v43-46-security-enhancements)
 
 ---
 
@@ -94,10 +95,11 @@
 
 ### API Keys
 
-- Format: `sk_live_<32 hex chars>` (256-bit entropy)
-- Stored as bcrypt hash, full key shown only at creation
-- Scoped to user (inherits user's role/org)
+- Формат: `sphr_{env}_{64hex}` (256-bit энтропия)
+- Хранится как bcrypt hash, полный ключ показывается только при создании
+- Scoped to user (наследует роль/org_id пользователя)
 - Optional expiry date
+- **Приоритет над JWT:** при одновременной передаче `Authorization: Bearer` и `X-API-Key` — API-ключ проверяется первым (v4.6.0)
 - Revocable at any time
 
 ---
@@ -443,3 +445,38 @@ See [SECURITY.md](../SECURITY.md) for the full vulnerability disclosure policy.
 | High | 7.0–8.9 | IDOR, privilege escalation, data leak | 7 days |
 | Medium | 4.0–6.9 | XSS, info disclosure | 30 days |
 | Low | 0.1–3.9 | Minor info leak, rate limit bypass | 90 days |
+
+---
+
+## 12. v4.3–4.6 Security Enhancements
+
+### v4.3 — Android Agent Watchdog механизмы
+- **ConfigWatchdog** — периодический опрос конфига из GitHub Raw (5 мин онлайн / 60с оффлайн)
+- **ServiceWatchdog** — AlarmManager keepalive каждые 5 мин
+- **Circuit Breaker → Config Hook** — 10+ ошибок → немедленная проверка конфига
+- Тройная защита от kill: BootReceiver + START_STICKY + AlarmManager
+
+### v4.4 — Device Inspector + REST команды
+- `POST /devices/{id}/reboot` — перезагрузка через WS
+- `POST /devices/{id}/shell` — shell-команды (защищено `require_permission("device:command")`)
+- `POST /devices/{id}/logcat` — сбор логов
+- `GET /devices/{id}/screenshot` — скриншот
+
+### v4.5 — Stale-task detection + Serveo tunnel
+- **Stale-task detection** — двухуровневое определение зависших задач:
+  1. Устройство оффлайн → задача автоматически TIMEOUT
+  2. Абсолютный предохранитель 24ч — защита от забытых задач
+- **Serveo SSH Tunnel** — замена Cloudflare Quick Tunnel (WebSocket idle drop через 5–50с)
+  - Alpine + openssh-client, ssh -N reconnect loop, ServerAliveInterval=30
+  - Домен: `sphere.serveousercontent.com`
+- **SPS/PPS/IDR кэширование** в StreamBridge — мгновенный старт для viewer
+- **Dynamic server URL** через ConfigWatchdog — APK не требует пересборки
+
+### v4.6 — Нагрузочное тестирование + Android hardening
+- **API Key приоритет** — X-API-Key проверяется первым при одновременной передаче с Bearer
+- **Android wsLock** — ReentrantLock для потокобезопасной отправки WS-сообщений
+- **CPU delta debounce** — игнорирование скачков <3%
+- **Reconnect debounce 5с** — защита от reconnect storm
+- **MediaCodec guard** — `isEncoding` проверка перед callback
+- **CRLF → LF** в Docker entrypoint.sh — устранение exec format error
+- **1 231 тест** по всему проекту (94 файла): APK 272, Backend 759, Frontend 132, Load 68

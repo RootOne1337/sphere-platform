@@ -22,6 +22,8 @@ import org.json.JSONObject
 import timber.log.Timber
 import java.util.concurrent.TimeUnit
 
+private const val MAX_RESPONSE_CHARS = 64 * 1024  // 64KB — защита от OOM
+
 /**
  * UpdateCheckWorker — периодически проверяет наличие новой версии APK.
  *
@@ -98,7 +100,8 @@ class UpdateCheckWorker @AssistedInject constructor(
                     Timber.d("UpdateCheckWorker: server returned HTTP ${response.code} — no update info")
                     return@use Result.success()
                 }
-                val body = response.body?.string() ?: return@use Result.success()
+                val body = response.body?.string()?.take(MAX_RESPONSE_CHARS)
+                    ?: return@use Result.success()
                 val json = JSONObject(body)
 
                 if (!json.optBoolean("update_available", false)) {

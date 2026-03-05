@@ -2,7 +2,8 @@
 
 import { useState, useCallback } from 'react';
 import { RowSelectionState } from '@tanstack/react-table';
-import { useDevices, useBulkAction, useDeleteDevice, useUpdateDevice } from '@/lib/hooks/useDevices';
+import { useDevices, useBulkAction, useDeleteDevice, useUpdateDevice, useBulkDeleteDevices } from '@/lib/hooks/useDevices';
+import { useDebounce } from '@/lib/hooks/useDebounce';
 import { useGroups, useMoveDevices } from '@/lib/hooks/useGroups';
 import { useLocations, useAssignDevicesToLocation, useRemoveDevicesFromLocation } from '@/lib/hooks/useLocations';
 import { FleetMatrix, type DeviceAction } from '@/src/features/devices/FleetMatrix';
@@ -27,6 +28,7 @@ import { Cpu, RefreshCcw, ShieldOff, LayoutGrid, List, Trash2, Pencil, MapPin, F
 
 export default function DevicesPage() {
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 300);
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
 
@@ -38,14 +40,15 @@ export default function DevicesPage() {
   const [selectedGroupId, setSelectedGroupId] = useState<string>('');
   const [selectedLocationId, setSelectedLocationId] = useState<string>('');
 
-  // Backend ограничивает per_page до 200 — используем максимум
+  // Backend поддерживает до 5000 — запрашиваем все устройства одной страницей
   const { data, isLoading, refetch } = useDevices({
     page: 1,
-    page_size: 200,
-    search: search || undefined,
+    page_size: 5000,
+    search: debouncedSearch || undefined,
   });
   const bulkMutation = useBulkAction();
   const deleteDevice = useDeleteDevice();
+  const bulkDelete = useBulkDeleteDevices();
   const updateDevice = useUpdateDevice();
   const { data: groups } = useGroups();
   const { data: locations } = useLocations();
@@ -93,7 +96,7 @@ export default function DevicesPage() {
 
   const handleBulkDelete = () => {
     if (!confirm(`Удалить ${selectedIds.length} устройств? Это действие необратимо.`)) return;
-    selectedIds.forEach(id => deleteDevice.mutate(id));
+    bulkDelete.mutate(selectedIds);
     setRowSelection({});
   };
 

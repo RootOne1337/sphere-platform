@@ -67,7 +67,7 @@ export function RunScriptModal({
   // Data fetching
   const { data: groups } = useGroups();
   const { data: allDevicesData, isLoading: devicesLoading } = useDevices({
-    page_size: 200,  // backend cap: le=200
+    page_size: 5000,
     group_id: targetMode === 'group' && selectedGroupId ? selectedGroupId : undefined,
   });
   const allDevices: Device[] = allDevicesData?.items ?? [];

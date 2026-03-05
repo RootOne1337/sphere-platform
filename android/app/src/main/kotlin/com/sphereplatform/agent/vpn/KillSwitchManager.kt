@@ -5,6 +5,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import timber.log.Timber
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -31,9 +32,16 @@ class KillSwitchManager @Inject constructor(
     var isEnabled = false
         private set
 
-    private companion object {
-        const val CHAIN_NAME = "SPHERE_KILLSWITCH"
-        const val VPN_INTERFACE = "sphere0"
+    /**
+     * FIX E3: Валидация hostname/IP перед вставкой в iptables.
+     * Без проверки: payload `"endpoint": "1.1.1.1; rm -rf /"` → command injection через su.
+     */
+    private val SAFE_HOST_PATTERN = Regex("^[a-zA-Z0-9._\\-]+$")
+
+    private fun requireSafeHost(host: String) {
+        require(host.isNotBlank() && host.length < 256 && SAFE_HOST_PATTERN.matches(host)) {
+            "KillSwitch: невалидный hostname/IP: '$host'"
+        }
     }
 
     /**
@@ -48,6 +56,7 @@ class KillSwitchManager @Inject constructor(
     ) = withContext(Dispatchers.IO) {
         try {
             val serverHost = vpnServerEndpoint.substringBefore(":")
+            requireSafeHost(serverHost)
 
             // Create chain
             iptables("-N $CHAIN_NAME 2>/dev/null || true")
@@ -69,6 +78,7 @@ class KillSwitchManager @Inject constructor(
             for (host in managementHosts) {
                 val cleanHost = host.trim().substringBefore(":")
                 if (cleanHost.isNotEmpty()) {
+                    requireSafeHost(cleanHost)
                     iptables("-A $CHAIN_NAME -d $cleanHost -j ACCEPT")
                     Timber.i("Kill switch: allowing management host $cleanHost")
                 }
@@ -119,11 +129,25 @@ class KillSwitchManager @Inject constructor(
         }
     }
 
+    private companion object {
+        const val CHAIN_NAME = "SPHERE_KILLSWITCH"
+        const val VPN_INTERFACE = "sphere0"
+        /** Таймаут на одну iptables-команду через su. На слабых эмуляторах su может зависнуть. */
+        const val ROOT_CMD_TIMEOUT_SECONDS = 30L
+    }
+
     private fun iptables(args: String) {
         val process = Runtime.getRuntime().exec(arrayOf("su", "-c", "iptables $args"))
-        val exitCode = process.waitFor()
+        // FIX C1: timeout — предотвращаем бесконечное зависание при stuck su-процессе
+        val finished = process.waitFor(ROOT_CMD_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+        if (!finished) {
+            process.destroyForcibly()
+            Timber.e("iptables $args → TIMEOUT after ${ROOT_CMD_TIMEOUT_SECONDS}s — процесс убит")
+            return
+        }
+        val exitCode = process.exitValue()
         if (exitCode != 0) {
-            val stderr = process.errorStream.bufferedReader().readText()
+            val stderr = process.errorStream.bufferedReader().use { it.readText().take(500) }
             Timber.w("iptables $args → exit=$exitCode: $stderr")
         }
     }

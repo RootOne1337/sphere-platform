@@ -1,0 +1,78 @@
+{
+  "models": [
+    {
+      "model": "Pixel 6",
+      "manufacturer": "Google",
+      "screen_density": 411,
+      "ram_mb": 8192,
+      "android_versions": ["12", "13", "14"]
+    },
+    {
+      "model": "Pixel 7 Pro",
+      "manufacturer": "Google",
+      "screen_density": 512,
+      "ram_mb": 12288,
+      "android_versions": ["13", "14"]
+    },
+    {
+      "model": "Samsung Galaxy S23",
+      "manufacturer": "Samsung",
+      "screen_density": 480,
+      "ram_mb": 8192,
+      "android_versions": ["13", "14"]
+    },
+    {
+      "model": "Samsung Galaxy A54",
+      "manufacturer": "Samsung",
+      "screen_density": 393,
+      "ram_mb": 6144,
+      "android_versions": ["13", "14"]
+    },
+    {
+      "model": "Xiaomi Redmi Note 12",
+      "manufacturer": "Xiaomi",
+      "screen_density": 395,
+      "ram_mb": 4096,
+      "android_versions": ["12", "13"]
+    },
+    {
+      "model": "OnePlus 11",
+      "manufacturer": "OnePlus",
+      "screen_density": 525,
+      "ram_mb": 16384,
+      "android_versions": ["13", "14"]
+    },
+    {
+      "model": "Huawei P60",
+      "manufacturer": "Huawei",
+      "screen_density": 480,
+      "ram_mb": 8192,
+      "android_versions": ["12"]
+    },
+    {
+      "model": "Sony Xperia 1 V",
+      "manufacturer": "Sony",
+      "screen_density": 643,
+      "ram_mb": 12288,
+      "android_versions": ["13", "14"]
+    },
+    {
+      "model": "Motorola Edge 40",
+      "manufacturer": "Motorola",
+      "screen_density": 402,
+      "ram_mb": 8192,
+      "android_versions": ["13"]
+    },
+    {
+      "model": "Nothing Phone 2",
+      "manufacturer": "Nothing",
+      "screen_density": 394,
+      "ram_mb": 12288,
+      "android_versions": ["13", "14"]
+    }
+  ],
+  "metadata": {
+    "description": "Пул моделей устройств для виртуальных агентов",
+    "count": 10
+  }
+}

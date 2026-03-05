@@ -40,17 +40,49 @@ class DeviceStatusProvider @Inject constructor(
         return cachedBattery
     }
 
-    /** Приближённая загрузка CPU (первая строка /proc/stat), 0–100. */
+    // FIX AUDIT-1.3: Предыдущие значения для дельта-вычисления CPU usage
+    // /proc/stat содержит КУМУЛЯТИВНЫЕ тики, поэтому нужна разница между замерами
+    @Volatile private var prevCpuTotal = 0L
+    @Volatile private var prevCpuIdle = 0L
+    @Volatile private var cachedCpu = 0f
+    @Volatile private var cpuExpireAt = 0L
+
+    /**
+     * Загрузка CPU за последний интервал (0-100%).
+     *
+     * FIX AUDIT-1.3: Вычисляет ДЕЛЬТУ между двумя замерами /proc/stat
+     * вместо простого деления кумулятивных тиков. Раньше показывал среднюю
+     * за всё время работы (~30-40%), теперь — реальную за последний интервал.
+     * Результат кешируется на 5 секунд.
+     */
     fun getCpuUsage(): Float {
+        val now = System.currentTimeMillis()
+        if (now < cpuExpireAt) return cachedCpu
+        cpuExpireAt = now + 5_000L
         return try {
-            val lines = java.io.File("/proc/stat").readLines()
-            val parts = lines.first().trim().split("\\s+".toRegex())
+            val parts = java.io.File("/proc/stat").useLines { lines ->
+                lines.first().trim().split("\\s+".toRegex())
+            }
             val user = parts[1].toLong()
             val nice = parts[2].toLong()
             val system = parts[3].toLong()
             val idle = parts[4].toLong()
-            val total = user + nice + system + idle
-            if (total == 0L) 0f else ((total - idle) * 100f / total)
+            val iowait = if (parts.size > 5) parts[5].toLong() else 0L
+            val total = user + nice + system + idle + iowait
+
+            val deltaTotal = total - prevCpuTotal
+            val deltaIdle = (idle + iowait) - prevCpuIdle
+
+            prevCpuTotal = total
+            prevCpuIdle = idle + iowait
+
+            // Первый замер (нет предыдущих данных) → 0f, следующий будет точным
+            if (deltaTotal <= 0L) 0f
+            else {
+                cachedCpu = ((deltaTotal - deltaIdle) * 100f / deltaTotal)
+                    .coerceIn(0f, 100f)
+                cachedCpu
+            }
         } catch (_: Exception) {
             0f
         }

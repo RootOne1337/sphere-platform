@@ -1,0 +1,46 @@
+# Sphere Platform — Spike-тест (резкий скачок)
+# 64 → мгновенно 1024 → hold → drop до 64
+# Проверяет реакцию на thundering herd
+
+name: spike-1024
+base_url: http://localhost:8000
+ws_url: ws://localhost:8000
+api_key: ""
+seed: 42
+
+heartbeat_interval: 30.0
+telemetry_interval: 10.0
+task_success_rate: 0.80
+task_failure_rate: 0.15
+task_duration_min: 2.0
+task_duration_max: 20.0
+enable_vpn: true
+enable_video: false
+random_disconnect_rate: 0.0001
+
+report_dir: reports/spike
+
+steps:
+  - name: "baseline-64"
+    target_agents: 64
+    ramp_up_sec: 15
+    hold_sec: 60
+    ramp_down_sec: 5
+    pass_criteria:
+      fleet_availability_gte: 99.0
+
+  - name: "spike-up-1024"
+    target_agents: 1024
+    ramp_up_sec: 15
+    hold_sec: 120
+    ramp_down_sec: 5
+    pass_criteria:
+      fleet_availability_gte: 90.0
+
+  - name: "spike-down-64"
+    target_agents: 64
+    ramp_up_sec: 1
+    hold_sec: 60
+    ramp_down_sec: 15
+    pass_criteria:
+      fleet_availability_gte: 97.0

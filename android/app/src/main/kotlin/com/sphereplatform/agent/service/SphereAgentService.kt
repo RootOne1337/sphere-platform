@@ -19,6 +19,7 @@ import com.sphereplatform.agent.ws.SphereWebSocketClient
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -57,6 +58,14 @@ class SphereAgentService : Service() {
     @Inject lateinit var appScope: CoroutineScope
     @Inject lateinit var configWatchdog: ConfigWatchdog
 
+    /**
+     * FIX D1: Service-scoped CoroutineScope — отменяется в onDestroy().
+     * appScope (application-level) НЕ отменяется при рестарте сервиса →
+     * корутины WS connect, configWatchdog, heartbeat дублируются.
+     * serviceScope гарантирует чистую остановку всех фоновых задач.
+     */
+    private val serviceScope = CoroutineScope(kotlinx.coroutines.SupervisorJob() + Dispatchers.Default)
+
     private val binder = LocalBinder()
 
     override fun onCreate() {
@@ -71,17 +80,17 @@ class SphereAgentService : Service() {
 
         // 3. Circuit breaker hook — при открытии CB проверяем конфиг из Git
         wsClient.onCircuitBreakerOpen = {
-            appScope.launch(Dispatchers.IO) { configWatchdog.forceCheck() }
+            serviceScope.launch(Dispatchers.IO) { configWatchdog.forceCheck() }
         }
 
         // 4. Запускаем WS-подключение (reconnect loop)
-        appScope.launch {
+        serviceScope.launch {
             wsClient.connect(deviceInfo.getDeviceId())
         }
 
         // 5. ConfigWatchdog — периодический опрос конфига из GitHub (CONFIG_URL)
         //    Если server_url сменился → обновляет store и форсирует reconnect
-        appScope.launch(Dispatchers.IO) {
+        serviceScope.launch(Dispatchers.IO) {
             configWatchdog.run()
         }
 
@@ -122,7 +131,13 @@ class SphereAgentService : Service() {
     override fun onBind(intent: Intent?): IBinder = binder
 
     override fun onDestroy() {
+        // FIX D1: Отменяем все service-scoped корутины (WS, configWatchdog, heartbeat)
+        serviceScope.cancel()
+        // FIX D1: Отменяем heartbeat watchdog loop в CommandDispatcher
+        commandHandler.dispatcher.stop()
         configWatchdog.stop()
+        // FIX AUDIT-2.7: Корректная отписка NetworkCallback
+        networkChangeHandler.unregister()
         wsClient.disconnect()
         adbActions.closeRootSession()
         super.onDestroy()
