@@ -65,7 +65,9 @@ Thumbs.db
 
 tmp_env.txt
 tmp_*.txt
+tmp_*.py
 *.tmp
+load_test_output.txt
 
 # Debug/dev artifacts (не коммитятся)
 *.bak
