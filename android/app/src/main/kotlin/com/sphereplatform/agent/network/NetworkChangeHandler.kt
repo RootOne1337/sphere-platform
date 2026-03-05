@@ -25,6 +25,8 @@ class NetworkChangeHandler @Inject constructor(
     private val wsClient: SphereWebSocketClient,
 ) {
     private var registered = false
+    // FIX AUDIT-2.7: Сохраняем callback для корректной unregister()
+    private var networkCallback: ConnectivityManager.NetworkCallback? = null
 
     fun register() {
         if (registered) return
@@ -35,7 +37,7 @@ class NetworkChangeHandler @Inject constructor(
             .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
             .build()
 
-        connectivityManager.registerNetworkCallback(request, object : ConnectivityManager.NetworkCallback() {
+        val callback = object : ConnectivityManager.NetworkCallback() {
             override fun onAvailable(network: Network) {
                 Timber.i("Network available — forcing WS reconnect")
                 // FIX ARCH-7: не ждём backoff, reconnect немедленно
@@ -48,6 +50,25 @@ class NetworkChangeHandler @Inject constructor(
                 Timber.w("Network lost — WS will receive onFailure automatically")
                 // WebSocket получит onFailure/onClosed автоматически от OkHttp
             }
-        })
+        }
+        networkCallback = callback
+        connectivityManager.registerNetworkCallback(request, callback)
+    }
+
+    /**
+     * FIX AUDIT-2.7: Корректная отписка — вызывается из SphereAgentService.onDestroy.
+     * Без этого NetworkCallback остаётся зарегистрированным → утечка ресурсов.
+     */
+    fun unregister() {
+        if (!registered) return
+        try {
+            val connectivityManager = context.getSystemService(ConnectivityManager::class.java)
+            networkCallback?.let { connectivityManager.unregisterNetworkCallback(it) }
+        } catch (e: Exception) {
+            Timber.w(e, "NetworkChangeHandler: unregister failed")
+        } finally {
+            registered = false
+            networkCallback = null
+        }
     }
 }

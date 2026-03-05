@@ -30,6 +30,13 @@ class H264Encoder(
     private val onFrameReady: (ByteArray, FrameMetadata) -> Unit,
 ) {
 
+    /**
+     * FIX AUDIT-1.4: Callback при фатальной ошибке кодека.
+     * Вызывается из MediaCodec callback thread — подписчик (StreamingManagerImpl)
+     * должен выполнять restart АСИНХРОННО, не из этого callback'а.
+     */
+    var onEncoderError: ((Exception) -> Unit)? = null
+
     data class EncoderConfig(
         val width: Int = 720,
         val height: Int = 1280,
@@ -259,8 +266,9 @@ class H264Encoder(
     }
 
     private fun restartEncoder() {
-        // StreamingManagerImpl observes errors via onFrameReady path.
-        // Restart is triggered externally to avoid re-entrant MediaCodec calls.
-        Timber.w("H264Encoder: restart requested from error callback")
+        // FIX AUDIT-1.4: Уведомляем подписчика (StreamingManagerImpl) о фатальной ошибке.
+        // Прямой restart из onError callback вызовет deadlock (re-entrant MediaCodec).
+        Timber.w("H264Encoder: ошибка кодека — уведомляем StreamingManager")
+        onEncoderError?.invoke(RuntimeException("MediaCodec fatal error"))
     }
 }

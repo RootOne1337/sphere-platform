@@ -37,6 +37,9 @@ class SphereWebSocketClient @Inject constructor(
     private var webSocket: WebSocket? = null
     private var deviceId: String = ""
 
+    // FIX AUDIT-1.7: Lock для атомарного обновления webSocket + isConnected
+    private val wsLock = Any()
+
     @Volatile
     var isConnected = false
         private set
@@ -47,6 +50,12 @@ class SphereWebSocketClient @Inject constructor(
     private var circuitOpenUntil = 0L
     // FIX-RECONNECT: 60s вместо 5 мин — при смене tunnel URL агент не должен ждать долго
     private val CIRCUIT_COOL_DOWN_MS = 60 * 1000L
+
+    // FIX AUDIT-1.2: Debounce для forceReconnectNow — защита от reconnect flood
+    // при мигании Wi-Fi на слабом эмуляторе
+    @Volatile
+    private var lastForceReconnectAt = 0L
+    private val FORCE_RECONNECT_DEBOUNCE_MS = 5_000L
 
     // Server close codes that indicate auth/permission problems (don't circuit break)
     companion object {
@@ -163,10 +172,13 @@ class SphereWebSocketClient @Inject constructor(
 
         val listener = object : WebSocketListener() {
             override fun onOpen(ws: WebSocket, response: Response) {
-                webSocket = ws
-                // First-message auth — ДО любых других сообщений
-                ws.send("""{"token":"$token"}""")
-                isConnected = true
+                // FIX AUDIT-1.7: Атомарное обновление webSocket + isConnected
+                synchronized(wsLock) {
+                    webSocket = ws
+                    // First-message auth — ДО любых других сообщений
+                    ws.send("""{"token":"$token"}""")
+                    isConnected = true
+                }
                 connected.complete(Unit)
                 onConnected?.invoke()
             }
@@ -185,16 +197,20 @@ class SphereWebSocketClient @Inject constructor(
             }
 
             override fun onFailure(ws: WebSocket, t: Throwable, response: Response?) {
-                isConnected = false
-                webSocket = null
+                synchronized(wsLock) {
+                    isConnected = false
+                    webSocket = null
+                }
                 if (!connected.isCompleted) connected.completeExceptionally(t)
                 else if (!disconnected.isCompleted) disconnected.complete(Unit)
                 onDisconnected?.invoke(-1, t.message ?: "failure")
             }
 
             override fun onClosed(ws: WebSocket, code: Int, reason: String) {
-                isConnected = false
-                webSocket = null
+                synchronized(wsLock) {
+                    isConnected = false
+                    webSocket = null
+                }
                 closeCode = code
                 closeReason = reason
                 disconnected.complete(Unit)
@@ -218,12 +234,12 @@ class SphereWebSocketClient @Inject constructor(
         (1000L * (1L shl attempt.coerceAtMost(5))).coerceAtMost(30_000L)
 
     fun sendJson(message: JsonObject): Boolean {
-        val ws = webSocket ?: return false
+        val ws = synchronized(wsLock) { webSocket } ?: return false
         return ws.send(message.toString())
     }
 
     fun sendBinary(data: ByteArray): Boolean {
-        val ws = webSocket ?: return false
+        val ws = synchronized(wsLock) { webSocket } ?: return false
         return ws.send(data.toByteString())
     }
 
@@ -233,7 +249,16 @@ class SphereWebSocketClient @Inject constructor(
      * Прерывает текущий backoff delay и сбрасывает circuit breaker.
      */
     fun forceReconnectNow() {
-        // FIX-RECONNECT: Сбрасываем circuit breaker — ConfigWatchdog подтвердил новый URL
+        // FIX AUDIT-1.2: Debounce — защита от reconnect flood при мигании Wi-Fi
+        val now = System.currentTimeMillis()
+        if (now - lastForceReconnectAt < FORCE_RECONNECT_DEBOUNCE_MS) {
+            Timber.d("forceReconnectNow: debounced (last ${now - lastForceReconnectAt}ms ago)")
+            return
+        }
+        lastForceReconnectAt = now
+
+        // Сбрасываем circuit breaker — вызывающий код (ConfigWatchdog/Network)
+        // подтвердил что переподключение имеет смысл
         circuitOpenUntil = 0L
         consecutiveFailures = 0
         reconnectTrigger.trySend(Unit)
@@ -241,9 +266,11 @@ class SphereWebSocketClient @Inject constructor(
 
     fun disconnect() {
         shouldStop = true
-        webSocket?.close(1000, "client_disconnect")
-        webSocket = null
-        isConnected = false
+        synchronized(wsLock) {
+            webSocket?.close(1000, "client_disconnect")
+            webSocket = null
+            isConnected = false
+        }
         reconnectTrigger.trySend(Unit)
     }
 }
