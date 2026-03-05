@@ -31,6 +31,9 @@
 | Development | 2 cores | 4 GB | 20 GB | Any Docker-capable |
 | Staging | 4 cores | 8 GB | 50 GB | Ubuntu 22.04 LTS |
 | Production | 8 cores | 16 GB | 100 GB SSD | Ubuntu 22.04 LTS |
+| **Enterprise (10k+ Devices)** | **16 Cores / 32 Threads** | **64 GB** | **2 TB NVMe** | **Ubuntu 22.04 LTS** |
+
+> *Note on Enterprise Hardware:* For orchestrating 10,000+ devices, 64 GB RAM provides ample headroom for Redis Pub/Sub queues and PostgreSQL shared buffers. NVMe storage is critical to avoid write-locks during mass task execution. A dedicated GPU (e.g., Nvidia RTX 4000 series or Tesla T4) is highly recommended if hardware-accelerated video transcoding or AI-based screen analysis is planned for the streaming pipeline.
 
 ### Required Software
 
@@ -87,6 +90,7 @@ VPN_KEY_ENCRYPTION_KEY=<Fernet.generate_key() output>
 ## 3. Development Stack
 
 Uses `docker-compose.override.yml` which enables:
+
 - Hot-reload for backend and frontend
 - Exposed DB and Redis ports for local tooling
 - Dev Dockerfiles (no multi-stage build)
@@ -132,6 +136,7 @@ docker compose -f docker-compose.yml -f docker-compose.full.yml up -d --build
 ```
 
 Staging-specific settings in `.env.local`:
+
 ```bash
 ENVIRONMENT=staging
 DEBUG=false
@@ -162,6 +167,7 @@ DB_MAX_OVERFLOW=20
 ```
 
 `docker-compose.production.yml` differences from dev:
+
 - No exposed DB/Redis ports
 - Resource limits (`mem_limit`, `cpus`)
 - Restart policy `unless-stopped`
@@ -229,6 +235,7 @@ docker compose restart backend celery-worker
 ### Manual migrations (if needed)
 
 One-time SQL applied in v4.0:
+
 ```sql
 -- Required for VPN peer status tracking
 ALTER TABLE vpn_peers
@@ -278,6 +285,7 @@ certbot renew --dry-run
 ```
 
 Update `infrastructure/nginx/nginx.conf`:
+
 ```nginx
 server {
     listen 443 ssl http2;
@@ -514,12 +522,14 @@ curl https://sphere.serveousercontent.com/api/v1/health
 ```
 
 **Переменные окружения (.env):**
+
 ```bash
 SERVER_PUBLIC_URL=https://sphere.serveousercontent.com
 CORS_EXTRA_ORIGINS=https://sphere.serveousercontent.com
 ```
 
 **Agent config (sphere-agent-config repo):**
+
 ```json
 { "server_url": "https://sphere.serveousercontent.com" }
 ```
