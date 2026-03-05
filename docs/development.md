@@ -1,6 +1,6 @@
 # Developer Guide
 
-> **Sphere Platform v4.2** — Local Development Setup & Coding Standards
+> **Sphere Platform v4.6** — Local Development Setup & Coding Standards
 
 ---
 
@@ -274,13 +274,19 @@ pytest --cov=backend --cov-report=html
 
 # Run fast (skip slow integration tests)
 pytest -m "not slow"
+
+# Run load tests (mock server)
+pytest tests/load/ -v
+
+# Run load tests (real backend — requires Docker stack)
+pytest tests/load/test_real_backend.py -v --tb=short
 ```
 
 ### Test structure
 
 ```
-tests/
-├── conftest.py            # Shared fixtures (test DB, HTTP client, auth tokens)
+tests/                          # 94 файла, 1 231 тест
+├── conftest.py                 # Shared fixtures (test DB, HTTP client, auth tokens)
 ├── auth/
 │   ├── test_login.py
 │   ├── test_refresh.py
@@ -289,14 +295,34 @@ tests/
 │   ├── test_crud.py
 │   └── test_bulk.py
 ├── test_scripts/
-│   └── test_pipeline_*.py   # Pipeline CRUD, executor, step handlers
+│   └── test_pipeline_*.py        # Pipeline CRUD, executor, step handlers
 ├── test_scripts/
-│   └── test_schedule_*.py   # Schedule CRUD, engine, dry-run
+│   └── test_schedule_*.py        # Schedule CRUD, engine, dry-run
 ├── vpn/
 │   └── test_vpn_api.py
-└── test_ws/
-    └── test_connection_manager.py
+├── test_ws/
+│   └── test_connection_manager.py
+└── load/                       # 🔥 Нагрузочное тестирование (68 тестов)
+    ├── core/                   # VirtualAgent, AgentPool, Orchestrator, MetricsCollector
+    ├── protocols/              # WS/REST клиенты, MessageFactory, H.264 эмулятор
+    ├── scenarios/              # 6 бизнес-сценариев
+    ├── config/                 # YAML-конфигурации нагрузки
+    ├── mock_server.py          # Mock Sphere Platform (REST + WS)
+    ├── test_unit_core.py       # 30 юнит-тестов
+    ├── test_integration.py     # 10 интеграционных тестов
+    ├── test_load_mock.py       # E2E mock: 256→1024 агентов
+    └── test_real_backend.py    # Real backend: 1024 агентов + DAG
 ```
+
+### Общая статистика тестов
+
+| Компонент | Файлов | Тестов | Фреймворк |
+|-----------|--------|--------|----------|
+| Android APK | 16 | 272 | JUnit, MockK, Turbine, Robolectric |
+| Backend | 50 | 759 | pytest, httpx, asyncio |
+| Frontend | 18 | 132 | Jest, Testing Library |
+| Load tests | 10 | 68 | pytest, asyncio, websockets |
+| **Итого** | **94** | **1 231** | |
 
 ### Writing a test
 

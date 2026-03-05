@@ -1,6 +1,6 @@
 # API Reference
 
-> **Sphere Platform v4.2** — REST API
+> **Sphere Platform v4.6** — REST API
 
 **Base URL:** `https://yourdomain.com/api/v1`
 **Interactive docs:** `https://yourdomain.com/api/v1/docs` (Swagger UI)
@@ -10,13 +10,19 @@
 
 ## Authentication
 
-All endpoints (except `/auth/login`, `/health`, and `/config/agent`) require a Bearer token.
+All endpoints (except `/auth/login`, `/health`, and `/config/agent`) require a Bearer token or API Key.
 
 ```http
+# JWT Bearer token
 Authorization: Bearer <access_token>
+
+# API Key (приоритет над JWT при наличии обоих)
+X-API-Key: sphr_<env>_<64hex>
 ```
 
 Tokens are obtained via the login endpoint and refreshed via `/auth/refresh`.
+API keys are created via `POST /api-keys` and have the format `sphr_{env}_{64hex}` (256-bit entropy).
+При одновременной передаче Bearer JWT и X-API-Key — API-ключ имеет приоритет.
 
 ### Error responses
 
@@ -269,7 +275,7 @@ Authorization: Bearer <token>
 | `tag` | string | Filter by tag |
 | `search` | string | Search by name or serial |
 | `page` | int | Page number (default: 1) |
-| `per_page` | int | Items per page (default: 50, max: 200) |
+| `per_page` | int | Items per page (default: 50, max: 5000) |
 
 **Response 200:**
 ```json
@@ -347,6 +353,99 @@ Authorization: Bearer <token>
 Delete a device. Returns `204 No Content`.
 
 **Requires:** `device:delete` permission.
+
+---
+
+### POST /devices/{id}/reboot
+
+> Добавлено в v4.4.0
+
+Отправка команды перезагрузки устройства через WebSocket Command Manager.
+
+```http
+POST /devices/{id}/reboot
+Authorization: Bearer <token>
+```
+
+**Response 200:**
+```json
+{ "status": "rebooting", "device_id": "uuid" }
+```
+
+**Ошибки:**
+- `404` — устройство не найдено
+- `503` — агент оффлайн (нет WS-соединения)
+
+Timeout-fallback: устройство может перезагрузиться до ACK (3с grace period).
+
+---
+
+### POST /devices/{id}/shell
+
+> Добавлено в v4.4.0
+
+Выполнение shell-команды на устройстве через WebSocket.
+
+```http
+POST /devices/{id}/shell
+Authorization: Bearer <token>
+
+{ "command": "adb shell getprop ro.build.display.id" }
+```
+
+**Response 200:**
+```json
+{
+  "exit_code": 0,
+  "stdout": "UP1A.231005.007",
+  "stderr": ""
+}
+```
+
+**Requires:** `device:command` permission.
+
+---
+
+### POST /devices/{id}/logcat
+
+> Добавлено в v4.4.0
+
+Запрос на сбор logcat с устройства (UPLOAD_LOGCAT команда).
+
+```http
+POST /devices/{id}/logcat
+Authorization: Bearer <token>
+
+{ "lines": 1000, "filter": "SphereAgent" }
+```
+
+**Response 202:**
+```json
+{ "status": "collecting", "device_id": "uuid" }
+```
+
+Логи загружаются агентом и доступны через `GET /logs/{device_id}`.
+
+---
+
+### GET /devices/{id}/screenshot
+
+> Добавлено в v4.4.0
+
+Снятие скриншота устройства.
+
+```http
+GET /devices/{id}/screenshot
+Authorization: Bearer <token>
+```
+
+**Response 200:**
+```json
+{
+  "screenshot_url": "https://storage.example.com/screenshots/uuid.png",
+  "timestamp": "2026-03-04T10:00:00Z"
+}
+```
 
 ---
 
@@ -1214,6 +1313,10 @@ All list endpoints support:
 | Param | Default | Max | Description |
 |-------|---------|-----|-------------|
 | `page` | `1` | — | Page number |
-| `per_page` | `50` | `200` | Items per page |
+| `per_page` | `50` | `5000` | Items per page |
 
 Response always includes `{ "items": [...], "total": N, "page": N, "per_page": N }`.
+
+> **v4.6.0:** `per_page` max увеличен с 200 до 5 000 для поддержки массовых
+> операций и нагрузочных тестов. Рекомендуется использовать значения ≤ 200
+> для стандартных UI-запросов.
