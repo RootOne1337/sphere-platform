@@ -88,10 +88,10 @@ class CommandDispatcherTest {
         val msg = buildJsonObject {
             put("type", "CANCEL_DAG")
             put("command_id", "cmd5")
-            put("signed_at", System.currentTimeMillis() / 1000 - 60) // ровно 60с
+            put("signed_at", System.currentTimeMillis() / 1000 - 59) // 59с — внутри TTL 60с
             put("ttl_seconds", 60)
         }
-        // 60 > 60 = false (не просрочена, граничный случай)
+        // 59 > 60 = false; даже при +1с drift: 60 > 60 = false (не просрочена)
         assertFalse(isControlCommandExpired(msg))
     }
 
