@@ -25,10 +25,14 @@ FLOW (без изменений):
 """
 import asyncio
 import json
+import os
 
 import asyncpg
 
-DB_DSN = "postgresql://sphere:A80fXnwMLNmwa-ebjhUm5RV_2evs1BLq@localhost:5432/sphereplatform"
+DB_DSN = os.environ.get(
+    "DATABASE_URL",
+    os.environ.get("POSTGRES_URL", "postgresql://sphere:sphere@localhost:5432/sphereplatform"),
+).replace("+asyncpg", "")
 SCRIPT_VERSION_ID = "21e7f39a-f1ea-4b16-bbe0-c20f1f611e61"
 
 MAX_CYCLES_BEFORE_RESTART = 28
@@ -272,7 +276,7 @@ def build_dag():
         "retry": 1,
         "action": {
             "type": "type_text",
-            "text": "NaftaliN1337228",
+            "text": os.environ.get("GAME_PASSWORD", "CHANGE_ME"),
             "clear_first": True
         },
         "on_success": "sleep_after_type",

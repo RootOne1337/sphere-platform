@@ -124,7 +124,7 @@ seed-enrollment: ## Создать enrollment API-ключ в БД (AGENT_CONFIG
 build-apk:     ## Собрать enterprise APK с зашитым CONFIG_URL (требует SPHERE_CONFIG_URL env)
 	@if [ -z "$$SPHERE_CONFIG_URL" ]; then \
 		echo "❌ Задай SPHERE_CONFIG_URL. Пример:"; \
-		echo "   SPHERE_CONFIG_URL=https://adb.leetpc.com/api/v1/config/agent make build-apk"; \
+		echo "   SPHERE_CONFIG_URL=https://sphere.example.com/api/v1/config/agent make build-apk"; \
 		exit 1; \
 	fi
 	@echo "Сборка enterprise APK с CONFIG_URL=$$SPHERE_CONFIG_URL"

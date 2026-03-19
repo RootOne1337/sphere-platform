@@ -211,7 +211,7 @@ nodes.append({
 nodes.append({
     "id": "type_password",
     "retry": 1,
-    "action": {"type": "type_text", "text": "NaftaliN1337228"},
+    "action": {"type": "type_text", "text": "CHANGE_ME_game_password"},
     "on_success": "sleep_pw_type",
     "on_failure": "scan_and_tap",
     "timeout_ms": 10000

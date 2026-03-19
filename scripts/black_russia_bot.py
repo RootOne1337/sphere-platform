@@ -16,6 +16,7 @@ Black Russia Auto-Login Bot
 from __future__ import annotations
 
 import argparse
+import os
 import subprocess
 import sys
 import time
@@ -43,7 +44,7 @@ DEVICE_SERIAL  = "emulator-5554"   # из `adb devices` (emulator-5554 / 127.0.0
 
 APP_PACKAGE    = "com.br.top"
 
-PASSWORD       = "NaftaliN1337228"   # пароль для входа И регистрации
+PASSWORD       = os.environ.get("BOT_PASSWORD", "")  # пароль для входа И регистрации — задаётся через env BOT_PASSWORD
 
 CHAR_NAME      = "Naf"               # имя нового персонажа (при первом входе)
 CHAR_SURNAME   = "Tali"              # фамилия нового персонажа

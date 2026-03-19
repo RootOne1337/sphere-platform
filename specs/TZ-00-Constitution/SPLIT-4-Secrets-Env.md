@@ -42,7 +42,7 @@ JWT_ACCESS_TOKEN_EXPIRE_MINUTES=30
 JWT_REFRESH_TOKEN_EXPIRE_DAYS=7
 
 # ── VPN / WireGuard Router ────────────────────────────────────────────────────
-WG_ROUTER_URL=http://2.56.122.229:8000
+WG_ROUTER_URL=http://YOUR_WG_SERVER_IP:8000
 WG_ROUTER_API_KEY=CHANGE_ME_wg_api_key
 
 # AmneziaWG обфускация (НЕ менять если уже есть активные туннели)
@@ -57,8 +57,8 @@ AWG_H3=2031675751
 AWG_H4=3699611814
 
 # ── Server ────────────────────────────────────────────────────────────────────
-VPN_SERVER_HOSTNAME=adb.leetpc.com
-SERVER_HOSTNAME=adb.leetpc.com
+VPN_SERVER_HOSTNAME=vpn.example.com
+SERVER_HOSTNAME=sphere.example.com
 
 # ── n8n ───────────────────────────────────────────────────────────────────────
 N8N_ENCRYPTION_KEY=CHANGE_ME_n8n_key_32chars
@@ -120,7 +120,7 @@ class Settings(BaseSettings):
     AWG_H4: int
     
     # Server
-    VPN_SERVER_HOSTNAME: str = "adb.leetpc.com"
+    VPN_SERVER_HOSTNAME: str = "sphere.example.com"
     
     # App
     DEBUG: bool = False

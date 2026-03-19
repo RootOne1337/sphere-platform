@@ -31,6 +31,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 import random
 import subprocess
 import time
@@ -60,9 +61,7 @@ REAL_BACKEND_URL = "http://127.0.0.1:8000"
 REAL_WS_URL = "ws://127.0.0.1:8000"
 
 # API-ключ для нагрузочного тестирования (создан в БД)
-LOAD_TEST_API_KEY = (
-    "sphr_dev_2d3bb7e42bf8f46a41c66bed5c098d5fad4db1650736c0afcc481fd47f0db42c"
-)
+LOAD_TEST_API_KEY = os.environ.get("LOAD_TEST_API_KEY", "")
 
 # Шаги нагрузки: (target_agents, ramp_sec, hold_sec)
 LOAD_STEPS = [
@@ -76,8 +75,8 @@ FA_THRESHOLD = 75.0       # % Fleet Availability (порог на реально
 DEAD_THRESHOLD = 10.0     # % макс DEAD-агентов (реальный backend строже к ресурсам)
 
 # Авторизация для создания задач (admin user)
-ADMIN_EMAIL = "NIFILIM1337@gmail.com"
-ADMIN_PASSWORD = "loadtest2024"
+ADMIN_EMAIL = os.environ.get("LOAD_TEST_ADMIN_EMAIL", "admin@example.com")
+ADMIN_PASSWORD = os.environ.get("LOAD_TEST_ADMIN_PASSWORD", "")
 
 # Тестовый скрипт (создан через SQL)
 LOAD_TEST_SCRIPT_ID = "a7f5c4a3-887e-47ac-90d9-cf081047f0cb"
@@ -238,7 +237,7 @@ def collect_redis_stats() -> dict[str, Any]:
         raw = subprocess.run(
             [
                 "docker", "exec", "sphere-platform-redis-1",
-                "redis-cli", "-a", "hUJmzAySXLnoPN3Yy9tz5RHgL8UsVHeJ", "INFO", "clients", "memory", "stats",
+                "redis-cli", "-a", os.environ.get("REDIS_PASSWORD", ""), "INFO", "clients", "memory", "stats",
             ],
             capture_output=True, text=True, timeout=10,
         )

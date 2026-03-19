@@ -10,8 +10,6 @@ def setup_cors(app: FastAPI) -> None:
     origins = [
         "http://localhost:3000",
         "http://localhost:3002",           # Next.js dev
-        "https://adb.leetpc.com",          # Production
-        "https://adb2.leetpc.com",         # Dev domain
     ]
     # Дополнительные origins из переменной окружения (через запятую)
     extra = os.environ.get("CORS_EXTRA_ORIGINS", "")

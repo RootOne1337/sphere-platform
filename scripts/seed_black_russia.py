@@ -406,7 +406,7 @@ BLACK_RUSSIA_DAG: dict = {
             "id": "type_pw",
             "action": {
                 "type": "type_text",
-                "text": "NaftaliN1337228",
+                "text": "CHANGE_ME_game_password",
                 "clear_first": True,
             },
             "on_success": "sleep_after_type",

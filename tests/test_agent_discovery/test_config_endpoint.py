@@ -273,7 +273,7 @@ class TestConfigFromAgentConfigFile:
             mock_settings.AGENT_CONFIG_DIR = str(tmp_path)
             mock_settings.AGENT_CONFIG_ENV = "production"
             mock_settings.ENVIRONMENT = "production"
-            mock_settings.SERVER_PUBLIC_URL = "https://adb.leetpc.com"
+            mock_settings.SERVER_PUBLIC_URL = "https://sphere.example.com"
             mock_settings.AGENT_CONFIG_CACHE_TTL = 0
 
             resp = await anon_client.get("/api/v1/config/agent")
@@ -281,7 +281,7 @@ class TestConfigFromAgentConfigFile:
         assert resp.status_code == 200
         data = resp.json()
         # server_url должен взяться из SERVER_PUBLIC_URL, а не из пустого JSON
-        assert data["server_url"] == "https://adb.leetpc.com"
+        assert data["server_url"] == "https://sphere.example.com"
         # enrollment_api_key должен прийти из файла
         assert data["enrollment_api_key"] == "sphr_prod_enrollment_key_2025"
         assert data["features"]["auto_register"] is True

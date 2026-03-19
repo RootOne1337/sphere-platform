@@ -286,8 +286,8 @@ services:
       - "${FRONTEND_PORT:-3000}:3000"   # S3 API
       - "9001:9001"   # Web Console
     environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-spheredev}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-spheredev123}
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?MINIO_ROOT_USER is required}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD is required}
     volumes:
       - minio_data:/data
     networks:

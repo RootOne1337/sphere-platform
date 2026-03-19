@@ -31,7 +31,7 @@ SERVICE_CLASS=".service.SphereAgentService"
 DEST_DIR="/system/priv-app/SphereAgent"
 
 # Серверная конфигурация (измените под вашу инфраструктуру)
-SERVER_URL="${SPHERE_SERVER_URL:-https://zinc-enhancement-walls-role.trycloudflare.com}"
+SERVER_URL="${SPHERE_SERVER_URL:?SPHERE_SERVER_URL is required}"
 API_KEY="${SPHERE_API_KEY:-sphr_dev_enrollment_key_2025}"
 DEVICE_ID="${SPHERE_DEVICE_ID:-waydroid-$(hostname)}"
 

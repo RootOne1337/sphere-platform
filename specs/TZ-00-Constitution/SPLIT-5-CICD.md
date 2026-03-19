@@ -405,7 +405,7 @@ preview-deploy.yml
   │        └── alembic upgrade head
   ├── poll /api/v1/health/ready (до 5 мин)
   ├── GitHub Deployment API → "success"
-  └── PR comment: https://pr-N.preview.adb.leetpc.com
+  └── PR comment: https://pr-N.preview.sphere.example.com
 
 PR закрыт / смержен
        │
@@ -426,7 +426,7 @@ preview-cleanup.yml
 
 - Изолировано в `/srv/sphere-previews/pr-N/` — не касается `/srv/sphere-platform/`
 - [Traefik](https://traefik.io) динамически маршрутизирует по Docker-labels — без перезагрузок конфига
-- Wildcard TLS `*.preview.adb.leetpc.com` через Let's Encrypt DNS-challenge (один сертификат на все PR)
+- Wildcard TLS `*.preview.sphere.example.com` через Let's Encrypt DNS-challenge (один сертификат на все PR)
 - Лимит: не более 5 одновременных окружений (server-side guard перед деплоем)
 - Каждое окружение: свой PostgreSQL-volume (чистая БД + миграции), свой Redis, ограниченные CPU/RAM
 
@@ -522,7 +522,7 @@ metrics:
 ```
 # DNS-запись у провайдера (Cloudflare / etc.)
 Тип:    A
-Имя:    *.preview.adb.leetpc.com
+Имя:    *.preview.sphere.example.com
 Значение: <IP VPS>
 TTL:    300
 ```
@@ -1132,7 +1132,7 @@ jobs:
 
 # ── Repository VARIABLES (видны в логах — не секретные) ──────────────────────
 PREVIEW_ENVIRONMENTS_ENABLED  = true               # ← ОПТ-ИН. По умолчанию НЕ создавать.
-PREVIEW_DOMAIN                = adb.leetpc.com
+PREVIEW_DOMAIN                = sphere.example.com
 ACME_EMAIL                    = your@email.com
 
 # ── Repository SECRETS (скрыты в логах) ──────────────────────────────────────
@@ -1162,7 +1162,7 @@ CF_DNS_API_TOKEN    = <Cloudflare API token>        # DNS-challenge для wildc
 
 **Preview Environments (только если `PREVIEW_ENVIRONMENTS_ENABLED = true`):**
 
-- [ ] PR открыт → `https://pr-N.preview.adb.leetpc.com` доступен по HTTPS за ≤ 5 мин
+- [ ] PR открыт → `https://pr-N.preview.sphere.example.com` доступен по HTTPS за ≤ 5 мин
 - [ ] PR обновлён (sync) → preview пересобирается, старый деплой отменяется
 - [ ] PR закрыт / смержен → окружение уничтожается автоматически (docker compose down -v)
 - [ ] > 5 одновременных PRs → deploy завершается с читаемой ошибкой

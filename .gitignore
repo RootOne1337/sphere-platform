@@ -86,7 +86,7 @@ task_result*.json
 # Ad-hoc данные / скрипты
 data/
 reports/
-updates/
+/updates/
 
 # Docs trash (временные/ad-hoc файлы в docs/)
 docs/XPath.txt

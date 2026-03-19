@@ -246,7 +246,7 @@ http {
     # ── Основной HTTPS сервер ───────────────────────────────────────────────
     server {
         listen 443 ssl http2;
-        server_name adb.leetpc.com;
+        server_name sphere.example.com;
 
         ssl_certificate     /etc/nginx/ssl/fullchain.pem;
         ssl_certificate_key /etc/nginx/ssl/privkey.pem;
@@ -323,7 +323,7 @@ openssl req -x509 -newkey rsa:4096 -keyout infrastructure/nginx/ssl/privkey.pem 
 # Для production — Let's Encrypt:
 # docker run -it --rm -p 80:80 \
 #   -v $(pwd)/infrastructure/nginx/ssl:/etc/letsencrypt \
-#   certbot/certbot certonly --standalone -d adb.leetpc.com
+#   certbot/certbot certonly --standalone -d sphere.example.com
 ```
 
 ---
@@ -351,7 +351,7 @@ def setup_cors(app):
     """Настроить CORS. Вызвать при старте приложения."""
     origins = [
         "http://localhost:3002",           # Next.js dev
-        "https://adb.leetpc.com",          # Production
+        "https://sphere.example.com",          # Production
     ]
     
     app.add_middleware(
