@@ -638,10 +638,10 @@ class OrchestrationEngine:
     async def _enqueue_task(org_id, device_id, task_id, priority: int) -> None:
         """Поставить задачу в per-device Redis очередь."""
         from backend.database.redis_client import redis_binary
-        from backend.services.task_queue import TaskQueueService
+        from backend.services.task_queue import TaskQueue
 
         if redis_binary:
-            queue_svc = TaskQueueService(redis_binary)
+            queue_svc = TaskQueue(redis_binary)
             await queue_svc.enqueue(
                 org_id=str(org_id),
                 device_id=str(device_id),

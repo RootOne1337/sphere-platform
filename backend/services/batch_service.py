@@ -115,11 +115,12 @@ class BatchService:
         Возвращает (batch, online_count).
         """
         from backend.database.redis_client import redis as _redis
+        from backend.services.cache_service import CacheService
         from backend.services.device_service import DeviceService
         from backend.services.device_status_cache import DeviceStatusCache
 
         # 1. Все активные устройства организации
-        device_svc = DeviceService(self.db)
+        device_svc = DeviceService(self.db, CacheService())
         all_ids = await device_svc.get_all_device_ids(org_id)
         if not all_ids:
             raise HTTPException(

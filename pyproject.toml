@@ -36,6 +36,10 @@ module = ["backend.services.cache_service", "backend.services.health_service"]
 ignore_errors = true  # Redis | None false positives — Redis guaranteed at startup
 warn_unused_ignores = false
 
+[[tool.mypy.overrides]]
+module = ["croniter", "pytz"]
+ignore_missing_imports = true  # third-party libs without bundled stubs
+
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
