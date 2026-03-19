@@ -133,7 +133,7 @@ class KeepAliveWorker @AssistedInject constructor(
      * Пытается пройти Zero-Touch enrollment.
      * Полностью повторяет логику [AutoEnrollmentWorker] но в контексте периодического тика.
      */
-    private fun tryAutoEnrollment(): Result {
+    private suspend fun tryAutoEnrollment(): Result {
         val config = provisioner.discoverConfig()
         if (config == null) {
             Timber.d("KeepAliveWorker: конфигурация не найдена — повторим через 15 мин")
