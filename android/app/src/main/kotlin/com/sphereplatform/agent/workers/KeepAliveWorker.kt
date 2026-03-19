@@ -1,14 +1,21 @@
 package com.sphereplatform.agent.workers
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.content.Context
+import android.content.pm.ServiceInfo
+import android.os.Build
+import androidx.core.app.NotificationCompat
 import androidx.hilt.work.HiltWorker
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.ForegroundInfo
 import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import com.sphereplatform.agent.R
 import com.sphereplatform.agent.provisioning.DeviceRegistrationClient
 import com.sphereplatform.agent.provisioning.RegistrationException
 import com.sphereplatform.agent.provisioning.ZeroTouchProvisioner
@@ -61,6 +68,18 @@ class KeepAliveWorker @AssistedInject constructor(
         private const val WORK_NAME = "sphere_keep_alive"
 
         /**
+         * ID уведомления для foreground-режима воркера (Android 12+ обход FGS-ограничений).
+         * Должен отличаться от [SphereAgentService.NOTIFICATION_ID] = 1.
+         */
+        private const val WORKER_NOTIFICATION_ID = 2
+
+        /**
+         * ID канала уведомлений для технического foreground воркера.
+         * IMPORTANCE_MIN — без звука, без вибрации, не показывается в статус-баре.
+         */
+        private const val WORKER_CHANNEL_ID = "sphere_keepalive_worker"
+
+        /**
          * Планирует периодический watchdog-тик каждые 15 минут.
          *
          * Вызывается из:
@@ -91,6 +110,23 @@ class KeepAliveWorker @AssistedInject constructor(
     override suspend fun doWork(): Result {
         Timber.d("KeepAliveWorker: тик")
 
+        // ── Продвигаем воркер в foreground для обхода FGS-ограничений Android 12+ ─────────
+        // Android 12+ (API 31) запрещает startForegroundService() из фонового контекста.
+        // WorkManager воркеры выполняются в фоне → SphereAgentService.start() молча падает
+        // с ForegroundServiceStartNotAllowedException, которое глотается в catch-блоке.
+        // setForeground() превращает ЭТОТ воркер в foreground service, после чего запуск
+        // ДРУГОГО foreground service (SphereAgentService) становится разрешённым.
+        // Android 14+ (API 34): требует объявления foregroundServiceType в манифесте
+        // для androidx.work.impl.foreground.SystemForegroundService.
+        try {
+            setForeground(createForegroundInfo())
+        } catch (e: Exception) {
+            // IllegalStateException: может упасть если WorkManager не поддерживает
+            // setForeground() в данной конфигурации. Не фатально — startForegroundService
+            // может сработать, если приложение всё равно на переднем плане.
+            Timber.w(e, "KeepAliveWorker: setForeground не сработал — продолжаем без него")
+        }
+
         val isEnrolled = ServiceWatchdog.isEnrolled(applicationContext)
         val hasToken = authStore.getToken() != null
 
@@ -110,6 +146,55 @@ class KeepAliveWorker @AssistedInject constructor(
 
         // ── Сценарий 3: Не enrolled → Zero-Touch enrollment ────────────────
         return tryAutoEnrollment()
+    }
+
+    /**
+     * Создаёт [ForegroundInfo] для продвижения воркера в foreground-режим.
+     *
+     * Уведомление имеет минимальный приоритет — не мелькает у пользователя.
+     * Android 14+ (API 34): тип [ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC] должен быть
+     * объявлен в манифесте для [androidx.work.impl.foreground.SystemForegroundService].
+     */
+    private fun createForegroundInfo(): ForegroundInfo {
+        ensureWorkerNotificationChannel()
+        val notification = NotificationCompat.Builder(applicationContext, WORKER_CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_sphere)
+            .setContentTitle("Sphere Platform")
+            .setContentText("Запуск агента...")
+            .setOngoing(true)
+            .setPriority(NotificationCompat.PRIORITY_MIN)
+            .setSilent(true)
+            .build()
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            ForegroundInfo(
+                WORKER_NOTIFICATION_ID,
+                notification,
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC,
+            )
+        } else {
+            ForegroundInfo(WORKER_NOTIFICATION_ID, notification)
+        }
+    }
+
+    /**
+     * Создаёт канал уведомлений минимального приоритета для foreground-воркера.
+     * Идемпотентно — повторные вызовы безопасны.
+     */
+    private fun ensureWorkerNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val nm = applicationContext.getSystemService(NotificationManager::class.java)
+            if (nm.getNotificationChannel(WORKER_CHANNEL_ID) == null) {
+                val channel = NotificationChannel(
+                    WORKER_CHANNEL_ID,
+                    "Sphere Agent (служебное)",
+                    NotificationManager.IMPORTANCE_MIN,
+                ).apply {
+                    description = "Технический канал для гарантированного запуска агента при загрузке"
+                    setShowBadge(false)
+                }
+                nm.createNotificationChannel(channel)
+            }
+        }
     }
 
     /**

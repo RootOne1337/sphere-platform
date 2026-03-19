@@ -98,6 +98,15 @@
             android:name="android.content.APP_RESTRICTIONS"
             android:resource="@xml/app_restrictions" />
 
+        <!-- ─── WorkManager SystemForegroundService — декларация типа для Android 14+ ── -->
+        <!-- Требуется при использовании setForeground() в KeepAliveWorker.            -->
+        <!-- Без этого setForeground() с foregroundServiceType бросает исключение.      -->
+        <service
+            android:name="androidx.work.impl.foreground.SystemForegroundService"
+            android:foregroundServiceType="dataSync"
+            android:exported="false"
+            tools:node="merge" />
+
         <!-- ─── Отключаем дефолтный WorkManager initializer (on-demand init) ─ -->
         <provider
             android:name="androidx.startup.InitializationProvider"
