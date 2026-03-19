@@ -13,9 +13,18 @@ services:
       - ./infrastructure/nginx/nginx.dev.conf:/etc/nginx/nginx.conf:ro
     ports:
       - "80:80"
+    command: ["nginx", "-g", "daemon off;"]
+    deploy:
+      resources:
+        limits:
+          memory: 128M
 
   #  n8n: подключается к postgres через sphere-пользователя 
   n8n:
+    deploy:
+      resources:
+        limits:
+          memory: 256M
     environment:
       - N8N_HOST=localhost
       - N8N_PORT=5678
@@ -33,6 +42,12 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile.dev
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+    networks:
+      - frontend-net
     volumes:
       - ./frontend:/app
       # named volume (не анонимный!) — переживает docker compose down/up
@@ -43,8 +58,11 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - NEXT_PUBLIC_API_URL=http://localhost/api/v1
-      - NEXT_PUBLIC_WS_URL=ws://localhost
+      # Относительные URL — работают через любой origin (localhost, Serveo, production домен).
+      # Абсолютные URL (http://localhost) ломают доступ через tunnel (mixed content HTTPS→HTTP).
+      - NEXT_PUBLIC_API_URL=/api/v1
+      - NEXT_PUBLIC_WS_URL=
+      - NEXT_PUBLIC_DEV_SKIP_AUTH=true
     # command берётся из Dockerfile.dev CMD: sh -c "npm install && npx next dev --turbopack"
 
   #  Backend: монтируем весь проект, PYTHONPATH=/app  from backend.* 
@@ -52,6 +70,13 @@ services:
     build:
       context: .
       dockerfile: backend/Dockerfile.dev
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    networks:
+      - frontend-net
+      - backend-net
     volumes:
       - .:/app
       - /app/backend/__pycache__

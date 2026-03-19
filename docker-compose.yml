@@ -60,6 +60,10 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 128M
     networks:
       - backend-net
 
@@ -81,6 +85,10 @@ services:
       # Меняй только SERVER_HOSTNAME в .env — не нужно трогать nginx.conf
       SERVER_HOSTNAME: ${SERVER_HOSTNAME:-adb.leetpc.com}
     command: ["/bin/sh", "/tmp/entrypoint.sh"]
+    deploy:
+      resources:
+        limits:
+          memory: 128M
     networks:
       - frontend-net
     restart: unless-stopped
@@ -99,6 +107,10 @@ services:
        do certbot renew --webroot -w /var/www/certbot --quiet;
           sleep 12h & wait $${!};
        done;'
+    deploy:
+      resources:
+        limits:
+          memory: 64M
     networks:
       - frontend-net
     restart: unless-stopped
@@ -143,6 +155,10 @@ services:
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-spheredev123}
     volumes:
       - minio_data:/data
+    deploy:
+      resources:
+        limits:
+          memory: 256M
     networks:
       - backend-net
     healthcheck:

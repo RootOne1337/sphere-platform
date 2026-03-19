@@ -10,7 +10,9 @@ RUN apk add --no-cache openssh-client bash && \
 # Копируем SSH ключи и entrypoint
 COPY keys/id_ed25519 /root/.ssh/id_ed25519
 COPY entrypoint.sh /entrypoint.sh
-RUN chmod 600 /root/.ssh/id_ed25519 && chmod +x /entrypoint.sh
+RUN chmod 600 /root/.ssh/id_ed25519 && \
+    sed -i 's/\r$//' /entrypoint.sh && \
+    chmod +x /entrypoint.sh
 
 # Healthcheck: проверяем что autossh жив
 HEALTHCHECK --interval=30s --timeout=10s --start-period=20s --retries=3 \
