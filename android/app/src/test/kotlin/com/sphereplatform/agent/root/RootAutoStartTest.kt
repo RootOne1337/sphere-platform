@@ -6,6 +6,7 @@ import io.mockk.mockk
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
+import java.io.File
 
 /**
  * Тесты RootAutoStart — утилита для снятия системных ограничений через root.
@@ -13,7 +14,8 @@ import org.junit.Test
  * Покрытие:
  *  - configure() без root → тихий пропуск
  *  - hasRoot() кэширует результат
- *  - configure() с packageName формирует корректные команды
+ *  - buildBootScript() формирует корректный скрипт
+ *  - installBootScript() не дублирует при наличии маркера
  */
 class RootAutoStartTest {
 
@@ -23,11 +25,13 @@ class RootAutoStartTest {
     fun setUp() {
         context = mockk(relaxed = true)
         every { context.packageName } returns "com.sphereplatform.agent.dev"
+        // Маркер-файл — не существует (первый запуск)
+        val fakeMarker = File.createTempFile("test_marker", ".tmp").apply { delete() }
+        every { context.getFileStreamPath("root_boot_script_installed") } returns fakeMarker
     }
 
     @Test
     fun `hasRoot returns false when su not available`() {
-        // В тестовой среде su недоступен — hasRoot() должен вернуть false
         val result = RootAutoStart.hasRoot()
         assertFalse("hasRoot() должен вернуть false в тестовой среде", result)
     }
