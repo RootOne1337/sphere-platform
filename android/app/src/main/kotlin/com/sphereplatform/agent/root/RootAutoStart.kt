@@ -82,7 +82,8 @@ object RootAutoStart {
 
     private fun removeSystemRestrictions(pkg: String) {
         // Снять Stopped State — гарантия доставки implicit broadcasts
-        execRoot("am force-stop $pkg 2>/dev/null; cmd package set-stopped-state $pkg false")
+        // ВАЖНО: НЕ используем am force-stop — это убьёт наш собственный процесс!
+        execRoot("cmd package set-stopped-state $pkg false")
 
         // Whitelist от Doze battery optimization
         execRoot("dumpsys deviceidle whitelist +$pkg")
