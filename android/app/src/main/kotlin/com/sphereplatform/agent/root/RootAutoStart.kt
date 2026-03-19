@@ -15,7 +15,7 @@ import java.util.concurrent.TimeUnit
  * (init.d, Magisk service.d, userinit.sh, init.rc) НЕ РАБОТАЮТ — LDPlayer
  * использует МИНИМАЛЬНЫЙ Android-ROM без этих расширений.
  *
- * ## Решение — 2 уровня:
+ * ## Решение — 3 уровня:
  *
  * ### Уровень 1: Подготовка системы (при каждом запуске app)
  * - Снятие Stopped State
@@ -30,8 +30,15 @@ import java.util.concurrent.TimeUnit
  * - Если процесс мёртв — перезапускает через am start
  * - Watchdog живёт до reboot (nohup отвязывает от родительского процесса)
  *
- * При boot стандартный BOOT_COMPLETED -> BootReceiver -> SphereApp ->
- * RootAutoStart запускает новый watchdog. Цепочка замыкается.
+ * ### Уровень 3: Android init service (устанавливается один раз, переживает ребут)
+ * - Записывает .rc файл в /system/etc/init/ — СТАНДАРТНЫЙ механизм Android init
+ * - Property trigger sys.boot_completed=1 запускает startup-скрипт при каждой загрузке
+ * - Startup-скрипт запускает приложение и watchdog daemon
+ * - Это ЕДИНСТВЕННЫЙ механизм гарантированного запуска на LDPlayer:
+ *   init.d, Magisk, userinit.sh — НЕ работают на минимальном ROM
+ *
+ * При boot: init → sphere_startup.sh → am start → SphereApp.onCreate() →
+ * RootAutoStart обновляет watchdog. Цепочка замыкается без BootReceiver.
  *
  * ## Вызывается
  * Из [com.sphereplatform.agent.SphereApp.onCreate] в фоновом потоке.
@@ -74,6 +81,9 @@ object RootAutoStart {
 
         // 4. Запустить nohup watchdog daemon
         startWatchdogDaemon(pkg)
+
+        // 5. Установить init service для автозапуска при каждой загрузке
+        installInitService(pkg)
 
         Timber.i("RootAutoStart: === НАСТРОЙКА ЗАВЕРШЕНА для $pkg ===")
     }
@@ -193,6 +203,101 @@ object RootAutoStart {
             Timber.i("RootAutoStart: watchdog daemon запущен (script: $scriptFile, pid: $pidFile)")
         } catch (e: Exception) {
             Timber.w(e, "RootAutoStart: не удалось запустить watchdog daemon")
+        }
+    }
+
+    // =====================================================================
+    //  5. Android init service — ПЕРЕЖИВАЕТ РЕБУТ
+    // =====================================================================
+
+    /**
+     * Устанавливает Android init service для автозапуска при загрузке.
+     *
+     * Записывает .rc файл в /system/etc/init/ — стандартный путь Android init.
+     * Property trigger `sys.boot_completed=1` запускает startup-скрипт.
+     *
+     * Это ЕДИНСТВЕННЫЙ механизм который работает на LDPlayer:
+     * init.d, Magisk service.d, userinit.sh — НЕ работают на минимальном ROM.
+     * Init property trigger — стандартный механизм ядра Android.
+     *
+     * Идемпотентно — перезаписывает файлы при каждом запуске (дёшево).
+     */
+    private fun installInitService(pkg: String) {
+        val rcPath = "/system/etc/init/sphere_autostart.rc"
+        val startupScript = "/data/local/tmp/sphere_startup.sh"
+        val watchdogScript = "/data/local/tmp/sphere_watchdog.sh"
+        val activityComponent = "$pkg/$NAMESPACE.ui.SetupActivity"
+        val receiverComponent = "$pkg/$NAMESPACE.BootReceiver"
+
+        try {
+            val process = Runtime.getRuntime().exec("su")
+            val stdin = DataOutputStream(process.outputStream)
+
+            // === 1. Записываем startup-скрипт (выполняется init при каждом boot) ===
+            stdin.writeBytes("cat > $startupScript << 'STARTUP_EOF'\n")
+            stdin.writeBytes("#!/system/bin/sh\n")
+            stdin.writeBytes("# Sphere Platform — автостарт при загрузке\n")
+            stdin.writeBytes("# Запускается Android init через property trigger sys.boot_completed=1\n")
+            stdin.writeBytes("\n")
+            stdin.writeBytes("# Переключаем SELinux в permissive для гарантированного запуска\n")
+            stdin.writeBytes("setenforce 0 2>/dev/null\n")
+            stdin.writeBytes("\n")
+            stdin.writeBytes("# Ждём полной инициализации Android framework\n")
+            stdin.writeBytes("sleep 15\n")
+            stdin.writeBytes("\n")
+            stdin.writeBytes("# Снимаем stopped state — гарантия доставки broadcast\n")
+            stdin.writeBytes("cmd package set-stopped-state $pkg false 2>/dev/null\n")
+            stdin.writeBytes("\n")
+            stdin.writeBytes("# Попытка 1: запуск через Activity\n")
+            stdin.writeBytes("am start -a android.intent.action.MAIN -n $activityComponent 2>/dev/null\n")
+            stdin.writeBytes("sleep 5\n")
+            stdin.writeBytes("\n")
+            stdin.writeBytes("# BOOT_COMPLETED для BootReceiver\n")
+            stdin.writeBytes("am broadcast -a android.intent.action.BOOT_COMPLETED -n $receiverComponent --include-stopped-packages 2>/dev/null\n")
+            stdin.writeBytes("\n")
+            stdin.writeBytes("# Retry loop — до 3 попыток с проверкой процесса\n")
+            stdin.writeBytes("for i in 1 2 3; do\n")
+            stdin.writeBytes("  sleep 10\n")
+            stdin.writeBytes("  pidof $pkg > /dev/null 2>&1 && break\n")
+            stdin.writeBytes("  am start -a android.intent.action.MAIN -n $activityComponent 2>/dev/null\n")
+            stdin.writeBytes("done\n")
+            stdin.writeBytes("\n")
+            stdin.writeBytes("# Запускаем watchdog для постоянного мониторинга\n")
+            stdin.writeBytes("exec sh $watchdogScript\n")
+            stdin.writeBytes("STARTUP_EOF\n")
+            stdin.writeBytes("chmod 755 $startupScript\n")
+
+            // === 2. Монтируем /system в rw и записываем .rc файл ===
+            stdin.writeBytes("mount -o remount,rw /system 2>/dev/null\n")
+            stdin.writeBytes("cat > $rcPath << 'RC_EOF'\n")
+            stdin.writeBytes("service sphere_autostart /system/bin/sh /data/local/tmp/sphere_startup.sh\n")
+            stdin.writeBytes("    class late_start\n")
+            stdin.writeBytes("    user root\n")
+            stdin.writeBytes("    group root\n")
+            stdin.writeBytes("    oneshot\n")
+            stdin.writeBytes("    disabled\n")
+            stdin.writeBytes("    seclabel u:r:shell:s0\n")
+            stdin.writeBytes("\n")
+            stdin.writeBytes("on property:sys.boot_completed=1\n")
+            stdin.writeBytes("    start sphere_autostart\n")
+            stdin.writeBytes("RC_EOF\n")
+            stdin.writeBytes("chmod 644 $rcPath\n")
+            stdin.writeBytes("mount -o remount,ro /system 2>/dev/null\n")
+
+            stdin.writeBytes("exit\n")
+            stdin.flush()
+            stdin.close()
+
+            val completed = process.waitFor(15, TimeUnit.SECONDS)
+            if (!completed) {
+                process.destroyForcibly()
+                Timber.w("RootAutoStart: таймаут установки init service")
+                return
+            }
+
+            Timber.i("RootAutoStart: init service установлен — $rcPath → $startupScript")
+        } catch (e: Exception) {
+            Timber.w(e, "RootAutoStart: не удалось установить init service")
         }
     }
 
