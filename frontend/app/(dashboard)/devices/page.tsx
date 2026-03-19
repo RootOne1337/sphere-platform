@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { RowSelectionState } from '@tanstack/react-table';
 import { useDevices, useBulkAction, useDeleteDevice, useUpdateDevice, useBulkDeleteDevices } from '@/lib/hooks/useDevices';
 import { useDebounce } from '@/lib/hooks/useDebounce';
@@ -24,7 +24,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Cpu, RefreshCcw, ShieldOff, LayoutGrid, List, Trash2, Pencil, MapPin, FolderOpen } from 'lucide-react';
+import { Cpu, RefreshCcw, ShieldOff, LayoutGrid, List, Trash2, Pencil, MapPin, FolderOpen, Filter, Server } from 'lucide-react';
+import { useGameServers } from '@/lib/hooks/usePipelineSettings';
 
 export default function DevicesPage() {
   const [search, setSearch] = useState('');
@@ -37,8 +38,16 @@ export default function DevicesPage() {
   const [newName, setNewName] = useState('');
   const [assignGroupDialog, setAssignGroupDialog] = useState(false);
   const [assignLocationDialog, setAssignLocationDialog] = useState(false);
+  const [assignServerDialog, setAssignServerDialog] = useState<{ open: boolean; deviceId: string; currentServer: string | null }>({
+    open: false, deviceId: '', currentServer: null,
+  });
+  const [selectedServerName, setSelectedServerName] = useState<string>('');
   const [selectedGroupId, setSelectedGroupId] = useState<string>('');
   const [selectedLocationId, setSelectedLocationId] = useState<string>('');
+
+  // Фильтры по группе и локации
+  const [filterGroupId, setFilterGroupId] = useState<string>('');
+  const [filterLocationId, setFilterLocationId] = useState<string>('');
 
   // Backend поддерживает до 5000 — запрашиваем все устройства одной страницей
   const { data, isLoading, refetch } = useDevices({
@@ -54,6 +63,21 @@ export default function DevicesPage() {
   const { data: locations } = useLocations();
   const moveDevices = useMoveDevices();
   const assignToLocation = useAssignDevicesToLocation();
+  const { data: gameServers } = useGameServers();
+
+  // Клиентская фильтрация по группе и локации
+  const filteredItems = useMemo(() => {
+    let items = data?.items ?? [];
+    if (filterGroupId && filterGroupId !== '__all__') {
+      items = items.filter(
+        (d) => d.group_id === filterGroupId || d.group_ids?.includes(filterGroupId),
+      );
+    }
+    if (filterLocationId && filterLocationId !== '__all__') {
+      items = items.filter((d) => d.location_ids?.includes(filterLocationId));
+    }
+    return items;
+  }, [data?.items, filterGroupId, filterLocationId]);
 
   const selectedIds = Object.keys(rowSelection).filter(Boolean);
 
@@ -75,6 +99,10 @@ export default function DevicesPage() {
       case 'assign_location':
         setRowSelection({ [deviceId]: true });
         setAssignLocationDialog(true);
+        break;
+      case 'assign_server':
+        setAssignServerDialog({ open: true, deviceId: device.id, currentServer: device.server_name });
+        setSelectedServerName(device.server_name ?? '');
         break;
       case 'delete':
         if (confirm(`Удалить устройство "${device.name}"? Это действие необратимо.`)) {
@@ -134,6 +162,7 @@ export default function DevicesPage() {
           </h1>
           <p className="text-[11px] text-muted-foreground mt-1 uppercase tracking-wider font-mono">
             {data?.total ?? 0} Global Endpoints Registered
+            {filteredItems.length !== (data?.items?.length ?? 0) && ` • ${filteredItems.length} отфильтровано`}
           </p>
         </div>
 
@@ -163,6 +192,50 @@ export default function DevicesPage() {
             onChange={(e) => setSearch(e.target.value)}
             className="w-full sm:w-[250px] lg:w-[300px] h-9 bg-card border-border font-mono text-xs rounded-sm focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary placeholder:text-[#555]"
           />
+
+          {/* Фильтры: группа + локация */}
+          <Select value={filterGroupId} onValueChange={setFilterGroupId}>
+            <SelectTrigger className="h-9 w-[160px] bg-card border-border font-mono text-xs rounded-sm">
+              <SelectValue placeholder="Все группы" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">Все группы</SelectItem>
+              {groups?.map((g) => (
+                <SelectItem key={g.id} value={g.id}>
+                  <span className="flex items-center gap-2">
+                    {g.color && <span className="w-2 h-2 rounded-full" style={{ backgroundColor: g.color }} />}
+                    {g.name}
+                  </span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={filterLocationId} onValueChange={setFilterLocationId}>
+            <SelectTrigger className="h-9 w-[160px] bg-card border-border font-mono text-xs rounded-sm">
+              <SelectValue placeholder="Все локации" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">Все локации</SelectItem>
+              {locations?.map((l) => (
+                <SelectItem key={l.id} value={l.id}>
+                  <span className="flex items-center gap-2">
+                    {l.color && <span className="w-2 h-2 rounded-full" style={{ backgroundColor: l.color }} />}
+                    {l.name}
+                  </span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {(filterGroupId && filterGroupId !== '__all__' || filterLocationId && filterLocationId !== '__all__') && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => { setFilterGroupId('__all__'); setFilterLocationId('__all__'); }}
+              className="h-9 text-xs font-mono text-muted-foreground hover:text-foreground"
+            >
+              <Filter className="w-3 h-3 mr-1" /> Сброс
+            </Button>
+          )}
           {selectedIds.length > 0 && viewMode === 'table' && (
             <div className="flex items-center gap-2 border-l border-border pl-2 ml-2">
               <span className="text-[10px] text-warning font-mono mr-1">
@@ -230,7 +303,7 @@ export default function DevicesPage() {
       <div className="flex-1 overflow-hidden flex flex-col pt-2">
         {viewMode === 'table' ? (
           <FleetMatrix
-            data={data?.items ?? []}
+            data={filteredItems}
             isLoading={isLoading}
             rowSelection={rowSelection}
             onRowSelectionChange={setRowSelection}
@@ -238,7 +311,7 @@ export default function DevicesPage() {
           />
         ) : (
           <MultiStreamGrid
-            devices={data?.items ?? []}
+            devices={filteredItems}
             selectedIds={selectedIds}
           />
         )}
@@ -329,6 +402,59 @@ export default function DevicesPage() {
             <p className="text-xs text-muted-foreground">{selectedIds.length} устройств будут добавлены в локацию (аддитивно)</p>
             <Button onClick={handleAssignLocation} disabled={assignToLocation.isPending || !selectedLocationId} className="w-full">
               {assignToLocation.isPending ? 'Назначение…' : 'Назначить'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Диалог назначения игрового сервера */}
+      <Dialog
+        open={assignServerDialog.open}
+        onOpenChange={(open) => {
+          if (!open) setAssignServerDialog({ open: false, deviceId: '', currentServer: null });
+        }}
+      >
+        <DialogContent aria-describedby={undefined}>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Server className="w-4 h-4" />
+              Назначить игровой сервер
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <div className="space-y-1">
+              <Label>Сервер Black Russia</Label>
+              <Select value={selectedServerName || '__none__'} onValueChange={(v) => setSelectedServerName(v === '__none__' ? '' : v)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Выбери сервер" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">— Снять привязку —</SelectItem>
+                  {gameServers?.map((s) => (
+                    <SelectItem key={s.id} value={s.name}>
+                      #{s.id} {s.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {assignServerDialog.currentServer && (
+              <p className="text-xs text-muted-foreground">
+                Текущий сервер: <span className="text-foreground font-mono">{assignServerDialog.currentServer}</span>
+              </p>
+            )}
+            <Button
+              onClick={async () => {
+                await updateDevice.mutateAsync({
+                  id: assignServerDialog.deviceId,
+                  server_name: selectedServerName || null,
+                });
+                setAssignServerDialog({ open: false, deviceId: '', currentServer: null });
+              }}
+              disabled={updateDevice.isPending}
+              className="w-full"
+            >
+              {updateDevice.isPending ? 'Сохранение…' : 'Сохранить'}
             </Button>
           </div>
         </DialogContent>

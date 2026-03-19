@@ -54,3 +54,33 @@ export function useCancelBatch() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['batches'] }),
   });
 }
+
+/** Ответ broadcast-эндпоинта — батч + кол-во онлайн-устройств */
+export interface BroadcastBatchResponse extends Batch {
+  online_devices: number;
+}
+
+/**
+ * Запуск скрипта на ВСЕХ онлайн-устройствах организации.
+ * Бэкенд автоматически определяет онлайн-устройства через Redis status cache.
+ */
+export function useBroadcastBatch() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (body: {
+      script_id: string;
+      wave_size?: number;
+      wave_delay_ms?: number;
+      jitter_ms?: number;
+      priority?: number;
+      name?: string;
+    }) => {
+      const { data } = await api.post('/batches/broadcast', body);
+      return data as BroadcastBatchResponse;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['tasks'] });
+      qc.invalidateQueries({ queryKey: ['batches'] });
+    },
+  });
+}

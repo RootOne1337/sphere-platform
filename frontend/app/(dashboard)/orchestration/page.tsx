@@ -196,7 +196,7 @@ const STATUS_CONFIG: Record<string, { color: string; dot: string; label: string 
 };
 
 function StatusBadge({ status }: { status: string }) {
-    const cfg = STATUS_CONFIG[status.toLowerCase()] ?? STATUS_CONFIG.queued;
+    const cfg = STATUS_CONFIG[(status || '').toLowerCase()] ?? STATUS_CONFIG.queued;
     return (
         <div className="flex items-center gap-2">
             <div className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
@@ -409,9 +409,9 @@ function PipelinesTab({ pipelines, loading, search, onRunPipeline }: { pipelines
         if (!search) return pipelines;
         const q = search.toLowerCase();
         return pipelines.filter(p =>
-            p.name.toLowerCase().includes(q) ||
+            (p.name || '').toLowerCase().includes(q) ||
             p.description?.toLowerCase().includes(q) ||
-            p.tags.some(t => t.toLowerCase().includes(q))
+            (p.tags || []).some(t => (t || '').toLowerCase().includes(q))
         );
     }, [pipelines, search]);
 
@@ -457,6 +457,15 @@ function PipelinesTab({ pipelines, loading, search, onRunPipeline }: { pipelines
 function PipelineRow({ pipeline: p, expanded, onToggle, onRunPipeline }: { pipeline: Pipeline; expanded: boolean; onToggle: () => void; onRunPipeline: () => void }) {
     const queryClient = useQueryClient();
 
+    const toggleActiveMut = useMutation({
+        mutationFn: () => api.post(`/pipelines/${p.id}/toggle`),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['pipelines'] });
+            toast.success(p.is_active ? 'Pipeline деактивирован' : 'Pipeline активирован');
+        },
+        onError: () => toast.error('Ошибка переключения pipeline'),
+    });
+
     return (
         <>
             <tr className="hover:bg-muted transition-colors group cursor-pointer" onClick={onToggle}>
@@ -490,6 +499,22 @@ function PipelineRow({ pipeline: p, expanded, onToggle, onRunPipeline }: { pipel
                 <td className="px-4 py-3 text-muted-foreground">{timeAgo(p.updated_at)}</td>
                 <td className="px-4 py-3 text-right" onClick={e => e.stopPropagation()}>
                     <div className="flex items-center justify-end gap-1">
+                        <Button
+                            variant="ghost"
+                            size="tiny"
+                            className={p.is_active
+                                ? 'text-success hover:text-warning hover:bg-warning/10'
+                                : 'text-muted-foreground hover:text-success hover:bg-success/10'
+                            }
+                            title={p.is_active ? 'Деактивировать' : 'Активировать'}
+                            onClick={() => toggleActiveMut.mutate()}
+                            disabled={toggleActiveMut.isPending}
+                        >
+                            {p.is_active
+                                ? <ToggleRight className="w-4 h-4" />
+                                : <ToggleLeft className="w-4 h-4" />
+                            }
+                        </Button>
                         <Button variant="ghost" size="tiny" className="text-muted-foreground hover:text-success hover:bg-success/10" title="Запустить" onClick={onRunPipeline}>
                             <Play className="w-3 h-3" />
                         </Button>
@@ -769,9 +794,9 @@ function SchedulesTab({ schedules, pipelines, loading, search, onCreateSchedule,
         if (!search) return schedules;
         const q = search.toLowerCase();
         return schedules.filter(s =>
-            s.name.toLowerCase().includes(q) ||
+            (s.name || '').toLowerCase().includes(q) ||
             s.cron_expression?.toLowerCase().includes(q) ||
-            s.target_type.toLowerCase().includes(q)
+            (s.target_type || '').toLowerCase().includes(q)
         );
     }, [schedules, search]);
 
@@ -833,7 +858,7 @@ function SchedulesTab({ schedules, pipelines, loading, search, onCreateSchedule,
                                 </td>
                                 <td className="px-4 py-3">
                                     <Badge variant="outline" className={`text-[9px] ${s.target_type === 'script' ? 'border-emerald-400 text-emerald-400' : 'border-violet-400 text-violet-400'}`}>
-                                        {s.target_type.toUpperCase()}
+                                        {(s.target_type || '').toUpperCase()}
                                     </Badge>
                                 </td>
                                 <td className="px-4 py-3">
@@ -855,7 +880,7 @@ function SchedulesTab({ schedules, pipelines, loading, search, onCreateSchedule,
                                             s.conflict_policy === 'queue' ? 'border-blue-400 text-blue-400' :
                                                 'border-destructive text-destructive'
                                         }`}>
-                                        {s.conflict_policy.toUpperCase()}
+                                        {(s.conflict_policy || '').toUpperCase()}
                                     </Badge>
                                 </td>
                                 <td className="px-4 py-3 text-right">
@@ -1670,6 +1695,7 @@ function EditScheduleDialog({ schedule, open, onOpenChange, pipelines }: {
     const [scriptId, setScriptId] = useState('');
     const [conflictPolicy, setConflictPolicy] = useState<'skip' | 'queue' | 'cancel'>('skip');
     const [timezone, setTimezone] = useState('UTC');
+    const [targetDeviceIds, setTargetDeviceIds] = useState<string[]>([]);
 
     // Заполняем форму данными расписания при открытии
     const scheduleId = schedule?.id;
@@ -1684,6 +1710,7 @@ function EditScheduleDialog({ schedule, open, onOpenChange, pipelines }: {
         setPipelineId(schedule.pipeline_id || '');
         setScriptId(schedule.script_id || '');
         setConflictPolicy(schedule.conflict_policy as 'skip' | 'queue' | 'cancel');
+        setTargetDeviceIds(schedule.device_ids || []);
         if (schedule.cron_expression) {
             setTriggerType('cron');
             setCronExpression(schedule.cron_expression);
@@ -1705,6 +1732,7 @@ function EditScheduleDialog({ schedule, open, onOpenChange, pipelines }: {
                 target_type: targetType,
                 conflict_policy: conflictPolicy,
                 timezone,
+                device_ids: targetDeviceIds.length > 0 ? targetDeviceIds : undefined,
             };
             if (targetType === 'pipeline') { payload.pipeline_id = pipelineId; payload.script_id = null; }
             else { payload.script_id = scriptId; payload.pipeline_id = null; }
@@ -1718,7 +1746,13 @@ function EditScheduleDialog({ schedule, open, onOpenChange, pipelines }: {
                 payload.cron_expression = null;
                 payload.one_shot_at = null;
             } else {
-                payload.one_shot_at = oneShotAt;
+                // datetime-local возвращает строку без timezone (напр. '2026-03-10T15:30').
+                // Добавляем ':00Z' чтобы передать явный UTC ISO 8601 — иначе бэкенд
+                // получает naive datetime и выбрасывает TypeError при расчёте next_fire_at.
+                const oneShotIso = oneShotAt.includes('Z') || oneShotAt.includes('+') || oneShotAt.includes('-', 10)
+                    ? oneShotAt
+                    : oneShotAt + ':00Z';
+                payload.one_shot_at = oneShotIso;
                 payload.cron_expression = null;
                 payload.interval_seconds = null;
             }
@@ -1905,6 +1939,12 @@ function EditScheduleDialog({ schedule, open, onOpenChange, pipelines }: {
                             </select>
                         </div>
                     )}
+
+                    {/* Целевые устройства */}
+                    <div className="space-y-1.5">
+                        <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Целевые устройства</Label>
+                        <DeviceSelector value={targetDeviceIds} onChange={setTargetDeviceIds} />
+                    </div>
                 </div>
 
                 <DialogFooter className="mt-4 pt-4 border-t border-border">
@@ -1963,7 +2003,15 @@ function CreateScheduleDialog({ open, onOpenChange, pipelines }: { open: boolean
 
             if (triggerType === 'cron') payload.cron_expression = cronExpression.trim();
             else if (triggerType === 'interval') payload.interval_seconds = intervalSeconds;
-            else payload.one_shot_at = oneShotAt;
+            else {
+                // datetime-local возвращает строку без timezone (напр. '2026-03-10T15:30').
+                // Добавляем ':00Z' чтобы передать явный UTC ISO 8601 — иначе бэкенд
+                // получает naive datetime и выбрасывает TypeError при расчёте next_fire_at.
+                const oneShotIso = oneShotAt.includes('Z') || oneShotAt.includes('+') || oneShotAt.includes('-', 10)
+                    ? oneShotAt
+                    : oneShotAt + ':00Z';
+                payload.one_shot_at = oneShotIso;
+            }
 
             const { data } = await api.post('/schedules', payload);
             return data;

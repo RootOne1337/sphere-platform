@@ -6,6 +6,8 @@ import {
     ColumnDef,
     flexRender,
     getCoreRowModel,
+    getSortedRowModel,
+    SortingState,
     useReactTable,
     RowSelectionState,
     VisibilityState,
@@ -18,7 +20,7 @@ import { Badge } from "@/src/shared/ui/badge";
 import { Button } from "@/src/shared/ui/button";
 import { cn } from "@/src/shared/lib/utils";
 import { useInspectorStore } from "@/src/features/inspector/inspectorStore";
-import { Activity, Wifi, Battery, Tag, Hash, Shield, Columns3, MoreHorizontal, Pencil, FolderOpen, MapPin, Trash2 } from "lucide-react";
+import { Activity, Wifi, Battery, Tag, Hash, Shield, Columns3, MoreHorizontal, Pencil, FolderOpen, MapPin, Trash2, Server } from "lucide-react";
 import { GridSparkline } from "./GridSparkline";
 import {
     DropdownMenu,
@@ -30,7 +32,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-export type DeviceAction = 'rename' | 'assign_group' | 'assign_location' | 'delete';
+export type DeviceAction = 'rename' | 'assign_group' | 'assign_location' | 'assign_server' | 'delete';
 
 interface FleetMatrixProps {
     data: Device[];
@@ -44,6 +46,7 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
     const { openInspector } = useInspectorStore();
     const parentRef = React.useRef<HTMLDivElement>(null);
     const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
+    const [sorting, setSorting] = React.useState<SortingState>([]);
 
     const columns = React.useMemo<ColumnDef<Device>[]>(
         () => [
@@ -160,6 +163,21 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
                 },
             },
             {
+                accessorKey: "server_name",
+                header: "Game Server",
+                size: 130,
+                cell: ({ row }) => {
+                    const sn = row.original.server_name;
+                    if (!sn) return <span className="text-muted-foreground text-[10px] font-mono">—</span>;
+                    return (
+                        <div className="flex items-center gap-1.5 h-full">
+                            <Server className="w-3 h-3 text-primary shrink-0" />
+                            <span className="font-mono text-[11px] text-foreground truncate">{sn}</span>
+                        </div>
+                    );
+                },
+            },
+            {
                 accessorKey: "tags",
                 header: "Classification Tags",
                 size: 300,
@@ -236,6 +254,12 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
                                     >
                                         <MapPin className="w-3 h-3 mr-2" /> В локацию
                                     </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                        className="text-xs font-mono cursor-pointer"
+                                        onClick={() => onDeviceAction?.(device.id, 'assign_server')}
+                                    >
+                                        <Server className="w-3 h-3 mr-2" /> Игровой сервер
+                                    </DropdownMenuItem>
                                     <DropdownMenuSeparator className="bg-border" />
                                     <DropdownMenuItem
                                         className="text-xs font-mono cursor-pointer text-destructive focus:text-destructive"
@@ -256,10 +280,12 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
     const table = useReactTable({
         data,
         columns,
-        state: { rowSelection, columnVisibility },
+        state: { rowSelection, columnVisibility, sorting },
         onRowSelectionChange: onRowSelectionChange,
         onColumnVisibilityChange: setColumnVisibility,
+        onSortingChange: setSorting,
         getCoreRowModel: getCoreRowModel(),
+        getSortedRowModel: getSortedRowModel(),
         getRowId: (row) => row.id,
     });
 
@@ -291,17 +317,27 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
         <div className="flex-1 flex flex-col border border-border bg-card rounded-sm overflow-x-auto overflow-y-hidden custom-scrollbar relative shadow-2xl">
             {/* Dynamic Header (Sticky) */}
             <div className="flex min-w-max bg-muted border-b border-border z-10 sticky top-0 uppercase tracking-widest text-[9px] font-bold text-muted-foreground h-8 pr-8">
-                {table.getFlatHeaders().map((header) => (
-                    <div
-                        key={header.id}
-                        className="flex items-center px-3 truncate border-r border-border last:border-r-0"
-                        style={{ width: header.getSize() }}
-                    >
-                        {header.isPlaceholder
-                            ? null
-                            : flexRender(header.column.columnDef.header, header.getContext())}
-                    </div>
-                ))}
+                {table.getFlatHeaders().map((header) => {
+                    const canSort = header.column.getCanSort();
+                    const sorted = header.column.getIsSorted();
+                    return (
+                        <div
+                            key={header.id}
+                            className={cn(
+                                "flex items-center px-3 truncate border-r border-border last:border-r-0",
+                                canSort && "cursor-pointer select-none hover:bg-background/50 transition-colors",
+                            )}
+                            style={{ width: header.getSize() }}
+                            onClick={canSort ? header.column.getToggleSortingHandler() : undefined}
+                        >
+                            {header.isPlaceholder
+                                ? null
+                                : flexRender(header.column.columnDef.header, header.getContext())}
+                            {sorted === 'asc' && <span className="ml-1 text-primary">↑</span>}
+                            {sorted === 'desc' && <span className="ml-1 text-primary">↓</span>}
+                        </div>
+                    );
+                })}
 
                 {/* Column Visibility Toggle */}
                 <div className="absolute right-0 top-0 h-full w-8 border-l border-border bg-muted flex items-center justify-center">

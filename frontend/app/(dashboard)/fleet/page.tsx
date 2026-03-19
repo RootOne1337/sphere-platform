@@ -39,7 +39,7 @@ export default function FleetGroupsPage() {
     };
 
     const filteredGroups = groups.filter(g =>
-        g.name.toLowerCase().includes(search.toLowerCase()) ||
+        (g.name || '').toLowerCase().includes(search.toLowerCase()) ||
         (g.description || '').toLowerCase().includes(search.toLowerCase())
     );
 

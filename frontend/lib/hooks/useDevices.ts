@@ -23,6 +23,7 @@ export interface Device {
   adb_connected: boolean;
   vpn_assigned: boolean;
   vpn_active: boolean | null;
+  server_name: string | null;
 }
 
 interface DevicesResponse {
@@ -76,7 +77,7 @@ export function useBulkAction() {
 export function useUpdateDevice() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...body }: { id: string; name?: string; tags?: string[]; is_active?: boolean; notes?: string }) => {
+    mutationFn: async ({ id, ...body }: { id: string; name?: string; tags?: string[]; is_active?: boolean; notes?: string; server_name?: string | null }) => {
       const { data } = await api.put(`/devices/${id}`, body);
       return data;
     },

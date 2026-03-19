@@ -15,12 +15,16 @@ export interface Task {
   wave_index: number | null;
   created_at: string;
   updated_at: string;
+  device_name: string | null;
+  script_name: string | null;
 }
 
 export interface TaskDetail extends Task {
   result: Record<string, unknown> | null;
   error_message: string | null;
   input_params: Record<string, unknown> | null;
+  device_name: string | null;
+  script_name: string | null;
 }
 
 export interface NodeExecutionLog {
@@ -153,6 +157,25 @@ export function useStopTask() {
   return useMutation({
     mutationFn: async (taskId: string) => {
       const { data } = await api.post(`/tasks/${taskId}/stop`);
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['tasks'] }),
+  });
+}
+
+/**
+ * Повторный запуск задачи — создаёт новый таск с теми же параметрами.
+ * Принимает оригинальную задачу, извлекает script_id, device_id, priority.
+ */
+export function useRetryTask() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (original: Pick<Task, 'script_id' | 'device_id' | 'priority'>) => {
+      const { data } = await api.post('/tasks', {
+        script_id: original.script_id,
+        device_id: original.device_id,
+        priority: original.priority,
+      });
       return data;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['tasks'] }),
