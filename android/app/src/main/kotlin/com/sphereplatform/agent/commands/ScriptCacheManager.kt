@@ -159,18 +159,23 @@ class ScriptCacheManager @Inject constructor(
 
         // LRU eviction: удаляем самую старую запись если кеш полон
         val index = readIndex().toMutableList()
+        var evictName: String? = null
         if (name !in index && index.size >= MAX_ENTRIES) {
-            val evictName = index.removeFirst()
-            prefs.edit().remove("$KEY_PREFIX$evictName").apply()
+            evictName = index.removeFirst()
             Timber.i("[ScriptCache] LRU evict: '$evictName' (лимит $MAX_ENTRIES достигнут)")
         }
         index.remove(name)  // убираем старую позицию если была
         index.add(name)     // добавляем в конец (самый свежий)
 
-        prefs.edit()
-            .putString("$KEY_PREFIX$name", json.encodeToString(entry))
-            .putString(KEY_INDEX, serializeIndex(index))
-            .apply()
+        // PERF: Один атомарный apply() вместо двух.
+        // До: remove().apply() + putString().apply() = 2 crypto-записи (EncryptedSharedPreferences
+        // шифрует каждый apply() через AES-GCM). Crash между ними → orphaned data.
+        // После: одна запись — 2× быстрее и crash-safe.
+        prefs.edit().apply {
+            evictName?.let { remove("$KEY_PREFIX$it") }
+            putString("$KEY_PREFIX$name", json.encodeToString(entry))
+            putString(KEY_INDEX, serializeIndex(index))
+        }.apply()
 
         Timber.i("[ScriptCache] PUT name='$name' hash=${hash.take(8)}… (всего в кеше: ${index.size})")
     }

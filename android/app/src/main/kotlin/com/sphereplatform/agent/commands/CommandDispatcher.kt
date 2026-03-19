@@ -310,6 +310,9 @@ class CommandDispatcher @Inject constructor(
         CommandType.EXECUTE_DAG -> {
             val dagName = cmd.payload["dag_name"]?.jsonPrimitive?.contentOrNull
             val dagHash = cmd.payload["dag_hash"]?.jsonPrimitive?.contentOrNull
+            // FIX: timeout_ms лежит в payload, а не внутри dag.
+            // Без этого DagRunner использовал fallback 1 час → DAG зацикливался бесконечно.
+            val timeoutMs = cmd.payload["timeout_ms"]?.jsonPrimitive?.longOrNull
 
             // Контент-адресабльный кеш: если имя + hash присланы — ищем в кеше
             val dagJson: JsonObject = if (dagName != null && dagHash != null) {
@@ -342,9 +345,16 @@ class CommandDispatcher @Inject constructor(
                     ?: error("Поле 'dag' обязательно в payload EXECUTE_DAG")
             }
 
-            // Mutex гарантирует не более одного активного DAG за раз
+            // FIX: Если предыдущий DAG ещё выполняется (dagMutex занят) —
+            // отменяем его через requestCancel() и ждём освобождения mutex.
+            // Без этого: зацикленный DAG удерживал mutex → новая задача блокировалась
+            // навсегда → пользователь видел «скрипт запускается только один раз».
+            if (dagMutex.isLocked) {
+                Timber.w("[EXECUTE_DAG] Предыдущий DAG ещё выполняется — отменяем для запуска нового")
+                dagRunner.requestCancel()
+            }
             dagMutex.withLock {
-                dagRunner.execute(cmd.command_id, dagJson)
+                dagRunner.execute(cmd.command_id, dagJson, timeoutMs)
             }
         }
 

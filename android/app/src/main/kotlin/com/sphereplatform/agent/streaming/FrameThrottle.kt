@@ -18,6 +18,12 @@ class FrameThrottle @Inject constructor() {
     val targetFps: Int = 30
 
     private val frameDurationNs = 1_000_000_000L / targetFps
+    /**
+     * PERF: Pre-computed минимальный интервал (80% от полного).
+     * До: `frameDurationNs * 0.8` = Long→Double конвертация + Float multiply на каждый кадр (30 fps).
+     * После: одно Long-сравнение. Мелочь, но вызывается из горячего MediaCodec callback.
+     */
+    private val minFrameIntervalNs = frameDurationNs * 4L / 5L  // 80% без Float
     @Volatile private var lastFrameTimeNs = 0L
 
     /**
@@ -38,7 +44,7 @@ class FrameThrottle @Inject constructor() {
         _totalFrames.incrementAndGet()
         val elapsed = frameTimeNs - lastFrameTimeNs
 
-        if (elapsed < frameDurationNs * 0.8) {
+        if (elapsed < minFrameIntervalNs) {
             _droppedFrames.incrementAndGet()
             return false
         }

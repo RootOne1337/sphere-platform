@@ -79,6 +79,26 @@ class DagRunner @Inject constructor(
          * EncryptedSharedPreferences → долгие I/O при каждом commit().
          */
         private const val MAX_PENDING_RESULT_CHARS = 128 * 1024  // 128KB
+        /**
+         * PERF: Лимит записей в iterLogs внутри loop-ноды.
+         * 1000 iterations × 10 body nodes = 10 000 log entries → при serialize
+         * мегабайтный JSON → OOM на слабых эмуляторах (512MB heap).
+         * 200 записей достаточно для диагностики любого loop.
+         */
+        private const val MAX_LOOP_LOGS = 200
+        /**
+         * PERF: Лимит hop'ов при маршрутизации on_success/on_failure.
+         * Без него: node_A.on_failure → node_B.on_failure → node_A → бесконечный цикл,
+         * 100% CPU, DAG никогда не завершится. 500 hop'ов = 500-узловой DAG × 1 проход.
+         * При циклических DAG (29 нод × ~17 циклов) — достаточно для выполнения скрипта
+         * в рамках типичного 5-мин таймаута, при этом защищает от бесконечного цикла.
+         */
+        private const val MAX_ROUTING_HOPS = 500
+        /**
+         * PERF: Макс длина output.toString() в node_logs.
+         * Без лимита: http_request body 256KB × 50 нод = 12.8MB в node_logs JSON.
+         */
+        private const val MAX_LOG_OUTPUT_CHARS = 2048
     }
 
     private val json = Json { ignoreUnknownKeys = true }
@@ -116,13 +136,27 @@ class DagRunner @Inject constructor(
 
     // ── Public API ────────────────────────────────────────────────────────────
 
-    suspend fun execute(commandId: String, dagJson: JsonObject): JsonObject {
-        cancelRequested = false  // reset on new execution
-        pauseRequested  = false  // reset on new execution
+    /**
+     * Исполняет DAG-скрипт.
+     *
+     * @param commandId  — уникальный ID команды/задачи (используется для progress/ack)
+     * @param dagJson    — JSON-объект с DAG-описанием (entry_node, nodes, ...)
+     * @param timeoutMs  — таймаут исполнения из payload (приоритетнее DAG-поля timeout_ms).
+     *                     Без явного значения: берётся из dagJson["timeout_ms"] или 300_000ms (5 мин).
+     */
+    suspend fun execute(commandId: String, dagJson: JsonObject, timeoutMs: Long? = null): JsonObject {
+        cancelRequested = false  // сброс при новом запуске
+        pauseRequested  = false  // сброс при новом запуске
 
         val entryNodeId = dagJson["entry_node"]!!.jsonPrimitive.content
         val nodesArray = dagJson["nodes"]!!.jsonArray          // LIST, не map!
-        val globalTimeoutMs = dagJson["timeout_ms"]?.jsonPrimitive?.longOrNull ?: 3_600_000L
+        // Приоритет: явный параметр → поле в DAG → дефолт 5 мин.
+        // FIX: Ранее читался dagJson["timeout_ms"], но backend кладёт timeout_ms в payload,
+        // а НЕ внутрь dag. Результат: всегда fallback на 3_600_000ms → DAG крутился 1 час
+        // вместо 5 мин, блокируя dagMutex и не давая запуститься следующей задаче.
+        val globalTimeoutMs = timeoutMs
+            ?: dagJson["timeout_ms"]?.jsonPrimitive?.longOrNull
+            ?: 300_000L
 
         // FIX AUDIT-3.3: Лимит нод — защита от OOM на слабом эмуляторе.
         // 500 нод достаточно для любого реального DAG-скрипта.
@@ -144,9 +178,25 @@ class DagRunner @Inject constructor(
 
         var currentNodeId: String? = entryNodeId
 
+        // PERF: Счётчик hop'ов маршрутизации — защита от зацикливания
+        // on_success/on_failure. Без него: A→B→A = ∞ цикл, 100% CPU.
+        var routingHops = 0
+
         try {
         withTimeout(globalTimeoutMs) {
             while (currentNodeId != null) {
+                // PERF: Проверка лимита маршрутных переходов
+                routingHops++
+                if (routingHops > MAX_ROUTING_HOPS) {
+                    Timber.e("[DAG] Routing hops exceeded $MAX_ROUTING_HOPS — возможен цикл, прерываем")
+                    success = false
+                    failedNode = currentNodeId
+                    nodeLogs.add(makeLog(
+                        currentNodeId ?: "unknown", "ROUTING_CYCLE", 0L, false,
+                        "DAG routing exceeded $MAX_ROUTING_HOPS hops — probable cycle detected", null
+                    ))
+                    break
+                }
                 // ── Check for cancel request from backend ──────────────
                 if (cancelRequested) {
                     Timber.i("[DAG] Cancelled by user at node '$currentNodeId'")
@@ -801,6 +851,12 @@ class DagRunner @Inject constructor(
 
             while (shouldContinue() && iterations < maxIterations && !cancelRequested) {
                 for (bodyEl in bodyArray) {
+                    // PERF: Лимит на кол-во логов в loop — защита от OOM при serialize.
+                    // 1000 iter × 10 nodes = 10 000 entries → мегабайтный JSON → crash.
+                    if (iterLogs.size >= MAX_LOOP_LOGS) {
+                        Timber.w("[DAG][loop] Log limit reached ($MAX_LOOP_LOGS) — дальнейшие логи пропускаются")
+                        break
+                    }
                     val bodyNode = bodyEl.jsonObject
                     val bNodeId  = bodyNode["id"]?.jsonPrimitive?.contentOrNull ?: "loop_body_$iterations"
                     val bAction  = bodyNode["action"]?.jsonObject
@@ -822,7 +878,7 @@ class DagRunner @Inject constructor(
                 iterations++
                 if (whileXpath != null) delay(pollMs)
             }
-            mapOf("iterations" to iterations, "logs" to iterLogs)
+            mapOf("iterations" to iterations, "logs" to iterLogs, "logs_truncated" to (iterLogs.size >= MAX_LOOP_LOGS))
         }
 
         "start" -> null
@@ -856,8 +912,14 @@ class DagRunner @Inject constructor(
         put("action_type", actionType)
         put("duration_ms", durationMs)
         put("success", success)
-        error?.let { put("error", it) }
-        output?.let { put("output", it.toString()) }
+        error?.let { put("error", it.take(512)) }
+        // PERF: Truncate output — без лимита http_request body (256KB) × 50 нод
+        // = 12.8MB в node_logs JSON → OOM при JSON.encodeToString().
+        output?.let {
+            val str = it.toString()
+            put("output", if (str.length <= MAX_LOG_OUTPUT_CHARS) str
+                          else str.take(MAX_LOG_OUTPUT_CHARS) + "…[truncated ${str.length - MAX_LOG_OUTPUT_CHARS} chars]")
+        }
     }
 
     private fun savePendingResult(commandId: String, result: JsonObject) {

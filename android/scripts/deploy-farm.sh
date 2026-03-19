@@ -42,7 +42,7 @@ INIT_SCRIPT_NAME="99sphereagent"
 
 # Серверная конфигурация для авто-энролмента (Zero-Touch)
 # Измените эти значения под вашу инфраструктуру!
-SERVER_URL="${SPHERE_SERVER_URL:-https://sphere.serveousercontent.com}"
+SERVER_URL="${SPHERE_SERVER_URL:-https://zinc-enhancement-walls-role.trycloudflare.com}"
 API_KEY="${SPHERE_API_KEY:-sphr_dev_enrollment_key_2025}"
 
 APK_PATH="${1:?Ошибка: укажите путь к APK. Использование: ./deploy-farm.sh <agent.apk> [adb_serial|ALL]}"
