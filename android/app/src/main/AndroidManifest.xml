@@ -65,14 +65,18 @@
             android:exported="false" />
 
         <!-- ─── Boot Receiver ────────────────────────────────────────────── -->
+        <!--
+            ВАЖНО: directBootAware УБРАН! На LDPlayer/эмуляторах LOCKED_BOOT_COMPLETED
+            вызывал SphereApp.onCreate() до разблокировки CE storage → crash loop.
+            WorkManager SQLite, EncryptedSharedPreferences, FileLoggingTree — все в CE.
+            Обычный BOOT_COMPLETED приходит ПОСЛЕ полной загрузки — CE доступен.
+        -->
         <receiver
             android:name=".BootReceiver"
-            android:exported="true"
-            android:directBootAware="true">
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.QUICKBOOT_POWERON" />
-                <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
                 <!-- Гарантированный запуск на кастомных эмуляторах при разблокировке экрана -->
                 <action android:name="android.intent.action.USER_PRESENT" />
             </intent-filter>

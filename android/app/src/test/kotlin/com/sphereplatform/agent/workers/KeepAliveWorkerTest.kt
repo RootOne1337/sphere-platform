@@ -187,6 +187,6 @@ class KeepAliveWorkerTest {
         val result = worker.doWork()
 
         assertEquals(ListenableWorker.Result.success(), result)
-        verify { registrationClient.register("http://test-server:8000", "enroll_key_123") }
+        coVerify { registrationClient.register("http://test-server:8000", "enroll_key_123") }
     }
 }
