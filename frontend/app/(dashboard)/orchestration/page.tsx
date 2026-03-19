@@ -117,6 +117,9 @@ interface Schedule {
     pipeline_id: string | null;
     conflict_policy: string;
     is_active: boolean;
+    device_ids: string[] | null;
+    group_id: string | null;
+    device_tags: string[] | null;
     total_runs: number;
     next_fire_at: string | null;
     last_fired_at: string | null;
