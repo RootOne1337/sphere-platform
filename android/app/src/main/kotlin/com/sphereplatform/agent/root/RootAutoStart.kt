@@ -52,6 +52,9 @@ object RootAutoStart {
      * Безопасен для вызова из любого контекста — если root недоступен,
      * тихо возвращается без ошибок.
      */
+    /** Namespace (Java-пакет) классов — НЕ совпадает с applicationId при наличии flavor suffix. */
+    private const val NAMESPACE = "com.sphereplatform.agent"
+
     fun configure(context: Context) {
         if (!hasRoot()) {
             Timber.d("RootAutoStart: root недоступен — пропускаем")
@@ -93,7 +96,7 @@ object RootAutoStart {
         execRoot("cmd appops set $pkg RUN_ANY_IN_BACKGROUND allow")
 
         // Гарантировать что BootReceiver включён
-        execRoot("pm enable $pkg/.BootReceiver")
+        execRoot("pm enable $pkg/$NAMESPACE.BootReceiver")
 
         // Отключить battery restrictions для пакета
         execRoot("cmd appops set $pkg WAKE_LOCK allow")
@@ -134,20 +137,29 @@ object RootAutoStart {
      * 4. Запускает SphereAgentService напрямую
      *
      * Пути boot-скриптов:
+     * Пути:
+     * - /system/etc/init/sphere_autostart.rc — НАТИВНЫЙ Android init (property trigger)
      * - /system/etc/init.d/ — классический busybox init (LDPlayer, многие ROM)
      * - /data/adb/service.d/ — Magisk (если установлен)
      * - /data/local/userinit.sh — Android-x86, BlissOS, некоторые эмуляторы
      */
+    /** Версия boot-скрипта — при изменении component names или логики инкрементируем. */
+    private const val BOOT_SCRIPT_VERSION = 2
+
     private fun installBootScript(context: Context, pkg: String) {
-        // Проверяем маркер — скрипт уже установлен?
+        // Проверяем маркер — скрипт уже установлен с актуальной версией?
         val markerFile = context.getFileStreamPath(MARKER_FILE)
-        if (markerFile.exists()) {
-            Timber.d("RootAutoStart: boot-скрипт уже установлен (маркер найден)")
+        val currentVersion = runCatching { markerFile.readText().trim() }.getOrDefault("")
+        if (currentVersion == BOOT_SCRIPT_VERSION.toString()) {
+            Timber.d("RootAutoStart: boot-скрипт v$BOOT_SCRIPT_VERSION уже установлен")
             return
         }
 
         // Содержимое boot-скрипта
         val bootScript = buildBootScript(pkg)
+
+        // ── Путь 0 (ГЛАВНЫЙ): Android init.rc — нативный property trigger ──
+        val initRcInstalled = installInitRc(pkg)
 
         // ── Путь A: /system/etc/init.d/ ──────────────────────────────────
         val initdInstalled = installToInitD(bootScript)
@@ -158,12 +170,12 @@ object RootAutoStart {
         // ── Путь C: /data/local/userinit.sh (Android-x86) ───────────────
         val userinitInstalled = installToUserinit(bootScript, pkg)
 
-        if (initdInstalled || magiskInstalled || userinitInstalled) {
-            // Создаём маркер-файл
-            runCatching { markerFile.writeText("installed") }
+        if (initRcInstalled || initdInstalled || magiskInstalled || userinitInstalled) {
+            // Записываем версию в маркер-файл
+            runCatching { markerFile.writeText(BOOT_SCRIPT_VERSION.toString()) }
             Timber.i(
-                "RootAutoStart: boot-скрипт установлен [init.d=%s, magisk=%s, userinit=%s]",
-                initdInstalled, magiskInstalled, userinitInstalled,
+                "RootAutoStart: boot-скрипт установлен [init.rc=%s, init.d=%s, magisk=%s, userinit=%s]",
+                initRcInstalled, initdInstalled, magiskInstalled, userinitInstalled,
             )
         } else {
             Timber.w("RootAutoStart: НЕ УДАЛОСЬ установить boot-скрипт ни в один путь!")
@@ -175,9 +187,9 @@ object RootAutoStart {
      */
     private fun buildBootScript(pkg: String): String {
         // Определяем component name для BootReceiver и Service
-        val receiverComponent = "$pkg/.BootReceiver"
-        val serviceComponent = "$pkg/.service.SphereAgentService"
-        val activityComponent = "$pkg/.ui.SetupActivity"
+        val receiverComponent = "$pkg/$NAMESPACE.BootReceiver"
+        val serviceComponent = "$pkg/$NAMESPACE.service.SphereAgentService"
+        val activityComponent = "$pkg/$NAMESPACE.ui.SetupActivity"
 
         return """
             |#!/system/bin/sh
@@ -210,6 +222,72 @@ object RootAutoStart {
             |sleep 5
             |am start -n $activityComponent --activity-clear-top 2>/dev/null
         """.trimMargin()
+    }
+
+    /**
+     * Путь 0 (ГЛАВНЫЙ): Android init.rc — нативный property trigger.
+     *
+     * Создаёт файл `/system/etc/init/sphere_autostart.rc` в формате Android Init Language.
+     * Это САМЫЙ надёжный механизм — он парсится нативным init-процессом Android при
+     * КАЖДОЙ загрузке ОС. Не зависит от busybox, Magisk, JobScheduler или WorkManager.
+     *
+     * Создаёт service + property trigger:
+     * - `on property:sys.boot_completed=1` → запускает oneshot service
+     * - service использует /system/bin/sh для am broadcast + am startservice + am start
+     *
+     * @return true если .rc файл успешно создан
+     */
+    private fun installInitRc(pkg: String): Boolean {
+        val receiverFull = "$pkg/$NAMESPACE.BootReceiver"
+        val serviceFull = "$pkg/$NAMESPACE.service.SphereAgentService"
+        val activityFull = "$pkg/$NAMESPACE.ui.SetupActivity"
+        val scriptPath = "/data/local/tmp/sphere_boot.sh"
+        val rcPath = "/system/etc/init/sphere_autostart.rc"
+
+        // Сначала создаём shell-скрипт который будет вызван из init.rc
+        val shellScript = """
+            #!/system/bin/sh
+            # Sphere Platform — boot helper (вызывается из init.rc)
+            sleep 10
+            cmd package set-stopped-state $pkg false 2>/dev/null
+            am broadcast -a android.intent.action.BOOT_COMPLETED -n $receiverFull --include-stopped-packages 2>/dev/null
+            am startservice -n $serviceFull 2>/dev/null
+            sleep 5
+            am start -n $activityFull --activity-clear-top 2>/dev/null
+        """.trimIndent()
+
+        // Затем создаём .rc файл в формате Android Init Language
+        val rcContent = """
+            # Sphere Platform Agent — автостарт через Android init system
+            service sphere_autostart $scriptPath
+                class late_start
+                user root
+                group root
+                oneshot
+                disabled
+                seclabel u:r:magisk:s0
+
+            on property:sys.boot_completed=1
+                start sphere_autostart
+        """.trimIndent()
+
+        return execRootScript(
+            """
+            mount -o rw,remount /system 2>/dev/null
+            # Shell-скрипт для запуска
+            cat > $scriptPath << 'SPHERE_SH_EOF'
+            $shellScript
+            SPHERE_SH_EOF
+            chmod 755 $scriptPath
+            # Android init.rc файл
+            cat > $rcPath << 'SPHERE_RC_EOF'
+            $rcContent
+            SPHERE_RC_EOF
+            chmod 644 $rcPath
+            chown root:root $rcPath
+            mount -o ro,remount /system 2>/dev/null
+            """.trimIndent(),
+        )
     }
 
     /**
@@ -289,7 +367,7 @@ object RootAutoStart {
         execRoot(
             "am broadcast" +
                 " -a android.intent.action.BOOT_COMPLETED" +
-                " -n $pkg/.BootReceiver" +
+                " -n $pkg/$NAMESPACE.BootReceiver" +
                 " --include-stopped-packages",
         )
         Timber.i("RootAutoStart: BOOT_COMPLETED отправлен принудительно")
