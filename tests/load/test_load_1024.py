@@ -246,7 +246,7 @@ async def test_load_ramp_to_1024() -> None:
     counters = snap.get("counters", {})
 
     print(f"\n{'='*70}")
-    print(f"  ИТОГИ НАГРУЗОЧНОГО ТЕСТА: 256 → 512 → 1024 АГЕНТОВ")
+    print("  ИТОГИ НАГРУЗОЧНОГО ТЕСТА: 256 → 512 → 1024 АГЕНТОВ")
     print(f"  Общее время: {total_duration:.1f}s ({total_duration/60:.1f} мин)")
     print(f"{'='*70}")
 
@@ -262,7 +262,7 @@ async def test_load_ramp_to_1024() -> None:
 
     # --- Ключевые метрики ---
     print(f"\n  {'─'*40}")
-    print(f"  Ключевые метрики протокола:")
+    print("  Ключевые метрики протокола:")
     for key in [
         "registration_success", "registration_duplicate",
         "ws_connect_success", "ws_online_total",
@@ -282,7 +282,7 @@ async def test_load_ramp_to_1024() -> None:
     # --- Гистограммы ---
     histograms = snap.get("histograms", {})
     print(f"\n  {'─'*40}")
-    print(f"  Латентности:")
+    print("  Латентности:")
     for hist_name in [
         "registration_latency_ms", "ws_connect_latency_ms",
         "ws_auth_latency_ms", "ws_heartbeat_rtt_ms",
@@ -312,4 +312,4 @@ async def test_load_ramp_to_1024() -> None:
         f"Результаты: {[{k: r[k] for k in ('step', 'target', 'avg_fa', 'dead_pct', 'passed')} for r in step_results]}"
     )
 
-    print(f"\n  ✓ ВСЕ ШАГИ ПРОЙДЕНЫ: 1024 агентов с реалистичным протоколом APK")
+    print("\n  ✓ ВСЕ ШАГИ ПРОЙДЕНЫ: 1024 агентов с реалистичным протоколом APK")

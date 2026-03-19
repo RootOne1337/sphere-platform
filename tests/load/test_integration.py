@@ -14,7 +14,6 @@ import json
 import logging
 import threading
 import time
-from typing import Any
 
 import aiohttp
 import pytest
@@ -22,7 +21,7 @@ import uvicorn
 
 from tests.load.core.identity_factory import IdentityFactory
 from tests.load.core.metrics_collector import MetricsCollector
-from tests.load.core.virtual_agent import VirtualAgent, AgentBehavior, AgentState
+from tests.load.core.virtual_agent import AgentBehavior, AgentState, VirtualAgent
 from tests.load.mock_server import app
 
 logger = logging.getLogger("test_integration")

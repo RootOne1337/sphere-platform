@@ -138,7 +138,7 @@ async def test_load_quick_ramp() -> None:
             await pool.scale_to(target, ramp_sec)
 
             # Ожидание выхода агентов в ONLINE
-            online = await pool.wait_online(
+            await pool.wait_online(
                 target=int(target * 0.8),  # 80% порог
                 timeout=ramp_sec + 30.0,
             )
@@ -188,7 +188,7 @@ async def test_load_quick_ramp() -> None:
     snap = metrics.snapshot()
 
     print(f"\n{'='*60}")
-    print(f"  ИТОГИ НАГРУЗОЧНОГО ТЕСТА")
+    print("  ИТОГИ НАГРУЗОЧНОГО ТЕСТА")
     print(f"  Общее время: {total_duration:.1f}s")
     print(f"{'='*60}")
 
@@ -203,7 +203,7 @@ async def test_load_quick_ramp() -> None:
 
     # Метрики
     counters = snap.get("counters", {})
-    print(f"\n  Ключевые метрики:")
+    print("\n  Ключевые метрики:")
     for key in [
         "registration_success", "registration_duplicate",
         "ws_connect_success", "ws_online_total",

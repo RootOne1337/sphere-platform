@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import random
 import string
-from typing import Sequence
 
 import structlog
 from sqlalchemy import func, select

@@ -24,13 +24,12 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-import os
 import time
 import uuid
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request
+from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse
 
 logger = logging.getLogger("mock_server")
@@ -253,7 +252,6 @@ async def broadcast_batch(request: Request) -> JSONResponse:
     Определяет онлайн-устройства по наличию активного WS-соединения,
     немедленно отправляет EXECUTE_DAG каждому через WebSocket.
     """
-    import random as _rnd
 
     body = await request.json()
     script_id = body.get("script_id", str(uuid.uuid4()))

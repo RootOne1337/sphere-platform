@@ -10,9 +10,9 @@ import uuid
 
 import structlog
 from fastapi import APIRouter, Depends, Query
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
-from sqlalchemy import select
 
 from backend.core.dependencies import require_permission
 from backend.core.lifespan_registry import register_startup

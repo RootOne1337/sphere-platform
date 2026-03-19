@@ -15,7 +15,6 @@ from backend.models.organization import Organization
 from backend.models.pipeline import Pipeline
 from backend.models.user import User
 
-
 # ══════════════════════════════════════════════════════════════════════════════
 #  Переопределение test_user с валидной RBAC-ролью
 # ══════════════════════════════════════════════════════════════════════════════

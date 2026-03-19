@@ -11,13 +11,11 @@ from typing import AsyncGenerator, Generator
 
 import pytest
 
+from tests.load.core.agent_pool import AgentPool
 from tests.load.core.identity_factory import IdentityFactory
 from tests.load.core.metrics_collector import MetricsCollector
 from tests.load.core.virtual_agent import AgentBehavior
-from tests.load.core.agent_pool import AgentPool
-from tests.load.core.orchestrator import TestConfig
 from tests.load.protocols.rest_client import RestClient
-
 
 # ---------------------------------------------------------------
 # Конфигурация из env-переменных

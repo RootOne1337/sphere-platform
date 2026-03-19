@@ -312,7 +312,6 @@ class VirtualAgent:
 
     async def _connect_and_serve(self) -> None:
         """Один полный цикл: connect → auth → online → (обрыв)."""
-        import websockets
         from websockets.asyncio.client import connect
 
         self.state = AgentState.CONNECTING
@@ -347,7 +346,7 @@ class VirtualAgent:
             await self._ws.send(auth_msg)
 
             # Ожидаем ответ (auth_ack или другой)
-            raw = await asyncio.wait_for(self._ws.recv(), timeout=10)
+            await asyncio.wait_for(self._ws.recv(), timeout=10)
             auth_elapsed = (time.monotonic() - t_auth) * 1000
             self.metrics.record("ws_auth_latency_ms", auth_elapsed)
 
@@ -828,7 +827,7 @@ class VirtualAgent:
             try:
                 assert self._session is not None
                 t0 = time.monotonic()
-                async with self._session.get(url, headers=headers) as resp:
+                async with self._session.get(url, headers=headers) as _resp:
                     elapsed_ms = (time.monotonic() - t0) * 1000
                     self.metrics.record("vpn_status_latency_ms", elapsed_ms)
                     self.metrics.inc("vpn_status_check")

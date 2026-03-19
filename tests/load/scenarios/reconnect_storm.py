@@ -55,7 +55,6 @@ class ReconnectStormScenario:
         """
         # 1. Начальное состояние
         initial_fa = self._pool.get_fleet_availability()
-        initial_online = self._pool.online_count
         total = self._pool.total_count
 
         to_disconnect = int(total * self._disconnect_pct)

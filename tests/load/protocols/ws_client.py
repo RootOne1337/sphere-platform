@@ -90,7 +90,7 @@ class WsClient:
 
             # Ждём ответ от сервера (обычно noop или ping)
             try:
-                reply = await asyncio.wait_for(
+                await asyncio.wait_for(
                     self._conn.recv(), timeout=_AUTH_TIMEOUT
                 )
                 auth_ms = (time.monotonic() - t0) * 1000

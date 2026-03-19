@@ -30,7 +30,6 @@
 from __future__ import annotations
 
 import asyncio
-import json
 import logging
 import random
 import subprocess
@@ -640,16 +639,13 @@ async def test_real_backend_load() -> None:
     histograms = snap.get("histograms", {})
 
     print(f"\n{'='*80}")
-    print(f"  ИТОГИ: НАГРУЗКА ПО РЕАЛЬНОМУ BACKEND")
+    print("  ИТОГИ: НАГРУЗКА ПО РЕАЛЬНОМУ BACKEND")
     print(f"  Время: {total_duration:.1f}s ({total_duration/60:.1f} мин)")
     print(f"{'='*80}")
 
     # Таблица шагов
-    all_passed = True
     for r in step_results:
         status = "PASS" if r["passed"] else "FAIL"
-        if not r["passed"]:
-            all_passed = False
         srv = r["server_snapshot"]
         # Ищем backend CPU
         backend_cpu = 0.0
@@ -668,7 +664,7 @@ async def test_real_backend_load() -> None:
         )
 
     # Метрики клиентской стороны
-    print(f"\n  --- Клиентские метрики ---")
+    print("\n  --- Клиентские метрики ---")
     print(f"  Регистраций: {counters.get('registration_success', 0)} OK / {counters.get('registration_error', 0)} ERR")
     print(f"  WS connect: {counters.get('ws_connect_success', 0)} OK / {counters.get('ws_connect_error', 0)} ERR")
     print(f"  Heartbeat pong: {counters.get('heartbeat_pong_sent', 0)}")
@@ -678,7 +674,7 @@ async def test_real_backend_load() -> None:
     print(f"  Reconnects: {counters.get('ws_reconnect_total', 0)}")
 
     # DAG-execution метрики (VirtualAgent: task_received/task_ack_sent/task_progress_sent/task_completed/task_failed)
-    print(f"\n  --- DAG Execution ---")
+    print("\n  --- DAG Execution ---")
     print(f"  Задач создано (API): {counters.get('dag_tasks_created', 0)} OK / {counters.get('dag_tasks_create_error', 0)} ERR")
     print(f"  DAG received (WS): {counters.get('task_received', 0)}")
     print(f"  DAG ack sent: {counters.get('task_ack_sent', 0)}")
@@ -688,7 +684,7 @@ async def test_real_backend_load() -> None:
     print(f"  DAG result sent: {counters.get('command_result_sent', 0)}")
 
     # Латентности
-    print(f"\n  --- Латентности ---")
+    print("\n  --- Латентности ---")
     for name in ["registration_latency_ms", "ws_connect_latency_ms", "ws_auth_latency_ms", "ws_heartbeat_rtt_ms"]:
         h = histograms.get(name, {})
         if h:
@@ -700,7 +696,7 @@ async def test_real_backend_load() -> None:
             )
 
     # Серверная эволюция: как росли метрики
-    print(f"\n  --- Эволюция серверных ресурсов ---")
+    print("\n  --- Эволюция серверных ресурсов ---")
     backend_cpus = []
     pg_cpus = []
     redis_cpus = []

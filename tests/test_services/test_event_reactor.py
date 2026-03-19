@@ -3,12 +3,10 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from backend.models.device_event import EventSeverity
 from backend.models.game_account import AccountStatus
 from backend.services.event_reactor import (
     ACCOUNT_STATUS_REACTIONS,
@@ -163,7 +161,7 @@ class TestEventReactorProcessEvent:
             mock_event_instance.id = uuid.uuid4()
             MockEvent.return_value = mock_event_instance
 
-            event = await reactor.process_event(
+            await reactor.process_event(
                 org_id=org_id,
                 device_id=device_id,
                 event_type="test.info",

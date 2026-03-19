@@ -11,7 +11,6 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from backend.database.engine import Base
 from backend.models.base_model import TimestampMixin, UUIDMixin
 
-
 # M2M association table: device <-> location
 device_location_members = Table(
     "device_location_members",

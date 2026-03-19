@@ -10,15 +10,12 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-import pytest
-
 from tests.load.core.identity_factory import IdentityFactory
 from tests.load.core.metrics_collector import MetricsCollector, StepResult
-from tests.load.core.report_generator import ReportGenerator
-from tests.load.core.virtual_agent import AgentBehavior, AgentState
 from tests.load.core.orchestrator import CriteriaEvaluator
+from tests.load.core.report_generator import ReportGenerator
+from tests.load.core.virtual_agent import AgentBehavior
 from tests.load.protocols.message_factory import MessageFactory
-
 
 # ===================================================================
 # IdentityFactory

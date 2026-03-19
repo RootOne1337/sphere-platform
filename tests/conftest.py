@@ -15,12 +15,14 @@ from __future__ import annotations
 # и 19 тестов на авторизацию / RBAC / org-isolation будут ложно проходить.
 # ---------------------------------------------------------------------------
 import os as _os
+
 _os.environ["DEV_SKIP_AUTH"] = "false"
 
 # ---------------------------------------------------------------------------
 # Подавляем DEBUG-логи aiosqlite, которые заливают stdout SQL-операторами
 # ---------------------------------------------------------------------------
 import logging as _logging
+
 _logging.getLogger("aiosqlite").setLevel(_logging.WARNING)
 
 import asyncio

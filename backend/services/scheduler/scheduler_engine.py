@@ -557,8 +557,8 @@ class SchedulerEngine:
             try:
                 from backend.database.redis_client import redis_binary
                 if redis_binary:
-                    from backend.websocket.pubsub_router import get_pubsub_publisher
                     from backend.services.task_queue import TaskQueue
+                    from backend.websocket.pubsub_router import get_pubsub_publisher
                     publisher = get_pubsub_publisher()
                     queue = TaskQueue(redis_binary)
             except Exception as exc:

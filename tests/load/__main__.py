@@ -15,11 +15,11 @@ import logging
 import sys
 from pathlib import Path
 
+from tests.load.core.agent_pool import AgentPool
 from tests.load.core.identity_factory import IdentityFactory
 from tests.load.core.metrics_collector import MetricsCollector
 from tests.load.core.orchestrator import Orchestrator, TestConfig
 from tests.load.core.virtual_agent import AgentBehavior
-from tests.load.core.agent_pool import AgentPool
 from tests.load.protocols.rest_client import RestClient
 from tests.load.scenarios.mixed_workload import MixedWorkloadScenario
 

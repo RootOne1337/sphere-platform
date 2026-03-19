@@ -7,13 +7,23 @@
 # но группировка по TZ-этапам помогает навигации.
 
 # --- Core (TZ-00) ---
+from backend.models.account_session import AccountSession, SessionEndReason  # noqa: F401
 from backend.models.api_key import APIKey  # noqa: F401
 from backend.models.audit_log import AuditLog  # noqa: F401
 from backend.models.base_model import TimestampMixin, UUIDMixin  # noqa: F401
 from backend.models.device import Device, DeviceStatus, device_group_members  # noqa: F401
 
+# --- Device Events & Account Sessions (TZ-11) ---
+from backend.models.device_event import DeviceEvent, EventSeverity  # noqa: F401
+
 # --- Device Registry (TZ-02) ---
 from backend.models.device_group import DeviceGroup  # noqa: F401
+
+# --- Event Triggers (TZ-11+) — автоматический запуск pipeline по событиям ---
+from backend.models.event_trigger import EventTrigger  # noqa: F401
+
+# --- Game Account Management (TZ-10) ---
+from backend.models.game_account import AccountStatus, GameAccount  # noqa: F401
 from backend.models.ldplayer_instance import LDPlayerInstance  # noqa: F401
 from backend.models.location import Location, device_location_members  # noqa: F401
 
@@ -28,6 +38,9 @@ from backend.models.pipeline import (  # noqa: F401
     PipelineRunStatus,
     StepType,
 )
+
+# --- Pipeline Settings (TZ-13) — персистентные настройки оркестрации ---
+from backend.models.pipeline_settings import PipelineSettings  # noqa: F401
 from backend.models.refresh_token import RefreshToken  # noqa: F401
 from backend.models.schedule import (  # noqa: F401
     Schedule,
@@ -51,19 +64,6 @@ from backend.models.webhook import Webhook  # noqa: F401
 
 # --- PC Agent (TZ-08) ---
 from backend.models.workstation import Workstation  # noqa: F401
-
-# --- Game Account Management (TZ-10) ---
-from backend.models.game_account import AccountStatus, GameAccount  # noqa: F401
-
-# --- Device Events & Account Sessions (TZ-11) ---
-from backend.models.device_event import DeviceEvent, EventSeverity  # noqa: F401
-from backend.models.account_session import AccountSession, SessionEndReason  # noqa: F401
-
-# --- Event Triggers (TZ-11+) — автоматический запуск pipeline по событиям ---
-from backend.models.event_trigger import EventTrigger  # noqa: F401
-
-# --- Pipeline Settings (TZ-13) — персистентные настройки оркестрации ---
-from backend.models.pipeline_settings import PipelineSettings  # noqa: F401
 
 __all__ = [
     "TimestampMixin",

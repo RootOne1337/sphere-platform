@@ -652,9 +652,10 @@ async def handle_assign_account(
     if not game:
         return StepResult(status="failure", error="game не указан в params")
 
-    from backend.models.game_account import AccountStatus, GameAccount
-    from backend.models.account_session import AccountSession
     from datetime import datetime, timezone
+
+    from backend.models.account_session import AccountSession
+    from backend.models.game_account import AccountStatus, GameAccount
 
     specific_id = params.get("account_id")
     if specific_id:
@@ -760,9 +761,10 @@ async def handle_release_account(
     if not account_id_str:
         return StepResult(status="failure", error="assigned_account_id отсутствует в context")
 
-    from backend.models.game_account import AccountStatus, GameAccount
-    from backend.models.account_session import AccountSession, SessionEndReason
     from datetime import datetime, timedelta, timezone
+
+    from backend.models.account_session import AccountSession, SessionEndReason
+    from backend.models.game_account import AccountStatus, GameAccount
 
     try:
         account_id = uuid.UUID(account_id_str)

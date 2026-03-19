@@ -2,7 +2,6 @@
 # ВЛАДЕЛЕЦ: TZ-01. Полная реализация FastAPI dependencies: JWT-валидация, RBAC, service factories.
 from __future__ import annotations
 
-import os as _os
 import uuid
 from typing import TYPE_CHECKING
 

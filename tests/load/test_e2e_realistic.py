@@ -23,10 +23,10 @@ import aiohttp
 import pytest
 import uvicorn
 
-from tests.load.core.dag_script_engine import DagScriptEngine, DagResult
+from tests.load.core.dag_script_engine import DagScriptEngine
 from tests.load.core.identity_factory import IdentityFactory
 from tests.load.core.metrics_collector import MetricsCollector
-from tests.load.core.virtual_agent import AgentBehavior, AgentState, VirtualAgent
+from tests.load.core.virtual_agent import AgentBehavior, VirtualAgent
 from tests.load.protocols.message_factory import MessageFactory
 
 logger = logging.getLogger("test_e2e_realistic")
@@ -273,7 +273,6 @@ class TestE2ERealisticProtocol:
         self, factory: IdentityFactory, metrics: MetricsCollector, behavior: AgentBehavior
     ) -> None:
         """Pong содержит echo серверного ts + телеметрию."""
-        import websockets
         from websockets.asyncio.client import connect
 
         identity = factory.create(1)
@@ -301,7 +300,7 @@ class TestE2ERealisticProtocol:
         try:
             # First-message auth
             await ws.send(json.dumps({"token": jwt_token}))
-            auth_resp = await asyncio.wait_for(ws.recv(), timeout=5)
+            await asyncio.wait_for(ws.recv(), timeout=5)
 
             # Ждём ping от сервера
             server_ts = None
@@ -334,7 +333,6 @@ class TestE2ERealisticProtocol:
         self, factory: IdentityFactory, metrics: MetricsCollector, behavior: AgentBehavior
     ) -> None:
         """CommandAck — БЕЗ поля «type» (реальный формат APK)."""
-        import websockets
         from websockets.asyncio.client import connect
 
         identity = factory.create(2)
@@ -375,7 +373,6 @@ class TestE2ERealisticProtocol:
         self, factory: IdentityFactory, metrics: MetricsCollector, behavior: AgentBehavior
     ) -> None:
         """Полный цикл EXECUTE_DAG: ack → progress × N → command_result."""
-        import websockets
         from websockets.asyncio.client import connect
 
         identity = factory.create(3)
@@ -434,7 +431,6 @@ class TestE2ERealisticProtocol:
         self, factory: IdentityFactory, metrics: MetricsCollector, behavior: AgentBehavior
     ) -> None:
         """Noop keepalive от сервера обновляет watchdog-таймер."""
-        import websockets
         from websockets.asyncio.client import connect
 
         identity = factory.create(4)
@@ -620,7 +616,7 @@ class TestDagScriptEngineEdgeCases:
         engine = DagScriptEngine(success_rate=0.0, speed_factor=0.01)
         t0 = time.monotonic()
         result = await engine.execute(dag, "test-retry")
-        elapsed = time.monotonic() - t0
+        _ = time.monotonic() - t0
 
         assert not result.success
         # С retry=2 должно быть 3 попытки (0, 1, 2)
@@ -705,7 +701,6 @@ class TestBroadcastBatch:
     @pytest.mark.asyncio
     async def test_broadcast_returns_batch_metadata(self) -> None:
         """Broadcast-ответ содержит обязательные поля батча."""
-        import websockets
         from websockets.asyncio.client import connect
 
         # Регистрируем и подключаем 1 агента напрямую
