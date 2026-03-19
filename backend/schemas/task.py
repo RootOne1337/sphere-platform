@@ -13,6 +13,10 @@ class CreateTaskRequest(BaseModel):
     script_id: uuid.UUID
     device_id: uuid.UUID
     priority: int = Field(default=5, ge=1, le=10)
+    account_id: uuid.UUID | None = Field(
+        None,
+        description="ID игрового аккаунта для подстановки переменных в DAG ({{account.xxx}})",
+    )
     webhook_url: str | None = Field(
         None,
         max_length=2048,
@@ -36,6 +40,8 @@ class TaskResponse(BaseModel):
     wave_index: int | None = None
     created_at: datetime
     updated_at: datetime
+    device_name: str | None = None
+    script_name: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
 

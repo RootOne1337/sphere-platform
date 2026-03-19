@@ -19,6 +19,8 @@ from backend.schemas.batch import (
     BatchDetailResponse,
     BatchExecutionRequest,
     BatchResponse,
+    BroadcastBatchRequest,
+    BroadcastBatchResponse,
 )
 from backend.services.batch_service import BatchService
 
@@ -51,6 +53,34 @@ async def start_batch(
     batch = await svc.start_batch(body, current_user.org_id, current_user.id)
     await db.commit()
     return BatchResponse.model_validate(batch)
+
+
+# ── Broadcast: запуск на всех онлайн-устройствах ───────────────────────────────
+
+@router.post(
+    "/broadcast",
+    response_model=BroadcastBatchResponse,
+    status_code=202,
+    summary="Запустить скрипт на ВСЕХ онлайн-устройствах организации (202 Accepted)",
+)
+async def broadcast_batch(
+    body: BroadcastBatchRequest,
+    current_user: User = require_permission("script:execute"),
+    svc: BatchService = Depends(get_batch_service),
+    db: AsyncSession = Depends(get_db),
+) -> BroadcastBatchResponse:
+    """
+    Автоматически определяет все онлайн-устройства организации
+    и запускает батч-выполнение скрипта волнами.
+    Не требует передачи device_ids — берёт все online из Redis status cache.
+    """
+    batch, online_count = await svc.broadcast_batch(
+        body, current_user.org_id, current_user.id
+    )
+    await db.commit()
+    resp = BroadcastBatchResponse.model_validate(batch)
+    resp.online_devices = online_count
+    return resp
 
 
 # ── Get batch status ───────────────────────────────────────────────────────────

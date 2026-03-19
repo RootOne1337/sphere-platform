@@ -401,7 +401,7 @@ async def execute_shell(
         "command_id": command_id,
         "payload": {"cmd": body.command},
         "signed_at": int(time.time()),
-        "ttl_seconds": 15,
+        "ttl_seconds": 30,
     })
     if not send_ok:
         raise HTTPException(status_code=504, detail=f"Failed to send shell command to device {device_id}")
@@ -424,7 +424,7 @@ async def execute_shell(
                     elif data.get("status") == "failed":
                         return {"error": data.get("error", "Unknown error")}
 
-        return await asyncio.wait_for(wait_for_result(), timeout=10.0)
+        return await asyncio.wait_for(wait_for_result(), timeout=30.0)
     except asyncio.TimeoutError:
         raise HTTPException(status_code=504, detail="Shell command timeout")
     finally:

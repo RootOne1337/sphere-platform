@@ -85,6 +85,7 @@ class UpdateDeviceRequest(BaseModel):
     tags: list[str] | None = None
     notes: str | None = None
     is_active: bool | None = None
+    server_name: str | None = Field(None, max_length=50, description="Привязанный игровой сервер (RED, MOSCOW, GROZNY)")
 
     @field_validator("serial")
     @classmethod
@@ -139,6 +140,7 @@ class DeviceResponse(BaseModel):
     location_ids: list[uuid.UUID] = Field(default_factory=list)  # M2M locations
     tags: list[str] = Field(default_factory=list)
     notes: str | None = None
+    server_name: str | None = None
     created_at: datetime
     updated_at: datetime
 

@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import asyncio
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 import structlog
 from sqlalchemy import func, select
@@ -65,6 +65,11 @@ class SchedulerEngine:
         """Один тик: найти созревшие расписания и обработать."""
         now = datetime.now(timezone.utc)
 
+        # FIX BUG-1: Собираем задачи для enqueue ПОСЛЕ коммита.
+        # Ранее enqueue происходил до db.commit() → dispatcher мог попить задачу
+        # из Redis, не найти её в БД (не закоммичена) и потерять навсегда.
+        pending_enqueue: list[tuple[str, str, str, int]] = []  # (task_id, device_id, org_id, priority)
+
         async with AsyncSessionLocal() as db:
             result = await db.execute(
                 select(Schedule)
@@ -80,7 +85,7 @@ class SchedulerEngine:
 
             for schedule in schedules:
                 try:
-                    await self._process_schedule(schedule, now, db)
+                    await self._process_schedule(schedule, now, db, pending_enqueue)
                 except Exception as exc:
                     logger.error(
                         "scheduler_engine.schedule_error",
@@ -90,11 +95,29 @@ class SchedulerEngine:
 
             await db.commit()
 
+        # FIX BUG-1: Redis enqueue ПОСЛЕ коммита — dispatcher гарантированно
+        # найдёт задачу в БД при dequeue.
+        if pending_enqueue:
+            try:
+                from backend.database.redis_client import redis_binary
+                if redis_binary:
+                    from backend.services.task_queue import TaskQueue
+                    queue = TaskQueue(redis_binary)
+                    for task_id, device_id, org_id, priority in pending_enqueue:
+                        await queue.enqueue(task_id, device_id, org_id, priority)
+                    logger.debug(
+                        "scheduler.enqueued_after_commit",
+                        count=len(pending_enqueue),
+                    )
+            except Exception as exc:
+                logger.error("scheduler.enqueue_failed", error=str(exc))
+
     async def _process_schedule(
         self,
         schedule: Schedule,
         fire_time: datetime,
         db: AsyncSession,
+        pending_enqueue: list[tuple[str, str, str, int]] | None = None,
     ) -> None:
         """
         Обработать одно «созревшее» расписание.
@@ -172,7 +195,7 @@ class SchedulerEngine:
 
         if schedule.target_type == ScheduleTargetType.SCRIPT and schedule.script_id:
             tasks_created, batch_id = await self._create_script_tasks(
-                schedule, device_ids, db,
+                schedule, device_ids, db, pending_enqueue,
             )
         elif schedule.target_type == ScheduleTargetType.PIPELINE and schedule.pipeline_id:
             tasks_created, pipeline_batch_id = await self._create_pipeline_runs(
@@ -273,9 +296,10 @@ class SchedulerEngine:
         schedule: Schedule,
         device_ids: list[uuid.UUID],
         db: AsyncSession,
+        pending_enqueue: list[tuple[str, str, str, int]] | None = None,
     ) -> tuple[int, uuid.UUID | None]:
         """Создать задачи (Task) для script-расписания с enqueue в Redis."""
-        from backend.models.script import Script
+        from backend.models.script import Script, ScriptVersion
         from backend.models.task import Task, TaskStatus
         from backend.models.task_batch import TaskBatch
 
@@ -288,6 +312,23 @@ class SchedulerEngine:
             )
             return 0, None
 
+        # FIX BUG-B: Извлечь timeout из DAG-версии скрипта.
+        # Без этого task.timeout_seconds = 300 (дефолт модели) → payload.timeout_ms = 300_000
+        # → DagRunner использует 5-минутный таймаут вместо DAG-ного (например, 86_400_000 = 24ч).
+        # Цепочка: task.timeout_seconds → payload.timeout_ms → CommandDispatcher → DagRunner.
+        task_timeout_seconds = 300  # дефолт, если DAG не указывает свой
+        version = await db.get(ScriptVersion, script.current_version_id)
+        if version and version.dag and isinstance(version.dag, dict):
+            dag_timeout_ms = version.dag.get("timeout_ms")
+            if isinstance(dag_timeout_ms, (int, float)) and dag_timeout_ms > 0:
+                task_timeout_seconds = int(dag_timeout_ms / 1000)
+                logger.info(
+                    "scheduler.dag_timeout_applied",
+                    timeout_seconds=task_timeout_seconds,
+                    dag_timeout_ms=dag_timeout_ms,
+                    script_id=str(schedule.script_id),
+                )
+
         batch = TaskBatch(
             org_id=schedule.org_id,
             script_id=schedule.script_id,
@@ -299,6 +340,13 @@ class SchedulerEngine:
 
         created_tasks: list[Task] = []
         for did in device_ids:
+            # Добавляем служебные маркеры в input_params для отладки и фильтрации в UI.
+            # _source / _schedule_id не влияют на выполнение DAG — они
+            # только дают возможность отличить задачи планировщика от ручных запусков.
+            task_params = dict(schedule.input_params or {})
+            task_params.setdefault("_source", "scheduler")
+            task_params.setdefault("_schedule_id", str(schedule.id))
+
             task = Task(
                 org_id=schedule.org_id,
                 script_id=schedule.script_id,
@@ -307,28 +355,41 @@ class SchedulerEngine:
                 batch_id=batch.id,
                 status=TaskStatus.QUEUED,
                 priority=5,
-                input_params=schedule.input_params or {},
+                timeout_seconds=task_timeout_seconds,
+                input_params=task_params,
             )
             db.add(task)
             created_tasks.append(task)
 
         await db.flush()
 
-        # Enqueue в Redis для диспетчеризации TaskService.dispatch_pending_tasks
-        try:
-            from backend.database.redis_client import redis_binary
-            if redis_binary:
-                from backend.services.task_queue import TaskQueue
-                queue = TaskQueue(redis_binary)
-                for task in created_tasks:
-                    await queue.enqueue(
-                        str(task.id),
-                        str(task.device_id),
-                        str(task.org_id),
-                        task.priority,
-                    )
-        except Exception as exc:
-            logger.error("scheduler.enqueue_failed", error=str(exc))
+        # FIX BUG-1: НЕ enqueue в Redis здесь! Задачи добавляются в pending_enqueue
+        # и будут зайнкючены в _tick() ПОСЛЕ db.commit(), чтобы dispatcher
+        # гарантированно нашёл их в БД.
+        if pending_enqueue is not None:
+            for task in created_tasks:
+                pending_enqueue.append((
+                    str(task.id),
+                    str(task.device_id),
+                    str(task.org_id),
+                    task.priority,
+                ))
+        else:
+            # Fallback: прямой enqueue (для вызовов вне _tick, например fire_now)
+            try:
+                from backend.database.redis_client import redis_binary
+                if redis_binary:
+                    from backend.services.task_queue import TaskQueue
+                    queue = TaskQueue(redis_binary)
+                    for task in created_tasks:
+                        await queue.enqueue(
+                            str(task.id),
+                            str(task.device_id),
+                            str(task.org_id),
+                            task.priority,
+                        )
+            except Exception as exc:
+                logger.error("scheduler.enqueue_failed", error=str(exc))
 
         return len(device_ids), batch.id
 
@@ -372,12 +433,27 @@ class SchedulerEngine:
         await db.flush()
         return len(device_ids), batch.id
 
+    # Буфер (в секундах) после таймаута задачи, прежде чем считать её «зависшей».
+    # Задача с timeout_seconds=N считается зависшей через N + _STALE_BUFFER_SECONDS секунд.
+    # Watchdog закроет задачу по timeout_seconds, а буфер даёт запас
+    # на сетевую задержку и обработку результата.
+    _STALE_BUFFER_SECONDS: int = 600  # 10 мин запас после таймаута
+
+    # Фиксированный порог для pipeline-ов (у них нет per-task timeout_seconds)
+    _PIPELINE_STALE_MINUTES: int = 120  # 2 часа
+
     async def _has_running_tasks(
         self,
         schedule: Schedule,
         db: AsyncSession,
     ) -> bool:
-        """Проверка: есть ли незавершённые задачи от предыдущего запуска."""
+        """
+        Проверка: есть ли незавершённые (и не зависшие) задачи от предыдущего запуска.
+
+        Задача считается «зависшей» если прошло timeout_seconds + _STALE_BUFFER_SECONDS
+        с момента создания. Watchdog закроет её по timeout, а буфер даёт запас.
+        Зависшие задачи не препятствуют запуску нового тика.
+        """
         # Проверяем последнюю execution — есть ли у неё незавершённые задачи
         last_exec = await db.scalar(
             select(ScheduleExecution)
@@ -391,7 +467,7 @@ class SchedulerEngine:
         if not last_exec:
             return False
 
-        # Проверяем задачи batch
+        # Проверяем задачи batch — динамический порог на основе timeout_seconds задачи
         if last_exec.batch_id:
             from backend.models.task import Task, TaskStatus
             running_count = await db.scalar(
@@ -400,12 +476,19 @@ class SchedulerEngine:
                 .where(
                     Task.batch_id == last_exec.batch_id,
                     Task.status.in_([TaskStatus.QUEUED, TaskStatus.RUNNING, TaskStatus.ASSIGNED]),
+                    # Задача НЕ зависшая если: created_at + timeout + buffer > now()
+                    Task.created_at + func.make_interval(
+                        secs=Task.timeout_seconds + self._STALE_BUFFER_SECONDS
+                    ) > func.now(),
                 )
             )
             return (running_count or 0) > 0
 
         if last_exec.pipeline_batch_id:
             from backend.models.pipeline import PipelineRun, PipelineRunStatus
+            pipeline_stale_cutoff = datetime.now(timezone.utc) - timedelta(
+                minutes=self._PIPELINE_STALE_MINUTES
+            )
             running_count = await db.scalar(
                 select(func.count())
                 .select_from(PipelineRun)
@@ -416,6 +499,7 @@ class SchedulerEngine:
                         PipelineRunStatus.RUNNING,
                         PipelineRunStatus.WAITING,
                     ]),
+                    PipelineRun.created_at > pipeline_stale_cutoff,
                 )
             )
             return (running_count or 0) > 0
@@ -483,19 +567,30 @@ class SchedulerEngine:
             for task in running_tasks:
                 try:
                     if task.status == TaskStatus.RUNNING and publisher:
-                        # Отправить CANCEL_DAG агенту через WebSocket
-                        await publisher.send_command_live(
+                        # Отправить CANCEL_DAG агенту через WebSocket.
+                        # command_id = "sched_cancel_{task_id}" — уникальный, чтобы ack
+                        # от CANCEL_DAG не перезаписал статус задачи в handle_task_result.
+                        # FIX BUG-3: Проверяем возврат send_command_live.
+                        cancel_delivered = await publisher.send_command_live(
                             str(task.device_id),
                             {
-                                "command_id": str(task.id),
+                                "command_id": f"sched_cancel_{task.id}",
                                 "type": "CANCEL_DAG",
                                 "signed_at": int(now.timestamp()),
+                                "ttl_seconds": 30,
                                 "payload": {"task_id": str(task.id)},
                             },
                         )
+                        if not cancel_delivered:
+                            logger.warning(
+                                "scheduler.cancel_dag_not_delivered",
+                                task_id=str(task.id),
+                                device_id=str(task.device_id),
+                                reason="Устройство offline или нет PubSub-подписчиков",
+                            )
 
                     if task.status in (TaskStatus.QUEUED, TaskStatus.ASSIGNED) and queue:
-                        await queue.cancel_task(str(task.id), str(task.org_id))
+                        await queue.cancel_task(str(task.id), str(task.org_id), str(task.device_id))
 
                     # Освободить running lock
                     if queue:

@@ -135,6 +135,23 @@ class PipelineService:
         await self.db.flush()
         logger.info("pipeline.deactivated", pipeline_id=str(pipeline_id))
 
+    async def toggle(
+        self,
+        pipeline_id: uuid.UUID,
+        org_id: uuid.UUID,
+        active: bool,
+    ) -> Pipeline:
+        """Включить / выключить pipeline. Сохраняется в БД, переживает рестарт."""
+        pipeline = await self.get(pipeline_id, org_id)
+        pipeline.is_active = active
+        await self.db.flush()
+        logger.info(
+            "pipeline.toggled",
+            pipeline_id=str(pipeline_id),
+            is_active=active,
+        )
+        return pipeline
+
     # ── Запуск ───────────────────────────────────────────────────────────────
 
     async def run(

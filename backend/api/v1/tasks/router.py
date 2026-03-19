@@ -11,12 +11,14 @@ import uuid
 import structlog
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
+from sqlalchemy import select
 
 from backend.core.dependencies import require_permission
 from backend.core.lifespan_registry import register_startup
 from backend.database.engine import AsyncSessionLocal, get_db
 from backend.database.redis_client import get_redis, get_redis_binary
-from backend.models.task import TaskStatus
+from backend.models.task import Task, TaskStatus
 from backend.models.user import User
 from backend.schemas.task import (
     CreateTaskRequest,
@@ -175,8 +177,16 @@ async def create_task(
         org_id=current_user.org_id,
         priority=body.priority,
         webhook_url=body.webhook_url,
+        account_id=body.account_id,
     )
     await db.commit()
+    # Перезагрузить с relationships для сериализации (device_name, script_name)
+    stmt = (
+        select(Task)
+        .options(selectinload(Task.device), selectinload(Task.script))
+        .where(Task.id == task.id)
+    )
+    task = (await db.execute(stmt)).scalar_one()
     return TaskResponse.model_validate(task)
 
 

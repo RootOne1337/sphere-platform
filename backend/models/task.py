@@ -55,3 +55,13 @@ class Task(Base, UUIDMixin, TimestampMixin):
     device: Mapped["Device"] = relationship()
     script: Mapped["Script"] = relationship(back_populates="tasks")
     batch: Mapped["TaskBatch | None"] = relationship(back_populates="tasks")
+
+    @property
+    def device_name(self) -> str | None:
+        """Имя устройства для отображения в UI (загружается через selectinload)."""
+        return self.device.name if self.device is not None else None
+
+    @property
+    def script_name(self) -> str | None:
+        """Имя скрипта для отображения в UI (загружается через selectinload)."""
+        return self.script.name if self.script is not None else None
