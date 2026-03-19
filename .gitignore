@@ -66,6 +66,7 @@ Thumbs.db
 tmp_env.txt
 tmp_*.txt
 tmp_*.py
+tmp_*.json
 *.tmp
 load_test_output.txt
 
@@ -74,12 +75,25 @@ load_test_output.txt
 build-errors.txt
 install_result.txt
 dag_dump*.json
+dag_reg*.json
 dag_pretty.json
 dag_dump_latest.json
 dag_payload.json
 screen*.png
 task_payload.json
 task_result*.json
+
+# Ad-hoc данные / скрипты
+data/
+reports/
+updates/
+
+# Docs trash (временные/ad-hoc файлы в docs/)
+docs/XPath.txt
+docs/branches.txt
+docs/test_results.txt
+docs/walkthrough.md.resolved
+docs/MERGE_LOG.md
 
 # Deployment artifacts (генерируются скриптами развёртывания)
 .admin-credentials
