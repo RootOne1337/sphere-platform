@@ -84,13 +84,13 @@ $waited = 0
 do {
     Start-Sleep -Seconds 2
     $waited += 2
-    $health = & $dockerExe @composeArgs ps postgres --format "{{.Health}}" 2>$null
+    $health = Invoke-Compose @($composeArgs + @("ps", "postgres", "--format", "{{.Health}}")) 2>$null
     Write-Host "  postgres health: $health ($waited s)" -ForegroundColor Gray
 } while ($health -ne "healthy" -and $waited -lt $maxWait)
 
 if ($health -ne "healthy") {
     Write-Host "Postgres did not become healthy in ${maxWait}s — check logs:" -ForegroundColor Red
-    & $dockerExe @composeArgs logs postgres --tail=20
+    Invoke-Compose @($composeArgs + @("logs", "postgres", "--tail=20"))
     exit 1
 }
 Write-Host "  postgres: healthy" -ForegroundColor Green

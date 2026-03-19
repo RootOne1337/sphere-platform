@@ -28,7 +28,10 @@ services:
           memory: 512M
 
   backend:
-    image: ghcr.io/${GITHUB_OWNER}/sphere-platform-backend:${IMAGE_TAG:-latest}
+    image: ghcr.io/${GITHUB_OWNER:-local}/sphere-platform-backend:${IMAGE_TAG:-latest}
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
     environment:
       - POSTGRES_URL=postgresql+asyncpg://${POSTGRES_USER:-sphere}:${POSTGRES_PASSWORD}@postgres:5432/sphereplatform
       - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
@@ -61,7 +64,10 @@ services:
           memory: 2G
 
   frontend:
-    image: ghcr.io/${GITHUB_OWNER}/sphere-platform-frontend:${IMAGE_TAG:-latest}
+    image: ghcr.io/${GITHUB_OWNER:-local}/sphere-platform-frontend:${IMAGE_TAG:-latest}
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
     environment:
       - NEXT_PUBLIC_API_URL=https://${SERVER_HOSTNAME}
       - NEXT_PUBLIC_WS_URL=wss://${SERVER_HOSTNAME}

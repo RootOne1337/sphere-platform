@@ -1,0 +1,62 @@
+# =============================================================================
+# .dockerignore — Sphere Platform
+# Исключаем из Docker build context всё, что не нужно в образе.
+# Без этого файла docker отправляет ~1GB+ (.git, node_modules, volumes).
+# =============================================================================
+
+# Git
+.git
+.gitignore
+.gitmodules
+
+# Секреты (НИКОГДА не попадают в образ)
+.env
+.env.*
+!.env.example
+.admin-credentials
+
+# Node.js (фронтенд зависимости ставятся ВНУТРИ контейнера)
+frontend/node_modules
+frontend/.next
+n8n-nodes/node_modules
+
+# Python кэш
+__pycache__
+*.pyc
+*.pyo
+.pytest_cache
+.mypy_cache
+.ruff_cache
+.venv
+
+# Docker volumes и данные
+postgres_data
+redis_data
+minio_data
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Документация и спеки (не нужны в runtime)
+docs/
+specs/
+reports/
+*.md
+!README.md
+
+# Тесты (не нужны в production образе)
+tests/
+
+# Android (не нужен в серверных образах)
+android/build
+android/.gradle
+
+# CI и логи
+.deploy.log
+.tunnel-url
+
+# Временные файлы
+tmp_*

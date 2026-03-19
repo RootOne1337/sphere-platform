@@ -9,22 +9,30 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Python зависимости (отдельный слой для кэша)
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY backend/requirements.txt /tmp/requirements.txt
+RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
-# Исходный код
-COPY . .
+# Исходный код (контекст = корень проекта, см. .dockerignore)
+COPY backend/ ./backend/
+COPY alembic/ ./alembic/
+COPY agent-config/ ./agent-config/
 
 # Запуск от non-root пользователя
 RUN useradd -r -u 1001 sphere
 USER sphere
 
+ENV PYTHONPATH=/app
+
 EXPOSE 8000
 
-# Production: без --reload, с worker limits для graceful restart
-CMD ["uvicorn", "main:app", \
-     "--host", "0.0.0.0", \
-     "--port", "8000", \
+# Production: gunicorn + uvicorn workers, graceful restart при утечке памяти
+CMD ["gunicorn", "backend.main:app", \
+     "--worker-class", "uvicorn.workers.UvicornWorker", \
      "--workers", "4", \
-     "--max-requests", "1000", \
-     "--max-requests-jitter", "100"]
+     "--bind", "0.0.0.0:8000", \
+     "--graceful-timeout", "30", \
+     "--timeout", "120", \
+     "--keep-alive", "65", \
+     "--max-requests", "10000", \
+     "--max-requests-jitter", "1000", \
+     "--access-logfile", "-"]
