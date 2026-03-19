@@ -56,6 +56,13 @@ class KeepAliveWorkerTest {
             }
             every { edit() } returns watchdogEditor
         }
+
+        // Device Protected Storage (DE) — основное хранилище enrolled-флага после фикса
+        val deContext = mockk<Context>(relaxed = true)
+        every { deContext.getSharedPreferences("sphere_watchdog", Context.MODE_PRIVATE) } returns watchdogPrefs
+        every { context.createDeviceProtectedStorageContext() } returns deContext
+
+        // Credential Encrypted (CE) — fallback для обратной совместимости
         every { context.getSharedPreferences("sphere_watchdog", Context.MODE_PRIVATE) } returns watchdogPrefs
         every { context.applicationContext } returns context
     }

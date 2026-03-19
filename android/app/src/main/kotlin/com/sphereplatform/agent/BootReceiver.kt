@@ -3,6 +3,7 @@ package com.sphereplatform.agent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import com.sphereplatform.agent.service.ServiceWatchdog
 import com.sphereplatform.agent.service.SphereAgentService
 import com.sphereplatform.agent.workers.KeepAliveWorker
@@ -52,7 +53,23 @@ class BootReceiver : BroadcastReceiver() {
                     // Не фатально — KeepAliveWorker и ServiceWatchdog подхватят.
                     Timber.e(e, "BootReceiver: не удалось запустить сервис — KeepAliveWorker подхватит")
                 }
+            } else if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+                // ── Android 9-11 (API 28-30): безусловный старт сервиса ────────────
+                // На API < 31 нет FGS-ограничений → startForegroundService() из
+                // BroadcastReceiver работает всегда. Запускаем сервис ДАЖЕ если
+                // enrollment не пройден — сервис сам обнаружит отсутствие токена
+                // и не подключится к WS, но процесс будет жив.
+                // KeepAliveWorker выполнит enrollment при появлении конфига/сети.
+                try {
+                    SphereAgentService.start(context)
+                    Timber.i("BootReceiver: сервис запущен безусловно (API ${Build.VERSION.SDK_INT} < 31)")
+                } catch (e: Exception) {
+                    Timber.e(e, "BootReceiver: не удалось запустить сервис")
+                }
+                // Параллельно запускаем enrollment
+                com.sphereplatform.agent.workers.AutoEnrollmentWorker.schedule(context)
             } else {
+                // Android 12+ (API 31): нельзя стартовать FGS из бэкграунда без enrolled.
                 // Немедленная попытка Zero-Touch enrollment (не ждём 15 мин тик).
                 Timber.i("BootReceiver: устройство не зарегистрировано → AutoEnrollmentWorker + KeepAliveWorker")
                 com.sphereplatform.agent.workers.AutoEnrollmentWorker.schedule(context)

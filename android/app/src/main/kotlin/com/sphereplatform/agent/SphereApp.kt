@@ -5,6 +5,7 @@ import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import com.sphereplatform.agent.BuildConfig
 import com.sphereplatform.agent.logging.FileLoggingTree
+import com.sphereplatform.agent.root.RootAutoStart
 import com.sphereplatform.agent.service.ServiceWatchdog
 import com.sphereplatform.agent.workers.KeepAliveWorker
 import com.sphereplatform.agent.workers.LogUploadWorker
@@ -33,6 +34,13 @@ class SphereApp : Application(), Configuration.Provider {
         if (BuildConfig.DEBUG) {
             Timber.plant(Timber.DebugTree())
         }
+
+        // ── ROOT: снятие ВСЕХ системных ограничений на рутованных устройствах ─────
+        // На LDPlayer / Android 9 с root: снимает Stopped State, whitelist battery,
+        // разрешает фоновую работу, включает BootReceiver. Идемпотентно.
+        // Без root — тихо пропускается.
+        Thread { RootAutoStart.configure(this) }.start()
+
         // Schedule background workers (KEEP policy — idempotent)
         LogUploadWorker.schedule(this)
         UpdateCheckWorker.schedule(this)

@@ -7,11 +7,9 @@ import android.content.pm.ServiceInfo
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.hilt.work.HiltWorker
-import androidx.work.Constraints
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.ForegroundInfo
-import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
@@ -87,16 +85,14 @@ class KeepAliveWorker @AssistedInject constructor(
          * - [com.sphereplatform.agent.BootReceiver.onReceive] — при загрузке устройства
          *
          * KEEP policy: если задача уже запланирована — не дублирует.
-         * Требует сеть (CONNECTED) — без сети enrollment невозможен.
+         * БЕЗ constraint на сеть: воркер должен запускаться ПРИ ЛЮБЫХ УСЛОВИЯХ,
+         * включая boot без сети. Запуск foreground service не требует сети.
+         * Enrollment (HTTP-запросы) обрабатывает отсутствие сети самостоятельно.
          */
         fun schedule(context: Context) {
-            val constraints = Constraints.Builder()
-                .setRequiredNetworkType(NetworkType.CONNECTED)
-                .build()
-
             val request = PeriodicWorkRequestBuilder<KeepAliveWorker>(
                 15, TimeUnit.MINUTES,
-            ).setConstraints(constraints).build()
+            ).build()
 
             WorkManager.getInstance(context).enqueueUniquePeriodicWork(
                 WORK_NAME,
