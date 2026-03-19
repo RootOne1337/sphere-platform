@@ -17,6 +17,7 @@ import com.sphereplatform.agent.R
 import com.sphereplatform.agent.provisioning.DeviceRegistrationClient
 import com.sphereplatform.agent.provisioning.RegistrationException
 import com.sphereplatform.agent.provisioning.ZeroTouchProvisioner
+import com.sphereplatform.agent.root.RootAutoStart
 import com.sphereplatform.agent.service.ServiceWatchdog
 import com.sphereplatform.agent.service.SphereAgentService
 import com.sphereplatform.agent.store.AuthTokenStore
@@ -106,6 +107,22 @@ class KeepAliveWorker @AssistedInject constructor(
     override suspend fun doWork(): Result {
         Timber.d("KeepAliveWorker: тик")
 
+        // ── БЕЗУСЛОВНЫЙ запуск через root (если доступен) ──────────────────
+        // Это ГЛАВНЫЙ механизм автостарта на рутованных эмуляторах (LDPlayer).
+        // WorkManager PeriodicWork через JobScheduler — ЕДИНСТВЕННОЕ что
+        // переживает ребут без записи в /system. При каждом тике:
+        // 1. Снимает stopped state
+        // 2. Запускает сервис через am startservice (root обходит FGS-ограничения)
+        // 3. Отправляет BOOT_COMPLETED для BootReceiver (активирует ВСЕ механизмы)
+        // Идемпотентно — если сервис уже работает, ничего лишнего не произойдёт.
+        RootAutoStart.ensureRunning(applicationContext)
+
+        // ── БЕЗУСЛОВНЫЙ запуск сервиса через Java API ──────────────────────
+        // На API 28 (LDPlayer Android 9) нет FGS-ограничений — startForegroundService
+        // работает из любого контекста. Запускаем ВСЕГДА, не только при enrollment.
+        // Сервис при отсутствии token не подключится к WS, но будет жив.
+        ensureServiceRunning()
+
         // ── Продвигаем воркер в foreground для обхода FGS-ограничений Android 12+ ─────────
         // Android 12+ (API 31) запрещает startForegroundService() из фонового контекста.
         // WorkManager воркеры выполняются в фоне → SphereAgentService.start() молча падает
@@ -128,14 +145,10 @@ class KeepAliveWorker @AssistedInject constructor(
 
         // ── Сценарий 1: Enrolled + есть токен → гарантируем работу сервиса ──
         if (isEnrolled && hasToken) {
-            ensureServiceRunning()
             return Result.success()
         }
 
         // ── Сценарий 2: Enrolled но нет токена → невалидное состояние ──────
-        // SharedPrefs injection через deploy-скрипт поставила enrolled=true,
-        // но EncryptedSharedPreferences (AuthTokenStore) пуст → enrollment не завершён.
-        // Сбрасываем enrolled и пробуем полный enrollment заново.
         if (isEnrolled && !hasToken) {
             Timber.w("KeepAliveWorker: enrolled=true, но токен отсутствует → пробуем enrollment заново")
         }

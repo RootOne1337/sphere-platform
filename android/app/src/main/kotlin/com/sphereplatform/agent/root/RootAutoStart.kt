@@ -61,6 +61,36 @@ object RootAutoStart {
     private const val NAMESPACE = "com.sphereplatform.agent"
 
     /**
+     * Принудительный запуск приложения через root.
+     *
+     * Вызывается из [KeepAliveWorker] при каждом тике (каждые 15 мин).
+     * Не зависит от enrollment, FGS ограничений, Doze mode.
+     * Идемпотентно — если сервис уже работает, am startservice ничего не сделает.
+     *
+     * Цепочка: WorkManager (переживает ребут) → ensureRunning() → root am start →
+     * приложение запущено. Это ЕДИНСТВЕННАЯ цепочка не зависящая от /system.
+     */
+    fun ensureRunning(context: Context) {
+        if (!hasRoot()) return
+        val pkg = context.packageName
+
+        // Снять stopped state — гарантия что broadcast и service start сработают
+        execRoot("cmd package set-stopped-state $pkg false")
+
+        // Запустить foreground service напрямую через am (минуя startForegroundService Java API)
+        execRoot("am startservice -n $pkg/$NAMESPACE.service.SphereAgentService")
+
+        // Отправить BOOT_COMPLETED для BootReceiver — активирует ВСЕ защитные механизмы
+        // (KeepAliveWorker.schedule, ServiceWatchdog.schedule, AutoEnrollment)
+        execRoot(
+            "am broadcast -a android.intent.action.BOOT_COMPLETED" +
+                " -n $pkg/$NAMESPACE.BootReceiver --include-stopped-packages",
+        )
+
+        Timber.d("RootAutoStart: ensureRunning — принудительный запуск через root для $pkg")
+    }
+
+    /**
      * Главная точка входа. Выполняет ВСЕ root-настройки.
      *
      * Безопасен для вызова из любого контекста — если root недоступен,
