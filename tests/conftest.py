@@ -17,6 +17,12 @@ from __future__ import annotations
 import os as _os
 _os.environ["DEV_SKIP_AUTH"] = "false"
 
+# ---------------------------------------------------------------------------
+# Подавляем DEBUG-логи aiosqlite, которые заливают stdout SQL-операторами
+# ---------------------------------------------------------------------------
+import logging as _logging
+_logging.getLogger("aiosqlite").setLevel(_logging.WARNING)
+
 import asyncio
 
 # ---------------------------------------------------------------------------
@@ -247,6 +253,8 @@ async def authenticated_client(
       - get_redis → FakeRedis
       - Authorization header с тестовым JWT (stub)
     """
+    from unittest.mock import patch
+
     from backend.core.security import create_access_token
 
     token, _jti = create_access_token(
@@ -264,12 +272,20 @@ async def authenticated_client(
     app.dependency_overrides[get_db] = _override_get_db
     app.dependency_overrides[get_redis] = _override_get_redis
 
-    async with AsyncClient(
-        transport=ASGITransport(app=app),
-        base_url="http://testserver",
-        headers={"Authorization": f"Bearer {token}"},
-    ) as client:
-        yield client
+    # ВАЖНО: CacheService вызывает get_redis() напрямую (не через Depends),
+    # поэтому app.dependency_overrides НЕ перехватывает эти вызовы.
+    # Патчим get_redis на уровне модуля cache_service для корректной работы
+    # blacklist-проверки токенов в тестах.
+    with patch(
+        "backend.services.cache_service.get_redis",
+        _override_get_redis,
+    ):
+        async with AsyncClient(
+            transport=ASGITransport(app=app),
+            base_url="http://testserver",
+            headers={"Authorization": f"Bearer {token}"},
+        ) as client:
+            yield client
 
     app.dependency_overrides.clear()
 

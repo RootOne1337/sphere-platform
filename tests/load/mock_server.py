@@ -243,6 +243,74 @@ async def task_stats() -> JSONResponse:
 
 
 # ---------------------------------------------------------------------------
+# REST: Broadcast — запуск скрипта на всех онлайн-устройствах
+# ---------------------------------------------------------------------------
+
+@app.post("/api/v1/batches/broadcast")
+async def broadcast_batch(request: Request) -> JSONResponse:
+    """Эмулирует broadcast-запуск на всех онлайн-устройствах.
+
+    Определяет онлайн-устройства по наличию активного WS-соединения,
+    немедленно отправляет EXECUTE_DAG каждому через WebSocket.
+    """
+    import random as _rnd
+
+    body = await request.json()
+    script_id = body.get("script_id", str(uuid.uuid4()))
+    wave_size = body.get("wave_size", 10)
+    priority = body.get("priority", 5)
+
+    # Онлайн = у кого есть WS-соединение
+    online_ids = list(_ws_connections.keys())
+    if not online_ids:
+        return JSONResponse(
+            status_code=409,
+            content={"detail": "Нет онлайн-устройств для запуска"},
+        )
+
+    batch_id = str(uuid.uuid4())
+    tasks_created = 0
+
+    # Отправляем EXECUTE_DAG каждому онлайн-устройству
+    dag = _DAG_FIXTURES[0] if _DAG_FIXTURES else _generate_minimal_dag()
+    for device_id in online_ids:
+        ws = _ws_connections.get(device_id)
+        if not ws:
+            continue
+        command_id = str(uuid.uuid4())
+        task_id = str(uuid.uuid4())
+        try:
+            await ws.send_text(json.dumps({
+                "command_id": command_id,
+                "type": "EXECUTE_DAG",
+                "signed_at": time.time(),
+                "ttl_seconds": 300,
+                "payload": {
+                    "task_id": task_id,
+                    "dag": dag,
+                    "batch_id": batch_id,
+                },
+            }))
+            tasks_created += 1
+        except Exception:
+            pass
+
+    return JSONResponse(
+        status_code=202,
+        content={
+            "id": batch_id,
+            "script_id": script_id,
+            "status": "RUNNING",
+            "total": tasks_created,
+            "succeeded": 0,
+            "failed": 0,
+            "online_devices": len(online_ids),
+            "wave_config": {"wave_size": wave_size, "priority": priority},
+        },
+    )
+
+
+# ---------------------------------------------------------------------------
 # WebSocket: /ws/android/{device_id}
 # ---------------------------------------------------------------------------
 

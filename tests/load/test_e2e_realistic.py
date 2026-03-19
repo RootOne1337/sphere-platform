@@ -629,6 +629,123 @@ class TestDagScriptEngineEdgeCases:
 
 
 # ---------------------------------------------------------------------------
+# Тест 4: Broadcast — запуск на всех онлайн-устройствах
+# ---------------------------------------------------------------------------
+
+class TestBroadcastBatch:
+    """Тесты broadcast-батча: запуск скрипта на всех онлайн-устройствах."""
+
+    @pytest.mark.asyncio
+    async def test_broadcast_no_online_devices(self) -> None:
+        """Broadcast без онлайн-устройств → 409 Conflict."""
+        async with aiohttp.ClientSession() as session:
+            resp = await session.post(
+                f"{_BASE_URL}/api/v1/batches/broadcast",
+                json={"script_id": str(uuid.uuid4()), "wave_size": 5},
+            )
+            assert resp.status == 409
+            data = await resp.json()
+            assert "онлайн" in data.get("detail", "").lower() or "online" in data.get("detail", "").lower()
+
+    @pytest.mark.asyncio
+    async def test_broadcast_to_connected_agents(
+        self, factory: IdentityFactory, metrics: MetricsCollector, behavior: AgentBehavior
+    ) -> None:
+        """Broadcast на N подключённых агентов — все получают EXECUTE_DAG."""
+        agents: list[VirtualAgent] = []
+        agent_count = 3
+
+        for i in range(agent_count):
+            identity = factory.create(200 + i)
+            agent = VirtualAgent(
+                identity=identity,
+                behavior=behavior,
+                metrics=metrics,
+                base_url=_BASE_URL,
+                ws_url=_WS_URL,
+            )
+            agents.append(agent)
+
+        # Запускаем агентов и ждём подключения
+        tasks = [asyncio.create_task(a.run()) for a in agents]
+        await asyncio.sleep(10)
+
+        # Проверяем что агенты онлайн
+        assert metrics.counter("ws_online_total") >= agent_count
+
+        # Вызываем broadcast
+        async with aiohttp.ClientSession() as session:
+            resp = await session.post(
+                f"{_BASE_URL}/api/v1/batches/broadcast",
+                json={
+                    "script_id": str(uuid.uuid4()),
+                    "wave_size": 10,
+                    "priority": 7,
+                },
+            )
+            assert resp.status == 202
+            data = await resp.json()
+            assert data["online_devices"] >= agent_count
+            assert data["total"] >= agent_count
+            assert data["status"] == "RUNNING"
+            assert "id" in data  # batch_id
+
+        # Даём время на обработку DAG
+        await asyncio.sleep(5)
+
+        # Останавливаем агентов
+        for a in agents:
+            await a.stop()
+        for t in tasks:
+            try:
+                await asyncio.wait_for(t, timeout=10)
+            except (asyncio.TimeoutError, asyncio.CancelledError):
+                t.cancel()
+
+    @pytest.mark.asyncio
+    async def test_broadcast_returns_batch_metadata(self) -> None:
+        """Broadcast-ответ содержит обязательные поля батча."""
+        import websockets
+        from websockets.asyncio.client import connect
+
+        # Регистрируем и подключаем 1 агента напрямую
+        async with aiohttp.ClientSession() as session:
+            resp = await session.post(
+                f"{_BASE_URL}/api/v1/devices/register",
+                json={"fingerprint": f"bc-meta-{uuid.uuid4().hex[:8]}", "type": "android", "model": "Pixel 7"},
+            )
+            reg = await resp.json()
+            device_id = reg["device_id"]
+            jwt_token = reg["jwt_token"]
+
+        ws = await connect(f"{_WS_URL}/ws/android/{device_id}", open_timeout=10)
+        try:
+            await ws.send(json.dumps({"token": jwt_token}))
+            await asyncio.wait_for(ws.recv(), timeout=5)  # auth_ok noop
+            await asyncio.sleep(1)
+
+            # Broadcast
+            async with aiohttp.ClientSession() as session:
+                resp = await session.post(
+                    f"{_BASE_URL}/api/v1/batches/broadcast",
+                    json={"script_id": str(uuid.uuid4()), "wave_size": 5, "priority": 3},
+                )
+                assert resp.status == 202
+                data = await resp.json()
+
+                # Обязательные поля BroadcastBatchResponse
+                assert "id" in data
+                assert "online_devices" in data
+                assert data["online_devices"] >= 1
+                assert "total" in data
+                assert "wave_config" in data
+                assert data["wave_config"]["priority"] == 3
+                assert data["wave_config"]["wave_size"] == 5
+        finally:
+            await ws.close()
+
+
+# ---------------------------------------------------------------------------
 # Утилиты
 # ---------------------------------------------------------------------------
 
