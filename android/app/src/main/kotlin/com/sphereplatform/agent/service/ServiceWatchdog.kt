@@ -6,6 +6,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.os.SystemClock
+import com.sphereplatform.agent.workers.KeepAliveWorker
 import timber.log.Timber
 
 /**
@@ -104,9 +105,11 @@ class ServiceWatchdog : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action != ACTION_WATCHDOG) return
 
-        // Не запускаем сервис если устройство ещё не прошло enrollment
         if (!isEnrolled(context)) {
-            Timber.d("ServiceWatchdog: tick — enrollment не пройден, пропускаем")
+            // Enrollment не пройден — планируем KeepAliveWorker как fallback.
+            // KeepAliveWorker (PeriodicWork через JobScheduler) сам попробует enrollment.
+            Timber.d("ServiceWatchdog: tick — enrollment не пройден, делегируем KeepAliveWorker")
+            KeepAliveWorker.schedule(context)
             return
         }
 
@@ -116,8 +119,8 @@ class ServiceWatchdog : BroadcastReceiver() {
         } catch (e: Exception) {
             // На Android 12+ (API 31) startForegroundService из бэкграунда запрещён
             // без исключений оптимизации батареи → ForegroundServiceStartNotAllowedException.
-            // Пропускаем этот тик — следующий через 5 минут повторит попытку.
-            Timber.e(e, "ServiceWatchdog: не удалось запустить сервис — повторим через ${WATCHDOG_INTERVAL_MS / 60_000} мин")
+            // Не фатально — KeepAliveWorker повторит через ≤15 мин.
+            Timber.e(e, "ServiceWatchdog: не удалось запустить сервис — KeepAliveWorker подхватит")
         }
     }
 }

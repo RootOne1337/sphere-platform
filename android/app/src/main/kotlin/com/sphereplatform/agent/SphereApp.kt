@@ -6,6 +6,7 @@ import androidx.work.Configuration
 import com.sphereplatform.agent.BuildConfig
 import com.sphereplatform.agent.logging.FileLoggingTree
 import com.sphereplatform.agent.service.ServiceWatchdog
+import com.sphereplatform.agent.workers.KeepAliveWorker
 import com.sphereplatform.agent.workers.LogUploadWorker
 import com.sphereplatform.agent.workers.UpdateCheckWorker
 import dagger.hilt.android.HiltAndroidApp
@@ -36,13 +37,18 @@ class SphereApp : Application(), Configuration.Provider {
         LogUploadWorker.schedule(this)
         UpdateCheckWorker.schedule(this)
 
-        // ServiceWatchdog: AlarmManager как доп. гарантия непрерывной работы агента.
-        // Тройная защита: BootReceiver + START_STICKY + AlarmManager = 100% uptime.
+        // ── КРИТИЧНО: KeepAliveWorker планируется БЕЗУСЛОВНО ───────────────────
+        // WorkManager PeriodicWork (15 мин) хранится в SQLite и использует системный
+        // JobScheduler с setPersisted(true). Это ЕДИНСТВЕННЫЙ механизм Android,
+        // который переживает reboot И не зависит от Stopped State.
+        // После первого запуска APK — агент гарантированно стартует при каждом boot.
+        // Пятислойная защита: BootReceiver + AlarmManager + KeepAliveWorker + START_STICKY + AutoEnrollment
+        KeepAliveWorker.schedule(this)
+
         if (ServiceWatchdog.isEnrolled(this)) {
             ServiceWatchdog.schedule(this)
         } else {
-            // Если мы не зарегистрированы, попробуем найти Zero-Touch конфиг в фоне.
-            // Это решает проблему ферм эмуляторов: при клонировании образ готов к авторегистрации.
+            // Немедленная попытка enrollment (OneTime) — не ждём 15 мин тика KeepAliveWorker.
             com.sphereplatform.agent.workers.AutoEnrollmentWorker.schedule(this)
         }
     }

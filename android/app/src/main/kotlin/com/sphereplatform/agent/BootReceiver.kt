@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import com.sphereplatform.agent.service.ServiceWatchdog
 import com.sphereplatform.agent.service.SphereAgentService
+import com.sphereplatform.agent.workers.KeepAliveWorker
 import timber.log.Timber
 
 /**
@@ -33,25 +34,29 @@ class BootReceiver : BroadcastReceiver() {
         ) {
             Timber.i("BootReceiver: триггер ($action) — запускаем агент")
 
-            // Запускаем сервис только если enrollment пройден
+            // ── ВСЕГДА планируем KeepAliveWorker (главная гарантия автостарта) ────
+            // PeriodicWork через JobScheduler переживает reboot и не зависит от
+            // Stopped State. Даже если все остальные механизмы откажут —
+            // KeepAliveWorker подхватит через ≤15 мин.
+            KeepAliveWorker.schedule(context)
+
+            // ── Планируем AlarmManager watchdog (дополнительный слой, 5 мин) ────
+            ServiceWatchdog.schedule(context)
+
+            // ── Запуск сервиса / enrollment ────────────────────────────────────
             if (ServiceWatchdog.isEnrolled(context)) {
                 try {
                     SphereAgentService.start(context)
                 } catch (e: Exception) {
-                    // На Android 12+ может прийти ForegroundServiceStartNotAllowedException
-                    // если система ещё в restricted-режиме после загрузки.
-                    // Watchdog AlarmManager подхватит запуск через 5 минут.
-                    Timber.e(e, "BootReceiver: не удалось запустить сервис при загрузке — watchdog подхватит")
+                    // Android 12+ (API 31): ForegroundServiceStartNotAllowedException
+                    // Не фатально — KeepAliveWorker и ServiceWatchdog подхватят.
+                    Timber.e(e, "BootReceiver: не удалось запустить сервис — KeepAliveWorker подхватит")
                 }
             } else {
-                // Если мы ещё не прошли enrollment, возможно есть конфиг для Zero-Touch 
-                // регистрации на /sdcard или HTTP Endpoint. Пытаемся сделать это в фоне.
-                Timber.i("BootReceiver: устройство не зарегистрировано. Запускаем фоновый AutoEnrollmentWorker...")
+                // Немедленная попытка Zero-Touch enrollment (не ждём 15 мин тик).
+                Timber.i("BootReceiver: устройство не зарегистрировано → AutoEnrollmentWorker + KeepAliveWorker")
                 com.sphereplatform.agent.workers.AutoEnrollmentWorker.schedule(context)
             }
-
-            // Планируем watchdog alarm (идемпотентно)
-            ServiceWatchdog.schedule(context)
         }
     }
 }
