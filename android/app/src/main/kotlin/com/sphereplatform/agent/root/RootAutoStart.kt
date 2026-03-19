@@ -1,6 +1,7 @@
 ﻿package com.sphereplatform.agent.root
 
 import android.content.Context
+import android.content.pm.ApplicationInfo
 import timber.log.Timber
 import java.io.BufferedReader
 import java.io.DataOutputStream
@@ -15,7 +16,7 @@ import java.util.concurrent.TimeUnit
  * (init.d, Magisk service.d, userinit.sh, init.rc) НЕ РАБОТАЮТ — LDPlayer
  * использует МИНИМАЛЬНЫЙ Android-ROM без этих расширений.
  *
- * ## Решение — 3 уровня:
+ * ## Решение — 4 уровня:
  *
  * ### Уровень 1: Подготовка системы (при каждом запуске app)
  * - Снятие Stopped State
@@ -32,13 +33,17 @@ import java.util.concurrent.TimeUnit
  *
  * ### Уровень 3: Android init service (устанавливается один раз, переживает ребут)
  * - Записывает .rc файл в /system/etc/init/ — СТАНДАРТНЫЙ механизм Android init
+ * - LDPlayer Android 9+ использует system-as-root: нужен mount -o remount,rw /
  * - Property trigger sys.boot_completed=1 запускает startup-скрипт при каждой загрузке
- * - Startup-скрипт запускает приложение и watchdog daemon
- * - Это ЕДИНСТВЕННЫЙ механизм гарантированного запуска на LDPlayer:
- *   init.d, Magisk, userinit.sh — НЕ работают на минимальном ROM
  *
- * При boot: init → sphere_startup.sh → am start → SphereApp.onCreate() →
- * RootAutoStart обновляет watchdog. Цепочка замыкается без BootReceiver.
+ * ### Уровень 4: Установка как системное приложение (САМЫЙ НАДЁЖНЫЙ)
+ * - Копирует APK в /system/priv-app/ — PackageManager видит как system app
+ * - android:persistent="true" в Manifest → Android AUTOSTARTS при каждой загрузке
+ * - System persistent app НЕВОЗМОЖНО убить — система перезапускает автоматически
+ * - Это тот же механизм что используют Телефон, СМС, Системные настройки
+ *
+ * При boot: Init → persistent app auto-start → SphereApp.onCreate() →
+ * RootAutoStart обновляет watchdog. Дополнительно init service как backup.
  *
  * ## Вызывается
  * Из [com.sphereplatform.agent.SphereApp.onCreate] в фоновом потоке.
@@ -84,6 +89,10 @@ object RootAutoStart {
 
         // 5. Установить init service для автозапуска при каждой загрузке
         installInitService(pkg)
+
+        // 6. Установить как системное приложение — САМЫЙ НАДЁЖНЫЙ МЕХАНИЗМ
+        // persistent=true system app запускается Android'ом АВТОМАТИЧЕСКИ при каждой загрузке
+        installAsSystemApp(context, pkg)
 
         Timber.i("RootAutoStart: === НАСТРОЙКА ЗАВЕРШЕНА для $pkg ===")
     }
@@ -216,11 +225,11 @@ object RootAutoStart {
      * Записывает .rc файл в /system/etc/init/ — стандартный путь Android init.
      * Property trigger `sys.boot_completed=1` запускает startup-скрипт.
      *
-     * Это ЕДИНСТВЕННЫЙ механизм который работает на LDPlayer:
-     * init.d, Magisk service.d, userinit.sh — НЕ работают на минимальном ROM.
-     * Init property trigger — стандартный механизм ядра Android.
+     * ВАЖНО: LDPlayer Android 9+ использует system-as-root layout:
+     * `/system` — bind mount от `/`. Стандартное `mount -o remount,rw /system`
+     * НЕ РАБОТАЕТ. Нужно `mount -o remount,rw /` или через blockdevice.
      *
-     * Идемпотентно — перезаписывает файлы при каждом запуске (дёшево).
+     * Идемпотентно — перезаписывает файлы при каждом запуске.
      */
     private fun installInitService(pkg: String) {
         val rcPath = "/system/etc/init/sphere_autostart.rc"
@@ -233,42 +242,44 @@ object RootAutoStart {
             val process = Runtime.getRuntime().exec("su")
             val stdin = DataOutputStream(process.outputStream)
 
-            // === 1. Записываем startup-скрипт (выполняется init при каждом boot) ===
+            // === 1. Записываем startup-скрипт в /data/ (всегда writable) ===
             stdin.writeBytes("cat > $startupScript << 'STARTUP_EOF'\n")
             stdin.writeBytes("#!/system/bin/sh\n")
             stdin.writeBytes("# Sphere Platform — автостарт при загрузке\n")
             stdin.writeBytes("# Запускается Android init через property trigger sys.boot_completed=1\n")
-            stdin.writeBytes("\n")
-            stdin.writeBytes("# Переключаем SELinux в permissive для гарантированного запуска\n")
+            stdin.writeBytes("log -t SphereAutoStart 'startup script started'\n")
             stdin.writeBytes("setenforce 0 2>/dev/null\n")
-            stdin.writeBytes("\n")
-            stdin.writeBytes("# Ждём полной инициализации Android framework\n")
             stdin.writeBytes("sleep 15\n")
-            stdin.writeBytes("\n")
-            stdin.writeBytes("# Снимаем stopped state — гарантия доставки broadcast\n")
+            stdin.writeBytes("log -t SphereAutoStart 'starting app after boot'\n")
             stdin.writeBytes("cmd package set-stopped-state $pkg false 2>/dev/null\n")
-            stdin.writeBytes("\n")
-            stdin.writeBytes("# Попытка 1: запуск через Activity\n")
             stdin.writeBytes("am start -a android.intent.action.MAIN -n $activityComponent 2>/dev/null\n")
             stdin.writeBytes("sleep 5\n")
-            stdin.writeBytes("\n")
-            stdin.writeBytes("# BOOT_COMPLETED для BootReceiver\n")
             stdin.writeBytes("am broadcast -a android.intent.action.BOOT_COMPLETED -n $receiverComponent --include-stopped-packages 2>/dev/null\n")
-            stdin.writeBytes("\n")
-            stdin.writeBytes("# Retry loop — до 3 попыток с проверкой процесса\n")
-            stdin.writeBytes("for i in 1 2 3; do\n")
+            stdin.writeBytes("for i in 1 2 3 4 5; do\n")
             stdin.writeBytes("  sleep 10\n")
             stdin.writeBytes("  pidof $pkg > /dev/null 2>&1 && break\n")
+            stdin.writeBytes("  log -t SphereAutoStart \"retry \$i: starting app\"\n")
             stdin.writeBytes("  am start -a android.intent.action.MAIN -n $activityComponent 2>/dev/null\n")
             stdin.writeBytes("done\n")
-            stdin.writeBytes("\n")
-            stdin.writeBytes("# Запускаем watchdog для постоянного мониторинга\n")
+            stdin.writeBytes("log -t SphereAutoStart 'starting watchdog'\n")
             stdin.writeBytes("exec sh $watchdogScript\n")
             stdin.writeBytes("STARTUP_EOF\n")
             stdin.writeBytes("chmod 755 $startupScript\n")
 
-            // === 2. Монтируем /system в rw и записываем .rc файл ===
+            // === 2. Монтируем /system в rw — НЕСКОЛЬКО СТРАТЕГИЙ ===
+            // Стратегия 1: system-as-root (Android 9+ / LDPlayer) — / вместо /system
+            stdin.writeBytes("mount -o remount,rw / 2>/dev/null\n")
+            // Стратегия 2: классический remount /system
             stdin.writeBytes("mount -o remount,rw /system 2>/dev/null\n")
+            // Стратегия 3: через blockdevice — находим устройство system раздела
+            stdin.writeBytes("SYSDEV=\$(mount | grep ' /system ' | head -1 | cut -d' ' -f1)\n")
+            stdin.writeBytes("[ -n \"\$SYSDEV\" ] && mount -o remount,rw \"\$SYSDEV\" /system 2>/dev/null\n")
+            // Стратегия 4: через blockdev + grep на /
+            stdin.writeBytes("ROOTDEV=\$(mount | grep ' / ' | head -1 | cut -d' ' -f1)\n")
+            stdin.writeBytes("[ -n \"\$ROOTDEV\" ] && mount -o remount,rw \"\$ROOTDEV\" / 2>/dev/null\n")
+
+            // === 3. Создаём директорию и записываем .rc файл ===
+            stdin.writeBytes("mkdir -p /system/etc/init 2>/dev/null\n")
             stdin.writeBytes("cat > $rcPath << 'RC_EOF'\n")
             stdin.writeBytes("service sphere_autostart /system/bin/sh /data/local/tmp/sphere_startup.sh\n")
             stdin.writeBytes("    class late_start\n")
@@ -276,13 +287,23 @@ object RootAutoStart {
             stdin.writeBytes("    group root\n")
             stdin.writeBytes("    oneshot\n")
             stdin.writeBytes("    disabled\n")
-            stdin.writeBytes("    seclabel u:r:shell:s0\n")
+            stdin.writeBytes("    seclabel u:r:su:s0\n")
             stdin.writeBytes("\n")
             stdin.writeBytes("on property:sys.boot_completed=1\n")
             stdin.writeBytes("    start sphere_autostart\n")
             stdin.writeBytes("RC_EOF\n")
             stdin.writeBytes("chmod 644 $rcPath\n")
+
+            // === 4. Верификация — проверяем что файл записан ===
+            stdin.writeBytes("if [ -f $rcPath ]; then\n")
+            stdin.writeBytes("  log -t SphereAutoStart 'init service .rc файл ЗАПИСАН УСПЕШНО'\n")
+            stdin.writeBytes("else\n")
+            stdin.writeBytes("  log -t SphereAutoStart 'ОШИБКА: init service .rc файл НЕ записан — /system read-only'\n")
+            stdin.writeBytes("fi\n")
+
+            // === 5. Возвращаем /system в ro ===
             stdin.writeBytes("mount -o remount,ro /system 2>/dev/null\n")
+            stdin.writeBytes("mount -o remount,ro / 2>/dev/null\n")
 
             stdin.writeBytes("exit\n")
             stdin.flush()
@@ -299,6 +320,92 @@ object RootAutoStart {
         } catch (e: Exception) {
             Timber.w(e, "RootAutoStart: не удалось установить init service")
         }
+    }
+
+    // =====================================================================
+    //  6. Установка как системное приложение — ГАРАНТИРОВАННЫЙ автостарт
+    // =====================================================================
+
+    /**
+     * Копирует APK в /system/priv-app/ — делает приложение СИСТЕМНЫМ.
+     *
+     * Системное приложение с android:persistent="true":
+     * - Запускается АВТОМАТИЧЕСКИ при каждой загрузке Android
+     * - Не может быть убито пользователем или battery optimization
+     * - Перезапускается при крэше
+     * - Тот же механизм что Телефон, СМС, SystemUI
+     *
+     * ВАЖНО: При первом запуске приложение ещё НЕ system app (установлено в /data/app/).
+     * После копирования в /system/priv-app/ и ребута — Android PackageManager обнаружит
+     * его как system app. Начиная со второго ребута — гарантированный автостарт.
+     *
+     * Проверяет isSystemApp() перед записью — не дублирует если уже установлено.
+     */
+    private fun installAsSystemApp(context: Context, pkg: String) {
+        // Если уже system app — не нужно ничего делать
+        if (isSystemApp(context)) {
+            Timber.i("RootAutoStart: приложение УЖЕ является system app — пропускаем установку")
+            return
+        }
+
+        val systemDir = "/system/priv-app/SphereAgent"
+        val systemApk = "$systemDir/base.apk"
+
+        try {
+            // Находим текущий APK через ApplicationInfo
+            val sourceApk = context.applicationInfo.sourceDir
+            Timber.i("RootAutoStart: копируем APK из $sourceApk в $systemApk")
+
+            val process = Runtime.getRuntime().exec("su")
+            val stdin = DataOutputStream(process.outputStream)
+
+            // Монтируем /system в rw — все стратегии
+            stdin.writeBytes("mount -o remount,rw / 2>/dev/null\n")
+            stdin.writeBytes("mount -o remount,rw /system 2>/dev/null\n")
+            stdin.writeBytes("SYSDEV=\$(mount | grep ' /system ' | head -1 | cut -d' ' -f1)\n")
+            stdin.writeBytes("[ -n \"\$SYSDEV\" ] && mount -o remount,rw \"\$SYSDEV\" /system 2>/dev/null\n")
+            stdin.writeBytes("ROOTDEV=\$(mount | grep ' / ' | head -1 | cut -d' ' -f1)\n")
+            stdin.writeBytes("[ -n \"\$ROOTDEV\" ] && mount -o remount,rw \"\$ROOTDEV\" / 2>/dev/null\n")
+
+            // Создаём директорию и копируем APK
+            stdin.writeBytes("mkdir -p $systemDir\n")
+            stdin.writeBytes("cp $sourceApk $systemApk\n")
+            stdin.writeBytes("chmod 644 $systemApk\n")
+            stdin.writeBytes("chmod 755 $systemDir\n")
+
+            // Верификация
+            stdin.writeBytes("if [ -f $systemApk ]; then\n")
+            stdin.writeBytes("  log -t SphereAutoStart 'system app APK СКОПИРОВАН УСПЕШНО в $systemDir'\n")
+            stdin.writeBytes("else\n")
+            stdin.writeBytes("  log -t SphereAutoStart 'ОШИБКА: не удалось скопировать APK в $systemDir'\n")
+            stdin.writeBytes("fi\n")
+
+            // Возвращаем /system в ro
+            stdin.writeBytes("mount -o remount,ro /system 2>/dev/null\n")
+            stdin.writeBytes("mount -o remount,ro / 2>/dev/null\n")
+
+            stdin.writeBytes("exit\n")
+            stdin.flush()
+            stdin.close()
+
+            val completed = process.waitFor(15, TimeUnit.SECONDS)
+            if (!completed) {
+                process.destroyForcibly()
+                Timber.w("RootAutoStart: таймаут установки system app")
+                return
+            }
+
+            Timber.i("RootAutoStart: APK скопирован в $systemApk — после ребута станет system app")
+        } catch (e: Exception) {
+            Timber.w(e, "RootAutoStart: не удалось установить как system app")
+        }
+    }
+
+    /**
+     * Проверяет, является ли приложение системным (установлено в /system/).
+     */
+    private fun isSystemApp(context: Context): Boolean {
+        return context.applicationInfo.flags and ApplicationInfo.FLAG_SYSTEM != 0
     }
 
     // =====================================================================
