@@ -17,6 +17,6 @@
     "auto_register": true
   },
   "meta": {
-    "note": "Разработка через Serveo tunnel. TODO: вернуть http://10.0.2.2:8000 для локальной разработки"
+    "note": "Serveo SSH tunnel восстановлен (2026-03-18). CF Quick Tunnel убран — дропает WebSocket/стримы."
   }
 }

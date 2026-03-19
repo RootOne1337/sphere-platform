@@ -98,6 +98,82 @@ class EventPublisher:
             payload={"task_id": task_id, "progress": progress},
         ))
 
+    # ── TZ-11: События аккаунтов ─────────────────────────────────────────
+
+    async def account_banned(
+        self,
+        device_id: str,
+        org_id: str,
+        account_id: str,
+        reason: str | None = None,
+    ) -> None:
+        """Аккаунт забанен в игре."""
+        await self.emit(FleetEvent(
+            event_type=EventType.ACCOUNT_BANNED,
+            device_id=device_id,
+            org_id=org_id,
+            payload={"account_id": account_id, "reason": reason},
+        ))
+
+    async def account_captcha(
+        self,
+        device_id: str,
+        org_id: str,
+        account_id: str,
+    ) -> None:
+        """Аккаунт требует решения капчи."""
+        await self.emit(FleetEvent(
+            event_type=EventType.ACCOUNT_CAPTCHA,
+            device_id=device_id,
+            org_id=org_id,
+            payload={"account_id": account_id},
+        ))
+
+    async def account_assigned(
+        self,
+        device_id: str,
+        org_id: str,
+        account_id: str,
+        session_id: str | None = None,
+    ) -> None:
+        """Аккаунт назначен на устройство."""
+        await self.emit(FleetEvent(
+            event_type=EventType.ACCOUNT_ASSIGNED,
+            device_id=device_id,
+            org_id=org_id,
+            payload={"account_id": account_id, "session_id": session_id},
+        ))
+
+    async def account_released(
+        self,
+        device_id: str,
+        org_id: str,
+        account_id: str,
+        reason: str | None = None,
+    ) -> None:
+        """Аккаунт освобождён от устройства."""
+        await self.emit(FleetEvent(
+            event_type=EventType.ACCOUNT_RELEASED,
+            device_id=device_id,
+            org_id=org_id,
+            payload={"account_id": account_id, "reason": reason},
+        ))
+
+    async def game_crashed(
+        self,
+        device_id: str,
+        org_id: str,
+        account_id: str | None = None,
+        error: str | None = None,
+    ) -> None:
+        """Игра крашнулась на устройстве."""
+        await self.emit(FleetEvent(
+            event_type=EventType.GAME_CRASHED,
+            device_id=device_id,
+            org_id=org_id,
+            payload={"account_id": account_id, "error": error},
+        ))
+
 
 # Синглтон
 _event_publisher: EventPublisher | None = None

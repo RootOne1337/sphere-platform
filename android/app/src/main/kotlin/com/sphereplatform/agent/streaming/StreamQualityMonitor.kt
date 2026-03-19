@@ -43,6 +43,19 @@ class StreamQualityMonitor @Inject constructor() {
         avgFrameSizeKb = if (frameCount > 0) bytesSentTotal / frameCount / 1024f else 0f,
     )
 
+    /**
+     * FIX F3: Сброс счётчиков при остановке стрима.
+     * Без этого при start→stop→start метрики новой сессии включали данные прошлой.
+     * Вызывается из StreamingManagerImpl.stopInternal().
+     */
+    @Synchronized
+    fun reset() {
+        frameTimestamps.clear()
+        bytesSentTotal = 0L
+        frameCount = 0
+        keyFrameCount = 0
+    }
+
     data class StreamStats(
         val currentFps: Int,
         val totalFrames: Int,

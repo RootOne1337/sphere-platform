@@ -13,14 +13,14 @@ export function AuditDrawer({ event, onClose }: AuditDrawerProps) {
 
     // Mock JSON Data generator based on action
     const getMockDetails = (action: string) => {
-        if (action.includes('CONFIG')) {
+        if (action?.includes('CONFIG')) {
             return {
                 previous: { "vpn_mode": "split", "max_retries": 3 },
                 new: { "vpn_mode": "full", "max_retries": 5 },
                 diff: { "vpn_mode": "split -> full", "max_retries": "3 -> 5" }
             };
         }
-        if (action.includes('LOGIN')) {
+        if (action?.includes('LOGIN')) {
             return {
                 "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
                 "timestamp": event.timestamp,

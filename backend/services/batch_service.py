@@ -21,7 +21,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from backend.models.script import Script
 from backend.models.task import Task, TaskStatus
 from backend.models.task_batch import TaskBatch, TaskBatchStatus
-from backend.schemas.batch import BatchExecutionRequest
+from backend.schemas.batch import BatchExecutionRequest, BroadcastBatchRequest
 from backend.services.workstation_mapping import WorkstationMappingService
 
 logger = structlog.get_logger()
@@ -98,6 +98,71 @@ class BatchService:
         bg_task.add_done_callback(_background_tasks.discard)
 
         return batch
+
+    async def broadcast_batch(
+        self,
+        request: BroadcastBatchRequest,
+        org_id: uuid.UUID,
+        user_id: uuid.UUID,
+    ) -> tuple[TaskBatch, int]:
+        """
+        Запуск скрипта на ВСЕХ онлайн-устройствах организации.
+
+        1. Получаем все device_id организации из БД
+        2. Фильтруем через status_cache — оставляем только online
+        3. Делегируем start_batch() с подготовленным списком
+
+        Возвращает (batch, online_count).
+        """
+        from backend.database.redis_client import redis as _redis
+        from backend.services.cache_service import CacheService
+        from backend.services.device_service import DeviceService
+        from backend.services.device_status_cache import DeviceStatusCache
+
+        # 1. Все активные устройства организации
+        device_svc = DeviceService(self.db, CacheService())
+        all_ids = await device_svc.get_all_device_ids(org_id)
+        if not all_ids:
+            raise HTTPException(
+                status_code=404,
+                detail="В организации нет активных устройств",
+            )
+
+        # 2. Фильтрация по live-статусу — только online
+        status_cache = DeviceStatusCache(_redis)
+        statuses = await status_cache.bulk_get_status(all_ids)
+        online_ids = [
+            uuid.UUID(did)
+            for did, st in statuses.items()
+            if st and st.status == "online"
+        ]
+        if not online_ids:
+            raise HTTPException(
+                status_code=409,
+                detail="Нет онлайн-устройств для запуска",
+            )
+
+        logger.info(
+            "broadcast.resolve",
+            org_id=str(org_id),
+            total_devices=len(all_ids),
+            online_devices=len(online_ids),
+        )
+
+        # 3. Создаём стандартный BatchExecutionRequest и делегируем start_batch
+        batch_request = BatchExecutionRequest(
+            script_id=request.script_id,
+            device_ids=online_ids,
+            wave_size=request.wave_size,
+            wave_delay_ms=request.wave_delay_ms,
+            jitter_ms=request.jitter_ms,
+            priority=request.priority,
+            webhook_url=request.webhook_url,
+            stagger_by_workstation=request.stagger_by_workstation,
+            name=request.name or "Broadcast: все онлайн-устройства",
+        )
+        batch = await self.start_batch(batch_request, org_id, user_id)
+        return batch, len(online_ids)
 
     async def _execute_waves(
         self,
@@ -240,7 +305,7 @@ class BatchService:
             ).scalars().all()
         )
         for task in queued_tasks:
-            await queue.cancel_task(str(task.id), str(org_id))
+            await queue.cancel_task(str(task.id), str(org_id), str(task.device_id))
             task.status = TaskStatus.CANCELLED
 
         batch.status = TaskBatchStatus.CANCELLED

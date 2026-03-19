@@ -8,7 +8,8 @@ import { Badge } from '@/components/ui/badge';
 import { RunScriptModal } from '@/components/sphere/RunScriptModal';
 
 export default function ScriptsPage() {
-  const { data: scripts, isLoading } = useScripts();
+  const { data: scriptsData, isLoading } = useScripts();
+  const scripts = scriptsData?.items ?? [];
   const [runTarget, setRunTarget] = useState<{ id: string; name: string } | null>(null);
 
   return (

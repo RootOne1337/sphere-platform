@@ -631,6 +631,215 @@ def _evaluate_condition(actual: Any, operator: str, expected: Any) -> bool:
 # ══════════════════════════════════════════════════════════════════════════════
 
 
+async def handle_assign_account(
+    step: dict[str, Any],
+    run: PipelineRun,
+    db: AsyncSession,
+) -> StepResult:
+    """
+    Шаг assign_account — назначить свободный игровой аккаунт на устройство.
+
+    params:
+      - game: название игры (обязательно)
+      - account_id: конкретный аккаунт (опционально, если не указан — берём свободный)
+
+    Результат: в context сохраняется assigned_account_id, assigned_account_login.
+    Также создаётся AccountSession для трекинга.
+    """
+    params = step.get("params", {})
+    game = params.get("game")
+
+    if not game:
+        return StepResult(status="failure", error="game не указан в params")
+
+    from datetime import datetime, timezone
+
+    from backend.models.account_session import AccountSession
+    from backend.models.game_account import AccountStatus, GameAccount
+
+    specific_id = params.get("account_id")
+    if specific_id:
+        # Назначить конкретный аккаунт
+        try:
+            acc_uuid = uuid.UUID(specific_id)
+        except (ValueError, TypeError):
+            return StepResult(status="failure", error=f"Некорректный account_id: {specific_id}")
+
+        account = (await db.execute(
+            select(GameAccount).where(
+                GameAccount.id == acc_uuid,
+                GameAccount.org_id == run.org_id,
+                GameAccount.status == AccountStatus.free,
+            ).with_for_update(skip_locked=True)
+        )).scalar_one_or_none()
+    else:
+        # Найти любой свободный аккаунт этой игры
+        account = (await db.execute(
+            select(GameAccount).where(
+                GameAccount.org_id == run.org_id,
+                GameAccount.game == game,
+                GameAccount.status == AccountStatus.free,
+            ).order_by(GameAccount.created_at.asc())
+            .limit(1)
+            .with_for_update(skip_locked=True)
+        )).scalar_one_or_none()
+
+    if not account:
+        return StepResult(
+            status="failure",
+            error=f"Нет свободных аккаунтов для игры '{game}'",
+        )
+
+    # Назначить аккаунт на устройство
+    now = datetime.now(timezone.utc)
+    account.status = AccountStatus.in_use
+    account.device_id = run.device_id
+    account.assigned_at = now
+    account.status_changed_at = now
+    account.status_reason = f"Назначен pipeline {run.pipeline_id}"
+
+    # Создать сессию
+    session = AccountSession(
+        org_id=run.org_id,
+        account_id=account.id,
+        device_id=run.device_id,
+        started_at=now,
+        pipeline_run_id=run.id,
+        level_before=account.level,
+        balance_before=account.balance_rub,
+        meta={"pipeline_step": step.get("id")},
+    )
+    db.add(session)
+    await db.flush()
+
+    logger.info(
+        "step.assign_account.success",
+        step_id=step.get("id"),
+        account_id=str(account.id),
+        account_login=account.login,
+        device_id=str(run.device_id),
+    )
+
+    return StepResult(
+        status="success",
+        output={
+            "account_id": str(account.id),
+            "login": account.login,
+            "game": account.game,
+            "session_id": str(session.id),
+        },
+        context_updates={
+            "assigned_account_id": str(account.id),
+            "assigned_account_login": account.login,
+            "assigned_account_game": account.game,
+            "account_session_id": str(session.id),
+        },
+    )
+
+
+async def handle_release_account(
+    step: dict[str, Any],
+    run: PipelineRun,
+    db: AsyncSession,
+) -> StepResult:
+    """
+    Шаг release_account — освободить аккаунт, привязанный к устройству.
+
+    params:
+      - end_reason: причина завершения (default: "completed")
+      - cooldown_minutes: кулдаун в минутах (default: 0)
+
+    Использует context.assigned_account_id и context.account_session_id.
+    """
+    params = step.get("params", {})
+    end_reason = params.get("end_reason", "completed")
+    cooldown_minutes = params.get("cooldown_minutes", 0)
+
+    account_id_str = run.context.get("assigned_account_id")
+    session_id_str = run.context.get("account_session_id")
+
+    if not account_id_str:
+        return StepResult(status="failure", error="assigned_account_id отсутствует в context")
+
+    from datetime import datetime, timedelta, timezone
+
+    from backend.models.account_session import AccountSession, SessionEndReason
+    from backend.models.game_account import AccountStatus, GameAccount
+
+    try:
+        account_id = uuid.UUID(account_id_str)
+    except (ValueError, TypeError):
+        return StepResult(status="failure", error=f"Некорректный account_id: {account_id_str}")
+
+    account = (await db.execute(
+        select(GameAccount).where(
+            GameAccount.id == account_id,
+            GameAccount.org_id == run.org_id,
+        )
+    )).scalar_one_or_none()
+
+    if not account:
+        return StepResult(status="failure", error=f"Аккаунт {account_id_str} не найден")
+
+    now = datetime.now(timezone.utc)
+
+    # Определить новый статус
+    if cooldown_minutes > 0:
+        account.status = AccountStatus.cooldown
+        account.cooldown_until = now + timedelta(minutes=cooldown_minutes)
+    else:
+        account.status = AccountStatus.free
+
+    account.device_id = None
+    account.assigned_at = None
+    account.status_changed_at = now
+    account.status_reason = f"Release: {end_reason}"
+    account.total_sessions += 1
+    account.last_session_end = now
+
+    # Завершить сессию
+    if session_id_str:
+        try:
+            session_id = uuid.UUID(session_id_str)
+            session = await db.get(AccountSession, session_id)
+            if session and session.ended_at is None:
+                session.ended_at = now
+                session.end_reason = SessionEndReason(end_reason)
+                session.level_after = account.level
+                session.balance_after = account.balance_rub
+        except (ValueError, TypeError):
+            pass
+
+    await db.flush()
+
+    logger.info(
+        "step.release_account.success",
+        step_id=step.get("id"),
+        account_id=str(account.id),
+        end_reason=end_reason,
+        cooldown_minutes=cooldown_minutes,
+    )
+
+    return StepResult(
+        status="success",
+        output={
+            "account_id": str(account.id),
+            "released": True,
+            "end_reason": end_reason,
+            "cooldown_minutes": cooldown_minutes,
+        },
+        context_updates={
+            "assigned_account_id": None,
+            "account_session_id": None,
+        },
+    )
+
+
+# ══════════════════════════════════════════════════════════════════════════
+# Регистрация обработчиков
+# ══════════════════════════════════════════════════════════════════════════
+
+
 StepHandlerRegistry.register("execute_script", handle_execute_script)
 StepHandlerRegistry.register("condition", handle_condition)
 StepHandlerRegistry.register("action", handle_action)
@@ -640,3 +849,5 @@ StepHandlerRegistry.register("parallel", handle_parallel)
 StepHandlerRegistry.register("loop", handle_loop)
 StepHandlerRegistry.register("n8n_workflow", handle_n8n_workflow)
 StepHandlerRegistry.register("sub_pipeline", handle_sub_pipeline)
+StepHandlerRegistry.register("assign_account", handle_assign_account)
+StepHandlerRegistry.register("release_account", handle_release_account)

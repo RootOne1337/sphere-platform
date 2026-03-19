@@ -1,0 +1,187 @@
+{
+  "version": "1.0",
+  "nodes": [
+    {
+      "id": "n1",
+      "action": {
+        "type": "launch_app",
+        "package": "org.telegram.messenger",
+        "delay_ms": 2000
+      },
+      "next": "n2",
+      "timeout_ms": 10000,
+      "retry": 1
+    },
+    {
+      "id": "n2",
+      "action": {
+        "type": "find_element",
+        "selector": "org.telegram.messenger:id/search_button",
+        "strategy": "id",
+        "timeout_ms": 8000,
+        "save_to": "search_btn",
+        "fail_if_not_found": true
+      },
+      "next": "n3",
+      "timeout_ms": 12000,
+      "retry": 2
+    },
+    {
+      "id": "n3",
+      "action": {
+        "type": "tap_element",
+        "selector": "org.telegram.messenger:id/search_button",
+        "strategy": "id",
+        "timeout_ms": 3000
+      },
+      "next": "n4",
+      "timeout_ms": 5000,
+      "retry": 1
+    },
+    {
+      "id": "n4",
+      "action": {
+        "type": "type_text",
+        "text": "Saved Messages",
+        "clear_first": true
+      },
+      "next": "n5",
+      "timeout_ms": 5000,
+      "retry": 0
+    },
+    {
+      "id": "n5",
+      "action": {
+        "type": "sleep",
+        "ms": 1500
+      },
+      "next": "n6",
+      "timeout_ms": 3000,
+      "retry": 0
+    },
+    {
+      "id": "n6",
+      "action": {
+        "type": "tap_element",
+        "selector": "//android.widget.TextView[@text='Saved Messages']",
+        "strategy": "xpath",
+        "timeout_ms": 5000,
+        "fail_if_not_found": true
+      },
+      "next": "n7",
+      "timeout_ms": 8000,
+      "retry": 2
+    },
+    {
+      "id": "n7",
+      "action": {
+        "type": "find_element",
+        "selector": "org.telegram.messenger:id/chat_comp_message_edit_text",
+        "strategy": "id",
+        "timeout_ms": 5000,
+        "save_to": "msg_input",
+        "fail_if_not_found": true
+      },
+      "next": "n8",
+      "timeout_ms": 8000,
+      "retry": 1
+    },
+    {
+      "id": "n8",
+      "action": {
+        "type": "tap_element",
+        "selector": "org.telegram.messenger:id/chat_comp_message_edit_text",
+        "strategy": "id",
+        "timeout_ms": 3000
+      },
+      "next": "n9",
+      "timeout_ms": 5000,
+      "retry": 1
+    },
+    {
+      "id": "n9",
+      "action": {
+        "type": "set_variable",
+        "key": "msg_text",
+        "value": "Load test heartbeat at {{timestamp}}"
+      },
+      "next": "n10",
+      "timeout_ms": 1000,
+      "retry": 0
+    },
+    {
+      "id": "n10",
+      "action": {
+        "type": "type_text",
+        "text": "Load test heartbeat {{index}}",
+        "clear_first": true
+      },
+      "next": "n11",
+      "timeout_ms": 5000,
+      "retry": 0
+    },
+    {
+      "id": "n11",
+      "action": {
+        "type": "tap_element",
+        "selector": "org.telegram.messenger:id/send_button",
+        "strategy": "id",
+        "timeout_ms": 3000,
+        "fail_if_not_found": true
+      },
+      "next": "n12",
+      "timeout_ms": 5000,
+      "retry": 1
+    },
+    {
+      "id": "n12",
+      "action": {
+        "type": "sleep",
+        "ms": 1000
+      },
+      "next": "n13",
+      "timeout_ms": 2000,
+      "retry": 0
+    },
+    {
+      "id": "n13",
+      "action": {
+        "type": "screenshot",
+        "save_to": "msg_sent_screenshot"
+      },
+      "next": "n14",
+      "timeout_ms": 5000,
+      "retry": 0
+    },
+    {
+      "id": "n14",
+      "action": {
+        "type": "get_element_text",
+        "selector": "//android.widget.TextView[last()]",
+        "strategy": "xpath",
+        "timeout_ms": 3000,
+        "save_to": "last_msg_text"
+      },
+      "next": "n15",
+      "timeout_ms": 5000,
+      "retry": 1
+    },
+    {
+      "id": "n15",
+      "action": {
+        "type": "assert",
+        "check": "variable_contains",
+        "params": {
+          "key": "last_msg_text",
+          "value": "Load test heartbeat"
+        },
+        "message": "Сообщение не было отправлено в Saved Messages"
+      },
+      "next": null,
+      "timeout_ms": 3000,
+      "retry": 0
+    }
+  ],
+  "entry_node": "n1",
+  "timeout_ms": 120000
+}

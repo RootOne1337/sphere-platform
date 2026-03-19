@@ -1,0 +1,153 @@
+{
+  "version": "1.0",
+  "nodes": [
+    {
+      "id": "n1",
+      "action": {
+        "type": "launch_app",
+        "package": "com.instagram.android",
+        "delay_ms": 2500
+      },
+      "next": "n2",
+      "timeout_ms": 10000,
+      "retry": 1
+    },
+    {
+      "id": "n2",
+      "action": {
+        "type": "find_first_element",
+        "candidates": [
+          {"selector": "//android.widget.EditText[@text='Phone number, username or email']", "strategy": "xpath", "label": "login_field_en"},
+          {"selector": "//android.widget.EditText[@text='Телефон, имя пользователя или эл. адрес']", "strategy": "xpath", "label": "login_field_ru"},
+          {"selector": "com.instagram.android:id/login_username", "strategy": "id", "label": "login_field_id"}
+        ],
+        "timeout_ms": 8000,
+        "save_to": "login_input",
+        "fail_if_not_found": true
+      },
+      "next": "n3",
+      "timeout_ms": 15000,
+      "retry": 2
+    },
+    {
+      "id": "n3",
+      "action": {
+        "type": "tap_element",
+        "selector": "com.instagram.android:id/login_username",
+        "strategy": "id",
+        "timeout_ms": 3000
+      },
+      "next": "n4",
+      "timeout_ms": 5000,
+      "retry": 1
+    },
+    {
+      "id": "n4",
+      "action": {
+        "type": "type_text",
+        "text": "test_user_{{index}}",
+        "clear_first": true
+      },
+      "next": "n5",
+      "timeout_ms": 5000,
+      "retry": 0
+    },
+    {
+      "id": "n5",
+      "action": {
+        "type": "tap_element",
+        "selector": "com.instagram.android:id/password",
+        "strategy": "id",
+        "timeout_ms": 3000
+      },
+      "next": "n6",
+      "timeout_ms": 5000,
+      "retry": 1
+    },
+    {
+      "id": "n6",
+      "action": {
+        "type": "type_text",
+        "text": "secure_pass_123",
+        "clear_first": true
+      },
+      "next": "n7",
+      "timeout_ms": 5000,
+      "retry": 0
+    },
+    {
+      "id": "n7",
+      "action": {
+        "type": "screenshot",
+        "save_to": "pre_login_screenshot"
+      },
+      "next": "n8",
+      "timeout_ms": 5000,
+      "retry": 0
+    },
+    {
+      "id": "n8",
+      "action": {
+        "type": "tap_first_visible",
+        "candidates": [
+          {"selector": "//android.widget.Button[@text='Log in']", "strategy": "xpath", "label": "login_btn_en"},
+          {"selector": "//android.widget.Button[@text='Войти']", "strategy": "xpath", "label": "login_btn_ru"},
+          {"selector": "com.instagram.android:id/next_button", "strategy": "id", "label": "login_btn_id"}
+        ],
+        "timeout_ms": 5000,
+        "fail_if_not_found": true
+      },
+      "next": "n9",
+      "timeout_ms": 8000,
+      "retry": 2
+    },
+    {
+      "id": "n9",
+      "action": {
+        "type": "sleep",
+        "ms": 3000
+      },
+      "next": "n10",
+      "timeout_ms": 5000,
+      "retry": 0
+    },
+    {
+      "id": "n10",
+      "action": {
+        "type": "condition",
+        "check": "element_exists",
+        "params": {
+          "selector": "com.instagram.android:id/tab_bar",
+          "strategy": "id",
+          "timeout_ms": 5000
+        }
+      },
+      "on_true": "n11",
+      "on_false": "n12",
+      "timeout_ms": 10000,
+      "retry": 0
+    },
+    {
+      "id": "n11",
+      "action": {
+        "type": "screenshot",
+        "save_to": "login_success_screenshot"
+      },
+      "next": null,
+      "timeout_ms": 5000,
+      "retry": 0
+    },
+    {
+      "id": "n12",
+      "action": {
+        "type": "screenshot",
+        "save_to": "login_failed_screenshot"
+      },
+      "next": null,
+      "timeout_ms": 5000,
+      "retry": 0
+    }
+  ],
+  "entry_node": "n1",
+  "timeout_ms": 180000
+}

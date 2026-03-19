@@ -18,10 +18,21 @@ class FrameThrottle @Inject constructor() {
     val targetFps: Int = 30
 
     private val frameDurationNs = 1_000_000_000L / targetFps
-    private var lastFrameTimeNs = 0L
+    /**
+     * PERF: Pre-computed минимальный интервал (80% от полного).
+     * До: `frameDurationNs * 0.8` = Long→Double конвертация + Float multiply на каждый кадр (30 fps).
+     * После: одно Long-сравнение. Мелочь, но вызывается из горячего MediaCodec callback.
+     */
+    private val minFrameIntervalNs = frameDurationNs * 4L / 5L  // 80% без Float
+    @Volatile private var lastFrameTimeNs = 0L
 
-    private var _droppedFrames = 0
-    private var _totalFrames = 0
+    /**
+     * FIX F2: Счётчики дропов обёрнуты в AtomicInteger — доступ из MediaCodec callback
+     * thread (shouldRenderFrame) и heartbeat thread (dropRatio, droppedFrames, totalFrames).
+     * Без синхронизации — data race на ARM/x86 (разный memory ordering).
+     */
+    private val _droppedFrames = java.util.concurrent.atomic.AtomicInteger(0)
+    private val _totalFrames = java.util.concurrent.atomic.AtomicInteger(0)
 
     /**
      * Returns `true` if the frame should be rendered/encoded; `false` if it
@@ -30,11 +41,11 @@ class FrameThrottle @Inject constructor() {
      * @param frameTimeNs VSYNC timestamp in nanoseconds (from Choreographer).
      */
     fun shouldRenderFrame(frameTimeNs: Long): Boolean {
-        _totalFrames++
+        _totalFrames.incrementAndGet()
         val elapsed = frameTimeNs - lastFrameTimeNs
 
-        if (elapsed < frameDurationNs * 0.8) {
-            _droppedFrames++
+        if (elapsed < minFrameIntervalNs) {
+            _droppedFrames.incrementAndGet()
             return false
         }
 
@@ -44,8 +55,8 @@ class FrameThrottle @Inject constructor() {
 
     /** Ratio of skipped frames to total frames observed (0.0–1.0). */
     val dropRatio: Float
-        get() = _droppedFrames.toFloat() / _totalFrames.coerceAtLeast(1)
+        get() = _droppedFrames.get().toFloat() / _totalFrames.get().coerceAtLeast(1)
 
-    val droppedFrames: Int get() = _droppedFrames
-    val totalFrames: Int get() = _totalFrames
+    val droppedFrames: Int get() = _droppedFrames.get()
+    val totalFrames: Int get() = _totalFrames.get()
 }

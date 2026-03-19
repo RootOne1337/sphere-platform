@@ -40,292 +40,469 @@ from backend.models.script import Script, ScriptVersion
 
 # ─── Black Russia DAG ────────────────────────────────────────────────────────
 #
-# DAG описывает линейный флоу входа в игру Black Russia (com.br.top).
-# Android Agent (TZ-07) выполняет этот DAG ИЗНУТРИ устройства через
-# Accessibility API / UIAutomator — без внешнего ADB.
+# РЕАКТИВНЫЙ WATCHDOG-DAG для Black Russia (com.br.top).
+# Android Agent (TZ-07) выполняет DAG ИЗНУТРИ устройства через root shell.
 #
-# Координаты под LDPlayer 720×1280 (портретный режим).
-# При другом разрешении скорректируй через Visual Builder (/scripts/builder).
+# Архитектура: бесконечный цикл «scan → route → action → sleep → scan»
+#   kill_app → sleep → open_app → sleep →
+#   → start → init_counter → init_phase → init_dead_count
+#   → check_game_alive → validate_pid → scan_all → route_*.
 #
-# Узлы:
-#  start → sleep_init → cond_perm → [tap_perm → sleep_perm] → cond_ok_1
-#    → [tap_ok_1 → sleep_ok_1] → cond_servers → [tap_server → sleep_server
-#    → cond_ok_2 → [tap_ok_2 → sleep_ok_2]] → wait_login
-#    → tap_pass_field → sleep_tap → type_pass → sleep_type → tap_play
-#    → wait_game → end_success / end_fail
+# scan_all — tap_first_visible с ~32 кандидатами (один UI dump на итерацию).
+# Что нашёл — то нажал. Потом route_pw / route_name / route_play по лейблам.
+# Watchdog: если pidof com.br.top не найден 4 раза → launch_game.
+# timeout_ms = 86400000 (24ч) — DAG крутится пока не остановят.
+#
+# Разрешение: не зависит — все тапы через element resource-id из UI dump.
 #
 # ─────────────────────────────────────────────────────────────────────────────
 
 BLACK_RUSSIA_DAG: dict = {
-    "version": "1.0",
+    "version": "2.0",
     "name": "Black Russia — Auto Login",
     "description": (
-        "Автоматический вход в Black Russia (com.br.top). "
+        "Реактивный watchdog-DAG для Black Russia (com.br.top). "
         "Выполняется Android Agent-ом изнутри устройства. "
-        "Обрабатывает: диалоги разрешений, OK-диалоги, выбор сервера, "
-        "ввод пароля, ожидание загрузки игры. "
-        "Координаты под LDPlayer 720×1280."
+        "Полный цикл: kill_app → open_app → watchdog-loop "
+        "(scan_all → route → action → sleep → scan). "
+        "Все тапы через tap_first_visible / tap_element (resource-id из UI dump). "
+        "Resolution-independent."
     ),
-    "entry_node": "start",
+    "entry_node": "kill_app",
+    "timeout_ms": 86_400_000,  # 24 часа — DAG крутится пока не остановят
     "nodes": [
-        # ── 1. Start ────────────────────────────────────────────────────────
+        # ══════════════════════════════════════════════════════════════════════
+        # ▶ ФАЗА 0: ПЕРЕЗАПУСК ПРИЛОЖЕНИЯ (новое — добавлено к v4)
+        # ══════════════════════════════════════════════════════════════════════
+        {
+            "id": "kill_app",
+            "action": {
+                "type": "stop_app",
+                "package": "com.br.top",
+                "delay_ms": 1_000,
+            },
+            "on_success": "sleep_after_kill",
+            "on_failure": "sleep_after_kill",
+            "retry": 0,
+            "timeout_ms": 5_000,
+        },
+        {
+            "id": "sleep_after_kill",
+            "action": {"type": "sleep", "ms": 2_000},
+            "on_success": "open_app",
+            "on_failure": None,
+            "retry": 0,
+            "timeout_ms": 5_000,
+        },
+        {
+            "id": "open_app",
+            "action": {
+                "type": "launch_app",
+                "package": "com.br.top",
+                "delay_ms": 5_000,
+            },
+            "on_success": "sleep_after_open",
+            "on_failure": "start",
+            "retry": 1,
+            "timeout_ms": 10_000,
+        },
+        {
+            "id": "sleep_after_open",
+            "action": {"type": "sleep", "ms": 10_000},
+            "on_success": "start",
+            "on_failure": None,
+            "retry": 0,
+            "timeout_ms": 15_000,
+        },
+
+        # ══════════════════════════════════════════════════════════════════════
+        # ▶ ФАЗА 1: ИНИЦИАЛИЗАЦИЯ (из рабочего v4)
+        # ══════════════════════════════════════════════════════════════════════
         {
             "id": "start",
             "action": {"type": "start"},
-            "on_success": "sleep_init",
+            "on_success": "init_counter",
             "on_failure": None,
             "retry": 0,
-            "timeout_ms": 5_000,
+            "timeout_ms": 1_000,
         },
-        # ── 2. Ждём загрузки приложения ─────────────────────────────────────
         {
-            "id": "sleep_init",
-            "action": {"type": "sleep", "ms": 5_000},
-            "on_success": "cond_perm",
+            "id": "init_counter",
+            "action": {
+                "type": "set_variable",
+                "key": "cycle_count",
+                "value": "0",
+            },
+            "on_success": "init_phase",
             "on_failure": None,
             "retry": 0,
-            "timeout_ms": 8_000,
+            "timeout_ms": 1_000,
         },
-        # ── 3. Проверяем диалог разрешений ──────────────────────────────────
         {
-            "id": "cond_perm",
+            "id": "init_phase",
+            "action": {
+                "type": "set_variable",
+                "key": "phase",
+                "value": "login",
+            },
+            "on_success": "init_dead_count",
+            "on_failure": None,
+            "retry": 0,
+            "timeout_ms": 1_000,
+        },
+        {
+            "id": "init_dead_count",
+            "action": {
+                "type": "set_variable",
+                "key": "dead_count",
+                "value": "3",
+            },
+            "on_success": "check_game_alive",
+            "on_failure": None,
+            "retry": 0,
+            "timeout_ms": 1_000,
+        },
+
+        # ══════════════════════════════════════════════════════════════════════
+        # ▶ ФАЗА 2: WATCHDOG — проверка процесса игры
+        # ══════════════════════════════════════════════════════════════════════
+        {
+            "id": "check_game_alive",
+            "action": {
+                "type": "shell",
+                "command": "pidof com.br.top",
+                "save_to": "game_pid",
+            },
+            "on_success": "validate_game_pid",
+            "on_failure": "increment_dead_count",
+            "retry": 0,
+            "timeout_ms": 6_000,
+        },
+        {
+            "id": "validate_game_pid",
             "action": {
                 "type": "condition",
-                "check": "element_exists",
-                "params": {
-                    "selector": "com.br.top:id/permission_allow_button",
-                    "strategy": "id",
-                },
-                "on_true": "tap_perm",
-                "on_false": "cond_ok_1",
+                "code": "local pid = tostring(ctx.game_pid or '')\nreturn #pid > 0 and pid ~= 'nil'",
+                "on_true": "reset_dead_alive",
+                "on_false": "increment_dead_count",
             },
-            "on_success": None,
-            "on_failure": "cond_ok_1",
+            "on_success": "reset_dead_alive",
+            "on_failure": "increment_dead_count",
             "retry": 0,
-            "timeout_ms": 8_000,
+            "timeout_ms": 2_000,
         },
-        # ── 4. Нажимаем "Разрешить" ─────────────────────────────────────────
         {
-            "id": "tap_perm",
-            "action": {"type": "tap", "x": 540, "y": 1080},
-            "on_success": "sleep_perm",
-            "on_failure": "cond_ok_1",
-            "retry": 1,
-            "timeout_ms": 5_000,
-        },
-        # ── 5. Пауза после разрешения ───────────────────────────────────────
-        {
-            "id": "sleep_perm",
-            "action": {"type": "sleep", "ms": 1_000},
-            "on_success": "cond_ok_1",
+            "id": "reset_dead_alive",
+            "action": {
+                "type": "set_variable",
+                "key": "dead_count",
+                "value": "0",
+            },
+            "on_success": "increment_counter",
             "on_failure": None,
             "retry": 0,
-            "timeout_ms": 3_000,
+            "timeout_ms": 1_000,
         },
-        # ── 6. Проверяем OK-диалог (загрузка, обновление и т.д.) ────────────
         {
-            "id": "cond_ok_1",
+            "id": "increment_dead_count",
+            "action": {
+                "type": "increment_variable",
+                "key": "dead_count",
+            },
+            "on_success": "check_dead_limit",
+            "on_failure": "scan_all",
+            "retry": 0,
+            "timeout_ms": 1_000,
+        },
+        {
+            "id": "check_dead_limit",
             "action": {
                 "type": "condition",
-                "check": "element_exists",
-                "params": {
-                    "selector": "com.br.top:id/button_ok",
-                    "strategy": "id",
-                },
-                "on_true": "tap_ok_1",
-                "on_false": "cond_servers",
+                "code": "return (tonumber(ctx.dead_count) or 0) < 4",
+                "on_true": "scan_all",
+                "on_false": "launch_game",
             },
-            "on_success": None,
-            "on_failure": "cond_servers",
+            "on_success": "scan_all",
+            "on_failure": "launch_game",
             "retry": 0,
-            "timeout_ms": 8_000,
+            "timeout_ms": 2_000,
         },
-        # ── 7. Нажимаем OK ──────────────────────────────────────────────────
         {
-            "id": "tap_ok_1",
-            "action": {"type": "tap", "x": 360, "y": 750},
-            "on_success": "sleep_ok_1",
-            "on_failure": "cond_servers",
+            "id": "launch_game",
+            "action": {
+                "type": "launch_app",
+                "package": "com.br.top",
+            },
+            "on_success": "launch_game_wait",
+            "on_failure": "launch_game_wait",
             "retry": 1,
-            "timeout_ms": 5_000,
+            "timeout_ms": 10_000,
         },
-        # ── 8. Пауза после OK ───────────────────────────────────────────────
         {
-            "id": "sleep_ok_1",
-            "action": {"type": "sleep", "ms": 500},
-            "on_success": "cond_servers",
+            "id": "launch_game_wait",
+            "action": {"type": "sleep", "ms": 15_000},
+            "on_success": "reset_dead_launched",
             "on_failure": None,
             "retry": 0,
-            "timeout_ms": 3_000,
+            "timeout_ms": 20_000,
         },
-        # ── 9. Проверяем список серверов ────────────────────────────────────
         {
-            "id": "cond_servers",
+            "id": "reset_dead_launched",
+            "action": {
+                "type": "set_variable",
+                "key": "dead_count",
+                "value": "0",
+            },
+            "on_success": "scan_all",
+            "on_failure": None,
+            "retry": 0,
+            "timeout_ms": 1_000,
+        },
+        {
+            "id": "increment_counter",
+            "action": {
+                "type": "increment_variable",
+                "key": "cycle_count",
+            },
+            "on_success": "check_watchdog",
+            "on_failure": "scan_all",
+            "retry": 0,
+            "timeout_ms": 1_000,
+        },
+        {
+            "id": "check_watchdog",
             "action": {
                 "type": "condition",
-                "check": "element_exists",
-                "params": {
-                    "selector": "com.br.top:id/list_servers_choose",
-                    "strategy": "id",
-                },
-                "on_true": "tap_server",
-                "on_false": "wait_login",
+                "code": "return true",
+                "on_true": "scan_all",
+                "on_false": "scan_all",
             },
-            "on_success": None,
-            "on_failure": "wait_login",
+            "on_success": "scan_all",
+            "on_failure": "scan_all",
             "retry": 0,
-            "timeout_ms": 8_000,
+            "timeout_ms": 2_000,
         },
-        # ── 10. Тапаем первый сервер ────────────────────────────────────────
+
+        # ══════════════════════════════════════════════════════════════════════
+        # ▶ ФАЗА 3: РЕАКТИВНЫЙ SCAN — tap_first_visible + роутинг
+        # ══════════════════════════════════════════════════════════════════════
         {
-            "id": "tap_server",
-            "action": {"type": "tap", "x": 360, "y": 480},
-            "on_success": "sleep_server",
-            "on_failure": "wait_login",
-            "retry": 1,
-            "timeout_ms": 5_000,
-        },
-        # ── 11. Ждём после выбора сервера ───────────────────────────────────
-        {
-            "id": "sleep_server",
-            "action": {"type": "sleep", "ms": 2_000},
-            "on_success": "cond_ok_2",
-            "on_failure": None,
-            "retry": 0,
-            "timeout_ms": 5_000,
-        },
-        # ── 12. OK-диалог после выбора сервера ──────────────────────────────
-        {
-            "id": "cond_ok_2",
+            "id": "scan_all",
             "action": {
-                "type": "condition",
-                "check": "element_exists",
-                "params": {
-                    "selector": "com.br.top:id/button_ok",
-                    "strategy": "id",
-                },
-                "on_true": "tap_ok_2",
-                "on_false": "wait_login",
-            },
-            "on_success": None,
-            "on_failure": "wait_login",
-            "retry": 0,
-            "timeout_ms": 8_000,
-        },
-        # ── 13. Нажимаем OK (после сервера) ─────────────────────────────────
-        {
-            "id": "tap_ok_2",
-            "action": {"type": "tap", "x": 360, "y": 750},
-            "on_success": "sleep_ok_2",
-            "on_failure": "wait_login",
-            "retry": 1,
-            "timeout_ms": 5_000,
-        },
-        # ── 14. Пауза после OK ──────────────────────────────────────────────
-        {
-            "id": "sleep_ok_2",
-            "action": {"type": "sleep", "ms": 500},
-            "on_success": "wait_login",
-            "on_failure": None,
-            "retry": 0,
-            "timeout_ms": 3_000,
-        },
-        # ── 15. Ждём экран входа (поле пароля) ──────────────────────────────
-        {
-            "id": "wait_login",
-            "action": {
-                "type": "find_element",
-                "selector": "com.br.top:id/password_enter",
-                "strategy": "id",
-                "timeout_ms": 30_000,
+                "type": "tap_first_visible",
+                "candidates": [
+                    {"label": "pw", "selector": "com.br.top:id/password_enter", "strategy": "id"},
+                    {"label": "name", "selector": "com.br.top:id/edit_text_name", "strategy": "id"},
+                    {"label": "su_remember", "selector": "com.android.settings:id/remember_forever", "strategy": "id"},
+                    {"label": "su_allow", "selector": "com.android.settings:id/allow", "strategy": "id"},
+                    {"label": "perm_allow", "selector": "com.android.packageinstaller:id/permission_allow_button", "strategy": "id"},
+                    {"label": "button_ok", "selector": "com.br.top:id/button_ok", "strategy": "id"},
+                    {"label": "button_repeat", "selector": "com.br.top:id/button_repeat", "strategy": "id"},
+                    {"label": "but_skip", "selector": "com.br.top:id/but_skip", "strategy": "id"},
+                    {"label": "but_continue", "selector": "com.br.top:id/but_continue", "strategy": "id"},
+                    {"label": "butt", "selector": "com.br.top:id/butt", "strategy": "id"},
+                    {"label": "servers_play", "selector": "com.br.top:id/br_servers_play", "strategy": "id"},
+                    {"label": "button_play", "selector": "com.br.top:id/button_play", "strategy": "id"},
+                    {"label": "play_butt", "selector": "com.br.top:id/play_butt", "strategy": "id"},
+                    {"label": "male_butt", "selector": "com.br.top:id/male_butt", "strategy": "id"},
+                    {"label": "arrow_right", "selector": "com.br.top:id/arrow_right", "strategy": "id"},
+                    {"label": "dw_ok", "selector": "com.br.top:id/dw_button_ok", "strategy": "id"},
+                    {"label": "dw_cancel", "selector": "com.br.top:id/dw_button_cancel", "strategy": "id"},
+                    {"label": "all_servers", "selector": "com.br.top:id/all_servers_button", "strategy": "id"},
+                    {"label": "reg_butt", "selector": "com.br.top:id/reg_butt", "strategy": "id"},
+                    {"label": "invite_nick", "selector": "com.br.top:id/invite_nick", "strategy": "id"},
+                    {"label": "servers_list", "selector": "com.br.top:id/list_servers_choose", "strategy": "id"},
+                    {"label": "reg_pw", "selector": "com.br.top:id/edit2", "strategy": "id"},
+                    {"label": "reg_pw_repeat", "selector": "com.br.top:id/edit3", "strategy": "id"},
+                    {"label": "play_but", "selector": "com.br.top:id/play_but", "strategy": "id"},
+                    {"label": "auto_switch", "selector": "com.br.top:id/auto_switch", "strategy": "id"},
+                    {"label": "text_dalhe", "selector": "\u0414\u0430\u043b\u0435\u0435", "strategy": "text"},
+                    {"label": "text_close", "selector": "\u0417\u0410\u041a\u0420\u042b\u0422\u042c", "strategy": "text"},
+                    {"label": "text_continue", "selector": "\u041d\u0430\u0436\u043c\u0438\u0442\u0435, \u0447\u0442\u043e\u0431\u044b \u043f\u0440\u043e\u0434\u043e\u043b\u0436\u0438\u0442\u044c", "strategy": "text"},
+                    {"label": "text_open_x1", "selector": "\u041e\u0442\u043a\u0440\u044b\u0442\u044c \u00d71", "strategy": "text"},
+                    {"label": "pkg_install_id", "selector": "com.android.packageinstaller:id/ok_button", "strategy": "id"},
+                    {
+                        "label": "pkg_install_xpath",
+                        "selector": "//android.widget.Button[contains(@text,'\u0423\u0441\u0442\u0430\u043d\u043e\u0432\u0438\u0442\u044c') or contains(@text,'Install') or contains(@text,'\u041e\u0431\u043d\u043e\u0432\u0438\u0442\u044c') or contains(@text,'Update')]",
+                        "strategy": "xpath",
+                    },
+                ],
+                "timeout_ms": 5_000,
                 "fail_if_not_found": True,
             },
-            "on_success": "tap_pass_field",
-            "on_failure": "end_fail",
+            "on_success": "route_pw",
+            "on_failure": "sleep_wait",
             "retry": 0,
-            "timeout_ms": 35_000,
+            "timeout_ms": 10_000,
         },
-        # ── 16. Тапаем поле пароля ──────────────────────────────────────────
+
+        # ══════════════════════════════════════════════════════════════════════
+        # ▶ ФАЗА 4: РОУТИНГ ПО ЛЕЙБЛАМИ (Lua-условия)
+        # ══════════════════════════════════════════════════════════════════════
         {
-            "id": "tap_pass_field",
-            "action": {"type": "tap", "x": 360, "y": 620},
-            "on_success": "sleep_tap",
-            "on_failure": "end_fail",
-            "retry": 1,
-            "timeout_ms": 5_000,
+            "id": "route_pw",
+            "action": {
+                "type": "condition",
+                "code": "return ctx.scan_all ~= nil and ctx.scan_all.tapped_label == 'pw'",
+                "on_true": "reset_counter_pw",
+                "on_false": "route_name",
+            },
+            "on_success": "reset_counter_pw",
+            "on_failure": "sleep_ok",
+            "retry": 0,
+            "timeout_ms": 2_000,
         },
-        # ── 17. Пауза (клавиатура) ──────────────────────────────────────────
         {
-            "id": "sleep_tap",
-            "action": {"type": "sleep", "ms": 500},
-            "on_success": "type_pass",
+            "id": "route_name",
+            "action": {
+                "type": "condition",
+                "code": "return ctx.scan_all ~= nil and ctx.scan_all.tapped_label == 'name'",
+                "on_true": "type_name",
+                "on_false": "route_play",
+            },
+            "on_success": "type_name",
+            "on_failure": "sleep_ok",
+            "retry": 0,
+            "timeout_ms": 2_000,
+        },
+        {
+            "id": "route_play",
+            "action": {
+                "type": "condition",
+                "code": "local label = ctx.scan_all and ctx.scan_all.tapped_label or ''\nreturn string.find(label, 'play') ~= nil",
+                "on_true": "sleep_wait",
+                "on_false": "sleep_ok",
+            },
+            "on_success": "set_phase_playing",
+            "on_failure": "sleep_ok",
+            "retry": 0,
+            "timeout_ms": 2_000,
+        },
+
+        # ══════════════════════════════════════════════════════════════════════
+        # ▶ ФАЗА 5: ДЕЙСТВИЯ — ввод пароля, имени, фамилии
+        # ══════════════════════════════════════════════════════════════════════
+        {
+            "id": "reset_counter_pw",
+            "action": {
+                "type": "set_variable",
+                "key": "cycle_count",
+                "value": "0",
+            },
+            "on_success": "sleep_before_type",
             "on_failure": None,
             "retry": 0,
-            "timeout_ms": 3_000,
+            "timeout_ms": 1_000,
         },
-        # ── 18. Вводим пароль ───────────────────────────────────────────────
         {
-            "id": "type_pass",
+            "id": "sleep_before_type",
+            "action": {"type": "sleep", "ms": 150},
+            "on_success": "type_pw",
+            "on_failure": None,
+            "retry": 0,
+            "timeout_ms": 5_000,
+        },
+        {
+            "id": "type_pw",
             "action": {
                 "type": "type_text",
                 "text": "NaftaliN1337228",
                 "clear_first": True,
             },
-            "on_success": "sleep_type",
-            "on_failure": "end_fail",
+            "on_success": "sleep_after_type",
+            "on_failure": "sleep_ok",
             "retry": 1,
-            "timeout_ms": 10_000,
+            "timeout_ms": 8_000,
         },
-        # ── 19. Пауза после ввода ────────────────────────────────────────────
         {
-            "id": "sleep_type",
-            "action": {"type": "sleep", "ms": 500},
-            "on_success": "tap_play",
+            "id": "sleep_after_type",
+            "action": {"type": "sleep", "ms": 150},
+            "on_success": "tap_play_login",
             "on_failure": None,
             "retry": 0,
-            "timeout_ms": 3_000,
-        },
-        # ── 20. Нажимаем кнопку Play/Войти ──────────────────────────────────
-        {
-            "id": "tap_play",
-            "action": {"type": "tap", "x": 360, "y": 890},
-            "on_success": "wait_game",
-            "on_failure": "end_fail",
-            "retry": 2,
             "timeout_ms": 5_000,
         },
-        # ── 21. Ждём загрузки игры (donate_header появляется в главном меню) ─
         {
-            "id": "wait_game",
+            "id": "tap_play_login",
             "action": {
-                "type": "find_element",
-                "selector": "com.br.top:id/donate_header_value_rub",
+                "type": "tap_element",
+                "selector": "com.br.top:id/play_but",
                 "strategy": "id",
-                "timeout_ms": 90_000,
-                "fail_if_not_found": True,
+                "timeout_ms": 5_000,
             },
-            "on_success": "end_success",
-            "on_failure": "end_fail",
-            "retry": 0,
-            "timeout_ms": 95_000,
+            "on_success": "set_phase_playing",
+            "on_failure": "sleep_ok",
+            "retry": 1,
+            "timeout_ms": 8_000,
         },
-        # ── 22. Успех ────────────────────────────────────────────────────────
         {
-            "id": "end_success",
-            "action": {"type": "end", "status": "success"},
-            "on_success": None,
+            "id": "type_name",
+            "action": {
+                "type": "type_text",
+                "text": "Naftali",
+                "clear_first": True,
+            },
+            "on_success": "tap_surname",
+            "on_failure": "sleep_ok",
+            "retry": 1,
+            "timeout_ms": 8_000,
+        },
+        {
+            "id": "tap_surname",
+            "action": {
+                "type": "tap_element",
+                "selector": "com.br.top:id/edit_text_surname",
+                "strategy": "id",
+                "timeout_ms": 5_000,
+            },
+            "on_success": "type_surname",
+            "on_failure": "sleep_ok",
+            "retry": 0,
+            "timeout_ms": 8_000,
+        },
+        {
+            "id": "type_surname",
+            "action": {
+                "type": "type_text",
+                "text": "Nthree",
+                "clear_first": True,
+            },
+            "on_success": "sleep_ok",
+            "on_failure": "sleep_ok",
+            "retry": 1,
+            "timeout_ms": 8_000,
+        },
+
+        # ══════════════════════════════════════════════════════════════════════
+        # ▶ ФАЗЫ SLEEP + PHASE TRACKING
+        # ══════════════════════════════════════════════════════════════════════
+        {
+            "id": "set_phase_playing",
+            "action": {
+                "type": "set_variable",
+                "key": "phase",
+                "value": "playing",
+            },
+            "on_success": "sleep_ok",
+            "on_failure": None,
+            "retry": 0,
+            "timeout_ms": 1_000,
+        },
+        {
+            "id": "sleep_ok",
+            "action": {"type": "sleep", "ms": 500},
+            "on_success": "check_game_alive",
             "on_failure": None,
             "retry": 0,
             "timeout_ms": 5_000,
         },
-        # ── 23. Провал (экран входа не появился / игра не загрузилась) ───────
         {
-            "id": "end_fail",
-            "action": {"type": "end", "status": "failure"},
-            "on_success": None,
-            "on_failure": None,
+            "id": "sleep_wait",
+            "action": {"type": "sleep", "ms": 5_000},
+            "on_success": "check_game_alive",
+            "on_failure": "check_game_alive",
             "retry": 0,
-            "timeout_ms": 5_000,
+            "timeout_ms": 10_000,
         },
     ],
 }
@@ -352,7 +529,7 @@ async def seed(org_id_override: uuid.UUID | None = None) -> None:
         org_id: uuid.UUID = org.id
         print(f"🏢  Организация: {org.name} ({org_id})")
 
-        # Проверить — не существует ли уже
+        # Проверить — существует ли уже
         existing: Script | None = await db.scalar(
             select(Script).where(
                 Script.org_id == org_id,
@@ -361,8 +538,29 @@ async def seed(org_id_override: uuid.UUID | None = None) -> None:
             )
         )
         if existing:
-            print(f"✅  Скрипт уже существует: {existing.id}")
-            print(f"   Открой в Visual Builder: /scripts/builder?id={existing.id}")
+            # Скрипт уже есть — создаём новую версию с обновлённым DAG
+            # (stop_app → launch_app → основной флоу)
+            from sqlalchemy import func as sa_func
+            max_ver = await db.scalar(
+                select(sa_func.coalesce(sa_func.max(ScriptVersion.version), 0))
+                .where(ScriptVersion.script_id == existing.id)
+            )
+            new_ver_num = (max_ver or 0) + 1
+            new_version = ScriptVersion(
+                script_id=existing.id,
+                org_id=org_id,
+                version=new_ver_num,
+                dag=BLACK_RUSSIA_DAG,
+                notes=f"v{new_ver_num}: Восстановлен рабочий реактивный watchdog-DAG (v4) + добавлен kill_app → open_app перед стартом.",
+            )
+            db.add(new_version)
+            await db.flush()
+            existing.current_version_id = new_version.id
+            await db.commit()
+            print(f"🔄  Скрипт обновлён: {existing.id}")
+            print(f"   Новая версия: {new_version.id} (v{new_ver_num})")
+            print(f"   DAG-узлов: {len(BLACK_RUSSIA_DAG['nodes'])}")
+            print(f"   Изменение: добавлен stop_app → sleep → launch_app перед логин-флоу")
             return
 
         # Создать Script

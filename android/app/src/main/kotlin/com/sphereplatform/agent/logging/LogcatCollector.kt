@@ -50,7 +50,11 @@ class LogcatCollector @Inject constructor() {
         val process = ProcessBuilder(cmd)
             .redirectErrorStream(true)
             .start()
-        val output = process.inputStream.bufferedReader(Charsets.UTF_8).readText()
+        // FIX H5: Лимит на чтение logcat — защита от OOM на слабых эмуляторах.
+        // 5000 строк × ~200 байт = ~1MB. Ограничиваем 2MB.
+        val output = process.inputStream.bufferedReader(Charsets.UTF_8).use {
+            it.readText().take(2 * 1024 * 1024)
+        }
         process.waitFor()
         output
     }.getOrElse { e ->

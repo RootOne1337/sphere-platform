@@ -21,6 +21,17 @@ class EventType(str, Enum):
     ALERT_TRIGGERED = "alert.triggered"
     STREAM_STARTED = "stream.started"
     STREAM_STOPPED = "stream.stopped"
+    # TZ-11: События аккаунтов и устройств для EventReactor
+    ACCOUNT_BANNED = "account.banned"
+    ACCOUNT_CAPTCHA = "account.captcha"
+    ACCOUNT_PHONE_VERIFY = "account.phone_verify"
+    ACCOUNT_ERROR = "account.error"
+    ACCOUNT_ASSIGNED = "account.assigned"
+    ACCOUNT_RELEASED = "account.released"
+    ACCOUNT_ROTATED = "account.rotated"
+    GAME_CRASHED = "game.crashed"
+    SESSION_STARTED = "session.started"
+    SESSION_ENDED = "session.ended"
 
 
 class FleetEvent(BaseModel):

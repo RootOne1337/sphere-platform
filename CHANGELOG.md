@@ -6,9 +6,310 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [4.7.0] — 2026-03-10  <!-- feat: Game Accounts, Event System, Pipeline Settings -->
+
+### Краткое описание
+Масштабное обновление платформы: 5 новых доменных модулей (Game Accounts, Event Triggers,
+Pipeline Settings, Account Sessions, Device Events), полная перестройка документации,
+оптимизация всех существующих сервисов и фронтенда.
+
+### Добавлено
+
+#### Backend — 5 новых API-модулей
+- **Game Accounts** (`/api/v1/game-accounts`): CRUD для игровых аккаунтов с автогенерацией никнеймов
+- **Event Triggers** (`/api/v1/event-triggers`): конфигурируемые правила реагирования на события
+- **Pipeline Settings** (`/api/v1/pipeline-settings`): хранение пользовательских настроек пайплайнов
+- **Account Sessions** (`/api/v1/account-sessions`): трекинг активных сессий аккаунтов на устройствах
+- **Device Events** (`/api/v1/device-events`): логирование событий жизненного цикла устройств
+
+#### Backend — новые сервисы
+- `event_reactor.py`: реактивная обработка событий по триггерам
+- `orchestration_engine.py`: координатор оркестрации пайплайнов
+- `nick_generator.py`: генерация случайных никнеймов
+- `task_heartbeat_watchdog.py`: фоновый watchdog для зависших задач
+- `orchestration_loop.py`: периодический тик оркестрации
+
+#### Frontend — 5 новых страниц
+- `/accounts` — управление игровыми аккаунтами
+- `/events` — таймлайн событий устройств
+- `/sessions` — мониторинг сессий аккаунтов
+- `/event-triggers` — конфигурация триггеров автоматизации
+- `/pipeline-settings` — редактор настроек пайплайнов
+
+#### Frontend — новые хуки и компоненты
+- `useGameAccounts`, `useDeviceEvents`, `useAccountSessions`, `useEventTriggers`, `usePipelineSettings`
+- UI: `Switch`, `Textarea`
+
+#### Database
+- 5 новых Alembic-миграций (20260301–20260309)
+- Модели: `GameAccount`, `EventTrigger`, `PipelineSettings`, `AccountSession`, `DeviceEvent`
+
+#### Tests
+- `test_event_triggers_api.py`: интеграционные тесты Event Triggers API
+- `test_pipeline_toggle.py`: тесты переключения пайплайнов
+- `test_event_reactor.py`: юнит-тесты реактивной обработки событий
+- `useEventTriggers.test.ts`: тесты фронтенд-хука триггеров
+
+#### Scripts
+- `seed_farming_dags.py`, `seed_game_accounts.py`: сиды для фарминга
+- `check_progress.py`, `validate_dag.py`, `update_dag_db.py`: утилиты
+
+### Изменено
+
+#### Backend
+- `batches/router.py`: оптимизация bulk-операций
+- `devices/router.py`: курсорная пагинация, расширенная фильтрация
+- `pipelines/router.py`: отслеживание статуса выполнения
+- `tasks/router.py`: исправления пагинации, фильтрация по статусу
+- `ws/android/router.py`: hardening WebSocket-обработчиков
+- `device_service.py`: производительность запросов, трекинг подключений
+- `pipeline_service.py`, `step_handlers.py`: улучшения выполнения шагов
+- `scheduler_engine.py`: guards от конкурентного выполнения
+- `task_queue.py`, `task_service.py`: state machine hardening
+- `event_publisher.py`: throttled broadcasting событий
+- `rbac.py`: новые permissions для 5 API-модулей
+
+#### Frontend
+- Все страницы дашборда обновлены (audit, devices, fleet, orchestration, stream, tasks, vpn)
+- `NOCSidebar`: навигация для 5 новых страниц
+- `FleetMatrix`, `MultiStreamGrid`, `AuditDrawer`: оптимизация рендеринга
+- `useStreamStore`: reconnection state
+- `useBatches`, `useDevices`, `useTasks`: пагинация и abort controller
+
+#### Android
+- `CommandDispatcher.kt`: потокобезопасная маршрутизация команд
+- `DagRunner.kt`: восстановление после ошибок, timeout для шагов
+- `ScriptCacheManager.kt`: инвалидация кеша, лимиты размера
+- `FrameThrottle.kt`: adaptive frame rate throttling
+- `StreamingManagerImpl.kt`: reconnection, исправление утечек памяти
+- Deploy-скрипты для farm, LDPlayer, Waydroid
+
+#### Infrastructure
+- Docker Compose: зависимости сервисов и health checks
+- Tunnel: конфигурация Serveo SSH-туннеля
+- Agent config: обновление dev-окружения
+
+### Документация
+- Все документы обновлены до v4.7.0
+- `api-reference.md`: добавлены 9 новых API-групп
+- `architecture.md`: 12 новых модулей в таблице компонентов, 9 маршрутов фронтенда
+- `web-ui-guide.md`: 5 новых секций страниц (21-25)
+- `configuration.md`: секция Orchestration & Event System env vars
+- `deployment.md`: секция Background Tasks
+- `.gitignore`: расширен для tmp_*.json, dag_reg*.json, data/, reports/
+- Удалены мусорные файлы из docs/
+
+---
+
 ## [Unreleased]
 
-_Нет нереализованных изменений._
+---
+
+## [4.6.2] — 2026-03-05  <!-- PERF: Android APK Performance Optimization -->
+
+### Краткое описание
+Комплексная оптимизация производительности Android APK — снижение потребления CPU,
+RAM и GC pressure при работающем DAG-скрипте и стриме одновременно.
+
+### Оптимизации
+
+#### `StreamingManagerImpl.kt` — Bitmap reuse + resource leak fix
+- **Bitmap кеширование**: переиспользование одного Bitmap-буфера вместо alloc+recycle
+  на КАЖДЫЙ кадр. До: 30 аллокаций/GC в секунду (720×1280×4 = 3.5MB × 30 = 105MB/с
+  GC pressure). После: 1 аллокация на сессию стрима.
+- **Индивидуальный try-catch в stopInternal()**: каждый ресурс (VirtualDisplay, ImageReader,
+  HandlerThread, Encoder) освобождается независимо. До: если release() одного бросал
+  исключение, остальные утекали (5-10MB на сессию).
+
+#### `DagRunner.kt` — memory caps + routing cycle protection
+- **MAX_LOOP_LOGS = 200**: лимит записей в loop iterLogs. До: 1000 iter × 10 body nodes
+  = 10 000 entries → мегабайтный JSON → OOM при serialize на 512MB хипе.
+- **MAX_ROUTING_HOPS = 1000**: защита от бесконечного цикла on_success/on_failure.
+  До: node_A → node_B → node_A = ∞ цикл, 100% CPU до globalTimeout.
+- **MAX_LOG_OUTPUT_CHARS = 2048**: truncation output в node_logs. До: http_request body
+  256KB × 50 нод = 12.8MB в финальном result JSON.
+
+#### `ScriptCacheManager.kt` — atomic write
+- **Один apply() вместо двух** при LRU eviction. До: remove().apply() + putString().apply()
+  = 2 AES-GCM шифрования через EncryptedSharedPreferences + crash между ними → orphaned data.
+  После: одна криптозапись, атомарная и в 2× быстрее.
+
+#### `FrameThrottle.kt` — pre-computed threshold
+- **Long-арифметика вместо Float**: `frameDurationNs * 4L / 5L` вместо `frameDurationNs * 0.8`.
+  Исключена Long→Double конвертация в горячем пути MediaCodec callback (30 fps).
+
+---
+
+## [4.6.1] — 2026-03-05  <!-- TZ-04 Watchdog: Scheduler Task Lock Fix -->
+
+### Краткое описание
+Устранена критическая ошибка: планировщик создавал задачи каждые 20 минут
+(счётчик `total_runs` рос до 57+), но устройства выполняли только **первую** задачу.
+Виновник — Redis-лок `task_running:{device_id}` (TTL=3600s) не освобождался при отключении
+WebSocket-агента. Все последующие тики планировщика создавали задачи, dispatch возвращал
+`None` ("устройство занято"). Исправлено сквозным комплексом из 4 файлов + 9 тестов.
+
+### Исправлено (критично)
+
+#### `backend/tasks/task_heartbeat_watchdog.py` — новый файл
+- **Heartbeat watchdog** — фоновый цикл каждые 60с освобождает зависшие задачи
+- RUNNING: зависла если `started_at + timeout_seconds + STALE_BUFFER_SECONDS < NOW()`
+  (по умолчанию: 5 мин таймаут + 5 мин буфер = 10 минут)
+- QUEUED/ASSIGNED: зависла если `created_at + QUEUED_STALE_MINUTES < NOW()`
+  (по умолчанию: 60 минут)
+- После `db.commit()` → Redis: `mark_completed` (RUNNING, освобождает running lock),
+  `cancel_task` (QUEUED, удаляет из ZSet)
+- Агрегация `TaskBatch.failed`, финализация статуса batch (FAILED / PARTIAL / COMPLETED)
+- `FOR UPDATE SKIP LOCKED` для safe multi-instance
+- Новые ENV: `TASK_STALE_BUFFER_SECONDS` (default=300), `TASK_QUEUED_STALE_MINUTES` (default=60)
+
+#### `backend/services/task_queue.py`
+- Добавлен метод `release_device_lock(device_id)` — освобождает running lock
+  без знания `task_id` (нужно при WS disconnect)
+
+#### `backend/api/ws/android/router.py`
+- При WS disconnect (`finally`, `if removed`) немедленно вызывается
+  `TaskQueue.release_device_lock(device_id)` — устройство возвращается в пул
+  не дожидаясь watchdog-а или истечения TTL=3600s
+
+#### `backend/services/scheduler/scheduler_engine.py`
+- `_has_running_tasks`: добавлен фильтр `Task.created_at > stale_cutoff`
+  (зависшие задачи старше 30 мин не блокируют новый тик, константа `_CONFLICT_STALE_MINUTES=30`)
+- `_create_script_tasks`: в `input_params` добавляются метки `_source=scheduler`
+  и `_schedule_id` для трейсинга и дебаггинга
+
+#### `backend/main.py`
+- Импорт `backend.tasks.task_heartbeat_watchdog` регистрирует watchdog
+  в lifespan registry при старте приложения
+
+### Тесты
+
+#### `tests/orchestrator/test_task_watchdog.py` — 9 тестов (новый файл)
+| Тест | Сценарий |
+|------|----------|
+| W-1 | RUNNING задача (20 мин, threshold=10 мин) → TIMEOUT |
+| W-2 | RUNNING задача (2 мин, threshold=10 мин) → не трогаем |
+| W-3 | QUEUED задача (90 мин, порог=60 мин) → TIMEOUT |
+| W-4 | QUEUED задача (5 мин, порог=60 мин) → не трогаем |
+| W-5 | `batch.failed` инкрементируется при таймауте задачи |
+| W-6 | Batch финализируется → FAILED когда все задачи провалились |
+| W-7 | `_has_running_tasks` возвращает `False` для задач >30 мин (stale filter) |
+| W-8 | `release_device_lock` вызывает `redis.delete` на правильный ключ |
+| W-9 | `release_device_lock` idempotent при отсутствии ключа |
+
+### Технические детали
+
+**Порядок операций в watchdog (намеренный):**
+1. `SELECT ... FOR UPDATE SKIP LOCKED` — атомарный захват строк
+2. Обновление статусов задач + агрегация batch в памяти
+3. `db.commit()` — БД как источник истины
+4. Redis cleanup (`DEL running key` / `ZREM queue`) — только после успешного commit
+
+Если Redis cleanup упадёт — задача уже `TIMEOUT` в БД, следующий цикл watchdog
+пропустит её (неактивный статус), Redis lock истечёт через max(TTL=3600s).
+
+---
+
+## [4.6.0] — 2026-03-04
+
+### Краткое описание
+Синтетическое нагрузочное тестирование (фреймворк + 1 024 виртуальных агента на реальном
+бэкенде — FA 100%), пагинация до 5 000 записей на страницу (backend + frontend + OpenAPI),
+Android Agent hardening (wsLock, CPU delta debounce, encoder callback guard).
+9 атомарных коммитов в PR #17.
+
+---
+
+### Добавлено
+
+#### Нагрузочный фреймворк — `tests/load/` (33 файла, 6 030 строк)
+- **VirtualAgent** — полный FSM: CREATED → REGISTERING → CONNECTING → ONLINE → EXECUTING → DEAD
+- **AgentPool** — ramp-up с anti-stampede jitter, Fleet Availability мониторинг
+- **Orchestrator** — YAML-конфигурации сценариев, пошаговое исполнение
+- **MockServer** — полная эмуляция REST + WS Sphere Platform (FastAPI + websockets)
+- **MessageFactory** — 12 типов WS-сообщений (auth, ping, telemetry, task, vpn, stream)
+- **MetricsCollector** — HdrHistogram latency (p50/p95/p99), счётчики, gauges, JSON-экспорт
+- **ReportGenerator** — HTML-отчёт с Chart.js графиками
+- **H.264 NAL-эмулятор** — SPS/PPS/IDR генерация для стриминг-тестов
+
+#### 6 бизнес-сценариев
+- **S1** DeviceRegistration — массовая регистрация с дедупликацией
+- **S3** TaskExecution — DAG-исполнение с прогрессом
+- **S4** VpnEnrollment — VPN peer provisioning
+- **S5** VideoStreaming — H.264 binary frames
+- **S6** ReconnectStorm — массовые reconnect под нагрузкой
+- **Mixed** — комбинированный сценарий
+
+#### 4 YAML-конфигурации нагрузки
+- `scenario_quick.yml` — 32 → 128 агентов
+- `scenario_scalability.yml` — 32 → 10 000 агентов
+- `scenario_soak.yml` — 512 × 30 мин
+- `scenario_spike.yml` — 64 → 1 024 → 64
+
+#### Тестовые сьюты — 68 тестов
+- 30 юнит-тестов ядра (IdentityFactory, MetricsCollector, MessageFactory, CriteriaEvaluator)
+- 10 интеграционных тестов (REST + WS через MockServer)
+- 17 E2E тестов (mock-загрузка 256 → 512 → 1 024 агентов, FA 100%)
+- 11 тестов реального бэкенда (1 024 агента + 639 DAG-задач)
+
+#### Нагрузочный тест реального бэкенда — 1 024 агента
+- REST регистрация 1 024 устройств — 100% успех
+- WebSocket подключение + first-message auth — 100%
+- 639 DAG-задач исполнены параллельно — 0 ошибок
+- Fleet Availability = **100%** при 1 024 онлайн-агентах
+
+#### Документация нагрузочного тестирования
+- `docs/load-test/01-ARCHITECTURE.md` — архитектура фреймворка
+- `docs/load-test/02-SCENARIOS.md` — описание сценариев
+- `docs/load-test/03-METRICS-AND-CRITERIA.md` — метрики и критерии pass/fail
+- `docs/load-test/04-EXECUTION-REPORT.md` — отчёт о прогонах
+
+### Улучшено
+
+#### Backend — Пагинация до 5 000 записей
+- `per_page` max увеличен с 200 до 5 000 (все list-эндпоинты)
+- OpenAPI спецификация обновлена
+
+#### Frontend — Пагинация 5 000
+- `page_size=5000` в 5 компонентах: DevicesPage, GroupsPage, ScriptsPage,
+  TasksPage, FleetManagementPage
+- Axios lock для предотвращения параллельных запросов при быстрой навигации
+
+#### Backend — API Key приоритет
+- При наличии и Bearer JWT, и `X-API-Key` — API-ключ имеет приоритет
+- Формат ключа: `sphr_{env}_{64hex}` (256-bit энтропия)
+
+### Исправлено
+
+| # | Компонент | Проблема | Решение |
+|---|-----------|----------|---------|
+| 1 | Backend | `per_page` ограничен 200 — frontend не мог загрузить весь список | Увеличен до 5 000 |
+| 2 | Frontend | Параллельные запросы при быстрой навигации | Axios lock |
+| 3 | Android | WebSocket race condition при отправке из нескольких потоков | `wsLock` (ReentrantLock) |
+| 4 | Android | CPU usage скачки из-за частого опроса | CPU delta debounce (игнорировать <3%) |
+| 5 | Android | Шторм reconnect событий | Debounce 5с для reconnect |
+| 6 | Android | MediaCodec callback на disposed encoder | Guard `isEncoding` перед обращением |
+| 7 | Infra | CRLF line endings в Docker entrypoint.sh (exec format error) | Конвертация LF |
+
+---
+
+### Deployment Notes
+
+**Новые зависимости (нагрузочные тесты):**
+```bash
+pip install websockets aiohttp hdrhistogram pyyaml jinja2
+```
+
+**Запуск нагрузочных тестов:**
+```bash
+# Юнит + интеграционные + mock-загрузка
+pytest tests/load/ -v
+
+# Реальный бэкенд (требует Docker stack)
+pytest tests/load/test_real_backend.py -v --tb=short
+```
+
+**APK:** Пересобрать после merge: `cd android && ./gradlew assembleDevDebug`
 
 ---
 

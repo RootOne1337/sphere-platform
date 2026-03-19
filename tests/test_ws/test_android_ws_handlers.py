@@ -259,10 +259,13 @@ class TestHandleDeviceEvent:
         with patch(
             "backend.websocket.event_publisher.get_event_publisher",
             return_value=mock_publisher,
+        ), patch(
+            "backend.api.ws.android.router.AsyncSessionLocal",
         ):
             await handle_device_event(
                 DEVICE_ID,
-                {"type": "event", "org_id": "org-1", "status": "busy"},
+                ORG_ID,
+                {"type": "event", "org_id": ORG_ID, "status": "busy"},
             )
 
         mock_publisher.emit.assert_called_once()
@@ -274,8 +277,10 @@ class TestHandleDeviceEvent:
         with patch(
             "backend.websocket.event_publisher.get_event_publisher",
             return_value=None,
+        ), patch(
+            "backend.api.ws.android.router.AsyncSessionLocal",
         ):
-            await handle_device_event(DEVICE_ID, {"type": "event"})
+            await handle_device_event(DEVICE_ID, ORG_ID, {"type": "event"})
 
     async def test_publisher_exception_is_swallowed(self):
         """EventPublisher.emit raises → logged as debug, not re-raised."""
@@ -285,9 +290,11 @@ class TestHandleDeviceEvent:
         with patch(
             "backend.websocket.event_publisher.get_event_publisher",
             return_value=mock_publisher,
+        ), patch(
+            "backend.api.ws.android.router.AsyncSessionLocal",
         ):
             # Must not raise — fleet events are best-effort
-            await handle_device_event(DEVICE_ID, {"type": "event"})
+            await handle_device_event(DEVICE_ID, ORG_ID, {"type": "event"})
 
     async def test_event_type_is_device_status_change(self):
         """Incoming device events map to DEVICE_STATUS_CHANGE event type."""
@@ -304,10 +311,13 @@ class TestHandleDeviceEvent:
         with patch(
             "backend.websocket.event_publisher.get_event_publisher",
             return_value=mock_publisher,
+        ), patch(
+            "backend.api.ws.android.router.AsyncSessionLocal",
         ):
             await handle_device_event(
                 DEVICE_ID,
-                {"type": "event", "org_id": "some-org"},
+                ORG_ID,
+                {"type": "event", "org_id": ORG_ID},
             )
 
         assert len(captured) == 1

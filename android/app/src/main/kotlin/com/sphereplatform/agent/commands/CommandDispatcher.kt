@@ -20,6 +20,8 @@ import com.sphereplatform.agent.vpn.SphereVpnManager
 import com.sphereplatform.agent.ws.SphereWebSocketClient
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -64,11 +66,16 @@ class CommandDispatcher @Inject constructor(
     // If a second DAG arrives while one is running, it queues and waits.
     private val dagMutex = Mutex()
 
+    // FIX AUDIT-2.5: Application-level heartbeat watchdog
+    // Если сервер не шлёт ping >90с — WS, скорее всего, мёртв
+    @Volatile private var lastPingAt = System.currentTimeMillis()
+    private val HEARTBEAT_TIMEOUT_MS = 90_000L // 90с (ping приходит каждые ~15-30с)
+
+    /** FIX D1: Job heartbeat watchdog — отменяется в stop(). */
+    private var heartbeatJob: kotlinx.coroutines.Job? = null
+
     fun start() {
         wsClient.onJsonMessage = { msg ->
-            // FIX ARCH-4: ping обрабатываем НЕМЕДЛЕННО в потоке callback'а,
-            // не через scope.launch. DagRunner может блокировать Dispatchers.IO,
-            // а pong ДОЛЖЕН уйти в рамках heartbeat timeout (TZ-03 SPLIT-4: 45s).
             val type = msg["type"]?.jsonPrimitive?.contentOrNull
             if (type == "ping") {
                 handlePingImmediate(msg)
@@ -77,17 +84,76 @@ class CommandDispatcher @Inject constructor(
             }
         }
 
-        // При reconnect — отправляем накопленные результаты DAG
+        // При reconnect — отправляем накопленные результаты DAG и сбрасываем heartbeat
         wsClient.onConnected = {
+            lastPingAt = System.currentTimeMillis()
             scope.launch { dagRunner.flushPendingResults() }
         }
+
+        // FIX AUDIT-2.5: Heartbeat watchdog — если сервер не шлёт ping > 90с,
+        // принудительный reconnect. Компенсирует кейс когда readTimeout
+        // не срабатывает (данные шли, но ping прекратился).
+        // FIX D1: Сохраняем Job для отмены в stop(). Без этого при рестарте
+        // сервиса создавалось N дублирующих watchdog-циклов.
+        heartbeatJob?.cancel()
+        heartbeatJob = scope.launch(Dispatchers.Default) {
+            while (true) {
+                delay(30_000L) // Проверяем каждые 30с
+                if (wsClient.isConnected) {
+                    val elapsed = System.currentTimeMillis() - lastPingAt
+                    if (elapsed > HEARTBEAT_TIMEOUT_MS) {
+                        Timber.w("Heartbeat watchdog: no ping for ${elapsed/1000}s — forcing reconnect")
+                        wsClient.forceReconnectNow()
+                        lastPingAt = System.currentTimeMillis() // Сброс чтобы не спамить
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * FIX D1: Останавливает heartbeat watchdog и сбрасывает callbacks.
+     * Вызывается из SphereAgentService.onDestroy() перед отменой serviceScope.
+     */
+    fun stop() {
+        heartbeatJob?.cancel()
+        heartbeatJob = null
+        wsClient.onJsonMessage = null
+        wsClient.onConnected = null
+    }
+
+    /**
+     * FIX D7: TTL-проверка для управляющих команд (CANCEL/PAUSE/RESUME_DAG).
+     * Эти команды обходят IncomingCommand десериализацию, поэтому TTL
+     * проверяется вручную. Защита от replay attack: повторная отправка
+     * устаревшей CANCEL_DAG не должна останавливать новый DAG.
+     *
+     * @return true если команда просрочена и был отправлен failed ack.
+     */
+    private fun isControlCommandExpired(msg: JsonObject, cmdId: String): Boolean {
+        val signedAt = msg["signed_at"]?.jsonPrimitive?.longOrNull ?: return false
+        val ttl = msg["ttl_seconds"]?.jsonPrimitive?.intOrNull ?: 60
+        val ageSeconds = System.currentTimeMillis() / 1000 - signedAt
+        if (ageSeconds > ttl) {
+            Timber.w("[$cmdId] Control command expired (age=${ageSeconds}s > ttl=${ttl}s)")
+            ack(cmdId, "failed", error = "expired")
+            return true
+        }
+        return false
     }
 
     /**
      * Обрабатывает ping синхронно, без корутинного пула.
      * Критично для длинных DAG: executor потоки заняты, но pong ДОЛЖЕН уйти.
+     *
+     * FIX M5: Метрики берутся из кэша DeviceStatusProvider (5с TTL),
+     * поэтому блокировка WS reader thread минимальна (<1ms если кэш горячий).
+     * При холодном кэше getCpuUsage() парсит /proc/stat (procfs, ~5ms),
+     * что приемлемо для WS reader thread.
      */
     private fun handlePingImmediate(msg: JsonObject) {
+        // FIX AUDIT-2.5: Обновляем heartbeat timestamp
+        lastPingAt = System.currentTimeMillis()
         val ts = msg["ts"]?.jsonPrimitive?.doubleOrNull ?: 0.0
         wsClient.sendJson(buildJsonObject {
             put("type", "pong")
@@ -146,6 +212,8 @@ class CommandDispatcher @Inject constructor(
             // ── CANCEL_DAG: bypass dagMutex ──
             "CANCEL_DAG" -> {
                 val cmdId = msg["command_id"]?.jsonPrimitive?.contentOrNull ?: ""
+                // FIX D7: TTL-проверка для управляющих команд (защита от replay attack)
+                if (isControlCommandExpired(msg, cmdId)) return
                 Timber.i("[CANCEL_DAG] Received cancel for command=$cmdId")
                 dagRunner.requestCancel()
                 ack(cmdId, "completed")
@@ -154,6 +222,7 @@ class CommandDispatcher @Inject constructor(
             // ── PAUSE_DAG: bypass dagMutex, пауза работающего DAG между нодами ──
             "PAUSE_DAG" -> {
                 val cmdId = msg["command_id"]?.jsonPrimitive?.contentOrNull ?: ""
+                if (isControlCommandExpired(msg, cmdId)) return
                 Timber.i("[PAUSE_DAG] Received pause for command=$cmdId")
                 dagRunner.requestPause()
                 ack(cmdId, "completed")
@@ -162,6 +231,7 @@ class CommandDispatcher @Inject constructor(
             // ── RESUME_DAG: bypass dagMutex, снятие паузы ──
             "RESUME_DAG" -> {
                 val cmdId = msg["command_id"]?.jsonPrimitive?.contentOrNull ?: ""
+                if (isControlCommandExpired(msg, cmdId)) return
                 Timber.i("[RESUME_DAG] Received resume for command=$cmdId")
                 dagRunner.requestResume()
                 ack(cmdId, "completed")
@@ -240,6 +310,9 @@ class CommandDispatcher @Inject constructor(
         CommandType.EXECUTE_DAG -> {
             val dagName = cmd.payload["dag_name"]?.jsonPrimitive?.contentOrNull
             val dagHash = cmd.payload["dag_hash"]?.jsonPrimitive?.contentOrNull
+            // FIX: timeout_ms лежит в payload, а не внутри dag.
+            // Без этого DagRunner использовал fallback 1 час → DAG зацикливался бесконечно.
+            val timeoutMs = cmd.payload["timeout_ms"]?.jsonPrimitive?.longOrNull
 
             // Контент-адресабльный кеш: если имя + hash присланы — ищем в кеше
             val dagJson: JsonObject = if (dagName != null && dagHash != null) {
@@ -272,9 +345,16 @@ class CommandDispatcher @Inject constructor(
                     ?: error("Поле 'dag' обязательно в payload EXECUTE_DAG")
             }
 
-            // Mutex гарантирует не более одного активного DAG за раз
+            // FIX: Если предыдущий DAG ещё выполняется (dagMutex занят) —
+            // отменяем его через requestCancel() и ждём освобождения mutex.
+            // Без этого: зацикленный DAG удерживал mutex → новая задача блокировалась
+            // навсегда → пользователь видел «скрипт запускается только один раз».
+            if (dagMutex.isLocked) {
+                Timber.w("[EXECUTE_DAG] Предыдущий DAG ещё выполняется — отменяем для запуска нового")
+                dagRunner.requestCancel()
+            }
             dagMutex.withLock {
-                dagRunner.execute(cmd.command_id, dagJson)
+                dagRunner.execute(cmd.command_id, dagJson, timeoutMs)
             }
         }
 
@@ -392,3 +472,6 @@ private val kotlinx.serialization.json.JsonPrimitive.doubleOrNull: Double?
 
 private val kotlinx.serialization.json.JsonPrimitive.intOrNull: Int?
     get() = runCatching { this.content.toInt() }.getOrNull()
+
+private val kotlinx.serialization.json.JsonPrimitive.longOrNull: Long?
+    get() = runCatching { this.content.toLong() }.getOrNull()

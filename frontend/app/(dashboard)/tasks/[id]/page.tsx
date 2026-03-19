@@ -47,6 +47,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; 
   completed: { label: 'Completed', color: 'text-green-400', bg: 'bg-green-500/10', border: 'border-green-500/20' },
   failed: { label: 'Failed', color: 'text-red-400', bg: 'bg-red-500/10', border: 'border-red-500/20' },
   cancelled: { label: 'Cancelled', color: 'text-gray-400', bg: 'bg-gray-500/10', border: 'border-gray-500/20' },
+  timeout: { label: 'Timeout', color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/20' },
 };
 
 const ACTION_ICONS: Record<string, string> = {
@@ -123,6 +124,9 @@ export default function TaskDetailPage({ params }: Props) {
         )}
         {(task.status === 'failed') && (
           <div className="absolute inset-0 bg-gradient-to-r from-red-500/10 via-transparent to-transparent opacity-50" />
+        )}
+        {(task.status === 'timeout') && (
+          <div className="absolute inset-0 bg-gradient-to-r from-amber-500/10 via-transparent to-transparent opacity-50" />
         )}
 
         <div className="relative p-6 flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -204,8 +208,8 @@ export default function TaskDetailPage({ params }: Props) {
       {/* ── Quick Info Grid ────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
         <InfoCard icon={ActivitySquare} label="Priority" value={String(task.priority)} />
-        <InfoCard icon={MonitorSmartphone} label="Device ID" value={task.device_id} isMono />
-        <InfoCard icon={FileCode2} label="Script ID" value={task.script_id} isMono />
+        <InfoCard icon={MonitorSmartphone} label="Устройство" value={task.device_name || task.device_id} isMono />
+        <InfoCard icon={FileCode2} label="Скрипт" value={task.script_name || task.script_id} isMono />
         <InfoCard icon={Box} label="Batch ID" value={task.batch_id || 'N/A'} isMono />
         {task.wave_index != null && <InfoCard icon={ListOrdered} label="Wave Index" value={String(task.wave_index)} />}
         <InfoCard icon={Clock} label="Created At" value={new Date(task.created_at).toLocaleString()} />

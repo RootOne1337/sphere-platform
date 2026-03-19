@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 # ── Запросы ──────────────────────────────────────────────────────────────────
 
@@ -50,6 +50,22 @@ class CreateScheduleRequest(BaseModel):
     # Лимит запусков
     max_runs: int | None = Field(None, ge=1, le=100_000)
 
+    @field_validator("one_shot_at", "active_from", "active_until", mode="before")
+    @classmethod
+    def _normalize_naive_datetime(cls, v: datetime | None) -> datetime | None:
+        """Приводит naive datetime к UTC-aware.
+
+        Клиент отправляет datetime-local без суффикса timezone (например,
+        '2026-03-10T15:30'). Pydantic v2 парсит это как naive object.
+        Без нормализации в _compute_next_fire возникает TypeError при
+        сравнении naive и aware datetime.
+        """
+        if v is None:
+            return None
+        if isinstance(v, datetime) and v.tzinfo is None:
+            return v.replace(tzinfo=timezone.utc)
+        return v
+
     @model_validator(mode="after")
     def _validate_triggers(self) -> "CreateScheduleRequest":
         """Проверка: ровно один триггер обязателен."""
@@ -92,6 +108,9 @@ class UpdateScheduleRequest(BaseModel):
     interval_seconds: int | None = Field(None, ge=60, le=86_400)
     one_shot_at: datetime | None = None
     timezone: str | None = Field(None, max_length=64)
+    target_type: str | None = Field(None, description="script | pipeline")
+    script_id: uuid.UUID | None = None
+    pipeline_id: uuid.UUID | None = None
     input_params: dict[str, Any] | None = None
     device_ids: list[uuid.UUID] | None = None
     group_id: uuid.UUID | None = None
@@ -102,6 +121,22 @@ class UpdateScheduleRequest(BaseModel):
     active_from: datetime | None = None
     active_until: datetime | None = None
     max_runs: int | None = Field(None, ge=1, le=100_000)
+
+    @field_validator("one_shot_at", "active_from", "active_until", mode="before")
+    @classmethod
+    def _normalize_naive_datetime(cls, v: datetime | None) -> datetime | None:
+        """Приводит naive datetime к UTC-aware.
+
+        Клиент отправляет datetime-local без суффикса timezone (например,
+        '2026-03-10T15:30'). Pydantic v2 парсит это как naive object.
+        Без нормализации в _compute_next_fire возникает TypeError при
+        сравнении naive и aware datetime.
+        """
+        if v is None:
+            return None
+        if isinstance(v, datetime) and v.tzinfo is None:
+            return v.replace(tzinfo=timezone.utc)
+        return v
 
 
 # ── Ответы ───────────────────────────────────────────────────────────────────

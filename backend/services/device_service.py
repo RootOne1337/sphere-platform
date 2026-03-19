@@ -68,6 +68,7 @@ class DeviceService:
             location_ids=location_ids,
             tags=device.tags or [],
             notes=device.notes,
+            server_name=device.server_name,
             created_at=device.created_at,
             updated_at=device.updated_at,
         )
@@ -235,6 +236,8 @@ class DeviceService:
             device.notes = data.notes
         if data.is_active is not None:
             device.is_active = data.is_active
+        if data.server_name is not None:
+            device.server_name = data.server_name if data.server_name != "" else None
 
         # Обновить meta fields (только если явно переданы)
         meta = dict(device.meta or {})

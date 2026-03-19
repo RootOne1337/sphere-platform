@@ -13,6 +13,8 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.RequestBody.Companion.toRequestBody
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
@@ -60,7 +62,45 @@ class DagRunner @Inject constructor(
     private val adbActions: AdbActionExecutor,
     private val wsClient: SphereWebSocketClient,
     private val prefs: EncryptedSharedPreferences,
+    private val httpClient: okhttp3.OkHttpClient,
 ) {
+    companion object {
+        /** FIX AUDIT-3.3: Лимит нод в DAG — защита от OOM */
+        private const val MAX_DAG_NODES = 500
+        /** FIX AUDIT-3.6: Лимит pending results при offline */
+        private const val MAX_PENDING_RESULTS = 50
+        /** FIX H2: Максимальная глубина вложенности loop → executeNode. Защита от StackOverflow. */
+        private const val MAX_EXECUTE_DEPTH = 10
+        /** FIX H5: Макс размер HTTP response body в DAG http_request */
+        private const val MAX_HTTP_RESPONSE_CHARS = 256 * 1024  // 256KB
+        /**
+         * FIX F5: Макс размер одного сериализованного pending result.
+         * DAG с сотнями нод может сгенерировать огромный node_logs → раздувание
+         * EncryptedSharedPreferences → долгие I/O при каждом commit().
+         */
+        private const val MAX_PENDING_RESULT_CHARS = 128 * 1024  // 128KB
+        /**
+         * PERF: Лимит записей в iterLogs внутри loop-ноды.
+         * 1000 iterations × 10 body nodes = 10 000 log entries → при serialize
+         * мегабайтный JSON → OOM на слабых эмуляторах (512MB heap).
+         * 200 записей достаточно для диагностики любого loop.
+         */
+        private const val MAX_LOOP_LOGS = 200
+        /**
+         * PERF: Лимит hop'ов при маршрутизации on_success/on_failure.
+         * Без него: node_A.on_failure → node_B.on_failure → node_A → бесконечный цикл,
+         * 100% CPU, DAG никогда не завершится. 500 hop'ов = 500-узловой DAG × 1 проход.
+         * При циклических DAG (29 нод × ~17 циклов) — достаточно для выполнения скрипта
+         * в рамках типичного 5-мин таймаута, при этом защищает от бесконечного цикла.
+         */
+        private const val MAX_ROUTING_HOPS = 500
+        /**
+         * PERF: Макс длина output.toString() в node_logs.
+         * Без лимита: http_request body 256KB × 50 нод = 12.8MB в node_logs JSON.
+         */
+        private const val MAX_LOG_OUTPUT_CHARS = 2048
+    }
+
     private val json = Json { ignoreUnknownKeys = true }
 
     @Volatile
@@ -96,13 +136,33 @@ class DagRunner @Inject constructor(
 
     // ── Public API ────────────────────────────────────────────────────────────
 
-    suspend fun execute(commandId: String, dagJson: JsonObject): JsonObject {
-        cancelRequested = false  // reset on new execution
-        pauseRequested  = false  // reset on new execution
+    /**
+     * Исполняет DAG-скрипт.
+     *
+     * @param commandId  — уникальный ID команды/задачи (используется для progress/ack)
+     * @param dagJson    — JSON-объект с DAG-описанием (entry_node, nodes, ...)
+     * @param timeoutMs  — таймаут исполнения из payload (приоритетнее DAG-поля timeout_ms).
+     *                     Без явного значения: берётся из dagJson["timeout_ms"] или 300_000ms (5 мин).
+     */
+    suspend fun execute(commandId: String, dagJson: JsonObject, timeoutMs: Long? = null): JsonObject {
+        cancelRequested = false  // сброс при новом запуске
+        pauseRequested  = false  // сброс при новом запуске
 
         val entryNodeId = dagJson["entry_node"]!!.jsonPrimitive.content
         val nodesArray = dagJson["nodes"]!!.jsonArray          // LIST, не map!
-        val globalTimeoutMs = dagJson["timeout_ms"]?.jsonPrimitive?.longOrNull ?: 3_600_000L
+        // Приоритет: явный параметр → поле в DAG → дефолт 5 мин.
+        // FIX: Ранее читался dagJson["timeout_ms"], но backend кладёт timeout_ms в payload,
+        // а НЕ внутрь dag. Результат: всегда fallback на 3_600_000ms → DAG крутился 1 час
+        // вместо 5 мин, блокируя dagMutex и не давая запуститься следующей задаче.
+        val globalTimeoutMs = timeoutMs
+            ?: dagJson["timeout_ms"]?.jsonPrimitive?.longOrNull
+            ?: 300_000L
+
+        // FIX AUDIT-3.3: Лимит нод — защита от OOM на слабом эмуляторе.
+        // 500 нод достаточно для любого реального DAG-скрипта.
+        require(nodesArray.size <= MAX_DAG_NODES) {
+            "DAG слишком большой: ${nodesArray.size} нод (лимит: $MAX_DAG_NODES)"
+        }
 
         // Build id → node object map for O(1) lookup
         val nodeMap: Map<String, JsonObject> = nodesArray.associate { el ->
@@ -118,9 +178,25 @@ class DagRunner @Inject constructor(
 
         var currentNodeId: String? = entryNodeId
 
+        // PERF: Счётчик hop'ов маршрутизации — защита от зацикливания
+        // on_success/on_failure. Без него: A→B→A = ∞ цикл, 100% CPU.
+        var routingHops = 0
+
         try {
         withTimeout(globalTimeoutMs) {
             while (currentNodeId != null) {
+                // PERF: Проверка лимита маршрутных переходов
+                routingHops++
+                if (routingHops > MAX_ROUTING_HOPS) {
+                    Timber.e("[DAG] Routing hops exceeded $MAX_ROUTING_HOPS — возможен цикл, прерываем")
+                    success = false
+                    failedNode = currentNodeId
+                    nodeLogs.add(makeLog(
+                        currentNodeId ?: "unknown", "ROUTING_CYCLE", 0L, false,
+                        "DAG routing exceeded $MAX_ROUTING_HOPS hops — probable cycle detected", null
+                    ))
+                    break
+                }
                 // ── Check for cancel request from backend ──────────────
                 if (cancelRequested) {
                     Timber.i("[DAG] Cancelled by user at node '$currentNodeId'")
@@ -293,8 +369,21 @@ class DagRunner @Inject constructor(
     private suspend fun executeNode(
         type: String,
         action: JsonObject,
+        ctx: MutableMap<String, Any?>,        depth: Int = 0,
+    ): Any? {
+        // FIX H2: Защита от глубокой рекурсии (loop внутри loop внутри loop...).
+        // На слабых эмуляторах стек корутин ограничен — StackOverflowError → crash.
+        require(depth < MAX_EXECUTE_DEPTH) {
+            "DAG executeNode depth limit exceeded ($MAX_EXECUTE_DEPTH) — слишком глубокая вложенность loop"
+        }
+        return executeNodeInternal(type, action, ctx, depth)
+    }
+
+    private suspend fun executeNodeInternal(
+        type: String,
+        action: JsonObject,
         ctx: MutableMap<String, Any?>,
-    ): Any? = when (type) {
+        depth: Int,    ): Any? = when (type) {
 
         "tap" -> {
             adbActions.tap(action["x"]!!.jsonPrimitive.int, action["y"]!!.jsonPrimitive.int)
@@ -760,8 +849,14 @@ class DagRunner @Inject constructor(
                 else               -> false
             }
 
-            while (shouldContinue() && iterations < maxIterations) {
+            while (shouldContinue() && iterations < maxIterations && !cancelRequested) {
                 for (bodyEl in bodyArray) {
+                    // PERF: Лимит на кол-во логов в loop — защита от OOM при serialize.
+                    // 1000 iter × 10 nodes = 10 000 entries → мегабайтный JSON → crash.
+                    if (iterLogs.size >= MAX_LOOP_LOGS) {
+                        Timber.w("[DAG][loop] Log limit reached ($MAX_LOOP_LOGS) — дальнейшие логи пропускаются")
+                        break
+                    }
                     val bodyNode = bodyEl.jsonObject
                     val bNodeId  = bodyNode["id"]?.jsonPrimitive?.contentOrNull ?: "loop_body_$iterations"
                     val bAction  = bodyNode["action"]?.jsonObject
@@ -769,7 +864,7 @@ class DagRunner @Inject constructor(
                     val bType = bAction["type"]!!.jsonPrimitive.content
                     val bTs   = System.currentTimeMillis()
                     try {
-                        val bResult = executeNode(bType, bAction, ctx)
+                        val bResult = executeNode(bType, bAction, ctx, depth + 1)
                         ctx[bNodeId] = bResult
                         iterLogs.add(mapOf("id" to bNodeId, "iter" to iterations, "ok" to true, "ms" to System.currentTimeMillis() - bTs))
                     } catch (e: Exception) {
@@ -783,7 +878,7 @@ class DagRunner @Inject constructor(
                 iterations++
                 if (whileXpath != null) delay(pollMs)
             }
-            mapOf("iterations" to iterations, "logs" to iterLogs)
+            mapOf("iterations" to iterations, "logs" to iterLogs, "logs_truncated" to (iterLogs.size >= MAX_LOOP_LOGS))
         }
 
         "start" -> null
@@ -817,56 +912,79 @@ class DagRunner @Inject constructor(
         put("action_type", actionType)
         put("duration_ms", durationMs)
         put("success", success)
-        error?.let { put("error", it) }
-        output?.let { put("output", it.toString()) }
+        error?.let { put("error", it.take(512)) }
+        // PERF: Truncate output — без лимита http_request body (256KB) × 50 нод
+        // = 12.8MB в node_logs JSON → OOM при JSON.encodeToString().
+        output?.let {
+            val str = it.toString()
+            put("output", if (str.length <= MAX_LOG_OUTPUT_CHARS) str
+                          else str.take(MAX_LOG_OUTPUT_CHARS) + "…[truncated ${str.length - MAX_LOG_OUTPUT_CHARS} chars]")
+        }
     }
 
     private fun savePendingResult(commandId: String, result: JsonObject) {
         val pending = prefs.getStringSet("pending_dag_results", mutableSetOf())
             ?.toMutableSet() ?: mutableSetOf()
+
+        // FIX AUDIT-3.6: Лимит pending results — защита от раздувания
+        // EncryptedSharedPreferences при длительном offline
+        if (pending.size >= MAX_PENDING_RESULTS) {
+            Timber.w("[DAG] Pending results limit reached ($MAX_PENDING_RESULTS) — dropping oldest")
+            // Удаляем самый старый результат (первый в Set)
+            pending.iterator().let { it.next(); it.remove() }
+        }
+
         pending.add(json.encodeToString(buildJsonObject {
             put("command_id", commandId)
             put("result", result)
             put("saved_at", System.currentTimeMillis())
-        }))
+        }).take(MAX_PENDING_RESULT_CHARS))
         prefs.edit().putStringSet("pending_dag_results", pending).apply()
-        Timber.i("[DAG] Result saved locally, command=$commandId")
+        Timber.i("[DAG] Result saved locally, command=$commandId (pending: ${pending.size})")
     }
 
     // Кеширование скриптов вынесено в ScriptCacheManager (content-addressable, LRU)
 
     // ── HTTP helper ───────────────────────────────────────────────────────────
 
+    /**
+     * FIX H4: HTTP-запросы в DAG через OkHttpClient.
+     * Ранее использовался java.net.HttpURLConnection — обход cert pinning,
+     * отсутствие auth interceptor, нет connection pooling. Теперь все
+     * HTTP-вызовы идут через shared OkHttpClient с теми же защитами,
+     * что и остальной агент.
+     */
     private suspend fun performHttpRequest(
         url: String,
         method: String,
         body: String?,
         headers: JsonObject?,
-        timeoutMs: Int,
+        @Suppress("UNUSED_PARAMETER") timeoutMs: Int,
     ): Map<String, Any?> = withContext(Dispatchers.IO) {
-        val conn = java.net.URL(url).openConnection() as java.net.HttpURLConnection
-        try {
-            conn.requestMethod = method
-            conn.connectTimeout = timeoutMs
-            conn.readTimeout = timeoutMs
-            conn.setRequestProperty("Content-Type", "application/json")
-            conn.setRequestProperty("User-Agent", "SphereAgent/1.0")
-            headers?.forEach { (k, v) ->
-                conn.setRequestProperty(k, v.jsonPrimitive.contentOrNull ?: "")
-            }
-            if (body != null && method in listOf("POST", "PUT", "PATCH")) {
-                conn.doOutput = true
-                conn.outputStream.bufferedWriter().use { it.write(body) }
-            }
-            val statusCode   = conn.responseCode
+        val requestBuilder = okhttp3.Request.Builder().url(url)
+        requestBuilder.addHeader("User-Agent", "SphereAgent/1.0")
+        headers?.forEach { (k, v) ->
+            requestBuilder.addHeader(k, v.jsonPrimitive.contentOrNull ?: "")
+        }
+        val requestBody = if (body != null && method in listOf("POST", "PUT", "PATCH")) {
+            body.toByteArray().toRequestBody("application/json; charset=utf-8".toMediaType())
+        } else null
+        requestBuilder.method(method, requestBody)
+
+        // FIX H4: Используем shared OkHttpClient (инжектирован через DI) —
+        // cert pinning, auth interceptor, connection pool включены
+        httpClient.newCall(requestBuilder.build()).execute().use { response ->
             val responseBody = try {
-                conn.inputStream.bufferedReader().readText()
+                // FIX H5: Лимит на размер response body
+                response.body?.charStream()?.use { reader ->
+                    val buf = CharArray(MAX_HTTP_RESPONSE_CHARS)
+                    val read = reader.read(buf)
+                    if (read > 0) String(buf, 0, read) else ""
+                } ?: ""
             } catch (e: Exception) {
-                conn.errorStream?.bufferedReader()?.readText() ?: ""
+                ""
             }
-            mapOf("status_code" to statusCode, "body" to responseBody)
-        } finally {
-            conn.disconnect()
+            mapOf("status_code" to response.code, "body" to responseBody)
         }
     }
 }

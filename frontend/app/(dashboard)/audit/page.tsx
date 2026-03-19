@@ -45,6 +45,16 @@ export default function AuditLogsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedEvent, setSelectedEvent] = useState<AuditEvent | null>(null);
 
+  // Панель фильтров
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [filterStatus, setFilterStatus] = useState<string>('');
+  const [filterAction, setFilterAction] = useState<string>('');
+  const [filterUser, setFilterUser] = useState<string>('');
+
+  // Уникальные значения для дропдаунов фильтров
+  const uniqueActions = useMemo(() => [...new Set(events.map((e) => e.action))].sort(), [events]);
+  const uniqueUsers = useMemo(() => [...new Set(events.map((e) => e.user))].sort(), [events]);
+
   const StatusIcon = ({ status }: { status: AuditEvent['status'] }) => {
     switch (status) {
       case 'SUCCESS': return <CheckCircle2 className="w-4 h-4 text-success" />;
@@ -56,22 +66,57 @@ export default function AuditLogsPage() {
 
   // Simple parser for our query builder syntax -> "status:FAILED user:admin"
   const filteredEvents = useMemo(() => {
-    if (!searchQuery.trim()) return events;
+    let result = events;
+
+    // Фильтры из панели
+    if (filterStatus) {
+      result = result.filter((e) => e.status === filterStatus);
+    }
+    if (filterAction) {
+      result = result.filter((e) => e.action === filterAction);
+    }
+    if (filterUser) {
+      result = result.filter((e) => e.user === filterUser);
+    }
+
+    if (!searchQuery.trim()) return result;
 
     const terms = searchQuery.toLowerCase().split(' ').filter(Boolean);
-    return events.filter(e => {
+    return result.filter(e => {
       return terms.every(term => {
         if (term.includes(':')) {
           const [key, val] = term.split(':');
-          if (key === 'status') return e.status.toLowerCase() === val;
-          if (key === 'action') return e.action.toLowerCase().includes(val);
-          if (key === 'user') return e.user.toLowerCase().includes(val);
+          if (key === 'status') return (e.status || '').toLowerCase() === val;
+          if (key === 'action') return (e.action || '').toLowerCase().includes(val);
+          if (key === 'user') return (e.user || '').toLowerCase().includes(val);
         }
         // Fallback global search
         return JSON.stringify(e).toLowerCase().includes(term);
       });
     });
-  }, [events, searchQuery]);
+  }, [events, searchQuery, filterStatus, filterAction, filterUser]);
+
+  /** Экспорт отфильтрованных событий в CSV */
+  const handleExportCSV = () => {
+    if (filteredEvents.length === 0) return;
+    const headers = ['Timestamp', 'Status', 'Action', 'User', 'Resource', 'IP'];
+    const rows = filteredEvents.map((e) => [
+      e.timestamp,
+      e.status,
+      e.action,
+      e.user,
+      e.resource,
+      e.ip,
+    ]);
+    const csv = [headers, ...rows].map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `audit-export-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <div className="flex flex-col h-full bg-card relative overflow-hidden">
@@ -93,19 +138,68 @@ export default function AuditLogsPage() {
             <AuditQueryBuilder value={searchQuery} onChange={setSearchQuery} />
           </div>
 
-          <Button variant="outline" size="sm" className="h-9 border-border hover:bg-border">
+          <Button variant="outline" size="sm" className="h-9 border-border hover:bg-border" onClick={() => setFiltersOpen(!filtersOpen)}>
             <Filter className="w-4 h-4 mr-2" />
-            <span className="text-[10px] uppercase font-bold tracking-widest">Filters</span>
+            <span className="text-[10px] uppercase font-bold tracking-widest">Filters{(filterStatus || filterAction || filterUser) ? ' ●' : ''}</span>
           </Button>
-          <Button variant="default" size="sm" className="h-9 bg-primary/20 text-primary hover:bg-primary/30 border border-primary/50">
+          <Button variant="default" size="sm" className="h-9 bg-primary/20 text-primary hover:bg-primary/30 border border-primary/50" onClick={handleExportCSV} disabled={filteredEvents.length === 0}>
             <Download className="w-4 h-4 mr-2" />
-            <span className="text-[10px] uppercase font-bold tracking-widest">Export CSV</span>
+            <span className="text-[10px] uppercase font-bold tracking-widest">Export CSV ({filteredEvents.length})</span>
           </Button>
         </div>
       </div>
 
       {/* Table Area */}
       <div className="flex-1 overflow-auto p-6 relative">
+        {/* Панель фильтров */}
+        {filtersOpen && (
+          <div className="mb-4 flex items-center gap-3 flex-wrap p-3 bg-muted border border-border rounded-sm">
+            <div className="flex items-center gap-1.5">
+              <label className="text-[10px] font-mono text-muted-foreground uppercase">Status:</label>
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="px-2 py-1 rounded border border-border bg-background text-xs font-mono"
+              >
+                <option value="">Все</option>
+                <option value="SUCCESS">SUCCESS</option>
+                <option value="FAILED">FAILED</option>
+                <option value="WARNING">WARNING</option>
+              </select>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <label className="text-[10px] font-mono text-muted-foreground uppercase">Action:</label>
+              <select
+                value={filterAction}
+                onChange={(e) => setFilterAction(e.target.value)}
+                className="px-2 py-1 rounded border border-border bg-background text-xs font-mono"
+              >
+                <option value="">Все</option>
+                {uniqueActions.map((a) => (
+                  <option key={a} value={a}>{a}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <label className="text-[10px] font-mono text-muted-foreground uppercase">User:</label>
+              <select
+                value={filterUser}
+                onChange={(e) => setFilterUser(e.target.value)}
+                className="px-2 py-1 rounded border border-border bg-background text-xs font-mono"
+              >
+                <option value="">Все</option>
+                {uniqueUsers.map((u) => (
+                  <option key={u} value={u}>{u}</option>
+                ))}
+              </select>
+            </div>
+            {(filterStatus || filterAction || filterUser) && (
+              <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => { setFilterStatus(''); setFilterAction(''); setFilterUser(''); }}>
+                Сбросить
+              </Button>
+            )}
+          </div>
+        )}
         <div className="rounded-sm border border-border bg-black shadow-2xl overflow-hidden h-full flex flex-col relative">
 
           {/* Timeline Bar — реальное распределение событий по времени */}

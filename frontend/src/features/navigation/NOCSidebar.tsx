@@ -26,7 +26,12 @@ import {
     X,
     UserCog,
     GitBranch,
-    MapPin
+    MapPin,
+    Gamepad2,
+    Zap,
+    History,
+    ToggleRight,
+    Settings2,
 } from "lucide-react";
 
 const NAV_ITEMS = [
@@ -36,6 +41,11 @@ const NAV_ITEMS = [
     { href: "/stream", label: "Device Stream", icon: Monitor },
     { href: "/tasks", label: "Task Engine", icon: ListTodo },
     { href: "/orchestration", label: "Orchestration", icon: GitBranch },
+    { href: "/pipeline-settings", label: "Pipeline Config", icon: Settings2 },
+    { href: "/accounts", label: "Game Accounts", icon: Gamepad2 },
+    { href: "/events", label: "Device Events", icon: Zap },
+    { href: "/event-triggers", label: "Event Triggers", icon: ToggleRight },
+    { href: "/sessions", label: "Sessions", icon: History },
     { href: "/vpn", label: "Tunneling", icon: Wifi },
     { href: "/scripts", label: "Scripts", icon: Code2 },
     { href: "/groups", label: "Groups", icon: FolderOpen },

@@ -25,7 +25,9 @@ async def lifespan(app: FastAPI):
     # Остальные модули регистрируют свои хуки при импорте router.py
     import backend.database.redis_client  # noqa: F401
     import backend.monitoring.pool_metrics  # noqa: F401 — регистрирует DB pool collector
+    import backend.tasks.orchestration_loop  # noqa: F401 — движок оркестрации (TZ-13)
     import backend.tasks.sync_device_status  # noqa: F401 — синхронизация статусов Redis → PostgreSQL
+    import backend.tasks.task_heartbeat_watchdog  # noqa: F401 — watchdog зависших задач (TZ-04)
     from backend.core.lifespan_registry import run_all_shutdown, run_all_startup
 
     await run_all_startup()

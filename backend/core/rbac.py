@@ -100,6 +100,33 @@ PERMISSIONS: dict[str, list[Role]] = {
     "schedule:write": [
         Role.DEVICE_MANAGER, Role.ORG_ADMIN, Role.ORG_OWNER, Role.SUPER_ADMIN,
     ],
+
+    # ── Game Accounts (TZ-10) ────────────────────────────────────────────────
+    "account:read": [
+        Role.VIEWER, Role.SCRIPT_RUNNER, Role.DEVICE_MANAGER,
+        Role.ORG_ADMIN, Role.ORG_OWNER, Role.SUPER_ADMIN,
+    ],
+    "account:write": [
+        Role.DEVICE_MANAGER, Role.ORG_ADMIN, Role.ORG_OWNER, Role.SUPER_ADMIN,
+    ],
+
+    # ── Device Events (TZ-11) ────────────────────────────────────────────────
+    "event:read": [
+        Role.VIEWER, Role.SCRIPT_RUNNER, Role.DEVICE_MANAGER,
+        Role.ORG_ADMIN, Role.ORG_OWNER, Role.SUPER_ADMIN,
+    ],
+    "event:write": [
+        Role.DEVICE_MANAGER, Role.ORG_ADMIN, Role.ORG_OWNER, Role.SUPER_ADMIN,
+    ],
+
+    # ── Account Sessions (TZ-11) ─────────────────────────────────────────────
+    "session:read": [
+        Role.VIEWER, Role.SCRIPT_RUNNER, Role.DEVICE_MANAGER,
+        Role.ORG_ADMIN, Role.ORG_OWNER, Role.SUPER_ADMIN,
+    ],
+    "session:write": [
+        Role.DEVICE_MANAGER, Role.ORG_ADMIN, Role.ORG_OWNER, Role.SUPER_ADMIN,
+    ],
 }
 
 

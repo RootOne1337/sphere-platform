@@ -13,6 +13,7 @@ import okhttp3.Request
 import timber.log.Timber
 import java.io.File
 import java.security.MessageDigest
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -39,6 +40,15 @@ class OtaUpdateService @Inject constructor(
     private val authStore: AuthTokenStore,
 ) {
     private val apkDir = File(context.filesDir, "ota")
+
+    companion object {
+        /**
+         * FIX D6: Максимальный размер APK (200MB).
+         * Защита от злоумышленного/взломанного сервера, который может вернуть
+         * произвольно большой файл и заполнить /data на эмуляторе.
+         */
+        private const val MAX_APK_SIZE_BYTES = 200L * 1024 * 1024
+    }
 
     suspend fun performUpdate(payload: OtaUpdatePayload) {
         Timber.i("OTA: starting update → version=${payload.version}")
@@ -74,12 +84,30 @@ class OtaUpdateService @Inject constructor(
 
         withContext(Dispatchers.IO) {
             // FIX 7.2: response.use {} гарантирует закрытие при ошибках HTTP
-            // (без use была утечка TCP-соединений в OkHttp connection pool)
             httpClient.newCall(request).execute().use { response ->
                 check(response.isSuccessful) { "OTA download failed: ${response.code}" }
+                // FIX D6: Проверяем Content-Length перед скачиванием — защита от переполнения /data
+                val contentLength = response.body!!.contentLength()
+                if (contentLength > MAX_APK_SIZE_BYTES) {
+                    throw IllegalStateException(
+                        "OTA APK слишком большой: ${contentLength / (1024 * 1024)}MB > ${MAX_APK_SIZE_BYTES / (1024 * 1024)}MB"
+                    )
+                }
                 response.body!!.byteStream().use { input ->
                     dest.outputStream().use { output ->
-                        input.copyTo(output)
+                        // FIX D6: Контроль размера при копировании (Content-Length может быть -1)
+                        val buffer = ByteArray(8192)
+                        var totalRead = 0L
+                        var read: Int
+                        while (input.read(buffer).also { read = it } != -1) {
+                            totalRead += read
+                            if (totalRead > MAX_APK_SIZE_BYTES) {
+                                throw IllegalStateException(
+                                    "OTA APK превысил лимит ${MAX_APK_SIZE_BYTES / (1024 * 1024)}MB при скачивании"
+                                )
+                            }
+                            output.write(buffer, 0, read)
+                        }
                     }
                 }
             }
@@ -138,11 +166,23 @@ class OtaUpdateService @Inject constructor(
 
     private fun tryRootInstall(apkFile: File): Boolean {
         return try {
+            // FIX F4: Экранирование пути — одинарные кавычки предотвращают
+            // неожиданный shell splitting/globbing если путь содержит пробелы.
+            // Путь контролируется агентом, но defensive coding обязателен.
+            val safePath = apkFile.absolutePath.replace("'", "'\\''")
             val process = Runtime.getRuntime().exec(
-                arrayOf("su", "-c", "pm install -r -t ${apkFile.absolutePath}")
+                arrayOf("su", "-c", "pm install -r -t '$safePath'")
             )
-            val exitCode = process.waitFor()
-            val output = process.inputStream.bufferedReader().readText()
+            // FIX C1: Таймаут 120с — pm install может быть долгим на слабых эмуляторах,
+            // но бесконечное ожидание недопустимо (su может зависнуть)
+            val finished = process.waitFor(120, TimeUnit.SECONDS)
+            if (!finished) {
+                process.destroyForcibly()
+                Timber.e("OTA: root install timed out after 120s")
+                return false
+            }
+            val exitCode = process.exitValue()
+            val output = process.inputStream.bufferedReader().use { it.readText().take(1024) }
             Timber.d("Root install exit=$exitCode output=$output")
             exitCode == 0 && output.contains("Success")
         } catch (e: Exception) {

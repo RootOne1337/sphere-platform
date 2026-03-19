@@ -1,6 +1,6 @@
 # Configuration Reference
 
-> **Sphere Platform v4.2** — All environment variables
+> **Sphere Platform v4.7** — All environment variables
 
 ---
 
@@ -169,6 +169,19 @@ Consumed directly by `docker-compose.yml`:
 | `POSTGRES_USER` | PostgreSQL user for container init |
 | `POSTGRES_PASSWORD` | PostgreSQL password for container init |
 | `REDIS_PASSWORD` | Redis AUTH password for container command |
+
+---
+
+## Orchestration & Event System (v4.7)
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `ORCHESTRATION_LOOP_INTERVAL` | | `10` | Seconds between orchestration loop ticks |
+| `TASK_HEARTBEAT_TIMEOUT` | | `120` | Seconds before a task is considered stale |
+| `TASK_HEARTBEAT_CHECK_INTERVAL` | | `30` | Watchdog check interval in seconds |
+| `EVENT_REACTOR_ENABLED` | | `true` | Enable/disable the event reactor |
+| `EVENT_REACTOR_MAX_BATCH` | | `100` | Max events processed per reactor tick |
+| `NICK_GENERATOR_LOCALE` | | `en` | Locale for random nickname generation |
 
 ---
 

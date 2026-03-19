@@ -33,6 +33,18 @@ class ScheduleService:
 
     # ── CRUD ─────────────────────────────────────────────────────────────────
 
+    @staticmethod
+    def _normalize_jsonb_uuids(fields: dict[str, Any]) -> dict[str, Any]:
+        """Конвертирует UUID-объекты в str для JSONB-полей (device_ids).
+
+        JSONB-колонки сериализуются через json.dumps(), который не поддерживает
+        uuid.UUID. Pydantic model_dump() возвращает UUID-объекты — нужна
+        промежуточная нормализация.
+        """
+        if "device_ids" in fields and fields["device_ids"] is not None:
+            fields["device_ids"] = [str(d) for d in fields["device_ids"]]
+        return fields
+
     async def create(
         self,
         org_id: uuid.UUID,
@@ -40,6 +52,7 @@ class ScheduleService:
         **fields: Any,
     ) -> Schedule:
         """Создать расписание и рассчитать next_fire_at."""
+        self._normalize_jsonb_uuids(fields)
         schedule = Schedule(
             org_id=org_id,
             created_by_id=created_by_id,
@@ -108,17 +121,23 @@ class ScheduleService:
         """Частичное обновление расписания. Пересчитывает next_fire_at."""
         schedule = await self.get(schedule_id, org_id)
 
-        # Если меняется триггер — очистить другие
+        # Если меняется триггер — очистить конкурирующие
         trigger_fields = {"cron_expression", "interval_seconds", "one_shot_at"}
-        changing_triggers = trigger_fields & set(fields.keys())
-        if changing_triggers:
-            for tf in trigger_fields - changing_triggers:
-                if fields.get(tf) is None:
-                    setattr(schedule, tf, None)
+        # Определяем, какие триггеры устанавливаются (не-None).
+        # Остальные триггеры обнуляем — CHECK-constraint ck_schedules_has_trigger
+        # требует ровно один заполненный триггер.
+        active_triggers = {tf for tf in trigger_fields if tf in fields and fields[tf] is not None}
+        if active_triggers:
+            for tf in trigger_fields - active_triggers:
+                setattr(schedule, tf, None)
 
+        self._normalize_jsonb_uuids(fields)
         for key, value in fields.items():
-            if value is not None and hasattr(schedule, key):
-                setattr(schedule, key, value)
+            if not hasattr(schedule, key):
+                continue
+            # Явно переданный None — очистка поля (exclude_unset=True
+            # гарантирует, что в dict попадают только заданные поля)
+            setattr(schedule, key, value)
 
         # Пересчитать next_fire_at
         schedule.next_fire_at = self._compute_next_fire(schedule)
@@ -202,6 +221,9 @@ class ScheduleService:
         - cron_expression → croniter.get_next()
         - interval_seconds → last_fired + interval (или now + interval)
         - one_shot_at → возвращаем as-is если в будущем
+
+        Naive datetime нормализуются в UTC (клиент отправляет datetime-local без
+        суффикса timezone — Pydantic v2 парсит это как naive object).
         """
         now = datetime.now(timezone.utc)
 
@@ -218,12 +240,19 @@ class ScheduleService:
 
         if schedule.interval_seconds:
             base_time = schedule.last_fired_at or now
+            # Нормализуем naive base_time (после UPDATE через API)
+            if base_time.tzinfo is None:
+                base_time = base_time.replace(tzinfo=timezone.utc)
             from datetime import timedelta
             return base_time + timedelta(seconds=schedule.interval_seconds)
 
         if schedule.one_shot_at:
-            if schedule.one_shot_at > now:
-                return schedule.one_shot_at
+            one_shot = schedule.one_shot_at
+            # Нормализуем naive datetime — клиент мог прислать без timezone суффикса
+            if one_shot.tzinfo is None:
+                one_shot = one_shot.replace(tzinfo=timezone.utc)
+            if one_shot > now:
+                return one_shot
             return None  # Уже прошло
 
         return None

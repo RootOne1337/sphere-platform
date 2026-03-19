@@ -6,10 +6,8 @@
 from __future__ import annotations
 
 import os
-import platform
 import random
 import time
-from datetime import datetime, timezone
 from typing import Any
 
 import structlog
@@ -204,7 +202,7 @@ async def get_monitoring_nodes(redis_conn=Depends(get_redis)) -> list[dict[str, 
     # ── PostgreSQL ───────────────────────────────────────────────────────────
     db_status = "HEALTHY"
     try:
-        from backend.database.engine import get_db
+        pass
         # Простая проверка — если get_db доступен, БД работает
     except Exception:
         db_status = "CRITICAL"

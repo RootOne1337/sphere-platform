@@ -12,8 +12,10 @@
 from __future__ import annotations
 
 import asyncio
+import copy
 import hashlib
 import json
+import re
 import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any
@@ -22,8 +24,10 @@ import structlog
 from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from backend.models.device import Device
+from backend.models.game_account import GameAccount
 from backend.models.script import Script, ScriptVersion
 from backend.models.task import Task, TaskStatus
 from backend.models.task_batch import TaskBatch, TaskBatchStatus
@@ -48,7 +52,76 @@ class TaskService:
         self.status_cache = status_cache
         self.publisher = publisher
 
+    # Регулярное выражение для плейсхолдеров {{account.xxx}} в DAG-нодах
+    _PLACEHOLDER_RE = re.compile(r"\{\{account\.(\w+)\}\}")
+
     # ── Вспомогательные ─────────────────────────────────────────────────────
+
+    @staticmethod
+    def _resolve_dag_placeholders(dag: dict, variables: dict[str, str]) -> dict:
+        """
+        Рекурсивно обходит DAG JSON и заменяет плейсхолдеры {{account.xxx}}
+        на реальные значения из словаря variables.
+        Возвращает глубокую копию DAG — оригинал не мутируется.
+        """
+        dag_copy = copy.deepcopy(dag)
+
+        def _walk(obj: Any) -> Any:
+            if isinstance(obj, str):
+                return TaskService._PLACEHOLDER_RE.sub(
+                    lambda m: variables.get(m.group(1), m.group(0)),
+                    obj,
+                )
+            if isinstance(obj, dict):
+                return {k: _walk(v) for k, v in obj.items()}
+            if isinstance(obj, list):
+                return [_walk(item) for item in obj]
+            return obj
+
+        return _walk(dag_copy)
+
+    @staticmethod
+    def _build_account_variables(account: GameAccount) -> dict[str, str]:
+        """
+        Строит словарь переменных для подстановки в DAG из модели GameAccount.
+        Ключи соответствуют суффиксам плейсхолдеров: {{account.<key>}}.
+        """
+        nickname = account.nickname or account.login or ""
+        parts = nickname.split("_", 1)
+        nick_part1 = parts[0] if parts else nickname
+        nick_part2 = parts[1] if len(parts) > 1 else ""
+
+        return {
+            "login": account.login or "",
+            "password": account.password_encrypted or "",
+            "nickname": nickname,
+            "nick_part1": nick_part1,
+            "nick_part2": nick_part2,
+            "server_name": account.server_name or "",
+            "game": account.game or "",
+            "gender": account.gender.value if account.gender else "male",
+        }
+
+    async def _load_account_for_task(self, task: Task) -> GameAccount | None:
+        """
+        Загружает GameAccount, связанный с задачей.
+        Ищет по account_id из input_params, или по device_id задачи.
+        """
+        # Приоритет 1: явный account_id в input_params
+        account_id_raw = (task.input_params or {}).get("account_id")
+        if account_id_raw:
+            try:
+                return await self.db.get(GameAccount, uuid.UUID(str(account_id_raw)))
+            except (ValueError, TypeError):
+                pass
+
+        # Приоритет 2: аккаунт, назначенный на устройство задачи
+        return await self.db.scalar(
+            select(GameAccount).where(
+                GameAccount.device_id == task.device_id,
+                GameAccount.status.in_(["in_use", "free"]),
+            ).order_by(GameAccount.assigned_at.desc().nulls_last()).limit(1)
+        )
 
     async def _get_script(
         self, script_id: uuid.UUID, org_id: uuid.UUID
@@ -82,7 +155,9 @@ class TaskService:
         self, task_id: uuid.UUID, org_id: uuid.UUID
     ) -> Task:
         task = await self.db.scalar(
-            select(Task).where(Task.id == task_id, Task.org_id == org_id)
+            select(Task)
+            .options(selectinload(Task.device), selectinload(Task.script))
+            .where(Task.id == task_id, Task.org_id == org_id)
         )
         if not task:
             raise HTTPException(status_code=404, detail="Task not found")
@@ -97,6 +172,7 @@ class TaskService:
         org_id: uuid.UUID,
         priority: int = 5,
         webhook_url: str | None = None,
+        account_id: uuid.UUID | None = None,
         batch_id: uuid.UUID | None = None,
         wave_index: int | None = None,
     ) -> Task:
@@ -163,6 +239,8 @@ class TaskService:
         input_params: dict = {"priority": priority}
         if webhook_url:
             input_params["webhook_url"] = webhook_url
+        if account_id:
+            input_params["account_id"] = str(account_id)
 
         task = Task(
             org_id=org_id,
@@ -229,6 +307,17 @@ class TaskService:
                 if not task:
                     continue
 
+                # Safety check: задача принадлежит этому устройству
+                if str(task.device_id) != device_id_str:
+                    logger.error(
+                        "task.dispatch_device_mismatch",
+                        task_id=task_id_str,
+                        expected_device=str(task.device_id),
+                        actual_device=device_id_str,
+                    )
+                    await self.queue.mark_completed(task_id_str, device_id_str)
+                    continue
+
                 version = await self.db.get(ScriptVersion, task.script_version_id)
                 if not version:
                     task.status = TaskStatus.FAILED
@@ -243,6 +332,20 @@ class TaskService:
                 dag_json_str = json.dumps(version.dag, sort_keys=True, ensure_ascii=False)
                 dag_hash = hashlib.sha256(dag_json_str.encode("utf-8")).hexdigest()
 
+                # Подстановка переменных аккаунта в DAG ({{account.xxx}} → реальные значения)
+                resolved_dag = version.dag
+                account = await self._load_account_for_task(task)
+                if account:
+                    variables = self._build_account_variables(account)
+                    resolved_dag = self._resolve_dag_placeholders(version.dag, variables)
+                    logger.info(
+                        "task.dag_variables_resolved",
+                        task_id=task_id_str,
+                        account_id=str(account.id),
+                        account_nick=account.nickname,
+                        variables_keys=list(variables.keys()),
+                    )
+
                 delivered = False
                 if self.publisher:
                     delivered = await self.publisher.send_command_live(
@@ -254,7 +357,7 @@ class TaskService:
                             "ttl_seconds": task.timeout_seconds,
                             "payload": {
                                 "task_id": task_id_str,
-                                "dag": version.dag,
+                                "dag": resolved_dag,
                                 "dag_name": dag_name,
                                 "dag_hash": dag_hash,
                                 "timeout_ms": task.timeout_seconds * 1000,
@@ -289,6 +392,28 @@ class TaskService:
                     exc_info=True,
                 )
 
+    # ── Безопасное освобождение running lock ─────────────────────────────────
+
+    async def _safe_mark_completed(self, task_id: str, device_id: str) -> None:
+        """
+        Освобождает running lock устройства, только если он принадлежит данной задаче.
+        Предотвращает случайное освобождение lock-а, который уже занят следующей задачей.
+        """
+        running_key = f"task_running:{device_id}"
+        current = await self.queue.redis.get(running_key)
+        if current is None:
+            return
+        current_str = current if isinstance(current, str) else current.decode()
+        if current_str == task_id:
+            await self.queue.mark_completed(task_id, device_id)
+        else:
+            logger.debug(
+                "task.skip_mark_completed_lock_mismatch",
+                task_id=task_id,
+                device_id=device_id,
+                current_holder=current_str,
+            )
+
     # ── Result handling ──────────────────────────────────────────────────────
 
     async def handle_task_result(
@@ -303,19 +428,63 @@ class TaskService:
             logger.warning("task.result.not_found", task_id=task_id)
             return
 
+        # FIX BUG-2: Не перезаписываем финальные статусы.
+        # Если планировщик уже поставил CANCELLED (conflict_policy=cancel),
+        # result от агента не должен перезаписывать его на COMPLETED/FAILED.
+        if task.status in (TaskStatus.CANCELLED, TaskStatus.COMPLETED, TaskStatus.FAILED):
+            logger.info(
+                "task.result.ignored_final_status",
+                task_id=task_id,
+                current_status=task.status,
+            )
+            # Результат сохраняем для диагностики, но статус не меняем
+            task.result = result
+            # Освобождаем running lock только если он принадлежит ЭТОЙ задаче
+            await self._safe_mark_completed(task_id, device_id)
+            return
+
         success = result.get("success", False)
         task.status = TaskStatus.COMPLETED if success else TaskStatus.FAILED
         task.finished_at = datetime.now(timezone.utc)
         task.result = result
         task.error_message = result.get("error")
 
-        await self.queue.mark_completed(task_id, device_id)
+        # FIX BUG-2: Безопасное освобождение — только если lock принадлежит этой задаче
+        await self._safe_mark_completed(task_id, device_id)
         logger.info(
             "task.completed",
             task_id=task_id,
             success=success,
             device_id=device_id,
         )
+
+        # ── EventReactor: эмиссия task.completed / task.failed ──────────────
+        # Позволяет EventTrigger'ам автоматически запускать pipeline
+        # при успехе/неуспехе задачи (GENERIC — любые сценарии).
+        try:
+            from backend.services.event_reactor import EventReactor
+            event_type = "task.completed" if success else "task.failed"
+            reactor = EventReactor(self.db)
+            await reactor.process_event(
+                org_id=task.org_id,
+                device_id=uuid.UUID(device_id),
+                event_type=event_type,
+                severity="info" if success else "warning",
+                message=result.get("error") if not success else None,
+                task_id=task.id,
+                pipeline_run_id=None,
+                data={
+                    "task_id": str(task.id),
+                    "script_id": str(task.script_id) if task.script_id else None,
+                    "success": success,
+                },
+            )
+        except Exception as e:
+            logger.warning(
+                "task_result.event_emission_failed",
+                task_id=task_id,
+                error=str(e),
+            )
 
         # Webhook callback (асинхронно — не блокирует)
         webhook_url = task.input_params.get("webhook_url") if task.input_params else None
@@ -391,7 +560,7 @@ class TaskService:
                 detail=f"Cannot cancel task in status '{task.status}'",
             )
 
-        removed = await self.queue.cancel_task(str(task_id), str(org_id))
+        removed = await self.queue.cancel_task(str(task_id), str(org_id), str(task.device_id))
         task.status = TaskStatus.CANCELLED
         task.finished_at = datetime.now(timezone.utc)
 
@@ -423,7 +592,7 @@ class TaskService:
 
         # Если задача QUEUED/ASSIGNED — просто отменяем через обычный путь
         if task.status in (TaskStatus.QUEUED, TaskStatus.ASSIGNED):
-            await self.queue.cancel_task(str(task_id), str(org_id))
+            await self.queue.cancel_task(str(task_id), str(org_id), str(task.device_id))
             task.status = TaskStatus.CANCELLED
             task.finished_at = datetime.now(timezone.utc)
             logger.info("task.force_stopped.queued", task_id=str(task_id))
@@ -490,7 +659,11 @@ class TaskService:
         items = list(
             (
                 await self.db.execute(
-                    stmt.order_by(Task.created_at.desc())
+                    stmt.options(
+                        selectinload(Task.device),
+                        selectinload(Task.script),
+                    )
+                    .order_by(Task.created_at.desc())
                     .offset((page - 1) * per_page)
                     .limit(per_page)
                 )

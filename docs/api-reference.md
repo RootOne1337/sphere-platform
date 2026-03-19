@@ -1,6 +1,6 @@
 # API Reference
 
-> **Sphere Platform v4.2** — REST API
+> **Sphere Platform v4.7** — REST API
 
 **Base URL:** `https://yourdomain.com/api/v1`
 **Interactive docs:** `https://yourdomain.com/api/v1/docs` (Swagger UI)
@@ -10,13 +10,19 @@
 
 ## Authentication
 
-All endpoints (except `/auth/login`, `/health`, and `/config/agent`) require a Bearer token.
+All endpoints (except `/auth/login`, `/health`, and `/config/agent`) require a Bearer token or API Key.
 
 ```http
+# JWT Bearer token
 Authorization: Bearer <access_token>
+
+# API Key (приоритет над JWT при наличии обоих)
+X-API-Key: sphr_<env>_<64hex>
 ```
 
 Tokens are obtained via the login endpoint and refreshed via `/auth/refresh`.
+API keys are created via `POST /api-keys` and have the format `sphr_{env}_{64hex}` (256-bit entropy).
+При одновременной передаче Bearer JWT и X-API-Key — API-ключ имеет приоритет.
 
 ### Error responses
 
@@ -269,7 +275,7 @@ Authorization: Bearer <token>
 | `tag` | string | Filter by tag |
 | `search` | string | Search by name or serial |
 | `page` | int | Page number (default: 1) |
-| `per_page` | int | Items per page (default: 50, max: 200) |
+| `per_page` | int | Items per page (default: 50, max: 5000) |
 
 **Response 200:**
 ```json
@@ -347,6 +353,99 @@ Authorization: Bearer <token>
 Delete a device. Returns `204 No Content`.
 
 **Requires:** `device:delete` permission.
+
+---
+
+### POST /devices/{id}/reboot
+
+> Добавлено в v4.4.0
+
+Отправка команды перезагрузки устройства через WebSocket Command Manager.
+
+```http
+POST /devices/{id}/reboot
+Authorization: Bearer <token>
+```
+
+**Response 200:**
+```json
+{ "status": "rebooting", "device_id": "uuid" }
+```
+
+**Ошибки:**
+- `404` — устройство не найдено
+- `503` — агент оффлайн (нет WS-соединения)
+
+Timeout-fallback: устройство может перезагрузиться до ACK (3с grace period).
+
+---
+
+### POST /devices/{id}/shell
+
+> Добавлено в v4.4.0
+
+Выполнение shell-команды на устройстве через WebSocket.
+
+```http
+POST /devices/{id}/shell
+Authorization: Bearer <token>
+
+{ "command": "adb shell getprop ro.build.display.id" }
+```
+
+**Response 200:**
+```json
+{
+  "exit_code": 0,
+  "stdout": "UP1A.231005.007",
+  "stderr": ""
+}
+```
+
+**Requires:** `device:command` permission.
+
+---
+
+### POST /devices/{id}/logcat
+
+> Добавлено в v4.4.0
+
+Запрос на сбор logcat с устройства (UPLOAD_LOGCAT команда).
+
+```http
+POST /devices/{id}/logcat
+Authorization: Bearer <token>
+
+{ "lines": 1000, "filter": "SphereAgent" }
+```
+
+**Response 202:**
+```json
+{ "status": "collecting", "device_id": "uuid" }
+```
+
+Логи загружаются агентом и доступны через `GET /logs/{device_id}`.
+
+---
+
+### GET /devices/{id}/screenshot
+
+> Добавлено в v4.4.0
+
+Снятие скриншота устройства.
+
+```http
+GET /devices/{id}/screenshot
+Authorization: Bearer <token>
+```
+
+**Response 200:**
+```json
+{
+  "screenshot_url": "https://storage.example.com/screenshots/uuid.png",
+  "timestamp": "2026-03-04T10:00:00Z"
+}
+```
 
 ---
 
@@ -1207,6 +1306,335 @@ POST /schedules/{id}/dry-run
 
 ---
 
+## Game Accounts — `/game-accounts`
+
+### GET /game-accounts
+
+List game accounts with filtering and pagination.
+
+| Param | Type | Description |
+|-------|------|-------------|
+| `game` | string | Filter by game name |
+| `status` | string | Filter by status (`active`, `banned`, `idle`) |
+| `device_id` | uuid | Filter by assigned device |
+| `page` | int | Page number |
+| `per_page` | int | Items per page |
+
+**Response 200:**
+```json
+{
+  "items": [
+    {
+      "id": "uuid",
+      "nickname": "string",
+      "game": "string",
+      "server": "string",
+      "status": "active",
+      "device_id": "uuid",
+      "created_at": "datetime",
+      "updated_at": "datetime"
+    }
+  ],
+  "total": 100,
+  "page": 1,
+  "per_page": 50
+}
+```
+
+### POST /game-accounts
+
+Create a new game account. If `nickname` is omitted, a random one is generated.
+
+### GET /game-accounts/{id}
+
+Get game account details.
+
+### PUT /game-accounts/{id}
+
+Update game account fields.
+
+### DELETE /game-accounts/{id}
+
+Delete a game account.
+
+---
+
+## Event Triggers — `/event-triggers`
+
+### GET /event-triggers
+
+List configured event triggers.
+
+| Param | Type | Description |
+|-------|------|-------------|
+| `event_type` | string | Filter by event type |
+| `enabled` | bool | Filter by enabled status |
+| `page` | int | Page number |
+| `per_page` | int | Items per page |
+
+**Response 200:**
+```json
+{
+  "items": [
+    {
+      "id": "uuid",
+      "name": "string",
+      "event_type": "string",
+      "condition": "object",
+      "action": "object",
+      "enabled": true,
+      "created_at": "datetime"
+    }
+  ],
+  "total": 10,
+  "page": 1,
+  "per_page": 50
+}
+```
+
+### POST /event-triggers
+
+Create a new event trigger rule.
+
+### GET /event-triggers/{id}
+
+Get trigger details.
+
+### PUT /event-triggers/{id}
+
+Update trigger configuration.
+
+### DELETE /event-triggers/{id}
+
+Delete a trigger.
+
+### POST /event-triggers/{id}/toggle
+
+Enable or disable a trigger.
+
+---
+
+## Pipeline Settings — `/pipeline-settings`
+
+### GET /pipeline-settings
+
+List pipeline settings.
+
+| Param | Type | Description |
+|-------|------|-------------|
+| `pipeline_id` | uuid | Filter by pipeline |
+
+**Response 200:**
+```json
+{
+  "items": [
+    {
+      "id": "uuid",
+      "pipeline_id": "uuid",
+      "key": "string",
+      "value": "any",
+      "updated_at": "datetime"
+    }
+  ],
+  "total": 5,
+  "page": 1,
+  "per_page": 50
+}
+```
+
+### POST /pipeline-settings
+
+Create or update a pipeline setting.
+
+### DELETE /pipeline-settings/{id}
+
+Delete a pipeline setting.
+
+---
+
+## Account Sessions — `/account-sessions`
+
+### GET /account-sessions
+
+List active account sessions.
+
+| Param | Type | Description |
+|-------|------|-------------|
+| `account_id` | uuid | Filter by game account |
+| `device_id` | uuid | Filter by device |
+| `status` | string | Filter by status (`active`, `ended`, `error`) |
+| `page` | int | Page number |
+| `per_page` | int | Items per page |
+
+**Response 200:**
+```json
+{
+  "items": [
+    {
+      "id": "uuid",
+      "account_id": "uuid",
+      "device_id": "uuid",
+      "started_at": "datetime",
+      "ended_at": "datetime|null",
+      "status": "active",
+      "metadata": "object"
+    }
+  ],
+  "total": 50,
+  "page": 1,
+  "per_page": 50
+}
+```
+
+### POST /account-sessions
+
+Start a new account session.
+
+### GET /account-sessions/{id}
+
+Get session details.
+
+### PUT /account-sessions/{id}/end
+
+End an active session.
+
+---
+
+## Device Events — `/device-events`
+
+### GET /device-events
+
+List device lifecycle events.
+
+| Param | Type | Description |
+|-------|------|-------------|
+| `device_id` | uuid | Filter by device |
+| `event_type` | string | Filter by event type (`connect`, `disconnect`, `error`, `command`, `heartbeat`) |
+| `since` | datetime | Events after this timestamp |
+| `until` | datetime | Events before this timestamp |
+| `page` | int | Page number |
+| `per_page` | int | Items per page |
+
+**Response 200:**
+```json
+{
+  "items": [
+    {
+      "id": "uuid",
+      "device_id": "uuid",
+      "event_type": "string",
+      "payload": "object",
+      "created_at": "datetime"
+    }
+  ],
+  "total": 1000,
+  "page": 1,
+  "per_page": 50
+}
+```
+
+### GET /device-events/{id}
+
+Get event details.
+
+---
+
+## Batches — `/batches`
+
+### GET /batches
+
+List batch operations.
+
+| Param | Type | Description |
+|-------|------|-------------|
+| `status` | string | Filter by batch status (`pending`, `running`, `completed`, `failed`) |
+| `page` | int | Page number |
+| `per_page` | int | Items per page |
+
+### POST /batches
+
+Create a new batch operation targeting multiple devices.
+
+```json
+{
+  "device_ids": ["uuid", "uuid"],
+  "action": "execute_script",
+  "params": {
+    "script_id": "uuid"
+  }
+}
+```
+
+### GET /batches/{id}
+
+Get batch operation status and per-device results.
+
+### POST /batches/{id}/cancel
+
+Cancel a running batch.
+
+---
+
+## Tasks — `/tasks`
+
+### GET /tasks
+
+List tasks with filtering and pagination.
+
+| Param | Type | Description |
+|-------|------|-------------|
+| `device_id` | uuid | Filter by device |
+| `status` | string | Filter by status (`pending`, `running`, `completed`, `failed`, `cancelled`) |
+| `type` | string | Filter by task type |
+| `page` | int | Page number |
+| `per_page` | int | Items per page |
+
+### GET /tasks/{id}
+
+Get task details including execution logs.
+
+### POST /tasks/{id}/cancel
+
+Cancel a pending or running task.
+
+### POST /tasks/{id}/retry
+
+Retry a failed task.
+
+---
+
+## Streaming — `/streaming`
+
+### POST /streaming/start
+
+Start a streaming session for a device.
+
+### POST /streaming/stop
+
+Stop an active streaming session.
+
+### GET /streaming/sessions
+
+List active streaming sessions.
+
+---
+
+## Monitoring — `/monitoring`
+
+### GET /monitoring/health
+
+System health check endpoint.
+
+### GET /monitoring/metrics
+
+Prometheus-compatible metrics endpoint.
+
+### GET /monitoring/pool-stats
+
+Database and Redis connection pool statistics.
+
+---
+
 ## Pagination
 
 All list endpoints support:
@@ -1214,6 +1642,10 @@ All list endpoints support:
 | Param | Default | Max | Description |
 |-------|---------|-----|-------------|
 | `page` | `1` | — | Page number |
-| `per_page` | `50` | `200` | Items per page |
+| `per_page` | `50` | `5000` | Items per page |
 
 Response always includes `{ "items": [...], "total": N, "page": N, "per_page": N }`.
+
+> **v4.6.0:** `per_page` max увеличен с 200 до 5 000 для поддержки массовых
+> операций и нагрузочных тестов. Рекомендуется использовать значения ≤ 200
+> для стандартных UI-запросов.

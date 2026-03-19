@@ -41,6 +41,11 @@ class DeviceRegistrationClient @Inject constructor(
     private val json: Json,
 ) {
 
+    companion object {
+        /** FIX D5: Максимальный размер ответа сервера при регистрации (защита от OOM). */
+        private const val MAX_RESPONSE_CHARS = 64 * 1024
+    }
+
     /**
      * Результат регистрации устройства.
      */
@@ -105,7 +110,8 @@ class DeviceRegistrationClient @Inject constructor(
             .build()
 
         httpClient.newCall(request).execute().use { response ->
-            val responseBody = response.body?.string()
+            // FIX D5: Ограничиваем размер ответа (защита от OOM)
+            val responseBody = response.body?.string()?.take(MAX_RESPONSE_CHARS)
                 ?: throw RegistrationException("Пустой ответ сервера", response.code)
 
             if (!response.isSuccessful) {

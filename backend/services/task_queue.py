@@ -7,6 +7,10 @@
 #   priority=1 (высокий) → score ~1e12  (наименьший → первым)
 #   priority=10 (низкий) → score ~10e12 (наибольший → последним)
 #
+# Per-device очереди: каждое устройство имеет собственный ZSet.
+# Это гарантирует, что задача отправленная на device_A не будет
+# перехвачена device_B при диспетчеризации.
+#
 # Atomic dequeue: Lua скрипт гарантирует атомарность ZPOPMIN + SET running lock.
 # Одно устройство — максимум 1 задача одновременно (RUNNING_KEY mutex с TTL).
 from __future__ import annotations
@@ -32,12 +36,12 @@ class TaskQueue:
     Приоритетная очередь задач на Redis Sorted Set.
 
     Ключи:
-        task_queue:{org_id}          — ZSet задач (score = приоритет)
-        task_running:{device_id}     — Строка (ID текущей задачи, TTL=3600s)
-        task:meta:{task_id}          — Hash метаданных задачи
+        task_queue:{org_id}:{device_id} — Per-device ZSet задач (score = приоритет)
+        task_running:{device_id}        — Строка (ID текущей задачи, TTL=3600s)
+        task:meta:{task_id}             — Hash метаданных задачи
     """
 
-    QUEUE_KEY = "task_queue:{org_id}"
+    QUEUE_KEY = "task_queue:{org_id}:{device_id}"
     RUNNING_KEY = "task_running:{device_id}"
     MAX_CONCURRENT_PER_DEVICE = 1
 
@@ -57,7 +61,7 @@ class TaskQueue:
         ZPOPMIN берёт наименьший score → priority=1 (высший) выполняется первым.
         """
         score = priority * 1_000_000_000_000 + time.time()
-        queue_key = self.QUEUE_KEY.format(org_id=org_id)
+        queue_key = self.QUEUE_KEY.format(org_id=org_id, device_id=device_id)
 
         async with self.redis.pipeline(transaction=True) as pipe:
             pipe.zadd(queue_key, {task_id: score})
@@ -90,7 +94,7 @@ class TaskQueue:
         if already_running:
             return None
 
-        queue_key = self.QUEUE_KEY.format(org_id=org_id)
+        queue_key = self.QUEUE_KEY.format(org_id=org_id, device_id=device_id)
 
         try:
             result = await self.redis.eval(_LUA_DEQUEUE, 2, queue_key, running_key)
@@ -125,20 +129,61 @@ class TaskQueue:
         await self.redis.delete(f"task:meta:{task_id}")
         logger.debug("task.device_released", task_id=task_id, device_id=device_id)
 
-    async def cancel_task(self, task_id: str, org_id: str) -> bool:
+    async def cancel_task(self, task_id: str, org_id: str, device_id: str | None = None) -> bool:
         """
         Отменить задачу из очереди (до начала выполнения).
         Возвращает True если задача была в очереди и удалена.
+
+        device_id обязателен для формирования per-device queue key.
+        Если не передан — пытаемся получить из task:meta.
         """
-        queue_key = self.QUEUE_KEY.format(org_id=org_id)
+        if not device_id:
+            meta_device = await self.redis.hget(f"task:meta:{task_id}", "device_id")
+            if meta_device:
+                device_id = meta_device if isinstance(meta_device, str) else meta_device.decode()
+            else:
+                logger.warning("task.cancel_no_device_id", task_id=task_id)
+                return False
+
+        queue_key = self.QUEUE_KEY.format(org_id=org_id, device_id=device_id)
         removed = await self.redis.zrem(queue_key, task_id)
         if removed:
             await self.redis.delete(f"task:meta:{task_id}")
         return bool(removed)
 
-    async def get_queue_depth(self, org_id: str) -> int:
-        """Количество задач в очереди для org."""
-        return await self.redis.zcard(self.QUEUE_KEY.format(org_id=org_id))
+    async def get_queue_depth(self, org_id: str, device_id: str | None = None) -> int:
+        """
+        Количество задач в очереди.
+        Если device_id указан — для конкретного устройства.
+        Если нет — суммарно по всем per-device очередям орг-ии (через SCAN).
+        """
+        if device_id:
+            return await self.redis.zcard(
+                self.QUEUE_KEY.format(org_id=org_id, device_id=device_id)
+            )
+        # Суммирование по всем per-device очередям
+        total = 0
+        pattern = f"task_queue:{org_id}:*"
+        async for key in self.redis.scan_iter(match=pattern, count=100):
+            total += await self.redis.zcard(key)
+        return total
 
     async def is_device_busy(self, device_id: str) -> bool:
         return bool(await self.redis.exists(self.RUNNING_KEY.format(device_id=device_id)))
+
+    async def release_device_lock(self, device_id: str) -> None:
+        """
+        Освободить running lock устройства без привязки к конкретной задаче.
+
+        Используется в двух случаях:
+          1. WS disconnect агента — когда задача RUNNING, но агент отключился.
+             Освобождаем lock немедленно, чтобы dispatcher мог выдать следующую
+             задачу при реконнекте. Задача в БД остаётся RUNNING до срабатывания
+             watchdog (task_heartbeat_watchdog.py).
+          2. Диагностические/административные операции.
+
+        БЕЗОПАСНОСТЬ: Вызов на отсутствующем ключе возвращает 0 — без ошибок.
+        """
+        key = self.RUNNING_KEY.format(device_id=device_id)
+        await self.redis.delete(key)
+        logger.debug("task.device_lock_released", device_id=device_id)

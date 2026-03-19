@@ -5,7 +5,7 @@ import { Play, Pause, X, MonitorPlay, Activity, Cpu } from 'lucide-react';
 import { Device } from '@/lib/hooks/useDevices';
 import { Badge } from '@/src/shared/ui/badge';
 import { Button } from '@/src/shared/ui/button';
-import { useStreamStore } from '@/src/shared/store/useStreamStore';
+import { useStreamStore, GRID_SIZE_OPTIONS, gridColumns, gridLabel, type GridSize } from '@/src/shared/store/useStreamStore';
 import { DeviceStream } from '@/components/sphere/DeviceStream';
 
 interface MultiStreamGridProps {
@@ -27,8 +27,8 @@ export function MultiStreamGrid({ devices, selectedIds, onClose }: MultiStreamGr
     // Глобальный стейт вещания: стримы включаются только по кнопке
     const [broadcastActive, setBroadcastActive] = useState(false);
 
-    // Map gridSize (total items) to columns
-    const columns = Math.ceil(Math.sqrt(gridSize));
+    // Количество колонок по таблице gridColumns из стора
+    const columns = gridColumns(gridSize);
 
     // На какие устройства подключаемся (первые N по размеру сетки)
     const visibleDevices = devices.slice(0, gridSize);
@@ -69,12 +69,11 @@ export function MultiStreamGrid({ devices, selectedIds, onClose }: MultiStreamGr
 
                     <div className="h-4 w-px bg-border hidden md:block" />
 
-                    {/* View Options */}
+                    {/* View Options — динамические кнопки из GRID_SIZE_OPTIONS */}
                     <div className="items-center gap-1 hidden md:flex">
-                        <Button variant="ghost" size="sm" onClick={() => setGridSize(1)} className={`h-6 text-[10px] px-2 ${gridSize === 1 ? 'bg-background text-foreground' : 'text-muted-foreground'}`}>1x1</Button>
-                        <Button variant="ghost" size="sm" onClick={() => setGridSize(4)} className={`h-6 text-[10px] px-2 ${gridSize === 4 ? 'bg-background text-foreground' : 'text-muted-foreground'}`}>2x2</Button>
-                        <Button variant="ghost" size="sm" onClick={() => setGridSize(9)} className={`h-6 text-[10px] px-2 ${gridSize === 9 ? 'bg-background text-foreground' : 'text-muted-foreground'}`}>3x3</Button>
-                        <Button variant="ghost" size="sm" onClick={() => setGridSize(16)} className={`h-6 text-[10px] px-2 ${gridSize === 16 ? 'bg-background text-foreground' : 'text-muted-foreground'}`}>4x4</Button>
+                        {GRID_SIZE_OPTIONS.map((s) => (
+                            <Button key={s} variant="ghost" size="sm" onClick={() => setGridSize(s)} className={`h-6 text-[10px] px-2 ${gridSize === s ? 'bg-background text-foreground' : 'text-muted-foreground'}`}>{gridLabel(s)}</Button>
+                        ))}
 
                         <div className="h-3 w-px bg-border mx-1" />
 
@@ -104,10 +103,10 @@ export function MultiStreamGrid({ devices, selectedIds, onClose }: MultiStreamGr
                             className="flex-1 relative bg-black/80 flex flex-col items-center justify-center overflow-hidden"
                             style={{ objectFit }}
                         >
-                            {broadcastActive && device.status.toLowerCase() === 'online' ? (
+                            {broadcastActive && (device.status || '').toLowerCase() === 'online' ? (
                                 /* Реальный видео-стрим через WebSocket H.264 */
                                 <DeviceStream deviceId={device.id} />
-                            ) : device.status.toLowerCase() === 'online' ? (
+                            ) : (device.status || '').toLowerCase() === 'online' ? (
                                 /* Онлайн, но стрим не включён — показываем готовность */
                                 <div className="flex flex-col items-center justify-center text-muted-foreground gap-2">
                                     <Play className="w-6 h-6 opacity-30" />
@@ -124,7 +123,7 @@ export function MultiStreamGrid({ devices, selectedIds, onClose }: MultiStreamGr
                             )}
 
                             {/* HUD Overlays */}
-                            {device.status.toLowerCase() === 'online' && showHUD && (
+                            {(device.status || '').toLowerCase() === 'online' && showHUD && (
                                 <div className="absolute top-2 left-2 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 backdrop-blur-md px-1.5 py-0.5 rounded-sm border border-white/5">
                                     <div className={`w-1.5 h-1.5 rounded-full ${broadcastActive ? 'bg-success animate-pulse' : 'bg-warning'}`} />
                                     <span className="text-[9px] font-mono font-bold text-white shadow-black drop-shadow-md tracking-wider">{device.id.slice(0, 8)}</span>
@@ -136,13 +135,13 @@ export function MultiStreamGrid({ devices, selectedIds, onClose }: MultiStreamGr
                         <div className="h-6 shrink-0 bg-card border-t border-border px-2 flex items-center justify-between">
                             <span className="text-[9px] font-mono text-muted-foreground font-bold tracking-widest truncate">{device.model || 'GENERIC'}</span>
 
-                            {showStats && device.status.toLowerCase() === 'online' && (
+                            {showStats && (device.status || '').toLowerCase() === 'online' && (
                                 <div className="flex items-center gap-3">
                                     <div className="flex items-center gap-1 text-[8px] font-mono text-warning">
-                                        <Activity className="w-2.5 h-2.5" /> 42ms
+                                        <Activity className="w-2.5 h-2.5" /> {device.last_heartbeat ? '< 5s' : '—'}
                                     </div>
                                     <div className="flex items-center gap-1 text-[8px] font-mono text-muted-foreground">
-                                        <Cpu className="w-2.5 h-2.5" /> 12%
+                                        <Cpu className="w-2.5 h-2.5" /> {device.cpu_usage != null ? `${device.cpu_usage}%` : '—'}
                                     </div>
                                 </div>
                             )}

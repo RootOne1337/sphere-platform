@@ -274,6 +274,24 @@ async def delete_pipeline(
     await db.commit()
 
 
+@router.post(
+    "/{pipeline_id}/toggle",
+    response_model=PipelineResponse,
+    summary="Включить / выключить pipeline",
+)
+async def toggle_pipeline(
+    pipeline_id: uuid.UUID,
+    active: bool = Query(..., description="true=включить, false=выключить"),
+    current_user: User = require_permission("pipeline:write"),
+    svc: PipelineService = Depends(get_pipeline_service),
+    db: AsyncSession = Depends(get_db),
+) -> PipelineResponse:
+    """Переключить is_active у pipeline. Сохраняется в БД, переживает рестарт."""
+    pipeline = await svc.toggle(pipeline_id, current_user.org_id, active)
+    await db.commit()
+    return PipelineResponse.model_validate(pipeline)
+
+
 # ══════════════════════════════════════════════════════════════════════════════
 #  Pipeline Run — запуск и управление
 # ══════════════════════════════════════════════════════════════════════════════
