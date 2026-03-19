@@ -1,6 +1,6 @@
 # Deployment Guide
 
-> **Sphere Platform v4.5** — Production Deployment Reference
+> **Sphere Platform v4.7** — Production Deployment Reference
 
 ---
 
@@ -431,6 +431,20 @@ cp volumes/redis_data/appendonly.aof backups/redis-$(date +%Y%m%d).aof
 |--------|--------|
 | RTO (Recovery Time Objective) | < 30 minutes |
 | RPO (Recovery Point Objective) | < 24 hours (with daily backups) / < 1 minute (with streaming replication) |
+
+---
+
+## 11.5 Background Tasks (v4.7)
+
+The backend runs several asyncio background tasks that start automatically:
+
+| Task | Module | Interval | Description |
+|------|--------|----------|-------------|
+| Orchestration Loop | `backend/tasks/orchestration_loop.py` | `ORCHESTRATION_LOOP_INTERVAL` (10s) | Periodic orchestration tick — checks pending pipelines |
+| Task Heartbeat Watchdog | `backend/tasks/task_heartbeat_watchdog.py` | `TASK_HEARTBEAT_CHECK_INTERVAL` (30s) | Marks stale tasks as failed after `TASK_HEARTBEAT_TIMEOUT` |
+| Event Reactor | `backend/services/event_reactor.py` | On-demand | Processes device events and fires matching triggers |
+
+These tasks are registered in `backend/main.py` startup lifecycle.
 
 ---
 

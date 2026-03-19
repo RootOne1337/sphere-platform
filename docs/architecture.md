@@ -1,6 +1,6 @@
 # Architecture
 
-> **Sphere Platform v4.5** — System Design Reference
+> **Sphere Platform v4.7** — System Design Reference
 
 ---
 
@@ -78,6 +78,17 @@ PostgreSQL  Redis     asyncio
 | Scheduler | `backend/services/scheduler/` | ScheduleService, SchedulerEngine (croniter) |
 | Pipelines API | `api/v1/pipelines/` | CRUD + execute + clone + runs + stats |
 | Schedules API | `api/v1/schedules/` | CRUD + toggle + executions + dry-run |
+| Batches API | `api/v1/batches/` | Bulk batch operations on devices/tasks |
+| Game Accounts | `api/v1/game_accounts/` | In-game account CRUD with nick generation |
+| Event Triggers | `api/v1/event_triggers/` | Configurable event-driven automation rules |
+| Pipeline Settings | `api/v1/pipeline_settings/` | Per-pipeline configuration persistence |
+| Account Sessions | `api/v1/account_sessions/` | Active account session tracking per device |
+| Device Events | `api/v1/device_events/` | Device lifecycle event logging and queries |
+| Event Reactor | `backend/services/event_reactor.py` | Reactive event processing engine |
+| Orchestration Engine | `backend/services/orchestrator/orchestration_engine.py` | Pipeline orchestration coordinator |
+| Nick Generator | `backend/services/nick_generator.py` | Random nickname generation utility |
+| Task Heartbeat | `backend/tasks/task_heartbeat_watchdog.py` | Background: watchdog for stale tasks |
+| Orchestration Loop | `backend/tasks/orchestration_loop.py` | Background: periodic orchestration tick |
 | WebSocket | `backend/websocket/` | `ConnectionManager`, `PubSubRouter` |
 | Core | `backend/core/` | Config, RBAC, security, dependencies |
 | Models | `backend/models/` | SQLAlchemy ORM models |
@@ -94,6 +105,15 @@ PostgreSQL  Redis     asyncio
 | `/scripts` | Script library + DAG builder (`@xyflow/react`) |
 | `/stream` | Device selection → H.264 WebCodecs decoder |
 | `/vpn` | Peer list, IP pool utilization, health, batch operations |
+| `/accounts` | Game accounts management with status tracking |
+| `/events` | Device events timeline and filtering |
+| `/sessions` | Account session monitoring |
+| `/event-triggers` | Automation trigger configuration UI |
+| `/pipeline-settings` | Per-pipeline settings editor |
+| `/fleet` | Real-time FleetMatrix device grid |
+| `/tasks` | Task listing with pagination and detail views |
+| `/audit` | Audit log viewer with AuditDrawer |
+| `/orchestration` | Pipeline visualization and execution |
 
 ### 2.3 Android Agent
 

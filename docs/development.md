@@ -1,6 +1,6 @@
 # Developer Guide
 
-> **Sphere Platform v4.6** — Local Development Setup & Coding Standards
+> **Sphere Platform v4.7** — Local Development Setup & Coding Standards
 
 ---
 

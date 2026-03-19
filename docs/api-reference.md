@@ -1,6 +1,6 @@
 # API Reference
 
-> **Sphere Platform v4.6** — REST API
+> **Sphere Platform v4.7** — REST API
 
 **Base URL:** `https://yourdomain.com/api/v1`
 **Interactive docs:** `https://yourdomain.com/api/v1/docs` (Swagger UI)
@@ -1303,6 +1303,335 @@ POST /schedules/{id}/dry-run
   ]
 }
 ```
+
+---
+
+## Game Accounts — `/game-accounts`
+
+### GET /game-accounts
+
+List game accounts with filtering and pagination.
+
+| Param | Type | Description |
+|-------|------|-------------|
+| `game` | string | Filter by game name |
+| `status` | string | Filter by status (`active`, `banned`, `idle`) |
+| `device_id` | uuid | Filter by assigned device |
+| `page` | int | Page number |
+| `per_page` | int | Items per page |
+
+**Response 200:**
+```json
+{
+  "items": [
+    {
+      "id": "uuid",
+      "nickname": "string",
+      "game": "string",
+      "server": "string",
+      "status": "active",
+      "device_id": "uuid",
+      "created_at": "datetime",
+      "updated_at": "datetime"
+    }
+  ],
+  "total": 100,
+  "page": 1,
+  "per_page": 50
+}
+```
+
+### POST /game-accounts
+
+Create a new game account. If `nickname` is omitted, a random one is generated.
+
+### GET /game-accounts/{id}
+
+Get game account details.
+
+### PUT /game-accounts/{id}
+
+Update game account fields.
+
+### DELETE /game-accounts/{id}
+
+Delete a game account.
+
+---
+
+## Event Triggers — `/event-triggers`
+
+### GET /event-triggers
+
+List configured event triggers.
+
+| Param | Type | Description |
+|-------|------|-------------|
+| `event_type` | string | Filter by event type |
+| `enabled` | bool | Filter by enabled status |
+| `page` | int | Page number |
+| `per_page` | int | Items per page |
+
+**Response 200:**
+```json
+{
+  "items": [
+    {
+      "id": "uuid",
+      "name": "string",
+      "event_type": "string",
+      "condition": "object",
+      "action": "object",
+      "enabled": true,
+      "created_at": "datetime"
+    }
+  ],
+  "total": 10,
+  "page": 1,
+  "per_page": 50
+}
+```
+
+### POST /event-triggers
+
+Create a new event trigger rule.
+
+### GET /event-triggers/{id}
+
+Get trigger details.
+
+### PUT /event-triggers/{id}
+
+Update trigger configuration.
+
+### DELETE /event-triggers/{id}
+
+Delete a trigger.
+
+### POST /event-triggers/{id}/toggle
+
+Enable or disable a trigger.
+
+---
+
+## Pipeline Settings — `/pipeline-settings`
+
+### GET /pipeline-settings
+
+List pipeline settings.
+
+| Param | Type | Description |
+|-------|------|-------------|
+| `pipeline_id` | uuid | Filter by pipeline |
+
+**Response 200:**
+```json
+{
+  "items": [
+    {
+      "id": "uuid",
+      "pipeline_id": "uuid",
+      "key": "string",
+      "value": "any",
+      "updated_at": "datetime"
+    }
+  ],
+  "total": 5,
+  "page": 1,
+  "per_page": 50
+}
+```
+
+### POST /pipeline-settings
+
+Create or update a pipeline setting.
+
+### DELETE /pipeline-settings/{id}
+
+Delete a pipeline setting.
+
+---
+
+## Account Sessions — `/account-sessions`
+
+### GET /account-sessions
+
+List active account sessions.
+
+| Param | Type | Description |
+|-------|------|-------------|
+| `account_id` | uuid | Filter by game account |
+| `device_id` | uuid | Filter by device |
+| `status` | string | Filter by status (`active`, `ended`, `error`) |
+| `page` | int | Page number |
+| `per_page` | int | Items per page |
+
+**Response 200:**
+```json
+{
+  "items": [
+    {
+      "id": "uuid",
+      "account_id": "uuid",
+      "device_id": "uuid",
+      "started_at": "datetime",
+      "ended_at": "datetime|null",
+      "status": "active",
+      "metadata": "object"
+    }
+  ],
+  "total": 50,
+  "page": 1,
+  "per_page": 50
+}
+```
+
+### POST /account-sessions
+
+Start a new account session.
+
+### GET /account-sessions/{id}
+
+Get session details.
+
+### PUT /account-sessions/{id}/end
+
+End an active session.
+
+---
+
+## Device Events — `/device-events`
+
+### GET /device-events
+
+List device lifecycle events.
+
+| Param | Type | Description |
+|-------|------|-------------|
+| `device_id` | uuid | Filter by device |
+| `event_type` | string | Filter by event type (`connect`, `disconnect`, `error`, `command`, `heartbeat`) |
+| `since` | datetime | Events after this timestamp |
+| `until` | datetime | Events before this timestamp |
+| `page` | int | Page number |
+| `per_page` | int | Items per page |
+
+**Response 200:**
+```json
+{
+  "items": [
+    {
+      "id": "uuid",
+      "device_id": "uuid",
+      "event_type": "string",
+      "payload": "object",
+      "created_at": "datetime"
+    }
+  ],
+  "total": 1000,
+  "page": 1,
+  "per_page": 50
+}
+```
+
+### GET /device-events/{id}
+
+Get event details.
+
+---
+
+## Batches — `/batches`
+
+### GET /batches
+
+List batch operations.
+
+| Param | Type | Description |
+|-------|------|-------------|
+| `status` | string | Filter by batch status (`pending`, `running`, `completed`, `failed`) |
+| `page` | int | Page number |
+| `per_page` | int | Items per page |
+
+### POST /batches
+
+Create a new batch operation targeting multiple devices.
+
+```json
+{
+  "device_ids": ["uuid", "uuid"],
+  "action": "execute_script",
+  "params": {
+    "script_id": "uuid"
+  }
+}
+```
+
+### GET /batches/{id}
+
+Get batch operation status and per-device results.
+
+### POST /batches/{id}/cancel
+
+Cancel a running batch.
+
+---
+
+## Tasks — `/tasks`
+
+### GET /tasks
+
+List tasks with filtering and pagination.
+
+| Param | Type | Description |
+|-------|------|-------------|
+| `device_id` | uuid | Filter by device |
+| `status` | string | Filter by status (`pending`, `running`, `completed`, `failed`, `cancelled`) |
+| `type` | string | Filter by task type |
+| `page` | int | Page number |
+| `per_page` | int | Items per page |
+
+### GET /tasks/{id}
+
+Get task details including execution logs.
+
+### POST /tasks/{id}/cancel
+
+Cancel a pending or running task.
+
+### POST /tasks/{id}/retry
+
+Retry a failed task.
+
+---
+
+## Streaming — `/streaming`
+
+### POST /streaming/start
+
+Start a streaming session for a device.
+
+### POST /streaming/stop
+
+Stop an active streaming session.
+
+### GET /streaming/sessions
+
+List active streaming sessions.
+
+---
+
+## Monitoring — `/monitoring`
+
+### GET /monitoring/health
+
+System health check endpoint.
+
+### GET /monitoring/metrics
+
+Prometheus-compatible metrics endpoint.
+
+### GET /monitoring/pool-stats
+
+Database and Redis connection pool statistics.
 
 ---
 
