@@ -52,6 +52,19 @@ from backend.models.webhook import Webhook  # noqa: F401
 # --- PC Agent (TZ-08) ---
 from backend.models.workstation import Workstation  # noqa: F401
 
+# --- Game Account Management (TZ-10) ---
+from backend.models.game_account import AccountStatus, GameAccount  # noqa: F401
+
+# --- Device Events & Account Sessions (TZ-11) ---
+from backend.models.device_event import DeviceEvent, EventSeverity  # noqa: F401
+from backend.models.account_session import AccountSession, SessionEndReason  # noqa: F401
+
+# --- Event Triggers (TZ-11+) — автоматический запуск pipeline по событиям ---
+from backend.models.event_trigger import EventTrigger  # noqa: F401
+
+# --- Pipeline Settings (TZ-13) — персистентные настройки оркестрации ---
+from backend.models.pipeline_settings import PipelineSettings  # noqa: F401
+
 __all__ = [
     "TimestampMixin",
     "UUIDMixin",
@@ -88,4 +101,16 @@ __all__ = [
     "ScheduleConflictPolicy",
     "ScheduleTargetType",
     "ScheduleExecutionStatus",
+    # TZ-10 Game Accounts
+    "GameAccount",
+    "AccountStatus",
+    # TZ-11 Device Events & Account Sessions
+    "DeviceEvent",
+    "EventSeverity",
+    "AccountSession",
+    "SessionEndReason",
+    # TZ-11+ Event Triggers
+    "EventTrigger",
+    # TZ-13 Pipeline Settings
+    "PipelineSettings",
 ]
