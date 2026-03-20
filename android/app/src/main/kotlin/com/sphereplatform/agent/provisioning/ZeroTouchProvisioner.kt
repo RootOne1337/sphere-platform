@@ -197,7 +197,6 @@ class ZeroTouchProvisioner @Inject constructor(
                     apiKey = apiKey,
                     deviceId = json.optString("device_id").takeIf { it.isNotBlank() },
                     source = "file:${file.absolutePath}",
-                    autoRegisterEnabled = json.optBoolean("auto_register", false),
                 )
             }.getOrElse { e ->
                 Timber.w(e, "ZeroTouch: failed to parse config from ${file.absolutePath}")

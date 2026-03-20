@@ -107,21 +107,6 @@ class AutoEnrollmentWorker @AssistedInject constructor(
                 authStore.saveServerUrl(config.serverUrl)
                 config.deviceId?.let { authStore.saveDeviceId(it) }
                 authStore.saveApiKey(config.apiKey)
-
-                // Upgrade: пробуем register() чтобы получить UUID device_id + JWT.
-                // При успехе — register() перезапишет static key на UUID + JWT.
-                // При неудаче — static key остаётся как baseline.
-                if (config.autoRegisterEnabled) {
-                    try {
-                        Timber.i("AutoEnrollmentWorker: upgrade → register() для UUID device_id + JWT")
-                        registrationClient.register(
-                            serverUrl = config.serverUrl,
-                            enrollmentApiKey = config.apiKey,
-                        )
-                    } catch (e: Exception) {
-                        Timber.d(e, "AutoEnrollmentWorker: register() upgrade не удался — static key сохранён")
-                    }
-                }
             }
 
             // --- Успех! Маркируем энролмент и запускаем сервис ---

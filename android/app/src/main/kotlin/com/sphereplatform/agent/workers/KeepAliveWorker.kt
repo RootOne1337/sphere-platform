@@ -249,26 +249,11 @@ class KeepAliveWorker @AssistedInject constructor(
                     enrollmentApiKey = enrollmentKey,
                 )
             } else if (config.apiKey.isNotBlank()) {
-                // Статический API-ключ из конфига/BuildConfig — сохраняем СРАЗУ (без HTTP)
+                // Статический API-ключ из конфига/BuildConfig
                 Timber.i("KeepAliveWorker: enrollment со статическим API-ключом (${config.source})")
                 authStore.saveServerUrl(config.serverUrl)
                 config.deviceId?.let { authStore.saveDeviceId(it) }
                 authStore.saveApiKey(config.apiKey)
-
-                // Upgrade: пробуем register() чтобы получить UUID device_id + JWT.
-                // register() сохранит UUID + JWT в authStore, перезаписав static key.
-                // При неудаче — static key остаётся как baseline.
-                if (config.autoRegisterEnabled) {
-                    try {
-                        Timber.i("KeepAliveWorker: upgrade → register() для UUID device_id + JWT")
-                        registrationClient.register(
-                            serverUrl = config.serverUrl,
-                            enrollmentApiKey = config.apiKey,
-                        )
-                    } catch (e: Exception) {
-                        Timber.d(e, "KeepAliveWorker: register() upgrade не удался — static key сохранён")
-                    }
-                }
             } else {
                 Timber.d("KeepAliveWorker: конфиг без ключа и без auto_register")
                 return Result.success()
