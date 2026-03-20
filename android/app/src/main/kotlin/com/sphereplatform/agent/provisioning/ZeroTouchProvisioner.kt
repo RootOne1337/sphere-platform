@@ -60,10 +60,12 @@ class ZeroTouchProvisioner @Inject constructor(
      */
     private val configHttpClient: OkHttpClient by lazy {
         OkHttpClient.Builder()
-            // FIX DNS: fallback на Google/Cloudflare DNS для эмуляторов
+            // FIX DNS: fallback на Google/Cloudflare DNS + DoH для эмуляторов
             .dns(FallbackDns())
-            .connectTimeout(5, TimeUnit.SECONDS)
-            .readTimeout(5, TimeUnit.SECONDS)
+            .connectTimeout(10, TimeUnit.SECONDS)
+            .readTimeout(10, TimeUnit.SECONDS)
+            // FIX: автоматический retry при обрыве TCP (connection reset, timeout)
+            .retryOnConnectionFailure(true)
             .build()
     }
 

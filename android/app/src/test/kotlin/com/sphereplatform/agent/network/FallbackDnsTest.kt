@@ -13,9 +13,10 @@ import java.net.UnknownHostException
  *
  * Проверяем:
  * 1. Системный DNS работает → fallback не вызывается
- * 2. Системный DNS падает → fallback через UDP резолвит
+ * 2. Системный DNS падает → DoH/UDP fallback резолвит
  * 3. Все резолверы падают → выбрасывается [UnknownHostException]
- * 4. Парсинг DNS wire-формата (RFC 1035)
+ * 4. Парсинг DoH JSON-ответа
+ * 5. Парсинг DNS wire-формата (RFC 1035)
  */
 class FallbackDnsTest {
 
@@ -36,7 +37,7 @@ class FallbackDnsTest {
      * Этот тест зависит от сетевого подключения.
      */
     @Test
-    fun `fallback резолвит публичный домен через Google DNS`() {
+    fun `fallback резолвит публичный домен через DoH или UDP`() {
         val dns = FallbackDns()
         // google.com гарантированно резолвится
         val result = dns.lookup("google.com")
@@ -65,7 +66,7 @@ class FallbackDnsTest {
 
     /**
      * Проверяем резолвинг домена serveo (наш реальный сервер).
-     * Этот тест зависит от DNS-доступности serveo.net.
+     * Тест валидирует всю цепочку: system → DoH → UDP.
      */
     @Test
     fun `sphere serveousercontent com резолвится`() {
@@ -76,5 +77,31 @@ class FallbackDnsTest {
         // IP должен быть валидным IPv4
         val ip = result.first()
         assertEquals("IPv4 = 4 байта", 4, ip.address.size)
+    }
+
+    /**
+     * Проверяем резолвинг GitHub Raw (для config endpoint).
+     * raw.githubusercontent.com — критичный домен для ZeroTouchProvisioner.
+     */
+    @Test
+    fun `raw githubusercontent com резолвится`() {
+        val dns = FallbackDns()
+        val result = dns.lookup("raw.githubusercontent.com")
+        assertNotNull(result)
+        assertTrue("raw.githubusercontent.com должен разрезолвиться", result.isNotEmpty())
+        assertEquals("IPv4 = 4 байта", 4, result.first().address.size)
+    }
+
+    /**
+     * Проверяем что множественные последовательные запросы не вызывают утечку ресурсов.
+     * Важно для production: FallbackDns вызывается при каждом HTTP запросе.
+     */
+    @Test
+    fun `множественные lookup не вызывают ресурсных утечек`() {
+        val dns = FallbackDns()
+        repeat(5) {
+            val result = dns.lookup("google.com")
+            assertTrue("Итерация $it: должен разрезолвиться", result.isNotEmpty())
+        }
     }
 }

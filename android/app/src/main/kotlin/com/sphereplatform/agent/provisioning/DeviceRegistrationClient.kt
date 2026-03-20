@@ -2,6 +2,7 @@ package com.sphereplatform.agent.provisioning
 
 import com.sphereplatform.agent.store.AuthTokenStore
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -44,6 +45,10 @@ class DeviceRegistrationClient @Inject constructor(
     companion object {
         /** FIX D5: Максимальный размер ответа сервера при регистрации (защита от OOM). */
         private const val MAX_RESPONSE_CHARS = 64 * 1024
+        /** Количество попыток регистрации (с exponential backoff). */
+        private const val MAX_RETRIES = 3
+        /** Начальная задержка перед retry (мс), удваивается при каждой попытке. */
+        private const val INITIAL_RETRY_DELAY_MS = 2_000L
     }
 
     /**
@@ -77,6 +82,46 @@ class DeviceRegistrationClient @Inject constructor(
         instanceIndex: Int? = null,
         location: String? = null,
     ): RegistrationResult = withContext(Dispatchers.IO) {
+        var lastException: Exception? = null
+
+        for (attempt in 1..MAX_RETRIES) {
+            try {
+                return@withContext doRegister(
+                    serverUrl, enrollmentApiKey, workstationId, instanceIndex, location,
+                )
+            } catch (e: RegistrationException) {
+                // 4xx клиентские ошибки — повтор бессмысленен (кроме 429 Too Many Requests)
+                if (e.httpCode in 400..499 && e.httpCode != 429) throw e
+                lastException = e
+            } catch (e: Exception) {
+                // Сетевые ошибки (таймаут, DNS, connection refused) — пробуем ещё
+                lastException = e
+            }
+
+            if (attempt < MAX_RETRIES) {
+                val backoffMs = INITIAL_RETRY_DELAY_MS * (1L shl (attempt - 1))
+                Timber.w(
+                    "DeviceRegistration: попытка %d/%d не удалась, retry через %dмс: %s",
+                    attempt, MAX_RETRIES, backoffMs, lastException?.message,
+                )
+                delay(backoffMs)
+            }
+        }
+
+        Timber.e(lastException, "DeviceRegistration: все %d попыток исчерпаны", MAX_RETRIES)
+        throw lastException ?: RegistrationException("Все попытки регистрации исчерпаны")
+    }
+
+    /**
+     * Выполняет одну попытку регистрации устройства на сервере.
+     */
+    private suspend fun doRegister(
+        serverUrl: String,
+        enrollmentApiKey: String,
+        workstationId: String? = null,
+        instanceIndex: Int? = null,
+        location: String? = null,
+    ): RegistrationResult {
         val fingerprint = cloneDetector.getFingerprint()
         val deviceType = cloneDetector.getDeviceType()
 
@@ -146,7 +191,7 @@ class DeviceRegistrationClient @Inject constructor(
                 result.name,
             )
 
-            return@withContext result
+            return result
         }
     }
 
