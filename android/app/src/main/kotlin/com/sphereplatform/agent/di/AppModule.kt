@@ -14,6 +14,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.serialization.json.Json
+import com.sphereplatform.agent.network.FallbackDns
 import okhttp3.CertificatePinner
 import okhttp3.ConnectionPool
 import okhttp3.OkHttpClient
@@ -47,6 +48,10 @@ object AppModule {
         @ApplicationContext ctx: Context,
     ): OkHttpClient {
         val builder = OkHttpClient.Builder()
+            // FIX DNS: На эмуляторах (LDPlayer/Nox/MEmu) системный DNS часто
+            // не резолвит внешние домены. FallbackDns пробует Google/Cloudflare
+            // при неудаче системного резолвера. Zero overhead при рабочем DNS.
+            .dns(FallbackDns())
             // FIX AUDIT-1.1: readTimeout=60s вместо бесконечного.
             // OkHttp WS ping (15s) + readTimeout(60s) = детектирование мёртвого
             // соединения за ~60с. Раньше при readTimeout=0 зависшие WS жили часами.

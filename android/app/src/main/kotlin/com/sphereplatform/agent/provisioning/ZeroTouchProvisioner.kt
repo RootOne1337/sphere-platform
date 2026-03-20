@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.RestrictionsManager
 import android.os.Environment
 import com.sphereplatform.agent.BuildConfig
+import com.sphereplatform.agent.network.FallbackDns
 import dagger.hilt.android.qualifiers.ApplicationContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -59,6 +60,8 @@ class ZeroTouchProvisioner @Inject constructor(
      */
     private val configHttpClient: OkHttpClient by lazy {
         OkHttpClient.Builder()
+            // FIX DNS: fallback на Google/Cloudflare DNS для эмуляторов
+            .dns(FallbackDns())
             .connectTimeout(5, TimeUnit.SECONDS)
             .readTimeout(5, TimeUnit.SECONDS)
             .build()
