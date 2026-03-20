@@ -1,6 +1,6 @@
 package com.sphereplatform.agent.commands
 
-import android.content.SharedPreferences
+import androidx.security.crypto.EncryptedSharedPreferences
 import com.sphereplatform.agent.lua.LuaEngine
 import com.sphereplatform.agent.ws.SphereWebSocketClient
 import com.sphereplatform.agent.lua.executeWithTimeout
@@ -61,7 +61,7 @@ class DagRunner @Inject constructor(
     private val luaEngine: LuaEngine,
     private val adbActions: AdbActionExecutor,
     private val wsClient: SphereWebSocketClient,
-    private val prefs: SharedPreferences,
+    private val prefs: EncryptedSharedPreferences,
     private val httpClient: okhttp3.OkHttpClient,
 ) {
     companion object {

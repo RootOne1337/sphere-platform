@@ -1,6 +1,6 @@
 package com.sphereplatform.agent.store
 
-import android.content.SharedPreferences
+import androidx.security.crypto.EncryptedSharedPreferences
 import dagger.Lazy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
@@ -30,7 +30,7 @@ import javax.inject.Singleton
  */
 @Singleton
 class AuthTokenStore @Inject constructor(
-    private val prefs: SharedPreferences,
+    private val prefs: EncryptedSharedPreferences,
     private val lazyHttpClient: Lazy<OkHttpClient>,
 ) {
     companion object {

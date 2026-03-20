@@ -1,6 +1,6 @@
 package com.sphereplatform.agent.commands
 
-import android.content.SharedPreferences
+import androidx.security.crypto.EncryptedSharedPreferences
 import com.sphereplatform.agent.lua.LuaEngine
 import com.sphereplatform.agent.lua.executeWithTimeout
 import com.sphereplatform.agent.ws.SphereWebSocketClient
@@ -31,7 +31,7 @@ class DagRunnerTest {
     private lateinit var luaEngine: LuaEngine
     private lateinit var adbActions: AdbActionExecutor
     private lateinit var wsClient: SphereWebSocketClient
-    private lateinit var prefs: SharedPreferences
+    private lateinit var prefs: EncryptedSharedPreferences
     private lateinit var httpClient: OkHttpClient
     private lateinit var runner: DagRunner
 

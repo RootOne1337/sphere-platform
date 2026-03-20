@@ -1,6 +1,7 @@
 package com.sphereplatform.agent.store
 
 import android.content.SharedPreferences
+import androidx.security.crypto.EncryptedSharedPreferences
 import io.mockk.*
 import kotlinx.coroutines.test.runTest
 import okhttp3.OkHttpClient
@@ -27,7 +28,7 @@ import org.junit.Test
  */
 class AuthTokenStoreTest {
 
-    private lateinit var prefs: SharedPreferences
+    private lateinit var prefs: EncryptedSharedPreferences
     private lateinit var editor: SharedPreferences.Editor
     private lateinit var store: AuthTokenStore
     private val storage = mutableMapOf<String, Any?>()
