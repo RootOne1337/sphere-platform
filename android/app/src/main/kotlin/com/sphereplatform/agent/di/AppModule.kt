@@ -71,14 +71,15 @@ object AppModule {
             .pingInterval(15, TimeUnit.SECONDS)
             .addInterceptor { chain ->
                 val token = lazyAuthStore.get().getToken()
-                val request = if (token != null) {
-                    chain.request().newBuilder()
-                        .addHeader("Authorization", "Bearer $token")
-                        .build()
-                } else {
-                    chain.request()
+                val requestBuilder = chain.request().newBuilder()
+                    // Serveo free-tier shows a browser warning interstitial for
+                    // requests without Accept: application/json. Adding this header
+                    // bypasses the interstitial and proxies directly to the backend.
+                    .addHeader("Accept", "application/json")
+                if (token != null) {
+                    requestBuilder.addHeader("Authorization", "Bearer $token")
                 }
-                chain.proceed(request)
+                chain.proceed(requestBuilder.build())
             }
 
         // Certificate pinning — loaded from res/raw/pinned_certs.txt

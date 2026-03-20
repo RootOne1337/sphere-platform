@@ -151,6 +151,7 @@ class DeviceRegistrationClient @Inject constructor(
             .url("${serverUrl.trimEnd('/')}/api/v1/devices/register")
             .header("X-API-Key", enrollmentApiKey)
             .header("Content-Type", "application/json")
+            .header("Accept", "application/json")
             .post(bodyJson.toRequestBody("application/json".toMediaType()))
             .build()
 

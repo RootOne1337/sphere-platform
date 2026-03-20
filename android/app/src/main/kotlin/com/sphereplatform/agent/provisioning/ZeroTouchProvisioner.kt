@@ -66,6 +66,14 @@ class ZeroTouchProvisioner @Inject constructor(
             .readTimeout(10, TimeUnit.SECONDS)
             // FIX: автоматический retry при обрыве TCP (connection reset, timeout)
             .retryOnConnectionFailure(true)
+            // Serveo free-tier interstitial bypass
+            .addInterceptor { chain ->
+                chain.proceed(
+                    chain.request().newBuilder()
+                        .addHeader("Accept", "application/json")
+                        .build()
+                )
+            }
             .build()
     }
 
