@@ -197,4 +197,31 @@ class AuthTokenStoreTest {
         val threshold = 5 * 60 * 1000L
         assertEquals(300_000L, threshold)
     }
+
+    // ── getDeviceId: валидация UUID ──────────────────────────────────────────
+
+    @Test
+    fun `getDeviceId возвращает валидный UUID`() {
+        storage["device_id"] = "64547be6-3db5-4470-9e29-293eaee35168"
+        assertEquals("64547be6-3db5-4470-9e29-293eaee35168", store.getDeviceId())
+    }
+
+    @Test
+    fun `getDeviceId возвращает null если нет device_id`() {
+        assertNull(store.getDeviceId())
+    }
+
+    @Test
+    fun `getDeviceId сбрасывает невалидный fingerprint формат`() {
+        storage["device_id"] = "android-fd591067aa36b2a1"
+        assertNull(store.getDeviceId())
+        verify { editor.remove("device_id") }
+    }
+
+    @Test
+    fun `getDeviceId сбрасывает произвольную строку`() {
+        storage["device_id"] = "not-a-uuid-at-all"
+        assertNull(store.getDeviceId())
+        verify { editor.remove("device_id") }
+    }
 }

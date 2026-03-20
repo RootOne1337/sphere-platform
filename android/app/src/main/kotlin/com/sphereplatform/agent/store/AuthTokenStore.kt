@@ -43,6 +43,10 @@ class AuthTokenStore @Inject constructor(
         private const val REFRESH_THRESHOLD_MS = 5 * 60 * 1000L  // 5 минут
         /** FIX E2: Лимит на размер response body при token refresh — защита от OOM. */
         private const val MAX_RESPONSE_CHARS = 64 * 1024
+        /** Регулярка UUID — строгая проверка формата device_id. */
+        private val UUID_REGEX = Regex(
+            "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+        )
     }
 
     private val tokenMutex = Mutex()
@@ -159,7 +163,20 @@ class AuthTokenStore @Inject constructor(
             .apply()
     }
 
-    fun getDeviceId(): String? = prefs.getString(KEY_DEVICE_ID, null)
+    /**
+     * Возвращает device_id если он валидный UUID.
+     * Если сохранён невалидный формат (например, fingerprint "android-xxx") —
+     * сбрасывает его и возвращает null для повторной регистрации.
+     */
+    fun getDeviceId(): String? {
+        val id = prefs.getString(KEY_DEVICE_ID, null) ?: return null
+        if (!UUID_REGEX.matches(id)) {
+            Timber.w("Невалидный device_id='%s', сбрасываю для повторной регистрации", id)
+            prefs.edit().remove(KEY_DEVICE_ID).apply()
+            return null
+        }
+        return id
+    }
 
     fun saveDeviceId(deviceId: String) {
         prefs.edit().putString(KEY_DEVICE_ID, deviceId).apply()
