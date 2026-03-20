@@ -3,6 +3,7 @@ package com.sphereplatform.agent.di
 import android.content.Context
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
+import com.sphereplatform.agent.network.FallbackDns
 import com.sphereplatform.agent.store.AuthTokenStore
 import dagger.Lazy
 import dagger.Module
@@ -47,6 +48,10 @@ object AppModule {
         @ApplicationContext ctx: Context,
     ): OkHttpClient {
         val builder = OkHttpClient.Builder()
+            // FIX: FallbackDns — DNS-over-HTTPS fallback для LDPlayer headless
+            // VirtualBox NAT блокирует UDP/53 → системный DNS не работает.
+            // FallbackDns: System DNS → DoH (Cloudflare/Google) → UDP DNS → exception
+            .dns(FallbackDns())
             // FIX AUDIT-1.1: readTimeout=60s вместо бесконечного.
             // OkHttp WS ping (15s) + readTimeout(60s) = детектирование мёртвого
             // соединения за ~60с. Раньше при readTimeout=0 зависшие WS жили часами.
@@ -64,14 +69,14 @@ object AppModule {
             .pingInterval(15, TimeUnit.SECONDS)
             .addInterceptor { chain ->
                 val token = lazyAuthStore.get().getToken()
-                val request = if (token != null) {
-                    chain.request().newBuilder()
-                        .addHeader("Authorization", "Bearer $token")
-                        .build()
-                } else {
-                    chain.request()
+                val requestBuilder = chain.request().newBuilder()
+                    // FIX: Accept: application/json — обход Serveo free-tier interstitial.
+                    // Без этого заголовка Serveo отдаёт HTML-страницу вместо API-ответа.
+                    .addHeader("Accept", "application/json")
+                if (token != null) {
+                    requestBuilder.addHeader("Authorization", "Bearer $token")
                 }
-                chain.proceed(request)
+                chain.proceed(requestBuilder.build())
             }
 
         // Certificate pinning — loaded from res/raw/pinned_certs.txt

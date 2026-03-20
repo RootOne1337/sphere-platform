@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.RestrictionsManager
 import android.os.Environment
 import com.sphereplatform.agent.BuildConfig
+import com.sphereplatform.agent.network.FallbackDns
 import dagger.hilt.android.qualifiers.ApplicationContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -59,8 +60,18 @@ class ZeroTouchProvisioner @Inject constructor(
      */
     private val configHttpClient: OkHttpClient by lazy {
         OkHttpClient.Builder()
-            .connectTimeout(5, TimeUnit.SECONDS)
-            .readTimeout(5, TimeUnit.SECONDS)
+            // FIX: FallbackDns — DNS-over-HTTPS для резолвинга на LDPlayer headless
+            .dns(FallbackDns())
+            .connectTimeout(10, TimeUnit.SECONDS)
+            .readTimeout(10, TimeUnit.SECONDS)
+            // FIX: Accept: application/json — обход Serveo interstitial
+            .addInterceptor { chain ->
+                chain.proceed(
+                    chain.request().newBuilder()
+                        .addHeader("Accept", "application/json")
+                        .build()
+                )
+            }
             .build()
     }
 
