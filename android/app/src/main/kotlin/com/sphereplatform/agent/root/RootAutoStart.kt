@@ -74,6 +74,9 @@ object RootAutoStart {
         if (!hasRoot()) return
         val pkg = context.packageName
 
+        // Диагностика — факт вызова ensureRunning записываем в файл
+        execRoot("echo \"[ENSURE] \$(date) pkg=$pkg\" >> $DIAG_FILE")
+
         // Снять stopped state — гарантия что broadcast и service start сработают
         execRoot("cmd package set-stopped-state $pkg false")
 
@@ -90,11 +93,17 @@ object RootAutoStart {
         Timber.d("RootAutoStart: ensureRunning — принудительный запуск через root для $pkg")
     }
 
+    /** Файл диагностики — пользователь проверяет через adb shell cat /data/local/tmp/sphere_diag.txt */
+    private const val DIAG_FILE = "/data/local/tmp/sphere_diag.txt"
+
     /**
      * Главная точка входа. Выполняет ВСЕ root-настройки.
      *
      * Безопасен для вызова из любого контекста — если root недоступен,
      * тихо возвращается без ошибок.
+     *
+     * Пишет диагностику в [DIAG_FILE] — после ребута можно проверить
+     * через adb shell cat /data/local/tmp/sphere_diag.txt
      */
     fun configure(context: Context) {
         if (!hasRoot()) {
@@ -104,6 +113,9 @@ object RootAutoStart {
 
         val pkg = context.packageName
         Timber.i("RootAutoStart: === НАЧАЛО НАСТРОЙКИ для $pkg ===")
+
+        // Диагностика — записываем факт запуска в файл (переживает ребут)
+        execRoot("echo \"[CONFIGURE] \$(date) pkg=$pkg pid=\$\$\" >> $DIAG_FILE")
 
         // 1. Снять системные ограничения
         removeSystemRestrictions(pkg)
@@ -117,9 +129,8 @@ object RootAutoStart {
         // 4. Запустить nohup watchdog daemon
         startWatchdogDaemon(pkg)
 
-        // 5+6. Установить ВСЕ механизмы автозапуска через ОДНУ su-сессию:
-        //       init service (.rc файлы) + system app (/system/priv-app/)
-        //       С отключением SELinux, записью во ВСЕ пути, верификацией
+        // 5+6. init service (.rc файлы) + прямая вставка в init.rc +
+        //       system app + userinit.sh/init.d + полная диагностика
         installSystemAutostart(context, pkg)
 
         Timber.i("RootAutoStart: === НАСТРОЙКА ЗАВЕРШЕНА для $pkg ===")
@@ -244,30 +255,41 @@ object RootAutoStart {
     }
 
     // =====================================================================
-    //  5 + 6. ПОЛНАЯ установка автозапуска (init service + system app)
-    //  Выполняется через ОДНУ su-сессию для атомарности и скорости
+    //  5 + 6. ПОЛНАЯ установка автозапуска
+    //  ОДНА su-сессия: SELinux off → mount rw → .rc БЕЗ seclabel →
+    //  прямая вставка exec в init.rc → userinit.sh → init.d → system app
     // =====================================================================
 
     /**
-     * Устанавливает ВСЕ механизмы автозапуска через одну root-сессию:
+     * Устанавливает ВСЕ механизмы автозапуска через одну root-сессию.
      *
-     * 1. Отключает SELinux (КРИТИЧЕСКИ ВАЖНО — без этого запись в /system блокируется)
-     * 2. Монтирует / и /system в rw (4 стратегии)
-     * 3. Записывает startup-скрипт в /data/local/tmp/ (100% writable)
-     * 4. Записывает .rc файл в КАЖДЫЙ возможный путь init (system, vendor, odm, product)
-     * 5. Дописывает import в СУЩЕСТВУЮЩИЕ init.rc файлы (fallback)
-     * 6. Копирует APK в /system/priv-app/ (system app с persistent=true)
-     * 7. Устанавливает правильные SELinux labels (chcon)
-     * 8. Верифицирует ВСЕ записи с логированием в logcat
+     * ### Исправленные баги (предыдущие версии):
+     * - **seclabel u:r:su:s0** — этого SELinux context НЕ СУЩЕСТВУЕТ на LDPlayer →
+     *   init ОТКАЗЫВАЛСЯ запускать service → startup script никогда не выполнялся.
+     *   ИСПРАВЛЕНО: seclabel УБРАН (setenforce 0 делает его ненужным).
+     * - **Только import в init.rc** — import НОВОГО файла может игнорироваться init.
+     *   ИСПРАВЛЕНО: ПРЯМАЯ вставка `exec` команды в существующий `on property:sys.boot_completed=1` блок.
+     * - **Нет fallback-механизмов** — если .rc не парсится init, ничего не работало.
+     *   ИСПРАВЛЕНО: добавлены userinit.sh + init.d + несколько trigger'ов в .rc
+     * - **Нет диагностики** — невозможно понять что пошло не так.
+     *   ИСПРАВЛЕНО: каждый шаг пишет в /data/local/tmp/sphere_diag.txt
      *
-     * ВАЖНО: SELinux на LDPlayer мог БЛОКИРОВАТЬ запись файлов даже при rw mount.
-     * Предыдущие версии НЕ отключали SELinux перед записью → файлы не создавались.
+     * ### Механизмы (7 уровней гарантии):
+     * 1. .rc файл с trigger'ами: on property:sys.boot_completed=1,
+     *    on property:dev.bootcomplete=1, on late-init
+     * 2. Прямая вставка exec в существующий init.rc
+     * 3. /data/local/userinit.sh (CyanogenMod/Android-x86 legacy)
+     * 4. /system/etc/init.d/ скрипт (некоторые ROM)
+     * 5. /data/adb/service.d/ скрипт (Magisk-like)
+     * 6. System app в /system/priv-app/ (persistent=true)
+     * 7. Файловая диагностика для отладки (sphere_diag.txt)
      */
     private fun installSystemAutostart(context: Context, pkg: String) {
         val startupScript = "/data/local/tmp/sphere_startup.sh"
         val watchdogScript = "/data/local/tmp/sphere_watchdog.sh"
         val activityComponent = "$pkg/$NAMESPACE.ui.SetupActivity"
         val receiverComponent = "$pkg/$NAMESPACE.BootReceiver"
+        val serviceComponent = "$pkg/$NAMESPACE.service.SphereAgentService"
         val sourceApk = context.applicationInfo.sourceDir
         val systemDir = "/system/priv-app/SphereAgent"
         val systemApk = "$systemDir/base.apk"
@@ -277,85 +299,98 @@ object RootAutoStart {
             val process = Runtime.getRuntime().exec("su")
             val stdin = DataOutputStream(process.outputStream)
 
-            // ═══════════════════════════════════════════════════════════════
-            //  ДИАГНОСТИКА: пишем в logcat каждый шаг
-            // ═══════════════════════════════════════════════════════════════
-            stdin.writeBytes("log -t SphereAutoStart '=== НАЧАЛО УСТАНОВКИ АВТОЗАПУСКА ==='\n")
+            // ── ДИАГНОСТИКА: файл-лог в /data/local/tmp/ ──────────────────
+            fun diag(msg: String) {
+                stdin.writeBytes("echo \"[INSTALL] \$(date) $msg\" >> $DIAG_FILE\n")
+                stdin.writeBytes("log -t SphereAutoStart '$msg'\n")
+            }
+
+            diag("=== НАЧАЛО УСТАНОВКИ АВТОЗАПУСКА ===")
 
             // ═══════════════════════════════════════════════════════════════
-            //  ШАГ 0: ОТКЛЮЧИТЬ SELINUX — БЕЗ ЭТОГО НИЧЕГО НЕ РАБОТАЕТ
+            //  ШАГ 0: ОТКЛЮЧИТЬ SELINUX
             // ═══════════════════════════════════════════════════════════════
-            stdin.writeBytes("log -t SphereAutoStart 'SELinux до: '\$(getenforce)\n")
+            stdin.writeBytes("echo \"[INSTALL] \$(date) SELinux до: \$(getenforce)\" >> $DIAG_FILE\n")
             stdin.writeBytes("setenforce 0\n")
-            // supolicy — снятие SELinux restrictions если su от SuperSU/phh
             stdin.writeBytes("supolicy --live 'allow * * * *' 2>/dev/null\n")
-            stdin.writeBytes("log -t SphereAutoStart 'SELinux после: '\$(getenforce)\n")
+            stdin.writeBytes("echo \"[INSTALL] \$(date) SELinux после: \$(getenforce)\" >> $DIAG_FILE\n")
 
             // ═══════════════════════════════════════════════════════════════
-            //  ШАГ 1: МОНТИРОВАНИЕ — ВСЕ СТРАТЕГИИ
+            //  ШАГ 1: МОНТИРОВАНИЕ /system в rw — ВСЕ СТРАТЕГИИ
             // ═══════════════════════════════════════════════════════════════
-            stdin.writeBytes("log -t SphereAutoStart 'Монтируем /system в rw...'\n")
-            // system-as-root (LDPlayer Android 9+)
-            stdin.writeBytes("mount -o remount,rw / && log -t SphereAutoStart 'mount / rw: OK' || log -t SphereAutoStart 'mount / rw: FAIL'\n")
-            // Классический remount
-            stdin.writeBytes("mount -o remount,rw /system && log -t SphereAutoStart 'mount /system rw: OK' || log -t SphereAutoStart 'mount /system rw: FAIL'\n")
-            // Через blockdevice
+            stdin.writeBytes("mount -o remount,rw / 2>&1 && echo '[INSTALL] mount / rw: OK' >> $DIAG_FILE || echo '[INSTALL] mount / rw: FAIL' >> $DIAG_FILE\n")
+            stdin.writeBytes("mount -o remount,rw /system 2>&1 && echo '[INSTALL] mount /system rw: OK' >> $DIAG_FILE || echo '[INSTALL] mount /system rw: FAIL' >> $DIAG_FILE\n")
             stdin.writeBytes("SYSDEV=\$(mount | grep ' /system ' | head -1 | cut -d' ' -f1)\n")
-            stdin.writeBytes("[ -n \"\$SYSDEV\" ] && mount -o remount,rw \"\$SYSDEV\" /system && log -t SphereAutoStart \"mount blockdev /system rw: OK (\$SYSDEV)\" || true\n")
+            stdin.writeBytes("[ -n \"\$SYSDEV\" ] && mount -o remount,rw \"\$SYSDEV\" /system 2>/dev/null\n")
             stdin.writeBytes("ROOTDEV=\$(mount | grep ' / ' | head -1 | cut -d' ' -f1)\n")
-            stdin.writeBytes("[ -n \"\$ROOTDEV\" ] && mount -o remount,rw \"\$ROOTDEV\" / && log -t SphereAutoStart \"mount blockdev / rw: OK (\$ROOTDEV)\" || true\n")
-            // Через /proc/mounts — ищем system partition
-            stdin.writeBytes("SYSBLK=\$(cat /proc/mounts | grep -E '/system|/ ' | head -1 | awk '{print \$1}')\n")
+            stdin.writeBytes("[ -n \"\$ROOTDEV\" ] && mount -o remount,rw \"\$ROOTDEV\" / 2>/dev/null\n")
+            stdin.writeBytes("SYSBLK=\$(cat /proc/mounts | grep -E '/system |/ ' | head -1 | awk '{print \$1}')\n")
             stdin.writeBytes("[ -n \"\$SYSBLK\" ] && blockdev --setrw \"\$SYSBLK\" 2>/dev/null && mount -o remount,rw \"\$SYSBLK\" /system 2>/dev/null\n")
 
             // ═══════════════════════════════════════════════════════════════
-            //  ШАГ 2: STARTUP-СКРИПТ в /data/local/tmp/ (100% writable)
+            //  ШАГ 2: STARTUP-СКРИПТ (запускает app + retry + watchdog)
             // ═══════════════════════════════════════════════════════════════
             stdin.writeBytes("cat > $startupScript << 'STARTUP_EOF'\n")
             stdin.writeBytes("#!/system/bin/sh\n")
-            stdin.writeBytes("log -t SphereAutoStart 'BOOT STARTUP: скрипт запущен'\n")
+            stdin.writeBytes("echo \"[BOOT] \$(date) sphere_startup.sh ЗАПУЩЕН\" >> $DIAG_FILE\n")
+            stdin.writeBytes("log -t SphereAutoStart 'BOOT: startup script запущен'\n")
             stdin.writeBytes("setenforce 0 2>/dev/null\n")
-            stdin.writeBytes("sleep 15\n")
-            stdin.writeBytes("log -t SphereAutoStart 'BOOT STARTUP: запускаем приложение'\n")
-            stdin.writeBytes("cmd package set-stopped-state $pkg false\n")
-            stdin.writeBytes("am start -a android.intent.action.MAIN -n $activityComponent\n")
-            stdin.writeBytes("sleep 5\n")
-            stdin.writeBytes("am startservice -n $pkg/$NAMESPACE.service.SphereAgentService\n")
-            stdin.writeBytes("am broadcast -a android.intent.action.BOOT_COMPLETED -n $receiverComponent --include-stopped-packages\n")
+            stdin.writeBytes("sleep 10\n")
+            stdin.writeBytes("log -t SphereAutoStart 'BOOT: запускаем приложение'\n")
+            stdin.writeBytes("cmd package set-stopped-state $pkg false 2>/dev/null\n")
+            stdin.writeBytes("am start -a android.intent.action.MAIN -n $activityComponent 2>&1 | log -t SphereAutoStart\n")
+            stdin.writeBytes("sleep 3\n")
+            stdin.writeBytes("am startservice -n $serviceComponent 2>&1 | log -t SphereAutoStart\n")
+            stdin.writeBytes("am broadcast -a android.intent.action.BOOT_COMPLETED -n $receiverComponent --include-stopped-packages 2>&1 | log -t SphereAutoStart\n")
             stdin.writeBytes("for i in 1 2 3 4 5 6 7 8 9 10; do\n")
             stdin.writeBytes("  sleep 10\n")
             stdin.writeBytes("  if pidof $pkg > /dev/null 2>&1; then\n")
-            stdin.writeBytes("    log -t SphereAutoStart \"BOOT STARTUP: процесс жив после попытки \$i\"\n")
+            stdin.writeBytes("    echo \"[BOOT] \$(date) процесс жив после попытки \$i\" >> $DIAG_FILE\n")
             stdin.writeBytes("    break\n")
             stdin.writeBytes("  fi\n")
-            stdin.writeBytes("  log -t SphereAutoStart \"BOOT STARTUP: retry \$i\"\n")
-            stdin.writeBytes("  am start -a android.intent.action.MAIN -n $activityComponent\n")
-            stdin.writeBytes("  am startservice -n $pkg/$NAMESPACE.service.SphereAgentService\n")
+            stdin.writeBytes("  echo \"[BOOT] \$(date) retry \$i\" >> $DIAG_FILE\n")
+            stdin.writeBytes("  am start -a android.intent.action.MAIN -n $activityComponent 2>/dev/null\n")
+            stdin.writeBytes("  am startservice -n $serviceComponent 2>/dev/null\n")
             stdin.writeBytes("done\n")
-            stdin.writeBytes("log -t SphereAutoStart 'BOOT STARTUP: переход к watchdog'\n")
+            stdin.writeBytes("echo \"[BOOT] \$(date) переход к watchdog\" >> $DIAG_FILE\n")
             stdin.writeBytes("exec sh $watchdogScript\n")
             stdin.writeBytes("STARTUP_EOF\n")
             stdin.writeBytes("chmod 755 $startupScript\n")
-            stdin.writeBytes("log -t SphereAutoStart 'startup-скрипт записан: $startupScript'\n")
+            diag("startup-скрипт записан")
 
             // ═══════════════════════════════════════════════════════════════
-            //  ШАГ 3: .RC ФАЙЛ — ВО ВСЕ ВОЗМОЖНЫЕ ПУТИ
+            //  ШАГ 3: .RC ФАЙЛ — БЕЗ seclabel! НЕСКОЛЬКО TRIGGER'ОВ!
+            //
+            //  КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: убран seclabel u:r:su:s0
+            //  Этот SELinux context НЕ СУЩЕСТВУЕТ на LDPlayer Android 9!
+            //  Init видел неизвестный seclabel → МОЛЧА отказывался запускать
+            //  service → startup script НИКОГДА не выполнялся.
+            //  При setenforce 0 seclabel не нужен.
+            //
+            //  Добавлены множественные trigger'ы:
+            //  - on property:sys.boot_completed=1 (стандартный)
+            //  - on property:dev.bootcomplete=1 (некоторые ROM)
+            //  - on late-init (ранний этап загрузки)
             // ═══════════════════════════════════════════════════════════════
-            val rcContent = """service sphere_autostart /system/bin/sh $startupScript
-    class late_start
-    user root
-    group root
-    oneshot
-    disabled
-    seclabel u:r:su:s0
+            val rcContent = buildString {
+                appendLine("service sphere_autostart /system/bin/sh $startupScript")
+                appendLine("    class late_start")
+                appendLine("    user root")
+                appendLine("    group root")
+                appendLine("    oneshot")
+                appendLine("    disabled")
+                appendLine("")
+                appendLine("on property:sys.boot_completed=1")
+                appendLine("    start sphere_autostart")
+                appendLine("")
+                appendLine("on property:dev.bootcomplete=1")
+                appendLine("    start sphere_autostart")
+                appendLine("")
+                appendLine("on late-init")
+                appendLine("    start sphere_autostart")
+            }
 
-on property:sys.boot_completed=1
-    start sphere_autostart
-"""
-            // Эскейпим и записываем через printf для надёжности
-            val rcEscaped = rcContent.replace("\\", "\\\\").replace("'", "'\\''")
-
-            // Пути для .rc файлов — Android init ищет во ВСЕХ этих директориях
+            // Записываем .rc через heredoc — надёжнее printf с escape
             val rcPaths = listOf(
                 "/system/etc/init/sphere_autostart.rc",
                 "/vendor/etc/init/sphere_autostart.rc",
@@ -365,53 +400,127 @@ on property:sys.boot_completed=1
             for (rcPath in rcPaths) {
                 val dir = rcPath.substringBeforeLast('/')
                 stdin.writeBytes("mkdir -p $dir 2>/dev/null\n")
-                stdin.writeBytes("printf '%s' '$rcEscaped' > $rcPath 2>/dev/null\n")
+                stdin.writeBytes("cat > $rcPath << 'RC_EOF'\n")
+                stdin.writeBytes(rcContent)
+                stdin.writeBytes("\nRC_EOF\n")
                 stdin.writeBytes("chmod 644 $rcPath 2>/dev/null\n")
-                // КРИТИЧЕСКИ ВАЖНО: правильный SELinux label!
                 stdin.writeBytes("chcon u:object_r:system_file:s0 $rcPath 2>/dev/null\n")
-                stdin.writeBytes("[ -f $rcPath ] && log -t SphereAutoStart 'rc ЗАПИСАН: $rcPath' || log -t SphereAutoStart 'rc НЕ записан: $rcPath'\n")
+                stdin.writeBytes("if [ -f $rcPath ]; then echo '[INSTALL] rc ЗАПИСАН: $rcPath' >> $DIAG_FILE; else echo '[INSTALL] rc НЕ записан: $rcPath' >> $DIAG_FILE; fi\n")
             }
 
-            // ═══════════════════════════════════════════════════════════════
-            //  ШАГ 4: IMPORT В СУЩЕСТВУЮЩИЕ init.rc (fallback)
-            // ═══════════════════════════════════════════════════════════════
-            // Также записываем .rc в /data/ и добавляем import в существующие файлы
-            stdin.writeBytes("printf '%s' '$rcEscaped' > /data/local/tmp/sphere_autostart.rc\n")
+            // Также в /data/local/tmp/ — гарантированно writable
+            stdin.writeBytes("cat > /data/local/tmp/sphere_autostart.rc << 'RC_EOF'\n")
+            stdin.writeBytes(rcContent)
+            stdin.writeBytes("\nRC_EOF\n")
             stdin.writeBytes("chmod 644 /data/local/tmp/sphere_autostart.rc\n")
-            val importLine = "import /data/local/tmp/sphere_autostart.rc"
-            val initRcPaths = listOf(
+            diag("rc в /data/local/tmp/ записан")
+
+            // ═══════════════════════════════════════════════════════════════
+            //  ШАГ 4: ПРЯМАЯ ВСТАВКА exec В СУЩЕСТВУЮЩИЙ init.rc
+            //  Вместо import (который может не парситься) — ВСТАВЛЯЕМ
+            //  exec /system/bin/sh -c "sh /data/local/tmp/sphere_startup.sh &"
+            //  прямо в блок on property:sys.boot_completed=1
+            // ═══════════════════════════════════════════════════════════════
+            val execLine = "    exec -- /system/bin/sh -c \"sh $startupScript &\""
+            val initRcFiles = listOf(
                 "/system/etc/init/hw/init.rc",
                 "/init.rc",
                 "/system/etc/init/hw/init.target.rc",
             )
-            for (initRc in initRcPaths) {
+            for (initRc in initRcFiles) {
+                // Если файл существует и содержит sys.boot_completed —
+                // добавляем exec ПОСЛЕ строки property trigger
                 stdin.writeBytes("if [ -f $initRc ]; then\n")
-                stdin.writeBytes("  grep -q sphere_autostart $initRc || echo '$importLine' >> $initRc\n")
-                stdin.writeBytes("  grep -q sphere_autostart $initRc && log -t SphereAutoStart 'import ДОБАВЛЕН в $initRc' || log -t SphereAutoStart 'import НЕ добавлен в $initRc'\n")
+                stdin.writeBytes("  if grep -q 'sys.boot_completed=1' $initRc; then\n")
+                stdin.writeBytes("    if ! grep -q 'sphere_startup' $initRc; then\n")
+                stdin.writeBytes("      sed -i '/sys.boot_completed=1/a\\$execLine' $initRc 2>/dev/null\n")
+                stdin.writeBytes("      grep -q 'sphere_startup' $initRc && echo '[INSTALL] exec ВСТАВЛЕН в $initRc' >> $DIAG_FILE || echo '[INSTALL] exec НЕ вставлен (sed fail) в $initRc' >> $DIAG_FILE\n")
+                stdin.writeBytes("    else\n")
+                stdin.writeBytes("      echo '[INSTALL] exec УЖЕ есть в $initRc' >> $DIAG_FILE\n")
+                stdin.writeBytes("    fi\n")
+                stdin.writeBytes("  else\n")
+                // Нет блока sys.boot_completed — добавляем целый блок в конец
+                stdin.writeBytes("    echo '' >> $initRc\n")
+                stdin.writeBytes("    echo 'on property:sys.boot_completed=1' >> $initRc\n")
+                stdin.writeBytes("    echo '$execLine' >> $initRc\n")
+                stdin.writeBytes("    echo '[INSTALL] блок boot_completed ДОБАВЛЕН в конец $initRc' >> $DIAG_FILE\n")
+                stdin.writeBytes("  fi\n")
+                stdin.writeBytes("else\n")
+                stdin.writeBytes("  echo '[INSTALL] нет файла $initRc' >> $DIAG_FILE\n")
                 stdin.writeBytes("fi\n")
             }
 
             // ═══════════════════════════════════════════════════════════════
-            //  ШАГ 5: SYSTEM APP — копируем APK в /system/priv-app/
+            //  ШАГ 5: userinit.sh — CyanogenMod/Android-x86 fallback
+            //  Многие эмуляторы (LDPlayer = Android-x86 based) запускают
+            //  /data/local/userinit.sh при каждой загрузке
+            // ═══════════════════════════════════════════════════════════════
+            val userinitPaths = listOf(
+                "/data/local/userinit.sh",
+                "/data/local/tmp/userinit.sh",
+            )
+            for (userinitPath in userinitPaths) {
+                stdin.writeBytes("if [ ! -f $userinitPath ] || ! grep -q 'sphere_startup' $userinitPath 2>/dev/null; then\n")
+                stdin.writeBytes("  echo '#!/system/bin/sh' > $userinitPath 2>/dev/null\n")
+                stdin.writeBytes("  echo 'echo \"[USERINIT] \$(date) userinit.sh запущен\" >> $DIAG_FILE' >> $userinitPath\n")
+                stdin.writeBytes("  echo 'sh $startupScript &' >> $userinitPath\n")
+                stdin.writeBytes("  chmod 755 $userinitPath\n")
+                stdin.writeBytes("  echo '[INSTALL] userinit записан: $userinitPath' >> $DIAG_FILE\n")
+                stdin.writeBytes("fi\n")
+            }
+
+            // ═══════════════════════════════════════════════════════════════
+            //  ШАГ 6: init.d — некоторые ROM запускают всё из этой папки
+            // ═══════════════════════════════════════════════════════════════
+            val initdPaths = listOf(
+                "/system/etc/init.d",
+                "/data/adb/service.d",
+            )
+            for (initdDir in initdPaths) {
+                stdin.writeBytes("mkdir -p $initdDir 2>/dev/null\n")
+                val initdScript = "$initdDir/99sphere"
+                stdin.writeBytes("cat > $initdScript << 'INITD_EOF'\n")
+                stdin.writeBytes("#!/system/bin/sh\n")
+                stdin.writeBytes("echo \"[INITD] \$(date) init.d скрипт запущен\" >> $DIAG_FILE\n")
+                stdin.writeBytes("sh $startupScript &\n")
+                stdin.writeBytes("INITD_EOF\n")
+                stdin.writeBytes("chmod 755 $initdScript 2>/dev/null\n")
+                stdin.writeBytes("chcon u:object_r:system_file:s0 $initdScript 2>/dev/null\n")
+                stdin.writeBytes("[ -f $initdScript ] && echo '[INSTALL] init.d записан: $initdScript' >> $DIAG_FILE || echo '[INSTALL] init.d НЕ записан: $initdScript' >> $DIAG_FILE\n")
+            }
+
+            // ═══════════════════════════════════════════════════════════════
+            //  ШАГ 7: SYSTEM APP — /system/priv-app/
             // ═══════════════════════════════════════════════════════════════
             if (!isAlreadySystemApp) {
-                stdin.writeBytes("log -t SphereAutoStart 'Копируем APK в /system/priv-app/...'\n")
+                diag("копируем APK в /system/priv-app/...")
                 stdin.writeBytes("mkdir -p $systemDir\n")
                 stdin.writeBytes("cp $sourceApk $systemApk\n")
                 stdin.writeBytes("chmod 644 $systemApk\n")
                 stdin.writeBytes("chmod 755 $systemDir\n")
                 stdin.writeBytes("chcon -R u:object_r:system_file:s0 $systemDir 2>/dev/null\n")
-                stdin.writeBytes("[ -f $systemApk ] && log -t SphereAutoStart 'system app APK СКОПИРОВАН: $systemApk' || log -t SphereAutoStart 'system app APK НЕ скопирован!'\n")
+                stdin.writeBytes("if [ -f $systemApk ]; then echo '[INSTALL] system app APK СКОПИРОВАН' >> $DIAG_FILE; else echo '[INSTALL] system app APK НЕ скопирован!' >> $DIAG_FILE; fi\n")
             } else {
-                stdin.writeBytes("log -t SphereAutoStart 'Приложение уже system app — пропускаем копирование'\n")
+                diag("уже system app — пропускаем")
             }
 
             // ═══════════════════════════════════════════════════════════════
-            //  ШАГ 6: ВОЗВРАЩАЕМ /system в ro
+            //  ШАГ 8: ВОЗВРАТ /system в ro + финальная диагностика
             // ═══════════════════════════════════════════════════════════════
             stdin.writeBytes("mount -o remount,ro /system 2>/dev/null\n")
             stdin.writeBytes("mount -o remount,ro / 2>/dev/null\n")
-            stdin.writeBytes("log -t SphereAutoStart '=== УСТАНОВКА АВТОЗАПУСКА ЗАВЕРШЕНА ==='\n")
+
+            // Финальная сводка — показать ВСЕ установленные файлы
+            stdin.writeBytes("echo '--- ФАЙЛЫ ---' >> $DIAG_FILE\n")
+            stdin.writeBytes("ls -la $startupScript >> $DIAG_FILE 2>&1\n")
+            stdin.writeBytes("ls -la /system/etc/init/sphere_autostart.rc >> $DIAG_FILE 2>&1\n")
+            stdin.writeBytes("ls -la /vendor/etc/init/sphere_autostart.rc >> $DIAG_FILE 2>&1\n")
+            stdin.writeBytes("ls -la $systemDir/base.apk >> $DIAG_FILE 2>&1\n")
+            stdin.writeBytes("ls -la /data/local/userinit.sh >> $DIAG_FILE 2>&1\n")
+            stdin.writeBytes("ls -la /system/etc/init.d/99sphere >> $DIAG_FILE 2>&1\n")
+            stdin.writeBytes("echo '--- КОНЕЦ ---' >> $DIAG_FILE\n")
+
+            diag("=== УСТАНОВКА ЗАВЕРШЕНА ===")
 
             stdin.writeBytes("exit\n")
             stdin.flush()
@@ -424,7 +533,7 @@ on property:sys.boot_completed=1
                 return
             }
 
-            Timber.i("RootAutoStart: автозапуск установлен — проверь logcat -s SphereAutoStart")
+            Timber.i("RootAutoStart: автозапуск установлен — диагностика: adb shell cat $DIAG_FILE")
         } catch (e: Exception) {
             Timber.w(e, "RootAutoStart: не удалось установить автозапуск")
         }
