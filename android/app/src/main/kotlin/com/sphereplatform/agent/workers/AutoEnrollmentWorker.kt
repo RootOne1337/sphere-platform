@@ -83,13 +83,9 @@ class AutoEnrollmentWorker @AssistedInject constructor(
         }
 
         return try {
-            // ВАЖНО: Всегда предпочитаем register() вместо сохранения static key.
-            // register() создаёт устройство в БД и возвращает UUID device_id + JWT.
-            // Без register(): device_id будет "emu-..." (не UUID) → WS сервер отклонит.
-            if (config.autoRegisterEnabled) {
-                // auto_register включён → регистрация через POST /devices/register
-                val enrollmentKey = config.apiKey.takeIf { it.isNotBlank() }
-                    ?: getEnrollmentKeyFromConfig(config.serverUrl)
+            // Если включена автоматическая регистрация через config_endpoint
+            if (config.autoRegisterEnabled && config.apiKey.isBlank()) {
+                val enrollmentKey = getEnrollmentKeyFromConfig(config.serverUrl)
                 if (enrollmentKey == null) {
                     Timber.w("AutoEnrollmentWorker: auto_register requested, but no enrollment key found")
                     return Result.failure()
@@ -100,28 +96,32 @@ class AutoEnrollmentWorker @AssistedInject constructor(
                     serverUrl = config.serverUrl,
                     enrollmentApiKey = enrollmentKey,
                 )
-            } else if (config.apiKey.isNotBlank()) {
-                // Без auto_register: пробуем register, fallback на static key
-                Timber.i("AutoEnrollmentWorker: trying register with API Key from ${config.source}")
-                try {
-                    registrationClient.register(
-                        serverUrl = config.serverUrl,
-                        enrollmentApiKey = config.apiKey,
-                    )
-                } catch (e: RegistrationException) {
-                    if (e.httpCode == 403) {
-                        // Ключ валиден но нет device:register → legacy static key
-                        Timber.d("AutoEnrollmentWorker: API key lacks device:register → legacy static")
-                        authStore.saveServerUrl(config.serverUrl)
-                        config.deviceId?.let { authStore.saveDeviceId(it) }
-                        authStore.saveApiKey(config.apiKey)
-                    } else {
-                        throw e
+            } else {
+                // Классический flow — используем предоставленный API ключ
+                if (config.apiKey.isBlank()) {
+                    Timber.w("AutoEnrollmentWorker: config contains no api_key and auto_register is false")
+                    return Result.failure()
+                }
+
+                Timber.i("AutoEnrollmentWorker: using static API Key from config")
+                authStore.saveServerUrl(config.serverUrl)
+                config.deviceId?.let { authStore.saveDeviceId(it) }
+                authStore.saveApiKey(config.apiKey)
+
+                // Upgrade: пробуем register() чтобы получить UUID device_id + JWT.
+                // При успехе — register() перезапишет static key на UUID + JWT.
+                // При неудаче — static key остаётся как baseline.
+                if (config.autoRegisterEnabled) {
+                    try {
+                        Timber.i("AutoEnrollmentWorker: upgrade → register() для UUID device_id + JWT")
+                        registrationClient.register(
+                            serverUrl = config.serverUrl,
+                            enrollmentApiKey = config.apiKey,
+                        )
+                    } catch (e: Exception) {
+                        Timber.d(e, "AutoEnrollmentWorker: register() upgrade не удался — static key сохранён")
                     }
                 }
-            } else {
-                Timber.w("AutoEnrollmentWorker: config contains no api_key and auto_register is false")
-                return Result.failure()
             }
 
             // --- Успех! Маркируем энролмент и запускаем сервис ---

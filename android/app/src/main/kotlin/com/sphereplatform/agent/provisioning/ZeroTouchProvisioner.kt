@@ -190,14 +190,14 @@ class ZeroTouchProvisioner @Inject constructor(
                 val json = JSONObject(file.readText(Charsets.UTF_8).take(MAX_CONFIG_CHARS))
                 val serverUrl = json.getString("server_url").takeIf { it.isNotBlank() }
                     ?: return@runCatching null
-                val apiKey = json.optString("api_key", "").takeIf { it.isNotBlank() } ?: ""
-                val autoRegister = json.optBoolean("auto_register", false)
+                val apiKey = json.getString("api_key").takeIf { it.isNotBlank() }
+                    ?: return@runCatching null
                 ProvisionConfig(
                     serverUrl = serverUrl,
                     apiKey = apiKey,
                     deviceId = json.optString("device_id").takeIf { it.isNotBlank() },
                     source = "file:${file.absolutePath}",
-                    autoRegisterEnabled = autoRegister,
+                    autoRegisterEnabled = json.optBoolean("auto_register", false),
                 )
             }.getOrElse { e ->
                 Timber.w(e, "ZeroTouch: failed to parse config from ${file.absolutePath}")

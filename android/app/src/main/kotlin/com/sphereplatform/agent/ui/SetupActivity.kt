@@ -133,16 +133,9 @@ class SetupActivity : AppCompatActivity() {
     // ── Zero-touch auto-enrollment ─────────────────────────────────────────
 
     private suspend fun performAutoEnroll(config: ZeroTouchProvisioner.ProvisionConfig) {
-        // ВАЖНО: Всегда предпочитаем register() — он создаёт устройство в БД
-        // и возвращает UUID device_id + JWT. Без register() WS отклонит "invalid_device_id".
-        if (config.autoRegisterEnabled) {
-            // auto_register — используем apiKey как enrollment key для register()
-            val enrollmentKey = config.apiKey.takeIf { it.isNotBlank() }
-            if (enrollmentKey != null) {
-                performAutoRegistration(config.serverUrl, enrollmentKey)
-            } else {
-                performAutoRegistration(config.serverUrl)
-            }
+        // Если autoRegister включён и API-ключ пуст (config_endpoint) → авто-регистрация
+        if (config.autoRegisterEnabled && config.apiKey.isBlank()) {
+            performAutoRegistration(config.serverUrl)
             return
         }
 
@@ -161,11 +154,11 @@ class SetupActivity : AppCompatActivity() {
      * Авто-регистрация через POST /api/v1/devices/register.
      * Не требует API-ключ от пользователя — используется enrollment key из конфига.
      */
-    private suspend fun performAutoRegistration(serverUrl: String, knownEnrollmentKey: String? = null) {
+    private suspend fun performAutoRegistration(serverUrl: String) {
         showStatus("Auto-registering device…", isError = false)
 
-        // Используем переданный ключ или получаем из config endpoint
-        val enrollmentKey = knownEnrollmentKey ?: getEnrollmentKeyFromConfig(serverUrl)
+        // Получаем enrollment API key из конфига (config endpoint или файл)
+        val enrollmentKey = getEnrollmentKeyFromConfig(serverUrl)
         if (enrollmentKey == null) {
             setLoading(false)
             showStatus("Auto-register: enrollment key not found. Enter credentials manually.", isError = true)

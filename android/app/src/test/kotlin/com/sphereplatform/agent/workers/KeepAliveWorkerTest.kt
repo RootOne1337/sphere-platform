@@ -112,14 +112,15 @@ class KeepAliveWorkerTest {
             deviceId = "test-device-1",
             source = "buildconfig:dev",
         )
-        coEvery { registrationClient.register(any(), any()) } returns mockk(relaxed = true)
 
         val worker = createWorker()
         val result = worker.doWork()
 
         assertEquals(ListenableWorker.Result.success(), result)
-        // С новой логикой: всегда пробуем register() первым (получаем UUID device_id + JWT)
-        coVerify { registrationClient.register("http://test-server:8000", "test_api_key") }
+        // Проверяем что enrollment прошёл
+        verify { authStore.saveServerUrl("http://test-server:8000") }
+        verify { authStore.saveApiKey("test_api_key") }
+        verify { authStore.saveDeviceId("test-device-1") }
     }
 
     // ── Сценарий 4: not enrolled + no config → success (повторит позже) ──
@@ -149,7 +150,7 @@ class KeepAliveWorkerTest {
             apiKey = "key",
             source = "test",
         )
-        coEvery { registrationClient.register(any(), any()) } throws RuntimeException("Сеть недоступна")
+        every { authStore.saveServerUrl(any()) } throws RuntimeException("Сеть недоступна")
 
         val worker = createWorker()
         val result = worker.doWork()
@@ -189,12 +190,10 @@ class KeepAliveWorkerTest {
         coVerify { registrationClient.register("http://test-server:8000", "enroll_key_123") }
     }
 
-    // ── Сценарий 7: auto-register + apiKey present → register с apiKey ──
-    // Это ключевой кейс: config_endpoint возвращает apiKey (enrollment key)
-    // И autoRegisterEnabled=true → должен вызвать register(), НЕ сохранять static key.
+    // ── Сценарий 7: autoRegister + apiKey → static save + register() upgrade ──
 
     @Test
-    fun `auto register with apiKey present calls register not static save`() = runTest {
+    fun `auto register with apiKey saves static then upgrades via register`() = runTest {
         enrolledStorage["enrolled"] = false
         every { authStore.getToken() } returns null
         every { provisioner.discoverConfig() } returns ZeroTouchProvisioner.ProvisionConfig(
@@ -209,8 +208,33 @@ class KeepAliveWorkerTest {
         val result = worker.doWork()
 
         assertEquals(ListenableWorker.Result.success(), result)
-        // С autoRegisterEnabled=true + apiKey → вызываем register(), НЕ saveApiKey()
+        // Static key saved FIRST (baseline)
+        verify { authStore.saveServerUrl("https://sphere.example.com") }
+        verify { authStore.saveApiKey("sphr_dev_enrollment_key_2025") }
+        // Then register() called for UUID upgrade
         coVerify { registrationClient.register("https://sphere.example.com", "sphr_dev_enrollment_key_2025") }
-        verify(exactly = 0) { authStore.saveApiKey(any()) }
+    }
+
+    // ── Сценарий 8: autoRegister + apiKey, register() fails → static key preserved ──
+
+    @Test
+    fun `auto register upgrade failure preserves static key`() = runTest {
+        enrolledStorage["enrolled"] = false
+        every { authStore.getToken() } returns null
+        every { provisioner.discoverConfig() } returns ZeroTouchProvisioner.ProvisionConfig(
+            serverUrl = "https://sphere.example.com",
+            apiKey = "sphr_dev_enrollment_key_2025",
+            source = "file:/sdcard/sphere-agent-config.json",
+            autoRegisterEnabled = true,
+        )
+        coEvery { registrationClient.register(any(), any()) } throws RuntimeException("Server unreachable")
+
+        val worker = createWorker()
+        val result = worker.doWork()
+
+        // Enrollment still succeeds (static key saved even though register failed)
+        assertEquals(ListenableWorker.Result.success(), result)
+        verify { authStore.saveServerUrl("https://sphere.example.com") }
+        verify { authStore.saveApiKey("sphr_dev_enrollment_key_2025") }
     }
 }
