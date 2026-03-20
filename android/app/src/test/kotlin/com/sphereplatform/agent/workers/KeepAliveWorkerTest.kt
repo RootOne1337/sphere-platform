@@ -112,15 +112,14 @@ class KeepAliveWorkerTest {
             deviceId = "test-device-1",
             source = "buildconfig:dev",
         )
+        coEvery { registrationClient.register(any(), any()) } returns mockk(relaxed = true)
 
         val worker = createWorker()
         val result = worker.doWork()
 
         assertEquals(ListenableWorker.Result.success(), result)
-        // Проверяем что enrollment прошёл
-        verify { authStore.saveServerUrl("http://test-server:8000") }
-        verify { authStore.saveApiKey("test_api_key") }
-        verify { authStore.saveDeviceId("test-device-1") }
+        // С новой логикой: всегда пробуем register() первым (получаем UUID device_id + JWT)
+        coVerify { registrationClient.register("http://test-server:8000", "test_api_key") }
     }
 
     // ── Сценарий 4: not enrolled + no config → success (повторит позже) ──
@@ -150,7 +149,7 @@ class KeepAliveWorkerTest {
             apiKey = "key",
             source = "test",
         )
-        every { authStore.saveServerUrl(any()) } throws RuntimeException("Сеть недоступна")
+        coEvery { registrationClient.register(any(), any()) } throws RuntimeException("Сеть недоступна")
 
         val worker = createWorker()
         val result = worker.doWork()
@@ -188,5 +187,30 @@ class KeepAliveWorkerTest {
 
         assertEquals(ListenableWorker.Result.success(), result)
         coVerify { registrationClient.register("http://test-server:8000", "enroll_key_123") }
+    }
+
+    // ── Сценарий 7: auto-register + apiKey present → register с apiKey ──
+    // Это ключевой кейс: config_endpoint возвращает apiKey (enrollment key)
+    // И autoRegisterEnabled=true → должен вызвать register(), НЕ сохранять static key.
+
+    @Test
+    fun `auto register with apiKey present calls register not static save`() = runTest {
+        enrolledStorage["enrolled"] = false
+        every { authStore.getToken() } returns null
+        every { provisioner.discoverConfig() } returns ZeroTouchProvisioner.ProvisionConfig(
+            serverUrl = "https://sphere.example.com",
+            apiKey = "sphr_dev_enrollment_key_2025",
+            source = "config_endpoint",
+            autoRegisterEnabled = true,
+        )
+        coEvery { registrationClient.register(any(), any()) } returns mockk(relaxed = true)
+
+        val worker = createWorker()
+        val result = worker.doWork()
+
+        assertEquals(ListenableWorker.Result.success(), result)
+        // С autoRegisterEnabled=true + apiKey → вызываем register(), НЕ saveApiKey()
+        coVerify { registrationClient.register("https://sphere.example.com", "sphr_dev_enrollment_key_2025") }
+        verify(exactly = 0) { authStore.saveApiKey(any()) }
     }
 }

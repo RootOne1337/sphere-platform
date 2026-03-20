@@ -226,6 +226,11 @@ class KeepAliveWorker @AssistedInject constructor(
     /**
      * Пытается пройти Zero-Touch enrollment.
      * Полностью повторяет логику [AutoEnrollmentWorker] но в контексте периодического тика.
+     *
+     * ВАЖНО: Всегда предпочитаем register() вместо сохранения static key.
+     * register() создаёт устройство в БД и возвращает UUID device_id + JWT.
+     * Без register(): device_id будет "emu-..." (не UUID) → WS сервер отклонит
+     * с "invalid_device_id" потому что uuid.UUID("emu-...") невалиден.
      */
     private suspend fun tryAutoEnrollment(): Result {
         val config = provisioner.discoverConfig()
@@ -235,10 +240,10 @@ class KeepAliveWorker @AssistedInject constructor(
         }
 
         return try {
-            if (config.autoRegisterEnabled && config.apiKey.isBlank()) {
-                // Auto-register через серверный endpoint
-                val serverConfig = provisioner.fetchServerConfig()
-                val enrollmentKey = serverConfig?.enrollmentApiKey
+            if (config.autoRegisterEnabled) {
+                // Auto-register: вызываем POST /devices/register → получаем UUID device_id + JWT
+                val enrollmentKey = config.apiKey.takeIf { it.isNotBlank() }
+                    ?: provisioner.fetchServerConfig()?.enrollmentApiKey
                 if (enrollmentKey == null) {
                     Timber.w("KeepAliveWorker: auto_register запрошен, но enrollment key не найден")
                     return Result.success()
@@ -249,11 +254,24 @@ class KeepAliveWorker @AssistedInject constructor(
                     enrollmentApiKey = enrollmentKey,
                 )
             } else if (config.apiKey.isNotBlank()) {
-                // Статический API-ключ из конфига/BuildConfig
-                Timber.i("KeepAliveWorker: enrollment со статическим API-ключом (${config.source})")
-                authStore.saveServerUrl(config.serverUrl)
-                config.deviceId?.let { authStore.saveDeviceId(it) }
-                authStore.saveApiKey(config.apiKey)
+                // Статический API-ключ (без auto_register) — пробуем register, fallback на static
+                Timber.i("KeepAliveWorker: пробуем register с ключом (${config.source})")
+                try {
+                    registrationClient.register(
+                        serverUrl = config.serverUrl,
+                        enrollmentApiKey = config.apiKey,
+                    )
+                } catch (e: RegistrationException) {
+                    if (e.httpCode == 403) {
+                        // Ключ валиден но нет device:register → legacy static key
+                        Timber.d("KeepAliveWorker: API key без device:register → legacy static enrollment")
+                        authStore.saveServerUrl(config.serverUrl)
+                        config.deviceId?.let { authStore.saveDeviceId(it) }
+                        authStore.saveApiKey(config.apiKey)
+                    } else {
+                        throw e
+                    }
+                }
             } else {
                 Timber.d("KeepAliveWorker: конфиг без ключа и без auto_register")
                 return Result.success()
