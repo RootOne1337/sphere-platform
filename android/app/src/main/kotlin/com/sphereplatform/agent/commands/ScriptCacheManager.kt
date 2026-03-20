@@ -1,6 +1,6 @@
 package com.sphereplatform.agent.commands
 
-import androidx.security.crypto.EncryptedSharedPreferences
+import android.content.SharedPreferences
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
@@ -54,7 +54,7 @@ import javax.inject.Singleton
  */
 @Singleton
 class ScriptCacheManager @Inject constructor(
-    private val prefs: EncryptedSharedPreferences,
+    private val prefs: SharedPreferences,
 ) {
 
     companion object {

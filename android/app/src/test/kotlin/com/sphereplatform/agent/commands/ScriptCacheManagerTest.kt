@@ -1,7 +1,6 @@
 package com.sphereplatform.agent.commands
 
 import android.content.SharedPreferences
-import androidx.security.crypto.EncryptedSharedPreferences
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
@@ -29,7 +28,7 @@ import org.junit.Test
  */
 class ScriptCacheManagerTest {
 
-    private lateinit var prefs: EncryptedSharedPreferences
+    private lateinit var prefs: SharedPreferences
     private lateinit var editor: SharedPreferences.Editor
     private lateinit var cache: ScriptCacheManager
     private val storage = mutableMapOf<String, String?>()

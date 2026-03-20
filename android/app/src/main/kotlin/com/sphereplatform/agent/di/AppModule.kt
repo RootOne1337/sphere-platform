@@ -1,6 +1,7 @@
 package com.sphereplatform.agent.di
 
 import android.content.Context
+import android.content.SharedPreferences
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 import com.sphereplatform.agent.store.AuthTokenStore
@@ -18,6 +19,7 @@ import com.sphereplatform.agent.network.FallbackDns
 import okhttp3.CertificatePinner
 import okhttp3.ConnectionPool
 import okhttp3.OkHttpClient
+import timber.log.Timber
 import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
 
@@ -123,19 +125,34 @@ object AppModule {
         isLenient = true
     }
 
+    /**
+     * SharedPreferences с шифрованием через Android Keystore.
+     *
+     * На эмуляторах (LDPlayer headless, Nox) Android Keystore может отсутствовать
+     * или быть повреждён — MasterKey.Builder.build() бросает GeneralSecurityException.
+     * В этом случае используем обычные SharedPreferences как fallback.
+     * Токены хранятся в plaintext, но на рутованных эмуляторах данные итак доступны.
+     *
+     * На продакшн-устройствах Keystore работает → всегда EncryptedSharedPreferences.
+     */
     @Provides
     @Singleton
-    fun providePreferences(@ApplicationContext ctx: Context): EncryptedSharedPreferences {
-        val masterKey = MasterKey.Builder(ctx)
-            .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
-            .build()
-        return EncryptedSharedPreferences.create(
-            ctx,
-            "sphere_prefs",
-            masterKey,
-            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM,
-        ) as EncryptedSharedPreferences
+    fun providePreferences(@ApplicationContext ctx: Context): SharedPreferences {
+        return try {
+            val masterKey = MasterKey.Builder(ctx)
+                .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+                .build()
+            EncryptedSharedPreferences.create(
+                ctx,
+                "sphere_prefs",
+                masterKey,
+                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM,
+            )
+        } catch (e: Exception) {
+            Timber.w(e, "EncryptedSharedPreferences недоступны (Keystore), fallback на обычные")
+            ctx.getSharedPreferences("sphere_prefs_fallback", Context.MODE_PRIVATE)
+        }
     }
 
     @Provides

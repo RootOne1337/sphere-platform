@@ -1,9 +1,11 @@
 package com.sphereplatform.agent
 
+import android.content.Context
 import android.app.Application
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import com.sphereplatform.agent.BuildConfig
+import com.sphereplatform.agent.logging.CrashHandler
 import com.sphereplatform.agent.logging.FileLoggingTree
 import com.sphereplatform.agent.root.RootAutoStart
 import com.sphereplatform.agent.service.ServiceWatchdog
@@ -26,6 +28,16 @@ class SphereApp : Application(), Configuration.Provider {
 
     @Inject
     lateinit var fileLoggingTree: FileLoggingTree
+
+    /**
+     * CrashHandler устанавливается ДО super.onCreate() (т.е. до инициализации Hilt).
+     * Это гарантирует что стектрейс любого краша при создании DI-графа
+     * будет записан в файл /files/sphere_crash.log.
+     */
+    override fun attachBaseContext(base: Context) {
+        super.attachBaseContext(base)
+        CrashHandler.install(this)
+    }
 
     override fun onCreate() {
         super.onCreate()
