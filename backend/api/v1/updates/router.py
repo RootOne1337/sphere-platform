@@ -20,7 +20,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.core.dependencies import require_permission
+from backend.core.dependencies import require_permission, require_roles
 from backend.database.engine import get_db
 
 router = APIRouter(prefix="/updates", tags=["updates"])
@@ -78,11 +78,8 @@ async def get_latest(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="X-API-Key required")
 
     # Verify API key
-    from backend.services.api_key_service import APIKeyService
-    api_key_svc = APIKeyService(db)
-    key_obj = await api_key_svc.authenticate(x_api_key)
-    if not key_obj:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API key")
+    from backend.api.ws.android.router import authenticate_ws_token
+    await authenticate_ws_token(x_api_key, db)
 
     releases = _load_releases()
     # Filter by platform + flavor, sorted by version_code desc
@@ -132,7 +129,7 @@ async def list_releases(
 @router.post("/", status_code=status.HTTP_201_CREATED)
 async def create_release(
     payload: CreateReleaseRequest,
-    _user=require_permission("device:write"),
+    _user=require_roles(["super_admin"]),
 ) -> JSONResponse:
     """
     Регистрирует новый APK-релиз в системе обновлений.
@@ -168,7 +165,7 @@ async def create_release(
 @router.delete("/{release_id}")
 async def delete_release(
     release_id: str,
-    _user=require_permission("device:delete"),
+    _user=require_roles(["super_admin"]),
 ) -> Response:
     releases = _load_releases()
     filtered = [r for r in releases if r.get("id") != release_id]

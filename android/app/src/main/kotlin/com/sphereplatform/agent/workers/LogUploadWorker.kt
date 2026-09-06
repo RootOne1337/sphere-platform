@@ -68,7 +68,7 @@ class LogUploadWorker @AssistedInject constructor(
 
     override suspend fun doWork(): Result {
         val serverUrl = authStore.getServerUrl().trimEnd('/')
-        val apiKey = authStore.getToken()
+        val apiKey = authStore.getFreshToken()
         val deviceId = authStore.getDeviceId()
 
         if (serverUrl.isBlank() || apiKey.isNullOrBlank() || deviceId.isNullOrBlank()) {

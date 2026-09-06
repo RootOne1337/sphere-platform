@@ -76,7 +76,7 @@ class UpdateCheckWorker @AssistedInject constructor(
 
     override suspend fun doWork(): Result {
         val serverUrl = authStore.getServerUrl().trimEnd('/')
-        val apiKey = authStore.getToken()
+        val apiKey = authStore.getFreshToken()
 
         if (serverUrl.isBlank() || apiKey.isNullOrBlank()) {
             Timber.d("UpdateCheckWorker: skipped (not enrolled)")
@@ -100,9 +100,10 @@ class UpdateCheckWorker @AssistedInject constructor(
                     Timber.d("UpdateCheckWorker: server returned HTTP ${response.code} — no update info")
                     return@use Result.success()
                 }
-                val body = response.body?.string()?.take(MAX_RESPONSE_CHARS)
-                    ?: return@use Result.success()
-                val json = JSONObject(body)
+                val body = response.body ?: return@use Result.retry()
+                val source = body.source()
+                check(!source.request(MAX_RESPONSE_CHARS.toLong() + 1)) { "Update response too large" }
+                val json = JSONObject(source.readUtf8())
 
                 if (!json.optBoolean("update_available", false)) {
                     Timber.i("UpdateCheckWorker: already on latest version ($versionCode)")

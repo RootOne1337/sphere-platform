@@ -37,24 +37,6 @@ from backend.models.organization import Organization
 from backend.models.user import User
 
 
-def _patch_pg_types_for_sqlite() -> None:
-    from sqlalchemy import JSON, String
-    from sqlalchemy.dialects.postgresql import ARRAY, JSONB
-
-    for table in Base.metadata.tables.values():
-        for column in table.columns:
-            col_type = type(column.type)
-            if col_type is JSONB or col_type.__name__ == "JSONB":
-                column.type = JSON()
-            elif col_type.__name__ == "INET":
-                column.type = String(45)
-            elif col_type is ARRAY or col_type.__name__ == "ARRAY":
-                column.type = JSON()
-
-
-_patch_pg_types_for_sqlite()
-
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
@@ -73,7 +55,7 @@ async def updates_admin(db_session: AsyncSession, updates_org):
         org_id=updates_org.id,
         email="updates-admin@sphere.local",
         password_hash="$2b$12$placeholder",
-        role="org_admin",
+        role="super_admin",
     )
     db_session.add(user)
     await db_session.flush()
@@ -104,6 +86,7 @@ async def agent_api_key(db_session: AsyncSession, updates_org):
         key_hash=hashlib.sha256(raw.encode()).hexdigest(),
         key_prefix="sphr_test",
         type="agent",
+        permissions=["device:register"],
         is_active=True,
     )
     db_session.add(api_key)
