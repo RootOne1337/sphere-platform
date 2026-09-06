@@ -9,15 +9,17 @@ from __future__ import annotations
 
 import asyncio
 import json
+import uuid
 
 import structlog
-from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
-from sqlalchemy import text
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.database.engine import get_db
+from backend.database.engine import AsyncSessionLocal
 from backend.database.redis_client import get_redis
 from backend.models.api_key import APIKey
+from backend.models.workstation import Workstation
 from backend.websocket.connection_manager import ConnectionManager, get_connection_manager
 
 logger = structlog.get_logger()
@@ -48,6 +50,8 @@ async def authenticate_agent_token(token: str, db: AsyncSession) -> APIKey:
     api_key = result.scalar_one_or_none()
     if not api_key:
         raise ValueError("Invalid or inactive agent token")
+    if "device:register" not in api_key.permissions:
+        raise ValueError("Agent registration permission required")
     # F-04: проверка срока действия токена
     if api_key.expires_at is not None and api_key.expires_at < now:
         raise ValueError("Agent token has expired")
@@ -65,45 +69,28 @@ async def handle_workstation_register(
     Кэширует топологию в Redis TTL 1h.
     """
     try:
-        # Upsert workstation
-        await db.execute(
-            text("""
-                UPDATE workstations
-                SET hostname       = :hostname,
-                    os_version     = :os_version,
-                    ip_address     = :ip_address,
-                    agent_version  = :agent_ver,
-                    last_seen      = now()
-                WHERE id::text = :wid
-            """),
-            {
-                "wid": workstation_id,
-                "hostname": payload.get("hostname", ""),
-                "os_version": payload.get("os_version", ""),
-                "ip_address": payload.get("ip_address", ""),
-                "agent_ver": payload.get("agent_version", ""),
-            },
-        )
-
-        # Upsert ldplayer_instances
+        from datetime import datetime, timezone
+        from backend.models.ldplayer_instance import LDPlayerInstance
+        workstation = await db.scalar(select(Workstation).where(
+            Workstation.id == uuid.UUID(workstation_id), Workstation.org_id == uuid.UUID(org_id),
+        ))
+        if workstation is None:
+            raise ValueError("Workstation not found")
+        workstation.hostname = payload.get("hostname", "")
+        workstation.os_version = payload.get("os_version", "")
+        workstation.agent_version = payload.get("agent_version", "")
+        workstation.last_heartbeat_at = datetime.now(timezone.utc).isoformat()
+        workstation.is_online = True
+        workstation.meta = {**(workstation.meta or {}), "ip_address": payload.get("ip_address", "")}
         for inst in payload.get("instances", []):
-            await db.execute(
-                text("""
-                    UPDATE ldplayer_instances
-                    SET instance_name = :name,
-                        adb_port      = :port,
-                        android_serial = :serial
-                    WHERE workstation_id::text = :wid
-                      AND instance_index = :idx
-                """),
-                {
-                    "wid": workstation_id,
-                    "idx": inst["index"],
-                    "name": inst["name"],
-                    "port": inst["adb_port"],
-                    "serial": inst.get("android_serial"),
-                },
-            )
+            instance = await db.scalar(select(LDPlayerInstance).where(
+                LDPlayerInstance.workstation_id == workstation.id,
+                LDPlayerInstance.org_id == workstation.org_id,
+                LDPlayerInstance.instance_index == inst["index"],
+            ))
+            if instance:
+                instance.android_serial = inst.get("android_serial")
+                instance.meta = {**(instance.meta or {}), "name": inst.get("name"), "adb_port": inst.get("adb_port")}
 
         await db.commit()
 
@@ -206,7 +193,6 @@ async def handle_agent_message(
 async def pc_agent_ws(
     ws: WebSocket,
     workstation_id: str,
-    db: AsyncSession = Depends(get_db),
 ) -> None:
     await ws.accept()
 
@@ -228,12 +214,20 @@ async def pc_agent_ws(
         return
 
     try:
-        api_key = await authenticate_agent_token(token, db)
+        async with AsyncSessionLocal() as db:
+            api_key = await authenticate_agent_token(token, db)
+            workstation = await db.scalar(select(Workstation).where(
+                Workstation.id == uuid.UUID(workstation_id),
+                Workstation.org_id == api_key.org_id,
+            ))
+            if workstation is None:
+                await ws.close(code=4004, reason="workstation_not_found")
+                return
+            org_id = str(api_key.org_id)
     except ValueError:
         await ws.close(code=4001, reason="invalid_agent_token")
         return
 
-    org_id = str(api_key.org_id)
     session_id = await manager.connect(ws, workstation_id, "pc", org_id)
     logger.info(
         "PC agent connected",
@@ -242,14 +236,22 @@ async def pc_agent_ws(
         session=session_id,
     )
 
+    pubsub = None
     try:
+        from backend.websocket.pubsub_router import get_pubsub_router
+        pubsub = get_pubsub_router()
+        if pubsub:
+            await pubsub.subscribe_device(workstation_id, org_id)
         while True:
             data = await ws.receive()
             if "text" in data:
                 msg = json.loads(data["text"])
-                await handle_agent_message(workstation_id, org_id, msg, manager, db)
+                async with AsyncSessionLocal() as db:
+                    await handle_agent_message(workstation_id, org_id, msg, manager, db)
     except WebSocketDisconnect:
         pass
     finally:
-        await manager.disconnect(workstation_id)
+        disconnected = await manager.disconnect(workstation_id, session_id=session_id)
+        if disconnected and pubsub:
+            await pubsub.unsubscribe_device(workstation_id)
         logger.info("PC agent disconnected", workstation_id=workstation_id)
