@@ -440,7 +440,7 @@ runtime-проверок и не считается доказательство
 - **Root cause:** `MAX_LOOP_LOGS=200` ограничивал исполнение через `break` из body, а не только сохранение диагностики. Счётчик итераций продолжал расти; оставшиеся действия и их ошибки не выполнялись, итог мог быть успешным.
 - **Evidence/reproduction:** на `a1636ff` реальные `DagRunner.execute` с 75 × 3 tap и 500 key events останавливались после 200 действий. В сценарии с ошибкой на 201-м действии ошибка не возникала и loop возвращал успех. При ровно 200 записях `logs_truncated` ошибочно был true. [До исправления: 5 failed](evidence/android-loop-before.txt), включая отдельный AUD-41.
 - **Affected files:** `android/app/src/main/kotlin/com/sphereplatform/agent/commands/DagRunner.kt:845`, `android/app/src/test/kotlin/com/sphereplatform/agent/commands/DagLoopExecutionTest.kt:45`.
-- **Fix:** ограничено только создание/добавление diagnostic entries; body продолжает исполняться и применять `abort_on_failure`. Truncation устанавливается только при фактически пропущенной записи, предупреждение выдаётся один раз на loop.
+- **Fix:** `9fbfa73` — ограничено только создание/добавление diagnostic entries; body продолжает исполняться и применять `abort_on_failure`. Truncation устанавливается только при фактически пропущенной записи, предупреждение выдаётся один раз на loop.
 - **Regression:** `diagnosticLimitCannotSkipRemainingActions`, `failureAfterDiagnosticLimitStillStopsAnAbortingLoop`, `diagnosticsStayBoundedWithoutAllocatingAnUnboundedLoopResult`, `exactLogCapacityIsNotReportedAsTruncation`. Проверяются 225/500 реальных вызовов runner→fake executor, ошибка на вызове 201, размер журнала 200 и точная граница флага. [После исправления: 338 passed](evidence/android-loop-after.txt), 0 failed/errors/skipped во всех 27 JVM suites.
 - **Residual risk:** сохранённые `max_iterations`, глубина рекурсии и таймауты по-прежнему ограничивают исполнение; это лимит числа записей конкретного loop, а не доказательство общего RAM budget для вложенных результатов. Фактическая доставка root-команды и замеры устройства не подтверждены. Обычные ошибки при `abort_on_failure=false` продолжают loop по существующему контракту.
 
@@ -449,7 +449,7 @@ runtime-проверок и не считается доказательство
 - **Root cause:** общий `catch (Exception)` внутри loop перехватывал `CancellationException` из suspend action. При стандартном `abort_on_failure=false` обработчик переходил к следующему действию устройства даже после отмены execution scope.
 - **Evidence/reproduction:** на `a1636ff` запустить loop `[sleep(10000), tap(9,9)]`, дождаться suspension через `runCurrent`, вызвать `cancelAndJoin` execution job. Проверка нулевого числа tap падала: отмена sleep превращалась в обычную ошибку body. [Исходный прогон](evidence/android-loop-before.txt).
 - **Affected files:** `android/app/src/main/kotlin/com/sphereplatform/agent/commands/DagRunner.kt:874`, `android/app/src/test/kotlin/com/sphereplatform/agent/commands/DagLoopExecutionTest.kt:71`.
-- **Fix:** `CancellationException` пробрасывается до общего обработчика ошибок body; cleanup активного execution остаётся в `finally`. Защита от повторной root-команды с неизвестным outcome сохранена.
+- **Fix:** `9fbfa73` — `CancellationException` пробрасывается до общего обработчика ошибок body; cleanup активного execution остаётся в `finally`. Защита от повторной root-команды с неизвестным outcome сохранена.
 - **Regression:** `coroutineCancellationDoesNotRunTheNextLoopAction` отменяет настоящую coroutine runner, проверяет отсутствие tap и очистку active task identity. Общий JVM прогон: **338 passed**, включая прежние root outcome/control/journal проверки.
 - **Residual risk:** это распространение coroutine cancellation на suspend boundary, не подтверждение физической остановки и не durable `CANCEL_DAG`; дополнительные checkpoints wire-команд описаны в AUD-42. Wire cancel по-прежнему cooperative; текущая синхронная команда и действия до следующей проверки флага могут завершиться. Не добавлены generation ordering, stop outbox или device execution ACK.
 
@@ -458,7 +458,7 @@ runtime-проверок и не считается доказательство
 - **Root cause:** cancel/pause проверялись только между верхнеуровневыми узлами, cancel дополнительно между целыми итерациями loop. Тело цикла, вложенные действия и retry после backoff не имели общей точки проверки. После последнего действия результат формировался без повторной проверки отмены.
 - **Evidence/reproduction:** на `9fbfa73` через реальный WebSocket callback диспетчера: принять CANCEL во время sleep внутри `[sleep, tap]` → tap всё равно исполнялся; PAUSE не удерживал loop; вложенный loop также продолжался. CANCEL во время retry backoff допускал второй tap. CANCEL во время последнего sleep подтверждался control ACK, но DAG выдавал `completed`. [13 tests, 6 failed / 7 existing passed](evidence/android-control-boundaries-before.txt).
 - **Affected files:** `android/app/src/main/kotlin/com/sphereplatform/agent/commands/DagRunner.kt:143`, `:237`, `:335`, `:388`, `:890`; `android/app/src/test/kotlin/com/sphereplatform/agent/commands/ControlCommandTargetTest.kt:150`.
-- **Fix:** общая suspend-проверка перед каждым действием/повтором и внутри вложенных loop; PAUSE ждёт RESUME либо CANCEL. Отдельное исключение принятой wire-отмены проходит мимо retry/loop error policy к terminal DAG outcome `success=false`, `CANCELLED`, `cancelled_by_user`. Проверка после действия исключает успешный результат, когда stop наблюдается во время последнего действия. Coroutine cancellation сохраняет отдельную обработку.
+- **Fix:** `71b2d2c` — общая suspend-проверка перед каждым действием/повтором и внутри вложенных loop; PAUSE ждёт RESUME либо CANCEL. Отдельное исключение принятой wire-отмены проходит мимо retry/loop error policy к terminal DAG outcome `success=false`, `CANCELLED`, `cancelled_by_user`. Проверка после действия исключает успешный результат, когда stop наблюдается во время последнего действия. Coroutine cancellation сохраняет отдельную обработку.
 - **Regression:** шесть новых сценариев `ControlCommandTargetTest`: cancel loop + durable duplicate replay, nested loop, pause/resume body, cancel paused body, cancel final action, cancel retry backoff. Используются реальные dispatcher/runner/journal и virtual coroutine time, подменены только OS/storage/network. [Полная JVM suite: 344 passed](evidence/android-control-boundaries-after.txt), 0 failures/errors/skips в 27 suites; прежние target isolation/root unknown-outcome проверки также прошли.
 - **Residual risk:** cooperative checkpoint не прерывает уже выполняемый синхронный/root/Lua вызов и не подтверждает физический эффект. Между проверкой флага и запуском действия возможна гонка; нет атомарной остановки внешнего shell. PAUSE не замораживает node/global timeout budgets. Durable server cancellation/outbox, stop ACK и ordering controls той же задачи остаются открыты. Формат wire-команд не меняется; production rollout не выполнялся.
 
@@ -536,3 +536,18 @@ Android build/tests также успешны:
 Сохранены [backend snapshot](evidence/ci-748bb3e-backend.json) и
 [Android snapshot](evidence/ci-748bb3e-android.json). Это проверка конкретной
 ревизии исправлений; зелёный CI не закрывает перечисленные runtime/RLS/rollout риски.
+
+На Android control fix `71b2d2c` **все backend jobs успешны**, включая Tests,
+Security, Lint, Alembic и статический RLS:
+[run 34066563090](https://github.com/RootOne1337/sphere-platform/actions/runs/34066563090).
+Android PR build/unit tests также успешны:
+[run 34066563159](https://github.com/RootOne1337/sphere-platform/actions/runs/34066563159).
+Сохранены [backend snapshot](evidence/ci-71b2d2c-backend.json) и
+[Android snapshot](evidence/ci-71b2d2c-android.json). Последующие изменения документации
+требуют своих checks; это результаты конкретного code head, не подтверждение runtime.
+
+[Руководство APK](../../android-agent.md) сверено с кодом: исправлены endpoint и
+first-message auth, имена DI/dispatcher, build flavors/artifact paths, signing env,
+источники provisioning и фактический command/ACK формат. Удалены неподтверждённые
+утверждения о 100% uptime и application-level OTA certificate pinning. Ограничения
+физических устройств, остановки, OTA recovery и замеров нагрузки обозначены явно.

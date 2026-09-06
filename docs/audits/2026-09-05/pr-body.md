@@ -109,11 +109,16 @@ single-algorithm verification and reject forged tokens across access/logout.
 The joint local scan reports no known vulnerabilities in the resolved Python set;
 other ecosystems and application blockers remain under audit.
 
+The APK operator guide is aligned with actual WS authentication, provisioning,
+flavors/signing, command/ACK payloads and component names. Previous claims of
+100% uptime and application-level OTA certificate pinning were unsupported and
+have been removed; device, signing, installation and recovery limits are explicit.
+
 ## Validation
 
-- On code revision `748bb3e`, [backend CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34050895738)
+- On code revision `71b2d2c`, [backend CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34066563090)
   passed Tests, Lint, Security, Alembic and static RLS checks;
-  [Android CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34050895681)
+  [Android CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34066563159)
   passed build and unit tests. This is a revision-specific snapshot; consult PR
   checks for subsequent documentation or code commits.
 
