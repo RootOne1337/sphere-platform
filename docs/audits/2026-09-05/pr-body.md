@@ -82,6 +82,12 @@ the target, and user stop has a distinct control ID so its ACK cannot falsely
 complete a task after Redis/SQL rollback. Acceptance remains separate from
 physical stop; durable cancellation and ordering within a task remain open.
 
+Android loop diagnostics no longer stop body execution at 200 entries. All
+configured actions still run within the explicit execution limits, and failures
+past the log cap retain their abort policy. Coroutine cancellation in a suspended
+body action propagates before the next device command. Five new runner regressions
+failed before the fix and pass now; bounded log size and exact truncation are checked.
+
 Audit selection and resource identity, request log context and HTTP metric labels
 now use the ASGI path rather than a URL reconstructed from Host. Malformed Host
 headers could otherwise suppress or relabel a successfully committed mutation's
@@ -103,7 +109,7 @@ other ecosystems and application blockers remain under audit.
   passed build and unit tests. This is a revision-specific snapshot; consult PR
   checks for subsequent documentation or code commits.
 
-- Android enterprise debug unit suite: **333 passed**.
+- Android enterprise debug unit suite: **338 passed**.
 - Combined backend/PC, PostgreSQL/Redis and deployment regressions: **1047 passed**.
   This includes **179 real-service tests** and **6 Compose configuration tests**.
   Coverage is **66.61%** and passes the unchanged **65%** gate with two-decimal

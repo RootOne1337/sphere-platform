@@ -568,10 +568,16 @@ adb shell iptables -L SPHERE_KILLSWITCH
 **Тесты**: 272 теста в 16 файлах (JUnit, MockK, Turbine, Robolectric).
 
 
-### Проверенный audit snapshot — 6 сентября 2026
+### Проверенный audit snapshot — 7 сентября 2026
 
-333 enterprise debug JVM tests passed. Управляющие команды требуют явный
+338 enterprise debug JVM tests passed. Управляющие команды требуют явный
 `payload.task_id`; late cancel/pause/resume не воздействуют на другой DAG.
 Подробности, ограничения cooperative stop и порядок backend/APK rollout:
 [контракт управления задачами](security/task-control-protocol.md). Это не
 измерение физической остановки, CPU/RAM/FPS или ёмкости 10–64 эмуляторов.
+
+Лимит в 200 diagnostic entries больше не обрывает действия loop; ошибки после
+этой границы обрабатываются, а отмена корутины в suspend action выходит из body
+до следующего действия. Пять новых regression tests сначала воспроизвели дефекты,
+затем прошли вместе с полной JVM suite. Доказательства и остаточные ограничения:
+[AUD-40/AUD-41](audits/2026-09-05/AUDIT-REPORT.md#aud-40--high-лимит-журнала-apk-молча-обрывал-действия-цикла).

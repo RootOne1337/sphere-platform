@@ -1,6 +1,6 @@
 # Sphere Platform: аудит готовности к эксплуатации
 
-Статус на 6 сентября 2026: **аудит продолжается; production readiness не подтверждена**.
+Статус на 7 сентября 2026: **аудит продолжается; production readiness не подтверждена**.
 Исходная ревизия: `28f8cc46ab65496e00297960fd94d87d1605cc83`.
 Ветка исправлений: `codex/enterprise-audit-20260905`; [draft PR #19](https://github.com/RootOne1337/sphere-platform/pull/19).
 
@@ -19,7 +19,7 @@ runtime-проверок и не считается доказательство
 
 | Проверка | Результат | Практическое ограничение |
 | --- | --- | --- |
-| Android enterprise debug unit suite | 333 passed, 0 failed | JVM/MockWebServer; не проверяет ОС, codec, батарею или смерть процесса на телефоне |
+| Android enterprise debug unit suite | 338 passed, 0 failed | JVM/MockWebServer; не проверяет ОС, codec, батарею или смерть процесса на телефоне |
 | Объединённая Backend/PC/production/deployment suite | **1047 passed, 0 failed**; coverage **66,61%** | Строгий coverage gate 65% пройден с precision=2. Load suite исключена; 6 Compose config tests не запускают сервисы |
 | Python dependency scan | **0 known vulnerabilities** в совместном backend/PC resolution | Pip-audit snapshot, не проверка frontend/Gradle/container/application security; [версии и ограничения](DEPENDENCY-REVIEW.md) |
 | Проверки PostgreSQL/Redis | **179 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
@@ -434,6 +434,24 @@ runtime-проверок и не считается доказательство
 - **Fix:** `748bb3e` — PyJWT 2.13.0, Starlette 1.3.1, pytest 9.0.3; совместимые FastAPI 0.136.3, Pydantic 2.9.2, pytest-asyncio 1.3.0. Единый settings pin 2.2.1; CI разрешает оба requirements одновременно, выполняет pip check и сканирует backend+PC.
 - **Regression:** полный runtime/SQL/Redis suite в отдельном окружении; 12 сохранённых JWT negative/positive controls; существующие auth, refresh, logout, WebSocket и API tests. Pip-audit остаётся обязательным, исключения advisory/снижение gates не добавлялись.
 - **Residual risk:** нулевой scan относится к конкретному Python resolution, не ко всему репозиторию. Frontend/Android/container advisories, hash lock/SBOM и будущие обновления остаются открыты. Production dependencies не менялись. Подробные версии/сканы: [DEPENDENCY-REVIEW.md](DEPENDENCY-REVIEW.md).
+
+### AUD-40 — High: лимит журнала APK молча обрывал действия цикла
+
+- **Root cause:** `MAX_LOOP_LOGS=200` ограничивал исполнение через `break` из body, а не только сохранение диагностики. Счётчик итераций продолжал расти; оставшиеся действия и их ошибки не выполнялись, итог мог быть успешным.
+- **Evidence/reproduction:** на `a1636ff` реальные `DagRunner.execute` с 75 × 3 tap и 500 key events останавливались после 200 действий. В сценарии с ошибкой на 201-м действии ошибка не возникала и loop возвращал успех. При ровно 200 записях `logs_truncated` ошибочно был true. [До исправления: 5 failed](evidence/android-loop-before.txt), включая отдельный AUD-41.
+- **Affected files:** `android/app/src/main/kotlin/com/sphereplatform/agent/commands/DagRunner.kt:845`, `android/app/src/test/kotlin/com/sphereplatform/agent/commands/DagLoopExecutionTest.kt:45`.
+- **Fix:** ограничено только создание/добавление diagnostic entries; body продолжает исполняться и применять `abort_on_failure`. Truncation устанавливается только при фактически пропущенной записи, предупреждение выдаётся один раз на loop.
+- **Regression:** `diagnosticLimitCannotSkipRemainingActions`, `failureAfterDiagnosticLimitStillStopsAnAbortingLoop`, `diagnosticsStayBoundedWithoutAllocatingAnUnboundedLoopResult`, `exactLogCapacityIsNotReportedAsTruncation`. Проверяются 225/500 реальных вызовов runner→fake executor, ошибка на вызове 201, размер журнала 200 и точная граница флага. [После исправления: 338 passed](evidence/android-loop-after.txt), 0 failed/errors/skipped во всех 27 JVM suites.
+- **Residual risk:** сохранённые `max_iterations`, глубина рекурсии и таймауты по-прежнему ограничивают исполнение; это лимит числа записей конкретного loop, а не доказательство общего RAM budget для вложенных результатов. Фактическая доставка root-команды и замеры устройства не подтверждены. Обычные ошибки при `abort_on_failure=false` продолжают loop по существующему контракту.
+
+### AUD-41 — High: loop APK продолжал команды после отмены корутины
+
+- **Root cause:** общий `catch (Exception)` внутри loop перехватывал `CancellationException` из suspend action. При стандартном `abort_on_failure=false` обработчик переходил к следующему действию устройства даже после отмены execution scope.
+- **Evidence/reproduction:** на `a1636ff` запустить loop `[sleep(10000), tap(9,9)]`, дождаться suspension через `runCurrent`, вызвать `cancelAndJoin` execution job. Проверка нулевого числа tap падала: отмена sleep превращалась в обычную ошибку body. [Исходный прогон](evidence/android-loop-before.txt).
+- **Affected files:** `android/app/src/main/kotlin/com/sphereplatform/agent/commands/DagRunner.kt:874`, `android/app/src/test/kotlin/com/sphereplatform/agent/commands/DagLoopExecutionTest.kt:71`.
+- **Fix:** `CancellationException` пробрасывается до общего обработчика ошибок body; cleanup активного execution остаётся в `finally`. Защита от повторной root-команды с неизвестным outcome сохранена.
+- **Regression:** `coroutineCancellationDoesNotRunTheNextLoopAction` отменяет настоящую coroutine runner, проверяет отсутствие tap и очистку active task identity. Общий JVM прогон: **338 passed**, включая прежние root outcome/control/journal проверки.
+- **Residual risk:** это распространение coroutine cancellation на suspend boundary, не подтверждение физической остановки и не durable `CANCEL_DAG`. Wire cancel по-прежнему cooperative; текущая синхронная команда и действия до следующей проверки флага могут завершиться. Не добавлены generation ordering, stop outbox или device execution ACK.
 
 ## Открытые подтверждённые блокеры
 

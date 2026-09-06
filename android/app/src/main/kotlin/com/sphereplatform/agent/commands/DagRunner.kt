@@ -844,6 +844,7 @@ class DagRunner @Inject constructor(
 
             var iterations = 0
             val iterLogs   = mutableListOf<Map<String, Any?>>()
+            var logsTruncated = false
 
             suspend fun shouldContinue(): Boolean = when {
                 count != null      -> iterations < count
@@ -853,11 +854,12 @@ class DagRunner @Inject constructor(
 
             while (shouldContinue() && iterations < maxIterations && !cancelRequested) {
                 for (bodyEl in bodyArray) {
-                    // PERF: Лимит на кол-во логов в loop — защита от OOM при serialize.
-                    // 1000 iter × 10 nodes = 10 000 entries → мегабайтный JSON → crash.
-                    if (iterLogs.size >= MAX_LOOP_LOGS) {
+                    // Limit diagnostics only; every configured action must still
+                    // execute and its failure policy must still be enforced.
+                    val keepLog = iterLogs.size < MAX_LOOP_LOGS
+                    if (!keepLog && !logsTruncated) {
+                        logsTruncated = true
                         Timber.w("[DAG][loop] Log limit reached ($MAX_LOOP_LOGS) — дальнейшие логи пропускаются")
-                        break
                     }
                     val bodyNode = bodyEl.jsonObject
                     val bNodeId  = bodyNode["id"]?.jsonPrimitive?.contentOrNull ?: "loop_body_$iterations"
@@ -868,11 +870,15 @@ class DagRunner @Inject constructor(
                     try {
                         val bResult = executeNode(bType, bAction, ctx, depth + 1)
                         ctx[bNodeId] = bResult
-                        iterLogs.add(mapOf("id" to bNodeId, "iter" to iterations, "ok" to true, "ms" to System.currentTimeMillis() - bTs))
+                        if (keepLog) iterLogs.add(mapOf("id" to bNodeId, "iter" to iterations, "ok" to true, "ms" to System.currentTimeMillis() - bTs))
+                    } catch (e: kotlinx.coroutines.CancellationException) {
+                        // Coroutine cancellation must leave the loop before the
+                        // next device action, even with abort_on_failure=false.
+                        throw e
                     } catch (e: RootCommandOutcomeUnknownException) {
                         throw e
                     } catch (e: Exception) {
-                        iterLogs.add(mapOf("id" to bNodeId, "iter" to iterations, "ok" to false, "error" to e.message, "ms" to System.currentTimeMillis() - bTs))
+                        if (keepLog) iterLogs.add(mapOf("id" to bNodeId, "iter" to iterations, "ok" to false, "error" to e.message, "ms" to System.currentTimeMillis() - bTs))
                         Timber.w(e, "[DAG][loop] Body '$bNodeId' failed at iter $iterations")
                         if (bodyNode["abort_on_failure"]?.jsonPrimitive?.content?.toBoolean() == true) {
                             throw RuntimeException("loop aborted at iter $iterations node '$bNodeId': ${e.message}")
@@ -882,7 +888,7 @@ class DagRunner @Inject constructor(
                 iterations++
                 if (whileXpath != null) delay(pollMs)
             }
-            mapOf("iterations" to iterations, "logs" to iterLogs, "logs_truncated" to (iterLogs.size >= MAX_LOOP_LOGS))
+            mapOf("iterations" to iterations, "logs" to iterLogs, "logs_truncated" to logsTruncated)
         }
 
         "start" -> null

@@ -1,6 +1,6 @@
 # Приоритеты продолжающегося аудита
 
-Обновлено 6 сентября 2026. Этот документ задаёт порядок работ; наличие пункта
+Обновлено 7 сентября 2026. Этот документ задаёт порядок работ; наличие пункта
 не означает, что его эксплуатация уже доказана. Для закрытия нужен воспроизводимый
 сценарий, исправление, regression test и повторная проверка.
 
@@ -11,7 +11,7 @@
 | 1 | Orchestrator | Версии закреплены; пароль исключён из новых metadata; account ownership, terminal receipt и rollback/retry исправлены | Конкурентные creation ticks, savepoint при частичной ошибке, crash recovery pipeline, транзакционные stats |
 | 1 | VPN | Глобальная SQL uniqueness/intent до provider effects, generation fencing, unknown-outcome retention и health recovery исправлены; 64 конкурентных assignments проверены | [Реализация и остаточные риски](VPN-LEASE-DESIGN.md): authoritative provider inventory/reconciliation, rollout legacy/orphan peers, зарезервированные router IP, AWG/маршруты, encoded-key adapter и реальный command publisher |
 | 1 | Deployment | Startup export и наследование dev commands/mounts/root/PG/Redis/application ports исправлены; оба Compose merge проверены | n8n/MinIO ingress, RLS roles, OTA/log persistence, запуск/health/recovery и restore backup |
-| 2 | APK runtime и производительность | 333 JVM tests; typeText больше не пишет raw/encoded ввод в логи; root pipe unknown не повторяется автоматически через DAG/loop; сервер восстанавливает evicted presence по pong; реальный APK↔API и нагрузка 10–64 не завершены | Root execution ACK, Lua pcall/unknown reconciliation, FGS/boot/timeout, emulator/physical permissions, process death, codec backpressure/recovery, multi-worker session fencing, PubSub reconnect, CPU/RAM/FPS/battery |
+| 2 | APK runtime и производительность | 338 JVM tests; лимит loop diagnostics не пропускает действия, coroutine cancellation выходит из body; typeText больше не пишет raw/encoded ввод в логи; root pipe unknown не повторяется автоматически через DAG/loop; сервер восстанавливает evicted presence по pong; реальный APK↔API и нагрузка 10–64 не завершены | Root execution ACK, Lua pcall/unknown reconciliation, FGS/boot/timeout, emulator/physical permissions, process death, codec backpressure/recovery, multi-worker session fencing, PubSub reconnect, CPU/RAM/FPS/battery |
 | 2 | PC agent | Идентичность workstation и ORM registration исправлены | Реальный command/ACK контракт, reconnect и замена сессии, ошибки ADB/emulator process, идемпотентность |
 | 2 | Dependencies/CI | Совместимое Python обновление: 1047 tests, pip check и joint pip-audit без известных уязвимостей; на 748bb3e все backend jobs и Android CI успешны; Host→audit/log/metrics path исправлен | Frontend/Android/container advisories, hash lock/SBOM, dependency-aware mypy, actions runtime/version pins; отдельный подготовленный load job |
 | 2 | Frontend/n8n/observability | Frontend build прошёл; остальные проверки неполны | Supported Node runtime, Jest/tsc/browser, API-key/HMAC/webhook contracts, реальные метрики/alerts и multiprocess |

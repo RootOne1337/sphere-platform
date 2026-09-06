@@ -35,6 +35,13 @@ Cancellation is cooperative. The current action may still be running; root pipe
 flushes do not report actual input execution or shell exit status. The final DAG
 receipt is separate and remains governed by the durable command journal.
 
+Coroutine cancellation from a suspended loop action now propagates out of the
+body instead of becoming a recoverable action failure. A real runner regression
+cancels a sleeping action and verifies that the following tap is never invoked.
+This does not interrupt synchronous root execution or turn a wire control receipt
+into a physical stop acknowledgement. Loop diagnostics retain at most 200 entries
+without skipping subsequent actions; see AUD-40/41 in the audit report.
+
 ## Server transactions and remaining failure cases
 
 TaskService cancel/force-stop lock and refresh the tenant-scoped task row before
