@@ -222,34 +222,32 @@ class PubSubPublisher:
         Если устройство offline — возвращает 503, не ждёт timeout впустую.
         Использует временный канал sphere:agent:result:{device_id}:{command_id}.
         """
-        command_id = command.setdefault("id", secrets.token_hex(8))
+        command_id = command.setdefault("command_id", command.get("id") or secrets.token_hex(8))
         result_channel = f"sphere:agent:result:{device_id}:{command_id}"
 
         # Подписаться ДО публикации во избежание race condition
         ps = self.redis.pubsub()
-        await ps.subscribe(result_channel)
-
         try:
-            success, was_queued = await self._send_command_inner(device_id, command)
-            if not success:
-                raise HTTPException(503, f"Device '{device_id}' is offline and queue unavailable")
-            if was_queued:
-                raise HTTPException(
-                    503,
-                    f"Device '{device_id}' is offline — command queued for delivery on reconnect",
-                )
-
-            loop = asyncio.get_running_loop()
-            deadline = loop.time() + timeout
-            async for msg in ps.listen():
-                if msg["type"] == "message":
-                    return json.loads(msg["data"])
-                if loop.time() > deadline:
-                    raise asyncio.TimeoutError()
+            async with asyncio.timeout(timeout):
+                await ps.subscribe(result_channel)
+                success, was_queued = await self._send_command_inner(device_id, command)
+                if not success:
+                    raise HTTPException(503, f"Device '{device_id}' is offline and queue unavailable")
+                if was_queued:
+                    raise HTTPException(
+                        503,
+                        f"Device '{device_id}' is offline — command queued for delivery on reconnect",
+                    )
+                async for msg in ps.listen():
+                    if msg["type"] == "message":
+                        result = json.loads(msg["data"])
+                        if result.get("status") not in {"received", "running"}:
+                            return result
         except asyncio.TimeoutError:
             raise HTTPException(504, f"Command timeout after {timeout}s")
         finally:
-            await ps.unsubscribe(result_channel)
+            # Closing the dedicated connection drops its subscriptions without
+            # an extra round trip that could hang during a network outage.
             await ps.aclose()
 
         raise HTTPException(504, "No response received")
