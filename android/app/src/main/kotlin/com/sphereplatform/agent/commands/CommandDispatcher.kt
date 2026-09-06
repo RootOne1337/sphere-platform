@@ -56,6 +56,7 @@ class CommandDispatcher @Inject constructor(
     private val scope: CoroutineScope,
     private val streamingManager: StreamingManager,
     @ApplicationContext private val appContext: Context,
+    private val commandJournal: CommandJournal,
 ) {
     private val json = Json {
         ignoreUnknownKeys = true
@@ -87,7 +88,7 @@ class CommandDispatcher @Inject constructor(
         // При reconnect — отправляем накопленные результаты DAG и сбрасываем heartbeat
         wsClient.onConnected = {
             lastPingAt = System.currentTimeMillis()
-            scope.launch { dagRunner.flushPendingResults() }
+            scope.launch { flushResults() }
         }
 
         // FIX AUDIT-2.5: Heartbeat watchdog — если сервер не шлёт ping > 90с,
@@ -100,6 +101,7 @@ class CommandDispatcher @Inject constructor(
             while (true) {
                 delay(30_000L) // Проверяем каждые 30с
                 if (wsClient.isConnected) {
+                    flushResults()
                     val elapsed = System.currentTimeMillis() - lastPingAt
                     if (elapsed > HEARTBEAT_TIMEOUT_MS) {
                         Timber.w("Heartbeat watchdog: no ping for ${elapsed/1000}s — forcing reconnect")
@@ -169,6 +171,10 @@ class CommandDispatcher @Inject constructor(
     private suspend fun handleMessage(msg: JsonObject) {
         // System streaming messages — NOT IncomingCommand format, handle first
         when (msg["type"]?.jsonPrimitive?.contentOrNull) {
+            "result_ack" -> {
+                msg["command_id"]?.jsonPrimitive?.contentOrNull?.let { commandJournal.acknowledge(it) }
+                return
+            }
             "start_stream" -> {
                 Timber.i("Received start_stream — launching screen capture permission dialog")
                 val intent = Intent(appContext, ScreenCaptureRequestActivity::class.java).apply {
@@ -247,26 +253,56 @@ class CommandDispatcher @Inject constructor(
         }
 
         // TTL check — отбрасываем устаревшие команды
+        if (cmd.type == CommandType.EXECUTE_DAG) {
+            try {
+                when (val claim = commandJournal.claim(cmd.command_id)) {
+                    is CommandJournal.Claim.Existing -> {
+                        wsClient.sendJson(claim.response)
+                        return
+                    }
+                    CommandJournal.Claim.Started -> Unit
+                }
+            } catch (e: Exception) {
+                ack(cmd.command_id, "failed", error = e.message ?: "command_receipt_unavailable")
+                return
+            }
+        }
         val ageSeconds = System.currentTimeMillis() / 1000 - cmd.signed_at
         if (ageSeconds > cmd.ttl_seconds) {
             Timber.w("[${cmd.command_id}] Expired (age=${ageSeconds}s > ttl=${cmd.ttl_seconds}s)")
-            ack(cmd.command_id, "failed", error = "expired")
+            terminalAck(cmd, "failed", error = "expired")
             return
         }
 
         ack(cmd.command_id, "received")
 
-        val result = runCatching {
+        try {
             ack(cmd.command_id, "running")
-            dispatch(cmd)
+            val result = dispatch(cmd)
+            val failed = result?.get("success")?.jsonPrimitive?.content == "false"
+            terminalAck(cmd, if (failed) "failed" else "completed", result = result)
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            terminalAck(cmd, "failed", error = "execution_interrupted_outcome_unknown")
+            throw e
+        } catch (e: Exception) {
+            Timber.e(e, "[${cmd.command_id}] Failed")
+            terminalAck(cmd, "failed", error = e.message ?: "unknown")
         }
+    }
 
-        if (result.isSuccess) {
-            ack(cmd.command_id, "completed", result = result.getOrNull())
-        } else {
-            val err = result.exceptionOrNull()?.message ?: "unknown"
-            Timber.e(result.exceptionOrNull(), "[${cmd.command_id}] Failed")
-            ack(cmd.command_id, "failed", error = err)
+    private fun terminalAck(cmd: IncomingCommand, status: String, error: String? = null, result: JsonObject? = null) {
+        if (cmd.type == CommandType.EXECUTE_DAG) {
+            wsClient.sendJson(commandJournal.complete(cmd.command_id, status, error, result))
+        } else ack(cmd.command_id, status, error, result)
+    }
+
+    private fun flushResults() {
+        try {
+            for (result in commandJournal.pending()) {
+                if (!wsClient.sendJson(result)) break
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "Cannot flush durable command results")
         }
     }
 

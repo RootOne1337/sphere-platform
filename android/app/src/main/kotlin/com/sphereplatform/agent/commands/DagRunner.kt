@@ -9,7 +9,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
@@ -67,18 +66,10 @@ class DagRunner @Inject constructor(
     companion object {
         /** FIX AUDIT-3.3: Лимит нод в DAG — защита от OOM */
         private const val MAX_DAG_NODES = 500
-        /** FIX AUDIT-3.6: Лимит pending results при offline */
-        private const val MAX_PENDING_RESULTS = 50
         /** FIX H2: Максимальная глубина вложенности loop → executeNode. Защита от StackOverflow. */
         private const val MAX_EXECUTE_DEPTH = 10
         /** FIX H5: Макс размер HTTP response body в DAG http_request */
         private const val MAX_HTTP_RESPONSE_CHARS = 256 * 1024  // 256KB
-        /**
-         * FIX F5: Макс размер одного сериализованного pending result.
-         * DAG с сотнями нод может сгенерировать огромный node_logs → раздувание
-         * EncryptedSharedPreferences → долгие I/O при каждом commit().
-         */
-        private const val MAX_PENDING_RESULT_CHARS = 128 * 1024  // 128KB
         /**
          * PERF: Лимит записей в iterLogs внутри loop-ноды.
          * 1000 iterations × 10 body nodes = 10 000 log entries → при serialize
@@ -330,10 +321,8 @@ class DagRunner @Inject constructor(
             put("node_logs", nodeLogsArray)
         }
 
-        if (!wsClient.isConnected) {
-            savePendingResult(commandId, finalResult)
-        }
-
+        // CommandDispatcher persists the terminal receipt before sending it,
+        // including when the socket currently appears connected.
         return finalResult
     }
 
@@ -342,26 +331,9 @@ class DagRunner @Inject constructor(
      * Вызывается из CommandDispatcher → wsClient.onConnected.
      */
     suspend fun flushPendingResults() {
-        val pending = prefs.getStringSet("pending_dag_results", emptySet())
-            ?.toList() ?: return
-        if (pending.isEmpty()) return
-
-        Timber.i("[DAG] Flushing ${pending.size} pending results")
-        for (entry in pending) {
-            try {
-                val obj = json.parseToJsonElement(entry).jsonObject
-                val cmdId = obj["command_id"]!!.jsonPrimitive.content
-                val result = obj["result"]!!.jsonObject
-                wsClient.sendJson(buildJsonObject {
-                    put("command_id", cmdId)
-                    put("status", "completed")
-                    put("result", result)
-                })
-            } catch (e: Exception) {
-                Timber.w(e, "[DAG] Error flushing pending result")
-            }
+        for (result in CommandJournal(prefs).pending()) {
+            if (!wsClient.sendJson(result)) break
         }
-        prefs.edit().remove("pending_dag_results").apply()
     }
 
     // ── Node executor ─────────────────────────────────────────────────────────
@@ -920,27 +892,6 @@ class DagRunner @Inject constructor(
             put("output", if (str.length <= MAX_LOG_OUTPUT_CHARS) str
                           else str.take(MAX_LOG_OUTPUT_CHARS) + "…[truncated ${str.length - MAX_LOG_OUTPUT_CHARS} chars]")
         }
-    }
-
-    private fun savePendingResult(commandId: String, result: JsonObject) {
-        val pending = prefs.getStringSet("pending_dag_results", mutableSetOf())
-            ?.toMutableSet() ?: mutableSetOf()
-
-        // FIX AUDIT-3.6: Лимит pending results — защита от раздувания
-        // EncryptedSharedPreferences при длительном offline
-        if (pending.size >= MAX_PENDING_RESULTS) {
-            Timber.w("[DAG] Pending results limit reached ($MAX_PENDING_RESULTS) — dropping oldest")
-            // Удаляем самый старый результат (первый в Set)
-            pending.iterator().let { it.next(); it.remove() }
-        }
-
-        pending.add(json.encodeToString(buildJsonObject {
-            put("command_id", commandId)
-            put("result", result)
-            put("saved_at", System.currentTimeMillis())
-        }).take(MAX_PENDING_RESULT_CHARS))
-        prefs.edit().putStringSet("pending_dag_results", pending).apply()
-        Timber.i("[DAG] Result saved locally, command=$commandId (pending: ${pending.size})")
     }
 
     // Кеширование скриптов вынесено в ScriptCacheManager (content-addressable, LRU)

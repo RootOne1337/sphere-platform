@@ -407,20 +407,12 @@ class TaskService:
         Освобождает running lock устройства, только если он принадлежит данной задаче.
         Предотвращает случайное освобождение lock-а, который уже занят следующей задачей.
         """
-        running_key = f"task_running:{device_id}"
-        current = await self.queue.redis.get(running_key)
-        if current is None:
-            return
-        current_str = current if isinstance(current, str) else current.decode()
-        if current_str == task_id:
+        try:
             await self.queue.mark_completed(task_id, device_id)
-        else:
-            logger.debug(
-                "task.skip_mark_completed_lock_mismatch",
-                task_id=task_id,
-                device_id=device_id,
-                current_holder=current_str,
-            )
+        except Exception as exc:
+            # A Redis outage must not roll back a durable task result. A retry
+            # of the terminal result will attempt the conditional release again.
+            logger.warning("task.result.queue_release_failed", task_id=task_id, error=str(exc))
 
     # ── Result handling ──────────────────────────────────────────────────────
 
@@ -429,14 +421,16 @@ class TaskService:
         task_id: str,
         device_id: str,
         result: dict,
-    ) -> None:
+        org_id: str | None = None,
+    ) -> bool:
         """Вызывается при получении command_result от агента (TZ-03 WebSocket)."""
         task = await self.db.scalar(select(Task).where(
             Task.id == uuid.UUID(task_id), Task.device_id == uuid.UUID(device_id),
+            *([Task.org_id == uuid.UUID(org_id)] if org_id is not None else []),
         ).with_for_update())
         if not task:
             logger.warning("task.result.not_found", task_id=task_id)
-            return
+            return False
 
         # FIX BUG-2: Не перезаписываем финальные статусы.
         # Если планировщик уже поставил CANCELLED (conflict_policy=cancel),
@@ -450,7 +444,7 @@ class TaskService:
             # Результат сохраняем для диагностики, но статус не меняем
             # Освобождаем running lock только если он принадлежит ЭТОЙ задаче
             await self._safe_mark_completed(task_id, device_id)
-            return
+            return True
 
         success = result.get("success", False)
         task.status = TaskStatus.COMPLETED if success else TaskStatus.FAILED
@@ -519,6 +513,7 @@ class TaskService:
         # ── TaskBatch авто-агрегация: обновить счётчики succeeded/failed/status ──
         if task.batch_id:
             await self._aggregate_batch(task.batch_id, success)
+        return True
 
     # ── TaskBatch авто-агрегация ────────────────────────────────────────────
 

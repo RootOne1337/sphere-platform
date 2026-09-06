@@ -107,7 +107,7 @@ async def handle_agent_message(
     elif msg_type == "task_progress":
         await handle_task_progress(device_id, org_id, msg)
     elif msg_type == "command_result":
-        await handle_command_result(device_id, org_id, msg)
+        await handle_command_result(device_id, org_id, msg, manager)
     elif msg_type == "event":
         await handle_device_event(device_id, org_id, msg)
     else:
@@ -198,7 +198,9 @@ async def handle_task_progress(device_id: str, org_id: str, msg: dict) -> None:
         logger.debug("task_progress publish skipped", device_id=device_id, error=str(e))
 
 
-async def handle_command_result(device_id: str, org_id: str, msg: dict) -> None:
+async def handle_command_result(
+    device_id: str, org_id: str, msg: dict, manager: ConnectionManager | None = None,
+) -> None:
     """Обработать результат команды/задачи от агента."""
     command_id = msg.get("command_id") or msg.get("id")
     if not command_id:
@@ -243,12 +245,16 @@ async def handle_command_result(device_id: str, org_id: str, msg: dict) -> None:
                 if error_msg:
                     final_result["error"] = error_msg
                 final_result["success"] = (status == "completed")
-                await svc.handle_task_result(
+                accepted = await svc.handle_task_result(
                     task_id=command_id,
                     device_id=device_id,
                     result=final_result,
+                    org_id=org_id,
                 )
                 await db.commit()
+            # Only the committed, owned task can release the device's outbox.
+            if accepted and manager is not None:
+                await manager.send_to_device(device_id, {"type": "result_ack", "command_id": command_id})
         except Exception as e:
             logger.error("Failed to persist task result", command_id=command_id, device_id=device_id, error=str(e))
 
@@ -566,13 +572,13 @@ async def android_agent_ws(
                         case "task_progress":
                             await handle_task_progress(device_id, org_id_str, msg)
                         case "command_result":
-                            await handle_command_result(device_id, org_id_str, msg)
+                            await handle_command_result(device_id, org_id_str, msg, manager)
                         case "event":
                             await handle_device_event(device_id, org_id_str, msg)
                         case _:
                             # CommandAck from APK has no "type" field — detect by command_id + status
                             if msg.get("command_id") and msg.get("status") in ("completed", "failed", "running", "received"):
-                                await handle_command_result(device_id, org_id_str, msg)
+                                await handle_command_result(device_id, org_id_str, msg, manager)
                             else:
                                 logger.debug(
                                     "Unknown message type",
