@@ -1,11 +1,12 @@
 # docker-compose.production.yml — production стек
 # NOTE: поле version устарело в Docker Compose v2+ и убрано намеренно
 # Запуск: docker compose -f docker-compose.yml -f docker-compose.production.yml up -d
+# Требуется Compose 2.24.4+; !reset очищает унаследованные dev-настройки.
 
 services:
   postgres:
     # Production: порт НЕ прокидывается наружу
-    ports: []
+    ports: !reset []
     environment:
       POSTGRES_DB: sphereplatform
       POSTGRES_USER: ${POSTGRES_USER:-sphere}
@@ -19,7 +20,7 @@ services:
 
   redis:
     # Production: порт НЕ прокидывается наружу
-    ports: []
+    ports: !reset []
     restart: always
     deploy:
       resources:
@@ -28,6 +29,11 @@ services:
           memory: 512M
 
   backend:
+    # Also safe when docker-compose.full.yml precedes this final override.
+    ports: !reset []
+    volumes: !reset []
+    command: !reset null
+    user: !reset null
     image: ghcr.io/${GITHUB_OWNER:-local}/sphere-platform-backend:${IMAGE_TAG:-latest}
     build:
       context: .
@@ -44,6 +50,7 @@ services:
       - AWG_H3=${AWG_H3}
       - AWG_H4=${AWG_H4}
       - DEBUG=false
+      - DEV_SKIP_AUTH=false
       - LOG_LEVEL=INFO
       - ENVIRONMENT=production
       - SERVER_PUBLIC_URL=https://${SERVER_HOSTNAME}
@@ -64,6 +71,10 @@ services:
           memory: 2G
 
   frontend:
+    ports: !reset []
+    volumes: !reset []
+    command: !reset null
+    user: !reset null
     image: ghcr.io/${GITHUB_OWNER:-local}/sphere-platform-frontend:${IMAGE_TAG:-latest}
     build:
       context: ./frontend
@@ -71,6 +82,7 @@ services:
     environment:
       - NEXT_PUBLIC_API_URL=https://${SERVER_HOSTNAME}
       - NEXT_PUBLIC_WS_URL=wss://${SERVER_HOSTNAME}
+      - NEXT_PUBLIC_DEV_SKIP_AUTH=false
     networks:
       - frontend-net
     restart: always

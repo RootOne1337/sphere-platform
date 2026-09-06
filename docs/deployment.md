@@ -38,7 +38,7 @@
 ### Required Software
 
 ```bash
-# Docker Engine 24+ with Compose Plugin V2
+# Docker Engine 24+ with Compose Plugin 2.24.4+ (supports !reset overrides)
 docker --version          # >= 24.0
 docker compose version    # >= 2.20
 
@@ -99,7 +99,6 @@ Uses `docker-compose.override.yml` which enables:
 # Start full dev stack
 docker compose \
   -f docker-compose.yml \
-  -f docker-compose.full.yml \
   -f docker-compose.override.yml \
   up -d --build
 
@@ -168,11 +167,24 @@ DB_MAX_OVERFLOW=20
 
 `docker-compose.production.yml` differences from dev:
 
-- No exposed DB/Redis ports
-- Resource limits (`mem_limit`, `cpus`)
-- Restart policy `unless-stopped`
-- Read-only root filesystems where possible
+- No published PostgreSQL/Redis or application ports; nginx reaches the applications on their Docker network
+- Resource limits under `deploy.resources.limits`
+- Restart policy `always` for the production overrides
+- Image-defined application command and user, without development source/cache mounts
 - Named volumes for data persistence
+
+Keep the production override last. It uses Compose `!reset` to clear inherited
+ports, source mounts, development commands and root-user overrides, including
+when an existing script still includes `docker-compose.full.yml` before it.
+See the [official Compose merge rules](https://docs.docker.com/reference/compose-file/merge/).
+`tests/deployment/test_compose_production.py` validates both file combinations by
+running `docker compose config` with synthetic values; it does not start services.
+
+This configuration check is not a deployment sign-off. n8n and MinIO still inherit
+their base host-port mappings and require an explicit ingress/access design.
+The image root filesystem is not declared read-only here. Runtime database roles,
+durable OTA/log storage and backup restore verification remain open audit items.
+Do not rely on the removed development bind mounts for production persistence.
 
 ### 5.2 Pre-flight Checklist
 
