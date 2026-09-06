@@ -149,7 +149,7 @@ class TaskService:
                 Device.id == device_id,
                 Device.org_id == org_id,
                 Device.is_active.is_(True),
-            )
+            ).with_for_update()
         )
         if not device:
             raise HTTPException(status_code=404, detail="Device not found")
@@ -190,11 +190,9 @@ class TaskService:
         )):
             raise HTTPException(status_code=404, detail="Account not found")
 
-        # Идемпотентность: защита от дублирующих вызовов.
-        # Задача считается зависшей (stale) в двух случаях:
-        #   1. Устройство ОФФЛАЙН — агент отключился, задача никогда не завершится
-        #   2. Абсолютный предохранитель: задача висит >24 часов (баг на агенте)
-        # Во всех остальных случаях — 409, задача реально работает.
+        # The device lock serializes competing creators through commit/rollback.
+        # Missing presence or an old heartbeat cannot prove an APK stopped work.
+        # Leave recovery/cancellation to the explicit task lifecycle, never a retry.
         duplicate = await self.db.scalar(
             select(Task).where(
                 Task.device_id == device_id,
@@ -204,45 +202,10 @@ class TaskService:
             ).limit(1)
         )
         if duplicate:
-            is_stale = False
-            stale_reason = ""
-
-            # Проверка 1: устройство оффлайн — задача точно зависла
-            if self.status_cache:
-                device_live = await self.status_cache.get_status(str(device_id))
-                if not device_live or device_live.status not in ("online", "busy"):
-                    is_stale = True
-                    stale_reason = (
-                        f"Устройство оффлайн (status="
-                        f"{device_live.status if device_live else 'нет в кэше'}), "
-                        f"задача не может завершиться"
-                    )
-
-            # Проверка 2: абсолютный таймаут 24 часа — защита от забытых задач
-            if not is_stale:
-                task_age = duplicate.updated_at or duplicate.created_at
-                absolute_cutoff = datetime.now(timezone.utc) - timedelta(hours=24)
-                if task_age < absolute_cutoff:
-                    is_stale = True
-                    stale_reason = f"Задача висит >24ч (с {task_age.isoformat()})"
-
-            if is_stale:
-                logger.warning(
-                    "task.stale_auto_timeout",
-                    stale_task_id=str(duplicate.id),
-                    device_id=str(device_id),
-                    old_status=duplicate.status,
-                    reason=stale_reason,
-                )
-                duplicate.status = TaskStatus.TIMEOUT
-                duplicate.finished_at = datetime.now(timezone.utc)
-                duplicate.error_message = f"Автоматический таймаут: {stale_reason}"
-                await self.db.flush()
-            else:
-                raise HTTPException(
-                    status_code=409,
-                    detail=f"Task already queued/running for device (task_id={duplicate.id})",
-                )
+            raise HTTPException(
+                status_code=409,
+                detail=f"Task already queued/running for device (task_id={duplicate.id})",
+            )
 
         input_params: dict = {"priority": priority}
         if webhook_url:
