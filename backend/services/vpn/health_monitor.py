@@ -10,7 +10,6 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.models.vpn_peer import VPNPeer, VPNPeerStatus
-from backend.services.vpn.awg_config import AWGObfuscationParams
 from backend.services.vpn.event_publisher import EventPublisher
 
 logger = structlog.get_logger()
@@ -30,7 +29,7 @@ class NoopCommandPublisher:
 class VPNHealthMonitor:
     """
     Checks VPN tunnel health by polling WG Router handshake timestamps.
-    Triggers reconnect commands for stale or missing peers.
+    Requests reconnect for stale handshakes; never provisions router peers.
     Run every 60 s via vpn_health_loop background task.
     """
 
@@ -52,6 +51,8 @@ class VPNHealthMonitor:
         self._http = httpx.AsyncClient(
             base_url=wg_router_url,
             timeout=httpx.Timeout(5.0),
+            headers={"X-API-Key": pool_service.wg_router_api_key}
+            if pool_service.wg_router_api_key else {},
         )
 
     async def close(self) -> None:
@@ -68,6 +69,11 @@ class VPNHealthMonitor:
             return {"checked": 0, "stale": 0, "missing": 0, "reconnects": 0}
 
         handshake_data = await self._get_handshake_times()
+        if handshake_data is None:
+            # An unavailable or invalid snapshot is not an empty peer inventory.
+            # Preserve the last known state and let the next cycle retry.
+            return {"checked": 0, "stale": 0, "missing": 0, "reconnects": 0,
+                    "error": "router_unavailable"}
         now = datetime.now(timezone.utc)
 
         stale = missing = reconnects = 0
@@ -77,7 +83,10 @@ class VPNHealthMonitor:
 
             if last_handshake is None:
                 missing += 1
-                await self._handle_missing_peer(peer, org_id)
+                peer.is_active = False
+                # Zero/absent handshake can mean the peer has never connected.
+                # Provisioning requires an authoritative inventory and durable
+                # intent, neither of which this observation endpoint provides.
                 continue
 
             since_sec = (now - last_handshake).total_seconds()
@@ -120,19 +129,27 @@ class VPNHealthMonitor:
         )
         return list(result.scalars().all())
 
-    async def _get_handshake_times(self) -> dict[str, datetime]:
-        """Fetch all peer handshake timestamps from WG Router API."""
+    async def _get_handshake_times(self) -> dict[str, datetime] | None:
+        """Return a validated snapshot, or None when router state is unknown."""
         try:
             resp = await self._http.get("/peers/handshakes")
+            resp.raise_for_status()
             data = resp.json()
-            return {
-                k: datetime.fromtimestamp(v, tz=timezone.utc)
-                for k, v in data.items()
-                if isinstance(v, (int, float)) and v > 0
-            }
+            if not isinstance(data, dict):
+                raise ValueError("Invalid handshake snapshot")
+            times = {}
+            latest = datetime.now(timezone.utc).timestamp() + 60
+            for key, timestamp in data.items():
+                if (not isinstance(key, str) or not key
+                        or not isinstance(timestamp, (int, float))
+                        or isinstance(timestamp, bool) or not 0 <= timestamp <= latest):
+                    raise ValueError("Invalid handshake timestamp")
+                if timestamp > 0:
+                    times[key] = datetime.fromtimestamp(timestamp, tz=timezone.utc)
+            return times
         except Exception as exc:
-            logger.error("Failed to fetch handshake times from WG Router", exc=str(exc))
-            return {}
+            logger.error("Failed to fetch handshake times from WG Router", error_type=type(exc).__name__)
+            return None
 
     async def _is_device_online(self, device_id: str) -> bool:
         """Check Redis device status cache. Returns True when no cache entry (assume online)."""
@@ -150,25 +167,7 @@ class VPNHealthMonitor:
             return False
 
         try:
-            decrypted_private = self.pool_service.key_cipher.decrypt(
-                peer.private_key_enc
-            ).decode()
-            obfuscation = AWGObfuscationParams(
-                jc=peer.awg_jc or 4,
-                jmin=peer.awg_jmin or 0,
-                jmax=peer.awg_jmax or 1,
-                s1=peer.awg_s1 or 1,
-                s2=peer.awg_s2 or 1,
-                h1=peer.awg_h1 or 1,
-                h2=peer.awg_h2 or 1,
-                h3=peer.awg_h3 or 1,
-                h4=peer.awg_h4 or 1,
-            )
-            config = self.pool_service.config_builder.build_client_config(
-                private_key=decrypted_private,
-                assigned_ip=peer.tunnel_ip or "0.0.0.0",
-                obfuscation=obfuscation,
-            )
+            config = self.pool_service.build_peer_config(peer)
         except Exception as exc:
             logger.error(
                 "Failed to decrypt peer config for reconnect",
@@ -192,23 +191,3 @@ class VPNHealthMonitor:
                 peer_id=str(peer.id),
             )
         return bool(sent)
-
-    async def _handle_missing_peer(
-        self, peer: VPNPeer, org_id: uuid.UUID
-    ) -> None:
-        """Re-register a peer that disappeared from the WG server via direct HTTP."""
-        try:
-            payload = {
-                "public_key": peer.public_key,
-                "allowed_ip": f"{peer.tunnel_ip or '0.0.0.0'}/32",
-            }
-            resp = await self._http.post("/peers", json=payload)
-            if resp.status_code not in (200, 201):
-                raise RuntimeError(f"WG Router error {resp.status_code}")
-            logger.info("Re-added missing VPN peer", device_id=str(peer.device_id))
-        except Exception as exc:
-            logger.error(
-                "Failed to re-add missing VPN peer",
-                device_id=str(peer.device_id),
-                exc=str(exc),
-            )

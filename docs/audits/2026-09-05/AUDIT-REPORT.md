@@ -315,6 +315,15 @@ runtime-проверок и не считается доказательство
 - **Regression:** [coverage-boundary-after.txt](evidence/coverage-boundary-after.txt): coverage CLI отклоняет 64,98% с exit code 2 и принимает 65,00%.
 - **Residual risk / correction:** прежняя формулировка этого отчёта и PR «gate остаётся блокирующим при 64,98%» была неточной: она основывалась на stdout, а не exit code. Этот дефект теперь проверяется отдельно. Coverage не является доказательством безопасности или полноты аудита.
 
+### AUD-28 — High: health-check повторно создавал peers при отказе роутера
+
+- **Root cause:** HTTP status не проверялся; timeout/ошибка JSON возвращали пустой snapshot. Отсутствующий или нулевой handshake трактовался как удалённый peer и запускал POST /peers без PSK. Health client и background factory не передавали router API key; reconnect собирал отдельную конфигурацию без сохранённого PSK.
+- **Affected files:** `backend/services/vpn/health_monitor.py`, `backend/services/vpn/pool_service.py`, `backend/tasks/vpn_health.py`.
+- **Evidence:** [vpn-health-before.txt](evidence/vpn-health-before.txt): 13 failures на PostgreSQL и httpx.MockTransport; router mutation после timeout/401/503/невалидного snapshot, peer без handshake, отсутствие auth header и потеря PSK. Внешний router не вызывался.
+- **Fix:** валидируются status, форма snapshot и timestamps; неизвестное состояние сохраняет последние данные и возвращает checked=0/error. Health-check больше не создаёт peers по handshake API. API key передаётся в background service/client. Retry и reconnect используют общий config builder с сохранённым PSK, без лишней генерации QR при reconnect.
+- **Regression:** `tests/production/test_vpn_health_recovery.py` — 16 cases, включая NaN/future timestamps и восстановление после неудачного poll. Прежний тест «missing peer» проверял только первоначальный assignment call; теперь проверяет отсутствие POST из monitor.
+- **Residual risk:** отсутствие peer требует отдельной сверки с authoritative provider inventory и durable provisioning intent. EventPublisher остаётся stub, фактическая доставка reconnect и handshake не доказаны. Commit фонового health-check, конкурентность revoke, global leases и маршруты остаются отдельной работой; этот fix не закрывает AUD-11.
+
 ## Открытые подтверждённые блокеры
 
 | ID / severity | Root cause и evidence | Необходимое продолжение |

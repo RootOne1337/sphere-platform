@@ -172,6 +172,18 @@ class VPNPoolService:
     async def _peer_to_assignment(
         self, peer: VPNPeer, split_tunnel: bool = True
     ) -> VPNAssignment:
+        config = self.build_peer_config(peer, split_tunnel)
+        return VPNAssignment(
+            peer_id=str(peer.id),
+            device_id=str(peer.device_id),
+            assigned_ip=peer.tunnel_ip or "",
+            config=config,
+            qr_code=self.config_builder.to_qr_code(config),
+            public_key=peer.public_key,
+        )
+
+    def build_peer_config(self, peer: VPNPeer, split_tunnel: bool = True) -> str:
+        """Build retry/reconnect configuration from the same persisted credentials."""
         decrypted_private = self.key_cipher.decrypt(peer.private_key_enc).decode()
         obfuscation = AWGObfuscationParams(
             jc=peer.awg_jc or 4,
@@ -184,20 +196,12 @@ class VPNPoolService:
             h3=peer.awg_h3 or 1,
             h4=peer.awg_h4 or 1,
         )
-        config = self.config_builder.build_client_config(
+        return self.config_builder.build_client_config(
             private_key=decrypted_private,
             assigned_ip=peer.tunnel_ip or "0.0.0.0",
             obfuscation=obfuscation,
             psk=self.key_cipher.decrypt(peer.preshared_key_enc).decode() if peer.preshared_key_enc else None,
             split_tunnel=split_tunnel,
-        )
-        return VPNAssignment(
-            peer_id=str(peer.id),
-            device_id=str(peer.device_id),
-            assigned_ip=peer.tunnel_ip or "",
-            config=config,
-            qr_code=self.config_builder.to_qr_code(config),
-            public_key=peer.public_key,
         )
 
     @circuit(failure_threshold=5, recovery_timeout=30)

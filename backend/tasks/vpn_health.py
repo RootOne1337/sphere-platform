@@ -79,6 +79,7 @@ async def _run_health_checks() -> None:
             config_builder=config_builder,
             key_cipher=key_cipher,
             wg_router_url=settings.WG_ROUTER_URL,
+            wg_router_api_key=settings.WG_ROUTER_API_KEY,
         )
         publisher = EventPublisher()
         monitor = VPNHealthMonitor(

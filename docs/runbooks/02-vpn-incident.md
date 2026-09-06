@@ -108,6 +108,13 @@ responses, actual handshake/reachability results and the actions taken. Confirm
 that no address was reassigned before its former peer was removed. Preserve
 unknown outcomes for reconciliation rather than labelling them successful.
 
+Health polling now authenticates to the router and rejects failed or malformed
+snapshots without changing the last known peer state. A missing/zero handshake
+marks the peer inactive but does not recreate it: the handshake endpoint is not
+an authoritative peer inventory. Reconcile actual router configuration before
+any provisioning repair. The reconnect configuration preserves the stored PSK;
+the current command publisher is still a stub, so this does not prove delivery.
+
 Open audit work includes durable global IP reservations, provisioning/revoke
 intent before external effects, lost-response reconciliation, commit/release
 atomicity, Redis-loss recovery, AWG settings, split routes and kill-switch runtime.
