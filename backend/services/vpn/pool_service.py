@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass
+from urllib.parse import quote
 
 import httpx
 import structlog
@@ -245,10 +246,11 @@ class VPNPoolService:
 
     async def _remove_peer_from_server(self, public_key: str) -> None:
         """Require confirmed deletion before the caller may release the address."""
-        resp = await self._http.delete(f"/peers/{public_key}")
-        if resp.status_code not in (200, 204, 404):
+        resp = await self._http.delete(f"/peers/{quote(public_key, safe='')}")
+        if resp.status_code not in (200, 204):
             # In particular, 202 only acknowledges a request; it does not prove
-            # the peer is gone. Timeouts propagate for the same reason.
+            # the peer is gone. A generic 404 can be a proxy/route error, not an
+            # authoritative absent-peer result. Retain the intent for reconciliation.
             raise httpx.HTTPStatusError(
                 "WG Router did not confirm peer deletion",
                 request=resp.request, response=resp,

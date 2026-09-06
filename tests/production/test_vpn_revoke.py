@@ -32,7 +32,7 @@ async def test_failed_revoke_retains_peer_and_address_reservation(world, outcome
         await service._http.aclose()
         service._http = httpx.AsyncClient(base_url="http://127.0.0.1:9", transport=httpx.MockTransport(router_failure))
         try:
-            if outcome in {"http_200", "http_204", "http_404"}:
+            if outcome in {"http_200", "http_204"}:
                 await service.revoke_vpn(str(w.dev_a.id), w.org_a.id)
                 await db.commit()
                 await db.refresh(peer)

@@ -82,13 +82,17 @@ it is not evidence that the tunnel has established a handshake.
 The implemented removal route is `DELETE /api/v1/vpn/revoke/<device_id>`, restricted
 to the authorized organization administrator. Removal deliberately disrupts that
 device's tunnel; use it only for a confirmed target under the incident's approved
-scope. As of the audit fix, timeout, 403, 500 and unconfirmed 202 preserve the peer
-and address. Confirmed 200/204 or already-absent 404 retain the existing idempotent
-router contract. A failed response must not be followed by manually returning the
+scope. Timeout, 403, 404, 500 and unconfirmed 202 preserve the peer
+and address. Only 200/204 are currently accepted as deletion confirmation. A
+generic 404 can indicate an incorrect proxy/route and is not authoritative proof
+of peer absence. A failed response must not be followed by manually returning the
 address to Redis. REVOKING now persists before DELETE and releases SQL ownership
 only after deletion confirmation and commit. PROVISIONING persists before POST;
 unknown results retain their address. Retry of either pending state returns 409
 and does not issue another provider mutation. There is no automatic reconciler.
+Public keys are percent-encoded as one URL path component; the actual provider
+must support this route contract. Reconcile provider routing before treating any
+404 as an already-removed peer.
 
 For pool exhaustion or duplicate addresses, preserve PostgreSQL, Redis and router
 inventory for reconciliation. Stop new allocations through the deployment's

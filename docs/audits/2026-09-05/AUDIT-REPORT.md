@@ -302,7 +302,7 @@ runtime-проверок и не считается доказательство
 - **Root cause:** DELETE helper подавлял timeout и ошибки HTTP, после чего peer считался FREE; параллельные revoke читали один ASSIGNED peer и повторно возвращали адрес.
 - **Affected files:** `backend/services/vpn/pool_service.py`, `_get_existing_peer`, `_remove_peer_from_server`.
 - **Evidence:** [vpn-revoke-before.txt](evidence/vpn-revoke-before.txt): 5 failures, включая timeout, 500, 403, незавершённый 202 и перекрывающиеся транзакции.
-- **Fix:** `caa9faa` — ошибка/неподтверждённый DELETE сохраняет peer и lease; peer row lock с refresh сериализует revoke. Сохраняется прежний контракт 200/204/404 как подтверждённое удаление/отсутствие.
+- **Fix:** `caa9faa` — ошибка/неподтверждённый DELETE сохраняет peer и lease; peer row lock с refresh сериализует revoke. Первоначально сохранялся контракт 200/204/404; последующий AUD-30 исключает неоднозначный 404.
 - **Regression:** 8 revoke cases, 3 assignment cases и старая VPN suite: [vpn-revoke-after.txt](evidence/vpn-revoke-after.txt), 92 passed. Ошибка не освобождает IP даже если caller ловит её и делает commit.
 - **Residual risk:** первоначальный fix сохранял окно Redis release перед SQL commit. Последующее исправление AUD-11 заменяет этот путь SQL ownership и долговечным REVOKING; provider reconciliation и реальный HTTP adapter ещё не закрыты.
 
@@ -343,6 +343,15 @@ runtime-проверок и не считается доказательство
 - **Regression:** `test_vpn_durable_leases.py` — 19 случаев, включая 64 параллельных назначения, потерю/poisoned cache Redis, cancellation, generation mismatch, сохранение route/PSK, pool exhaustion, независимость caller transaction. `test_vpn_migration.py` — 5 проверок реальной миграции в PostgreSQL throwaway schema. [vpn-lease-after.txt](evidence/vpn-lease-after.txt) и общий прогон включают прежние VPN contracts/revoke/health tests.
 - **Migration evidence:** [vpn-migration-conflicts.txt](evidence/vpn-migration-conflicts.txt): миграция атомарно отказала на накопленных дублях тестового стенда, исходный head и строки сохранились. После удаления только 227 старых artificial Audit A/B peers в выделенной sphere_audit выполнен успешный upgrade. Production не менялся. Автотесты теперь удаляют VPN rows только своих двух UUID организаций. Invalid addresses/network prefixes и downgrade с pending intent также отклоняются без потери данных.
 - **Residual risk:** automatic provider reconciliation отсутствует. Pending intent удерживает IP до управляемой сверки, что снижает доступность при отказе, но исключает слепое повторное выделение. Старые writers нельзя запускать одновременно с новым allocator; orphan router peers вне SQL должны быть сверены до rollout. Полный RLS/runtime-role design, HTTP adapter, reserved router IP, AWG settings/routes и физический handshake остаются открытыми. 64 SQL assignments не измеряют ёмкость 64 APK. Подробности: [VPN-LEASE-DESIGN.md](VPN-LEASE-DESIGN.md).
+
+### AUD-30 — High: DELETE менял путь для base64 key, а generic 404 освобождал peer
+
+- **Root cause:** public key вставлялся в путь без percent encoding; символ `/` создавал дополнительный route segment. Любой 404, включая proxy/route Not Found, трактовался как доказательство отсутствия peer.
+- **Affected files:** `backend/services/vpn/pool_service.py`, `_remove_peer_from_server`.
+- **Evidence:** [vpn-router-path-before.txt](evidence/vpn-router-path-before.txt): 2 failures — raw HTTP path отличался от единого encoded key; generic 404 принимался без ошибки. MockTransport локальный, реальный роутер не вызывался.
+- **Fix:** percent encoding ключа как одного URL component; DELETE принимает только 200/204. При 404 intent остаётся REVOKING, адрес не освобождается.
+- **Regression:** `test_vpn_router_path.py` и существующий real-SQL revoke matrix, включая 404, проверяют path/error и удержание адреса.
+- **Residual risk:** корректный already-absent результат провайдера требует отдельного authoritative contract. Encoded slash должен поддерживаться router/proxy; автоматическое разрешение 404 без этой проверки запрещено. Реальный deployed provider всё ещё не обследован.
 
 ## Открытые подтверждённые блокеры
 
