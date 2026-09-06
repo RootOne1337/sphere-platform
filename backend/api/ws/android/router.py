@@ -39,7 +39,7 @@ async def authenticate_ws_token(token: str, db: AsyncSession):
         from backend.services.api_key_service import APIKeyService
         svc = APIKeyService(db)
         api_key = await svc.authenticate(token)
-        if not api_key:
+        if not api_key or api_key.type != "agent" or "device:register" not in api_key.permissions:
             raise HTTPException(status_code=401, detail="Invalid or expired API key")
 
         class _ApiKeyPrincipal:
@@ -70,7 +70,7 @@ async def authenticate_ws_token(token: str, db: AsyncSession):
     role = payload.get("role", "")
     if role == "device":
         device_subject = await db.get(Device, uuid.UUID(payload["sub"]))
-        if not device_subject:
+        if not device_subject or not device_subject.is_active:
             raise HTTPException(
                 status_code=401, detail="Device not found",
             )
@@ -78,14 +78,18 @@ async def authenticate_ws_token(token: str, db: AsyncSession):
         class _DevicePrincipal:
             """Принципал для устройства — совместим с user.org_id проверкой."""
 
-            def __init__(self, org_id: uuid.UUID) -> None:
+            def __init__(self, org_id: uuid.UUID, device_id: uuid.UUID) -> None:
                 self.org_id = org_id
+                self.device_id = device_id
 
-        return _DevicePrincipal(device_subject.org_id)
+        return _DevicePrincipal(device_subject.org_id, device_subject.id)
 
     user = await db.get(User, uuid.UUID(payload["sub"]))
     if not user or not user.is_active:
         raise HTTPException(status_code=401, detail="User not found or inactive")
+    from backend.core.rbac import has_permission
+    if not has_permission(user.role, "device:write"):
+        raise HTTPException(status_code=403, detail="Agent access denied")
     return user
 
 
@@ -423,7 +427,7 @@ async def android_agent_ws(
                 return
 
             device = await db.get(Device, device_uuid)
-            if not device:
+            if not device or not device.is_active:
                 logger.warning("android_ws: device_not_found", device_id=device_id)
                 await _close(4004, "device_not_found")
                 return
@@ -447,6 +451,11 @@ async def android_agent_ws(
 
                 if str(device.org_id) != str(user.org_id):
                     logger.warning("android_ws: org mismatch", device_id=device_id)
+                    await _close(4004, "device_not_found")
+                    return
+
+                subject_device_id = getattr(user, "device_id", None)
+                if subject_device_id is not None and subject_device_id != device.id:
                     await _close(4004, "device_not_found")
                     return
 
