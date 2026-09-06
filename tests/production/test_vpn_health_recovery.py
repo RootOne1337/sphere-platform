@@ -175,6 +175,31 @@ async def test_revoked_peer_is_not_reactivated_or_reconnected_by_inflight_poll(h
     assert stats["checked"] == 0
 
 
+@pytest.mark.parametrize("snapshot", ["stale", "missing"])
+async def test_late_health_response_cannot_overwrite_a_newer_observation(health_world, snapshot):
+    h = health_world
+    monitor = h.make_monitor(httpx.Response(200, json={}))
+    monitor._is_device_online = AsyncMock(return_value=True)
+    fresh = datetime.now(timezone.utc)
+
+    async def newer_cycle_finishes_first():
+        async with h.world.sessions() as other_db:
+            peer = await other_db.get(VPNPeer, h.peer.id)
+            peer.last_handshake_at = fresh
+            peer.is_active = True
+            await other_db.commit()
+        return {h.peer.public_key: h.observed_at} if snapshot == "stale" else {}
+
+    monitor._get_handshake_times = newer_cycle_finishes_first
+    await monitor.check_all_peers(h.world.org_a.id)
+    await h.db.commit()
+    async with h.world.sessions() as verify:
+        peer = await verify.get(VPNPeer, h.peer.id)
+        assert peer.last_handshake_at == fresh
+        assert peer.is_active is True
+    h.publisher.send_command_to_device.assert_not_awaited()
+
+
 @pytest.mark.parametrize("fail_first_commit", [False, True])
 async def test_background_health_cycle_commits_observations_and_authenticates(health_world, fail_first_commit):
     h = health_world

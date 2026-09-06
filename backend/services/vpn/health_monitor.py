@@ -6,8 +6,9 @@ from datetime import datetime, timezone
 
 import httpx
 import structlog
-from sqlalchemy import select, update
+from sqlalchemy import or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.sql.elements import ColumnElement
 
 from backend.models.vpn_peer import VPNPeer, VPNPeerStatus
 from backend.services.vpn.event_publisher import EventPublisher
@@ -83,8 +84,13 @@ class VPNHealthMonitor:
 
             since_sec = (now - last_handshake).total_seconds() if last_handshake else None
             values: dict = {"is_active": since_sec is not None and since_sec < self.STALE_HANDSHAKE_THRESHOLD}
+            freshness: ColumnElement[bool] = VPNPeer.last_handshake_at == peer.last_handshake_at
             if last_handshake:
                 values["last_handshake_at"] = last_handshake
+                freshness = or_(
+                    VPNPeer.last_handshake_at.is_(None),
+                    VPNPeer.last_handshake_at <= last_handshake,
+                )
             # The router poll can overlap revocation. Recheck ownership/state
             # when writing, rather than flushing an obsolete ORM snapshot.
             current = await self.db.scalar(update(VPNPeer).where(
@@ -92,6 +98,7 @@ class VPNHealthMonitor:
                 VPNPeer.org_id == org_id,
                 VPNPeer.device_id == peer.device_id,
                 VPNPeer.status == VPNPeerStatus.ASSIGNED,
+                freshness,
             ).values(**values).returning(VPNPeer.id).execution_options(synchronize_session="fetch"))
             if current is None:
                 continue
