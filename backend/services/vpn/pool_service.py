@@ -12,6 +12,7 @@ from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from backend.models.device import Device
 from backend.models.vpn_peer import VPNPeer, VPNPeerStatus
 from backend.services.vpn.awg_config import AWGConfigBuilder, AWGObfuscationParams
 from backend.services.vpn.ip_pool import IPPoolAllocator
@@ -75,6 +76,12 @@ class VPNPoolService:
         split_tunnel: bool = True,
     ) -> VPNAssignment:
         """Assign a VPN peer to a device. Idempotent  returns existing if already assigned."""
+        device_uuid = uuid.UUID(device_id) if isinstance(device_id, str) else device_id
+        owned = await self.db.scalar(select(Device.id).where(
+            Device.id == device_uuid, Device.org_id == org_id, Device.is_active.is_(True),
+        ).with_for_update())
+        if owned is None:
+            raise HTTPException(status_code=404, detail="Device not found")
         existing = await self._get_existing_peer(device_id, org_id)
         if existing:
             return await self._peer_to_assignment(existing, split_tunnel)
@@ -181,6 +188,7 @@ class VPNPoolService:
             private_key=decrypted_private,
             assigned_ip=peer.tunnel_ip or "0.0.0.0",
             obfuscation=obfuscation,
+            psk=self.key_cipher.decrypt(peer.preshared_key_enc).decode() if peer.preshared_key_enc else None,
             split_tunnel=split_tunnel,
         )
         return VPNAssignment(
