@@ -111,7 +111,10 @@ class TaskService:
         account_id_raw = (task.input_params or {}).get("account_id")
         if account_id_raw:
             try:
-                return await self.db.get(GameAccount, uuid.UUID(str(account_id_raw)))
+                return await self.db.scalar(select(GameAccount).where(
+                    GameAccount.id == uuid.UUID(str(account_id_raw)),
+                    GameAccount.org_id == task.org_id,
+                ))
             except (ValueError, TypeError):
                 pass
 
@@ -119,6 +122,7 @@ class TaskService:
         return await self.db.scalar(
             select(GameAccount).where(
                 GameAccount.device_id == task.device_id,
+                GameAccount.org_id == task.org_id,
                 GameAccount.status.in_(["in_use", "free"]),
             ).order_by(GameAccount.assigned_at.desc().nulls_last()).limit(1)
         )
@@ -181,6 +185,10 @@ class TaskService:
             raise HTTPException(status_code=400, detail="Script has no versions")
 
         await self._get_device(device_id, org_id)
+        if account_id and not await self.db.scalar(select(GameAccount.id).where(
+            GameAccount.id == account_id, GameAccount.org_id == org_id,
+        )):
+            raise HTTPException(status_code=404, detail="Account not found")
 
         # Идемпотентность: защита от дублирующих вызовов.
         # Задача считается зависшей (stale) в двух случаях:
@@ -423,7 +431,9 @@ class TaskService:
         result: dict,
     ) -> None:
         """Вызывается при получении command_result от агента (TZ-03 WebSocket)."""
-        task = await self.db.get(Task, uuid.UUID(task_id))
+        task = await self.db.scalar(select(Task).where(
+            Task.id == uuid.UUID(task_id), Task.device_id == uuid.UUID(device_id),
+        ).with_for_update())
         if not task:
             logger.warning("task.result.not_found", task_id=task_id)
             return
@@ -431,14 +441,13 @@ class TaskService:
         # FIX BUG-2: Не перезаписываем финальные статусы.
         # Если планировщик уже поставил CANCELLED (conflict_policy=cancel),
         # result от агента не должен перезаписывать его на COMPLETED/FAILED.
-        if task.status in (TaskStatus.CANCELLED, TaskStatus.COMPLETED, TaskStatus.FAILED):
+        if task.status in (TaskStatus.CANCELLED, TaskStatus.COMPLETED, TaskStatus.FAILED, TaskStatus.TIMEOUT):
             logger.info(
                 "task.result.ignored_final_status",
                 task_id=task_id,
                 current_status=task.status,
             )
             # Результат сохраняем для диагностики, но статус не меняем
-            task.result = result
             # Освобождаем running lock только если он принадлежит ЭТОЙ задаче
             await self._safe_mark_completed(task_id, device_id)
             return
