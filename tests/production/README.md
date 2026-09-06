@@ -44,3 +44,9 @@ create/update/import/orchestrator writers erase the legacy plaintext. The CLI
 test executes `python -m backend.cli.account_credentials` against only its new
 organization UUID. Encryption/rotation/rollback tests are not a production data
 migration or proof that historical backups are free of plaintext.
+
+`test_cancellation_serialization.py` uses independent PostgreSQL sessions and
+retained ORM snapshots to check cancel/force-stop against terminal results. It
+also holds a result transaction open while cancellation runs, verifies no early
+queue/publisher effect, and checks tenant rejection and valid active transitions.
+These tests do not prove physical device stop or durable delivery of cancellation.

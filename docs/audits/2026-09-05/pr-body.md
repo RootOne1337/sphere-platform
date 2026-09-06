@@ -24,6 +24,9 @@ replace work that the APK may still be executing. Batch counters serialize
 across result handlers and watchdogs, whose queue deadline now remains UTC.
 Live task progress/logs require ownership for both API reads and device writes.
 Authenticated heartbeats reconstruct evicted Redis presence on the next pong.
+Cancel/force-stop now lock and refresh the task before validating its status, so
+a concurrent committed result cannot be overwritten or trigger a late stop.
+The mutation retains the tenant filter; terminal-state conflicts return 409.
 
 The production Compose override clears inherited private ports and development
 application commands, users and source mounts. Both base/production and
@@ -75,9 +78,9 @@ A successful pipe flush still does not prove physical execution or exit status.
 ## Validation
 
 - Android enterprise debug unit suite: **326 passed**.
-- Combined backend/PC, PostgreSQL/Redis and deployment regressions: **1014 passed**.
-  This includes **158 real-service tests** and **6 Compose configuration tests**.
-  Coverage is **66.30%** and passes the unchanged **65%** gate with two-decimal
+- Combined backend/PC, PostgreSQL/Redis and deployment regressions: **1028 passed**.
+  This includes **172 real-service tests** and **6 Compose configuration tests**.
+  Coverage is **66.57%** and passes the unchanged **65%** gate with two-decimal
   precision. No threshold or coverage scope was weakened. Two additional
   regression tests exercise the 64.98% rejection and exact 65.00% boundary. Long load/soak profiles require a prepared API
   environment and are excluded from the ordinary PR command.
@@ -105,7 +108,8 @@ claim exactly-once effects. CPU/RAM/FPS, physical-device compatibility and 10–
 emulator capacity have not been measured.
 
 n8n/MinIO ingress, runtime database roles, durable OTA/log storage, task-specific
-stop acknowledgements and post-commit webhook delivery remain open. Existing
+stop acknowledgements, cancellation under Redis/commit failure, batch/scheduler
+cancellation and post-commit webhook delivery remain open. Existing
 incorrect batch counters and legacy task metadata require reconciliation.
 
 The VPN migration refuses duplicate held IPs, invalid addresses/network prefixes

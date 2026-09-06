@@ -20,8 +20,8 @@ runtime-проверок и не считается доказательство
 | Проверка | Результат | Практическое ограничение |
 | --- | --- | --- |
 | Android enterprise debug unit suite | 326 passed, 0 failed | JVM/MockWebServer; не проверяет ОС, codec, батарею или смерть процесса на телефоне |
-| Объединённая Backend/PC/production/deployment suite | **1014 passed, 0 failed**; coverage **66,30%** | Строгий coverage gate 65% пройден с precision=2. Load suite исключена; 6 Compose config tests не запускают сервисы |
-| Проверки PostgreSQL/Redis | **158 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
+| Объединённая Backend/PC/production/deployment suite | **1028 passed, 0 failed**; coverage **66,57%** | Строгий coverage gate 65% пройден с precision=2. Load suite исключена; 6 Compose config tests не запускают сервисы |
+| Проверки PostgreSQL/Redis | **172 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
 | Миграции | Применены до **20260906_account_ciphertext** включительно | Только изолированная БД; конфликтные данные/downgrade проверены в throwaway schema; production не мигрировался |
 | Backend image | Собирается; исходная запись OpenAPI воспроизведённо падает с PermissionError | Исправлен lifespan; полный deployment runtime ещё не подтверждён |
 | Frontend build | Успешно | Type-check/Jest и браузерный runtime требуют отдельного завершения проверки |
@@ -32,7 +32,7 @@ runtime-проверок и не считается доказательство
 Предыдущий отдельный DAG benchmark однажды занял 127,1 ms при пороге 100 ms;
 изолированный повтор и последующие общие прогоны прошли. Порог не ослаблялся.
 Файл production-regressions-after.txt сохраняет более ранний standalone snapshot
-с 41 тестом; актуальные 158 входят в общий прогон.
+с 41 тестом; актуальные 172 входят в общий прогон.
 
 Команды запуска и предохранители изоляции: [tests/production/README.md](../../../tests/production/README.md).
 Исходные `14 passed` в [reproductions.txt](evidence/reproductions.txt) означают
@@ -397,6 +397,15 @@ runtime-проверок и не считается доказательство
 | AUD-14 / High | Несуперпользователь-владелец таблиц обходит RLS. F14 на PostgreSQL; tenant context не установлен повсеместно | Разделение migration/runtime ролей, политики и контекст для HTTP/auth/jobs, реальные cross-tenant проверки |
 | DEPLOY-03 / High | Effective Compose оставляет n8n/MinIO host ports; production persistence и DB roles не согласованы | Ingress/access design, роли, долговечные artifacts, runtime/restore проверка |
 
+### AUD-35 — High: cancel/force-stop перезаписывали результат конкурирующей транзакции
+
+- **Root cause:** TaskService читал задачу без FOR UPDATE и без обновления identity map. Между чтением и изменением result handler/watchdog мог зафиксировать COMPLETED/FAILED/TIMEOUT; cancel затем записывал CANCELLED поверх результата. Stop мог отправляться до освобождения строки конкурирующим result handler.
+- **Affected files:** `backend/services/task_service.py`, `_get_task`, `cancel_task`, `force_stop_task`.
+- **Evidence:** [cancellation-serialization-before.txt](evidence/cancellation-serialization-before.txt): 8 failures, 6 controls passed. Две настоящие PostgreSQL сессии воспроизводят как уже закоммиченный terminal state при устаревшем ORM object, так и незавершённую транзакцию с удерживаемым row lock.
+- **Fix:** оба mutation path получают tenant-scoped FOR UPDATE и populate_existing перед проверкой статуса и внешними эффектами. После конкурирующего terminal commit возвращается 409; result сохраняется, Redis/command publisher не вызываются. Обычные GET не получают write lock.
+- **Regression:** `tests/production/test_cancellation_serialization.py`: 14 passed — три terminal outcomes, два cancellation path, блокировка конкурирующим result owner, tenant 404 и разрешённая отмена активных задач. [cancellation-serialization-after.txt](evidence/cancellation-serialization-after.txt).
+- **Residual risk:** это сериализация серверного решения, а не подтверждение физической остановки APK. Pre-commit CANCEL_DAG, Redis failure, durable cancellation/stop ACK, отдельные batch/scheduler cancellation paths и остановка уже доставленной ASSIGNED задачи требуют продолжения проверки.
+
 ## Продолжение обследования: ещё не закрытые компоненты
 
 Следующие пункты — кандидаты/недостаточное покрытие, а не автоматически доказанные
@@ -448,7 +457,9 @@ RLS успешны, Security/pip-audit падает; Android `34047657671` ус�
 
 На Android logging fix `d710587` backend `34048071044`: Tests/Lint/Alembic/
 статический RLS успешны, Security/pip-audit падает; Android `34048071041`
-успешен. Следующий root delivery fix требует отдельной проверки CI.
+успешен. На root delivery fix `7aea90f` backend `34048960771`: Tests/Lint/Alembic/
+статический RLS успешны, Security/pip-audit падает; Android `34048960802` успешен.
+Это snapshot перед последующими cancellation fixes.
 
 PR остаётся draft до завершения открытых блокеров, повторного runtime обследования
 и финализации отчёта. Merge и deployment не выполнялись.

@@ -157,13 +157,18 @@ class TaskService:
         return device
 
     async def _get_task(
-        self, task_id: uuid.UUID, org_id: uuid.UUID
+        self, task_id: uuid.UUID, org_id: uuid.UUID, *, for_update: bool = False
     ) -> Task:
-        task = await self.db.scalar(
+        statement = (
             select(Task)
             .options(selectinload(Task.device), selectinload(Task.script))
             .where(Task.id == task_id, Task.org_id == org_id)
         )
+        if for_update:
+            # Serialize mutations with result handlers and watchdogs, refreshing
+            # any earlier identity-map snapshot after the row lock is acquired.
+            statement = statement.with_for_update().execution_options(populate_existing=True)
+        task = await self.db.scalar(statement)
         if not task:
             raise HTTPException(status_code=404, detail="Task not found")
         return task
@@ -513,7 +518,7 @@ class TaskService:
     async def cancel_task(
         self, task_id: uuid.UUID, org_id: uuid.UUID
     ) -> Task:
-        task = await self._get_task(task_id, org_id)
+        task = await self._get_task(task_id, org_id, for_update=True)
 
         if task.status not in (TaskStatus.QUEUED, TaskStatus.ASSIGNED):
             raise HTTPException(
@@ -543,7 +548,7 @@ class TaskService:
         2. Освобождает Redis lock
         3. Обновляет статус в БД
         """
-        task = await self._get_task(task_id, org_id)
+        task = await self._get_task(task_id, org_id, for_update=True)
 
         if task.status not in (TaskStatus.RUNNING, TaskStatus.QUEUED, TaskStatus.ASSIGNED):
             raise HTTPException(
