@@ -6,6 +6,13 @@ on:
   pull_request:
     branches: [main, develop]
 
+permissions:
+  contents: read
+
+concurrency:
+  group: backend-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   lint:
     name: Lint (ruff + mypy)
@@ -46,11 +53,12 @@ jobs:
   test:
     name: Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     services:
       postgres:
         image: postgres:15-alpine
         env:
-          POSTGRES_DB: sphereplatform_test
+          POSTGRES_DB: sphereplatform_audit_test
           POSTGRES_USER: sphere
           POSTGRES_PASSWORD: test_password
         options: >-
@@ -68,7 +76,7 @@ jobs:
         ports:
           - 6379:6379
     env:
-      POSTGRES_URL: postgresql+asyncpg://sphere:test_password@localhost:5432/sphereplatform_test
+      POSTGRES_URL: postgresql+asyncpg://sphere:test_password@localhost:5432/sphereplatform_audit_test
       REDIS_URL: redis://localhost:6379/0
       REDIS_PASSWORD: ""
       JWT_SECRET_KEY: test_jwt_secret_key_at_least_32_chars_long
@@ -79,6 +87,8 @@ jobs:
       AWG_H3: 3333333333
       AWG_H4: 4444444444
       VPN_SERVER_HOSTNAME: localhost
+      SPHERE_RUN_INTEGRATION: "1"
+      PYTHONPATH: ".:pc-agent"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -90,7 +100,21 @@ jobs:
       - run: alembic -c alembic/alembic.ini upgrade head
         env:
           PYTHONPATH: "."
-      - run: pytest tests/ -v --cov=backend --cov-report=xml --cov-fail-under=65
+      # Load/soak profiles require an explicitly prepared isolated API and agents.
+      # They are not a substitute for the PostgreSQL/Redis regressions enabled here.
+      - name: Unit and real-service regression tests
+        run: >-
+          pytest tests/ --ignore=tests/load -v --tb=short
+          --junitxml=test-results.xml --cov=backend --cov-report=xml
+          --cov-fail-under=65
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: backend-test-results
+          path: |
+            test-results.xml
+            coverage.xml
+          if-no-files-found: warn
       - uses: codecov/codecov-action@v4
         with:
           file: ./coverage.xml
@@ -98,6 +122,7 @@ jobs:
   alembic-check:
     name: Alembic Single Head
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: [test]
     services:
       postgres:

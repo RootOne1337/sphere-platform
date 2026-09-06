@@ -15,4 +15,8 @@ python -m alembic -c alembic/alembic.ini upgrade head
 python -m pytest tests/production -q
 ```
 
-Without `SPHERE_RUN_INTEGRATION=1`, tests using the database fixture are skipped. CI should explicitly enable this suite with disposable service containers. The normal SQLite suite cannot establish PostgreSQL locking or tenant-policy correctness.
+Without `SPHERE_RUN_INTEGRATION=1`, tests using the database fixture are skipped. Backend CI explicitly enables this suite with disposable PostgreSQL/Redis service containers and applies migrations before testing. The normal SQLite suite cannot establish PostgreSQL locking or tenant-policy correctness; the static RLS coverage check is not a runtime isolation test.
+
+The combined CI command is `pytest tests/ --ignore=tests/load -v --tb=short --junitxml=test-results.xml --cov=backend --cov-report=xml --cov-fail-under=65`. Set `PYTHONPATH` to include the repository and `pc-agent` (`.;pc-agent` on Windows, `.:pc-agent` on Linux). Native PostgreSQL types retain SQLite-only variants, so both suites can run in one process. CI has a 20-minute test-job deadline and uploads JUnit/coverage artifacts even after failure. The 65% coverage gate is preserved.
+
+`tests/load` includes long-running load/soak profiles. They require a separately prepared, explicitly isolated API/agent environment; the ordinary CI service containers do not provide that API. Excluding this directory from the PR regression command does not establish capacity or complete the load audit. Record environment, duration, recovery scenarios and CPU/RAM/FPS before making any 10–64 emulator capacity claim.
