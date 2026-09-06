@@ -33,6 +33,6 @@ pytz>=2024.1            # TZ-12 таймзоны для cron-расписани�
 pyotp>=2.9.0            # TZ-01 MFA TOTP
 minio>=7.2.0            # TZ-04 хранение скриншотов устройств
 cryptography>=42.0.0    # TZ-06 Fernet шифрование private key + X25519 fallback
-fakeredis>=2.21.0       # тесты: in-memory Redis mock без Docker
+fakeredis[lua]>=2.21.0  # tests execute the same atomic Lua scripts as Redis
 pytest-mock>=3.12.0     # тесты: mock/patch для внешних зависимостей
 aiosqlite>=0.20.0       # тесты: in-memory SQLite для conftest.py
