@@ -105,7 +105,7 @@ class HeartbeatManager:
 
         # Логировать latency для мониторинга
         timestamp = msg.get("ts")
-        if type(timestamp) in (int, float) and 0 <= timestamp <= 253402300799:
+        if isinstance(timestamp, (int, float)) and not isinstance(timestamp, bool) and 0 <= timestamp <= 253402300799:
             server_latency_ms = round((time.time() - timestamp) * 1000, 2)
             logger.debug(
                 "Heartbeat pong received",
