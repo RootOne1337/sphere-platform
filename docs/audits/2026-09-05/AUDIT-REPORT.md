@@ -20,13 +20,19 @@ runtime-проверок и не считается доказательство
 | Проверка | Результат | Практическое ограничение |
 | --- | --- | --- |
 | Android enterprise debug unit suite | 316 passed, 0 failed | JVM/MockWebServer; не проверяет ОС, codec, батарею или смерть процесса на телефоне |
-| Backend/PC существующая suite и lifespan regressions | Предыдущий полный прогон: 834 passed. Последний: 833 passed, 1 performance failure; отдельный повтор этого теста прошёл | Порог DAG validation 100 ms: последний замер 127.1 ms на общей станции. Порог не ослаблялся; load suite исключена |
-| Новые проверки PostgreSQL/Redis | 38 passed, 0 xfail | Включены rollback, dispatch recovery и n8n/orchestrator producers |
-| Миграции | Исходные миграции и device refresh применены к изолированной БД | Данные production не мигрировались |
+| Объединённая Backend/PC/production/deployment suite | **913 passed, 0 failed**; coverage **64,98%** | Coverage gate 65% пока не пройден. Load suite исключена; 6 Compose config tests не запускают сервисы |
+| Проверки PostgreSQL/Redis | **73 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
+| Миграции | Применены до **20260906_task_accounting** включительно | Только изолированная БД; production не мигрировался |
 | Backend image | Собирается; исходная запись OpenAPI воспроизведённо падает с PermissionError | Исправлен lifespan; полный deployment runtime ещё не подтверждён |
 | Frontend build | Успешно | Type-check/Jest и браузерный runtime требуют отдельного завершения проверки |
 | APK ↔ реальный локальный backend | Не завершено | Автоматическая проверка разрешений отклонила запуск локального API: `blocked by policy`; обход не выполнялся |
 | 10–64 эмулятора, физические телефоны | Не измерено | Нет подтверждённых CPU/RAM/FPS/энергопотребления и совместимости со всеми Android |
+
+Последний общий вывод: [combined-suite-current.txt](evidence/combined-suite-current.txt).
+Предыдущий отдельный DAG benchmark однажды занял 127,1 ms при пороге 100 ms;
+изолированный повтор и последующие общие прогоны прошли. Порог не ослаблялся.
+Файл production-regressions-after.txt сохраняет более ранний standalone snapshot
+с 41 тестом; актуальные 73 входят в общий прогон.
 
 Команды запуска и предохранители изоляции: [tests/production/README.md](../../../tests/production/README.md).
 Исходные `14 passed` в [reproductions.txt](evidence/reproductions.txt) означают
@@ -210,13 +216,85 @@ runtime-проверок и не считается доказательство
 - **Evidence/regression:** [task-producers-before.txt](evidence/task-producers-before.txt), `test_task_producers.py`, 24 существующих n8n API tests с опубликованной версией в fixture.
 - **Residual risk:** старые task input_params и GameAccount passwords не мигрированы; pipeline/scheduler и конкурентность orchestration engine обследуются отдельно.
 
+### AUD-19 — High: оркестратор менял чужой аккаунт и переписывал terminal outcome
+
+- **Root cause:** lookup игрового аккаунта не ограничивался организацией; признаком обработки результата служил статус CANCELLED вместо отдельной квитанции. Повторный tick мог повторно учитывать завершение после переназначения аккаунта.
+- **Affected files:** `backend/services/orchestrator/orchestration_engine.py:339`, `backend/models/task.py`, миграция `alembic/versions/20260906_task_accounting.py`.
+- **Evidence:** [orchestrator-results-before.txt](evidence/orchestrator-results-before.txt): 2 failures исходных проверок.
+- **Fix:** `2b61bb3` — tenant lookup и account row lock; `orchestration_processed_at` фиксируется атомарно с изменением аккаунта; terminal Task.status/result сохраняются; конкурентные workers используют SKIP LOCKED.
+- **Regression:** 3 сценария `test_orchestrator_results.py`: повтор после переназначения, чужая организация, конкуренция и rollback/retry.
+- **Residual risk:** прежние CANCELLED не реконструированы; конкурентное создание аккаунтов и pipeline recovery ещё открыты. In-memory статистика оркестратора не является транзакционным счётчиком.
+
+### AUD-20 — High: чтение и подмена live-прогресса чужих задач
+
+- **Root cause:** HTTP read проверял только `script:read`; агентская запись доверяла task_id. Redis keys общие для всей платформы. Некорректные counters могли вызвать исключение обработки WS.
+- **Affected files:** `backend/api/v1/tasks/router.py:234`, `backend/api/ws/android/router.py:142`.
+- **Evidence:** [progress-isolation-before.txt](evidence/progress-isolation-before.txt): 12 failed, 1 passed. Реальные JWT/ASGI, PostgreSQL и Redis; чужой пользователь получал приватный node ID.
+- **Fix:** `a92e18d` — ownership по организации при чтении; по task/device/org и активному статусу перед записью/event; ограниченная типизированная валидация входного сообщения.
+- **Regression:** [progress-isolation-after.txt](evidence/progress-isolation-after.txt), 13 passed: cross-tenant read, sibling device, unknown/terminal task, malformed payload и разрешённый сценарий.
+- **Residual risk:** один indexed PostgreSQL lookup на progress frame; throughput для 64 APK ещё не измерен. Cache не является долговечным журналом, поздний progress при конкурентном terminal commit остаётся телеметрией.
+
+### AUD-21 — High: retry и конкурентные producers создавали повторное выполнение
+
+- **Root cause:** проверка дубликата и INSERT не сериализованы; missing Redis presence или возраст записи >24 ч объявляли предыдущую задачу TIMEOUT без доказательства остановки APK.
+- **Affected files:** `backend/services/task_service.py:144`, `backend/services/task_service.py:172`.
+- **Evidence:** [creation-recovery-before.txt](evidence/creation-recovery-before.txt): 5 failures; два перекрывающихся запроса создавали две QUEUED задачи, retry менял QUEUED/ASSIGNED/RUNNING на TIMEOUT.
+- **Fix:** `f240a6a` — device row lock до duplicate lookup, удерживаемый до commit/rollback; существующая активная задача возвращает 409 без изменения результата.
+- **Regression:** [creation-recovery-after.txt](evidence/creation-recovery-after.txt), 5 passed, реальные перекрывающиеся PostgreSQL-транзакции и потеря presence.
+- **Residual risk:** контракт dedup действует для одного device/script version через TaskService; это не общий idempotency-key API. Watchdog, force-stop, ручные producers и старые зависшие задачи требуют отдельного reconciliation.
+
+### AUD-22 — High: неверный watchdog deadline на хосте вне UTC
+
+- **Root cause:** UTC cutoff лишался tzinfo ради SQLite. asyncpg интерпретировал его как локальное время хоста для timestamptz; на проверенном UTC+5 часовое ожидание очереди увеличивалось на 5 часов.
+- **Affected files:** `backend/tasks/task_heartbeat_watchdog.py:86`.
+- **Evidence:** [watchdog-runtime-before.txt](evidence/watchdog-runtime-before.txt): overdue QUEUED/ASSIGNED не переходили в TIMEOUT, 2 failures на реальном PostgreSQL.
+- **Fix:** `810b243` — timezone-aware UTC во входном параметре; SQLite также принимает такое значение.
+- **Regression:** 2 deadline/rollback tests после fix; `473db53` добавляет 2 проверки commit failure и Redis release failure. [watchdog-faults-after.txt](evidence/watchdog-faults-after.txt): 4 passed. На Unix тест временно задаёт TZ=Etc/GMT-5 и восстанавливает его.
+- **Residual risk:** этот fix не делает CANCEL_DAG долговечным и не доказывает остановку действия на телефоне. Task-specific cancellation, повтор отмены и подтверждение остановки остаются открыты.
+
+### AUD-23 — High: потеря batch counters при одновременных результатах
+
+- **Root cause:** блокировка разных Task rows не защищала общий TaskBatch. Несколько workers читали старый счётчик и перезаписывали increment друг друга; watchdog использовал тот же небезопасный read-modify-write.
+- **Affected files:** `backend/services/task_service.py:472`, `backend/tasks/task_heartbeat_watchdog.py:306`.
+- **Evidence:** [batch-concurrency-before.txt](evidence/batch-concurrency-before.txt): 3 failures с перекрывающимися транзакциями и заранее загруженной ORM-моделью.
+- **Fix:** `42f222f` — общий batch row lock с populate_existing для result handler и watchdog; стабильный порядок блокировок нескольких batches.
+- **Regression:** success/success, success/failure, success/watchdog; [batch-concurrency-after.txt](evidence/batch-concurrency-after.txt): 5 passed вместе с deadline slice.
+- **Residual risk:** исторические неверные counters не пересчитаны. Надёжность всего wave/pipeline жизненного цикла требует дальнейших сценариев.
+
+### AUD-24 — High: APK оставался невидимым после потери Redis presence
+
+- **Root cause:** handle_pong обновлял только существующую Redis-запись. После eviction/restart живой WS продолжал обмен, но dispatcher не видел online presence до reconnect. Ошибка Redis или неверный latency timestamp прерывали cache update.
+- **Affected files:** `backend/websocket/heartbeat.py:87`, `backend/api/ws/android/router.py:546`.
+- **Evidence:** [presence-recovery-before.txt](evidence/presence-recovery-before.txt): 5 failures; удалялся только ключ устройства текущего fixture в реальном Redis, без FLUSHDB.
+- **Fix:** `a5587f2` — восстановление online presence по authenticated pong с session ID; busy сохраняется; известная новая сессия не перезаписывается старой. Ошибка Redis повторяется на следующем pong; некорректная telemetry не записывается, latency timestamp ограничен.
+- **Regression:** расширенные 7 recovery cases и существующие heartbeat/authorization tests: [presence-recovery-after.txt](evidence/presence-recovery-after.txt), 18 passed.
+- **Residual risk:** это проверка server handler/cache, не реального Android network stack. Атомарное fencing между несколькими workers, PubSub recovery и физический APK после полного Redis restart ещё не доказаны.
+
+### DEPLOY-01 / DEPLOY-02 — High: production наследовал открытые порты и dev runtime
+
+- **Root cause:** пустой ports list объединялся с base вместо удаления mappings. Документированный base/full/production merge также сохранял команды разработки, root frontend, прямые application ports и bind mounts исходников.
+- **Affected files:** `docker-compose.production.yml:8`, `docs/deployment.md:150`.
+- **Evidence:** [compose-production-before.txt](evidence/compose-production-before.txt): 3 failed, 1 passed; настоящий `docker compose config` с синтетическими переменными, без запуска контейнеров.
+- **Fix:** `5444a44` — явные `!reset` для DB/Redis/application ports и application command/user/volumes, явное отключение dev-auth flags; актуализированы запуск и требования Compose 2.24.4+. Поведение подтверждено [официальными merge rules Docker](https://docs.docker.com/reference/compose-file/merge/).
+- **Regression:** расширенная матрица обоих Compose stack и обоих applications: [compose-production-after.txt](evidence/compose-production-after.txt), 6 passed.
+- **Residual risk:** n8n/MinIO base ports остаются опубликованными и требуют отдельного ingress/access design. RLS runtime-role rollout, OTA/log persistence, root filesystem policy, backup restore и фактическая доступность после запуска не закрыты. Удалённые dev mounts не заменяются гарантией сохранности production-артефактов.
+
+### TEST-01 — Medium: SQLite suites портили PostgreSQL проверки; CI пропускал runtime regressions
+
+- **Root cause:** восемь conftests глобально заменяли ARRAY/JSONB/INET модели на SQLite-типы; PostgreSQL получал JSON вместо varchar[]. CI одновременно собирал длительные load/soak профили без API-стенда и не включал opt-in production suite.
+- **Affected files:** `tests/conftest.py:50` и дочерние conftests; `.github/workflows/ci-backend.yml`.
+- **Evidence:** [combined-suite-coverage.txt](evidence/combined-suite-coverage.txt): 872 passed, 3 DatatypeMismatchError. Старый GitHub run `34025311501` оставался на общей pytest-команде.
+- **Fix:** `ad4fc27` — централизованные SQLite-only variants и SQLite UUID function; native PostgreSQL metadata сохраняется. CI включает изолированные PG/Redis regression tests, применяет миграции, ограничивает test job 20 минутами и сохраняет JUnit/coverage при ошибках. Load suite требует отдельного подготовленного стенда.
+- **Regression:** первый общий повтор после type fix: 875 passed; последующие полные результаты приведены в таблице выше. Порог покрытия 65% не снижался.
+- **Residual risk:** статический RLS job не проверяет runtime isolation; mypy CI без backend dependencies слабее dependency-aware проверки. Security advisories и отдельный load job остаются открыты; зелёный build не закрывает аудит.
+
 ## Открытые подтверждённые блокеры
 
 | ID / severity | Root cause и evidence | Необходимое продолжение |
 | --- | --- | --- |
 | AUD-11 / High | Независимые tenant VPN pools выделяют одинаковый IP в общей subnet; reinit возвращает уже занятые адреса. F11 | Глобальная согласованная аренда IP, атомарность, отказоустойчивое revoke, проверка конфигурации |
 | AUD-14 / High | Несуперпользователь-владелец таблиц обходит RLS. F14 на PostgreSQL; tenant context не установлен повсеместно | Разделение migration/runtime ролей, политики и контекст для HTTP/auth/jobs, реальные cross-tenant проверки |
-| DEPLOY-01 / High | `ports: []` в override не очищает base mappings; effective Compose сохраняет host ports PostgreSQL/Redis | Исправить merge и проверить итоговую конфигурацию, сеть и runtime доступность |
+| DEPLOY-03 / High | Effective Compose оставляет n8n/MinIO host ports; production persistence и DB roles не согласованы | Ingress/access design, роли, долговечные artifacts, runtime/restore проверка |
 
 ## Продолжение обследования: ещё не закрытые компоненты
 
@@ -232,7 +310,9 @@ GitHub checks на первой ревизии PR: Android build и lint про�
 не считаются исправленными до анализа advisory, обновления и повторного запуска.
 
 На ревизии `554df5d` CI обнаружил пять lint diagnostics и уязвимые зависимости.
-Lint исправлен в `3767de1`, локальный Ruff проходит. Dependency-aware mypy на Windows
+Lint исправлен в `3767de1`, локальный Ruff проходит. На опубликованном `4c8f066`
+Android build и lint успешны, security job падает; эти результаты исторические
+и не подменяют проверки нового head. Dependency-aware mypy на Windows
 также выявил прежние diagnostics вне исправленного owner count; они не подавлялись.
 Security job показывает PyJWT/Starlette/pytest advisories; проверки upstream и
 совместимых обновлений продолжаются. Список приоритетов: [ROADMAP.md](ROADMAP.md).

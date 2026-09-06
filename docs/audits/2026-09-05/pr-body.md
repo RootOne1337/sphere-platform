@@ -17,14 +17,28 @@ Redis failure cannot prevent committing the task result. Queue acquisition and
 conditional release use atomic Lua; synchronous command waits have real deadlines
 and ignore intermediate acknowledgements.
 
+Orchestrator account updates now enforce tenant ownership, record a separate
+processing receipt and preserve terminal task outcomes. Device-row locking
+serializes task creation; missing Redis presence no longer causes a retry to
+replace work that the APK may still be executing. Batch counters serialize
+across result handlers and watchdogs, whose queue deadline now remains UTC.
+Live task progress/logs require ownership for both API reads and device writes.
+Authenticated heartbeats reconstruct evicted Redis presence on the next pong.
+
+The production Compose override clears inherited private ports and development
+application commands, users and source mounts. Both base/production and
+base/full/production combinations are checked with synthetic configuration only.
+Backend CI now enables the isolated PostgreSQL/Redis regressions, has a bounded
+20-minute test job and retains JUnit/coverage artifacts on failure.
+
 ## Validation
 
 - Android enterprise debug unit suite: **316 passed**.
-- Backend/PC suite: an earlier full run had **834 passed**. The latest had
-  **833 passed and one performance-threshold failure** (500-node DAG validation,
-  127.1 ms vs 100 ms); its isolated rerun passed. The threshold was not relaxed.
-  Load tests and real-service regressions run separately.
-- Dedicated loopback PostgreSQL/Redis regressions: **38 passed, no xfail**.
+- Combined backend/PC, PostgreSQL/Redis and deployment regressions: **913 passed**.
+  This includes **73 real-service tests** and **6 Compose configuration tests**.
+  Coverage is **64.98%**, still below the unchanged **65%** gate; no threshold or
+  coverage scope was weakened. Long load/soak profiles require a prepared API
+  environment and are excluded from the ordinary PR command.
 - Reproductions and before/after evidence are indexed in
   [the audit report](docs/audits/2026-09-05/AUDIT-REPORT.md).
 - Tests cover PostgreSQL row/commit behavior, Redis atomicity and lost responses,
@@ -38,15 +52,19 @@ The former strict xfail now passes: committed PostgreSQL assignments own dispatc
 intent, row locks serialize workers, and receipt-based retries survive lost
 transport responses. n8n/orchestrator producers use the validated task contract;
 resolved account payloads determine DAG cache identity. Full RLS rollout,
-orchestrator accounting/concurrency, VPN/deployment and the remaining component
-audit are still open. Legacy running assignments require rollout reconciliation.
+orchestrator creation/pipeline recovery, VPN/deployment and the remaining
+component audit are still open. Legacy running assignments require rollout reconciliation.
 
-Apply the device refresh migration before deploying the new backend; previously
+Apply migrations through `20260906_task_accounting` before a backend rollout; previously
 issued refresh tokens require device re-enrollment. The command journal retains
 512 receipts for seven days with a 1 MiB cap and rejects new DAGs when full.
 Interrupted execution returns an explicit unknown-outcome failure; this does not
 claim exactly-once effects. CPU/RAM/FPS, physical-device compatibility and 10–64
 emulator capacity have not been measured.
+
+n8n/MinIO ingress, runtime database roles, durable OTA/log storage, task-specific
+stop acknowledgements and post-commit webhook delivery remain open. Existing
+incorrect batch counters and legacy task metadata require reconciliation.
 
 A real APK-to-backend runtime test is incomplete: automatic approval review
 rejected starting the isolated local API with `blocked by policy`; no workaround
