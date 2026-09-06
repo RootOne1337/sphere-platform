@@ -188,7 +188,9 @@ class AdbActionExecutor @Inject constructor(
         // Spaces must be encoded as %s for Android's input text command.
         val encoded = text.replace(" ", "%s")
         val safe = encoded.replace("'", "'\\''")
-        Timber.d("typeText: typing '${text}' (encoded='$safe')")
+        // Typed values may be account credentials. File logs are uploaded even
+        // in release builds; neither the raw nor shell-encoded value is safe.
+        Timber.d("typeText: input requested")
         executeRootCommand("input text '$safe'")
         delay(150)
     }

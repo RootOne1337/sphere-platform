@@ -19,7 +19,7 @@ runtime-проверок и не считается доказательство
 
 | Проверка | Результат | Практическое ограничение |
 | --- | --- | --- |
-| Android enterprise debug unit suite | 316 passed, 0 failed | JVM/MockWebServer; не проверяет ОС, codec, батарею или смерть процесса на телефоне |
+| Android enterprise debug unit suite | 318 passed, 0 failed | JVM/MockWebServer; не проверяет ОС, codec, батарею или смерть процесса на телефоне |
 | Объединённая Backend/PC/production/deployment suite | **1014 passed, 0 failed**; coverage **66,30%** | Строгий coverage gate 65% пройден с precision=2. Load suite исключена; 6 Compose config tests не запускают сервисы |
 | Проверки PostgreSQL/Redis | **158 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
 | Миграции | Применены до **20260906_account_ciphertext** включительно | Только изолированная БД; конфликтные данные/downgrade проверены в throwaway schema; production не мигрировался |
@@ -371,6 +371,15 @@ runtime-проверок и не считается доказательство
 - **Regression:** [account-storage-after.txt](evidence/account-storage-after.txt): 41 focused test — raw SQL всех четырёх writers, исходный пароль в dispatch, недоступный ключ/legacy API, tamper и подмена identities, rotation/new-key-only, SQL rollback при commit/cancel/corrupt row, повторный запуск, ограниченные пачки, реальный CLI и Alembic upgrade/downgrade. Набор включает 8 прежних permission cases и прежний DAG cache test.
 - **Residual risk:** production data не мигрировались, ключ не provisioned. Нужен maintenance rollout с остановкой старых writers и сверкой scope/количества строк; RLS visibility не доказывается этим CLI. Старые backups/WAL/MVCC могут содержать plaintext, DB+key/backend-memory compromise остаётся, replay старого токена для того же аккаунта не предотвращён. APK/cache/logs/reveal audit и restore требуют продолжения. [Полная процедура и ограничения](../../security/account-credentials.md).
 
+### AUD-33 — High: APK включал вводимые пароли в выгружаемые диагностические логи
+
+- **Root cause:** `AdbActionExecutor.typeText` передавал в `Timber.d` исходный ввод и shell-encoded представление. `SphereApp` подключает `FileLoggingTree` без условия DEBUG; tree сохраняет сообщения всех уровней, `LogUploadWorker` включает последние file logs в upload. Серверное чтение device logs требует `device:read`, а не отдельного credential permission.
+- **Evidence:** [android-credential-log-before.txt](evidence/android-credential-log-before.txt): два теста вызывают настоящий executor с fake Runtime/Process и настоящим Timber sink. Команда ввода доставлена, но проверка отсутствия raw input в sink падает; обычный пароль и текст с кавычкой/пробелом. Сам `su` не запускается. Доставка файлов через физический APK не воспроизводилась; путь file/upload установлен по коду.
+- **Affected files:** `android/app/src/main/kotlin/com/sphereplatform/agent/commands/AdbActionExecutor.kt:191`; путь распространения — `SphereApp.kt:33`, `logging/FileLoggingTree.kt:70`, `workers/LogUploadWorker.kt:82`, `backend/api/v1/logs/router.py:141`.
+- **Fix:** событие `typeText: input requested` не содержит raw/encoded text. Сам shell input command и задержка не меняются; диагностика остальных событий сохраняется.
+- **Regression:** `AdbCredentialLoggingTest` проверяет действительную запись команды в output stream и отсутствие обеих форм credentials во всех захваченных Timber сообщениях. Повторный Android suite: [android-credential-log-after.txt](evidence/android-credential-log-after.txt).
+- **Residual risk:** старые локальные/uploaded логи не очищались. Если в них были реальные credentials, нужны ограничение доступа, контролируемая очистка по retention и оценка смены самих паролей. Это исправление одного подтверждённого источника; общие log redaction, action outputs, screenshots, Unicode/IME и совместимость root-команд на физических устройствах ещё не закрыты.
+
 ## Открытые подтверждённые блокеры
 
 | ID / severity | Root cause и evidence | Необходимое продолжение |
@@ -423,6 +432,10 @@ known-third-party для установленной библиотеки и уп
 На `7cb77d5` backend run `34046802288` завершился: Tests/Lint/Alembic/статический
 RLS успешны, Security/pip-audit падает; Android `34046802281` успешен.
 Это snapshot перед шифрованием credentials, не результат последующего head.
+
+На серверном fix `d966f15` backend run `34047657701`: Tests/Lint/Alembic/статический
+RLS успешны, Security/pip-audit падает; Android `34047657671` успешен.
+Это проверка encryption revision до отдельного Android logging fix.
 
 PR остаётся draft до завершения открытых блокеров, повторного runtime обследования
 и финализации отчёта. Merge и deployment не выполнялись.

@@ -115,6 +115,12 @@ Envelope защищает от подмены идентичности, но н�
 долговечный журнал reveal GET, retention/redaction, credential-bearing task DAG/cache,
 frontend query cleanup и весь поток export ещё требуют проверки.
 
+AUD-33 устраняет подтверждённую запись raw/encoded пароля из Android `typeText`
+в Timber. File logger активен и в release, его содержимое включается в uploads.
+После обновления старые файлы/серверные копии не исчезают: обработайте их по
+согласованной retention policy и оцените смену затронутых паролей. Остальные
+action outputs и диагностические источники этим изменением не сертифицируются.
+
 Regression suite `tests/production/test_account_credentials.py` использует
 реальную JWT/RBAC авторизацию, изолированный PostgreSQL и ASGI API; проверяет
 запрещённые/разрешённые роли, no-store, обычное чтение и tenant boundary.

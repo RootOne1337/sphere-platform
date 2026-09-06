@@ -60,9 +60,14 @@ The backend image includes a read-only-by-default migration/verification CLI wit
 bounded transactions, restart and rotation support. Indirect script access and
 credential-bearing APK/cache/log surfaces remain under audit.
 
+Android text input no longer emits raw or shell-encoded values to Timber. The
+file logger is active in release and its content enters diagnostic uploads;
+the input command remains unchanged. Regression tests exercise the real executor
+and logging API with a fake root process. Historical logs still require review.
+
 ## Validation
 
-- Android enterprise debug unit suite: **316 passed**.
+- Android enterprise debug unit suite: **318 passed**.
 - Combined backend/PC, PostgreSQL/Redis and deployment regressions: **1014 passed**.
   This includes **158 real-service tests** and **6 Compose configuration tests**.
   Coverage is **66.30%** and passes the unchanged **65%** gate with two-decimal
