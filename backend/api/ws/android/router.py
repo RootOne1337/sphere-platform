@@ -543,7 +543,7 @@ async def android_agent_ws(
 
     # Запустить heartbeat (SPLIT-4)
     from backend.websocket.heartbeat import HeartbeatManager
-    heartbeat = HeartbeatManager(ws, device_id, status_cache)
+    heartbeat = HeartbeatManager(ws, device_id, status_cache, session_id=session_id)
     await heartbeat.start()
 
     # Подписать PubSub router на командный канал этого устройства
