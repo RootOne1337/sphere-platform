@@ -570,7 +570,7 @@ adb shell iptables -L SPHERE_KILLSWITCH
 
 ### Проверенный audit snapshot — 7 сентября 2026
 
-338 enterprise debug JVM tests passed. Управляющие команды требуют явный
+344 enterprise debug JVM tests passed. Управляющие команды требуют явный
 `payload.task_id`; late cancel/pause/resume не воздействуют на другой DAG.
 Подробности, ограничения cooperative stop и порядок backend/APK rollout:
 [контракт управления задачами](security/task-control-protocol.md). Это не
@@ -581,3 +581,9 @@ adb shell iptables -L SPHERE_KILLSWITCH
 до следующего действия. Пять новых regression tests сначала воспроизвели дефекты,
 затем прошли вместе с полной JVM suite. Доказательства и остаточные ограничения:
 [AUD-40/AUD-41](audits/2026-09-05/AUDIT-REPORT.md#aud-40--high-лимит-журнала-apk-молча-обрывал-действия-цикла).
+
+CANCEL/PAUSE проверяются перед каждым действием и retry, включая вложенные loop.
+Принятая отмена, наблюдаемая во время последнего действия, даёт failed DAG receipt;
+его повторная доставка не запускает отменённый сценарий заново. Ещё шесть runtime
+logic regressions проверяют эти границы через dispatcher/runner/journal. Текущая
+синхронная/root/Lua-команда не прерывается; PAUSE не останавливает таймауты.

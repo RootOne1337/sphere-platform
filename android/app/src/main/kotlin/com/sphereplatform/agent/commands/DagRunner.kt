@@ -5,6 +5,8 @@ import com.sphereplatform.agent.lua.LuaEngine
 import com.sphereplatform.agent.ws.SphereWebSocketClient
 import com.sphereplatform.agent.lua.executeWithTimeout
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -136,6 +138,24 @@ class DagRunner @Inject constructor(
         true
     }
 
+    // A wire stop is a terminal DAG outcome, distinct from losing the coroutine.
+    // It must escape retries and nested loop failure policies.
+    private class DagControlCancelledException : RuntimeException("cancelled_by_user")
+
+    private suspend fun checkCancellation() {
+        currentCoroutineContext().ensureActive()
+        if (cancelRequested) throw DagControlCancelledException()
+    }
+
+    private suspend fun awaitExecutionPermission() {
+        checkCancellation()
+        while (pauseRequested) {
+            delay(200L)
+            checkCancellation()
+        }
+        checkCancellation()
+    }
+
     // ── Public API ────────────────────────────────────────────────────────────
 
     /**
@@ -214,28 +234,7 @@ class DagRunner @Inject constructor(
                     ))
                     break
                 }
-                // ── Check for cancel request from backend ──────────────
-                if (cancelRequested) {
-                    Timber.i("[DAG] Cancelled by user at node '$currentNodeId'")
-                    success = false
-                    failedNode = currentNodeId
-                    break
-                }
-                // ── Пауза: ждём снятия паузы или отмены ────────────────
-                if (pauseRequested) {
-                    Timber.i("[DAG] Paused at node '$currentNodeId' — waiting for resume")
-                    while (pauseRequested) {
-                        if (cancelRequested) break
-                        delay(200L)
-                    }
-                    if (cancelRequested) {
-                        Timber.i("[DAG] Cancelled during pause at node '$currentNodeId'")
-                        success = false
-                        failedNode = currentNodeId
-                        break
-                    }
-                    Timber.i("[DAG] Resumed at node '$currentNodeId'")
-                }
+                awaitExecutionPermission()
                 val nodeId = currentNodeId ?: break
                 val node = nodeMap[nodeId]
                     ?: throw IllegalArgumentException("Node '$nodeId' not found in DAG")
@@ -289,6 +288,8 @@ class DagRunner @Inject constructor(
                     } catch (e: kotlinx.coroutines.CancellationException) {
                         // Не глотаем отмену корутины (глобальный таймаут или cancel)
                         throw e
+                    } catch (e: DagControlCancelledException) {
+                        throw e
                     } catch (e: RootCommandOutcomeUnknownException) {
                         // A side effect may have happened. Neither node retry nor
                         // on_failure routing is an execution acknowledgement.
@@ -331,6 +332,12 @@ class DagRunner @Inject constructor(
                 }
             }
         }
+        } catch (e: DagControlCancelledException) {
+            success = false
+            failedNode = currentNodeId
+            nodeLogs.add(makeLog(
+                currentNodeId ?: "unknown", "CANCELLED", 0L, false, e.message, null
+            ))
         } catch (e: TimeoutCancellationException) {
             // Глобальный таймаут DAG — не нодовый
             val elapsedSec = globalTimeoutMs / 1000
@@ -378,7 +385,12 @@ class DagRunner @Inject constructor(
         require(depth < MAX_EXECUTE_DEPTH) {
             "DAG executeNode depth limit exceeded ($MAX_EXECUTE_DEPTH) — слишком глубокая вложенность loop"
         }
-        return executeNodeInternal(type, action, ctx, depth)
+        // Applies to top-level nodes, each retry and every nested loop action.
+        awaitExecutionPermission()
+        val result = executeNodeInternal(type, action, ctx, depth)
+        // A stop accepted during the final action must not become DAG success.
+        checkCancellation()
+        return result
     }
 
     private suspend fun executeNodeInternal(
@@ -874,6 +886,8 @@ class DagRunner @Inject constructor(
                     } catch (e: kotlinx.coroutines.CancellationException) {
                         // Coroutine cancellation must leave the loop before the
                         // next device action, even with abort_on_failure=false.
+                        throw e
+                    } catch (e: DagControlCancelledException) {
                         throw e
                     } catch (e: RootCommandOutcomeUnknownException) {
                         throw e

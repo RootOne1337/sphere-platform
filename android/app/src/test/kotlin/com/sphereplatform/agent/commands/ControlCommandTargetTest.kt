@@ -147,4 +147,104 @@ class ControlCommandTargetTest {
         assertEquals("completed", terminal(oldId)?.get("status")?.jsonPrimitive?.content)
         dispatcher.stop()
     }
+
+    private fun loopCommand(nested: Boolean = false): JsonObject {
+        fun node(id: String, action: JsonObject) = buildJsonObject { put("id", id); put("action", action) }
+        val body = buildJsonArray {
+            add(node("wait", buildJsonObject { put("type", "sleep"); put("ms", 100) }))
+            add(node("tap", buildJsonObject { put("type", "tap"); put("x", 10); put("y", 20) }))
+        }
+        val loop = buildJsonObject { put("type", "loop"); put("count", 1); put("body", body) }
+        val action = if (nested) buildJsonObject {
+            put("type", "loop"); put("count", 1)
+            put("body", buildJsonArray { add(node("inner", loop)) })
+        } else loop
+        return withDag(buildJsonObject {
+            put("entry_node", "repeat")
+            put("nodes", buildJsonArray { add(node("repeat", action)) })
+        })
+    }
+
+    private fun withDag(dag: JsonObject) = JsonObject(execute(currentId) +
+        ("payload" to buildJsonObject { put("dag", dag) }))
+
+    @Test fun wireCancelStopsBeforeTheNextLoopBodyActionAndPersistsFailure() = runTest {
+        val dispatcher = start(backgroundScope)
+        send(loopCommand()); runCurrent()
+        send(control("CANCEL_DAG")); runCurrent(); advanceTimeBy(150); runCurrent()
+        assertEquals("completed", terminal("control_CANCEL_DAG_test")?.get("status")?.jsonPrimitive?.content)
+        verify(exactly = 0) { adb.tap(any(), any()) }
+        assertEquals("failed", terminal(currentId)?.get("status")?.jsonPrimitive?.content)
+        val original = terminal(currentId)
+        send(loopCommand()); runCurrent(); advanceTimeBy(150); runCurrent()
+        assertEquals(original, terminal(currentId)) // Durable terminal replay, no rerun.
+        verify(exactly = 0) { adb.tap(any(), any()) }
+        dispatcher.stop()
+    }
+
+    @Test fun wireCancelEscapesNestedLoopBodies() = runTest {
+        val dispatcher = start(backgroundScope)
+        send(loopCommand(nested = true)); runCurrent()
+        send(control("CANCEL_DAG")); runCurrent(); advanceTimeBy(150); runCurrent()
+        verify(exactly = 0) { adb.tap(any(), any()) }
+        assertEquals("failed", terminal(currentId)?.get("status")?.jsonPrimitive?.content)
+        dispatcher.stop()
+    }
+
+    @Test fun wirePauseStopsInsideLoopUntilMatchingResume() = runTest {
+        val dispatcher = start(backgroundScope)
+        send(loopCommand()); runCurrent()
+        send(control("PAUSE_DAG")); runCurrent(); advanceTimeBy(350); runCurrent()
+        verify(exactly = 0) { adb.tap(any(), any()) }
+        assertNull(terminal(currentId))
+        send(control("RESUME_DAG")); runCurrent(); advanceTimeBy(250); runCurrent()
+        verify(exactly = 1) { adb.tap(10, 20) }
+        assertEquals("completed", terminal(currentId)?.get("status")?.jsonPrimitive?.content)
+        dispatcher.stop()
+    }
+
+    @Test fun wireCancelReleasesAPausedLoopWithoutResumingActions() = runTest {
+        val dispatcher = start(backgroundScope)
+        send(loopCommand()); runCurrent()
+        send(control("PAUSE_DAG")); runCurrent(); advanceTimeBy(150); runCurrent()
+        send(control("CANCEL_DAG")); runCurrent(); advanceTimeBy(250); runCurrent()
+        verify(exactly = 0) { adb.tap(any(), any()) }
+        assertEquals("failed", terminal(currentId)?.get("status")?.jsonPrimitive?.content)
+        dispatcher.stop()
+    }
+
+    @Test fun cancellationDuringFinalActionCannotReturnSuccessfulDag() = runTest {
+        val dispatcher = start(backgroundScope)
+        send(withDag(buildJsonObject {
+            put("entry_node", "wait")
+            put("nodes", buildJsonArray { add(buildJsonObject {
+                put("id", "wait")
+                put("action", buildJsonObject { put("type", "sleep"); put("ms", 100) })
+            }) })
+        })); runCurrent()
+        send(control("CANCEL_DAG")); runCurrent(); advanceTimeBy(150); runCurrent()
+        assertEquals("completed", terminal("control_CANCEL_DAG_test")?.get("status")?.jsonPrimitive?.content)
+        assertEquals("failed", terminal(currentId)?.get("status")?.jsonPrimitive?.content)
+        dispatcher.stop()
+    }
+
+    @Test fun cancellationDuringRetryBackoffCannotSendAnotherDeviceAction() = runTest {
+        val dispatcher = start(backgroundScope)
+        var calls = 0
+        every { adb.tap(10, 20) } answers {
+            calls++
+            if (calls == 1) throw IllegalStateException("isolated retryable failure")
+        }
+        send(withDag(buildJsonObject {
+            put("entry_node", "tap")
+            put("nodes", buildJsonArray { add(buildJsonObject {
+                put("id", "tap"); put("retry", 1)
+                put("action", buildJsonObject { put("type", "tap"); put("x", 10); put("y", 20) })
+            }) })
+        })); runCurrent() // First failure is now in the 50 ms retry backoff.
+        send(control("CANCEL_DAG")); runCurrent(); advanceTimeBy(100); runCurrent()
+        verify(exactly = 1) { adb.tap(10, 20) }
+        assertEquals("failed", terminal(currentId)?.get("status")?.jsonPrimitive?.content)
+        dispatcher.stop()
+    }
 }

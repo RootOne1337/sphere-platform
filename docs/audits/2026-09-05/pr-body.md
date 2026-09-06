@@ -88,6 +88,14 @@ past the log cap retain their abort policy. Coroutine cancellation in a suspende
 body action propagates before the next device command. Five new runner regressions
 failed before the fix and pass now; bounded log size and exact truncation are checked.
 
+Accepted wire controls are checked before each action and retry, including
+nested loop bodies. Paused bodies wait for resume or cancellation; cancellation
+escapes body/retry failure handling and produces a failed terminal DAG receipt.
+A stop observed during the final action cannot report success. Six additional
+real dispatcher/runner/journal regressions failed before the fix and now pass,
+including replay of the cancelled task's durable receipt. Checkpoints remain
+cooperative and do not interrupt a running root/Lua action or freeze timeouts.
+
 Audit selection and resource identity, request log context and HTTP metric labels
 now use the ASGI path rather than a URL reconstructed from Host. Malformed Host
 headers could otherwise suppress or relabel a successfully committed mutation's
@@ -109,7 +117,7 @@ other ecosystems and application blockers remain under audit.
   passed build and unit tests. This is a revision-specific snapshot; consult PR
   checks for subsequent documentation or code commits.
 
-- Android enterprise debug unit suite: **338 passed**.
+- Android enterprise debug unit suite: **344 passed**.
 - Combined backend/PC, PostgreSQL/Redis and deployment regressions: **1047 passed**.
   This includes **179 real-service tests** and **6 Compose configuration tests**.
   Coverage is **66.61%** and passes the unchanged **65%** gate with two-decimal

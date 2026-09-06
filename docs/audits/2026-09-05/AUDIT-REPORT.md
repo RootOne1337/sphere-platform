@@ -19,7 +19,7 @@ runtime-проверок и не считается доказательство
 
 | Проверка | Результат | Практическое ограничение |
 | --- | --- | --- |
-| Android enterprise debug unit suite | 338 passed, 0 failed | JVM/MockWebServer; не проверяет ОС, codec, батарею или смерть процесса на телефоне |
+| Android enterprise debug unit suite | 344 passed, 0 failed | JVM/MockWebServer; не проверяет ОС, codec, батарею или смерть процесса на телефоне |
 | Объединённая Backend/PC/production/deployment suite | **1047 passed, 0 failed**; coverage **66,61%** | Строгий coverage gate 65% пройден с precision=2. Load suite исключена; 6 Compose config tests не запускают сервисы |
 | Python dependency scan | **0 known vulnerabilities** в совместном backend/PC resolution | Pip-audit snapshot, не проверка frontend/Gradle/container/application security; [версии и ограничения](DEPENDENCY-REVIEW.md) |
 | Проверки PostgreSQL/Redis | **179 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
@@ -451,7 +451,16 @@ runtime-проверок и не считается доказательство
 - **Affected files:** `android/app/src/main/kotlin/com/sphereplatform/agent/commands/DagRunner.kt:874`, `android/app/src/test/kotlin/com/sphereplatform/agent/commands/DagLoopExecutionTest.kt:71`.
 - **Fix:** `CancellationException` пробрасывается до общего обработчика ошибок body; cleanup активного execution остаётся в `finally`. Защита от повторной root-команды с неизвестным outcome сохранена.
 - **Regression:** `coroutineCancellationDoesNotRunTheNextLoopAction` отменяет настоящую coroutine runner, проверяет отсутствие tap и очистку active task identity. Общий JVM прогон: **338 passed**, включая прежние root outcome/control/journal проверки.
-- **Residual risk:** это распространение coroutine cancellation на suspend boundary, не подтверждение физической остановки и не durable `CANCEL_DAG`. Wire cancel по-прежнему cooperative; текущая синхронная команда и действия до следующей проверки флага могут завершиться. Не добавлены generation ordering, stop outbox или device execution ACK.
+- **Residual risk:** это распространение coroutine cancellation на suspend boundary, не подтверждение физической остановки и не durable `CANCEL_DAG`; дополнительные checkpoints wire-команд описаны в AUD-42. Wire cancel по-прежнему cooperative; текущая синхронная команда и действия до следующей проверки флага могут завершиться. Не добавлены generation ordering, stop outbox или device execution ACK.
+
+### AUD-42 — High: APK принимал CANCEL/PAUSE, но продолжал loop/retry и мог вернуть успех
+
+- **Root cause:** cancel/pause проверялись только между верхнеуровневыми узлами, cancel дополнительно между целыми итерациями loop. Тело цикла, вложенные действия и retry после backoff не имели общей точки проверки. После последнего действия результат формировался без повторной проверки отмены.
+- **Evidence/reproduction:** на `9fbfa73` через реальный WebSocket callback диспетчера: принять CANCEL во время sleep внутри `[sleep, tap]` → tap всё равно исполнялся; PAUSE не удерживал loop; вложенный loop также продолжался. CANCEL во время retry backoff допускал второй tap. CANCEL во время последнего sleep подтверждался control ACK, но DAG выдавал `completed`. [13 tests, 6 failed / 7 existing passed](evidence/android-control-boundaries-before.txt).
+- **Affected files:** `android/app/src/main/kotlin/com/sphereplatform/agent/commands/DagRunner.kt:143`, `:237`, `:335`, `:388`, `:890`; `android/app/src/test/kotlin/com/sphereplatform/agent/commands/ControlCommandTargetTest.kt:150`.
+- **Fix:** общая suspend-проверка перед каждым действием/повтором и внутри вложенных loop; PAUSE ждёт RESUME либо CANCEL. Отдельное исключение принятой wire-отмены проходит мимо retry/loop error policy к terminal DAG outcome `success=false`, `CANCELLED`, `cancelled_by_user`. Проверка после действия исключает успешный результат, когда stop наблюдается во время последнего действия. Coroutine cancellation сохраняет отдельную обработку.
+- **Regression:** шесть новых сценариев `ControlCommandTargetTest`: cancel loop + durable duplicate replay, nested loop, pause/resume body, cancel paused body, cancel final action, cancel retry backoff. Используются реальные dispatcher/runner/journal и virtual coroutine time, подменены только OS/storage/network. [Полная JVM suite: 344 passed](evidence/android-control-boundaries-after.txt), 0 failures/errors/skips в 27 suites; прежние target isolation/root unknown-outcome проверки также прошли.
+- **Residual risk:** cooperative checkpoint не прерывает уже выполняемый синхронный/root/Lua вызов и не подтверждает физический эффект. Между проверкой флага и запуском действия возможна гонка; нет атомарной остановки внешнего shell. PAUSE не замораживает node/global timeout budgets. Durable server cancellation/outbox, stop ACK и ordering controls той же задачи остаются открыты. Формат wire-команд не меняется; production rollout не выполнялся.
 
 ## Открытые подтверждённые блокеры
 

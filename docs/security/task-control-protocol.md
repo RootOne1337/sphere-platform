@@ -31,9 +31,15 @@ modify task B. An accepted control returns `completed` with
 `result.control_accepted=true` and the target task ID. This is completion of the
 control request, **not confirmation that device effects have stopped**.
 
-Cancellation is cooperative. The current action may still be running; root pipe
-flushes do not report actual input execution or shell exit status. The final DAG
-receipt is separate and remains governed by the durable command journal.
+Cancellation is cooperative. A checkpoint runs before each action/retry,
+including nested loop bodies; pause waits at that boundary until resume or cancel.
+A cancellation observed during the final action produces `success=false` with
+`CANCELLED`/`cancelled_by_user`, so the dispatcher persists a failed DAG receipt.
+The separate control ACK still records acceptance only. The current synchronous,
+root or Lua action may continue until it returns. Checkpoint-to-action races are
+possible; root pipe flushes do not prove execution or shell exit status. Pause
+does not freeze node/global timeout budgets. Duplicate DAG delivery replays the
+durable terminal receipt without restarting a cancelled scenario.
 
 Coroutine cancellation from a suspended loop action now propagates out of the
 body instead of becoming a recoverable action failure. A real runner regression
@@ -77,8 +83,10 @@ performed during this audit.
 `ControlCommandTargetTest` exercises the real dispatcher, journal and DAG runner
 through their WebSocket callback with virtual coroutine time and fake OS/storage.
 It verifies delayed controls, valid cancellation/pause/resume, malformed targets
-and active-state cleanup. PostgreSQL tests in `test_cancellation_commands.py`
+and active-state cleanup. Six additional cases cover loop/nested cancellation,
+pause/resume within a body, cancellation while paused, final-action outcome,
+retry backoff and replay of a cancelled task. PostgreSQL tests in `test_cancellation_commands.py`
 deliver a real control ACK through the backend handler after injected Redis/SQL
 failure; `test_cancellation_serialization.py` uses two concurrent DB sessions.
 These are runtime logic tests, not physical-device stop or emulator capacity
-measurements. See AUD-35–37 in the [audit report](../audits/2026-09-05/AUDIT-REPORT.md).
+measurements. See AUD-35–37 and AUD-40–42 in the [audit report](../audits/2026-09-05/AUDIT-REPORT.md).
