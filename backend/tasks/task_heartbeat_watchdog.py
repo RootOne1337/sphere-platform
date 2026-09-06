@@ -323,8 +323,12 @@ async def _aggregate_batches(
         if task.batch_id:
             batch_ids_counts[task.batch_id] = batch_ids_counts.get(task.batch_id, 0) + 1
 
-    for batch_id, timeout_count in batch_ids_counts.items():
-        batch = await db.get(TaskBatch, batch_id)
+    # Use the same lock as TaskService result accounting and a stable acquisition
+    # order when a watchdog transaction touches more than one batch.
+    for batch_id, timeout_count in sorted(batch_ids_counts.items()):
+        batch = await db.scalar(select(TaskBatch).where(
+            TaskBatch.id == batch_id,
+        ).with_for_update().execution_options(populate_existing=True))
         if not batch:
             continue
 

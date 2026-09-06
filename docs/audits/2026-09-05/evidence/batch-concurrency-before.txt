@@ -1,0 +1,72 @@
+FFF                                                                      [100%]
+================================== FAILURES ===================================
+___ test_batch_accounting_serializes_independent_terminal_results[success] ____
+tests\production\test_batch_concurrency.py:52: in test_batch_accounting_serializes_independent_terminal_results
+    assert stale_batch.succeeded == (2 if other_writer == "success" else 1)
+E   assert 1 == 2
+E    +  where 1 = <backend.models.task_batch.TaskBatch object at 0x0000019A86DDA780>.succeeded
+---------------------------- Captured stdout call -----------------------------
+{"task_id": "0dba3b7f-5df7-4e1d-a4d5-56d7fe0cca84", "error": "'NoneType' object has no attribute 'eval'", "event": "task.result.queue_release_failed", "level": "warning", "logger": "backend.services.task_service", "timestamp": "2026-09-06T10:13:41.204454Z"}
+{"task_id": "0dba3b7f-5df7-4e1d-a4d5-56d7fe0cca84", "success": true, "device_id": "aabe7310-c822-4960-a832-19746e66705b", "event": "task.completed", "level": "info", "logger": "backend.services.task_service", "timestamp": "2026-09-06T10:13:41.204454Z"}
+{"event_id": "85733d5f-3591-4dc0-a2d6-2ee2168e34fb", "event_type": "task.completed", "device_id": "aabe7310-c822-4960-a832-19746e66705b", "account_id": null, "event": "event_reactor.event_saved", "level": "info", "logger": "backend.services.event_reactor", "timestamp": "2026-09-06T10:13:41.215995Z"}
+{"task_id": "df623531-23c1-48d8-a735-7bda79ce9b2a", "error": "'NoneType' object has no attribute 'eval'", "event": "task.result.queue_release_failed", "level": "warning", "logger": "backend.services.task_service", "timestamp": "2026-09-06T10:13:41.234586Z"}
+{"task_id": "df623531-23c1-48d8-a735-7bda79ce9b2a", "success": true, "device_id": "3129aafe-ea24-4de2-9cd5-570f86a9e650", "event": "task.completed", "level": "info", "logger": "backend.services.task_service", "timestamp": "2026-09-06T10:13:41.234586Z"}
+{"event_id": "21e01f71-3650-43d7-961a-9989638d1e28", "event_type": "task.completed", "device_id": "3129aafe-ea24-4de2-9cd5-570f86a9e650", "account_id": null, "event": "event_reactor.event_saved", "level": "info", "logger": "backend.services.event_reactor", "timestamp": "2026-09-06T10:13:41.245090Z"}
+------------------------------ Captured log call ------------------------------
+WARNING  backend.services.task_service:task_service.py:367 {'task_id': '0dba3b7f-5df7-4e1d-a4d5-56d7fe0cca84', 'error': "'NoneType' object has no attribute 'eval'", 'event': 'task.result.queue_release_failed', 'level': 'warning', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-06T10:13:41.204454Z'}
+INFO     backend.services.task_service:task_service.py:409 {'task_id': '0dba3b7f-5df7-4e1d-a4d5-56d7fe0cca84', 'success': True, 'device_id': 'aabe7310-c822-4960-a832-19746e66705b', 'event': 'task.completed', 'level': 'info', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-06T10:13:41.204454Z'}
+INFO     backend.services.event_reactor:event_reactor.py:106 {'event_id': '85733d5f-3591-4dc0-a2d6-2ee2168e34fb', 'event_type': 'task.completed', 'device_id': 'aabe7310-c822-4960-a832-19746e66705b', 'account_id': None, 'event': 'event_reactor.event_saved', 'level': 'info', 'logger': 'backend.services.event_reactor', 'timestamp': '2026-09-06T10:13:41.215995Z'}
+WARNING  backend.services.task_service:task_service.py:367 {'task_id': 'df623531-23c1-48d8-a735-7bda79ce9b2a', 'error': "'NoneType' object has no attribute 'eval'", 'event': 'task.result.queue_release_failed', 'level': 'warning', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-06T10:13:41.234586Z'}
+INFO     backend.services.task_service:task_service.py:409 {'task_id': 'df623531-23c1-48d8-a735-7bda79ce9b2a', 'success': True, 'device_id': '3129aafe-ea24-4de2-9cd5-570f86a9e650', 'event': 'task.completed', 'level': 'info', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-06T10:13:41.234586Z'}
+INFO     backend.services.event_reactor:event_reactor.py:106 {'event_id': '21e01f71-3650-43d7-961a-9989638d1e28', 'event_type': 'task.completed', 'device_id': '3129aafe-ea24-4de2-9cd5-570f86a9e650', 'account_id': None, 'event': 'event_reactor.event_saved', 'level': 'info', 'logger': 'backend.services.event_reactor', 'timestamp': '2026-09-06T10:13:41.245090Z'}
+___ test_batch_accounting_serializes_independent_terminal_results[failure] ____
+tests\production\test_batch_concurrency.py:54: in test_batch_accounting_serializes_independent_terminal_results
+    assert stale_batch.status == (
+E   AssertionError: assert <TaskBatchSta...NG: 'running'> == <TaskBatchSta...AL: 'partial'>
+E     
+E     - partial
+E     + running
+---------------------------- Captured stdout call -----------------------------
+{"task_id": "02b97b98-8508-4270-87bb-e34b95d7cec0", "error": "'NoneType' object has no attribute 'eval'", "event": "task.result.queue_release_failed", "level": "warning", "logger": "backend.services.task_service", "timestamp": "2026-09-06T10:13:41.928371Z"}
+{"task_id": "02b97b98-8508-4270-87bb-e34b95d7cec0", "success": true, "device_id": "ade8d222-a652-4c88-ad9d-f2c792335855", "event": "task.completed", "level": "info", "logger": "backend.services.task_service", "timestamp": "2026-09-06T10:13:41.928371Z"}
+{"event_id": "081a5eb9-a79d-4790-ba69-704bcfdf5e3e", "event_type": "task.completed", "device_id": "ade8d222-a652-4c88-ad9d-f2c792335855", "account_id": null, "event": "event_reactor.event_saved", "level": "info", "logger": "backend.services.event_reactor", "timestamp": "2026-09-06T10:13:41.944181Z"}
+{"task_id": "6e18e117-da4a-4c6f-b7a1-4191df5749dc", "error": "'NoneType' object has no attribute 'eval'", "event": "task.result.queue_release_failed", "level": "warning", "logger": "backend.services.task_service", "timestamp": "2026-09-06T10:13:41.966205Z"}
+{"task_id": "6e18e117-da4a-4c6f-b7a1-4191df5749dc", "success": false, "device_id": "6b9c4f38-f8fa-4e6b-8d49-25136c9f233e", "event": "task.completed", "level": "info", "logger": "backend.services.task_service", "timestamp": "2026-09-06T10:13:41.966720Z"}
+{"event_id": "07da643a-8ebb-4cc8-bbba-c1ae8a7e9c46", "event_type": "task.failed", "device_id": "6b9c4f38-f8fa-4e6b-8d49-25136c9f233e", "account_id": null, "event": "event_reactor.event_saved", "level": "info", "logger": "backend.services.event_reactor", "timestamp": "2026-09-06T10:13:41.977288Z"}
+------------------------------ Captured log call ------------------------------
+WARNING  backend.services.task_service:task_service.py:367 {'task_id': '02b97b98-8508-4270-87bb-e34b95d7cec0', 'error': "'NoneType' object has no attribute 'eval'", 'event': 'task.result.queue_release_failed', 'level': 'warning', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-06T10:13:41.928371Z'}
+INFO     backend.services.task_service:task_service.py:409 {'task_id': '02b97b98-8508-4270-87bb-e34b95d7cec0', 'success': True, 'device_id': 'ade8d222-a652-4c88-ad9d-f2c792335855', 'event': 'task.completed', 'level': 'info', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-06T10:13:41.928371Z'}
+INFO     backend.services.event_reactor:event_reactor.py:106 {'event_id': '081a5eb9-a79d-4790-ba69-704bcfdf5e3e', 'event_type': 'task.completed', 'device_id': 'ade8d222-a652-4c88-ad9d-f2c792335855', 'account_id': None, 'event': 'event_reactor.event_saved', 'level': 'info', 'logger': 'backend.services.event_reactor', 'timestamp': '2026-09-06T10:13:41.944181Z'}
+WARNING  backend.services.task_service:task_service.py:367 {'task_id': '6e18e117-da4a-4c6f-b7a1-4191df5749dc', 'error': "'NoneType' object has no attribute 'eval'", 'event': 'task.result.queue_release_failed', 'level': 'warning', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-06T10:13:41.966205Z'}
+INFO     backend.services.task_service:task_service.py:409 {'task_id': '6e18e117-da4a-4c6f-b7a1-4191df5749dc', 'success': False, 'device_id': '6b9c4f38-f8fa-4e6b-8d49-25136c9f233e', 'event': 'task.completed', 'level': 'info', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-06T10:13:41.966720Z'}
+INFO     backend.services.event_reactor:event_reactor.py:106 {'event_id': '07da643a-8ebb-4cc8-bbba-c1ae8a7e9c46', 'event_type': 'task.failed', 'device_id': '6b9c4f38-f8fa-4e6b-8d49-25136c9f233e', 'account_id': None, 'event': 'event_reactor.event_saved', 'level': 'info', 'logger': 'backend.services.event_reactor', 'timestamp': '2026-09-06T10:13:41.977288Z'}
+___ test_batch_accounting_serializes_independent_terminal_results[watchdog] ___
+tests\production\test_batch_concurrency.py:54: in test_batch_accounting_serializes_independent_terminal_results
+    assert stale_batch.status == (
+E   AssertionError: assert <TaskBatchSta...NG: 'running'> == <TaskBatchSta...AL: 'partial'>
+E     
+E     - partial
+E     + running
+---------------------------- Captured stdout call -----------------------------
+{"task_id": "4363d5bf-2a8d-42c2-97f4-b5624a04b814", "error": "'NoneType' object has no attribute 'eval'", "event": "task.result.queue_release_failed", "level": "warning", "logger": "backend.services.task_service", "timestamp": "2026-09-06T10:13:42.323100Z"}
+{"task_id": "4363d5bf-2a8d-42c2-97f4-b5624a04b814", "success": true, "device_id": "8c71a220-4cc6-4728-89e6-3fa4c930be4c", "event": "task.completed", "level": "info", "logger": "backend.services.task_service", "timestamp": "2026-09-06T10:13:42.323604Z"}
+{"event_id": "6aeeb909-8e9e-47c3-8714-433896e158b9", "event_type": "task.completed", "device_id": "8c71a220-4cc6-4728-89e6-3fa4c930be4c", "account_id": null, "event": "event_reactor.event_saved", "level": "info", "logger": "backend.services.event_reactor", "timestamp": "2026-09-06T10:13:42.333078Z"}
+------------------------------ Captured log call ------------------------------
+WARNING  backend.services.task_service:task_service.py:367 {'task_id': '4363d5bf-2a8d-42c2-97f4-b5624a04b814', 'error': "'NoneType' object has no attribute 'eval'", 'event': 'task.result.queue_release_failed', 'level': 'warning', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-06T10:13:42.323100Z'}
+INFO     backend.services.task_service:task_service.py:409 {'task_id': '4363d5bf-2a8d-42c2-97f4-b5624a04b814', 'success': True, 'device_id': '8c71a220-4cc6-4728-89e6-3fa4c930be4c', 'event': 'task.completed', 'level': 'info', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-06T10:13:42.323604Z'}
+INFO     backend.services.event_reactor:event_reactor.py:106 {'event_id': '6aeeb909-8e9e-47c3-8714-433896e158b9', 'event_type': 'task.completed', 'device_id': '8c71a220-4cc6-4728-89e6-3fa4c930be4c', 'account_id': None, 'event': 'event_reactor.event_saved', 'level': 'info', 'logger': 'backend.services.event_reactor', 'timestamp': '2026-09-06T10:13:42.333078Z'}
+============================== warnings summary ===============================
+.venv-audit\Lib\site-packages\pydantic\fields.py:754: 484 warnings
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\pydantic\fields.py:754: PydanticDeprecatedSince20: Using extra keyword arguments on `Field` is deprecated and will be removed. Use `json_schema_extra` instead. (Extra keys: 'deprecated'). Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.6/migration/
+    warn(
+
+backend\api\v1\game_accounts\router.py:94
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\api\v1\game_accounts\router.py:94: DeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+    sort_dir: str = Query("desc", regex="^(asc|desc)$", description="Направление сортировки"),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/production/test_batch_concurrency.py::test_batch_accounting_serializes_independent_terminal_results[success]
+FAILED tests/production/test_batch_concurrency.py::test_batch_accounting_serializes_independent_terminal_results[failure]
+FAILED tests/production/test_batch_concurrency.py::test_batch_accounting_serializes_independent_terminal_results[watchdog]
+3 failed, 485 warnings in 1.63s

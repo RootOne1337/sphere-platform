@@ -474,7 +474,11 @@ class TaskService:
         Инкрементально обновить счётчики батча.
         Когда все задачи завершены — вычислить финальный статус.
         """
-        batch = await self.db.get(TaskBatch, batch_id)
+        # Result handlers and watchdogs share this lock. Refresh preloaded ORM
+        # values after waiting so no worker overwrites a committed increment.
+        batch = await self.db.scalar(select(TaskBatch).where(
+            TaskBatch.id == batch_id,
+        ).with_for_update().execution_options(populate_existing=True))
         if not batch:
             return
 
