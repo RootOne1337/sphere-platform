@@ -20,8 +20,8 @@ runtime-проверок и не считается доказательство
 | Проверка | Результат | Практическое ограничение |
 | --- | --- | --- |
 | Android enterprise debug unit suite | 333 passed, 0 failed | JVM/MockWebServer; не проверяет ОС, codec, батарею или смерть процесса на телефоне |
-| Объединённая Backend/PC/production/deployment suite | **1031 passed, 0 failed**; coverage **66,57%** | Строгий coverage gate 65% пройден с precision=2. Load suite исключена; 6 Compose config tests не запускают сервисы |
-| Проверки PostgreSQL/Redis | **175 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
+| Объединённая Backend/PC/production/deployment suite | **1035 passed, 0 failed**; coverage **66,61%** | Строгий coverage gate 65% пройден с precision=2. Load suite исключена; 6 Compose config tests не запускают сервисы |
+| Проверки PostgreSQL/Redis | **179 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
 | Миграции | Применены до **20260906_account_ciphertext** включительно | Только изолированная БД; конфликтные данные/downgrade проверены в throwaway schema; production не мигрировался |
 | Backend image | Собирается; исходная запись OpenAPI воспроизведённо падает с PermissionError | Исправлен lifespan; полный deployment runtime ещё не подтверждён |
 | Frontend build | Успешно | Type-check/Jest и браузерный runtime требуют отдельного завершения проверки |
@@ -32,7 +32,7 @@ runtime-проверок и не считается доказательство
 Предыдущий отдельный DAG benchmark однажды занял 127,1 ms при пороге 100 ms;
 изолированный повтор и последующие общие прогоны прошли. Порог не ослаблялся.
 Файл production-regressions-after.txt сохраняет более ранний standalone snapshot
-с 41 тестом; актуальные 175 входят в общий прогон.
+с 41 тестом; актуальные 179 входят в общий прогон.
 
 Команды запуска и предохранители изоляции: [tests/production/README.md](../../../tests/production/README.md).
 Исходные `14 passed` в [reproductions.txt](evidence/reproductions.txt) означают
@@ -424,7 +424,16 @@ runtime-проверок и не считается доказательство
 - **Regression:** 7 новых Android integration-on-JVM случаев, **333 Android tests passed**, 0 failures/errors/skips; [android-control-target-after.txt](evidence/android-control-target-after.txt). Реальный PostgreSQL watchdog test проверяет target после TIMEOUT commit.
 - **Residual risk:** нет durable cancellation и ordering controls внутри одного task_id; delayed resume той же задачи всё ещё требует sequence/generation. Между claim и началом execution control может быть отклонён; текущая нода останавливается кооперативно. Для rollout сначала обновляются все backend writers, затем APK: старый watchdog не передаёт target и новый APK его отвергает. Физические устройства не тестировались. [Контракт и rollout](../../security/task-control-protocol.md).
 
-## Продолжение обследования остальных компонентов
+### AUD-38 — Medium: Host подменял audit path и скрывал подтверждённые изменения
+
+- **Root cause:** audit skip/action/resource и request-log/metrics path использовали request.url.path. Установленная Starlette 0.50.0 собирала этот URL из Host без валидации; path внутри Host отличался от фактически маршрутизированного ASGI scope.path. Upstream: [GHSA-86qp-5c8j-p5mr](https://github.com/Kludex/starlette/security/advisories/GHSA-86qp-5c8j-p5mr).
+- **Affected files:** `backend/middleware/audit.py`, `metrics.py`, `request_id.py`.
+- **Evidence:** [audit-path-before.txt](evidence/audit-path-before.txt): 3 failures, 1 valid-host control passed. Авторизованный PUT устройства сохраняет новое имя, но Host с `/metrics?` или `/api/v1/auth/refresh?` исключает audit entry. Host с `/api/v1/tasks/<UUID>?` записывает put.tasks и чужой resource_id вместо реального устройства. ASGITransport и PostgreSQL локальные; ingress/nginx не тестировался.
+- **Fix:** все три middleware используют исходный ASGI scope.path, не зависящий от реконструкции URL по Host.
+- **Regression:** четыре real API/DB cases проверяют сам mutation, audit actor/action/resource/status, metric label и request context. [audit-path-after.txt](evidence/audit-path-after.txt): 28 связанных cases passed.
+- **Residual risk:** разрешения endpoint не обходятся этим сценарием; требуется право выполнить сам mutation. Подмена заголовка на реальном ingress зависит от proxy validation. Background audit всё ещё может теряться при остановке процесса/ошибке SQL; обновление уязвимых dependencies и остальные URL consumers требуют отдельной проверки. Этот fix не делает security CI зелёным автоматически.
+
+## Остальные области обследования
 
 Следующие пункты — кандидаты/недостаточное покрытие, а не автоматически доказанные
 эксплуатируемые уязвимости: Android FGS/boot/timeout, root-only действия на обычных

@@ -12,7 +12,7 @@
 ........................................................................ [ 83%]
 ........................................................................ [ 90%]
 ........................................................................ [ 97%]
-.......................                                                  [100%]
+...........................                                              [100%]
 ============================== warnings summary ===============================
 .venv-audit\Lib\site-packages\pydantic\fields.py:754: 484 warnings
   C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\pydantic\fields.py:754: PydanticDeprecatedSince20: Using extra keyword arguments on `Field` is deprecated and will be removed. Use `json_schema_extra` instead. (Extra keys: 'deprecated'). Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.6/migration/
@@ -77,7 +77,7 @@ backend\core\startup_checks.py                             21     15  28.57%
 backend\database\engine.py                                 27      4  85.19%
 backend\database\redis_client.py                           21      9  57.14%
 backend\main.py                                            76     24  68.42%
-backend\middleware\audit.py                                64      9  85.94%
+backend\middleware\audit.py                                65      9  86.15%
 backend\middleware\tenant_middleware.py                    12      1  91.67%
 backend\models\account_session.py                          43      2  95.35%
 backend\models\device_event.py                             33      1  96.97%
@@ -133,7 +133,7 @@ backend\services\vpn\pool_service.py                      121      2  98.35%
 backend\tasks\ensure_enrollment_key.py                     31     24  22.58%
 backend\tasks\orchestration_loop.py                        11      4  63.64%
 backend\tasks\sync_device_status.py                        60     15  75.00%
-backend\tasks\task_heartbeat_watchdog.py                  139     32  76.98%
+backend\tasks\task_heartbeat_watchdog.py                  139     28  79.86%
 backend\tasks\vpn_health.py                                59      2  96.61%
 backend\websocket\connection_manager.py                    98      9  90.82%
 backend\websocket\event_publisher.py                       47     11  76.60%
@@ -143,9 +143,9 @@ backend\websocket\offline_queue.py                         85      8  90.59%
 backend\websocket\pubsub_router.py                        172     43  75.00%
 backend\websocket\stream_bridge.py                        139     57  58.99%
 ----------------------------------------------------------------------------
-TOTAL                                                   11150   3727  66.57%
+TOTAL                                                   11151   3723  66.61%
 
 97 files skipped due to complete coverage.
 Coverage JSON written to file docs/audits/2026-09-05/evidence/coverage-current.json
-Required test coverage of 65% reached. Total coverage: 66.57%
-1031 passed, 488 warnings in 117.42s (0:01:57)
+Required test coverage of 65% reached. Total coverage: 66.61%
+1035 passed, 488 warnings in 122.62s (0:02:02)

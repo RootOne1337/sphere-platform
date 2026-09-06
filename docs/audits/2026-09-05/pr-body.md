@@ -82,12 +82,17 @@ the target, and user stop has a distinct control ID so its ACK cannot falsely
 complete a task after Redis/SQL rollback. Acceptance remains separate from
 physical stop; durable cancellation and ordering within a task remain open.
 
+Audit selection and resource identity, request log context and HTTP metric labels
+now use the ASGI path rather than a URL reconstructed from Host. Malformed Host
+headers could otherwise suppress or relabel a successfully committed mutation's
+audit entry. Real API/PostgreSQL regressions preserve the routed resource identity.
+
 ## Validation
 
 - Android enterprise debug unit suite: **333 passed**.
-- Combined backend/PC, PostgreSQL/Redis and deployment regressions: **1031 passed**.
-  This includes **175 real-service tests** and **6 Compose configuration tests**.
-  Coverage is **66.57%** and passes the unchanged **65%** gate with two-decimal
+- Combined backend/PC, PostgreSQL/Redis and deployment regressions: **1035 passed**.
+  This includes **179 real-service tests** and **6 Compose configuration tests**.
+  Coverage is **66.61%** and passes the unchanged **65%** gate with two-decimal
   precision. No threshold or coverage scope was weakened. Two additional
   regression tests exercise the 64.98% rejection and exact 65.00% boundary. Long load/soak profiles require a prepared API
   environment and are excluded from the ordinary PR command.
