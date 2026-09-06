@@ -217,25 +217,16 @@ class OrchestrationEngine:
         await db.flush()
 
         # Задача регистрации
-        task = Task(
+        from backend.services.task_service import TaskService
+        task = await TaskService(db).create_task(
             org_id=org_id,
             device_id=device.id,
             script_id=settings.registration_script_id,
-            status=TaskStatus.QUEUED,
             priority=10,
-            timeout_seconds=settings.registration_timeout_seconds,
-            input_params={
-                "account_id": str(account.id),
-                "nickname": nickname,
-                "password": password,
-                "server_name": device.server_name,
-            },
+            account_id=account.id,
         )
-        db.add(task)
+        task.timeout_seconds = settings.registration_timeout_seconds
         await db.flush()
-
-        # Enqueue в per-device Redis очередь
-        await self._enqueue_task(org_id, device.id, task.id, task.priority)
 
         logger.info(
             "orchestration.reg_created",
@@ -318,28 +309,19 @@ class OrchestrationEngine:
         self, db, settings: PipelineSettings, account: GameAccount
     ) -> None:
         """Создать задачу фарма — аккаунт переходит в in_use."""
-        account.status = AccountStatus.in_use
-        account.status_reason = "Фарм-сессия через оркестратор"
-        account.status_changed_at = datetime.now(timezone.utc)
-
-        task = Task(
+        from backend.services.task_service import TaskService
+        task = await TaskService(db).create_task(
             org_id=settings.org_id,
             device_id=account.device_id,
             script_id=settings.farming_script_id,
-            status=TaskStatus.QUEUED,
             priority=5,
-            timeout_seconds=settings.farming_session_duration_seconds,
-            input_params={
-                "account_id": str(account.id),
-                "nickname": account.nickname,
-                "password": account.password_encrypted,
-                "server_name": account.server_name,
-            },
+            account_id=account.id,
         )
-        db.add(task)
+        task.timeout_seconds = settings.farming_session_duration_seconds
+        account.status = AccountStatus.in_use
+        account.status_reason = "Фарм-сессия через оркестратор"
+        account.status_changed_at = datetime.now(timezone.utc)
         await db.flush()
-
-        await self._enqueue_task(settings.org_id, account.device_id, task.id, task.priority)
 
         logger.info(
             "orchestration.farm_created",
