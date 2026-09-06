@@ -49,7 +49,6 @@ async def test_old_result_does_not_release_new_lease(world):
     assert await world.redis.get(queue.RUNNING_KEY.format(device_id=device)) == "new-task"
 
 
-@pytest.mark.xfail(strict=True, reason="AUD-09 open: Redis publication occurs before PostgreSQL commit")
 async def test_rollback_never_publishes_task(world):
     w = world
     queue = TaskQueue(w.redis)

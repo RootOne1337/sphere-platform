@@ -43,12 +43,12 @@ class TaskService:
     def __init__(
         self,
         db: AsyncSession,
-        queue: TaskQueue,
+        queue: TaskQueue | None = None,
         status_cache: Any | None = None,
         publisher: Any | None = None,
     ) -> None:
         self.db = db
-        self.queue = queue
+        self.queue = queue if queue is not None else TaskQueue(None)
         self.status_cache = status_cache
         self.publisher = publisher
 
@@ -264,9 +264,8 @@ class TaskService:
         await self.db.flush()
 
         # Добавить в Redis очередь
-        await self.queue.enqueue(
-            str(task.id), str(device_id), str(org_id), priority
-        )
+        # The committed QUEUED row is the durable dispatch intent.
+        # Publishing to Redis here would escape a caller's transaction rollback.
         logger.info(
             "task.created",
             task_id=str(task.id),
@@ -278,129 +277,117 @@ class TaskService:
     # ── Dispatch ──────────────────────────────────────────────────────────────
 
     async def dispatch_pending_tasks(self) -> None:
-        """
-        Раздать задачи из очереди онлайн-агентам.
-        Запускается периодически из _task_dispatcher_loop (регистрируется при старте).
+        """Dispatch committed intent using this dispatcher's dedicated DB session.
+
+        A device row serializes competing dispatchers. ASSIGNED is committed
+        before sending; until the agent acknowledges receipt, the same task ID
+        is retried. Redis is transport/presence, never the source of task intent.
         """
         if not self.status_cache:
             return
 
-        all_device_ids = await self.status_cache.get_all_tracked_device_ids()
-
-        for device_id_str in all_device_ids:
-            # Проверяем что устройство действительно ONLINE перед диспетчеризацией
-            device_status = await self.status_cache.get_status(device_id_str)
-            if not device_status or device_status.status != "online":
-                continue
-
+        candidates = list(await self.db.scalars(
+            select(Task.device_id).where(
+                Task.status.in_([TaskStatus.QUEUED, TaskStatus.ASSIGNED]),
+            ).distinct()
+        ))
+        await self.db.rollback()
+        presence_by_id = {}
+        # Batched MGET avoids one Redis round trip per pending device. Do not
+        # truncate candidates before filtering offline/busy devices: that can
+        # permanently starve later devices in a large fleet.
+        for offset in range(0, len(candidates), 512):
+            async with asyncio.timeout(2):
+                presence_by_id.update(await self.status_cache.bulk_get_status(
+                    [str(value) for value in candidates[offset:offset + 512]],
+                ))
+        for device_id in candidates:
+            task_id_str = None
             try:
-                device_uuid = uuid.UUID(device_id_str)
-            except ValueError:
-                continue
-
-            device = await self.db.scalar(
-                select(Device).where(Device.id == device_uuid, Device.is_active.is_(True))
-            )
-            if not device:
-                continue
-
-            task_id_str = await self.queue.dequeue_for_device(
-                device_id_str, str(device.org_id)
-            )
-            if not task_id_str:
-                continue
-
-            try:
-                task = await self.db.get(Task, uuid.UUID(task_id_str))
-                if not task:
+                presence = presence_by_id.get(str(device_id))
+                if not presence or presence.status not in ("online", "busy"):
+                    await self.db.rollback()
+                    continue
+                device = await self.db.scalar(select(Device).where(
+                    Device.id == device_id, Device.is_active.is_(True),
+                ).with_for_update(skip_locked=True).execution_options(populate_existing=True))
+                if device is None:
+                    await self.db.rollback()
                     continue
 
-                # Safety check: задача принадлежит этому устройству
-                if str(task.device_id) != device_id_str:
-                    logger.error(
-                        "task.dispatch_device_mismatch",
-                        task_id=task_id_str,
-                        expected_device=str(task.device_id),
-                        actual_device=device_id_str,
-                    )
-                    await self.queue.mark_completed(task_id_str, device_id_str)
+                task = await self.db.scalar(select(Task).where(
+                    Task.device_id == device_id, Task.org_id == device.org_id,
+                    Task.status.in_([TaskStatus.ASSIGNED, TaskStatus.RUNNING]),
+                ).order_by(Task.created_at).limit(1).with_for_update()
+                    .execution_options(populate_existing=True))
+                now = datetime.now(timezone.utc)
+                if task is not None and (
+                    task.status == TaskStatus.RUNNING or
+                    task.updated_at > now - timedelta(seconds=30)
+                ):
+                    await self.db.rollback()
+                    continue
+                if task is None:
+                    task = await self.db.scalar(select(Task).where(
+                        Task.device_id == device_id, Task.org_id == device.org_id,
+                        Task.status == TaskStatus.QUEUED,
+                    ).order_by(Task.priority, Task.created_at, Task.id).limit(1)
+                        .with_for_update().execution_options(populate_existing=True))
+                if task is None:
+                    await self.db.rollback()
                     continue
 
-                version = await self.db.get(ScriptVersion, task.script_version_id)
-                if not version:
+                task_id_str = str(task.id)
+                version = await self.db.scalar(select(ScriptVersion).where(
+                    ScriptVersion.id == task.script_version_id,
+                    ScriptVersion.script_id == task.script_id,
+                    ScriptVersion.org_id == task.org_id,
+                ))
+                if version is None:
                     task.status = TaskStatus.FAILED
                     task.error_message = "Script version not found"
+                    task.finished_at = now
+                    await self.db.commit()
                     continue
-
-                # Загрузить скрипт для имени (ScriptCacheManager на APK использует dag_name)
                 script = await self.db.get(Script, task.script_id)
-                dag_name = script.name if script else f"script_{task.script_id}"
-
-                # Content-addressable hash для ScriptCacheManager на APK
-                # Подстановка переменных аккаунта в DAG ({{account.xxx}} → реальные значения)
                 resolved_dag = version.dag
                 account = await self._load_account_for_task(task)
-                if account:
-                    variables = self._build_account_variables(account)
-                    resolved_dag = self._resolve_dag_placeholders(version.dag, variables)
-                    logger.info(
-                        "task.dag_variables_resolved",
-                        task_id=task_id_str,
-                        account_id=str(account.id),
-                        account_nick=account.nickname,
-                        variables_keys=list(variables.keys()),
+                if account is not None:
+                    resolved_dag = self._resolve_dag_placeholders(
+                        version.dag, self._build_account_variables(account),
                     )
+                dag_json = json.dumps(resolved_dag, sort_keys=True, ensure_ascii=False)
+                command = {
+                    "command_id": task_id_str,
+                    "type": "EXECUTE_DAG",
+                    "signed_at": int(now.timestamp()),
+                    "ttl_seconds": task.timeout_seconds,
+                    "payload": {
+                        "task_id": task_id_str,
+                        "dag": resolved_dag,
+                        "dag_name": script.name if script else f"script_{task.script_id}",
+                        "dag_hash": hashlib.sha256(dag_json.encode("utf-8")).hexdigest(),
+                        "timeout_ms": task.timeout_seconds * 1000,
+                    },
+                }
+                task.status = TaskStatus.ASSIGNED
+                task.updated_at = now
+                await self.db.commit()
 
-                # The cache identity must include account-specific substitutions.
-                # Hashing the template reuses a previous account's resolved DAG.
-                dag_json_str = json.dumps(resolved_dag, sort_keys=True, ensure_ascii=False)
-                dag_hash = hashlib.sha256(dag_json_str.encode("utf-8")).hexdigest()
-
-                delivered = False
-                if self.publisher:
-                    delivered = await self.publisher.send_command_live(
-                        device_id_str,
-                        {
-                            "command_id": task_id_str,
-                            "type": "EXECUTE_DAG",
-                            "signed_at": int(datetime.now(timezone.utc).timestamp()),
-                            "ttl_seconds": task.timeout_seconds,
-                            "payload": {
-                                "task_id": task_id_str,
-                                "dag": resolved_dag,
-                                "dag_name": dag_name,
-                                "dag_hash": dag_hash,
-                                "timeout_ms": task.timeout_seconds * 1000,
-                            },
-                        },
-                    )
-
-                if delivered:
-                    task.status = TaskStatus.RUNNING
-                    task.started_at = datetime.now(timezone.utc)
-                    logger.info("task.dispatched", task_id=task_id_str, device_id=device_id_str)
-                else:
-                    # Агент оффлайн — освободить lock и вернуть задачу в очередь
-                    await self.queue.mark_completed(task_id_str, device_id_str)
-                    await self.queue.enqueue(
-                        task_id_str,
-                        device_id_str,
-                        str(device.org_id),
-                        task.priority,
-                    )
-                    logger.warning(
-                        "task.requeued.agent_offline",
-                        task_id=task_id_str,
-                        device_id=device_id_str,
-                    )
-
+                delivered = bool(self.publisher and await self.publisher.send_command_live(
+                    str(device_id), command,
+                ))
+                logger.info("task.assignment_sent", task_id=task_id_str,
+                            device_id=str(device_id), transport_accepted=delivered)
+                # Only the device's received/running acknowledgement advances
+                # ASSIGNED. A send return value cannot prove remote receipt.
+            except asyncio.CancelledError:
+                await self.db.rollback()
+                raise
             except Exception as exc:
-                logger.error(
-                    "task.dispatch_error",
-                    task_id=task_id_str,
-                    error=str(exc),
-                    exc_info=True,
-                )
+                await self.db.rollback()
+                logger.warning("task.dispatch_retry_pending", task_id=task_id_str,
+                               device_id=str(device_id), error=str(exc))
 
     # ── Безопасное освобождение running lock ─────────────────────────────────
 

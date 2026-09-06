@@ -30,7 +30,10 @@ async def test_dispatched_hash_identifies_resolved_account_payload(world):
         await queue.enqueue(str(task.id), str(w.dev_a.id), str(w.org_a.id))
         cache = AsyncMock()
         cache.get_all_tracked_device_ids.return_value = [str(w.dev_a.id)]
-        cache.get_status.return_value = SimpleNamespace(status="online")
+        cache.get_status.side_effect = lambda device_id: SimpleNamespace(status="online") if device_id == str(w.dev_a.id) else None
+        cache.bulk_get_status.side_effect = lambda ids: {
+            device_id: SimpleNamespace(status="online") if device_id == str(w.dev_a.id) else None for device_id in ids
+        }
         publisher = AsyncMock()
         publisher.send_command_live.return_value = True
         await TaskService(db, queue, status_cache=cache, publisher=publisher).dispatch_pending_tasks()

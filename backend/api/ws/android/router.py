@@ -215,6 +215,32 @@ async def handle_command_result(
     except Exception as e:
         logger.warning("Failed to publish command result", device_id=device_id, error=str(e))
     # Persist task result to DB on final status (completed or failed)
+    if status in ("received", "running"):
+        try:
+            import uuid
+            from datetime import datetime, timezone
+
+            from sqlalchemy import select
+
+            from backend.database.engine import AsyncSessionLocal
+            from backend.models.task import Task, TaskStatus
+
+            task_uuid = uuid.UUID(command_id)
+            async with AsyncSessionLocal() as db:
+                task = await db.scalar(select(Task).where(
+                    Task.id == task_uuid, Task.device_id == uuid.UUID(device_id),
+                    Task.org_id == uuid.UUID(org_id), Task.status == TaskStatus.ASSIGNED,
+                ).with_for_update())
+                if task is not None:
+                    task.status = TaskStatus.RUNNING
+                    task.started_at = datetime.now(timezone.utc)
+                    await db.commit()
+        except (ValueError, TypeError):
+            return
+        except Exception as exc:
+            logger.warning("task.receipt.persistence_failed", command_id=command_id, error=str(exc))
+        return
+
     if status in ("completed", "failed"):
         # FIX BUG-A: управляющие команды (CANCEL_DAG, PAUSE_DAG, etc.) используют
         # command_id вида "sched_cancel_UUID" / "watchdog_cancel_UUID".
