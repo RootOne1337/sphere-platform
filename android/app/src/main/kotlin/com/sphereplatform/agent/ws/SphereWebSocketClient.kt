@@ -5,6 +5,12 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.sync.Mutex
+import java.io.IOException
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
@@ -39,6 +45,8 @@ class SphereWebSocketClient @Inject constructor(
 
     // FIX AUDIT-1.7: Lock для атомарного обновления webSocket + isConnected
     private val wsLock = Any()
+    private val connectMutex = Mutex()
+    private var generation = 0L
 
     @Volatile
     var isConnected = false
@@ -84,9 +92,14 @@ class SphereWebSocketClient @Inject constructor(
     var onCircuitBreakerOpen: (() -> Unit)? = null
 
     suspend fun connect(deviceId: String) {
-        shouldStop = false
-        this.deviceId = deviceId
-        reconnectLoop()
+        if (!connectMutex.tryLock()) return
+        try {
+            shouldStop = false
+            this.deviceId = deviceId
+            reconnectLoop()
+        } finally {
+            connectMutex.unlock()
+        }
     }
 
     private suspend fun reconnectLoop() {
@@ -164,6 +177,7 @@ class SphereWebSocketClient @Inject constructor(
             ?: throw AuthException("No auth token stored")
         val wsUrl = "${authStore.getServerUrl().trimEnd('/')}/ws/android/$deviceId"
         val request = Request.Builder().url(wsUrl).build()
+        val attemptGeneration = synchronized(wsLock) { ++generation }
 
         val connected = CompletableDeferred<Unit>()
         val disconnected = CompletableDeferred<Unit>()
@@ -174,9 +188,16 @@ class SphereWebSocketClient @Inject constructor(
             override fun onOpen(ws: WebSocket, response: Response) {
                 // FIX AUDIT-1.7: Атомарное обновление webSocket + isConnected
                 synchronized(wsLock) {
+                    if (attemptGeneration != generation || shouldStop) {
+                        ws.cancel()
+                        return
+                    }
                     webSocket = ws
                     // First-message auth — ДО любых других сообщений
-                    ws.send("""{"token":"$token"}""")
+                    if (!ws.send("""{"token":"$token"}""")) {
+                        connected.completeExceptionally(IOException("Cannot send authentication"))
+                        return
+                    }
                     isConnected = true
                 }
                 connected.complete(Unit)
@@ -184,6 +205,7 @@ class SphereWebSocketClient @Inject constructor(
             }
 
             override fun onMessage(ws: WebSocket, text: String) {
+                if (synchronized(wsLock) { attemptGeneration != generation || shouldStop }) return
                 try {
                     val msg = json.parseToJsonElement(text).jsonObject
                     onJsonMessage?.invoke(msg)
@@ -193,34 +215,69 @@ class SphereWebSocketClient @Inject constructor(
             }
 
             override fun onMessage(ws: WebSocket, bytes: ByteString) {
+                if (synchronized(wsLock) { attemptGeneration != generation || shouldStop }) return
                 onBinaryMessage?.invoke(bytes.toByteArray())
             }
 
             override fun onFailure(ws: WebSocket, t: Throwable, response: Response?) {
-                synchronized(wsLock) {
-                    isConnected = false
-                    webSocket = null
+                val current = synchronized(wsLock) {
+                    (attemptGeneration == generation).also {
+                        if (it) {
+                            isConnected = false
+                            webSocket = null
+                        }
+                    }
                 }
                 if (!connected.isCompleted) connected.completeExceptionally(t)
-                else if (!disconnected.isCompleted) disconnected.complete(Unit)
-                onDisconnected?.invoke(-1, t.message ?: "failure")
+                else if (!disconnected.isCompleted) disconnected.completeExceptionally(t)
+                if (current) onDisconnected?.invoke(-1, t.message ?: "failure")
+            }
+
+            override fun onClosing(ws: WebSocket, code: Int, reason: String) {
+                ws.close(code, reason)
             }
 
             override fun onClosed(ws: WebSocket, code: Int, reason: String) {
-                synchronized(wsLock) {
-                    isConnected = false
-                    webSocket = null
+                val current = synchronized(wsLock) {
+                    (attemptGeneration == generation).also {
+                        if (it) {
+                            isConnected = false
+                            webSocket = null
+                        }
+                    }
                 }
                 closeCode = code
                 closeReason = reason
                 disconnected.complete(Unit)
-                onDisconnected?.invoke(code, reason)
+                if (current) onDisconnected?.invoke(code, reason)
             }
         }
 
-        httpClient.newWebSocket(request, listener)
-        connected.await()     // Ждём успешного onOpen
-        disconnected.await()  // Ждём закрытия или сбоя
+        val socket = httpClient.newWebSocket(request, listener)
+        synchronized(wsLock) {
+            if (attemptGeneration == generation && !shouldStop && !disconnected.isCompleted) {
+                webSocket = socket
+            } else {
+                socket.cancel()
+            }
+        }
+        try {
+            try {
+                withTimeout(20_000L) { connected.await() }
+            } catch (e: TimeoutCancellationException) {
+                currentCoroutineContext().ensureActive()
+                throw IOException("WebSocket handshake timeout", e)
+            }
+            disconnected.await()
+        } finally {
+            socket.cancel()
+            synchronized(wsLock) {
+                if (attemptGeneration == generation) {
+                    webSocket = null
+                    isConnected = false
+                }
+            }
+        }
 
         // After connection closed — check close code for auth/heartbeat rejection
         if (closeCode == CODE_INVALID_TOKEN || closeCode == CODE_AUTH_TIMEOUT
@@ -234,12 +291,17 @@ class SphereWebSocketClient @Inject constructor(
         (1000L * (1L shl attempt.coerceAtMost(5))).coerceAtMost(30_000L)
 
     fun sendJson(message: JsonObject): Boolean {
+        if (!isConnected) return false
         val ws = synchronized(wsLock) { webSocket } ?: return false
         return ws.send(message.toString())
     }
 
     fun sendBinary(data: ByteArray): Boolean {
+        if (!isConnected) return false
         val ws = synchronized(wsLock) { webSocket } ?: return false
+        // Keep video from filling OkHttp's 16 MiB queue and closing the socket.
+        // Return false to the existing adaptive bitrate controller before copying.
+        if (ws.queueSize() + data.size > 1024 * 1024) return false
         return ws.send(data.toByteString())
     }
 
@@ -261,13 +323,14 @@ class SphereWebSocketClient @Inject constructor(
         // подтвердил что переподключение имеет смысл
         circuitOpenUntil = 0L
         consecutiveFailures = 0
+        synchronized(wsLock) { webSocket }?.cancel()
         reconnectTrigger.trySend(Unit)
     }
 
     fun disconnect() {
         shouldStop = true
         synchronized(wsLock) {
-            webSocket?.close(1000, "client_disconnect")
+            webSocket?.cancel()
             webSocket = null
             isConnected = false
         }
