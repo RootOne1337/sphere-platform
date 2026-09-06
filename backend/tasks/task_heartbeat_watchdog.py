@@ -84,8 +84,6 @@ async def _process_stale_tasks(
 
     now = datetime.now(timezone.utc)
     queued_cutoff = now - timedelta(minutes=queued_stale_minutes)
-    # Для SQLite (тесты) используем naive datetime в WHERE — PostgreSQL принимает оба варианта.
-    queued_cutoff_naive = queued_cutoff.replace(tzinfo=None)
 
     expired_running: list[tuple[str, str]] = []   # [(task_id, device_id)]
     expired_queued: list[tuple[str, str, str]] = []  # [(task_id, device_id, org_id)]
@@ -141,7 +139,9 @@ async def _process_stale_tasks(
         select(Task)
         .where(
             Task.status.in_([TaskStatus.QUEUED, TaskStatus.ASSIGNED]),
-            Task.created_at < queued_cutoff_naive,
+            # asyncpg interprets naive timestamptz values in the host timezone.
+            # Keep UTC explicit; SQLite's DateTime adapter also accepts it.
+            Task.created_at < queued_cutoff,
         )
     )
     if use_for_update:
