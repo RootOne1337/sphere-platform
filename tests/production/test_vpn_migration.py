@@ -5,12 +5,11 @@ import uuid
 from pathlib import Path
 
 import pytest
+from alembic.migration import MigrationContext
+from alembic.operations import Operations
 from sqlalchemy import text
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.schema import CreateSchema
-
-from alembic.migration import MigrationContext
-from alembic.operations import Operations
 
 
 def migrate(connection, direction):

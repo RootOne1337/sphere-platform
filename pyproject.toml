@@ -8,6 +8,11 @@ ignore = [
     "E501",   # line too long — handled by formatter
 ]
 
+[tool.ruff.lint.isort]
+# The local migration directory is not the imported Alembic distribution.
+# Keep classification deterministic across Ruff versions and environments.
+known-third-party = ["alembic"]
+
 [tool.ruff.lint.per-file-ignores]
 # SQLAlchemy models use string-quoted forward references for relationships.
 # Ruff cannot resolve cross-model names without a full import graph; the

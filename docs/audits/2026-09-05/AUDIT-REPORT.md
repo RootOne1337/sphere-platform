@@ -391,6 +391,12 @@ head; последующие коммиты требуют собственны�
 статическим RLS job и failure Security/pip-audit. Android run `34031085117` успешен.
 Эти результаты не распространяются автоматически на последующие SQL lifecycle fixes.
 
+На `b9c12bf` Ruff 0.16.6 в GitHub выявил I001 в `test_vpn_migration.py`: локальный
+Ruff 0.3 классифицировал Alembic иначе из-за одноимённой папки миграций. Явный
+known-third-party для установленной библиотеки и упорядоченные imports проходят
+на обеих версиях; правила lint не отключались. Новые GitHub checks ещё нужно
+сверить на ревизии исправления.
+
 Для AUD-11 реализованы [SQL reservations и generation fencing](VPN-LEASE-DESIGN.md);
 документ описывает границы транзакций, обязательный migration preflight и ещё
 не реализованный provider reconciliation. Это не означает готовность всего VPN.
