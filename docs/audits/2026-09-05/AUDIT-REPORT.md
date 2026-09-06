@@ -20,8 +20,8 @@ runtime-проверок и не считается доказательство
 | Проверка | Результат | Практическое ограничение |
 | --- | --- | --- |
 | Android enterprise debug unit suite | 316 passed, 0 failed | JVM/MockWebServer; не проверяет ОС, codec, батарею или смерть процесса на телефоне |
-| Объединённая Backend/PC/production/deployment suite | **913 passed, 0 failed**; coverage **64,98%** | Coverage gate 65% пока не пройден. Load suite исключена; 6 Compose config tests не запускают сервисы |
-| Проверки PostgreSQL/Redis | **73 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
+| Объединённая Backend/PC/production/deployment suite | **926 passed, 0 failed**; coverage **65,04%** | Строгий coverage gate 65% пройден с precision=2. Load suite исключена; 6 Compose config tests не запускают сервисы |
+| Проверки PostgreSQL/Redis | **84 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
 | Миграции | Применены до **20260906_task_accounting** включительно | Только изолированная БД; production не мигрировался |
 | Backend image | Собирается; исходная запись OpenAPI воспроизведённо падает с PermissionError | Исправлен lifespan; полный deployment runtime ещё не подтверждён |
 | Frontend build | Успешно | Type-check/Jest и браузерный runtime требуют отдельного завершения проверки |
@@ -32,7 +32,7 @@ runtime-проверок и не считается доказательство
 Предыдущий отдельный DAG benchmark однажды занял 127,1 ms при пороге 100 ms;
 изолированный повтор и последующие общие прогоны прошли. Порог не ослаблялся.
 Файл production-regressions-after.txt сохраняет более ранний standalone snapshot
-с 41 тестом; актуальные 73 входят в общий прогон.
+с 41 тестом; актуальные 84 входят в общий прогон.
 
 Команды запуска и предохранители изоляции: [tests/production/README.md](../../../tests/production/README.md).
 Исходные `14 passed` в [reproductions.txt](evidence/reproductions.txt) означают
@@ -285,8 +285,35 @@ runtime-проверок и не считается доказательство
 - **Affected files:** `tests/conftest.py:50` и дочерние conftests; `.github/workflows/ci-backend.yml`.
 - **Evidence:** [combined-suite-coverage.txt](evidence/combined-suite-coverage.txt): 872 passed, 3 DatatypeMismatchError. Старый GitHub run `34025311501` оставался на общей pytest-команде.
 - **Fix:** `ad4fc27` — централизованные SQLite-only variants и SQLite UUID function; native PostgreSQL metadata сохраняется. CI включает изолированные PG/Redis regression tests, применяет миграции, ограничивает test job 20 минутами и сохраняет JUnit/coverage при ошибках. Load suite требует отдельного подготовленного стенда.
-- **Regression:** первый общий повтор после type fix: 875 passed; последующие полные результаты приведены в таблице выше. Порог покрытия 65% не снижался.
+- **Regression:** первый общий повтор после type fix: 875 passed; последующие полные результаты приведены в таблице выше. Порог покрытия 65% не снижался; его прежнее округление исправлено отдельно в TEST-02.
 - **Residual risk:** статический RLS job не проверяет runtime isolation; mypy CI без backend dependencies слабее dependency-aware проверки. Security advisories и отдельный load job остаются открыты; зелёный build не закрывает аудит.
+
+### AUD-25 / AUD-26 — High: VPN назначался чужому устройству и терял PSK при retry
+
+- **Root cause:** assign_vpn доверял device_id без проверки организации; повторная сборка конфигурации не расшифровывала сохранённый preshared_key_enc.
+- **Affected files:** `backend/services/vpn/pool_service.py:79` и `_peer_to_assignment`.
+- **Evidence:** [vpn-contract-before.txt](evidence/vpn-contract-before.txt): 2 failures. Чужой device ID приводил к выделению peer; повторный config терял строку PresharedKey.
+- **Fix:** `92869ac` — active device/org lookup и device row lock до pool/router effects; повтор возвращает исходный PSK.
+- **Regression:** `test_vpn_contract.py`: запрет чужого устройства, идентичный повтор, две перекрывающиеся assignment-транзакции с единственным router call. [vpn-contract-after.txt](evidence/vpn-contract-after.txt): 84 passed вместе с прежней VPN suite.
+- **Residual risk:** router transport подменён; параметры AWG и настоящий handshake не проверены. Это не исправляет глобальную уникальность адресов или неопределённый результат provisioning.
+
+### AUD-27 — High: revoke освобождал IP при отказе роутера или конкурентном повторе
+
+- **Root cause:** DELETE helper подавлял timeout и ошибки HTTP, после чего peer считался FREE; параллельные revoke читали один ASSIGNED peer и повторно возвращали адрес.
+- **Affected files:** `backend/services/vpn/pool_service.py`, `_get_existing_peer`, `_remove_peer_from_server`.
+- **Evidence:** [vpn-revoke-before.txt](evidence/vpn-revoke-before.txt): 5 failures, включая timeout, 500, 403, незавершённый 202 и перекрывающиеся транзакции.
+- **Fix:** `caa9faa` — ошибка/неподтверждённый DELETE сохраняет peer и lease; peer row lock с refresh сериализует revoke. Сохраняется прежний контракт 200/204/404 как подтверждённое удаление/отсутствие.
+- **Regression:** 8 revoke cases, 3 assignment cases и старая VPN suite: [vpn-revoke-after.txt](evidence/vpn-revoke-after.txt), 92 passed. Ошибка не освобождает IP даже если caller ловит её и делает commit.
+- **Residual risk:** Redis release всё ещё предшествует PostgreSQL commit; нет долговечного revoke intent и provider reconciliation. Нельзя считать адресный пул безопасным после Redis loss или неясного provisioning; AUD-11 остаётся открытым.
+
+### TEST-02 — Medium: округление coverage давало ложный зелёный статус
+
+- **Root cause:** precision=0 округлял 64,98% до 65 при вычислении exit code. При этом terminal summary сравнивал неокруглённое значение и печатал FAIL.
+- **Evidence:** GitHub Tests job на `ecac8a1` имел success при строке `FAIL ... 64.98%`; [coverage-boundary-before.txt](evidence/coverage-boundary-before.txt): 1 failed, 1 passed на синтетических границах 6498/10000 и 6500/10000 statements.
+- **Affected files:** `pyproject.toml`, `tests/deployment/test_coverage_gate.py`.
+- **Fix:** `1335a72` — report precision=2, порог остаётся 65%; исправление замечания mypy к numeric narrowing heartbeat — `31077b3`.
+- **Regression:** [coverage-boundary-after.txt](evidence/coverage-boundary-after.txt): coverage CLI отклоняет 64,98% с exit code 2 и принимает 65,00%.
+- **Residual risk / correction:** прежняя формулировка этого отчёта и PR «gate остаётся блокирующим при 64,98%» была неточной: она основывалась на stdout, а не exit code. Этот дефект теперь проверяется отдельно. Coverage не является доказательством безопасности или полноты аудита.
 
 ## Открытые подтверждённые блокеры
 

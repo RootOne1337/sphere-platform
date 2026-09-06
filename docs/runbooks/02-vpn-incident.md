@@ -1,295 +1,115 @@
-# Runbook 02 — VPN Tunnel Failure & Pool Exhaustion
+# Runbook 02 — VPN incidents and address-pool exhaustion
 
-**Severity:** P1  
-**Maintainer:** Infrastructure / Backend Team  
-**Last Updated:** 2026-01-01  
+Updated: 2026-09-06. Scope: the VPN implementation in this repository. This is an
+operating guide for the current incomplete subsystem, not a deployment sign-off.
+The [audit report](../audits/2026-09-05/AUDIT-REPORT.md) records verified defects,
+fixes and remaining blockers.
 
----
+## Current architecture
 
-## Overview
+`VPNPoolService` calls the configured `WG_ROUTER_URL` over HTTP to provision or
+remove peers. The backend container is not documented by this implementation as
+the host of a `wg0` interface. Inspect interfaces on the actual configured router
+using that router's operating procedure.
 
-This runbook covers failures in the AmneziaWG (WireGuard-based) VPN subsystem,
-including: individual tunnel failures, IP pool exhaustion, kill-switch lockout,
-and peer connectivity issues.
+PostgreSQL `vpn_peers` stores device/organization ownership, address, public key,
+encrypted private key/PSK, obfuscation parameters and handshake metadata. Client
+configuration is generated in memory. This backend does not write
+`/etc/wireguard/peers/<device_id>.conf` files.
 
----
+The legacy free list is a Redis sorted set named `vpn:ip_pool:<org_id>`.
+`VPN_POOL_SUBNET` defaults to `10.100.0.0/16`. Separate organization sets currently
+cover the same subnet: global uniqueness and safe reinitialization are **open
+High-severity defects (AUD-11)**. A free-list entry is not proof that an address
+is unused on the router.
 
-## Symptoms
+## Read-only diagnosis
 
-### Tunnel failure
-
-- Devices show `vpn_status: disconnected` in the dashboard despite `vpn_connect` command succeeding
-- ADB commands time out after VPN connect (device network unreachable via VPN IP)
-- Backend API returns `{"detail": "VPN tunnel failed to establish"}` for connect requests
-- Grafana alert: **VpnTunnelFailureRate** fires
-
-### Pool exhaustion
-
-- Backend API returns HTTP 503: `{"detail": "No available VPN IPs in pool"}`
-- Grafana: **VpnPoolUtilization > 90%** alert fires
-- `GET /api/v1/vpn/pool-stats` returns `{"available": 0, "assigned": N, "total": N}`
-
-### Kill-switch lockout
-
-- Device connected to VPN but cannot reach any host (including backend)
-- `vpn_disconnect` command does not restore connectivity
-- ADB log shows `iptables REJECT` for all outgoing traffic
-
----
-
-## Architecture Reference
-
-```
-Backend VPN Manager
-│
-├─ WireGuard interface: wg0
-├─ IP Pool: 10.100.0.0/16 (65534 addresses)
-├─ Peer config: /etc/wireguard/peers/<device_id>.conf
-│
-└─ Kill-switch chain: SPHERE_KILLSWITCH (iptables)
-       └─ ACCEPT wg0 traffic
-       └─ ACCEPT loopback
-       └─ REJECT all other traffic (when kill-switch enabled)
-```
-
-VPN state lifecycle:
-```
-DISCONNECTED → [vpn_connect] → CONNECTING → CONNECTED
-CONNECTED    → [vpn_disconnect] → DISCONNECTING → DISCONNECTED
-CONNECTED    → [tunnel loss]  → ERROR → [self-heal] → RECONNECTING
-```
-
----
-
-## Diagnosis
-
-### Step 1 — Check VPN service status
+Use the deployment's authenticated ingress, not a presumed public backend port.
+`BASE_URL` below is the deployment origin and `TOKEN` belongs to an authorized
+operator; keep their actual values out of incident attachments.
 
 ```bash
-# Is wireguard interface up?
-docker compose exec backend wg show wg0
-
-# Check pool stats
-curl -H "Authorization: Bearer $TOKEN" \
-  http://localhost:8000/api/v1/vpn/pool-stats | jq
-
-# Check VPN health endpoint
-curl -H "Authorization: Bearer $TOKEN" \
-  http://localhost:8000/api/v1/vpn/health | jq
+curl --fail-with-body -H "Authorization: Bearer $TOKEN" \
+  "$BASE_URL/api/v1/vpn/peers"
+curl --fail-with-body -H "Authorization: Bearer $TOKEN" \
+  "$BASE_URL/api/v1/vpn/pool/stats"
 ```
 
-Expected `wg show` output includes active peers, transfer bytes, and last-handshake times.
+The routes are `/pool/stats` and `/peers`; the previous `/pool-stats` and
+`/peers/<device_id>/ip-lease` examples were not implemented endpoints. Assignment
+exhaustion currently raises HTTP 503 with `VPN pool exhausted`.
 
-### Step 2 — Review VPN events
+`GET /api/v1/vpn/health` currently returns a static success response. It does not
+verify a handshake, router availability or usable connectivity. Compare peer
+metadata with the router's actual peer inventory, recent handshakes and a
+permitted reachability check from the affected device. Keep the scope restricted
+to infrastructure you operate.
 
-```bash
-# Recent VPN errors from backend logs
-docker compose logs --no-log-prefix backend | \
-  jq 'select(.event | contains("vpn") or contains("VPN"))' | tail -50
+Read recent backend logs using the deployment's Compose file selection. Match
+peer/device IDs and router response status; avoid collecting generated client
+configuration or decrypted keys. On the router, use its own logs and monitoring.
+Alert names or dashboard values are not assumed to be implemented by this guide.
 
-# WireGuard kernel logs
-journalctl -k | grep -i "wireguard" | tail -20
-dmesg | grep -i "wireguard" | tail -20
+With the deployment's Redis authentication configured, inspect the actual set:
+
+```text
+ZCARD vpn:ip_pool:<org_id>
+ZRANGE vpn:ip_pool:<org_id> 0 20
 ```
 
-### Step 3 — Check specific device VPN state
+An authorized PostgreSQL operator can diagnose conflicting non-free addresses:
 
-```bash
-# Get device VPN status
-curl -H "Authorization: Bearer $TOKEN" \
-  "http://localhost:8000/api/v1/devices/<device_id>" | jq .vpn_status
-
-# List all devices with VPN errors
-curl -H "Authorization: Bearer $TOKEN" \
-  "http://localhost:8000/api/v1/devices?vpn_status=error" | jq '.items[].id'
+```sql
+SELECT tunnel_ip, count(*) AS peer_count
+FROM vpn_peers
+WHERE tunnel_ip IS NOT NULL AND upper(status::text) <> 'FREE'
+GROUP BY tunnel_ip
+HAVING count(*) > 1;
 ```
 
-### Step 4 — Check IP pool state in Redis
+This query does not modify peers and cannot prove that the provider has no
+orphaned peers absent from PostgreSQL. Reconcile both inventories.
 
-```bash
-docker compose exec redis redis-cli
-> SMEMBERS vpn:pool:available   # available IPs
-> SMEMBERS vpn:pool:assigned    # assigned IPs
-> HGETALL  vpn:peer:assignments # device_id → IP mapping
-```
+## Recovery decisions
 
-### Step 5 — Check WireGuard peer configs
+For an individual device, verify organization ownership, server endpoint/public
+key, matching PSK, matching server/client AWG parameters and actual router state.
+A repeated successful assignment now returns the original PSK/configuration;
+it is not evidence that the tunnel has established a handshake.
 
-```bash
-# List generated peer configs
-ls -la /etc/wireguard/peers/ 2>/dev/null || \
-  docker compose exec backend ls /etc/wireguard/peers/
+The implemented removal route is `DELETE /api/v1/vpn/revoke/<device_id>`, restricted
+to the authorized organization administrator. Removal deliberately disrupts that
+device's tunnel; use it only for a confirmed target under the incident's approved
+scope. As of the audit fix, timeout, 403, 500 and unconfirmed 202 preserve the peer
+and address. Confirmed 200/204 or already-absent 404 retain the existing idempotent
+router contract. A failed response must not be followed by manually returning the
+address to Redis.
 
-# Check a specific peer
-docker compose exec backend cat /etc/wireguard/peers/<device_id>.conf
-```
+For pool exhaustion or duplicate addresses, preserve PostgreSQL, Redis and router
+inventory for reconciliation. Stop new allocations through the deployment's
+controlled maintenance procedure while resolving ownership. Do not delete/refill
+the free lists, reclaim an address solely because a device is offline, or expand
+CIDR and restart as an automatic repair. Those actions can reissue an active
+address under the current allocator. The old `VPN_IP_POOL_SIZE` and
+`VPN_IP_POOL_CIDR` settings described by this runbook do not exist; changing the
+real `VPN_POOL_SUBNET` needs a coordinated router/routing and allocation migration.
 
----
+Kill-switch delivery, reconnection and the provider adapter remain under audit.
+Do not assume that a successful API response proves an on-device firewall rule,
+that backend has a particular iptables chain, or that reboot clears it. Use the
+actual installed agent/router recovery procedure and an already available
+management path; verify effective device rules and permissions first.
 
-## Remediation
+## After the incident
 
-### Scenario A — Individual tunnel failure (single device)
+Record the affected organization/device/peer IDs, time window, observed provider
+responses, actual handshake/reachability results and the actions taken. Confirm
+that no address was reassigned before its former peer was removed. Preserve
+unknown outcomes for reconciliation rather than labelling them successful.
 
-```bash
-# Force-disconnect and reconnect via API
-DEVICE_ID="<device_id>"
-TOKEN="<admin_token>"
-
-# 1. Force disconnect
-curl -X POST \
-  -H "Authorization: Bearer $TOKEN" \
-  "http://localhost:8000/api/v1/vpn/peers/$DEVICE_ID/disconnect?force=true"
-
-# 2. Wait 3 seconds
-sleep 3
-
-# 3. Reconnect
-curl -X POST \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  "http://localhost:8000/api/v1/vpn/peers/$DEVICE_ID/connect"
-
-# 4. Check tunnel state after 10 seconds
-sleep 10
-curl -H "Authorization: Bearer $TOKEN" \
-  "http://localhost:8000/api/v1/devices/$DEVICE_ID" | jq '{id, vpn_status, vpn_ip}'
-```
-
-### Scenario B — Mass tunnel failures (10+ devices)
-
-This often indicates a WireGuard interface restart or host reboot.
-
-```bash
-# 1. Restart WireGuard interface
-docker compose exec backend wg-quick down wg0 || true
-docker compose exec backend wg-quick up wg0
-
-# 2. Restart backend (reloads peer configs)
-docker compose restart backend
-
-# 3. Trigger re-register from devices via broadcast WebSocket command
-curl -X POST \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  "http://localhost:8000/api/v1/devices/bulk-actions" \
-  -d '{"action": "reconnect_vpn", "all_devices": true}'
-```
-
-### Scenario C — IP pool exhaustion
-
-#### Immediate relief: reclaim stale assignments
-
-```bash
-# Find devices that have an assigned IP but haven't connected in >24h
-docker compose exec redis redis-cli HGETALL vpn:peer:assignments | \
-  paste - - | while read device_id ip; do
-    last_seen=$(curl -s -H "Authorization: Bearer $TOKEN" \
-      "http://localhost:8000/api/v1/devices/$device_id" | jq -r .last_seen)
-    echo "$device_id $ip $last_seen"
-  done
-```
-
-```bash
-# Force-release stale IP assignment
-curl -X DELETE \
-  -H "Authorization: Bearer $TOKEN" \
-  "http://localhost:8000/api/v1/vpn/peers/$STALE_DEVICE_ID/ip-lease"
-```
-
-#### Permanent fix: expand IP pool range
-
-In `backend/core/config.py`, increase `VPN_IP_POOL_SIZE` or change the CIDR:
-
-```python
-VPN_IP_POOL_CIDR: str = "10.100.0.0/15"   # was /16 (65534), now /15 (131070)
-```
-
-Then restart backend to regenerate the pool:
-
-```bash
-docker compose exec redis redis-cli DEL vpn:pool:available vpn:pool:assigned
-# WARNING: this clears all VP assignments — devices must reconnect
-docker compose restart backend
-```
-
-### Scenario D — Kill-switch lockout
-
-If a device's kill-switch is active and the VPN tunnel is down, the device
-loses all network access, including the ability to reconnect.
-
-**Recovery options (in order of preference):**
-
-**Option 1 — Send disable-killswitch command if device still reachable via ADB USB**
-
-```bash
-# Via PC Agent (LAN)
-adb -s <device_serial> shell \
-  "su -c 'iptables -F SPHERE_KILLSWITCH && iptables -D OUTPUT -j SPHERE_KILLSWITCH 2>/dev/null'"
-```
-
-**Option 2 — Reboot device (kill-switch does not persist across reboot by default)**
-
-```bash
-adb -s <device_serial> reboot
-# Wait for boot (~60s), then reconnect VPN from UI
-```
-
-**Option 3 — Factory / ADB shell reset (last resort)**
-
-```bash
-adb -s <device_serial> shell settings put global airplane_mode_on 1
-adb -s <device_serial> shell am broadcast -a android.intent.action.AIRPLANE_MODE --ez state true
-sleep 5
-adb -s <device_serial> shell settings put global airplane_mode_on 0
-adb -s <device_serial> shell am broadcast -a android.intent.action.AIRPLANE_MODE --ez state false
-```
-
-### Scenario E — Backend VPN manager crashed / stuck
-
-```bash
-# Check for stuck WireGuard config lock
-ls -la /var/run/wireguard/ 2>/dev/null
-rm -f /var/run/wireguard/wg0.lock  # if stuck
-
-# Restart backend service
-docker compose restart backend
-
-# Verify wg0 interface is back
-docker compose exec backend wg show
-```
-
----
-
-## Self-Healing Configuration
-
-The backend VPN manager has built-in self-healing. Check its settings:
-
-```bash
-# Current config values
-docker compose exec backend python -c "
-from backend.core.config import settings
-print('reconnect_attempts:', settings.VPN_RECONNECT_ATTEMPTS)
-print('reconnect_backoff_sec:', settings.VPN_RECONNECT_BACKOFF_SEC)
-print('keepalive_interval:', settings.VPN_KEEPALIVE_INTERVAL_SEC)
-"
-```
-
-Backoff schedule: `1s → 5s → 15s → 60s → 300s` (capped at 5 minutes).
-
----
-
-## Post-Incident
-
-1. Document which devices were affected and for how long.
-2. Review backend logs for the VPN event sequence.
-3. Check if IP pool high-watermark was reached.
-4. If pool exhaustion was the cause, create a GitHub Issue for CIDR expansion.
-5. Update monitoring thresholds if alerts fired too late (or too early).
-
----
-
-## Related
-
-- [01-backend-outage.md](01-backend-outage.md) — If VPN failure is caused by backend crash
-- [04-fleet-offline.md](04-fleet-offline.md) — Mass device disconnect including VPN
-- [docs/configuration.md](../configuration.md) — VPN configuration variables
+Open audit work includes durable global IP reservations, provisioning/revoke
+intent before external effects, lost-response reconciliation, commit/release
+atomicity, Redis-loss recovery, AWG settings, split routes and kill-switch runtime.
+The current tests use local PostgreSQL and mocked router transport; they do not
+certify a deployed tunnel or physical Android behavior.

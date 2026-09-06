@@ -31,13 +31,20 @@ base/full/production combinations are checked with synthetic configuration only.
 Backend CI now enables the isolated PostgreSQL/Redis regressions, has a bounded
 20-minute test job and retains JUnit/coverage artifacts on failure.
 
+VPN assignment now validates the active device in the caller's organization,
+serializes concurrent requests and returns the original PSK on retry. Failed or
+unconfirmed router deletion preserves the peer/address reservation; concurrent
+revocations return it once. The global allocator and ambiguous cross-system
+outcomes remain open blockers.
+
 ## Validation
 
 - Android enterprise debug unit suite: **316 passed**.
-- Combined backend/PC, PostgreSQL/Redis and deployment regressions: **913 passed**.
-  This includes **73 real-service tests** and **6 Compose configuration tests**.
-  Coverage is **64.98%**, still below the unchanged **65%** gate; no threshold or
-  coverage scope was weakened. Long load/soak profiles require a prepared API
+- Combined backend/PC, PostgreSQL/Redis and deployment regressions: **926 passed**.
+  This includes **84 real-service tests** and **6 Compose configuration tests**.
+  Coverage is **65.04%** and passes the unchanged **65%** gate with two-decimal
+  precision. No threshold or coverage scope was weakened. Two additional
+  regression tests exercise the 64.98% rejection and exact 65.00% boundary. Long load/soak profiles require a prepared API
   environment and are excluded from the ordinary PR command.
 - Reproductions and before/after evidence are indexed in
   [the audit report](docs/audits/2026-09-05/AUDIT-REPORT.md).
@@ -74,3 +81,9 @@ is still open. No merge or deployment has been performed.
 The report corrects the earlier ACK-discriminator assessment: the original main
 WebSocket loop already supported untyped legacy acknowledgements. The explicit
 type standardizes the contract; it does not prove all original replies were lost.
+
+The earlier claim that 64.98% necessarily blocked CI was incorrect: the default
+precision rounded it to 65% for the exit decision, despite a FAIL summary.
+`1335a72` fixes precision and adds a real coverage CLI boundary regression.
+`31077b3` fixes the subsequent mypy timestamp-narrowing diagnostics. The latest
+checks must be evaluated on this updated head, not inferred from historical jobs.

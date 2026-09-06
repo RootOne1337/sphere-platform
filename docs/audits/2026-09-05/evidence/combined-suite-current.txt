@@ -2,15 +2,15 @@
 ........................................................................ [ 15%]
 ........................................................................ [ 23%]
 ........................................................................ [ 31%]
-........................................................................ [ 39%]
-........................................................................ [ 47%]
-........................................................................ [ 55%]
-........................................................................ [ 63%]
-........................................................................ [ 70%]
-........................................................................ [ 78%]
-........................................................................ [ 86%]
-........................................................................ [ 94%]
-.................................................                        [100%]
+........................................................................ [ 38%]
+........................................................................ [ 46%]
+........................................................................ [ 54%]
+........................................................................ [ 62%]
+........................................................................ [ 69%]
+........................................................................ [ 77%]
+........................................................................ [ 85%]
+........................................................................ [ 93%]
+..............................................................           [100%]
 ============================== warnings summary ===============================
 .venv-audit\Lib\site-packages\pydantic\fields.py:754: 484 warnings
   C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\pydantic\fields.py:754: PydanticDeprecatedSince20: Using extra keyword arguments on `Field` is deprecated and will be removed. Use `json_schema_extra` instead. (Extra keys: 'deprecated'). Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.6/migration/
@@ -30,117 +30,117 @@ tests/test_updates/test_updates_api.py::TestSSRFGuard::test_file_scheme_rejected
 =============================== tests coverage ================================
 ______________ coverage: platform win32, python 3.12.12-final-0 _______________
 
-Name                                                    Stmts   Miss  Cover
----------------------------------------------------------------------------
-backend\api\v1\account_sessions\router.py                  35     13    63%
-backend\api\v1\audit\router.py                             32     17    47%
-backend\api\v1\auth\router.py                             139     63    55%
-backend\api\v1\batches\router.py                           32     13    59%
-backend\api\v1\bulk\router.py                              29      2    93%
-backend\api\v1\config\router.py                            71     11    85%
-backend\api\v1\device_events\router.py                     35     13    63%
-backend\api\v1\devices\router.py                          242    166    31%
-backend\api\v1\discovery\router.py                         20      1    95%
-backend\api\v1\event_triggers\router.py                    83     15    82%
-backend\api\v1\game_accounts\router.py                     63     31    51%
-backend\api\v1\groups\router.py                            41      7    83%
-backend\api\v1\health\router.py                            18      1    94%
-backend\api\v1\locations\router.py                         39     16    59%
-backend\api\v1\logs\router.py                             101     38    62%
-backend\api\v1\monitoring\router.py                       151    102    32%
-backend\api\v1\n8n\router.py                               77     30    61%
-backend\api\v1\pipeline_settings\router.py                106     65    39%
-backend\api\v1\pipelines\router.py                         88     43    51%
-backend\api\v1\schedules\router.py                         71     39    45%
-backend\api\v1\scripts\router.py                           55     28    49%
-backend\api\v1\streaming\router.py                         62     34    45%
-backend\api\v1\tasks\router.py                            137     89    35%
-backend\api\v1\updates\router.py                           75     11    85%
-backend\api\v1\users\router.py                             85     37    56%
-backend\api\v1\vpn\router.py                              113     42    63%
-backend\api\ws\agent\router.py                            137     69    50%
-backend\api\ws\android\router.py                          431    175    59%
-backend\api\ws\events\router.py                           226    158    30%
-backend\api\ws\stream\router.py                           137     69    50%
-backend\core\config.py                                     57      3    95%
-backend\core\cors.py                                       11      1    91%
-backend\core\dependencies.py                               84     24    71%
-backend\core\exceptions.py                                 33     11    67%
-backend\core\lifespan_registry.py                          17      6    65%
-backend\core\logging_config.py                             21      1    95%
-backend\core\rbac.py                                       25      2    92%
-backend\core\security.py                                   35      1    97%
-backend\core\startup_checks.py                             21     15    29%
-backend\database\engine.py                                 27      8    70%
-backend\database\redis_client.py                           21      9    57%
-backend\main.py                                            76     24    68%
-backend\middleware\audit.py                                64      9    86%
-backend\middleware\tenant_middleware.py                    12      1    92%
-backend\models\account_session.py                          43      2    95%
-backend\models\device_event.py                             33      1    97%
-backend\models\event_trigger.py                            25      1    96%
-backend\models\game_account.py                             72      5    93%
-backend\models\pipeline_settings.py                        31      1    97%
-backend\models\task.py                                     43      2    95%
-backend\monitoring\pool_metrics.py                         31      2    94%
-backend\schemas\account_sessions.py                        65      4    94%
-backend\schemas\dag.py                                    108     26    76%
-backend\schemas\device_events.py                           58      9    84%
-backend\schemas\device_register.py                         56      4    93%
-backend\schemas\devices.py                                122     20    84%
-backend\schemas\discovery.py                               46      2    96%
-backend\schemas\game_accounts.py                          229     60    74%
-backend\schemas\groups.py                                  73      3    96%
-backend\schemas\locations.py                               69     15    78%
-backend\schemas\schedule.py                               138     23    83%
-backend\schemas\webhook.py                                 43      2    95%
-backend\services\account_session_service.py               122    101    17%
-backend\services\batch_service.py                         106     49    54%
-backend\services\bulk_service.py                           69     18    74%
-backend\services\device_event_service.py                   83     65    22%
-backend\services\device_registration_service.py            83      8    90%
-backend\services\device_service.py                        173     94    46%
-backend\services\device_status_cache.py                    69      7    90%
-backend\services\discovery_service.py                      65     25    62%
-backend\services\event_reactor.py                         140     86    39%
-backend\services\game_account_service.py                  179    156    13%
-backend\services\group_service.py                         101     38    62%
-backend\services\health_service.py                         98     13    87%
-backend\services\location_service.py                      101     82    19%
-backend\services\lua_safety.py                             13      1    92%
-backend\services\n8n_webhook_service.py                    99     60    39%
-backend\services\nick_generator.py                         45     27    40%
-backend\services\orchestrator\orchestration_engine.py     238    166    30%
-backend\services\orchestrator\pipeline_executor.py        146    146     0%
-backend\services\orchestrator\pipeline_service.py         152     46    70%
-backend\services\orchestrator\step_handlers.py            331    255    23%
-backend\services\pipeline_settings_service.py              40     25    38%
-backend\services\scheduler\schedule_service.py            115     30    74%
-backend\services\scheduler\scheduler_engine.py            244    244     0%
-backend\services\script_service.py                        105     13    88%
-backend\services\task_queue.py                             58      3    95%
-backend\services\task_service.py                          255     81    68%
-backend\services\vpn\awg_config.py                         59      2    97%
-backend\services\vpn\dependencies.py                       35     14    60%
-backend\services\vpn\event_publisher.py                     7      2    71%
-backend\services\vpn\health_monitor.py                     95     18    81%
-backend\services\vpn\pool_service.py                       90     12    87%
-backend\tasks\ensure_enrollment_key.py                     31     24    23%
-backend\tasks\orchestration_loop.py                        11      4    64%
-backend\tasks\sync_device_status.py                        60     15    75%
-backend\tasks\task_heartbeat_watchdog.py                  139     32    77%
-backend\tasks\vpn_health.py                                56     26    54%
-backend\websocket\connection_manager.py                    98      9    91%
-backend\websocket\event_publisher.py                       47     11    77%
-backend\websocket\frames.py                                38      2    95%
-backend\websocket\heartbeat.py                             90     18    80%
-backend\websocket\offline_queue.py                         85      8    91%
-backend\websocket\pubsub_router.py                        172     43    75%
-backend\websocket\stream_bridge.py                        139     57    59%
----------------------------------------------------------------------------
-TOTAL                                                   10938   3831    65%
+Name                                                    Stmts   Miss   Cover
+----------------------------------------------------------------------------
+backend\api\v1\account_sessions\router.py                  35     13  62.86%
+backend\api\v1\audit\router.py                             32     17  46.88%
+backend\api\v1\auth\router.py                             139     63  54.68%
+backend\api\v1\batches\router.py                           32     13  59.38%
+backend\api\v1\bulk\router.py                              29      2  93.10%
+backend\api\v1\config\router.py                            71     11  84.51%
+backend\api\v1\device_events\router.py                     35     13  62.86%
+backend\api\v1\devices\router.py                          242    166  31.40%
+backend\api\v1\discovery\router.py                         20      1  95.00%
+backend\api\v1\event_triggers\router.py                    83     15  81.93%
+backend\api\v1\game_accounts\router.py                     63     31  50.79%
+backend\api\v1\groups\router.py                            41      7  82.93%
+backend\api\v1\health\router.py                            18      1  94.44%
+backend\api\v1\locations\router.py                         39     16  58.97%
+backend\api\v1\logs\router.py                             101     38  62.38%
+backend\api\v1\monitoring\router.py                       151    102  32.45%
+backend\api\v1\n8n\router.py                               77     30  61.04%
+backend\api\v1\pipeline_settings\router.py                106     65  38.68%
+backend\api\v1\pipelines\router.py                         88     43  51.14%
+backend\api\v1\schedules\router.py                         71     39  45.07%
+backend\api\v1\scripts\router.py                           55     28  49.09%
+backend\api\v1\streaming\router.py                         62     34  45.16%
+backend\api\v1\tasks\router.py                            137     89  35.04%
+backend\api\v1\updates\router.py                           75     11  85.33%
+backend\api\v1\users\router.py                             85     37  56.47%
+backend\api\v1\vpn\router.py                              113     42  62.83%
+backend\api\ws\agent\router.py                            137     69  49.64%
+backend\api\ws\android\router.py                          431    175  59.40%
+backend\api\ws\events\router.py                           226    158  30.09%
+backend\api\ws\stream\router.py                           137     69  49.64%
+backend\core\config.py                                     57      3  94.74%
+backend\core\cors.py                                       11      1  90.91%
+backend\core\dependencies.py                               84     24  71.43%
+backend\core\exceptions.py                                 33     11  66.67%
+backend\core\lifespan_registry.py                          17      6  64.71%
+backend\core\logging_config.py                             21      1  95.24%
+backend\core\rbac.py                                       25      2  92.00%
+backend\core\security.py                                   35      1  97.14%
+backend\core\startup_checks.py                             21     15  28.57%
+backend\database\engine.py                                 27      8  70.37%
+backend\database\redis_client.py                           21      9  57.14%
+backend\main.py                                            76     24  68.42%
+backend\middleware\audit.py                                64      9  85.94%
+backend\middleware\tenant_middleware.py                    12      1  91.67%
+backend\models\account_session.py                          43      2  95.35%
+backend\models\device_event.py                             33      1  96.97%
+backend\models\event_trigger.py                            25      1  96.00%
+backend\models\game_account.py                             72      5  93.06%
+backend\models\pipeline_settings.py                        31      1  96.77%
+backend\models\task.py                                     43      2  95.35%
+backend\monitoring\pool_metrics.py                         31      2  93.55%
+backend\schemas\account_sessions.py                        65      4  93.85%
+backend\schemas\dag.py                                    108     26  75.93%
+backend\schemas\device_events.py                           58      9  84.48%
+backend\schemas\device_register.py                         56      4  92.86%
+backend\schemas\devices.py                                122     20  83.61%
+backend\schemas\discovery.py                               46      2  95.65%
+backend\schemas\game_accounts.py                          229     60  73.80%
+backend\schemas\groups.py                                  73      3  95.89%
+backend\schemas\locations.py                               69     15  78.26%
+backend\schemas\schedule.py                               138     23  83.33%
+backend\schemas\webhook.py                                 43      2  95.35%
+backend\services\account_session_service.py               122    101  17.21%
+backend\services\batch_service.py                         106     49  53.77%
+backend\services\bulk_service.py                           69     18  73.91%
+backend\services\device_event_service.py                   83     65  21.69%
+backend\services\device_registration_service.py            83      8  90.36%
+backend\services\device_service.py                        173     94  45.66%
+backend\services\device_status_cache.py                    69      7  89.86%
+backend\services\discovery_service.py                      65     25  61.54%
+backend\services\event_reactor.py                         140     86  38.57%
+backend\services\game_account_service.py                  179    156  12.85%
+backend\services\group_service.py                         101     38  62.38%
+backend\services\health_service.py                         98     13  86.73%
+backend\services\location_service.py                      101     82  18.81%
+backend\services\lua_safety.py                             13      1  92.31%
+backend\services\n8n_webhook_service.py                    99     60  39.39%
+backend\services\nick_generator.py                         45     27  40.00%
+backend\services\orchestrator\orchestration_engine.py     238    166  30.25%
+backend\services\orchestrator\pipeline_executor.py        146    146   0.00%
+backend\services\orchestrator\pipeline_service.py         152     46  69.74%
+backend\services\orchestrator\step_handlers.py            331    255  22.96%
+backend\services\pipeline_settings_service.py              40     25  37.50%
+backend\services\scheduler\schedule_service.py            115     30  73.91%
+backend\services\scheduler\scheduler_engine.py            244    244   0.00%
+backend\services\script_service.py                        105     13  87.62%
+backend\services\task_queue.py                             58      3  94.83%
+backend\services\task_service.py                          255     81  68.24%
+backend\services\vpn\awg_config.py                         59      2  96.61%
+backend\services\vpn\dependencies.py                       35     14  60.00%
+backend\services\vpn\event_publisher.py                     7      2  71.43%
+backend\services\vpn\health_monitor.py                     95     18  81.05%
+backend\services\vpn\pool_service.py                       92      6  93.48%
+backend\tasks\ensure_enrollment_key.py                     31     24  22.58%
+backend\tasks\orchestration_loop.py                        11      4  63.64%
+backend\tasks\sync_device_status.py                        60     15  75.00%
+backend\tasks\task_heartbeat_watchdog.py                  139     32  76.98%
+backend\tasks\vpn_health.py                                56     26  53.57%
+backend\websocket\connection_manager.py                    98      9  90.82%
+backend\websocket\event_publisher.py                       47     11  76.60%
+backend\websocket\frames.py                                38      2  94.74%
+backend\websocket\heartbeat.py                             90     18  80.00%
+backend\websocket\offline_queue.py                         85      8  90.59%
+backend\websocket\pubsub_router.py                        172     43  75.00%
+backend\websocket\stream_bridge.py                        139     57  58.99%
+----------------------------------------------------------------------------
+TOTAL                                                   10940   3825  65.04%
 
 96 files skipped due to complete coverage.
 Coverage JSON written to file docs/audits/2026-09-05/evidence/coverage-current.json
-FAIL Required test coverage of 65% not reached. Total coverage: 64.98%
-913 passed, 488 warnings in 58.09s
+Required test coverage of 65% reached. Total coverage: 65.04%
+926 passed, 488 warnings in 64.12s (0:01:04)
