@@ -1,5 +1,6 @@
 """Real PostgreSQL peers; in-memory router transport, no external VPN calls."""
 
+from contextlib import asynccontextmanager
 from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
@@ -13,6 +14,7 @@ from backend.models.vpn_peer import VPNPeer, VPNPeerStatus
 from backend.services.vpn.awg_config import AWGConfigBuilder
 from backend.services.vpn.health_monitor import VPNHealthMonitor
 from backend.services.vpn.pool_service import VPNPoolService
+from backend.tasks.vpn_health import _run_health_checks
 
 
 @pytest_asyncio.fixture
@@ -144,3 +146,103 @@ async def test_health_check_recovers_on_next_successful_poll(health_world):
     assert h.peer.is_active is True
     assert h.peer.last_handshake_at > h.observed_at
     h.publisher.send_command_to_device.assert_not_awaited()
+
+
+@pytest.mark.parametrize("age_seconds", [10, 600])
+async def test_revoked_peer_is_not_reactivated_or_reconnected_by_inflight_poll(health_world, age_seconds):
+    h = health_world
+    monitor = h.make_monitor(httpx.Response(200, json={}))
+    monitor._is_device_online = AsyncMock(return_value=True)
+
+    async def revoke_during_poll():
+        async with h.world.sessions() as revoke_db:
+            peer = await revoke_db.get(VPNPeer, h.peer.id)
+            peer.status = VPNPeerStatus.FREE
+            peer.device_id = None
+            peer.is_active = False
+            await revoke_db.commit()
+        return {h.peer.public_key: datetime.now(timezone.utc) - timedelta(seconds=age_seconds)}
+
+    monitor._get_handshake_times = revoke_during_poll
+    stats = await monitor.check_all_peers(h.world.org_a.id)
+    await h.db.commit()
+    async with h.world.sessions() as verify:
+        peer = await verify.get(VPNPeer, h.peer.id)
+        assert peer.status == VPNPeerStatus.FREE
+        assert peer.device_id is None
+        assert peer.is_active is False
+    h.publisher.send_command_to_device.assert_not_awaited()
+    assert stats["checked"] == 0
+
+
+@pytest.mark.parametrize("fail_first_commit", [False, True])
+async def test_background_health_cycle_commits_observations_and_authenticates(health_world, fail_first_commit):
+    h = health_world
+    from sqlalchemy import case
+
+    from backend.models.organization import Organization
+
+    other_peer = VPNPeer(
+        org_id=h.world.org_b.id, device_id=h.world.dev_b.id,
+        public_key="audit-other-peer-key", tunnel_ip="10.210.0.3",
+        private_key_enc=h.cipher.encrypt(b"audit-other-private-key"),
+        status=VPNPeerStatus.ASSIGNED, is_active=False, last_handshake_at=h.observed_at,
+    )
+    h.db.add(other_peer)
+    await h.db.commit()
+    contexts = []
+
+    @asynccontextmanager
+    async def scoped_session(org_id=None):
+        # Scope only organization enumeration to this disposable fixture. Peer
+        # reads/writes and commit/close behavior use the real PostgreSQL session.
+        async with h.world.sessions() as db:
+            execute = db.execute
+
+            async def execute_scoped(statement, *args, **kwargs):
+                if any(desc.get("entity") is Organization for desc in statement.column_descriptions):
+                    statement = statement.where(Organization.id.in_([
+                        h.world.org_a.id, h.world.org_b.id,
+                    ])).order_by(case((Organization.id == h.world.org_a.id, 0), else_=1))
+                return await execute(statement, *args, **kwargs)
+
+            db.execute = execute_scoped
+            if org_id:
+                contexts.append(org_id)
+            if fail_first_commit and org_id == str(h.world.org_a.id):
+                db.commit = AsyncMock(side_effect=ConnectionError("audit commit failed"))
+            yield db
+
+    requests = []
+    fresh = datetime.now(timezone.utc)
+    client_type = httpx.AsyncClient
+
+    def handle(request):
+        requests.append(request)
+        return httpx.Response(200, json={
+            h.peer.public_key: fresh.timestamp(), other_peer.public_key: fresh.timestamp(),
+        })
+
+    def client(**kwargs):
+        return client_type(transport=httpx.MockTransport(handle), **kwargs)
+
+    with (
+        patch("backend.database.engine.get_db_session", scoped_session),
+        patch("backend.database.redis_client.redis", h.world.redis),
+        patch("backend.services.vpn.dependencies.get_awg_config_builder", return_value=h.service.config_builder),
+        patch("backend.services.vpn.dependencies.get_key_cipher", return_value=h.cipher),
+        patch("backend.core.config.settings.WG_ROUTER_API_KEY", "audit-router-key"),
+        patch("backend.services.vpn.health_monitor.httpx.AsyncClient", side_effect=client),
+    ):
+        await _run_health_checks()
+    async with h.world.sessions() as verify:
+        peer = await verify.get(VPNPeer, h.peer.id)
+        expected = h.observed_at if fail_first_commit else fresh
+        assert peer.last_handshake_at == expected, "Only a committed observation may survive session close"
+        assert peer.is_active is True
+        second = await verify.get(VPNPeer, other_peer.id)
+        assert second.last_handshake_at == fresh, "One tenant's failed commit must not stop the next tenant"
+        assert second.is_active is True
+    assert contexts == [str(h.world.org_a.id), str(h.world.org_b.id)]
+    assert [request.method for request in requests] == ["GET", "GET"]
+    assert all(request.headers.get("X-API-Key") == "audit-router-key" for request in requests)

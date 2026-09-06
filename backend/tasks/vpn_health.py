@@ -67,31 +67,34 @@ async def _run_health_checks() -> None:
     from backend.services.vpn.pool_service import VPNPoolService
 
     async with get_db_session() as db:
-        result = await db.execute(select(Organization))
-        orgs = list(result.scalars().all())
+        result = await db.execute(select(Organization.id))
+        org_ids = list(result.scalars().all())
 
-        config_builder = get_awg_config_builder()
-        key_cipher = get_key_cipher()
-        ip_pool = IPPoolAllocator(_redis, subnet=settings.VPN_POOL_SUBNET)
-        pool_svc = VPNPoolService(
-            db=db,
-            ip_pool=ip_pool,
-            config_builder=config_builder,
-            key_cipher=key_cipher,
-            wg_router_url=settings.WG_ROUTER_URL,
-            wg_router_api_key=settings.WG_ROUTER_API_KEY,
-        )
-        publisher = EventPublisher()
-        monitor = VPNHealthMonitor(
-            db=db,
-            pool_service=pool_svc,
-            publisher=publisher,
-            wg_router_url=settings.WG_ROUTER_URL,
-            redis=_redis,
-        )
+    config_builder = get_awg_config_builder()
+    key_cipher = get_key_cipher()
+    for org_id in org_ids:
         try:
-            for org in orgs:
-                await monitor.check_all_peers(org.id)
-        finally:
-            await monitor.close()
-            await pool_svc.close()
+            async with get_db_session(org_id=str(org_id)) as db:
+                pool_svc = VPNPoolService(
+                    db=db,
+                    ip_pool=IPPoolAllocator(_redis, subnet=settings.VPN_POOL_SUBNET),
+                    config_builder=config_builder,
+                    key_cipher=key_cipher,
+                    wg_router_url=settings.WG_ROUTER_URL,
+                    wg_router_api_key=settings.WG_ROUTER_API_KEY,
+                )
+                monitor = VPNHealthMonitor(
+                    db=db, pool_service=pool_svc, publisher=EventPublisher(),
+                    wg_router_url=settings.WG_ROUTER_URL, redis=_redis,
+                )
+                try:
+                    await monitor.check_all_peers(org_id)
+                    await db.commit()
+                finally:
+                    await monitor.close()
+                    await pool_svc.close()
+        except Exception as exc:
+            # One failed tenant transaction must not roll back another tenant's
+            # observations or prevent their next health check.
+            logger.error('VPN organization health check failed',
+                         org_id=str(org_id), error_type=type(exc).__name__)

@@ -322,7 +322,16 @@ runtime-проверок и не считается доказательство
 - **Evidence:** [vpn-health-before.txt](evidence/vpn-health-before.txt): 13 failures на PostgreSQL и httpx.MockTransport; router mutation после timeout/401/503/невалидного snapshot, peer без handshake, отсутствие auth header и потеря PSK. Внешний router не вызывался.
 - **Fix:** валидируются status, форма snapshot и timestamps; неизвестное состояние сохраняет последние данные и возвращает checked=0/error. Health-check больше не создаёт peers по handshake API. API key передаётся в background service/client. Retry и reconnect используют общий config builder с сохранённым PSK, без лишней генерации QR при reconnect.
 - **Regression:** `tests/production/test_vpn_health_recovery.py` — 16 cases, включая NaN/future timestamps и восстановление после неудачного poll. Прежний тест «missing peer» проверял только первоначальный assignment call; теперь проверяет отсутствие POST из monitor.
-- **Residual risk:** отсутствие peer требует отдельной сверки с authoritative provider inventory и durable provisioning intent. EventPublisher остаётся stub, фактическая доставка reconnect и handshake не доказаны. Commit фонового health-check, конкурентность revoke, global leases и маршруты остаются отдельной работой; этот fix не закрывает AUD-11.
+- **Residual risk:** отсутствие peer требует отдельной сверки с authoritative provider inventory и durable provisioning intent. EventPublisher остаётся stub, фактическая доставка reconnect и handshake не доказаны. Commit фонового health-check и overlap revoke разобраны в AUD-29; global leases и маршруты остаются открытыми. Этот fix не закрывает AUD-11.
+
+### AUD-29 — High: фоновая проверка VPN теряла данные и использовала отозванный peer
+
+- **Root cause:** get_db_session не делает автоматический commit, а health loop ограничивался flush. После router poll обновлялась старая ORM-модель без повторной проверки status/device; конкурентный revoke уже мог завершиться. Это позволяло вернуть is_active=True для FREE peer или сформировать reconnect с отозванной конфигурацией.
+- **Affected files:** `backend/tasks/vpn_health.py`, `backend/services/vpn/health_monitor.py`.
+- **Evidence:** [vpn-health-transaction-before.txt](evidence/vpn-health-transaction-before.txt): 3 failures — свежий/stale snapshot, перекрытый подтверждённым SQL revoke, и потеря observation при закрытии background session.
+- **Fix:** условный SQL UPDATE проверяет прежнюю организацию, устройство и ASSIGNED непосредственно при записи; изменённый peer пропускается. Background job использует отдельную tenant-context session и явный commit для каждой организации, продолжает после ошибки одной организации.
+- **Regression:** расширенная VPN suite: [vpn-health-transaction-after.txt](evidence/vpn-health-transaction-after.txt), 112 passed. 20 новых health cases включают реальный PostgreSQL commit/rollback и отказ commit первой организации с успешной обработкой второй.
+- **Residual risk:** polling и reconnect не имеют долговечного outbox; доставка после commit/revoke и stop acknowledgement требуют отдельного протокола с fencing. Redis lease фонового цикла пока не продлевается; длительные циклы могут пересекаться. Тест организации задаёт изолированную enumeration boundary и не доказывает полный rollout RLS.
 
 ## Открытые подтверждённые блокеры
 

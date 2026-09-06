@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 
 import httpx
 import structlog
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.models.vpn_peer import VPNPeer, VPNPeerStatus
@@ -76,24 +76,35 @@ class VPNHealthMonitor:
                     "error": "router_unavailable"}
         now = datetime.now(timezone.utc)
 
-        stale = missing = reconnects = 0
+        checked = stale = missing = reconnects = 0
 
         for peer in peers:
             last_handshake = handshake_data.get(peer.public_key)
 
+            since_sec = (now - last_handshake).total_seconds() if last_handshake else None
+            values: dict = {"is_active": since_sec is not None and since_sec < self.STALE_HANDSHAKE_THRESHOLD}
+            if last_handshake:
+                values["last_handshake_at"] = last_handshake
+            # The router poll can overlap revocation. Recheck ownership/state
+            # when writing, rather than flushing an obsolete ORM snapshot.
+            current = await self.db.scalar(update(VPNPeer).where(
+                VPNPeer.id == peer.id,
+                VPNPeer.org_id == org_id,
+                VPNPeer.device_id == peer.device_id,
+                VPNPeer.status == VPNPeerStatus.ASSIGNED,
+            ).values(**values).returning(VPNPeer.id).execution_options(synchronize_session="fetch"))
+            if current is None:
+                continue
+            checked += 1
+
             if last_handshake is None:
                 missing += 1
-                peer.is_active = False
                 # Zero/absent handshake can mean the peer has never connected.
                 # Provisioning requires an authoritative inventory and durable
                 # intent, neither of which this observation endpoint provides.
                 continue
 
-            since_sec = (now - last_handshake).total_seconds()
-            peer.last_handshake_at = last_handshake
-            peer.is_active = since_sec < self.STALE_HANDSHAKE_THRESHOLD
-
-            if since_sec > self.STALE_HANDSHAKE_THRESHOLD:
+            if since_sec is not None and since_sec >= self.STALE_HANDSHAKE_THRESHOLD:
                 stale += 1
                 # FIX 6.4: only reconnect online devices (avoids false alerts for
                 # powered-off emulators generating hundreds of spurious vpn_reconnect)
@@ -109,7 +120,7 @@ class VPNHealthMonitor:
 
         await self.db.flush()
         return {
-            "checked": len(peers),
+            "checked": checked,
             "stale": stale,
             "missing": missing,
             "reconnects": reconnects,
@@ -125,7 +136,7 @@ class VPNHealthMonitor:
                 VPNPeer.org_id == org_id,
                 VPNPeer.status == VPNPeerStatus.ASSIGNED,
                 VPNPeer.device_id.isnot(None),
-            )
+            ).order_by(VPNPeer.id)
         )
         return list(result.scalars().all())
 
