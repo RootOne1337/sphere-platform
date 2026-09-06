@@ -566,3 +566,12 @@ adb shell iptables -L SPHERE_KILLSWITCH
 | ForegroundServiceStartNotAllowedException | try-catch в BootReceiver | BootReceiver.kt |
 
 **Тесты**: 272 теста в 16 файлах (JUnit, MockK, Turbine, Robolectric).
+
+
+### Проверенный audit snapshot — 6 сентября 2026
+
+333 enterprise debug JVM tests passed. Управляющие команды требуют явный
+`payload.task_id`; late cancel/pause/resume не воздействуют на другой DAG.
+Подробности, ограничения cooperative stop и порядок backend/APK rollout:
+[контракт управления задачами](security/task-control-protocol.md). Это не
+измерение физической остановки, CPU/RAM/FPS или ёмкости 10–64 эмуляторов.

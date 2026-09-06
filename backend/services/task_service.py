@@ -570,7 +570,9 @@ class TaskService:
             await self.publisher.send_command_live(
                 device_id_str,
                 {
-                    "command_id": str(task_id),
+                    # A control receipt must not enter the DAG result handler,
+                    # including when cancellation's SQL transaction rolls back.
+                    "command_id": f"user_cancel_{task_id}",
                     "type": "CANCEL_DAG",
                     "signed_at": int(datetime.now(timezone.utc).timestamp()),
                     "payload": {"task_id": str(task_id)},

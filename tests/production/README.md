@@ -50,3 +50,10 @@ retained ORM snapshots to check cancel/force-stop against terminal results. It
 also holds a result transaction open while cancellation runs, verifies no early
 queue/publisher effect, and checks tenant rejection and valid active transitions.
 These tests do not prove physical device stop or durable delivery of cancellation.
+
+`test_cancellation_commands.py` delivers stop ACKs through the real backend
+handler after injected Redis/SQL failure and verifies that they cannot finalize
+the DAG or clear its journal. It also verifies a targeted watchdog stop after
+TIMEOUT. Pair these tests with Android `ControlCommandTargetTest` and the
+[control contract](../../docs/security/task-control-protocol.md); neither suite
+establishes durable stop delivery or physical execution acknowledgement.

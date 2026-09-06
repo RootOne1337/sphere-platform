@@ -28,6 +28,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.decodeFromJsonElement
@@ -227,32 +228,27 @@ class CommandDispatcher @Inject constructor(
                 (streamingManager as? StreamingManagerImpl)?.onViewerConnected()
                 return
             }
-            // ── CANCEL_DAG: bypass dagMutex ──
-            "CANCEL_DAG" -> {
-                val cmdId = msg["command_id"]?.jsonPrimitive?.contentOrNull ?: ""
-                // FIX D7: TTL-проверка для управляющих команд (защита от replay attack)
+            // Controls bypass dagMutex but are fenced to a particular execution.
+            "CANCEL_DAG", "PAUSE_DAG", "RESUME_DAG" -> {
+                val cmdId = (msg["command_id"] as? JsonPrimitive)?.contentOrNull ?: ""
                 if (isControlCommandExpired(msg, cmdId)) return
-                Timber.i("[CANCEL_DAG] Received cancel for command=$cmdId")
-                dagRunner.requestCancel()
-                ack(cmdId, "completed")
-                return
-            }
-            // ── PAUSE_DAG: bypass dagMutex, пауза работающего DAG между нодами ──
-            "PAUSE_DAG" -> {
-                val cmdId = msg["command_id"]?.jsonPrimitive?.contentOrNull ?: ""
-                if (isControlCommandExpired(msg, cmdId)) return
-                Timber.i("[PAUSE_DAG] Received pause for command=$cmdId")
-                dagRunner.requestPause()
-                ack(cmdId, "completed")
-                return
-            }
-            // ── RESUME_DAG: bypass dagMutex, снятие паузы ──
-            "RESUME_DAG" -> {
-                val cmdId = msg["command_id"]?.jsonPrimitive?.contentOrNull ?: ""
-                if (isControlCommandExpired(msg, cmdId)) return
-                Timber.i("[RESUME_DAG] Received resume for command=$cmdId")
-                dagRunner.requestResume()
-                ack(cmdId, "completed")
+                val target = ((msg["payload"] as? JsonObject)?.get("task_id") as? JsonPrimitive)
+                    ?.takeIf { it.isString }?.contentOrNull
+                if (target.isNullOrBlank()) {
+                    ack(cmdId, "failed", error = "invalid_task_target")
+                    return
+                }
+                val accepted = when (msg["type"]?.jsonPrimitive?.content) {
+                    "CANCEL_DAG" -> dagRunner.requestCancel(target)
+                    "PAUSE_DAG" -> dagRunner.requestPause(target)
+                    else -> dagRunner.requestResume(target)
+                }
+                if (accepted) {
+                    // This acknowledges the control request, not physical stop.
+                    ack(cmdId, "completed", result = buildJsonObject {
+                        put("task_id", target); put("control_accepted", true)
+                    })
+                } else ack(cmdId, "failed", error = "task_not_running")
                 return
             }
         }

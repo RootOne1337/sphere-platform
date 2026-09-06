@@ -94,13 +94,20 @@ class DagRunner @Inject constructor(
 
     private val json = Json { ignoreUnknownKeys = true }
 
+    // Match the target and change flags under the same lock used to start/end
+    // execution. A delayed control must never cross into the next DAG.
+    private val executionLock = Any()
+    private var activeCommandId: String? = null
+
     @Volatile
     private var cancelRequested = false
 
-    /** Called from CommandDispatcher when CANCEL_DAG arrives. */
-    fun requestCancel() {
+    /** A null target is reserved for local callers; wire controls require an ID. */
+    fun requestCancel(commandId: String? = null): Boolean = synchronized(executionLock) {
+        if (activeCommandId == null || (commandId != null && commandId != activeCommandId)) return false
         cancelRequested = true
         Timber.i("[DAG] Cancel requested by user")
+        true
     }
 
     @Volatile
@@ -111,18 +118,22 @@ class DagRunner @Inject constructor(
      * и возобновляется только при вызове [requestResume] или [requestCancel].
      * Called from CommandDispatcher when PAUSE_DAG arrives.
      */
-    fun requestPause() {
+    fun requestPause(commandId: String? = null): Boolean = synchronized(executionLock) {
+        if (activeCommandId == null || (commandId != null && commandId != activeCommandId)) return false
         pauseRequested = true
         Timber.i("[DAG] Pause requested by user")
+        true
     }
 
     /**
      * Снимает DAG с паузы — выполнение продолжается с той ноды, на которой остановились.
      * Called from CommandDispatcher when RESUME_DAG arrives.
      */
-    fun requestResume() {
+    fun requestResume(commandId: String? = null): Boolean = synchronized(executionLock) {
+        if (activeCommandId == null || (commandId != null && commandId != activeCommandId)) return false
         pauseRequested = false
         Timber.i("[DAG] Resume requested by user")
+        true
     }
 
     // ── Public API ────────────────────────────────────────────────────────────
@@ -136,9 +147,24 @@ class DagRunner @Inject constructor(
      *                     Без явного значения: берётся из dagJson["timeout_ms"] или 300_000ms (5 мин).
      */
     suspend fun execute(commandId: String, dagJson: JsonObject, timeoutMs: Long? = null): JsonObject {
-        cancelRequested = false  // сброс при новом запуске
-        pauseRequested  = false  // сброс при новом запуске
+        synchronized(executionLock) {
+            check(activeCommandId == null) { "device_execution_busy" }
+            cancelRequested = false
+            pauseRequested = false
+            activeCommandId = commandId
+        }
+        try {
+            return executeActive(commandId, dagJson, timeoutMs)
+        } finally {
+            synchronized(executionLock) {
+                activeCommandId = null
+                cancelRequested = false
+                pauseRequested = false
+            }
+        }
+    }
 
+    private suspend fun executeActive(commandId: String, dagJson: JsonObject, timeoutMs: Long?): JsonObject {
         val entryNodeId = dagJson["entry_node"]!!.jsonPrimitive.content
         val nodesArray = dagJson["nodes"]!!.jsonArray          // LIST, не map!
         // Приоритет: явный параметр → поле в DAG → дефолт 5 мин.

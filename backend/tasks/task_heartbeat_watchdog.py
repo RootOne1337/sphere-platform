@@ -270,6 +270,7 @@ async def _expire_stale_tasks() -> None:
                             "command_id": f"watchdog_cancel_{task_id}",
                             "signed_at": int(_time.time()),
                             "ttl_seconds": 30,
+                            "payload": {"task_id": task_id},
                         },
                     )
                     logger.info(

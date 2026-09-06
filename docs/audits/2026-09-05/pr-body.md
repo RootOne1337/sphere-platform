@@ -75,11 +75,18 @@ that classification. The failed receipt survives duplicate delivery. Live touch
 handlers contain the failure without another send or an uncaught coroutine error.
 A successful pipe flush still does not prove physical execution or exit status.
 
+DAG controls now require an explicit task target and atomically match it to the
+active Android execution. Delayed cancel/pause/resume cannot affect a different
+DAG; missing or inactive targets return failed control receipts. Watchdog includes
+the target, and user stop has a distinct control ID so its ACK cannot falsely
+complete a task after Redis/SQL rollback. Acceptance remains separate from
+physical stop; durable cancellation and ordering within a task remain open.
+
 ## Validation
 
-- Android enterprise debug unit suite: **326 passed**.
-- Combined backend/PC, PostgreSQL/Redis and deployment regressions: **1028 passed**.
-  This includes **172 real-service tests** and **6 Compose configuration tests**.
+- Android enterprise debug unit suite: **333 passed**.
+- Combined backend/PC, PostgreSQL/Redis and deployment regressions: **1031 passed**.
+  This includes **175 real-service tests** and **6 Compose configuration tests**.
   Coverage is **66.57%** and passes the unchanged **65%** gate with two-decimal
   precision. No threshold or coverage scope was weakened. Two additional
   regression tests exercise the 64.98% rejection and exact 65.00% boundary. Long load/soak profiles require a prepared API
@@ -111,6 +118,10 @@ n8n/MinIO ingress, runtime database roles, durable OTA/log storage, task-specifi
 stop acknowledgements, cancellation under Redis/commit failure, batch/scheduler
 cancellation and post-commit webhook delivery remain open. Existing
 incorrect batch counters and legacy task metadata require reconciliation.
+Update all backend writers before enforcing explicit control targets in the APK;
+old watchdog messages lack a target and will be rejected. Old APKs still need
+updating to prevent controls from affecting a different task. See the
+[control contract](docs/security/task-control-protocol.md) for rollout limits.
 
 The VPN migration refuses duplicate held IPs, invalid addresses/network prefixes
 and downgrade with pending intents. Reconcile PostgreSQL/router inventories and

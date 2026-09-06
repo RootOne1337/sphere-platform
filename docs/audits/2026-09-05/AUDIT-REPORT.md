@@ -19,9 +19,9 @@ runtime-проверок и не считается доказательство
 
 | Проверка | Результат | Практическое ограничение |
 | --- | --- | --- |
-| Android enterprise debug unit suite | 326 passed, 0 failed | JVM/MockWebServer; не проверяет ОС, codec, батарею или смерть процесса на телефоне |
-| Объединённая Backend/PC/production/deployment suite | **1028 passed, 0 failed**; coverage **66,57%** | Строгий coverage gate 65% пройден с precision=2. Load suite исключена; 6 Compose config tests не запускают сервисы |
-| Проверки PostgreSQL/Redis | **172 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
+| Android enterprise debug unit suite | 333 passed, 0 failed | JVM/MockWebServer; не проверяет ОС, codec, батарею или смерть процесса на телефоне |
+| Объединённая Backend/PC/production/deployment suite | **1031 passed, 0 failed**; coverage **66,57%** | Строгий coverage gate 65% пройден с precision=2. Load suite исключена; 6 Compose config tests не запускают сервисы |
+| Проверки PostgreSQL/Redis | **175 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
 | Миграции | Применены до **20260906_account_ciphertext** включительно | Только изолированная БД; конфликтные данные/downgrade проверены в throwaway schema; production не мигрировался |
 | Backend image | Собирается; исходная запись OpenAPI воспроизведённо падает с PermissionError | Исправлен lifespan; полный deployment runtime ещё не подтверждён |
 | Frontend build | Успешно | Type-check/Jest и браузерный runtime требуют отдельного завершения проверки |
@@ -32,7 +32,7 @@ runtime-проверок и не считается доказательство
 Предыдущий отдельный DAG benchmark однажды занял 127,1 ms при пороге 100 ms;
 изолированный повтор и последующие общие прогоны прошли. Порог не ослаблялся.
 Файл production-regressions-after.txt сохраняет более ранний standalone snapshot
-с 41 тестом; актуальные 172 входят в общий прогон.
+с 41 тестом; актуальные 175 входят в общий прогон.
 
 Команды запуска и предохранители изоляции: [tests/production/README.md](../../../tests/production/README.md).
 Исходные `14 passed` в [reproductions.txt](evidence/reproductions.txt) означают
@@ -406,7 +406,25 @@ runtime-проверок и не считается доказательство
 - **Regression:** `tests/production/test_cancellation_serialization.py`: 14 passed — три terminal outcomes, два cancellation path, блокировка конкурирующим result owner, tenant 404 и разрешённая отмена активных задач. [cancellation-serialization-after.txt](evidence/cancellation-serialization-after.txt).
 - **Residual risk:** это сериализация серверного решения, а не подтверждение физической остановки APK. Pre-commit CANCEL_DAG, Redis failure, durable cancellation/stop ACK, отдельные batch/scheduler cancellation paths и остановка уже доставленной ASSIGNED задачи требуют продолжения проверки.
 
-## Продолжение обследования: ещё не закрытые компоненты
+### AUD-36 — High: ACK остановки мог ложно завершить DAG после rollback
+
+- **Root cause:** user force-stop отправлял CANCEL_DAG с command_id, равным UUID задачи. Android отвечал completed на принятие control; backend считал любой такой UUID ACK результатом DAG. Если после отправки stop происходил отказ Redis или SQL commit, задача оставалась RUNNING, а запоздалый ACK записывал COMPLETED и подтверждал чужой журнал результата.
+- **Affected files:** `backend/services/task_service.py`, `backend/api/ws/android/router.py` (граница обработки ACK, без изменения handler).
+- **Evidence:** [cancellation-commands-before.txt](evidence/cancellation-commands-before.txt): два PostgreSQL runtime failures при injected redis_release/sql_commit; ACK проходит через настоящий handle_command_result, stored status становится COMPLETED вместо RUNNING.
+- **Fix:** user stop использует отдельный `user_cancel_<task_id>` command_id, а UUID цели остаётся в payload.task_id. Такой receipt не попадает в DAG result persistence и не вызывает result_ack для журнала задачи.
+- **Regression:** оба отказа после delivery + проверка неизменённого результата/отсутствия DAG result_ack. [cancellation-commands-after.txt](evidence/cancellation-commands-after.txt): 24 связанных backend cases passed.
+- **Residual risk:** stop всё ещё может быть принят APK до SQL rollback; здесь исправлена ложная успешная запись, но не согласование остановки после отказа. Нужны durable intent/outbox и отдельный stop ACK. На wire distinct ID — обязательный контракт; произвольные новые control producers не должны использовать UUID задачи.
+
+### AUD-37 — High: запоздалое управление старой задачей воздействовало на новый DAG
+
+- **Root cause:** Android CANCEL_DAG/PAUSE_DAG/RESUME_DAG не использовали payload.task_id; TTL не предотвращал доставку устаревшей команды внутри допустимого окна. Watchdog вообще не передавал task_id в payload.
+- **Affected files:** `android/.../commands/CommandDispatcher.kt`, `DagRunner.kt`, `backend/tasks/task_heartbeat_watchdog.py`.
+- **Evidence:** [android-control-target-before.txt](evidence/android-control-target-before.txt): 6 failures, 1 positive control passed. Настоящие dispatcher/journal/runner исполняют task A, затем task B; отмена A прерывает B. Отдельно воспроизведены late pause/resume, malformed/missing target и ложный ACK после завершения/ошибки DAG. Третий случай в cancellation-commands-before.txt доказывает отсутствие target у watchdog.
+- **Fix:** обязательный строковый target; проверка ID активного execution и изменение flags атомарны относительно start/finally cleanup. Неактивная цель получает task_not_running, неверная — invalid_task_target. Watchdog передаёт task_id. ACK явно содержит control_accepted и не утверждает физическую остановку.
+- **Regression:** 7 новых Android integration-on-JVM случаев, **333 Android tests passed**, 0 failures/errors/skips; [android-control-target-after.txt](evidence/android-control-target-after.txt). Реальный PostgreSQL watchdog test проверяет target после TIMEOUT commit.
+- **Residual risk:** нет durable cancellation и ordering controls внутри одного task_id; delayed resume той же задачи всё ещё требует sequence/generation. Между claim и началом execution control может быть отклонён; текущая нода останавливается кооперативно. Для rollout сначала обновляются все backend writers, затем APK: старый watchdog не передаёт target и новый APK его отвергает. Физические устройства не тестировались. [Контракт и rollout](../../security/task-control-protocol.md).
+
+## Продолжение обследования остальных компонентов
 
 Следующие пункты — кандидаты/недостаточное покрытие, а не автоматически доказанные
 эксплуатируемые уязвимости: Android FGS/boot/timeout, root-only действия на обычных
