@@ -1,0 +1,38 @@
+FFF                                                                      [100%]
+================================== FAILURES ===================================
+___________ test_farming_task_has_version_without_redis_publication ___________
+tests\production\test_task_producers.py:25: in test_farming_task_has_version_without_redis_publication
+    assert task.script_version_id == w.version.id
+E   AssertionError: assert None == UUID('6ecea30e-3dd7-4a79-b10d-5901ee38cf9e')
+E    +  where None = <backend.models.task.Task object at 0x00000205CB0B7A10>.script_version_id
+E    +  and   UUID('6ecea30e-3dd7-4a79-b10d-5901ee38cf9e') = <backend.models.script.ScriptVersion object at 0x00000205CB0261E0>.id
+E    +    where <backend.models.script.ScriptVersion object at 0x00000205CB0261E0> = namespace(make_url=<function make_url at 0x00000205C507D080>, url=postgresql+asyncpg://audit:***@127.0.0.1:55432/spher...bind=<sqlalchemy.ext.asyncio.engine.AsyncEngine object at 0x00000205CAA19510>, autoflush=True, expire_on_commit=False)).version
+---------------------------- Captured stdout call -----------------------------
+{"account_id": "cef5ac9d-de6a-4ae4-9f63-0670ef47c4d4", "nick": null, "server": null, "device_id": "3a795915-c02d-422f-864a-d2c378de3127", "task_id": "a5cbb7d1-bce2-4f43-9e34-574521c7be7f", "level": "info", "target": null, "event": "orchestration.farm_created", "logger": "backend.services.orchestrator.orchestration_engine", "timestamp": "2026-09-06T09:31:52.697217Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.services.orchestrator.orchestration_engine:orchestration_engine.py:344 {'account_id': 'cef5ac9d-de6a-4ae4-9f63-0670ef47c4d4', 'nick': None, 'server': None, 'device_id': '3a795915-c02d-422f-864a-d2c378de3127', 'task_id': 'a5cbb7d1-bce2-4f43-9e34-574521c7be7f', 'level': 'info', 'target': None, 'event': 'orchestration.farm_created', 'logger': 'backend.services.orchestrator.orchestration_engine', 'timestamp': '2026-09-06T09:31:52.697217Z'}
+____________________ test_n8n_viewer_cannot_execute_a_task ____________________
+tests\production\test_task_producers.py:35: in test_n8n_viewer_cannot_execute_a_task
+    assert response.status_code == 403
+E   assert 201 == 403
+E    +  where 201 = <Response [201 Created]>.status_code
+_____ test_n8n_valid_task_pins_current_version_and_rejects_foreign_device _____
+tests\production\test_task_producers.py:43: in test_n8n_valid_task_pins_current_version_and_rejects_foreign_device
+    assert response.status_code == 404
+E   assert 201 == 404
+E    +  where 201 = <Response [201 Created]>.status_code
+============================== warnings summary ===============================
+.venv-audit\Lib\site-packages\pydantic\fields.py:754: 484 warnings
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\pydantic\fields.py:754: PydanticDeprecatedSince20: Using extra keyword arguments on `Field` is deprecated and will be removed. Use `json_schema_extra` instead. (Extra keys: 'deprecated'). Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.6/migration/
+    warn(
+
+backend\api\v1\game_accounts\router.py:94
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\api\v1\game_accounts\router.py:94: DeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+    sort_dir: str = Query("desc", regex="^(asc|desc)$", description="Направление сортировки"),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/production/test_task_producers.py::test_farming_task_has_version_without_redis_publication
+FAILED tests/production/test_task_producers.py::test_n8n_viewer_cannot_execute_a_task
+FAILED tests/production/test_task_producers.py::test_n8n_valid_task_pins_current_version_and_rejects_foreign_device
+3 failed, 485 warnings in 1.14s

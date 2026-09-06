@@ -19,9 +19,12 @@ and ignore intermediate acknowledgements.
 
 ## Validation
 
-- Android enterprise debug unit suite: **315 passed**.
-- Backend/PC suite, excluding load and separate production regressions: **834 passed**.
-- Dedicated loopback PostgreSQL/Redis regressions: **26 passed, 1 strict xfail**.
+- Android enterprise debug unit suite: **316 passed**.
+- Backend/PC suite: an earlier full run had **834 passed**. The latest had
+  **833 passed and one performance-threshold failure** (500-node DAG validation,
+  127.1 ms vs 100 ms); its isolated rerun passed. The threshold was not relaxed.
+  Load tests and real-service regressions run separately.
+- Dedicated loopback PostgreSQL/Redis regressions: **38 passed, no xfail**.
 - Reproductions and before/after evidence are indexed in
   [the audit report](docs/audits/2026-09-05/AUDIT-REPORT.md).
 - Tests cover PostgreSQL row/commit behavior, Redis atomicity and lost responses,
@@ -31,10 +34,12 @@ and ignore intermediate acknowledgements.
 ## Remaining blockers and rollout constraints
 
 This remains an **ongoing draft audit**, not a production-readiness assertion.
-The strict xfail is a confirmed defect: publishing a task to Redis before the
-PostgreSQL transaction commits leaves ghost tasks on rollback. Durable task
-dispatch/recovery, full RLS rollout, orchestrator/VPN/deployment defects and the
-remaining component audit are still open.
+The former strict xfail now passes: committed PostgreSQL assignments own dispatch
+intent, row locks serialize workers, and receipt-based retries survive lost
+transport responses. n8n/orchestrator producers use the validated task contract;
+resolved account payloads determine DAG cache identity. Full RLS rollout,
+orchestrator accounting/concurrency, VPN/deployment and the remaining component
+audit are still open. Legacy running assignments require rollout reconciliation.
 
 Apply the device refresh migration before deploying the new backend; previously
 issued refresh tokens require device re-enrollment. The command journal retains

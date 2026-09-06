@@ -19,9 +19,9 @@ runtime-проверок и не считается доказательство
 
 | Проверка | Результат | Практическое ограничение |
 | --- | --- | --- |
-| Android enterprise debug unit suite | 315 passed, 0 failed | JVM/MockWebServer; не проверяет ОС, codec, батарею или смерть процесса на телефоне |
-| Backend/PC существующая suite и lifespan regressions | 834 passed | Load suite исключена; часть тестов использует SQLite/fakeredis |
-| Новые проверки PostgreSQL/Redis | 26 passed, 1 strict xfail | xfail — открытый AUD-09, а не исправленный дефект |
+| Android enterprise debug unit suite | 316 passed, 0 failed | JVM/MockWebServer; не проверяет ОС, codec, батарею или смерть процесса на телефоне |
+| Backend/PC существующая suite и lifespan regressions | Предыдущий полный прогон: 834 passed. Последний: 833 passed, 1 performance failure; отдельный повтор этого теста прошёл | Порог DAG validation 100 ms: последний замер 127.1 ms на общей станции. Порог не ослаблялся; load suite исключена |
+| Новые проверки PostgreSQL/Redis | 38 passed, 0 xfail | Включены rollback, dispatch recovery и n8n/orchestrator producers |
 | Миграции | Исходные миграции и device refresh применены к изолированной БД | Данные production не мигрировались |
 | Backend image | Собирается; исходная запись OpenAPI воспроизведённо падает с PermissionError | Исправлен lifespan; полный deployment runtime ещё не подтверждён |
 | Frontend build | Успешно | Type-check/Jest и браузерный runtime требуют отдельного завершения проверки |
@@ -75,7 +75,7 @@ runtime-проверок и не считается доказательство
 
 - **Root cause:** поиск задачи только по ID; отсутствие блокировки и полного запрета изменения терминального результата.
 - **Evidence:** F06; `tests/production/test_result_isolation.py` проверяет чужое устройство и конфликтующий повтор.
-- **Affected files:** `backend/services/task_service.py:419`, `backend/api/ws/android/router.py`.
+- **Affected files:** `backend/services/task_service.py:408`, `backend/api/ws/android/router.py`.
 - **Fix:** `9febb43`, `0f717b1` — фильтры device/org, `FOR UPDATE`, неизменяемые terminal states; подтверждение только после DB commit.
 - **Regression:** `test_result_isolation.py`, `test_result_receipts.py`: повтор, чужой task, Redis outage, отказ PostgreSQL commit, чтение зафиксированного результата отдельной DB-сессией непосредственно при ACK.
 - **Residual risk:** event/webhook side effects, task progress и агрегирование batch требуют дальнейшей проверки транзакционности и конкурентности.
@@ -87,7 +87,7 @@ runtime-проверок и не считается доказательство
 - **Affected files:** `backend/services/task_service.py:105` и создание задачи.
 - **Fix:** `9febb43` — tenant filter для явной и автоматической привязки аккаунта.
 - **Regression:** `tests/production/test_result_isolation.py`.
-- **Residual risk:** хранение паролей и раскрытие их через другие API пока не закрыты; cache hash вычисляется до подстановок и требует отдельного исправления.
+- **Residual risk:** хранение паролей и раскрытие их через другие API пока не закрыты. Ошибка cache identity после подстановок исправлена отдельно в APK-05.
 
 ### AUD-08 / F08 — High: два одновременных задания одному устройству и снятие чужой lease
 
@@ -96,7 +96,7 @@ runtime-проверок и не считается доказательство
 - **Affected files:** `backend/services/task_queue.py:90`, `backend/requirements.txt`.
 - **Fix:** `10af834` — проверка занятости внутри Lua, compare-and-delete при завершении, отказ от fallback после неоднозначного сетевого сбоя; fakeredis исполняет тот же Lua.
 - **Regression:** `tests/production/test_queue_recovery.py`: конкурентность, старый результат, потеря ответа Redis после исполнения команды.
-- **Residual risk:** фиксированная TTL lease, восстановление после потери Redis и AUD-09 ниже не решены этим коммитом.
+- **Residual risk:** этот коммит сам по себе не решал потерю Redis. В `8367979` основной диспетчер переведён на PostgreSQL ownership; Redis queue остаётся вспомогательным API. Старые Redis-пути scheduler и startup требуют очистки при завершении rollout.
 
 ### AUD-12 / F12 — High: неограниченное ожидание ответа команды и преждевременное завершение
 
@@ -184,12 +184,36 @@ runtime-проверок и не считается доказательство
 Изменение устраняет неоднозначность и несовместимость со строгим helper-router;
 реальные ошибки статуса/повторов/сохранения доказаны отдельно в APK-03.
 
+### APK-05 — High: использование DAG с данными предыдущего аккаунта
+
+- **Root cause:** сервер вычислял hash шаблона до подстановки аккаунта; APK предпочитал cache hit явно переданному новому DAG.
+- **Affected files:** `backend/services/task_service.py`, Android `commands/CommandDispatcher.kt`.
+- **Evidence:** [dag-cache-before.txt](evidence/dag-cache-before.txt), [android-cache-before.txt](evidence/android-cache-before.txt).
+- **Fix:** `8246cd9` — hash разрешённого payload; явное тело команды имеет приоритет над кэшем, включая совместимость со старым сервером.
+- **Regression:** `test_dag_cache_identity.py` и `CommandDeliveryTest.explicitDagPayloadTakesPrecedenceOverStaleCache`.
+- **Residual risk:** пароль ещё хранится в разрешённом DAG/локальном кэше; политика хранения secrets рассматривается отдельно.
+
+### AUD-09 — High: потеря/дублирование задач при разрыве между PostgreSQL и Redis
+
+- **Root cause:** Redis enqueue до commit создавал ghost task при rollback; потеря Redis уничтожала очередь; отправка до фиксации назначения и неоднозначный send не имели надёжного recovery.
+- **Evidence:** [durable-dispatch-before.txt](evidence/durable-dispatch-before.txt): четыре падения; F09 и queue-before.txt.
+- **Affected files:** `backend/services/task_service.py:279`, Android WS receipt handler.
+- **Fix:** `8367979` — PostgreSQL QUEUED/ASSIGNED являются долговечным намерением; device/task row locks; ASSIGNED commit до отправки; повтор через 30 секунд с тем же ID до receipt; переход RUNNING только по receipt устройства. Presence читается пакетами вне DB locks.
+- **Regression:** 7 сценариев `test_durable_dispatch.py`; rollback regression теперь проходит без xfail. Проверены быстрый terminal result, конкурентные workers, отсутствие Redis queue/lease и потеря transport response.
+- **Residual risk:** rollout требует APK с durable journal. Старые RUNNING/ASSIGNED нуждаются в reconciliation; восстановление всей presence-информации после сброса Redis и полноценный network chaos пока не подтверждены.
+
+### AUD-10 — High: задачи оркестратора без версии; n8n обходил права исполнения
+
+- **Root cause:** ручное создание Task не проверяло общий контракт: версия отсутствовала; n8n допускал viewer и чужой device ID. Оркестратор копировал пароль в читаемые task input_params.
+- **Affected files:** `backend/services/orchestrator/orchestration_engine.py`, `backend/api/v1/n8n/router.py`.
+- **Fix:** `81b2c6b` — общий TaskService, закрепление текущей версии, `script:execute` и tenant lookup, account_id вместо копии пароля, отсутствие pre-commit Redis enqueue в исправленных producer paths.
+- **Evidence/regression:** [task-producers-before.txt](evidence/task-producers-before.txt), `test_task_producers.py`, 24 существующих n8n API tests с опубликованной версией в fixture.
+- **Residual risk:** старые task input_params и GameAccount passwords не мигрированы; pipeline/scheduler и конкурентность orchestration engine обследуются отдельно.
+
 ## Открытые подтверждённые блокеры
 
 | ID / severity | Root cause и evidence | Необходимое продолжение |
 | --- | --- | --- |
-| AUD-09 / High | TaskService.create_task публикует в Redis до PostgreSQL commit; rollback оставляет ghost task. F09, queue-before.txt, strict xfail `test_rollback_never_publishes_task` | PostgreSQL authoritative queue/outbox, согласованный claim, восстановление после отказов и удаления Redis |
-| AUD-10 / High | Orchestrator создаёт Task без script_version_id; dispatcher не может получить версию. F10 исходных воспроизведений | Единый путь создания/публикации задач для orchestrator, pipeline, scheduler, n8n с runtime tests |
 | AUD-11 / High | Независимые tenant VPN pools выделяют одинаковый IP в общей subnet; reinit возвращает уже занятые адреса. F11 | Глобальная согласованная аренда IP, атомарность, отказоустойчивое revoke, проверка конфигурации |
 | AUD-14 / High | Несуперпользователь-владелец таблиц обходит RLS. F14 на PostgreSQL; tenant context не установлен повсеместно | Разделение migration/runtime ролей, политики и контекст для HTTP/auth/jobs, реальные cross-tenant проверки |
 | DEPLOY-01 / High | `ports: []` в override не очищает base mappings; effective Compose сохраняет host ports PostgreSQL/Redis | Исправить merge и проверить итоговую конфигурацию, сеть и runtime доступность |
@@ -198,7 +222,7 @@ runtime-проверок и не считается доказательство
 
 Следующие пункты — кандидаты/недостаточное покрытие, а не автоматически доказанные
 эксплуатируемые уязвимости: Android FGS/boot/timeout, root-only действия на обычных
-телефонах, screen codec recovery и cache hash после подстановки аккаунта; PC-agent
+телефонах, screen codec recovery; PC-agent
 protocol; orchestrator/pipeline crash recovery; сохранение паролей игровых аккаунтов;
 MFA/session/logout races; VPN revoke/PSK/маршруты; backup/restore; webhook/n8n contract;
 frontend runtime; метрики и multiprocess; зависимости и CI.
@@ -206,6 +230,12 @@ frontend runtime; метрики и multiprocess; зависимости и CI.
 GitHub checks на первой ревизии PR: Android build и lint проходили, security job
 падал. Эти результаты нельзя переносить на новую ревизию без проверки. Зависимости
 не считаются исправленными до анализа advisory, обновления и повторного запуска.
+
+На ревизии `554df5d` CI обнаружил пять lint diagnostics и уязвимые зависимости.
+Lint исправлен в `3767de1`, локальный Ruff проходит. Dependency-aware mypy на Windows
+также выявил прежние diagnostics вне исправленного owner count; они не подавлялись.
+Security job показывает PyJWT/Starlette/pytest advisories; проверки upstream и
+совместимых обновлений продолжаются. Список приоритетов: [ROADMAP.md](ROADMAP.md).
 
 PR остаётся draft до завершения открытых блокеров, повторного runtime обследования
 и финализации отчёта. Merge и deployment не выполнялись.

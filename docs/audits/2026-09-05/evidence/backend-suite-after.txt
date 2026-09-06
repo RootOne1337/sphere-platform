@@ -3,13 +3,19 @@
 ........................................................................ [ 25%]
 ........................................................................ [ 34%]
 ........................................................................ [ 43%]
-........................................................................ [ 51%]
+............................................F........................... [ 51%]
 ........................................................................ [ 60%]
 ........................................................................ [ 69%]
 ........................................................................ [ 77%]
 ........................................................................ [ 86%]
 ........................................................................ [ 94%]
 ..........................................                               [100%]
+================================== FAILURES ===================================
+___________ TestDagPerformance.test_500_nodes_validates_under_100ms ___________
+tests\test_scripts\test_dag_schema.py:279: in test_500_nodes_validates_under_100ms
+    assert elapsed_ms < 100, f"Validation took {elapsed_ms:.1f}ms (limit: 100ms)"
+E   AssertionError: Validation took 127.1ms (limit: 100ms)
+E   assert 127.11089994991198 < 100
 ============================== warnings summary ===============================
 .venv-audit\Lib\site-packages\pydantic\fields.py:754: 484 warnings
   C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\pydantic\fields.py:754: PydanticDeprecatedSince20: Using extra keyword arguments on `Field` is deprecated and will be removed. Use `json_schema_extra` instead. (Extra keys: 'deprecated'). Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.6/migration/
@@ -26,4 +32,6 @@ tests/test_updates/test_updates_api.py::TestSSRFGuard::test_file_scheme_rejected
     return await dependant.call(**values)
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-834 passed, 488 warnings in 30.90s
+=========================== short test summary info ===========================
+FAILED tests/test_scripts/test_dag_schema.py::TestDagPerformance::test_500_nodes_validates_under_100ms
+1 failed, 833 passed, 488 warnings in 31.02s
