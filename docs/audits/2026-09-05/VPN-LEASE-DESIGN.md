@@ -1,116 +1,113 @@
-# План исправления долговечности VPN allocation
+# Долговечное владение VPN-адресами
 
-Статус: **предлагаемая реализация, ещё не внесена в runtime**. 6 сентября 2026.
-Относится к открытому AUD-11 и residual risk AUD-27. Исправленные AUD-28/AUD-29
-делают health observation безопаснее, но не реализуют этот план.
+Статус на 6 сентября 2026: SQL reservation и generation fencing реализованы;
+provider reconciliation и реальный VPN runtime остаются открытыми. Документ
+заменяет первоначальный план этой ревизии аудита. Связанные findings: AUD-11,
+AUD-27, AUD-28/AUD-29 в AUDIT-REPORT.md.
 
-## Подтверждённые границы проблемы
+## Реализованные инварианты
 
-Сегодня `VPNPoolService.assign_vpn` выполняет ZPOPMIN, затем внешний POST, затем
-добавляет VPNPeer и делает flush. Commit принадлежит HTTP endpoint. Любой exception
-внутри service возвращает IP в Redis. Поэтому потерянный ответ после применения
-POST и ошибка PostgreSQL после успешного POST оставляют неизвестный результат
-роутера без долговечной SQL reservation. Отказ внешнего commit также не может
-отменить ранее выполненный POST.
+- PostgreSQL `vpn_peers` владеет адресом до любого POST /peers. Глобальный partial
+  unique index `uq_vpn_held_ip` запрещает одинаковый INET для всех non-FREE peers,
+  независимо от организации. Host-only constraint запрещает префиксы подсетей.
+- Короткая PostgreSQL advisory lock сериализует выбор адреса; уникальный индекс
+  остаётся последней защитой. Ни advisory, ни row lock не удерживаются при HTTP IO.
+- Private key, PSK, IP, AWG parameters, split_tunnel и operation UUID записываются
+  до intent commit. Retry успешного назначения возвращает ту же конфигурацию.
+- Redis не участвует в выдаче или освобождении адреса. Legacy ZSET helpers ещё
+  присутствуют для прежних тестов/диагностики, но не вызываются lifecycle/API.
+  Reinitialization, eviction и потеря Redis не меняют SQL ownership.
+- IP освобождается только после принятого provider DELETE и commit состояния FREE.
+  Неудачный SQL commit сохраняет предыдущее долговечное состояние.
+- Поздний ответ провайдера завершает только совпадающий operation_id, peer_id,
+  org_id и ожидаемое состояние. Ошибка/cancellation не удаляет committed intent.
 
-При revoke успешный DELETE разрешает Redis release ещё до SQL commit. Исправление
-подавленных HTTP ошибок не закрывает это окно. Redis free lists отдельных
-организаций покрывают одну платформенную подсеть; initialize_pool через ZADD NX
-снова добавляет ранее извлечённые адреса. Доказательство дублей — F11 в исходном
-evidence, а не проверка уникальности реального deployment.
+## Состояния и ответы
 
-В репозитории нет реализации WG Router, подтверждающей idempotency POST или
-authoritative inventory API. `/peers/handshakes` не устанавливает факт отсутствия
-peer. Нельзя подменить этот недостающий контракт предположением об идемпотентности.
-
-## Инварианты исправления
-
-1. PostgreSQL подтверждает владение каноническим IP и конкретным peer до любого
-   внешнего provisioning effect. Для текущего общего роутера namespace глобален;
-   org_id не может быть частью ограничения, допускающей дубли IP разных tenants.
-2. Уникальность действует для всех незавершённых/неопределённых состояний, а не
-   только ASSIGNED. `is_active` означает здоровье handshake и не освобождает IP.
-3. Приватный ключ, PSK, IP, AWG parameters и выбранные маршруты сохраняются вместе
-   с intent. Повтор не создаёт новые credentials для прежней операции.
-4. Потеря Redis/перезапуск/eviction не меняют владение. Redis может быть только
-   восстанавливаемым cache; его содержимое не разрешает повторную выдачу IP.
-5. Peer становится доступным для повторного использования адреса только после
-   подтверждённого удаления прежнего peer и успешного commit этого факта.
-6. Tenant/device authorization проверяется внутри транзакции создания intent.
-   API не возвращает клиентскую конфигурацию чужого или неопределённого peer.
-7. Поздний ответ старой операции не завершает новую операцию: SQL transition
-   сравнивает operation/generation ID, peer ID и ожидаемое состояние.
-
-## Предлагаемые состояния
-
-Имена ниже описывают будущую модель; текущий enum содержит FREE/ASSIGNED/ERROR.
-
-| Состояние | IP удерживается | Допустимое продолжение |
+| Состояние | IP удерживается | Поведение |
 | --- | --- | --- |
-| PROVISIONING | Да | Вызов router после commit intent; подтверждение с тем же generation ID |
-| ASSIGNED | Да | Возврат сохранённой конфигурации; запись revoke intent |
-| REVOKING | Да | Удаление конкретного public key; подтверждённый результат и commit освобождения |
-| UNKNOWN | Да | Authoritative reconciliation; автоматическая новая выдача запрещена |
-| FREE | Нет | История сохраняется; следующий peer получает новый generation ID |
+| PROVISIONING | Да | Intent перед POST; незавершённый/неизвестный результат остаётся в этом состоянии |
+| ASSIGNED | Да | Конфигурация доступна для retry; можно начать revoke |
+| REVOKING | Да | Intent перед DELETE; неизвестный результат остаётся в этом состоянии |
+| ERROR | Да | Legacy error; требует отдельной сверки |
+| FREE | Нет | Подтверждённое освобождение; история peer сохраняется, device_id очищается |
 
-Сетевой timeout не означает отказ операции. UNKNOWN после POST нельзя безопасно
-«исправить» немедленным DELETE и release без гарантии завершения старого POST:
-удаление может опередить запоздалое создание. Повторение POST допустимо только
-после доказанного provider idempotency contract. При его отсутствии сохраняется
-quarantine с явным состоянием для оператора.
+PROVISIONING/REVOKING не имеют автоматического timeout-release. Повтор assign или
+revoke незавершённого peer возвращает 409 с требованием reconciliation, без нового
+provider call. HTTP ошибки lifecycle возвращают 503 без текста provider response.
+`is_active` отражает handshake; оно не разрешает переиспользовать адрес.
+
+Это сознательное ограничение восстановления: в репозитории нет авторитетного
+контракта inventory/idempotency WG Router. Нельзя безопасно повторять неизвестный
+POST или удалять его и немедленно возвращать IP — поздний POST может завершиться
+после DELETE. Автоматический reconciler пока не реализован.
 
 ## Транзакционные границы
 
-Lifecycle должен иметь собственные короткие SQL-транзакции; нельзя незаметно
-добавить `db.commit()` в нынешний service и тем самым коммитить чужие изменения
-caller. Выделенный session factory/operation service и его владельцы должны быть
-явными. Сейчас write callers — assign, revoke и bulk_rotate в VPN router;
-background health использует service для конфигурации и не должен выполнять
-provisioning. Rotation должна состоять из отдельно фиксируемых операций удаления
-и назначения с отражением частичного результата.
+`VPNPoolService.assign_vpn` и `revoke_vpn` владеют commits на выделенной SQL-сессии.
+Обе production DI-фабрики создают её отдельно от HTTP/auth caller. Передавать
+service сессию с чужими pending writes нельзя. Health monitor использует только
+чистую сборку конфигурации и собственную наблюдательную транзакцию.
 
-Последовательность: authorization + reservation + intent → commit → provider call
-→ условный SQL transition по generation → commit → ответ API. Crash между любой
-парой этапов оставляет диагностируемый intent. Reconciler работает по этим intent,
-а не по отсутствию heartbeat. Rollback освобождает только ещё не опубликованную
-reservation, для которой внешний effect точно не начинался.
+Authorization + reservation + intent → commit → provider call → условный SQL
+transition по operation_id → commit → ответ. Rollback до intent commit запрещает
+provider effect; rollback после внешнего эффекта сохраняет intent. Bulk rotation
+выполняет отдельно фиксируемые revoke/assign; частичная ошибка не откатывает уже
+подтверждённые операции других устройств.
+
+Адреса выбираются из настроенной IPv4 subnet не шире /16. Семантика старого
+split_tunnel (True означает весь IPv4 traffic) пока сохранена; для новых peers
+выбор долговечен. Для legacy rows split_tunnel неизвестен и используется прежний
+fallback True. Это не исправляет AWG server/client mismatch или hardcoded routes.
 
 ## Миграция и rollout
 
-До включения нового allocator нужны инвентаризация PostgreSQL/Redis/router и
-сверка уже занятых адресов. Миграция не должна выбирать победителя существующего
-дубля, удалять peer или перенумеровывать активный туннель автоматически. Дубли,
-невалидные адреса и неизвестные provider peers блокируют включение нового пути
-до управляемого reconciliation. Schema preflight и migration прогоняются сначала
-на выделенной копии искусственных данных, включая намеренно конфликтующие строки.
+Применяется `20260906_vpn_intents` после `20260906_task_accounting`. Миграция
+преобразует tunnel_ip в INET, расширяет status, добавляет operation_id и
+split_tunnel, host-only constraint и глобальную уникальность non-FREE адресов.
+Дубли/невалидные адреса/префиксы отклоняют миграцию атомарно. Она не выбирает
+победителя, не перенумеровывает устройство и не удаляет конфликтующие peers.
+Downgrade запрещён, пока существуют PROVISIONING/REVOKING intents.
 
-Для общей подсети требуется глобальное уникальное ограничение на удерживаемые IP.
-Одна лишь эта constraint после старого POST недостаточна: intent commit обязан
-предшествовать POST. Runtime role/RLS должны позволять allocator обнаруживать
-занятость без раскрытия tenant credentials; security-definer функция требует
-отдельной проверки search_path, grants и вызывающих ролей. Работа над AUD-14
-должна учитывать этот глобальный ресурс.
+До rollout остановите старые allocation writers через контролируемое обслуживание
+и сверьте PostgreSQL, legacy Redis и реальный router inventory. Одновременная
+работа старой версии недопустима: она всё ещё выполняет POST до SQL reservation.
+SQL uniqueness не обнаружит orphan provider peers, отсутствующие в базе. Их
+адреса должны быть сверены/зарезервированы до включения новых назначений.
 
-Изменение URL роутера само по себе не создаёт новый безопасный namespace адресов.
-Расширение на несколько роутеров требует явной идентичности routing domain.
-Статистика пула должна читать новый источник владения; старый Redis ZCARD может
-остаться только диагностикой legacy cache.
+Локально старые накопленные фикстуры содержали 227 искусственных peers и дубли.
+Миграция ожидаемо отказала и сохранила старый head/строки. После удаления только
+этих disposable Audit A/B peers в `sphere_audit` миграция прошла. Новые тесты
+удаляют свои VPN peers по двум созданным UUID организаций; production не менялся.
 
-## Критерии закрытия
+## Подтверждённые проверки
 
-- Разные tenants и 64 конкурентных assignments не получают общий удерживаемый IP.
-- Reinitialize/eviction/потеря Redis не возвращают активный адрес в выдачу.
-- Provider mock фиксирует видимый другой SQL-сессии intent до первого POST/DELETE.
-- Ошибка commit до provider call запрещает effect; ошибка после эффекта оставляет
-  quarantine. Повторный запрос сохраняет peer/key/generation.
-- Применённый POST с потерянным ответом, поздний POST после попытки revoke,
-  асинхронный 202, повтор DELETE и crash при финальном SQL commit проверяются
-  управляемым транспортом с зафиксированным порядком событий.
-- Конкурентные assign/revoke/rotate, повтор старого response и смена владельца
-  устройства не завершают чужую/новую операцию.
-- Реальные PostgreSQL constraints и непривилегированная роль проверяются отдельно
-  от SQLite и статического RLS checker. Миграция с дублями отказывает без потери данных.
-- Provider adapter подтверждён его реальным контрактом; mock transport не считается
-  доказательством AmneziaWG handshake, Android delivery или работающего kill switch.
+`tests/production/test_vpn_durable_leases.py` проверяет настоящие PostgreSQL commits,
+row/index constraints и in-memory httpx transport:
 
-Этот план не изменяет статус AUD-11: он остаётся открытым High-блокером.
+- cross-tenant allocation и 64 параллельных назначения;
+- видимый другой SQL-сессии intent перед POST и DELETE;
+- отказ intent/final commit, потерянный ответ и cancellation после начала POST;
+- запрет повторного POST/DELETE неизвестной операции;
+- потерю/poisoned reinitialization/недоступность Redis;
+- release после подтверждённого удаления и SQL commit, pool exhaustion;
+- generation mismatch и сохранение выбранной конфигурации при retry.
+
+`test_vpn_migration.py` выполняет реальную миграцию в throwaway schema PostgreSQL:
+дубли, invalid IP, network prefix, downgrade с provisioning/revoking и успешный
+обратный переход после явного FREE. Вся schema откатывается после проверки.
+64 назначения — concurrency regression сервера, не benchmark 64 Android-эмуляторов.
+
+## Остаточные риски
+
+Provider inventory/reconciler отсутствует; pending intents требуют управляемой
+сверки. HTTP adapter и реальный AWG handshake не подтверждены. Redis health lock
+не имеет renewal, VPN EventPublisher остаётся stub. Full RLS/runtime role rollout
+открыт: глобальная занятость должна быть доступна allocator без выдачи tenant
+secrets. Partial unique index предотвращает двойную выдачу даже при неполной
+видимости, но не гарантирует успешное выделение из-под будущей RLS-роли.
+
+Не измерены CPU/RAM/FPS/battery или реальная ёмкость эмуляторов. Не проверены
+reserved router addresses, серверные маршруты и управляемое восстановление после
+полного отказа провайдера. Изменение WG_ROUTER_URL не создаёт новый независимый
+address namespace. Несколько роутеров требуют явного routing-domain design.

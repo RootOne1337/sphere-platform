@@ -295,7 +295,7 @@ runtime-проверок и не считается доказательство
 - **Evidence:** [vpn-contract-before.txt](evidence/vpn-contract-before.txt): 2 failures. Чужой device ID приводил к выделению peer; повторный config терял строку PresharedKey.
 - **Fix:** `92869ac` — active device/org lookup и device row lock до pool/router effects; повтор возвращает исходный PSK.
 - **Regression:** `test_vpn_contract.py`: запрет чужого устройства, идентичный повтор, две перекрывающиеся assignment-транзакции с единственным router call. [vpn-contract-after.txt](evidence/vpn-contract-after.txt): 84 passed вместе с прежней VPN suite.
-- **Residual risk:** router transport подменён; параметры AWG и настоящий handshake не проверены. Это не исправляет глобальную уникальность адресов или неопределённый результат provisioning.
+- **Residual risk:** router transport подменён; параметры AWG и настоящий handshake не проверены. Глобальные reservations и удержание неизвестного provisioning реализованы следующим исправлением AUD-11; provider reconciliation остаётся открытым.
 
 ### AUD-27 — High: revoke освобождал IP при отказе роутера или конкурентном повторе
 
@@ -304,7 +304,7 @@ runtime-проверок и не считается доказательство
 - **Evidence:** [vpn-revoke-before.txt](evidence/vpn-revoke-before.txt): 5 failures, включая timeout, 500, 403, незавершённый 202 и перекрывающиеся транзакции.
 - **Fix:** `caa9faa` — ошибка/неподтверждённый DELETE сохраняет peer и lease; peer row lock с refresh сериализует revoke. Сохраняется прежний контракт 200/204/404 как подтверждённое удаление/отсутствие.
 - **Regression:** 8 revoke cases, 3 assignment cases и старая VPN suite: [vpn-revoke-after.txt](evidence/vpn-revoke-after.txt), 92 passed. Ошибка не освобождает IP даже если caller ловит её и делает commit.
-- **Residual risk:** Redis release всё ещё предшествует PostgreSQL commit; нет долговечного revoke intent и provider reconciliation. Нельзя считать адресный пул безопасным после Redis loss или неясного provisioning; AUD-11 остаётся открытым.
+- **Residual risk:** первоначальный fix сохранял окно Redis release перед SQL commit. Последующее исправление AUD-11 заменяет этот путь SQL ownership и долговечным REVOKING; provider reconciliation и реальный HTTP adapter ещё не закрыты.
 
 ### TEST-02 — Medium: округление coverage давало ложный зелёный статус
 
@@ -322,7 +322,7 @@ runtime-проверок и не считается доказательство
 - **Evidence:** [vpn-health-before.txt](evidence/vpn-health-before.txt): 13 failures на PostgreSQL и httpx.MockTransport; router mutation после timeout/401/503/невалидного snapshot, peer без handshake, отсутствие auth header и потеря PSK. Внешний router не вызывался.
 - **Fix:** `10141ee` — валидируются status, форма snapshot и timestamps; неизвестное состояние сохраняет последние данные и возвращает checked=0/error. Health-check больше не создаёт peers по handshake API. API key передаётся в background service/client. Retry и reconnect используют общий config builder с сохранённым PSK, без лишней генерации QR при reconnect.
 - **Regression:** `tests/production/test_vpn_health_recovery.py` — 16 cases, включая NaN/future timestamps и восстановление после неудачного poll. Прежний тест «missing peer» проверял только первоначальный assignment call; теперь проверяет отсутствие POST из monitor.
-- **Residual risk:** отсутствие peer требует отдельной сверки с authoritative provider inventory и durable provisioning intent. EventPublisher остаётся stub, фактическая доставка reconnect и handshake не доказаны. Commit фонового health-check и overlap revoke разобраны в AUD-29; global leases и маршруты остаются открытыми. Этот fix не закрывает AUD-11.
+- **Residual risk:** отсутствие peer требует отдельной сверки с authoritative provider inventory. EventPublisher остаётся stub, фактическая доставка reconnect и handshake не доказаны. Commit фонового health-check и overlap revoke разобраны в AUD-29; SQL intents добавлены в AUD-11. Provider reconciliation и маршруты ещё открыты.
 
 ### AUD-29 — High: фоновая проверка VPN теряла данные и использовала отозванный peer
 
@@ -334,11 +334,21 @@ runtime-проверок и не считается доказательство
 - **Дополнительное evidence/fix:** поздний stale/empty ответ параллельного poll перезаписывал более свежую SQL observation; [vpn-health-ordering-before.txt](evidence/vpn-health-ordering-before.txt): 2 failures. `a85f5d2` — SQL update запрещает уменьшение last_handshake_at и применяет missing observation только если исходный timestamp не изменился. [vpn-health-ordering-after.txt](evidence/vpn-health-ordering-after.txt): 31 passed, включая расширенные 22 production health cases и прежние monitor tests.
 - **Residual risk:** polling и reconnect не имеют долговечного outbox; доставка после commit/revoke и stop acknowledgement требуют отдельного протокола с fencing. Redis lease фонового цикла пока не продлевается; длительные циклы могут пересекаться. Тест организации задаёт изолированную enumeration boundary и не доказывает полный rollout RLS.
 
+### AUD-11 / F11 — High: повторная выдача VPN IP и потеря ownership после сетевого/SQL отказа
+
+- **Root cause:** tenant Redis ZSET покрывали одну subnet, а reinit возвращал извлечённые адреса. POST выполнялся до SQL записи; exception возвращал IP даже после применения запроса роутером. Revoke возвращал IP в Redis до SQL commit.
+- **Affected files:** `backend/models/vpn_peer.py`, `backend/services/vpn/ip_pool.py`, `pool_service.py`, `dependencies.py`, `backend/api/v1/vpn/router.py`, `backend/schemas/vpn/peer.py`, `alembic/versions/20260906_vpn_intents.py`.
+- **Evidence:** F11 исходного аудита; [vpn-lease-before.txt](evidence/vpn-lease-before.txt): 5 failures — одинаковый IP у разных tenants, отсутствие видимого SQL intent перед POST, потерянный ответ, отказ intent/final commit.
+- **Fix:** глобальная unique constraint non-FREE INET, короткий advisory lock при выборе IP; PROVISIONING/REVOKING intent commit до provider IO. SQL generation check перед финальным commit; rollback/cancellation не удаляет intent. IP освобождается только commit FREE. Production DI выделяет сессию lifecycle отдельно от caller; API stats читают SQL, а Redis не участвует в ownership. Retry незавершённого peer возвращает 409 без нового provider call; новый split_tunnel сохраняется.
+- **Regression:** `test_vpn_durable_leases.py` — 19 случаев, включая 64 параллельных назначения, потерю/poisoned cache Redis, cancellation, generation mismatch, сохранение route/PSK, pool exhaustion, независимость caller transaction. `test_vpn_migration.py` — 5 проверок реальной миграции в PostgreSQL throwaway schema. [vpn-lease-after.txt](evidence/vpn-lease-after.txt) и общий прогон включают прежние VPN contracts/revoke/health tests.
+- **Migration evidence:** [vpn-migration-conflicts.txt](evidence/vpn-migration-conflicts.txt): миграция атомарно отказала на накопленных дублях тестового стенда, исходный head и строки сохранились. После удаления только 227 старых artificial Audit A/B peers в выделенной sphere_audit выполнен успешный upgrade. Production не менялся. Автотесты теперь удаляют VPN rows только своих двух UUID организаций. Invalid addresses/network prefixes и downgrade с pending intent также отклоняются без потери данных.
+- **Residual risk:** automatic provider reconciliation отсутствует. Pending intent удерживает IP до управляемой сверки, что снижает доступность при отказе, но исключает слепое повторное выделение. Старые writers нельзя запускать одновременно с новым allocator; orphan router peers вне SQL должны быть сверены до rollout. Полный RLS/runtime-role design, HTTP adapter, reserved router IP, AWG settings/routes и физический handshake остаются открытыми. 64 SQL assignments не измеряют ёмкость 64 APK. Подробности: [VPN-LEASE-DESIGN.md](VPN-LEASE-DESIGN.md).
+
 ## Открытые подтверждённые блокеры
 
 | ID / severity | Root cause и evidence | Необходимое продолжение |
 | --- | --- | --- |
-| AUD-11 / High | Независимые tenant VPN pools выделяют одинаковый IP в общей subnet; reinit возвращает уже занятые адреса. F11 | Глобальная согласованная аренда IP, атомарность, отказоустойчивое revoke, проверка конфигурации |
+| AUD-11 / High, частично исправлен | SQL ownership/uniqueness/intents исправлены и проверены; реальные orphan peers и provider unknown outcomes не reconciled | Inventory contract, controlled reconciliation/rollout, HTTP adapter и AWG конфигурация; незавершённые intents пока удерживаются |
 | AUD-14 / High | Несуперпользователь-владелец таблиц обходит RLS. F14 на PostgreSQL; tenant context не установлен повсеместно | Разделение migration/runtime ролей, политики и контекст для HTTP/auth/jobs, реальные cross-tenant проверки |
 | DEPLOY-03 / High | Effective Compose оставляет n8n/MinIO host ports; production persistence и DB roles не согласованы | Ingress/access design, роли, долговечные artifacts, runtime/restore проверка |
 
@@ -368,9 +378,9 @@ Security job показывает PyJWT/Starlette/pytest advisories; прове�
 успешно собрал APK и выполнил unit tests. Это проверенный snapshot предыдущего
 head; последующие коммиты требуют собственных CI результатов.
 
-Для AUD-11 подготовлен [план durable VPN lease](VPN-LEASE-DESIGN.md) с границами
-транзакций, quarantine, migration preflight и критериями fault/concurrency tests.
-План ещё не реализован и не закрывает глобальный allocator.
+Для AUD-11 реализованы [SQL reservations и generation fencing](VPN-LEASE-DESIGN.md);
+документ описывает границы транзакций, обязательный migration preflight и ещё
+не реализованный provider reconciliation. Это не означает готовность всего VPN.
 
 PR остаётся draft до завершения открытых блокеров, повторного runtime обследования
 и финализации отчёта. Merge и deployment не выполнялись.

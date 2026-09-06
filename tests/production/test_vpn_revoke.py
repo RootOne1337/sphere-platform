@@ -39,16 +39,16 @@ async def test_failed_revoke_retains_peer_and_address_reservation(world, outcome
                 assert peer.status == VPNPeerStatus.FREE
                 assert peer.device_id is None
                 assert not peer.is_active
-                pool.release_ip.assert_awaited_once_with(str(w.org_a.id), "10.200.0.2")
+                pool.release_ip.assert_not_awaited()
                 return
             with pytest.raises(httpx.HTTPError):
                 await service.revoke_vpn(str(w.dev_a.id), w.org_a.id)
             # Even a caller that commits after catching the error must retain the lease.
             await db.commit()
             await db.refresh(peer)
-            assert peer.status == VPNPeerStatus.ASSIGNED
+            assert peer.status == VPNPeerStatus.REVOKING
             assert peer.device_id == w.dev_a.id
-            assert peer.is_active
+            assert not peer.is_active
             pool.release_ip.assert_not_awaited()
         finally:
             await service.close()
@@ -79,7 +79,9 @@ async def test_concurrent_revoke_returns_address_only_once(world):
                 finally:
                     pending.cancel()
                     await asyncio.gather(pending, return_exceptions=True)
-                pool.release_ip.assert_awaited_once()
+                pool.release_ip.assert_not_awaited()
+                await first.refresh(peer)
+                assert peer.status == VPNPeerStatus.FREE
                 repeated_delete.assert_not_awaited()
         finally:
             for service in services:

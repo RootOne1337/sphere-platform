@@ -20,7 +20,7 @@ async def vpn_service(world):
         service = VPNPoolService(db, AsyncMock(), AWGConfigBuilder(
             server_public_key="audit-server-public-key", server_endpoint="127.0.0.1:9",
         ), Fernet(Fernet.generate_key()), wg_router_url="http://127.0.0.1:9")
-        service.ip_pool.allocate_ip.return_value = "10.200.0.2"
+        service.ip_pool.reserve_ip.return_value = "10.200.0.2"
         try:
             with patch.object(service, "_add_peer_to_server", AsyncMock()):
                 yield service
@@ -33,7 +33,7 @@ async def test_vpn_assignment_rejects_foreign_device_before_any_allocation(world
     with pytest.raises(HTTPException) as error:
         await svc.assign_vpn(str(world.dev_b.id), world.org_a.id)
     assert error.value.status_code == 404
-    svc.ip_pool.allocate_ip.assert_not_awaited()
+    svc.ip_pool.reserve_ip.assert_not_awaited()
     svc._add_peer_to_server.assert_not_awaited()
 
 
@@ -70,6 +70,6 @@ async def test_concurrent_assignment_does_not_create_a_second_router_peer(world,
                 assert repeated.peer_id == first.peer_id
                 assert repeated.config == first.config
                 add_peer.assert_not_awaited()
-                svc.ip_pool.allocate_ip.assert_awaited_once()
+                svc.ip_pool.reserve_ip.assert_awaited_once()
         finally:
             await other.close()

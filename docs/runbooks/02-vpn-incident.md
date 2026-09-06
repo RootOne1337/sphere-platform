@@ -17,11 +17,12 @@ encrypted private key/PSK, obfuscation parameters and handshake metadata. Client
 configuration is generated in memory. This backend does not write
 `/etc/wireguard/peers/<device_id>.conf` files.
 
-The legacy free list is a Redis sorted set named `vpn:ip_pool:<org_id>`.
-`VPN_POOL_SUBNET` defaults to `10.100.0.0/16`. Separate organization sets currently
-cover the same subnet: global uniqueness and safe reinitialization are **open
-High-severity defects (AUD-11)**. A free-list entry is not proof that an address
-is unused on the router.
+PostgreSQL now owns held IPs, including PROVISIONING and REVOKING intents, with a
+global unique index. `VPN_POOL_SUBNET` defaults to `10.100.0.0/16`; allocation is
+bounded to IPv4 /16 or smaller. The legacy Redis sorted sets `vpn:ip_pool:<org_id>`
+are no longer consulted for assignment/release. Their contents are diagnostic
+history, not evidence that an address is free. Pool stats use SQL and report
+global capacity/free addresses and the caller organization's held addresses.
 
 ## Read-only diagnosis
 
@@ -84,14 +85,17 @@ device's tunnel; use it only for a confirmed target under the incident's approve
 scope. As of the audit fix, timeout, 403, 500 and unconfirmed 202 preserve the peer
 and address. Confirmed 200/204 or already-absent 404 retain the existing idempotent
 router contract. A failed response must not be followed by manually returning the
-address to Redis.
+address to Redis. REVOKING now persists before DELETE and releases SQL ownership
+only after deletion confirmation and commit. PROVISIONING persists before POST;
+unknown results retain their address. Retry of either pending state returns 409
+and does not issue another provider mutation. There is no automatic reconciler.
 
 For pool exhaustion or duplicate addresses, preserve PostgreSQL, Redis and router
 inventory for reconciliation. Stop new allocations through the deployment's
 controlled maintenance procedure while resolving ownership. Do not delete/refill
 the free lists, reclaim an address solely because a device is offline, or expand
-CIDR and restart as an automatic repair. Those actions can reissue an active
-address under the current allocator. The old `VPN_IP_POOL_SIZE` and
+CIDR and restart as an automatic repair. The former Redis allocator could reissue
+active addresses; the SQL allocator ignores these lists. The old `VPN_IP_POOL_SIZE` and
 `VPN_IP_POOL_CIDR` settings described by this runbook do not exist; changing the
 real `VPN_POOL_SUBNET` needs a coordinated router/routing and allocation migration.
 
@@ -117,10 +121,15 @@ the current command publisher is still a stub, so this does not prove delivery.
 Background observations commit per organization. Writes skip peers revoked during
 the poll and do not replace newer handshake timestamps with delayed observations.
 
-Open audit work includes durable global IP reservations, provisioning/revoke
-intent before external effects, lost-response reconciliation, commit/release
-atomicity, Redis-loss recovery, AWG settings, split routes and kill-switch runtime.
+Apply migration `20260906_vpn_intents` only after stopping legacy allocation writers
+and reconciling PostgreSQL/router inventory. It refuses conflicting held IPs,
+invalid addresses and network prefixes without choosing a winner or deleting rows.
+Do not run old writers during rollout; their provider POST still precedes SQL.
+Downgrade refuses to discard pending PROVISIONING/REVOKING intents.
+
+Open audit work includes lost-response reconciliation and orphan router peers,
+the provider adapter, reserved router addresses, AWG settings, split routes and kill-switch runtime.
 The current tests use local PostgreSQL and mocked router transport; they do not
 certify a deployed tunnel or physical Android behavior.
-The [durable lease plan](../audits/2026-09-05/VPN-LEASE-DESIGN.md) records the required
-transaction boundaries and migration preflight; it is not implemented allocator behavior.
+The [durable lease design](../audits/2026-09-05/VPN-LEASE-DESIGN.md) records the implemented
+transaction boundaries, migration preflight and incomplete recovery contract.

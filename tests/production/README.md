@@ -26,5 +26,13 @@ preserved PSK, per-tenant background commit/rollback, concurrent revocation and
 out-of-order health observations. Router requests use `httpx.MockTransport` in
 memory; PostgreSQL persistence and transaction overlap are real. These tests do
 not start a VPN router, prove command delivery through the current stub publisher,
-or establish an Android handshake. See AUD-28/AUD-29 and the proposed
+or establish an Android handshake. See AUD-28/AUD-29 and the
 [durable lease design](../../docs/audits/2026-09-05/VPN-LEASE-DESIGN.md) for remaining scope.
+
+Apply `20260906_vpn_intents` for `test_vpn_durable_leases.py`. The migration fails
+on duplicate held addresses in previously accumulated test fixtures; do not apply
+cleanup procedures to valuable data. The fixture now deletes only VPN rows of its
+two newly created organization UUIDs. `test_vpn_migration.py` runs migration error,
+rollback and downgrade scenarios in temporary PostgreSQL schemas rolled back at
+test end. The 64 concurrent assignments use in-memory router responses and do not
+represent measured emulator capacity.

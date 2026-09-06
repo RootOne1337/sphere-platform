@@ -96,5 +96,14 @@ async def world():
         ) as client:
             yield SimpleNamespace(**locals())
     app.dependency_overrides.clear()
+    # Global VPN uniqueness makes fixture cleanup necessary across test worlds.
+    # Delete only peers owned by the two UUID organizations created above.
+    from sqlalchemy import delete
+
+    from backend.models.vpn_peer import VPNPeer
+
+    async with sessions() as cleanup:
+        await cleanup.execute(delete(VPNPeer).where(VPNPeer.org_id.in_([org_a.id, org_b.id])))
+        await cleanup.commit()
     await redis.aclose()
     await engine.dispose()
