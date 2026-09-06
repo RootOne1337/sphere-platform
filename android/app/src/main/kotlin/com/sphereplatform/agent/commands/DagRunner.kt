@@ -263,6 +263,10 @@ class DagRunner @Inject constructor(
                     } catch (e: kotlinx.coroutines.CancellationException) {
                         // Не глотаем отмену корутины (глобальный таймаут или cancel)
                         throw e
+                    } catch (e: RootCommandOutcomeUnknownException) {
+                        // A side effect may have happened. Neither node retry nor
+                        // on_failure routing is an execution acknowledgement.
+                        throw e
                     } catch (e: Exception) {
                         nodeError = e.message ?: "unknown error"
                         Timber.w(e, "[DAG] Node '$nodeId' failed attempt $attempt")
@@ -839,6 +843,8 @@ class DagRunner @Inject constructor(
                         val bResult = executeNode(bType, bAction, ctx, depth + 1)
                         ctx[bNodeId] = bResult
                         iterLogs.add(mapOf("id" to bNodeId, "iter" to iterations, "ok" to true, "ms" to System.currentTimeMillis() - bTs))
+                    } catch (e: RootCommandOutcomeUnknownException) {
+                        throw e
                     } catch (e: Exception) {
                         iterLogs.add(mapOf("id" to bNodeId, "iter" to iterations, "ok" to false, "error" to e.message, "ms" to System.currentTimeMillis() - bTs))
                         Timber.w(e, "[DAG][loop] Body '$bNodeId' failed at iter $iterations")

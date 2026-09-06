@@ -199,7 +199,13 @@ class CommandDispatcher @Inject constructor(
             "touch_tap" -> {
                 val x = msg["x"]?.jsonPrimitive?.intOrNull ?: return
                 val y = msg["y"]?.jsonPrimitive?.intOrNull ?: return
-                scope.launch { adbActions.tap(x, y) }
+                scope.launch {
+                    try {
+                        adbActions.tap(x, y)
+                    } catch (_: RootCommandOutcomeUnknownException) {
+                        Timber.w("Live tap outcome is unknown; command was not replayed")
+                    }
+                }
                 return
             }
             "touch_swipe" -> {
@@ -208,7 +214,13 @@ class CommandDispatcher @Inject constructor(
                 val x2 = msg["x2"]?.jsonPrimitive?.intOrNull ?: return
                 val y2 = msg["y2"]?.jsonPrimitive?.intOrNull ?: return
                 val duration = msg["duration_ms"]?.jsonPrimitive?.intOrNull ?: 300
-                scope.launch { adbActions.swipe(x1, y1, x2, y2, duration) }
+                scope.launch {
+                    try {
+                        adbActions.swipe(x1, y1, x2, y2, duration)
+                    } catch (_: RootCommandOutcomeUnknownException) {
+                        Timber.w("Live swipe outcome is unknown; command was not replayed")
+                    }
+                }
                 return
             }
             "request_keyframe" -> {

@@ -16,6 +16,7 @@ class CommandDeliveryTest {
     private val ws = mockk<SphereWebSocketClient>(relaxed = true)
     private val dag = mockk<DagRunner>(relaxed = true)
     private val cache = mockk<ScriptCacheManager>(relaxed = true)
+    private val adb = mockk<AdbActionExecutor>(relaxed = true)
     private val messages = mutableListOf<JsonObject>()
     private val callback = slot<((JsonObject) -> Unit)?>()
     private val disk = mutableMapOf<String, String?>()
@@ -34,7 +35,7 @@ class CommandDeliveryTest {
     private fun dispatcher(scope: kotlinx.coroutines.CoroutineScope): CommandDispatcher {
         every { ws.onJsonMessage = captureNullable(callback) } just Runs
         every { ws.sendJson(capture(messages)) } returns true
-        return CommandDispatcher(ws, mockk(relaxed = true), dag, cache,
+        return CommandDispatcher(ws, adb, dag, cache,
             mockk(relaxed = true), mockk(relaxed = true), mockk(relaxed = true),
             mockk(relaxed = true), mockk(relaxed = true), mockk(relaxed = true),
             mockk(relaxed = true), scope, mockk(relaxed = true), mockk(relaxed = true), journal())
@@ -105,6 +106,38 @@ class CommandDeliveryTest {
         callback.captured!!(msg)
         runCurrent()
         assertEquals(fresh, executed.captured)
+        dispatcher.stop()
+    }
+
+    @Test fun uncertainDagOutcomeIsDurableAndDuplicateCannotRerunIt() = runTest {
+        coEvery { dag.execute(any(), any(), any()) } throws RootCommandOutcomeUnknownException()
+        val dispatcher = dispatcher(backgroundScope)
+        repeat(2) { callback.captured!!(command()); runCurrent() }
+        coVerify(exactly = 1) { dag.execute(any(), any(), any()) }
+        val pending = journal().pending().single()
+        assertEquals("failed", pending["status"]!!.jsonPrimitive.content)
+        assertTrue(pending["error"]!!.jsonPrimitive.content.contains("unknown"))
+        dispatcher.stop()
+    }
+
+    @Test fun uncertainLiveTapDoesNotEscapeIntoApplicationScope() = runTest {
+        every { adb.tap(any(), any()) } throws RootCommandOutcomeUnknownException()
+        val dispatcher = dispatcher(backgroundScope)
+        callback.captured!!(buildJsonObject { put("type", "touch_tap"); put("x", 10); put("y", 20) })
+        runCurrent()
+        verify(exactly = 1) { adb.tap(10, 20) }
+        dispatcher.stop()
+        // runTest also rejects any uncaught child-coroutine failure.
+    }
+
+    @Test fun uncertainLiveSwipeDoesNotEscapeIntoApplicationScope() = runTest {
+        every { adb.swipe(any(), any(), any(), any(), any()) } throws RootCommandOutcomeUnknownException()
+        val dispatcher = dispatcher(backgroundScope)
+        callback.captured!!(buildJsonObject {
+            put("type", "touch_swipe"); put("x1", 1); put("y1", 2); put("x2", 3); put("y2", 4)
+        })
+        runCurrent()
+        verify(exactly = 1) { adb.swipe(1, 2, 3, 4, 300) }
         dispatcher.stop()
     }
 }

@@ -65,9 +65,16 @@ file logger is active in release and its content enters diagnostic uploads;
 the input command remains unchanged. Regression tests exercise the real executor
 and logging API with a fake root process. Historical logs still require review.
 
+Root input no longer blindly resends a command after an ambiguous pipe write or
+flush failure. The broken session is invalidated and a distinct unknown-outcome
+error stops DAG retry/failure routing and nested loops; LuaJ host errors preserve
+that classification. The failed receipt survives duplicate delivery. Live touch
+handlers contain the failure without another send or an uncaught coroutine error.
+A successful pipe flush still does not prove physical execution or exit status.
+
 ## Validation
 
-- Android enterprise debug unit suite: **318 passed**.
+- Android enterprise debug unit suite: **326 passed**.
 - Combined backend/PC, PostgreSQL/Redis and deployment regressions: **1014 passed**.
   This includes **158 real-service tests** and **6 Compose configuration tests**.
   Coverage is **66.30%** and passes the unchanged **65%** gate with two-decimal

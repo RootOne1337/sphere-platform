@@ -19,7 +19,7 @@ runtime-проверок и не считается доказательство
 
 | Проверка | Результат | Практическое ограничение |
 | --- | --- | --- |
-| Android enterprise debug unit suite | 318 passed, 0 failed | JVM/MockWebServer; не проверяет ОС, codec, батарею или смерть процесса на телефоне |
+| Android enterprise debug unit suite | 326 passed, 0 failed | JVM/MockWebServer; не проверяет ОС, codec, батарею или смерть процесса на телефоне |
 | Объединённая Backend/PC/production/deployment suite | **1014 passed, 0 failed**; coverage **66,30%** | Строгий coverage gate 65% пройден с precision=2. Load suite исключена; 6 Compose config tests не запускают сервисы |
 | Проверки PostgreSQL/Redis | **158 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
 | Миграции | Применены до **20260906_account_ciphertext** включительно | Только изолированная БД; конфликтные данные/downgrade проверены в throwaway schema; production не мигрировался |
@@ -375,10 +375,19 @@ runtime-проверок и не считается доказательство
 
 - **Root cause:** `AdbActionExecutor.typeText` передавал в `Timber.d` исходный ввод и shell-encoded представление. `SphereApp` подключает `FileLoggingTree` без условия DEBUG; tree сохраняет сообщения всех уровней, `LogUploadWorker` включает последние file logs в upload. Серверное чтение device logs требует `device:read`, а не отдельного credential permission.
 - **Evidence:** [android-credential-log-before.txt](evidence/android-credential-log-before.txt): два теста вызывают настоящий executor с fake Runtime/Process и настоящим Timber sink. Команда ввода доставлена, но проверка отсутствия raw input в sink падает; обычный пароль и текст с кавычкой/пробелом. Сам `su` не запускается. Доставка файлов через физический APK не воспроизводилась; путь file/upload установлен по коду.
-- **Affected files:** `android/app/src/main/kotlin/com/sphereplatform/agent/commands/AdbActionExecutor.kt:191`; путь распространения — `SphereApp.kt:33`, `logging/FileLoggingTree.kt:70`, `workers/LogUploadWorker.kt:82`, `backend/api/v1/logs/router.py:141`.
+- **Affected files:** `android/app/src/main/kotlin/com/sphereplatform/agent/commands/AdbActionExecutor.kt:199`; путь распространения — `SphereApp.kt:33`, `logging/FileLoggingTree.kt:70`, `workers/LogUploadWorker.kt:82`, `backend/api/v1/logs/router.py:141`.
 - **Fix:** событие `typeText: input requested` не содержит raw/encoded text. Сам shell input command и задержка не меняются; диагностика остальных событий сохраняется.
 - **Regression:** `AdbCredentialLoggingTest` проверяет действительную запись команды в output stream и отсутствие обеих форм credentials во всех захваченных Timber сообщениях. Повторный Android suite: [android-credential-log-after.txt](evidence/android-credential-log-after.txt).
 - **Residual risk:** старые локальные/uploaded логи не очищались. Если в них были реальные credentials, нужны ограничение доступа, контролируемая очистка по retention и оценка смены самих паролей. Это исправление одного подтверждённого источника; общие log redaction, action outputs, screenshots, Unicode/IME и совместимость root-команд на физических устройствах ещё не закрыты.
+
+### AUD-34 — High: APK повторял root-команду после неопределённого результата записи
+
+- **Root cause:** `executeRootCommand` при IOException уничтожала root process, открывала новый и повторяла ту же команду. Ошибка flush может наступить после передачи строки с newline; исход действия неизвестен. На следующих уровнях общий DAG retry и loop catch продолжали execution, а LuaJ оборачивал host exception в обычный LuaError.
+- **Evidence:** [android-root-delivery-before.txt](evidence/android-root-delivery-before.txt): 4 failures на `d710587`; fake pipe принимает полный `input tap 10 20`, затем flush падает, второй process получает ту же строку. Проверяются также recovery следующей команды, DAG retry/on_failure и nested loop. В промежуточном исправлении [android-root-propagation-before.txt](evidence/android-root-propagation-before.txt) выявлены 3 integration failures: Lua повторяла DAG, live tap/swipe выпускали исключение в application coroutine scope (13 tests, 3 failures).
+- **Affected files:** `android/app/src/main/kotlin/com/sphereplatform/agent/commands/AdbActionExecutor.kt:127`, `DagRunner.kt:266` и `:846`, `CommandDispatcher.kt:202` и `:217`, `lua/LuaEngine.kt:73`.
+- **Fix:** сломанная root session явно инвалидируется независимо от isAlive; команда не переотправляется. RootCommandOutcomeUnknownException останавливает текущий DAG без retry/on_failure/продолжения loop. Непойманная LuaJ host error сохраняет исходный тип. Live input обрабатывает unknown без повторения и без uncaught child failure. Новый root process допускается только для следующей отдельной команды.
+- **Regression:** 5 real executor/DAG/Lua tests и 3 dispatcher tests, включая durable failed receipt и повтор того же command_id. [android-root-delivery-after.txt](evidence/android-root-delivery-after.txt): **326 Android JVM tests passed**, 0 failures/errors/skips. Root process/input/output полностью подменены; su и реальный input на устройстве не запускались.
+- **Residual risk:** успешный flush всё ещё не является подтверждением выполнения/exit status команды; нужен отдельный root execution acknowledgement protocol. Завершение дочернего input process после kill и реальные Android recovery не проверены. Live touch пока без явного ACK. Lua pcall/custom scripts могут сами обработать ошибку и продолжить действия; автоматизация с новым command_id также требует отдельной политики unknown outcome. Это не exactly-once гарантия физических эффектов.
 
 ## Открытые подтверждённые блокеры
 
@@ -436,6 +445,10 @@ RLS успешны, Security/pip-audit падает; Android `34046802281` ус�
 На серверном fix `d966f15` backend run `34047657701`: Tests/Lint/Alembic/статический
 RLS успешны, Security/pip-audit падает; Android `34047657671` успешен.
 Это проверка encryption revision до отдельного Android logging fix.
+
+На Android logging fix `d710587` backend `34048071044`: Tests/Lint/Alembic/
+статический RLS успешны, Security/pip-audit падает; Android `34048071041`
+успешен. Следующий root delivery fix требует отдельной проверки CI.
 
 PR остаётся draft до завершения открытых блокеров, повторного runtime обследования
 и финализации отчёта. Merge и deployment не выполнялись.
