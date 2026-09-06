@@ -10,32 +10,12 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.security import create_access_token
-from backend.database.engine import Base, get_db
+from backend.database.engine import get_db
 from backend.database.redis_client import get_redis
 from backend.main import app
 from backend.models import *  # noqa: F401,F403
 from backend.models.organization import Organization
 from backend.models.user import User
-
-
-def _patch_pg_types_for_sqlite() -> None:
-    """JSONB → JSON, INET → String(45), ARRAY → JSON (must run before create_all)."""
-    from sqlalchemy import JSON, String
-    from sqlalchemy.dialects.postgresql import ARRAY, JSONB
-
-    for table in Base.metadata.tables.values():
-        for column in table.columns:
-            col_type = type(column.type)
-            if col_type is JSONB or col_type.__name__ == "JSONB":
-                column.type = JSON()
-            elif col_type.__name__ == "INET":
-                column.type = String(45)
-            elif col_type is ARRAY or col_type.__name__ == "ARRAY":
-                column.type = JSON()
-
-
-# Patch at import time so root conftest async_engine sees patched types
-_patch_pg_types_for_sqlite()
 
 
 @pytest_asyncio.fixture
