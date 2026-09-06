@@ -339,8 +339,8 @@ class OrchestrationEngine:
     async def _process_completed_tasks(self, db, settings: PipelineSettings) -> None:
         """
         Обрабатывает завершённые задачи (COMPLETED/FAILED/TIMEOUT) и обновляет
-        статусы аккаунтов. После обработки задача помечается CANCELLED, чтобы
-        не обрабатываться повторно.
+        статусы аккаунтов. Отдельная отметка обработки сохраняет terminal outcome;
+        row locks исключают повторный учёт конкурентными workers.
 
         Регистрация:
           COMPLETED + success=true → аккаунт free (готов к фарму)
@@ -360,23 +360,26 @@ class OrchestrationEngine:
                     Task.org_id == org_id,
                     Task.script_id == settings.registration_script_id,
                     Task.status.in_([TaskStatus.COMPLETED, TaskStatus.FAILED, TaskStatus.TIMEOUT]),
-                ).limit(50)
+                ).where(Task.orchestration_processed_at.is_(None))
+                .order_by(Task.id).limit(50).with_for_update(skip_locked=True)
             )
             for task in result.scalars().all():
                 account_id = (task.input_params or {}).get("account_id")
                 if not account_id:
                     # Помечаем задачу как обработанную
-                    task.status = TaskStatus.CANCELLED
+                    task.orchestration_processed_at = datetime.now(timezone.utc)
                     continue
 
                 res = await db.execute(
-                    select(GameAccount).where(GameAccount.id == account_id)
+                    select(GameAccount).where(
+                        GameAccount.id == account_id, GameAccount.org_id == org_id,
+                    ).with_for_update().execution_options(populate_existing=True)
                 )
                 account = res.scalar_one_or_none()
 
                 # Guard: обрабатываем только pending_registration
                 if not account or account.status != AccountStatus.pending_registration:
-                    task.status = TaskStatus.CANCELLED
+                    task.orchestration_processed_at = datetime.now(timezone.utc)
                     continue
 
                 now = datetime.now(timezone.utc)
@@ -414,7 +417,7 @@ class OrchestrationEngine:
 
                 account.status_changed_at = now
                 # Помечаем задачу как обработанную
-                task.status = TaskStatus.CANCELLED
+                task.orchestration_processed_at = datetime.now(timezone.utc)
 
         # ── Задачи фарма ─────────────────────────────────────────────────────
         if settings.farming_script_id:
@@ -423,21 +426,24 @@ class OrchestrationEngine:
                     Task.org_id == org_id,
                     Task.script_id == settings.farming_script_id,
                     Task.status.in_([TaskStatus.COMPLETED, TaskStatus.FAILED, TaskStatus.TIMEOUT]),
-                ).limit(50)
+                ).where(Task.orchestration_processed_at.is_(None))
+                .order_by(Task.id).limit(50).with_for_update(skip_locked=True)
             )
             for task in result.scalars().all():
                 account_id = (task.input_params or {}).get("account_id")
                 if not account_id:
-                    task.status = TaskStatus.CANCELLED
+                    task.orchestration_processed_at = datetime.now(timezone.utc)
                     continue
 
                 res = await db.execute(
-                    select(GameAccount).where(GameAccount.id == account_id)
+                    select(GameAccount).where(
+                        GameAccount.id == account_id, GameAccount.org_id == org_id,
+                    ).with_for_update().execution_options(populate_existing=True)
                 )
                 account = res.scalar_one_or_none()
 
                 if not account or account.status != AccountStatus.in_use:
-                    task.status = TaskStatus.CANCELLED
+                    task.orchestration_processed_at = datetime.now(timezone.utc)
                     continue
 
                 now = datetime.now(timezone.utc)
@@ -505,7 +511,7 @@ class OrchestrationEngine:
                 account.status_changed_at = now
                 account.total_sessions += 1
                 account.last_session_end = now
-                task.status = TaskStatus.CANCELLED
+                task.orchestration_processed_at = datetime.now(timezone.utc)
 
     # ── Кулдаун → free ───────────────────────────────────────────────────────
 
