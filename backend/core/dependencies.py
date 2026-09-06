@@ -94,7 +94,7 @@ async def get_tenant_db(
     """
     from sqlalchemy import text
     await db.execute(
-        text("SET LOCAL app.current_org_id = :org_id"),
+        text("SELECT set_config('app.current_org_id', :org_id, true)"),
         {"org_id": str(current_user.org_id)},
     )
     return db

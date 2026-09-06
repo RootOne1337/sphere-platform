@@ -59,7 +59,7 @@ async def get_db_session(
     async with AsyncSessionLocal() as session:
         if org_id:
             await session.execute(
-                text("SET LOCAL app.current_org_id = :org_id"),
+                text("SELECT set_config('app.current_org_id', :org_id, true)"),
                 {"org_id": org_id},
             )
         try:
