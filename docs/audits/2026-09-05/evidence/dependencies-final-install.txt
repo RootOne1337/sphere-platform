@@ -1,0 +1,2 @@
+Using Python 3.12.12 environment at: .venv-audit\dependency-upgrade
+Audited 44 packages in 26ms

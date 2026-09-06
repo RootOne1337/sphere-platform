@@ -20,7 +20,7 @@ runtime-проверок и не считается доказательство
 | Проверка | Результат | Практическое ограничение |
 | --- | --- | --- |
 | Android enterprise debug unit suite | 333 passed, 0 failed | JVM/MockWebServer; не проверяет ОС, codec, батарею или смерть процесса на телефоне |
-| Объединённая Backend/PC/production/deployment suite | **1035 passed, 0 failed**; coverage **66,61%** | Строгий coverage gate 65% пройден с precision=2. Load suite исключена; 6 Compose config tests не запускают сервисы |
+| Объединённая Backend/PC/production/deployment suite | **1047 passed, 0 failed**; coverage **66,61%** | Строгий coverage gate 65% пройден с precision=2. Load suite исключена; 6 Compose config tests не запускают сервисы |
 | Проверки PostgreSQL/Redis | **179 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
 | Миграции | Применены до **20260906_account_ciphertext** включительно | Только изолированная БД; конфликтные данные/downgrade проверены в throwaway schema; production не мигрировался |
 | Backend image | Собирается; исходная запись OpenAPI воспроизведённо падает с PermissionError | Исправлен lifespan; полный deployment runtime ещё не подтверждён |
@@ -433,7 +433,16 @@ runtime-проверок и не считается доказательство
 - **Regression:** четыре real API/DB cases проверяют сам mutation, audit actor/action/resource/status, metric label и request context. [audit-path-after.txt](evidence/audit-path-after.txt): 28 связанных cases passed.
 - **Residual risk:** разрешения endpoint не обходятся этим сценарием; требуется право выполнить сам mutation. Подмена заголовка на реальном ingress зависит от proxy validation. Background audit всё ещё может теряться при остановке процесса/ошибке SQL; обновление уязвимых dependencies и остальные URL consumers требуют отдельной проверки. Этот fix не делает security CI зелёным автоматически.
 
-## Остальные области обследования
+### AUD-39 — Medium: уязвимые Python pins и несовместимая совместная установка
+
+- **Root cause:** PyJWT/pytest были закреплены до security fixes; старая связка Pydantic/FastAPI разрешала Starlette 0.50.0. PC agent требовал pydantic-settings==2.2, backend — ==2.2.1; последовательные CI installs скрывали противоречие.
+- **Affected files:** `backend/requirements.txt`, `pc-agent/requirements.txt`, `.github/workflows/ci-backend.yml`.
+- **Evidence:** CI на d7839fb выдаёт 17 advisory records / 3 packages, включая повторные записи (11 уникальных GHSA). Joint resolver отказывает на конфликтующих exact pins. [Разбор reachability и upstream sources](DEPENDENCY-REVIEW.md); только Host→audit сценарий доказан как application defect (AUD-38), JWT auth bypass не утверждается.
+- **Fix:** PyJWT 2.13.0, Starlette 1.3.1, pytest 9.0.3; совместимые FastAPI 0.136.3, Pydantic 2.9.2, pytest-asyncio 1.3.0. Единый settings pin 2.2.1; CI разрешает оба requirements одновременно, выполняет pip check и сканирует backend+PC.
+- **Regression:** полный runtime/SQL/Redis suite в отдельном окружении; 12 сохранённых JWT negative/positive controls; существующие auth, refresh, logout, WebSocket и API tests. Pip-audit остаётся обязательным, исключения advisory/снижение gates не добавлялись.
+- **Residual risk:** нулевой scan относится к конкретному Python resolution, не ко всему репозиторию. Frontend/Android/container advisories, hash lock/SBOM и будущие обновления остаются открыты. Production dependencies не менялись. Подробные версии/сканы: [DEPENDENCY-REVIEW.md](DEPENDENCY-REVIEW.md).
+
+## Следующие компоненты аудита
 
 Следующие пункты — кандидаты/недостаточное покрытие, а не автоматически доказанные
 эксплуатируемые уязвимости: Android FGS/boot/timeout, root-only действия на обычных

@@ -4,6 +4,11 @@ These opt-in tests use PostgreSQL and Redis, real JWT authentication, and two di
 
 Use dedicated local PostgreSQL and Redis instances. The database name must contain `audit`, and both URLs must use a loopback host. The suite intentionally refuses other targets. It creates test rows and Redis keys, so do not point it at a development database containing valuable data.
 
+Install the jointly compatible dependencies with
+`python -m pip install -r backend/requirements.txt -r pc-agent/requirements.txt`,
+then run `python -m pip check`. CI uses the same joint resolution, so conflicting
+pins cannot be concealed by installing one component after the other.
+
 Example PowerShell configuration (synthetic credentials; provision the matching local services first):
 
 ```powershell

@@ -6,26 +6,22 @@
 ........................................................................ [ 41%]
 ........................................................................ [ 48%]
 ........................................................................ [ 55%]
-........................................................................ [ 62%]
-........................................................................ [ 69%]
-........................................................................ [ 76%]
-........................................................................ [ 83%]
-........................................................................ [ 90%]
-........................................................................ [ 97%]
-...........................                                              [100%]
+........................................................................ [ 61%]
+........................................................................ [ 68%]
+........................................................................ [ 75%]
+........................................................................ [ 82%]
+........................................................................ [ 89%]
+........................................................................ [ 96%]
+.......................................                                  [100%]
 ============================== warnings summary ===============================
-.venv-audit\Lib\site-packages\pydantic\fields.py:754: 484 warnings
-  C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\pydantic\fields.py:754: PydanticDeprecatedSince20: Using extra keyword arguments on `Field` is deprecated and will be removed. Use `json_schema_extra` instead. (Extra keys: 'deprecated'). Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.6/migration/
-    warn(
-
 backend\api\v1\game_accounts\router.py:95
-  C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\api\v1\game_accounts\router.py:95: DeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\api\v1\game_accounts\router.py:95: FastAPIDeprecationWarning: `regex` has been deprecated, please use `pattern` instead
     sort_dir: str = Query("desc", regex="^(asc|desc)$", description="Направление сортировки"),
 
 tests/test_updates/test_updates_api.py::TestSSRFGuard::test_http_url_rejected_at_creation
 tests/test_updates/test_updates_api.py::TestSSRFGuard::test_internal_ip_http_url_rejected
 tests/test_updates/test_updates_api.py::TestSSRFGuard::test_file_scheme_rejected
-  C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\fastapi\routing.py:314: DeprecationWarning: 'HTTP_422_UNPROCESSABLE_ENTITY' is deprecated. Use 'HTTP_422_UNPROCESSABLE_CONTENT' instead.
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\fastapi\routing.py:328: StarletteDeprecationWarning: 'HTTP_422_UNPROCESSABLE_ENTITY' is deprecated. Use 'HTTP_422_UNPROCESSABLE_CONTENT' instead.
     return await dependant.call(**values)
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
@@ -148,4 +144,4 @@ TOTAL                                                   11151   3723  66.61%
 97 files skipped due to complete coverage.
 Coverage JSON written to file docs/audits/2026-09-05/evidence/coverage-current.json
 Required test coverage of 65% reached. Total coverage: 66.61%
-1035 passed, 488 warnings in 122.62s (0:02:02)
+1047 passed, 4 warnings in 120.00s (0:02:00)

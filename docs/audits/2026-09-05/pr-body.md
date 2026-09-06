@@ -87,10 +87,18 @@ now use the ASGI path rather than a URL reconstructed from Host. Malformed Host
 headers could otherwise suppress or relabel a successfully committed mutation's
 audit entry. Real API/PostgreSQL regressions preserve the routed resource identity.
 
+The tested Python dependency set now includes the PyJWT, Starlette and pytest
+security releases with compatible FastAPI/Pydantic/pytest-asyncio versions.
+Backend and PC settings pins agree; CI resolves both requirements together,
+checks consistency and scans both. Twelve JWT controls preserve fixed-key,
+single-algorithm verification and reject forged tokens across access/logout.
+The joint local scan reports no known vulnerabilities in the resolved Python set;
+other ecosystems and application blockers remain under audit.
+
 ## Validation
 
 - Android enterprise debug unit suite: **333 passed**.
-- Combined backend/PC, PostgreSQL/Redis and deployment regressions: **1035 passed**.
+- Combined backend/PC, PostgreSQL/Redis and deployment regressions: **1047 passed**.
   This includes **179 real-service tests** and **6 Compose configuration tests**.
   Coverage is **66.61%** and passes the unchanged **65%** gate with two-decimal
   precision. No threshold or coverage scope was weakened. Two additional
