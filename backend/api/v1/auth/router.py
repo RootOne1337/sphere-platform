@@ -10,7 +10,8 @@ from fastapi import APIRouter, Cookie, Depends, HTTPException, Request, Response
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.core.dependencies import get_auth_service, get_current_user
+from backend.core.dependencies import get_auth_service, get_current_user, require_permission
+from backend.core.rbac import has_permission
 from backend.core.exceptions import (
     InvalidCredentialsError,
     InvalidTokenError,
@@ -341,7 +342,7 @@ async def mfa_disable(
 )
 async def create_api_key(
     body: CreateAPIKeyRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = require_permission("api_key:write"),
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -349,6 +350,8 @@ async def create_api_key(
     raw_key показывается ОДИН РАЗ в ответе — после этого получить его невозможно.
     """
     from backend.services.api_key_service import APIKeyService
+    if any(not has_permission(current_user.role, permission) for permission in body.permissions):
+        raise HTTPException(status_code=403, detail="Cannot delegate requested permissions")
     svc = APIKeyService(db)
     api_key, raw_key = await svc.create_api_key(
         org_id=current_user.org_id,
@@ -377,7 +380,7 @@ async def create_api_key(
     summary="SPLIT-4: Список API ключей",
 )
 async def list_api_keys(
-    current_user: User = Depends(get_current_user),
+    current_user: User = require_permission("api_key:read"),
     db: AsyncSession = Depends(get_db),
 ):
     """Список активных API ключей для org текущего пользователя."""
@@ -394,7 +397,7 @@ async def list_api_keys(
 )
 async def revoke_api_key(
     key_id: uuid.UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: User = require_permission("api_key:write"),
     db: AsyncSession = Depends(get_db),
 ):
     """Отозвать (деактивировать) API ключ."""
