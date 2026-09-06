@@ -1,0 +1,68 @@
+FFFFF                                                                    [100%]
+================================== FAILURES ===================================
+______ test_failed_revoke_retains_peer_and_address_reservation[timeout] _______
+tests\production\test_vpn_revoke.py:35: in test_failed_revoke_retains_peer_and_address_reservation
+    with pytest.raises(httpx.HTTPError):
+E   Failed: DID NOT RAISE <class 'httpx.HTTPError'>
+---------------------------- Captured stdout call -----------------------------
+{"exc": "isolated ambiguous DELETE response", "event": "Failed to remove peer from WG server", "level": "warning", "logger": "backend.services.vpn.pool_service", "timestamp": "2026-09-06T11:08:21.149811Z"}
+------------------------------ Captured log call ------------------------------
+WARNING  backend.services.vpn.pool_service:pool_service.py:226 {'exc': 'isolated ambiguous DELETE response', 'event': 'Failed to remove peer from WG server', 'level': 'warning', 'logger': 'backend.services.vpn.pool_service', 'timestamp': '2026-09-06T11:08:21.149811Z'}
+______ test_failed_revoke_retains_peer_and_address_reservation[http_500] ______
+tests\production\test_vpn_revoke.py:35: in test_failed_revoke_retains_peer_and_address_reservation
+    with pytest.raises(httpx.HTTPError):
+E   Failed: DID NOT RAISE <class 'httpx.HTTPError'>
+---------------------------- Captured stdout call -----------------------------
+{"public_key": "audit-peer", "status": 500, "event": "WG Router remove peer unexpected status", "level": "warning", "logger": "backend.services.vpn.pool_service", "timestamp": "2026-09-06T11:08:21.500849Z"}
+------------------------------ Captured log call ------------------------------
+WARNING  backend.services.vpn.pool_service:pool_service.py:220 {'public_key': 'audit-peer', 'status': 500, 'event': 'WG Router remove peer unexpected status', 'level': 'warning', 'logger': 'backend.services.vpn.pool_service', 'timestamp': '2026-09-06T11:08:21.500849Z'}
+______ test_failed_revoke_retains_peer_and_address_reservation[http_403] ______
+tests\production\test_vpn_revoke.py:35: in test_failed_revoke_retains_peer_and_address_reservation
+    with pytest.raises(httpx.HTTPError):
+E   Failed: DID NOT RAISE <class 'httpx.HTTPError'>
+---------------------------- Captured stdout call -----------------------------
+{"public_key": "audit-peer", "status": 403, "event": "WG Router remove peer unexpected status", "level": "warning", "logger": "backend.services.vpn.pool_service", "timestamp": "2026-09-06T11:08:21.662288Z"}
+------------------------------ Captured log call ------------------------------
+WARNING  backend.services.vpn.pool_service:pool_service.py:220 {'public_key': 'audit-peer', 'status': 403, 'event': 'WG Router remove peer unexpected status', 'level': 'warning', 'logger': 'backend.services.vpn.pool_service', 'timestamp': '2026-09-06T11:08:21.662288Z'}
+______ test_failed_revoke_retains_peer_and_address_reservation[http_202] ______
+tests\production\test_vpn_revoke.py:35: in test_failed_revoke_retains_peer_and_address_reservation
+    with pytest.raises(httpx.HTTPError):
+E   Failed: DID NOT RAISE <class 'httpx.HTTPError'>
+---------------------------- Captured stdout call -----------------------------
+{"public_key": "audit-peer", "status": 202, "event": "WG Router remove peer unexpected status", "level": "warning", "logger": "backend.services.vpn.pool_service", "timestamp": "2026-09-06T11:08:21.817325Z"}
+------------------------------ Captured log call ------------------------------
+WARNING  backend.services.vpn.pool_service:pool_service.py:220 {'public_key': 'audit-peer', 'status': 202, 'event': 'WG Router remove peer unexpected status', 'level': 'warning', 'logger': 'backend.services.vpn.pool_service', 'timestamp': '2026-09-06T11:08:21.817325Z'}
+______________ test_concurrent_revoke_returns_address_only_once _______________
+..\..\..\AppData\Roaming\uv\python\cpython-3.12.12-windows-x86_64-none\Lib\unittest\mock.py:2334: in assert_awaited_once
+    raise AssertionError(msg)
+E   AssertionError: Expected release_ip to have been awaited once. Awaited 2 times.
+
+During handling of the above exception, another exception occurred:
+tests\production\test_vpn_revoke.py:73: in test_concurrent_revoke_returns_address_only_once
+    pool.release_ip.assert_awaited_once()
+E   AssertionError: Expected release_ip to have been awaited once. Awaited 2 times.
+E   
+E   pytest introspection follows:
+E   
+E   Args:
+E   assert ('f9d59de5-ec... '10.200.0.2') == ()
+E     
+E     Left contains 2 more items, first extra item: 'f9d59de5-ec9d-4761-9ba4-66920b0c045a'
+E     Use -v to get more diff
+============================== warnings summary ===============================
+.venv-audit\Lib\site-packages\pydantic\fields.py:754: 484 warnings
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\pydantic\fields.py:754: PydanticDeprecatedSince20: Using extra keyword arguments on `Field` is deprecated and will be removed. Use `json_schema_extra` instead. (Extra keys: 'deprecated'). Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.6/migration/
+    warn(
+
+backend\api\v1\game_accounts\router.py:94
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\api\v1\game_accounts\router.py:94: DeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+    sort_dir: str = Query("desc", regex="^(asc|desc)$", description="Направление сортировки"),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/production/test_vpn_revoke.py::test_failed_revoke_retains_peer_and_address_reservation[timeout]
+FAILED tests/production/test_vpn_revoke.py::test_failed_revoke_retains_peer_and_address_reservation[http_500]
+FAILED tests/production/test_vpn_revoke.py::test_failed_revoke_retains_peer_and_address_reservation[http_403]
+FAILED tests/production/test_vpn_revoke.py::test_failed_revoke_retains_peer_and_address_reservation[http_202]
+FAILED tests/production/test_vpn_revoke.py::test_concurrent_revoke_returns_address_only_once
+5 failed, 485 warnings in 1.27s

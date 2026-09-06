@@ -165,7 +165,7 @@ class VPNPoolService:
                 VPNPeer.device_id == device_uuid,
                 VPNPeer.org_id == org_id,
                 VPNPeer.status == VPNPeerStatus.ASSIGNED,
-            )
+            ).with_for_update().execution_options(populate_existing=True)
         )
         return result.scalar_one_or_none()
 
@@ -213,14 +213,12 @@ class VPNPoolService:
             raise RuntimeError(f"WG Router error {resp.status_code}: {resp.text}")
 
     async def _remove_peer_from_server(self, public_key: str) -> None:
-        """DELETE /peers/{public_key} on WG Router API (best-effort, won't raise)."""
-        try:
-            resp = await self._http.delete(f"/peers/{public_key}")
-            if resp.status_code not in (200, 204, 404):
-                logger.warning(
-                    "WG Router remove peer unexpected status",
-                    public_key=public_key,
-                    status=resp.status_code,
-                )
-        except Exception as exc:
-            logger.warning("Failed to remove peer from WG server", exc=str(exc))
+        """Require confirmed deletion before the caller may release the address."""
+        resp = await self._http.delete(f"/peers/{public_key}")
+        if resp.status_code not in (200, 204, 404):
+            # In particular, 202 only acknowledges a request; it does not prove
+            # the peer is gone. Timeouts propagate for the same reason.
+            raise httpx.HTTPStatusError(
+                "WG Router did not confirm peer deletion",
+                request=resp.request, response=resp,
+            )
