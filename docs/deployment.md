@@ -217,6 +217,20 @@ ufw enable
 
 Alembic is used for all schema changes.
 
+The audit migration `20260906_vpn_intents` requires a controlled VPN writer
+maintenance window, not a mixed-version rolling deployment. Reconcile held
+PostgreSQL addresses with actual router inventory, including orphan peers absent
+from SQL, and stop legacy allocation writers before applying it. Duplicate held
+addresses, invalid addresses or network prefixes make this migration fail
+atomically; it does not delete or renumber peers. Downgrade is refused while
+PROVISIONING/REVOKING intents exist. See the
+[VPN runbook](runbooks/02-vpn-incident.md) and
+[transaction/rollout design](audits/2026-09-05/VPN-LEASE-DESIGN.md).
+
+From the repository root, use the repository's explicit Alembic configuration:
+`python -m alembic -c alembic/alembic.ini upgrade head`. In a container use the
+equivalent path for its working directory and the selected Compose stack.
+
 ```bash
 # Apply all pending migrations
 docker compose exec backend alembic upgrade head

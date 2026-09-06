@@ -32,10 +32,14 @@ Backend CI now enables the isolated PostgreSQL/Redis regressions, has a bounded
 20-minute test job and retains JUnit/coverage artifacts on failure.
 
 VPN assignment now validates the active device in the caller's organization,
-serializes concurrent requests and returns the original PSK on retry. Failed or
-unconfirmed router deletion preserves the peer/address reservation; concurrent
-revocations return it once. The global allocator and ambiguous cross-system
-outcomes remain open blockers.
+serializes concurrent requests and returns the original PSK and saved route choice
+on retry. PostgreSQL owns global held-IP uniqueness and commits provisioning/revoke
+intents before router effects. Completion checks the operation generation; unknown
+outcomes retain their address and reject blind retries. Redis loss or stale free
+lists cannot reissue an address. Lifecycle commits use separate sessions from HTTP
+callers. DELETE percent-encodes peer keys and accepts only 200/204; generic 404
+requires reconciliation. The authoritative provider inventory/reconciler remains
+unimplemented, so pending operations deliberately retain their IP.
 
 VPN health polling now authenticates to the router, validates observations and
 preserves last known state on failed or malformed responses. Missing/zero
@@ -48,9 +52,9 @@ successful delivery to Android or an established tunnel.
 ## Validation
 
 - Android enterprise debug unit suite: **316 passed**.
-- Combined backend/PC, PostgreSQL/Redis and deployment regressions: **948 passed**.
-  This includes **106 real-service tests** and **6 Compose configuration tests**.
-  Coverage is **65.30%** and passes the unchanged **65%** gate with two-decimal
+- Combined backend/PC, PostgreSQL/Redis and deployment regressions: **974 passed**.
+  This includes **132 real-service tests** and **6 Compose configuration tests**.
+  Coverage is **65.55%** and passes the unchanged **65%** gate with two-decimal
   precision. No threshold or coverage scope was weakened. Two additional
   regression tests exercise the 64.98% rejection and exact 65.00% boundary. Long load/soak profiles require a prepared API
   environment and are excluded from the ordinary PR command.
@@ -70,7 +74,7 @@ resolved account payloads determine DAG cache identity. Full RLS rollout,
 orchestrator creation/pipeline recovery, VPN/deployment and the remaining
 component audit are still open. Legacy running assignments require rollout reconciliation.
 
-Apply migrations through `20260906_task_accounting` before a backend rollout; previously
+Apply migrations through `20260906_vpn_intents` before a backend rollout; previously
 issued refresh tokens require device re-enrollment. The command journal retains
 512 receipts for seven days with a 1 MiB cap and rejects new DAGs when full.
 Interrupted execution returns an explicit unknown-outcome failure; this does not
@@ -80,6 +84,12 @@ emulator capacity have not been measured.
 n8n/MinIO ingress, runtime database roles, durable OTA/log storage, task-specific
 stop acknowledgements and post-commit webhook delivery remain open. Existing
 incorrect batch counters and legacy task metadata require reconciliation.
+
+The VPN migration refuses duplicate held IPs, invalid addresses/network prefixes
+and downgrade with pending intents. Reconcile PostgreSQL/router inventories and
+stop legacy allocation writers before rollout; old code still provisions before
+SQL ownership. The 64-concurrent-assignment regression uses real PostgreSQL and
+mock router responses and is not an Android emulator capacity measurement.
 
 A real APK-to-backend runtime test is incomplete: automatic approval review
 rejected starting the isolated local API with `blocked by policy`; no workaround

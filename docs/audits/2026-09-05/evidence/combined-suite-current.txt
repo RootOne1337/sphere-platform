@@ -1,17 +1,17 @@
 ........................................................................ [  7%]
-........................................................................ [ 15%]
+........................................................................ [ 14%]
 ........................................................................ [ 22%]
-........................................................................ [ 30%]
-........................................................................ [ 37%]
-........................................................................ [ 45%]
-........................................................................ [ 53%]
-........................................................................ [ 60%]
-........................................................................ [ 68%]
-........................................................................ [ 75%]
-........................................................................ [ 83%]
-........................................................................ [ 91%]
-........................................................................ [ 98%]
-............                                                             [100%]
+........................................................................ [ 29%]
+........................................................................ [ 36%]
+........................................................................ [ 44%]
+........................................................................ [ 51%]
+........................................................................ [ 59%]
+........................................................................ [ 66%]
+........................................................................ [ 73%]
+........................................................................ [ 81%]
+........................................................................ [ 88%]
+........................................................................ [ 96%]
+......................................                                   [100%]
 ============================== warnings summary ===============================
 .venv-audit\Lib\site-packages\pydantic\fields.py:754: 484 warnings
   C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\pydantic\fields.py:754: PydanticDeprecatedSince20: Using extra keyword arguments on `Field` is deprecated and will be removed. Use `json_schema_extra` instead. (Extra keys: 'deprecated'). Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.6/migration/
@@ -58,7 +58,7 @@ backend\api\v1\streaming\router.py                         62     34  45.16%
 backend\api\v1\tasks\router.py                            137     89  35.04%
 backend\api\v1\updates\router.py                           75     11  85.33%
 backend\api\v1\users\router.py                             85     37  56.47%
-backend\api\v1\vpn\router.py                              113     42  62.83%
+backend\api\v1\vpn\router.py                              115     45  60.87%
 backend\api\ws\agent\router.py                            137     69  49.64%
 backend\api\ws\android\router.py                          431    175  59.40%
 backend\api\ws\events\router.py                           226    158  30.09%
@@ -72,7 +72,7 @@ backend\core\logging_config.py                             21      1  95.24%
 backend\core\rbac.py                                       25      2  92.00%
 backend\core\security.py                                   35      1  97.14%
 backend\core\startup_checks.py                             21     15  28.57%
-backend\database\engine.py                                 27      8  70.37%
+backend\database\engine.py                                 27      4  85.19%
 backend\database\redis_client.py                           21      9  57.14%
 backend\main.py                                            76     24  68.42%
 backend\middleware\audit.py                                64      9  85.94%
@@ -122,14 +122,15 @@ backend\services\script_service.py                        105     13  87.62%
 backend\services\task_queue.py                             58      3  94.83%
 backend\services\task_service.py                          255     81  68.24%
 backend\services\vpn\awg_config.py                         59      2  96.61%
-backend\services\vpn\dependencies.py                       35     14  60.00%
+backend\services\vpn\dependencies.py                       34     15  55.88%
 backend\services\vpn\event_publisher.py                     7      2  71.43%
 backend\services\vpn\health_monitor.py                    102     13  87.25%
-backend\services\vpn\pool_service.py                       94      6  93.62%
+backend\services\vpn\ip_pool.py                            54      2  96.30%
+backend\services\vpn\pool_service.py                      121      2  98.35%
 backend\tasks\ensure_enrollment_key.py                     31     24  22.58%
 backend\tasks\orchestration_loop.py                        11      4  63.64%
 backend\tasks\sync_device_status.py                        60     15  75.00%
-backend\tasks\task_heartbeat_watchdog.py                  139     36  74.10%
+backend\tasks\task_heartbeat_watchdog.py                  139     32  76.98%
 backend\tasks\vpn_health.py                                59      2  96.61%
 backend\websocket\connection_manager.py                    98      9  90.82%
 backend\websocket\event_publisher.py                       47     11  76.60%
@@ -139,9 +140,9 @@ backend\websocket\offline_queue.py                         85      8  90.59%
 backend\websocket\pubsub_router.py                        172     43  75.00%
 backend\websocket\stream_bridge.py                        139     57  58.99%
 ----------------------------------------------------------------------------
-TOTAL                                                   10952   3800  65.30%
+TOTAL                                                   11012   3794  65.55%
 
-96 files skipped due to complete coverage.
+95 files skipped due to complete coverage.
 Coverage JSON written to file docs/audits/2026-09-05/evidence/coverage-current.json
-Required test coverage of 65% reached. Total coverage: 65.30%
-948 passed, 488 warnings in 70.99s (0:01:10)
+Required test coverage of 65% reached. Total coverage: 65.55%
+974 passed, 488 warnings in 96.28s (0:01:36)

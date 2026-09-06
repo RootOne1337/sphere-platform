@@ -20,9 +20,9 @@ runtime-проверок и не считается доказательство
 | Проверка | Результат | Практическое ограничение |
 | --- | --- | --- |
 | Android enterprise debug unit suite | 316 passed, 0 failed | JVM/MockWebServer; не проверяет ОС, codec, батарею или смерть процесса на телефоне |
-| Объединённая Backend/PC/production/deployment suite | **948 passed, 0 failed**; coverage **65,30%** | Строгий coverage gate 65% пройден с precision=2. Load suite исключена; 6 Compose config tests не запускают сервисы |
-| Проверки PostgreSQL/Redis | **106 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
-| Миграции | Применены до **20260906_task_accounting** включительно | Только изолированная БД; production не мигрировался |
+| Объединённая Backend/PC/production/deployment suite | **974 passed, 0 failed**; coverage **65,55%** | Строгий coverage gate 65% пройден с precision=2. Load suite исключена; 6 Compose config tests не запускают сервисы |
+| Проверки PostgreSQL/Redis | **132 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
+| Миграции | Применены до **20260906_vpn_intents** включительно | Только изолированная БД; конфликтные данные/downgrade проверены в throwaway schema; production не мигрировался |
 | Backend image | Собирается; исходная запись OpenAPI воспроизведённо падает с PermissionError | Исправлен lifespan; полный deployment runtime ещё не подтверждён |
 | Frontend build | Успешно | Type-check/Jest и браузерный runtime требуют отдельного завершения проверки |
 | APK ↔ реальный локальный backend | Не завершено | Автоматическая проверка разрешений отклонила запуск локального API: `blocked by policy`; обход не выполнялся |
@@ -32,7 +32,7 @@ runtime-проверок и не считается доказательство
 Предыдущий отдельный DAG benchmark однажды занял 127,1 ms при пороге 100 ms;
 изолированный повтор и последующие общие прогоны прошли. Порог не ослаблялся.
 Файл production-regressions-after.txt сохраняет более ранний standalone snapshot
-с 41 тестом; актуальные 106 входят в общий прогон.
+с 41 тестом; актуальные 132 входят в общий прогон.
 
 Команды запуска и предохранители изоляции: [tests/production/README.md](../../../tests/production/README.md).
 Исходные `14 passed` в [reproductions.txt](evidence/reproductions.txt) означают
@@ -339,7 +339,7 @@ runtime-проверок и не считается доказательство
 - **Root cause:** tenant Redis ZSET покрывали одну subnet, а reinit возвращал извлечённые адреса. POST выполнялся до SQL записи; exception возвращал IP даже после применения запроса роутером. Revoke возвращал IP в Redis до SQL commit.
 - **Affected files:** `backend/models/vpn_peer.py`, `backend/services/vpn/ip_pool.py`, `pool_service.py`, `dependencies.py`, `backend/api/v1/vpn/router.py`, `backend/schemas/vpn/peer.py`, `alembic/versions/20260906_vpn_intents.py`.
 - **Evidence:** F11 исходного аудита; [vpn-lease-before.txt](evidence/vpn-lease-before.txt): 5 failures — одинаковый IP у разных tenants, отсутствие видимого SQL intent перед POST, потерянный ответ, отказ intent/final commit.
-- **Fix:** глобальная unique constraint non-FREE INET, короткий advisory lock при выборе IP; PROVISIONING/REVOKING intent commit до provider IO. SQL generation check перед финальным commit; rollback/cancellation не удаляет intent. IP освобождается только commit FREE. Production DI выделяет сессию lifecycle отдельно от caller; API stats читают SQL, а Redis не участвует в ownership. Retry незавершённого peer возвращает 409 без нового provider call; новый split_tunnel сохраняется.
+- **Fix:** `a9cb944` — глобальная unique constraint non-FREE INET, короткий advisory lock при выборе IP; PROVISIONING/REVOKING intent commit до provider IO. SQL generation check перед финальным commit; rollback/cancellation не удаляет intent. IP освобождается только commit FREE. Production DI выделяет сессию lifecycle отдельно от caller; API stats читают SQL, а Redis не участвует в ownership. Retry незавершённого peer возвращает 409 без нового provider call; новый split_tunnel сохраняется.
 - **Regression:** `test_vpn_durable_leases.py` — 19 случаев, включая 64 параллельных назначения, потерю/poisoned cache Redis, cancellation, generation mismatch, сохранение route/PSK, pool exhaustion, независимость caller transaction. `test_vpn_migration.py` — 5 проверок реальной миграции в PostgreSQL throwaway schema. [vpn-lease-after.txt](evidence/vpn-lease-after.txt) и общий прогон включают прежние VPN contracts/revoke/health tests.
 - **Migration evidence:** [vpn-migration-conflicts.txt](evidence/vpn-migration-conflicts.txt): миграция атомарно отказала на накопленных дублях тестового стенда, исходный head и строки сохранились. После удаления только 227 старых artificial Audit A/B peers в выделенной sphere_audit выполнен успешный upgrade. Production не менялся. Автотесты теперь удаляют VPN rows только своих двух UUID организаций. Invalid addresses/network prefixes и downgrade с pending intent также отклоняются без потери данных.
 - **Residual risk:** automatic provider reconciliation отсутствует. Pending intent удерживает IP до управляемой сверки, что снижает доступность при отказе, но исключает слепое повторное выделение. Старые writers нельзя запускать одновременно с новым allocator; orphan router peers вне SQL должны быть сверены до rollout. Полный RLS/runtime-role design, HTTP adapter, reserved router IP, AWG settings/routes и физический handshake остаются открытыми. 64 SQL assignments не измеряют ёмкость 64 APK. Подробности: [VPN-LEASE-DESIGN.md](VPN-LEASE-DESIGN.md).
@@ -349,7 +349,7 @@ runtime-проверок и не считается доказательство
 - **Root cause:** public key вставлялся в путь без percent encoding; символ `/` создавал дополнительный route segment. Любой 404, включая proxy/route Not Found, трактовался как доказательство отсутствия peer.
 - **Affected files:** `backend/services/vpn/pool_service.py`, `_remove_peer_from_server`.
 - **Evidence:** [vpn-router-path-before.txt](evidence/vpn-router-path-before.txt): 2 failures — raw HTTP path отличался от единого encoded key; generic 404 принимался без ошибки. MockTransport локальный, реальный роутер не вызывался.
-- **Fix:** percent encoding ключа как одного URL component; DELETE принимает только 200/204. При 404 intent остаётся REVOKING, адрес не освобождается.
+- **Fix:** `9b28dc6` — percent encoding ключа как одного URL component; DELETE принимает только 200/204. При 404 intent остаётся REVOKING, адрес не освобождается.
 - **Regression:** `test_vpn_router_path.py` и существующий real-SQL revoke matrix, включая 404, проверяют path/error и удержание адреса.
 - **Residual risk:** корректный already-absent результат провайдера требует отдельного authoritative contract. Encoded slash должен поддерживаться router/proxy; автоматическое разрешение 404 без этой проверки запрещено. Реальный deployed provider всё ещё не обследован.
 
@@ -386,6 +386,10 @@ Security job показывает PyJWT/Starlette/pytest advisories; прове�
 статический RLS job успешны; Security/pip-audit — failure. Android run `34029730717`
 успешно собрал APK и выполнил unit tests. Это проверенный snapshot предыдущего
 head; последующие коммиты требуют собственных CI результатов.
+
+На `5cbeb55` backend run `34031085035` завершился с успешными Tests/Lint/Alembic/
+статическим RLS job и failure Security/pip-audit. Android run `34031085117` успешен.
+Эти результаты не распространяются автоматически на последующие SQL lifecycle fixes.
 
 Для AUD-11 реализованы [SQL reservations и generation fencing](VPN-LEASE-DESIGN.md);
 документ описывает границы транзакций, обязательный migration preflight и ещё
