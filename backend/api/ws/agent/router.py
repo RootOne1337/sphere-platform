@@ -70,6 +70,7 @@ async def handle_workstation_register(
     """
     try:
         from datetime import datetime, timezone
+
         from backend.models.ldplayer_instance import LDPlayerInstance
         workstation = await db.scalar(select(Workstation).where(
             Workstation.id == uuid.UUID(workstation_id), Workstation.org_id == uuid.UUID(org_id),

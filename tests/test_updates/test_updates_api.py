@@ -28,14 +28,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 import backend.api.v1.updates.router as updates_module
 from backend.core.security import create_access_token
-from backend.database.engine import Base, get_db
+from backend.database.engine import get_db
 from backend.database.redis_client import get_redis
 from backend.main import app
 from backend.models import *  # noqa: F401,F403
 from backend.models.api_key import APIKey
 from backend.models.organization import Organization
 from backend.models.user import User
-
 
 # ---------------------------------------------------------------------------
 # Fixtures

@@ -9,8 +9,8 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.dependencies import get_audit_service, require_roles
-from backend.core.security import hash_password
 from backend.core.rbac import can_manage_role
+from backend.core.security import hash_password
 from backend.database.engine import get_db
 from backend.models.user import User
 from backend.schemas.auth import (
@@ -225,7 +225,7 @@ async def deactivate_user(
         owners = await db.scalar(select(func.count()).select_from(User).where(
             User.org_id == user.org_id, User.role == "org_owner", User.is_active.is_(True)
         ))
-        if owners <= 1:
+        if (owners or 0) <= 1:
             raise HTTPException(status_code=400, detail="Cannot remove the last org_owner")
     user.is_active = False
     await audit_svc.log(

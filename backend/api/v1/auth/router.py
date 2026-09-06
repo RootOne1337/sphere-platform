@@ -11,12 +11,12 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.dependencies import get_auth_service, get_current_user, require_permission
-from backend.core.rbac import has_permission
 from backend.core.exceptions import (
     InvalidCredentialsError,
     InvalidTokenError,
     TooManyAttemptsError,
 )
+from backend.core.rbac import has_permission
 from backend.core.security import decode_expired_access_token
 from backend.database.engine import get_db
 from backend.models.user import User
