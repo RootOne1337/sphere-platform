@@ -5,14 +5,18 @@ from __future__ import annotations
 
 import asyncio
 import json
+import uuid
 
 import structlog
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from pydantic import BaseModel, Field, ValidationError
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.database.engine import AsyncSessionLocal
 from backend.database.redis_client import get_redis_binary
 from backend.models.device import Device
+from backend.models.task import Task, TaskStatus
 from backend.schemas.device_status import DeviceLiveStatus
 from backend.services.device_status_cache import DeviceStatusCache
 from backend.websocket.connection_manager import ConnectionManager, get_connection_manager
@@ -135,12 +139,37 @@ async def handle_telemetry(
         await status_cache.set_status(device_id, current)
 
 
+class TaskProgressMessage(BaseModel):
+    task_id: uuid.UUID
+    nodes_done: int = Field(default=0, strict=True, ge=0, le=2**31 - 1)
+    total_nodes: int = Field(default=1, strict=True, ge=1, le=2**31 - 1)
+    current_node: str = Field(default="", max_length=512)
+
+
 async def handle_task_progress(device_id: str, org_id: str, msg: dict) -> None:
     """Обработать прогресс выполнения DAG от агента."""
-    task_id = msg.get("task_id")
-    nodes_done = msg.get("nodes_done", 0)
-    total_nodes = msg.get("total_nodes", 1)
-    current_node = msg.get("current_node", "")
+    try:
+        message = TaskProgressMessage.model_validate(msg)
+        device_uuid, org_uuid = uuid.UUID(device_id), uuid.UUID(org_id)
+    except (ValidationError, ValueError, TypeError):
+        logger.warning("Invalid task progress", device_id=device_id)
+        return
+
+    # Redis keys are globally addressed by task ID. Authenticate ownership before
+    # writing any cache entry or publishing an event, including within one tenant.
+    async with AsyncSessionLocal() as db:
+        owned = await db.scalar(select(Task.id).where(
+            Task.id == message.task_id,
+            Task.device_id == device_uuid,
+            Task.org_id == org_uuid,
+            Task.status.in_([TaskStatus.ASSIGNED, TaskStatus.RUNNING]),
+        ))
+    if owned is None:
+        return
+    task_id = str(message.task_id)
+    nodes_done = message.nodes_done
+    total_nodes = message.total_nodes
+    current_node = message.current_node
     # For cyclic DAGs: cap progress at 100%, track cycles
     progress = min(int(nodes_done / max(total_nodes, 1) * 100), 100)
     cycles = nodes_done // max(total_nodes, 1)

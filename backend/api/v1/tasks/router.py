@@ -9,7 +9,7 @@ from __future__ import annotations
 import uuid
 
 import structlog
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -234,8 +234,13 @@ async def get_task_logs(
 async def get_task_progress(
     task_id: uuid.UUID,
     current_user: User = require_permission("script:read"),
+    db: AsyncSession = Depends(get_db),
     redis=Depends(get_redis),
 ) -> dict:
+    if await db.scalar(select(Task.id).where(
+        Task.id == task_id, Task.org_id == current_user.org_id,
+    )) is None:
+        raise HTTPException(status_code=404, detail="Task not found")
     data = await redis.hgetall(f"task_progress:{task_id}")
     if not data:
         return {"nodes_done": 0, "total_nodes": 0, "current_node": "", "progress": 0, "cycles": 0, "started_at": None}
@@ -258,8 +263,13 @@ async def get_task_progress(
 async def get_task_live_logs(
     task_id: uuid.UUID,
     current_user: User = require_permission("script:read"),
+    db: AsyncSession = Depends(get_db),
     redis=Depends(get_redis),
 ) -> list[dict]:
+    if await db.scalar(select(Task.id).where(
+        Task.id == task_id, Task.org_id == current_user.org_id,
+    )) is None:
+        raise HTTPException(status_code=404, detail="Task not found")
     import json as _json
     entries = await redis.lrange(f"task_progress_log:{task_id}", 0, -1)
     if not entries:
