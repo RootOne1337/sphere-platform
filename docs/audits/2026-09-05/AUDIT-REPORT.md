@@ -20,8 +20,8 @@ runtime-проверок и не считается доказательство
 | Проверка | Результат | Практическое ограничение |
 | --- | --- | --- |
 | Android enterprise debug unit suite | 316 passed, 0 failed | JVM/MockWebServer; не проверяет ОС, codec, батарею или смерть процесса на телефоне |
-| Объединённая Backend/PC/production/deployment suite | **926 passed, 0 failed**; coverage **65,04%** | Строгий coverage gate 65% пройден с precision=2. Load suite исключена; 6 Compose config tests не запускают сервисы |
-| Проверки PostgreSQL/Redis | **84 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
+| Объединённая Backend/PC/production/deployment suite | **948 passed, 0 failed**; coverage **65,30%** | Строгий coverage gate 65% пройден с precision=2. Load suite исключена; 6 Compose config tests не запускают сервисы |
+| Проверки PostgreSQL/Redis | **106 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
 | Миграции | Применены до **20260906_task_accounting** включительно | Только изолированная БД; production не мигрировался |
 | Backend image | Собирается; исходная запись OpenAPI воспроизведённо падает с PermissionError | Исправлен lifespan; полный deployment runtime ещё не подтверждён |
 | Frontend build | Успешно | Type-check/Jest и браузерный runtime требуют отдельного завершения проверки |
@@ -32,7 +32,7 @@ runtime-проверок и не считается доказательство
 Предыдущий отдельный DAG benchmark однажды занял 127,1 ms при пороге 100 ms;
 изолированный повтор и последующие общие прогоны прошли. Порог не ослаблялся.
 Файл production-regressions-after.txt сохраняет более ранний standalone snapshot
-с 41 тестом; актуальные 84 входят в общий прогон.
+с 41 тестом; актуальные 106 входят в общий прогон.
 
 Команды запуска и предохранители изоляции: [tests/production/README.md](../../../tests/production/README.md).
 Исходные `14 passed` в [reproductions.txt](evidence/reproductions.txt) означают
@@ -320,7 +320,7 @@ runtime-проверок и не считается доказательство
 - **Root cause:** HTTP status не проверялся; timeout/ошибка JSON возвращали пустой snapshot. Отсутствующий или нулевой handshake трактовался как удалённый peer и запускал POST /peers без PSK. Health client и background factory не передавали router API key; reconnect собирал отдельную конфигурацию без сохранённого PSK.
 - **Affected files:** `backend/services/vpn/health_monitor.py`, `backend/services/vpn/pool_service.py`, `backend/tasks/vpn_health.py`.
 - **Evidence:** [vpn-health-before.txt](evidence/vpn-health-before.txt): 13 failures на PostgreSQL и httpx.MockTransport; router mutation после timeout/401/503/невалидного snapshot, peer без handshake, отсутствие auth header и потеря PSK. Внешний router не вызывался.
-- **Fix:** валидируются status, форма snapshot и timestamps; неизвестное состояние сохраняет последние данные и возвращает checked=0/error. Health-check больше не создаёт peers по handshake API. API key передаётся в background service/client. Retry и reconnect используют общий config builder с сохранённым PSK, без лишней генерации QR при reconnect.
+- **Fix:** `10141ee` — валидируются status, форма snapshot и timestamps; неизвестное состояние сохраняет последние данные и возвращает checked=0/error. Health-check больше не создаёт peers по handshake API. API key передаётся в background service/client. Retry и reconnect используют общий config builder с сохранённым PSK, без лишней генерации QR при reconnect.
 - **Regression:** `tests/production/test_vpn_health_recovery.py` — 16 cases, включая NaN/future timestamps и восстановление после неудачного poll. Прежний тест «missing peer» проверял только первоначальный assignment call; теперь проверяет отсутствие POST из monitor.
 - **Residual risk:** отсутствие peer требует отдельной сверки с authoritative provider inventory и durable provisioning intent. EventPublisher остаётся stub, фактическая доставка reconnect и handshake не доказаны. Commit фонового health-check и overlap revoke разобраны в AUD-29; global leases и маршруты остаются открытыми. Этот fix не закрывает AUD-11.
 
@@ -329,9 +329,9 @@ runtime-проверок и не считается доказательство
 - **Root cause:** get_db_session не делает автоматический commit, а health loop ограничивался flush. После router poll обновлялась старая ORM-модель без повторной проверки status/device; конкурентный revoke уже мог завершиться. Это позволяло вернуть is_active=True для FREE peer или сформировать reconnect с отозванной конфигурацией.
 - **Affected files:** `backend/tasks/vpn_health.py`, `backend/services/vpn/health_monitor.py`.
 - **Evidence:** [vpn-health-transaction-before.txt](evidence/vpn-health-transaction-before.txt): 3 failures — свежий/stale snapshot, перекрытый подтверждённым SQL revoke, и потеря observation при закрытии background session.
-- **Fix:** условный SQL UPDATE проверяет прежнюю организацию, устройство и ASSIGNED непосредственно при записи; изменённый peer пропускается. Background job использует отдельную tenant-context session и явный commit для каждой организации, продолжает после ошибки одной организации.
+- **Fix:** `2d752bf` — условный SQL UPDATE проверяет прежнюю организацию, устройство и ASSIGNED непосредственно при записи; изменённый peer пропускается. Background job использует отдельную tenant-context session и явный commit для каждой организации, продолжает после ошибки одной организации.
 - **Regression:** расширенная VPN suite: [vpn-health-transaction-after.txt](evidence/vpn-health-transaction-after.txt), 112 passed. 20 новых health cases включают реальный PostgreSQL commit/rollback и отказ commit первой организации с успешной обработкой второй.
-- **Дополнительное evidence/fix:** поздний stale/empty ответ параллельного poll перезаписывал более свежую SQL observation; [vpn-health-ordering-before.txt](evidence/vpn-health-ordering-before.txt): 2 failures. SQL update теперь запрещает уменьшение last_handshake_at и применяет missing observation только если исходный timestamp не изменился. [vpn-health-ordering-after.txt](evidence/vpn-health-ordering-after.txt): 31 passed, включая расширенные 22 production health cases и прежние monitor tests.
+- **Дополнительное evidence/fix:** поздний stale/empty ответ параллельного poll перезаписывал более свежую SQL observation; [vpn-health-ordering-before.txt](evidence/vpn-health-ordering-before.txt): 2 failures. `a85f5d2` — SQL update запрещает уменьшение last_handshake_at и применяет missing observation только если исходный timestamp не изменился. [vpn-health-ordering-after.txt](evidence/vpn-health-ordering-after.txt): 31 passed, включая расширенные 22 production health cases и прежние monitor tests.
 - **Residual risk:** polling и reconnect не имеют долговечного outbox; доставка после commit/revoke и stop acknowledgement требуют отдельного протокола с fencing. Redis lease фонового цикла пока не продлевается; длительные циклы могут пересекаться. Тест организации задаёт изолированную enumeration boundary и не доказывает полный rollout RLS.
 
 ## Открытые подтверждённые блокеры
@@ -362,6 +362,15 @@ Android build и lint успешны, security job падает; эти резу
 также выявил прежние diagnostics вне исправленного owner count; они не подавлялись.
 Security job показывает PyJWT/Starlette/pytest advisories; проверки upstream и
 совместимых обновлений продолжаются. Список приоритетов: [ROADMAP.md](ROADMAP.md).
+
+На `1e9bc63` GitHub backend run `34029730768` завершился: Tests, Lint, Alembic и
+статический RLS job успешны; Security/pip-audit — failure. Android run `34029730717`
+успешно собрал APK и выполнил unit tests. Это проверенный snapshot предыдущего
+head; последующие коммиты требуют собственных CI результатов.
+
+Для AUD-11 подготовлен [план durable VPN lease](VPN-LEASE-DESIGN.md) с границами
+транзакций, quarantine, migration preflight и критериями fault/concurrency tests.
+План ещё не реализован и не закрывает глобальный allocator.
 
 PR остаётся draft до завершения открытых блокеров, повторного runtime обследования
 и финализации отчёта. Merge и deployment не выполнялись.

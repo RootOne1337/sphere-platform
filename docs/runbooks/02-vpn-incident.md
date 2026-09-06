@@ -114,9 +114,13 @@ marks the peer inactive but does not recreate it: the handshake endpoint is not
 an authoritative peer inventory. Reconcile actual router configuration before
 any provisioning repair. The reconnect configuration preserves the stored PSK;
 the current command publisher is still a stub, so this does not prove delivery.
+Background observations commit per organization. Writes skip peers revoked during
+the poll and do not replace newer handshake timestamps with delayed observations.
 
 Open audit work includes durable global IP reservations, provisioning/revoke
 intent before external effects, lost-response reconciliation, commit/release
 atomicity, Redis-loss recovery, AWG settings, split routes and kill-switch runtime.
 The current tests use local PostgreSQL and mocked router transport; they do not
 certify a deployed tunnel or physical Android behavior.
+The [durable lease plan](../audits/2026-09-05/VPN-LEASE-DESIGN.md) records the required
+transaction boundaries and migration preflight; it is not implemented allocator behavior.

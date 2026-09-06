@@ -20,3 +20,11 @@ Without `SPHERE_RUN_INTEGRATION=1`, tests using the database fixture are skipped
 The combined CI command is `pytest tests/ --ignore=tests/load -v --tb=short --junitxml=test-results.xml --cov=backend --cov-report=xml --cov-fail-under=65`. Set `PYTHONPATH` to include the repository and `pc-agent` (`.;pc-agent` on Windows, `.:pc-agent` on Linux). Native PostgreSQL types retain SQLite-only variants, so both suites can run in one process. CI has a 20-minute test-job deadline and uploads JUnit/coverage artifacts even after failure. The 65% coverage gate is preserved.
 
 `tests/load` includes long-running load/soak profiles. They require a separately prepared, explicitly isolated API/agent environment; the ordinary CI service containers do not provide that API. Excluding this directory from the PR regression command does not establish capacity or complete the load audit. Record environment, duration, recovery scenarios and CPU/RAM/FPS before making any 10–64 emulator capacity claim.
+
+`test_vpn_health_recovery.py` exercises rejected/malformed router snapshots,
+preserved PSK, per-tenant background commit/rollback, concurrent revocation and
+out-of-order health observations. Router requests use `httpx.MockTransport` in
+memory; PostgreSQL persistence and transaction overlap are real. These tests do
+not start a VPN router, prove command delivery through the current stub publisher,
+or establish an Android handshake. See AUD-28/AUD-29 and the proposed
+[durable lease design](../../docs/audits/2026-09-05/VPN-LEASE-DESIGN.md) for remaining scope.

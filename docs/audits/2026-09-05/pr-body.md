@@ -37,12 +37,20 @@ unconfirmed router deletion preserves the peer/address reservation; concurrent
 revocations return it once. The global allocator and ambiguous cross-system
 outcomes remain open blockers.
 
+VPN health polling now authenticates to the router, validates observations and
+preserves last known state on failed or malformed responses. Missing/zero
+handshakes no longer trigger peer provisioning. Reconnect uses the stored PSK.
+Background observations commit independently per tenant; conditional writes skip
+revoked peers and prevent late poll responses from overwriting newer handshakes.
+The production command publisher is still a stub, so these fixes do not claim
+successful delivery to Android or an established tunnel.
+
 ## Validation
 
 - Android enterprise debug unit suite: **316 passed**.
-- Combined backend/PC, PostgreSQL/Redis and deployment regressions: **926 passed**.
-  This includes **84 real-service tests** and **6 Compose configuration tests**.
-  Coverage is **65.04%** and passes the unchanged **65%** gate with two-decimal
+- Combined backend/PC, PostgreSQL/Redis and deployment regressions: **948 passed**.
+  This includes **106 real-service tests** and **6 Compose configuration tests**.
+  Coverage is **65.30%** and passes the unchanged **65%** gate with two-decimal
   precision. No threshold or coverage scope was weakened. Two additional
   regression tests exercise the 64.98% rejection and exact 65.00% boundary. Long load/soak profiles require a prepared API
   environment and are excluded from the ordinary PR command.
