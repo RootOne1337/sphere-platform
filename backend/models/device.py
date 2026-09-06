@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import enum
 import uuid
+from datetime import datetime
 
-from sqlalchemy import ARRAY, Boolean, Column, Enum, ForeignKey, String, Table, Text
+from sqlalchemy import ARRAY, Boolean, Column, DateTime, Enum, ForeignKey, String, Table, Text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -36,25 +37,34 @@ class Device(Base, UUIDMixin, TimestampMixin):
     Статус хранится в Redis (TTL), в БД — неизменяемая анкета.
     Детальная логика: TZ-02.
     """
+
     __tablename__ = "devices"
 
     org_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("organizations.id"), index=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
-    serial: Mapped[str | None] = mapped_column(String(100), nullable=True, index=True)   # ADB serial
+    serial: Mapped[str | None] = mapped_column(String(100), nullable=True, index=True)  # ADB serial
     android_version: Mapped[str | None] = mapped_column(String(50), nullable=True)
     model: Mapped[str | None] = mapped_column(String(255), nullable=True)
     tags: Mapped[list[str]] = mapped_column(ARRAY(String), server_default="{}")
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    refresh_token_hash: Mapped[str | None] = mapped_column(String(64), unique=True, nullable=True)
+    refresh_token_expires_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     # Last known status — source of truth is Redis; this column updated async via WebSocket events
     last_status: Mapped[str] = mapped_column(
-        Enum(DeviceStatus, name="device_status_enum", values_callable=lambda x: [e.value for e in x]),
+        Enum(
+            DeviceStatus, name="device_status_enum", values_callable=lambda x: [e.value for e in x]
+        ),
         default=DeviceStatus.OFFLINE,
         nullable=False,
     )
     meta: Mapped[dict] = mapped_column(JSONB, server_default="{}", nullable=False)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     server_name: Mapped[str | None] = mapped_column(
-        String(50), nullable=True, index=True,
+        String(50),
+        nullable=True,
+        index=True,
         comment="Игровой сервер, привязанный к устройству (RED, MOSCOW, GROZNY и т.д.)",
     )
 

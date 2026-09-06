@@ -95,7 +95,7 @@ class AuthTokenStore @Inject constructor(
     private fun refreshTokenRequest(refreshToken: String): String {
         val serverUrl = getServerUrl()
         val request = Request.Builder()
-            .url("$serverUrl/api/v1/auth/refresh")
+            .url("$serverUrl/api/v1/devices/refresh")
             .addHeader("Cookie", "refresh_token=$refreshToken")
             .post(ByteArray(0).toRequestBody("application/json".toMediaType()))
             .build()
@@ -103,21 +103,21 @@ class AuthTokenStore @Inject constructor(
         lazyHttpClient.get().newCall(request).execute().use { response ->
             check(response.isSuccessful) { "Refresh failed: ${response.code}" }
             // FIX E2: Ограничиваем размер body — защита от OOM при огромном ответе
-            val bodyStr = response.body?.string()?.take(MAX_RESPONSE_CHARS)
-                ?: error("Empty refresh response")
+            val body = response.body ?: error("Empty refresh response")
+            val source = body.source()
+            check(!source.request(MAX_RESPONSE_CHARS.toLong() + 1)) { "Refresh response too large" }
+            val bodyStr = source.readUtf8()
             val json = Json.parseToJsonElement(bodyStr).jsonObject
             val newAccessToken = json["access_token"]!!.jsonPrimitive.content
             val expiresIn = json["expires_in"]?.jsonPrimitive?.long ?: 900L
+            val newRefreshToken = json["refresh_token"]?.jsonPrimitive?.content
+                ?: error("Refresh response is missing rotation token")
 
             prefs.edit()
                 .putString(KEY_ACCESS_TOKEN, newAccessToken)
+                .putString(KEY_REFRESH_TOKEN, newRefreshToken)
                 .putLong(KEY_ACCESS_TOKEN_EXPIRES_AT, System.currentTimeMillis() + expiresIn * 1000)
                 .apply()
-
-            // Ротация refresh token если пришёл новый
-            json["refresh_token"]?.jsonPrimitive?.content?.let {
-                prefs.edit().putString(KEY_REFRESH_TOKEN, it).apply()
-            }
 
             Timber.d("Access token refreshed, expires in ${expiresIn}s")
             return newAccessToken

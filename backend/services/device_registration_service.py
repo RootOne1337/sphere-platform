@@ -2,7 +2,9 @@
 # ВЛАДЕЛЕЦ: TZ-12 Agent Discovery. Автоматическая регистрация устройств.
 from __future__ import annotations
 
+import hashlib
 import uuid
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from sqlalchemy import select
@@ -39,6 +41,12 @@ class DeviceRegistrationService:
         4. Генерируем JWT для агента (sub = device_id, role = "device")
         """
         # Поиск по fingerprint (идемпотентность)
+        # Serialize enrollment for one organization to avoid duplicate fingerprints.
+        from backend.models.organization import Organization
+
+        await self.db.scalar(
+            select(Organization).where(Organization.id == org_id).with_for_update()
+        )
         existing = await self._find_by_fingerprint(org_id, data.fingerprint)
 
         if existing:
@@ -120,6 +128,25 @@ class DeviceRegistrationService:
         device.meta = meta
         device.is_active = True
 
+    async def refresh_device_token(self, raw_token: str) -> DeviceRegisterResponse:
+        from fastapi import HTTPException
+
+        token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
+        device = await self.db.scalar(
+            select(Device)
+            .where(
+                Device.refresh_token_hash == token_hash,
+                Device.is_active.is_(True),
+                Device.refresh_token_expires_at > datetime.now(timezone.utc),
+            )
+            .with_for_update()
+        )
+        if device is None:
+            raise HTTPException(status_code=401, detail="Invalid device refresh token")
+        result = self._build_response(device, is_new=False)
+        await self.db.commit()
+        return result
+
     def _build_response(self, device: Device, is_new: bool) -> DeviceRegisterResponse:
         """Сформировать ответ с JWT токенами для агента."""
         # JWT: sub = device_id, role = "device" (специальная роль для агентов)
@@ -129,6 +156,10 @@ class DeviceRegistrationService:
             role="device",
         )
         refresh_token = create_refresh_token()
+        device.refresh_token_hash = hashlib.sha256(refresh_token.encode()).hexdigest()
+        device.refresh_token_expires_at = datetime.now(timezone.utc) + timedelta(
+            days=settings.JWT_REFRESH_TOKEN_EXPIRE_DAYS
+        )
 
         # server_url из единого источника: Settings.SERVER_PUBLIC_URL
         server_url = settings.SERVER_PUBLIC_URL.rstrip("/")

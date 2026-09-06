@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import uuid
 
-from fastapi import APIRouter, Depends, Header, Query
+from fastapi import APIRouter, Cookie, Depends, Header, HTTPException, Query
 from fastapi import status as http_status
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -74,9 +74,13 @@ async def get_device_me(
     Используется агентом при zero-touch enrollment для верификации ключа.
     """
     from fastapi import HTTPException
+
     if not x_api_key:
-        raise HTTPException(status_code=http_status.HTTP_401_UNAUTHORIZED, detail="X-API-Key required")
+        raise HTTPException(
+            status_code=http_status.HTTP_401_UNAUTHORIZED, detail="X-API-Key required"
+        )
     from backend.services.api_key_service import APIKeyService
+
     api_key_svc = APIKeyService(db)
     key = await api_key_svc.authenticate(x_api_key)
     if not key:
@@ -137,14 +141,13 @@ async def list_devices(
             enriched.append(d)
         devices = enriched
     pages = (total + per_page - 1) // per_page if total > 0 else 0
-    return DeviceListResponse(
-        items=devices, total=total, page=page, per_page=per_page, pages=pages
-    )
+    return DeviceListResponse(items=devices, total=total, page=page, per_page=per_page, pages=pages)
 
 
 # ── Fleet status (bulk MGET) ──────────────────────────────────────────────────
 # NOTE: These routes MUST appear before /{device_id} routes so FastAPI
 # doesn't try to coerce "status" into a UUID.
+
 
 @router.post(
     "/status/bulk",
@@ -182,6 +185,16 @@ async def get_fleet_status(
         busy=summary["busy"],
         offline=summary["offline"],
     )
+
+
+@router.post("/refresh", response_model=DeviceRegisterResponse)
+async def refresh_device(
+    refresh_token: str | None = Cookie(default=None),
+    db: AsyncSession = Depends(get_db),
+) -> DeviceRegisterResponse:
+    if not refresh_token or len(refresh_token) > 512:
+        raise HTTPException(status_code=401, detail="Device refresh token required")
+    return await DeviceRegistrationService(db).refresh_device_token(refresh_token)
 
 
 # ── Auto-register (TZ-12 Agent Discovery) ────────────────────────────────────
@@ -240,6 +253,7 @@ async def register_device(
 
 # ── Create ────────────────────────────────────────────────────────────────────
 
+
 @router.post(
     "",
     response_model=DeviceResponse,
@@ -258,6 +272,7 @@ async def create_device(
 
 
 # ── Get one ───────────────────────────────────────────────────────────────────
+
 
 @router.get(
     "/{device_id}",
@@ -279,6 +294,7 @@ async def get_device(
 
 # ── Update ────────────────────────────────────────────────────────────────────
 
+
 @router.put(
     "/{device_id}",
     response_model=DeviceResponse,
@@ -298,6 +314,7 @@ async def update_device(
 
 # ── Delete ────────────────────────────────────────────────────────────────────
 
+
 @router.delete(
     "/{device_id}",
     status_code=204,
@@ -316,6 +333,7 @@ async def delete_device(
 
 # ── Status (live Redis) ───────────────────────────────────────────────────────
 
+
 @router.get(
     "/{device_id}/status",
     response_model=DeviceStatusResponse,
@@ -330,6 +348,7 @@ async def get_device_status(
 
 
 # ── ADB Connect ───────────────────────────────────────────────────────────────
+
 
 @router.post(
     "/{device_id}/connect",
@@ -349,6 +368,7 @@ async def connect_device(
 
 # ── Screenshot ────────────────────────────────────────────────────────────────
 
+
 @router.get(
     "/{device_id}/screenshot",
     summary="Запросить скриншот устройства (TZ-03 stub)",
@@ -366,6 +386,7 @@ async def take_screenshot(
 
 class ExecuteShellRequest(BaseModel):
     command: str = Field(..., min_length=1, max_length=4096)
+
 
 @router.post(
     "/{device_id}/shell",
@@ -396,15 +417,20 @@ async def execute_shell(
         raise HTTPException(status_code=400, detail="Device is offline")
 
     command_id = str(uuid.uuid4())
-    send_ok = await manager.send_to_device(str(device_id), {
-        "type": "SHELL",
-        "command_id": command_id,
-        "payload": {"cmd": body.command},
-        "signed_at": int(time.time()),
-        "ttl_seconds": 30,
-    })
+    send_ok = await manager.send_to_device(
+        str(device_id),
+        {
+            "type": "SHELL",
+            "command_id": command_id,
+            "payload": {"cmd": body.command},
+            "signed_at": int(time.time()),
+            "ttl_seconds": 30,
+        },
+    )
     if not send_ok:
-        raise HTTPException(status_code=504, detail=f"Failed to send shell command to device {device_id}")
+        raise HTTPException(
+            status_code=504, detail=f"Failed to send shell command to device {device_id}"
+        )
 
     redis = await get_redis_binary()
     if not redis:
@@ -415,6 +441,7 @@ async def execute_shell(
     await pubsub.subscribe(result_channel)
 
     try:
+
         async def wait_for_result():
             async for message in pubsub.listen():
                 if message["type"] == "message":
@@ -434,9 +461,11 @@ async def execute_shell(
 
 # ── Logcat Viewer ─────────────────────────────────────────────────────────────
 
+
 class RequestLogcatRequest(BaseModel):
     lines: int = Field(500, ge=1, le=10000)
     mode: str = "sphere"
+
 
 @router.post(
     "/{device_id}/logcat",
@@ -467,15 +496,20 @@ async def request_logcat(
         raise HTTPException(status_code=400, detail="Device is offline")
 
     command_id = str(uuid.uuid4())
-    send_ok = await manager.send_to_device(str(device_id), {
-        "type": "UPLOAD_LOGCAT",
-        "command_id": command_id,
-        "payload": {"lines": body.lines, "mode": body.mode},
-        "signed_at": int(time.time()),
-        "ttl_seconds": 15,
-    })
+    send_ok = await manager.send_to_device(
+        str(device_id),
+        {
+            "type": "UPLOAD_LOGCAT",
+            "command_id": command_id,
+            "payload": {"lines": body.lines, "mode": body.mode},
+            "signed_at": int(time.time()),
+            "ttl_seconds": 15,
+        },
+    )
     if not send_ok:
-        raise HTTPException(status_code=504, detail=f"Failed to send logcat request to device {device_id}")
+        raise HTTPException(
+            status_code=504, detail=f"Failed to send logcat request to device {device_id}"
+        )
 
     redis = await get_redis_binary()
     if not redis:
@@ -486,6 +520,7 @@ async def request_logcat(
     await pubsub.subscribe(result_channel)
 
     try:
+
         async def wait_for_result():
             async for message in pubsub.listen():
                 if message["type"] == "message":
@@ -504,6 +539,7 @@ async def request_logcat(
 
 
 # ── Reboot ────────────────────────────────────────────────────────────────────
+
 
 @router.post(
     "/{device_id}/reboot",
@@ -533,13 +569,16 @@ async def reboot_device(
         raise HTTPException(status_code=400, detail="Device is offline")
 
     command_id = str(uuid.uuid4())
-    send_ok = await manager.send_to_device(str(device_id), {
-        "type": "REBOOT",
-        "command_id": command_id,
-        "payload": {},
-        "signed_at": int(time.time()),
-        "ttl_seconds": 15,
-    })
+    send_ok = await manager.send_to_device(
+        str(device_id),
+        {
+            "type": "REBOOT",
+            "command_id": command_id,
+            "payload": {},
+            "signed_at": int(time.time()),
+            "ttl_seconds": 15,
+        },
+    )
     if not send_ok:
         raise HTTPException(
             status_code=504,
@@ -555,6 +594,7 @@ async def reboot_device(
     await pubsub.subscribe(result_channel)
 
     try:
+
         async def wait_for_result():
             async for message in pubsub.listen():
                 if message["type"] == "message":
