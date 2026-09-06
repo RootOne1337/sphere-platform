@@ -227,6 +227,15 @@ PROVISIONING/REVOKING intents exist. See the
 [VPN runbook](runbooks/02-vpn-incident.md) and
 [transaction/rollout design](audits/2026-09-05/VPN-LEASE-DESIGN.md).
 
+The next revision, `20260906_account_ciphertext`, adds encrypted account storage.
+Provision the independent `ACCOUNT_CREDENTIAL_KEYS` key ring, stop account and
+dispatch/orchestrator writers, and run the explicit backfill/verification from
+[the credential runbook](security/account-credentials.md). Applying Alembic alone
+does not encrypt legacy rows; credential reveal and dispatch fail closed until
+they are migrated. The maintenance CLI ships in the backend image as
+`python -m backend.cli.account_credentials`. Downgrade refuses encrypted rows.
+Do not use the generic rolling-deploy/rollback examples below for this transition.
+
 From the repository root, use the repository's explicit Alembic configuration:
 `python -m alembic -c alembic/alembic.ini upgrade head`. In a container use the
 equivalent path for its working directory and the selected Compose stack.

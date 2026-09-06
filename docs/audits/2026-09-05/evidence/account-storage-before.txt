@@ -1,0 +1,44 @@
+FFFF                                                                     [100%]
+================================== FAILURES ===================================
+____________ test_account_writers_do_not_persist_plaintext[create] ____________
+tests\production\test_account_secret_storage.py:63: in test_account_writers_do_not_persist_plaintext
+    assert stored != expected, "Raw PostgreSQL exposes the reusable account password"
+E   AssertionError: Raw PostgreSQL exposes the reusable account password
+E   assert 'audit-plaintext-storage-marker' != 'audit-plaintext-storage-marker'
+____________ test_account_writers_do_not_persist_plaintext[update] ____________
+tests\production\test_account_secret_storage.py:63: in test_account_writers_do_not_persist_plaintext
+    assert stored != expected, "Raw PostgreSQL exposes the reusable account password"
+E   AssertionError: Raw PostgreSQL exposes the reusable account password
+E   assert 'audit-plaintext-storage-marker' != 'audit-plaintext-storage-marker'
+____________ test_account_writers_do_not_persist_plaintext[import] ____________
+tests\production\test_account_secret_storage.py:63: in test_account_writers_do_not_persist_plaintext
+    assert stored != expected, "Raw PostgreSQL exposes the reusable account password"
+E   AssertionError: Raw PostgreSQL exposes the reusable account password
+E   assert 'audit-plaintext-storage-marker' != 'audit-plaintext-storage-marker'
+_________ test_account_writers_do_not_persist_plaintext[orchestrator] _________
+tests\production\test_account_secret_storage.py:63: in test_account_writers_do_not_persist_plaintext
+    assert stored != expected, "Raw PostgreSQL exposes the reusable account password"
+E   AssertionError: Raw PostgreSQL exposes the reusable account password
+E   assert 'yCOVUjCrbwD5' != 'yCOVUjCrbwD5'
+---------------------------- Captured stdout call -----------------------------
+{"task_id": "53cdeef1-3fbf-4202-8438-04fcf27ff27c", "device_id": "fa3d48ca-6730-405c-ae2f-e519df553e1f", "priority": 10, "event": "task.created", "level": "info", "logger": "backend.services.task_service", "timestamp": "2026-09-06T16:51:48.206421Z"}
+{"device": "audit-device-a", "server": null, "nick": "audit-storage-4af1b229f5b74160abcdbef445c41dde", "task_id": "53cdeef1-3fbf-4202-8438-04fcf27ff27c", "account_id": "03139b69-6e42-4ad9-8b7a-46b7c81372df", "event": "orchestration.reg_created", "level": "info", "logger": "backend.services.orchestrator.orchestration_engine", "timestamp": "2026-09-06T16:51:48.209082Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.services.task_service:task_service.py:232 {'task_id': '53cdeef1-3fbf-4202-8438-04fcf27ff27c', 'device_id': 'fa3d48ca-6730-405c-ae2f-e519df553e1f', 'priority': 10, 'event': 'task.created', 'level': 'info', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-06T16:51:48.206421Z'}
+INFO     backend.services.orchestrator.orchestration_engine:orchestration_engine.py:231 {'device': 'audit-device-a', 'server': None, 'nick': 'audit-storage-4af1b229f5b74160abcdbef445c41dde', 'task_id': '53cdeef1-3fbf-4202-8438-04fcf27ff27c', 'account_id': '03139b69-6e42-4ad9-8b7a-46b7c81372df', 'event': 'orchestration.reg_created', 'level': 'info', 'logger': 'backend.services.orchestrator.orchestration_engine', 'timestamp': '2026-09-06T16:51:48.209082Z'}
+============================== warnings summary ===============================
+.venv-audit\Lib\site-packages\pydantic\fields.py:754: 484 warnings
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\pydantic\fields.py:754: PydanticDeprecatedSince20: Using extra keyword arguments on `Field` is deprecated and will be removed. Use `json_schema_extra` instead. (Extra keys: 'deprecated'). Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.6/migration/
+    warn(
+
+backend\api\v1\game_accounts\router.py:95
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\api\v1\game_accounts\router.py:95: DeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+    sort_dir: str = Query("desc", regex="^(asc|desc)$", description="Направление сортировки"),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/production/test_account_secret_storage.py::test_account_writers_do_not_persist_plaintext[create]
+FAILED tests/production/test_account_secret_storage.py::test_account_writers_do_not_persist_plaintext[update]
+FAILED tests/production/test_account_secret_storage.py::test_account_writers_do_not_persist_plaintext[import]
+FAILED tests/production/test_account_secret_storage.py::test_account_writers_do_not_persist_plaintext[orchestrator]
+4 failed, 485 warnings in 2.11s

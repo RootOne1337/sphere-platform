@@ -1,17 +1,18 @@
 ........................................................................ [  7%]
 ........................................................................ [ 14%]
 ........................................................................ [ 21%]
-........................................................................ [ 29%]
-........................................................................ [ 36%]
-........................................................................ [ 43%]
-........................................................................ [ 51%]
-........................................................................ [ 58%]
-........................................................................ [ 65%]
-........................................................................ [ 73%]
-........................................................................ [ 80%]
-........................................................................ [ 87%]
-........................................................................ [ 95%]
-..............................................                           [100%]
+........................................................................ [ 28%]
+........................................................................ [ 35%]
+........................................................................ [ 42%]
+........................................................................ [ 49%]
+........................................................................ [ 56%]
+........................................................................ [ 63%]
+........................................................................ [ 71%]
+........................................................................ [ 78%]
+........................................................................ [ 85%]
+........................................................................ [ 92%]
+........................................................................ [ 99%]
+......                                                                   [100%]
 ============================== warnings summary ===============================
 .venv-audit\Lib\site-packages\pydantic\fields.py:754: 484 warnings
   C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\pydantic\fields.py:754: PydanticDeprecatedSince20: Using extra keyword arguments on `Field` is deprecated and will be removed. Use `json_schema_extra` instead. (Extra keys: 'deprecated'). Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.6/migration/
@@ -43,7 +44,7 @@ backend\api\v1\device_events\router.py                     35     13  62.86%
 backend\api\v1\devices\router.py                          242    166  31.40%
 backend\api\v1\discovery\router.py                         20      1  95.00%
 backend\api\v1\event_triggers\router.py                    83     15  81.93%
-backend\api\v1\game_accounts\router.py                     68     29  57.35%
+backend\api\v1\game_accounts\router.py                     68     27  60.29%
 backend\api\v1\groups\router.py                            41      7  82.93%
 backend\api\v1\health\router.py                            18      1  94.44%
 backend\api\v1\locations\router.py                         39     16  58.97%
@@ -63,7 +64,8 @@ backend\api\ws\agent\router.py                            137     69  49.64%
 backend\api\ws\android\router.py                          431    175  59.40%
 backend\api\ws\events\router.py                           226    158  30.09%
 backend\api\ws\stream\router.py                           137     69  49.64%
-backend\core\config.py                                     57      3  94.74%
+backend\cli\account_credentials.py                         41     41   0.00%
+backend\core\config.py                                     58      3  94.83%
 backend\core\cors.py                                       11      1  90.91%
 backend\core\dependencies.py                               84     24  71.43%
 backend\core\exceptions.py                                 33     11  66.67%
@@ -80,7 +82,7 @@ backend\middleware\tenant_middleware.py                    12      1  91.67%
 backend\models\account_session.py                          43      2  95.35%
 backend\models\device_event.py                             33      1  96.97%
 backend\models\event_trigger.py                            25      1  96.00%
-backend\models\game_account.py                             72      3  95.83%
+backend\models\game_account.py                             73      3  95.89%
 backend\models\pipeline_settings.py                        31      1  96.77%
 backend\models\task.py                                     43      2  95.35%
 backend\monitoring\pool_metrics.py                         31      2  93.55%
@@ -90,11 +92,12 @@ backend\schemas\device_events.py                           58      9  84.48%
 backend\schemas\device_register.py                         56      4  92.86%
 backend\schemas\devices.py                                122     20  83.61%
 backend\schemas\discovery.py                               46      2  95.65%
-backend\schemas\game_accounts.py                          229     60  73.80%
+backend\schemas\game_accounts.py                          229     48  79.04%
 backend\schemas\groups.py                                  73      3  95.89%
 backend\schemas\locations.py                               69     15  78.26%
 backend\schemas\schedule.py                               138     23  83.33%
 backend\schemas\webhook.py                                 43      2  95.35%
+backend\services\account_credential_migration.py           42      2  95.24%
 backend\services\account_session_service.py               122    101  17.21%
 backend\services\batch_service.py                         106     49  53.77%
 backend\services\bulk_service.py                           69     18  73.91%
@@ -104,14 +107,14 @@ backend\services\device_service.py                        173     94  45.66%
 backend\services\device_status_cache.py                    69      7  89.86%
 backend\services\discovery_service.py                      65     25  61.54%
 backend\services\event_reactor.py                         140     86  38.57%
-backend\services\game_account_service.py                  179    147  17.88%
+backend\services\game_account_service.py                  185    104  43.78%
 backend\services\group_service.py                         101     38  62.38%
 backend\services\health_service.py                         98     13  86.73%
 backend\services\location_service.py                      101     82  18.81%
 backend\services\lua_safety.py                             13      1  92.31%
 backend\services\n8n_webhook_service.py                    99     60  39.39%
-backend\services\nick_generator.py                         45     27  40.00%
-backend\services\orchestrator\orchestration_engine.py     238    166  30.25%
+backend\services\nick_generator.py                         45     26  42.22%
+backend\services\orchestrator\orchestration_engine.py     240    152  36.67%
 backend\services\orchestrator\pipeline_executor.py        146    146   0.00%
 backend\services\orchestrator\pipeline_service.py         152     46  69.74%
 backend\services\orchestrator\step_handlers.py            331    255  22.96%
@@ -120,7 +123,7 @@ backend\services\scheduler\schedule_service.py            115     30  73.91%
 backend\services\scheduler\scheduler_engine.py            244    244   0.00%
 backend\services\script_service.py                        105     13  87.62%
 backend\services\task_queue.py                             58      3  94.83%
-backend\services\task_service.py                          255     81  68.24%
+backend\services\task_service.py                          256     82  67.97%
 backend\services\vpn\awg_config.py                         59      2  96.61%
 backend\services\vpn\dependencies.py                       34     15  55.88%
 backend\services\vpn\event_publisher.py                     7      2  71.43%
@@ -130,7 +133,7 @@ backend\services\vpn\pool_service.py                      121      2  98.35%
 backend\tasks\ensure_enrollment_key.py                     31     24  22.58%
 backend\tasks\orchestration_loop.py                        11      4  63.64%
 backend\tasks\sync_device_status.py                        60     15  75.00%
-backend\tasks\task_heartbeat_watchdog.py                  139     32  76.98%
+backend\tasks\task_heartbeat_watchdog.py                  139     36  74.10%
 backend\tasks\vpn_health.py                                59      2  96.61%
 backend\websocket\connection_manager.py                    98      9  90.82%
 backend\websocket\event_publisher.py                       47     11  76.60%
@@ -140,9 +143,9 @@ backend\websocket\offline_queue.py                         85      8  90.59%
 backend\websocket\pubsub_router.py                        172     43  75.00%
 backend\websocket\stream_bridge.py                        139     57  58.99%
 ----------------------------------------------------------------------------
-TOTAL                                                   11017   3781  65.68%
+TOTAL                                                   11147   3757  66.30%
 
-95 files skipped due to complete coverage.
+97 files skipped due to complete coverage.
 Coverage JSON written to file docs/audits/2026-09-05/evidence/coverage-current.json
-Required test coverage of 65% reached. Total coverage: 65.68%
-982 passed, 488 warnings in 100.79s (0:01:40)
+Required test coverage of 65% reached. Total coverage: 66.30%
+1014 passed, 488 warnings in 117.75s (0:01:57)

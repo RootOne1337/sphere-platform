@@ -20,9 +20,9 @@ runtime-проверок и не считается доказательство
 | Проверка | Результат | Практическое ограничение |
 | --- | --- | --- |
 | Android enterprise debug unit suite | 316 passed, 0 failed | JVM/MockWebServer; не проверяет ОС, codec, батарею или смерть процесса на телефоне |
-| Объединённая Backend/PC/production/deployment suite | **982 passed, 0 failed**; coverage **65,68%** | Строгий coverage gate 65% пройден с precision=2. Load suite исключена; 6 Compose config tests не запускают сервисы |
-| Проверки PostgreSQL/Redis | **140 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
-| Миграции | Применены до **20260906_vpn_intents** включительно | Только изолированная БД; конфликтные данные/downgrade проверены в throwaway schema; production не мигрировался |
+| Объединённая Backend/PC/production/deployment suite | **1014 passed, 0 failed**; coverage **66,30%** | Строгий coverage gate 65% пройден с precision=2. Load suite исключена; 6 Compose config tests не запускают сервисы |
+| Проверки PostgreSQL/Redis | **158 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
+| Миграции | Применены до **20260906_account_ciphertext** включительно | Только изолированная БД; конфликтные данные/downgrade проверены в throwaway schema; production не мигрировался |
 | Backend image | Собирается; исходная запись OpenAPI воспроизведённо падает с PermissionError | Исправлен lifespan; полный deployment runtime ещё не подтверждён |
 | Frontend build | Успешно | Type-check/Jest и браузерный runtime требуют отдельного завершения проверки |
 | APK ↔ реальный локальный backend | Не завершено | Автоматическая проверка разрешений отклонила запуск локального API: `blocked by policy`; обход не выполнялся |
@@ -32,7 +32,7 @@ runtime-проверок и не считается доказательство
 Предыдущий отдельный DAG benchmark однажды занял 127,1 ms при пороге 100 ms;
 изолированный повтор и последующие общие прогоны прошли. Порог не ослаблялся.
 Файл production-regressions-after.txt сохраняет более ранний standalone snapshot
-с 41 тестом; актуальные 140 входят в общий прогон.
+с 41 тестом; актуальные 158 входят в общий прогон.
 
 Команды запуска и предохранители изоляции: [tests/production/README.md](../../../tests/production/README.md).
 Исходные `14 passed` в [reproductions.txt](evidence/reproductions.txt) означают
@@ -360,7 +360,16 @@ runtime-проверок и не считается доказательство
 - **Evidence:** [account-credentials-before.txt](evidence/account-credentials-before.txt): 6 failures, 2 controls passed на реальном JWT/SQL/ASGI API. Три operational/read roles получали password; три разрешённые административные роли не получали no-store.
 - **Fix:** отдельное account:credentials:read для org_admin/org_owner/super_admin; проверка до service reveal, Cache-Control: no-store. Обычные account:read ответы и org filter сохраняются.
 - **Regression:** 8 новых role/tenant/header cases и прежние delegation checks: [account-credentials-after.txt](evidence/account-credentials-after.txt), 13 passed.
-- **Residual risk:** password_encrypted всё ещё хранит plaintext, общий audit middleware не фиксирует reveal GET, HTTP no-store не очищает frontend query memory/уже полученные копии. Credential-bearing DAG и доступ через разрешённое выполнение скриптов требуют дальнейшей проверки. Политика и границы: [account-credentials.md](../../security/account-credentials.md).
+- **Residual risk:** хранение новых паролей исправлено отдельно в AUD-32; старым данным требуется явный перенос. Общий audit middleware не фиксирует reveal GET, HTTP no-store не очищает frontend query memory/уже полученные копии. Credential-bearing DAG и доступ через разрешённое выполнение скриптов требуют дальнейшей проверки. Политика и границы: [account-credentials.md](../../security/account-credentials.md).
+
+### AUD-32 — High: все writers игровых аккаунтов сохраняли пароль открытым текстом
+
+- **Root cause:** create/update/import присваивали входную строку `password_encrypted` напрямую; auto-registration делала то же для сгенерированного пароля. Reveal и task variables читали столбец без decrypt. Имя столбца ошибочно подразумевало защиту: SQL read/dump давал готовый reusable credential.
+- **Evidence:** [account-storage-before.txt](evidence/account-storage-before.txt): четыре падения на ревизии `7cb77d5`, по одному на каждый writer. После commit новый DB session выполнял raw SQL и получал исходный пароль. Только синтетические аккаунты изолированной БД, включая случайно сгенерированный пароль тестового orchestrator.
+- **Affected files:** `backend/services/game_account_service.py:169` (также 301/487), `backend/services/orchestrator/orchestration_engine.py:216`, `backend/services/task_service.py:97`, `backend/models/game_account.py:100`, `backend/core/config.py:36`; новые `backend/services/account_credentials.py:31`, `account_credential_migration.py:27`, `backend/cli/account_credentials.py:12`, `alembic/versions/20260906_account_ciphertext.py`; `.env.example` и Compose full/production.
+- **Fix:** независимый Fernet key ring, authenticated envelope v1 с UUID tenant/account, новый ciphertext столбец и очистка старого plaintext в одной записи. Чтение и dispatch используют decrypt; неизвестные/legacy/повреждённые credentials блокируются без plaintext fallback. Отдельный bounded CLI по умолчанию только проверяет; `--apply` переносит legacy, `--rotate` перепаковывает под первый ключ. Schema downgrade отказывает при encrypted rows.
+- **Regression:** [account-storage-after.txt](evidence/account-storage-after.txt): 41 focused test — raw SQL всех четырёх writers, исходный пароль в dispatch, недоступный ключ/legacy API, tamper и подмена identities, rotation/new-key-only, SQL rollback при commit/cancel/corrupt row, повторный запуск, ограниченные пачки, реальный CLI и Alembic upgrade/downgrade. Набор включает 8 прежних permission cases и прежний DAG cache test.
+- **Residual risk:** production data не мигрировались, ключ не provisioned. Нужен maintenance rollout с остановкой старых writers и сверкой scope/количества строк; RLS visibility не доказывается этим CLI. Старые backups/WAL/MVCC могут содержать plaintext, DB+key/backend-memory compromise остаётся, replay старого токена для того же аккаунта не предотвращён. APK/cache/logs/reveal audit и restore требуют продолжения. [Полная процедура и ограничения](../../security/account-credentials.md).
 
 ## Открытые подтверждённые блокеры
 
@@ -375,7 +384,7 @@ runtime-проверок и не считается доказательство
 Следующие пункты — кандидаты/недостаточное покрытие, а не автоматически доказанные
 эксплуатируемые уязвимости: Android FGS/boot/timeout, root-only действия на обычных
 телефонах, screen codec recovery; PC-agent
-protocol; orchestrator/pipeline crash recovery; сохранение паролей игровых аккаунтов;
+protocol; orchestrator/pipeline crash recovery; rollout/restore credentials и APK cache/logs;
 MFA/session/logout races; VPN revoke/PSK/маршруты; backup/restore; webhook/n8n contract;
 frontend runtime; метрики и multiprocess; зависимости и CI.
 
@@ -410,6 +419,10 @@ known-third-party для установленной библиотеки и уп
 Для AUD-11 реализованы [SQL reservations и generation fencing](VPN-LEASE-DESIGN.md);
 документ описывает границы транзакций, обязательный migration preflight и ещё
 не реализованный provider reconciliation. Это не означает готовность всего VPN.
+
+На `7cb77d5` backend run `34046802288` завершился: Tests/Lint/Alembic/статический
+RLS успешны, Security/pip-audit падает; Android `34046802281` успешен.
+Это snapshot перед шифрованием credentials, не результат последующего head.
 
 PR остаётся draft до завершения открытых блокеров, повторного runtime обследования
 и финализации отчёта. Merge и deployment не выполнялись.

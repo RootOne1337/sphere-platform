@@ -52,14 +52,20 @@ successful delivery to Android or an established tunnel.
 Account password disclosure requires a separate credential-read permission held
 by organization administrators/owners and platform administrators. Ordinary
 account readers cannot reveal passwords; allowed responses use no-store and retain
-the tenant filter. Secret storage and indirect script access remain under audit.
+the tenant filter. Create/update/import/auto-registration encrypt recoverable
+credentials before persistence using a separate Fernet key ring and an envelope
+bound to account/tenant UUIDs. The legacy plaintext is cleared in the same write.
+Reveal and dispatch reject unmigrated, corrupted or unavailable credentials.
+The backend image includes a read-only-by-default migration/verification CLI with
+bounded transactions, restart and rotation support. Indirect script access and
+credential-bearing APK/cache/log surfaces remain under audit.
 
 ## Validation
 
 - Android enterprise debug unit suite: **316 passed**.
-- Combined backend/PC, PostgreSQL/Redis and deployment regressions: **982 passed**.
-  This includes **140 real-service tests** and **6 Compose configuration tests**.
-  Coverage is **65.68%** and passes the unchanged **65%** gate with two-decimal
+- Combined backend/PC, PostgreSQL/Redis and deployment regressions: **1014 passed**.
+  This includes **158 real-service tests** and **6 Compose configuration tests**.
+  Coverage is **66.30%** and passes the unchanged **65%** gate with two-decimal
   precision. No threshold or coverage scope was weakened. Two additional
   regression tests exercise the 64.98% rejection and exact 65.00% boundary. Long load/soak profiles require a prepared API
   environment and are excluded from the ordinary PR command.
@@ -79,7 +85,7 @@ resolved account payloads determine DAG cache identity. Full RLS rollout,
 orchestrator creation/pipeline recovery, VPN/deployment and the remaining
 component audit are still open. Legacy running assignments require rollout reconciliation.
 
-Apply migrations through `20260906_vpn_intents` before a backend rollout; previously
+Apply migrations through `20260906_account_ciphertext` before a backend rollout; previously
 issued refresh tokens require device re-enrollment. The command journal retains
 512 receipts for seven days with a 1 MiB cap and rejects new DAGs when full.
 Interrupted execution returns an explicit unknown-outcome failure; this does not
@@ -95,6 +101,13 @@ and downgrade with pending intents. Reconcile PostgreSQL/router inventories and
 stop legacy allocation writers before rollout; old code still provisions before
 SQL ownership. The 64-concurrent-assignment regression uses real PostgreSQL and
 mock router responses and is not an Android emulator capacity measurement.
+
+Account encryption additionally requires an independent `ACCOUNT_CREDENTIAL_KEYS`
+secret, quiesced legacy account/orchestrator/dispatch writers, explicit credential
+backfill and verification before resuming work. Alembic alone does not migrate
+passwords; missing keys or legacy records block credential use. Encrypted rows
+prevent schema downgrade. Old backups/WAL may still contain plaintext, and restore
+requires the matching keys. No deployment key or production data was changed.
 
 A real APK-to-backend runtime test is incomplete: automatic approval review
 rejected starting the isolated local API with `blocked by policy`; no workaround

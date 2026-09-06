@@ -203,7 +203,6 @@ class OrchestrationEngine:
             org_id=org_id,
             game="black_russia",
             login=nickname,
-            password_encrypted=password,
             server_name=device.server_name,
             nickname=nickname,
             status=AccountStatus.pending_registration,
@@ -213,6 +212,8 @@ class OrchestrationEngine:
             assigned_at=datetime.now(timezone.utc),
             target_level=settings.default_target_level,
         )
+        from backend.services.account_credentials import set_account_password
+        set_account_password(account, password)
         db.add(account)
         await db.flush()
 

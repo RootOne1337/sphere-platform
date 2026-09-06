@@ -31,6 +31,7 @@ from backend.models.game_account import GameAccount
 from backend.models.script import Script, ScriptVersion
 from backend.models.task import Task, TaskStatus
 from backend.models.task_batch import TaskBatch, TaskBatchStatus
+from backend.services.account_credentials import read_account_password
 from backend.services.task_queue import TaskQueue
 
 logger = structlog.get_logger()
@@ -93,7 +94,7 @@ class TaskService:
 
         return {
             "login": account.login or "",
-            "password": account.password_encrypted or "",
+            "password": read_account_password(account),
             "nickname": nickname,
             "nick_part1": nick_part1,
             "nick_part2": nick_part2,

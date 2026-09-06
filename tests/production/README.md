@@ -36,3 +36,11 @@ two newly created organization UUIDs. `test_vpn_migration.py` runs migration err
 rollback and downgrade scenarios in temporary PostgreSQL schemas rolled back at
 test end. The 64 concurrent assignments use in-memory router responses and do not
 represent measured emulator capacity.
+
+Apply `20260906_account_ciphertext` for account credential regressions. Tests
+generate ephemeral Fernet keys per fixture and change only disposable accounts;
+they do not use deployment keys. SQL reads bypass ORM processing to prove that
+create/update/import/orchestrator writers erase the legacy plaintext. The CLI
+test executes `python -m backend.cli.account_credentials` against only its new
+organization UUID. Encryption/rotation/rollback tests are not a production data
+migration or proof that historical backups are free of plaintext.

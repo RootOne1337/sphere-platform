@@ -7,14 +7,17 @@ import pytest_asyncio
 
 from backend.models.game_account import GameAccount
 from backend.models.user import User
+from backend.services.account_credentials import set_account_password
+
+PASSWORD = "audit-secret-do-not-disclose"
 
 
 @pytest_asyncio.fixture
-async def account_world(world):
+async def account_world(world, account_credential_key):
     async with world.sessions() as db:
         account = GameAccount(org_id=world.org_a.id, game="Audit Game",
-                              login="audit-" + uuid.uuid4().hex,
-                              password_encrypted="audit-secret-do-not-disclose")
+                              login="audit-" + uuid.uuid4().hex)
+        set_account_password(account, PASSWORD)
         db.add(account)
         users = {}
         for role in ("viewer", "script_runner", "device_manager", "org_admin", "org_owner", "super_admin"):
@@ -32,7 +35,7 @@ async def test_account_read_permission_cannot_reveal_credentials(account_world, 
     response = await world.client.get(f"/api/v1/game-accounts/{account.id}?show_password=true",
                                       headers=world.auth(users[role]))
     assert response.status_code == 403, "Account-read access must not disclose a reusable credential"
-    assert account.password_encrypted not in response.text
+    assert PASSWORD not in response.text
 
 
 @pytest.mark.parametrize("role", ["org_admin", "org_owner", "super_admin"])
@@ -41,7 +44,7 @@ async def test_authorized_credential_disclosure_is_not_cacheable(account_world, 
     response = await world.client.get(f"/api/v1/game-accounts/{account.id}?show_password=true",
                                       headers=world.auth(users[role]))
     assert response.status_code == 200
-    assert response.json()["password"] == account.password_encrypted
+    assert response.json()["password"] == PASSWORD
     assert "no-store" in response.headers.get("Cache-Control", "")
 
 
@@ -50,7 +53,7 @@ async def test_normal_viewer_reads_still_work_without_password(account_world):
     response = await world.client.get(f"/api/v1/game-accounts/{account.id}", headers=world.auth(users["viewer"]))
     assert response.status_code == 200
     assert "password" not in response.json()
-    assert account.password_encrypted not in response.text
+    assert PASSWORD not in response.text
 
 
 async def test_credential_permission_does_not_cross_tenant_boundary(account_world):
@@ -62,4 +65,4 @@ async def test_credential_permission_does_not_cross_tenant_boundary(account_worl
     response = await world.client.get(f"/api/v1/game-accounts/{account.id}?show_password=true",
                                       headers=world.auth(user))
     assert response.status_code == 404
-    assert account.password_encrypted not in response.text
+    assert PASSWORD not in response.text

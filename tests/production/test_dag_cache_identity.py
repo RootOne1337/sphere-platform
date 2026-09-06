@@ -8,19 +8,20 @@ from unittest.mock import AsyncMock
 from backend.models.game_account import GameAccount
 from backend.models.script import ScriptVersion
 from backend.models.task import Task
+from backend.services.account_credentials import set_account_password
 from backend.services.task_queue import TaskQueue
 from backend.services.task_service import TaskService
 
 
-async def test_dispatched_hash_identifies_resolved_account_payload(world):
+async def test_dispatched_hash_identifies_resolved_account_payload(world, account_credential_key):
     w = world
     queue = TaskQueue(w.redis)
     async with w.sessions() as db:
         version = await db.get(ScriptVersion, w.version.id)
         version.dag = {"entry_node": "n1", "nodes": [{"id": "n1", "action": {
             "type": "type_text", "text": "{{account.login}}"}}]}
-        account = GameAccount(org_id=w.org_a.id, game="audit", login="resolved-account",
-                              password_encrypted="synthetic-unused")
+        account = GameAccount(org_id=w.org_a.id, game="audit", login="resolved-account")
+        set_account_password(account, "synthetic-unused")
         db.add(account)
         await db.flush()
         task = Task(org_id=w.org_a.id, device_id=w.dev_a.id, script_id=w.script.id,

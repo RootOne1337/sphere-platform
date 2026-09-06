@@ -19,6 +19,18 @@ from backend.models import Device, Organization, User
 from backend.models.script import Script, ScriptVersion
 
 
+@pytest.fixture
+def account_credential_key(monkeypatch):
+    from cryptography.fernet import Fernet
+    from pydantic import SecretStr
+
+    from backend.core.config import settings
+
+    key = Fernet.generate_key().decode()
+    monkeypatch.setattr(settings, "ACCOUNT_CREDENTIAL_KEYS", SecretStr(key))
+    return key
+
+
 @pytest_asyncio.fixture
 async def world():
     if os.environ.get("SPHERE_RUN_INTEGRATION") != "1":

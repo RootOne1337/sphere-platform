@@ -11,6 +11,7 @@ from datetime import datetime
 
 from sqlalchemy import (
     BigInteger,
+    CheckConstraint,
     DateTime,
     Enum,
     Float,
@@ -94,7 +95,11 @@ class GameAccount(Base, UUIDMixin, TimestampMixin):
     )
     password_encrypted: Mapped[str] = mapped_column(
         Text, nullable=False,
-        comment="Пароль (в открытом виде — шифрование на уровне приложения)",
+        comment="Legacy plaintext; empty after explicit credential migration",
+    )
+    password_ciphertext: Mapped[str | None] = mapped_column(
+        Text, nullable=True,
+        comment="Fernet envelope v1 bound to organization and account UUID; NULL means legacy",
     )
 
     # --- Игровой сервер и персонаж ---
@@ -232,6 +237,8 @@ class GameAccount(Base, UUIDMixin, TimestampMixin):
 
     # --- Индексы ---
     __table_args__ = (
+        CheckConstraint("password_ciphertext IS NULL OR password_encrypted = ''",
+                        name="ck_account_no_plaintext_with_ciphertext"),
         # Уникальность: один логин на игру внутри организации
         Index(
             "ix_game_accounts_org_game_login",
