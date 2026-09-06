@@ -353,6 +353,15 @@ runtime-проверок и не считается доказательство
 - **Regression:** `test_vpn_router_path.py` и существующий real-SQL revoke matrix, включая 404, проверяют path/error и удержание адреса.
 - **Residual risk:** корректный already-absent результат провайдера требует отдельного authoritative contract. Encoded slash должен поддерживаться router/proxy; автоматическое разрешение 404 без этой проверки запрещено. Реальный deployed provider всё ещё не обследован.
 
+### AUD-31 — High: обычное чтение аккаунта раскрывало пароль
+
+- **Root cause:** `show_password=true` проверял только account:read; viewer/script_runner/device_manager могли получить reusable credential. У ответа с паролем отсутствовал запрет HTTP caching.
+- **Affected files:** `backend/core/rbac.py`, `backend/api/v1/game_accounts/router.py`.
+- **Evidence:** [account-credentials-before.txt](evidence/account-credentials-before.txt): 6 failures, 2 controls passed на реальном JWT/SQL/ASGI API. Три operational/read roles получали password; три разрешённые административные роли не получали no-store.
+- **Fix:** отдельное account:credentials:read для org_admin/org_owner/super_admin; проверка до service reveal, Cache-Control: no-store. Обычные account:read ответы и org filter сохраняются.
+- **Regression:** 8 новых role/tenant/header cases и прежние delegation checks: [account-credentials-after.txt](evidence/account-credentials-after.txt), 13 passed.
+- **Residual risk:** password_encrypted всё ещё хранит plaintext, общий audit middleware не фиксирует reveal GET, HTTP no-store не очищает frontend query memory/уже полученные копии. Credential-bearing DAG и доступ через разрешённое выполнение скриптов требуют дальнейшей проверки. Политика и границы: [account-credentials.md](../../security/account-credentials.md).
+
 ## Открытые подтверждённые блокеры
 
 | ID / severity | Root cause и evidence | Необходимое продолжение |

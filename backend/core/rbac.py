@@ -110,6 +110,8 @@ PERMISSIONS: dict[str, list[Role]] = {
     "account:write": [
         Role.DEVICE_MANAGER, Role.ORG_ADMIN, Role.ORG_OWNER, Role.SUPER_ADMIN,
     ],
+    # Reusable credentials are more sensitive than operational account metadata.
+    "account:credentials:read": [Role.ORG_ADMIN, Role.ORG_OWNER, Role.SUPER_ADMIN],
 
     # ── Device Events (TZ-11) ────────────────────────────────────────────────
     "event:read": [
