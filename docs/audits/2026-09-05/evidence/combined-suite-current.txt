@@ -1,24 +1,24 @@
 ........................................................................ [  7%]
 ........................................................................ [ 14%]
-........................................................................ [ 22%]
+........................................................................ [ 21%]
 ........................................................................ [ 29%]
 ........................................................................ [ 36%]
-........................................................................ [ 44%]
+........................................................................ [ 43%]
 ........................................................................ [ 51%]
-........................................................................ [ 59%]
-........................................................................ [ 66%]
+........................................................................ [ 58%]
+........................................................................ [ 65%]
 ........................................................................ [ 73%]
-........................................................................ [ 81%]
-........................................................................ [ 88%]
-........................................................................ [ 96%]
-......................................                                   [100%]
+........................................................................ [ 80%]
+........................................................................ [ 87%]
+........................................................................ [ 95%]
+..............................................                           [100%]
 ============================== warnings summary ===============================
 .venv-audit\Lib\site-packages\pydantic\fields.py:754: 484 warnings
   C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\pydantic\fields.py:754: PydanticDeprecatedSince20: Using extra keyword arguments on `Field` is deprecated and will be removed. Use `json_schema_extra` instead. (Extra keys: 'deprecated'). Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.6/migration/
     warn(
 
-backend\api\v1\game_accounts\router.py:94
-  C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\api\v1\game_accounts\router.py:94: DeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+backend\api\v1\game_accounts\router.py:95
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\api\v1\game_accounts\router.py:95: DeprecationWarning: `regex` has been deprecated, please use `pattern` instead
     sort_dir: str = Query("desc", regex="^(asc|desc)$", description="Направление сортировки"),
 
 tests/test_updates/test_updates_api.py::TestSSRFGuard::test_http_url_rejected_at_creation
@@ -43,7 +43,7 @@ backend\api\v1\device_events\router.py                     35     13  62.86%
 backend\api\v1\devices\router.py                          242    166  31.40%
 backend\api\v1\discovery\router.py                         20      1  95.00%
 backend\api\v1\event_triggers\router.py                    83     15  81.93%
-backend\api\v1\game_accounts\router.py                     63     31  50.79%
+backend\api\v1\game_accounts\router.py                     68     29  57.35%
 backend\api\v1\groups\router.py                            41      7  82.93%
 backend\api\v1\health\router.py                            18      1  94.44%
 backend\api\v1\locations\router.py                         39     16  58.97%
@@ -80,7 +80,7 @@ backend\middleware\tenant_middleware.py                    12      1  91.67%
 backend\models\account_session.py                          43      2  95.35%
 backend\models\device_event.py                             33      1  96.97%
 backend\models\event_trigger.py                            25      1  96.00%
-backend\models\game_account.py                             72      5  93.06%
+backend\models\game_account.py                             72      3  95.83%
 backend\models\pipeline_settings.py                        31      1  96.77%
 backend\models\task.py                                     43      2  95.35%
 backend\monitoring\pool_metrics.py                         31      2  93.55%
@@ -104,7 +104,7 @@ backend\services\device_service.py                        173     94  45.66%
 backend\services\device_status_cache.py                    69      7  89.86%
 backend\services\discovery_service.py                      65     25  61.54%
 backend\services\event_reactor.py                         140     86  38.57%
-backend\services\game_account_service.py                  179    156  12.85%
+backend\services\game_account_service.py                  179    147  17.88%
 backend\services\group_service.py                         101     38  62.38%
 backend\services\health_service.py                         98     13  86.73%
 backend\services\location_service.py                      101     82  18.81%
@@ -140,9 +140,9 @@ backend\websocket\offline_queue.py                         85      8  90.59%
 backend\websocket\pubsub_router.py                        172     43  75.00%
 backend\websocket\stream_bridge.py                        139     57  58.99%
 ----------------------------------------------------------------------------
-TOTAL                                                   11012   3794  65.55%
+TOTAL                                                   11017   3781  65.68%
 
 95 files skipped due to complete coverage.
 Coverage JSON written to file docs/audits/2026-09-05/evidence/coverage-current.json
-Required test coverage of 65% reached. Total coverage: 65.55%
-974 passed, 488 warnings in 96.28s (0:01:36)
+Required test coverage of 65% reached. Total coverage: 65.68%
+982 passed, 488 warnings in 100.79s (0:01:40)

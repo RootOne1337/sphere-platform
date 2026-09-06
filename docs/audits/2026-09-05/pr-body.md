@@ -49,12 +49,17 @@ revoked peers and prevent late poll responses from overwriting newer handshakes.
 The production command publisher is still a stub, so these fixes do not claim
 successful delivery to Android or an established tunnel.
 
+Account password disclosure requires a separate credential-read permission held
+by organization administrators/owners and platform administrators. Ordinary
+account readers cannot reveal passwords; allowed responses use no-store and retain
+the tenant filter. Secret storage and indirect script access remain under audit.
+
 ## Validation
 
 - Android enterprise debug unit suite: **316 passed**.
-- Combined backend/PC, PostgreSQL/Redis and deployment regressions: **974 passed**.
-  This includes **132 real-service tests** and **6 Compose configuration tests**.
-  Coverage is **65.55%** and passes the unchanged **65%** gate with two-decimal
+- Combined backend/PC, PostgreSQL/Redis and deployment regressions: **982 passed**.
+  This includes **140 real-service tests** and **6 Compose configuration tests**.
+  Coverage is **65.68%** and passes the unchanged **65%** gate with two-decimal
   precision. No threshold or coverage scope was weakened. Two additional
   regression tests exercise the 64.98% rejection and exact 65.00% boundary. Long load/soak profiles require a prepared API
   environment and are excluded from the ordinary PR command.

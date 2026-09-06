@@ -20,8 +20,8 @@ runtime-проверок и не считается доказательство
 | Проверка | Результат | Практическое ограничение |
 | --- | --- | --- |
 | Android enterprise debug unit suite | 316 passed, 0 failed | JVM/MockWebServer; не проверяет ОС, codec, батарею или смерть процесса на телефоне |
-| Объединённая Backend/PC/production/deployment suite | **974 passed, 0 failed**; coverage **65,55%** | Строгий coverage gate 65% пройден с precision=2. Load suite исключена; 6 Compose config tests не запускают сервисы |
-| Проверки PostgreSQL/Redis | **132 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
+| Объединённая Backend/PC/production/deployment suite | **982 passed, 0 failed**; coverage **65,68%** | Строгий coverage gate 65% пройден с precision=2. Load suite исключена; 6 Compose config tests не запускают сервисы |
+| Проверки PostgreSQL/Redis | **140 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
 | Миграции | Применены до **20260906_vpn_intents** включительно | Только изолированная БД; конфликтные данные/downgrade проверены в throwaway schema; production не мигрировался |
 | Backend image | Собирается; исходная запись OpenAPI воспроизведённо падает с PermissionError | Исправлен lifespan; полный deployment runtime ещё не подтверждён |
 | Frontend build | Успешно | Type-check/Jest и браузерный runtime требуют отдельного завершения проверки |
@@ -32,7 +32,7 @@ runtime-проверок и не считается доказательство
 Предыдущий отдельный DAG benchmark однажды занял 127,1 ms при пороге 100 ms;
 изолированный повтор и последующие общие прогоны прошли. Порог не ослаблялся.
 Файл production-regressions-after.txt сохраняет более ранний standalone snapshot
-с 41 тестом; актуальные 132 входят в общий прогон.
+с 41 тестом; актуальные 140 входят в общий прогон.
 
 Команды запуска и предохранители изоляции: [tests/production/README.md](../../../tests/production/README.md).
 Исходные `14 passed` в [reproductions.txt](evidence/reproductions.txt) означают
@@ -403,8 +403,9 @@ head; последующие коммиты требуют собственны�
 На `b9c12bf` Ruff 0.16.6 в GitHub выявил I001 в `test_vpn_migration.py`: локальный
 Ruff 0.3 классифицировал Alembic иначе из-за одноимённой папки миграций. Явный
 known-third-party для установленной библиотеки и упорядоченные imports проходят
-на обеих версиях; правила lint не отключались. Новые GitHub checks ещё нужно
-сверить на ревизии исправления.
+на обеих версиях; правила lint не отключались. На `7c3cf28` backend run
+`34045859924`: Tests/Lint/Alembic/статический RLS успешны, Security/pip-audit
+падает. Android run `34045859946` успешен; новые коммиты требуют своих checks.
 
 Для AUD-11 реализованы [SQL reservations и generation fencing](VPN-LEASE-DESIGN.md);
 документ описывает границы транзакций, обязательный migration preflight и ещё
