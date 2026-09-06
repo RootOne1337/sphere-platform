@@ -91,4 +91,20 @@ class CommandDeliveryTest {
         assertEquals("failed", pending["status"]!!.jsonPrimitive.content)
         dispatcher.stop()
     }
+
+    @Test fun explicitDagPayloadTakesPrecedenceOverStaleCache() = runTest {
+        val stale = buildJsonObject { put("account", "previous") }
+        val fresh = buildJsonObject { put("account", "current") }
+        every { cache.get("script", "same-legacy-hash") } returns ScriptCacheManager.CacheResult.Hit(stale, 0)
+        val executed = slot<JsonObject>()
+        coEvery { dag.execute(any(), capture(executed), any()) } returns buildJsonObject { put("success", true) }
+        val dispatcher = dispatcher(backgroundScope)
+        val msg = JsonObject(command() + ("payload" to buildJsonObject {
+            put("dag", fresh); put("dag_name", "script"); put("dag_hash", "same-legacy-hash")
+        }))
+        callback.captured!!(msg)
+        runCurrent()
+        assertEquals(fresh, executed.captured)
+        dispatcher.stop()
+    }
 }

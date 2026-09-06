@@ -337,9 +337,6 @@ class TaskService:
                 dag_name = script.name if script else f"script_{task.script_id}"
 
                 # Content-addressable hash для ScriptCacheManager на APK
-                dag_json_str = json.dumps(version.dag, sort_keys=True, ensure_ascii=False)
-                dag_hash = hashlib.sha256(dag_json_str.encode("utf-8")).hexdigest()
-
                 # Подстановка переменных аккаунта в DAG ({{account.xxx}} → реальные значения)
                 resolved_dag = version.dag
                 account = await self._load_account_for_task(task)
@@ -353,6 +350,11 @@ class TaskService:
                         account_nick=account.nickname,
                         variables_keys=list(variables.keys()),
                     )
+
+                # The cache identity must include account-specific substitutions.
+                # Hashing the template reuses a previous account's resolved DAG.
+                dag_json_str = json.dumps(resolved_dag, sort_keys=True, ensure_ascii=False)
+                dag_hash = hashlib.sha256(dag_json_str.encode("utf-8")).hexdigest()
 
                 delivered = False
                 if self.publisher:

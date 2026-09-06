@@ -351,7 +351,13 @@ class CommandDispatcher @Inject constructor(
             val timeoutMs = cmd.payload["timeout_ms"]?.jsonPrimitive?.longOrNull
 
             // Контент-адресабльный кеш: если имя + hash присланы — ищем в кеше
-            val dagJson: JsonObject = if (dagName != null && dagHash != null) {
+            val suppliedDag = cmd.payload["dag"]?.jsonObject
+            val dagJson: JsonObject = if (suppliedDag != null) {
+                // Explicit payload is authoritative, including during migration
+                // from servers that hashed a template before account substitution.
+                if (dagName != null && dagHash != null) scriptCache.put(dagName, dagHash, suppliedDag)
+                suppliedDag
+            } else if (dagName != null && dagHash != null) {
                 when (val cacheResult = scriptCache.get(dagName, dagHash)) {
                     is ScriptCacheManager.CacheResult.Hit -> {
                         // Кеш-хит: DAG актуален, запускаем без пердачи по WS
