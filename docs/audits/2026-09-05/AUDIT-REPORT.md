@@ -21,6 +21,7 @@ runtime-проверок и не считается доказательство
 | --- | --- | --- |
 | Android enterprise debug unit suite | 333 passed, 0 failed | JVM/MockWebServer; не проверяет ОС, codec, батарею или смерть процесса на телефоне |
 | Объединённая Backend/PC/production/deployment suite | **1047 passed, 0 failed**; coverage **66,61%** | Строгий coverage gate 65% пройден с precision=2. Load suite исключена; 6 Compose config tests не запускают сервисы |
+| Python dependency scan | **0 known vulnerabilities** в совместном backend/PC resolution | Pip-audit snapshot, не проверка frontend/Gradle/container/application security; [версии и ограничения](DEPENDENCY-REVIEW.md) |
 | Проверки PostgreSQL/Redis | **179 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
 | Миграции | Применены до **20260906_account_ciphertext** включительно | Только изолированная БД; конфликтные данные/downgrade проверены в throwaway schema; production не мигрировался |
 | Backend image | Собирается; исходная запись OpenAPI воспроизведённо падает с PermissionError | Исправлен lifespan; полный deployment runtime ещё не подтверждён |
@@ -384,25 +385,17 @@ runtime-проверок и не считается доказательство
 
 - **Root cause:** `executeRootCommand` при IOException уничтожала root process, открывала новый и повторяла ту же команду. Ошибка flush может наступить после передачи строки с newline; исход действия неизвестен. На следующих уровнях общий DAG retry и loop catch продолжали execution, а LuaJ оборачивал host exception в обычный LuaError.
 - **Evidence:** [android-root-delivery-before.txt](evidence/android-root-delivery-before.txt): 4 failures на `d710587`; fake pipe принимает полный `input tap 10 20`, затем flush падает, второй process получает ту же строку. Проверяются также recovery следующей команды, DAG retry/on_failure и nested loop. В промежуточном исправлении [android-root-propagation-before.txt](evidence/android-root-propagation-before.txt) выявлены 3 integration failures: Lua повторяла DAG, live tap/swipe выпускали исключение в application coroutine scope (13 tests, 3 failures).
-- **Affected files:** `android/app/src/main/kotlin/com/sphereplatform/agent/commands/AdbActionExecutor.kt:127`, `DagRunner.kt:266` и `:846`, `CommandDispatcher.kt:202` и `:217`, `lua/LuaEngine.kt:73`.
+- **Affected files:** `android/app/src/main/kotlin/com/sphereplatform/agent/commands/AdbActionExecutor.kt:127`, `DagRunner.kt` (node/loop exception paths), `CommandDispatcher.kt` (live touch paths), `lua/LuaEngine.kt:73`.
 - **Fix:** сломанная root session явно инвалидируется независимо от isAlive; команда не переотправляется. RootCommandOutcomeUnknownException останавливает текущий DAG без retry/on_failure/продолжения loop. Непойманная LuaJ host error сохраняет исходный тип. Live input обрабатывает unknown без повторения и без uncaught child failure. Новый root process допускается только для следующей отдельной команды.
 - **Regression:** 5 real executor/DAG/Lua tests и 3 dispatcher tests, включая durable failed receipt и повтор того же command_id. [android-root-delivery-after.txt](evidence/android-root-delivery-after.txt): **326 Android JVM tests passed**, 0 failures/errors/skips. Root process/input/output полностью подменены; su и реальный input на устройстве не запускались.
 - **Residual risk:** успешный flush всё ещё не является подтверждением выполнения/exit status команды; нужен отдельный root execution acknowledgement protocol. Завершение дочернего input process после kill и реальные Android recovery не проверены. Live touch пока без явного ACK. Lua pcall/custom scripts могут сами обработать ошибку и продолжить действия; автоматизация с новым command_id также требует отдельной политики unknown outcome. Это не exactly-once гарантия физических эффектов.
-
-## Открытые подтверждённые блокеры
-
-| ID / severity | Root cause и evidence | Необходимое продолжение |
-| --- | --- | --- |
-| AUD-11 / High, частично исправлен | SQL ownership/uniqueness/intents исправлены и проверены; реальные orphan peers и provider unknown outcomes не reconciled | Inventory contract, controlled reconciliation/rollout, HTTP adapter и AWG конфигурация; незавершённые intents пока удерживаются |
-| AUD-14 / High | Несуперпользователь-владелец таблиц обходит RLS. F14 на PostgreSQL; tenant context не установлен повсеместно | Разделение migration/runtime ролей, политики и контекст для HTTP/auth/jobs, реальные cross-tenant проверки |
-| DEPLOY-03 / High | Effective Compose оставляет n8n/MinIO host ports; production persistence и DB roles не согласованы | Ingress/access design, роли, долговечные artifacts, runtime/restore проверка |
 
 ### AUD-35 — High: cancel/force-stop перезаписывали результат конкурирующей транзакции
 
 - **Root cause:** TaskService читал задачу без FOR UPDATE и без обновления identity map. Между чтением и изменением result handler/watchdog мог зафиксировать COMPLETED/FAILED/TIMEOUT; cancel затем записывал CANCELLED поверх результата. Stop мог отправляться до освобождения строки конкурирующим result handler.
 - **Affected files:** `backend/services/task_service.py`, `_get_task`, `cancel_task`, `force_stop_task`.
 - **Evidence:** [cancellation-serialization-before.txt](evidence/cancellation-serialization-before.txt): 8 failures, 6 controls passed. Две настоящие PostgreSQL сессии воспроизводят как уже закоммиченный terminal state при устаревшем ORM object, так и незавершённую транзакцию с удерживаемым row lock.
-- **Fix:** оба mutation path получают tenant-scoped FOR UPDATE и populate_existing перед проверкой статуса и внешними эффектами. После конкурирующего terminal commit возвращается 409; result сохраняется, Redis/command publisher не вызываются. Обычные GET не получают write lock.
+- **Fix:** `d7839fb` — оба mutation path получают tenant-scoped FOR UPDATE и populate_existing перед проверкой статуса и внешними эффектами. После конкурирующего terminal commit возвращается 409; result сохраняется, Redis/command publisher не вызываются. Обычные GET не получают write lock.
 - **Regression:** `tests/production/test_cancellation_serialization.py`: 14 passed — три terminal outcomes, два cancellation path, блокировка конкурирующим result owner, tenant 404 и разрешённая отмена активных задач. [cancellation-serialization-after.txt](evidence/cancellation-serialization-after.txt).
 - **Residual risk:** это сериализация серверного решения, а не подтверждение физической остановки APK. Pre-commit CANCEL_DAG, Redis failure, durable cancellation/stop ACK, отдельные batch/scheduler cancellation paths и остановка уже доставленной ASSIGNED задачи требуют продолжения проверки.
 
@@ -411,7 +404,7 @@ runtime-проверок и не считается доказательство
 - **Root cause:** user force-stop отправлял CANCEL_DAG с command_id, равным UUID задачи. Android отвечал completed на принятие control; backend считал любой такой UUID ACK результатом DAG. Если после отправки stop происходил отказ Redis или SQL commit, задача оставалась RUNNING, а запоздалый ACK записывал COMPLETED и подтверждал чужой журнал результата.
 - **Affected files:** `backend/services/task_service.py`, `backend/api/ws/android/router.py` (граница обработки ACK, без изменения handler).
 - **Evidence:** [cancellation-commands-before.txt](evidence/cancellation-commands-before.txt): два PostgreSQL runtime failures при injected redis_release/sql_commit; ACK проходит через настоящий handle_command_result, stored status становится COMPLETED вместо RUNNING.
-- **Fix:** user stop использует отдельный `user_cancel_<task_id>` command_id, а UUID цели остаётся в payload.task_id. Такой receipt не попадает в DAG result persistence и не вызывает result_ack для журнала задачи.
+- **Fix:** `3a7fcc8` — user stop использует отдельный `user_cancel_<task_id>` command_id, а UUID цели остаётся в payload.task_id. Такой receipt не попадает в DAG result persistence и не вызывает result_ack для журнала задачи.
 - **Regression:** оба отказа после delivery + проверка неизменённого результата/отсутствия DAG result_ack. [cancellation-commands-after.txt](evidence/cancellation-commands-after.txt): 24 связанных backend cases passed.
 - **Residual risk:** stop всё ещё может быть принят APK до SQL rollback; здесь исправлена ложная успешная запись, но не согласование остановки после отказа. Нужны durable intent/outbox и отдельный stop ACK. На wire distinct ID — обязательный контракт; произвольные новые control producers не должны использовать UUID задачи.
 
@@ -420,7 +413,7 @@ runtime-проверок и не считается доказательство
 - **Root cause:** Android CANCEL_DAG/PAUSE_DAG/RESUME_DAG не использовали payload.task_id; TTL не предотвращал доставку устаревшей команды внутри допустимого окна. Watchdog вообще не передавал task_id в payload.
 - **Affected files:** `android/.../commands/CommandDispatcher.kt`, `DagRunner.kt`, `backend/tasks/task_heartbeat_watchdog.py`.
 - **Evidence:** [android-control-target-before.txt](evidence/android-control-target-before.txt): 6 failures, 1 positive control passed. Настоящие dispatcher/journal/runner исполняют task A, затем task B; отмена A прерывает B. Отдельно воспроизведены late pause/resume, malformed/missing target и ложный ACK после завершения/ошибки DAG. Третий случай в cancellation-commands-before.txt доказывает отсутствие target у watchdog.
-- **Fix:** обязательный строковый target; проверка ID активного execution и изменение flags атомарны относительно start/finally cleanup. Неактивная цель получает task_not_running, неверная — invalid_task_target. Watchdog передаёт task_id. ACK явно содержит control_accepted и не утверждает физическую остановку.
+- **Fix:** `3a7fcc8` — обязательный строковый target; проверка ID активного execution и изменение flags атомарны относительно start/finally cleanup. Неактивная цель получает task_not_running, неверная — invalid_task_target. Watchdog передаёт task_id. ACK явно содержит control_accepted и не утверждает физическую остановку.
 - **Regression:** 7 новых Android integration-on-JVM случаев, **333 Android tests passed**, 0 failures/errors/skips; [android-control-target-after.txt](evidence/android-control-target-after.txt). Реальный PostgreSQL watchdog test проверяет target после TIMEOUT commit.
 - **Residual risk:** нет durable cancellation и ordering controls внутри одного task_id; delayed resume той же задачи всё ещё требует sequence/generation. Между claim и началом execution control может быть отклонён; текущая нода останавливается кооперативно. Для rollout сначала обновляются все backend writers, затем APK: старый watchdog не передаёт target и новый APK его отвергает. Физические устройства не тестировались. [Контракт и rollout](../../security/task-control-protocol.md).
 
@@ -429,7 +422,7 @@ runtime-проверок и не считается доказательство
 - **Root cause:** audit skip/action/resource и request-log/metrics path использовали request.url.path. Установленная Starlette 0.50.0 собирала этот URL из Host без валидации; path внутри Host отличался от фактически маршрутизированного ASGI scope.path. Upstream: [GHSA-86qp-5c8j-p5mr](https://github.com/Kludex/starlette/security/advisories/GHSA-86qp-5c8j-p5mr).
 - **Affected files:** `backend/middleware/audit.py`, `metrics.py`, `request_id.py`.
 - **Evidence:** [audit-path-before.txt](evidence/audit-path-before.txt): 3 failures, 1 valid-host control passed. Авторизованный PUT устройства сохраняет новое имя, но Host с `/metrics?` или `/api/v1/auth/refresh?` исключает audit entry. Host с `/api/v1/tasks/<UUID>?` записывает put.tasks и чужой resource_id вместо реального устройства. ASGITransport и PostgreSQL локальные; ingress/nginx не тестировался.
-- **Fix:** все три middleware используют исходный ASGI scope.path, не зависящий от реконструкции URL по Host.
+- **Fix:** `422c9c7` — все три middleware используют исходный ASGI scope.path, не зависящий от реконструкции URL по Host.
 - **Regression:** четыре real API/DB cases проверяют сам mutation, audit actor/action/resource/status, metric label и request context. [audit-path-after.txt](evidence/audit-path-after.txt): 28 связанных cases passed.
 - **Residual risk:** разрешения endpoint не обходятся этим сценарием; требуется право выполнить сам mutation. Подмена заголовка на реальном ingress зависит от proxy validation. Background audit всё ещё может теряться при остановке процесса/ошибке SQL; обновление уязвимых dependencies и остальные URL consumers требуют отдельной проверки. Этот fix не делает security CI зелёным автоматически.
 
@@ -438,9 +431,17 @@ runtime-проверок и не считается доказательство
 - **Root cause:** PyJWT/pytest были закреплены до security fixes; старая связка Pydantic/FastAPI разрешала Starlette 0.50.0. PC agent требовал pydantic-settings==2.2, backend — ==2.2.1; последовательные CI installs скрывали противоречие.
 - **Affected files:** `backend/requirements.txt`, `pc-agent/requirements.txt`, `.github/workflows/ci-backend.yml`.
 - **Evidence:** CI на d7839fb выдаёт 17 advisory records / 3 packages, включая повторные записи (11 уникальных GHSA). Joint resolver отказывает на конфликтующих exact pins. [Разбор reachability и upstream sources](DEPENDENCY-REVIEW.md); только Host→audit сценарий доказан как application defect (AUD-38), JWT auth bypass не утверждается.
-- **Fix:** PyJWT 2.13.0, Starlette 1.3.1, pytest 9.0.3; совместимые FastAPI 0.136.3, Pydantic 2.9.2, pytest-asyncio 1.3.0. Единый settings pin 2.2.1; CI разрешает оба requirements одновременно, выполняет pip check и сканирует backend+PC.
+- **Fix:** `748bb3e` — PyJWT 2.13.0, Starlette 1.3.1, pytest 9.0.3; совместимые FastAPI 0.136.3, Pydantic 2.9.2, pytest-asyncio 1.3.0. Единый settings pin 2.2.1; CI разрешает оба requirements одновременно, выполняет pip check и сканирует backend+PC.
 - **Regression:** полный runtime/SQL/Redis suite в отдельном окружении; 12 сохранённых JWT negative/positive controls; существующие auth, refresh, logout, WebSocket и API tests. Pip-audit остаётся обязательным, исключения advisory/снижение gates не добавлялись.
 - **Residual risk:** нулевой scan относится к конкретному Python resolution, не ко всему репозиторию. Frontend/Android/container advisories, hash lock/SBOM и будущие обновления остаются открыты. Production dependencies не менялись. Подробные версии/сканы: [DEPENDENCY-REVIEW.md](DEPENDENCY-REVIEW.md).
+
+## Открытые подтверждённые блокеры
+
+| ID / severity | Root cause и evidence | Необходимое продолжение |
+| --- | --- | --- |
+| AUD-11 / High, частично исправлен | SQL ownership/uniqueness/intents исправлены и проверены; реальные orphan peers и provider unknown outcomes не reconciled | Inventory contract, controlled reconciliation/rollout, HTTP adapter и AWG конфигурация; незавершённые intents пока удерживаются |
+| AUD-14 / High | Несуперпользователь-владелец таблиц обходит RLS. F14 на PostgreSQL; tenant context не установлен повсеместно | Разделение migration/runtime ролей, политики и контекст для HTTP/auth/jobs, реальные cross-tenant проверки |
+| DEPLOY-03 / High | Effective Compose оставляет n8n/MinIO host ports; production persistence и DB roles не согласованы | Ingress/access design, роли, долговечные artifacts, runtime/restore проверка |
 
 ## Следующие компоненты аудита
 
@@ -499,3 +500,12 @@ RLS успешны, Security/pip-audit падает; Android `34047657671` ус�
 
 PR остаётся draft до завершения открытых блокеров, повторного runtime обследования
 и финализации отчёта. Merge и deployment не выполнялись.
+
+После dependency fix `748bb3e` **все backend jobs успешны**, включая Security,
+Tests, Lint, Alembic и статический RLS:
+[GitHub run 34050895738](https://github.com/RootOne1337/sphere-platform/actions/runs/34050895738).
+Android build/tests также успешны:
+[run 34050895681](https://github.com/RootOne1337/sphere-platform/actions/runs/34050895681).
+Сохранены [backend snapshot](evidence/ci-748bb3e-backend.json) и
+[Android snapshot](evidence/ci-748bb3e-android.json). Это проверка конкретной
+ревизии исправлений; зелёный CI не закрывает перечисленные runtime/RLS/rollout риски.

@@ -123,16 +123,13 @@ nano .env.local
 
 ### Required Python packages
 
-```
-websockets>=12.0
-aiohttp>=3.9
-pydantic>=2.0
-pydantic-settings>=2.0
-psutil>=5.9
-structlog>=24.0
-aiofiles>=23.0
-tenacity>=8.0        # reconnect with exponential backoff
-```
+The authoritative list is [pc-agent/requirements.txt](../pc-agent/requirements.txt).
+From the repository root, install it with
+`python -m pip install -r pc-agent/requirements.txt` and run `python -m pip check`.
+For the combined backend/PC test environment, install both requirement files in
+one command so conflicting pins cannot silently replace each other. The current
+validated versions and security scope are recorded in the
+[dependency review](audits/2026-09-05/DEPENDENCY-REVIEW.md).
 
 ---
 

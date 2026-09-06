@@ -97,6 +97,12 @@ other ecosystems and application blockers remain under audit.
 
 ## Validation
 
+- On code revision `748bb3e`, [backend CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34050895738)
+  passed Tests, Lint, Security, Alembic and static RLS checks;
+  [Android CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34050895681)
+  passed build and unit tests. This is a revision-specific snapshot; consult PR
+  checks for subsequent documentation or code commits.
+
 - Android enterprise debug unit suite: **333 passed**.
 - Combined backend/PC, PostgreSQL/Redis and deployment regressions: **1047 passed**.
   This includes **179 real-service tests** and **6 Compose configuration tests**.

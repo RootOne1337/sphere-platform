@@ -63,3 +63,8 @@ still use ranges; the version snapshot is evidence, not an enforced hash lock.
 Future installation needs fresh resolution/scanning. Python 3.12 joint testing
 does not establish every standalone PC-agent Python 3.11 deployment behavior.
 No production environment was upgraded during the audit.
+
+GitHub CI independently passed on `748bb3e`: all backend jobs, including the
+joint Security scan and Tests, and Android build/tests. The
+[backend snapshot](evidence/ci-748bb3e-backend.json) and
+[Android snapshot](evidence/ci-748bb3e-android.json) identify the exact revision.
