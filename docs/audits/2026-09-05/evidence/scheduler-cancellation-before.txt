@@ -1,0 +1,120 @@
+FFFF...FFF...FF                                                          [100%]
+================================== FAILURES ===================================
+_ test_scheduler_cannot_stop_or_overwrite_a_task_result_owner[True-assigned] __
+tests\production\test_scheduler_cancellation.py:110: in test_scheduler_cannot_stop_or_overwrite_a_task_result_owner
+    assert stored.status == (TaskStatus.COMPLETED if success else TaskStatus.FAILED)
+E   AssertionError: assert <TaskStatus.C...: 'cancelled'> == <TaskStatus.C...: 'completed'>
+E
+E     - completed
+E     + cancelled
+---------------------------- Captured stdout call -----------------------------
+{"task_id": "d8d28110-a1a6-4af3-962e-1d85af90af7a", "success": true, "device_id": "868cf956-553b-4eed-9727-65f8799ac795", "event": "task.completed", "level": "info", "logger": "backend.services.task_service", "timestamp": "2026-09-07T09:08:24.893098Z"}
+{"event_id": "85920584-3ab3-4c72-be8f-ba39be5ad06a", "event_type": "task.completed", "device_id": "868cf956-553b-4eed-9727-65f8799ac795", "account_id": null, "event": "event_reactor.event_saved", "level": "info", "logger": "backend.services.event_reactor", "timestamp": "2026-09-07T09:08:24.905105Z"}
+{"batch_id": "01bcf1a7-8154-4430-855d-772b53bb90af", "status": "completed", "succeeded": 1, "failed": 0, "event": "batch.auto_aggregated", "level": "info", "logger": "backend.services.task_service", "timestamp": "2026-09-07T09:08:24.917429Z"}
+{"task_id": "d8d28110-a1a6-4af3-962e-1d85af90af7a", "device_id": "868cf956-553b-4eed-9727-65f8799ac795", "event": "scheduler.task_cancelled", "level": "info", "logger": "backend.services.scheduler.scheduler_engine", "timestamp": "2026-09-07T09:08:24.951190Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.services.task_service:task_service.py:415 {'task_id': 'd8d28110-a1a6-4af3-962e-1d85af90af7a', 'success': True, 'device_id': '868cf956-553b-4eed-9727-65f8799ac795', 'event': 'task.completed', 'level': 'info', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-07T09:08:24.893098Z'}
+INFO     backend.services.event_reactor:event_reactor.py:106 {'event_id': '85920584-3ab3-4c72-be8f-ba39be5ad06a', 'event_type': 'task.completed', 'device_id': '868cf956-553b-4eed-9727-65f8799ac795', 'account_id': None, 'event': 'event_reactor.event_saved', 'level': 'info', 'logger': 'backend.services.event_reactor', 'timestamp': '2026-09-07T09:08:24.905105Z'}
+INFO     backend.services.task_service:task_service.py:506 {'batch_id': '01bcf1a7-8154-4430-855d-772b53bb90af', 'status': <TaskBatchStatus.COMPLETED: 'completed'>, 'succeeded': 1, 'failed': 0, 'event': 'batch.auto_aggregated', 'level': 'info', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-07T09:08:24.917429Z'}
+INFO     backend.services.scheduler.scheduler_engine:scheduler_engine.py:604 {'task_id': 'd8d28110-a1a6-4af3-962e-1d85af90af7a', 'device_id': '868cf956-553b-4eed-9727-65f8799ac795', 'event': 'scheduler.task_cancelled', 'level': 'info', 'logger': 'backend.services.scheduler.scheduler_engine', 'timestamp': '2026-09-07T09:08:24.951190Z'}
+__ test_scheduler_cannot_stop_or_overwrite_a_task_result_owner[True-running] __
+tests\production\test_scheduler_cancellation.py:110: in test_scheduler_cannot_stop_or_overwrite_a_task_result_owner
+    assert stored.status == (TaskStatus.COMPLETED if success else TaskStatus.FAILED)
+E   AssertionError: assert <TaskStatus.C...: 'cancelled'> == <TaskStatus.C...: 'completed'>
+E
+E     - completed
+E     + cancelled
+---------------------------- Captured stdout call -----------------------------
+{"task_id": "8e85d11c-dab3-43f0-8005-81af901994ff", "success": true, "device_id": "f9da6ad6-4830-4383-9b22-83d404b5f087", "event": "task.completed", "level": "info", "logger": "backend.services.task_service", "timestamp": "2026-09-07T09:08:25.474684Z"}
+{"event_id": "a6dd7a5c-4d94-4d00-95ac-ab27daa10129", "event_type": "task.completed", "device_id": "f9da6ad6-4830-4383-9b22-83d404b5f087", "account_id": null, "event": "event_reactor.event_saved", "level": "info", "logger": "backend.services.event_reactor", "timestamp": "2026-09-07T09:08:25.485219Z"}
+{"batch_id": "35d80dd3-5dc2-43d9-83d8-8fa2e1e2ad58", "status": "completed", "succeeded": 1, "failed": 0, "event": "batch.auto_aggregated", "level": "info", "logger": "backend.services.task_service", "timestamp": "2026-09-07T09:08:25.495447Z"}
+{"task_id": "8e85d11c-dab3-43f0-8005-81af901994ff", "device_id": "f9da6ad6-4830-4383-9b22-83d404b5f087", "event": "scheduler.task_cancelled", "level": "info", "logger": "backend.services.scheduler.scheduler_engine", "timestamp": "2026-09-07T09:08:25.526238Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.services.task_service:task_service.py:415 {'task_id': '8e85d11c-dab3-43f0-8005-81af901994ff', 'success': True, 'device_id': 'f9da6ad6-4830-4383-9b22-83d404b5f087', 'event': 'task.completed', 'level': 'info', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-07T09:08:25.474684Z'}
+INFO     backend.services.event_reactor:event_reactor.py:106 {'event_id': 'a6dd7a5c-4d94-4d00-95ac-ab27daa10129', 'event_type': 'task.completed', 'device_id': 'f9da6ad6-4830-4383-9b22-83d404b5f087', 'account_id': None, 'event': 'event_reactor.event_saved', 'level': 'info', 'logger': 'backend.services.event_reactor', 'timestamp': '2026-09-07T09:08:25.485219Z'}
+INFO     backend.services.task_service:task_service.py:506 {'batch_id': '35d80dd3-5dc2-43d9-83d8-8fa2e1e2ad58', 'status': <TaskBatchStatus.COMPLETED: 'completed'>, 'succeeded': 1, 'failed': 0, 'event': 'batch.auto_aggregated', 'level': 'info', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-07T09:08:25.495447Z'}
+INFO     backend.services.scheduler.scheduler_engine:scheduler_engine.py:604 {'task_id': '8e85d11c-dab3-43f0-8005-81af901994ff', 'device_id': 'f9da6ad6-4830-4383-9b22-83d404b5f087', 'event': 'scheduler.task_cancelled', 'level': 'info', 'logger': 'backend.services.scheduler.scheduler_engine', 'timestamp': '2026-09-07T09:08:25.526238Z'}
+_ test_scheduler_cannot_stop_or_overwrite_a_task_result_owner[False-assigned] _
+tests\production\test_scheduler_cancellation.py:110: in test_scheduler_cannot_stop_or_overwrite_a_task_result_owner
+    assert stored.status == (TaskStatus.COMPLETED if success else TaskStatus.FAILED)
+E   AssertionError: assert <TaskStatus.C...: 'cancelled'> == <TaskStatus.FAILED: 'failed'>
+E
+E     - failed
+E     + cancelled
+---------------------------- Captured stdout call -----------------------------
+{"task_id": "5c067d19-79c8-4a34-8ce4-6f99658dffd7", "success": false, "device_id": "76934914-5dfd-4f50-9508-1802c82b1607", "event": "task.completed", "level": "info", "logger": "backend.services.task_service", "timestamp": "2026-09-07T09:08:25.941308Z"}
+{"event_id": "18e907e6-45f2-49a5-82d3-c0ce3782e6c0", "event_type": "task.failed", "device_id": "76934914-5dfd-4f50-9508-1802c82b1607", "account_id": null, "event": "event_reactor.event_saved", "level": "info", "logger": "backend.services.event_reactor", "timestamp": "2026-09-07T09:08:25.952468Z"}
+{"batch_id": "7d7c1c77-681a-4d7f-963a-b8cf1ee17af2", "status": "failed", "succeeded": 0, "failed": 1, "event": "batch.auto_aggregated", "level": "info", "logger": "backend.services.task_service", "timestamp": "2026-09-07T09:08:25.965527Z"}
+{"task_id": "5c067d19-79c8-4a34-8ce4-6f99658dffd7", "device_id": "76934914-5dfd-4f50-9508-1802c82b1607", "event": "scheduler.task_cancelled", "level": "info", "logger": "backend.services.scheduler.scheduler_engine", "timestamp": "2026-09-07T09:08:25.995283Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.services.task_service:task_service.py:415 {'task_id': '5c067d19-79c8-4a34-8ce4-6f99658dffd7', 'success': False, 'device_id': '76934914-5dfd-4f50-9508-1802c82b1607', 'event': 'task.completed', 'level': 'info', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-07T09:08:25.941308Z'}
+INFO     backend.services.event_reactor:event_reactor.py:106 {'event_id': '18e907e6-45f2-49a5-82d3-c0ce3782e6c0', 'event_type': 'task.failed', 'device_id': '76934914-5dfd-4f50-9508-1802c82b1607', 'account_id': None, 'event': 'event_reactor.event_saved', 'level': 'info', 'logger': 'backend.services.event_reactor', 'timestamp': '2026-09-07T09:08:25.952468Z'}
+INFO     backend.services.task_service:task_service.py:506 {'batch_id': '7d7c1c77-681a-4d7f-963a-b8cf1ee17af2', 'status': <TaskBatchStatus.FAILED: 'failed'>, 'succeeded': 0, 'failed': 1, 'event': 'batch.auto_aggregated', 'level': 'info', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-07T09:08:25.965527Z'}
+INFO     backend.services.scheduler.scheduler_engine:scheduler_engine.py:604 {'task_id': '5c067d19-79c8-4a34-8ce4-6f99658dffd7', 'device_id': '76934914-5dfd-4f50-9508-1802c82b1607', 'event': 'scheduler.task_cancelled', 'level': 'info', 'logger': 'backend.services.scheduler.scheduler_engine', 'timestamp': '2026-09-07T09:08:25.995283Z'}
+_ test_scheduler_cannot_stop_or_overwrite_a_task_result_owner[False-running] __
+tests\production\test_scheduler_cancellation.py:110: in test_scheduler_cannot_stop_or_overwrite_a_task_result_owner
+    assert stored.status == (TaskStatus.COMPLETED if success else TaskStatus.FAILED)
+E   AssertionError: assert <TaskStatus.C...: 'cancelled'> == <TaskStatus.FAILED: 'failed'>
+E
+E     - failed
+E     + cancelled
+---------------------------- Captured stdout call -----------------------------
+{"task_id": "c406670c-c1c2-45e5-8c3f-6420db587b26", "success": false, "device_id": "0f81959b-fa10-40e3-852d-7fd6f4d8ee38", "event": "task.completed", "level": "info", "logger": "backend.services.task_service", "timestamp": "2026-09-07T09:08:26.348245Z"}
+{"event_id": "2d9ea944-f021-49a7-9f14-22468af88e18", "event_type": "task.failed", "device_id": "0f81959b-fa10-40e3-852d-7fd6f4d8ee38", "account_id": null, "event": "event_reactor.event_saved", "level": "info", "logger": "backend.services.event_reactor", "timestamp": "2026-09-07T09:08:26.362727Z"}
+{"batch_id": "c7b2436f-aad2-48d3-a751-fde466e3d05b", "status": "failed", "succeeded": 0, "failed": 1, "event": "batch.auto_aggregated", "level": "info", "logger": "backend.services.task_service", "timestamp": "2026-09-07T09:08:26.377082Z"}
+{"task_id": "c406670c-c1c2-45e5-8c3f-6420db587b26", "device_id": "0f81959b-fa10-40e3-852d-7fd6f4d8ee38", "event": "scheduler.task_cancelled", "level": "info", "logger": "backend.services.scheduler.scheduler_engine", "timestamp": "2026-09-07T09:08:26.423710Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.services.task_service:task_service.py:415 {'task_id': 'c406670c-c1c2-45e5-8c3f-6420db587b26', 'success': False, 'device_id': '0f81959b-fa10-40e3-852d-7fd6f4d8ee38', 'event': 'task.completed', 'level': 'info', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-07T09:08:26.348245Z'}
+INFO     backend.services.event_reactor:event_reactor.py:106 {'event_id': '2d9ea944-f021-49a7-9f14-22468af88e18', 'event_type': 'task.failed', 'device_id': '0f81959b-fa10-40e3-852d-7fd6f4d8ee38', 'account_id': None, 'event': 'event_reactor.event_saved', 'level': 'info', 'logger': 'backend.services.event_reactor', 'timestamp': '2026-09-07T09:08:26.362727Z'}
+INFO     backend.services.task_service:task_service.py:506 {'batch_id': 'c7b2436f-aad2-48d3-a751-fde466e3d05b', 'status': <TaskBatchStatus.FAILED: 'failed'>, 'succeeded': 0, 'failed': 1, 'event': 'batch.auto_aggregated', 'level': 'info', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-07T09:08:26.377082Z'}
+INFO     backend.services.scheduler.scheduler_engine:scheduler_engine.py:604 {'task_id': 'c406670c-c1c2-45e5-8c3f-6420db587b26', 'device_id': '0f81959b-fa10-40e3-852d-7fd6f4d8ee38', 'event': 'scheduler.task_cancelled', 'level': 'info', 'logger': 'backend.services.scheduler.scheduler_engine', 'timestamp': '2026-09-07T09:08:26.423710Z'}
+___ test_scheduler_cannot_overwrite_committing_pipeline_outcome[completed] ____
+tests\production\test_scheduler_cancellation.py:166: in test_scheduler_cannot_overwrite_committing_pipeline_outcome
+    assert stored.status == terminal
+E   AssertionError: assert <PipelineRunS...: 'cancelled'> == <PipelineRunS...: 'completed'>
+E
+E     - completed
+E     + cancelled
+_____ test_scheduler_cannot_overwrite_committing_pipeline_outcome[failed] _____
+tests\production\test_scheduler_cancellation.py:166: in test_scheduler_cannot_overwrite_committing_pipeline_outcome
+    assert stored.status == terminal
+E   AssertionError: assert <PipelineRunS...: 'cancelled'> == <PipelineRunS...LED: 'failed'>
+E
+E     - failed
+E     + cancelled
+___ test_scheduler_cannot_overwrite_committing_pipeline_outcome[timed_out] ____
+tests\production\test_scheduler_cancellation.py:166: in test_scheduler_cannot_overwrite_committing_pipeline_outcome
+    assert stored.status == terminal
+E   AssertionError: assert <PipelineRunS...: 'cancelled'> == <PipelineRunS...: 'timed_out'>
+E
+E     - timed_out
+E     + cancelled
+____ test_scheduler_does_not_follow_cross_tenant_legacy_batch_links[False] ____
+tests\production\test_scheduler_cancellation.py:201: in test_scheduler_does_not_follow_cross_tenant_legacy_batch_links
+    assert await cancel(db, schedule) == 0
+E   assert 1 == 0
+---------------------------- Captured stdout call -----------------------------
+{"task_id": "76c7163b-a5c8-443f-8f3d-e64df82d735c", "device_id": "98a425a9-8e76-4d50-87f7-4ac6fde28380", "event": "scheduler.task_cancelled", "level": "info", "logger": "backend.services.scheduler.scheduler_engine", "timestamp": "2026-09-07T09:08:29.593446Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.services.scheduler.scheduler_engine:scheduler_engine.py:604 {'task_id': '76c7163b-a5c8-443f-8f3d-e64df82d735c', 'device_id': '98a425a9-8e76-4d50-87f7-4ac6fde28380', 'event': 'scheduler.task_cancelled', 'level': 'info', 'logger': 'backend.services.scheduler.scheduler_engine', 'timestamp': '2026-09-07T09:08:29.593446Z'}
+____ test_scheduler_does_not_follow_cross_tenant_legacy_batch_links[True] _____
+tests\production\test_scheduler_cancellation.py:201: in test_scheduler_does_not_follow_cross_tenant_legacy_batch_links
+    assert await cancel(db, schedule) == 0
+E   assert 1 == 0
+============================== warnings summary ===============================
+backend\api\v1\game_accounts\router.py:95
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\api\v1\game_accounts\router.py:95: FastAPIDeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+    sort_dir: str = Query("desc", regex="^(asc|desc)$", description="Направление сортировки"),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/production/test_scheduler_cancellation.py::test_scheduler_cannot_stop_or_overwrite_a_task_result_owner[True-assigned]
+FAILED tests/production/test_scheduler_cancellation.py::test_scheduler_cannot_stop_or_overwrite_a_task_result_owner[True-running]
+FAILED tests/production/test_scheduler_cancellation.py::test_scheduler_cannot_stop_or_overwrite_a_task_result_owner[False-assigned]
+FAILED tests/production/test_scheduler_cancellation.py::test_scheduler_cannot_stop_or_overwrite_a_task_result_owner[False-running]
+FAILED tests/production/test_scheduler_cancellation.py::test_scheduler_cannot_overwrite_committing_pipeline_outcome[completed]
+FAILED tests/production/test_scheduler_cancellation.py::test_scheduler_cannot_overwrite_committing_pipeline_outcome[failed]
+FAILED tests/production/test_scheduler_cancellation.py::test_scheduler_cannot_overwrite_committing_pipeline_outcome[timed_out]
+FAILED tests/production/test_scheduler_cancellation.py::test_scheduler_does_not_follow_cross_tenant_legacy_batch_links[False]
+FAILED tests/production/test_scheduler_cancellation.py::test_scheduler_does_not_follow_cross_tenant_legacy_batch_links[True]
+9 failed, 6 passed, 1 warning in 5.35s

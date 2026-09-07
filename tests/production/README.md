@@ -70,3 +70,11 @@ before invoking aggregation while cancellation waits; this detects an inverted
 Batch-to-Task lock order. Observations use pg_stat_activity in the disposable DB.
 The before evidence contains the first 15 cases; the 16th is an additional
 lock-order regression. These do not certify wave producer recovery or device stop.
+
+`test_scheduler_cancellation.py` holds task/pipeline outcome transactions open
+while the real scheduler cancellation path runs. It checks outcome preservation,
+absence of premature queue/control effects, active cancellation and explicit org
+predicates. Two malformed legacy links are test fixtures, not proof of a public
+API exploit. A supplemental controlled-clock case verifies fresh control signing
+time after a 120-second simulated row wait. Pipeline writers, child-task stop,
+network/commit recovery and the cancellation outbox are not certified here.

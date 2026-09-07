@@ -1590,29 +1590,48 @@ rather than device results. See [AUD-43 and remaining work](audits/2026-09-05/AU
 
 ## Tasks — `/tasks`
 
+Verified against the task router/schema on 7 September 2026. Reads require
+`script:read`; create/cancel/stop require `script:execute`. All paths below are
+under `/api/v1` and apply the caller's organization boundary.
+
 ### GET /tasks
 
-List tasks with filtering and pagination.
+Filters: `device_id`, `script_id`, `batch_id` (UUIDs) and `status` (`queued`,
+`assigned`, `running`, `completed`, `failed`, `timeout`, `cancelled`).
+`page` defaults to 1; `per_page` defaults to 50 and is limited to **200** here.
+Response contains `items`, `total`, `page`, `per_page`, `pages`.
 
-| Param | Type | Description |
-|-------|------|-------------|
-| `device_id` | uuid | Filter by device |
-| `status` | string | Filter by status (`pending`, `running`, `completed`, `failed`, `cancelled`) |
-| `type` | string | Filter by task type |
-| `page` | int | Page number |
-| `per_page` | int | Items per page |
+### POST /tasks
+
+Accepts `script_id`, `device_id`, optional `account_id`, `priority` (1–10,
+default 5) and `webhook_url`. Returns 201 with the committed task. Execution
+admission validates script version/device/account ownership and current work;
+creation does not acknowledge physical device execution.
 
 ### GET /tasks/{id}
 
-Get task details including execution logs.
+Returns task identity, lifecycle timestamps, result, error and input parameters.
+Related read routes are `/{id}/logs` (stored node logs), `/{id}/progress`
+(Redis progress), `/{id}/live-logs` (Redis node entries) and `/{id}/screenshots`
+(screenshot links or stored keys when URL generation fails).
 
-### POST /tasks/{id}/cancel
+### DELETE /tasks/{id}
 
-Cancel a pending or running task.
+Cancels QUEUED/ASSIGNED tasks; returns 204 after commit. RUNNING or terminal
+states return 409; unknown/foreign IDs return 404. The row is locked/refreshed
+before validation and queue effects; `finished_at` is recorded in UTC.
 
-### POST /tasks/{id}/retry
+### POST /tasks/{id}/stop
 
-Retry a failed task.
+Accepts QUEUED/ASSIGNED/RUNNING; returns 200 with `status: stopped` and `task_id`
+after the SQL cancellation commit. Terminal state returns 409. This response
+is a server decision, not a physical stop acknowledgement: transport/Redis/commit
+failures and in-flight ASSIGNED work still need reconciliation. The RUNNING
+control has a distinct command ID and explicit task target; see the
+[control contract](security/task-control-protocol.md).
+
+The router has no POST `/{id}/cancel` or `/{id}/retry` endpoint. Submitting a
+new task is new execution and requires reconciling any earlier unknown outcome.
 
 ---
 
@@ -1650,14 +1669,15 @@ Database and Redis connection pool statistics.
 
 ## Pagination
 
-All list endpoints support:
+Pagination is endpoint-specific. Check each route; for example, Tasks limits
+`per_page` to 200. The following legacy defaults are not a universal contract:
 
 | Param | Default | Max | Description |
 |-------|---------|-----|-------------|
 | `page` | `1` | — | Page number |
 | `per_page` | `50` | `5000` | Items per page |
 
-Response always includes `{ "items": [...], "total": N, "page": N, "per_page": N }`.
+Several paginated endpoints include `{ "items": [...], "total": N, "page": N, "per_page": N }`; verify the response schema for the selected route.
 
 > **v4.6.0:** `per_page` max увеличен с 200 до 5 000 для поддержки массовых
 > операций и нагрузочных тестов. Рекомендуется использовать значения ≤ 200

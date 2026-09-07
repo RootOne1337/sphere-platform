@@ -20,9 +20,9 @@ runtime-проверок и не считается доказательство
 | Проверка | Результат | Практическое ограничение |
 | --- | --- | --- |
 | Android enterprise debug unit suite | 344 passed, 0 failed | JVM/MockWebServer; не проверяет ОС, codec, батарею или смерть процесса на телефоне |
-| Объединённая Backend/PC/production/deployment suite | **1062 passed, 0 failed**; coverage **66,72%** | Строгий coverage gate 65% пройден с precision=2. Load suite исключена; 6 Compose config tests не запускают сервисы |
+| Объединённая Backend/PC/production/deployment suite | **1079 passed, 0 failed**; coverage **67,27%** | Строгий coverage gate 65% пройден с precision=2. Load suite исключена; 6 Compose config tests не запускают сервисы |
 | Python dependency scan | **0 known vulnerabilities** в совместном backend/PC resolution | Pip-audit snapshot, не проверка frontend/Gradle/container/application security; [версии и ограничения](DEPENDENCY-REVIEW.md) |
-| Проверки PostgreSQL/Redis | **194 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
+| Проверки PostgreSQL/Redis | **211 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
 | Миграции | Применены до **20260906_account_ciphertext** включительно | Только изолированная БД; конфликтные данные/downgrade проверены в throwaway schema; production не мигрировался |
 | Backend image | Собирается; исходная запись OpenAPI воспроизведённо падает с PermissionError | Исправлен lifespan; полный deployment runtime ещё не подтверждён |
 | Frontend build | Успешно | Type-check/Jest и браузерный runtime требуют отдельного завершения проверки |
@@ -33,7 +33,7 @@ runtime-проверок и не считается доказательство
 Предыдущий отдельный DAG benchmark однажды занял 127,1 ms при пороге 100 ms;
 изолированный повтор и последующие общие прогоны прошли. Порог не ослаблялся.
 Файл production-regressions-after.txt сохраняет более ранний standalone snapshot
-с 41 тестом; актуальные 194 входят в общий прогон.
+с 41 тестом; актуальные 211 входят в общий прогон.
 
 Команды запуска и предохранители изоляции: [tests/production/README.md](../../../tests/production/README.md).
 Исходные `14 passed` в [reproductions.txt](evidence/reproductions.txt) означают
@@ -467,9 +467,18 @@ runtime-проверок и не считается доказательство
 - **Root cause:** `cancel_batch` читал eligible tasks и batch без блокировок/обновления ORM snapshot, вызывал Redis до решения владельца строки и затем писал CANCELLED. Guard пропускал FAILED/PARTIAL, а stale RUNNING обходил остальные terminal states. Отменённым tasks не выставлялся `finished_at`.
 - **Evidence/reproduction:** на `3f4ea2d` реальный `TaskService.handle_task_result` удерживает Task/TaskBatch с незакоммиченным completed/failed результатом, вторая DB session запускает batch cancel, затем result owner коммитит. Итоговый task и batch становились CANCELLED поверх результата; два cancel повторяли queue call. Первичный прогон: [11 failed / 4 passed](evidence/batch-cancellation-before.txt). Тест наблюдает `pg_stat_activity.wait_event_type`, а не предполагает конкуренцию по случайной задержке.
 - **Affected files:** `backend/services/batch_service.py:261`, `:279`; `tests/production/test_batch_cancellation.py`.
-- **Fix:** eligible tasks выбираются с tenant filter, стабильным порядком UUID, FOR UPDATE и `populate_existing`; затем блокируется/обновляется batch и повторно допускаются только PENDING/RUNNING. Terminal batch возвращает 409 до queue effects. Отмена записывает UTC `finished_at`; RUNNING tasks сохраняются.
+- **Fix:** `d4bb4d5` — eligible tasks выбираются с tenant filter, стабильным порядком UUID, FOR UPDATE и `populate_existing`; затем блокируется/обновляется batch и повторно допускаются только PENDING/RUNNING. Terminal batch возвращает 409 до queue effects. Отмена записывает UTC `finished_at`; RUNNING tasks сохраняются.
 - **Regression:** 16 новых PostgreSQL cases: result/cancel, fresh/stale terminal states, repeated cancellation, active task timestamps, tenant rejection и RUNNING semantics. Дополнительный тест сначала удерживает только Task, затем запускает cancel и result aggregation: обе транзакции завершаются в пределах deadline без инверсии Task → Batch. [41 related tests passed](evidence/batch-cancellation-after.txt). Общий прогон с первыми 15 cases: **1062 passed, 66,72%**; дополнительный lock-order case входит в последующий targeted прогон.
 - **Residual risk:** Redis effects остаются до commit API; нет durable cancellation outbox/stop ACK. ASSIGNED мог уже попасть на APK, RUNNING намеренно не останавливается этим API. Wave producer отдельно не проверяет cancellation и преждевременно выставляет COMPLETED после создания задач; его lifecycle не закрыт этим fix. Scheduler/pipeline cancellation проверяются отдельно. Это не blanket guarantee отсутствия всех deadlocks.
+
+### AUD-44 — High: scheduler cancellation терял результаты задач и pipeline runs
+
+- **Root cause:** `_cancel_previous_tasks` получал eligible Task/PipelineRun без FOR UPDATE и без обновления ORM snapshot, затем посылал queue/CANCEL_DAG effects и сохранял CANCELLED. Результат конкурирующего writer между SELECT и commit не защищался; selector также полагался на batch link без явного org filter.
+- **Evidence/reproduction:** на `d4bb4d5` отдельная PostgreSQL session удерживает terminal result задачи (через настоящий `handle_task_result`) либо pipeline run; scheduler выполняет cancellation до её commit. После commit owner статус перезаписывался на CANCELLED, terminal timestamp pipeline терялся. Семь таких concurrency cases падали. Ещё два теста с явно созданной некорректной legacy tenant-связью показали отсутствие query boundary; это не доказательство возможности создать такую связь через публичный API. Полный исходный набор: [9 failed / 6 passed](evidence/scheduler-cancellation-before.txt).
+- **Affected files:** `backend/services/scheduler/scheduler_engine.py:525`, `:541`, `:569`, `:624`; `tests/production/test_scheduler_cancellation.py`.
+- **Fix:** Task и PipelineRun читаются со стабильным порядком ID, FOR UPDATE, `populate_existing` и org predicate; latest execution ограничен организацией schedule. После ожидания terminal rows больше не eligible, поэтому не изменяются и не вызывают queue/stop. Timestamp каждой stop-команды формируется после ожидания блокировки, а не до SELECT.
+- **Regression:** 16 PostgreSQL cases: четыре task result races, три pipeline outcome races, шесть разрешённых active transitions, два tenant-link guards и дополнительный fake-clock тест задержки 120 s при TTL 30 s. [49 related tests passed](evidence/scheduler-cancellation-after.txt); полный объединённый прогон: **1079 passed, 67,27%**, включая 211 PostgreSQL/Redis cases. Mock transport не затрагивает внешних устройств.
+- **Residual risk:** lock сохраняется на время queue/publisher вызовов; потеря Redis/сети или commit может оставить неоднозначную отмену. Нет outbox/physical stop ACK; pipeline executor и другие writers требуют отдельного fencing/recovery, а in-flight child task не останавливается одной сменой PipelineRun.status. PAUSED pipeline и конкуренция creation ticks не закрыты. Scalar batch IDs в legacy data требуют собственной проверки/восстановления.
 
 ## Открытые подтверждённые блокеры
 

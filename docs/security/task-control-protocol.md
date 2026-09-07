@@ -62,6 +62,15 @@ UTC finished_at; RUNNING tasks continue. ASSIGNED may already be in transit.
 Wave production has a separate lifecycle and still needs cancellation/status
 recovery work. See AUD-43 and test_batch_cancellation.py for the proven boundary.
 
+Scheduler cancellation locks eligible tenant Task/PipelineRun rows in stable ID
+order and refreshes them before mutation. A concurrently committed terminal row
+is excluded after the lock wait, with no queue/control effect for that row.
+The latest execution lookup also retains the schedule organization. Stop signing
+time is generated after waiting so a long SQL wait does not consume its TTL.
+The scheduler still uses prefixed control IDs and explicit task targets.
+Pipeline row cancellation does not itself stop an in-flight child task or fence
+all executor writes. See AUD-44 and test_scheduler_cancellation.py.
+
 These changes do not introduce a cancellation outbox. In particular:
 
 - TaskService still sends the running stop before its caller commits. A failed
@@ -75,8 +84,8 @@ These changes do not introduce a cancellation outbox. In particular:
 - Controls are not durably deduplicated or ordered within the same execution.
   A delayed resume for the same task may override a later pause. TTL is only an
   age bound, not an execution generation or ordering guarantee.
-- Scheduler serialization, wave producer recovery, stale RUNNING reconciliation and post-commit
-  effects remain open. A new task must not be treated as proof the old one has
+- Other pipeline writers, wave producer recovery, stale RUNNING reconciliation
+  and post-commit effects remain open. A new task must not be treated as proof the old one has
   physically stopped.
 
 ## Rollout and verification
@@ -97,4 +106,4 @@ retry backoff and replay of a cancelled task. PostgreSQL tests in `test_cancella
 deliver a real control ACK through the backend handler after injected Redis/SQL
 failure; `test_cancellation_serialization.py` uses two concurrent DB sessions.
 These are runtime logic tests, not physical-device stop or emulator capacity
-measurements. See AUD-35–37 and AUD-40–42 in the [audit report](../audits/2026-09-05/AUDIT-REPORT.md).
+measurements. See AUD-35–37 and AUD-40–44 in the [audit report](../audits/2026-09-05/AUDIT-REPORT.md).
