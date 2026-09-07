@@ -590,3 +590,27 @@ docker compose -f docker-compose.yml -f docker-compose.full.yml up -d --build
 docker compose exec backend alembic upgrade head
 docker compose exec backend python scripts/create_admin.py
 ```
+
+
+## Generated HTTP API documentation
+
+With the jointly compatible backend/PC dependencies installed and required
+application configuration supplied, run from the repository root:
+
+```bash
+python -m scripts.export_api_docs
+python -m scripts.export_api_docs --check
+```
+
+The first command updates `docs/openapi.json` and `docs/api-endpoints.md`; the
+second fails when either artifact is missing or stale. Use disposable development
+configuration (including a non-production `JWT_SECRET_KEY`). The exporter imports
+the registered application and calls `app.openapi()` without entering lifespan,
+starting workers or making HTTP/database requests. It is not a runtime test.
+
+Commit both generated files with route/schema changes. Backend CI runs `--check`
+using its pinned dependencies. OpenAPI covers declared HTTP operations, excludes
+WebSocket/plain ASGI routes and does not fully express permission/error behavior.
+Keep operator explanations and [task-control limits](security/task-control-protocol.md)
+up to date separately. Component review status is in the
+[audit roadmap](audits/2026-09-05/ROADMAP.md).

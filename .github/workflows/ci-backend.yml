@@ -24,7 +24,7 @@ jobs:
           python-version: "3.12"
           cache: pip
       - run: pip install ruff mypy
-      - run: ruff check backend/ tests/
+      - run: ruff check backend/ tests/ scripts/export_api_docs.py
       - run: mypy backend/ --ignore-missing-imports
 
   security:
@@ -108,6 +108,8 @@ jobs:
           pytest tests/ --ignore=tests/load -v --tb=short
           --junitxml=test-results.xml --cov=backend --cov-report=xml
           --cov-fail-under=65
+      - name: Verify generated HTTP API documentation
+        run: python -m scripts.export_api_docs --check
       - uses: actions/upload-artifact@v4
         if: always()
         with:

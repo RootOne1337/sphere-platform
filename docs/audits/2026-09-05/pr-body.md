@@ -128,11 +128,17 @@ flavors/signing, command/ACK payloads and component names. Previous claims of
 100% uptime and application-level OTA certificate pinning were unsupported and
 have been removed; device, signing, installation and recovery limits are explicit.
 
+The HTTP schema/catalog now regenerate from the registered application and CI
+rejects stale artifacts. The previous snapshot omitted 30 routes; the updated
+catalog lists 162 operations across 126 paths. Manual Tasks/Batches, signing,
+WS authentication and documentation URLs are reconciled with source. Other manual
+component guides remain under review; declared schemas do not certify runtime.
+
 ## Validation
 
-- On code revision `71b2d2c`, [backend CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34066563090)
+- On code revision `753f67c`, [backend CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34104984521)
   passed Tests, Lint, Security, Alembic and static RLS checks;
-  [Android CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34066563159)
+  [Android CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34104984710)
   passed build and unit tests. This is a revision-specific snapshot; consult PR
   checks for subsequent documentation or code commits.
 

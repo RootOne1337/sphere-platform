@@ -593,8 +593,10 @@ graph LR
 | Документ | Описание |
 |----------|----------|
 | 📐 [Architecture](docs/architecture.md) | Дизайн системы, потоки данных, компонентные диаграммы |
-| 📖 [API Reference](docs/api-reference.md) | REST-эндпоинты, схемы запросов/ответов |
-| 🚀 [**Full Deploy Guide**](FULL-DEPLOYMENT-GUIDE.md) | **Полный гайд развёртывания — от нуля до продакшна за 15 минут** |
+| 🧪 [Текущий аудит](docs/audits/2026-09-05/AUDIT-REPORT.md) | Доказательства, исправления, проверки и открытые production blockers |
+| 📖 [API Reference](docs/api-reference.md) | Ручной справочник; статус сверки отмечен внутри |
+| 📋 [HTTP API catalog](docs/api-endpoints.md) / [OpenAPI](docs/openapi.json) | Генерация из зарегистрированных маршрутов; CI проверяет актуальность |
+| 🚀 [**Full Deploy Guide**](FULL-DEPLOYMENT-GUIDE.md) | Инструкция развёртывания; readiness требует закрытия текущих audit blockers |
 | 🚀 [Deployment Guide](docs/deployment.md) | Docker, продакшн, staging, tunnel setup |
 | ⚙️ [Configuration](docs/configuration.md) | Справочник переменных окружения |
 | 🔒 [Security](docs/security.md) | Auth, RBAC, шифрование, модель угроз |

@@ -1,16 +1,25 @@
 # API Reference
 
-> **Sphere Platform v4.7** — REST API
+> **Sphere Platform** — manual REST API guide
 
 **Base URL:** `https://yourdomain.com/api/v1`
-**Interactive docs:** `https://yourdomain.com/api/v1/docs` (Swagger UI)
-**OpenAPI spec:** `https://yourdomain.com/api/v1/openapi.json`
+**Interactive docs:** `https://yourdomain.com/api/docs` (Swagger UI)
+**OpenAPI spec:** `https://yourdomain.com/openapi.json`
 
 ---
 
+The [generated endpoint catalog](api-endpoints.md) and [OpenAPI snapshot](openapi.json)
+reflect the registered HTTP contracts and are checked in CI. Tasks/Batches below
+were reconciled with the audit branch on 7 September 2026. Other manual sections
+still need component review; a listed contract does not establish runtime or
+security correctness. See the [audit report](audits/2026-09-05/AUDIT-REPORT.md).
+
 ## Authentication
 
-All endpoints (except `/auth/login`, `/health`, and `/config/agent`) require a Bearer token or API Key.
+Authentication and authorization are route-specific. The backend uses Bearer
+tokens, API keys and dedicated device/enrollment contracts; permission checks
+are not fully described by OpenAPI security declarations. Verify the selected
+route and its role/tenant requirements instead of applying one global exception list.
 
 ```http
 # JWT Bearer token

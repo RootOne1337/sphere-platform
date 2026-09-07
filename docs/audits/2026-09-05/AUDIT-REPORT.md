@@ -476,7 +476,7 @@ runtime-проверок и не считается доказательство
 - **Root cause:** `_cancel_previous_tasks` получал eligible Task/PipelineRun без FOR UPDATE и без обновления ORM snapshot, затем посылал queue/CANCEL_DAG effects и сохранял CANCELLED. Результат конкурирующего writer между SELECT и commit не защищался; selector также полагался на batch link без явного org filter.
 - **Evidence/reproduction:** на `d4bb4d5` отдельная PostgreSQL session удерживает terminal result задачи (через настоящий `handle_task_result`) либо pipeline run; scheduler выполняет cancellation до её commit. После commit owner статус перезаписывался на CANCELLED, terminal timestamp pipeline терялся. Семь таких concurrency cases падали. Ещё два теста с явно созданной некорректной legacy tenant-связью показали отсутствие query boundary; это не доказательство возможности создать такую связь через публичный API. Полный исходный набор: [9 failed / 6 passed](evidence/scheduler-cancellation-before.txt).
 - **Affected files:** `backend/services/scheduler/scheduler_engine.py:525`, `:541`, `:569`, `:624`; `tests/production/test_scheduler_cancellation.py`.
-- **Fix:** Task и PipelineRun читаются со стабильным порядком ID, FOR UPDATE, `populate_existing` и org predicate; latest execution ограничен организацией schedule. После ожидания terminal rows больше не eligible, поэтому не изменяются и не вызывают queue/stop. Timestamp каждой stop-команды формируется после ожидания блокировки, а не до SELECT.
+- **Fix:** `753f67c` — Task и PipelineRun читаются со стабильным порядком ID, FOR UPDATE, `populate_existing` и org predicate; latest execution ограничен организацией schedule. После ожидания terminal rows больше не eligible, поэтому не изменяются и не вызывают queue/stop. Timestamp каждой stop-команды формируется после ожидания блокировки, а не до SELECT.
 - **Regression:** 16 PostgreSQL cases: четыре task result races, три pipeline outcome races, шесть разрешённых active transitions, два tenant-link guards и дополнительный fake-clock тест задержки 120 s при TTL 30 s. [49 related tests passed](evidence/scheduler-cancellation-after.txt); полный объединённый прогон: **1079 passed, 67,27%**, включая 211 PostgreSQL/Redis cases. Mock transport не затрагивает внешних устройств.
 - **Residual risk:** lock сохраняется на время queue/publisher вызовов; потеря Redis/сети или commit может оставить неоднозначную отмену. Нет outbox/physical stop ACK; pipeline executor и другие writers требуют отдельного fencing/recovery, а in-flight child task не останавливается одной сменой PipelineRun.status. PAUSED pipeline и конкуренция creation ticks не закрыты. Scalar batch IDs в legacy data требуют собственной проверки/восстановления.
 
@@ -569,3 +569,21 @@ first-message auth, имена DI/dispatcher, build flavors/artifact paths, sign
 источники provisioning и фактический command/ACK формат. Удалены неподтверждённые
 утверждения о 100% uptime и application-level OTA certificate pinning. Ограничения
 физических устройств, остановки, OTA recovery и замеров нагрузки обозначены явно.
+
+
+Справочник HTTP API теперь имеет воспроизводимую выгрузку: `python -m
+scripts.export_api_docs` обновляет `docs/openapi.json` и `docs/api-endpoints.md`,
+`--check` проверяет их без запуска lifespan. Старый snapshot содержал 96 paths,
+актуальный — **162 HTTP operations / 126 paths** (добавлены 30 отсутствовавших
+маршрутов). [До обновления](evidence/api-docs-before.txt) check отклонял оба файла;
+[после](evidence/api-docs-after.txt) проходит. В CI добавлен отдельный шаг проверки
+документации. Это полнота объявленных HTTP routes/schemas, а не runtime/permission
+сертификация; ручные разделы остальных компонентов ещё требуют сверки.
+
+
+На `753f67c` backend [run 34104984521](https://github.com/RootOne1337/sphere-platform/actions/runs/34104984521)
+прошёл все jobs, включая Tests/Lint/Security/Alembic/static RLS. Android
+[run 34104984710](https://github.com/RootOne1337/sphere-platform/actions/runs/34104984710)
+также успешен. Сохранены [backend](evidence/ci-753f67c-backend.json) и
+[Android](evidence/ci-753f67c-android.json) snapshots конкретного code head;
+последующий documentation CI gate требует собственного прогона.
