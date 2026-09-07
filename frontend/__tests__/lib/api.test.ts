@@ -31,7 +31,7 @@ jest.mock('axios', () => {
 
 // Мок store
 const mockGetState = jest.fn(() => ({
-  accessToken: 'test-access-token',
+  accessToken: 'test-access-token' as string | null,
   setAccessToken: jest.fn(),
   logout: jest.fn(),
 }));
