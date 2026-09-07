@@ -45,8 +45,10 @@ cover unsigned/disallowed-algorithm/wrong-key tokens, required claims and ensuri
 `jku`/`kid` headers cannot select an external signing key, including the logout
 verification path. No header URL is fetched by the tests.
 
-The final run passes **1047 tests**, coverage **66.61%**, at the unchanged strict
-65% gate. Results are [combined-suite-current.txt](evidence/combined-suite-current.txt).
+At the dependency-change revision the run passed **1047 tests**, coverage
+**66.61%**, at the unchanged strict 65% gate. The rolling
+[combined-suite-current.txt](evidence/combined-suite-current.txt) now records later
+audit fixes; consult the main audit report for its current count and coverage.
 The final environment passes [dependency consistency](evidence/dependencies-final-check.txt);
 its installed versions are captured in [the package snapshot](evidence/dependencies-final-freeze.txt).
 The joint backend/PC scan reports no known vulnerabilities:
@@ -68,3 +70,23 @@ GitHub CI independently passed on `748bb3e`: all backend jobs, including the
 joint Security scan and Tests, and Android build/tests. The
 [backend snapshot](evidence/ci-748bb3e-backend.json) and
 [Android snapshot](evidence/ci-748bb3e-android.json) identify the exact revision.
+
+## GitHub alert triage — 7 September 2026
+
+The repository API reports **137 open default-branch alerts**: 1 critical,
+61 high, 62 medium and 13 low. These are manifest-level alerts, including duplicate
+package/lockfile entries, not 137 proven application exploits or the state of
+this unmerged audit branch. The snapshot has 105 frontend lockfile alerts,
+23 frontend manifest alerts, 3 n8n lockfile alerts and 6 backend manifest alerts:
+[API projection](evidence/dependabot-open-current.jsonl).
+
+The critical entry (#53) concerns **Handlebars 4.7.8**, present as a development
+transitive dependency of ts-jest. The [upstream advisory](https://github.com/handlebars-lang/handlebars.js/security/advisories/GHSA-2w6w-674q-4c4q)
+requires passing an attacker-controlled AST object into `compile()` and lists
+4.7.9 as the first patched release. Inspection of the installed ts-jest CLI found
+`compile(JEST_CONFIG_TEMPLATE)` with a constant string; repository frontend source
+search found no direct Handlebars use. This does not establish a reachable HTTP
+RCE in Sphere and does not excuse retaining the affected development package.
+Dependency remediation, compatibility tests and a fresh npm scan remain required.
+Next.js production dependency alerts also remain and need separate reachability
+and upgrade validation; the Python scan result does not cover them.

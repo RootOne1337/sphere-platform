@@ -503,7 +503,7 @@ runtime-проверок и не считается доказательство
 - **Root cause:** producer не проверял актуальный статус batch перед волной. Выборка cancel видела только committed Task rows и пропускала ещё создаваемые задачи. Обычная проверка статуса без общего transaction fence не закрывает эту гонку. Task result/watchdog aggregation также меняли CANCELLED на COMPLETED/FAILED при завершении оставшейся RUNNING task.
 - **Evidence/reproduction:** на `841904f` отмена между commit волн оставляет следующую task QUEUED; отмена во время незакоммиченного insert завершается раньше producer и пропускает task. В обратном порядке producer начинает create до commit cancellation. Четыре terminal batch состояния не запрещают новую волну; success/failure/timeout отменённого batch меняют его статус. Внутренний worker с явно неверным org context меняет счётчики чужого batch (test fixture, не доказанный публичный API exploit). [Исходные 11 cases: 11 failed](evidence/batch-wave-cancellation-before.txt).
 - **Affected files:** `backend/services/batch_service.py`, `backend/services/task_service.py`, `backend/tasks/task_heartbeat_watchdog.py`; `tests/production/test_batch_wave_cancellation.py`.
-- **Fix:** producer и cancel берут общий PostgreSQL transaction advisory lock по batch до task/device row locks. После ожидания producer заново читает tenant-scoped scalar status и допускает только PENDING/RUNNING. Cancel сначала ждёт admission, затем выбирает уже committed tasks и сохраняет прежний Task → TaskBatch порядок. Devices внутри волны блокируются по UUID. Result/watchdog увеличивают counters, но сохраняют CANCELLED.
+- **Fix:** `87092d2` — producer и cancel берут общий PostgreSQL transaction advisory lock по batch до task/device row locks. После ожидания producer заново читает tenant-scoped scalar status и допускает только PENDING/RUNNING. Cancel сначала ждёт admission, затем выбирает уже committed tasks и сохраняет прежний Task → TaskBatch порядок. Devices внутри волны блокируются по UUID. Result/watchdog увеличивают counters, но сохраняют CANCELLED.
 - **Regression:** все 11 исходных cases проходят. Ещё два теста проверяют освобождение advisory lock после настоящей SQL ошибки/rollback и два конкурирующих batch с обратным входным порядком общих устройств. [73 related tests passed](evidence/batch-wave-cancellation-after.txt), включая прежние проверки Task → Batch deadlock и result/cancel serialization. Полный прогон: **1109 passed, coverage 67,64%**, включая **241 PostgreSQL/Redis cases**; строгий gate 65% сохранён. Ruff, configured Bandit (0 Medium/High) и API docs --check прошли.
 - **Residual risk:** гарантия действует для обновлённых BatchService producer/cancel и указанных aggregation writers; перед использованием требуется обновить все backend workers, старый worker advisory fence не соблюдает. Другие scheduler/pipeline writers, durable wave replay/cursor, неизвестный commit outcome и stop outbox остаются открыты. Cancel может ждать текущую волну/SQL lock; прикладной deadline ожидания не добавлен. Redis effects остаются до commit; отмена SQL не доказывает физическую остановку ASSIGNED/RUNNING на APK. Исторические данные и производственная инфраструктура не изменялись.
 
@@ -618,5 +618,16 @@ scripts.export_api_docs` обновляет `docs/openapi.json` и `docs/api-end
 На `788a625` [backend CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34131800743)
 и [Android CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34131800736)
 прошли полностью. Снимки: [backend](evidence/ci-788a625-backend.json),
-[Android](evidence/ci-788a625-android.json). Более поздние commits startup/cancellation
-проверены локально общим прогоном выше; актуальный remote status — в PR checks.
+[Android](evidence/ci-788a625-android.json). Следующий снимок ниже включает startup/cancellation fixes.
+
+На финальном code revision `87092d2` [backend CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34133092803)
+прошёл Tests, Lint, Security, RLS static coverage и Alembic; [Android CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34133092736)
+прошёл сборку APK и unit tests. Сохранены [backend snapshot](evidence/ci-87092d2-backend.json)
+и [Android snapshot](evidence/ci-87092d2-android.json). Это проверка указанного кода;
+последующие documentation commits имеют собственные PR checks. Preview guard прошёл,
+сам deployment был пропущен. APK на физическом устройстве не запускался.
+
+Отдельный [dependency review](DEPENDENCY-REVIEW.md#github-alert-triage--7-september-2026)
+фиксирует 137 manifest-level alerts основной ветки и границы применимости к этой
+ветке. Critical Handlebars относится к dev dependency; HTTP exploit не доказан.
+Frontend production dependencies, npm/Gradle/container проверка остаются открыты.

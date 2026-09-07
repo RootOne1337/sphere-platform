@@ -153,9 +153,9 @@ cancellation delivery remain open.
 
 ## Validation
 
-- On code revision `788a625`, [backend CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34131800743)
+- On code revision `87092d2`, [backend CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34133092803)
   passed Tests, Lint, Security, Alembic and static RLS checks;
-  [Android CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34131800736)
+  [Android CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34133092736)
   passed build and unit tests. This is a revision-specific snapshot; consult PR
   checks for subsequent documentation or code commits.
 
@@ -167,7 +167,7 @@ cancellation delivery remain open.
   regression tests exercise the 64.98% rejection and exact 65.00% boundary. Long load/soak profiles require a prepared API
   environment and are excluded from the ordinary PR command.
 - Reproductions and before/after evidence are indexed in
-  [the audit report](docs/audits/2026-09-05/AUDIT-REPORT.md).
+  [the audit report](https://github.com/RootOne1337/sphere-platform/blob/codex/enterprise-audit-20260905/docs/audits/2026-09-05/AUDIT-REPORT.md).
 - Tests cover PostgreSQL row/commit behavior, Redis atomicity and lost responses,
   tenant/device authorization, command duplicates, simulated process restart,
   storage failure, failed DB commit and Redis outage.
@@ -195,7 +195,7 @@ incorrect batch counters and legacy task metadata require reconciliation.
 Update all backend writers before enforcing explicit control targets in the APK;
 old watchdog messages lack a target and will be rejected. Old APKs still need
 updating to prevent controls from affecting a different task. See the
-[control contract](docs/security/task-control-protocol.md) for rollout limits.
+[control contract](https://github.com/RootOne1337/sphere-platform/blob/codex/enterprise-audit-20260905/docs/security/task-control-protocol.md) for rollout limits.
 
 The VPN migration refuses duplicate held IPs, invalid addresses/network prefixes
 and downgrade with pending intents. Reconcile PostgreSQL/router inventories and
