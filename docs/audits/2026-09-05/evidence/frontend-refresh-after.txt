@@ -1,0 +1,28 @@
+PASS __tests__/hooks/useEventTriggers.test.ts
+PASS __tests__/hooks/useTasks.test.ts
+PASS __tests__/hooks/useScripts.test.ts
+PASS __tests__/hooks/useVpn.test.ts
+PASS __tests__/session/login.test.tsx
+PASS __tests__/hooks/useGroups.test.ts
+PASS __tests__/hooks/useDevices.test.ts
+PASS __tests__/hooks/useLocations.test.ts
+PASS __tests__/session/refresh-races.test.tsx
+PASS __tests__/hooks/useBatches.test.ts
+PASS __tests__/hooks/useUsers.test.ts
+PASS __tests__/session/providers.test.tsx
+PASS __tests__/hooks/useDebounce.test.ts
+PASS __tests__/stores/uiStore.test.ts
+PASS __tests__/stores/streamStore.test.ts
+PASS __tests__/stores/inspectorStore.test.ts
+PASS __tests__/stores/authStore.test.ts
+PASS __tests__/stores/themeStore.test.ts
+PASS __tests__/lib/utils.test.ts
+PASS __tests__/stores/commandPaletteStore.test.ts
+PASS __tests__/middleware/middleware.test.ts
+PASS __tests__/lib/api.test.ts
+
+Test Suites: 22 passed, 22 total
+Tests:       192 passed, 192 total
+Snapshots:   0 total
+Time:        8.228 s
+Ran all test suites.

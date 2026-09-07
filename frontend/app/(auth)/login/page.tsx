@@ -1,11 +1,12 @@
 'use client';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import axios from 'axios';
-import { useAuthStore, saveRefreshToken } from '@/lib/store';
+import { beginLogin, useAuthStore } from '@/lib/store';
 
 // Используем сырой axios (без interceptors) для login — иначе interceptor перехватывает 401
 const authApi = axios.create({
@@ -15,7 +16,8 @@ const authApi = axios.create({
 });
 
 export default function LoginPage() {
-  const { setAccessToken, setUser } = useAuthStore();
+  const router = useRouter();
+  const attemptVersion = useRef<number | null>(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -30,12 +32,16 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     setError('');
+    const version = beginLogin();
+    attemptVersion.current = version;
 
     try {
       const { data } = await authApi.post(
         '/auth/login',
         { email, password },
       );
+
+      if (useAuthStore.getState().sessionVersion !== version) return;
 
       // Check if MFA is required
       if (data.mfa_required) {
@@ -45,15 +51,9 @@ export default function LoginPage() {
         return;
       }
 
-      setAccessToken(data.access_token);
-      setUser(data.user);
-      // Сохраняем refresh_token в localStorage (fallback для tunnel/proxy)
-      if (data.refresh_token) {
-        saveRefreshToken(data.refresh_token);
-      }
-      // Полная перезагрузка — гарантирует чистый init auth через useInitAuth с localStorage
-      window.location.href = '/dashboard';
+      if (useAuthStore.getState().completeLogin(data, version)) router.replace('/dashboard');
     } catch (err: unknown) {
+      if (useAuthStore.getState().sessionVersion !== version) return;
       const msg =
         (err as { response?: { data?: { detail?: string } } })?.response?.data
           ?.detail ?? 'Login failed';
@@ -67,21 +67,17 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     setError('');
+    const version = attemptVersion.current;
+    if (version === null || useAuthStore.getState().sessionVersion !== version) { setLoading(false); return; }
 
     try {
       const { data } = await authApi.post(
         '/auth/login/mfa',
         { state_token: stateToken, code: mfaCode },
       );
-      setAccessToken(data.access_token);
-      setUser(data.user);
-      // Сохраняем refresh_token в localStorage (fallback для tunnel/proxy)
-      if (data.refresh_token) {
-        saveRefreshToken(data.refresh_token);
-      }
-      // Полная перезагрузка для чистого init
-      window.location.href = '/dashboard';
+      if (useAuthStore.getState().completeLogin(data, version)) router.replace('/dashboard');
     } catch (err: unknown) {
+      if (useAuthStore.getState().sessionVersion !== version) return;
       const msg =
         (err as { response?: { data?: { detail?: string } } })?.response?.data
           ?.detail ?? 'Invalid MFA code';
@@ -124,7 +120,7 @@ export default function LoginPage() {
                 type="button"
                 variant="ghost"
                 className="w-full"
-                onClick={() => { setMfaRequired(false); setMfaCode(''); setError(''); }}
+                onClick={() => { beginLogin(); attemptVersion.current = null; setLoading(false); setMfaRequired(false); setMfaCode(''); setError(''); }}
               >
                 Back to login
               </Button>

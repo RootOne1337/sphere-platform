@@ -18,6 +18,7 @@ function AuthInitializer({ children }: { children: React.ReactNode }) {
   const ready = useInitAuth();
   const accessToken = useAuthStore((s) => s.accessToken);
   const user = useAuthStore((s) => s.user);
+  const sessionVersion = useAuthStore((s) => s.sessionVersion);
   const isPublic = PUBLIC_PATHS.includes(pathname);
   const authenticated = Boolean(accessToken && user);
 
@@ -40,7 +41,7 @@ function AuthInitializer({ children }: { children: React.ReactNode }) {
       </div>
     );
   }
-  const identity = authenticated ? JSON.stringify([user!.org_id, user!.id, user!.role]) : 'anonymous';
+  const identity = authenticated ? JSON.stringify([sessionVersion, user!.org_id, user!.id, user!.role]) : 'anonymous';
   return <SessionQueries key={identity}>{children}</SessionQueries>;
 }
 

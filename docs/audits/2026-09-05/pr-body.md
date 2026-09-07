@@ -236,3 +236,10 @@ so cached account data cannot cross that browser session boundary. Six new
 React/JSDOM regressions failed before the fix; all 176 frontend tests and strict
 TypeScript validation pass on Node 24.19.0. Refresh races and logout wiring remain
 under review; this does not claim bypass of backend authorization.
+
+Frontend authentication now fences request/response/retry handling by session
+version. Shared refresh has a five-second timeout; stale results cannot restore
+logout, overwrite a newer login or replay an old mutation with a different user's
+token. Login/MFA completion is atomic and attempt-bound. Six refresh and two login
+regressions failed before these changes; 192 frontend tests and tsc now pass.
+Browser cookie ordering and backend refresh-family concurrency remain open.

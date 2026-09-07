@@ -3,95 +3,120 @@ import { create } from 'zustand';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 
-// Ключ для хранения refresh_token в localStorage (fallback для сред без cookie — tunnel/proxy)
 const REFRESH_TOKEN_KEY = 'sphere_refresh_token';
+const SIGNED_OUT_KEY = 'sphere_signed_out';
+export const AUTH_TIMEOUT_MS = 5000;
 
-/** Сохранить refresh_token в localStorage */
 export function saveRefreshToken(token: string) {
-  if (typeof window !== 'undefined') {
-    localStorage.setItem(REFRESH_TOKEN_KEY, token);
-  }
+  if (typeof window !== 'undefined') localStorage.setItem(REFRESH_TOKEN_KEY, token);
 }
-
-/** Получить refresh_token из localStorage */
 export function getRefreshToken(): string | null {
-  if (typeof window !== 'undefined') {
-    return localStorage.getItem(REFRESH_TOKEN_KEY);
-  }
-  return null;
+  return typeof window !== 'undefined' ? localStorage.getItem(REFRESH_TOKEN_KEY) : null;
 }
-
-/** Удалить refresh_token из localStorage */
 export function clearRefreshToken() {
-  if (typeof window !== 'undefined') {
-    localStorage.removeItem(REFRESH_TOKEN_KEY);
-  }
+  if (typeof window !== 'undefined') localStorage.removeItem(REFRESH_TOKEN_KEY);
+}
+function signedOut(): boolean {
+  return typeof window !== 'undefined' && localStorage.getItem(SIGNED_OUT_KEY) === '1';
 }
 
+type User = { id: string; email: string; role: string; org_id: string; mfa_enabled?: boolean };
+export interface SessionTokens { access_token: string; refresh_token?: string; user: User }
 interface AuthState {
   accessToken: string | null;
-  user: { id: string; email: string; role: string; org_id: string; mfa_enabled?: boolean } | null;
-
+  user: User | null;
+  sessionVersion: number;
   setAccessToken: (token: string) => void;
-  setUser: (user: AuthState['user']) => void;
+  setUser: (user: User | null) => void;
+  completeLogin: (tokens: SessionTokens, version: number) => boolean;
   logout: () => void;
 }
 
-// Access token — ТОЛЬКО в памяти (Zustand без persist)
-export const useAuthStore = create<AuthState>()((set) => ({
+// Access tokens stay in memory. A new login/logout invalidates outstanding work.
+export const useAuthStore = create<AuthState>()((set, get) => ({
   accessToken: null,
   user: null,
-
-  setAccessToken: (token) => set({ accessToken: token }),
-  setUser: (user) => set({ user }),
+  sessionVersion: 0,
+  setAccessToken: (token) => set(s => ({ accessToken: token, sessionVersion: s.sessionVersion + 1 })),
+  setUser: (user) => set(s => ({ user, sessionVersion: s.sessionVersion + 1 })),
+  completeLogin: (tokens, version) => {
+    if (get().sessionVersion !== version) return false;
+    validateTokens(tokens);
+    persistTokens(tokens);
+    set({ accessToken: tokens.access_token, user: tokens.user });
+    return true;
+  },
   logout: () => {
+    // Publish the memory boundary even if the browser blocks storage access.
+    set(s => ({ accessToken: null, user: null, sessionVersion: s.sessionVersion + 1 }));
     clearRefreshToken();
-    set({ accessToken: null, user: null });
+    if (typeof window !== 'undefined') localStorage.setItem(SIGNED_OUT_KEY, '1');
   },
 }));
 
-// ─── SILENT REFRESH ПРИ F5 ───────────────────────────────────────
-// При перезагрузке: отправляем refresh_token через header (localStorage fallback)
-// 200 → сохраняем новый accessToken + refresh_token → пользователь залогинен
-// 401 → токен протух → пользователь не залогинен
-// ──────────────────────────────────────────────────────────────────
-// ⚠️ АВТОРИЗАЦИЯ ОТКЛЮЧЕНА НА ВРЕМЯ РАЗРАБОТКИ
-const _DEV_SKIP_AUTH = process.env.NEXT_PUBLIC_DEV_SKIP_AUTH === 'true';
+export function beginLogin(): number {
+  useAuthStore.getState().logout();
+  return useAuthStore.getState().sessionVersion;
+}
+
+export class SessionChangedError extends Error {
+  constructor() { super('Session changed while the request was in flight'); this.name = 'SessionChangedError'; }
+}
+export function assertSession(version: number) {
+  if (useAuthStore.getState().sessionVersion !== version) throw new SessionChangedError();
+}
+function validateTokens(data: SessionTokens) {
+  if (typeof data.access_token !== 'string' || !data.access_token || !data.user?.id || !data.user.org_id) {
+    throw new Error('Invalid authentication response');
+  }
+}
+function persistTokens(data: SessionTokens) {
+  if (data.refresh_token) saveRefreshToken(data.refresh_token);
+  if (typeof window !== 'undefined') localStorage.removeItem(SIGNED_OUT_KEY);
+}
+
+let refreshing: { version: number; promise: Promise<string> } | null = null;
+
+/** One refresh per session, shared by startup and HTTP retries. Never restore a retired session. */
+export function refreshSession(version = useAuthStore.getState().sessionVersion): Promise<string> {
+  assertSession(version);
+  if (signedOut()) return Promise.reject(new SessionChangedError());
+  if (refreshing?.version === version) return refreshing.promise;
+  const stored = getRefreshToken();
+  const promise = axios.post<SessionTokens>(
+    `${process.env.NEXT_PUBLIC_API_URL ?? '/api/v1'}/auth/refresh`, {},
+    { withCredentials: true, timeout: AUTH_TIMEOUT_MS, headers: stored ? { 'X-Refresh-Token': stored } : {} },
+  ).then(({ data }) => {
+    assertSession(version);
+    validateTokens(data);
+    const user = useAuthStore.getState().user;
+    if (user && (user.id !== data.user.id || user.org_id !== data.user.org_id)) {
+      throw new Error('Refresh identity does not match the active session');
+    }
+    // Rotation preserves the version; queued requests still belong to this identity.
+    persistTokens(data);
+    useAuthStore.setState({ accessToken: data.access_token, user: data.user });
+    return data.access_token;
+  }).catch(error => {
+    if (useAuthStore.getState().sessionVersion === version) useAuthStore.getState().logout();
+    throw error;
+  }).finally(() => {
+    if (refreshing?.promise === promise) refreshing = null;
+  });
+  refreshing = { version, promise };
+  return promise;
+}
 
 export function useInitAuth(): boolean {
-  const [ready, setReady] = useState(!_DEV_SKIP_AUTH ? false : true);
-
+  const [ready, setReady] = useState(false);
   useEffect(() => {
-    // DEV_SKIP_AUTH: не делаем никаких запросов, сразу ready
-    if (_DEV_SKIP_AUTH) return;
-
-    const base = process.env.NEXT_PUBLIC_API_URL ?? '/api/v1';
-    const storedRefresh = getRefreshToken();
-    const setAccessToken = useAuthStore.getState().setAccessToken;
-    const setUser = useAuthStore.getState().setUser;
-
-    // Отправляем refresh_token и через cookie (withCredentials), и через header (fallback)
-    const headers: Record<string, string> = {};
-    if (storedRefresh) {
-      headers['X-Refresh-Token'] = storedRefresh;
-    }
-
-    axios.post(`${base}/auth/refresh`, {}, { withCredentials: true, headers })
-      .then((res) => {
-        setAccessToken(res.data.access_token);
-        if (res.data.user) setUser(res.data.user);
-        // Сохраняем новый refresh_token (ротация)
-        if (res.data.refresh_token) {
-          saveRefreshToken(res.data.refresh_token);
-        }
-      })
-      .catch(() => {
-        // refreshToken протух или отсутствует — пользователь не залогинен
-        clearRefreshToken();
-      })
-      .finally(() => setReady(true));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    let mounted = true;
+    const state = useAuthStore.getState();
+    if ((state.accessToken && state.user) || signedOut()) { setReady(true); return; }
+    void refreshSession(state.sessionVersion).catch(() => undefined).finally(() => {
+      if (mounted) setReady(true);
+    });
+    return () => { mounted = false; };
   }, []);
-
   return ready;
 }
