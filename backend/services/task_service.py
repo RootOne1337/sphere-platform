@@ -475,7 +475,7 @@ class TaskService:
 
     # ── TaskBatch авто-агрегация ────────────────────────────────────────────
 
-    async def _aggregate_batch(self, batch_id: uuid.UUID, success: bool) -> None:
+    async def _aggregate_batch(self, batch_id: uuid.UUID, success: bool, *, count: int = 1) -> None:
         """
         Инкрементально обновить счётчики батча.
         Когда все задачи завершены — вычислить финальный статус.
@@ -489,9 +489,9 @@ class TaskService:
             return
 
         if success:
-            batch.succeeded = (batch.succeeded or 0) + 1
+            batch.succeeded = (batch.succeeded or 0) + count
         else:
-            batch.failed = (batch.failed or 0) + 1
+            batch.failed = (batch.failed or 0) + count
 
         completed_count = (batch.succeeded or 0) + (batch.failed or 0)
 

@@ -591,49 +591,17 @@ Authorization: Bearer <token>
 
 ### POST /scripts/{id}/execute
 
-Execute a script on a set of devices or a device group.
-
-```http
-POST /scripts/{id}/execute
-
-{
-  "device_ids": ["uuid1", "uuid2"],
-  "group_id": "uuid",          // alternative to device_ids
-  "wave_size": 50,             // devices per wave
-  "wave_delay_seconds": 5      // delay between waves
-}
-```
-
-**Response 202:**
-```json
-{
-  "batch_id": "uuid",
-  "total_devices": 100,
-  "total_waves": 2,
-  "status": "PENDING"
-}
-```
+This route is not registered. Use [POST /batches](#post-batches) for wave
+submission or [POST /tasks](#post-tasks) for one device. The previous example
+with `group_id` and `wave_delay_seconds` did not describe the current API.
 
 ---
 
 ### GET /tasks/{batch_id}/progress
 
-Server-Sent Events stream for execution progress.
-
-```http
-GET /tasks/{batch_id}/progress
-Accept: text/event-stream
-Authorization: Bearer <token>
-```
-
-Events:
-```
-event: task.complete
-data: {"device_id":"uuid","exit_code":0,"duration_ms":1234}
-
-event: batch.done
-data: {"batch_id":"uuid","success":98,"failed":2,"total":100}
-```
+The registered `/tasks/{task_id}/progress` endpoint describes a single task,
+not a batch SSE stream. Poll [GET /batches/{id}](#get-batchesid) for batch status;
+see the [Tasks section](#tasks--tasks) for progress and live logs.
 
 ---
 
@@ -1560,6 +1528,17 @@ optional `wave_size` (1–100, default 10), `wave_delay_ms` (default 5000),
 `jitter_ms` (default 1000), `priority` (1–10, default 5), `name`, `webhook_url`
 and `stagger_by_workstation` (default true). Returns 202 with the batch record.
 
+Wave submission creates QUEUED task intents; it does not mean devices completed
+execution. `failed` includes rejected device slots (for example missing, foreign
+or already busy devices), plus failed/timed-out tasks. Final task results determine
+COMPLETED/FAILED/PARTIAL when all requested slots have an outcome. A database
+error aborts the current wave; prior committed waves remain and recovery is still
+manual. Do not blindly replay the whole batch.
+
+`webhook_url` is accepted/stored, but reliable batch completion delivery is not
+implemented. The premature callback previously emitted after submission has
+been disabled. Poll status until a durable outcome notification mechanism exists.
+
 ```json
 {
   "script_id": "<script UUID>",
@@ -1591,9 +1570,8 @@ validation and queue effects. QUEUED/ASSIGNED tasks become CANCELLED with UTC
 `finished_at`; RUNNING tasks continue under the existing batch API policy.
 
 SQL cancellation is not proof of physical stop. ASSIGNED may already be in
-transit; Redis/commit failure and wave producer recovery remain open. In
-particular, the current producer can report completion after task creation
-rather than device results. See [AUD-43 and remaining work](audits/2026-09-05/AUDIT-REPORT.md).
+transit; Redis/commit failure, cancellation during further wave production and
+producer recovery remain open. See [AUD-43–45 and remaining work](audits/2026-09-05/AUDIT-REPORT.md).
 
 ---
 

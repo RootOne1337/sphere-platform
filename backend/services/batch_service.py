@@ -5,7 +5,7 @@
 #   — start_batch() возвращает 202 немедленно, волны запускаются в фоне
 #   — FIX-4.1: фоновая задача использует ИЗОЛИРОВАННУЮ сессию (не DI-сессию)
 #   — FIX-4.3: глобальный set _background_tasks защищает задачи от GC
-#   — FIX-4.2: статус батча обновляется С КОММИТОМ после завершения волн
+#   — Завершение волн означает создание intent, а не выполнение на устройстве
 #   — Частичный прогресс сохраняется (коммит каждой волны отдельно)
 from __future__ import annotations
 
@@ -176,9 +176,6 @@ class BatchService:
         FIX-4.1: Фоновая задача с ИЗОЛИРОВАННОЙ сессией.
         DI-сессия self.db уже закрыта к этому моменту!
         """
-        succeeded = 0
-        failed = 0
-
         async with self._session_maker() as db:
             from backend.database.redis_client import redis as _redis
             from backend.services.task_queue import TaskQueue
@@ -188,6 +185,7 @@ class BatchService:
             task_svc = TaskService(db, queue)
 
             for wave_num, wave_devices in enumerate(waves):
+                failed = 0
                 logger.info(
                     "batch.wave.start",
                     batch_id=str(batch_id),
@@ -206,13 +204,21 @@ class BatchService:
                             batch_id=batch_id,
                             wave_index=wave_num,
                         )
-                    except Exception as exc:
+                    except HTTPException as exc:
+                        if not 400 <= exc.status_code < 500:
+                            raise
                         logger.warning(
                             "batch.wave.task_create_failed",
                             device_id=str(device_id),
                             error=str(exc),
                         )
                         failed += 1
+
+                # Admission rejections are terminal failures for requested slots.
+                # Account for them under the same row lock as device results,
+                # after all task/device locks, in this wave's transaction.
+                if failed:
+                    await task_svc._aggregate_batch(batch_id, success=False, count=failed)
 
                 # Коммит каждой волны — частичный прогресс сохраняется
                 await db.commit()
@@ -223,21 +229,11 @@ class BatchService:
                     delay_s = (request.wave_delay_ms + jitter) / 1000
                     await asyncio.sleep(delay_s)
 
-        # FIX-4.2: Обновить статус батча С КОММИТОМ — без этого статус зависнет в RUNNING
-        async with self._session_maker() as db:
-            batch = await db.get(TaskBatch, batch_id)
-            if batch:
-                batch.status = TaskBatchStatus.COMPLETED
-                await db.commit()
-
-        # Финальный webhook
-        webhook_url = request.webhook_url
-        if webhook_url:
-            await self._send_batch_complete_webhook(
-                batch_id, webhook_url, succeeded, failed
-            )
+        # SQL admission is not completion. Task results/watchdogs determine the
+        # final state. A completion webhook requires a post-commit outcome outbox;
+        # never announce success merely because all waves have been submitted.
         logger.info(
-            "batch.completed",
+            "batch.waves_submitted",
             batch_id=str(batch_id),
             waves=len(waves),
         )

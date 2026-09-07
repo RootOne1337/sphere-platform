@@ -59,8 +59,11 @@ order, then locks/refreshes the batch. Only PENDING/RUNNING batches are mutable;
 terminal batches return 409 before queue effects. Result writers acquire Task
 before TaskBatch, and cancellation retains that order. Cancelled tasks receive a
 UTC finished_at; RUNNING tasks continue. ASSIGNED may already be in transit.
-Wave production has a separate lifecycle and still needs cancellation/status
-recovery work. See AUD-43 and test_batch_cancellation.py for the proven boundary.
+Wave submission now keeps a batch active until device outcomes arrive and counts
+admission failures under the result aggregation lock. It does not emit a false
+completion webhook. Cancellation during further waves, producer crash recovery
+and durable outcome notifications remain open. See AUD-43/AUD-45 and the batch
+cancellation/wave outcome tests for the proven boundaries.
 
 Scheduler cancellation locks eligible tenant Task/PipelineRun rows in stable ID
 order and refreshes them before mutation. A concurrently committed terminal row

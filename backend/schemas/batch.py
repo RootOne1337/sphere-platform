@@ -38,7 +38,7 @@ class BatchExecutionRequest(BaseModel):
     webhook_url: str | None = Field(
         None,
         max_length=2048,
-        description="URL callback при завершении всего батча",
+        description="Зарезервированный URL callback; доставка ещё не реализована, используйте GET /batches/{id}",
     )
     stagger_by_workstation: bool = Field(
         default=True,
@@ -73,7 +73,7 @@ class BroadcastBatchRequest(BaseModel):
     webhook_url: str | None = Field(
         None,
         max_length=2048,
-        description="URL callback при завершении всего батча",
+        description="Зарезервированный URL callback; доставка ещё не реализована, используйте GET /batches/{id}",
     )
     stagger_by_workstation: bool = Field(
         default=True,

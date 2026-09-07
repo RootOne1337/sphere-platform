@@ -78,3 +78,11 @@ predicates. Two malformed legacy links are test fixtures, not proof of a public
 API exploit. A supplemental controlled-clock case verifies fresh control signing
 time after a 120-second simulated row wait. Pipeline writers, child-task stop,
 network/commit recovery and the cancellation outbox are not certified here.
+
+`test_batch_wave_outcomes.py` runs the real wave producer, SQL task admission and
+device result handler. Thirteen cases cover queued versus completed state, false
+webhook suppression, result commits before producer exit, rejected device slots,
+post-submission cancellation and admission/result counter concurrency. A real
+PostgreSQL division-by-zero error proves that the current wave aborts without
+discarding prior committed waves or reporting success. Transport is mocked;
+wave restart/cancellation fencing and reliable callbacks remain separate work.

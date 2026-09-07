@@ -134,6 +134,13 @@ catalog lists 162 operations across 126 paths. Manual Tasks/Batches, signing,
 WS authentication and documentation URLs are reconciled with source. Other manual
 component guides remain under review; declared schemas do not certify runtime.
 
+Wave admission no longer marks QUEUED work COMPLETED or sends a false completion
+callback. Rejected device slots contribute to SQL outcome counters under the same
+lock as device results. Unexpected/database faults abort the current wave while
+retaining earlier commits. Thirteen real PostgreSQL regressions include concurrent
+outcome writes and an actual statement error. Batch callback delivery, cancellation
+during production, startup ordering and durable wave recovery remain open.
+
 ## Validation
 
 - On code revision `753f67c`, [backend CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34104984521)
@@ -143,9 +150,9 @@ component guides remain under review; declared schemas do not certify runtime.
   checks for subsequent documentation or code commits.
 
 - Android enterprise debug unit suite: **344 passed**.
-- Combined backend/PC, PostgreSQL/Redis and deployment regressions: **1079 passed**.
-  This includes **211 real-service tests** and **6 Compose configuration tests**.
-  Coverage is **67.27%** and passes the unchanged **65%** gate with two-decimal
+- Combined backend/PC, PostgreSQL/Redis and deployment regressions: **1092 passed**.
+  This includes **224 real-service tests** and **6 Compose configuration tests**.
+  Coverage is **67.60%** and passes the unchanged **65%** gate with two-decimal
   precision. No threshold or coverage scope was weakened. Two additional
   regression tests exercise the 64.98% rejection and exact 65.00% boundary. Long load/soak profiles require a prepared API
   environment and are excluded from the ordinary PR command.

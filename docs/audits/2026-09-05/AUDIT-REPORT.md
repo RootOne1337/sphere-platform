@@ -20,9 +20,9 @@ runtime-проверок и не считается доказательство
 | Проверка | Результат | Практическое ограничение |
 | --- | --- | --- |
 | Android enterprise debug unit suite | 344 passed, 0 failed | JVM/MockWebServer; не проверяет ОС, codec, батарею или смерть процесса на телефоне |
-| Объединённая Backend/PC/production/deployment suite | **1079 passed, 0 failed**; coverage **67,27%** | Строгий coverage gate 65% пройден с precision=2. Load suite исключена; 6 Compose config tests не запускают сервисы |
+| Объединённая Backend/PC/production/deployment suite | **1092 passed, 0 failed**; coverage **67,60%** | Строгий coverage gate 65% пройден с precision=2. Load suite исключена; 6 Compose config tests не запускают сервисы |
 | Python dependency scan | **0 known vulnerabilities** в совместном backend/PC resolution | Pip-audit snapshot, не проверка frontend/Gradle/container/application security; [версии и ограничения](DEPENDENCY-REVIEW.md) |
-| Проверки PostgreSQL/Redis | **211 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
+| Проверки PostgreSQL/Redis | **224 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
 | Миграции | Применены до **20260906_account_ciphertext** включительно | Только изолированная БД; конфликтные данные/downgrade проверены в throwaway schema; production не мигрировался |
 | Backend image | Собирается; исходная запись OpenAPI воспроизведённо падает с PermissionError | Исправлен lifespan; полный deployment runtime ещё не подтверждён |
 | Frontend build | Успешно | Type-check/Jest и браузерный runtime требуют отдельного завершения проверки |
@@ -33,7 +33,7 @@ runtime-проверок и не считается доказательство
 Предыдущий отдельный DAG benchmark однажды занял 127,1 ms при пороге 100 ms;
 изолированный повтор и последующие общие прогоны прошли. Порог не ослаблялся.
 Файл production-regressions-after.txt сохраняет более ранний standalone snapshot
-с 41 тестом; актуальные 211 входят в общий прогон.
+с 41 тестом; актуальные 224 входят в общий прогон.
 
 Команды запуска и предохранители изоляции: [tests/production/README.md](../../../tests/production/README.md).
 Исходные `14 passed` в [reproductions.txt](evidence/reproductions.txt) означают
@@ -469,7 +469,7 @@ runtime-проверок и не считается доказательство
 - **Affected files:** `backend/services/batch_service.py:261`, `:279`; `tests/production/test_batch_cancellation.py`.
 - **Fix:** `d4bb4d5` — eligible tasks выбираются с tenant filter, стабильным порядком UUID, FOR UPDATE и `populate_existing`; затем блокируется/обновляется batch и повторно допускаются только PENDING/RUNNING. Terminal batch возвращает 409 до queue effects. Отмена записывает UTC `finished_at`; RUNNING tasks сохраняются.
 - **Regression:** 16 новых PostgreSQL cases: result/cancel, fresh/stale terminal states, repeated cancellation, active task timestamps, tenant rejection и RUNNING semantics. Дополнительный тест сначала удерживает только Task, затем запускает cancel и result aggregation: обе транзакции завершаются в пределах deadline без инверсии Task → Batch. [41 related tests passed](evidence/batch-cancellation-after.txt). Общий прогон с первыми 15 cases: **1062 passed, 66,72%**; дополнительный lock-order case входит в последующий targeted прогон.
-- **Residual risk:** Redis effects остаются до commit API; нет durable cancellation outbox/stop ACK. ASSIGNED мог уже попасть на APK, RUNNING намеренно не останавливается этим API. Wave producer отдельно не проверяет cancellation и преждевременно выставляет COMPLETED после создания задач; его lifecycle не закрыт этим fix. Scheduler/pipeline cancellation проверяются отдельно. Это не blanket guarantee отсутствия всех deadlocks.
+- **Residual risk:** Redis effects остаются до commit API; нет durable cancellation outbox/stop ACK. ASSIGNED мог уже попасть на APK, RUNNING намеренно не останавливается этим API. Преждевременный COMPLETED producer исправлен отдельно в AUD-45; cancellation между волнами и recovery ещё открыты. Scheduler/pipeline cancellation проверяются отдельно. Это не blanket guarantee отсутствия всех deadlocks.
 
 ### AUD-44 — High: scheduler cancellation терял результаты задач и pipeline runs
 
@@ -479,6 +479,15 @@ runtime-проверок и не считается доказательство
 - **Fix:** `753f67c` — Task и PipelineRun читаются со стабильным порядком ID, FOR UPDATE, `populate_existing` и org predicate; latest execution ограничен организацией schedule. После ожидания terminal rows больше не eligible, поэтому не изменяются и не вызывают queue/stop. Timestamp каждой stop-команды формируется после ожидания блокировки, а не до SELECT.
 - **Regression:** 16 PostgreSQL cases: четыре task result races, три pipeline outcome races, шесть разрешённых active transitions, два tenant-link guards и дополнительный fake-clock тест задержки 120 s при TTL 30 s. [49 related tests passed](evidence/scheduler-cancellation-after.txt); полный объединённый прогон: **1079 passed, 67,27%**, включая 211 PostgreSQL/Redis cases. Mock transport не затрагивает внешних устройств.
 - **Residual risk:** lock сохраняется на время queue/publisher вызовов; потеря Redis/сети или commit может оставить неоднозначную отмену. Нет outbox/physical stop ACK; pipeline executor и другие writers требуют отдельного fencing/recovery, а in-flight child task не останавливается одной сменой PipelineRun.status. PAUSED pipeline и конкуренция creation ticks не закрыты. Scalar batch IDs в legacy data требуют собственной проверки/восстановления.
+
+### AUD-45 — High: волновой producer объявлял успех до выполнения задач
+
+- **Root cause:** `_execute_waves` безусловно записывал COMPLETED и отправлял `batch.completed` после SQL создания задач. Локальный `succeeded` всегда оставался нулём; `failed` не сохранялся в batch. Любое исключение создания перехватывалось, включая ошибку SQL, после которой транзакция уже непригодна. Последняя запись producer могла перезаписать FAILED/PARTIAL, уже установленный обработчиком результатов.
+- **Evidence/reproduction:** на `b64adce` новая QUEUED task сопровождалась COMPLETED batch и ложным webhook; `cancel_batch` возвращал 409, хотя выполнение ещё не начиналось. Реальные result handlers между commit волны и выходом producer теряли terminal status. Неизвестное/чужое устройство не увеличивало `failed`. Ошибка PostgreSQL `SELECT 1 / 0` во второй волне подавлялась, а batch объявлялся успешным. [Исходные 13 сценариев: 12 failed / 1 passed](evidence/batch-wave-outcomes-before.txt).
+- **Affected files:** `backend/services/batch_service.py`, `backend/services/task_service.py`; `tests/production/test_batch_wave_outcomes.py`.
+- **Fix:** убрана безусловная финализация и преждевременная отправка callback. Отказы допуска 4xx учитываются в SQL через общий FOR UPDATE aggregation lock, после создания задач и в транзакции той же волны. DB/неожиданные ошибки выходят из producer и откатывают текущую волну; предыдущие commit сохраняются. Финальный статус рассчитывается по outcomes, а не факту постановки в очередь.
+- **Regression:** 13 новых PostgreSQL cases: success/failure после QUEUED, отсутствие false webhook, три terminal outcome interleavings, смешанные/полные отказы допуска, возможность отмены после enqueue, реальная SQL ошибка и два конкурентных increment с владельцем result lock. [56 related tests passed](evidence/batch-wave-outcomes-after.txt). Полный прогон: **1092 passed**, coverage **67,60%**, включая **224 PostgreSQL/Redis cases**. Никакие реальные устройства/webhooks не вызываются.
+- **Residual risk:** `webhook_url` пока только принимается/хранится; корректный post-commit completion callback с durable outbox ещё не реализован. Нет durable wave cursor, безопасного restart/replay и reconciliation после неизвестного commit outcome. Фоновый producer запускается до commit родителя, не fenced с cancel между волнами; эти отдельные дефекты остаются открыты. RUNNING batch после аварии требует расследования, а не слепого повтора. Повторяющиеся device IDs и иные writers требуют проверки. Исторические ложные статусы/счётчики автоматически не исправляются.
 
 ## Открытые подтверждённые блокеры
 
