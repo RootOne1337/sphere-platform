@@ -7,9 +7,6 @@ import { useInitAuth, useAuthStore } from '@/lib/store';
 // Публичные пути — не требуют авторизации
 const PUBLIC_PATHS = ['/login'];
 
-// ⚠️ АВТОРИЗАЦИЯ ОТКЛЮЧЕНА НА ВРЕМЯ РАЗРАБОТКИ
-const DEV_SKIP_AUTH = true;
-
 /**
  * Client-side auth guard.
  * Заменяет middleware redirect — работает стабильно через tunnel (Serveo/Cloudflare),
@@ -20,34 +17,34 @@ function AuthInitializer({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const ready = useInitAuth();
   const accessToken = useAuthStore((s) => s.accessToken);
+  const user = useAuthStore((s) => s.user);
+  const isPublic = PUBLIC_PATHS.includes(pathname);
+  const authenticated = Boolean(accessToken && user);
 
   useEffect(() => {
-    // DEV_SKIP_AUTH: полностью пропускаем auth guard
-    if (DEV_SKIP_AUTH) return;
     if (!ready) return;
-    const isPublic = PUBLIC_PATHS.some((p) => pathname.startsWith(p));
-    if (!isPublic && !accessToken) {
+    if (!isPublic && !authenticated) {
       // Не авторизован на защищённой странице → login
       router.replace('/login');
-    } else if (isPublic && accessToken) {
+    } else if (isPublic && authenticated) {
       // Уже залогинен на login странице → dashboard
       router.replace('/dashboard');
     }
-  }, [ready, accessToken, pathname, router]);
+  }, [ready, authenticated, isPublic, router]);
 
-  if (DEV_SKIP_AUTH) return <>{children}</>;
-
-  if (!ready) {
+  // A redirect is asynchronous. Keep private hooks/streams unmounted until allowed.
+  if (!ready || isPublic === authenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-950">
         <div className="text-muted-foreground text-sm">Loading…</div>
       </div>
     );
   }
-  return <>{children}</>;
+  const identity = authenticated ? JSON.stringify([user!.org_id, user!.id, user!.role]) : 'anonymous';
+  return <SessionQueries key={identity}>{children}</SessionQueries>;
 }
 
-export function Providers({ children }: { children: React.ReactNode }) {
+function SessionQueries({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient({
     defaultOptions: {
       queries: {
@@ -57,9 +54,19 @@ export function Providers({ children }: { children: React.ReactNode }) {
     },
   }));
 
+  useEffect(() => () => {
+    // Retired requests may finish, but their client is no longer visible to another identity.
+    void queryClient.cancelQueries();
+    queryClient.clear();
+  }, [queryClient]);
+
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthInitializer>{children}</AuthInitializer>
+      {children}
     </QueryClientProvider>
   );
+}
+
+export function Providers({ children }: { children: React.ReactNode }) {
+  return <AuthInitializer>{children}</AuthInitializer>;
 }

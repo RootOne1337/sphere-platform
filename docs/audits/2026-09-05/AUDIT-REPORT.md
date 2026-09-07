@@ -516,6 +516,14 @@ runtime-проверок и не считается доказательство
 - **Regression:** пять реальных ASGI/PostgreSQL/Redis cases проверяют атрибуты удаления cookie, пустой 204, сохранённый SQL revoke и 401 при повторном refresh/доступе со старым access. [71 related auth tests passed](evidence/session-logout-after.txt), включая JWT forgery/expired-token contract checks. Полный прогон: **1114 passed**, coverage **67,77%**, включая **246 PostgreSQL/Redis cases**; строгий gate 65% сохранён.
 - **Residual risk:** при отсутствующем/некорректном Bearer endpoint только удаляет cookie, не выполняя SQL revoke. Redis/DB failure не подтверждает завершение серверного отзыва. Concurrent refresh/logout, session-family revocation, frontend Sign Out/guard/cache и поздние auth responses проверяются отдельно. XSS exposure localStorage fallback не устраняется этим fix; HTTP transport подменён, живой сервер не запускался.
 
+### AUD-49 — High: браузер показывал закрытые страницы и кэш предыдущей организации
+
+- **Root cause / affected files:** `frontend/app/providers.tsx` содержал постоянный `DEV_SKIP_AUTH = true`; один `QueryClient` переживал смену identity. Redirect после render сам по себе также не препятствует запуску private hooks. Публичность определялась по prefix `/login`.
+- **Evidence / reproduction:** React/JSDOM с настоящими Zustand и React Query: private children монтируются при pending/отсутствующей сессии; после logout остаются; `/login-private` открыт; переход A → B продолжает показывать cached account credential A, пока B ещё не ответил. [До исправления: 6 failed](evidence/frontend-boundary-before.txt).
+- **Fix:** закрытые children не монтируются до готовности и наличия token + user; login — точный public route; смена identity создаёт новый query client до отображения страницы. Retired client отменяет запросы и очищается при unmount.
+- **Regression:** `frontend/__tests__/session/providers.test.tsx` — 6 runtime cases, включая позднюю запись в retired cache. [Все 176 frontend tests проходят](evidence/frontend-boundary-after.txt); `tsc --noEmit` проходит на Node 24.19.0.
+- **Residual risk:** доказано отображение браузерного кэша, а не обход серверных tenant checks. Refresh/login races, действующий logout handler, другие Zustand/browser stores, multiple tabs и browser-level reload ещё требуют отдельных проверок. Production browser/APK runtime этим не подтверждён.
+
 ## Открытые подтверждённые блокеры
 
 | ID / severity | Root cause и evidence | Необходимое продолжение |

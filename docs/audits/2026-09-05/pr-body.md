@@ -229,3 +229,10 @@ precision rounded it to 65% for the exit decision, despite a FAIL summary.
 `1335a72` fixes precision and adds a real coverage CLI boundary regression.
 `31077b3` fixes the subsequent mypy timestamp-narrowing diagnostics. The latest
 checks must be evaluated on this updated head, not inferred from historical jobs.
+
+Private frontend routes now remain unmounted until the authenticated identity is
+ready. React Query clients are replaced before rendering a different identity,
+so cached account data cannot cross that browser session boundary. Six new
+React/JSDOM regressions failed before the fix; all 176 frontend tests and strict
+TypeScript validation pass on Node 24.19.0. Refresh races and logout wiring remain
+under review; this does not claim bypass of backend authorization.
