@@ -1,6 +1,6 @@
 # Sphere Platform: аудит готовности к эксплуатации
 
-Статус на 7 сентября 2026: **аудит продолжается; production readiness не подтверждена**.
+Статус на 8 сентября 2026: **аудит продолжается; production readiness не подтверждена**.
 Исходная ревизия: `28f8cc46ab65496e00297960fd94d87d1605cc83`.
 Ветка исправлений: `codex/enterprise-audit-20260905`; [draft PR #19](https://github.com/RootOne1337/sphere-platform/pull/19).
 
@@ -20,9 +20,9 @@ runtime-проверок и не считается доказательство
 | Проверка | Результат | Практическое ограничение |
 | --- | --- | --- |
 | Android enterprise debug unit suite | 344 passed, 0 failed | JVM/MockWebServer; не проверяет ОС, codec, батарею или смерть процесса на телефоне |
-| Объединённая Backend/PC/production/deployment suite | **1109 passed, 0 failed**; coverage **67,64%** | Строгий coverage gate 65% пройден с precision=2. Load suite исключена; 6 Compose config tests не запускают сервисы |
+| Объединённая Backend/PC/production/deployment suite | **1114 passed, 0 failed**; coverage **67,77%** | Строгий coverage gate 65% пройден с precision=2. Load suite исключена; 6 Compose config tests не запускают сервисы |
 | Python dependency scan | **0 known vulnerabilities** в совместном backend/PC resolution | Pip-audit snapshot, не проверка frontend/Gradle/container/application security; [версии и ограничения](DEPENDENCY-REVIEW.md) |
-| Проверки PostgreSQL/Redis | **241 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
+| Проверки PostgreSQL/Redis | **246 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
 | Миграции | Применены до **20260906_account_ciphertext** включительно | Только изолированная БД; конфликтные данные/downgrade проверены в throwaway schema; production не мигрировался |
 | Backend image | Собирается; исходная запись OpenAPI воспроизведённо падает с PermissionError | Исправлен lifespan; полный deployment runtime ещё не подтверждён |
 | Frontend build | Успешно | Type-check/Jest и браузерный runtime требуют отдельного завершения проверки |
@@ -33,7 +33,7 @@ runtime-проверок и не считается доказательство
 Предыдущий отдельный DAG benchmark однажды занял 127,1 ms при пороге 100 ms;
 изолированный повтор и последующие общие прогоны прошли. Порог не ослаблялся.
 Файл production-regressions-after.txt сохраняет более ранний standalone snapshot
-с 41 тестом; актуальные 241 входят в общий прогон.
+с 41 тестом; актуальные 246 входят в общий прогон.
 
 Команды запуска и предохранители изоляции: [tests/production/README.md](../../../tests/production/README.md).
 Исходные `14 passed` в [reproductions.txt](evidence/reproductions.txt) означают
@@ -506,6 +506,15 @@ runtime-проверок и не считается доказательство
 - **Fix:** `87092d2` — producer и cancel берут общий PostgreSQL transaction advisory lock по batch до task/device row locks. После ожидания producer заново читает tenant-scoped scalar status и допускает только PENDING/RUNNING. Cancel сначала ждёт admission, затем выбирает уже committed tasks и сохраняет прежний Task → TaskBatch порядок. Devices внутри волны блокируются по UUID. Result/watchdog увеличивают counters, но сохраняют CANCELLED.
 - **Regression:** все 11 исходных cases проходят. Ещё два теста проверяют освобождение advisory lock после настоящей SQL ошибки/rollback и два конкурирующих batch с обратным входным порядком общих устройств. [73 related tests passed](evidence/batch-wave-cancellation-after.txt), включая прежние проверки Task → Batch deadlock и result/cancel serialization. Полный прогон: **1109 passed, coverage 67,64%**, включая **241 PostgreSQL/Redis cases**; строгий gate 65% сохранён. Ruff, configured Bandit (0 Medium/High) и API docs --check прошли.
 - **Residual risk:** гарантия действует для обновлённых BatchService producer/cancel и указанных aggregation writers; перед использованием требуется обновить все backend workers, старый worker advisory fence не соблюдает. Другие scheduler/pipeline writers, durable wave replay/cursor, неизвестный commit outcome и stop outbox остаются открыты. Cancel может ждать текущую волну/SQL lock; прикладной deadline ожидания не добавлен. Redis effects остаются до commit; отмена SQL не доказывает физическую остановку ASSIGNED/RUNNING на APK. Исторические данные и производственная инфраструктура не изменялись.
+
+### AUD-48 — High: logout сохранял cookie и оставлял fallback refresh-token рабочим
+
+- **Root cause:** endpoint добавлял cookie deletion к injected Response, затем возвращал другой Response(204), теряя Set-Cookie. При отзыве токена учитывалась только cookie, хотя frontend и refresh endpoint поддерживают `X-Refresh-Token` для сред без cookie.
+- **Evidence/reproduction:** на `9bb33ad` HTTP logout возвращает 204 без Set-Cookie для valid/invalid/absent Bearer. Logout с действительным Bearer и refresh в header оставляет этот refresh рабочим: последующий настоящий POST /auth/refresh возвращает 200. Cookie-вариант SQL отзыва уже работал. [До fix: 4 failed / 1 passed](evidence/session-logout-before.txt).
+- **Affected files:** `backend/api/v1/auth/router.py`, `tests/production/test_session_logout.py`, generated API contracts.
+- **Fix:** возвращается тот же Response с удалением cookie и 204; параметры удаления согласованы с выдачей cookie. При valid signed Bearer отзыв получает cookie либо fallback header. В OpenAPI указан фактический 204.
+- **Regression:** пять реальных ASGI/PostgreSQL/Redis cases проверяют атрибуты удаления cookie, пустой 204, сохранённый SQL revoke и 401 при повторном refresh/доступе со старым access. [71 related auth tests passed](evidence/session-logout-after.txt), включая JWT forgery/expired-token contract checks. Полный прогон: **1114 passed**, coverage **67,77%**, включая **246 PostgreSQL/Redis cases**; строгий gate 65% сохранён.
+- **Residual risk:** при отсутствующем/некорректном Bearer endpoint только удаляет cookie, не выполняя SQL revoke. Redis/DB failure не подтверждает завершение серверного отзыва. Concurrent refresh/logout, session-family revocation, frontend Sign Out/guard/cache и поздние auth responses проверяются отдельно. XSS exposure localStorage fallback не устраняется этим fix; HTTP transport подменён, живой сервер не запускался.
 
 ## Открытые подтверждённые блокеры
 

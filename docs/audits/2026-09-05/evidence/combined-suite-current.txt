@@ -12,8 +12,8 @@
 ........................................................................ [ 77%]
 ........................................................................ [ 84%]
 ........................................................................ [ 90%]
-........................................................................ [ 97%]
-.............................                                            [100%]
+........................................................................ [ 96%]
+..................................                                       [100%]
 ============================== warnings summary ===============================
 backend\api\v1\game_accounts\router.py:95
   C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\api\v1\game_accounts\router.py:95: FastAPIDeprecationWarning: `regex` has been deprecated, please use `pattern` instead
@@ -33,7 +33,7 @@ Name                                                    Stmts   Miss   Cover
 ----------------------------------------------------------------------------
 backend\api\v1\account_sessions\router.py                  35     13  62.86%
 backend\api\v1\audit\router.py                             32     17  46.88%
-backend\api\v1\auth\router.py                             139     63  54.68%
+backend\api\v1\auth\router.py                             142     56  60.56%
 backend\api\v1\batches\router.py                           30      9  70.00%
 backend\api\v1\bulk\router.py                              29      2  93.10%
 backend\api\v1\config\router.py                            71     11  84.51%
@@ -64,7 +64,7 @@ backend\api\ws\stream\router.py                           137     69  49.64%
 backend\cli\account_credentials.py                         41     41   0.00%
 backend\core\config.py                                     58      3  94.83%
 backend\core\cors.py                                       11      1  90.91%
-backend\core\dependencies.py                               84     24  71.43%
+backend\core\dependencies.py                               84     21  75.00%
 backend\core\exceptions.py                                 33     11  66.67%
 backend\core\lifespan_registry.py                          17      6  64.71%
 backend\core\logging_config.py                             21      1  95.24%
@@ -130,7 +130,7 @@ backend\services\vpn\pool_service.py                      121      2  98.35%
 backend\tasks\ensure_enrollment_key.py                     31     24  22.58%
 backend\tasks\orchestration_loop.py                        11      4  63.64%
 backend\tasks\sync_device_status.py                        60     15  75.00%
-backend\tasks\task_heartbeat_watchdog.py                  139     31  77.70%
+backend\tasks\task_heartbeat_watchdog.py                  139     28  79.86%
 backend\tasks\vpn_health.py                                59      2  96.61%
 backend\websocket\connection_manager.py                    98      9  90.82%
 backend\websocket\event_publisher.py                       47     11  76.60%
@@ -140,9 +140,9 @@ backend\websocket\offline_queue.py                         85      8  90.59%
 backend\websocket\pubsub_router.py                        172     43  75.00%
 backend\websocket\stream_bridge.py                        139     57  58.99%
 ----------------------------------------------------------------------------
-TOTAL                                                   11166   3613  67.64%
+TOTAL                                                   11169   3600  67.77%
 
 97 files skipped due to complete coverage.
 Coverage JSON written to file docs/audits/2026-09-05/evidence/coverage-current.json
-Required test coverage of 65% reached. Total coverage: 67.64%
-1109 passed, 4 warnings in 137.76s (0:02:17)
+Required test coverage of 65% reached. Total coverage: 67.77%
+1114 passed, 4 warnings in 142.60s (0:02:22)

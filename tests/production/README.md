@@ -99,3 +99,9 @@ handling. Thirteen cases include two extra regressions beyond the 11-case before
 proof: SQL rollback releases the production lock, and overlapping batches acquire
 devices without reverse-order deadlock. PostgreSQL lock waits are observed directly;
 queue effects remain mocked and no physical stop guarantee follows.
+
+`test_session_logout.py` verifies actual Set-Cookie deletion on ASGI responses,
+SQL refresh-token revocation through cookie/header transports, rejection of refresh
+replay and access-token blacklist behavior. It uses real local PostgreSQL/Redis,
+not a listening server. Invalid/absent Bearer and concurrent session-recovery limits
+are documented separately.

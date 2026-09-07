@@ -29,7 +29,7 @@ for tested behavior and remaining limits.
 | `DELETE` | `/api/v1/auth/api-keys/{key_id}` | auth | 200, 422 | SPLIT-4: Отозвать API ключ |
 | `POST` | `/api/v1/auth/login` | auth | 200, 422 | Login: получить access token + refresh cookie |
 | `POST` | `/api/v1/auth/login/mfa` | auth | 200, 422 | Второй шаг MFA login: подтвердить TOTP-код |
-| `POST` | `/api/v1/auth/logout` | auth | 200, 422 | Logout: инвалидировать токены |
+| `POST` | `/api/v1/auth/logout` | auth | 204, 422 | Logout: инвалидировать токены |
 | `GET` | `/api/v1/auth/me` | auth | 200 | Информация о текущем пользователе |
 | `DELETE` | `/api/v1/auth/mfa` | auth | 200 | SPLIT-2: Отключить MFA |
 | `POST` | `/api/v1/auth/mfa/setup` | auth | 200 | SPLIT-2: Шаг 1 — Сгенерировать TOTP QR-код |

@@ -151,6 +151,11 @@ terminal/tenant guards, rollback lock release and overlapping reverse-order devi
 sets. All workers must be updated to honor this fence; physical stop and durable
 cancellation delivery remain open.
 
+HTTP logout now returns its actual cookie-deletion response and revokes the
+`X-Refresh-Token` fallback used by the frontend. Five PostgreSQL/Redis/ASGI cases
+include a previously successful refresh replay after logout and old-access
+rejection. Frontend sign-out/session lifecycle and concurrent rotation remain open.
+
 ## Validation
 
 - On code revision `87092d2`, [backend CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34133092803)
@@ -160,9 +165,9 @@ cancellation delivery remain open.
   checks for subsequent documentation or code commits.
 
 - Android enterprise debug unit suite: **344 passed**.
-- Combined backend/PC, PostgreSQL/Redis and deployment regressions: **1109 passed**.
-  This includes **241 real-service tests** and **6 Compose configuration tests**.
-  Coverage is **67.64%** and passes the unchanged **65%** gate with two-decimal
+- Combined backend/PC, PostgreSQL/Redis and deployment regressions: **1114 passed**.
+  This includes **246 real-service tests** and **6 Compose configuration tests**.
+  Coverage is **67.77%** and passes the unchanged **65%** gate with two-decimal
   precision. No threshold or coverage scope was weakened. Two additional
   regression tests exercise the 64.98% rejection and exact 65.00% boundary. Long load/soak profiles require a prepared API
   environment and are excluded from the ordinary PR command.

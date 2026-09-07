@@ -208,10 +208,12 @@ async def refresh(
 
 @router.post(
     "/logout",
+    status_code=status.HTTP_204_NO_CONTENT,
     response_model=None,
     summary="Logout: инвалидировать токены",
 )
 async def logout(
+    request: Request,
     response: Response,
     credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
     refresh_token: str | None = Cookie(default=None, alias=REFRESH_COOKIE_NAME),
@@ -228,19 +230,19 @@ async def logout(
             await auth_svc.logout(
                 jti=payload["jti"],
                 token_exp=payload["exp"],
-                refresh_token_raw=refresh_token,
+                # Match the browser's cookie + header fallback refresh contract.
+                refresh_token_raw=refresh_token or request.headers.get("x-refresh-token"),
             )
         except (jwt.InvalidTokenError, KeyError):
             # Невалидный токен — продолжаем удалять cookie
             pass
 
-    response.delete_cookie(
-        REFRESH_COOKIE_NAME,
-        httponly=True,
-        secure=True,
-        samesite="strict",
-    )
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
+    cookie_options = _cookie_settings()
+    cookie_options.pop("max_age")
+    response.delete_cookie(REFRESH_COOKIE_NAME, **cookie_options)
+    response.status_code = status.HTTP_204_NO_CONTENT
+    # Returning a new Response would silently discard the deletion header.
+    return response
 
 
 # ── Me ────────────────────────────────────────────────────────────────────────

@@ -76,7 +76,7 @@ Content-Type: application/json
 }
 ```
 
-Refresh token is set as `HttpOnly` cookie `sphere_refresh`.
+Refresh token is set as `HttpOnly; Secure; SameSite=None; Path=/` cookie `refresh_token`.
 
 ---
 
@@ -84,7 +84,7 @@ Refresh token is set as `HttpOnly` cookie `sphere_refresh`.
 
 ```http
 POST /auth/refresh
-Cookie: sphere_refresh=<refresh_token>
+Cookie: refresh_token=<refresh_token>
 ```
 
 **Response 200:**
@@ -104,7 +104,14 @@ POST /auth/logout
 Authorization: Bearer <token>
 ```
 
-Revokes the refresh token. Returns `204 No Content`.
+With a valid signed Bearer token (including an expired access token), blacklists
+the unexpired access token and revokes the supplied refresh token. Supply
+`Cookie: refresh_token=...` or `X-Refresh-Token: ...`; cookie takes precedence.
+Returns an empty `204 No Content` with the cookie-expiration header. An absent
+or invalid Bearer still clears the cookie but does not revoke the SQL token.
+Server-side revocation is not confirmed when Redis/PostgreSQL operations fail.
+The client must also clear its in-memory/localStorage credentials and private
+cached data; see [AUD-48 and remaining session work](audits/2026-09-05/AUDIT-REPORT.md).
 
 ---
 
