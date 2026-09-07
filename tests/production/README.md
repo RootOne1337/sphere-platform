@@ -62,3 +62,11 @@ the DAG or clear its journal. It also verifies a targeted watchdog stop after
 TIMEOUT. Pair these tests with Android `ControlCommandTargetTest` and the
 [control contract](../../docs/security/task-control-protocol.md); neither suite
 establishes durable stop delivery or physical execution acknowledgement.
+
+`test_batch_cancellation.py` checks real result-owner locks, terminal batch
+snapshots, repeated cancellation, tenant rejection, task finish times and the
+policy of leaving RUNNING tasks active. A separate ordering case holds Task
+before invoking aggregation while cancellation waits; this detects an inverted
+Batch-to-Task lock order. Observations use pg_stat_activity in the disposable DB.
+The before evidence contains the first 15 cases; the 16th is an additional
+lock-order regression. These do not certify wave producer recovery or device stop.

@@ -28,6 +28,14 @@ Cancel/force-stop now lock and refresh the task before validating its status, so
 a concurrent committed result cannot be overwritten or trigger a late stop.
 The mutation retains the tenant filter; terminal-state conflicts return 409.
 
+Batch cancellation now locks eligible tenant tasks in stable ID order, then
+locks and refreshes the batch before status validation or queue effects. This
+preserves concurrent committed results, rejects all terminal batch states and
+prevents repeated cancellation effects. Cancelled tasks receive finished_at;
+RUNNING tasks remain active. Sixteen PostgreSQL cases cover row-owner waits,
+stale snapshots and Task-to-Batch lock ordering. Wave producer lifecycle and
+durable cancellation delivery remain separate open work.
+
 The production Compose override clears inherited private ports and development
 application commands, users and source mounts. Both base/production and
 base/full/production combinations are checked with synthetic configuration only.
@@ -123,9 +131,9 @@ have been removed; device, signing, installation and recovery limits are explici
   checks for subsequent documentation or code commits.
 
 - Android enterprise debug unit suite: **344 passed**.
-- Combined backend/PC, PostgreSQL/Redis and deployment regressions: **1047 passed**.
-  This includes **179 real-service tests** and **6 Compose configuration tests**.
-  Coverage is **66.61%** and passes the unchanged **65%** gate with two-decimal
+- Combined backend/PC, PostgreSQL/Redis and deployment regressions: **1062 passed**.
+  This includes **194 real-service tests** and **6 Compose configuration tests**.
+  Coverage is **66.72%** and passes the unchanged **65%** gate with two-decimal
   precision. No threshold or coverage scope was weakened. Two additional
   regression tests exercise the 64.98% rejection and exact 65.00% boundary. Long load/soak profiles require a prepared API
   environment and are excluded from the ordinary PR command.
@@ -153,8 +161,7 @@ claim exactly-once effects. CPU/RAM/FPS, physical-device compatibility and 10–
 emulator capacity have not been measured.
 
 n8n/MinIO ingress, runtime database roles, durable OTA/log storage, task-specific
-stop acknowledgements, cancellation under Redis/commit failure, batch/scheduler
-cancellation and post-commit webhook delivery remain open. Existing
+stop acknowledgements, cancellation under Redis/commit failure, scheduler cancellation and batch wave production and post-commit webhook delivery remain open. Existing
 incorrect batch counters and legacy task metadata require reconciliation.
 Update all backend writers before enforcing explicit control targets in the APK;
 old watchdog messages lack a target and will be rejected. Old APKs still need

@@ -20,9 +20,9 @@ runtime-проверок и не считается доказательство
 | Проверка | Результат | Практическое ограничение |
 | --- | --- | --- |
 | Android enterprise debug unit suite | 344 passed, 0 failed | JVM/MockWebServer; не проверяет ОС, codec, батарею или смерть процесса на телефоне |
-| Объединённая Backend/PC/production/deployment suite | **1047 passed, 0 failed**; coverage **66,61%** | Строгий coverage gate 65% пройден с precision=2. Load suite исключена; 6 Compose config tests не запускают сервисы |
+| Объединённая Backend/PC/production/deployment suite | **1062 passed, 0 failed**; coverage **66,72%** | Строгий coverage gate 65% пройден с precision=2. Load suite исключена; 6 Compose config tests не запускают сервисы |
 | Python dependency scan | **0 known vulnerabilities** в совместном backend/PC resolution | Pip-audit snapshot, не проверка frontend/Gradle/container/application security; [версии и ограничения](DEPENDENCY-REVIEW.md) |
-| Проверки PostgreSQL/Redis | **179 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
+| Проверки PostgreSQL/Redis | **194 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
 | Миграции | Применены до **20260906_account_ciphertext** включительно | Только изолированная БД; конфликтные данные/downgrade проверены в throwaway schema; production не мигрировался |
 | Backend image | Собирается; исходная запись OpenAPI воспроизведённо падает с PermissionError | Исправлен lifespan; полный deployment runtime ещё не подтверждён |
 | Frontend build | Успешно | Type-check/Jest и браузерный runtime требуют отдельного завершения проверки |
@@ -33,7 +33,7 @@ runtime-проверок и не считается доказательство
 Предыдущий отдельный DAG benchmark однажды занял 127,1 ms при пороге 100 ms;
 изолированный повтор и последующие общие прогоны прошли. Порог не ослаблялся.
 Файл production-regressions-after.txt сохраняет более ранний standalone snapshot
-с 41 тестом; актуальные 179 входят в общий прогон.
+с 41 тестом; актуальные 194 входят в общий прогон.
 
 Команды запуска и предохранители изоляции: [tests/production/README.md](../../../tests/production/README.md).
 Исходные `14 passed` в [reproductions.txt](evidence/reproductions.txt) означают
@@ -461,6 +461,15 @@ runtime-проверок и не считается доказательство
 - **Fix:** `71b2d2c` — общая suspend-проверка перед каждым действием/повтором и внутри вложенных loop; PAUSE ждёт RESUME либо CANCEL. Отдельное исключение принятой wire-отмены проходит мимо retry/loop error policy к terminal DAG outcome `success=false`, `CANCELLED`, `cancelled_by_user`. Проверка после действия исключает успешный результат, когда stop наблюдается во время последнего действия. Coroutine cancellation сохраняет отдельную обработку.
 - **Regression:** шесть новых сценариев `ControlCommandTargetTest`: cancel loop + durable duplicate replay, nested loop, pause/resume body, cancel paused body, cancel final action, cancel retry backoff. Используются реальные dispatcher/runner/journal и virtual coroutine time, подменены только OS/storage/network. [Полная JVM suite: 344 passed](evidence/android-control-boundaries-after.txt), 0 failures/errors/skips в 27 suites; прежние target isolation/root unknown-outcome проверки также прошли.
 - **Residual risk:** cooperative checkpoint не прерывает уже выполняемый синхронный/root/Lua вызов и не подтверждает физический эффект. Между проверкой флага и запуском действия возможна гонка; нет атомарной остановки внешнего shell. PAUSE не замораживает node/global timeout budgets. Durable server cancellation/outbox, stop ACK и ordering controls той же задачи остаются открыты. Формат wire-команд не меняется; production rollout не выполнялся.
+
+### AUD-43 — High: batch cancellation перезаписывал terminal outcome и повторял queue effects
+
+- **Root cause:** `cancel_batch` читал eligible tasks и batch без блокировок/обновления ORM snapshot, вызывал Redis до решения владельца строки и затем писал CANCELLED. Guard пропускал FAILED/PARTIAL, а stale RUNNING обходил остальные terminal states. Отменённым tasks не выставлялся `finished_at`.
+- **Evidence/reproduction:** на `3f4ea2d` реальный `TaskService.handle_task_result` удерживает Task/TaskBatch с незакоммиченным completed/failed результатом, вторая DB session запускает batch cancel, затем result owner коммитит. Итоговый task и batch становились CANCELLED поверх результата; два cancel повторяли queue call. Первичный прогон: [11 failed / 4 passed](evidence/batch-cancellation-before.txt). Тест наблюдает `pg_stat_activity.wait_event_type`, а не предполагает конкуренцию по случайной задержке.
+- **Affected files:** `backend/services/batch_service.py:261`, `:279`; `tests/production/test_batch_cancellation.py`.
+- **Fix:** eligible tasks выбираются с tenant filter, стабильным порядком UUID, FOR UPDATE и `populate_existing`; затем блокируется/обновляется batch и повторно допускаются только PENDING/RUNNING. Terminal batch возвращает 409 до queue effects. Отмена записывает UTC `finished_at`; RUNNING tasks сохраняются.
+- **Regression:** 16 новых PostgreSQL cases: result/cancel, fresh/stale terminal states, repeated cancellation, active task timestamps, tenant rejection и RUNNING semantics. Дополнительный тест сначала удерживает только Task, затем запускает cancel и result aggregation: обе транзакции завершаются в пределах deadline без инверсии Task → Batch. [41 related tests passed](evidence/batch-cancellation-after.txt). Общий прогон с первыми 15 cases: **1062 passed, 66,72%**; дополнительный lock-order case входит в последующий targeted прогон.
+- **Residual risk:** Redis effects остаются до commit API; нет durable cancellation outbox/stop ACK. ASSIGNED мог уже попасть на APK, RUNNING намеренно не останавливается этим API. Wave producer отдельно не проверяет cancellation и преждевременно выставляет COMPLETED после создания задач; его lifecycle не закрыт этим fix. Scheduler/pipeline cancellation проверяются отдельно. Это не blanket guarantee отсутствия всех deadlocks.
 
 ## Открытые подтверждённые блокеры
 

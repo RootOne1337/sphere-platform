@@ -12,6 +12,7 @@ from __future__ import annotations
 import asyncio
 import random
 import uuid
+from datetime import datetime, timezone
 
 import structlog
 from fastapi import HTTPException
@@ -262,14 +263,15 @@ class BatchService:
         )
 
     async def get_batch(
-        self, batch_id: uuid.UUID, org_id: uuid.UUID
+        self, batch_id: uuid.UUID, org_id: uuid.UUID, *, for_update: bool = False
     ) -> TaskBatch:
-        batch = await self.db.scalar(
-            select(TaskBatch).where(
-                TaskBatch.id == batch_id,
-                TaskBatch.org_id == org_id,
-            )
+        statement = select(TaskBatch).where(
+            TaskBatch.id == batch_id,
+            TaskBatch.org_id == org_id,
         )
+        if for_update:
+            statement = statement.with_for_update().execution_options(populate_existing=True)
+        batch = await self.db.scalar(statement)
         if not batch:
             raise HTTPException(status_code=404, detail="Batch not found")
         return batch
@@ -278,18 +280,19 @@ class BatchService:
         self, batch_id: uuid.UUID, org_id: uuid.UUID
     ) -> None:
         """
-        Отменяет батч: помечает незапущенные задачи CANCELLED.
-        Уже запущенные задачи завершатся сами.
+        Отменяет QUEUED/ASSIGNED задачи; RUNNING завершаются самостоятельно.
+        ASSIGNED может быть в доставке: SQL отмена не доказывает остановку APK.
         """
         batch = await self.get_batch(batch_id, org_id)
 
-        if batch.status in (TaskBatchStatus.COMPLETED, TaskBatchStatus.CANCELLED):
+        if batch.status not in (TaskBatchStatus.PENDING, TaskBatchStatus.RUNNING):
             raise HTTPException(
                 status_code=409,
                 detail=f"Batch already in terminal status '{batch.status}'",
             )
 
-        # Отменить QUEUED задачи этого батча
+        # Result handlers acquire Task -> TaskBatch. Keep the same order and
+        # deterministic task ordering so cancellation cannot invert those locks.
         from backend.database.redis_client import redis as _redis
         from backend.services.task_queue import TaskQueue
 
@@ -299,14 +302,25 @@ class BatchService:
                 await self.db.execute(
                     select(Task).where(
                         Task.batch_id == batch_id,
+                        Task.org_id == org_id,
                         Task.status.in_([TaskStatus.QUEUED, TaskStatus.ASSIGNED]),
-                    )
+                    ).order_by(Task.id).with_for_update().execution_options(populate_existing=True)
                 )
             ).scalars().all()
         )
+        # A result/cancellation may have committed while we waited for tasks.
+        # Refresh any identity-map snapshot before validating or touching Redis.
+        batch = await self.get_batch(batch_id, org_id, for_update=True)
+        if batch.status not in (TaskBatchStatus.PENDING, TaskBatchStatus.RUNNING):
+            raise HTTPException(
+                status_code=409,
+                detail=f"Batch already in terminal status '{batch.status}'",
+            )
+        now = datetime.now(timezone.utc)
         for task in queued_tasks:
             await queue.cancel_task(str(task.id), str(org_id), str(task.device_id))
             task.status = TaskStatus.CANCELLED
+            task.finished_at = now
 
         batch.status = TaskBatchStatus.CANCELLED
         logger.info("batch.cancelled", batch_id=str(batch_id), tasks_cancelled=len(queued_tasks))

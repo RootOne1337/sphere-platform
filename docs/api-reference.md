@@ -1541,37 +1541,50 @@ Get event details.
 
 ## Batches — `/batches`
 
-### GET /batches
-
-List batch operations.
-
-| Param | Type | Description |
-|-------|------|-------------|
-| `status` | string | Filter by batch status (`pending`, `running`, `completed`, `failed`) |
-| `page` | int | Page number |
-| `per_page` | int | Items per page |
+These paths are under `/api/v1`. Verified against the batch router/schema on
+7 September 2026; the API has no GET collection route or POST cancel route.
 
 ### POST /batches
 
-Create a new batch operation targeting multiple devices.
+Requires `script:execute`; accepts `script_id` and 1–1000 `device_ids` plus
+optional `wave_size` (1–100, default 10), `wave_delay_ms` (default 5000),
+`jitter_ms` (default 1000), `priority` (1–10, default 5), `name`, `webhook_url`
+and `stagger_by_workstation` (default true). Returns 202 with the batch record.
 
 ```json
 {
-  "device_ids": ["uuid", "uuid"],
-  "action": "execute_script",
-  "params": {
-    "script_id": "uuid"
-  }
+  "script_id": "<script UUID>",
+  "device_ids": ["<device UUID>"],
+  "wave_size": 10,
+  "wave_delay_ms": 5000,
+  "jitter_ms": 1000
 }
 ```
 
+### POST /batches/broadcast
+
+Requires `script:execute`; accepts the same wave options and `script_id`, with
+no `device_ids`. Resolves online devices in the caller's organization and returns
+202 with the batch record plus `online_devices`.
+
 ### GET /batches/{id}
 
-Get batch operation status and per-device results.
+Requires `script:read`. Returns the tenant-scoped batch record with status,
+`total`, `succeeded`, `failed`, `wave_config`, timestamps and optional `notes`.
+This response does not contain a per-device task list.
 
-### POST /batches/{id}/cancel
+### DELETE /batches/{id}
 
-Cancel a running batch.
+Requires `script:execute`. Returns 204 after the caller commits cancellation.
+Unknown/foreign batch returns 404; COMPLETED, PARTIAL, FAILED and CANCELLED
+batches return 409. The server locks eligible tasks then the batch before
+validation and queue effects. QUEUED/ASSIGNED tasks become CANCELLED with UTC
+`finished_at`; RUNNING tasks continue under the existing batch API policy.
+
+SQL cancellation is not proof of physical stop. ASSIGNED may already be in
+transit; Redis/commit failure and wave producer recovery remain open. In
+particular, the current producer can report completion after task creation
+rather than device results. See [AUD-43 and remaining work](audits/2026-09-05/AUDIT-REPORT.md).
 
 ---
 

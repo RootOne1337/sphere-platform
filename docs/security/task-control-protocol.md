@@ -54,6 +54,14 @@ TaskService cancel/force-stop lock and refresh the tenant-scoped task row before
 checking its status. A concurrently completed/failed/timed-out task returns 409
 without another queue or command effect. Ordinary GETs do not take this lock.
 
+Batch DELETE authorizes the organization, locks QUEUED/ASSIGNED tasks in UUID
+order, then locks/refreshes the batch. Only PENDING/RUNNING batches are mutable;
+terminal batches return 409 before queue effects. Result writers acquire Task
+before TaskBatch, and cancellation retains that order. Cancelled tasks receive a
+UTC finished_at; RUNNING tasks continue. ASSIGNED may already be in transit.
+Wave production has a separate lifecycle and still needs cancellation/status
+recovery work. See AUD-43 and test_batch_cancellation.py for the proven boundary.
+
 These changes do not introduce a cancellation outbox. In particular:
 
 - TaskService still sends the running stop before its caller commits. A failed
@@ -67,7 +75,7 @@ These changes do not introduce a cancellation outbox. In particular:
 - Controls are not durably deduplicated or ordered within the same execution.
   A delayed resume for the same task may override a later pause. TTL is only an
   age bound, not an execution generation or ordering guarantee.
-- Batch/scheduler serialization, stale RUNNING reconciliation and post-commit
+- Scheduler serialization, wave producer recovery, stale RUNNING reconciliation and post-commit
   effects remain open. A new task must not be treated as proof the old one has
   physically stopped.
 
