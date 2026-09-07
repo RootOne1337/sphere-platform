@@ -1526,7 +1526,9 @@ These paths are under `/api/v1`. Verified against the batch router/schema on
 Requires `script:execute`; accepts `script_id` and 1–1000 `device_ids` plus
 optional `wave_size` (1–100, default 10), `wave_delay_ms` (default 5000),
 `jitter_ms` (default 1000), `priority` (1–10, default 5), `name`, `webhook_url`
-and `stagger_by_workstation` (default true). Returns 202 with the batch record.
+and `stagger_by_workstation` (default true). The service commits the batch before
+launching the independent worker; returns 202 with the batch record. A failed
+commit launches no worker. Crash recovery between commit and launch is still open.
 
 Wave submission creates QUEUED task intents; it does not mean devices completed
 execution. `failed` includes rejected device slots (for example missing, foreign

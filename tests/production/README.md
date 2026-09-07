@@ -86,3 +86,8 @@ post-submission cancellation and admission/result counter concurrency. A real
 PostgreSQL division-by-zero error proves that the current wave aborts without
 discarding prior committed waves or reporting success. Transport is mocked;
 wave restart/cancellation fencing and reliable callbacks remain separate work.
+
+`test_batch_startup.py` verifies parent visibility across sessions, no launch on
+commit/mapping failure and an ASGI POST with actual SQL task admission. It does
+not exercise a listening server or physical APK. The fourth case supplements
+the three-case before proof; durable recovery after commit remains open.

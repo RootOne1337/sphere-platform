@@ -139,7 +139,9 @@ callback. Rejected device slots contribute to SQL outcome counters under the sam
 lock as device results. Unexpected/database faults abort the current wave while
 retaining earlier commits. Thirteen real PostgreSQL regressions include concurrent
 outcome writes and an actual statement error. Batch callback delivery, cancellation
-during production, startup ordering and durable wave recovery remain open.
+during production and durable wave recovery remain open. Batch startup now commits
+the parent before launching independent work; four regressions cover parent
+visibility, commit/mapping failure and real ASGI submission/task admission.
 
 ## Validation
 

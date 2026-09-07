@@ -47,6 +47,11 @@ class BatchService:
         org_id: uuid.UUID,
         user_id: uuid.UUID,
     ) -> TaskBatch:
+        """Prepare and commit the batch before starting independent wave work.
+
+        This entry point owns its transaction boundary because its worker uses
+        a different session. A successful return is already durable.
+        """
         # Проверить скрипт
         script = await self.db.scalar(
             select(Script).where(
@@ -89,6 +94,11 @@ class BatchService:
             wave_size=request.wave_size,
             stagger_by_workstation=request.stagger_by_workstation,
         )
+
+        # The worker must never race an uncommitted parent or escape a failed
+        # commit. A process crash between commit and launch still needs durable
+        # wave-plan recovery; moving task creation earlier cannot solve that.
+        await self.db.commit()
 
         # FIX-4.3: Запустить фоновую задачу, защитить от GC через глобальный set
         bg_task = asyncio.create_task(
