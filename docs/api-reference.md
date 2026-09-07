@@ -1567,13 +1567,17 @@ This response does not contain a per-device task list.
 
 Requires `script:execute`. Returns 204 after the caller commits cancellation.
 Unknown/foreign batch returns 404; COMPLETED, PARTIAL, FAILED and CANCELLED
-batches return 409. The server locks eligible tasks then the batch before
-validation and queue effects. QUEUED/ASSIGNED tasks become CANCELLED with UTC
+batches return 409. The server serializes cancellation with in-flight wave
+admission, then locks eligible tasks and the batch before validation and queue
+effects. Later waves re-read tenant/status after this transaction fence and do
+not create tasks after cancellation. QUEUED/ASSIGNED tasks become CANCELLED with UTC
 `finished_at`; RUNNING tasks continue under the existing batch API policy.
 
 SQL cancellation is not proof of physical stop. ASSIGNED may already be in
-transit; Redis/commit failure, cancellation during further wave production and
-producer recovery remain open. See [AUD-43–45 and remaining work](audits/2026-09-05/AUDIT-REPORT.md).
+transit; Redis/commit failure and durable producer recovery remain open.
+Late RUNNING task results/timeouts update counters while retaining CANCELLED.
+All backend workers must run the updated fence; mixed versions do not provide
+this guarantee. See [AUD-43–47 and remaining work](audits/2026-09-05/AUDIT-REPORT.md).
 
 ---
 

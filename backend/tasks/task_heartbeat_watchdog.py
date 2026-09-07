@@ -336,7 +336,9 @@ async def _aggregate_batches(
         batch.failed = (batch.failed or 0) + timeout_count
         completed_count = (batch.succeeded or 0) + (batch.failed or 0)
 
-        if completed_count >= batch.total:
+        # A timeout is an outcome of surviving work, not a reason to reopen a
+        # batch whose remaining admission was cancelled.
+        if completed_count >= batch.total and batch.status != TaskBatchStatus.CANCELLED:
             if (batch.failed or 0) == 0:
                 batch.status = TaskBatchStatus.COMPLETED
             elif (batch.succeeded or 0) == 0:

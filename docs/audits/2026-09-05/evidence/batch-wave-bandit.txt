@@ -1,19 +1,19 @@
 [main]	INFO	profile include tests: None
-[main]	INFO	profile exclude tests: B104,B601,B101
+[main]	INFO	profile exclude tests: B101,B104,B601
 [main]	INFO	cli include tests: None
 [main]	INFO	cli exclude tests: None
 [main]	INFO	using config: .bandit
 [main]	INFO	running on Python 3.12.12
 [tester]	WARNING	nosec encountered (B108), but no failed test on line 42
 [tester]	WARNING	nosec encountered (B108), but no failed test on line 30
-Working... ---------------------------------------- 100% 0:00:02
-Run started:2026-09-07 14:11:16.726182
+Working... ---------------------------------------- 100% 0:00:01
+Run started:2026-09-07 14:25:26.487916
 
 Test results:
 	No issues identified.
 
 Code scanned:
-	Total lines of code: 20793
+	Total lines of code: 20814
 	Total lines skipped (#nosec): 0
 	Total potential issues skipped due to specifically being disabled (e.g., #nosec BXXX): 2
 

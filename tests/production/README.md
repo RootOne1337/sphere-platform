@@ -85,9 +85,17 @@ webhook suppression, result commits before producer exit, rejected device slots,
 post-submission cancellation and admission/result counter concurrency. A real
 PostgreSQL division-by-zero error proves that the current wave aborts without
 discarding prior committed waves or reporting success. Transport is mocked;
-wave restart/cancellation fencing and reliable callbacks remain separate work.
+wave restart and reliable callbacks remain separate work; cancellation fencing
+is exercised separately below.
 
 `test_batch_startup.py` verifies parent visibility across sessions, no launch on
 commit/mapping failure and an ASGI POST with actual SQL task admission. It does
 not exercise a listening server or physical APK. The fourth case supplements
 the three-case before proof; durable recovery after commit remains open.
+
+`test_batch_wave_cancellation.py` reproduces cancellation before, during and
+between wave transactions, terminal/tenant admission guards and late result/timeout
+handling. Thirteen cases include two extra regressions beyond the 11-case before
+proof: SQL rollback releases the production lock, and overlapping batches acquire
+devices without reverse-order deadlock. PostgreSQL lock waits are observed directly;
+queue effects remain mocked and no physical stop guarantee follows.

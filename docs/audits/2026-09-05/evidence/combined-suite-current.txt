@@ -1,19 +1,19 @@
 ........................................................................ [  6%]
-........................................................................ [ 13%]
+........................................................................ [ 12%]
 ........................................................................ [ 19%]
-........................................................................ [ 26%]
+........................................................................ [ 25%]
 ........................................................................ [ 32%]
-........................................................................ [ 39%]
-........................................................................ [ 46%]
-........................................................................ [ 52%]
-........................................................................ [ 59%]
-........................................................................ [ 65%]
-........................................................................ [ 72%]
-........................................................................ [ 79%]
-........................................................................ [ 85%]
-........................................................................ [ 92%]
-........................................................................ [ 98%]
-............                                                             [100%]
+........................................................................ [ 38%]
+........................................................................ [ 45%]
+........................................................................ [ 51%]
+........................................................................ [ 58%]
+........................................................................ [ 64%]
+........................................................................ [ 71%]
+........................................................................ [ 77%]
+........................................................................ [ 84%]
+........................................................................ [ 90%]
+........................................................................ [ 97%]
+.............................                                            [100%]
 ============================== warnings summary ===============================
 backend\api\v1\game_accounts\router.py:95
   C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\api\v1\game_accounts\router.py:95: FastAPIDeprecationWarning: `regex` has been deprecated, please use `pattern` instead
@@ -34,7 +34,7 @@ Name                                                    Stmts   Miss   Cover
 backend\api\v1\account_sessions\router.py                  35     13  62.86%
 backend\api\v1\audit\router.py                             32     17  46.88%
 backend\api\v1\auth\router.py                             139     63  54.68%
-backend\api\v1\batches\router.py                           32     13  59.38%
+backend\api\v1\batches\router.py                           30      9  70.00%
 backend\api\v1\bulk\router.py                              29      2  93.10%
 backend\api\v1\config\router.py                            71     11  84.51%
 backend\api\v1\device_events\router.py                     35     13  62.86%
@@ -96,7 +96,7 @@ backend\schemas\schedule.py                               138     23  83.33%
 backend\schemas\webhook.py                                 43      2  95.35%
 backend\services\account_credential_migration.py           42      2  95.24%
 backend\services\account_session_service.py               122    101  17.21%
-backend\services\batch_service.py                         110     17  84.55%
+backend\services\batch_service.py                         122     16  86.89%
 backend\services\bulk_service.py                           69     18  73.91%
 backend\services\device_event_service.py                   83     65  21.69%
 backend\services\device_registration_service.py            83      8  90.36%
@@ -130,7 +130,7 @@ backend\services\vpn\pool_service.py                      121      2  98.35%
 backend\tasks\ensure_enrollment_key.py                     31     24  22.58%
 backend\tasks\orchestration_loop.py                        11      4  63.64%
 backend\tasks\sync_device_status.py                        60     15  75.00%
-backend\tasks\task_heartbeat_watchdog.py                  139     28  79.86%
+backend\tasks\task_heartbeat_watchdog.py                  139     31  77.70%
 backend\tasks\vpn_health.py                                59      2  96.61%
 backend\websocket\connection_manager.py                    98      9  90.82%
 backend\websocket\event_publisher.py                       47     11  76.60%
@@ -140,9 +140,9 @@ backend\websocket\offline_queue.py                         85      8  90.59%
 backend\websocket\pubsub_router.py                        172     43  75.00%
 backend\websocket\stream_bridge.py                        139     57  58.99%
 ----------------------------------------------------------------------------
-TOTAL                                                   11156   3615  67.60%
+TOTAL                                                   11166   3613  67.64%
 
 97 files skipped due to complete coverage.
 Coverage JSON written to file docs/audits/2026-09-05/evidence/coverage-current.json
-Required test coverage of 65% reached. Total coverage: 67.60%
-1092 passed, 4 warnings in 132.86s (0:02:12)
+Required test coverage of 65% reached. Total coverage: 67.64%
+1109 passed, 4 warnings in 137.76s (0:02:17)

@@ -20,9 +20,9 @@ runtime-проверок и не считается доказательство
 | Проверка | Результат | Практическое ограничение |
 | --- | --- | --- |
 | Android enterprise debug unit suite | 344 passed, 0 failed | JVM/MockWebServer; не проверяет ОС, codec, батарею или смерть процесса на телефоне |
-| Объединённая Backend/PC/production/deployment suite | **1092 passed, 0 failed**; coverage **67,60%** | Строгий coverage gate 65% пройден с precision=2. Load suite исключена; 6 Compose config tests не запускают сервисы |
+| Объединённая Backend/PC/production/deployment suite | **1109 passed, 0 failed**; coverage **67,64%** | Строгий coverage gate 65% пройден с precision=2. Load suite исключена; 6 Compose config tests не запускают сервисы |
 | Python dependency scan | **0 known vulnerabilities** в совместном backend/PC resolution | Pip-audit snapshot, не проверка frontend/Gradle/container/application security; [версии и ограничения](DEPENDENCY-REVIEW.md) |
-| Проверки PostgreSQL/Redis | **224 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
+| Проверки PostgreSQL/Redis | **241 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
 | Миграции | Применены до **20260906_account_ciphertext** включительно | Только изолированная БД; конфликтные данные/downgrade проверены в throwaway schema; production не мигрировался |
 | Backend image | Собирается; исходная запись OpenAPI воспроизведённо падает с PermissionError | Исправлен lifespan; полный deployment runtime ещё не подтверждён |
 | Frontend build | Успешно | Type-check/Jest и браузерный runtime требуют отдельного завершения проверки |
@@ -33,7 +33,7 @@ runtime-проверок и не считается доказательство
 Предыдущий отдельный DAG benchmark однажды занял 127,1 ms при пороге 100 ms;
 изолированный повтор и последующие общие прогоны прошли. Порог не ослаблялся.
 Файл production-regressions-after.txt сохраняет более ранний standalone snapshot
-с 41 тестом; актуальные 224 входят в общий прогон.
+с 41 тестом; актуальные 241 входят в общий прогон.
 
 Команды запуска и предохранители изоляции: [tests/production/README.md](../../../tests/production/README.md).
 Исходные `14 passed` в [reproductions.txt](evidence/reproductions.txt) означают
@@ -469,7 +469,7 @@ runtime-проверок и не считается доказательство
 - **Affected files:** `backend/services/batch_service.py:261`, `:279`; `tests/production/test_batch_cancellation.py`.
 - **Fix:** `d4bb4d5` — eligible tasks выбираются с tenant filter, стабильным порядком UUID, FOR UPDATE и `populate_existing`; затем блокируется/обновляется batch и повторно допускаются только PENDING/RUNNING. Terminal batch возвращает 409 до queue effects. Отмена записывает UTC `finished_at`; RUNNING tasks сохраняются.
 - **Regression:** 16 новых PostgreSQL cases: result/cancel, fresh/stale terminal states, repeated cancellation, active task timestamps, tenant rejection и RUNNING semantics. Дополнительный тест сначала удерживает только Task, затем запускает cancel и result aggregation: обе транзакции завершаются в пределах deadline без инверсии Task → Batch. [41 related tests passed](evidence/batch-cancellation-after.txt). Общий прогон с первыми 15 cases: **1062 passed, 66,72%**; дополнительный lock-order case входит в последующий targeted прогон.
-- **Residual risk:** Redis effects остаются до commit API; нет durable cancellation outbox/stop ACK. ASSIGNED мог уже попасть на APK, RUNNING намеренно не останавливается этим API. Преждевременный COMPLETED producer исправлен отдельно в AUD-45; cancellation между волнами и recovery ещё открыты. Scheduler/pipeline cancellation проверяются отдельно. Это не blanket guarantee отсутствия всех deadlocks.
+- **Residual risk:** Redis effects остаются до commit API; нет durable cancellation outbox/stop ACK. ASSIGNED мог уже попасть на APK, RUNNING намеренно не останавливается этим API. Преждевременный COMPLETED producer исправлен отдельно в AUD-45; cancellation между волнами закрыта отдельно в AUD-47; durable recovery ещё открыт. Scheduler/pipeline cancellation проверяются отдельно. Это не blanket guarantee отсутствия всех deadlocks.
 
 ### AUD-44 — High: scheduler cancellation терял результаты задач и pipeline runs
 
@@ -487,16 +487,25 @@ runtime-проверок и не считается доказательство
 - **Affected files:** `backend/services/batch_service.py`, `backend/services/task_service.py`; `tests/production/test_batch_wave_outcomes.py`.
 - **Fix:** `788a625` — убрана безусловная финализация и преждевременная отправка callback. Отказы допуска 4xx учитываются в SQL через общий FOR UPDATE aggregation lock, после создания задач и в транзакции той же волны. DB/неожиданные ошибки выходят из producer и откатывают текущую волну; предыдущие commit сохраняются. Финальный статус рассчитывается по outcomes, а не факту постановки в очередь.
 - **Regression:** 13 новых PostgreSQL cases: success/failure после QUEUED, отсутствие false webhook, три terminal outcome interleavings, смешанные/полные отказы допуска, возможность отмены после enqueue, реальная SQL ошибка и два конкурентных increment с владельцем result lock. [56 related tests passed](evidence/batch-wave-outcomes-after.txt). Полный прогон: **1092 passed**, coverage **67,60%**, включая **224 PostgreSQL/Redis cases**. Никакие реальные устройства/webhooks не вызываются.
-- **Residual risk:** `webhook_url` пока только принимается/хранится; корректный post-commit completion callback с durable outbox ещё не реализован. Нет durable wave cursor, безопасного restart/replay и reconciliation после неизвестного commit outcome. Startup ordering исправлен отдельно в AUD-46; fencing с cancel между волнами ещё открыт. RUNNING batch после аварии требует расследования, а не слепого повтора. Повторяющиеся device IDs и иные writers требуют проверки. Исторические ложные статусы/счётчики автоматически не исправляются.
+- **Residual risk:** `webhook_url` пока только принимается/хранится; корректный post-commit completion callback с durable outbox ещё не реализован. Нет durable wave cursor, безопасного restart/replay и reconciliation после неизвестного commit outcome. Startup ordering исправлен отдельно в AUD-46; fencing с cancel между волнами — в AUD-47. RUNNING batch после аварии требует расследования, а не слепого повтора. Повторяющиеся device IDs и иные writers требуют проверки. Исторические ложные статусы/счётчики автоматически не исправляются.
 
 ### AUD-46 — High: worker batch запускался до commit родительской записи
 
 - **Root cause:** `start_batch` делал flush и `asyncio.create_task`, а commit выполнялся позже в HTTP router. Независимая worker session могла не видеть родителя; ошибка commit в router не отменяла уже запущенную работу.
 - **Evidence/reproduction:** отдельная PostgreSQL session фонового worker читает batch до caller commit и получает `None`; при инъекции ошибки commit в реальный endpoint coroutine worker уже запущен. Контрольный сценарий ошибки mapping не запускает фоновые задачи. [До fix: 2 failed / 1 passed](evidence/batch-startup-before.txt) на `788a625`.
 - **Affected files:** `backend/services/batch_service.py`, `backend/api/v1/batches/router.py`, `tests/production/test_batch_startup.py`.
-- **Fix:** сервис явно владеет transaction boundary: сначала проверяет/подготавливает волны, коммитит parent, затем запускает worker. Оба HTTP start/broadcast paths используют этот commit, лишний commit router убран. Ошибка commit выходит до создания coroutine worker.
-- **Regression:** три исходных сценария проходят; добавлен четвёртый через ASGI HTTP POST /batches с настоящим worker и TaskService на выделенной БД: 202, ровно один launch и QUEUED task. [25 related tests passed](evidence/batch-startup-after.txt). Полный прогон AUD-45 остаётся отдельным revision-specific baseline до следующей общей проверки.
+- **Fix:** `841904f` — сервис явно владеет transaction boundary: сначала проверяет/подготавливает волны, коммитит parent, затем запускает worker. Оба HTTP start/broadcast paths используют этот commit, лишний commit router убран. Ошибка commit выходит до создания coroutine worker.
+- **Regression:** три исходных сценария проходят; добавлен четвёртый через ASGI HTTP POST /batches с настоящим worker и TaskService на выделенной БД: 202, ровно один launch и QUEUED task. [25 related tests passed](evidence/batch-startup-after.txt). Все четыре cases также входят в последующий полный прогон AUD-47.
 - **Residual risk:** окно process crash между успешным commit и launch остаётся; нужны durable wave plan/cursor и recovery worker. Неизвестный commit outcome нельзя автоматически повторять. Это не доказательство доставки задач APK или cancellation fencing между волнами.
+
+### AUD-47 — High: отменённый batch продолжал допускать новые задачи
+
+- **Root cause:** producer не проверял актуальный статус batch перед волной. Выборка cancel видела только committed Task rows и пропускала ещё создаваемые задачи. Обычная проверка статуса без общего transaction fence не закрывает эту гонку. Task result/watchdog aggregation также меняли CANCELLED на COMPLETED/FAILED при завершении оставшейся RUNNING task.
+- **Evidence/reproduction:** на `841904f` отмена между commit волн оставляет следующую task QUEUED; отмена во время незакоммиченного insert завершается раньше producer и пропускает task. В обратном порядке producer начинает create до commit cancellation. Четыре terminal batch состояния не запрещают новую волну; success/failure/timeout отменённого batch меняют его статус. Внутренний worker с явно неверным org context меняет счётчики чужого batch (test fixture, не доказанный публичный API exploit). [Исходные 11 cases: 11 failed](evidence/batch-wave-cancellation-before.txt).
+- **Affected files:** `backend/services/batch_service.py`, `backend/services/task_service.py`, `backend/tasks/task_heartbeat_watchdog.py`; `tests/production/test_batch_wave_cancellation.py`.
+- **Fix:** producer и cancel берут общий PostgreSQL transaction advisory lock по batch до task/device row locks. После ожидания producer заново читает tenant-scoped scalar status и допускает только PENDING/RUNNING. Cancel сначала ждёт admission, затем выбирает уже committed tasks и сохраняет прежний Task → TaskBatch порядок. Devices внутри волны блокируются по UUID. Result/watchdog увеличивают counters, но сохраняют CANCELLED.
+- **Regression:** все 11 исходных cases проходят. Ещё два теста проверяют освобождение advisory lock после настоящей SQL ошибки/rollback и два конкурирующих batch с обратным входным порядком общих устройств. [73 related tests passed](evidence/batch-wave-cancellation-after.txt), включая прежние проверки Task → Batch deadlock и result/cancel serialization. Полный прогон: **1109 passed, coverage 67,64%**, включая **241 PostgreSQL/Redis cases**; строгий gate 65% сохранён. Ruff, configured Bandit (0 Medium/High) и API docs --check прошли.
+- **Residual risk:** гарантия действует для обновлённых BatchService producer/cancel и указанных aggregation writers; перед использованием требуется обновить все backend workers, старый worker advisory fence не соблюдает. Другие scheduler/pipeline writers, durable wave replay/cursor, неизвестный commit outcome и stop outbox остаются открыты. Cancel может ждать текущую волну/SQL lock; прикладной deadline ожидания не добавлен. Redis effects остаются до commit; отмена SQL не доказывает физическую остановку ASSIGNED/RUNNING на APK. Исторические данные и производственная инфраструктура не изменялись.
 
 ## Открытые подтверждённые блокеры
 
@@ -605,3 +614,9 @@ scripts.export_api_docs` обновляет `docs/openapi.json` и `docs/api-end
 также успешен. Сохранены [backend](evidence/ci-753f67c-backend.json) и
 [Android](evidence/ci-753f67c-android.json) snapshots конкретного code head;
 последующий documentation CI gate требует собственного прогона.
+
+На `788a625` [backend CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34131800743)
+и [Android CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34131800736)
+прошли полностью. Снимки: [backend](evidence/ci-788a625-backend.json),
+[Android](evidence/ci-788a625-android.json). Более поздние commits startup/cancellation
+проверены локально общим прогоном выше; актуальный remote status — в PR checks.

@@ -10,13 +10,14 @@
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import random
 import uuid
 from datetime import datetime, timezone
 
 import structlog
 from fastapi import HTTPException
-from sqlalchemy import select
+from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from backend.models.script import Script
@@ -29,6 +30,17 @@ logger = structlog.get_logger()
 
 # FIX-4.3: Глобальный set фоновых задач — переживает HTTP-запрос, защита от GC
 _background_tasks: set[asyncio.Task] = set()
+
+
+async def _lock_batch_production(db: AsyncSession, batch_id: uuid.UUID) -> None:
+    """Fence wave admission and cancellation, even when no Task row exists yet.
+
+    This transaction lock precedes task/device locks. Do not lock TaskBatch
+    before Task: result handlers already use Task -> TaskBatch ordering.
+    """
+    key = int.from_bytes(hashlib.sha256(f"batch-production:{batch_id}".encode()).digest()[:8],
+                         "big", signed=True)
+    await db.execute(text("SELECT pg_advisory_xact_lock(:key)"), {"key": key})
 
 
 class BatchService:
@@ -195,6 +207,15 @@ class BatchService:
             task_svc = TaskService(db, queue)
 
             for wave_num, wave_devices in enumerate(waves):
+                await _lock_batch_production(db, batch_id)
+                # Read the scalar status after waiting, never an old ORM snapshot.
+                status = await db.scalar(select(TaskBatch.status).where(
+                    TaskBatch.id == batch_id, TaskBatch.org_id == org_id,
+                ))
+                if status not in (TaskBatchStatus.PENDING, TaskBatchStatus.RUNNING):
+                    await db.rollback()
+                    logger.info("batch.wave.skipped_inactive", batch_id=str(batch_id))
+                    return
                 failed = 0
                 logger.info(
                     "batch.wave.start",
@@ -203,7 +224,9 @@ class BatchService:
                     devices=len(wave_devices),
                 )
 
-                for device_id in wave_devices:
+                # Concurrent batches can overlap devices; acquire their row
+                # locks in one stable order within each committed wave.
+                for device_id in sorted(wave_devices):
                     try:
                         await task_svc.create_task(
                             script_id=request.script_id,
@@ -296,6 +319,10 @@ class BatchService:
                 status_code=409,
                 detail=f"Batch already in terminal status '{batch.status}'",
             )
+
+        # A task-only SELECT cannot see an in-flight wave's uncommitted inserts.
+        # Wait for admission first so the subsequent query includes its commit.
+        await _lock_batch_production(self.db, batch_id)
 
         # Result handlers acquire Task -> TaskBatch. Keep the same order and
         # deterministic task ordering so cancellation cannot invert those locks.

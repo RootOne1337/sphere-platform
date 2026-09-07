@@ -285,8 +285,8 @@ Evidence: [loop before](audits/2026-09-05/evidence/android-loop-before.txt),
 [controls before](audits/2026-09-05/evidence/android-control-boundaries-before.txt),
 [full suite after](audits/2026-09-05/evidence/android-control-boundaries-after.txt).
 
-The combined backend/PC/local-service/deployment suite last passed **1092 tests**,
-with **67.60%** backend coverage. JVM/MockWebServer and isolated PostgreSQL/Redis
+The combined backend/PC/local-service/deployment suite last passed **1109 tests**,
+with **67.64%** backend coverage. JVM/MockWebServer and isolated PostgreSQL/Redis
 checks exercise real runtime logic but replace device/network boundaries.
 
 Real APK-to-backend runtime remains incomplete: automatic approval review

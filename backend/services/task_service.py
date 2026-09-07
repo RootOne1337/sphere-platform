@@ -495,7 +495,9 @@ class TaskService:
 
         completed_count = (batch.succeeded or 0) + (batch.failed or 0)
 
-        if completed_count >= batch.total:
+        # Batch cancellation permits existing RUNNING tasks to finish. Their
+        # outcomes still count, but cannot undo the batch's cancellation intent.
+        if completed_count >= batch.total and batch.status != TaskBatchStatus.CANCELLED:
             # Все задачи завершены — вычисляем финальный статус
             if batch.failed == 0:
                 batch.status = TaskBatchStatus.COMPLETED

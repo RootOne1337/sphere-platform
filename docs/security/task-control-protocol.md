@@ -61,9 +61,12 @@ before TaskBatch, and cancellation retains that order. Cancelled tasks receive a
 UTC finished_at; RUNNING tasks continue. ASSIGNED may already be in transit.
 Wave submission now keeps a batch active until device outcomes arrive and counts
 admission failures under the result aggregation lock. It does not emit a false
-completion webhook. Cancellation during further waves, producer crash recovery
-and durable outcome notifications remain open. See AUD-43/AUD-45 and the batch
-cancellation/wave outcome tests for the proven boundaries.
+completion webhook. Parent commit precedes worker launch. Producer/cancel share
+a PostgreSQL transaction advisory lock before task/device row locks: cancellation
+waits for in-flight admission, then sees its committed tasks; later waves re-read
+tenant/status after waiting. Late results/timeouts keep CANCELLED while updating
+counters. Producer crash recovery and durable outcome notifications remain open.
+See AUD-43/AUD-45–47 and the batch cancellation/startup/wave outcome tests.
 
 Scheduler cancellation locks eligible tenant Task/PipelineRun rows in stable ID
 order and refreshes them before mutation. A concurrently committed terminal row
@@ -97,7 +100,9 @@ Update all backend workers before adopting the Android target requirement: old
 watchdogs send no `payload.task_id`, which the new APK rejects. Pause/resume
 integrations must also send a target and a distinct control ID. Old APKs still
 ignore the target, so delayed-control protection requires the APK update too.
-Mixed versions do not provide the complete guarantee. No production rollout was
+All backend workers must also adopt the batch production/cancellation fence; an
+old wave worker can still admit work after cancellation. Mixed versions do not
+provide the complete guarantee. No production rollout was
 performed during this audit.
 
 `ControlCommandTargetTest` exercises the real dispatcher, journal and DAG runner
