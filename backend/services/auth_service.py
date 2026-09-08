@@ -213,7 +213,11 @@ class AuthService:
         return result.scalar_one_or_none()
 
     async def _get_refresh_token_by_hash(self, token_hash: str) -> RefreshToken | None:
+        # Refresh and logout consume the same row. Validate only after its owner
+        # commits, and replace any preloaded ORM snapshot while acquiring the lock.
         result = await self.db.execute(
             select(RefreshToken).where(RefreshToken.token_hash == token_hash)
+            .with_for_update()
+            .execution_options(populate_existing=True)
         )
         return result.scalar_one_or_none()

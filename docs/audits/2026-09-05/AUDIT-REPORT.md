@@ -20,9 +20,9 @@ runtime-проверок и не считается доказательство
 | Проверка | Результат | Практическое ограничение |
 | --- | --- | --- |
 | Android enterprise debug unit suite | 344 passed, 0 failed | JVM/MockWebServer; не проверяет ОС, codec, батарею или смерть процесса на телефоне |
-| Объединённая Backend/PC/production/deployment suite | **1114 passed, 0 failed**; coverage **67,77%** | Строгий coverage gate 65% пройден с precision=2. Load suite исключена; 6 Compose config tests не запускают сервисы |
+| Объединённая Backend/PC/production/deployment suite | **1122 passed, 0 failed**; coverage **67,77%** | Строгий coverage gate 65% пройден с precision=2. Load suite исключена; 6 Compose config tests не запускают сервисы |
 | Python dependency scan | **0 known vulnerabilities** в совместном backend/PC resolution | Pip-audit snapshot, не проверка frontend/Gradle/container/application security; [версии и ограничения](DEPENDENCY-REVIEW.md) |
-| Проверки PostgreSQL/Redis | **246 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
+| Проверки PostgreSQL/Redis | **254 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
 | Миграции | Применены до **20260906_account_ciphertext** включительно | Только изолированная БД; конфликтные данные/downgrade проверены в throwaway schema; production не мигрировался |
 | Backend image | Собирается; исходная запись OpenAPI воспроизведённо падает с PermissionError | Исправлен lifespan; полный deployment runtime ещё не подтверждён |
 | Frontend | **198 Jest tests passed**, tsc passed; Next production build exit 0 на Node 24.19.0 | React/JSDOM + Axios adapters; настоящий browser runtime не проверен. Windows standalone tracing выдал ENOENT warning, artifact packaging ещё не подтверждён |
@@ -33,7 +33,7 @@ runtime-проверок и не считается доказательство
 Предыдущий отдельный DAG benchmark однажды занял 127,1 ms при пороге 100 ms;
 изолированный повтор и последующие общие прогоны прошли. Порог не ослаблялся.
 Файл production-regressions-after.txt сохраняет более ранний standalone snapshot
-с 41 тестом; актуальные 246 входят в общий прогон.
+с 41 тестом; актуальные 254 входят в общий прогон.
 
 Команды запуска и предохранители изоляции: [tests/production/README.md](../../../tests/production/README.md).
 Исходные `14 passed` в [reproductions.txt](evidence/reproductions.txt) означают
@@ -513,7 +513,7 @@ runtime-проверок и не считается доказательство
 - **Evidence/reproduction:** на `9bb33ad` HTTP logout возвращает 204 без Set-Cookie для valid/invalid/absent Bearer. Logout с действительным Bearer и refresh в header оставляет этот refresh рабочим: последующий настоящий POST /auth/refresh возвращает 200. Cookie-вариант SQL отзыва уже работал. [До fix: 4 failed / 1 passed](evidence/session-logout-before.txt).
 - **Affected files:** `backend/api/v1/auth/router.py`, `tests/production/test_session_logout.py`, generated API contracts.
 - **Fix:** возвращается тот же Response с удалением cookie и 204; параметры удаления согласованы с выдачей cookie. При valid signed Bearer отзыв получает cookie либо fallback header. В OpenAPI указан фактический 204.
-- **Regression:** пять реальных ASGI/PostgreSQL/Redis cases проверяют атрибуты удаления cookie, пустой 204, сохранённый SQL revoke и 401 при повторном refresh/доступе со старым access. [71 related auth tests passed](evidence/session-logout-after.txt), включая JWT forgery/expired-token contract checks. Полный прогон: **1114 passed**, coverage **67,77%**, включая **246 PostgreSQL/Redis cases**; строгий gate 65% сохранён.
+- **Regression:** пять реальных ASGI/PostgreSQL/Redis cases проверяют атрибуты удаления cookie, пустой 204, сохранённый SQL revoke и 401 при повторном refresh/доступе со старым access. [71 related auth tests passed](evidence/session-logout-after.txt), включая JWT forgery/expired-token contract checks. Полный прогон: **1122 passed**, coverage **67,77%**, включая **246 PostgreSQL/Redis cases**; строгий gate 65% сохранён.
 - **Residual risk:** при отсутствующем/некорректном Bearer endpoint только удаляет cookie, не выполняя SQL revoke. Redis/DB failure не подтверждает завершение серверного отзыва. Concurrent refresh/logout, session-family revocation, frontend Sign Out/guard/cache и поздние auth responses проверяются отдельно. XSS exposure localStorage fallback не устраняется этим fix; HTTP transport подменён, живой сервер не запускался.
 
 ### AUD-49 — High: браузер показывал закрытые страницы и кэш предыдущей организации
@@ -540,6 +540,14 @@ runtime-проверок и не считается доказательство
 - **Fix:** клик синхронно очищает local session и переходит на login; новый `signOut` в `frontend/lib/store.ts` отправляет captured Bearer и fallback refresh напрямую на `/auth/logout`, с cookie и timeout 5 секунд, без перехвата 401. Неподтверждённый remote logout отражается предупреждением на login. Late failure старого logout не меняет новую сессию. Недоступный localStorage не мешает удалить memory credentials; cookie fallback и memory logout intent сохраняются.
 - **Regression:** `frontend/__tests__/session/logout.test.tsx` проверяет реальный клик/захваченные headers, network failure, late failure после нового login, отказ browser storage. `login.test.tsx` проверяет видимость предупреждения. [Текущий полный прогон: 198 tests passed](evidence/frontend-session-current.txt), tsc passed; [Next build exit 0](evidence/frontend-session-build.txt).
 - **Residual risk:** при offline timeout SQL revoke не подтверждён — UI сообщает об этом. Logout требует валидно подписанного Bearer для server revocation (AUD-48); late Set-Cookie/refresh-family и multiple tabs остаются открыты. Memory-only logout marker не переживёт полный reload при заблокированном storage; серверная cookie должна быть удалена успешным logout. Build на Windows содержит tracing ENOENT warning: exit 0 не подтверждает корректность standalone artifact или deployment.
+
+### AUD-52 — High: конкурентная ротация принимала один refresh-токен дважды
+
+- **Root cause / affected files:** `backend/services/auth_service.py::_get_refresh_token_by_hash` выполнял обычный SELECT. Два запроса читали `revoked=False`, затем оба коммитили новый токен; ожидающий UPDATE не перепроверял committed revoke/expiry. Ранее загруженный ORM объект также сохранял старое состояние.
+- **Evidence / reproduction:** выделенный PostgreSQL, два независимых AsyncSession и настоящий row owner; тест наблюдает `pg_stat_activity.wait_event_type=Lock`, затем освобождает транзакцию. Оба refresh возвращали 200 вместо одного 200 + одного 401. Отдельные committed revoke/expiry также обходились: [6 failed / 2 rollback controls passed](evidence/session-rotation-before.txt). Транспорт внешних систем не используется.
+- **Fix:** общий lookup refresh/logout захватывает `SELECT ... FOR UPDATE` и `populate_existing=True` до проверки revoked/expiry. Успешная ротация коммитит потребление родителя и новый токен вместе. После ожидания проверяется свежая строка, включая ранее загруженный ORM snapshot.
+- **Regression:** `tests/production/test_session_rotation.py` — 8 PostgreSQL cases: двойное потребление fresh/preloaded, revoke/expiry после ожидания fresh/preloaded, rollback revocation, искусственный commit failure до durability. Победивший child дополнительно проверяется через ASGI HTTP refresh; replay родителя возвращает 401. [61 related auth tests passed](evidence/session-rotation-after.txt); полный прогон **1122 passed / 67,77%**, включая 254 PostgreSQL/Redis cases. Ruff и Bandit gate проходят.
+- **Residual risk:** блокируется одна token row, а не вся refresh family. Logout старого родителя после уже завершившейся ротации не гарантирует отзыв ранее выданного child; lineage/family protocol ещё не реализован. Commit с потерянным подтверждением может потребовать повторного login; нет безопасного replay выдачи токенов. Concurrent user deactivation/role changes, Redis outage during logout и browser multi-tab coordination требуют отдельной проверки. Существующие ранее размноженные токены автоматически не отзываются.
 
 ## Открытые подтверждённые блокеры
 

@@ -154,7 +154,10 @@ cancellation delivery remain open.
 HTTP logout now returns its actual cookie-deletion response and revokes the
 `X-Refresh-Token` fallback used by the frontend. Five PostgreSQL/Redis/ASGI cases
 include a previously successful refresh replay after logout and old-access
-rejection. Concurrent server rotation and refresh-family revocation remain open.
+rejection. Concurrent single-use refresh is serialized with a PostgreSQL row lock and fresh
+ORM state before validation. Eight database regressions prove single consumption,
+revoke/expiry visibility after waits and rollback behavior. Refresh-family
+revocation and uncertain-commit replay remain open.
 
 Private frontend pages remain unmounted until the identity is ready; a new
 session/identity gets a separate React Query client before rendering. Version
@@ -174,11 +177,11 @@ network failure displays an unconfirmed-revocation message on login.
 
 - Frontend: **198 tests / 23 suites passed**, TypeScript noEmit passed on Node 24.19.0.
   Next build exits 0; Windows standalone tracing emits an ENOENT warning, so
-  packaging and real-browser behavior remain unconfirmed. New Linux frontend CI
-  runs Jest, tsc, production build and a standalone-entry-point check.
+  packaging and real-browser behavior remain unconfirmed. On `0eeeaca`, [Linux frontend CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34174839494)
+  passed Jest, tsc, production build and a standalone-entry-point check.
 - Android enterprise debug unit suite: **344 passed**.
-- Combined backend/PC, PostgreSQL/Redis and deployment regressions: **1114 passed**.
-  This includes **246 real-service tests** and **6 Compose configuration tests**.
+- Combined backend/PC, PostgreSQL/Redis and deployment regressions: **1122 passed**.
+  This includes **254 real-service tests** and **6 Compose configuration tests**.
   Coverage is **67.77%** and passes the unchanged **65%** gate with two-decimal
   precision. No threshold or coverage scope was weakened. Two additional
   regression tests exercise the 64.98% rejection and exact 65.00% boundary. Long load/soak profiles require a prepared API

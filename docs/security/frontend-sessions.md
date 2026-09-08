@@ -1,7 +1,7 @@
 # Frontend session boundaries
 
 Reviewed 8 September 2026. This describes the implemented browser session flow;
-backend authorization remains mandatory for every request. See AUD-48–51 in the
+backend authorization remains mandatory for every request. See AUD-48–52 in the
 [audit report](../audits/2026-09-05/AUDIT-REPORT.md) for evidence and open risks.
 
 `Providers` mounts private pages only after initialization has completed and both
@@ -42,7 +42,8 @@ revocation even when the endpoint returns 204 to delete a cookie.
 The `sphere_signed_out` marker prevents automatic cookie restoration after explicit
 logout. When storage is blocked, the current document retains the boundary in memory
 and can use cookie transport, but this intent cannot persist across a full reload.
-Concurrent Set-Cookie responses, refresh-family revocation and cross-tab coordination
+The backend serializes consumption of each refresh row (AUD-52). Concurrent
+Set-Cookie responses, refresh-family revocation and cross-tab coordination
 need further testing. Never describe an offline logout as confirmed remote revocation.
 
 Run `npm ci --ignore-scripts`, `npm run type-check`, `npx --no-install jest --runInBand`

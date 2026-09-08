@@ -105,3 +105,10 @@ SQL refresh-token revocation through cookie/header transports, rejection of refr
 replay and access-token blacklist behavior. It uses real local PostgreSQL/Redis,
 not a listening server. Invalid/absent Bearer and concurrent session-recovery limits
 are documented separately.
+
+`test_session_rotation.py` proves single-use refresh consumption with real concurrent
+PostgreSQL transactions, observed row waits and preloaded ORM identities. It covers
+committed revoke/expiry after a wait, rolled-back revocation and failure before
+rotation commit durability. The successful child is exercised through ASGI HTTP.
+These eight cases establish token-row serialization, not refresh-family revocation,
+unknown-commit replay or full browser cookie ordering. See AUD-52.
