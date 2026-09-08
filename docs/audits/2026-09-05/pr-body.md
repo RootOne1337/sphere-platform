@@ -159,6 +159,12 @@ ORM state before validation. Eight database regressions prove single consumption
 revoke/expiry visibility after waits and rollback behavior. Refresh-family
 revocation and uncertain-commit replay remain open.
 
+MFA completion now requires successful atomic consumption of its Redis challenge.
+Concurrent valid submissions cannot issue two sessions, and a challenge expiring
+after its initial read cannot issue credentials. Five real Redis/PostgreSQL
+regressions cover those races, invalid TOTP, lost Redis responses and SQL failure.
+This establishes challenge single-use, not bypass resistance for every MFA path.
+
 Private frontend pages remain unmounted until the identity is ready; a new
 session/identity gets a separate React Query client before rendering. Version
 checks prevent delayed responses from restoring logout, replacing another login
@@ -169,20 +175,20 @@ network failure displays an unconfirmed-revocation message on login.
 
 ## Validation
 
-- On backend code revision `efe9be8`, [backend CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34157767581)
+- On code revision `5d2f331` (before the subsequent MFA consumption fix), [backend CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34175292665)
   passed Tests, Lint, Security, Alembic and static RLS checks;
-  [Android CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34157767566)
+  [Android CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34175292637)
   passed build and unit tests. This is a revision-specific snapshot; consult PR
   checks for subsequent documentation or code commits.
 
 - Frontend: **198 tests / 23 suites passed**, TypeScript noEmit passed on Node 24.19.0.
   Next build exits 0; Windows standalone tracing emits an ENOENT warning, so
-  packaging and real-browser behavior remain unconfirmed. On `0eeeaca`, [Linux frontend CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34174839494)
+  packaging and real-browser behavior remain unconfirmed. On `5d2f331`, [Linux frontend CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34175292639)
   passed Jest, tsc, production build and a standalone-entry-point check.
 - Android enterprise debug unit suite: **344 passed**.
-- Combined backend/PC, PostgreSQL/Redis and deployment regressions: **1122 passed**.
-  This includes **254 real-service tests** and **6 Compose configuration tests**.
-  Coverage is **67.77%** and passes the unchanged **65%** gate with two-decimal
+- Combined backend/PC, PostgreSQL/Redis and deployment regressions: **1127 passed**.
+  This includes **259 real-service tests** and **6 Compose configuration tests**.
+  Coverage is **67.74%** and passes the unchanged **65%** gate with two-decimal
   precision. No threshold or coverage scope was weakened. Two additional
   regression tests exercise the 64.98% rejection and exact 65.00% boundary. Long load/soak profiles require a prepared API
   environment and are excluded from the ordinary PR command.

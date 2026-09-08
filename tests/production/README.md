@@ -112,3 +112,9 @@ committed revoke/expiry after a wait, rolled-back revocation and failure before
 rotation commit durability. The successful child is exercised through ASGI HTTP.
 These eight cases establish token-row serialization, not refresh-family revocation,
 unknown-commit replay or full browser cookie ordering. See AUD-52.
+
+`test_mfa_consumption.py` uses real TOTP verification, Redis GET/DEL/TTL and PostgreSQL
+issuance to prove one winner per MFA challenge. It also covers invalid-code recovery,
+a lost Redis response after successful consumption and a SQL failure before commit.
+Consumed challenges are not restored after uncertain or failed issuance: restart the
+password/MFA flow. This is not a complete MFA rate-limit or Redis-failover assessment.

@@ -273,6 +273,7 @@ class TestCompleteMfaLogin:
         cache = _make_cache()
         user = _make_user(mfa_enabled=True)
         cache.get.return_value = str(user.id)
+        cache.delete.return_value = 1
         db.get.return_value = user
         svc = AuthService(db, cache)
 

@@ -20,9 +20,9 @@ runtime-проверок и не считается доказательство
 | Проверка | Результат | Практическое ограничение |
 | --- | --- | --- |
 | Android enterprise debug unit suite | 344 passed, 0 failed | JVM/MockWebServer; не проверяет ОС, codec, батарею или смерть процесса на телефоне |
-| Объединённая Backend/PC/production/deployment suite | **1122 passed, 0 failed**; coverage **67,77%** | Строгий coverage gate 65% пройден с precision=2. Load suite исключена; 6 Compose config tests не запускают сервисы |
+| Объединённая Backend/PC/production/deployment suite | **1127 passed, 0 failed**; coverage **67,74%** | Строгий coverage gate 65% пройден с precision=2. Load suite исключена; 6 Compose config tests не запускают сервисы |
 | Python dependency scan | **0 known vulnerabilities** в совместном backend/PC resolution | Pip-audit snapshot, не проверка frontend/Gradle/container/application security; [версии и ограничения](DEPENDENCY-REVIEW.md) |
-| Проверки PostgreSQL/Redis | **254 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
+| Проверки PostgreSQL/Redis | **259 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
 | Миграции | Применены до **20260906_account_ciphertext** включительно | Только изолированная БД; конфликтные данные/downgrade проверены в throwaway schema; production не мигрировался |
 | Backend image | Собирается; исходная запись OpenAPI воспроизведённо падает с PermissionError | Исправлен lifespan; полный deployment runtime ещё не подтверждён |
 | Frontend | **198 Jest tests passed**, tsc passed; Next production build exit 0 на Node 24.19.0 | React/JSDOM + Axios adapters; настоящий browser runtime не проверен. Windows standalone tracing выдал ENOENT warning, artifact packaging ещё не подтверждён |
@@ -33,7 +33,7 @@ runtime-проверок и не считается доказательство
 Предыдущий отдельный DAG benchmark однажды занял 127,1 ms при пороге 100 ms;
 изолированный повтор и последующие общие прогоны прошли. Порог не ослаблялся.
 Файл production-regressions-after.txt сохраняет более ранний standalone snapshot
-с 41 тестом; актуальные 254 входят в общий прогон.
+с 41 тестом; актуальные 259 входят в общий прогон.
 
 Команды запуска и предохранители изоляции: [tests/production/README.md](../../../tests/production/README.md).
 Исходные `14 passed` в [reproductions.txt](evidence/reproductions.txt) означают
@@ -549,6 +549,14 @@ runtime-проверок и не считается доказательство
 - **Regression:** `tests/production/test_session_rotation.py` — 8 PostgreSQL cases: двойное потребление fresh/preloaded, revoke/expiry после ожидания fresh/preloaded, rollback revocation, искусственный commit failure до durability. Победивший child дополнительно проверяется через ASGI HTTP refresh; replay родителя возвращает 401. [61 related auth tests passed](evidence/session-rotation-after.txt); полный прогон **1122 passed / 67,77%**, включая 254 PostgreSQL/Redis cases. Ruff и Bandit gate проходят.
 - **Residual risk:** блокируется одна token row, а не вся refresh family. Logout старого родителя после уже завершившейся ротации не гарантирует отзыв ранее выданного child; lineage/family protocol ещё не реализован. Commit с потерянным подтверждением может потребовать повторного login; нет безопасного replay выдачи токенов. Concurrent user deactivation/role changes, Redis outage during logout и browser multi-tab coordination требуют отдельной проверки. Существующие ранее размноженные токены автоматически не отзываются.
 
+### AUD-53 — Medium: MFA challenge допускал повторное потребление
+
+- **Root cause / affected files:** `backend/services/auth_service.py::complete_mfa_login` выполнял GET → TOTP verify → DEL, но не проверял результат DEL. `backend/services/cache_service.py::delete` отбрасывал Redis count. Поэтому два запроса, прочитавшие один state, оба выпускали токены; истёкший после GET challenge также принимался.
+- **Evidence / reproduction:** реальные PostgreSQL/Redis и настоящий pyotp: барьер обеспечивает два завершённых GET до продолжения проверок; обе попытки отвечают 200. В отдельном сценарии реальный Redis TTL истекает после чтения, но до consumption — выдача также 200. [До fix: 2 failed / 3 controls passed](evidence/mfa-consumption-before.txt).
+- **Fix:** после успешного TOTP продолжает только запрос, которому атомарный Redis DEL вернул 1. Отсутствующий/уже использованный state возвращает InvalidTokenError/HTTP 401. Неверный TOTP не потребляет challenge; ошибка Redis не допускает выдачу SQL credentials.
+- **Regression:** `tests/production/test_mfa_consumption.py` — 5 cases: concurrent valid submissions, actual TTL expiry, invalid TOTP then success, потеря ответа Redis после реального удаления, SQL failure после flush до commit. [97 related auth/cache tests passed](evidence/mfa-consumption-after.txt); общий прогон **1127 passed / 67,74%**, включая 259 PostgreSQL/Redis cases. Ruff и Bandit gate проходят. Unit mock успешного consumption теперь явно возвращает count=1.
+- **Residual risk:** оба исходных запроса требовали действительный state и TOTP — обход второго фактора не доказан. Redis consumption и SQL issuance не являются общей транзакцией: после consume/commit failure требуется новый password/MFA flow, старый challenge не восстанавливается. Rate limiting MFA, повтор TOTP между разными challenges, Redis failover consistency, secrets at rest и concurrent deactivation требуют отдельного аудита.
+
 ## Открытые подтверждённые блокеры
 
 | ID / severity | Root cause и evidence | Необходимое продолжение |
@@ -673,3 +681,12 @@ scripts.export_api_docs` обновляет `docs/openapi.json` и `docs/api-end
 фиксирует 137 manifest-level alerts основной ветки и границы применимости к этой
 ветке. Critical Handlebars относится к dev dependency; HTTP exploit не доказан.
 Frontend production dependencies, npm/Gradle/container проверка остаются открыты.
+
+На `5d2f331` (frontend session + SQL refresh fixes, до MFA consumption fix) успешно
+завершены [backend CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34175292665),
+[frontend CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34175292639)
+и [Android CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34175292637).
+Снимки: [backend](evidence/ci-5d2f331-backend.json),
+[frontend](evidence/ci-5d2f331-frontend.json), [Android](evidence/ci-5d2f331-android.json).
+Frontend проверяет 198 tests, tsc, production build и Linux standalone entry point.
+Это не проверка настоящего browser/APK runtime; следующий code head требует своих checks.

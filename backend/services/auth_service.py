@@ -169,8 +169,10 @@ class AuthService:
         if not mfa_svc.verify_totp(user.mfa_secret or "", totp_code):
             raise InvalidCredentialsError()
 
-        # Очистить state и выдать токены
-        await self.cache.delete(f"mfa:state:{state_token}")
+        # Issue only for the request that actually consumes the live challenge.
+        # Another valid submission or TTL expiry may have removed it after GET.
+        if await self.cache.delete(f"mfa:state:{state_token}") != 1:
+            raise InvalidTokenError("MFA session expired or already consumed")
         return await self._issue_tokens(user)
 
     # ── Internal helpers ─────────────────────────────────────────────────────
