@@ -96,3 +96,17 @@ global jobs, full APK runtime and 10–64 emulator load remain unverified here.
 
 Primary basis: PostgreSQL [CREATE FUNCTION security-definer guidance](https://www.postgresql.org/docs/15/sql-createfunction.html)
 and [row security behavior](https://www.postgresql.org/docs/15/ddl-rowsecurity.html).
+
+
+## Concurrent enrollment-key changes
+
+AUD-60 proves that an enrollment request waiting on last_used_at UPDATE could use
+an earlier key snapshot after an administrator committed revoke, expiry or removal
+of device:register. Authentication now locks and refreshes the key first, then
+checks active/expiry and exposes current permissions to the handler. The lock stays
+with the caller's transaction. Two independent runtime requests are observed in
+PostgreSQL Lock waits before the administrator commits in each regression.
+[Three failures before](../audits/2026-09-05/evidence/enrollment-revocation-before.txt)
+and [31 related checks after](../audits/2026-09-05/evidence/enrollment-revocation-after.txt)
+are retained. This does not revoke an already-authorized open socket or promise
+instant cancellation of an operation whose authorization won the lock first.

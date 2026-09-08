@@ -633,6 +633,16 @@ runtime-проверок и не считается доказательство
 - **Residual risk:** защищена server-side auth chain, не измерен реальный APK/OS/кодек. Уже открытый WS не отзывает principal автоматически при изменении ключа/роли. Post-auth task results/progress/events и глобальные фоновые сессии ещё требуют tenant propagation. API-key enrollment bootstrap исправлен отдельно в AUD-58; неизвестный refresh commit/replay остаётся открытым.
 
 
+### AUD-60 — High: ожидающий enrollment принимал уже отозванный ключ и удалённое право
+
+- **Root cause:** `APIKeyService.authenticate` читал key обычным SELECT, а затем блокировался на UPDATE last_used_at. После ожидания он возвращал ранее загруженные active/permissions/expiry, не учитывая изменение, закоммиченное владельцем строки. Комментарий об UPDATE «без блокировки» был неверен.
+- **Evidence/reproduction:** [3 failed](evidence/enrollment-revocation-before.txt): два настоящих ASGI enrollment запроса через независимые runtime connections; тест наблюдает два `pg_stat_activity.wait_event_type=Lock`. После admin commit revoke/permission removal/expiry оба запроса возвращали 201 и создавали устройства вместо 401/403.
+- **Affected files:** `backend/services/api_key_service.py::authenticate`; `tests/production/test_enrollment_revocation.py`.
+- **Fix:** SELECT FOR UPDATE с populate_existing захватывает и обновляет key snapshot до проверки полномочий. Active/expiry проверяются после ожидания; UPDATE last_used_at выполняется по id+org_id под той же блокировкой. Метод не добавляет скрытый commit; транзакцией владеет caller.
+- **Regression:** три concurrency regressions проходят; [31 related cases passed](evidence/enrollment-revocation-after.txt) включает runtime bootstrap, function security и API-key service unit tests. Исходный before был снят после AUD-58: исправление tenant bootstrap позволило проверить реальную конкурентную авторизацию вместо прежнего default-deny.
+- **Residual risk:** отзыв, закоммиченный после успешной проверки уже исполняющейся операции, не отменяет её. Существующие WS sessions не закрываются автоматически при revoke. Один общий ключ сериализует concurrent authentication; UPDATE уже требовал блокировку до исправления, но latency на 10–64 эмуляторах отдельно не измерена. Идемпотентный replay credential выдачи/unknown commit остаётся отдельным контрактом.
+
+
 ## Открытые подтверждённые блокеры
 
 | ID / severity | Root cause и evidence | Необходимое продолжение |

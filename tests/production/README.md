@@ -172,3 +172,8 @@ listener. Sixteen runtime-role cases cover device/refreshed/key/user connection
 and reconnect, log/OTA access, device and tenant denials, enrollment-to-refresh-to-WS
 and SQL failure/recovery. Connection manager, heartbeat, stream and queue effects
 are doubles. This does not exercise APK OS behavior or post-auth task writers.
+
+`test_enrollment_revocation.py` holds a real key row while two runtime HTTP requests
+wait, then commits revoke, permission removal or expiry. Both requests must use
+current key state and create no device. These three cases cover the previous
+SELECT-to-UPDATE snapshot race, not revocation of already-open WebSocket sessions.

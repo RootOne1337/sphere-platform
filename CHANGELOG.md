@@ -14,6 +14,9 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Security / runtime
 
+- AUD-60: API-key auth блокирует и обновляет key snapshot до проверки active/expiry/
+  permissions; concurrent enrollment не принимает уже закоммиченные revoke/expiry
+  или удаление device:register. Три реальных SQL lock-wait regressions сохранены.
 - AUD-59: Android WS аутентифицирует principal до target-device SELECT; agent JWT
   проверяет подписанную организацию и связывает Session. 16 ASGI/PG/Redis cases
   проверяют reconnect, HTTP logs/OTA и enrollment → refresh → WS с runtime ролью.
