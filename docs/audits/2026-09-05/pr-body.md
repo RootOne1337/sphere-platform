@@ -172,9 +172,10 @@ network failure displays an unconfirmed-revocation message on login.
   passed build and unit tests. This is a revision-specific snapshot; consult PR
   checks for subsequent documentation or code commits.
 
-- Frontend: **197 tests / 23 suites passed**, TypeScript noEmit passed on Node 24.19.0.
+- Frontend: **198 tests / 23 suites passed**, TypeScript noEmit passed on Node 24.19.0.
   Next build exits 0; Windows standalone tracing emits an ENOENT warning, so
-  packaging and real-browser behavior remain unconfirmed.
+  packaging and real-browser behavior remain unconfirmed. New Linux frontend CI
+  runs Jest, tsc, production build and a standalone-entry-point check.
 - Android enterprise debug unit suite: **344 passed**.
 - Combined backend/PC, PostgreSQL/Redis and deployment regressions: **1114 passed**.
   This includes **246 real-service tests** and **6 Compose configuration tests**.

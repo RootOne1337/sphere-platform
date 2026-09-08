@@ -208,7 +208,8 @@ class DeviceService:
 
 ```bash
 cd frontend
-npm install
+# Node 24 is used for the audited frontend checks
+npm ci --ignore-scripts
 cp .env.example .env.local    # set NEXT_PUBLIC_API_URL=http://localhost/api/v1
 npm run dev                   # starts on :3000 with hot reload
 ```
@@ -216,12 +217,12 @@ npm run dev                   # starts on :3000 with hot reload
 ### Adding a new page
 
 1. Create `frontend/app/(dashboard)/my-page/page.tsx`
-2. Add nav item in `frontend/app/(dashboard)/layout.tsx`
-3. Create data hook in `frontend/hooks/useMyFeature.ts`:
+2. Add nav item in `frontend/src/features/navigation/NOCSidebar.tsx`
+3. Create data hook in `frontend/lib/hooks/useMyFeature.ts`:
 
 ```typescript
 import { useQuery } from "@tanstack/react-query";
-import api from "@/lib/api";
+import { api } from "@/lib/api";
 
 export function useMyFeature() {
   return useQuery({
@@ -237,10 +238,17 @@ export function useMyFeature() {
 ### Auth-protected API calls
 
 Use the `api` axios instance from `frontend/lib/api.ts` — it automatically
-attaches the access token and handles 401 refresh.
+attaches the access token, fences requests/responses by session version, and shares
+a bounded refresh across concurrent 401s. See the [session contract](security/frontend-sessions.md)
+for private page/cache boundaries, login/MFA, logout, storage fallback and limitations.
+
+Run `npm run type-check`, `npx --no-install jest --runInBand`, and `npm run build`
+from `frontend`. The Frontend CI workflow repeats these checks on Node 24/Linux.
+Jest TSX uses `tsconfig.jest.json`; application JSX settings remain controlled by Next.js.
+The tests use JSDOM and transport adapters, not a deployed browser/backend.
 
 ```typescript
-import api from "@/lib/api";
+import { api } from "@/lib/api";
 
 const { data } = await api.get("/devices?page=1&per_page=50");
 ```
@@ -250,7 +258,7 @@ const { data } = await api.get("/devices?page=1&per_page=50");
 Generate types from the OpenAPI spec:
 ```bash
 npm run gen:types
-# Reads from http://localhost/api/v1/openapi.json
+# Reads from http://localhost:8000/openapi.json
 # Writes to src/api/types.ts
 ```
 
