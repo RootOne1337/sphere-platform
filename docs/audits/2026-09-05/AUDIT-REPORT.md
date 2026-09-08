@@ -572,7 +572,7 @@ runtime-проверок и не считается доказательство
 - **Root cause:** baseline включал RLS без создания политик; отдельный ручной SQL не вызывался Alembic. `pipeline_settings` и обе M2M-таблицы не получили RLS вообще. Старый CI сверял 15 вручную перечисленных таблиц с ручным SQL и ошибочно исключал ассоциации как защищённые FK.
 - **Evidence/reproduction:** схема `20260906_account_ciphertext`, non-owner/NOBYPASSRLS роль с обычными CRUD grants, две синтетические организации и transaction-local tenant A. Прямой SELECT раскрывал чужие связи, INSERT соединял endpoints разных организаций, UPDATE изменял чужие настройки оркестратора. В 15 таблицах default deny скрывал даже собственные строки. [Исходные 19 failed, 2 passed](evidence/rls-policies-before.txt). Это доказанная SQL boundary failure, не заявление об отдельном публичном HTTP exploit для каждой таблицы.
 - **Affected files:** `alembic/versions/0001_baseline_initial_schema.py:418`, `alembic/versions/20260309_pipeline_settings.py`, `infrastructure/postgres/rls_policies.sql`, `infrastructure/postgres/audit_log_policies.sql`, `scripts/check_rls.py`; исправление — `alembic/versions/20260908_tenant_policies.py:34`.
-- **Fix:** новая migration устанавливает политики всех 28 mapped tables. USING/WITH CHECK защищают чтение и запись; обе стороны M2M проверяются явно. Restrictive tenant boundary не позволяет дополнительной permissive policy открыть чужие строки. Старые repository-owned policy names заменяются, неизвестные operator restrictions сохраняются. Audit допускает только tenant SELECT/INSERT и запрещает UPDATE/DELETE; NULL-org runtime INSERT закрыт. Tenant setting приводится к UUID без преобразования индексируемого org_id; missing/empty отказывает, malformed вызывает ошибку до записи. Небезопасный downgrade запрещён.
+- **Fix:** `297bb01` — новая migration устанавливает политики всех 28 mapped tables. USING/WITH CHECK защищают чтение и запись; обе стороны M2M проверяются явно. Restrictive tenant boundary не позволяет дополнительной permissive policy открыть чужие строки. Старые repository-owned policy names заменяются, неизвестные operator restrictions сохраняются. Audit допускает только tenant SELECT/INSERT и запрещает UPDATE/DELETE; NULL-org runtime INSERT закрыт. Tenant setting приводится к UUID без преобразования индексируемого org_id; missing/empty отказывает, malformed вызывает ошибку до записи. Небезопасный downgrade запрещён.
 - **Regression:** [33 passed](evidence/rls-policies-after.txt): 25 cases реальной полной схемы под отдельной ролью; четыре migration cases для legacy, permissive/restrictive operator policies и downgrade; четыре inventory cases, включая пропущенную M2M. Дополнительные сценарии расширяют исходный before proof; malformed-context test уточнён до отказа записи. Общий прогон **1170 passed / 67,94%**, включая **298 PostgreSQL/Redis cases**. Ruff, Bandit gate и static inventory проходят.
 - **Documentation/rollout:** ручные SQL entry points явно отклоняют старый способ установки; актуальный [RLS runbook](../../security/postgresql-rls.md) содержит условия rollout, модель ролей, ограничения контекста и rollback. Developer/deployment guides и README больше не утверждают гарантированную RLS/production readiness.
 - **Residual risk:** AUD-14 остаётся открытым для auth/bootstrap/refresh/device lookup до выбора tenant, повторной установки context после commit/rollback, глобальных jobs и provisioning migration/runtime ролей. Текущий Compose использует общий PostgreSQL bootstrap user и не готов к безопасному переключению. Не проверены все cross-tenant FK и конкурентная смена org родителя; SQL policy tests не заменяют HTTP/worker runtime. Migration применена только в выделенной БД; production и ключи не изменялись. RLS с GUC не защищает от произвольного SQL, который сам выбирает tenant.
@@ -728,5 +728,15 @@ Frontend проверяет 198 tests, tsc, production build и Linux standalone
 [backend](https://github.com/RootOne1337/sphere-platform/actions/runs/34176043929),
 [frontend](https://github.com/RootOne1337/sphere-platform/actions/runs/34176043928) и
 [Android](https://github.com/RootOne1337/sphere-platform/actions/runs/34176043952).
-Новые RLS изменения проверены локально общим прогоном 1170 tests; их GitHub CI
-будет оцениваться отдельно на новом head. PR остаётся draft, merge/deploy не выполнены.
+RLS code head `297bb01` также полностью прошёл
+[backend](https://github.com/RootOne1337/sphere-platform/actions/runs/34212030440),
+[frontend](https://github.com/RootOne1337/sphere-platform/actions/runs/34212030378) и
+[Android](https://github.com/RootOne1337/sphere-platform/actions/runs/34212030360).
+Снимки: [backend](evidence/ci-297bb01-backend.json),
+[frontend](evidence/ci-297bb01-frontend.json), [Android](evidence/ci-297bb01-android.json).
+Linux CI: **1170 passed, 4 warnings / 67,90%**; локальный Windows прогон:
+**1170 passed / 67,94%**. Оба проходят неизменный 65% gate. Backend Actions
+сообщает Node 20→24 deprecation warnings у прежних action versions; их обновление
+остаётся отдельной CI задачей. Последующий documentation commit запускает свои
+checks и не меняет проверенный код. PR остаётся draft без независимого review;
+merge/deploy не выполнены.

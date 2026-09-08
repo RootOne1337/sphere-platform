@@ -926,7 +926,7 @@ Docker images — rebuild all services after merge (`docker compose build`).
 
 ## Previous releases
 
-See `docs/merge_log.md` and [walkthrough.md.resolved](walkthrough.md.resolved) for full branch-by-branch integration history.
+Earlier branch integration is recorded in Git history. The former merge log and walkthrough artifacts are not present in this checkout.
 
 [4.1.0]: https://github.com/RootOne1337/sphere-platform/compare/v4.0.0...v4.1.0
 [4.0.0]: https://github.com/RootOne1337/sphere-platform/releases/tag/v4.0.0

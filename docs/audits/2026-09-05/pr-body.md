@@ -281,8 +281,12 @@ is refused and the old manual SQL setup fails explicitly with migration guidance
 Verification: 25 full-schema runtime-role cases, four migration/operator-policy
 cases and four CI inventory cases pass (33 total); the startup fix adds ten more
 PostgreSQL regressions. The combined 1170-test local suite and unchanged coverage
-gate pass. New GitHub checks must be evaluated on this RLS head; earlier green
-checks do not certify it. All reproductions remain isolated and do not assert a
+gate pass. RLS code head `297bb01` passed
+[backend CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34212030440)
+(1170 passed, 67.90% Linux coverage),
+[frontend CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34212030378)
+and [Android CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34212030360).
+Subsequent documentation-only commits trigger separate checks. All reproductions remain isolated and do not assert a
 public HTTP exploit for every affected table. See the
 [RLS rollout contract](https://github.com/RootOne1337/sphere-platform/blob/codex/enterprise-audit-20260905/docs/security/postgresql-rls.md)
 for auth/bootstrap/jobs, transaction context, foreign-key and role constraints.
