@@ -1,0 +1,100 @@
+FFFFFFFF.F                                                               [100%]
+================================== FAILURES ===================================
+_ test_startup_rejects_table_ownership_even_without_superuser_or_bypass[owner] _
+tests\production\test_rls_startup.py:77: in test_startup_rejects_table_ownership_even_without_superuser_or_bypass
+    with pytest.raises(RuntimeError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE <class 'RuntimeError'>
+---------------------------- Captured stdout call -----------------------------
+{"event": "startup_check: DB role 'audit_owner_ea440f465dce4234804fa4360feb5014' \u2014 RLS active (superuser=False, bypassrls=False)"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.core.startup_checks:startup_checks.py:54 startup_check: DB role 'audit_owner_ea440f465dce4234804fa4360feb5014' — RLS active (superuser=False, bypassrls=False)
+_ test_startup_rejects_table_ownership_even_without_superuser_or_bypass[forced_owner] _
+tests\production\test_rls_startup.py:77: in test_startup_rejects_table_ownership_even_without_superuser_or_bypass
+    with pytest.raises(RuntimeError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE <class 'RuntimeError'>
+---------------------------- Captured stdout call -----------------------------
+{"event": "startup_check: DB role 'audit_owner_da4b69dd52b74a38acd761e2add2c34b' \u2014 RLS active (superuser=False, bypassrls=False)"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.core.startup_checks:startup_checks.py:54 startup_check: DB role 'audit_owner_da4b69dd52b74a38acd761e2add2c34b' — RLS active (superuser=False, bypassrls=False)
+_ test_startup_rejects_table_ownership_even_without_superuser_or_bypass[inherited_owner] _
+tests\production\test_rls_startup.py:77: in test_startup_rejects_table_ownership_even_without_superuser_or_bypass
+    with pytest.raises(RuntimeError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE <class 'RuntimeError'>
+---------------------------- Captured stdout call -----------------------------
+{"event": "startup_check: DB role 'audit_runtime_b95f4adee4af4bd7b996a2aa446fb6ec' \u2014 RLS active (superuser=False, bypassrls=False)"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.core.startup_checks:startup_checks.py:54 startup_check: DB role 'audit_runtime_b95f4adee4af4bd7b996a2aa446fb6ec' — RLS active (superuser=False, bypassrls=False)
+_ test_startup_rejects_table_ownership_even_without_superuser_or_bypass[noinherit_owner] _
+tests\production\test_rls_startup.py:77: in test_startup_rejects_table_ownership_even_without_superuser_or_bypass
+    with pytest.raises(RuntimeError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE <class 'RuntimeError'>
+---------------------------- Captured stdout call -----------------------------
+{"event": "startup_check: DB role 'audit_runtime_223b413b05ff4f8a8b96be2b491e80e4' \u2014 RLS active (superuser=False, bypassrls=False)"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.core.startup_checks:startup_checks.py:54 startup_check: DB role 'audit_runtime_223b413b05ff4f8a8b96be2b491e80e4' — RLS active (superuser=False, bypassrls=False)
+____ test_startup_rejects_unsafe_runtime_database_configuration[disabled] _____
+tests\production\test_rls_startup.py:100: in test_startup_rejects_unsafe_runtime_database_configuration
+    with pytest.raises(RuntimeError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE <class 'RuntimeError'>
+---------------------------- Captured stdout call -----------------------------
+{"event": "startup_check: DB role 'audit_runtime_f7c3161c10e749fb8a553ea5ac5ec538' \u2014 RLS active (superuser=False, bypassrls=False)"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.core.startup_checks:startup_checks.py:54 startup_check: DB role 'audit_runtime_f7c3161c10e749fb8a553ea5ac5ec538' — RLS active (superuser=False, bypassrls=False)
+_ test_startup_rejects_unsafe_runtime_database_configuration[missing_policy] __
+tests\production\test_rls_startup.py:100: in test_startup_rejects_unsafe_runtime_database_configuration
+    with pytest.raises(RuntimeError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE <class 'RuntimeError'>
+---------------------------- Captured stdout call -----------------------------
+{"event": "startup_check: DB role 'audit_runtime_358185b6a7b44131a980cb097a7f2180' \u2014 RLS active (superuser=False, bypassrls=False)"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.core.startup_checks:startup_checks.py:54 startup_check: DB role 'audit_runtime_358185b6a7b44131a980cb097a7f2180' — RLS active (superuser=False, bypassrls=False)
+____ test_startup_rejects_unsafe_runtime_database_configuration[truncate] _____
+tests\production\test_rls_startup.py:100: in test_startup_rejects_unsafe_runtime_database_configuration
+    with pytest.raises(RuntimeError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE <class 'RuntimeError'>
+---------------------------- Captured stdout call -----------------------------
+{"event": "startup_check: DB role 'audit_runtime_1d3ecb519a8a4dde87482f13f3213b61' \u2014 RLS active (superuser=False, bypassrls=False)"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.core.startup_checks:startup_checks.py:54 startup_check: DB role 'audit_runtime_1d3ecb519a8a4dde87482f13f3213b61' — RLS active (superuser=False, bypassrls=False)
+_ test_startup_rejects_unsafe_runtime_database_configuration[bypass_membership] _
+tests\production\test_rls_startup.py:100: in test_startup_rejects_unsafe_runtime_database_configuration
+    with pytest.raises(RuntimeError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE <class 'RuntimeError'>
+---------------------------- Captured stdout call -----------------------------
+{"event": "startup_check: DB role 'audit_runtime_d7414bab5ba84d71988b9eb19bca212d' \u2014 RLS active (superuser=False, bypassrls=False)"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.core.startup_checks:startup_checks.py:54 startup_check: DB role 'audit_runtime_d7414bab5ba84d71988b9eb19bca212d' — RLS active (superuser=False, bypassrls=False)
+_______ test_unsafe_development_role_warns_without_claiming_active_rls ________
+tests\production\test_rls_startup.py:117: in test_unsafe_development_role_warns_without_claiming_active_rls
+    assert "SECURITY" in caplog.text
+E   assert 'SECURITY' in "INFO     backend.core.startup_checks:startup_checks.py:54 startup_check: DB role 'audit_owner_80d0b8b558a04de1a0e3d5cf1fec7b3a' — RLS active (superuser=False, bypassrls=False)\n"
+E    +  where "INFO     backend.core.startup_checks:startup_checks.py:54 startup_check: DB role 'audit_owner_80d0b8b558a04de1a0e3d5cf1fec7b3a' — RLS active (superuser=False, bypassrls=False)\n" = <_pytest.logging.LogCaptureFixture object at 0x0000026BF6866240>.text
+---------------------------- Captured stdout call -----------------------------
+{"event": "startup_check: DB role 'audit_owner_80d0b8b558a04de1a0e3d5cf1fec7b3a' \u2014 RLS active (superuser=False, bypassrls=False)"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.core.startup_checks:startup_checks.py:54 startup_check: DB role 'audit_owner_80d0b8b558a04de1a0e3d5cf1fec7b3a' — RLS active (superuser=False, bypassrls=False)
+============================== warnings summary ===============================
+backend\api\v1\game_accounts\router.py:95
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\api\v1\game_accounts\router.py:95: FastAPIDeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+    sort_dir: str = Query("desc", regex="^(asc|desc)$", description="Направление сортировки"),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/production/test_rls_startup.py::test_startup_rejects_table_ownership_even_without_superuser_or_bypass[owner]
+FAILED tests/production/test_rls_startup.py::test_startup_rejects_table_ownership_even_without_superuser_or_bypass[forced_owner]
+FAILED tests/production/test_rls_startup.py::test_startup_rejects_table_ownership_even_without_superuser_or_bypass[inherited_owner]
+FAILED tests/production/test_rls_startup.py::test_startup_rejects_table_ownership_even_without_superuser_or_bypass[noinherit_owner]
+FAILED tests/production/test_rls_startup.py::test_startup_rejects_unsafe_runtime_database_configuration[disabled]
+FAILED tests/production/test_rls_startup.py::test_startup_rejects_unsafe_runtime_database_configuration[missing_policy]
+FAILED tests/production/test_rls_startup.py::test_startup_rejects_unsafe_runtime_database_configuration[truncate]
+FAILED tests/production/test_rls_startup.py::test_startup_rejects_unsafe_runtime_database_configuration[bypass_membership]
+FAILED tests/production/test_rls_startup.py::test_unsafe_development_role_warns_without_claiming_active_rls
+9 failed, 1 passed, 1 warning in 4.31s

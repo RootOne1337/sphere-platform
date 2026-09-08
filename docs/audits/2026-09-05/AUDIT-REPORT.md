@@ -123,6 +123,15 @@ runtime-проверок и не считается доказательство
 - **Regression:** корректный tenant context внутри транзакции и отсутствие его после commit.
 - **Residual risk:** helper используется не повсеместно; роль владельца таблиц обходит RLS. Полная RLS-изоляция остаётся открытой.
 
+### AUD-14 / F14 — High: runtime-владелец обходит RLS; startup сообщает ложную защищённость
+
+- **Root cause:** проверка учитывала только `rolsuper` и `rolbypassrls`. Обычный владелец таблицы и участник owner-role обходят RLS; владелец может отменить даже FORCE RLS. TRUNCATE не проверяет строки. Отсутствующие политики не проверялись.
+- **Evidence:** [rls-startup-before.txt](evidence/rls-startup-before.txt) — **9 failed, 1 passed**. На PostgreSQL обычный owner читает обе организации; FORCE owner выполняет ALTER, NOINHERIT member выполняет SET ROLE, runtime с TRUNCATE удаляет обе синтетические строки (транзакция откатывается).
+- **Affected files:** `backend/core/startup_checks.py:44`, `tests/production/test_rls_startup.py:73`.
+- **Fix (частичный):** production startup отклоняет owner/member, privileged membership, TRUNCATE, неактивный RLS и отсутствие политик на видимых mapped tables. Development явно предупреждает. Сообщение об успешной проверке ограничено prerequisites и не утверждает корректность tenant isolation.
+- **Regression:** 10 PostgreSQL cases, включая разрешённую non-owner роль, видящую только свою организацию; вместе с lifespan — [13 passed](evidence/rls-startup-after.txt).
+- **Residual risk / blocker:** это защита от опасной конфигурации, а не завершение RLS rollout. Нужны политики всей схемы, tenant context до auth lookup и после каждого commit, tenant-aware jobs и отдельное provision runtime/migration ролей. Текущий production superuser/owner конфиг должен отказать при запуске; автоматически повышать права или отключать проверку нельзя. Проверка каталога сама по себе не доказывает семантику политик и полноту миграций.
+
 ### AUD-15 — High: успешный образ не запускал API из-за записи OpenAPI
 
 - **Root cause:** startup писал файл в root-owned каталог приложения от непривилегированного пользователя.
@@ -562,7 +571,7 @@ runtime-проверок и не считается доказательство
 | ID / severity | Root cause и evidence | Необходимое продолжение |
 | --- | --- | --- |
 | AUD-11 / High, частично исправлен | SQL ownership/uniqueness/intents исправлены и проверены; реальные orphan peers и provider unknown outcomes не reconciled | Inventory contract, controlled reconciliation/rollout, HTTP adapter и AWG конфигурация; незавершённые intents пока удерживаются |
-| AUD-14 / High | Несуперпользователь-владелец таблиц обходит RLS. F14 на PostgreSQL; tenant context не установлен повсеместно | Разделение migration/runtime ролей, политики и контекст для HTTP/auth/jobs, реальные cross-tenant проверки |
+| AUD-14 / High | Owner bypass воспроизведён; production startup guard исправлен (10 PostgreSQL cases). Политики/tenant context не установлены повсеместно | Разделение migration/runtime ролей, политики и контекст для HTTP/auth/jobs, реальные cross-tenant проверки |
 | DEPLOY-03 / High | Effective Compose оставляет n8n/MinIO host ports; production persistence и DB roles не согласованы | Ingress/access design, роли, долговечные artifacts, runtime/restore проверка |
 
 ## Следующие компоненты аудита

@@ -254,3 +254,13 @@ checks must be evaluated on this updated head, not inferred from historical jobs
 Frontend tests use React/JSDOM and controlled Axios adapters, with no listening
 API. Browser storage fallback, refresh cookie ordering, cross-tab coordination,
 other client stores and backend refresh-family concurrency require further work.
+
+### RLS startup guard (AUD-14, rollout remains blocked)
+
+Ordinary table owners previously passed startup and could read both tenants even
+without SUPERUSER/BYPASSRLS. Startup now rejects ownership and owner-role membership,
+privileged memberships, TRUNCATE privileges, inactive RLS and absent policies in
+production. Development warns explicitly. Ten real PostgreSQL regressions exercise
+actual owner/FORCE/SET ROLE/TRUNCATE behavior: nine failed before, all ten plus three
+lifespan tests pass after. This does not certify policy predicates or solve auth/job
+tenant propagation; switching deployment credentials remains blocked on that work.

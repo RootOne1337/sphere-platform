@@ -118,3 +118,9 @@ issuance to prove one winner per MFA challenge. It also covers invalid-code reco
 a lost Redis response after successful consumption and a SQL failure before commit.
 Consumed challenges are not restored after uncertain or failed issuance: restart the
 password/MFA flow. This is not a complete MFA rate-limit or Redis-failover assessment.
+
+`test_rls_startup.py` creates UUID-scoped roles and a throwaway schema to exercise
+actual owner, FORCE, inherited/NOINHERIT membership and TRUNCATE escapes. The startup
+guard rejects unsafe production roles and missing RLS prerequisites. A non-owner
+control sees only its tenant. Schema/roles are removed; this is not an end-to-end
+HTTP/auth/background-job rollout under runtime credentials.
