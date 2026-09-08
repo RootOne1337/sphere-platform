@@ -113,6 +113,16 @@ it('rejects a successful stale response after the active identity changes', asyn
   expect(await pending).toBeInstanceOf(Error);
 });
 
+it('binds a mutation to the identity at call time, before the next microtask', async () => {
+  identify('a');
+  const requests: InternalAxiosRequestConfig[] = [];
+  api.defaults.adapter = async config => { requests.push(config); return response(config, 'changed'); };
+  const pending = api.post('/accounts', { label: 'intent from A' }).catch(error => error);
+  identify('b');
+  expect(await pending).toBeInstanceOf(Error);
+  expect(requests.every(config => config.headers.Authorization === 'Bearer access-a')).toBe(true);
+});
+
 it('ignores an old refresh failure after a different login succeeds', async () => {
   identify('a');
   api.defaults.adapter = async config => { throw unauthorized(config); };

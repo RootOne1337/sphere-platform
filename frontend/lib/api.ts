@@ -16,7 +16,7 @@ api.interceptors.request.use((config: SessionRequest) => {
   if (state.accessToken) config.headers.Authorization = `Bearer ${state.accessToken}`;
   else delete config.headers.Authorization;
   return config;
-});
+}, error => { throw error; }, { synchronous: true });
 
 api.interceptors.response.use(
   response => {
