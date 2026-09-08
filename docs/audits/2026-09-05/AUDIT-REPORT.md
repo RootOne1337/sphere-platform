@@ -1,6 +1,6 @@
 # Sphere Platform: аудит готовности к эксплуатации
 
-Статус на 8 сентября 2026: **аудит продолжается; production readiness не подтверждена**.
+Статус на 9 сентября 2026: **аудит продолжается; production readiness не подтверждена**.
 Исходная ревизия: `28f8cc46ab65496e00297960fd94d87d1605cc83`.
 Ветка исправлений: `codex/enterprise-audit-20260905`; [draft PR #19](https://github.com/RootOne1337/sphere-platform/pull/19).
 
@@ -20,9 +20,9 @@ runtime-проверок и не считается доказательство
 | Проверка | Результат | Практическое ограничение |
 | --- | --- | --- |
 | Android enterprise debug unit suite | 344 passed, 0 failed | JVM/MockWebServer; не проверяет ОС, codec, батарею или смерть процесса на телефоне |
-| Объединённая Backend/PC/production/deployment suite | **1192 passed, 0 failed**; coverage **67,99%** | Строгий coverage gate 65% пройден с precision=2. Load suite исключена; 6 Compose config tests не запускают сервисы |
+| Объединённая Backend/PC/production/deployment suite | **1214 passed, 0 failed**; coverage **67,95%** | Строгий coverage gate 65% пройден с precision=2. Load suite исключена; 6 Compose config tests не запускают сервисы |
 | Python dependency scan | **0 known vulnerabilities** в совместном backend/PC resolution | Pip-audit snapshot, не проверка frontend/Gradle/container/application security; [версии и ограничения](DEPENDENCY-REVIEW.md) |
-| Проверки PostgreSQL/Redis | **320 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
+| Проверки PostgreSQL/Redis | **342 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
 | Миграции | Применены до **20260908_tenant_policies** включительно | Только изолированная БД; конфликтные данные/downgrade проверены в throwaway schema; production не мигрировался |
 | Backend image | Собирается; исходная запись OpenAPI воспроизведённо падает с PermissionError | Исправлен lifespan; полный deployment runtime ещё не подтверждён |
 | Frontend | **198 Jest tests passed**, tsc passed; Next production build exit 0 на Node 24.19.0 | React/JSDOM + Axios adapters; настоящий browser runtime не проверен. Windows standalone tracing выдал ENOENT warning, artifact packaging ещё не подтверждён |
@@ -33,7 +33,7 @@ runtime-проверок и не считается доказательство
 Предыдущий отдельный DAG benchmark однажды занял 127,1 ms при пороге 100 ms;
 изолированный повтор и последующие общие прогоны прошли. Порог не ослаблялся.
 Файл production-regressions-after.txt сохраняет более ранний standalone snapshot
-с 41 тестом; актуальные 320 входят в общий прогон.
+с 41 тестом; актуальные 342 входят в общий прогон.
 
 Команды запуска и предохранители изоляции: [tests/production/README.md](../../../tests/production/README.md).
 Исходные `14 passed` в [reproductions.txt](evidence/reproductions.txt) означают
@@ -130,7 +130,7 @@ runtime-проверок и не считается доказательство
 - **Affected files:** `backend/core/startup_checks.py:39`, `tests/production/test_rls_startup.py:56`.
 - **Fix (частичный):** `48948cd` — production startup отклоняет owner/member, privileged membership, TRUNCATE, неактивный RLS и отсутствие политик на видимых mapped tables. Development явно предупреждает. Сообщение об успешной проверке ограничено prerequisites и не утверждает корректность tenant isolation.
 - **Regression:** 10 PostgreSQL cases, включая разрешённую non-owner роль, видящую только свою организацию; вместе с lifespan — [13 passed](evidence/rls-startup-after.txt).
-- **Residual risk / blocker:** это защита от опасной конфигурации, а не завершение RLS rollout. Политики схемы дополнены в AUD-54, восстановление bound Session после commit — в AUD-55; нужны context до auth lookup, перевод unscoped callers и tenant-aware jobs и отдельное provision runtime/migration ролей. Текущий production superuser/owner конфиг должен отказать при запуске; автоматически повышать права или отключать проверку нельзя. Проверка каталога сама по себе не доказывает семантику политик и полноту миграций.
+- **Residual risk / blocker:** это защита от опасной конфигурации, а не завершение RLS rollout. Политики схемы дополнены в AUD-54, восстановление bound Session после commit — в AUD-55; user JWT lookup исправлен в AUD-57; нужны tenant boundaries для opaque auth bootstrap, перевод unscoped callers и tenant-aware jobs и отдельное provision runtime/migration ролей. Текущий production superuser/owner конфиг должен отказать при запуске; автоматически повышать права или отключать проверку нельзя. Проверка каталога сама по себе не доказывает семантику политик и полноту миграций.
 
 ### AUD-15 — High: успешный образ не запускал API из-за записи OpenAPI
 
@@ -598,12 +598,23 @@ runtime-проверок и не считается доказательство
 - **Residual risk:** request/auth DB в этих тестах остаётся прежней привилегированной fixture, отдельно проверяется именно non-owner audit writer. Полный HTTP auth/bootstrap под runtime credentials ещё не закрыт. BackgroundTask не является durable outbox: тест SQL failure явно подтверждает отсутствие первой audit row при уже успешном HTTP изменении. Crash/retry/unknown commit, audit delivery metrics и неаутентифицированные/platform события требуют отдельного решения. RLS policy и tenant filtering не обеспечивают глобальную неизменяемость от DB owner.
 
 
+### AUD-57 — High: JWT lookup выполнялся до tenant context; старый токен следовал за переносом пользователя
+
+- **Root cause:** `get_current_user` проверял подпись и blacklist, затем выполнял `db.get(User, sub)` до установки PostgreSQL tenant context. Non-owner роль с RLS не видела даже разрешённого пользователя. Под owner-подключением отсутствовал контроль соответствия `User.org_id` подписанному `org_id`; токен организации A продолжал давать профиль пользователя после его переноса в B. Некорректный UUID subject также выходил необработанной ошибкой.
+- **Evidence/reproduction:** [17 failed, 5 passed](evidence/jwt-tenant-before.txt). Настоящие ASGI `/auth/me` и PUT `/devices/{id}` с отдельными non-owner LOGIN credentials отклоняли корректные JWT кодом 401. Owner-control получает 200 и профиль с новой организацией по реально выпущенному до переноса токену. Дополнительные подписанные тестовые claims без организации/с чужой организацией/неверным purpose принимались; это проверки контракта, а не доказательство возможности подделать подпись или получить user access через существующий issuer другого типа токена.
+- **Affected files:** `backend/core/dependencies.py::get_current_user`; `tests/production/test_jwt_tenant_runtime.py`; SQL-адаптер SQLite в `tests/conftest.py`; per-request fixture в `tests/n8n/conftest.py`.
+- **Fix:** до доступа к БД проверяются purpose `access` и UUID `sub`/`org_id`; после проверки blacklist подписанная организация привязывается к Session. User выбирается по **id и org_id**, с обновлением ORM snapshot. Активность и права берутся из текущей строки БД. Общий JWT decoder и форматы device/refresh flow не изменены.
+- **Regression:** 10 случаев с non-owner HTTP credentials и 12 owner-controls — [22 ASGI/PostgreSQL/Redis cases passed](evidence/jwt-tenant-after.txt): обе организации, порядок tenant binding перед SELECT users, 200/403/404 при записи устройства и audit через один runtime pool, concurrent requests, чистая новая Session, перенос/деактивация/понижение роли после выдачи токена, invalid/missing claims и неизвестный user. SQLite unit tests имеют только SQL-адаптер `set_config`: он не эмулирует RLS и не считается доказательством изоляции; production dialect bypass не добавлялся.
+- **Validation:** [116 related auth/n8n/tenant tests passed](evidence/jwt-tenant-related.txt). Общий прогон **1214 passed / 67,95%**, включая **342 PostgreSQL/Redis cases**, четыре прежних warnings; неизменный gate 65%. Ruff, Bandit и generated API check проходят. Пять n8n unit fixtures-сценариев исправлены переходом на Session per request: прежняя fixture пыталась привязать разные организации к одной ORM identity map. Проверено существование 203 локальных ссылок в девяти руководствах; это не сертификация всего содержания документации.
+- **Residual risk:** проверена цепочка уже выданного user access JWT и выбранные HTTP handlers. Email login, MFA/refresh/API-key/device bootstrap, WebSocket и глобальные jobs требуют отдельных проверенных tenant boundaries. Совпадение JWT claims не заменяет подпись; произвольный GUC SQL остаётся вне threat boundary. Изменение прав после SELECT в уже идущем запросе не блокируется. Durable audit outbox, полный rollout непривилегированных ролей, listening APK↔API и нагрузка 10–64 не закрыты.
+
+
 ## Открытые подтверждённые блокеры
 
 | ID / severity | Root cause и evidence | Необходимое продолжение |
 | --- | --- | --- |
 | AUD-11 / High, частично исправлен | SQL ownership/uniqueness/intents исправлены и проверены; реальные orphan peers и provider unknown outcomes не reconciled | Inventory contract, controlled reconciliation/rollout, HTTP adapter и AWG конфигурация; незавершённые intents пока удерживаются |
-| AUD-14 / High | Startup guard исправлен; политики всех 28 tables и runtime CRUD проверены (AUD-54). Восстановление bound Session после commit/recovery исправлено (AUD-55); auth/jobs ещё не переведены | Разделение migration/runtime ролей, перевод HTTP/auth/jobs на bound Sessions, разрешённые/запрещённые runtime API/worker сценарии |
+| AUD-14 / High | Startup guard исправлен; политики всех 28 tables и runtime CRUD проверены (AUD-54). Восстановление bound Session после commit/recovery исправлено (AUD-55); user JWT HTTP lookup исправлен (AUD-57); opaque auth/jobs ещё не переведены | Разделение migration/runtime ролей, перевод HTTP/auth/jobs на bound Sessions, разрешённые/запрещённые runtime API/worker сценарии |
 | DEPLOY-03 / High | Effective Compose оставляет n8n/MinIO host ports; production persistence и DB roles не согласованы | Ingress/access design, роли, долговечные artifacts, runtime/restore проверка |
 
 ## Следующие компоненты аудита

@@ -74,7 +74,13 @@ async def n8n_client(
     )
 
     async def _override_db():
-        yield db_session
+        # Match get_db's per-request Session lifetime; never reuse one identity
+        # map for requests from different tenants. Keep the test's outer rollback.
+        async with AsyncSession(
+            bind=db_session.bind, expire_on_commit=False,
+            join_transaction_mode="create_savepoint",
+        ) as session:
+            yield session
 
     async def _override_redis():
         return mock_redis
@@ -107,7 +113,11 @@ async def other_org_client(
     )
 
     async def _override_db():
-        yield db_session
+        async with AsyncSession(
+            bind=db_session.bind, expire_on_commit=False,
+            join_transaction_mode="create_savepoint",
+        ) as session:
+            yield session
 
     async def _override_redis():
         return mock_redis

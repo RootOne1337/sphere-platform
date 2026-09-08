@@ -10,6 +10,11 @@
 > `get_tenant_db()` / `get_db_session(org_id=...)` now keep one tenant per Session
 > across commit/rollback/recovery. Bind before data access and before savepoints;
 > use a fresh Session for another tenant. Plain `get_db()` remains unscoped.
+> User access JWT authentication now binds its verified organization before loading
+> the user; handlers sharing that request Session inherit the binding. Opaque
+> login/refresh/MFA/API-key and device bootstrap still need separate tenant boundaries.
+> SQLite's test-only `set_config` adapter does not implement RLS. HTTP fixtures
+> serving different tenants must create a fresh Session for each request.
 
 ---
 

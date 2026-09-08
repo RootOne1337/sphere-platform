@@ -1,6 +1,6 @@
 # PostgreSQL RLS: доказательства и условия внедрения
 
-Обновлено 8 сентября 2026. Политики схемы исправлены в
+Обновлено 9 сентября 2026. Политики схемы исправлены в
 `20260908_tenant_policies`; **полный переход приложения на runtime-роль ещё
 заблокирован**. AUD-14 остаётся частично открытым. Это не инструкция немедленно
 менять production credentials. Проверены только выделенный локальный PostgreSQL 15
@@ -111,6 +111,28 @@ BackgroundTask сообщает error, но не имеет durable retry/outbox
 риск зафиксирован тестом, а не скрыт успешным HTTP ответом. Отсутствующий tenant не
 подменяется глобальным доступом; pre-auth/platform auditing остаётся открытым.
 
+## User access JWT и tenant context
+
+AUD-57 привязывает проверенный `org_id` до SELECT пользователя. Принимается только
+user token purpose `access` с UUID subject/organization; подпись, срок и blacklist
+проверяются прежде обращения к tenant rows. User lookup содержит оба условия
+`id` и `org_id` и обновляет ORM snapshot: перенос пользователя в B делает старый
+токен A непригодным, а текущие role/is_active читаются из БД.
+
+[22 HTTP regression cases](../../tests/production/test_jwt_tenant_runtime.py)
+проверяют `/auth/me` и PUT `/devices/{id}` под фактическими runtime credentials,
+включая audit callback, concurrent A/B requests и pool_size=1. Сохранены
+[падающий before proof](../audits/2026-09-05/evidence/jwt-tenant-before.txt) и
+[последующий успешный прогон](../audits/2026-09-05/evidence/jwt-tenant-after.txt).
+Owner-controls дополнительно проверяют обязательность token/user org match.
+
+Это цепочка **уже выданного** JWT. Login по email, opaque refresh/MFA/API-key,
+device enrollment/auth и глобальные jobs требуют отдельного bootstrap design.
+Нельзя решать их default deny выдачей BYPASSRLS, публичным SELECT credential tables
+или доверяя неподписанному tenant header. Production rollout остаётся заблокированным.
+SQLite unit adapter `set_config` поддерживает SQL-вызов, но не реализует RLS;
+доказательства tenant isolation получены только на PostgreSQL.
+
 ## Migration и rollback
 
 Из корня репозитория, под отдельной migration-role и с проверенным search_path:
@@ -139,8 +161,8 @@ upgrade не должен отмечаться как применённая rev
    owner/member, SUPERUSER/BYPASSRLS, участником privileged role или иметь TRUNCATE.
    Не выдавать ему DDL/role administration. Compose пока использует общий
    PostgreSQL bootstrap user; production guard должен отклонить такой запуск.
-2. Обеспечить проверенный tenant context **до** user/device/API-key lookup,
-   login/MFA/refresh/enrollment bootstrap. В явно привязанных Session восстановление
+2. Обеспечить проверенный tenant context **до** device/API-key lookup,
+   login/MFA/refresh/enrollment bootstrap. User access JWT lookup исправлен в AUD-57. В явно привязанных Session восстановление
    после смены транзакции исправлено в AUD-55; unscoped callers ещё нужно перевести.
 3. Перевести глобальную enumeration и фоновые scheduler/orchestrator/VPN/audit
    jobs на проверенные границы организации (HTTP audit writer исправлен отдельно

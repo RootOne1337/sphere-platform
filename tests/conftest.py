@@ -60,10 +60,20 @@ for _table in Base.metadata.tables.values():
 
 @event.listens_for(Engine, "engine_connect")
 def _sqlite_uuid_function(connection):
-    """Support audit-log defaults without mutating PostgreSQL column metadata."""
+    """SQLite SQL adapters only; tenant enforcement is proved in PostgreSQL tests."""
     if connection.dialect.name == "sqlite":
         connection.connection.dbapi_connection.create_function(
             "gen_random_uuid", 0, lambda: uuid.uuid4().hex,
+        )
+        # SQLite has no GUC/RLS. Let unit tests exercise the real auth claim and
+        # explicit org checks without adding a production dialect bypass. This
+        # function does NOT emulate tenant isolation or transaction-local state.
+        def tenant_setting(name, value, local):
+            assert name == "app.current_org_id" and local == 1
+            return value
+
+        connection.connection.dbapi_connection.create_function(
+            "set_config", 3, tenant_setting,
         )
 
 

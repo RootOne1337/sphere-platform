@@ -186,9 +186,9 @@ network failure displays an unconfirmed-revocation message on login.
   packaging and real-browser behavior remain unconfirmed. On `3630a63`, [Linux frontend CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34175662261)
   passed Jest, tsc, production build and a standalone-entry-point check.
 - Android enterprise debug unit suite: **344 passed**.
-- Combined backend/PC, PostgreSQL/Redis and deployment regressions: **1192 passed**.
-  This includes **320 real-service tests** and **6 Compose configuration tests**.
-  Coverage is **67.99%** and passes the unchanged **65%** gate with two-decimal
+- Combined backend/PC, PostgreSQL/Redis and deployment regressions: **1214 passed**.
+  This includes **342 real-service tests** and **6 Compose configuration tests**.
+  Coverage is **67.95%** and passes the unchanged **65%** gate with two-decimal
   precision. No threshold or coverage scope was weakened. Two additional
   regression tests exercise the 64.98% rejection and exact 65.00% boundary. Long load/soak profiles require a prepared API
   environment and are excluded from the ordinary PR command.
@@ -329,3 +329,21 @@ and [Android CI](https://github.com/RootOne1337/sphere-platform/actions/runs/342
 The subsequent documentation-only snapshot has separate checks; the tested code
 is unchanged. Draft review, full auth/job runtime-role rollout and audit outbox
 remain open; no production deployment or merge was performed.
+
+
+### Bind user JWT authentication before querying tenant data (AUD-57)
+
+Valid user access tokens returned 401 with the real non-owner PostgreSQL role
+because authentication queried users before setting tenant context. Owner connections
+also accepted an old token after its user moved to another organization. Authentication
+now validates purpose and UUID claims, binds the signature-verified tenant after the
+blacklist check, and selects a fresh user by both id and org_id. Database role/activity
+remain authoritative. The generic decoder and device/refresh token formats are unchanged.
+
+The saved before run has 17 failures and five controls. All 22 ASGI/PG/Redis regressions
+now pass (10 non-owner HTTP cases and 12 owner controls): both tenants, SQL ordering, runtime device PUT and audit 200/403/404, concurrent
+requests on one connection, moved/deactivated/downgraded users and invalid claims.
+SQLite unit tests have a test-only SQL adapter; production binding has no dialect bypass.
+Opaque auth bootstrap, WebSocket/jobs and full runtime-role rollout remain open.
+
+Local combined validation: **1214 passed / 67.95%**, including **342 PostgreSQL/Redis cases**; 116 related tests pass. The 65% gate is unchanged. Ruff, Bandit and generated API checks pass. GitHub checks for the new code revision are tracked separately below.

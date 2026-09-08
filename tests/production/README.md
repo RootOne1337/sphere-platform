@@ -148,3 +148,14 @@ auth/request fixture remains privileged. It covers 200/403/404, concurrent tenan
 SQL failure after flush, recovery and a clean pooled Session. The first audit is
 still lost after an injected post-flush failure; this is a documented durable-outbox
 blocker, not a claim of guaranteed audit delivery.
+
+`test_jwt_tenant_runtime.py` runs user JWT auth, device PUT and audit writes under
+actual non-owner LOGIN credentials sharing a one-connection pool. Twenty-two cases
+cover allowed/forbidden/foreign access, concurrent tenants, binding before user SQL,
+pool cleanup and account moves/deactivation/role downgrade after token issuance.
+Ten cases use non-owner HTTP credentials; twelve owner controls prove explicit token/user organization checks, with invalid claims
+rejected at HTTP auth even when PostgreSQL bypasses RLS. Synthetic signed token
+purposes are negative contract tests, not evidence of an exploitable issuer bypass.
+This covers an already-issued access JWT, not opaque login/refresh/MFA/API-key or
+all device/worker bootstrap. Unit SQLite's set_config adapter does not emulate RLS;
+none of these PostgreSQL cases uses it or skips production binding.

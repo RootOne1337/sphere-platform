@@ -8,11 +8,13 @@ from typing import TYPE_CHECKING
 import jwt
 from fastapi import Depends, Header, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.rbac import has_permission
 from backend.core.security import decode_access_token
 from backend.database.engine import get_db
+from backend.database.tenant import bind_tenant_context
 
 if TYPE_CHECKING:
     from backend.models.api_key import APIKey
@@ -57,9 +59,17 @@ async def get_current_user(
         )
     try:
         payload = decode_access_token(credentials.credentials)
+        if payload.get("type") != "access":
+            raise jwt.InvalidTokenError("Expected a user access token")
+        if not isinstance(payload.get("sub"), str) or not isinstance(payload.get("org_id"), str):
+            raise jwt.InvalidTokenError("Missing or invalid user/tenant claims")
+        user_id = uuid.UUID(payload["sub"])
+        org_id = uuid.UUID(payload["org_id"])
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token expired")
     except jwt.InvalidTokenError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+    except ValueError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
 
     # Проверить blacklist в Redis
@@ -68,9 +78,15 @@ async def get_current_user(
     if await cache.is_token_blacklisted(payload["jti"]):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token revoked")
 
-    # Загрузить пользователя из БД
+    # The signature-verified tenant must be bound before RLS evaluates users.
+    # Keep the explicit org filter for development/privileged DB connections too;
+    # an old token must not follow an account moved to another organization.
+    await bind_tenant_context(db, str(org_id))
     from backend.models.user import User
-    user = await db.get(User, uuid.UUID(payload["sub"]))
+    user = await db.scalar(
+        select(User).where(User.id == user_id, User.org_id == org_id)
+        .execution_options(populate_existing=True)
+    )
     if not user or not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -92,7 +108,6 @@ async def get_tenant_db(
     Session bound to the current tenant across commit/rollback/recovery.
     Use instead of get_db for all endpoints with business data.
     """
-    from backend.database.tenant import bind_tenant_context
     await bind_tenant_context(db, str(current_user.org_id))
     return db
 

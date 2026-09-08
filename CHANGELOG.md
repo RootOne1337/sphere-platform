@@ -6,7 +6,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [Unreleased] — enterprise audit, 2026-09-08
+## [Unreleased] — enterprise audit, 2026-09-09
 
 Изменения находятся в draft PR; это не опубликованный production release.
 Полный перечень предыдущих audit fixes, доказательства и residual risks:
@@ -14,6 +14,10 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Security / runtime
 
+- AUD-57: user JWT связывает tenant до SQL lookup; пользователь сверяется по id и org_id.
+  Старый токен не действует после переноса в другую организацию; invalid UUID/purpose
+  отклоняются. 22 ASGI/PG/Redis cases проверяют runtime-роль, конкурентность, права,
+  device write и audit. Login/refresh/MFA/API-key bootstrap и полный RLS rollout открыты.
 - AUD-56: фоновая HTTP audit-сессия привязывается к tenant до INSERT, чтобы RLS
   не терял журнал после успешной операции. Шесть ASGI/PostgreSQL regressions;
   durable audit retry/outbox остаётся открытым.
@@ -27,8 +31,8 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - AUD-54: Alembic `20260908_tenant_policies` устанавливает tenant policies всех
   28 таблиц, защищает оба конца M2M и append-only audit. 25 full-schema runtime-role
   checks и четыре migration/operator-policy checks; четыре CI inventory checks.
-- Общий backend/PC/production/deployment прогон: 1192 passed, coverage 67,99%,
-  включая 320 PostgreSQL/Redis cases; без load suite и listening APK/API.
+- Общий backend/PC/production/deployment прогон: 1214 passed, coverage 67,95%,
+  включая 342 PostgreSQL/Redis cases; без load suite и listening APK/API.
 
 ### Migration / deployment constraints
 
