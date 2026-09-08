@@ -307,7 +307,7 @@ after: all 16 plus the existing context test pass. These test DB helpers directl
 unscoped HTTP/auth/bootstrap/jobs remain rollout blockers. SQL arbitrary SET and
 network partition/server failover are outside this proof.
 
-AUD-55 local combined verification: **1186 passed / 68.01%**, including 314 real-service tests. Ruff and Bandit gate pass; this new code head needs its own GitHub checks.
+AUD-55 local combined verification: **1186 passed / 68.01%**, including 314 real-service tests. Ruff and Bandit gate pass; this change is covered by the subsequent combined CI snapshot below.
 
 ### Bind the HTTP audit writer to its tenant (AUD-56)
 
@@ -321,4 +321,11 @@ the request/auth DB fixture remains privileged. Missing tenant fails closed. A S
 failure can still lose audit after HTTP commit because BackgroundTask has no durable
 outbox/retry; the regression explicitly records this remaining limitation.
 
-Combined verification with AUD-56: **1192 passed / 67.99%**, including 320 real-service cases. Ruff, Bandit and generated API documentation checks pass. New GitHub checks are required for this code revision.
+Combined verification with AUD-56: **1192 passed / 67.99%**, including 320 real-service cases. Ruff, Bandit and generated API documentation checks pass. Code head `063a9d5` passed
+[backend CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34252757065)
+(1192 tests, 67.95% Linux coverage),
+[frontend CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34252757456)
+and [Android CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34252757061).
+The subsequent documentation-only snapshot has separate checks; the tested code
+is unchanged. Draft review, full auth/job runtime-role rollout and audit outbox
+remain open; no production deployment or merge was performed.

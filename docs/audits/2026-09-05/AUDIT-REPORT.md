@@ -130,7 +130,7 @@ runtime-проверок и не считается доказательство
 - **Affected files:** `backend/core/startup_checks.py:39`, `tests/production/test_rls_startup.py:56`.
 - **Fix (частичный):** `48948cd` — production startup отклоняет owner/member, privileged membership, TRUNCATE, неактивный RLS и отсутствие политик на видимых mapped tables. Development явно предупреждает. Сообщение об успешной проверке ограничено prerequisites и не утверждает корректность tenant isolation.
 - **Regression:** 10 PostgreSQL cases, включая разрешённую non-owner роль, видящую только свою организацию; вместе с lifespan — [13 passed](evidence/rls-startup-after.txt).
-- **Residual risk / blocker:** это защита от опасной конфигурации, а не завершение RLS rollout. Политики схемы дополнены в AUD-54; нужны tenant context до auth lookup и после каждого commit, tenant-aware jobs и отдельное provision runtime/migration ролей. Текущий production superuser/owner конфиг должен отказать при запуске; автоматически повышать права или отключать проверку нельзя. Проверка каталога сама по себе не доказывает семантику политик и полноту миграций.
+- **Residual risk / blocker:** это защита от опасной конфигурации, а не завершение RLS rollout. Политики схемы дополнены в AUD-54, восстановление bound Session после commit — в AUD-55; нужны context до auth lookup, перевод unscoped callers и tenant-aware jobs и отдельное provision runtime/migration ролей. Текущий production superuser/owner конфиг должен отказать при запуске; автоматически повышать права или отключать проверку нельзя. Проверка каталога сама по себе не доказывает семантику политик и полноту миграций.
 
 ### AUD-15 — High: успешный образ не запускал API из-за записи OpenAPI
 
@@ -593,7 +593,7 @@ runtime-проверок и не считается доказательство
 - **Root cause:** audit middleware создавал отдельную DB-сессию после request transaction и не устанавливал tenant context. Политика audit_logs отклоняла INSERT; HTTP-операция уже могла завершиться успешно, а вместо записи оставался только error log.
 - **Evidence/reproduction:** [5 failed, 1 passed](evidence/audit-tenant-before.txt): реальные PUT /devices через ASGI, фоновый writer подключён отдельными non-owner LOGIN credentials. HTTP 200/403/404 возвращаются ожидаемо, но audit row отсутствует, PostgreSQL сообщает row-level security violation. Контрольный unauthenticated request не создаёт tenant audit согласно существующему контракту.
 - **Affected files:** `backend/middleware/audit.py:126`; `tests/production/test_audit_tenant_runtime.py`.
-- **Fix:** свежая Session привязывается к заранее сохранённому principal.org_id до add/INSERT. Она использует общий transaction-aware binder из AUD-55; неизвестный/отсутствующий tenant не превращается в unscoped INSERT.
+- **Fix:** `063a9d5` — свежая Session привязывается к заранее сохранённому principal.org_id до add/INSERT. Она использует общий transaction-aware binder из AUD-55; неизвестный/отсутствующий tenant не превращается в unscoped INSERT.
 - **Regression:** шесть новых ASGI/PostgreSQL cases: успешное изменение, forbidden/not-found, одновременные A/B writers через один pool, SQL failure после реального flush с recovery следующего tenant, unauthenticated control. [26 related tests passed](evidence/audit-tenant-after.txt), включая Host/audit-path integrity и transaction recovery. Общий прогон: **1192 passed / 67,99%**, включая 320 PostgreSQL/Redis cases; Ruff, Bandit gate и HTTP schema check проходят.
 - **Residual risk:** request/auth DB в этих тестах остаётся прежней привилегированной fixture, отдельно проверяется именно non-owner audit writer. Полный HTTP auth/bootstrap под runtime credentials ещё не закрыт. BackgroundTask не является durable outbox: тест SQL failure явно подтверждает отсутствие первой audit row при уже успешном HTTP изменении. Crash/retry/unknown commit, audit delivery metrics и неаутентифицированные/platform события требуют отдельного решения. RLS policy и tenant filtering не обеспечивают глобальную неизменяемость от DB owner.
 
@@ -761,3 +761,17 @@ Linux CI: **1170 passed, 4 warnings / 67,90%**; локальный Windows пр�
 остаётся отдельной CI задачей. Последующий documentation commit запускает свои
 checks и не меняет проверенный код. PR остаётся draft без независимого review;
 merge/deploy не выполнены.
+
+Code head `063a9d5` (AUD-55 и AUD-56) полностью прошёл
+[backend CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34252757065),
+[frontend CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34252757456) и
+[Android CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34252757061).
+Сохранены [backend](evidence/ci-063a9d5-backend.json),
+[frontend](evidence/ci-063a9d5-frontend.json) и [Android](evidence/ci-063a9d5-android.json)
+snapshots. Linux: **1192 passed / 67,95%**; Windows: **1192 passed / 67,99%**,
+по четыре warnings, неизменный coverage gate 65% пройден. 22 новых cases используют
+реальные runtime LOGIN credentials: 16 DB-session проверок и шесть ASGI/audit-writer
+проверок. Остальные 320 PostgreSQL/Redis cases не переименовываются в полную
+runtime-role suite. После локального прогона не осталось тестовых LOGIN-ролей
+`audit_runtime_user_*` и их соединений. Preview guard успешен, deployment пропущен.
+Documentation-only snapshot запускает свои checks; код с указанной ревизии не менялся.
