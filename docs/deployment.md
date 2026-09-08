@@ -1,6 +1,10 @@
 # Deployment Guide
 
-> **Sphere Platform v4.7** — Production Deployment Reference
+> **Статус на 8 сентября 2026:** аудит продолжается; этот справочник не является
+> подтверждением production readiness. RLS runtime-role rollout заблокирован до
+> проверки auth/bootstrap и фоновых задач: [условия и доказательства](security/postgresql-rls.md).
+> Текущий общий PostgreSQL owner/superuser не пройдёт production startup guard.
+> Не применять generic rolling deploy/rollback к этим security migrations.
 
 ---
 
@@ -33,7 +37,7 @@
 | Production | 8 cores | 16 GB | 100 GB SSD | Ubuntu 22.04 LTS |
 | **Enterprise (10k+ Devices)** | **16 Cores / 32 Threads** | **64 GB** | **2 TB NVMe** | **Ubuntu 22.04 LTS** |
 
-> *Note on Enterprise Hardware:* For orchestrating 10,000+ devices, 64 GB RAM provides ample headroom for Redis Pub/Sub queues and PostgreSQL shared buffers. NVMe storage is critical to avoid write-locks during mass task execution. A dedicated GPU (e.g., Nvidia RTX 4000 series or Tesla T4) is highly recommended if hardware-accelerated video transcoding or AI-based screen analysis is planned for the streaming pipeline.
+> Эти конфигурации — прежние ориентиры, а не измеренная ёмкость. Работа 10–64 эмуляторов, 10 000 устройств, CPU/RAM/FPS и запас производительности не подтверждены текущими тестами. NVMe сам по себе не устраняет блокировки PostgreSQL.
 
 ### Required Software
 
@@ -68,7 +72,7 @@ $EDITOR .env.local
 ### Required Variables
 
 All variables are documented in [configuration.md](configuration.md).
-Minimally required for any environment:
+Development/bootstrap example only; this shared PostgreSQL role is not safe for production runtime. See the [RLS rollout blockers](security/postgresql-rls.md) before separating migration/runtime credentials:
 
 ```bash
 POSTGRES_USER=sphere
@@ -250,11 +254,9 @@ docker compose exec backend alembic current
 # View migration history
 docker compose exec backend alembic history --verbose
 
-# Rollback one step
-docker compose exec backend alembic downgrade -1
-
-# Rollback to specific revision
-docker compose exec backend alembic downgrade 0001
+# Security revision 20260908_tenant_policies blocks downgrade.
+# Use a reviewed forward migration; encrypted credentials and VPN intents
+# have additional rollback constraints documented above.
 ```
 
 ### Migration after production deploy
@@ -414,15 +416,11 @@ docker compose up -d --no-deps frontend
 
 ### Rollback
 
-```bash
-# Rollback database
-docker compose exec backend alembic downgrade -1
-
-# Rollback to previous image
-docker compose down
-git checkout <previous-tag>
-docker compose -f docker-compose.yml -f docker-compose.full.yml up -d
-```
+Automatic schema/image rollback is not supported across the current security
+transitions. Tenant policy downgrade is explicitly blocked; encrypted credentials
+and pending VPN intents also have guards. Prepare a reviewed forward repair or a
+verified isolated restore with matching application version, keys and role policy.
+Do not disable RLS/startup checks to make an older image start.
 
 ---
 

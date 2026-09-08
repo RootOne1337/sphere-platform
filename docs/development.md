@@ -1,6 +1,11 @@
 # Developer Guide
 
-> **Sphere Platform v4.7** — Local Development Setup & Coding Standards
+> **Sphere Platform** — Local Development Setup & Coding Standards
+>
+> RLS policies are installed by Alembic `20260908_tenant_policies` on all 28 model
+> tables. Non-owner runtime credentials and HTTP/auth/job tenant propagation remain
+> rollout blockers. Read [the RLS contract](security/postgresql-rls.md); neither an
+> explicit ORM filter nor middleware proves full database isolation.
 
 ---
 
@@ -130,7 +135,7 @@ async def list_items(
     db: AsyncSession = Depends(get_db),
     current_user = Depends(require_permission("myfeature:read")),
 ):
-    # query only current org's data — RLS enforces, but filter explicitly too
+    # Explicit tenant filter is required; get_db alone does not establish RLS context.
     result = await db.execute(
         select(MyModel).where(MyModel.org_id == current_user.org_id)
     )

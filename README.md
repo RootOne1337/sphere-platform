@@ -8,7 +8,7 @@
 ### Enterprise Android Device Management & Automation Platform
 
 [![Version](https://img.shields.io/badge/version-4.7.0-00d4ff?style=flat-square)](VERSION)
-[![Tests](https://img.shields.io/badge/tests-1231_passed-00d4ff?style=flat-square&logo=pytest&logoColor=white)](tests/)
+[![Audit](https://img.shields.io/badge/audit-in_progress-orange?style=flat-square)](docs/audits/2026-09-05/AUDIT-REPORT.md)
 [![Python](https://img.shields.io/badge/python-3.12-3776ab?style=flat-square&logo=python&logoColor=white)](backend/)
 [![Kotlin](https://img.shields.io/badge/kotlin-1.9-7F52FF?style=flat-square&logo=kotlin&logoColor=white)](android/)
 [![Next.js](https://img.shields.io/badge/Next.js-15-000000?style=flat-square&logo=next.js&logoColor=white)](frontend/)
@@ -20,7 +20,7 @@
 [![CI Backend](https://github.com/RootOne1337/sphere-platform/actions/workflows/ci-backend.yml/badge.svg)](https://github.com/RootOne1337/sphere-platform/actions)
 [![CI Android](https://github.com/RootOne1337/sphere-platform/actions/workflows/ci-android.yml/badge.svg)](https://github.com/RootOne1337/sphere-platform/actions)
 
-**Управляй тысячами Android-устройств. В реальном времени. Без компромиссов.**
+**Управление Android-устройствами, мониторинг и автоматизация.**
 
 [Документация](docs/) · [Web UI Guide](docs/web-ui-guide.md) · [API Reference](docs/api-reference.md) · [**Full Deploy Guide**](FULL-DEPLOYMENT-GUIDE.md) · [Deployment](docs/deployment.md) · [Changelog](CHANGELOG.md) · [Contributing](CONTRIBUTING.md)
 
@@ -28,9 +28,15 @@
 
 </div>
 
+> **Аудит на 8 сентября 2026 продолжается.** Production readiness и нагрузка
+> 10–64 эмулятора не подтверждены. Актуальные тесты, реальные дефекты, исправления
+> и остаточные риски: [audit report](docs/audits/2026-09-05/AUDIT-REPORT.md).
+> Политики всех 28 таблиц установлены миграцией; полный переход приложения на
+> непривилегированную PostgreSQL роль остаётся [блокером](docs/security/postgresql-rls.md).
+
 ## Что такое Sphere Platform?
 
-Sphere Platform — production-grade система для **управления, мониторинга и автоматизации** крупных парков Android-устройств. H.264 видеостриминг в реальном времени, DAG-движок скриптов, pipeline-оркестратор, cron-планировщик, zero-touch provisioning 1000+ эмуляторов и защищённый VPN — всё в одной платформе.
+Sphere Platform — развиваемая система для **управления, мониторинга и автоматизации** крупных парков Android-устройств. H.264 видеостриминг в реальном времени, DAG-движок скриптов, pipeline-оркестратор, cron-планировщик, zero-touch provisioning 1000+ эмуляторов и защищённый VPN — всё в одной платформе.
 
 > **Для кого:** DevOps-команды, тестировочные фермы, мобильные фермы, автоматизация QA, enterprise fleet management.
 
@@ -163,7 +169,7 @@ graph TB
     end
 
     subgraph DATA[Data Layer]
-        PG[(PostgreSQL 15<br/>RLS · 19 таблиц)]
+        PG[(PostgreSQL 15<br/>28 таблиц · RLS policies)]
         REDIS[(Redis 7.2<br/>PubSub · Cache · Queue)]
     end
 

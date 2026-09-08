@@ -186,9 +186,9 @@ network failure displays an unconfirmed-revocation message on login.
   packaging and real-browser behavior remain unconfirmed. On `3630a63`, [Linux frontend CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34175662261)
   passed Jest, tsc, production build and a standalone-entry-point check.
 - Android enterprise debug unit suite: **344 passed**.
-- Combined backend/PC, PostgreSQL/Redis and deployment regressions: **1127 passed**.
-  This includes **259 real-service tests** and **6 Compose configuration tests**.
-  Coverage is **67.74%** and passes the unchanged **65%** gate with two-decimal
+- Combined backend/PC, PostgreSQL/Redis and deployment regressions: **1170 passed**.
+  This includes **298 real-service tests** and **6 Compose configuration tests**.
+  Coverage is **67.94%** and passes the unchanged **65%** gate with two-decimal
   precision. No threshold or coverage scope was weakened. Two additional
   regression tests exercise the 64.98% rejection and exact 65.00% boundary. Long load/soak profiles require a prepared API
   environment and are excluded from the ordinary PR command.
@@ -208,7 +208,8 @@ resolved account payloads determine DAG cache identity. Full RLS rollout,
 orchestrator creation/pipeline recovery, VPN/deployment and the remaining
 component audit are still open. Legacy running assignments require rollout reconciliation.
 
-Apply migrations through `20260906_account_ciphertext` before a backend rollout; previously
+The schema head is `20260908_tenant_policies`; production rollout remains blocked
+on separate runtime credentials and auth/job tenant propagation. Previously
 issued refresh tokens require device re-enrollment. The command journal retains
 512 receipts for seven days with a 1 MiB cap and rejects new DAGs when full.
 Interrupted execution returns an explicit unknown-outcome failure; this does not
@@ -264,3 +265,24 @@ production. Development warns explicitly. Ten real PostgreSQL regressions exerci
 actual owner/FORCE/SET ROLE/TRUNCATE behavior: nine failed before, all ten plus three
 lifespan tests pass after. This does not certify policy predicates or solve auth/job
 tenant propagation; switching deployment credentials remains blocked on that work.
+
+### Complete schema policies (AUD-54; application rollout still blocked)
+
+The actual migrated schema exposed orchestration settings and device/group/location
+associations to other tenants through an ordinary CRUD role, while 15 RLS-enabled
+tables without policies denied even legitimate tenant access. The before proof
+recorded 19 failures and two controls. A new Alembic revision installs policies for
+all 28 application tables, protects both association endpoints and makes audit
+runtime access tenant-scoped and append-only. Restrictive boundaries prevent
+permissive-policy OR bypass; operator restrictive policies are retained. Missing
+or empty context denies access; malformed UUID fails before writes. Unsafe downgrade
+is refused and the old manual SQL setup fails explicitly with migration guidance.
+
+Verification: 25 full-schema runtime-role cases, four migration/operator-policy
+cases and four CI inventory cases pass (33 total); the startup fix adds ten more
+PostgreSQL regressions. The combined 1170-test local suite and unchanged coverage
+gate pass. New GitHub checks must be evaluated on this RLS head; earlier green
+checks do not certify it. All reproductions remain isolated and do not assert a
+public HTTP exploit for every affected table. See the
+[RLS rollout contract](https://github.com/RootOne1337/sphere-platform/blob/codex/enterprise-audit-20260905/docs/security/postgresql-rls.md)
+for auth/bootstrap/jobs, transaction context, foreign-key and role constraints.

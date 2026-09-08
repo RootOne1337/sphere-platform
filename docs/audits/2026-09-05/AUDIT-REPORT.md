@@ -20,10 +20,10 @@ runtime-проверок и не считается доказательство
 | Проверка | Результат | Практическое ограничение |
 | --- | --- | --- |
 | Android enterprise debug unit suite | 344 passed, 0 failed | JVM/MockWebServer; не проверяет ОС, codec, батарею или смерть процесса на телефоне |
-| Объединённая Backend/PC/production/deployment suite | **1127 passed, 0 failed**; coverage **67,74%** | Строгий coverage gate 65% пройден с precision=2. Load suite исключена; 6 Compose config tests не запускают сервисы |
+| Объединённая Backend/PC/production/deployment suite | **1170 passed, 0 failed**; coverage **67,94%** | Строгий coverage gate 65% пройден с precision=2. Load suite исключена; 6 Compose config tests не запускают сервисы |
 | Python dependency scan | **0 known vulnerabilities** в совместном backend/PC resolution | Pip-audit snapshot, не проверка frontend/Gradle/container/application security; [версии и ограничения](DEPENDENCY-REVIEW.md) |
-| Проверки PostgreSQL/Redis | **259 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
-| Миграции | Применены до **20260906_account_ciphertext** включительно | Только изолированная БД; конфликтные данные/downgrade проверены в throwaway schema; production не мигрировался |
+| Проверки PostgreSQL/Redis | **298 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
+| Миграции | Применены до **20260908_tenant_policies** включительно | Только изолированная БД; конфликтные данные/downgrade проверены в throwaway schema; production не мигрировался |
 | Backend image | Собирается; исходная запись OpenAPI воспроизведённо падает с PermissionError | Исправлен lifespan; полный deployment runtime ещё не подтверждён |
 | Frontend | **198 Jest tests passed**, tsc passed; Next production build exit 0 на Node 24.19.0 | React/JSDOM + Axios adapters; настоящий browser runtime не проверен. Windows standalone tracing выдал ENOENT warning, artifact packaging ещё не подтверждён |
 | APK ↔ реальный локальный backend | Не завершено | Автоматическая проверка разрешений отклонила запуск локального API: `blocked by policy`; обход не выполнялся |
@@ -33,7 +33,7 @@ runtime-проверок и не считается доказательство
 Предыдущий отдельный DAG benchmark однажды занял 127,1 ms при пороге 100 ms;
 изолированный повтор и последующие общие прогоны прошли. Порог не ослаблялся.
 Файл production-regressions-after.txt сохраняет более ранний standalone snapshot
-с 41 тестом; актуальные 259 входят в общий прогон.
+с 41 тестом; актуальные 298 входят в общий прогон.
 
 Команды запуска и предохранители изоляции: [tests/production/README.md](../../../tests/production/README.md).
 Исходные `14 passed` в [reproductions.txt](evidence/reproductions.txt) означают
@@ -127,10 +127,10 @@ runtime-проверок и не считается доказательство
 
 - **Root cause:** проверка учитывала только `rolsuper` и `rolbypassrls`. Обычный владелец таблицы и участник owner-role обходят RLS; владелец может отменить даже FORCE RLS. TRUNCATE не проверяет строки. Отсутствующие политики не проверялись.
 - **Evidence:** [rls-startup-before.txt](evidence/rls-startup-before.txt) — **9 failed, 1 passed**. На PostgreSQL обычный owner читает обе организации; FORCE owner выполняет ALTER, NOINHERIT member выполняет SET ROLE, runtime с TRUNCATE удаляет обе синтетические строки (транзакция откатывается).
-- **Affected files:** `backend/core/startup_checks.py:44`, `tests/production/test_rls_startup.py:73`.
-- **Fix (частичный):** production startup отклоняет owner/member, privileged membership, TRUNCATE, неактивный RLS и отсутствие политик на видимых mapped tables. Development явно предупреждает. Сообщение об успешной проверке ограничено prerequisites и не утверждает корректность tenant isolation.
+- **Affected files:** `backend/core/startup_checks.py:39`, `tests/production/test_rls_startup.py:56`.
+- **Fix (частичный):** `48948cd` — production startup отклоняет owner/member, privileged membership, TRUNCATE, неактивный RLS и отсутствие политик на видимых mapped tables. Development явно предупреждает. Сообщение об успешной проверке ограничено prerequisites и не утверждает корректность tenant isolation.
 - **Regression:** 10 PostgreSQL cases, включая разрешённую non-owner роль, видящую только свою организацию; вместе с lifespan — [13 passed](evidence/rls-startup-after.txt).
-- **Residual risk / blocker:** это защита от опасной конфигурации, а не завершение RLS rollout. Нужны политики всей схемы, tenant context до auth lookup и после каждого commit, tenant-aware jobs и отдельное provision runtime/migration ролей. Текущий production superuser/owner конфиг должен отказать при запуске; автоматически повышать права или отключать проверку нельзя. Проверка каталога сама по себе не доказывает семантику политик и полноту миграций.
+- **Residual risk / blocker:** это защита от опасной конфигурации, а не завершение RLS rollout. Политики схемы дополнены в AUD-54; нужны tenant context до auth lookup и после каждого commit, tenant-aware jobs и отдельное provision runtime/migration ролей. Текущий production superuser/owner конфиг должен отказать при запуске; автоматически повышать права или отключать проверку нельзя. Проверка каталога сама по себе не доказывает семантику политик и полноту миграций.
 
 ### AUD-15 — High: успешный образ не запускал API из-за записи OpenAPI
 
@@ -566,12 +566,23 @@ runtime-проверок и не считается доказательство
 - **Regression:** `tests/production/test_mfa_consumption.py` — 5 cases: concurrent valid submissions, actual TTL expiry, invalid TOTP then success, потеря ответа Redis после реального удаления, SQL failure после flush до commit. [97 related auth/cache tests passed](evidence/mfa-consumption-after.txt); общий прогон **1127 passed / 67,74%**, включая 259 PostgreSQL/Redis cases. Ruff и Bandit gate проходят. Unit mock успешного consumption теперь явно возвращает count=1.
 - **Residual risk:** оба исходных запроса требовали действительный state и TOTP — обход второго фактора не доказан. Redis consumption и SQL issuance не являются общей транзакцией: после consume/commit failure требуется новый password/MFA flow, старый challenge не восстанавливается. Rate limiting MFA, повтор TOTP между разными challenges, Redis failover consistency, secrets at rest и concurrent deactivation требуют отдельного аудита.
 
+
+### AUD-54 — High: миграции оставляли tenant-таблицы без RLS или без рабочих политик
+
+- **Root cause:** baseline включал RLS без создания политик; отдельный ручной SQL не вызывался Alembic. `pipeline_settings` и обе M2M-таблицы не получили RLS вообще. Старый CI сверял 15 вручную перечисленных таблиц с ручным SQL и ошибочно исключал ассоциации как защищённые FK.
+- **Evidence/reproduction:** схема `20260906_account_ciphertext`, non-owner/NOBYPASSRLS роль с обычными CRUD grants, две синтетические организации и transaction-local tenant A. Прямой SELECT раскрывал чужие связи, INSERT соединял endpoints разных организаций, UPDATE изменял чужие настройки оркестратора. В 15 таблицах default deny скрывал даже собственные строки. [Исходные 19 failed, 2 passed](evidence/rls-policies-before.txt). Это доказанная SQL boundary failure, не заявление об отдельном публичном HTTP exploit для каждой таблицы.
+- **Affected files:** `alembic/versions/0001_baseline_initial_schema.py:418`, `alembic/versions/20260309_pipeline_settings.py`, `infrastructure/postgres/rls_policies.sql`, `infrastructure/postgres/audit_log_policies.sql`, `scripts/check_rls.py`; исправление — `alembic/versions/20260908_tenant_policies.py:34`.
+- **Fix:** новая migration устанавливает политики всех 28 mapped tables. USING/WITH CHECK защищают чтение и запись; обе стороны M2M проверяются явно. Restrictive tenant boundary не позволяет дополнительной permissive policy открыть чужие строки. Старые repository-owned policy names заменяются, неизвестные operator restrictions сохраняются. Audit допускает только tenant SELECT/INSERT и запрещает UPDATE/DELETE; NULL-org runtime INSERT закрыт. Tenant setting приводится к UUID без преобразования индексируемого org_id; missing/empty отказывает, malformed вызывает ошибку до записи. Небезопасный downgrade запрещён.
+- **Regression:** [33 passed](evidence/rls-policies-after.txt): 25 cases реальной полной схемы под отдельной ролью; четыре migration cases для legacy, permissive/restrictive operator policies и downgrade; четыре inventory cases, включая пропущенную M2M. Дополнительные сценарии расширяют исходный before proof; malformed-context test уточнён до отказа записи. Общий прогон **1170 passed / 67,94%**, включая **298 PostgreSQL/Redis cases**. Ruff, Bandit gate и static inventory проходят.
+- **Documentation/rollout:** ручные SQL entry points явно отклоняют старый способ установки; актуальный [RLS runbook](../../security/postgresql-rls.md) содержит условия rollout, модель ролей, ограничения контекста и rollback. Developer/deployment guides и README больше не утверждают гарантированную RLS/production readiness.
+- **Residual risk:** AUD-14 остаётся открытым для auth/bootstrap/refresh/device lookup до выбора tenant, повторной установки context после commit/rollback, глобальных jobs и provisioning migration/runtime ролей. Текущий Compose использует общий PostgreSQL bootstrap user и не готов к безопасному переключению. Не проверены все cross-tenant FK и конкурентная смена org родителя; SQL policy tests не заменяют HTTP/worker runtime. Migration применена только в выделенной БД; production и ключи не изменялись. RLS с GUC не защищает от произвольного SQL, который сам выбирает tenant.
+
 ## Открытые подтверждённые блокеры
 
 | ID / severity | Root cause и evidence | Необходимое продолжение |
 | --- | --- | --- |
 | AUD-11 / High, частично исправлен | SQL ownership/uniqueness/intents исправлены и проверены; реальные orphan peers и provider unknown outcomes не reconciled | Inventory contract, controlled reconciliation/rollout, HTTP adapter и AWG конфигурация; незавершённые intents пока удерживаются |
-| AUD-14 / High | Owner bypass воспроизведён; production startup guard исправлен (10 PostgreSQL cases). Политики/tenant context не установлены повсеместно | Разделение migration/runtime ролей, политики и контекст для HTTP/auth/jobs, реальные cross-tenant проверки |
+| AUD-14 / High | Startup guard исправлен; политики всех 28 tables и runtime CRUD проверены (AUD-54). Auth/jobs и context после commit ещё не переведены | Разделение migration/runtime ролей, контекст для HTTP/auth/jobs и после commit, разрешённые/запрещённые runtime API/worker сценарии |
 | DEPLOY-03 / High | Effective Compose оставляет n8n/MinIO host ports; production persistence и DB roles не согласованы | Ingress/access design, роли, долговечные artifacts, runtime/restore проверка |
 
 ## Следующие компоненты аудита
@@ -712,3 +723,10 @@ Frontend проверяет 198 tests, tsc, production build и Linux standalone
 Последующий documentation commit имеет собственные checks; этот snapshot относится
 к точной проверенной ревизии кода. Контракт браузерной сессии описан отдельно в
 [frontend-sessions.md](../../security/frontend-sessions.md).
+
+На `1b9fce4` (предыдущий documentation head) полностью прошли
+[backend](https://github.com/RootOne1337/sphere-platform/actions/runs/34176043929),
+[frontend](https://github.com/RootOne1337/sphere-platform/actions/runs/34176043928) и
+[Android](https://github.com/RootOne1337/sphere-platform/actions/runs/34176043952).
+Новые RLS изменения проверены локально общим прогоном 1170 tests; их GitHub CI
+будет оцениваться отдельно на новом head. PR остаётся draft, merge/deploy не выполнены.

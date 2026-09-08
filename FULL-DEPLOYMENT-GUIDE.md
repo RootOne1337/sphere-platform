@@ -1,9 +1,13 @@
 # Sphere Platform — Полный гайд развёртывания
 
-> **From Zero to Production за 15 минут**
+> **Статус на 8 сентября 2026: production readiness не подтверждена.**
 >
-> Enterprise-grade руководство по клонированию, настройке и запуску всей платформы.
-> Подходит для VPS, выделенного сервера, Windows-машины разработчика и CI/CD.
+> Это справочник настройки; полный runtime и ёмкость 10–64 эмулятора ещё проверяются.
+> Текущий общий PostgreSQL owner/superuser отклоняется production startup guard.
+> До rollout нужно завершить auth/job tenant context и разделение runtime/migration
+> ролей: [RLS runbook](docs/security/postgresql-rls.md). Политики устанавливает Alembic,
+> ручной SQL setup и автоматический downgrade текущей security revision запрещены.
+> Фактические результаты и оставшиеся блокеры: [audit report](docs/audits/2026-09-05/AUDIT-REPORT.md).
 
 ---
 

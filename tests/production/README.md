@@ -124,3 +124,12 @@ actual owner, FORCE, inherited/NOINHERIT membership and TRUNCATE escapes. The st
 guard rejects unsafe production roles and missing RLS prerequisites. A non-owner
 control sees only its tenant. Schema/roles are removed; this is not an end-to-end
 HTTP/auth/background-job rollout under runtime credentials.
+
+`test_rls_policies.py` grants a UUID role CRUD (no ownership/BYPASSRLS/TRUNCATE)
+on the actual Alembic-migrated schema and verifies unfiltered reads, foreign writes,
+both M2M endpoints, audit append-only behavior and absent/invalid tenant context.
+`test_rls_migration.py` uses rollback-only minimal schemas to check preservation of
+operator restrictive policies, resistance to permissive-policy OR bypass, legacy
+policy replacement and refusal of unsafe downgrade. These are SQL boundaries;
+HTTP/auth/jobs under runtime credentials remain a [rollout blocker](../../docs/security/postgresql-rls.md).
+The earlier privileged integration suite is not relabelled as a runtime-role suite.

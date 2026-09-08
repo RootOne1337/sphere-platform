@@ -17,7 +17,8 @@ class AuditLog(Base):
     Иммутабельный журнал аудита.
     НЕ наследует TimestampMixin (нет updated_at — immutable by design).
     НЕ наследует UUIDMixin — id задаётся явно для разделения ответственности.
-    RLS-политика (audit_log_policies.sql) запрещает UPDATE и DELETE.
+    Миграция 20260908_tenant_policies запрещает runtime UPDATE и DELETE через RLS.
+    Требуется non-owner роль без BYPASSRLS/TRUNCATE; владелец обходит защиту.
     Детальная логика: TZ-01 SPLIT-5.
     """
     __tablename__ = "audit_logs"

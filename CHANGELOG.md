@@ -6,6 +6,30 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased] — enterprise audit, 2026-09-08
+
+Изменения находятся в draft PR; это не опубликованный production release.
+Полный перечень предыдущих audit fixes, доказательства и residual risks:
+[audit report](docs/audits/2026-09-05/AUDIT-REPORT.md).
+
+### Security / runtime
+
+- AUD-14: production startup отклоняет PostgreSQL owner/member, privileged roles,
+  TRUNCATE и отсутствующий RLS/policies; 10 новых PostgreSQL regressions.
+- AUD-54: Alembic `20260908_tenant_policies` устанавливает tenant policies всех
+  28 таблиц, защищает оба конца M2M и append-only audit. 25 full-schema runtime-role
+  checks и четыре migration/operator-policy checks; четыре CI inventory checks.
+- Общий backend/PC/production/deployment прогон: 1170 passed, coverage 67,94%,
+  включая 298 PostgreSQL/Redis cases; без load suite и listening APK/API.
+
+### Migration / deployment constraints
+
+Полный переход приложения на non-owner runtime credentials остаётся заблокирован
+до исправления auth/bootstrap/jobs и transaction context. Старые ручные RLS SQL
+entry points явно отклоняются; downgrade tenant-policy revision запрещён.
+[Runbook](docs/security/postgresql-rls.md) описывает условия перехода и ограничения.
+Production и внешняя инфраструктура не изменялись.
+
 ## [4.7.0] — 2026-03-10  <!-- feat: Game Accounts, Event System, Pipeline Settings -->
 
 ### Краткое описание
