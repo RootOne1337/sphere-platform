@@ -347,3 +347,13 @@ SQLite unit tests have a test-only SQL adapter; production binding has no dialec
 Opaque auth bootstrap, WebSocket/jobs and full runtime-role rollout remain open.
 
 Local combined validation: **1214 passed / 67.95%**, including **342 PostgreSQL/Redis cases**; 116 related tests pass. The 65% gate is unchanged. Ruff, Bandit and generated API checks pass. GitHub checks for the new code revision are tracked separately below.
+
+Backend CI attempt 1 on `d828a62` had **1 failed / 1213 passed**: the unchanged DAG timing test measured 363.2 ms against 100 ms. All 22 new JWT cases passed. The failure excerpt is retained; 24 local DAG cases pass. One rerun uses identical code and thresholds; runner timing variance is still an open measurement concern.
+
+Code head `d828a62` now passes [backend CI attempt 2](https://github.com/RootOne1337/sphere-platform/actions/runs/34282838423/attempts/2),
+[frontend CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34282838431) and
+[Android CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34282838503).
+Linux retry: **1214 passed / 67.99%**; Windows: **1214 passed / 67.95%**.
+The first failed timing run remains in evidence; no code, test or threshold changed
+between attempts. Preview guard passes, deployment is skipped. The follow-up commit
+contains documentation and CI snapshots only and starts its own checks. PR remains draft.

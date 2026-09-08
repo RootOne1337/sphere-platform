@@ -31,7 +31,11 @@ runtime-проверок и не считается доказательство
 
 Последний общий вывод: [combined-suite-current.txt](evidence/combined-suite-current.txt).
 Предыдущий отдельный DAG benchmark однажды занял 127,1 ms при пороге 100 ms;
-изолированный повтор и последующие общие прогоны прошли. Порог не ослаблялся.
+изолированный повтор и последующие общие прогоны прошли. На первой CI попытке
+`d828a62` этот же неизменённый тест измерил 363,2 ms: **1 failed / 1213 passed**,
+все 22 новых JWT cases прошли. [Сохранённый CI excerpt](evidence/ci-d828a62-attempt1.txt).
+[Локальные 24 DAG cases прошли](evidence/dag-timing-d828a62-local.txt). Порог 100 ms
+не ослаблялся, тест не исключался; причина timing variance на runner не установлена.
 Файл production-regressions-after.txt сохраняет более ранний standalone snapshot
 с 41 тестом; актуальные 342 входят в общий прогон.
 
@@ -603,7 +607,7 @@ runtime-проверок и не считается доказательство
 - **Root cause:** `get_current_user` проверял подпись и blacklist, затем выполнял `db.get(User, sub)` до установки PostgreSQL tenant context. Non-owner роль с RLS не видела даже разрешённого пользователя. Под owner-подключением отсутствовал контроль соответствия `User.org_id` подписанному `org_id`; токен организации A продолжал давать профиль пользователя после его переноса в B. Некорректный UUID subject также выходил необработанной ошибкой.
 - **Evidence/reproduction:** [17 failed, 5 passed](evidence/jwt-tenant-before.txt). Настоящие ASGI `/auth/me` и PUT `/devices/{id}` с отдельными non-owner LOGIN credentials отклоняли корректные JWT кодом 401. Owner-control получает 200 и профиль с новой организацией по реально выпущенному до переноса токену. Дополнительные подписанные тестовые claims без организации/с чужой организацией/неверным purpose принимались; это проверки контракта, а не доказательство возможности подделать подпись или получить user access через существующий issuer другого типа токена.
 - **Affected files:** `backend/core/dependencies.py::get_current_user`; `tests/production/test_jwt_tenant_runtime.py`; SQL-адаптер SQLite в `tests/conftest.py`; per-request fixture в `tests/n8n/conftest.py`.
-- **Fix:** до доступа к БД проверяются purpose `access` и UUID `sub`/`org_id`; после проверки blacklist подписанная организация привязывается к Session. User выбирается по **id и org_id**, с обновлением ORM snapshot. Активность и права берутся из текущей строки БД. Общий JWT decoder и форматы device/refresh flow не изменены.
+- **Fix:** `d828a62` — до доступа к БД проверяются purpose `access` и UUID `sub`/`org_id`; после проверки blacklist подписанная организация привязывается к Session. User выбирается по **id и org_id**, с обновлением ORM snapshot. Активность и права берутся из текущей строки БД. Общий JWT decoder и форматы device/refresh flow не изменены.
 - **Regression:** 10 случаев с non-owner HTTP credentials и 12 owner-controls — [22 ASGI/PostgreSQL/Redis cases passed](evidence/jwt-tenant-after.txt): обе организации, порядок tenant binding перед SELECT users, 200/403/404 при записи устройства и audit через один runtime pool, concurrent requests, чистая новая Session, перенос/деактивация/понижение роли после выдачи токена, invalid/missing claims и неизвестный user. SQLite unit tests имеют только SQL-адаптер `set_config`: он не эмулирует RLS и не считается доказательством изоляции; production dialect bypass не добавлялся.
 - **Validation:** [116 related auth/n8n/tenant tests passed](evidence/jwt-tenant-related.txt). Общий прогон **1214 passed / 67,95%**, включая **342 PostgreSQL/Redis cases**, четыре прежних warnings; неизменный gate 65%. Ruff, Bandit и generated API check проходят. Пять n8n unit fixtures-сценариев исправлены переходом на Session per request: прежняя fixture пыталась привязать разные организации к одной ORM identity map. Проверено существование 203 локальных ссылок в девяти руководствах; это не сертификация всего содержания документации.
 - **Residual risk:** проверена цепочка уже выданного user access JWT и выбранные HTTP handlers. Email login, MFA/refresh/API-key/device bootstrap, WebSocket и глобальные jobs требуют отдельных проверенных tenant boundaries. Совпадение JWT claims не заменяет подпись; произвольный GUC SQL остаётся вне threat boundary. Изменение прав после SELECT в уже идущем запросе не блокируется. Durable audit outbox, полный rollout непривилегированных ролей, listening APK↔API и нагрузка 10–64 не закрыты.
@@ -786,3 +790,19 @@ snapshots. Linux: **1192 passed / 67,95%**; Windows: **1192 passed / 67,99%**,
 runtime-role suite. После локального прогона не осталось тестовых LOGIN-ролей
 `audit_runtime_user_*` и их соединений. Preview guard успешен, deployment пропущен.
 Documentation-only snapshot запускает свои checks; код с указанной ревизии не менялся.
+
+
+На code head `d828a62` (AUD-57) завершены
+[backend CI, попытка 2](https://github.com/RootOne1337/sphere-platform/actions/runs/34282838423/attempts/2),
+[frontend CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34282838431) и
+[Android CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34282838503).
+Сохранены compact snapshots: [backend](evidence/ci-d828a62-backend.json),
+[frontend](evidence/ci-d828a62-frontend.json), [Android](evidence/ci-d828a62-android.json).
+[Linux повтор](evidence/ci-d828a62-attempt2-tests.txt): **1214 passed / 67,99%**;
+Windows: **1214 passed / 67,95%**, включая 342 PostgreSQL/Redis cases, четыре warnings.
+Первый CI отказ и неизменённый порог DAG benchmark описаны выше. Повтор не менял
+код, тест или gate. Это не доказывает стабильность latency под будущей нагрузкой.
+Preview guard завершился успешно, deploy пропущен. После локального прогона осталось
+ноль temporary runtime LOGIN roles и ноль их соединений. PR #19 остаётся draft;
+merge/deployment не выполнялись. Последующий commit добавляет только документацию
+и сохранённые CI evidence, его проверки относятся к новой ревизии.
