@@ -175,15 +175,15 @@ network failure displays an unconfirmed-revocation message on login.
 
 ## Validation
 
-- On code revision `5d2f331` (before the subsequent MFA consumption fix), [backend CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34175292665)
+- On code revision `3630a63` (including MFA consumption), [backend CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34175662279)
   passed Tests, Lint, Security, Alembic and static RLS checks;
-  [Android CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34175292637)
+  [Android CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34175662252)
   passed build and unit tests. This is a revision-specific snapshot; consult PR
   checks for subsequent documentation or code commits.
 
 - Frontend: **198 tests / 23 suites passed**, TypeScript noEmit passed on Node 24.19.0.
   Next build exits 0; Windows standalone tracing emits an ENOENT warning, so
-  packaging and real-browser behavior remain unconfirmed. On `5d2f331`, [Linux frontend CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34175292639)
+  packaging and real-browser behavior remain unconfirmed. On `3630a63`, [Linux frontend CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34175662261)
   passed Jest, tsc, production build and a standalone-entry-point check.
 - Android enterprise debug unit suite: **344 passed**.
 - Combined backend/PC, PostgreSQL/Redis and deployment regressions: **1127 passed**.

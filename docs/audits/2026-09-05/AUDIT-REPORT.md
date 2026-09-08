@@ -513,8 +513,8 @@ runtime-проверок и не считается доказательство
 - **Evidence/reproduction:** на `9bb33ad` HTTP logout возвращает 204 без Set-Cookie для valid/invalid/absent Bearer. Logout с действительным Bearer и refresh в header оставляет этот refresh рабочим: последующий настоящий POST /auth/refresh возвращает 200. Cookie-вариант SQL отзыва уже работал. [До fix: 4 failed / 1 passed](evidence/session-logout-before.txt).
 - **Affected files:** `backend/api/v1/auth/router.py`, `tests/production/test_session_logout.py`, generated API contracts.
 - **Fix:** возвращается тот же Response с удалением cookie и 204; параметры удаления согласованы с выдачей cookie. При valid signed Bearer отзыв получает cookie либо fallback header. В OpenAPI указан фактический 204.
-- **Regression:** пять реальных ASGI/PostgreSQL/Redis cases проверяют атрибуты удаления cookie, пустой 204, сохранённый SQL revoke и 401 при повторном refresh/доступе со старым access. [71 related auth tests passed](evidence/session-logout-after.txt), включая JWT forgery/expired-token contract checks. Полный прогон: **1122 passed**, coverage **67,77%**, включая **246 PostgreSQL/Redis cases**; строгий gate 65% сохранён.
-- **Residual risk:** при отсутствующем/некорректном Bearer endpoint только удаляет cookie, не выполняя SQL revoke. Redis/DB failure не подтверждает завершение серверного отзыва. Concurrent refresh/logout, session-family revocation, frontend Sign Out/guard/cache и поздние auth responses проверяются отдельно. XSS exposure localStorage fallback не устраняется этим fix; HTTP transport подменён, живой сервер не запускался.
+- **Regression:** пять реальных ASGI/PostgreSQL/Redis cases проверяют атрибуты удаления cookie, пустой 204, сохранённый SQL revoke и 401 при повторном refresh/доступе со старым access. [71 related auth tests passed](evidence/session-logout-after.txt), включая JWT forgery/expired-token contract checks. Исторический прогон на `efe9be8`: **1114 passed**, coverage **67,77%**, включая **246 PostgreSQL/Redis cases**; строгий gate 65% сохранён.
+- **Residual risk:** при отсутствующем/некорректном Bearer endpoint только удаляет cookie, не выполняя SQL revoke. Redis/DB failure не подтверждает завершение серверного отзыва. Frontend Sign Out/guard/cache и поздние auth responses исправлены в AUD-49–51; single-use SQL refresh — в AUD-52. Session-family revocation остаётся открытым. XSS exposure localStorage fallback не устраняется этим fix; HTTP transport подменён, живой сервер не запускался.
 
 ### AUD-49 — High: браузер показывал закрытые страницы и кэш предыдущей организации
 
@@ -522,7 +522,7 @@ runtime-проверок и не считается доказательство
 - **Evidence / reproduction:** React/JSDOM с настоящими Zustand и React Query: private children монтируются при pending/отсутствующей сессии; после logout остаются; `/login-private` открыт; переход A → B продолжает показывать cached account credential A, пока B ещё не ответил. [До исправления: 6 failed](evidence/frontend-boundary-before.txt).
 - **Fix:** закрытые children не монтируются до готовности и наличия token + user; login — точный public route; смена identity создаёт новый query client до отображения страницы. Retired client отменяет запросы и очищается при unmount.
 - **Regression:** `frontend/__tests__/session/providers.test.tsx` — 6 runtime cases, включая позднюю запись в retired cache. [Все 176 frontend tests проходят](evidence/frontend-boundary-after.txt); `tsc --noEmit` проходит на Node 24.19.0.
-- **Residual risk:** доказано отображение браузерного кэша, а не обход серверных tenant checks. Refresh/login races, действующий logout handler, другие Zustand/browser stores, multiple tabs и browser-level reload ещё требуют отдельных проверок. Production browser/APK runtime этим не подтверждён.
+- **Residual risk:** доказано отображение браузерного кэша, а не обход серверных tenant checks. Refresh/login races и logout handler исправлены в AUD-50–51. Другие Zustand/browser stores, multiple tabs и browser-level reload ещё требуют отдельных проверок. Production browser/APK runtime этим не подтверждён.
 
 ### AUD-50 — High: задержанные auth/HTTP ответы пересекали границу сессии
 
@@ -531,7 +531,7 @@ runtime-проверок и не считается доказательство
 - **Fix:** версия сессии проверяется перед отправкой/retry и обработкой любого HTTP response; login/logout инвалидируют старую работу. Startup/401 используют один ограниченный 5 секундами refresh. Ротация сохраняет версию identity, каждый исходный запрос повторяется максимум один раз. Identity mismatch refresh закрывает сессию. Login/MFA применяются атомарно и только к актуальной попытке; client navigation не вызывает лишнюю ротацию. Query cache key включает версию сессии, включая повторный вход того же пользователя. Browser marker после logout предотвращает silent restore оставшейся cookie при remount/reload в среде с доступным localStorage.
 - **Regression:** `frontend/__tests__/session/refresh-races.test.tsx` (12 cases), `login.test.tsx` (4 cases), существующие 176 tests: [192 passed](evidence/frontend-refresh-after.txt), `tsc --noEmit` passed. Дополнительные cases: два initializers + API 401, обе повторные 401, чужая cookie identity, remount после logout, MFA success/back. Тест кнопки logout намеренно ещё не включён в этот commit: её fix отдельный AUD-51.
 - **Дополнительное boundary evidence:** Axios request interceptor по умолчанию запускался в следующей microtask; смена A → B сразу после `api.post` привязывала запрос уже к B. [Один новый regression failed](evidence/frontend-call-boundary-before.txt). Interceptor теперь синхронный: snapshot фиксируется в момент вызова API, до следующей microtask. Этот case расширяет AUD-50, а не закрывает серверную idempotency.
-- **Residual risk:** запрос уже мог исполниться сервером до logout; fencing не отменяет side effects и не даёт общей idempotency мутаций. Browser не может отменить поздний Set-Cookie: mismatch закрывается, но cookie ordering/concurrent server rotation и refresh-family revocation требуют серверной проверки. Multiple tabs, запрещённый browser storage, альтернативные stores и настоящий браузер ещё не проверены. Сбой refresh требует повторного входа.
+- **Residual risk:** запрос уже мог исполниться сервером до logout; fencing не отменяет side effects и не даёт общей idempotency мутаций. Browser не может отменить поздний Set-Cookie: mismatch закрывается, но cookie ordering/concurrent server rotation и refresh-family revocation требуют серверной проверки. Отказ browser storage при logout проверен в AUD-51; multiple tabs, полная перезагрузка без доступного storage, альтернативные stores и настоящий браузер ещё не проверены. Сбой refresh требует повторного входа.
 
 ### AUD-51 — High: кнопка выхода не завершала сессию
 
@@ -690,3 +690,16 @@ Frontend production dependencies, npm/Gradle/container проверка оста
 [frontend](evidence/ci-5d2f331-frontend.json), [Android](evidence/ci-5d2f331-android.json).
 Frontend проверяет 198 tests, tsc, production build и Linux standalone entry point.
 Это не проверка настоящего browser/APK runtime; следующий code head требует своих checks.
+
+На `3630a63` (включая AUD-53) все code checks успешны:
+[backend](https://github.com/RootOne1337/sphere-platform/actions/runs/34175662279),
+[frontend](https://github.com/RootOne1337/sphere-platform/actions/runs/34175662261),
+[Android](https://github.com/RootOne1337/sphere-platform/actions/runs/34175662252).
+Сохранены [backend snapshot](evidence/ci-3630a63-backend.json),
+[frontend snapshot](evidence/ci-3630a63-frontend.json) и
+[Android snapshot](evidence/ci-3630a63-android.json). Preview guard успешен, deployment
+пропущен. Проверено существование 151 локальной Markdown-ссылки в восьми актуализируемых
+руководствах/отчётах; это не означает проверки всего содержания всех документов проекта.
+Последующий documentation commit имеет собственные checks; этот snapshot относится
+к точной проверенной ревизии кода. Контракт браузерной сессии описан отдельно в
+[frontend-sessions.md](../../security/frontend-sessions.md).
