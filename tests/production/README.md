@@ -166,3 +166,9 @@ EXECUTE on the two tenant-only functions from `20260909_credential_lookup`; no
 runtime ownership or BYPASSRLS is granted. Eighteen cases include parallel SQL lock
 waits, replay, post-flush failure/retry, temp-table shadowing, revoked EXECUTE and
 function owner protection. See [the operator contract](../../docs/security/device-credential-bootstrap.md).
+
+`test_agent_tenant_runtime.py` drives the real ASGI WebSocket/HTTP routes without a
+listener. Sixteen runtime-role cases cover device/refreshed/key/user connection
+and reconnect, log/OTA access, device and tenant denials, enrollment-to-refresh-to-WS
+and SQL failure/recovery. Connection manager, heartbeat, stream and queue effects
+are doubles. This does not exercise APK OS behavior or post-auth task writers.

@@ -623,6 +623,16 @@ runtime-проверок и не считается доказательство
 - **Residual risk:** это явно ограниченная привилегированная DB-функция; её owner/DDL/grants требуют защиты. Hash holder с EXECUTE может определить org соответствующего credential. Provisioning production roles, opaque user auth и jobs остаются открытыми; неизвестный результат commit и потерянный refresh response не получают автоматического replay. Fingerprint re-enrollment по сохранённому enrollment key не является device attestation. [Контракт, migration/grants и rollback](../../security/device-credential-bootstrap.md).
 
 
+### AUD-59 — High: Android WebSocket и agent HTTP отвергали валидные credentials под RLS
+
+- **Root cause:** Android WS загружал target device до аутентификации, а общий `authenticate_ws_token` читал Device/User по subject без tenant context и без сверки подписанной организации. Agent logs/OTA используют тот же verifier, поэтому исправление только user HTTP JWT не восстанавливало работу APK.
+- **Evidence/reproduction:** [7 failed / 7 negative controls passed](evidence/agent-tenant-before.txt): настоящие ASGI WebSocket events и HTTP запросы с реальным non-owner SQL. Device/refreshed/API-key/user credentials не доходили до manager.connect; agent HTTP получал 401. Очереди/стрим/heartbeat заменены test doubles, сетевой listener и APK процесс не запускались.
+- **Affected files:** `backend/api/ws/android/router.py`; `tests/production/test_agent_tenant_runtime.py`.
+- **Fix:** verifier проверяет purpose и UUID claims, связывает подписанный tenant до Device/User SQL, обновляет ORM snapshot и сверяет org_id явно. WS сначала аутентифицирует principal и только затем выбирает активное целевое устройство в его организации, сохраняя device-subject matching и проверку user permission. DB session закрывается до длительного receive loop.
+- **Regression:** [21 related cases passed](evidence/agent-tenant-after.txt): 16 новых ASGI/PG/Redis cases и пять прежних unit auth tests. Проверены подключение и повторное подключение с четырьмя видами credentials, own/foreign/same-org-other-device log upload, OTA, inactive/moved/revoked/viewer/invalid identities, runtime enrollment → refresh → WS → OTA и SQL error → close1011 → новая успешная сессия. Проверка log evidence после первоначального proof уточнена до реальной вложенной директории; протокол/ожидаемые HTTP коды не ослаблялись.
+- **Residual risk:** защищена server-side auth chain, не измерен реальный APK/OS/кодек. Уже открытый WS не отзывает principal автоматически при изменении ключа/роли. Post-auth task results/progress/events и глобальные фоновые сессии ещё требуют tenant propagation. API-key enrollment bootstrap исправлен отдельно в AUD-58; неизвестный refresh commit/replay остаётся открытым.
+
+
 ## Открытые подтверждённые блокеры
 
 | ID / severity | Root cause и evidence | Необходимое продолжение |

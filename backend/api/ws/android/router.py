@@ -15,6 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.database.engine import AsyncSessionLocal
 from backend.database.redis_client import get_redis_binary
+from backend.database.tenant import bind_tenant_context
 from backend.models.device import Device
 from backend.models.task import Task, TaskStatus
 from backend.schemas.device_status import DeviceLiveStatus
@@ -38,6 +39,8 @@ async def authenticate_ws_token(token: str, db: AsyncSession):
     import jwt as pyjwt
     from fastapi import HTTPException
 
+    if not isinstance(token, str):
+        raise HTTPException(status_code=401, detail="Invalid token")
     # API key path — токены вида sphr_<env>_<hex>
     if token.startswith("sphr_"):
         from backend.services.api_key_service import APIKeyService
@@ -58,9 +61,17 @@ async def authenticate_ws_token(token: str, db: AsyncSession):
 
     try:
         payload = decode_access_token(token)
+        if payload.get("type") != "access":
+            raise pyjwt.InvalidTokenError("Expected an access token")
+        if not isinstance(payload.get("sub"), str) or not isinstance(payload.get("org_id"), str):
+            raise pyjwt.InvalidTokenError("Missing identity claims")
+        subject_id = uuid.UUID(payload["sub"])
+        org_id = uuid.UUID(payload["org_id"])
     except pyjwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token expired")
     except pyjwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    except ValueError:
         raise HTTPException(status_code=401, detail="Invalid token")
 
     # Проверить blacklist
@@ -68,12 +79,15 @@ async def authenticate_ws_token(token: str, db: AsyncSession):
     cache = CacheService()
     if await cache.is_token_blacklisted(payload["jti"]):
         raise HTTPException(status_code=401, detail="Token revoked")
+    await bind_tenant_context(db, str(org_id))
 
     # Устройства получают JWT с role="device" и sub=device_id.
     # Для них ищем в таблице devices, а не users.
     role = payload.get("role", "")
     if role == "device":
-        device_subject = await db.get(Device, uuid.UUID(payload["sub"]))
+        device_subject = await db.scalar(select(Device).where(
+            Device.id == subject_id, Device.org_id == org_id,
+        ).execution_options(populate_existing=True))
         if not device_subject or not device_subject.is_active:
             raise HTTPException(
                 status_code=401, detail="Device not found",
@@ -88,7 +102,9 @@ async def authenticate_ws_token(token: str, db: AsyncSession):
 
         return _DevicePrincipal(device_subject.org_id, device_subject.id)
 
-    user = await db.get(User, uuid.UUID(payload["sub"]))
+    user = await db.scalar(select(User).where(
+        User.id == subject_id, User.org_id == org_id,
+    ).execution_options(populate_existing=True))
     if not user or not user.is_active:
         raise HTTPException(status_code=401, detail="User not found or inactive")
     from backend.core.rbac import has_permission
@@ -487,14 +503,12 @@ async def android_agent_ws(
                 await _close(4004, "invalid_device_id")
                 return
 
-            device = await db.get(Device, device_uuid)
-            if not device or not device.is_active:
-                logger.warning("android_ws: device_not_found", device_id=device_id)
-                await _close(4004, "device_not_found")
-                return
-
             if _is_dev_skip_auth():
                 # DEV-режим: пропускаем валидацию токена, берём org из устройства
+                device = await db.get(Device, device_uuid)
+                if not device or not device.is_active:
+                    await _close(4004, "device_not_found")
+                    return
                 org_id_str = str(device.org_id)
                 logger.info("android_ws: DEV_SKIP_AUTH — auth bypassed", device_id=device_id, org_id=org_id_str)
             else:
@@ -510,8 +524,12 @@ async def android_agent_ws(
                     await _close(4001, "invalid_token")
                     return
 
-                if str(device.org_id) != str(user.org_id):
-                    logger.warning("android_ws: org mismatch", device_id=device_id)
+                # Authentication binds the Session before any target-device SQL.
+                device = await db.scalar(select(Device).where(
+                    Device.id == device_uuid, Device.org_id == user.org_id,
+                    Device.is_active.is_(True),
+                ).execution_options(populate_existing=True))
+                if device is None:
                     await _close(4004, "device_not_found")
                     return
 

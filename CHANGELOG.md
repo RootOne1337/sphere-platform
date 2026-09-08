@@ -14,6 +14,9 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Security / runtime
 
+- AUD-59: Android WS аутентифицирует principal до target-device SELECT; agent JWT
+  проверяет подписанную организацию и связывает Session. 16 ASGI/PG/Redis cases
+  проверяют reconnect, HTTP logs/OTA и enrollment → refresh → WS с runtime ролью.
 - AUD-58: opaque enrollment API-key/device-refresh tenant discovery работает под
   non-owner PostgreSQL credentials через две ограниченные lookup-функции; 18 runtime
   cases, explicit grants и rollback описаны в device-credential-bootstrap guide.
