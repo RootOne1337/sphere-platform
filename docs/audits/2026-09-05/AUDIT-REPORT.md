@@ -25,7 +25,7 @@ runtime-проверок и не считается доказательство
 | Проверки PostgreSQL/Redis | **246 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
 | Миграции | Применены до **20260906_account_ciphertext** включительно | Только изолированная БД; конфликтные данные/downgrade проверены в throwaway schema; production не мигрировался |
 | Backend image | Собирается; исходная запись OpenAPI воспроизведённо падает с PermissionError | Исправлен lifespan; полный deployment runtime ещё не подтверждён |
-| Frontend build | Успешно | Type-check/Jest и браузерный runtime требуют отдельного завершения проверки |
+| Frontend | **197 Jest tests passed**, tsc passed; Next production build exit 0 на Node 24.19.0 | React/JSDOM + Axios adapters; настоящий browser runtime не проверен. Windows standalone tracing выдал ENOENT warning, artifact packaging ещё не подтверждён |
 | APK ↔ реальный локальный backend | Не завершено | Автоматическая проверка разрешений отклонила запуск локального API: `blocked by policy`; обход не выполнялся |
 | 10–64 эмулятора, физические телефоны | Не измерено | Нет подтверждённых CPU/RAM/FPS/энергопотребления и совместимости со всеми Android |
 
@@ -531,6 +531,14 @@ runtime-проверок и не считается доказательство
 - **Fix:** версия сессии проверяется перед отправкой/retry и обработкой любого HTTP response; login/logout инвалидируют старую работу. Startup/401 используют один ограниченный 5 секундами refresh. Ротация сохраняет версию identity, каждый исходный запрос повторяется максимум один раз. Identity mismatch refresh закрывает сессию. Login/MFA применяются атомарно и только к актуальной попытке; client navigation не вызывает лишнюю ротацию. Query cache key включает версию сессии, включая повторный вход того же пользователя. Browser marker после logout предотвращает silent restore оставшейся cookie при remount/reload в среде с доступным localStorage.
 - **Regression:** `frontend/__tests__/session/refresh-races.test.tsx` (12 cases), `login.test.tsx` (4 cases), существующие 176 tests: [192 passed](evidence/frontend-refresh-after.txt), `tsc --noEmit` passed. Дополнительные cases: два initializers + API 401, обе повторные 401, чужая cookie identity, remount после logout, MFA success/back. Тест кнопки logout намеренно ещё не включён в этот commit: её fix отдельный AUD-51.
 - **Residual risk:** запрос уже мог исполниться сервером до logout; fencing не отменяет side effects и не даёт общей idempotency мутаций. Browser не может отменить поздний Set-Cookie: mismatch закрывается, но cookie ordering/concurrent server rotation и refresh-family revocation требуют серверной проверки. Multiple tabs, запрещённый browser storage, альтернативные stores и настоящий браузер ещё не проверены. Сбой refresh требует повторного входа.
+
+### AUD-51 — High: кнопка выхода не завершала сессию
+
+- **Root cause / affected files:** `frontend/src/features/navigation/NOCSidebar.tsx` содержал только закомментированный placeholder logout handler. Даже серверный AUD-48 fix не вызывался интерфейсом.
+- **Evidence / reproduction:** реальный React click Sign out оставляет `access-a` в Zustand; [1 failed до fix](evidence/frontend-logout-before.txt). Это без внешнего сервера: исходящий transport записывается в adapter.
+- **Fix:** клик синхронно очищает local session и переходит на login; новый `signOut` в `frontend/lib/store.ts` отправляет captured Bearer и fallback refresh напрямую на `/auth/logout`, с cookie и timeout 5 секунд, без перехвата 401. Неподтверждённый remote logout отражается предупреждением на login. Late failure старого logout не меняет новую сессию. Недоступный localStorage не мешает удалить memory credentials; cookie fallback и memory logout intent сохраняются.
+- **Regression:** `frontend/__tests__/session/logout.test.tsx` проверяет реальный клик/захваченные headers, network failure, late failure после нового login, отказ browser storage. `login.test.tsx` проверяет видимость предупреждения. [197 tests passed](evidence/frontend-session-current.txt), tsc passed; [Next build exit 0](evidence/frontend-session-build.txt).
+- **Residual risk:** при offline timeout SQL revoke не подтверждён — UI сообщает об этом. Logout требует валидно подписанного Bearer для server revocation (AUD-48); late Set-Cookie/refresh-family и multiple tabs остаются открыты. Memory-only logout marker не переживёт полный reload при заблокированном storage; серверная cookie должна быть удалена успешным logout. Build на Windows содержит tracing ENOENT warning: exit 0 не подтверждает корректность standalone artifact или deployment.
 
 ## Открытые подтверждённые блокеры
 

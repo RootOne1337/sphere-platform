@@ -34,6 +34,8 @@ let refreshRequests: InternalAxiosRequestConfig[];
 beforeEach(() => {
   useAuthStore.getState().logout();
   localStorage.clear();
+  // Simulate a fresh page load; only the persisted logout marker survives reloads.
+  useAuthStore.setState({ explicitlySignedOut: false });
   refreshReply = deferred();
   refreshRequests = [];
   axios.defaults.adapter = async config => {

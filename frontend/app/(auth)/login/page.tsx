@@ -17,6 +17,7 @@ const authApi = axios.create({
 
 export default function LoginPage() {
   const router = useRouter();
+  const logoutWarning = useAuthStore(s => s.logoutWarning);
   const attemptVersion = useRef<number | null>(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -161,6 +162,7 @@ export default function LoginPage() {
                 required
               />
             </div>
+            {logoutWarning && <p role="status" className="text-sm text-amber-500">{logoutWarning}</p>}
             {error && <p className="text-sm text-red-500">{error}</p>}
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? 'Signing in…' : 'Sign in'}

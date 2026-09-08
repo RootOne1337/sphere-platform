@@ -154,16 +154,27 @@ cancellation delivery remain open.
 HTTP logout now returns its actual cookie-deletion response and revokes the
 `X-Refresh-Token` fallback used by the frontend. Five PostgreSQL/Redis/ASGI cases
 include a previously successful refresh replay after logout and old-access
-rejection. Frontend sign-out/session lifecycle and concurrent rotation remain open.
+rejection. Concurrent server rotation and refresh-family revocation remain open.
+
+Private frontend pages remain unmounted until the identity is ready; a new
+session/identity gets a separate React Query client before rendering. Version
+checks prevent delayed responses from restoring logout, replacing another login
+or replaying old mutations with a different user. Startup/401 refresh is shared
+and bounded to five seconds. Login/MFA apply atomically to the current attempt.
+Sign out immediately clears browser access and revokes captured server credentials;
+network failure displays an unconfirmed-revocation message on login.
 
 ## Validation
 
-- On code revision `87092d2`, [backend CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34133092803)
+- On backend code revision `efe9be8`, [backend CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34157767581)
   passed Tests, Lint, Security, Alembic and static RLS checks;
-  [Android CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34133092736)
+  [Android CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34157767566)
   passed build and unit tests. This is a revision-specific snapshot; consult PR
   checks for subsequent documentation or code commits.
 
+- Frontend: **197 tests / 23 suites passed**, TypeScript noEmit passed on Node 24.19.0.
+  Next build exits 0; Windows standalone tracing emits an ENOENT warning, so
+  packaging and real-browser behavior remain unconfirmed.
 - Android enterprise debug unit suite: **344 passed**.
 - Combined backend/PC, PostgreSQL/Redis and deployment regressions: **1114 passed**.
   This includes **246 real-service tests** and **6 Compose configuration tests**.
@@ -230,16 +241,6 @@ precision rounded it to 65% for the exit decision, despite a FAIL summary.
 `31077b3` fixes the subsequent mypy timestamp-narrowing diagnostics. The latest
 checks must be evaluated on this updated head, not inferred from historical jobs.
 
-Private frontend routes now remain unmounted until the authenticated identity is
-ready. React Query clients are replaced before rendering a different identity,
-so cached account data cannot cross that browser session boundary. Six new
-React/JSDOM regressions failed before the fix; all 176 frontend tests and strict
-TypeScript validation pass on Node 24.19.0. Refresh races and logout wiring remain
-under review; this does not claim bypass of backend authorization.
-
-Frontend authentication now fences request/response/retry handling by session
-version. Shared refresh has a five-second timeout; stale results cannot restore
-logout, overwrite a newer login or replay an old mutation with a different user's
-token. Login/MFA completion is atomic and attempt-bound. Six refresh and two login
-regressions failed before these changes; 192 frontend tests and tsc now pass.
-Browser cookie ordering and backend refresh-family concurrency remain open.
+Frontend tests use React/JSDOM and controlled Axios adapters, with no listening
+API. Browser storage fallback, refresh cookie ordering, cross-tab coordination,
+other client stores and backend refresh-family concurrency require further work.

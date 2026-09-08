@@ -83,3 +83,9 @@ it('ignores MFA completion after returning to the login form', async () => {
   expect(useAuthStore.getState().accessToken).toBeNull();
   expect(mockReplace).not.toHaveBeenCalled();
 });
+
+it('displays a server revocation warning on the login page', () => {
+  useAuthStore.setState({ logoutWarning: 'Server session revocation could not be confirmed.' });
+  render(<LoginPage />);
+  expect(screen.getByRole('status')).toHaveTextContent('could not be confirmed');
+});

@@ -1,0 +1,74 @@
+ ⚠ Warning: Next.js inferred your workspace root, but it may not be correct.
+ We detected multiple lockfiles and selected the directory of C:\Users\dimas\package-lock.json as the root directory.
+ To silence this warning, set `outputFileTracingRoot` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
+   See https://nextjs.org/docs/app/api-reference/config/next-config-js/output#caveats for more information.
+ Detected additional lockfiles:
+   * C:\Users\dimas\Documents\ChatGPT\sphere-platform\frontend\package-lock.json
+
+   ▲ Next.js 15.5.13
+
+   Creating an optimized production build ...
+Browserslist: browsers data (caniuse-lite) is 7 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+ ✓ Compiled successfully in 6.2s
+   Linting and checking validity of types ...
+   Collecting page data ...
+   Generating static pages (0/30) ...
+   Generating static pages (7/30)
+   Generating static pages (14/30)
+   Generating static pages (22/30)
+ ✓ Generating static pages (30/30)
+   Finalizing page optimization ...
+   Collecting build traces ...
+ ⚠ Failed to copy traced files for C:\Users\dimas\Documents\ChatGPT\sphere-platform\frontend\.next\server\app\(dashboard)\page.js [Error: ENOENT: no such file or directory, copyfile 'C:\Users\dimas\Documents\ChatGPT\sphere-platform\frontend\.next\server\app\(dashboard)\page_client-reference-manifest.js' -> 'C:\Users\dimas\Documents\ChatGPT\sphere-platform\frontend\.next\standalone\Documents\ChatGPT\sphere-platform\frontend\.next\server\app\(dashboard)\page_client-reference-manifest.js'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'copyfile',
+  path: 'C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\frontend\\.next\\server\\app\\(dashboard)\\page_client-reference-manifest.js',
+  dest: 'C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\frontend\\.next\\standalone\\Documents\\ChatGPT\\sphere-platform\\frontend\\.next\\server\\app\\(dashboard)\\page_client-reference-manifest.js'
+}
+
+Route (app)                                 Size  First Load JS
+┌ ○ /                                      133 B         102 kB
+├ ○ /_not-found                             1 kB         103 kB
+├ ○ /accounts                              14 kB         190 kB
+├ ○ /audit                               8.67 kB         147 kB
+├ ○ /dashboard                           9.57 kB         148 kB
+├ ○ /devices                             38.4 kB         226 kB
+├ ƒ /devices/[id]                        7.32 kB         149 kB
+├ ○ /discovery                           7.54 kB         141 kB
+├ ○ /event-triggers                      9.83 kB         192 kB
+├ ○ /events                              4.96 kB         181 kB
+├ ○ /fleet                               7.37 kB         168 kB
+├ ○ /groups                              6.75 kB         158 kB
+├ ○ /icon.svg                                0 B            0 B
+├ ○ /locations                           7.53 kB         159 kB
+├ ○ /login                               4.64 kB         135 kB
+├ ○ /logs                                5.18 kB         174 kB
+├ ○ /monitoring                          6.02 kB         144 kB
+├ ○ /orchestration                       19.9 kB         204 kB
+├ ○ /pipeline-settings                   8.27 kB         189 kB
+├ ○ /scripts                             7.04 kB         186 kB
+├ ○ /scripts/builder                     64.7 kB         200 kB
+├ ○ /sessions                            5.88 kB         182 kB
+├ ○ /settings                            11.7 kB         159 kB
+├ ○ /stream                              4.67 kB         139 kB
+├ ƒ /stream/[id]                           394 B         126 kB
+├ ○ /tasks                               9.01 kB         194 kB
+├ ƒ /tasks/[id]                          12.6 kB         154 kB
+├ ○ /updates                             6.67 kB         179 kB
+├ ○ /users                               6.57 kB         158 kB
+├ ○ /vpn                                  107 kB         263 kB
+└ ○ /webhooks                            6.88 kB         158 kB
++ First Load JS shared by all             102 kB
+  ├ chunks/1255-c32318a942e40e3e.js      45.7 kB
+  ├ chunks/4bd1b696-100b9d70ed4e49c1.js  54.2 kB
+  └ other shared chunks (total)          2.04 kB
+
+
+ƒ Middleware                             34.1 kB
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
