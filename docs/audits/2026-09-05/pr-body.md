@@ -186,9 +186,9 @@ network failure displays an unconfirmed-revocation message on login.
   packaging and real-browser behavior remain unconfirmed. On `3630a63`, [Linux frontend CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34175662261)
   passed Jest, tsc, production build and a standalone-entry-point check.
 - Android enterprise debug unit suite: **344 passed**.
-- Combined backend/PC, PostgreSQL/Redis and deployment regressions: **1186 passed**.
-  This includes **314 real-service tests** and **6 Compose configuration tests**.
-  Coverage is **68.01%** and passes the unchanged **65%** gate with two-decimal
+- Combined backend/PC, PostgreSQL/Redis and deployment regressions: **1192 passed**.
+  This includes **320 real-service tests** and **6 Compose configuration tests**.
+  Coverage is **67.99%** and passes the unchanged **65%** gate with two-decimal
   precision. No threshold or coverage scope was weakened. Two additional
   regression tests exercise the 64.98% rejection and exact 65.00% boundary. Long load/soak profiles require a prepared API
   environment and are excluded from the ordinary PR command.
@@ -308,3 +308,17 @@ unscoped HTTP/auth/bootstrap/jobs remain rollout blockers. SQL arbitrary SET and
 network partition/server failover are outside this proof.
 
 AUD-55 local combined verification: **1186 passed / 68.01%**, including 314 real-service tests. Ruff and Bandit gate pass; this new code head needs its own GitHub checks.
+
+### Bind the HTTP audit writer to its tenant (AUD-56)
+
+HTTP mutations could succeed while the separate background audit INSERT was
+rejected by RLS. Bind the new audit Session to the captured principal tenant before
+inserting. Six ASGI/PostgreSQL tests cover successful/denied/missing-resource writes,
+concurrent tenants, SQL failure after flush and recovery, and the existing unauthenticated
+skip behavior. Before: five failed and one control; after: 26 related tests pass.
+Only the audit writer uses runtime login credentials in these HTTP reproductions;
+the request/auth DB fixture remains privileged. Missing tenant fails closed. A SQL
+failure can still lose audit after HTTP commit because BackgroundTask has no durable
+outbox/retry; the regression explicitly records this remaining limitation.
+
+Combined verification with AUD-56: **1192 passed / 67.99%**, including 320 real-service cases. Ruff, Bandit and generated API documentation checks pass. New GitHub checks are required for this code revision.

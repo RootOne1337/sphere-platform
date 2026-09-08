@@ -141,3 +141,10 @@ no context inheritance by a fresh Session, retained ORM identities and savepoint
 behavior. The login role is removed after its pool is disposed. These 16 cases
 exercise DB helpers directly; they do not establish complete HTTP/auth/job rollout
 or PostgreSQL/network failover. A Session has one tenant for its lifetime.
+
+`test_audit_tenant_runtime.py` executes real ASGI PUT handlers and their background
+audit callback. A separate non-owner LOGIN role writes audit logs, while the HTTP
+auth/request fixture remains privileged. It covers 200/403/404, concurrent tenants,
+SQL failure after flush, recovery and a clean pooled Session. The first audit is
+still lost after an injected post-flush failure; this is a documented durable-outbox
+blocker, not a claim of guaranteed audit delivery.

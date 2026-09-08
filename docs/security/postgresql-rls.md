@@ -93,6 +93,24 @@ savepoint helper отклоняет: rollback savepoint мог бы убрать
 Основание реализации: [SessionEvents.after_begin](https://docs.sqlalchemy.org/en/20/orm/events.html#sqlalchemy.orm.SessionEvents.after_begin)
 и [asyncio events через sync_session](https://docs.sqlalchemy.org/en/20/orm/extensions/asyncio.html#using-events-with-the-asyncio-extension).
 
+## Фоновая запись HTTP audit log
+
+AUD-56 исправляет конкретного unscoped writer: `audit_middleware` теперь привязывает
+свою новую Session к captured principal.org_id перед INSERT. До исправления реальный
+ASGI запрос успешно менял устройство, но non-owner audit writer получал RLS violation
+и не сохранял audit row. [До: пять падений и контроль](../audits/2026-09-05/evidence/audit-tenant-before.txt),
+[после: 26 связанных проверок](../audits/2026-09-05/evidence/audit-tenant-after.txt).
+
+Шесть новых тестов проверяют 200/403/404, concurrent A/B, отсутствие context в новой
+Session и SQL error после flush с последующей записью другой организации. Runtime
+LOGIN credentials применены именно к audit writer; request/auth fixture в этих
+сценариях остаётся привилегированной. Это не завершает перевод всей HTTP цепочки.
+
+При SQL error после успешной бизнес-операции audit entry всё ещё теряется: текущий
+BackgroundTask сообщает error, но не имеет durable retry/outbox. Этот остаточный
+риск зафиксирован тестом, а не скрыт успешным HTTP ответом. Отсутствующий tenant не
+подменяется глобальным доступом; pre-auth/platform auditing остаётся открытым.
+
 ## Migration и rollback
 
 Из корня репозитория, под отдельной migration-role и с проверенным search_path:
@@ -125,7 +143,8 @@ upgrade не должен отмечаться как применённая rev
    login/MFA/refresh/enrollment bootstrap. В явно привязанных Session восстановление
    после смены транзакции исправлено в AUD-55; unscoped callers ещё нужно перевести.
 3. Перевести глобальную enumeration и фоновые scheduler/orchestrator/VPN/audit
-   jobs на проверенные границы организации. Проверить разрешённые операции через
+   jobs на проверенные границы организации (HTTP audit writer исправлен отдельно
+   в AUD-56). Проверить разрешённые операции через
    фактические ASGI/worker пути, конкурентность, rollback и повторное использование
    соединений под runtime credentials. Текущие SQL policy tests этого не заменяют.
 4. Проверить cross-tenant FK ссылки обычных таблиц, изменение организации

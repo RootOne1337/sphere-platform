@@ -13,6 +13,7 @@ from starlette.requests import Request
 from starlette.responses import Response
 
 from backend.database.engine import AsyncSessionLocal
+from backend.database.tenant import bind_tenant_context
 from backend.models.audit_log import AuditLog
 
 logger = structlog.get_logger()
@@ -125,6 +126,9 @@ async def audit_middleware(request: Request, call_next):
     async def _write_audit() -> None:
         async with AsyncSessionLocal() as audit_session:
             try:
+                # This is a fresh Session after the HTTP transaction. Capture and
+                # bind the principal's tenant before RLS checks the audit INSERT.
+                await bind_tenant_context(audit_session, str(audit_data["org_id"]))
                 audit_session.add(AuditLog(**audit_data))
                 await audit_session.commit()
             except Exception as exc:

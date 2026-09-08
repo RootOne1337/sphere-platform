@@ -20,9 +20,9 @@ runtime-проверок и не считается доказательство
 | Проверка | Результат | Практическое ограничение |
 | --- | --- | --- |
 | Android enterprise debug unit suite | 344 passed, 0 failed | JVM/MockWebServer; не проверяет ОС, codec, батарею или смерть процесса на телефоне |
-| Объединённая Backend/PC/production/deployment suite | **1186 passed, 0 failed**; coverage **68,01%** | Строгий coverage gate 65% пройден с precision=2. Load suite исключена; 6 Compose config tests не запускают сервисы |
+| Объединённая Backend/PC/production/deployment suite | **1192 passed, 0 failed**; coverage **67,99%** | Строгий coverage gate 65% пройден с precision=2. Load suite исключена; 6 Compose config tests не запускают сервисы |
 | Python dependency scan | **0 known vulnerabilities** в совместном backend/PC resolution | Pip-audit snapshot, не проверка frontend/Gradle/container/application security; [версии и ограничения](DEPENDENCY-REVIEW.md) |
-| Проверки PostgreSQL/Redis | **314 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
+| Проверки PostgreSQL/Redis | **320 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
 | Миграции | Применены до **20260908_tenant_policies** включительно | Только изолированная БД; конфликтные данные/downgrade проверены в throwaway schema; production не мигрировался |
 | Backend image | Собирается; исходная запись OpenAPI воспроизведённо падает с PermissionError | Исправлен lifespan; полный deployment runtime ещё не подтверждён |
 | Frontend | **198 Jest tests passed**, tsc passed; Next production build exit 0 на Node 24.19.0 | React/JSDOM + Axios adapters; настоящий browser runtime не проверен. Windows standalone tracing выдал ENOENT warning, artifact packaging ещё не подтверждён |
@@ -33,7 +33,7 @@ runtime-проверок и не считается доказательство
 Предыдущий отдельный DAG benchmark однажды занял 127,1 ms при пороге 100 ms;
 изолированный повтор и последующие общие прогоны прошли. Порог не ослаблялся.
 Файл production-regressions-after.txt сохраняет более ранний standalone snapshot
-с 41 тестом; актуальные 314 входят в общий прогон.
+с 41 тестом; актуальные 320 входят в общий прогон.
 
 Команды запуска и предохранители изоляции: [tests/production/README.md](../../../tests/production/README.md).
 Исходные `14 passed` в [reproductions.txt](evidence/reproductions.txt) означают
@@ -581,11 +581,21 @@ runtime-проверок и не считается доказательство
 
 - **Root cause:** get_tenant_db/get_db_session устанавливали set_config(..., true) однократно. PostgreSQL LOCAL setting сбрасывается при завершении транзакции; последующие запросы под безопасной ролью не видят свои строки. Повторный вызов helper менял tenant той же Session, сохраняя ORM identity map первой организации.
 - **Evidence/reproduction:** [14 failed, 2 passed](evidence/tenant-transactions-before.txt). Реальные отдельные non-owner LOGIN credentials, полная схема, две организации и pool_size=1. После commit/rollback/SQL error/Session.invalidate собственный SELECT возвращал пустой набор; после смены tenant одна Session одновременно возвращала cached Device A и загружала Device B. Два контрольных теста доказывают, что переноса LOCAL setting в новую Session через pool до fix не было.
-- **Affected files:** `backend/database/engine.py`, `backend/core/dependencies.py:get_tenant_db`, совместимый helper `backend/middleware/tenant_middleware.py:set_tenant_context`; новая общая реализация `backend/database/tenant.py`.
-- **Fix:** Session привязывается к одному валидированному UUID; after_begin восстанавливает LOCAL setting через Connection на каждой транзакции/новом соединении. Смена tenant в Session запрещена. Первая привязка внутри savepoint запрещена, повторная привязка того же tenant допустима. Параметризованный общий helper заменяет однократный set_config и старый raw-SQL helper.
+- **Affected files:** `backend/database/engine.py:48`, `backend/core/dependencies.py:87`, совместимый helper `backend/middleware/tenant_middleware.py:set_tenant_context`; новая общая реализация `backend/database/tenant.py:19`.
+- **Fix:** `7c02be2` — Session привязывается к одному валидированному UUID; after_begin восстанавливает LOCAL setting через Connection на каждой транзакции/новом соединении. Смена tenant в Session запрещена. Первая привязка внутри savepoint запрещена, повторная привязка того же tenant допустима. Параметризованный общий helper заменяет однократный set_config и старый raw-SQL helper.
 - **Regression:** 16 новых cases в `tests/production/test_tenant_transactions.py`: HTTP dependency helper/background context manager, commit/rollback, SQL error, connection invalidation, interleaving A/B через один pg_backend_pid, fresh-session isolation, ORM identity retention, savepoint и invalid UUID. Вместе с обновлённой проверкой transaction-local setting — [17 passed](evidence/tenant-transactions-after.txt). Старый тест ошибочно требовал потери контекста в продолжающей работу Session; теперь проверяется очистка в новой Session и сохранение привязки в текущей.
 - **Общая проверка:** **1186 passed / 68,01%**, включая 314 PostgreSQL/Redis cases; Ruff и Bandit gate пройдены.
 - **Residual risk:** unscoped get_db/auth/bootstrap/jobs автоматически не защищены. Вызов dependency helper напрямую не является end-to-end ASGI проверкой. Invalidation проверяет замену собственного соединения, не network partition/server failover; запрет повторной привязки не очищает объекты, прочитанные до первой привязки. Arbitrary SQL/SET, global enumeration, RLS role provisioning и полный rollout остаются открытыми. [Контракт и ограничения](../../security/postgresql-rls.md).
+
+
+### AUD-56 — High: фоновый audit INSERT терялся под runtime-ролью после успешного HTTP запроса
+
+- **Root cause:** audit middleware создавал отдельную DB-сессию после request transaction и не устанавливал tenant context. Политика audit_logs отклоняла INSERT; HTTP-операция уже могла завершиться успешно, а вместо записи оставался только error log.
+- **Evidence/reproduction:** [5 failed, 1 passed](evidence/audit-tenant-before.txt): реальные PUT /devices через ASGI, фоновый writer подключён отдельными non-owner LOGIN credentials. HTTP 200/403/404 возвращаются ожидаемо, но audit row отсутствует, PostgreSQL сообщает row-level security violation. Контрольный unauthenticated request не создаёт tenant audit согласно существующему контракту.
+- **Affected files:** `backend/middleware/audit.py:126`; `tests/production/test_audit_tenant_runtime.py`.
+- **Fix:** свежая Session привязывается к заранее сохранённому principal.org_id до add/INSERT. Она использует общий transaction-aware binder из AUD-55; неизвестный/отсутствующий tenant не превращается в unscoped INSERT.
+- **Regression:** шесть новых ASGI/PostgreSQL cases: успешное изменение, forbidden/not-found, одновременные A/B writers через один pool, SQL failure после реального flush с recovery следующего tenant, unauthenticated control. [26 related tests passed](evidence/audit-tenant-after.txt), включая Host/audit-path integrity и transaction recovery. Общий прогон: **1192 passed / 67,99%**, включая 320 PostgreSQL/Redis cases; Ruff, Bandit gate и HTTP schema check проходят.
+- **Residual risk:** request/auth DB в этих тестах остаётся прежней привилегированной fixture, отдельно проверяется именно non-owner audit writer. Полный HTTP auth/bootstrap под runtime credentials ещё не закрыт. BackgroundTask не является durable outbox: тест SQL failure явно подтверждает отсутствие первой audit row при уже успешном HTTP изменении. Crash/retry/unknown commit, audit delivery metrics и неаутентифицированные/platform события требуют отдельного решения. RLS policy и tenant filtering не обеспечивают глобальную неизменяемость от DB owner.
 
 
 ## Открытые подтверждённые блокеры
