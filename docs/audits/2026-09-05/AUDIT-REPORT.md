@@ -613,6 +613,16 @@ runtime-проверок и не считается доказательство
 - **Residual risk:** проверена цепочка уже выданного user access JWT и выбранные HTTP handlers. Email login, MFA/refresh/API-key/device bootstrap, WebSocket и глобальные jobs требуют отдельных проверенных tenant boundaries. Совпадение JWT claims не заменяет подпись; произвольный GUC SQL остаётся вне threat boundary. Изменение прав после SELECT в уже идущем запросе не блокируется. Durable audit outbox, полный rollout непривилегированных ролей, listening APK↔API и нагрузка 10–64 не закрыты.
 
 
+### AUD-58 — High: enrollment и device refresh не работали под непривилегированной PostgreSQL ролью
+
+- **Root cause:** API-key и device-refresh lookup требовали доступа к RLS-таблицам до определения tenant. Валидный opaque secret возвращал 401, поэтому APK не мог зарегистрироваться или продлить credentials после перехода на runtime-role.
+- **Evidence/reproduction:** [7 failed / 6 negative controls passed](evidence/device-bootstrap-before.txt), реальные HTTP ASGI запросы под отдельными non-owner LOGIN credentials. Привилегированное подключение применяется только для подготовки/верификации тестовых данных.
+- **Affected files:** `alembic/versions/20260909_credential_lookup.py`, `backend/database/credential_lookup.py`, `backend/services/api_key_service.py`, `backend/services/device_registration_service.py`; production/SQLite fixtures и `tests/production/test_device_bootstrap_runtime.py`.
+- **Fix:** две SECURITY DEFINER функции возвращают только org UUID по полному хешу активного credential; PUBLIC access отозван, search_path закреплён, таблицы fully-qualified, dynamic SQL отсутствует. Runtime получает только explicit USAGE/EXECUTE. Затем Session привязывается к tenant и выполняет обычный credential lookup под RLS с org/hash проверками. Application role не получает BYPASSRLS или table ownership.
+- **Regression:** [18 runtime cases passed](evidence/device-bootstrap-runtime-after.txt), включая реальные параллельные SQL lock waits, re-enrollment, single-use refresh/child, denied credentials, scoped pool reuse, SQL error после flush/retry, function grants/owner protection и temp-table shadowing. Первоначальный related snapshot — [83 passed](evidence/device-bootstrap-after.txt). Более строгая проверка SQL concurrency добавлена после исходного 13-case before proof.
+- **Residual risk:** это явно ограниченная привилегированная DB-функция; её owner/DDL/grants требуют защиты. Hash holder с EXECUTE может определить org соответствующего credential. Provisioning production roles, opaque user auth и jobs остаются открытыми; неизвестный результат commit и потерянный refresh response не получают автоматического replay. Fingerprint re-enrollment по сохранённому enrollment key не является device attestation. [Контракт, migration/grants и rollback](../../security/device-credential-bootstrap.md).
+
+
 ## Открытые подтверждённые блокеры
 
 | ID / severity | Root cause и evidence | Необходимое продолжение |

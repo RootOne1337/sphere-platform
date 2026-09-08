@@ -34,6 +34,8 @@ async def runtime_db(world):
         await db.execute(text(f'CREATE ROLE "{role}" LOGIN NOSUPERUSER NOBYPASSRLS PASSWORD \'{password}\''))
         await db.execute(text(f'GRANT USAGE ON SCHEMA public TO "{role}"'))
         await db.execute(text(f'GRANT SELECT, INSERT, UPDATE, DELETE ON {tables} TO "{role}"'))
+        await db.execute(text(f'GRANT USAGE ON SCHEMA sphere_auth TO "{role}"'))
+        await db.execute(text(f'GRANT EXECUTE ON FUNCTION sphere_auth.api_key_org(text), sphere_auth.device_refresh_org(text) TO "{role}"'))
     engine = create_async_engine(
         world.engine.url.set(username=role, password=password),
         pool_size=1, max_overflow=0, pool_timeout=5,
@@ -49,6 +51,8 @@ async def runtime_db(world):
         async with world.engine.begin() as db:
             await db.execute(text(f'REVOKE ALL PRIVILEGES ON {tables} FROM "{role}"'))
             await db.execute(text(f'REVOKE USAGE ON SCHEMA public FROM "{role}"'))
+            await db.execute(text(f'REVOKE EXECUTE ON FUNCTION sphere_auth.api_key_org(text), sphere_auth.device_refresh_org(text) FROM "{role}"'))
+            await db.execute(text(f'REVOKE USAGE ON SCHEMA sphere_auth FROM "{role}"'))
             await db.execute(text(f'DROP ROLE "{role}"'))
 
 

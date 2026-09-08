@@ -77,6 +77,19 @@ def _sqlite_uuid_function(connection):
         )
 
 
+@event.listens_for(Engine, "before_cursor_execute", retval=True)
+def _sqlite_credential_lookup(connection, cursor, statement, parameters, context, executemany):
+    # SQLite has neither schemas nor SECURITY DEFINER. Substitute only the two
+    # exact tenant-only SQL calls in unit tests. PostgreSQL tests execute the real
+    # migration functions and verify their grants, search_path and RLS boundaries.
+    if connection.dialect.name == "sqlite":
+        statement = {
+            "SELECT sphere_auth.api_key_org(?)": "SELECT org_id FROM api_keys WHERE key_hash = ?",
+            "SELECT sphere_auth.device_refresh_org(?)": "SELECT org_id FROM devices WHERE refresh_token_hash = ?",
+        }.get(statement, statement)
+    return statement, parameters
+
+
 # ---------------------------------------------------------------------------
 # Event loop — один на всю сессию (pytest-asyncio)
 # ---------------------------------------------------------------------------

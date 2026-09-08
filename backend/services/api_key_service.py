@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.config import settings
 from backend.core.security import generate_api_key
+from backend.database.credential_lookup import bind_credential_tenant
 from backend.models.api_key import APIKey
 
 
@@ -59,9 +60,13 @@ class APIKeyService:
 
         from backend.core.security import hash_token
         key_hash = hash_token(raw_key)
+        org_id = await bind_credential_tenant(self.db, "api_key", key_hash)
+        if org_id is None:
+            return None
 
         from sqlalchemy import or_
         stmt = select(APIKey).where(
+            APIKey.org_id == org_id,
             APIKey.key_hash == key_hash,
             APIKey.is_active.is_(True),
             or_(

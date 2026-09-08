@@ -14,6 +14,9 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Security / runtime
 
+- AUD-58: opaque enrollment API-key/device-refresh tenant discovery работает под
+  non-owner PostgreSQL credentials через две ограниченные lookup-функции; 18 runtime
+  cases, explicit grants и rollback описаны в device-credential-bootstrap guide.
 - AUD-57: user JWT связывает tenant до SQL lookup; пользователь сверяется по id и org_id.
   Старый токен не действует после переноса в другую организацию; invalid UUID/purpose
   отклоняются. 22 ASGI/PG/Redis cases проверяют runtime-роль, конкурентность, права,

@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.config import settings
 from backend.core.security import create_access_token, create_refresh_token
+from backend.database.credential_lookup import bind_credential_tenant
 from backend.models.device import Device, DeviceStatus
 from backend.schemas.device_register import DeviceRegisterRequest, DeviceRegisterResponse
 
@@ -132,9 +133,13 @@ class DeviceRegistrationService:
         from fastapi import HTTPException
 
         token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
+        org_id = await bind_credential_tenant(self.db, "device_refresh", token_hash)
+        if org_id is None:
+            raise HTTPException(status_code=401, detail="Invalid device refresh token")
         device = await self.db.scalar(
             select(Device)
             .where(
+                Device.org_id == org_id,
                 Device.refresh_token_hash == token_hash,
                 Device.is_active.is_(True),
                 Device.refresh_token_expires_at > datetime.now(timezone.utc),

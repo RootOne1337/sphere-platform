@@ -159,3 +159,10 @@ purposes are negative contract tests, not evidence of an exploitable issuer bypa
 This covers an already-issued access JWT, not opaque login/refresh/MFA/API-key or
 all device/worker bootstrap. Unit SQLite's set_config adapter does not emulate RLS;
 none of these PostgreSQL cases uses it or skips production binding.
+
+`test_device_bootstrap_runtime.py` covers opaque key enrollment and device refresh
+using actual non-owner LOGIN credentials. The fixture explicitly grants USAGE and
+EXECUTE on the two tenant-only functions from `20260909_credential_lookup`; no
+runtime ownership or BYPASSRLS is granted. Eighteen cases include parallel SQL lock
+waits, replay, post-flush failure/retry, temp-table shadowing, revoked EXECUTE and
+function owner protection. See [the operator contract](../../docs/security/device-credential-bootstrap.md).

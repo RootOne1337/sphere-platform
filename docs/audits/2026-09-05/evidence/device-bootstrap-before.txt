@@ -1,0 +1,61 @@
+FF..F.F...FFF                                                            [100%]
+================================== FAILURES ===================================
+_____ test_runtime_enrollment_and_reenrollment_uses_secret_tenant[False] ______
+tests\production\test_device_bootstrap_runtime.py:54: in test_runtime_enrollment_and_reenrollment_uses_secret_tenant
+    assert first.status_code == 201, first.text
+E   AssertionError: {"detail":"Невалидный или истёкший API-ключ"}
+E   assert 401 == 201
+E    +  where 401 = <Response [401 Unauthorized]>.status_code
+______ test_runtime_enrollment_and_reenrollment_uses_secret_tenant[True] ______
+tests\production\test_device_bootstrap_runtime.py:54: in test_runtime_enrollment_and_reenrollment_uses_secret_tenant
+    assert first.status_code == 201, first.text
+E   AssertionError: {"detail":"Невалидный или истёкший API-ключ"}
+E   assert 401 == 201
+E    +  where 401 = <Response [401 Unauthorized]>.status_code
+___________ test_runtime_enrollment_rejects_invalid_key[permission] ___________
+tests\production\test_device_bootstrap_runtime.py:74: in test_runtime_enrollment_rejects_invalid_key
+    assert response.status_code == (403 if invalid == "permission" else 401), response.text
+E   AssertionError: {"detail":"Невалидный или истёкший API-ключ"}
+E   assert 401 == 403
+E    +  where 401 = <Response [401 Unauthorized]>.status_code
+____________ test_runtime_refresh_rotates_once_and_child_is_usable ____________
+tests\production\test_device_bootstrap_runtime.py:83: in test_runtime_refresh_rotates_once_and_child_is_usable
+    assert first.status_code == 200, first.text
+E   AssertionError: {"detail":"Invalid device refresh token"}
+E   assert 401 == 200
+E    +  where 401 = <Response [401 Unauthorized]>.status_code
+_________ test_runtime_concurrent_same_fingerprint_creates_one_device _________
+tests\production\test_device_bootstrap_runtime.py:110: in test_runtime_concurrent_same_fingerprint_creates_one_device
+    assert [r.status_code for r in responses] == [201] * 3
+E   assert [401, 401, 401] == [201, 201, 201]
+E
+E     At index 0 diff: 401 != 201
+E     Use -v to get more diff
+_______________ test_runtime_concurrent_refresh_has_one_winner ________________
+tests\production\test_device_bootstrap_runtime.py:123: in test_runtime_concurrent_refresh_has_one_winner
+    assert sorted(r.status_code for r in responses) == [200, 401]
+E   assert [401, 401] == [200, 401]
+E
+E     At index 0 diff: 401 != 200
+E     Use -v to get more diff
+______ test_runtime_new_session_cannot_enumerate_credentials_after_auth _______
+tests\production\test_device_bootstrap_runtime.py:130: in test_runtime_new_session_cannot_enumerate_credentials_after_auth
+    assert response.status_code == 201, response.text
+E   AssertionError: {"detail":"Невалидный или истёкший API-ключ"}
+E   assert 401 == 201
+E    +  where 401 = <Response [401 Unauthorized]>.status_code
+============================== warnings summary ===============================
+backend\api\v1\game_accounts\router.py:95
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\api\v1\game_accounts\router.py:95: FastAPIDeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+    sort_dir: str = Query("desc", regex="^(asc|desc)$", description="Направление сортировки"),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/production/test_device_bootstrap_runtime.py::test_runtime_enrollment_and_reenrollment_uses_secret_tenant[False]
+FAILED tests/production/test_device_bootstrap_runtime.py::test_runtime_enrollment_and_reenrollment_uses_secret_tenant[True]
+FAILED tests/production/test_device_bootstrap_runtime.py::test_runtime_enrollment_rejects_invalid_key[permission]
+FAILED tests/production/test_device_bootstrap_runtime.py::test_runtime_refresh_rotates_once_and_child_is_usable
+FAILED tests/production/test_device_bootstrap_runtime.py::test_runtime_concurrent_same_fingerprint_creates_one_device
+FAILED tests/production/test_device_bootstrap_runtime.py::test_runtime_concurrent_refresh_has_one_winner
+FAILED tests/production/test_device_bootstrap_runtime.py::test_runtime_new_session_cannot_enumerate_credentials_after_auth
+7 failed, 6 passed, 1 warning in 6.81s
