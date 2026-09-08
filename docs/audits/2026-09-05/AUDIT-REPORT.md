@@ -771,7 +771,7 @@ Code head `063a9d5` (AUD-55 и AUD-56) полностью прошёл
 snapshots. Linux: **1192 passed / 67,95%**; Windows: **1192 passed / 67,99%**,
 по четыре warnings, неизменный coverage gate 65% пройден. 22 новых cases используют
 реальные runtime LOGIN credentials: 16 DB-session проверок и шесть ASGI/audit-writer
-проверок. Остальные 320 PostgreSQL/Redis cases не переименовываются в полную
+проверок. Весь набор из 320 PostgreSQL/Redis cases не является полной
 runtime-role suite. После локального прогона не осталось тестовых LOGIN-ролей
 `audit_runtime_user_*` и их соединений. Preview guard успешен, deployment пропущен.
 Documentation-only snapshot запускает свои checks; код с указанной ревизии не менялся.
