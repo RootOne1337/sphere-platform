@@ -1,6 +1,5 @@
 # backend/middleware/tenant_middleware.py
-# Устанавливает PostgreSQL-контекст для RLS на уровне ASGI middleware.
-# Подробнее: TZ-00 SPLIT-2 (rls_policies.sql), TZ-01 SPLIT-3 (RBAC).
+# Инициализация request state. Контекст БД задаётся отдельно в tenant-bound Session.
 from __future__ import annotations
 
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -10,15 +9,9 @@ from starlette.responses import Response
 
 class TenantMiddleware(BaseHTTPMiddleware):
     """
-    ASGI-middleware для установки PostgreSQL-контекста tenant.
-
-    ВНИМАНИЕ: Этот middleware НЕ устанавливает SET LOCAL — это невозможно
-    на уровне connection pool без гарантии одной транзакции. Вместо этого
-    он извлекает org_id из JWT и сохраняет в request.state.
-
-    Реальная инъекция SET LOCAL app.current_org_id происходит в
-    backend/core/dependencies.py::get_tenant_db() при открытии сессии.
-    Это единственный правильный подход с asyncpg connection pool.
+    Инициализирует request state; не декодирует JWT и не устанавливает DB context.
+    PostgreSQL LOCAL context восстанавливает backend.database.tenant для явно
+    привязанных Session. Middleware не обеспечивает RLS для unscoped callers.
     """
 
     async def dispatch(self, request: Request, call_next) -> Response:
@@ -32,8 +25,7 @@ class TenantMiddleware(BaseHTTPMiddleware):
 
 async def set_tenant_context(db_session, org_id: str) -> None:
     """
-    Вспомогательная функция: устанавливает RLS-контекст в открытой сессии.
-    Вызывается из get_tenant_db() после BEGIN транзакции.
+    Совместимый helper: привязывает Session к tenant на всех её транзакциях.
 
     Пример:
         async with AsyncSession(engine) as session:
@@ -41,6 +33,6 @@ async def set_tenant_context(db_session, org_id: str) -> None:
                 await set_tenant_context(session, org_id)
                 result = await session.execute(select(Device))
     """
-    await db_session.execute(
-        f"SET LOCAL app.current_org_id = '{org_id}'"  # noqa: S608 — org_id is UUID, validated upstream
-    )
+    from backend.database.tenant import bind_tenant_context
+
+    await bind_tenant_context(db_session, org_id)

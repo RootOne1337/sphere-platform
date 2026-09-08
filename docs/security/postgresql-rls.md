@@ -53,20 +53,45 @@ UPDATE/DELETE запреты действуют даже при дополнит
 согласовать с auth/bootstrap, а не выдавать приложению BYPASSRLS.
 
 Tenant setting приводится к UUID; индексируемый столбец org_id не приводится к
-text. Отсутствующее/пустое значение закрывает доступ, неверный UUID вызывает ошибку
-до записи. Код должен передавать UUID из проверенного principal параметром:
+text. Отсутствующее/пустое значение закрывает доступ, неверный UUID вызывает ошибку.
+Код привязывает Session к UUID из проверенного principal **до** доступа к данным:
 
 ```python
-await db.execute(
-    text("SELECT set_config('app.current_org_id', :org_id, true)"),
-    {"org_id": str(validated_org_id)},
-)
+from backend.database.tenant import bind_tenant_context
+
+await bind_tenant_context(db, str(validated_org_id))
+# В следующих транзакциях этой Session контекст восстанавливается автоматически.
 ```
 
-Это значение действует только до конца транзакции. После commit/rollback его нужно
-установить заново в следующей транзакции той же Session. Обычный `get_db()` и
-текущее использование `get_db_session(org_id=...)` ещё не обеспечивают контекст
-на всём жизненном цикле HTTP/auth/jobs. Наличие middleware не доказывает обратного.
+`get_tenant_db()` и `get_db_session(org_id=...)` используют тот же helper.
+Состояние tenant хранится в Session, а PostgreSQL setting остаётся LOCAL для
+каждой транзакции. Событие after_begin устанавливает контекст на предоставленном
+Connection, включая новое соединение после recovery. Commit/rollback удаляют
+setting из соединения; следующий запрос той же Session восстанавливает его.
+Новая Session из того же пула остаётся без tenant, пока явно не привязана.
+
+В AUD-55 подтверждены потеря доступа после commit/rollback/SQL error/invalidation
+и возможность оставить в одной ORM identity map объекты разных организаций при
+повторной привязке. До fix — [14 failed, 2 passed](../audits/2026-09-05/evidence/tenant-transactions-before.txt);
+после — [17 passed](../audits/2026-09-05/evidence/tenant-transactions-after.txt).
+Шестнадцать новых тестов используют реальные non-owner LOGIN credentials,
+полную мигрированную схему и pool_size=1; pg_backend_pid подтверждает повторное
+использование одного соединения. Disconnect моделируется закрытием соединения
+через Session.invalidate(), а не отказом всей сети/PostgreSQL failover.
+
+Tenant нельзя менять в той же Session даже после commit/close/reset: создайте новую
+Session. Это защищает от смешивания сохранённых ORM identities, но не проверяет
+объекты, загруженные **до первой привязки** unscoped сессией. Первую привязку внутри
+savepoint helper отклоняет: rollback savepoint мог бы убрать LOCAL setting,
+оставив внешнюю транзакцию активной. Привязывайте до begin_nested(); повторная
+привязка того же tenant и rollback вложенной транзакции проверены.
+
+Обычный `get_db()` остаётся unscoped. Auth/bootstrap и глобальные jobs ещё требуют
+перевода на эти границы. Middleware лишь инициализирует request state и не задаёт
+контекст PostgreSQL. Проверка helper напрямую не подтверждает все ASGI/worker пути.
+
+Основание реализации: [SessionEvents.after_begin](https://docs.sqlalchemy.org/en/20/orm/events.html#sqlalchemy.orm.SessionEvents.after_begin)
+и [asyncio events через sync_session](https://docs.sqlalchemy.org/en/20/orm/extensions/asyncio.html#using-events-with-the-asyncio-extension).
 
 ## Migration и rollback
 
@@ -97,7 +122,8 @@ upgrade не должен отмечаться как применённая rev
    Не выдавать ему DDL/role administration. Compose пока использует общий
    PostgreSQL bootstrap user; production guard должен отклонить такой запуск.
 2. Обеспечить проверенный tenant context **до** user/device/API-key lookup,
-   login/MFA/refresh/enrollment bootstrap и после каждой смены транзакции.
+   login/MFA/refresh/enrollment bootstrap. В явно привязанных Session восстановление
+   после смены транзакции исправлено в AUD-55; unscoped callers ещё нужно перевести.
 3. Перевести глобальную enumeration и фоновые scheduler/orchestrator/VPN/audit
    jobs на проверенные границы организации. Проверить разрешённые операции через
    фактические ASGI/worker пути, конкурентность, rollback и повторное использование

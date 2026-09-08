@@ -14,13 +14,17 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Security / runtime
 
+- AUD-55: tenant binding теперь сохраняется в Session после commit/rollback/recovery;
+  смена tenant внутри Session и первая привязка в savepoint запрещены. 16 новых
+  PostgreSQL tests используют отдельные LOGIN credentials и пул из одного соединения.
+
 - AUD-14: production startup отклоняет PostgreSQL owner/member, privileged roles,
   TRUNCATE и отсутствующий RLS/policies; 10 новых PostgreSQL regressions.
 - AUD-54: Alembic `20260908_tenant_policies` устанавливает tenant policies всех
   28 таблиц, защищает оба конца M2M и append-only audit. 25 full-schema runtime-role
   checks и четыре migration/operator-policy checks; четыре CI inventory checks.
-- Общий backend/PC/production/deployment прогон: 1170 passed, coverage 67,94%,
-  включая 298 PostgreSQL/Redis cases; без load suite и listening APK/API.
+- Общий backend/PC/production/deployment прогон: 1186 passed, coverage 68,01%,
+  включая 314 PostgreSQL/Redis cases; без load suite и listening APK/API.
 
 ### Migration / deployment constraints
 

@@ -20,9 +20,9 @@ runtime-проверок и не считается доказательство
 | Проверка | Результат | Практическое ограничение |
 | --- | --- | --- |
 | Android enterprise debug unit suite | 344 passed, 0 failed | JVM/MockWebServer; не проверяет ОС, codec, батарею или смерть процесса на телефоне |
-| Объединённая Backend/PC/production/deployment suite | **1170 passed, 0 failed**; coverage **67,94%** | Строгий coverage gate 65% пройден с precision=2. Load suite исключена; 6 Compose config tests не запускают сервисы |
+| Объединённая Backend/PC/production/deployment suite | **1186 passed, 0 failed**; coverage **68,01%** | Строгий coverage gate 65% пройден с precision=2. Load suite исключена; 6 Compose config tests не запускают сервисы |
 | Python dependency scan | **0 known vulnerabilities** в совместном backend/PC resolution | Pip-audit snapshot, не проверка frontend/Gradle/container/application security; [версии и ограничения](DEPENDENCY-REVIEW.md) |
-| Проверки PostgreSQL/Redis | **298 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
+| Проверки PostgreSQL/Redis | **314 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
 | Миграции | Применены до **20260908_tenant_policies** включительно | Только изолированная БД; конфликтные данные/downgrade проверены в throwaway schema; production не мигрировался |
 | Backend image | Собирается; исходная запись OpenAPI воспроизведённо падает с PermissionError | Исправлен lifespan; полный deployment runtime ещё не подтверждён |
 | Frontend | **198 Jest tests passed**, tsc passed; Next production build exit 0 на Node 24.19.0 | React/JSDOM + Axios adapters; настоящий browser runtime не проверен. Windows standalone tracing выдал ENOENT warning, artifact packaging ещё не подтверждён |
@@ -33,7 +33,7 @@ runtime-проверок и не считается доказательство
 Предыдущий отдельный DAG benchmark однажды занял 127,1 ms при пороге 100 ms;
 изолированный повтор и последующие общие прогоны прошли. Порог не ослаблялся.
 Файл production-regressions-after.txt сохраняет более ранний standalone snapshot
-с 41 тестом; актуальные 298 входят в общий прогон.
+с 41 тестом; актуальные 314 входят в общий прогон.
 
 Команды запуска и предохранители изоляции: [tests/production/README.md](../../../tests/production/README.md).
 Исходные `14 passed` в [reproductions.txt](evidence/reproductions.txt) означают
@@ -577,12 +577,23 @@ runtime-проверок и не считается доказательство
 - **Documentation/rollout:** ручные SQL entry points явно отклоняют старый способ установки; актуальный [RLS runbook](../../security/postgresql-rls.md) содержит условия rollout, модель ролей, ограничения контекста и rollback. Developer/deployment guides и README больше не утверждают гарантированную RLS/production readiness.
 - **Residual risk:** AUD-14 остаётся открытым для auth/bootstrap/refresh/device lookup до выбора tenant, повторной установки context после commit/rollback, глобальных jobs и provisioning migration/runtime ролей. Текущий Compose использует общий PostgreSQL bootstrap user и не готов к безопасному переключению. Не проверены все cross-tenant FK и конкурентная смена org родителя; SQL policy tests не заменяют HTTP/worker runtime. Migration применена только в выделенной БД; production и ключи не изменялись. RLS с GUC не защищает от произвольного SQL, который сам выбирает tenant.
 
+### AUD-55 — High: tenant-контекст терялся после commit/recovery; Session могла смешивать организации
+
+- **Root cause:** get_tenant_db/get_db_session устанавливали set_config(..., true) однократно. PostgreSQL LOCAL setting сбрасывается при завершении транзакции; последующие запросы под безопасной ролью не видят свои строки. Повторный вызов helper менял tenant той же Session, сохраняя ORM identity map первой организации.
+- **Evidence/reproduction:** [14 failed, 2 passed](evidence/tenant-transactions-before.txt). Реальные отдельные non-owner LOGIN credentials, полная схема, две организации и pool_size=1. После commit/rollback/SQL error/Session.invalidate собственный SELECT возвращал пустой набор; после смены tenant одна Session одновременно возвращала cached Device A и загружала Device B. Два контрольных теста доказывают, что переноса LOCAL setting в новую Session через pool до fix не было.
+- **Affected files:** `backend/database/engine.py`, `backend/core/dependencies.py:get_tenant_db`, совместимый helper `backend/middleware/tenant_middleware.py:set_tenant_context`; новая общая реализация `backend/database/tenant.py`.
+- **Fix:** Session привязывается к одному валидированному UUID; after_begin восстанавливает LOCAL setting через Connection на каждой транзакции/новом соединении. Смена tenant в Session запрещена. Первая привязка внутри savepoint запрещена, повторная привязка того же tenant допустима. Параметризованный общий helper заменяет однократный set_config и старый raw-SQL helper.
+- **Regression:** 16 новых cases в `tests/production/test_tenant_transactions.py`: HTTP dependency helper/background context manager, commit/rollback, SQL error, connection invalidation, interleaving A/B через один pg_backend_pid, fresh-session isolation, ORM identity retention, savepoint и invalid UUID. Вместе с обновлённой проверкой transaction-local setting — [17 passed](evidence/tenant-transactions-after.txt). Старый тест ошибочно требовал потери контекста в продолжающей работу Session; теперь проверяется очистка в новой Session и сохранение привязки в текущей.
+- **Общая проверка:** **1186 passed / 68,01%**, включая 314 PostgreSQL/Redis cases; Ruff и Bandit gate пройдены.
+- **Residual risk:** unscoped get_db/auth/bootstrap/jobs автоматически не защищены. Вызов dependency helper напрямую не является end-to-end ASGI проверкой. Invalidation проверяет замену собственного соединения, не network partition/server failover; запрет повторной привязки не очищает объекты, прочитанные до первой привязки. Arbitrary SQL/SET, global enumeration, RLS role provisioning и полный rollout остаются открытыми. [Контракт и ограничения](../../security/postgresql-rls.md).
+
+
 ## Открытые подтверждённые блокеры
 
 | ID / severity | Root cause и evidence | Необходимое продолжение |
 | --- | --- | --- |
 | AUD-11 / High, частично исправлен | SQL ownership/uniqueness/intents исправлены и проверены; реальные orphan peers и provider unknown outcomes не reconciled | Inventory contract, controlled reconciliation/rollout, HTTP adapter и AWG конфигурация; незавершённые intents пока удерживаются |
-| AUD-14 / High | Startup guard исправлен; политики всех 28 tables и runtime CRUD проверены (AUD-54). Auth/jobs и context после commit ещё не переведены | Разделение migration/runtime ролей, контекст для HTTP/auth/jobs и после commit, разрешённые/запрещённые runtime API/worker сценарии |
+| AUD-14 / High | Startup guard исправлен; политики всех 28 tables и runtime CRUD проверены (AUD-54). Восстановление bound Session после commit/recovery исправлено (AUD-55); auth/jobs ещё не переведены | Разделение migration/runtime ролей, перевод HTTP/auth/jobs на bound Sessions, разрешённые/запрещённые runtime API/worker сценарии |
 | DEPLOY-03 / High | Effective Compose оставляет n8n/MinIO host ports; production persistence и DB roles не согласованы | Ingress/access design, роли, долговечные artifacts, runtime/restore проверка |
 
 ## Следующие компоненты аудита

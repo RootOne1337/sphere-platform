@@ -89,14 +89,11 @@ async def get_tenant_db(
     current_user: "User" = Depends(get_current_user),
 ) -> AsyncSession:
     """
-    Session with active tenant RLS context.
+    Session bound to the current tenant across commit/rollback/recovery.
     Use instead of get_db for all endpoints with business data.
     """
-    from sqlalchemy import text
-    await db.execute(
-        text("SELECT set_config('app.current_org_id', :org_id, true)"),
-        {"org_id": str(current_user.org_id)},
-    )
+    from backend.database.tenant import bind_tenant_context
+    await bind_tenant_context(db, str(current_user.org_id))
     return db
 
 

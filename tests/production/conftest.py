@@ -1,6 +1,7 @@
 """Opt-in PostgreSQL/Redis fixtures restricted to disposable local services."""
 
 import os
+import secrets
 import uuid
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
@@ -17,6 +18,38 @@ from backend.database.engine import get_db
 from backend.main import app
 from backend.models import Device, Organization, User
 from backend.models.script import Script, ScriptVersion
+
+
+@pytest_asyncio.fixture
+async def runtime_db(world):
+    """Actual non-owner login credentials; one pooled connection exposes scope leaks."""
+    from sqlalchemy import text
+
+    from backend.database.engine import Base
+
+    role = "audit_runtime_user_" + world.suffix
+    password = secrets.token_hex(32)  # Local disposable credentials, never logged.
+    tables = ", ".join(f'public."{table}"' for table in sorted(Base.metadata.tables))
+    async with world.engine.begin() as db:
+        await db.execute(text(f'CREATE ROLE "{role}" LOGIN NOSUPERUSER NOBYPASSRLS PASSWORD \'{password}\''))
+        await db.execute(text(f'GRANT USAGE ON SCHEMA public TO "{role}"'))
+        await db.execute(text(f'GRANT SELECT, INSERT, UPDATE, DELETE ON {tables} TO "{role}"'))
+    engine = create_async_engine(
+        world.engine.url.set(username=role, password=password),
+        pool_size=1, max_overflow=0, pool_timeout=5,
+    )
+    sessions = async_sessionmaker(engine, expire_on_commit=False)
+    try:
+        async with engine.connect() as db:
+            assert await db.scalar(text("SELECT current_user")) == role
+            assert await db.scalar(text("SELECT row_security_active('devices')")) is True
+        yield SimpleNamespace(engine=engine, sessions=sessions, role=role, world=world)
+    finally:
+        await engine.dispose()
+        async with world.engine.begin() as db:
+            await db.execute(text(f'REVOKE ALL PRIVILEGES ON {tables} FROM "{role}"'))
+            await db.execute(text(f'REVOKE USAGE ON SCHEMA public FROM "{role}"'))
+            await db.execute(text(f'DROP ROLE "{role}"'))
 
 
 @pytest.fixture

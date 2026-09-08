@@ -6,6 +6,10 @@
 > tables. Non-owner runtime credentials and HTTP/auth/job tenant propagation remain
 > rollout blockers. Read [the RLS contract](security/postgresql-rls.md); neither an
 > explicit ORM filter nor middleware proves full database isolation.
+>
+> `get_tenant_db()` / `get_db_session(org_id=...)` now keep one tenant per Session
+> across commit/rollback/recovery. Bind before data access and before savepoints;
+> use a fresh Session for another tenant. Plain `get_db()` remains unscoped.
 
 ---
 

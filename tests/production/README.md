@@ -133,3 +133,11 @@ operator restrictive policies, resistance to permissive-policy OR bypass, legacy
 policy replacement and refusal of unsafe downgrade. These are SQL boundaries;
 HTTP/auth/jobs under runtime credentials remain a [rollout blocker](../../docs/security/postgresql-rls.md).
 The earlier privileged integration suite is not relabelled as a runtime-role suite.
+
+`test_tenant_transactions.py` logs in with an actual UUID-scoped non-owner role and
+uses pool_size=1 to prove tenant restoration after commit/rollback/SQL failure and
+Session.invalidate(). It checks interleaved A/B Sessions on the same backend PID,
+no context inheritance by a fresh Session, retained ORM identities and savepoint
+behavior. The login role is removed after its pool is disposed. These 16 cases
+exercise DB helpers directly; they do not establish complete HTTP/auth/job rollout
+or PostgreSQL/network failover. A Session has one tenant for its lifetime.

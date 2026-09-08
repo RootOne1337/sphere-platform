@@ -186,9 +186,9 @@ network failure displays an unconfirmed-revocation message on login.
   packaging and real-browser behavior remain unconfirmed. On `3630a63`, [Linux frontend CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34175662261)
   passed Jest, tsc, production build and a standalone-entry-point check.
 - Android enterprise debug unit suite: **344 passed**.
-- Combined backend/PC, PostgreSQL/Redis and deployment regressions: **1170 passed**.
-  This includes **298 real-service tests** and **6 Compose configuration tests**.
-  Coverage is **67.94%** and passes the unchanged **65%** gate with two-decimal
+- Combined backend/PC, PostgreSQL/Redis and deployment regressions: **1186 passed**.
+  This includes **314 real-service tests** and **6 Compose configuration tests**.
+  Coverage is **68.01%** and passes the unchanged **65%** gate with two-decimal
   precision. No threshold or coverage scope was weakened. Two additional
   regression tests exercise the 64.98% rejection and exact 65.00% boundary. Long load/soak profiles require a prepared API
   environment and are excluded from the ordinary PR command.
@@ -290,3 +290,21 @@ Subsequent documentation-only commits trigger separate checks. All reproductions
 public HTTP exploit for every affected table. See the
 [RLS rollout contract](https://github.com/RootOne1337/sphere-platform/blob/codex/enterprise-audit-20260905/docs/security/postgresql-rls.md)
 for auth/bootstrap/jobs, transaction context, foreign-key and role constraints.
+
+### Session tenant context survives transactions (AUD-55)
+
+The DB helpers set PostgreSQL LOCAL tenant context only once. A commit, rollback
+or recovered connection caused later reads to lose their own tenant rows; rebinding
+one Session could retain tenant A ORM objects while loading tenant B. Bind each
+Session to one validated tenant and reapply LOCAL context in after_begin. Reject
+cross-tenant rebinding and first binding inside a savepoint; use a fresh Session
+for another tenant. The connection pool retains no tenant setting.
+
+Sixteen real PostgreSQL login-role regressions cover transaction endings, SQL error,
+connection invalidation, one-connection A/B interleaving, fresh-session isolation,
+identity-map retention and savepoints. Before: 14 failed, two controls passed;
+after: all 16 plus the existing context test pass. These test DB helpers directly;
+unscoped HTTP/auth/bootstrap/jobs remain rollout blockers. SQL arbitrary SET and
+network partition/server failover are outside this proof.
+
+AUD-55 local combined verification: **1186 passed / 68.01%**, including 314 real-service tests. Ruff and Bandit gate pass; this new code head needs its own GitHub checks.
