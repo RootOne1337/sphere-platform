@@ -658,7 +658,7 @@ runtime-проверок и не считается доказательство
 - **Root cause:** login выбирал User по email до tenant binding; refresh/logout искали opaque token hash в unscoped Session; Redis MFA state содержал лишь user UUID, а второй HTTP request открывал новую unscoped Session. RLS скрывала валидные строки. Logout при этом мог вернуть 204, оставив refresh token неотозванным в SQL.
 - **Evidence/reproduction:** [10 failed / 8 passing denial controls](evidence/user-bootstrap-before.txt) на actual non-owner PostgreSQL LOGIN. Валидные login/MFA/refresh возвращали 401, cookie/header logout не менял revoked, два refresh не достигали ожидаемых SQL row locks. Проверка использует реальные ASGI endpoints и только изолированные PostgreSQL/Redis.
 - **Affected files:** `backend/services/auth_service.py`; `backend/database/credential_lookup.py`; `alembic/versions/20260909_user_auth_bootstrap.py`; `tests/production/test_user_bootstrap_runtime.py`; runtime-grant/SQLite/AsyncMock/MFA fixtures.
-- **Fix:** две закрытые для PUBLIC функции возвращают только org UUID по точному globally unique email или полному active refresh hash; после этого Session привязывается до обычных scoped SELECT. Refresh сохраняет FOR UPDATE и проверяет соответствие user/refresh organization. MFA v2 server-side JSON хранит user/org, второй шаг связывает tenant, перепроверяет active/MFA/org и сохраняет одноразовое DEL consumption. Credentials возвращаются после SQL commit. Миграция требует отдельных runtime EXECUTE grants; [runbook](../../security/user-auth-bootstrap.md) описывает threat boundary, cutover и rollback.
+- **Fix:** `d642273` — две закрытые для PUBLIC функции возвращают только org UUID по точному globally unique email или полному active refresh hash; после этого Session привязывается до обычных scoped SELECT. Refresh сохраняет FOR UPDATE и проверяет соответствие user/refresh organization. MFA v2 server-side JSON хранит user/org, второй шаг связывает tenant, перепроверяет active/MFA/org и сохраняет одноразовое DEL consumption. Credentials возвращаются после SQL commit. Миграция требует отдельных runtime EXECUTE grants; [runbook](../../security/user-auth-bootstrap.md) описывает threat boundary, cutover и rollback.
 - **Regression:** [105 related cases passed](evidence/user-bootstrap-after.txt), включая 34 новых real-service cases. Login → me → refresh → replay denial → logout для A/B, ложный org header, cookie/header/JSON refresh, SQL revoke, current active/moved identity, два refresh SQL waiters и один winner/usable child; concurrent MFA GET/DEL, invalid/legacy state, moved/disabled user; SQL abort после flush и recovery для login/refresh/MFA; exact narrow lookup, temp shadowing, explicit EXECUTE и owner protection. Исходный before включает 18 HTTP cases; дополнительные function/MFA/failure tests добавлены при реализации механизма.
 - **Residual risk:** email угадываем, поэтому EXECUTE раскрывает database caller организацию активного известного email; это не HTTP auth или проверка пароля. MFA namespace v2 требует нового password step для legacy challenges и согласованного cutover workers; client wire format не меняется. После успешного DEL и неуспешного SQL commit нужен новый challenge, а после потерянного ответа на успешный commit сохраняется unknown-outcome риск. Refresh-family revocation, MFA guessing/recovery policy, admin changes после авторизации, остальные auth callers и глобальные jobs остаются открыты. Доказательств полного browser/production/network failover нет.
 
@@ -898,3 +898,18 @@ runtime LOGIN-ролей и соединений после локальных �
 222 локальные Markdown-ссылки в 11 руководствах перед добавлением CI-снимков.
 Независимых PR reviews нет; PR остаётся draft. Следующий documentation-only commit
 сохраняет результаты и запускает собственные checks; production code не меняется.
+
+
+Code head `d642273` (AUD-62) прошёл с первой попытки
+[backend CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34379906033),
+[frontend CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34379906010) и
+[Android CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34379906047).
+Снимки: [backend](evidence/ci-d642273-backend.json),
+[frontend](evidence/ci-d642273-frontend.json), [Android](evidence/ci-d642273-android.json).
+[Linux summary](evidence/ci-d642273-tests.txt): **1300 passed / 68,77%**;
+Windows: **1300 passed / 68,80%**, включая **428 PostgreSQL/Redis cases**, четыре
+warnings. Неизменный 65% gate пройден. Новая миграция и все 34 user-bootstrap cases
+проверены в CI. Preview guard успешен, deploy пропущен. После локальных тестов
+временных runtime LOGIN-ролей и соединений ноль. PR остаётся draft без независимого
+review; production grants/cutover не выполнялись. Следующий документационный commit
+сохраняет эти результаты и запускает собственные checks, не меняя production code.
