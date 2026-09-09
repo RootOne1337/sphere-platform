@@ -40,8 +40,8 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - AUD-54: Alembic `20260908_tenant_policies` устанавливает tenant policies всех
   28 таблиц, защищает оба конца M2M и append-only audit. 25 full-schema runtime-role
   checks и четыре migration/operator-policy checks; четыре CI inventory checks.
-- Общий backend/PC/production/deployment прогон: 1214 passed, coverage 67,95%,
-  включая 342 PostgreSQL/Redis cases; без load suite и listening APK/API.
+- Общий backend/PC/production/deployment прогон: 1251 passed, coverage 68,48%,
+  включая 379 PostgreSQL/Redis cases; без load suite и listening APK/API.
 
 ### Migration / deployment constraints
 

@@ -12,7 +12,10 @@
 > use a fresh Session for another tenant. Plain `get_db()` remains unscoped.
 > User access JWT authentication now binds its verified organization before loading
 > the user; handlers sharing that request Session inherit the binding. Opaque
-> login/refresh/MFA/API-key and device bootstrap still need separate tenant boundaries.
+> user login/refresh/MFA and post-auth jobs still need tenant boundaries. API-key
+> and device-refresh bootstrap now use tenant-only SQL functions, and Android WS
+> authenticates before target lookup. Apply `20260909_credential_lookup` and review
+> [the required function grants](security/device-credential-bootstrap.md).
 > SQLite's test-only `set_config` adapter does not implement RLS. HTTP fixtures
 > serving different tenants must create a fresh Session for each request.
 

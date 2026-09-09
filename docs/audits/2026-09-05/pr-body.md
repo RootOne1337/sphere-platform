@@ -186,9 +186,9 @@ network failure displays an unconfirmed-revocation message on login.
   packaging and real-browser behavior remain unconfirmed. On `3630a63`, [Linux frontend CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34175662261)
   passed Jest, tsc, production build and a standalone-entry-point check.
 - Android enterprise debug unit suite: **344 passed**.
-- Combined backend/PC, PostgreSQL/Redis and deployment regressions: **1214 passed**.
-  This includes **342 real-service tests** and **6 Compose configuration tests**.
-  Coverage is **67.95%** and passes the unchanged **65%** gate with two-decimal
+- Combined backend/PC, PostgreSQL/Redis and deployment regressions: **1251 passed**.
+  This includes **379 real-service tests** and **6 Compose configuration tests**.
+  Coverage is **68.48%** and passes the unchanged **65%** gate with two-decimal
   precision. No threshold or coverage scope was weakened. Two additional
   regression tests exercise the 64.98% rejection and exact 65.00% boundary. Long load/soak profiles require a prepared API
   environment and are excluded from the ordinary PR command.
@@ -208,7 +208,7 @@ resolved account payloads determine DAG cache identity. Full RLS rollout,
 orchestrator creation/pipeline recovery, VPN/deployment and the remaining
 component audit are still open. Legacy running assignments require rollout reconciliation.
 
-The schema head is `20260908_tenant_policies`; production rollout remains blocked
+The schema head is `20260909_credential_lookup`; production rollout remains blocked
 on separate runtime credentials and auth/job tenant propagation. Previously
 issued refresh tokens require device re-enrollment. The command journal retains
 512 receipts for seven days with a 1 MiB cap and rejects new DAGs when full.
@@ -357,3 +357,37 @@ Linux retry: **1214 passed / 67.99%**; Windows: **1214 passed / 67.95%**.
 The first failed timing run remains in evidence; no code, test or threshold changed
 between attempts. Preview guard passes, deployment is skipped. The follow-up commit
 contains documentation and CI snapshots only and starts its own checks. PR remains draft.
+
+
+### Device enrollment, refresh and agent connection under RLS (AUD-58–60)
+
+Valid enrollment keys and device refresh tokens returned 401 because their tenant
+was unknown before RLS lookup. Two protected SQL functions now return only an org
+UUID for a complete active credential hash. PUBLIC access is revoked, search_path
+is pinned and relations are schema-qualified. Runtime needs explicit EXECUTE grants;
+normal scoped credential checks follow. No runtime ownership/BYPASSRLS is granted.
+
+Android WebSocket now authenticates before target-device lookup. Its shared agent
+HTTP/WS JWT verifier binds and checks signed tenant identity. Enrollment also rechecks
+key active state, expiry and permissions after a real row-lock wait; previously two
+waiting requests could create devices after admin revoke/permission removal/expiry.
+
+Thirty-seven new PostgreSQL/Redis cases include full server-side ASGI enrollment →
+refresh → WebSocket → OTA, reconnect and SQL failure recovery; exact device/tenant
+boundaries; multi-connection lock contention; refresh replay; lookup function grants
+and temp-table shadowing. Before evidence is retained separately for all three defects.
+The transport manager/heartbeat/stream effects are doubles. No listening API or APK
+OS test is implied. User opaque auth, post-auth writers/global jobs, production role
+provisioning, refresh response loss and live socket revocation remain open. See the
+[device credential runbook](https://github.com/RootOne1337/sphere-platform/blob/codex/enterprise-audit-20260905/docs/security/device-credential-bootstrap.md)
+for migration/grants/rollback and threat-boundary details.
+
+Combined local validation on `bd7ad7a`: **1251 passed / 68.48%**, including **379 PostgreSQL/Redis cases**. Ruff, Bandit and API export checks pass; the 65% gate is unchanged. Temporary runtime roles/connections were cleaned up. New GitHub checks are reported against this exact code revision.
+
+On `bd7ad7a`, [backend](https://github.com/RootOne1337/sphere-platform/actions/runs/34288111441),
+[frontend](https://github.com/RootOne1337/sphere-platform/actions/runs/34288111373) and
+[Android](https://github.com/RootOne1337/sphere-platform/actions/runs/34288111362) CI all
+pass on attempt 1. Linux: **1251 tests / 68.44%**; Windows: **1251 / 68.48%**. Preview
+guard passes and deploy is skipped. The following documentation-only commit saves
+these snapshots and starts its own checks. No independent review or production rollout
+is claimed; the PR remains draft.

@@ -1,12 +1,14 @@
 # Sphere Platform — Полный гайд развёртывания
 
-> **Статус на 8 сентября 2026: production readiness не подтверждена.**
+> **Статус на 9 сентября 2026: production readiness не подтверждена.**
 >
 > Это справочник настройки; полный runtime и ёмкость 10–64 эмулятора ещё проверяются.
 > Текущий общий PostgreSQL owner/superuser отклоняется production startup guard.
 > До rollout нужно завершить auth/job tenant context и разделение runtime/migration
 > ролей: [RLS runbook](docs/security/postgresql-rls.md). Политики устанавливает Alembic,
-> ручной SQL setup и автоматический downgrade текущей security revision запрещены.
+> ручной SQL setup и автоматический downgrade `20260908_tenant_policies` запрещены.
+> Head `20260909_credential_lookup` и runtime function grants описаны в
+> [device credential runbook](docs/security/device-credential-bootstrap.md).
 > Фактические результаты и оставшиеся блокеры: [audit report](docs/audits/2026-09-05/AUDIT-REPORT.md).
 
 ---
@@ -93,7 +95,7 @@
 
 | Сервис | Образ | Порт | Назначение |
 |--------|-------|------|------------|
-| **postgres** | postgres:15-alpine | 5432 | Основная БД (19 таблиц, RLS, аудит) |
+| **postgres** | postgres:15-alpine | 5432 | Основная БД (28 таблиц, RLS, аудит) |
 | **redis** | redis:7.2-alpine | 6379 | Кэш, Pub/Sub, статусы устройств |
 | **backend** | python:3.12-slim | 8000 | FastAPI REST + WebSocket API |
 | **frontend** | node:20 | 3000 | Next.js 15 Web UI |
@@ -174,7 +176,7 @@ cd sphere-platform
 3. **Собирает Docker-образы** — backend (Python 3.12) + frontend (Node 20)
 4. **Запускает контейнеры** — все 9 сервисов через Docker Compose
 5. **Ждёт готовности** — PostgreSQL healthcheck, Redis PONG, Backend /health
-6. **Применяет миграции** — Alembic upgrade head (19 таблиц, RLS, индексы)
+6. **Применяет миграции** — Alembic upgrade head (28 таблиц, RLS, индексы)
 7. **Создаёт администратора** — суперадмин + enrollment-ключ для агентов
 8. **Health-check** — проверяет каждый сервис и выводит URL-ы
 

@@ -12,7 +12,7 @@
 [![Python](https://img.shields.io/badge/python-3.12-3776ab?style=flat-square&logo=python&logoColor=white)](backend/)
 [![Kotlin](https://img.shields.io/badge/kotlin-1.9-7F52FF?style=flat-square&logo=kotlin&logoColor=white)](android/)
 [![Next.js](https://img.shields.io/badge/Next.js-15-000000?style=flat-square&logo=next.js&logoColor=white)](frontend/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?style=flat-square&logo=fastapi&logoColor=white)](backend/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.136-009688?style=flat-square&logo=fastapi&logoColor=white)](backend/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-4169E1?style=flat-square&logo=postgresql&logoColor=white)](infrastructure/postgres/)
 [![Redis](https://img.shields.io/badge/Redis-7.2-DC382D?style=flat-square&logo=redis&logoColor=white)](infrastructure/redis/)
 [![Docker](https://img.shields.io/badge/Docker-Compose_V2-2496ED?style=flat-square&logo=docker&logoColor=white)](docker-compose.yml)

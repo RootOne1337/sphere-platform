@@ -1,7 +1,7 @@
 # PostgreSQL RLS: доказательства и условия внедрения
 
 Обновлено 9 сентября 2026. Политики схемы исправлены в
-`20260908_tenant_policies`; **полный переход приложения на runtime-роль ещё
+`20260908_tenant_policies`; head теперь `20260909_credential_lookup`. **Полный переход приложения на runtime-роль ещё
 заблокирован**. AUD-14 остаётся частично открытым. Это не инструкция немедленно
 менять production credentials. Проверены только выделенный локальный PostgreSQL 15
 и синтетические организации; production не изменялся.
@@ -126,8 +126,10 @@ user token purpose `access` с UUID subject/organization; подпись, сро
 [последующий успешный прогон](../audits/2026-09-05/evidence/jwt-tenant-after.txt).
 Owner-controls дополнительно проверяют обязательность token/user org match.
 
-Это цепочка **уже выданного** JWT. Login по email, opaque refresh/MFA/API-key,
-device enrollment/auth и глобальные jobs требуют отдельного bootstrap design.
+User JWT проверен в AUD-57. AUD-58 добавляет ограниченный opaque API-key/device-refresh
+bootstrap, AUD-59 проверяет ASGI Android WS и agent HTTP, AUD-60 сериализует проверку
+enrollment key с отзывом. [Механизм и обязательные grants](device-credential-bootstrap.md).
+Login по email, user refresh/MFA, post-auth agent writers и глобальные jobs ещё открыты.
 Нельзя решать их default deny выдачей BYPASSRLS, публичным SELECT credential tables
 или доверяя неподписанному tenant header. Production rollout остаётся заблокированным.
 SQLite unit adapter `set_config` поддерживает SQL-вызов, но не реализует RLS;
@@ -149,8 +151,8 @@ python scripts/check_rls.py
 
 Старые `infrastructure/postgres/rls_policies.sql` и `audit_log_policies.sql`
 теперь явно завершаются ошибкой с указанием Alembic, чтобы старый deployment script
-не сообщил об успешной настройке неполных политик. Автоматический downgrade этой
-revision запрещён: возврат к открытым ассоциациям/настройкам требует отдельного
+не сообщил об успешной настройке неполных политик. Автоматический downgrade `20260908_tenant_policies`
+запрещён: возврат к открытым ассоциациям/настройкам требует отдельного
 решения, а исправление политики — новой forward migration. Транзакционный отказ
 upgrade не должен отмечаться как применённая revision. Проверьте это на копии
 схемы с реальными операторскими политиками до любого production rollout.
@@ -161,8 +163,10 @@ upgrade не должен отмечаться как применённая rev
    owner/member, SUPERUSER/BYPASSRLS, участником privileged role или иметь TRUNCATE.
    Не выдавать ему DDL/role administration. Compose пока использует общий
    PostgreSQL bootstrap user; production guard должен отклонить такой запуск.
-2. Обеспечить проверенный tenant context **до** device/API-key lookup,
-   login/MFA/refresh/enrollment bootstrap. User access JWT lookup исправлен в AUD-57. В явно привязанных Session восстановление
+2. Завершить user login/MFA/refresh bootstrap и проверить остальные auth callers.
+   User JWT, API-key/device-refresh lookup и Android WS auth исправлены в AUD-57–60.
+   Runtime требует explicit EXECUTE на две функции; их owner/DDL/grants защищаются
+   отдельно, приложение не должно наследовать права владельца. В явно привязанных Session восстановление
    после смены транзакции исправлено в AUD-55; unscoped callers ещё нужно перевести.
 3. Перевести глобальную enumeration и фоновые scheduler/orchestrator/VPN/audit
    jobs на проверенные границы организации (HTTP audit writer исправлен отдельно
