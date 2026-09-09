@@ -14,6 +14,10 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Security / runtime
 
+- AUD-71: зависший APK refresh больше не удерживает очередь после HTTP-дедлайна;
+  stop отменяет конкретный OkHttp Call, поздний body не меняет credentials.
+  Pending ID остаётся для recovery; восемь новых regressions, 362 JVM tests проходят.
+  Предел HTTP не является SLA ожидания mutex/диска или подтверждением Android OS recovery.
 - AUD-69: device refresh с сохранённым operation UUID восстанавливает тот же
   token-преемник после lost commit/HTTP response; row locks, expiry и re-enrollment
   сохраняют отзыв и одну ротацию. Новая миграция `20260910_device_refresh_retry`.

@@ -80,12 +80,20 @@ researches NitroGen and a future external inference worker; no AI is implemented
   prove disk/memory ordering, failed commit handling and stale re-enrollment/clear.
   Full Android suite: **354 passed**. Physical Android crash/keystore remains untested.
 
+- **AUD-71:** a hung blocking APK refresh held the token mutex beyond its coroutine
+  deadline; cancellation was swallowed and late bodies still saved credentials.
+  Baseline: **4 failures / 1 control**. Async OkHttp cancellation, bounded parsing and
+  coroutine-owned credential writes repair the lifecycle while preserving retry ID.
+  **8 new cases**, including 64 concurrent callers and failed-body cleanup; the full
+  suite now has **362 tests**. Disk/keystore stalls and physical network recovery
+  require separate drills.
+
 ## Validation
 
 - Combined local backend/PC/PostgreSQL/Redis/deployment: **1375 passed**, including
   **477 real-service cases** and 25 deployment cases; **69.35%** coverage,
   four existing warnings. Load/soak profiles are excluded from this ordinary PR run.
-- Android enterprise debug unit suite: **354 passed**. These JVM/MockWebServer checks
+- Android enterprise debug unit suite: **362 passed / 29 suites**. These JVM/MockWebServer/OkHttp checks
   do not establish device OS, codec, battery or real network behavior.
 - Frontend: **198 tests / 23 suites**, TypeScript and production build pass. Linux CI
   verifies the standalone entry point; local Windows tracing emitted an ENOENT
@@ -100,9 +108,9 @@ researches NitroGen and a future external inference worker; no AI is implemented
   [Android](https://github.com/RootOne1337/sphere-platform/actions/runs/34416514460)
   CI on attempt 1; the separate Android push run also passes. Linux: **1375 tests /
   69.30%**, including all 24 new SQL/ASGI cases. Exact job snapshots and test excerpts
-  are retained. Preview guard passes and deployment is skipped. The following
-  documentation-only commit records these results; application code is unchanged
-  and that commit starts its own checks.
+  are retained. Preview guard passes and deployment is skipped. These results precede
+  AUD-71; the new revision's CI will be recorded after push. Backend/PC/schema did
+  not change in AUD-71; its new local validation is the Android suite above.
 
 ## Rollout and remaining risks
 
@@ -145,7 +153,9 @@ The 64-concurrent VPN test uses SQL plus a router double and is not a capacity r
 GitHub-independent failover is a documented direction, not yet an implementation:
 saved primary/secondary routes to the same installation, with optional external
 discovery. AUD-69/70 cover new device refresh response recovery; legacy already-lost
-operations, expired credentials, real OS/network drills and refresh cancellation remain open. Monitoring
+operations, expired credentials and real OS/network drills remain open. AUD-71
+repairs HTTP cancellation; mutex queueing, disk/keystore stalls and device scheduling
+are outside its 10-second HTTP bound. Monitoring
 Compose wiring and synthetic VPN UI zeroes are confirmed open gaps. Startup readiness
 does not check schema head, task execution or browser actions; the legacy tunnel
 path remains outside AUD-68. Reboot/restore/soak drills are still required.

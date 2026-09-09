@@ -74,7 +74,7 @@ LAN-first management, сохранённый резервный endpoint той 
 | --- | --- | --- |
 | Парк устройств | Регистрация, идентификаторы, группы/теги, presence, API/WS | Массовый reconnect, provisioning всех станций, физические телефоны |
 | Автоматизация | DAG/Lua, задания, batches/waves, scheduler/pipelines, локальный журнал | Полный crash recovery, unknown physical outcomes, отмена при отказах |
-| Связь | Recoverable refresh, heartbeat, reconnect, config discovery, generation fencing | Резервный адрес, независимость от GitHub, реальные OS/network failure drills |
+| Связь | Recoverable refresh с отменой HTTP, heartbeat, reconnect, config discovery, generation fencing | Резервный адрес, независимость от GitHub, реальные OS/network failure drills |
 | Экран и управление | H.264 / WebCodecs, touch/key primitives, backpressure | Codec/OS recovery, latency под нагрузкой, измеренный ресурсный бюджет |
 | PC-agent | Workstation ownership, registration, command result routing/recovery | Durable results, повторная topology, реальный LDPlayer/ADB/host reboot |
 | VPN | SQL lease/intents, ограничения адресов, recovery/fencing | Provider reconciliation и реальные маршруты/инвентарь |

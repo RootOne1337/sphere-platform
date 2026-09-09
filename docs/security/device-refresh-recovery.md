@@ -116,6 +116,29 @@ pending ID через `apply()`. Если процесс упал до запи�
 регистрация или очистка, старый ответ не записывается. Возвращается текущее состояние
 credentials, а не устаревший token, захваченный до запроса.
 
+### Тайм-аут и остановка refresh (AUD-71)
+
+HTTP refresh использует асинхронный OkHttp `enqueue`. Собственный coroutine-дедлайн
+10 секунд вызывает `Call.cancel()` и возвращает сохранённый access token; его срок
+по-прежнему проверяет сервер. Внешняя отмена/тайм-аут вызывающей coroutine пробрасывается,
+чтобы остановка reconnect/worker не продолжала работу с fallback token. Отдельный
+10-секундный `Call.timeout` установлен только для refresh, без изменения общего WS client.
+Coroutine-дедлайн охватывает также ожидание в очереди OkHttp и чтение response body.
+
+Callback ограничивает размер ответа, закрывает body через `use` и передаёт только
+разобранные значения. Сохранение credentials выполняет активная coroutine после
+проверки cancellation и текущего token/ID. Поздний ответ отменённого запроса не
+записывает credentials. Pending operation ID сохраняется для следующего recovery;
+отмена ожидающего mutex клиента не отменяет refresh его текущего владельца.
+
+Это предел HTTP-ожидания при работающих планировщиках, **не универсальный SLA метода**:
+ожидание mutex предшествует его собственному дедлайну; `SharedPreferences.commit()`
+остаётся блокирующей записью на IO dispatcher. Зависание диска/keystore нельзя
+безопасно прервать coroutine-таймером. Отмена после уже начавшейся атомарной preference
+edit не откатывает её; пара token/ID остаётся согласованной по протоколу выше.
+Произвольный interceptor/нестандартный Source, игнорирующий `Call.cancel()`, может
+занимать HTTP-поток до своего возврата, но больше не удерживает refresh mutex.
+
 ## Rollout / rollback
 
 1. Проверить backup и выполнить новую миграцию отдельной migration-ролью.
@@ -146,6 +169,11 @@ backend может нормально ротировать, но восстан�
 - APK: [7 failures до fix](../audits/2026-09-05/evidence/android-refresh-recovery-before.txt),
   [354 JVM cases после](../audits/2026-09-05/evidence/android-refresh-recovery-after.txt).
   Memory и disk в новой preference double разделены; HTTP не открывает sockets.
+- AUD-71: [4 failures / 1 control до fix](../audits/2026-09-05/evidence/android-refresh-cancellation-before-summary.txt).
+  Восемь новых cases проверяют deadline/stop, поздний body, внешний timeout, 64
+  ожидающих вызова и ошибочные ответы (JSON/size/missing rotation). Настоящий OkHttp
+  работает с interceptor/Source doubles без сети. Полный текущий набор —
+  [362 tests / 29 suites](../audits/2026-09-05/evidence/android-refresh-cancellation-summary.json).
 
 Тесты не заменяют actual Android process death/keystore/disk failure, APK↔server
 network drill или массовый парк. Восстановление ограничено сроком существующего
@@ -154,5 +182,5 @@ offline-auth, нового резервного endpoint, восстановле
 независимого от PostgreSQL режима. Backend response recovery не использует Redis;
 WS/auth и другие компоненты имеют собственные зависимости.
 
-APK cancellation и жёсткий срок blocking HTTP refresh требуют отдельной проверки:
-coroutine `withTimeout` сам по себе не доказывает отмену OkHttp `execute()`.
+APK HTTP cancellation воспроизведена и исправлена в AUD-71; фактическая отмена
+сокетов на Android, остановка процесса и отказ накопителя ещё требуют OS drill.

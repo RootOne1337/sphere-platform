@@ -116,7 +116,13 @@ Code commits: `83585d3`, `484cca6`; текущий schema head `20260910_device_
 нерасходованным преемником, без продления expiry. CI `9177769` прошёл attempt 1: backend/frontend/Android; Linux **1375 / 69,30%**.
 [Exact snapshots](AUDIT-REPORT.md) сохранены; следующие OS/network испытания отдельны.
 
-Следующие P0: hard timeout/cancellation refresh; сохранённый secondary management
+На этапе AUD-71 hard HTTP timeout/cancellation refresh воспроизведён и исправлен:
+исходные четыре failures/один control, восемь новых regressions; **362 Android JVM
+tests / 29 suites** проходят. Deadline отменяет конкретный Call, late body не
+записывает credentials, pending ID сохраняет recovery. Это не SLA блокирующего
+disk/keystore commit и не OS/socket proof. [Evidence и границы](AUDIT-REPORT.md#aud-71--high-зависший-apk-refresh-задерживал-stopreconnect-и-сохранял-ответ-после-отмены).
+
+Следующие P0: сохранённый secondary management
 route и локальный discovery без GitHub; real Android process/host/network recovery;
 сохранность текущего задания/ACK после отказа. Исторические user-session lost commit
 и initial enrollment loss не закрываются device-refresh протоколом. Monitoring

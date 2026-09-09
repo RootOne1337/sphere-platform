@@ -314,7 +314,7 @@ windows cap at 15–30 seconds. Clean server closes also enter a retry window in
 of reconnecting immediately. Stop and forced reconnect retain their existing wake
 channel. These limits describe retry scheduling, not command latency or a recovery
 SLO. Three new tests execute the real client loop/backoff with socket doubles and
-virtual time; the suite contained 347 tests at AUD-67; after AUD-70 it contains 354. Older APK builds retain their
+virtual time; the suite contained 347 tests at AUD-67, 354 at AUD-70 and 362 at AUD-71. Older APK builds retain their
 old policy until updated. A secondary endpoint and LAN-first discovery are separate
 work; jitter alone is not a backup channel.
 
@@ -327,9 +327,27 @@ Retries reuse the persisted UUID and original token. Backend migration
 successor without extending its expiry. The token tuple and intent removal share one
 preference edit; stale responses cannot overwrite re-enrollment or cleared credentials.
 
-Seven new memory/disk/HTTP-boundary cases pass; the full suite is **354 tests / 28
+Seven new memory/disk/HTTP-boundary cases pass; the suite at AUD-70 was **354 tests / 28
 suites**. This is not a physical process-death/keystore test. Deploy migration and
 all backend workers before APK; preserve app data and signing identity. Older
 servers do not guarantee response recovery. The feature does not recover an
 already-lost legacy rotation, initial enrollment, expired refresh credentials or a
-second server route. Blocking HTTP cancellation remains a separate audit item.
+second server route.
+
+## Refresh deadlines and cancellation (AUD-71)
+
+Refresh now uses asynchronous OkHttp with cancellation wired to that specific Call.
+Its own 10-second deadline returns the stored token and releases the refresh mutex
+while cancelling HTTP. Parent cancellation propagates to stop the caller. Callback
+parsing closes the bounded response body and cannot save credentials; the active
+coroutine checks current state before saving. An uncertain operation retains its ID
+for recovery on the next attempt. The shared WS client's timeouts are unchanged.
+
+Eight new JVM cases cover a hung request, stop, late body, outer timeout, 64 parallel
+callers with one cancelled waiter, and malformed/oversized/incomplete responses.
+Initial reproduction: four failures and one passing control; current enterprise
+debug suite: **362 tests / 29 suites**. These are real OkHttp calls with synthetic
+interceptors/bodies, without sockets or a hardware fleet. Waiting for the mutex and
+blocked preference/keystore IO are not bounded by an HTTP deadline. Physical Android
+network/OS behavior remains unmeasured; see the
+[full recovery contract](security/device-refresh-recovery.md#тайм-аут-и-остановка-refresh-aud-71).

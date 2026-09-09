@@ -25,7 +25,7 @@ runtime-проверок и не считается доказательство
 
 | Проверка | Результат | Практическое ограничение |
 | --- | --- | --- |
-| Android enterprise debug unit suite | 354 passed, 0 failed | JVM/MockWebServer; не проверяет ОС, codec, батарею или смерть процесса на телефоне |
+| Android enterprise debug unit suite | 362 passed, 0 failed | JVM/MockWebServer и OkHttp interceptors; не проверяет ОС, codec, батарею или смерть процесса на телефоне |
 | Объединённая Backend/PC/production/deployment suite | **1375 passed, 0 failed**; coverage **69,35%** | Строгий coverage gate 65% пройден с precision=2. Load suite исключена; 25 deployment cases включают config/subprocess probes без запуска сервисов |
 | Python dependency scan | **0 known vulnerabilities** в совместном backend/PC resolution | Pip-audit snapshot, не проверка frontend/Gradle/container/application security; [версии и ограничения](DEPENDENCY-REVIEW.md) |
 | Проверки PostgreSQL/Redis | **477 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
@@ -1173,3 +1173,54 @@ dependency-aware результат. Preview guard прошёл, deployment skip
 `20260910_device_refresh_retry`. Этот документационный commit фиксирует результат;
 исполняемый код после `9177769` не меняется, его собственные checks идут отдельно.
 PR остаётся draft; review, merge, production migration и deployment не выполнены.
+
+## AUD-71 — High: зависший APK refresh задерживал stop/reconnect и сохранял ответ после отмены
+
+**Эксплуатационный приоритет P0.** При зависании refresh HTTP вызовы reconnect,
+OTA/log workers ожидали общий token mutex дольше заявленного дедлайна. Остановка
+вызывающей coroutine тоже ждала HTTP; поздний ответ мог менять credentials после отмены.
+
+- **Root cause:** `withTimeout(10_000)` оборачивал `withContext(IO)` с блокирующим
+  `OkHttp.execute()`/чтением body. Отмена coroutine не вызывала `Call.cancel()`, а
+  structured concurrency ждала завершения IO. `catch(Exception)` поглощал также
+  `CancellationException`. Запись credentials происходила внутри блокирующей операции,
+  до проверки отмены при возврате из IO. Общий HTTP client имеет read timeout 60 s,
+  который не равен end-to-end deadline и не ограничивает всю длительность ответа.
+- **Evidence/reproduction:** baseline `eb22477` + первые пять regression tests:
+  [4 failures / 1 passing control](evidence/android-refresh-cancellation-before-summary.txt),
+  [Gradle output](evidence/android-refresh-cancellation-before.txt). Interceptor
+  удерживает headers до latch release; через 12 s refresh ещё не вернулся. Stop
+  не завершился за 1 s. Отменённое чтение body после release заменило parent на
+  child token. Внешний timeout позволил исполнить код после `getFreshToken()`.
+  Отмена mutex waiter не повреждала первый запрос — passing control.
+- **Affected files:**
+  [`AuthTokenStore.kt`](../../../android/app/src/main/kotlin/com/sphereplatform/agent/store/AuthTokenStore.kt),
+  [`RefreshCancellationTest.kt`](../../../android/app/src/test/kotlin/com/sphereplatform/agent/store/RefreshCancellationTest.kt).
+- **Fix:** `enqueue` + `suspendCancellableCoroutine`, cancellation handler отменяет
+  конкретный Call. Собственный 10 s deadline возвращает stored token, внешняя
+  cancellation пробрасывается. Per-call HTTP timeout не меняет shared WS client.
+  Callback закрывает bounded body и возвращает только parsed values; активная
+  coroutine проверяет cancellation и credentials перед edit. Pending ID сохраняется,
+  поэтому следующий вызов восстанавливает прежнюю операцию через AUD-69/70.
+- **Regression:** восемь новых случаев, включая три дополнительных controls для
+  invalid JSON, oversized body и missing rotation token. Проверяются настоящий
+  `Call.isCanceled`, возврат при удерживаемых headers, same-ID retry, поздний body,
+  caller timeout, один refresh для 64 ожидающих вызовов с отменённым waiter и закрытие
+  body при ошибках. [362 tests / 29 suites, 0 failures/errors/skips](evidence/android-refresh-cancellation-summary.json),
+  [полный прогон](evidence/android-refresh-cancellation-after.txt). В том числе все
+  семь прежних recovery cases. Deadline case занял 10,009 s в локальном JVM run;
+  это время одного теста, не Android SLO. Reproduce из `android/`:
+  `./gradlew --no-daemon :app:testEnterpriseDebugUnitTest --tests '*RefreshCancellationTest'`.
+- **Residual risk:** transport/Source и preferences — управляемые doubles; нет
+  нового listener, Android OS/сокетов или аппаратного парка. Очередь mutex находится
+  до собственного deadline, блокирующий disk/keystore commit не становится
+  прерываемым. Начавшаяся preference edit не откатывается при одновременной отмене.
+  Нестандартный interceptor/Source может игнорировать cancel и удерживать HTTP thread,
+  но не refresh mutex. Отмена не гарантирует server rollback — для uncertain commit
+  необходим прежний recovery-протокол. LAN reserve route, expiry/enrollment loss и
+  реальные OS/load drills остаются отдельными P0 задачами.
+
+Backend/PC/SQL/schema этим изменением не менялись; последний их локальный общий
+прогон — **1375 / 69,35%** на AUD-69/70, отдельно от текущего Android run.
+CI новой ревизии фиксируется после push; результаты `9177769` выше относятся
+к предыдущему коду. PR остаётся draft; merge/deployment не выполнялись.

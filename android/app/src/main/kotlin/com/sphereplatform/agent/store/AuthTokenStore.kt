@@ -2,23 +2,34 @@ package com.sphereplatform.agent.store
 
 import androidx.security.crypto.EncryptedSharedPreferences
 import dagger.Lazy
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.long
+import okhttp3.Call
+import okhttp3.Callback
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.Response
 import timber.log.Timber
+import java.io.IOException
 import java.util.UUID
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 
 /**
  * AuthTokenStore — безопасное хранение JWT токена агента.
@@ -43,6 +54,7 @@ class AuthTokenStore @Inject constructor(
         private const val KEY_DEVICE_ID = "device_id"
 
         private const val REFRESH_THRESHOLD_MS = 5 * 60 * 1000L  // 5 минут
+        private const val REFRESH_TIMEOUT_MS = 10_000L
         /** FIX E2: Лимит на размер response body при token refresh — защита от OOM. */
         private const val MAX_RESPONSE_CHARS = 64 * 1024
         /** Регулярка UUID — строгая проверка формата device_id. */
@@ -80,30 +92,35 @@ class AuthTokenStore @Inject constructor(
         }
 
         return@withLock try {
-            // Coroutine timeout does not by itself cancel blocking OkHttp execute().
-            // Transport cancellation/deadline needs a separate lifecycle audit.
-            withTimeout(10_000L) {
-                withContext(Dispatchers.IO) {
-                    refreshTokenRequest(refreshToken)
-                }
+            // Only our own deadline falls back. Parent cancellation must stop reconnect/workers.
+            withTimeoutOrNull(REFRESH_TIMEOUT_MS) {
+                refreshTokenRequest(refreshToken)
+            } ?: run {
+                Timber.w("Token refresh timed out, using stored token")
+                getToken()
             }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
+            currentCoroutineContext().ensureActive()
             Timber.w(e, "Token refresh failed, using stored token")
             getToken()
         }
     }
 
-    private fun refreshTokenRequest(refreshToken: String): String {
-        val requestId = synchronized(this) {
-            check(prefs.getString(KEY_REFRESH_TOKEN, null) == refreshToken) { "Refresh credentials changed" }
-            val saved = prefs.getString(KEY_REFRESH_ROTATION_ID, null)
-            val id = saved?.let { UUID.fromString(it).toString() } ?: UUID.randomUUID().toString()
-            // Always commit, including retries: a failed commit changes memory too.
-            // This also flushes preceding apply() writes before consuming a child token.
-            check(prefs.edit().putString(KEY_REFRESH_ROTATION_ID, id).commit()) {
-                "Cannot persist refresh intent"
+    private suspend fun refreshTokenRequest(refreshToken: String): String {
+        val requestId = withContext(Dispatchers.IO) {
+            synchronized(this@AuthTokenStore) {
+                check(prefs.getString(KEY_REFRESH_TOKEN, null) == refreshToken) { "Refresh credentials changed" }
+                val saved = prefs.getString(KEY_REFRESH_ROTATION_ID, null)
+                val id = saved?.let { UUID.fromString(it).toString() } ?: UUID.randomUUID().toString()
+                // Always commit, including retries: a failed commit changes memory too.
+                // This also flushes preceding apply() writes before consuming a child token.
+                check(prefs.edit().putString(KEY_REFRESH_ROTATION_ID, id).commit()) {
+                    "Cannot persist refresh intent"
+                }
+                id
             }
-            id
         }
         val serverUrl = getServerUrl()
         val request = Request.Builder()
@@ -113,20 +130,37 @@ class AuthTokenStore @Inject constructor(
             .post(ByteArray(0).toRequestBody("application/json".toMediaType()))
             .build()
 
-        lazyHttpClient.get().newCall(request).execute().use { response ->
-            check(response.isSuccessful) { "Refresh failed: ${response.code}" }
-            // FIX E2: Ограничиваем размер body — защита от OOM при огромном ответе
-            val body = response.body ?: error("Empty refresh response")
-            val source = body.source()
-            check(!source.request(MAX_RESPONSE_CHARS.toLong() + 1)) { "Refresh response too large" }
-            val bodyStr = source.readUtf8()
-            val json = Json.parseToJsonElement(bodyStr).jsonObject
-            val newAccessToken = json["access_token"]!!.jsonPrimitive.content
-            val expiresIn = json["expires_in"]?.jsonPrimitive?.long ?: 900L
-            val newRefreshToken = json["refresh_token"]?.jsonPrimitive?.content
-                ?: error("Refresh response is missing rotation token")
+        val call = lazyHttpClient.get().newCall(request)
+        // Per-call transport bound; never change the shared WS client's timeouts.
+        call.timeout().timeout(REFRESH_TIMEOUT_MS, TimeUnit.MILLISECONDS)
+        val refreshed = suspendCancellableCoroutine<RefreshedTokens> { continuation ->
+            continuation.invokeOnCancellation { call.cancel() }
+            call.enqueue(object : Callback {
+                override fun onFailure(call: Call, e: IOException) {
+                    continuation.resumeWithException(e)
+                }
 
-            synchronized(this) {
+                override fun onResponse(call: Call, response: Response) {
+                    val tokens = try {
+                        response.use {
+                            if (!continuation.isActive) return
+                            readRefreshResponse(it)
+                        }
+                    } catch (e: Exception) {
+                        continuation.resumeWithException(e)
+                        return
+                    }
+                    // The callback owns/closes the body and returns values only. It never
+                    // writes credentials, even when a response arrives after cancellation.
+                    continuation.resume(tokens)
+                }
+            })
+        }
+
+        withContext(Dispatchers.IO) {
+            val context = currentCoroutineContext()
+            synchronized(this@AuthTokenStore) {
+                context.ensureActive()
                 check(prefs.getString(KEY_REFRESH_TOKEN, null) == refreshToken &&
                     prefs.getString(KEY_REFRESH_ROTATION_ID, null) == requestId) {
                     "Refresh credentials changed"
@@ -134,16 +168,34 @@ class AuthTokenStore @Inject constructor(
                 // Atomic preference edit. A crash before disk persistence leaves the
                 // committed parent+intent recoverable; the next consume commits first.
                 prefs.edit()
-                    .putString(KEY_ACCESS_TOKEN, newAccessToken)
-                    .putString(KEY_REFRESH_TOKEN, newRefreshToken)
-                    .putLong(KEY_ACCESS_TOKEN_EXPIRES_AT, System.currentTimeMillis() + expiresIn * 1000)
+                    .putString(KEY_ACCESS_TOKEN, refreshed.accessToken)
+                    .putString(KEY_REFRESH_TOKEN, refreshed.refreshToken)
+                    .putLong(KEY_ACCESS_TOKEN_EXPIRES_AT, System.currentTimeMillis() + refreshed.expiresIn * 1000)
                     .remove(KEY_REFRESH_ROTATION_ID)
                     .apply()
             }
-
-            Timber.d("Access token refreshed, expires in ${expiresIn}s")
-            return newAccessToken
         }
+
+        Timber.d("Access token refreshed, expires in ${refreshed.expiresIn}s")
+        return refreshed.accessToken
+    }
+
+    private data class RefreshedTokens(val accessToken: String, val refreshToken: String, val expiresIn: Long)
+
+    private fun readRefreshResponse(response: Response): RefreshedTokens {
+        check(response.isSuccessful) { "Refresh failed: ${response.code}" }
+        // FIX E2: Ограничиваем размер body — защита от OOM при огромном ответе
+        val body = response.body ?: error("Empty refresh response")
+        val source = body.source()
+        check(!source.request(MAX_RESPONSE_CHARS.toLong() + 1)) { "Refresh response too large" }
+        val bodyStr = source.readUtf8()
+        val json = Json.parseToJsonElement(bodyStr).jsonObject
+        val newAccessToken = json["access_token"]!!.jsonPrimitive.content
+        val expiresIn = json["expires_in"]?.jsonPrimitive?.long ?: 900L
+        val newRefreshToken = json["refresh_token"]?.jsonPrimitive?.content
+            ?: error("Refresh response is missing rotation token")
+
+        return RefreshedTokens(newAccessToken, newRefreshToken, expiresIn)
     }
 
     @Synchronized

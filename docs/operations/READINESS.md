@@ -25,6 +25,7 @@ UI показывает измеренные данные, их возраст �
 | P0 | Сервер перезапущен, парк возвращается без оператора | APK clean-close обходил delay, network retry имел одинаковые сроки у всех клиентов; AUD-67 исправляет pacing/jitter | Убить/поднять выделенный backend при 100, 500, 1000 реальных или протокольных clients; измерить p50/p95/p99 времени возврата и число незавершённых задач |
 | P0 | GitHub или основной адрес недоступен | `ConfigWatchdog` читает один CONFIG_URL, `AuthTokenStore` хранит один server URL. Это discovery, а не резервный command channel | Сохранённые primary/secondary endpoints одного сервиса, переключение без изменения device ID, блокировка GitHub в изолированной среде, restart APK с сохранённым маршрутом |
 | P0 | Истёк token во время outage | AUD-69/70 добавили сохранённый refresh operation ID и один recoverable successor; 24 SQL/ASGI + 7 APK cases проверяют commit loss и сохранение identity | [Rollout backend→APK](../security/device-refresh-recovery.md), фактический Android process death и сетевой обрыв; recovery ограничен expiry/consumption преемника |
+| P0 | Зависший refresh задерживает reconnect/stop | AUD-71: четыре исходных failures; HTTP теперь отменяется по дедлайну 10 s или отмене вызывающей coroutine, поздний body не записывает credentials. Восемь новых JVM cases | Проверить реальные Android sockets/OS; mutex wait и зависший commit/keystore не имеют общего 10-секундного SLA |
 | P0 | Нет связи во время выполнения задания | DAG исполняется локально, журнал хранит receipts/results; размер и срок хранения ограничены | Обрыв на claim/start/action/result/ACK, reboot процесса, повторная доставка; не повторить необратимое действие молча |
 | P0 | Запуск «одной кнопкой» | AUD-68 исправил ложный успех launcher и добавил API/frontend probes; 17 новых tests проверяют native failure/readiness | Реальные Docker off/image failure/reboot drills; проверка schema head/grants, end-to-end device/task smoke. [Startup contract](STARTUP.md) |
 | P0 | Инцидент невозможно найти | Есть JSON backend logs, request ID, APK local logs/upload; сквозного incident timeline нет | Один инцидент находится по времени + device/task ID, с версиями, маршрутом и причинной цепочкой, без ручного просмотра всего stdout |
@@ -80,7 +81,7 @@ backup/restore drill и локальный журнал APK. Отдельный 
 | `SphereWebSocketClient` | Один активный WS, handshake timeout 20 s, reconnect/circuit, force reconnect | `isConnected` выставляется после отправки auth, а не подтверждения сервером |
 | `ConfigWatchdog` | Опрос адреса: 120 s connected / 60 s disconnected; первая задержка 5 s | Один compile-time CONFIG_URL, в enterprise по умолчанию пуст; не второй канал команд |
 | `FallbackDns` | Системный DNS и внешние DNS fallback | Не меняет endpoint и не оживляет сервер; внешние резолверы не заменяют LAN DNS |
-| `AuthTokenStore` | Сохранённая identity, access/refresh, mutex refresh | Persisted operation ID восстанавливает lost response в tests; actual OS/keystore/network drill ещё не выполнен |
+| `AuthTokenStore` | Сохранённая identity, access/refresh, mutex refresh, cancellable HTTP | Persisted operation ID и deadline/stop проверены в tests; actual OS/keystore/network drill ещё не выполнен |
 | `CommandJournal` / `DagRunner` | Локальная работа и повторная доставка terminal result до ACK | Не бесконечный storage; interruption может иметь unknown outcome |
 | Foreground Service / watchdogs | Возврат сервиса после некоторых остановок | Force-stop, Direct Boot, permissions/OEM и root/non-root требуют реальных OS tests |
 | Binary send cap | Видео не занимает всю очередь OkHttp | Видео и управление всё ещё делят транспорт; p99 command latency под стримом не измерен |
@@ -167,7 +168,7 @@ capture и background возможности каждого телефона. AP
 - Проверены исходники connect/discovery/token/service/journal/logging, Compose,
   monitoring и конкретный VPN UI path. Это не постраничный полный browser-аудит.
 - AUD-67 имеет before/after tests: исправлены reconnect pacing/jitter; Android
-  enterprise debug suite на AUD-67 — 347; после AUD-70 — 354 JVM tests. Реальные OS/network measurements открыты.
+  enterprise debug suite на AUD-67 — 347; после AUD-70 — 354, AUD-71 — 362 JVM tests. Реальные OS/network measurements открыты.
 - AUD-68: устранён ложный startup success, 25 deployment tests проходят. Это
   subprocess/config проверки; daemon/OS failure drill остаётся открытым.
 - Зафиксированы эксплуатационные пробелы, принято простое направление failover,
@@ -179,3 +180,7 @@ capture и background возможности каждого телефона. AP
 AUD-69/70: SQL refresh recovery и APK persist-before-send проверены локально;
 [контракт](../security/device-refresh-recovery.md) ограничивает recovery одной
 операцией и сроком преемника. Резервный route по-прежнему не реализован.
+
+AUD-71: собственный deadline отменяет HTTP и сохраняет retry intent, внешняя отмена
+останавливает вызывающую coroutine. Реальные header/body hangs и late-response races
+воспроизведены внутри JVM с подменой транспорта; hardware latency не измерена.
