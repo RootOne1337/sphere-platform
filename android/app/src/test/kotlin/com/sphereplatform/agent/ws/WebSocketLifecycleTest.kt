@@ -29,6 +29,44 @@ class WebSocketLifecycleTest {
     }
     private val client = SphereWebSocketClient(http, auth, Json)
 
+    @Test fun cleanServerCloseWaitsBeforeReconnect() = runTest {
+        val job = launch { client.connect("local-test-device") }
+        runCurrent()
+        listener.onOpen(socket, mockk(relaxed = true))
+        runCurrent()
+        listener.onClosed(socket, 1001, "server_restart")
+        runCurrent()
+        verify(exactly = 1) { http.newWebSocket(any(), any()) }
+        advanceTimeBy(999)
+        runCurrent()
+        verify(exactly = 1) { http.newWebSocket(any(), any()) }
+        advanceTimeBy(1002)
+        runCurrent()
+        verify(exactly = 2) { http.newWebSocket(any(), any()) }
+        job.cancelAndJoin()
+    }
+
+    @Test fun cleanServerCloseWaitIsInterruptibleByStop() = runTest {
+        val job = launch { client.connect("local-test-device") }
+        runCurrent()
+        listener.onOpen(socket, mockk(relaxed = true))
+        runCurrent()
+        listener.onClosed(socket, 1000, "maintenance")
+        runCurrent()
+        client.disconnect()
+        runCurrent()
+        assertTrue(job.isCompleted)
+        verify(exactly = 1) { http.newWebSocket(any(), any()) }
+    }
+
+    @Test fun reconnectDelaySamplesDoNotCollapseToOneFleetDeadline() {
+        val method = SphereWebSocketClient::class.java.getDeclaredMethod("calculateBackoff", Int::class.javaPrimitiveType)
+        method.isAccessible = true
+        val delays = List(128) { method.invoke(client, 5) as Long }
+        assertTrue(delays.all { it in 15_000L..30_000L })
+        assertTrue("Every recovering device would use the same retry deadline", delays.toSet().size > 32)
+    }
+
     @Test fun cancellationDuringHandshakeReleasesSocket() = runTest {
         val job = launch { client.connect("local-test-device") }
         runCurrent()
@@ -64,9 +102,12 @@ class WebSocketLifecycleTest {
         listener.onFailure(socket, IOException("local network failure"), null)
         runCurrent()
         verify(exactly = 1) { http.newWebSocket(any(), any()) }
-        advanceTimeBy(1000)
+        advanceTimeBy(999)
         runCurrent()
         verify(exactly = 1) { http.newWebSocket(any(), any()) }
+        advanceTimeBy(1002)
+        runCurrent()
+        verify(exactly = 2) { http.newWebSocket(any(), any()) }
         job.cancelAndJoin()
     }
 

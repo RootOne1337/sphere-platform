@@ -14,6 +14,9 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Security / runtime
 
+- AUD-67: APK clean server close использует retry delay; equal jitter распределяет
+  fleet reconnect по окнам 1–2 s до 15–30 s. Три новых runtime-policy tests,
+  347 Android JVM cases проходят; реальная ёмкость парка не заявляется.
 - AUD-66: неизвестные PC commands возвращают failed с причиной, сохраняя command ID;
   ложный completed/null без исполнения устранён. Три новых Redis regressions,
   95 связанных cases проходят. Для поддержки новой операции нужен новый клиент.

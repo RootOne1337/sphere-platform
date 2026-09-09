@@ -24,11 +24,12 @@ import okio.ByteString.Companion.toByteString
 import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.random.Random
 
 /**
  * SphereWebSocketClient — надёжный WS-клиент с:
- * - Exponential backoff: 1s → 2s → 4s → 8s → 16s → 30s
- * - Smart circuit breaker: 10 NETWORK ошибок → 5 минут паузы
+ * - Exponential retry windows with equal jitter (first retry 1–2s, cap 15–30s)
+ * - Smart circuit breaker: 10 NETWORK ошибок → 60 секунд паузы
  *   AUTH ошибки (4001) НЕ считаются — вместо этого запрашивается новый токен
  * - First-message auth (JWT в первом сообщении после onOpen, не в URL)
  * - Network change detection через [forceReconnectNow]
@@ -124,9 +125,10 @@ class SphereWebSocketClient @Inject constructor(
 
             try {
                 connectOnce()
-                // Нормальное закрытие — сбрасываем backoff и продолжаем
+                // A clean server restart still needs a paced retry. Resetting to
+                // zero bypassed all delay and synchronized reconnecting devices.
                 consecutiveFailures = 0
-                attempt = 0
+                attempt = 1
             } catch (e: CancellationException) {
                 throw e
             } catch (e: AuthRejectedException) {
@@ -287,8 +289,12 @@ class SphereWebSocketClient @Inject constructor(
         }
     }
 
-    private fun calculateBackoff(attempt: Int): Long =
-        (1000L * (1L shl attempt.coerceAtMost(5))).coerceAtMost(30_000L)
+    private fun calculateBackoff(attempt: Int): Long {
+        val ceiling = (1000L * (1L shl attempt.coerceIn(0, 5))).coerceAtMost(30_000L)
+        // Independent retry times spread fleet recovery; a positive lower bound
+        // prevents busy retries even when the server repeatedly closes cleanly.
+        return Random.nextLong(ceiling / 2, ceiling + 1)
+    }
 
     fun sendJson(message: JsonObject): Boolean {
         if (!isConnected) return false

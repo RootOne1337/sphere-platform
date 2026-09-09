@@ -285,7 +285,7 @@ runtime verification. These controls do not certify every endpoint or dependency
 
 ## 12. Verified audit snapshot
 
-**344 enterprise debug JVM tests passed**, with zero failures/errors/skips across
+**347 enterprise debug JVM tests passed**, with zero failures/errors/skips across
 27 suites. Eleven new regressions first failed before the two loop/control fixes:
 log-cap action loss, error handling past the cap, coroutine cancellation, wire
 cancel/pause in nested bodies, retry/final-action boundaries and durable replay.
@@ -304,3 +304,15 @@ rejected starting the isolated local API with `blocked by policy`; no workaround
 was used. OS/process death, physical-device behavior and fleet capacity remain
 unverified. Track the latest PR checks on the actual revision; a build or unit
 suite alone does not close these requirements.
+
+
+### Fleet reconnect policy (AUD-67)
+
+The first retry now waits 1–2 seconds with independent equal jitter; exponential
+windows cap at 15–30 seconds. Clean server closes also enter a retry window instead
+of reconnecting immediately. Stop and forced reconnect retain their existing wake
+channel. These limits describe retry scheduling, not command latency or a recovery
+SLO. Three new tests execute the real client loop/backoff with socket doubles and
+virtual time; the complete suite contains 347 tests. Older APK builds retain their
+old policy until updated. A secondary endpoint and LAN-first discovery are separate
+work; jitter alone is not a backup channel.

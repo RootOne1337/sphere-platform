@@ -19,7 +19,7 @@ runtime-проверок и не считается доказательство
 
 | Проверка | Результат | Практическое ограничение |
 | --- | --- | --- |
-| Android enterprise debug unit suite | 344 passed, 0 failed | JVM/MockWebServer; не проверяет ОС, codec, батарею или смерть процесса на телефоне |
+| Android enterprise debug unit suite | 347 passed, 0 failed | JVM/MockWebServer; не проверяет ОС, codec, батарею или смерть процесса на телефоне |
 | Объединённая Backend/PC/production/deployment suite | **1334 passed, 0 failed**; coverage **69,31%** | Строгий coverage gate 65% пройден с precision=2. Load suite исключена; 6 Compose config tests не запускают сервисы |
 | Python dependency scan | **0 known vulnerabilities** в совместном backend/PC resolution | Pip-audit snapshot, не проверка frontend/Gradle/container/application security; [версии и ограничения](DEPENDENCY-REVIEW.md) |
 | Проверки PostgreSQL/Redis | **453 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
@@ -701,6 +701,16 @@ runtime-проверок и не считается доказательство
 - **Fix:** `8692a58` — default branch поднимает явный `ValueError("Unsupported command type: ...")`; существующая error path формирует `command_result`, тот же command ID и `failed` с причиной. No-ID сообщения по-прежнему не создают ответ. Новая миграция, backend protocol change или execution retry не нужны.
 - **Regression:** три новых реальных Redis cases; [95 related cases passed](evidence/pc-unsupported-command-after.txt), включая 13 protocol cases и 82 PC unit cases. Проверены тип/ID/error, отсутствие result/success и отсутствие LDPlayer/ADB calls, одновременно сохранены supported/legacy controls.
 - **Residual risk:** это корректность отчёта об unsupported type, не доказательство прав на произвольные команды, корректности payload, реального subprocess outcome или durable receipt. Отсутствующий type/ID, malformed/non-object messages и ограничения concurrency остаются отдельными путями аудита. Поддержка новой команды всё ещё требует обновления клиента; silent success не является механизмом совместимости.
+
+
+### AUD-67 — High: APK reconnect синхронизировал парк и обходил задержку после server close
+
+- **Root cause/impact:** `SphereWebSocketClient.reconnectLoop` сбрасывал attempt в 0 после обычного закрытия, поэтому следующий socket открывался без ожидания. `calculateBackoff` возвращал одну и ту же задержку для любого устройства с одинаковым attempt. После общего рестарта сети/сервера клиенты формировали одинаковые retry deadlines; repeated clean closes не имели pacing. Нагрузочный коллапс не измерен, но оба дефекта политики воспроизведены.
+- **Evidence/reproduction:** [3 failed / 6 passing controls](evidence/android-reconnect-fleet-before.txt). Настоящий reconnect loop с virtual time повторно открывает socket сразу после server close 1000/1001; stop не завершает ожидаемый paced retry. 128 вызовов production backoff имеют один срок вместо распределения. OkHttp socket — double, real listener не создаётся.
+- **Affected files:** `android/app/src/main/kotlin/com/sphereplatform/agent/ws/SphereWebSocketClient.kt` (`reconnectLoop`, `calculateBackoff`); `WebSocketLifecycleTest.kt`, `SphereWebSocketClientTest.kt`.
+- **Fix:** normal close переводит цикл на первый retry; delay получает equal jitter в пределах половины экспоненциального ceiling и самого ceiling. Первый повтор — 1–2 s, максимальное окно — 15–30 s. Положительный минимум исключает busy retry; существующий stop/force-reconnect канал сохраняется. Credentials, persisted server URL и wire contract не меняются.
+- **Regression:** [полный Android unit run](evidence/android-reconnect-fleet-after.txt), [347 tests / 27 suites, 0 failures/errors/skips](evidence/android-reconnect-fleet-summary.json). Три новых теста проверяют реальный client loop и production delay; прежние тесты backoff/констант теперь читают production implementation вместо копирования формулы и сравнений константы с самой собой. Проверка network retry использует границы окна и не зависит от случайного точного значения.
+- **Residual risk:** jitter уменьшает синхронизацию retry, но это не capacity test, SLO или полноценный secondary channel. Initial connect/config polling, wall-clock circuit/debounce, auth-ACK distinction, delayed refresh, смена endpoint и отказ Redis/PG остаются в [эксплуатационном плане](../../operations/READINESS.md). Реальные сотни APK, TLS/network/OS и ручной recovery не проверены. Новая APK версия нужна для этой политики; старые APK продолжают использовать прежние задержки.
 
 
 ## Открытые подтверждённые блокеры
