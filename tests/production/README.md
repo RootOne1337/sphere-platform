@@ -177,3 +177,12 @@ are doubles. This does not exercise APK OS behavior or post-auth task writers.
 wait, then commits revoke, permission removal or expiry. Both requests must use
 current key state and create no device. These three cases cover the previous
 SELECT-to-UPDATE snapshot race, not revocation of already-open WebSocket sessions.
+
+`test_agent_messages_runtime.py` sends post-auth messages through the same real ASGI
+router with non-owner credentials for all four new SQL Sessions. Fifteen cases cover
+typed/untyped start receipts, progress, events, commit-before-terminal-ACK, reconnect
+replay, batch/event accounting, two concurrent SQL lock waiters, Redis method failures,
+SQL abort after flush and successful replay, ownership denials and pooled context
+cleanup. ACK callback assertions also record successful verification outside the
+handler, which otherwise catches send errors. No network listener, APK process or
+full EventTrigger/account/pipeline effect is exercised; transport doubles are retained.

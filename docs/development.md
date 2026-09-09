@@ -16,6 +16,9 @@
 > and device-refresh bootstrap now use tenant-only SQL functions, and Android WS
 > authenticates before target lookup. Apply `20260909_credential_lookup` and review
 > [the required function grants](security/device-credential-bootstrap.md).
+> Android task progress, receipts/results and device events bind their own fresh
+> Sessions from authenticated connection identity; the closed auth Session cannot
+> pass its SQL context to the receive loop. Terminal ACK follows SQL commit.
 > SQLite's test-only `set_config` adapter does not implement RLS. HTTP fixtures
 > serving different tenants must create a fresh Session for each request.
 

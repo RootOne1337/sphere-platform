@@ -186,9 +186,9 @@ network failure displays an unconfirmed-revocation message on login.
   packaging and real-browser behavior remain unconfirmed. On `3630a63`, [Linux frontend CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34175662261)
   passed Jest, tsc, production build and a standalone-entry-point check.
 - Android enterprise debug unit suite: **344 passed**.
-- Combined backend/PC, PostgreSQL/Redis and deployment regressions: **1251 passed**.
-  This includes **379 real-service tests** and **6 Compose configuration tests**.
-  Coverage is **68.48%** and passes the unchanged **65%** gate with two-decimal
+- Combined backend/PC, PostgreSQL/Redis and deployment regressions: **1266 passed**.
+  This includes **394 real-service tests** and **6 Compose configuration tests**.
+  Coverage is **68.71%** and passes the unchanged **65%** gate with two-decimal
   precision. No threshold or coverage scope was weakened. Two additional
   regression tests exercise the 64.98% rejection and exact 65.00% boundary. Long load/soak profiles require a prepared API
   environment and are excluded from the ordinary PR command.
@@ -377,7 +377,7 @@ refresh → WebSocket → OTA, reconnect and SQL failure recovery; exact device/
 boundaries; multi-connection lock contention; refresh replay; lookup function grants
 and temp-table shadowing. Before evidence is retained separately for all three defects.
 The transport manager/heartbeat/stream effects are doubles. No listening API or APK
-OS test is implied. User opaque auth, post-auth writers/global jobs, production role
+OS test is implied. User opaque auth, global jobs, production role
 provisioning, refresh response loss and live socket revocation remain open. See the
 [device credential runbook](https://github.com/RootOne1337/sphere-platform/blob/codex/enterprise-audit-20260905/docs/security/device-credential-bootstrap.md)
 for migration/grants/rollback and threat-boundary details.
@@ -391,3 +391,26 @@ pass on attempt 1. Linux: **1251 tests / 68.44%**; Windows: **1251 / 68.48%**. P
 guard passes and deploy is skipped. The following documentation-only commit saves
 these snapshots and starts its own checks. No independent review or production rollout
 is claimed; the PR remains draft.
+
+### Connected Android task/event persistence under RLS (AUD-61)
+
+A device could authenticate successfully yet its subsequent SQL Sessions had no
+tenant context. Start receipts left tasks ASSIGNED, progress disappeared, terminal
+results received no result_ack and device-event INSERTs failed RLS. Each of the four
+fresh handler Sessions now binds the authenticated connection organization before
+its first tenant query. Existing device/tenant predicates and commit-before-ACK remain.
+
+Fifteen new non-owner PostgreSQL/Redis cases execute real ASGI WebSocket messages.
+Before evidence records 12 failures and three passing denial controls. They cover
+typed/untyped receipts, progress, committed Task/Batch/DeviceEvent state at ACK,
+conflicting replay after reconnect, two actual SQL lock waiters without double
+accounting, Redis method failures, post-flush SQL abort/no ACK/retry, device/tenant
+denials and clean pooled Sessions. The 47 related tests pass. No APK wire-format,
+migration or production grant changes are needed for this fix.
+
+Transport manager/heartbeat/stream/publisher remain doubles. PubSub/Fleet events
+and Redis lock release may still precede SQL commit; no durable outbox or full
+EventTrigger/account/pipeline effect verification is claimed. Global job propagation,
+user opaque auth, live socket revocation and actual APK/network/load runs remain open.
+
+Local AUD-61 validation: **1266 passed / 68.71%**, including **394 PostgreSQL/Redis cases**; four existing warnings, unchanged 65% gate. After the combined run, the test callback guard was strengthened to expose swallowed assertion failures, then all 47 related cases were rerun. Production code is unchanged since the full run. Ruff, Bandit (zero Medium/High) and API export checks pass. GitHub checks are tracked on the pushed revision separately.

@@ -129,7 +129,10 @@ Owner-controls дополнительно проверяют обязатель�
 User JWT проверен в AUD-57. AUD-58 добавляет ограниченный opaque API-key/device-refresh
 bootstrap, AUD-59 проверяет ASGI Android WS и agent HTTP, AUD-60 сериализует проверку
 enrollment key с отзывом. [Механизм и обязательные grants](device-credential-bootstrap.md).
-Login по email, user refresh/MFA, post-auth agent writers и глобальные jobs ещё открыты.
+AUD-61 связывает отдельные post-auth Android Sessions перед task receipt/result,
+progress ownership и EventReactor SQL. [15 runtime regressions](../../tests/production/test_agent_messages_runtime.py)
+проверяют ASGI receive loop, commit-before-ACK, duplicate accounting и SQL abort/retry.
+Login по email, user refresh/MFA и глобальные jobs ещё открыты.
 Нельзя решать их default deny выдачей BYPASSRLS, публичным SELECT credential tables
 или доверяя неподписанному tenant header. Production rollout остаётся заблокированным.
 SQLite unit adapter `set_config` поддерживает SQL-вызов, но не реализует RLS;

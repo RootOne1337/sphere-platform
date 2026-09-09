@@ -87,6 +87,12 @@ also covers existing auth/discovery contracts. SQLite substitutes only the two
 exact tenant-only lookup calls in test fixtures; it does not prove RLS or function
 security. PostgreSQL tests execute the actual migration functions.
 
+After authentication closes its Session, Android progress, start receipts, terminal
+results and device events each bind a fresh Session to the authenticated organization
+(AUD-61). [Post-auth ASGI regressions](../../tests/production/test_agent_messages_runtime.py)
+exercise the non-owner SQL paths, replay and commit-before-result_ack. This does not
+make PubSub notifications, Redis lock release or EventTrigger effects a durable outbox.
+
 Refresh response loss after a successful commit still requires recovery: replay
 of the old token is rejected. Re-enrollment preserves the device ID but rotates
 credentials; it does not promise identical responses. A retained enrollment key

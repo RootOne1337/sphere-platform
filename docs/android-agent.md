@@ -1,6 +1,6 @@
 # Android Agent
 
-Developer and operator guide, checked against the audit branch on **7 September
+Developer and operator guide, checked against the audit branch on **9 September
 2026**. The audit is ongoing; production readiness and compatibility with every
 Android device have not been established. Findings, reproduction evidence and
 remaining blockers are in the [audit report](audits/2026-09-05/AUDIT-REPORT.md).
@@ -174,6 +174,15 @@ not a query parameter. The socket being locally open does not prove completion
 of server-side authorization. Reconnect, refresh and server acceptance must be
 verified as separate events.
 
+The backend authenticates before loading the target device and binds the verified
+organization to each fresh SQL Session used by task progress, start receipts,
+terminal results and device events. `result_ack` is sent only after the owned task's
+SQL commit. Under runtime RLS credentials, duplicate results after reconnect preserve
+the first terminal outcome and do not count the batch twice. See the
+[credential/RLS contract](security/device-credential-bootstrap.md) for migration
+grants, session boundaries and remaining delivery risks. These server-side ASGI
+regressions do not establish APK process/OS behavior or network failover.
+
 Ordinary commands use the following envelope; timestamps here are illustrative
 and senders must supply current UTC epoch seconds:
 
@@ -285,8 +294,9 @@ Evidence: [loop before](audits/2026-09-05/evidence/android-loop-before.txt),
 [controls before](audits/2026-09-05/evidence/android-control-boundaries-before.txt),
 [full suite after](audits/2026-09-05/evidence/android-control-boundaries-after.txt).
 
-The combined backend/PC/local-service/deployment suite last passed **1127 tests**,
-with **67.74%** backend coverage. JVM/MockWebServer and isolated PostgreSQL/Redis
+The combined backend/PC/local-service/deployment suite last passed **1266 tests**,
+with **68.71%** backend coverage. It includes 394 PostgreSQL/Redis cases and
+15 new post-auth Android runtime-role cases (AUD-61). JVM/MockWebServer and isolated PostgreSQL/Redis
 checks exercise real runtime logic but replace device/network boundaries.
 
 Real APK-to-backend runtime remains incomplete: automatic approval review

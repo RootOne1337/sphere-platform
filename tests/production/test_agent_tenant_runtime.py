@@ -34,10 +34,11 @@ def agent_runtime(runtime_db, monkeypatch, tmp_path):
     return SimpleNamespace(db=runtime_db, world=runtime_db.world, manager=manager, path=tmp_path)
 
 
-async def websocket(device_id, token):
+async def websocket(device_id, token, messages=()):
     events = iter([
         {"type": "websocket.connect"},
         {"type": "websocket.receive", "text": json.dumps({"token": token})},
+        *({"type": "websocket.receive", "text": json.dumps(message)} for message in messages),
         {"type": "websocket.disconnect", "code": 1000},
     ])
     sent = []

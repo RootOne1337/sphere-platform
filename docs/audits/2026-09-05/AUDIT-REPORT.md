@@ -20,9 +20,9 @@ runtime-проверок и не считается доказательство
 | Проверка | Результат | Практическое ограничение |
 | --- | --- | --- |
 | Android enterprise debug unit suite | 344 passed, 0 failed | JVM/MockWebServer; не проверяет ОС, codec, батарею или смерть процесса на телефоне |
-| Объединённая Backend/PC/production/deployment suite | **1251 passed, 0 failed**; coverage **68,48%** | Строгий coverage gate 65% пройден с precision=2. Load suite исключена; 6 Compose config tests не запускают сервисы |
+| Объединённая Backend/PC/production/deployment suite | **1266 passed, 0 failed**; coverage **68,71%** | Строгий coverage gate 65% пройден с precision=2. Load suite исключена; 6 Compose config tests не запускают сервисы |
 | Python dependency scan | **0 known vulnerabilities** в совместном backend/PC resolution | Pip-audit snapshot, не проверка frontend/Gradle/container/application security; [версии и ограничения](DEPENDENCY-REVIEW.md) |
-| Проверки PostgreSQL/Redis | **379 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
+| Проверки PostgreSQL/Redis | **394 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
 | Миграции | Применены до **20260909_credential_lookup** включительно | Только изолированная БД; конфликтные данные/downgrade проверены в throwaway schema; production не мигрировался |
 | Backend image | Собирается; исходная запись OpenAPI воспроизведённо падает с PermissionError | Исправлен lifespan; полный deployment runtime ещё не подтверждён |
 | Frontend | **198 Jest tests passed**, tsc passed; Next production build exit 0 на Node 24.19.0 | React/JSDOM + Axios adapters; настоящий browser runtime не проверен. Windows standalone tracing выдал ENOENT warning, artifact packaging ещё не подтверждён |
@@ -37,7 +37,7 @@ runtime-проверок и не считается доказательство
 [Локальные 24 DAG cases прошли](evidence/dag-timing-d828a62-local.txt). Порог 100 ms
 не ослаблялся, тест не исключался; причина timing variance на runner не установлена.
 Файл production-regressions-after.txt сохраняет более ранний standalone snapshot
-с 41 тестом; актуальные 379 входят в общий прогон.
+с 41 тестом; актуальные 394 входят в общий прогон.
 
 Команды запуска и предохранители изоляции: [tests/production/README.md](../../../tests/production/README.md).
 Исходные `14 passed` в [reproductions.txt](evidence/reproductions.txt) означают
@@ -630,7 +630,7 @@ runtime-проверок и не считается доказательство
 - **Affected files:** `backend/api/ws/android/router.py`; `tests/production/test_agent_tenant_runtime.py`.
 - **Fix:** `9f439fd` — verifier проверяет purpose и UUID claims, связывает подписанный tenant до Device/User SQL, обновляет ORM snapshot и сверяет org_id явно. WS сначала аутентифицирует principal и только затем выбирает активное целевое устройство в его организации, сохраняя device-subject matching и проверку user permission. DB session закрывается до длительного receive loop.
 - **Regression:** [21 related cases passed](evidence/agent-tenant-after.txt): 16 новых ASGI/PG/Redis cases и пять прежних unit auth tests. Проверены подключение и повторное подключение с четырьмя видами credentials, own/foreign/same-org-other-device log upload, OTA, inactive/moved/revoked/viewer/invalid identities, runtime enrollment → refresh → WS → OTA и SQL error → close1011 → новая успешная сессия. Проверка log evidence после первоначального proof уточнена до реальной вложенной директории; протокол/ожидаемые HTTP коды не ослаблялись.
-- **Residual risk:** защищена server-side auth chain, не измерен реальный APK/OS/кодек. Уже открытый WS не отзывает principal автоматически при изменении ключа/роли. Post-auth task results/progress/events и глобальные фоновые сессии ещё требуют tenant propagation. API-key enrollment bootstrap исправлен отдельно в AUD-58; неизвестный refresh commit/replay остаётся открытым.
+- **Residual risk:** защищена server-side auth chain, не измерен реальный APK/OS/кодек. Уже открытый WS не отзывает principal автоматически при изменении ключа/роли. Post-auth task results/progress/events исправлены в AUD-61; глобальные фоновые сессии ещё требуют tenant propagation. API-key enrollment bootstrap исправлен отдельно в AUD-58; неизвестный refresh commit/replay остаётся открытым.
 
 
 ### AUD-60 — High: ожидающий enrollment принимал уже отозванный ключ и удалённое право
@@ -643,12 +643,22 @@ runtime-проверок и не считается доказательство
 - **Residual risk:** отзыв, закоммиченный после успешной проверки уже исполняющейся операции, не отменяет её. Существующие WS sessions не закрываются автоматически при revoke. Один общий ключ сериализует concurrent authentication; UPDATE уже требовал блокировку до исправления, но latency на 10–64 эмуляторах отдельно не измерена. Идемпотентный replay credential выдачи/unknown commit остаётся отдельным контрактом.
 
 
+### AUD-61 — High: подключённый APK не мог сохранять задачи и события под runtime ролью
+
+- **Root cause:** успешная WebSocket-аутентификация закрывает свою SQL Session до receive loop. Четыре post-auth блока открывали новые unbound Sessions: progress ownership lookup, received/running receipt, terminal result и EventReactor. Под реальной непривилегированной ролью RLS скрывала task rows и запрещала INSERT device_events. Task оставался ASSIGNED/RUNNING, batch не учитывал результат, result_ack не отправлялся; сервер не освобождал retained result в Android journal.
+- **Evidence/reproduction:** [12 failed / 3 negative controls passed до исправления](evidence/agent-messages-runtime-before.txt). Реальный ASGI WS router сначала принимает выданный device JWT, затем получает APK-сообщения. PostgreSQL/Redis локальные, отдельный LOGIN без ownership/BYPASSRLS. Receipt оставался ASSIGNED, terminal ACK count был ноль, progress cache пуст, event INSERT отклоняла row-level security. Конкурентный тест не наблюдал ожидаемые Task row locks, поскольку RLS скрывала обеим сессиям задачу.
+- **Affected files:** `backend/api/ws/android/router.py::handle_task_progress`, `handle_command_result`, `handle_device_event`; `tests/production/test_agent_messages_runtime.py`; ASGI helper в `test_agent_tenant_runtime.py`.
+- **Fix:** перед первым tenant SQL каждого из четырёх блоков вызван существующий `bind_tenant_context` с организацией authenticated connection. Поля org_id/device_id из входящего сообщения не определяют этот контекст. Сохраняются task/device/org filters, row locks, caller-owned commit и отправка result_ack после завершённого SQL commit. Миграция и изменение протокола APK не нужны.
+- **Regression:** 15 новых non-owner cases; [47 related checks passed](evidence/agent-messages-runtime-after.txt). Оба формата receipt (с type и без него), received/running с неизменным started_at при повторе; completed/failed с проверкой committed Task/Batch/DeviceEvent непосредственно при ACK; противоречащий replay после reconnect не меняет первый результат и не удваивает counters/events. Два независимых runtime connections реально ожидают блокировку Task; duplicate completion учитывается один раз. Проверены Redis method failures, реальный SQL abort `SELECT 1/0` после flush → rollback/no ACK → успешный replay, запреты foreign/same-org-other-device, terminal progress, authenticated event identity и отсутствие tenant context в fresh pooled Session.
+- **Residual risk:** ASGI выполняется без сетевого listener; manager/heartbeat/stream/publisher — doubles, настоящего APK/OS/network failover здесь нет. Redis failures вводятся на границе методов, не остановкой Redis. PubSub/Fleet events и освобождение Redis task lock по-прежнему могут предшествовать SQL commit; это не durable outbox. Не проверены все EventTrigger/account/pipeline ссылки и эффекты. Live socket revocation, глобальные jobs, crash/unknown-commit recovery и нагрузка 10–64 остаются открыты. Исходный before был снят после AUD-58–60: работающая auth chain сделала post-auth дефект достижимым под runtime ролью.
+
+
 ## Открытые подтверждённые блокеры
 
 | ID / severity | Root cause и evidence | Необходимое продолжение |
 | --- | --- | --- |
 | AUD-11 / High, частично исправлен | SQL ownership/uniqueness/intents исправлены и проверены; реальные orphan peers и provider unknown outcomes не reconciled | Inventory contract, controlled reconciliation/rollout, HTTP adapter и AWG конфигурация; незавершённые intents пока удерживаются |
-| AUD-14 / High | Startup guard исправлен; политики всех 28 tables и runtime CRUD проверены (AUD-54). Восстановление bound Session после commit/recovery исправлено (AUD-55); user JWT и API-key/device-refresh/Android WS auth исправлены (AUD-57–60); user opaque auth и post-auth/jobs ещё не переведены | Разделение migration/runtime ролей, перевод HTTP/auth/jobs на bound Sessions, разрешённые/запрещённые runtime API/worker сценарии |
+| AUD-14 / High | Startup guard исправлен; политики всех 28 tables и runtime CRUD проверены (AUD-54). Восстановление bound Session после commit/recovery исправлено (AUD-55); user JWT, API-key/device-refresh/Android WS auth и post-auth task/event sessions исправлены (AUD-57–61); user opaque auth и глобальные jobs ещё не переведены | Разделение migration/runtime ролей, перевод HTTP/auth/jobs на bound Sessions, разрешённые/запрещённые runtime API/worker сценарии |
 | DEPLOY-03 / High | Effective Compose оставляет n8n/MinIO host ports; production persistence и DB roles не согласованы | Ingress/access design, роли, долговечные artifacts, runtime/restore проверка |
 
 ## Следующие компоненты аудита
@@ -860,3 +870,6 @@ Windows: **1251 passed / 68,48%**. Четыре warnings, неизменный g
 Preview guard успешен, deploy пропущен. Независимых PR reviews пока нет; PR остаётся
 open draft. Следующий документационный commit сохраняет доказательства и запускает
 свои checks; перечисленные результаты относятся к указанной ревизии кода.
+
+
+Локальная проверка AUD-61: **1266 passed / 68,71%**, включая **394 PostgreSQL/Redis cases**; четыре прежних warnings, gate 65% сохранён. После общего прогона усилен guard тестового ACK callback: caught AssertionError не может дать ложный pass; повторены все 47 связанных cases. Production code после общего прогона не менялся. Ruff, Bandit (0 Medium/High) и API schema/catalog check прошли. Точная отправленная ревизия получит отдельные GitHub checks.

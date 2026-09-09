@@ -14,6 +14,10 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Security / runtime
 
+- AUD-61: post-auth Android progress, task receipts/results и device events связывают
+  каждую новую SQL Session с authenticated tenant. Исправлены скрытые под RLS задачи,
+  отсутствующий result_ack и отклонённые event INSERT. 15 non-owner ASGI regressions
+  проверяют commit-before-ACK, replay, конкурентный учёт и SQL abort/recovery.
 - AUD-60: API-key auth блокирует и обновляет key snapshot до проверки active/expiry/
   permissions; concurrent enrollment не принимает уже закоммиченные revoke/expiry
   или удаление device:register. Три реальных SQL lock-wait regressions сохранены.
@@ -40,8 +44,8 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - AUD-54: Alembic `20260908_tenant_policies` устанавливает tenant policies всех
   28 таблиц, защищает оба конца M2M и append-only audit. 25 full-schema runtime-role
   checks и четыре migration/operator-policy checks; четыре CI inventory checks.
-- Общий backend/PC/production/deployment прогон: 1251 passed, coverage 68,48%,
-  включая 379 PostgreSQL/Redis cases; без load suite и listening APK/API.
+- Общий backend/PC/production/deployment прогон: 1266 passed, coverage 68,71%,
+  включая 394 PostgreSQL/Redis cases; без load suite и listening APK/API.
 
 ### Migration / deployment constraints
 

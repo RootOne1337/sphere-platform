@@ -174,6 +174,7 @@ async def handle_task_progress(device_id: str, org_id: str, msg: dict) -> None:
     # Redis keys are globally addressed by task ID. Authenticate ownership before
     # writing any cache entry or publishing an event, including within one tenant.
     async with AsyncSessionLocal() as db:
+        await bind_tenant_context(db, str(org_uuid))
         owned = await db.scalar(select(Task.id).where(
             Task.id == message.task_id,
             Task.device_id == device_uuid,
@@ -272,6 +273,7 @@ async def handle_command_result(
 
             task_uuid = uuid.UUID(command_id)
             async with AsyncSessionLocal() as db:
+                await bind_tenant_context(db, org_id)
                 task = await db.scalar(select(Task).where(
                     Task.id == task_uuid, Task.device_id == uuid.UUID(device_id),
                     Task.org_id == uuid.UUID(org_id), Task.status == TaskStatus.ASSIGNED,
@@ -309,6 +311,7 @@ async def handle_command_result(
             from backend.database.redis_client import redis as _redis
             from backend.services.task_queue import TaskQueue
             async with AsyncSessionLocal() as db:
+                await bind_tenant_context(db, org_id)
                 queue = TaskQueue(_redis)
                 from backend.services.task_service import TaskService
                 svc = TaskService(db=db, queue=queue)
@@ -367,6 +370,7 @@ async def handle_device_event(device_id: str, org_id: str, msg: dict) -> None:
         pipeline_run_id = uuid.UUID(pipeline_run_id_raw) if pipeline_run_id_raw else None
 
         async with AsyncSessionLocal() as db:
+            await bind_tenant_context(db, org_id)
             reactor = EventReactor(db)
             await reactor.process_event(
                 org_id=uuid.UUID(org_id),
