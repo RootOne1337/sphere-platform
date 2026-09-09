@@ -212,3 +212,8 @@ replies, typed compatibility and nonterminal/telemetry controls. The fixture use
 the PC tenant runtime setup; no actual network socket or LDPlayer/ADB process runs.
 These assertions verify the result discriminator and publication boundary, not
 durable delivery, command idempotency or subscriber recovery after Redis/network loss.
+
+Three additional cases in that file reject false success for unsupported PC command
+names (AUD-66): a typo, the old guide's `adb_exec`, and a future unknown operation.
+The actual dispatcher/handler/Redis subscriber must observe a correlated failed
+reply and no LDPlayer/ADB calls. Supported/legacy controls remain active.

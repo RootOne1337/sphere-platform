@@ -14,6 +14,9 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Security / runtime
 
+- AUD-66: неизвестные PC commands возвращают failed с причиной, сохраняя command ID;
+  ложный completed/null без исполнения устранён. Три новых Redis regressions,
+  95 связанных cases проходят. Для поддержки новой операции нужен новый клиент.
 - AUD-65: PC session наблюдает sender и receiver, очищает state при auth failure/
   cancel и reconnect при send failure. Stop прерывает circuit/backoff; clean close
   не создаёт tight reconnect loop, timeouts не копят Event.wait. Девять новых
@@ -61,8 +64,8 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - AUD-54: Alembic `20260908_tenant_policies` устанавливает tenant policies всех
   28 таблиц, защищает оба конца M2M и append-only audit. 25 full-schema runtime-role
   checks и четыре migration/operator-policy checks; четыре CI inventory checks.
-- Общий backend/PC/production/deployment прогон: 1322 passed, coverage 69,30%,
-  включая 450 PostgreSQL/Redis cases; без load suite и listening APK/API.
+- Общий backend/PC/production/deployment прогон: 1334 passed, coverage 69,31%,
+  включая 453 PostgreSQL/Redis cases; без load suite и listening APK/API.
 
 ### Migration / deployment constraints
 

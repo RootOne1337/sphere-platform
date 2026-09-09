@@ -20,9 +20,9 @@ runtime-проверок и не считается доказательство
 | Проверка | Результат | Практическое ограничение |
 | --- | --- | --- |
 | Android enterprise debug unit suite | 344 passed, 0 failed | JVM/MockWebServer; не проверяет ОС, codec, батарею или смерть процесса на телефоне |
-| Объединённая Backend/PC/production/deployment suite | **1322 passed, 0 failed**; coverage **69,30%** | Строгий coverage gate 65% пройден с precision=2. Load suite исключена; 6 Compose config tests не запускают сервисы |
+| Объединённая Backend/PC/production/deployment suite | **1334 passed, 0 failed**; coverage **69,31%** | Строгий coverage gate 65% пройден с precision=2. Load suite исключена; 6 Compose config tests не запускают сервисы |
 | Python dependency scan | **0 known vulnerabilities** в совместном backend/PC resolution | Pip-audit snapshot, не проверка frontend/Gradle/container/application security; [версии и ограничения](DEPENDENCY-REVIEW.md) |
-| Проверки PostgreSQL/Redis | **450 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
+| Проверки PostgreSQL/Redis | **453 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
 | Миграции | Применены до **20260909_user_auth_bootstrap** включительно | Только изолированная БД; конфликтные данные/downgrade проверены в throwaway schema; production не мигрировался |
 | Backend image | Собирается; исходная запись OpenAPI воспроизведённо падает с PermissionError | Исправлен lifespan; полный deployment runtime ещё не подтверждён |
 | Frontend | **198 Jest tests passed**, tsc passed; Next production build exit 0 на Node 24.19.0 | React/JSDOM + Axios adapters; настоящий browser runtime не проверен. Windows standalone tracing выдал ENOENT warning, artifact packaging ещё не подтверждён |
@@ -37,7 +37,7 @@ runtime-проверок и не считается доказательство
 [Локальные 24 DAG cases прошли](evidence/dag-timing-d828a62-local.txt). Порог 100 ms
 не ослаблялся, тест не исключался; причина timing variance на runner не установлена.
 Файл production-regressions-after.txt сохраняет более ранний standalone snapshot
-с 41 тестом; актуальные 450 входят в общий прогон.
+с 41 тестом; актуальные 453 входят в общий прогон.
 
 Команды запуска и предохранители изоляции: [tests/production/README.md](../../../tests/production/README.md).
 Исходные `14 passed` в [reproductions.txt](evidence/reproductions.txt) означают
@@ -680,7 +680,7 @@ runtime-проверок и не считается доказательство
 - **Affected files:** `pc-agent/agent/dispatcher.py`, `backend/api/ws/agent/router.py::handle_agent_message`, `tests/production/test_pc_result_protocol.py`.
 - **Fix:** `eda33a7` — PC dispatcher явно отправляет `type: command_result` в success/error ответах. Backend совместим с установленными старыми клиентами: только сообщение без discriminator, с непустым string `command_id` и `completed`/`failed` считается legacy result. Payload сохраняется; telemetry и промежуточные статусы не переклассифицируются. Новая миграция не требуется.
 - **Regression:** [24 related cases passed](evidence/pc-result-protocol-after.txt), включая 10 новых runtime cases: реальная success/error пара dispatcher → handler → Redis subscriber, legacy success/error, typed reply, четыре nonterminal controls и явно типизированная telemetry с похожими полями. Проверка type в исходящем payload не позволяет backend compatibility скрыть возврат дефекта в клиенте.
-- **Residual risk:** это проверка протокола и Redis publication, не реальный PC network/OS/ADB/LDPlayer запуск. PubSub остаётся недолговечным: отсутствие подписчика, потеря подключения, client queue drop и Redis failure могут потерять результат. Receipt/ACK, retry, durable outbox, idempotency и command authorization/correlation требуют отдельных сценариев. Unknown command по-прежнему может вернуть completed с null; этот отдельный путь не объявлен исправленным. Существующие ограничения AUD-63 на RLS rollout, provisioning и real disconnect сохраняются.
+- **Residual risk:** это проверка протокола и Redis publication, не реальный PC network/OS/ADB/LDPlayer запуск. PubSub остаётся недолговечным: отсутствие подписчика, потеря подключения, client queue drop и Redis failure могут потерять результат. Receipt/ACK, retry, durable outbox, idempotency и command authorization/correlation требуют отдельных сценариев. Unknown command отдельно исправлен в AUD-66; исходный AUD-64 проверял только доставку результата. Существующие ограничения AUD-63 на RLS rollout, provisioning и real disconnect сохраняются.
 
 
 ### AUD-65 — High: PC transport failure не запускал recovery и оставлял некорректное состояние
@@ -688,9 +688,19 @@ runtime-проверок и не считается доказательство
 - **Impact/root cause:** `_send_loop` ловил send error и завершался отдельно от receive loop. Клиент оставался connected, новые ответы копились в очереди без отправщика, reconnect не начинался до независимого завершения приёмника. Auth write находился до cleanup `try/finally`, поэтому его failure/cancellation оставлял `_ws` и `_connected`. Shielded stop waiters не отменялись при timeout, circuit sleep не реагировал на stop до пяти минут, а clean peer close обходил reconnect delay.
 - **Evidence/reproduction:** [6 failed / 3 controls](evidence/pc-client-recovery-before.txt). Настоящий client run получает искусственную ошибку send при открытом приёмнике и не устанавливает второе соединение. Отдельно проверены stale auth state, cancellation, stop при открытом circuit, накопление Event.wait после 20 отказов и немедленный reconnect после clean close. WebSocket boundary — управляемый in-process double; listener/DNS/внешние подключения отсутствуют.
 - **Affected files:** `pc-agent/agent/client.py:40` (`run`), `_connect_once`, `_receive_loop`, `_send_loop`; `tests/test_pc_client_recovery.py`, `tests/test_pc_agent_arch.py`.
-- **Fix:** Session владеет sender/receiver tasks и завершается при окончании любого направления. Send errors доходят до reconnect loop; cleanup включает auth write, сбрасывает состояние и отменяет/собирает обе transport tasks. Ожидания backoff/circuit отменяемы через stop без shield; clean closes тоже выдерживают delay. Queue ordering сохранён, взятые элементы отмечаются task_done.
+- **Fix:** `e216980` — Session владеет sender/receiver tasks и завершается при окончании любого направления. Send errors доходят до reconnect loop; cleanup включает auth write, сбрасывает состояние и отменяет/собирает обе transport tasks. Ожидания backoff/circuit отменяемы через stop без shield; clean closes тоже выдерживают delay. Queue ordering сохранён, взятые элементы отмечаются task_done.
 - **Regression:** [91 PC cases passed](evidence/pc-client-recovery-after.txt), включая девять новых lifecycle cases. После send error устанавливается новое соединение и следующий результат отправляется; auth failure/cancel очищаются; stop прерывает circuit; 20 reconnect delays не оставляют waiter tasks; clean/abrupt receive termination собирает transport tasks; 20 конкурентных producers сохраняют auth-first/order и один sender. Старый backoff test мог пройти с пустым списком наблюдений: теперь исполняется настоящий run и проверяется вся последовательность 1→2→4→8→16→30.
 - **Residual risk:** socket implementation — double, это не реальная сеть или TLS/WebSocket handshake failure matrix. `_connected` означает отправленный auth frame, не server auth ACK. Failed send имеет неизвестный исход и автоматически не повторяется; оставшаяся in-memory очередь, durable receipts, command idempotency, topology replay и server ASGI disconnect остаются отдельными задачами. Dispatch tasks не ограничены и могут жить дольше WS-сессии; их отмена/дренирование и OS subprocess cleanup этим изменением не решены. Stop во время ещё не завершённого connect handshake отдельно не проверен.
+
+
+### AUD-66 — Medium: неизвестная PC-команда возвращала ложный completed
+
+- **Root cause/impact:** default branch `_handle` возвращала `None`, а `dispatch` считала любое обычное завершение success. Опечатка, устаревшее имя команды или несовместимая новая операция давали `status: completed, result: null` без вызова LDPlayer/ADB. Ожидающий result subscriber получал ложное подтверждение выполнения. Severity Medium: затронуты неподдерживаемые типы, а не успешность всех поддерживаемых команд.
+- **Evidence/reproduction:** [3 failed / 10 controls](evidence/pc-unsupported-command-before.txt). Реальные dispatcher/backend handler публикуют в выделенный Redis `completed` для `ld_lauch`, старого документированного `adb_exec` и `unsupported_future_command`; execution boundaries не вызываются. Успешные/ошибочные поддерживаемые команды и legacy protocol controls продолжают проходить.
+- **Affected files:** `pc-agent/agent/dispatcher.py:139` (default branch), `dispatch` на строке 28; `tests/production/test_pc_result_protocol.py`.
+- **Fix:** default branch поднимает явный `ValueError("Unsupported command type: ...")`; существующая error path формирует `command_result`, тот же command ID и `failed` с причиной. No-ID сообщения по-прежнему не создают ответ. Новая миграция, backend protocol change или execution retry не нужны.
+- **Regression:** три новых реальных Redis cases; [95 related cases passed](evidence/pc-unsupported-command-after.txt), включая 13 protocol cases и 82 PC unit cases. Проверены тип/ID/error, отсутствие result/success и отсутствие LDPlayer/ADB calls, одновременно сохранены supported/legacy controls.
+- **Residual risk:** это корректность отчёта об unsupported type, не доказательство прав на произвольные команды, корректности payload, реального subprocess outcome или durable receipt. Отсутствующий type/ID, malformed/non-object messages и ограничения concurrency остаются отдельными путями аудита. Поддержка новой команды всё ещё требует обновления клиента; silent success не является механизмом совместимости.
 
 
 ## Открытые подтверждённые блокеры
@@ -962,3 +972,13 @@ security, RLS и миграции прошли. Preview guard успешен, de
 эти результаты и запускает собственные checks; production code после `eda33a7`
 не меняется. PR остаётся draft без независимого review; OS/ADB/LDPlayer/APK/network
 и нагрузка 10–64 не объявлены проверенными. Merge/deployment не выполнялись.
+
+
+Локальная проверка AUD-65–66: **1334 passed / 69,31%**, включая **453 PostgreSQL/Redis
+cases**, четыре прежних warnings, 262,84 s; строгий порог 65% сохранён. Девять новых
+PC lifecycle cases и три новых Redis unknown-command cases входят в общий прогон.
+После удаления неиспользуемого import повторены все 13 protocol cases; исполняемая
+логика после полного прогона не менялась. Ruff, generated API export и Bandit для
+обоих изменённых PC modules (0 Medium/High) прошли. 246 локальных Markdown targets
+существуют. GitHub CI для новой code revision проверяется отдельно; реальные
+listeners/OS/process/10–64-device измерения этим результатом не подтверждаются.

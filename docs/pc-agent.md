@@ -121,8 +121,10 @@ The bridge computes default instance ports as `5554 + index * 2`; verify the act
 emulator configuration. The separate [ADBDiscovery module](../pc-agent/modules/adb_discovery.py)
 is not routed by the current dispatcher. End-to-end discovery and OS execution
 remain under audit; the command list is an implementation inventory,
-not proof of successful remote execution. Unknown command types currently return
-`None`, so a success-shaped reply is not evidence that an action ran.
+not proof of successful remote execution. Unknown command types now produce
+`status: failed` with an `Unsupported command type` error (AUD-66), rather than
+the former false `completed`/null response. A command without an ID still has no
+correlated reply; unsupported commands do not invoke LDPlayer or ADB.
 
 Success and error replies now include the `command_result` discriminator (AUD-64):
 
@@ -185,3 +187,9 @@ Nine new lifecycle cases run the actual client with controlled in-process socket
 sender failure/reconnect, auth failure/cancellation, circuit stop, repeated backoff,
 clean-close pacing, receive termination and concurrent producer ordering. No real
 WebSocket listener, DNS lookup, TLS handshake or emulator is involved.
+
+AUD-66 retains [three failures before](audits/2026-09-05/evidence/pc-unsupported-command-before.txt)
+and [95 related passing cases after](audits/2026-09-05/evidence/pc-unsupported-command-after.txt).
+Three more Redis cases verify failure reporting for misspelled, outdated and future
+unsupported names without execution. Supported command and legacy result controls
+remain part of the 13-case result protocol suite.

@@ -19,7 +19,7 @@ separates confirmed blockers from paths still requiring investigation.
 | User sessions and frontend | Refresh rotation has a single SQL consumer; logout revokes the actual refresh source and clears cookies. MFA requires one Redis challenge consumer. Browser identity/cache generations prevent old responses from restoring a previous session or crossing organizations. |
 | Task execution and recovery | Committed assignments own dispatch intent; durable Android receipts handle duplicates and retain results until SQL commit acknowledgement. Task/batch/scheduler locks preserve competing terminal outcomes. Wave admission, parent commit ordering, cancellation fences and counters are reconciled. |
 | Android | Repairs enrollment/refresh and HTTP contracts, limits automatic credentials to the management origin, cleans up transport cancellation, restores Redis presence, targets controls to the intended task and prevents loop/root retries from falsely reporting success or repeating uncertain effects. |
-| PC agent | Enforces workstation ownership, uses current locked API-key validation, binds registration SQL and fixes terminal result routing, including older installed clients. |
+| PC agent | Enforces workstation ownership, uses current locked API-key validation, binds registration SQL and fixes terminal result routing, including older installed clients. Supervises send/receive failure and rejects false success for unsupported commands. |
 | Orchestrator and VPN | Enforces account ownership and versioned task contracts; VPN assignments retain SQL ownership/intents across uncertain provider outcomes, concurrent allocations and health/revoke retries. |
 | Deployment and maintenance | Removes startup writes from immutable API images, corrects effective Compose inheritance, updates the compatible Python dependency set, enforces the exact coverage threshold and regenerates the HTTP schema/catalog in CI. Operator guides describe actual contracts and rollout constraints. |
 
@@ -46,10 +46,16 @@ separates confirmed blockers from paths still requiring investigation.
   3 controls**; nine new lifecycle cases and all **91 related PC tests** pass with
   controlled socket boundaries. Network/OS execution remains unverified.
 
+- **AUD-66:** unsupported PC commands returned completed/null without executing
+  anything. They now use the correlated failed/error envelope. Baseline: **3 failures
+  / 10 controls**; three additional Redis cases verify no LDPlayer/ADB call. All
+  **95 related cases** pass. This Medium finding concerns unsupported command types;
+  real execution correctness and command authorization require separate validation.
+
 ## Validation
 
-- Combined local backend/PC/PostgreSQL/Redis/deployment: **1322 passed**, including
-  **450 real-service cases** and six Compose configuration tests; **69.30%** coverage,
+- Combined local backend/PC/PostgreSQL/Redis/deployment: **1334 passed**, including
+  **453 real-service cases** and six Compose configuration tests; **69.31%** coverage,
   four existing warnings. Load/soak profiles are excluded from this ordinary PR run.
 - Android enterprise debug unit suite: **344 passed**. These JVM/MockWebServer checks
   do not establish device OS, codec, battery or real network behavior.
@@ -66,8 +72,8 @@ separates confirmed blockers from paths still requiring investigation.
   [Android](https://github.com/RootOne1337/sphere-platform/actions/runs/34383128765)
   CI on attempt 1. Linux: **1322 tests / 69.27%**, including all 22 new PC cases.
   Compact run snapshots and the test summary are retained with the audit report.
-  The following documentation-only commit starts its own checks; application code
-  is unchanged. Preview guard passes and deployment is skipped.
+  The newer AUD-65/66 client changes need their own code-revision CI; the recorded
+  eda33a7 results do not cover them. Preview deployment remains skipped.
 
 ## Rollout and remaining risks
 
@@ -94,7 +100,7 @@ acknowledgements, pipeline/wave crash recovery and post-commit event delivery re
 open. These changes do not guarantee exactly-once physical effects.
 
 PC workstation/instance provisioning, live key revocation, normal ASGI disconnect,
-topology replay, durable result delivery and unknown-command handling remain open.
+topology replay, durable result delivery and payload/correlation validation remain open.
 Redis PubSub and the client queue can lose replies on failure. No actual LDPlayer/ADB
 process, Windows service or PC network recovery was exercised by the new cases.
 

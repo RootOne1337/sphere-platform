@@ -105,3 +105,29 @@ async def test_telemetry_with_result_fields_is_not_reclassified(pc_runtime):
         assert await sub.get_message(ignore_subscribe_messages=True, timeout=0.1) is None
     finally:
         await sub.aclose()
+
+
+@pytest.mark.parametrize("command", ["ld_lauch", "adb_exec", "unsupported_future_command"])
+async def test_unsupported_pc_command_reports_failure_without_execution(pc_runtime, command):
+    r = pc_runtime
+    command_id = str(uuid.uuid4())
+    ldplayer, adb = AsyncMock(), AsyncMock()
+
+    class Transport:
+        async def send(self, message):
+            await deliver(r, message)
+
+    dispatcher = CommandDispatcher(ldplayer, adb, Transport())
+    sub = await subscribe(r, command_id)
+    try:
+        await dispatcher.dispatch({"type": command, "command_id": command_id, "payload": {}})
+        received = await sub.get_message(ignore_subscribe_messages=True, timeout=0.2)
+        assert received is not None
+        reply = json.loads(received["data"])
+        assert reply["status"] == "failed", "An unsupported operation reached the subscriber as completed"
+        assert reply["type"] == "command_result" and reply["command_id"] == command_id
+        assert "Unsupported command type" in reply["error"]
+        assert command in reply["error"] and "result" not in reply
+        assert ldplayer.mock_calls == [] and adb.mock_calls == []
+    finally:
+        await sub.aclose()
