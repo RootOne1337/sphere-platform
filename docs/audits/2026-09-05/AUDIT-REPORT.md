@@ -698,7 +698,7 @@ runtime-проверок и не считается доказательство
 - **Root cause/impact:** default branch `_handle` возвращала `None`, а `dispatch` считала любое обычное завершение success. Опечатка, устаревшее имя команды или несовместимая новая операция давали `status: completed, result: null` без вызова LDPlayer/ADB. Ожидающий result subscriber получал ложное подтверждение выполнения. Severity Medium: затронуты неподдерживаемые типы, а не успешность всех поддерживаемых команд.
 - **Evidence/reproduction:** [3 failed / 10 controls](evidence/pc-unsupported-command-before.txt). Реальные dispatcher/backend handler публикуют в выделенный Redis `completed` для `ld_lauch`, старого документированного `adb_exec` и `unsupported_future_command`; execution boundaries не вызываются. Успешные/ошибочные поддерживаемые команды и legacy protocol controls продолжают проходить.
 - **Affected files:** `pc-agent/agent/dispatcher.py:139` (default branch), `dispatch` на строке 28; `tests/production/test_pc_result_protocol.py`.
-- **Fix:** default branch поднимает явный `ValueError("Unsupported command type: ...")`; существующая error path формирует `command_result`, тот же command ID и `failed` с причиной. No-ID сообщения по-прежнему не создают ответ. Новая миграция, backend protocol change или execution retry не нужны.
+- **Fix:** `8692a58` — default branch поднимает явный `ValueError("Unsupported command type: ...")`; существующая error path формирует `command_result`, тот же command ID и `failed` с причиной. No-ID сообщения по-прежнему не создают ответ. Новая миграция, backend protocol change или execution retry не нужны.
 - **Regression:** три новых реальных Redis cases; [95 related cases passed](evidence/pc-unsupported-command-after.txt), включая 13 protocol cases и 82 PC unit cases. Проверены тип/ID/error, отсутствие result/success и отсутствие LDPlayer/ADB calls, одновременно сохранены supported/legacy controls.
 - **Residual risk:** это корректность отчёта об unsupported type, не доказательство прав на произвольные команды, корректности payload, реального subprocess outcome или durable receipt. Отсутствующий type/ID, malformed/non-object messages и ограничения concurrency остаются отдельными путями аудита. Поддержка новой команды всё ещё требует обновления клиента; silent success не является механизмом совместимости.
 
@@ -982,3 +982,19 @@ PC lifecycle cases и три новых Redis unknown-command cases входят
 обоих изменённых PC modules (0 Medium/High) прошли. 246 локальных Markdown targets
 существуют. GitHub CI для новой code revision проверяется отдельно; реальные
 listeners/OS/process/10–64-device измерения этим результатом не подтверждаются.
+
+
+Code head `8692a58` (AUD-65–66) прошёл с первой попытки
+[backend CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34387311587),
+[frontend CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34387311505) и
+[Android CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34387314911).
+Сохранены [backend](evidence/ci-8692a58-backend.json),
+[frontend](evidence/ci-8692a58-frontend.json) и [Android](evidence/ci-8692a58-android.json)
+snapshots. [Linux summary, 12 новых cases и исправленный backoff test](evidence/ci-8692a58-tests.txt):
+**1334 passed / 69,27%**, 266,92 s; Windows: **1334 / 69,31%**, включая **453
+PostgreSQL/Redis cases**, четыре прежних warnings. Порог 65% сохранён; lint/mypy,
+security, RLS и миграции прошли. Preview guard успешен, deploy пропущен. Временных
+локальных runtime LOGIN-ролей и соединений ноль. Документационный commit сохраняет
+результаты и запускает собственные checks; исполняемый код после `8692a58` не
+меняется. PR остаётся draft без независимого review, merge или deployment. Реальные
+PC/APK sockets, OS/subprocess и нагрузка 10–64 устройств не объявлены проверенными.

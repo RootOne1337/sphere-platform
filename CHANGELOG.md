@@ -24,7 +24,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - AUD-64: PC success/error ответы содержат command_result; backend принимает старые
   untyped terminal replies. Исправлена доказанная потеря результатов до Redis channel.
   10 новых cases связывают dispatcher, handler и настоящий Redis subscriber; durable
-  delivery, OS execution и неизвестные команды остаются отдельными проверками.
+  delivery и OS execution остаются открытыми; unknown commands исправлены в AUD-66.
 - AUD-63: PC-agent использует общий API-key bootstrap и связывает fresh registration
   Session с authenticated tenant. 12 non-owner SQL/Redis cases проверяют connection/
   registration, key revoke wait, SQL abort/retry и cache failure. PC guide приведён

@@ -66,14 +66,14 @@ separates confirmed blockers from paths still requiring investigation.
   The compatible joint Python dependency scan is a recorded snapshot, not a scan of
   all ecosystems. Coverage remains gated at **65%**, with precision=2 and tests for
   the 64.98% rejection / 65.00% acceptance boundaries.
-- Application revision **`eda33a7`**, including both PC fixes, passes
-  [backend](https://github.com/RootOne1337/sphere-platform/actions/runs/34383128767),
-  [frontend](https://github.com/RootOne1337/sphere-platform/actions/runs/34383128758) and
-  [Android](https://github.com/RootOne1337/sphere-platform/actions/runs/34383128765)
-  CI on attempt 1. Linux: **1322 tests / 69.27%**, including all 22 new PC cases.
-  Compact run snapshots and the test summary are retained with the audit report.
-  The newer AUD-65/66 client changes need their own code-revision CI; the recorded
-  eda33a7 results do not cover them. Preview deployment remains skipped.
+- Application revision **`8692a58`**, including AUD-65/66, passes
+  [backend](https://github.com/RootOne1337/sphere-platform/actions/runs/34387311587),
+  [frontend](https://github.com/RootOne1337/sphere-platform/actions/runs/34387311505) and
+  [Android](https://github.com/RootOne1337/sphere-platform/actions/runs/34387314911)
+  CI on attempt 1. Linux: **1334 tests / 69.27%**, including all 12 new cases and the
+  strengthened backoff test. Compact job snapshots and test summaries are retained.
+  The following documentation-only commit starts its own checks; application code
+  is unchanged. Preview guard passes and deployment is skipped.
 
 ## Rollout and remaining risks
 
