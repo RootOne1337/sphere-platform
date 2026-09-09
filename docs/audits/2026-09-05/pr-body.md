@@ -94,14 +94,15 @@ researches NitroGen and a future external inference worker; no AI is implemented
   The compatible joint Python dependency scan is a recorded snapshot, not a scan of
   all ecosystems. Coverage remains gated at **65%**, with precision=2 and tests for
   the 64.98% rejection / 65.00% acceptance boundaries.
-- Previous revision **`769aec3`**, including AUD-67/68, passes
-  [backend](https://github.com/RootOne1337/sphere-platform/actions/runs/34407474578),
-  [frontend](https://github.com/RootOne1337/sphere-platform/actions/runs/34407474747) and
-  [Android](https://github.com/RootOne1337/sphere-platform/actions/runs/34407474584)
-  CI on attempt 1. Linux: **1351 tests / 69.27%**, including all 17 new deployment
-  cases. Compact job snapshots and the test summary are retained in audit evidence.
-  Preview guard passes and deployment is skipped. The following documentation-only
-  commit recorded those results. New AUD-69/70 code requires its own CI verification.
+- Revision **`9177769`**, including AUD-69/70, passes
+  [backend](https://github.com/RootOne1337/sphere-platform/actions/runs/34416514477),
+  [frontend](https://github.com/RootOne1337/sphere-platform/actions/runs/34416514436) and
+  [Android](https://github.com/RootOne1337/sphere-platform/actions/runs/34416514460)
+  CI on attempt 1; the separate Android push run also passes. Linux: **1375 tests /
+  69.30%**, including all 24 new SQL/ASGI cases. Exact job snapshots and test excerpts
+  are retained. Preview guard passes and deployment is skipped. The following
+  documentation-only commit records these results; application code is unchanged
+  and that commit starts its own checks.
 
 ## Rollout and remaining risks
 

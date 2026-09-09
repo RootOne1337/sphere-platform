@@ -113,7 +113,8 @@ Device refresh lost-response recovery исправлен: 24 SQL/ASGI и сем�
 общий Windows прогон **1375 tests / 69,35%**, **477 PG/Redis**, **354 Android JVM**.
 Code commits: `83585d3`, `484cca6`; текущий schema head `20260910_device_refresh_retry`.
 [Recovery/rollout](../../security/device-refresh-recovery.md) ограничен одним
-нерасходованным преемником, без продления expiry. CI новой ревизии проверяется отдельно.
+нерасходованным преемником, без продления expiry. CI `9177769` прошёл attempt 1: backend/frontend/Android; Linux **1375 / 69,30%**.
+[Exact snapshots](AUDIT-REPORT.md) сохранены; следующие OS/network испытания отдельны.
 
 Следующие P0: hard timeout/cancellation refresh; сохранённый secondary management
 route и локальный discovery без GitHub; real Android process/host/network recovery;

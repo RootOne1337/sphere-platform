@@ -1147,10 +1147,29 @@ suites**, без failures/errors/skips. Ruff 0.15.2, API export check и backend
 (0 Medium/High) проходят. [Локальный dependency-aware mypy без incremental cache](evidence/device-refresh-local-mypy.txt)
 сообщил 13 ошибок в семи неизменённых файлах/импортах; это не проходящий локальный gate. Отдельный CI mypy
 запускается в собственном окружении без полного dependency set, его результат
-должен учитываться отдельно. Новый CI code revision ещё ожидает проверки.
+должен учитываться отдельно. Результат новой CI revision приведён ниже.
 
 Миграция применена только к выделенному loopback audit PostgreSQL. Downgrade/upgrade
 новой миграции проверены в транзакции с rollback: текущие grants и данные сохраняются
 после теста; production не изменялся. API documentation отражает optional UUID header.
 Runtime OS/network/keystore/process-death и fleet capacity не измерены; reserve route
 и hard cancellation deadline refresh остаются следующими эксплуатационными задачами.
+
+
+Code revision **`9177769`** с AUD-69/70 прошла attempt 1:
+[backend](https://github.com/RootOne1337/sphere-platform/actions/runs/34416514477),
+[frontend](https://github.com/RootOne1337/sphere-platform/actions/runs/34416514436),
+[Android PR](https://github.com/RootOne1337/sphere-platform/actions/runs/34416514460)
+и отдельный [Android push run](https://github.com/RootOne1337/sphere-platform/actions/runs/34416509416).
+[Linux excerpt](evidence/ci-9177769-tests.txt): **1375 passed / 69,30%**, 233,43 s,
+четыре прежних warnings; все 24 новых SQL/ASGI случая проходят. Backend lint/mypy,
+security, RLS coverage и Alembic успешны. CI mypy не заменяет отражённый выше локальный
+dependency-aware результат. Preview guard прошёл, deployment skipped.
+
+Сохранены snapshots [backend](evidence/ci-9177769-backend.json),
+[frontend](evidence/ci-9177769-frontend.json), [Android PR](evidence/ci-9177769-android.json),
+[Android push](evidence/ci-9177769-android-push.json) и [preview](evidence/ci-9177769-preview.json).
+После локального прогона runtime SQL-ролей и соединений — ноль, migration head —
+`20260910_device_refresh_retry`. Этот документационный commit фиксирует результат;
+исполняемый код после `9177769` не меняется, его собственные checks идут отдельно.
+PR остаётся draft; review, merge, production migration и deployment не выполнены.

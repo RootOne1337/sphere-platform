@@ -18,6 +18,21 @@ access token устройство теряло возможность автом
 выпускается заново; весь HTTP response не является побитно одинаковым. Срок жизни
 refresh-преемника при повторе **не продлевается**. Device ID остаётся прежним.
 
+```mermaid
+sequenceDiagram
+    participant A as APK
+    participant S as Backend
+    participant D as PostgreSQL
+    A->>A: Commit исходного token + operation UUID
+    A->>S: Refresh(token, UUID)
+    S->>D: Lock device, записать hashes, commit
+    S--xA: Ответ потерян
+    A->>S: Повтор того же token + UUID
+    S->>D: Lock, проверить receipt и срок преемника
+    S-->>A: Тот же refresh-преемник + новый access JWT
+    A->>A: Одна edit для credentials + удаления intent
+```
+
 ## HTTP-контракт
 
 `POST /api/v1/devices/refresh`:
@@ -70,6 +85,10 @@ HKDF предназначен для получения ключевого ма�
 При восстановлении повторно вычисляется преемник и сравнивается его SHA-256 с
 текущим сохранённым hash. SQL не хранит исходный или новый bearer, access JWT либо
 зашифрованный HTTP response; отдельный общий recovery encryption key не нужен.
+
+Derivation `v1` — сохраняемый контракт: его нельзя менять при rollout, пока существуют
+операции, требующие старого способа восстановления. Будущая смена алгоритма требует
+явной совместимости/миграции receipt, а не простой замены функции.
 
 Знание только database hash и UUID не даёт исходный HKDF secret. UUID не считается
 самостоятельным секретом или фактором auth. Кража исходного bearer вместе с ID
