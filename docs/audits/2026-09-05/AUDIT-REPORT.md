@@ -648,7 +648,7 @@ runtime-проверок и не считается доказательство
 - **Root cause:** успешная WebSocket-аутентификация закрывает свою SQL Session до receive loop. Четыре post-auth блока открывали новые unbound Sessions: progress ownership lookup, received/running receipt, terminal result и EventReactor. Под реальной непривилегированной ролью RLS скрывала task rows и запрещала INSERT device_events. Task оставался ASSIGNED/RUNNING, batch не учитывал результат, result_ack не отправлялся; сервер не освобождал retained result в Android journal.
 - **Evidence/reproduction:** [12 failed / 3 negative controls passed до исправления](evidence/agent-messages-runtime-before.txt). Реальный ASGI WS router сначала принимает выданный device JWT, затем получает APK-сообщения. PostgreSQL/Redis локальные, отдельный LOGIN без ownership/BYPASSRLS. Receipt оставался ASSIGNED, terminal ACK count был ноль, progress cache пуст, event INSERT отклоняла row-level security. Конкурентный тест не наблюдал ожидаемые Task row locks, поскольку RLS скрывала обеим сессиям задачу.
 - **Affected files:** `backend/api/ws/android/router.py::handle_task_progress`, `handle_command_result`, `handle_device_event`; `tests/production/test_agent_messages_runtime.py`; ASGI helper в `test_agent_tenant_runtime.py`.
-- **Fix:** перед первым tenant SQL каждого из четырёх блоков вызван существующий `bind_tenant_context` с организацией authenticated connection. Поля org_id/device_id из входящего сообщения не определяют этот контекст. Сохраняются task/device/org filters, row locks, caller-owned commit и отправка result_ack после завершённого SQL commit. Миграция и изменение протокола APK не нужны.
+- **Fix:** `f272360` — перед первым tenant SQL каждого из четырёх блоков вызван существующий `bind_tenant_context` с организацией authenticated connection. Поля org_id/device_id из входящего сообщения не определяют этот контекст. Сохраняются task/device/org filters, row locks, caller-owned commit и отправка result_ack после завершённого SQL commit. Миграция и изменение протокола APK не нужны.
 - **Regression:** 15 новых non-owner cases; [47 related checks passed](evidence/agent-messages-runtime-after.txt). Оба формата receipt (с type и без него), received/running с неизменным started_at при повторе; completed/failed с проверкой committed Task/Batch/DeviceEvent непосредственно при ACK; противоречащий replay после reconnect не меняет первый результат и не удваивает counters/events. Два независимых runtime connections реально ожидают блокировку Task; duplicate completion учитывается один раз. Проверены Redis method failures, реальный SQL abort `SELECT 1/0` после flush → rollback/no ACK → успешный replay, запреты foreign/same-org-other-device, terminal progress, authenticated event identity и отсутствие tenant context в fresh pooled Session.
 - **Residual risk:** ASGI выполняется без сетевого listener; manager/heartbeat/stream/publisher — doubles, настоящего APK/OS/network failover здесь нет. Redis failures вводятся на границе методов, не остановкой Redis. PubSub/Fleet events и освобождение Redis task lock по-прежнему могут предшествовать SQL commit; это не durable outbox. Не проверены все EventTrigger/account/pipeline ссылки и эффекты. Live socket revocation, глобальные jobs, crash/unknown-commit recovery и нагрузка 10–64 остаются открыты. Исходный before был снят после AUD-58–60: работающая auth chain сделала post-auth дефект достижимым под runtime ролью.
 
@@ -872,4 +872,19 @@ open draft. Следующий документационный commit сохр�
 свои checks; перечисленные результаты относятся к указанной ревизии кода.
 
 
-Локальная проверка AUD-61: **1266 passed / 68,71%**, включая **394 PostgreSQL/Redis cases**; четыре прежних warnings, gate 65% сохранён. После общего прогона усилен guard тестового ACK callback: caught AssertionError не может дать ложный pass; повторены все 47 связанных cases. Production code после общего прогона не менялся. Ruff, Bandit (0 Medium/High) и API schema/catalog check прошли. Точная отправленная ревизия получит отдельные GitHub checks.
+Локальная проверка AUD-61: **1266 passed / 68,71%**, включая **394 PostgreSQL/Redis cases**; четыре прежних warnings, gate 65% сохранён. После общего прогона усилен guard тестового ACK callback: caught AssertionError не может дать ложный pass; повторены все 47 связанных cases. Production code после общего прогона не менялся. Ruff, Bandit (0 Medium/High) и API schema/catalog check прошли. Результаты GitHub для точной ревизии приведены ниже.
+
+
+Code head `f272360` (AUD-61) полностью прошёл с первой попытки
+[backend CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34348705525),
+[frontend CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34348705438) и
+[Android CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34348705527).
+Сохранены [backend](evidence/ci-f272360-backend.json),
+[frontend](evidence/ci-f272360-frontend.json) и [Android](evidence/ci-f272360-android.json)
+snapshots. [Linux summary](evidence/ci-f272360-tests.txt): **1266 passed / 68,65%**;
+Windows: **1266 passed / 68,71%**, четыре warnings; неизменный 65% gate пройден.
+Все 15 новых cases входят в CI. Preview guard успешен, deploy пропущен. Временных
+runtime LOGIN-ролей и соединений после локальных прогонов осталось ноль. Проверены
+222 локальные Markdown-ссылки в 11 руководствах перед добавлением CI-снимков.
+Независимых PR reviews нет; PR остаётся draft. Следующий documentation-only commit
+сохраняет результаты и запускает собственные checks; production code не меняется.

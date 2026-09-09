@@ -413,4 +413,14 @@ and Redis lock release may still precede SQL commit; no durable outbox or full
 EventTrigger/account/pipeline effect verification is claimed. Global job propagation,
 user opaque auth, live socket revocation and actual APK/network/load runs remain open.
 
-Local AUD-61 validation: **1266 passed / 68.71%**, including **394 PostgreSQL/Redis cases**; four existing warnings, unchanged 65% gate. After the combined run, the test callback guard was strengthened to expose swallowed assertion failures, then all 47 related cases were rerun. Production code is unchanged since the full run. Ruff, Bandit (zero Medium/High) and API export checks pass. GitHub checks are tracked on the pushed revision separately.
+Local AUD-61 validation: **1266 passed / 68.71%**, including **394 PostgreSQL/Redis cases**; four existing warnings, unchanged 65% gate. After the combined run, the test callback guard was strengthened to expose swallowed assertion failures, then all 47 related cases were rerun. Production code is unchanged since the full run. Ruff, Bandit (zero Medium/High) and API export checks pass. GitHub results for the exact code revision follow below.
+
+
+On code head `f272360`, [backend](https://github.com/RootOne1337/sphere-platform/actions/runs/34348705525),
+[frontend](https://github.com/RootOne1337/sphere-platform/actions/runs/34348705438) and
+[Android](https://github.com/RootOne1337/sphere-platform/actions/runs/34348705527) CI pass
+on attempt 1. Linux: **1266 tests / 68.65%**; Windows: **1266 / 68.71%**, including
+394 PostgreSQL/Redis cases. Preview guard passes and deployment is skipped. Compact
+snapshots and the Linux test summary are committed with the audit report. The following
+documentation-only revision starts its own checks; application code is unchanged.
+No independent review, full production rollout or APK/OS/load verification is implied.
