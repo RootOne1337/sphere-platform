@@ -1,13 +1,19 @@
 # Sphere Platform: аудит готовности к эксплуатации
 
-Статус на 9 сентября 2026: **аудит продолжается; production readiness не подтверждена**.
+Статус на 10 сентября 2026: **аудит продолжается; production readiness не подтверждена**.
 Исходная ревизия: `28f8cc46ab65496e00297960fd94d87d1605cc83`.
 Ветка исправлений: `codex/enterprise-audit-20260905`; [draft PR #19](https://github.com/RootOne1337/sphere-platform/pull/19).
 
 Проверка разрешена владельцем. Воспроизведения выполнялись на локальных искусственных
 данных, выделенных PostgreSQL/Redis и подменённых транспортных границах. Внешняя
-инфраструктура не является целью тестирования. Целевая конфигурация — 10–64 эмулятора
-на станции с последующим использованием физических Android-устройств.
+инфраструктура не является целью тестирования. Целевая конфигурация — сотни/тысячи APK в парке, ориентировочно 10–64 эмулятора
+на станции, затем физические Android-устройства. Ёмкость пока не измерена.
+
+Текущий порядок работ: автоматический reconnect и независимый от GitHub recovery,
+сохранность исполнения, достоверный startup, диагностика инцидентов, реальные UI
+данные. [Эксплуатационная матрица](../../operations/READINESS.md) отделяет
+подтверждённые дефекты от проектируемых возможностей; историческая severity ниже
+не означает, что сейчас исправления идут в порядке номеров AUD.
 
 Главные подтверждённые риски: повышение tenant-пользователя до платформенного
 администратора, нарушение изоляции устройств и задач, повторное выполнение DAG,
@@ -1008,3 +1014,37 @@ security, RLS и миграции прошли. Preview guard успешен, de
 результаты и запускает собственные checks; исполняемый код после `8692a58` не
 меняется. PR остаётся draft без независимого review, merge или deployment. Реальные
 PC/APK sockets, OS/subprocess и нагрузка 10–64 устройств не объявлены проверенными.
+
+
+### AUD-68 — High: development launcher сообщал успех после неудачного старта
+
+- **Root cause:** `docker info/build/up` проверялись как PowerShell exceptions,
+  хотя native CLI возвращает ненулевой exit code. Результаты двух health waits
+  отбрасывались, container names были привязаны к одному project. Backend/frontend
+  в full Compose вообще не имели health probes; missing `.env` копировался и запуск
+  продолжался без заполнения конфигурации.
+- **Evidence/reproduction:** [10 failing launcher cases](evidence/dev-launcher-before.txt)
+  выполняют настоящий `start-dev.ps1` в дочернем PowerShell, в отдельной копии пути
+  с пробелами, подставляя Docker CLI как Python process с exit 17. Ошибки info,
+  config, build, up и readiness дают ложный успех до исправления. Ещё [7 failing
+  probe cases](evidence/dev-readiness-before.txt) обнаруживают отсутствие healthchecks
+  в реальном `docker compose config` merge. Docker daemon/services не запускались.
+- **Affected files:** `scripts/start-dev.ps1`, `docker-compose.full.yml`;
+  `tests/deployment/test_dev_launcher.py`, `tests/deployment/test_dev_readiness.py`.
+- **Fix:** явная проверка native exit code; quiet config до build/up; обязательная
+  подготовка созданного `.env`; `up --wait --wait-timeout` вместо fixed-name inspect.
+  Backend проверяет `/api/v1/health/readyz` и ready body; frontend — HTTP 200 `/login`,
+  с network timeout и отказом на redirect. Failed startup сохраняет containers/volumes
+  для диагностики. Default wait — 180 s, параметр `-ReadyTimeoutSec`.
+- **Regression:** [25 deployment tests passed](evidence/dev-launcher-after.txt),
+  включая 17 новых. Probe expressions исполняются реальными Python/Node processes
+  с подменой только HTTP boundary: ready/unready/network failure и 200/302/503.
+  PowerShell subprocess tests проверяют exit status, прекращение последующих шагов,
+  config-before-up и отсутствие fixed container lookup. CI требует pwsh/Node/Docker,
+  при отсутствии в CI тесты падают, а не молча пропускаются.
+- **Residual risk:** тесты не являются реальным Docker failure drill. Ready endpoint
+  не проверяет Alembic head/runtime grants/задачи/WS, `/login` не проверяет браузерные
+  операции, остальные services без probes требуют только running. Wait timeout не
+  ограничивает build/pull/зависший Docker CLI. Старые `-Tunnel`, `-Down`, `-Status`
+  не входят в исправленный startup path. Full recipe остаётся development; подробный
+  [startup contract](../../operations/STARTUP.md) не обещает production autostart.

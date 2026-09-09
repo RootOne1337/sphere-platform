@@ -6,13 +6,18 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [Unreleased] — enterprise audit, 2026-09-09
+## [Unreleased] — enterprise audit, 2026-09-10
 
 Изменения находятся в draft PR; это не опубликованный production release.
 Полный перечень предыдущих audit fixes, доказательства и residual risks:
 [audit report](docs/audits/2026-09-05/AUDIT-REPORT.md).
 
 ### Security / runtime
+
+- AUD-68: development startup прекращается при native Docker/config/build/up error;
+  Compose ждёт readiness по service identity, API/frontend получили health probes.
+  17 новых subprocess/config regressions; missing env требует заполнения перед запуском.
+  [Startup contract](docs/operations/STARTUP.md) описывает границы проверки.
 
 - AUD-67: APK clean server close использует retry delay; equal jitter распределяет
   fleet reconnect по окнам 1–2 s до 15–30 s. Три новых runtime-policy tests,
