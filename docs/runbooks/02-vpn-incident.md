@@ -1,9 +1,11 @@
 # Runbook 02 — VPN incidents and address-pool exhaustion
 
-Updated: 2026-09-06. Scope: the VPN implementation in this repository. This is an
+Reviewed: 2026-09-10. Scope: the VPN implementation in this repository. This is an
 operating guide for the current incomplete subsystem, not a deployment sign-off.
 The [audit report](../audits/2026-09-05/AUDIT-REPORT.md) records verified defects,
 fixes and remaining blockers.
+
+For shared incident fields and Compose selection, see [the runbook index](README.md).
 
 ## Current architecture
 

@@ -26,14 +26,14 @@ runtime-проверок и не считается доказательство
 | Проверка | Результат | Практическое ограничение |
 | --- | --- | --- |
 | Android enterprise debug unit suite | 347 passed, 0 failed | JVM/MockWebServer; не проверяет ОС, codec, батарею или смерть процесса на телефоне |
-| Объединённая Backend/PC/production/deployment suite | **1334 passed, 0 failed**; coverage **69,31%** | Строгий coverage gate 65% пройден с precision=2. Load suite исключена; 6 Compose config tests не запускают сервисы |
+| Объединённая Backend/PC/production/deployment suite | **1351 passed, 0 failed**; coverage **69,32%** | Строгий coverage gate 65% пройден с precision=2. Load suite исключена; 25 deployment cases включают config/subprocess probes без запуска сервисов |
 | Python dependency scan | **0 known vulnerabilities** в совместном backend/PC resolution | Pip-audit snapshot, не проверка frontend/Gradle/container/application security; [версии и ограничения](DEPENDENCY-REVIEW.md) |
 | Проверки PostgreSQL/Redis | **453 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
 | Миграции | Применены до **20260909_user_auth_bootstrap** включительно | Только изолированная БД; конфликтные данные/downgrade проверены в throwaway schema; production не мигрировался |
 | Backend image | Собирается; исходная запись OpenAPI воспроизведённо падает с PermissionError | Исправлен lifespan; полный deployment runtime ещё не подтверждён |
 | Frontend | **198 Jest tests passed**, tsc passed; Next production build exit 0 на Node 24.19.0 | React/JSDOM + Axios adapters; настоящий browser runtime не проверен. Windows standalone tracing выдал ENOENT warning, artifact packaging ещё не подтверждён |
 | APK ↔ реальный локальный backend | Не завершено | Автоматическая проверка разрешений отклонила запуск локального API: `blocked by policy`; обход не выполнялся |
-| 10–64 эмулятора, физические телефоны | Не измерено | Нет подтверждённых CPU/RAM/FPS/энергопотребления и совместимости со всеми Android |
+| 10–64 эмулятора на станции, сотни/тысячи APK, физические телефоны | Не измерено | Нет подтверждённых CPU/RAM/FPS/энергопотребления и совместимости со всеми Android |
 
 Последний общий вывод: [combined-suite-current.txt](evidence/combined-suite-current.txt).
 Предыдущий отдельный DAG benchmark однажды занял 127,1 ms при пороге 100 ms;
@@ -1031,7 +1031,7 @@ PC/APK sockets, OS/subprocess и нагрузка 10–64 устройств н�
   в реальном `docker compose config` merge. Docker daemon/services не запускались.
 - **Affected files:** `scripts/start-dev.ps1`, `docker-compose.full.yml`;
   `tests/deployment/test_dev_launcher.py`, `tests/deployment/test_dev_readiness.py`.
-- **Fix:** явная проверка native exit code; quiet config до build/up; обязательная
+- **Fix:** `7d47c61` — явная проверка native exit code; quiet config до build/up; обязательная
   подготовка созданного `.env`; `up --wait --wait-timeout` вместо fixed-name inspect.
   Backend проверяет `/api/v1/health/readyz` и ready body; frontend — HTTP 200 `/login`,
   с network timeout и отказом на redirect. Failed startup сохраняет containers/volumes
@@ -1048,3 +1048,26 @@ PC/APK sockets, OS/subprocess и нагрузка 10–64 устройств н�
   ограничивает build/pull/зависший Docker CLI. Старые `-Tunnel`, `-Down`, `-Status`
   не входят в исправленный startup path. Full recipe остаётся development; подробный
   [startup contract](../../operations/STARTUP.md) не обещает production autostart.
+
+
+## Эксплуатационный срез 10 сентября 2026
+
+AUD-67 (`f99a310`) исправляет APK retry pacing/jitter. AUD-68 (`7d47c61`)
+исправляет ложный development startup success. Общий локальный прогон после этих
+изменений: **1351 passed / 69,32%**, 273,07 s, включая **453 PostgreSQL/Redis**
+и **25 deployment** cases, четыре прежних warnings. Coverage gate 65% сохранён.
+Android enterprise JVM suite: **347 passed**, 27 suites; before/after evidence
+хранится отдельно. Ruff 0.15.2 и API schema/catalog check проходят. Старый Ruff
+0.3.0 из backend test dependencies сообщает E721 в неизменённом exact-int check;
+CI использует отдельный новый Ruff, guard против bool→int не ослаблялся.
+
+[README](../../../README.md), [documentation index](../../README.md), runbooks,
+[operational matrix](../../operations/READINESS.md) и
+[AI readiness assessment](../../architecture/AI-READINESS.md) описывают текущие
+контракты и ограничения. Monitoring wiring и synthetic VPN metrics зафиксированы
+как открытые пробелы. LAN primary/saved secondary/optional GitHub — направление
+будущего изменения, а не существующий резервный канал. AI не внедряется.
+
+Новая code revision ещё требует отдельного CI результата; предыдущие CI snapshots
+выше относятся к явно указанным SHA. Проверка runtime APK/OS/браузера, реального
+Docker restart, аппаратной нагрузки и incident ingestion не объявлена завершённой.

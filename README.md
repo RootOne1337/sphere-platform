@@ -1,663 +1,182 @@
 <div align="center">
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/badge/SPHERE-PLATFORM-00d4ff?style=for-the-badge&logo=satellite&logoColor=white">
-  <img alt="Sphere Platform" src="https://img.shields.io/badge/SPHERE-PLATFORM-0066cc?style=for-the-badge&logo=satellite&logoColor=white">
-</picture>
+# Sphere Platform
 
-### Enterprise Android Device Management & Automation Platform
+### Управление Android-парком · Локальное выполнение заданий · Наблюдаемое восстановление
 
-[![Version](https://img.shields.io/badge/version-4.7.0-00d4ff?style=flat-square)](VERSION)
-[![Audit](https://img.shields.io/badge/audit-in_progress-orange?style=flat-square)](docs/audits/2026-09-05/AUDIT-REPORT.md)
-[![Python](https://img.shields.io/badge/python-3.12-3776ab?style=flat-square&logo=python&logoColor=white)](backend/)
-[![Kotlin](https://img.shields.io/badge/kotlin-1.9-7F52FF?style=flat-square&logo=kotlin&logoColor=white)](android/)
-[![Next.js](https://img.shields.io/badge/Next.js-15-000000?style=flat-square&logo=next.js&logoColor=white)](frontend/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.136-009688?style=flat-square&logo=fastapi&logoColor=white)](backend/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-4169E1?style=flat-square&logo=postgresql&logoColor=white)](infrastructure/postgres/)
-[![Redis](https://img.shields.io/badge/Redis-7.2-DC382D?style=flat-square&logo=redis&logoColor=white)](infrastructure/redis/)
-[![Docker](https://img.shields.io/badge/Docker-Compose_V2-2496ED?style=flat-square&logo=docker&logoColor=white)](docker-compose.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](LICENSE)
-[![CI Backend](https://github.com/RootOne1337/sphere-platform/actions/workflows/ci-backend.yml/badge.svg)](https://github.com/RootOne1337/sphere-platform/actions)
-[![CI Android](https://github.com/RootOne1337/sphere-platform/actions/workflows/ci-android.yml/badge.svg)](https://github.com/RootOne1337/sphere-platform/actions)
+[![Audit](https://img.shields.io/badge/status-active_development-2563eb?style=flat-square)](docs/operations/READINESS.md)
+[![Backend CI](https://github.com/RootOne1337/sphere-platform/actions/workflows/ci-backend.yml/badge.svg?branch=codex%2Fenterprise-audit-20260905)](https://github.com/RootOne1337/sphere-platform/actions/workflows/ci-backend.yml)
+[![Android CI](https://github.com/RootOne1337/sphere-platform/actions/workflows/ci-android.yml/badge.svg?branch=codex%2Fenterprise-audit-20260905)](https://github.com/RootOne1337/sphere-platform/actions/workflows/ci-android.yml)
+[![Frontend CI](https://github.com/RootOne1337/sphere-platform/actions/workflows/ci-frontend.yml/badge.svg?branch=codex%2Fenterprise-audit-20260905)](https://github.com/RootOne1337/sphere-platform/actions/workflows/ci-frontend.yml)
 
-**Управление Android-устройствами, мониторинг и автоматизация.**
+**Один интерфейс для устройств, заданий, экранов и состояния системы.**
 
-[Документация](docs/) · [Web UI Guide](docs/web-ui-guide.md) · [API Reference](docs/api-reference.md) · [**Full Deploy Guide**](FULL-DEPLOYMENT-GUIDE.md) · [Deployment](docs/deployment.md) · [Changelog](CHANGELOG.md) · [Contributing](CONTRIBUTING.md)
-
----
+[Начать](#начать-работу) · [Документация](docs/README.md) · [Реальная готовность](docs/operations/READINESS.md) · [Аудит](docs/audits/2026-09-05/AUDIT-REPORT.md) · [Changelog](CHANGELOG.md)
 
 </div>
 
-> **Аудит на 8 сентября 2026 продолжается.** Production readiness и нагрузка
-> 10–64 эмулятора не подтверждены. Актуальные тесты, реальные дефекты, исправления
-> и остаточные риски: [audit report](docs/audits/2026-09-05/AUDIT-REPORT.md).
-> Политики всех 28 таблиц установлены миграцией; полный переход приложения на
-> непривилегированную PostgreSQL роль остаётся [блокером](docs/security/postgresql-rls.md).
-
-## Что такое Sphere Platform?
-
-Sphere Platform — развиваемая система для **управления, мониторинга и автоматизации** крупных парков Android-устройств. H.264 видеостриминг в реальном времени, DAG-движок скриптов, pipeline-оркестратор, cron-планировщик, zero-touch provisioning 1000+ эмуляторов и защищённый VPN — всё в одной платформе.
-
-> **Для кого:** DevOps-команды, тестировочные фермы, мобильные фермы, автоматизация QA, enterprise fleet management.
-
 ---
 
-## Возможности
+> **Состояние на 10 сентября 2026:** активная разработка и эксплуатационный аудит.
+> Цель — сотни/тысячи подключённых устройств, с десятками эмуляторов на каждой
+> станции. Подтверждённого capacity limit, SLA и совместимости со всеми телефонами
+> пока нет. В документации отделены реализованные механизмы, проверенные сценарии
+> и проектные решения. [Текущие приоритеты и критерии готовности →](docs/operations/READINESS.md)
 
-<table>
-<tr>
-<td width="50%">
+## Для чего Sphere
 
-### Управление флотом
-- Регистрация, группировка, тегирование **1000+ устройств**
-- Статус устройств в реальном времени через Redis
-- Bulk-операции на группы (перезагрузка, обновление, команды)
-- Zero-touch auto-enrollment для LDPlayer эмуляторов
+Sphere объединяет управление Android-устройствами, локальную автоматизацию,
+наблюдение экрана, рабочие станции и серверную координацию задач. APK получает
+задание и выполняет его локально; backend хранит состояние, принимает результаты
+и управляет парком. PC-agent связывает станцию с LDPlayer/ADB. Web UI даёт оператору
+точку управления и диагностики.
 
-</td>
-<td width="50%">
+Главный критерий качества — оператору не приходится вручную переподключать или
+переустанавливать сотни APK после обычного сбоя. Сейчас именно этот сценарий,
+достоверность результатов и обнаружение причин отказа определяют порядок работ.
 
-### H.264 Стриминг
-- **MediaProjection → MediaCodec → NAL-unit → WebSocket → WebCodecs**
-- SPS/PPS/IDR кэширование — мгновенный старт для нового viewer
-- Adaptive bitrate + frame drop при перегрузке
-- Persistent decoder — reconnect без чёрного экрана
+## Выберите свой маршрут
 
-</td>
-</tr>
-<tr>
-<td width="50%">
+| Вам нужно | Начните здесь |
+| --- | --- |
+| Понять, что уже работает и что мешает эксплуатации | [Эксплуатационная готовность](docs/operations/READINESS.md) |
+| Подготовить локальный стек | [Разработка](docs/development.md) → [Конфигурация](docs/configuration.md) |
+| Подключить эмулятор или телефон | [Android Agent](docs/android-agent.md) |
+| Подключить рабочую станцию | [PC Agent](docs/pc-agent.md) |
+| Разобраться с интерфейсом | [Web UI Guide](docs/web-ui-guide.md) |
+| Найти причину сбоя | [Диагностика и её текущие ограничения](docs/operations/READINESS.md#наблюдаемость-ответ-на-что-случилось-в-1432-на-устройстве-x) → [Runbooks](docs/runbooks/README.md) |
+| Проверить API и payload | [Генерируемый каталог](docs/api-endpoints.md) · [OpenAPI](docs/openapi.json) |
+| Проверить исправление и доказательства | [Audit report](docs/audits/2026-09-05/AUDIT-REPORT.md) · [Regression harness](tests/production/README.md) |
+| Подготовить deployment | [Deployment](docs/deployment.md) · [Полный guide](FULL-DEPLOYMENT-GUIDE.md) |
+| Оценить будущую моторную AI-модель | [AI readiness: анализ без внедрения](docs/architecture/AI-READINESS.md) |
 
-### Автоматизация скриптов
-- DAG v7 — направленный ациклический граф действий
-- Wave/Batch исполнение по группам устройств
-- 9 типов шагов: `run_script`, `condition`, `parallel`, `http_request`...
-- Pipeline chaining — цепочки скриптов с условной логикой
-
-</td>
-<td width="50%">
-
-### Планировщик и Оркестратор
-- DB-backed Cron Scheduler (croniter + SKIP LOCKED)
-- Conflict policies: `skip` / `queue` / `cancel_previous`
-- Pipeline Executor — параллельные и последовательные шаги
-- Мгновенная диспетчеризация через Redis TaskQueue
-
-</td>
-</tr>
-<tr>
-<td width="50%">
-
-### VPN-туннелирование
-- **AmneziaWG** — обфусцированный WireGuard
-- Per-device туннели с автоматическим IP-пулом
-- Self-healing + Kill Switch
-- Полный API для управления VPN-пирами
-
-</td>
-<td width="50%">
-
-### Мониторинг и Безопасность
-- Prometheus + Grafana + Alertmanager
-- Структурированное логирование (structlog)
-- JWT + TOTP MFA + RBAC + Row-Level Security
-- Аудит-лог всех действий
-
-</td>
-</tr>
-<tr>
-<td width="50%">
-
-### Нагрузочное тестирование
-- Фреймворк синтетических нагрузочных тестов (asyncio + websockets)
-- **1 024 виртуальных агента** на реальном бэкенде — FA 100%
-- 639 DAG-задач исполнены параллельно
-- HdrHistogram latency, Fleet Availability, HTML-отчёты
-- YAML-сценарии: quick, scalability (до 10 000), soak, spike
-
-</td>
-<td width="50%">
-
-### API Key Authentication
-- Формат `sphr_{env}_{64hex}` — 256-bit энтропия
-- Приоритет API-ключа над JWT при наличии обоих
-- Пагинация до 5 000 записей на страницу
-- Оптимизировано для массовых операций
-
-</td>
-</tr>
-<tr>
-<td width="50%">
-
-### Game Accounts & Sessions (v4.7)
-- Управление игровыми аккаунтами с автогенерацией ников
-- Трекинг сессий аккаунтов на устройствах
-- Привязка аккаунтов к конкретным устройствам
-- Мониторинг активных сессий в реальном времени
-
-</td>
-<td width="50%">
-
-### Event System & Automation (v4.7)
-- Event Triggers — автоматические реакции на события устройств
-- Device Events — полный таймлайн жизненного цикла устройств
-- Pipeline Settings — конфигурация пайплайнов через UI
-- Event Reactor + Orchestration Loop — background-автоматизация
-
-</td>
-</tr>
-</table>
-
----
-
-## Архитектура
+## Как устроена платформа
 
 ```mermaid
-graph TB
-    subgraph Internet
-        USER[👤 Оператор / Браузер]
-    end
-
-    subgraph PROXY[Reverse Proxy]
-        NGINX[nginx<br/>TLS · Rate Limit · WS Upgrade]
-    end
-
-    subgraph CORE[Core Services]
-        BACKEND[⚡ FastAPI Backend<br/>:8000]
-        FRONTEND[🖥️ Next.js 15 Frontend<br/>:3000]
-        N8N[🔗 n8n Workflows<br/>:5678]
-    end
-
-    subgraph DATA[Data Layer]
-        PG[(PostgreSQL 15<br/>28 таблиц · RLS policies)]
-        REDIS[(Redis 7.2<br/>PubSub · Cache · Queue)]
-    end
-
-    subgraph WS_LAYER[WebSocket Layer]
-        CM[ConnectionManager]
-        PSR[PubSubRouter]
-        SB[StreamBridge<br/>SPS/PPS Cache]
-    end
-
-    subgraph MONITORING[Observability]
-        PROM[Prometheus]
-        GRAF[Grafana]
-        ALERT[Alertmanager]
-    end
-
-    subgraph AGENTS[Device Agents]
-        ANDROID[📱 Android Agent<br/>Kotlin · H.264 · VPN]
-        PC[🖥️ PC Agent<br/>Python · ADB Bridge]
-    end
-
-    USER -->|HTTPS/WSS| NGINX
-    NGINX --> BACKEND
-    NGINX --> FRONTEND
-    NGINX --> N8N
-
-    BACKEND --> PG
-    BACKEND --> REDIS
-    BACKEND --> CM
-    CM --> PSR
-    CM --> SB
-
-    PSR -->|WSS| ANDROID
-    PSR -->|WSS| PC
-    SB -->|H.264 NAL| USER
-
-    BACKEND --> PROM
-    PROM --> GRAF
-    PROM --> ALERT
-
-    style BACKEND fill:#009688,color:#fff
-    style FRONTEND fill:#000,color:#fff
-    style PG fill:#4169E1,color:#fff
-    style REDIS fill:#DC382D,color:#fff
-    style ANDROID fill:#3DDC84,color:#fff
-    style NGINX fill:#009639,color:#fff
+flowchart LR
+    O[Оператор / Web UI] --> B[Backend: API + задачи + события]
+    B --> P[(PostgreSQL: durable state)]
+    B <--> R[(Redis: presence / очереди / PubSub)]
+    B <--> A[Android APK: локальный DAG / receipts / экран]
+    B <--> C[PC Agent: станция / LDPlayer / ADB]
+    C --> E[Локальные эмуляторы]
+    A --> O
 ```
 
-### Потоки данных
+Диаграмма показывает роли компонентов. Она не означает подтверждённую HA-топологию:
+второй URL на тот же сервер не переживает потерю этого сервера. Принятое направление —
+LAN-first management, сохранённый резервный endpoint той же установки и GitHub как
+дополнительный discovery. Этот failover-контракт ещё предстоит реализовать и проверить.
 
-```mermaid
-sequenceDiagram
-    participant O as Оператор
-    participant F as Frontend
-    participant B as Backend
-    participant R as Redis
-    participant D as Device
+## Возможности и доказательства
 
-    Note over O,D: 🔐 Аутентификация
-    O->>F: Логин (email + TOTP)
-    F->>B: POST /auth/login
-    B-->>F: JWT access + refresh
-    
-    Note over O,D: 📱 Управление устройством
-    O->>F: Открыть устройство
-    F->>B: GET /devices/{id}
-    B->>R: Кэш статуса (online/offline)
-    B-->>F: Device + Status
+| Область | Реализованная основа | Что ещё проверяется |
+| --- | --- | --- |
+| Парк устройств | Регистрация, идентификаторы, группы/теги, presence, API/WS | Массовый reconnect, provisioning всех станций, физические телефоны |
+| Автоматизация | DAG/Lua, задания, batches/waves, scheduler/pipelines, локальный журнал | Полный crash recovery, unknown physical outcomes, отмена при отказах |
+| Связь | Refresh, heartbeat, reconnect, config discovery, generation fencing | Резервный адрес, независимость от GitHub, потеря ответа refresh, outage matrix |
+| Экран и управление | H.264 / WebCodecs, touch/key primitives, backpressure | Codec/OS recovery, latency под нагрузкой, измеренный ресурсный бюджет |
+| PC-agent | Workstation ownership, registration, command result routing/recovery | Durable results, повторная topology, реальный LDPlayer/ADB/host reboot |
+| VPN | SQL lease/intents, ограничения адресов, recovery/fencing | Provider reconciliation и реальные маршруты/инвентарь |
+| Web UI | Страницы, API hooks, identity/cache separation, mutation flows | Все пользовательские действия и отсутствие synthetic metrics на каждом экране |
+| Диагностика | Structured backend logs, request ID, metrics, APK file logs/upload | Работающий общий metrics stack, correlation timeline и support bundle |
 
-    Note over O,D: 🎬 H.264 Стриминг
-    O->>F: Запустить стрим
-    F->>B: WS /ws/stream/{device_id}/view
-    B->>D: WS command: start_stream
-    D-->>B: NAL units (SPS→PPS→IDR→P-frames)
-    B->>B: StreamBridge кэширует SPS/PPS/IDR
-    B-->>F: Binary frames → WebCodecs decoder
+Границы тестирования важны: JVM/MockWebServer не заменяют Android OS, React/JSDOM
+не заменяет браузер, Compose config не заменяет запуск сервисов. В [отчёте](docs/audits/2026-09-05/AUDIT-REPORT.md)
+у каждого исправления есть severity, root cause, before/after evidence, tests и
+residual risk. PR остаётся draft до завершения эксплуатационных критериев.
 
-    Note over O,D: 📋 Выполнение скрипта
-    O->>F: Запустить DAG-скрипт
-    F->>B: POST /tasks
-    B->>R: Enqueue в TaskQueue
-    R-->>B: Dispatch
-    B->>D: WS command: EXECUTE_DAG
-    D-->>B: Результат шагов
-    B-->>F: SSE обновления статуса
-```
+## Начать работу
 
-### Pipeline Orchestrator
+### 1. Подготовить окружение
 
-```mermaid
-graph LR
-    API[REST API] --> PS[PipelineService]
-    PS --> PE[PipelineExecutor]
-    
-    PE --> RS[run_script]
-    PE --> RP[run_pipeline]
-    PE --> HR[http_request]
-    PE --> CD[condition]
-    PE --> DL[delay]
-    PE --> PL[parallel]
-    PE --> SV[set_variable]
-    PE --> NT[notify]
-    PE --> AP[approval]
+Нужны Git, Docker Engine/Desktop с Compose v2 и настроенный `.env`. Для отдельных
+компонентов используются Python 3.12, Node.js и JDK/Android SDK; точные команды и
+версии сборки приведены в [development guide](docs/development.md) и исходных manifests.
+APK имеет `minSdk=26`; это нижняя граница установки, а не обещание всех функций на
+любом Android 8+ устройстве.
 
-    SE[SchedulerEngine] -->|croniter| PS
-    SE --> DB[(Schedule + Execution)]
-
-    style PE fill:#009688,color:#fff
-    style SE fill:#ff9800,color:#fff
-```
-
-### Agent Resilience (6-уровневая гарантия)
-
-```mermaid
-graph TD
-    BOOT[1. BootReceiver<br/>BOOT_COMPLETED] --> SERVICE
-    STICKY[2. START_STICKY<br/>OS auto-restart] --> SERVICE
-    SW[3. ServiceWatchdog<br/>AlarmManager 5 min] --> SERVICE
-    APP[4. Application.onCreate<br/>Watchdog scheduling] --> SERVICE
-    CW[5. ConfigWatchdog<br/>GitHub Raw polling] --> SERVICE
-    NET[6. NetworkChangeHandler<br/>Instant reconnect] --> SERVICE
-
-    SERVICE[SphereService<br/>Foreground + WebSocket]
-    SERVICE --> CB{Circuit Breaker<br/>10 failures?}
-    CB -->|Да| CW
-    CB -->|Нет| WS[WebSocket<br/>Reconnect]
-
-    style SERVICE fill:#3DDC84,color:#000
-    style CB fill:#ff5722,color:#fff
-```
-
-> Полная архитектурная документация: [docs/architecture.md](docs/architecture.md)
-
----
-
-## Быстрый старт
-
-### Требования
-
-| Компонент | Минимум | Рекомендуется |
-|-----------|---------|---------------|
-| Docker Desktop | 4.x+ (Compose V2) | Последняя версия |
-| RAM | 4 ГБ | 8+ ГБ |
-| CPU | 2 cores | 4+ cores |
-| Порты | 80, 443 | + 5432, 6379 (dev) |
-
-### Развёртывание одной командой
-
-```bash
+```powershell
 git clone https://github.com/RootOne1337/sphere-platform.git
 cd sphere-platform
-bash scripts/full-deploy.sh
+Copy-Item .env.example .env
 ```
 
-> **Windows:** `powershell -ExecutionPolicy Bypass -File scripts\full-deploy.ps1`
->
-> Подробнее: **[Full Deploy Guide](FULL-DEPLOYMENT-GUIDE.md)** (15 секций, от нуля до продакшна)
+Заполните параметры по [configuration guide](docs/configuration.md). Не публикуйте
+`.env`, tokens и signing keys. Для development и deployment действуют разные
+Compose/configuration contracts; не смешивайте их автоматически.
 
-### 1 — Клонирование и настройка (ручной режим)
+### 2. Проверить выбранную конфигурацию
 
-```bash
-git clone https://github.com/RootOne1337/sphere-platform.git
-cd sphere-platform
+Для текущего development-рецепта:
 
-# Генерация секретов (.env.local)
-python scripts/generate_secrets.py
+```powershell
+docker compose -f docker-compose.yml -f docker-compose.full.yml config --quiet
 ```
 
-### 2 — Запуск
+Команда проверяет Compose/interpolation, не запускает сервисы и не проверяет SQL
+миграции, готовность API или работу APK. Отсутствующий обязательный параметр должен
+быть исправлен до запуска.
 
-```bash
-# 🔧 Разработка (hot-reload backend + frontend)
-docker compose -f docker-compose.yml \
-               -f docker-compose.full.yml \
-               -f docker-compose.override.yml up -d
+### 3. Запустить development-стек
 
-# 🚀 Продакшн
-docker compose -f docker-compose.yml \
-               -f docker-compose.production.yml up -d
+Существующий launcher:
 
-# ✅ Проверка статуса
-docker compose ps
+```powershell
+./scripts/start-dev.ps1
 ```
 
-### 3 — Инициализация
+Он запускает `docker-compose.yml` + `docker-compose.full.yml`. Frontend в этом
+рецепте работает в dev mode. Launcher останавливается при ошибке Docker/config/build/up
+и ждёт готовности PostgreSQL, Redis, API и frontend; default wait — 180 s.
+[AUD-68 и startup contract](docs/operations/STARTUP.md) описывают 17 regression cases.
+Проверка миграций, runtime grants, APK auth и задания остаётся отдельным этапом.
 
-```bash
-# Миграции базы данных
-docker compose exec backend alembic upgrade head
+Для запуска из prepared images и эксплуатационного окружения используйте
+[deployment guide](docs/deployment.md). Runtime database roles, миграции, ключи,
+backup/restore и persistence имеют явные rollout ограничения. Аудит не выполнял
+production rollout. Автоматический запуск при boot требует отдельного reboot/restore drill на подготовленном
+стенде; subprocess tests launcher не заменяют такой прогон.
 
-# Создание суперадминистратора
-docker compose exec backend python scripts/create_admin.py
-```
+### 4. Подключить первое устройство
 
-### 4 — Доступ к сервисам
+Следуйте [APK guide](docs/android-agent.md): flavor/package/signature, provisioning,
+server origin, device identity, permissions, регистрация и first-message WS auth.
+Начните с одного изолированного устройства и одного простого задания. Для PC станции
+нужны существующая workstation identity, соответствующий agent key и рабочие пути
+к локальным executable — [точный PC-контракт](docs/pc-agent.md).
 
-| Сервис | URL | Описание |
-|--------|-----|----------|
-| 🖥️ Web UI | `http://localhost` | Основной интерфейс |
-| 📖 Swagger | `http://localhost/api/v1/docs` | Интерактивная API-документация |
-| 📘 ReDoc | `http://localhost/api/v1/redoc` | Альтернативная API-документация |
-| 📊 Grafana | `http://localhost:3001` | Дашборды мониторинга |
-| 🔗 n8n | `http://localhost:5678` | No-code автоматизация |
+Не удаляйте credentials/journal как универсальный способ «починить reconnect»:
+так теряются identity и доказательства исполнения. Нужен диагностируемый recovery.
 
----
+## Если что-то пошло не так
 
-## Структура проекта
+Запишите время с часовым поясом, device/workstation ID, task/command ID, действие
+в UI, ожидаемый и фактический результат, версии APK/backend и момент последнего
+успешного подключения. После этого можно сузить поиск до соответствующих событий,
+воспроизвести сценарий и сохранить regression test.
 
-```
-sphere-platform/
-│
-├── backend/                    # ⚡ FastAPI Backend (Python 3.12)
-│   ├── api/v1/                 #    REST-эндпоинты (22 модуля)
-│   ├── api/ws/                 #    WebSocket-маршруты (agent, stream, events)
-│   ├── core/                   #    Конфигурация, RBAC, JWT, зависимости
-│   ├── models/                 #    SQLAlchemy ORM (19 таблиц)
-│   ├── schemas/                #    Pydantic v2 request/response схемы
-│   ├── services/               #    Бизнес-логика (orchestrator, scheduler, vpn)
-│   ├── tasks/                  #    Background asyncio tasks
-│   ├── websocket/              #    ConnectionManager + PubSubRouter + StreamBridge
-│   └── monitoring/             #    Prometheus-метрики, healthcheck
-│
-├── frontend/                   # 🖥️ Next.js 15 App Router (React 19)
-│   ├── app/(auth)/             #    Авторизация
-│   ├── app/(dashboard)/        #    Dashboard, Devices, Scripts, Stream, VPN,
-│   │                           #    Tasks, Fleet, Monitoring, Orchestration
-│   ├── components/             #    shadcn/ui компоненты
-│   ├── hooks/                  #    TanStack Query v5 хуки
-│   └── lib/                    #    Axios, Zustand, H264Decoder
-│
-├── android/                    # 📱 Android Agent (Kotlin + Hilt)
-│   └── app/src/main/           #    Services, VPN, Streaming, ConfigWatchdog
-│
-├── pc-agent/                   # 🖥️ PC Agent (Python asyncio)
-│   └── modules/                #    ADB bridge, LDPlayer, telemetry
-│
-├── infrastructure/             # 🏗️ Инфраструктура
-│   ├── nginx/                  #    Reverse proxy + TLS
-│   ├── postgres/               #    Init SQL, RLS-политики
-│   ├── redis/                  #    Конфигурация Redis
-│   ├── monitoring/             #    Prometheus, Grafana, Alertmanager
-│   └── traefik/                #    Альтернативный reverse proxy
-│
-├── specs/                      # 📋 Технические спецификации (14 модулей)
-│   ├── TZ-00-Constitution/     #    Репозиторий, Docker, PostgreSQL, Redis, CI/CD
-│   ├── TZ-01-Auth-Service/     #    JWT, MFA, RBAC, API Keys, Audit
-│   ├── TZ-02-Device-Registry/  #    CRUD, Groups, Status, Bulk, Discovery
-│   ├── TZ-03-WebSocket-Layer/  #    ConnectionManager, PubSub, Backpressure
-│   ├── TZ-04-Script-Engine/    #    DAG Schema, CRUD, TaskQueue, Wave/Batch
-│   ├── TZ-05-H264-Streaming/   #    MediaProjection, MediaCodec, NAL, WebCodecs
-│   ├── TZ-06-VPN-AmneziaWG/    #    Config, Pool, Self-Healing, Kill Switch
-│   ├── TZ-07-Android-Agent/    #    Architecture, WebSocket, Commands, OTA
-│   ├── TZ-08-PC-Agent/         #    Architecture, LDPlayer, Telemetry, ADB
-│   ├── TZ-09-n8n-Integration/  #    Setup, DevicePool, ExecuteScript, Events
-│   ├── TZ-10-Web-Frontend/     #    Setup, Dashboard, Remote, VPN UI, Scripts
-│   ├── TZ-11-Monitoring/       #    Prometheus, Grafana, Alertmanager, Logging
-│   ├── TZ-12-Agent-Discovery/  #    Zero-touch provisioning plan
-│   └── TZ-12-Orchestrator/     #    Pipeline Engine, Scheduler, Events (5 SPLITs)
-│
-├── agent-config/               # ⚙️ Zero-touch provisioning конфигурации
-├── n8n-nodes/                  # 🔗 Кастомные n8n-ноды
-├── alembic/                    # 🗃️ Миграции базы данных
-├── tests/                      # 🧪 Тесты (94 файла, 1 231 тест)
-│   ├── auth/                   #    Аутентификация, MFA, JWT
-│   ├── devices/                #    CRUD устройств, bulk, discovery
-│   ├── vpn/                    #    VPN-пиры, пул IP, health
-│   ├── test_scripts/           #    Pipeline, Scheduler, DAG
-│   ├── test_ws/                #    WebSocket Connection Manager
-│   └── load/                   #    🔥 Нагрузочные тесты (32→10 000 агентов)
-│       ├── core/               #       VirtualAgent, AgentPool, Orchestrator
-│       ├── protocols/          #       WS/REST клиенты, H.264 эмулятор
-│       ├── scenarios/          #       6 бизнес-сценариев
-│       ├── config/             #       YAML-конфигурации нагрузки
-│       └── mock_server.py      #       Mock Sphere Platform
-├── scripts/                    # 🛠️ Утилиты и деплой-скрипты
-│   ├── full-deploy.sh          #    Полное развёртывание Linux/macOS (8 шагов)
-│   ├── full-deploy.ps1         #    Полное развёртывание Windows PowerShell
-│   ├── health-check.sh         #    Проверка здоровья всех сервисов
-│   ├── backup-database.sh      #    Бэкап PostgreSQL + Redis с ротацией
-│   ├── generate_secrets.py     #    Генерация криптографических секретов
-│   └── create_admin.py         #    Создание суперадминистратора
-│
-├── docs/                       # 📖 Документация проекта
-└── .github/                    # 🔄 CI/CD workflows
-```
+Сегодня сквозной поиск ещё неполон. [План наблюдаемости](docs/operations/READINESS.md)
+определяет требуемый timeline. [Runbooks](docs/runbooks/README.md) сверены с текущими
+именами сервисов и health paths; их команды выбираются для вашего Compose project.
+Это инструкции диагностики, а не доказательство пройденного recovery drill.
 
----
+## Работа с кодом
 
-## Технологический стек
+| Каталог | Назначение |
+| --- | --- |
+| [backend/](backend/) | FastAPI, orchestration, models, WS, background services |
+| [frontend/](frontend/) | Next.js UI и API/WS clients |
+| [android/](android/) | Kotlin APK, локальный исполнитель и streaming |
+| [pc-agent/](pc-agent/) | Python agent для рабочих станций |
+| [alembic/](alembic/) | Версионированные миграции |
+| [infrastructure/](infrastructure/) | Proxy, monitoring и конфигурация сервисов |
+| [tests/](tests/) | Unit, isolated-service и deployment regressions |
+| [docs/](docs/README.md) | Guides, решения, evidence и rollout contracts |
 
-```mermaid
-graph LR
-    subgraph Backend
-        PY[Python 3.12] --> FAST[FastAPI 0.115]
-        FAST --> SA[SQLAlchemy 2.0<br/>async]
-        FAST --> STRUCT[structlog]
-        SA --> PG[(PostgreSQL 15<br/>RLS)]
-        FAST --> RD[(Redis 7.2)]
-    end
+Изменения ведутся атомарными коммитами: воспроизведение → минимальный fix → проверка
+→ актуальная документация → PR/CI. Исправление не считается проверенным только
+потому, что собрался APK или прошёл lint. Тесты с PostgreSQL/Redis разрешены только
+на выделенных локальных test services; [предохранители и команды](tests/production/README.md).
 
-    subgraph Frontend
-        TS[TypeScript] --> NEXT[Next.js 15]
-        NEXT --> REACT[React 19]
-        REACT --> SHAD[shadcn/ui]
-        REACT --> TQ[TanStack Query v5]
-        REACT --> ZS[Zustand]
-    end
-
-    subgraph Mobile
-        KT[Kotlin] --> HILT[Hilt DI]
-        KT --> MC[MediaCodec<br/>H.264]
-        KT --> AWG[AmneziaWG]
-        KT --> OK[OkHttp3 WS]
-    end
-
-    subgraph Infra
-        DC[Docker Compose V2]
-        NG[nginx]
-        PROM[Prometheus]
-        GRAF[Grafana]
-        GHA[GitHub Actions]
-    end
-
-    style FAST fill:#009688,color:#fff
-    style NEXT fill:#000,color:#fff
-    style KT fill:#7F52FF,color:#fff
-    style PG fill:#4169E1,color:#fff
-    style RD fill:#DC382D,color:#fff
-```
-
-<details>
-<summary><b>Полная таблица технологий</b></summary>
-
-### Backend
-| Компонент | Технология | Назначение |
-|-----------|------------|------------|
-| Фреймворк | FastAPI 0.115+ | Async REST + WebSocket API |
-| ORM | SQLAlchemy 2.0 (async) | Data access layer |
-| БД | PostgreSQL 15 | Primary data store + RLS |
-| Кэш / Брокер | Redis 7.2 | PubSub, кэш, очередь задач |
-| Auth | JWT HS256 + TOTP MFA | Двухфакторная аутентификация |
-| Задачи | asyncio + Redis PubSub | Background task execution |
-| Метрики | Prometheus + structlog | Observability |
-| Миграции | Alembic | Schema version control |
-| Валидация | Pydantic v2 | Request/Response schemas |
-
-### Frontend
-| Компонент | Технология | Назначение |
-|-----------|------------|------------|
-| Фреймворк | Next.js 15.1 (App Router) | SSR + Client components |
-| UI библиотека | shadcn/ui + Radix UI | Accessible component library |
-| Стилизация | Tailwind CSS | Utility-first CSS |
-| Стейт (серверный) | TanStack Query v5 | Cache, sync, background refetch |
-| Стейт (клиентский) | Zustand | Lightweight state management |
-| Графы | @xyflow/react | DAG визуализация |
-| Декодер | WebCodecs API | H.264 hardware decode |
-
-### Android Agent
-| Компонент | Технология | Назначение |
-|-----------|------------|------------|
-| Язык | Kotlin (compileSdk 35) | Modern Android development |
-| DI | Hilt + WorkManager | Dependency injection + scheduled work |
-| Стриминг | MediaProjection + MediaCodec | H.264 hardware encoding |
-| VPN | AmneziaWG | Obfuscated WireGuard tunnels |
-| Транспорт | OkHttp3 WebSocket | Bidirectional communication |
-| Discovery | CloneDetector + ZeroTouchProvisioner | Auto-enrollment |
-| Resilience | ConfigWatchdog + ServiceWatchdog + CircuitBreaker | 6-level uptime |
-
-### Инфраструктура
-| Компонент | Технология | Назначение |
-|-----------|------------|------------|
-| Reverse Proxy | nginx | TLS termination, rate limiting |
-| Контейнеры | Docker Compose V2 | Service orchestration |
-| CI/CD | GitHub Actions | Automated testing + deployment |
-| Мониторинг | Prometheus + Grafana + Alertmanager | Full observability stack |
-| Tunnel | Serveo SSH | Dev environment tunneling |
-
-</details>
-
----
-
-## API обзор
-
-<details>
-<summary><b>REST API Endpoints (22 модуля)</b></summary>
-
-| Модуль | Базовый путь | Описание |
-|--------|-------------|----------|
-| Auth | `/api/v1/auth` | Логин, регистрация, refresh token, TOTP |
-| Users | `/api/v1/users` | CRUD пользователей, роли |
-| Devices | `/api/v1/devices` | CRUD устройств, статус, register |
-| Groups | `/api/v1/groups` | Группы устройств, тегирование |
-| Scripts | `/api/v1/scripts` | DAG-скрипты, версионирование |
-| Tasks | `/api/v1/tasks` | Создание задач, статус, результаты |
-| Batches | `/api/v1/batches` | Батч-задачи, wave-исполнение |
-| Bulk | `/api/v1/bulk` | Массовые операции на устройства |
-| Pipelines | `/api/v1/pipelines` | Pipeline CRUD, выполнение |
-| Schedules | `/api/v1/schedules` | Cron-расписания, конфликт-политики |
-| VPN | `/api/v1/vpn` | Управление WireGuard-пирами |
-| Streaming | `/api/v1/streaming` | H.264 стрим-сессии |
-| Discovery | `/api/v1/discovery` | Auto-enrollment, workstations |
-| Config | `/api/v1/config` | Agent конфигурация |
-| Updates | `/api/v1/updates` | OTA-обновления APK |
-| Audit | `/api/v1/audit` | Аудит-лог |
-| Logs | `/api/v1/logs` | Логи устройств |
-| Locations | `/api/v1/locations` | Геолокация устройств |
-| Monitoring | `/api/v1/monitoring` | Prometheus-метрики |
-| Health | `/api/v1/health` | Healthcheck endpoint |
-| n8n | `/api/v1/n8n` | n8n webhook integration |
-
-**WebSocket Endpoints:**
-
-| Путь | Описание |
-|------|----------|
-| `/ws/android/{device_id}` | Подключение Android-агента |
-| `/ws/agent/{agent_id}` | Подключение PC-агента |
-| `/ws/stream/{device_id}/view` | H.264 viewer (бинарные фреймы) |
-| `/ws/events` | Server-Sent Events (real-time updates) |
-
-</details>
-
-> Интерактивная документация: **Swagger UI** по адресу `/api/v1/docs`
-
----
-
-## Документация
-
-| Документ | Описание |
-|----------|----------|
-| 📐 [Architecture](docs/architecture.md) | Дизайн системы, потоки данных, компонентные диаграммы |
-| 🧪 [Текущий аудит](docs/audits/2026-09-05/AUDIT-REPORT.md) | Доказательства, исправления, проверки и открытые production blockers |
-| 📖 [API Reference](docs/api-reference.md) | Ручной справочник; статус сверки отмечен внутри |
-| 📋 [HTTP API catalog](docs/api-endpoints.md) / [OpenAPI](docs/openapi.json) | Генерация из зарегистрированных маршрутов; CI проверяет актуальность |
-| 🚀 [**Full Deploy Guide**](FULL-DEPLOYMENT-GUIDE.md) | Инструкция развёртывания; readiness требует закрытия текущих audit blockers |
-| 🚀 [Deployment Guide](docs/deployment.md) | Docker, продакшн, staging, tunnel setup |
-| ⚙️ [Configuration](docs/configuration.md) | Справочник переменных окружения |
-| 🔒 [Security](docs/security.md) | Auth, RBAC, шифрование, модель угроз |
-| 🛠️ [Developer Guide](docs/development.md) | Локальная настройка, тестирование, стандарты |
-| �️ [Web UI Guide](docs/web-ui-guide.md) | Полный гайд по веб-интерфейсу — все страницы, кнопки, модальные окна |
-| �📱 [Android Agent](docs/android-agent.md) | Сборка APK, развёртывание, обновления |
-| 🖥️ [PC Agent](docs/pc-agent.md) | Установка, ADB-мост, LDPlayer |
-| ⚙️ [Agent Config](agent-config/README.md) | Zero-touch provisioning |
-| 📋 [Technical Specs](specs/) | 14 модулей технических спецификаций (70+ SPLIT-документов) |
-| 📝 [ADR](docs/adr/) | Architecture Decision Records |
-| 🚨 [Runbooks](docs/runbooks/) | Процедуры реагирования на инциденты |
-| 🤝 [Contributing](CONTRIBUTING.md) | Руководство по контрибуции |
-| 🛡️ [Security Policy](SECURITY.md) | Процесс отчёта об уязвимостях |
-| 📰 [Changelog](CHANGELOG.md) | История релизов |
-| 🔥 [Load Testing](docs/load-test/) | Фреймворк нагрузочного тестирования (1 024 агента) |
-
----
-
-## Разработка
-
-```bash
-# Форк, клонирование, создание ветки
-git checkout -b feat/SPHERE-XXX-short-description
-
-# Установка pre-commit хуков (ruff, mypy, bandit)
-pre-commit install
-
-# Запуск тестов
-cd backend && pytest -x
-
-# Линтинг
-ruff check backend/
-mypy backend/ --ignore-missing-imports
-```
-
-Подробности о стандартах кода, стратегии ветвления и CI/CD — в [CONTRIBUTING.md](CONTRIBUTING.md).
-
----
-
-<div align="center">
-
-### Статистика проекта
-
-| Метрика | Значение |
-|---------|----------|
-| ORM-моделей | 19 таблиц |
-| REST-модулей | 22 |
-| WebSocket-эндпоинтов | 4 |
-| Тестовых файлов | 94 (1 231 тест) |
-| Технических спецификаций | 14 модулей / 70+ документов |
-| Docker-сервисов | 10+ |
-| Алембик-миграций | 15+ |
-
----
-
-**MIT License** · Built with ❤️ by [RootOne1337](https://github.com/RootOne1337)
-
-</div>
+[Contributing](CONTRIBUTING.md) · [Changelog](CHANGELOG.md) · [Архитектурные решения](docs/adr/README.md) · [Лицензия платформы](LICENSE)

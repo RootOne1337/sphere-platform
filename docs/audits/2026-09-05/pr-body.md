@@ -2,13 +2,20 @@
 
 This draft repairs demonstrated authorization, tenant isolation and runtime failures
 across the backend, Android/PC agents, frontend, task producers and VPN lifecycle.
-It is an ongoing audit, not a production-readiness or complete security certification.
+The current operational priorities are unattended APK recovery, durable execution,
+truthful startup, incident diagnosis and measured UI data. Fleet capacity is a target,
+not a verified property; this draft does not establish production readiness.
 
 The [audit report](https://github.com/RootOne1337/sphere-platform/blob/codex/enterprise-audit-20260905/docs/audits/2026-09-05/AUDIT-REPORT.md)
 records severity, root cause, before/after evidence, affected files, fixes, regressions
 and residual risk for each finding. Fixes and evidence use separate, scoped commits.
 The [roadmap](https://github.com/RootOne1337/sphere-platform/blob/codex/enterprise-audit-20260905/docs/audits/2026-09-05/ROADMAP.md)
-separates confirmed blockers from paths still requiring investigation.
+separates confirmed blockers from paths still requiring investigation. The
+[operational matrix](https://github.com/RootOne1337/sphere-platform/blob/codex/enterprise-audit-20260905/docs/operations/READINESS.md)
+now sets the work order; the README, documentation index and incident runbooks have
+been reconciled with current contracts. A separate
+[AI readiness assessment](https://github.com/RootOne1337/sphere-platform/blob/codex/enterprise-audit-20260905/docs/architecture/AI-READINESS.md)
+researches NitroGen and a future external inference worker; no AI is implemented.
 
 ## Changes
 
@@ -18,10 +25,10 @@ separates confirmed blockers from paths still requiring investigation.
 | PostgreSQL tenant isolation | Installs policies for all 28 tenant tables, rejects unsafe runtime roles, preserves tenant binding across transaction recovery and binds JWT/auth/audit/agent sessions before SQL. Narrow credential lookup functions bootstrap tenant context under non-owner credentials. |
 | User sessions and frontend | Refresh rotation has a single SQL consumer; logout revokes the actual refresh source and clears cookies. MFA requires one Redis challenge consumer. Browser identity/cache generations prevent old responses from restoring a previous session or crossing organizations. |
 | Task execution and recovery | Committed assignments own dispatch intent; durable Android receipts handle duplicates and retain results until SQL commit acknowledgement. Task/batch/scheduler locks preserve competing terminal outcomes. Wave admission, parent commit ordering, cancellation fences and counters are reconciled. |
-| Android | Repairs enrollment/refresh and HTTP contracts, limits automatic credentials to the management origin, cleans up transport cancellation, restores Redis presence, targets controls to the intended task and prevents loop/root retries from falsely reporting success or repeating uncertain effects. |
+| Android | Repairs enrollment/refresh and HTTP contracts, limits automatic credentials to the management origin, cleans up transport cancellation, restores Redis presence, targets controls to the intended task and prevents loop/root retries from falsely reporting success or repeating uncertain effects. Clean closes now wait before retry, with equal jitter to spread fleet reconnects. |
 | PC agent | Enforces workstation ownership, uses current locked API-key validation, binds registration SQL and fixes terminal result routing, including older installed clients. Supervises send/receive failure and rejects false success for unsupported commands. |
 | Orchestrator and VPN | Enforces account ownership and versioned task contracts; VPN assignments retain SQL ownership/intents across uncertain provider outcomes, concurrent allocations and health/revoke retries. |
-| Deployment and maintenance | Removes startup writes from immutable API images, corrects effective Compose inheritance, updates the compatible Python dependency set, enforces the exact coverage threshold and regenerates the HTTP schema/catalog in CI. Operator guides describe actual contracts and rollout constraints. |
+| Deployment and maintenance | Removes startup writes from immutable API images, corrects effective Compose inheritance, updates the compatible Python dependency set, enforces the exact coverage threshold and regenerates the HTTP schema/catalog in CI. Development startup checks native Docker failures and waits for API/frontend readiness. Operator guides describe actual contracts and rollout constraints. |
 
 ### Latest runtime findings
 
@@ -52,12 +59,23 @@ separates confirmed blockers from paths still requiring investigation.
   **95 related cases** pass. This Medium finding concerns unsupported command types;
   real execution correctness and command authorization require separate validation.
 
+- **AUD-67:** APK clean server close skipped retry delay, while network retries had
+  shared fleet deadlines. Clean-close pacing and equal jitter repair the retry policy.
+  Three failing cases before the fix; all **347 Android JVM cases** pass afterward.
+  Hardware fleet behavior remains unmeasured.
+- **AUD-68:** the development launcher printed success after native Docker failure,
+  discarded health wait outcomes and never checked API/frontend readiness. Checked
+  exit codes, config preflight and Compose service health gates fix this path.
+  **17 new regressions**, baseline 10 launcher + 7 missing-probe failures; **25 total
+  deployment cases** pass. Actual PowerShell/Python/Node processes are exercised with
+  controlled CLI/HTTP boundaries, not a real Docker failure drill.
+
 ## Validation
 
-- Combined local backend/PC/PostgreSQL/Redis/deployment: **1334 passed**, including
-  **453 real-service cases** and six Compose configuration tests; **69.31%** coverage,
+- Combined local backend/PC/PostgreSQL/Redis/deployment: **1351 passed**, including
+  **453 real-service cases** and 25 deployment cases; **69.32%** coverage,
   four existing warnings. Load/soak profiles are excluded from this ordinary PR run.
-- Android enterprise debug unit suite: **344 passed**. These JVM/MockWebServer checks
+- Android enterprise debug unit suite: **347 passed**. These JVM/MockWebServer checks
   do not establish device OS, codec, battery or real network behavior.
 - Frontend: **198 tests / 23 suites**, TypeScript and production build pass. Linux CI
   verifies the standalone entry point; local Windows tracing emitted an ENOENT
@@ -66,14 +84,14 @@ separates confirmed blockers from paths still requiring investigation.
   The compatible joint Python dependency scan is a recorded snapshot, not a scan of
   all ecosystems. Coverage remains gated at **65%**, with precision=2 and tests for
   the 64.98% rejection / 65.00% acceptance boundaries.
-- Application revision **`8692a58`**, including AUD-65/66, passes
+- Previous application revision **`8692a58`**, including AUD-65/66, passes
   [backend](https://github.com/RootOne1337/sphere-platform/actions/runs/34387311587),
   [frontend](https://github.com/RootOne1337/sphere-platform/actions/runs/34387311505) and
   [Android](https://github.com/RootOne1337/sphere-platform/actions/runs/34387314911)
   CI on attempt 1. Linux: **1334 tests / 69.27%**, including all 12 new cases and the
   strengthened backoff test. Compact job snapshots and test summaries are retained.
-  The following documentation-only commit starts its own checks; application code
-  is unchanged. Preview guard passes and deployment is skipped.
+  New AUD-67/68 code requires its own CI run; prior results do not certify it.
+  Preview deployment remains skipped.
 
 ## Rollout and remaining risks
 
@@ -107,8 +125,16 @@ process, Windows service or PC network recovery was exercised by the new cases.
 n8n/MinIO ingress, OTA/log persistence, deployment health and backup restore still need
 runtime validation. Real APK-to-listening-backend validation was blocked by automatic
 approval review (`blocked by policy`); no workaround was attempted. Physical Android
-compatibility and CPU/RAM/FPS/battery for **10–64 emulators have not been measured**.
+compatibility and CPU/RAM/FPS/battery for **10–64 emulators per station or hundreds/
+thousands of connected APKs have not been measured**.
 The 64-concurrent VPN test uses SQL plus a router double and is not a capacity result.
+
+GitHub-independent failover is a documented direction, not yet an implementation:
+saved primary/secondary routes to the same installation, with optional external
+discovery. Lost successful refresh responses remain a P0 recovery risk. Monitoring
+Compose wiring and synthetic VPN UI zeroes are confirmed open gaps. Startup readiness
+does not check schema head, task execution or browser actions; the legacy tunnel
+path remains outside AUD-68. Reboot/restore/soak drills are still required.
 
 No independent review, production migration, service rollout, merge or deployment
 is claimed. Preview deployment is skipped; the PR remains draft.

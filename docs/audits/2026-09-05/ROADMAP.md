@@ -1,12 +1,27 @@
 # Приоритеты продолжающегося аудита
 
-Обновлено 9 сентября 2026. Этот документ задаёт порядок работ; наличие пункта
+Обновлено 10 сентября 2026. Этот документ задаёт порядок работ; наличие пункта
 не означает, что его эксплуатация уже доказана. Для закрытия нужен воспроизводимый
 сценарий, исправление, regression test и повторная проверка.
 
+**Приоритет владельца от 9 сентября: реальная эксплуатация.** Порядок P0–P3 теперь
+задаёт [эксплуатационная матрица](../../operations/READINESS.md): APK recovery/fallback,
+сохранность заданий, запуск и наблюдаемость → достоверность UI → capacity → будущий AI.
+Новые security barriers не являются самостоятельной целью development-этапа.
+RLS остаётся условием корректной работы текущих путей и будущего rollout.
+
+## Технический backlog по компонентам
+
+Таблица ниже сохраняет прежнюю классификацию аудита; текущий порядок работ — в
+эксплуатационной матрице. Новый fleet target — сотни/тысячи APK, 10–64 на станции;
+ёмкость не измерена. AUD-67 исправляет clean-close pacing и jitter (347 JVM tests).
+AUD-68 исправляет ложный startup success; 17 новых regression cases проверяют
+native CLI/readiness, полный daemon/reboot drill остаётся открытым.
+
+
 | Приоритет | Область | Текущее состояние | Следующее доказательство/критерий закрытия |
 | --- | --- | --- | --- |
-| 1 — текущий | RLS | Owner/member/TRUNCATE bypass доказаны; guard и политики всех 28 tables исправлены; 39 PostgreSQL + 4 inventory cases; AUD-55 добавляет 16 cases сохранения tenant после commit/recovery и запрета rebind; audit writer переведён (AUD-56, 6 ASGI/PG cases); user JWT до lookup (AUD-57); API-key/device refresh bootstrap, Android ASGI auth/reconnect и key revoke race исправлены (AUD-58–60, 37 новых cases); post-auth task/progress/event Sessions исправлены (AUD-61, 15 новых cases); user login/refresh/logout/MFA bootstrap исправлен (AUD-62, 34 новых cases) | Перевод остальных unscoped callers на bound Sessions, фоновые jobs, provisioning отдельных ролей; разрешённые и запрещённые HTTP/worker сценарии под runtime credentials; rollout остаётся заблокированным |
+| 1 — rollout | RLS | Owner/member/TRUNCATE bypass доказаны; guard и политики всех 28 tables исправлены; 39 PostgreSQL + 4 inventory cases; AUD-55 добавляет 16 cases сохранения tenant после commit/recovery и запрета rebind; audit writer переведён (AUD-56, 6 ASGI/PG cases); user JWT до lookup (AUD-57); API-key/device refresh bootstrap, Android ASGI auth/reconnect и key revoke race исправлены (AUD-58–60, 37 новых cases); post-auth task/progress/event Sessions исправлены (AUD-61, 15 новых cases); user login/refresh/logout/MFA bootstrap исправлен (AUD-62, 34 новых cases) | Перевод остальных unscoped callers на bound Sessions, фоновые jobs, provisioning отдельных ролей; разрешённые и запрещённые HTTP/worker сценарии под runtime credentials; rollout остаётся заблокированным |
 | 1 | Task lifecycle | SQL assignment/receipt recovery, Android journal, TaskService producer/cancel serialization, distinct control receipts, APK target matching/checkpoints в loop/retry/final outcome, batch/scheduler cancel/result serialization, batch counters, wave outcome/admission accounting, commit-before-launch, wave/cancel transaction fence и UTC watchdog исправлены | Durable cancellation/stop ACK, ordering controls той же задачи, Redis/commit failure при cancel, pipeline writer fencing/child stop, durable wave plan/replay/recovery, stale RUNNING reconciliation, pipeline/scheduler producers, post-commit webhook/events |
 | 1 | Авторизация и secrets | Исправлены role/API-key/device/task/n8n boundaries, право reveal, шифрование всех account writers и key-aware migration/rotation CLI; logout cookie/header contract, single-use refresh и MFA consumption исправлены; RLS owner bypass подтверждён | Refresh-family revoke/unknown commit и multiple tabs (single-use SQL rotation исправлена в AUD-52; frontend session fixes в AUD-49–51), реальная непривилегированная PostgreSQL роль, межорганизационный доступ по всем API/jobs, rollout/backfill/restore с управляемыми ключами, журнал reveal, APK/cache/logs и косвенный доступ через tasks |
 | 1 | Orchestrator | Версии закреплены; пароль исключён из новых metadata; account ownership, terminal receipt и rollback/retry исправлены | Конкурентные creation ticks, savepoint при частичной ошибке, crash recovery pipeline, транзакционные stats |
@@ -14,7 +29,7 @@
 | 1 | Deployment | Startup export и наследование dev commands/mounts/root/PG/Redis/application ports исправлены; оба Compose merge проверены | n8n/MinIO ingress, RLS roles, OTA/log persistence, запуск/health/recovery и restore backup |
 | 2 | APK runtime и производительность | 344 JVM tests; лимит loop diagnostics не пропускает действия, coroutine cancellation выходит из body; typeText больше не пишет raw/encoded ввод в логи; root pipe unknown не повторяется автоматически через DAG/loop; сервер восстанавливает evicted presence по pong; реальный APK↔API и нагрузка 10–64 не завершены | Root execution ACK, Lua pcall/unknown reconciliation, FGS/boot/timeout, emulator/physical permissions, process death, codec backpressure/recovery, multi-worker session fencing, PubSub reconnect, CPU/RAM/FPS/battery |
 | 2 | PC agent | Идентичность workstation и ORM registration исправлены; API-key bootstrap и fresh registration tenant исправлены (AUD-63, 12 non-owner cases); потеря terminal replies до Redis channel исправлена (AUD-64, 10 protocol cases); client transport recovery/state cleanup исправлены (AUD-65, 9 lifecycle cases); unknown command false-success исправлен (AUD-66, 3 Redis cases) | Durable PC result/ACK, payload/correlation validation, topology replay, provisioning, real ASGI disconnect, reconnect и замена сессии, ошибки ADB/emulator process, идемпотентность |
-| 2 | Dependencies/CI | Совместимое Python обновление: 1334 tests, pip check и joint pip-audit без известных уязвимостей; на 8692a58 backend/frontend/Android CI успешны с первой попытки; Host→audit/log/metrics path исправлен | Frontend/Android/container advisories, hash lock/SBOM, dependency-aware mypy, actions runtime/version pins; отдельный подготовленный load job; исследование повторяющейся timing variance DAG benchmark на CI (100 ms gate сохранён) |
+| 2 | Dependencies/CI | Текущий прогон: 1351 tests / 69,32%; совместимое Python обновление, pip check и joint pip-audit без известных уязвимостей; на 8692a58 backend/frontend/Android CI успешны с первой попытки; Host→audit/log/metrics path исправлен | Frontend/Android/container advisories, hash lock/SBOM, dependency-aware mypy, actions runtime/version pins; отдельный подготовленный load job; исследование повторяющейся timing variance DAG benchmark на CI (100 ms gate сохранён) |
 | 2 | Frontend/n8n/observability | 198 Jest tests и tsc проходят на Node 24; guard/cache/session/logout исправлены; frontend CI на 8692a58 прошёл Linux tests/types/build/standalone entry point; browser checks неполны | Supported Node runtime, Jest/tsc/browser, API-key/HMAC/webhook contracts, реальные метрики/alerts и multiprocess |
 | 3 | Уборка и удобство эксплуатации | HTTP schema/catalog воспроизводятся из кода; CI проверяет актуальность; Tasks/Batches и APK guide сверены | Устаревшие Redis producer paths, документация конфигурации, согласованный gitignore для regression tests, runbooks и дашборды |
 
