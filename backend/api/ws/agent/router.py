@@ -146,6 +146,16 @@ async def handle_agent_message(
     TZ-08 SPLIT-2/3/5: полная маршрутизация по type.
     """
     msg_type = msg.get("type")
+    # Older PC agents sent terminal replies without a discriminator. Preserve
+    # their payload during a rolling upgrade, without reclassifying telemetry
+    # or nonterminal/uncorrelated messages as command results.
+    if (
+        msg_type is None
+        and isinstance(msg.get("command_id"), str)
+        and msg["command_id"]
+        and msg.get("status") in ("completed", "failed")
+    ):
+        msg_type = "command_result"
 
     match msg_type:
         case "command_result":

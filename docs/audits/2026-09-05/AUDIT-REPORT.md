@@ -20,9 +20,9 @@ runtime-проверок и не считается доказательство
 | Проверка | Результат | Практическое ограничение |
 | --- | --- | --- |
 | Android enterprise debug unit suite | 344 passed, 0 failed | JVM/MockWebServer; не проверяет ОС, codec, батарею или смерть процесса на телефоне |
-| Объединённая Backend/PC/production/deployment suite | **1312 passed, 0 failed**; coverage **69,18%** | Строгий coverage gate 65% пройден с precision=2. Load suite исключена; 6 Compose config tests не запускают сервисы |
+| Объединённая Backend/PC/production/deployment suite | **1322 passed, 0 failed**; coverage **69,30%** | Строгий coverage gate 65% пройден с precision=2. Load suite исключена; 6 Compose config tests не запускают сервисы |
 | Python dependency scan | **0 known vulnerabilities** в совместном backend/PC resolution | Pip-audit snapshot, не проверка frontend/Gradle/container/application security; [версии и ограничения](DEPENDENCY-REVIEW.md) |
-| Проверки PostgreSQL/Redis | **440 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
+| Проверки PostgreSQL/Redis | **450 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
 | Миграции | Применены до **20260909_user_auth_bootstrap** включительно | Только изолированная БД; конфликтные данные/downgrade проверены в throwaway schema; production не мигрировался |
 | Backend image | Собирается; исходная запись OpenAPI воспроизведённо падает с PermissionError | Исправлен lifespan; полный deployment runtime ещё не подтверждён |
 | Frontend | **198 Jest tests passed**, tsc passed; Next production build exit 0 на Node 24.19.0 | React/JSDOM + Axios adapters; настоящий browser runtime не проверен. Windows standalone tracing выдал ENOENT warning, artifact packaging ещё не подтверждён |
@@ -37,7 +37,7 @@ runtime-проверок и не считается доказательство
 [Локальные 24 DAG cases прошли](evidence/dag-timing-d828a62-local.txt). Порог 100 ms
 не ослаблялся, тест не исключался; причина timing variance на runner не установлена.
 Файл production-regressions-after.txt сохраняет более ранний standalone snapshot
-с 41 тестом; актуальные 440 входят в общий прогон.
+с 41 тестом; актуальные 450 входят в общий прогон.
 
 Команды запуска и предохранители изоляции: [tests/production/README.md](../../../tests/production/README.md).
 Исходные `14 passed` в [reproductions.txt](evidence/reproductions.txt) означают
@@ -668,9 +668,19 @@ runtime-проверок и не считается доказательство
 - **Root cause:** PC endpoint использовал собственный unscoped APIKey SELECT вместо общего credential bootstrap; после auth receive loop открывал новую Session, а workstation registration не связывал её с authenticated organization. Под runtime RLS валидный ключ отвергался, существующие Workstation/LDPlayerInstance не обновлялись.
 - **Evidence/reproduction:** [6 failed / 6 passing controls](evidence/pc-tenant-before.txt) на настоящих non-owner credentials: valid connect отказан; foreign-workstation проверка не достигалась после key auth; собственные registration/recovery/cache-failure сценарии не сохраняли SQL; concurrency не достигала ожидаемых key row locks.
 - **Affected files:** `backend/api/ws/agent/router.py::authenticate_agent_token`, `handle_workstation_register`; `tests/production/test_pc_tenant_runtime.py`.
-- **Fix:** PC auth использует `APIKeyService.authenticate` с tenant discovery и проверкой после row lock, сохраняя agent type/device:register constraints. Registration связывает fresh Session до Workstation/LDPlayerInstance SQL. Redis-only telemetry/result сообщения не получают лишнего SQL binding. Новая миграция, PC wire change или production grants не выполнялись; нужны ранее введённые API-key function grants.
+- **Fix:** `4222b14` — PC auth использует `APIKeyService.authenticate` с tenant discovery и проверкой после row lock, сохраняя agent type/device:register constraints. Registration связывает fresh Session до Workstation/LDPlayerInstance SQL. Redis-only telemetry/result сообщения не получают лишнего SQL binding. Новая миграция, PC wire change или production grants не выполнялись; нужны ранее введённые API-key function grants.
 - **Regression:** 12 новых actual runtime-role cases; [45 related cases passed](evidence/pc-tenant-after.txt). Endpoint connect/reconnect с receive-loop registration, invalid/expired/inactive/wrong-type/unprivileged key, foreign workstation, два настоящих SQL lock waiters при отзыве key, instance persistence, post-flush SQL abort → rollback → retry, Redis failure после SQL commit и fresh pooled Session без tenant. Existing socket double расширен последовательностью сообщений; normal ASGI disconnect этим не моделируется.
-- **Residual risk:** socket/manager — doubles, это не полный PC↔server network/ADB/LDPlayer запуск. Нужны provisioning workstation/instance rows, live key revocation, PC command/result contract, topology replay, normal ASGI disconnect и runtime/process recovery. Key является org-level credential, не hardware-bound identity; API-key last_used_at в auth-only Session не гарантированно сохраняется. Обновлён [PC guide](../../pc-agent.md): действительные `.env`/SPHERE_ settings, endpoint, команды и непроверенные ограничения вместо несуществующих API/config примеров.
+- **Residual risk:** socket/manager — doubles, это не полный PC↔server network/ADB/LDPlayer запуск. Нужны provisioning workstation/instance rows, live key revocation, durable PC command/result contract (routing исправлен в AUD-64), topology replay, normal ASGI disconnect и runtime/process recovery. Key является org-level credential, не hardware-bound identity; API-key last_used_at в auth-only Session не гарантированно сохраняется. Обновлён [PC guide](../../pc-agent.md): действительные `.env`/SPHERE_ settings, endpoint, команды и непроверенные ограничения вместо несуществующих API/config примеров.
+
+
+### AUD-64 — High: PC-команды выполнялись, но сервер отбрасывал их результаты
+
+- **Root cause:** обе ветки `CommandDispatcher.dispatch` отправляли `command_id` и terminal `status` без `type`. PC backend выбирал обработчик только по `type == "command_result"`; успешное выполнение и ошибка попадали в default logging, не в Redis result channel. Даже исправный Redis не получал результат для ожидающего подписчика.
+- **Evidence/reproduction:** [4 failed / 6 passing controls](evidence/pc-result-protocol-before.txt). Настоящий PC dispatcher выполняет `ping` или получает искусственную ошибку от LDPlayer boundary; transport adapter передаёт его точный ответ в настоящий backend handler. Подписка на изолированном Redis подтверждает отсутствие ответа. Отдельно воспроизведены обе старые untyped terminal формы. Typed reply, nonterminal и telemetry controls проходят до исправления.
+- **Affected files:** `pc-agent/agent/dispatcher.py`, `backend/api/ws/agent/router.py::handle_agent_message`, `tests/production/test_pc_result_protocol.py`.
+- **Fix:** PC dispatcher явно отправляет `type: command_result` в success/error ответах. Backend совместим с установленными старыми клиентами: только сообщение без discriminator, с непустым string `command_id` и `completed`/`failed` считается legacy result. Payload сохраняется; telemetry и промежуточные статусы не переклассифицируются. Новая миграция не требуется.
+- **Regression:** [24 related cases passed](evidence/pc-result-protocol-after.txt), включая 10 новых runtime cases: реальная success/error пара dispatcher → handler → Redis subscriber, legacy success/error, typed reply, четыре nonterminal controls и явно типизированная telemetry с похожими полями. Проверка type в исходящем payload не позволяет backend compatibility скрыть возврат дефекта в клиенте.
+- **Residual risk:** это проверка протокола и Redis publication, не реальный PC network/OS/ADB/LDPlayer запуск. PubSub остаётся недолговечным: отсутствие подписчика, потеря подключения, client queue drop и Redis failure могут потерять результат. Receipt/ACK, retry, durable outbox, idempotency и command authorization/correlation требуют отдельных сценариев. Unknown command по-прежнему может вернуть completed с null; этот отдельный путь не объявлен исправленным. Существующие ограничения AUD-63 на RLS rollout, provisioning и real disconnect сохраняются.
 
 
 ## Открытые подтверждённые блокеры
@@ -678,7 +688,7 @@ runtime-проверок и не считается доказательство
 | ID / severity | Root cause и evidence | Необходимое продолжение |
 | --- | --- | --- |
 | AUD-11 / High, частично исправлен | SQL ownership/uniqueness/intents исправлены и проверены; реальные orphan peers и provider unknown outcomes не reconciled | Inventory contract, controlled reconciliation/rollout, HTTP adapter и AWG конфигурация; незавершённые intents пока удерживаются |
-| AUD-14 / High | Startup guard исправлен; политики всех 28 tables и runtime CRUD проверены (AUD-54). Восстановление bound Session после commit/recovery исправлено (AUD-55); user JWT, API-key/device-refresh/Android WS auth и post-auth task/event sessions исправлены (AUD-57–61); user login/refresh/logout/MFA исправлены в AUD-62; остальные auth callers и глобальные jobs требуют проверки | Разделение migration/runtime ролей, перевод HTTP/auth/jobs на bound Sessions, разрешённые/запрещённые runtime API/worker сценарии |
+| AUD-14 / High | Startup guard исправлен; политики всех 28 tables и runtime CRUD проверены (AUD-54). Восстановление bound Session после commit/recovery исправлено (AUD-55); user JWT, API-key/device-refresh/Android WS auth и post-auth task/event sessions исправлены (AUD-57–61); user login/refresh/logout/MFA исправлены в AUD-62; PC key auth/registration исправлены в AUD-63; остальные auth callers и глобальные jobs требуют проверки | Разделение migration/runtime ролей, перевод HTTP/auth/jobs на bound Sessions, разрешённые/запрещённые runtime API/worker сценарии |
 | DEPLOY-03 / High | Effective Compose оставляет n8n/MinIO host ports; production persistence и DB roles не согласованы | Ingress/access design, роли, долговечные artifacts, runtime/restore проверка |
 
 ## Следующие компоненты аудита
@@ -686,7 +696,7 @@ runtime-проверок и не считается доказательство
 Следующие пункты — кандидаты/недостаточное покрытие, а не автоматически доказанные
 эксплуатируемые уязвимости: Android FGS/boot/timeout, root-only действия на обычных
 телефонах, screen codec recovery; PC-agent
-protocol; orchestrator/pipeline crash recovery; rollout/restore credentials и APK cache/logs;
+durable delivery, unknown commands и normal disconnect; orchestrator/pipeline crash recovery; rollout/restore credentials и APK cache/logs;
 MFA/session/logout races; VPN revoke/PSK/маршруты; backup/restore; webhook/n8n contract;
 frontend runtime; метрики и multiprocess; зависимости и CI.
 
@@ -923,3 +933,6 @@ warnings. Неизменный 65% gate пройден. Новая миграц�
 временных runtime LOGIN-ролей и соединений ноль. PR остаётся draft без независимого
 review; production grants/cutover не выполнялись. Следующий документационный commit
 сохраняет эти результаты и запускает собственные checks, не меняя production code.
+
+
+Локальная проверка AUD-63–64: **1322 passed / 69,30%**, включая **450 PostgreSQL/Redis cases**; четыре прежних warnings, неизменный 65% gate. Общий прогон занял 253,67 s. 12 новых PC tenant cases и 10 protocol cases входят в этот прогон. Ruff, Bandit (0 Medium/High) и generated API check прошли. Проверены 230 локальных Markdown targets в семи затронутых руководствах. Точная GitHub code revision и её CI будут записаны отдельным snapshot; локальный pass не заменяет CI или реальные OS/ADB/LDPlayer/device измерения.

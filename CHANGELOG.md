@@ -14,6 +14,10 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Security / runtime
 
+- AUD-64: PC success/error ответы содержат command_result; backend принимает старые
+  untyped terminal replies. Исправлена доказанная потеря результатов до Redis channel.
+  10 новых cases связывают dispatcher, handler и настоящий Redis subscriber; durable
+  delivery, OS execution и неизвестные команды остаются отдельными проверками.
 - AUD-63: PC-agent использует общий API-key bootstrap и связывает fresh registration
   Session с authenticated tenant. 12 non-owner SQL/Redis cases проверяют connection/
   registration, key revoke wait, SQL abort/retry и cache failure. PC guide приведён
@@ -53,8 +57,8 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - AUD-54: Alembic `20260908_tenant_policies` устанавливает tenant policies всех
   28 таблиц, защищает оба конца M2M и append-only audit. 25 full-schema runtime-role
   checks и четыре migration/operator-policy checks; четыре CI inventory checks.
-- Общий backend/PC/production/deployment прогон: 1312 passed, coverage 69,18%,
-  включая 440 PostgreSQL/Redis cases; без load suite и listening APK/API.
+- Общий backend/PC/production/deployment прогон: 1322 passed, coverage 69,30%,
+  включая 450 PostgreSQL/Redis cases; без load suite и listening APK/API.
 
 ### Migration / deployment constraints
 

@@ -119,10 +119,23 @@ ADB operations here target `127.0.0.1:<port>`; they do not implement the former
 guide's generic `adb_exec`/serial envelope or automatic single-device selection.
 The bridge computes default instance ports as `5554 + index * 2`; verify the actual
 emulator configuration. The separate [ADBDiscovery module](../pc-agent/modules/adb_discovery.py)
-is not routed by the current dispatcher. End-to-end discovery and command/result
-compatibility remain under audit; the command list is an implementation inventory,
+is not routed by the current dispatcher. End-to-end discovery and OS execution
+remain under audit; the command list is an implementation inventory,
 not proof of successful remote execution. Unknown command types currently return
 `None`, so a success-shaped reply is not evidence that an action ran.
+
+Success and error replies now include the `command_result` discriminator (AUD-64):
+
+```json
+{"type":"command_result","command_id":"<command-uuid>","status":"completed","result":{"pong":true}}
+```
+
+An execution exception uses `status: failed` and an `error` string. The backend
+publishes the payload to `sphere:agent:result:<workstation-id>:<command-id>`.
+During a rolling client upgrade it also accepts the older untyped terminal reply
+with a nonempty string command ID. Explicit telemetry and intermediate statuses
+are not results. Redis PubSub publication is not a durable receipt or execution ACK;
+there is no guarantee of recovery if the subscriber, connection or Redis is unavailable.
 
 ## Recovery, operations and verification
 
@@ -151,3 +164,10 @@ updates, SQL abort/retry, Redis failure and pooled context cleanup. They do not 
 normal ASGI disconnect frames, real PC network recovery, command execution, LDPlayer
 processes or CPU/RAM capacity. No claim of minimal CPU consumption or support for
 10–64 emulators follows from these tests.
+
+AUD-64 retains [four failures before](audits/2026-09-05/evidence/pc-result-protocol-before.txt)
+and [24 related passing cases after](audits/2026-09-05/evidence/pc-result-protocol-after.txt).
+Ten new cases link the actual dispatcher and backend handler to a real isolated
+Redis subscriber, covering success, execution error, legacy clients and controls.
+The transport is an in-process adapter; LDPlayer/ADB are doubles. This verifies
+result formatting/routing without claiming durable delivery or physical execution.

@@ -204,3 +204,11 @@ key-lock contention during revoke, committed registration, SQL abort/retry, Redi
 cache failure and pooled scope cleanup. Socket/manager are doubles; disconnect is
 raised as WebSocketDisconnect, not supplied as a normal ASGI disconnect frame.
 Actual client execution, network/OS recovery and LDPlayer/ADB actions remain open.
+
+`test_pc_result_protocol.py` links the actual PC dispatcher to the backend handler
+and a real Redis subscriber through an in-process transport adapter. Ten cases cover
+successful ping, a synthetic LDPlayer execution exception, both legacy terminal
+replies, typed compatibility and nonterminal/telemetry controls. The fixture uses
+the PC tenant runtime setup; no actual network socket or LDPlayer/ADB process runs.
+These assertions verify the result discriminator and publication boundary, not
+durable delivery, command idempotency or subscriber recovery after Redis/network loss.

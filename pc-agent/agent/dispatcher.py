@@ -40,6 +40,7 @@ class CommandDispatcher:
             result = await self._handle(cmd_type, payload)
             if command_id and self.ws_client:
                 await self.ws_client.send({
+                    "type": "command_result",
                     "command_id": command_id,
                     "status": "completed",
                     "result": result,
@@ -48,6 +49,7 @@ class CommandDispatcher:
             logger.error(f"Команда {cmd_type!r} упала: {exc!r}")
             if command_id and self.ws_client:
                 await self.ws_client.send({
+                    "type": "command_result",
                     "command_id": command_id,
                     "status": "failed",
                     "error": str(exc),
