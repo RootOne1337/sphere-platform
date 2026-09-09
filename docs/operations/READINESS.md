@@ -182,5 +182,5 @@ AUD-69/70: SQL refresh recovery и APK persist-before-send проверены л
 операцией и сроком преемника. Резервный route по-прежнему не реализован.
 
 AUD-71: собственный deadline отменяет HTTP и сохраняет retry intent, внешняя отмена
-останавливает вызывающую coroutine. Реальные header/body hangs и late-response races
+останавливает вызывающую coroutine. Управляемые зависания headers/body и late-response races
 воспроизведены внутри JVM с подменой транспорта; hardware latency не измерена.

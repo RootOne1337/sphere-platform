@@ -127,3 +127,8 @@ route и локальный discovery без GitHub; real Android process/host/n
 сохранность текущего задания/ACK после отказа. Исторические user-session lost commit
 и initial enrollment loss не закрываются device-refresh протоколом. Monitoring
 wiring, truthful VPN UI, incident timeline и measured capacity остаются открытыми.
+
+CI ревизии `fec0c5f` с AUD-71 прошёл с первой попытки: backend/frontend, Android
+push и PR. Linux **1375 tests / 69,30%**, все 24 SQL refresh-recovery cases; Android
+Dev/Enterprise × Debug/Release test tasks успешны. [Snapshots и точные границы](AUDIT-REPORT.md#проверка-ревизии-fec0c5f-с-aud-71)
+сохранены. Preview guard прошёл, deployment skipped; PR остаётся draft.

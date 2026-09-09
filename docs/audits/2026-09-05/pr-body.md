@@ -102,15 +102,18 @@ researches NitroGen and a future external inference worker; no AI is implemented
   The compatible joint Python dependency scan is a recorded snapshot, not a scan of
   all ecosystems. Coverage remains gated at **65%**, with precision=2 and tests for
   the 64.98% rejection / 65.00% acceptance boundaries.
-- Revision **`9177769`**, including AUD-69/70, passes
-  [backend](https://github.com/RootOne1337/sphere-platform/actions/runs/34416514477),
-  [frontend](https://github.com/RootOne1337/sphere-platform/actions/runs/34416514436) and
-  [Android](https://github.com/RootOne1337/sphere-platform/actions/runs/34416514460)
-  CI on attempt 1; the separate Android push run also passes. Linux: **1375 tests /
-  69.30%**, including all 24 new SQL/ASGI cases. Exact job snapshots and test excerpts
-  are retained. Preview guard passes and deployment is skipped. These results precede
-  AUD-71; the new revision's CI will be recorded after push. Backend/PC/schema did
-  not change in AUD-71; its new local validation is the Android suite above.
+- Revision **`fec0c5f`**, including AUD-71, passes
+  [backend](https://github.com/RootOne1337/sphere-platform/actions/runs/34418225844),
+  [frontend](https://github.com/RootOne1337/sphere-platform/actions/runs/34418225854),
+  [Android PR](https://github.com/RootOne1337/sphere-platform/actions/runs/34418225845)
+  and [Android push](https://github.com/RootOne1337/sphere-platform/actions/runs/34418223069)
+  CI on attempt 1. Linux: **1375 tests / 69.30%**, 279.86 seconds, four existing
+  warnings, including all 24 SQL refresh-recovery cases. Android ran all four
+  Dev/Enterprise × Debug/Release test tasks. Exact job snapshots and excerpts
+  are retained. Preview guard passes and deployment is skipped. The following
+  documentation-only commit records this verified code revision; its own checks
+  run separately. Backend/PC/schema did not change in AUD-71; the local combined
+  run above remains the AUD-69/70 result, separately from this fresh Linux CI run.
 
 ## Rollout and remaining risks
 

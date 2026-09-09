@@ -1196,7 +1196,7 @@ OTA/log workers ожидали общий token mutex дольше заявле�
 - **Affected files:**
   [`AuthTokenStore.kt`](../../../android/app/src/main/kotlin/com/sphereplatform/agent/store/AuthTokenStore.kt),
   [`RefreshCancellationTest.kt`](../../../android/app/src/test/kotlin/com/sphereplatform/agent/store/RefreshCancellationTest.kt).
-- **Fix:** `enqueue` + `suspendCancellableCoroutine`, cancellation handler отменяет
+- **Fix:** `fec0c5f` — `enqueue` + `suspendCancellableCoroutine`, cancellation handler отменяет
   конкретный Call. Собственный 10 s deadline возвращает stored token, внешняя
   cancellation пробрасывается. Per-call HTTP timeout не меняет shared WS client.
   Callback закрывает bounded body и возвращает только parsed values; активная
@@ -1222,5 +1222,24 @@ OTA/log workers ожидали общий token mutex дольше заявле�
 
 Backend/PC/SQL/schema этим изменением не менялись; последний их локальный общий
 прогон — **1375 / 69,35%** на AUD-69/70, отдельно от текущего Android run.
-CI новой ревизии фиксируется после push; результаты `9177769` выше относятся
-к предыдущему коду. PR остаётся draft; merge/deployment не выполнялись.
+
+### Проверка ревизии `fec0c5f` с AUD-71
+
+Все CI runs прошли с первой попытки:
+[backend](https://github.com/RootOne1337/sphere-platform/actions/runs/34418225844),
+[frontend](https://github.com/RootOne1337/sphere-platform/actions/runs/34418225854),
+[Android PR](https://github.com/RootOne1337/sphere-platform/actions/runs/34418225845),
+[Android push](https://github.com/RootOne1337/sphere-platform/actions/runs/34418223069).
+Linux backend — **1375 passed / 69,30%**, 279,86 s, четыре прежних warnings;
+[excerpt](evidence/ci-fec0c5f-tests.txt) включает все 24 SQL refresh-recovery cases.
+Lint/mypy в окружении CI, security, RLS coverage и Alembic прошли. Ранее описанные
+13 ошибок локального dependency-aware mypy этим результатом не закрываются.
+
+Android CI выполнил [все четыре test tasks](evidence/ci-fec0c5f-android-tests.txt):
+Dev/Enterprise × Debug/Release. Per-case count **362 / 29 suites** относится к
+локальному EnterpriseDebug XML, а не к аппаратному парку. Preview guard прошёл,
+deployment skipped. Снимки: [backend](evidence/ci-fec0c5f-backend.json),
+[frontend](evidence/ci-fec0c5f-frontend.json), [Android PR](evidence/ci-fec0c5f-android.json),
+[Android push](evidence/ci-fec0c5f-android-push.json), [preview](evidence/ci-fec0c5f-preview.json).
+Документационный commit сохраняет эти результаты, не меняя исполняемый код;
+его checks идут отдельно. PR остаётся draft, без независимого review, merge или deployment.
