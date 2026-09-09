@@ -39,6 +39,13 @@ separates confirmed blockers from paths still requiring investigation.
   controls**; **10 new cases** join the actual dispatcher and handler to a real Redis
   subscriber. All **24 related cases** pass. LDPlayer/ADB and transport are doubles.
 
+- **AUD-65:** a dead sender left the PC client apparently connected with no outgoing
+  consumer. Auth failure/cancellation also escaped cleanup; reconnect/circuit waits
+  leaked tasks or delayed stop, and clean closes reconnected without pacing. Session
+  supervision and interruptible waits repair these paths. Baseline: **6 failures /
+  3 controls**; nine new lifecycle cases and all **91 related PC tests** pass with
+  controlled socket boundaries. Network/OS execution remains unverified.
+
 ## Validation
 
 - Combined local backend/PC/PostgreSQL/Redis/deployment: **1322 passed**, including

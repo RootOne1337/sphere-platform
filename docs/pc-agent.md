@@ -141,11 +141,18 @@ there is no guarantee of recovery if the subscriber, connection or Redis is unav
 
 The main process starts the WS client, telemetry, a 15-second ADB sync loop and one
 initial topology task. That task waits one second; it is not a verified per-reconnect
-registration mechanism. The client marks itself connected before server auth is
-confirmed. Its outgoing queue is bounded at 1000 messages, drops sends while
-Disconnected or full, and is not a durable result outbox. After ten consecutive
-connection failures its circuit breaker waits five minutes. These code paths still
-need process/network failure and delivery testing with the real PC agent.
+registration mechanism. The client marks itself connected after writing the auth
+frame; server auth is not yet confirmed. Its outgoing queue is bounded at 1000
+messages, drops sends while disconnected or full, and is not a durable result outbox.
+
+AUD-65 makes either sender or receiver termination close the session and collect
+both transport tasks. Failed/cancelled auth writes clear connection state. Reconnect
+delays and the five-minute circuit cooldown after ten failures respond to stop;
+expired delays do not retain shielded waiter tasks. Clean peer closes also wait
+before reconnecting. The failed send is not automatically replayed: its physical
+outcome may be unknown. Dispatch tasks can outlive a session and still need bounded
+concurrency, shutdown and subprocess recovery design. Real process/network delivery
+and stop during an incomplete connect handshake remain unverified.
 
 [install.bat](../pc-agent/install.bat) configures an NSSM service named
 `SpherePCAgent`, working directory `pc-agent/`, parameters `-m agent.main`, daily log
@@ -171,3 +178,10 @@ Ten new cases link the actual dispatcher and backend handler to a real isolated
 Redis subscriber, covering success, execution error, legacy clients and controls.
 The transport is an in-process adapter; LDPlayer/ADB are doubles. This verifies
 result formatting/routing without claiming durable delivery or physical execution.
+
+AUD-65 retains [six failures before](audits/2026-09-05/evidence/pc-client-recovery-before.txt)
+and [91 PC cases passing after](audits/2026-09-05/evidence/pc-client-recovery-after.txt).
+Nine new lifecycle cases run the actual client with controlled in-process sockets:
+sender failure/reconnect, auth failure/cancellation, circuit stop, repeated backoff,
+clean-close pacing, receive termination and concurrent producer ordering. No real
+WebSocket listener, DNS lookup, TLS handshake or emulator is involved.

@@ -14,6 +14,10 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Security / runtime
 
+- AUD-65: PC session наблюдает sender и receiver, очищает state при auth failure/
+  cancel и reconnect при send failure. Stop прерывает circuit/backoff; clean close
+  не создаёт tight reconnect loop, timeouts не копят Event.wait. Девять новых
+  lifecycle cases, 91 PC test проходят; реальная сеть/OS и durable delivery открыты.
 - AUD-64: PC success/error ответы содержат command_result; backend принимает старые
   untyped terminal replies. Исправлена доказанная потеря результатов до Redis channel.
   10 новых cases связывают dispatcher, handler и настоящий Redis subscriber; durable

@@ -1,0 +1,116 @@
+FFFFFF...                                                                [100%]
+================================== FAILURES ===================================
+________ test_send_failure_reconnects_even_when_receiver_is_still_open ________
+..\..\..\AppData\Roaming\uv\python\cpython-3.12.12-windows-x86_64-none\Lib\asyncio\tasks.py:520: in wait_for
+    return await fut
+           ^^^^^^^^^
+..\..\..\AppData\Roaming\uv\python\cpython-3.12.12-windows-x86_64-none\Lib\asyncio\locks.py:212: in wait
+    await fut
+E   asyncio.exceptions.CancelledError
+
+The above exception was the direct cause of the following exception:
+tests\test_pc_client_recovery.py:102: in test_send_failure_reconnects_even_when_receiver_is_still_open
+    await asyncio.wait_for(second.receiving.wait(), 1)
+..\..\..\AppData\Roaming\uv\python\cpython-3.12.12-windows-x86_64-none\Lib\asyncio\tasks.py:519: in wait_for
+    async with timeouts.timeout(timeout):
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\AppData\Roaming\uv\python\cpython-3.12.12-windows-x86_64-none\Lib\asyncio\timeouts.py:115: in __aexit__
+    raise TimeoutError from exc_val
+E   TimeoutError
+---------------------------- Captured stderr call -----------------------------
+2026-09-09 22:57:19.403 | INFO     | agent.client:_connect_once:113 - Подключаемся к ws://audit.invalid/ws/agent/isolated-pc
+2026-09-09 22:57:19.403 | INFO     | agent.client:_connect_once:123 - WS-соединение установлено
+2026-09-09 22:57:19.403 | INFO     | agent.client:_connect_once:131 - Auth-фрейм отправлен
+2026-09-09 22:57:19.404 | WARNING  | agent.client:_send_loop:171 - Ошибка отправки WS-сообщения: OSError('isolated send failure')
+2026-09-09 22:57:20.405 | INFO     | agent.client:_connect_once:159 - WS-сессия завершена
+_______ test_auth_write_failure_cleans_state_and_next_session_recovers ________
+tests\test_pc_client_recovery.py:119: in test_auth_write_failure_cleans_state_and_next_session_recovers
+    assert failed.closed and not client._connected and client._ws is None
+E   assert (True and not True)
+E    +  where True = <tests.test_pc_client_recovery.Socket object at 0x000002271D7A58E0>.closed
+E    +  and   True = <agent.client.AgentWebSocketClient object at 0x000002271D7A5760>._connected
+---------------------------- Captured stderr call -----------------------------
+2026-09-09 22:57:20.746 | INFO     | agent.client:_connect_once:113 - Подключаемся к ws://audit.invalid/ws/agent/isolated-pc
+2026-09-09 22:57:20.747 | INFO     | agent.client:_connect_once:123 - WS-соединение установлено
+_________________ test_cancellation_during_auth_cleans_state __________________
+tests\test_pc_client_recovery.py:134: in test_cancellation_during_auth_cleans_state
+    assert socket.closed and not client._connected and client._ws is None
+E   assert (True and not True)
+E    +  where True = <tests.test_pc_client_recovery.Socket object at 0x000002271D7A8D10>.closed
+E    +  and   True = <agent.client.AgentWebSocketClient object at 0x000002271D7A9F70>._connected
+---------------------------- Captured stderr call -----------------------------
+2026-09-09 22:57:20.755 | INFO     | agent.client:_connect_once:113 - Подключаемся к ws://audit.invalid/ws/agent/isolated-pc
+2026-09-09 22:57:20.755 | INFO     | agent.client:_connect_once:123 - WS-соединение установлено
+___________ test_stop_interrupts_open_circuit_without_reconnecting ____________
+..\..\..\AppData\Roaming\uv\python\cpython-3.12.12-windows-x86_64-none\Lib\asyncio\tasks.py:520: in wait_for
+    return await fut
+           ^^^^^^^^^
+E   asyncio.exceptions.CancelledError
+
+The above exception was the direct cause of the following exception:
+tests\test_pc_client_recovery.py:145: in test_stop_interrupts_open_circuit_without_reconnecting
+    await asyncio.wait_for(asyncio.shield(run), 1)
+..\..\..\AppData\Roaming\uv\python\cpython-3.12.12-windows-x86_64-none\Lib\asyncio\tasks.py:519: in wait_for
+    async with timeouts.timeout(timeout):
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\AppData\Roaming\uv\python\cpython-3.12.12-windows-x86_64-none\Lib\asyncio\timeouts.py:115: in __aexit__
+    raise TimeoutError from exc_val
+E   TimeoutError
+---------------------------- Captured stderr call -----------------------------
+2026-09-09 22:57:20.764 | WARNING  | agent.client:run:50 - Circuit OPEN, ждём 300с перед следующей попыткой
+___________ test_repeated_failed_connects_do_not_leave_stop_waiters ___________
+tests\test_pc_client_recovery.py:170: in test_repeated_failed_connects_do_not_leave_stop_waiters
+    assert waiters == [], "Each expired reconnect delay leaked a shielded Event.wait task"
+E   AssertionError: Each expired reconnect delay leaked a shielded Event.wait task
+E   assert [<Task finish...lt=True>, ...] == []
+E
+E     Left contains 20 more items, first extra item: <Task finished name='Task-28' coro=<Event.wait() done, defined at C:\Users\dimas\AppData\Roaming\uv\python\cpython-3.12.12-windows-x86_64-none\Lib\asyncio\locks.py:199> result=True>
+E     Use -v to get more diff
+---------------------------- Captured stderr call -----------------------------
+2026-09-09 22:57:21.796 | WARNING  | agent.client:run:70 - WS разорван: OSError('isolated reconnect failure'), reconnect через 0.0с (попытка #1)
+2026-09-09 22:57:21.796 | WARNING  | agent.client:run:70 - WS разорван: OSError('isolated reconnect failure'), reconnect через 0.0с (попытка #2)
+2026-09-09 22:57:21.796 | WARNING  | agent.client:run:70 - WS разорван: OSError('isolated reconnect failure'), reconnect через 0.0с (попытка #3)
+2026-09-09 22:57:21.796 | WARNING  | agent.client:run:70 - WS разорван: OSError('isolated reconnect failure'), reconnect через 0.0с (попытка #4)
+2026-09-09 22:57:21.796 | WARNING  | agent.client:run:70 - WS разорван: OSError('isolated reconnect failure'), reconnect через 0.0с (попытка #5)
+2026-09-09 22:57:21.796 | WARNING  | agent.client:run:70 - WS разорван: OSError('isolated reconnect failure'), reconnect через 0.0с (попытка #6)
+2026-09-09 22:57:21.796 | WARNING  | agent.client:run:70 - WS разорван: OSError('isolated reconnect failure'), reconnect через 0.0с (попытка #7)
+2026-09-09 22:57:21.796 | WARNING  | agent.client:run:70 - WS разорван: OSError('isolated reconnect failure'), reconnect через 0.0с (попытка #8)
+2026-09-09 22:57:21.796 | WARNING  | agent.client:run:70 - WS разорван: OSError('isolated reconnect failure'), reconnect через 0.0с (попытка #9)
+2026-09-09 22:57:21.796 | WARNING  | agent.client:run:70 - WS разорван: OSError('isolated reconnect failure'), reconnect через 0.0с (попытка #10)
+2026-09-09 22:57:21.796 | WARNING  | agent.client:run:70 - WS разорван: OSError('isolated reconnect failure'), reconnect через 0.0с (попытка #11)
+2026-09-09 22:57:21.796 | WARNING  | agent.client:run:70 - WS разорван: OSError('isolated reconnect failure'), reconnect через 0.0с (попытка #12)
+2026-09-09 22:57:21.797 | WARNING  | agent.client:run:70 - WS разорван: OSError('isolated reconnect failure'), reconnect через 0.0с (попытка #13)
+2026-09-09 22:57:21.797 | WARNING  | agent.client:run:70 - WS разорван: OSError('isolated reconnect failure'), reconnect через 0.0с (попытка #14)
+2026-09-09 22:57:21.797 | WARNING  | agent.client:run:70 - WS разорван: OSError('isolated reconnect failure'), reconnect через 0.0с (попытка #15)
+2026-09-09 22:57:21.797 | WARNING  | agent.client:run:70 - WS разорван: OSError('isolated reconnect failure'), reconnect через 0.0с (попытка #16)
+2026-09-09 22:57:21.797 | WARNING  | agent.client:run:70 - WS разорван: OSError('isolated reconnect failure'), reconnect через 0.0с (попытка #17)
+2026-09-09 22:57:21.797 | WARNING  | agent.client:run:70 - WS разорван: OSError('isolated reconnect failure'), reconnect через 0.0с (попытка #18)
+2026-09-09 22:57:21.797 | WARNING  | agent.client:run:70 - WS разорван: OSError('isolated reconnect failure'), reconnect через 0.0с (попытка #19)
+2026-09-09 22:57:21.797 | WARNING  | agent.client:run:70 - WS разорван: OSError('isolated reconnect failure'), reconnect через 0.0с (попытка #20)
+2026-09-09 22:57:21.797 | WARNING  | agent.client:run:70 - WS разорван: OSError('isolated reconnect failure'), reconnect через 0.0с (попытка #21)
+_____________ test_clean_close_uses_delay_before_next_connection ______________
+tests\test_pc_client_recovery.py:183: in test_clean_close_uses_delay_before_next_connection
+    with pytest.raises(TimeoutError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE <class 'TimeoutError'>
+---------------------------- Captured stderr call -----------------------------
+2026-09-09 22:57:21.815 | INFO     | agent.client:_connect_once:113 - Подключаемся к ws://audit.invalid/ws/agent/isolated-pc
+2026-09-09 22:57:21.815 | INFO     | agent.client:_connect_once:123 - WS-соединение установлено
+2026-09-09 22:57:21.815 | INFO     | agent.client:_connect_once:131 - Auth-фрейм отправлен
+2026-09-09 22:57:21.816 | INFO     | agent.client:_connect_once:159 - WS-сессия завершена
+2026-09-09 22:57:21.816 | INFO     | agent.client:_connect_once:113 - Подключаемся к ws://audit.invalid/ws/agent/isolated-pc
+2026-09-09 22:57:21.816 | INFO     | agent.client:_connect_once:123 - WS-соединение установлено
+============================== warnings summary ===============================
+backend\api\v1\game_accounts\router.py:95
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\api\v1\game_accounts\router.py:95: FastAPIDeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+    sort_dir: str = Query("desc", regex="^(asc|desc)$", description="Направление сортировки"),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/test_pc_client_recovery.py::test_send_failure_reconnects_even_when_receiver_is_still_open
+FAILED tests/test_pc_client_recovery.py::test_auth_write_failure_cleans_state_and_next_session_recovers
+FAILED tests/test_pc_client_recovery.py::test_cancellation_during_auth_cleans_state
+FAILED tests/test_pc_client_recovery.py::test_stop_interrupts_open_circuit_without_reconnecting
+FAILED tests/test_pc_client_recovery.py::test_repeated_failed_connects_do_not_leave_stop_waiters
+FAILED tests/test_pc_client_recovery.py::test_clean_close_uses_delay_before_next_connection
+6 failed, 3 passed, 1 warning in 2.61s
