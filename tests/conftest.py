@@ -85,7 +85,10 @@ def _sqlite_credential_lookup(connection, cursor, statement, parameters, context
     if connection.dialect.name == "sqlite":
         statement = {
             "SELECT sphere_auth.api_key_org(?)": "SELECT org_id FROM api_keys WHERE key_hash = ?",
-            "SELECT sphere_auth.device_refresh_org(?)": "SELECT org_id FROM devices WHERE refresh_token_hash = ?",
+            "SELECT sphere_auth.device_refresh_org(?)": (
+                "WITH candidate(value) AS (SELECT ?) SELECT org_id FROM devices, candidate "
+                "WHERE refresh_token_hash = candidate.value OR refresh_previous_token_hash = candidate.value"
+            ),
             "SELECT sphere_auth.user_refresh_org(?)": "SELECT org_id FROM refresh_tokens WHERE token_hash = ?",
             "SELECT sphere_auth.user_login_org(?)": "SELECT org_id FROM users WHERE email = ?",
         }.get(statement, statement)

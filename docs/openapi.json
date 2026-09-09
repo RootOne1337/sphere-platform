@@ -2004,6 +2004,25 @@
         "operationId": "refresh_device_api_v1_devices_refresh_post",
         "parameters": [
           {
+            "name": "X-Refresh-Request-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Persist before sending; reuse with the same refresh token to recover a lost response.",
+              "title": "X-Refresh-Request-Id"
+            },
+            "description": "Persist before sending; reuse with the same refresh token to recover a lost response."
+          },
+          {
             "name": "refresh_token",
             "in": "cookie",
             "required": false,
@@ -11488,7 +11507,7 @@
           "refresh_token": {
             "type": "string",
             "title": "Refresh Token",
-            "description": "JWT refresh token."
+            "description": "Opaque rotating refresh token; not a JWT."
           },
           "expires_in": {
             "type": "integer",

@@ -2,12 +2,16 @@
 # ВЛАДЕЛЕЦ: TZ-12 Agent Discovery. Автоматическая регистрация устройств.
 from __future__ import annotations
 
+import base64
 import hashlib
+import hmac
 import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
-from sqlalchemy import select
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.kdf.hkdf import HKDF
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.config import settings
@@ -70,7 +74,7 @@ class DeviceRegistrationService:
         stmt = select(Device).where(
             Device.org_id == org_id,
             Device.meta["fingerprint"].as_string() == fingerprint,
-        )
+        ).with_for_update().execution_options(populate_existing=True)
         result = await self.db.execute(stmt)
         return result.scalar_one_or_none()
 
@@ -129,7 +133,9 @@ class DeviceRegistrationService:
         device.meta = meta
         device.is_active = True
 
-    async def refresh_device_token(self, raw_token: str) -> DeviceRegisterResponse:
+    async def refresh_device_token(
+        self, raw_token: str, request_id: uuid.UUID | None = None,
+    ) -> DeviceRegisterResponse:
         from fastapi import HTTPException
 
         token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
@@ -140,19 +146,59 @@ class DeviceRegistrationService:
             select(Device)
             .where(
                 Device.org_id == org_id,
-                Device.refresh_token_hash == token_hash,
+                or_(Device.refresh_token_hash == token_hash,
+                    Device.refresh_previous_token_hash == token_hash),
                 Device.is_active.is_(True),
                 Device.refresh_token_expires_at > datetime.now(timezone.utc),
             )
             .with_for_update()
+            .execution_options(populate_existing=True)
         )
-        if device is None:
+        # Recheck time after any row-lock wait, not just at statement construction.
+        if (device is None or device.refresh_token_expires_at is None
+                or device.refresh_token_expires_at <= datetime.now(timezone.utc)):
             raise HTTPException(status_code=401, detail="Invalid device refresh token")
-        result = self._build_response(device, is_new=False)
+        key_hash = hashlib.sha256(request_id.bytes).hexdigest() if request_id else None
+        successor = self._refresh_successor(raw_token, device, request_id) if request_id else None
+        if device.refresh_token_hash == token_hash:
+            result = self._build_response(device, is_new=False, refresh_token=successor)
+            if request_id:
+                device.refresh_previous_token_hash = token_hash
+                device.refresh_rotation_key_hash = key_hash
+        else:
+            # One unconsumed successor only. Missing/different intents, re-enrollment
+            # or a newer rotation cannot recover or resurrect a prior credential.
+            if (successor is None or device.refresh_rotation_key_hash != key_hash
+                    or not hmac.compare_digest(
+                        hashlib.sha256(successor.encode()).hexdigest(), device.refresh_token_hash or "",
+                    )):
+                raise HTTPException(status_code=401, detail="Invalid device refresh token")
+            result = self._token_response(device, successor, is_new=False)
         await self.db.commit()
         return result
 
-    def _build_response(self, device: Device, is_new: bool) -> DeviceRegisterResponse:
+    @staticmethod
+    def _refresh_successor(raw_token: str, device: Device, request_id: uuid.UUID) -> str:
+        # Purpose-separated HKDF-SHA256 with fixed-size UUID fields. Recovery needs
+        # the original high-entropy bearer AND the client's persisted operation ID.
+        # SQL stores hashes only; no server encryption key or plaintext reply cache.
+        info = b"sphere/device-refresh/v1\0" + device.org_id.bytes + device.id.bytes
+        digest = HKDF(algorithm=hashes.SHA256(), length=32, salt=request_id.bytes, info=info).derive(raw_token.encode())
+        return base64.urlsafe_b64encode(digest).decode().rstrip("=")
+
+    def _build_response(
+        self, device: Device, is_new: bool, refresh_token: str | None = None,
+    ) -> DeviceRegisterResponse:
+        refresh_token = refresh_token or create_refresh_token()
+        device.refresh_token_hash = hashlib.sha256(refresh_token.encode()).hexdigest()
+        device.refresh_token_expires_at = datetime.now(timezone.utc) + timedelta(
+            days=settings.JWT_REFRESH_TOKEN_EXPIRE_DAYS
+        )
+        device.refresh_previous_token_hash = None
+        device.refresh_rotation_key_hash = None
+        return self._token_response(device, refresh_token, is_new)
+
+    def _token_response(self, device: Device, refresh_token: str, is_new: bool) -> DeviceRegisterResponse:
         """Сформировать ответ с JWT токенами для агента."""
         # JWT: sub = device_id, role = "device" (специальная роль для агентов)
         access_token, _ = create_access_token(
@@ -160,12 +206,6 @@ class DeviceRegistrationService:
             org_id=str(device.org_id),
             role="device",
         )
-        refresh_token = create_refresh_token()
-        device.refresh_token_hash = hashlib.sha256(refresh_token.encode()).hexdigest()
-        device.refresh_token_expires_at = datetime.now(timezone.utc) + timedelta(
-            days=settings.JWT_REFRESH_TOKEN_EXPIRE_DAYS
-        )
-
         # server_url из единого источника: Settings.SERVER_PUBLIC_URL
         server_url = settings.SERVER_PUBLIC_URL.rstrip("/")
 

@@ -48,6 +48,8 @@ class Device(Base, UUIDMixin, TimestampMixin):
     tags: Mapped[list[str]] = mapped_column(ARRAY(String), server_default="{}")
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     refresh_token_hash: Mapped[str | None] = mapped_column(String(64), unique=True, nullable=True)
+    refresh_previous_token_hash: Mapped[str | None] = mapped_column(String(64), unique=True, nullable=True)
+    refresh_rotation_key_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
     refresh_token_expires_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )

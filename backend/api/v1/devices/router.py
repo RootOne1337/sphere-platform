@@ -190,11 +190,15 @@ async def get_fleet_status(
 @router.post("/refresh", response_model=DeviceRegisterResponse)
 async def refresh_device(
     refresh_token: str | None = Cookie(default=None),
+    refresh_request_id: uuid.UUID | None = Header(
+        default=None, alias="X-Refresh-Request-Id",
+        description="Persist before sending; reuse with the same refresh token to recover a lost response.",
+    ),
     db: AsyncSession = Depends(get_db),
 ) -> DeviceRegisterResponse:
     if not refresh_token or len(refresh_token) > 512:
         raise HTTPException(status_code=401, detail="Device refresh token required")
-    return await DeviceRegistrationService(db).refresh_device_token(refresh_token)
+    return await DeviceRegistrationService(db).refresh_device_token(refresh_token, refresh_request_id)
 
 
 # ── Auto-register (TZ-12 Agent Discovery) ────────────────────────────────────

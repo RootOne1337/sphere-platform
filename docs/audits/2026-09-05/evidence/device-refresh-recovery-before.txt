@@ -1,0 +1,60 @@
+FFF.........FFFF                                                         [100%]
+================================== FAILURES ===================================
+_____ test_lost_committed_response_recovers_after_connection_pool_restart _____
+tests\production\test_device_refresh_recovery.py:71: in test_lost_committed_response_recovers_after_connection_pool_restart
+    assert recovered.status_code == 200
+E   assert 401 == 200
+E    +  where 401 = <Response [401 Unauthorized]>.status_code
+_______________ test_retry_keeps_successor_expiry_and_identity ________________
+tests\production\test_device_refresh_recovery.py:91: in test_retry_keeps_successor_expiry_and_identity
+    assert response.status_code == 200
+E   assert 401 == 200
+E    +  where 401 = <Response [401 Unauthorized]>.status_code
+__ test_concurrent_refresh_has_one_successor_with_observed_sql_waiters[True] __
+tests\production\test_device_refresh_recovery.py:116: in test_concurrent_refresh_has_one_successor_with_observed_sql_waiters
+    assert sorted(response.status_code for response in responses) == ([200, 200] if same_intent else [200, 401])
+E   assert [200, 401] == [200, 200]
+E
+E     At index 1 diff: 401 != 200
+E     Use -v to get more diff
+_ test_recovery_ignores_supplied_foreign_org_header_and_cannot_resolve_other_device _
+tests\production\test_device_refresh_recovery.py:164: in test_recovery_ignores_supplied_foreign_org_header_and_cannot_resolve_other_device
+    assert response.status_code == 200
+E   assert 401 == 200
+E    +  where 401 = <Response [401 Unauthorized]>.status_code
+______________ test_sql_failure_before_commit_keeps_retry_usable ______________
+tests\production\test_device_refresh_recovery.py:189: in test_sql_failure_before_commit_keeps_retry_usable
+    assert [first.status_code, second.status_code] == [200, 200]
+E   assert [200, 401] == [200, 200]
+E
+E     At index 1 diff: 401 != 200
+E     Use -v to get more diff
+---------------------------- Captured stdout call -----------------------------
+{"error": "(sqlalchemy.dialects.postgresql.asyncpg.Error) <class 'asyncpg.exceptions.DivisionByZeroError'>: division by zero\n[SQL: SELECT 1/0]\n(Background on this error at: https://sqlalche.me/e/20/dbapi)", "event": "unhandled_exception", "path": "/api/v1/devices/refresh", "request_id": "52c26366", "method": "POST", "level": "error", "logger": "backend.main", "timestamp": "2026-09-09T21:50:18.115325Z"}
+------------------------------ Captured log call ------------------------------
+ERROR    backend.main:main.py:99 {'error': "(sqlalchemy.dialects.postgresql.asyncpg.Error) <class 'asyncpg.exceptions.DivisionByZeroError'>: division by zero\n[SQL: SELECT 1/0]\n(Background on this error at: https://sqlalche.me/e/20/dbapi)", 'event': 'unhandled_exception', 'path': '/api/v1/devices/refresh', 'request_id': '52c26366', 'method': 'POST', 'level': 'error', 'logger': 'backend.main', 'timestamp': '2026-09-09T21:50:18.115325Z'}
+____ test_malformed_refresh_intent_does_not_consume_credential[not-a-uuid] ____
+tests\production\test_device_refresh_recovery.py:197: in test_malformed_refresh_intent_does_not_consume_credential
+    assert (await w.client.post(PATH, headers=headers(enrolled.refresh_token, invalid))).status_code == 422
+E   assert 200 == 422
+E    +  where 200 = <Response [200 OK]>.status_code
+_ test_malformed_refresh_intent_does_not_consume_credential[xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx] _
+tests\production\test_device_refresh_recovery.py:197: in test_malformed_refresh_intent_does_not_consume_credential
+    assert (await w.client.post(PATH, headers=headers(enrolled.refresh_token, invalid))).status_code == 422
+E   assert 200 == 422
+E    +  where 200 = <Response [200 OK]>.status_code
+============================== warnings summary ===============================
+backend\api\v1\game_accounts\router.py:95
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\api\v1\game_accounts\router.py:95: FastAPIDeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+    sort_dir: str = Query("desc", regex="^(asc|desc)$", description="Направление сортировки"),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/production/test_device_refresh_recovery.py::test_lost_committed_response_recovers_after_connection_pool_restart
+FAILED tests/production/test_device_refresh_recovery.py::test_retry_keeps_successor_expiry_and_identity
+FAILED tests/production/test_device_refresh_recovery.py::test_concurrent_refresh_has_one_successor_with_observed_sql_waiters[True]
+FAILED tests/production/test_device_refresh_recovery.py::test_recovery_ignores_supplied_foreign_org_header_and_cannot_resolve_other_device
+FAILED tests/production/test_device_refresh_recovery.py::test_sql_failure_before_commit_keeps_retry_usable
+FAILED tests/production/test_device_refresh_recovery.py::test_malformed_refresh_intent_does_not_consume_credential[not-a-uuid]
+FAILED tests/production/test_device_refresh_recovery.py::test_malformed_refresh_intent_does_not_consume_credential[xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx]
+7 failed, 9 passed, 1 warning in 8.11s
