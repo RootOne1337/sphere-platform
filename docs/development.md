@@ -13,10 +13,11 @@
 > User access JWT authentication now binds its verified organization before loading
 > the user; handlers sharing that request Session inherit the binding. User login,
 > refresh/logout and MFA bootstrap are covered by AUD-62. Global jobs and other auth
-> callers still require review. Apply `20260909_user_auth_bootstrap` and review the
+> callers still require review. Apply through `20260910_device_refresh_retry` and review the
 > [user function grants and MFA cutover](security/user-auth-bootstrap.md) alongside
 > [device function grants](security/device-credential-bootstrap.md). Android WS
-> authenticates before target lookup.
+> authenticates before target lookup. [Device refresh recovery](security/device-refresh-recovery.md)
+> requires the new migration and backend before APK; no new runtime EXECUTE grant is added.
 > Android task progress, receipts/results and device events bind their own fresh
 > Sessions from authenticated connection identity; the closed auth Session cannot
 > pass its SQL context to the receive loop. Terminal ACK follows SQL commit.

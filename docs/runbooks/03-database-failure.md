@@ -42,11 +42,12 @@ SELECT version_num FROM alembic_version;
 
 ## Миграции
 
-Head на этом срезе — `20260909_user_auth_bootstrap`. Сверьте с текущим checkout и
+Head на этом срезе — `20260910_device_refresh_retry`. Сверьте с текущим checkout и
 `alembic -c alembic/alembic.ini heads`; `current` выполняйте с migration credentials
 в подготовленной среде. Failed migration и failed runtime SELECT — разные сбои.
 Часть migrations намеренно запрещает небезопасный downgrade. Подробности в
-[credential runbook](../security/user-auth-bootstrap.md) и [RLS guide](../security/postgresql-rls.md).
+[user credential runbook](../security/user-auth-bootstrap.md),
+[device refresh rollback](../security/device-refresh-recovery.md) и [RLS guide](../security/postgresql-rls.md).
 
 ## Восстановление
 

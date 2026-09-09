@@ -25,7 +25,7 @@ researches NitroGen and a future external inference worker; no AI is implemented
 | PostgreSQL tenant isolation | Installs policies for all 28 tenant tables, rejects unsafe runtime roles, preserves tenant binding across transaction recovery and binds JWT/auth/audit/agent sessions before SQL. Narrow credential lookup functions bootstrap tenant context under non-owner credentials. |
 | User sessions and frontend | Refresh rotation has a single SQL consumer; logout revokes the actual refresh source and clears cookies. MFA requires one Redis challenge consumer. Browser identity/cache generations prevent old responses from restoring a previous session or crossing organizations. |
 | Task execution and recovery | Committed assignments own dispatch intent; durable Android receipts handle duplicates and retain results until SQL commit acknowledgement. Task/batch/scheduler locks preserve competing terminal outcomes. Wave admission, parent commit ordering, cancellation fences and counters are reconciled. |
-| Android | Repairs enrollment/refresh and HTTP contracts, limits automatic credentials to the management origin, cleans up transport cancellation, restores Redis presence, targets controls to the intended task and prevents loop/root retries from falsely reporting success or repeating uncertain effects. Clean closes now wait before retry, with equal jitter to spread fleet reconnects. |
+| Android | Repairs enrollment/refresh and HTTP contracts, limits automatic credentials to the management origin, cleans up transport cancellation, restores Redis presence, targets controls to the intended task and prevents loop/root retries from falsely reporting success or repeating uncertain effects. Clean closes now wait before retry, with equal jitter to spread fleet reconnects. A persisted refresh intent recovers lost responses and prevents stale credentials from replacing new state. |
 | PC agent | Enforces workstation ownership, uses current locked API-key validation, binds registration SQL and fixes terminal result routing, including older installed clients. Supervises send/receive failure and rejects false success for unsupported commands. |
 | Orchestrator and VPN | Enforces account ownership and versioned task contracts; VPN assignments retain SQL ownership/intents across uncertain provider outcomes, concurrent allocations and health/revoke retries. |
 | Deployment and maintenance | Removes startup writes from immutable API images, corrects effective Compose inheritance, updates the compatible Python dependency set, enforces the exact coverage threshold and regenerates the HTTP schema/catalog in CI. Development startup checks native Docker failures and waits for API/frontend readiness. Operator guides describe actual contracts and rollout constraints. |
@@ -70,12 +70,22 @@ researches NitroGen and a future external inference worker; no AI is implemented
   deployment cases** pass. Actual PowerShell/Python/Node processes are exercised with
   controlled CLI/HTTP boundaries, not a real Docker failure drill.
 
+- **AUD-69:** lost successful device-refresh commit/HTTP responses stranded the
+  installed credential. Optional persisted UUIDs and one SQL receipt recover the
+  same unconsumed HKDF-derived successor without extending expiry. Baseline:
+  **7 failures / 9 controls**. **24 new PostgreSQL/ASGI cases** cover response loss,
+  lock races, expiry/re-enrollment, migration/grants and recovered WS auth.
+- **AUD-70:** APK refresh now commits its operation ID before HTTP and fences replies
+  against intervening credential changes. **7 new JVM cases**, all failed before,
+  prove disk/memory ordering, failed commit handling and stale re-enrollment/clear.
+  Full Android suite: **354 passed**. Physical Android crash/keystore remains untested.
+
 ## Validation
 
-- Combined local backend/PC/PostgreSQL/Redis/deployment: **1351 passed**, including
-  **453 real-service cases** and 25 deployment cases; **69.32%** coverage,
+- Combined local backend/PC/PostgreSQL/Redis/deployment: **1375 passed**, including
+  **477 real-service cases** and 25 deployment cases; **69.35%** coverage,
   four existing warnings. Load/soak profiles are excluded from this ordinary PR run.
-- Android enterprise debug unit suite: **347 passed**. These JVM/MockWebServer checks
+- Android enterprise debug unit suite: **354 passed**. These JVM/MockWebServer checks
   do not establish device OS, codec, battery or real network behavior.
 - Frontend: **198 tests / 23 suites**, TypeScript and production build pass. Linux CI
   verifies the standalone entry point; local Windows tracing emitted an ENOENT
@@ -84,23 +94,25 @@ researches NitroGen and a future external inference worker; no AI is implemented
   The compatible joint Python dependency scan is a recorded snapshot, not a scan of
   all ecosystems. Coverage remains gated at **65%**, with precision=2 and tests for
   the 64.98% rejection / 65.00% acceptance boundaries.
-- Revision **`769aec3`**, including AUD-67/68, passes
+- Previous revision **`769aec3`**, including AUD-67/68, passes
   [backend](https://github.com/RootOne1337/sphere-platform/actions/runs/34407474578),
   [frontend](https://github.com/RootOne1337/sphere-platform/actions/runs/34407474747) and
   [Android](https://github.com/RootOne1337/sphere-platform/actions/runs/34407474584)
   CI on attempt 1. Linux: **1351 tests / 69.27%**, including all 17 new deployment
   cases. Compact job snapshots and the test summary are retained in audit evidence.
   Preview guard passes and deployment is skipped. The following documentation-only
-  commit records these results and starts its own checks; application code is unchanged.
+  commit recorded those results. New AUD-69/70 code requires its own CI verification.
 
 ## Rollout and remaining risks
 
-Schema head: **`20260909_user_auth_bootstrap`**. Production remains blocked on
+Schema head: **`20260910_device_refresh_retry`**. Device recovery rollout is migration
+→ all backend workers → APK, preserving app identity. Existing grants are retained.
+[Refresh recovery contract](https://github.com/RootOne1337/sphere-platform/blob/codex/enterprise-audit-20260905/docs/security/device-refresh-recovery.md). Production remains blocked on
 separate migration/runtime credentials and remaining auth/global-worker tenant
 propagation. Runtime grants must include all four protected credential functions.
 MFA v2 invalidates old in-flight challenges and requires coordinated worker cutover;
 Redis consumption and SQL commit are not one transaction. Refresh-family revocation,
-lost successful commit responses and MFA guessing/recovery policy remain open. See
+lost successful **user-session** commit responses and MFA guessing/recovery policy remain open. See
 [user auth](https://github.com/RootOne1337/sphere-platform/blob/codex/enterprise-audit-20260905/docs/security/user-auth-bootstrap.md)
 and [RLS rollout](https://github.com/RootOne1337/sphere-platform/blob/codex/enterprise-audit-20260905/docs/security/postgresql-rls.md).
 
@@ -131,10 +143,14 @@ The 64-concurrent VPN test uses SQL plus a router double and is not a capacity r
 
 GitHub-independent failover is a documented direction, not yet an implementation:
 saved primary/secondary routes to the same installation, with optional external
-discovery. Lost successful refresh responses remain a P0 recovery risk. Monitoring
+discovery. AUD-69/70 cover new device refresh response recovery; legacy already-lost
+operations, expired credentials, real OS/network drills and refresh cancellation remain open. Monitoring
 Compose wiring and synthetic VPN UI zeroes are confirmed open gaps. Startup readiness
 does not check schema head, task execution or browser actions; the legacy tunnel
 path remains outside AUD-68. Reboot/restore/soak drills are still required.
+
+Local dependency-aware mypy reports 13 errors in seven unchanged files/imports;
+CI mypy uses a separate lighter environment and must be assessed separately.
 
 No independent review, production migration, service rollout, merge or deployment
 is claimed. Preview deployment is skipped; the PR remains draft.

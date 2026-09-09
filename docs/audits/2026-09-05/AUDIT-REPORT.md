@@ -25,11 +25,11 @@ runtime-проверок и не считается доказательство
 
 | Проверка | Результат | Практическое ограничение |
 | --- | --- | --- |
-| Android enterprise debug unit suite | 347 passed, 0 failed | JVM/MockWebServer; не проверяет ОС, codec, батарею или смерть процесса на телефоне |
-| Объединённая Backend/PC/production/deployment suite | **1351 passed, 0 failed**; coverage **69,32%** | Строгий coverage gate 65% пройден с precision=2. Load suite исключена; 25 deployment cases включают config/subprocess probes без запуска сервисов |
+| Android enterprise debug unit suite | 354 passed, 0 failed | JVM/MockWebServer; не проверяет ОС, codec, батарею или смерть процесса на телефоне |
+| Объединённая Backend/PC/production/deployment suite | **1375 passed, 0 failed**; coverage **69,35%** | Строгий coverage gate 65% пройден с precision=2. Load suite исключена; 25 deployment cases включают config/subprocess probes без запуска сервисов |
 | Python dependency scan | **0 known vulnerabilities** в совместном backend/PC resolution | Pip-audit snapshot, не проверка frontend/Gradle/container/application security; [версии и ограничения](DEPENDENCY-REVIEW.md) |
-| Проверки PostgreSQL/Redis | **453 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
-| Миграции | Применены до **20260909_user_auth_bootstrap** включительно | Только изолированная БД; конфликтные данные/downgrade проверены в throwaway schema; production не мигрировался |
+| Проверки PostgreSQL/Redis | **477 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
+| Миграции | Применены до **20260910_device_refresh_retry** включительно | Только изолированная БД; конфликтные данные/downgrade проверены в throwaway schema; production не мигрировался |
 | Backend image | Собирается; исходная запись OpenAPI воспроизведённо падает с PermissionError | Исправлен lifespan; полный deployment runtime ещё не подтверждён |
 | Frontend | **198 Jest tests passed**, tsc passed; Next production build exit 0 на Node 24.19.0 | React/JSDOM + Axios adapters; настоящий browser runtime не проверен. Windows standalone tracing выдал ENOENT warning, artifact packaging ещё не подтверждён |
 | APK ↔ реальный локальный backend | Не завершено | Автоматическая проверка разрешений отклонила запуск локального API: `blocked by policy`; обход не выполнялся |
@@ -43,7 +43,7 @@ runtime-проверок и не считается доказательство
 [Локальные 24 DAG cases прошли](evidence/dag-timing-d828a62-local.txt). Порог 100 ms
 не ослаблялся, тест не исключался; причина timing variance на runner не установлена.
 Файл production-regressions-after.txt сохраняет более ранний standalone snapshot
-с 41 тестом; актуальные 453 входят в общий прогон.
+с 41 тестом; актуальные 477 входят в общий прогон.
 
 Команды запуска и предохранители изоляции: [tests/production/README.md](../../../tests/production/README.md).
 Исходные `14 passed` в [reproductions.txt](evidence/reproductions.txt) означают
@@ -1084,3 +1084,73 @@ security, RLS и миграции успешны. Preview guard успешен, 
 исполняемый код после `769aec3` не меняется. PR остаётся draft без независимого
 review, merge и deployment. Runtime APK/OS/браузера, реальный Docker restart,
 аппаратная нагрузка и incident ingestion не объявлены проверенными.
+
+
+### AUD-69 — High: потеря refresh-ответа навсегда расходовала единственный device credential
+
+- **Root cause:** сервер заменял единственный refresh hash при commit, до доставки
+  HTTP response. Retry исходного токена всегда получал 401. SQL rollback был покрыт,
+  но успешный commit с неизвестным результатом клиенту — нет.
+- **Evidence:** [baseline](evidence/device-refresh-recovery-before.txt), 7 failures /
+  9 controls. Transport выполняет фактический ASGI request до commit и теряет ответ;
+  новая runtime SQL session получает отказ. Дополнительные cases моделируют lost
+  commit acknowledgement после реального commit и наблюдают pg_stat_activity Lock
+  waiters при одновременных HTTP requests.
+- **Affected files:** `backend/services/device_registration_service.py`,
+  `backend/api/v1/devices/router.py`, `backend/schemas/device_register.py`,
+  `backend/models/device.py`, `alembic/versions/20260910_device_refresh_retry.py`.
+- **Fix:** `83585d3` — необязательный UUID `X-Refresh-Request-Id`, одна previous-hash/ID-hash
+  receipt на device, восстановление того же HKDF-SHA256 refresh-преемника из исходного
+  секрета/ID/context. Retry не продлевает refresh expiry; JWT выпускается свежий.
+  RLS lookup возвращает только tenant; row lock и повторная expiry-проверка после
+  ожидания сохраняют актуальность. Re-enrollment блокирует Device и очищает receipt.
+- **Regression:** 24 новых cases в `test_device_refresh_recovery.py`; [43 related
+  passed](evidence/device-refresh-recovery-after.txt). SQL non-owner, pool restart,
+  commit/abort/lock races, разные ID, активность/expiry/re-enrollment, tenant/device
+  scope, hash-only denial, migration/grant rollback и actual ASGI WS auth/reconnect.
+- **Residual risk:** нужен rollout migration→все workers→APK; old clients остаются
+  одноразовыми. Recovery действует лишь до expiry/consumption/re-enrollment преемника,
+  не восстанавливает ранее потерянные legacy операции. Устройство с украденными
+  bearer+ID не отличимо без attestation. Нет доказательства real APK/network/OS load.
+  [Полный контракт и rollback](../../security/device-refresh-recovery.md).
+
+### AUD-70 — High: APK терял refresh intent при crash и применял устаревшие credentials
+
+- **Root cause:** refresh не имел persist-before-send операции; `apply()` credentials
+  не гарантировал диск до следующей ротации. Reply записывался без проверки, не
+  заменены/очищены ли credentials за время HTTP; catch возвращал захваченный старый token.
+- **Evidence:** [7 failing JVM cases](evidence/android-refresh-recovery-before.txt),
+  включая разделённые disk/memory preferences, loss→recreation, failed commit,
+  concurrent re-enrollment/clear. HTTP interceptor не использует сеть.
+- **Affected files:** `android/.../store/AuthTokenStore.kt`,
+  `android/.../store/RefreshRecoveryTest.kt`, прежняя preference fixture в
+  `AuthTokenStoreTest.kt` теперь явно поддерживает успешный commit.
+- **Fix:** `484cca6` — UUID intent синхронно сохраняется на IO перед HTTP, повторяет commit при
+  каждой попытке, передаётся в новый header. Сохранение пары credentials и удаление
+  intent — одна edit. Смена auth state и проверка reply сериализованы; stale reply
+  не перезаписывает новые credentials. При ошибке возвращается текущее состояние.
+- **Regression:** [354 tests / 28 suites, 0 failures/errors/skips](evidence/android-refresh-recovery-summary.json),
+  [полный Gradle run](evidence/android-refresh-recovery-after.txt). Семь новых cases
+  проверяют durability ordering и stale replies; остальные 347 сохранились.
+- **Residual risk:** SharedPreferences/HTTP boundaries — doubles; фактическое падение
+  Android процесса/keystore/disk и сотни APK пока не проверены. Старый backend не
+  обеспечивает recovery. Blocking HTTP cancellation/timeout остаётся отдельной работой;
+  initial enrollment durability и одновременная смена server origin этим fix не закрыты.
+
+
+## Проверка AUD-69/70 — 10 сентября 2026
+
+После backend `83585d3` и APK `484cca6`: общий локальный прогон **1375 passed**,
+coverage **69,35%**, 275,04 s, четыре прежних warnings. Включены **477 PostgreSQL/Redis**
+и **25 deployment** cases. Coverage gate 65% сохранён. Android — **354 tests / 28
+suites**, без failures/errors/skips. Ruff 0.15.2, API export check и backend Bandit
+(0 Medium/High) проходят. [Локальный dependency-aware mypy без incremental cache](evidence/device-refresh-local-mypy.txt)
+сообщил 13 ошибок в семи неизменённых файлах/импортах; это не проходящий локальный gate. Отдельный CI mypy
+запускается в собственном окружении без полного dependency set, его результат
+должен учитываться отдельно. Новый CI code revision ещё ожидает проверки.
+
+Миграция применена только к выделенному loopback audit PostgreSQL. Downgrade/upgrade
+новой миграции проверены в транзакции с rollback: текущие grants и данные сохраняются
+после теста; production не изменялся. API documentation отражает optional UUID header.
+Runtime OS/network/keystore/process-death и fleet capacity не измерены; reserve route
+и hard cancellation deadline refresh остаются следующими эксплуатационными задачами.

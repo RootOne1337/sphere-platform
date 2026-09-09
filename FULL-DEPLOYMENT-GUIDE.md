@@ -1,13 +1,15 @@
 # Sphere Platform — Полный гайд развёртывания
 
-> **Статус на 9 сентября 2026: production readiness не подтверждена.**
+> **Статус на 10 сентября 2026: production readiness не подтверждена.**
 >
 > Это справочник настройки; полный runtime и ёмкость 10–64 эмулятора ещё проверяются.
 > Текущий общий PostgreSQL owner/superuser отклоняется production startup guard.
 > До rollout нужно завершить auth/job tenant context и разделение runtime/migration
 > ролей: [RLS runbook](docs/security/postgresql-rls.md). Политики устанавливает Alembic,
 > ручной SQL setup и автоматический downgrade `20260908_tenant_policies` запрещены.
-> Head `20260909_user_auth_bootstrap` добавляет две user-функции к двум device-функциям.
+> Migration `20260909_user_auth_bootstrap` добавляет две user-функции к двум device-функциям.
+> Текущий head — `20260910_device_refresh_retry`; [device retry rollout](docs/security/device-refresh-recovery.md)
+> требует обновления всех backend workers перед новым APK, сохраняет прежние grants.
 > Их runtime EXECUTE grants и обязательный MFA cutover описаны в
 > [user auth runbook](docs/security/user-auth-bootstrap.md) и
 > [device credential runbook](docs/security/device-credential-bootstrap.md).

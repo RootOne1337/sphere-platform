@@ -217,3 +217,20 @@ Three additional cases in that file reject false success for unsupported PC comm
 names (AUD-66): a typo, the old guide's `adb_exec`, and a future unknown operation.
 The actual dispatcher/handler/Redis subscriber must observe a correlated failed
 reply and no LDPlayer/ADB calls. Supported/legacy controls remain active.
+
+
+### Recoverable device refresh (AUD-69/70)
+
+Apply migration `20260910_device_refresh_retry` before these tests. The 24 new cases
+in `test_device_refresh_recovery.py` exercise non-owner SQL, post-commit response
+loss, pool recreation, row-lock races, expiry/re-enrollment, commit rollback,
+transactional migration roundtrip and recovered ASGI WebSocket authorization.
+43 related cases pass with the earlier bootstrap/legacy-refresh regressions.
+The migration retains existing protected-function owner/EXECUTE grants. The
+roundtrip runs inside an owner transaction that is rolled back; no schema downgrade
+is committed. Fixtures use only the named loopback audit services.
+
+Android's separate `RefreshRecoveryTest` has seven cases using distinct fake memory
+and disk plus an HTTP interceptor, with no network. Full JVM suite: 354 cases.
+This validates ordering and stale-response fencing, not actual Android OS crash,
+keystore or disk durability. [Protocol/rollout](../../docs/security/device-refresh-recovery.md).

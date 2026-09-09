@@ -105,3 +105,18 @@ PC/APK sockets, OS/subprocess и нагрузка 10–64 устройств н�
 попытки; Linux **1351 passed / 69,27%**, Windows **1351 / 69,32%**. Все 17 новых
 startup cases прошли на обеих ОС. APK suite — **347 JVM tests**, сборка CI успешна.
 [Сохранённая проверка](AUDIT-REPORT.md) отделена от предстоящих OS/network/load drills.
+
+
+### Следующий этап после AUD-69/70
+
+Device refresh lost-response recovery исправлен: 24 SQL/ASGI и семь APK cases,
+общий Windows прогон **1375 tests / 69,35%**, **477 PG/Redis**, **354 Android JVM**.
+Code commits: `83585d3`, `484cca6`; текущий schema head `20260910_device_refresh_retry`.
+[Recovery/rollout](../../security/device-refresh-recovery.md) ограничен одним
+нерасходованным преемником, без продления expiry. CI новой ревизии проверяется отдельно.
+
+Следующие P0: hard timeout/cancellation refresh; сохранённый secondary management
+route и локальный discovery без GitHub; real Android process/host/network recovery;
+сохранность текущего задания/ACK после отказа. Исторические user-session lost commit
+и initial enrollment loss не закрываются device-refresh протоколом. Monitoring
+wiring, truthful VPN UI, incident timeline и measured capacity остаются открытыми.

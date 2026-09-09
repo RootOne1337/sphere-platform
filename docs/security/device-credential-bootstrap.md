@@ -1,6 +1,6 @@
 # Device credentials: tenant discovery and runtime rollout
 
-Updated 9 September 2026. AUD-58 fixes opaque API-key and device-refresh tenant
+Updated 10 September 2026. AUD-58 fixes opaque API-key and device-refresh tenant
 discovery under a non-owner PostgreSQL login. Full production rollout remains
 blocked by other unscoped auth/jobs and runtime-role provisioning. Tests use only
 the dedicated local PostgreSQL 15/Redis services and synthetic credentials.
@@ -19,12 +19,13 @@ and observe at least two PostgreSQL lock waits before releasing the row owner.
 
 ## Narrow lookup boundary
 
-Alembic `20260909_credential_lookup` adds two functions:
+Alembic `20260909_credential_lookup` adds two functions;
+`20260910_device_refresh_retry` extends device lookup for one retained rotation:
 
 | Function | Input | Output | Eligible row |
 | --- | --- | --- | --- |
 | `sphere_auth.api_key_org(text)` | Complete SHA-256 API-key hash | Organization UUID or NULL | Active key, no expiry or not expired |
-| `sphere_auth.device_refresh_org(text)` | Complete SHA-256 refresh-token hash | Organization UUID or NULL | Active device, unexpired refresh |
+| `sphere_auth.device_refresh_org(text)` | Complete SHA-256 refresh-token hash | Organization UUID or NULL | Active device, unexpired current refresh; current or retained previous hash (AUD-69) |
 
 These are a deliberate, limited exception to RLS, executed as their trusted owner.
 They return no credential, key prefix, permissions, device metadata or user record.
@@ -71,7 +72,9 @@ privileged engine. Migration ownership must be able to read `public.api_keys` an
 `public.devices` across tenants. Existing operator FORCE RLS/ownership rules need
 review. The current Compose owner login remains rejected by the production guard.
 
-Downgrade removes only these functions and the empty schema, without CASCADE.
+Downgrade of the original bootstrap migration removes only these functions and
+the empty schema, without CASCADE. The newer refresh-retry migration restores
+the previous lookup and removes only its two metadata columns.
 Coordinate application rollback first: code using the functions cannot work after
 they are removed. Operator objects in the schema deliberately block its removal.
 No production migration or grant was performed during the audit.
@@ -93,8 +96,9 @@ results and device events each bind a fresh Session to the authenticated organiz
 exercise the non-owner SQL paths, replay and commit-before-result_ack. This does not
 make PubSub notifications, Redis lock release or EventTrigger effects a durable outbox.
 
-Refresh response loss after a successful commit still requires recovery: replay
-of the old token is rejected. Re-enrollment preserves the device ID but rotates
+AUD-69/70 add [recoverable device refresh](device-refresh-recovery.md): a persisted
+operation UUID lets the client recover one unconsumed successor after lost commit/
+HTTP response. Legacy requests without that header still reject old-token replay. Re-enrollment preserves the device ID but rotates
 credentials; it does not promise identical responses. A retained enrollment key
 can re-enroll a matching fingerprint; device attestation/proof of possession and
 enrollment-key retirement remain separate work. User email/MFA/refresh bootstrap

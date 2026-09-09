@@ -14,6 +14,14 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Security / runtime
 
+- AUD-69: device refresh с сохранённым operation UUID восстанавливает тот же
+  token-преемник после lost commit/HTTP response; row locks, expiry и re-enrollment
+  сохраняют отзыв и одну ротацию. Новая миграция `20260910_device_refresh_retry`.
+  24 новых SQL/ASGI regressions; [rollout contract](docs/security/device-refresh-recovery.md).
+- AUD-70: APK сохраняет refresh intent до HTTP и повторяет его после восстановления;
+  поздний response не перезаписывает re-enrollment/clear. Семь новых JVM cases,
+  354 Android tests проходят; реальные OS/network drills остаются открытыми.
+
 - AUD-68: development startup прекращается при native Docker/config/build/up error;
   Compose ждёт readiness по service identity, API/frontend получили health probes.
   17 новых subprocess/config regressions; missing env требует заполнения перед запуском.

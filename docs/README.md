@@ -23,6 +23,7 @@
 - [Архитектура платформы](architecture.md) и [ADR](adr/README.md).
 - [Task control / rollout](security/task-control-protocol.md).
 - [Device credential bootstrap](security/device-credential-bootstrap.md).
+- [Device refresh recovery / rollout](security/device-refresh-recovery.md).
 - [User login/refresh/MFA](security/user-auth-bootstrap.md).
 - [PostgreSQL runtime roles и RLS](security/postgresql-rls.md).
 - [Account credential storage/backfill](security/account-credentials.md).

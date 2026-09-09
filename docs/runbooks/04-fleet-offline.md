@@ -54,3 +54,13 @@ result receipt и ACK. Не повторяйте физическое дейст
 одинаковые device IDs, отсутствие повторного действия, проверенные terminal/unknown
 outcomes и наблюдаемый backlog. После инцидента добавить regression и обновить
 capacity/recovery budget. Реальный изолированный fleet drill ещё требуется.
+
+
+## Потерянный ответ обновления credentials
+
+Новый APK сохраняет UUID операции до refresh. При network/commit-response loss
+он повторяет исходный token/UUID и получает того же преемника; не стирайте app data.
+Это требует migration `20260910_device_refresh_retry` и нового кода на всех workers.
+[Recovery contract](../security/device-refresh-recovery.md) описывает диагностику
+legacy clients, expiry и re-enrollment. Вечно просроченный token и потерянный раньше
+введения протокола response этим механизмом не восстанавливаются.
