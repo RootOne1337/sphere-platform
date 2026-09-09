@@ -678,7 +678,7 @@ runtime-проверок и не считается доказательство
 - **Root cause:** обе ветки `CommandDispatcher.dispatch` отправляли `command_id` и terminal `status` без `type`. PC backend выбирал обработчик только по `type == "command_result"`; успешное выполнение и ошибка попадали в default logging, не в Redis result channel. Даже исправный Redis не получал результат для ожидающего подписчика.
 - **Evidence/reproduction:** [4 failed / 6 passing controls](evidence/pc-result-protocol-before.txt). Настоящий PC dispatcher выполняет `ping` или получает искусственную ошибку от LDPlayer boundary; transport adapter передаёт его точный ответ в настоящий backend handler. Подписка на изолированном Redis подтверждает отсутствие ответа. Отдельно воспроизведены обе старые untyped terminal формы. Typed reply, nonterminal и telemetry controls проходят до исправления.
 - **Affected files:** `pc-agent/agent/dispatcher.py`, `backend/api/ws/agent/router.py::handle_agent_message`, `tests/production/test_pc_result_protocol.py`.
-- **Fix:** PC dispatcher явно отправляет `type: command_result` в success/error ответах. Backend совместим с установленными старыми клиентами: только сообщение без discriminator, с непустым string `command_id` и `completed`/`failed` считается legacy result. Payload сохраняется; telemetry и промежуточные статусы не переклассифицируются. Новая миграция не требуется.
+- **Fix:** `eda33a7` — PC dispatcher явно отправляет `type: command_result` в success/error ответах. Backend совместим с установленными старыми клиентами: только сообщение без discriminator, с непустым string `command_id` и `completed`/`failed` считается legacy result. Payload сохраняется; telemetry и промежуточные статусы не переклассифицируются. Новая миграция не требуется.
 - **Regression:** [24 related cases passed](evidence/pc-result-protocol-after.txt), включая 10 новых runtime cases: реальная success/error пара dispatcher → handler → Redis subscriber, legacy success/error, typed reply, четыре nonterminal controls и явно типизированная telemetry с похожими полями. Проверка type в исходящем payload не позволяет backend compatibility скрыть возврат дефекта в клиенте.
 - **Residual risk:** это проверка протокола и Redis publication, не реальный PC network/OS/ADB/LDPlayer запуск. PubSub остаётся недолговечным: отсутствие подписчика, потеря подключения, client queue drop и Redis failure могут потерять результат. Receipt/ACK, retry, durable outbox, idempotency и command authorization/correlation требуют отдельных сценариев. Unknown command по-прежнему может вернуть completed с null; этот отдельный путь не объявлен исправленным. Существующие ограничения AUD-63 на RLS rollout, provisioning и real disconnect сохраняются.
 
@@ -935,4 +935,20 @@ review; production grants/cutover не выполнялись. Следующи�
 сохраняет эти результаты и запускает собственные checks, не меняя production code.
 
 
-Локальная проверка AUD-63–64: **1322 passed / 69,30%**, включая **450 PostgreSQL/Redis cases**; четыре прежних warnings, неизменный 65% gate. Общий прогон занял 253,67 s. 12 новых PC tenant cases и 10 protocol cases входят в этот прогон. Ruff, Bandit (0 Medium/High) и generated API check прошли. Проверены 230 локальных Markdown targets в семи затронутых руководствах. Точная GitHub code revision и её CI будут записаны отдельным snapshot; локальный pass не заменяет CI или реальные OS/ADB/LDPlayer/device измерения.
+Локальная проверка AUD-63–64: **1322 passed / 69,30%**, включая **450 PostgreSQL/Redis cases**; четыре прежних warnings, неизменный 65% gate. Общий прогон занял 253,67 s. 12 новых PC tenant cases и 10 protocol cases входят в этот прогон. Ruff, Bandit (0 Medium/High) и generated API check прошли. Проверены 230 локальных Markdown targets в семи затронутых руководствах. Результат точной GitHub code revision приведён ниже; локальный pass не заменяет CI или реальные OS/ADB/LDPlayer/device измерения.
+
+
+Code head `eda33a7` (AUD-63–64) прошёл с первой попытки
+[backend CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34383128767),
+[frontend CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34383128758) и
+[Android CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34383128765).
+Сохранены [backend](evidence/ci-eda33a7-backend.json),
+[frontend](evidence/ci-eda33a7-frontend.json) и [Android](evidence/ci-eda33a7-android.json)
+snapshots. [Linux summary и все 22 новых PC cases](evidence/ci-eda33a7-tests.txt):
+**1322 passed / 69,27%**, 264,00 s; Windows: **1322 / 69,30%**, включая **450
+PostgreSQL/Redis cases**, четыре warnings. Порог 65% сохранён; lint/mypy, dependency
+security, RLS и миграции прошли. Preview guard успешен, deploy пропущен. Временных
+локальных runtime LOGIN-ролей и соединений ноль. Документационный commit сохраняет
+эти результаты и запускает собственные checks; production code после `eda33a7`
+не меняется. PR остаётся draft без независимого review; OS/ADB/LDPlayer/APK/network
+и нагрузка 10–64 не объявлены проверенными. Merge/deployment не выполнялись.

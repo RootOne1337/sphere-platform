@@ -14,8 +14,8 @@
 | 1 | Deployment | Startup export и наследование dev commands/mounts/root/PG/Redis/application ports исправлены; оба Compose merge проверены | n8n/MinIO ingress, RLS roles, OTA/log persistence, запуск/health/recovery и restore backup |
 | 2 | APK runtime и производительность | 344 JVM tests; лимит loop diagnostics не пропускает действия, coroutine cancellation выходит из body; typeText больше не пишет raw/encoded ввод в логи; root pipe unknown не повторяется автоматически через DAG/loop; сервер восстанавливает evicted presence по pong; реальный APK↔API и нагрузка 10–64 не завершены | Root execution ACK, Lua pcall/unknown reconciliation, FGS/boot/timeout, emulator/physical permissions, process death, codec backpressure/recovery, multi-worker session fencing, PubSub reconnect, CPU/RAM/FPS/battery |
 | 2 | PC agent | Идентичность workstation и ORM registration исправлены; API-key bootstrap и fresh registration tenant исправлены (AUD-63, 12 non-owner cases); потеря terminal replies до Redis channel исправлена (AUD-64, 10 protocol cases) | Durable PC result/ACK, unknown command outcome, topology replay, provisioning, real ASGI disconnect, reconnect и замена сессии, ошибки ADB/emulator process, идемпотентность |
-| 2 | Dependencies/CI | Совместимое Python обновление: 1322 tests, pip check и joint pip-audit без известных уязвимостей; на d642273 backend/frontend/Android CI успешны с первой попытки; Host→audit/log/metrics path исправлен | Frontend/Android/container advisories, hash lock/SBOM, dependency-aware mypy, actions runtime/version pins; отдельный подготовленный load job; исследование повторяющейся timing variance DAG benchmark на CI (100 ms gate сохранён) |
-| 2 | Frontend/n8n/observability | 198 Jest tests и tsc проходят на Node 24; guard/cache/session/logout исправлены; frontend CI на d642273 прошёл Linux tests/types/build/standalone entry point; browser checks неполны | Supported Node runtime, Jest/tsc/browser, API-key/HMAC/webhook contracts, реальные метрики/alerts и multiprocess |
+| 2 | Dependencies/CI | Совместимое Python обновление: 1322 tests, pip check и joint pip-audit без известных уязвимостей; на eda33a7 backend/frontend/Android CI успешны с первой попытки; Host→audit/log/metrics path исправлен | Frontend/Android/container advisories, hash lock/SBOM, dependency-aware mypy, actions runtime/version pins; отдельный подготовленный load job; исследование повторяющейся timing variance DAG benchmark на CI (100 ms gate сохранён) |
+| 2 | Frontend/n8n/observability | 198 Jest tests и tsc проходят на Node 24; guard/cache/session/logout исправлены; frontend CI на eda33a7 прошёл Linux tests/types/build/standalone entry point; browser checks неполны | Supported Node runtime, Jest/tsc/browser, API-key/HMAC/webhook contracts, реальные метрики/alerts и multiprocess |
 | 3 | Уборка и удобство эксплуатации | HTTP schema/catalog воспроизводятся из кода; CI проверяет актуальность; Tasks/Batches и APK guide сверены | Устаревшие Redis producer paths, документация конфигурации, согласованный gitignore для regression tests, runbooks и дашборды |
 
 Ограничения проверки: запуск выделенного локального API отклонён автоматической
@@ -52,3 +52,19 @@ warnings. Неизменный 65% gate пройден. Новая миграц�
 временных runtime LOGIN-ролей и соединений ноль. PR остаётся draft без независимого
 review; production grants/cutover не выполнялись. Следующий документационный commit
 сохраняет эти результаты и запускает собственные checks, не меняя production code.
+
+
+Code head `eda33a7` (AUD-63–64) прошёл с первой попытки
+[backend CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34383128767),
+[frontend CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34383128758) и
+[Android CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34383128765).
+Сохранены [backend](evidence/ci-eda33a7-backend.json),
+[frontend](evidence/ci-eda33a7-frontend.json) и [Android](evidence/ci-eda33a7-android.json)
+snapshots. [Linux summary и все 22 новых PC cases](evidence/ci-eda33a7-tests.txt):
+**1322 passed / 69,27%**, 264,00 s; Windows: **1322 / 69,30%**, включая **450
+PostgreSQL/Redis cases**, четыре warnings. Порог 65% сохранён; lint/mypy, dependency
+security, RLS и миграции прошли. Preview guard успешен, deploy пропущен. Временных
+локальных runtime LOGIN-ролей и соединений ноль. Документационный commit сохраняет
+эти результаты и запускает собственные checks; production code после `eda33a7`
+не меняется. PR остаётся draft без независимого review; OS/ADB/LDPlayer/APK/network
+и нагрузка 10–64 не объявлены проверенными. Merge/deployment не выполнялись.

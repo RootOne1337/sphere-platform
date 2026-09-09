@@ -53,11 +53,14 @@ separates confirmed blockers from paths still requiring investigation.
   The compatible joint Python dependency scan is a recorded snapshot, not a scan of
   all ecosystems. Coverage remains gated at **65%**, with precision=2 and tests for
   the 64.98% rejection / 65.00% acceptance boundaries.
-- The last verified published application revision before the PC fixes is `d642273`:
-  [backend](https://github.com/RootOne1337/sphere-platform/actions/runs/34379906033),
-  [frontend](https://github.com/RootOne1337/sphere-platform/actions/runs/34379906010) and
-  [Android](https://github.com/RootOne1337/sphere-platform/actions/runs/34379906047)
-  pass on attempt 1; Linux **1300 tests / 68.77%**. The PC revision needs its own CI.
+- Application revision **`eda33a7`**, including both PC fixes, passes
+  [backend](https://github.com/RootOne1337/sphere-platform/actions/runs/34383128767),
+  [frontend](https://github.com/RootOne1337/sphere-platform/actions/runs/34383128758) and
+  [Android](https://github.com/RootOne1337/sphere-platform/actions/runs/34383128765)
+  CI on attempt 1. Linux: **1322 tests / 69.27%**, including all 22 new PC cases.
+  Compact run snapshots and the test summary are retained with the audit report.
+  The following documentation-only commit starts its own checks; application code
+  is unchanged. Preview guard passes and deployment is skipped.
 
 ## Rollout and remaining risks
 
