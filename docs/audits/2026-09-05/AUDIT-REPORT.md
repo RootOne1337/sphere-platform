@@ -20,10 +20,10 @@ runtime-проверок и не считается доказательство
 | Проверка | Результат | Практическое ограничение |
 | --- | --- | --- |
 | Android enterprise debug unit suite | 344 passed, 0 failed | JVM/MockWebServer; не проверяет ОС, codec, батарею или смерть процесса на телефоне |
-| Объединённая Backend/PC/production/deployment suite | **1266 passed, 0 failed**; coverage **68,71%** | Строгий coverage gate 65% пройден с precision=2. Load suite исключена; 6 Compose config tests не запускают сервисы |
+| Объединённая Backend/PC/production/deployment suite | **1300 passed, 0 failed**; coverage **68,80%** | Строгий coverage gate 65% пройден с precision=2. Load suite исключена; 6 Compose config tests не запускают сервисы |
 | Python dependency scan | **0 known vulnerabilities** в совместном backend/PC resolution | Pip-audit snapshot, не проверка frontend/Gradle/container/application security; [версии и ограничения](DEPENDENCY-REVIEW.md) |
-| Проверки PostgreSQL/Redis | **394 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
-| Миграции | Применены до **20260909_credential_lookup** включительно | Только изолированная БД; конфликтные данные/downgrade проверены в throwaway schema; production не мигрировался |
+| Проверки PostgreSQL/Redis | **428 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
+| Миграции | Применены до **20260909_user_auth_bootstrap** включительно | Только изолированная БД; конфликтные данные/downgrade проверены в throwaway schema; production не мигрировался |
 | Backend image | Собирается; исходная запись OpenAPI воспроизведённо падает с PermissionError | Исправлен lifespan; полный deployment runtime ещё не подтверждён |
 | Frontend | **198 Jest tests passed**, tsc passed; Next production build exit 0 на Node 24.19.0 | React/JSDOM + Axios adapters; настоящий browser runtime не проверен. Windows standalone tracing выдал ENOENT warning, artifact packaging ещё не подтверждён |
 | APK ↔ реальный локальный backend | Не завершено | Автоматическая проверка разрешений отклонила запуск локального API: `blocked by policy`; обход не выполнялся |
@@ -37,7 +37,7 @@ runtime-проверок и не считается доказательство
 [Локальные 24 DAG cases прошли](evidence/dag-timing-d828a62-local.txt). Порог 100 ms
 не ослаблялся, тест не исключался; причина timing variance на runner не установлена.
 Файл production-regressions-after.txt сохраняет более ранний standalone snapshot
-с 41 тестом; актуальные 394 входят в общий прогон.
+с 41 тестом; актуальные 428 входят в общий прогон.
 
 Команды запуска и предохранители изоляции: [tests/production/README.md](../../../tests/production/README.md).
 Исходные `14 passed` в [reproductions.txt](evidence/reproductions.txt) означают
@@ -653,12 +653,22 @@ runtime-проверок и не считается доказательство
 - **Residual risk:** ASGI выполняется без сетевого listener; manager/heartbeat/stream/publisher — doubles, настоящего APK/OS/network failover здесь нет. Redis failures вводятся на границе методов, не остановкой Redis. PubSub/Fleet events и освобождение Redis task lock по-прежнему могут предшествовать SQL commit; это не durable outbox. Не проверены все EventTrigger/account/pipeline ссылки и эффекты. Live socket revocation, глобальные jobs, crash/unknown-commit recovery и нагрузка 10–64 остаются открыты. Исходный before был снят после AUD-58–60: работающая auth chain сделала post-auth дефект достижимым под runtime ролью.
 
 
+### AUD-62 — High: login, user refresh/MFA и SQL logout не работали под runtime ролью
+
+- **Root cause:** login выбирал User по email до tenant binding; refresh/logout искали opaque token hash в unscoped Session; Redis MFA state содержал лишь user UUID, а второй HTTP request открывал новую unscoped Session. RLS скрывала валидные строки. Logout при этом мог вернуть 204, оставив refresh token неотозванным в SQL.
+- **Evidence/reproduction:** [10 failed / 8 passing denial controls](evidence/user-bootstrap-before.txt) на actual non-owner PostgreSQL LOGIN. Валидные login/MFA/refresh возвращали 401, cookie/header logout не менял revoked, два refresh не достигали ожидаемых SQL row locks. Проверка использует реальные ASGI endpoints и только изолированные PostgreSQL/Redis.
+- **Affected files:** `backend/services/auth_service.py`; `backend/database/credential_lookup.py`; `alembic/versions/20260909_user_auth_bootstrap.py`; `tests/production/test_user_bootstrap_runtime.py`; runtime-grant/SQLite/AsyncMock/MFA fixtures.
+- **Fix:** две закрытые для PUBLIC функции возвращают только org UUID по точному globally unique email или полному active refresh hash; после этого Session привязывается до обычных scoped SELECT. Refresh сохраняет FOR UPDATE и проверяет соответствие user/refresh organization. MFA v2 server-side JSON хранит user/org, второй шаг связывает tenant, перепроверяет active/MFA/org и сохраняет одноразовое DEL consumption. Credentials возвращаются после SQL commit. Миграция требует отдельных runtime EXECUTE grants; [runbook](../../security/user-auth-bootstrap.md) описывает threat boundary, cutover и rollback.
+- **Regression:** [105 related cases passed](evidence/user-bootstrap-after.txt), включая 34 новых real-service cases. Login → me → refresh → replay denial → logout для A/B, ложный org header, cookie/header/JSON refresh, SQL revoke, current active/moved identity, два refresh SQL waiters и один winner/usable child; concurrent MFA GET/DEL, invalid/legacy state, moved/disabled user; SQL abort после flush и recovery для login/refresh/MFA; exact narrow lookup, temp shadowing, explicit EXECUTE и owner protection. Исходный before включает 18 HTTP cases; дополнительные function/MFA/failure tests добавлены при реализации механизма.
+- **Residual risk:** email угадываем, поэтому EXECUTE раскрывает database caller организацию активного известного email; это не HTTP auth или проверка пароля. MFA namespace v2 требует нового password step для legacy challenges и согласованного cutover workers; client wire format не меняется. После успешного DEL и неуспешного SQL commit нужен новый challenge, а после потерянного ответа на успешный commit сохраняется unknown-outcome риск. Refresh-family revocation, MFA guessing/recovery policy, admin changes после авторизации, остальные auth callers и глобальные jobs остаются открыты. Доказательств полного browser/production/network failover нет.
+
+
 ## Открытые подтверждённые блокеры
 
 | ID / severity | Root cause и evidence | Необходимое продолжение |
 | --- | --- | --- |
 | AUD-11 / High, частично исправлен | SQL ownership/uniqueness/intents исправлены и проверены; реальные orphan peers и provider unknown outcomes не reconciled | Inventory contract, controlled reconciliation/rollout, HTTP adapter и AWG конфигурация; незавершённые intents пока удерживаются |
-| AUD-14 / High | Startup guard исправлен; политики всех 28 tables и runtime CRUD проверены (AUD-54). Восстановление bound Session после commit/recovery исправлено (AUD-55); user JWT, API-key/device-refresh/Android WS auth и post-auth task/event sessions исправлены (AUD-57–61); user opaque auth и глобальные jobs ещё не переведены | Разделение migration/runtime ролей, перевод HTTP/auth/jobs на bound Sessions, разрешённые/запрещённые runtime API/worker сценарии |
+| AUD-14 / High | Startup guard исправлен; политики всех 28 tables и runtime CRUD проверены (AUD-54). Восстановление bound Session после commit/recovery исправлено (AUD-55); user JWT, API-key/device-refresh/Android WS auth и post-auth task/event sessions исправлены (AUD-57–61); user login/refresh/logout/MFA исправлены в AUD-62; остальные auth callers и глобальные jobs требуют проверки | Разделение migration/runtime ролей, перевод HTTP/auth/jobs на bound Sessions, разрешённые/запрещённые runtime API/worker сценарии |
 | DEPLOY-03 / High | Effective Compose оставляет n8n/MinIO host ports; production persistence и DB roles не согласованы | Ingress/access design, роли, долговечные artifacts, runtime/restore проверка |
 
 ## Следующие компоненты аудита

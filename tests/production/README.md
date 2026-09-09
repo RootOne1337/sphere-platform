@@ -186,3 +186,13 @@ SQL abort after flush and successful replay, ownership denials and pooled contex
 cleanup. ACK callback assertions also record successful verification outside the
 handler, which otherwise catches send errors. No network listener, APK process or
 full EventTrigger/account/pipeline effect is exercised; transport doubles are retained.
+
+`test_user_bootstrap_runtime.py` adds 34 actual non-owner HTTP/SQL/Redis cases for
+login, refresh, logout and MFA bootstrap. Runtime fixture grants EXECUTE on the two
+user functions added by `20260909_user_auth_bootstrap` as well as the earlier device
+functions. Tests cover permitted A/B identities, denial controls, all refresh sources,
+SQL logout revocation, actual concurrent refresh row waits, one MFA consumer after
+two reads, malformed/legacy state, identity changes, post-flush SQL abort/retry and
+function grants/search_path/owner protection. Login rate-limit keys are namespaced
+per fixture while retaining real Redis enforcement. See [rollout and remaining risks](../../docs/security/user-auth-bootstrap.md),
+including MFA v2 challenge invalidation and Redis/SQL unknown outcomes.

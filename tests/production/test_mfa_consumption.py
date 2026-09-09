@@ -1,6 +1,7 @@
 """MFA challenges must be consumed exactly once before issuing SQL credentials."""
 
 import asyncio
+import json
 import uuid
 
 import pyotp
@@ -23,7 +24,7 @@ async def challenge(world):
         user.mfa_secret = secret
         await db.commit()
     state = uuid.uuid4().hex
-    await CacheService().set(f"mfa:state:{state}", str(user.id), ttl=300)
+    await CacheService().set(f"mfa:state:v2:{state}", json.dumps({"user_id": str(user.id), "org_id": str(user.org_id)}), ttl=300)
     return state, pyotp.TOTP(secret).now()
 
 
@@ -65,7 +66,7 @@ async def test_concurrent_valid_mfa_submissions_issue_one_session(world):
         ), 4)
     assert sorted(results) == [200, 401]
     assert await issued_count(world) == 1
-    assert await world.redis.get(f"mfa:state:{state}") is None
+    assert await world.redis.get(f"mfa:state:v2:{state}") is None
 
 
 async def test_mfa_state_expiring_after_read_cannot_issue_tokens(world):

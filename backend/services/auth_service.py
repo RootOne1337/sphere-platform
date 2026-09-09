@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import secrets
+import uuid
 from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import select
@@ -20,6 +22,8 @@ from backend.core.security import (
     create_refresh_token,
     verify_password,
 )
+from backend.database.credential_lookup import bind_credential_tenant, bind_user_login_tenant
+from backend.database.tenant import bind_tenant_context
 from backend.models.refresh_token import RefreshToken
 from backend.models.user import User
 from backend.services.cache_service import CacheService
@@ -57,8 +61,8 @@ class AuthService:
         if user.mfa_enabled:
             state_token = secrets.token_urlsafe(32)
             await self.cache.set(
-                f"mfa:state:{state_token}",
-                str(user.id),
+                f"mfa:state:v2:{state_token}",
+                json.dumps({"user_id": str(user.id), "org_id": str(user.org_id)}),
                 ttl=300,  # 5 минут на ввод TOTP
             )
             return {
@@ -85,8 +89,8 @@ class AuthService:
         if rt.expires_at < datetime.now(timezone.utc):
             raise InvalidTokenError("Refresh token expired")
 
-        user = await self.db.get(User, rt.user_id)
-        if not user or not user.is_active:
+        user = await self.db.get(User, rt.user_id, populate_existing=True)
+        if not user or not user.is_active or user.org_id != rt.org_id:
             raise InvalidTokenError("User not found or inactive")
 
         # Rotate: отозвать старый, выпустить новый refresh token
@@ -155,13 +159,21 @@ class AuthService:
         Второй шаг MFA login.
         Проверяет TOTP-код из state_token (Redis) и выдаёт токены.
         """
-        user_id_str = await self.cache.get(f"mfa:state:{state_token}")
-        if not user_id_str:
+        # Only server-written v2 state can carry the pre-auth tenant. Legacy
+        # challenges require a new password step; no unscoped user lookup fallback.
+        state_raw = await self.cache.get(f"mfa:state:v2:{state_token}")
+        if not state_raw:
             raise InvalidTokenError("MFA session expired or invalid")
-
-        import uuid
-        user = await self.db.get(User, uuid.UUID(user_id_str))
-        if not user or not user.is_active:
+        try:
+            state = json.loads(state_raw)
+            if not isinstance(state, dict) or not all(isinstance(state.get(k), str) for k in ("user_id", "org_id")):
+                raise ValueError("Invalid MFA identity")
+            user_id, org_id = uuid.UUID(state["user_id"]), uuid.UUID(state["org_id"])
+        except (ValueError, TypeError):
+            raise InvalidTokenError("MFA session expired or invalid")
+        await bind_tenant_context(self.db, str(org_id))
+        user = await self.db.get(User, user_id, populate_existing=True)
+        if not user or not user.is_active or not user.mfa_enabled or user.org_id != org_id:
             raise InvalidCredentialsError()
 
         from backend.services.mfa_service import MFAService
@@ -171,7 +183,7 @@ class AuthService:
 
         # Issue only for the request that actually consumes the live challenge.
         # Another valid submission or TTL expiry may have removed it after GET.
-        if await self.cache.delete(f"mfa:state:{state_token}") != 1:
+        if await self.cache.delete(f"mfa:state:v2:{state_token}") != 1:
             raise InvalidTokenError("MFA session expired or already consumed")
         return await self._issue_tokens(user)
 
@@ -209,16 +221,23 @@ class AuthService:
         }
 
     async def _get_user_by_email(self, email: str) -> User | None:
+        org_id = await bind_user_login_tenant(self.db, email)
+        if org_id is None:
+            return None
         result = await self.db.execute(
-            select(User).where(User.email == email)
+            select(User).where(User.email == email, User.org_id == org_id)
+            .execution_options(populate_existing=True)
         )
         return result.scalar_one_or_none()
 
     async def _get_refresh_token_by_hash(self, token_hash: str) -> RefreshToken | None:
+        org_id = await bind_credential_tenant(self.db, "user_refresh", token_hash)
+        if org_id is None:
+            return None
         # Refresh and logout consume the same row. Validate only after its owner
         # commits, and replace any preloaded ORM snapshot while acquiring the lock.
         result = await self.db.execute(
-            select(RefreshToken).where(RefreshToken.token_hash == token_hash)
+            select(RefreshToken).where(RefreshToken.token_hash == token_hash, RefreshToken.org_id == org_id)
             .with_for_update()
             .execution_options(populate_existing=True)
         )

@@ -186,9 +186,9 @@ network failure displays an unconfirmed-revocation message on login.
   packaging and real-browser behavior remain unconfirmed. On `3630a63`, [Linux frontend CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34175662261)
   passed Jest, tsc, production build and a standalone-entry-point check.
 - Android enterprise debug unit suite: **344 passed**.
-- Combined backend/PC, PostgreSQL/Redis and deployment regressions: **1266 passed**.
-  This includes **394 real-service tests** and **6 Compose configuration tests**.
-  Coverage is **68.71%** and passes the unchanged **65%** gate with two-decimal
+- Combined backend/PC, PostgreSQL/Redis and deployment regressions: **1300 passed**.
+  This includes **428 real-service tests** and **6 Compose configuration tests**.
+  Coverage is **68.80%** and passes the unchanged **65%** gate with two-decimal
   precision. No threshold or coverage scope was weakened. Two additional
   regression tests exercise the 64.98% rejection and exact 65.00% boundary. Long load/soak profiles require a prepared API
   environment and are excluded from the ordinary PR command.
@@ -377,7 +377,7 @@ refresh → WebSocket → OTA, reconnect and SQL failure recovery; exact device/
 boundaries; multi-connection lock contention; refresh replay; lookup function grants
 and temp-table shadowing. Before evidence is retained separately for all three defects.
 The transport manager/heartbeat/stream effects are doubles. No listening API or APK
-OS test is implied. User opaque auth, global jobs, production role
+OS test is implied. Remaining auth callers, global jobs, production role
 provisioning, refresh response loss and live socket revocation remain open. See the
 [device credential runbook](https://github.com/RootOne1337/sphere-platform/blob/codex/enterprise-audit-20260905/docs/security/device-credential-bootstrap.md)
 for migration/grants/rollback and threat-boundary details.
@@ -411,7 +411,7 @@ migration or production grant changes are needed for this fix.
 Transport manager/heartbeat/stream/publisher remain doubles. PubSub/Fleet events
 and Redis lock release may still precede SQL commit; no durable outbox or full
 EventTrigger/account/pipeline effect verification is claimed. Global job propagation,
-user opaque auth, live socket revocation and actual APK/network/load runs remain open.
+remaining auth callers, live socket revocation and actual APK/network/load runs remain open.
 
 Local AUD-61 validation: **1266 passed / 68.71%**, including **394 PostgreSQL/Redis cases**; four existing warnings, unchanged 65% gate. After the combined run, the test callback guard was strengthened to expose swallowed assertion failures, then all 47 related cases were rerun. Production code is unchanged since the full run. Ruff, Bandit (zero Medium/High) and API export checks pass. GitHub results for the exact code revision follow below.
 
@@ -424,3 +424,35 @@ on attempt 1. Linux: **1266 tests / 68.65%**; Windows: **1266 / 68.71%**, includ
 snapshots and the Linux test summary are committed with the audit report. The following
 documentation-only revision starts its own checks; application code is unchanged.
 No independent review, full production rollout or APK/OS/load verification is implied.
+
+### User login, refresh/logout and MFA under RLS (AUD-62)
+
+Unscoped credential queries made valid user login/refresh/MFA return 401 under
+non-owner PostgreSQL credentials. Logout could return 204 without revoking the SQL
+refresh token. Two protected SQL functions now discover only the organization from
+an exact globally unique email or a complete active refresh hash. Normal scoped
+credential/password checks follow. Refresh/logout retain row-lock consumption;
+refresh rejects a user moved outside the token's organization.
+
+MFA stores server-written user/organization JSON under a versioned Redis namespace,
+binds before User access, rechecks active/MFA/organization state and requires the
+single successful DEL before SQL token issuance. Client wire formats stay unchanged.
+Legacy in-flight challenges require a new password step, and deployment must
+coordinate old/new workers. Migration `20260909_user_auth_bootstrap` requires explicit
+EXECUTE grants on the two user functions, additional to the device-function grants.
+See the [user auth runbook](https://github.com/RootOne1337/sphere-platform/blob/codex/enterprise-audit-20260905/docs/security/user-auth-bootstrap.md).
+
+Baseline: 10 failures and eight passing denial controls. The final 34 new non-owner
+cases cover A/B HTTP chains, all refresh sources, SQL logout revocation, one parallel
+refresh winner, one concurrent MFA consumer, changed identities, malformed/legacy
+state, SQL abort/recovery and function grants/search_path/ownership. All 105 related
+checks pass. Combined local validation: **1300 tests / 68.80%**, including **428
+PostgreSQL/Redis cases**, four existing warnings, unchanged 65% gate. Ruff, Bandit and
+API export checks pass. Exact-head GitHub results are recorded separately.
+
+Database EXECUTE can reveal the organization of a guessed active email; this is a
+documented metadata boundary and does not authenticate the HTTP caller. Redis DEL
+and SQL commit are not a distributed transaction: an MFA SQL failure after consumption
+requires a new challenge. Unknown commit/response outcomes, refresh-family revocation,
+MFA guessing/recovery policy, other auth callers/global workers and production role
+provisioning remain open. No production migration, restart or deployment occurred.

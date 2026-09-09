@@ -7,7 +7,9 @@
 > До rollout нужно завершить auth/job tenant context и разделение runtime/migration
 > ролей: [RLS runbook](docs/security/postgresql-rls.md). Политики устанавливает Alembic,
 > ручной SQL setup и автоматический downgrade `20260908_tenant_policies` запрещены.
-> Head `20260909_credential_lookup` и runtime function grants описаны в
+> Head `20260909_user_auth_bootstrap` добавляет две user-функции к двум device-функциям.
+> Их runtime EXECUTE grants и обязательный MFA cutover описаны в
+> [user auth runbook](docs/security/user-auth-bootstrap.md) и
 > [device credential runbook](docs/security/device-credential-bootstrap.md).
 > Фактические результаты и оставшиеся блокеры: [audit report](docs/audits/2026-09-05/AUDIT-REPORT.md).
 

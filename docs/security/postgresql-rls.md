@@ -1,7 +1,7 @@
 # PostgreSQL RLS: доказательства и условия внедрения
 
 Обновлено 9 сентября 2026. Политики схемы исправлены в
-`20260908_tenant_policies`; head теперь `20260909_credential_lookup`. **Полный переход приложения на runtime-роль ещё
+`20260908_tenant_policies`; head теперь `20260909_user_auth_bootstrap`. **Полный переход приложения на runtime-роль ещё
 заблокирован**. AUD-14 остаётся частично открытым. Это не инструкция немедленно
 менять production credentials. Проверены только выделенный локальный PostgreSQL 15
 и синтетические организации; production не изменялся.
@@ -132,7 +132,9 @@ enrollment key с отзывом. [Механизм и обязательные 
 AUD-61 связывает отдельные post-auth Android Sessions перед task receipt/result,
 progress ownership и EventReactor SQL. [15 runtime regressions](../../tests/production/test_agent_messages_runtime.py)
 проверяют ASGI receive loop, commit-before-ACK, duplicate accounting и SQL abort/retry.
-Login по email, user refresh/MFA и глобальные jobs ещё открыты.
+AUD-62 закрывает проверенные HTTP login, user refresh/logout и MFA bootstrap:
+[user resolver grants, threat boundary и MFA v2 cutover](user-auth-bootstrap.md).
+Остальные auth callers и глобальные jobs ещё требуют проверки.
 Нельзя решать их default deny выдачей BYPASSRLS, публичным SELECT credential tables
 или доверяя неподписанному tenant header. Production rollout остаётся заблокированным.
 SQLite unit adapter `set_config` поддерживает SQL-вызов, но не реализует RLS;
@@ -166,9 +168,9 @@ upgrade не должен отмечаться как применённая rev
    owner/member, SUPERUSER/BYPASSRLS, участником privileged role или иметь TRUNCATE.
    Не выдавать ему DDL/role administration. Compose пока использует общий
    PostgreSQL bootstrap user; production guard должен отклонить такой запуск.
-2. Завершить user login/MFA/refresh bootstrap и проверить остальные auth callers.
-   User JWT, API-key/device-refresh lookup и Android WS auth исправлены в AUD-57–60.
-   Runtime требует explicit EXECUTE на две функции; их owner/DDL/grants защищаются
+2. Проверить остальные auth callers и provisioning. User JWT, device credentials,
+   Android WS и user login/refresh/logout/MFA исправлены в AUD-57–62.
+   Runtime требует explicit EXECUTE на четыре функции; их owner/DDL/grants защищаются
    отдельно, приложение не должно наследовать права владельца. В явно привязанных Session восстановление
    после смены транзакции исправлено в AUD-55; unscoped callers ещё нужно перевести.
 3. Перевести глобальную enumeration и фоновые scheduler/orchestrator/VPN/audit

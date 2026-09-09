@@ -97,8 +97,9 @@ Refresh response loss after a successful commit still requires recovery: replay
 of the old token is rejected. Re-enrollment preserves the device ID but rotates
 credentials; it does not promise identical responses. A retained enrollment key
 can re-enroll a matching fingerprint; device attestation/proof of possession and
-enrollment-key retirement remain separate work. User email/MFA/refresh bootstrap,
-global jobs, full APK runtime and 10–64 emulator load remain unverified here.
+enrollment-key retirement remain separate work. User email/MFA/refresh bootstrap
+is covered separately by [AUD-62 and its rollout contract](user-auth-bootstrap.md).
+Global jobs, full APK runtime and 10–64 emulator load remain unverified here.
 
 Primary basis: PostgreSQL [CREATE FUNCTION security-definer guidance](https://www.postgresql.org/docs/15/sql-createfunction.html)
 and [row security behavior](https://www.postgresql.org/docs/15/ddl-rowsecurity.html).

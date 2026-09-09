@@ -2,14 +2,16 @@
 
 > **Статус на 9 сентября 2026:** аудит продолжается; этот справочник не является
 > подтверждением production readiness. RLS runtime-role rollout заблокирован до
-> завершения user auth/bootstrap и фоновых задач: [условия и доказательства](security/postgresql-rls.md).
+> проверки остальных auth callers, фоновых задач и provisioning ролей: [условия и доказательства](security/postgresql-rls.md).
 > Текущий общий PostgreSQL owner/superuser не пройдёт production startup guard.
 > Не применять generic rolling deploy/rollback к этим security migrations.
 
 ---
 
-> Миграция `20260909_credential_lookup` требует explicit runtime EXECUTE grants
-> на две tenant-only функции: [device credential runbook](security/device-credential-bootstrap.md).
+> Head `20260909_user_auth_bootstrap` требует explicit runtime EXECUTE grants
+> на две user функции в дополнение к двум device-функциям:
+> [user auth и MFA cutover](security/user-auth-bootstrap.md),
+> [device credential runbook](security/device-credential-bootstrap.md).
 > Полный runtime-role rollout этим не завершается.
 
 ## Table of Contents

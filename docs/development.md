@@ -11,11 +11,12 @@
 > across commit/rollback/recovery. Bind before data access and before savepoints;
 > use a fresh Session for another tenant. Plain `get_db()` remains unscoped.
 > User access JWT authentication now binds its verified organization before loading
-> the user; handlers sharing that request Session inherit the binding. Opaque
-> user login/refresh/MFA and post-auth jobs still need tenant boundaries. API-key
-> and device-refresh bootstrap now use tenant-only SQL functions, and Android WS
-> authenticates before target lookup. Apply `20260909_credential_lookup` and review
-> [the required function grants](security/device-credential-bootstrap.md).
+> the user; handlers sharing that request Session inherit the binding. User login,
+> refresh/logout and MFA bootstrap are covered by AUD-62. Global jobs and other auth
+> callers still require review. Apply `20260909_user_auth_bootstrap` and review the
+> [user function grants and MFA cutover](security/user-auth-bootstrap.md) alongside
+> [device function grants](security/device-credential-bootstrap.md). Android WS
+> authenticates before target lookup.
 > Android task progress, receipts/results and device events bind their own fresh
 > Sessions from authenticated connection identity; the closed auth Session cannot
 > pass its SQL context to the receive loop. Terminal ACK follows SQL commit.
