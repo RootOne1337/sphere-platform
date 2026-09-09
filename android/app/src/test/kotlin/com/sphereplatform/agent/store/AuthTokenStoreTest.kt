@@ -53,6 +53,7 @@ class AuthTokenStoreTest {
                 this@mockk
             }
             every { apply() } just Runs
+            every { commit() } returns true
         }
         prefs = mockk(relaxed = true) {
             every { edit() } returns editor

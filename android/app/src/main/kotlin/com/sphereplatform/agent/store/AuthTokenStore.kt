@@ -16,6 +16,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import timber.log.Timber
+import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -26,7 +27,7 @@ import javax.inject.Singleton
  * Ключи и значения никогда не хранятся в plaintext.
  *
  * [getFreshToken] проактивно обновляет access token если осталось < 5 мин до истечения.
- * Это гарантирует что first-message WS всегда содержит неистёкший токен.
+ * При ошибке сохраняет текущее credential state; сервер отдельно проверяет expiry.
  */
 @Singleton
 class AuthTokenStore @Inject constructor(
@@ -36,6 +37,7 @@ class AuthTokenStore @Inject constructor(
     companion object {
         private const val KEY_ACCESS_TOKEN = "access_token"
         private const val KEY_REFRESH_TOKEN = "refresh_token"
+        private const val KEY_REFRESH_ROTATION_ID = "refresh_rotation_id"
         private const val KEY_ACCESS_TOKEN_EXPIRES_AT = "access_token_expires_at"
         private const val KEY_SERVER_URL = "server_url"
         private const val KEY_DEVICE_ID = "device_id"
@@ -78,25 +80,36 @@ class AuthTokenStore @Inject constructor(
         }
 
         return@withLock try {
-            // FIX M3: Таймаут 10с на refresh внутри Mutex — ранее зависший HTTP
-            // блокировал ВСЕ getFreshToken() вызовы на 60с (OkHttp readTimeout).
-            // Каскад: WS auth → heartbeat → reconnect → снова Mutex death.
+            // Coroutine timeout does not by itself cancel blocking OkHttp execute().
+            // Transport cancellation/deadline needs a separate lifecycle audit.
             withTimeout(10_000L) {
                 withContext(Dispatchers.IO) {
                     refreshTokenRequest(refreshToken)
                 }
             }
         } catch (e: Exception) {
-            Timber.w(e, "Token refresh failed, using existing token")
-            accessToken
+            Timber.w(e, "Token refresh failed, using stored token")
+            getToken()
         }
     }
 
     private fun refreshTokenRequest(refreshToken: String): String {
+        val requestId = synchronized(this) {
+            check(prefs.getString(KEY_REFRESH_TOKEN, null) == refreshToken) { "Refresh credentials changed" }
+            val saved = prefs.getString(KEY_REFRESH_ROTATION_ID, null)
+            val id = saved?.let { UUID.fromString(it).toString() } ?: UUID.randomUUID().toString()
+            // Always commit, including retries: a failed commit changes memory too.
+            // This also flushes preceding apply() writes before consuming a child token.
+            check(prefs.edit().putString(KEY_REFRESH_ROTATION_ID, id).commit()) {
+                "Cannot persist refresh intent"
+            }
+            id
+        }
         val serverUrl = getServerUrl()
         val request = Request.Builder()
             .url("$serverUrl/api/v1/devices/refresh")
             .addHeader("Cookie", "refresh_token=$refreshToken")
+            .addHeader("X-Refresh-Request-Id", requestId)
             .post(ByteArray(0).toRequestBody("application/json".toMediaType()))
             .build()
 
@@ -113,21 +126,32 @@ class AuthTokenStore @Inject constructor(
             val newRefreshToken = json["refresh_token"]?.jsonPrimitive?.content
                 ?: error("Refresh response is missing rotation token")
 
-            prefs.edit()
-                .putString(KEY_ACCESS_TOKEN, newAccessToken)
-                .putString(KEY_REFRESH_TOKEN, newRefreshToken)
-                .putLong(KEY_ACCESS_TOKEN_EXPIRES_AT, System.currentTimeMillis() + expiresIn * 1000)
-                .apply()
+            synchronized(this) {
+                check(prefs.getString(KEY_REFRESH_TOKEN, null) == refreshToken &&
+                    prefs.getString(KEY_REFRESH_ROTATION_ID, null) == requestId) {
+                    "Refresh credentials changed"
+                }
+                // Atomic preference edit. A crash before disk persistence leaves the
+                // committed parent+intent recoverable; the next consume commits first.
+                prefs.edit()
+                    .putString(KEY_ACCESS_TOKEN, newAccessToken)
+                    .putString(KEY_REFRESH_TOKEN, newRefreshToken)
+                    .putLong(KEY_ACCESS_TOKEN_EXPIRES_AT, System.currentTimeMillis() + expiresIn * 1000)
+                    .remove(KEY_REFRESH_ROTATION_ID)
+                    .apply()
+            }
 
             Timber.d("Access token refreshed, expires in ${expiresIn}s")
             return newAccessToken
         }
     }
 
+    @Synchronized
     fun saveTokens(accessToken: String, refreshToken: String, expiresIn: Long) {
         prefs.edit()
             .putString(KEY_ACCESS_TOKEN, accessToken)
             .putString(KEY_REFRESH_TOKEN, refreshToken)
+            .remove(KEY_REFRESH_ROTATION_ID)
             .putLong(KEY_ACCESS_TOKEN_EXPIRES_AT, System.currentTimeMillis() + expiresIn * 1000)
             .apply()
     }
@@ -136,18 +160,22 @@ class AuthTokenStore @Inject constructor(
      * Saves a static API key as the agent's auth token (no expiry / no refresh).
      * Used during device enrollment from [com.sphereplatform.agent.ui.SetupActivity].
      */
+    @Synchronized
     fun saveApiKey(apiKey: String) {
         prefs.edit()
             .putString(KEY_ACCESS_TOKEN, apiKey)
             .remove(KEY_REFRESH_TOKEN)
+            .remove(KEY_REFRESH_ROTATION_ID)
             .putLong(KEY_ACCESS_TOKEN_EXPIRES_AT, Long.MAX_VALUE)
             .apply()
     }
 
+    @Synchronized
     fun clearTokens() {
         prefs.edit()
             .remove(KEY_ACCESS_TOKEN)
             .remove(KEY_REFRESH_TOKEN)
+            .remove(KEY_REFRESH_ROTATION_ID)
             .remove(KEY_ACCESS_TOKEN_EXPIRES_AT)
             .apply()
     }

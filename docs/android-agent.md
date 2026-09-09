@@ -125,7 +125,8 @@ An illustrative local configuration shape is:
 Device auto-registration calls `POST /api/v1/devices/register` and persists the
 returned device ID, access token and refresh token. Refresh uses
 `POST /api/v1/devices/refresh`; the backend binds credentials to an active
-device and rotates refresh material. Legacy credentials from before this audit's
+device and rotates refresh material. AUD-69/70 add a persisted operation UUID for
+recovering a lost response; see the [refresh recovery contract](security/device-refresh-recovery.md). Legacy credentials from before this audit's
 migration require re-enrollment. Do not duplicate enrolled app storage across a
 fleet: identity and outstanding receipts belong to one device.
 
@@ -285,8 +286,8 @@ runtime verification. These controls do not certify every endpoint or dependency
 
 ## 12. Verified audit snapshot
 
-**347 enterprise debug JVM tests passed**, with zero failures/errors/skips across
-27 suites. Eleven new regressions first failed before the two loop/control fixes:
+**354 enterprise debug JVM tests passed**, with zero failures/errors/skips across
+28 suites. Eleven new regressions first failed before the two loop/control fixes:
 log-cap action loss, error handling past the cap, coroutine cancellation, wire
 cancel/pause in nested bodies, retry/final-action boundaries and durable replay.
 Evidence: [loop before](audits/2026-09-05/evidence/android-loop-before.txt),
@@ -313,6 +314,22 @@ windows cap at 15–30 seconds. Clean server closes also enter a retry window in
 of reconnecting immediately. Stop and forced reconnect retain their existing wake
 channel. These limits describe retry scheduling, not command latency or a recovery
 SLO. Three new tests execute the real client loop/backoff with socket doubles and
-virtual time; the complete suite contains 347 tests. Older APK builds retain their
+virtual time; the suite contained 347 tests at AUD-67; after AUD-70 it contains 354. Older APK builds retain their
 old policy until updated. A secondary endpoint and LAN-first discovery are separate
 work; jitter alone is not a backup channel.
+
+
+## Refresh recovery after response loss (AUD-69/70)
+
+The APK commits `refresh_rotation_id` on the IO dispatcher before calling refresh.
+Retries reuse the persisted UUID and original token. Backend migration
+`20260910_device_refresh_retry` retains one operation and returns the same unconsumed
+successor without extending its expiry. The token tuple and intent removal share one
+preference edit; stale responses cannot overwrite re-enrollment or cleared credentials.
+
+Seven new memory/disk/HTTP-boundary cases pass; the full suite is **354 tests / 28
+suites**. This is not a physical process-death/keystore test. Deploy migration and
+all backend workers before APK; preserve app data and signing identity. Older
+servers do not guarantee response recovery. The feature does not recover an
+already-lost legacy rotation, initial enrollment, expired refresh credentials or a
+second server route. Blocking HTTP cancellation remains a separate audit item.
