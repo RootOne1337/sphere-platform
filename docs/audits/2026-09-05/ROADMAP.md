@@ -29,8 +29,8 @@ native CLI/readiness, полный daemon/reboot drill остаётся откр
 | 1 | Deployment | Startup export и наследование dev commands/mounts/root/PG/Redis/application ports исправлены; оба Compose merge проверены | n8n/MinIO ingress, RLS roles, OTA/log persistence, запуск/health/recovery и restore backup |
 | 2 | APK runtime и производительность | 344 JVM tests; лимит loop diagnostics не пропускает действия, coroutine cancellation выходит из body; typeText больше не пишет raw/encoded ввод в логи; root pipe unknown не повторяется автоматически через DAG/loop; сервер восстанавливает evicted presence по pong; реальный APK↔API и нагрузка 10–64 не завершены | Root execution ACK, Lua pcall/unknown reconciliation, FGS/boot/timeout, emulator/physical permissions, process death, codec backpressure/recovery, multi-worker session fencing, PubSub reconnect, CPU/RAM/FPS/battery |
 | 2 | PC agent | Идентичность workstation и ORM registration исправлены; API-key bootstrap и fresh registration tenant исправлены (AUD-63, 12 non-owner cases); потеря terminal replies до Redis channel исправлена (AUD-64, 10 protocol cases); client transport recovery/state cleanup исправлены (AUD-65, 9 lifecycle cases); unknown command false-success исправлен (AUD-66, 3 Redis cases) | Durable PC result/ACK, payload/correlation validation, topology replay, provisioning, real ASGI disconnect, reconnect и замена сессии, ошибки ADB/emulator process, идемпотентность |
-| 2 | Dependencies/CI | Текущий прогон: 1351 tests / 69,32%; совместимое Python обновление, pip check и joint pip-audit без известных уязвимостей; на 8692a58 backend/frontend/Android CI успешны с первой попытки; Host→audit/log/metrics path исправлен | Frontend/Android/container advisories, hash lock/SBOM, dependency-aware mypy, actions runtime/version pins; отдельный подготовленный load job; исследование повторяющейся timing variance DAG benchmark на CI (100 ms gate сохранён) |
-| 2 | Frontend/n8n/observability | 198 Jest tests и tsc проходят на Node 24; guard/cache/session/logout исправлены; frontend CI на 8692a58 прошёл Linux tests/types/build/standalone entry point; browser checks неполны | Supported Node runtime, Jest/tsc/browser, API-key/HMAC/webhook contracts, реальные метрики/alerts и multiprocess |
+| 2 | Dependencies/CI | Текущий прогон: 1351 tests / 69,32%; совместимое Python обновление, pip check и joint pip-audit без известных уязвимостей; на 769aec3 backend/frontend/Android CI успешны с первой попытки; Host→audit/log/metrics path исправлен | Frontend/Android/container advisories, hash lock/SBOM, dependency-aware mypy, actions runtime/version pins; отдельный подготовленный load job; исследование повторяющейся timing variance DAG benchmark на CI (100 ms gate сохранён) |
+| 2 | Frontend/n8n/observability | 198 Jest tests и tsc проходят на Node 24; guard/cache/session/logout исправлены; frontend CI на 769aec3 прошёл Linux tests/types/build/standalone entry point; browser checks неполны | Supported Node runtime, Jest/tsc/browser, API-key/HMAC/webhook contracts, реальные метрики/alerts и multiprocess |
 | 3 | Уборка и удобство эксплуатации | HTTP schema/catalog воспроизводятся из кода; CI проверяет актуальность; Tasks/Batches и APK guide сверены | Устаревшие Redis producer paths, документация конфигурации, согласованный gitignore для regression tests, runbooks и дашборды |
 
 Ограничения проверки: запуск выделенного локального API отклонён автоматической
@@ -85,17 +85,23 @@ security, RLS и миграции прошли. Preview guard успешен, de
 и нагрузка 10–64 не объявлены проверенными. Merge/deployment не выполнялись.
 
 
-Code head `8692a58` (AUD-65–66) прошёл с первой попытки
+Code head `769aec3` (AUD-65–66) прошёл с первой попытки
 [backend CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34387311587),
 [frontend CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34387311505) и
 [Android CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34387314911).
-Сохранены [backend](evidence/ci-8692a58-backend.json),
-[frontend](evidence/ci-8692a58-frontend.json) и [Android](evidence/ci-8692a58-android.json)
-snapshots. [Linux summary, 12 новых cases и исправленный backoff test](evidence/ci-8692a58-tests.txt):
+Сохранены [backend](evidence/ci-769aec3-backend.json),
+[frontend](evidence/ci-769aec3-frontend.json) и [Android](evidence/ci-769aec3-android.json)
+snapshots. [Linux summary, 12 новых cases и исправленный backoff test](evidence/ci-769aec3-tests.txt):
 **1334 passed / 69,27%**, 266,92 s; Windows: **1334 / 69,31%**, включая **453
 PostgreSQL/Redis cases**, четыре прежних warnings. Порог 65% сохранён; lint/mypy,
 security, RLS и миграции прошли. Preview guard успешен, deploy пропущен. Временных
 локальных runtime LOGIN-ролей и соединений ноль. Документационный commit сохраняет
-результаты и запускает собственные checks; исполняемый код после `8692a58` не
+результаты и запускает собственные checks; исполняемый код после `769aec3` не
 меняется. PR остаётся draft без независимого review, merge или deployment. Реальные
 PC/APK sockets, OS/subprocess и нагрузка 10–64 устройств не объявлены проверенными.
+
+
+Ревизия `769aec3` (включая AUD-67/68): backend/frontend/Android CI прошли с первой
+попытки; Linux **1351 passed / 69,27%**, Windows **1351 / 69,32%**. Все 17 новых
+startup cases прошли на обеих ОС. APK suite — **347 JVM tests**, сборка CI успешна.
+[Сохранённая проверка](AUDIT-REPORT.md) отделена от предстоящих OS/network/load drills.

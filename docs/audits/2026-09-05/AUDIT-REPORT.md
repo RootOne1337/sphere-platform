@@ -1068,6 +1068,19 @@ CI использует отдельный новый Ruff, guard против b
 как открытые пробелы. LAN primary/saved secondary/optional GitHub — направление
 будущего изменения, а не существующий резервный канал. AI не внедряется.
 
-Новая code revision ещё требует отдельного CI результата; предыдущие CI snapshots
-выше относятся к явно указанным SHA. Проверка runtime APK/OS/браузера, реального
-Docker restart, аппаратной нагрузки и incident ingestion не объявлена завершённой.
+Ревизия **`769aec3`**, включающая оба исправления, прошла с первой попытки
+[backend CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34407474578),
+[frontend CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34407474747) и
+[Android CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34407474584).
+Сохранены [backend](evidence/ci-769aec3-backend.json),
+[frontend](evidence/ci-769aec3-frontend.json), [Android](evidence/ci-769aec3-android.json)
+и [preview](evidence/ci-769aec3-preview.json) snapshots.
+[Linux summary и все 17 новых случаев](evidence/ci-769aec3-tests.txt):
+**1351 passed / 69,27%**, 252,65 s, четыре прежних warnings. Backend lint/mypy,
+security, RLS и миграции успешны. Preview guard успешен, deployment skipped.
+Временных runtime SQL-ролей и оставшихся тестовых соединений ноль.
+
+Этот documentation-only commit сохраняет результаты и запускает собственные checks;
+исполняемый код после `769aec3` не меняется. PR остаётся draft без независимого
+review, merge и deployment. Runtime APK/OS/браузера, реальный Docker restart,
+аппаратная нагрузка и incident ingestion не объявлены проверенными.
