@@ -18,6 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.database.engine import AsyncSessionLocal
 from backend.database.redis_client import get_redis
+from backend.database.tenant import bind_tenant_context
 from backend.models.api_key import APIKey
 from backend.models.workstation import Workstation
 from backend.websocket.connection_manager import ConnectionManager, get_connection_manager
@@ -33,28 +34,15 @@ async def authenticate_agent_token(token: str, db: AsyncSession) -> APIKey:
     agent_token = sha256(raw_key) хранится в таблице api_keys с type='agent'.
     Отличие от JWT: не истекает через 15 мин, не нужен refresh-цикл.
     """
-    import hashlib
-    from datetime import datetime, timezone
+    from backend.services.api_key_service import APIKeyService
 
-    from sqlalchemy import select
-
-    key_hash = hashlib.sha256(token.encode()).hexdigest()
-    now = datetime.now(timezone.utc)
-    result = await db.execute(
-        select(APIKey).where(
-            APIKey.key_hash == key_hash,
-            APIKey.is_active == True,  # noqa: E712
-            APIKey.type == "agent",
-        )
-    )
-    api_key = result.scalar_one_or_none()
-    if not api_key:
+    # Share opaque-tenant discovery and post-lock active/expiry checks with
+    # enrollment. A separate unscoped SELECT fails under runtime RLS.
+    api_key = await APIKeyService(db).authenticate(token)
+    if not api_key or api_key.type != "agent":
         raise ValueError("Invalid or inactive agent token")
     if "device:register" not in api_key.permissions:
         raise ValueError("Agent registration permission required")
-    # F-04: проверка срока действия токена
-    if api_key.expires_at is not None and api_key.expires_at < now:
-        raise ValueError("Agent token has expired")
     return api_key
 
 
@@ -72,6 +60,7 @@ async def handle_workstation_register(
         from datetime import datetime, timezone
 
         from backend.models.ldplayer_instance import LDPlayerInstance
+        await bind_tenant_context(db, org_id)
         workstation = await db.scalar(select(Workstation).where(
             Workstation.id == uuid.UUID(workstation_id), Workstation.org_id == uuid.UUID(org_id),
         ))

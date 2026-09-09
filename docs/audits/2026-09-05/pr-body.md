@@ -186,9 +186,9 @@ network failure displays an unconfirmed-revocation message on login.
   packaging and real-browser behavior remain unconfirmed. On `3630a63`, [Linux frontend CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34175662261)
   passed Jest, tsc, production build and a standalone-entry-point check.
 - Android enterprise debug unit suite: **344 passed**.
-- Combined backend/PC, PostgreSQL/Redis and deployment regressions: **1300 passed**.
-  This includes **428 real-service tests** and **6 Compose configuration tests**.
-  Coverage is **68.80%** and passes the unchanged **65%** gate with two-decimal
+- Combined backend/PC, PostgreSQL/Redis and deployment regressions: **1312 passed**.
+  This includes **440 real-service tests** and **6 Compose configuration tests**.
+  Coverage is **69.18%** and passes the unchanged **65%** gate with two-decimal
   precision. No threshold or coverage scope was weakened. Two additional
   regression tests exercise the 64.98% rejection and exact 65.00% boundary. Long load/soak profiles require a prepared API
   environment and are excluded from the ordinary PR command.
@@ -466,3 +466,20 @@ PostgreSQL/Redis cases. Migration and all 34 user-bootstrap cases pass. Preview 
 passes; deployment is skipped. Compact snapshots are retained with the audit report.
 The following documentation-only commit starts its own checks and changes no
 application code. The PR remains draft without independent review or production rollout.
+
+### PC agent tenant bootstrap and registration (AUD-63)
+
+PC auth duplicated an unscoped API-key query and registration opened an unbound
+Session after auth. Valid non-owner connections and workstation/instance updates
+therefore failed under RLS. PC now uses shared API-key tenant discovery and post-lock
+validation; its registration Session binds authenticated organization before SQL.
+Existing agent type/permission and workstation/instance org checks remain intact.
+
+Twelve new real PostgreSQL/Redis cases retain six baseline failures and six passing
+controls. The endpoint and receive-loop registration run with socket/manager doubles;
+tests cover reconnect, key/workstation denials, two real SQL lock waiters during key
+revocation, instance persistence, post-flush SQL abort/retry and Redis cache failure.
+All 45 related checks pass. The PC guide now describes actual .env/SPHERE_ settings,
+the /ws/agent path and dispatcher fields instead of unsupported configuration/API
+examples. Real ASGI disconnect, PC command/result delivery, topology replay, workstation
+provisioning, OS/ADB/LDPlayer execution and load capacity remain separate work.

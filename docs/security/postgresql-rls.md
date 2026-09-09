@@ -135,6 +135,9 @@ progress ownership и EventReactor SQL. [15 runtime regressions](../../tests/pro
 AUD-62 закрывает проверенные HTTP login, user refresh/logout и MFA bootstrap:
 [user resolver grants, threat boundary и MFA v2 cutover](user-auth-bootstrap.md).
 Остальные auth callers и глобальные jobs ещё требуют проверки.
+AUD-63 переводит PC key auth на общий resolver и связывает workstation registration
+Session; [12 runtime-role cases](../../tests/production/test_pc_tenant_runtime.py)
+используют transport doubles. Это не полный PC/ADB/network runtime.
 Нельзя решать их default deny выдачей BYPASSRLS, публичным SELECT credential tables
 или доверяя неподписанному tenant header. Production rollout остаётся заблокированным.
 SQLite unit adapter `set_config` поддерживает SQL-вызов, но не реализует RLS;

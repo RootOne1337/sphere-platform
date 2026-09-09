@@ -14,6 +14,10 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Security / runtime
 
+- AUD-63: PC-agent использует общий API-key bootstrap и связывает fresh registration
+  Session с authenticated tenant. 12 non-owner SQL/Redis cases проверяют connection/
+  registration, key revoke wait, SQL abort/retry и cache failure. PC guide приведён
+  к реальным settings, endpoint и dispatch-командам; OS/ADB/load не объявлены проверенными.
 - AUD-62: user login/refresh/logout и MFA определяют tenant до RLS lookup;
   добавлены закрытые SQL org-only resolvers и MFA v2 server-side user/org state.
   34 новых non-owner cases проверяют HTTP chain, SQL revoke, concurrent consumers,
@@ -49,8 +53,8 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - AUD-54: Alembic `20260908_tenant_policies` устанавливает tenant policies всех
   28 таблиц, защищает оба конца M2M и append-only audit. 25 full-schema runtime-role
   checks и четыре migration/operator-policy checks; четыре CI inventory checks.
-- Общий backend/PC/production/deployment прогон: 1300 passed, coverage 68,80%,
-  включая 428 PostgreSQL/Redis cases; без load suite и listening APK/API.
+- Общий backend/PC/production/deployment прогон: 1312 passed, coverage 69,18%,
+  включая 440 PostgreSQL/Redis cases; без load suite и listening APK/API.
 
 ### Migration / deployment constraints
 

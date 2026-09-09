@@ -20,9 +20,9 @@ runtime-проверок и не считается доказательство
 | Проверка | Результат | Практическое ограничение |
 | --- | --- | --- |
 | Android enterprise debug unit suite | 344 passed, 0 failed | JVM/MockWebServer; не проверяет ОС, codec, батарею или смерть процесса на телефоне |
-| Объединённая Backend/PC/production/deployment suite | **1300 passed, 0 failed**; coverage **68,80%** | Строгий coverage gate 65% пройден с precision=2. Load suite исключена; 6 Compose config tests не запускают сервисы |
+| Объединённая Backend/PC/production/deployment suite | **1312 passed, 0 failed**; coverage **69,18%** | Строгий coverage gate 65% пройден с precision=2. Load suite исключена; 6 Compose config tests не запускают сервисы |
 | Python dependency scan | **0 known vulnerabilities** в совместном backend/PC resolution | Pip-audit snapshot, не проверка frontend/Gradle/container/application security; [версии и ограничения](DEPENDENCY-REVIEW.md) |
-| Проверки PostgreSQL/Redis | **428 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
+| Проверки PostgreSQL/Redis | **440 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
 | Миграции | Применены до **20260909_user_auth_bootstrap** включительно | Только изолированная БД; конфликтные данные/downgrade проверены в throwaway schema; production не мигрировался |
 | Backend image | Собирается; исходная запись OpenAPI воспроизведённо падает с PermissionError | Исправлен lifespan; полный deployment runtime ещё не подтверждён |
 | Frontend | **198 Jest tests passed**, tsc passed; Next production build exit 0 на Node 24.19.0 | React/JSDOM + Axios adapters; настоящий browser runtime не проверен. Windows standalone tracing выдал ENOENT warning, artifact packaging ещё не подтверждён |
@@ -37,7 +37,7 @@ runtime-проверок и не считается доказательство
 [Локальные 24 DAG cases прошли](evidence/dag-timing-d828a62-local.txt). Порог 100 ms
 не ослаблялся, тест не исключался; причина timing variance на runner не установлена.
 Файл production-regressions-after.txt сохраняет более ранний standalone snapshot
-с 41 тестом; актуальные 428 входят в общий прогон.
+с 41 тестом; актуальные 440 входят в общий прогон.
 
 Команды запуска и предохранители изоляции: [tests/production/README.md](../../../tests/production/README.md).
 Исходные `14 passed` в [reproductions.txt](evidence/reproductions.txt) означают
@@ -661,6 +661,16 @@ runtime-проверок и не считается доказательство
 - **Fix:** `d642273` — две закрытые для PUBLIC функции возвращают только org UUID по точному globally unique email или полному active refresh hash; после этого Session привязывается до обычных scoped SELECT. Refresh сохраняет FOR UPDATE и проверяет соответствие user/refresh organization. MFA v2 server-side JSON хранит user/org, второй шаг связывает tenant, перепроверяет active/MFA/org и сохраняет одноразовое DEL consumption. Credentials возвращаются после SQL commit. Миграция требует отдельных runtime EXECUTE grants; [runbook](../../security/user-auth-bootstrap.md) описывает threat boundary, cutover и rollback.
 - **Regression:** [105 related cases passed](evidence/user-bootstrap-after.txt), включая 34 новых real-service cases. Login → me → refresh → replay denial → logout для A/B, ложный org header, cookie/header/JSON refresh, SQL revoke, current active/moved identity, два refresh SQL waiters и один winner/usable child; concurrent MFA GET/DEL, invalid/legacy state, moved/disabled user; SQL abort после flush и recovery для login/refresh/MFA; exact narrow lookup, temp shadowing, explicit EXECUTE и owner protection. Исходный before включает 18 HTTP cases; дополнительные function/MFA/failure tests добавлены при реализации механизма.
 - **Residual risk:** email угадываем, поэтому EXECUTE раскрывает database caller организацию активного известного email; это не HTTP auth или проверка пароля. MFA namespace v2 требует нового password step для legacy challenges и согласованного cutover workers; client wire format не меняется. После успешного DEL и неуспешного SQL commit нужен новый challenge, а после потерянного ответа на успешный commit сохраняется unknown-outcome риск. Refresh-family revocation, MFA guessing/recovery policy, admin changes после авторизации, остальные auth callers и глобальные jobs остаются открыты. Доказательств полного browser/production/network failover нет.
+
+
+### AUD-63 — High: PC-agent auth и workstation registration теряли tenant context
+
+- **Root cause:** PC endpoint использовал собственный unscoped APIKey SELECT вместо общего credential bootstrap; после auth receive loop открывал новую Session, а workstation registration не связывал её с authenticated organization. Под runtime RLS валидный ключ отвергался, существующие Workstation/LDPlayerInstance не обновлялись.
+- **Evidence/reproduction:** [6 failed / 6 passing controls](evidence/pc-tenant-before.txt) на настоящих non-owner credentials: valid connect отказан; foreign-workstation проверка не достигалась после key auth; собственные registration/recovery/cache-failure сценарии не сохраняли SQL; concurrency не достигала ожидаемых key row locks.
+- **Affected files:** `backend/api/ws/agent/router.py::authenticate_agent_token`, `handle_workstation_register`; `tests/production/test_pc_tenant_runtime.py`.
+- **Fix:** PC auth использует `APIKeyService.authenticate` с tenant discovery и проверкой после row lock, сохраняя agent type/device:register constraints. Registration связывает fresh Session до Workstation/LDPlayerInstance SQL. Redis-only telemetry/result сообщения не получают лишнего SQL binding. Новая миграция, PC wire change или production grants не выполнялись; нужны ранее введённые API-key function grants.
+- **Regression:** 12 новых actual runtime-role cases; [45 related cases passed](evidence/pc-tenant-after.txt). Endpoint connect/reconnect с receive-loop registration, invalid/expired/inactive/wrong-type/unprivileged key, foreign workstation, два настоящих SQL lock waiters при отзыве key, instance persistence, post-flush SQL abort → rollback → retry, Redis failure после SQL commit и fresh pooled Session без tenant. Existing socket double расширен последовательностью сообщений; normal ASGI disconnect этим не моделируется.
+- **Residual risk:** socket/manager — doubles, это не полный PC↔server network/ADB/LDPlayer запуск. Нужны provisioning workstation/instance rows, live key revocation, PC command/result contract, topology replay, normal ASGI disconnect и runtime/process recovery. Key является org-level credential, не hardware-bound identity; API-key last_used_at в auth-only Session не гарантированно сохраняется. Обновлён [PC guide](../../pc-agent.md): действительные `.env`/SPHERE_ settings, endpoint, команды и непроверенные ограничения вместо несуществующих API/config примеров.
 
 
 ## Открытые подтверждённые блокеры

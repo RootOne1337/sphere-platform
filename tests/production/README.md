@@ -196,3 +196,11 @@ two reads, malformed/legacy state, identity changes, post-flush SQL abort/retry 
 function grants/search_path/owner protection. Login rate-limit keys are namespaced
 per fixture while retaining real Redis enforcement. See [rollout and remaining risks](../../docs/security/user-auth-bootstrap.md),
 including MFA v2 challenge invalidation and Redis/SQL unknown outcomes.
+
+`test_pc_tenant_runtime.py` uses actual non-owner PostgreSQL credentials for PC key
+auth and workstation/instance registration. Twelve cases cover endpoint reconnect
+with registration through the receive loop, key/workstation denial controls, SQL
+key-lock contention during revoke, committed registration, SQL abort/retry, Redis
+cache failure and pooled scope cleanup. Socket/manager are doubles; disconnect is
+raised as WebSocketDisconnect, not supplied as a normal ASGI disconnect frame.
+Actual client execution, network/OS recovery and LDPlayer/ADB actions remain open.
