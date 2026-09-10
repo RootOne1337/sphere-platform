@@ -105,3 +105,15 @@ workers и перечитывает сохранённый ID перед каж�
 4xx завершает одноразовую работу failure. Периодический worker вернётся на следующем
 допущенном ОС тике; `success` тика при ошибке не означает успешного enrollment.
 [Полный контракт и непроверенные OS/response-loss сценарии](../architecture/ANDROID-BACKGROUND-ENROLLMENT.md).
+
+## Registration долго не отпускает worker
+
+После AUD-76 HTTP registration имеет бюджет 10 s, отменяется при stop и не ждёт
+error body для известного non-2xx status. `Registration HTTP timed out` или
+transport IOException оставляет retry; это не подтверждение rollback на сервере.
+Late cancelled response не должен менять identity или запускать сервис.
+
+Отдельно различайте очередь enrollment mutex, ожидание Android network constraints,
+fingerprint/keystore IO и HTTP. У первых этапов нет общего 10-секундного срока.
+Не очищайте данные при неизвестном server commit: сохраните время/device/build и
+HTTP outcome для расследования. [Границы и воспроизведения](../architecture/ANDROID-BACKGROUND-ENROLLMENT.md).

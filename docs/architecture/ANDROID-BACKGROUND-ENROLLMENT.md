@@ -1,6 +1,6 @@
 # Фоновая регистрация APK и запуск связи
 
-**10 сентября 2026 · AUD-75 · проверено в JVM, аппаратный rollout не выполнен.**
+**10 сентября 2026 · AUD-75–76 · проверено в JVM, аппаратный rollout не выполнен.**
 
 [APK guide](../android-agent.md) · [Резервные адреса](ANDROID-SAVED-ROUTES.md) ·
 [Готовность системы](../operations/READINESS.md) · [Аудит](../audits/2026-09-05/AUDIT-REPORT.md)
@@ -68,13 +68,13 @@ cd android
 .\gradlew.bat --no-daemon :app:testEnterpriseDebugUnitTest
 ```
 
-Итог: [450 tests / 33 suites](../audits/2026-09-05/evidence/android-background-enrollment-summary.json),
+Итог AUD-75: [450 tests / 33 suites](../audits/2026-09-05/evidence/android-background-enrollment-summary.json),
 [полный вывод](../audits/2026-09-05/evidence/android-background-enrollment-after.txt).
 SQL contract tests предыдущих этапов не выдаются за установленный APK→SQL smoke.
 
 ## Остаточные риски и следующий этап
 
-Registration использует blocking HTTP; потеря ответа после server commit и
+HTTP registration ограничен и отменяется после AUD-76 ниже. Потеря ответа после server commit и
 долговечная атомарная запись UUID/tokens/marker ещё не закрыты. Mutex workers
 не решает конкуренцию с ручной регистрацией или остановку процесса посреди записи.
 Смена identity уже после подтверждения активного WS не имеет отдельного немедленного
@@ -88,3 +88,44 @@ latency и одновременный возврат сотен/тысяч ус�
 Новой миграции нет. Сначала все backend endpoints должны поддерживать существующие
 device refresh и `auth_ok`, затем APK обновляется с прежней подписью и app data.
 Переустановка, очистка identity, merge и deployment не являются частью этого fix.
+
+## Дедлайн и отмена первичной регистрации (AUD-76)
+
+`DeviceRegistrationClient` больше не удерживает вызывающую coroutine до возвращения
+blocking `execute()`. Асинхронный Call получает отдельный timeout 10 s; coroutine
+budget охватывает ожидание dispatcher, headers и разбор success body. Отмена caller
+отменяет именно этот Call. Общие WS client timeouts, pool и dispatcher не меняются.
+
+Callback закрывает response и возвращает только разобранные значения. Проверка
+cancellation предшествует записи store, поэтому body, завершившийся после отмены,
+не записывает identity/routes/tokens. Собственный HTTP timeout становится IOException:
+одноразовый worker возвращает retry и освобождает enrollment mutex. Внешняя отмена
+остаётся CancellationException, а следующий worker может продолжить работу.
+
+Success body ограничен **64 KiB в байтах до JSON parse**, с пробой следующего байта;
+внутренний буфер Okio может прочитать ещё один segment. Большой ответ с валидным
+JSON-префиксом больше не обрезается до якобы успешной регистрации. При non-2xx
+сохраняется HTTP status без ожидания error body; `RegistrationException.responseBody`
+остаётся null. Для подробностей ошибки нужен server-side log, не полный response в APK log.
+
+Baseline на `f9cccbc`: [5 failures / 2 controls](../audits/2026-09-05/evidence/android-registration-http-before.txt),
+[точные сообщения](../audits/2026-09-05/evidence/android-registration-http-before-summary.json).
+Добавлены 13 `RegistrationRecoveryTest` и два `BackgroundEnrollmentTest` cases:
+headers/body deadlines, parent cancellation, late reply после новой identity,
+граница 64 KiB, error status без body, IO retry, dispatcher cancellation и mutex
+release после stop/timeout. Итог:
+[465 tests / 34 suites](../audits/2026-09-05/evidence/android-registration-http-summary.json),
+[полный вывод](../audits/2026-09-05/evidence/android-registration-http-after.txt).
+
+Первый расширенный candidate имел один [неверный критерий теста очереди](../audits/2026-09-05/evidence/android-registration-http-fixture-before-summary.json):
+application interceptor может увидеть отменённый Call после освобождения слота.
+Это не сетевой send. Финальная проверка ждёт окончания callbacks и проверяет cancel,
+сохранение работающего соседа и отсутствие credential writes; исходный failure сохранён.
+
+**Границы:** срок 10 s не включает ожидание worker mutex, fingerprint/device IO,
+планирование Android или уже начатую синхронную запись preferences. Persistence
+всё ещё состоит из отдельных route/ID/token операций; cancellation не транзакция.
+Нет fencing успешного неотменённого ответа против другой регистрации/clear и нет
+idempotent receipt initial registration после server commit. Резерв применяется
+к уже установленной связи; начальный registration вызов сам не перебирает endpoints.
+Реальные sockets/OS/keystore/process death/fleet latency остаются непроверенными.

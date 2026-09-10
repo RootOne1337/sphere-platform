@@ -14,6 +14,12 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Security / runtime
 
+- AUD-76: первичная registration теперь отменяет конкретный HTTP Call при stop,
+  ограничивает запрос 10 s и success body 64 KiB до parse. Late cancelled callback
+  не записывает credentials; error status не ждёт body. Worker timeout остаётся
+  retryable и освобождает общую блокировку. 15 новых regressions, **465 JVM tests**.
+  Initial response loss и atomic disk state остаются открытыми.
+
 - AUD-75: фоновые workers регистрируют supplied bootstrap key до запуска агента,
   учитывают generated config flag/null и используют общую блокировку. Повторный
   запуск с сохранённой identity не выполняет новую registration rotation; transient

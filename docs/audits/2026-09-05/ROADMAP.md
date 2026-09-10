@@ -224,3 +224,15 @@ Runtime **`be75f57`**: backend/frontend/Android PR+push прошли с перв
 preview только guard, deploy skipped. Backend **1390 / 69.38%**, Android все
 четыре test variants. Локально **450 / 33 suites**. [Точные SHA/run links и evidence](AUDIT-REPORT.md).
 Это проверка очередного исправления, не завершение всего аудита или аппаратного rollout.
+
+## AUD-76 — registration HTTP: локально исправлено
+
+Blocking HTTP, отсутствие call cancellation, поздняя запись после stop и чтение
+body до лимита воспроизведены и исправлены. **15 новых cases; 465 / 34 suites**.
+Отдельно сохранена корректировка ложного interceptor-count assertion, без изменения
+runtime policy. [AUD-76 report](AUDIT-REPORT.md) содержит baseline и residual risks.
+
+Следующий P0 — initial registration response loss и atomic identity persistence,
+конкуренция ручного setup и worker, clone identity/config metadata; затем legacy
+UPDATE_CONFIG и реальные OS/fleet drills. HTTP cancellation не закрывает эти задачи.
+CI новой ревизии обязателен; весь запрос владельца ещё не завершён.

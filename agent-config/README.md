@@ -99,3 +99,12 @@ TLS/flavor/pinning и храните конфигурацию как часть 
 Физические OS/network/fleet drills, enrollment response loss, атомарная запись
 identity, durable config rollback и инфраструктурная HA остаются открытыми.
 Доказательства и точные ограничения: [AUD-74](../docs/audits/2026-09-05/AUDIT-REPORT.md).
+
+## Timeout первичной регистрации
+
+После AUD-76 registration имеет отдельный HTTP budget 10 s и отменяет Call при stop;
+late cancelled response не записывает credentials. Error status используется без
+чтения error body, success body ограничен 64 KiB. Timeout оставляет worker retry.
+Это не deadline всей подготовки устройства или гарантия атомарного disk state.
+Начальная регистрация сама не перебирает reserve URLs; saved failover применяется
+после полученной identity. [Контракт](../docs/architecture/ANDROID-BACKGROUND-ENROLLMENT.md).

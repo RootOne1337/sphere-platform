@@ -1,24 +1,34 @@
 package com.sphereplatform.agent.provisioning
 
-import com.sphereplatform.agent.store.AuthTokenStore
 import com.sphereplatform.agent.network.forManagementRoute
 import com.sphereplatform.agent.network.normalizeManagementUrl
+import com.sphereplatform.agent.store.AuthTokenStore
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.boolean
-import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.long
+import okhttp3.Call
+import okhttp3.Callback
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.Response
 import timber.log.Timber
+import java.io.IOException
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 
 /**
  * DeviceRegistrationClient — автоматическая регистрация устройства на сервере.
@@ -44,8 +54,9 @@ class DeviceRegistrationClient @Inject constructor(
 ) {
 
     companion object {
-        /** FIX D5: Максимальный размер ответа сервера при регистрации (защита от OOM). */
-        private const val MAX_RESPONSE_CHARS = 64 * 1024
+        /** Bound HTTP (including callback body parsing), not device or preference IO. */
+        private const val REGISTRATION_TIMEOUT_MS = 10_000L
+        private const val MAX_RESPONSE_BYTES = 64 * 1024
     }
 
     /**
@@ -112,50 +123,74 @@ class DeviceRegistrationClient @Inject constructor(
             .post(bodyJson.toRequestBody("application/json".toMediaType()))
             .build()
 
-        httpClient.forManagementRoute(serverUrl).newCall(request).execute().use { response ->
-            // FIX D5: Ограничиваем размер ответа (защита от OOM)
-            val responseBody = response.body?.string()?.take(MAX_RESPONSE_CHARS)
-                ?: throw RegistrationException("Пустой ответ сервера", response.code)
+        val reply = withTimeoutOrNull(REGISTRATION_TIMEOUT_MS) {
+            currentCoroutineContext().ensureActive()
+            val call = httpClient.forManagementRoute(serverUrl).newCall(request)
+            call.timeout().timeout(REGISTRATION_TIMEOUT_MS, TimeUnit.MILLISECONDS)
+            suspendCancellableCoroutine<RegistrationReply> { continuation ->
+                continuation.invokeOnCancellation { call.cancel() }
+                call.enqueue(object : Callback {
+                    override fun onFailure(call: Call, e: IOException) {
+                        continuation.resumeWithException(e)
+                    }
 
-            if (!response.isSuccessful) {
-                Timber.w("DeviceRegistration: HTTP ${response.code}: $responseBody")
-                throw RegistrationException(
-                    "Ошибка регистрации: HTTP ${response.code}",
-                    response.code,
-                    responseBody,
-                )
+                    override fun onResponse(call: Call, response: Response) {
+                        val parsed = try {
+                            response.use {
+                                if (!continuation.isActive) return
+                                readRegistrationReply(it, serverUrl)
+                            }
+                        } catch (e: Exception) {
+                            continuation.resumeWithException(e)
+                            return
+                        }
+                        // Return values only: a late callback never writes credentials.
+                        continuation.resume(parsed)
+                    }
+                })
             }
+        } ?: throw IOException("Registration HTTP timed out")
 
-            val jsonResponse = json.parseToJsonElement(responseBody).jsonObject
-            val result = RegistrationResult(
-                deviceId = jsonResponse["device_id"]!!.jsonPrimitive.content,
-                name = jsonResponse["name"]!!.jsonPrimitive.content,
-                accessToken = jsonResponse["access_token"]!!.jsonPrimitive.content,
-                refreshToken = jsonResponse["refresh_token"]!!.jsonPrimitive.content,
-                expiresIn = jsonResponse["expires_in"]!!.jsonPrimitive.long,
-                serverUrl = normalizeManagementUrl(serverUrl),
-                isNew = jsonResponse["is_new"]!!.jsonPrimitive.boolean,
-            )
+        // Parent cancellation propagates; our own HTTP deadline remains retryable.
+        currentCoroutineContext().ensureActive()
+        val result = reply.result
+        authStore.saveServerRoutes(result.serverUrl, fallbackServerUrl ?: reply.advertisedUrl)
+        authStore.saveDeviceId(result.deviceId)
+        authStore.saveTokens(result.accessToken, result.refreshToken, result.expiresIn)
 
-            // Сохраняем полученные данные в хранилище
-            // Keep the route that actually registered us. Canonical public URLs may
-            // be unreachable from a LAN device; they are candidates, not confirmation.
-            val advertised = jsonResponse["server_url"]?.jsonPrimitive?.content
-                ?.let { runCatching { normalizeManagementUrl(it) }.getOrNull() }
-                ?.takeIf { it != result.serverUrl }
-            authStore.saveServerRoutes(result.serverUrl, fallbackServerUrl ?: advertised)
-            authStore.saveDeviceId(result.deviceId)
-            authStore.saveTokens(result.accessToken, result.refreshToken, result.expiresIn)
+        Timber.i(
+            "DeviceRegistration: %s device_id=%s name=%s",
+            if (result.isNew) "REGISTERED NEW" else "RE-ENROLLED",
+            result.deviceId,
+            result.name,
+        )
+        result
+    }
 
-            Timber.i(
-                "DeviceRegistration: %s device_id=%s name=%s",
-                if (result.isNew) "REGISTERED NEW" else "RE-ENROLLED",
-                result.deviceId,
-                result.name,
-            )
+    private data class RegistrationReply(val result: RegistrationResult, val advertisedUrl: String?)
 
-            return@withContext result
+    private fun readRegistrationReply(response: Response, serverUrl: String): RegistrationReply {
+        if (!response.isSuccessful) {
+            // Retry classification needs the status, not a potentially stalled error body.
+            throw RegistrationException("Ошибка регистрации: HTTP ${response.code}", response.code)
         }
+        val source = response.body?.source() ?: throw IOException("Empty registration response")
+        if (source.request(MAX_RESPONSE_BYTES.toLong() + 1)) throw IOException("Registration response too large")
+        val jsonResponse = json.parseToJsonElement(source.readUtf8()).jsonObject
+        val result = RegistrationResult(
+            deviceId = jsonResponse["device_id"]!!.jsonPrimitive.content,
+            name = jsonResponse["name"]!!.jsonPrimitive.content,
+            accessToken = jsonResponse["access_token"]!!.jsonPrimitive.content,
+            refreshToken = jsonResponse["refresh_token"]!!.jsonPrimitive.content,
+            expiresIn = jsonResponse["expires_in"]!!.jsonPrimitive.long,
+            serverUrl = normalizeManagementUrl(serverUrl),
+            isNew = jsonResponse["is_new"]!!.jsonPrimitive.boolean,
+        )
+        // Keep the successful LAN request route; advertised public URL is a candidate.
+        val advertised = jsonResponse["server_url"]?.jsonPrimitive?.content
+            ?.let { runCatching { normalizeManagementUrl(it) }.getOrNull() }
+            ?.takeIf { it != result.serverUrl }
+        return RegistrationReply(result, advertised)
     }
 
     /**

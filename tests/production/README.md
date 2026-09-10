@@ -289,3 +289,13 @@ registration client and store; HTTP, preferences, root and service calls are dou
 identity ACK. Full enterprise debug: **450 tests / 33 suites**, no failures/skips.
 This is separate from the preceding 490 PostgreSQL/Redis cases; it does not join an
 installed APK to a real database. [Reproduction and boundaries](../../docs/architecture/ANDROID-BACKGROUND-ENROLLMENT.md).
+
+### Cancellable registration HTTP (AUD-76)
+
+13 new `RegistrationRecoveryTest` cases and two worker cases exercise actual OkHttp
+callbacks with held headers, body and dispatcher queue, cancellation, late replies,
+size boundaries and enrollment lock release. Full enterprise debug: **465 / 34 suites**.
+Baseline: five failures / two controls. The first expanded candidate had one invalid
+interceptor-count assertion; the corrected test drains callbacks and verifies no
+credential mutation. [Evidence and limits](../../docs/architecture/ANDROID-BACKGROUND-ENROLLMENT.md).
+No backend code/schema changes or installed APK/SQL smoke is claimed.

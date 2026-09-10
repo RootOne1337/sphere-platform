@@ -124,12 +124,21 @@ researches NitroGen and a future external inference worker; no AI is implemented
   with synthetic HTTP, preferences and OS boundaries. Initial registration response
   loss and hardware/OS/fleet behavior remain unverified.
 
+- **AUD-76:** blocking registration ignored caller cancellation, persisted a late
+  reply and read the entire response before applying a size limit. Async cancellable
+  HTTP with a separate 10-second budget and pre-parse 64 KiB bound repairs these
+  paths. Known non-success status no longer waits for error body. Worker timeout
+  remains retryable and releases the enrollment mutex. Baseline: **5 failures /
+  2 controls**; **15 new cases**, including actual worker recovery after timeout/stop.
+  One first-candidate test misidentified application interceptor invocation as a
+  network send; its failure and corrected cancellation/state assertions are recorded.
+
 ## Validation
 
 - Combined local backend/PC/PostgreSQL/Redis/deployment: **1390 passed**, including
   **490 real-service cases** and 25 deployment cases; **69.38%** coverage,
   four existing warnings. Load/soak profiles are excluded from this ordinary PR run.
-- Android enterprise debug unit suite: **450 passed / 33 suites**. These JVM/MockWebServer/OkHttp checks
+- Android enterprise debug unit suite: **465 passed / 34 suites**. These JVM/MockWebServer/OkHttp checks
   do not establish device OS, codec, battery or real network behavior.
 - Frontend: **198 tests / 23 suites**, TypeScript and production build pass. Linux CI
   verifies the standalone entry point; local Windows tracing emitted an ENOENT
@@ -138,7 +147,7 @@ researches NitroGen and a future external inference worker; no AI is implemented
   The compatible joint Python dependency scan is a recorded snapshot, not a scan of
   all ecosystems. Coverage remains gated at **65%**, with precision=2 and tests for
   the 64.98% rejection / 65.00% acceptance boundaries.
-- Current runtime revision **`be75f57`** (AUD-75) passes
+- Preceding runtime revision **`be75f57`** (AUD-75; does not cover AUD-76) passes
   [backend](https://github.com/RootOne1337/sphere-platform/actions/runs/34497536085), [frontend](https://github.com/RootOne1337/sphere-platform/actions/runs/34497536209),
   [Android PR](https://github.com/RootOne1337/sphere-platform/actions/runs/34497536769) and [Android push](https://github.com/RootOne1337/sphere-platform/actions/runs/34497528849)
   on attempt 1. Linux backend: **1390 passed / 69.38%**, 286.11 seconds,

@@ -29,6 +29,7 @@ import java.io.File
 import java.nio.file.Files
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
 /** Real workers, config parser, registration HTTP and token store; no OS/service/socket effects. */
@@ -44,6 +45,7 @@ class BackgroundEnrollmentTest {
     private val startedIds = CopyOnWriteArrayList<String>()
     private var enrolled = false
     private var status = 201
+    private var beforeReply: () -> Unit = {}
     private lateinit var context: Context
     private lateinit var directory: File
     private lateinit var client: OkHttpClient
@@ -77,6 +79,7 @@ class BackgroundEnrollmentTest {
         }
         client = OkHttpClient.Builder().addInterceptor { chain ->
             requests.add(chain.request())
+            beforeReply()
             Response.Builder().request(chain.request()).protocol(Protocol.HTTP_1_1).code(status).message("isolated")
                 .body("""{"device_id":"$id","name":"isolated","access_token":"issued-access",
                     "refresh_token":"issued-refresh","expires_in":900,"server_url":"$url","is_new":true}""".toResponseBody()).build()
@@ -355,5 +358,57 @@ class BackgroundEnrollmentTest {
         assertEquals(listOf(id), startedIds)
         coVerify(exactly = 0) { provisioner.discoverConfig() }
         assertTrue(requests.isEmpty())
+    }
+
+    @Test fun `cancelled registration owner releases enrollment for the next worker`() = runBlocking {
+        configured()
+        val entered = CountDownLatch(1)
+        val release = CountDownLatch(1)
+        beforeReply = {
+            if (requests.size == 1) { entered.countDown(); check(release.await(20, TimeUnit.SECONDS)) }
+        }
+        val first = launch(Dispatchers.Default) { worker("auto").doWork() }
+        try {
+            assertTrue(entered.await(5, TimeUnit.SECONDS))
+            first.cancel()
+            assertEquals(true, withTimeoutOrNull(1_000) { first.join(); true })
+            assertFalse(enrolled)
+            assertTrue(startedIds.isEmpty())
+            assertEquals(ListenableWorker.Result.success(), withTimeout(3_000) { worker("keep").doWork() })
+            assertEquals(listOf(id), startedIds)
+            assertEquals(2, requests.size)
+        } finally {
+            release.countDown()
+            first.cancelAndJoin()
+            withTimeout(5_000) { while (client.dispatcher.runningCallsCount() != 0) delay(5) }
+        }
+        assertEquals("issued-access", store.getToken())
+        assertEquals(listOf(id), startedIds)
+    }
+
+    @Test fun `registration HTTP deadline returns worker retry and allows the next attempt`() = runBlocking {
+        configured()
+        val entered = CountDownLatch(1)
+        val release = CountDownLatch(1)
+        beforeReply = {
+            if (requests.size == 1) { entered.countDown(); check(release.await(20, TimeUnit.SECONDS)) }
+        }
+        val first = async(Dispatchers.Default) { worker("auto").doWork() }
+        try {
+            assertTrue(entered.await(5, TimeUnit.SECONDS))
+            assertEquals(ListenableWorker.Result.retry(), withTimeoutOrNull(12_000) { first.await() })
+            assertFalse(enrolled)
+            assertNull(store.getToken())
+            assertTrue(startedIds.isEmpty())
+            assertEquals(ListenableWorker.Result.success(), withTimeout(3_000) { worker("auto").doWork() })
+            assertEquals(listOf(id), startedIds)
+            assertEquals(2, requests.size)
+        } finally {
+            release.countDown()
+            first.cancelAndJoin()
+            withTimeout(5_000) { while (client.dispatcher.runningCallsCount() != 0) delay(5) }
+        }
+        assertEquals("issued-access", store.getToken())
+        assertEquals(listOf(id), startedIds)
     }
 }

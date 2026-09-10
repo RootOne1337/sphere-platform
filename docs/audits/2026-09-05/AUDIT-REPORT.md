@@ -25,7 +25,7 @@ runtime-проверок и не считается доказательство
 
 | Проверка | Результат | Практическое ограничение |
 | --- | --- | --- |
-| Android enterprise debug unit suite | 450 passed, 0 failed | JVM/MockWebServer и OkHttp interceptors; не проверяет ОС, codec, батарею или смерть процесса на телефоне |
+| Android enterprise debug unit suite | 465 passed, 0 failed | JVM/MockWebServer и OkHttp interceptors; не проверяет ОС, codec, батарею или смерть процесса на телефоне |
 | Объединённая Backend/PC/production/deployment suite | **1390 passed, 0 failed**; coverage **69,38%** | Строгий coverage gate 65% пройден с precision=2. Load suite исключена; 25 deployment cases включают config/subprocess probes без запуска сервисов |
 | Python dependency scan | **0 known vulnerabilities** в совместном backend/PC resolution | Pip-audit snapshot, не проверка frontend/Gradle/container/application security; [версии и ограничения](DEPENDENCY-REVIEW.md) |
 | Проверки PostgreSQL/Redis | **490 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
@@ -1620,3 +1620,49 @@ Runtime/fixtures/docs commit: **`be75f575d7130e0f3f757ffee6a60e089007df0f`**. В
 концами строк и удалёнными trailing spaces. Migration head не менялся. Ни Android
 OS/fleet/network measurements, ни deployment, ни независимое review не выполнены.
 Следующий commit только фиксирует evidence/docs; он имеет отдельные checks.
+
+## AUD-76 — High: registration удерживал worker и записывал поздний ответ после отмены
+
+**Эксплуатационный P0: остановка и повторная попытка первичного подключения.**
+
+- **Root cause:** blocking OkHttp `execute()` внутри `withContext(IO)` не был связан
+  с coroutine cancellation и не имел отдельного registration budget. После чтения
+  body шли записи route/ID/tokens без проверки отмены. `body.string().take(64 KiB)`
+  сначала выделял память под весь ответ, затем мог принять валидный обрезанный JSON.
+  Известный non-2xx status тоже ждал полного error body перед retry classification.
+- **Evidence/reproduction:** на неизменённом production коде `f9cccbc` новый набор
+  дал [5 failures / 2 controls](evidence/android-registration-http-before.txt),
+  [XML summary с точными сообщениями](evidence/android-registration-http-before-summary.json).
+  Held headers не завершаются в 12 s, cancel не завершает caller за 1 s, поздний
+  success body пишет preferences; valid JSON + 1 MiB whitespace принимается; HTTP
+  503 с задержанным body не возвращает уже известный status.
+- **Affected files:** `android/app/src/main/kotlin/com/sphereplatform/agent/provisioning/DeviceRegistrationClient.kt`;
+  новый `RegistrationRecoveryTest.kt` и расширенный `BackgroundEnrollmentTest.kt`.
+- **Fix:** async enqueue/cancellable continuation + отдельные coroutine/Call budgets
+  10 s. Callback владеет response, закрывает его и отдаёт только значения; активность
+  coroutine проверяется до store writes. Success body ограничен байтами до parse,
+  non-2xx бросает typed status без error body. Собственный timeout — IOException
+  для worker retry; parent cancellation не поглощается. Shared WS timeouts/pool/
+  dispatcher сохранены, новый внешний сервис не добавлен.
+- **Regression:** 13 новых registration cases + два worker cases с настоящими
+  parser/client/store/worker и synthetic transport/preferences/device metadata.
+  Проверены headers/body deadlines, отмена caller/queued Call, сохранение новых
+  credentials после late cancelled reply, IO retry, 64 KiB boundary, освобождение
+  enrollment mutex при отмене/timeout и успешная следующая попытка.
+  [Итог: 465 / 34 suites](evidence/android-registration-http-summary.json),
+  [полный run](evidence/android-registration-http-after.txt), 0 fail/error/skip, 2m 11s.
+- **Fixture correction:** первый расширенный прогон [465 / 1 failure](evidence/android-registration-http-fixture-before.txt)
+  считал application interceptor invocation сетевым send. Отменённый queued Call
+  может войти в interceptor, оставаясь cancelled. [Ошибка assertion сохранена](evidence/android-registration-http-fixture-before-summary.json);
+  финальный test дожидается callbacks и проверяет отсутствие записей и сохранность
+  другого Call. Production policy ради прохождения этого assertion не менялась.
+- **Residual risk:** HTTP budget не охватывает mutex wait, metadata/keystore и
+  начатую синхронную persistence. Route/ID/tokens всё ещё не единый durable commit;
+  неотменённый response не fenced от manual re-enrollment/clear. Initial server
+  commit response loss, initial fallback traversal, clone identity и OS/network/
+  fleet/resource behavior остаются открытыми. RegistrationException сохраняет
+  httpCode, но больше не удерживает error response body. Backend/schema не менялись.
+
+[Актуальный контракт и rollout](../../architecture/ANDROID-BACKGROUND-ENROLLMENT.md).
+CI нового runtime commit фиксируется отдельно; CI предыдущего `be75f57` не является
+проверкой AUD-76. Сохраняется rollout backend→APK; deployment и merge не выполнялись.

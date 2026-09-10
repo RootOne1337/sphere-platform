@@ -432,5 +432,16 @@ remain retryable. WS reads the assigned ID on each attempt and rejects stale-ID 
 **450 JVM tests / 33 suites**, including 22 new worker cases and two WS identity
 cases, pass. Android service/root and HTTP boundaries are doubles; this is not an
 installed APK or SQL smoke. [Behavior, reproduction, rollout and residual risks](architecture/ANDROID-BACKGROUND-ENROLLMENT.md).
-Blocking initial registration, response loss, atomic disk persistence, manual setup
+Initial response loss, atomic disk persistence, manual setup
 concurrency and actual OS/fleet/resource behavior remain open.
+
+## 19. Initial registration HTTP recovery (AUD-76)
+
+Registration now has cancellable asynchronous HTTP with a 10-second request budget;
+success bodies are limited to 64 KiB before parsing. Non-success status does not wait
+for an error body. Late cancelled callbacks cannot write credentials. Worker timeout
+returns retry, while parent cancellation propagates and frees the enrollment mutex.
+
+**465 JVM tests / 34 suites**, with 15 new cases. [Contract, evidence and limits](architecture/ANDROID-BACKGROUND-ENROLLMENT.md).
+The HTTP bound does not make device/preference IO bounded or identity writes atomic.
+Lost server commit responses and real installed APK/fleet recovery remain open.
