@@ -1845,3 +1845,32 @@ Fixture теперь добавляет свой UUID к Redis identifier, ка�
 Ruff 0.15.2 и API export check проходят. Старый `python -m ruff` из audit venv
 выбирает 0.3.0 и сообщает E721 в неизменённом `account_credentials.py`; этот результат
 не подменяется новым lint. Проверка 0.15.2 выполнена отдельным установленным CLI.
+
+## AUD-79 — High: Bash full-deploy передавал весь Compose prefix одним аргументом
+
+- **Root cause / affected file:** `scripts/full-deploy.sh` устанавливает
+  `IFS=$'\n\t'`, но хранит `-f docker-compose.yml -f <overlay>` в строке.
+  Некавыченное `$COMPOSE_FILES` больше не разделяется по пробелам: build, up,
+  readiness, migration и seed получают один malformed argument вместо четырёх.
+- **Evidence/reproduction:** [четыре failures на 0da40f1](evidence/compose-arguments-before-summary.json),
+  [полный вывод с argv](evidence/compose-arguments-before.txt). Тест сохраняет весь
+  shipped preamble, IFS и option parsing, включая `--production`; затем запускает
+  настоящие `build_images`/`seed_data`. Отдельный процесс на границе Docker фиксирует
+  `['compose', '-f docker-compose.yml -f docker-compose.full.yml', ...]` и exit 64.
+  Это воспроизведение неправильных аргументов; Docker daemon не запускается.
+- **Fix:** Bash array для обоих overlay choices и `"${COMPOSE_FILES[@]}"` во всех
+  десяти вызовах Compose с file options. Глобальный IFS и смысл команд сохранены.
+- **Regression:** четыре новых tests в `tests/deployment/test_full_deploy_compose_arguments.py`;
+  прежний Bash bootstrap fixture также теперь загружает настоящий preamble вместо
+  ручного объявления defaults. [Все 37 deployment cases проходят](evidence/compose-arguments-after-summary.json),
+  [вывод](evidence/compose-arguments-after.txt), 19.84 s; Ruff и Bash syntax проходят.
+  AUD-78 по-прежнему доказывает SQL/HTTP bootstrap, но его первый function-only
+  harness не включал global IFS и потому не доказывал правильность полного launcher.
+- **Residual risk:** полный Compose/APK/VPN ещё не принят. Выбор `.env.local` в
+  PowerShell остаётся подтверждённым по коду пробелом; Bash `source .env.local`,
+  migration ordering, readiness/roles, autostart и credentials file требуют следующих
+  отдельных сценариев. Этот fix не меняет их и не объявляет весь launcher рабочим.
+
+Изменены один runtime shell script и два regression files. Последний полный локальный
+backend/PC run — AUD-78: 1413 passed, 69.38%; для изменения argv повторён целевой
+полный deployment набор. Exact runtime revision CI сохраняется отдельно.

@@ -2,7 +2,6 @@
 
 import json
 import os
-import re
 import shutil
 import subprocess
 import sys
@@ -56,15 +55,16 @@ if ($env:ADMIN_EMAIL -ne 'previous-email' -or $env:ADMIN_PASSWORD -ne 'previous-
 ''', encoding="utf-8")
     else:
         source = (REPOSITORY / "scripts/full-deploy.sh").read_text(encoding="utf-8")
-        function = re.search(r"^seed_data\(\) \{.*?^\}", source, re.M | re.S).group()
-        script.write_text('''set -euo pipefail
+        prefix, entrypoint = source.rsplit('\nmain "$@"', 1)
+        assert not entrypoint.strip()
+        library = tmp_path / "full-deploy-library.sh"
+        library.write_text(prefix + "\n", encoding="utf-8")
+        script.write_text('''source "$PILOT_ROOT/full-deploy-library.sh" --headless
 PROJECT_DIR="$PILOT_ROOT"
 LOG_FILE="$PILOT_ROOT/deploy.log"
-COMPOSE_FILES='-f docker-compose.yml -f docker-compose.full.yml'
 GREEN='' BOLD='' NC=''
 log() { printf '%s\\n' "$2"; }
 docker() { "$PILOT_PYTHON" "$PILOT_FAKE" "$@"; }
-''' + function + '''
 seed_data
 test "$ADMIN_EMAIL" = previous-email
 test "$ADMIN_PASSWORD" = previous-password

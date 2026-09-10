@@ -32,6 +32,13 @@ researches NitroGen and a future external inference worker; no AI is implemented
 
 ### Latest runtime findings
 
+- **AUD-79:** the Bash launcher's newline/tab IFS sent the entire Compose file
+  prefix as one argument. Both overlay choices are arrays and all ten call sites
+  preserve argument boundaries. Four baseline failures keep actual initialization
+  and options; all 37 deployment tests pass against a separate Docker boundary
+  process. The older bootstrap fixture now also includes the shipped preamble.
+  Full-stack env selection, migrations, installed APK and VPN remain open.
+
 - **AUD-62:** valid user login/refresh/MFA failed under RLS; logout could return 204
   without revoking its SQL token. Protected tenant resolvers and versioned MFA state
   restore scoped access. Baseline: **10 failures / 8 controls**; **34 new cases** cover

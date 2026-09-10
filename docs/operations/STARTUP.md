@@ -88,3 +88,10 @@ Admin и enrollment CLI теперь используют `SPHERE_BOOTSTRAP_ORG_
 отозванного ключа или переноса старого `default-org` нет. Реальный SQL/HTTP сценарий
 создаёт admin, выполняет login, регистрирует device и читает его той же identity;
 Compose, браузер и APK transport в этот прогон не входят.
+
+### Bash full-deploy: исправление аргументов Compose (AUD-79)
+
+`full-deploy.sh` использует array для файлов dev/production Compose и quoted expansion
+во всех стадиях. Это устраняет malformed `-f ... -f ...` argument при штатном IFS.
+Проверка включает настоящий preamble, build и bootstrap с процессом на границе Docker.
+Она не подтверждает остальные стадии полного deployment. [План приёмки](PILOT-ACCEPTANCE.md).

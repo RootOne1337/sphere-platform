@@ -909,3 +909,10 @@ curl https://sphere.serveousercontent.com/api/v1/health
 > - Настроить pipeline-оркестрацию и cron-расписания
 >
 > Документация: [docs/](docs/) · API: [docs/api-reference.md](docs/api-reference.md) · Web UI: [docs/web-ui-guide.md](docs/web-ui-guide.md)
+
+### Проверенная граница Bash launcher (AUD-79)
+
+Dev/production Compose arguments теперь передаются массивом при штатном `IFS`.
+Проверены build и bootstrap с настоящим preamble и процессом вместо Docker;
+полный deployment набор — 37 passing cases. Env-file, migrations/API ordering,
+готовность сервисов и реальный APK/VPN остаются в [приёмке пилота](docs/operations/PILOT-ACCEPTANCE.md).

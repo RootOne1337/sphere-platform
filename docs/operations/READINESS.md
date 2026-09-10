@@ -226,3 +226,10 @@ AUD-74: сохранённая пара и refresh/WS retry через друг�
 ID, старые callbacks и локальная конфигурация без bootstrap ключа. Это doubles/ASGI
 и выделенный PostgreSQL; фактический Android process death, LAN/DNS, нагрузка и
 наблюдаемая хронология инцидента остаются следующим доказательством готовности.
+
+### AUD-79: Compose argument routing
+
+Bash full-deploy исправлен: штатный `IFS` больше не склеивает file options в один
+аргумент. Все 37 deployment cases проходят, четыре новых включают весь preamble и
+оба overlay. Последний полный локальный backend/PC итог остаётся 1413 / 69,38% из
+AUD-78; установленный APK, полный stack, env selection и VPN не приняты.

@@ -1039,3 +1039,10 @@ Earlier branch integration is recorded in Git history. The former merge log and 
 
 [4.1.0]: https://github.com/RootOne1337/sphere-platform/compare/v4.0.0...v4.1.0
 [4.0.0]: https://github.com/RootOne1337/sphere-platform/releases/tag/v4.0.0
+
+### Audit continuation — Bash Compose invocation (AUD-79)
+
+- Use arrays for both full-deploy Compose overlays and preserve argument boundaries
+  with the shipped newline/tab IFS; repair all ten command sites.
+- Four failing-before regressions keep real initialization/options. All 37 deployment
+  cases pass; full-stack/env-file/migration/APK/VPN acceptance remains open.

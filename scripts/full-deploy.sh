@@ -43,7 +43,7 @@ NC='\033[0m'
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 LOG_FILE="$PROJECT_DIR/.deploy.log"
-COMPOSE_FILES="-f docker-compose.yml -f docker-compose.full.yml"
+COMPOSE_FILES=(-f docker-compose.yml -f docker-compose.full.yml)
 MAX_WAIT=120          # Максимальное ожидание готовности сервисов (секунды)
 HEALTH_RETRIES=30     # Количество попыток health-check
 
@@ -69,7 +69,7 @@ for arg in "$@"; do
 done
 
 if $PRODUCTION; then
-    COMPOSE_FILES="-f docker-compose.yml -f docker-compose.production.yml"
+    COMPOSE_FILES=(-f docker-compose.yml -f docker-compose.production.yml)
 fi
 
 # ── Логирование ───────────────────────────────────────────────────────────────
@@ -235,8 +235,7 @@ build_images() {
 
     log INFO "Сборка образов (первый раз может занять 3-5 минут)..."
 
-    # shellcheck disable=SC2086
-    docker compose $COMPOSE_FILES build --parallel 2>&1 | tee -a "$LOG_FILE"
+    docker compose "${COMPOSE_FILES[@]}" build --parallel 2>&1 | tee -a "$LOG_FILE"
     if [[ ${PIPESTATUS[0]} -ne 0 ]]; then
         die "Сборка Docker-образов провалилась. Проверь Dockerfile-ы и логи"
     fi
@@ -260,14 +259,13 @@ start_containers() {
         set +a
     fi
 
-    # shellcheck disable=SC2086
-    docker compose $COMPOSE_FILES up -d 2>&1 | tee -a "$LOG_FILE"
+    docker compose "${COMPOSE_FILES[@]}" up -d 2>&1 | tee -a "$LOG_FILE"
     if [[ ${PIPESTATUS[0]} -ne 0 ]]; then
         die "Не удалось запустить контейнеры"
     fi
 
     log INFO "Контейнеры запущены"
-    docker compose $COMPOSE_FILES ps --format "table {{.Name}}\t{{.Status}}" 2>/dev/null || true
+    docker compose "${COMPOSE_FILES[@]}" ps --format "table {{.Name}}\t{{.Status}}" 2>/dev/null || true
 }
 
 # =============================================================================
@@ -280,7 +278,7 @@ wait_for_services() {
     log INFO "Ожидание PostgreSQL..."
     local waited=0
     while (( waited < MAX_WAIT )); do
-        if docker compose $COMPOSE_FILES exec -T postgres pg_isready -U "${POSTGRES_USER:-sphere}" &>/dev/null; then
+        if docker compose "${COMPOSE_FILES[@]}" exec -T postgres pg_isready -U "${POSTGRES_USER:-sphere}" &>/dev/null; then
             log INFO "PostgreSQL: ready (${waited}s)"
             break
         fi
@@ -297,7 +295,7 @@ wait_for_services() {
     log INFO "Ожидание Redis..."
     waited=0
     while (( waited < MAX_WAIT )); do
-        if docker compose $COMPOSE_FILES exec -T redis redis-cli -a "${REDIS_PASSWORD:-}" ping 2>/dev/null | grep -q PONG; then
+        if docker compose "${COMPOSE_FILES[@]}" exec -T redis redis-cli -a "${REDIS_PASSWORD:-}" ping 2>/dev/null | grep -q PONG; then
             log INFO "Redis: ready (${waited}s)"
             break
         fi
@@ -337,7 +335,7 @@ run_migrations() {
     cd "$PROJECT_DIR"
 
     # shellcheck disable=SC2086
-    docker compose $COMPOSE_FILES exec -T backend \
+    docker compose "${COMPOSE_FILES[@]}" exec -T backend \
         alembic -c alembic/alembic.ini upgrade head 2>&1 | tee -a "$LOG_FILE"
 
     if [[ ${PIPESTATUS[0]} -ne 0 ]]; then
@@ -379,15 +377,13 @@ seed_data() {
     if [[ -n "${SPHERE_BOOTSTRAP_ORG_SLUG:-}" ]]; then
         bootstrap_org_env=(-e SPHERE_BOOTSTRAP_ORG_SLUG)
     fi
-    # shellcheck disable=SC2086
     ADMIN_EMAIL="$admin_email" ADMIN_PASSWORD="$admin_password" \
-        docker compose $COMPOSE_FILES exec -T -e ADMIN_EMAIL -e ADMIN_PASSWORD "${bootstrap_org_env[@]}" backend \
+        docker compose "${COMPOSE_FILES[@]}" exec -T -e ADMIN_EMAIL -e ADMIN_PASSWORD "${bootstrap_org_env[@]}" backend \
         python scripts/create_admin.py 2>&1 | tee -a "$LOG_FILE" || return 1
 
     log INFO "Генерация enrollment-ключа..."
     # Use the backend's configured environment; never force a development key.
-    # shellcheck disable=SC2086
-    docker compose $COMPOSE_FILES exec -T "${bootstrap_org_env[@]}" backend \
+    docker compose "${COMPOSE_FILES[@]}" exec -T "${bootstrap_org_env[@]}" backend \
         python -m scripts.seed_enrollment_key 2>&1 | tee -a "$LOG_FILE" || return 1
 
     # Вывод учётных данных
@@ -449,7 +445,7 @@ final_healthcheck() {
 
     # PostgreSQL
     # shellcheck disable=SC2086
-    if docker compose $COMPOSE_FILES exec -T postgres pg_isready -U "${POSTGRES_USER:-sphere}" &>/dev/null; then
+    if docker compose "${COMPOSE_FILES[@]}" exec -T postgres pg_isready -U "${POSTGRES_USER:-sphere}" &>/dev/null; then
         log INFO "PostgreSQL:     ✅ Ready"
     else
         log ERROR "PostgreSQL:     ❌ Не готов"
@@ -458,7 +454,7 @@ final_healthcheck() {
 
     # Redis
     # shellcheck disable=SC2086
-    if docker compose $COMPOSE_FILES exec -T redis redis-cli -a "${REDIS_PASSWORD:-}" ping 2>/dev/null | grep -q PONG; then
+    if docker compose "${COMPOSE_FILES[@]}" exec -T redis redis-cli -a "${REDIS_PASSWORD:-}" ping 2>/dev/null | grep -q PONG; then
         log INFO "Redis:          ✅ PONG"
     else
         log ERROR "Redis:          ❌ Не отвечает"
