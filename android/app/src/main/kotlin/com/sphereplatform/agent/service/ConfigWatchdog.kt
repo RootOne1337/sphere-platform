@@ -11,9 +11,10 @@ import javax.inject.Singleton
 
 /**
  * Polls the configured public discovery endpoint, without device credentials.
- * Periodic and forced checks share one cancellable request. A response may update
- * the selected route only within its service generation and store revision.
- * This is discovery, not a saved secondary route or a guarantee of server HA.
+ * Periodic and forced checks share one cancellable request. A response may save
+ * route candidates only within its service generation and store revision.
+ * A healthy selected route remains active until the WS loop authenticates another.
+ * Local MDM/file candidates are read at service start; this does not provide server HA.
  */
 @Singleton
 class ConfigWatchdog @Inject constructor(

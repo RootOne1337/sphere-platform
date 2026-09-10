@@ -78,7 +78,7 @@ class SphereAgentService : Service() {
         // 2. Мониторинг сети
         networkChangeHandler.register()
 
-        // 3. Circuit breaker hook — при открытии CB проверяем конфиг из Git
+        // 3. Circuit breaker hook — запрашиваем настроенный config endpoint
         wsClient.onCircuitBreakerOpen = {
             serviceScope.launch(Dispatchers.IO) { configWatchdog.forceCheck() }
         }
@@ -88,8 +88,8 @@ class SphereAgentService : Service() {
             wsClient.connect(deviceInfo.getDeviceId())
         }
 
-        // 5. ConfigWatchdog — периодический опрос конфига из GitHub (CONFIG_URL)
-        //    Если server_url сменился → обновляет store и форсирует reconnect
+        // 5. ConfigWatchdog — локальные кандидаты при старте, затем HTTP CONFIG_URL.
+        //    Новые маршруты сохраняются без разрыва подтверждённого WS.
         serviceScope.launch(Dispatchers.IO) {
             configWatchdog.run()
         }

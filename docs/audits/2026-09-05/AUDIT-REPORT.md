@@ -1435,7 +1435,7 @@ Discovery заменял рабочий адрес до проверки, а reg
   `SetupActivity`, `AutoEnrollmentWorker`, `KeepAliveWorker`, новый
   `network/ManagementRoute.kt` и MDM resources; backend config router/schema,
   agent-config schema/generator/template, сгенерированный OpenAPI.
-- **Fix:** primary/fallback сохраняются одной записью с commit; последний выбранный
+- **Fix:** `5f7900e` — primary/fallback сохраняются одной записью с commit; последний выбранный
   адрес остаётся кандидатом. WS выбирает следующий URL после failure, refresh идёт
   через тот же URL с прежним pending operation ID. Только target-bound `auth_ok`
   текущей revision продвигает адрес до connected/result replay. Discovery сохраняет
@@ -1483,3 +1483,34 @@ ACK/refresh-recovery протоколы до обновления APK. Сохр�
 app data. PR остаётся draft; merge, deployment и реальный fleet drill не выполнены.
 CI предыдущего `e68ec0a` выше не является проверкой нового AUD-74; его ревизия
 и результаты CI фиксируются отдельно после push.
+
+
+### CI `5f7900e`: успешный backend и воспроизведённая гонка Android test harness
+
+[Backend](evidence/ci-5f7900e-backend.json),
+[frontend](evidence/ci-5f7900e-frontend.json) и
+[Android push](evidence/ci-5f7900e-android-push.json) прошли с первой попытки.
+Linux: **1390 passed / 69,38%**, 289,08 s, четыре warnings; все пять новых
+Python cases PASSED: [excerpt](evidence/ci-5f7900e-tests.txt).
+Android push выполнил все четыре variant test tasks: [excerpt](evidence/ci-5f7900e-android-tests.txt).
+[Preview guard](evidence/ci-5f7900e-preview.json) прошёл, deploy пропущен.
+
+Однако [Android PR attempt 1](evidence/ci-5f7900e-android-attempt1.json) имеет
+**426 tests / 1 failure в DevDebug**: `ConfigRecoveryTest` проверял reconnect count
+до завершения coroutine, [CI excerpt](evidence/ci-5f7900e-android-attempt1.txt).
+Наличие committed preference не означает, что следующий вызов reconnect уже
+выполнен. Это race проверки, не доказанный отказ runtime маршрутизации.
+
+Перед исправлением ожидания в тест добавлен gate на чтение `isConnected` между
+commit и reconnect. Он детерминированно воспроизвёл `expected 1, was 0`:
+[локальный baseline](evidence/android-config-check-race-before.txt).
+Исправленный тест проверяет нулевой счётчик во время паузы, освобождает gate,
+дожидается завершения фоновой проверки и только затем ожидает один reconnect.
+Cleanup освобождает gate до захвата state lock. Runtime-код и таймауты не ослаблены,
+тест не исключён. [Полный повтор](evidence/android-config-check-race-after.txt):
+[426 tests / 32 suites](evidence/android-config-check-race-summary.json), без failures/errors/skips.
+
+Неуспешная первая CI попытка сохранена; «все CI зелёные» для `5f7900e` не заявляется.
+Следующий commit исправляет harness и поясняющие docs/comments, его CI проверяется
+отдельно. Legacy `UPDATE_CONFIG` по-прежнему задаёт один URL и очищает резерв;
+настройка пары описана через MDM/JSON/discovery.

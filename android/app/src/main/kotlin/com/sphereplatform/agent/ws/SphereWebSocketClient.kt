@@ -91,7 +91,7 @@ class SphereWebSocketClient @Inject constructor(
 
     /**
      * Вызывается при открытии circuit breaker (после N последовательных ошибок).
-     * Используется [ConfigWatchdog] для немедленной проверки конфига из Git —
+     * Используется [ConfigWatchdog] для проверки настроенного config endpoint —
      * возможно server_url сменился и нужно переподключиться на новый адрес.
      */
     var onCircuitBreakerOpen: (() -> Unit)? = null
@@ -162,8 +162,8 @@ class SphereWebSocketClient @Inject constructor(
                 consecutiveFailures++
                 attempt++
 
-                // При первом обрыве — немедленно чекаем конфиг из Git
-                // (server_url мог смениться → агент должен переподключиться мгновенно)
+                // При первом обрыве запрашиваем свежих кандидатов из config endpoint.
+                // Перебор сохранённых маршрутов не ждёт доступности discovery.
                 if (consecutiveFailures == 1) {
                     Timber.i("Первый обрыв связи — запрашиваем проверку конфига")
                     onCircuitBreakerOpen?.invoke()

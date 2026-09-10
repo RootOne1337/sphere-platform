@@ -191,3 +191,9 @@ durable config revision/rollback и проверка установки до cre
 гарантированный reconnect SLA или совместимость со всеми Android. Отдельно остаются
 loss при enrollment и unknown outcome физических действий. P1 monitoring/UI data
 и профилирование ресурсов сохраняют приоритет после восстановления управления.
+
+CI `5f7900e`: backend/frontend/Android push прошли, Android PR обнаружил race
+в discovery assertion после preference commit. Управляемая пауза воспроизвела
+раннюю проверку счётчика; harness теперь ожидает completion. Evidence первой
+неуспешной попытки сохранена, исправление теста проверяется отдельным commit.
+Legacy `UPDATE_CONFIG` остаётся single-URL путём; пару задают MDM/JSON/discovery.

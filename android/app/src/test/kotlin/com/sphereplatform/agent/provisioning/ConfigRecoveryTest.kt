@@ -40,6 +40,7 @@ class ConfigRecoveryTest {
     private val entered = CountDownLatch(1)
     private val release = CountDownLatch(1)
     private val reconnects = AtomicInteger()
+    private var holdBeforeReconnect = false
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private lateinit var client: OkHttpClient
     private lateinit var store: AuthTokenStore
@@ -76,6 +77,13 @@ class ConfigRecoveryTest {
         store = AuthTokenStore(prefs, Lazy { client })
         provisioner = provisionerAt("https://config.invalid/api/v1/config/agent")
         val ws = mockk<SphereWebSocketClient>(relaxed = true) {
+            every { isConnected } answers {
+                if (holdBeforeReconnect) {
+                    entered.countDown()
+                    check(release.await(20, TimeUnit.SECONDS)) { "Test must release reconnect decision" }
+                }
+                false
+            }
             every { forceReconnectNow() } answers { reconnects.incrementAndGet(); Unit }
         }
         watchdog = ConfigWatchdog(provisioner, store, ws, scope)
@@ -85,9 +93,10 @@ class ConfigRecoveryTest {
 
     @After
     fun cleanup() = runBlocking {
+        // Release transport/decision gates before stop takes the watchdog state lock.
+        release.countDown()
         watchdog.stop()
         scope.cancel()
-        release.countDown()
         withTimeout(5_000) { scope.coroutineContext[Job]!!.join() }
         client.dispatcher.executorService.shutdown()
         assertTrue("HTTP workers must finish", client.dispatcher.executorService.awaitTermination(5, TimeUnit.SECONDS))
@@ -115,6 +124,7 @@ class ConfigRecoveryTest {
 
     @Test
     fun `enrolled watchdog discovers public config without misusing device JWT as API key`() = runBlocking {
+        holdBeforeReconnect = true
         respond = { response(it.request(), code = if (it.request().header("X-API-Key") == null) 200 else 401) }
         watchdog.forceCheck()
         eventually { requests.isNotEmpty() }
@@ -122,6 +132,11 @@ class ConfigRecoveryTest {
         assertNull(requests.single().header("Authorization"))
         assertNull(requests.single().header("Cookie"))
         eventually { memory["primary_server_url"] == discoveredUrl }
+        awaitEntered()
+        // Preference commit is visible before the reconnect decision completes.
+        assertEquals(0, reconnects.get())
+        release.countDown()
+        settleChecks()
         assertEquals(initialUrl, store.getServerUrl())
         assertEquals(1, reconnects.get())
         assertEquals("issued-device-jwt", store.getToken())

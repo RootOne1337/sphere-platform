@@ -96,7 +96,8 @@ release signing, install an APK or certify a physical-device runtime.
 
 `ZeroTouchProvisioner.discoverConfig()` uses the first accepted source:
 
-1. Managed configuration: `sphere_server_url`, `sphere_api_key`, `sphere_device_id`.
+1. Managed configuration: `sphere_server_url`, optional `sphere_fallback_server_url`,
+   `sphere_api_key`, `sphere_device_id`.
 2. `sphere-agent-config.json` in shared external storage, app external files,
    then app internal files, subject to actual storage access.
 3. The HTTP configuration endpoint from `BuildConfig.CONFIG_URL`.
@@ -113,7 +114,8 @@ After AUD-73, HTTP discovery is a cancellable public request: no device credenti
 10-second HTTP deadline and a 64-KiB response bound before parsing. Periodic/forced
 watchdog checks share one request; stop and local route changes invalidate its
 response. See the [discovery recovery contract](architecture/ANDROID-DISCOVERY-RECOVERY.md)
-for lifecycle, configuration and the still-open secondary-route/health-trial work.
+for lifecycle and configuration; AUD-74 adds the
+[saved routes and ACK-gated selection](architecture/ANDROID-SAVED-ROUTES.md).
 Distribution/trust of enrollment keys and mutable remote configuration remains
 part of the security audit; development defaults are not a production policy.
 
@@ -122,6 +124,7 @@ An illustrative local configuration shape is:
 ```json
 {
   "server_url": "https://management.example",
+  "fallback_server_url": "https://management-backup.example",
   "api_key": "<provisioned enrollment credential>",
   "device_id": "<assigned device UUID>"
 }
