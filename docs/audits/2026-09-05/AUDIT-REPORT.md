@@ -1666,3 +1666,29 @@ OS/fleet/network measurements, ни deployment, ни независимое revi
 [Актуальный контракт и rollout](../../architecture/ANDROID-BACKGROUND-ENROLLMENT.md).
 CI нового runtime commit фиксируется отдельно; CI предыдущего `be75f57` не является
 проверкой AUD-76. Сохраняется rollout backend→APK; deployment и merge не выполнялись.
+
+### Проверка ревизии `2f17a85` с AUD-76
+
+Runtime/fixtures/docs commit: **`2f17a85cf90fbb87ac5312fdfc2c4ff60dd324e0`**. Все checks ниже
+относятся к этой ревизии, attempt 1:
+
+| Workflow | Результат |
+| --- | --- |
+| [Backend](https://github.com/RootOne1337/sphere-platform/actions/runs/34500318992) | Все jobs success; **1390 passed / 69.37%**, 291.44 s, четыре существующих warnings |
+| [Frontend](https://github.com/RootOne1337/sphere-platform/actions/runs/34500318999) | Все jobs success |
+| [Android PR](https://github.com/RootOne1337/sphere-platform/actions/runs/34500319016) | Build и четыре Dev/Enterprise × Debug/Release unit-test tasks success |
+| [Android push](https://github.com/RootOne1337/sphere-platform/actions/runs/34500313633) | Build и те же четыре test tasks success |
+| [Preview](https://github.com/RootOne1337/sphere-platform/actions/runs/34500319000) | Guard success, deploy skipped |
+
+[Backend summary](evidence/ci-2f17a85-tests.txt),
+[Android PR tasks](evidence/ci-2f17a85-android-tests.txt),
+[Android push tasks](evidence/ci-2f17a85-android-push-tests.txt).
+Полные job snapshots: [backend](evidence/ci-2f17a85-backend.json),
+[frontend](evidence/ci-2f17a85-frontend.json), [Android](evidence/ci-2f17a85-android.json),
+[push](evidence/ci-2f17a85-android-push.json), [preview](evidence/ci-2f17a85-preview.json).
+
+Число **465 / 34 suites** получено из отдельного локального XML run; build success
+не выдаётся за runtime proof. Локальные before/after логи сохранены с нормализованными
+концами строк и удалёнными trailing spaces. Migration head не менялся. Ни Android
+OS/fleet/network measurements, ни deployment, ни независимое review не выполнены.
+Следующий commit только фиксирует evidence/docs; он имеет отдельные checks.

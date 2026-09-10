@@ -236,3 +236,10 @@ runtime policy. [AUD-76 report](AUDIT-REPORT.md) содержит baseline и re
 конкуренция ручного setup и worker, clone identity/config metadata; затем legacy
 UPDATE_CONFIG и реальные OS/fleet drills. HTTP cancellation не закрывает эти задачи.
 CI новой ревизии обязателен; весь запрос владельца ещё не завершён.
+
+### CI AUD-76 зафиксирован
+
+Runtime **`2f17a85`**: backend/frontend/Android PR+push прошли с первой попытки;
+preview только guard, deploy skipped. Backend **1390 / 69.37%**, Android все
+четыре test variants. Локально **465 / 34 suites**. [Точные SHA/run links и evidence](AUDIT-REPORT.md).
+Это проверка очередного исправления, не завершение всего аудита или аппаратного rollout.
