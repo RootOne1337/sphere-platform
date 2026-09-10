@@ -118,19 +118,17 @@ researches NitroGen and a future external inference worker; no AI is implemented
   The compatible joint Python dependency scan is a recorded snapshot, not a scan of
   all ecosystems. Coverage remains gated at **65%**, with precision=2 and tests for
   the 64.98% rejection / 65.00% acceptance boundaries.
-- Revision **`70c6a21`**, including AUD-72, passes
-  [backend](https://github.com/RootOne1337/sphere-platform/actions/runs/34463225417),
-  [frontend](https://github.com/RootOne1337/sphere-platform/actions/runs/34463225399),
-  [Android PR](https://github.com/RootOne1337/sphere-platform/actions/runs/34463225418)
-  and [Android push](https://github.com/RootOne1337/sphere-platform/actions/runs/34463221343)
-  CI on attempt 1. Linux: **1383 tests / 69.34%**, 298.47 seconds, four existing
-  warnings, including all eight new SQL/ASGI auth-ack cases. Android ran all four
-  Dev/Enterprise × Debug/Release test tasks. Exact job snapshots and excerpts
+- Revision **`e68ec0a`**, including AUD-73, passes
+  [backend](https://github.com/RootOne1337/sphere-platform/actions/runs/34466367344),
+  [frontend](https://github.com/RootOne1337/sphere-platform/actions/runs/34466367307),
+  [Android PR](https://github.com/RootOne1337/sphere-platform/actions/runs/34466367295)
+  and [Android push](https://github.com/RootOne1337/sphere-platform/actions/runs/34466363373)
+  CI on attempt 1. Linux: **1385 tests / 69.36%**, 296.30 seconds, four existing
+  warnings, including both new SQL/ASGI discovery contract cases. Android ran all
+  four Dev/Enterprise × Debug/Release test tasks. Exact-head snapshots and excerpts
   are retained. Preview guard passes and deployment is skipped. The following
   documentation-only commit records this verified code revision; its checks are
-  separate. These CI runs precede AUD-73; its results will be retained after push.
-  The new local runs have 399 Android and 1385 backend/PC cases; backend code and
-  schema are unchanged.
+  separate. The local runs above cover AUD-73; backend code/schema are unchanged.
 
 ## Rollout and remaining risks
 

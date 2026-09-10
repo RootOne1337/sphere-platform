@@ -168,4 +168,9 @@ cancellable request, один active check и local revision fence. **399 Androi
 
 Полный Windows backend/PC прогон AUD-73: **1385 / 69,42%**, **487 PG/Redis** и
 25 deployment cases; Ruff/API export pass. Schema не менялась, временных runtime
-ролей/других DB connections ноль. CI новой ревизии записывается после push.
+ролей/других DB connections ноль. CI code revision `e68ec0a` прошёл с первой
+попытки: backend/frontend, Android push/PR; Linux **1385 / 69,36%**, оба новых
+discovery contract cases и четыре Android test tasks успешны.
+[Точные snapshots и ограничения](AUDIT-REPORT.md#проверка-ревизии-e68ec0a-с-aud-73).
+Документационный commit сохраняет проверенную code revision; deployment skipped,
+PR остаётся draft.

@@ -1354,7 +1354,7 @@ coroutine; `body.string().take(64 KiB)` читал весь ответ и при
   suspend call sites в `SetupActivity.kt` / `AutoEnrollmentWorker.kt` и fixtures
   `KeepAliveWorkerTest.kt`; новый `ConfigRecoveryTest.kt`, два cases в
   `tests/production/test_agent_tenant_runtime.py`.
-- **Fix:** discovery без credentials; async OkHttp bridge с отменой Call и собственным
+- **Fix:** `e68ec0a` — discovery без credentials; async OkHttp bridge с отменой Call и собственным
   10 s budget, ограниченное чтение HTTP body и валидация URL. Один periodic owner и
   одна активная проверка; stop/отмена owner закрывают поколение и принудительный job.
   Store snapshot включает локальную revision; сравнение и запись сериализованы с
@@ -1381,4 +1381,29 @@ PG/Redis** и 25 deployment cases. [Лог](evidence/config-recovery-combined-su
 Ruff 0.15.2 и API export check прошли. [Очистка](evidence/config-recovery-runtime-cleanup.json):
 0 временных runtime LOGIN-ролей и 0 других DB connections. Новый dependency-aware
 mypy здесь не запускался: последний результат AUD-72 — 13 ошибок в семи неизменённых
-файлах. Backend code не менялся. CI AUD-73 будет записан после push отдельно от `70c6a21`.
+файлах. Backend code не менялся. Результаты новой CI ревизии приведены ниже.
+
+
+### Проверка ревизии `e68ec0a` с AUD-73
+
+Все CI runs прошли с первой попытки:
+[backend](https://github.com/RootOne1337/sphere-platform/actions/runs/34466367344),
+[frontend](https://github.com/RootOne1337/sphere-platform/actions/runs/34466367307),
+[Android PR](https://github.com/RootOne1337/sphere-platform/actions/runs/34466367295),
+[Android push](https://github.com/RootOne1337/sphere-platform/actions/runs/34466363373).
+Linux backend — **1385 passed / 69,36%**, 296,30 s, четыре прежних warnings;
+[excerpt](evidence/ci-e68ec0a-tests.txt) включает оба новых discovery contract cases.
+Lint/mypy в окружении CI, security, RLS и миграции прошли. CI использует более лёгкое
+mypy-окружение, поэтому прежние локальные 13 type errors не объявляются закрытыми.
+
+Android собрал APK и выполнил [четыре test tasks](evidence/ci-e68ec0a-android-tests.txt)
+Dev/Enterprise × Debug/Release. Счётчик **399 tests / 31 suites** получен отдельно
+из локальных EnterpriseDebug XML. Preview guard успешен, deploy skipped. Снимки:
+[backend](evidence/ci-e68ec0a-backend.json), [frontend](evidence/ci-e68ec0a-frontend.json),
+[Android PR](evidence/ci-e68ec0a-android.json), [Android push](evidence/ci-e68ec0a-android-push.json),
+[preview](evidence/ci-e68ec0a-preview.json). Все snapshot SHA совпадают с `e68ec0a`.
+
+Документационный commit сохраняет результаты этой code revision; его checks идут
+отдельно, исполняемый код не меняется. PR остаётся draft без независимого review,
+merge или deployment. Saved-secondary/health-trial и реальный APK/fleet recovery
+остаются открытыми; это не подтверждение production readiness.
