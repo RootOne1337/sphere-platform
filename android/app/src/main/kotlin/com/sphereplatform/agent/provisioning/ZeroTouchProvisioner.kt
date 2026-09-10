@@ -98,7 +98,13 @@ class ZeroTouchProvisioner internal constructor(
         /** Флаг: сервер поддерживает auto_register → агент должен вызвать POST /devices/register */
         val autoRegisterEnabled: Boolean = false,
         val fallbackServerUrl: String? = null,
-    )
+    ) {
+        /** Only an explicitly assigned UUID can use the legacy static-key path. */
+        val requiresRegistration: Boolean
+            get() = autoRegisterEnabled || deviceId == null || !runCatching {
+                java.util.UUID.fromString(deviceId).toString().equals(deviceId, ignoreCase = true)
+            }.getOrDefault(false)
+    }
 
     /**
      * Результат запроса к HTTP Config Endpoint.
@@ -205,7 +211,7 @@ class ZeroTouchProvisioner internal constructor(
             environment = json.optString("environment", "unknown"),
             autoRegister = json.optJSONObject("features")?.optBoolean("auto_register", false) ?: false,
             enrollmentAllowed = json.optBoolean("enrollment_allowed", false),
-            enrollmentApiKey = json.optString("enrollment_api_key", "").takeIf { it.isNotBlank() },
+            enrollmentApiKey = json.nonBlankString("enrollment_api_key"),
             wsPath = json.optString("ws_path", "/ws/android"),
             configPollIntervalSeconds = json.optInt("config_poll_interval_seconds", 86400),
             fallbackServerUrl = if (json.isNull("fallback_server_url")) null else
@@ -252,14 +258,14 @@ class ZeroTouchProvisioner internal constructor(
                 val json = JSONObject(file.readText(Charsets.UTF_8).take(MAX_CONFIG_CHARS))
                 val serverUrl = json.getString("server_url").takeIf { it.isNotBlank() }
                     ?: return@runCatching null
-                val apiKey = json.optString("api_key", "").takeIf { it.isNotBlank() }
-                    ?: json.optString("enrollment_api_key", "")
+                val apiKey = json.nonBlankString("api_key") ?: json.nonBlankString("enrollment_api_key") ?: ""
                 if (requireKey && apiKey.isBlank()) return@runCatching null
                 ProvisionConfig(
                     serverUrl = serverUrl,
                     apiKey = apiKey,
-                    deviceId = json.optString("device_id").takeIf { it.isNotBlank() },
+                    deviceId = json.nonBlankString("device_id"),
                     source = "file:${file.absolutePath}",
+                    autoRegisterEnabled = json.optJSONObject("features")?.optBoolean("auto_register", false) ?: false,
                     fallbackServerUrl = if (json.isNull("fallback_server_url")) null else
                         json.optString("fallback_server_url").takeIf { it.isNotBlank() }?.let(::normalizeManagementUrl),
                 )
@@ -306,4 +312,7 @@ class ZeroTouchProvisioner internal constructor(
             fallbackServerUrl = serverConfig.fallbackServerUrl,
         )
     }
+
+    private fun JSONObject.nonBlankString(name: String): String? =
+        (opt(name) as? String)?.takeIf { it.isNotBlank() }
 }

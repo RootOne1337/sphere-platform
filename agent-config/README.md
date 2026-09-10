@@ -59,10 +59,13 @@ python scripts/generate_device_config.py --env development --workstation-id ws-P
 Доставка конфигураций через ADB и запуск APK — отдельные операции оператора.
 
 SetupActivity сначала пытается зарегистрироваться с переданным ключом, затем
-может перейти к legacy API-key пути. Фоновые workers имеют отдельные условия
-выбора enrollment/static-key пути; полностью unattended provisioning требует
-отдельного runtime drill. Новые tests подтверждают перенос полей генератором и
-разбор APK, а не полный запуск клона. Пара маршрутов сохраняется независимо от
+может перейти к legacy API-key пути. После AUD-75 фоновые workers регистрируют
+переданный ключ при `features.auto_register=true` или отсутствии валидного UUID.
+Legacy static-key путь требует явного UUID; JSON null не становится строкой-ключом.
+Два workers используют общий mutex, а повторный запуск после выданной identity
+не выполняет регистрацию заново. 22 worker regressions проверяют реальный parser,
+registration client и store с synthetic HTTP/OS; запуск установленного клона ещё
+не доказан. [Контракт](../docs/architecture/ANDROID-BACKGROUND-ENROLLMENT.md). Пара маршрутов сохраняется независимо от
 credentials; при успешной регистрации APK сохраняет использованный request URL,
 а иной advertised URL становится кандидатом, если явный резерв не задан.
 
@@ -93,6 +96,6 @@ TLS/flavor/pinning и храните конфигурацию как часть 
 - Backend: публичный optional fallback и retry потерянного refresh response через
   другой ASGI origin с реальным PostgreSQL commit.
 
-Физические OS/network/fleet drills, enrollment response loss, полный фоновый
-provisioning, durable config rollback и инфраструктурная HA остаются открытыми.
+Физические OS/network/fleet drills, enrollment response loss, атомарная запись
+identity, durable config rollback и инфраструктурная HA остаются открытыми.
 Доказательства и точные ограничения: [AUD-74](../docs/audits/2026-09-05/AUDIT-REPORT.md).

@@ -279,3 +279,13 @@ Full Android enterprise debug: **426 tests / 32 suites**. No actual fleet, liste
 DNS outage, Android OS crash or resource profile is established.
 
 [Contract and evidence](../../docs/architecture/ANDROID-SAVED-ROUTES.md).
+
+### Background APK enrollment (AUD-75)
+
+No backend production behavior or SQL schema changes in this increment.
+`BackgroundEnrollmentTest` adds 22 Robolectric cases with real workers, parser,
+registration client and store; HTTP, preferences, root and service calls are doubles.
+`SavedRouteFailoverTest` adds two cases for enrollment after service boot and stale
+identity ACK. Full enterprise debug: **450 tests / 33 suites**, no failures/skips.
+This is separate from the preceding 490 PostgreSQL/Redis cases; it does not join an
+installed APK to a real database. [Reproduction and boundaries](../../docs/architecture/ANDROID-BACKGROUND-ENROLLMENT.md).

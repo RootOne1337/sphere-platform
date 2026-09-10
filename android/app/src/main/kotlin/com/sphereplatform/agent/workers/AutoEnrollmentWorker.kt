@@ -17,6 +17,10 @@ import com.sphereplatform.agent.service.SphereAgentService
 import com.sphereplatform.agent.store.AuthTokenStore
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.sync.withLock
 import timber.log.Timber
 
 /**
@@ -28,8 +32,8 @@ import timber.log.Timber
  * Рабочий процесс:
  * 1. Ищет конфигурацию (файлы, MDM, серверный конфиг).
  * 2. Если конфигурация найдена:
- *    а) При autoRegister=true → вызывает API регистрации, сохраняет JWT токены.
- *    б) Иначе → сохраняет статический API ключ.
+ *    а) При autoRegister=true или без назначенного UUID → регистрирует устройство.
+ *    б) Иначе → сохраняет явный UUID и статический API ключ (legacy).
  * 3. Отмечает enrolled=true в настройках.
  * 4. Запускает Foreground Service агента.
  */
@@ -67,28 +71,20 @@ class AutoEnrollmentWorker @AssistedInject constructor(
         }
     }
 
-    override suspend fun doWork(): Result {
-        // Если уже зарегистрированы — ничего делать не нужно
-        if (ServiceWatchdog.isEnrolled(context) && authStore.getToken() != null) {
-            Timber.d("AutoEnrollmentWorker: skipped, already enrolled")
-            return Result.success()
-        }
+    override suspend fun doWork(): Result = authStore.enrollmentMutex.withLock { doWorkLocked() }
 
+    private suspend fun doWorkLocked(): Result {
         Timber.i("AutoEnrollmentWorker: started")
 
-        val config = provisioner.discoverConfig()
-        if (config == null) {
-            Timber.w("AutoEnrollmentWorker: configuration not found. Manual enrollment required.")
-            return Result.success() // Нет смысла повторять без конфига
-        }
-
         return try {
-            // Если включена автоматическая регистрация через config_endpoint
-            if (config.autoRegisterEnabled && config.apiKey.isBlank()) {
-                val enrollmentKey = getEnrollmentKeyFromConfig()
+            // A missing marker or earlier FGS rejection must not rotate issued credentials again.
+            if (!authStore.getToken().isNullOrBlank() && authStore.getDeviceId() != null) return activate()
+            val config = provisioner.discoverConfig() ?: return Result.retry()
+            if (config.requiresRegistration) {
+                val enrollmentKey = config.apiKey.takeIf { it.isNotBlank() } ?: getEnrollmentKeyFromConfig()
                 if (enrollmentKey == null) {
                     Timber.w("AutoEnrollmentWorker: auto_register requested, but no enrollment key found")
-                    return Result.failure()
+                    return Result.retry()
                 }
 
                 Timber.i("AutoEnrollmentWorker: attempting to register with server ${config.serverUrl}")
@@ -110,27 +106,26 @@ class AutoEnrollmentWorker @AssistedInject constructor(
                 authStore.saveApiKey(config.apiKey)
             }
 
-            // --- Успех! Маркируем энролмент и запускаем сервис ---
-            ServiceWatchdog.markEnrolled(context)
-            ServiceWatchdog.schedule(context)
+            activate()
 
-            try {
-                SphereAgentService.start(context)
-                Timber.i("AutoEnrollmentWorker: successfully started SphereAgentService!")
-            } catch (e: Exception) {
-                Timber.e(e, "AutoEnrollmentWorker: enrolled, but failed to start service (Android 12+ restriction?)")
-            }
-
-            Result.success()
-
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: RegistrationException) {
             Timber.w("AutoEnrollmentWorker: Registration failed: HTTP ${e.httpCode} - ${e.message}")
             // Если ошибка 4xx (например невалидный ключ), лучше не ретраить, а завершить с отказом
-            return if (e.httpCode in 400..499) Result.failure() else Result.retry()
+            return if (e.httpCode in 400..499 && e.httpCode !in setOf(408, 429)) Result.failure() else Result.retry()
         } catch (e: Exception) {
             Timber.e(e, "AutoEnrollmentWorker: unexpected error")
             Result.retry() // Сетевые ошибки — повторяем позже
         }
+    }
+
+    private suspend fun activate(): Result {
+        currentCoroutineContext().ensureActive()
+        ServiceWatchdog.markEnrolled(context)
+        ServiceWatchdog.schedule(context)
+        SphereAgentService.start(context)
+        return Result.success()
     }
 
     private suspend fun getEnrollmentKeyFromConfig(): String? {

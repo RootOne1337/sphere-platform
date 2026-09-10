@@ -114,12 +114,22 @@ researches NitroGen and a future external inference worker; no AI is implemented
   cases (3 PostgreSQL/ASGI)** cover route failures, persistence, pending refresh ID,
   late events, config propagation and lost-response retry through a second origin.
 
+- **AUD-75:** background workers treated a supplied bootstrap key as a session,
+  marked enrollment without an assigned identity, and could register concurrently.
+  Service boot captured the old ID for all subsequent WS attempts. Shared worker
+  serialization, explicit registration selection, activation retry and per-attempt
+  assigned identity repair these paths. Baselines: 7/8 failures initially, four
+  further failures on the first candidate, and both identity cases failing before
+  the WS fix. **24 new JVM cases** cover actual worker/parser/client/store logic
+  with synthetic HTTP, preferences and OS boundaries. Initial registration response
+  loss and hardware/OS/fleet behavior remain unverified.
+
 ## Validation
 
 - Combined local backend/PC/PostgreSQL/Redis/deployment: **1390 passed**, including
   **490 real-service cases** and 25 deployment cases; **69.38%** coverage,
   four existing warnings. Load/soak profiles are excluded from this ordinary PR run.
-- Android enterprise debug unit suite: **426 passed / 32 suites**. These JVM/MockWebServer/OkHttp checks
+- Android enterprise debug unit suite: **450 passed / 33 suites**. These JVM/MockWebServer/OkHttp checks
   do not establish device OS, codec, battery or real network behavior.
 - Frontend: **198 tests / 23 suites**, TypeScript and production build pass. Linux CI
   verifies the standalone entry point; local Windows tracing emitted an ENOENT
@@ -128,7 +138,7 @@ researches NitroGen and a future external inference worker; no AI is implemented
   The compatible joint Python dependency scan is a recorded snapshot, not a scan of
   all ecosystems. Coverage remains gated at **65%**, with precision=2 and tests for
   the 64.98% rejection / 65.00% acceptance boundaries.
-- Revision **`2bbd9a5`**, including AUD-74 and the discovery-test correction, passes
+- Preceding revision **`2bbd9a5`** (does not cover AUD-75), including AUD-74 and the discovery-test correction, passes
   [backend](https://github.com/RootOne1337/sphere-platform/actions/runs/34490836701),
   [frontend](https://github.com/RootOne1337/sphere-platform/actions/runs/34490836636),
   [Android PR](https://github.com/RootOne1337/sphere-platform/actions/runs/34490836418) and
@@ -186,8 +196,9 @@ The 64-concurrent VPN test uses SQL plus a router double and is not a capacity r
 Saved primary/fallback routes now support WS and refresh retry independently of
 GitHub, with optional discovery. Both routes must belong to one installation; this
 does not provide backend/database HA. Durable config version/rollback, live local
-config reload, pre-credential installation validation and full background enrollment
-remain open. [Configuration and limits](https://github.com/RootOne1337/sphere-platform/blob/codex/enterprise-audit-20260905/docs/architecture/ANDROID-SAVED-ROUTES.md). AUD-69/70 cover new device refresh response recovery; legacy already-lost
+config reload and pre-credential installation validation remain open. AUD-75 repairs
+background worker selection/concurrency and WS identity; initial registration
+response loss, atomic disk state and installed APK boot recovery remain open. [Configuration and limits](https://github.com/RootOne1337/sphere-platform/blob/codex/enterprise-audit-20260905/docs/architecture/ANDROID-SAVED-ROUTES.md). AUD-69/70 cover new device refresh response recovery; legacy already-lost
 operations, expired credentials and real OS/network drills remain open. AUD-71
 repairs HTTP cancellation; mutex queueing, disk/keystore stalls and device scheduling
 are outside its 10-second HTTP bound. Monitoring

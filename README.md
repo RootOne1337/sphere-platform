@@ -76,7 +76,7 @@ OS/network/fleet drills и инфраструктурная HA ещё требу
 | --- | --- | --- |
 | Парк устройств | Регистрация, идентификаторы, группы/теги, presence, API/WS | Массовый reconnect, provisioning всех станций, физические телефоны |
 | Автоматизация | DAG/Lua, задания, batches/waves, scheduler/pipelines, локальный журнал | Полный crash recovery, unknown physical outcomes, отмена при отказах |
-| Связь | Подтверждение авторизации, recoverable refresh, [сохранённый основной/резервный маршрут](docs/architecture/ANDROID-SAVED-ROUTES.md), discovery без credentials | Реальные OS/network/fleet drills, durable config version/rollback и HA backend |
+| Связь | [Фоновая регистрация и актуальный device ID](docs/architecture/ANDROID-BACKGROUND-ENROLLMENT.md), подтверждение авторизации, recoverable refresh, [сохранённый основной/резервный маршрут](docs/architecture/ANDROID-SAVED-ROUTES.md), discovery без credentials | Реальные OS/network/fleet drills, durable config version/rollback и HA backend |
 | Экран и управление | H.264 / WebCodecs, touch/key primitives, backpressure | Codec/OS recovery, latency под нагрузкой, измеренный ресурсный бюджет |
 | PC-agent | Workstation ownership, registration, command result routing/recovery | Durable results, повторная topology, реальный LDPlayer/ADB/host reboot |
 | VPN | SQL lease/intents, ограничения адресов, recovery/fencing | Provider reconciliation и реальные маршруты/инвентарь |

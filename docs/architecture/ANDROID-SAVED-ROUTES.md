@@ -180,3 +180,11 @@ app data. Optional config field совместим со старыми clients; 
 передачи credentials, live local config reload, initial enrollment response-loss,
 реальные OS/network/Redis/PostgreSQL drills, latency/capacity и incident timeline.
 Signed/versioned discovery и отдельный backup transport пока не добавляются.
+
+## Первичный запуск и identity после AUD-75
+
+Сохранённые маршруты не заменяют enrollment. Теперь фоновые workers обменивают
+bootstrap key на назначенный ID/credentials до запроса activation, а уже запущенный
+WS loop перечитывает ID на каждой попытке. Параллельные workers не делают повторную
+registration rotation после успешного владельца. Поздний ACK старого ID отклоняется.
+[Отдельный контракт, 24 новых regressions и остаточные ограничения](ANDROID-BACKGROUND-ENROLLMENT.md).

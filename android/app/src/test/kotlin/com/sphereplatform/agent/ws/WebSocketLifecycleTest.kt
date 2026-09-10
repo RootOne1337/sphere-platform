@@ -13,6 +13,7 @@ import java.io.IOException
 @OptIn(ExperimentalCoroutinesApi::class)
 class WebSocketLifecycleTest {
     private val auth = mockk<AuthTokenStore>(relaxed = true) {
+        every { getDeviceId() } returns "local-test-device"
         coEvery { getFreshTokenForRoute(any(), any()) } returns "test-token"
         every { connectionRoutesSnapshot() } returns AuthTokenStore.ConnectionRoutes(0, listOf("http://127.0.0.1:12345"))
         every { acceptConnectionRoute(any(), any()) } returns true
@@ -47,7 +48,7 @@ class WebSocketLifecycleTest {
     }
 
     @Test fun cleanServerCloseWaitsBeforeReconnect() = runTest {
-        val job = launch { client.connect("local-test-device") }
+        val job = launch { client.connect() }
         runCurrent()
         authenticateSocket()
         runCurrent()
@@ -64,7 +65,7 @@ class WebSocketLifecycleTest {
     }
 
     @Test fun cleanServerCloseWaitIsInterruptibleByStop() = runTest {
-        val job = launch { client.connect("local-test-device") }
+        val job = launch { client.connect() }
         runCurrent()
         authenticateSocket()
         runCurrent()
@@ -85,7 +86,7 @@ class WebSocketLifecycleTest {
     }
 
     @Test fun cancellationDuringHandshakeReleasesSocket() = runTest {
-        val job = launch { client.connect("local-test-device") }
+        val job = launch { client.connect() }
         runCurrent()
         job.cancelAndJoin()
         verify(atLeast = 1) { socket.cancel() }
@@ -93,7 +94,7 @@ class WebSocketLifecycleTest {
     }
 
     @Test fun forcedReconnectClosesActiveTransport() = runTest {
-        val job = launch { client.connect("local-test-device") }
+        val job = launch { client.connect() }
         runCurrent()
         authenticateSocket()
         runCurrent()
@@ -103,7 +104,7 @@ class WebSocketLifecycleTest {
     }
 
     @Test fun closingHandshakeIsAcknowledged() = runTest {
-        val job = launch { client.connect("local-test-device") }
+        val job = launch { client.connect() }
         runCurrent()
         authenticateSocket()
         listener.onClosing(socket, 1000, "server_shutdown")
@@ -112,7 +113,7 @@ class WebSocketLifecycleTest {
     }
 
     @Test fun failureAfterOpenUsesBackoff() = runTest {
-        val job = launch { client.connect("local-test-device") }
+        val job = launch { client.connect() }
         runCurrent()
         authenticateSocket()
         runCurrent()
@@ -129,7 +130,7 @@ class WebSocketLifecycleTest {
     }
 
     @Test fun videoBackpressureDoesNotFillOkHttpQueue() = runTest {
-        val job = launch { client.connect("local-test-device") }
+        val job = launch { client.connect() }
         runCurrent()
         authenticateSocket()
         every { socket.queueSize() } returns 2L * 1024 * 1024
@@ -139,7 +140,7 @@ class WebSocketLifecycleTest {
     }
 
     @Test fun handshakeTimeoutRetriesInsteadOfCancellingConnectLoop() = runTest {
-        val job = launch { client.connect("local-test-device") }
+        val job = launch { client.connect() }
         runCurrent()
         advanceTimeBy(22_001)
         runCurrent()

@@ -9,6 +9,7 @@ import com.sphereplatform.agent.provisioning.ZeroTouchProvisioner
 import com.sphereplatform.agent.store.AuthTokenStore
 import io.mockk.*
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.sync.Mutex
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
@@ -42,6 +43,7 @@ class KeepAliveWorkerTest {
         provisioner = mockk(relaxed = true)
         registrationClient = mockk(relaxed = true)
         authStore = mockk(relaxed = true)
+        every { authStore.enrollmentMutex } returns Mutex()
 
         // Мокаем SharedPreferences для ServiceWatchdog.isEnrolled()
         watchdogEditor = mockk(relaxed = true) {
@@ -77,6 +79,7 @@ class KeepAliveWorkerTest {
     fun `enrolled with token returns success`() = runTest {
         enrolledStorage["enrolled"] = true
         every { authStore.getToken() } returns "valid_token"
+        every { authStore.getDeviceId() } returns "11111111-1111-4111-8111-111111111111"
 
         val worker = createWorker()
         val result = worker.doWork()
@@ -109,7 +112,7 @@ class KeepAliveWorkerTest {
         coEvery { provisioner.discoverConfig() } returns ZeroTouchProvisioner.ProvisionConfig(
             serverUrl = "http://test-server:8000",
             apiKey = "test_api_key",
-            deviceId = "test-device-1",
+            deviceId = "11111111-1111-4111-8111-111111111111",
             source = "buildconfig:dev",
         )
 
@@ -120,7 +123,7 @@ class KeepAliveWorkerTest {
         // Проверяем что enrollment прошёл
         verify { authStore.saveServerRoutes("http://test-server:8000", null) }
         verify { authStore.saveApiKey("test_api_key") }
-        verify { authStore.saveDeviceId("test-device-1") }
+        verify { authStore.saveDeviceId("11111111-1111-4111-8111-111111111111") }
     }
 
     // ── Сценарий 4: not enrolled + no config → success (повторит позже) ──
@@ -148,9 +151,10 @@ class KeepAliveWorkerTest {
         coEvery { provisioner.discoverConfig() } returns ZeroTouchProvisioner.ProvisionConfig(
             serverUrl = "http://unreachable:8000",
             apiKey = "key",
+            deviceId = "11111111-1111-4111-8111-111111111111",
             source = "test",
         )
-        every { authStore.saveServerUrl(any()) } throws RuntimeException("Сеть недоступна")
+        every { authStore.saveServerRoutes(any(), any()) } throws RuntimeException("Storage unavailable")
 
         val worker = createWorker()
         val result = worker.doWork()

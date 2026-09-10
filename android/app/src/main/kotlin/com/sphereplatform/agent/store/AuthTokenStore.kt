@@ -68,6 +68,8 @@ class AuthTokenStore @Inject constructor(
     }
 
     private val tokenMutex = Mutex()
+    /** Serializes background boot/periodic enrollment for this application store. */
+    internal val enrollmentMutex = Mutex()
     private var serverUrlRevision = 0L
 
     internal data class ServerUrlSnapshot(val url: String, val revision: Long)

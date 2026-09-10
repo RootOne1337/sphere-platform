@@ -419,3 +419,18 @@ isolated HTTP/WS doubles. Three new PostgreSQL/ASGI cases cover optional config 
 lost refresh response recovery across origins; two Python cases exercise the real
 fleet config generator. These results do not establish physical OS behavior,
 network recovery latency, APK resource use or fleet capacity.
+
+## 18. Background enrollment and current device identity (AUD-75)
+
+Both background workers now register a supplied bootstrap key when auto-registration
+is enabled or no valid assigned UUID exists. Generated JSON's flag and null fields
+are parsed correctly. A shared worker mutex prevents concurrent registration; an
+issued identity retries service activation without another registration after a
+missing marker or rejected start request. Missing config and transient HTTP failures
+remain retryable. WS reads the assigned ID on each attempt and rejects stale-ID ACK.
+
+**450 JVM tests / 33 suites**, including 22 new worker cases and two WS identity
+cases, pass. Android service/root and HTTP boundaries are doubles; this is not an
+installed APK or SQL smoke. [Behavior, reproduction, rollout and residual risks](architecture/ANDROID-BACKGROUND-ENROLLMENT.md).
+Blocking initial registration, response loss, atomic disk persistence, manual setup
+concurrency and actual OS/fleet/resource behavior remain open.

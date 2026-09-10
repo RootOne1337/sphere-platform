@@ -14,7 +14,6 @@ import com.sphereplatform.agent.R
 import com.sphereplatform.agent.commands.AdbActionExecutor
 import com.sphereplatform.agent.commands.DeviceCommandHandler
 import com.sphereplatform.agent.network.NetworkChangeHandler
-import com.sphereplatform.agent.providers.DeviceInfoProvider
 import com.sphereplatform.agent.ws.SphereWebSocketClient
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
@@ -54,7 +53,6 @@ class SphereAgentService : Service() {
     @Inject lateinit var commandHandler: DeviceCommandHandler
     @Inject lateinit var networkChangeHandler: NetworkChangeHandler
     @Inject lateinit var adbActions: AdbActionExecutor
-    @Inject lateinit var deviceInfo: DeviceInfoProvider
     @Inject lateinit var appScope: CoroutineScope
     @Inject lateinit var configWatchdog: ConfigWatchdog
 
@@ -85,7 +83,7 @@ class SphereAgentService : Service() {
 
         // 4. Запускаем WS-подключение (reconnect loop)
         serviceScope.launch {
-            wsClient.connect(deviceInfo.getDeviceId())
+            wsClient.connect()
         }
 
         // 5. ConfigWatchdog — локальные кандидаты при старте, затем HTTP CONFIG_URL.

@@ -25,7 +25,7 @@ runtime-проверок и не считается доказательство
 
 | Проверка | Результат | Практическое ограничение |
 | --- | --- | --- |
-| Android enterprise debug unit suite | 426 passed, 0 failed | JVM/MockWebServer и OkHttp interceptors; не проверяет ОС, codec, батарею или смерть процесса на телефоне |
+| Android enterprise debug unit suite | 450 passed, 0 failed | JVM/MockWebServer и OkHttp interceptors; не проверяет ОС, codec, батарею или смерть процесса на телефоне |
 | Объединённая Backend/PC/production/deployment suite | **1390 passed, 0 failed**; coverage **69,38%** | Строгий coverage gate 65% пройден с precision=2. Load suite исключена; 25 deployment cases включают config/subprocess probes без запуска сервисов |
 | Python dependency scan | **0 known vulnerabilities** в совместном backend/PC resolution | Pip-audit snapshot, не проверка frontend/Gradle/container/application security; [версии и ограничения](DEPENDENCY-REVIEW.md) |
 | Проверки PostgreSQL/Redis | **490 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
@@ -1546,3 +1546,51 @@ unit-test tasks: [excerpt](evidence/ci-2bbd9a5-android-tests.txt),
 очищает резерв; для пары используйте MDM/JSON/discovery. Полный command update
 и unattended background enrollment требуют следующей проверки. Не выполнены
 физический fleet drill, production rollout, merge или независимый review.
+
+## AUD-75 — High: фоновая регистрация не давала APK рабочую identity
+
+**Эксплуатационный P0: unattended boot и возврат управления без переустановки.**
+
+- **Root cause:** оба workers входили в registration только при пустом API key.
+  Supplied bootstrap key сохранялся как session, marker появлялся без assigned ID.
+  Файловый parser терял `features.auto_register` и превращал JSON null в строку.
+  KeepAlive запускал root/service перед enrollment; WS запоминал ID из раннего boot
+  навсегда. Раздельные workers не сериализовали registration. Missing config и
+  rejected service start могли завершать одноразовую работу без следующей попытки.
+- **Evidence/reproduction:** на `334b3e7` [8 cases — 7 failures / 1 control](evidence/android-background-enrollment-before.txt).
+  На промежуточном candidate после первого worker fix, до mutex/activation/null-key
+  исправлений: [12 cases — 4 failures / 8 controls](evidence/android-background-enrollment-races-before.txt).
+  До WS fix [обе проверки late identity и stale ACK падают](evidence/android-enrollment-identity-before.txt).
+  Это разные наборы и рабочие состояния; их нельзя складывать как число уникальных
+  production дефектов. HTTP responses, OS и preferences изолированы doubles.
+- **Affected files:** `ZeroTouchProvisioner.kt`, `AuthTokenStore.kt`,
+  `AutoEnrollmentWorker.kt`, `KeepAliveWorker.kt`, `SphereAgentService.kt`,
+  `SphereWebSocketClient.kt`; worker/lifecycle/authentication/route fixtures.
+- **Fix:** registration при auto-register или отсутствии валидного UUID; supplied
+  key используется первым, discovery требуется лишь без него. Parser принимает
+  generated flag и настоящие nullable fields. Workers используют общий mutex и
+  перепроверяют credentials после ожидания; activation повторяется без регистрации
+  после пропавшего marker/отказа service start. Missing config/transient failures
+  остаются retryable, cancellation не превращается в success. KeepAlive запрашивает
+  root/service после identity. WS читает текущий assigned ID на каждой попытке и
+  проверяет его повторно перед принятием ACK.
+- **Regression tests:** `BackgroundEnrollmentTest` — 22 новых cases, включая
+  generated local file без discovery HTTP, 401/408/429/503, повторный periodic tick,
+  legacy UUID/static key, held registration с двумя workers, cancellation waiter,
+  missing marker и rejected start. `SavedRouteFailoverTest` — ещё два identity cases.
+  [Полный Gradle run](evidence/android-background-enrollment-after.txt):
+  [450 tests / 33 suites](evidence/android-background-enrollment-summary.json),
+  0 failures/errors/skips, 1m 53s. В старом KeepAlive fixture исправлена неактуальная
+  заглушка `saveServerUrl` на реально вызываемый `saveServerRoutes`; прежний тест
+  storage error мог проходить без нужного failure. CI новой ревизии фиксируется отдельно.
+- **Residual risk:** настоящий installed APK, force-stop/reboot/permissions/root,
+  sockets, CPU/RAM/battery и fleet capacity не проверены. Blocking registration,
+  response loss после server commit и atomic durable identity/tokens/marker открыты.
+  Mutex охватывает два workers в одном процессе, не ручной SetupActivity. Нет
+  немедленного сигнала enrollment→WS reconnect или fencing уже активного WS после
+  поздней identity replacement. Start API не доказывает service readiness.
+
+[Подробный контракт и rollout](../../architecture/ANDROID-BACKGROUND-ENROLLMENT.md).
+Backend/schema не менялись; предыдущие 1390 Python / 490 PG+Redis cases не называются
+новым установленным APK→SQL smoke. Полный запрос владельца не завершён: текущий
+порядок оставшихся работ указан в [матрице готовности](../../operations/READINESS.md).

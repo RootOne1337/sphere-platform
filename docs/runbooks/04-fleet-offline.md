@@ -90,3 +90,18 @@ legacy clients, expiry и re-enrollment. Вечно просроченный tok
 протокол, он не является рабочим recovery route. При отказе обоих адресов APK
 продолжает ограниченный по backoff перебор, сохраняя identity; автоматический
 re-enrollment как способ восстановить этот сценарий не выполняется.
+
+## APK не вышел на связь после фоновой регистрации
+
+Для APK до AUD-75 проверьте сочетание bootstrap key, отсутствующего server UUID
+и раннего запуска сервиса: marker `enrolled=true` мог появиться без регистрации,
+а WS loop удерживал прежний локальный ID. Новый APK вызывает registration из обоих
+workers и перечитывает сохранённый ID перед каждым WS; marker сам по себе не
+доказывает готовность соединения. После отказа запуска уже выданные credentials
+сохраняются, повторяется activation, без повторной регистрации.
+
+Сопоставьте HTTP registration outcome, device ID и последующий target-bound ACK;
+не включайте ключи в evidence. 408/429/5xx/network failure оставляют retry, постоянный
+4xx завершает одноразовую работу failure. Периодический worker вернётся на следующем
+допущенном ОС тике; `success` тика при ошибке не означает успешного enrollment.
+[Полный контракт и непроверенные OS/response-loss сценарии](../architecture/ANDROID-BACKGROUND-ENROLLMENT.md).

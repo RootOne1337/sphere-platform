@@ -46,7 +46,6 @@ class SphereWebSocketClient @Inject constructor(
     private val json: Json,
 ) {
     private var webSocket: WebSocket? = null
-    private var deviceId: String = ""
 
     // FIX AUDIT-1.7: Lock для атомарного обновления webSocket + isConnected
     private val wsLock = Any()
@@ -96,11 +95,10 @@ class SphereWebSocketClient @Inject constructor(
      */
     var onCircuitBreakerOpen: (() -> Unit)? = null
 
-    suspend fun connect(deviceId: String) {
+    suspend fun connect() {
         if (!connectMutex.tryLock()) return
         try {
             shouldStop = false
-            this.deviceId = deviceId
             reconnectLoop()
         } finally {
             connectMutex.unlock()
@@ -187,9 +185,11 @@ class SphereWebSocketClient @Inject constructor(
      * НЕ в URL (токен в query-param виден в логах сервера и прокси).
      */
     private suspend fun connectOnce(routes: AuthTokenStore.ConnectionRoutes, route: String) {
+        // Service may start before enrollment. Re-read the assigned UUID on every attempt.
+        val expectedDeviceId = authStore.getDeviceId() ?: throw AuthException("No assigned device ID stored")
         val token = authStore.getFreshTokenForRoute(routes, route)
             ?: throw AuthException("No auth token stored")
-        val wsUrl = "$route/ws/android/$deviceId"
+        val wsUrl = "$route/ws/android/$expectedDeviceId"
         val request = Request.Builder().url(wsUrl).build()
         val attemptGeneration = synchronized(wsLock) { ++generation }
 
@@ -198,7 +198,6 @@ class SphereWebSocketClient @Inject constructor(
         var closeCode = 0
         var closeReason = ""
         var authSent = false // guarded by wsLock
-        val expectedDeviceId = deviceId
 
         val listener = object : WebSocketListener() {
             override fun onOpen(ws: WebSocket, response: Response) {
@@ -237,7 +236,7 @@ class SphereWebSocketClient @Inject constructor(
                                 connected.completeExceptionally(IOException("Invalid server authentication acknowledgement"))
                                 return
                             }
-                            if (!authStore.acceptConnectionRoute(routes, route)) {
+                            if (authStore.getDeviceId() != expectedDeviceId || !authStore.acceptConnectionRoute(routes, route)) {
                                 connected.completeExceptionally(IOException("Management route changed during authentication"))
                                 return
                             }

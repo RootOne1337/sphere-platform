@@ -124,7 +124,7 @@ class SavedRouteFailoverTest {
         realHttp.connectionPool.evictAll()
     }
 
-    private fun start() = scope.launch { client.connect(device) }
+    private fun start() = scope.launch { client.connect() }
     private suspend fun attempt(index: Int): Attempt = withTimeout(5_000) {
         while (attempts.size <= index) delay(10)
         attempts[index]
@@ -526,5 +526,31 @@ class SavedRouteFailoverTest {
         } finally {
             check(file.delete()); check(dir.delete())
         }
+    }
+
+    @Test
+    fun `boot loop replaces pre enrollment identity with the server assigned ID`() = runBlocking {
+        memory.remove("device_id")
+        memory.remove("access_token")
+        val job = scope.launch(start = CoroutineStart.UNDISPATCHED) { client.connect() }
+        assertTrue(attempts.isEmpty())
+        store.saveDeviceId(device)
+        store.saveTokens("issued-access", "issued-refresh", 900)
+        client.forceReconnectNow()
+        val a = attempt(0)
+        assertEquals("/ws/android/$device", a.request.url.encodedPath)
+        open(a); acknowledge(a)
+        assertTrue(client.isConnected)
+        job.cancelAndJoin()
+    }
+
+    @Test
+    fun `identity changed while authenticating cannot accept the old device ACK`() = runBlocking {
+        start()
+        val a = attempt(0)
+        open(a)
+        store.saveDeviceId("22222222-2222-4222-8222-222222222222")
+        acknowledge(a)
+        assertFalse(client.isConnected)
     }
 }

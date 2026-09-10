@@ -23,36 +23,19 @@ import com.sphereplatform.agent.service.SphereAgentService
 import com.sphereplatform.agent.store.AuthTokenStore
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.sync.withLock
 import timber.log.Timber
 import java.util.concurrent.TimeUnit
 
 /**
- * KeepAliveWorker — периодический рабочий процесс для гарантированного автостарта агента.
- *
- * ЗАЧЕМ ЭТО НУЖНО:
- * На Android после установки APK приложение находится в «Stopped State» — все implicit
- * broadcast (включая BOOT_COMPLETED) заблокированы. BootReceiver НЕ срабатывает.
- * AlarmManager-алармы теряются при reboot. OneTimeWorkRequest не повторяется.
- *
- * KeepAliveWorker решает эту проблему:
- * - Планируется как [PeriodicWorkRequest] при ПЕРВОМ запуске приложения
- * - WorkManager хранит задачи в SQLite и использует системный [android.app.job.JobScheduler]
- *   с setPersisted(true) → задача ПЕРЕЖИВАЕТ reboot на уровне ОС
- * - JobScheduler НЕ проверяет FLAG_STOPPED → задача выполняется даже если приложение
- *   ни разу не получало BOOT_COMPLETED
- * - При каждом тике (15 мин) проверяет состояние агента и восстанавливает его
- *
- * ПЯТИСЛОЙНАЯ ЗАЩИТА:
- * 1. BOOT_COMPLETED → BootReceiver (стандартный путь, после снятия Stopped State)
- * 2. AlarmManager → ServiceWatchdog (каждые 5 мин, после enrollment)
- * 3. **KeepAliveWorker** → JobScheduler/WorkManager (каждые 15 мин, ВСЕГДА)
- * 4. START_STICKY → ОС перезапускает убитый foreground service
- * 5. AutoEnrollmentWorker → немедленная попытка enrollment при первом boot
- *
- * Тик выполняет одно из:
- * - enrolled + есть token → запускает [SphereAgentService]
- * - enrolled + нет token → сбрасывает enrollment, пытается заново
- * - не enrolled → пытается Zero-Touch enrollment через [ZeroTouchProvisioner]
+ * Periodic recovery of enrollment and the agent service, once WorkManager can run.
+ * Issued credentials plus an assigned device ID are required before requesting
+ * service activation. Missing config or a failed registration leaves the next
+ * periodic tick available. WorkManager timing and service start remain subject
+ * to Android scheduling, permissions and force-stop/OEM restrictions.
  */
 @HiltWorker
 class KeepAliveWorker @AssistedInject constructor(
@@ -67,7 +50,7 @@ class KeepAliveWorker @AssistedInject constructor(
         private const val WORK_NAME = "sphere_keep_alive"
 
         /**
-         * ID уведомления для foreground-режима воркера (Android 12+ обход FGS-ограничений).
+         * ID уведомления для foreground-режима воркера.
          * Должен отличаться от [SphereAgentService.NOTIFICATION_ID] = 1.
          */
         private const val WORKER_NOTIFICATION_ID = 2
@@ -86,7 +69,7 @@ class KeepAliveWorker @AssistedInject constructor(
          * - [com.sphereplatform.agent.BootReceiver.onReceive] — при загрузке устройства
          *
          * KEEP policy: если задача уже запланирована — не дублирует.
-         * БЕЗ constraint на сеть: воркер должен запускаться ПРИ ЛЮБЫХ УСЛОВИЯХ,
+         * Без constraint на сеть: планирование допускает запуск
          * включая boot без сети. Запуск foreground service не требует сети.
          * Enrollment (HTTP-запросы) обрабатывает отсутствие сети самостоятельно.
          */
@@ -100,39 +83,21 @@ class KeepAliveWorker @AssistedInject constructor(
                 ExistingPeriodicWorkPolicy.KEEP,
                 request,
             )
-            Timber.i("KeepAliveWorker: запланирован (каждые 15 мин, setPersisted=true)")
+            Timber.i("KeepAliveWorker: запланирован (минимальный интервал 15 мин)")
         }
     }
 
-    override suspend fun doWork(): Result {
+    override suspend fun doWork(): Result = authStore.enrollmentMutex.withLock { doWorkLocked() }
+
+    private suspend fun doWorkLocked(): Result {
         Timber.d("KeepAliveWorker: тик")
 
-        // ── БЕЗУСЛОВНЫЙ запуск через root (если доступен) ──────────────────
-        // Это ГЛАВНЫЙ механизм автостарта на рутованных эмуляторах (LDPlayer).
-        // WorkManager PeriodicWork через JobScheduler — ЕДИНСТВЕННОЕ что
-        // переживает ребут без записи в /system. При каждом тике:
-        // 1. Снимает stopped state
-        // 2. Запускает сервис через am startservice (root обходит FGS-ограничения)
-        // 3. Отправляет BOOT_COMPLETED для BootReceiver (активирует ВСЕ механизмы)
-        // Идемпотентно — если сервис уже работает, ничего лишнего не произойдёт.
-        RootAutoStart.ensureRunning(applicationContext)
-
-        // ── БЕЗУСЛОВНЫЙ запуск сервиса через Java API ──────────────────────
-        // На API 28 (LDPlayer Android 9) нет FGS-ограничений — startForegroundService
-        // работает из любого контекста. Запускаем ВСЕГДА, не только при enrollment.
-        // Сервис при отсутствии token не подключится к WS, но будет жив.
-        ensureServiceRunning()
-
-        // ── Продвигаем воркер в foreground для обхода FGS-ограничений Android 12+ ─────────
-        // Android 12+ (API 31) запрещает startForegroundService() из фонового контекста.
-        // WorkManager воркеры выполняются в фоне → SphereAgentService.start() молча падает
-        // с ForegroundServiceStartNotAllowedException, которое глотается в catch-блоке.
-        // setForeground() превращает ЭТОТ воркер в foreground service, после чего запуск
-        // ДРУГОГО foreground service (SphereAgentService) становится разрешённым.
-        // Android 14+ (API 34): требует объявления foregroundServiceType в манифесте
-        // для androidx.work.impl.foreground.SystemForegroundService.
+        // Request foreground execution; this is not proof that Android will
+        // permit starting the agent service. Its start failure is handled below.
         try {
             setForeground(createForegroundInfo())
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             // IllegalStateException: может упасть если WorkManager не поддерживает
             // setForeground() в данной конфигурации. Не фатально — startForegroundService
@@ -141,16 +106,18 @@ class KeepAliveWorker @AssistedInject constructor(
         }
 
         val isEnrolled = ServiceWatchdog.isEnrolled(applicationContext)
-        val hasToken = authStore.getToken() != null
+        val hasToken = !authStore.getToken().isNullOrBlank() && authStore.getDeviceId() != null
 
         // ── Сценарий 1: Enrolled + есть токен → гарантируем работу сервиса ──
-        if (isEnrolled && hasToken) {
+        if (hasToken) {
+            if (!isEnrolled) ServiceWatchdog.markEnrolled(applicationContext)
+            ensureServiceRunning()
             return Result.success()
         }
 
         // ── Сценарий 2: Enrolled но нет токена → невалидное состояние ──────
         if (isEnrolled && !hasToken) {
-            Timber.w("KeepAliveWorker: enrolled=true, но токен отсутствует → пробуем enrollment заново")
+            Timber.w("KeepAliveWorker: enrolled=true, но credentials или device ID отсутствуют → пробуем enrollment заново")
         }
 
         // ── Сценарий 3: Не enrolled → Zero-Touch enrollment ────────────────
@@ -198,7 +165,7 @@ class KeepAliveWorker @AssistedInject constructor(
                     "Sphere Agent (служебное)",
                     NotificationManager.IMPORTANCE_MIN,
                 ).apply {
-                    description = "Технический канал для гарантированного запуска агента при загрузке"
+                    description = "Технический канал для попыток восстановления агента"
                     setShowBadge(false)
                 }
                 nm.createNotificationChannel(channel)
@@ -207,14 +174,17 @@ class KeepAliveWorker @AssistedInject constructor(
     }
 
     /**
-     * Гарантирует что [SphereAgentService] запущен.
-     * Вызов startForegroundService идемпотентен — если сервис уже работает, ничего не произойдёт.
+     * Запрашивает запуск [SphereAgentService] после получения identity.
+     * Повторный запрос не означает подтверждение готовности сервиса или WS.
      */
     private fun ensureServiceRunning() {
         try {
+            RootAutoStart.ensureRunning(applicationContext)
             SphereAgentService.start(applicationContext)
             ServiceWatchdog.schedule(applicationContext)
-            Timber.d("KeepAliveWorker: сервис запущен/подтверждён, watchdog запланирован")
+            Timber.d("KeepAliveWorker: запуск сервиса запрошен, watchdog запланирован")
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             // Android 12+: ForegroundServiceStartNotAllowedException возможен
             // если WorkManager выполняет задачу в expedited/background context.
@@ -225,20 +195,15 @@ class KeepAliveWorker @AssistedInject constructor(
 
     /**
      * Пытается пройти Zero-Touch enrollment.
-     * Полностью повторяет логику [AutoEnrollmentWorker] но в контексте периодического тика.
+     * Использует тот же enrollment mutex, что и [AutoEnrollmentWorker].
      */
     private suspend fun tryAutoEnrollment(): Result {
-        val config = provisioner.discoverConfig()
-        if (config == null) {
-            Timber.d("KeepAliveWorker: конфигурация не найдена — повторим через 15 мин")
-            return Result.success()
-        }
-
         return try {
-            if (config.autoRegisterEnabled && config.apiKey.isBlank()) {
+            val config = provisioner.discoverConfig() ?: return Result.success()
+            if (config.requiresRegistration) {
                 // Auto-register через серверный endpoint
-                val serverConfig = provisioner.fetchServerConfig()
-                val enrollmentKey = serverConfig?.enrollmentApiKey
+                val enrollmentKey = config.apiKey.takeIf { it.isNotBlank() }
+                    ?: provisioner.fetchServerConfig()?.enrollmentApiKey
                 if (enrollmentKey == null) {
                     Timber.w("KeepAliveWorker: auto_register запрошен, но enrollment key не найден")
                     return Result.success()
@@ -261,17 +226,20 @@ class KeepAliveWorker @AssistedInject constructor(
             }
 
             // Enrollment успешен → активируем все защитные механизмы
+            currentCoroutineContext().ensureActive()
             ServiceWatchdog.markEnrolled(applicationContext)
             ServiceWatchdog.schedule(applicationContext)
             ensureServiceRunning()
 
-            Timber.i("KeepAliveWorker: enrollment успешен! Агент активирован.")
+            Timber.i("KeepAliveWorker: enrollment сохранён, запуск агента запрошен.")
             Result.success()
 
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: RegistrationException) {
             Timber.w("KeepAliveWorker: регистрация провалена: HTTP ${e.httpCode} — ${e.message}")
-            // 4xx ошибки (кроме 429) — не ретраим в рамках этого тика
-            // Но PeriodicWork всё равно повторится через 15 мин
+            // Следующий периодический тик снова попробует регистрацию.
+            // Success завершает тик, но не отмечает устройство зарегистрированным.
             Result.success()
         } catch (e: Exception) {
             Timber.w(e, "KeepAliveWorker: enrollment ошибка — повторим через 15 мин")

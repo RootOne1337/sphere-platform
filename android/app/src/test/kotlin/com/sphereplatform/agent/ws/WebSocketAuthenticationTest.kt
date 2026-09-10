@@ -18,6 +18,7 @@ import java.io.IOException
 class WebSocketAuthenticationTest {
     private val deviceId = "d4b781b0-6571-4e94-9183-a7c36715e7e2"
     private val auth = mockk<AuthTokenStore>(relaxed = true) {
+        every { getDeviceId() } returns "d4b781b0-6571-4e94-9183-a7c36715e7e2"
         coEvery { getFreshTokenForRoute(any(), any()) } returns "isolated-token"
         every { connectionRoutesSnapshot() } returns AuthTokenStore.ConnectionRoutes(0, listOf("https://isolated.invalid"))
         every { acceptConnectionRoute(any(), any()) } returns true
@@ -57,7 +58,7 @@ class WebSocketAuthenticationTest {
         """{"type":"auth_ok","device_id":"$device","protocol_version":$version}"""
 
     @Test fun transportOpenDoesNotAnnounceOrSendApplicationTraffic() = runTest {
-        val job = launch { client.connect(deviceId) }
+        val job = launch { client.connect() }
         try {
             runCurrent(); open(); runCurrent()
             assertFalse("Transport open is not server authentication", client.isConnected)
@@ -69,7 +70,7 @@ class WebSocketAuthenticationTest {
     }
 
     @Test fun validAckAnnouncesOnceAndIsNotDispatchedAsACommand() = runTest {
-        val job = launch { client.connect(deviceId) }
+        val job = launch { client.connect() }
         try {
             runCurrent(); open()
             repeat(2) { listeners.last().onMessage(socket, ack()) }
@@ -86,7 +87,7 @@ class WebSocketAuthenticationTest {
     }
 
     @Test fun silentAuthAfterOpenTimesOutAndRetries() = runTest {
-        val job = launch { client.connect(deviceId) }
+        val job = launch { client.connect() }
         try {
             runCurrent(); open(); runCurrent()
             advanceTimeBy(22_001); runCurrent()
@@ -98,7 +99,7 @@ class WebSocketAuthenticationTest {
     }
 
     @Test fun authRejectionBeforeAckRefreshesImmediatelyWithoutHandshakeTimeout() = runTest {
-        val job = launch { client.connect(deviceId) }
+        val job = launch { client.connect() }
         try {
             runCurrent(); open()
             listeners.last().onClosed(socket, 4001, "invalid_token")
@@ -110,7 +111,7 @@ class WebSocketAuthenticationTest {
     }
 
     @Test fun callbacksFromTimedOutHandshakeCannotRestoreConnectedState() = runTest {
-        val job = launch { client.connect(deviceId) }
+        val job = launch { client.connect() }
         try {
             runCurrent()
             val expired = listeners.single()
@@ -125,7 +126,7 @@ class WebSocketAuthenticationTest {
     }
 
     @Test fun messagesFromFailedSessionAreIgnoredDuringBackoff() = runTest {
-        val job = launch { client.connect(deviceId) }
+        val job = launch { client.connect() }
         try {
             runCurrent(); open()
             val failed = listeners.single()
@@ -141,7 +142,7 @@ class WebSocketAuthenticationTest {
     }
 
     private fun rejectsBeforeAuth(message: String) = runTest {
-        val job = launch { client.connect(deviceId) }
+        val job = launch { client.connect() }
         try {
             runCurrent(); open()
             listeners.single().onMessage(socket, message); runCurrent()
@@ -161,7 +162,7 @@ class WebSocketAuthenticationTest {
     @Test fun commandBeforeAckIsNotExecuted() = rejectsBeforeAuth("""{"type":"execute_dag"}""")
 
     @Test fun cancellationWhileAwaitingAckReleasesSocket() = runTest {
-        val job = launch { client.connect(deviceId) }
+        val job = launch { client.connect() }
         runCurrent(); open()
         job.cancelAndJoin()
         listeners.single().onMessage(socket, ack())
@@ -170,7 +171,7 @@ class WebSocketAuthenticationTest {
     }
 
     @Test fun rejectedAckCannotBeReplacedBeforeCleanupRuns() = runTest {
-        val job = launch { client.connect(deviceId) }
+        val job = launch { client.connect() }
         try {
             runCurrent(); open()
             listeners.single().onMessage(socket, ack(device = "wrong-device"))
@@ -181,7 +182,7 @@ class WebSocketAuthenticationTest {
     }
 
     @Test fun failedSocketCannotReauthenticateBeforeCleanupRuns() = runTest {
-        val job = launch { client.connect(deviceId) }
+        val job = launch { client.connect() }
         try {
             runCurrent(); open()
             listeners.single().onMessage(socket, ack()); runCurrent()
@@ -195,7 +196,7 @@ class WebSocketAuthenticationTest {
     }
 
     @Test fun binaryBeforeAckCannotReachApplication() = runTest {
-        val job = launch { client.connect(deviceId) }
+        val job = launch { client.connect() }
         try {
             runCurrent(); open()
             listeners.single().onMessage(socket, byteArrayOf(1).toByteString()); runCurrent()
@@ -208,7 +209,7 @@ class WebSocketAuthenticationTest {
     }
 
     @Test fun transportCancellationCannotReenterAnAuthenticatedListener() = runTest {
-        val job = launch { client.connect(deviceId) }
+        val job = launch { client.connect() }
         runCurrent(); open()
         listeners.single().onMessage(socket, ack()); runCurrent()
         every { socket.cancel() } answers {

@@ -203,3 +203,17 @@ Legacy `UPDATE_CONFIG` остаётся single-URL путём; пару зада
 все четыре Android test variants. [Evidence](evidence/ci-2bbd9a5-tests.txt).
 Legacy `UPDATE_CONFIG` остаётся single-URL путём и очищает резерв; расширение
 его контракта должно проверять сохранение работающего маршрута и identity.
+
+## AUD-75 — фоновая регистрация и identity: локально исправлено
+
+Supplied bootstrap key больше не становится рабочим token без registration;
+generated JSON flag/null разобраны правильно. Workers сериализованы и повторяют
+activation уже выданной identity. WS перечитывает ID и отвергает поздний ACK старого
+устройства. **24 новых JVM cases; 450 / 33 suites проходят**. Baseline failures и
+границы проверки — в [AUD-75 report](AUDIT-REPORT.md) и [контракте](../../architecture/ANDROID-BACKGROUND-ENROLLMENT.md).
+
+Следующие P0: initial registration response loss/atomic disk state, ручной setup
+против background enrollment, legacy UPDATE_CONFIG с резервным адресом, реальные
+boot/network/fleet drills и расследуемый incident timeline. Monitoring Compose,
+фиктивные VPN measurements и resource profiles сохраняют приоритеты матрицы.
+Новая ревизия требует собственного CI; merge/deployment не выполнялись.

@@ -14,6 +14,13 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Security / runtime
 
+- AUD-75: фоновые workers регистрируют supplied bootstrap key до запуска агента,
+  учитывают generated config flag/null и используют общую блокировку. Повторный
+  запуск с сохранённой identity не выполняет новую registration rotation; transient
+  failures остаются retryable. WS перечитывает назначенный ID и отклоняет старый ACK.
+  24 новых JVM regressions; **450 tests / 33 suites**. Initial response loss, disk
+  atomicity, OS/fleet/resource measurements остаются открытыми.
+
 - AUD-74: APK сохраняет основной/резервный адрес одной установки и перебирает их
   для WS и refresh без GitHub. Новый адрес выбирается по device-bound `auth_ok`;
   discovery сохраняет кандидатов без разрыва рабочего соединения. LAN registration
