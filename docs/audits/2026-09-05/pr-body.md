@@ -128,15 +128,20 @@ researches NitroGen and a future external inference worker; no AI is implemented
   The compatible joint Python dependency scan is a recorded snapshot, not a scan of
   all ecosystems. Coverage remains gated at **65%**, with precision=2 and tests for
   the 64.98% rejection / 65.00% acceptance boundaries.
-- AUD-74 revision **`5f7900e`** passes backend/frontend and Android push CI.
-  Linux: **1390 passed / 69.38%**, 289.08 seconds, all five new Python cases pass.
-  Android push runs all four variants. Android PR attempt 1 fails one DevDebug
-  discovery test: its assertion observed preference commit before the reconnect
-  callback. A controlled pause reproduced `expected 1, was 0`; the corrected
-  test joins the background check before asserting completion. Full local repeat:
-  **426 passed / 32 suites**. The failed CI snapshot is retained; it is not called
-  an all-green revision. The harness correction receives its own CI verification.
-  Preview guard passes and deployment is skipped; database schema is unchanged.
+- Revision **`2bbd9a5`**, including AUD-74 and the discovery-test correction, passes
+  [backend](https://github.com/RootOne1337/sphere-platform/actions/runs/34490836701),
+  [frontend](https://github.com/RootOne1337/sphere-platform/actions/runs/34490836636),
+  [Android PR](https://github.com/RootOne1337/sphere-platform/actions/runs/34490836418) and
+  [Android push](https://github.com/RootOne1337/sphere-platform/actions/runs/34490829634) CI on attempt 1.
+  Linux: **1390 passed / 69.38%**, 294.70 seconds, four existing warnings;
+  all five new route/config/refresh-origin cases pass. Android builds the debug
+  APKs and runs all four Dev/Enterprise × Debug/Release unit-test tasks.
+  [Preview guard](https://github.com/RootOne1337/sphere-platform/actions/runs/34490836570) passes; deployment is skipped.
+  Earlier `5f7900e` PR CI failed one test assertion race; its failed snapshot and
+  deterministic reproduction remain in the report. Runtime fix: `5f7900e`;
+  harness correction: `2bbd9a5`. Exact-revision evidence is retained. The following
+  evidence/documentation commit changes no executable behavior; its own
+  checks are separate. Database schema is unchanged.
 
 ## Rollout and remaining risks
 

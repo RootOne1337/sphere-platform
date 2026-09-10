@@ -1514,3 +1514,35 @@ Cleanup освобождает gate до захвата state lock. Runtime-ко
 Следующий commit исправляет harness и поясняющие docs/comments, его CI проверяется
 отдельно. Legacy `UPDATE_CONFIG` по-прежнему задаёт один URL и очищает резерв;
 настройка пары описана через MDM/JSON/discovery.
+
+
+### Проверка ревизии `2bbd9a5` с AUD-74
+
+Все CI завершились успешно с первой попытки:
+[backend](https://github.com/RootOne1337/sphere-platform/actions/runs/34490836701),
+[frontend](https://github.com/RootOne1337/sphere-platform/actions/runs/34490836636),
+[Android PR](https://github.com/RootOne1337/sphere-platform/actions/runs/34490836418),
+[Android push](https://github.com/RootOne1337/sphere-platform/actions/runs/34490829634).
+[Preview guard](https://github.com/RootOne1337/sphere-platform/actions/runs/34490836570) успешен, deploy пропущен.
+
+Linux backend: **1390 passed / 69,38%**, 294,70 s,
+четыре прежних warnings. Все пять новых config/refresh-origin/generator cases
+прошли: [точный excerpt](evidence/ci-2bbd9a5-tests.txt).
+[Backend snapshot](evidence/ci-2bbd9a5-backend.json) содержит head SHA, attempt и jobs.
+CI mypy в лёгком окружении проходит; локальные 13 ошибок с полными зависимостями
+выше этим не отменяются.
+
+Android собрал debug APK и выполнил все четыре Dev/Enterprise × Debug/Release
+unit-test tasks: [excerpt](evidence/ci-2bbd9a5-android-tests.txt),
+[PR snapshot](evidence/ci-2bbd9a5-android.json),
+[push snapshot](evidence/ci-2bbd9a5-android-push.json).
+Счётчик 426 / 32 suites относится к отдельному локальному enterprise debug run.
+[Frontend](evidence/ci-2bbd9a5-frontend.json) и
+[preview](evidence/ci-2bbd9a5-preview.json) сохранены отдельно.
+
+Ревизия `2bbd9a5` содержит исправление harness, runtime fix остаётся `5f7900e`.
+Неуспешный PR run `5f7900e` и управляемое воспроизведение сохранены выше.
+После проверенной ревизии изменены только evidence и документация. Уточнено ограничение legacy `UPDATE_CONFIG`: он задаёт один URL и
+очищает резерв; для пары используйте MDM/JSON/discovery. Полный command update
+и unattended background enrollment требуют следующей проверки. Не выполнены
+физический fleet drill, production rollout, merge или независимый review.

@@ -197,3 +197,9 @@ CI `5f7900e`: backend/frontend/Android push прошли, Android PR обнар�
 раннюю проверку счётчика; harness теперь ожидает completion. Evidence первой
 неуспешной попытки сохранена, исправление теста проверяется отдельным commit.
 Legacy `UPDATE_CONFIG` остаётся single-URL путём; пару задают MDM/JSON/discovery.
+
+Ревизия AUD-74 `2bbd9a5`: все backend/frontend/Android CI прошли с первой
+попытки; Linux **1390 / 69,38%**, новые пять Python cases PASSED,
+все четыре Android test variants. [Evidence](evidence/ci-2bbd9a5-tests.txt).
+Legacy `UPDATE_CONFIG` остаётся single-URL путём и очищает резерв; расширение
+его контракта должно проверять сохранение работающего маршрута и identity.
