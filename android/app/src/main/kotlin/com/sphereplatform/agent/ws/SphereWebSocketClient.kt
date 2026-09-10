@@ -1,6 +1,7 @@
 package com.sphereplatform.agent.ws
 
 import com.sphereplatform.agent.store.AuthTokenStore
+import com.sphereplatform.agent.network.forManagementRoute
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.channels.Channel
@@ -108,6 +109,7 @@ class SphereWebSocketClient @Inject constructor(
 
     private suspend fun reconnectLoop() {
         var attempt = 0
+        var failedRoute: String? = null
         while (!shouldStop) {
             // Circuit breaker check
             val now = System.currentTimeMillis()
@@ -126,12 +128,17 @@ class SphereWebSocketClient @Inject constructor(
                 if (shouldStop) return
             }
 
+            val routes = authStore.connectionRoutesSnapshot()
+            val previousIndex = routes.urls.indexOf(failedRoute)
+            val route = routes.urls.getOrNull(if (previousIndex >= 0) (previousIndex + 1) % routes.urls.size else 0)
             try {
-                connectOnce()
+                if (route == null) throw AuthException("No management route stored")
+                connectOnce(routes, route)
                 // A clean server restart still needs a paced retry. Resetting to
                 // zero bypassed all delay and synchronized reconnecting devices.
                 consecutiveFailures = 0
                 attempt = 1
+                failedRoute = null
             } catch (e: CancellationException) {
                 throw e
             } catch (e: AuthRejectedException) {
@@ -139,6 +146,7 @@ class SphereWebSocketClient @Inject constructor(
                 // Clear token cache so next attempt gets a fresh token.
                 Timber.w("Auth rejected (code=${e.code}), clearing token cache")
                 authStore.clearTokenCache()
+                failedRoute = route
                 attempt++
                 // Short delay before retry with fresh token
                 withTimeoutOrNull(2000L) { reconnectTrigger.receive() }
@@ -150,6 +158,7 @@ class SphereWebSocketClient @Inject constructor(
             } catch (e: Exception) {
                 // Network/unknown failure — circuit breaker applies
                 Timber.w(e, "WS connect failed (attempt=$attempt)")
+                failedRoute = route
                 consecutiveFailures++
                 attempt++
 
@@ -177,10 +186,10 @@ class SphereWebSocketClient @Inject constructor(
      * First-message auth: JWT отправляется первым сообщением в [onOpen],
      * НЕ в URL (токен в query-param виден в логах сервера и прокси).
      */
-    private suspend fun connectOnce() {
-        val token = authStore.getFreshToken()
+    private suspend fun connectOnce(routes: AuthTokenStore.ConnectionRoutes, route: String) {
+        val token = authStore.getFreshTokenForRoute(routes, route)
             ?: throw AuthException("No auth token stored")
-        val wsUrl = "${authStore.getServerUrl().trimEnd('/')}/ws/android/$deviceId"
+        val wsUrl = "$route/ws/android/$deviceId"
         val request = Request.Builder().url(wsUrl).build()
         val attemptGeneration = synchronized(wsLock) { ++generation }
 
@@ -226,6 +235,10 @@ class SphereWebSocketClient @Inject constructor(
                                 version?.isString != false || version.intOrNull != 1
                             ) {
                                 connected.completeExceptionally(IOException("Invalid server authentication acknowledgement"))
+                                return
+                            }
+                            if (!authStore.acceptConnectionRoute(routes, route)) {
+                                connected.completeExceptionally(IOException("Management route changed during authentication"))
                                 return
                             }
                             isConnected = true
@@ -302,7 +315,7 @@ class SphereWebSocketClient @Inject constructor(
             }
         }
 
-        val socket = httpClient.newWebSocket(request, listener)
+        val socket = httpClient.forManagementRoute(route).newWebSocket(request, listener)
         synchronized(wsLock) {
             if (attemptGeneration == generation && !shouldStop && !disconnected.isCompleted) {
                 webSocket = socket

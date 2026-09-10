@@ -64,9 +64,11 @@ flowchart LR
 ```
 
 Диаграмма показывает роли компонентов. Она не означает подтверждённую HA-топологию:
-второй URL на тот же сервер не переживает потерю этого сервера. Принятое направление —
-LAN-first management, сохранённый резервный endpoint той же установки и GitHub как
-дополнительный discovery. Этот failover-контракт ещё предстоит реализовать и проверить.
+второй URL на тот же сервер не переживает потерю этого сервера. APK уже сохраняет
+основной и резервный адрес одной установки, переключает WS и refresh после отказа
+и подтверждает новый маршрут по `auth_ok`, без обязательного GitHub discovery.
+[Настройка и границы проверки](docs/architecture/ANDROID-SAVED-ROUTES.md): реальные
+OS/network/fleet drills и инфраструктурная HA ещё требуются.
 
 ## Возможности и доказательства
 
@@ -74,7 +76,7 @@ LAN-first management, сохранённый резервный endpoint той 
 | --- | --- | --- |
 | Парк устройств | Регистрация, идентификаторы, группы/теги, presence, API/WS | Массовый reconnect, provisioning всех станций, физические телефоны |
 | Автоматизация | DAG/Lua, задания, batches/waves, scheduler/pipelines, локальный журнал | Полный crash recovery, unknown physical outcomes, отмена при отказах |
-| Связь | Подтверждение авторизации, recoverable refresh, heartbeat/reconnect, [отменяемый discovery без credentials](docs/architecture/ANDROID-DISCOVERY-RECOVERY.md) | Резервный адрес, независимость от GitHub, реальные OS/network failure drills |
+| Связь | Подтверждение авторизации, recoverable refresh, [сохранённый основной/резервный маршрут](docs/architecture/ANDROID-SAVED-ROUTES.md), discovery без credentials | Реальные OS/network/fleet drills, durable config version/rollback и HA backend |
 | Экран и управление | H.264 / WebCodecs, touch/key primitives, backpressure | Codec/OS recovery, latency под нагрузкой, измеренный ресурсный бюджет |
 | PC-agent | Workstation ownership, registration, command result routing/recovery | Durable results, повторная topology, реальный LDPlayer/ADB/host reboot |
 | VPN | SQL lease/intents, ограничения адресов, recovery/fencing | Provider reconciliation и реальные маршруты/инвентарь |

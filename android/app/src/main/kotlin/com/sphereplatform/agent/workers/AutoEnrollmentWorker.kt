@@ -94,6 +94,7 @@ class AutoEnrollmentWorker @AssistedInject constructor(
                 Timber.i("AutoEnrollmentWorker: attempting to register with server ${config.serverUrl}")
                 registrationClient.register(
                     serverUrl = config.serverUrl,
+                    fallbackServerUrl = config.fallbackServerUrl,
                     enrollmentApiKey = enrollmentKey,
                 )
             } else {
@@ -104,7 +105,7 @@ class AutoEnrollmentWorker @AssistedInject constructor(
                 }
 
                 Timber.i("AutoEnrollmentWorker: using static API Key from config")
-                authStore.saveServerUrl(config.serverUrl)
+                authStore.saveServerRoutes(config.serverUrl, config.fallbackServerUrl)
                 config.deviceId?.let { authStore.saveDeviceId(it) }
                 authStore.saveApiKey(config.apiKey)
             }

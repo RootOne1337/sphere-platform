@@ -18,7 +18,9 @@ import java.io.IOException
 class WebSocketAuthenticationTest {
     private val deviceId = "d4b781b0-6571-4e94-9183-a7c36715e7e2"
     private val auth = mockk<AuthTokenStore>(relaxed = true) {
-        coEvery { getFreshToken() } returns "isolated-token"
+        coEvery { getFreshTokenForRoute(any(), any()) } returns "isolated-token"
+        every { connectionRoutesSnapshot() } returns AuthTokenStore.ConnectionRoutes(0, listOf("https://isolated.invalid"))
+        every { acceptConnectionRoute(any(), any()) } returns true
         every { getServerUrl() } returns "https://isolated.invalid"
     }
     private val socket = mockk<WebSocket>(relaxed = true) {
@@ -27,7 +29,16 @@ class WebSocketAuthenticationTest {
         every { queueSize() } returns 0L
     }
     private val listeners = mutableListOf<WebSocketListener>()
-    private val http = mockk<OkHttpClient> {
+    private val http: OkHttpClient = mockk<OkHttpClient> {
+        val baseClient = this
+        every { certificatePinner } returns CertificatePinner.DEFAULT
+        every { newBuilder() } answers {
+            mockk<OkHttpClient.Builder> {
+                every { followRedirects(any()) } returns this
+                every { followSslRedirects(any()) } returns this
+                every { build() } returns baseClient
+            }
+        }
         every { newWebSocket(any(), any()) } answers { listeners.add(secondArg()); socket }
     }
     private val client = SphereWebSocketClient(http, auth, Json)

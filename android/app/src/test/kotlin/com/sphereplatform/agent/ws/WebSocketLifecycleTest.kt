@@ -13,7 +13,9 @@ import java.io.IOException
 @OptIn(ExperimentalCoroutinesApi::class)
 class WebSocketLifecycleTest {
     private val auth = mockk<AuthTokenStore>(relaxed = true) {
-        coEvery { getFreshToken() } returns "test-token"
+        coEvery { getFreshTokenForRoute(any(), any()) } returns "test-token"
+        every { connectionRoutesSnapshot() } returns AuthTokenStore.ConnectionRoutes(0, listOf("http://127.0.0.1:12345"))
+        every { acceptConnectionRoute(any(), any()) } returns true
         every { getServerUrl() } returns "http://127.0.0.1:12345"
     }
     private val socket = mockk<WebSocket>(relaxed = true) {
@@ -21,7 +23,16 @@ class WebSocketLifecycleTest {
         every { queueSize() } returns 0L
     }
     private lateinit var listener: WebSocketListener
-    private val http = mockk<OkHttpClient> {
+    private val http: OkHttpClient = mockk<OkHttpClient> {
+        val baseClient = this
+        every { certificatePinner } returns CertificatePinner.DEFAULT
+        every { newBuilder() } answers {
+            mockk<OkHttpClient.Builder> {
+                every { followRedirects(any()) } returns this
+                every { followSslRedirects(any()) } returns this
+                every { build() } returns baseClient
+            }
+        }
         every { newWebSocket(any(), any()) } answers {
             listener = secondArg()
             socket

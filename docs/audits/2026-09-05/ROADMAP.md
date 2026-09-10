@@ -174,3 +174,20 @@ discovery contract cases и четыре Android test tasks успешны.
 [Точные snapshots и ограничения](AUDIT-REPORT.md#проверка-ревизии-e68ec0a-с-aud-73).
 Документационный commit сохраняет проверенную code revision; deployment skipped,
 PR остаётся draft.
+
+### Сохранённый резерв и выбор подтверждённого маршрута: AUD-74
+
+Предыдущая запись «secondary route ещё не реализован» описывает ревизии до AUD-74.
+Теперь сохранены primary/fallback + выбранный адрес; WS и refresh перебирают их
+без обращения к GitHub. Discovery не обрывает здоровую связь; выбранный адрес
+меняется по подтверждению device ID. Пара сохраняется одним commit, локальные
+MDM/файлы читаются при старте без bootstrap key для уже enrolled APK. Генератор
+переносит fallback, его enrollment key распознаётся APK; LAN registration сохраняет
+адрес запроса. [Контракт и rollout](../../architecture/ANDROID-SAVED-ROUTES.md).
+
+Следующие P0: фактический OS/network/backend restart drill с метриками возврата,
+durable config revision/rollback и проверка установки до credentials; диагностика
+инцидента по device/task/time. Не заявлены кластер БД, независимый transport,
+гарантированный reconnect SLA или совместимость со всеми Android. Отдельно остаются
+loss при enrollment и unknown outcome физических действий. P1 monitoring/UI data
+и профилирование ресурсов сохраняют приоритет после восстановления управления.

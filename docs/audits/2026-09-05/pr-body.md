@@ -101,15 +101,25 @@ researches NitroGen and a future external inference worker; no AI is implemented
   fanned out and outlived stop/local route changes. Public cancellable discovery now
   has a 10-second HTTP budget, bounded parsing, one active watchdog check and a
   generation/local-revision fence. Baseline **9 failures / 4 controls**; **21 new
-  Android cases** and **2 SQL/ASGI contract controls**. This does not implement a
-  secondary endpoint or validate a candidate's backend availability.
+  Android cases** and **2 SQL/ASGI contract controls**. AUD-74 below extends this
+  with saved candidates and ACK-gated route selection.
+
+- **AUD-74:** one saved URL and unconditional discovery/registration replacement
+  stranded APKs on unavailable routes. The APK now persists primary/fallback URLs,
+  retries WS and refresh through the selected route without GitHub, and promotes
+  it only after device-bound `auth_ok`. Discovery retains a healthy active socket;
+  successful LAN registration retains its request URL. Route-only MDM/files work
+  at service start for enrolled agents. API/schema/generator carry fallback, and
+  APK parsing accepts the generator's enrollment key. **27 new JVM + 5 Python
+  cases (3 PostgreSQL/ASGI)** cover route failures, persistence, pending refresh ID,
+  late events, config propagation and lost-response retry through a second origin.
 
 ## Validation
 
-- Combined local backend/PC/PostgreSQL/Redis/deployment: **1385 passed**, including
-  **487 real-service cases** and 25 deployment cases; **69.42%** coverage,
+- Combined local backend/PC/PostgreSQL/Redis/deployment: **1390 passed**, including
+  **490 real-service cases** and 25 deployment cases; **69.38%** coverage,
   four existing warnings. Load/soak profiles are excluded from this ordinary PR run.
-- Android enterprise debug unit suite: **399 passed / 31 suites**. These JVM/MockWebServer/OkHttp checks
+- Android enterprise debug unit suite: **426 passed / 32 suites**. These JVM/MockWebServer/OkHttp checks
   do not establish device OS, codec, battery or real network behavior.
 - Frontend: **198 tests / 23 suites**, TypeScript and production build pass. Linux CI
   verifies the standalone entry point; local Windows tracing emitted an ENOENT
@@ -118,7 +128,7 @@ researches NitroGen and a future external inference worker; no AI is implemented
   The compatible joint Python dependency scan is a recorded snapshot, not a scan of
   all ecosystems. Coverage remains gated at **65%**, with precision=2 and tests for
   the 64.98% rejection / 65.00% acceptance boundaries.
-- Revision **`e68ec0a`**, including AUD-73, passes
+- Preceding revision **`e68ec0a`**, including AUD-73, passes
   [backend](https://github.com/RootOne1337/sphere-platform/actions/runs/34466367344),
   [frontend](https://github.com/RootOne1337/sphere-platform/actions/runs/34466367307),
   [Android PR](https://github.com/RootOne1337/sphere-platform/actions/runs/34466367295)
@@ -128,7 +138,8 @@ researches NitroGen and a future external inference worker; no AI is implemented
   four Dev/Enterprise × Debug/Release test tasks. Exact-head snapshots and excerpts
   are retained. Preview guard passes and deployment is skipped. The following
   documentation-only commit records this verified code revision; its checks are
-  separate. The local runs above cover AUD-73; backend code/schema are unchanged.
+  separate. The local runs above cover AUD-74; its CI will be recorded after push.
+  The config API adds an optional field; the database schema is unchanged.
 
 ## Rollout and remaining risks
 
@@ -170,9 +181,11 @@ compatibility and CPU/RAM/FPS/battery for **10–64 emulators per station or hun
 thousands of connected APKs have not been measured**.
 The 64-concurrent VPN test uses SQL plus a router double and is not a capacity result.
 
-GitHub-independent failover is a documented direction, not yet an implementation:
-saved primary/secondary routes to the same installation, with optional external
-discovery. AUD-69/70 cover new device refresh response recovery; legacy already-lost
+Saved primary/fallback routes now support WS and refresh retry independently of
+GitHub, with optional discovery. Both routes must belong to one installation; this
+does not provide backend/database HA. Durable config version/rollback, live local
+config reload, pre-credential installation validation and full background enrollment
+remain open. [Configuration and limits](https://github.com/RootOne1337/sphere-platform/blob/codex/enterprise-audit-20260905/docs/architecture/ANDROID-SAVED-ROUTES.md). AUD-69/70 cover new device refresh response recovery; legacy already-lost
 operations, expired credentials and real OS/network drills remain open. AUD-71
 repairs HTTP cancellation; mutex queueing, disk/keystore stalls and device scheduling
 are outside its 10-second HTTP bound. Monitoring
@@ -180,7 +193,7 @@ Compose wiring and synthetic VPN UI zeroes are confirmed open gaps. Startup read
 does not check schema head, task execution or browser actions; the legacy tunnel
 path remains outside AUD-68. Reboot/restore/soak drills are still required.
 
-The last local dependency-aware mypy run (AUD-72) reports 13 errors in seven unchanged files/imports;
+The local dependency-aware mypy run repeated for AUD-74 reports 13 errors in seven unchanged files/imports;
 CI mypy uses a separate lighter environment and must be assessed separately.
 
 No independent review, production migration, service rollout, merge or deployment

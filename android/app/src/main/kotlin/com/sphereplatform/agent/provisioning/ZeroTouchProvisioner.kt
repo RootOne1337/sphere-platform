@@ -5,6 +5,7 @@ import android.content.RestrictionsManager
 import android.os.Environment
 import com.sphereplatform.agent.BuildConfig
 import com.sphereplatform.agent.network.FallbackDns
+import com.sphereplatform.agent.network.normalizeManagementUrl
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -96,6 +97,7 @@ class ZeroTouchProvisioner internal constructor(
         val source: String = "unknown",
         /** Флаг: сервер поддерживает auto_register → агент должен вызвать POST /devices/register */
         val autoRegisterEnabled: Boolean = false,
+        val fallbackServerUrl: String? = null,
     )
 
     /**
@@ -110,6 +112,7 @@ class ZeroTouchProvisioner internal constructor(
         val enrollmentApiKey: String?,
         val wsPath: String,
         val configPollIntervalSeconds: Int,
+        val fallbackServerUrl: String? = null,
     )
 
     suspend fun discoverConfig(): ProvisionConfig? {
@@ -135,6 +138,10 @@ class ZeroTouchProvisioner internal constructor(
         Timber.d("ZeroTouch: no auto-provision config found — manual enrollment required")
         return null
     }
+
+    /** Local route provisioning can be reapplied at service start without enrollment or HTTP. */
+    internal fun discoverLocalConfig(): ProvisionConfig? =
+        discoverFromManagedConfig(requireKey = false) ?: discoverFromLocalFile(requireKey = false)
 
     val hasConfigEndpoint: Boolean get() = configUrl.isNotBlank()
 
@@ -201,30 +208,34 @@ class ZeroTouchProvisioner internal constructor(
             enrollmentApiKey = json.optString("enrollment_api_key", "").takeIf { it.isNotBlank() },
             wsPath = json.optString("ws_path", "/ws/android"),
             configPollIntervalSeconds = json.optInt("config_poll_interval_seconds", 86400),
+            fallbackServerUrl = if (json.isNull("fallback_server_url")) null else
+                json.optString("fallback_server_url").takeIf { it.isNotBlank() }?.let(::normalizeManagementUrl),
         )
     }
 
     // ── 1. Android Enterprise Managed Config (MDM push) ─────────────────────
 
-    private fun discoverFromManagedConfig(): ProvisionConfig? = runCatching {
+    private fun discoverFromManagedConfig(requireKey: Boolean = true): ProvisionConfig? = runCatching {
         val rm = context.getSystemService(Context.RESTRICTIONS_SERVICE) as? RestrictionsManager
             ?: return@runCatching null
         val bundle = rm.applicationRestrictions ?: return@runCatching null
         val serverUrl = bundle.getString("sphere_server_url")?.takeIf { it.isNotBlank() }
             ?: return@runCatching null
-        val apiKey = bundle.getString("sphere_api_key")?.takeIf { it.isNotBlank() }
-            ?: return@runCatching null
+        val apiKey = bundle.getString("sphere_api_key")?.takeIf { it.isNotBlank() } ?: ""
+        if (requireKey && apiKey.isBlank()) return@runCatching null
         ProvisionConfig(
             serverUrl = serverUrl,
             apiKey = apiKey,
             deviceId = bundle.getString("sphere_device_id")?.takeIf { it.isNotBlank() },
             source = "managed_config",
+            fallbackServerUrl = bundle.getString("sphere_fallback_server_url")?.takeIf { it.isNotBlank() }
+                ?.let(::normalizeManagementUrl),
         )
     }.getOrNull()
 
     // ── 2‑4. JSON config file (multiple search paths) ───────────────────────
 
-    private fun discoverFromLocalFile(): ProvisionConfig? {
+    private fun discoverFromLocalFile(requireKey: Boolean = true): ProvisionConfig? {
         val searchPaths = buildList<File> {
             // /sdcard/sphere-agent-config.json — most accessible for adb push
             runCatching { Environment.getExternalStorageDirectory() }
@@ -241,13 +252,16 @@ class ZeroTouchProvisioner internal constructor(
                 val json = JSONObject(file.readText(Charsets.UTF_8).take(MAX_CONFIG_CHARS))
                 val serverUrl = json.getString("server_url").takeIf { it.isNotBlank() }
                     ?: return@runCatching null
-                val apiKey = json.getString("api_key").takeIf { it.isNotBlank() }
-                    ?: return@runCatching null
+                val apiKey = json.optString("api_key", "").takeIf { it.isNotBlank() }
+                    ?: json.optString("enrollment_api_key", "")
+                if (requireKey && apiKey.isBlank()) return@runCatching null
                 ProvisionConfig(
                     serverUrl = serverUrl,
                     apiKey = apiKey,
                     deviceId = json.optString("device_id").takeIf { it.isNotBlank() },
                     source = "file:${file.absolutePath}",
+                    fallbackServerUrl = if (json.isNull("fallback_server_url")) null else
+                        json.optString("fallback_server_url").takeIf { it.isNotBlank() }?.let(::normalizeManagementUrl),
                 )
             }.getOrElse { e ->
                 Timber.w(e, "ZeroTouch: failed to parse config from ${file.absolutePath}")
@@ -289,6 +303,7 @@ class ZeroTouchProvisioner internal constructor(
             apiKey = apiKey,
             source = "config_endpoint",
             autoRegisterEnabled = serverConfig.autoRegister,
+            fallbackServerUrl = serverConfig.fallbackServerUrl,
         )
     }
 }

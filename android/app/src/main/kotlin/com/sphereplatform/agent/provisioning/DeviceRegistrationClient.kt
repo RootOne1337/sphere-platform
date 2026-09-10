@@ -1,6 +1,8 @@
 package com.sphereplatform.agent.provisioning
 
 import com.sphereplatform.agent.store.AuthTokenStore
+import com.sphereplatform.agent.network.forManagementRoute
+import com.sphereplatform.agent.network.normalizeManagementUrl
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
@@ -76,6 +78,7 @@ class DeviceRegistrationClient @Inject constructor(
         workstationId: String? = null,
         instanceIndex: Int? = null,
         location: String? = null,
+        fallbackServerUrl: String? = null,
     ): RegistrationResult = withContext(Dispatchers.IO) {
         val fingerprint = cloneDetector.getFingerprint()
         val deviceType = cloneDetector.getDeviceType()
@@ -109,7 +112,7 @@ class DeviceRegistrationClient @Inject constructor(
             .post(bodyJson.toRequestBody("application/json".toMediaType()))
             .build()
 
-        httpClient.newCall(request).execute().use { response ->
+        httpClient.forManagementRoute(serverUrl).newCall(request).execute().use { response ->
             // FIX D5: Ограничиваем размер ответа (защита от OOM)
             val responseBody = response.body?.string()?.take(MAX_RESPONSE_CHARS)
                 ?: throw RegistrationException("Пустой ответ сервера", response.code)
@@ -130,12 +133,17 @@ class DeviceRegistrationClient @Inject constructor(
                 accessToken = jsonResponse["access_token"]!!.jsonPrimitive.content,
                 refreshToken = jsonResponse["refresh_token"]!!.jsonPrimitive.content,
                 expiresIn = jsonResponse["expires_in"]!!.jsonPrimitive.long,
-                serverUrl = jsonResponse["server_url"]?.jsonPrimitive?.content ?: serverUrl,
+                serverUrl = normalizeManagementUrl(serverUrl),
                 isNew = jsonResponse["is_new"]!!.jsonPrimitive.boolean,
             )
 
             // Сохраняем полученные данные в хранилище
-            authStore.saveServerUrl(result.serverUrl)
+            // Keep the route that actually registered us. Canonical public URLs may
+            // be unreachable from a LAN device; they are candidates, not confirmation.
+            val advertised = jsonResponse["server_url"]?.jsonPrimitive?.content
+                ?.let { runCatching { normalizeManagementUrl(it) }.getOrNull() }
+                ?.takeIf { it != result.serverUrl }
+            authStore.saveServerRoutes(result.serverUrl, fallbackServerUrl ?: advertised)
             authStore.saveDeviceId(result.deviceId)
             authStore.saveTokens(result.accessToken, result.refreshToken, result.expiresIn)
 

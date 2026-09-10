@@ -261,3 +261,21 @@ body limits, 64 coalesced notifications, stop/restart and stale local route revi
 Full Android enterprise debug suite: **399 tests / 31 suites**. No listeners, device
 OS, fleet throughput or new backend permission policy are exercised here.
 [Discovery contract](../../docs/architecture/ANDROID-DISCOVERY-RECOVERY.md).
+
+### Saved APK routes and refresh origin recovery (AUD-74)
+
+`test_agent_tenant_runtime.py` adds three PostgreSQL/ASGI cases: optional public
+`fallback_server_url` (present/absent), then refresh with a deliberately lost
+post-commit HTTP response and retry through a second ASGI origin. The retry returns
+the same refresh successor; a changed operation ID fails, recovered device WS auth
+passes, and a foreign device remains denied. The transport is in process and the
+database uses the dedicated non-owner runtime role.
+
+`tests/test_agent_config_routes.py` adds two pure Python cases for the real config
+generator. Android `SavedRouteFailoverTest` adds 27 JVM/Robolectric cases: route
+selection, persisted pair, refresh ID, late callbacks, auth denial, local MDM/file
+discovery, generated enrollment key, registration URL and derived client pinning.
+Full Android enterprise debug: **426 tests / 32 suites**. No actual fleet, listener,
+DNS outage, Android OS crash or resource profile is established.
+
+[Contract and evidence](../../docs/architecture/ANDROID-SAVED-ROUTES.md).

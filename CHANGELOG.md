@@ -14,6 +14,14 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Security / runtime
 
+- AUD-74: APK сохраняет основной/резервный адрес одной установки и перебирает их
+  для WS и refresh без GitHub. Новый адрес выбирается по device-bound `auth_ok`;
+  discovery сохраняет кандидатов без разрыва рабочего соединения. LAN registration
+  сохраняет request URL; fallback проходит через MDM, JSON, публичный API и
+  генератор, а APK принимает его `enrollment_api_key`. 27 новых JVM и пять Python
+  regressions, включая три SQL/ASGI cases. **426 Android tests**; реальные OS/network
+  и capacity drills ещё требуются. [Контракт](docs/architecture/ANDROID-SAVED-ROUTES.md).
+
 - AUD-73: APK discovery больше не отправляет device JWT как API-ключ, ограничивает
   HTTP десятью секундами и body 64 KiB до разбора. Watchdog объединяет проверки,
   отменяет их при stop и не применяет response после локальной смены адреса.

@@ -135,7 +135,7 @@ class SetupActivity : AppCompatActivity() {
     private suspend fun performAutoEnroll(config: ZeroTouchProvisioner.ProvisionConfig) {
         // Если autoRegister включён и API-ключ пуст (config_endpoint) → авто-регистрация
         if (config.autoRegisterEnabled && config.apiKey.isBlank()) {
-            performAutoRegistration(config.serverUrl)
+            performAutoRegistration(config.serverUrl, config.fallbackServerUrl)
             return
         }
 
@@ -154,7 +154,7 @@ class SetupActivity : AppCompatActivity() {
      * Авто-регистрация через POST /api/v1/devices/register.
      * Не требует API-ключ от пользователя — используется enrollment key из конфига.
      */
-    private suspend fun performAutoRegistration(serverUrl: String) {
+    private suspend fun performAutoRegistration(serverUrl: String, fallbackServerUrl: String?) {
         showStatus("Auto-registering device…", isError = false)
 
         // Получаем enrollment API key из конфига (config endpoint или файл)
@@ -168,6 +168,7 @@ class SetupActivity : AppCompatActivity() {
         val result = runCatching {
             registrationClient.register(
                 serverUrl = serverUrl,
+                fallbackServerUrl = fallbackServerUrl,
                 enrollmentApiKey = enrollmentKey,
             )
         }
@@ -222,6 +223,7 @@ class SetupActivity : AppCompatActivity() {
         val regResult = runCatching {
             registrationClient.register(
                 serverUrl = config.serverUrl,
+                fallbackServerUrl = config.fallbackServerUrl,
                 enrollmentApiKey = config.apiKey,
             )
         }
@@ -260,7 +262,7 @@ class SetupActivity : AppCompatActivity() {
         val result = runCatching { verifyCredentials(config.serverUrl, config.apiKey, deviceId) }
         setLoading(false)
         if (result.isSuccess) {
-            authStore.saveServerUrl(config.serverUrl)
+            authStore.saveServerRoutes(config.serverUrl, config.fallbackServerUrl)
             authStore.saveApiKey(config.apiKey)
             authStore.saveDeviceId(deviceId)
             showStatus("Auto-enrolled successfully (legacy)", isError = false)

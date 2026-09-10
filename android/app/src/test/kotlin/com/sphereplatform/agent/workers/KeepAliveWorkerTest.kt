@@ -118,7 +118,7 @@ class KeepAliveWorkerTest {
 
         assertEquals(ListenableWorker.Result.success(), result)
         // Проверяем что enrollment прошёл
-        verify { authStore.saveServerUrl("http://test-server:8000") }
+        verify { authStore.saveServerRoutes("http://test-server:8000", null) }
         verify { authStore.saveApiKey("test_api_key") }
         verify { authStore.saveDeviceId("test-device-1") }
     }

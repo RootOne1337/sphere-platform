@@ -2,9 +2,11 @@
 
 import asyncio
 import json
+import uuid
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
+import httpx
 import pytest
 from sqlalchemy import text, update
 from test_device_bootstrap_runtime import issue_device, issue_key
@@ -150,6 +152,56 @@ async def test_enrolled_device_discovery_uses_public_config_without_api_key_head
     # Omitting credentials for discovery does not alter device identity or WS auth.
     sent = await websocket(enrolled.device_id, token)
     assert any(m["type"] == "websocket.send" and json.loads(m["text"]).get("type") == "auth_ok" for m in sent)
+
+
+@pytest.mark.parametrize("fallback", [None, "https://secondary.invalid"])
+async def test_public_discovery_advertises_optional_same_installation_fallback(agent_runtime, monkeypatch, fallback):
+    from backend.api.v1.config import router as config_router
+
+    monkeypatch.setattr(config_router.settings, "AGENT_CONFIG_CACHE_TTL", 0)
+    config = {"server_url": "https://primary.invalid"}
+    if fallback is not None:
+        config["fallback_server_url"] = fallback
+    monkeypatch.setattr(config_router, "_load_agent_config_from_file", lambda: config)
+    result = await agent_runtime.world.client.get("/api/v1/config/agent")
+    assert result.status_code == 200
+    assert result.json()["server_url"] == "https://primary.invalid"
+    assert result.json().get("fallback_server_url") == fallback
+    assert result.json()["org_id"] is None
+
+
+async def test_refresh_response_lost_on_primary_replays_on_secondary_origin(agent_runtime):
+    """Two host names, one SQL installation; no external servers or real sockets."""
+    r = agent_runtime
+    enrolled = await issue_device(r.world)
+    request_id = str(uuid.uuid4())
+    headers = {"Cookie": "refresh_token=" + enrolled.refresh_token, "X-Refresh-Request-Id": request_id}
+    committed = {}
+
+    class LosePrimaryResponse(httpx.AsyncBaseTransport):
+        async def handle_async_request(self, request):
+            async with httpx.ASGITransport(app=app) as transport:
+                response = await transport.handle_async_request(request)
+                await response.aread()
+                assert response.status_code == 200
+                committed.update(response.json())
+                await response.aclose()
+            raise httpx.ReadError("isolated primary response loss after SQL commit")
+
+    async with httpx.AsyncClient(transport=LosePrimaryResponse(), base_url="https://primary.invalid") as primary:
+        with pytest.raises(httpx.ReadError):
+            await primary.post("/api/v1/devices/refresh", headers=headers)
+    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="https://secondary.invalid") as secondary:
+        recovered = await secondary.post("/api/v1/devices/refresh", headers=headers)
+        assert recovered.status_code == 200
+        assert recovered.json()["refresh_token"] == committed["refresh_token"]
+        assert (await secondary.post("/api/v1/devices/refresh", headers={
+            **headers, "X-Refresh-Request-Id": str(uuid.uuid4()),
+        })).status_code == 401
+    sent = await websocket(enrolled.device_id, recovered.json()["access_token"])
+    assert any(m["type"] == "websocket.send" and json.loads(m["text"]).get("device_id") == str(enrolled.device_id) for m in sent)
+    foreign = await websocket(r.world.dev_b.id, recovered.json()["access_token"])
+    assert not any(m["type"] == "websocket.send" for m in foreign)
 
 
 @pytest.mark.parametrize("credential", ["device", "refreshed", "enrollment_key", "user"])

@@ -379,13 +379,40 @@ now establish server acknowledgement before testing an active channel.
 Deploy **all backend workers before APK**, preserving app data and signing identity.
 An older backend without `auth_ok` cannot confirm a new APK; it will reconnect on
 deadline. [Wire protocol, rollout and evidence](architecture/ANDROID-CONNECTION-PROTOCOL.md).
-Saved secondary routes, physical Android sockets and fleet recovery remain open.
+Saved secondary routes are implemented by AUD-74 below; physical Android sockets
+and fleet recovery remain unmeasured.
 
 
 ## 16. Discovery recovery (AUD-73)
 
-The full enterprise debug suite now passes **399 tests / 31 suites**, including
+The AUD-73 enterprise debug snapshot passed **399 tests / 31 suites**, including
 21 new discovery cases. Initial baseline: nine failures / four controls. Public
 HTTP, cancellation, single-flight checks, stop/restart and local route revisions
-are covered with Robolectric and synthetic transport. The saved secondary route
-and candidate health trial are still open. [Current contract and evidence](architecture/ANDROID-DISCOVERY-RECOVERY.md).
+are covered with Robolectric and synthetic transport. AUD-74 extends this with saved
+route candidates and ACK-gated selection, below. [Current contract and evidence](architecture/ANDROID-DISCOVERY-RECOVERY.md).
+
+## 17. Saved management routes (AUD-74)
+
+The APK retains primary/fallback URLs and its last selected address. A failed
+attempt advances to the next saved route, including token refresh on that route;
+neither GitHub nor fresh discovery is required. Selection is accepted only after
+the expected device-bound `auth_ok`, before result replay. A config update cannot
+disconnect a healthy authenticated socket. Late callbacks and changed local route
+revisions cannot promote an obsolete connection.
+
+Configure `fallback_server_url` in provisioning JSON/HTTP config or
+`sphere_fallback_server_url` in MDM. Already enrolled agents read route-only MDM or
+local files at service start without a bootstrap key. Initial enrollment still
+requires a key; local JSON accepts `api_key` or the generator's `enrollment_api_key`.
+Successful LAN registration preserves its request address, recording a different
+advertised server URL as fallback unless an explicit backup was supplied.
+
+Both addresses must belong to the same installation and credential/task state.
+One extra URL does not supply a second backend, database or command protocol.
+[Configuration examples, rollout, pinning and persistence limits](architecture/ANDROID-SAVED-ROUTES.md).
+
+**426 JVM tests / 32 suites**, including **27 new route regressions**, pass with
+isolated HTTP/WS doubles. Three new PostgreSQL/ASGI cases cover optional config and
+lost refresh response recovery across origins; two Python cases exercise the real
+fleet config generator. These results do not establish physical OS behavior,
+network recovery latency, APK resource use or fleet capacity.

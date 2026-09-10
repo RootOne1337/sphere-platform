@@ -246,12 +246,13 @@ class KeepAliveWorker @AssistedInject constructor(
                 Timber.i("KeepAliveWorker: авто-регистрация через ${config.serverUrl}")
                 registrationClient.register(
                     serverUrl = config.serverUrl,
+                    fallbackServerUrl = config.fallbackServerUrl,
                     enrollmentApiKey = enrollmentKey,
                 )
             } else if (config.apiKey.isNotBlank()) {
                 // Статический API-ключ из конфига/BuildConfig
                 Timber.i("KeepAliveWorker: enrollment со статическим API-ключом (${config.source})")
-                authStore.saveServerUrl(config.serverUrl)
+                authStore.saveServerRoutes(config.serverUrl, config.fallbackServerUrl)
                 config.deviceId?.let { authStore.saveDeviceId(it) }
                 authStore.saveApiKey(config.apiKey)
             } else {

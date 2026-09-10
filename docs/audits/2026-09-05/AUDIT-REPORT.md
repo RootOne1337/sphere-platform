@@ -25,17 +25,17 @@ runtime-проверок и не считается доказательство
 
 | Проверка | Результат | Практическое ограничение |
 | --- | --- | --- |
-| Android enterprise debug unit suite | 399 passed, 0 failed | JVM/MockWebServer и OkHttp interceptors; не проверяет ОС, codec, батарею или смерть процесса на телефоне |
-| Объединённая Backend/PC/production/deployment suite | **1385 passed, 0 failed**; coverage **69,42%** | Строгий coverage gate 65% пройден с precision=2. Load suite исключена; 25 deployment cases включают config/subprocess probes без запуска сервисов |
+| Android enterprise debug unit suite | 426 passed, 0 failed | JVM/MockWebServer и OkHttp interceptors; не проверяет ОС, codec, батарею или смерть процесса на телефоне |
+| Объединённая Backend/PC/production/deployment suite | **1390 passed, 0 failed**; coverage **69,38%** | Строгий coverage gate 65% пройден с precision=2. Load suite исключена; 25 deployment cases включают config/subprocess probes без запуска сервисов |
 | Python dependency scan | **0 known vulnerabilities** в совместном backend/PC resolution | Pip-audit snapshot, не проверка frontend/Gradle/container/application security; [версии и ограничения](DEPENDENCY-REVIEW.md) |
-| Проверки PostgreSQL/Redis | **487 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
+| Проверки PostgreSQL/Redis | **490 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
 | Миграции | Применены до **20260910_device_refresh_retry** включительно | Только изолированная БД; конфликтные данные/downgrade проверены в throwaway schema; production не мигрировался |
 | Backend image | Собирается; исходная запись OpenAPI воспроизведённо падает с PermissionError | Исправлен lifespan; полный deployment runtime ещё не подтверждён |
 | Frontend | **198 Jest tests passed**, tsc passed; Next production build exit 0 на Node 24.19.0 | React/JSDOM + Axios adapters; настоящий browser runtime не проверен. Windows standalone tracing выдал ENOENT warning, artifact packaging ещё не подтверждён |
 | APK ↔ реальный локальный backend | Не завершено | Автоматическая проверка разрешений отклонила запуск локального API: `blocked by policy`; обход не выполнялся |
 | 10–64 эмулятора на станции, сотни/тысячи APK, физические телефоны | Не измерено | Нет подтверждённых CPU/RAM/FPS/энергопотребления и совместимости со всеми Android |
 
-Последний общий вывод: [config-recovery-combined-suite.txt](evidence/config-recovery-combined-suite.txt).
+Последний общий вывод: [saved-routes-combined-suite.txt](evidence/saved-routes-combined-suite.txt).
 Предыдущий отдельный DAG benchmark однажды занял 127,1 ms при пороге 100 ms;
 изолированный повтор и последующие общие прогоны прошли. На первой CI попытке
 `d828a62` этот же неизменённый тест измерил 363,2 ms: **1 failed / 1213 passed**,
@@ -43,7 +43,7 @@ runtime-проверок и не считается доказательство
 [Локальные 24 DAG cases прошли](evidence/dag-timing-d828a62-local.txt). Порог 100 ms
 не ослаблялся, тест не исключался; причина timing variance на runner не установлена.
 Файл production-regressions-after.txt сохраняет более ранний standalone snapshot
-с 41 тестом; актуальные 487 входят в общий прогон.
+с 41 тестом; актуальные 490 входят в общий прогон.
 
 Команды запуска и предохранители изоляции: [tests/production/README.md](../../../tests/production/README.md).
 Исходные `14 passed` в [reproductions.txt](evidence/reproductions.txt) означают
@@ -1407,3 +1407,79 @@ Dev/Enterprise × Debug/Release. Счётчик **399 tests / 31 suites** пол
 отдельно, исполняемый код не меняется. PR остаётся draft без независимого review,
 merge или deployment. Saved-secondary/health-trial и реальный APK/fleet recovery
 остаются открытыми; это не подтверждение production readiness.
+
+
+## AUD-74 — High: APK оставался на недоступном адресе и терял рабочий LAN route
+
+**Эксплуатационный P0: сохранить управление без переустановки и GitHub discovery.**
+Связь зависела от одного `server_url`; резерв из JSON не доходил до WS/refresh.
+Discovery заменял рабочий адрес до проверки, а registration мог подменить
+доступный LAN URL недоступным public URL из response.
+
+- **Root cause:** store хранил только выбранный URL; WS и refresh независимо читали
+  его, без списка кандидатов. Watchdog применял синтаксически валидный URL сразу
+  и вызывал reconnect. Registration доверял advertised URL вместо адреса запроса.
+  `fallback_server_url` отсутствовал в API schema/генераторе/ProvisionConfig;
+  локальный parser требовал `api_key`, а генератор писал `enrollment_api_key`.
+- **Evidence/reproduction:** на `9ead4f2` с добавленными regression cases:
+  [первые шесть JVM cases — 5 failures / 1 control](evidence/android-saved-routes-before.txt),
+  [optional config API — 1 failure / 1 control](evidence/backend-saved-routes-before.txt).
+  Для воспроизведения будущего route storage baseline fixtures заполняют synthetic
+  primary/fallback preference keys; исходный runtime их не использует.
+  Отдельно до соответствующих исправлений:
+  [генератор теряет fallback — 1 failure / 1 control](evidence/config-generator-routes-before.txt),
+  [APK не читает generated enrollment key — 1 failure](evidence/android-generated-config-before.txt).
+  Это проверки реального кода с изолированными HTTP/WS/Android boundaries.
+- **Affected files:** Android `AuthTokenStore`, `SphereWebSocketClient`,
+  `ConfigWatchdog`, `ZeroTouchProvisioner`, `DeviceRegistrationClient`,
+  `SetupActivity`, `AutoEnrollmentWorker`, `KeepAliveWorker`, новый
+  `network/ManagementRoute.kt` и MDM resources; backend config router/schema,
+  agent-config schema/generator/template, сгенерированный OpenAPI.
+- **Fix:** primary/fallback сохраняются одной записью с commit; последний выбранный
+  адрес остаётся кандидатом. WS выбирает следующий URL после failure, refresh идёт
+  через тот же URL с прежним pending operation ID. Только target-bound `auth_ok`
+  текущей revision продвигает адрес до connected/result replay. Discovery сохраняет
+  кандидатов без разрыва здорового WS. При старте сервиса доступны route-only
+  MDM/файл без enrollment key. Registration сохраняет request URL, advertised URL
+  становится резервом при отсутствии явного. Поле проходит через API/JSON/MDM/
+  генератор; parser принимает оба имени bootstrap key. Derived management clients
+  сохраняют pool/dispatcher, применяют загруженные installation pins к маршруту
+  и не следуют redirects.
+- **Regression tests:** `SavedRouteFailoverTest` — **27 новых JVM cases**, включая
+  оба route failures, auth denial, lost/stale ACK, late callback, pending refresh ID,
+  process-recreation preference doubles, failed commit, route-only config,
+  normalization, TLS pin mapping, generated key и LAN registration. Полный
+  [Android run](evidence/android-saved-routes-after.txt):
+  [426 tests / 32 suites](evidence/android-saved-routes-summary.json), 0 failures/errors/skips.
+  Три новых PostgreSQL/ASGI cases в `test_agent_tenant_runtime.py`: optional field
+  и lost post-commit refresh response на primary с повтором через secondary origin,
+  тем же child, отказом неверного operation ID и foreign-device WS. Два pure Python
+  cases в `test_agent_config_routes.py` проверяют реальный генератор.
+- **Residual risk:** два адреса одной установки не дают HA базы/хоста или отдельный
+  command transport. Identity/task state и signing keys должны быть общими;
+  принадлежность установки до передачи credentials задаётся оператором. Durable
+  config version/rollback и несколько HTTP discovery источников не реализованы.
+  Active URL `apply()` может потеряться при crash, но сохранённая пара остаётся;
+  реальные disk/keystore/process death не эмулируются JVM doubles полностью.
+  Не загруженные при bootstrap TLS pins этим fix не появляются. Фоновые enrollment
+  paths и потерянный registration response требуют отдельного runtime аудита;
+  совместимость generator/parser не доказывает полный запуск клона. Нет live local
+  config reload, измеренного OS/network/fleet recovery SLA или resource profile.
+
+### Локальная проверка AUD-74
+
+[Общий Windows прогон](evidence/saved-routes-combined-suite.txt): **1390 passed /
+69,38%**, 273,72 s, четыре прежних warnings; **490 PG/Redis** и **25 deployment**
+cases включены. Дополнительный [целевой SQL/ASGI набор](evidence/backend-saved-routes-after.txt):
+53 passed. Ruff и API export check прошли. [Bandit gate](evidence/saved-routes-bandit.txt):
+0 Medium/High. [Dependency-aware mypy](evidence/saved-routes-local-mypy.txt) остаётся
+неуспешным: **13 errors / 7 неизменённых файлов**, поэтому полный type-check pass
+не заявлен. [Cleanup](evidence/saved-routes-runtime-cleanup.json): migration head
+не изменён, временных runtime LOGIN roles и иных соединений к audit DB нет.
+
+[Контракт, настройка и rollout](../../architecture/ANDROID-SAVED-ROUTES.md).
+Новая SQL migration не нужна. Все backend маршруты должны поддерживать существующие
+ACK/refresh-recovery протоколы до обновления APK. Сохраняются signing identity и
+app data. PR остаётся draft; merge, deployment и реальный fleet drill не выполнены.
+CI предыдущего `e68ec0a` выше не является проверкой нового AUD-74; его ревизия
+и результаты CI фиксируются отдельно после push.

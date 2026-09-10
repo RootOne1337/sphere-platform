@@ -22,6 +22,7 @@
 
 - [Архитектура платформы](architecture.md) и [ADR](adr/README.md).
 - [Подтверждение Android-соединения / порядок обновления](architecture/ANDROID-CONNECTION-PROTOCOL.md).
+- [Основной и резервный адрес APK: настройка, переключение, ограничения](architecture/ANDROID-SAVED-ROUTES.md).
 - [Android discovery: HTTP budget, конкуренция и остановка](architecture/ANDROID-DISCOVERY-RECOVERY.md).
 - [Task control / rollout](security/task-control-protocol.md).
 - [Device credential bootstrap](security/device-credential-bootstrap.md).

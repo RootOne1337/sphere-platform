@@ -46,6 +46,16 @@ class ConfigWatchdog @Inject constructor(
             ++generation
         }
         try {
+            val initialRoute = authStore.serverUrlSnapshot()
+            try {
+                withContext(Dispatchers.IO) { provisioner.discoverLocalConfig() }?.let { local ->
+                    applyCandidates(runGeneration, initialRoute, local.serverUrl, local.fallbackServerUrl)
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Timber.w("ConfigWatchdog: local route config failed (%s)", e.javaClass.simpleName)
+            }
             if (!provisioner.hasConfigEndpoint) return@coroutineScope
             delay(5_000L)
             while (isActive) {
@@ -95,17 +105,23 @@ class ConfigWatchdog @Inject constructor(
         val route = authStore.serverUrlSnapshot()
         val config = provisioner.fetchServerConfig() ?: return
         val remoteUrl = config.serverUrl.trimEnd('/')
+        applyCandidates(checkGeneration, route, remoteUrl, config.fallbackServerUrl)
+    }
+
+    private suspend fun applyCandidates(checkGeneration: Long, route: AuthTokenStore.ServerUrlSnapshot,
+                                        remoteUrl: String, fallbackUrl: String?) {
         val context = currentCoroutineContext()
         synchronized(stateLock) {
             context.ensureActive()
             if (stopped || generation != checkGeneration) return
-            if (route.url.isBlank() || route.url.trimEnd('/') == remoteUrl) return
-            if (!authStore.replaceServerUrl(route, remoteUrl)) {
-                Timber.d("ConfigWatchdog: discarding response after local route change")
+            if (route.url.isBlank()) return
+            if (!authStore.replaceDiscoveredRoutes(route, remoteUrl, fallbackUrl)) {
+                Timber.d("ConfigWatchdog: route candidates unchanged or superseded")
                 return
             }
-            Timber.i("ConfigWatchdog: discovered route updated; requesting reconnect")
-            wsClient.forceReconnectNow()
+            Timber.i("ConfigWatchdog: management route candidates saved")
+            // A candidate must not tear down a working authenticated connection.
+            if (!wsClient.isConnected) wsClient.forceReconnectNow()
         }
     }
 }

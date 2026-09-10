@@ -23,8 +23,8 @@ UI показывает измеренные данные, их возраст �
 | Приоритет | Сценарий | Что найдено / подтверждено | Следующее доказательство готовности |
 | --- | --- | --- | --- |
 | P0 | Сервер перезапущен, парк возвращается без оператора | APK clean-close обходил delay, network retry имел одинаковые сроки у всех клиентов; AUD-67 исправляет pacing/jitter | Убить/поднять выделенный backend при 100, 500, 1000 реальных или протокольных clients; измерить p50/p95/p99 времени возврата и число незавершённых задач |
-| P0 | GitHub или основной адрес недоступен | `ConfigWatchdog` читает один CONFIG_URL, `AuthTokenStore` хранит один server URL. Это discovery, а не резервный command channel | Сохранённые primary/secondary endpoints одного сервиса, переключение без изменения device ID, блокировка GitHub в изолированной среде, restart APK с сохранённым маршрутом |
-| P0 | Discovery перестаёт работать после enrollment или переживает stop | AUD-73: JWT в `X-API-Key` давал 401; параллельные/поздние запросы меняли URL. Публичный отменяемый HTTP, один запрос и local revision исправляют воспроизведённые сценарии | [Контракт](../architecture/ANDROID-DISCOVERY-RECOVERY.md); следующие P0 — health trial кандидата, сохранённый secondary и реальный OS/network recovery |
+| P0 | GitHub или основной адрес недоступен | AUD-74 сохраняет primary/fallback, перебирает их для WS и refresh без discovery, выбирает активный адрес по device-bound ACK; 27 JVM и 3 SQL/ASGI cases | [Настройка](../architecture/ANDROID-SAVED-ROUTES.md); реальный OS restart, отказ LAN/DNS/GitHub, проверка latency/capacity и отказа самого backend |
+| P0 | Discovery перестаёт работать после enrollment или переживает stop | AUD-73: JWT в `X-API-Key` давал 401; параллельные/поздние запросы меняли URL. Публичный отменяемый HTTP, один запрос и local revision исправляют воспроизведённые сценарии | [Контракт](../architecture/ANDROID-DISCOVERY-RECOVERY.md); AUD-74 сохраняет кандидатов без разрыва рабочего WS. Открыты durable config revision и реальный OS/network recovery |
 | P0 | Истёк token во время outage | AUD-69/70 добавили сохранённый refresh operation ID и один recoverable successor; 24 SQL/ASGI + 7 APK cases проверяют commit loss и сохранение identity | [Rollout backend→APK](../security/device-refresh-recovery.md), фактический Android process death и сетевой обрыв; recovery ограничен expiry/consumption преемника |
 | P0 | Зависший refresh задерживает reconnect/stop | AUD-71: четыре исходных failures; HTTP теперь отменяется по дедлайну 10 s или отмене вызывающей coroutine, поздний body не записывает credentials. Восемь новых JVM cases | Проверить реальные Android sockets/OS; mutex wait и зависший commit/keystore не имеют общего 10-секундного SLA |
 | P0 | Нет связи во время выполнения задания | DAG исполняется локально, журнал хранит receipts/results; размер и срок хранения ограничены | Обрыв на claim/start/action/result/ACK, reboot процесса, повторная доставка; не повторить необратимое действие молча |
@@ -44,17 +44,21 @@ P0 — порядок эксплуатационной работы, а не CVS
 
 ## Связь: минимальная архитектура без зависимости от GitHub
 
-Принятое направление; **ещё не реализация**:
+**AUD-74 реализует сохранённую пару и ACK-gated выбор маршрута.** Ниже указаны
+границы реализации и инфраструктура, которую оператор ещё должен подготовить:
 
 1. Постоянное LAN-имя основного management service, управляемое локальным DNS;
    адрес хоста фиксируется DHCP reservation/статической настройкой инфраструктуры.
 2. В APK сохраняются основной и резервный endpoint **той же установки Sphere**,
-   device identity и последняя рабочая версия конфигурации. После неудач выбирается
-   другой endpoint с ограниченным backoff/jitter; переустановка не нужна.
-3. Локальный config endpoint служит основным discovery, внешний GitHub — дополнительным.
-   Недоступность discovery не стирает рабочую конфигурацию и credentials.
-4. Обновление конфигурации имеет revision, проверку структуры/принадлежности установке
-   и возможность отката. Поздний старый ответ не должен отменить новое рабочее значение.
+   device identity и выбранный адрес. После неудач WS и refresh выбирают другой
+   сохранённый endpoint с backoff/jitter; переустановка не требуется для route retry.
+   Durable versioned config/rollback ещё не реализован.
+3. Локальные MDM/файлы читаются при старте сервиса. HTTP использует один CONFIG_URL:
+   можно задать локальный endpoint при enterprise build; список локального и GitHub
+   источников ещё не добавлен. Недоступность discovery не стирает сохранённую пару.
+4. Локальная revision защищает от позднего ответа. Discovery сохраняет кандидатов,
+   рабочий адрес меняется по ACK. Принадлежность установке до отправки credentials
+   и rollback серверной версии пока не проверяются: адреса задаёт доверенный оператор.
 5. Один активный исполнитель задачи и один владелец control session на устройство.
    Резервный маршрут не должен создавать второе выполнение или две конфликтующие
    управляющие сессии. Identity/receipt protocol одинаков на обоих адресах.
@@ -63,8 +67,8 @@ P0 — порядок эксплуатационной работы, а не CVS
 flowchart LR
     A[APK: credentials + journal + saved endpoints] --> L[Основной LAN endpoint]
     A -. переключение .-> R[Резервный endpoint той же установки]
-    C[Локальный config endpoint] -. versioned configuration .-> A
-    G[GitHub: дополнительный discovery] -. необязательное обновление .-> A
+    C[Один CONFIG_URL или локальный файл при старте] -. кандидаты .-> A
+    G[GitHub: возможный CONFIG_URL] -. необязательное обновление .-> A
     L --> S[Sphere backend + durable state]
     R --> S
 ```
@@ -80,7 +84,7 @@ backup/restore drill и локальный журнал APK. Отдельный 
 | Механизм | Реальное назначение | Ограничение |
 | --- | --- | --- |
 | `SphereWebSocketClient` | Один активный WS, ожидание target-bound `auth_ok` до 20 s, reconnect/circuit, force reconnect | AUD-72 подтверждает identity до `isConnected`; это не readiness всех backend services. [Rollout backend→APK](../architecture/ANDROID-CONNECTION-PROTOCOL.md) |
-| `ConfigWatchdog` | Опрос адреса: 120 s connected / 60 s disconnected; первая задержка 5 s | Один compile-time CONFIG_URL, в enterprise по умолчанию пуст; не второй канал команд |
+| `ConfigWatchdog` | Сохраняет кандидатов, читает локальные источники при старте; HTTP 120 s connected / 60 s disconnected, первая задержка 5 s | Один compile-time CONFIG_URL, в enterprise по умолчанию пуст; нет live reload локального файла или durable config version |
 | `FallbackDns` | Системный DNS и внешние DNS fallback | Не меняет endpoint и не оживляет сервер; внешние резолверы не заменяют LAN DNS |
 | `AuthTokenStore` | Сохранённая identity, access/refresh, mutex refresh, cancellable HTTP | Persisted operation ID и deadline/stop проверены в tests; actual OS/keystore/network drill ещё не выполнен |
 | `CommandJournal` / `DagRunner` | Локальная работа и повторная доставка terminal result до ACK | Не бесконечный storage; interruption может иметь unknown outcome |
@@ -180,7 +184,7 @@ capture и background возможности каждого телефона. AP
 
 AUD-69/70: SQL refresh recovery и APK persist-before-send проверены локально;
 [контракт](../security/device-refresh-recovery.md) ограничивает recovery одной
-операцией и сроком преемника. Резервный route по-прежнему не реализован.
+операцией и сроком преемника. Резервный route добавлен следующим AUD-74.
 
 AUD-71: собственный deadline отменяет HTTP и сохраняет retry intent, внешняя отмена
 останавливает вызывающую coroutine. Управляемые зависания headers/body и late-response races
@@ -188,8 +192,15 @@ AUD-71: собственный deadline отменяет HTTP и сохраня�
 
 AUD-72: устранён преждевременный connected state и поздние callbacks закрытого
 сеанса; 16 новых JVM и восемь SQL/ASGI cases. Эта предпосылка для failover проверена,
-но резервный route ещё не добавлен. Новому APK нужен `auth_ok` на всех workers.
+а резервный route добавлен AUD-74. Новому APK нужен `auth_ok` на всех workers.
 
 AUD-73: 9 исходных discovery failures воспроизведены и исправлены; **399 JVM tests /
 31 suites**, 21 новый case. HTTP и lifecycle checks не подтверждают реальный
 secondary route, server health trial или ёмкость парка. [Контракт](../architecture/ANDROID-DISCOVERY-RECOVERY.md).
+
+AUD-74: сохранённая пара и refresh/WS retry через другой origin реализованы;
+**426 JVM / 32 suites**, включая 27 новых route cases. Проверены кандидат без разрыва
+связи, отказ двух адресов, восстановление сохранённых preferences, pending refresh
+ID, старые callbacks и локальная конфигурация без bootstrap ключа. Это doubles/ASGI
+и выделенный PostgreSQL; фактический Android process death, LAN/DNS, нагрузка и
+наблюдаемая хронология инцидента остаются следующим доказательством готовности.

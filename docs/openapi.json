@@ -9122,6 +9122,18 @@
             "title": "Server Url",
             "description": "Актуальный URL бэкенда. Агент использует для WS-подключения."
           },
+          "fallback_server_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fallback Server Url",
+            "description": "Опциональный резервный URL той же установки Sphere; сохраняется APK для WS и refresh."
+          },
           "ws_path": {
             "type": "string",
             "title": "Ws Path",

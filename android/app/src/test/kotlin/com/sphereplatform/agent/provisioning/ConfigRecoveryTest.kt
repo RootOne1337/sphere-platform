@@ -64,6 +64,7 @@ class ConfigRecoveryTest {
                 mockk<SharedPreferences.Editor> editor@ {
                     every { putString(any(), any()) } answers { pending[firstArg()] = secondArg(); this@editor }
                     every { apply() } answers { pending.forEach { (k, v) -> if (v == null) memory.remove(k) else memory[k] = v } }
+                    every { commit() } answers { pending.forEach { (k, v) -> if (v == null) memory.remove(k) else memory[k] = v }; true }
                 }
             }
         }
@@ -120,7 +121,8 @@ class ConfigRecoveryTest {
         assertNull("Discovery must not forward device JWT to the config host", requests.single().header("X-API-Key"))
         assertNull(requests.single().header("Authorization"))
         assertNull(requests.single().header("Cookie"))
-        eventually { store.getServerUrl() == discoveredUrl }
+        eventually { memory["primary_server_url"] == discoveredUrl }
+        assertEquals(initialUrl, store.getServerUrl())
         assertEquals(1, reconnects.get())
         assertEquals("issued-device-jwt", store.getToken())
     }
@@ -327,7 +329,8 @@ class ConfigRecoveryTest {
             release.countDown()
             settleChecks()
             assertTrue(calls.first().isCanceled())
-            assertEquals("https://new-generation.invalid", store.getServerUrl())
+            assertEquals("https://new-generation.invalid", memory["primary_server_url"])
+            assertEquals(initialUrl, store.getServerUrl())
             assertEquals(1, reconnects.get())
         } finally { owner.cancelAndJoin() }
     }

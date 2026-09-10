@@ -1,6 +1,8 @@
 package com.sphereplatform.agent.store
 
 import androidx.security.crypto.EncryptedSharedPreferences
+import com.sphereplatform.agent.network.forManagementRoute
+import com.sphereplatform.agent.network.normalizeManagementUrl
 import dagger.Lazy
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -51,6 +53,8 @@ class AuthTokenStore @Inject constructor(
         private const val KEY_REFRESH_ROTATION_ID = "refresh_rotation_id"
         private const val KEY_ACCESS_TOKEN_EXPIRES_AT = "access_token_expires_at"
         private const val KEY_SERVER_URL = "server_url"
+        private const val KEY_PRIMARY_SERVER_URL = "primary_server_url"
+        private const val KEY_FALLBACK_SERVER_URL = "fallback_server_url"
         private const val KEY_DEVICE_ID = "device_id"
 
         private const val REFRESH_THRESHOLD_MS = 5 * 60 * 1000L  // 5 минут
@@ -67,22 +71,70 @@ class AuthTokenStore @Inject constructor(
     private var serverUrlRevision = 0L
 
     internal data class ServerUrlSnapshot(val url: String, val revision: Long)
+    internal data class ConnectionRoutes(val revision: Long, val urls: List<String>)
 
     @Synchronized
     internal fun serverUrlSnapshot() = ServerUrlSnapshot(getServerUrl(), serverUrlRevision)
 
     @Synchronized
-    internal fun replaceServerUrl(expected: ServerUrlSnapshot, url: String): Boolean {
+    internal fun replaceDiscoveredRoutes(expected: ServerUrlSnapshot, url: String, fallback: String?): Boolean {
         if (serverUrlRevision != expected.revision || getServerUrl() != expected.url) return false
-        saveServerUrl(url)
+        val primary = normalizeManagementUrl(url)
+        val backup = (fallback ?: prefs.getString(KEY_FALLBACK_SERVER_URL, null))
+            ?.let(::normalizeManagementUrl)?.takeIf { it != primary }
+        val currentPrimary = prefs.getString(KEY_PRIMARY_SERVER_URL, null) ?: getServerUrl()
+        if (primary == currentPrimary && backup == prefs.getString(KEY_FALLBACK_SERVER_URL, null)) return false
+        commitRoutes(getServerUrl(), primary, backup)
         return true
+    }
+
+    @Synchronized
+    internal fun connectionRoutesSnapshot(): ConnectionRoutes {
+        val urls = listOf(getServerUrl(), prefs.getString(KEY_PRIMARY_SERVER_URL, null),
+            prefs.getString(KEY_FALLBACK_SERVER_URL, null))
+            .mapNotNull { value -> value?.let { runCatching { normalizeManagementUrl(it) }.getOrNull() } }
+            .distinct()
+        return ConnectionRoutes(serverUrlRevision, urls)
+    }
+
+    /** Only target-bound auth_ok can promote a discovered/backup connection route. */
+    @Synchronized
+    internal fun acceptConnectionRoute(expected: ConnectionRoutes, url: String): Boolean {
+        if (serverUrlRevision != expected.revision || url !in expected.urls) return false
+        if (getServerUrl() != url) {
+            prefs.edit().putString(KEY_SERVER_URL, url).apply()
+            ++serverUrlRevision
+        }
+        return true
+    }
+
+    /** Explicit provisioning replaces the previous installation's route pair. */
+    @Synchronized
+    fun saveServerRoutes(primaryUrl: String, fallbackUrl: String? = null) {
+        val primary = normalizeManagementUrl(primaryUrl)
+        val fallback = fallbackUrl?.let(::normalizeManagementUrl)?.takeIf { it != primary }
+        commitRoutes(primary, primary, fallback)
+    }
+
+    private fun commitRoutes(active: String, primary: String, fallback: String?) {
+        val keys = listOf(KEY_SERVER_URL, KEY_PRIMARY_SERVER_URL, KEY_FALLBACK_SERVER_URL)
+        val previous = keys.associateWith { prefs.getString(it, null) }
+        if (!prefs.edit().putString(KEY_SERVER_URL, active).putString(KEY_PRIMARY_SERVER_URL, primary)
+                .putString(KEY_FALLBACK_SERVER_URL, fallback).commit()) {
+            // commit(false) may already change preference memory. Do not publish that plan.
+            prefs.edit().also { editor -> previous.forEach { (key, value) -> editor.putString(key, value) } }.apply()
+            ++serverUrlRevision
+            throw IOException("Cannot persist management routes")
+        }
+        ++serverUrlRevision
     }
 
     fun getServerUrl(): String = prefs.getString(KEY_SERVER_URL, "") ?: ""
 
     @Synchronized
     fun saveServerUrl(url: String) {
-        prefs.edit().putString(KEY_SERVER_URL, url.trimEnd('/')).apply()
+        prefs.edit().putString(KEY_SERVER_URL, url.trimEnd('/'))
+            .putString(KEY_PRIMARY_SERVER_URL, url.trimEnd('/')).putString(KEY_FALLBACK_SERVER_URL, null).apply()
         ++serverUrlRevision
     }
 
@@ -95,21 +147,30 @@ class AuthTokenStore @Inject constructor(
      *
      * Thread-safe: Mutex гарантирует один refresh-запрос при параллельных вызовах.
      */
-    suspend fun getFreshToken(): String? = tokenMutex.withLock {
-        val accessToken = prefs.getString(KEY_ACCESS_TOKEN, null) ?: return@withLock null
+    suspend fun getFreshToken(): String? = tokenMutex.withLock { getFreshTokenLocked(getServerUrl()) }
+
+    internal suspend fun getFreshTokenForRoute(plan: ConnectionRoutes, url: String): String? = tokenMutex.withLock {
+        synchronized(this@AuthTokenStore) {
+            check(plan.revision == serverUrlRevision && url in plan.urls) { "Management route changed" }
+        }
+        getFreshTokenLocked(url)
+    }
+
+    private suspend fun getFreshTokenLocked(serverUrl: String): String? {
+        val accessToken = prefs.getString(KEY_ACCESS_TOKEN, null) ?: return null
         val expiresAt = prefs.getLong(KEY_ACCESS_TOKEN_EXPIRES_AT, 0L)
         val refreshToken = prefs.getString(KEY_REFRESH_TOKEN, null)
-            ?: return@withLock accessToken
+            ?: return accessToken
 
         // Если токен истекает через > 5 минут — возвращаем без обновления
         if (System.currentTimeMillis() + REFRESH_THRESHOLD_MS < expiresAt) {
-            return@withLock accessToken
+            return accessToken
         }
 
-        return@withLock try {
+        return try {
             // Only our own deadline falls back. Parent cancellation must stop reconnect/workers.
             withTimeoutOrNull(REFRESH_TIMEOUT_MS) {
-                refreshTokenRequest(refreshToken)
+                refreshTokenRequest(refreshToken, serverUrl)
             } ?: run {
                 Timber.w("Token refresh timed out, using stored token")
                 getToken()
@@ -123,7 +184,7 @@ class AuthTokenStore @Inject constructor(
         }
     }
 
-    private suspend fun refreshTokenRequest(refreshToken: String): String {
+    private suspend fun refreshTokenRequest(refreshToken: String, serverUrl: String): String {
         val requestId = withContext(Dispatchers.IO) {
             synchronized(this@AuthTokenStore) {
                 check(prefs.getString(KEY_REFRESH_TOKEN, null) == refreshToken) { "Refresh credentials changed" }
@@ -137,7 +198,6 @@ class AuthTokenStore @Inject constructor(
                 id
             }
         }
-        val serverUrl = getServerUrl()
         val request = Request.Builder()
             .url("$serverUrl/api/v1/devices/refresh")
             .addHeader("Cookie", "refresh_token=$refreshToken")
@@ -145,7 +205,7 @@ class AuthTokenStore @Inject constructor(
             .post(ByteArray(0).toRequestBody("application/json".toMediaType()))
             .build()
 
-        val call = lazyHttpClient.get().newCall(request)
+        val call = lazyHttpClient.get().forManagementRoute(serverUrl).newCall(request)
         // Per-call transport bound; never change the shared WS client's timeouts.
         call.timeout().timeout(REFRESH_TIMEOUT_MS, TimeUnit.MILLISECONDS)
         val refreshed = suspendCancellableCoroutine<RefreshedTokens> { continuation ->

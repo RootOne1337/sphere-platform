@@ -1,6 +1,6 @@
 # Android discovery: восстановление конфигурации
 
-**Контракт AUD-73 · 10 сентября 2026 · резервный command route ещё не реализован.**
+**Контракт AUD-73/74 · 10 сентября 2026 · discovery обновляет сохранённые кандидаты.**
 
 [Документация](../README.md) · [APK](../android-agent.md) ·
 [Подтверждение подключения](ANDROID-CONNECTION-PROTOCOL.md) ·
@@ -9,11 +9,12 @@
 
 ## Что делает текущий механизм
 
-`ConfigWatchdog` периодически получает JSON с одного `CONFIG_URL`. Если ответ
-валиден и адрес отличается от сохранённого, watchdog обновляет адрес и запрашивает
-переподключение WS. Device ID, access/refresh credentials и журнал заданий сохраняются.
-Само получение JSON не проверяет доступность нового backend; рабочим WS считается
-только после корректного `auth_ok` по контракту AUD-72.
+`ConfigWatchdog` читает локальную конфигурацию при старте сервиса и периодически
+получает JSON с одного `CONFIG_URL`. AUD-74 сохраняет `server_url` и необязательный
+`fallback_server_url` как кандидатов, оставляя текущий активный адрес. Если WS уже
+подтверждён, discovery не прерывает его; иначе запрашивает reconnect. Только
+корректный `auth_ok` выбирает новый активный адрес. Device ID, credentials и журнал
+сохраняются. [Полный маршрутный контракт](ANDROID-SAVED-ROUTES.md).
 
 | Источник / настройка | Текущее поведение |
 | --- | --- |
@@ -21,7 +22,7 @@
 | Dev `CONFIG_URL` | В текущем flavor указывает на GitHub Raw; динамический список источников пока не добавлен |
 | Пустой `CONFIG_URL` | HTTP discovery выключен; это не запрет работы с уже сохранённым server URL |
 | Первичное provisioning | MDM → локальные JSON-файлы → HTTP config → BuildConfig defaults |
-| Уже зарегистрированный APK | Watchdog опрашивает HTTP config; изменение MDM/локального файла само по себе не является live discovery |
+| Уже зарегистрированный APK | При старте сервиса: MDM → локальные файлы, без требования enrollment key; затем HTTP config. Live hot reload локальных источников не добавлен |
 | Периодический опрос | Первая проверка через 5 s; после завершения проверки 120 s connected / 60 s disconnected |
 | Принудительный опрос | Network failure/circuit notification запрашивает проверку; сигналы во время активного запроса объединяются |
 | `config_poll_interval_seconds` | Поле парсится, но watchdog пока использует интервалы выше |
@@ -42,13 +43,14 @@ credentials. Его опциональный `X-API-Key` предназначе�
 
 ```json
 {
-  "server_url": "https://sphere.example.internal"
+  "server_url": "https://sphere.example.internal",
+  "fallback_server_url": "https://sphere-backup.example.internal"
 }
 ```
 
 Дополнительные bootstrap-поля, включая `features.auto_register` и
 `enrollment_api_key`, продолжают парситься. При обновлении работающего агента
-watchdog использует адрес; он не заменяет credentials данными discovery.
+watchdog использует маршруты; он не заменяет credentials данными discovery.
 `server_url` должен быть HTTP(S) URL без user/password, query и fragment.
 Валидный синтаксис не подтверждает сертификат, доступность или принадлежность
 endpoint нужной установке. Действующие Android flavor/TLS ограничения сохраняются.
@@ -78,9 +80,9 @@ sequenceDiagram
     S->>W: Дополнительные сигналы
     Note over W: Используют уже активную проверку
     H-->>W: Bounded JSON
-    W->>P: Заменить только неизменённый снимок
-    P-->>W: Применён / устарел
-    Note over W: Только применённый ответ запрашивает reconnect
+    W->>P: Сохранить кандидатов только для неизменённого снимка
+    P-->>W: Применён / неизменён / устарел
+    Note over W: Reconnect только если WS ещё не подтверждён
 ```
 
 Один periodic owner и одна активная проверка принадлежат поколению сервиса.
@@ -92,7 +94,10 @@ sequenceDiagram
 при выборе A → B → A. Проверка revision и запись выполняются под одним lock.
 Это **локальная revision процесса**, не серверный `config_version`, не durable
 история конфигураций и не защита от устаревшего JSON в следующем отдельном опросе.
-Существующая запись preferences через `apply()` не стала синхронным disk commit.
+В AUD-74 пара кандидатов сохраняется одним `commit()`; ошибка возвращает прежние
+значения в memory и не публикует план. Выбор подтверждённого активного адреса
+использует `apply()`: при потере этой записи после crash сохранённая пара остаётся.
+Отсутствующий/null fallback в discovery сохраняет прежний резерв.
 
 ## Проверки и оставшиеся ограничения
 
@@ -100,7 +105,7 @@ sequenceDiagram
 [Gradle baseline](../audits/2026-09-05/evidence/android-config-recovery-before.txt).
 Baseline использует код `02f55b4` с добавленным constructor seam для подстановки
 config URL/client; логика запроса/watchdog не менялась до воспроизведения.
-Полный итоговый [Gradle run](../audits/2026-09-05/evidence/android-config-recovery-after.txt):
+Исторический полный прогон AUD-73 [Gradle run](../audits/2026-09-05/evidence/android-config-recovery-after.txt):
 [399 tests / 31 suites](../audits/2026-09-05/evidence/android-config-recovery-summary.json), без failures/errors/skips.
 `ConfigRecoveryTest` сохраняет 21 случай: credentials, deadline/cancel, 64 signals,
 oversized body, stop/restart, duplicate owner, local revision/ABA и failure controls.
@@ -114,11 +119,12 @@ preferences подменены. Это не установленный APK, LAN/
 cancel; callback всё равно не получает права менять route. Блокирующий disk/keystore
 и чтение локальных provisioning-файлов не входят в новый HTTP budget.
 
-Сохранённый secondary endpoint, health trial/rollback нового адреса, durable
-config revision и независимое от GitHub discovery остаются **открытыми P0**.
-Недоступный, но синтаксически корректный адрес из нового ответа всё ещё может
-заменить доступный текущий адрес. Следующий этап должен сохранять рабочий маршрут
-до проверки кандидата и не полагаться на доступность внешнего discovery.
+AUD-74 добавляет сохранённый secondary endpoint, перебор без GitHub и сохранение
+активного маршрута до ACK нового соединения; локальная конфигурация читается при
+старте сервиса. **Открыты:** durable config version/rollback, список HTTP discovery
+источников, проверка принадлежности кандидата установке до передачи credentials
+и реальные OS/network/fleet drills. Настраивайте только доверенные адреса одной
+установки. [Текущие доказательства](ANDROID-SAVED-ROUTES.md#проверки-и-rollout).
 
 Изменение AUD-73 требует обновления APK с сохранением signing identity/app data.
 Новой миграции или нового backend API для него нет. Требование AUD-72 обновить все
