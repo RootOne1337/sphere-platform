@@ -1269,7 +1269,7 @@ deployment skipped. Снимки: [backend](evidence/ci-fec0c5f-backend.json),
   `tests/production/test_agent_tenant_runtime.py`, новый
   `android/app/src/test/kotlin/com/sphereplatform/agent/ws/WebSocketAuthenticationTest.kt`;
   прежние `WebSocketLifecycleTest.kt` fixtures теперь подтверждают авторизацию.
-- **Fix:** backend отправляет `auth_ok` с device ID и числовой protocol version 1
+- **Fix:** `70c6a21` — backend отправляет `auth_ok` с device ID и числовой protocol version 1
   после авторизации/закрытия DB session, до публикации соединения. Отправка ограничена
   5 s; при ошибке registry не меняется. APK разрешает application traffic и
   однократный `onConnected` только после корректного ACK. Общий WS deadline 20 s
@@ -1301,5 +1301,29 @@ deployment skipped. Снимки: [backend](evidence/ci-fec0c5f-backend.json),
 [Bandit по существующей `.bandit` конфигурации](evidence/auth-ack-bandit.txt) —
 0 Medium/High. [Dependency-aware mypy](evidence/auth-ack-local-mypy.txt) повторён:
 те же 13 ошибок в семи неизменённых файлах; локальный gate не объявлен проходящим.
-CI новой ревизии будет записан после push отдельно от предыдущего `fec0c5f`.
 Schema head не менялся; merge/deployment не выполнялись, PR остаётся draft.
+
+### Проверка ревизии `70c6a21` с AUD-72
+
+Все CI runs прошли с первой попытки:
+[backend](https://github.com/RootOne1337/sphere-platform/actions/runs/34463225417),
+[frontend](https://github.com/RootOne1337/sphere-platform/actions/runs/34463225399),
+[Android PR](https://github.com/RootOne1337/sphere-platform/actions/runs/34463225418),
+[Android push](https://github.com/RootOne1337/sphere-platform/actions/runs/34463221343).
+Linux backend — **1383 passed / 69,34%**, 298,47 s, четыре прежних warnings;
+[excerpt](evidence/ci-70c6a21-tests.txt) включает все восемь новых SQL/ASGI auth-ack
+cases. Lint/mypy в окружении CI, security, RLS coverage и Alembic прошли. Это не
+закрывает 13 ошибок локального dependency-aware mypy, указанных выше.
+
+Android CI собрал debug APK и выполнил [все четыре test tasks](evidence/ci-70c6a21-android-tests.txt):
+Dev/Enterprise × Debug/Release. Счётчик **378 / 30 suites** относится к локальному
+EnterpriseDebug XML. Это не проверка установленного APK, Android OS или нагрузки
+парка. Preview guard прошёл, deployment skipped. Снимки:
+[backend](evidence/ci-70c6a21-backend.json), [frontend](evidence/ci-70c6a21-frontend.json),
+[Android PR](evidence/ci-70c6a21-android.json), [Android push](evidence/ci-70c6a21-android-push.json),
+[preview](evidence/ci-70c6a21-preview.json). Локальная очистка подтверждена отдельно:
+[0 временных runtime LOGIN-ролей и 0 других DB connections](evidence/auth-ack-runtime-cleanup.json).
+
+Документационный commit сохраняет результаты для точной code revision `70c6a21`,
+не меняя исполняемый код; его checks идут отдельно. Резервный маршрут остаётся
+открытым P0. PR остаётся draft, без независимого review, merge или deployment.

@@ -85,18 +85,18 @@ security, RLS и миграции прошли. Preview guard успешен, de
 и нагрузка 10–64 не объявлены проверенными. Merge/deployment не выполнялись.
 
 
-Code head `769aec3` (AUD-65–66) прошёл с первой попытки
+Code head `8692a58` (AUD-65–66) прошёл с первой попытки
 [backend CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34387311587),
 [frontend CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34387311505) и
 [Android CI](https://github.com/RootOne1337/sphere-platform/actions/runs/34387314911).
-Сохранены [backend](evidence/ci-769aec3-backend.json),
-[frontend](evidence/ci-769aec3-frontend.json) и [Android](evidence/ci-769aec3-android.json)
-snapshots. [Linux summary, 12 новых cases и исправленный backoff test](evidence/ci-769aec3-tests.txt):
+Сохранены [backend](evidence/ci-8692a58-backend.json),
+[frontend](evidence/ci-8692a58-frontend.json) и [Android](evidence/ci-8692a58-android.json)
+snapshots. [Linux summary, 12 новых cases и исправленный backoff test](evidence/ci-8692a58-tests.txt):
 **1334 passed / 69,27%**, 266,92 s; Windows: **1334 / 69,31%**, включая **453
 PostgreSQL/Redis cases**, четыре прежних warnings. Порог 65% сохранён; lint/mypy,
 security, RLS и миграции прошли. Preview guard успешен, deploy пропущен. Временных
 локальных runtime LOGIN-ролей и соединений ноль. Документационный commit сохраняет
-результаты и запускает собственные checks; исполняемый код после `769aec3` не
+результаты и запускает собственные checks; исполняемый код после `8692a58` не
 меняется. PR остаётся draft без независимого review, merge или deployment. Реальные
 PC/APK sockets, OS/subprocess и нагрузка 10–64 устройств не объявлены проверенными.
 
@@ -146,3 +146,11 @@ SQL/ASGI cases, полный local backend/PC **1383 / 69,39%**, **485 PG/Redis*
 Резервный route пока не реализован: сохранённые primary/secondary endpoints одной
 установки, local discovery, versioning/rollback конфигурации и реальные OS/network
 drills остаются следующим P0. ACK не является probe всех downstream dependencies.
+
+CI code revision `70c6a21` с AUD-72 прошёл с первой попытки: backend/frontend,
+Android push и PR. Linux **1383 tests / 69,34%**, включая все восемь новых SQL/ASGI
+auth-ack cases; четыре Android Dev/Enterprise × Debug/Release test tasks успешны.
+[Снимки, excerpts и границы проверки](AUDIT-REPORT.md#проверка-ревизии-70c6a21-с-aud-72)
+сохранены. Временных SQL runtime-ролей и других DB connections не осталось.
+Документационный commit не меняет code revision; preview deployment skipped,
+PR остаётся draft. Rollout требует **все backend workers → APK**.

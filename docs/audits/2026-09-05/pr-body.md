@@ -111,18 +111,17 @@ researches NitroGen and a future external inference worker; no AI is implemented
   The compatible joint Python dependency scan is a recorded snapshot, not a scan of
   all ecosystems. Coverage remains gated at **65%**, with precision=2 and tests for
   the 64.98% rejection / 65.00% acceptance boundaries.
-- Revision **`fec0c5f`**, including AUD-71, passes
-  [backend](https://github.com/RootOne1337/sphere-platform/actions/runs/34418225844),
-  [frontend](https://github.com/RootOne1337/sphere-platform/actions/runs/34418225854),
-  [Android PR](https://github.com/RootOne1337/sphere-platform/actions/runs/34418225845)
-  and [Android push](https://github.com/RootOne1337/sphere-platform/actions/runs/34418223069)
-  CI on attempt 1. Linux: **1375 tests / 69.30%**, 279.86 seconds, four existing
-  warnings, including all 24 SQL refresh-recovery cases. Android ran all four
+- Revision **`70c6a21`**, including AUD-72, passes
+  [backend](https://github.com/RootOne1337/sphere-platform/actions/runs/34463225417),
+  [frontend](https://github.com/RootOne1337/sphere-platform/actions/runs/34463225399),
+  [Android PR](https://github.com/RootOne1337/sphere-platform/actions/runs/34463225418)
+  and [Android push](https://github.com/RootOne1337/sphere-platform/actions/runs/34463221343)
+  CI on attempt 1. Linux: **1383 tests / 69.34%**, 298.47 seconds, four existing
+  warnings, including all eight new SQL/ASGI auth-ack cases. Android ran all four
   Dev/Enterprise × Debug/Release test tasks. Exact job snapshots and excerpts
   are retained. Preview guard passes and deployment is skipped. The following
-  documentation-only commit recorded this verified code revision. This precedes
-  AUD-72; that change's CI will be recorded after push. The local results above
-  are the new AUD-72 runs, with no schema change.
+  documentation-only commit records this verified code revision; its checks are
+  separate. The local results above are the AUD-72 runs, with no schema change.
 
 ## Rollout and remaining risks
 
