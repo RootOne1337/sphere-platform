@@ -1,6 +1,6 @@
 # Фоновая регистрация APK и запуск связи
 
-**10 сентября 2026 · AUD-75–77 · проверено в JVM, аппаратный rollout не выполнен.**
+**11 сентября 2026 · AUD-75–77 · проверено в JVM, аппаратный rollout не выполнен.**
 
 [APK guide](../android-agent.md) · [Резервные адреса](ANDROID-SAVED-ROUTES.md) ·
 [Готовность системы](../operations/READINESS.md) · [Аудит](../audits/2026-09-05/AUDIT-REPORT.md)

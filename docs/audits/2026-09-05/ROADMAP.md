@@ -256,3 +256,10 @@ changes. **20 новых cases; 485 / 35 suites**. Baseline: **8 failures / 1 co
 и initial fallback traversal. Аппаратные OS/network/fleet drills, наблюдаемость,
 достоверный UI и ресурсные бюджеты остаются в плане. [Доказательства](AUDIT-REPORT.md).
 CI новой runtime ревизии обязателен; audit целиком не завершён.
+
+### CI AUD-77 зафиксирован
+
+Runtime **`93a4872`**: backend/frontend/Android PR+push прошли с первой попытки;
+preview только guard, deploy skipped. Backend **1390 / 69.40%**, Android все
+четыре test variants. Локально **485 / 35 suites**. [Точные SHA/run links и evidence](AUDIT-REPORT.md).
+Это проверка очередного исправления, не завершение всего аудита или аппаратного rollout.

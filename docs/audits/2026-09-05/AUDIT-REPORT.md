@@ -1,6 +1,6 @@
 # Sphere Platform: аудит готовности к эксплуатации
 
-Статус на 10 сентября 2026: **аудит продолжается; production readiness не подтверждена**.
+Статус на 11 сентября 2026: **аудит продолжается; production readiness не подтверждена**.
 Исходная ревизия: `28f8cc46ab65496e00297960fd94d87d1605cc83`.
 Ветка исправлений: `codex/enterprise-audit-20260905`; [draft PR #19](https://github.com/RootOne1337/sphere-platform/pull/19).
 
@@ -1738,3 +1738,29 @@ Backend/schema не менялись. [Текущий контракт](../../ar
 заменяет прежние замечания AUD-75/76 о раздельных registration writes и UI races;
 исторические результаты сохранены. CI новой runtime ревизии фиксируется отдельно.
 Merge, deployment и готовность всего проекта не заявлены.
+
+### Проверка ревизии `93a4872` с AUD-77
+
+Runtime/fixtures/docs commit: **`93a487268fe4505e5e6e9470bffaf9cd3a9799e6`**. Все checks ниже
+относятся к этой ревизии, attempt 1:
+
+| Workflow | Результат |
+| --- | --- |
+| [Backend](https://github.com/RootOne1337/sphere-platform/actions/runs/34518711631) | Все jobs success; **1390 passed / 69.40%**, 296.33 s, четыре существующих warnings |
+| [Frontend](https://github.com/RootOne1337/sphere-platform/actions/runs/34518711638) | Все jobs success |
+| [Android PR](https://github.com/RootOne1337/sphere-platform/actions/runs/34518711637) | Build и четыре Dev/Enterprise × Debug/Release unit-test tasks success |
+| [Android push](https://github.com/RootOne1337/sphere-platform/actions/runs/34518706234) | Build и те же четыре test tasks success |
+| [Preview](https://github.com/RootOne1337/sphere-platform/actions/runs/34518711671) | Guard success, deploy skipped |
+
+[Backend summary](evidence/ci-93a4872-tests.txt),
+[Android PR tasks](evidence/ci-93a4872-android-tests.txt),
+[Android push tasks](evidence/ci-93a4872-android-push-tests.txt).
+Полные job snapshots: [backend](evidence/ci-93a4872-backend.json),
+[frontend](evidence/ci-93a4872-frontend.json), [Android](evidence/ci-93a4872-android.json),
+[push](evidence/ci-93a4872-android-push.json), [preview](evidence/ci-93a4872-preview.json).
+
+Число **485 / 35 suites** получено из отдельного локального XML run; build success
+не выдаётся за runtime proof. Локальные before/after логи сохранены с нормализованными
+концами строк и удалёнными trailing spaces. Migration head не менялся. Ни Android
+OS/fleet/network measurements, ни deployment, ни независимое review не выполнены.
+Следующий commit только фиксирует evidence/docs; он имеет отдельные checks.
