@@ -310,3 +310,12 @@ restart without pending apply, stale replies, both refresh ordering directions,
 waiter cancellation and readers during failed persistence. No actual Android disk,
 keystore, OS kill or server credential replay is claimed.
 [Evidence and residual risks](../../docs/architecture/ANDROID-BACKGROUND-ENROLLMENT.md).
+
+### First-pilot bootstrap (AUD-78)
+
+15 new cases run the shipped seed against isolated PostgreSQL, and an actual admin
+Python subprocess followed by ASGI login, registration and device visibility.
+Eight Bash/PowerShell cases execute the actual extracted bootstrap functions with
+a process-backed Docker boundary. Full suite: **1413 / 505 real-service / 33 deployment**.
+No Compose, browser, installed APK or VPN tunnel acceptance is claimed.
+[Plan, environment assumptions and evidence](../../docs/operations/PILOT-ACCEPTANCE.md).

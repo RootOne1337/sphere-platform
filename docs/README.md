@@ -1,7 +1,7 @@
 # Документация Sphere Platform
 
 **Навигация по текущим контрактам, эксплуатационным ограничениям и доказательствам.**
-Обновлено 10 сентября 2026. [Вернуться на главную](../README.md).
+Обновлено 11 сентября 2026. [Вернуться на главную](../README.md).
 
 ## С чего начать
 
@@ -9,6 +9,7 @@
 | --- | --- |
 | Оценить реальную готовность и порядок работ | [Эксплуатационная матрица](operations/READINESS.md) |
 | Найти подтверждённый дефект/исправление | [Audit report и evidence](audits/2026-09-05/AUDIT-REPORT.md) |
+| Узнать, что осталось до первого рабочего запуска | [Пилот: этапы, ориентиры сроков и критерии](operations/PILOT-ACCEPTANCE.md) |
 | Запустить и понимать readiness | [Startup contract](operations/STARTUP.md) |
 | Подготовить окружение | [Development](development.md), [Configuration](configuration.md) |
 | Подключить устройство/станцию | [Android](android-agent.md), [PC-agent](pc-agent.md) |

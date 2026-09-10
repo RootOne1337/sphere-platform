@@ -291,26 +291,31 @@ ALTER TABLE vpn_peers
 
 ## 7. First-Time Bootstrap
 
-After fresh deploy on any environment:
+For the first development pilot, use the [acceptance plan](operations/PILOT-ACCEPTANCE.md).
+This sequence assumes prepared database bootstrap credentials and selected Compose
+files/environment. Production runtime credentials must remain separate from the
+migration/bootstrap role; the snippets do not replace that rollout.
 
-```bash
-# 1. Run migrations
-docker compose exec backend alembic upgrade head
+1. Apply the reviewed migrations using `python -m alembic -c alembic/alembic.ini upgrade head`
+   with the bootstrap connection, before starting ordinary application work.
+2. Run `python scripts/create_admin.py` in the prepared backend environment.
+   Interactive mode prompts for email/password. For unattended mode supply
+   `ADMIN_EMAIL`/`ADMIN_PASSWORD`; with Compose exec forward them explicitly using
+   `-e ADMIN_EMAIL -e ADMIN_PASSWORD`, not only host `SPHERE_ADMIN_*` variables.
+3. Run `python -m scripts.seed_enrollment_key`. Both scripts use
+   `SPHERE_BOOTSTRAP_ORG_SLUG` (default `default`). The organization must already
+   exist and the effective agent-config environment must contain the intended key.
+   Existing conflicting/revoked/expired keys are errors, not silently repaired.
+4. Check `/api/v1/health/readyz`, then actual login, device registration and device
+   visibility. `/api/v1/health` is a static liveness response. `/vpn/health` is also
+   static and cannot establish that a VPN tunnel works.
+5. Complete the browser → APK → task/result and actual VPN acceptance scenarios.
 
-# 2. Create super admin (interactive)
-docker compose exec backend python scripts/create_admin.py
-# Prompts for: email, username, password
-
-# 3. Verify health
-curl http://localhost/api/v1/health
-# Expected: {"status":"ok","checks":{"database":{"status":"ok"},"redis":{"status":"ok"}}}
-
-# 4. Verify VPN health
-curl -H "Authorization: Bearer <token>" http://localhost/api/v1/vpn/health
-
-# 5. Open Web UI
-open http://localhost
-```
+AUD-78 repairs the bootstrap functions in both full-deploy launchers. It does not
+validate their complete env-file selection, migration ordering, final health,
+autostart or production role setup. Repeat admin creation intentionally: an existing
+email in the same organization has its password/role updated. A different organization
+is rejected; old users/devices are not automatically moved.
 
 ---
 

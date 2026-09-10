@@ -141,10 +141,23 @@ researches NitroGen and a future external inference worker; no AI is implemented
   cover persistence failure/retry, races, cancellation and refresh issuance order.
   This does not recover server-side issuance after a lost initial response.
 
+- **AUD-78:** the first-run bootstrap imported nonexistent DB factories, targeted
+  a different organization from the administrator, and launchers printed credentials
+  after failed creation. The real session factory, explicit shared organization,
+  checked existing keys and environment-forwarded admin CLI repair these paths.
+  Baseline: eight seed cases fail at one ImportError; six launcher regressions fail.
+  **23 new cases** exercise actual admin subprocess/login/register/device visibility
+  with isolated SQL/HTTP and both shell functions against a Docker process double.
+  Four further cases catch the reserved `.local` default email and invalid CLI
+  inputs. Both launchers now default to `admin@example.com`; the CLI validates
+  against the actual LoginRequest before SQL, without printing rejected passwords.
+  [Pilot acceptance plan](https://github.com/RootOne1337/sphere-platform/blob/codex/enterprise-audit-20260905/docs/operations/PILOT-ACCEPTANCE.md)
+  now prioritizes the first usable stack/APK/task/VPN path with conditional estimates.
+
 ## Validation
 
-- Combined local backend/PC/PostgreSQL/Redis/deployment: **1390 passed**, including
-  **490 real-service cases** and 25 deployment cases; **69.38%** coverage,
+- Combined local backend/PC/PostgreSQL/Redis/deployment: **1413 passed**, including
+  **505 real-service cases** and 33 deployment cases; **69.38%** coverage,
   four existing warnings. Load/soak profiles are excluded from this ordinary PR run.
 - Android enterprise debug unit suite: **485 passed / 35 suites**. These JVM/MockWebServer/OkHttp checks
   do not establish device OS, codec, battery or real network behavior.
@@ -155,7 +168,7 @@ researches NitroGen and a future external inference worker; no AI is implemented
   The compatible joint Python dependency scan is a recorded snapshot, not a scan of
   all ecosystems. Coverage remains gated at **65%**, with precision=2 and tests for
   the 64.98% rejection / 65.00% acceptance boundaries.
-- Current runtime revision **`93a4872`** (AUD-77) passes
+- Preceding runtime revision **`93a4872`** (AUD-77; does not cover AUD-78) passes
   [backend](https://github.com/RootOne1337/sphere-platform/actions/runs/34518711631), [frontend](https://github.com/RootOne1337/sphere-platform/actions/runs/34518711638),
   [Android PR](https://github.com/RootOne1337/sphere-platform/actions/runs/34518711637) and [Android push](https://github.com/RootOne1337/sphere-platform/actions/runs/34518706234)
   on attempt 1. Linux backend: **1390 passed / 69.40%**, 296.33 seconds,

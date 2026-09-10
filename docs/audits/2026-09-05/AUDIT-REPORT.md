@@ -26,16 +26,16 @@ runtime-проверок и не считается доказательство
 | Проверка | Результат | Практическое ограничение |
 | --- | --- | --- |
 | Android enterprise debug unit suite | 485 passed, 0 failed | JVM/MockWebServer и OkHttp interceptors; не проверяет ОС, codec, батарею или смерть процесса на телефоне |
-| Объединённая Backend/PC/production/deployment suite | **1390 passed, 0 failed**; coverage **69,38%** | Строгий coverage gate 65% пройден с precision=2. Load suite исключена; 25 deployment cases включают config/subprocess probes без запуска сервисов |
+| Объединённая Backend/PC/production/deployment suite | **1413 passed, 0 failed**; coverage **69,38%** | Строгий coverage gate 65% пройден с precision=2. Load suite исключена; 33 deployment cases включают config/subprocess probes без запуска сервисов |
 | Python dependency scan | **0 known vulnerabilities** в совместном backend/PC resolution | Pip-audit snapshot, не проверка frontend/Gradle/container/application security; [версии и ограничения](DEPENDENCY-REVIEW.md) |
-| Проверки PostgreSQL/Redis | **490 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
+| Проверки PostgreSQL/Redis | **505 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
 | Миграции | Применены до **20260910_device_refresh_retry** включительно | Только изолированная БД; конфликтные данные/downgrade проверены в throwaway schema; production не мигрировался |
 | Backend image | Собирается; исходная запись OpenAPI воспроизведённо падает с PermissionError | Исправлен lifespan; полный deployment runtime ещё не подтверждён |
 | Frontend | **198 Jest tests passed**, tsc passed; Next production build exit 0 на Node 24.19.0 | React/JSDOM + Axios adapters; настоящий browser runtime не проверен. Windows standalone tracing выдал ENOENT warning, artifact packaging ещё не подтверждён |
 | APK ↔ реальный локальный backend | Не завершено | Автоматическая проверка разрешений отклонила запуск локального API: `blocked by policy`; обход не выполнялся |
 | 10–64 эмулятора на станции, сотни/тысячи APK, физические телефоны | Не измерено | Нет подтверждённых CPU/RAM/FPS/энергопотребления и совместимости со всеми Android |
 
-Последний общий вывод: [saved-routes-combined-suite.txt](evidence/saved-routes-combined-suite.txt).
+Последний общий вывод: [pilot-combined.txt](evidence/pilot-combined.txt).
 Предыдущий отдельный DAG benchmark однажды занял 127,1 ms при пороге 100 ms;
 изолированный повтор и последующие общие прогоны прошли. На первой CI попытке
 `d828a62` этот же неизменённый тест измерил 363,2 ms: **1 failed / 1213 passed**,
@@ -43,7 +43,7 @@ runtime-проверок и не считается доказательство
 [Локальные 24 DAG cases прошли](evidence/dag-timing-d828a62-local.txt). Порог 100 ms
 не ослаблялся, тест не исключался; причина timing variance на runner не установлена.
 Файл production-regressions-after.txt сохраняет более ранний standalone snapshot
-с 41 тестом; актуальные 490 входят в общий прогон.
+с 41 тестом; актуальные 505 входят в общий прогон.
 
 Команды запуска и предохранители изоляции: [tests/production/README.md](../../../tests/production/README.md).
 Исходные `14 passed` в [reproductions.txt](evidence/reproductions.txt) означают
@@ -1764,3 +1764,84 @@ Runtime/fixtures/docs commit: **`93a487268fe4505e5e6e9470bffaf9cd3a9799e6`**. В
 концами строк и удалёнными trailing spaces. Migration head не менялся. Ни Android
 OS/fleet/network measurements, ни deployment, ни независимое review не выполнены.
 Следующий commit только фиксирует evidence/docs; он имеет отдельные checks.
+
+## AUD-78 — High: первый bootstrap не создавал рабочий доступ к пользователю и APK
+
+**Приоритет владельца: пройти первый полный запуск.** [Остаток работ и оценка](../../operations/PILOT-ACCEPTANCE.md).
+
+- **Root cause:** seed импортировал отсутствующие `async_engine/async_session_maker`,
+  использовал `create_all` вместо migration contract и выбирал `default-org`, тогда
+  как admin CLI выбирает `default`. Последнее расхождение обнаружено в коде: import
+  failure до его исправления не позволял пройти до этого SQL. PowerShell создавал
+  локальные admin values, но не передавал их в `exec -T`; Bash собирал inline Python
+  с отсутствующими factory/model полями. Оба launcher превращали ошибки admin/key
+  в предупреждения и печатали якобы рабочие credentials.
+- **Evidence/reproduction:** baseline `3c66c28`: [8 seed tests](evidence/pilot-bootstrap-before-summary.json)
+  останавливаются на одном ImportError (**не восемь разных дефектов**);
+  [6 launcher failures](evidence/pilot-launchers-before-summary.json) фиксируют
+  передачу старых/отсутствующих env values и возврат успеха после exit 17 процесса.
+  [Seed log](evidence/pilot-bootstrap-before.txt), [launcher log](evidence/pilot-launchers-before.txt).
+- **Affected files:** `scripts/seed_enrollment_key.py`, `scripts/create_admin.py`,
+  `scripts/full-deploy.ps1`, `scripts/full-deploy.sh`; новые
+  `tests/production/test_pilot_enrollment_bootstrap.py` и
+  `tests/deployment/test_bootstrap_launchers.py`.
+- **Fix:** реальный `AsyncSessionLocal`, существующая явно выбранная org/default,
+  tenant bind и org/key locks, проверка повторного seed без reactivation/rebinding;
+  отсутствие key/org — ошибка, без создания таблиц/второго tenant. Admin использует
+  ту же org и отказывает при чужом email. Явные UUID/MFA defaults поддерживают
+  также схему с ORM defaults. Bash вызывает общий admin CLI; оба launcher передают
+  credentials через environment и прекращают bootstrap при ошибке. PS восстанавливает
+  env; stderr содержит имена переменных, но не их secret values. Seed выводит ID.
+- **Regression:** 15 реальных PostgreSQL/Redis/ASGI cases, включая отдельный процесс
+  admin CLI, настоящий login, регистрацию и чтение device, существующего/нового
+  пользователя/организацию, чужой tenant, повторный/concurrent seed, revoked/expired/
+  changed permissions. Восемь случаев исполняют извлечённые неизменённые функции
+  shipped Bash/PowerShell через отдельный Docker double. [Итог](evidence/pilot-bootstrap-summary.json):
+  **1413 passed**, coverage **69.38%**, 279.97 s, 505 real-service и 33 deployment cases;
+  [полный вывод](evidence/pilot-combined.txt). Android runtime не менялся: прежние 485 JVM tests.
+- **Candidate corrections:** [7 failures / 7 passed](evidence/pilot-bootstrap-candidate-before-summary.json)
+  выявили моё предположение об отсутствующем ORM `Organization.is_active` и неверный
+  запрет имени `ADMIN_PASSWORD` в диагностике (имя не является secret value).
+  Оба исправлены. Следующий [1 failure / 17 passed](evidence/pilot-admin-before-summary.json)
+  показал зависимость admin INSERT от server UUID defaults, отсутствующих в существующей
+  ORM-created audit DB; это **не доказательство отсутствия defaults в fresh Alembic DB**.
+  UUID/MFA теперь передаются явно; legacy-схема проверена локально, fresh migrations — в CI.
+- **Residual risk:** это части bootstrap, не полный Compose/real browser/APK/VPN.
+  `.env`/`.env.local`, migration order, runtime roles/grants, autostart, final health
+  и парольный файл legacy launcher остаются отдельной работой. Старые `default-org`
+  ключи/устройства не переносятся автоматически. Privileged bootstrap connection
+  не заменяет runtime RLS. Авто dev-key hook и deployment artifacts требуют проверки
+  вместе с первым fresh-volume запуском. Initial registration lost response, clones,
+  аппаратная нагрузка/сеть, VPN router/root tools, UI и наблюдаемость остаются открытыми.
+
+Новый deployment/merge не выполнялся. CI фиксируется по runtime SHA отдельно.
+Плановая оценка 1–3 дня / 1–2 недели / 3–6 недель условна и пересматривается после
+первого полного прогона; эти сроки не являются результатами тестирования.
+
+### Дополнительный blocker штатного входа в AUD-78
+
+Оба launcher по умолчанию создавали `admin@sphere.local`, отвергаемый настоящим
+`LoginRequest.email`. CLI также принимал env password короче восьми символов,
+создавая учётную запись, с которой API не допускает login. [Четыре исходных failures](evidence/pilot-login-input-before-summary.json)
+сняты после первого bootstrap fix, но до изменения этих прежних input paths;
+[полный вывод](evidence/pilot-login-input-before.txt). Это не четыре независимых
+уязвимости: два shell defaults и два несовместимых CLI inputs.
+
+Default теперь `admin@example.com`; это локальный идентификатор для входа, никакое
+письмо не отправляется. CLI до SQL использует ту же `LoginRequest` и сохраняет
+нормализованный email. Ошибка не печатает отклонённый пароль. Невалидные старые
+учётные записи не переименовываются автоматически. Четыре новых tests входят
+в общий итог **23 новых / 1413 total / 505 real-service / 33 deployment** выше.
+
+### Изоляция login rate-limit в regression fixture
+
+Повторный combined candidate дал [1 failure / 1408 passed](evidence/pilot-rate-fixture-before-summary.json):
+новые synthetic clients разных fixtures/runs делили `127.0.0.1` rate-limit key,
+и третий login получил 429. [Вывод сохранён](evidence/pilot-rate-fixture-before.txt).
+Fixture теперь добавляет свой UUID к Redis identifier, как существующий user-auth
+набор. Реальные Redis pipeline/TTL и login limit сохранены; production limiter
+не отключён и не ослаблен. Финальный полный run содержит все 23 новых cases.
+
+Ruff 0.15.2 и API export check проходят. Старый `python -m ruff` из audit venv
+выбирает 0.3.0 и сообщает E721 в неизменённом `account_credentials.py`; этот результат
+не подменяется новым lint. Проверка 0.15.2 выполнена отдельным установленным CLI.

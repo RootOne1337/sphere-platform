@@ -1,6 +1,6 @@
 # Sphere Platform — Полный гайд развёртывания
 
-> **Статус на 10 сентября 2026: production readiness не подтверждена.**
+> **Статус на 11 сентября 2026: production readiness не подтверждена.**
 >
 > Это справочник настройки; полный runtime и ёмкость 10–64 эмулятора ещё проверяются.
 > Текущий общий PostgreSQL owner/superuser отклоняется production startup guard.
@@ -289,14 +289,19 @@ make migrate
 
 ### 4.5 Создание администратора
 
+После AUD-78 admin и enrollment key используют одну организацию
+`SPHERE_BOOTSTRAP_ORG_SLUG` (по умолчанию `default`). Сначала миграции и admin,
+затем `python -m scripts.seed_enrollment_key` с теми же bootstrap DB credentials.
+Конфликт ключа и ошибка создания прекращают bootstrap. [План первого пилота](docs/operations/PILOT-ACCEPTANCE.md)
+отделяет этот проверенный участок от ещё непроверенных стадий полного launcher.
+
 ```bash
 # Интерактивно (запрашивает email/пароль)
 docker compose exec backend python scripts/create_admin.py
 
-# Или через переменные окружения (CI/CD)
-SPHERE_ADMIN_EMAIL=admin@company.com \
-SPHERE_ADMIN_PASSWORD=SuperSecret123! \
-docker compose exec backend python scripts/create_admin.py
+# Для prepared Compose передайте уже заданные ADMIN_EMAIL / ADMIN_PASSWORD:
+docker compose exec -e ADMIN_EMAIL -e ADMIN_PASSWORD backend python scripts/create_admin.py
+# SPHERE_ADMIN_* — входные переменные full-deploy launcher, не самого Python CLI.
 ```
 
 ### 4.6 Проверка здоровья

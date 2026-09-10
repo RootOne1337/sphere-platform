@@ -117,3 +117,15 @@ state changes fence late replies. Disk failure returns an error and restores
 previous memory; it cannot undo server-side credential issuance. Legacy static-key
 setup remains separate. **485 JVM tests / 35 suites**, including 20 new cases.
 [Contract and remaining initial response-loss/OS limits](../docs/architecture/ANDROID-BACKGROUND-ENROLLMENT.md).
+
+## Ключ bootstrap и организация оператора (AUD-78)
+
+После миграций сначала выполните `scripts/create_admin.py`, затем
+`python -m scripts.seed_enrollment_key` с подготовленными bootstrap DB credentials.
+Обе команды используют `SPHERE_BOOTSTRAP_ORG_SLUG` (по умолчанию `default`). Seed
+читает `enrollment_api_key` из эффективного environment JSON; это входной секрет,
+а не значение, которое следует извлекать из stdout. В лог выводятся только ID.
+
+Ключ в другой организации, revoked/expired или без `device:register` даёт ошибку;
+старые `default-org` devices не перемещаются автоматически. Нет `create_all` вместо
+Alembic. [План первого запуска и ограничения](../docs/operations/PILOT-ACCEPTANCE.md).

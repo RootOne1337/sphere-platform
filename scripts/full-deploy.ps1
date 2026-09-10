@@ -322,26 +322,29 @@ function Step-RunMigrations {
 function Step-SeedData {
     Write-Log "STEP" "Шаг 7/8 — Инициализация данных"
 
-    $adminEmail = if ($env:SPHERE_ADMIN_EMAIL) { $env:SPHERE_ADMIN_EMAIL } else { "admin@sphere.local" }
+    $adminEmail = if ($env:SPHERE_ADMIN_EMAIL) { $env:SPHERE_ADMIN_EMAIL } else { "admin@example.com" }
     $adminPassword = if ($env:SPHERE_ADMIN_PASSWORD) { $env:SPHERE_ADMIN_PASSWORD } else {
         & python -c "import secrets; print(secrets.token_urlsafe(16))" 2>$null
     }
 
     Write-Log "INFO" "Создание администратора ($adminEmail)..."
 
+    $previousAdminEmail = $env:ADMIN_EMAIL
+    $previousAdminPassword = $env:ADMIN_PASSWORD
+    $bootstrapOrgEnv = @()
+    if ($env:SPHERE_BOOTSTRAP_ORG_SLUG) { $bootstrapOrgEnv = @('-e', 'SPHERE_BOOTSTRAP_ORG_SLUG') }
     try {
-        Invoke-Compose @("exec", "-T", "backend", "python", "scripts/create_admin.py")
-    } catch {
-        Write-Log "WARN" "Администратор может уже существовать"
+        $env:ADMIN_EMAIL = $adminEmail
+        $env:ADMIN_PASSWORD = $adminPassword
+        Invoke-Compose (@("exec", "-T", "-e", "ADMIN_EMAIL", "-e", "ADMIN_PASSWORD") + $bootstrapOrgEnv + @("backend", "python", "scripts/create_admin.py"))
+    } finally {
+        $env:ADMIN_EMAIL = $previousAdminEmail
+        $env:ADMIN_PASSWORD = $previousAdminPassword
     }
 
     # Enrollment ключ
     Write-Log "INFO" "Генерация enrollment-ключа..."
-    try {
-        Invoke-Compose @("exec", "-T", "-e", "AGENT_CONFIG_ENV=development", "backend", "python", "-m", "scripts.seed_enrollment_key")
-    } catch {
-        Write-Log "WARN" "Enrollment-ключ не сгенерирован"
-    }
+    Invoke-Compose (@("exec", "-T") + $bootstrapOrgEnv + @("backend", "python", "-m", "scripts.seed_enrollment_key"))
 
     Write-Host ""
     Write-Host "  ╔══════════════════════════════════════════════════╗" -ForegroundColor Green

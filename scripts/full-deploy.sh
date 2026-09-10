@@ -20,7 +20,7 @@
 #   ./scripts/full-deploy.sh --production # Production-режим
 #
 # Окружение:
-#   SPHERE_ADMIN_EMAIL    — Email администратора (по умолчанию: admin@sphere.local)
+#   SPHERE_ADMIN_EMAIL    — Email администратора (по умолчанию: admin@example.com)
 #   SPHERE_ADMIN_PASSWORD — Пароль администратора (генерируется автоматически)
 #   SPHERE_ENV            — Окружение: development|staging|production
 #
@@ -362,7 +362,7 @@ seed_data() {
     cd "$PROJECT_DIR"
 
     # Создание суперадминистратора
-    local admin_email="${SPHERE_ADMIN_EMAIL:-admin@sphere.local}"
+    local admin_email="${SPHERE_ADMIN_EMAIL:-admin@example.com}"
     local admin_password="${SPHERE_ADMIN_PASSWORD:-}"
 
     if [[ -z "$admin_password" ]]; then
@@ -374,45 +374,21 @@ seed_data() {
 
     log INFO "Создание администратора ($admin_email)..."
 
+    # Forward values through the process environment, not inline Python/argv.
+    local -a bootstrap_org_env=()
+    if [[ -n "${SPHERE_BOOTSTRAP_ORG_SLUG:-}" ]]; then
+        bootstrap_org_env=(-e SPHERE_BOOTSTRAP_ORG_SLUG)
+    fi
     # shellcheck disable=SC2086
-    docker compose $COMPOSE_FILES exec -T backend python -c "
-import asyncio, sys, os
-sys.path.insert(0, '/app')
-os.environ.setdefault('ENVIRONMENT', 'development')
+    ADMIN_EMAIL="$admin_email" ADMIN_PASSWORD="$admin_password" \
+        docker compose $COMPOSE_FILES exec -T -e ADMIN_EMAIL -e ADMIN_PASSWORD "${bootstrap_org_env[@]}" backend \
+        python scripts/create_admin.py 2>&1 | tee -a "$LOG_FILE" || return 1
 
-async def create():
-    from backend.database.engine import async_session_factory
-    from backend.models.user import User
-    from backend.core.security import get_password_hash
-    from sqlalchemy import select
-    
-    async with async_session_factory() as session:
-        existing = await session.execute(select(User).where(User.email == '$admin_email'))
-        if existing.scalar_one_or_none():
-            print('Администратор уже существует — пропускаем')
-            return
-        
-        user = User(
-            email='$admin_email',
-            username='admin',
-            hashed_password=get_password_hash('$admin_password'),
-            is_active=True,
-            is_superuser=True,
-            role='super_admin',
-        )
-        session.add(user)
-        await session.commit()
-        print(f'Администратор создан: $admin_email')
-
-asyncio.run(create())
-" 2>&1 | tee -a "$LOG_FILE" || log WARN "Не удалось создать администратора (возможно, уже существует)"
-
-    # Enrollment-ключ для агентов
     log INFO "Генерация enrollment-ключа..."
+    # Use the backend's configured environment; never force a development key.
     # shellcheck disable=SC2086
-    docker compose $COMPOSE_FILES exec -T -e AGENT_CONFIG_ENV="${SPHERE_ENV:-development}" backend \
-        python -m scripts.seed_enrollment_key 2>&1 | tee -a "$LOG_FILE" || \
-        log WARN "Enrollment-ключ не сгенерирован (может уже существовать)"
+    docker compose $COMPOSE_FILES exec -T "${bootstrap_org_env[@]}" backend \
+        python -m scripts.seed_enrollment_key 2>&1 | tee -a "$LOG_FILE" || return 1
 
     # Вывод учётных данных
     echo ""

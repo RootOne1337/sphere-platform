@@ -27,10 +27,20 @@ README и руководства обновляются по реализова�
 поиск инцидента по времени/device/task и устранение фиктивных VPN measurements
 остаются работой впереди. Анализ AI оформлен отдельно; интеграция не реализуется.
 
+## Ближайший рубеж — первый рабочий пилот
+
+По уточнению владельца от 11 сентября приоритет — полный путь
+стек → веб/вход → APK → устройство → задание/результат, затем VPN и recovery.
+[План приёмки](PILOT-ACCEPTANCE.md) содержит ориентиры 1–3 рабочих дня для первого
+пути, 1–2 недели для пилота с VPN и 3–6 недель для измеренного парка. Это условная
+оценка при доступном стенде, не обещание дат. До первого полного прогона уверенность
+низкая. Новый функционал AI и полный исторический backlog не блокируют рубеж A.
+
 ## Приоритеты: сначала потеря управления и работы
 
 | Приоритет | Сценарий | Что найдено / подтверждено | Следующее доказательство готовности |
 | --- | --- | --- | --- |
+| P0 | Первый пользователь не может войти или не видит зарегистрированный APK | AUD-78: bootstrap scripts используют существующие DB imports, передают credentials и одну организацию; 23 новых SQL/HTTP/subprocess cases | [Пилот](PILOT-ACCEPTANCE.md); полный fresh-volume Compose, env selection, migration ordering, browser и установленный APK |
 | P0 | Регистрация теряет credentials после остановки или ответы меняют identity в обратном порядке | AUD-77: один проверяемый commit UUID/tokens/routes, serialization с refresh, local revision fence; 20 новых JVM cases | [Контракт](../architecture/ANDROID-BACKGROUND-ENROLLMENT.md); initial server response loss, failed re-enrollment recovery, реальные disk/keystore/OS |
 | P0 | Registration зависает или поздний ответ записывает credentials после stop | AUD-76: async Call, HTTP budget 10 s, byte limit до parse, cancellation и освобождение worker mutex; 15 новых JVM cases | [Контракт](../architecture/ANDROID-BACKGROUND-ENROLLMENT.md); AUD-77 добавляет единый commit и serialization; initial response loss и реальные sockets/OS открыты |
 | P0 | APK не регистрируется после boot или подключается со старым ID | AUD-75: supplied bootstrap key больше не подменяет session; два workers сериализованы, повторяют activation, WS перечитывает назначенный ID; 24 новых JVM cases | [Контракт](../architecture/ANDROID-BACKGROUND-ENROLLMENT.md); AUD-77 закрывает отдельные записи и конкуренцию HTTP registration; response loss и установленный APK boot/recovery открыты |

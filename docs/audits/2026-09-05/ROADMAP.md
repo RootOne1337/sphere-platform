@@ -1,6 +1,6 @@
 # Приоритеты продолжающегося аудита
 
-Обновлено 10 сентября 2026. Этот документ задаёт порядок работ; наличие пункта
+Обновлено 11 сентября 2026. Этот документ задаёт порядок работ; наличие пункта
 не означает, что его эксплуатация уже доказана. Для закрытия нужен воспроизводимый
 сценарий, исправление, regression test и повторная проверка.
 
@@ -9,6 +9,12 @@
 сохранность заданий, запуск и наблюдаемость → достоверность UI → capacity → будущий AI.
 Новые security barriers не являются самостоятельной целью development-этапа.
 RLS остаётся условием корректной работы текущих путей и будущего rollout.
+
+**Уточнение владельца от 11 сентября:** ближайший результат — первый рабочий
+пилот: стек/веб/вход/APK/задача, затем VPN/recovery и основные операции UI.
+[План приёмки с условными сроками](../../operations/PILOT-ACCEPTANCE.md). Завершение
+всего исторического backlog не является условием первого пилота; новые blockers
+этой цепочки получают приоритет. AI остаётся отдельным анализом.
 
 ## Технический backlog по компонентам
 
@@ -263,3 +269,14 @@ Runtime **`93a4872`**: backend/frontend/Android PR+push прошли с перв
 preview только guard, deploy skipped. Backend **1390 / 69.40%**, Android все
 четыре test variants. Локально **485 / 35 suites**. [Точные SHA/run links и evidence](AUDIT-REPORT.md).
 Это проверка очередного исправления, не завершение всего аудита или аппаратного rollout.
+
+## AUD-78 — bootstrap пилота: локально исправлено
+
+23 новых SQL/HTTP/process cases; **1413 общий прогон / 505 real-service / 33 deployment**.
+Отдельный admin Python process проходит login→registration→device read; launcher
+functions передают credentials и не скрывают ошибки. [Доказательства](AUDIT-REPORT.md).
+
+Следующий шаг рубежа A: согласовать env-file/Compose и migration order для fresh
+startup; пройти выбранный browser/APK/task путь на разрешённом стенде. Затем VPN,
+initial enrollment recovery и clone identity. Наблюдаемость, truthful UI и capacity
+остаются в [критериях пилота](../../operations/PILOT-ACCEPTANCE.md); AI не внедряется.

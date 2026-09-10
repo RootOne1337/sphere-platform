@@ -40,6 +40,7 @@ Sphere объединяет управление Android-устройствам�
 | Вам нужно | Начните здесь |
 | --- | --- |
 | Понять, что уже работает и что мешает эксплуатации | [Эксплуатационная готовность](docs/operations/READINESS.md) |
+| Дойти до первого рабочего пилота и понять сроки | [План приёмки: веб → APK → задача → VPN](docs/operations/PILOT-ACCEPTANCE.md) |
 | Подготовить локальный стек | [Разработка](docs/development.md) → [Конфигурация](docs/configuration.md) |
 | Подключить эмулятор или телефон | [Android Agent](docs/android-agent.md) |
 | Подключить рабочую станцию | [PC Agent](docs/pc-agent.md) |

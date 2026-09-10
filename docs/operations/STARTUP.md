@@ -74,3 +74,17 @@ health expressions из Compose merge. Docker/HTTP boundaries подменены
 запуском без воздействия на существующие контейнеры. Вместе с прежними deployment
 cases проходят 25 тестов. Evidence и ограничения — в
 [AUD-68](../audits/2026-09-05/AUDIT-REPORT.md).
+
+## Bootstrap пользователя и устройства (AUD-78)
+
+`start-dev.ps1` по-прежнему запускает prepared services, а не создаёт всю установку
+с нуля. [План пилота](PILOT-ACCEPTANCE.md) задаёт порядок миграций, bootstrap,
+browser/APK и VPN проверок. Исправлены функции bootstrap в `full-deploy.ps1/.sh`,
+но остальные стадии этих legacy launchers не получили общего sign-off.
+
+Admin и enrollment CLI теперь используют `SPHERE_BOOTSTRAP_ORG_SLUG=default`
+по умолчанию; ключ создаётся только после организации администратора. Отсутствующая
+конфигурация/ключ, SQL error и конфликт ключа прекращают bootstrap. Реактивации
+отозванного ключа или переноса старого `default-org` нет. Реальный SQL/HTTP сценарий
+создаёт admin, выполняет login, регистрирует device и читает его той же identity;
+Compose, браузер и APK transport в этот прогон не входят.

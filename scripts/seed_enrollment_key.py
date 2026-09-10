@@ -1,116 +1,65 @@
 #!/usr/bin/env python3
-"""
-seed_enrollment_key.py — Создание enrollment API-ключа для zero-touch регистрации.
+"""Seed the configured enrollment key in the administrator's organization.
 
-Использование:
-    python -m scripts.seed_enrollment_key
-
-Скрипт:
-1. Загружает конфиг из agent-config/environments/{AGENT_CONFIG_ENV}.json
-2. Создаёт организацию "Default Org" если её нет
-3. Создаёт APIKey с raw_key = enrollment_api_key из конфига, permission = device:register
-4. Идемпотентен: повторный запуск не создаёт дублей
-
-Для dev-окружения:
-    AGENT_CONFIG_ENV=development python -m scripts.seed_enrollment_key
+Run migrations and scripts/create_admin.py first. Both bootstrap commands use
+SPHERE_BOOTSTRAP_ORG_SLUG (default: default). Existing keys are verified, never
+reactivated, transferred or silently granted permissions by a repeated seed.
 """
 from __future__ import annotations
 
 import asyncio
 import hashlib
 import json
+import os
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
-# Добавляем корень проекта в sys.path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 
 async def main() -> None:
-    from backend.core.config import settings
-    from backend.database.engine import Base, async_engine, async_session_maker
-    import backend.models  # noqa: F401 — регистрация mappers
-
-    # Загружаем agent-config
-    env = settings.AGENT_CONFIG_ENV or settings.ENVIRONMENT
-    config_file = PROJECT_ROOT / settings.AGENT_CONFIG_DIR / "environments" / f"{env}.json"
-
-    if not config_file.exists():
-        print(f"❌ Конфиг файл не найден: {config_file}")
-        sys.exit(1)
-
-    config = json.loads(config_file.read_text(encoding="utf-8"))
-    raw_key = config.get("enrollment_api_key")
-
-    if not raw_key:
-        print(f"⚠️  enrollment_api_key не задан в {config_file.name}")
-        sys.exit(0)
-
-    key_hash = hashlib.sha256(raw_key.encode()).hexdigest()
-    key_prefix = raw_key[:14]
-
-    print(f"📋 Окружение: {env}")
-    print(f"🔑 Enrollment key: {raw_key[:20]}...")
-    print(f"🔒 Key hash: {key_hash[:16]}...")
-
-    # Импортируем модели
     from sqlalchemy import select
 
+    from backend.core.config import settings
+    from backend.database.engine import AsyncSessionLocal
+    from backend.database.tenant import bind_tenant_context
     from backend.models.api_key import APIKey
     from backend.models.organization import Organization
 
-    # Создаём таблицы (для dev с SQLite / первый запуск)
-    async with async_engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    env = settings.AGENT_CONFIG_ENV or settings.ENVIRONMENT
+    config_file = PROJECT_ROOT / settings.AGENT_CONFIG_DIR / "environments" / f"{env}.json"
+    config = json.loads(config_file.read_text(encoding="utf-8"))
+    raw_key = config.get("enrollment_api_key")
+    if not isinstance(raw_key, str) or not raw_key.strip():
+        raise ValueError("Configured enrollment_api_key must be a non-empty string")
+    org_slug = os.environ.get("SPHERE_BOOTSTRAP_ORG_SLUG", "default").strip()
+    if not org_slug:
+        raise ValueError("SPHERE_BOOTSTRAP_ORG_SLUG must not be empty")
+    key_hash = hashlib.sha256(raw_key.encode()).hexdigest()
 
-    async with async_session_maker() as session:
-        # Находим или создаём организацию
-        result = await session.execute(
-            select(Organization).where(Organization.slug == "default-org")
-        )
-        org = result.scalar_one_or_none()
-
-        if not org:
-            org = Organization(name="Default Organization", slug="default-org")
-            session.add(org)
+    async with AsyncSessionLocal() as session:
+        org = await session.scalar(select(Organization).where(Organization.slug == org_slug).with_for_update())
+        if org is None:
+            raise RuntimeError("Bootstrap organization missing; run scripts/create_admin.py first with the same SPHERE_BOOTSTRAP_ORG_SLUG")
+        await bind_tenant_context(session, str(org.id))
+        existing = await session.scalar(select(APIKey).where(APIKey.key_hash == key_hash).with_for_update().execution_options(populate_existing=True))
+        if existing is not None:
+            if (existing.org_id != org.id or not existing.is_active
+                    or "device:register" not in (existing.permissions or [])
+                    or (existing.expires_at is not None and existing.expires_at <= datetime.now(timezone.utc))):
+                raise RuntimeError("Existing enrollment key conflicts with bootstrap organization or is disabled, expired or lacks device:register; provision a new key explicitly")
+            key_id = existing.id
+        else:
+            key = APIKey(org_id=org.id, user_id=None, name=f"Enrollment Key ({env})",
+                key_prefix=raw_key[:14], key_hash=key_hash, type="agent",
+                permissions=["device:register"], is_active=True, expires_at=None)
+            session.add(key)
             await session.flush()
-            print(f"✅ Создана организация: {org.name} (id={org.id})")
-        else:
-            print(f"📌 Организация существует: {org.name} (id={org.id})")
-
-        # Проверяем, есть ли уже такой ключ
-        result = await session.execute(
-            select(APIKey).where(APIKey.key_hash == key_hash)
-        )
-        existing = result.scalar_one_or_none()
-
-        if existing:
-            print(
-                f"📌 Enrollment ключ уже существует"
-                f" (id={existing.id}, active={existing.is_active})"
-            )
-            if not existing.is_active:
-                existing.is_active = True
-                print("   → Реактивирован")
-        else:
-            api_key = APIKey(
-                org_id=org.id,
-                user_id=None,
-                name=f"Enrollment Key ({env})",
-                key_prefix=key_prefix,
-                key_hash=key_hash,
-                type="agent",
-                permissions=["device:register"],
-                is_active=True,
-                expires_at=None,
-            )
-            session.add(api_key)
-            print(f"✅ Создан enrollment API-ключ: {key_prefix}... (permissions: device:register)")
-
+            key_id = key.id
         await session.commit()
-
-    print("🎉 Seed завершён успешно!")
+        print(f"Enrollment key ready: id={key_id}, org_id={org.id}")
 
 
 if __name__ == "__main__":

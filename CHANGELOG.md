@@ -14,6 +14,12 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Security / runtime
 
+- AUD-78: исправлен bootstrap первого пользователя и enrollment key: отсутствующие
+  DB imports, разная организация admin/device, потерянные credentials в launcher
+  и ложный успех после ошибки. Bash использует общий Python CLI; ошибки прерывают
+  bootstrap. 23 новых checks: реальные SQL/login/register/device-read и процессы
+  PowerShell/Bash. Полный запуск Compose/APK/VPN ещё не подтверждён.
+
 - AUD-77: registration сохраняет UUID/tokens/routes одним проверяемым commit,
   сериализуется с refresh и отклоняет ответы после изменения identity/маршрутов.
   Неуспешная запись возвращает ошибку и восстанавливает память; невалидные
