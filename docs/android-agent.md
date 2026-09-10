@@ -109,6 +109,11 @@ URL override is used by this configuration chain.
 
 Enterprise `CONFIG_URL` is set from `SPHERE_CONFIG_URL` at build time. Dev defaults
 read `SERVER_PUBLIC_URL` from the root `.env` and retain a development config URL.
+After AUD-73, HTTP discovery is a cancellable public request: no device credentials,
+10-second HTTP deadline and a 64-KiB response bound before parsing. Periodic/forced
+watchdog checks share one request; stop and local route changes invalidate its
+response. See the [discovery recovery contract](architecture/ANDROID-DISCOVERY-RECOVERY.md)
+for lifecycle, configuration and the still-open secondary-route/health-trial work.
 Distribution/trust of enrollment keys and mutable remote configuration remains
 part of the security audit; development defaults are not a production policy.
 
@@ -375,3 +380,12 @@ Deploy **all backend workers before APK**, preserving app data and signing ident
 An older backend without `auth_ok` cannot confirm a new APK; it will reconnect on
 deadline. [Wire protocol, rollout and evidence](architecture/ANDROID-CONNECTION-PROTOCOL.md).
 Saved secondary routes, physical Android sockets and fleet recovery remain open.
+
+
+## 16. Discovery recovery (AUD-73)
+
+The full enterprise debug suite now passes **399 tests / 31 suites**, including
+21 new discovery cases. Initial baseline: nine failures / four controls. Public
+HTTP, cancellation, single-flight checks, stop/restart and local route revisions
+are covered with Robolectric and synthetic transport. The saved secondary route
+and candidate health trial are still open. [Current contract and evidence](architecture/ANDROID-DISCOVERY-RECOVERY.md).

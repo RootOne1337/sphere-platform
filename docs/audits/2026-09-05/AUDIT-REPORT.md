@@ -25,17 +25,17 @@ runtime-проверок и не считается доказательство
 
 | Проверка | Результат | Практическое ограничение |
 | --- | --- | --- |
-| Android enterprise debug unit suite | 378 passed, 0 failed | JVM/MockWebServer и OkHttp interceptors; не проверяет ОС, codec, батарею или смерть процесса на телефоне |
-| Объединённая Backend/PC/production/deployment suite | **1383 passed, 0 failed**; coverage **69,39%** | Строгий coverage gate 65% пройден с precision=2. Load suite исключена; 25 deployment cases включают config/subprocess probes без запуска сервисов |
+| Android enterprise debug unit suite | 399 passed, 0 failed | JVM/MockWebServer и OkHttp interceptors; не проверяет ОС, codec, батарею или смерть процесса на телефоне |
+| Объединённая Backend/PC/production/deployment suite | **1385 passed, 0 failed**; coverage **69,42%** | Строгий coverage gate 65% пройден с precision=2. Load suite исключена; 25 deployment cases включают config/subprocess probes без запуска сервисов |
 | Python dependency scan | **0 known vulnerabilities** в совместном backend/PC resolution | Pip-audit snapshot, не проверка frontend/Gradle/container/application security; [версии и ограничения](DEPENDENCY-REVIEW.md) |
-| Проверки PostgreSQL/Redis | **485 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
+| Проверки PostgreSQL/Redis | **487 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
 | Миграции | Применены до **20260910_device_refresh_retry** включительно | Только изолированная БД; конфликтные данные/downgrade проверены в throwaway schema; production не мигрировался |
 | Backend image | Собирается; исходная запись OpenAPI воспроизведённо падает с PermissionError | Исправлен lifespan; полный deployment runtime ещё не подтверждён |
 | Frontend | **198 Jest tests passed**, tsc passed; Next production build exit 0 на Node 24.19.0 | React/JSDOM + Axios adapters; настоящий browser runtime не проверен. Windows standalone tracing выдал ENOENT warning, artifact packaging ещё не подтверждён |
 | APK ↔ реальный локальный backend | Не завершено | Автоматическая проверка разрешений отклонила запуск локального API: `blocked by policy`; обход не выполнялся |
 | 10–64 эмулятора на станции, сотни/тысячи APK, физические телефоны | Не измерено | Нет подтверждённых CPU/RAM/FPS/энергопотребления и совместимости со всеми Android |
 
-Последний общий вывод: [auth-ack-combined-suite.txt](evidence/auth-ack-combined-suite.txt).
+Последний общий вывод: [config-recovery-combined-suite.txt](evidence/config-recovery-combined-suite.txt).
 Предыдущий отдельный DAG benchmark однажды занял 127,1 ms при пороге 100 ms;
 изолированный повтор и последующие общие прогоны прошли. На первой CI попытке
 `d828a62` этот же неизменённый тест измерил 363,2 ms: **1 failed / 1213 passed**,
@@ -43,7 +43,7 @@ runtime-проверок и не считается доказательство
 [Локальные 24 DAG cases прошли](evidence/dag-timing-d828a62-local.txt). Порог 100 ms
 не ослаблялся, тест не исключался; причина timing variance на runner не установлена.
 Файл production-regressions-after.txt сохраняет более ранний standalone snapshot
-с 41 тестом; актуальные 477 входят в общий прогон.
+с 41 тестом; актуальные 487 входят в общий прогон.
 
 Команды запуска и предохранители изоляции: [tests/production/README.md](../../../tests/production/README.md).
 Исходные `14 passed` в [reproductions.txt](evidence/reproductions.txt) означают
@@ -1327,3 +1327,58 @@ EnterpriseDebug XML. Это не проверка установленного A
 Документационный commit сохраняет результаты для точной code revision `70c6a21`,
 не меняя исполняемый код; его checks идут отдельно. Резервный маршрут остаётся
 открытым P0. PR остаётся draft, без независимого review, merge или deployment.
+
+
+## AUD-73 — High: discovery терял связь после enrollment и переживал остановку сервиса
+
+**Эксплуатационный P0: существующий канал обновления адреса, без нового failover.**
+После enrollment/refresh watchdog отправлял device JWT как `X-API-Key`; config
+endpoint отклонял его с 401. При outage десятки сигналов запускали отдельные запросы.
+`stop()` менял только boolean; поздний ответ мог заменить локально выбранный URL и
+вызвать reconnect после остановки сервиса. Blocking HTTP не отменялся вместе с
+coroutine; `body.string().take(64 KiB)` читал весь ответ и принимал валидный префикс.
+
+- **Root cause:** смешение device JWT и config API key, `execute()` вне cancellable
+  bridge, независимые application-scope jobs без single-flight/владельца и отсутствие
+  проверки revision перед записью адреса. Ограничение body применялось после чтения.
+- **Evidence/reproduction:** baseline `02f55b4` + constructor seam для изолированного
+  client/URL, без изменения алгоритма до запуска tests: [9 failures / 4 controls](evidence/android-config-recovery-before-summary.json),
+  [Gradle](evidence/android-config-recovery-before.txt). Реальный OkHttp с synthetic
+  interceptors: 64 уведомления породили 64 запроса; held headers не отпустили caller
+  за 12 s; stop не отменил Call; поздний JSON перезаписал локально выбранный адрес.
+  [Два non-owner SQL/ASGI cases](evidence/backend-config-recovery-contract.txt)
+  подтверждают issued/refreshed JWT: старый request 401, публичный request 200,
+  прежняя identity по-прежнему получает WS `auth_ok`. Это серверный contract control,
+  он проходит до и после APK fix; backend permissions не меняются.
+- **Affected files:** `ZeroTouchProvisioner.kt`, `ConfigWatchdog.kt`, `AuthTokenStore.kt`;
+  suspend call sites в `SetupActivity.kt` / `AutoEnrollmentWorker.kt` и fixtures
+  `KeepAliveWorkerTest.kt`; новый `ConfigRecoveryTest.kt`, два cases в
+  `tests/production/test_agent_tenant_runtime.py`.
+- **Fix:** discovery без credentials; async OkHttp bridge с отменой Call и собственным
+  10 s budget, ограниченное чтение HTTP body и валидация URL. Один periodic owner и
+  одна активная проверка; stop/отмена owner закрывают поколение и принудительный job.
+  Store snapshot включает локальную revision; сравнение и запись сериализованы с
+  обычным `saveServerUrl`, включая A → B → A. Только принятый response вызывает reconnect.
+- **Regression:** 21 новый Android case, в том числе late body cleanup, service
+  restart, duplicate owner, cancellation periodic owner и ABA. [399 passed / 31 suites](evidence/android-config-recovery-summary.json),
+  [полный Gradle run](evidence/android-config-recovery-after.txt). Воспроизведение:
+  `./gradlew --no-daemon :app:testEnterpriseDebugUnitTest --tests '*ConfigRecoveryTest'`
+  из `android/`; SQL contract — `pytest tests/production/test_agent_tenant_runtime.py -k discovery`
+  по README изолированного harness.
+- **Residual risk:** Robolectric/HTTP interceptors/preferences doubles, не реальный
+  APK/OS/сокеты или ёмкость парка. 64 сигнала одного watchdog не равны 64 устройствам.
+  Некооперативный HTTP Source может переживать cancel в своём thread, без права
+  записи route. Disk/keystore и legacy file reading не входят в HTTP deadline.
+  Revision процесса не является durable/server config version. Синтаксически валидный
+  недоступный endpoint всё ещё может заменить работающий адрес; health trial/rollback,
+  сохранённый secondary route и независимый discovery остаются следующими P0.
+  [Полный контракт](../../architecture/ANDROID-DISCOVERY-RECOVERY.md).
+
+Backend code и schema этим изменением не меняются. Новый APK сохраняет прежнее
+требование AUD-72: сначала обновить все backend workers. Полный локальный backend/PC
+прогон: **1385 passed / 69,42%**, 268,55 s, четыре прежних warnings, включая **487
+PG/Redis** и 25 deployment cases. [Лог](evidence/config-recovery-combined-suite.txt).
+Ruff 0.15.2 и API export check прошли. [Очистка](evidence/config-recovery-runtime-cleanup.json):
+0 временных runtime LOGIN-ролей и 0 других DB connections. Новый dependency-aware
+mypy здесь не запускался: последний результат AUD-72 — 13 ошибок в семи неизменённых
+файлах. Backend code не менялся. CI AUD-73 будет записан после push отдельно от `70c6a21`.

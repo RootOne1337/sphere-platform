@@ -14,6 +14,13 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Security / runtime
 
+- AUD-73: APK discovery больше не отправляет device JWT как API-ключ, ограничивает
+  HTTP десятью секундами и body 64 KiB до разбора. Watchdog объединяет проверки,
+  отменяет их при stop и не применяет response после локальной смены адреса.
+  Baseline: 9 failures / 4 controls; 21 новая Android regression, 399 JVM tests
+  проходят. Два SQL/ASGI cases подтверждают старый 401 и публичный 200 с той же
+  device identity. [Контракт и ограничения](docs/architecture/ANDROID-DISCOVERY-RECOVERY.md).
+
 - AUD-72: APK становится connected после подтверждения device ID сервером, а не
   сразу после открытия WS. Silent auth ограничен дедлайном, поздние callbacks
   завершённого сеанса не включают канал и не доставляют команды. 16 новых JVM и

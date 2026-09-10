@@ -24,6 +24,7 @@ UI показывает измеренные данные, их возраст �
 | --- | --- | --- | --- |
 | P0 | Сервер перезапущен, парк возвращается без оператора | APK clean-close обходил delay, network retry имел одинаковые сроки у всех клиентов; AUD-67 исправляет pacing/jitter | Убить/поднять выделенный backend при 100, 500, 1000 реальных или протокольных clients; измерить p50/p95/p99 времени возврата и число незавершённых задач |
 | P0 | GitHub или основной адрес недоступен | `ConfigWatchdog` читает один CONFIG_URL, `AuthTokenStore` хранит один server URL. Это discovery, а не резервный command channel | Сохранённые primary/secondary endpoints одного сервиса, переключение без изменения device ID, блокировка GitHub в изолированной среде, restart APK с сохранённым маршрутом |
+| P0 | Discovery перестаёт работать после enrollment или переживает stop | AUD-73: JWT в `X-API-Key` давал 401; параллельные/поздние запросы меняли URL. Публичный отменяемый HTTP, один запрос и local revision исправляют воспроизведённые сценарии | [Контракт](../architecture/ANDROID-DISCOVERY-RECOVERY.md); следующие P0 — health trial кандидата, сохранённый secondary и реальный OS/network recovery |
 | P0 | Истёк token во время outage | AUD-69/70 добавили сохранённый refresh operation ID и один recoverable successor; 24 SQL/ASGI + 7 APK cases проверяют commit loss и сохранение identity | [Rollout backend→APK](../security/device-refresh-recovery.md), фактический Android process death и сетевой обрыв; recovery ограничен expiry/consumption преемника |
 | P0 | Зависший refresh задерживает reconnect/stop | AUD-71: четыре исходных failures; HTTP теперь отменяется по дедлайну 10 s или отмене вызывающей coroutine, поздний body не записывает credentials. Восемь новых JVM cases | Проверить реальные Android sockets/OS; mutex wait и зависший commit/keystore не имеют общего 10-секундного SLA |
 | P0 | Нет связи во время выполнения задания | DAG исполняется локально, журнал хранит receipts/results; размер и срок хранения ограничены | Обрыв на claim/start/action/result/ACK, reboot процесса, повторная доставка; не повторить необратимое действие молча |
@@ -188,3 +189,7 @@ AUD-71: собственный deadline отменяет HTTP и сохраня�
 AUD-72: устранён преждевременный connected state и поздние callbacks закрытого
 сеанса; 16 новых JVM и восемь SQL/ASGI cases. Эта предпосылка для failover проверена,
 но резервный route ещё не добавлен. Новому APK нужен `auth_ok` на всех workers.
+
+AUD-73: 9 исходных discovery failures воспроизведены и исправлены; **399 JVM tests /
+31 suites**, 21 новый case. HTTP и lifecycle checks не подтверждают реальный
+secondary route, server health trial или ёмкость парка. [Контракт](../architecture/ANDROID-DISCOVERY-RECOVERY.md).

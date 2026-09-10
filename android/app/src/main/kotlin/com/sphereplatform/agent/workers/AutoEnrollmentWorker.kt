@@ -85,7 +85,7 @@ class AutoEnrollmentWorker @AssistedInject constructor(
         return try {
             // Если включена автоматическая регистрация через config_endpoint
             if (config.autoRegisterEnabled && config.apiKey.isBlank()) {
-                val enrollmentKey = getEnrollmentKeyFromConfig(config.serverUrl)
+                val enrollmentKey = getEnrollmentKeyFromConfig()
                 if (enrollmentKey == null) {
                     Timber.w("AutoEnrollmentWorker: auto_register requested, but no enrollment key found")
                     return Result.failure()
@@ -132,7 +132,7 @@ class AutoEnrollmentWorker @AssistedInject constructor(
         }
     }
 
-    private fun getEnrollmentKeyFromConfig(serverUrl: String): String? {
+    private suspend fun getEnrollmentKeyFromConfig(): String? {
         val serverConfig = provisioner.fetchServerConfig()
         return serverConfig?.enrollmentApiKey
     }

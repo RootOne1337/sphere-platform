@@ -90,14 +90,14 @@ class KeepAliveWorkerTest {
     fun `enrolled without token tries enrollment`() = runTest {
         enrolledStorage["enrolled"] = true
         every { authStore.getToken() } returns null
-        every { provisioner.discoverConfig() } returns null
+        coEvery { provisioner.discoverConfig() } returns null
 
         val worker = createWorker()
         val result = worker.doWork()
 
         assertEquals(ListenableWorker.Result.success(), result)
         // discoverConfig вызван (попытка enrollment)
-        verify { provisioner.discoverConfig() }
+        coVerify { provisioner.discoverConfig() }
     }
 
     // ── Сценарий 3: not enrolled + apiKey config → enrollment ────────────
@@ -106,7 +106,7 @@ class KeepAliveWorkerTest {
     fun `not enrolled with config enrolls successfully`() = runTest {
         enrolledStorage["enrolled"] = false
         every { authStore.getToken() } returns null
-        every { provisioner.discoverConfig() } returns ZeroTouchProvisioner.ProvisionConfig(
+        coEvery { provisioner.discoverConfig() } returns ZeroTouchProvisioner.ProvisionConfig(
             serverUrl = "http://test-server:8000",
             apiKey = "test_api_key",
             deviceId = "test-device-1",
@@ -129,7 +129,7 @@ class KeepAliveWorkerTest {
     fun `not enrolled without config returns success`() = runTest {
         enrolledStorage["enrolled"] = false
         every { authStore.getToken() } returns null
-        every { provisioner.discoverConfig() } returns null
+        coEvery { provisioner.discoverConfig() } returns null
 
         val worker = createWorker()
         val result = worker.doWork()
@@ -145,7 +145,7 @@ class KeepAliveWorkerTest {
     fun `enrollment exception still returns success`() = runTest {
         enrolledStorage["enrolled"] = false
         every { authStore.getToken() } returns null
-        every { provisioner.discoverConfig() } returns ZeroTouchProvisioner.ProvisionConfig(
+        coEvery { provisioner.discoverConfig() } returns ZeroTouchProvisioner.ProvisionConfig(
             serverUrl = "http://unreachable:8000",
             apiKey = "key",
             source = "test",
@@ -166,13 +166,13 @@ class KeepAliveWorkerTest {
     fun `auto register with enrollment key from server`() = runTest {
         enrolledStorage["enrolled"] = false
         every { authStore.getToken() } returns null
-        every { provisioner.discoverConfig() } returns ZeroTouchProvisioner.ProvisionConfig(
+        coEvery { provisioner.discoverConfig() } returns ZeroTouchProvisioner.ProvisionConfig(
             serverUrl = "http://test-server:8000",
             apiKey = "",
             source = "config_endpoint",
             autoRegisterEnabled = true,
         )
-        every { provisioner.fetchServerConfig() } returns ZeroTouchProvisioner.ServerConfig(
+        coEvery { provisioner.fetchServerConfig() } returns ZeroTouchProvisioner.ServerConfig(
             serverUrl = "http://test-server:8000",
             environment = "dev",
             autoRegister = true,

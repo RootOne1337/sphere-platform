@@ -122,6 +122,36 @@ async def test_auth_ack_is_not_issued_for_rejected_identity(agent_runtime, rejec
     r.manager.connect.assert_not_awaited()
 
 
+@pytest.mark.parametrize("refresh", [False, True])
+async def test_enrolled_device_discovery_uses_public_config_without_api_key_header(agent_runtime, monkeypatch, refresh):
+    """APK credentials are JWTs; sending them as a config API key blocks recovery."""
+    from backend.api.v1.config import router as config_router
+
+    r = agent_runtime
+    monkeypatch.setattr(config_router.settings, "AGENT_CONFIG_CACHE_TTL", 0)
+    monkeypatch.setattr(config_router, "_load_agent_config_from_file", lambda: {
+        "server_url": "https://discovered.invalid", "features": {"auto_register": False},
+    })
+    enrolled = await issue_device(r.world)
+    token = enrolled.access_token
+    if refresh:
+        rotated = await r.world.client.post("/api/v1/devices/refresh", headers={"Cookie": "refresh_token=" + enrolled.refresh_token})
+        assert rotated.status_code == 200
+        token = rotated.json()["access_token"]
+
+    rejected = await r.world.client.get("/api/v1/config/agent", headers={"X-API-Key": token})
+    assert rejected.status_code == 401  # The old Android watchdog's exact request.
+    public = await r.world.client.get("/api/v1/config/agent")
+    assert public.status_code == 200
+    assert public.json()["server_url"] == "https://discovered.invalid"
+    assert public.json()["org_id"] is None
+    assert public.json()["enrollment_allowed"] is False
+    assert token not in public.text
+    # Omitting credentials for discovery does not alter device identity or WS auth.
+    sent = await websocket(enrolled.device_id, token)
+    assert any(m["type"] == "websocket.send" and json.loads(m["text"]).get("type") == "auth_ok" for m in sent)
+
+
 @pytest.mark.parametrize("credential", ["device", "refreshed", "enrollment_key", "user"])
 async def test_runtime_agent_websocket_connect_and_reconnect(agent_runtime, credential):
     r = agent_runtime

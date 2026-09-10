@@ -97,12 +97,19 @@ researches NitroGen and a future external inference worker; no AI is implemented
   denial, loss, reconnect and late callbacks. **Deploy every backend worker before
   APK**; an older server without the acknowledgement cannot confirm a new client.
 
+- **AUD-73:** enrolled APK sent device JWT as a config API key (401); forced checks
+  fanned out and outlived stop/local route changes. Public cancellable discovery now
+  has a 10-second HTTP budget, bounded parsing, one active watchdog check and a
+  generation/local-revision fence. Baseline **9 failures / 4 controls**; **21 new
+  Android cases** and **2 SQL/ASGI contract controls**. This does not implement a
+  secondary endpoint or validate a candidate's backend availability.
+
 ## Validation
 
-- Combined local backend/PC/PostgreSQL/Redis/deployment: **1383 passed**, including
-  **485 real-service cases** and 25 deployment cases; **69.39%** coverage,
+- Combined local backend/PC/PostgreSQL/Redis/deployment: **1385 passed**, including
+  **487 real-service cases** and 25 deployment cases; **69.42%** coverage,
   four existing warnings. Load/soak profiles are excluded from this ordinary PR run.
-- Android enterprise debug unit suite: **378 passed / 30 suites**. These JVM/MockWebServer/OkHttp checks
+- Android enterprise debug unit suite: **399 passed / 31 suites**. These JVM/MockWebServer/OkHttp checks
   do not establish device OS, codec, battery or real network behavior.
 - Frontend: **198 tests / 23 suites**, TypeScript and production build pass. Linux CI
   verifies the standalone entry point; local Windows tracing emitted an ENOENT
@@ -121,7 +128,9 @@ researches NitroGen and a future external inference worker; no AI is implemented
   Dev/Enterprise × Debug/Release test tasks. Exact job snapshots and excerpts
   are retained. Preview guard passes and deployment is skipped. The following
   documentation-only commit records this verified code revision; its checks are
-  separate. The local results above are the AUD-72 runs, with no schema change.
+  separate. These CI runs precede AUD-73; its results will be retained after push.
+  The new local runs have 399 Android and 1385 backend/PC cases; backend code and
+  schema are unchanged.
 
 ## Rollout and remaining risks
 
@@ -173,7 +182,7 @@ Compose wiring and synthetic VPN UI zeroes are confirmed open gaps. Startup read
 does not check schema head, task execution or browser actions; the legacy tunnel
 path remains outside AUD-68. Reboot/restore/soak drills are still required.
 
-Local dependency-aware mypy was rerun and still reports 13 errors in seven unchanged files/imports;
+The last local dependency-aware mypy run (AUD-72) reports 13 errors in seven unchanged files/imports;
 CI mypy uses a separate lighter environment and must be assessed separately.
 
 No independent review, production migration, service rollout, merge or deployment

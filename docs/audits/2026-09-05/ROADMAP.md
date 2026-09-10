@@ -154,3 +154,18 @@ auth-ack cases; четыре Android Dev/Enterprise × Debug/Release test tasks 
 сохранены. Временных SQL runtime-ролей и других DB connections не осталось.
 Документационный commit не меняет code revision; preview deployment skipped,
 PR остаётся draft. Rollout требует **все backend workers → APK**.
+
+
+### Устранение отказов существующего discovery: AUD-73
+
+Воспроизведены JWT-as-API-key 401, 64 параллельных forced checks, блокирующий HTTP,
+late response после stop/смены URL и чтение oversized body. Исправлены публичный
+cancellable request, один active check и local revision fence. **399 Android tests /
+31 suites**, 21 новый case, два SQL/ASGI contract controls; [доказательства](AUDIT-REPORT.md).
+Это ещё не secondary route. Следующий P0 — сохранить рабочий адрес при проверке
+кандидата, primary/secondary одной установки и local discovery без GitHub; затем
+проверить реальные OS/network/fleet drills. [Границы](../../architecture/ANDROID-DISCOVERY-RECOVERY.md).
+
+Полный Windows backend/PC прогон AUD-73: **1385 / 69,42%**, **487 PG/Redis** и
+25 deployment cases; Ruff/API export pass. Schema не менялась, временных runtime
+ролей/других DB connections ноль. CI новой ревизии записывается после push.

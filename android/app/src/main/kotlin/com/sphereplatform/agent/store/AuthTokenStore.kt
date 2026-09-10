@@ -64,11 +64,26 @@ class AuthTokenStore @Inject constructor(
     }
 
     private val tokenMutex = Mutex()
+    private var serverUrlRevision = 0L
+
+    internal data class ServerUrlSnapshot(val url: String, val revision: Long)
+
+    @Synchronized
+    internal fun serverUrlSnapshot() = ServerUrlSnapshot(getServerUrl(), serverUrlRevision)
+
+    @Synchronized
+    internal fun replaceServerUrl(expected: ServerUrlSnapshot, url: String): Boolean {
+        if (serverUrlRevision != expected.revision || getServerUrl() != expected.url) return false
+        saveServerUrl(url)
+        return true
+    }
 
     fun getServerUrl(): String = prefs.getString(KEY_SERVER_URL, "") ?: ""
 
+    @Synchronized
     fun saveServerUrl(url: String) {
         prefs.edit().putString(KEY_SERVER_URL, url.trimEnd('/')).apply()
+        ++serverUrlRevision
     }
 
     /** Возвращает текущий access token без проверки срока истечения (для заголовков HTTP). */

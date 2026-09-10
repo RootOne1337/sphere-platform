@@ -248,3 +248,16 @@ boundaries, not a listening server or load test.
 
 Android adds 16 lifecycle/gating cases; full enterprise debug suite: 378 tests / 30
 suites. [Versioned handshake and deployment order](../../docs/architecture/ANDROID-CONNECTION-PROTOCOL.md).
+
+
+### Android discovery credential/lifecycle contract (AUD-73)
+
+`test_enrolled_device_discovery_uses_public_config_without_api_key_header` adds two
+non-owner SQL/ASGI cases: issued and refreshed device JWTs are rejected as config
+API keys (401), public discovery succeeds (200), and the same identity still gets
+WS `auth_ok`. These are passing server contract controls; the fix is in the APK.
+The new `ConfigRecoveryTest` has 21 Robolectric/OkHttp cases, including held headers,
+body limits, 64 coalesced notifications, stop/restart and stale local route revisions.
+Full Android enterprise debug suite: **399 tests / 31 suites**. No listeners, device
+OS, fleet throughput or new backend permission policy are exercised here.
+[Discovery contract](../../docs/architecture/ANDROID-DISCOVERY-RECOVERY.md).

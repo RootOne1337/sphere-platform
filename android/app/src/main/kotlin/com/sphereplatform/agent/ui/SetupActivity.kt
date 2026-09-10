@@ -158,7 +158,7 @@ class SetupActivity : AppCompatActivity() {
         showStatus("Auto-registering device…", isError = false)
 
         // Получаем enrollment API key из конфига (config endpoint или файл)
-        val enrollmentKey = getEnrollmentKeyFromConfig(serverUrl)
+        val enrollmentKey = getEnrollmentKeyFromConfig()
         if (enrollmentKey == null) {
             setLoading(false)
             showStatus("Auto-register: enrollment key not found. Enter credentials manually.", isError = true)
@@ -197,7 +197,7 @@ class SetupActivity : AppCompatActivity() {
      * Получает enrollment API key из server config endpoint или локальных источников.
      * Prioritет: config endpoint → локальный файл → BuildConfig.DEFAULT_API_KEY.
      */
-    private fun getEnrollmentKeyFromConfig(serverUrl: String): String? {
+    private suspend fun getEnrollmentKeyFromConfig(): String? {
         // Пробуем получить ключ из config endpoint (server возвращает enrollment_api_key)
         val serverConfig = provisioner.fetchServerConfig()
         if (serverConfig?.enrollmentApiKey != null) {

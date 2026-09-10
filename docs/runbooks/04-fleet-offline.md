@@ -40,6 +40,13 @@ watchdog использует 90 s без application ping. Нельзя счи�
 точным wall-clock временем обнаружения. Старые APK имеют другую reconnect policy.
 
 ConfigWatchdog: первая проверка через 5 s, затем 120 s connected / 60 s disconnected.
+После AUD-73 запрос имеет 10 s HTTP deadline; повторные сигналы используют активную
+проверку, stop отменяет её. На старом APK device JWT ошибочно попадал в `X-API-Key`
+config-запроса и давал `401`. Проверьте версию APK и публичный `GET /api/v1/config/agent`
+без credentials; не подставляйте JWT как API-ключ и не очищайте identity устройства.
+Отсутствующий/ошибочный ответ сохраняет прежний URL. Валидный JSON с недоступным
+адресом пока может заменить его: health trial/rollback ещё не реализованы.
+[Точный контракт discovery](../architecture/ANDROID-DISCOVERY-RECOVERY.md).
 Enterprise CONFIG_URL может быть пуст; один сохранённый URL не является двумя
 независимыми путями. Secondary endpoint и versioned LAN discovery пока в плане.
 
