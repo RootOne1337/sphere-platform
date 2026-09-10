@@ -25,7 +25,7 @@ runtime-проверок и не считается доказательство
 
 | Проверка | Результат | Практическое ограничение |
 | --- | --- | --- |
-| Android enterprise debug unit suite | 465 passed, 0 failed | JVM/MockWebServer и OkHttp interceptors; не проверяет ОС, codec, батарею или смерть процесса на телефоне |
+| Android enterprise debug unit suite | 485 passed, 0 failed | JVM/MockWebServer и OkHttp interceptors; не проверяет ОС, codec, батарею или смерть процесса на телефоне |
 | Объединённая Backend/PC/production/deployment suite | **1390 passed, 0 failed**; coverage **69,38%** | Строгий coverage gate 65% пройден с precision=2. Load suite исключена; 25 deployment cases включают config/subprocess probes без запуска сервисов |
 | Python dependency scan | **0 known vulnerabilities** в совместном backend/PC resolution | Pip-audit snapshot, не проверка frontend/Gradle/container/application security; [версии и ограничения](DEPENDENCY-REVIEW.md) |
 | Проверки PostgreSQL/Redis | **490 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
@@ -1692,3 +1692,49 @@ Runtime/fixtures/docs commit: **`2f17a85cf90fbb87ac5312fdfc2c4ff60dd324e0`**. В
 концами строк и удалёнными trailing spaces. Migration head не менялся. Ни Android
 OS/fleet/network measurements, ни deployment, ни независимое review не выполнены.
 Следующий commit только фиксирует evidence/docs; он имеет отдельные checks.
+
+## AUD-77 — High: раздельная запись регистрации теряла identity и допускала обратный порядок credentials
+
+**Эксплуатационный P0: APK теряет возможность продолжить подключение после регистрации.**
+
+- **Root cause:** registration сначала commit routes, затем отдельно apply ID и
+  tokens. Возврат успеха не подтверждал их запись на диск. Mutex фоновых workers
+  не охватывал ручной клиент и refresh; поздний ответ мог восстановить очищенные
+  credentials или заменить более новые. JSON primitive.content принимал null как
+  строку, а назначенный UUID/expiry не проверялись перед mutation.
+- **Evidence/reproduction:** неизменённый runtime `fb6e908` дал
+  [8 failures / 1 control](evidence/android-registration-state-before-summary.json),
+  [полный вывод](evidence/android-registration-state-before.txt). Модель отдельных
+  memory/disk теряет pending apply после успеха; route boundary содержит новый URL
+  со старой identity; credential commit failure не замечается. Gate первого ответа
+  показывает обратную запись двух issuances, overwrite после clear/route change,
+  invalid UUID и JSON null token. HTTP 401 сохраняет прежнее состояние (control).
+- **Affected files:** `android/app/src/main/kotlin/com/sphereplatform/agent/store/AuthTokenStore.kt`,
+  `android/app/src/main/kotlin/com/sphereplatform/agent/provisioning/DeviceRegistrationClient.kt`,
+  новый `RegistrationPersistenceTest.kt`; preference doubles трёх прежних suites
+  добавляют `contains` для сохранения отсутствующего expiry.
+- **Fix:** один checked commit routes/UUID/tokens/expiry/remove refresh intent;
+  failure восстанавливает предыдущую память и возвращает IOException. Monitor
+  закрывает промежуточную память от читателей store. Общий token mutex сериализует
+  регистрацию UI/workers с refresh; версии routes/credentials отклоняют stale reply,
+  включая ABA. Проверены строковые credentials, UUID, positive nonoverflow expiry.
+  Отмена проверяется под monitor до записи, ожидающий mutex caller отменяется отдельно.
+- **Regression:** 20 новых cases: baseline + failure/exception recovery, сохранение
+  отсутствующих ключей, ABA/ID fencing, cancelled waiter, оба порядка refresh и
+  registration, malformed credentials/expiry, old WS route plan и blocked reader
+  до rollback. [485 tests / 35 suites](evidence/android-registration-state-summary.json),
+  [полный прогон](evidence/android-registration-state-after.txt): 0 fail/error/skip, 2m 19s.
+- **Residual risk:** memory/disk и transport — doubles; реальный keystore/OS crash
+  и backend issuance не тестируются этим набором. Уже начатый synchronous commit
+  не отменяется и не имеет deadline. Если rollback тоже не удался, память неизвестна;
+  suppressed exception сохраняется. Один mutex процесса не устраняет remote commit
+  после отмены HTTP. Потеря initial reply/failed commit/stale rejection может оставить
+  серверную rotation без сохранённого результата. Старые credentials после failed
+  re-enrollment могут быть непригодны, а worker shortcut не распознаёт это. Требуется
+  отдельный recovery protocol. Marker, legacy static setup, clones, initial fallback,
+  настоящие sockets/OS/fleet/resource measurements остаются открытыми.
+
+Backend/schema не менялись. [Текущий контракт](../../architecture/ANDROID-BACKGROUND-ENROLLMENT.md)
+заменяет прежние замечания AUD-75/76 о раздельных registration writes и UI races;
+исторические результаты сохранены. CI новой runtime ревизии фиксируется отдельно.
+Merge, deployment и готовность всего проекта не заявлены.

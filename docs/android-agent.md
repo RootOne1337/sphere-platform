@@ -432,7 +432,7 @@ remain retryable. WS reads the assigned ID on each attempt and rejects stale-ID 
 **450 JVM tests / 33 suites**, including 22 new worker cases and two WS identity
 cases, pass. Android service/root and HTTP boundaries are doubles; this is not an
 installed APK or SQL smoke. [Behavior, reproduction, rollout and residual risks](architecture/ANDROID-BACKGROUND-ENROLLMENT.md).
-Initial response loss, atomic disk persistence, manual setup
+Initial response loss, physical disk/keystore persistence, legacy static setup
 concurrency and actual OS/fleet/resource behavior remain open.
 
 ## 19. Initial registration HTTP recovery (AUD-76)
@@ -443,5 +443,14 @@ for an error body. Late cancelled callbacks cannot write credentials. Worker tim
 returns retry, while parent cancellation propagates and frees the enrollment mutex.
 
 **465 JVM tests / 34 suites**, with 15 new cases. [Contract, evidence and limits](architecture/ANDROID-BACKGROUND-ENROLLMENT.md).
-The HTTP bound does not make device/preference IO bounded or identity writes atomic.
+The HTTP bound does not make device/preference IO bounded; AUD-77 adds one checked registration commit.
 Lost server commit responses and real installed APK/fleet recovery remain open.
+
+## Registration state recovery (AUD-77)
+
+Real registration now commits UUID, tokens and routes in one checked preference
+edit and serializes issuance with refresh across UI/background callers. Local
+state changes fence late replies. Disk failure returns an error and restores
+previous memory; it cannot undo server-side credential issuance. Legacy static-key
+setup remains separate. **485 JVM tests / 35 suites**, including 20 new cases.
+[Contract and remaining initial response-loss/OS limits](architecture/ANDROID-BACKGROUND-ENROLLMENT.md).

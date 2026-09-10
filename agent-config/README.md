@@ -105,6 +105,15 @@ identity, durable config rollback и инфраструктурная HA ост�
 После AUD-76 registration имеет отдельный HTTP budget 10 s и отменяет Call при stop;
 late cancelled response не записывает credentials. Error status используется без
 чтения error body, success body ограничен 64 KiB. Timeout оставляет worker retry.
-Это не deadline всей подготовки устройства или гарантия атомарного disk state.
+Это не deadline всей подготовки устройства. AUD-77 ниже добавляет единый registration commit; физический disk/keystore drill ещё не выполнен.
 Начальная регистрация сама не перебирает reserve URLs; saved failover применяется
 после полученной identity. [Контракт](../docs/architecture/ANDROID-BACKGROUND-ENROLLMENT.md).
+
+## Registration state recovery (AUD-77)
+
+Real registration now commits UUID, tokens and routes in one checked preference
+edit and serializes issuance with refresh across UI/background callers. Local
+state changes fence late replies. Disk failure returns an error and restores
+previous memory; it cannot undo server-side credential issuance. Legacy static-key
+setup remains separate. **485 JVM tests / 35 suites**, including 20 new cases.
+[Contract and remaining initial response-loss/OS limits](../docs/architecture/ANDROID-BACKGROUND-ENROLLMENT.md).

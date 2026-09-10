@@ -243,3 +243,16 @@ Runtime **`2f17a85`**: backend/frontend/Android PR+push прошли с перв
 preview только guard, deploy skipped. Backend **1390 / 69.37%**, Android все
 четыре test variants. Локально **465 / 34 suites**. [Точные SHA/run links и evidence](AUDIT-REPORT.md).
 Это проверка очередного исправления, не завершение всего аудита или аппаратного rollout.
+
+## AUD-77 — registration persistence и порядок issuance: локально исправлено
+
+Единый checked commit и общий mutex с refresh закрывают воспроизведённые потери
+UUID/tokens/routes и обратный порядок ответов. Versions защищают от clear/route/ID
+changes. **20 новых cases; 485 / 35 suites**. Baseline: **8 failures / 1 control**.
+Это закрывает локальные части atomic identity/manual HTTP concurrency из AUD-75/76.
+
+Следующий P0: server commit response loss, failed re-enrollment с уже отозванным
+старым refresh и recovery intent; затем clone identity, legacy static setup/config
+и initial fallback traversal. Аппаратные OS/network/fleet drills, наблюдаемость,
+достоверный UI и ресурсные бюджеты остаются в плане. [Доказательства](AUDIT-REPORT.md).
+CI новой runtime ревизии обязателен; audit целиком не завершён.

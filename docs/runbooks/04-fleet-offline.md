@@ -117,3 +117,16 @@ Late cancelled response не должен менять identity или запу�
 fingerprint/keystore IO и HTTP. У первых этапов нет общего 10-секундного срока.
 Не очищайте данные при неизвестном server commit: сохраните время/device/build и
 HTTP outcome для расследования. [Границы и воспроизведения](../architecture/ANDROID-BACKGROUND-ENROLLMENT.md).
+
+## Registration ответил, но credentials не сохранились
+
+После AUD-77 `Cannot persist registration` означает неуспех локального commit;
+`Registration state changed` — отклонение ответа после изменения credentials или
+маршрутов. Запрос запуска worker не должен следовать после этой ошибки. Сохраните
+время, device/build, причину IOException и предшествующее действие оператора.
+Не добавляйте токены или response body в диагностические логи.
+
+Локальный rollback не отзывает выданную сервером пару. При re-enrollment старый
+token/UUID в памяти не доказывает пригодность refresh; автоматический worker shortcut
+пока не решает этот случай. Не очищайте app data и не переустанавливайте APK ради
+маскировки неизвестного исхода. [Контракт и открытые сценарии](../architecture/ANDROID-BACKGROUND-ENROLLMENT.md).

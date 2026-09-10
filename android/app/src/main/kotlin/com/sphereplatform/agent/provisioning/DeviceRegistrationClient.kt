@@ -11,6 +11,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -91,6 +92,20 @@ class DeviceRegistrationClient @Inject constructor(
         location: String? = null,
         fallbackServerUrl: String? = null,
     ): RegistrationResult = withContext(Dispatchers.IO) {
+        authStore.withRegistration {
+            registerLocked(serverUrl, enrollmentApiKey, workstationId, instanceIndex, location, fallbackServerUrl)
+        }
+    }
+
+    private suspend fun registerLocked(
+        serverUrl: String,
+        enrollmentApiKey: String,
+        workstationId: String?,
+        instanceIndex: Int?,
+        location: String?,
+        fallbackServerUrl: String?,
+    ): RegistrationResult {
+        val version = authStore.registrationVersion()
         val fingerprint = cloneDetector.getFingerprint()
         val deviceType = cloneDetector.getDeviceType()
 
@@ -154,9 +169,8 @@ class DeviceRegistrationClient @Inject constructor(
         // Parent cancellation propagates; our own HTTP deadline remains retryable.
         currentCoroutineContext().ensureActive()
         val result = reply.result
-        authStore.saveServerRoutes(result.serverUrl, fallbackServerUrl ?: reply.advertisedUrl)
-        authStore.saveDeviceId(result.deviceId)
-        authStore.saveTokens(result.accessToken, result.refreshToken, result.expiresIn)
+        authStore.saveRegistration(version, result.deviceId, result.accessToken, result.refreshToken,
+            result.expiresIn, result.serverUrl, fallbackServerUrl ?: reply.advertisedUrl, currentCoroutineContext())
 
         Timber.i(
             "DeviceRegistration: %s device_id=%s name=%s",
@@ -164,7 +178,7 @@ class DeviceRegistrationClient @Inject constructor(
             result.deviceId,
             result.name,
         )
-        result
+        return result
     }
 
     private data class RegistrationReply(val result: RegistrationResult, val advertisedUrl: String?)
@@ -178,10 +192,10 @@ class DeviceRegistrationClient @Inject constructor(
         if (source.request(MAX_RESPONSE_BYTES.toLong() + 1)) throw IOException("Registration response too large")
         val jsonResponse = json.parseToJsonElement(source.readUtf8()).jsonObject
         val result = RegistrationResult(
-            deviceId = jsonResponse["device_id"]!!.jsonPrimitive.content,
+            deviceId = requiredString(jsonResponse, "device_id"),
             name = jsonResponse["name"]!!.jsonPrimitive.content,
-            accessToken = jsonResponse["access_token"]!!.jsonPrimitive.content,
-            refreshToken = jsonResponse["refresh_token"]!!.jsonPrimitive.content,
+            accessToken = requiredString(jsonResponse, "access_token"),
+            refreshToken = requiredString(jsonResponse, "refresh_token"),
             expiresIn = jsonResponse["expires_in"]!!.jsonPrimitive.long,
             serverUrl = normalizeManagementUrl(serverUrl),
             isNew = jsonResponse["is_new"]!!.jsonPrimitive.boolean,
@@ -191,6 +205,14 @@ class DeviceRegistrationClient @Inject constructor(
             ?.let { runCatching { normalizeManagementUrl(it) }.getOrNull() }
             ?.takeIf { it != result.serverUrl }
         return RegistrationReply(result, advertised)
+    }
+
+    private fun requiredString(response: JsonObject, key: String): String {
+        val value = response[key] as? JsonPrimitive
+        if (value == null || !value.isString || value.content.isBlank()) {
+            throw IOException("Invalid registration field: $key")
+        }
+        return value.content
     }
 
     /**

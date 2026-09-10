@@ -14,18 +14,24 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Security / runtime
 
+- AUD-77: registration сохраняет UUID/tokens/routes одним проверяемым commit,
+  сериализуется с refresh и отклоняет ответы после изменения identity/маршрутов.
+  Неуспешная запись возвращает ошибку и восстанавливает память; невалидные
+  credentials/expiry не принимаются. 20 новых regressions; **485 JVM tests**.
+  Initial server response loss и аппаратная durability остаются открытыми.
+
 - AUD-76: первичная registration теперь отменяет конкретный HTTP Call при stop,
   ограничивает запрос 10 s и success body 64 KiB до parse. Late cancelled callback
   не записывает credentials; error status не ждёт body. Worker timeout остаётся
   retryable и освобождает общую блокировку. 15 новых regressions, **465 JVM tests**.
-  Initial response loss и atomic disk state остаются открытыми.
+  Initial response loss остаётся открытым; единый commit добавлен в AUD-77.
 
 - AUD-75: фоновые workers регистрируют supplied bootstrap key до запуска агента,
   учитывают generated config flag/null и используют общую блокировку. Повторный
   запуск с сохранённой identity не выполняет новую registration rotation; transient
   failures остаются retryable. WS перечитывает назначенный ID и отклоняет старый ACK.
-  24 новых JVM regressions; **450 tests / 33 suites**. Initial response loss, disk
-  atomicity, OS/fleet/resource measurements остаются открытыми.
+  24 новых JVM regressions; **450 tests / 33 suites**. Initial response loss и OS/fleet/resource measurements остаются открытыми;
+  локальный registration commit добавлен в AUD-77.
 
 - AUD-74: APK сохраняет основной/резервный адрес одной установки и перебирает их
   для WS и refresh без GitHub. Новый адрес выбирается по device-bound `auth_ok`;

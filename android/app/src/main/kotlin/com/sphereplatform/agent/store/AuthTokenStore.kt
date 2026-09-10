@@ -30,6 +30,7 @@ import java.util.UUID
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
@@ -71,6 +72,73 @@ class AuthTokenStore @Inject constructor(
     /** Serializes background boot/periodic enrollment for this application store. */
     internal val enrollmentMutex = Mutex()
     private var serverUrlRevision = 0L
+    private var credentialRevision = 0L
+
+    internal data class RegistrationVersion(val credentials: Long, val routes: Long)
+
+    /** UI and workers must preserve issuance order, including refresh rotation. */
+    internal suspend fun <T> withRegistration(block: suspend () -> T): T = tokenMutex.withLock { block() }
+
+    @Synchronized
+    internal fun registrationVersion() = RegistrationVersion(credentialRevision, serverUrlRevision)
+
+    /** Success means one complete preference edit has reached commit(true). */
+    @Synchronized
+    internal fun saveRegistration(
+        expected: RegistrationVersion,
+        deviceId: String,
+        accessToken: String,
+        refreshToken: String,
+        expiresIn: Long,
+        primaryUrl: String,
+        fallbackUrl: String?,
+        context: CoroutineContext,
+    ) {
+        context.ensureActive()
+        if (expected != registrationVersion()) throw IOException("Registration state changed")
+        if (!UUID_REGEX.matches(deviceId) || accessToken.isBlank() || refreshToken.isBlank() || expiresIn <= 0) {
+            throw IOException("Invalid registration identity or credentials")
+        }
+        val expiresAt = try {
+            Math.addExact(System.currentTimeMillis(), Math.multiplyExact(expiresIn, 1000L))
+        } catch (e: ArithmeticException) {
+            throw IOException("Invalid registration expiry", e)
+        }
+        val primary = normalizeManagementUrl(primaryUrl)
+        val fallback = fallbackUrl?.let(::normalizeManagementUrl)?.takeIf { it != primary }
+        val keys = listOf(KEY_SERVER_URL, KEY_PRIMARY_SERVER_URL, KEY_FALLBACK_SERVER_URL,
+            KEY_DEVICE_ID, KEY_ACCESS_TOKEN, KEY_REFRESH_TOKEN, KEY_REFRESH_ROTATION_ID)
+        val previous = keys.associateWith { prefs.getString(it, null) }
+        val previousExpiry = if (prefs.contains(KEY_ACCESS_TOKEN_EXPIRES_AT)) {
+            prefs.getLong(KEY_ACCESS_TOKEN_EXPIRES_AT, 0L)
+        } else null
+        try {
+            val committed = prefs.edit()
+                .putString(KEY_SERVER_URL, primary).putString(KEY_PRIMARY_SERVER_URL, primary)
+                .putString(KEY_FALLBACK_SERVER_URL, fallback).putString(KEY_DEVICE_ID, deviceId)
+                .putString(KEY_ACCESS_TOKEN, accessToken).putString(KEY_REFRESH_TOKEN, refreshToken)
+                .putLong(KEY_ACCESS_TOKEN_EXPIRES_AT, expiresAt).remove(KEY_REFRESH_ROTATION_ID)
+                .commit()
+            if (!committed) throw IOException("Cannot persist registration")
+        } catch (e: Exception) {
+            // Failed commit may have changed memory. Readers use the same monitor,
+            // so they cannot observe this candidate before rollback. Disk failure is
+            // not a server rollback: issued credentials may still require recovery.
+            try {
+                prefs.edit().also { editor ->
+                    previous.forEach { (key, value) -> editor.putString(key, value) }
+                    if (previousExpiry == null) editor.remove(KEY_ACCESS_TOKEN_EXPIRES_AT)
+                    else editor.putLong(KEY_ACCESS_TOKEN_EXPIRES_AT, previousExpiry)
+                }.apply()
+            } catch (rollbackFailure: Exception) {
+                e.addSuppressed(rollbackFailure)
+            }
+            throw IOException("Cannot persist registration", e)
+        } finally {
+            ++credentialRevision
+            ++serverUrlRevision
+        }
+    }
 
     internal data class ServerUrlSnapshot(val url: String, val revision: Long)
     internal data class ConnectionRoutes(val revision: Long, val urls: List<String>)
@@ -131,6 +199,7 @@ class AuthTokenStore @Inject constructor(
         ++serverUrlRevision
     }
 
+    @Synchronized
     fun getServerUrl(): String = prefs.getString(KEY_SERVER_URL, "") ?: ""
 
     @Synchronized
@@ -141,6 +210,7 @@ class AuthTokenStore @Inject constructor(
     }
 
     /** Возвращает текущий access token без проверки срока истечения (для заголовков HTTP). */
+    @Synchronized
     fun getToken(): String? = prefs.getString(KEY_ACCESS_TOKEN, null)
 
     /**
@@ -250,6 +320,7 @@ class AuthTokenStore @Inject constructor(
                     .putLong(KEY_ACCESS_TOKEN_EXPIRES_AT, System.currentTimeMillis() + refreshed.expiresIn * 1000)
                     .remove(KEY_REFRESH_ROTATION_ID)
                     .apply()
+                ++credentialRevision
             }
         }
 
@@ -277,6 +348,7 @@ class AuthTokenStore @Inject constructor(
 
     @Synchronized
     fun saveTokens(accessToken: String, refreshToken: String, expiresIn: Long) {
+        ++credentialRevision
         prefs.edit()
             .putString(KEY_ACCESS_TOKEN, accessToken)
             .putString(KEY_REFRESH_TOKEN, refreshToken)
@@ -291,6 +363,7 @@ class AuthTokenStore @Inject constructor(
      */
     @Synchronized
     fun saveApiKey(apiKey: String) {
+        ++credentialRevision
         prefs.edit()
             .putString(KEY_ACCESS_TOKEN, apiKey)
             .remove(KEY_REFRESH_TOKEN)
@@ -301,6 +374,7 @@ class AuthTokenStore @Inject constructor(
 
     @Synchronized
     fun clearTokens() {
+        ++credentialRevision
         prefs.edit()
             .remove(KEY_ACCESS_TOKEN)
             .remove(KEY_REFRESH_TOKEN)
@@ -314,6 +388,7 @@ class AuthTokenStore @Inject constructor(
      * Только сбрасывает expiry — не удаляет refresh_token (позволяет обновить access).
      * Вызывается при AUTH_REJECTED (4001) от сервера.
      */
+    @Synchronized
     fun clearTokenCache() {
         prefs.edit()
             .putLong(KEY_ACCESS_TOKEN_EXPIRES_AT, 0L)
@@ -325,17 +400,21 @@ class AuthTokenStore @Inject constructor(
      * Если сохранён невалидный формат (например, fingerprint "android-xxx") —
      * сбрасывает его и возвращает null для повторной регистрации.
      */
+    @Synchronized
     fun getDeviceId(): String? {
         val id = prefs.getString(KEY_DEVICE_ID, null) ?: return null
         if (!UUID_REGEX.matches(id)) {
             Timber.w("Невалидный device_id='%s', сбрасываю для повторной регистрации", id)
             prefs.edit().remove(KEY_DEVICE_ID).apply()
+            ++credentialRevision
             return null
         }
         return id
     }
 
+    @Synchronized
     fun saveDeviceId(deviceId: String) {
+        ++credentialRevision
         prefs.edit().putString(KEY_DEVICE_ID, deviceId).apply()
     }
 }

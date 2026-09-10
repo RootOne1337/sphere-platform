@@ -299,3 +299,14 @@ Baseline: five failures / two controls. The first expanded candidate had one inv
 interceptor-count assertion; the corrected test drains callbacks and verifies no
 credential mutation. [Evidence and limits](../../docs/architecture/ANDROID-BACKGROUND-ENROLLMENT.md).
 No backend code/schema changes or installed APK/SQL smoke is claimed.
+
+### Registration persistence and issuance ordering (AUD-77)
+
+20 new JVM `RegistrationPersistenceTest` cases use the real registration client and
+token store with isolated OkHttp issuance gates and separate preference memory/disk
+doubles. Baseline 9 cases: 8 failures / 1 control; full enterprise debug after fix:
+**485 tests / 35 suites**, no failures/errors/skips. Includes failed/throwing commit,
+restart without pending apply, stale replies, both refresh ordering directions,
+waiter cancellation and readers during failed persistence. No actual Android disk,
+keystore, OS kill or server credential replay is claimed.
+[Evidence and residual risks](../../docs/architecture/ANDROID-BACKGROUND-ENROLLMENT.md).

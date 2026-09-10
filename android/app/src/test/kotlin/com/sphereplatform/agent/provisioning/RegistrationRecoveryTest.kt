@@ -54,6 +54,7 @@ class RegistrationRecoveryTest {
         val prefs = mockk<EncryptedSharedPreferences> {
             every { getString(any(), any()) } answers { memory[firstArg()] as? String ?: secondArg() }
             every { getLong(any(), any()) } answers { memory[firstArg()] as? Long ?: secondArg() }
+            every { contains(any()) } answers { memory.containsKey(firstArg()) }
             every { edit() } answers {
                 val pending = mutableMapOf<String, Any?>()
                 fun write() = pending.forEach { (k, v) -> if (v == null) memory.remove(k) else memory[k] = v }

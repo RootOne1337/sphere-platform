@@ -1,6 +1,6 @@
 # Фоновая регистрация APK и запуск связи
 
-**10 сентября 2026 · AUD-75–76 · проверено в JVM, аппаратный rollout не выполнен.**
+**10 сентября 2026 · AUD-75–77 · проверено в JVM, аппаратный rollout не выполнен.**
 
 [APK guide](../android-agent.md) · [Резервные адреса](ANDROID-SAVED-ROUTES.md) ·
 [Готовность системы](../operations/READINESS.md) · [Аудит](../audits/2026-09-05/AUDIT-REPORT.md)
@@ -34,8 +34,8 @@ APK с локальной конфигурацией и ключом регис�
 `AuthTokenStore`. После ожидания worker повторно читает identity: два фоновых
 запуска не выполняют конкурентную registration rotation для одного процесса.
 Отмена ожидающего worker не отменяет владельца; отмена discovery выходит наружу,
-а не превращается в успешный результат. Это не межпроцессная блокировка и не
-сериализация ручного SetupActivity с workers.
+а не превращается в успешный результат. Это не межпроцессная блокировка. AUD-77 ниже дополнительно сериализует
+HTTP registration из SetupActivity и workers с refresh через token mutex.
 
 WS больше не получает ID один раз от `DeviceInfoProvider` при создании сервиса.
 Каждая попытка читает текущий сохранённый UUID. Пока его нет, socket не создаётся.
@@ -74,9 +74,10 @@ SQL contract tests предыдущих этапов не выдаются за 
 
 ## Остаточные риски и следующий этап
 
-HTTP registration ограничен и отменяется после AUD-76 ниже. Потеря ответа после server commit и
-долговечная атомарная запись UUID/tokens/marker ещё не закрыты. Mutex workers
-не решает конкуренцию с ручной регистрацией или остановку процесса посреди записи.
+HTTP registration ограничен и отменяется после AUD-76. AUD-77 объединяет запись
+UUID/tokens/routes и упорядочивает registration/refresh внутри процесса. Marker
+остаётся отдельным: после его потери worker использует сохранённую identity. Потеря
+ответа после server commit и реальная смерть процесса/keystore ещё не закрыты.
 Смена identity уже после подтверждения активного WS не имеет отдельного немедленного
 сигнала закрытия этим изменением. Наследуемые ошибочные данные требуют диагностики.
 
@@ -123,9 +124,57 @@ application interceptor может увидеть отменённый Call по
 сохранение работающего соседа и отсутствие credential writes; исходный failure сохранён.
 
 **Границы:** срок 10 s не включает ожидание worker mutex, fingerprint/device IO,
-планирование Android или уже начатую синхронную запись preferences. Persistence
-всё ещё состоит из отдельных route/ID/token операций; cancellation не транзакция.
-Нет fencing успешного неотменённого ответа против другой регистрации/clear и нет
-idempotent receipt initial registration после server commit. Резерв применяется
+планирование Android или уже начатую синхронную запись preferences. AUD-77 ниже
+добавляет единый commit и fencing неотменённых ответов. Cancellation не отменяет
+начатый disk commit; idempotent receipt initial registration пока отсутствует. Резерв применяется
 к уже установленной связи; начальный registration вызов сам не перебирает endpoints.
 Реальные sockets/OS/keystore/process death/fleet latency остаются непроверенными.
+
+## Сохранение регистрации и конкурирующие ответы (AUD-77)
+
+Успех `DeviceRegistrationClient.register()` теперь означает `commit(true)` одной
+операции: active/primary/fallback, UUID, access/refresh, expiry и удаление старого
+refresh intent. Проверяются UUID, непустые строковые credentials и положительный
+expiry без переполнения. JSON null/число/boolean не становятся строкой токена.
+
+Registration и refresh используют один coroutine mutex `AuthTokenStore`. Mutex
+workers остаётся внешним; ручные HTTP регистрации используют внутренний. Запросы
+сериализуются, но не объединяются: два явных вызова могут последовательно выпустить
+две пары credentials. Отмена ожидающего не отменяет владельца. Межпроцессной
+блокировки нет; 10 s HTTP budget начинается после очереди и metadata IO.
+
+Перед HTTP запоминаются версии credentials и маршрутов. Commit под monitor store
+отклоняет ответ, если за это время произошли clear, замена ID/tokens/API key или
+изменение маршрутов, включая изменение и возврат прежних значений. Успешная запись
+также инвалидирует ранее захваченный WS route plan при неизменном URL. Синхронные
+читатели store ждут завершения commit/rollback и не получают промежуточный token.
+
+При `commit(false)` или exception caller получает IOException, а store восстанавливает
+полное прежнее состояние памяти, включая отсутствие expiry. Это не rollback на
+сервере и не гарантия восстановления физического диска. Если сам rollback также
+падает, исходная ошибка содержит suppressed failure; требуется диагностика storage.
+Синхронный commit/rollback не имеет deadline и может задержать читателей.
+Отмена до commit запрещает запись; отмена во время уже начатого commit его не прерывает.
+
+Baseline `fb6e908`: [9 cases / 8 failures / 1 control](../audits/2026-09-05/evidence/android-registration-state-before-summary.json),
+[вывод](../audits/2026-09-05/evidence/android-registration-state-before.txt).
+После fix: 20 новых `RegistrationPersistenceTest`, включая отказ/exception записи,
+отбрасывание pending apply при пересоздании store, обратный порядок ответов,
+clear/ABA/route/ID races, отмену mutex waiter, оба порядка refresh/registration,
+invalid payload и запрет публикации неуспешного commit читателю.
+[Полный прогон: 485 tests / 35 suites](../audits/2026-09-05/evidence/android-registration-state-summary.json),
+[вывод](../audits/2026-09-05/evidence/android-registration-state-after.txt).
+Preference disk и transport — контролируемые doubles, не аппаратный crash test.
+
+**Открыто:** сервер может выпустить credentials, которые клиент не сохранит из-за
+response loss, cancellation, failed commit или отклонённого stale reply. После
+неудачной повторной регистрации прежние credentials могут уже не работать; shortcut
+worker с прежним token/UUID сам по себе этого не обнаруживает. Нужен отдельный
+протокол восстановления initial enrollment, а не обещание, что локальный rollback
+отменил серверную rotation. Legacy static-key setup всё ещё пишет отдельными
+операциями. Marker, clone collisions, initial fallback traversal и аппаратные
+OS/network/fleet измерения также не закрыты.
+
+Контракт синхронного commit и асинхронного apply сверён с
+[Android SharedPreferences.Editor](https://developer.android.com/reference/android/content/SharedPreferences.Editor).
+Это основание для модели теста, а не доказательство всех гарантий keystore/OEM.
