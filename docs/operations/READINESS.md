@@ -78,7 +78,7 @@ backup/restore drill и локальный журнал APK. Отдельный 
 
 | Механизм | Реальное назначение | Ограничение |
 | --- | --- | --- |
-| `SphereWebSocketClient` | Один активный WS, handshake timeout 20 s, reconnect/circuit, force reconnect | `isConnected` выставляется после отправки auth, а не подтверждения сервером |
+| `SphereWebSocketClient` | Один активный WS, ожидание target-bound `auth_ok` до 20 s, reconnect/circuit, force reconnect | AUD-72 подтверждает identity до `isConnected`; это не readiness всех backend services. [Rollout backend→APK](../architecture/ANDROID-CONNECTION-PROTOCOL.md) |
 | `ConfigWatchdog` | Опрос адреса: 120 s connected / 60 s disconnected; первая задержка 5 s | Один compile-time CONFIG_URL, в enterprise по умолчанию пуст; не второй канал команд |
 | `FallbackDns` | Системный DNS и внешние DNS fallback | Не меняет endpoint и не оживляет сервер; внешние резолверы не заменяют LAN DNS |
 | `AuthTokenStore` | Сохранённая identity, access/refresh, mutex refresh, cancellable HTTP | Persisted operation ID и deadline/stop проверены в tests; actual OS/keystore/network drill ещё не выполнен |
@@ -168,7 +168,7 @@ capture и background возможности каждого телефона. AP
 - Проверены исходники connect/discovery/token/service/journal/logging, Compose,
   monitoring и конкретный VPN UI path. Это не постраничный полный browser-аудит.
 - AUD-67 имеет before/after tests: исправлены reconnect pacing/jitter; Android
-  enterprise debug suite на AUD-67 — 347; после AUD-70 — 354, AUD-71 — 362 JVM tests. Реальные OS/network measurements открыты.
+  enterprise debug suite на AUD-67 — 347; после AUD-70 — 354, AUD-71 — 362, AUD-72 — 378 JVM tests. Реальные OS/network measurements открыты.
 - AUD-68: устранён ложный startup success, 25 deployment tests проходят. Это
   subprocess/config проверки; daemon/OS failure drill остаётся открытым.
 - Зафиксированы эксплуатационные пробелы, принято простое направление failover,
@@ -184,3 +184,7 @@ AUD-69/70: SQL refresh recovery и APK persist-before-send проверены л
 AUD-71: собственный deadline отменяет HTTP и сохраняет retry intent, внешняя отмена
 останавливает вызывающую coroutine. Управляемые зависания headers/body и late-response races
 воспроизведены внутри JVM с подменой транспорта; hardware latency не измерена.
+
+AUD-72: устранён преждевременный connected state и поздние callbacks закрытого
+сеанса; 16 новых JVM и восемь SQL/ASGI cases. Эта предпосылка для failover проверена,
+но резервный route ещё не добавлен. Новому APK нужен `auth_ok` на всех workers.

@@ -14,6 +14,10 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Security / runtime
 
+- AUD-72: APK становится connected после подтверждения device ID сервером, а не
+  сразу после открытия WS. Silent auth ограничен дедлайном, поздние callbacks
+  завершённого сеанса не включают канал и не доставляют команды. 16 новых JVM и
+  восемь SQL/ASGI cases; 378 Android tests. [Обновить backend раньше APK](docs/architecture/ANDROID-CONNECTION-PROTOCOL.md).
 - AUD-71: зависший APK refresh больше не удерживает очередь после HTTP-дедлайна;
   stop отменяет конкретный OkHttp Call, поздний body не меняет credentials.
   Pending ID остаётся для recovery; восемь новых regressions, 362 JVM tests проходят.

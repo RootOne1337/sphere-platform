@@ -29,10 +29,16 @@ class WebSocketLifecycleTest {
     }
     private val client = SphereWebSocketClient(http, auth, Json)
 
+    private fun authenticateSocket() {
+        listener.onOpen(socket, mockk(relaxed = true))
+        listener.onMessage(socket, """{"type":"auth_ok","device_id":"local-test-device","protocol_version":1}""")
+        assertTrue(client.isConnected)
+    }
+
     @Test fun cleanServerCloseWaitsBeforeReconnect() = runTest {
         val job = launch { client.connect("local-test-device") }
         runCurrent()
-        listener.onOpen(socket, mockk(relaxed = true))
+        authenticateSocket()
         runCurrent()
         listener.onClosed(socket, 1001, "server_restart")
         runCurrent()
@@ -49,7 +55,7 @@ class WebSocketLifecycleTest {
     @Test fun cleanServerCloseWaitIsInterruptibleByStop() = runTest {
         val job = launch { client.connect("local-test-device") }
         runCurrent()
-        listener.onOpen(socket, mockk(relaxed = true))
+        authenticateSocket()
         runCurrent()
         listener.onClosed(socket, 1000, "maintenance")
         runCurrent()
@@ -78,7 +84,7 @@ class WebSocketLifecycleTest {
     @Test fun forcedReconnectClosesActiveTransport() = runTest {
         val job = launch { client.connect("local-test-device") }
         runCurrent()
-        listener.onOpen(socket, mockk(relaxed = true))
+        authenticateSocket()
         runCurrent()
         client.forceReconnectNow()
         verify(atLeast = 1) { socket.cancel() }
@@ -88,7 +94,7 @@ class WebSocketLifecycleTest {
     @Test fun closingHandshakeIsAcknowledged() = runTest {
         val job = launch { client.connect("local-test-device") }
         runCurrent()
-        listener.onOpen(socket, mockk(relaxed = true))
+        authenticateSocket()
         listener.onClosing(socket, 1000, "server_shutdown")
         verify { socket.close(1000, "server_shutdown") }
         job.cancelAndJoin()
@@ -97,7 +103,7 @@ class WebSocketLifecycleTest {
     @Test fun failureAfterOpenUsesBackoff() = runTest {
         val job = launch { client.connect("local-test-device") }
         runCurrent()
-        listener.onOpen(socket, mockk(relaxed = true))
+        authenticateSocket()
         runCurrent()
         listener.onFailure(socket, IOException("local network failure"), null)
         runCurrent()
@@ -114,7 +120,7 @@ class WebSocketLifecycleTest {
     @Test fun videoBackpressureDoesNotFillOkHttpQueue() = runTest {
         val job = launch { client.connect("local-test-device") }
         runCurrent()
-        listener.onOpen(socket, mockk(relaxed = true))
+        authenticateSocket()
         every { socket.queueSize() } returns 2L * 1024 * 1024
         assertFalse(client.sendBinary(ByteArray(1024)))
         verify(exactly = 0) { socket.send(any<okio.ByteString>()) }

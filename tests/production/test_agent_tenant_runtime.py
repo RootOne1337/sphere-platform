@@ -34,7 +34,7 @@ def agent_runtime(runtime_db, monkeypatch, tmp_path):
     return SimpleNamespace(db=runtime_db, world=runtime_db.world, manager=manager, path=tmp_path)
 
 
-async def websocket(device_id, token, messages=()):
+async def websocket(device_id, token, messages=(), *, on_send=None):
     events = iter([
         {"type": "websocket.connect"},
         {"type": "websocket.receive", "text": json.dumps({"token": token})},
@@ -47,6 +47,8 @@ async def websocket(device_id, token, messages=()):
         return next(events)
 
     async def send(message):
+        if on_send is not None:
+            await on_send(message)
         sent.append(message)
 
     path = f"/ws/android/{device_id}"
@@ -57,6 +59,67 @@ async def websocket(device_id, token, messages=()):
         "server": ("audit.local", 80), "root_path": "", "subprotocols": [],
     }, receive, send), 5)
     return sent
+
+
+@pytest.mark.parametrize("credential", ["device", "refreshed", "enrollment_key", "user"])
+async def test_auth_ack_precedes_registry_publication_and_commands(agent_runtime, credential):
+    r = agent_runtime
+    enrolled = await issue_device(r.world)
+    token = enrolled.access_token
+    if credential == "refreshed":
+        result = await r.world.client.post("/api/v1/devices/refresh", headers={"Cookie": "refresh_token=" + enrolled.refresh_token})
+        assert result.status_code == 200
+        token = result.json()["access_token"]
+    elif credential == "enrollment_key":
+        _, token = await issue_key(r.world)
+    elif credential == "user":
+        token = r.world.auth(r.world.users["org_admin"])["Authorization"].split()[1]
+
+    async def publish_connection(ws, *_):
+        # A published socket can receive work immediately from another producer.
+        await ws.send_json({"type": "execute_dag", "id": "isolated-command"})
+        return "runtime-session"
+
+    r.manager.connect.side_effect = publish_connection
+    for _ in range(2):
+        sent = await websocket(enrolled.device_id, token)
+        payloads = [json.loads(m["text"]) for m in sent if m["type"] == "websocket.send"]
+        assert payloads == [
+            {"type": "auth_ok", "device_id": str(enrolled.device_id), "protocol_version": 1},
+            {"type": "execute_dag", "id": "isolated-command"},
+        ]
+        assert token not in json.dumps(payloads)
+
+
+async def test_auth_ack_delivery_failure_does_not_publish_or_evict_session(agent_runtime):
+    r = agent_runtime
+    enrolled = await issue_device(r.world)
+
+    async def lose_ack(message):
+        if message["type"] == "websocket.send" and json.loads(message["text"]).get("type") == "auth_ok":
+            raise OSError("isolated loss before auth acknowledgement delivery")
+
+    await websocket(enrolled.device_id, enrolled.access_token, on_send=lose_ack)
+    r.manager.connect.assert_not_awaited()
+    r.manager.disconnect.assert_not_awaited()
+
+
+@pytest.mark.parametrize("rejected", ["foreign", "invalid_token", "inactive"])
+async def test_auth_ack_is_not_issued_for_rejected_identity(agent_runtime, rejected):
+    r = agent_runtime
+    enrolled = await issue_device(r.world)
+    target, token = enrolled.device_id, enrolled.access_token
+    if rejected == "foreign":
+        target = r.world.dev_b.id
+    elif rejected == "invalid_token":
+        token = "not-a-token"
+    else:
+        async with r.world.sessions() as db:
+            await db.execute(update(Device).where(Device.id == target).values(is_active=False))
+            await db.commit()
+    sent = await websocket(target, token)
+    assert not [message for message in sent if message["type"] == "websocket.send"]
+    r.manager.connect.assert_not_awaited()
 
 
 @pytest.mark.parametrize("credential", ["device", "refreshed", "enrollment_key", "user"])

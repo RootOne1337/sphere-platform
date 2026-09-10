@@ -231,6 +231,20 @@ roundtrip runs inside an owner transaction that is rolled back; no schema downgr
 is committed. Fixtures use only the named loopback audit services.
 
 Android's separate `RefreshRecoveryTest` has seven cases using distinct fake memory
-and disk plus an HTTP interceptor, with no network. Full JVM suite: 354 cases.
+and disk plus an HTTP interceptor, with no network. JVM suite at AUD-70: 354 cases.
 This validates ordering and stale-response fencing, not actual Android OS crash,
 keystore or disk durability. [Protocol/rollout](../../docs/security/device-refresh-recovery.md).
+
+### Android authentication acknowledgement (AUD-72)
+
+Eight new cases in `test_agent_tenant_runtime.py` execute actual ASGI auth under a
+non-owner PostgreSQL role. The first server frame identifies the authenticated
+device before registry publication/command delivery, including reconnect for
+device, refreshed, enrollment-key and user credentials. Failed acknowledgement
+delivery cannot publish/evict a session; foreign, invalid and inactive credentials
+receive no acknowledgement. Initial baseline: five failures and three controls;
+48 related auth/refresh cases pass. Delivery/registry/heartbeat are controlled
+boundaries, not a listening server or load test.
+
+Android adds 16 lifecycle/gating cases; full enterprise debug suite: 378 tests / 30
+suites. [Versioned handshake and deployment order](../../docs/architecture/ANDROID-CONNECTION-PROTOCOL.md).

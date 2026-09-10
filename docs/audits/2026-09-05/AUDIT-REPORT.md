@@ -25,17 +25,17 @@ runtime-проверок и не считается доказательство
 
 | Проверка | Результат | Практическое ограничение |
 | --- | --- | --- |
-| Android enterprise debug unit suite | 362 passed, 0 failed | JVM/MockWebServer и OkHttp interceptors; не проверяет ОС, codec, батарею или смерть процесса на телефоне |
-| Объединённая Backend/PC/production/deployment suite | **1375 passed, 0 failed**; coverage **69,35%** | Строгий coverage gate 65% пройден с precision=2. Load suite исключена; 25 deployment cases включают config/subprocess probes без запуска сервисов |
+| Android enterprise debug unit suite | 378 passed, 0 failed | JVM/MockWebServer и OkHttp interceptors; не проверяет ОС, codec, батарею или смерть процесса на телефоне |
+| Объединённая Backend/PC/production/deployment suite | **1383 passed, 0 failed**; coverage **69,39%** | Строгий coverage gate 65% пройден с precision=2. Load suite исключена; 25 deployment cases включают config/subprocess probes без запуска сервисов |
 | Python dependency scan | **0 known vulnerabilities** в совместном backend/PC resolution | Pip-audit snapshot, не проверка frontend/Gradle/container/application security; [версии и ограничения](DEPENDENCY-REVIEW.md) |
-| Проверки PostgreSQL/Redis | **477 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
+| Проверки PostgreSQL/Redis | **485 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
 | Миграции | Применены до **20260910_device_refresh_retry** включительно | Только изолированная БД; конфликтные данные/downgrade проверены в throwaway schema; production не мигрировался |
 | Backend image | Собирается; исходная запись OpenAPI воспроизведённо падает с PermissionError | Исправлен lifespan; полный deployment runtime ещё не подтверждён |
 | Frontend | **198 Jest tests passed**, tsc passed; Next production build exit 0 на Node 24.19.0 | React/JSDOM + Axios adapters; настоящий browser runtime не проверен. Windows standalone tracing выдал ENOENT warning, artifact packaging ещё не подтверждён |
 | APK ↔ реальный локальный backend | Не завершено | Автоматическая проверка разрешений отклонила запуск локального API: `blocked by policy`; обход не выполнялся |
 | 10–64 эмулятора на станции, сотни/тысячи APK, физические телефоны | Не измерено | Нет подтверждённых CPU/RAM/FPS/энергопотребления и совместимости со всеми Android |
 
-Последний общий вывод: [combined-suite-current.txt](evidence/combined-suite-current.txt).
+Последний общий вывод: [auth-ack-combined-suite.txt](evidence/auth-ack-combined-suite.txt).
 Предыдущий отдельный DAG benchmark однажды занял 127,1 ms при пороге 100 ms;
 изолированный повтор и последующие общие прогоны прошли. На первой CI попытке
 `d828a62` этот же неизменённый тест измерил 363,2 ms: **1 failed / 1213 passed**,
@@ -1243,3 +1243,63 @@ deployment skipped. Снимки: [backend](evidence/ci-fec0c5f-backend.json),
 [Android push](evidence/ci-fec0c5f-android-push.json), [preview](evidence/ci-fec0c5f-preview.json).
 Документационный commit сохраняет эти результаты, не меняя исполняемый код;
 его checks идут отдельно. PR остаётся draft, без независимого review, merge или deployment.
+
+
+## AUD-72 — High: transport open выдавал ложный connected, поздние callbacks переживали сеанс
+
+**Эксплуатационный приоритет P0; предпосылка оценки резервного маршрута.** APK
+запускал `onConnected` и повторную отправку результатов сразу после `onOpen`, до
+проверки identity сервером. Silent auth переставал ограничиваться handshake deadline.
+Завершившаяся попытка сохраняла generation до следующего reconnect, поэтому во
+время backoff поздние callbacks могли включить connected или передать команды.
+
+- **Root cause:** `connected.complete(Unit)` находился в `onOpen`; backend не
+  отправлял явного auth acknowledgement. `finally` очищал поля, но не инвалидировал
+  generation. После добавления ожидания ACK нужно также сохранять auth close codes
+  и первую terminal completion, включая callbacks до запуска coroutine cleanup.
+- **Evidence/reproduction:** baseline `5204e1f` + первые regression tests:
+  [Android 10 failures / 2 controls](evidence/android-auth-ack-before.txt),
+  [backend 5 failures / 3 controls](evidence/backend-auth-ack-before.txt).
+  JVM вызывает настоящие loop/listeners с virtual time: transport open без ACK,
+  тишина после open, неверный device/version, команда до ACK, callback во время
+  backoff. ASGI с реальным non-owner SQL проверяет первый server frame и немедленную
+  публикацию команды при регистрации socket; при потере ACK registry не должен меняться.
+- **Affected files:** `backend/api/ws/android/router.py`,
+  `android/app/src/main/kotlin/com/sphereplatform/agent/ws/SphereWebSocketClient.kt`,
+  `tests/production/test_agent_tenant_runtime.py`, новый
+  `android/app/src/test/kotlin/com/sphereplatform/agent/ws/WebSocketAuthenticationTest.kt`;
+  прежние `WebSocketLifecycleTest.kt` fixtures теперь подтверждают авторизацию.
+- **Fix:** backend отправляет `auth_ok` с device ID и числовой protocol version 1
+  после авторизации/закрытия DB session, до публикации соединения. Отправка ограничена
+  5 s; при ошибке registry не меняется. APK разрешает application traffic и
+  однократный `onConnected` только после корректного ACK. Общий WS deadline 20 s
+  охватывает ACK; close-коды авторизации сразу запускают прежний refresh path.
+  Ended generation инвалидируется до backoff; первая failure completion не может
+  стать успешной от позднего ACK даже до coroutine cleanup.
+- **Дополнительное воспроизведение:** [callback внутри `socket.cancel()`](evidence/android-auth-ack-cleanup-before.txt)
+  передал одну команду в уже останавливаемый handler. Перенос invalidation перед
+  внешним transport teardown устраняет окно; отдельный regression сохранён.
+- **Regression:** итоговые 16 новых JVM и восемь SQL/ASGI cases.
+  [378 tests / 30 suites](evidence/android-auth-ack-summary.json),
+  [полный Gradle output](evidence/android-auth-ack-after.txt);
+  [48 связанных backend auth/refresh cases](evidence/backend-auth-ack-after.txt).
+  `./gradlew --no-daemon :app:testEnterpriseDebugUnitTest --tests '*WebSocketAuthenticationTest'`
+  из `android/`; backend — `pytest tests/production/test_agent_tenant_runtime.py -k auth_ack`
+  с изолированными runtime credentials по README harness.
+- **Residual risk:** ACK подтверждает identity, не readiness всех services/SQL result
+  commit. Обязателен rollout **все backend workers → APK**; rollback в обратном
+  порядке. Старый сервер без ACK не подключит новый клиент. Старый audited APK
+  отклоняет неизвестный frame с parser warning и сохраняет ранний connected до
+  своего обновления. Delivery/registry/heartbeat и Android WS — doubles; actual
+  APK sockets/OS/fleet/latency не проверены. Post-auth setup failures, общий budget
+  reconnect, запасной route и local discovery остаются отдельной работой.
+  [Полный wire/rollout contract](../../architecture/ANDROID-CONNECTION-PROTOCOL.md).
+
+Локальный полный прогон: **1383 passed / 69,39%**, 281,40 s, четыре прежних warnings;
+включает **485 PostgreSQL/Redis** и 25 deployment cases. Load/soak исключены.
+[Лог](evidence/auth-ack-combined-suite.txt). Ruff и API export check прошли;
+[Bandit по существующей `.bandit` конфигурации](evidence/auth-ack-bandit.txt) —
+0 Medium/High. [Dependency-aware mypy](evidence/auth-ack-local-mypy.txt) повторён:
+те же 13 ошибок в семи неизменённых файлах; локальный gate не объявлен проходящим.
+CI новой ревизии будет записан после push отдельно от предыдущего `fec0c5f`.
+Schema head не менялся; merge/deployment не выполнялись, PR остаётся draft.

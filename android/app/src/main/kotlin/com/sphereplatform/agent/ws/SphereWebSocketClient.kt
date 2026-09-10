@@ -14,6 +14,9 @@ import java.io.IOException
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.intOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -31,7 +34,7 @@ import kotlin.random.Random
  * - Exponential retry windows with equal jitter (first retry 1–2s, cap 15–30s)
  * - Smart circuit breaker: 10 NETWORK ошибок → 60 секунд паузы
  *   AUTH ошибки (4001) НЕ считаются — вместо этого запрашивается новый токен
- * - First-message auth (JWT в первом сообщении после onOpen, не в URL)
+ * - First-message auth and target-bound server acknowledgement before application traffic
  * - Network change detection через [forceReconnectNow]
  * - Безопасная остановка через [disconnect]
  */
@@ -185,12 +188,14 @@ class SphereWebSocketClient @Inject constructor(
         val disconnected = CompletableDeferred<Unit>()
         var closeCode = 0
         var closeReason = ""
+        var authSent = false // guarded by wsLock
+        val expectedDeviceId = deviceId
 
         val listener = object : WebSocketListener() {
             override fun onOpen(ws: WebSocket, response: Response) {
                 // FIX AUDIT-1.7: Атомарное обновление webSocket + isConnected
                 synchronized(wsLock) {
-                    if (attemptGeneration != generation || shouldStop) {
+                    if (attemptGeneration != generation || shouldStop || connected.isCompleted || disconnected.isCompleted) {
                         ws.cancel()
                         return
                     }
@@ -200,24 +205,59 @@ class SphereWebSocketClient @Inject constructor(
                         connected.completeExceptionally(IOException("Cannot send authentication"))
                         return
                     }
-                    isConnected = true
+                    authSent = true
                 }
-                connected.complete(Unit)
-                onConnected?.invoke()
             }
 
             override fun onMessage(ws: WebSocket, text: String) {
                 if (synchronized(wsLock) { attemptGeneration != generation || shouldStop }) return
                 try {
                     val msg = json.parseToJsonElement(text).jsonObject
+                    val type = msg["type"]?.jsonPrimitive?.contentOrNull
+                    val authenticatedNow = synchronized(wsLock) {
+                        if (attemptGeneration != generation || shouldStop) return
+                        if (!isConnected) {
+                            // A failure/close is terminal even before the reconnect
+                            // coroutine gets CPU time to invalidate this generation.
+                            if (connected.isCompleted) return
+                            val version = msg["protocol_version"]?.jsonPrimitive
+                            if (!authSent || type != "auth_ok" ||
+                                msg["device_id"]?.jsonPrimitive?.contentOrNull != expectedDeviceId ||
+                                version?.isString != false || version.intOrNull != 1
+                            ) {
+                                connected.completeExceptionally(IOException("Invalid server authentication acknowledgement"))
+                                return
+                            }
+                            isConnected = true
+                            connected.complete(Unit)
+                            true
+                        } else {
+                            false
+                        }
+                    }
+                    if (authenticatedNow) {
+                        onConnected?.invoke()
+                        return
+                    }
+                    // Duplicate acknowledgements never replay the result journal twice.
+                    if (type == "auth_ok") return
                     onJsonMessage?.invoke(msg)
                 } catch (e: Exception) {
-                    Timber.w("Invalid JSON message: ${e.message}")
+                    if (!connected.isCompleted) {
+                        connected.completeExceptionally(IOException("Invalid server authentication acknowledgement", e))
+                    }
+                    Timber.w("Invalid WebSocket JSON message")
                 }
             }
 
             override fun onMessage(ws: WebSocket, bytes: ByteString) {
-                if (synchronized(wsLock) { attemptGeneration != generation || shouldStop }) return
+                synchronized(wsLock) {
+                    if (attemptGeneration != generation || shouldStop) return
+                    if (!isConnected) {
+                        connected.completeExceptionally(IOException("Binary message before authentication acknowledgement"))
+                        return
+                    }
+                }
                 onBinaryMessage?.invoke(bytes.toByteArray())
             }
 
@@ -250,6 +290,13 @@ class SphereWebSocketClient @Inject constructor(
                 }
                 closeCode = code
                 closeReason = reason
+                if (!connected.isCompleted) {
+                    val failure = if (code == CODE_INVALID_TOKEN || code == CODE_AUTH_TIMEOUT ||
+                        code == CODE_DEVICE_NOT_FOUND || code == CODE_HEARTBEAT_TIMEOUT
+                    ) AuthRejectedException(code, reason)
+                    else IOException("WebSocket closed before authentication acknowledgement: $code")
+                    connected.completeExceptionally(failure)
+                }
                 disconnected.complete(Unit)
                 if (current) onDisconnected?.invoke(code, reason)
             }
@@ -268,17 +315,22 @@ class SphereWebSocketClient @Inject constructor(
                 withTimeout(20_000L) { connected.await() }
             } catch (e: TimeoutCancellationException) {
                 currentCoroutineContext().ensureActive()
-                throw IOException("WebSocket handshake timeout", e)
+                throw IOException("WebSocket authentication handshake timeout", e)
             }
             disconnected.await()
         } finally {
-            socket.cancel()
             synchronized(wsLock) {
                 if (attemptGeneration == generation) {
+                    // Invalidate callbacks immediately, including the backoff window
+                    // before the next attempt allocates its own generation.
+                    ++generation
                     webSocket = null
                     isConnected = false
                 }
             }
+            // Transport cancellation can race with an already queued reader callback.
+            // Make that callback stale before invoking external teardown code.
+            socket.cancel()
         }
 
         // After connection closed — check close code for auth/heartbeat rejection

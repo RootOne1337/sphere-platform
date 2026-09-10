@@ -88,12 +88,21 @@ researches NitroGen and a future external inference worker; no AI is implemented
   suite now has **362 tests**. Disk/keystore stalls and physical network recovery
   require separate drills.
 
+- **AUD-72:** APK reported connected on transport open, bypassing its deadline while
+  waiting for server auth and allowing ended-session callbacks during backoff.
+  A target-bound `auth_ok` now gates application traffic and result replay; it is
+  sent before registry publication. Failed acknowledgement delivery cannot evict
+  an existing session. Baseline: **10 JVM failures / 2 controls**, **5 SQL/ASGI
+  failures / 3 controls**. **16 new JVM + 8 SQL/ASGI cases** cover acknowledgements,
+  denial, loss, reconnect and late callbacks. **Deploy every backend worker before
+  APK**; an older server without the acknowledgement cannot confirm a new client.
+
 ## Validation
 
-- Combined local backend/PC/PostgreSQL/Redis/deployment: **1375 passed**, including
-  **477 real-service cases** and 25 deployment cases; **69.35%** coverage,
+- Combined local backend/PC/PostgreSQL/Redis/deployment: **1383 passed**, including
+  **485 real-service cases** and 25 deployment cases; **69.39%** coverage,
   four existing warnings. Load/soak profiles are excluded from this ordinary PR run.
-- Android enterprise debug unit suite: **362 passed / 29 suites**. These JVM/MockWebServer/OkHttp checks
+- Android enterprise debug unit suite: **378 passed / 30 suites**. These JVM/MockWebServer/OkHttp checks
   do not establish device OS, codec, battery or real network behavior.
 - Frontend: **198 tests / 23 suites**, TypeScript and production build pass. Linux CI
   verifies the standalone entry point; local Windows tracing emitted an ENOENT
@@ -111,14 +120,16 @@ researches NitroGen and a future external inference worker; no AI is implemented
   warnings, including all 24 SQL refresh-recovery cases. Android ran all four
   Dev/Enterprise × Debug/Release test tasks. Exact job snapshots and excerpts
   are retained. Preview guard passes and deployment is skipped. The following
-  documentation-only commit records this verified code revision; its own checks
-  run separately. Backend/PC/schema did not change in AUD-71; the local combined
-  run above remains the AUD-69/70 result, separately from this fresh Linux CI run.
+  documentation-only commit recorded this verified code revision. This precedes
+  AUD-72; that change's CI will be recorded after push. The local results above
+  are the new AUD-72 runs, with no schema change.
 
 ## Rollout and remaining risks
 
 Schema head: **`20260910_device_refresh_retry`**. Device recovery rollout is migration
 → all backend workers → APK, preserving app identity. Existing grants are retained.
+AUD-72 additionally requires the `auth_ok` handshake on every backend worker before
+updating APK; it adds no migration. [Handshake protocol and rollback](https://github.com/RootOne1337/sphere-platform/blob/codex/enterprise-audit-20260905/docs/architecture/ANDROID-CONNECTION-PROTOCOL.md).
 [Refresh recovery contract](https://github.com/RootOne1337/sphere-platform/blob/codex/enterprise-audit-20260905/docs/security/device-refresh-recovery.md). Production remains blocked on
 separate migration/runtime credentials and remaining auth/global-worker tenant
 propagation. Runtime grants must include all four protected credential functions.
@@ -163,7 +174,7 @@ Compose wiring and synthetic VPN UI zeroes are confirmed open gaps. Startup read
 does not check schema head, task execution or browser actions; the legacy tunnel
 path remains outside AUD-68. Reboot/restore/soak drills are still required.
 
-Local dependency-aware mypy reports 13 errors in seven unchanged files/imports;
+Local dependency-aware mypy was rerun and still reports 13 errors in seven unchanged files/imports;
 CI mypy uses a separate lighter environment and must be assessed separately.
 
 No independent review, production migration, service rollout, merge or deployment

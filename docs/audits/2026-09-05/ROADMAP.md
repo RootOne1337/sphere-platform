@@ -132,3 +132,17 @@ CI ревизии `fec0c5f` с AUD-71 прошёл с первой попытк�
 push и PR. Linux **1375 tests / 69,30%**, все 24 SQL refresh-recovery cases; Android
 Dev/Enterprise × Debug/Release test tasks успешны. [Snapshots и точные границы](AUDIT-REPORT.md#проверка-ревизии-fec0c5f-с-aud-71)
 сохранены. Preview guard прошёл, deployment skipped; PR остаётся draft.
+
+
+### Предпосылка резервного канала: AUD-72
+
+Проверка выбора рабочего маршрута выявила ложный `isConnected` до server auth
+и callbacks завершённого WS во время backoff. Исправлено подтверждение device ID
+перед application traffic и fencing terminal session: 16 новых JVM и восемь
+SQL/ASGI cases, полный local backend/PC **1383 / 69,39%**, **485 PG/Redis**, Android
+**378 / 30 suites**. [Handshake / rollout](../../architecture/ANDROID-CONNECTION-PROTOCOL.md).
+Новый APK требует обновления всех backend workers; schema не менялась.
+
+Резервный route пока не реализован: сохранённые primary/secondary endpoints одной
+установки, local discovery, versioning/rollback конфигурации и реальные OS/network
+drills остаются следующим P0. ACK не является probe всех downstream dependencies.

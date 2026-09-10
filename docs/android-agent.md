@@ -25,7 +25,7 @@ permission and power-management behavior needs device runtime testing.
 | --- | --- |
 | `SphereAgentService` | Starts the dispatcher, network monitor, management WS and config watchdog; closes service resources on destruction |
 | `DeviceCommandHandler` | Compatibility facade around `CommandDispatcher` |
-| `SphereWebSocketClient` | Management connection, first-message authentication, reconnect and stale-listener fencing |
+| `SphereWebSocketClient` | Management connection, target-bound server auth acknowledgement, reconnect and stale-listener fencing |
 | `CommandDispatcher` | Command validation, control target matching, ACKs, journal and DAG dispatch |
 | `CommandJournal` | Encrypted durable DAG receipts, duplicate replay and terminal-result retention |
 | `DagRunner` / `LuaEngine` | Node routing, loops, retries, control checkpoints and Lua actions |
@@ -351,3 +351,27 @@ interceptors/bodies, without sockets or a hardware fleet. Waiting for the mutex 
 blocked preference/keystore IO are not bounded by an HTTP deadline. Physical Android
 network/OS behavior remains unmeasured; see the
 [full recovery contract](security/device-refresh-recovery.md#тайм-аут-и-остановка-refresh-aud-71).
+
+## Confirmed WebSocket authentication (AUD-72)
+
+Transport open now sends only the token. The APK becomes connected and starts result
+replay only after `auth_ok` with the current device ID and numeric protocol version
+1. The 20-second WS deadline includes waiting for this acknowledgement; a silent
+server cannot leave the APK apparently connected. Invalid acknowledgements and
+application data arriving before auth do not reach command execution. Auth close
+codes keep their immediate token-refresh path. Ended generations are invalidated
+before backoff, including late callback races before coroutine cleanup runs.
+
+The backend emits the acknowledgement after identity/tenant/device checks and
+before publishing the socket to command producers. It confirms authentication,
+not readiness of every dependency or SQL commitment of a task result.
+
+Initial baseline: 10 failures / 2 controls in 12 new JVM cases, 5 failures / 3
+controls in eight non-owner SQL/ASGI cases. The completed Android set adds four
+callback/binary regressions: **378 tests / 30 suites** pass. Prior lifecycle tests
+now establish server acknowledgement before testing an active channel.
+
+Deploy **all backend workers before APK**, preserving app data and signing identity.
+An older backend without `auth_ok` cannot confirm a new APK; it will reconnect on
+deadline. [Wire protocol, rollout and evidence](architecture/ANDROID-CONNECTION-PROTOCOL.md).
+Saved secondary routes, physical Android sockets and fleet recovery remain open.

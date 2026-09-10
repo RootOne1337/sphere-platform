@@ -552,6 +552,18 @@ async def android_agent_ws(
         return
     # DB session is now CLOSED — safe to enter long-lived WS loop
 
+    # Confirm the authenticated target before publishing the socket: another
+    # producer may send work as soon as manager.connect exposes this connection.
+    # This confirms identity, not readiness of every downstream service.
+    try:
+        await asyncio.wait_for(ws.send_json({
+            "type": "auth_ok", "device_id": device_id, "protocol_version": 1,
+        }), timeout=5.0)
+    except Exception:
+        logger.warning("android_ws.auth_ack_failed", device_id=device_id)
+        await _close(1011, "auth_ack_failed")
+        return
+
     session_id = await manager.connect(ws, device_id, "android", org_id_str)
 
     # Сброс счётчика фреймов при новом подключении — для корректного логирования
