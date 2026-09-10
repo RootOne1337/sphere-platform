@@ -217,3 +217,10 @@ activation уже выданной identity. WS перечитывает ID и �
 boot/network/fleet drills и расследуемый incident timeline. Monitoring Compose,
 фиктивные VPN measurements и resource profiles сохраняют приоритеты матрицы.
 Новая ревизия требует собственного CI; merge/deployment не выполнялись.
+
+### CI AUD-75 зафиксирован
+
+Runtime **`be75f57`**: backend/frontend/Android PR+push прошли с первой попытки;
+preview только guard, deploy skipped. Backend **1390 / 69.38%**, Android все
+четыре test variants. Локально **450 / 33 suites**. [Точные SHA/run links и evidence](AUDIT-REPORT.md).
+Это проверка очередного исправления, не завершение всего аудита или аппаратного rollout.
