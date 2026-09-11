@@ -371,3 +371,11 @@ AUD-86: до проверки optional PostgreSQL owner найден более 
 93 deployment cases проходят. [Before](evidence/compose-settings-before.txt).
 Полный новый CI фиксируется отдельно. Следующий порядок остаётся полный Compose/
 init.sql/browser/APK/task, затем VPN/recovery и incident timeline.
+
+AUD-86 `8932e49` прошёл весь Linux CI: **1506 / 69.66%**, 266.05 s,
+538 production-directory / 93 deployment, image **4 + 1** отдельно. Все четыре
+workflow first-attempt success. [Evidence](evidence/ci-8932e49-tests.txt).
+Последний полный Windows: 1498 / 69.67%, затем 93 deployment; APK не устанавливался.
+Следующий P0 остаётся полный Compose/init.sql/browser/APK/task/result, затем VPN,
+recovery и incident timeline. PostgreSQL OWNER=sphere при другом POSTGRES_USER
+ещё требует isolated reproduction; не заявлен новым дефектом без доказательства.

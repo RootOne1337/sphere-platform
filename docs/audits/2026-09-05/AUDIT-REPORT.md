@@ -41,7 +41,7 @@ AUD-81–86 ниже. Это закрытые дефекты отдельных 
 | Проверка | Результат | Практическое ограничение |
 | --- | --- | --- |
 | Android enterprise debug unit suite | 485 passed, 0 failed | JVM/MockWebServer и OkHttp interceptors; не проверяет ОС, codec, батарею или смерть процесса на телефоне |
-| Объединённая Backend/PC/production/deployment suite (Linux `cbf8f01`) | **1498 passed, 0 failed**; coverage **69,66%** | Coverage gate 65% пройден; load suite исключена. 85 deployment cases используют shell/Compose boundaries; отдельный image runtime scenario проверен с SQL |
+| Объединённая Backend/PC/production/deployment suite (Linux `8932e49`) | **1506 passed, 0 failed**; coverage **69,66%** | Coverage gate 65% пройден; load suite исключена. 93 deployment cases используют shell/Compose boundaries; image 4 + 1 проверяются отдельно |
 | Python dependency scan | **0 known vulnerabilities** в совместном backend/PC resolution | Pip-audit snapshot, не проверка frontend/Gradle/container/application security; [версии и ограничения](DEPENDENCY-REVIEW.md) |
 | Production-directory suite | **538 passed**, включены в общий прогон, 0 xfail | Реальные PostgreSQL/Redis row locks/commits/cache плюс negative environment/transport controls; не каждый case открывает БД. Полного APK↔API нет |
 | Миграции | Применены до **20260910_device_refresh_retry** включительно | Только изолированная БД; конфликтные данные/downgrade проверены в throwaway schema; production не мигрировался |
@@ -50,9 +50,10 @@ AUD-81–86 ниже. Это закрытые дефекты отдельных 
 | APK ↔ реальный локальный backend | Не завершено | Автоматическая проверка разрешений отклонила запуск локального API: `blocked by policy`; обход не выполнялся |
 | 10–64 эмулятора на станции, сотни/тысячи APK, физические телефоны | Не измерено | Нет подтверждённых CPU/RAM/FPS/энергопотребления и совместимости со всеми Android |
 
-Последний полный Linux вывод: [CI `cbf8f01`](evidence/ci-cbf8f01-tests.txt).
+Последний полный Linux вывод: [CI `8932e49`](evidence/ci-8932e49-tests.txt).
 Последний полный Windows вывод: [1498 cases / 69,67%](evidence/admin-restart-full.txt).
-Включены 85 deployment cases. Отдельный packaged-runtime scenario не прибавляется к этому числу.
+В Windows full включены 85 deployment cases; после AUD-86 отдельно [93 deployment cases](evidence/compose-settings-after.txt).
+Image scenarios не прибавляются к pytest total.
 Предыдущий отдельный DAG benchmark однажды занял 127,1 ms при пороге 100 ms;
 изолированный повтор и последующие общие прогоны прошли. На первой CI попытке
 `d828a62` этот же неизменённый тест измерил 363,2 ms: **1 failed / 1213 passed**,
@@ -2303,3 +2304,23 @@ init.sql фиксирует OWNER=sphere, тогда как Compose разреш
   secrets; его общая deploy readiness не заявлена. PostgreSQL init.sql, browser,
   установленный APK/task/result, VPN и реальные network/OS recovery ещё требуют
   приёмки. Schema, APK и Python runtime source этим fix не меняются.
+
+### AUD-86: финальная проверка ревизии в CI
+
+Точный `8932e49cb6ab9a2c6d65a324b833cb0f741597ab`: **1506 Linux cases / 69.66%**, 266.05 s,
+4 warnings; 538 production-directory / 93 deployment включены в итог.
+Все четыре workflow прошли с первой попытки: [backend](https://github.com/RootOne1337/sphere-platform/actions/runs/34632726381), [frontend](https://github.com/RootOne1337/sphere-platform/actions/runs/34632726401), [android](https://github.com/RootOne1337/sphere-platform/actions/runs/34632726421), [preview](https://github.com/RootOne1337/sphere-platform/actions/runs/34632726390).
+Preview deployment пропущен. [Pytest](evidence/ci-8932e49-tests.txt),
+[Android variants](evidence/ci-8932e49-android-tests.txt),
+[4 no-network probes](evidence/ci-8932e49-image-bootstrap-tests.txt),
+[1 SQL/runtime scenario](evidence/ci-8932e49-image-runtime-tests.txt),
+[artifact image/cleanup](evidence/ci-8932e49-image-runtime-summary.json).
+
+Восемь новых generator→Compose→Settings cases включены в общий Linux результат;
+image **4 + 1** считаются отдельно. Последний полный Windows — 1498 / 69.67%,
+затем 93 deployment cases после one-line Compose fix. Не выдаём targeted результат
+за полный локальный прогон 1506. Android production source в этом этапе не менялся;
+прошедшие сборки/tests не означают installed-APK smoke.
+Schema head по-прежнему `20260910_device_refresh_retry`. Остались полный выбранный
+Compose/init.sql, browser/установленная APK/task/result, VPN, реальные failure drills
+и incident timeline; optional PostgreSQL owner пока только source observation.

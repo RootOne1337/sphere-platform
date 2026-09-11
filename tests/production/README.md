@@ -402,3 +402,11 @@ generator, render each Compose overlay, then import Settings in a fresh process
 with its exact container environment. Two baseline failures / six controls; all
 93 deployment cases pass locally after the one-line default fix. No DB/API listener,
 daemon or installed APK is involved; the last full local suite remains 1498 cases.
+
+### AUD-86 exact revision verified in Linux
+
+`8932e49cb6ab9a2c6d65a324b833cb0f741597ab`: **1506 passed / 69.66%**, including 538
+production-directory and 93 deployment cases. Image probes remain separate: 4
+no-network cases plus 1 SQL/runtime scenario. All four workflows pass attempt 1.
+[Evidence](../../docs/audits/2026-09-05/evidence/ci-8932e49-tests.txt).
+Windows last full: 1498 / 69.67%; targeted deployment after AUD-86: 93 passed.

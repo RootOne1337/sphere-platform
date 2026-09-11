@@ -5,17 +5,17 @@
 [Главная](../../README.md) · [Доказательства аудита](../audits/2026-09-05/AUDIT-REPORT.md) ·
 [APK](../android-agent.md) · [PC-agent](../pc-agent.md) · [Будущий AI-контур](../architecture/AI-READINESS.md)
 
-**Последняя проверенная ревизия: `cbf8f01`; runtime-код — `08338d3` (AUD-85).**
-Linux CI: **1498 passed / 69.66%**, включая 538 production-directory и
-85 deployment cases. Отдельный обязательный image job: **4 no-network probes +
-1 SQL/runtime scenario**. Все четыре workflow проходят с первой попытки; preview
-deployment пропущен. [Результаты](../audits/2026-09-05/evidence/ci-cbf8f01-tests.txt),
-[runtime image](../audits/2026-09-05/evidence/ci-cbf8f01-image-runtime-tests.txt).
-Подтверждены свежие миграции, admin/key bootstrap, полный ASGI lifespan и сохранение
-login/device во втором процессе. Windows полный прогон: 1498 / 69.67%.
-Следующие gates development-пилота — полный выбранный Compose с его init.sql,
-browser и установленный APK → задание → результат, затем VPN/recovery.
-Production DB roles/grants остаются отдельным обязательным rollout.
+**Последняя проверенная ревизия: `8932e49` (AUD-86).**
+Linux CI: **1506 passed / 69.66%**, включая 538 production-directory и
+93 deployment cases. Обязательный image job: отдельно **4 no-network probes +
+1 SQL/runtime scenario**. Все четыре workflow прошли с первой попытки; preview
+deployment пропущен. [Результаты](../audits/2026-09-05/evidence/ci-8932e49-tests.txt),
+[runtime image](../audits/2026-09-05/evidence/ci-8932e49-image-runtime-tests.txt).
+AUD-85 сохраняет admin credentials при повторе; AUD-86 устраняет падение Settings
+на свежем full-deploy. Windows: полный 1498 / 69.67%, затем 93 deployment cases.
+Подтверждены свежие миграции/bootstrap, полный ASGI lifespan и login/device во
+втором процессе. Далее — выбранный полный Compose/init.sql, browser и установленный
+APK → задание → результат, затем VPN/recovery. Production roles/grants — отдельный rollout.
 
 ## Что считаем работающей системой
 

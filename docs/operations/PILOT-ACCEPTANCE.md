@@ -49,7 +49,7 @@ Android и доступный управляемый VPN-router. До перво
 
 | Шаг | Текущий результат | Что ещё сделать / критерий завершения |
 | --- | --- | --- |
-| 1. Выбрать запуск | AUD-79/80: argv/env selection; AUD-84: `.env`-only config сохраняется | Проверить реальные адреса/параметры и Bash dotenv; запускать один выбранный project |
+| 1. Выбрать запуск | AUD-79/80: argv/env selection; AUD-84: сохранение `.env`; AUD-86: generated config проходит Settings | Проверить реальные адреса/параметры и Bash dotenv; запускать один выбранный project |
 | 2. Подготовить БД | AUD-82: порядок; fresh SQL migrations/bootstrap и повтор прошли внутри runtime image | Полный выбранный Compose и persistent-volume restart. Production дополнительно требует отдельного provision roles/grants |
 | 3. Создать пользователя и enrollment key | AUD-78/81/83/85: identity и повтор; runtime image выполняет CLI→SQL→полный ASGI lifespan→login/device | Пройти выбранный Compose и browser/APK; текущий image scenario не открывает HTTP listener |
 | 4. Открыть веб и подключить APK | Android registration/refresh/ACK/fallback покрыты JVM-тестами | Проверить настоящий browser login, provisioning APK, permissions, `auth_ok`, видимость устройства и версию APK в UI |
@@ -248,3 +248,12 @@ boolean DEV_SKIP_AUTH для штатно сгенерированной кон�
 шесть controls, восемь retained cases, **93 deployment tests проходят локально**.
 Это часть шага 1, отдельная от проверки образа с SQL. PostgreSQL init.sql и полный
 выбранный Compose/browser/installed APK/task/result остаются в очереди приёмки.
+
+### Подтверждение AUD-86 в CI
+
+`8932e49`: **1506 / 69.66%**, 538 production-directory / 93 deployment,
+отдельно image **4 + 1**. Все PR workflows прошли с первой попытки.
+[Точные результаты](../audits/2026-09-05/evidence/ci-8932e49-tests.txt).
+Это закрывает подтверждённые admin-repeat и generated-config blockers. Полный
+Compose/init.sql, browser/installed APK/task/result и VPN остаются открыты;
+условные сроки не сокращаются автоматически по числу коммитов или тестов.

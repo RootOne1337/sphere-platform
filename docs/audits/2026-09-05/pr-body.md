@@ -214,7 +214,14 @@ researches NitroGen and a future external inference worker; no AI is implemented
 
 ## Validation
 
-- Latest checked revision `cbf8f01` (runtime code `08338d3`): **1498 passed /
+- Latest checked revision `8932e49` (AUD-86): **1506 passed / 69.66%**,
+  including 538 production-directory and 93 deployment cases. Separate mandatory
+  image job: **4 no-network + 1 real SQL/runtime scenario**. All four workflow
+  attempts pass first try: [backend](https://github.com/RootOne1337/sphere-platform/actions/runs/34632726381), [frontend](https://github.com/RootOne1337/sphere-platform/actions/runs/34632726401), [android](https://github.com/RootOne1337/sphere-platform/actions/runs/34632726421), [preview](https://github.com/RootOne1337/sphere-platform/actions/runs/34632726390); preview deployment skipped.
+  Windows last full: 1498 / 69.67%; all 93 deployment cases pass after the Compose fix.
+  Full Compose/init.sql/browser/installed APK/task/VPN remain open.
+
+- Previous checked revision `cbf8f01` (runtime code `08338d3`): **1498 passed /
   69.66%**, 538 production-directory / 85 deployment cases. Mandatory image
   job now passes **4 no-network probes + 1 real SQL/runtime scenario**. All four
   workflows pass attempt 1: [backend](https://github.com/RootOne1337/sphere-platform/actions/runs/34631587864), [frontend](https://github.com/RootOne1337/sphere-platform/actions/runs/34631587800), [android](https://github.com/RootOne1337/sphere-platform/actions/runs/34631587650), [preview](https://github.com/RootOne1337/sphere-platform/actions/runs/34631587792); preview deployment skipped.
