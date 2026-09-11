@@ -1,6 +1,6 @@
 # Android Agent
 
-Developer and operator guide, checked against the audit branch on **9 September
+Developer and operator guide, checked against the audit branch on **11 September
 2026**. The audit is ongoing; production readiness and compatibility with every
 Android device have not been established. Findings, reproduction evidence and
 remaining blockers are in the [audit report](audits/2026-09-05/AUDIT-REPORT.md).
@@ -454,3 +454,27 @@ state changes fence late replies. Disk failure returns an error and restores
 previous memory; it cannot undo server-side credential issuance. Legacy static-key
 setup remains separate. **485 JVM tests / 35 suites**, including 20 new cases.
 [Contract and remaining initial response-loss/OS limits](architecture/ANDROID-BACKGROUND-ENROLLMENT.md).
+
+## Inspected CI artifact for the first pilot (11 September 2026)
+
+The actual `debug-apk` artifact from [Android run 34528723295](https://github.com/RootOne1337/sphere-platform/actions/runs/34528723295)
+at `0da40f1` was downloaded and inspected locally with Android SDK build-tools
+35.0.0. Both ZIP CRC checks and APK v2 signature verification pass. Version code:
+10200; enterprise version 1.2.0, dev 1.2.0-dev.
+
+| Package | Application ID | APK bytes | min/target SDK |
+| --- | --- | ---: | --- |
+| dev debug | `com.sphereplatform.agent.dev.debug` | 8,353,013 | 26/35 |
+| enterprise debug | `com.sphereplatform.agent.debug` | 8,352,977 | 26/35 |
+
+Both artifacts are debuggable, contain 15 DEX files and no packaged `lib/*.so`
+entries. These observations do not establish runtime memory, speed, root tooling
+or VPN support. [Hashes, signer fingerprints and artifact provenance](audits/2026-09-05/evidence/apk-0da40f1-inspection.json).
+This is an inspected debug artifact, not a release or an installed-device proof.
+
+Before a persistent pilot, select one package and a managed signing identity,
+verify update compatibility and preserve app data. Changing flavor creates separate
+storage. The current PR workflow does not manage release keys or install/update
+the APK; CI debug outputs are suitable for development inspection, with update
+compatibility still to be checked. The inspected artifact expires on 9 December
+2026 under its current retention policy. Later CI runs are separate artifacts.

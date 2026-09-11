@@ -26,7 +26,7 @@ runtime-проверок и не считается доказательство
 | Проверка | Результат | Практическое ограничение |
 | --- | --- | --- |
 | Android enterprise debug unit suite | 485 passed, 0 failed | JVM/MockWebServer и OkHttp interceptors; не проверяет ОС, codec, батарею или смерть процесса на телефоне |
-| Объединённая Backend/PC/production/deployment suite | **1413 passed, 0 failed**; coverage **69,38%** | Строгий coverage gate 65% пройден с precision=2. Load suite исключена; 33 deployment cases включают config/subprocess probes без запуска сервисов |
+| Объединённая Backend/PC/production/deployment suite (Linux `ac7a11f`) | **1417 passed, 0 failed**; coverage **69,37%** | Строгий coverage gate 65% пройден. Load suite исключена; 37 deployment cases включают config/subprocess probes без запуска сервисов |
 | Python dependency scan | **0 known vulnerabilities** в совместном backend/PC resolution | Pip-audit snapshot, не проверка frontend/Gradle/container/application security; [версии и ограничения](DEPENDENCY-REVIEW.md) |
 | Проверки PostgreSQL/Redis | **505 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
 | Миграции | Применены до **20260910_device_refresh_retry** включительно | Только изолированная БД; конфликтные данные/downgrade проверены в throwaway schema; production не мигрировался |
@@ -35,7 +35,8 @@ runtime-проверок и не считается доказательство
 | APK ↔ реальный локальный backend | Не завершено | Автоматическая проверка разрешений отклонила запуск локального API: `blocked by policy`; обход не выполнялся |
 | 10–64 эмулятора на станции, сотни/тысячи APK, физические телефоны | Не измерено | Нет подтверждённых CPU/RAM/FPS/энергопотребления и совместимости со всеми Android |
 
-Последний общий вывод: [pilot-combined.txt](evidence/pilot-combined.txt).
+Последний полный Linux вывод: [CI `ac7a11f`](evidence/ci-ac7a11f-tests.txt).
+Последний полный Windows вывод: [1413 cases](evidence/pilot-combined.txt).
 Предыдущий отдельный DAG benchmark однажды занял 127,1 ms при пороге 100 ms;
 изолированный повтор и последующие общие прогоны прошли. На первой CI попытке
 `d828a62` этот же неизменённый тест измерил 363,2 ms: **1 failed / 1213 passed**,
@@ -1874,3 +1875,41 @@ Ruff 0.15.2 и API export check проходят. Старый `python -m ruff` 
 Изменены один runtime shell script и два regression files. Последний полный локальный
 backend/PC run — AUD-78: 1413 passed, 69.38%; для изменения argv повторён целевой
 полный deployment набор. Exact runtime revision CI сохраняется отдельно.
+
+### Exact-revision CI для AUD-78/79
+
+**AUD-78 runtime `0da40f1`:** [backend](https://github.com/RootOne1337/sphere-platform/actions/runs/34528723293), [frontend](https://github.com/RootOne1337/sphere-platform/actions/runs/34528723346), [android](https://github.com/RootOne1337/sphere-platform/actions/runs/34528723295), [preview](https://github.com/RootOne1337/sphere-platform/actions/runs/34528723291) — все четыре workflows
+завершились с первой попытки. Linux: **1413 passed / 69.37%**, 319.03 s,
+4 warnings; [вывод](evidence/ci-0da40f1-tests.txt). Backend CI выполняет fresh
+Alembic migrations и полный набор с выделенными PostgreSQL/Redis. Android PR
+проходит все четыре unit-test variants; [вывод](evidence/ci-0da40f1-android-tests.txt).
+Отдельного Android push workflow для этих script/test изменений нет. Preview guard
+прошёл; deployment job пропущен. Snapshot каждого workflow сохранён в evidence.
+
+**AUD-79 runtime `ac7a11f`:** [backend](https://github.com/RootOne1337/sphere-platform/actions/runs/34529567946), [frontend](https://github.com/RootOne1337/sphere-platform/actions/runs/34529567951), [android](https://github.com/RootOne1337/sphere-platform/actions/runs/34529567922), [preview](https://github.com/RootOne1337/sphere-platform/actions/runs/34529567939) — все четыре workflows
+завершились с первой попытки. Linux: **1417 passed / 69.37%**, 228.42 s,
+4 warnings; [вывод](evidence/ci-ac7a11f-tests.txt). Backend CI выполняет fresh
+Alembic migrations и полный набор с выделенными PostgreSQL/Redis. Android PR
+проходит все четыре unit-test variants; [вывод](evidence/ci-ac7a11f-android-tests.txt).
+Отдельного Android push workflow для этих script/test изменений нет. Preview guard
+прошёл; deployment job пропущен. Snapshot каждого workflow сохранён в evidence.
+
+Последний Windows combined run: 1413 passed / 69.38% / 279.97 s (AUD-78).
+После Bash-only fix локально повторён deployment набор: 37 passed / 19.84 s;
+новый полный combined run выполнен в Linux CI, без повторного локального SQL прогона.
+Прежний local Android snapshot — 485 tests / 35 suites; Android runtime не менялся.
+Ruff 0.15.2, API export check и Bash/PowerShell syntax проверены. Старые результаты
+venv Ruff 0.3.0 и dependency-aware mypy описаны выше, они не скрываются lighter CI.
+Далее идёт отдельный evidence/docs commit со своими checks. Merge, deployment,
+installed APK, VPN handshake и fleet measurements не выполнялись.
+
+### Проверка выданного APK artifact
+
+[Android CI artifact `0da40f1`](evidence/apk-0da40f1-inspection.json) действительно
+содержит dev/enterprise debug APK: 8 353 013 / 8 352 977 bytes, versionCode 10200,
+min/target 26/35. `aapt` читает manifest, `apksigner` подтверждает v2 signature,
+ZIP CRC проходит, SHA-256 и certificate fingerprint сохранены. Это отдельная
+проверка фактического артефакта после сборки. Установка, постоянная signing identity,
+update без потери данных, release shrink, APK/OS/VPN и performance не проверены.
+Пакеты разных flavors имеют отдельное storage; пилот должен зафиксировать package
+и update contract до массовой установки. [APK guide](../../../docs/android-agent.md).

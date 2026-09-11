@@ -285,3 +285,9 @@ AUD-79 закрывает Bash Compose argument routing: global IFS больше
 file options в один аргумент. Четыре before failures, 37 passing deployment cases;
 следующие startup priorities — единый env-file, migration ordering, runtime roles,
 истинная readiness. [Доказательства](evidence/compose-arguments-before-summary.json).
+
+AUD-78/79 exact runtime CI завершён: `0da40f1` — 1413 Linux cases;
+`ac7a11f` — **1417 / 69.37%**, 228.42 s. Backend/frontend/Android/preview
+на каждой ревизии прошли с первой попытки; preview deployment пропущен. Последний
+локальный общий итог 1413 / 69,38%, затем 37 deployment cases. [CI итог](evidence/ci-ac7a11f-tests.txt).
+Это подтверждает компонентные проверки bootstrap/argv; полный pilot acceptance открыт.

@@ -233,3 +233,11 @@ Bash full-deploy исправлен: штатный `IFS` больше не ск
 аргумент. Все 37 deployment cases проходят, четыре новых включают весь preamble и
 оба overlay. Последний полный локальный backend/PC итог остаётся 1413 / 69,38% из
 AUD-78; установленный APK, полный stack, env selection и VPN не приняты.
+
+### Последнее подтверждение CI для первого запуска
+
+Runtime `ac7a11f`: **1417 passed / 69.37%** в Linux с fresh migrations и
+выделенными PostgreSQL/Redis; backend/frontend/Android workflows прошли с первой
+попытки. Preview guard прошёл, deployment пропущен. [Точный срез](../audits/2026-09-05/evidence/ci-ac7a11f-tests.txt).
+Локально: последний полный run 1413 / 69,38%, затем все 37 deployment cases.
+Это не подтверждение установленного APK, VPN или аппаратной ёмкости.

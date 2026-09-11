@@ -319,3 +319,11 @@ Eight Bash/PowerShell cases execute the actual extracted bootstrap functions wit
 a process-backed Docker boundary. Full suite: **1413 / 505 real-service / 33 deployment**.
 No Compose, browser, installed APK or VPN tunnel acceptance is claimed.
 [Plan, environment assumptions and evidence](../../docs/operations/PILOT-ACCEPTANCE.md).
+
+### AUD-79: deployment initialization coverage
+
+Four additional Bash cases keep the shipped preamble and both overlay options.
+Local deployment directory: 37 passed. Full Linux suite at `ac7a11f`:
+**1417 passed / 69.37%**, with 505 PostgreSQL/Redis cases and 37 deployment
+cases. [Exact CI excerpt](../../docs/audits/2026-09-05/evidence/ci-ac7a11f-tests.txt).
+The Docker process is a boundary double; this does not run the full stack.

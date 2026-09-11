@@ -163,6 +163,14 @@ researches NitroGen and a future external inference worker; no AI is implemented
 
 ## Validation
 
+- `0da40f1` (AUD-78): **1413 passed** in the full Linux backend/PC/real-service/deployment suite; all four PR workflows passed on attempt 1. [Backend results](https://github.com/RootOne1337/sphere-platform/blob/codex/enterprise-audit-20260905/docs/audits/2026-09-05/evidence/ci-0da40f1-tests.txt).
+- `ac7a11f` (AUD-79): **1417 passed** in the full Linux backend/PC/real-service/deployment suite; all four PR workflows passed on attempt 1. [Backend results](https://github.com/RootOne1337/sphere-platform/blob/codex/enterprise-audit-20260905/docs/audits/2026-09-05/evidence/ci-ac7a11f-tests.txt).
+- Latest `ac7a11f` coverage: **69.37%**, including 505 PostgreSQL/Redis and
+  37 deployment cases. [Backend](https://github.com/RootOne1337/sphere-platform/actions/runs/34529567946), [frontend](https://github.com/RootOne1337/sphere-platform/actions/runs/34529567951),
+  [Android](https://github.com/RootOne1337/sphere-platform/actions/runs/34529567922) and [preview guard](https://github.com/RootOne1337/sphere-platform/actions/runs/34529567939).
+  All four Android unit-test variants pass; preview deployment is skipped.
+  The subsequent evidence/docs commit changes no runtime behavior and has separate checks.
+
 - Combined local backend/PC/PostgreSQL/Redis/deployment: **1413 passed**, including
   **505 real-service cases** and 33 deployment cases; **69.38%** coverage,
   four existing warnings. Load/soak profiles are excluded from this ordinary PR run.

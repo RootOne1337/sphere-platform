@@ -117,3 +117,21 @@ email через `SPHERE_ADMIN_EMAIL` у launcher или `ADMIN_EMAIL` у CLI. �
 по отдельности. Четыре новых сценария сохраняют настоящий preamble/option parsing,
 а весь deployment набор содержит 37 passing cases. Это ещё не запуск полного стека:
 следом требуется проверить env-file, порядок migrations/API и настоящую готовность.
+
+## Контрольная точка после AUD-78/79
+
+На `ac7a11f` полный Linux CI: **1417 tests / 69.37%**, включая 505
+PostgreSQL/Redis и 37 deployment cases. Backend/frontend/Android проходят;
+preview deployment пропущен. [Доказательства](../audits/2026-09-05/evidence/ci-ac7a11f-tests.txt).
+Для приёмки по-прежнему нужны шаги 1–9 выше. Конфигурация запуска и migrations/API
+идут следующими, до внешнего вида UI и большой нагрузки.
+
+### APK artifact и сохранение identity
+
+Два настоящих debug APK из CI `0da40f1` проверены: около 8,35 MB каждый,
+minSdk 26 / targetSdk 35, versionCode 10200, ZIP CRC и v2 signatures проходят.
+[Фактические package IDs, хеши и подпись](../audits/2026-09-05/evidence/apk-0da40f1-inspection.json).
+Размер файла не доказывает CPU/RAM, latency или VPN. Перед длительным пилотом
+нужно выбрать один package и постоянную managed signing identity, проверить update
+без потери app data. CI пока выдаёт debug artifacts; готовый release/update channel
+этим не подтверждается. На эмулятор или телефон эти APK не устанавливались.
