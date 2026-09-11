@@ -327,3 +327,10 @@ Local deployment directory: 37 passed. Full Linux suite at `ac7a11f`:
 **1417 passed / 69.37%**, with 505 PostgreSQL/Redis cases and 37 deployment
 cases. [Exact CI excerpt](../../docs/audits/2026-09-05/evidence/ci-ac7a11f-tests.txt).
 The Docker process is a boundary double; this does not run the full stack.
+
+### AUD-80: Windows dotenv selection
+
+Seven new deployment cases: actual synthetic Compose rendering and full start-dev
+with a Docker process double. Local deployment: 44 passed. Exact `ea8e606` Linux
+CI: **1424 passed / 69.38%**, including unchanged 505 PostgreSQL/Redis cases.
+[CI excerpt](../../docs/audits/2026-09-05/evidence/ci-ea8e606-tests.txt). No service startup or installed-device claim.

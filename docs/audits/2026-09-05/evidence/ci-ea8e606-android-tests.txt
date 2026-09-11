@@ -1,0 +1,9 @@
+Android PR run 34546302056, head ea8e60646926be657a1d1c42c7dcbbb446b8831c, attempt 1
+All four variant tasks; no installed APK/hardware claim.
+
+Build APK	Build debug APK	2026-09-11T00:26:54.4302046Z BUILD SUCCESSFUL in 3m 3s
+Build APK	Run unit tests	2026-09-11T00:28:29.6822191Z > Task :app:testDevDebugUnitTest
+Build APK	Run unit tests	2026-09-11T00:28:29.8814127Z > Task :app:testEnterpriseDebugUnitTest
+Build APK	Run unit tests	2026-09-11T00:29:00.4771453Z > Task :app:testDevReleaseUnitTest
+Build APK	Run unit tests	2026-09-11T00:29:00.7770856Z > Task :app:testEnterpriseReleaseUnitTest
+Build APK	Run unit tests	2026-09-11T00:30:53.6467993Z BUILD SUCCESSFUL in 3m 58s

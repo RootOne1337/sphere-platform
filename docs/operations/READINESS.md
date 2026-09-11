@@ -248,3 +248,10 @@ Full-deploy wrapper и штатный start-dev теперь передают `.
 явно. Пять before failures / 12 controls; после fix все 44 deployment cases проходят.
 Настоящий Compose renderer не запускает сервисы. Migration ordering, secrets,
 legacy branches, первый установленный APK/task/VPN остаются открытыми.
+
+### Текущий CI: AUD-80
+
+Runtime `ea8e606`: **1424 passed / 69.38%** в Linux, 505 PostgreSQL/Redis и
+44 deployment cases; backend/frontend/Android прошли с первой попытки. Preview
+deployment пропущен. [Точное evidence](../audits/2026-09-05/evidence/ci-ea8e606-tests.txt).
+Windows env paths подтверждены; полный первый pilot acceptance остаётся открытым.

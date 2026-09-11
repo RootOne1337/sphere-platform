@@ -26,7 +26,7 @@ runtime-проверок и не считается доказательство
 | Проверка | Результат | Практическое ограничение |
 | --- | --- | --- |
 | Android enterprise debug unit suite | 485 passed, 0 failed | JVM/MockWebServer и OkHttp interceptors; не проверяет ОС, codec, батарею или смерть процесса на телефоне |
-| Объединённая Backend/PC/production/deployment suite (Linux `ac7a11f`) | **1417 passed, 0 failed**; coverage **69,37%** | Строгий coverage gate 65% пройден. Load suite исключена; 37 deployment cases включают config/subprocess probes без запуска сервисов |
+| Объединённая Backend/PC/production/deployment suite (Linux `ea8e606`) | **1424 passed, 0 failed**; coverage **69,38%** | Строгий coverage gate 65% пройден. Load suite исключена; 44 deployment cases включают Compose renderer/subprocess probes без запуска сервисов |
 | Python dependency scan | **0 known vulnerabilities** в совместном backend/PC resolution | Pip-audit snapshot, не проверка frontend/Gradle/container/application security; [версии и ограничения](DEPENDENCY-REVIEW.md) |
 | Проверки PostgreSQL/Redis | **505 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
 | Миграции | Применены до **20260910_device_refresh_retry** включительно | Только изолированная БД; конфликтные данные/downgrade проверены в throwaway schema; production не мигрировался |
@@ -35,7 +35,7 @@ runtime-проверок и не считается доказательство
 | APK ↔ реальный локальный backend | Не завершено | Автоматическая проверка разрешений отклонила запуск локального API: `blocked by policy`; обход не выполнялся |
 | 10–64 эмулятора на станции, сотни/тысячи APK, физические телефоны | Не измерено | Нет подтверждённых CPU/RAM/FPS/энергопотребления и совместимости со всеми Android |
 
-Последний полный Linux вывод: [CI `ac7a11f`](evidence/ci-ac7a11f-tests.txt).
+Последний полный Linux вывод: [CI `ea8e606`](evidence/ci-ea8e606-tests.txt).
 Последний полный Windows вывод: [1413 cases](evidence/pilot-combined.txt).
 Предыдущий отдельный DAG benchmark однажды занял 127,1 ms при пороге 100 ms;
 изолированный повтор и последующие общие прогоны прошли. На первой CI попытке
@@ -1950,3 +1950,19 @@ update без потери данных, release shrink, APK/OS/VPN и performan
 Последний полный CI до этого fix: `ac7a11f`, 1417 cases / 69.37%. Для нового
 PowerShell fix локально повторён полный deployment набор; его exact SHA CI будет
 сохранён отдельно. Приоритет далее — migration→API bootstrap и первый device/task.
+
+### AUD-80: CI по runtime revision
+
+`ea8e60646926be657a1d1c42c7dcbbb446b8831c`: [backend](https://github.com/RootOne1337/sphere-platform/actions/runs/34546302055), [frontend](https://github.com/RootOne1337/sphere-platform/actions/runs/34546302107),
+[Android](https://github.com/RootOne1337/sphere-platform/actions/runs/34546302056) и [preview guard](https://github.com/RootOne1337/sphere-platform/actions/runs/34546302095)
+успешны с первой попытки; preview deployment пропущен. [Linux итог](evidence/ci-ea8e606-tests.txt):
+**1424 passed / 69.38%**, 238.84 s, 4 warnings; 505 PostgreSQL/Redis
+и 44 deployment cases. Fresh migrations и API export check проходят. Все четыре
+Android variants прошли; [вывод](evidence/ci-ea8e606-android-tests.txt). Отдельного
+Android push run для этого изменения нет.
+
+Локальная проверка AUD-80: все 44 deployment cases / 25.55 s, Ruff 0.15.2,
+оба PowerShell AST parsers. Backend/Android runtime не менялся; последний полный
+Windows run остаётся 1413 / 69.38%, JVM 485 / 35 suites. Схема БД не менялась.
+Последующий commit только сохраняет evidence/docs и имеет отдельные checks.
+Installed APK, полный Compose/VPN/fleet, merge и deployment не заявляются.

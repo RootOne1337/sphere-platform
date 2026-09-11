@@ -170,6 +170,12 @@ researches NitroGen and a future external inference worker; no AI is implemented
 
 ## Validation
 
+- Latest runtime `ea8e606` (AUD-80): **1424 passed**, including 505 PostgreSQL/Redis
+  and 44 deployment cases; **69.38%** coverage. [Backend](https://github.com/RootOne1337/sphere-platform/actions/runs/34546302055),
+  [frontend](https://github.com/RootOne1337/sphere-platform/actions/runs/34546302107), [Android](https://github.com/RootOne1337/sphere-platform/actions/runs/34546302056) and
+  [preview guard](https://github.com/RootOne1337/sphere-platform/actions/runs/34546302095) pass on attempt 1; preview deployment is
+  skipped. Local deployment has 44 passing cases. Evidence/docs follow separately.
+
 - `0da40f1` (AUD-78): **1413 passed** in the full Linux backend/PC/real-service/deployment suite; all four PR workflows passed on attempt 1. [Backend results](https://github.com/RootOne1337/sphere-platform/blob/codex/enterprise-audit-20260905/docs/audits/2026-09-05/evidence/ci-0da40f1-tests.txt).
 - `ac7a11f` (AUD-79): **1417 passed** in the full Linux backend/PC/real-service/deployment suite; all four PR workflows passed on attempt 1. [Backend results](https://github.com/RootOne1337/sphere-platform/blob/codex/enterprise-audit-20260905/docs/audits/2026-09-05/evidence/ci-ac7a11f-tests.txt).
 - Latest `ac7a11f` coverage: **69.37%**, including 505 PostgreSQL/Redis and

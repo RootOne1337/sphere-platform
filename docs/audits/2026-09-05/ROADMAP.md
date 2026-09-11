@@ -296,3 +296,9 @@ AUD-80 закрывает env selection full-deploy wrapper / штатного s
 `.env.local` → `.env`, explicit absolute path. Семь новых cases, 44 deployment pass.
 Открыты Bash dotenv/source и Windows legacy paths, lifecycle секретов и migration→API
 ordering; этот fix не является sign-off полного запуска. [Evidence](evidence/windows-env-before-summary.json).
+
+AUD-80 runtime `ea8e606` прошёл все четыре PR workflows с первой попытки:
+**1424 / 69.38%**, 238.84 s. [CI](evidence/ci-ea8e606-tests.txt). Локально 44
+deployment cases проходят. Следующий приоритет — fresh bootstrap ordering,
+наличие bootstrap CLI в immutable image и корректная identity первого устройства.
+Статические наблюдения этих путей требуют отдельных воспроизведений до fix.

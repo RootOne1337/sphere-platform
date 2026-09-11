@@ -144,3 +144,29 @@ Full-deploy wrapper и штатный start-dev config/build/up теперь я�
 и launcher subprocess; все 44 deployment cases проходят. Это закрывает доказанное
 расхождение выбора файла в этих Windows paths. Bash dotenv parsing, legacy branches,
 secrets lifecycle и настоящие настройки стенда ещё требуют проверки.
+
+## Следующий проверяемый рубеж после AUD-80
+
+Точный CI `ea8e606`: **1424 / 69.38%**, backend/frontend/Android проходят;
+preview deployment пропущен. [Вывод](../audits/2026-09-05/evidence/ci-ea8e606-tests.txt).
+44 deployment cases локально проходят. Это завершает проверку конкретных bootstrap,
+Compose argv и Windows env fixes, но не весь запуск.
+
+При чтении следующих участков видны отдельные препятствия. Они ещё не имеют
+нового runtime reproduction и не объявляются исправленными:
+
+1. [`full-deploy.ps1`](../../scripts/full-deploy.ps1) / [Bash](../../scripts/full-deploy.sh)
+   запускают API до migration stage. PowerShell при отказе container migration
+   пробует host CLI, не доказывая тот же DB target; health использует фиксированные
+   имена контейнеров. Нужен один выбранный project и проверяемый migration→API порядок.
+2. [`backend/Dockerfile`](../../backend/Dockerfile) копирует backend/alembic/config,
+   но не bootstrap scripts, которые production launcher вызывает через exec.
+   Dev bind-mount скрывает отсутствие файлов в immutable image. Нужна проверка
+   содержимого и запуска CLI в собранном образе; сейчас это вывод из Dockerfile.
+3. [`ensure_enrollment_key`](../../backend/tasks/ensure_enrollment_key.py) при dev startup
+   выбирает первую org и фиксированный dev key, независимо от выбранной bootstrap org.
+   Нужен отдельный SQL/lifespan сценарий для повторного запуска и нескольких org.
+
+После закрытия blockers этого рубежа — настоящий login → установленный APK →
+device/task/result и recovery/VPN. Оценка сроков всё ещё условна; число коммитов
+не снимает эти критерии приёмки.
