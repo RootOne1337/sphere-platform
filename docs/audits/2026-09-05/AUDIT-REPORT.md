@@ -2090,3 +2090,33 @@ no-new-privileges; один readonly probe mount и временный `/tmp`. �
 добавил два Compose cases и сохранил UTF-8 вывод. Отдельная неудачная попытка Compose
 сначала не дошла до collection из-за отсутствующего synthetic JWT в окружении;
 она не включена в доказательство дефекта. CI сохраняется отдельно по runtime SHA.
+
+## AUD-84 — High: повторный full-deploy затеняет рабочий `.env` новыми секретами
+
+- **Root cause / affected files:** `scripts/full-deploy.ps1/.sh` в generation stage
+  проверяют только `.env.local`. Установка с существующим `.env` попадает в fresh
+  generation path, включая headless и skip-secrets. Созданный `.env.local` получает
+  приоритет у дальнейшего bootstrap/Compose: процесс использует новые credentials
+  при прежних данных/паролях persistent services.
+- **Evidence/reproduction:** unchanged `a294c29`: [4 failures / 6 controls](evidence/existing-env-before-summary.json),
+  [вывод](evidence/existing-env-before.txt). Настоящие PS secret function и Bash
+  preamble/function работают в temporary directory с synthetic `.env`. Генератор
+  перехвачен отдельным native process: зафиксирован неверный вызов и создание
+  затеняющего файла. Это proof ошибочного перехода конфигурации; реальный отказ
+  PostgreSQL auth/Redis/decryption этим тестом не выполнялся.
+- **Fix:** оба launcher сохраняют `.env`-only установку без создания `.env.local`.
+  Если `.env.local` уже существует, прежний приоритет сохраняется. Fresh install
+  по-прежнему генерирует конфигурацию. Старые файлы не редактируются этим guard.
+- **Regression:** `tests/deployment/test_bootstrap_existing_env.py`, 10 cases для
+  PS/Bash: `.env` с обычным headless/skip, `.env.local`, оба файла и fresh config.
+  Проверяются bytes существующих files, отсутствие лишнего generator call/file
+  и fresh environment selection. [Все 77 deployment cases](evidence/existing-env-after-summary.json)
+  проходят за 70.95 s; [вывод](evidence/existing-env-after.txt). Ruff, Bash syntax,
+  PowerShell AST parse проходят. Последний полный локальный SQL/backend run остаётся
+  **1466 / 69.70%** (AUD-83); backend/Android source этим fix не меняется.
+- **Residual risk:** не проверен полный перезапуск persistent volume. Explicit
+  interactive overwrite `.env.local`, прямой generator, admin password updates,
+  secret rotation/backup и восстановление уже сломанной конфигурации требуют
+  отдельного плана. Выбор `.env` не доказывает валидность его содержимого. Обновление
+  PostgreSQL password в dotenv само по себе не меняет пароль существующей БД.
+  Никакие реальные secret files/volumes не изменялись; schema не менялась.

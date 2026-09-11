@@ -690,3 +690,10 @@ serialization as the explicit CLI. Both Compose overlays forward
 `SPHERE_BOOTSTRAP_ORG_SLUG`; persist it in the installation env file. Known key or
 configuration conflicts are warnings in the hook and errors in the explicit CLI.
 Check actual device registration after API readiness. [Diagnostic events and limits](operations/STARTUP.md).
+
+### Preserve existing installation configuration
+
+AUD-84 prevents full-deploy from generating a higher-priority `.env.local` when
+the installation already uses `.env`. Existing files are retained on unattended
+startup; fresh generation still works. This does not rotate database credentials
+or validate persistent-volume recovery. See [repeat-startup contract](operations/STARTUP.md).

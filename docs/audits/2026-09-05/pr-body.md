@@ -32,6 +32,12 @@ researches NitroGen and a future external inference worker; no AI is implemented
 
 ### Latest runtime findings
 
+- **AUD-84:** full-deploy treated an installation with `.env` as fresh and generated
+  a higher-priority `.env.local` with different credentials, even in skip-secrets.
+  Both launchers now retain the existing configuration. Four reproduced failures /
+  six controls; ten new cases and all 77 local deployment tests pass. Persistent
+  volume restart, admin password lifecycle and deliberate rotation remain open.
+
 - **AUD-83:** the development startup hook ignored configured enrollment identity,
   bound its legacy key to the first org and raced on worker startup. Real SQL/ASGI
   reproduced registration 401, wrong org and duplicate-key errors. CLI/hook now

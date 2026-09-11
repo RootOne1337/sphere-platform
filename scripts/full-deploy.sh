@@ -175,6 +175,13 @@ generate_secrets() {
 
     cd "$PROJECT_DIR"
 
+    # Compose already accepts .env; a new .env.local would shadow credentials
+    # belonging to initialized PostgreSQL/Redis and other persistent services.
+    if [[ ! -e .env.local && -f .env ]]; then
+        log INFO "Используется существующий .env — новые секреты не генерируются"
+        return
+    fi
+
     if [[ -f .env.local ]] && $SKIP_SECRETS; then
         log INFO "Секреты уже существуют (.env.local) — пропускаем"
         return

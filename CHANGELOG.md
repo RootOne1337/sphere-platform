@@ -1080,3 +1080,11 @@ Earlier branch integration is recorded in Git history. The former merge log and 
   taking the development API down; preserve strict explicit CLI failures.
 - 19 new startup regression cases and two Compose cases; 11 baseline failures /
   3 controls, followed by the complete 1466-case local suite.
+
+### Audit continuation — existing installation credentials (AUD-84)
+
+- Keep an existing `.env` when `.env.local` is absent during full-deploy, including
+  headless/skip-secrets. Avoid silently shadowing retained credentials with a new file.
+- Preserve local-file precedence and fresh generation; ten new cases exercise both
+  shells. Four baseline failures / six controls; all 77 deployment cases pass.
+- Actual database password rotation and persistent-volume recovery remain separate.

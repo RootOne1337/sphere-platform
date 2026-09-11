@@ -322,3 +322,10 @@ AUD-83 закрывает legacy dev enrollment split: configured key/exact org,
 и fresh SQL/image bootstrap; далее installed APK/task и VPN. В частности, generation
 stage проверяет только `.env.local`: `.env`-only installation требует отдельного
 воспроизведения до fix, пока это наблюдение из кода.
+
+AUD-84 воспроизвёл и исправил `.env`-only credential shadowing: оба full-deploy
+сохраняют существующий config вместо fresh generator. 4 baseline failures /
+6 controls, все 77 deployment cases проходят. [Evidence](evidence/existing-env-after-summary.json).
+Следующие P0: повтор admin bootstrap без нежелательной смены identity/password,
+roles/grants и fresh image SQL bootstrap. Installed APK/VPN/recovery остаются
+дальнейшей живой приёмкой; полноценная rotation/backup не закрыта.

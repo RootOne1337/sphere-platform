@@ -347,3 +347,12 @@ Baseline: 11 failures / 3 controls; Windows full suite: **1466 / 69.70%**,
 The SQL fixture patches only session selection, settings, isolated rate-limit keys
 and old hard-coded test material; it does not fake key queries, locks or commits.
 This is not a full process startup, installed APK or daemon/network recovery drill.
+
+### AUD-84: retain existing installation configuration
+
+Ten new deployment cases execute both shipped secret-generation stages in
+temporary directories. Synthetic credentials are byte-checked; a process double
+records unexpected generator calls. Four failures / six controls on `a294c29`,
+then **77 deployment cases pass / 70.95 s**. The last local combined suite stays
+1466 / 69.70%; no backend or Android runtime change in this increment. Actual
+persistent-volume restart and credential rotation are separate acceptance gates.

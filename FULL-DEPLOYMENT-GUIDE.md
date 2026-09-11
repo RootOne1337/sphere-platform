@@ -908,3 +908,12 @@ dev mount скрывал отсутствие `/app/scripts`, а production exec
 Настоящий container probe проверяет CLI validation, Alembic head и non-root/read-only
 режим; четыре cases проходят и включены в отдельный CI job. Полный bootstrap,
 порядок миграций/API и установленный APK остаются в [плане приёмки](docs/operations/PILOT-ACCEPTANCE.md).
+
+## Повторный запуск с существующими секретами
+
+`.env.local` имеет приоритет; если его нет, существующий `.env` сохраняется и
+используется без создания нового файла с другими паролями (AUD-84). Headless
+и skip-secrets учитывают оба пути. Fresh setup создаёт `.env.local`, если нет
+обоих файлов. Не считайте ручную перегенерацию ротацией уже инициализированных
+PostgreSQL/Redis: это требует согласованного обновления сервисов и backup.
+[Контракт повторного запуска](docs/operations/STARTUP.md).

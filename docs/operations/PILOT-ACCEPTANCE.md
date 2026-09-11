@@ -182,3 +182,13 @@ shell на процессе Docker double, включая отказы (65 deplo
 согласован с CLI в AUD-83; старые credentials не мигрируются автоматически.
 Уже работающие workers скрипт не останавливает; несовместимая migration требует
 отдельного cutover. Полная цепочка веб/APK/task и VPN пока не принята.
+
+## Сохранение `.env` при повторе: AUD-84
+
+Закрыта доказанная ошибка: full-deploy создавал новые секреты поверх установки,
+настроенной только через `.env`. Оба shell теперь сохраняют этот файл как active
+configuration; 4 baseline failures / 6 controls, все 77 deployment cases проходят.
+Это не подтверждает весь secret lifecycle: admin password updates, explicit
+rotation, восстановление backup и настоящий persistent-volume restart ещё нужны.
+Следующий gate первого пилота — roles/grants и fresh SQL/image bootstrap, затем
+установленный APK/task/result. [Контракт повторного запуска](STARTUP.md).

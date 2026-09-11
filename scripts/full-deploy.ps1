@@ -183,6 +183,14 @@ function Step-GenerateSecrets {
 
     $envFile = Join-Path $ProjectDir ".env.local"
 
+    # The Compose wrapper also accepts .env. Do not shadow an existing
+    # installation with new credentials for already initialized volumes.
+    if (-not (Test-Path -LiteralPath $envFile) -and
+        (Test-Path -LiteralPath (Join-Path $ProjectDir ".env") -PathType Leaf)) {
+        Write-Log "INFO" "Используется существующий .env — новые секреты не генерируются"
+        return
+    }
+
     if ((Test-Path $envFile) -and $SkipSecrets) {
         Write-Log "INFO" "Секреты уже существуют (.env.local) — пропуск"
         return

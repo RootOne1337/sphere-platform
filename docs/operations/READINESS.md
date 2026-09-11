@@ -279,3 +279,11 @@ Configured enrollment key, bootstrap org и API dev hook теперь согла
 67 deployment cases; [evidence](../audits/2026-09-05/evidence/startup-enrollment-full.txt).
 Known config/key conflict виден в структурированных логах без отключения API.
 Fresh-volume bootstrap, roles, secrets и установленный APK остаются следующими gates.
+
+### AUD-84: сохранение существующего `.env`
+
+Full-deploy больше не создаёт `.env.local` с новыми секретами при наличии только
+`.env`. Оба shell проверены на synthetic files и generator process double:
+4 failures / 6 controls до fix; 77 deployment cases проходят после. [Evidence](../audits/2026-09-05/evidence/existing-env-after-summary.json).
+Secret rotation/admin password/backup и настоящий restart persistent volumes
+не считаются закрытыми этим guard.
