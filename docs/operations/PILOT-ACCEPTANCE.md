@@ -40,7 +40,7 @@ Android и доступный управляемый VPN-router. До перво
 
 | Шаг | Текущий результат | Что ещё сделать / критерий завершения |
 | --- | --- | --- |
-| 1. Выбрать запуск | Есть dev Compose и отдельный production overlay | Проверить единый env-file, адреса, обязательные параметры, выбранный project; исключить расхождение `.env` и `.env.local` |
+| 1. Выбрать запуск | AUD-79: Bash argv; AUD-80: Windows `.env.local` → `.env` и explicit file | Проверить Bash dotenv, реальные адреса/обязательные параметры, selected project и оставшиеся legacy ветки |
 | 2. Подготовить БД | Миграции и отдельные RLS fixes проверены изолированно | Пройти fresh-volume bootstrap, schema head, роли/grants, правильный порядок migration→API; проверить повторный запуск |
 | 3. Создать пользователя и enrollment key | AUD-78 исправляет CLI/imports, передачу credentials и организацию ключа; реальные SQL/HTTP проверки | Подтвердить те же действия внутри выбранного полного Compose; текущий fix не проверяет остальные этапы full-deploy |
 | 4. Открыть веб и подключить APK | Android registration/refresh/ACK/fallback покрыты JVM-тестами | Проверить настоящий browser login, provisioning APK, permissions, `auth_ok`, видимость устройства и версию APK в UI |
@@ -135,3 +135,12 @@ minSdk 26 / targetSdk 35, versionCode 10200, ZIP CRC и v2 signatures прохо
 нужно выбрать один package и постоянную managed signing identity, проверить update
 без потери app data. CI пока выдаёт debug artifacts; готовый release/update channel
 этим не подтверждается. На эмулятор или телефон эти APK не устанавливались.
+
+## Windows configuration: AUD-80
+
+Full-deploy wrapper и штатный start-dev config/build/up теперь явно передают
+`.env.local` (приоритет) или `.env` из checkout. Файлы не объединяются, process env
+сохраняет приоритет. Проверены настоящий Compose renderer на synthetic configuration
+и launcher subprocess; все 44 deployment cases проходят. Это закрывает доказанное
+расхождение выбора файла в этих Windows paths. Bash dotenv parsing, legacy branches,
+secrets lifecycle и настоящие настройки стенда ещё требуют проверки.

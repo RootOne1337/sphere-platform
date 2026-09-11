@@ -74,9 +74,13 @@ function Assert-DockerRunning {
 
 # ── Проверка .env ─────────────────────────────────────────────────────────────
 function Assert-EnvFile {
-    Write-Step "Проверяю .env файл..."
-    $envFile = Join-Path $ROOT ".env"
-    if (-not (Test-Path $envFile)) {
+    Write-Step "Проверяю .env.local / .env..."
+    $envFile = @('.env.local', '.env') | ForEach-Object {
+        $candidate = Join-Path $ROOT $_
+        if (Test-Path -LiteralPath $candidate -PathType Leaf) { $candidate }
+    } | Select-Object -First 1
+    if (-not $envFile) {
+        $envFile = Join-Path $ROOT ".env"
         if (Test-Path (Join-Path $ROOT ".env.example")) {
             Copy-Item (Join-Path $ROOT ".env.example") $envFile
             Write-Info ".env создан из .env.example — заполни обязательные параметры и повтори запуск."
@@ -86,7 +90,8 @@ function Assert-EnvFile {
             exit 1
         }
     } else {
-        Write-Ok ".env найден"
+        $script:ComposeArgs += @('--env-file', $envFile)
+        Write-Ok "Конфигурация выбрана: $(Split-Path $envFile -Leaf)"
     }
 }
 

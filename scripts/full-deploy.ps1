@@ -34,9 +34,9 @@ $LogFile = Join-Path $ProjectDir ".deploy.log"
 $StopWatch = [System.Diagnostics.Stopwatch]::StartNew()
 
 if ($Production) {
-    $ComposeFiles = @("-f", "docker-compose.yml", "-f", "docker-compose.production.yml")
+    $ComposeFiles = @("-f", (Join-Path $ProjectDir "docker-compose.yml"), "-f", (Join-Path $ProjectDir "docker-compose.production.yml"))
 } else {
-    $ComposeFiles = @("-f", "docker-compose.yml", "-f", "docker-compose.full.yml")
+    $ComposeFiles = @("-f", (Join-Path $ProjectDir "docker-compose.yml"), "-f", (Join-Path $ProjectDir "docker-compose.full.yml"))
 }
 
 # ── Справка ───────────────────────────────────────────────────────────────────
@@ -104,7 +104,16 @@ function Show-Banner {
 # ── Docker Compose обёртка ────────────────────────────────────────────────────
 function Invoke-Compose {
     param([string[]]$Arguments)
-    $allArgs = $ComposeFiles + $Arguments
+    # Match make setup: generated .env.local takes precedence over .env.
+    # Let Compose parse dotenv; never execute it or print resolved secrets.
+    $selectedEnvFile = @('.env.local', '.env') | ForEach-Object {
+        $candidate = Join-Path $ProjectDir $_
+        if (Test-Path -LiteralPath $candidate -PathType Leaf) { $candidate }
+    } | Select-Object -First 1
+    if (-not $selectedEnvFile) {
+        throw "No .env.local or .env in the installation directory. Prepare configuration before Compose."
+    }
+    $allArgs = @('--env-file', $selectedEnvFile) + $ComposeFiles + $Arguments
     & docker compose @allArgs
     if ($LASTEXITCODE -ne 0) {
         throw "docker compose $($Arguments -join ' ') провалился (exit code: $LASTEXITCODE)"

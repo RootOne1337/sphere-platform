@@ -17,6 +17,7 @@ REPOSITORY = Path(__file__).resolve().parents[2]
 @pytest.fixture(params=["powershell", "bash"])
 def bootstrap(request, tmp_path):
     shell = request.param
+    (tmp_path / ".env.local").write_text("# synthetic bootstrap configuration\n", encoding="utf-8")
     executable = shutil.which("pwsh" if shell == "powershell" else "bash")
     if shell == "bash" and os.name == "nt":
         candidate = Path("C:/Program Files/Git/bin/bash.exe")

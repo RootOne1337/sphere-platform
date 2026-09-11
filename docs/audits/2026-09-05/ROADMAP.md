@@ -291,3 +291,8 @@ AUD-78/79 exact runtime CI завершён: `0da40f1` — 1413 Linux cases;
 на каждой ревизии прошли с первой попытки; preview deployment пропущен. Последний
 локальный общий итог 1413 / 69,38%, затем 37 deployment cases. [CI итог](evidence/ci-ac7a11f-tests.txt).
 Это подтверждает компонентные проверки bootstrap/argv; полный pilot acceptance открыт.
+
+AUD-80 закрывает env selection full-deploy wrapper / штатного start-dev на Windows:
+`.env.local` → `.env`, explicit absolute path. Семь новых cases, 44 deployment pass.
+Открыты Bash dotenv/source и Windows legacy paths, lifecycle секретов и migration→API
+ordering; этот fix не является sign-off полного запуска. [Evidence](evidence/windows-env-before-summary.json).

@@ -54,9 +54,11 @@ function global:docker { & $env:LAUNCHER_PYTHON $env:LAUNCHER_FAKE @args }
 exit $LASTEXITCODE
 ''', encoding="utf-8")
 
-    def run(scenario="success", missing_env=False):
+    def run(scenario="success", missing_env=False, local_env=False):
         if missing_env:
             (root / ".env").unlink()
+        if local_env:
+            (root / ".env.local").write_text("# synthetic generated configuration\n", encoding="utf-8")
         environment = os.environ.copy()
         environment.update(
             LAUNCHER_SCENARIO=scenario, LAUNCHER_CALLS=str(calls),
@@ -107,3 +109,15 @@ def test_launcher_success_waits_in_the_selected_compose_project(launch):
     assert str(root / "docker-compose.yml") in up
     assert str(root / "docker-compose.full.yml") in up
     assert not any("inspect" in call for call in calls), calls
+
+
+@pytest.mark.parametrize("missing_env", [False, True])
+def test_dev_launcher_uses_generated_local_env_for_every_startup_compose_call(launch, missing_env):
+    result, calls, root = launch(missing_env=missing_env, local_env=True)
+    assert result.returncode == 0, result.stdout + result.stderr
+    for call in calls:
+        if call[0] == "compose":
+            assert "--env-file" in call, call
+            assert call[call.index("--env-file") + 1] == str(root / ".env.local")
+    if missing_env:
+        assert not (root / ".env").exists()

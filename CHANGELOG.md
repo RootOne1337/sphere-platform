@@ -1046,3 +1046,11 @@ Earlier branch integration is recorded in Git history. The former merge log and 
   with the shipped newline/tab IFS; repair all ten command sites.
 - Four failing-before regressions keep real initialization/options. All 37 deployment
   cases pass; full-stack/env-file/migration/APK/VPN acceptance remains open.
+
+### Audit continuation — Windows Compose environment (AUD-80)
+
+- Select generated `.env.local` before `.env`, with explicit absolute env/YAML paths
+  in full-deploy and explicit env in normal start-dev config/build/up. Preserve
+  process overrides; reject missing installation env instead of using ambient config.
+- Seven new regressions; baseline five failures and twelve controls, then all 44
+  deployment cases pass. Real Compose rendering uses synthetic files without services.

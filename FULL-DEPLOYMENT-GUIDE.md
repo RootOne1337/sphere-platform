@@ -916,3 +916,13 @@ Dev/production Compose arguments теперь передаются массив�
 Проверены build и bootstrap с настоящим preamble и процессом вместо Docker;
 полный deployment набор — 37 passing cases. Env-file, migrations/API ordering,
 готовность сервисов и реальный APK/VPN остаются в [приёмке пилота](docs/operations/PILOT-ACCEPTANCE.md).
+
+### Windows: источник конфигурации (AUD-80)
+
+`full-deploy.ps1` выбирает `.env.local`, затем `.env` в корне установки и передаёт
+абсолютный путь через Compose `--env-file`. Оба YAML paths также абсолютные.
+Файлы не объединяются; shell/process env сохраняет приоритет. Отсутствие обоих
+останавливает wrapper до Docker. Штатный `start-dev.ps1` config/build/up имеет
+тот же выбор, а при отсутствии обоих создаёт только template и требует заполнения.
+Legacy start-dev Status/Down/Tunnel и остальные этапы full-deploy требуют отдельной
+приёмки. [Текущий план](docs/operations/PILOT-ACCEPTANCE.md).

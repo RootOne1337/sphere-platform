@@ -241,3 +241,10 @@ Runtime `ac7a11f`: **1417 passed / 69.37%** в Linux с fresh migrations и
 попытки. Preview guard прошёл, deployment пропущен. [Точный срез](../audits/2026-09-05/evidence/ci-ac7a11f-tests.txt).
 Локально: последний полный run 1413 / 69,38%, затем все 37 deployment cases.
 Это не подтверждение установленного APK, VPN или аппаратной ёмкости.
+
+### AUD-80: выбранный env до запуска Windows Compose
+
+Full-deploy wrapper и штатный start-dev теперь передают `.env.local` → `.env`
+явно. Пять before failures / 12 controls; после fix все 44 deployment cases проходят.
+Настоящий Compose renderer не запускает сервисы. Migration ordering, secrets,
+legacy branches, первый установленный APK/task/VPN остаются открытыми.

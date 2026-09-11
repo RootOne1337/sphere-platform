@@ -651,3 +651,13 @@ docker compose exec postgres psql -U sphere sphereplatform \
 # Redis: check memory
 docker compose exec redis redis-cli info memory
 ```
+
+### Windows configuration selection (AUD-80)
+
+The full-deploy Compose wrapper and normal start-dev config/build/up path explicitly
+select checkout `.env.local`, then `.env`, matching Makefile priority. Files are not
+merged. Process environment overrides retain Compose precedence. Full-deploy refuses
+to invoke Compose without either file; start-dev creates a template only when both
+are missing and requires the operator to fill it before retry. The real Compose
+renderer is tested with synthetic files, without starting services. This does not
+certify full startup, legacy branches or deployment roles/migrations.

@@ -1913,3 +1913,40 @@ ZIP CRC проходит, SHA-256 и certificate fingerprint сохранены.
 update без потери данных, release shrink, APK/OS/VPN и performance не проверены.
 Пакеты разных flavors имеют отдельное storage; пилот должен зафиксировать package
 и update contract до массовой установки. [APK guide](../../../docs/android-agent.md).
+
+## AUD-80 — High: Windows launcher игнорировал подготовленный .env.local
+
+- **Root cause / affected files:** `scripts/full-deploy.ps1` генерирует `.env.local`,
+  но `Invoke-Compose` не передавал `--env-file`. Compose выбирал `.env` либо ambient
+  configuration. `scripts/start-dev.ps1` требовал только `.env`, при единственном
+  готовом `.env.local` создавал template и останавливал запуск.
+- **Evidence/reproduction:** baseline `f811320`: [5 failures / 12 passing controls](evidence/windows-env-before-summary.json),
+  [полный вывод](evidence/windows-env-before.txt). Настоящий PowerShell wrapper
+  вызывает настоящий `docker compose config --format json` с двумя synthetic YAML,
+  synthetic dotenv и caller directory, отличающимся от checkout с пробелами в пути.
+  При `.env.local`+`.env` выбран не local marker; local-only также не выбран;
+  missing installation env не останавливал Docker. Два start-dev cases фиксируют
+  отсутствие `--env-file` и ненужное создание template/exit.
+- **Fix:** явный приоритет `.env.local` → `.env`, абсолютный env path. Все вызовы
+  full-deploy wrapper используют выбранный файл и абсолютные YAML paths. Без файла
+  wrapper отказывает до Docker. Штатные config/build/up в start-dev используют тот
+  же выбор; template создаётся только при отсутствии обоих файлов и требует ручного
+  заполнения. Dotenv разбирает Compose, значения не исполняются и не печатаются.
+  Явный process environment сохраняет стандартный приоритет над dotenv.
+- **Regression:** `tests/deployment/test_full_deploy_env.py` — пять cases с настоящим
+  Compose renderer; две новые start-dev regressions и прежние startup/native failure
+  cases. [Все 44 deployment cases проходят](evidence/windows-env-after-summary.json),
+  [вывод](evidence/windows-env-after.txt), 25.55 s. PowerShell AST parse и Ruff проходят.
+  Bootstrap process fixture получает synthetic `.env.local`, соответствующий новому
+  контракту. Production backend/Android и схема БД не менялись.
+- **Residual risk:** `.env.local` имеет приоритет целиком, файлы не объединяются.
+  Старые installations должны явно выбрать источник; скрипт не переносит значения.
+  Изменение файла между отдельными командами/запусками не блокируется. Legacy
+  start-dev Status/Down/Tunnel, Bash dotenv `source`, генерация/rotation secrets,
+  migration ordering, runtime DB roles и hard-coded health checks full-deploy
+  остаются открытыми. Конфигурация Compose не является запуском контейнеров или
+  приёмкой APK/VPN; никакой deployment/merge не выполнен.
+
+Последний полный CI до этого fix: `ac7a11f`, 1417 cases / 69.37%. Для нового
+PowerShell fix локально повторён полный deployment набор; его exact SHA CI будет
+сохранён отдельно. Приоритет далее — migration→API bootstrap и первый device/task.

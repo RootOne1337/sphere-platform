@@ -1,17 +1,20 @@
 # Запуск development-стека и значение readiness
 
-**Сверено 10 сентября 2026 · AUD-68.** [Эксплуатационный план](READINESS.md) ·
+**Сверено 11 сентября 2026 · AUD-68/78–80.** [Эксплуатационный план](READINESS.md) ·
 [Runbooks](../runbooks/README.md) · [Deployment](../deployment.md).
 
 ## Подготовка
 
 Нужны PowerShell 7, Docker с Compose v2, поддерживающим `up --wait --wait-timeout`,
-и заполненный `.env` в корне checkout. Для production overlay уже требуется
+и заполненный `.env.local` либо `.env` в корне checkout. Для production overlay уже требуется
 Compose 2.24.4+ из-за `!reset`. Параметры перечислены в
 [configuration guide](../configuration.md); этот launcher использует base + full,
 а не production overlay. Не запускайте его поверх другого deployment project.
 
-Если `.env` отсутствует, скрипт копирует `.env.example` и заканчивает работу с
+Приоритет: `.env.local`, затем `.env`; выбранный абсолютный путь передаётся
+через `--env-file` во все штатные config/build/up команды. Файлы не объединяются.
+Явный process environment по-прежнему имеет приоритет Compose. Если отсутствуют
+оба файла, скрипт копирует `.env.example` в `.env` и заканчивает работу с
 ошибкой. Заполните параметры и повторите запуск. Шаблон не является готовой
 конфигурацией. Миграции, runtime DB role/grants и initial identity необходимо
 подготовить по соответствующим rollout guides; launcher не меняет их автоматически.
@@ -95,3 +98,11 @@ Compose, браузер и APK transport в этот прогон не вход�
 во всех стадиях. Это устраняет malformed `-f ... -f ...` argument при штатном IFS.
 Проверка включает настоящий preamble, build и bootstrap с процессом на границе Docker.
 Она не подтверждает остальные стадии полного deployment. [План приёмки](PILOT-ACCEPTANCE.md).
+
+### Windows env selection (AUD-80)
+
+`full-deploy.ps1` использует тот же приоритет `.env.local` → `.env` для каждого
+вызова wrapper, включая build/migration/bootstrap; без файла Compose не вызывается.
+Абсолютные YAML/env paths не зависят от caller directory. Подготовка env не означает
+проверку DB roles/migration ordering/readiness. Legacy Status/Down/Tunnel start-dev
+по-прежнему не входят в принятый штатный startup path.

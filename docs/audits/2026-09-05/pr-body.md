@@ -32,6 +32,13 @@ researches NitroGen and a future external inference worker; no AI is implemented
 
 ### Latest runtime findings
 
+- **AUD-80:** Windows full-deploy ignored its generated `.env.local`; start-dev
+  rejected that file unless `.env` also existed. Both normal paths now select
+  `.env.local` then `.env` explicitly, with absolute paths and unchanged process-env
+  precedence. Seven new cases reproduce five failures plus controls; all 44 local
+  deployment tests pass, including actual Compose rendering of synthetic config.
+  Legacy branches, secret lifecycle and migration/API startup remain open.
+
 - **AUD-79:** the Bash launcher's newline/tab IFS sent the entire Compose file
   prefix as one argument. Both overlay choices are arrays and all ten call sites
   preserve argument boundaries. Four baseline failures keep actual initialization
