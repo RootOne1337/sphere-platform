@@ -71,3 +71,13 @@ commit после потери процесса/ответа автоматич�
 пустом значении; production также сохраняет false. Это не отказ PostgreSQL/Redis:
 импорт Settings останавливался до подключения к ним. Не включайте true для обхода
 ошибки и не прикладывайте полный rendered environment с credentials к инциденту.
+
+## PostgreSQL остановился при первом init: role sphere does not exist
+
+При нестандартном POSTGRES_USER старая версия init.sql назначала владельцем n8n
+несуществующую роль sphere. AUD-87 исправляет свежие установки. Найдите в Docker
+logs ошибку `/docker-entrypoint-initdb.d/init.sql` и проверьте, дошёл ли entrypoint
+до завершения initialization. Повтор может запустить уже непустой кластер, пропустив
+оставшиеся init statements; running/pg_isready не доказывает наличие n8n/extensions.
+Проверьте pg_database/datdba и pg_extension перед repair. Не удаляйте existing volume
+с данными и не запускайте init.sql повторно вслепую. [Контракт](../operations/STARTUP.md).

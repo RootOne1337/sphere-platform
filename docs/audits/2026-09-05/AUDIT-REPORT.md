@@ -31,9 +31,10 @@ runtime-проверок и не считается доказательство
 | AUD-84: новый `.env.local` затеняет рабочий `.env` | 4 failures / 6 controls на временной установке | Сохранение выбранной существующей конфигурации |
 | AUD-85: повтор меняет admin password, поздний отказ скрывает initial credentials | 9 failures / 4 controls, настоящий shell/CLI/SQL/login | Create-only, serialization, committed outcome до enrollment |
 | AUD-86: свежий full-deploy не загружает Settings | 2 failures / 6 controls, generator→Compose→Settings | Валидное false вместо пустого DEV_SKIP_AUTH |
+| AUD-87: другой POSTGRES_USER ломает первый init | PostgreSQL exit 3; default user control проходит | Владелец n8n — пользователь, выполняющий init |
 
 Полные root cause, файлы, воспроизведения и residual risk находятся в разделах
-AUD-81–86 ниже. Это закрытые дефекты отдельных путей, не акт готовности всего продукта.
+AUD-81–87 ниже. Это закрытые дефекты отдельных путей, не акт готовности всего продукта.
 [Следующие критерии первого пилота](../../operations/PILOT-ACCEPTANCE.md).
 
 ## Результаты проверок
@@ -2324,3 +2325,41 @@ image **4 + 1** считаются отдельно. Последний полн
 Schema head по-прежнему `20260910_device_refresh_retry`. Остались полный выбранный
 Compose/init.sql, browser/установленная APK/task/result, VPN, реальные failure drills
 и incident timeline; optional PostgreSQL owner пока только source observation.
+
+## AUD-87 — High: изменение POSTGRES_USER ломает первый PostgreSQL init
+
+- **Root cause / affected files:** Compose передаёт настраиваемый `POSTGRES_USER`
+  официальному PostgreSQL entrypoint и сервису n8n, но `infrastructure/postgres/init.sql`
+  создаёт n8n с hardcoded `OWNER = sphere`. На пустом кластере с другим пользователем
+  роли sphere нет; entrypoint выходит с кодом 3 до завершения init/расширений.
+- **Evidence/reproduction:** unchanged `14e88be`: [1 failure / 1 control](evidence/postgres-init-confirmed-before/postgres-init-summary.json),
+  [test output](evidence/postgres-init-before.txt),
+  [настоящий PostgreSQL error](evidence/postgres-init-confirmed-before/postgres-init-sphere_audit_operator.txt).
+  Новый `postgres:15-alpine` container монтирует штатный init.sql, использует отдельный
+  новый volume, `--network none`, без host ports. При `sphere_audit_operator`:
+  `role "sphere" does not exist`; при `sphere` init и restart проходят. Первый
+  init проверяется до restart, чтобы повтор не скрывал упавший entrypoint.
+- **Fix:** удалить явный OWNER. PostgreSQL назначает владельцем выполняющего команду
+  пользователя; официальный entrypoint выполняет SQL как выбранный POSTGRES_USER.
+  Это стандартное [поведение PostgreSQL 15](https://www.postgresql.org/docs/15/sql-createdatabase.html),
+  подтверждённое SQL-проверкой обоих пользователей. Locale/encoding/template не меняются.
+- **Regression:** `tests/containers/postgres_init_probe.py`, 2 stdlib cases,
+  [оба проходят](evidence/postgres-init-after.txt) за **12.285 s**. Проверяются
+  pg_database owner, подключение к n8n, uuid-ossp/pg_trgm/btree_gin, затем реальный
+  container restart с сохранённой marker-записью на том же volume и повторной SQL
+  проверкой. [Структурированные результаты](evidence/postgres-init-final-after/postgres-init-summary.json).
+  Cleanup проверяет ID/name/ownership label перед удалением только собственных
+  ресурсов; все удалены. Два cases добавлены в mandatory image job отдельно от
+  pytest 1506 и image 4 + 1. Ruff проходит; полный новый CI фиксируется отдельно.
+- **Test development:** первая версия harness использовала tmpfs, который не
+  сохранял marker после container restart; заменена новым disposable named volume
+  до подтверждённого baseline. Первый вариант fix `OWNER=CURRENT_USER` отвергнут
+  PostgreSQL 15 parser и не коммитился; окончательный вариант без OWNER прошёл оба
+  реальных сценария. Эти промежуточные ошибки не считаются дополнительными AUD.
+- **Residual risk:** init.sql исполняется entrypoint только на свежем кластере.
+  Исправление не восстанавливает автоматически старый volume после частичного init;
+  перед repair нужны проверка n8n/extensions/владельцев и сохранённых данных. Никакие
+  существующие volumes, пароли или роли не изменялись. Production runtime/migration
+  roles, полный Compose, n8n workload, browser/installed APK/task/VPN и host failure
+  drills остаются отдельными этапами. Сам init.sql не стал повторно запускаемой
+  миграцией; schema head приложения не менялся.

@@ -1,12 +1,13 @@
 # Проверки поставляемого backend-образа
 
-Обе проверки запускаются в обязательном job `Production image bootstrap`.
+Проверки запускаются в обязательном job `Production image bootstrap`.
 Они считаются отдельно от pytest suite и не требуют установленной APK.
 
 | Проверка | Что выполняется | Граница доказательства |
 | --- | --- | --- |
 | `backend_bootstrap_probe.py` — 4 cases | Validation обоих CLI, единственный migration head, запрет записи в `/app` | Без сети и SQL |
 | `backend_runtime_probe.py` — 1 составной scenario | Пустая PostgreSQL → настоящие миграции → admin/key CLI → приложение → login/registration/visibility → повтор | Реальные SQL/Redis и два процесса с полным ASGI lifespan; без API listener, frontend, APK и VPN |
+| `postgres_init_probe.py` — 2 cases | Штатный init.sql для default/custom POSTGRES_USER; владелец n8n, расширения и container restart с сохранением записи | Отдельный настоящий PG entrypoint и новый disposable volume; без полного Compose/APK |
 
 ## Локальный запуск runtime scenario
 
@@ -42,3 +43,25 @@ runner cleanup не гарантирован; оставшиеся ресурс�
 Нет Gunicorn multi-worker, полного Compose, crash/reboot, отказа сети/БД, browser,
 установленной APK, выполнения задания, VPN handshake или измерения ёмкости парка.
 Успех сценария не закрывает [полный пилот](../../docs/operations/PILOT-ACCEPTANCE.md).
+
+## Штатный PostgreSQL entrypoint и persistent-volume restart
+
+```sh
+python tests/containers/postgres_init_probe.py --evidence-dir postgres-init-evidence
+```
+
+Два cases используют официальный PostgreSQL 15 и настоящий
+`infrastructure/postgres/init.sql` с `POSTGRES_USER=sphere` и
+`POSTGRES_USER=sphere_audit_operator`. Каждый создаёт отдельный named volume с
+уникальным label, контейнер с `--network none` и без host ports. Проверка ждёт
+финальный TCP server внутри контейнера, чтобы temporary init server не считался
+готовой БД; ошибка первого init проваливает case до любого restart.
+
+SQL проверяет выбранного пользователя, владельца n8n, доступ к n8n и три расширения
+основной БД. После этого создаётся marker, выполняется настоящий container restart
+и проверяется сохранение marker, владельца и расширений. В `finally` удаляются
+только созданные этим запуском контейнер/volume после проверки ID/name/label.
+Логи и JSON summary содержат результат обеих фаз и cleanup. При убийстве runner
+cleanup не гарантирован; оставшиеся ресурсы имеют label `sphere.audit.init`.
+Существующие volumes не используются. Проверка не подтверждает восстановление
+частично инициализированной старой установки или полноценный Compose rollout.

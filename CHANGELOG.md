@@ -1114,3 +1114,12 @@ Earlier branch integration is recorded in Git history. The former merge log and 
   and the production overlay's forced false.
 - Reproduce two failures / six controls through the real generator/Compose/Settings
   path; retain eight regression cases. All 93 deployment tests pass locally.
+
+### Audit continuation — PostgreSQL initialization user (AUD-87)
+
+- Remove hardcoded sphere ownership from the n8n database created by init.sql;
+  use the configured entrypoint user's default ownership on fresh clusters.
+- Reproduce PostgreSQL exit 3 for a custom POSTGRES_USER; retain two real container
+  regressions for initial state and restart with preserved data. Both pass locally.
+- Add mandatory CI coverage and document partially initialized volume limits;
+  no existing data, password, role or application migration is modified.

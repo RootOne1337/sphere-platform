@@ -257,3 +257,12 @@ boolean DEV_SKIP_AUTH для штатно сгенерированной кон�
 Это закрывает подтверждённые admin-repeat и generated-config blockers. Полный
 Compose/init.sql, browser/installed APK/task/result и VPN остаются открыты;
 условные сроки не сокращаются автоматически по числу коммитов или тестов.
+
+## Штатный PostgreSQL init.sql: AUD-87
+
+Предыдущее наблюдение о OWNER=sphere теперь воспроизведено и исправлено: новая
+установка с другим POSTGRES_USER больше не падает на создании n8n. Отдельные
+контейнерные cases проверяют default/custom user, владелец/extensions и container
+restart с сохранённой записью. [Evidence](../audits/2026-09-05/evidence/postgres-init-final-after/postgres-init-summary.json).
+Это покрывает init.sql отдельно от Alembic/image scenario. Полный выбранный Compose,
+browser/установленная APK/task/result и VPN ещё нужны; частичный старый init не лечится автоматически.

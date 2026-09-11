@@ -410,3 +410,12 @@ production-directory and 93 deployment cases. Image probes remain separate: 4
 no-network cases plus 1 SQL/runtime scenario. All four workflows pass attempt 1.
 [Evidence](../../docs/audits/2026-09-05/evidence/ci-8932e49-tests.txt).
 Windows last full: 1498 / 69.67%; targeted deployment after AUD-86: 93 passed.
+
+### AUD-87: real PostgreSQL entrypoint initialization
+
+Two separate [container cases](../containers/README.md) mount the shipped init.sql
+into fresh PostgreSQL clusters with default/custom POSTGRES_USER. One baseline
+failure/one control; both pass after removing hardcoded n8n ownership. They assert
+owner/extensions, actual container restart and retained SQL marker, with guarded
+cleanup of newly created volumes. Count separately from 1506 pytest and image 4 + 1.
+No existing cluster, application schema or installed APK is changed.

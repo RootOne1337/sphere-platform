@@ -287,3 +287,12 @@ from loading even with a freshly generated installation configuration. Explicit
 Backend boolean validation remains strict. Generated configuration still requires
 operator-supplied addresses/integration values; this fix does not validate the whole
 installation. [Startup contract](operations/STARTUP.md).
+
+## PostgreSQL initialization identity
+
+For a fresh cluster, `POSTGRES_USER` selects the entrypoint user and therefore the
+owner of the n8n database created by `infrastructure/postgres/init.sql` (AUD-87).
+The default remains sphere; a configured alternative no longer fails on a missing
+hardcoded sphere role. Both fresh initialization and restart retaining database
+contents are tested. Existing clusters do not re-run init.sql, and changing the
+environment does not rename database roles. [Startup and partial-init limits](operations/STARTUP.md).

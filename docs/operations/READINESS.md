@@ -318,3 +318,11 @@ DEV_SKIP_AUTH не позволял backend загрузить настройк�
 использует false. Все 93 deployment tests проходят локально; полный CI этой
 ревизии фиксируется отдельно. Это приоритетный startup defect, не дополнительный
 security barrier. [Evidence](../audits/2026-09-05/evidence/compose-settings-before.txt).
+
+### AUD-87: первый PostgreSQL init с выбранным пользователем
+
+Закрыт подтверждённый exit 3 при POSTGRES_USER != sphere. Default/custom users
+теперь проходят настоящий entrypoint, SQL ownership/extensions и container restart
+с сохранением данных. Два новых mandatory-container cases учитываются отдельно от
+pytest и image 4 + 1. [Локальное доказательство](../audits/2026-09-05/evidence/postgres-init-after.txt).
+Старые частичные установки и полный Compose/APK/VPN требуют отдельной приёмки.

@@ -1,0 +1,19 @@
+test_configured_user_initializes_and_restarts_with_owned_n8n_and_extensions (__main__.PostgresInitializationTests.test_configured_user_initializes_and_restarts_with_owned_n8n_and_extensions) ... FAIL
+test_default_user_initializes_and_restarts_with_owned_n8n_and_extensions (__main__.PostgresInitializationTests.test_default_user_initializes_and_restarts_with_owned_n8n_and_extensions) ... ok
+
+======================================================================
+FAIL: test_configured_user_initializes_and_restarts_with_owned_n8n_and_extensions (__main__.PostgresInitializationTests.test_configured_user_initializes_and_restarts_with_owned_n8n_and_extensions)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\tests\containers\postgres_init_probe.py", line 102, in test_configured_user_initializes_and_restarts_with_owned_n8n_and_extensions
+    self.exercise("sphere_audit_operator")
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\tests\containers\postgres_init_probe.py", line 70, in exercise
+    self.wait_ready(container, user)
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\tests\containers\postgres_init_probe.py", line 30, in wait_ready
+    self.assertTrue(state["Running"], f"PostgreSQL exited during initialization: {state['ExitCode']}")
+AssertionError: False is not true : PostgreSQL exited during initialization: 3
+
+----------------------------------------------------------------------
+Ran 2 tests in 10.061s
+
+FAILED (failures=1)

@@ -379,3 +379,12 @@ workflow first-attempt success. [Evidence](evidence/ci-8932e49-tests.txt).
 Следующий P0 остаётся полный Compose/init.sql/browser/APK/task/result, затем VPN,
 recovery и incident timeline. PostgreSQL OWNER=sphere при другом POSTGRES_USER
 ещё требует isolated reproduction; не заявлен новым дефектом без доказательства.
+
+AUD-87 подтверждает и закрывает прежнее source observation о PostgreSQL owner:
+custom POSTGRES_USER давал exit 3 и role sphere does not exist. Минимальный fix
+опускает OWNER, оставляя владельцем пользователя entrypoint. Baseline: 1 FAIL / 1 control,
+после: 2 PASS с fresh-init и container restart на том же disposable volume.
+[Evidence](evidence/postgres-init-after.txt). Два stdlib cases добавлены в mandatory
+CI отдельно от 1506 pytest и image 4 + 1. Не восстановлены старые частично созданные
+кластеры. Следующий приоритет: полный выбранный Compose/browser/APK/task/result,
+VPN/recovery/incident timeline; прежнее наблюдение подтверждено в AUD-87.

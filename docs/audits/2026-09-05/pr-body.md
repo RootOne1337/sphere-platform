@@ -32,6 +32,13 @@ researches NitroGen and a future external inference worker; no AI is implemented
 
 ### Latest runtime findings
 
+- **AUD-87:** custom POSTGRES_USER made the first PostgreSQL entrypoint exit 3:
+  init.sql assigned n8n to missing role sphere. Omit OWNER to retain the actual
+  entrypoint user's ownership. One real baseline failure / one default-user control;
+  both default/custom cases now pass fresh init, owner/extensions and container restart
+  with retained data. Two separate cases enter mandatory image CI. Existing partial
+  volumes require inspection; no automatic data repair or full-stack/APK claim.
+
 - **AUD-86:** freshly generated config lacked optional DEV_SKIP_AUTH; full Compose
   passed an empty string and Settings failed before SQL/startup. Default it to false
   in one line, retaining strict parsing and forced false in production. Actual

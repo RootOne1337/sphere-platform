@@ -715,3 +715,12 @@ now renders to `false`, preserving the backend's strict boolean validation and
 production's forced false. The real generator → Compose → Settings path is retained
 as eight regression cases; all 93 deployment cases pass locally. This is separate
 from daemon startup and installed-APK acceptance.
+
+### PostgreSQL init.sql with a configured user
+
+AUD-87 removes hardcoded n8n ownership from init.sql; a fresh cluster assigns the
+database to the entrypoint's POSTGRES_USER. Two real PostgreSQL container cases
+verify default/custom users, n8n ownership, required extensions and a restart with
+retained data. [Probe and cleanup](../tests/containers/README.md). No existing volume
+is changed. Partially initialized installations need inspection/repair separately;
+init.sql is not an application migration or production role-provisioning mechanism.
