@@ -152,17 +152,16 @@ preview deployment пропущен. [Вывод](../audits/2026-09-05/evidence/
 44 deployment cases локально проходят. Это завершает проверку конкретных bootstrap,
 Compose argv и Windows env fixes, но не весь запуск.
 
-При чтении следующих участков видны отдельные препятствия. Они ещё не имеют
-нового runtime reproduction и не объявляются исправленными:
+Следующие участки требуют отдельных проверок; состояние каждого указано ниже:
 
 1. [`full-deploy.ps1`](../../scripts/full-deploy.ps1) / [Bash](../../scripts/full-deploy.sh)
    запускают API до migration stage. PowerShell при отказе container migration
    пробует host CLI, не доказывая тот же DB target; health использует фиксированные
    имена контейнеров. Нужен один выбранный project и проверяемый migration→API порядок.
-2. [`backend/Dockerfile`](../../backend/Dockerfile) копирует backend/alembic/config,
-   но не bootstrap scripts, которые production launcher вызывает через exec.
-   Dev bind-mount скрывает отсутствие файлов в immutable image. Нужна проверка
-   содержимого и запуска CLI в собранном образе; сейчас это вывод из Dockerfile.
+2. **AUD-81: отсутствие CLI закрыто.** [`backend/Dockerfile`](../../backend/Dockerfile)
+   теперь включает admin/enrollment scripts. Настоящий image probe: 2 failures до
+   исправления, 4 passing cases после; [evidence](../audits/2026-09-05/evidence/image-bootstrap-summary.json).
+   Реальное SQL bootstrap внутри image остаётся отдельным критерием.
 3. [`ensure_enrollment_key`](../../backend/tasks/ensure_enrollment_key.py) при dev startup
    выбирает первую org и фиксированный dev key, независимо от выбранной bootstrap org.
    Нужен отдельный SQL/lifespan сценарий для повторного запуска и нескольких org.

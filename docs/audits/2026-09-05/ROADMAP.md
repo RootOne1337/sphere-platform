@@ -302,3 +302,8 @@ AUD-80 runtime `ea8e606` прошёл все четыре PR workflows с пер
 deployment cases проходят. Следующий приоритет — fresh bootstrap ordering,
 наличие bootstrap CLI в immutable image и корректная identity первого устройства.
 Статические наблюдения этих путей требуют отдельных воспроизведений до fix.
+
+AUD-81 закрывает отсутствие admin/enrollment CLI в immutable image: настоящий
+container воспроизводит 2 failures, после минимального COPY 4 cases проходят.
+CI теперь имеет обязательный image-bootstrap job. Дальше — migration/API ordering
+и dev enrollment lifecycle. [Image evidence](evidence/image-bootstrap-summary.json).

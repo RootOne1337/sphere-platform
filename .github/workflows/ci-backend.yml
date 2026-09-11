@@ -14,6 +14,27 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  image-bootstrap:
+    name: Production image bootstrap
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the shipped production image
+        run: docker build -f backend/Dockerfile -t sphere-backend-bootstrap-ci .
+      - name: Run bootstrap entry points without network or source mounts
+        run: |
+          docker run --rm --network none --read-only --cap-drop ALL \
+            --security-opt no-new-privileges --tmpfs /tmp:rw,nosuid,nodev,size=16m \
+            --mount "type=bind,source=${{ github.workspace }}/tests/containers/backend_bootstrap_probe.py,target=/tmp/backend_bootstrap_probe.py,readonly" \
+            sphere-backend-bootstrap-ci python /tmp/backend_bootstrap_probe.py 2>&1 | tee image-bootstrap-probe.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: image-bootstrap-probe
+          path: image-bootstrap-probe.txt
+          if-no-files-found: warn
+
   lint:
     name: Lint (ruff + mypy)
     runs-on: ubuntu-latest

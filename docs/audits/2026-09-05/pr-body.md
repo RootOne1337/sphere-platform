@@ -32,6 +32,12 @@ researches NitroGen and a future external inference worker; no AI is implemented
 
 ### Latest runtime findings
 
+- **AUD-81:** full-deploy invokes bootstrap CLIs absent from the production image.
+  Ship only those two scripts. A new mandatory CI job builds the actual image and
+  executes four network-isolated, read-only probes without a source mount. Baseline:
+  two missing-file/module failures; after: all four pass. These are separate from
+  the 1424-case pytest suite; full SQL bootstrap/rollout remains open.
+
 - **AUD-80:** Windows full-deploy ignored its generated `.env.local`; start-dev
   rejected that file unless `.env` also existed. Both normal paths now select
   `.env.local` then `.env` explicitly, with absolute paths and unchanged process-env

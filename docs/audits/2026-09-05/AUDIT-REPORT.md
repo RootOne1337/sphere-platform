@@ -1966,3 +1966,35 @@ Android push run для этого изменения нет.
 Windows run остаётся 1413 / 69.38%, JVM 485 / 35 suites. Схема БД не менялась.
 Последующий commit только сохраняет evidence/docs и имеет отдельные checks.
 Installed APK, полный Compose/VPN/fleet, merge и deployment не заявляются.
+
+## AUD-81 — High: production image не содержит bootstrap CLI
+
+- **Root cause / affected file:** `backend/Dockerfile` копирует backend/alembic и
+  agent-config, но исключает оба CLI, вызываемые full-deploy через container exec.
+  Dev mount всего checkout скрывает отсутствие `/app/scripts` в собранном образе.
+- **Evidence/reproduction:** собран unchanged baseline `ecce7f2`; [build log](evidence/image-bootstrap-build-before.txt).
+  Настоящий image process без сети и source mount: [2 failures / 2 controls](evidence/image-bootstrap-before.txt).
+  `python scripts/create_admin.py` получает file-not-found exit 2; `python -m
+  scripts.seed_enrollment_key` получает ModuleNotFoundError. Alembic single head
+  доступен, default user non-root и application directory недоступна для записи.
+- **Fix:** `COPY scripts/create_admin.py scripts/seed_enrollment_key.py ./scripts/`.
+  В image добавлены только два нужных CLI, не весь каталог вспомогательных скриптов.
+- **Regression:** четыре standard-library unittest cases в
+  `tests/containers/backend_bootstrap_probe.py`; новый обязательный job
+  `Production image bootstrap` в backend CI строит настоящий Dockerfile и исполняет
+  probe в container. [After build](evidence/image-bootstrap-build-after.txt),
+  [4 passing cases](evidence/image-bootstrap-after.txt), [image IDs/изоляция](evidence/image-bootstrap-summary.json).
+  Оба CLI доходят до собственной валидации synthetic inputs/config; Alembic читает
+  packaged migration head. Ruff проходит. Эти 4 cases отдельны от pytest total 1424.
+- **Harness correction:** первый probe дал [3 failures / 1 control](evidence/image-bootstrap-probe-assertion-before.txt).
+  Третье падение было ошибкой теста: parser не принимал branch label `(main)` перед
+  `(head)`. Исправлен parser, unchanged baseline повторён: два настоящих failures.
+  Migration source и количество heads не изменялись.
+- **Residual risk:** отсутствие файлов закрыто; реальное создание admin/key через
+  SQL внутри image и fresh migration ещё не проверялись этим probe. Нет API socket,
+  Compose rollout или APK/VPN. Package versions/base image не полностью locked;
+  before/after image IDs и build logs сохранены. Schema head не менялся.
+
+Проверка: default `sphere`, read-only rootfs, network none, capabilities dropped,
+no-new-privileges; один readonly probe mount и временный `/tmp`. Ни source checkout,
+ни host secrets, ни DB socket не монтируются. CI фиксируется отдельно по runtime SHA.

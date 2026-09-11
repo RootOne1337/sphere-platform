@@ -926,3 +926,11 @@ Dev/production Compose arguments теперь передаются массив�
 тот же выбор, а при отсутствии обоих создаёт только template и требует заполнения.
 Legacy start-dev Status/Down/Tunnel и остальные этапы full-deploy требуют отдельной
 приёмки. [Текущий план](docs/operations/PILOT-ACCEPTANCE.md).
+
+### Bootstrap tools внутри production image (AUD-81)
+
+Два CLI администратора/enrollment теперь входят в backend image. До исправления
+dev mount скрывал отсутствие `/app/scripts`, а production exec падал до SQL.
+Настоящий container probe проверяет CLI validation, Alembic head и non-root/read-only
+режим; четыре cases проходят и включены в отдельный CI job. Полный bootstrap,
+порядок миграций/API и установленный APK остаются в [плане приёмки](docs/operations/PILOT-ACCEPTANCE.md).

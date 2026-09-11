@@ -661,3 +661,12 @@ to invoke Compose without either file; start-dev creates a template only when bo
 are missing and requires the operator to fill it before retry. The real Compose
 renderer is tested with synthetic files, without starting services. This does not
 certify full startup, legacy branches or deployment roles/migrations.
+
+### Immutable image bootstrap tools (AUD-81)
+
+The production backend image ships the two administrative CLIs used by full-deploy:
+`scripts/create_admin.py` and `scripts/seed_enrollment_key.py`. A separate backend CI
+job builds that Dockerfile and executes four CLI/migration/user probes without
+network, source mounts or a writable root filesystem. The probe validates packaged
+entry points; SQL initialization, migration privileges and rollout order still
+require their own acceptance. Unrelated scripts are not included.

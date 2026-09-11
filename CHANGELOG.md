@@ -1054,3 +1054,10 @@ Earlier branch integration is recorded in Git history. The former merge log and 
   process overrides; reject missing installation env instead of using ambient config.
 - Seven new regressions; baseline five failures and twelve controls, then all 44
   deployment cases pass. Real Compose rendering uses synthetic files without services.
+
+### Audit continuation — packaged bootstrap commands (AUD-81)
+
+- Ship the administrator and enrollment CLIs in the production backend image.
+- Add a mandatory image CI job with four independent stdlib runtime probes:
+  two CLI validation paths, packaged Alembic head and non-root/read-only behavior.
+  Baseline missing-file/module failures and corrected test-parser evidence retained.

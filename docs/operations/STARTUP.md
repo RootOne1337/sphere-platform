@@ -106,3 +106,11 @@ Compose, браузер и APK transport в этот прогон не вход�
 Абсолютные YAML/env paths не зависят от caller directory. Подготовка env не означает
 проверку DB roles/migration ordering/readiness. Legacy Status/Down/Tunnel start-dev
 по-прежнему не входят в принятый штатный startup path.
+
+### Production image bootstrap (AUD-81)
+
+Production image теперь содержит `scripts/create_admin.py` и
+`scripts/seed_enrollment_key.py`; full-deploy не зависит от dev bind-mount для этих
+команд. Отдельный backend CI job строит image и проверяет entry points без сети,
+с read-only rootfs от обычного пользователя. Это проверка packaged CLI, не успешной
+SQL инициализации или полного deployment. [План пилота](PILOT-ACCEPTANCE.md).

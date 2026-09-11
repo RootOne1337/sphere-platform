@@ -255,3 +255,9 @@ Runtime `ea8e606`: **1424 passed / 69.38%** в Linux, 505 PostgreSQL/Redis и
 44 deployment cases; backend/frontend/Android прошли с первой попытки. Preview
 deployment пропущен. [Точное evidence](../audits/2026-09-05/evidence/ci-ea8e606-tests.txt).
 Windows env paths подтверждены; полный первый pilot acceptance остаётся открытым.
+
+### AUD-81: packaged bootstrap
+
+Production Dockerfile содержит два bootstrap CLI. Настоящий image probe: baseline
+2 failures / 2 controls, после COPY все 4 cases проходят. Эти cases идут отдельным
+CI job и не прибавлены к прежним 1424 pytest cases. SQL bootstrap/rollout ещё открыт.
