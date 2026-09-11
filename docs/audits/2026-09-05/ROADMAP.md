@@ -364,3 +364,10 @@ CI **1498 / 69.66%**, 538 production-directory / 85 deployment, **4 + 1**
 configurable POSTGRES_USER. Требуется реальное воспроизведение на временном PG;
 это пока не подтверждённый AUD. Остальной порядок: полный Compose/browser/APK/task,
 VPN/recovery/observability. Оценка fleet capacity и сроки не выводятся из test counts.
+
+AUD-86: до проверки optional PostgreSQL owner найден более общий блокер первого
+запуска — пустой DEV_SKIP_AUTH из full Compose при штатной генерации config.
+Подтверждены 2 failures / 6 controls, минимальный default false исправлен; все
+93 deployment cases проходят. [Before](evidence/compose-settings-before.txt).
+Полный новый CI фиксируется отдельно. Следующий порядок остаётся полный Compose/
+init.sql/browser/APK/task, затем VPN/recovery и incident timeline.

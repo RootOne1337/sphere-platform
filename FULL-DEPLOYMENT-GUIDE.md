@@ -926,3 +926,11 @@ creation credentials выводятся до enrollment, а Bash сохраня�
 Поздний отказ не является общим успехом, но уже созданный пароль доступен. При existing
 кандидат не выводится и credential file не перезаписывается. Намеренный reset через
 direct CLI без флага остаётся отдельной операцией. [Полный контракт и ограничения](docs/operations/STARTUP.md).
+
+## Если backend раньше падал на DEV_SKIP_AUTH
+
+AUD-86 исправляет default full Compose: отсутствующее/пустое значение теперь
+становится `false`, а не строкой, которую Settings не может распознать. Не требуется
+включать обход авторизации или добавлять обязательный параметр в существующий dotenv.
+[Подробный startup contract](docs/operations/STARTUP.md). Полная приёмка стека/APK
+по-прежнему описана в [плане пилота](docs/operations/PILOT-ACCEPTANCE.md).

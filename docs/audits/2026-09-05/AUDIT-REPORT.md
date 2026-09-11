@@ -30,9 +30,10 @@ runtime-проверок и не считается доказательство
 | AUD-83: dev enrollment использует другую identity и workers конфликтуют | 11 failures / 3 controls, SQL unique errors и registration 401 | Общий CLI/hook contract, exact org, configured key, row lock |
 | AUD-84: новый `.env.local` затеняет рабочий `.env` | 4 failures / 6 controls на временной установке | Сохранение выбранной существующей конфигурации |
 | AUD-85: повтор меняет admin password, поздний отказ скрывает initial credentials | 9 failures / 4 controls, настоящий shell/CLI/SQL/login | Create-only, serialization, committed outcome до enrollment |
+| AUD-86: свежий full-deploy не загружает Settings | 2 failures / 6 controls, generator→Compose→Settings | Валидное false вместо пустого DEV_SKIP_AUTH |
 
 Полные root cause, файлы, воспроизведения и residual risk находятся в разделах
-AUD-81–85 ниже. Это закрытые дефекты отдельных путей, не акт готовности всего продукта.
+AUD-81–86 ниже. Это закрытые дефекты отдельных путей, не акт готовности всего продукта.
 [Следующие критерии первого пилота](../../operations/PILOT-ACCEPTANCE.md).
 
 ## Результаты проверок
@@ -2269,3 +2270,36 @@ image scenario проверяет fresh Alembic DB без этого файла.
 init.sql фиксирует OWNER=sphere, тогда как Compose разрешает POSTGRES_USER.
 Отдельное воспроизведение ещё не выполнено; новый AUD/исправление не заявлены.
 Далее — browser/установленный APK/task/result, VPN, реальные recovery и incident timeline.
+
+## AUD-86 — High: свежая конфигурация full-deploy блокирует импорт backend Settings
+
+- **Root cause / affected files:** `.env.example` и штатный `generate_secrets.py`
+  не задают optional `DEV_SKIP_AUTH`. `docker-compose.full.yml` передавал
+  `${DEV_SKIP_AUTH:-}` как пустую строку. Она перекрывает default `False` в
+  `backend/core/config.py`; Pydantic отвергает её как boolean. Импорт Settings
+  прерывается до SQL и startup, поэтому backend и CLI, использующие Settings,
+  не могут работать с такой свежей конфигурацией.
+- **Evidence/reproduction:** runtime `cbf8f01`, [2 failures / 6 controls](evidence/compose-settings-before-summary.json),
+  [вывод](evidence/compose-settings-before.txt): штатный generator пишет только во
+  временную директорию; настоящий Compose рендерит base + full/production; новый
+  Python process получает точный backend environment и импортирует Settings без
+  dotenv вызывающего проекта. Full с отсутствующим или пустым значением падает с
+  `bool_parsing, input_value=''`. Явные false/true проходят; production во всех
+  четырёх вариантах остаётся false. Начальные ошибки harness (missing test JWT,
+  затем двойной keyword PYTHONPATH) устранены до этого подтверждённого baseline и
+  не считаются дефектами проекта; runtime до baseline не менялся.
+- **Fix:** одна строка `docker-compose.full.yml`: `${DEV_SKIP_AUTH:-false}`.
+  Отсутствующее/пустое значение становится валидным false; schema остаётся строгой,
+  explicit true в development сохраняется, production продолжает задавать false.
+  Изменение не включает обход авторизации и не требует править старые dotenv.
+- **Regression:** `tests/deployment/test_compose_runtime_settings.py`, 8 cases,
+  generator → настоящий Compose → реальный Settings process. Синтетические env
+  файлы не коммитятся; rendered credentials не выводятся. Все **93 deployment tests**
+  прошли за **79.69 s**, 1 warning: [summary](evidence/compose-settings-after-summary.json),
+  [вывод](evidence/compose-settings-after.txt). Ruff проходит. Полная suite последнего
+  runtime остаётся 1498 / 69.66% Linux; новый полный CI фиксируется отдельно.
+- **Residual risk:** это проверка startup configuration, не полный Compose launch.
+  Generated template всё ещё требует operator values для адресов/интеграций/части
+  secrets; его общая deploy readiness не заявлена. PostgreSQL init.sql, browser,
+  установленный APK/task/result, VPN и реальные network/OS recovery ещё требуют
+  приёмки. Schema, APK и Python runtime source этим fix не меняются.

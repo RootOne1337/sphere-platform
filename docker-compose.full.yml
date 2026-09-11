@@ -28,7 +28,7 @@ services:
       - SPHERE_BOOTSTRAP_ORG_SLUG=${SPHERE_BOOTSTRAP_ORG_SLUG:-default}
       - WEB_CONCURRENCY=${WEB_CONCURRENCY:-4}
       - CORS_EXTRA_ORIGINS=${CORS_EXTRA_ORIGINS:-}
-      - DEV_SKIP_AUTH=${DEV_SKIP_AUTH:-}
+      - DEV_SKIP_AUTH=${DEV_SKIP_AUTH:-false}
     ports:
       - "${BACKEND_PORT:-8000}:8000"
     depends_on:

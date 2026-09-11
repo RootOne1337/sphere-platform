@@ -240,3 +240,11 @@ SQL/runtime scenario проходят с первой попытки во все
 Проверка полного Compose должна дополнительно использовать штатный PostgreSQL
 init.sql: его OWNER=sphere при configurable POSTGRES_USER требует воспроизведения.
 Browser/installed APK/task/result и VPN остаются следующими критериями приёмки.
+
+## Свежий dotenv проходит импорт backend: AUD-86
+
+Устранён подтверждённый блокер до SQL: full Compose больше не подставляет пустой
+boolean DEV_SKIP_AUTH для штатно сгенерированной конфигурации. Два исходных падения /
+шесть controls, восемь retained cases, **93 deployment tests проходят локально**.
+Это часть шага 1, отдельная от проверки образа с SQL. PostgreSQL init.sql и полный
+выбранный Compose/browser/installed APK/task/result остаются в очереди приёмки.

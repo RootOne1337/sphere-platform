@@ -277,3 +277,13 @@ it. Disabled/wrong-role/foreign-org conflicts fail explicitly. Direct admin CLI 
 Initial passwords are shown after commit and before enrollment; Bash retains its
 existing `.admin-credentials` artifact only for a newly created account. See
 [startup outcomes and unknown-commit limits](operations/STARTUP.md).
+
+## Optional development authentication switch
+
+The full Compose overlay passes `DEV_SKIP_AUTH=false` when the variable is absent
+or empty (AUD-86). Previously it passed an empty string, which prevented Settings
+from loading even with a freshly generated installation configuration. Explicit
+`true` remains a development option; the production overlay forces `false`.
+Backend boolean validation remains strict. Generated configuration still requires
+operator-supplied addresses/integration values; this fix does not validate the whole
+installation. [Startup contract](operations/STARTUP.md).

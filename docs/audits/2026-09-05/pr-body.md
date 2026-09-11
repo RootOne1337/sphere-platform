@@ -32,6 +32,12 @@ researches NitroGen and a future external inference worker; no AI is implemented
 
 ### Latest runtime findings
 
+- **AUD-86:** freshly generated config lacked optional DEV_SKIP_AUTH; full Compose
+  passed an empty string and Settings failed before SQL/startup. Default it to false
+  in one line, retaining strict parsing and forced false in production. Actual
+  generator→Compose→Settings reproduces 2 failures / 6 controls; all 93 local deployment
+  cases pass (8 new). This fixes startup, not full-stack/installed-APK acceptance.
+
 - **AUD-85:** repeat full-deploy overwrote the operator password; a later enrollment
   failure hid credentials already committed to SQL. Both launchers use create-only
   provisioning, preserve existing admin state and require a committed created/existing

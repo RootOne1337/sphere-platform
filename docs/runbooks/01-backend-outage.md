@@ -63,3 +63,11 @@ Disabled/wrong-role/foreign-org — причины явного отказа; п
 Для намеренного reset следуйте [admin startup contract](../operations/STARTUP.md).
 Не прикладывайте password или `.admin-credentials` к incident report. Неизвестный
 commit после потери процесса/ответа автоматически не разрешается.
+
+## Settings не загружается на свежем full-deploy
+
+`DEV_SKIP_AUTH: bool_parsing, input_value=''` указывает на исправленный в AUD-86
+пустой default full overlay. Обновлённый Compose передаёт `false` при отсутствии/
+пустом значении; production также сохраняет false. Это не отказ PostgreSQL/Redis:
+импорт Settings останавливался до подключения к ним. Не включайте true для обхода
+ошибки и не прикладывайте полный rendered environment с credentials к инциденту.

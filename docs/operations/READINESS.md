@@ -310,3 +310,11 @@ ASGI login и три concurrent CLI процесса проверены. Пол�
 development-пилота — fresh полный стек и установленный APK/task/result; production
 roles/grants остаются отдельным обязательным rollout. Unknown admin commit,
 credential-store и полный persistent-volume restart ещё не закрыты.
+
+### AUD-86: исправлен default свежей установки
+
+Generator → Compose → Settings воспроизвёл 2 failures / 6 controls: пустой
+DEV_SKIP_AUTH не позволял backend загрузить настройки. Full overlay теперь
+использует false. Все 93 deployment tests проходят локально; полный CI этой
+ревизии фиксируется отдельно. Это приоритетный startup defect, не дополнительный
+security barrier. [Evidence](../audits/2026-09-05/evidence/compose-settings-before.txt).

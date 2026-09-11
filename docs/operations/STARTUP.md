@@ -205,3 +205,13 @@ lifespan, login, registration/visibility и повтор в новом проц�
 Сценарий packaged SQL/runtime теперь также подтверждён [Linux CI `cbf8f01`](../audits/2026-09-05/evidence/ci-cbf8f01-image-runtime-tests.txt).
 Четыре no-network probes и один runtime scenario идут отдельно от общего pytest.
 Штатный Compose PostgreSQL init.sql, весь стек, browser и APK этим прогоном не проверяются.
+
+## Optional DEV_SKIP_AUTH и свежая конфигурация
+
+AUD-86: в full overlay отсутствие или пустое `DEV_SKIP_AUTH` передаётся backend
+как `false`. Прежняя пустая строка останавливала импорт Settings с `bool_parsing`
+даже после штатной генерации конфигурации. Explicit true в development сохраняется;
+production overlay всегда задаёт false. Исправляется Compose contract, не ослабляется
+валидация backend. При диагностике проверяйте только это поле в effective environment,
+не публикуйте полный Compose render с секретами. Восемь generator/Compose/Settings
+cases и все 93 deployment tests проходят; полный стек проверяется отдельно.

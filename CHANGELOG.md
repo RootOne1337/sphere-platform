@@ -1106,3 +1106,11 @@ Earlier branch integration is recorded in Git history. The former merge log and 
 - Add it to mandatory image CI separately from the four no-network probes and pytest.
   No new runtime defect claimed; full Compose/browser/APK/VPN acceptance remains open.
 - Archive all four successful first-attempt CI runs for AUD-85 (`08338d3`, 1498 tests).
+
+### Audit continuation — fresh full-deploy configuration (AUD-86)
+
+- Default an absent/empty DEV_SKIP_AUTH to false in the full overlay, preventing
+  Settings import failure with generated configuration. Keep strict backend parsing
+  and the production overlay's forced false.
+- Reproduce two failures / six controls through the real generator/Compose/Settings
+  path; retain eight regression cases. All 93 deployment tests pass locally.

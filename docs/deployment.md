@@ -707,3 +707,11 @@ login/device visibility across two processes. This development-mode scenario use
 an internal Docker network, no host ports and no source mounts. It complements the
 four no-network image probes. [Run it and read the limits](../tests/containers/README.md).
 Full Compose, browser/APK, VPN and production DB-role rollout remain separate gates.
+
+### Fresh configuration parsing
+
+AUD-86 fixes a startup failure in the full overlay: missing/empty `DEV_SKIP_AUTH`
+now renders to `false`, preserving the backend's strict boolean validation and
+production's forced false. The real generator → Compose → Settings path is retained
+as eight regression cases; all 93 deployment cases pass locally. This is separate
+from daemon startup and installed-APK acceptance.
