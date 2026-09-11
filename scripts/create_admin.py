@@ -1,4 +1,5 @@
-"""Create or update admin user with given credentials."""
+"""Create/update an administrator; --create-only preserves existing identities."""
+import argparse
 import asyncio
 import getpass
 import os
@@ -12,6 +13,11 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument("--create-only", action="store_true",
+    help="Create an absent administrator; retain existing credentials/state and report the committed outcome")
+args = parser.parse_args()
 
 DATABASE_URL = os.getenv(
     "POSTGRES_URL",
@@ -51,52 +57,52 @@ async def main() -> None:
     hashed = bcrypt.hashpw(credentials.password.encode(), bcrypt.gensalt()).decode()
     email = str(credentials.email)
 
-    async with engine.begin() as conn:
-        # Ensure org exists
-        org = await conn.execute(
-            text("SELECT id FROM organizations WHERE slug = :slug LIMIT 1"), {"slug": ORG_SLUG}
-        )
-        row = org.fetchone()
-        if row is None:
-            org = await conn.execute(
-                text(
-                    "INSERT INTO organizations (id, name, slug) "
-                    "VALUES (:id, 'Default', :slug) RETURNING id"
-                ), {"id": uuid.uuid4(), "slug": ORG_SLUG}
-            )
-            org_id = org.fetchone()[0]
-        else:
-            org_id = row[0]
-
-        # Upsert user
-        existing = await conn.execute(
-            text("SELECT id, org_id FROM users WHERE email = :email"),
-            {"email": email},
-        )
-        existing_user = existing.fetchone()
-        if existing_user:
-            if existing_user.org_id != org_id:
-                raise RuntimeError("Admin already belongs to another organization; select its SPHERE_BOOTSTRAP_ORG_SLUG explicitly")
+    try:
+        async with engine.begin() as conn:
+            # The unique slug handles concurrent fresh installations; the row
+            # lock serializes each organization before the user read/write.
             await conn.execute(
-                text(
-                    "UPDATE users SET password_hash = :h, role = 'super_admin', is_active = true "
-                    "WHERE email = :email"
-                ),
-                {"h": hashed, "email": email},
+                text("INSERT INTO organizations (id, name, slug) VALUES (:id, 'Default', :slug) "
+                     "ON CONFLICT (slug) DO NOTHING"),
+                {"id": uuid.uuid4(), "slug": ORG_SLUG},
             )
-            print(f"Updated user: {email}")
-        else:
-            await conn.execute(
-                text(
-                    "INSERT INTO users (id, org_id, email, password_hash, role, is_active, mfa_enabled) "
-                    "VALUES (:id, :org_id, :email, :h, 'super_admin', true, false)"
-                ),
-                {"id": uuid.uuid4(), "org_id": org_id, "email": email, "h": hashed},
+            org_id = await conn.scalar(
+                text("SELECT id FROM organizations WHERE slug = :slug FOR UPDATE"), {"slug": ORG_SLUG})
+            existing = await conn.execute(
+                text("SELECT id, org_id, role, is_active FROM users WHERE email = :email FOR UPDATE"),
+                {"email": email},
             )
-            print(f"Created user: {email}")
+            existing_user = existing.fetchone()
+            if existing_user:
+                if existing_user.org_id != org_id:
+                    raise RuntimeError("Admin already belongs to another organization; select its SPHERE_BOOTSTRAP_ORG_SLUG explicitly")
+                if args.create_only:
+                    if not existing_user.is_active or existing_user.role != "super_admin":
+                        raise RuntimeError("Existing administrator is disabled or no longer super_admin; repair the account explicitly")
+                    outcome = "existing"
+                else:
+                    await conn.execute(
+                        text("UPDATE users SET password_hash = :h, role = 'super_admin', is_active = true "
+                             "WHERE email = :email"),
+                        {"h": hashed, "email": email},
+                    )
+                    outcome = "updated"
+            else:
+                await conn.execute(
+                    text("INSERT INTO users (id, org_id, email, password_hash, role, is_active, mfa_enabled) "
+                         "VALUES (:id, :org_id, :email, :h, 'super_admin', true, false)"),
+                    {"id": uuid.uuid4(), "org_id": org_id, "email": email, "h": hashed},
+                )
+                outcome = "created"
+    finally:
+        await engine.dispose()
 
-    await engine.dispose()
+    # No success/outcome is emitted before the transaction commits. Launchers
+    # only display their candidate password when this command created the user.
+    print(f"Admin {outcome}: {email}")
     print("Done.")
+    if args.create_only:
+        print(f"SPHERE_ADMIN_BOOTSTRAP={outcome}")
 
 
 if __name__ == "__main__":

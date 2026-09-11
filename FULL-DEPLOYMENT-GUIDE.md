@@ -267,7 +267,7 @@ head и role/grant requirements указаны в начале документ�
 
 ```bash
 # Интерактивный admin CLI запрашивает email/password.
-dc run --rm --no-deps backend python scripts/create_admin.py
+dc run --rm --no-deps backend python scripts/create_admin.py --create-only
 dc run --rm --no-deps -T backend python -m scripts.seed_enrollment_key
 ```
 
@@ -917,3 +917,12 @@ dev mount скрывал отсутствие `/app/scripts`, а production exec
 обоих файлов. Не считайте ручную перегенерацию ротацией уже инициализированных
 PostgreSQL/Redis: это требует согласованного обновления сервисов и backup.
 [Контракт повторного запуска](docs/operations/STARTUP.md).
+
+## Пароль администратора при повторном full-deploy
+
+AUD-85 добавляет `--create-only`: existing active super_admin сохраняет пароль/роль/MFA;
+candidate `SPHERE_ADMIN_PASSWORD` действует только для новой записи. После confirmed
+creation credentials выводятся до enrollment, а Bash сохраняет их в `.admin-credentials`.
+Поздний отказ не является общим успехом, но уже созданный пароль доступен. При existing
+кандидат не выводится и credential file не перезаписывается. Намеренный reset через
+direct CLI без флага остаётся отдельной операцией. [Полный контракт и ограничения](docs/operations/STARTUP.md).

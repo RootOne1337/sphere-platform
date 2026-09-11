@@ -266,3 +266,14 @@ never silently repaired. The hook warns and keeps the API available for operator
 repair; the CLI fails. Production has no automatic enrollment hook provisioning.
 See [startup behavior and diagnostics](operations/STARTUP.md) and
 [pilot acceptance](operations/PILOT-ACCEPTANCE.md).
+
+## Administrator bootstrap mode
+
+Full-deploy uses `--create-only`: `SPHERE_ADMIN_EMAIL` selects the operator identity
+and `SPHERE_ADMIN_PASSWORD` is a candidate for first creation only. An existing active
+super_admin retains credentials, role and MFA; changed candidate input does not reset
+it. Disabled/wrong-role/foreign-org conflicts fail explicitly. Direct admin CLI uses
+`ADMIN_EMAIL`/`ADMIN_PASSWORD`; omit `--create-only` only for an intentional reset.
+Initial passwords are shown after commit and before enrollment; Bash retains its
+existing `.admin-credentials` artifact only for a newly created account. See
+[startup outcomes and unknown-commit limits](operations/STARTUP.md).

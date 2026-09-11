@@ -305,37 +305,58 @@ seed_data() {
     if [[ -n "${SPHERE_BOOTSTRAP_ORG_SLUG:-}" ]]; then
         bootstrap_org_env=(-e SPHERE_BOOTSTRAP_ORG_SLUG)
     fi
-    ADMIN_EMAIL="$admin_email" ADMIN_PASSWORD="$admin_password" \
+    local admin_output
+    if ! admin_output=$(ADMIN_EMAIL="$admin_email" ADMIN_PASSWORD="$admin_password" \
         docker compose "${COMPOSE_FILES[@]}" run --rm --no-deps -T -e ADMIN_EMAIL -e ADMIN_PASSWORD "${bootstrap_org_env[@]}" backend \
-        python scripts/create_admin.py 2>&1 | tee -a "$LOG_FILE" || return 1
+        python scripts/create_admin.py --create-only 2>&1); then
+        printf '%s\n' "$admin_output" | tee -a "$LOG_FILE"
+        return 1
+    fi
+    printf '%s\n' "$admin_output" | tee -a "$LOG_FILE"
+    local admin_outcome='' outcome_count=0 line
+    while IFS= read -r line; do
+        line=${line%$'\r'}
+        case "$line" in
+            SPHERE_ADMIN_BOOTSTRAP=created|SPHERE_ADMIN_BOOTSTRAP=existing)
+                admin_outcome="$line"
+                outcome_count=$((outcome_count + 1)) ;;
+        esac
+    done <<< "$admin_output"
+    if [[ "$outcome_count" != 1 ]]; then
+        die "Admin bootstrap returned no unambiguous committed outcome; candidate credentials are not confirmed"
+    fi
+    if [[ "$admin_outcome" == SPHERE_ADMIN_BOOTSTRAP=created ]]; then
+        log INFO "Новый администратор сохранён; остальные этапы bootstrap ещё выполняются"
+        # Вывод учётных данных
+        echo ""
+        echo -e "${GREEN}${BOLD}╔══════════════════════════════════════════════════╗${NC}"
+        echo -e "${GREEN}${BOLD}║           УЧЁТНЫЕ ДАННЫЕ АДМИНИСТРАТОРА          ║${NC}"
+        echo -e "${GREEN}${BOLD}╠══════════════════════════════════════════════════╣${NC}"
+        echo -e "${GREEN}${BOLD}║  Email:    ${NC}$admin_email"
+        echo -e "${GREEN}${BOLD}║  Пароль:   ${NC}$admin_password"
+        echo -e "${GREEN}${BOLD}╠══════════════════════════════════════════════════╣${NC}"
+        echo -e "${GREEN}${BOLD}║  Сохраните пароль нового администратора         ║${NC}"
+        echo -e "${GREEN}${BOLD}╚══════════════════════════════════════════════════╝${NC}"
+        echo ""
 
-    log INFO "Генерация enrollment-ключа..."
-    # Use the backend's configured environment; never force a development key.
-    docker compose "${COMPOSE_FILES[@]}" run --rm --no-deps -T "${bootstrap_org_env[@]}" backend \
-        python -m scripts.seed_enrollment_key 2>&1 | tee -a "$LOG_FILE" || return 1
-
-    # Вывод учётных данных
-    echo ""
-    echo -e "${GREEN}${BOLD}╔══════════════════════════════════════════════════╗${NC}"
-    echo -e "${GREEN}${BOLD}║           УЧЁТНЫЕ ДАННЫЕ АДМИНИСТРАТОРА          ║${NC}"
-    echo -e "${GREEN}${BOLD}╠══════════════════════════════════════════════════╣${NC}"
-    echo -e "${GREEN}${BOLD}║  Email:    ${NC}$admin_email"
-    echo -e "${GREEN}${BOLD}║  Пароль:   ${NC}$admin_password"
-    echo -e "${GREEN}${BOLD}╠══════════════════════════════════════════════════╣${NC}"
-    echo -e "${GREEN}${BOLD}║  ⚠  СОХРАНИ ПАРОЛЬ — он не хранится в системе!  ║${NC}"
-    echo -e "${GREEN}${BOLD}╚══════════════════════════════════════════════════╝${NC}"
-    echo ""
-
-    # Сохранить в файл (gitignored)
-    cat > "$PROJECT_DIR/.admin-credentials" <<EOF
+        # Сохранить в файл (gitignored)
+        cat > "$PROJECT_DIR/.admin-credentials" <<EOF
 # Sphere Platform — Admin Credentials
 # Generated: $(date -u '+%Y-%m-%dT%H:%M:%SZ')
 # NEVER COMMIT THIS FILE
 ADMIN_EMAIL=$admin_email
 ADMIN_PASSWORD=$admin_password
 EOF
-    chmod 600 "$PROJECT_DIR/.admin-credentials"
-    log INFO "Учётные данные сохранены в .admin-credentials"
+        chmod 600 "$PROJECT_DIR/.admin-credentials"
+        log INFO "Учётные данные сохранены в .admin-credentials"
+    else
+        log INFO "Администратор уже существует — пароль и настройки сохранены; используйте прежние учётные данные"
+    fi
+
+    log INFO "Генерация enrollment-ключа..."
+    # Use the backend's configured environment; never force a development key.
+    docker compose "${COMPOSE_FILES[@]}" run --rm --no-deps -T "${bootstrap_org_env[@]}" backend \
+        python -m scripts.seed_enrollment_key 2>&1 | tee -a "$LOG_FILE" || return 1
 }
 
 # =============================================================================

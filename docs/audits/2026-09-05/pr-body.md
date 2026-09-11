@@ -32,6 +32,15 @@ researches NitroGen and a future external inference worker; no AI is implemented
 
 ### Latest runtime findings
 
+- **AUD-85:** repeat full-deploy overwrote the operator password; a later enrollment
+  failure hid credentials already committed to SQL. Both launchers use create-only
+  provisioning, preserve existing admin state and require a committed created/existing
+  outcome. Only newly created credentials are presented, before enrollment; existing
+  Bash credential records remain intact. Actual shell→CLI→PostgreSQL→ASGI login and
+  concurrent processes reproduce 9 failures / 4 controls. Local full suite:
+  **1498 passed / 69.67%**, including 538 production-directory / 85 deployment
+  cases. Unknown commit, full stack/installed APK and credential-store remain open.
+
 - **AUD-84:** full-deploy treated an installation with `.env` as fresh and generated
   a higher-priority `.env.local` with different credentials, even in skip-secrets.
   Both launchers now retain the existing configuration. Four reproduced failures /

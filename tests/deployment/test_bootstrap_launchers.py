@@ -38,6 +38,11 @@ with open(os.environ['PILOT_CALLS'], 'a', encoding='utf-8') as f:
 if os.environ['PILOT_FAILURE'] == stage:
     sys.exit(17)
 print('Synthetic bootstrap success: ' + stage)
+if stage == 'admin':
+    mode = os.environ['PILOT_ADMIN_OUTCOME']
+    if mode != 'missing':
+        print('SPHERE_ADMIN_BOOTSTRAP=' + ('created' if mode == 'duplicate' else mode))
+    if mode == 'duplicate': print('SPHERE_ADMIN_BOOTSTRAP=existing')
 ''', encoding="utf-8")
     calls = tmp_path / "calls.jsonl"
     script = tmp_path / ("run.ps1" if shell == "powershell" else "run.sh")
@@ -71,10 +76,11 @@ test "$ADMIN_EMAIL" = previous-email
 test "$ADMIN_PASSWORD" = previous-password
 ''', encoding="utf-8")
 
-    def run(failure="none", default_email=False):
+    def run(failure="none", default_email=False, outcome="created"):
         env = os.environ.copy()
         env.update(PILOT_ROOT=tmp_path.as_posix(), PILOT_PYTHON=Path(sys.executable).as_posix(),
             PILOT_FAKE=fake.as_posix(), PILOT_CALLS=calls.as_posix(), PILOT_FAILURE=failure,
+            PILOT_ADMIN_OUTCOME=outcome,
             PILOT_SOURCE=str(REPOSITORY / "scripts/full-deploy.ps1"),
             SPHERE_ADMIN_EMAIL="pilot@example.invalid", SPHERE_ADMIN_PASSWORD="pilot-test-password",
             SPHERE_BOOTSTRAP_ORG_SLUG="pilot-operator-org",
@@ -94,7 +100,7 @@ def test_bootstrap_forwards_actual_credentials_without_embedding_them_in_command
     admin, enrollment = calls
     assert admin["email"] == "pilot@example.invalid"
     assert admin["password"] == "pilot-test-password"
-    assert admin["args"][-2:] == ["python", "scripts/create_admin.py"]
+    assert admin["args"][-3:] == ["python", "scripts/create_admin.py", "--create-only"]
     assert "ADMIN_EMAIL" in admin["args"] and "ADMIN_PASSWORD" in admin["args"]
     assert "pilot-test-password" not in " ".join(admin["args"])
     assert enrollment["stage"] == "enrollment"
@@ -113,5 +119,27 @@ def test_failed_bootstrap_stops_before_claiming_working_credentials(bootstrap, f
     result, calls = bootstrap(failure)
     assert result.returncode != 0, result.stdout + result.stderr
     assert calls[-1]["stage"] == failure
-    assert "pilot-test-password" not in result.stdout
-    assert "УЧЁТНЫЕ ДАННЫЕ АДМИНИСТРАТОРА" not in result.stdout
+    if failure == "admin":
+        assert "pilot-test-password" not in result.stdout
+        assert "УЧЁТНЫЕ ДАННЫЕ АДМИНИСТРАТОРА" not in result.stdout
+    else:
+        # The administrator already committed. Its initial credentials must be
+        # recoverable even when the later enrollment stage fails (AUD-85).
+        assert "pilot-test-password" in result.stdout
+    assert "РАЗВЁРНУТА УСПЕШНО" not in result.stdout
+
+
+@pytest.mark.parametrize("outcome", ["missing", "duplicate", "unknown"])
+def test_unconfirmed_admin_outcome_stops_before_enrollment_and_candidate_output(bootstrap, outcome):
+    result, calls = bootstrap(outcome=outcome)
+    assert result.returncode != 0
+    assert len(calls) == 1
+    assert "committed outcome" in result.stdout + result.stderr
+    assert "pilot-test-password" not in result.stdout + result.stderr
+
+
+def test_existing_admin_does_not_present_the_unused_candidate_password(bootstrap):
+    result, calls = bootstrap(outcome="existing")
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert len(calls) == 2
+    assert "pilot-test-password" not in result.stdout + result.stderr

@@ -338,3 +338,12 @@ AUD-81–84 CI сохранён отдельно для каждого runtime c
 при повторе и fresh bootstrap, затем installed APK/task и VPN. Roles/grants —
 обязательная отдельная часть production rollout. Исторические пункты
 аудита выше не подменяют эти критерии приёмки.
+
+AUD-85 закрывает повторный admin bootstrap: create-only в обоих launcher, сохранение
+credentials/state, committed outcome перед отображением и доступность initial
+password при позднем enrollment failure. [9 baseline failures / 4 controls](evidence/admin-restart-before-summary.json).
+Полный Windows: **1498 / 69.67%**, 538 production-directory / 85 deployment.
+Следующий приоритет development-пилота — fresh prepared stack bootstrap и настоящий
+installed APK/task/result, затем VPN/recovery. Source observations оставшихся paths
+не считаются новыми исправленными дефектами; production-role rollout не блокирует
+изолированный development smoke.

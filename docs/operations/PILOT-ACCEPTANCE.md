@@ -51,7 +51,7 @@ Android и доступный управляемый VPN-router. До перво
 | --- | --- | --- |
 | 1. Выбрать запуск | AUD-79/80: argv/env selection; AUD-84: `.env`-only config сохраняется | Проверить реальные адреса/параметры и Bash dotenv; запускать один выбранный project |
 | 2. Подготовить БД | AUD-82: migration/bootstrap до приложений; fresh migrations проходят в CI | Development: fresh-volume bootstrap/schema head и повтор. Production дополнительно требует отдельного provision roles/grants |
-| 3. Создать пользователя и enrollment key | AUD-78/81/83: packaged CLI, выбранная org/config, registration/visibility и worker concurrency проходят | Проверить admin credentials при повторе и те же действия в полном Compose; image probe пока без SQL |
+| 3. Создать пользователя и enrollment key | AUD-78/81/83/85: packaged CLI, выбранная org/config, registration/visibility, конкурентность и сохранение admin при повторе проходят | Пройти те же действия в полном Compose; SQL/login выполнены через shell/CLI process boundary, image probe пока без SQL |
 | 4. Открыть веб и подключить APK | Android registration/refresh/ACK/fallback покрыты JVM-тестами | Проверить настоящий browser login, provisioning APK, permissions, `auth_ok`, видимость устройства и версию APK в UI |
 | 5. Выполнить задание | Backend dispatch и Android journal/DAG имеют regression tests | Веб → исполнение на эмуляторе → сохранённый результат → UI; отказ/отмена/повторная доставка с тем же task ID |
 | 6. Восстановить связь | Сохранены endpoints, intent refresh, checked registration commit | Потеря initial registration response, клонированная identity, backend/сеть/process restart; никакой ручной переустановки |
@@ -77,8 +77,9 @@ A/B имеют приоритет перед косметическими пра
 организация либо подготавливается новый enrollment key с понятной принадлежностью.
 
 Административные CLI требуют отдельно подготовленных прав БД для bootstrap.
-Они не заменяют RLS runtime-role rollout. Повтор `create_admin.py` с существующим
-email обновляет пароль и роль; используйте этот режим намеренно. При email в другой
+Они не заменяют production RLS runtime-role rollout. Full-deploy использует
+`create_admin.py --create-only` и сохраняет existing admin. Прямой CLI без этого
+флага обновляет пароль/роль/active; используйте этот режим намеренно. При email в другой
 организации команда отказывает, не перепривязывает пользователя.
 
 Bootstrap-функции Windows/Bash передают email/password через environment в
@@ -199,8 +200,8 @@ shell на процессе Docker double, включая отказы (65 deplo
 configuration; 4 baseline failures / 6 controls, все 77 deployment cases проходят.
 Это не подтверждает весь secret lifecycle: admin password updates, explicit
 rotation, восстановление backup и настоящий persistent-volume restart ещё нужны.
-Следующий gate development-пилота — admin credentials при повторе и fresh SQL
-bootstrap, затем установленный APK/task/result. Roles/grants остаются отдельной
+Admin credentials при повторе проверены в AUD-85. Следующий gate development-пилота —
+fresh SQL/bootstrap выбранного полного стека, затем установленный APK/task/result. Roles/grants остаются отдельной
 обязательной частью production rollout. [Контракт повторного запуска](STARTUP.md).
 
 ## Проверенная контрольная точка AUD-81–84
@@ -211,3 +212,12 @@ probes, все PR workflows успешны с первой попытки. [Evid
 все 77 deployment cases проходят. Это закрывает описанные
 bootstrap defects; первый installed-APK/task/result smoke всё ещё требуется.
 Никакого изменения общей оценки сроков только по росту числа тестов/коммитов нет.
+
+## Admin restart: AUD-85
+
+Повторный full-deploy сохраняет рабочий пароль; после новой записи initial
+credentials доступны до возможного отказа enrollment. Это проверено настоящими
+PS/Bash functions → CLI → PostgreSQL → ASGI login; Docker/enrollment — process
+boundaries. Девять before failures / четыре controls, общий Windows **1498 / 69.67%**.
+Следующий P0 — fresh bootstrap полного выбранного стека и установленный APK/task/result.
+Результаты по образу, транспортам и OS всё ещё отделены от component proof.

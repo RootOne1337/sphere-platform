@@ -364,3 +364,17 @@ including 524 production-directory and 77 deployment cases. Four immutable-image
 stdlib probes run in a separate mandatory job and are not added to pytest counts.
 All four Android variants pass. [Structured evidence and excerpts](../../docs/audits/2026-09-05/AUDIT-REPORT.md).
 All four runtime heads passed on their first attempts; preview deployment was skipped.
+
+### AUD-85: operator credentials across full-deploy restart
+
+`test_admin_bootstrap_restart.py` adds 14 cases: actual shell bootstrap functions,
+real admin CLI processes, disposable PostgreSQL and ASGI login; the Docker boundary
+only forwards whitelisted admin commands, while enrollment's outcome is synthetic.
+Three concurrent CLI processes exercise existing/fresh organization races. A deferred
+SQL trigger rejects COMMIT and is removed in finally; rollback cannot produce a
+success marker. Eight deployment cases reject missing/duplicate/unknown outcomes
+and verify existing-account output. Before: 9 failures / 4 controls. Full Windows:
+**1498 / 69.67%**, 538 production-directory / 85 deployment cases.
+[Evidence](../../docs/audits/2026-09-05/evidence/admin-restart-full.txt).
+The image probe exercises `--create-only` validation and still has four separate
+stdlib cases. This is not Docker app startup, an installed APK or a network drill.

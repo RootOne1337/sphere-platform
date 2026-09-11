@@ -65,6 +65,8 @@ if stage in ['dependencies','application'] and '--wait' not in args:
 if os.environ['SEQUENCE_FAILURE'] == stage:
     print('Synthetic failure at ' + stage, file=sys.stderr); sys.exit(17)
 if stage != 'other':
+    if stage == 'admin':
+        print('SPHERE_ADMIN_BOOTSTRAP=' + ('existing' if state.get('admin') else 'created'))
     state[stage] = True
     statefile.write_text(json.dumps(state))
 ''', encoding="utf-8")

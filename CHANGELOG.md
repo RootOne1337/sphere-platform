@@ -1088,3 +1088,13 @@ Earlier branch integration is recorded in Git history. The former merge log and 
 - Preserve local-file precedence and fresh generation; ten new cases exercise both
   shells. Four baseline failures / six controls; all 77 deployment cases pass.
 - Actual database password rotation and persistent-volume recovery remain separate.
+
+### Audit continuation — idempotent administrator bootstrap (AUD-85)
+
+- Full-deploy uses create-only admin provisioning; existing credentials/role/MFA
+  remain intact. Explicit direct CLI update remains available for intentional reset.
+- Serialize concurrent organization/user bootstrap; report created/existing only
+  after commit. Reject unknown or ambiguous outcome instead of presenting a candidate.
+- Present newly committed credentials before enrollment; preserve the Bash credential
+  record on retries. Fourteen SQL/shell/login cases and eight deployment cases added;
+  9 baseline failures / 4 controls, then all 1498 local tests pass.

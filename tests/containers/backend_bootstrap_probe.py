@@ -27,7 +27,7 @@ class BackendBootstrapImageTests(unittest.TestCase):
             capture_output=True, text=True, timeout=20)
 
     def test_administrator_entry_point_reaches_input_validation(self):
-        result = self.command("scripts/create_admin.py", ADMIN_EMAIL="invalid@sphere.local",
+        result = self.command("scripts/create_admin.py", "--create-only", ADMIN_EMAIL="invalid@sphere.local",
             ADMIN_PASSWORD="synthetic-image-password")
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
         self.assertIn("Invalid admin credentials:", result.stderr)

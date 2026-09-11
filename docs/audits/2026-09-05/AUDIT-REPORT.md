@@ -49,8 +49,8 @@ AUD-81–84 ниже. Это закрытые дефекты отдельных 
 | 10–64 эмулятора на станции, сотни/тысячи APK, физические телефоны | Не измерено | Нет подтверждённых CPU/RAM/FPS/энергопотребления и совместимости со всеми Android |
 
 Последний полный Linux вывод: [CI `b9a3518`](evidence/ci-b9a3518-tests.txt).
-Последний полный Windows вывод: [1466 cases / 69,70%](evidence/startup-enrollment-full.txt).
-После последнего shell fix отдельно прошли [77 deployment cases](evidence/existing-env-after.txt).
+Последний полный Windows вывод: [1498 cases / 69,67%](evidence/admin-restart-full.txt).
+Включены 85 deployment cases. CI нового runtime commit фиксируется отдельно.
 Предыдущий отдельный DAG benchmark однажды занял 127,1 ms при пороге 100 ms;
 изолированный повтор и последующие общие прогоны прошли. На первой CI попытке
 `d828a62` этот же неизменённый тест измерил 363,2 ms: **1 failed / 1213 passed**,
@@ -2161,3 +2161,57 @@ JVM остаётся 485 / 35 suites (Android source не менялся).
 SQL проверены через локальные реальные Sessions/ASGI, launcher через process double.
 Эти виды evidence не означают завершённый daemon/installed-APK/VPN/fleet acceptance.
 Схема не менялась. Следующий commit сохраняет только evidence и документацию.
+
+## AUD-85 — High: повторный full-deploy меняет пароль оператора; поздний отказ скрывает созданные credentials
+
+- **Root cause / affected files:** `scripts/full-deploy.ps1/.sh` на каждом запуске
+  выбирают candidate password (случайный, если не задан) и вызывают update-capable
+  `scripts/create_admin.py`. CLI обновляет password/role/active существующей записи.
+  Вывод/сохранение credentials происходит только после enrollment; при его отказе
+  новый admin уже committed, но оператор не получает пароль. Org/user read→insert
+  без сериализации также конфликтует при одновременном bootstrap.
+- **Evidence/reproduction:** unchanged `508b1cc`: [9 failures / 4 controls](evidence/admin-restart-before-summary.json),
+  [вывод](evidence/admin-restart-before.txt). Оба настоящих shell bootstrap stages
+  через отдельный Docker boundary запускают **настоящий admin CLI и PostgreSQL**;
+  старый пароль после повторного запуска получает **401** от реального ASGI login.
+  При synthetic enrollment failure уже созданный password принимает login, но его
+  нет в stdout. CLI create-only regressions на старом коде показывают перезапись
+  hash/state и конфликтующие concurrent inserts. Старый CLI не разбирал флаги.
+  Fresh login, запрет другой org и intentional direct update — passing controls.
+- **Fix:** CLI получает `--create-only`; обе full-deploy используют его. Existing
+  active super_admin сохраняет password/role/MFA/state; disabled или изменённая
+  роль требуют явного восстановления. Обычный прямой CLI сохраняет прежний режим
+  intentional update. `INSERT ... ON CONFLICT (slug) DO NOTHING` и organization
+  row lock сериализуют fresh/concurrent bootstrap; user также читается с row lock.
+  `SPHERE_ADMIN_BOOTSTRAP=created|existing` выдаётся только после успешного commit.
+  Shell требует ровно один известный outcome; отсутствие/неоднозначность — ошибка.
+  Candidate password показывается только при `created`, сразу до enrollment.
+  Bash сохраняет `.admin-credentials` в этот же момент; existing не меняет файл.
+- **Regression:** 14 новых production-directory cases и 8 deployment cases.
+  Сохранён целый путь shell→CLI→SQL→login для обоих shell, concurrent CLI с тремя
+  процессами для existing/fresh org, сохранение identity/state, cross-org rollback,
+  explicit password update. Дополнительный deferred SQL trigger отвергает COMMIT
+  после успешного INSERT: нет пользователя/org и success marker; trigger/function
+  имеют UUID-specific имена и удаляются в finally. Deployment проверяет missing/
+  duplicate/unknown outcome и unused candidate. Production image probe теперь
+  проверяет validation нового `--create-only` entry point; число image cases — 4.
+  [Полный Windows прогон](evidence/admin-restart-full-summary.json): **1498 passed / 69.67%**,
+  379.22 s, 4 warnings, включая 538 production-directory и 85 deployment.
+  [Полный вывод](evidence/admin-restart-full.txt). Первые 113 targeted cases прошли
+  за 112.09 s; затем добавлен commit-failure case в общий прогон. Ruff и оба parsers проходят.
+- **Изменение прежнего assertion:** раньше launcher test требовал не показывать
+  password при любой ошибке, включая уже committed admin + поздний enrollment fail.
+  AUD-85 сохраняет запрет вывода при admin failure, но проверяет доступность созданных
+  credentials при позднем отказе. Это partial bootstrap, а не ложный общий успех;
+  последующие шаги всё равно останавливаются. Реальный SQL/HTTP case доказывает,
+  что показанный пароль принимает login.
+- **Residual risk:** неизвестный исход admin commit из-за обрыва/смерти процесса
+  до получения outcome не восстановлен автоматически; кандидат не считается
+  подтверждённым и existing account не перезаписывается повтором. Сохраните исходный
+  candidate или выполните явный password reset после проверки identity. Bash
+  `.admin-credentials` остаётся существующим plaintext operator artifact (chmod 600),
+  PS выводит initial password в console; secret-store/atomic persistence/rotation
+  этим fix не добавлены. Launcher/image обновляются вместе штатным build stage.
+  Full Compose, transport failures, reboot, installed APK/VPN и production-role
+  rollout не выполнены. Enrollment failure в новых shell cases подменён; его SQL
+  отдельно покрыт существующей suite. Schema head не менялся.

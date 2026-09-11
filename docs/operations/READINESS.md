@@ -297,3 +297,14 @@ Full-deploy больше не создаёт `.env.local` с новыми сек
 4 failures / 6 controls до fix; 77 deployment cases проходят после. [Evidence](../audits/2026-09-05/evidence/existing-env-after-summary.json).
 Secret rotation/admin password/backup и настоящий restart persistent volumes
 не считаются закрытыми этим guard.
+
+### AUD-85: пароль оператора переживает повторный запуск
+
+Закрыты password reset при full-deploy и потеря initial password при позднем
+enrollment failure; CLI/shell различают committed created/existing. Реальные SQL,
+ASGI login и три concurrent CLI процесса проверены. Полный Windows итог:
+**1498 / 69.67%**, 538 production-directory / 85 deployment cases.
+[Evidence](../audits/2026-09-05/evidence/admin-restart-full.txt). Следующий gate
+development-пилота — fresh полный стек и установленный APK/task/result; production
+roles/grants остаются отдельным обязательным rollout. Unknown admin commit,
+credential-store и полный persistent-volume restart ещё не закрыты.

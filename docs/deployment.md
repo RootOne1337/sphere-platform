@@ -298,7 +298,7 @@ migration/bootstrap role; the snippets do not replace that rollout.
 
 1. Apply the reviewed migrations using `python -m alembic -c alembic/alembic.ini upgrade head`
    with the bootstrap connection, before starting ordinary application work.
-2. Run `python scripts/create_admin.py` in the prepared backend environment.
+2. Run `python scripts/create_admin.py --create-only` in the prepared backend environment.
    Interactive mode prompts for email/password. For unattended mode supply
    `ADMIN_EMAIL`/`ADMIN_PASSWORD`; with a one-off Compose run forward them using
    `-e ADMIN_EMAIL -e ADMIN_PASSWORD`, not only host `SPHERE_ADMIN_*` variables.
@@ -313,9 +313,10 @@ migration/bootstrap role; the snippets do not replace that rollout.
 
 AUD-78 repairs the bootstrap functions in both full-deploy launchers. It does not
 validate their complete env-file selection, migration ordering, final health,
-autostart or production role setup. Repeat admin creation intentionally: an existing
-email in the same organization has its password/role updated. A different organization
-is rejected; old users/devices are not automatically moved.
+autostart or production role setup. AUD-85 makes both launchers preserve existing
+admin credentials with `--create-only`. Direct CLI without that flag intentionally
+updates password/role/active. A different organization is rejected; old users/devices
+are not automatically moved. [Current admin outcome contract](operations/STARTUP.md).
 
 ---
 

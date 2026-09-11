@@ -51,3 +51,15 @@ Readiness стабилен, устройство восстановило auth, 
 подтверждённый result, duplicates/unknown outcomes сверены, парк возвращается без
 ручного enrollment. Сохраните время отказа/возврата и regression reproduction.
 Не объявляйте инцидент закрытым только по зелёному container status.
+
+## Повторный запуск и пароль оператора
+
+Full-deploy больше не обновляет existing admin password (AUD-85). Найдите
+`SPHERE_ADMIN_BOOTSTRAP=existing`: используйте прежние credentials, не новый
+candidate из окружения. При `created` новый пароль показан сразу после commit;
+в Bash он также сохранён в `.admin-credentials`. Отказ enrollment после этого
+не отменяет уже созданного пользователя и не означает общий успешный запуск.
+Disabled/wrong-role/foreign-org — причины явного отказа; проверяйте выбранную identity.
+Для намеренного reset следуйте [admin startup contract](../operations/STARTUP.md).
+Не прикладывайте password или `.admin-credentials` к incident report. Неизвестный
+commit после потери процесса/ответа автоматически не разрешается.

@@ -134,7 +134,8 @@ healthchecks внутри контейнеров; они не зависят о�
 
 Этот порядок не останавливает уже запущенные workers и не заменяет coordinated
 migration/runtime-role rollout. Launcher не создаёт разделённые роли/grants.
-Повтор admin bootstrap может обновить пароль; не перегенерируйте secrets существующей
+Full-deploy сохраняет existing admin (AUD-85); direct CLI без `--create-only`
+может обновить пароль. Не перегенерируйте secrets существующей
 установки без отдельного плана. Secret lifecycle и legacy branches ещё проверяются.
 Регрессии: полный main обоих shell с процессом вместо Docker, реальные Compose merges
 и выражения probes с HTTP double; локально 65 deployment cases проходят.
@@ -165,6 +166,29 @@ headless/skip-secrets. При наличии `.env.local` он сохраняе�
 
 Это защита выбора конфигурации, не ротация. Interactive overwrite `.env.local`
 остаётся явным отдельным действием; смена пароля в dotenv не меняет пароль уже
-инициализированного PostgreSQL. Admin bootstrap при повторе может обновить user
-password — перед повтором сохраняйте выбранные admin credentials. Полный reboot,
+инициализированного PostgreSQL. Full-deploy сохраняет existing admin (AUD-85); direct CLI без `--create-only`
+намеренно обновляет user password. Полный reboot,
 restore и persistent-volume acceptance всё ещё требуются.
+
+## Повторный admin bootstrap (AUD-85)
+
+Full-deploy вызывает `python scripts/create_admin.py --create-only`. При наличии
+active super_admin в выбранной организации пароль, роль и MFA сохраняются, даже
+если candidate `SPHERE_ADMIN_PASSWORD` отличается. Он используется только для
+нового пользователя; новый случайный candidate при повторе не меняет login.
+Отключённая учётная запись, другая роль или другая org — явная ошибка, не автопочинка.
+
+CLI выдаёт ровно один `SPHERE_ADMIN_BOOTSTRAP=created|existing` после commit.
+При `created` launcher показывает initial credentials до enrollment; Bash также
+записывает `.admin-credentials` (chmod 600). Поэтому последующий enrollment failure
+не скрывает уже созданный пароль. При `existing` кандидат не показывается и файл
+не перезаписывается. Неизвестный/отсутствующий/двойной outcome останавливает запуск.
+Этот вывод подтверждает только admin stage, не готовность остальных сервисов.
+
+Для намеренного восстановления пароля используйте direct `scripts/create_admin.py`
+без `--create-only` с выбранными `ADMIN_EMAIL`, `ADMIN_PASSWORD` и bootstrap org.
+Этот режим также возвращает super_admin/active; применяйте его только к выбранной
+административной identity. Полный CLI и launcher должны быть одной версии образа.
+При потерянном ответе commit не делайте вывод, что пользователь не создан: сохраните
+исходный candidate и проверьте identity перед явным reset. Автоматического разрешения
+неизвестного commit и защищённого secret-store этим изменением не добавлено.

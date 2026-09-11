@@ -41,6 +41,7 @@ overlay = 'docker-compose.production.yml' if os.environ['LAUNCHER_PRODUCTION'] =
 if args[:5] != ['compose', '-f', 'docker-compose.yml', '-f', overlay]:
     print('Compose file options were not passed as distinct arguments', file=sys.stderr)
     sys.exit(64)
+if 'scripts/create_admin.py' in args: print('SPHERE_ADMIN_BOOTSTRAP=created')
 ''', encoding="utf-8")
     script = tmp_path / "run.sh"
     script.write_text('''source "$LAUNCHER_LIBRARY" "$@"

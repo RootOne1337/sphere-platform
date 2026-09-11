@@ -285,26 +285,38 @@ function Step-SeedData {
     try {
         $env:ADMIN_EMAIL = $adminEmail
         $env:ADMIN_PASSWORD = $adminPassword
-        Invoke-Compose (@("run", "--rm", "--no-deps", "-T", "-e", "ADMIN_EMAIL", "-e", "ADMIN_PASSWORD") + $bootstrapOrgEnv + @("backend", "python", "scripts/create_admin.py"))
+        $adminOutput = @(Invoke-Compose (@("run", "--rm", "--no-deps", "-T", "-e", "ADMIN_EMAIL", "-e", "ADMIN_PASSWORD") + $bootstrapOrgEnv + @("backend", "python", "scripts/create_admin.py", "--create-only")))
     } finally {
         $env:ADMIN_EMAIL = $previousAdminEmail
         $env:ADMIN_PASSWORD = $previousAdminPassword
     }
 
+    $adminOutput | ForEach-Object { Write-Host $_ }
+    $outcomes = @($adminOutput | Where-Object {
+        $_ -in @('SPHERE_ADMIN_BOOTSTRAP=created', 'SPHERE_ADMIN_BOOTSTRAP=existing')
+    })
+    if ($outcomes.Count -ne 1) {
+        throw "Admin bootstrap returned no unambiguous committed outcome; candidate credentials are not confirmed"
+    }
+    if ($outcomes[0] -eq 'SPHERE_ADMIN_BOOTSTRAP=created') {
+        Write-Log "INFO" "Новый администратор сохранён; остальные этапы bootstrap ещё выполняются"
+        Write-Host ""
+        Write-Host "  ╔══════════════════════════════════════════════════╗" -ForegroundColor Green
+        Write-Host "  ║           УЧЁТНЫЕ ДАННЫЕ АДМИНИСТРАТОРА          ║" -ForegroundColor Green
+        Write-Host "  ╠══════════════════════════════════════════════════╣" -ForegroundColor Green
+        Write-Host "  ║  Email:    $adminEmail" -ForegroundColor Green
+        Write-Host "  ║  Пароль:   $adminPassword" -ForegroundColor Green
+        Write-Host "  ╠══════════════════════════════════════════════════╣" -ForegroundColor Green
+        Write-Host "  ║  Сохраните пароль нового администратора         ║" -ForegroundColor Yellow
+        Write-Host "  ╚══════════════════════════════════════════════════╝" -ForegroundColor Green
+        Write-Host ""
+    } else {
+        Write-Log "INFO" "Администратор уже существует — пароль и настройки сохранены; используйте прежние учётные данные"
+    }
+
     # Enrollment ключ
     Write-Log "INFO" "Генерация enrollment-ключа..."
     Invoke-Compose (@("run", "--rm", "--no-deps", "-T") + $bootstrapOrgEnv + @("backend", "python", "-m", "scripts.seed_enrollment_key"))
-
-    Write-Host ""
-    Write-Host "  ╔══════════════════════════════════════════════════╗" -ForegroundColor Green
-    Write-Host "  ║           УЧЁТНЫЕ ДАННЫЕ АДМИНИСТРАТОРА          ║" -ForegroundColor Green
-    Write-Host "  ╠══════════════════════════════════════════════════╣" -ForegroundColor Green
-    Write-Host "  ║  Email:    $adminEmail" -ForegroundColor Green
-    Write-Host "  ║  Пароль:   $adminPassword" -ForegroundColor Green
-    Write-Host "  ╠══════════════════════════════════════════════════╣" -ForegroundColor Green
-    Write-Host "  ║  ⚠  СОХРАНИ — пароль не хранится в системе!     ║" -ForegroundColor Yellow
-    Write-Host "  ╚══════════════════════════════════════════════════╝" -ForegroundColor Green
-    Write-Host ""
 }
 
 # =============================================================================
