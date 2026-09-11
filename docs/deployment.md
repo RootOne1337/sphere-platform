@@ -698,3 +698,12 @@ AUD-84 prevents full-deploy from generating a higher-priority `.env.local` when
 the installation already uses `.env`. Existing files are retained on unattended
 startup; fresh generation still works. This does not rotate database credentials
 or validate persistent-volume recovery. See [repeat-startup contract](operations/STARTUP.md).
+
+### Packaged SQL bootstrap acceptance
+
+The production Dockerfile is now exercised against disposable PostgreSQL/Redis,
+with fresh migrations, both real bootstrap CLIs, full application lifespan and ASGI
+login/device visibility across two processes. This development-mode scenario uses
+an internal Docker network, no host ports and no source mounts. It complements the
+four no-network image probes. [Run it and read the limits](../tests/containers/README.md).
+Full Compose, browser/APK, VPN and production DB-role rollout remain separate gates.

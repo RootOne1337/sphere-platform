@@ -29,9 +29,10 @@ runtime-проверок и не считается доказательство
 | AUD-82: приложения запускаются до schema/bootstrap | 21 failure / 7 controls на shell/Compose boundaries | Dependencies → migration/admin/key → applications с readiness |
 | AUD-83: dev enrollment использует другую identity и workers конфликтуют | 11 failures / 3 controls, SQL unique errors и registration 401 | Общий CLI/hook contract, exact org, configured key, row lock |
 | AUD-84: новый `.env.local` затеняет рабочий `.env` | 4 failures / 6 controls на временной установке | Сохранение выбранной существующей конфигурации |
+| AUD-85: повтор меняет admin password, поздний отказ скрывает initial credentials | 9 failures / 4 controls, настоящий shell/CLI/SQL/login | Create-only, serialization, committed outcome до enrollment |
 
 Полные root cause, файлы, воспроизведения и residual risk находятся в разделах
-AUD-81–84 ниже. Это закрытые дефекты отдельных путей, не акт готовности всего продукта.
+AUD-81–85 ниже. Это закрытые дефекты отдельных путей, не акт готовности всего продукта.
 [Следующие критерии первого пилота](../../operations/PILOT-ACCEPTANCE.md).
 
 ## Результаты проверок
@@ -39,18 +40,18 @@ AUD-81–84 ниже. Это закрытые дефекты отдельных 
 | Проверка | Результат | Практическое ограничение |
 | --- | --- | --- |
 | Android enterprise debug unit suite | 485 passed, 0 failed | JVM/MockWebServer и OkHttp interceptors; не проверяет ОС, codec, батарею или смерть процесса на телефоне |
-| Объединённая Backend/PC/production/deployment suite (Linux `b9a3518`) | **1476 passed, 0 failed**; coverage **69,66%** | Строгий coverage gate 65% пройден. Load suite исключена; 77 deployment cases используют Compose renderer/subprocess probes без запуска сервисов |
+| Объединённая Backend/PC/production/deployment suite (Linux `08338d3`) | **1498 passed, 0 failed**; coverage **69,66%** | Coverage gate 65% пройден; load suite исключена. 85 deployment cases используют shell/Compose boundaries; отдельный image runtime scenario проверен с SQL |
 | Python dependency scan | **0 known vulnerabilities** в совместном backend/PC resolution | Pip-audit snapshot, не проверка frontend/Gradle/container/application security; [версии и ограничения](DEPENDENCY-REVIEW.md) |
-| Production-directory suite | **524 passed**, включены в общий прогон, 0 xfail | Реальные PostgreSQL/Redis row locks/commits/cache плюс negative environment/transport controls; не каждый case открывает БД. Полного APK↔API нет |
+| Production-directory suite | **538 passed**, включены в общий прогон, 0 xfail | Реальные PostgreSQL/Redis row locks/commits/cache плюс negative environment/transport controls; не каждый case открывает БД. Полного APK↔API нет |
 | Миграции | Применены до **20260910_device_refresh_retry** включительно | Только изолированная БД; конфликтные данные/downgrade проверены в throwaway schema; production не мигрировался |
-| Backend image | **4 production-image probes passed** отдельно от pytest: оба bootstrap CLI, migration head, non-root/read-only permissions | Network none, без source mount/SQL; полный startup и installed APK не проверены |
+| Backend image | **4 no-network probes в CI + 1 runtime scenario локально**, отдельно от pytest | Пустая SQL, bootstrap, полный ASGI lifespan, login/device и второй процесс; без source mount/API listener/полного Compose/APK |
 | Frontend | **198 Jest tests passed**, tsc passed; Next production build exit 0 на Node 24.19.0 | React/JSDOM + Axios adapters; настоящий browser runtime не проверен. Windows standalone tracing выдал ENOENT warning, artifact packaging ещё не подтверждён |
 | APK ↔ реальный локальный backend | Не завершено | Автоматическая проверка разрешений отклонила запуск локального API: `blocked by policy`; обход не выполнялся |
 | 10–64 эмулятора на станции, сотни/тысячи APK, физические телефоны | Не измерено | Нет подтверждённых CPU/RAM/FPS/энергопотребления и совместимости со всеми Android |
 
-Последний полный Linux вывод: [CI `b9a3518`](evidence/ci-b9a3518-tests.txt).
+Последний полный Linux вывод: [CI `08338d3`](evidence/ci-08338d3-tests.txt).
 Последний полный Windows вывод: [1498 cases / 69,67%](evidence/admin-restart-full.txt).
-Включены 85 deployment cases. CI нового runtime commit фиксируется отдельно.
+Включены 85 deployment cases. Отдельный packaged-runtime scenario не прибавляется к этому числу.
 Предыдущий отдельный DAG benchmark однажды занял 127,1 ms при пороге 100 ms;
 изолированный повтор и последующие общие прогоны прошли. На первой CI попытке
 `d828a62` этот же неизменённый тест измерил 363,2 ms: **1 failed / 1213 passed**,
@@ -58,7 +59,7 @@ AUD-81–84 ниже. Это закрытые дефекты отдельных 
 [Локальные 24 DAG cases прошли](evidence/dag-timing-d828a62-local.txt). Порог 100 ms
 не ослаблялся, тест не исключался; причина timing variance на runner не установлена.
 Файл production-regressions-after.txt сохраняет более ранний standalone snapshot
-с 41 тестом; актуальные 524 production-directory cases входят в общий прогон.
+с 41 тестом; актуальные 538 production-directory cases входят в общий прогон.
 
 Команды запуска и предохранители изоляции: [tests/production/README.md](../../../tests/production/README.md).
 Исходные `14 passed` в [reproductions.txt](evidence/reproductions.txt) означают
@@ -2215,3 +2216,31 @@ SQL проверены через локальные реальные Sessions/A
   Full Compose, transport failures, reboot, installed APK/VPN и production-role
   rollout не выполнены. Enrollment failure в новых shell cases подменён; его SQL
   отдельно покрыт существующей suite. Schema head не менялся.
+
+### AUD-85: CI и проверка поставляемого runtime image
+
+Точный runtime `08338d3161a0916e0ed7ff026a78bb2780884584`: **1498 Linux cases / 69.66%**, 370.98 s,
+4 warnings; 538 production-directory / 85 deployment включены в итог.
+Все четыре workflow прошли с первой попытки: [backend](https://github.com/RootOne1337/sphere-platform/actions/runs/34630665020), [frontend](https://github.com/RootOne1337/sphere-platform/actions/runs/34630665004), [android](https://github.com/RootOne1337/sphere-platform/actions/runs/34630665170), [preview](https://github.com/RootOne1337/sphere-platform/actions/runs/34630665035). Preview deployment пропущен.
+[Pytest](evidence/ci-08338d3-tests.txt), [четыре Android variants](evidence/ci-08338d3-android-tests.txt),
+[четыре отдельные image probes](evidence/ci-08338d3-image-bootstrap-tests.txt).
+Windows: **1498 / 69.67%**, 379.22 s. Результаты относятся к указанной ревизии.
+
+Дополнительно закрыт пробел проверки образа с SQL: production Dockerfile из этого
+runtime собран в `sha256:29d8eb137c0248a3481e253ef29c50c8f2dc22224667b32f53c1be88d40bf86f`. [Runtime evidence](evidence/packaged-runtime-08338d3/image-runtime-summary.json),
+[логи двух фаз](evidence/packaged-runtime-08338d3/image-runtime-probe.txt).
+Новый составной сценарий проходит локально: пустая PostgreSQL 15 → настоящие
+миграции → admin/key CLI → полный ASGI lifespan → readiness/login/registration/
+visibility → повтор миграций/bootstrap → новый процесс и прежний login/device.
+Он не использует dependency overrides; JSON error/critical в stdout фаз проваливает
+проверку. Данные PostgreSQL/Redis находятся в tmpfs на внутренней Docker-сети;
+host ports отсутствуют. Контейнер работает non-root/read-only с одним mounted probe,
+без mount исходников. Runner проверяет ownership/ID перед cleanup; ресурсы удалены.
+
+Это **один новый acceptance scenario**, а не новый найденный дефект и не добавление
+к 1498 pytest cases. Сохранён в `tests/containers/backend_runtime_probe.py` и добавлен
+в обязательный image job следующим test commit; его CI фиксируется отдельно.
+Четыре прежних no-network probes остаются. [Повтор запуска и границы](../../../tests/containers/README.md).
+SQL bootstrap внутри образа и обычный restart двух процессов подтверждены; полный
+Compose/Gunicorn, crash/network/DB recovery, browser, APK/task/VPN и capacity остаются
+непроверенными. Production roles/grants не заменяются development-проверкой.

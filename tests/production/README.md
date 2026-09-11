@@ -378,3 +378,13 @@ and verify existing-account output. Before: 9 failures / 4 controls. Full Window
 [Evidence](../../docs/audits/2026-09-05/evidence/admin-restart-full.txt).
 The image probe exercises `--create-only` validation and still has four separate
 stdlib cases. This is not Docker app startup, an installed APK or a network drill.
+
+### Current CI and packaged SQL runtime acceptance
+
+Runtime `08338d3161a0916e0ed7ff026a78bb2780884584`: **1498 Linux / 69.66%**, including
+538 production-directory and 85 deployment cases; all four PR workflows pass on
+attempt 1. Windows: 1498 / 69.67%. Four image probes are counted separately.
+A new [packaged runtime scenario](../containers/README.md) passes locally on the same
+image source: real fresh SQL/bootstrap, unmodified app lifespan, ASGI login/device
+and new-process restart. It is added to mandatory image CI and counted as one
+separate scenario, not another pytest case. No full Compose/browser/installed APK.

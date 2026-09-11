@@ -192,3 +192,12 @@ CLI выдаёт ровно один `SPHERE_ADMIN_BOOTSTRAP=created|existing` �
 При потерянном ответе commit не делайте вывод, что пользователь не создан: сохраните
 исходный candidate и проверьте identity перед явным reset. Автоматического разрешения
 неизвестного commit и защищённого secret-store этим изменением не добавлено.
+
+## Проверка bootstrap в собранном образе
+
+Помимо четырёх no-network проверок CLI/metadata/permissions, image job получает
+один составной SQL/runtime scenario. Он создаёт отдельные PostgreSQL/Redis на
+внутренней Docker-сети, выполняет миграции/admin/key и проверяет полный ASGI
+lifespan, login, registration/visibility и повтор в новом процессе. Локально
+`08338d3` проходит; API listener и полный Compose не запускаются.
+[Команда, evidence и cleanup contract](../../tests/containers/README.md).

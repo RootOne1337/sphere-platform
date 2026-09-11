@@ -347,3 +347,11 @@ password при позднем enrollment failure. [9 baseline failures / 4 cont
 installed APK/task/result, затем VPN/recovery. Source observations оставшихся paths
 не считаются новыми исправленными дефектами; production-role rollout не блокирует
 изолированный development smoke.
+
+AUD-85 runtime `08338d3`: **1498 Linux / 69.66%**, all four workflows pass
+on attempt 1; Windows 1498 / 69.67%. Дополнительный локальный packaged-runtime
+scenario закрыл fresh SQL/bootstrap и restart/login/device внутри собранного образа.
+Это acceptance coverage, не AUD-86 и не доказательство installed APK. Сохранённый
+[runner](../../../tests/containers/README.md) добавлен в обязательный image CI.
+Следующий P0: полный выбранный Compose/browser/installed APK/task/result, затем VPN,
+recovery и incident timeline. DB/Redis outage и host reboot остаются отдельными drills.

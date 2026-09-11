@@ -50,8 +50,8 @@ Android и доступный управляемый VPN-router. До перво
 | Шаг | Текущий результат | Что ещё сделать / критерий завершения |
 | --- | --- | --- |
 | 1. Выбрать запуск | AUD-79/80: argv/env selection; AUD-84: `.env`-only config сохраняется | Проверить реальные адреса/параметры и Bash dotenv; запускать один выбранный project |
-| 2. Подготовить БД | AUD-82: migration/bootstrap до приложений; fresh migrations проходят в CI | Development: fresh-volume bootstrap/schema head и повтор. Production дополнительно требует отдельного provision roles/grants |
-| 3. Создать пользователя и enrollment key | AUD-78/81/83/85: packaged CLI, выбранная org/config, registration/visibility, конкурентность и сохранение admin при повторе проходят | Пройти те же действия в полном Compose; SQL/login выполнены через shell/CLI process boundary, image probe пока без SQL |
+| 2. Подготовить БД | AUD-82: порядок; fresh SQL migrations/bootstrap и повтор прошли внутри runtime image | Полный выбранный Compose и persistent-volume restart. Production дополнительно требует отдельного provision roles/grants |
+| 3. Создать пользователя и enrollment key | AUD-78/81/83/85: identity и повтор; runtime image выполняет CLI→SQL→полный ASGI lifespan→login/device | Пройти выбранный Compose и browser/APK; текущий image scenario не открывает HTTP listener |
 | 4. Открыть веб и подключить APK | Android registration/refresh/ACK/fallback покрыты JVM-тестами | Проверить настоящий browser login, provisioning APK, permissions, `auth_ok`, видимость устройства и версию APK в UI |
 | 5. Выполнить задание | Backend dispatch и Android journal/DAG имеют regression tests | Веб → исполнение на эмуляторе → сохранённый результат → UI; отказ/отмена/повторная доставка с тем же task ID |
 | 6. Восстановить связь | Сохранены endpoints, intent refresh, checked registration commit | Потеря initial registration response, клонированная identity, backend/сеть/process restart; никакой ручной переустановки |
@@ -221,3 +221,13 @@ PS/Bash functions → CLI → PostgreSQL → ASGI login; Docker/enrollment — p
 boundaries. Девять before failures / четыре controls, общий Windows **1498 / 69.67%**.
 Следующий P0 — fresh bootstrap полного выбранного стека и установленный APK/task/result.
 Результаты по образу, транспортам и OS всё ещё отделены от component proof.
+
+## Поставляемый образ: SQL и повтор процесса
+
+Runtime `08338d3` прошёл локальный сценарий с пустой PostgreSQL, Redis, настоящими
+CLI и полным lifespan приложения. После повторного bootstrap новый процесс принимает
+прежний пароль и видит то же устройство. Данные SQL не подменяются; HTTP выполняется
+через ASGI. [Evidence](../audits/2026-09-05/evidence/packaged-runtime-08338d3/image-runtime-probe.txt),
+[runner](../../tests/containers/README.md). Это сокращает пробел packaged bootstrap,
+но не заменяет полный Compose, browser, установленный APK/task/result и VPN.
+Сроки пересматриваются после настоящего рубежа A, не по числу прошедших тестов.

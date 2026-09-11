@@ -1098,3 +1098,11 @@ Earlier branch integration is recorded in Git history. The former merge log and 
 - Present newly committed credentials before enrollment; preserve the Bash credential
   record on retries. Fourteen SQL/shell/login cases and eight deployment cases added;
   9 baseline failures / 4 controls, then all 1498 local tests pass.
+
+### Audit validation — packaged SQL bootstrap and process restart
+
+- Retain a reproducible probe of the built backend image with fresh disposable SQL,
+  real CLI/bootstrap/app lifecycle, login/device visibility and repeat in a new process.
+- Add it to mandatory image CI separately from the four no-network probes and pytest.
+  No new runtime defect claimed; full Compose/browser/APK/VPN acceptance remains open.
+- Archive all four successful first-attempt CI runs for AUD-85 (`08338d3`, 1498 tests).

@@ -28,11 +28,17 @@ jobs:
             --security-opt no-new-privileges --tmpfs /tmp:rw,nosuid,nodev,size=16m \
             --mount "type=bind,source=${{ github.workspace }}/tests/containers/backend_bootstrap_probe.py,target=/tmp/backend_bootstrap_probe.py,readonly" \
             sphere-backend-bootstrap-ci python /tmp/backend_bootstrap_probe.py 2>&1 | tee image-bootstrap-probe.txt
+      - name: Fresh packaged SQL bootstrap and application process restart
+        run: >-
+          python tests/containers/run_backend_runtime_probe.py
+          --image sphere-backend-bootstrap-ci --evidence-dir image-runtime-evidence
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: image-bootstrap-probe
-          path: image-bootstrap-probe.txt
+          path: |
+            image-bootstrap-probe.txt
+            image-runtime-evidence/
           if-no-files-found: warn
 
   lint:
