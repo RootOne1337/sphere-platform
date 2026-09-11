@@ -42,16 +42,16 @@ AUD-81–87 ниже. Это закрытые дефекты отдельных 
 | Проверка | Результат | Практическое ограничение |
 | --- | --- | --- |
 | Android enterprise debug unit suite | 485 passed, 0 failed | JVM/MockWebServer и OkHttp interceptors; не проверяет ОС, codec, батарею или смерть процесса на телефоне |
-| Объединённая Backend/PC/production/deployment suite (Linux `8932e49`) | **1506 passed, 0 failed**; coverage **69,66%** | Coverage gate 65% пройден; load suite исключена. 93 deployment cases используют shell/Compose boundaries; image 4 + 1 проверяются отдельно |
+| Объединённая Backend/PC/production/deployment suite (Linux `a5209ba`) | **1506 passed, 0 failed**; coverage **69,71%** | Coverage gate 65% пройден; load suite исключена. 93 deployment cases используют shell/Compose boundaries; container 4 + 1 + 2 проверяются отдельно |
 | Python dependency scan | **0 known vulnerabilities** в совместном backend/PC resolution | Pip-audit snapshot, не проверка frontend/Gradle/container/application security; [версии и ограничения](DEPENDENCY-REVIEW.md) |
 | Production-directory suite | **538 passed**, включены в общий прогон, 0 xfail | Реальные PostgreSQL/Redis row locks/commits/cache плюс negative environment/transport controls; не каждый case открывает БД. Полного APK↔API нет |
 | Миграции | Применены до **20260910_device_refresh_retry** включительно | Только изолированная БД; конфликтные данные/downgrade проверены в throwaway schema; production не мигрировался |
-| Backend image | **4 no-network probes + 1 SQL/runtime scenario проходят локально и в CI**, отдельно от pytest | Пустая SQL, bootstrap, полный ASGI lifespan, login/device и второй процесс; без source mount/API listener/полного Compose/APK |
+| Контейнерные проверки | **4 no-network + 1 SQL/runtime + 2 PostgreSQL init/restart** проходят локально и в CI, отдельно от pytest | Пустая SQL/bootstrap, ASGI lifespan/login/device, default/custom PG init и сохранение данных; без полного Compose/browser/APK |
 | Frontend | **198 Jest tests passed**, tsc passed; Next production build exit 0 на Node 24.19.0 | React/JSDOM + Axios adapters; настоящий browser runtime не проверен. Windows standalone tracing выдал ENOENT warning, artifact packaging ещё не подтверждён |
 | APK ↔ реальный локальный backend | Не завершено | Автоматическая проверка разрешений отклонила запуск локального API: `blocked by policy`; обход не выполнялся |
 | 10–64 эмулятора на станции, сотни/тысячи APK, физические телефоны | Не измерено | Нет подтверждённых CPU/RAM/FPS/энергопотребления и совместимости со всеми Android |
 
-Последний полный Linux вывод: [CI `8932e49`](evidence/ci-8932e49-tests.txt).
+Последний полный Linux вывод: [CI `a5209ba`](evidence/ci-a5209ba-tests.txt).
 Последний полный Windows вывод: [1498 cases / 69,67%](evidence/admin-restart-full.txt).
 В Windows full включены 85 deployment cases; после AUD-86 отдельно [93 deployment cases](evidence/compose-settings-after.txt).
 Image scenarios не прибавляются к pytest total.
@@ -2363,3 +2363,27 @@ Compose/init.sql, browser/установленная APK/task/result, VPN, ре�
   roles, полный Compose, n8n workload, browser/installed APK/task/VPN и host failure
   drills остаются отдельными этапами. Сам init.sql не стал повторно запускаемой
   миграцией; schema head приложения не менялся.
+
+### AUD-87: точная ревизия подтверждена в CI
+
+`a5209ba1fc578a63a3d3885c8009f3ea5e5352ee`: **1506 Linux cases / 69.71%**, 235.26 s,
+4 warnings; 538 production-directory / 93 deployment входят в итог.
+Все четыре workflows проходят с первой попытки: [backend](https://github.com/RootOne1337/sphere-platform/actions/runs/34634637818), [frontend](https://github.com/RootOne1337/sphere-platform/actions/runs/34634637813), [android](https://github.com/RootOne1337/sphere-platform/actions/runs/34634637816), [preview](https://github.com/RootOne1337/sphere-platform/actions/runs/34634637675).
+Preview deployment пропущен. [Pytest](evidence/ci-a5209ba-tests.txt),
+[все Android variants](evidence/ci-a5209ba-android-tests.txt).
+
+Отдельный mandatory container job: [4 no-network probes](evidence/ci-a5209ba-image-bootstrap-tests.txt),
+[1 SQL/runtime scenario](evidence/ci-a5209ba-image-runtime-tests.txt),
+[2 PostgreSQL init/restart cases](evidence/ci-a5209ba-postgres-init-tests.txt).
+[Runtime artifact](evidence/ci-a5209ba-image-runtime-summary.json) и
+[PostgreSQL artifact](evidence/ci-a5209ba-postgres-init-summary.json) привязаны к этому
+SHA/run/attempt и подтверждают cleanup. Семь container cases не прибавляются к 1506
+pytest. Первый init/default/custom owners, extensions и сохранённая запись после
+container restart проверены в Linux CI. Наличие n8n DB не означает запуск n8n workload.
+
+Локально: последний полный Windows 1498 / 69.67%, затем 93 deployment cases и
+2 PostgreSQL container cases; schema head не менялся. PostgreSQL init.sql теперь
+проверен отдельно от packaged Alembic/runtime. Следующий незакрытый рубеж: выбранный
+полный Compose, browser и установленный APK → задание → результат, затем VPN,
+recovery, incident timeline и измерение fleet. Восстановление старого частичного init
+не выполнено и не требуется автоматически для исправления новой установки.

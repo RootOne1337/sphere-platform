@@ -419,3 +419,11 @@ failure/one control; both pass after removing hardcoded n8n ownership. They asse
 owner/extensions, actual container restart and retained SQL marker, with guarded
 cleanup of newly created volumes. Count separately from 1506 pytest and image 4 + 1.
 No existing cluster, application schema or installed APK is changed.
+
+### AUD-87 verified CI
+
+Exact `a5209ba1fc578a63a3d3885c8009f3ea5e5352ee`: **1506 / 69.71%**, 538 production-directory /
+93 deployment cases. Separate mandatory container checks: **4 no-network + 1
+SQL/runtime + 2 PostgreSQL init/restart**. All four workflows pass attempt 1.
+[PG artifact excerpt](../../docs/audits/2026-09-05/evidence/ci-a5209ba-postgres-init-tests.txt).
+Windows last full remains 1498 / 69.67%, followed by 93 deployment and 2 PG cases.

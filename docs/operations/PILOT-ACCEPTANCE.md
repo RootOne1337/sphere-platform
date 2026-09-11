@@ -50,7 +50,7 @@ Android и доступный управляемый VPN-router. До перво
 | Шаг | Текущий результат | Что ещё сделать / критерий завершения |
 | --- | --- | --- |
 | 1. Выбрать запуск | AUD-79/80: argv/env selection; AUD-84: сохранение `.env`; AUD-86: generated config проходит Settings | Проверить реальные адреса/параметры и Bash dotenv; запускать один выбранный project |
-| 2. Подготовить БД | AUD-82: порядок; fresh SQL migrations/bootstrap и повтор прошли внутри runtime image | Полный выбранный Compose и persistent-volume restart. Production дополнительно требует отдельного provision roles/grants |
+| 2. Подготовить БД | AUD-82: порядок; migrations/bootstrap в runtime image; AUD-87: default/custom PG init.sql и container restart с сохранением записи | Полный выбранный Compose; recovery старых частичных установок при необходимости. Production дополнительно требует provision roles/grants |
 | 3. Создать пользователя и enrollment key | AUD-78/81/83/85: identity и повтор; runtime image выполняет CLI→SQL→полный ASGI lifespan→login/device | Пройти выбранный Compose и browser/APK; текущий image scenario не открывает HTTP listener |
 | 4. Открыть веб и подключить APK | Android registration/refresh/ACK/fallback покрыты JVM-тестами | Проверить настоящий browser login, provisioning APK, permissions, `auth_ok`, видимость устройства и версию APK в UI |
 | 5. Выполнить задание | Backend dispatch и Android journal/DAG имеют regression tests | Веб → исполнение на эмуляторе → сохранённый результат → UI; отказ/отмена/повторная доставка с тем же task ID |
@@ -266,3 +266,12 @@ Compose/init.sql, browser/installed APK/task/result и VPN остаются от
 restart с сохранённой записью. [Evidence](../audits/2026-09-05/evidence/postgres-init-final-after/postgres-init-summary.json).
 Это покрывает init.sql отдельно от Alembic/image scenario. Полный выбранный Compose,
 browser/установленная APK/task/result и VPN ещё нужны; частичный старый init не лечится автоматически.
+
+### PostgreSQL init/restart в Linux CI
+
+`a5209ba`: **1506 / 69.71%**, отдельно container **4 + 1 + 2**, все
+четыре workflows проходят с первой попытки. [Оба PG cases](../audits/2026-09-05/evidence/ci-a5209ba-postgres-init-tests.txt).
+Таким образом init.sql и сохранение записи после container restart проверены
+для default/custom user. Следующий P0 — весь выбранный Compose/browser/installed APK/
+task/result, затем VPN/recovery. Частичные старые volumes не изменялись; наличие n8n
+DB не доказывает работоспособность его workload.

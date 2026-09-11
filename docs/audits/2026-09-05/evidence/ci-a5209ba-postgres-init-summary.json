@@ -1,0 +1,71 @@
+{
+  "tests": 2,
+  "failures": 0,
+  "errors": 0,
+  "records": [
+    {
+      "user": "sphere_audit_operator",
+      "network": "none",
+      "host_ports": [],
+      "init_sql": "infrastructure/postgres/init.sql",
+      "first_passed": true,
+      "restart_passed": true,
+      "removed": true,
+      "image_id": "sha256:aad6289ca337b3ce76896f2e7e61480490152886c7828120371fb28e6b779e1d",
+      "first": {
+        "user": "sphere_audit_operator",
+        "database": "sphereplatform",
+        "n8n_owner": "sphere_audit_operator",
+        "extensions": [
+          "btree_gin",
+          "pg_trgm",
+          "uuid-ossp"
+        ]
+      },
+      "repeat": {
+        "user": "sphere_audit_operator",
+        "database": "sphereplatform",
+        "n8n_owner": "sphere_audit_operator",
+        "extensions": [
+          "btree_gin",
+          "pg_trgm",
+          "uuid-ossp"
+        ]
+      }
+    },
+    {
+      "user": "sphere",
+      "network": "none",
+      "host_ports": [],
+      "init_sql": "infrastructure/postgres/init.sql",
+      "first_passed": true,
+      "restart_passed": true,
+      "removed": true,
+      "image_id": "sha256:aad6289ca337b3ce76896f2e7e61480490152886c7828120371fb28e6b779e1d",
+      "first": {
+        "user": "sphere",
+        "database": "sphereplatform",
+        "n8n_owner": "sphere",
+        "extensions": [
+          "btree_gin",
+          "pg_trgm",
+          "uuid-ossp"
+        ]
+      },
+      "repeat": {
+        "user": "sphere",
+        "database": "sphereplatform",
+        "n8n_owner": "sphere",
+        "extensions": [
+          "btree_gin",
+          "pg_trgm",
+          "uuid-ossp"
+        ]
+      }
+    }
+  ],
+  "head_sha": "a5209ba1fc578a63a3d3885c8009f3ea5e5352ee",
+  "run_id": 34634637818,
+  "artifact_id": 10277643786,
+  "attempt": 1
+}

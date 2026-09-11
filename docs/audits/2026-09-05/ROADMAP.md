@@ -388,3 +388,11 @@ custom POSTGRES_USER давал exit 3 и role sphere does not exist. Миним
 CI отдельно от 1506 pytest и image 4 + 1. Не восстановлены старые частично созданные
 кластеры. Следующий приоритет: полный выбранный Compose/browser/APK/task/result,
 VPN/recovery/incident timeline; прежнее наблюдение подтверждено в AUD-87.
+
+AUD-87 `a5209ba` завершён: **1506 / 69.71%** в Linux CI,
+235.26 s; 538 production-directory / 93 deployment, отдельно container **4 + 1 + 2**.
+Все четыре workflows first-attempt success. [PG init/restart](evidence/ci-a5209ba-postgres-init-tests.txt).
+Проверенный init.sql больше не требует отдельной роли sphere при другом POSTGRES_USER.
+Следующие gates: полный выбранный Compose/browser/installed APK/task/result, VPN,
+recovery и incident timeline. Прежние записи об unverified PG owner — исторические;
+они заменены AUD-87 и приведёнными SQL/container evidence.
