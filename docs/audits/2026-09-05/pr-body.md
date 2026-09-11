@@ -208,7 +208,14 @@ researches NitroGen and a future external inference worker; no AI is implemented
 
 ## Validation
 
-- Latest runtime `08338d3` (AUD-85): **1498 passed / 69.66%** in Linux,
+- Latest checked revision `cbf8f01` (runtime code `08338d3`): **1498 passed /
+  69.66%**, 538 production-directory / 85 deployment cases. Mandatory image
+  job now passes **4 no-network probes + 1 real SQL/runtime scenario**. All four
+  workflows pass attempt 1: [backend](https://github.com/RootOne1337/sphere-platform/actions/runs/34631587864), [frontend](https://github.com/RootOne1337/sphere-platform/actions/runs/34631587800), [android](https://github.com/RootOne1337/sphere-platform/actions/runs/34631587650), [preview](https://github.com/RootOne1337/sphere-platform/actions/runs/34631587792); preview deployment skipped.
+  Exact image/cleanup metadata and both app phases are archived. Windows full suite
+  remains 1498 / 69.67%. Full Compose init.sql/browser/APK/task/VPN remain open.
+
+- Runtime fix `08338d3` (AUD-85): **1498 passed / 69.66%** in Linux,
   including 538 production-directory and 85 deployment cases; four separate image
   probes. All four workflow attempts pass first try: [backend](https://github.com/RootOne1337/sphere-platform/actions/runs/34630665020), [frontend](https://github.com/RootOne1337/sphere-platform/actions/runs/34630665004), [android](https://github.com/RootOne1337/sphere-platform/actions/runs/34630665170), [preview](https://github.com/RootOne1337/sphere-platform/actions/runs/34630665035).
   Preview deployment skipped. Windows: 1498 / 69.67%.
@@ -216,7 +223,7 @@ researches NitroGen and a future external inference worker; no AI is implemented
   full app lifespan, ASGI login/registration/visibility and a second process with
   retained credentials/device. Internal Docker network, tmpfs services, no host ports,
   source mounts or dependency overrides. One separate scenario is added to image CI;
-  its new CI result follows separately. Full Compose/browser/APK/task/VPN remain open.
+  its CI result is confirmed above. Full Compose/browser/APK/task/VPN remain open.
 
 - Earlier runtime `b9a3518` (AUD-84): **1476 passed / 69.66%**, including
   524 production-directory and 77 deployment cases. Separate mandatory production

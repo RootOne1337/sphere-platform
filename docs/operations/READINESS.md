@@ -5,16 +5,17 @@
 [Главная](../../README.md) · [Доказательства аудита](../audits/2026-09-05/AUDIT-REPORT.md) ·
 [APK](../android-agent.md) · [PC-agent](../pc-agent.md) · [Будущий AI-контур](../architecture/AI-READINESS.md)
 
-**Последняя проверенная runtime revision: `08338d3` (AUD-85).**
+**Последняя проверенная ревизия: `cbf8f01`; runtime-код — `08338d3` (AUD-85).**
 Linux CI: **1498 passed / 69.66%**, включая 538 production-directory и
-85 deployment cases; отдельно 4 image probes. Все PR workflows проходят с первой
-попытки; preview deployment пропущен. [Результаты](../audits/2026-09-05/evidence/ci-08338d3-tests.txt).
-В том же runtime image локально прошёл новый SQL/lifespan/login/device/restart
-scenario; [границы и повтор](../../tests/containers/README.md). Он добавлен в image CI
-следующим test commit, чей результат фиксируется отдельно.
-Admin credentials при повторе сохранены. Следующие gates development-пилота:
-полный выбранный Compose, browser и установленный APK → задание → результат,
-затем VPN/recovery. Production DB roles/grants остаются отдельным обязательным rollout.
+85 deployment cases. Отдельный обязательный image job: **4 no-network probes +
+1 SQL/runtime scenario**. Все четыре workflow проходят с первой попытки; preview
+deployment пропущен. [Результаты](../audits/2026-09-05/evidence/ci-cbf8f01-tests.txt),
+[runtime image](../audits/2026-09-05/evidence/ci-cbf8f01-image-runtime-tests.txt).
+Подтверждены свежие миграции, admin/key bootstrap, полный ASGI lifespan и сохранение
+login/device во втором процессе. Windows полный прогон: 1498 / 69.67%.
+Следующие gates development-пилота — полный выбранный Compose с его init.sql,
+browser и установленный APK → задание → результат, затем VPN/recovery.
+Production DB roles/grants остаются отдельным обязательным rollout.
 
 ## Что считаем работающей системой
 

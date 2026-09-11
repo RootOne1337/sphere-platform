@@ -388,3 +388,9 @@ A new [packaged runtime scenario](../containers/README.md) passes locally on the
 image source: real fresh SQL/bootstrap, unmodified app lifespan, ASGI login/device
 and new-process restart. It is added to mandatory image CI and counted as one
 separate scenario, not another pytest case. No full Compose/browser/installed APK.
+
+Packaged acceptance CI `cbf8f01215c5e27a809c29fa711d4e9f2a5c5a95` подтверждён:
+**1498 / 69.66%**; отдельно **4 no-network + 1 SQL/runtime** проходят в
+обязательном image job. [Сохранённые фазы](../../docs/audits/2026-09-05/evidence/ci-cbf8f01-image-runtime-tests.txt).
+Runtime source не менялся после `08338d3`; все четыре PR workflows проходят
+с первой попытки. Этот scenario не использует Compose PostgreSQL init.sql.

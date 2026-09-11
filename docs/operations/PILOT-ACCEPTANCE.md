@@ -231,3 +231,12 @@ CLI и полным lifespan приложения. После повторног
 [runner](../../tests/containers/README.md). Это сокращает пробел packaged bootstrap,
 но не заменяет полный Compose, browser, установленный APK/task/result и VPN.
 Сроки пересматриваются после настоящего рубежа A, не по числу прошедших тестов.
+
+### Linux CI для packaged runtime
+
+`cbf8f01`: **1498 / 69.66%**, четыре no-network image probes и отдельный
+SQL/runtime scenario проходят с первой попытки во всех PR workflows. [Evidence](../audits/2026-09-05/evidence/ci-cbf8f01-image-runtime-tests.txt).
+Так закрывается проверка SQL bootstrap внутри поставляемого backend-образа.
+Проверка полного Compose должна дополнительно использовать штатный PostgreSQL
+init.sql: его OWNER=sphere при configurable POSTGRES_USER требует воспроизведения.
+Browser/installed APK/task/result и VPN остаются следующими критериями приёмки.

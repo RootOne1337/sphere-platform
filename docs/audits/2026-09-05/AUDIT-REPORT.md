@@ -40,16 +40,16 @@ AUD-81–85 ниже. Это закрытые дефекты отдельных 
 | Проверка | Результат | Практическое ограничение |
 | --- | --- | --- |
 | Android enterprise debug unit suite | 485 passed, 0 failed | JVM/MockWebServer и OkHttp interceptors; не проверяет ОС, codec, батарею или смерть процесса на телефоне |
-| Объединённая Backend/PC/production/deployment suite (Linux `08338d3`) | **1498 passed, 0 failed**; coverage **69,66%** | Coverage gate 65% пройден; load suite исключена. 85 deployment cases используют shell/Compose boundaries; отдельный image runtime scenario проверен с SQL |
+| Объединённая Backend/PC/production/deployment suite (Linux `cbf8f01`) | **1498 passed, 0 failed**; coverage **69,66%** | Coverage gate 65% пройден; load suite исключена. 85 deployment cases используют shell/Compose boundaries; отдельный image runtime scenario проверен с SQL |
 | Python dependency scan | **0 known vulnerabilities** в совместном backend/PC resolution | Pip-audit snapshot, не проверка frontend/Gradle/container/application security; [версии и ограничения](DEPENDENCY-REVIEW.md) |
 | Production-directory suite | **538 passed**, включены в общий прогон, 0 xfail | Реальные PostgreSQL/Redis row locks/commits/cache плюс negative environment/transport controls; не каждый case открывает БД. Полного APK↔API нет |
 | Миграции | Применены до **20260910_device_refresh_retry** включительно | Только изолированная БД; конфликтные данные/downgrade проверены в throwaway schema; production не мигрировался |
-| Backend image | **4 no-network probes в CI + 1 runtime scenario локально**, отдельно от pytest | Пустая SQL, bootstrap, полный ASGI lifespan, login/device и второй процесс; без source mount/API listener/полного Compose/APK |
+| Backend image | **4 no-network probes + 1 SQL/runtime scenario проходят локально и в CI**, отдельно от pytest | Пустая SQL, bootstrap, полный ASGI lifespan, login/device и второй процесс; без source mount/API listener/полного Compose/APK |
 | Frontend | **198 Jest tests passed**, tsc passed; Next production build exit 0 на Node 24.19.0 | React/JSDOM + Axios adapters; настоящий browser runtime не проверен. Windows standalone tracing выдал ENOENT warning, artifact packaging ещё не подтверждён |
 | APK ↔ реальный локальный backend | Не завершено | Автоматическая проверка разрешений отклонила запуск локального API: `blocked by policy`; обход не выполнялся |
 | 10–64 эмулятора на станции, сотни/тысячи APK, физические телефоны | Не измерено | Нет подтверждённых CPU/RAM/FPS/энергопотребления и совместимости со всеми Android |
 
-Последний полный Linux вывод: [CI `08338d3`](evidence/ci-08338d3-tests.txt).
+Последний полный Linux вывод: [CI `cbf8f01`](evidence/ci-cbf8f01-tests.txt).
 Последний полный Windows вывод: [1498 cases / 69,67%](evidence/admin-restart-full.txt).
 Включены 85 deployment cases. Отдельный packaged-runtime scenario не прибавляется к этому числу.
 Предыдущий отдельный DAG benchmark однажды занял 127,1 ms при пороге 100 ms;
@@ -2244,3 +2244,28 @@ host ports отсутствуют. Контейнер работает non-root/
 SQL bootstrap внутри образа и обычный restart двух процессов подтверждены; полный
 Compose/Gunicorn, crash/network/DB recovery, browser, APK/task/VPN и capacity остаются
 непроверенными. Production roles/grants не заменяются development-проверкой.
+
+### Packaged runtime acceptance: проверка CI
+
+Test revision `cbf8f01215c5e27a809c29fa711d4e9f2a5c5a95` (runtime-код остаётся `08338d3`):
+**1498 Linux tests / 69.66%**, 362.65 s, 4 warnings. Все четыре
+workflow завершились с первой попытки: [backend](https://github.com/RootOne1337/sphere-platform/actions/runs/34631587864), [frontend](https://github.com/RootOne1337/sphere-platform/actions/runs/34631587800), [android](https://github.com/RootOne1337/sphere-platform/actions/runs/34631587650), [preview](https://github.com/RootOne1337/sphere-platform/actions/runs/34631587792); preview deployment пропущен.
+[Общий прогон](evidence/ci-cbf8f01-tests.txt), [Android variants](evidence/ci-cbf8f01-android-tests.txt).
+
+Обязательный image job проходит **4 no-network probes + 1 SQL/runtime scenario**;
+это отдельные результаты, не 1503 pytest cases.
+[Четыре probes](evidence/ci-cbf8f01-image-bootstrap-tests.txt),
+[обе runtime-фазы](evidence/ci-cbf8f01-image-runtime-tests.txt),
+[image ID и cleanup](evidence/ci-cbf8f01-image-runtime-summary.json).
+Последний файл получен из artifact успешного exact-SHA run, подтверждает отдельную
+internal network, отсутствие host ports и удаление принадлежащих runner ресурсов.
+Fresh migrations/admin/key, реальный lifespan и login/device в двух процессах
+теперь проверены и на Windows Docker Desktop, и в Linux CI. Полный local pytest
+остаётся 1498 / 69.67%; повтор не требовался, runtime после `08338d3` не менялся.
+
+Это контроль packaged startup, не full Compose/installed APK. Следующая проверка
+инициализации полного стека должна включить штатный PostgreSQL init.sql; текущий
+image scenario проверяет fresh Alembic DB без этого файла. Source observation:
+init.sql фиксирует OWNER=sphere, тогда как Compose разрешает POSTGRES_USER.
+Отдельное воспроизведение ещё не выполнено; новый AUD/исправление не заявлены.
+Далее — browser/установленный APK/task/result, VPN, реальные recovery и incident timeline.

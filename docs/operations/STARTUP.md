@@ -201,3 +201,7 @@ CLI выдаёт ровно один `SPHERE_ADMIN_BOOTSTRAP=created|existing` �
 lifespan, login, registration/visibility и повтор в новом процессе. Локально
 `08338d3` проходит; API listener и полный Compose не запускаются.
 [Команда, evidence и cleanup contract](../../tests/containers/README.md).
+
+Сценарий packaged SQL/runtime теперь также подтверждён [Linux CI `cbf8f01`](../audits/2026-09-05/evidence/ci-cbf8f01-image-runtime-tests.txt).
+Четыре no-network probes и один runtime scenario идут отдельно от общего pytest.
+Штатный Compose PostgreSQL init.sql, весь стек, browser и APK этим прогоном не проверяются.

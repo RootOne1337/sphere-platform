@@ -355,3 +355,12 @@ scenario закрыл fresh SQL/bootstrap и restart/login/device внутри �
 [runner](../../../tests/containers/README.md) добавлен в обязательный image CI.
 Следующий P0: полный выбранный Compose/browser/installed APK/task/result, затем VPN,
 recovery и incident timeline. DB/Redis outage и host reboot остаются отдельными drills.
+
+Последняя контрольная точка: test revision `cbf8f01`, runtime `08338d3`.
+CI **1498 / 69.66%**, 538 production-directory / 85 deployment, **4 + 1**
+отдельных image checks; все четыре workflows first-attempt success.
+[Packaged runtime evidence](evidence/ci-cbf8f01-image-runtime-tests.txt).
+Следующий source observation: PostgreSQL init.sql hardcoded OWNER=sphere при
+configurable POSTGRES_USER. Требуется реальное воспроизведение на временном PG;
+это пока не подтверждённый AUD. Остальной порядок: полный Compose/browser/APK/task,
+VPN/recovery/observability. Оценка fleet capacity и сроки не выводятся из test counts.
