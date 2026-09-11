@@ -4,12 +4,17 @@
 
 ---
 
-All configuration is loaded from `.env.local` at startup via `pydantic-settings`.
-Copy `.env.example` as a starting point and fill in your values.
+Backend Settings read `.env` followed by `.env.local`; explicit process environment
+values have priority. Settings do not describe every shell/Compose variable. The
+Windows launchers pass one selected env file to Compose (`.env.local`, else `.env`);
+full-deploy preserves an existing `.env` instead of shadowing it with generated
+credentials. See the [startup contract](operations/STARTUP.md). For a new installation,
+copy `.env.example` as a starting point and fill in the required values.
 
 ```bash
 cp .env.example .env.local
-python scripts/generate_secrets.py   # auto-fills all secret fields
+# Generate a separate candidate for review; this does not update service passwords.
+python scripts/generate_secrets.py --output .env.generated
 ```
 
 > **Security:** Never commit `.env.local` or `.env` to version control.

@@ -35,7 +35,7 @@ native CLI/readiness, полный daemon/reboot drill остаётся откр
 | 1 | Deployment | Startup export и наследование dev commands/mounts/root/PG/Redis/application ports исправлены; оба Compose merge проверены | n8n/MinIO ingress, RLS roles, OTA/log persistence, запуск/health/recovery и restore backup |
 | 2 | APK runtime и производительность | Последний локальный Android итог: 485 JVM tests (AUD-77); лимит loop diagnostics не пропускает действия, coroutine cancellation выходит из body; typeText больше не пишет raw/encoded ввод в логи; root pipe unknown не повторяется автоматически через DAG/loop; сервер восстанавливает evicted presence по pong; реальный APK↔API и нагрузка 10–64 не завершены | Root execution ACK, Lua pcall/unknown reconciliation, FGS/boot/timeout, emulator/physical permissions, process death, codec backpressure/recovery, multi-worker session fencing, PubSub reconnect, CPU/RAM/FPS/battery |
 | 2 | PC agent | Идентичность workstation и ORM registration исправлены; API-key bootstrap и fresh registration tenant исправлены (AUD-63, 12 non-owner cases); потеря terminal replies до Redis channel исправлена (AUD-64, 10 protocol cases); client transport recovery/state cleanup исправлены (AUD-65, 9 lifecycle cases); unknown command false-success исправлен (AUD-66, 3 Redis cases) | Durable PC result/ACK, payload/correlation validation, topology replay, provisioning, real ASGI disconnect, reconnect и замена сессии, ошибки ADB/emulator process, идемпотентность |
-| 2 | Dependencies/CI | Последний полный локальный прогон AUD-78: 1413 tests / 69,38%; совместимое Python обновление, pip check и joint pip-audit без известных уязвимостей; на 769aec3 backend/frontend/Android CI успешны с первой попытки; Host→audit/log/metrics path исправлен | Frontend/Android/container advisories, hash lock/SBOM, dependency-aware mypy, actions runtime/version pins; отдельный подготовленный load job; исследование повторяющейся timing variance DAG benchmark на CI (100 ms gate сохранён) |
+| 2 | Dependencies/CI | Последний полный локальный прогон AUD-83: 1466 tests; CI той же runtime revision проходит; совместимое Python обновление, pip check и joint pip-audit без известных уязвимостей; на 769aec3 backend/frontend/Android CI успешны с первой попытки; Host→audit/log/metrics path исправлен | Frontend/Android/container advisories, hash lock/SBOM, dependency-aware mypy, actions runtime/version pins; отдельный подготовленный load job; исследование повторяющейся timing variance DAG benchmark на CI (100 ms gate сохранён) |
 | 2 | Frontend/n8n/observability | 198 Jest tests и tsc проходят на Node 24; guard/cache/session/logout исправлены; frontend CI на 769aec3 прошёл Linux tests/types/build/standalone entry point; browser checks неполны | Supported Node runtime, Jest/tsc/browser, API-key/HMAC/webhook contracts, реальные метрики/alerts и multiprocess |
 | 3 | Уборка и удобство эксплуатации | HTTP schema/catalog воспроизводятся из кода; CI проверяет актуальность; Tasks/Batches и APK guide сверены | Устаревшие Redis producer paths, документация конфигурации, согласованный gitignore для regression tests, runbooks и дашборды |
 
@@ -329,3 +329,12 @@ AUD-84 воспроизвёл и исправил `.env`-only credential shadowi
 Следующие P0: повтор admin bootstrap без нежелательной смены identity/password,
 roles/grants и fresh image SQL bootstrap. Installed APK/VPN/recovery остаются
 дальнейшей живой приёмкой; полноценная rotation/backup не закрыта.
+
+AUD-81–84 CI сохранён отдельно для каждого runtime commit. Последний `b9a3518`:
+**1476 / 69.66%**, 342.65 s; 524 production-directory / 77 deployment,
+4 image probes отдельно. Backend/frontend/Android/preview guard прошли с первой
+попытки; deployment пропущен. [CI excerpt](evidence/ci-b9a3518-tests.txt).
+Следующий приоритет первого development-пилота остаётся сохранение admin identity
+при повторе и fresh bootstrap, затем installed APK/task и VPN. Roles/grants —
+обязательная отдельная часть production rollout. Исторические пункты
+аудита выше не подменяют эти критерии приёмки.

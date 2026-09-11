@@ -5,6 +5,16 @@
 [Главная](../../README.md) · [Доказательства аудита](../audits/2026-09-05/AUDIT-REPORT.md) ·
 [APK](../android-agent.md) · [PC-agent](../pc-agent.md) · [Будущий AI-контур](../architecture/AI-READINESS.md)
 
+**Последняя проверенная runtime revision: `b9a3518` (AUD-84).**
+Linux CI: **1476 passed / 69.66%**, включая 524 production-directory и
+77 deployment cases; отдельно 4 image probes. Backend/frontend/Android проходят,
+preview deployment пропущен. [Точные результаты](../audits/2026-09-05/evidence/ci-b9a3518-tests.txt).
+AUD-81–84 закрывают packaged bootstrap CLI, порядок запуска, dev enrollment identity
+и затенение существующего `.env`. Следующие gates development-пилота: admin credentials
+при повторе, fresh SQL/bootstrap и установленный APK → задание → результат, затем VPN/recovery.
+Разделённые DB roles/grants обязательны для production rollout, не отдельный
+предварительный барьер изолированного development-пилота.
+
 ## Что считаем работающей системой
 
 Оператор запускает подготовленный стек, парк автоматически подключается, задания

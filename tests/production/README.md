@@ -356,3 +356,11 @@ records unexpected generator calls. Four failures / six controls on `a294c29`,
 then **77 deployment cases pass / 70.95 s**. The last local combined suite stays
 1466 / 69.70%; no backend or Android runtime change in this increment. Actual
 persistent-volume restart and credential rotation are separate acceptance gates.
+
+### Verified runtime CI after AUD-81–84
+
+Exact `b9a35186f13ffe28ab54321fca6604400084ae9a`: **1476 passed / 69.66%** on Linux,
+including 524 production-directory and 77 deployment cases. Four immutable-image
+stdlib probes run in a separate mandatory job and are not added to pytest counts.
+All four Android variants pass. [Structured evidence and excerpts](../../docs/audits/2026-09-05/AUDIT-REPORT.md).
+All four runtime heads passed on their first attempts; preview deployment was skipped.

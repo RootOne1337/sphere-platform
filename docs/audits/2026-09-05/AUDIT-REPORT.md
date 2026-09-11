@@ -15,27 +15,40 @@
 подтверждённые дефекты от проектируемых возможностей; историческая severity ниже
 не означает, что сейчас исправления идут в порядке номеров AUD.
 
-Главные подтверждённые риски: повышение tenant-пользователя до платформенного
+Исходный аудит подтвердил повышение tenant-пользователя до платформенного
 администратора, нарушение изоляции устройств и задач, повторное выполнение DAG,
 потеря результата при сбое транспорта и несогласованность PostgreSQL с Redis.
 Исправления ниже включают регрессионные проверки. Успешная сборка отдельно от
 runtime-проверок и не считается доказательством работоспособности системы.
+
+## Последние эксплуатационные исправления
+
+| Дефект первого/повторного запуска | Доказательство до исправления | Исправление |
+| --- | --- | --- |
+| AUD-81: CLI отсутствует в production image | 2 failures / 2 controls в реальном контейнере без сети | Добавлены оба entry point, обязательный image CI probe |
+| AUD-82: приложения запускаются до schema/bootstrap | 21 failure / 7 controls на shell/Compose boundaries | Dependencies → migration/admin/key → applications с readiness |
+| AUD-83: dev enrollment использует другую identity и workers конфликтуют | 11 failures / 3 controls, SQL unique errors и registration 401 | Общий CLI/hook contract, exact org, configured key, row lock |
+| AUD-84: новый `.env.local` затеняет рабочий `.env` | 4 failures / 6 controls на временной установке | Сохранение выбранной существующей конфигурации |
+
+Полные root cause, файлы, воспроизведения и residual risk находятся в разделах
+AUD-81–84 ниже. Это закрытые дефекты отдельных путей, не акт готовности всего продукта.
+[Следующие критерии первого пилота](../../operations/PILOT-ACCEPTANCE.md).
 
 ## Результаты проверок
 
 | Проверка | Результат | Практическое ограничение |
 | --- | --- | --- |
 | Android enterprise debug unit suite | 485 passed, 0 failed | JVM/MockWebServer и OkHttp interceptors; не проверяет ОС, codec, батарею или смерть процесса на телефоне |
-| Объединённая Backend/PC/production/deployment suite (Linux `ea8e606`) | **1424 passed, 0 failed**; coverage **69,38%** | Строгий coverage gate 65% пройден. Load suite исключена; 44 deployment cases включают Compose renderer/subprocess probes без запуска сервисов |
+| Объединённая Backend/PC/production/deployment suite (Linux `b9a3518`) | **1476 passed, 0 failed**; coverage **69,66%** | Строгий coverage gate 65% пройден. Load suite исключена; 77 deployment cases используют Compose renderer/subprocess probes без запуска сервисов |
 | Python dependency scan | **0 known vulnerabilities** в совместном backend/PC resolution | Pip-audit snapshot, не проверка frontend/Gradle/container/application security; [версии и ограничения](DEPENDENCY-REVIEW.md) |
-| Проверки PostgreSQL/Redis | **505 passed**, включены в общий прогон, 0 xfail | Реальные row locks/commits/cache; transport effects подменены, полного APK↔API нет |
+| Production-directory suite | **524 passed**, включены в общий прогон, 0 xfail | Реальные PostgreSQL/Redis row locks/commits/cache плюс negative environment/transport controls; не каждый case открывает БД. Полного APK↔API нет |
 | Миграции | Применены до **20260910_device_refresh_retry** включительно | Только изолированная БД; конфликтные данные/downgrade проверены в throwaway schema; production не мигрировался |
-| Backend image | Собирается; исходная запись OpenAPI воспроизведённо падает с PermissionError | Исправлен lifespan; полный deployment runtime ещё не подтверждён |
+| Backend image | **4 production-image probes passed** отдельно от pytest: оба bootstrap CLI, migration head, non-root/read-only permissions | Network none, без source mount/SQL; полный startup и installed APK не проверены |
 | Frontend | **198 Jest tests passed**, tsc passed; Next production build exit 0 на Node 24.19.0 | React/JSDOM + Axios adapters; настоящий browser runtime не проверен. Windows standalone tracing выдал ENOENT warning, artifact packaging ещё не подтверждён |
 | APK ↔ реальный локальный backend | Не завершено | Автоматическая проверка разрешений отклонила запуск локального API: `blocked by policy`; обход не выполнялся |
 | 10–64 эмулятора на станции, сотни/тысячи APK, физические телефоны | Не измерено | Нет подтверждённых CPU/RAM/FPS/энергопотребления и совместимости со всеми Android |
 
-Последний полный Linux вывод: [CI `ea8e606`](evidence/ci-ea8e606-tests.txt).
+Последний полный Linux вывод: [CI `b9a3518`](evidence/ci-b9a3518-tests.txt).
 Последний полный Windows вывод: [1413 cases](evidence/pilot-combined.txt).
 Предыдущий отдельный DAG benchmark однажды занял 127,1 ms при пороге 100 ms;
 изолированный повтор и последующие общие прогоны прошли. На первой CI попытке
@@ -44,7 +57,7 @@ runtime-проверок и не считается доказательство
 [Локальные 24 DAG cases прошли](evidence/dag-timing-d828a62-local.txt). Порог 100 ms
 не ослаблялся, тест не исключался; причина timing variance на runner не установлена.
 Файл production-regressions-after.txt сохраняет более ранний standalone snapshot
-с 41 тестом; актуальные 505 входят в общий прогон.
+с 41 тестом; актуальные 524 production-directory cases входят в общий прогон.
 
 Команды запуска и предохранители изоляции: [tests/production/README.md](../../../tests/production/README.md).
 Исходные `14 passed` в [reproductions.txt](evidence/reproductions.txt) означают
@@ -2120,3 +2133,30 @@ no-new-privileges; один readonly probe mount и временный `/tmp`. �
   отдельного плана. Выбор `.env` не доказывает валидность его содержимого. Обновление
   PostgreSQL password в dotenv само по себе не меняет пароль существующей БД.
   Никакие реальные secret files/volumes не изменялись; schema не менялась.
+
+### AUD-81–84: проверка каждого runtime revision в CI
+
+Все четыре PR workflows каждой ревизии завершились успешно с первой попытки.
+
+| Исправление / commit | Linux pytest / coverage / время | Workflow evidence |
+| --- | --- | --- |
+| AUD-81 `bcec5cd` | 1424 / 69.38% / 265.65 s | [backend](https://github.com/RootOne1337/sphere-platform/actions/runs/34587399195), [frontend](https://github.com/RootOne1337/sphere-platform/actions/runs/34587399052), [android](https://github.com/RootOne1337/sphere-platform/actions/runs/34587399221), [preview](https://github.com/RootOne1337/sphere-platform/actions/runs/34587399483) |
+| AUD-82 `8c2b647` | 1445 / 69.38% / 318.49 s | [backend](https://github.com/RootOne1337/sphere-platform/actions/runs/34597814621), [frontend](https://github.com/RootOne1337/sphere-platform/actions/runs/34597814673), [android](https://github.com/RootOne1337/sphere-platform/actions/runs/34597814720), [preview](https://github.com/RootOne1337/sphere-platform/actions/runs/34597814631) |
+| AUD-83 `a294c29` | 1466 / 69.69% / 314.89 s | [backend](https://github.com/RootOne1337/sphere-platform/actions/runs/34599102371), [frontend](https://github.com/RootOne1337/sphere-platform/actions/runs/34599102395), [android](https://github.com/RootOne1337/sphere-platform/actions/runs/34599102359), [preview](https://github.com/RootOne1337/sphere-platform/actions/runs/34599102367) |
+| AUD-84 `b9a3518` | 1476 / 69.66% / 342.65 s | [backend](https://github.com/RootOne1337/sphere-platform/actions/runs/34600117652), [frontend](https://github.com/RootOne1337/sphere-platform/actions/runs/34600117632), [android](https://github.com/RootOne1337/sphere-platform/actions/runs/34600117642), [preview](https://github.com/RootOne1337/sphere-platform/actions/runs/34600117644) |
+
+Последний [pytest excerpt](evidence/ci-b9a3518-tests.txt): **1476 passed**,
+4 warnings; production-directory 524 и deployment 77 входят в итог.
+Все четыре Android variants проходят [в CI](evidence/ci-b9a3518-android-tests.txt).
+[Production image probe](evidence/ci-b9a3518-image-bootstrap-tests.txt) даёт
+отдельные **4 passing cases**; их нет в pytest total. Fresh Alembic migrations,
+API export, backend/frontend checks проходят; preview deployment пропущен.
+
+Локально AUD-83: 1466 passing cases с реальными изолированными PostgreSQL/Redis,
+coverage 69.70%; после AUD-84 отдельно все 77 deployment cases проходят.
+JVM остаётся 485 / 35 suites (Android source не менялся).
+Полный образ не использовался для SQL bootstrap или API listener: image probe
+проверяет packaged CLI validation, migration metadata и права файлов. CLI и hook
+SQL проверены через локальные реальные Sessions/ASGI, launcher через process double.
+Эти виды evidence не означают завершённый daemon/installed-APK/VPN/fleet acceptance.
+Схема не менялась. Следующий commit сохраняет только evidence и документацию.

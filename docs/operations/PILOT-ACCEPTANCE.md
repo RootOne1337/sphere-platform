@@ -17,6 +17,15 @@
 Для первого пилота не требуется закрыть весь исторический security backlog или
 сразу доказать ёмкость в тысячу устройств. Требуется пройти конкретные шаги ниже.
 
+## Режим первого пилота
+
+Первый стенд — изолированный `ENVIRONMENT=development` с prepared credentials и
+миграциями. Текущий [DB-role guard](../../backend/core/startup_checks.py) в этом
+режиме предупреждает о privileged role, но не останавливает API; такое поведение
+уже покрыто PostgreSQL regression. Отдельный production RLS rollout не является
+новым обязательным этапом перед этим dev smoke. В production отдельные runtime/
+migration roles и grants остаются обязательными, guard не отключается.
+
 ## Оценка объёма от текущего состояния
 
 | Рубеж | Плановый ориентир | Что должно быть предъявлено |
@@ -40,9 +49,9 @@ Android и доступный управляемый VPN-router. До перво
 
 | Шаг | Текущий результат | Что ещё сделать / критерий завершения |
 | --- | --- | --- |
-| 1. Выбрать запуск | AUD-79: Bash argv; AUD-80: Windows `.env.local` → `.env` и explicit file | Проверить Bash dotenv, реальные адреса/обязательные параметры, selected project и оставшиеся legacy ветки |
-| 2. Подготовить БД | Миграции и отдельные RLS fixes проверены изолированно | Пройти fresh-volume bootstrap, schema head, роли/grants, правильный порядок migration→API; проверить повторный запуск |
-| 3. Создать пользователя и enrollment key | AUD-78 исправляет CLI/imports, передачу credentials и организацию ключа; реальные SQL/HTTP проверки | Подтвердить те же действия внутри выбранного полного Compose; текущий fix не проверяет остальные этапы full-deploy |
+| 1. Выбрать запуск | AUD-79/80: argv/env selection; AUD-84: `.env`-only config сохраняется | Проверить реальные адреса/параметры и Bash dotenv; запускать один выбранный project |
+| 2. Подготовить БД | AUD-82: migration/bootstrap до приложений; fresh migrations проходят в CI | Development: fresh-volume bootstrap/schema head и повтор. Production дополнительно требует отдельного provision roles/grants |
+| 3. Создать пользователя и enrollment key | AUD-78/81/83: packaged CLI, выбранная org/config, registration/visibility и worker concurrency проходят | Проверить admin credentials при повторе и те же действия в полном Compose; image probe пока без SQL |
 | 4. Открыть веб и подключить APK | Android registration/refresh/ACK/fallback покрыты JVM-тестами | Проверить настоящий browser login, provisioning APK, permissions, `auth_ok`, видимость устройства и версию APK в UI |
 | 5. Выполнить задание | Backend dispatch и Android journal/DAG имеют regression tests | Веб → исполнение на эмуляторе → сохранённый результат → UI; отказ/отмена/повторная доставка с тем же task ID |
 | 6. Восстановить связь | Сохранены endpoints, intent refresh, checked registration commit | Потеря initial registration response, клонированная identity, backend/сеть/process restart; никакой ручной переустановки |
@@ -190,5 +199,15 @@ shell на процессе Docker double, включая отказы (65 deplo
 configuration; 4 baseline failures / 6 controls, все 77 deployment cases проходят.
 Это не подтверждает весь secret lifecycle: admin password updates, explicit
 rotation, восстановление backup и настоящий persistent-volume restart ещё нужны.
-Следующий gate первого пилота — roles/grants и fresh SQL/image bootstrap, затем
-установленный APK/task/result. [Контракт повторного запуска](STARTUP.md).
+Следующий gate development-пилота — admin credentials при повторе и fresh SQL
+bootstrap, затем установленный APK/task/result. Roles/grants остаются отдельной
+обязательной частью production rollout. [Контракт повторного запуска](STARTUP.md).
+
+## Проверенная контрольная точка AUD-81–84
+
+`b9a3518`: **1476 Linux cases / 69.66%** и отдельные 4 production-image
+probes, все PR workflows успешны с первой попытки. [Evidence](../audits/2026-09-05/evidence/ci-b9a3518-tests.txt).
+Локальный полный прогон AUD-83 дал 1466 passing cases; после AUD-84 отдельно
+все 77 deployment cases проходят. Это закрывает описанные
+bootstrap defects; первый installed-APK/task/result smoke всё ещё требуется.
+Никакого изменения общей оценки сроков только по росту числа тестов/коммитов нет.
