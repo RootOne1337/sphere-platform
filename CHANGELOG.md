@@ -1070,3 +1070,13 @@ Earlier branch integration is recorded in Git history. The former merge log and 
   instead of fixed container names/host ports and a misleading success banner.
 - 21 new regression cases; 21 baseline failures and 7 controls, then 65 deployment
   cases pass. Full daemon/SQL rollout and incompatible rolling migrations remain open.
+
+### Audit continuation — startup enrollment identity (AUD-83)
+
+- Share configured enrollment validation/SQL serialization between the CLI and dev
+  startup. Select the operator organization explicitly; forward its slug in Compose.
+- Prevent duplicate-key worker startup failures and accidental legacy-key creation.
+  Report configuration/key conflicts without silently reactivating credentials or
+  taking the development API down; preserve strict explicit CLI failures.
+- 19 new startup regression cases and two Compose cases; 11 baseline failures /
+  3 controls, followed by the complete 1466-case local suite.

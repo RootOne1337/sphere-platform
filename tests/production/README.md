@@ -334,3 +334,16 @@ Seven new deployment cases: actual synthetic Compose rendering and full start-de
 with a Docker process double. Local deployment: 44 passed. Exact `ea8e606` Linux
 CI: **1424 passed / 69.38%**, including unchanged 505 PostgreSQL/Redis cases.
 [CI excerpt](../../docs/audits/2026-09-05/evidence/ci-ea8e606-tests.txt). No service startup or installed-device claim.
+
+### AUD-83: startup enrollment identity
+
+`test_startup_enrollment.py` adds 19 cases: real isolated PostgreSQL and ASGI
+registration/visibility, CLI/restart and four concurrent hook calls, invalid keys,
+configuration and development aliases. Three environment controls do not open a
+database; the outage-propagation case injects ConnectionError at the session factory.
+Two additional deployment cases render Compose to verify the selected org env.
+Baseline: 11 failures / 3 controls; Windows full suite: **1466 / 69.70%**,
+524 production-directory / 67 deployment cases. [Evidence](../../docs/audits/2026-09-05/evidence/startup-enrollment-full.txt).
+The SQL fixture patches only session selection, settings, isolated rate-limit keys
+and old hard-coded test material; it does not fake key queries, locks or commits.
+This is not a full process startup, installed APK or daemon/network recovery drill.

@@ -313,3 +313,12 @@ one-off migration/admin/key → applications; production probes проверяю
 21 baseline failure / 7 controls, все 65 deployment cases проходят. Нет SQL/API
 daemon запуска: next — роли/grants, secret lifecycle, dev-key hook и настоящее
 fresh image bootstrap. [Evidence](evidence/startup-sequence-after-summary.json).
+
+AUD-83 закрывает legacy dev enrollment split: configured key/exact org, общий CLI
+и hook, row-lock convergence, явная диагностика конфликтов. 11 baseline failures /
+3 controls; локальный общий прогон **1466 / 69.70%**, 524 production-directory
+и 67 deployment cases. [Evidence](evidence/startup-enrollment-full-summary.json).
+Следующий P0 — сохранение identity/секретов повторного запуска, подготовка DB roles
+и fresh SQL/image bootstrap; далее installed APK/task и VPN. В частности, generation
+stage проверяет только `.env.local`: `.env`-only installation требует отдельного
+воспроизведения до fix, пока это наблюдение из кода.

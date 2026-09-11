@@ -65,6 +65,7 @@ services:
       - DEV_SKIP_AUTH=false
       - LOG_LEVEL=INFO
       - ENVIRONMENT=production
+      - SPHERE_BOOTSTRAP_ORG_SLUG=${SPHERE_BOOTSTRAP_ORG_SLUG:-default}
       - SERVER_PUBLIC_URL=https://${SERVER_HOSTNAME}
       - AGENT_CONFIG_ENV=production
     depends_on:

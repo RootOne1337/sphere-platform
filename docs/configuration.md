@@ -247,3 +247,17 @@ s = Settings()
 print('Config OK:', s.ENVIRONMENT)
 "
 ```
+
+## Enrollment bootstrap identity
+
+| Variable | Default | Contract |
+| --- | --- | --- |
+| `SPHERE_BOOTSTRAP_ORG_SLUG` | `default` | Exact organization shared by administrator CLI, enrollment CLI and the development startup hook. Persist it in the selected Compose env file; export it explicitly for direct host CLI use. |
+
+The enrollment key comes from the effective agent-config environment, not a
+second hard-coded startup key. Development hook and explicit CLI share validation
+and SQL serialization. A disabled, expired, conflicting or insufficient key is
+never silently repaired. The hook warns and keeps the API available for operator
+repair; the CLI fails. Production has no automatic enrollment hook provisioning.
+See [startup behavior and diagnostics](operations/STARTUP.md) and
+[pilot acceptance](operations/PILOT-ACCEPTANCE.md).

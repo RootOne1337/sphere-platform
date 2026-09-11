@@ -270,3 +270,12 @@ migration/admin/key в one-off backend containers, затем запускают
 fallback и fixed-name/host-port pseudo health удалены. Все 65 deployment cases
 проходят с процессом вместо Docker; полный daemon/SQL/APK rollout не принят.
 Разделение DB roles, secrets и dev-key hook остаются ближайшими ограничениями.
+
+### AUD-83: startup identity и конкурентность
+
+Configured enrollment key, bootstrap org и API dev hook теперь согласованы.
+Доказаны и исправлены registration 401, запись в другую org и duplicate-key crash
+параллельных workers. Локально **1466 / 69.70%**, 524 production-directory и
+67 deployment cases; [evidence](../audits/2026-09-05/evidence/startup-enrollment-full.txt).
+Known config/key conflict виден в структурированных логах без отключения API.
+Fresh-volume bootstrap, roles, secrets и установленный APK остаются следующими gates.

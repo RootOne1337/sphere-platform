@@ -37,6 +37,10 @@ def dev_services(request, tmp_path_factory):
     return json.loads(result.stdout)["services"]
 
 
+def test_backend_receives_the_selected_bootstrap_organization(dev_services):
+    assert dev_services["backend"]["environment"].get("SPHERE_BOOTSTRAP_ORG_SLUG") == "audit-fixture"
+
+
 @pytest.mark.parametrize("scenario,code", [("ready", 0), ("unready", 1), ("error", 1)])
 def test_backend_healthcheck_requires_readiness_response(dev_services, scenario, code):
     check = dev_services["backend"].get("healthcheck", {})

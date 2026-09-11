@@ -300,7 +300,7 @@ migration/bootstrap role; the snippets do not replace that rollout.
    with the bootstrap connection, before starting ordinary application work.
 2. Run `python scripts/create_admin.py` in the prepared backend environment.
    Interactive mode prompts for email/password. For unattended mode supply
-   `ADMIN_EMAIL`/`ADMIN_PASSWORD`; with Compose exec forward them explicitly using
+   `ADMIN_EMAIL`/`ADMIN_PASSWORD`; with a one-off Compose run forward them using
    `-e ADMIN_EMAIL -e ADMIN_PASSWORD`, not only host `SPHERE_ADMIN_*` variables.
 3. Run `python -m scripts.seed_enrollment_key`. Both scripts use
    `SPHERE_BOOTSTRAP_ORG_SLUG` (default `default`). The organization must already
@@ -682,3 +682,11 @@ The final output reports selected-project Compose status, not universal readines
 These limits exclude image build/pull and do not validate ingress/TLS, device/tasks
 or services without probes. Existing workers are not stopped: incompatible upgrades
 still require a coordinated rollout and explicit runtime/migration roles/grants.
+
+### Enrollment identity during development startup
+
+AUD-83 makes the dev hook use the same configured key, exact bootstrap org and SQL
+serialization as the explicit CLI. Both Compose overlays forward
+`SPHERE_BOOTSTRAP_ORG_SLUG`; persist it in the installation env file. Known key or
+configuration conflicts are warnings in the hook and errors in the explicit CLI.
+Check actual device registration after API readiness. [Diagnostic events and limits](operations/STARTUP.md).

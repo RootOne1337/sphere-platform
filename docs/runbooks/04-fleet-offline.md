@@ -130,3 +130,18 @@ HTTP outcome для расследования. [Границы и воспро�
 token/UUID в памяти не доказывает пригодность refresh; автоматический worker shortcut
 пока не решает этот случай. Не очищайте app data и не переустанавливайте APK ради
 маскировки неизвестного исхода. [Контракт и открытые сценарии](../architecture/ANDROID-BACKGROUND-ENROLLMENT.md).
+
+## Если новые устройства получают 401 сразу после запуска
+
+Найдите `enrollment_bootstrap_unavailable` и поле `reason` в backend logs.
+`BootstrapOrganizationMissing` означает, что выбранная bootstrap org не создана;
+`EnrollmentConfigurationError` — неверный/missing config; `EnrollmentKeyConflict`
+— ключ отозван, истёк, принадлежит другой org или не имеет `device:register`.
+Проверьте выбранный env/config и `SPHERE_BOOTSTRAP_ORG_SLUG`, затем выполните
+явный enrollment CLI по [startup contract](../operations/STARTUP.md).
+Не публикуйте raw key, его hash или config в incident report.
+
+`enrollment_bootstrap_ready` содержит key ID/org ID; сравните org с оператором.
+Успешный HTTP readiness при warning не означает готовую регистрацию. Старые
+credentials не реактивируются и devices не переносятся автоматически. Эти события
+есть у development hook; production provisioning выполняется явно через CLI.

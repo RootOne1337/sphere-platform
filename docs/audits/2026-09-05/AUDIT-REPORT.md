@@ -2047,3 +2047,46 @@ no-new-privileges; один readonly probe mount и временный `/tmp`. �
 
 Схема БД и production backend/Android logic не менялись. Новый image CI AUD-81
 остаётся обязательным; его четыре cases считаются отдельно от обычного pytest.
+
+## AUD-83 — High: dev startup создаёт другую enrollment identity и падает при гонке workers
+
+- **Root cause / affected files:** `backend/tasks/ensure_enrollment_key.py` имеет
+  отдельную реализацию: fixed key, первая организация без явного slug, read→insert
+  без блокировки; любой найденный key считается готовым. `docker-compose.full.yml`
+  и production overlay не передают выбранный bootstrap slug обычному backend.
+- **Evidence/reproduction:** на unchanged `8c2b647` [11 failures / 3 controls](evidence/startup-enrollment-confirmed-before-summary.json),
+  [вывод](evidence/startup-enrollment-confirmed-before.txt). Реальный ASGI registration
+  с configured key получает **401**; отдельный SQL case показывает другую org_id.
+  Четыре одновременных hook вызова с независимыми SQL Sessions получают PostgreSQL
+  unique violations — и на fresh key, и после explicit CLI seed. Revoked/expired/
+  permission/org conflict не диагностируются. Два Compose render cases подтверждают
+  потерю slug. Три non-development controls проходят. Это 11 assertions одного
+  несогласованного bootstrap path, не 11 независимых уязвимостей.
+- **Fix:** общий `backend/services/enrollment_bootstrap.py` используется CLI и hook.
+  Выбор config/key и exact organization совпадает; row lock организации сериализует
+  key decision, Session получает tenant context. CLI остаётся строгим. Dev hook
+  сообщает `enrollment_bootstrap_unavailable` с причиной для известной ошибки
+  config/org/key и оставляет API доступным для исправления; не создаёт fallback key
+  и не реактивирует/переносит существующий. Неожиданные DB errors распространяются.
+  Успех пишет только key ID/org ID. Оба overlay передают `SPHERE_BOOTSTRAP_ORG_SLUG`.
+- **Regression:** 19 новых production-directory cases и 2 deployment cases.
+  SQL/ASGI проверяют registration и чтение устройства правильной identity, отказ
+  другой org, CLI→restart, 4-worker convergence, revoked/expired/conflicting keys,
+  dev aliases и invalid config. Проверка DB error propagation использует явно
+  synthetic ConnectionError, не остановку сервера. Production/staging/test hook
+  ничего не provision. Первые targeted 43 cases прошли; затем расширен набор.
+  [Общий Windows прогон](evidence/startup-enrollment-full-summary.json): **1466 passed**,
+  **69.70%**, 356.91 s, 4 warnings; [вывод](evidence/startup-enrollment-full.txt).
+  Включены 524 cases production directory (включая controls) и 67 deployment cases.
+  Ruff 0.15.2 для всего backend/tests проходит. Image probe — отдельные 4 cases в CI.
+- **Residual risk:** hook проверен напрямую, без полного Gunicorn lifespan/OS/APK.
+  Bootstrap требует заранее созданной организации и подходящих SQL credentials;
+  это не подготовка migration/runtime roles. Старые keys/devices не перемещаются
+  и не отзываются автоматически; при конфликте нужен явный выбор новой identity.
+  DB outage/recovery целиком, production rollout, secret rotation, signing/update,
+  VPN и fleet capacity остаются отдельной приёмкой. Schema head не менялся.
+
+Первый короткий SQL baseline дал 9 failures / 3 controls; второй полный baseline
+добавил два Compose cases и сохранил UTF-8 вывод. Отдельная неудачная попытка Compose
+сначала не дошла до collection из-за отсутствующего synthetic JWT в окружении;
+она не включена в доказательство дефекта. CI сохраняется отдельно по runtime SHA.

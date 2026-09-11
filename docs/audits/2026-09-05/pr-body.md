@@ -32,6 +32,16 @@ researches NitroGen and a future external inference worker; no AI is implemented
 
 ### Latest runtime findings
 
+- **AUD-83:** the development startup hook ignored configured enrollment identity,
+  bound its legacy key to the first org and raced on worker startup. Real SQL/ASGI
+  reproduced registration 401, wrong org and duplicate-key errors. CLI/hook now
+  share exact-org/configured-key validation and row-lock serialization; Compose
+  forwards the org slug. Known conflicts produce diagnostic warnings in the dev
+  hook, remain strict CLI failures and never reactivate/rebind credentials.
+  11 baseline failures / 3 controls; local **1466 passed / 69.70%**, including
+  524 production-directory and 67 deployment cases. Full lifecycle/installed APK
+  and runtime-role provisioning remain open.
+
 - **AUD-82:** full-deploy started API before schema/admin/enrollment existed and
   depended on backend exec/host migration fallback. Both launchers now wait for
   databases, run one-off migration/admin/key, then wait for applications. Production

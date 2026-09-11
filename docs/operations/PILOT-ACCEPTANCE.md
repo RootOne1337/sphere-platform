@@ -163,9 +163,10 @@ Compose argv и Windows env fixes, но не весь запуск.
    теперь включает admin/enrollment scripts. Настоящий image probe: 2 failures до
    исправления, 4 passing cases после; [evidence](../audits/2026-09-05/evidence/image-bootstrap-summary.json).
    Реальное SQL bootstrap внутри image остаётся отдельным критерием.
-3. [`ensure_enrollment_key`](../../backend/tasks/ensure_enrollment_key.py) при dev startup
-   выбирает первую org и фиксированный dev key, независимо от выбранной bootstrap org.
-   Нужен отдельный SQL/lifespan сценарий для повторного запуска и нескольких org.
+3. **AUD-83: identity dev-hook согласована с CLI.** [Hook](../../backend/tasks/ensure_enrollment_key.py)
+   использует configured key и exact bootstrap org; параллельные workers сериализованы.
+   SQL/ASGI проверяют registration/tenant visibility и повторный bootstrap; Compose
+   передаёт выбранный slug. Полный process lifespan/installed APK ещё не принят.
 
 После закрытия blockers этого рубежа — настоящий login → установленный APK →
 device/task/result и recovery/VPN. Оценка сроков всё ещё условна; число коммитов
@@ -177,6 +178,7 @@ AUD-81/82 закрывают отсутствие packaged CLI и порядок
 Доказательства: настоящий image probe без сети (4 cases) и полный main flow обоих
 shell на процессе Docker double, включая отказы (65 deployment cases). Следующие
 условия первого живого запуска: разделённые DB roles/grants, подготовленные config/key,
-legacy dev-key hook, сохранение секретов при повторе и fresh-volume bootstrap.
+сохранение секретов при повторе и fresh-volume bootstrap. Legacy dev-key hook
+согласован с CLI в AUD-83; старые credentials не мигрируются автоматически.
 Уже работающие workers скрипт не останавливает; несовместимая migration требует
 отдельного cutover. Полная цепочка веб/APK/task и VPN пока не принята.

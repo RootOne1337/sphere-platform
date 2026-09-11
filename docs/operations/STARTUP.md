@@ -138,3 +138,20 @@ migration/runtime-role rollout. Launcher не создаёт разделённ�
 установки без отдельного плана. Secret lifecycle и legacy branches ещё проверяются.
 Регрессии: полный main обоих shell с процессом вместо Docker, реальные Compose merges
 и выражения probes с HTTP double; локально 65 deployment cases проходят.
+
+## Единая enrollment identity при старте (AUD-83)
+
+CLI и development hook используют один configured key и
+`SPHERE_BOOTSTRAP_ORG_SLUG` (default: `default`). Оба Compose overlay передают этот
+slug backend; сохраните его в выбранном env-файле, чтобы autostart использовал ту
+же организацию. Для прямого host CLI задайте переменную в окружении процесса.
+Организация создаётся administrator bootstrap заранее; первая попавшаяся org
+больше не используется. Параллельные workers используют одну SQL row lock.
+
+Hook действует только в `development`/`dev`/`local`. При известной ошибке config,
+отсутствующей org или конфликтующем key он пишет `enrollment_bootstrap_unavailable`
+с `reason` и оставляет API доступным; explicit seed CLI завершается ошибкой.
+`enrollment_bootstrap_ready` содержит key ID/org ID, без key material. Поэтому
+readiness API не заменяет регистрацию тестового устройства. Автоматического
+переноса старых devices/keys, выдачи новых прав и реактивации revoked key нет.
+DB failure не маскируется как предупреждение о настройке.
