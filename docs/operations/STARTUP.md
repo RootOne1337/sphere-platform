@@ -114,3 +114,27 @@ Production image теперь содержит `scripts/create_admin.py` и
 команд. Отдельный backend CI job строит image и проверяет entry points без сети,
 с read-only rootfs от обычного пользователя. Это проверка packaged CLI, не успешной
 SQL инициализации или полного deployment. [План пилота](PILOT-ACCEPTANCE.md).
+
+## Full-deploy: порядок первого запуска (AUD-82)
+
+Оба `full-deploy.ps1/.sh` выполняют:
+
+1. Проверку инструментов, подготовку конфигурации и build.
+2. `up -d --wait --wait-timeout 180 postgres redis` выбранного project.
+3. Migration, admin и enrollment key как отдельные `run --rm --no-deps -T backend`
+   команды с теми же Compose files/env. API не требуется для этих команд.
+4. Полный `up -d --wait --wait-timeout 300`, затем `ps --all` того же project.
+
+Ошибка любой стадии останавливает дальнейшие. Host Alembic fallback удалён.
+Production overlay также содержит backend `/api/v1/health/readyz` и frontend `/login`
+healthchecks внутри контейнеров; они не зависят от опубликованных host ports.
+Таймауты 180/300 s относятся к Compose readiness, не ко всему build/pull/startup.
+Результат подтверждает running/healthy по имеющимся probes; дополнительные сервисы
+без probes, ingress/TLS, login/device/task и VPN проверяются отдельно.
+
+Этот порядок не останавливает уже запущенные workers и не заменяет coordinated
+migration/runtime-role rollout. Launcher не создаёт разделённые роли/grants.
+Повтор admin bootstrap может обновить пароль; не перегенерируйте secrets существующей
+установки без отдельного плана. Secret lifecycle и legacy branches ещё проверяются.
+Регрессии: полный main обоих shell с процессом вместо Docker, реальные Compose merges
+и выражения probes с HTTP double; локально 65 deployment cases проходят.

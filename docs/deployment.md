@@ -1,6 +1,6 @@
 # Deployment Guide
 
-> **Статус на 10 сентября 2026:** аудит продолжается; этот справочник не является
+> **Статус на 11 сентября 2026:** аудит продолжается; этот справочник не является
 > подтверждением production readiness. RLS runtime-role rollout заблокирован до
 > проверки остальных auth callers, фоновых задач и provisioning ролей: [условия и доказательства](security/postgresql-rls.md).
 > Текущий общий PostgreSQL owner/superuser не пройдёт production startup guard.
@@ -670,3 +670,15 @@ job builds that Dockerfile and executes four CLI/migration/user probes without
 network, source mounts or a writable root filesystem. The probe validates packaged
 entry points; SQL initialization, migration privileges and rollout order still
 require their own acceptance. Unrelated scripts are not included.
+
+### Full-deploy phase contract (AUD-82)
+
+Both full-deploy launchers now build, wait for PostgreSQL/Redis (180 s), execute
+migration/admin/enrollment with `compose run --rm --no-deps -T backend`, then start
+the full stack with `up --wait --wait-timeout 300`. A phase failure stops later work;
+host Alembic fallback is removed. The production overlay includes internal backend
+readyz/frontend login probes, so readiness does not depend on host port publication.
+The final output reports selected-project Compose status, not universal readiness.
+These limits exclude image build/pull and do not validate ingress/TLS, device/tasks
+or services without probes. Existing workers are not stopped: incompatible upgrades
+still require a coordinated rollout and explicit runtime/migration roles/grants.

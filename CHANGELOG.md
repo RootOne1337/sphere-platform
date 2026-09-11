@@ -1061,3 +1061,12 @@ Earlier branch integration is recorded in Git history. The former merge log and 
 - Add a mandatory image CI job with four independent stdlib runtime probes:
   two CLI validation paths, packaged Alembic head and non-root/read-only behavior.
   Baseline missing-file/module failures and corrected test-parser evidence retained.
+
+### Audit continuation — full-deploy phase ordering (AUD-82)
+
+- Wait for PostgreSQL/Redis before one-off migrations/admin/enrollment; start the
+  application stack only after all succeed. Remove host migration fallback.
+- Add production backend/frontend readiness probes and use Compose project health
+  instead of fixed container names/host ports and a misleading success banner.
+- 21 new regression cases; 21 baseline failures and 7 controls, then 65 deployment
+  cases pass. Full daemon/SQL rollout and incompatible rolling migrations remain open.

@@ -307,3 +307,9 @@ AUD-81 закрывает отсутствие admin/enrollment CLI в immutable
 container воспроизводит 2 failures, после минимального COPY 4 cases проходят.
 CI теперь имеет обязательный image-bootstrap job. Дальше — migration/API ordering
 и dev enrollment lifecycle. [Image evidence](evidence/image-bootstrap-summary.json).
+
+AUD-82 закрывает порядок full-deploy и его readiness contract: dependencies →
+one-off migration/admin/key → applications; production probes проверяют API/login.
+21 baseline failure / 7 controls, все 65 deployment cases проходят. Нет SQL/API
+daemon запуска: next — роли/grants, secret lifecycle, dev-key hook и настоящее
+fresh image bootstrap. [Evidence](evidence/startup-sequence-after-summary.json).

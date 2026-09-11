@@ -73,7 +73,7 @@ email обновляет пароль и роль; используйте это
 организации команда отказывает, не перепривязывает пользователя.
 
 Bootstrap-функции Windows/Bash передают email/password через environment в
-`docker compose exec -e ADMIN_EMAIL -e ADMIN_PASSWORD`, без inline Python с паролем.
+`docker compose run --rm --no-deps -T -e ADMIN_EMAIL -e ADMIN_PASSWORD`, без inline Python с паролем.
 При отказе пользователя или ключа функция не показывает якобы рабочие credentials.
 PowerShell восстанавливает прежние process env значения. Остальные этапы legacy
 `full-deploy.*` — secrets/env selection, migration ordering, readiness, production
@@ -154,10 +154,11 @@ Compose argv и Windows env fixes, но не весь запуск.
 
 Следующие участки требуют отдельных проверок; состояние каждого указано ниже:
 
-1. [`full-deploy.ps1`](../../scripts/full-deploy.ps1) / [Bash](../../scripts/full-deploy.sh)
-   запускают API до migration stage. PowerShell при отказе container migration
-   пробует host CLI, не доказывая тот же DB target; health использует фиксированные
-   имена контейнеров. Нужен один выбранный project и проверяемый migration→API порядок.
+1. **AUD-82: порядок launcher исправлен.** [`PS`](../../scripts/full-deploy.ps1) /
+   [Bash](../../scripts/full-deploy.sh): PostgreSQL/Redis → one-off migration/admin/key
+   → приложения с Compose wait. Production probes проверяют API/login; host fallback
+   удалён. 65 deployment cases проходят; настоящий fresh-volume SQL/daemon rollout,
+   runtime roles и уже работающие workers ещё требуют проверки.
 2. **AUD-81: отсутствие CLI закрыто.** [`backend/Dockerfile`](../../backend/Dockerfile)
    теперь включает admin/enrollment scripts. Настоящий image probe: 2 failures до
    исправления, 4 passing cases после; [evidence](../audits/2026-09-05/evidence/image-bootstrap-summary.json).
@@ -169,3 +170,13 @@ Compose argv и Windows env fixes, но не весь запуск.
 После закрытия blockers этого рубежа — настоящий login → установленный APK →
 device/task/result и recovery/VPN. Оценка сроков всё ещё условна; число коммитов
 не снимает эти критерии приёмки.
+
+## Приёмка после изменения порядка запуска
+
+AUD-81/82 закрывают отсутствие packaged CLI и порядок запуска до schema/bootstrap.
+Доказательства: настоящий image probe без сети (4 cases) и полный main flow обоих
+shell на процессе Docker double, включая отказы (65 deployment cases). Следующие
+условия первого живого запуска: разделённые DB roles/grants, подготовленные config/key,
+legacy dev-key hook, сохранение секретов при повторе и fresh-volume bootstrap.
+Уже работающие workers скрипт не останавливает; несовместимая migration требует
+отдельного cutover. Полная цепочка веб/APK/task и VPN пока не принята.

@@ -1,0 +1,139 @@
+{
+  "baseline_sha": "bcec5cdcc653abe1e76eeeba3ba014d84a6a78e5",
+  "state": "startup-sequence-before",
+  "totals": {
+    "tests": 28,
+    "failures": 21,
+    "errors": 0,
+    "skipped": 0
+  },
+  "failures": [
+    {
+      "name": "test_fresh_full_deploy_orders_dependency_migration_bootstrap_and_application[powershell]",
+      "failure": {
+        "message": "AssertionError: \n    \u2554\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2557\n    \u2551                                                           \u2551\n    \u2551         \u25cf SPHERE PLATFORM \u2014 Full Deployment \u25cf             \u2551\n    \u2551                                                           \u2551\n    \u2551   Enterprise Android Device Management & Automation       \u2551\n    \u2551                                                           \u2551\n    \u255a\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u255d\n  \n    \u0412\u0435\u0440\u0441\u0438\u044f:   isolated-test\n    \u0420\u0435\u0436\u0438\u043c:    DEVELOPMENT\n    \u0414\u0430\u0442\u0430:     2026-09-11 15:07:53\n  \n  \n  \u2550\u2550\u2550 \u0428\u0430\u0433 1/8 \u2014 \u041f\u0440\u043e\u0432\u0435\u0440\u043a\u0430 \u0437\u0430\u0432\u0438\u0441\u0438\u043c\u043e\u0441\u0442\u0435\u0439 \u2550\u2550\u2550\n  [\u2713] Docker: v29.2.1\n  [\u2713] Docker Compose: v2.36.0\n  [\u2713] Python: v3.12.12 (main, Nov 19 2025, 22:43:30) [MSC v.1944 64 bit (AMD64)]\n  [\u2713] Git: v2.45.1.windows.1\n  [\u2713] \u0412\u0441\u0435 \u0437\u0430\u0432\u0438\u0441\u0438\u043c\u043e\u0441\u0442\u0438 \u043f\u0440\u043e\u0432\u0435\u0440\u0435\u043d\u044b\n  \n  \u2550\u2550\u2550 \u0428\u0430\u0433 2/8 \u2014 \u0413\u0435\u043d\u0435\u0440\u0430\u0446\u0438\u044f \u0441\u0435\u043a\u0440\u0435\u0442\u043e\u0432 \u2550\u2550\u2550\n  [\u2713] \u0421\u0435\u043a\u0440\u0435\u0442\u044b \u0443\u0436\u0435 \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u044e\u0442 (.env.local) \u2014 \u043f\u0440\u043e\u043f\u0443\u0441\u043a (headless)\n  \n  \u2550\u2550\u2550 \u0428\u0430\u0433 3/8 \u2014 \u0421\u0431\u043e\u0440\u043a\u0430 Docker-\u043e\u0431\u0440\u0430\u0437\u043e\u0432 \u2550\u2550\u2550\n  [\u2713] \u0421\u0431\u043e\u0440\u043a\u0430 \u043e\u0431\u0440\u0430\u0437\u043e\u0432 (\u043f\u0435\u0440\u0432\u044b\u0439 \u0440\u0430\u0437 \u043c\u043e\u0436\u0435\u0442 \u0437\u0430\u043d\u044f\u0442\u044c 3-5 \u043c\u0438\u043d\u0443\u0442)...\n  [\u2713] Docker-\u043e\u0431\u0440\u0430\u0437\u044b \u0433\u043e\u0442\u043e\u0432\u044b\n  \n  \u2550\u2550\u2550 \u0428\u0430\u0433 4/8 \u2014 \u0417\u0430\u043f\u0443\u0441\u043a \u043a\u043e\u043d\u0442\u0435\u0439\u043d\u0435\u0440\u043e\u0432 \u2550\u2550\u2550\n  docker compose up -d \u043f\u0440\u043e\u0432\u0430\u043b\u0438\u043b\u0441\u044f (exit code: 71)\n  API was started before schema and bootstrap were ready\n  \nassert 1 == 0\n +  where 1 = CompletedProcess(args=['C:\\\\Users\\\\dimas\\\\.cache\\\\codex-runtimes\\\\codex-primary-runtime\\\\dependencies\\\\native\\\\powersh...ndocker compose up -d \u043f\u0440\u043e\u0432\u0430\u043b\u0438\u043b\u0441\u044f (exit code: 71)\\n', stderr='API was started before schema and bootstrap were ready\\n').returncode"
+      }
+    },
+    {
+      "name": "test_fresh_full_deploy_orders_dependency_migration_bootstrap_and_application[bash]",
+      "failure": {
+        "message": "AssertionError: #x1B[0;36m\n    \u2554\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2557\n    \u2551                                                           \u2551\n    \u2551         \u25cf SPHERE PLATFORM \u2014 Full Deployment \u25cf             \u2551\n    \u2551                                                           \u2551\n    \u2551   Enterprise Android Device Management & Automation       \u2551\n    \u2551                                                           \u2551\n    \u255a\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u255d\n  #x1B[0m\n    \u0412\u0435\u0440\u0441\u0438\u044f:   isolated-test\n    \u0420\u0435\u0436\u0438\u043c:    DEVELOPMENT\n    \u0414\u0430\u0442\u0430:     2026-09-11 15:07:54 RTZ\n  \n  \n  #x1B[0;36m#x1B[1m\u2550\u2550\u2550 \u0428\u0430\u0433 1/8 \u2014 \u041f\u0440\u043e\u0432\u0435\u0440\u043a\u0430 \u0437\u0430\u0432\u0438\u0441\u0438\u043c\u043e\u0441\u0442\u0435\u0439 \u2550\u2550\u2550#x1B[0m\n  #x1B[0;32m[\u2713]#x1B[0m Docker: v29.2.1\n  #x1B[0;32m[\u2713]#x1B[0m Docker Compose: v2.36.0\n  #x1B[0;32m[\u2713]#x1B[0m Python: v(main,\n  #x1B[0;32m[\u2713]#x1B[0m Git: 2.45.1.windows.1\n  #x1B[0;32m[\u2713]#x1B[0m Docker daemon: \u0434\u043e\u0441\u0442\u0443\u043f\u0435\u043d\n  \n  #x1B[0;36m#x1B[1m\u2550\u2550\u2550 \u0428\u0430\u0433 2/8 \u2014 \u0413\u0435\u043d\u0435\u0440\u0430\u0446\u0438\u044f \u0441\u0435\u043a\u0440\u0435\u0442\u043e\u0432 \u2550\u2550\u2550#x1B[0m\n  #x1B[0;32m[\u2713]#x1B[0m \u0421\u0435\u043a\u0440\u0435\u0442\u044b \u0443\u0436\u0435 \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u044e\u0442 (.env.local) \u2014 \u043f\u0440\u043e\u043f\u0443\u0441\u043a\u0430\u0435\u043c (headless)\n  \n  #x1B[0;36m#x1B[1m\u2550\u2550\u2550 \u0428\u0430\u0433 3/8 \u2014 \u0421\u0431\u043e\u0440\u043a\u0430 Docker-\u043e\u0431\u0440\u0430\u0437\u043e\u0432 \u2550\u2550\u2550#x1B[0m\n  #x1B[0;32m[\u2713]#x1B[0m \u0421\u0431\u043e\u0440\u043a\u0430 \u043e\u0431\u0440\u0430\u0437\u043e\u0432 (\u043f\u0435\u0440\u0432\u044b\u0439 \u0440\u0430\u0437 \u043c\u043e\u0436\u0435\u0442 \u0437\u0430\u043d\u044f\u0442\u044c 3-5 \u043c\u0438\u043d\u0443\u0442)...\n  #x1B[0;32m[\u2713]#x1B[0m Docker-\u043e\u0431\u0440\u0430\u0437\u044b \u0433\u043e\u0442\u043e\u0432\u044b\n  \n  #x1B[0;36m#x1B[1m\u2550\u2550\u2550 \u0428\u0430\u0433 4/8 \u2014 \u0417\u0430\u043f\u0443\u0441\u043a \u043a\u043e\u043d\u0442\u0435\u0439\u043d\u0435\u0440\u043e\u0432 \u2550\u2550\u2550#x1B[0m\n  API was started before schema and bootstrap were ready\n  \nassert 71 == 0\n +  where 71 = CompletedProcess(args=['C:\\\\Program Files\\\\Git\\\\bin\\\\bash.exe', 'C:/Users/dimas/AppData/Local/Temp/pytest-of-dimas/pyt...1b[1m\u2550\u2550\u2550 \u0428\u0430\u0433 4/8 \u2014 \u0417\u0430\u043f\u0443\u0441\u043a \u043a\u043e\u043d\u0442\u0435\u0439\u043d\u0435\u0440\u043e\u0432 \u2550\u2550\u2550\\x1b[0m\\nAPI was started before schema and bootstrap were ready\\n', stderr='').returncode"
+      }
+    },
+    {
+      "name": "test_full_deploy_stops_on_phase_failure_without_host_fallback_or_false_success[powershell-dependencies]",
+      "failure": {
+        "message": "AssertionError: [{'args': ['compose', '--env-file', 'C:\\\\Users\\\\dimas\\\\AppData\\\\Local\\\\Temp\\\\pytest-of-dimas\\\\pytest-96\\\\test_full_dep...st-96\\\\test_full_deploy_stops_on_phas0\\\\checkout with spaces\\\\docker-compose.yml', '-f', ...], 'stage': 'application'}]\nassert 'application' == 'dependencies'\n  \n  - dependencies\n  + application"
+      }
+    },
+    {
+      "name": "test_full_deploy_stops_on_phase_failure_without_host_fallback_or_false_success[powershell-migration]",
+      "failure": {
+        "message": "AssertionError: [{'args': ['compose', '--env-file', 'C:\\\\Users\\\\dimas\\\\AppData\\\\Local\\\\Temp\\\\pytest-of-dimas\\\\pytest-96\\\\test_full_dep...st-96\\\\test_full_deploy_stops_on_phas1\\\\checkout with spaces\\\\docker-compose.yml', '-f', ...], 'stage': 'application'}]\nassert 'application' == 'migration'\n  \n  - migration\n  + application"
+      }
+    },
+    {
+      "name": "test_full_deploy_stops_on_phase_failure_without_host_fallback_or_false_success[powershell-admin]",
+      "failure": {
+        "message": "AssertionError: [{'args': ['compose', '--env-file', 'C:\\\\Users\\\\dimas\\\\AppData\\\\Local\\\\Temp\\\\pytest-of-dimas\\\\pytest-96\\\\test_full_dep...st-96\\\\test_full_deploy_stops_on_phas2\\\\checkout with spaces\\\\docker-compose.yml', '-f', ...], 'stage': 'application'}]\nassert 'application' == 'admin'\n  \n  - admin\n  + application"
+      }
+    },
+    {
+      "name": "test_full_deploy_stops_on_phase_failure_without_host_fallback_or_false_success[powershell-enrollment]",
+      "failure": {
+        "message": "AssertionError: [{'args': ['compose', '--env-file', 'C:\\\\Users\\\\dimas\\\\AppData\\\\Local\\\\Temp\\\\pytest-of-dimas\\\\pytest-96\\\\test_full_dep...st-96\\\\test_full_deploy_stops_on_phas3\\\\checkout with spaces\\\\docker-compose.yml', '-f', ...], 'stage': 'application'}]\nassert 'application' == 'enrollment'\n  \n  - enrollment\n  + application"
+      }
+    },
+    {
+      "name": "test_full_deploy_stops_on_phase_failure_without_host_fallback_or_false_success[powershell-application]",
+      "failure": {
+        "message": "AssertionError: assert ('Synthetic failure at ' + 'application') in ('\\n  \u2554\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2557\\n  \u2551                                               ....\\n[\u2713] Docker-\u043e\u0431\u0440\u0430\u0437\u044b \u0433\u043e\u0442\u043e\u0432\u044b\\n\\n\u2550\u2550\u2550 \u0428\u0430\u0433 4/8 \u2014 \u0417\u0430\u043f\u0443\u0441\u043a \u043a\u043e\u043d\u0442\u0435\u0439\u043d\u0435\u0440\u043e\u0432 \u2550\u2550\u2550\\ndocker compose up -d \u043f\u0440\u043e\u0432\u0430\u043b\u0438\u043b\u0441\u044f (exit code: 71)\\n' + 'API was started before schema and bootstrap were ready\\n')\n +  where '\\n  \u2554\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2557\\n  \u2551                                               ....\\n[\u2713] Docker-\u043e\u0431\u0440\u0430\u0437\u044b \u0433\u043e\u0442\u043e\u0432\u044b\\n\\n\u2550\u2550\u2550 \u0428\u0430\u0433 4/8 \u2014 \u0417\u0430\u043f\u0443\u0441\u043a \u043a\u043e\u043d\u0442\u0435\u0439\u043d\u0435\u0440\u043e\u0432 \u2550\u2550\u2550\\ndocker compose up -d \u043f\u0440\u043e\u0432\u0430\u043b\u0438\u043b\u0441\u044f (exit code: 71)\\n' = CompletedProcess(args=['C:\\\\Users\\\\dimas\\\\.cache\\\\codex-runtimes\\\\codex-primary-runtime\\\\dependencies\\\\native\\\\powersh...ndocker compose up -d \u043f\u0440\u043e\u0432\u0430\u043b\u0438\u043b\u0441\u044f (exit code: 71)\\n', stderr='API was started before schema and bootstrap were ready\\n').stdout\n +  and   'API was started before schema and bootstrap were ready\\n' = CompletedProcess(args=['C:\\\\Users\\\\dimas\\\\.cache\\\\codex-runtimes\\\\codex-primary-runtime\\\\dependencies\\\\native\\\\powersh...ndocker compose up -d \u043f\u0440\u043e\u0432\u0430\u043b\u0438\u043b\u0441\u044f (exit code: 71)\\n', stderr='API was started before schema and bootstrap were ready\\n').stderr"
+      }
+    },
+    {
+      "name": "test_full_deploy_stops_on_phase_failure_without_host_fallback_or_false_success[bash-dependencies]",
+      "failure": {
+        "message": "AssertionError: [{'args': ['info'], 'stage': 'other'}, {'args': ['compose', '-f', 'docker-compose.yml', '-f', 'docker-compose.full.yml... {'args': ['compose', '-f', 'docker-compose.yml', '-f', 'docker-compose.full.yml', 'up', ...], 'stage': 'application'}]\nassert 'application' == 'dependencies'\n  \n  - dependencies\n  + application"
+      }
+    },
+    {
+      "name": "test_full_deploy_stops_on_phase_failure_without_host_fallback_or_false_success[bash-migration]",
+      "failure": {
+        "message": "AssertionError: [{'args': ['info'], 'stage': 'other'}, {'args': ['compose', '-f', 'docker-compose.yml', '-f', 'docker-compose.full.yml... {'args': ['compose', '-f', 'docker-compose.yml', '-f', 'docker-compose.full.yml', 'up', ...], 'stage': 'application'}]\nassert 'application' == 'migration'\n  \n  - migration\n  + application"
+      }
+    },
+    {
+      "name": "test_full_deploy_stops_on_phase_failure_without_host_fallback_or_false_success[bash-admin]",
+      "failure": {
+        "message": "AssertionError: [{'args': ['info'], 'stage': 'other'}, {'args': ['compose', '-f', 'docker-compose.yml', '-f', 'docker-compose.full.yml... {'args': ['compose', '-f', 'docker-compose.yml', '-f', 'docker-compose.full.yml', 'up', ...], 'stage': 'application'}]\nassert 'application' == 'admin'\n  \n  - admin\n  + application"
+      }
+    },
+    {
+      "name": "test_full_deploy_stops_on_phase_failure_without_host_fallback_or_false_success[bash-enrollment]",
+      "failure": {
+        "message": "AssertionError: [{'args': ['info'], 'stage': 'other'}, {'args': ['compose', '-f', 'docker-compose.yml', '-f', 'docker-compose.full.yml... {'args': ['compose', '-f', 'docker-compose.yml', '-f', 'docker-compose.full.yml', 'up', ...], 'stage': 'application'}]\nassert 'application' == 'enrollment'\n  \n  - enrollment\n  + application"
+      }
+    },
+    {
+      "name": "test_full_deploy_stops_on_phase_failure_without_host_fallback_or_false_success[bash-application]",
+      "failure": {
+        "message": "AssertionError: assert ('Synthetic failure at ' + 'application') in ('\\x1b[0;36m\\n  \u2554\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2557\\n  \u2551                                     ...\\x1b[0;36m\\x1b[1m\u2550\u2550\u2550 \u0428\u0430\u0433 4/8 \u2014 \u0417\u0430\u043f\u0443\u0441\u043a \u043a\u043e\u043d\u0442\u0435\u0439\u043d\u0435\u0440\u043e\u0432 \u2550\u2550\u2550\\x1b[0m\\nAPI was started before schema and bootstrap were ready\\n' + '')\n +  where '\\x1b[0;36m\\n  \u2554\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2557\\n  \u2551                                     ...\\x1b[0;36m\\x1b[1m\u2550\u2550\u2550 \u0428\u0430\u0433 4/8 \u2014 \u0417\u0430\u043f\u0443\u0441\u043a \u043a\u043e\u043d\u0442\u0435\u0439\u043d\u0435\u0440\u043e\u0432 \u2550\u2550\u2550\\x1b[0m\\nAPI was started before schema and bootstrap were ready\\n' = CompletedProcess(args=['C:\\\\Program Files\\\\Git\\\\bin\\\\bash.exe', 'C:/Users/dimas/AppData/Local/Temp/pytest-of-dimas/pyt...1b[1m\u2550\u2550\u2550 \u0428\u0430\u0433 4/8 \u2014 \u0417\u0430\u043f\u0443\u0441\u043a \u043a\u043e\u043d\u0442\u0435\u0439\u043d\u0435\u0440\u043e\u0432 \u2550\u2550\u2550\\x1b[0m\\nAPI was started before schema and bootstrap were ready\\n', stderr='').stdout\n +  and   '' = CompletedProcess(args=['C:\\\\Program Files\\\\Git\\\\bin\\\\bash.exe', 'C:/Users/dimas/AppData/Local/Temp/pytest-of-dimas/pyt...1b[1m\u2550\u2550\u2550 \u0428\u0430\u0433 4/8 \u2014 \u0417\u0430\u043f\u0443\u0441\u043a \u043a\u043e\u043d\u0442\u0435\u0439\u043d\u0435\u0440\u043e\u0432 \u2550\u2550\u2550\\x1b[0m\\nAPI was started before schema and bootstrap were ready\\n', stderr='').stderr"
+      }
+    },
+    {
+      "name": "test_repeat_full_deploy_keeps_the_same_order[powershell]",
+      "failure": {
+        "message": "AssertionError: \n    \u2554\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2557\n    \u2551                                                           \u2551\n    \u2551         \u25cf SPHERE PLATFORM \u2014 Full Deployment \u25cf             \u2551\n    \u2551                                                           \u2551\n    \u2551   Enterprise Android Device Management & Automation       \u2551\n    \u2551                                                           \u2551\n    \u255a\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u255d\n  \n    \u0412\u0435\u0440\u0441\u0438\u044f:   isolated-test\n    \u0420\u0435\u0436\u0438\u043c:    DEVELOPMENT\n    \u0414\u0430\u0442\u0430:     2026-09-11 15:08:14\n  \n  \n  \u2550\u2550\u2550 \u0428\u0430\u0433 1/8 \u2014 \u041f\u0440\u043e\u0432\u0435\u0440\u043a\u0430 \u0437\u0430\u0432\u0438\u0441\u0438\u043c\u043e\u0441\u0442\u0435\u0439 \u2550\u2550\u2550\n  [\u2713] Docker: v29.2.1\n  [\u2713] Docker Compose: v2.36.0\n  [\u2713] Python: v3.12.12 (main, Nov 19 2025, 22:43:30) [MSC v.1944 64 bit (AMD64)]\n  [\u2713] Git: v2.45.1.windows.1\n  [\u2713] \u0412\u0441\u0435 \u0437\u0430\u0432\u0438\u0441\u0438\u043c\u043e\u0441\u0442\u0438 \u043f\u0440\u043e\u0432\u0435\u0440\u0435\u043d\u044b\n  \n  \u2550\u2550\u2550 \u0428\u0430\u0433 2/8 \u2014 \u0413\u0435\u043d\u0435\u0440\u0430\u0446\u0438\u044f \u0441\u0435\u043a\u0440\u0435\u0442\u043e\u0432 \u2550\u2550\u2550\n  [\u2713] \u0421\u0435\u043a\u0440\u0435\u0442\u044b \u0443\u0436\u0435 \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u044e\u0442 (.env.local) \u2014 \u043f\u0440\u043e\u043f\u0443\u0441\u043a (headless)\n  \n  \u2550\u2550\u2550 \u0428\u0430\u0433 3/8 \u2014 \u0421\u0431\u043e\u0440\u043a\u0430 Docker-\u043e\u0431\u0440\u0430\u0437\u043e\u0432 \u2550\u2550\u2550\n  [\u2713] \u0421\u0431\u043e\u0440\u043a\u0430 \u043e\u0431\u0440\u0430\u0437\u043e\u0432 (\u043f\u0435\u0440\u0432\u044b\u0439 \u0440\u0430\u0437 \u043c\u043e\u0436\u0435\u0442 \u0437\u0430\u043d\u044f\u0442\u044c 3-5 \u043c\u0438\u043d\u0443\u0442)...\n  [\u2713] Docker-\u043e\u0431\u0440\u0430\u0437\u044b \u0433\u043e\u0442\u043e\u0432\u044b\n  \n  \u2550\u2550\u2550 \u0428\u0430\u0433 4/8 \u2014 \u0417\u0430\u043f\u0443\u0441\u043a \u043a\u043e\u043d\u0442\u0435\u0439\u043d\u0435\u0440\u043e\u0432 \u2550\u2550\u2550\n  docker compose up -d \u043f\u0440\u043e\u0432\u0430\u043b\u0438\u043b\u0441\u044f (exit code: 71)\n  API was started before schema and bootstrap were ready\n  \nassert 1 == 0\n +  where 1 = CompletedProcess(args=['C:\\\\Users\\\\dimas\\\\.cache\\\\codex-runtimes\\\\codex-primary-runtime\\\\dependencies\\\\native\\\\powersh...ndocker compose up -d \u043f\u0440\u043e\u0432\u0430\u043b\u0438\u043b\u0441\u044f (exit code: 71)\\n', stderr='API was started before schema and bootstrap were ready\\n').returncode"
+      }
+    },
+    {
+      "name": "test_repeat_full_deploy_keeps_the_same_order[bash]",
+      "failure": {
+        "message": "AssertionError: #x1B[0;36m\n    \u2554\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2557\n    \u2551                                                           \u2551\n    \u2551         \u25cf SPHERE PLATFORM \u2014 Full Deployment \u25cf             \u2551\n    \u2551                                                           \u2551\n    \u2551   Enterprise Android Device Management & Automation       \u2551\n    \u2551                                                           \u2551\n    \u255a\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u255d\n  #x1B[0m\n    \u0412\u0435\u0440\u0441\u0438\u044f:   isolated-test\n    \u0420\u0435\u0436\u0438\u043c:    DEVELOPMENT\n    \u0414\u0430\u0442\u0430:     2026-09-11 15:08:15 RTZ\n  \n  \n  #x1B[0;36m#x1B[1m\u2550\u2550\u2550 \u0428\u0430\u0433 1/8 \u2014 \u041f\u0440\u043e\u0432\u0435\u0440\u043a\u0430 \u0437\u0430\u0432\u0438\u0441\u0438\u043c\u043e\u0441\u0442\u0435\u0439 \u2550\u2550\u2550#x1B[0m\n  #x1B[0;32m[\u2713]#x1B[0m Docker: v29.2.1\n  #x1B[0;32m[\u2713]#x1B[0m Docker Compose: v2.36.0\n  #x1B[0;32m[\u2713]#x1B[0m Python: v(main,\n  #x1B[0;32m[\u2713]#x1B[0m Git: 2.45.1.windows.1\n  #x1B[0;32m[\u2713]#x1B[0m Docker daemon: \u0434\u043e\u0441\u0442\u0443\u043f\u0435\u043d\n  \n  #x1B[0;36m#x1B[1m\u2550\u2550\u2550 \u0428\u0430\u0433 2/8 \u2014 \u0413\u0435\u043d\u0435\u0440\u0430\u0446\u0438\u044f \u0441\u0435\u043a\u0440\u0435\u0442\u043e\u0432 \u2550\u2550\u2550#x1B[0m\n  #x1B[0;32m[\u2713]#x1B[0m \u0421\u0435\u043a\u0440\u0435\u0442\u044b \u0443\u0436\u0435 \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u044e\u0442 (.env.local) \u2014 \u043f\u0440\u043e\u043f\u0443\u0441\u043a\u0430\u0435\u043c (headless)\n  \n  #x1B[0;36m#x1B[1m\u2550\u2550\u2550 \u0428\u0430\u0433 3/8 \u2014 \u0421\u0431\u043e\u0440\u043a\u0430 Docker-\u043e\u0431\u0440\u0430\u0437\u043e\u0432 \u2550\u2550\u2550#x1B[0m\n  #x1B[0;32m[\u2713]#x1B[0m \u0421\u0431\u043e\u0440\u043a\u0430 \u043e\u0431\u0440\u0430\u0437\u043e\u0432 (\u043f\u0435\u0440\u0432\u044b\u0439 \u0440\u0430\u0437 \u043c\u043e\u0436\u0435\u0442 \u0437\u0430\u043d\u044f\u0442\u044c 3-5 \u043c\u0438\u043d\u0443\u0442)...\n  #x1B[0;32m[\u2713]#x1B[0m Docker-\u043e\u0431\u0440\u0430\u0437\u044b \u0433\u043e\u0442\u043e\u0432\u044b\n  \n  #x1B[0;36m#x1B[1m\u2550\u2550\u2550 \u0428\u0430\u0433 4/8 \u2014 \u0417\u0430\u043f\u0443\u0441\u043a \u043a\u043e\u043d\u0442\u0435\u0439\u043d\u0435\u0440\u043e\u0432 \u2550\u2550\u2550#x1B[0m\n  API was started before schema and bootstrap were ready\n  \nassert 71 == 0\n +  where 71 = CompletedProcess(args=['C:\\\\Program Files\\\\Git\\\\bin\\\\bash.exe', 'C:/Users/dimas/AppData/Local/Temp/pytest-of-dimas/pyt...1b[1m\u2550\u2550\u2550 \u0428\u0430\u0433 4/8 \u2014 \u0417\u0430\u043f\u0443\u0441\u043a \u043a\u043e\u043d\u0442\u0435\u0439\u043d\u0435\u0440\u043e\u0432 \u2550\u2550\u2550\\x1b[0m\\nAPI was started before schema and bootstrap were ready\\n', stderr='').returncode"
+      }
+    },
+    {
+      "name": "test_backend_healthcheck_requires_readiness_response[production-ready-0]",
+      "failure": {
+        "message": "AssertionError: Backend has no readiness gate in the effective Compose configuration\nassert None\n +  where None = <built-in method get of dict object at 0x000002523F2429C0>('test')\n +    where <built-in method get of dict object at 0x000002523F2429C0> = {}.get"
+      }
+    },
+    {
+      "name": "test_backend_healthcheck_requires_readiness_response[production-unready-1]",
+      "failure": {
+        "message": "AssertionError: Backend has no readiness gate in the effective Compose configuration\nassert None\n +  where None = <built-in method get of dict object at 0x000002523F293180>('test')\n +    where <built-in method get of dict object at 0x000002523F293180> = {}.get"
+      }
+    },
+    {
+      "name": "test_backend_healthcheck_requires_readiness_response[production-error-1]",
+      "failure": {
+        "message": "AssertionError: Backend has no readiness gate in the effective Compose configuration\nassert None\n +  where None = <built-in method get of dict object at 0x000002523F262E80>('test')\n +    where <built-in method get of dict object at 0x000002523F262E80> = {}.get"
+      }
+    },
+    {
+      "name": "test_frontend_healthcheck_rejects_redirects_errors_and_network_failure[production-200]",
+      "failure": {
+        "message": "AssertionError: Frontend has no HTTP readiness gate in the effective Compose configuration\nassert None\n +  where None = <built-in method get of dict object at 0x000002523F23A940>('test')\n +    where <built-in method get of dict object at 0x000002523F23A940> = {}.get"
+      }
+    },
+    {
+      "name": "test_frontend_healthcheck_rejects_redirects_errors_and_network_failure[production-302]",
+      "failure": {
+        "message": "AssertionError: Frontend has no HTTP readiness gate in the effective Compose configuration\nassert None\n +  where None = <built-in method get of dict object at 0x000002523F26DCC0>('test')\n +    where <built-in method get of dict object at 0x000002523F26DCC0> = {}.get"
+      }
+    },
+    {
+      "name": "test_frontend_healthcheck_rejects_redirects_errors_and_network_failure[production-503]",
+      "failure": {
+        "message": "AssertionError: Frontend has no HTTP readiness gate in the effective Compose configuration\nassert None\n +  where None = <built-in method get of dict object at 0x000002523F289EC0>('test')\n +    where <built-in method get of dict object at 0x000002523F289EC0> = {}.get"
+      }
+    },
+    {
+      "name": "test_frontend_healthcheck_rejects_redirects_errors_and_network_failure[production-error]",
+      "failure": {
+        "message": "AssertionError: Frontend has no HTTP readiness gate in the effective Compose configuration\nassert None\n +  where None = <built-in method get of dict object at 0x000002523F263FC0>('test')\n +    where <built-in method get of dict object at 0x000002523F263FC0> = {}.get"
+      }
+    }
+  ],
+  "boundary": "Full shipped PS main and Bash preamble/main with process Docker state model. Host Python beyond --version and HTTP are intercepted. Real Compose rendering + actual probe expressions with HTTP doubles. No daemon/API/SQL startup."
+}

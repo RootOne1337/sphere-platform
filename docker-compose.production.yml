@@ -29,6 +29,17 @@ services:
           memory: 512M
 
   backend:
+    healthcheck:
+      # Probe dependencies through the API; a running process alone is insufficient.
+      test:
+        - CMD
+        - python
+        - -c
+        - "import json, sys, urllib.request; r = urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health/readyz', timeout=3); sys.exit(0 if r.status == 200 and json.load(r).get('status') == 'ready' else 1)"
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
     # Also safe when docker-compose.full.yml precedes this final override.
     ports: !reset []
     volumes: !reset []
@@ -72,6 +83,16 @@ services:
           memory: 2G
 
   frontend:
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3000/login', {redirect: 'manual', signal: AbortSignal.timeout(3000)}).then(r => process.exit(r.status === 200 ? 0 : 1)).catch(() => process.exit(1))"
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
     ports: !reset []
     volumes: !reset []
     command: !reset null

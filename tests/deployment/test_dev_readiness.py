@@ -13,13 +13,13 @@ import pytest
 REPOSITORY = Path(__file__).resolve().parents[2]
 
 
-@pytest.fixture(scope="module")
-def dev_services(tmp_path_factory):
+@pytest.fixture(scope="module", params=["full", "production"])
+def dev_services(request, tmp_path_factory):
     if not shutil.which("docker"):
         if os.environ.get("CI"):
             pytest.fail("Docker Compose is required for readiness configuration checks")
         pytest.skip("Docker Compose unavailable")
-    files = ["docker-compose.yml", "docker-compose.full.yml"]
+    files = ["docker-compose.yml", f"docker-compose.{request.param}.yml"]
     variables = set()
     for name in files:
         variables.update(re.findall(r"\$\{?([A-Z][A-Z0-9_]*)", (REPOSITORY / name).read_text(encoding="utf-8")))

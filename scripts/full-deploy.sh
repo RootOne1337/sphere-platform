@@ -3,15 +3,15 @@
 # full-deploy.sh — Полное развёртывание Sphere Platform с нуля
 # =============================================================================
 #
-# Скрипт автоматизирует ВСЕ шаги от клонирования до работающей системы:
+# Скрипт выполняет подготовку и запуск выбранного Compose project:
 #   1. Проверка зависимостей (Docker, Python, Git)
 #   2. Генерация криптографических секретов
-#   3. Сборка и запуск Docker-контейнеров
-#   4. Ожидание готовности PostgreSQL и Redis
-#   5. Применение миграций базы данных (Alembic)
-#   6. Создание суперадминистратора
-#   7. Генерация enrollment-ключа для агентов
-#   8. Health-check всех сервисов
+#   3. Сборка Docker-образов
+#   4. Запуск PostgreSQL/Redis и ожидание readiness
+#   5. Alembic-миграции в one-off backend container
+#   6. Администратор и enrollment key в one-off containers
+#   7. Запуск приложений и ожидание Compose running/healthy
+#   8. Статус выбранного project (APK/VPN проверяются отдельно)
 #
 # Использование:
 #   chmod +x scripts/full-deploy.sh
@@ -44,8 +44,6 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 LOG_FILE="$PROJECT_DIR/.deploy.log"
 COMPOSE_FILES=(-f docker-compose.yml -f docker-compose.full.yml)
-MAX_WAIT=120          # Максимальное ожидание готовности сервисов (секунды)
-HEALTH_RETRIES=30     # Количество попыток health-check
 
 # ── Режимы ────────────────────────────────────────────────────────────────────
 HEADLESS=false
@@ -244,118 +242,41 @@ build_images() {
 }
 
 # =============================================================================
-# ШАГ 4: Запуск контейнеров
+# ШАГ 7: Запуск приложений после bootstrap
 # =============================================================================
 start_containers() {
-    log STEP "Шаг 4/8 — Запуск контейнеров"
-
+    log STEP "Шаг 7/8 — Запуск приложений после bootstrap"
     cd "$PROJECT_DIR"
-
-    # Загрузить .env.local
-    if [[ -f .env.local ]]; then
-        set -a
-        # shellcheck disable=SC1091
-        source .env.local
-        set +a
-    fi
-
-    docker compose "${COMPOSE_FILES[@]}" up -d 2>&1 | tee -a "$LOG_FILE"
-    if [[ ${PIPESTATUS[0]} -ne 0 ]]; then
-        die "Не удалось запустить контейнеры"
-    fi
-
-    log INFO "Контейнеры запущены"
-    docker compose "${COMPOSE_FILES[@]}" ps --format "table {{.Name}}\t{{.Status}}" 2>/dev/null || true
+    docker compose "${COMPOSE_FILES[@]}" up -d --wait --wait-timeout 300 2>&1 | tee -a "$LOG_FILE" || return 1
+    log INFO "Compose running/healthy достигнуты"
 }
 
 # =============================================================================
-# ШАГ 5: Ожидание готовности сервисов
+# ШАГ 4: PostgreSQL и Redis до миграций
 # =============================================================================
 wait_for_services() {
-    log STEP "Шаг 5/8 — Ожидание готовности сервисов"
-
-    # PostgreSQL
-    log INFO "Ожидание PostgreSQL..."
-    local waited=0
-    while (( waited < MAX_WAIT )); do
-        if docker compose "${COMPOSE_FILES[@]}" exec -T postgres pg_isready -U "${POSTGRES_USER:-sphere}" &>/dev/null; then
-            log INFO "PostgreSQL: ready (${waited}s)"
-            break
-        fi
-        sleep 2
-        waited=$((waited + 2))
-        echo -ne "\r    Ожидание PostgreSQL... ${waited}s / ${MAX_WAIT}s"
-    done
-    echo ""
-    if (( waited >= MAX_WAIT )); then
-        die "PostgreSQL не стал ready за ${MAX_WAIT}s"
-    fi
-
-    # Redis
-    log INFO "Ожидание Redis..."
-    waited=0
-    while (( waited < MAX_WAIT )); do
-        if docker compose "${COMPOSE_FILES[@]}" exec -T redis redis-cli -a "${REDIS_PASSWORD:-}" ping 2>/dev/null | grep -q PONG; then
-            log INFO "Redis: ready (${waited}s)"
-            break
-        fi
-        sleep 2
-        waited=$((waited + 2))
-        echo -ne "\r    Ожидание Redis... ${waited}s / ${MAX_WAIT}s"
-    done
-    echo ""
-    if (( waited >= MAX_WAIT )); then
-        die "Redis не стал ready за ${MAX_WAIT}s"
-    fi
-
-    # Backend
-    log INFO "Ожидание Backend..."
-    waited=0
-    while (( waited < MAX_WAIT )); do
-        if curl -sf http://localhost:8000/api/v1/health &>/dev/null; then
-            log INFO "Backend: ready (${waited}s)"
-            break
-        fi
-        sleep 3
-        waited=$((waited + 3))
-        echo -ne "\r    Ожидание Backend... ${waited}s / ${MAX_WAIT}s"
-    done
-    echo ""
-    if (( waited >= MAX_WAIT )); then
-        log WARN "Backend не отвечает на /health за ${MAX_WAIT}s — продолжаем (возможно первый запуск)"
-    fi
+    log STEP "Шаг 4/8 — PostgreSQL и Redis до миграций"
+    cd "$PROJECT_DIR"
+    docker compose "${COMPOSE_FILES[@]}" up -d --wait --wait-timeout 180 postgres redis 2>&1 | tee -a "$LOG_FILE" || return 1
+    log INFO "Зависимости готовы в выбранном Compose project"
 }
 
 # =============================================================================
-# ШАГ 6: Миграции базы данных
+# ШАГ 5: Миграции базы данных
 # =============================================================================
 run_migrations() {
-    log STEP "Шаг 6/8 — Миграции базы данных (Alembic)"
-
+    log STEP "Шаг 5/8 — Миграции до запуска API"
     cd "$PROJECT_DIR"
-
-    # shellcheck disable=SC2086
-    docker compose "${COMPOSE_FILES[@]}" exec -T backend \
-        alembic -c alembic/alembic.ini upgrade head 2>&1 | tee -a "$LOG_FILE"
-
-    if [[ ${PIPESTATUS[0]} -ne 0 ]]; then
-        log WARN "Миграции через контейнер не прошли — пробуем с хоста..."
-        local python_cmd="python3"
-        command -v python3 &>/dev/null || python_cmd="python"
-        PYTHONPATH="$PROJECT_DIR" $python_cmd -m alembic -c alembic/alembic.ini upgrade head 2>&1 | tee -a "$LOG_FILE"
-        if [[ ${PIPESTATUS[0]} -ne 0 ]]; then
-            die "Миграции провалились. Проверь POSTGRES_URL и подключение к БД"
-        fi
-    fi
-
-    log INFO "Миграции применены успешно"
+    docker compose "${COMPOSE_FILES[@]}" run --rm --no-deps -T backend \
+        alembic -c alembic/alembic.ini upgrade head 2>&1 | tee -a "$LOG_FILE" || return 1
+    log INFO "Миграции применены выбранным backend image/configuration"
 }
 
 # =============================================================================
-# ШАГ 7: Инициализация данных
+# ШАГ 6: Инициализация данных
 # =============================================================================
 seed_data() {
-    log STEP "Шаг 7/8 — Инициализация данных"
+    log STEP "Шаг 6/8 — Инициализация данных"
 
     cd "$PROJECT_DIR"
 
@@ -378,12 +299,12 @@ seed_data() {
         bootstrap_org_env=(-e SPHERE_BOOTSTRAP_ORG_SLUG)
     fi
     ADMIN_EMAIL="$admin_email" ADMIN_PASSWORD="$admin_password" \
-        docker compose "${COMPOSE_FILES[@]}" exec -T -e ADMIN_EMAIL -e ADMIN_PASSWORD "${bootstrap_org_env[@]}" backend \
+        docker compose "${COMPOSE_FILES[@]}" run --rm --no-deps -T -e ADMIN_EMAIL -e ADMIN_PASSWORD "${bootstrap_org_env[@]}" backend \
         python scripts/create_admin.py 2>&1 | tee -a "$LOG_FILE" || return 1
 
     log INFO "Генерация enrollment-ключа..."
     # Use the backend's configured environment; never force a development key.
-    docker compose "${COMPOSE_FILES[@]}" exec -T "${bootstrap_org_env[@]}" backend \
+    docker compose "${COMPOSE_FILES[@]}" run --rm --no-deps -T "${bootstrap_org_env[@]}" backend \
         python -m scripts.seed_enrollment_key 2>&1 | tee -a "$LOG_FILE" || return 1
 
     # Вывод учётных данных
@@ -414,102 +335,12 @@ EOF
 # ШАГ 8: Финальная проверка
 # =============================================================================
 final_healthcheck() {
-    log STEP "Шаг 8/8 — Финальная проверка"
-
-    local all_ok=true
-
-    # Backend API
-    if curl -sf http://localhost:8000/api/v1/health -o /dev/null; then
-        local health_json
-        health_json=$(curl -sf http://localhost:8000/api/v1/health)
-        log INFO "Backend API:    ✅ $health_json"
-    else
-        log ERROR "Backend API:    ❌ Не отвечает на /api/v1/health"
-        all_ok=false
-    fi
-
-    # Frontend
-    if curl -sf http://localhost:3000 -o /dev/null; then
-        log INFO "Frontend:       ✅ Доступен на :3000"
-    else
-        log ERROR "Frontend:       ❌ Не отвечает на :3000"
-        all_ok=false
-    fi
-
-    # Nginx (proxy)
-    if curl -sf http://localhost -o /dev/null; then
-        log INFO "Nginx Proxy:    ✅ Доступен на :80"
-    else
-        log WARN "Nginx Proxy:    ⚠  Не отвечает (может ждать SSL)"
-    fi
-
-    # PostgreSQL
-    # shellcheck disable=SC2086
-    if docker compose "${COMPOSE_FILES[@]}" exec -T postgres pg_isready -U "${POSTGRES_USER:-sphere}" &>/dev/null; then
-        log INFO "PostgreSQL:     ✅ Ready"
-    else
-        log ERROR "PostgreSQL:     ❌ Не готов"
-        all_ok=false
-    fi
-
-    # Redis
-    # shellcheck disable=SC2086
-    if docker compose "${COMPOSE_FILES[@]}" exec -T redis redis-cli -a "${REDIS_PASSWORD:-}" ping 2>/dev/null | grep -q PONG; then
-        log INFO "Redis:          ✅ PONG"
-    else
-        log ERROR "Redis:          ❌ Не отвечает"
-        all_ok=false
-    fi
-
-    # n8n
-    if curl -sf http://localhost:5678 -o /dev/null; then
-        log INFO "n8n:            ✅ Доступен на :5678"
-    else
-        log WARN "n8n:            ⚠  Не отвечает (не критично)"
-    fi
-
-    # MinIO
-    if curl -sf http://localhost:9001 -o /dev/null; then
-        log INFO "MinIO Console:  ✅ Доступен на :9001"
-    else
-        log WARN "MinIO Console:  ⚠  Не отвечает (не критично)"
-    fi
-
-    # Swagger
-    if curl -sf http://localhost:8000/docs -o /dev/null; then
-        log INFO "Swagger UI:     ✅ Доступен на /docs"
-    fi
-
-    echo ""
-    if $all_ok; then
-        echo -e "${GREEN}${BOLD}"
-        echo "  ╔═══════════════════════════════════════════════════════════╗"
-        echo "  ║                                                           ║"
-        echo "  ║          🚀 SPHERE PLATFORM РАЗВЁРНУТА УСПЕШНО 🚀          ║"
-        echo "  ║                                                           ║"
-        echo "  ╠═══════════════════════════════════════════════════════════╣"
-        echo "  ║                                                           ║"
-        echo "  ║   🖥  Web UI:     http://localhost                         ║"
-        echo "  ║   📡 API:        http://localhost:8000/api/v1             ║"
-        echo "  ║   📖 Swagger:    http://localhost:8000/docs               ║"
-        echo "  ║   📊 Grafana:    http://localhost:3001                    ║"
-        echo "  ║   🔗 n8n:        http://localhost:5678                    ║"
-        echo "  ║   💾 MinIO:      http://localhost:9001                    ║"
-        echo "  ║                                                           ║"
-        echo "  ╚═══════════════════════════════════════════════════════════╝"
-        echo -e "${NC}"
-    else
-        echo -e "${YELLOW}${BOLD}"
-        echo "  ══════════════════════════════════════════════════════════"
-        echo "  ⚠  Некоторые сервисы не прошли проверку."
-        echo "  Проверь логи: docker compose logs <service>"
-        echo "  Или посмотри: $LOG_FILE"
-        echo "  ══════════════════════════════════════════════════════════"
-        echo -e "${NC}"
-    fi
-
-    echo "  Лог развёртывания: $LOG_FILE"
-    echo ""
+    log STEP "Шаг 8/8 — Статус выбранного Compose project"
+    docker compose "${COMPOSE_FILES[@]}" ps --all 2>&1 | tee -a "$LOG_FILE" || return 1
+    log INFO "Schema/bootstrap завершены; Compose readiness пройдена"
+    echo "  Следующая проверка: вход в веб, регистрация APK и задание с результатом."
+    echo "  Адреса и ограничения: docs/operations/STARTUP.md"
+    echo "  Лог подготовки и запуска: $LOG_FILE"
 }
 
 # =============================================================================
@@ -526,10 +357,10 @@ main() {
     check_dependencies
     generate_secrets
     build_images
-    start_containers
     wait_for_services
     run_migrations
     seed_data
+    start_containers
     final_healthcheck
 
     echo -e "${CYAN}Развёртывание завершено за $SECONDS секунд.${NC}"

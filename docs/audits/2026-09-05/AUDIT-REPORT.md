@@ -1998,3 +1998,52 @@ Installed APK, полный Compose/VPN/fleet, merge и deployment не заяв
 Проверка: default `sphere`, read-only rootfs, network none, capabilities dropped,
 no-new-privileges; один readonly probe mount и временный `/tmp`. Ни source checkout,
 ни host secrets, ни DB socket не монтируются. CI фиксируется отдельно по runtime SHA.
+
+## AUD-82 — High: full-deploy запускает API до миграций/identity и ошибочно проверяет готовность
+
+- **Root cause:** оба full-deploy main вызывают полный `up` перед migrations/admin/key.
+  Migration использует `exec` в ещё неготовый backend; PowerShell fallback запускает
+  host Alembic с незафиксированным DB target (Bash fallback также присутствовал, но
+  его достижимость зависит от errexit). PS health обращается к фиксированным именам
+  контейнеров; финальный HTTP health в обоих scripts смотрит фиксированные host ports,
+  не опубликованные production overlay. Ошибка превращается в warning/exit 0.
+  В base+production отсутствовали backend/frontend health probes.
+- **Evidence:** [21 failures / 7 controls](evidence/startup-sequence-before-summary.json)
+  на `bcec5cd`, [полный вывод](evidence/startup-sequence-before.txt). Четырнадцать
+  сценариев исполняют настоящие PS main и Bash preamble/main: отдельный Docker process
+  моделирует fresh schema/bootstrap и отвергает ранний API `up`. Это proof порядка
+  вызовов, **не реальный crash API на fresh PostgreSQL**. Семь дополнительных случаев
+  используют настоящий Compose renderer и находят отсутствующие production probes;
+  прежние семь dev probe cases — passing controls. Это не 21 независимый дефект.
+- **Fix / affected files:** `scripts/full-deploy.ps1`, `scripts/full-deploy.sh`:
+  build → PostgreSQL/Redis `up --wait` (180 s) → migration → admin → key через
+  `run --rm --no-deps -T backend` → полный `up --wait` (300 s) → выбранный project ps.
+  Host migration fallback удалён. При любой ошибке последующие этапы не выполняются.
+  Фиксированные container names/host HTTP и обещание полного успеха заменены
+  результатом Compose readiness. `docker-compose.production.yml` получает такие же
+  backend readyz / frontend login probes, как full overlay, внутри контейнеров.
+- **Regression:** `test_full_deploy_sequence.py`: fresh/repeat и failure на каждой
+  из пяти фаз для обоих shell. Host Python кроме version перехвачен, поэтому возврат
+  fallback не сможет подключиться к настоящей host DB. `test_dev_readiness.py`
+  исполняет effective probes обоих overlays на ready/unready/error/redirect.
+  Старый argv test проверяет новый `run` entry point. [Все 65 deployment cases](evidence/startup-sequence-after-summary.json)
+  проходят за 65.04 s; [вывод](evidence/startup-sequence-after.txt). Ruff, Bash syntax
+  и PS AST parse проходят. Изменения после прогона — комментарии/перенос одной shell
+  команды, без изменения argv. CI нового runtime SHA сохраняется отдельно.
+- **Test strengthening:** [первый baseline 19 failures / 9 controls](evidence/startup-sequence-initial-before-summary.json)
+  имел два слишком широких checks application failure: ранний неверный up также
+  давал nonzero. Добавлена проверка конкретного injected failure и изоляция host
+  Python; unchanged runtime повторён: 21 failure / 7 controls. Итоговый тест не
+  принимает ранний отказ вместо заданного failure scenario.
+- **Residual risk:** ни full daemon deployment, ни fresh-volume SQL/bootstrap в
+  image, ни installed APK не выполнены. Отдельные migration/runtime роли и grants
+  ещё не подготовлены launcher; общий owner по-прежнему не проходит production guard.
+  Уже работающий backend не останавливается: это не координированный rolling migration
+  для несовместимых изменений. Secret generation/rotation, Bash dotenv source,
+  авто dev-key hook и custom-org env/config требуют проверки. Повтор admin CLI может
+  менять пароль. Compose wait ограничивает readiness, не build/pull/npm/весь startup;
+  running-сервисы без healthcheck не имеют полноценной HTTP-проверки. Ingress/TLS,
+  n8n/MinIO, VPN, recovery и hardware measurements остаются отдельной приёмкой.
+
+Схема БД и production backend/Android logic не менялись. Новый image CI AUD-81
+остаётся обязательным; его четыре cases считаются отдельно от обычного pytest.

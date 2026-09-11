@@ -173,21 +173,18 @@ cd sphere-platform
 
 ### Что делает скрипт
 
-Скрипт `full-deploy` автоматически выполняет **все 8 шагов**:
+Порядок после AUD-81/82:
 
-1. **Проверяет зависимости** — Docker, Python, Git, свободное место
-2. **Генерирует секреты** — криптографически стойкие пароли в `.env.local`
-3. **Собирает Docker-образы** — backend (Python 3.12) + frontend (Node 20)
-4. **Запускает контейнеры** — все 9 сервисов через Docker Compose
-5. **Ждёт готовности** — PostgreSQL healthcheck, Redis PONG, Backend /health
-6. **Применяет миграции** — Alembic upgrade head (28 таблиц, RLS, индексы)
-7. **Создаёт администратора** — суперадмин + enrollment-ключ для агентов
-8. **Health-check** — проверяет каждый сервис и выводит URL-ы
+1. Проверка инструментов и подготовка конфигурации.
+2. Сборка образов; production backend содержит admin/enrollment CLI.
+3. PostgreSQL/Redis → Compose wait (180 s).
+4. One-off миграции → администратор → enrollment key; отказ прекращает запуск.
+5. Приложения → Compose wait (300 s) → статус выбранного project.
 
-**Результат за 5-10 минут:**
-- Web UI доступен на `http://localhost`
-- API работает на `http://localhost:8000/api/v1`
-- Swagger на `http://localhost:8000/docs`
+Нет гарантии «5–10 минут»: build/pull/npm не входят в readiness timeout. Сервисам
+без healthcheck достаточно running; ingress, пользовательский вход, APK/task и VPN
+проверяются отдельно. Разделение runtime/migration ролей и уже работающие workers
+требуют отдельного rollout, описанного в начале руководства.
 
 ---
 
@@ -243,80 +240,57 @@ cp .env.example .env.local
 
 ### 4.3 Запуск Docker-стека
 
+Для новой prepared development установки сначала поднимите только зависимости.
+Пример ниже — Bash; выбран `.env.local` из шага 4.2. При использовании `.env`
+явно замените имя. Не меняйте Compose project между командами.
+
 ```bash
-# Вариант 1: Makefile (рекомендуется)
-make full                # Все сервисы
-
-# Вариант 2: Docker Compose напрямую
-docker compose -f docker-compose.yml -f docker-compose.full.yml up -d
-
-# Вариант 3: PowerShell-скрипт (Windows)
-.\scripts\deploy.ps1
+dc() { docker compose --env-file .env.local -f docker-compose.yml -f docker-compose.full.yml "$@"; }
+dc build
+dc up -d --wait --wait-timeout 180 postgres redis
 ```
 
-Что запускается:
-```
-✅ postgres    — PostgreSQL 15 (healthcheck: pg_isready)
-✅ redis       — Redis 7.2 (healthcheck: PING)
-✅ nginx       — Reverse proxy (порты 80/443)
-✅ n8n         — Workflow automation
-✅ minio       — S3-хранилище
-✅ certbot     — SSL auto-renewal
-✅ backend     — FastAPI (порт 8000)
-✅ frontend    — Next.js 15 (порт 3000)
-```
-
-Проверка статуса:
-```bash
-docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
-```
+Автоматические альтернативы — `scripts/full-deploy.sh` / `scripts/full-deploy.ps1`.
+`start-dev.ps1` запускает уже подготовленный стек; bootstrap он не выполняет.
 
 ### 4.4 Миграции базы данных
 
 ```bash
-# Из контейнера (рекомендуется)
-docker compose exec backend alembic -c alembic/alembic.ini upgrade head
-
-# Или через Makefile
-make migrate
+dc run --rm --no-deps -T backend alembic -c alembic/alembic.ini upgrade head
 ```
 
-Что создаётся:
-- **19 таблиц** — users, devices, groups, scripts, tasks, vpn_peers, audit_logs и др.
-- **Row-Level Security** — изоляция данных по org_id
-- **Индексы** — оптимизированные для 1000+ устройств
-- **Extensions** — uuid-ossp, pg_trgm, btree_gin
+Команда выполняется до API с явно подготовленными migration credentials. Текущий
+head и role/grant requirements указаны в начале документа. При ошибке не переходите
+к следующим шагам; host fallback не подтверждает тот же target и не используется.
 
 ### 4.5 Создание администратора
 
-После AUD-78 admin и enrollment key используют одну организацию
-`SPHERE_BOOTSTRAP_ORG_SLUG` (по умолчанию `default`). Сначала миграции и admin,
-затем `python -m scripts.seed_enrollment_key` с теми же bootstrap DB credentials.
-Конфликт ключа и ошибка создания прекращают bootstrap. [План первого пилота](docs/operations/PILOT-ACCEPTANCE.md)
-отделяет этот проверенный участок от ещё непроверенных стадий полного launcher.
-
 ```bash
-# Интерактивно (запрашивает email/пароль)
-docker compose exec backend python scripts/create_admin.py
-
-# Для prepared Compose передайте уже заданные ADMIN_EMAIL / ADMIN_PASSWORD:
-docker compose exec -e ADMIN_EMAIL -e ADMIN_PASSWORD backend python scripts/create_admin.py
-# SPHERE_ADMIN_* — входные переменные full-deploy launcher, не самого Python CLI.
+# Интерактивный admin CLI запрашивает email/password.
+dc run --rm --no-deps backend python scripts/create_admin.py
+dc run --rm --no-deps -T backend python -m scripts.seed_enrollment_key
 ```
+
+Оба CLI используют `SPHERE_BOOTSTRAP_ORG_SLUG=default`. Для иной организации
+передайте одну и ту же явно заданную переменную через `-e SPHERE_BOOTSTRAP_ORG_SLUG`
+обоим one-off containers. Enrollment key берётся из эффективного agent-config.
+Повтор admin CLI может обновить пароль; конфликты ключа не исправляются молча.
+Для headless задайте `ADMIN_EMAIL/ADMIN_PASSWORD` в process environment и передайте
+`-e ADMIN_EMAIL -e ADMIN_PASSWORD`; `SPHERE_ADMIN_*` предназначены для full-deploy.
 
 ### 4.6 Проверка здоровья
 
+Только после успешных migrations/admin/key:
+
 ```bash
-# Health-check скрипт (все сервисы)
-./scripts/health-check.sh
-
-# Или вручную
-curl http://localhost:8000/api/v1/health
-# → {"status":"ok","version":"4.5.0"}
-
-curl http://localhost:3000
-# → 200 OK (Next.js HTML)
+dc up -d --wait --wait-timeout 300
+dc ps --all
 ```
+
+Backend probe требует `/api/v1/health/readyz` → HTTP 200 и `status=ready`;
+frontend probe требует `/login` → 200. Production overlay имеет такие же probes
+внутри контейнеров. Это проверка Compose running/healthy, не успешного login,
+APK/task или VPN. [Полные критерии пилота](docs/operations/PILOT-ACCEPTANCE.md).
 
 ### Доступ к сервисам
 

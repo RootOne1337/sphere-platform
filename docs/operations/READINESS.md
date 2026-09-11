@@ -261,3 +261,12 @@ Windows env paths подтверждены; полный первый pilot acce
 Production Dockerfile содержит два bootstrap CLI. Настоящий image probe: baseline
 2 failures / 2 controls, после COPY все 4 cases проходят. Эти cases идут отдельным
 CI job и не прибавлены к прежним 1424 pytest cases. SQL bootstrap/rollout ещё открыт.
+
+### AUD-82: bootstrap до приложений
+
+Оба full-deploy теперь поднимают PostgreSQL/Redis и ждут readiness, выполняют
+migration/admin/key в one-off backend containers, затем запускают приложения и
+ждут Compose running/healthy. Production имеет API/login probes. Host migration
+fallback и fixed-name/host-port pseudo health удалены. Все 65 deployment cases
+проходят с процессом вместо Docker; полный daemon/SQL/APK rollout не принят.
+Разделение DB roles, secrets и dev-key hook остаются ближайшими ограничениями.

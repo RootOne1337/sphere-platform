@@ -60,4 +60,4 @@ docker() { "$LAUNCHER_PYTHON" "$LAUNCHER_BOUNDARY" "$@"; }
     recorded = [json.loads(line) for line in calls.read_text(encoding="utf-8").splitlines()]
     assert result.returncode == 0, result.stdout + result.stderr + "\nargv: " + repr(recorded)
     assert len(recorded) == (1 if operation == "build_images" else 2)
-    assert recorded[0][5] == ("build" if operation == "build_images" else "exec")
+    assert recorded[0][5] == ("build" if operation == "build_images" else "run")

@@ -32,6 +32,13 @@ researches NitroGen and a future external inference worker; no AI is implemented
 
 ### Latest runtime findings
 
+- **AUD-82:** full-deploy started API before schema/admin/enrollment existed and
+  depended on backend exec/host migration fallback. Both launchers now wait for
+  databases, run one-off migration/admin/key, then wait for applications. Production
+  gets API/login healthchecks; fixed names/host HTTP and false success output are
+  removed. All 65 local deployment cases pass (21 new). Full SQL/daemon acceptance,
+  role separation and coordinated upgrades remain open.
+
 - **AUD-81:** full-deploy invokes bootstrap CLIs absent from the production image.
   Ship only those two scripts. A new mandatory CI job builds the actual image and
   executes four network-isolated, read-only probes without a source mount. Baseline:
