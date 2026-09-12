@@ -1,11 +1,16 @@
 # Эксплуатационная готовность Sphere
 
-**Срез: 11 сентября 2026 · аудит продолжается · приоритеты согласованы с владельцем.**
+**Срез: 12 сентября 2026 · аудит продолжается · приоритеты согласованы с владельцем.**
+
+**Локальный стенд запущен:** отдельный `sphere-pilot-20260911`, семь сервисов,
+реальный browser login и reload с сохранением сессии. Исправлен Windows CRLF blocker
+Nginx (AUD-88). [Адреса, APK и границы проверки](LOCAL-PILOT.md).
+Установленный APK → задание → результат и VPN ещё предстоит проверить.
 
 [Главная](../../README.md) · [Доказательства аудита](../audits/2026-09-05/AUDIT-REPORT.md) ·
 [APK](../android-agent.md) · [PC-agent](../pc-agent.md) · [Будущий AI-контур](../architecture/AI-READINESS.md)
 
-**Последняя проверенная ревизия: `a5209ba` (AUD-87).**
+**Последняя ревизия с архивированным полным CI: `a5209ba` (AUD-87).**
 Linux CI: **1506 passed / 69.71%**, включая 538 production-directory и
 93 deployment cases. Отдельно mandatory container job: **4 no-network probes +
 1 SQL/runtime scenario + 2 PostgreSQL init/restart cases**. Все четыре workflows

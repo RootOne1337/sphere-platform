@@ -5,6 +5,11 @@ Developer and operator guide, checked against the audit branch on **11 September
 Android device have not been established. Findings, reproduction evidence and
 remaining blockers are in the [audit report](audits/2026-09-05/AUDIT-REPORT.md).
 
+For the separate Windows installation started on 12 September, use the
+[local pilot handoff](operations/LOCAL-PILOT.md). Its dev debug APK has a separate
+application ID, local enrollment key and discovery URL; normal dev/enterprise
+artifacts are not configured for that isolated installation.
+
 ## 1. Overview
 
 The Kotlin APK connects managed devices to Sphere Platform, executes DAGs and

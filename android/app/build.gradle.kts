@@ -15,10 +15,10 @@ if (versionFile.exists()) versionProps.load(versionFile.inputStream())
 val appVersionCode = versionProps.getProperty("VERSION_CODE", "10001").toInt()
 val appVersionName: String = versionProps.getProperty("VERSION_NAME", "1.0.0")
 
-// ── Динамический server URL из корневого .env ─────────────────────────────
-// sync-tunnel-url.sh обновляет SERVER_PUBLIC_URL → Gradle подхватывает при каждой сборке
+// Build-specific URL takes precedence without modifying a shared installation's .env.
+// Legacy fallback: sync-tunnel-url.sh updates SERVER_PUBLIC_URL in the root .env.
 val dotEnvFile = rootProject.file("../.env")
-val serverPublicUrl: String = if (dotEnvFile.exists()) {
+val serverPublicUrl: String = System.getenv("SPHERE_SERVER_URL") ?: if (dotEnvFile.exists()) {
     dotEnvFile.readLines()
         .firstOrNull { it.startsWith("SERVER_PUBLIC_URL=") }
         ?.substringAfter("=")?.trim()?.removeSurrounding("\"")
@@ -58,20 +58,22 @@ android {
     productFlavors {
         create("dev") {
             dimension = "env"
-            applicationIdSuffix = ".dev"
+            // Separate pilot identity/storage from an already installed dev agent.
+            applicationIdSuffix = System.getenv("SPHERE_DEV_APPLICATION_ID_SUFFIX") ?: ".dev"
             versionNameSuffix = "-dev"
             buildConfigField("boolean", "ALLOW_HTTP", "true")
             buildConfigField("String", "FLAVOR_LABEL", "\"dev\"")
-            // Server URL из .env (обновляется sync-tunnel-url.sh при смене Cloudflare-туннеля)
+            // Isolated dev builds can select their own server, enrollment and discovery.
             buildConfigField("String", "DEFAULT_SERVER_URL", "\"$serverPublicUrl\"")
-            // Enrollment key из agent-config/environments/development.json
-            buildConfigField("String", "DEFAULT_API_KEY", "\"sphr_dev_enrollment_key_2025\"")
+            // Override with the key seeded into the selected development installation.
+            buildConfigField("String", "DEFAULT_API_KEY", "\"${System.getenv("SPHERE_ENROLLMENT_KEY") ?: "sphr_dev_enrollment_key_2025"}\"")
             buildConfigField("String", "DEFAULT_DEVICE_ID", "\"\"")
-            // TZ-12: HTTP Config Endpoint через GitHub Raw — публичный репо с конфигами
+            // A local SPHERE_CONFIG_URL avoids contacting the shared GitHub environment.
+            // Legacy default: HTTP Config Endpoint через GitHub Raw.
             // БЕЗОПАСНОСТЬ: укажи pinned commit hash вместо mutable ветки `main`
             // для устранения supply-chain риска (зависимость от изменяемого ref).
             // Пример: https://raw.githubusercontent.com/RootOne1337/sphere-agent-config/<PINNED_COMMIT_HASH>/environments/development.json
-            buildConfigField("String", "CONFIG_URL", "\"https://raw.githubusercontent.com/RootOne1337/sphere-agent-config/main/environments/development.json\"")
+            buildConfigField("String", "CONFIG_URL", "\"${System.getenv("SPHERE_CONFIG_URL") ?: "https://raw.githubusercontent.com/RootOne1337/sphere-agent-config/main/environments/development.json"}\"")
         }
         create("enterprise") {
             dimension = "env"

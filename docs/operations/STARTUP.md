@@ -5,6 +5,10 @@
 
 ## Подготовка
 
+Для уже подготовленного отдельного Windows-стенда `sphere-pilot-20260911` используйте
+[локальную инструкцию](LOCAL-PILOT.md): другой project/env и порт 18080 позволяют
+сохранить старую установку. Описанный ниже общий launcher относится к обычному dev.
+
 Нужны PowerShell 7, Docker с Compose v2, поддерживающим `up --wait --wait-timeout`,
 и заполненный `.env.local` либо `.env` в корне checkout. Для production overlay уже требуется
 Compose 2.24.4+ из-за `!reset`. Параметры перечислены в
