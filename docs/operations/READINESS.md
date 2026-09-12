@@ -6,7 +6,9 @@
 browser login/reload и один установленный APK. После AUD-92 прошли 12/12 HTTPS
 `echo`; gateway restart → автоматический возврат за 9.03 s без новой регистрации.
 [Версии и доказательства](LOCAL-PILOT.md). Внешний туннель временный; постоянный
-независимый ingress, автоматический publisher, полное DAG-задание из UI и VPN ещё не приняты.
+независимый ingress, полное DAG-задание из UI и VPN ещё не приняты.
+[Publisher](DISCOVERY-PUBLISHER.md) уже выполняет смену адреса автоматически;
+native restart → publication 39.97 s → echo 250.83 s. Host reboot ещё не принят.
 Signed discovery работает: [native смена адреса и возврат](../audits/2026-09-05/SIGNED-DISCOVERY-NATIVE.md)
 прошли без переустановки и новой регистрации. Backend HA этим не подтверждено.
 

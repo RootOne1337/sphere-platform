@@ -86,7 +86,10 @@ Installation ID/public verification key заданы при сборке; enroll
 
 **Текущий внешний адрес временный.** Он работает через исходящий Quick Tunnel,
 но изменится при restart connector. Основной signed config находится на GitHub вне туннеля;
-копия — на gateway. Автопубликация сменившегося URL ещё не реализована. [Remote profile, реальные проверки и ограничения](REMOTE-PILOT.md).
+копия — на gateway. Автопубликация включена для этого стенда: задача
+`Sphere-Publisher-pilot-20260911`, цикл 60 s и logon текущего Windows-пользователя.
+[Контракт, состояние и остановка](DISCOVERY-PUBLISHER.md). Старый baked gateway
+mirror APK после смены hostname недоступен; её основной GitHub source стабилен. [Remote profile, реальные проверки и ограничения](REMOTE-PILOT.md).
 [Подписанный bootstrap и открытая инфраструктурная работа](../architecture/ANDROID-BOOTSTRAP-DISCOVERY.md).
 
 ## Доказательства и следующий тест
@@ -117,7 +120,13 @@ Installation ID/public verification key заданы при сборке; enroll
   Команды управления им в тест не входили. 27 baseline containers полностью совпали,
   `/reverent_colden` отсутствует. Исходная inventory сохранена без подмены.
 
-**Дальше:** постоянные независимые ingress/config hosts, автоматическая публикация и renewal; второй
+**Автоматическая публикация:** реальный restart коннектора → новый signed v8
+за 39.97 s → APK echo за 250.83 s; без ручного config update и регистрации.
+Текущий внешний адрес: `https://reach-further-loads-ran.trycloudflare.com`.
+Last-known route/expiry/version publisher видны в
+`.local-pilot/remote/publisher/state/status.json`.
+
+**Дальше:** постоянные независимые ingress/config hosts, приёмка host reboot и renewal; второй
 эмулятор с проверенной сборкой; web → DAG → durable result; VPN и failure drills.
 
 **Пока не подтверждено:** полноценное задание из UI, стриминг, физические телефоны,

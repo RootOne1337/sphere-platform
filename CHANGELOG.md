@@ -14,6 +14,13 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Security / runtime
 
+- AUD-96: scoped host publisher automatically signs and publishes changed Quick
+  Tunnel routes, renews near expiry and repairs the public mirror after failures.
+  Journal/CAS and process locking preserve versions after request/response loss.
+  Windows scheduled task on the new pilot passed native restart → publication →
+  APK echo without manual config/reconnect; 50 publisher/signer tests pass.
+  [Evidence and deployment limits](docs/audits/2026-09-05/AUTOMATIC-DISCOVERY-PUBLICATION.md).
+
 - Native signed discovery acceptance on `f61cd5a` (final equivalent APK `0f1410e`): GitHub supplies a new
   route while the old connector/config mirror is unavailable; actual echo and
   return migration pass with the same PID/device identity and zero enrollments.

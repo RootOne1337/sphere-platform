@@ -63,7 +63,9 @@ autossh и keepalive. Существующие туннели других ус�
 Quick Tunnel выдаёт URL после запуска connector. Для нового адреса необходимо
 согласовать public JSON, backend public URL/CORS и выпустить новый signed version.
 В signed APK management адрес менять или пересобирать APK не требуется. Автоматическая
-публикация нового URL после connector restart **не реализована**. Поэтому сохранённый
+публикация нового URL после connector restart включена через
+[host publisher](DISCOVERY-PUBLISHER.md) на новом стенде; Windows logon требуется.
+Для другой установки он готовится отдельно. GitHub rollout остаётся медленным; сохранённый
 Quick Tunnel APK нельзя раздавать большому парку как постоянную сборку.
 [Официальные ограничения](https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/do-more-with-tunnels/trycloudflare/).
 

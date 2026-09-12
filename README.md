@@ -26,7 +26,9 @@
 > **Проверено на APK:** подписанный bootstrap, смена management адреса при отказе
 > исходного туннеля и возврат без переустановки, с сохранением identity.
 > [Native evidence](docs/audits/2026-09-05/SIGNED-DISCOVERY-NATIVE.md). Постоянный независимый
-> ingress и массовая приёмка ещё открыты.
+> ingress и массовая приёмка ещё открыты. На новом Windows-стенде
+> [автоматическая публикация адреса](docs/operations/DISCOVERY-PUBLISHER.md)
+> проверена после restart connector без ручного обновления конфигурации.
 
 ## Для чего Sphere
 

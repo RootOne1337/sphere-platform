@@ -4,6 +4,12 @@
 Исходная ревизия: `28f8cc46ab65496e00297960fd94d87d1605cc83`.
 Ветка исправлений: `codex/enterprise-audit-20260905`; [draft PR #19](https://github.com/RootOne1337/sphere-platform/pull/19).
 
+**AUD-96: publisher устраняет ручную публикацию после смены tunnel URL.**
+Scoped Docker observation, HTTPS installation/readiness, signed CAS и journal;
+на новом стенде включена задача текущего пользователя. Native restart → publication
+39.97 s → echo 250.83 s, та же identity, 0 регистраций.
+[Root cause, tests и ограничения](AUTOMATIC-DISCOVERY-PUBLICATION.md).
+
 **AUD-95 OPEN: новая конфигурация через GitHub может приходить через несколько минут.**
 Native revalidation/query experiments не подтвердили быстрое обновление; неэффективный
 query workaround удалён. Нужны заранее доступный резерв и второй постоянный source.

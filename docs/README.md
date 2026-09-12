@@ -56,4 +56,5 @@ catalog генерируется из registered routes, но не удосто�
 миграционные ограничения и remaining risks. Изменение цели парка или deployment
 топологии отражается сначала в operational matrix, затем в runbooks и тестах.
 
+- [Автоматический publisher: настройка, supervision и восстановление](operations/DISCOVERY-PUBLISHER.md).
 - [Signed discovery на установленном APK: отказ, миграция и возврат](audits/2026-09-05/SIGNED-DISCOVERY-NATIVE.md).

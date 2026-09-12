@@ -35,8 +35,9 @@ cache подтверждает revalidation для совместимых пос
   failover не должен ждать публикации нового адреса после каждого отказа.
 - Второй постоянный config host с измеренной свежестью документа и независимостью
   от первого provider. Gateway mirror полезен, пока доступен его собственный адрес.
-- Автоматический publisher новых адресов и renewal до expiry; проверка при
-  connector/host reboot, blocked provider и массовом reconnect.
+- Автоматический publisher/renewal реализован в [AUD-96](AUTOMATIC-DISCOVERY-PUBLICATION.md).
+  Connector restart принят; остаются host reboot, blocked provider, долгосрочный
+  renewal и массовый reconnect. Это не устраняет измеренную задержку GitHub.
 
 Affected components: публичные config sources и rollout; клиент
 [SignedDiscovery](../../../android/app/src/main/kotlin/com/sphereplatform/agent/provisioning/SignedDiscovery.kt),

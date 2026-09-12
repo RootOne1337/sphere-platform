@@ -124,8 +124,13 @@ gateway, публичный JSON или репозиторий. При публ�
 не изменены. Ветка является bootstrap URL: её нельзя удалять после merge, пока
 APK зависит от неё. Начальный документ имеет срок 30 дней от выпуска.
 
+[Host publisher](../operations/DISCOVERY-PUBLISHER.md) теперь автоматически
+наблюдает Quick Tunnel, публикует signed version и продлевает документ за 7 дней
+до expiry. Native restart → publication → APK recovery принят на новом Windows pilot.
+Это не переносимый system service: текущая установка работает при logon пользователя.
+
 **Открыто:** второй постоянный внешний config host, независимый второй ingress,
-автоматическая публикация сменившегося tunnel URL и renewal до expiry, обновление
+host reboot и долгосрочная приёмка renewal, обновление
 списка bootstrap hosts и verification keys без APK update, versioned diagnostics
 в UI, jitter/rate limit forced config polling, fleet/physical-device acceptance.
 Сейчас bootstrap sources и verification key задаются при сборке; не обещается
