@@ -152,7 +152,8 @@ class SetupActivity : AppCompatActivity() {
     private suspend fun performAutoEnrollLocked(config: ZeroTouchProvisioner.ProvisionConfig) {
         // Если autoRegister включён и API-ключ пуст (config_endpoint) → авто-регистрация
         if (config.autoRegisterEnabled && config.apiKey.isBlank()) {
-            performAutoRegistration(config.serverUrl, config.fallbackServerUrl)
+            setLoading(false)
+            showStatus("Auto-register: no enrollment key bound to this configuration.", isError = true)
             return
         }
 
@@ -165,69 +166,6 @@ class SetupActivity : AppCompatActivity() {
         // Есть server_url но нет API-ключа и нет autoRegister → ручной ввод
         setLoading(false)
         showStatus("Server found (${config.source}), enter API key manually.", isError = false)
-    }
-
-    /**
-     * Авто-регистрация через POST /api/v1/devices/register.
-     * Не требует API-ключ от пользователя — используется enrollment key из конфига.
-     */
-    private suspend fun performAutoRegistration(serverUrl: String, fallbackServerUrl: String?) {
-        showStatus("Auto-registering device…", isError = false)
-
-        // Получаем enrollment API key из конфига (config endpoint или файл)
-        val enrollmentKey = getEnrollmentKeyFromConfig()
-        if (enrollmentKey == null) {
-            setLoading(false)
-            showStatus("Auto-register: enrollment key not found. Enter credentials manually.", isError = true)
-            return
-        }
-
-        val result = runCatching {
-            registrationClient.register(
-                serverUrl = serverUrl,
-                fallbackServerUrl = fallbackServerUrl,
-                enrollmentApiKey = enrollmentKey,
-            )
-        }.onFailure { if (it is CancellationException) throw it }
-
-        setLoading(false)
-        if (result.isSuccess) {
-            val reg = result.getOrThrow()
-            showStatus(
-                "Registered: ${reg.name} (${if (reg.isNew) "new" else "re-enrolled"})",
-                isError = false,
-            )
-            requestIgnoreBatteryOptimization()
-            launchAgent()
-        } else {
-            val ex = result.exceptionOrNull()
-            val msg = if (ex is RegistrationException) {
-                "HTTP ${ex.httpCode}: ${ex.message}"
-            } else {
-                ex?.message ?: "unknown"
-            }
-            Timber.w("Auto-registration failed: $msg")
-            showAutoEnrollmentFailure(ex, "Auto-register failed: $msg")
-        }
-    }
-
-    /**
-     * Получает enrollment API key из server config endpoint или локальных источников.
-     * Prioritет: config endpoint → локальный файл → BuildConfig.DEFAULT_API_KEY.
-     */
-    private suspend fun getEnrollmentKeyFromConfig(): String? {
-        // Пробуем получить ключ из config endpoint (server возвращает enrollment_api_key)
-        val serverConfig = provisioner.fetchServerConfig()
-        if (serverConfig?.enrollmentApiKey != null) {
-            return serverConfig.enrollmentApiKey
-        }
-        // Пробуем из локального конфиг-файла (adb push)
-        val localConfig = provisioner.discoverConfig()
-        if (localConfig != null && localConfig.apiKey.isNotBlank()) {
-            return localConfig.apiKey
-        }
-        // BuildConfig fallback
-        return BuildConfig.DEFAULT_API_KEY.takeIf { it.isNotBlank() }
     }
 
     /**

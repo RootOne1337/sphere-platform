@@ -4,6 +4,11 @@
 Исходная ревизия: `28f8cc46ab65496e00297960fd94d87d1605cc83`.
 Ветка исправлений: `codex/enterprise-audit-20260905`; [draft PR #19](https://github.com/RootOne1337/sphere-platform/pull/19).
 
+**AUD-93: enrollment смешивал выбранный адрес с ключом другого discovery-ответа.**
+Повторный HTTP lookup удалён из setup/workers; ключ берётся из согласованного
+`ProvisionConfig`. Before-case падает на старых workers; after-case проверяет оба
+фоновых пути. [Root cause и границы](ENROLLMENT-DISCOVERY-SNAPSHOT.md).
+
 **AUD-92: подключённый APK ошибочно объявлялся offline.** Интерактивные shell,
 logcat и reboot зависели от попадания HTTP в worker, владеющий WebSocket. В native
 smoke `echo` один запрос вернул 400, два — 200. Три cross-worker regression падали

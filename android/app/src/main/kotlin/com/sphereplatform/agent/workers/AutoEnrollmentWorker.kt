@@ -81,7 +81,7 @@ class AutoEnrollmentWorker @AssistedInject constructor(
             if (!authStore.getToken().isNullOrBlank() && authStore.getDeviceId() != null) return activate()
             val config = provisioner.discoverConfig() ?: return Result.retry()
             if (config.requiresRegistration) {
-                val enrollmentKey = config.apiKey.takeIf { it.isNotBlank() } ?: getEnrollmentKeyFromConfig()
+                val enrollmentKey = config.apiKey.takeIf { it.isNotBlank() }
                 if (enrollmentKey == null) {
                     Timber.w("AutoEnrollmentWorker: auto_register requested, but no enrollment key found")
                     return Result.retry()
@@ -128,8 +128,4 @@ class AutoEnrollmentWorker @AssistedInject constructor(
         return Result.success()
     }
 
-    private suspend fun getEnrollmentKeyFromConfig(): String? {
-        val serverConfig = provisioner.fetchServerConfig()
-        return serverConfig?.enrollmentApiKey
-    }
 }

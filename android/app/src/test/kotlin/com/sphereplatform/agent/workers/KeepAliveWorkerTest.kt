@@ -164,7 +164,7 @@ class KeepAliveWorkerTest {
         assertEquals(ListenableWorker.Result.success(), result)
     }
 
-    // ── Сценарий 6: auto-register config (apiKey пустой) → server config ─
+    // ── Сценарий 6: адрес и enrollment key из одного discovery результата ─
 
     @Test
     fun `auto register with enrollment key from server`() = runTest {
@@ -172,18 +172,9 @@ class KeepAliveWorkerTest {
         every { authStore.getToken() } returns null
         coEvery { provisioner.discoverConfig() } returns ZeroTouchProvisioner.ProvisionConfig(
             serverUrl = "http://test-server:8000",
-            apiKey = "",
+            apiKey = "enroll_key_123",
             source = "config_endpoint",
             autoRegisterEnabled = true,
-        )
-        coEvery { provisioner.fetchServerConfig() } returns ZeroTouchProvisioner.ServerConfig(
-            serverUrl = "http://test-server:8000",
-            environment = "dev",
-            autoRegister = true,
-            enrollmentAllowed = true,
-            enrollmentApiKey = "enroll_key_123",
-            wsPath = "/ws/android",
-            configPollIntervalSeconds = 86400,
         )
         coEvery { registrationClient.register(any(), any()) } returns mockk(relaxed = true)
 
@@ -192,5 +183,6 @@ class KeepAliveWorkerTest {
 
         assertEquals(ListenableWorker.Result.success(), result)
         coVerify { registrationClient.register("http://test-server:8000", "enroll_key_123") }
+        coVerify(exactly = 0) { provisioner.fetchServerConfig() }
     }
 }

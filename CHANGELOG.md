@@ -14,6 +14,12 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Security / runtime
 
+- AUD-93: setup and background enrollment use the key bound to the selected
+  discovery result. Remove later HTTP key lookups and unrestricted UI baked-key
+  fallback, preventing a route from one response from receiving a key from another.
+  Before regression failed; both worker paths now preserve retry without registering.
+  [Evidence](docs/audits/2026-09-05/ENROLLMENT-DISCOVERY-SNAPSHOT.md).
+
 - AUD-92: interactive shell/logcat/reboot reach the worker owning the Android
   WebSocket through Redis. Subscribe acknowledgement precedes command publication;
   offline interactive actions are not deferred. Reboot timeout reports unknown

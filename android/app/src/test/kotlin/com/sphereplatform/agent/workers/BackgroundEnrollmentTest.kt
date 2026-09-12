@@ -361,6 +361,19 @@ class BackgroundEnrollmentTest {
         assertTrue(requests.isEmpty())
     }
 
+    @Test fun `workers never mix a selected route with a key from a later discovery response`() = runBlocking {
+        coEvery { provisioner.discoverConfig() } returns ZeroTouchProvisioner.ProvisionConfig(
+            url, "", autoRegisterEnabled = true)
+        coEvery { provisioner.fetchServerConfig() } returns ZeroTouchProvisioner.ServerConfig(
+            "https://other-installation.invalid", "test", true, true, "unrelated-key", "/ws/android", 120)
+        assertEquals(ListenableWorker.Result.retry(), worker("auto").doWork())
+        assertEquals(ListenableWorker.Result.success(), worker("keep").doWork())
+        assertTrue(requests.isEmpty())
+        assertNull(store.getDeviceId())
+        assertFalse(enrolled)
+        coVerify(exactly = 0) { provisioner.fetchServerConfig() }
+    }
+
     private suspend fun assertForegroundWorkerRace(foregroundFirst: Boolean) = coroutineScope {
         configured()
         val entered = CountDownLatch(1)

@@ -203,7 +203,6 @@ class KeepAliveWorker @AssistedInject constructor(
             if (config.requiresRegistration) {
                 // Auto-register через серверный endpoint
                 val enrollmentKey = config.apiKey.takeIf { it.isNotBlank() }
-                    ?: provisioner.fetchServerConfig()?.enrollmentApiKey
                 if (enrollmentKey == null) {
                     Timber.w("KeepAliveWorker: auto_register запрошен, но enrollment key не найден")
                     return Result.success()
