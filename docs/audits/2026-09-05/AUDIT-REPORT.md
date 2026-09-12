@@ -4,6 +4,12 @@
 Исходная ревизия: `28f8cc46ab65496e00297960fd94d87d1605cc83`.
 Ветка исправлений: `codex/enterprise-audit-20260905`; [draft PR #19](https://github.com/RootOne1337/sphere-platform/pull/19).
 
+**AUD-92: подключённый APK ошибочно объявлялся offline.** Интерактивные shell,
+logcat и reboot зависели от попадания HTTP в worker, владеющий WebSocket. В native
+smoke `echo` один запрос вернул 400, два — 200. Три cross-worker regression падали
+до fix; 15 targeted cases проходят после Redis routing и subscribe ACK до отправки.
+[Root cause, tests и границы](INTERACTIVE-COMMAND-ROUTING.md).
+
 **Дополнение 12 сентября: AUD-89/90.** Первая APK registration игнорировала заданный
 резерв при недоступности основного endpoint. Три новых сценария падали до fix;
 targeted 63 проходят после. Публичный discovery без секретов теперь сохраняет

@@ -6,13 +6,19 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [Unreleased] — enterprise audit, 2026-09-11
+## [Unreleased] — enterprise audit, 2026-09-12
 
 Изменения находятся в draft PR; это не опубликованный production release.
 Полный перечень предыдущих audit fixes, доказательства и residual risks:
 [audit report](docs/audits/2026-09-05/AUDIT-REPORT.md).
 
 ### Security / runtime
+
+- AUD-92: interactive shell/logcat/reboot reach the worker owning the Android
+  WebSocket through Redis. Subscribe acknowledgement precedes command publication;
+  offline interactive actions are not deferred. Reboot timeout reports unknown
+  outcome instead of success. Three reproduced cross-worker failures; 15 targeted
+  cases pass. [Evidence](docs/audits/2026-09-05/INTERACTIVE-COMMAND-ROUTING.md).
 
 - AUD-91: foreground auto-enrollment and background workers share the initial
   enrollment gate and reuse issued identity. Duplicate app/package-replaced

@@ -216,6 +216,9 @@ class PubSubPublisher:
         device_id: str,
         command: dict,
         timeout: float = 30.0,
+        *,
+        live_only: bool = False,
+        accept_progress: bool = False,
     ) -> dict:
         """
         Отправить команду и ждать ответ.
@@ -230,9 +233,17 @@ class PubSubPublisher:
         try:
             async with asyncio.timeout(timeout):
                 await ps.subscribe(result_channel)
-                success, was_queued = await self._send_command_inner(device_id, command)
+                # subscribe() writes the command; wait for Redis to confirm it
+                # before another connection can publish a very fast result.
+                async for message in ps.listen():
+                    if message["type"] == "subscribe":
+                        break
+                if live_only:
+                    success, was_queued = await self.send_command_live(device_id, command), False
+                else:
+                    success, was_queued = await self._send_command_inner(device_id, command)
                 if not success:
-                    raise HTTPException(503, f"Device '{device_id}' is offline and queue unavailable")
+                    raise HTTPException(503, f"Device '{device_id}' command channel is unavailable")
                 if was_queued:
                     raise HTTPException(
                         503,
@@ -241,7 +252,7 @@ class PubSubPublisher:
                 async for msg in ps.listen():
                     if msg["type"] == "message":
                         result = json.loads(msg["data"])
-                        if result.get("status") not in {"received", "running"}:
+                        if accept_progress or result.get("status") not in {"received", "running"}:
                             return result
         except asyncio.TimeoutError:
             raise HTTPException(504, f"Command timeout after {timeout}s")
