@@ -4,6 +4,11 @@
 Исходная ревизия: `28f8cc46ab65496e00297960fd94d87d1605cc83`.
 Ветка исправлений: `codex/enterprise-audit-20260905`; [draft PR #19](https://github.com/RootOne1337/sphere-platform/pull/19).
 
+**AUD-94: HTTP-кэш задерживал обновление адреса.** Локальный before-case с
+настоящими OkHttp Cache/MockWebServer возвращал старый подписанный v1 вместо v2.
+Config GET теперь требует revalidation; полный Android прогон: 522 tests / 37 suites.
+[Root cause, native наблюдение и пределы](DISCOVERY-HTTP-CACHE.md).
+
 **AUD-93: enrollment смешивал выбранный адрес с ключом другого discovery-ответа.**
 Повторный HTTP lookup удалён из setup/workers; ключ берётся из согласованного
 `ProvisionConfig`. Before-case падает на старых workers; after-case проверяет оба

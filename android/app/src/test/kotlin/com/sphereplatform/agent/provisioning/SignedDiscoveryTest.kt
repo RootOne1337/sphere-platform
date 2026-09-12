@@ -4,6 +4,8 @@ import com.sphereplatform.agent.BuildConfig
 import kotlinx.coroutines.*
 import okhttp3.*
 import okhttp3.ResponseBody.Companion.toResponseBody
+import okhttp3.mockwebserver.MockResponse
+import okhttp3.mockwebserver.MockWebServer
 import org.json.JSONObject
 import org.junit.Assert.*
 import org.junit.Test
@@ -235,6 +237,35 @@ class SignedDiscoveryTest {
                 listOf(second), discovery(MemoryCache())) { client }
             assertNull(provisioner.discoverConfig())
         } finally { client.dispatcher.executorService.shutdown(); client.connectionPool.evictAll() }
+    }
+
+    @Test fun `discovery revalidates HTTP cache before reusing signed routes`() = runBlocking {
+        val server = MockWebServer()
+        server.enqueue(MockResponse().setHeader("Cache-Control", "public, max-age=300")
+            .setBody(signed(payload(1, "https://old-route.invalid")).toString()))
+        server.enqueue(MockResponse().setHeader("Cache-Control", "public, max-age=300")
+            .setBody(signed(payload(2, "https://replacement.invalid")).toString()))
+        server.start()
+        val directory = File(RuntimeEnvironment.getApplication().cacheDir, "http-${UUID.randomUUID()}")
+        val httpCache = Cache(directory, 1024 * 1024)
+        val client = OkHttpClient.Builder().cache(httpCache).addInterceptor { chain ->
+            // Isolated loopback transport; production sources still require HTTPS.
+            chain.proceed(chain.request().newBuilder().url(server.url("/agent.json")).build())
+        }.build()
+        try {
+            val subject = SignedDiscovery(listOf(first), verifier(), MemoryCache()) { time }
+            val provisioner = ZeroTouchProvisioner(RuntimeEnvironment.getApplication(), first,
+                emptyList(), subject) { client }
+            assertEquals("https://old-route.invalid", provisioner.fetchServerConfig()?.serverUrl)
+            // A valid signature does not make the cached route the publisher's latest route.
+            assertEquals("https://replacement.invalid", provisioner.fetchServerConfig()?.serverUrl)
+            assertEquals(2, server.requestCount)
+        } finally {
+            client.dispatcher.executorService.shutdown()
+            client.connectionPool.evictAll()
+            httpCache.close()
+            server.close()
+        }
     }
 
     @Test fun `stuck source has bounded deadline and cannot block successful mirror or write late`() = runBlocking {

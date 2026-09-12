@@ -14,6 +14,11 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Security / runtime
 
+- AUD-94: mutable discovery GETs request HTTP cache revalidation. A real cached
+  signed v1 hid published v2 in the failing before-case; 522 Android regressions
+  pass after the fix. CDN propagation is still not an instantaneous SLA.
+  [Evidence](docs/audits/2026-09-05/DISCOVERY-HTTP-CACHE.md).
+
 - Android signed discovery (opt-in): up to three public HTTPS sources, fixed RSA
   signature verification, installation/version/freshness checks and AtomicFile
   cached routes/version floor. Initial enrollment can follow a newly signed route
