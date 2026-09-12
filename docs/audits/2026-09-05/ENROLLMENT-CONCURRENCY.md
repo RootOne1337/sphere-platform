@@ -28,16 +28,16 @@ REPLACE дополнительно обрывал текущий запрос.
 
 ## Regression tests и affected files
 
-[BackgroundEnrollmentTest.kt](../../../../android/app/src/test/kotlin/com/sphereplatform/agent/workers/BackgroundEnrollmentTest.kt)
+[BackgroundEnrollmentTest.kt](../../../android/app/src/test/kotlin/com/sphereplatform/agent/workers/BackgroundEnrollmentTest.kt)
 проверяет оба порядка гонки с настоящим registration client/store и worker,
 единственный HTTP запрос, повторное использование identity и неполное старое
-состояние. [EnrollmentSchedulingTest.kt](../../../../android/app/src/test/kotlin/com/sphereplatform/agent/workers/EnrollmentSchedulingTest.kt)
+состояние. [EnrollmentSchedulingTest.kt](../../../android/app/src/test/kotlin/com/sphereplatform/agent/workers/EnrollmentSchedulingTest.kt)
 использует настоящий WorkManager test database: две постановки оставляют один
 неотменённый Work ID. Targeted **29 tests passed**, включая пять новых cases.
 
-Изменены [AuthTokenStore.kt](../../../../android/app/src/main/kotlin/com/sphereplatform/agent/store/AuthTokenStore.kt),
-[SetupActivity.kt](../../../../android/app/src/main/kotlin/com/sphereplatform/agent/ui/SetupActivity.kt),
-[AutoEnrollmentWorker.kt](../../../../android/app/src/main/kotlin/com/sphereplatform/agent/workers/AutoEnrollmentWorker.kt),
+Изменены [AuthTokenStore.kt](../../../android/app/src/main/kotlin/com/sphereplatform/agent/store/AuthTokenStore.kt),
+[SetupActivity.kt](../../../android/app/src/main/kotlin/com/sphereplatform/agent/ui/SetupActivity.kt),
+[AutoEnrollmentWorker.kt](../../../android/app/src/main/kotlin/com/sphereplatform/agent/workers/AutoEnrollmentWorker.kt),
 указанные tests и test-only WorkManager dependency той же версии 2.9.0.
 
 ## Residual risk

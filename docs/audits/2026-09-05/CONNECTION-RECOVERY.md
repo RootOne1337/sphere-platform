@@ -33,9 +33,9 @@ suite: **63 passed**, Gradle BUILD SUCCESSFUL. В worker regression теперь
 
 **Затронутые файлы и regression tests:**
 
-- [DeviceRegistrationClient.kt](../../../../android/app/src/main/kotlin/com/sphereplatform/agent/provisioning/DeviceRegistrationClient.kt)
-- [RegistrationRecoveryTest.kt](../../../../android/app/src/test/kotlin/com/sphereplatform/agent/provisioning/RegistrationRecoveryTest.kt)
-- [BackgroundEnrollmentTest.kt](../../../../android/app/src/test/kotlin/com/sphereplatform/agent/workers/BackgroundEnrollmentTest.kt)
+- [DeviceRegistrationClient.kt](../../../android/app/src/main/kotlin/com/sphereplatform/agent/provisioning/DeviceRegistrationClient.kt)
+- [RegistrationRecoveryTest.kt](../../../android/app/src/test/kotlin/com/sphereplatform/agent/provisioning/RegistrationRecoveryTest.kt)
+- [BackgroundEnrollmentTest.kt](../../../android/app/src/test/kotlin/com/sphereplatform/agent/workers/BackgroundEnrollmentTest.kt)
 
 **Residual risk.** HTTP каждой попытки ограничен 10 s; два последовательно
 недоступных маршрута могут занимать до 20 s плюс fingerprint/preferences I/O.
@@ -64,14 +64,14 @@ BuildConfig. Если документ содержал маршруты без 
 `SPHERE_FALLBACK_SERVER_URL` добавляет второй адрес при сборке; незаданный адрес
 остаётся пустым. Документ со своим enrollment key сохраняет прежний контракт.
 
-**Регрессии:** [ConfigRecoveryTest.kt](../../../../android/app/src/test/kotlin/com/sphereplatform/agent/provisioning/ConfigRecoveryTest.kt)
+**Регрессии:** [ConfigRecoveryTest.kt](../../../android/app/src/test/kotlin/com/sphereplatform/agent/provisioning/ConfigRecoveryTest.kt)
 проверяет public discovery и отсутствие отправки credentials в discovery запрос,
 а также negative control другого origin. Все **23 ConfigRecovery cases** прошли.
 После AUD-89/90 полный devDebug JVM-прогон: **493 tests / 35 suites, 0 failures,
 0 errors, 0 skipped**, Gradle BUILD SUCCESSFUL за 2 min 16 s.
 
-**Файлы:** [ZeroTouchProvisioner.kt](../../../../android/app/src/main/kotlin/com/sphereplatform/agent/provisioning/ZeroTouchProvisioner.kt),
-[app/build.gradle.kts](../../../../android/app/build.gradle.kts), указанный test.
+**Файлы:** [ZeroTouchProvisioner.kt](../../../android/app/src/main/kotlin/com/sphereplatform/agent/provisioning/ZeroTouchProvisioner.kt),
+[app/build.gradle.kts](../../../android/app/build.gradle.kts), указанный test.
 
 **Residual risk.** Новая установка с полностью изменившейся парой адресов требует
 доверенного обновления provision config; произвольный новый URL из анонимного

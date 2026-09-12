@@ -21,9 +21,10 @@
 | MinIO S3 / console | `127.0.0.1:19000` / <http://127.0.0.1:19001> | Container health; прикладной screenshot flow ещё не проверен |
 | PostgreSQL / Redis | Только собственная Docker network | Миграции и bootstrap, отдельные persistent volumes |
 
-В Docker Desktop семь сервисов объединены под новым именем. Backend и frontend
+В Docker Desktop девять активных сервисов объединены под новым именем: семь
+базовых и два для временного внешнего доступа. Backend и frontend
 работают из собранных образов, без source bind mounts и установки npm при старте.
-Backend выполняет четыре Gunicorn workers. Все семь сервисов имеют healthcheck и
+Backend выполняет четыре Gunicorn workers. Все девять сервисов имеют healthcheck и
 `restart: unless-stopped`; после запуска Docker они возобновляют работу, если
 оператор не остановил их вручную. Docker Desktop должен быть запущен.
 
@@ -44,7 +45,7 @@ python .local-pilot/manage.py verify-old
 ```
 
 Сгенерированный local helper фиксирует `--project-name`, `--project-directory`,
-`--env-file` и три overlay, удаляет конфликтующие Compose/config значения из
+`--env-file` и выбранные Compose overlays, удаляет конфликтующие Compose/config значения из
 унаследованного environment. Он и installation manifest находятся в `.local-pilot/`
 и относятся к этому компьютеру. Нельзя заменять эту команду обычным `docker compose
 up` без выбранного project/env. Никакой `down -v` для первого тестирования не нужен.
@@ -61,50 +62,59 @@ admin и enrollment bootstrap; копирование одного overlay не 
 `com.sphereplatform.agent.pilot.debug` позволяет установить его рядом с обычными
 dev/enterprise сборками, сохраняя отдельные credentials и identity.
 
-Сборка задаёт четыре параметра только текущему процессу Gradle:
+Свежий файл: **`SphereAgent-remote-temporary-c0c0783-dev-debug.apk`**.
+Указатель на ту же сборку: **`LATEST-SphereAgent-pilot.apk`** в том же каталоге.
+SHA-256: `914e10c95eac99b863caffd54360359d69b2b76a2ce64adbce26723b925449e9`.
+Размер 8 359 033 bytes; versionCode 10200, minSdk 26, targetSdk 35.
 
-| Переменная | Назначение этого стенда |
-| --- | --- |
-| `SPHERE_SERVER_URL` | `http://10.0.2.2:18080` |
-| `SPHERE_CONFIG_URL` | `http://10.0.2.2:18080/api/v1/config/agent` |
-| `SPHERE_ENROLLMENT_KEY` | Ключ из локального agent config, предварительно seeded в новую БД |
-| `SPHERE_DEV_APPLICATION_ID_SUFFIX` | `.pilot` |
+В новой сборке `SPHERE_SERVER_URL` задаёт текущий внешний HTTPS адрес из
+`.local-pilot/installation.json`, `SPHERE_CONFIG_URL` — его `/api/v1/config/agent`.
+`SPHERE_ENROLLMENT_KEY` задаётся из закрытого config новой установки;
+`SPHERE_DEV_APPLICATION_ID_SUFFIX=.pilot`. Резервного адреса пока нет.
+`GIT_SHA` передаётся при сборке; manifest сохраняет revision и параметры проверки.
 
-Обычные dev defaults и enterprise flavor без этих overrides сохранены.
-`GIT_SHA` передаётся при сборке; manifest фиксирует revision, SHA-256, размер и
-application ID. Dev discovery направлен на этот же локальный сервер и не зависит
-от общей GitHub-конфигурации старой установки. Второй URL той же машины не является
-отдельным отказоустойчивым сервером.
+Эта APK установлена **только на доступный `emulator-5554`**. SHA-256 извлечённого
+установленного `base.apk` совпал с файлом. Другие экземпляры автоматически не
+обновлялись. Общая надпись `1.2.0-dev` не различает все audit builds: используйте
+имя файла/SHA, package ID и installation manifest.
 
-`10.0.2.2` — выбранный адрес host loopback для Android Emulator. Если другой
-эмулятор использует иной host gateway, надо согласовать его маршрут. Порты этого
-стенда опубликованы только на `127.0.0.1`: физический телефон и другая рабочая
-станция по LAN пока не подключены. Этот APK автоматически туда не устанавливался.
+Старый pilot APK с `10.0.2.2:18080` предназначался для host gateway эмулятора,
+а не распределённых станций. Ошибка на этом адресе означает, что экземпляр всё ещё
+использует такую сборку или старое provisioning. Обновление требует того же package
+и signing identity; не очищайте app data ради смены маршрута.
+
+**Текущий внешний адрес временный.** Он работает через исходящий Quick Tunnel,
+но изменится при restart connector. Config находится в том же туннеле; это общий
+отказ. [Remote profile, реальные проверки и ограничения](REMOTE-PILOT.md).
+[Независимый bootstrap без переустановки — следующий этап](../architecture/ANDROID-BOOTSTRAP-DISCOVERY.md).
 
 ## Доказательства и следующий тест
 
-- На свежих volumes применена schema до `20260910_device_refresh_retry`, затем
-  выполнены реальные CLI создания admin и enrollment key.
-- Playwright проверил login HTTP 200 → dashboard → devices HTTP 200. После reload
-  `/auth/refresh` вернул 200, пользователь остался на `/devices`. Первый 401 refresh
-  в чистом браузере до login ожидаем и не принят за дефект.
-- UI показывает **0 устройств** из новой базы: фиктивные online devices не добавлялись.
-- AUD-88 выявлен при настоящем запуске: CRLF ломал Nginx. Три Git checkout cases
-  падали до LF attributes и проходят после; gateway после исправления отвечает.
-- Полный локальный deployment suite: **98 passed / 85.25 s**. Он включает три
-  checkout regression и две проверки реального Compose merge локального профиля:
-  изоляция ресурсов/портов, image defaults, включённая auth и healthchecks.
-- Проверяется неизменность всех 29 прежних контейнеров; в local manifest сохранены
-  их ID/image/status/start time. Evidence и APK содержатся в игнорируемом
-  `.local-pilot/`; значения секретов не включаются в публичный отчёт.
+- На свежих volumes применена schema до `20260910_device_refresh_retry`, CLI
+  создали admin и enrollment key. Browser login/dashboard/devices и refresh после
+  reload прошли. Серверные данные не заменялись фиктивными online devices.
+- Backend/frontend образы нового стенда: `a22fb54`. Четыре Gunicorn workers.
+  После AUD-92 установленный APK выполнил 12/12 отдельных HTTPS `echo` запросов.
+  Первый запрос непосредственно после backend restart ранее получил 503 до возврата
+  WS подписчика; переходный отказ сохранён отдельно, не выдан за успешную команду.
+- APK `c0c0783`: 498 JVM tests / 36 suites, без failures/errors/skips. На установленном
+  APK gateway restart → новая WS session за 9.03 s, тот же PID/device ID, 0 новых
+  регистраций. Provider connector не перезапускался; второй provider не проверен.
+- Protocol probe отдельно проверил HTTPS enrollment, WSS auth/heartbeat/reconnect
+  и удалил своё синтетическое устройство. [Повторяемый сценарий](REMOTE-PILOT.md).
+- Объединённый локальный Python-прогон: **1526 passed / 368.66 s**, `tests/load`
+  исключён как отдельный opt-in профиль. Deployment subset: **101 passed**.
+  Coverage в этом локальном прогоне не измерялась; точный CI результат отмечается в PR.
+- Все 9 активных сервисов healthy. Старый `sphere-platform` и `sphere-tunnel`
+  сохранили ID/image/state/start time/mounts. Из общей исходной inventory 28 контейнеров
+  совпали; не относящийся к Sphere `/reverent_colden` больше не существует. Причина
+  его исчезновения этой проверкой не установлена; «все 29 неизменны» не заявляется.
 
-**Следующий шаг:** установить pilot APK на один эмулятор, выдать нужные Android
-разрешения, подтвердить регистрацию и `auth_ok`, найти тот же device ID в UI,
-выполнить простое задание и проверить reconnect без переустановки.
+**Дальше:** независимые источники конфигурации и постоянные ingress; второй
+эмулятор с проверенной сборкой; web → DAG → durable result; VPN и failure drills.
 
-**Пока не подтверждено:** исполнение APK на устройстве, end-to-end задание,
-стриминг, physical-device/LAN режим, VPN, external PC-agent, длительная нагрузка
-и массовое восстановление. Управляемый WG/AWG router для нового стенда не настроен;
-VPN-блок dashboard с нулём туннелей не доказывает доступность router. Отдельный
-Prometheus/Grafana/Loki stack не включён этим профилем. n8n требует первого входа
-и настройки workflows; контейнер health не равен работающей интеграции.
+**Пока не подтверждено:** полноценное задание из UI, стриминг, физические телефоны,
+VPN, external PC-agent, длительная нагрузка и массовое восстановление. Native echo
+не заменяет эти сценарии. WG/AWG router для нового стенда не настроен; нулевой
+VPN dashboard не доказывает доступность router. Prometheus/Grafana/Loki stack этим
+профилем не включён. n8n требует настройки workflows; health не равен интеграции.

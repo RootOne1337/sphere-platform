@@ -10,6 +10,7 @@
 | Оценить реальную готовность и порядок работ | [Эксплуатационная матрица](operations/READINESS.md) |
 | Найти подтверждённый дефект/исправление | [Audit report и evidence](audits/2026-09-05/AUDIT-REPORT.md) |
 | Узнать, что осталось до первого рабочего запуска | [Пилот: этапы, ориентиры сроков и критерии](operations/PILOT-ACCEPTANCE.md) |
+| Открыть текущий стенд / получить APK | [Local pilot](operations/LOCAL-PILOT.md), [Remote profile и native acceptance](operations/REMOTE-PILOT.md) |
 | Запустить и понимать readiness | [Startup contract](operations/STARTUP.md) |
 | Подготовить окружение | [Development](development.md), [Configuration](configuration.md) |
 | Подключить устройство/станцию | [Android](android-agent.md), [PC-agent](pc-agent.md) |

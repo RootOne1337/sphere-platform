@@ -40,17 +40,26 @@ initiated после received/running ACK, но timeout теперь возвр�
 
 ## Файлы и сохранённые regression tests
 
-- [devices/router.py](../../../../backend/api/v1/devices/router.py): общая доставка
+- [devices/router.py](../../../backend/api/v1/devices/router.py): общая доставка
   трёх интерактивных API с SQL-проверкой доступа.
-- [pubsub_router.py](../../../../backend/websocket/pubsub_router.py): subscribe ACK,
+- [pubsub_router.py](../../../backend/websocket/pubsub_router.py): subscribe ACK,
   live-only option и ожидание progress по явному запросу.
-- [test_interactive_command_routing.py](../../../../tests/production/test_interactive_command_routing.py):
+- [test_interactive_command_routing.py](../../../tests/production/test_interactive_command_routing.py):
   12 сценариев — три cross-worker/immediate-result, три offline без deferred effect,
   три foreign-device denial до publish, reboot timeout/ACK и отсутствие transport.
 
 После fix эти 12 и три существующие deadline regression прошли: **15 passed,
-1 существующее предупреждение, 6.40 s**. Полный прогон и повтор на установленном
-APK фиксируются в итоговом обновлении этого документа.
+1 существующее предупреждение, 6.40 s**. Объединённый прогон `tests/` без отдельного
+opt-in `tests/load`: **1526 passed / 368.66 s**, 4 предупреждения, без измерения coverage.
+На четырёхпроцессном backend image `a22fb54` после подтверждённого возврата native
+APK прошли **12/12** HTTPS `echo` с правильным stdout (735–1266 ms). Первый запрос
+во время предшествующего backend restart получил 503, следующие 11 прошли; этот
+переход сохранён отдельно. Успех после возврата связи не маскирует outage.
+
+Targeted Ruff и generated API check проходят. Общие локальные Ruff/mypy остаются
+нечистыми: 1 E721 и 13 type errors. Архив исходников `c0c0783` в том же окружении
+воспроизводит те же количества и файлы; новые routing-файлы ошибок не добавили.
+Это не заявление о прохождении этих gates в CI.
 
 ## Residual risk
 

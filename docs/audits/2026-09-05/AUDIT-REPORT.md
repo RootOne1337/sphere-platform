@@ -57,6 +57,12 @@ AUD-81–87 ниже. Это закрытые дефекты отдельных 
 
 ## Результаты проверок
 
+**Новый срез 12 сентября:** 1526 локальных Python tests прошли (без opt-in load и
+без coverage measurement), 101 deployment cases включены. Android devDebug: 498
+tests / 36 suites. [Native pilot evidence и ограничения](../../operations/REMOTE-PILOT.md).
+Исторические Linux coverage counts ниже сохраняют свою ревизию и не являются
+результатом последнего HEAD. Локальные Ruff/mypy baseline errors указаны в AUD-92.
+
 | Проверка | Результат | Практическое ограничение |
 | --- | --- | --- |
 | Android enterprise debug unit suite | 485 passed, 0 failed | JVM/MockWebServer и OkHttp interceptors; не проверяет ОС, codec, батарею или смерть процесса на телефоне |
@@ -66,7 +72,7 @@ AUD-81–87 ниже. Это закрытые дефекты отдельных 
 | Миграции | Применены до **20260910_device_refresh_retry** включительно | Только изолированная БД; конфликтные данные/downgrade проверены в throwaway schema; production не мигрировался |
 | Контейнерные проверки | **4 no-network + 1 SQL/runtime + 2 PostgreSQL init/restart** проходят локально и в CI, отдельно от pytest | Пустая SQL/bootstrap, ASGI lifespan/login/device, default/custom PG init и сохранение данных; без полного Compose/browser/APK |
 | Frontend | **198 Jest tests passed**, tsc passed; Next production build exit 0 на Node 24.19.0 | React/JSDOM + Axios adapters; настоящий browser runtime не проверен. Windows standalone tracing выдал ENOENT warning, artifact packaging ещё не подтверждён |
-| APK ↔ реальный локальный backend | Не завершено | Автоматическая проверка разрешений отклонила запуск локального API: `blocked by policy`; обход не выполнялся |
+| Установленный APK ↔ новый backend | **12/12 HTTPS shell echo**, gateway restart recovery **9.03 s** | APK `c0c0783`, backend `a22fb54`; тот же PID/device ID, 0 новых registrations. Один временный tunnel, не полное DAG/VPN/fleet acceptance |
 | 10–64 эмулятора на станции, сотни/тысячи APK, физические телефоны | Не измерено | Нет подтверждённых CPU/RAM/FPS/энергопотребления и совместимости со всеми Android |
 
 Последний полный Linux вывод: [CI `a5209ba`](evidence/ci-a5209ba-tests.txt).
