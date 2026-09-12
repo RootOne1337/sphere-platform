@@ -41,7 +41,7 @@ Admin и enrollment key принадлежат одной организации
 python .local-pilot/manage.py up -d --wait --wait-timeout 180
 python .local-pilot/manage.py ps --all
 python .local-pilot/manage.py logs --since 10m --tail 100 backend
-python .local-pilot/manage.py verify-old
+python .local-pilot/verify_runtime.py
 ```
 
 Сгенерированный local helper фиксирует `--project-name`, `--project-directory`,
@@ -62,16 +62,17 @@ admin и enrollment bootstrap; копирование одного overlay не 
 `com.sphereplatform.agent.pilot.debug` позволяет установить его рядом с обычными
 dev/enterprise сборками, сохраняя отдельные credentials и identity.
 
-Свежий файл: **`SphereAgent-remote-temporary-c0c0783-dev-debug.apk`**.
+Свежий файл: **`SphereAgent-signed-discovery-0f1410e-dev-debug.apk`**.
 Указатель на ту же сборку: **`LATEST-SphereAgent-pilot.apk`** в том же каталоге.
-SHA-256: `914e10c95eac99b863caffd54360359d69b2b76a2ce64adbce26723b925449e9`.
-Размер 8 359 033 bytes; versionCode 10200, minSdk 26, targetSdk 35.
+SHA-256: `3fea6b1be345bec99a71e1926a386dd070c361887d875d5b46a7c18d83d0d36b`.
+Размер 8,418,510 bytes; versionCode 10200, minSdk 26, targetSdk 35.
 
-В новой сборке `SPHERE_SERVER_URL` задаёт текущий внешний HTTPS адрес из
-`.local-pilot/installation.json`, `SPHERE_CONFIG_URL` — его `/api/v1/config/agent`.
-`SPHERE_ENROLLMENT_KEY` задаётся из закрытого config новой установки;
-`SPHERE_DEV_APPLICATION_ID_SUFFIX=.pilot`. Резервного адреса пока нет.
-`GIT_SHA` передаётся при сборке; manifest сохраняет revision и параметры проверки.
+Management URL и fallback в APK пусты. `SPHERE_CONFIG_URL` указывает на подписанный
+документ в ветке `codex/pilot-bootstrap-20260911` отдельного config repository;
+`SPHERE_CONFIG_MIRROR_URLS` — на `/bootstrap/agent.signed.json` pilot gateway.
+Installation ID/public verification key заданы при сборке; enrollment credential
+берётся из закрытого config этой установки. `SPHERE_DEV_APPLICATION_ID_SUFFIX=.pilot`.
+[Точные параметры и обновление документа](../architecture/ANDROID-SIGNED-DISCOVERY.md).
 
 Эта APK установлена **только на доступный `emulator-5554`**. SHA-256 извлечённого
 установленного `base.apk` совпал с файлом. Другие экземпляры автоматически не
@@ -84,9 +85,9 @@ SHA-256: `914e10c95eac99b863caffd54360359d69b2b76a2ce64adbce26723b925449e9`.
 и signing identity; не очищайте app data ради смены маршрута.
 
 **Текущий внешний адрес временный.** Он работает через исходящий Quick Tunnel,
-но изменится при restart connector. Config находится в том же туннеле; это общий
-отказ. [Remote profile, реальные проверки и ограничения](REMOTE-PILOT.md).
-[Независимый bootstrap без переустановки — следующий этап](../architecture/ANDROID-BOOTSTRAP-DISCOVERY.md).
+но изменится при restart connector. Основной signed config находится на GitHub вне туннеля;
+копия — на gateway. Автопубликация сменившегося URL ещё не реализована. [Remote profile, реальные проверки и ограничения](REMOTE-PILOT.md).
+[Подписанный bootstrap и открытая инфраструктурная работа](../architecture/ANDROID-BOOTSTRAP-DISCOVERY.md).
 
 ## Доказательства и следующий тест
 
@@ -105,12 +106,18 @@ SHA-256: `914e10c95eac99b863caffd54360359d69b2b76a2ce64adbce26723b925449e9`.
 - Объединённый локальный Python-прогон: **1526 passed / 368.66 s**, `tests/load`
   исключён как отдельный opt-in профиль. Deployment subset: **101 passed**.
   Coverage в этом локальном прогоне не измерялась; точный CI результат отмечается в PR.
-- Все 9 активных сервисов healthy. Старый `sphere-platform` и `sphere-tunnel`
-  сохранили ID/image/state/start time/mounts. Из общей исходной inventory 28 контейнеров
-  совпали; не относящийся к Sphere `/reverent_colden` больше не существует. Причина
-  его исчезновения этой проверкой не установлена; «все 29 неизменны» не заявляется.
+- Signed APK `0f1410e`: 522 JVM tests / 37 suites; в signed dev/enterprise
+  дополнительно по 19 cases. На том же коде `f61cd5a` смена адреса при остановленном connector:
+  271.61 s до echo; обратный переход успешен, PID/identity сохранены, 0 регистраций.
+  [Полный native сценарий](../audits/2026-09-05/SIGNED-DISCOVERY-NATIVE.md).
+- Итоговая APK: аварийный kill своего процесса → Android восстановил WS и echo
+  за **7.2 s**, новый PID, прежние identity/cache v7, 0 регистраций.
+- Все 9 активных сервисов healthy. Старые Sphere ID/image/state/mounts сохранены;
+  у `sphere-tunnel` изменился StartedAt (16:42:38 UTC), причина не установлена.
+  Команды управления им в тест не входили. 27 baseline containers полностью совпали,
+  `/reverent_colden` отсутствует. Исходная inventory сохранена без подмены.
 
-**Дальше:** независимые источники конфигурации и постоянные ingress; второй
+**Дальше:** постоянные независимые ingress/config hosts, автоматическая публикация и renewal; второй
 эмулятор с проверенной сборкой; web → DAG → durable result; VPN и failure drills.
 
 **Пока не подтверждено:** полноценное задание из UI, стриминг, физические телефоны,

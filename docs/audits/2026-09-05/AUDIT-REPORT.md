@@ -9,6 +9,10 @@ Native revalidation/query experiments не подтвердили быстрое
 query workaround удалён. Нужны заранее доступный резерв и второй постоянный source.
 [Evidence и условия закрытия](DISCOVERY-CDN-FRESHNESS.md).
 
+**Native signed discovery:** проверены получение конфигурации вне туннеля, смена
+адреса при отказе исходного канала и обратный переход без reinstall/re-enrollment.
+[Версии, доказательства и residual risks](SIGNED-DISCOVERY-NATIVE.md).
+
 **AUD-94: HTTP-кэш задерживал обновление адреса.** Локальный before-case с
 настоящими OkHttp Cache/MockWebServer возвращал старый подписанный v1 вместо v2.
 Config GET теперь требует revalidation; полный Android прогон: 522 tests / 37 suites.

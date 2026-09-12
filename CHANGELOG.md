@@ -14,6 +14,15 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Security / runtime
 
+- Native signed discovery acceptance on `f61cd5a` (final equivalent APK `0f1410e`): GitHub supplies a new
+  route while the old connector/config mirror is unavailable; actual echo and
+  return migration pass with the same PID/device identity and zero enrollments.
+  Final APK install/hash, signed v7 cache and real echo were checked separately.
+  Killing only its process recovered automatically to a real echo in 7.2 s,
+  with the same identity/cache and zero new registrations.
+  [Evidence](docs/audits/2026-09-05/SIGNED-DISCOVERY-NATIVE.md). Single emulator,
+  temporary same-provider ingress; permanent fallback/automated renewal still open.
+
 - AUD-95 remains open: GitHub publication/freshness can delay address migration
   for several minutes. Remove the minute-query experiment after native acceptance
   did not demonstrate improvement; retain standard HTTP cache revalidation and

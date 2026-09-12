@@ -28,6 +28,11 @@ config backend находится в другом каталоге. Автори
 Не включайте все profiles как якобы готовый резерв. Для текущего стенда включён
 только `quick`; два постоянных profiles — подготовка для следующего этапа.
 
+Реализация signed APK (`f61cd5a`, итоговый APK `0f1410e`) прошла миграцию через GitHub
+при недоступном исходном ingress и его config mirror; затем вернулся без
+переустановки. [Native evidence и границы](../audits/2026-09-05/SIGNED-DISCOVERY-NATIVE.md).
+Тестовый второй connector удалён; это не работающий постоянный WAN резерв.
+
 ## Подготовка другой изолированной установки
 
 Сначала подготовьте local-pilot schema/admin/enrollment по [основному guide](LOCAL-PILOT.md).
@@ -39,7 +44,8 @@ config backend находится в другом каталоге. Автори
 Создайте `.local-pilot/remote/public/agent.json` из
 [публичного шаблона](../../agent-config/templates/public-discovery.json): замените
 installation ID и адреса на собственные. Этот документ не является доверенным
-подписанным manifest: текущий APK ещё не проверяет signature/version/installation ID.
+подписанным manifest и используется только legacy APK. Новый signed APK принимает
+`/bootstrap/agent.signed.json` по [отдельному контракту](../architecture/ANDROID-SIGNED-DISCOVERY.md).
 Шаблон содержит неработающие example-адреса, а не готовую конфигурацию.
 
 Для named Cloudflare profile нужен собственный `.local-pilot/remote/cloudflare/config.yml`,
@@ -55,7 +61,8 @@ autossh и keepalive. Существующие туннели других ус�
 Фактические ограничения регистрации проверяйте у [провайдера](https://serveo.net/docs/).
 
 Quick Tunnel выдаёт URL после запуска connector. Для нового адреса необходимо
-согласовать public JSON, backend public URL/CORS и параметры pilot APK. Автоматическая
+согласовать public JSON, backend public URL/CORS и выпустить новый signed version.
+В signed APK management адрес менять или пересобирать APK не требуется. Автоматическая
 публикация нового URL после connector restart **не реализована**. Поэтому сохранённый
 Quick Tunnel APK нельзя раздавать большому парку как постоянную сборку.
 [Официальные ограничения](https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/do-more-with-tunnels/trycloudflare/).
@@ -84,7 +91,7 @@ injection: скрипт находит единственный `public-gateway`
 ## Подтверждённый native результат 12 сентября
 
 На `emulator-5554` установлен пакет `com.sphereplatform.agent.pilot.debug` из
-`c0c0783`; SHA-256 установленного `base.apk` совпадает с опубликованным локальным
+`c0c0783` (предыдущая проверка); SHA-256 установленного `base.apk` совпадает с опубликованным локальным
 файлом. После gateway restart этот APK восстановил сессию за **9.03 s**, включая
 время команды Docker restart: тот же PID/device ID, новая Redis WS session,
 **0 повторных регистраций**, без UI/ADB reconnect. Это одно измерение, не SLA.

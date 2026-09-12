@@ -1,0 +1,67 @@
+{
+  "verified_at": "2026-09-12",
+  "sha": "f61cd5addf9f49593d46e4693ed2527e5c9ac99d",
+  "runs": [
+    {
+      "name": "CI \u2014 Backend",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/34706329785",
+      "sha": "f61cd5addf9f49593d46e4693ed2527e5c9ac99d",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "name": "RLS Policy Coverage",
+          "conclusion": "success"
+        },
+        {
+          "name": "Lint (ruff + mypy)",
+          "conclusion": "success"
+        },
+        {
+          "name": "Tests",
+          "conclusion": "success"
+        },
+        {
+          "name": "Production image bootstrap",
+          "conclusion": "success"
+        },
+        {
+          "name": "Security (bandit + pip-audit)",
+          "conclusion": "success"
+        },
+        {
+          "name": "Alembic Single Head",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "name": "CI \u2014 Android",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/34706329752",
+      "sha": "f61cd5addf9f49593d46e4693ed2527e5c9ac99d",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "name": "Build APK",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "name": "CI \u2014 Frontend",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/34706329914",
+      "sha": "f61cd5addf9f49593d46e4693ed2527e5c9ac99d",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "name": "Frontend tests, types and build",
+          "conclusion": "success"
+        }
+      ]
+    }
+  ],
+  "backend_summary": [
+    "Tests\tUnit and real-service regression tests\t2026-09-12T16:55:10.3058742Z ================= 1547 passed, 4 warnings in 367.11s (0:06:07) ================="
+  ],
+  "current_android_sources_identical_to_this_revision": true,
+  "note": "Revision-specific archived result. New PR head checks are separate."
+}

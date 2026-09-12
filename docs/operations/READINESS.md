@@ -6,12 +6,20 @@
 browser login/reload и один установленный APK. После AUD-92 прошли 12/12 HTTPS
 `echo`; gateway restart → автоматический возврат за 9.03 s без новой регистрации.
 [Версии и доказательства](LOCAL-PILOT.md). Внешний туннель временный; постоянный
-независимый discovery/ingress, полное DAG-задание из UI и VPN ещё не приняты.
+независимый ingress, автоматический publisher, полное DAG-задание из UI и VPN ещё не приняты.
+Signed discovery работает: [native смена адреса и возврат](../audits/2026-09-05/SIGNED-DISCOVERY-NATIVE.md)
+прошли без переустановки и новой регистрации. Backend HA этим не подтверждено.
 
 [Главная](../../README.md) · [Доказательства аудита](../audits/2026-09-05/AUDIT-REPORT.md) ·
 [APK](../android-agent.md) · [PC-agent](../pc-agent.md) · [Будущий AI-контур](../architecture/AI-READINESS.md)
 
-**Последняя ревизия с архивированным полным CI: `a5209ba` (AUD-87).**
+**Последний архивированный CI: `f61cd5a` — backend, Android и frontend success.**
+Backend: **1547 passed / 367.11 s**, обязательные проверки lint/security/RLS и
+production image bootstrap прошли. Итоговый Android код `0f1410e` совпадает с этой
+ревизией; проверки нового PR head отмечаются отдельно.
+[Архив с run links](../audits/2026-09-05/evidence/ci-f61cd5a-summary.json).
+
+**Историческая ревизия: `a5209ba` (AUD-87).**
 Linux CI: **1506 passed / 69.71%**, включая 538 production-directory и
 93 deployment cases. Отдельно mandatory container job: **4 no-network probes +
 1 SQL/runtime scenario + 2 PostgreSQL init/restart cases**. Все четыре workflows
@@ -65,7 +73,7 @@ README и руководства обновляются по реализова�
 | P0 | APK не регистрируется после boot или подключается со старым ID | AUD-75: supplied bootstrap key больше не подменяет session; два workers сериализованы, повторяют activation, WS перечитывает назначенный ID; 24 новых JVM cases | [Контракт](../architecture/ANDROID-BACKGROUND-ENROLLMENT.md); AUD-77 закрывает отдельные записи и конкуренцию HTTP registration; response loss и установленный APK boot/recovery открыты |
 | P0 | Сервер перезапущен, парк возвращается без оператора | APK clean-close обходил delay, network retry имел одинаковые сроки у всех клиентов; AUD-67 исправляет pacing/jitter | Убить/поднять выделенный backend при 100, 500, 1000 реальных или протокольных clients; измерить p50/p95/p99 времени возврата и число незавершённых задач |
 | P0 | GitHub или основной адрес недоступен | AUD-74 сохраняет primary/fallback, перебирает их для WS и refresh без discovery, выбирает активный адрес по device-bound ACK; 27 JVM и 3 SQL/ASGI cases | [Настройка](../architecture/ANDROID-SAVED-ROUTES.md); реальный OS restart, отказ LAN/DNS/GitHub, проверка latency/capacity и отказа самого backend |
-| P0 | Discovery перестаёт работать после enrollment или переживает stop | AUD-73: JWT в `X-API-Key` давал 401; параллельные/поздние запросы меняли URL. Публичный отменяемый HTTP, один запрос и local revision исправляют воспроизведённые сценарии | [Контракт](../architecture/ANDROID-DISCOVERY-RECOVERY.md); AUD-74 сохраняет кандидатов без разрыва рабочего WS. Открыты durable config revision и реальный OS/network recovery |
+| P0 | Discovery перестаёт работать после enrollment или переживает stop | AUD-73: JWT в `X-API-Key` давал 401; параллельные/поздние запросы меняли URL. Публичный отменяемый HTTP, один запрос и local revision исправляют воспроизведённые сценарии | [Контракт](../architecture/ANDROID-DISCOVERY-RECOVERY.md); AUD-74 сохраняет кандидатов без разрыва рабочего WS. Signed mode сохраняет durable version floor; native миграция одного APK принята. Открыты fleet/OS recovery и независимая инфраструктура |
 | P0 | Истёк token во время outage | AUD-69/70 добавили сохранённый refresh operation ID и один recoverable successor; 24 SQL/ASGI + 7 APK cases проверяют commit loss и сохранение identity | [Rollout backend→APK](../security/device-refresh-recovery.md), фактический Android process death и сетевой обрыв; recovery ограничен expiry/consumption преемника |
 | P0 | Зависший refresh задерживает reconnect/stop | AUD-71: четыре исходных failures; HTTP теперь отменяется по дедлайну 10 s или отмене вызывающей coroutine, поздний body не записывает credentials. Восемь новых JVM cases | Проверить реальные Android sockets/OS; mutex wait и зависший commit/keystore не имеют общего 10-секундного SLA |
 | P0 | Нет связи во время выполнения задания | DAG исполняется локально, журнал хранит receipts/results; размер и срок хранения ограничены | Обрыв на claim/start/action/result/ACK, reboot процесса, повторная доставка; не повторить необратимое действие молча |

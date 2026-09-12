@@ -40,7 +40,7 @@ Affected files:
 
 Полный devDebug JVM прогон после fix: **522 tests / 37 suites**, без failures,
 errors и skips; devDebug APK собран. Проверка на установленном APK фиксируется
-отдельно в [pilot guide](../../operations/LOCAL-PILOT.md).
+отдельно в [native evidence](SIGNED-DISCOVERY-NATIVE.md).
 
 ## Residual risk
 

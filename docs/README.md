@@ -55,3 +55,5 @@ catalog генерируется из registered routes, но не удосто�
 Каждый следующий PR обновляет затронутый контракт, команды воспроизведения,
 миграционные ограничения и remaining risks. Изменение цели парка или deployment
 топологии отражается сначала в operational matrix, затем в runbooks и тестах.
+
+- [Signed discovery на установленном APK: отказ, миграция и возврат](audits/2026-09-05/SIGNED-DISCOVERY-NATIVE.md).

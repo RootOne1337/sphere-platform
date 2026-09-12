@@ -139,6 +139,15 @@ durability при неисправном накопителе/OEM или ато�
 сохранённые routes не удаляются. Изоляция и доверие ручному MDM/file provisioning
 не заменяются этим механизмом.
 
+## Native pilot
+
+APK `0f1410e` установлен с пустыми baked management URLs.
+Его Android код совпадает с `f61cd5a`. На этой реализации проверены приём подписанного cache, смена адреса через GitHub при отказе исходного
+tunnel/config mirror и обратный переход. PID/identity сохранены, новых регистраций нет.
+[Сценарий, времена и evidence](../audits/2026-09-05/SIGNED-DISCOVERY-NATIVE.md).
+Discovery GET требует HTTP revalidation. Минутный query удалён: он не ускорил
+GitHub в native acceptance. [AUD-95 OPEN](../audits/2026-09-05/DISCOVERY-CDN-FRESHNESS.md).
+
 ## Сохранённые проверки
 
 - Три before-failures для primary transport failure, malformed primary и mirror-only
