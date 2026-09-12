@@ -25,6 +25,7 @@ runtime-проверок и не считается доказательство
 
 | Дефект первого/повторного запуска | Доказательство до исправления | Исправление |
 | --- | --- | --- |
+| AUD-88: Windows checkout ломает запуск Nginx | Реальный контейнер: `set: line 9: illegal option -`, HTTP connection refused; 3 failed checkout regressions | LF attributes для Linux scripts; 3 passed, gateway HTTP 200 и browser login |
 | AUD-81: CLI отсутствует в production image | 2 failures / 2 controls в реальном контейнере без сети | Добавлены оба entry point, обязательный image CI probe |
 | AUD-82: приложения запускаются до schema/bootstrap | 21 failure / 7 controls на shell/Compose boundaries | Dependencies → migration/admin/key → applications с readiness |
 | AUD-83: dev enrollment использует другую identity и workers конфликтуют | 11 failures / 3 controls, SQL unique errors и registration 401 | Общий CLI/hook contract, exact org, configured key, row lock |
@@ -2387,3 +2388,32 @@ container restart проверены в Linux CI. Наличие n8n DB не о�
 полный Compose, browser и установленный APK → задание → результат, затем VPN,
 recovery, incident timeline и измерение fleet. Восстановление старого частичного init
 не выполнено и не требуется автоматически для исправления новой установки.
+
+### AUD-88 · P1 · Windows checkout prevents the HTTP gateway from starting
+
+- **Root cause:** the repository did not pin line endings for Linux shell scripts.
+  With `core.autocrlf=true`, Git checks out the bind-mounted Nginx entrypoint as
+  CRLF. Alpine `/bin/sh` interprets the carriage return in `set -e` as an invalid
+  option and exits before starting Nginx.
+- **Evidence/reproduction (12 September 2026):** isolated project
+  `sphere-pilot-20260911`, `nginx:alpine`, Windows Docker Desktop: repeated
+  `/tmp/entrypoint.sh: set: line 9: illegal option -`, restarting container and
+  connection refused on port 18080. Other services were running. A real Git
+  `checkout-index` under `core.autocrlf=true` reproduced CRLF in all three cases:
+  Nginx entrypoint, tunnel entrypoint and Android Gradle wrapper.
+- **Affected files/fix:** `.gitattributes` now enforces `*.sh text eol=lf` and
+  `android/gradlew text eol=lf`. The current Nginx working file was normalized to LF;
+  its logical content did not change. Only the new pilot gateway was restarted.
+- **Regression:** `tests/deployment/test_linux_script_checkout.py`: **3 failed →
+  3 passed**. The test stages canonical LF blobs in a disposable Git repository,
+  removes the working copies and checks them out using actual Windows-style Git
+  settings; it does not merely inspect the attributes text.
+- **Runtime recheck:** `/login` and `/api/v1/health/readyz` return HTTP 200 through
+  Nginx; real browser login and `/devices` succeed. Reload preserves the session.
+  All 29 pre-existing containers retain their IDs, images, status and start time.
+- **Residual risk:** attributes affect subsequent checkouts, not arbitrary
+  existing copies. Existing CRLF shell files need targeted normalization before
+  use; old deployments were intentionally not restarted or modified. A healthy
+  container alone does not validate UI/APK workflows; the pilot overlay now probes
+  the gateway and n8n over HTTP. [Local pilot handoff](../../operations/LOCAL-PILOT.md)
+  records the remaining APK/device/VPN acceptance boundary.
