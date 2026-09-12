@@ -86,7 +86,8 @@ class RegistrationRecoveryTest {
         client.connectionPool.evictAll()
     }
 
-    private suspend fun register() = registration.register(url, "sphr_isolated", fallbackServerUrl = backup)
+    private suspend fun register(withFallback: Boolean = false) =
+        registration.register(url, "sphr_isolated", fallbackServerUrl = backup.takeIf { withFallback })
     private fun awaitEntered() = assertTrue("Registration must reach held transport", entered.await(5, TimeUnit.SECONDS))
     private suspend fun awaitIdle() = withTimeout(5_000) {
         while (client.dispatcher.runningCallsCount() != 0 || client.dispatcher.queuedCallsCount() != 0) delay(5)
@@ -134,7 +135,7 @@ class RegistrationRecoveryTest {
 
     @Test fun `stopping registration cancels actual HTTP without waiting for headers`() = runBlocking {
         holdHeaders()
-        val pending = launch(Dispatchers.Default) { register() }
+        val pending = launch(Dispatchers.Default) { register(withFallback = true) }
         try {
             awaitEntered()
             pending.cancel()
@@ -193,7 +194,7 @@ class RegistrationRecoveryTest {
 
     @Test fun `successful registration retains explicit routes and issued credentials`() = runBlocking {
         respond = { response(it.request(), trackedBody()) }
-        assertEquals(id, register().deviceId)
+        assertEquals(id, register(withFallback = true).deviceId)
         assertEquals(id, store.getDeviceId())
         assertEquals("issued-access", store.getToken())
         assertEquals(backup, memory["fallback_server_url"])
@@ -290,8 +291,62 @@ class RegistrationRecoveryTest {
             // promotion; it is not evidence of a network send. Drain callbacks,
             // then verify cancellation and absence of any credential write.
             assertTrue(calls.contains(blocker))
-            assertTrue(calls.all { it === blocker || it.isCanceled() })
+        assertTrue(calls.all { it === blocker || it.isCanceled() })
             assertTrue(memory.isEmpty())
         } finally { release.countDown(); pending.cancelAndJoin(); awaitIdle() }
+    }
+
+    @Test fun `first registration uses configured backup after primary transport failure`() = runBlocking {
+        respond = {
+            if (it.request().url.host == "primary.invalid") throw IOException("primary connection refused")
+            response(it.request())
+        }
+        assertEquals(backup, register(withFallback = true).serverUrl)
+        assertEquals(listOf("primary.invalid", "backup.invalid"), calls.map { it.request().url.host })
+        assertTrue(calls.all { it.request().header("X-API-Key") == "sphr_isolated" })
+        assertEquals(backup, store.getServerUrl())
+        assertEquals(url, memory["fallback_server_url"])
+        assertEquals(id, store.getDeviceId())
+        assertEquals("issued-access", store.getToken())
+    }
+
+    @Test fun `first registration uses backup after unavailable primary gateway`() = runBlocking {
+        respond = { response(it.request(), code = if (it.request().url.host == "primary.invalid") 503 else 201) }
+        assertEquals(backup, register(withFallback = true).serverUrl)
+        assertEquals(2, calls.size)
+        assertEquals("issued-refresh", memory["refresh_token"])
+    }
+
+    @Test fun `unavailable route pair leaves credentials intact after exactly two attempts`() = runBlocking {
+        store.saveApiKey("existing-key")
+        val before = memory.toMap()
+        respond = { throw IOException("both management routes unavailable") }
+        assertTrue(runCatching { register(withFallback = true) }.exceptionOrNull() is IOException)
+        assertEquals(listOf("primary.invalid", "backup.invalid"), calls.map { it.request().url.host })
+        assertEquals(before, memory)
+    }
+
+    @Test fun `credential rejection does not probe another route`() = runBlocking {
+        respond = { response(it.request(), code = 401) }
+        val failure = runCatching { register(withFallback = true) }.exceptionOrNull()
+        assertEquals(401, (failure as RegistrationException).httpCode)
+        assertEquals(1, calls.size)
+        assertTrue(memory.isEmpty())
+    }
+
+    @Test fun `rate limit is returned for backoff rather than immediate alternate request`() = runBlocking {
+        respond = { response(it.request(), code = 429) }
+        val failure = runCatching { register(withFallback = true) }.exceptionOrNull()
+        assertEquals(429, (failure as RegistrationException).httpCode)
+        assertEquals(1, calls.size)
+        assertTrue(memory.isEmpty())
+    }
+
+    @Test fun `equivalent configured route is not attempted twice`() = runBlocking {
+        respond = { throw IOException("route unavailable") }
+        assertTrue(runCatching {
+            registration.register(url, "sphr_isolated", fallbackServerUrl = "$url/")
+        }.exceptionOrNull() is IOException)
+        assertEquals(1, calls.size)
     }
 }

@@ -14,6 +14,12 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Security / runtime
 
+- AUD-89: initial Android registration tries the configured alternate after
+  transport failure, HTTP 408 or 5xx. One successful response commits identity;
+  cancellation, persistence failures, 401/403 and 429 do not trigger an extra
+  enrollment. Three failing before-cases; 63 targeted regressions pass after.
+  [Evidence and remaining risks](docs/audits/2026-09-05/CONNECTION-RECOVERY.md).
+
 - AUD-78: исправлен bootstrap первого пользователя и enrollment key: отсутствующие
   DB imports, разная организация admin/device, потерянные credentials в launcher
   и ложный успех после ошибки. Bash использует общий Python CLI; ошибки прерывают

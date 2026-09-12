@@ -114,9 +114,9 @@ class BackgroundEnrollmentTest {
         AutoEnrollmentWorker(context, mockk(relaxed = true), provisioner, registration, store)
     else KeepAliveWorker(context, mockk(relaxed = true), provisioner, registration, store)
 
-    private fun configured(auto: Boolean = true, device: String? = null) {
+    private fun configured(auto: Boolean = true, device: String? = null, fallback: String? = backup) {
         coEvery { provisioner.discoverConfig() } returns ZeroTouchProvisioner.ProvisionConfig(
-            url, key, deviceId = device, autoRegisterEnabled = auto, fallbackServerUrl = backup,
+            url, key, deviceId = device, autoRegisterEnabled = auto, fallbackServerUrl = fallback,
         )
     }
 
@@ -280,7 +280,7 @@ class BackgroundEnrollmentTest {
         status = 201
         assertEquals(ListenableWorker.Result.success(), worker("keep").doWork())
         assertTrue(enrolled)
-        assertEquals(2, requests.size)
+        assertEquals(listOf("primary.invalid", "backup.invalid", "primary.invalid"), requests.map { it.url.host })
         assertEquals(listOf(id), startedIds)
     }
 
@@ -388,7 +388,7 @@ class BackgroundEnrollmentTest {
     }
 
     @Test fun `registration HTTP deadline returns worker retry and allows the next attempt`() = runBlocking {
-        configured()
+        configured(fallback = null)
         val entered = CountDownLatch(1)
         val release = CountDownLatch(1)
         beforeReply = {

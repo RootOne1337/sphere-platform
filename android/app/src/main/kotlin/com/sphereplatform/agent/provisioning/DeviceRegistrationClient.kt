@@ -3,6 +3,7 @@ package com.sphereplatform.agent.provisioning
 import com.sphereplatform.agent.network.forManagementRoute
 import com.sphereplatform.agent.network.normalizeManagementUrl
 import com.sphereplatform.agent.store.AuthTokenStore
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
@@ -129,8 +130,50 @@ class DeviceRegistrationClient @Inject constructor(
             toJsonObject(bodyMap),
         )
 
-        Timber.d("DeviceRegistration: POST /api/v1/devices/register fingerprint=${fingerprint.take(16)}...")
+        val routes = listOfNotNull(normalizeManagementUrl(serverUrl),
+            fallbackServerUrl?.let(::normalizeManagementUrl)).distinct()
+        val reply = registerThroughRoutes(routes, enrollmentApiKey, bodyJson)
 
+        // The entire route attempt shares one registration version and one commit.
+        // Storage failure/cancellation must never cause another remote enrollment.
+        currentCoroutineContext().ensureActive()
+        val result = reply.result
+        val alternate = routes.firstOrNull { it != result.serverUrl } ?: reply.advertisedUrl
+        authStore.saveRegistration(version, result.deviceId, result.accessToken, result.refreshToken,
+            result.expiresIn, result.serverUrl, alternate, currentCoroutineContext())
+
+        Timber.i(
+            "DeviceRegistration: %s device_id=%s name=%s",
+            if (result.isNew) "REGISTERED NEW" else "RE-ENROLLED",
+            result.deviceId,
+            result.name,
+        )
+        return result
+    }
+
+    private suspend fun registerThroughRoutes(
+        routes: List<String>, enrollmentApiKey: String, bodyJson: String,
+    ): RegistrationReply {
+        for ((index, route) in routes.withIndex()) {
+            currentCoroutineContext().ensureActive()
+            try {
+                return requestRegistration(route, enrollmentApiKey, bodyJson)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                val transient = e is IOException ||
+                    (e is RegistrationException && (e.httpCode == 408 || e.httpCode in 500..599))
+                if (!transient || index == routes.lastIndex) throw e
+                Timber.w("DeviceRegistration: route unavailable; trying configured alternate")
+            }
+        }
+        error("No registration route configured")
+    }
+
+    /** Each configured route has a ten-second HTTP bound, including its body. */
+    private suspend fun requestRegistration(
+        serverUrl: String, enrollmentApiKey: String, bodyJson: String,
+    ): RegistrationReply {
         val request = Request.Builder()
             .url("${serverUrl.trimEnd('/')}/api/v1/devices/register")
             .header("X-API-Key", enrollmentApiKey)
@@ -138,7 +181,7 @@ class DeviceRegistrationClient @Inject constructor(
             .post(bodyJson.toRequestBody("application/json".toMediaType()))
             .build()
 
-        val reply = withTimeoutOrNull(REGISTRATION_TIMEOUT_MS) {
+        return withTimeoutOrNull(REGISTRATION_TIMEOUT_MS) {
             currentCoroutineContext().ensureActive()
             val call = httpClient.forManagementRoute(serverUrl).newCall(request)
             call.timeout().timeout(REGISTRATION_TIMEOUT_MS, TimeUnit.MILLISECONDS)
@@ -166,19 +209,6 @@ class DeviceRegistrationClient @Inject constructor(
             }
         } ?: throw IOException("Registration HTTP timed out")
 
-        // Parent cancellation propagates; our own HTTP deadline remains retryable.
-        currentCoroutineContext().ensureActive()
-        val result = reply.result
-        authStore.saveRegistration(version, result.deviceId, result.accessToken, result.refreshToken,
-            result.expiresIn, result.serverUrl, fallbackServerUrl ?: reply.advertisedUrl, currentCoroutineContext())
-
-        Timber.i(
-            "DeviceRegistration: %s device_id=%s name=%s",
-            if (result.isNew) "REGISTERED NEW" else "RE-ENROLLED",
-            result.deviceId,
-            result.name,
-        )
-        return result
     }
 
     private data class RegistrationReply(val result: RegistrationResult, val advertisedUrl: String?)
