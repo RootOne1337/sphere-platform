@@ -147,4 +147,7 @@ Native приёмка: scheduler после restart своего connector оп�
 через 39.97 s. APK автоматически приняла новый адрес и выполнила echo за 250.83 s,
 сохранив PID/identity и не регистрируясь заново. Повторные циклы — unchanged v8.
 [Сценарий и evidence](../audits/2026-09-05/AUTOMATIC-DISCOVERY-PUBLICATION.md).
+При реальной недоступности PostgreSQL новый publisher сохранил прежний документ;
+после возврата БД scheduled cycle и выполнение команды на APK восстановились.
+[Доказательство отказа БД](../audits/2026-09-05/evidence/publisher-postgres-failure-20260912.json).
 Host reboot/logon trigger и многосуточный renewal drill пока не выполнены.

@@ -56,6 +56,17 @@ fault injection, с тем же PID/device ID и 0 регистраций. Ру�
 Последующие scheduler cycles: unchanged v8, без лишних commits.
 [JSON evidence](evidence/automatic-discovery-publication-20260912.json).
 
+Отдельная проверка PostgreSQL: при pause только БД нового стенда реальная задача
+завершилась с `ReadTimeout`, сохранив прежние signed mirror/journal и время последнего
+успеха. После unpause следующий scheduled cycle вернулся к unchanged v8; APK
+выполнила echo с тем же PID, identity и cache, без новой регистрации.
+БД восстановлена в `finally`, все девять сервисов снова healthy.
+[PostgreSQL evidence](evidence/publisher-postgres-failure-20260912.json).
+
+Полный CI реализации `b76d225`: **1576 backend tests passed**, Android, frontend,
+lint/security/RLS, migrations и production image bootstrap — success;
+draft preview пропущен. [Архив проверок этой ревизии](evidence/ci-b76d225-summary.json).
+
 ## Residual risk
 
 Автопубликация не гарантирует быстрый rollout GitHub Raw: [AUD-95](DISCOVERY-CDN-FRESHNESS.md)
