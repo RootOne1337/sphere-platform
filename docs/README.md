@@ -1,7 +1,7 @@
 # Документация Sphere Platform
 
 **Навигация по текущим контрактам, эксплуатационным ограничениям и доказательствам.**
-Обновлено 11 сентября 2026. [Вернуться на главную](../README.md).
+Обновлено 12 сентября 2026. [Вернуться на главную](../README.md).
 
 ## С чего начать
 
@@ -26,6 +26,7 @@
 - [Фоновая регистрация APK: повторный запуск, конкуренция и device identity](architecture/ANDROID-BACKGROUND-ENROLLMENT.md).
 - [Основной и резервный адрес APK: настройка, переключение, ограничения](architecture/ANDROID-SAVED-ROUTES.md).
 - [Android discovery: HTTP budget, конкуренция и остановка](architecture/ANDROID-DISCOVERY-RECOVERY.md).
+- [Смена адресов без переустановки: независимые источники и подписанный bootstrap — план](architecture/ANDROID-BOOTSTRAP-DISCOVERY.md).
 - [Task control / rollout](security/task-control-protocol.md).
 - [Device credential bootstrap](security/device-credential-bootstrap.md).
 - [Device refresh recovery / rollout](security/device-refresh-recovery.md).
