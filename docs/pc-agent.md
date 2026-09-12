@@ -5,6 +5,11 @@ The audit is ongoing. A successful Python build or server-side regression does n
 prove LDPlayer/ADB execution, Windows service recovery or capacity for 10–64 emulators.
 See the [audit report](audits/2026-09-05/AUDIT-REPORT.md) for evidence and remaining work.
 
+13 September native update: a running LDPlayer instance lost its host NAT process
+while DHCP stayed alive. Both APKs now work after scoped network repair. The
+[network runbook](operations/LDPLAYER-NETWORK-RECOVERY.md) provides a tested explicit
+repair tool; automatic NAT supervision is not yet integrated into this PC-agent.
+
 ## Source and startup
 
 The entry point is [agent/main.py](../pc-agent/agent/main.py); the root

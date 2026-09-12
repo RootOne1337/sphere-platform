@@ -1,9 +1,9 @@
 # Эксплуатационная готовность Sphere
 
-**Срез: 12 сентября 2026 · аудит продолжается · приоритеты согласованы с владельцем.**
+**Срез: 13 сентября 2026 · аудит продолжается · приоритеты согласованы с владельцем.**
 
 **Стенд работает:** отдельный `sphere-pilot-20260911`, девять healthy сервисов,
-browser login/reload и один установленный APK. После AUD-92 прошли 12/12 HTTPS
+browser login/reload и два установленных APK. После AUD-92 прошли 12/12 HTTPS
 `echo`; gateway restart → автоматический возврат за 9.03 s без новой регистрации.
 [Версии и доказательства](LOCAL-PILOT.md). Внешний туннель временный; постоянный
 независимый ingress, полное DAG-задание из UI и VPN ещё не приняты.
@@ -11,6 +11,12 @@ browser login/reload и один установленный APK. После AUD-
 native restart → publication 39.97 s → echo 250.83 s. Host reboot ещё не принят.
 Signed discovery работает: [native смена адреса и возврат](../audits/2026-09-05/SIGNED-DISCOVERY-NATIVE.md)
 прошли без переустановки и новой регистрации. Backend HA этим не подтверждено.
+
+**AUD-99:** сеть второго LDPlayer имела DHCP, но не имела NAT process. После
+адресного ремонта оба APK выполняют команды с разными IDs; повторный fault →
+repair → возврат второго за 6.08 s, затем 12/12 команд с сохранением PID APK.
+[Evidence и границы](../audits/2026-09-05/LDPLAYER-NAT-INCIDENT.md).
+Автоматический host watchdog пока не включён.
 
 **AUD-97:** исправлено зависание подписок после неудачного Redis reconnect.
 Настоящий 30 s Redis pause → первая команда через 9.47 s после восстановления,
@@ -24,11 +30,12 @@ Signed discovery работает: [native смена адреса и возвр
 [Главная](../../README.md) · [Доказательства аудита](../audits/2026-09-05/AUDIT-REPORT.md) ·
 [APK](../android-agent.md) · [PC-agent](../pc-agent.md) · [Будущий AI-контур](../architecture/AI-READINESS.md)
 
-**Последний архивированный CI: `c2682b0` — backend, Android и frontend success.**
-Backend: **1586 passed / 390.79 s**, обязательные проверки lint/security/RLS,
-Alembic и production image bootstrap прошли. AUD-98 внесён позже;
+**Последний архивированный CI: `f20b3b9` — все обязательные checks success:**
+backend, Android, frontend, lint/security/RLS, Alembic и image bootstrap.
+JUnit из artifact: **1591 tests / 0 failures / 0 errors / 0 skipped / 261.517 s**.
+AUD-99 внесён позже;
 проверки нового PR head отмечаются отдельно.
-[Архив с run links](../audits/2026-09-05/evidence/ci-c2682b0-summary.json).
+[Архив с run links](../audits/2026-09-05/evidence/ci-f20b3b9-summary.json).
 
 **Историческая ревизия: `a5209ba` (AUD-87).**
 Linux CI: **1506 passed / 69.71%**, включая 538 production-directory и

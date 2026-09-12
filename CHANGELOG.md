@@ -6,13 +6,20 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [Unreleased] — enterprise audit, 2026-09-12
+## [Unreleased] — enterprise audit, 2026-09-13
 
 Изменения находятся в draft PR; это не опубликованный production release.
 Полный перечень предыдущих audit fixes, доказательства и residual risks:
 [audit report](docs/audits/2026-09-05/AUDIT-REPORT.md).
 
 ### Security / runtime
+
+- AUD-99: restore the second local LDPlayer's missing NAT service without
+  reinstalling its APK. Add a scoped Windows diagnostic/repair tool and 15 tests;
+  preserve other networks and verify process identity before repairing orphan DHCP.
+  Both APKs now execute commands; a repeated fault recovers the second in 6.08 s
+  after repair, then 12/12 commands pass. Host supervision is not yet automatic.
+  [Evidence and runbook](docs/audits/2026-09-05/LDPLAYER-NAT-INCIDENT.md).
 
 - AUD-98: device diagnostics in Sphere mode request the APK's persistent journal
   instead of a fixed logcat tag allowlist. Preserve the viewer response and full
