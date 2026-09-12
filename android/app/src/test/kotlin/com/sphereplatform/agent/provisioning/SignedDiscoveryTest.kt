@@ -268,44 +268,6 @@ class SignedDiscoveryTest {
         }
     }
 
-    @Test fun `signed source leaves stale CDN cache bucket on next minute`() = runBlocking {
-        val server = MockWebServer()
-        server.enqueue(MockResponse().setHeader("Cache-Control", "public, max-age=300")
-            .setBody(signed(payload(1, "https://old-route.invalid")).toString()))
-        server.enqueue(MockResponse().setHeader("Cache-Control", "public, max-age=300")
-            .setBody(signed(payload(2, "https://replacement.invalid")).toString()))
-        server.start()
-        val httpCache = Cache(File(RuntimeEnvironment.getApplication().cacheDir, "cdn-${UUID.randomUUID()}"), 1024 * 1024)
-        val client = OkHttpClient.Builder().cache(httpCache).addInterceptor { chain ->
-            // Model an intermediary that ignores request no-cache but keys by full URL.
-            val target = server.url("/agent.json").newBuilder()
-                .encodedQuery(chain.request().url.encodedQuery).build()
-            chain.proceed(chain.request().newBuilder().url(target).removeHeader("Cache-Control").build())
-        }.build()
-        var clock = time
-        try {
-            val source = "$first?channel=pilot"
-            val subject = SignedDiscovery(listOf(source), verifier(), MemoryCache()) { clock }
-            val provisioner = ZeroTouchProvisioner(RuntimeEnvironment.getApplication(), source,
-                emptyList(), subject) { client }
-            assertEquals("https://old-route.invalid", provisioner.fetchServerConfig()?.serverUrl)
-            assertEquals("https://old-route.invalid", provisioner.fetchServerConfig()?.serverUrl)
-            assertEquals(1, server.requestCount) // Shared cache key within one minute.
-            clock += 60
-            assertEquals("https://replacement.invalid", provisioner.fetchServerConfig()?.serverUrl)
-            assertEquals(2, server.requestCount)
-            val firstRequest = server.takeRequest(1, TimeUnit.SECONDS)!!.requestUrl!!
-            val nextRequest = server.takeRequest(1, TimeUnit.SECONDS)!!.requestUrl!!
-            assertEquals("pilot", nextRequest.queryParameter("channel"))
-            assertNotEquals(firstRequest.queryParameter("sphere_bootstrap_epoch"), nextRequest.queryParameter("sphere_bootstrap_epoch"))
-        } finally {
-            client.dispatcher.executorService.shutdown()
-            client.connectionPool.evictAll()
-            httpCache.close()
-            server.close()
-        }
-    }
-
     @Test fun `stuck source has bounded deadline and cannot block successful mirror or write late`() = runBlocking {
         val release = CountDownLatch(1)
         val entered = CountDownLatch(1)

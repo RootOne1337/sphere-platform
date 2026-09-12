@@ -4,9 +4,10 @@
 Исходная ревизия: `28f8cc46ab65496e00297960fd94d87d1605cc83`.
 Ветка исправлений: `codex/enterprise-audit-20260905`; [draft PR #19](https://github.com/RootOne1337/sphere-platform/pull/19).
 
-**AUD-95: CDN мог продолжать выдавать прежний discovery даже с no-cache.**
-Добавлен общий минутный query для signed public sources; before-case с настоящим
-HTTP cache падает. [Root cause, native задержка и контракт](DISCOVERY-CDN-FRESHNESS.md).
+**AUD-95 OPEN: новая конфигурация через GitHub может приходить через несколько минут.**
+Native revalidation/query experiments не подтвердили быстрое обновление; неэффективный
+query workaround удалён. Нужны заранее доступный резерв и второй постоянный source.
+[Evidence и условия закрытия](DISCOVERY-CDN-FRESHNESS.md).
 
 **AUD-94: HTTP-кэш задерживал обновление адреса.** Локальный before-case с
 настоящими OkHttp Cache/MockWebServer возвращал старый подписанный v1 вместо v2.

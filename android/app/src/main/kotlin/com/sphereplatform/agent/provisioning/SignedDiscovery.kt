@@ -153,16 +153,6 @@ internal class SignedDiscovery(
         }
     }
 
-    /** Public mutable sources must tolerate this query; preserve all other parameters.
-     * A shared minute key avoids five-minute stale CDN entries without per-device
-     * random cache keys or extra HTTP polling. It is not a freshness/SLA guarantee.
-     */
-    fun requestUrl(source: String): String {
-        require(source in urls)
-        return source.toHttpUrlOrNull()!!.newBuilder()
-            .setQueryParameter("sphere_bootstrap_epoch", (now() / 60).toString()).build().toString()
-    }
-
     suspend fun fetch(fetchJson: suspend (String, Long) -> JSONObject?): VerifiedManifest? {
         val observed = completedGeneration
         return mutex.withLock {

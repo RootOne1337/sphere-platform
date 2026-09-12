@@ -14,10 +14,10 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Security / runtime
 
-- AUD-95: signed public discovery sources use a shared minute query to leave
-  stale CDN cache entries that ignore no-cache. Existing query parameters and
-  HTTP request frequency are preserved. Endpoint query support is required.
-  [Contract and before-case](docs/audits/2026-09-05/DISCOVERY-CDN-FRESHNESS.md).
+- AUD-95 remains open: GitHub publication/freshness can delay address migration
+  for several minutes. Remove the minute-query experiment after native acceptance
+  did not demonstrate improvement; retain standard HTTP cache revalidation and
+  signed durable routes. [Evidence and rollout gates](docs/audits/2026-09-05/DISCOVERY-CDN-FRESHNESS.md).
 
 - AUD-94: mutable discovery GETs request HTTP cache revalidation. A real cached
   signed v1 hid published v2 in the failing before-case; 522 Android regressions

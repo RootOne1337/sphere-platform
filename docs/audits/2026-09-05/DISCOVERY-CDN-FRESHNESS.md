@@ -1,49 +1,48 @@
-# AUD-95: CDN продолжает выдавать старый discovery после revalidation request
+# AUD-95: задержка GitHub discovery остаётся открытым эксплуатационным ограничением
 
-**Severity: High для восстановления после смены адреса · 12 сентября 2026.**
+**Severity: High для смены единственного доступного адреса · 12 сентября 2026 · OPEN.**
 
-## Root cause и воспроизведение
+## Evidence и root cause
 
-Подписанный v3 оставался допустимым для APK, пока GitHub уже публиковал v4.
-`Cache-Control: no-cache` в AUD-94 помогает совместимому HTTP cache, но не даёт
-приложению управления всей CDN-цепочкой. Native тест `f61cd5a` получил новую
-конфигурацию и выполнил echo только через **271.61 s** после отключения исходного
-connector. Процесс и device ID сохранились, повторной регистрации не было.
-Вклад каждой ступени CDN/polling в это время не установлен.
+Подписанный предыдущий version остаётся валидным до expiry, хотя publisher уже
+выпустил новый маршрут. Это не rollback и не ошибка проверки подписи. Задержка
+публикации/кэширования и период опроса могут удерживать устройство на старых
+кандидатах. GitHub Raw отдаёт Cache-Control max-age=300; no-cache request не
+позволяет приложению управлять всей CDN-цепочкой.
 
-Регрессия `signed source leaves stale CDN cache bucket on next minute` моделирует
-посредника, игнорирующего request `no-cache`, с настоящими OkHttp Cache и
-MockWebServer. Publisher выдаёт подписанные v1/v2 с `max-age=300`. После продвижения
-времени на минуту старый код всё ещё возвращает v1. **До fix: 1 test, 1 failure.**
+Native миграция на `f61cd5a` с HTTP revalidation заняла **271.61 s** до echo.
+В экспериментальном `9af3ee2` общий минутный query не улучшил наблюдение:
+миграция снова заняла около 284 s. PID/identity сохранились, повторной регистрации
+не было; обе миграции и обратный возврат прошли. Точный вклад origin propagation,
+CDN edges, connection reuse и polling не установлен. Несколько наблюдений не
+являются latency distribution.
 
-## Fix
+## Принятое решение
 
-Только signed mode добавляет к публичному source URL query parameter
-`sphere_bootstrap_epoch=floor(unix_seconds/60)`. Остальные query parameters
-сохраняются. Это общий cache key для устройств внутри минуты: нет случайного
-per-device nonce, дополнительных HTTP requests или ускорения periodic polling.
-`no-cache` сохраняется. Legacy source URLs не меняются.
+Минутный query **удалён из итоговой реализации**: приёмка на реальном источнике не
+подтвердила пользу, а изменение query добавляло требование совместимости для всех
+public sources. Код signed discovery возвращён к проверенному контракту f61cd5a.
+HTTP no-cache из AUD-94 сохранён: его независимый regression с настоящим HTTP
+cache подтверждает revalidation для совместимых посредников.
 
-Подписанные sources должны отдавать тот же документ при этом query parameter.
-Pre-signed/одноразовые URLs, которым нельзя менять query, для этого contract не
-подходят. Подпись документа проверяется независимо от transport query, а durable
-version floor продолжает запрещать downgrade.
+Экспериментальный cache regression проходил для посредника, учитывающего query;
+это не доказательство поведения GitHub. Его исходный failing case и implementation
+сохранены в git history, но тест и workaround не входят в итоговый APK.
 
-Affected files:
+## Что требуется до закрытия
 
-- [SignedDiscovery.kt](../../../android/app/src/main/kotlin/com/sphereplatform/agent/provisioning/SignedDiscovery.kt)
-- [ZeroTouchProvisioner.kt](../../../android/app/src/main/kotlin/com/sphereplatform/agent/provisioning/ZeroTouchProvisioner.kt)
-- [SignedDiscoveryTest.kt](../../../android/app/src/test/kotlin/com/sphereplatform/agent/provisioning/SignedDiscoveryTest.kt)
+- Заранее известный второй работающий ingress к той же установке: saved-route
+  failover не должен ждать публикации нового адреса после каждого отказа.
+- Второй постоянный config host с измеренной свежестью документа и независимостью
+  от первого provider. Gateway mirror полезен, пока доступен его собственный адрес.
+- Автоматический publisher новых адресов и renewal до expiry; проверка при
+  connector/host reboot, blocked provider и массовом reconnect.
 
-Регрессия проверяет одну origin fetch внутри минуты, новый origin fetch в следующей
-минуте, принятие нового подписанного маршрута и сохранение исходного query.
-Native повтор фиксируется в [pilot guide](../../operations/LOCAL-PILOT.md).
+Affected components: публичные config sources и rollout; клиент
+[SignedDiscovery](../../../android/app/src/main/kotlin/com/sphereplatform/agent/provisioning/SignedDiscovery.kt),
+[ConfigWatchdog](../../../android/app/src/main/kotlin/com/sphereplatform/agent/service/ConfigWatchdog.kt).
 
-## Residual risk
-
-Это не минутное SLA reconnect: CDN может не учитывать query, origin может ещё не
-обновиться; остаются частота опроса, обнаружение обрыва, backoff и состояние сети.
-Wall clock используется также для срока подписи; неверные часы требуют диагностики.
-Нужен второй постоянный config host и ingress, а также автоматическая публикация
-и renewal. Увеличение числа CDN cache keys ограничено одним в минуту на source;
-реальная нагрузка парка ещё не измерена.
+Regression: [AUD-94](DISCOVERY-HTTP-CACHE.md) и подписанный cache/version contract
+остаются в suite. Новый независимый ingress пока не готов, поэтому AUD-95 не
+объявляется исправленным. Native evidence и все три замера публикуются отдельно
+в [операционном guide](../../operations/LOCAL-PILOT.md).
