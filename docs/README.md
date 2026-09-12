@@ -38,6 +38,7 @@
 - [Frontend session/cache lifecycle](security/frontend-sessions.md).
 - [VPN intents и recovery](audits/2026-09-05/VPN-LEASE-DESIGN.md).
 - [Тесты на выделенных PostgreSQL/Redis](../tests/production/README.md).
+- [Восстановление команд и событий после отказа Redis: AUD-97](audits/2026-09-05/REDIS-SUBSCRIPTION-RECOVERY.md).
 
 ## Как читать статус
 

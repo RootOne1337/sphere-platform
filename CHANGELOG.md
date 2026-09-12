@@ -14,6 +14,13 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Security / runtime
 
+- AUD-97: retry complete Redis subscriptions after a failed recovery attempt in
+  device command and browser event listeners. Previously a first/partial subscribe
+  failure could strand existing clients indefinitely. Six before failures; 77
+  adjacent/regression tests pass. Native 30-second Redis outage recovered real
+  commands with the same APK process and WebSocket session.
+  [Evidence and limits](docs/audits/2026-09-05/REDIS-SUBSCRIPTION-RECOVERY.md).
+
 - AUD-96: scoped host publisher automatically signs and publishes changed Quick
   Tunnel routes, renews near expiry and repairs the public mirror after failures.
   Journal/CAS and process locking preserve versions after request/response loss.
@@ -28,7 +35,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   Killing only its process recovered automatically to a real echo in 7.2 s,
   with the same identity/cache and zero new registrations.
   [Evidence](docs/audits/2026-09-05/SIGNED-DISCOVERY-NATIVE.md). Single emulator,
-  temporary same-provider ingress; permanent fallback/automated renewal still open.
+  temporary same-provider ingress; permanent fallback and multi-day renewal acceptance remain open.
 
 - AUD-95 remains open: GitHub publication/freshness can delay address migration
   for several minutes. Remove the minute-query experiment after native acceptance

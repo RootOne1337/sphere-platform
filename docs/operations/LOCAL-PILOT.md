@@ -28,6 +28,12 @@ Backend выполняет четыре Gunicorn workers. Все девять с
 `restart: unless-stopped`; после запуска Docker они возобновляют работу, если
 оператор не остановил их вручную. Docker Desktop должен быть запущен.
 
+Backend нового стенда обновлён с исправлением AUD-97; private overlay
+`.local-pilot/backend-acceptance.yml` выбран local launcher. Frontend и APK этой
+проверкой не заменялись. После 30 s недоступности Redis реальные команды вернулись
+без перезапуска backend/APK, с той же WS session: первая через 9.47 s, затем 12/12.
+[Ревизии, воспроизведение и residual risk](../audits/2026-09-05/REDIS-SUBSCRIPTION-RECOVERY.md).
+
 ## Вход и управление
 
 Логин **`admin@example.com`**. Уникальный пароль создан только для этой установки

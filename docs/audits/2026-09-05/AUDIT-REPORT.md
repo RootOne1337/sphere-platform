@@ -4,6 +4,12 @@
 Исходная ревизия: `28f8cc46ab65496e00297960fd94d87d1605cc83`.
 Ветка исправлений: `codex/enterprise-audit-20260905`; [draft PR #19](https://github.com/RootOne1337/sphere-platform/pull/19).
 
+**AUD-97: команды и события могли не восстановиться после краткого отказа Redis.**
+Неудачная повторная подписка оставляла listener без всех нужных каналов.
+6 before failures; после fix 77 tests passed и native 30 s Redis outage →
+echo через 9.47 s, затем 12/12, та же WebSocket-сессия APK, 0 регистраций.
+[Причина, исправление и пределы проверки](REDIS-SUBSCRIPTION-RECOVERY.md).
+
 **AUD-96: publisher устраняет ручную публикацию после смены tunnel URL.**
 Scoped Docker observation, HTTPS installation/readiness, signed CAS и journal;
 на новом стенде включена задача текущего пользователя. Native restart → publication

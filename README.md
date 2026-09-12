@@ -29,6 +29,9 @@
 > ingress и массовая приёмка ещё открыты. На новом Windows-стенде
 > [автоматическая публикация адреса](docs/operations/DISCOVERY-PUBLISHER.md)
 > проверена после restart connector без ручного обновления конфигурации.
+> После исправления Redis reconnect проверено и
+> [возобновление реальных команд после отказа Redis](docs/audits/2026-09-05/REDIS-SUBSCRIPTION-RECOVERY.md)
+> с той же WebSocket-сессией APK.
 
 ## Для чего Sphere
 

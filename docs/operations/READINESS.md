@@ -12,14 +12,19 @@ native restart → publication 39.97 s → echo 250.83 s. Host reboot ещё н�
 Signed discovery работает: [native смена адреса и возврат](../audits/2026-09-05/SIGNED-DISCOVERY-NATIVE.md)
 прошли без переустановки и новой регистрации. Backend HA этим не подтверждено.
 
+**AUD-97:** исправлено зависание подписок после неудачного Redis reconnect.
+Настоящий 30 s Redis pause → первая команда через 9.47 s после восстановления,
+затем 12/12; тот же APK PID/WS session, без повторной регистрации и backend restart
+во время drill. [77 regressions и runtime evidence](../audits/2026-09-05/REDIS-SUBSCRIPTION-RECOVERY.md).
+
 [Главная](../../README.md) · [Доказательства аудита](../audits/2026-09-05/AUDIT-REPORT.md) ·
 [APK](../android-agent.md) · [PC-agent](../pc-agent.md) · [Будущий AI-контур](../architecture/AI-READINESS.md)
 
-**Последний архивированный CI: `f61cd5a` — backend, Android и frontend success.**
-Backend: **1547 passed / 367.11 s**, обязательные проверки lint/security/RLS и
-production image bootstrap прошли. Итоговый Android код `0f1410e` совпадает с этой
-ревизией; проверки нового PR head отмечаются отдельно.
-[Архив с run links](../audits/2026-09-05/evidence/ci-f61cd5a-summary.json).
+**Последний архивированный CI: `b76d225` — backend, Android и frontend success.**
+Backend: **1576 passed / 369.88 s**, обязательные проверки lint/security/RLS,
+Alembic и production image bootstrap прошли. AUD-97 внесён позже;
+проверки нового PR head отмечаются отдельно.
+[Архив с run links](../audits/2026-09-05/evidence/ci-b76d225-summary.json).
 
 **Историческая ревизия: `a5209ba` (AUD-87).**
 Linux CI: **1506 passed / 69.71%**, включая 538 production-directory и

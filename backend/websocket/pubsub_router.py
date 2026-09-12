@@ -74,8 +74,20 @@ class PubSubRouter:
             return
         backoff = 1.0
         max_backoff = 30.0
+        recovery_needed = False
         while True:
             try:
+                # Keep recovery pending until EVERY subscription is restored.
+                # A failed first subscribe leaves subscribed=False; a partial
+                # restore may stay live forever while silently missing channels.
+                if recovery_needed:
+                    await self._pubsub.aclose()
+                    self._pubsub = self.redis.pubsub()
+                    for ch in list(self._subscribed_channels):
+                        await self._pubsub.subscribe(ch)
+                    recovery_needed = False
+                    logger.info("PubSub listen loop restarted", channels=len(self._subscribed_channels))
+
                 # FIX: если нет подписок — ждём, иначе listen() вернётся немедленно
                 # и while True образует CPU spinloop без единого await, блокируя event loop.
                 if not self._pubsub.subscribed:
@@ -97,6 +109,7 @@ class PubSubRouter:
             except asyncio.CancelledError:
                 return
             except Exception as e:
+                recovery_needed = True
                 logger.error(
                     "PubSub listen loop crashed — restarting",
                     error=str(e),
@@ -104,17 +117,6 @@ class PubSubRouter:
                 )
                 await asyncio.sleep(backoff)
                 backoff = min(backoff * 2, max_backoff)
-                # Re-create pubsub connection after crash
-                try:
-                    if self._pubsub:
-                        await self._pubsub.aclose()
-                    self._pubsub = self.redis.pubsub()
-                    # Re-subscribe to all channels
-                    for ch in list(self._subscribed_channels):
-                        await self._pubsub.subscribe(ch)
-                    logger.info("PubSub listen loop restarted", channels=len(self._subscribed_channels))
-                except Exception as re_err:
-                    logger.error("PubSub reconnect failed", error=str(re_err))
 
     async def _route_message(self, channel: str, data: bytes | str) -> None:
         # MED-7: removeprefix() вместо split(":")[-1] — безопасно для device_id вида "192.168.1.1:5555"
