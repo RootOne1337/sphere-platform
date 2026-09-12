@@ -456,12 +456,21 @@ async def request_logcat(
     db: AsyncSession = Depends(get_db),
     svc: DeviceService = Depends(get_device_service),
 ) -> dict:
+    # SphereApp always persists its own logs, including release builds where
+    # Timber.DebugTree/logcat output is disabled. A fixed logcat tag allowlist
+    # misses both those logs and the class tags emitted by debug builds.
+    sphere_logs = body.mode == "sphere"
+    command_type = "REQUEST_LOGS" if sphere_logs else "UPLOAD_LOGCAT"
+    payload = {"max_bytes": 64 * 1024} if sphere_logs else {"lines": body.lines, "mode": body.mode}
     result = await _request_interactive_command(
-        device_id, current_user, svc, "UPLOAD_LOGCAT", {"lines": body.lines, "mode": body.mode}, 15.0,
+        device_id, current_user, svc, command_type, payload, 15.0,
     )
     if result.get("status") == "failed":
         return {"error": result.get("error", "Unknown error")}
-    return {"logcat": result.get("result", {}).get("logcat", "")}
+    content = result.get("result", {}).get("logs" if sphere_logs else "logcat", "")
+    if sphere_logs:
+        content = "\n".join(content.splitlines()[-body.lines:])
+    return {"logcat": content}
 
 
 # ── Reboot ────────────────────────────────────────────────────────────────────

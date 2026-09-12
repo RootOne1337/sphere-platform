@@ -81,6 +81,10 @@ Ruff затронутых файлов прошёл. Локальный Windows 
 зависимостей сообщает 13 ошибок в 7 других, неизменённых файлах; это не объявляется
 успешной проверкой. Проверка нового PR head в Linux CI учитывается отдельно.
 
+**CI `c2682b0` завершён:** 1586 backend tests passed / 390.79 s; Linux lint/mypy,
+Android, frontend, security/RLS, Alembic и production image bootstrap — success.
+Draft preview пропущен. [Архив точной ревизии](evidence/ci-c2682b0-summary.json).
+
 ## Runtime после исправления
 
 Новый backend image установлен только в `sphere-pilot-20260911`. Установка образа

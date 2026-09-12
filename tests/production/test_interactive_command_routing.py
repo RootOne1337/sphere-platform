@@ -13,7 +13,8 @@ from backend.websocket.pubsub_router import PubSubPublisher, PubSubRouter
 
 @pytest.mark.parametrize("endpoint,body,command_type,expected", [
     ("shell", {"command": "echo isolated"}, "SHELL", {"output": "isolated\n"}),
-    ("logcat", {"lines": 10, "mode": "sphere"}, "UPLOAD_LOGCAT", {"logcat": "isolated-log"}),
+    ("logcat", {"lines": 10, "mode": "full"}, "UPLOAD_LOGCAT", {"logcat": "isolated-log"}),
+    ("logcat", {"lines": 10, "mode": "sphere"}, "REQUEST_LOGS", {"logcat": "isolated-file-log"}),
     ("reboot", None, "REBOOT", None),
 ])
 async def test_interactive_request_reaches_another_worker_and_keeps_immediate_result(
@@ -28,7 +29,8 @@ async def test_interactive_request_reaches_another_worker_and_keeps_immediate_re
         delivered.append(command)
         # Return while delivery is still in progress: subscribing afterwards loses it.
         await world.redis.publish(f"sphere:agent:result:{device_id}:{command['command_id']}",
-            json.dumps({"status": "completed", "result": {"output": "isolated\n", "logcat": "isolated-log"}}))
+            json.dumps({"status": "completed", "result": {"output": "isolated\n", "logcat": "isolated-log",
+                "logs": "isolated-file-log"}}))
 
     await owner_manager.connect(AsyncMock(send_json=reply), device_id, "android", str(world.org_a.id))
     router = PubSubRouter(world.redis, owner_manager)

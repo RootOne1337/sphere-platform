@@ -10,6 +10,11 @@
 echo через 9.47 s, затем 12/12, та же WebSocket-сессия APK, 0 регистраций.
 [Причина, исправление и пределы проверки](REDIS-SUBSCRIPTION-RECOVERY.md).
 
+**AUD-98: запрос журнала APK возвращал только заголовки logcat.** Режим Sphere
+переключён на уже существующий persistent journal APK. Native до: 58 символов;
+после: 100 полезных строк за 0.531 s. 3 before failures → 17 passed.
+[Источник, совместимость и ограничения](DEVICE-DIAGNOSTICS-SOURCE.md).
+
 **AUD-96: publisher устраняет ручную публикацию после смены tunnel URL.**
 Scoped Docker observation, HTTPS installation/readiness, signed CAS и journal;
 на новом стенде включена задача текущего пользователя. Native restart → publication

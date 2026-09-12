@@ -235,7 +235,7 @@ POST /api/v1/bulk-action { device_ids: [...15 ids], action: "reboot" }
 | **Info** | Полная информация: модель, Android версия, статус, батарея, группа, VPN |
 | **Scripts** | Запуск скрипта на устройстве (RunScriptTab) |
 | **Terminal** | WebTerminal (xterm.js) — shell-доступ к устройству |
-| **Logs** | LogcatViewer — просмотр Android logcat в реальном времени |
+| **Logs** | LogcatViewer — получение сохранённого журнала Sphere с APK по запросу |
 
 ### Диалоги
 

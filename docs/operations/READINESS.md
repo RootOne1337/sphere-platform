@@ -17,14 +17,18 @@ Signed discovery работает: [native смена адреса и возвр
 затем 12/12; тот же APK PID/WS session, без повторной регистрации и backend restart
 во время drill. [77 regressions и runtime evidence](../audits/2026-09-05/REDIS-SUBSCRIPTION-RECOVERY.md).
 
+**AUD-98:** API журнала устройства теперь получает сохранённые сообщения APK,
+а не только заголовки logcat; 100 строк проверены на установленном агенте.
+[17 tests и ограничения диагностики](../audits/2026-09-05/DEVICE-DIAGNOSTICS-SOURCE.md).
+
 [Главная](../../README.md) · [Доказательства аудита](../audits/2026-09-05/AUDIT-REPORT.md) ·
 [APK](../android-agent.md) · [PC-agent](../pc-agent.md) · [Будущий AI-контур](../architecture/AI-READINESS.md)
 
-**Последний архивированный CI: `b76d225` — backend, Android и frontend success.**
-Backend: **1576 passed / 369.88 s**, обязательные проверки lint/security/RLS,
-Alembic и production image bootstrap прошли. AUD-97 внесён позже;
+**Последний архивированный CI: `c2682b0` — backend, Android и frontend success.**
+Backend: **1586 passed / 390.79 s**, обязательные проверки lint/security/RLS,
+Alembic и production image bootstrap прошли. AUD-98 внесён позже;
 проверки нового PR head отмечаются отдельно.
-[Архив с run links](../audits/2026-09-05/evidence/ci-b76d225-summary.json).
+[Архив с run links](../audits/2026-09-05/evidence/ci-c2682b0-summary.json).
 
 **Историческая ревизия: `a5209ba` (AUD-87).**
 Linux CI: **1506 passed / 69.71%**, включая 538 production-directory и

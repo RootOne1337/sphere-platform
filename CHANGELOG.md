@@ -14,6 +14,12 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Security / runtime
 
+- AUD-98: device diagnostics in Sphere mode request the APK's persistent journal
+  instead of a fixed logcat tag allowlist. Preserve the viewer response and full
+  system logcat mode. Native output changed from two headers to 100 app log lines;
+  three before failures and 17 passing tests. No APK update is required.
+  [Evidence and limits](docs/audits/2026-09-05/DEVICE-DIAGNOSTICS-SOURCE.md).
+
 - AUD-97: retry complete Redis subscriptions after a failed recovery attempt in
   device command and browser event listeners. Previously a first/partial subscribe
   failure could strand existing clients indefinitely. Six before failures; 77
