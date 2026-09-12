@@ -212,7 +212,8 @@ class ZeroTouchProvisioner internal constructor(
             withTimeoutOrNull(timeoutMs) {
                 // Mutable bootstrap documents may be cached by a CDN for minutes.
                 // Revalidate HTTP caches; offline recovery uses our verified durable cache.
-                val request = Request.Builder().url(url).header("Accept", "application/json")
+                val requestUrl = signedDiscovery?.requestUrl(url) ?: url
+                val request = Request.Builder().url(requestUrl).header("Accept", "application/json")
                     .header("Cache-Control", "no-cache").build()
                 val call = configHttpClient.newCall(request)
                 call.timeout().timeout(timeoutMs, TimeUnit.MILLISECONDS)

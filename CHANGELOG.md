@@ -14,6 +14,11 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Security / runtime
 
+- AUD-95: signed public discovery sources use a shared minute query to leave
+  stale CDN cache entries that ignore no-cache. Existing query parameters and
+  HTTP request frequency are preserved. Endpoint query support is required.
+  [Contract and before-case](docs/audits/2026-09-05/DISCOVERY-CDN-FRESHNESS.md).
+
 - AUD-94: mutable discovery GETs request HTTP cache revalidation. A real cached
   signed v1 hid published v2 in the failing before-case; 522 Android regressions
   pass after the fix. CDN propagation is still not an instantaneous SLA.
