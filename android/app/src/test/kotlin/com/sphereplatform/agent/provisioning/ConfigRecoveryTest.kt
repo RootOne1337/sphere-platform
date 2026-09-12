@@ -1,6 +1,8 @@
 package com.sphereplatform.agent.provisioning
 
 import android.content.SharedPreferences
+import android.content.Context
+import com.sphereplatform.agent.BuildConfig
 import androidx.security.crypto.EncryptedSharedPreferences
 import com.sphereplatform.agent.service.ConfigWatchdog
 import com.sphereplatform.agent.store.AuthTokenStore
@@ -20,8 +22,10 @@ import org.junit.After
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
+import org.junit.Assume.assumeTrue
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
@@ -89,7 +93,28 @@ class ConfigRecoveryTest {
         watchdog = ConfigWatchdog(provisioner, store, ws, scope)
     }
 
-    private fun provisionerAt(url: String) = ZeroTouchProvisioner(mockk(relaxed = true), url) { client }
+    private fun provisionerAt(url: String) = ZeroTouchProvisioner(mockk<Context>(relaxed = true) {
+        every { getSystemService(Context.RESTRICTIONS_SERVICE) } returns null
+        every { getExternalFilesDir(null) } returns null
+        every { filesDir } returns RuntimeEnvironment.getApplication().filesDir
+    }, url) { client }
+
+    @Test fun `public discovery of baked route retains locally provisioned enrollment credential`() = runBlocking {
+        assumeTrue(BuildConfig.DEFAULT_SERVER_URL.isNotBlank() && BuildConfig.DEFAULT_API_KEY.isNotBlank())
+        respond = { response(it.request(), """{"server_url":"${BuildConfig.DEFAULT_SERVER_URL}",
+            "features":{"auto_register":true}}""".toResponseBody()) }
+        val config = provisioner.discoverConfig()!!
+        assertEquals("Public discovery must not require publishing the enrollment key",
+            BuildConfig.DEFAULT_API_KEY, config.apiKey)
+        assertTrue(config.requiresRegistration)
+        assertTrue(requests.all { it.header("X-API-Key") == null && it.header("Authorization") == null })
+    }
+
+    @Test fun `unrelated discovered origin never receives baked enrollment key`() = runBlocking {
+        respond = { response(it.request(), """{"server_url":"https://unrelated.invalid",
+            "features":{"auto_register":true}}""".toResponseBody()) }
+        assertEquals("", provisioner.discoverConfig()!!.apiKey)
+    }
 
     @After
     fun cleanup() = runBlocking {

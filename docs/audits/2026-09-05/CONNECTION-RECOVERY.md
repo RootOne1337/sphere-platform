@@ -43,3 +43,38 @@ suite: **63 passed**, Gradle BUILD SUCCESSFUL. В worker regression теперь
 серверного commit первоначальной регистрации остаётся отдельным сценарием:
 повтор может перевыпустить tokens для того же fingerprint. Проверка использует
 управляемые HTTP doubles, а не два реальных независимых WAN провайдера.
+
+## AUD-90 · High · Публичный discovery терял локально заданный enrollment key
+
+**Влияние и причина.** `discoverConfig()` выбирал доступный HTTP discovery раньше
+BuildConfig. Если документ содержал маршруты без enrollment key, возвращался
+пустой ключ. Фоновые enrollment workers снова запрашивали тот же документ и
+оставались без ключа, хотя он уже был включён в APK. Публиковать этот ключ в
+анонимном internet endpoint для работоспособности приложения не требуется.
+
+**Доказательство до fix.** Discovery возвращает baked server URL и
+`features.auto_register=true`, не передаёт ключ. Новый сценарий ожидал локально
+заданный credential и получал пустую строку: **1 failure / 1 negative control**.
+Первоначальная ошибка mock Context/filesDir была исправлена в harness до этой
+подтверждённой baseline и не считается продуктовым дефектом.
+
+**Fix.** Для совпадающего нормализованного baked primary/fallback используется
+локальный ключ. Для другого discovered URL ключ не подставляется. При этом
+резерв берётся только из baked пары, а не из произвольного публичного поля.
+`SPHERE_FALLBACK_SERVER_URL` добавляет второй адрес при сборке; незаданный адрес
+остаётся пустым. Документ со своим enrollment key сохраняет прежний контракт.
+
+**Регрессии:** [ConfigRecoveryTest.kt](../../../../android/app/src/test/kotlin/com/sphereplatform/agent/provisioning/ConfigRecoveryTest.kt)
+проверяет public discovery и отсутствие отправки credentials в discovery запрос,
+а также negative control другого origin. Все **23 ConfigRecovery cases** прошли.
+После AUD-89/90 полный devDebug JVM-прогон: **493 tests / 35 suites, 0 failures,
+0 errors, 0 skipped**, Gradle BUILD SUCCESSFUL за 2 min 16 s.
+
+**Файлы:** [ZeroTouchProvisioner.kt](../../../../android/app/src/main/kotlin/com/sphereplatform/agent/provisioning/ZeroTouchProvisioner.kt),
+[app/build.gradle.kts](../../../../android/app/build.gradle.kts), указанный test.
+
+**Residual risk.** Новая установка с полностью изменившейся парой адресов требует
+доверенного обновления provision config; произвольный новый URL из анонимного
+документа не получает baked credential. MDM и локальный файл по-прежнему имеют
+приоритет перед HTTP и BuildConfig. UI lifecycle и фоновый worker ещё требуют
+отдельной проверки на установленном APK. JVM-тесты не доказывают Android runtime.

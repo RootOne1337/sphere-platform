@@ -41,6 +41,7 @@ android {
         // Enterprise build metadata
         buildConfigField("String", "GIT_SHA", "\"${System.getenv("GIT_SHA") ?: "local"}\"")
         buildConfigField("String", "BUILD_TIME", "\"${System.currentTimeMillis()}\"")
+        buildConfigField("String", "DEFAULT_FALLBACK_SERVER_URL", "\"${System.getenv("SPHERE_FALLBACK_SERVER_URL") ?: ""}\"")
     }
 
     // ── Signing (env-var driven, never commit keys to VCS) ───────────────────

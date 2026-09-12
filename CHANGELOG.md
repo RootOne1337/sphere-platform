@@ -14,6 +14,12 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Security / runtime
 
+- AUD-90: routes-only public discovery retains the APK's locally provisioned
+  enrollment key for its explicitly baked primary/fallback pair. Unrelated
+  origins do not receive it. Add `SPHERE_FALLBACK_SERVER_URL` build provisioning.
+  One failing before-case plus a negative control; complete devDebug JVM suite
+  after AUD-89/90: 493 passed, no failures/errors/skips.
+
 - AUD-89: initial Android registration tries the configured alternate after
   transport failure, HTTP 408 or 5xx. One successful response commits identity;
   cancellation, persistence failures, 401/403 and 429 do not trigger an extra

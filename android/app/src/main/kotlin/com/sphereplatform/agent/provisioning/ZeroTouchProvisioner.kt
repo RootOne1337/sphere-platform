@@ -287,6 +287,7 @@ class ZeroTouchProvisioner internal constructor(
             apiKey = key,
             deviceId = BuildConfig.DEFAULT_DEVICE_ID.takeIf { it.isNotBlank() },
             source = "buildconfig:${BuildConfig.FLAVOR_LABEL}",
+            fallbackServerUrl = BuildConfig.DEFAULT_FALLBACK_SERVER_URL.takeIf { it.isNotBlank() },
         )
     }
 
@@ -301,15 +302,23 @@ class ZeroTouchProvisioner internal constructor(
      */
     private suspend fun discoverFromConfigEndpoint(): ProvisionConfig? {
         val serverConfig = fetchServerConfig() ?: return null
-        // Config endpoint возвращает enrollment_api_key для zero-touch регистрации.
-        // Если ключ есть — агент может сразу вызвать POST /devices/register.
-        val apiKey = serverConfig.enrollmentApiKey ?: ""
+        // Public discovery can contain routes only. A baked credential may be
+        // reused only for one of its explicitly provisioned installation routes.
+        val baked = discoverFromBuildConfig()?.takeIf { config ->
+            normalizeManagementUrl(serverConfig.serverUrl) in
+                listOfNotNull(config.serverUrl, config.fallbackServerUrl).map(::normalizeManagementUrl)
+        }
+        val apiKey = serverConfig.enrollmentApiKey ?: baked?.apiKey ?: ""
+        val fallback = if (serverConfig.enrollmentApiKey == null && baked != null) {
+            listOfNotNull(baked.serverUrl, baked.fallbackServerUrl)
+                .map(::normalizeManagementUrl).firstOrNull { it != normalizeManagementUrl(serverConfig.serverUrl) }
+        } else serverConfig.fallbackServerUrl
         return ProvisionConfig(
             serverUrl = serverConfig.serverUrl,
             apiKey = apiKey,
             source = "config_endpoint",
             autoRegisterEnabled = serverConfig.autoRegister,
-            fallbackServerUrl = serverConfig.fallbackServerUrl,
+            fallbackServerUrl = fallback,
         )
     }
 
