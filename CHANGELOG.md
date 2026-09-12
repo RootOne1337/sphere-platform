@@ -14,6 +14,13 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Security / runtime
 
+- AUD-91: foreground auto-enrollment and background workers share the initial
+  enrollment gate and reuse issued identity. Duplicate app/package-replaced
+  scheduling keeps the pending WorkManager attempt. The setup screen observes
+  background completion and reports automatic retry for transient failures.
+  Reproduced on an installed APK; 29 targeted cases, including five new regressions,
+  pass. [Root cause and limits](docs/audits/2026-09-05/ENROLLMENT-CONCURRENCY.md).
+
 - AUD-90: routes-only public discovery retains the APK's locally provisioned
   enrollment key for its explicitly baked primary/fallback pair. Unrelated
   origins do not receive it. Add `SPHERE_FALLBACK_SERVER_URL` build provisioning.

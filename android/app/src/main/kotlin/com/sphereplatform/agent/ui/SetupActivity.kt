@@ -13,6 +13,7 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
+import androidx.work.WorkManager
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.chip.Chip
 import com.google.android.material.progressindicator.LinearProgressIndicator
@@ -26,14 +27,17 @@ import com.sphereplatform.agent.provisioning.ZeroTouchProvisioner
 import com.sphereplatform.agent.service.ServiceWatchdog
 import com.sphereplatform.agent.service.SphereAgentService
 import com.sphereplatform.agent.store.AuthTokenStore
+import com.sphereplatform.agent.workers.AutoEnrollmentWorker
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import timber.log.Timber
 import java.util.UUID
+import java.io.IOException
 import javax.inject.Inject
 
 /**
@@ -78,13 +82,20 @@ class SetupActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         // Already enrolled → launch service immediately
-        if (authStore.getToken() != null) {
+        if (!authStore.getToken().isNullOrBlank() && authStore.getDeviceId() != null) {
             launchAgent()
             return
         }
 
         setContentView(R.layout.activity_setup)
         bindViews()
+
+        // A background retry may complete while this screen still shows a network error.
+        WorkManager.getInstance(this).getWorkInfosForUniqueWorkLiveData(AutoEnrollmentWorker.WORK_NAME)
+            .observe(this) {
+                if (!isFinishing && !isDestroyed && !authStore.getToken().isNullOrBlank() &&
+                    authStore.getDeviceId() != null) launchAgent()
+            }
 
         // FIX D2: discoverConfig() может вызвать HTTP на config endpoint (5s timeout).
         // Синхронный вызов из onCreate() = ANR на main thread.
@@ -133,6 +144,12 @@ class SetupActivity : AppCompatActivity() {
     // ── Zero-touch auto-enrollment ─────────────────────────────────────────
 
     private suspend fun performAutoEnroll(config: ZeroTouchProvisioner.ProvisionConfig) {
+        // Boot/package-replaced workers use the same gate. Waiting for the HTTP
+        // registration mutex alone still permits a second enrollment afterwards.
+        if (authStore.reuseEnrollmentOrEnroll { performAutoEnrollLocked(config) }) launchAgent()
+    }
+
+    private suspend fun performAutoEnrollLocked(config: ZeroTouchProvisioner.ProvisionConfig) {
         // Если autoRegister включён и API-ключ пуст (config_endpoint) → авто-регистрация
         if (config.autoRegisterEnabled && config.apiKey.isBlank()) {
             performAutoRegistration(config.serverUrl, config.fallbackServerUrl)
@@ -171,7 +188,7 @@ class SetupActivity : AppCompatActivity() {
                 fallbackServerUrl = fallbackServerUrl,
                 enrollmentApiKey = enrollmentKey,
             )
-        }
+        }.onFailure { if (it is CancellationException) throw it }
 
         setLoading(false)
         if (result.isSuccess) {
@@ -190,7 +207,7 @@ class SetupActivity : AppCompatActivity() {
                 ex?.message ?: "unknown"
             }
             Timber.w("Auto-registration failed: $msg")
-            showStatus("Auto-register failed: $msg. Enter credentials manually.", isError = true)
+            showAutoEnrollmentFailure(ex, "Auto-register failed: $msg")
         }
     }
 
@@ -226,7 +243,7 @@ class SetupActivity : AppCompatActivity() {
                 fallbackServerUrl = config.fallbackServerUrl,
                 enrollmentApiKey = config.apiKey,
             )
-        }
+        }.onFailure { if (it is CancellationException) throw it }
 
         setLoading(false)
         if (regResult.isSuccess) {
@@ -250,7 +267,16 @@ class SetupActivity : AppCompatActivity() {
 
         val msg = ex?.message ?: "unknown"
         Timber.w("Auto-enrollment failed: $msg")
-        showStatus("Auto-provision failed (${config.source}): $msg. Enter credentials manually.", isError = true)
+        showAutoEnrollmentFailure(ex, "Auto-provision failed (${config.source}): $msg")
+    }
+
+    private fun showAutoEnrollmentFailure(error: Throwable?, message: String) {
+        val retryable = error is IOException || (error is RegistrationException &&
+            (error.httpCode == 408 || error.httpCode == 429 || error.httpCode in 500..599))
+        if (retryable) {
+            AutoEnrollmentWorker.schedule(this)
+            showStatus("$message. Automatic retry is active; keep the app installed.", isError = true)
+        } else showStatus("$message. Check enrollment configuration.", isError = true)
     }
 
     /**

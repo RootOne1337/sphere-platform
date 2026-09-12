@@ -47,7 +47,7 @@ class AutoEnrollmentWorker @AssistedInject constructor(
 ) : CoroutineWorker(context, params) {
 
     companion object {
-        private const val WORK_NAME = "sphere_auto_enroll"
+        internal const val WORK_NAME = "sphere_auto_enroll"
 
         /**
          * Планирует одноразовую фоновую задачу по авто-регистрации.
@@ -64,7 +64,7 @@ class AutoEnrollmentWorker @AssistedInject constructor(
 
             WorkManager.getInstance(context).enqueueUniqueWork(
                 WORK_NAME,
-                ExistingWorkPolicy.REPLACE,
+                ExistingWorkPolicy.KEEP,
                 request,
             )
             Timber.i("AutoEnrollmentWorker scheduled")

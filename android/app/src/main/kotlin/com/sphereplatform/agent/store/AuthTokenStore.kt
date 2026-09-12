@@ -69,7 +69,7 @@ class AuthTokenStore @Inject constructor(
     }
 
     private val tokenMutex = Mutex()
-    /** Serializes background boot/periodic enrollment for this application store. */
+    /** Serializes foreground and background initial enrollment for this store. */
     internal val enrollmentMutex = Mutex()
     private var serverUrlRevision = 0L
     private var credentialRevision = 0L
@@ -78,6 +78,14 @@ class AuthTokenStore @Inject constructor(
 
     /** UI and workers must preserve issuance order, including refresh rotation. */
     internal suspend fun <T> withRegistration(block: suspend () -> T): T = tokenMutex.withLock { block() }
+
+    /** Returns true when another entry point has already issued a complete identity. */
+    internal suspend fun reuseEnrollmentOrEnroll(block: suspend () -> Unit): Boolean = enrollmentMutex.withLock {
+        if (!getToken().isNullOrBlank() && getDeviceId() != null) true else {
+            block()
+            false
+        }
+    }
 
     @Synchronized
     internal fun registrationVersion() = RegistrationVersion(credentialRevision, serverUrlRevision)

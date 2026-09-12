@@ -361,6 +361,53 @@ class BackgroundEnrollmentTest {
         assertTrue(requests.isEmpty())
     }
 
+    private suspend fun assertForegroundWorkerRace(foregroundFirst: Boolean) = coroutineScope {
+        configured()
+        val entered = CountDownLatch(1)
+        val release = CountDownLatch(1)
+        beforeReply = { entered.countDown(); check(release.await(5, TimeUnit.SECONDS)) }
+        suspend fun foreground() = store.reuseEnrollmentOrEnroll {
+            registration.register(url, key, fallbackServerUrl = backup)
+        }
+        val first = async { if (foregroundFirst) foreground() else worker("auto").doWork() }
+        try {
+            assertTrue(withContext(Dispatchers.IO) { entered.await(5, TimeUnit.SECONDS) })
+            val second = async(start = CoroutineStart.UNDISPATCHED) {
+                if (foregroundFirst) worker("auto").doWork() else foreground()
+            }
+            release.countDown()
+            first.await()
+            second.await()
+            assertEquals("One issued identity across foreground and worker", 1, requests.size)
+            assertEquals(id, store.getDeviceId())
+            assertEquals("issued-refresh", memory["refresh_token"])
+            assertEquals(listOf(id), startedIds)
+        } finally { release.countDown() }
+    }
+
+    @Test fun `foreground waits for worker registration without rotating its tokens`() = runBlocking {
+        assertForegroundWorkerRace(foregroundFirst = false)
+    }
+
+    @Test fun `worker reuses foreground registration without another HTTP request`() = runBlocking {
+        assertForegroundWorkerRace(foregroundFirst = true)
+    }
+
+    @Test fun `foreground retry reuses an already issued identity`() = runBlocking {
+        configured()
+        worker("auto").doWork()
+        assertTrue(store.reuseEnrollmentOrEnroll { error("Must not register twice") })
+        assertEquals(1, requests.size)
+    }
+
+    @Test fun `token without device id does not skip initial registration`() = runBlocking {
+        memory["access_token"] = "partial-old-state"
+        assertFalse(store.reuseEnrollmentOrEnroll { registration.register(url, key) })
+        assertEquals(1, requests.size)
+        assertEquals(id, store.getDeviceId())
+        assertEquals("issued-access", store.getToken())
+    }
+
     @Test fun `cancelled registration owner releases enrollment for the next worker`() = runBlocking {
         configured()
         val entered = CountDownLatch(1)

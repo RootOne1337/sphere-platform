@@ -1,6 +1,6 @@
 # Sphere Platform: аудит готовности к эксплуатации
 
-Статус на 11 сентября 2026: **аудит продолжается; production readiness не подтверждена**.
+Статус на 12 сентября 2026: **аудит продолжается; production readiness не подтверждена**.
 Исходная ревизия: `28f8cc46ab65496e00297960fd94d87d1605cc83`.
 Ветка исправлений: `codex/enterprise-audit-20260905`; [draft PR #19](https://github.com/RootOne1337/sphere-platform/pull/19).
 
@@ -9,6 +9,11 @@
 targeted 63 проходят после. Публичный discovery без секретов теперь сохраняет
 локальный enrollment key только для явно заданной пары адресов. Полный devDebug
 JVM-прогон: 493 passed. [Причины, воспроизведения и ограничения](CONNECTION-RECOVERY.md).
+
+**AUD-91 обнаружен на установленном APK:** экран настройки и package-replaced
+worker повторно регистрировали один fingerprint, перевыпуская tokens. Общая
+блокировка с повторной проверкой identity и KEEP для WorkManager устраняют
+дублирование. [Runtime evidence, 29 targeted tests и residual risk](ENROLLMENT-CONCURRENCY.md).
 
 Проверка разрешена владельцем. Воспроизведения выполнялись на локальных искусственных
 данных, выделенных PostgreSQL/Redis и подменённых транспортных границах. Внешняя
