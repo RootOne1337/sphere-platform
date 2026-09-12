@@ -155,10 +155,11 @@ class AuthTokenStore @Inject constructor(
     internal fun serverUrlSnapshot() = ServerUrlSnapshot(getServerUrl(), serverUrlRevision)
 
     @Synchronized
-    internal fun replaceDiscoveredRoutes(expected: ServerUrlSnapshot, url: String, fallback: String?): Boolean {
+    internal fun replaceDiscoveredRoutes(expected: ServerUrlSnapshot, url: String, fallback: String?,
+                                         replaceFallback: Boolean = false): Boolean {
         if (serverUrlRevision != expected.revision || getServerUrl() != expected.url) return false
         val primary = normalizeManagementUrl(url)
-        val backup = (fallback ?: prefs.getString(KEY_FALLBACK_SERVER_URL, null))
+        val backup = (if (replaceFallback) fallback else fallback ?: prefs.getString(KEY_FALLBACK_SERVER_URL, null))
             ?.let(::normalizeManagementUrl)?.takeIf { it != primary }
         val currentPrimary = prefs.getString(KEY_PRIMARY_SERVER_URL, null) ?: getServerUrl()
         if (primary == currentPrimary && backup == prefs.getString(KEY_FALLBACK_SERVER_URL, null)) return false

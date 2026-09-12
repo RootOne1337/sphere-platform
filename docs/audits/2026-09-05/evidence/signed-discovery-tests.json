@@ -1,0 +1,32 @@
+{
+  "date": "2026-09-12",
+  "mirrors_before": {
+    "tests": 26,
+    "failures": 3
+  },
+  "unbound_enrollment_before": {
+    "tests": 1,
+    "failures": 1
+  },
+  "android_after": {
+    "tests": 521,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "android_suites": 37,
+  "offline_signer_passed": 21,
+  "fixture_only_public_key": true,
+  "native_signed_mode_tested": false,
+  "previous_head_ci": {
+    "sha": "51323fe1a70dc80b1801036b8f562c35f4ee5c49",
+    "required_checks": "success",
+    "preview_deployment": "intentionally skipped (draft PR)"
+  },
+  "limits": [
+    "legacy behavior tested separately",
+    "minSdk26 Robolectric is not native OS",
+    "permanent second ingress unverified",
+    "renewal and automatic publisher not implemented"
+  ]
+}

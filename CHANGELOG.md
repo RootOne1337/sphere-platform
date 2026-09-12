@@ -14,6 +14,13 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Security / runtime
 
+- Android signed discovery (opt-in): up to three public HTTPS sources, fixed RSA
+  signature verification, installation/version/freshness checks and AtomicFile
+  cached routes/version floor. Initial enrollment can follow a newly signed route
+  without baking the management URL. Add offline signer and cross-language vector.
+  521 devDebug JVM tests and 21 signer tests pass. Permanent ingress and automated
+  document renewal remain open. [Contract](docs/architecture/ANDROID-SIGNED-DISCOVERY.md).
+
 - AUD-93: setup and background enrollment use the key bound to the selected
   discovery result. Remove later HTTP key lookups and unrestricted UI baked-key
   fallback, preventing a route from one response from receiving a key from another.

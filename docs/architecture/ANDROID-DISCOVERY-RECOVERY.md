@@ -2,9 +2,10 @@
 
 **Контракт AUD-73/74 · 10 сентября 2026 · discovery обновляет сохранённые кандидаты.**
 
-Дополнение 12 сентября: [проект независимых bootstrap mirrors и подписанного
-документа](ANDROID-BOOTSTRAP-DISCOVERY.md). Список источников и проверка подписи
-ещё не реализованы; описанный ниже механизм продолжает использовать один URL.
+Дополнение 12 сентября: [signed discovery и до трёх bootstrap sources реализованы
+как opt-in](ANDROID-SIGNED-DISCOVERY.md). Ниже сохранён legacy контракт AUD-73/74.
+При включении нового режима подпись, installation/version/freshness и private cache
+проверяются до применения кандидатов; старые APK продолжают использовать прежний JSON.
 
 [Документация](../README.md) · [APK](../android-agent.md) ·
 [Подтверждение подключения](ANDROID-CONNECTION-PROTOCOL.md) ·

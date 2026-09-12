@@ -106,17 +106,17 @@ class ConfigWatchdog @Inject constructor(
         val route = authStore.serverUrlSnapshot()
         val config = provisioner.fetchServerConfig() ?: return
         val remoteUrl = config.serverUrl.trimEnd('/')
-        applyCandidates(checkGeneration, route, remoteUrl, config.fallbackServerUrl)
+        applyCandidates(checkGeneration, route, remoteUrl, config.fallbackServerUrl, config.verifiedInstallation)
     }
 
     private suspend fun applyCandidates(checkGeneration: Long, route: AuthTokenStore.ServerUrlSnapshot,
-                                        remoteUrl: String, fallbackUrl: String?) {
+                                        remoteUrl: String, fallbackUrl: String?, replaceFallback: Boolean = false) {
         val context = currentCoroutineContext()
         synchronized(stateLock) {
             context.ensureActive()
             if (stopped || generation != checkGeneration) return
             if (route.url.isBlank()) return
-            if (!authStore.replaceDiscoveredRoutes(route, remoteUrl, fallbackUrl)) {
+            if (!authStore.replaceDiscoveredRoutes(route, remoteUrl, fallbackUrl, replaceFallback)) {
                 Timber.d("ConfigWatchdog: route candidates unchanged or superseded")
                 return
             }

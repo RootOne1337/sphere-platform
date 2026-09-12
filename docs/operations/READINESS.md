@@ -85,6 +85,13 @@ P0 — порядок эксплуатационной работы, а не CVS
 
 ## Связь: минимальная архитектура без зависимости от GitHub
 
+**Новое:** [signed discovery](../architecture/ANDROID-SIGNED-DISCOVERY.md) добавляет
+проверку подписи/установки/версии, AtomicFile cache и до трёх начальных sources.
+521 devDebug JVM tests и 21 offline signer tests проходят. Первый source pilot
+размещён вне туннеля в отдельной config branch; второй — копия в gateway.
+Постоянные независимые ingress, renewal/publisher automation и fleet acceptance
+ещё открыты. Legacy сборки автоматически не переходят на signed mode.
+
 **AUD-74 реализует сохранённую пару и ACK-gated выбор маршрута.** Ниже указаны
 границы реализации и инфраструктура, которую оператор ещё должен подготовить:
 

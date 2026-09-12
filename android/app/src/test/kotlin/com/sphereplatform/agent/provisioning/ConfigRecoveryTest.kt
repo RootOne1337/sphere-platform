@@ -99,6 +99,44 @@ class ConfigRecoveryTest {
         every { filesDir } returns RuntimeEnvironment.getApplication().filesDir
     }, url) { client }
 
+    private fun withMirrors(primary: String, mirrors: List<String>) = ZeroTouchProvisioner(
+        RuntimeEnvironment.getApplication(), primary, mirrors) { client }
+
+    @Test fun `discovery reaches configured mirror when primary transport fails`() = runBlocking {
+        val primary = "https://primary-config.invalid/config.json"
+        val backup = "https://backup-config.invalid/config.json"
+        respond = {
+            if (it.request().url.toString() == primary) throw java.io.IOException("isolated outage")
+            response(it.request())
+        }
+        assertEquals(discoveredUrl, withMirrors(primary, listOf(backup)).fetchServerConfig()?.serverUrl)
+        assertEquals(listOf(primary, backup), requests.map { it.url.toString() })
+        assertTrue(requests.all { it.header("Authorization") == null && it.header("X-API-Key") == null })
+    }
+
+    @Test fun `discovery mirror survives malformed primary config`() = runBlocking {
+        respond = {
+            response(it.request(), if (it.request().url.host == "primary-config.invalid")
+                "<html>upstream unavailable</html>".toResponseBody() else payload.toResponseBody())
+        }
+        assertEquals(discoveredUrl, withMirrors("https://primary-config.invalid/config.json",
+            listOf("https://backup-config.invalid/config.json")).fetchServerConfig()?.serverUrl)
+    }
+
+    @Test fun `mirror only configuration remains discoverable`() = runBlocking {
+        val mirrored = withMirrors("", listOf("https://backup-config.invalid/config.json"))
+        assertTrue(mirrored.hasConfigEndpoint)
+        assertEquals(discoveredUrl, mirrored.fetchServerConfig()?.serverUrl)
+    }
+
+    @Test fun `complete signed route set retires old fallback but preserves working active address`() {
+        store.saveServerRoutes(initialUrl, "https://retired-backup.invalid")
+        assertTrue(store.replaceDiscoveredRoutes(store.serverUrlSnapshot(), discoveredUrl, null, replaceFallback = true))
+        assertEquals(listOf(initialUrl, discoveredUrl), store.connectionRoutesSnapshot().urls)
+        assertEquals(initialUrl, store.getServerUrl())
+        assertEquals("issued-device-jwt", store.getToken())
+    }
+
     @Test fun `public discovery of baked route retains locally provisioned enrollment credential`() = runBlocking {
         assumeTrue(BuildConfig.DEFAULT_SERVER_URL.isNotBlank() && BuildConfig.DEFAULT_API_KEY.isNotBlank())
         respond = { response(it.request(), """{"server_url":"${BuildConfig.DEFAULT_SERVER_URL}",
