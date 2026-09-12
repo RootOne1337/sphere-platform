@@ -7,8 +7,11 @@ See the [audit report](audits/2026-09-05/AUDIT-REPORT.md) for evidence and remai
 
 13 September native update: a running LDPlayer instance lost its host NAT process
 while DHCP stayed alive. Both APKs now work after scoped network repair. The
-[network runbook](operations/LDPLAYER-NETWORK-RECOVERY.md) provides a tested explicit
-repair tool; automatic NAT supervision is not yet integrated into this PC-agent.
+[network runbook](operations/LDPLAYER-NETWORK-RECOVERY.md) provides manual repair
+and a separate Windows scheduled watchdog, installed for pilot indices 0/1.
+It recovers NAT without requiring PC-agent/server connectivity; native automatic
+repair returned the second APK command in 108.12 s after fault. Its status is local;
+delivery of fresh station-network events through PC-agent to backend/UI is still open.
 
 ## Source and startup
 

@@ -14,11 +14,19 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Security / runtime
 
+- AUD-99 follow-up: install a scoped Windows station watchdog for pilot indices
+  0/1. Confirm missing NAT twice, persist a five-minute retry cooldown before any
+  mutation, serialize repair across workers and reject shared VM networks.
+  **56 tests pass** on Windows. Native scheduled recovery restores the second
+  NAT automatically in 106.91 s; real APK command in 108.12 s after fault,
+  then 12/12 commands with both APK PIDs and the first NAT preserved.
+  [Acceptance, resource measurements and limits](docs/audits/2026-09-05/LDPLAYER-AUTOMATIC-RECOVERY.md).
+
 - AUD-99: restore the second local LDPlayer's missing NAT service without
   reinstalling its APK. Add a scoped Windows diagnostic/repair tool and 15 tests;
   preserve other networks and verify process identity before repairing orphan DHCP.
   Both APKs now execute commands; a repeated fault recovers the second in 6.08 s
-  after repair, then 12/12 commands pass. Host supervision is not yet automatic.
+  after repair, then 12/12 commands pass. Automatic supervision follows above.
   [Evidence and runbook](docs/audits/2026-09-05/LDPLAYER-NAT-INCIDENT.md).
 
 - AUD-98: device diagnostics in Sphere mode request the APK's persistent journal

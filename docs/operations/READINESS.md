@@ -16,7 +16,10 @@ Signed discovery работает: [native смена адреса и возвр
 адресного ремонта оба APK выполняют команды с разными IDs; повторный fault →
 repair → возврат второго за 6.08 s, затем 12/12 команд с сохранением PID APK.
 [Evidence и границы](../audits/2026-09-05/LDPLAYER-NAT-INCIDENT.md).
-Автоматический host watchdog пока не включён.
+Теперь [host watchdog включён для indices 0/1](../audits/2026-09-05/LDPLAYER-AUTOMATIC-RECOVERY.md):
+реальный fault → автоматический NAT через 106.91 s → команда второй APK через
+108.12 s, затем 12/12 команд. 56 Windows regressions; 0.69–0.97 s на здоровый
+минутный цикл. Требует входа пользователя; события в backend/UI ещё не поступают.
 
 **AUD-97:** исправлено зависание подписок после неудачного Redis reconnect.
 Настоящий 30 s Redis pause → первая команда через 9.47 s после восстановления,
@@ -30,12 +33,12 @@ repair → возврат второго за 6.08 s, затем 12/12 кома�
 [Главная](../../README.md) · [Доказательства аудита](../audits/2026-09-05/AUDIT-REPORT.md) ·
 [APK](../android-agent.md) · [PC-agent](../pc-agent.md) · [Будущий AI-контур](../architecture/AI-READINESS.md)
 
-**Последний архивированный CI: `f20b3b9` — все обязательные checks success:**
+**Последний архивированный CI: `5157d1c` — все обязательные checks success:**
 backend, Android, frontend, lint/security/RLS, Alembic и image bootstrap.
-JUnit из artifact: **1591 tests / 0 failures / 0 errors / 0 skipped / 261.517 s**.
-AUD-99 внесён позже;
-проверки нового PR head отмечаются отдельно.
-[Архив с run links](../audits/2026-09-05/evidence/ci-f20b3b9-summary.json).
+[Архив с run links](../audits/2026-09-05/evidence/ci-5157d1c-summary.json).
+Автоматический host watchdog внесён позже; проверки нового PR head отслеживаются отдельно.
+Предыдущий `f20b3b9`: JUnit **1591 tests / 0 failures / 0 errors / 0 skipped / 261.517 s**
+([архив](../audits/2026-09-05/evidence/ci-f20b3b9-summary.json)).
 
 **Историческая ревизия: `a5209ba` (AUD-87).**
 Linux CI: **1506 passed / 69.71%**, включая 538 production-directory и

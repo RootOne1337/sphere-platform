@@ -8,17 +8,64 @@ port forwarding, firewall changes, APK data reset, or other network is involved.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import ntpath
 import os
 import re
 import subprocess
+import threading
 import time
+from contextlib import contextmanager
 from pathlib import Path
 
 
 class NetworkRecoveryError(RuntimeError):
     pass
+
+
+class RecoveryBusy(NetworkRecoveryError):
+    pass
+
+
+_locks_guard = threading.Lock()
+_locks: dict[str, threading.Lock] = {}
+
+
+@contextmanager
+def exclusive_lock(path: Path):
+    """Nonblocking thread + OS lock; automatically released after process death."""
+    with _locks_guard:
+        lock = _locks.setdefault(os.path.normcase(str(path.resolve())), threading.Lock())
+    if not lock.acquire(blocking=False):
+        raise RecoveryBusy("Another network recovery is running")
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with path.open("a+b") as handle:
+            handle.seek(0, os.SEEK_END)
+            if not handle.tell():
+                handle.write(b"0")
+                handle.flush()
+            handle.seek(0)
+            try:
+                if os.name == "nt":
+                    import msvcrt
+                    msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)
+                else:
+                    import fcntl
+                    fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except OSError as exc:
+                raise RecoveryBusy("Another network recovery is running") from exc
+            try:
+                yield
+            finally:
+                handle.seek(0)
+                if os.name == "nt":
+                    msvcrt.locking(handle.fileno(), msvcrt.LK_UNLCK, 1)
+                else:
+                    fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+    finally:
+        lock.release()
 
 
 def owned_processes(processes: list[dict], directory: str, network: str, kind: str) -> list[dict]:
@@ -47,6 +94,13 @@ def validate_vm(output: str, index: int) -> str:
 
 
 def recover(host, index: int, *, repair: bool = False) -> dict:
+    if repair:
+        with host.repair_lock():
+            return _recover(host, index, repair=True)
+    return _recover(host, index)
+
+
+def _recover(host, index: int, *, repair: bool = False) -> dict:
     if not 0 <= index <= 4095:
         raise ValueError("Invalid LDPlayer index")
     network = validate_vm(host.vm_info(index), index)
@@ -67,6 +121,7 @@ def recover(host, index: int, *, repair: bool = False) -> dict:
     current_dhcp = owned_processes(fresh, host.directory, network, "dhcp")
     if current_dhcp != dhcp:
         raise NetworkRecoveryError("DHCP identity changed; retry inspection")
+    host.assert_dedicated(index, network)
     if dhcp:
         host.stop_verified_dhcp(dhcp[0], network)
     host.start_network(network)
@@ -90,6 +145,10 @@ class WindowsHost:
             raise ValueError("Expected the LDPlayer VBoxManage.exe")
         self.directory = str(self.vboxmanage.parent)
 
+    def repair_lock(self):
+        scope = hashlib.sha256(ntpath.normcase(self.directory).encode()).hexdigest()[:24]
+        return exclusive_lock(Path(os.environ["LOCALAPPDATA"]) / "Sphere" / "locks" / f"ldplayer-{scope}.lock")
+
     @staticmethod
     def call(args: list[str]) -> str:
         result = subprocess.run(args, capture_output=True, text=True, encoding="utf-8", errors="replace",
@@ -105,11 +164,40 @@ class WindowsHost:
     def vm_info(self, index: int) -> str:
         return self.call([str(self.vboxmanage), "showvminfo", f"leidian{index}", "--machinereadable"])
 
+    def running_vms(self) -> dict[str, str]:
+        raw = self.call([str(self.vboxmanage), "list", "runningvms"])
+        result = {}
+        for line in raw.splitlines():
+            match = re.fullmatch(r'"(.+)" \{([a-fA-F0-9-]{36})\}', line.strip())
+            if not match or match[1] in result:
+                raise NetworkRecoveryError("Unrecognized running VM inventory")
+            result[match[1]] = match[2]
+        return result
+
+    def assert_dedicated(self, index: int, network: str) -> None:
+        validate_vm(self.vm_info(index), index)
+        running = self.running_vms()
+        if f"leidian{index}" not in running:
+            raise NetworkRecoveryError("Selected VM stopped during inspection")
+        for name, vm_id in running.items():
+            if name == f"leidian{index}":
+                continue
+            raw = self.call([str(self.vboxmanage), "showvminfo", vm_id, "--machinereadable"])
+            if not re.search(r'^name="', raw, re.MULTILINE):
+                raise NetworkRecoveryError("Cannot verify other running VM topology")
+            if re.search(r'^nat-network\d+="' + re.escape(network) + r'"$', raw, re.MULTILINE):
+                raise NetworkRecoveryError("Selected network is shared with another running VM")
+        validate_vm(self.vm_info(index), index)
+
     def processes(self) -> list[dict]:
         raw = self.powershell("@(@(Get-CimInstance Win32_Process -Filter \"Name='VBoxNetNAT.exe' OR Name='VBoxNetDHCP.exe'\") | "
             "Select-Object Name,ProcessId,ExecutablePath,CommandLine,@{n='Created';e={$_.CreationDate.ToUniversalTime().ToString('o')}}) | ConvertTo-Json -Compress")
         value = json.loads(raw or "[]")
-        return value if isinstance(value, list) else [value]
+        entries = value if isinstance(value, list) else [value]
+        if any(not isinstance(p, dict) or any(not p.get(k) for k in
+                ("Name", "ProcessId", "ExecutablePath", "CommandLine", "Created")) for p in entries):
+            raise NetworkRecoveryError("Process inventory contains unverifiable identities")
+        return entries
 
     def stop_verified_dhcp(self, process: dict, network: str) -> None:
         # Check creation time (PID reuse), executable, command line and absence
@@ -144,7 +232,7 @@ def main() -> None:
     args = parser.parse_args()
     try:
         result = recover(WindowsHost(args.vboxmanage), args.index, repair=args.repair)
-    except (NetworkRecoveryError, ValueError, OSError) as exc:
+    except (NetworkRecoveryError, ValueError, OSError, subprocess.TimeoutExpired) as exc:
         print(json.dumps({"status": "error", "error_type": type(exc).__name__, "reason": str(exc)}))
         raise SystemExit(1) from None
     print(json.dumps(result))

@@ -1,8 +1,11 @@
 """NAT recovery is scoped to one explicit running VM; all host effects are recorded."""
 
+from contextlib import nullcontext
+from pathlib import Path
+
 import pytest
 
-from scripts.ldplayer_network import NetworkRecoveryError, owned_processes, recover
+from scripts.ldplayer_network import NetworkRecoveryError, WindowsHost, owned_processes, recover
 
 
 def process(index, kind, pid=101, directory=r"C:\Program Files\ldplayer9box"):
@@ -29,6 +32,12 @@ class Host:
         self.info_calls += 1
         return (f'name="leidian{index}"\nVMState="{self.state}"\nnic1="natnetwork"\n'
             f'nat-network1="{self.network}"\ncableconnected1="on"\n')
+
+    def repair_lock(self):
+        return nullcontext()
+
+    def assert_dedicated(self, index, network):
+        pass
 
     def processes(self):
         return list(self.entries)
@@ -137,3 +146,42 @@ def test_invalid_index_is_rejected_before_host_inspection(index):
     with pytest.raises(ValueError):
         recover(host, index, repair=True)
     assert not host.info_calls and not host.changes
+
+
+@pytest.mark.parametrize("raw", ['null', '[{}]', '[{"Name":"VBoxNetNAT.exe"}]'])
+def test_native_adapter_rejects_incomplete_process_identity(raw):
+    host = object.__new__(WindowsHost)
+    host.powershell = lambda code: raw
+    with pytest.raises(NetworkRecoveryError, match="identities"):
+        host.processes()
+
+
+@pytest.mark.parametrize("raw", ['unexpected output', '"vm" {bad-id}',
+    '"vm" {20160302-aaaa-aaaa-0eee-000000000000}\n"vm" {20160302-aaaa-aaaa-0eee-000000000001}'])
+def test_native_adapter_rejects_ambiguous_inventory(raw):
+    host = object.__new__(WindowsHost)
+    host.vboxmanage = Path("VBoxManage.exe")
+    host.call = lambda args: raw
+    with pytest.raises(NetworkRecoveryError):
+        host.running_vms()
+
+
+def test_native_adapter_rejects_other_vm_sharing_secondary_nic():
+    host = object.__new__(WindowsHost)
+    host.vboxmanage = Path("VBoxManage.exe")
+    host.vm_info = Host().vm_info
+    host.running_vms = lambda: {"leidian1": "selected", "custom-vm": "other"}
+    host.call = lambda args: 'name="custom-vm"\nnat-network2="LdNatNetwork1"\n'
+    with pytest.raises(NetworkRecoveryError, match="shared"):
+        host.assert_dedicated(1, "LdNatNetwork1")
+
+
+def test_native_adapter_checks_creation_time_in_same_dhcp_stop_command():
+    host = object.__new__(WindowsHost)
+    commands = []
+    host.powershell = commands.append
+    host.stop_verified_dhcp(process(1, "dhcp"), "LdNatNetwork1")
+    command = commands[0]
+    assert "CreationDate.ToUniversalTime()" in command and "ExecutablePath -ne" in command
+    assert "CommandLine -ne" in command and "if ($nat.Count)" in command
+    assert command.endswith("Stop-Process -Id 101 -Force")

@@ -40,7 +40,8 @@
 - [Тесты на выделенных PostgreSQL/Redis](../tests/production/README.md).
 - [Восстановление команд и событий после отказа Redis: AUD-97](audits/2026-09-05/REDIS-SUBSCRIPTION-RECOVERY.md).
 - [Источник журнала APK в Device Inspector: AUD-98](audits/2026-09-05/DEVICE-DIAGNOSTICS-SOURCE.md).
-- [LDPlayer запущен без выхода в сеть: проверка и адресный ремонт](operations/LDPLAYER-NETWORK-RECOVERY.md).
+- [LDPlayer запущен без выхода в сеть: диагностика, ремонт и Windows watchdog](operations/LDPLAYER-NETWORK-RECOVERY.md).
+- [Автоматическое восстановление NAT: native fault, команды двух APK и ресурсы](audits/2026-09-05/LDPLAYER-AUTOMATIC-RECOVERY.md).
 
 ## Как читать статус
 
