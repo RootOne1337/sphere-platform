@@ -85,14 +85,17 @@ admin и enrollment bootstrap; копирование одного overlay не 
 `com.sphereplatform.agent.pilot.debug` позволяет установить его рядом с обычными
 dev/enterprise сборками, сохраняя отдельные credentials и identity.
 
-Свежий файл: **`SphereAgent-signed-discovery-9618a57-dev-debug.apk`**.
+Свежий файл: **`SphereAgent-signed-discovery-ce26a9e-dev-debug.apk`**.
 Указатель на ту же сборку: **`LATEST-SphereAgent-pilot.apk`** в том же каталоге.
-SHA-256: `d6db04c6101349050913bd48582839e8be098b02660834603bfffd11b42151ea`.
-Размер 8,444,546 bytes; versionCode 10200, minSdk 26, targetSdk 35.
-Обновлена на обоих LDPlayer поверх прежней: автоматический возврат команд за
-7.828 / 8.406 s от начала установки, те же IDs, signed cache v8, без новых
-регистраций. Затем 12/12 команд и настоящие журналы обоих устройств.
-[Manifest и проверка UTF-8 диагностики](../audits/2026-09-05/APK-UTF8-LOG-TAIL.md).
+SHA-256: `24ef116ed28777b94f43715e1f5ae326d25d4d04c579d14e7937139188d7a19d`.
+Размер 8,380,169 bytes; versionCode 10201 / 1.2.1-dev, minSdk 26, targetSdk 35.
+Обновлена на обоих LDPlayer поверх прежней через ADB: автоматический возврат команд
+за 7.640 / 7.813 s от начала установки, те же IDs, signed cache v8, без новых
+регистраций. После сброса разрешения на каждом APK сама через root подготовила
+захват экрана: projection активен без ручного диалога. Затем захват остановлен,
+12/12 команд и настоящие журналы обоих устройств. **OTA self-install не принят:**
+серверный каталог пока пуст; локальный LATEST не является публикацией OTA.
+[Manifest, native before/after и ограничения](../audits/2026-09-05/ANDROID-UNATTENDED-CAPABILITIES.md).
 
 Management URL и fallback в APK пусты. `SPHERE_CONFIG_URL` указывает на подписанный
 документ в ветке `codex/pilot-bootstrap-20260911` отдельного config repository;

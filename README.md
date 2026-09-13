@@ -36,8 +36,10 @@
 > [восстановление второго после отказа сети станции](docs/audits/2026-09-05/LDPLAYER-NAT-INCIDENT.md).
 > Теперь этот ремонт [выполняется автоматически задачей Windows](docs/audits/2026-09-05/LDPLAYER-AUTOMATIC-RECOVERY.md):
 > реальный fault → команда второй APK через 108.12 s, затем 12/12 команд на двух устройствах.
-> [Текущая APK `9618a57`](docs/operations/LOCAL-PILOT.md#apk-именно-для-нового-стенда)
-> обновлена на обоих без новой регистрации; исправлено чтение больших UTF-8 журналов.
+> [Текущая APK `ce26a9e`, 1.2.1-dev](docs/operations/LOCAL-PILOT.md#apk-именно-для-нового-стенда)
+> обновлена на обоих без новой регистрации; захват экрана после сброса разрешения
+> запускается силами самой APK через root, без ручного нажатия. [Native before/after](docs/audits/2026-09-05/ANDROID-UNATTENDED-CAPABILITIES.md).
+> OTA self-install, передача кадров между workers и VPN пока не приняты целиком.
 
 ## Для чего Sphere
 

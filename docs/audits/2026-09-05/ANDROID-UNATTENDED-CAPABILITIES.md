@@ -1,6 +1,6 @@
 # Android без локального ADB: фактическая готовность
 
-**13 сентября 2026 · AUD-102 · High · исправление в коде, native-приёмка новой APK ожидается.**
+**13 сентября 2026 · AUD-102 · High · исправлено и принято на двух Android 9/API 28.**
 
 [Аудит](AUDIT-REPORT.md) · [Локальный стенд](../../operations/LOCAL-PILOT.md) ·
 [Подключение и резервные адреса](../../operations/READINESS.md)
@@ -49,7 +49,28 @@ helper с контролируемым процессом и настоящим�
 отдельный Android user, ложный exit 0, deny/default/unsupported, неуспех root,
 таймаут с остановкой процесса, отсутствие su, недопустимый target, ограничение чтения.
 8 tests pass; полная dev JVM suite: **523 tests / 38 suites, 0 failures/errors/skips**.
-[JUnit summary](evidence/root-projection-full-summary.json). Новая APK проверяется отдельно.
+[JUnit summary](evidence/root-projection-full-summary.json). Signed dev и enterprise
+builds проходят по 37 тестов: 19 discovery + 10 logger + 8 root permission.
+
+**Native после fix.** APK `ce26a9e` установлена поверх старой на обоих устройствах
+по одному через ADB; self-install OTA этим не проверялся. Автоматический возврат
+команд от начала установки: 7.640 s (первый), 7.813 s (второй), прежние device IDs
+и signed cache v8, без ручного запуска приложения/очистки данных/новой регистрации.
+На каждом снова сброшен только `PROJECT_MEDIA` в `default`, затем сервер отправил
+`start_stream`. APK сама выставила `allow`: во всех 5 наблюдениях на каждом
+projection активен, системный dialog отсутствует, PID тот же. После теста серверный
+`stop_stream` остановил projection; оба устройства выполнили ещё 12/12 команд,
+API вернул настоящие 100-строчные журналы. ADB не выдавал разрешение в проверяемом
+пути: только fault, read-only inspection и восстановление исходного app-op после теста.
+
+[После — первый](evidence/native-projection-permission-after-index0.json) ·
+[После — второй](evidence/native-projection-permission-after.json) ·
+[Установка и команды](evidence/apk-projection-native-rollout-20260913.json) ·
+[APK manifest](evidence/apk-ce26a9e-manifest.json).
+
+Свежая local APK: `SphereAgent-signed-discovery-ce26a9e-dev-debug.apk`, 8,380,169 bytes,
+SHA-256 `24ef116ed28777b94f43715e1f5ae326d25d4d04c579d14e7937139188d7a19d`.
+`LATEST-SphereAgent-pilot.apk` переключён только после приёмки обоих устройств.
 
 **Residual risk.** Проверка Android 9 не доказывает поведение всех OEM и Android 14+.
 Обычный Android требует consent и новый token для каждой projection session;
@@ -74,7 +95,7 @@ helper с контролируемым процессом и настоящим�
 
 ## Порядок дальнейшей проверки
 
-1. Принять новый root permission flow на устройстве после сброса app-op, без ручной кнопки.
+1. Выполнено на двух Android 9: новый root permission flow после сброса app-op, без ручной кнопки. Другие версии/OEM и recreation Activity во время задержанного su требуют отдельной проверки.
 2. Исправить межпроцессный путь стрима и проверить реальные кадры в viewer.
 3. Опубликовать и принять OTA от скачивания до автоматического возврата APK; отдельно проверить сбои.
 4. Проверить VPN и независимый резервный ingress на целевой конфигурации.

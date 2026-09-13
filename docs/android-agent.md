@@ -169,6 +169,13 @@ the APK. Preserve/migrate credentials and command receipts deliberately. See
 
 ## 6. OTA Updates
 
+**Pilot status, 13 September:** the server currently has **zero published OTA
+releases**. A local `LATEST` APK does not publish a release. Version 10201 / 1.2.1-dev
+was installed on both pilot devices via controlled ADB rollout; this does not prove
+automatic self-install. Runtime OTA needs only the Android APK and its reachable
+management server, not LDPlayer or station ADB. Root must be authorized for the
+app itself. [Verified capabilities and outstanding blockers](audits/2026-09-05/ANDROID-UNATTENDED-CAPABILITIES.md).
+
 `OTA_UPDATE` uses an `OtaUpdatePayload` with `download_url`, `version`, `sha256`
 and optional `force`. The current implementation validates an HTTPS URL whose
 host matches the management server, downloads up to 200 MiB and compares the

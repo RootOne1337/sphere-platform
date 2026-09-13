@@ -1,0 +1,33 @@
+{
+  "phase": "after",
+  "at": "2026-09-13T02:27:35.206123+00:00",
+  "device_id": "ba1346c1-1581-452f-adee-451d36622aaf",
+  "android_sdk": "28",
+  "trigger": "server Redis command -> existing APK WebSocket",
+  "adb_used_for_fault_and_inspection_only": true,
+  "samples": [
+    {
+      "permission_dialog_resumed": false,
+      "projection_active": true
+    },
+    {
+      "permission_dialog_resumed": false,
+      "projection_active": true
+    },
+    {
+      "permission_dialog_resumed": false,
+      "projection_active": true
+    },
+    {
+      "permission_dialog_resumed": false,
+      "projection_active": true
+    },
+    {
+      "permission_dialog_resumed": false,
+      "projection_active": true
+    }
+  ],
+  "app_op_allowed_by_apk": true,
+  "same_apk_pid": true,
+  "original_app_op_restored": true
+}

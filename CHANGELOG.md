@@ -17,8 +17,11 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - AUD-102: prepare and verify this APK's `PROJECT_MEDIA` app-op through its own
   authorized root process before requesting a fresh capture token. Bound the root
   wait, keep it off the UI thread and retain normal consent when root is unavailable.
-  Native Android 9 before-fix reproduces a blocking consent dialog; 8 regression
-  tests pass. Advance Android version to 10201 / 1.2.1 for the next candidate.
+  Native Android 9 before-fix reproduces a blocking consent dialog; after-fix
+  capture starts on both devices after an app-op reset, without a manual click.
+  8 regressions, 523 full JVM tests and 37 tests per signed flavor pass. APK
+  `ce26a9e`, version 10201 / 1.2.1-dev, is accepted on both pilot devices; ADB
+  rollout is explicitly distinct from the still unverified OTA self-install.
   [Acceptance status and remaining OTA/streaming work](docs/audits/2026-09-05/ANDROID-UNATTENDED-CAPABILITIES.md).
 
 - AUD-101: run Windows publisher/NAT tasks directly with `pythonw.exe` and suppress

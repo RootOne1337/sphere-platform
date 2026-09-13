@@ -1,0 +1,53 @@
+{
+  "source_commit": "ce26a9e5c11e4b308199cd56ec90223efb5d64a7",
+  "built_at_utc": "2026-09-13T02:26:27.724544+00:00",
+  "file": "SphereAgent-signed-discovery-ce26a9e-dev-debug.apk",
+  "sha256": "24ef116ed28777b94f43715e1f5ae326d25d4d04c579d14e7937139188d7a19d",
+  "bytes": 8380169,
+  "package": "com.sphereplatform.agent.pilot.debug",
+  "config_url": "https://raw.githubusercontent.com/RootOne1337/sphere-agent-config/codex/pilot-bootstrap-20260911/pilots/sphere-pilot-20260911/discovery.json",
+  "config_mirror_url": "https://reach-further-loads-ran.trycloudflare.com/bootstrap/agent.signed.json",
+  "discovery_key_id": "pilot-20260911-v1",
+  "installation_id": "ce58a96d-fd02-4f7c-ac86-111c4f7fa37e",
+  "baked_management_urls": [],
+  "signing": "Android Debug; v2 signature verified; same certificate as previous pilot",
+  "version_name": "1.2.1-dev",
+  "version_code": 10201,
+  "min_sdk": 26,
+  "target_sdk": 35,
+  "default_dev_suite": {
+    "tests": 523,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "suites": 38,
+    "seconds": 120.176,
+    "configuration": "default dev debug; production permission helper on IO; native APK acceptance separate"
+  },
+  "signed_build_tests": {
+    "dev": {
+      "signed_discovery_tests": 19,
+      "file_logging_tests": 10,
+      "root_projection_tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "enterprise": {
+      "signed_discovery_tests": 19,
+      "file_logging_tests": 10,
+      "root_projection_tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "installed_on_device": true,
+  "independent_fallback_verified": false,
+  "warning": "Signed bootstrap pilot; one temporary ingress. No fleet or independent provider acceptance.",
+  "installed_sha256": "24ef116ed28777b94f43715e1f5ae326d25d4d04c579d14e7937139188d7a19d",
+  "native_cached_version": 8,
+  "native_signed_cache_verified": true,
+  "native_projection_permission_verified": true,
+  "ota_self_install_verified": false
+}
