@@ -36,7 +36,14 @@ repair → возврат второго за 6.08 s, затем 12/12 кома�
 100 строк и последний marker после. Полный JVM suite 515 passed; signed flavors
 по 29 passed. [Доказательства и границы](../audits/2026-09-05/APK-UTF8-LOG-TAIL.md).
 
-**AUD-104–106, текущая APK `a1a40ff` / 1.2.3-dev:** оба Android сами установили
+**AUD-107, текущая APK `fdd26c5` / 1.2.4-dev:** оба Android обновлены через OTA;
+возврат команд 10.266 / 9.844 s. Реальный обрыв очищает staging, две одновременно
+принятые OTA дают одну загрузку до замены процесса; native retry 10.453 s.
+Reboot после OTA → самостоятельный старт и команда за 21.094 s. Финальные 12/12
+команд/журналы/hash pass. 556 JVM tests, signed flavors по 70.
+[Evidence и границы](../audits/2026-09-05/ANDROID-OTA-RECOVERY.md).
+
+**AUD-104–106, предыдущая APK `a1a40ff` / 1.2.3-dev:** оба Android сами установили
 опубликованный release через HTTPS + собственный su, без ADB install и manual UI.
 Возврат команд 6.641 / 10.125 s; reboot после OTA → 22.000 s. Native `/latest`
 исправлен с localhost на current public host; 12/12 команд и оба журнала pass.
@@ -53,16 +60,16 @@ SIGKILL → 5.453 s при отключённом Windows watchdog и без app
 запускается без ручного consent: разрешение выдаёт сама APK через собственный su.
 523 full JVM tests и по 37 tests в signed flavors pass; затем 12/12 команд.
 **Открыто:** подтверждённые ложные offline ответы streaming REST между workers;
-OTA interruption/concurrency, полный естественный periodic cycle и fleet rollout;
+durable OTA session/dedup, конкурентная публикация, естественный periodic cycle и fleet rollout;
 VPN и независимый резервный ingress. [Фактическая автономность Android](../audits/2026-09-05/ANDROID-UNATTENDED-CAPABILITIES.md).
 
 [Главная](../../README.md) · [Доказательства аудита](../audits/2026-09-05/AUDIT-REPORT.md) ·
 [APK](../android-agent.md) · [PC-agent](../pc-agent.md) · [Будущий AI-контур](../architecture/AI-READINESS.md)
 
-**Последний архивированный CI: `8d93e48` — все обязательные checks success:**
+**Последний архивированный CI исходников: `fdd26c5` — все обязательные checks success:**
 backend, Android, frontend, lint/security/RLS, Alembic и image bootstrap.
-[Архив с run links](../audits/2026-09-05/evidence/ci-8d93e48-summary.json).
-Включает Windows background, root projection и persisted Android boot recovery.
+[Архив с run links](../audits/2026-09-05/evidence/ci-fdd26c5-summary.json).
+Включает OTA recovery, Windows background, root projection и persisted Android boot recovery.
 Проверки последующего documentation head отслеживаются отдельно.
 Предыдущий `f20b3b9`: JUnit **1591 tests / 0 failures / 0 errors / 0 skipped / 261.517 s**
 ([архив](../audits/2026-09-05/evidence/ci-f20b3b9-summary.json)).
@@ -115,10 +122,10 @@ README и руководства обновляются по реализова�
 
 | Приоритет | Сценарий | Что найдено / подтверждено | Следующее доказательство готовности |
 | --- | --- | --- | --- |
-| P0 | Первый пользователь не может войти или не видит зарегистрированный APK | AUD-78: bootstrap scripts используют существующие DB imports, передают credentials и одну организацию; 23 новых SQL/HTTP/subprocess cases | [Пилот](PILOT-ACCEPTANCE.md); полный fresh-volume Compose, env selection, migration ordering, browser и установленный APK |
+| P0 | Первый пользователь должен получить полный результат задания | Fresh-volume pilot, browser login/reload и два APK уже работают; [актуальная 1.2.4](LOCAL-PILOT.md) прошла OTA/команды | [Пилот](PILOT-ACCEPTANCE.md): web → DAG → физическое действие → persisted result → UI, error/cancel/retry |
 | P0 | Регистрация теряет credentials после остановки или ответы меняют identity в обратном порядке | AUD-77: один проверяемый commit UUID/tokens/routes, serialization с refresh, local revision fence; 20 новых JVM cases | [Контракт](../architecture/ANDROID-BACKGROUND-ENROLLMENT.md); initial server response loss, failed re-enrollment recovery, реальные disk/keystore/OS |
 | P0 | Registration зависает или поздний ответ записывает credentials после stop | AUD-76: async Call, HTTP budget 10 s, byte limit до parse, cancellation и освобождение worker mutex; 15 новых JVM cases | [Контракт](../architecture/ANDROID-BACKGROUND-ENROLLMENT.md); AUD-77 добавляет единый commit и serialization; initial response loss и реальные sockets/OS открыты |
-| P0 | APK не регистрируется после boot или подключается со старым ID | AUD-75: supplied bootstrap key больше не подменяет session; два workers сериализованы, повторяют activation, WS перечитывает назначенный ID; 24 новых JVM cases | [Контракт](../architecture/ANDROID-BACKGROUND-ENROLLMENT.md); AUD-77 закрывает отдельные записи и конкуренцию HTTP registration; response loss и установленный APK boot/recovery открыты |
+| P0 | APK должен сам запускаться после Android boot | AUD-75/77/91 согласуют enrollment, AUD-103 добавляет persisted JobScheduler; native reboot двух Android 9 и текущей 1.2.4 принят с прежними IDs | [Контракт](../architecture/ANDROID-BACKGROUND-ENROLLMENT.md); initial response loss, fresh/never-launched package, другие Android/OEM и force-stop |
 | P0 | Сервер перезапущен, парк возвращается без оператора | APK clean-close обходил delay, network retry имел одинаковые сроки у всех клиентов; AUD-67 исправляет pacing/jitter | Убить/поднять выделенный backend при 100, 500, 1000 реальных или протокольных clients; измерить p50/p95/p99 времени возврата и число незавершённых задач |
 | P0 | GitHub или основной адрес недоступен | AUD-74 сохраняет primary/fallback, перебирает их для WS и refresh без discovery, выбирает активный адрес по device-bound ACK; 27 JVM и 3 SQL/ASGI cases | [Настройка](../architecture/ANDROID-SAVED-ROUTES.md); реальный OS restart, отказ LAN/DNS/GitHub, проверка latency/capacity и отказа самого backend |
 | P0 | Discovery перестаёт работать после enrollment или переживает stop | AUD-73: JWT в `X-API-Key` давал 401; параллельные/поздние запросы меняли URL. Публичный отменяемый HTTP, один запрос и local revision исправляют воспроизведённые сценарии | [Контракт](../architecture/ANDROID-DISCOVERY-RECOVERY.md); AUD-74 сохраняет кандидатов без разрыва рабочего WS. Signed mode сохраняет durable version floor; native миграция одного APK принята. Открыты fleet/OS recovery и независимая инфраструктура |
@@ -145,8 +152,9 @@ P0 — порядок эксплуатационной работы, а не CVS
 проверку подписи/установки/версии, AtomicFile cache и до трёх начальных sources.
 521 devDebug JVM tests и 21 offline signer tests проходят. Первый source pilot
 размещён вне туннеля в отдельной config branch; второй — копия в gateway.
-Постоянные независимые ingress, renewal/publisher automation и fleet acceptance
-ещё открыты. Legacy сборки автоматически не переходят на signed mode.
+Автоматический publisher/renewal реализован, native смена адреса через него
+принята. Постоянные независимые ingress, host logon/reboot, длительное наблюдение
+renewal и fleet acceptance ещё открыты. Legacy сборки не переходят на signed mode сами.
 
 **AUD-74 реализует сохранённую пару и ACK-gated выбор маршрута.** Ниже указаны
 границы реализации и инфраструктура, которую оператор ещё должен подготовить:
@@ -158,13 +166,15 @@ P0 — порядок эксплуатационной работы, а не CVS
 2. В APK сохраняются основной и резервный endpoint **той же установки Sphere**,
    device identity и выбранный адрес. После неудач WS и refresh выбирают другой
    сохранённый endpoint с backoff/jitter; переустановка не требуется для route retry.
-   Durable versioned config/rollback ещё не реализован.
-3. Локальные MDM/файлы читаются при старте сервиса. HTTP использует один CONFIG_URL:
-   можно задать локальный endpoint при enterprise build; список локального и GitHub
-   источников ещё не добавлен. Недоступность discovery не стирает сохранённую пару.
+   Signed mode сохраняет verified config и version floor атомарно; возврат
+   прежнего адреса публикуется как новая подписанная версия, без снижения floor.
+3. Локальные MDM/файлы читаются при старте сервиса. Signed mode опрашивает до трёх
+   заранее настроенных HTTP sources; legacy использует CONFIG_URL. Недоступность
+   discovery не стирает подтверждённый cache и сохранённую пару маршрутов.
 4. Локальная revision защищает от позднего ответа. Discovery сохраняет кандидатов,
-   рабочий адрес меняется по ACK. Принадлежность установке до отправки credentials
-   и rollback серверной версии пока не проверяются: адреса задаёт доверенный оператор.
+   рабочий адрес меняется по ACK. Signed mode проверяет подпись, installation ID,
+   срок и version floor; legacy сохраняет собственные ограничения доверия.
+   Key/source rotation и независимость инфраструктуры остаются отдельными gates.
 5. Один активный исполнитель задачи и один владелец control session на устройство.
    Резервный маршрут не должен создавать второе выполнение или две конфликтующие
    управляющие сессии. Identity/receipt protocol одинаков на обоих адресах.
@@ -173,8 +183,8 @@ P0 — порядок эксплуатационной работы, а не CVS
 flowchart LR
     A[APK: credentials + journal + saved endpoints] --> L[Основной management endpoint]
     A -. переключение .-> R[Резервный endpoint той же установки]
-    C[Один CONFIG_URL или локальный файл при старте] -. кандидаты .-> A
-    G[GitHub: возможный CONFIG_URL] -. необязательное обновление .-> A
+    C[Signed sources: до трёх адресов и verified cache] -. кандидаты .-> A
+    G[GitHub и gateway mirror текущего pilot] -. подписанная публикация .-> C
     L --> S[Sphere backend + durable state]
     R --> S
 ```
@@ -190,11 +200,11 @@ backup/restore drill и локальный журнал APK. Отдельный 
 | Механизм | Реальное назначение | Ограничение |
 | --- | --- | --- |
 | `SphereWebSocketClient` | Один активный WS, ожидание target-bound `auth_ok` до 20 s, reconnect/circuit, force reconnect | AUD-72 подтверждает identity до `isConnected`; это не readiness всех backend services. [Rollout backend→APK](../architecture/ANDROID-CONNECTION-PROTOCOL.md) |
-| `ConfigWatchdog` | Сохраняет кандидатов, читает локальные источники при старте; HTTP 120 s connected / 60 s disconnected, первая задержка 5 s | Один compile-time CONFIG_URL, в enterprise по умолчанию пуст; нет live reload локального файла или durable config version |
+| `ConfigWatchdog` | Сохраняет кандидатов, читает источники; signed mode проверяет несколько HTTP sources и durable version floor | В pilot основной GitHub source и mirror на том же ingress; это не две независимые рабочие серверные площадки. Legacy enterprise defaults пусты |
 | `FallbackDns` | Системный DNS и внешние DNS fallback | Не меняет endpoint и не оживляет сервер; внешние резолверы не заменяют LAN DNS |
 | `AuthTokenStore` | Сохранённая identity, access/refresh, mutex refresh, cancellable HTTP | Persisted operation ID и deadline/stop проверены в tests; actual OS/keystore/network drill ещё не выполнен |
 | `CommandJournal` / `DagRunner` | Локальная работа и повторная доставка terminal result до ACK | Не бесконечный storage; interruption может иметь unknown outcome |
-| Foreground Service / watchdogs | Возврат сервиса после некоторых остановок | Force-stop, Direct Boot, permissions/OEM и root/non-root требуют реальных OS tests |
+| Foreground Service / watchdogs / JobScheduler | Native возврат после SIGKILL и Android reboot без Windows launcher принят на двух Android 9 | Force-stop, never-launched package, Direct Boot, permissions/OEM и другие версии Android требуют отдельной приёмки |
 | Binary send cap | Видео не занимает всю очередь OkHttp | Видео и управление всё ещё делят транспорт; p99 command latency под стримом не измерен |
 
 Источники: [WS](../../android/app/src/main/kotlin/com/sphereplatform/agent/ws/SphereWebSocketClient.kt),
@@ -274,7 +284,11 @@ PG connection loss/restart, GitHub blocked, LAN DNS down, primary route unavaila
 capture и background возможности каждого телефона. APK — исполнитель локальных
 заданий; контрольная станция определяет политику и наблюдает результат.
 
-## Что выполнено этим срезом
+## История предыдущих срезов AUD-67–87
+
+Ниже сохранены результаты на момент соответствующего исправления. Указанные
+здесь «следующие gates» и CI counts являются историей; текущую готовность,
+версию APK и оставшиеся задачи определяют начало документа и матрица выше.
 
 - Проверены исходники connect/discovery/token/service/journal/logging, Compose,
   monitoring и конкретный VPN UI path. Это не постраничный полный browser-аудит.
@@ -318,7 +332,7 @@ Bash full-deploy исправлен: штатный `IFS` больше не ск
 оба overlay. Последний полный локальный backend/PC итог остаётся 1413 / 69,38% из
 AUD-78; установленный APK, полный stack, env selection и VPN не приняты.
 
-### Последнее подтверждение CI для первого запуска
+### Историческое подтверждение CI первого запуска
 
 Runtime `ac7a11f`: **1417 passed / 69.37%** в Linux с fresh migrations и
 выделенными PostgreSQL/Redis; backend/frontend/Android workflows прошли с первой
@@ -333,7 +347,7 @@ Full-deploy wrapper и штатный start-dev теперь передают `.
 Настоящий Compose renderer не запускает сервисы. Migration ordering, secrets,
 legacy branches, первый установленный APK/task/VPN остаются открытыми.
 
-### Текущий CI: AUD-80
+### Исторический CI: AUD-80
 
 Runtime `ea8e606`: **1424 passed / 69.38%** в Linux, 505 PostgreSQL/Redis и
 44 deployment cases; backend/frontend/Android прошли с первой попытки. Preview

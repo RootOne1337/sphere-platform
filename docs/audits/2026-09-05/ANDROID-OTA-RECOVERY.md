@@ -1,6 +1,6 @@
 # OTA: обрыв загрузки и параллельные обновления
 
-**13 сентября 2026 · AUD-107 · High operational · source fix и JVM regression приняты; новая APK проходит native-приёмку.**
+**13 сентября 2026 · AUD-107 · High operational · native до/после, OTA на двух Android и повторный reboot приняты.**
 
 [Аудит](AUDIT-REPORT.md) · [Доставка OTA](ANDROID-OTA-DELIVERY.md) · [Текущая APK](../../operations/LOCAL-PILOT.md#apk-именно-для-нового-стенда)
 
@@ -46,8 +46,12 @@ Affected files:
 
 ## Regression и воспроизведение
 
-`cd android`, затем `./gradlew :app:testDevDebugUnitTest --tests
-com.sphereplatform.agent.ota.OtaUpdateServiceRecoveryTest` (Windows: `gradlew.bat`).
+Из каталога `android` (Windows: `gradlew.bat`):
+
+```sh
+./gradlew :app:testDevDebugUnitTest --tests com.sphereplatform.agent.ota.OtaUpdateServiceRecoveryTest
+```
+
 Тест вызывает production service, настоящий OkHttp, чтение/запись файлов и
 SHA-256. Подменена только граница Android installer. Cancellation использует
 настоящий loopback TCP server с медленным body; другие fixtures — OkHttp
@@ -62,9 +66,43 @@ mismatch, HTTP 503, oversized Content-Length и retry после installer failu
 
 ## Текущая приёмка и границы
 
-Работающие устройства пока остаются на принятой 1.2.3; LATEST не меняется до
-проверки нового подписанного кандидата, доставки с сервера и повторения native
-fault. Коммит исходников сам по себе не публикует обновление.
+Оба устройства уже на **1.2.4-dev / 10204**, source **`fdd26c5`**. Размер
+**8,385,905 bytes**; SHA-256
+`db3f9111e3e59c2871b042e07a81bb86d123c686bd40e27e8b2ec3b5f0902add`.
+V2 подпись проверена, сертификат/package совпадают с предыдущей APK. Signed dev
+и enterprise проходят **по 70 selected tests**, включая все девять OTA cases.
+
+1. Второй Android сам скачал и установил 10203 → 10204 через сервер/HTTPS/свой su.
+   Команда вернулась за **10.266 s**; при старте удалились оба полных старых APK
+   и файл baseline-обрыва. Каталог `ota` пуст.
+2. Повторён тот же native truncated-body fault на 10204: ошибка с command_id
+   видна в APK journal; **файлов после ошибки нет**, PID сохранён и оба устройства
+   отвечают. Исходная конфигурация gateway восстановлена, test container удалён.
+3. Следом отправлены **две OTA-команды с разными IDs**, одной версией/проверенным
+   SHA. Redis receipt channels подтверждают `received` и `running` от APK для
+   обеих команд; в её журнале **один** `OTA: starting update` с уникальной меткой.
+   Только одна загрузка/передача установщику прошла до self-replacement; новый
+   процесс отвечает через **10.453 s**, installed SHA совпадает, staging пуст.
+   Это также native retry после обрыва. Ожидающая coroutine исчезла со старым
+   процессом; durable exactly-once или завершённый ACK для обеих команд этим
+   **не подтверждается**.
+4. После canary опубликован обычный **android/dev 10204**. Первый Android сам
+   обновился и вернулся за **9.844 s**, второй продолжал работу. Canary удалён;
+   прежний android/dev 10203 сохранён, всего в каталоге **два release**.
+5. Reboot второго уже на 10204: Android сам запускает `BootRecoveryJobService`,
+   команда проходит за **21.094 s**. App-launch/UI действий нет, Windows station
+   watchdog отключён на время reboot/установок и восстановлен. Device IDs,
+   signed cache v9 и APK hash сохранены; новых регистраций нет.
+6. Финально **12/12 команд**, оба реальных журнала, installed SHA и пустые staging
+   проверены. WorkManager DB read-only: ENQUEUED, interval 6 h / backoff 30 s на
+   обоих устройствах. `/latest` с 10203 предлагает 10204 на текущем HTTPS host;
+   с 10204 возвращает отсутствие обновления. Девять сервисов healthy; старая
+   Sphere installation сохраняет IDs/images/states/mounts.
+
+[Полные native evidence](evidence/apk-ota-recovery-native-20260913.json) ·
+[Artifact manifest](evidence/apk-fdd26c5-manifest.json).
+LATEST продвинут только после этой приёмки. Коммит исходников сам по себе не
+публикует обновление; полный естественный шестичасовой период не выжидался.
 
 - Mutex охватывает передачу APK установщику. Асинхронный PackageInstaller
   fallback после commit всё ещё требует отдельного persistent session tracking;
@@ -79,5 +117,6 @@ fault. Коммит исходников сам по себе не публик�
 - Два rooted Android 9 не заменяют нагрузку сотен устройств, проверку иных Android
   и полный естественный шестичасовой цикл WorkManager.
 
-Предыдущий точный CI head [5c6d3af](evidence/ci-5c6d3af-summary.json) зелёный.
-Он не заменяет отдельную проверку нового commit.
+Точный source CI head [fdd26c5](evidence/ci-fdd26c5-summary.json) зелёный:
+backend, Android, frontend, lint/security/RLS и image bootstrap. Последующий
+commit документации проверяется отдельно; статус виден в PR.

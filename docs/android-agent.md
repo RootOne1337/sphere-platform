@@ -1,16 +1,17 @@
 # Android Agent
 
-13 September 2026 pilot update: signed APK **`a1a40ff`, 1.2.3-dev / 10203**
-recovers after real Android reboot on both enrolled Android 9 devices without
-a Windows app launcher. A native persisted `BootRecoveryJobService` bypasses
-dependence on vendor-filtered boot broadcasts; WorkManager alone did not recover.
-Command recovery: 20.859 / 25.375 s after reboot, 5.453 s after one process kill.
-The native trials disabled the station watchdog and sent no app-launch commands.
-An already-launched package is required; Android quotas, force-stop and newer
-OS restrictions still apply. Both pilot devices subsequently self-installed 1.2.3
-through authenticated server OTA without ADB install; post-update reboot recovery
-was verified on the second device. [OTA evidence](audits/2026-09-05/ANDROID-OTA-DELIVERY.md).
-[Current artifact](operations/LOCAL-PILOT.md) · [AUD-103 evidence](audits/2026-09-05/ANDROID-BOOT-RECOVERY.md).
+13 September 2026 pilot: signed APK **`fdd26c5`, 1.2.4-dev / 10204** is
+installed on both owned Android 9 devices through authenticated server OTA and
+the APK's own `su`, with no ADB install/manual UI. Commands return in
+10.266 / 9.844 s. A real truncated download leaves no staging files; two
+overlapping OTA commands produce one download before process replacement.
+The updated APK also starts itself after Android reboot: 21.094 s to a real
+command, with the Windows station watchdog disabled. Android's process-start
+event names the persisted `BootRecoveryJobService`; identity and signed cache
+v9 remain intact. Final 12/12 commands and both installed hashes pass.
+These are rooted Android 9 pilot observations, not universal OS/fleet guarantees.
+[Current artifact](operations/LOCAL-PILOT.md) · [OTA recovery evidence](audits/2026-09-05/ANDROID-OTA-RECOVERY.md) ·
+[Boot recovery design and limits](audits/2026-09-05/ANDROID-BOOT-RECOVERY.md).
 
 Developer and operator guide, checked against the audit branch on **11 September
 2026**. The audit is ongoing; production readiness and compatibility with every
@@ -176,15 +177,14 @@ the APK. Preserve/migrate credentials and command receipts deliberately. See
 
 ## 6. OTA Updates
 
-**Pilot status, 13 September:** **one published android/dev release, 10203 / 1.2.3-dev**.
-Both Android 9 devices downloaded and self-installed it through their existing
-management connection and own `su`, without ADB install or manual UI. Command
-recovery took 6.641 / 10.125 s; a subsequent Android reboot recovered in 22.000 s.
+**Pilot status, 13 September:** latest **android/dev 10204 / 1.2.4-dev** is
+published; previous 10203 is retained. Both Androids downloaded/self-installed
+the latest APK through their own authenticated HTTPS connection and root.
 Root must already be authorized for the app itself. The periodic worker is
-enqueued on both devices every six hours; the complete natural interval was not
-waited during native acceptance. Future builds need explicit artifact/metadata
-publication; local LATEST and Git commits alone do not release an update.
-[Native evidence and remaining gates](audits/2026-09-05/ANDROID-OTA-DELIVERY.md).
+enqueued on both devices every six hours; the complete natural interval was
+not waited during native acceptance. Future builds need explicit artifact and
+metadata publication; local LATEST and Git commits alone do not release OTA.
+[Native evidence and remaining gates](audits/2026-09-05/ANDROID-OTA-RECOVERY.md).
 
 `OTA_UPDATE` uses an `OtaUpdatePayload` with `download_url`, `version`, `sha256`
 and optional `force`. The current implementation validates an HTTPS URL whose
@@ -195,8 +195,11 @@ to a `PackageInstaller` session.
 The previous guide's application-level `APK_SIGNING_CERT_SHA256` check was not
 implemented in this APK service. A checksum from the same command is not an
 independent release signature. Package installation outcome, redirect/origin
-handling, partial-download cleanup, version policy and recovery across process
-loss still need audit. A command ACK is not proof that the new APK booted and
+handling, version policy and durable installer sessions still need audit.
+Interrupted-file cleanup, HTTP cancellation, serialized attempts and orphan
+cleanup after process replacement are covered by AUD-107. The mutex serializes
+installer submission; it does not provide persistent exactly-once completion
+for asynchronous PackageInstaller sessions. A command ACK is not proof that the new APK booted and
 reconnected. The two-device pilot rollout above verifies that outcome for this
 compatible package/signing identity; it does not establish fleet-wide compatibility.
 

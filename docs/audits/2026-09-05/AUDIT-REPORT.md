@@ -6,8 +6,10 @@
 
 **AUD-107:** воспроизведены конфликт параллельных OTA, неотменяемый HTTP body
 и оставшиеся staging-файлы. Исправлены очередь/уникальный файл/cancellation/cleanup;
-556 JVM tests pass. Native baseline подтверждает мусор после self-install и обрыва;
-1.2.4 ещё проходит приёмку. [Evidence и границы](ANDROID-OTA-RECOVERY.md).
+556 JVM tests pass; signed flavors по 70. Оба Android сами обновились до 1.2.4:
+10.266 / 9.844 s до команды. Native обрыв теперь не оставляет файлов; две
+одновременные OTA дают одну загрузку до replacement. Reboot → 21.094 s;
+12/12 команд, identities и staging проверены. [Evidence и границы](ANDROID-OTA-RECOVERY.md).
 
 **Native OTA AUD-104–106 принято:** оба Android установили 1.2.3 через сервер
 без ADB install: возврат команд 6.641 / 10.125 s. Reboot после OTA → 22.000 s;

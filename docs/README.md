@@ -1,7 +1,7 @@
 # Документация Sphere Platform
 
 **Навигация по текущим контрактам, эксплуатационным ограничениям и доказательствам.**
-Обновлено 12 сентября 2026. [Вернуться на главную](../README.md).
+Обновлено 13 сентября 2026. [Вернуться на главную](../README.md).
 
 ## С чего начать
 
@@ -43,6 +43,9 @@
 - [LDPlayer запущен без выхода в сеть: диагностика, ремонт и Windows watchdog](operations/LDPLAYER-NETWORK-RECOVERY.md).
 - [Автоматическое восстановление NAT: native fault, команды двух APK и ресурсы](audits/2026-09-05/LDPLAYER-AUTOMATIC-RECOVERY.md).
 - [Большой UTF-8 журнал APK: исправленный byte-tail и native приёмка новой сборки](audits/2026-09-05/APK-UTF8-LOG-TAIL.md).
+- [Android запускает APK после reboot без Windows launcher](audits/2026-09-05/ANDROID-BOOT-RECOVERY.md).
+- [Root capture и границы автоматической выдачи разрешений](audits/2026-09-05/ANDROID-UNATTENDED-CAPABILITIES.md).
+- [OTA 1.2.4: обрыв, конкуренция, очистка и самостоятельная установка на двух Android](audits/2026-09-05/ANDROID-OTA-RECOVERY.md).
 
 ## Как читать статус
 

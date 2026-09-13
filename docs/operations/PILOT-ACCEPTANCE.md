@@ -1,11 +1,13 @@
 # Первый рабочий пилот: что осталось до использования
 
-**12 сентября 2026 · рабочий план, не акт готовности.**
+**13 сентября 2026 · рабочий план, не акт полной готовности.**
 
 **Продвижение:** [новый стенд](LOCAL-PILOT.md) работает отдельно от старой установки.
-Browser login/reload, один установленный APK, 12/12 HTTPS shell `echo` после AUD-92
-и автоматический возврат после gateway restart проверены. Полное DAG-задание из UI,
-второй экземпляр и постоянные независимые каналы ещё не приняты; рубеж A не закрыт.
+Browser login/reload и два разных устройства на APK **1.2.4-dev / 10204** проверены.
+Оба сами обновились через сервер, приняли 12/12 команд; на текущем APK проверены
+обрыв OTA, одновременные обновления и самостоятельный запуск после Android reboot.
+[Native evidence](../audits/2026-09-05/ANDROID-OTA-RECOVERY.md). Полное DAG-задание
+из UI и постоянные независимые каналы ещё не приняты; рубеж A не закрыт.
 
 [Главная](../../README.md) · [Текущий аудит](../audits/2026-09-05/AUDIT-REPORT.md) ·
 [Эксплуатационная матрица](READINESS.md) · [Запуск](STARTUP.md) · [APK](../android-agent.md)
@@ -31,7 +33,13 @@ Browser login/reload, один установленный APK, 12/12 HTTPS shell
 новым обязательным этапом перед этим dev smoke. В production отдельные runtime/
 migration roles и grants остаются обязательными, guard не отключается.
 
-## Оценка объёма от текущего состояния
+## Ориентиры объёма и оставшаяся приёмка
+
+Диапазоны ниже — исходная оценка инженерного объёма от 11 сентября, а не новый
+отсчёт после каждого исправления. Запуск отдельного стека, browser login, два APK,
+OTA и несколько recovery drills уже выполнены. Ближайшее оставшееся доказательство
+для рубежа A: полный web → DAG → реальное выполнение → сохранённый результат → UI.
+Число коммитов не позволяет предсказать длительность runtime-проверок и новых отказов.
 
 | Рубеж | Плановый ориентир | Что должно быть предъявлено |
 | --- | --- | --- |
@@ -55,12 +63,12 @@ in-process HTTP и JVM tests по-прежнему не заменяют ост�
 
 | Шаг | Текущий результат | Что ещё сделать / критерий завершения |
 | --- | --- | --- |
-| 1. Выбрать запуск | AUD-79/80: argv/env selection; AUD-84: сохранение `.env`; AUD-86: generated config проходит Settings | Проверить реальные адреса/параметры и Bash dotenv; запускать один выбранный project |
-| 2. Подготовить БД | AUD-82: порядок; migrations/bootstrap в runtime image; AUD-87: default/custom PG init.sql и container restart с сохранением записи | Полный выбранный Compose; recovery старых частичных установок при необходимости. Production дополнительно требует provision roles/grants |
-| 3. Создать пользователя и enrollment key | AUD-78/81/83/85: identity и повтор; runtime image выполняет CLI→SQL→полный ASGI lifespan→login/device | Пройти выбранный Compose и browser/APK; текущий image scenario не открывает HTTP listener |
-| 4. Открыть веб и подключить APK | Android registration/refresh/ACK/fallback покрыты JVM-тестами | Проверить настоящий browser login, provisioning APK, permissions, `auth_ok`, видимость устройства и версию APK в UI |
+| 1. Выбрать запуск | Отдельный Windows Compose `sphere-pilot-20260911` работает, девять сервисов healthy; старая установка сохранена | Host reboot/logon и выбранный операторский launcher; альтернативный deployment не считается принятым автоматически |
+| 2. Подготовить БД | Новый pilot поднят на fresh volumes с migrations/bootstrap; CI проверяет default/custom PostgreSQL init и restart | Recovery старых частичных установок при необходимости; production отдельно требует runtime roles/grants |
+| 3. Создать пользователя и enrollment key | На новом стеке работают настоящий HTTP login, сохранённый admin и два разных device IDs | Fresh unattended bootstrap после полного host restart и конфликты существующих установок |
+| 4. Открыть веб и подключить APK | Browser login/reload, команды двум Android, signed discovery, root capture, OTA и Android reboot проверены | Полная карточка/версия/действия устройства в UI вместе с заданием; другие ROM/права проверяются отдельно |
 | 5. Выполнить задание | Backend dispatch и Android journal/DAG имеют regression tests | Веб → исполнение на эмуляторе → сохранённый результат → UI; отказ/отмена/повторная доставка с тем же task ID |
-| 6. Восстановить связь | Сохранены endpoints, intent refresh, checked registration commit | Потеря initial registration response, клонированная identity, backend/сеть/process restart; никакой ручной переустановки |
+| 6. Восстановить связь | Native gateway/backend/Redis recovery, signed route migration, Android reboot/process kill и OTA проверены на небольшом pilot | Initial registration response loss, clone identity, независимый ingress, fleet/soak; отсутствие ручного вмешательства на целевых станциях |
 | 7. Подключить VPN | SQL ownership/intents и router adapter частично проверены | Реальный router, доставка config на APK, наличие совместимых AWG/WG tools, handshake, маршруты, сохранность management-связи при отказе |
 | 8. Диагностировать и управлять | Есть backend logs/request ID и APK log upload | Рабочий metrics stack, incident correlation, основные кнопки UI и отсутствие фиктивных показателей |
 | 9. Увеличить парк | Аппаратных capacity measurements нет | 1 → несколько → 10–64 на станции → 100/500; следующий уровень только после замеров предыдущего |

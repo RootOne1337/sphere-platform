@@ -36,14 +36,17 @@
 > [восстановление второго после отказа сети станции](docs/audits/2026-09-05/LDPLAYER-NAT-INCIDENT.md).
 > Теперь этот ремонт [выполняется автоматически задачей Windows](docs/audits/2026-09-05/LDPLAYER-AUTOMATIC-RECOVERY.md):
 > реальный fault → команда второй APK через 108.12 s, затем 12/12 команд на двух устройствах.
-> [Текущая APK `a1a40ff`, 1.2.3-dev](docs/operations/LOCAL-PILOT.md#apk-именно-для-нового-стенда)
+> [Текущая APK `fdd26c5`, 1.2.4-dev](docs/operations/LOCAL-PILOT.md#apk-именно-для-нового-стенда)
 > обновлена на обоих без новой регистрации; захват экрана после сброса разрешения
 > запускается силами самой APK через root, без ручного нажатия. [Native before/after](docs/audits/2026-09-05/ANDROID-UNATTENDED-CAPABILITIES.md).
 > [Самозапуск после Android reboot](docs/audits/2026-09-05/ANDROID-BOOT-RECOVERY.md)
 > подтверждён на обоих устройствах без Windows launcher: 20.9 / 25.4 s до команды;
 > после падения процесса — 5.5 s. [OTA self-install](docs/audits/2026-09-05/ANDROID-OTA-DELIVERY.md)
 > принят на обоих: APK сама скачала и установила опубликованную версию, вернулась
-> без ADB install. Передача кадров между workers, VPN и массовый rollout ещё открыты.
+> без ADB install. [Обрыв и параллельная OTA](docs/audits/2026-09-05/ANDROID-OTA-RECOVERY.md)
+> проверены на 1.2.4: повреждённая загрузка не оставляет файлов, две команды
+> запускают одну загрузку до self-replacement; reboot → команда за 21.1 s.
+> Передача кадров между workers, VPN и массовый rollout ещё открыты.
 
 ## Для чего Sphere
 

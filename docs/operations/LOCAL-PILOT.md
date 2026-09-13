@@ -85,19 +85,21 @@ admin и enrollment bootstrap; копирование одного overlay не 
 `com.sphereplatform.agent.pilot.debug` позволяет установить его рядом с обычными
 dev/enterprise сборками, сохраняя отдельные credentials и identity.
 
-Свежий файл: **`SphereAgent-signed-discovery-a1a40ff-dev-debug.apk`**.
+Свежий файл: **`SphereAgent-signed-discovery-fdd26c5-dev-debug.apk`**.
 Указатель на ту же сборку: **`LATEST-SphereAgent-pilot.apk`** в том же каталоге.
-SHA-256: `44126e952376667a8f8cb7bcfd2923ac4343ecfa0a9e5eda6ff79008e2f826ee`.
-Размер 8,383,485 bytes; versionCode 10203 / 1.2.3-dev, minSdk 26, targetSdk 35.
-**Оба Android обновились с 10202 через OTA:** APK сама скачала файл с сервера,
-проверила SHA и установила через свой `su`; возврат команд за 10.125 / 6.641 s.
+SHA-256: `db3f9111e3e59c2871b042e07a81bb86d123c686bd40e27e8b2ec3b5f0902add`.
+Размер 8,385,905 bytes; versionCode 10204 / 1.2.4-dev, minSdk 26, targetSdk 35.
+**Оба Android обновились с 10203 через OTA:** APK сама скачала файл с сервера,
+проверила SHA и установила через свой `su`; возврат команд за 9.844 / 10.266 s.
 ADB install, Windows app launcher и ручные разрешения в этих trials не применялись.
 Прежние device IDs и signed cache v9 сохранены. После OTA reboot второго Android
-→ самостоятельный `BootRecoveryJobService` → команда за 22.000 s, без регистрации.
-Затем 12/12 команд, журналы и хеши обоих installed APK проверены.
-[Artifact, native OTA и ограничения](../audits/2026-09-05/ANDROID-OTA-DELIVERY.md).
+→ самостоятельный `BootRecoveryJobService` → команда за 21.094 s, без регистрации.
+Повторный реальный обрыв загрузки оставляет staging пустым; две одновременно
+принятые OTA-команды дали одну загрузку до self-replacement. Затем 12/12 команд,
+журналы и хеши обоих installed APK проверены. Full JVM 556 tests; signed flavors
+по 70 selected tests. [Artifact, native OTA и ограничения](../audits/2026-09-05/ANDROID-OTA-RECOVERY.md).
 
-В серверном каталоге опубликован **1 release android/dev 10203**. Файл и каталог
+В каталоге **2 release android/dev: 10203 и актуальный 10204**. Файл и каталог
 хранятся в `.local-pilot/updates/`, backend bind mount `/var/lib/sphere/updates`;
 пересоздание backend сохранило release и авторизованное скачивание. Backend image
 закреплён на `c2d412f`, public-gateway использует Host fix `985e4fc`.

@@ -1,6 +1,10 @@
 # OTA: самостоятельное обновление Android
 
-**13 сентября 2026 · AUD-104–106 · High operational · OTA self-install принят на двух Android 9.**
+**13 сентября 2026 · AUD-104–106 · High operational · история приёмки APK 1.2.3.**
+
+Актуальная APK — **1.2.4 / `fdd26c5`**, оба Android уже обновились. Native обрыв,
+параллельные команды, staging cleanup и повторный reboot описаны в [AUD-107](ANDROID-OTA-RECOVERY.md).
+Числа/каталог/хеши ниже относятся к исторической приёмке 1.2.3.
 
 [Аудит](AUDIT-REPORT.md) · [Автозапуск](ANDROID-BOOT-RECOVERY.md) · [Стенд](../../operations/LOCAL-PILOT.md)
 
