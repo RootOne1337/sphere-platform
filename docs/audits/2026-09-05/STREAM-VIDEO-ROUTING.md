@@ -69,8 +69,18 @@ warm-up delivery до измерения contention; поздний вызов �
 
 ## Границы текущей приёмки
 
-Native baseline сохранён; новая image и реальные кадры после deployment
-проверяются отдельно. APK остаётся **fdd26c5 / 1.2.4 / 10204** — server fix не
+Backend **f8c66b9** установлен, все его required CI checks pass. Новый pilot,
+OTA catalog и APK hash сохранены. Первый post-deploy artifact GET по прежнему
+HTTP connection завершился timeout и вызвал rollback только нового backend.
+Повторная установка с fresh-connection read-only проверкой прошла; during-rollback
+WebSocket 502 не засчитан как after-fix.
+
+Шесть native connections после исправления получают SPS/PPS/IDR; первый binary
+frame за **1.328–1.703 s**. В настоящем браузере декодированы оба экрана. Однако
+**стабильная приёмка отклонена**: APK 1.2.4 падает в native ImageReader copy на
+обоих Android. Владелец подтвердил crash dialogs. Проверка 45 frames/15 s не прошла;
+редкие кадры нельзя объяснять только неподвижным экраном, поскольку crash доказан.
+Просмотры остановлены; следующий обязательный fix — [AUD-112](ANDROID-CAPTURE-LIFECYCLE.md). APK остаётся **fdd26c5 / 1.2.4 / 10204** — server fix не
 требует переустановки. Native after/decoded browser, RTT/fleet load, длительный
 soak и сеть между городами нельзя засчитать по этим loopback regressions.
 

@@ -1,0 +1,89 @@
+{
+  "apk_source": "fdd26c5",
+  "version_code": 10204,
+  "native_signature": "SIGSEGV in sphere-imagerea / libc memcpy / Bitmap_copyPixelsFromBuffer",
+  "before": {
+    "phase": "before",
+    "exit": 1,
+    "suites": 1,
+    "tests": 2,
+    "failures": 2,
+    "errors": 0,
+    "skipped": 0,
+    "failed_cases": [
+      {
+        "name": "queued image callback after stop cannot touch released reader",
+        "message": "java.lang.AssertionError: Verification failed: call 1 of 1: ImageReader(#1).acquireLatestImage()) should not be called"
+      },
+      {
+        "name": "stop cannot close reader or recycle bitmap during native copy",
+        "message": "java.lang.AssertionError: ImageReader native buffer freed while copy is active"
+      }
+    ]
+  },
+  "after_initial": {
+    "phase": "after",
+    "exit": 0,
+    "suites": 1,
+    "tests": 2,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "failed_cases": []
+  },
+  "native_fix_accepted": false,
+  "native_crashes": {
+    "emulator-5554": [
+      "09-13 20:28:00.960  9309 14584 F libc    : Fatal signal 11 (SIGSEGV), code 1 (SEGV_MAPERR), fault addr 0x76386a1b9610 in tid 14584 (sphere-imagerea), pid 9309 (ent.pilot.debug)",
+      "09-13 20:28:01.015 14633 14633 F DEBUG   : pid: 9309, tid: 14584, name: sphere-imagerea  >>> com.sphereplatform.agent.pilot.debug <<<",
+      "09-13 20:28:01.112 14633 14633 F DEBUG   :     #02 pc 000000000015130b  /system/lib64/libandroid_runtime.so (Bitmap_copyPixelsFromBuffer(_JNIEnv*, _jobject*, long, _jobject*)+107)",
+      "09-13 20:29:44.114 14659 15704 F libc    : Fatal signal 11 (SIGSEGV), code 1 (SEGV_MAPERR), fault addr 0x76386af02ab0 in tid 15704 (sphere-imagerea), pid 14659 (ent.pilot.debug)",
+      "09-13 20:29:44.148 15750 15750 F DEBUG   : pid: 14659, tid: 15704, name: sphere-imagerea  >>> com.sphereplatform.agent.pilot.debug <<<",
+      "09-13 20:29:44.182 15750 15750 F DEBUG   :     #02 pc 000000000015130b  /system/lib64/libandroid_runtime.so (Bitmap_copyPixelsFromBuffer(_JNIEnv*, _jobject*, long, _jobject*)+107)",
+      "09-13 20:29:47.960 15773 15857 F libc    : Fatal signal 11 (SIGSEGV), code 1 (SEGV_MAPERR), fault addr 0x76386e76f010 in tid 15857 (sphere-imagerea), pid 15773 (ent.pilot.debug)",
+      "09-13 20:29:48.080 16351 16351 F DEBUG   : pid: 15773, tid: 15857, name: sphere-imagerea  >>> com.sphereplatform.agent.pilot.debug <<<",
+      "09-13 20:29:48.182 16351 16351 F DEBUG   :     #02 pc 000000000015130b  /system/lib64/libandroid_runtime.so (Bitmap_copyPixelsFromBuffer(_JNIEnv*, _jobject*, long, _jobject*)+107)",
+      "09-13 20:32:41.241 16496 17310 F libc    : Fatal signal 11 (SIGSEGV), code 1 (SEGV_MAPERR), fault addr 0x76386ccd0490 in tid 17310 (sphere-imagerea), pid 16496 (ent.pilot.debug)",
+      "09-13 20:32:41.514 17345 17345 F DEBUG   : pid: 16496, tid: 17310, name: sphere-imagerea  >>> com.sphereplatform.agent.pilot.debug <<<",
+      "09-13 20:32:41.692 17345 17345 F DEBUG   :     #02 pc 000000000015130b  /system/lib64/libandroid_runtime.so (Bitmap_copyPixelsFromBuffer(_JNIEnv*, _jobject*, long, _jobject*)+107)"
+    ],
+    "emulator-5556": [
+      "09-13 20:27:44.436  6742  6742 F DEBUG   :     #02 pc 000000000015130b  /system/lib64/libandroid_runtime.so (Bitmap_copyPixelsFromBuffer(_JNIEnv*, _jobject*, long, _jobject*)+107)",
+      "09-13 20:28:14.868  6790  7591 F libc    : Fatal signal 11 (SIGSEGV), code 1 (SEGV_MAPERR), fault addr 0x76386ca54d10 in tid 7591 (sphere-imagerea), pid 6790 (ent.pilot.debug)",
+      "09-13 20:28:14.890  7665  7665 F DEBUG   : pid: 6790, tid: 7591, name: sphere-imagerea  >>> com.sphereplatform.agent.pilot.debug <<<",
+      "09-13 20:28:14.932  7665  7665 F DEBUG   :     #02 pc 000000000015130b  /system/lib64/libandroid_runtime.so (Bitmap_copyPixelsFromBuffer(_JNIEnv*, _jobject*, long, _jobject*)+107)",
+      "09-13 20:28:17.897  7709  7775 F libc    : Fatal signal 11 (SIGSEGV), code 1 (SEGV_MAPERR), fault addr 0x7638705588b0 in tid 7775 (sphere-imagerea), pid 7709 (ent.pilot.debug)",
+      "09-13 20:28:17.937  8122  8122 F DEBUG   : pid: 7709, tid: 7775, name: sphere-imagerea  >>> com.sphereplatform.agent.pilot.debug <<<",
+      "09-13 20:28:17.966  8122  8122 F DEBUG   :     #02 pc 000000000015130b  /system/lib64/libandroid_runtime.so (Bitmap_copyPixelsFromBuffer(_JNIEnv*, _jobject*, long, _jobject*)+107)",
+      "09-13 20:29:21.358  8224  9111 F libc    : Fatal signal 11 (SIGSEGV), code 1 (SEGV_MAPERR), fault addr 0x76386f7ccd60 in tid 9111 (sphere-imagerea), pid 8224 (ent.pilot.debug)",
+      "09-13 20:29:21.402  9183  9183 F DEBUG   : pid: 8224, tid: 9111, name: sphere-imagerea  >>> com.sphereplatform.agent.pilot.debug <<<",
+      "09-13 20:29:21.442  9183  9183 F DEBUG   :     #02 pc 000000000015130b  /system/lib64/libandroid_runtime.so (Bitmap_copyPixelsFromBuffer(_JNIEnv*, _jobject*, long, _jobject*)+107)",
+      "09-13 20:29:24.297  9232  9291 F libc    : Fatal signal 11 (SIGSEGV), code 1 (SEGV_MAPERR), fault addr 0x7638707072b0 in tid 9291 (sphere-imagerea), pid 9232 (ent.pilot.debug)",
+      "09-13 20:29:24.350  9678  9678 F DEBUG   : pid: 9232, tid: 9291, name: sphere-imagerea  >>> com.sphereplatform.agent.pilot.debug <<<",
+      "09-13 20:29:24.420  9678  9678 F DEBUG   :     #02 pc 000000000015130b  /system/lib64/libandroid_runtime.so (Bitmap_copyPixelsFromBuffer(_JNIEnv*, _jobject*, long, _jobject*)+107)",
+      "09-13 20:29:44.064  9764  9839 F libc    : Fatal signal 11 (SIGSEGV), code 1 (SEGV_MAPERR), fault addr 0x76386f09f570 in tid 9839 (sphere-imagerea), pid 9764 (ent.pilot.debug)",
+      "09-13 20:29:44.095 10204 10204 F DEBUG   : pid: 9764, tid: 9839, name: sphere-imagerea  >>> com.sphereplatform.agent.pilot.debug <<<",
+      "09-13 20:29:44.150 10204 10204 F DEBUG   :     #02 pc 000000000015130b  /system/lib64/libandroid_runtime.so (Bitmap_copyPixelsFromBuffer(_JNIEnv*, _jobject*, long, _jobject*)+107)",
+      "09-13 20:29:48.728 10320 10418 F libc    : Fatal signal 11 (SIGSEGV), code 1 (SEGV_MAPERR), fault addr 0x7638705f7a30 in tid 10418 (sphere-imagerea), pid 10320 (ent.pilot.debug)",
+      "09-13 20:29:48.776 10693 10693 F DEBUG   : pid: 10320, tid: 10418, name: sphere-imagerea  >>> com.sphereplatform.agent.pilot.debug <<<",
+      "09-13 20:29:48.938 10693 10693 F DEBUG   :     #02 pc 000000000015130b  /system/lib64/libandroid_runtime.so (Bitmap_copyPixelsFromBuffer(_JNIEnv*, _jobject*, long, _jobject*)+107)",
+      "09-13 20:29:52.125 10839 10922 F libc    : Fatal signal 11 (SIGSEGV), code 1 (SEGV_MAPERR), fault addr 0x7638703765b0 in tid 10922 (sphere-imagerea), pid 10839 (ent.pilot.debug)",
+      "09-13 20:29:52.277 11357 11357 F DEBUG   : pid: 10839, tid: 10922, name: sphere-imagerea  >>> com.sphereplatform.agent.pilot.debug <<<",
+      "09-13 20:29:52.426 11357 11357 F DEBUG   :     #02 pc 000000000015130b  /system/lib64/libandroid_runtime.so (Bitmap_copyPixelsFromBuffer(_JNIEnv*, _jobject*, long, _jobject*)+107)",
+      "09-13 20:32:40.723 11456 12361 F libc    : Fatal signal 11 (SIGSEGV), code 1 (SEGV_MAPERR), fault addr 0x76386d5f0600 in tid 12361 (sphere-imagerea), pid 11456 (ent.pilot.debug)",
+      "09-13 20:32:40.823 12437 12437 F DEBUG   : pid: 11456, tid: 12361, name: sphere-imagerea  >>> com.sphereplatform.agent.pilot.debug <<<",
+      "09-13 20:32:40.965 12437 12437 F DEBUG   :     #02 pc 000000000015130b  /system/lib64/libandroid_runtime.so (Bitmap_copyPixelsFromBuffer(_JNIEnv*, _jobject*, long, _jobject*)+107)"
+    ]
+  },
+  "after_full": {
+    "phase": "full",
+    "exit": 0,
+    "suites": 42,
+    "tests": 560,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "failed_cases": []
+  },
+  "capture_regressions": 4
+}

@@ -14,6 +14,13 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Security / runtime
 
+- AUD-112: reproduce native APK SIGSEGV during image copy and concurrent capture
+  teardown on both Androids. Serialize lifecycle, protect acquired-image lifetime,
+  reject obsolete callbacks and always unlock the encoder canvas. Two baseline
+  races fail; all four capture regressions and 560 full JVM tests now pass.
+  APK 1.2.5 is the candidate; native OTA/stream acceptance remains pending.
+  [Crash report](docs/audits/2026-09-05/ANDROID-CAPTURE-LIFECYCLE.md).
+
 - AUD-111: route binary frames and viewer controls between workers, guard cleanup
   by session, recover subscriptions/capture and stop only after the last viewer.
   Four failing runtime scenarios now pass; 211 combined regressions. Native

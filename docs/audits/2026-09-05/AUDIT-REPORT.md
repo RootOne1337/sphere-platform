@@ -4,10 +4,16 @@
 Исходная ревизия: `28f8cc46ab65496e00297960fd94d87d1605cc83`.
 Ветка исправлений: `codex/enterprise-audit-20260905`; [draft PR #19](https://github.com/RootOne1337/sphere-platform/pull/19).
 
+**AUD-112 — текущий runtime blocker:** реальный просмотр обоих Android выявил
+SIGSEGV в ImageReader/Bitmap copy, подтверждённый владельцем. Callback и cleanup
+конкурируют за освобождаемую native memory; 2 baseline regressions failed.
+Исправление и APK 1.2.5 проверяются; стабильный stream не принят.
+[Инцидент и доказательства](ANDROID-CAPTURE-LIFECYCLE.md).
+
 **AUD-109–111:** bounded video queues, restricted-role viewer login и cross-worker
 frame/control/lifecycle исправлены; 211 regressions pass. Native baseline: оба
-viewer без кадров за 15 s, хотя APK исполняют команды. Deployment/after ещё
-проверяются отдельно. [Дефекты, evidence, residual risk](STREAM-VIDEO-ROUTING.md).
+viewer без кадров за 15 s, хотя APK исполняют команды. Backend f8c66b9 deployed и CI pass; реальные кадры декодируются, но
+падение APK AUD-112 блокирует приёмку стабильности. [Дефекты, evidence, residual risk](STREAM-VIDEO-ROUTING.md).
 
 **AUD-108:** native 8/24 ложных offline 404 в REST stream controls.
 Публикация перенесена к worker-владельцу через Redis; 12 baseline failures →
