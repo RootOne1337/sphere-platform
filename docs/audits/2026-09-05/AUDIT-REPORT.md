@@ -7,7 +7,9 @@
 **AUD-103:** настоящий reboot второго Android оставил APK без процесса и связи
 на всём 240 s интервале. OEM фильтрует boot broadcasts; WorkManager recovery
 зависел от того же события. Добавлен независимый persisted JobScheduler path;
-native-приёмка новой APK выполняется. [Root cause и evidence](ANDROID-BOOT-RECOVERY.md).
+на обоих Android APK сама вернулась после reboot за 20.859 / 25.375 s,
+после SIGKILL — за 5.453 s. Windows watchdog отключён, app-launch команд нет;
+затем 12/12 команд и реальные журналы. 533 JVM tests, все source CI checks pass. [Root cause и evidence](ANDROID-BOOT-RECOVERY.md).
 
 **AUD-102:** native-проверка нового Android воспроизвела ручной projection dialog.
 Добавлена подготовка app-op внутри APK; 8 regression tests и 523 full JVM tests pass.

@@ -1,9 +1,14 @@
 # Android Agent
 
-13 September 2026 pilot update: signed APK `9618a57` fixes empty/truncated UTF-8
-diagnostic tails and is verified on both LDPlayer instances. In-place upgrades
-reconnect automatically, preserve IDs/cache, and return real commands and logs.
-[Current artifact](operations/LOCAL-PILOT.md) · [AUD-100 evidence](audits/2026-09-05/APK-UTF8-LOG-TAIL.md).
+13 September 2026 pilot update: signed APK **`8d93e48`, 1.2.2-dev / 10202**
+recovers after real Android reboot on both enrolled Android 9 devices without
+a Windows app launcher. A native persisted `BootRecoveryJobService` bypasses
+dependence on vendor-filtered boot broadcasts; WorkManager alone did not recover.
+Command recovery: 20.859 / 25.375 s after reboot, 5.453 s after one process kill.
+The native trials disabled the station watchdog and sent no app-launch commands.
+An already-launched package is required; Android quotas, force-stop and newer
+OS restrictions still apply. Controlled upgrades used ADB: OTA is not yet accepted.
+[Current artifact](operations/LOCAL-PILOT.md) · [AUD-103 evidence](audits/2026-09-05/ANDROID-BOOT-RECOVERY.md).
 
 Developer and operator guide, checked against the audit branch on **11 September
 2026**. The audit is ongoing; production readiness and compatibility with every

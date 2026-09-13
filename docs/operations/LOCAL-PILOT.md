@@ -85,17 +85,22 @@ admin и enrollment bootstrap; копирование одного overlay не 
 `com.sphereplatform.agent.pilot.debug` позволяет установить его рядом с обычными
 dev/enterprise сборками, сохраняя отдельные credentials и identity.
 
-Свежий файл: **`SphereAgent-signed-discovery-ce26a9e-dev-debug.apk`**.
+Свежий файл: **`SphereAgent-signed-discovery-8d93e48-dev-debug.apk`**.
 Указатель на ту же сборку: **`LATEST-SphereAgent-pilot.apk`** в том же каталоге.
-SHA-256: `24ef116ed28777b94f43715e1f5ae326d25d4d04c579d14e7937139188d7a19d`.
-Размер 8,380,169 bytes; versionCode 10201 / 1.2.1-dev, minSdk 26, targetSdk 35.
-Обновлена на обоих LDPlayer поверх прежней через ADB: автоматический возврат команд
-за 7.640 / 7.813 s от начала установки, те же IDs, signed cache v8, без новых
-регистраций. После сброса разрешения на каждом APK сама через root подготовила
-захват экрана: projection активен без ручного диалога. Затем захват остановлен,
-12/12 команд и настоящие журналы обоих устройств. **OTA self-install не принят:**
-серверный каталог пока пуст; локальный LATEST не является публикацией OTA.
-[Manifest, native before/after и ограничения](../audits/2026-09-05/ANDROID-UNATTENDED-CAPABILITIES.md).
+SHA-256: `34ee14cf3d14c4ccf68f8be45da96291a400ee2c8c8658c57c5ad8fdd8ac6aa1`.
+Размер 8,382,997 bytes; versionCode 10202 / 1.2.2-dev, minSdk 26, targetSdk 35.
+Обновлена на обоих LDPlayer поверх прежней через ADB: возврат команд за
+7.609 / 7.797 s, прежние IDs, signed cache v9, без новых регистраций.
+Настоящий Android reboot каждого при отключённом Windows watchdog: APK сама
+запускается через persisted JobScheduler, команда за 25.375 / 20.859 s.
+SIGKILL второго процесса → самостоятельный возврат за 5.453 s. Никаких app-launch
+команд или ручного UI в этих drills; затем 12/12 команд и реальные журналы.
+[Manifest и native evidence](../audits/2026-09-05/ANDROID-BOOT-RECOVERY.md).
+
+Root projection принят на предыдущей APK `ce26a9e`; реализация сохранена,
+8 regression tests пройдены в обоих signed flavors новой сборки.
+**OTA self-install не принят:** каталог пока пуст; локальный LATEST не является
+публикацией OTA. [Остальные возможности](../audits/2026-09-05/ANDROID-UNATTENDED-CAPABILITIES.md).
 
 Management URL и fallback в APK пусты. `SPHERE_CONFIG_URL` указывает на подписанный
 документ в ветке `codex/pilot-bootstrap-20260911` отдельного config repository;
@@ -104,10 +109,10 @@ Installation ID/public verification key заданы при сборке; enroll
 берётся из закрытого config этой установки. `SPHERE_DEV_APPLICATION_ID_SUFFIX=.pilot`.
 [Точные параметры и обновление документа](../architecture/ANDROID-SIGNED-DISCOVERY.md).
 
-Эта APK установлена **только на доступный `emulator-5554`**. SHA-256 извлечённого
-установленного `base.apk` совпал с файлом. Другие экземпляры автоматически не
-обновлялись. Общая надпись `1.2.0-dev` не различает все audit builds: используйте
-имя файла/SHA, package ID и installation manifest.
+Эта APK установлена на **оба доступных экземпляра**, `emulator-5554` и
+`emulator-5556`. Хеш каждого установленного `base.apk` совпадает с manifest.
+Другие станции этой локальной проверкой не обновлялись. При выборе файла
+сверяйте versionCode, SHA-256, package ID и installation manifest.
 
 Старый pilot APK с `10.0.2.2:18080` предназначался для host gateway эмулятора,
 а не распределённых станций. Ошибка на этом адресе означает, что экземпляр всё ещё

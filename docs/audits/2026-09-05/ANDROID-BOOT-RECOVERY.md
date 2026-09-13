@@ -1,7 +1,7 @@
 # Самостоятельный запуск APK после загрузки Android
 
-**13 сентября 2026 · AUD-103 · Critical operational · native before подтверждён,
-исправление проходит приёмку.**
+**13 сентября 2026 · AUD-103 · Critical operational · исправлено и принято
+на двух Android 9/API 28.**
 
 [Аудит](AUDIT-REPORT.md) · [Автономность APK](ANDROID-UNATTENDED-CAPABILITIES.md) ·
 [Стенд](../../operations/LOCAL-PILOT.md)
@@ -70,13 +70,34 @@ Affected files: Android manifest, `SphereApp`, комментарии `BootRecei
 constraints, idempotent schedule, смена job ID, отказ запуска службы, enrollment,
 ошибка/отказ планировщика, сохранение чужого job и OS retry. **10 tests pass**;
 полная dev JVM suite: **533 tests / 39 suites, 0 failures/errors/skips**.
-[JUnit summary](evidence/android-boot-full-summary.json). Native-проверка новой APK выполняется отдельно.
+[JUnit summary](evidence/android-boot-full-summary.json).
 
-Повторная native-проверка должна установить совместимую APK поверх существующей,
-подтвердить сохранённый job и выполнить reboot с отключённым host watchdog.
-Критерии: новый boot ID, самостоятельный процесс APK, тот же device ID и подписанный
-cache, реальные команды через сервер, отсутствие app-launch команд/ручного UI
-в проверяемом интервале. Отдельно проверяется убийство процесса, не force-stop package.
+APK **`8d93e48`, 1.2.2-dev / 10202** установлена поверх прежней на оба Android.
+В каждом reboot drill Windows NAT task отключена и восстановлена в `finally`.
+Никаких app-launch команд или ручных UI действий в проверяемом интервале нет.
+
+| Проверка | До fix | После fix |
+| --- | --- | --- |
+| Reboot второго Android | Нет процесса/команд весь интервал 240 s | Команда через **20.859 s** |
+| Reboot первого Android | Отдельный before не проводился | Команда через **25.375 s** |
+| SIGKILL второго APK | Отдельный before не проводился | Новый процесс и команда через **5.453 s**, boot ID прежний |
+
+В обоих reboot Android `am_proc_start` прямо указывает причиной запуска
+`BootRecoveryJobService`; production log подтверждает выполнение persisted job.
+Job сохраняется после восстановления, Setup Activity не открывается. При SIGKILL
+Android перезапустил `SphereAgentService`; это отдельный service recovery path.
+Другой APK продолжает отвечать, его PID неизменен. Device IDs, signed cache v9 и
+установленный SHA сохранены, новых регистраций нет. Затем **12/12 команд** и
+настоящие 100-строчные журналы обоих устройств прошли через сервер.
+
+[Native trials и rollout](evidence/apk-boot-native-rollout-20260913.json) ·
+[Artifact manifest](evidence/apk-8d93e48-manifest.json) ·
+[Все CI checks исходного fix успешны](evidence/ci-8d93e48-summary.json).
+
+Обновление на этом этапе выполнено через ADB для контролируемой приёмки;
+это не OTA. Локальный `LATEST-SphereAgent-pilot.apk` переведён на новый файл
+только после native checks. Измеренные секунды относятся к двум конкретным
+эмуляторам и включают Android boot и первую настоящую серверную команду.
 
 ## Residual risk
 

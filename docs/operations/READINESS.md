@@ -36,7 +36,13 @@ repair → возврат второго за 6.08 s, затем 12/12 кома�
 100 строк и последний marker после. Полный JVM suite 515 passed; signed flavors
 по 29 passed. [Доказательства и границы](../audits/2026-09-05/APK-UTF8-LOG-TAIL.md).
 
-**AUD-102, текущая APK `ce26a9e`:** на обоих Android 9 захват после сброса app-op
+**AUD-103, текущая APK `8d93e48` / 1.2.2-dev:** исправлен самостоятельный запуск
+после Android boot. Native reboot обоих → команда за 20.859 / 25.375 s,
+SIGKILL → 5.453 s при отключённом Windows watchdog и без app-launch команд.
+533 JVM tests; затем 12/12 команд и журналы.
+[Причина, проверка и ограничения](../audits/2026-09-05/ANDROID-BOOT-RECOVERY.md).
+
+**AUD-102, APK `ce26a9e`:** на обоих Android 9 захват после сброса app-op
 запускается без ручного consent: разрешение выдаёт сама APK через собственный su.
 523 full JVM tests и по 37 tests в signed flavors pass; затем 12/12 команд.
 **Открыто:** подтверждённые ложные offline ответы streaming REST между workers;
@@ -46,11 +52,11 @@ repair → возврат второго за 6.08 s, затем 12/12 кома�
 [Главная](../../README.md) · [Доказательства аудита](../audits/2026-09-05/AUDIT-REPORT.md) ·
 [APK](../android-agent.md) · [PC-agent](../pc-agent.md) · [Будущий AI-контур](../architecture/AI-READINESS.md)
 
-**Последний архивированный CI: `b3d0273` — все обязательные checks success:**
+**Последний архивированный CI: `8d93e48` — все обязательные checks success:**
 backend, Android, frontend, lint/security/RLS, Alembic и image bootstrap.
-[Архив с run links](../audits/2026-09-05/evidence/ci-b3d0273-summary.json).
-Это включает запуск фоновых задач без консоли. APK fix `ce26a9e` внесён позже;
-проверки нового PR head отслеживаются отдельно.
+[Архив с run links](../audits/2026-09-05/evidence/ci-8d93e48-summary.json).
+Включает Windows background, root projection и persisted Android boot recovery.
+Проверки последующего documentation head отслеживаются отдельно.
 Предыдущий `f20b3b9`: JUnit **1591 tests / 0 failures / 0 errors / 0 skipped / 261.517 s**
 ([архив](../audits/2026-09-05/evidence/ci-f20b3b9-summary.json)).
 

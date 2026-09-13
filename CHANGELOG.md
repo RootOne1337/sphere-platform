@@ -14,6 +14,11 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Security / runtime
 
+- AUD-103 native acceptance: both Android 9 devices restart APK themselves after
+  reboot (20.859 / 25.375 s to command); process kill recovers in 5.453 s. No
+  host app launch, station watchdog disabled, IDs/cache retained, 12/12 commands
+  and real logs pass. LATEST advances to 8d93e48 / 1.2.2-dev after acceptance.
+  Full 533 JVM tests and all source CI checks pass; OTA remains unaccepted.
 - AUD-103: add a native persisted Android recovery job independent of boot
   broadcasts and WorkManager rescheduling. A real Android 9 reboot left the
   enrolled APK absent/offline throughout 240 seconds with the Windows watchdog

@@ -16,6 +16,15 @@ root manager разрешил `su` именно UID приложения.
 Windows NAT watchdog — отдельный ремонт конкретной виртуальной сети двух локальных
 LDPlayer. Он не нужен физическому телефону и не заменяет восстановление связи APK.
 
+## Самозапуск после Android boot
+
+AUD-103 подтверждён на двух Android 9: APK `8d93e48` самостоятельно возвращает
+команды через 20.859 / 25.375 s после reboot, при отключённом Windows watchdog.
+Android запустил именно persisted `BootRecoveryJobService`. SIGKILL второго APK
+восстановлен за 5.453 s через service recovery. Это не host launcher и не OTA;
+first launch, force-stop и совместимость других OS остаются отдельными условиями.
+[Root cause, tests и native evidence](ANDROID-BOOT-RECOVERY.md).
+
 ## AUD-102: новый Android требует ручной кнопки для стрима
 
 **Root cause.** `CommandDispatcher` открывал `ScreenCaptureRequestActivity`, которая
