@@ -1,6 +1,6 @@
 # Управление стримом между backend workers
 
-**13 сентября 2026 · AUD-108 · High operational · REST fix проверен на real Redis; native deployment проходит приёмку.**
+**13 сентября 2026 · AUD-108 · High operational · REST controls приняты на real Redis и двух Android через четыре workers.**
 
 [Аудит](AUDIT-REPORT.md) · [Готовность](../../operations/READINESS.md) · [Android capabilities](ANDROID-UNATTENDED-CAPABILITIES.md)
 
@@ -49,6 +49,38 @@ python -m pytest tests/production/test_stream_control_routing.py tests/productio
 Для real-service tests нужны `SPHERE_RUN_INTEGRATION=1`, loopback PostgreSQL
 с `audit` в имени БД и отдельный Redis: [test contract](../../../tests/production/README.md).
 
+## Native deployment и приёмка
+
+Backend image source **`1310016`** собран из `git archive` только tracked runtime
+paths, без локальных credentials/build-каталогов. SHA файла маршрута в image
+сверен с archive и git source с учётом Windows CRLF. Заменён только backend
+нового `sphere-pilot-20260911`; каталог двух OTA releases сохранён побайтно,
+авторизованная выдача APK 1.2.4 сохраняет SHA. Старые Sphere IDs/images/states/mounts
+не менялись в ходе deployment.
+
+Первый helper ошибочно сравнил порядок Mounts в Docker inspect и откатил только
+новый backend. Read-only повтор показал изменение порядка без изменения mounts;
+сравнение исправлено сортировкой по Destination. Проба на временно возвращённом
+старом image не засчитана как проверка fix. После повторного deployment:
+
+- **24/24 keyframe HTTP 200** на отдельных соединениях вместо **8/24 false 404**.
+  Shell-команды обоим устройствам до/после проходят.
+- На обоих Android через REST выполнены start → keyframe → stop, отдельный HTTPS
+  connection на действие. `dumpsys media_projection` подтверждает настоящую активную
+  проекцию, затем `null`. Ожидание active после HTTP start: **0.625 / 0.625 s**;
+  ожидание inactive после stop: **0.594 / 1.156 s**. Это локальные интервалы
+  наблюдения после ответа, не end-to-end latency SLA.
+- Ручных разрешений и ADB mutations нет; прежние PID и команды APK сохранены.
+  После trial ни на одном устройстве не осталась активная проекция.
+- Девять сервисов healthy; OTA APK остаётся **`fdd26c5`, 1.2.4 / 10204**,
+  повторной сборки/переустановки для server routing fix не требуется.
+
+[Полные native evidence](evidence/stream-control-native-20260913.json).
+
+Source CI **`1310016`**: все обязательные workflows/jobs success;
+[архив](evidence/ci-1310016-summary.json). Последующий documentation head
+проверяется отдельно в PR, без переноса статуса предыдущего commit.
+
 ## Residual risk и следующая приёмка
 
 - Viewer WebSocket, video bridge/frame delivery, stream status и reconnect/stop
@@ -56,6 +88,6 @@ python -m pytest tests/production/test_stream_control_routing.py tests/productio
   полный стрим и не делает process-local status достоверным для всех workers.
 - Успешная Redis publication не является ACK Android. Socket может исчезнуть
   после публикации; pending interactive commands не переигрываются молча.
-- Следующий шаг: native REST before/after на новом backend image; затем отдельный
-  cross-worker video/lifecycle fix, настоящие viewer frames, reconnect, stop и
-  отсутствие фоновой проекции без зрителя. OTA APK 1.2.4 этим fix не меняется.
+- Следующий шаг: отдельный cross-worker video/lifecycle fix, настоящие viewer
+  frames, reconnect, stop и отсутствие фоновой проекции без зрителя. Native REST
+  start/stop не заменяет приёмку потока в браузере.

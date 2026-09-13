@@ -36,6 +36,12 @@ repair → возврат второго за 6.08 s, затем 12/12 кома�
 100 строк и последний marker после. Полный JVM suite 515 passed; signed flavors
 по 29 passed. [Доказательства и границы](../audits/2026-09-05/APK-UTF8-LOG-TAIL.md).
 
+**AUD-108, текущий backend `1310016`:** REST start/stop/keyframe больше не
+проверяют только worker-local socket. Native 8/24 false offline → 24/24 success;
+настоящий start/stop проекции обоих Android без manual UI принят. 206 real-service/WS
+tests pass. [Evidence](../audits/2026-09-05/STREAM-CONTROL-ROUTING.md).
+Frame relay, viewer lifecycle и stream status остаются process-local и открыты.
+
 **AUD-107, текущая APK `fdd26c5` / 1.2.4-dev:** оба Android обновлены через OTA;
 возврат команд 10.266 / 9.844 s. Реальный обрыв очищает staging, две одновременно
 принятые OTA дают одну загрузку до замены процесса; native retry 10.453 s.
@@ -59,17 +65,17 @@ SIGKILL → 5.453 s при отключённом Windows watchdog и без app
 **AUD-102, APK `ce26a9e`:** на обоих Android 9 захват после сброса app-op
 запускается без ручного consent: разрешение выдаёт сама APK через собственный su.
 523 full JVM tests и по 37 tests в signed flavors pass; затем 12/12 команд.
-**Открыто:** подтверждённые ложные offline ответы streaming REST между workers;
+**Открыто:** streaming frame relay, viewer lifecycle и status между workers;
 durable OTA session/dedup, конкурентная публикация, естественный periodic cycle и fleet rollout;
 VPN и независимый резервный ingress. [Фактическая автономность Android](../audits/2026-09-05/ANDROID-UNATTENDED-CAPABILITIES.md).
 
 [Главная](../../README.md) · [Доказательства аудита](../audits/2026-09-05/AUDIT-REPORT.md) ·
 [APK](../android-agent.md) · [PC-agent](../pc-agent.md) · [Будущий AI-контур](../architecture/AI-READINESS.md)
 
-**Последний архивированный CI исходников: `fdd26c5` — все обязательные checks success:**
+**Последний архивированный CI исходников: `1310016` — все обязательные checks success:**
 backend, Android, frontend, lint/security/RLS, Alembic и image bootstrap.
-[Архив с run links](../audits/2026-09-05/evidence/ci-fdd26c5-summary.json).
-Включает OTA recovery, Windows background, root projection и persisted Android boot recovery.
+[Архив с run links](../audits/2026-09-05/evidence/ci-1310016-summary.json).
+Включает stream REST routing, OTA recovery, root projection и Android boot recovery.
 Проверки последующего documentation head отслеживаются отдельно.
 Предыдущий `f20b3b9`: JUnit **1591 tests / 0 failures / 0 errors / 0 skipped / 261.517 s**
 ([архив](../audits/2026-09-05/evidence/ci-f20b3b9-summary.json)).

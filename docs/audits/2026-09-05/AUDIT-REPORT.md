@@ -6,7 +6,9 @@
 
 **AUD-108:** native 8/24 ложных offline 404 в REST stream controls.
 Публикация перенесена к worker-владельцу через Redis; 12 baseline failures →
-206 passing tests. Video bridge/lifecycle остаются отдельной задачей.
+206 passing tests. Новый backend `1310016`: 24/24 keyframe pass, настоящий REST
+start/stop проекции на обоих Android без ручных разрешений; APK не менялась.
+Video bridge/lifecycle остаются отдельной задачей.
 [Причина и evidence](STREAM-CONTROL-ROUTING.md).
 
 **AUD-107:** воспроизведены конфликт параллельных OTA, неотменяемый HTTP body

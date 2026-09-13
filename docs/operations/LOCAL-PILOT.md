@@ -102,7 +102,11 @@ ADB install, Windows app launcher и ручные разрешения в эти
 В каталоге **2 release android/dev: 10203 и актуальный 10204**. Файл и каталог
 хранятся в `.local-pilot/updates/`, backend bind mount `/var/lib/sphere/updates`;
 пересоздание backend сохранило release и авторизованное скачивание. Backend image
-закреплён на `c2d412f`, public-gateway использует Host fix `985e4fc`.
+закреплён на **`1310016`**, public-gateway использует Host fix `985e4fc`.
+Новый backend исправляет REST start/stop/keyframe между workers: 24/24 keyframe
+и реальный start/stop проекции обоих Android pass. [Evidence](../audits/2026-09-05/STREAM-CONTROL-ROUTING.md).
+Video bridge/viewer lifecycle всё ещё требуют отдельного fix; REST 200 не означает
+полученную браузером картинку.
 На обоих Android сохранён periodic update worker: 6 h при сети, retry от 30 s.
 Полный шестичасовой период не выжидался; native установка инициирована сервером.
 Будущие APK надо публиковать в этот каталог: один git commit или локальный LATEST

@@ -101,7 +101,7 @@ backend ранее проверен с 10203 [отдельно](ANDROID-OTA-DELI
 
 | Приоритет | Подтверждённое состояние | Следующая приёмка |
 | --- | --- | --- |
-| High | Streaming REST использует process-local `ConnectionManager` при четырёх workers. На online APK keyframe дал 14 HTTP 200 и 2 HTTP 404; обычные команды до/после прошли. Frame bridge и viewer lifecycle также локальные | Доставка control и кадров между разными workers, reconnect, stop и отсутствие фонового стрима без viewer |
+| High | REST controls исправлены в AUD-108: 24/24 keyframe, реальный start/stop обоих Android pass. Frame bridge, viewer WebSocket lifecycle и stream status остаются локальными | Доставка кадров и viewer control между workers, reconnect, stop и отсутствие фонового стрима без viewer |
 | High | OTA self-install принят на двух Android 9, 10204 опубликован, 10203 сохранён. Полный естественный период 6 h не выжидался; будущие builds требуют публикации | Natural periodic update, staged fleet rollout, ограничения package/flavor/signing identity |
 | High | Pilot persistent bind mount пережил replacement; default `/tmp` других deployments и конкурентная запись JSON остаются ограничениями | Concurrent publication и durable installer session/dedup после process loss |
 | High | Есть подписанные discovery/cache/mirror, но pilot имеет один временный ingress | Отказ независимого пути без потери обоих каналов; текущий резерв адресов не является отдельным живым сервером |

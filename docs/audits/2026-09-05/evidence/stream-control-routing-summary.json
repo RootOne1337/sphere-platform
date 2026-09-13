@@ -231,5 +231,6 @@
     "projection_not_started": true,
     "independent_http_connections": true
   },
-  "native_after_pending": true
+  "native_after_pending": false,
+  "native_after_evidence": "stream-control-native-20260913.json"
 }

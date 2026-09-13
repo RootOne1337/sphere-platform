@@ -175,6 +175,12 @@ Deploy compatible backend workers before enforcing explicit control targets in
 the APK. Preserve/migrate credentials and command receipts deliberately. See
 [the rollout contract](security/task-control-protocol.md) for mixed-version limits.
 
+Current pilot backend **`1310016`** routes REST start/stop/keyframe through the
+owning agent worker. Native start/stop effects pass on both Androids without
+manual consent. Viewer WebSocket/frame relay and stream status still require
+cross-worker repair; this is not complete browser video acceptance.
+[Server-side report](audits/2026-09-05/STREAM-CONTROL-ROUTING.md).
+
 ## 6. OTA Updates
 
 **Pilot status, 13 September:** latest **android/dev 10204 / 1.2.4-dev** is
