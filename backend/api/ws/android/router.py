@@ -621,7 +621,7 @@ async def android_agent_ws(
     try:
         from backend.websocket.stream_bridge import get_stream_bridge
         bridge = get_stream_bridge()
-        if bridge and bridge.is_streaming(device_id):
+        if bridge:
             await bridge.resume_stream_for_device(device_id)
             logger.info("android_ws: stream resumed for reconnected agent", device_id=device_id)
     except Exception as e:

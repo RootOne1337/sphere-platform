@@ -4,6 +4,11 @@
 Исходная ревизия: `28f8cc46ab65496e00297960fd94d87d1605cc83`.
 Ветка исправлений: `codex/enterprise-audit-20260905`; [draft PR #19](https://github.com/RootOne1337/sphere-platform/pull/19).
 
+**AUD-109–111:** bounded video queues, restricted-role viewer login и cross-worker
+frame/control/lifecycle исправлены; 211 regressions pass. Native baseline: оба
+viewer без кадров за 15 s, хотя APK исполняют команды. Deployment/after ещё
+проверяются отдельно. [Дефекты, evidence, residual risk](STREAM-VIDEO-ROUTING.md).
+
 **AUD-108:** native 8/24 ложных offline 404 в REST stream controls.
 Публикация перенесена к worker-владельцу через Redis; 12 baseline failures →
 206 passing tests. Новый backend `1310016`: 24/24 keyframe pass, настоящий REST

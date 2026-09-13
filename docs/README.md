@@ -45,6 +45,7 @@
 - [Большой UTF-8 журнал APK: исправленный byte-tail и native приёмка новой сборки](audits/2026-09-05/APK-UTF8-LOG-TAIL.md).
 - [Android запускает APK после reboot без Windows launcher](audits/2026-09-05/ANDROID-BOOT-RECOVERY.md).
 - [Root capture и границы автоматической выдачи разрешений](audits/2026-09-05/ANDROID-UNATTENDED-CAPABILITIES.md).
+- [Binary video между workers: воспроизведение, recovery и границы приёмки](audits/2026-09-05/STREAM-VIDEO-ROUTING.md).
 - [Stream REST controls между workers: native start/stop на двух Android](audits/2026-09-05/STREAM-CONTROL-ROUTING.md).
 - [OTA 1.2.4: обрыв, конкуренция, очистка и самостоятельная установка на двух Android](audits/2026-09-05/ANDROID-OTA-RECOVERY.md).
 

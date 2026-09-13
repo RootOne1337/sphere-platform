@@ -45,13 +45,11 @@ async def test_F05_viewer_can_send_touch_actions(world):
             {"type": "text", "text": "audit-marker"},
         ]
     )
-    manager = SimpleNamespace(send_to_device=AsyncMock())
-    bridge = SimpleNamespace(register_viewer=AsyncMock(), unregister_viewer=AsyncMock())
+    bridge = SimpleNamespace(register_viewer=AsyncMock(), unregister_viewer=AsyncMock(), send_control=AsyncMock())
     with (
         patch.object(router, "AsyncSessionLocal", w.sessions),
         patch.object(router, "get_stream_bridge", return_value=bridge),
-        patch.object(router, "get_connection_manager", return_value=manager),
     ):
         await router.stream_viewer_ws(ws, str(w.dev_a.id))
-    sent = [c.args[1]["type"] for c in manager.send_to_device.await_args_list]
+    sent = [c.args[1]["type"] for c in bridge.send_control.await_args_list]
     assert "touch_tap" not in sent and "text" not in sent

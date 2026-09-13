@@ -14,6 +14,12 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Security / runtime
 
+- AUD-111: route binary frames and viewer controls between workers, guard cleanup
+  by session, recover subscriptions/capture and stop only after the last viewer.
+  Four failing runtime scenarios now pass; 211 combined regressions. Native
+  baseline: both viewers receive zero frames in 15 s despite live APK commands.
+  [Transport and acceptance scope](docs/audits/2026-09-05/STREAM-VIDEO-ROUTING.md).
+
 - AUD-110: bind the verified viewer tenant before PostgreSQL RLS lookup. A valid
   login previously failed to enter streaming on the restricted runtime role.
   Real PostgreSQL regression accepts own device and rejects foreign device.

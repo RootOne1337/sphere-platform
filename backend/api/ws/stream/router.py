@@ -11,7 +11,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.dependencies import _is_dev_skip_auth
 from backend.database.engine import AsyncSessionLocal
-from backend.websocket.connection_manager import get_connection_manager
 from backend.websocket.stream_bridge import get_stream_bridge
 
 logger = structlog.get_logger()
@@ -148,12 +147,14 @@ async def stream_viewer_ws(
         await ws.close(code=1013, reason="stream_bridge_unavailable")
         return
 
-    manager = get_connection_manager()
-
     # Unique session for this viewer
     session_id = secrets.token_hex(8)
 
-    await bridge.register_viewer(device_id, ws, session_id)
+    try:
+        await bridge.register_viewer(device_id, ws, session_id)
+    except Exception:
+        await ws.close(code=1013, reason="stream_transport_unavailable")
+        return
     logger.info(
         "Stream viewer connected",
         device_id=device_id,
@@ -162,10 +163,13 @@ async def stream_viewer_ws(
     )
 
     # Notify agent → triggers SPS/PPS replay + I-frame request
-    await manager.send_to_device(device_id, {
-        "type": "viewer_connected",
-        "session_id": session_id,
-    })
+    async def send_control(command: dict) -> None:
+        try:
+            sent = await bridge.send_control(device_id, command)
+        except Exception:
+            sent = False
+        if not sent:
+            await ws.send_json({"type": "error", "error": "stream_control_unavailable"})
 
     # FIX-KEEPALIVE: Периодический ping каждые 10 секунд — предотвращает
     # закрытие WS Cloudflare tunnel'ом при отсутствии upstream трафика.
@@ -184,6 +188,7 @@ async def stream_viewer_ws(
     ping_task = asyncio.create_task(_viewer_ping_loop())
 
     try:
+        await send_control({"type": "viewer_connected", "session_id": session_id})
         while True:
             data = await ws.receive_json()
             if data.get("type") in {"click", "swipe", "keyevent", "text"} and not can_control:
@@ -194,7 +199,7 @@ async def stream_viewer_ws(
                     # Forward tap coordinates to agent — coordinate mapping done client-side
                     x = int(data.get("x", 0))
                     y = int(data.get("y", 0))
-                    await manager.send_to_device(device_id, {
+                    await send_control({
                         "type": "touch_tap",
                         "x": x,
                         "y": y,
@@ -206,7 +211,7 @@ async def stream_viewer_ws(
                     x2 = int(data.get("x2", 0))
                     y2 = int(data.get("y2", 0))
                     duration_ms = int(data.get("duration_ms", 300))
-                    await manager.send_to_device(device_id, {
+                    await send_control({
                         "type": "touch_swipe",
                         "x1": x1, "y1": y1,
                         "x2": x2, "y2": y2,
@@ -214,17 +219,17 @@ async def stream_viewer_ws(
                         "session_id": session_id,
                     })
                 case "request_keyframe":
-                    await manager.send_to_device(device_id, {
+                    await send_control({
                         "type": "request_keyframe",
                     })
                 case "keyevent":
-                    await manager.send_to_device(device_id, {
+                    await send_control({
                         "type": "keyevent",
                         "code": int(data.get("code", 0)),
                         "session_id": session_id,
                     })
                 case "text":
-                    await manager.send_to_device(device_id, {
+                    await send_control({
                         "type": "text",
                         "text": str(data.get("text", "")),
                         "session_id": session_id,
@@ -254,7 +259,8 @@ async def stream_viewer_ws(
         )
     finally:
         ping_task.cancel()
-        await bridge.unregister_viewer(device_id)
+        await asyncio.gather(ping_task, return_exceptions=True)
+        await bridge.unregister_viewer(device_id, session_id)
         logger.info(
             "Stream viewer disconnected",
             device_id=device_id,
