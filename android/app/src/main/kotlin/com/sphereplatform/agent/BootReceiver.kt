@@ -35,9 +35,8 @@ class BootReceiver : BroadcastReceiver() {
             Timber.i("BootReceiver: триггер ($action) — запускаем агент")
 
             // ── ВСЕГДА планируем KeepAliveWorker (главная гарантия автостарта) ────
-            // PeriodicWork через JobScheduler переживает reboot и не зависит от
-            // Stopped State. Даже если все остальные механизмы откажут —
-            // KeepAliveWorker подхватит через ≤15 мин.
+            // WorkManager восстанавливает jobs по boot broadcast; доставка и сроки
+            // зависят от Android/OEM. Отдельный persisted job планируется в SphereApp.
             KeepAliveWorker.schedule(context)
 
             // ── Планируем AlarmManager watchdog (дополнительный слой, 5 мин) ────

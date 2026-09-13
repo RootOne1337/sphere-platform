@@ -14,6 +14,13 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Security / runtime
 
+- AUD-103: add a native persisted Android recovery job independent of boot
+  broadcasts and WorkManager rescheduling. A real Android 9 reboot left the
+  enrolled APK absent/offline throughout 240 seconds with the Windows watchdog
+  disabled. Preserve successors before service activation and retry scheduler
+  failures; version advances to 10202 / 1.2.2.
+  [Evidence and acceptance status](docs/audits/2026-09-05/ANDROID-BOOT-RECOVERY.md).
+
 - AUD-102: prepare and verify this APK's `PROJECT_MEDIA` app-op through its own
   authorized root process before requesting a fresh capture token. Bound the root
   wait, keep it off the UI thread and retain normal consent when root is unavailable.

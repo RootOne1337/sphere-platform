@@ -4,6 +4,11 @@
 Исходная ревизия: `28f8cc46ab65496e00297960fd94d87d1605cc83`.
 Ветка исправлений: `codex/enterprise-audit-20260905`; [draft PR #19](https://github.com/RootOne1337/sphere-platform/pull/19).
 
+**AUD-103:** настоящий reboot второго Android оставил APK без процесса и связи
+на всём 240 s интервале. OEM фильтрует boot broadcasts; WorkManager recovery
+зависел от того же события. Добавлен независимый persisted JobScheduler path;
+native-приёмка новой APK выполняется. [Root cause и evidence](ANDROID-BOOT-RECOVERY.md).
+
 **AUD-102:** native-проверка нового Android воспроизвела ручной projection dialog.
 Добавлена подготовка app-op внутри APK; 8 regression tests и 523 full JVM tests pass.
 На обоих Android 9 после сброса app-op захват стартует без ручного диалога. Отдельно

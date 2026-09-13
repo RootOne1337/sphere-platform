@@ -7,6 +7,7 @@ import com.sphereplatform.agent.BuildConfig
 import com.sphereplatform.agent.logging.FileLoggingTree
 import com.sphereplatform.agent.root.RootAutoStart
 import com.sphereplatform.agent.service.ServiceWatchdog
+import com.sphereplatform.agent.service.BootRecoveryJobService
 import com.sphereplatform.agent.workers.KeepAliveWorker
 import com.sphereplatform.agent.workers.LogUploadWorker
 import com.sphereplatform.agent.workers.UpdateCheckWorker
@@ -35,6 +36,10 @@ class SphereApp : Application(), Configuration.Provider {
             Timber.plant(Timber.DebugTree())
         }
 
+        // Persist this independent boot path BEFORE optional WorkManager setup.
+        // A vendor may filter BOOT_COMPLETED, including WorkManager's receiver.
+        BootRecoveryJobService.schedule(this)
+
         // ── ROOT: снятие ВСЕХ системных ограничений на рутованных устройствах ─────
         // На LDPlayer / Android 9 с root: снимает Stopped State, whitelist battery,
         // разрешает фоновую работу, включает BootReceiver. Идемпотентно.
@@ -46,10 +51,9 @@ class SphereApp : Application(), Configuration.Provider {
         UpdateCheckWorker.schedule(this)
 
         // ── КРИТИЧНО: KeepAliveWorker планируется БЕЗУСЛОВНО ───────────────────
-        // WorkManager PeriodicWork (15 мин) хранится в SQLite и использует системный
-        // JobScheduler с setPersisted(true). Это ЕДИНСТВЕННЫЙ механизм Android,
-        // который переживает reboot И не зависит от Stopped State.
-        // После первого запуска APK — агент гарантированно стартует при каждом boot.
+        // WorkManager хранит своё расписание в SQLite, но его JobScheduler jobs
+        // не persisted: после reboot их восстанавливает RescheduleReceiver.
+        // Native BootRecoveryJobService выше закрывает зависимость от broadcast.
         // Пятислойная защита: BootReceiver + AlarmManager + KeepAliveWorker + START_STICKY + AutoEnrollment
         KeepAliveWorker.schedule(this)
 
