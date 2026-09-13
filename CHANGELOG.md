@@ -14,6 +14,13 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Security / runtime
 
+- AUD-100: read persistent APK log tails using byte offsets and one UTF-8 byte
+  budget across rotations. Bound a request to 256 KiB and coordinate reads with
+  the writer. Installed APK returned HTTP 200 with an empty tail from a 540035-byte
+  UTF-8 fixture. Replace replica tests with the actual production tree:
+  6 failures before, 10 tests pass after.
+  [Evidence, rollout status and limits](docs/audits/2026-09-05/APK-UTF8-LOG-TAIL.md).
+
 - AUD-99 follow-up: install a scoped Windows station watchdog for pilot indices
   0/1. Confirm missing NAT twice, persist a five-minute retry cooldown before any
   mutation, serialize repair across workers and reject shared VM networks.

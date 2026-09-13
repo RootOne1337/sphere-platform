@@ -4,6 +4,10 @@
 Исходная ревизия: `28f8cc46ab65496e00297960fd94d87d1605cc83`.
 Ветка исправлений: `codex/enterprise-audit-20260905`; [draft PR #19](https://github.com/RootOne1337/sphere-platform/pull/19).
 
+**AUD-100:** большой UTF-8 журнал возвращал HTTP 200 и пустой текст. Native before
+подтверждён; byte-tail fix проходит 10 настоящих production-class tests (6 failures
+до fix). [Причина, evidence и статус установки APK](APK-UTF8-LOG-TAIL.md).
+
 **AUD-99: второй LDPlayer был запущен без NAT-процесса своей сети.** После ремонта
 два последних APK работают одновременно с различными IDs. Повторный outage →
 repair → echo второго через 6.08 s, затем 12/12 команд; первый продолжал работать.
