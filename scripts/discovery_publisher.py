@@ -103,7 +103,8 @@ class DocumentStore(Protocol):
 
 
 def run_command(args: list[str], *, body: bytes | None = None, timeout: int = 30) -> bytes:
-    result = subprocess.run(args, input=body, capture_output=True, timeout=timeout, check=False)
+    result = subprocess.run(args, input=body, capture_output=True, timeout=timeout, check=False,
+        creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
     if result.returncode:
         status = re.search(rb"HTTP (\d{3})", result.stderr)
         suffix = f", HTTP {status[1].decode()}" if status else ""

@@ -14,6 +14,11 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Security / runtime
 
+- AUD-101: run Windows publisher/NAT tasks directly with `pythonw.exe` and suppress
+  console creation in publisher child commands. Migrate only exact owned actions,
+  comparing account SIDs. Both pilot tasks pass; 97 related tests pass, including
+  native no-console probes. [Evidence](docs/audits/2026-09-05/WINDOWS-BACKGROUND-WINDOWS.md).
+
 - AUD-100: read persistent APK log tails using byte offsets and one UTF-8 byte
   budget across rotations. Bound a request to 256 KiB and coordinate reads with
   the writer. Installed APK returned HTTP 200 with an empty tail from a 540035-byte

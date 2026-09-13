@@ -7,9 +7,10 @@ param(
 $ErrorActionPreference = 'Stop'
 $watchdogConfig = (Resolve-Path -LiteralPath $ConfigPath).Path
 $watchdogPython = (Resolve-Path -LiteralPath $PythonExecutable).Path
+$watchdogWindowlessPython = (Resolve-Path -LiteralPath (Join-Path (Split-Path -Parent $watchdogPython) 'pythonw.exe')).Path
 $watchdogRunner = Join-Path $PSScriptRoot 'Invoke-LDPlayerWatchdog.ps1'
 $watchdogRoot = Split-Path -Parent $PSScriptRoot
-foreach ($watchdogPath in @($watchdogConfig, $watchdogPython, $watchdogRunner)) {
+foreach ($watchdogPath in @($watchdogConfig, $watchdogPython, $watchdogWindowlessPython, $watchdogRunner)) {
     if ($watchdogPath.Contains('"') -or $watchdogPath.Contains("`r") -or $watchdogPath.Contains("`n")) {
         throw 'Task paths cannot contain quotes or line breaks.'
     }
@@ -23,18 +24,29 @@ try {
     Pop-Location
 }
 $watchdogIdentity = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
-$watchdogArguments = '-NoProfile -NonInteractive -WindowStyle Hidden -File "{0}" -ConfigPath "{1}" -PythonExecutable "{2}"' -f $watchdogRunner, $watchdogConfig, $watchdogPython
+$watchdogLegacyArguments = '-NoProfile -NonInteractive -WindowStyle Hidden -File "{0}" -ConfigPath "{1}" -PythonExecutable "{2}"' -f $watchdogRunner, $watchdogConfig, $watchdogPython
+$watchdogArguments = '-m scripts.ldplayer_watchdog --config "{0}"' -f $watchdogConfig
 $watchdogShell = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
 $watchdogExisting = Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue
 if ($watchdogExisting) {
+    # Task Scheduler may return a short account name instead of DOMAIN\user.
+    # Compare SIDs, not display names, while retaining the exact action check.
+    $watchdogOwner = $watchdogExisting.Principal.UserId
+    $watchdogOwnerSid = if ($watchdogOwner -match '^S-1-') {
+        [System.Security.Principal.SecurityIdentifier]::new($watchdogOwner).Value
+    } else {
+        ([System.Security.Principal.NTAccount]::new($watchdogOwner)).Translate([System.Security.Principal.SecurityIdentifier]).Value
+    }
+    $watchdogSameAction = $watchdogExisting.Actions.Count -eq 1 -and (
+        ($watchdogExisting.Actions[0].Execute -eq $watchdogWindowlessPython -and $watchdogExisting.Actions[0].Arguments -eq $watchdogArguments) -or
+        ($watchdogExisting.Actions[0].Execute -eq $watchdogShell -and $watchdogExisting.Actions[0].Arguments -eq $watchdogLegacyArguments))
     if ($watchdogExisting.Actions.Count -ne 1 -or
-        $watchdogExisting.Actions[0].Execute -ne $watchdogShell -or
-        $watchdogExisting.Actions[0].Arguments -ne $watchdogArguments -or
-        $watchdogExisting.Principal.UserId -ne $watchdogIdentity) {
+        -not $watchdogSameAction -or
+        $watchdogOwnerSid -ne [System.Security.Principal.WindowsIdentity]::GetCurrent().User.Value) {
         throw 'Existing scheduled task has a different owner/action; it was not changed.'
     }
 }
-$watchdogAction = New-ScheduledTaskAction -Execute $watchdogShell -Argument $watchdogArguments -WorkingDirectory $watchdogRoot
+$watchdogAction = New-ScheduledTaskAction -Execute $watchdogWindowlessPython -Argument $watchdogArguments -WorkingDirectory $watchdogRoot
 $watchdogTriggers = @(
     (New-ScheduledTaskTrigger -AtLogOn -User $watchdogIdentity),
     (New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(1) -RepetitionInterval (New-TimeSpan -Minutes 1))

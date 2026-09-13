@@ -87,6 +87,10 @@ python -m scripts.ldplayer_watchdog --config C:/Sphere/station-network/config.js
 Установщик повторяет проверку и создаёт задачу текущего пользователя: скрытое окно,
 Limited, AtLogon и раз в минуту, IgnoreNew, максимум 5 минут на запуск. Пароль не
 сохраняется. Чужая задача с тем же именем/другим действием не перезаписывается.
+Исполнение — напрямую через `pythonw.exe` рядом с указанным Python, без PowerShell
+wrapper. Дочерние команды используют `CREATE_NO_WINDOW`. Наша прежняя задача
+мигрирует при совпадении action/config и SID пользователя.
+[Проверка отсутствия консоли](../audits/2026-09-05/WINDOWS-BACKGROUND-WINDOWS.md).
 
 Политика ремонта:
 

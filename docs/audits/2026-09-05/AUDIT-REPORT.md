@@ -4,6 +4,10 @@
 Исходная ревизия: `28f8cc46ab65496e00297960fd94d87d1605cc83`.
 Ветка исправлений: `codex/enterprise-audit-20260905`; [draft PR #19](https://github.com/RootOne1337/sphere-platform/pull/19).
 
+**AUD-101:** устранены консольные пути наших scheduled tasks/Gradle helpers;
+обе задачи переведены на `pythonw`, child processes без консоли. 97 tests,
+успешные scheduled cycles. [Evidence и границы](WINDOWS-BACKGROUND-WINDOWS.md).
+
 **AUD-100:** большой UTF-8 журнал возвращал HTTP 200 и пустой текст. Native before
 подтверждён; byte-tail fix проходит 10 настоящих production-class tests (6 failures
 до fix). APK `9618a57` установлена на двух устройствах: after вернул 100 строк

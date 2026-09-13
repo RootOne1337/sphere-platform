@@ -118,6 +118,11 @@ python -m scripts.discovery_publisher --config C:/Sphere/private/publisher.json 
 
 ## Диагностика и остановка
 
+Задача исполняется напрямую через `pythonw.exe`, без консольного wrapper;
+`gh`/`docker` запускаются с `CREATE_NO_WINDOW`. Рядом с указанным Python нужен
+`pythonw.exe`. Прежнее наше действие мигрирует при проверке exact action и SID.
+[AUD-101](../audits/2026-09-05/WINDOWS-BACKGROUND-WINDOWS.md).
+
 Смотрите `state_dir/status.json`: status/reason, проверенное время, последний успех,
 version, URL, expiry, duration и точный publication scope. Проверяйте возраст status:
 старый `ok` не доказывает, что scheduler продолжает работать. Private `journal.json`
