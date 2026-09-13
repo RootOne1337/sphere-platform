@@ -4,6 +4,11 @@
 Исходная ревизия: `28f8cc46ab65496e00297960fd94d87d1605cc83`.
 Ветка исправлений: `codex/enterprise-audit-20260905`; [draft PR #19](https://github.com/RootOne1337/sphere-platform/pull/19).
 
+**AUD-115:** создание сценария возвращало HTTP 500 после commit из-за lazy load
+текущей версии при сериализации. Явная async-загрузка отношения устраняет ошибку;
+create/update/rollback и отдельный GET проверены на PostgreSQL, 42 tests pass.
+[Воспроизведение и ограничения](SCRIPT-CREATE-RESPONSE.md).
+
 **AUD-114:** Device Stream удалял карточку и Stop при временном offline из-за
 online-only запроса. Карточки сохраняются с явным статусом; старое видео скрывается,
 возврат online восстанавливает только неотменённый просмотр. 3 baseline failures →
