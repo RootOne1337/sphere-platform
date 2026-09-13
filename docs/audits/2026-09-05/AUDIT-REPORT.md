@@ -6,7 +6,8 @@
 
 **AUD-100:** большой UTF-8 журнал возвращал HTTP 200 и пустой текст. Native before
 подтверждён; byte-tail fix проходит 10 настоящих production-class tests (6 failures
-до fix). [Причина, evidence и статус установки APK](APK-UTF8-LOG-TAIL.md).
+до fix). APK `9618a57` установлена на двух устройствах: after вернул 100 строк
+и marker, затем 12/12 команд. [Причина, evidence и установка APK](APK-UTF8-LOG-TAIL.md).
 
 **AUD-99: второй LDPlayer был запущен без NAT-процесса своей сети.** После ремонта
 два последних APK работают одновременно с различными IDs. Повторный outage →

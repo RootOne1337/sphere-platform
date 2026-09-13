@@ -38,7 +38,7 @@ Backend нового стенда обновлён с исправлением A
 [Доказательство и ограничения](../audits/2026-09-05/DEVICE-DIAGNOSTICS-SOURCE.md).
 
 Сейчас подключены **два** LDPlayer: `auto-ph-000` / V2266A и `auto-ph-001` / HD1910,
-с различными device IDs. Последняя APK `0f1410e` подтверждена хешем на обоих;
+с различными device IDs. На момент AUD-99 APK `0f1410e` подтверждена хешем на обоих;
 после ремонта отсутствующего NAT второй сети прошли параллельные команды и
 повторный network recovery без перезапуска APK.
 [Инцидент и приёмка двух устройств](../audits/2026-09-05/LDPLAYER-NAT-INCIDENT.md) ·
@@ -85,10 +85,14 @@ admin и enrollment bootstrap; копирование одного overlay не 
 `com.sphereplatform.agent.pilot.debug` позволяет установить его рядом с обычными
 dev/enterprise сборками, сохраняя отдельные credentials и identity.
 
-Свежий файл: **`SphereAgent-signed-discovery-0f1410e-dev-debug.apk`**.
+Свежий файл: **`SphereAgent-signed-discovery-9618a57-dev-debug.apk`**.
 Указатель на ту же сборку: **`LATEST-SphereAgent-pilot.apk`** в том же каталоге.
-SHA-256: `3fea6b1be345bec99a71e1926a386dd070c361887d875d5b46a7c18d83d0d36b`.
-Размер 8,418,510 bytes; versionCode 10200, minSdk 26, targetSdk 35.
+SHA-256: `d6db04c6101349050913bd48582839e8be098b02660834603bfffd11b42151ea`.
+Размер 8,444,546 bytes; versionCode 10200, minSdk 26, targetSdk 35.
+Обновлена на обоих LDPlayer поверх прежней: автоматический возврат команд за
+7.828 / 8.406 s от начала установки, те же IDs, signed cache v8, без новых
+регистраций. Затем 12/12 команд и настоящие журналы обоих устройств.
+[Manifest и проверка UTF-8 диагностики](../audits/2026-09-05/APK-UTF8-LOG-TAIL.md).
 
 Management URL и fallback в APK пусты. `SPHERE_CONFIG_URL` указывает на подписанный
 документ в ветке `codex/pilot-bootstrap-20260911` отдельного config repository;
@@ -132,7 +136,10 @@ mirror APK после смены hostname недоступен; её основ�
 - Объединённый локальный Python-прогон: **1526 passed / 368.66 s**, `tests/load`
   исключён как отдельный opt-in профиль. Deployment subset: **101 passed**.
   Coverage в этом локальном прогоне не измерялась; точный CI результат отмечается в PR.
-- Signed APK `0f1410e`: 522 JVM tests / 37 suites; в signed dev/enterprise
+- Текущая signed APK `9618a57`: 515 JVM tests / 37 suites, по 29 signed
+  dev/enterprise tests (discovery и реальный logger). 17 прежних replica tests
+  заменены 10 production-class проверками; native before/after диагностики принят.
+- Историческая signed APK `0f1410e`: 522 JVM tests / 37 suites; в signed dev/enterprise
   дополнительно по 19 cases. На том же коде `f61cd5a` смена адреса при остановленном connector:
   271.61 s до echo; обратный переход успешен, PID/identity сохранены, 0 регистраций.
   [Полный native сценарий](../audits/2026-09-05/SIGNED-DISCOVERY-NATIVE.md).

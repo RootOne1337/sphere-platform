@@ -1,5 +1,10 @@
 # Android Agent
 
+13 September 2026 pilot update: signed APK `9618a57` fixes empty/truncated UTF-8
+diagnostic tails and is verified on both LDPlayer instances. In-place upgrades
+reconnect automatically, preserve IDs/cache, and return real commands and logs.
+[Current artifact](operations/LOCAL-PILOT.md) · [AUD-100 evidence](audits/2026-09-05/APK-UTF8-LOG-TAIL.md).
+
 Developer and operator guide, checked against the audit branch on **11 September
 2026**. The audit is ongoing; production readiness and compatibility with every
 Android device have not been established. Findings, reproduction evidence and

@@ -42,6 +42,7 @@
 - [Источник журнала APK в Device Inspector: AUD-98](audits/2026-09-05/DEVICE-DIAGNOSTICS-SOURCE.md).
 - [LDPlayer запущен без выхода в сеть: диагностика, ремонт и Windows watchdog](operations/LDPLAYER-NETWORK-RECOVERY.md).
 - [Автоматическое восстановление NAT: native fault, команды двух APK и ресурсы](audits/2026-09-05/LDPLAYER-AUTOMATIC-RECOVERY.md).
+- [Большой UTF-8 журнал APK: исправленный byte-tail и native приёмка новой сборки](audits/2026-09-05/APK-UTF8-LOG-TAIL.md).
 
 ## Как читать статус
 

@@ -59,9 +59,30 @@ reads/writes и остановка тестового потока без уте
 
 ## Статус и residual risk
 
-На момент code fix локальный production-class regression прошёл. Сборка новой
-signed pilot APK и повтор исходного native запроса учитываются отдельной приёмкой;
-успешный JVM-тест не объявляется установленным исправлением.
+**Native after принят:** APK из `9618a57` собрана с той же package/signature,
+installation identity и enrollment credential. Signed dev/enterprise сборки
+проходят по **29 tests**: 19 signed discovery + 10 настоящего logger.
+BuildConfig и упакованный DEX проверены, management URLs по-прежнему пусты.
+Bootstrap mirror этой новой сборки обновлён на текущий gateway, проверенный по
+подписи документа v8; он остаётся временным и не является независимым ingress.
+[Manifest](evidence/apk-9618a57-manifest.json).
+
+Оба эмулятора обновлены через `adb install -r`, без сброса app data и ручного
+открытия APK. Реальная команда вернулась на втором через **7.828 s**, на первом
+через **8.406 s** от начала установки; существующие IDs и подписанный cache v8
+сохранились, новых registration events в процессах нет. Пока один обновлялся,
+второй выполнял команды и сохранял свой PID.
+
+Повтор большого UTF-8 fixture на новом APK: **HTTP 200 / 4388 bytes / 100 строк**,
+последний marker присутствует, replacement characters отсутствуют, **0.609 s**.
+Fixture after на один byte короче before из-за слова AFTER вместо BEFORE в marker;
+сам Unicode prefix одинаков. Fixture удалена, исходные журналы сохранены.
+[Native after](evidence/native-utf8-log-tail-after.json).
+
+Затем **12/12 команд** на двух APK и обычные журналы по 100 настоящих строк
+(10067 / 10490 UTF-8 bytes), без synthetic fixture. Хеш установленного APK проверен
+на обоих устройствах. Только после приёмки обновлён `LATEST-SphereAgent-pilot.apk`.
+[Rollout evidence](evidence/apk-log-tail-native-rollout-20260913.json).
 
 Writer остаётся асинхронным: чтение не обещает flush очереди. Queue overflow/disk
 errors могут терять сообщения; retention ограничен. Повреждённые UTF-8 bytes

@@ -18,7 +18,10 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   budget across rotations. Bound a request to 256 KiB and coordinate reads with
   the writer. Installed APK returned HTTP 200 with an empty tail from a 540035-byte
   UTF-8 fixture. Replace replica tests with the actual production tree:
-  6 failures before, 10 tests pass after.
+  6 failures before, 10 tests pass after; full dev suite 515 passed. Signed APK
+  `9618a57` is accepted on both pilot emulators: automatic in-place upgrade
+  reconnect in 7.828/8.406 s, Unicode tail returns the marker and 100 lines,
+  then 12/12 commands pass. Latest pilot artifact is updated after acceptance.
   [Evidence, rollout status and limits](docs/audits/2026-09-05/APK-UTF8-LOG-TAIL.md).
 
 - AUD-99 follow-up: install a scoped Windows station watchdog for pilot indices

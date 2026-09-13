@@ -30,13 +30,20 @@ repair → возврат второго за 6.08 s, затем 12/12 кома�
 а не только заголовки logcat; 100 строк проверены на установленном агенте.
 [17 tests и ограничения диагностики](../audits/2026-09-05/DEVICE-DIAGNOSTICS-SOURCE.md).
 
+**AUD-100:** исправлен пустой хвост большого UTF-8 журнала. Новая APK `9618a57`
+установлена на обоих LDPlayer без сброса данных: автоматический возврат за
+7.828 / 8.406 s, затем 12/12 команд. Native журнал: 0 bytes до → 4388 bytes,
+100 строк и последний marker после. Полный JVM suite 515 passed; signed flavors
+по 29 passed. [Доказательства и границы](../audits/2026-09-05/APK-UTF8-LOG-TAIL.md).
+
 [Главная](../../README.md) · [Доказательства аудита](../audits/2026-09-05/AUDIT-REPORT.md) ·
 [APK](../android-agent.md) · [PC-agent](../pc-agent.md) · [Будущий AI-контур](../architecture/AI-READINESS.md)
 
-**Последний архивированный CI: `5157d1c` — все обязательные checks success:**
+**Последний архивированный CI: `dd666f2` — все обязательные checks success:**
 backend, Android, frontend, lint/security/RLS, Alembic и image bootstrap.
-[Архив с run links](../audits/2026-09-05/evidence/ci-5157d1c-summary.json).
-Автоматический host watchdog внесён позже; проверки нового PR head отслеживаются отдельно.
+[Архив с run links](../audits/2026-09-05/evidence/ci-dd666f2-summary.json).
+Это включает автоматический host watchdog. APK fix `9618a57` внесён позже;
+проверки нового PR head отслеживаются отдельно.
 Предыдущий `f20b3b9`: JUnit **1591 tests / 0 failures / 0 errors / 0 skipped / 261.517 s**
 ([архив](../audits/2026-09-05/evidence/ci-f20b3b9-summary.json)).
 
