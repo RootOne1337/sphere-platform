@@ -31,7 +31,7 @@
     "skipped": 0,
     "failed_cases": []
   },
-  "native_fix_accepted": false,
+  "native_fix_accepted": true,
   "native_crashes": {
     "emulator-5554": [
       "09-13 20:28:00.960  9309 14584 F libc    : Fatal signal 11 (SIGSEGV), code 1 (SEGV_MAPERR), fault addr 0x76386a1b9610 in tid 14584 (sphere-imagerea), pid 9309 (ent.pilot.debug)",
@@ -85,5 +85,6 @@
     "skipped": 0,
     "failed_cases": []
   },
-  "capture_regressions": 4
+  "capture_regressions": 4,
+  "native_scope": "Two rooted API28 emulators, OTA hashes, 10 lifecycle trials and unchanged PIDs; see android-capture-native-summary.json"
 }

@@ -58,11 +58,39 @@ cd android
 ./gradlew :app:testDevDebugUnitTest --tests '*StreamingCaptureLifecycleTest'
 ```
 
+## Native после исправления: 14 сентября
+
+Оба owned Android обновились до **1.2.5-dev / 10205 / `343c6e8`** через
+существующий APK WebSocket → HTTPS download → собственный su installer.
+ADB install, app launch и ручные permissions не применялись. Хеши обоих installed
+base.apk совпадают: `bc9abf49821d0774310a3eb2a92889c50b6e755ca971d7982a1ece95c96acfa7`.
+Device IDs и signed cache v9 сохранены; staging пустой; LATEST указывает на эту сборку.
+
+Canary начат на втором Android. Первоначальный наблюдатель прервался из-за потери
+команд на первом, всё ещё работающем на старой 1.2.4. Факт установки canary проверен
+отдельно по installed hash, PID и команде. Первый затем обновился через stable OTA:
+**10.390 s** до команды, при неизменном PID второго и отключённом Windows watchdog.
+
+**6 циклов на первом + 4 на втором:** получены SPS/PPS/IDR и новые кадры при движении
+системной шторки через команды APK. В пяти циклах подключался дополнительный
+зритель. После закрытия всех viewers projection автоматически освобождалась за
+**1.594–2.266 s**, первый кадр за **1.312–1.687 s**, PID каждого неизменен.
+Новых crash-записей после OTA в наблюдаемом буфере нет. На втором PID 386 сохранялся
+более 53 минут при пользовательских просмотрах; это наблюдение процесса, не
+непрерывно измеренный тест качества видео. [Native evidence](evidence/android-capture-native-summary.json).
+
+После server fix AUD-113 настоящий веб повторно декодировал оба экрана без
+crash dialogs; browser console не содержит errors/warnings. Свои просмотры
+закрыты после проверки.
+
+Отдельно найден серверный источник лишних start на статичном экране:
+[AUD-113](STREAM-IDLE-RECOVERY.md). APK fix не заменяет этот server fix.
+
 ## Residual risk и статус
 
 **Full Dev JVM: 560 tests / 42 suites / 0 failures, errors, skips**, включая
-четыре capture regressions. Подписанная pilot build, OTA и native capture
-repetition оформляются отдельно. [Результаты](evidence/android-capture-lifecycle-summary.json).
+четыре capture regressions. Signed dev/enterprise проходят по 74 selected tests;
+native scope описан выше. [Результаты](evidence/android-capture-lifecycle-summary.json).
 Лимит памяти/нагрузки при сотнях просмотров, Android 14/15 projection restrictions
 и зависание vendor surface/codec не считаются проверенными. Stop должен дождаться
 уже выполняющегося native frame operation; замеры длительности stop нужны на

@@ -6,7 +6,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [Unreleased] — enterprise audit, 2026-09-13
+## [Unreleased] — enterprise audit, 2026-09-14
 
 Изменения находятся в draft PR; это не опубликованный production release.
 Полный перечень предыдущих audit fixes, доказательства и residual risks:
@@ -24,7 +24,9 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   teardown on both Androids. Serialize lifecycle, protect acquired-image lifetime,
   reject obsolete callbacks and always unlock the encoder canvas. Two baseline
   races fail; all four capture regressions and 560 full JVM tests now pass.
-  APK 1.2.5 is the candidate; native OTA/stream acceptance remains pending.
+  Both owned Android 9 agents received 1.2.5 through OTA; 10 native capture
+  cycles, screen motion, overlapping viewers and automatic stop preserve PIDs.
+  Installed hashes match; no new crash records after OTA in the observed window.
   [Crash report](docs/audits/2026-09-05/ANDROID-CAPTURE-LIFECYCLE.md).
 
 - AUD-111: route binary frames and viewer controls between workers, guard cleanup

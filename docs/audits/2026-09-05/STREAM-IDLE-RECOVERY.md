@@ -44,6 +44,12 @@ SPHERE_RUN_INTEGRATION=1 python -m pytest tests/production/test_stream_video_rou
 
 ## Границы
 
-Native deployment и длительное наблюдение описываются отдельно после установки.
+Backend **fa099aa**: все required CI checks passed, [workflow/job archive](evidence/ci-fa099aa-summary.json).
+Установлен только в новом pilot; OTA catalog/hash и старые
+Sphere containers сохранены. Оба Android на APK 1.2.5 одновременно прошли **75 s**
+настоящего WSS просмотра: по **одной** start-команде за всё окно, 22/18 кадров
+со статичного экрана, SPS/PPS/IDR, **12/12 опросов обоих PID/online и 24/24 echo**.
+PID 31803 / 386 сохранились; после закрытия зрителей projection освободилась
+автоматически. Это короткая native regression, а не многочасовой farming soak.
 Реальный сетевой разрыв по-прежнему может потребовать перезапуска захвата.
 Этот тест не подтверждает Redis HA, fleet capacity или непрерывную работу фермы.

@@ -85,28 +85,34 @@ admin и enrollment bootstrap; копирование одного overlay не 
 `com.sphereplatform.agent.pilot.debug` позволяет установить его рядом с обычными
 dev/enterprise сборками, сохраняя отдельные credentials и identity.
 
-Свежий файл: **`SphereAgent-signed-discovery-fdd26c5-dev-debug.apk`**.
+Свежий файл: **`SphereAgent-signed-discovery-343c6e8-dev-debug.apk`**.
 Указатель на ту же сборку: **`LATEST-SphereAgent-pilot.apk`** в том же каталоге.
-SHA-256: `db3f9111e3e59c2871b042e07a81bb86d123c686bd40e27e8b2ec3b5f0902add`.
-Размер 8,385,905 bytes; versionCode 10204 / 1.2.4-dev, minSdk 26, targetSdk 35.
-**Оба Android обновились с 10203 через OTA:** APK сама скачала файл с сервера,
-проверила SHA и установила через свой `su`; возврат команд за 9.844 / 10.266 s.
-ADB install, Windows app launcher и ручные разрешения в этих trials не применялись.
-Прежние device IDs и signed cache v9 сохранены. После OTA reboot второго Android
-→ самостоятельный `BootRecoveryJobService` → команда за 21.094 s, без регистрации.
-Повторный реальный обрыв загрузки оставляет staging пустым; две одновременно
-принятые OTA-команды дали одну загрузку до self-replacement. Затем 12/12 команд,
-журналы и хеши обоих installed APK проверены. Full JVM 556 tests; signed flavors
-по 70 selected tests. [Artifact, native OTA и ограничения](../audits/2026-09-05/ANDROID-OTA-RECOVERY.md).
+SHA-256: `bc9abf49821d0774310a3eb2a92889c50b6e755ca971d7982a1ece95c96acfa7`.
+Размер 8,386,661 bytes; versionCode 10205 / 1.2.5-dev, minSdk 26, targetSdk 35.
+**Оба Android обновились с 10204 через OTA**, без ADB install, Windows launcher,
+ручных разрешений, очистки данных и новой регистрации. Installed hash и signed
+cache v9 проверены на обоих. Первый вернулся к командам через 10.390 s.
+Начальная canary-проверка второго прервалась из-за потери команд на ещё старом
+первом APK; последующий независимый hash/PID/command check подтвердил установку.
+Эта прерванная проверка не засчитана как непрерывный OTA success.
 
-В каталоге **2 release android/dev: 10203 и актуальный 10204**. Файл и каталог
-хранятся в `.local-pilot/updates/`, backend bind mount `/var/lib/sphere/updates`;
-пересоздание backend сохранило release и авторизованное скачивание. Backend image
-закреплён на **`1310016`**, public-gateway использует Host fix `985e4fc`.
-Новый backend исправляет REST start/stop/keyframe между workers: 24/24 keyframe
-и реальный start/stop проекции обоих Android pass. [Evidence](../audits/2026-09-05/STREAM-CONTROL-ROUTING.md).
-Video bridge/viewer lifecycle всё ещё требуют отдельного fix; REST 200 не означает
-полученную браузером картинку.
+AUD-112 устраняет SIGSEGV при конкурирующих frame copy и stop: **6 + 4 native
+цикла** с движением экрана, overlapping viewer и автоматической остановкой
+прошли с теми же PID; новых crash-записей после OTA нет. Full JVM: **560 tests**,
+оба signed flavors: **74 selected tests**. [Root cause и native evidence](../audits/2026-09-05/ANDROID-CAPTURE-LIFECYCLE.md).
+Проверки reboot, прерванной/параллельной OTA на предыдущей 1.2.4 остаются
+историческими: [AUD-107](../audits/2026-09-05/ANDROID-OTA-RECOVERY.md).
+
+В каталоге **3 release android/dev: 10203, 10204 и актуальный 10205**; canary retired.
+Файл и каталог хранятся в `.local-pilot/updates/`, backend bind mount
+`/var/lib/sphere/updates`. Пересоздание только нового backend сохранило каталог
+и авторизованное скачивание актуального APK. Backend закреплён на **`fa099aa`**,
+public-gateway использует Host fix `985e4fc`.
+[Передача кадров между workers](../audits/2026-09-05/STREAM-VIDEO-ROUTING.md) исправлена;
+[AUD-113](../audits/2026-09-05/STREAM-IDLE-RECOVERY.md) устраняет restart здорового
+захвата по Redis read timeout. Native 75 s на обоих: ровно один start на устройство,
+24/24 echo, PID и online неизменны; после закрытия auto-stop. GET stream status пока использует worker-local
+статистику; длительная стабильность/нагрузка и полное задание из UI ещё не приняты.
 На обоих Android сохранён periodic update worker: 6 h при сети, retry от 30 s.
 Полный шестичасовой период не выжидался; native установка инициирована сервером.
 Будущие APK надо публиковать в этот каталог: один git commit или локальный LATEST

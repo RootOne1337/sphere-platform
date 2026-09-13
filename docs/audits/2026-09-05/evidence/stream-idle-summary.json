@@ -19,5 +19,132 @@
     "failures": 0,
     "errors": 0,
     "skipped": 0
+  },
+  "native_after": {
+    "at": "2026-09-13T19:55:09.703630+00:00",
+    "backend_source": "fa099aa5e108154fbee206aa60f28c6f008efade",
+    "version_code": 10205,
+    "duration_seconds": 75,
+    "devices": [
+      {
+        "device": "85f2f935-7739-400e-9389-0d71227e8f0a",
+        "pid": "31803",
+        "frames": 22,
+        "nal_types": {
+          "7": 1,
+          "8": 1,
+          "5": 1,
+          "1": 19
+        },
+        "start_commands": 1
+      },
+      {
+        "device": "ba1346c1-1581-452f-adee-451d36622aaf",
+        "pid": "386",
+        "frames": 18,
+        "nal_types": {
+          "7": 1,
+          "8": 1,
+          "5": 1,
+          "1": 15
+        },
+        "start_commands": 1
+      }
+    ],
+    "checks": [
+      {
+        "seconds": 1.75,
+        "both_pids_unchanged": true,
+        "both_commands_passed": true,
+        "both_listed_online": true
+      },
+      {
+        "seconds": 8.516,
+        "both_pids_unchanged": true,
+        "both_commands_passed": true,
+        "both_listed_online": true
+      },
+      {
+        "seconds": 15.266,
+        "both_pids_unchanged": true,
+        "both_commands_passed": true,
+        "both_listed_online": true
+      },
+      {
+        "seconds": 22.094,
+        "both_pids_unchanged": true,
+        "both_commands_passed": true,
+        "both_listed_online": true
+      },
+      {
+        "seconds": 28.641,
+        "both_pids_unchanged": true,
+        "both_commands_passed": true,
+        "both_listed_online": true
+      },
+      {
+        "seconds": 35.36,
+        "both_pids_unchanged": true,
+        "both_commands_passed": true,
+        "both_listed_online": true
+      },
+      {
+        "seconds": 41.938,
+        "both_pids_unchanged": true,
+        "both_commands_passed": true,
+        "both_listed_online": true
+      },
+      {
+        "seconds": 48.422,
+        "both_pids_unchanged": true,
+        "both_commands_passed": true,
+        "both_listed_online": true
+      },
+      {
+        "seconds": 54.969,
+        "both_pids_unchanged": true,
+        "both_commands_passed": true,
+        "both_listed_online": true
+      },
+      {
+        "seconds": 61.485,
+        "both_pids_unchanged": true,
+        "both_commands_passed": true,
+        "both_listed_online": true
+      },
+      {
+        "seconds": 68.078,
+        "both_pids_unchanged": true,
+        "both_commands_passed": true,
+        "both_listed_online": true
+      },
+      {
+        "seconds": 74.797,
+        "both_pids_unchanged": true,
+        "both_commands_passed": true,
+        "both_listed_online": true
+      }
+    ],
+    "passed": true
+  },
+  "deployment": {
+    "at": "2026-09-13T19:54:11.909685+00:00",
+    "source_commit": "fa099aa5e108154fbee206aa60f28c6f008efade",
+    "image_id": "sha256:e396f0154bde80d212c9041aad7edf810c68834878f6240488c684ed10dfe148",
+    "tag": "sphere-pilot-20260911-backend:fa099aa",
+    "route_sha256": "216eb5e0545848d3022dfb44f55649376ba0f42e7ad11099c78522019f80601a",
+    "context": "git archive tracked backend/alembic/agent-config/bootstrap scripts only",
+    "previous_backend_id": "0695d4e66d9c8afdaa05caf38f13351dd95a59f518e0462adfe165c553cfdf0c",
+    "backend_id": "5c989c4847db04a2ecb63e9aa6349aa0b8fb1ab7b628865e5ce43017fee3f03a",
+    "artifact_verification_attempts": [
+      {
+        "attempt": 1,
+        "passed": true
+      }
+    ],
+    "only_new_backend_recreated": true,
+    "catalog_bytes_preserved": true,
+    "latest_apk_download_hash_preserved": true,
+    "old_sphere_inspect_preserved": true
   }
 }

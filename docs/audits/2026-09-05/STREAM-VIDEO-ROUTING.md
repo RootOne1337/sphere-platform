@@ -80,9 +80,12 @@ frame за **1.328–1.703 s**. В настоящем браузере деко�
 **стабильная приёмка отклонена**: APK 1.2.4 падает в native ImageReader copy на
 обоих Android. Владелец подтвердил crash dialogs. Проверка 45 frames/15 s не прошла;
 редкие кадры нельзя объяснять только неподвижным экраном, поскольку crash доказан.
-Просмотры остановлены; следующий обязательный fix — [AUD-112](ANDROID-CAPTURE-LIFECYCLE.md). APK остаётся **fdd26c5 / 1.2.4 / 10204** — server fix не
-требует переустановки. Native after/decoded browser, RTT/fleet load, длительный
-soak и сеть между городами нельзя засчитать по этим loopback regressions.
+Эта первоначальная неуспешная проверка сохранена как baseline.
+Далее [AUD-112](ANDROID-CAPTURE-LIFECYCLE.md) установил APK **343c6e8 / 1.2.5**
+через OTA на оба Android: 10 native capture lifecycle trials прошли с неизменными
+PID и без новых crash records. [AUD-113](STREAM-IDLE-RECOVERY.md) устраняет
+незапрошенный restart на статичном экране; текущий backend **fa099aa**.
+RTT/fleet load, длительный soak и сеть между городами остаются отдельной приёмкой.
 
 GET stream status пока использует локальную статистику; его cross-worker смысл
 ещё требует исправления. Один viewer на device внутри worker сохраняется;

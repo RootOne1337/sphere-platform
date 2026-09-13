@@ -5,6 +5,11 @@
 [Аудит](AUDIT-REPORT.md) · [Локальный стенд](../../operations/LOCAL-PILOT.md) ·
 [Подключение и резервные адреса](../../operations/READINESS.md)
 
+**Текущий pilot: APK 1.2.5 (`343c6e8`) на обоих Android через OTA.**
+После наблюдавшихся SIGSEGV исправлено владение native frame buffers;
+10 capture lifecycle trials прошли с прежними PID. Это отдельная проверка
+от root permission AUD-102: [AUD-112](ANDROID-CAPTURE-LIFECYCLE.md).
+
 ## Что действительно независимо от станции
 
 APK хранит свою регистрацию, получает подписанный discovery, открывает исходящий

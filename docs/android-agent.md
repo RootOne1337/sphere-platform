@@ -1,17 +1,25 @@
 # Android Agent
 
-13 September 2026 pilot: signed APK **`fdd26c5`, 1.2.4-dev / 10204** is
+14 September 2026 pilot: signed APK **`343c6e8`, 1.2.5-dev / 10205** is
 installed on both owned Android 9 devices through authenticated server OTA and
-the APK's own `su`, with no ADB install/manual UI. Commands return in
-10.266 / 9.844 s. A real truncated download leaves no staging files; two
-overlapping OTA commands produce one download before process replacement.
-The updated APK also starts itself after Android reboot: 21.094 s to a real
-command, with the Windows station watchdog disabled. Android's process-start
-event names the persisted `BootRecoveryJobService`; identity and signed cache
-v9 remain intact. Final 12/12 commands and both installed hashes pass.
-These are rooted Android 9 pilot observations, not universal OS/fleet guarantees.
-[Current artifact](operations/LOCAL-PILOT.md) · [OTA recovery evidence](audits/2026-09-05/ANDROID-OTA-RECOVERY.md) ·
-[Boot recovery design and limits](audits/2026-09-05/ANDROID-BOOT-RECOVERY.md).
+the APK's own `su`, with no ADB install/manual permissions or app launcher.
+It fixes a native SIGSEGV caused by frame copying racing with capture teardown.
+Ten native lifecycle cycles (6 + 4), screen motion, overlapping viewers and
+automatic projection stop pass with unchanged PIDs. Installed hashes match;
+no new crash entries appeared after OTA in the observed logs. Full JVM suite:
+560 tests; signed dev/enterprise: 74 selected tests each.
+
+The new backend `fa099aa` also fixes unsolicited capture restarts every Redis
+read timeout on a static display: 75 s of paired viewing preserves both PIDs,
+24/24 commands, online presence and one start per device. These are short pilot
+regressions, not a farming soak, universal Android guarantee or fleet capacity.
+[Current artifact](operations/LOCAL-PILOT.md) · [Capture lifecycle evidence](audits/2026-09-05/ANDROID-CAPTURE-LIFECYCLE.md) ·
+[Idle recovery](audits/2026-09-05/STREAM-IDLE-RECOVERY.md).
+
+Earlier 1.2.4 trials verified interrupted/overlapping OTA cleanup and autonomous
+Android reboot recovery in 21.094 s. Those results remain tied to that revision;
+they are not claimed as a repeated reboot drill on 1.2.5.
+[OTA recovery](audits/2026-09-05/ANDROID-OTA-RECOVERY.md) · [Boot recovery](audits/2026-09-05/ANDROID-BOOT-RECOVERY.md).
 
 Developer and operator guide, checked against the audit branch on **11 September
 2026**. The audit is ongoing; production readiness and compatibility with every

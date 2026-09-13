@@ -1,6 +1,6 @@
 # Эксплуатационная готовность Sphere
 
-**Срез: 13 сентября 2026 · аудит продолжается · приоритеты согласованы с владельцем.**
+**Срез: 14 сентября 2026 · аудит продолжается · приоритеты согласованы с владельцем.**
 
 **Стенд работает:** отдельный `sphere-pilot-20260911`, девять healthy сервисов,
 browser login/reload и два установленных APK. После AUD-92 прошли 12/12 HTTPS
@@ -36,13 +36,27 @@ repair → возврат второго за 6.08 s, затем 12/12 кома�
 100 строк и последний marker после. Полный JVM suite 515 passed; signed flavors
 по 29 passed. [Доказательства и границы](../audits/2026-09-05/APK-UTF8-LOG-TAIL.md).
 
-**AUD-108, текущий backend `1310016`:** REST start/stop/keyframe больше не
+**AUD-112, текущая APK `343c6e8` / 1.2.5-dev:** оба устройства обновлены через
+OTA; исправлена гонка ImageReader copy/teardown, приводившая к SIGSEGV всего APK.
+6 + 4 native цикла захвата, движение экрана, повторный зритель и auto-stop прошли
+без смены PID; 560 JVM tests и по 74 signed-flavor tests.
+[Доказательства и границы](../audits/2026-09-05/ANDROID-CAPTURE-LIFECYCLE.md).
+
+**AUD-109–113, текущий backend `fa099aa`:** bounded очереди видео, restricted-role
+viewer login и передача кадров/controls между workers исправлены. Пауза кадров
+более 5 s больше не должна вызывать повторный start через Redis request timeout.
+212 связанных tests pass, включая настоящий socket loss и idle baseline до/после.
+Native 75 s: по одной start-команде, оба PID неизменны, 12/12 online-проверок и
+24/24 echo; после закрытия обоих viewers захват освобождён автоматически.
+[Видео](../audits/2026-09-05/STREAM-VIDEO-ROUTING.md) · [Idle recovery](../audits/2026-09-05/STREAM-IDLE-RECOVERY.md).
+
+**AUD-108, предыдущий backend `1310016`:** REST start/stop/keyframe больше не
 проверяют только worker-local socket. Native 8/24 false offline → 24/24 success;
 настоящий start/stop проекции обоих Android без manual UI принят. 206 real-service/WS
 tests pass. [Evidence](../audits/2026-09-05/STREAM-CONTROL-ROUTING.md).
-Frame relay, viewer lifecycle и stream status остаются process-local и открыты.
+Frame relay и viewer lifecycle далее исправлены AUD-111; GET stream status остаётся worker-local.
 
-**AUD-107, текущая APK `fdd26c5` / 1.2.4-dev:** оба Android обновлены через OTA;
+**AUD-107, предыдущая APK `fdd26c5` / 1.2.4-dev:** оба Android обновлены через OTA;
 возврат команд 10.266 / 9.844 s. Реальный обрыв очищает staging, две одновременно
 принятые OTA дают одну загрузку до замены процесса; native retry 10.453 s.
 Reboot после OTA → самостоятельный старт и команда за 21.094 s. Финальные 12/12
@@ -65,17 +79,18 @@ SIGKILL → 5.453 s при отключённом Windows watchdog и без app
 **AUD-102, APK `ce26a9e`:** на обоих Android 9 захват после сброса app-op
 запускается без ручного consent: разрешение выдаёт сама APK через собственный su.
 523 full JVM tests и по 37 tests в signed flavors pass; затем 12/12 команд.
-**Открыто:** streaming frame relay, viewer lifecycle и status между workers;
+**Открыто:** GET stream status между workers и длительный streaming soak;
 durable OTA session/dedup, конкурентная публикация, естественный periodic cycle и fleet rollout;
 VPN и независимый резервный ingress. [Фактическая автономность Android](../audits/2026-09-05/ANDROID-UNATTENDED-CAPABILITIES.md).
 
 [Главная](../../README.md) · [Доказательства аудита](../audits/2026-09-05/AUDIT-REPORT.md) ·
 [APK](../android-agent.md) · [PC-agent](../pc-agent.md) · [Будущий AI-контур](../architecture/AI-READINESS.md)
 
-**Последний архивированный CI исходников: `1310016` — все обязательные checks success:**
+**Последний архивированный CI исходников: `fa099aa` — все обязательные checks success:**
 backend, Android, frontend, lint/security/RLS, Alembic и image bootstrap.
-[Архив с run links](../audits/2026-09-05/evidence/ci-1310016-summary.json).
-Включает stream REST routing, OTA recovery, root projection и Android boot recovery.
+[Архив с run links](../audits/2026-09-05/evidence/ci-fa099aa-summary.json).
+Включает cross-worker video и capture lifecycle, OTA/root projection/boot recovery.
+Включает также idle video recovery AUD-113.
 Проверки последующего documentation head отслеживаются отдельно.
 Предыдущий `f20b3b9`: JUnit **1591 tests / 0 failures / 0 errors / 0 skipped / 261.517 s**
 ([архив](../audits/2026-09-05/evidence/ci-f20b3b9-summary.json)).
@@ -128,10 +143,10 @@ README и руководства обновляются по реализова�
 
 | Приоритет | Сценарий | Что найдено / подтверждено | Следующее доказательство готовности |
 | --- | --- | --- | --- |
-| P0 | Первый пользователь должен получить полный результат задания | Fresh-volume pilot, browser login/reload и два APK уже работают; [актуальная 1.2.4](LOCAL-PILOT.md) прошла OTA/команды | [Пилот](PILOT-ACCEPTANCE.md): web → DAG → физическое действие → persisted result → UI, error/cancel/retry |
+| P0 | Первый пользователь должен получить полный результат задания | Fresh-volume pilot, browser login/reload и два APK уже работают; [актуальная 1.2.5](LOCAL-PILOT.md) прошла OTA/команды | [Пилот](PILOT-ACCEPTANCE.md): web → DAG → физическое действие → persisted result → UI, error/cancel/retry |
 | P0 | Регистрация теряет credentials после остановки или ответы меняют identity в обратном порядке | AUD-77: один проверяемый commit UUID/tokens/routes, serialization с refresh, local revision fence; 20 новых JVM cases | [Контракт](../architecture/ANDROID-BACKGROUND-ENROLLMENT.md); initial server response loss, failed re-enrollment recovery, реальные disk/keystore/OS |
 | P0 | Registration зависает или поздний ответ записывает credentials после stop | AUD-76: async Call, HTTP budget 10 s, byte limit до parse, cancellation и освобождение worker mutex; 15 новых JVM cases | [Контракт](../architecture/ANDROID-BACKGROUND-ENROLLMENT.md); AUD-77 добавляет единый commit и serialization; initial response loss и реальные sockets/OS открыты |
-| P0 | APK должен сам запускаться после Android boot | AUD-75/77/91 согласуют enrollment, AUD-103 добавляет persisted JobScheduler; native reboot двух Android 9 и текущей 1.2.4 принят с прежними IDs | [Контракт](../architecture/ANDROID-BACKGROUND-ENROLLMENT.md); initial response loss, fresh/never-launched package, другие Android/OEM и force-stop |
+| P0 | APK должен сам запускаться после Android boot | AUD-75/77/91 согласуют enrollment, AUD-103 добавляет persisted JobScheduler; native reboot двух Android 9 и предыдущей 1.2.4 принят с прежними IDs | [Контракт](../architecture/ANDROID-BACKGROUND-ENROLLMENT.md); initial response loss, fresh/never-launched package, другие Android/OEM и force-stop |
 | P0 | Сервер перезапущен, парк возвращается без оператора | APK clean-close обходил delay, network retry имел одинаковые сроки у всех клиентов; AUD-67 исправляет pacing/jitter | Убить/поднять выделенный backend при 100, 500, 1000 реальных или протокольных clients; измерить p50/p95/p99 времени возврата и число незавершённых задач |
 | P0 | GitHub или основной адрес недоступен | AUD-74 сохраняет primary/fallback, перебирает их для WS и refresh без discovery, выбирает активный адрес по device-bound ACK; 27 JVM и 3 SQL/ASGI cases | [Настройка](../architecture/ANDROID-SAVED-ROUTES.md); реальный OS restart, отказ LAN/DNS/GitHub, проверка latency/capacity и отказа самого backend |
 | P0 | Discovery перестаёт работать после enrollment или переживает stop | AUD-73: JWT в `X-API-Key` давал 401; параллельные/поздние запросы меняли URL. Публичный отменяемый HTTP, один запрос и local revision исправляют воспроизведённые сценарии | [Контракт](../architecture/ANDROID-DISCOVERY-RECOVERY.md); AUD-74 сохраняет кандидатов без разрыва рабочего WS. Signed mode сохраняет durable version floor; native миграция одного APK принята. Открыты fleet/OS recovery и независимая инфраструктура |
