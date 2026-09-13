@@ -4,6 +4,11 @@
 Исходная ревизия: `28f8cc46ab65496e00297960fd94d87d1605cc83`.
 Ветка исправлений: `codex/enterprise-audit-20260905`; [draft PR #19](https://github.com/RootOne1337/sphere-platform/pull/19).
 
+**AUD-107:** воспроизведены конфликт параллельных OTA, неотменяемый HTTP body
+и оставшиеся staging-файлы. Исправлены очередь/уникальный файл/cancellation/cleanup;
+556 JVM tests pass. Native baseline подтверждает мусор после self-install и обрыва;
+1.2.4 ещё проходит приёмку. [Evidence и границы](ANDROID-OTA-RECOVERY.md).
+
 **Native OTA AUD-104–106 принято:** оба Android установили 1.2.3 через сервер
 без ADB install: возврат команд 6.641 / 10.125 s. Reboot после OTA → 22.000 s;
 IDs/cache сохранены, 12/12 команд и журналы pass. Опубликован 1 release, каталог

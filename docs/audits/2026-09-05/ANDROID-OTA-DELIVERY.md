@@ -142,7 +142,8 @@ CI `c2d412f` дошёл до проверки generated API docs и обнару
 - Native root test принят только на данном Android 9 с уже разрешённым `su`
   для приложения. Без таких полномочий PackageInstaller может требовать
   `STATUS_PENDING_USER_ACTION`; root на устройстве не равен разрешению каждому UID.
-- Download interruption/cleanup, конкурентная установка, signer/package checks,
+- Download interruption/cleanup и параллельные попытки исправлены в [AUD-107](ANDROID-OTA-RECOVERY.md);
+  новая native-приёмка описана отдельно. Signer/package checks,
   конкурентная запись JSON-каталога и staged fleet rollout ещё открыты.
   Сохранность каталога и файла при replacement проверена только для pilot bind mount.
 - Шестичасовой штатный период остаётся; автоматическое повторение короткого

@@ -6,7 +6,15 @@ import android.content.Intent
 import android.content.pm.PackageInstaller
 import com.sphereplatform.agent.store.AuthTokenStore
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -28,7 +36,7 @@ import javax.inject.Singleton
  *
  * # Безопасность
  * - [validateDownloadUrl]: хост URL == хост сервера → нет утечки Bearer-токена
- * - Path traversal check: canonicalFile за пределами otaDir → exception
+ * - Staging filename generated locally; version metadata never selects a path
  * - SHA-256 mismatch → exception, APK удаляется
  * - Загрузка только с Bearer-токеном (не открытый URL)
  * - Только HTTPS
@@ -40,6 +48,21 @@ class OtaUpdateService @Inject constructor(
     private val authStore: AuthTokenStore,
 ) {
     private val apkDir = File(context.filesDir, "ota")
+    private val updateMutex = Mutex()
+
+    init {
+        // Self-install replaces this process before finally can run. Hilt creates
+        // one instance per agent process, before either OTA caller starts work.
+        // Delete only our staging files; never recurse into application storage.
+        runCatching {
+            apkDir.listFiles { file ->
+                file.isFile && file.name.startsWith("update_") && file.name.endsWith(".apk")
+            }?.forEach { file ->
+                if (file.delete()) Timber.i("OTA: removed abandoned staging file ${file.name}")
+                else Timber.w("OTA: could not remove abandoned staging file ${file.name}")
+            }
+        }.onFailure { Timber.w(it, "OTA: abandoned staging cleanup failed") }
+    }
 
     companion object {
         /**
@@ -50,30 +73,27 @@ class OtaUpdateService @Inject constructor(
         private const val MAX_APK_SIZE_BYTES = 200L * 1024 * 1024
     }
 
-    suspend fun performUpdate(payload: OtaUpdatePayload) {
-        Timber.i("OTA: starting update → version=${payload.version}")
-        val apkFile = downloadApk(payload)
-        try {
-            verifyChecksum(apkFile, payload.sha256)
-            install(apkFile)
-        } finally {
-            // APK удаляется в любом случае после попытки установки
-            apkFile.delete()
-            Timber.d("OTA: APK deleted")
+    suspend fun performUpdate(payload: OtaUpdatePayload) = withContext(Dispatchers.IO) {
+        // Periodic checks and WebSocket commands share this singleton. Waiting
+        // callers remain cancellable and cannot overwrite an installer's input.
+        updateMutex.withLock {
+            Timber.i("OTA: starting update → version=${payload.version}")
+            check(apkDir.isDirectory || apkDir.mkdirs()) { "Cannot create OTA staging directory" }
+            val apkFile = File.createTempFile("update_", ".apk", apkDir)
+            try {
+                downloadApk(payload, apkFile)
+                verifyChecksum(apkFile, payload.sha256)
+                currentCoroutineContext().ensureActive()
+                install(apkFile)
+            } finally {
+                // Includes partial downloads, cancellation and failed installs.
+                if (!apkFile.delete() && apkFile.exists()) Timber.w("OTA: staging cleanup failed")
+                else Timber.d("OTA: APK deleted")
+            }
         }
     }
 
-    private suspend fun downloadApk(payload: OtaUpdatePayload): File {
-        apkDir.mkdirs()
-        val dest = File(apkDir, "update_${payload.version}.apk")
-
-        // Path traversal check
-        val canonicalDest = dest.canonicalFile
-        val canonicalDir = apkDir.canonicalFile
-        check(canonicalDest.startsWith(canonicalDir)) {
-            "Path traversal detected in OTA filename"
-        }
-
+    private suspend fun downloadApk(payload: OtaUpdatePayload, dest: File) = coroutineScope {
         // БЕЗОПАСНОСТЬ: SSRF-защита — скачиваем только с нашего сервера.
         validateDownloadUrl(payload.download_url)
 
@@ -82,9 +102,16 @@ class OtaUpdateService @Inject constructor(
             .header("Authorization", "Bearer ${authStore.getToken()}")
             .build()
 
-        withContext(Dispatchers.IO) {
+        val call = httpClient.newCall(request)
+        // Blocking execute/read must be interrupted when WorkManager or the
+        // command scope stops. A child observes cancellation while IO is blocked;
+        // coroutineScope waits for the IO/writer to close before staging deletion.
+        val cancellation = launch(start = CoroutineStart.UNDISPATCHED) {
+            try { awaitCancellation() } finally { call.cancel() }
+        }
+        try {
             // FIX 7.2: response.use {} гарантирует закрытие при ошибках HTTP
-            httpClient.newCall(request).execute().use { response ->
+            call.execute().use { response ->
                 check(response.isSuccessful) { "OTA download failed: ${response.code}" }
                 // FIX D6: Проверяем Content-Length перед скачиванием — защита от переполнения /data
                 val contentLength = response.body!!.contentLength()
@@ -100,6 +127,7 @@ class OtaUpdateService @Inject constructor(
                         var totalRead = 0L
                         var read: Int
                         while (input.read(buffer).also { read = it } != -1) {
+                            currentCoroutineContext().ensureActive()
                             totalRead += read
                             if (totalRead > MAX_APK_SIZE_BYTES) {
                                 throw IllegalStateException(
@@ -111,10 +139,10 @@ class OtaUpdateService @Inject constructor(
                     }
                 }
             }
+            Timber.i("OTA: downloaded ${dest.length()} bytes → ${dest.name}")
+        } finally {
+            cancellation.cancel()
         }
-
-        Timber.i("OTA: downloaded ${dest.length()} bytes → ${dest.name}")
-        return dest
     }
 
     /**
@@ -139,12 +167,13 @@ class OtaUpdateService @Inject constructor(
         }
     }
 
-    private fun verifyChecksum(file: File, expectedSha256: String) {
+    private suspend fun verifyChecksum(file: File, expectedSha256: String) {
         val digest = MessageDigest.getInstance("SHA-256")
         file.inputStream().use { input ->
             val buffer = ByteArray(8192)
             var read: Int
             while (input.read(buffer).also { read = it } != -1) {
+                currentCoroutineContext().ensureActive()
                 digest.update(buffer, 0, read)
             }
         }

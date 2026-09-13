@@ -14,6 +14,11 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Security / runtime
 
+- AUD-107: serialize concurrent OTA attempts, use unique staging files, cancel
+  blocked HTTP calls, and remove partial/orphaned APKs after failure or process
+  replacement. Real service regression: 9/9; full JVM: 556 tests in 41 suites.
+  Native baseline confirms old APK and failed staging files remain; candidate
+  1.2.4 / 10204 must pass OTA acceptance before advancing LATEST.
 - Native OTA acceptance: both Android 9 devices self-install published 1.2.3-dev
   from the authenticated server using their own su; no ADB install/manual UI,
   commands return in 6.641 / 10.125 s. Post-OTA reboot returns in 22.000 s.
