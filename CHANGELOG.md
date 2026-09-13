@@ -14,6 +14,11 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Security / runtime
 
+- AUD-108: route REST stream start/stop/keyframe through the live PubSub
+  channel instead of a worker-local socket map. Preserve tenant/RBAC checks,
+  reject unavailable transport with 503 and never queue interactive controls.
+  Real Redis/HTTP regression: 18 cases, 206 combined tests pass; native baseline
+  has 8 false offline replies in 24 requests. Video/lifecycle routing remains open.
 - AUD-107: serialize concurrent OTA attempts, use unique staging files, cancel
   blocked HTTP calls, and remove partial/orphaned APKs after failure or process
   replacement. Real service regression: 9/9; full JVM: 556 tests in 41 suites.

@@ -5,6 +5,7 @@ from __future__ import annotations
 import structlog
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
+from redis.exceptions import RedisError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -12,7 +13,6 @@ from backend.core.dependencies import require_permission
 from backend.database.engine import get_db
 from backend.models.device import Device
 from backend.models.user import User
-from backend.websocket.connection_manager import get_connection_manager
 from backend.websocket.stream_bridge import get_stream_bridge
 
 logger = structlog.get_logger()
@@ -41,6 +41,25 @@ async def _check_device_ownership(
     )
     if not result.scalar_one_or_none():
         raise HTTPException(status_code=404, detail="Device not found")
+
+
+async def _send_live_control(device_id: str, command: dict) -> None:
+    """Publish to the agent's owner worker; never defer interactive controls."""
+    from backend.websocket.pubsub_router import get_pubsub_publisher
+
+    publisher = get_pubsub_publisher()
+    if publisher is None:
+        raise HTTPException(503, "Stream command transport is unavailable")
+    try:
+        sent = await publisher.send_command_live(device_id, command)
+    except RedisError as exc:
+        # Publication may have succeeded before a lost response. Do not retry an
+        # interactive start/stop automatically or misreport an infrastructure
+        # failure as a missing/offline device.
+        logger.warning("stream_control_transport_failed", device_id=device_id, command_type=command["type"])
+        raise HTTPException(503, "Stream command transport failed; delivery outcome is unknown") from exc
+    if not sent:
+        raise HTTPException(503, "Device stream command channel is unavailable")
 
 
 @router.get("/{device_id}/status", response_model=StreamStatusResponse)
@@ -75,18 +94,11 @@ async def request_stream_start(
     this REST endpoint is for manual/testing purposes.
     """
     await _check_device_ownership(device_id, str(current_user.org_id), db)
-    manager = get_connection_manager()
-    if not manager.is_connected(device_id):
-        raise HTTPException(status_code=404, detail="Device not connected")
-
-    sent = await manager.send_to_device(device_id, {
+    await _send_live_control(device_id, {
         "type": "start_stream",
         "quality": "720p",
         "bitrate": 2_000_000,
     })
-    if not sent:
-        raise HTTPException(status_code=503, detail="Failed to reach device")
-
     logger.info("stream_start_requested", device_id=device_id, user_id=str(current_user.id))
     return {"status": "start_requested", "device_id": device_id}
 
@@ -99,13 +111,7 @@ async def request_stream_stop(
 ) -> dict:
     """Send stop_stream command to the Android agent."""
     await _check_device_ownership(device_id, str(current_user.org_id), db)
-    manager = get_connection_manager()
-    if not manager.is_connected(device_id):
-        raise HTTPException(status_code=404, detail="Device not connected")
-
-    sent = await manager.send_to_device(device_id, {"type": "stop_stream"})
-    if not sent:
-        raise HTTPException(status_code=503, detail="Failed to reach device")
+    await _send_live_control(device_id, {"type": "stop_stream"})
 
     logger.info("stream_stop_requested", device_id=device_id, user_id=str(current_user.id))
     return {"status": "stop_requested", "device_id": device_id}
@@ -119,12 +125,6 @@ async def request_keyframe(
 ) -> dict:
     """Request an immediate I-frame (for viewer reconnect recovery)."""
     await _check_device_ownership(device_id, str(current_user.org_id), db)
-    manager = get_connection_manager()
-    if not manager.is_connected(device_id):
-        raise HTTPException(status_code=404, detail="Device not connected")
-
-    sent = await manager.send_to_device(device_id, {"type": "request_keyframe"})
-    if not sent:
-        raise HTTPException(status_code=503, detail="Failed to reach device")
+    await _send_live_control(device_id, {"type": "request_keyframe"})
 
     return {"status": "keyframe_requested", "device_id": device_id}

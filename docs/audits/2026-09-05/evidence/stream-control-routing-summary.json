@@ -1,0 +1,235 @@
+{
+  "before": {
+    "tests": 18,
+    "failures": 12,
+    "errors": 0,
+    "skipped": 0,
+    "seconds": 4.458
+  },
+  "after": {
+    "tests": 206,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "seconds": 14.43
+  },
+  "native_before": {
+    "at": "2026-09-13T17:02:30.337816+00:00",
+    "phase": "before",
+    "backend_workers": 4,
+    "requests": [
+      {
+        "index": 0,
+        "status": 404,
+        "body": {
+          "detail": "Device not connected"
+        },
+        "seconds": 0.406
+      },
+      {
+        "index": 1,
+        "status": 200,
+        "body": {
+          "status": "keyframe_requested",
+          "device_id": "ba1346c1-1581-452f-adee-451d36622aaf"
+        },
+        "seconds": 0.36
+      },
+      {
+        "index": 0,
+        "status": 200,
+        "body": {
+          "status": "keyframe_requested",
+          "device_id": "85f2f935-7739-400e-9389-0d71227e8f0a"
+        },
+        "seconds": 0.391
+      },
+      {
+        "index": 1,
+        "status": 404,
+        "body": {
+          "detail": "Device not connected"
+        },
+        "seconds": 0.406
+      },
+      {
+        "index": 0,
+        "status": 200,
+        "body": {
+          "status": "keyframe_requested",
+          "device_id": "85f2f935-7739-400e-9389-0d71227e8f0a"
+        },
+        "seconds": 0.422
+      },
+      {
+        "index": 1,
+        "status": 404,
+        "body": {
+          "detail": "Device not connected"
+        },
+        "seconds": 0.39
+      },
+      {
+        "index": 0,
+        "status": 200,
+        "body": {
+          "status": "keyframe_requested",
+          "device_id": "85f2f935-7739-400e-9389-0d71227e8f0a"
+        },
+        "seconds": 0.375
+      },
+      {
+        "index": 1,
+        "status": 200,
+        "body": {
+          "status": "keyframe_requested",
+          "device_id": "ba1346c1-1581-452f-adee-451d36622aaf"
+        },
+        "seconds": 0.375
+      },
+      {
+        "index": 0,
+        "status": 200,
+        "body": {
+          "status": "keyframe_requested",
+          "device_id": "85f2f935-7739-400e-9389-0d71227e8f0a"
+        },
+        "seconds": 0.375
+      },
+      {
+        "index": 1,
+        "status": 404,
+        "body": {
+          "detail": "Device not connected"
+        },
+        "seconds": 0.422
+      },
+      {
+        "index": 0,
+        "status": 404,
+        "body": {
+          "detail": "Device not connected"
+        },
+        "seconds": 0.391
+      },
+      {
+        "index": 1,
+        "status": 200,
+        "body": {
+          "status": "keyframe_requested",
+          "device_id": "ba1346c1-1581-452f-adee-451d36622aaf"
+        },
+        "seconds": 0.406
+      },
+      {
+        "index": 0,
+        "status": 200,
+        "body": {
+          "status": "keyframe_requested",
+          "device_id": "85f2f935-7739-400e-9389-0d71227e8f0a"
+        },
+        "seconds": 0.375
+      },
+      {
+        "index": 1,
+        "status": 200,
+        "body": {
+          "status": "keyframe_requested",
+          "device_id": "ba1346c1-1581-452f-adee-451d36622aaf"
+        },
+        "seconds": 0.375
+      },
+      {
+        "index": 0,
+        "status": 404,
+        "body": {
+          "detail": "Device not connected"
+        },
+        "seconds": 0.375
+      },
+      {
+        "index": 1,
+        "status": 200,
+        "body": {
+          "status": "keyframe_requested",
+          "device_id": "ba1346c1-1581-452f-adee-451d36622aaf"
+        },
+        "seconds": 0.359
+      },
+      {
+        "index": 0,
+        "status": 200,
+        "body": {
+          "status": "keyframe_requested",
+          "device_id": "85f2f935-7739-400e-9389-0d71227e8f0a"
+        },
+        "seconds": 0.406
+      },
+      {
+        "index": 1,
+        "status": 200,
+        "body": {
+          "status": "keyframe_requested",
+          "device_id": "ba1346c1-1581-452f-adee-451d36622aaf"
+        },
+        "seconds": 0.359
+      },
+      {
+        "index": 0,
+        "status": 200,
+        "body": {
+          "status": "keyframe_requested",
+          "device_id": "85f2f935-7739-400e-9389-0d71227e8f0a"
+        },
+        "seconds": 0.5
+      },
+      {
+        "index": 1,
+        "status": 404,
+        "body": {
+          "detail": "Device not connected"
+        },
+        "seconds": 0.453
+      },
+      {
+        "index": 0,
+        "status": 200,
+        "body": {
+          "status": "keyframe_requested",
+          "device_id": "85f2f935-7739-400e-9389-0d71227e8f0a"
+        },
+        "seconds": 0.359
+      },
+      {
+        "index": 1,
+        "status": 200,
+        "body": {
+          "status": "keyframe_requested",
+          "device_id": "ba1346c1-1581-452f-adee-451d36622aaf"
+        },
+        "seconds": 0.375
+      },
+      {
+        "index": 0,
+        "status": 200,
+        "body": {
+          "status": "keyframe_requested",
+          "device_id": "85f2f935-7739-400e-9389-0d71227e8f0a"
+        },
+        "seconds": 0.391
+      },
+      {
+        "index": 1,
+        "status": 404,
+        "body": {
+          "detail": "Device not connected"
+        },
+        "seconds": 0.375
+      }
+    ],
+    "both_devices_answered_before_after": true,
+    "projection_not_started": true,
+    "independent_http_connections": true
+  },
+  "native_after_pending": true
+}

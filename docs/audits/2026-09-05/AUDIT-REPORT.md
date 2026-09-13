@@ -4,6 +4,11 @@
 Исходная ревизия: `28f8cc46ab65496e00297960fd94d87d1605cc83`.
 Ветка исправлений: `codex/enterprise-audit-20260905`; [draft PR #19](https://github.com/RootOne1337/sphere-platform/pull/19).
 
+**AUD-108:** native 8/24 ложных offline 404 в REST stream controls.
+Публикация перенесена к worker-владельцу через Redis; 12 baseline failures →
+206 passing tests. Video bridge/lifecycle остаются отдельной задачей.
+[Причина и evidence](STREAM-CONTROL-ROUTING.md).
+
 **AUD-107:** воспроизведены конфликт параллельных OTA, неотменяемый HTTP body
 и оставшиеся staging-файлы. Исправлены очередь/уникальный файл/cancellation/cleanup;
 556 JVM tests pass; signed flavors по 70. Оба Android сами обновились до 1.2.4:
