@@ -1,518 +1,203 @@
 # PC Agent
 
-> **Sphere Platform v4.0** — PC Agent Operator & Developer Guide
+Operator/developer guide checked against the audit branch on **9 September 2026**.
+The audit is ongoing. A successful Python build or server-side regression does not
+prove LDPlayer/ADB execution, Windows service recovery or capacity for 10–64 emulators.
+See the [audit report](audits/2026-09-05/AUDIT-REPORT.md) for evidence and remaining work.
 
----
+13 September native update: a running LDPlayer instance lost its host NAT process
+while DHCP stayed alive. Both APKs now work after scoped network repair. The
+[network runbook](operations/LDPLAYER-NETWORK-RECOVERY.md) provides manual repair
+and a separate Windows scheduled watchdog, installed for pilot indices 0/1.
+It recovers NAT without requiring PC-agent/server connectivity; native automatic
+repair returned the second APK command in 108.12 s after fault. Its status is local;
+delivery of fresh station-network events through PC-agent to backend/UI is still open.
 
-## Table of Contents
+## Source and startup
 
-1. [Overview](#1-overview)
-2. [Architecture](#2-architecture)
-3. [Installation](#3-installation)
-4. [Configuration](#4-configuration)
-5. [ADB Bridge](#5-adb-bridge)
-6. [Device Discovery](#6-device-discovery)
-7. [LDPlayer Integration](#7-ldplayer-integration)
-8. [Telemetry](#8-telemetry)
-9. [Running as a Service](#9-running-as-a-service)
-10. [Command Reference](#10-command-reference)
-11. [Troubleshooting](#11-troubleshooting)
+The entry point is [agent/main.py](../pc-agent/agent/main.py); the root
+[main.py](../pc-agent/main.py) is a launcher shim. The implementation is flat:
 
----
+| File | Current responsibility |
+| --- | --- |
+| [config.py](../pc-agent/agent/config.py) | Pydantic settings, `.env`, `SPHERE_` prefix |
+| [client.py](../pc-agent/agent/client.py) | WebSocket first-message key auth, reconnect, outgoing queue |
+| [dispatcher.py](../pc-agent/agent/dispatcher.py) | Command routing and result messages |
+| [ldplayer.py](../pc-agent/agent/ldplayer.py) | `ldconsole.exe` instance operations |
+| [adb_bridge.py](../pc-agent/agent/adb_bridge.py) | Local TCP ADB ports, shell/install/push/pull |
+| [topology.py](../pc-agent/agent/topology.py) | Workstation/instance registration payload |
+| [telemetry.py](../pc-agent/agent/telemetry.py) | Host CPU/memory/disk/network collection |
+| [models.py](../pc-agent/agent/models.py) | Registration and telemetry payloads |
 
-## 1. Overview
-
-The PC Agent is a Python `asyncio` daemon that runs on a **Windows or Linux host** where
-Android devices (real or emulated) are connected via USB or ADB over TCP. It bridges
-the Sphere Platform backend to locally connected devices through a WebSocket connection.
-
-**Primary functions:**
-- ADB command relay: backend sends commands → PC Agent executes via `adb` → returns result
-- Device discovery: scans USB/TCP for connected Android devices
-- LDPlayer emulator lifecycle management (Windows only)
-- Host telemetry: CPU, RAM, disk metrics reported to backend
-
----
-
-## 2. Architecture
-
-```
-pc-agent/
-├── main.py              ← launcher shim (entry point)
-└── agent/
-    ├── main.py          ← asyncio app entry
-    ├── ws/
-    │   └── client.py    ← WebSocket client, JWT auth, reconnect
-    ├── adb/
-    │   ├── bridge.py    ← adb CLI wrapper (asyncio.subprocess)
-    │   └── executor.py  ← command execution with timeout
-    ├── modules/
-    │   ├── discovery.py ← USB/TCP device enumeration
-    │   └── commands.py  ← command dispatch table
-    ├── ldplayer/
-    │   ├── manager.py   ← LDPlayer lifecycle (start/stop/list instances)
-    │   └── config.py    ← LDPlayer path + registry detection
-    ├── core/
-    │   ├── config.py    ← pydantic-settings Settings
-    │   └── constants.py
-    └── telemetry/
-        └── collector.py ← psutil metrics collection + reporting
-```
-
-### Event loop architecture
-
-```
-main() coroutine
-  ├── ws_client.run()          ← persistent WS connection
-  ├── telemetry_loop()         ← every 30s reports host metrics
-  └── heartbeat_loop()         ← every 10s sends ping
-
-ws_client.run():
-  ├── await connect_with_backoff()
-  ├── async for msg in ws:
-  │     command = parse_command(msg)
-  │     result = await dispatch(command)
-  │     await ws.send_json(result)
-  └── on disconnect: reconnect with backoff
-```
-
----
-
-## 3. Installation
-
-### Windows
-
-**Prerequisites:**
-- Python 3.11+
-- Android Platform Tools (adb) in PATH
-- (Optional) LDPlayer 9.x installed
+From `pc-agent/`, use an isolated Python environment and install
+[requirements.txt](../pc-agent/requirements.txt):
 
 ```powershell
-# Clone or extract the agent
-cd C:\sphere-pc-agent
-
-# Create virtualenv
 python -m venv .venv
-.venv\Scripts\Activate.ps1
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Configure
-copy .env.example .env.local
-notepad .env.local
+.venv/Scripts/python.exe -m pip install -r requirements.txt
+.venv/Scripts/python.exe -m pip check
+.venv/Scripts/python.exe -m agent.main
 ```
 
-### Linux
+The audit uses Python 3.12 for the combined backend/PC tests. The existing Dockerfile
+starts from Python 3.11; it has not established a working LDPlayer installation on
+Linux. Default executable paths target Windows LDPlayer. OS/device support must be
+validated for the actual host rather than inferred from Python portability.
 
-```bash
-# Install Python 3.11+
-sudo apt-get install python3.11 python3.11-venv android-tools-adb
+## Configuration and identity
 
-# Create virtualenv
-python3.11 -m venv .venv
-source .venv/bin/activate
+Settings read **`.env` in the working directory**, with the **`SPHERE_` prefix**.
+The old guide's `.env.local`, `SPHERE_WS_URL`, `SPHERE_API_KEY`, unprefixed
+`WORKSTATION_ID` and `/ws/workstation/...` examples did not match this implementation.
 
-# Install dependencies
-pip install -r requirements.txt
+| Variable | Default / meaning |
+| --- | --- |
+| `SPHERE_SERVER_URL` | `ws://localhost:8000`; base WS origin, without the endpoint path |
+| `SPHERE_AGENT_TOKEN` | `changeme`; replace with a real agent API key |
+| `SPHERE_WORKSTATION_ID` | `workstation-01`; replace with the existing workstation UUID |
+| `SPHERE_LDPLAYER_PATH` | `C:\LDPlayer\LDPlayer9` |
+| `SPHERE_LDCONSOLE` | `C:\LDPlayer\LDPlayer9\ldconsole.exe` |
+| `SPHERE_ADB_PATH` | `C:\LDPlayer\LDPlayer9\adb.exe` |
+| `SPHERE_RECONNECT_INITIAL_DELAY` | 1 second |
+| `SPHERE_RECONNECT_MAX_DELAY` | 30 seconds |
+| `SPHERE_RECONNECT_BACKOFF_FACTOR` | 2 |
+| `SPHERE_TELEMETRY_INTERVAL` | 30 seconds |
 
-# Configure
-cp .env.example .env.local
-nano .env.local
+Example `.env` with placeholders:
+
+```dotenv
+SPHERE_SERVER_URL=wss://management.example
+SPHERE_AGENT_TOKEN=<agent-api-key>
+SPHERE_WORKSTATION_ID=<existing-workstation-uuid>
+SPHERE_LDCONSOLE=C:\LDPlayer\LDPlayer9\ldconsole.exe
+SPHERE_ADB_PATH=C:\LDPlayer\LDPlayer9\adb.exe
+SPHERE_TELEMETRY_INTERVAL=30
 ```
 
-### Required Python packages
+Create an agent-type key with `device:register` through the authorized
+`POST /api/v1/auth/api-keys` flow. A user access JWT is not this endpoint's PC
+credential. The workstation must already exist in the key's organization.
+The current [HTTP catalog](api-endpoints.md) has no `POST /workstations` route;
+the old guide's curl example was unsupported. A reviewed workstation/instance
+provisioning flow remains necessary; the WebSocket registration handler updates
+existing rows and does not create missing workstations or instances.
 
-```
-websockets>=12.0
-aiohttp>=3.9
-pydantic>=2.0
-pydantic-settings>=2.0
-psutil>=5.9
-structlog>=24.0
-aiofiles>=23.0
-tenacity>=8.0        # reconnect with exponential backoff
-```
-
----
-
-## 4. Configuration
-
-Configuration is loaded from `pc-agent/.env.local`:
-
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `SPHERE_WS_URL` | ✓ | Backend WebSocket URL: `wss://yourdomain.com/ws/workstation/<id>` |
-| `SPHERE_API_URL` | ✓ | Backend API URL: `https://yourdomain.com/api/v1` |
-| `SPHERE_API_KEY` | ✓ | API key from `POST /api-keys` (role: `device_manager`) |
-| `WORKSTATION_ID` | ✓ | UUID registered via `POST /workstations` |
-| `ADB_PATH` | | Path to adb binary (default: `adb` from PATH) |
-| `ADB_CONNECT_TIMEOUT` | | Seconds before ADB command timeout (default: `10`) |
-| `LDPLAYER_PATH` | | Path to LDPlayer installation (Windows) |
-| `TELEMETRY_INTERVAL` | | Seconds between telemetry reports (default: `30`) |
-| `LOG_LEVEL` | | `DEBUG`, `INFO`, `WARNING` (default: `INFO`) |
-| `RECONNECT_MAX_DELAY` | | Max reconnect delay in seconds (default: `120`) |
-
-**Example `.env.local`:**
-```bash
-SPHERE_WS_URL=wss://yourdomain.com/ws/workstation/550e8400-e29b-41d4-a716-446655440000
-SPHERE_API_URL=https://yourdomain.com/api/v1
-SPHERE_API_KEY=sk_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-WORKSTATION_ID=550e8400-e29b-41d4-a716-446655440000
-ADB_PATH=C:\Platform-Tools\adb.exe
-LDPLAYER_PATH=C:\LDPlayer\LDPlayer9
-LOG_LEVEL=INFO
-```
-
-### Registering the workstation
-
-Before first run, register the workstation in the platform:
-
-```bash
-# Via API
-curl -X POST https://yourdomain.com/api/v1/workstations \
-  -H "Authorization: Bearer <admin_token>" \
-  -H "Content-Type: application/json" \
-  -d '{"name": "Windows PC-01", "hostname": "pc-01.lan", "location": "Office"}'
-
-# Note the returned UUID → set as WORKSTATION_ID
-```
-
----
-
-## 5. ADB Bridge
-
-The ADB bridge wraps the `adb` CLI tool using `asyncio.subprocess`.
-
-### Command execution
-
-```python
-# Internal (agent/adb/bridge.py)
-result = await bridge.execute("adb -s emulator-5554 shell input tap 540 960")
-# Returns: AdbResult(exit_code=0, stdout="", stderr="", duration_ms=89)
-```
-
-### Supported ADB operations
-
-| Operation | Command pattern |
-|-----------|----------------|
-| Shell command | `adb shell <cmd>` |
-| Install APK | `adb install -r <path>` |
-| Push file | `adb push <local> <remote>` |
-| Pull file | `adb pull <remote> <local>` |
-| Reboot | `adb reboot` |
-| Screenshot | `adb exec-out screencap -p` |
-| Port forward | `adb forward tcp:<local> tcp:<remote>` |
-
-### Multi-device targeting
-
-When multiple devices are connected, commands must specify a serial:
+The client appends `/ws/agent/<workstation-uuid>` to the base URL, then sends:
 
 ```json
-{
-  "cmd": "adb_exec",
-  "args": {
-    "serial": "emulator-5554",
-    "command": "adb shell getprop ro.product.model"
-  }
-}
+{"type":"auth","token":"<agent-api-key>","workstation_id":"<existing-workstation-uuid>"}
 ```
 
-If `serial` is omitted and only one device is connected, it is used automatically.
+The server uses the path identity and the authenticated key organization. AUD-63
+reuses the shared API-key tenant resolver, lock and active/expiry checks. The
+separate registration Session binds that organization before accessing workstation
+and instance rows. Runtime needs the API-key function grants in the
+[credential runbook](security/device-credential-bootstrap.md). A key can address
+workstations in its own organization; this is not workstation hardware attestation.
+Open connections do not automatically close when their key is later revoked.
 
----
+## Runtime messages and commands
 
-## 6. Device Discovery
+`workstation_register` updates hostname, OS/agent version, heartbeat, online flag
+and matching existing instance metadata/serials. SQL commits before the topology
+cache write (`topology:workstation:<id>`, one-hour TTL). Redis failure can leave the
+cache stale while SQL has committed. `workstation_telemetry` caches the payload for
+120 seconds and publishes an organization event; it is not a durable event journal.
 
-Discovery scans for connected Android devices and returns them to the backend.
-
-### Trigger discovery
-
-Backend sends command or discovery is triggered via `POST /discovery/scan`:
+The dispatcher accepts `type`, `command_id` and `payload`, for example:
 
 ```json
-{
-  "type": "command.execute",
-  "data": { "cmd": "discover_adb" }
-}
+{"type":"ping","command_id":"<command-uuid>","payload":{}}
 ```
 
-### Discovery algorithm
+| Types | Required payload fields |
+| --- | --- |
+| `ping`, `ld_list`, `adb_devices`, `adb_sync` | None |
+| `ld_launch`, `ld_quit`, `ld_reboot` | `index` |
+| `ld_create` | `name` |
+| `ld_install_apk` | `index`, `apk_path` |
+| `ld_run_app` | `index`, `package_name` |
+| `ld_exec` | `index`, `command` |
+| `adb_shell` | `port`, `command` |
+| `adb_install` | `port`, `apk_path` |
+| `adb_push` | `port`, `local`, `remote` |
+| `adb_pull` | `port`, `remote`, `local` |
 
-```python
-# agent/modules/discovery.py
-async def discover_devices():
-    # 1. Run: adb devices -l
-    stdout = await adb.execute("adb devices -l")
+ADB operations here target `127.0.0.1:<port>`; they do not implement the former
+guide's generic `adb_exec`/serial envelope or automatic single-device selection.
+The bridge computes default instance ports as `5554 + index * 2`; verify the actual
+emulator configuration. The separate [ADBDiscovery module](../pc-agent/modules/adb_discovery.py)
+is not routed by the current dispatcher. End-to-end discovery and OS execution
+remain under audit; the command list is an implementation inventory,
+not proof of successful remote execution. Unknown command types now produce
+`status: failed` with an `Unsupported command type` error (AUD-66), rather than
+the former false `completed`/null response. A command without an ID still has no
+correlated reply; unsupported commands do not invoke LDPlayer or ADB.
 
-    # 2. Parse output
-    devices = parse_adb_devices(stdout)
-    # Each device: { serial, state, model, transport_id }
-
-    # 3. For each connected device, get extra properties
-    for device in devices:
-        props = await get_device_props(device.serial)
-        device.update(props)
-
-    return devices
-```
-
-### Discovery response format
+Success and error replies now include the `command_result` discriminator (AUD-64):
 
 ```json
-{
-  "devices": [
-    {
-      "serial": "emulator-5554",
-      "state": "device",
-      "model": "sdk_gphone64_x86_64",
-      "android_version": "13",
-      "api_level": "33",
-      "product": "sdk_gphone64_x86_64",
-      "transport": "usb"
-    },
-    {
-      "serial": "192.168.11.101:5555",
-      "state": "device",
-      "model": "Pixel_6",
-      "android_version": "14",
-      "api_level": "34",
-      "transport": "tcp"
-    }
-  ]
-}
+{"type":"command_result","command_id":"<command-uuid>","status":"completed","result":{"pong":true}}
 ```
 
----
+An execution exception uses `status: failed` and an `error` string. The backend
+publishes the payload to `sphere:agent:result:<workstation-id>:<command-id>`.
+During a rolling client upgrade it also accepts the older untyped terminal reply
+with a nonempty string command ID. Explicit telemetry and intermediate statuses
+are not results. Redis PubSub publication is not a durable receipt or execution ACK;
+there is no guarantee of recovery if the subscriber, connection or Redis is unavailable.
 
-## 7. LDPlayer Integration
+## Recovery, operations and verification
 
-LDPlayer is an Android emulator for Windows. The PC Agent can manage LDPlayer
-instances via the `ldconsole.exe` CLI.
+The main process starts the WS client, telemetry, a 15-second ADB sync loop and one
+initial topology task. That task waits one second; it is not a verified per-reconnect
+registration mechanism. The client marks itself connected after writing the auth
+frame; server auth is not yet confirmed. Its outgoing queue is bounded at 1000
+messages, drops sends while disconnected or full, and is not a durable result outbox.
 
-### Commands
+AUD-65 makes either sender or receiver termination close the session and collect
+both transport tasks. Failed/cancelled auth writes clear connection state. Reconnect
+delays and the five-minute circuit cooldown after ten failures respond to stop;
+expired delays do not retain shielded waiter tasks. Clean peer closes also wait
+before reconnecting. The failed send is not automatically replayed: its physical
+outcome may be unknown. Dispatch tasks can outlive a session and still need bounded
+concurrency, shutdown and subprocess recovery design. Real process/network delivery
+and stop during an incomplete connect handshake remain unverified.
 
-| Backend command | LDPlayer operation |
-|----------------|--------------------|
-| `ldplayer.list` | `ldconsole list` |
-| `ldplayer.start` | `ldconsole launch --index <n>` |
-| `ldplayer.stop` | `ldconsole quit --index <n>` |
-| `ldplayer.reboot` | `ldconsole reboot --index <n>` |
-| `ldplayer.create` | `ldconsole add --name <name>` |
-| `ldplayer.delete` | `ldconsole remove --index <n>` |
+[install.bat](../pc-agent/install.bat) configures an NSSM service named
+`SpherePCAgent`, working directory `pc-agent/`, parameters `-m agent.main`, daily log
+rotation and automatic restart. It also starts the service. Review the chosen Python,
+working directory, credentials and executable paths before using it; the audit did
+not install/start an operating-system service. Container/Windows/Linux service
+behavior and access to local emulator executables remain separate validation work.
 
-### List instances
+AUD-63 retains [six failures before](audits/2026-09-05/evidence/pc-tenant-before.txt)
+and [45 related passing cases after](audits/2026-09-05/evidence/pc-tenant-after.txt).
+Twelve new PostgreSQL/Redis cases use actual non-owner credentials. The real endpoint,
+receive-loop dispatch and registration handler execute with explicit socket/manager
+transport doubles. They cover connect/reconnect plus registration, invalid keys,
+foreign workstations, two SQL key-lock waiters during revoke, committed instance
+updates, SQL abort/retry, Redis failure and pooled context cleanup. They do not test
+normal ASGI disconnect frames, real PC network recovery, command execution, LDPlayer
+processes or CPU/RAM capacity. No claim of minimal CPU consumption or support for
+10–64 emulators follows from these tests.
 
-```json
-{
-  "cmd": "ldplayer.list"
-}
-```
+AUD-64 retains [four failures before](audits/2026-09-05/evidence/pc-result-protocol-before.txt)
+and [24 related passing cases after](audits/2026-09-05/evidence/pc-result-protocol-after.txt).
+Ten new cases link the actual dispatcher and backend handler to a real isolated
+Redis subscriber, covering success, execution error, legacy clients and controls.
+The transport is an in-process adapter; LDPlayer/ADB are doubles. This verifies
+result formatting/routing without claiming durable delivery or physical execution.
 
-**Response:**
-```json
-{
-  "instances": [
-    { "index": 0, "name": "LDPlayer-0", "top_level_adb": "emulator-5554", "running": true },
-    { "index": 1, "name": "LDPlayer-1", "top_level_adb": "emulator-5556", "running": false }
-  ]
-}
-```
+AUD-65 retains [six failures before](audits/2026-09-05/evidence/pc-client-recovery-before.txt)
+and [91 PC cases passing after](audits/2026-09-05/evidence/pc-client-recovery-after.txt).
+Nine new lifecycle cases run the actual client with controlled in-process sockets:
+sender failure/reconnect, auth failure/cancellation, circuit stop, repeated backoff,
+clean-close pacing, receive termination and concurrent producer ordering. No real
+WebSocket listener, DNS lookup, TLS handshake or emulator is involved.
 
-### Auto-detection of LDPlayer path
-
-On Windows, the agent auto-detects LDPlayer from the registry:
-```
-HKEY_LOCAL_MACHINE\SOFTWARE\leidian\ldplayer9\InstallDir
-```
-
-Override with `LDPLAYER_PATH` env variable if needed.
-
----
-
-## 8. Telemetry
-
-The agent reports host metrics every `TELEMETRY_INTERVAL` seconds (default: 30).
-
-### Metrics reported
-
-```json
-{
-  "type": "telemetry.report",
-  "data": {
-    "workstation_id": "uuid",
-    "timestamp": "2026-02-23T10:00:00Z",
-    "cpu_percent": 23.4,
-    "ram_total_mb": 32768,
-    "ram_used_mb": 12800,
-    "ram_percent": 39.1,
-    "disk_total_gb": 500,
-    "disk_used_gb": 180,
-    "disk_percent": 36.0,
-    "connected_devices": 4,
-    "adb_server_running": true
-  }
-}
-```
-
-Metrics are stored in the backend and exposed via Prometheus for Grafana dashboards.
-
----
-
-## 9. Running as a Service
-
-### Windows — Task Scheduler
-
-```powershell
-# Create scheduled task (run at startup, hidden)
-$action = New-ScheduledTaskAction `
-  -Execute "C:\sphere-pc-agent\.venv\Scripts\python.exe" `
-  -Argument "C:\sphere-pc-agent\pc-agent\main.py" `
-  -WorkingDirectory "C:\sphere-pc-agent\pc-agent"
-
-$trigger = New-ScheduledTaskTrigger -AtStartup
-
-$settings = New-ScheduledTaskSettingsSet `
-  -ExecutionTimeLimit (New-TimeSpan -Hours 0) `
-  -RestartCount 10 `
-  -RestartInterval (New-TimeSpan -Minutes 1)
-
-Register-ScheduledTask `
-  -TaskName "SphereAgent" `
-  -Action $action `
-  -Trigger $trigger `
-  -Settings $settings `
-  -RunLevel Highest `
-  -Force
-```
-
-### Windows — NSSM (Non-Sucking Service Manager)
-
-```powershell
-# Download nssm from https://nssm.cc/
-nssm install SphereAgent "C:\sphere-pc-agent\.venv\Scripts\python.exe"
-nssm set SphereAgent Arguments "C:\sphere-pc-agent\pc-agent\main.py"
-nssm set SphereAgent AppDirectory "C:\sphere-pc-agent\pc-agent"
-nssm set SphereAgent Start SERVICE_AUTO_START
-nssm set SphereAgent AppStdout "C:\sphere-pc-agent\logs\stdout.log"
-nssm set SphereAgent AppStderr "C:\sphere-pc-agent\logs\stderr.log"
-nssm start SphereAgent
-```
-
-### Linux — systemd
-
-```ini
-# /etc/systemd/system/sphere-agent.service
-[Unit]
-Description=Sphere PC Agent
-After=network-online.target
-Wants=network-online.target
-
-[Service]
-Type=simple
-User=sphere-agent
-WorkingDirectory=/opt/sphere-pc-agent/pc-agent
-ExecStart=/opt/sphere-pc-agent/.venv/bin/python main.py
-Restart=always
-RestartSec=5
-StandardOutput=journal
-StandardError=journal
-
-[Install]
-WantedBy=multi-user.target
-```
-
-```bash
-sudo systemctl enable sphere-agent
-sudo systemctl start sphere-agent
-sudo journalctl -u sphere-agent -f   # follow logs
-```
-
----
-
-## 10. Command Reference
-
-### Full command list
-
-| Command | Args | Description |
-|---------|------|-------------|
-| `discover_adb` | — | Enumerate connected ADB devices |
-| `adb_exec` | `serial`, `command` | Execute ADB command |
-| `adb_connect` | `host`, `port` | Connect via ADB TCP |
-| `adb_disconnect` | `serial` | Disconnect ADB device |
-| `screenshot` | `serial` | Capture device screenshot |
-| `ldplayer.list` | — | List LDPlayer instances |
-| `ldplayer.start` | `index` | Start LDPlayer instance |
-| `ldplayer.stop` | `index` | Stop LDPlayer instance |
-| `ldplayer.reboot` | `index` | Reboot LDPlayer instance |
-| `telemetry.report` | — | Request immediate telemetry report |
-| `agent.status` | — | Agent status (version, uptime, connections) |
-| `agent.restart` | — | Graceful restart of the agent process |
-
----
-
-## 11. Troubleshooting
-
-### Agent can't connect to backend
-
-```bash
-# Test WebSocket endpoint
-python -c "
-import asyncio, websockets
-
-async def test():
-    uri = 'wss://yourdomain.com/ws/workstation/uuid?token=...'
-    async with websockets.connect(uri) as ws:
-        print('Connected:', await ws.recv())
-
-asyncio.run(test())
-"
-```
-
-### ADB not found
-
-```bash
-# Check ADB in PATH
-adb version
-
-# Windows: add Platform Tools to PATH
-$env:PATH += ";C:\platform-tools"
-
-# Verify adb server is running
-adb start-server
-adb devices
-```
-
-### No devices found after discovery
-
-```bash
-# Check USB debugging enabled on device
-adb devices
-# Should show: serial    device (not "unauthorized")
-
-# If "unauthorized": check device screen for RSA key prompt
-
-# For LDPlayer: ensure adb port is accessible
-adb connect localhost:5554
-```
-
-### High CPU usage
-
-The agent is asyncio-based and uses minimal CPU. If usage is high:
-```bash
-# Check Python process
-wmic process where "name='python.exe'" get ProcessId,CommandLine,WorkingSetSize
-
-# Increase telemetry interval
-TELEMETRY_INTERVAL=60  # in .env.local
-```
-
-### Logs
-
-```bash
-# Windows (if using NSSM)
-Get-Content C:\sphere-pc-agent\logs\stdout.log -Wait -Tail 50
-
-# Linux (systemd)
-journalctl -u sphere-agent -f --since "1 hour ago"
-```
+AUD-66 retains [three failures before](audits/2026-09-05/evidence/pc-unsupported-command-before.txt)
+and [95 related passing cases after](audits/2026-09-05/evidence/pc-unsupported-command-after.txt).
+Three more Redis cases verify failure reporting for misspelled, outdated and future
+unsupported names without execution. Supported command and legacy result controls
+remain part of the 13-case result protocol suite.

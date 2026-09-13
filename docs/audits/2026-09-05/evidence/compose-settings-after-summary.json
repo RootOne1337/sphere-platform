@@ -1,0 +1,12 @@
+{
+  "baseline_sha": "cbf8f01215c5e27a809c29fa711d4e9f2a5c5a95",
+  "state": "compose-settings-after",
+  "totals": {
+    "tests": 93,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "failures": [],
+  "boundary": "Actual secrets generator creates a temporary synthetic env file; real Docker Compose renders each shipped overlay; a fresh Python process imports actual Settings with the exact container environment. No daemon, application listener, database connection or installed APK."
+}

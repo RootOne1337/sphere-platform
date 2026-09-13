@@ -29,7 +29,7 @@ class PrometheusMiddleware(BaseHTTPMiddleware):
     """
 
     async def dispatch(self, request: Request, call_next) -> Response:
-        path = request.url.path
+        path = request.scope["path"]
 
         if path in METRICS_SKIP_PATHS:
             return await call_next(request)

@@ -47,8 +47,8 @@ class TestHeartbeatManager:
     # ── handle_pong ───────────────────────────────────────────────────────────
 
     async def test_pong_updates_last_pong_timestamp(self, heartbeat):
+        heartbeat._last_pong = asyncio.get_running_loop().time() - 10
         before = heartbeat._last_pong
-        await asyncio.sleep(0.01)
         await heartbeat.handle_pong({"type": "pong", "ts": time.time()})
         assert heartbeat._last_pong > before
 

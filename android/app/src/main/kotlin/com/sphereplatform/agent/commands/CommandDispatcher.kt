@@ -28,6 +28,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.decodeFromJsonElement
@@ -56,6 +57,7 @@ class CommandDispatcher @Inject constructor(
     private val scope: CoroutineScope,
     private val streamingManager: StreamingManager,
     @ApplicationContext private val appContext: Context,
+    private val commandJournal: CommandJournal,
 ) {
     private val json = Json {
         ignoreUnknownKeys = true
@@ -87,7 +89,7 @@ class CommandDispatcher @Inject constructor(
         // При reconnect — отправляем накопленные результаты DAG и сбрасываем heartbeat
         wsClient.onConnected = {
             lastPingAt = System.currentTimeMillis()
-            scope.launch { dagRunner.flushPendingResults() }
+            scope.launch { flushResults() }
         }
 
         // FIX AUDIT-2.5: Heartbeat watchdog — если сервер не шлёт ping > 90с,
@@ -100,6 +102,7 @@ class CommandDispatcher @Inject constructor(
             while (true) {
                 delay(30_000L) // Проверяем каждые 30с
                 if (wsClient.isConnected) {
+                    flushResults()
                     val elapsed = System.currentTimeMillis() - lastPingAt
                     if (elapsed > HEARTBEAT_TIMEOUT_MS) {
                         Timber.w("Heartbeat watchdog: no ping for ${elapsed/1000}s — forcing reconnect")
@@ -169,8 +172,12 @@ class CommandDispatcher @Inject constructor(
     private suspend fun handleMessage(msg: JsonObject) {
         // System streaming messages — NOT IncomingCommand format, handle first
         when (msg["type"]?.jsonPrimitive?.contentOrNull) {
+            "result_ack" -> {
+                msg["command_id"]?.jsonPrimitive?.contentOrNull?.let { commandJournal.acknowledge(it) }
+                return
+            }
             "start_stream" -> {
-                Timber.i("Received start_stream — launching screen capture permission dialog")
+                Timber.i("Received start_stream — preparing screen capture permission")
                 val intent = Intent(appContext, ScreenCaptureRequestActivity::class.java).apply {
                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 }
@@ -193,7 +200,13 @@ class CommandDispatcher @Inject constructor(
             "touch_tap" -> {
                 val x = msg["x"]?.jsonPrimitive?.intOrNull ?: return
                 val y = msg["y"]?.jsonPrimitive?.intOrNull ?: return
-                scope.launch { adbActions.tap(x, y) }
+                scope.launch {
+                    try {
+                        adbActions.tap(x, y)
+                    } catch (_: RootCommandOutcomeUnknownException) {
+                        Timber.w("Live tap outcome is unknown; command was not replayed")
+                    }
+                }
                 return
             }
             "touch_swipe" -> {
@@ -202,39 +215,40 @@ class CommandDispatcher @Inject constructor(
                 val x2 = msg["x2"]?.jsonPrimitive?.intOrNull ?: return
                 val y2 = msg["y2"]?.jsonPrimitive?.intOrNull ?: return
                 val duration = msg["duration_ms"]?.jsonPrimitive?.intOrNull ?: 300
-                scope.launch { adbActions.swipe(x1, y1, x2, y2, duration) }
+                scope.launch {
+                    try {
+                        adbActions.swipe(x1, y1, x2, y2, duration)
+                    } catch (_: RootCommandOutcomeUnknownException) {
+                        Timber.w("Live swipe outcome is unknown; command was not replayed")
+                    }
+                }
                 return
             }
             "request_keyframe" -> {
                 (streamingManager as? StreamingManagerImpl)?.onViewerConnected()
                 return
             }
-            // ── CANCEL_DAG: bypass dagMutex ──
-            "CANCEL_DAG" -> {
-                val cmdId = msg["command_id"]?.jsonPrimitive?.contentOrNull ?: ""
-                // FIX D7: TTL-проверка для управляющих команд (защита от replay attack)
+            // Controls bypass dagMutex but are fenced to a particular execution.
+            "CANCEL_DAG", "PAUSE_DAG", "RESUME_DAG" -> {
+                val cmdId = (msg["command_id"] as? JsonPrimitive)?.contentOrNull ?: ""
                 if (isControlCommandExpired(msg, cmdId)) return
-                Timber.i("[CANCEL_DAG] Received cancel for command=$cmdId")
-                dagRunner.requestCancel()
-                ack(cmdId, "completed")
-                return
-            }
-            // ── PAUSE_DAG: bypass dagMutex, пауза работающего DAG между нодами ──
-            "PAUSE_DAG" -> {
-                val cmdId = msg["command_id"]?.jsonPrimitive?.contentOrNull ?: ""
-                if (isControlCommandExpired(msg, cmdId)) return
-                Timber.i("[PAUSE_DAG] Received pause for command=$cmdId")
-                dagRunner.requestPause()
-                ack(cmdId, "completed")
-                return
-            }
-            // ── RESUME_DAG: bypass dagMutex, снятие паузы ──
-            "RESUME_DAG" -> {
-                val cmdId = msg["command_id"]?.jsonPrimitive?.contentOrNull ?: ""
-                if (isControlCommandExpired(msg, cmdId)) return
-                Timber.i("[RESUME_DAG] Received resume for command=$cmdId")
-                dagRunner.requestResume()
-                ack(cmdId, "completed")
+                val target = ((msg["payload"] as? JsonObject)?.get("task_id") as? JsonPrimitive)
+                    ?.takeIf { it.isString }?.contentOrNull
+                if (target.isNullOrBlank()) {
+                    ack(cmdId, "failed", error = "invalid_task_target")
+                    return
+                }
+                val accepted = when (msg["type"]?.jsonPrimitive?.content) {
+                    "CANCEL_DAG" -> dagRunner.requestCancel(target)
+                    "PAUSE_DAG" -> dagRunner.requestPause(target)
+                    else -> dagRunner.requestResume(target)
+                }
+                if (accepted) {
+                    // This acknowledges the control request, not physical stop.
+                    ack(cmdId, "completed", result = buildJsonObject {
+                        put("task_id", target); put("control_accepted", true)
+                    })
+                } else ack(cmdId, "failed", error = "task_not_running")
                 return
             }
         }
@@ -247,26 +261,56 @@ class CommandDispatcher @Inject constructor(
         }
 
         // TTL check — отбрасываем устаревшие команды
+        if (cmd.type == CommandType.EXECUTE_DAG) {
+            try {
+                when (val claim = commandJournal.claim(cmd.command_id)) {
+                    is CommandJournal.Claim.Existing -> {
+                        wsClient.sendJson(claim.response)
+                        return
+                    }
+                    CommandJournal.Claim.Started -> Unit
+                }
+            } catch (e: Exception) {
+                ack(cmd.command_id, "failed", error = e.message ?: "command_receipt_unavailable")
+                return
+            }
+        }
         val ageSeconds = System.currentTimeMillis() / 1000 - cmd.signed_at
         if (ageSeconds > cmd.ttl_seconds) {
             Timber.w("[${cmd.command_id}] Expired (age=${ageSeconds}s > ttl=${cmd.ttl_seconds}s)")
-            ack(cmd.command_id, "failed", error = "expired")
+            terminalAck(cmd, "failed", error = "expired")
             return
         }
 
         ack(cmd.command_id, "received")
 
-        val result = runCatching {
+        try {
             ack(cmd.command_id, "running")
-            dispatch(cmd)
+            val result = dispatch(cmd)
+            val failed = result?.get("success")?.jsonPrimitive?.content == "false"
+            terminalAck(cmd, if (failed) "failed" else "completed", result = result)
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            terminalAck(cmd, "failed", error = "execution_interrupted_outcome_unknown")
+            throw e
+        } catch (e: Exception) {
+            Timber.e(e, "[${cmd.command_id}] Failed")
+            terminalAck(cmd, "failed", error = e.message ?: "unknown")
         }
+    }
 
-        if (result.isSuccess) {
-            ack(cmd.command_id, "completed", result = result.getOrNull())
-        } else {
-            val err = result.exceptionOrNull()?.message ?: "unknown"
-            Timber.e(result.exceptionOrNull(), "[${cmd.command_id}] Failed")
-            ack(cmd.command_id, "failed", error = err)
+    private fun terminalAck(cmd: IncomingCommand, status: String, error: String? = null, result: JsonObject? = null) {
+        if (cmd.type == CommandType.EXECUTE_DAG) {
+            wsClient.sendJson(commandJournal.complete(cmd.command_id, status, error, result))
+        } else ack(cmd.command_id, status, error, result)
+    }
+
+    private fun flushResults() {
+        try {
+            for (result in commandJournal.pending()) {
+                if (!wsClient.sendJson(result)) break
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "Cannot flush durable command results")
         }
     }
 
@@ -315,7 +359,13 @@ class CommandDispatcher @Inject constructor(
             val timeoutMs = cmd.payload["timeout_ms"]?.jsonPrimitive?.longOrNull
 
             // Контент-адресабльный кеш: если имя + hash присланы — ищем в кеше
-            val dagJson: JsonObject = if (dagName != null && dagHash != null) {
+            val suppliedDag = cmd.payload["dag"]?.jsonObject
+            val dagJson: JsonObject = if (suppliedDag != null) {
+                // Explicit payload is authoritative, including during migration
+                // from servers that hashed a template before account substitution.
+                if (dagName != null && dagHash != null) scriptCache.put(dagName, dagHash, suppliedDag)
+                suppliedDag
+            } else if (dagName != null && dagHash != null) {
                 when (val cacheResult = scriptCache.get(dagName, dagHash)) {
                     is ScriptCacheManager.CacheResult.Hit -> {
                         // Кеш-хит: DAG актуален, запускаем без пердачи по WS

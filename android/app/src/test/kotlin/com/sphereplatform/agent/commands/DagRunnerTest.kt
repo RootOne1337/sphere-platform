@@ -55,6 +55,7 @@ class DagRunnerTest {
         every { editor.remove(any()) } returns editor
         every { editor.apply() } just Runs
         every { prefs.getStringSet(any(), any()) } returns emptySet()
+        every { prefs.getString(any(), any()) } returns null
 
         runner = DagRunner(luaEngine, adbActions, wsClient, prefs, httpClient)
     }
@@ -415,12 +416,11 @@ class DagRunnerTest {
     // ── Pending results ──────────────────────────────────────────────────────
 
     @Test
-    fun `при offline сохраняет pending result`() = runTest {
+    fun `при offline возвращает результат для журнала диспетчера`() = runTest {
         every { wsClient.isConnected } returns false
         val dag = buildDag("n1", node("n1", "start"))
-        runner.execute("cmd-24", dag)
-        // Должен был вызваться prefs.edit().putStringSet("pending_dag_results", ...)
-        verify { prefs.edit() }
+        val result = runner.execute("cmd-24", dag)
+        assertTrue(result["success"]!!.jsonPrimitive.boolean)
     }
 
     // ── find_element в DAG ───────────────────────────────────────────────────

@@ -1,6 +1,28 @@
 # Developer Guide
 
-> **Sphere Platform v4.7** — Local Development Setup & Coding Standards
+> **Sphere Platform** — Local Development Setup & Coding Standards
+>
+> RLS policies are installed by Alembic `20260908_tenant_policies` on all 28 model
+> tables. Non-owner runtime credentials and HTTP/auth/job tenant propagation remain
+> rollout blockers. Read [the RLS contract](security/postgresql-rls.md); neither an
+> explicit ORM filter nor middleware proves full database isolation.
+>
+> `get_tenant_db()` / `get_db_session(org_id=...)` now keep one tenant per Session
+> across commit/rollback/recovery. Bind before data access and before savepoints;
+> use a fresh Session for another tenant. Plain `get_db()` remains unscoped.
+> User access JWT authentication now binds its verified organization before loading
+> the user; handlers sharing that request Session inherit the binding. User login,
+> refresh/logout and MFA bootstrap are covered by AUD-62. Global jobs and other auth
+> callers still require review. Apply through `20260910_device_refresh_retry` and review the
+> [user function grants and MFA cutover](security/user-auth-bootstrap.md) alongside
+> [device function grants](security/device-credential-bootstrap.md). Android WS
+> authenticates before target lookup. [Device refresh recovery](security/device-refresh-recovery.md)
+> requires the new migration and backend before APK; no new runtime EXECUTE grant is added.
+> Android task progress, receipts/results and device events bind their own fresh
+> Sessions from authenticated connection identity; the closed auth Session cannot
+> pass its SQL context to the receive loop. Terminal ACK follows SQL commit.
+> SQLite's test-only `set_config` adapter does not implement RLS. HTTP fixtures
+> serving different tenants must create a fresh Session for each request.
 
 ---
 
@@ -130,7 +152,7 @@ async def list_items(
     db: AsyncSession = Depends(get_db),
     current_user = Depends(require_permission("myfeature:read")),
 ):
-    # query only current org's data — RLS enforces, but filter explicitly too
+    # Explicit tenant filter is required; get_db alone does not establish RLS context.
     result = await db.execute(
         select(MyModel).where(MyModel.org_id == current_user.org_id)
     )
@@ -208,7 +230,8 @@ class DeviceService:
 
 ```bash
 cd frontend
-npm install
+# Node 24 is used for the audited frontend checks
+npm ci --ignore-scripts
 cp .env.example .env.local    # set NEXT_PUBLIC_API_URL=http://localhost/api/v1
 npm run dev                   # starts on :3000 with hot reload
 ```
@@ -216,12 +239,12 @@ npm run dev                   # starts on :3000 with hot reload
 ### Adding a new page
 
 1. Create `frontend/app/(dashboard)/my-page/page.tsx`
-2. Add nav item in `frontend/app/(dashboard)/layout.tsx`
-3. Create data hook in `frontend/hooks/useMyFeature.ts`:
+2. Add nav item in `frontend/src/features/navigation/NOCSidebar.tsx`
+3. Create data hook in `frontend/lib/hooks/useMyFeature.ts`:
 
 ```typescript
 import { useQuery } from "@tanstack/react-query";
-import api from "@/lib/api";
+import { api } from "@/lib/api";
 
 export function useMyFeature() {
   return useQuery({
@@ -237,10 +260,17 @@ export function useMyFeature() {
 ### Auth-protected API calls
 
 Use the `api` axios instance from `frontend/lib/api.ts` — it automatically
-attaches the access token and handles 401 refresh.
+attaches the access token, fences requests/responses by session version, and shares
+a bounded refresh across concurrent 401s. See the [session contract](security/frontend-sessions.md)
+for private page/cache boundaries, login/MFA, logout, storage fallback and limitations.
+
+Run `npm run type-check`, `npx --no-install jest --runInBand`, and `npm run build`
+from `frontend`. The Frontend CI workflow repeats these checks on Node 24/Linux.
+Jest TSX uses `tsconfig.jest.json`; application JSX settings remain controlled by Next.js.
+The tests use JSDOM and transport adapters, not a deployed browser/backend.
 
 ```typescript
-import api from "@/lib/api";
+import { api } from "@/lib/api";
 
 const { data } = await api.get("/devices?page=1&per_page=50");
 ```
@@ -250,7 +280,7 @@ const { data } = await api.get("/devices?page=1&per_page=50");
 Generate types from the OpenAPI spec:
 ```bash
 npm run gen:types
-# Reads from http://localhost/api/v1/openapi.json
+# Reads from http://localhost:8000/openapi.json
 # Writes to src/api/types.ts
 ```
 
@@ -590,3 +620,27 @@ docker compose -f docker-compose.yml -f docker-compose.full.yml up -d --build
 docker compose exec backend alembic upgrade head
 docker compose exec backend python scripts/create_admin.py
 ```
+
+
+## Generated HTTP API documentation
+
+With the jointly compatible backend/PC dependencies installed and required
+application configuration supplied, run from the repository root:
+
+```bash
+python -m scripts.export_api_docs
+python -m scripts.export_api_docs --check
+```
+
+The first command updates `docs/openapi.json` and `docs/api-endpoints.md`; the
+second fails when either artifact is missing or stale. Use disposable development
+configuration (including a non-production `JWT_SECRET_KEY`). The exporter imports
+the registered application and calls `app.openapi()` without entering lifespan,
+starting workers or making HTTP/database requests. It is not a runtime test.
+
+Commit both generated files with route/schema changes. Backend CI runs `--check`
+using its pinned dependencies. OpenAPI covers declared HTTP operations, excludes
+WebSocket/plain ASGI routes and does not fully express permission/error behavior.
+Keep operator explanations and [task-control limits](security/task-control-protocol.md)
+up to date separately. Component review status is in the
+[audit roadmap](audits/2026-09-05/ROADMAP.md).

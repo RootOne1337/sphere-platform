@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { signOut } from "@/lib/store";
 import { useState } from "react";
 import { cn } from "@/src/shared/lib/utils";
 import { Button } from "@/src/shared/ui/button";
@@ -67,6 +68,7 @@ interface NOCSidebarProps {
 
 export function NOCSidebar({ onOpenAppearance, isMobileOpen, onMobileClose }: NOCSidebarProps) {
     const pathname = usePathname();
+    const router = useRouter();
     const [isCollapsed, setIsCollapsed] = useState(true);
 
     // Закрываем меню на мобилках при клике на линк
@@ -174,7 +176,11 @@ export function NOCSidebar({ onOpenAppearance, isMobileOpen, onMobileClose }: NO
                             (isCollapsed && !isMobileOpen) ? "lg:justify-center lg:px-0" : "justify-start gap-3"
                         )}
                         title={(isCollapsed && !isMobileOpen) ? "Sign out" : undefined}
-                    // onClick={() => { logout logic }}
+                        aria-label="Sign out"
+                        onClick={() => {
+                            void signOut();
+                            router.replace('/login');
+                        }}
                     >
                         <LogOut className="w-4 h-4 shrink-0" />
                         {(!isCollapsed || isMobileOpen) && <span>Sign Out</span>}

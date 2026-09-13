@@ -525,6 +525,7 @@ class SchedulerEngine:
             select(ScheduleExecution)
             .where(
                 ScheduleExecution.schedule_id == schedule.id,
+                ScheduleExecution.org_id == schedule.org_id,
                 ScheduleExecution.status == ScheduleExecutionStatus.TRIGGERED,
             )
             .order_by(ScheduleExecution.fire_time.desc())
@@ -533,21 +534,22 @@ class SchedulerEngine:
         if not last_exec:
             return 0
 
-        now = datetime.now(timezone.utc)
-
         if last_exec.batch_id:
             from backend.models.task import Task, TaskStatus
 
+            # Serialize against result handlers before any queue/stop effect.
+            # Refresh identity-map values after waiting; never cancel a committed outcome.
             running_tasks = (
                 await db.scalars(
                     select(Task).where(
                         Task.batch_id == last_exec.batch_id,
+                        Task.org_id == schedule.org_id,
                         Task.status.in_([
                             TaskStatus.QUEUED,
                             TaskStatus.RUNNING,
                             TaskStatus.ASSIGNED,
                         ]),
-                    )
+                    ).order_by(Task.id).with_for_update().execution_options(populate_existing=True)
                 )
             ).all()
 
@@ -565,6 +567,8 @@ class SchedulerEngine:
                 logger.warning("scheduler.cancel_deps_failed", error=str(exc))
 
             for task in running_tasks:
+                # The lock wait may exceed the control TTL; timestamp at dispatch.
+                now = datetime.now(timezone.utc)
                 try:
                     if task.status == TaskStatus.RUNNING and publisher:
                         # Отправить CANCEL_DAG агенту через WebSocket.
@@ -620,16 +624,18 @@ class SchedulerEngine:
                 await db.scalars(
                     select(PipelineRun).where(
                         PipelineRun.context["batch_id"].astext == str(last_exec.pipeline_batch_id),
+                        PipelineRun.org_id == schedule.org_id,
                         PipelineRun.status.in_([
                             PipelineRunStatus.QUEUED,
                             PipelineRunStatus.RUNNING,
                             PipelineRunStatus.WAITING,
                         ]),
-                    )
+                    ).order_by(PipelineRun.id).with_for_update().execution_options(populate_existing=True)
                 )
             ).all()
 
             for run in running_runs:
+                now = datetime.now(timezone.utc)
                 run.status = PipelineRunStatus.CANCELLED
                 run.finished_at = now
                 cancelled += 1

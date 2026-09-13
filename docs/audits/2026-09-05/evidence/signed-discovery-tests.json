@@ -1,0 +1,54 @@
+{
+  "date": "2026-09-12",
+  "mirrors_before": {
+    "tests": 26,
+    "failures": 3
+  },
+  "unbound_enrollment_before": {
+    "tests": 1,
+    "failures": 1
+  },
+  "android_after": {
+    "tests": 522,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "android_suites": 37,
+  "offline_signer_passed": 21,
+  "fixture_only_public_key": true,
+  "native_signed_mode_tested": true,
+  "previous_head_ci": {
+    "sha": "f61cd5addf9f49593d46e4693ed2527e5c9ac99d",
+    "required_checks": "success",
+    "preview_deployment": "intentionally skipped (draft PR)"
+  },
+  "limits": [
+    "legacy behavior tested separately",
+    "minSdk26 Robolectric is not native OS",
+    "permanent second ingress unverified",
+    "renewal and automatic publisher not implemented"
+  ],
+  "http_cache_before": {
+    "tests": 1,
+    "failures": 1
+  },
+  "cdn_bucket_experiment": {
+    "tests_before": 1,
+    "failures_before": 1,
+    "withdrawn": true
+  },
+  "signed_build_tests": {
+    "dev": {
+      "signed_discovery_tests": 19,
+      "failures": 0,
+      "skipped": 0
+    },
+    "enterprise": {
+      "signed_discovery_tests": 19,
+      "failures": 0,
+      "skipped": 0
+    }
+  },
+  "native_evidence": "signed-discovery-native-20260912.json"
+}

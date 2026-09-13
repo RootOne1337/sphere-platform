@@ -1,0 +1,152 @@
+  console.error
+    Error: Not implemented: navigation (except hash changes)
+        at module.exports (C:\Users\dimas\Documents\ChatGPT\sphere-platform\frontend\node_modules\jsdom\lib\jsdom\browser\not-implemented.js:9:17)
+        at navigateFetch (C:\Users\dimas\Documents\ChatGPT\sphere-platform\frontend\node_modules\jsdom\lib\jsdom\living\window\navigation.js:77:3)
+        at exports.navigate (C:\Users\dimas\Documents\ChatGPT\sphere-platform\frontend\node_modules\jsdom\lib\jsdom\living\window\navigation.js:55:3)
+        at LocationImpl._locationObjectNavigate (C:\Users\dimas\Documents\ChatGPT\sphere-platform\frontend\node_modules\jsdom\lib\jsdom\living\window\Location-impl.js:30:5)
+        at LocationImpl._locationObjectSetterNavigate (C:\Users\dimas\Documents\ChatGPT\sphere-platform\frontend\node_modules\jsdom\lib\jsdom\living\window\Location-impl.js:24:17)
+        at LocationImpl.set href [as href] (C:\Users\dimas\Documents\ChatGPT\sphere-platform\frontend\node_modules\jsdom\lib\jsdom\living\window\Location-impl.js:46:10)
+        at Location.set href [as href] (C:\Users\dimas\Documents\ChatGPT\sphere-platform\frontend\node_modules\jsdom\lib\jsdom\living\generated\Location.js:125:37)
+        at C:\Users\dimas\Documents\ChatGPT\sphere-platform\frontend\lib\api.ts:90:31
+        at Axios.request (C:\Users\dimas\Documents\ChatGPT\sphere-platform\frontend\node_modules\axios\lib\core\Axios.js:41:14)
+        at Object.<anonymous> (C:\Users\dimas\Documents\ChatGPT\sphere-platform\frontend\__tests__\session\refresh-races.test.tsx:121:10) {
+      type: 'not implemented'
+    }
+
+      23 |     // Подавляем ожидаемые ошибки от React Query
+      24 |     if (typeof args[0] === 'string' && args[0].includes('QueryClient')) return;
+    > 25 |     originalError(...args);
+         |     ^
+      26 |   };
+      27 | });
+      28 | afterAll(() => { console.error = originalError; });
+
+      at console.error (__tests__/setup.ts:25:5)
+      at VirtualConsole.<anonymous> (node_modules/@jest/environment-jsdom-abstract/build/index.js:87:23)
+      at module.exports (node_modules/jsdom/lib/jsdom/browser/not-implemented.js:12:26)
+      at navigateFetch (node_modules/jsdom/lib/jsdom/living/window/navigation.js:77:3)
+      at exports.navigate (node_modules/jsdom/lib/jsdom/living/window/navigation.js:55:3)
+      at LocationImpl._locationObjectNavigate (node_modules/jsdom/lib/jsdom/living/window/Location-impl.js:30:5)
+      at LocationImpl._locationObjectSetterNavigate (node_modules/jsdom/lib/jsdom/living/window/Location-impl.js:24:17)
+      at LocationImpl.set href [as href] (node_modules/jsdom/lib/jsdom/living/window/Location-impl.js:46:10)
+      at Location.set href [as href] (node_modules/jsdom/lib/jsdom/living/generated/Location.js:125:37)
+      at lib/api.ts:90:31
+      at Axios.request (node_modules/axios/lib/core/Axios.js:41:14)
+      at Object.<anonymous> (__tests__/session/refresh-races.test.tsx:121:10)
+
+FAIL __tests__/session/refresh-races.test.tsx
+  × does not resurrect a logged-out session from a delayed startup refresh (15 ms)
+  √ shares one startup refresh through StrictMode effect replay (3 ms)
+  × does not replay a mutation or restore credentials after logout during API refresh (53 ms)
+  × does not refresh or replay an old 401 under a newly signed-in tenant (52 ms)
+  × rejects a successful stale response after the active identity changes (51 ms)
+  × ignores an old refresh failure after a different login succeeds (120 ms)
+  √ coalesces concurrent 401s and retries each request at most once (54 ms)
+  × bounds the refresh transport wait (5 ms)
+
+  ● does not resurrect a logged-out session from a delayed startup refresh
+
+    expect(received).toBeNull()
+
+    Received: "access-a"
+
+      51 |   await act(async () => refreshReply.resolve(tokens('a')));
+      52 |   await waitFor(() => expect(hook.result.current).toBe(true));
+    > 53 |   expect(useAuthStore.getState().accessToken).toBeNull();
+         |                                               ^
+      54 |   expect(getRefreshToken()).toBeNull();
+      55 | });
+      56 |
+
+      at Object.<anonymous> (__tests__/session/refresh-races.test.tsx:53:47)
+
+  ● does not replay a mutation or restore credentials after logout during API refresh
+
+    expect(received).toBeInstanceOf(expected)
+
+    Expected constructor: Error
+    Received constructor: Object
+
+      75 |   act(() => useAuthStore.getState().logout());
+      76 |   refreshReply.resolve(tokens('a'));
+    > 77 |   expect(await pending).toBeInstanceOf(Error);
+         |                         ^
+      78 |   expect(requests).toHaveLength(1);
+      79 |   expect(useAuthStore.getState().accessToken).toBeNull();
+      80 |   expect(getRefreshToken()).toBeNull();
+
+      at Object.<anonymous> (__tests__/session/refresh-races.test.tsx:77:25)
+
+  ● does not refresh or replay an old 401 under a newly signed-in tenant
+
+    expect(received).toBeInstanceOf(expected)
+
+    Expected constructor: Error
+    Received constructor: Object
+
+       95 |   refreshReply.resolve(tokens('b'));
+       96 |   first.resolve();
+    >  97 |   expect(await pending).toBeInstanceOf(Error);
+          |                         ^
+       98 |   expect(refreshRequests).toHaveLength(0);
+       99 |   expect(requests).toHaveLength(1);
+      100 | });
+
+      at Object.<anonymous> (__tests__/session/refresh-races.test.tsx:97:25)
+
+  ● rejects a successful stale response after the active identity changes
+
+    expect(received).toBeInstanceOf(expected)
+
+    Expected constructor: Error
+    Received constructor: Object
+
+      109 |   identify('b');
+      110 |   oldReply.resolve();
+    > 111 |   expect(await pending).toBeInstanceOf(Error);
+          |                         ^
+      112 | });
+      113 |
+      114 | it('ignores an old refresh failure after a different login succeeds', async () => {
+
+      at Object.<anonymous> (__tests__/session/refresh-races.test.tsx:111:25)
+
+  ● ignores an old refresh failure after a different login succeeds
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: "access-b"
+    Received: null
+
+      120 |   refreshReply.reject(new Error('old refresh connection failed'));
+      121 |   expect(await pending).toBeInstanceOf(Error);
+    > 122 |   expect(useAuthStore.getState().accessToken).toBe('access-b');
+          |                                               ^
+      123 |   expect(getRefreshToken()).toBe('refresh-b');
+      124 | });
+      125 |
+
+      at Object.<anonymous> (__tests__/session/refresh-races.test.tsx:122:47)
+
+  ● bounds the refresh transport wait
+
+    expect(received).toBeGreaterThan(expected)
+
+    Expected: > 0
+    Received:   0
+
+      145 |   await act(async () => refreshReply.resolve(tokens('a')));
+      146 |   await waitFor(() => expect(hook.result.current).toBe(true));
+    > 147 |   expect(refreshRequests[0].timeout).toBeGreaterThan(0);
+          |                                      ^
+      148 |   expect(refreshRequests[0].timeout).toBeLessThanOrEqual(10_000);
+      149 | });
+      150 |
+
+      at Object.<anonymous> (__tests__/session/refresh-races.test.tsx:147:38)
+
+Test Suites: 1 failed, 1 total
+Tests:       6 failed, 2 passed, 8 total
+Snapshots:   0 total
+Time:        1.294 s
+Ran all test suites matching __tests__/session/refresh-races.test.tsx.

@@ -97,6 +97,9 @@ docs/MERGE_LOG.md
 
 # Deployment artifacts (генерируются скриптами развёртывания)
 .admin-credentials
+.local-pilot/
+.playwright-cli/
+output/playwright/
 .deploy.log
 backups/
 ui_dump*.xml

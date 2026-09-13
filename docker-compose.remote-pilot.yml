@@ -1,0 +1,114 @@
+# Append after base + full + local-pilot. Outbound tunnels only; no new host ports.
+services:
+  backend:
+    environment:
+      CORS_EXTRA_ORIGINS: ${PILOT_BROWSER_URL},${PILOT_REMOTE_PRIMARY:?Set primary HTTPS URL},${PILOT_REMOTE_FALLBACK:?Set alternate HTTPS URL}
+  public-gateway:
+    image: nginx:alpine
+    command: ["nginx", "-c", "/etc/nginx/remote-pilot.conf", "-g", "daemon off;"]
+    volumes:
+      - ./infrastructure/nginx/remote-pilot.conf:/etc/nginx/remote-pilot.conf:ro
+      - ./.local-pilot/remote/public:/public:ro
+    networks: [frontend-net]
+    depends_on:
+      nginx:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8080/api/v1/health/readyz"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+    logging:
+      driver: json-file
+      options: {max-size: "5m", max-file: "3"}
+  cloudflared:
+    profiles: [cloudflare]
+    image: cloudflare/cloudflared:2026.9.1@sha256:b269e8abd07a5bf6f3f4be65d5050b2174eca89c56a0241a8ff32a16aec454e4
+    command: ["tunnel", "--config", "/etc/cloudflared/config.yml", "--no-autoupdate", "run"]
+    volumes:
+      # Mount only this tunnel's runtime credentials, never the account cert.pem.
+      - ./.local-pilot/remote/cloudflare:/etc/cloudflared:ro
+    networks: [frontend-net]
+    depends_on:
+      public-gateway:
+        condition: service_healthy
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "cloudflared", "tunnel", "--metrics", "127.0.0.1:20241", "ready"]
+      interval: 15s
+      timeout: 5s
+      retries: 12
+    deploy:
+      resources:
+        limits:
+          memory: 192M
+    logging:
+      driver: json-file
+      options: {max-size: "5m", max-file: "3"}
+  ssh-tunnel:
+    profiles: [serveo]
+    image: ${PILOT_IMAGE_PREFIX}-ssh-tunnel:remote-v1
+    build:
+      context: ./infrastructure/remote-tunnel
+    environment:
+      REMOTE_SUBDOMAIN: ${PILOT_SSH_SUBDOMAIN:?Set dedicated SSH subdomain}
+      REMOTE_SSH_HOST: serveo.net
+      REMOTE_SSH_PORT: ${PILOT_SSH_PORT:-22}
+      REMOTE_PUBLIC_URL: ${PILOT_REMOTE_FALLBACK}
+    volumes: [pilot_ssh_identity:/state]
+    secrets: [serveo_identity]
+    networks: [frontend-net]
+    depends_on:
+      public-gateway:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail --silent --max-time 8 -H 'serveo-skip-browser-warning: true' \"$$REMOTE_PUBLIC_URL/api/v1/config/agent\" | grep -q '\"installation_id\"'"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 64M
+    logging:
+      driver: json-file
+      options: {max-size: "5m", max-file: "3"}
+  cloudflare-quick:
+    # Temporary acceptance only: this URL changes when the connector restarts.
+    profiles: [quick]
+    image: cloudflare/cloudflared:2026.9.1@sha256:b269e8abd07a5bf6f3f4be65d5050b2174eca89c56a0241a8ff32a16aec454e4
+    command: ["tunnel", "--no-autoupdate", "--url", "http://public-gateway:8080", "--metrics", "127.0.0.1:20241"]
+    networks: [frontend-net]
+    depends_on:
+      public-gateway:
+        condition: service_healthy
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "cloudflared", "tunnel", "--metrics", "127.0.0.1:20241", "ready"]
+      interval: 15s
+      timeout: 5s
+      retries: 12
+    deploy:
+      resources:
+        limits:
+          memory: 192M
+    logging:
+      driver: json-file
+      options: {max-size: "5m", max-file: "3"}
+volumes:
+  pilot_ssh_identity:
+secrets:
+  serveo_identity:
+    file: ${PILOT_SSH_KEY_FILE:-./.local-pilot/remote/serveo-account.key}

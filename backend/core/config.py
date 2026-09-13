@@ -1,5 +1,5 @@
 # backend/core/config.py
-from pydantic import Field, field_validator
+from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -30,6 +30,10 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = "HS256"
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     JWT_REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+
+    # Independent Fernet keys, newest first. Empty disables credential use/writes.
+    # Kept out of Settings repr; provision through the deployment secret store.
+    ACCOUNT_CREDENTIAL_KEYS: SecretStr = SecretStr("")
 
     # VPN
     WG_ROUTER_URL: str = "http://localhost:8001"

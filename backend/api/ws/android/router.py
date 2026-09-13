@@ -5,14 +5,19 @@ from __future__ import annotations
 
 import asyncio
 import json
+import uuid
 
 import structlog
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from pydantic import BaseModel, Field, ValidationError
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.database.engine import AsyncSessionLocal
 from backend.database.redis_client import get_redis_binary
+from backend.database.tenant import bind_tenant_context
 from backend.models.device import Device
+from backend.models.task import Task, TaskStatus
 from backend.schemas.device_status import DeviceLiveStatus
 from backend.services.device_status_cache import DeviceStatusCache
 from backend.websocket.connection_manager import ConnectionManager, get_connection_manager
@@ -34,12 +39,14 @@ async def authenticate_ws_token(token: str, db: AsyncSession):
     import jwt as pyjwt
     from fastapi import HTTPException
 
+    if not isinstance(token, str):
+        raise HTTPException(status_code=401, detail="Invalid token")
     # API key path — токены вида sphr_<env>_<hex>
     if token.startswith("sphr_"):
         from backend.services.api_key_service import APIKeyService
         svc = APIKeyService(db)
         api_key = await svc.authenticate(token)
-        if not api_key:
+        if not api_key or api_key.type != "agent" or "device:register" not in api_key.permissions:
             raise HTTPException(status_code=401, detail="Invalid or expired API key")
 
         class _ApiKeyPrincipal:
@@ -54,9 +61,17 @@ async def authenticate_ws_token(token: str, db: AsyncSession):
 
     try:
         payload = decode_access_token(token)
+        if payload.get("type") != "access":
+            raise pyjwt.InvalidTokenError("Expected an access token")
+        if not isinstance(payload.get("sub"), str) or not isinstance(payload.get("org_id"), str):
+            raise pyjwt.InvalidTokenError("Missing identity claims")
+        subject_id = uuid.UUID(payload["sub"])
+        org_id = uuid.UUID(payload["org_id"])
     except pyjwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token expired")
     except pyjwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    except ValueError:
         raise HTTPException(status_code=401, detail="Invalid token")
 
     # Проверить blacklist
@@ -64,13 +79,16 @@ async def authenticate_ws_token(token: str, db: AsyncSession):
     cache = CacheService()
     if await cache.is_token_blacklisted(payload["jti"]):
         raise HTTPException(status_code=401, detail="Token revoked")
+    await bind_tenant_context(db, str(org_id))
 
     # Устройства получают JWT с role="device" и sub=device_id.
     # Для них ищем в таблице devices, а не users.
     role = payload.get("role", "")
     if role == "device":
-        device_subject = await db.get(Device, uuid.UUID(payload["sub"]))
-        if not device_subject:
+        device_subject = await db.scalar(select(Device).where(
+            Device.id == subject_id, Device.org_id == org_id,
+        ).execution_options(populate_existing=True))
+        if not device_subject or not device_subject.is_active:
             raise HTTPException(
                 status_code=401, detail="Device not found",
             )
@@ -78,14 +96,20 @@ async def authenticate_ws_token(token: str, db: AsyncSession):
         class _DevicePrincipal:
             """Принципал для устройства — совместим с user.org_id проверкой."""
 
-            def __init__(self, org_id: uuid.UUID) -> None:
+            def __init__(self, org_id: uuid.UUID, device_id: uuid.UUID) -> None:
                 self.org_id = org_id
+                self.device_id = device_id
 
-        return _DevicePrincipal(device_subject.org_id)
+        return _DevicePrincipal(device_subject.org_id, device_subject.id)
 
-    user = await db.get(User, uuid.UUID(payload["sub"]))
+    user = await db.scalar(select(User).where(
+        User.id == subject_id, User.org_id == org_id,
+    ).execution_options(populate_existing=True))
     if not user or not user.is_active:
         raise HTTPException(status_code=401, detail="User not found or inactive")
+    from backend.core.rbac import has_permission
+    if not has_permission(user.role, "device:write"):
+        raise HTTPException(status_code=403, detail="Agent access denied")
     return user
 
 
@@ -103,7 +127,7 @@ async def handle_agent_message(
     elif msg_type == "task_progress":
         await handle_task_progress(device_id, org_id, msg)
     elif msg_type == "command_result":
-        await handle_command_result(device_id, org_id, msg)
+        await handle_command_result(device_id, org_id, msg, manager)
     elif msg_type == "event":
         await handle_device_event(device_id, org_id, msg)
     else:
@@ -131,12 +155,38 @@ async def handle_telemetry(
         await status_cache.set_status(device_id, current)
 
 
+class TaskProgressMessage(BaseModel):
+    task_id: uuid.UUID
+    nodes_done: int = Field(default=0, strict=True, ge=0, le=2**31 - 1)
+    total_nodes: int = Field(default=1, strict=True, ge=1, le=2**31 - 1)
+    current_node: str = Field(default="", max_length=512)
+
+
 async def handle_task_progress(device_id: str, org_id: str, msg: dict) -> None:
     """Обработать прогресс выполнения DAG от агента."""
-    task_id = msg.get("task_id")
-    nodes_done = msg.get("nodes_done", 0)
-    total_nodes = msg.get("total_nodes", 1)
-    current_node = msg.get("current_node", "")
+    try:
+        message = TaskProgressMessage.model_validate(msg)
+        device_uuid, org_uuid = uuid.UUID(device_id), uuid.UUID(org_id)
+    except (ValidationError, ValueError, TypeError):
+        logger.warning("Invalid task progress", device_id=device_id)
+        return
+
+    # Redis keys are globally addressed by task ID. Authenticate ownership before
+    # writing any cache entry or publishing an event, including within one tenant.
+    async with AsyncSessionLocal() as db:
+        await bind_tenant_context(db, str(org_uuid))
+        owned = await db.scalar(select(Task.id).where(
+            Task.id == message.task_id,
+            Task.device_id == device_uuid,
+            Task.org_id == org_uuid,
+            Task.status.in_([TaskStatus.ASSIGNED, TaskStatus.RUNNING]),
+        ))
+    if owned is None:
+        return
+    task_id = str(message.task_id)
+    nodes_done = message.nodes_done
+    total_nodes = message.total_nodes
+    current_node = message.current_node
     # For cyclic DAGs: cap progress at 100%, track cycles
     progress = min(int(nodes_done / max(total_nodes, 1) * 100), 100)
     cycles = nodes_done // max(total_nodes, 1)
@@ -194,7 +244,9 @@ async def handle_task_progress(device_id: str, org_id: str, msg: dict) -> None:
         logger.debug("task_progress publish skipped", device_id=device_id, error=str(e))
 
 
-async def handle_command_result(device_id: str, org_id: str, msg: dict) -> None:
+async def handle_command_result(
+    device_id: str, org_id: str, msg: dict, manager: ConnectionManager | None = None,
+) -> None:
     """Обработать результат команды/задачи от агента."""
     command_id = msg.get("command_id") or msg.get("id")
     if not command_id:
@@ -209,6 +261,33 @@ async def handle_command_result(device_id: str, org_id: str, msg: dict) -> None:
     except Exception as e:
         logger.warning("Failed to publish command result", device_id=device_id, error=str(e))
     # Persist task result to DB on final status (completed or failed)
+    if status in ("received", "running"):
+        try:
+            import uuid
+            from datetime import datetime, timezone
+
+            from sqlalchemy import select
+
+            from backend.database.engine import AsyncSessionLocal
+            from backend.models.task import Task, TaskStatus
+
+            task_uuid = uuid.UUID(command_id)
+            async with AsyncSessionLocal() as db:
+                await bind_tenant_context(db, org_id)
+                task = await db.scalar(select(Task).where(
+                    Task.id == task_uuid, Task.device_id == uuid.UUID(device_id),
+                    Task.org_id == uuid.UUID(org_id), Task.status == TaskStatus.ASSIGNED,
+                ).with_for_update())
+                if task is not None:
+                    task.status = TaskStatus.RUNNING
+                    task.started_at = datetime.now(timezone.utc)
+                    await db.commit()
+        except (ValueError, TypeError):
+            return
+        except Exception as exc:
+            logger.warning("task.receipt.persistence_failed", command_id=command_id, error=str(exc))
+        return
+
     if status in ("completed", "failed"):
         # FIX BUG-A: управляющие команды (CANCEL_DAG, PAUSE_DAG, etc.) используют
         # command_id вида "sched_cancel_UUID" / "watchdog_cancel_UUID".
@@ -232,6 +311,7 @@ async def handle_command_result(device_id: str, org_id: str, msg: dict) -> None:
             from backend.database.redis_client import redis as _redis
             from backend.services.task_queue import TaskQueue
             async with AsyncSessionLocal() as db:
+                await bind_tenant_context(db, org_id)
                 queue = TaskQueue(_redis)
                 from backend.services.task_service import TaskService
                 svc = TaskService(db=db, queue=queue)
@@ -239,12 +319,16 @@ async def handle_command_result(device_id: str, org_id: str, msg: dict) -> None:
                 if error_msg:
                     final_result["error"] = error_msg
                 final_result["success"] = (status == "completed")
-                await svc.handle_task_result(
+                accepted = await svc.handle_task_result(
                     task_id=command_id,
                     device_id=device_id,
                     result=final_result,
+                    org_id=org_id,
                 )
                 await db.commit()
+            # Only the committed, owned task can release the device's outbox.
+            if accepted and manager is not None:
+                await manager.send_to_device(device_id, {"type": "result_ack", "command_id": command_id})
         except Exception as e:
             logger.error("Failed to persist task result", command_id=command_id, device_id=device_id, error=str(e))
 
@@ -286,6 +370,7 @@ async def handle_device_event(device_id: str, org_id: str, msg: dict) -> None:
         pipeline_run_id = uuid.UUID(pipeline_run_id_raw) if pipeline_run_id_raw else None
 
         async with AsyncSessionLocal() as db:
+            await bind_tenant_context(db, org_id)
             reactor = EventReactor(db)
             await reactor.process_event(
                 org_id=uuid.UUID(org_id),
@@ -422,14 +507,12 @@ async def android_agent_ws(
                 await _close(4004, "invalid_device_id")
                 return
 
-            device = await db.get(Device, device_uuid)
-            if not device:
-                logger.warning("android_ws: device_not_found", device_id=device_id)
-                await _close(4004, "device_not_found")
-                return
-
             if _is_dev_skip_auth():
                 # DEV-режим: пропускаем валидацию токена, берём org из устройства
+                device = await db.get(Device, device_uuid)
+                if not device or not device.is_active:
+                    await _close(4004, "device_not_found")
+                    return
                 org_id_str = str(device.org_id)
                 logger.info("android_ws: DEV_SKIP_AUTH — auth bypassed", device_id=device_id, org_id=org_id_str)
             else:
@@ -445,8 +528,17 @@ async def android_agent_ws(
                     await _close(4001, "invalid_token")
                     return
 
-                if str(device.org_id) != str(user.org_id):
-                    logger.warning("android_ws: org mismatch", device_id=device_id)
+                # Authentication binds the Session before any target-device SQL.
+                device = await db.scalar(select(Device).where(
+                    Device.id == device_uuid, Device.org_id == user.org_id,
+                    Device.is_active.is_(True),
+                ).execution_options(populate_existing=True))
+                if device is None:
+                    await _close(4004, "device_not_found")
+                    return
+
+                subject_device_id = getattr(user, "device_id", None)
+                if subject_device_id is not None and subject_device_id != device.id:
                     await _close(4004, "device_not_found")
                     return
 
@@ -459,6 +551,18 @@ async def android_agent_ws(
         await _close(1011, "auth_error")
         return
     # DB session is now CLOSED — safe to enter long-lived WS loop
+
+    # Confirm the authenticated target before publishing the socket: another
+    # producer may send work as soon as manager.connect exposes this connection.
+    # This confirms identity, not readiness of every downstream service.
+    try:
+        await asyncio.wait_for(ws.send_json({
+            "type": "auth_ok", "device_id": device_id, "protocol_version": 1,
+        }), timeout=5.0)
+    except Exception:
+        logger.warning("android_ws.auth_ack_failed", device_id=device_id)
+        await _close(1011, "auth_ack_failed")
+        return
 
     session_id = await manager.connect(ws, device_id, "android", org_id_str)
 
@@ -473,7 +577,7 @@ async def android_agent_ws(
 
     # Запустить heartbeat (SPLIT-4)
     from backend.websocket.heartbeat import HeartbeatManager
-    heartbeat = HeartbeatManager(ws, device_id, status_cache)
+    heartbeat = HeartbeatManager(ws, device_id, status_cache, session_id=session_id)
     await heartbeat.start()
 
     # Подписать PubSub router на командный канал этого устройства
@@ -557,13 +661,13 @@ async def android_agent_ws(
                         case "task_progress":
                             await handle_task_progress(device_id, org_id_str, msg)
                         case "command_result":
-                            await handle_command_result(device_id, org_id_str, msg)
+                            await handle_command_result(device_id, org_id_str, msg, manager)
                         case "event":
                             await handle_device_event(device_id, org_id_str, msg)
                         case _:
                             # CommandAck from APK has no "type" field — detect by command_id + status
                             if msg.get("command_id") and msg.get("status") in ("completed", "failed", "running", "received"):
-                                await handle_command_result(device_id, org_id_str, msg)
+                                await handle_command_result(device_id, org_id_str, msg, manager)
                             else:
                                 logger.debug(
                                     "Unknown message type",

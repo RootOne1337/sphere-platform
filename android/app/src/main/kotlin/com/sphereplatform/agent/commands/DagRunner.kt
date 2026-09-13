@@ -5,11 +5,12 @@ import com.sphereplatform.agent.lua.LuaEngine
 import com.sphereplatform.agent.ws.SphereWebSocketClient
 import com.sphereplatform.agent.lua.executeWithTimeout
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
@@ -67,18 +68,10 @@ class DagRunner @Inject constructor(
     companion object {
         /** FIX AUDIT-3.3: Лимит нод в DAG — защита от OOM */
         private const val MAX_DAG_NODES = 500
-        /** FIX AUDIT-3.6: Лимит pending results при offline */
-        private const val MAX_PENDING_RESULTS = 50
         /** FIX H2: Максимальная глубина вложенности loop → executeNode. Защита от StackOverflow. */
         private const val MAX_EXECUTE_DEPTH = 10
         /** FIX H5: Макс размер HTTP response body в DAG http_request */
         private const val MAX_HTTP_RESPONSE_CHARS = 256 * 1024  // 256KB
-        /**
-         * FIX F5: Макс размер одного сериализованного pending result.
-         * DAG с сотнями нод может сгенерировать огромный node_logs → раздувание
-         * EncryptedSharedPreferences → долгие I/O при каждом commit().
-         */
-        private const val MAX_PENDING_RESULT_CHARS = 128 * 1024  // 128KB
         /**
          * PERF: Лимит записей в iterLogs внутри loop-ноды.
          * 1000 iterations × 10 body nodes = 10 000 log entries → при serialize
@@ -103,13 +96,20 @@ class DagRunner @Inject constructor(
 
     private val json = Json { ignoreUnknownKeys = true }
 
+    // Match the target and change flags under the same lock used to start/end
+    // execution. A delayed control must never cross into the next DAG.
+    private val executionLock = Any()
+    private var activeCommandId: String? = null
+
     @Volatile
     private var cancelRequested = false
 
-    /** Called from CommandDispatcher when CANCEL_DAG arrives. */
-    fun requestCancel() {
+    /** A null target is reserved for local callers; wire controls require an ID. */
+    fun requestCancel(commandId: String? = null): Boolean = synchronized(executionLock) {
+        if (activeCommandId == null || (commandId != null && commandId != activeCommandId)) return false
         cancelRequested = true
         Timber.i("[DAG] Cancel requested by user")
+        true
     }
 
     @Volatile
@@ -120,18 +120,40 @@ class DagRunner @Inject constructor(
      * и возобновляется только при вызове [requestResume] или [requestCancel].
      * Called from CommandDispatcher when PAUSE_DAG arrives.
      */
-    fun requestPause() {
+    fun requestPause(commandId: String? = null): Boolean = synchronized(executionLock) {
+        if (activeCommandId == null || (commandId != null && commandId != activeCommandId)) return false
         pauseRequested = true
         Timber.i("[DAG] Pause requested by user")
+        true
     }
 
     /**
      * Снимает DAG с паузы — выполнение продолжается с той ноды, на которой остановились.
      * Called from CommandDispatcher when RESUME_DAG arrives.
      */
-    fun requestResume() {
+    fun requestResume(commandId: String? = null): Boolean = synchronized(executionLock) {
+        if (activeCommandId == null || (commandId != null && commandId != activeCommandId)) return false
         pauseRequested = false
         Timber.i("[DAG] Resume requested by user")
+        true
+    }
+
+    // A wire stop is a terminal DAG outcome, distinct from losing the coroutine.
+    // It must escape retries and nested loop failure policies.
+    private class DagControlCancelledException : RuntimeException("cancelled_by_user")
+
+    private suspend fun checkCancellation() {
+        currentCoroutineContext().ensureActive()
+        if (cancelRequested) throw DagControlCancelledException()
+    }
+
+    private suspend fun awaitExecutionPermission() {
+        checkCancellation()
+        while (pauseRequested) {
+            delay(200L)
+            checkCancellation()
+        }
+        checkCancellation()
     }
 
     // ── Public API ────────────────────────────────────────────────────────────
@@ -145,9 +167,24 @@ class DagRunner @Inject constructor(
      *                     Без явного значения: берётся из dagJson["timeout_ms"] или 300_000ms (5 мин).
      */
     suspend fun execute(commandId: String, dagJson: JsonObject, timeoutMs: Long? = null): JsonObject {
-        cancelRequested = false  // сброс при новом запуске
-        pauseRequested  = false  // сброс при новом запуске
+        synchronized(executionLock) {
+            check(activeCommandId == null) { "device_execution_busy" }
+            cancelRequested = false
+            pauseRequested = false
+            activeCommandId = commandId
+        }
+        try {
+            return executeActive(commandId, dagJson, timeoutMs)
+        } finally {
+            synchronized(executionLock) {
+                activeCommandId = null
+                cancelRequested = false
+                pauseRequested = false
+            }
+        }
+    }
 
+    private suspend fun executeActive(commandId: String, dagJson: JsonObject, timeoutMs: Long?): JsonObject {
         val entryNodeId = dagJson["entry_node"]!!.jsonPrimitive.content
         val nodesArray = dagJson["nodes"]!!.jsonArray          // LIST, не map!
         // Приоритет: явный параметр → поле в DAG → дефолт 5 мин.
@@ -197,28 +234,7 @@ class DagRunner @Inject constructor(
                     ))
                     break
                 }
-                // ── Check for cancel request from backend ──────────────
-                if (cancelRequested) {
-                    Timber.i("[DAG] Cancelled by user at node '$currentNodeId'")
-                    success = false
-                    failedNode = currentNodeId
-                    break
-                }
-                // ── Пауза: ждём снятия паузы или отмены ────────────────
-                if (pauseRequested) {
-                    Timber.i("[DAG] Paused at node '$currentNodeId' — waiting for resume")
-                    while (pauseRequested) {
-                        if (cancelRequested) break
-                        delay(200L)
-                    }
-                    if (cancelRequested) {
-                        Timber.i("[DAG] Cancelled during pause at node '$currentNodeId'")
-                        success = false
-                        failedNode = currentNodeId
-                        break
-                    }
-                    Timber.i("[DAG] Resumed at node '$currentNodeId'")
-                }
+                awaitExecutionPermission()
                 val nodeId = currentNodeId ?: break
                 val node = nodeMap[nodeId]
                     ?: throw IllegalArgumentException("Node '$nodeId' not found in DAG")
@@ -272,6 +288,12 @@ class DagRunner @Inject constructor(
                     } catch (e: kotlinx.coroutines.CancellationException) {
                         // Не глотаем отмену корутины (глобальный таймаут или cancel)
                         throw e
+                    } catch (e: DagControlCancelledException) {
+                        throw e
+                    } catch (e: RootCommandOutcomeUnknownException) {
+                        // A side effect may have happened. Neither node retry nor
+                        // on_failure routing is an execution acknowledgement.
+                        throw e
                     } catch (e: Exception) {
                         nodeError = e.message ?: "unknown error"
                         Timber.w(e, "[DAG] Node '$nodeId' failed attempt $attempt")
@@ -310,6 +332,12 @@ class DagRunner @Inject constructor(
                 }
             }
         }
+        } catch (e: DagControlCancelledException) {
+            success = false
+            failedNode = currentNodeId
+            nodeLogs.add(makeLog(
+                currentNodeId ?: "unknown", "CANCELLED", 0L, false, e.message, null
+            ))
         } catch (e: TimeoutCancellationException) {
             // Глобальный таймаут DAG — не нодовый
             val elapsedSec = globalTimeoutMs / 1000
@@ -330,10 +358,8 @@ class DagRunner @Inject constructor(
             put("node_logs", nodeLogsArray)
         }
 
-        if (!wsClient.isConnected) {
-            savePendingResult(commandId, finalResult)
-        }
-
+        // CommandDispatcher persists the terminal receipt before sending it,
+        // including when the socket currently appears connected.
         return finalResult
     }
 
@@ -342,26 +368,9 @@ class DagRunner @Inject constructor(
      * Вызывается из CommandDispatcher → wsClient.onConnected.
      */
     suspend fun flushPendingResults() {
-        val pending = prefs.getStringSet("pending_dag_results", emptySet())
-            ?.toList() ?: return
-        if (pending.isEmpty()) return
-
-        Timber.i("[DAG] Flushing ${pending.size} pending results")
-        for (entry in pending) {
-            try {
-                val obj = json.parseToJsonElement(entry).jsonObject
-                val cmdId = obj["command_id"]!!.jsonPrimitive.content
-                val result = obj["result"]!!.jsonObject
-                wsClient.sendJson(buildJsonObject {
-                    put("command_id", cmdId)
-                    put("status", "completed")
-                    put("result", result)
-                })
-            } catch (e: Exception) {
-                Timber.w(e, "[DAG] Error flushing pending result")
-            }
+        for (result in CommandJournal(prefs).pending()) {
+            if (!wsClient.sendJson(result)) break
         }
-        prefs.edit().remove("pending_dag_results").apply()
     }
 
     // ── Node executor ─────────────────────────────────────────────────────────
@@ -376,7 +385,12 @@ class DagRunner @Inject constructor(
         require(depth < MAX_EXECUTE_DEPTH) {
             "DAG executeNode depth limit exceeded ($MAX_EXECUTE_DEPTH) — слишком глубокая вложенность loop"
         }
-        return executeNodeInternal(type, action, ctx, depth)
+        // Applies to top-level nodes, each retry and every nested loop action.
+        awaitExecutionPermission()
+        val result = executeNodeInternal(type, action, ctx, depth)
+        // A stop accepted during the final action must not become DAG success.
+        checkCancellation()
+        return result
     }
 
     private suspend fun executeNodeInternal(
@@ -842,6 +856,7 @@ class DagRunner @Inject constructor(
 
             var iterations = 0
             val iterLogs   = mutableListOf<Map<String, Any?>>()
+            var logsTruncated = false
 
             suspend fun shouldContinue(): Boolean = when {
                 count != null      -> iterations < count
@@ -851,11 +866,12 @@ class DagRunner @Inject constructor(
 
             while (shouldContinue() && iterations < maxIterations && !cancelRequested) {
                 for (bodyEl in bodyArray) {
-                    // PERF: Лимит на кол-во логов в loop — защита от OOM при serialize.
-                    // 1000 iter × 10 nodes = 10 000 entries → мегабайтный JSON → crash.
-                    if (iterLogs.size >= MAX_LOOP_LOGS) {
+                    // Limit diagnostics only; every configured action must still
+                    // execute and its failure policy must still be enforced.
+                    val keepLog = iterLogs.size < MAX_LOOP_LOGS
+                    if (!keepLog && !logsTruncated) {
+                        logsTruncated = true
                         Timber.w("[DAG][loop] Log limit reached ($MAX_LOOP_LOGS) — дальнейшие логи пропускаются")
-                        break
                     }
                     val bodyNode = bodyEl.jsonObject
                     val bNodeId  = bodyNode["id"]?.jsonPrimitive?.contentOrNull ?: "loop_body_$iterations"
@@ -866,9 +882,17 @@ class DagRunner @Inject constructor(
                     try {
                         val bResult = executeNode(bType, bAction, ctx, depth + 1)
                         ctx[bNodeId] = bResult
-                        iterLogs.add(mapOf("id" to bNodeId, "iter" to iterations, "ok" to true, "ms" to System.currentTimeMillis() - bTs))
+                        if (keepLog) iterLogs.add(mapOf("id" to bNodeId, "iter" to iterations, "ok" to true, "ms" to System.currentTimeMillis() - bTs))
+                    } catch (e: kotlinx.coroutines.CancellationException) {
+                        // Coroutine cancellation must leave the loop before the
+                        // next device action, even with abort_on_failure=false.
+                        throw e
+                    } catch (e: DagControlCancelledException) {
+                        throw e
+                    } catch (e: RootCommandOutcomeUnknownException) {
+                        throw e
                     } catch (e: Exception) {
-                        iterLogs.add(mapOf("id" to bNodeId, "iter" to iterations, "ok" to false, "error" to e.message, "ms" to System.currentTimeMillis() - bTs))
+                        if (keepLog) iterLogs.add(mapOf("id" to bNodeId, "iter" to iterations, "ok" to false, "error" to e.message, "ms" to System.currentTimeMillis() - bTs))
                         Timber.w(e, "[DAG][loop] Body '$bNodeId' failed at iter $iterations")
                         if (bodyNode["abort_on_failure"]?.jsonPrimitive?.content?.toBoolean() == true) {
                             throw RuntimeException("loop aborted at iter $iterations node '$bNodeId': ${e.message}")
@@ -878,7 +902,7 @@ class DagRunner @Inject constructor(
                 iterations++
                 if (whileXpath != null) delay(pollMs)
             }
-            mapOf("iterations" to iterations, "logs" to iterLogs, "logs_truncated" to (iterLogs.size >= MAX_LOOP_LOGS))
+            mapOf("iterations" to iterations, "logs" to iterLogs, "logs_truncated" to logsTruncated)
         }
 
         "start" -> null
@@ -920,27 +944,6 @@ class DagRunner @Inject constructor(
             put("output", if (str.length <= MAX_LOG_OUTPUT_CHARS) str
                           else str.take(MAX_LOG_OUTPUT_CHARS) + "…[truncated ${str.length - MAX_LOG_OUTPUT_CHARS} chars]")
         }
-    }
-
-    private fun savePendingResult(commandId: String, result: JsonObject) {
-        val pending = prefs.getStringSet("pending_dag_results", mutableSetOf())
-            ?.toMutableSet() ?: mutableSetOf()
-
-        // FIX AUDIT-3.6: Лимит pending results — защита от раздувания
-        // EncryptedSharedPreferences при длительном offline
-        if (pending.size >= MAX_PENDING_RESULTS) {
-            Timber.w("[DAG] Pending results limit reached ($MAX_PENDING_RESULTS) — dropping oldest")
-            // Удаляем самый старый результат (первый в Set)
-            pending.iterator().let { it.next(); it.remove() }
-        }
-
-        pending.add(json.encodeToString(buildJsonObject {
-            put("command_id", commandId)
-            put("result", result)
-            put("saved_at", System.currentTimeMillis())
-        }).take(MAX_PENDING_RESULT_CHARS))
-        prefs.edit().putStringSet("pending_dag_results", pending).apply()
-        Timber.i("[DAG] Result saved locally, command=$commandId (pending: ${pending.size})")
     }
 
     // Кеширование скриптов вынесено в ScriptCacheManager (content-addressable, LRU)

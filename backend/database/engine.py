@@ -2,11 +2,11 @@
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
-from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
 
 from backend.core.config import settings
+from backend.database.tenant import bind_tenant_context
 
 engine = create_async_engine(
     settings.POSTGRES_URL,
@@ -50,18 +50,16 @@ async def get_db_session(
 ) -> AsyncGenerator[AsyncSession, None]:
     """
     Async context manager для фоновых задач (не FastAPI endpoints).
-    MED-4: если передан org_id — автоматически устанавливает RLS-контекст.
+    Если передан org_id, Session привязана к tenant на всех её транзакциях.
+    Без org_id сессия остаётся unscoped; это не разрешение обходить RLS.
 
     Usage (TZ-04 _execute_waves, TZ-02 sync_device_status_to_db):
         async with get_db_session(org_id=str(batch.org_id)) as db:
             await db.get(TaskBatch, batch_id)
     """
     async with AsyncSessionLocal() as session:
-        if org_id:
-            await session.execute(
-                text("SET LOCAL app.current_org_id = :org_id"),
-                {"org_id": org_id},
-            )
+        if org_id is not None:
+            await bind_tenant_context(session, org_id)
         try:
             yield session
         except Exception:

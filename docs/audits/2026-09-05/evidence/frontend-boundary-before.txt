@@ -1,0 +1,112 @@
+FAIL __tests__/session/providers.test.tsx
+  × does not mount private children during refresh (26 ms)
+  × blocks signed-out children before the login redirect completes (11 ms)
+  × allows the login route but does not treat a login prefix as public (6 ms)
+  × shows private content for an authenticated identity and unmounts it on logout (3 ms)
+  × redirects an authenticated login visit without mounting the form (3 ms)
+  × isolates cached tenant data before rendering the next identity (16 ms)
+
+  ● does not mount private children during refresh
+
+    expect(jest.fn()).not.toHaveBeenCalled()
+
+    Expected number of calls: 0
+    Received number of calls: 1
+
+    1: called with 0 arguments
+
+      34 |   function Private() { mounted(); return <div>private accounts</div>; }
+      35 |   render(<Providers><Private /></Providers>);
+    > 36 |   expect(mounted).not.toHaveBeenCalled();
+         |                       ^
+      37 |   expect(screen.queryByText('private accounts')).not.toBeInTheDocument();
+      38 | });
+      39 |
+
+      at Object.<anonymous> (__tests__/session/providers.test.tsx:36:23)
+
+  ● blocks signed-out children before the login redirect completes
+
+    expect(element).not.toBeInTheDocument()
+
+    expected document not to contain element, found <div>private accounts</div> instead
+
+      40 | it('blocks signed-out children before the login redirect completes', () => {
+      41 |   render(<Providers><div>private accounts</div></Providers>);
+    > 42 |   expect(screen.queryByText('private accounts')).not.toBeInTheDocument();
+         |                                                      ^
+      43 |   expect(mockReplace).toHaveBeenCalledWith('/login');
+      44 | });
+      45 |
+
+      at Object.<anonymous> (__tests__/session/providers.test.tsx:42:54)
+
+  ● allows the login route but does not treat a login prefix as public
+
+    expect(element).not.toBeInTheDocument()
+
+    expected document not to contain element, found <div>private accounts</div> instead
+
+      50 |   mockPath = '/login-private';
+      51 |   view.rerender(<Providers><div>private accounts</div></Providers>);
+    > 52 |   expect(screen.queryByText('private accounts')).not.toBeInTheDocument();
+         |                                                      ^
+      53 |   expect(mockReplace).toHaveBeenCalledWith('/login');
+      54 | });
+      55 |
+
+      at Object.<anonymous> (__tests__/session/providers.test.tsx:52:54)
+
+  ● shows private content for an authenticated identity and unmounts it on logout
+
+    expect(element).not.toBeInTheDocument()
+
+    expected document not to contain element, found <div>private accounts</div> instead
+
+      59 |   expect(screen.getByText('private accounts')).toBeInTheDocument();
+      60 |   act(() => useAuthStore.getState().logout());
+    > 61 |   expect(screen.queryByText('private accounts')).not.toBeInTheDocument();
+         |                                                      ^
+      62 | });
+      63 |
+      64 | it('redirects an authenticated login visit without mounting the form', () => {
+
+      at Object.<anonymous> (__tests__/session/providers.test.tsx:61:54)
+
+  ● redirects an authenticated login visit without mounting the form
+
+    expect(element).not.toBeInTheDocument()
+
+    expected document not to contain element, found <div>login form</div> instead
+
+      66 |   mockPath = '/login';
+      67 |   render(<Providers><div>login form</div></Providers>);
+    > 68 |   expect(screen.queryByText('login form')).not.toBeInTheDocument();
+         |                                                ^
+      69 |   expect(mockReplace).toHaveBeenCalledWith('/dashboard');
+      70 | });
+      71 |
+
+      at Object.<anonymous> (__tests__/session/providers.test.tsx:68:48)
+
+  ● isolates cached tenant data before rendering the next identity
+
+    expect(element).not.toBeInTheDocument()
+
+    expected document not to contain element, found <div>tenant A private credential</div> instead
+
+      86 |   fetchAccounts.mockImplementation(() => new Promise(resolve => { finishB = resolve; }));
+      87 |   act(() => identify('b'));
+    > 88 |   expect(screen.queryByText('tenant A private credential')).not.toBeInTheDocument();
+         |                                                                 ^
+      89 |   expect(currentClient!).not.toBe(retired);
+      90 |   await waitFor(() => expect(fetchAccounts).toHaveBeenCalledTimes(2));
+      91 |   await act(async () => finishB('tenant B accounts'));
+
+      at Object.<anonymous> (__tests__/session/providers.test.tsx:88:65)
+
+Test Suites: 1 failed, 1 total
+Tests:       6 failed, 6 total
+Snapshots:   0 total
+Time:        1.087 s
+Ran all test suites matching __tests__/session/providers.test.tsx.

@@ -1,0 +1,10 @@
+{
+  "variant": "EnterpriseDebug",
+  "suites": 32,
+  "totals": {
+    "tests": 426,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  }
+}

@@ -1,12 +1,14 @@
 package com.sphereplatform.agent.lua
 
 import com.sphereplatform.agent.commands.AdbActionExecutor
+import com.sphereplatform.agent.commands.RootCommandOutcomeUnknownException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import org.luaj.vm2.Globals
+import org.luaj.vm2.LuaError
 import org.luaj.vm2.LuaTable
 import org.luaj.vm2.LuaValue
 import org.luaj.vm2.Varargs
@@ -69,7 +71,14 @@ class LuaEngine @Inject constructor(
             Timber.d("[Lua] execute: ctx keys=${ctx.keys}, types=${ctx.mapValues { it.value?.let { v -> v::class.simpleName } }}")
             val globals = buildSandbox(ctx)
             val chunk = globals.load(code, "script")
-            val result = chunk.call()
+            val result = try {
+                chunk.call()
+            } catch (e: LuaError) {
+                // LuaJ wraps host exceptions. Preserve the non-retryable root
+                // outcome instead of turning it into an ordinary script error.
+                (e.cause as? RootCommandOutcomeUnknownException)?.let { throw it }
+                throw e
+            }
             val kotlinResult = luaToKotlin(result)
             Timber.d("[Lua] result: $kotlinResult (luaType=${result.typename()})")
             kotlinResult

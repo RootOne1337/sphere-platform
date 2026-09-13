@@ -19,6 +19,7 @@ class Role(str, Enum):
 # Более высокие роли включают права более низких НЕ через hierarchy, а явно в каждом списке —
 # это проще в отладке и аудите (нет скрытых inherit-цепочек).
 PERMISSIONS: dict[str, list[Role]] = {
+    "device:register": [Role.ORG_ADMIN, Role.ORG_OWNER, Role.SUPER_ADMIN],
     # ── Устройства ──────────────────────────────────────────────────────────
     "device:read": [
         Role.VIEWER, Role.SCRIPT_RUNNER, Role.DEVICE_MANAGER,
@@ -109,6 +110,8 @@ PERMISSIONS: dict[str, list[Role]] = {
     "account:write": [
         Role.DEVICE_MANAGER, Role.ORG_ADMIN, Role.ORG_OWNER, Role.SUPER_ADMIN,
     ],
+    # Reusable credentials are more sensitive than operational account metadata.
+    "account:credentials:read": [Role.ORG_ADMIN, Role.ORG_OWNER, Role.SUPER_ADMIN],
 
     # ── Device Events (TZ-11) ────────────────────────────────────────────────
     "event:read": [
@@ -137,3 +140,14 @@ def has_permission(user_role: str, permission: str) -> bool:
         return Role(user_role) in allowed_roles
     except ValueError:
         return False
+
+
+def can_manage_role(actor_role: str, target_role: str) -> bool:
+    """Only platform administrators can grant or alter platform authority."""
+    if actor_role == Role.SUPER_ADMIN:
+        return target_role in {role.value for role in Role}
+    if actor_role == Role.ORG_OWNER:
+        return target_role in {role.value for role in Role} - {Role.SUPER_ADMIN.value}
+    if actor_role == Role.ORG_ADMIN:
+        return target_role in {Role.DEVICE_MANAGER, Role.SCRIPT_RUNNER, Role.VIEWER, Role.API_USER}
+    return False

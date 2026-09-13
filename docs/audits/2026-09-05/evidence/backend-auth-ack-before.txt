@@ -1,0 +1,94 @@
+FFFFF...                                                                 [100%]
+================================== FAILURES ===================================
+______ test_auth_ack_precedes_registry_publication_and_commands[device] _______
+tests\production\test_agent_tenant_runtime.py:87: in test_auth_ack_precedes_registry_publication_and_commands
+    assert payloads == [
+E   AssertionError: assert [{'id': 'isol...execute_dag'}] == [{'device_id'...execute_dag'}]
+E
+E     At index 0 diff: {'type': 'execute_dag', 'id': 'isolated-command'} != {'type': 'auth_ok', 'device_id': '6c66309d-8af4-4e40-83e4-26b47738f67c', 'protocol_version': 1}
+E     Right contains one more item: {'id': 'isolated-command', 'type': 'execute_dag'}
+E     Use -v to get more diff
+---------------------------- Captured stdout call -----------------------------
+{"device_id": "6c66309d-8af4-4e40-83e4-26b47738f67c", "org_id": "f756dd55-4212-425d-aaf3-199e310d76f7", "event": "android_ws: auth passed", "level": "info", "logger": "backend.api.ws.android.router", "timestamp": "2026-09-10T00:08:09.379296Z"}
+{"device_id": "6c66309d-8af4-4e40-83e4-26b47738f67c", "error": "Cannot call \"receive\" once a disconnect message has been received.", "event": "WS receive loop error", "level": "warning", "logger": "backend.api.ws.android.router", "timestamp": "2026-09-10T00:08:09.381478Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.api.ws.android.router:router.py:546 {'device_id': '6c66309d-8af4-4e40-83e4-26b47738f67c', 'org_id': 'f756dd55-4212-425d-aaf3-199e310d76f7', 'event': 'android_ws: auth passed', 'level': 'info', 'logger': 'backend.api.ws.android.router', 'timestamp': '2026-09-10T00:08:09.379296Z'}
+WARNING  backend.api.ws.android.router:router.py:677 {'device_id': '6c66309d-8af4-4e40-83e4-26b47738f67c', 'error': 'Cannot call "receive" once a disconnect message has been received.', 'event': 'WS receive loop error', 'level': 'warning', 'logger': 'backend.api.ws.android.router', 'timestamp': '2026-09-10T00:08:09.381478Z'}
+_____ test_auth_ack_precedes_registry_publication_and_commands[refreshed] _____
+tests\production\test_agent_tenant_runtime.py:87: in test_auth_ack_precedes_registry_publication_and_commands
+    assert payloads == [
+E   AssertionError: assert [{'id': 'isol...execute_dag'}] == [{'device_id'...execute_dag'}]
+E
+E     At index 0 diff: {'type': 'execute_dag', 'id': 'isolated-command'} != {'type': 'auth_ok', 'device_id': 'd0f2451c-a4ec-4a4a-8965-8b775970e409', 'protocol_version': 1}
+E     Right contains one more item: {'id': 'isolated-command', 'type': 'execute_dag'}
+E     Use -v to get more diff
+---------------------------- Captured stdout call -----------------------------
+{"device_id": "d0f2451c-a4ec-4a4a-8965-8b775970e409", "org_id": "f55cfafb-c24b-4554-a205-2e5c851dabc5", "event": "android_ws: auth passed", "path": "/api/v1/devices/refresh", "request_id": "bb29f101", "method": "POST", "level": "info", "logger": "backend.api.ws.android.router", "timestamp": "2026-09-10T00:08:10.135493Z"}
+{"device_id": "d0f2451c-a4ec-4a4a-8965-8b775970e409", "error": "Cannot call \"receive\" once a disconnect message has been received.", "event": "WS receive loop error", "path": "/api/v1/devices/refresh", "request_id": "bb29f101", "method": "POST", "level": "warning", "logger": "backend.api.ws.android.router", "timestamp": "2026-09-10T00:08:10.138710Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.api.ws.android.router:router.py:546 {'device_id': 'd0f2451c-a4ec-4a4a-8965-8b775970e409', 'org_id': 'f55cfafb-c24b-4554-a205-2e5c851dabc5', 'event': 'android_ws: auth passed', 'path': '/api/v1/devices/refresh', 'request_id': 'bb29f101', 'method': 'POST', 'level': 'info', 'logger': 'backend.api.ws.android.router', 'timestamp': '2026-09-10T00:08:10.135493Z'}
+WARNING  backend.api.ws.android.router:router.py:677 {'device_id': 'd0f2451c-a4ec-4a4a-8965-8b775970e409', 'error': 'Cannot call "receive" once a disconnect message has been received.', 'event': 'WS receive loop error', 'path': '/api/v1/devices/refresh', 'request_id': 'bb29f101', 'method': 'POST', 'level': 'warning', 'logger': 'backend.api.ws.android.router', 'timestamp': '2026-09-10T00:08:10.138710Z'}
+__ test_auth_ack_precedes_registry_publication_and_commands[enrollment_key] ___
+tests\production\test_agent_tenant_runtime.py:87: in test_auth_ack_precedes_registry_publication_and_commands
+    assert payloads == [
+E   AssertionError: assert [{'id': 'isol...execute_dag'}] == [{'device_id'...execute_dag'}]
+E
+E     At index 0 diff: {'type': 'execute_dag', 'id': 'isolated-command'} != {'type': 'auth_ok', 'device_id': '13718ece-bcdb-4132-8f02-79d8ff16856d', 'protocol_version': 1}
+E     Right contains one more item: {'id': 'isolated-command', 'type': 'execute_dag'}
+E     Use -v to get more diff
+---------------------------- Captured stdout call -----------------------------
+{"device_id": "13718ece-bcdb-4132-8f02-79d8ff16856d", "org_id": "a50f9856-4f32-4ee5-b054-fb685ca9e3cd", "event": "android_ws: auth passed", "level": "info", "logger": "backend.api.ws.android.router", "timestamp": "2026-09-10T00:08:10.673177Z"}
+{"device_id": "13718ece-bcdb-4132-8f02-79d8ff16856d", "error": "Cannot call \"receive\" once a disconnect message has been received.", "event": "WS receive loop error", "level": "warning", "logger": "backend.api.ws.android.router", "timestamp": "2026-09-10T00:08:10.674243Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.api.ws.android.router:router.py:546 {'device_id': '13718ece-bcdb-4132-8f02-79d8ff16856d', 'org_id': 'a50f9856-4f32-4ee5-b054-fb685ca9e3cd', 'event': 'android_ws: auth passed', 'level': 'info', 'logger': 'backend.api.ws.android.router', 'timestamp': '2026-09-10T00:08:10.673177Z'}
+WARNING  backend.api.ws.android.router:router.py:677 {'device_id': '13718ece-bcdb-4132-8f02-79d8ff16856d', 'error': 'Cannot call "receive" once a disconnect message has been received.', 'event': 'WS receive loop error', 'level': 'warning', 'logger': 'backend.api.ws.android.router', 'timestamp': '2026-09-10T00:08:10.674243Z'}
+_______ test_auth_ack_precedes_registry_publication_and_commands[user] ________
+tests\production\test_agent_tenant_runtime.py:87: in test_auth_ack_precedes_registry_publication_and_commands
+    assert payloads == [
+E   AssertionError: assert [{'id': 'isol...execute_dag'}] == [{'device_id'...execute_dag'}]
+E
+E     At index 0 diff: {'type': 'execute_dag', 'id': 'isolated-command'} != {'type': 'auth_ok', 'device_id': '02530f82-3289-4f1a-ace8-3dadc161dfb8', 'protocol_version': 1}
+E     Right contains one more item: {'id': 'isolated-command', 'type': 'execute_dag'}
+E     Use -v to get more diff
+---------------------------- Captured stdout call -----------------------------
+{"device_id": "02530f82-3289-4f1a-ace8-3dadc161dfb8", "org_id": "5c4c0178-b5ba-4924-93ae-ef4c630c0529", "event": "android_ws: auth passed", "level": "info", "logger": "backend.api.ws.android.router", "timestamp": "2026-09-10T00:08:11.045670Z"}
+{"device_id": "02530f82-3289-4f1a-ace8-3dadc161dfb8", "error": "Cannot call \"receive\" once a disconnect message has been received.", "event": "WS receive loop error", "level": "warning", "logger": "backend.api.ws.android.router", "timestamp": "2026-09-10T00:08:11.047324Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.api.ws.android.router:router.py:546 {'device_id': '02530f82-3289-4f1a-ace8-3dadc161dfb8', 'org_id': '5c4c0178-b5ba-4924-93ae-ef4c630c0529', 'event': 'android_ws: auth passed', 'level': 'info', 'logger': 'backend.api.ws.android.router', 'timestamp': '2026-09-10T00:08:11.045670Z'}
+WARNING  backend.api.ws.android.router:router.py:677 {'device_id': '02530f82-3289-4f1a-ace8-3dadc161dfb8', 'error': 'Cannot call "receive" once a disconnect message has been received.', 'event': 'WS receive loop error', 'level': 'warning', 'logger': 'backend.api.ws.android.router', 'timestamp': '2026-09-10T00:08:11.047324Z'}
+______ test_auth_ack_delivery_failure_does_not_publish_or_evict_session _______
+..\..\..\AppData\Roaming\uv\python\cpython-3.12.12-windows-x86_64-none\Lib\unittest\mock.py:2429: in assert_not_awaited
+    raise AssertionError(msg)
+E   AssertionError: Expected mock to not have been awaited. Awaited 1 times.
+
+During handling of the above exception, another exception occurred:
+tests\production\test_agent_tenant_runtime.py:103: in test_auth_ack_delivery_failure_does_not_publish_or_evict_session
+    r.manager.connect.assert_not_awaited()
+E   AssertionError: Expected mock to not have been awaited. Awaited 1 times.
+E
+E   pytest introspection follows:
+E
+E   Args:
+E   assert (<starlette.w...c1588e7925da') == ()
+E
+E     Left contains 4 more items, first extra item: <starlette.websockets.WebSocket object at 0x0000020828A58140>
+E     Use -v to get more diff
+---------------------------- Captured stdout call -----------------------------
+{"device_id": "8ce854f3-e368-4453-9ff0-ee653d28a657", "org_id": "36519253-f686-401b-ad9b-c1588e7925da", "event": "android_ws: auth passed", "level": "info", "logger": "backend.api.ws.android.router", "timestamp": "2026-09-10T00:08:11.407296Z"}
+{"device_id": "8ce854f3-e368-4453-9ff0-ee653d28a657", "error": "Cannot call \"receive\" once a disconnect message has been received.", "event": "WS receive loop error", "level": "warning", "logger": "backend.api.ws.android.router", "timestamp": "2026-09-10T00:08:11.408368Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.api.ws.android.router:router.py:546 {'device_id': '8ce854f3-e368-4453-9ff0-ee653d28a657', 'org_id': '36519253-f686-401b-ad9b-c1588e7925da', 'event': 'android_ws: auth passed', 'level': 'info', 'logger': 'backend.api.ws.android.router', 'timestamp': '2026-09-10T00:08:11.407296Z'}
+WARNING  backend.api.ws.android.router:router.py:677 {'device_id': '8ce854f3-e368-4453-9ff0-ee653d28a657', 'error': 'Cannot call "receive" once a disconnect message has been received.', 'event': 'WS receive loop error', 'level': 'warning', 'logger': 'backend.api.ws.android.router', 'timestamp': '2026-09-10T00:08:11.408368Z'}
+============================== warnings summary ===============================
+backend\api\v1\game_accounts\router.py:95
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\api\v1\game_accounts\router.py:95: FastAPIDeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+    sort_dir: str = Query("desc", regex="^(asc|desc)$", description="Направление сортировки"),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/production/test_agent_tenant_runtime.py::test_auth_ack_precedes_registry_publication_and_commands[device]
+FAILED tests/production/test_agent_tenant_runtime.py::test_auth_ack_precedes_registry_publication_and_commands[refreshed]
+FAILED tests/production/test_agent_tenant_runtime.py::test_auth_ack_precedes_registry_publication_and_commands[enrollment_key]
+FAILED tests/production/test_agent_tenant_runtime.py::test_auth_ack_precedes_registry_publication_and_commands[user]
+FAILED tests/production/test_agent_tenant_runtime.py::test_auth_ack_delivery_failure_does_not_publish_or_evict_session
+5 failed, 3 passed, 16 deselected, 1 warning in 3.84s

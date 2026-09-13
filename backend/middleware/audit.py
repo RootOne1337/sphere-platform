@@ -13,6 +13,7 @@ from starlette.requests import Request
 from starlette.responses import Response
 
 from backend.database.engine import AsyncSessionLocal
+from backend.database.tenant import bind_tenant_context
 from backend.models.audit_log import AuditLog
 
 logger = structlog.get_logger()
@@ -75,7 +76,9 @@ async def audit_middleware(request: Request, call_next):
     Открывает НОВУЮ DB-сессию (не request-сессию) чтобы не зависеть
     от уже завершённой транзакции request.
     """
-    if request.method not in AUDITED_METHODS or request.url.path in SKIP_PATHS:
+    # Use the ASGI request target, not a URL reconstructed from the Host header.
+    path = request.scope["path"]
+    if request.method not in AUDITED_METHODS or path in SKIP_PATHS:
         return await call_next(request)
 
     start = time.time()
@@ -107,9 +110,9 @@ async def audit_middleware(request: Request, call_next):
         "user_id": user_id,
         "ip_address": request.client.host if request.client else None,
         "user_agent": request.headers.get("user-agent"),
-        "action": _path_to_action(request.method, request.url.path),
-        "resource_type": _extract_resource_type(request.url.path),
-        "resource_id": _extract_resource_id(request.url.path),
+        "action": _path_to_action(request.method, path),
+        "resource_type": _extract_resource_type(path),
+        "resource_id": _extract_resource_id(path),
         "meta": {
             "status": "success" if response.status_code < 400 else "failure",
             "duration_ms": duration_ms,
@@ -123,6 +126,9 @@ async def audit_middleware(request: Request, call_next):
     async def _write_audit() -> None:
         async with AsyncSessionLocal() as audit_session:
             try:
+                # This is a fresh Session after the HTTP transaction. Capture and
+                # bind the principal's tenant before RLS checks the audit INSERT.
+                await bind_tenant_context(audit_session, str(audit_data["org_id"]))
                 audit_session.add(AuditLog(**audit_data))
                 await audit_session.commit()
             except Exception as exc:

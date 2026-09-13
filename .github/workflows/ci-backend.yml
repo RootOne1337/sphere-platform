@@ -6,7 +6,46 @@ on:
   pull_request:
     branches: [main, develop]
 
+permissions:
+  contents: read
+
+concurrency:
+  group: backend-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
+  image-bootstrap:
+    name: Production image bootstrap
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the shipped production image
+        run: docker build -f backend/Dockerfile -t sphere-backend-bootstrap-ci .
+      - name: Run bootstrap entry points without network or source mounts
+        run: |
+          docker run --rm --network none --read-only --cap-drop ALL \
+            --security-opt no-new-privileges --tmpfs /tmp:rw,nosuid,nodev,size=16m \
+            --mount "type=bind,source=${{ github.workspace }}/tests/containers/backend_bootstrap_probe.py,target=/tmp/backend_bootstrap_probe.py,readonly" \
+            sphere-backend-bootstrap-ci python /tmp/backend_bootstrap_probe.py 2>&1 | tee image-bootstrap-probe.txt
+      - name: Fresh packaged SQL bootstrap and application process restart
+        run: >-
+          python tests/containers/run_backend_runtime_probe.py
+          --image sphere-backend-bootstrap-ci --evidence-dir image-runtime-evidence
+      - name: PostgreSQL entrypoint initialization and persistent-volume restart
+        run: |
+          python tests/containers/postgres_init_probe.py --evidence-dir postgres-init-evidence 2>&1 | tee postgres-init-probe.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: image-bootstrap-probe
+          path: |
+            image-bootstrap-probe.txt
+            image-runtime-evidence/
+            postgres-init-evidence/
+            postgres-init-probe.txt
+          if-no-files-found: warn
+
   lint:
     name: Lint (ruff + mypy)
     runs-on: ubuntu-latest
@@ -17,7 +56,7 @@ jobs:
           python-version: "3.12"
           cache: pip
       - run: pip install ruff mypy
-      - run: ruff check backend/ tests/
+      - run: ruff check backend/ tests/ scripts/export_api_docs.py scripts/discovery_manifest.py scripts/discovery_publisher.py scripts/ldplayer_network.py scripts/ldplayer_watchdog.py
       - run: mypy backend/ --ignore-missing-imports
 
   security:
@@ -31,7 +70,7 @@ jobs:
           cache: pip
       - run: pip install bandit pip-audit
       - run: bandit -r backend/ -c .bandit -ll
-      - run: pip-audit -r backend/requirements.txt
+      - run: pip-audit -r backend/requirements.txt -r pc-agent/requirements.txt
 
   rls-check:
     name: RLS Policy Coverage
@@ -46,11 +85,12 @@ jobs:
   test:
     name: Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     services:
       postgres:
         image: postgres:15-alpine
         env:
-          POSTGRES_DB: sphereplatform_test
+          POSTGRES_DB: sphereplatform_audit_test
           POSTGRES_USER: sphere
           POSTGRES_PASSWORD: test_password
         options: >-
@@ -68,7 +108,7 @@ jobs:
         ports:
           - 6379:6379
     env:
-      POSTGRES_URL: postgresql+asyncpg://sphere:test_password@localhost:5432/sphereplatform_test
+      POSTGRES_URL: postgresql+asyncpg://sphere:test_password@localhost:5432/sphereplatform_audit_test
       REDIS_URL: redis://localhost:6379/0
       REDIS_PASSWORD: ""
       JWT_SECRET_KEY: test_jwt_secret_key_at_least_32_chars_long
@@ -79,18 +119,37 @@ jobs:
       AWG_H3: 3333333333
       AWG_H4: 4444444444
       VPN_SERVER_HOSTNAME: localhost
+      SPHERE_RUN_INTEGRATION: "1"
+      PYTHONPATH: ".:pc-agent"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
           cache: pip
-      - run: pip install -r backend/requirements.txt
-      - run: pip install -r pc-agent/requirements.txt
+      # One resolver transaction: sequential installs hid conflicting exact pins.
+      - run: pip install -r backend/requirements.txt -r pc-agent/requirements.txt
+      - run: pip check
       - run: alembic -c alembic/alembic.ini upgrade head
         env:
           PYTHONPATH: "."
-      - run: pytest tests/ -v --cov=backend --cov-report=xml --cov-fail-under=65
+      # Load/soak profiles require an explicitly prepared isolated API and agents.
+      # They are not a substitute for the PostgreSQL/Redis regressions enabled here.
+      - name: Unit and real-service regression tests
+        run: >-
+          pytest tests/ --ignore=tests/load -v --tb=short
+          --junitxml=test-results.xml --cov=backend --cov-report=xml
+          --cov-fail-under=65
+      - name: Verify generated HTTP API documentation
+        run: python -m scripts.export_api_docs --check
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: backend-test-results
+          path: |
+            test-results.xml
+            coverage.xml
+          if-no-files-found: warn
       - uses: codecov/codecov-action@v4
         with:
           file: ./coverage.xml
@@ -98,6 +157,7 @@ jobs:
   alembic-check:
     name: Alembic Single Head
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: [test]
     services:
       postgres:

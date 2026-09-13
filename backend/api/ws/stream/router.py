@@ -124,6 +124,11 @@ async def stream_viewer_ws(
                 return
 
             # Extract needed values before DB session closes
+            from backend.core.rbac import has_permission
+            if not has_permission(user.role, "stream:read"):
+                await ws.close(code=4003, reason="stream_access_denied")
+                return
+            can_control = has_permission(user.role, "stream:control")
             user_id_str = str(user.id)
     except Exception:
         await ws.close(code=1011, reason="auth_error")
@@ -173,6 +178,9 @@ async def stream_viewer_ws(
     try:
         while True:
             data = await ws.receive_json()
+            if data.get("type") in {"click", "swipe", "keyevent", "text"} and not can_control:
+                await ws.send_json({"type": "error", "error": "stream_control_denied"})
+                continue
             match data.get("type"):
                 case "click":
                     # Forward tap coordinates to agent — coordinate mapping done client-side

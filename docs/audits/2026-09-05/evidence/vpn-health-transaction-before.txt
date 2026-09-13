@@ -1,0 +1,48 @@
+FFF                                                                      [100%]
+================================== FAILURES ===================================
+__ test_revoked_peer_is_not_reactivated_or_reconnected_by_inflight_poll[10] ___
+tests\production\test_vpn_health_recovery.py:175: in test_revoked_peer_is_not_reactivated_or_reconnected_by_inflight_poll
+    assert stats["checked"] == 0
+E   assert 1 == 0
+__ test_revoked_peer_is_not_reactivated_or_reconnected_by_inflight_poll[600] __
+..\..\..\AppData\Roaming\uv\python\cpython-3.12.12-windows-x86_64-none\Lib\unittest\mock.py:2429: in assert_not_awaited
+    raise AssertionError(msg)
+E   AssertionError: Expected mock to not have been awaited. Awaited 1 times.
+
+During handling of the above exception, another exception occurred:
+tests\production\test_vpn_health_recovery.py:174: in test_revoked_peer_is_not_reactivated_or_reconnected_by_inflight_poll
+    h.publisher.send_command_to_device.assert_not_awaited()
+E   AssertionError: Expected mock to not have been awaited. Awaited 1 times.
+E   
+E   pytest introspection follows:
+E   
+E   Args:
+E   assert ('a20de4eb-5b...n_reconnect'}) == ()
+E     
+E     Left contains 2 more items, first extra item: 'a20de4eb-5bf7-4323-bab3-c241a746cf60'
+E     Use -v to get more diff
+---------------------------- Captured stdout call -----------------------------
+{"device_id": "a20de4eb-5bf7-4323-bab3-c241a746cf60", "since_handshake_s": 600.0, "event": "VPN stale handshake", "level": "warning", "logger": "backend.services.vpn.health_monitor", "timestamp": "2026-09-06T11:29:25.969036Z"}
+------------------------------ Captured log call ------------------------------
+WARNING  backend.services.vpn.health_monitor:health_monitor.py:102 {'device_id': 'a20de4eb-5bf7-4323-bab3-c241a746cf60', 'since_handshake_s': 600.0, 'event': 'VPN stale handshake', 'level': 'warning', 'logger': 'backend.services.vpn.health_monitor', 'timestamp': '2026-09-06T11:29:25.969036Z'}
+_____ test_background_health_cycle_commits_observations_and_authenticates _____
+tests\production\test_vpn_health_recovery.py:219: in test_background_health_cycle_commits_observations_and_authenticates
+    assert peer.last_handshake_at == fresh, "Closing a background session must not roll observations back"
+E   AssertionError: Closing a background session must not roll observations back
+E   assert datetime.datetime(2026, 9, 6, 11, 24, 26, 125921, tzinfo=datetime.timezone.utc) == datetime.datetime(2026, 9, 6, 11, 29, 26, 174719, tzinfo=datetime.timezone.utc)
+E    +  where datetime.datetime(2026, 9, 6, 11, 24, 26, 125921, tzinfo=datetime.timezone.utc) = <backend.models.vpn_peer.VPNPeer object at 0x00000299E441D4F0>.last_handshake_at
+============================== warnings summary ===============================
+.venv-audit\Lib\site-packages\pydantic\fields.py:754: 484 warnings
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\pydantic\fields.py:754: PydanticDeprecatedSince20: Using extra keyword arguments on `Field` is deprecated and will be removed. Use `json_schema_extra` instead. (Extra keys: 'deprecated'). Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.6/migration/
+    warn(
+
+backend\api\v1\game_accounts\router.py:94
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\api\v1\game_accounts\router.py:94: DeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+    sort_dir: str = Query("desc", regex="^(asc|desc)$", description="Направление сортировки"),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/production/test_vpn_health_recovery.py::test_revoked_peer_is_not_reactivated_or_reconnected_by_inflight_poll[10]
+FAILED tests/production/test_vpn_health_recovery.py::test_revoked_peer_is_not_reactivated_or_reconnected_by_inflight_poll[600]
+FAILED tests/production/test_vpn_health_recovery.py::test_background_health_cycle_commits_observations_and_authenticates
+3 failed, 16 deselected, 485 warnings in 1.34s

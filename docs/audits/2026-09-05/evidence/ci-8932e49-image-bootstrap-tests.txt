@@ -1,0 +1,9 @@
+Production image bootstrap job 103373213652, head 8932e49cb6ab9a2c6d65a324b833cb0f741597ab, attempt 1
+Separate stdlib probe; these four cases are not part of the pytest total.
+
+2026-09-11T18:21:12.7642591Z test_administrator_entry_point_reaches_input_validation (__main__.BackendBootstrapImageTests.test_administrator_entry_point_reaches_input_validation) ... ok
+2026-09-11T18:21:13.3008004Z test_enrollment_entry_point_reaches_config_validation (__main__.BackendBootstrapImageTests.test_enrollment_entry_point_reaches_config_validation) ... ok
+2026-09-11T18:21:13.6441516Z test_migration_cli_can_read_the_packaged_single_head (__main__.BackendBootstrapImageTests.test_migration_cli_can_read_the_packaged_single_head) ... ok
+2026-09-11T18:21:13.6444381Z test_runtime_user_cannot_write_the_application_directory (__main__.BackendBootstrapImageTests.test_runtime_user_cannot_write_the_application_directory) ... ok
+2026-09-11T18:21:13.6445327Z Ran 4 tests in 1.275s
+2026-09-11T18:21:13.6445510Z OK

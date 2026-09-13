@@ -1,0 +1,26 @@
+{
+  "baseline_sha": "3c66c280e59b301fd39f305c3d8982ab0acec191",
+  "working_tree": "AUD-78 bootstrap candidate; runtime SHA recorded separately",
+  "totals": {
+    "tests": 1413,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "coverage_percent": "69.38",
+  "elapsed_seconds": "279.97",
+  "integration_cases": 505,
+  "deployment_cases": 33,
+  "new_cases": 23,
+  "boundaries": "Real isolated PostgreSQL/Redis and ASGI HTTP; actual admin Python subprocess; actual Bash/PowerShell bootstrap functions with process-backed Docker double. No Compose startup, browser, installed APK or VPN tunnel proof.",
+  "baseline": {
+    "seed": "8 tests all stop at the same pre-existing ImportError, not eight independent defects",
+    "launchers": "6 failures: credentials not forwarded and errors reported as successful bootstrap",
+    "login_inputs": "Four additional failures on the AUD-78 candidate before login-input fix: both launchers choose reserved .local email; admin CLI writes email/short password rejected by LoginRequest."
+  },
+  "candidate_failures": [
+    "First candidate: 7 failed/7 passed: unimplemented Organization.is_active assumption and test falsely prohibiting env-variable name in error output. Corrected before final verification.",
+    "Expanded run: 1 failed/17 passed: admin INSERT relied on DB UUID defaults absent in the existing ORM-created audit schema. Explicit UUID/MFA defaults now support that layout and migrated CI schema.",
+    "Repeated combined candidate: 1 failed / 1408 passed because synthetic loopback login clients shared rate-limit state across runs. Isolate the Redis key namespace per fixture, retaining real limiter and limit; no application change."
+  ]
+}

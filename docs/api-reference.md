@@ -1,16 +1,25 @@
 # API Reference
 
-> **Sphere Platform v4.7** — REST API
+> **Sphere Platform** — manual REST API guide
 
 **Base URL:** `https://yourdomain.com/api/v1`
-**Interactive docs:** `https://yourdomain.com/api/v1/docs` (Swagger UI)
-**OpenAPI spec:** `https://yourdomain.com/api/v1/openapi.json`
+**Interactive docs:** `https://yourdomain.com/api/docs` (Swagger UI)
+**OpenAPI spec:** `https://yourdomain.com/openapi.json`
 
 ---
 
+The [generated endpoint catalog](api-endpoints.md) and [OpenAPI snapshot](openapi.json)
+reflect the registered HTTP contracts and are checked in CI. Tasks/Batches below
+were reconciled with the audit branch on 7 September 2026. Other manual sections
+still need component review; a listed contract does not establish runtime or
+security correctness. See the [audit report](audits/2026-09-05/AUDIT-REPORT.md).
+
 ## Authentication
 
-All endpoints (except `/auth/login`, `/health`, and `/config/agent`) require a Bearer token or API Key.
+Authentication and authorization are route-specific. The backend uses Bearer
+tokens, API keys and dedicated device/enrollment contracts; permission checks
+are not fully described by OpenAPI security declarations. Verify the selected
+route and its role/tenant requirements instead of applying one global exception list.
 
 ```http
 # JWT Bearer token
@@ -67,7 +76,7 @@ Content-Type: application/json
 }
 ```
 
-Refresh token is set as `HttpOnly` cookie `sphere_refresh`.
+Refresh token is set as `HttpOnly; Secure; SameSite=None; Path=/` cookie `refresh_token`.
 
 ---
 
@@ -75,7 +84,7 @@ Refresh token is set as `HttpOnly` cookie `sphere_refresh`.
 
 ```http
 POST /auth/refresh
-Cookie: sphere_refresh=<refresh_token>
+Cookie: refresh_token=<refresh_token>
 ```
 
 **Response 200:**
@@ -95,7 +104,14 @@ POST /auth/logout
 Authorization: Bearer <token>
 ```
 
-Revokes the refresh token. Returns `204 No Content`.
+With a valid signed Bearer token (including an expired access token), blacklists
+the unexpired access token and revokes the supplied refresh token. Supply
+`Cookie: refresh_token=...` or `X-Refresh-Token: ...`; cookie takes precedence.
+Returns an empty `204 No Content` with the cookie-expiration header. An absent
+or invalid Bearer still clears the cookie but does not revoke the SQL token.
+Server-side revocation is not confirmed when Redis/PostgreSQL operations fail.
+The client must also clear its in-memory/localStorage credentials and private
+cached data; see [AUD-48 and remaining session work](audits/2026-09-05/AUDIT-REPORT.md).
 
 ---
 
@@ -582,49 +598,17 @@ Authorization: Bearer <token>
 
 ### POST /scripts/{id}/execute
 
-Execute a script on a set of devices or a device group.
-
-```http
-POST /scripts/{id}/execute
-
-{
-  "device_ids": ["uuid1", "uuid2"],
-  "group_id": "uuid",          // alternative to device_ids
-  "wave_size": 50,             // devices per wave
-  "wave_delay_seconds": 5      // delay between waves
-}
-```
-
-**Response 202:**
-```json
-{
-  "batch_id": "uuid",
-  "total_devices": 100,
-  "total_waves": 2,
-  "status": "PENDING"
-}
-```
+This route is not registered. Use [POST /batches](#post-batches) for wave
+submission or [POST /tasks](#post-tasks) for one device. The previous example
+with `group_id` and `wave_delay_seconds` did not describe the current API.
 
 ---
 
 ### GET /tasks/{batch_id}/progress
 
-Server-Sent Events stream for execution progress.
-
-```http
-GET /tasks/{batch_id}/progress
-Accept: text/event-stream
-Authorization: Bearer <token>
-```
-
-Events:
-```
-event: task.complete
-data: {"device_id":"uuid","exit_code":0,"duration_ms":1234}
-
-event: batch.done
-data: {"batch_id":"uuid","success":98,"failed":2,"total":100}
-```
+The registered `/tasks/{task_id}/progress` endpoint describes a single task,
+not a batch SSE stream. Poll [GET /batches/{id}](#get-batchesid) for batch status;
+see the [Tasks section](#tasks--tasks) for progress and live logs.
 
 ---
 
@@ -1541,65 +1525,113 @@ Get event details.
 
 ## Batches — `/batches`
 
-### GET /batches
-
-List batch operations.
-
-| Param | Type | Description |
-|-------|------|-------------|
-| `status` | string | Filter by batch status (`pending`, `running`, `completed`, `failed`) |
-| `page` | int | Page number |
-| `per_page` | int | Items per page |
+These paths are under `/api/v1`. Verified against the batch router/schema on
+7 September 2026; the API has no GET collection route or POST cancel route.
 
 ### POST /batches
 
-Create a new batch operation targeting multiple devices.
+Requires `script:execute`; accepts `script_id` and 1–1000 `device_ids` plus
+optional `wave_size` (1–100, default 10), `wave_delay_ms` (default 5000),
+`jitter_ms` (default 1000), `priority` (1–10, default 5), `name`, `webhook_url`
+and `stagger_by_workstation` (default true). The service commits the batch before
+launching the independent worker; returns 202 with the batch record. A failed
+commit launches no worker. Crash recovery between commit and launch is still open.
+
+Wave submission creates QUEUED task intents; it does not mean devices completed
+execution. `failed` includes rejected device slots (for example missing, foreign
+or already busy devices), plus failed/timed-out tasks. Final task results determine
+COMPLETED/FAILED/PARTIAL when all requested slots have an outcome. A database
+error aborts the current wave; prior committed waves remain and recovery is still
+manual. Do not blindly replay the whole batch.
+
+`webhook_url` is accepted/stored, but reliable batch completion delivery is not
+implemented. The premature callback previously emitted after submission has
+been disabled. Poll status until a durable outcome notification mechanism exists.
 
 ```json
 {
-  "device_ids": ["uuid", "uuid"],
-  "action": "execute_script",
-  "params": {
-    "script_id": "uuid"
-  }
+  "script_id": "<script UUID>",
+  "device_ids": ["<device UUID>"],
+  "wave_size": 10,
+  "wave_delay_ms": 5000,
+  "jitter_ms": 1000
 }
 ```
 
+### POST /batches/broadcast
+
+Requires `script:execute`; accepts the same wave options and `script_id`, with
+no `device_ids`. Resolves online devices in the caller's organization and returns
+202 with the batch record plus `online_devices`.
+
 ### GET /batches/{id}
 
-Get batch operation status and per-device results.
+Requires `script:read`. Returns the tenant-scoped batch record with status,
+`total`, `succeeded`, `failed`, `wave_config`, timestamps and optional `notes`.
+This response does not contain a per-device task list.
 
-### POST /batches/{id}/cancel
+### DELETE /batches/{id}
 
-Cancel a running batch.
+Requires `script:execute`. Returns 204 after the caller commits cancellation.
+Unknown/foreign batch returns 404; COMPLETED, PARTIAL, FAILED and CANCELLED
+batches return 409. The server serializes cancellation with in-flight wave
+admission, then locks eligible tasks and the batch before validation and queue
+effects. Later waves re-read tenant/status after this transaction fence and do
+not create tasks after cancellation. QUEUED/ASSIGNED tasks become CANCELLED with UTC
+`finished_at`; RUNNING tasks continue under the existing batch API policy.
+
+SQL cancellation is not proof of physical stop. ASSIGNED may already be in
+transit; Redis/commit failure and durable producer recovery remain open.
+Late RUNNING task results/timeouts update counters while retaining CANCELLED.
+All backend workers must run the updated fence; mixed versions do not provide
+this guarantee. See [AUD-43–47 and remaining work](audits/2026-09-05/AUDIT-REPORT.md).
 
 ---
 
 ## Tasks — `/tasks`
 
+Verified against the task router/schema on 7 September 2026. Reads require
+`script:read`; create/cancel/stop require `script:execute`. All paths below are
+under `/api/v1` and apply the caller's organization boundary.
+
 ### GET /tasks
 
-List tasks with filtering and pagination.
+Filters: `device_id`, `script_id`, `batch_id` (UUIDs) and `status` (`queued`,
+`assigned`, `running`, `completed`, `failed`, `timeout`, `cancelled`).
+`page` defaults to 1; `per_page` defaults to 50 and is limited to **200** here.
+Response contains `items`, `total`, `page`, `per_page`, `pages`.
 
-| Param | Type | Description |
-|-------|------|-------------|
-| `device_id` | uuid | Filter by device |
-| `status` | string | Filter by status (`pending`, `running`, `completed`, `failed`, `cancelled`) |
-| `type` | string | Filter by task type |
-| `page` | int | Page number |
-| `per_page` | int | Items per page |
+### POST /tasks
+
+Accepts `script_id`, `device_id`, optional `account_id`, `priority` (1–10,
+default 5) and `webhook_url`. Returns 201 with the committed task. Execution
+admission validates script version/device/account ownership and current work;
+creation does not acknowledge physical device execution.
 
 ### GET /tasks/{id}
 
-Get task details including execution logs.
+Returns task identity, lifecycle timestamps, result, error and input parameters.
+Related read routes are `/{id}/logs` (stored node logs), `/{id}/progress`
+(Redis progress), `/{id}/live-logs` (Redis node entries) and `/{id}/screenshots`
+(screenshot links or stored keys when URL generation fails).
 
-### POST /tasks/{id}/cancel
+### DELETE /tasks/{id}
 
-Cancel a pending or running task.
+Cancels QUEUED/ASSIGNED tasks; returns 204 after commit. RUNNING or terminal
+states return 409; unknown/foreign IDs return 404. The row is locked/refreshed
+before validation and queue effects; `finished_at` is recorded in UTC.
 
-### POST /tasks/{id}/retry
+### POST /tasks/{id}/stop
 
-Retry a failed task.
+Accepts QUEUED/ASSIGNED/RUNNING; returns 200 with `status: stopped` and `task_id`
+after the SQL cancellation commit. Terminal state returns 409. This response
+is a server decision, not a physical stop acknowledgement: transport/Redis/commit
+failures and in-flight ASSIGNED work still need reconciliation. The RUNNING
+control has a distinct command ID and explicit task target; see the
+[control contract](security/task-control-protocol.md).
+
+The router has no POST `/{id}/cancel` or `/{id}/retry` endpoint. Submitting a
+new task is new execution and requires reconciling any earlier unknown outcome.
 
 ---
 
@@ -1637,14 +1669,15 @@ Database and Redis connection pool statistics.
 
 ## Pagination
 
-All list endpoints support:
+Pagination is endpoint-specific. Check each route; for example, Tasks limits
+`per_page` to 200. The following legacy defaults are not a universal contract:
 
 | Param | Default | Max | Description |
 |-------|---------|-----|-------------|
 | `page` | `1` | — | Page number |
 | `per_page` | `50` | `5000` | Items per page |
 
-Response always includes `{ "items": [...], "total": N, "page": N, "per_page": N }`.
+Several paginated endpoints include `{ "items": [...], "total": N, "page": N, "per_page": N }`; verify the response schema for the selected route.
 
 > **v4.6.0:** `per_page` max увеличен с 200 до 5 000 для поддержки массовых
 > операций и нагрузочных тестов. Рекомендуется использовать значения ≤ 200

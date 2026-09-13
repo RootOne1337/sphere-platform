@@ -23,11 +23,20 @@ logger = structlog.get_logger()
 
 # Lua-скрипт для атомарной операции: pop из ZSet + установить running-lock
 _LUA_DEQUEUE = """
+if redis.call('EXISTS', KEYS[2]) == 1 then return nil end
 local task_id = redis.call('ZPOPMIN', KEYS[1], 1)
 if #task_id == 0 then return nil end
 local tid = task_id[1]
 redis.call('SET', KEYS[2], tid, 'EX', 3600)
 return tid
+"""
+
+_LUA_COMPLETE = """
+if redis.call('GET', KEYS[1]) == ARGV[1] then
+    redis.call('DEL', KEYS[1])
+end
+redis.call('DEL', KEYS[2])
+return 1
 """
 
 
@@ -84,23 +93,15 @@ class TaskQueue:
         """
         Atomic dequeue для устройства.
         Использует Lua eval для атомарности (ZPOPMIN + SET lock).
-        Fallback на pessimistic pipeline при недоступности eval (тесты с fakeredis).
+        При ошибке Redis операция прерывается без неатомарного fallback.
         Возвращает task_id или None если устройство занято / очередь пуста.
         """
         running_key = self.RUNNING_KEY.format(device_id=device_id)
 
-        # Быстрая проверка — если устройство занято, не трогаем ZSet
-        already_running = await self.redis.get(running_key)
-        if already_running:
-            return None
-
         queue_key = self.QUEUE_KEY.format(org_id=org_id, device_id=device_id)
-
-        try:
-            result = await self.redis.eval(_LUA_DEQUEUE, 2, queue_key, running_key)
-        except Exception:
-            # Fallback: не атомарно, но приемлемо для тестов и Redis без Lua
-            result = await self._dequeue_fallback(queue_key, running_key)
+        # Check ownership, pop and acquire the lease in one atomic operation.
+        # After a timeout Redis may already have executed the script.
+        result = await self.redis.eval(_LUA_DEQUEUE, 2, queue_key, running_key)
 
         if result is None:
             return None
@@ -109,24 +110,11 @@ class TaskQueue:
         logger.debug("task.dequeued", task_id=task_id, device_id=device_id)
         return task_id
 
-    async def _dequeue_fallback(
-        self, queue_key: str, running_key: str
-    ) -> str | None:
-        """Non-atomic fallback dequeue (used in tests / non-Lua environments)."""
-        results = await self.redis.zpopmin(queue_key, 1)
-        if not results:
-            return None
-        task_id = results[0] if isinstance(results[0], str) else results[0][0]
-        # Convert tuple from ZPOPMIN if needed
-        if isinstance(task_id, (list, tuple)):
-            task_id = task_id[0]
-        await self.redis.set(running_key, task_id, ex=3600)
-        return task_id
-
     async def mark_completed(self, task_id: str, device_id: str) -> None:
         """Освободить устройство после завершения задачи."""
-        await self.redis.delete(self.RUNNING_KEY.format(device_id=device_id))
-        await self.redis.delete(f"task:meta:{task_id}")
+        await self.redis.eval(_LUA_COMPLETE, 2,
+                              self.RUNNING_KEY.format(device_id=device_id),
+                              f"task:meta:{task_id}", task_id)
         logger.debug("task.device_released", task_id=task_id, device_id=device_id)
 
     async def cancel_task(self, task_id: str, org_id: str, device_id: str | None = None) -> bool:

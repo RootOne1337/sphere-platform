@@ -6,6 +6,256 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased] — enterprise audit, 2026-09-13
+
+Изменения находятся в draft PR; это не опубликованный production release.
+Полный перечень предыдущих audit fixes, доказательства и residual risks:
+[audit report](docs/audits/2026-09-05/AUDIT-REPORT.md).
+
+### Security / runtime
+
+- AUD-102: prepare and verify this APK's `PROJECT_MEDIA` app-op through its own
+  authorized root process before requesting a fresh capture token. Bound the root
+  wait, keep it off the UI thread and retain normal consent when root is unavailable.
+  Native Android 9 before-fix reproduces a blocking consent dialog; after-fix
+  capture starts on both devices after an app-op reset, without a manual click.
+  8 regressions, 523 full JVM tests and 37 tests per signed flavor pass. APK
+  `ce26a9e`, version 10201 / 1.2.1-dev, is accepted on both pilot devices; ADB
+  rollout is explicitly distinct from the still unverified OTA self-install.
+  [Acceptance status and remaining OTA/streaming work](docs/audits/2026-09-05/ANDROID-UNATTENDED-CAPABILITIES.md).
+
+- AUD-101: run Windows publisher/NAT tasks directly with `pythonw.exe` and suppress
+  console creation in publisher child commands. Migrate only exact owned actions,
+  comparing account SIDs. Both pilot tasks pass; 97 related tests pass, including
+  native no-console probes. [Evidence](docs/audits/2026-09-05/WINDOWS-BACKGROUND-WINDOWS.md).
+
+- AUD-100: read persistent APK log tails using byte offsets and one UTF-8 byte
+  budget across rotations. Bound a request to 256 KiB and coordinate reads with
+  the writer. Installed APK returned HTTP 200 with an empty tail from a 540035-byte
+  UTF-8 fixture. Replace replica tests with the actual production tree:
+  6 failures before, 10 tests pass after; full dev suite 515 passed. Signed APK
+  `9618a57` is accepted on both pilot emulators: automatic in-place upgrade
+  reconnect in 7.828/8.406 s, Unicode tail returns the marker and 100 lines,
+  then 12/12 commands pass. Latest pilot artifact is updated after acceptance.
+  [Evidence, rollout status and limits](docs/audits/2026-09-05/APK-UTF8-LOG-TAIL.md).
+
+- AUD-99 follow-up: install a scoped Windows station watchdog for pilot indices
+  0/1. Confirm missing NAT twice, persist a five-minute retry cooldown before any
+  mutation, serialize repair across workers and reject shared VM networks.
+  **56 tests pass** on Windows. Native scheduled recovery restores the second
+  NAT automatically in 106.91 s; real APK command in 108.12 s after fault,
+  then 12/12 commands with both APK PIDs and the first NAT preserved.
+  [Acceptance, resource measurements and limits](docs/audits/2026-09-05/LDPLAYER-AUTOMATIC-RECOVERY.md).
+
+- AUD-99: restore the second local LDPlayer's missing NAT service without
+  reinstalling its APK. Add a scoped Windows diagnostic/repair tool and 15 tests;
+  preserve other networks and verify process identity before repairing orphan DHCP.
+  Both APKs now execute commands; a repeated fault recovers the second in 6.08 s
+  after repair, then 12/12 commands pass. Automatic supervision follows above.
+  [Evidence and runbook](docs/audits/2026-09-05/LDPLAYER-NAT-INCIDENT.md).
+
+- AUD-98: device diagnostics in Sphere mode request the APK's persistent journal
+  instead of a fixed logcat tag allowlist. Preserve the viewer response and full
+  system logcat mode. Native output changed from two headers to 100 app log lines;
+  three before failures and 17 passing tests. No APK update is required.
+  [Evidence and limits](docs/audits/2026-09-05/DEVICE-DIAGNOSTICS-SOURCE.md).
+
+- AUD-97: retry complete Redis subscriptions after a failed recovery attempt in
+  device command and browser event listeners. Previously a first/partial subscribe
+  failure could strand existing clients indefinitely. Six before failures; 77
+  adjacent/regression tests pass. Native 30-second Redis outage recovered real
+  commands with the same APK process and WebSocket session.
+  [Evidence and limits](docs/audits/2026-09-05/REDIS-SUBSCRIPTION-RECOVERY.md).
+
+- AUD-96: scoped host publisher automatically signs and publishes changed Quick
+  Tunnel routes, renews near expiry and repairs the public mirror after failures.
+  Journal/CAS and process locking preserve versions after request/response loss.
+  Windows scheduled task on the new pilot passed native restart → publication →
+  APK echo without manual config/reconnect; 50 publisher/signer tests pass.
+  [Evidence and deployment limits](docs/audits/2026-09-05/AUTOMATIC-DISCOVERY-PUBLICATION.md).
+
+- Native signed discovery acceptance on `f61cd5a` (final equivalent APK `0f1410e`): GitHub supplies a new
+  route while the old connector/config mirror is unavailable; actual echo and
+  return migration pass with the same PID/device identity and zero enrollments.
+  Final APK install/hash, signed v7 cache and real echo were checked separately.
+  Killing only its process recovered automatically to a real echo in 7.2 s,
+  with the same identity/cache and zero new registrations.
+  [Evidence](docs/audits/2026-09-05/SIGNED-DISCOVERY-NATIVE.md). Single emulator,
+  temporary same-provider ingress; permanent fallback and multi-day renewal acceptance remain open.
+
+- AUD-95 remains open: GitHub publication/freshness can delay address migration
+  for several minutes. Remove the minute-query experiment after native acceptance
+  did not demonstrate improvement; retain standard HTTP cache revalidation and
+  signed durable routes. [Evidence and rollout gates](docs/audits/2026-09-05/DISCOVERY-CDN-FRESHNESS.md).
+
+- AUD-94: mutable discovery GETs request HTTP cache revalidation. A real cached
+  signed v1 hid published v2 in the failing before-case; 522 Android regressions
+  pass after the fix. CDN propagation is still not an instantaneous SLA.
+  [Evidence](docs/audits/2026-09-05/DISCOVERY-HTTP-CACHE.md).
+
+- Android signed discovery (opt-in): up to three public HTTPS sources, fixed RSA
+  signature verification, installation/version/freshness checks and AtomicFile
+  cached routes/version floor. Initial enrollment can follow a newly signed route
+  without baking the management URL. Add offline signer and cross-language vector.
+  521 devDebug JVM tests and 21 signer tests pass. Permanent ingress and automated
+  document renewal remain open. [Contract](docs/architecture/ANDROID-SIGNED-DISCOVERY.md).
+
+- AUD-93: setup and background enrollment use the key bound to the selected
+  discovery result. Remove later HTTP key lookups and unrestricted UI baked-key
+  fallback, preventing a route from one response from receiving a key from another.
+  Before regression failed; both worker paths now preserve retry without registering.
+  [Evidence](docs/audits/2026-09-05/ENROLLMENT-DISCOVERY-SNAPSHOT.md).
+
+- AUD-92: interactive shell/logcat/reboot reach the worker owning the Android
+  WebSocket through Redis. Subscribe acknowledgement precedes command publication;
+  offline interactive actions are not deferred. Reboot timeout reports unknown
+  outcome instead of success. Three reproduced cross-worker failures; 15 targeted
+  cases pass. [Evidence](docs/audits/2026-09-05/INTERACTIVE-COMMAND-ROUTING.md).
+
+- AUD-91: foreground auto-enrollment and background workers share the initial
+  enrollment gate and reuse issued identity. Duplicate app/package-replaced
+  scheduling keeps the pending WorkManager attempt. The setup screen observes
+  background completion and reports automatic retry for transient failures.
+  Reproduced on an installed APK; 29 targeted cases, including five new regressions,
+  pass. [Root cause and limits](docs/audits/2026-09-05/ENROLLMENT-CONCURRENCY.md).
+
+- AUD-90: routes-only public discovery retains the APK's locally provisioned
+  enrollment key for its explicitly baked primary/fallback pair. Unrelated
+  origins do not receive it. Add `SPHERE_FALLBACK_SERVER_URL` build provisioning.
+  One failing before-case plus a negative control; complete devDebug JVM suite
+  after AUD-89/90: 493 passed, no failures/errors/skips.
+
+- AUD-89: initial Android registration tries the configured alternate after
+  transport failure, HTTP 408 or 5xx. One successful response commits identity;
+  cancellation, persistence failures, 401/403 and 429 do not trigger an extra
+  enrollment. Three failing before-cases; 63 targeted regressions pass after.
+  [Evidence and remaining risks](docs/audits/2026-09-05/CONNECTION-RECOVERY.md).
+
+- AUD-78: исправлен bootstrap первого пользователя и enrollment key: отсутствующие
+  DB imports, разная организация admin/device, потерянные credentials в launcher
+  и ложный успех после ошибки. Bash использует общий Python CLI; ошибки прерывают
+  bootstrap. 23 новых checks: реальные SQL/login/register/device-read и процессы
+  PowerShell/Bash. Полный запуск Compose/APK/VPN ещё не подтверждён.
+
+- AUD-77: registration сохраняет UUID/tokens/routes одним проверяемым commit,
+  сериализуется с refresh и отклоняет ответы после изменения identity/маршрутов.
+  Неуспешная запись возвращает ошибку и восстанавливает память; невалидные
+  credentials/expiry не принимаются. 20 новых regressions; **485 JVM tests**.
+  Initial server response loss и аппаратная durability остаются открытыми.
+
+- AUD-76: первичная registration теперь отменяет конкретный HTTP Call при stop,
+  ограничивает запрос 10 s и success body 64 KiB до parse. Late cancelled callback
+  не записывает credentials; error status не ждёт body. Worker timeout остаётся
+  retryable и освобождает общую блокировку. 15 новых regressions, **465 JVM tests**.
+  Initial response loss остаётся открытым; единый commit добавлен в AUD-77.
+
+- AUD-75: фоновые workers регистрируют supplied bootstrap key до запуска агента,
+  учитывают generated config flag/null и используют общую блокировку. Повторный
+  запуск с сохранённой identity не выполняет новую registration rotation; transient
+  failures остаются retryable. WS перечитывает назначенный ID и отклоняет старый ACK.
+  24 новых JVM regressions; **450 tests / 33 suites**. Initial response loss и OS/fleet/resource measurements остаются открытыми;
+  локальный registration commit добавлен в AUD-77.
+
+- AUD-74: APK сохраняет основной/резервный адрес одной установки и перебирает их
+  для WS и refresh без GitHub. Новый адрес выбирается по device-bound `auth_ok`;
+  discovery сохраняет кандидатов без разрыва рабочего соединения. LAN registration
+  сохраняет request URL; fallback проходит через MDM, JSON, публичный API и
+  генератор, а APK принимает его `enrollment_api_key`. 27 новых JVM и пять Python
+  regressions, включая три SQL/ASGI cases. **426 Android tests**; реальные OS/network
+  и capacity drills ещё требуются. [Контракт](docs/architecture/ANDROID-SAVED-ROUTES.md).
+
+- AUD-73: APK discovery больше не отправляет device JWT как API-ключ, ограничивает
+  HTTP десятью секундами и body 64 KiB до разбора. Watchdog объединяет проверки,
+  отменяет их при stop и не применяет response после локальной смены адреса.
+  Baseline: 9 failures / 4 controls; 21 новая Android regression, 399 JVM tests
+  проходят. Два SQL/ASGI cases подтверждают старый 401 и публичный 200 с той же
+  device identity. [Контракт и ограничения](docs/architecture/ANDROID-DISCOVERY-RECOVERY.md).
+
+- AUD-72: APK становится connected после подтверждения device ID сервером, а не
+  сразу после открытия WS. Silent auth ограничен дедлайном, поздние callbacks
+  завершённого сеанса не включают канал и не доставляют команды. 16 новых JVM и
+  восемь SQL/ASGI cases; 378 Android tests. [Обновить backend раньше APK](docs/architecture/ANDROID-CONNECTION-PROTOCOL.md).
+- AUD-71: зависший APK refresh больше не удерживает очередь после HTTP-дедлайна;
+  stop отменяет конкретный OkHttp Call, поздний body не меняет credentials.
+  Pending ID остаётся для recovery; восемь новых regressions, 362 JVM tests проходят.
+  Предел HTTP не является SLA ожидания mutex/диска или подтверждением Android OS recovery.
+- AUD-69: device refresh с сохранённым operation UUID восстанавливает тот же
+  token-преемник после lost commit/HTTP response; row locks, expiry и re-enrollment
+  сохраняют отзыв и одну ротацию. Новая миграция `20260910_device_refresh_retry`.
+  24 новых SQL/ASGI regressions; [rollout contract](docs/security/device-refresh-recovery.md).
+- AUD-70: APK сохраняет refresh intent до HTTP и повторяет его после восстановления;
+  поздний response не перезаписывает re-enrollment/clear. Семь новых JVM cases,
+  354 Android tests проходят; реальные OS/network drills остаются открытыми.
+
+- AUD-68: development startup прекращается при native Docker/config/build/up error;
+  Compose ждёт readiness по service identity, API/frontend получили health probes.
+  17 новых subprocess/config regressions; missing env требует заполнения перед запуском.
+  [Startup contract](docs/operations/STARTUP.md) описывает границы проверки.
+
+- AUD-67: APK clean server close использует retry delay; equal jitter распределяет
+  fleet reconnect по окнам 1–2 s до 15–30 s. Три новых runtime-policy tests,
+  347 Android JVM cases проходят; реальная ёмкость парка не заявляется.
+- AUD-66: неизвестные PC commands возвращают failed с причиной, сохраняя command ID;
+  ложный completed/null без исполнения устранён. Три новых Redis regressions,
+  95 связанных cases проходят. Для поддержки новой операции нужен новый клиент.
+- AUD-65: PC session наблюдает sender и receiver, очищает state при auth failure/
+  cancel и reconnect при send failure. Stop прерывает circuit/backoff; clean close
+  не создаёт tight reconnect loop, timeouts не копят Event.wait. Девять новых
+  lifecycle cases, 91 PC test проходят; реальная сеть/OS и durable delivery открыты.
+- AUD-64: PC success/error ответы содержат command_result; backend принимает старые
+  untyped terminal replies. Исправлена доказанная потеря результатов до Redis channel.
+  10 новых cases связывают dispatcher, handler и настоящий Redis subscriber; durable
+  delivery и OS execution остаются открытыми; unknown commands исправлены в AUD-66.
+- AUD-63: PC-agent использует общий API-key bootstrap и связывает fresh registration
+  Session с authenticated tenant. 12 non-owner SQL/Redis cases проверяют connection/
+  registration, key revoke wait, SQL abort/retry и cache failure. PC guide приведён
+  к реальным settings, endpoint и dispatch-командам; OS/ADB/load не объявлены проверенными.
+- AUD-62: user login/refresh/logout и MFA определяют tenant до RLS lookup;
+  добавлены закрытые SQL org-only resolvers и MFA v2 server-side user/org state.
+  34 новых non-owner cases проверяют HTTP chain, SQL revoke, concurrent consumers,
+  function security и SQL abort/recovery. Нужны новые EXECUTE grants; legacy MFA
+  challenges требуют повторного password step при согласованном cutover workers.
+- AUD-61: post-auth Android progress, task receipts/results и device events связывают
+  каждую новую SQL Session с authenticated tenant. Исправлены скрытые под RLS задачи,
+  отсутствующий result_ack и отклонённые event INSERT. 15 non-owner ASGI regressions
+  проверяют commit-before-ACK, replay, конкурентный учёт и SQL abort/recovery.
+- AUD-60: API-key auth блокирует и обновляет key snapshot до проверки active/expiry/
+  permissions; concurrent enrollment не принимает уже закоммиченные revoke/expiry
+  или удаление device:register. Три реальных SQL lock-wait regressions сохранены.
+- AUD-59: Android WS аутентифицирует principal до target-device SELECT; agent JWT
+  проверяет подписанную организацию и связывает Session. 16 ASGI/PG/Redis cases
+  проверяют reconnect, HTTP logs/OTA и enrollment → refresh → WS с runtime ролью.
+- AUD-58: opaque enrollment API-key/device-refresh tenant discovery работает под
+  non-owner PostgreSQL credentials через две ограниченные lookup-функции; 18 runtime
+  cases, explicit grants и rollback описаны в device-credential-bootstrap guide.
+- AUD-57: user JWT связывает tenant до SQL lookup; пользователь сверяется по id и org_id.
+  Старый токен не действует после переноса в другую организацию; invalid UUID/purpose
+  отклоняются. 22 ASGI/PG/Redis cases проверяют runtime-роль, конкурентность, права,
+  device write и audit. Login/refresh/MFA/API-key bootstrap и полный RLS rollout открыты.
+- AUD-56: фоновая HTTP audit-сессия привязывается к tenant до INSERT, чтобы RLS
+  не терял журнал после успешной операции. Шесть ASGI/PostgreSQL regressions;
+  durable audit retry/outbox остаётся открытым.
+
+- AUD-55: tenant binding теперь сохраняется в Session после commit/rollback/recovery;
+  смена tenant внутри Session и первая привязка в savepoint запрещены. 16 новых
+  PostgreSQL tests используют отдельные LOGIN credentials и пул из одного соединения.
+
+- AUD-14: production startup отклоняет PostgreSQL owner/member, privileged roles,
+  TRUNCATE и отсутствующий RLS/policies; 10 новых PostgreSQL regressions.
+- AUD-54: Alembic `20260908_tenant_policies` устанавливает tenant policies всех
+  28 таблиц, защищает оба конца M2M и append-only audit. 25 full-schema runtime-role
+  checks и четыре migration/operator-policy checks; четыре CI inventory checks.
+- Общий backend/PC/production/deployment прогон: 1334 passed, coverage 69,31%,
+  включая 453 PostgreSQL/Redis cases; без load suite и listening APK/API.
+
+### Migration / deployment constraints
+
+Полный переход приложения на non-owner runtime credentials остаётся заблокирован
+до исправления auth/bootstrap/jobs и transaction context. Старые ручные RLS SQL
+entry points явно отклоняются; downgrade tenant-policy revision запрещён.
+[Runbook](docs/security/postgresql-rls.md) описывает условия перехода и ограничения.
+Production и внешняя инфраструктура не изменялись.
+
 ## [4.7.0] — 2026-03-10  <!-- feat: Game Accounts, Event System, Pipeline Settings -->
 
 ### Краткое описание
@@ -902,7 +1152,91 @@ Docker images — rebuild all services after merge (`docker compose build`).
 
 ## Previous releases
 
-See `docs/merge_log.md` and [walkthrough.md.resolved](walkthrough.md.resolved) for full branch-by-branch integration history.
+Earlier branch integration is recorded in Git history. The former merge log and walkthrough artifacts are not present in this checkout.
 
 [4.1.0]: https://github.com/RootOne1337/sphere-platform/compare/v4.0.0...v4.1.0
 [4.0.0]: https://github.com/RootOne1337/sphere-platform/releases/tag/v4.0.0
+
+### Audit continuation — Bash Compose invocation (AUD-79)
+
+- Use arrays for both full-deploy Compose overlays and preserve argument boundaries
+  with the shipped newline/tab IFS; repair all ten command sites.
+- Four failing-before regressions keep real initialization/options. All 37 deployment
+  cases pass; full-stack/env-file/migration/APK/VPN acceptance remains open.
+
+### Audit continuation — Windows Compose environment (AUD-80)
+
+- Select generated `.env.local` before `.env`, with explicit absolute env/YAML paths
+  in full-deploy and explicit env in normal start-dev config/build/up. Preserve
+  process overrides; reject missing installation env instead of using ambient config.
+- Seven new regressions; baseline five failures and twelve controls, then all 44
+  deployment cases pass. Real Compose rendering uses synthetic files without services.
+
+### Audit continuation — packaged bootstrap commands (AUD-81)
+
+- Ship the administrator and enrollment CLIs in the production backend image.
+- Add a mandatory image CI job with four independent stdlib runtime probes:
+  two CLI validation paths, packaged Alembic head and non-root/read-only behavior.
+  Baseline missing-file/module failures and corrected test-parser evidence retained.
+
+### Audit continuation — full-deploy phase ordering (AUD-82)
+
+- Wait for PostgreSQL/Redis before one-off migrations/admin/enrollment; start the
+  application stack only after all succeed. Remove host migration fallback.
+- Add production backend/frontend readiness probes and use Compose project health
+  instead of fixed container names/host ports and a misleading success banner.
+- 21 new regression cases; 21 baseline failures and 7 controls, then 65 deployment
+  cases pass. Full daemon/SQL rollout and incompatible rolling migrations remain open.
+
+### Audit continuation — startup enrollment identity (AUD-83)
+
+- Share configured enrollment validation/SQL serialization between the CLI and dev
+  startup. Select the operator organization explicitly; forward its slug in Compose.
+- Prevent duplicate-key worker startup failures and accidental legacy-key creation.
+  Report configuration/key conflicts without silently reactivating credentials or
+  taking the development API down; preserve strict explicit CLI failures.
+- 19 new startup regression cases and two Compose cases; 11 baseline failures /
+  3 controls, followed by the complete 1466-case local suite.
+
+### Audit continuation — existing installation credentials (AUD-84)
+
+- Keep an existing `.env` when `.env.local` is absent during full-deploy, including
+  headless/skip-secrets. Avoid silently shadowing retained credentials with a new file.
+- Preserve local-file precedence and fresh generation; ten new cases exercise both
+  shells. Four baseline failures / six controls; all 77 deployment cases pass.
+- Actual database password rotation and persistent-volume recovery remain separate.
+
+### Audit continuation — idempotent administrator bootstrap (AUD-85)
+
+- Full-deploy uses create-only admin provisioning; existing credentials/role/MFA
+  remain intact. Explicit direct CLI update remains available for intentional reset.
+- Serialize concurrent organization/user bootstrap; report created/existing only
+  after commit. Reject unknown or ambiguous outcome instead of presenting a candidate.
+- Present newly committed credentials before enrollment; preserve the Bash credential
+  record on retries. Fourteen SQL/shell/login cases and eight deployment cases added;
+  9 baseline failures / 4 controls, then all 1498 local tests pass.
+
+### Audit validation — packaged SQL bootstrap and process restart
+
+- Retain a reproducible probe of the built backend image with fresh disposable SQL,
+  real CLI/bootstrap/app lifecycle, login/device visibility and repeat in a new process.
+- Add it to mandatory image CI separately from the four no-network probes and pytest.
+  No new runtime defect claimed; full Compose/browser/APK/VPN acceptance remains open.
+- Archive all four successful first-attempt CI runs for AUD-85 (`08338d3`, 1498 tests).
+
+### Audit continuation — fresh full-deploy configuration (AUD-86)
+
+- Default an absent/empty DEV_SKIP_AUTH to false in the full overlay, preventing
+  Settings import failure with generated configuration. Keep strict backend parsing
+  and the production overlay's forced false.
+- Reproduce two failures / six controls through the real generator/Compose/Settings
+  path; retain eight regression cases. All 93 deployment tests pass locally.
+
+### Audit continuation — PostgreSQL initialization user (AUD-87)
+
+- Remove hardcoded sphere ownership from the n8n database created by init.sql;
+  use the configured entrypoint user's default ownership on fresh clusters.
+- Reproduce PostgreSQL exit 3 for a custom POSTGRES_USER; retain two real container
+  regressions for initial state and restart with preserved data. Both pass locally.
+- Add mandatory CI coverage and document partially initialized volume limits;
+  no existing data, password, role or application migration is modified.

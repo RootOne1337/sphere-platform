@@ -4,6 +4,7 @@ import android.content.SharedPreferences
 import androidx.security.crypto.EncryptedSharedPreferences
 import io.mockk.*
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
@@ -52,6 +53,7 @@ class AuthTokenStoreTest {
                 this@mockk
             }
             every { apply() } just Runs
+            every { commit() } returns true
         }
         prefs = mockk(relaxed = true) {
             every { edit() } returns editor
@@ -154,23 +156,24 @@ class AuthTokenStoreTest {
     }
 
     @Test
-    fun `getFreshToken с истекающим токеном отправляет refresh запрос`() = runTest {
+    fun `getFreshToken с истекающим токеном отправляет refresh запрос`() = runBlocking {
         storage["access_token"] = "old-token"
         storage["refresh_token"] = "refresh-xyz"
         storage["access_token_expires_at"] = System.currentTimeMillis() + 60_000L // +1 мин (< 5 мин)
         storage["server_url"] = server.url("").toString().trimEnd('/')
 
         server.enqueue(MockResponse()
-            .setBody("""{"access_token":"new-token","expires_in":900}""")
+            .setBody("""{"access_token":"new-token","refresh_token":"rotated-refresh","expires_in":900}""")
             .setResponseCode(200))
 
         val result = store.getFreshToken()
-        // При успешном refresh → новый токен; при ошибке → old-token (failsafe)
-        assertTrue("Должен вернуть токен", result == "new-token" || result == "old-token")
+        assertEquals("new-token", result)
+        assertEquals("rotated-refresh", storage["refresh_token"])
+        assertEquals("/api/v1/devices/refresh", server.takeRequest().path)
     }
 
     @Test
-    fun `getFreshToken при ошибке HTTP → текущий token`() = runTest {
+    fun `getFreshToken при ошибке HTTP → текущий token`() = runBlocking {
         storage["access_token"] = "old-token"
         storage["refresh_token"] = "refresh-xyz"
         storage["access_token_expires_at"] = System.currentTimeMillis() + 60_000L

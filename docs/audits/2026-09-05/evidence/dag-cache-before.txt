@@ -1,0 +1,28 @@
+F                                                                        [100%]
+================================== FAILURES ===================================
+__________ test_dispatched_hash_identifies_resolved_account_payload ___________
+tests\production\test_dag_cache_identity.py:40: in test_dispatched_hash_identifies_resolved_account_payload
+    assert payload["dag_hash"] == expected
+E   AssertionError: assert '21fc48dbbee7...bd8585aa0cd91' == 'bf8b5f470730...5d93fd2f15330'
+E     
+E     - bf8b5f470730e0f44081dbc991ea18572d9f03308b8dd7246835d93fd2f15330
+E     + 21fc48dbbee7be443479edf0892259aa70fb4effd0542c4c0debd8585aa0cd91
+---------------------------- Captured stdout call -----------------------------
+{"task_id": "7a286ab3-0770-4dc1-bd92-b2c41b25f819", "account_id": "585c37c1-5bea-4ab4-bcab-30c3f7a8d11e", "account_nick": null, "variables_keys": ["login", "password", "nickname", "nick_part1", "nick_part2", "server_name", "game", "gender"], "event": "task.dag_variables_resolved", "level": "info", "logger": "backend.services.task_service", "timestamp": "2026-09-06T09:17:57.093325Z"}
+{"task_id": "7a286ab3-0770-4dc1-bd92-b2c41b25f819", "device_id": "4e178ee1-5380-4fc7-ab30-394982aa23ec", "event": "task.dispatched", "level": "info", "logger": "backend.services.task_service", "timestamp": "2026-09-06T09:17:57.093848Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.services.task_service:task_service.py:349 {'task_id': '7a286ab3-0770-4dc1-bd92-b2c41b25f819', 'account_id': '585c37c1-5bea-4ab4-bcab-30c3f7a8d11e', 'account_nick': None, 'variables_keys': ['login', 'password', 'nickname', 'nick_part1', 'nick_part2', 'server_name', 'game', 'gender'], 'event': 'task.dag_variables_resolved', 'level': 'info', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-06T09:17:57.093325Z'}
+INFO     backend.services.task_service:task_service.py:379 {'task_id': '7a286ab3-0770-4dc1-bd92-b2c41b25f819', 'device_id': '4e178ee1-5380-4fc7-ab30-394982aa23ec', 'event': 'task.dispatched', 'level': 'info', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-06T09:17:57.093848Z'}
+============================== warnings summary ===============================
+.venv-audit\Lib\site-packages\pydantic\fields.py:754: 484 warnings
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\pydantic\fields.py:754: PydanticDeprecatedSince20: Using extra keyword arguments on `Field` is deprecated and will be removed. Use `json_schema_extra` instead. (Extra keys: 'deprecated'). Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.6/migration/
+    warn(
+
+backend\api\v1\game_accounts\router.py:94
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\api\v1\game_accounts\router.py:94: DeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+    sort_dir: str = Query("desc", regex="^(asc|desc)$", description="Направление сортировки"),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/production/test_dag_cache_identity.py::test_dispatched_hash_identifies_resolved_account_payload
+1 failed, 485 warnings in 0.96s

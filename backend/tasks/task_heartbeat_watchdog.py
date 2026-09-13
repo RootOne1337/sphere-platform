@@ -84,8 +84,6 @@ async def _process_stale_tasks(
 
     now = datetime.now(timezone.utc)
     queued_cutoff = now - timedelta(minutes=queued_stale_minutes)
-    # Для SQLite (тесты) используем naive datetime в WHERE — PostgreSQL принимает оба варианта.
-    queued_cutoff_naive = queued_cutoff.replace(tzinfo=None)
 
     expired_running: list[tuple[str, str]] = []   # [(task_id, device_id)]
     expired_queued: list[tuple[str, str, str]] = []  # [(task_id, device_id, org_id)]
@@ -141,7 +139,9 @@ async def _process_stale_tasks(
         select(Task)
         .where(
             Task.status.in_([TaskStatus.QUEUED, TaskStatus.ASSIGNED]),
-            Task.created_at < queued_cutoff_naive,
+            # asyncpg interprets naive timestamptz values in the host timezone.
+            # Keep UTC explicit; SQLite's DateTime adapter also accepts it.
+            Task.created_at < queued_cutoff,
         )
     )
     if use_for_update:
@@ -270,6 +270,7 @@ async def _expire_stale_tasks() -> None:
                             "command_id": f"watchdog_cancel_{task_id}",
                             "signed_at": int(_time.time()),
                             "ttl_seconds": 30,
+                            "payload": {"task_id": task_id},
                         },
                     )
                     logger.info(
@@ -323,15 +324,21 @@ async def _aggregate_batches(
         if task.batch_id:
             batch_ids_counts[task.batch_id] = batch_ids_counts.get(task.batch_id, 0) + 1
 
-    for batch_id, timeout_count in batch_ids_counts.items():
-        batch = await db.get(TaskBatch, batch_id)
+    # Use the same lock as TaskService result accounting and a stable acquisition
+    # order when a watchdog transaction touches more than one batch.
+    for batch_id, timeout_count in sorted(batch_ids_counts.items()):
+        batch = await db.scalar(select(TaskBatch).where(
+            TaskBatch.id == batch_id,
+        ).with_for_update().execution_options(populate_existing=True))
         if not batch:
             continue
 
         batch.failed = (batch.failed or 0) + timeout_count
         completed_count = (batch.succeeded or 0) + (batch.failed or 0)
 
-        if completed_count >= batch.total:
+        # A timeout is an outcome of surviving work, not a reason to reopen a
+        # batch whose remaining admission was cancelled.
+        if completed_count >= batch.total and batch.status != TaskBatchStatus.CANCELLED:
             if (batch.failed or 0) == 0:
                 batch.status = TaskBatchStatus.COMPLETED
             elif (batch.succeeded or 0) == 0:

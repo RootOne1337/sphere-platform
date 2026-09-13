@@ -32,6 +32,8 @@
     <!-- Managed Config (AppRestrictions) — shown in MDM/EMM console -->
     <string name="restriction_server_url_title">Sphere Platform Server URL</string>
     <string name="restriction_server_url_desc">HTTPS URL of the Sphere management backend</string>
+    <string name="restriction_fallback_url_title">Sphere fallback server URL</string>
+    <string name="restriction_fallback_url_desc">Optional second HTTPS route to the same Sphere installation</string>
     <string name="restriction_api_key_title">Sphere API Key</string>
     <string name="restriction_api_key_desc">Device API key generated in the Sphere management console</string>
     <string name="restriction_device_id_title">Sphere Device ID (optional)</string>

@@ -41,9 +41,9 @@ class VPNPeerResponse(BaseModel):
 # ── Pool stats ────────────────────────────────────────────────────────────────
 
 class VPNPoolStats(BaseModel):
-    total_ips: int = Field(..., description="Всего IP в подсети (allocated + free)")
-    allocated: int = Field(..., description="Назначено устройствам")
-    free: int = Field(..., description="Свободно в Redis пуле")
+    total_ips: int = Field(..., description="Общая ёмкость платформенной подсети")
+    allocated: int = Field(..., description="Удерживаемые IP текущей организации, включая незавершённые операции")
+    free: int = Field(..., description="Свободно глобально по подтверждённым PostgreSQL reservations")
     active_tunnels: int = Field(..., description="Туннели с handshake < 3 мин")
     stale_handshakes: int = Field(..., description="Туннели с handshake > 3 мин")
 

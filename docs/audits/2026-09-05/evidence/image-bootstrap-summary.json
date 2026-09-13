@@ -1,0 +1,30 @@
+{
+  "baseline_sha": "ecce7f29f4b15aaf6dcff2193d1cf4ad875a8375",
+  "images": {
+    "before": {
+      "tag": "sphere-audit-bootstrap:ecce7f2-before",
+      "id": "sha256:f0d32cb515141fa1036530c9f563bad396778501aa7429d5fc679eb48ede4f76",
+      "user": "sphere",
+      "created": "2026-09-11T10:00:04.859749862Z"
+    },
+    "after": {
+      "tag": "sphere-audit-bootstrap:aud81-after",
+      "id": "sha256:a6155082ae0dc9ce3c444db8c6967467a6dfe74bfbde527bd3aecaf7cdba252d",
+      "user": "sphere",
+      "created": "2026-09-11T10:01:18.653106933Z"
+    }
+  },
+  "before": {
+    "tests": 4,
+    "failures": 2,
+    "controls": 2
+  },
+  "after": {
+    "tests": 4,
+    "failures": 0
+  },
+  "probe_sha256": "466c030014e353f6e78015192cb234beab113fc02d6c1a1f75a5d212d80521cd",
+  "isolation": "Default sphere user; --network none --read-only --cap-drop ALL --security-opt no-new-privileges --tmpfs /tmp:rw,nosuid,nodev,size=16m. Only probe file mounted read-only; no source or database mounts.",
+  "limits": "CLI validation and Alembic heads only; no SQL/bootstrap success, migration execution, HTTP listener, full Compose, APK/VPN or deployment.",
+  "harness_correction": "First probe: 3 failures/1 control. One false failure rejected Alembic branch label (main) before (head). Corrected parser, reran unchanged baseline: 2 real failures/2 controls."
+}

@@ -1,9 +1,19 @@
 # Sphere Platform — Полный гайд развёртывания
 
-> **From Zero to Production за 15 минут**
+> **Статус на 11 сентября 2026: production readiness не подтверждена.**
 >
-> Enterprise-grade руководство по клонированию, настройке и запуску всей платформы.
-> Подходит для VPS, выделенного сервера, Windows-машины разработчика и CI/CD.
+> Это справочник настройки; полный runtime и ёмкость 10–64 эмулятора ещё проверяются.
+> Текущий общий PostgreSQL owner/superuser отклоняется production startup guard.
+> До rollout нужно завершить auth/job tenant context и разделение runtime/migration
+> ролей: [RLS runbook](docs/security/postgresql-rls.md). Политики устанавливает Alembic,
+> ручной SQL setup и автоматический downgrade `20260908_tenant_policies` запрещены.
+> Migration `20260909_user_auth_bootstrap` добавляет две user-функции к двум device-функциям.
+> Текущий head — `20260910_device_refresh_retry`; [device retry rollout](docs/security/device-refresh-recovery.md)
+> требует обновления всех backend workers перед новым APK, сохраняет прежние grants.
+> Их runtime EXECUTE grants и обязательный MFA cutover описаны в
+> [user auth runbook](docs/security/user-auth-bootstrap.md) и
+> [device credential runbook](docs/security/device-credential-bootstrap.md).
+> Фактические результаты и оставшиеся блокеры: [audit report](docs/audits/2026-09-05/AUDIT-REPORT.md).
 
 ---
 
@@ -89,7 +99,7 @@
 
 | Сервис | Образ | Порт | Назначение |
 |--------|-------|------|------------|
-| **postgres** | postgres:15-alpine | 5432 | Основная БД (19 таблиц, RLS, аудит) |
+| **postgres** | postgres:15-alpine | 5432 | Основная БД (28 таблиц, RLS, аудит) |
 | **redis** | redis:7.2-alpine | 6379 | Кэш, Pub/Sub, статусы устройств |
 | **backend** | python:3.12-slim | 8000 | FastAPI REST + WebSocket API |
 | **frontend** | node:20 | 3000 | Next.js 15 Web UI |
@@ -163,21 +173,18 @@ cd sphere-platform
 
 ### Что делает скрипт
 
-Скрипт `full-deploy` автоматически выполняет **все 8 шагов**:
+Порядок после AUD-81/82:
 
-1. **Проверяет зависимости** — Docker, Python, Git, свободное место
-2. **Генерирует секреты** — криптографически стойкие пароли в `.env.local`
-3. **Собирает Docker-образы** — backend (Python 3.12) + frontend (Node 20)
-4. **Запускает контейнеры** — все 9 сервисов через Docker Compose
-5. **Ждёт готовности** — PostgreSQL healthcheck, Redis PONG, Backend /health
-6. **Применяет миграции** — Alembic upgrade head (19 таблиц, RLS, индексы)
-7. **Создаёт администратора** — суперадмин + enrollment-ключ для агентов
-8. **Health-check** — проверяет каждый сервис и выводит URL-ы
+1. Проверка инструментов и подготовка конфигурации.
+2. Сборка образов; production backend содержит admin/enrollment CLI.
+3. PostgreSQL/Redis → Compose wait (180 s).
+4. One-off миграции → администратор → enrollment key; отказ прекращает запуск.
+5. Приложения → Compose wait (300 s) → статус выбранного project.
 
-**Результат за 5-10 минут:**
-- Web UI доступен на `http://localhost`
-- API работает на `http://localhost:8000/api/v1`
-- Swagger на `http://localhost:8000/docs`
+Нет гарантии «5–10 минут»: build/pull/npm не входят в readiness timeout. Сервисам
+без healthcheck достаточно running; ingress, пользовательский вход, APK/task и VPN
+проверяются отдельно. Разделение runtime/migration ролей и уже работающие workers
+требуют отдельного rollout, описанного в начале руководства.
 
 ---
 
@@ -233,75 +240,57 @@ cp .env.example .env.local
 
 ### 4.3 Запуск Docker-стека
 
+Для новой prepared development установки сначала поднимите только зависимости.
+Пример ниже — Bash; выбран `.env.local` из шага 4.2. При использовании `.env`
+явно замените имя. Не меняйте Compose project между командами.
+
 ```bash
-# Вариант 1: Makefile (рекомендуется)
-make full                # Все сервисы
-
-# Вариант 2: Docker Compose напрямую
-docker compose -f docker-compose.yml -f docker-compose.full.yml up -d
-
-# Вариант 3: PowerShell-скрипт (Windows)
-.\scripts\deploy.ps1
+dc() { docker compose --env-file .env.local -f docker-compose.yml -f docker-compose.full.yml "$@"; }
+dc build
+dc up -d --wait --wait-timeout 180 postgres redis
 ```
 
-Что запускается:
-```
-✅ postgres    — PostgreSQL 15 (healthcheck: pg_isready)
-✅ redis       — Redis 7.2 (healthcheck: PING)
-✅ nginx       — Reverse proxy (порты 80/443)
-✅ n8n         — Workflow automation
-✅ minio       — S3-хранилище
-✅ certbot     — SSL auto-renewal
-✅ backend     — FastAPI (порт 8000)
-✅ frontend    — Next.js 15 (порт 3000)
-```
-
-Проверка статуса:
-```bash
-docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
-```
+Автоматические альтернативы — `scripts/full-deploy.sh` / `scripts/full-deploy.ps1`.
+`start-dev.ps1` запускает уже подготовленный стек; bootstrap он не выполняет.
 
 ### 4.4 Миграции базы данных
 
 ```bash
-# Из контейнера (рекомендуется)
-docker compose exec backend alembic -c alembic/alembic.ini upgrade head
-
-# Или через Makefile
-make migrate
+dc run --rm --no-deps -T backend alembic -c alembic/alembic.ini upgrade head
 ```
 
-Что создаётся:
-- **19 таблиц** — users, devices, groups, scripts, tasks, vpn_peers, audit_logs и др.
-- **Row-Level Security** — изоляция данных по org_id
-- **Индексы** — оптимизированные для 1000+ устройств
-- **Extensions** — uuid-ossp, pg_trgm, btree_gin
+Команда выполняется до API с явно подготовленными migration credentials. Текущий
+head и role/grant requirements указаны в начале документа. При ошибке не переходите
+к следующим шагам; host fallback не подтверждает тот же target и не используется.
 
 ### 4.5 Создание администратора
 
 ```bash
-# Интерактивно (запрашивает email/пароль)
-docker compose exec backend python scripts/create_admin.py
-
-# Или через переменные окружения (CI/CD)
-SPHERE_ADMIN_EMAIL=admin@company.com \
-SPHERE_ADMIN_PASSWORD=SuperSecret123! \
-docker compose exec backend python scripts/create_admin.py
+# Интерактивный admin CLI запрашивает email/password.
+dc run --rm --no-deps backend python scripts/create_admin.py --create-only
+dc run --rm --no-deps -T backend python -m scripts.seed_enrollment_key
 ```
+
+Оба CLI используют `SPHERE_BOOTSTRAP_ORG_SLUG=default`. Для иной организации
+передайте одну и ту же явно заданную переменную через `-e SPHERE_BOOTSTRAP_ORG_SLUG`
+обоим one-off containers. Enrollment key берётся из эффективного agent-config.
+Повтор admin CLI может обновить пароль; конфликты ключа не исправляются молча.
+Для headless задайте `ADMIN_EMAIL/ADMIN_PASSWORD` в process environment и передайте
+`-e ADMIN_EMAIL -e ADMIN_PASSWORD`; `SPHERE_ADMIN_*` предназначены для full-deploy.
 
 ### 4.6 Проверка здоровья
 
+Только после успешных migrations/admin/key:
+
 ```bash
-# Health-check скрипт (все сервисы)
-./scripts/health-check.sh
-
-# Или вручную
-curl http://localhost:8000/api/v1/health
-# → {"status":"ok","version":"4.5.0"}
-
-curl http://localhost:3000
-# → 200 OK (Next.js HTML)
+dc up -d --wait --wait-timeout 300
+dc ps --all
 ```
+
+Backend probe требует `/api/v1/health/readyz` → HTTP 200 и `status=ready`;
+frontend probe требует `/login` → 200. Production overlay имеет такие же probes
+внутри контейнеров. Это проверка Compose running/healthy, не успешного login,
+APK/task или VPN. [Полные критерии пилота](docs/operations/PILOT-ACCEPTANCE.md).
 
 ### Доступ к сервисам
 
@@ -894,3 +883,62 @@ curl https://sphere.serveousercontent.com/api/v1/health
 > - Настроить pipeline-оркестрацию и cron-расписания
 >
 > Документация: [docs/](docs/) · API: [docs/api-reference.md](docs/api-reference.md) · Web UI: [docs/web-ui-guide.md](docs/web-ui-guide.md)
+
+### Проверенная граница Bash launcher (AUD-79)
+
+Dev/production Compose arguments теперь передаются массивом при штатном `IFS`.
+Проверены build и bootstrap с настоящим preamble и процессом вместо Docker;
+полный deployment набор — 37 passing cases. Env-file, migrations/API ordering,
+готовность сервисов и реальный APK/VPN остаются в [приёмке пилота](docs/operations/PILOT-ACCEPTANCE.md).
+
+### Windows: источник конфигурации (AUD-80)
+
+`full-deploy.ps1` выбирает `.env.local`, затем `.env` в корне установки и передаёт
+абсолютный путь через Compose `--env-file`. Оба YAML paths также абсолютные.
+Файлы не объединяются; shell/process env сохраняет приоритет. Отсутствие обоих
+останавливает wrapper до Docker. Штатный `start-dev.ps1` config/build/up имеет
+тот же выбор, а при отсутствии обоих создаёт только template и требует заполнения.
+Legacy start-dev Status/Down/Tunnel и остальные этапы full-deploy требуют отдельной
+приёмки. [Текущий план](docs/operations/PILOT-ACCEPTANCE.md).
+
+### Bootstrap tools внутри production image (AUD-81)
+
+Два CLI администратора/enrollment теперь входят в backend image. До исправления
+dev mount скрывал отсутствие `/app/scripts`, а production exec падал до SQL.
+Настоящий container probe проверяет CLI validation, Alembic head и non-root/read-only
+режим; четыре cases проходят и включены в отдельный CI job. Полный bootstrap,
+порядок миграций/API и установленный APK остаются в [плане приёмки](docs/operations/PILOT-ACCEPTANCE.md).
+
+## Повторный запуск с существующими секретами
+
+`.env.local` имеет приоритет; если его нет, существующий `.env` сохраняется и
+используется без создания нового файла с другими паролями (AUD-84). Headless
+и skip-secrets учитывают оба пути. Fresh setup создаёт `.env.local`, если нет
+обоих файлов. Не считайте ручную перегенерацию ротацией уже инициализированных
+PostgreSQL/Redis: это требует согласованного обновления сервисов и backup.
+[Контракт повторного запуска](docs/operations/STARTUP.md).
+
+## Пароль администратора при повторном full-deploy
+
+AUD-85 добавляет `--create-only`: existing active super_admin сохраняет пароль/роль/MFA;
+candidate `SPHERE_ADMIN_PASSWORD` действует только для новой записи. После confirmed
+creation credentials выводятся до enrollment, а Bash сохраняет их в `.admin-credentials`.
+Поздний отказ не является общим успехом, но уже созданный пароль доступен. При existing
+кандидат не выводится и credential file не перезаписывается. Намеренный reset через
+direct CLI без флага остаётся отдельной операцией. [Полный контракт и ограничения](docs/operations/STARTUP.md).
+
+## Если backend раньше падал на DEV_SKIP_AUTH
+
+AUD-86 исправляет default full Compose: отсутствующее/пустое значение теперь
+становится `false`, а не строкой, которую Settings не может распознать. Не требуется
+включать обход авторизации или добавлять обязательный параметр в существующий dotenv.
+[Подробный startup contract](docs/operations/STARTUP.md). Полная приёмка стека/APK
+по-прежнему описана в [плане пилота](docs/operations/PILOT-ACCEPTANCE.md).
+
+## Настраиваемый пользователь PostgreSQL
+
+AUD-87: новый кластер и n8n создаются с выбранным POSTGRES_USER, без требования
+наличия отдельной роли sphere. Контейнерные проверки default/custom user и restart
+с сохранёнными данными проходят. Изменение не применяется автоматически к старым
+volumes и не меняет роли/пароли работающей установки.
+[Первый init и частично созданные кластеры](docs/operations/STARTUP.md).
