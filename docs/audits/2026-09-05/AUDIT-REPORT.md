@@ -4,6 +4,11 @@
 Исходная ревизия: `28f8cc46ab65496e00297960fd94d87d1605cc83`.
 Ветка исправлений: `codex/enterprise-audit-20260905`; [draft PR #19](https://github.com/RootOne1337/sphere-platform/pull/19).
 
+**AUD-106:** native final check нашёл localhost в download URL через tunnel.
+Remote gateway сохраняет public Host; настоящий isolated Nginx regression
+падает до fix и проходит после. Через рабочий ingress URL корректен, 12/12
+команд pass. [Причина и evidence](ANDROID-OTA-DELIVERY.md).
+
 **AUD-105:** добавлен отсутствовавший authenticated APK download endpoint.
 Managed release URL следует текущему ingress; missing/corrupt/unpublished
 artifacts отвергаются. 2 baseline failures → 56 HTTP/runtime tests pass.

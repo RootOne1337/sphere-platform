@@ -74,6 +74,25 @@ identity и versionCode должны относиться к этому APK. С�
 Полная native-доставка и сохранение каталога после container recreation
 проверяются следующими шагами, отдельно от HTTP regression suite.
 
+## AUD-106: localhost в URL из каталога через настоящий туннель
+
+Native final check выявил дефект интеграции AUD-105: `/latest` возвращал
+`https://localhost/api/v1/updates/artifacts/...`. Remote gateway принудительно
+заменял Host на localhost, поэтому backend формировал непригодный для Android URL.
+Командные OTA trials использовали проверенный внешний URL явно и не могли
+подтвердить корректность каталожного URL. Ошибка найдена отдельной проверкой.
+
+`infrastructure/nginx/remote-pilot.conf` теперь сохраняет incoming Host;
+X-Forwarded-Host по-прежнему перезаписывается gateway. Regression запускает
+настоящий Nginx с production config и отдельным echo upstream в isolated internal
+Docker network. Старый config возвращает localhost — тест падает. После fix
+сохраняются primary/recovered host, scoped forwarded header и входной port.
+Compose isolation suite проходит вместе с ним. Затем только новый public-gateway
+проверен `nginx -t` и reload; `/latest` через настоящий tunnel вернул текущий
+management host, 12/12 команд прошли. [Evidence](evidence/ota-ingress-host-summary.json).
+Native полная цепочка проверена на HTTPS 443; нестандартный порт всей proxy chain
+не принят этим тестом, который проверяет порт только на remote gateway hop.
+
 ## Residual risk
 
 - Native root test принят только на данном Android 9 с уже разрешённым `su`

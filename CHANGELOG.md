@@ -14,6 +14,10 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Security / runtime
 
+- AUD-106: preserve the public Host through the remote pilot gateway so managed
+  OTA URLs do not point Android at localhost. Reproduce with actual Nginx on an
+  isolated network, reload only the new gateway, and verify latest metadata
+  through the real tunnel followed by 12/12 device commands.
 - AUD-105: serve published APK artifacts to authenticated device JWTs from an
   operator-staged immutable store. Verify staged SHA/size before registration,
   reject missing/unpublished files and construct managed URLs on the current
