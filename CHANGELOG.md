@@ -14,6 +14,11 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Security / runtime
 
+- AUD-104: retry OTA metadata HTTP/refresh failures instead of delaying for the
+  next six-hour period, read the recovered route after refresh, propagate
+  cancellation and skip stale versions. Nine regressions fail before; all 14
+  worker cases and 547 full JVM tests pass. Version 10203 / 1.2.3 prepares the
+  next candidate; complete server-to-APK delivery is still under acceptance.
 - AUD-103 native acceptance: both Android 9 devices restart APK themselves after
   reboot (20.859 / 25.375 s to command); process kill recovers in 5.453 s. No
   host app launch, station watchdog disabled, IDs/cache retained, 12/12 commands
