@@ -8,15 +8,17 @@
 #  DELETE /updates/{id}  — удаление релиза                       (JWT admin)
 from __future__ import annotations
 
+import hashlib
 import json
 import os
+import re
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response, status
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request, Response, status
+from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -28,6 +30,19 @@ router = APIRouter(prefix="/updates", tags=["updates"])
 # Релизы хранятся в JSON-файле (нет нужды в отдельной таблице)
 # В production заменяется на путь из env-переменной SPHERE_UPDATES_PATH
 _UPDATES_PATH = Path(os.environ.get("SPHERE_UPDATES_PATH", "/tmp/sphere_updates.json"))  # nosec B108
+_ARTIFACT_PREFIX = "/api/v1/updates/artifacts/"
+_MAX_ARTIFACT_BYTES = 200 * 1024 * 1024
+
+
+def _artifact_path(digest: str) -> Path:
+    if not re.fullmatch(r"[a-f0-9]{64}", digest):
+        raise HTTPException(status_code=404, detail="Artifact not found")
+    directory = (_UPDATES_PATH.parent / "artifacts").resolve()
+    path = directory / f"{digest}.apk"
+    # Deployment supplies immutable files; never follow a link outside the store.
+    if path.is_symlink() or not path.is_file() or path.resolve().parent != directory:
+        raise HTTPException(status_code=404, detail="Artifact not found")
+    return path
 
 
 # ── In-memory store backed by JSON file ──────────────────────────────────────
@@ -63,6 +78,7 @@ class CreateReleaseRequest(BaseModel):
 
 @router.get("/latest")
 async def get_latest(
+    request: Request,
     platform: str = Query(default="android"),
     flavor: str = Query(default="enterprise"),
     version_code: int = Query(default=0),
@@ -96,15 +112,40 @@ async def get_latest(
     if latest_code <= version_code:
         return JSONResponse({"update_available": False, "current_version_code": version_code})
 
+    download_url = latest.get("download_url")
+    if isinstance(download_url, str) and download_url.startswith(_ARTIFACT_PREFIX):
+        # Keep managed metadata independent of an ingress hostname. The same
+        # HTTPS host used by the agent receives its authenticated download.
+        download_url = str(request.base_url.replace(scheme="https")).rstrip("/") + download_url
+
     return JSONResponse({
         "update_available": True,
         "version_code": latest_code,
         "version_name": latest.get("version_name"),
-        "download_url": latest.get("download_url"),
+        "download_url": download_url,
         "sha256": latest.get("sha256", ""),
         "mandatory": latest.get("mandatory", False),
         "changelog": latest.get("changelog"),
     })
+
+
+@router.get("/artifacts/{sha256}")
+async def download_artifact(
+    sha256: str,
+    authorization: Optional[str] = Header(default=None),
+    db: AsyncSession = Depends(get_db),
+) -> FileResponse:
+    """Download a published, operator-staged APK using the agent's own JWT."""
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Bearer token required")
+    from backend.api.ws.android.router import authenticate_ws_token
+    await authenticate_ws_token(authorization.removeprefix("Bearer "), db)
+    if not any(r.get("sha256") == sha256 and r.get("download_url") == _ARTIFACT_PREFIX + sha256
+               for r in _load_releases()):
+        raise HTTPException(status_code=404, detail="Published artifact not found")
+    path = _artifact_path(sha256)
+    return FileResponse(path, media_type="application/vnd.android.package-archive",
+                        headers={"Cache-Control": "private, no-store"})
 
 
 # ── List all releases (admin) ─────────────────────────────────────────────────
@@ -135,8 +176,18 @@ async def create_release(
     Регистрирует новый APK-релиз в системе обновлений.
     После создания агенты автоматически обнаружат его при следующей проверке (до 6 ч).
     """
-    # Security: allow only https:// download URLs to prevent SSRF
-    if not payload.download_url.startswith("https://"):
+    if payload.download_url == _ARTIFACT_PREFIX + payload.sha256:
+        try:
+            artifact = _artifact_path(payload.sha256)
+        except HTTPException as exc:
+            raise HTTPException(status_code=422, detail="Managed artifact is missing or invalid") from exc
+        if not 0 < artifact.stat().st_size <= _MAX_ARTIFACT_BYTES:
+            raise HTTPException(status_code=422, detail="Managed artifact size is invalid")
+        with artifact.open("rb") as stream:
+            digest = hashlib.file_digest(stream, "sha256").hexdigest()
+        if digest != payload.sha256:
+            raise HTTPException(status_code=422, detail="Managed artifact checksum mismatch")
+    elif not payload.download_url.startswith("https://"):
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="download_url must use HTTPS",

@@ -4,6 +4,11 @@
 Исходная ревизия: `28f8cc46ab65496e00297960fd94d87d1605cc83`.
 Ветка исправлений: `codex/enterprise-audit-20260905`; [draft PR #19](https://github.com/RootOne1337/sphere-platform/pull/19).
 
+**AUD-105:** добавлен отсутствовавший authenticated APK download endpoint.
+Managed release URL следует текущему ingress; missing/corrupt/unpublished
+artifacts отвергаются. 2 baseline failures → 56 HTTP/runtime tests pass.
+[Контракт и открытая native-приёмка](ANDROID-OTA-DELIVERY.md).
+
 **AUD-104:** OTA worker перестал считать HTTP 401/429/503 успешной проверкой.
 9 before failures → 14 worker regressions и 547 full JVM tests pass.
 Root installer на втором Android работает без диалога; серверная публикация

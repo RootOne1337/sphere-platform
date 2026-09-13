@@ -45,6 +45,35 @@ HTTP 401/429/503, срыв сети/установки, stale version, size limi
 обновление. Нужна отдельная приёмка: авторизованная выдача файла сервером,
 скачивание внутри APK, замена версии, самостоятельный старт и реальные команды.
 
+## AUD-105: авторизованная выдача APK сервером
+
+В каталоге можно было записать URL, но сам backend не имел download endpoint
+для APK. Новый `GET /api/v1/updates/artifacts/{sha256}` принимает Bearer JWT
+устройства через существующую проверку активной identity. Файл должен быть
+опубликован в каталоге, находиться в `artifacts/<sha256>.apk` рядом с каталогом,
+не быть symlink и соответствовать SHA/размеру при публикации. Неопубликованный
+файл не выдаётся; ответ `private, no-store` не разрешает публичное кеширование.
+
+В release metadata допускается точный относительный путь
+`/api/v1/updates/artifacts/<sha256>`. `/latest` преобразует его в HTTPS URL
+с текущим request host. Смена ingress не требует переписывать download hostname
+каждого релиза. Прежние внешние HTTPS metadata остаются совместимы, но APK
+допускает скачивание только с management host.
+
+Affected files: `backend/api/v1/updates/router.py` и HTTP regression tests.
+**2 before failures / 24 cases → 56 passed** после fix, включая настоящий
+PostgreSQL/Redis, device JWT/refresh и tenant HTTP/WS checks.
+[Evidence](evidence/ota-artifact-api-summary.json).
+
+Развёртывание: оператор сначала помещает проверенный immutable APK в persistent
+`artifacts` directory рядом с `SPHERE_UPDATES_PATH`, затем регистрирует release
+через существующий super-admin `POST /updates/`. Значения SHA, package/signing
+identity и versionCode должны относиться к этому APK. Создание локального файла
+без публикации metadata обновление не включает. Обычный `/tmp` внутри контейнера
+не является persistent storage; pilot использует отдельный directory bind mount.
+Полная native-доставка и сохранение каталога после container recreation
+проверяются следующими шагами, отдельно от HTTP regression suite.
+
 ## Residual risk
 
 - Native root test принят только на данном Android 9 с уже разрешённым `su`

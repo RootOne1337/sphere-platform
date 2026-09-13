@@ -19,6 +19,7 @@ Enterprise rationale
 """
 from __future__ import annotations
 
+import hashlib
 from unittest.mock import patch
 
 import pytest
@@ -169,6 +170,69 @@ _VALID_RELEASE = {
     "mandatory": False,
     "changelog": "Bug fixes",
 }
+
+
+class TestManagedArtifacts:
+    async def test_published_artifact_download_requires_agent_auth(self, admin_client, isolate_updates_file):
+        content = b"owned APK fixture"
+        digest = hashlib.sha256(content).hexdigest()
+        artifact = isolate_updates_file.parent / "artifacts" / f"{digest}.apk"
+        artifact.parent.mkdir()
+        artifact.write_bytes(content)
+        path = f"/api/v1/updates/artifacts/{digest}"
+        created = await admin_client.post("/api/v1/updates/", json={**_VALID_RELEASE,
+            "download_url": path, "sha256": digest})
+        assert created.status_code == 201, created.text
+        downloaded = await admin_client.get(path)
+        assert downloaded.status_code == 200, downloaded.text
+        assert downloaded.content == content
+        assert downloaded.headers["cache-control"] == "private, no-store"
+        denied = await admin_client.get(path, headers={"Authorization": ""})
+        assert denied.status_code == 401
+
+    async def test_managed_url_follows_current_request_host(self, admin_client, isolate_updates_file):
+        content = b"APK current ingress fixture"
+        digest = hashlib.sha256(content).hexdigest()
+        artifact = isolate_updates_file.parent / "artifacts" / f"{digest}.apk"
+        artifact.parent.mkdir()
+        artifact.write_bytes(content)
+        path = f"/api/v1/updates/artifacts/{digest}"
+        created = await admin_client.post("/api/v1/updates/", json={**_VALID_RELEASE,
+            "download_url": path, "sha256": digest})
+        assert created.status_code == 201, created.text
+        token = admin_client.headers['Authorization'].removeprefix('Bearer ')
+        for hostname in ('primary.test', 'recovered.test'):
+            latest = await admin_client.get('/api/v1/updates/latest',
+                headers={'Host': hostname, 'X-API-Key': token})
+            assert latest.status_code == 200, latest.text
+            assert latest.json()['download_url'] == f'https://{hostname}{path}'
+
+    async def test_missing_managed_artifact_cannot_be_published(self, admin_client):
+        response = await admin_client.post('/api/v1/updates/', json={**_VALID_RELEASE,
+            'download_url': '/api/v1/updates/artifacts/' + 'a' * 64})
+        assert response.status_code == 422
+
+    async def test_wrong_file_hash_cannot_be_published(self, admin_client, isolate_updates_file):
+        artifact = isolate_updates_file.parent / 'artifacts' / ('a' * 64 + '.apk')
+        artifact.parent.mkdir()
+        artifact.write_bytes(b'wrong checksum')
+        response = await admin_client.post('/api/v1/updates/', json={**_VALID_RELEASE,
+            'download_url': '/api/v1/updates/artifacts/' + 'a' * 64})
+        assert response.status_code == 422
+
+    async def test_unpublished_file_is_not_downloadable(self, admin_client, isolate_updates_file):
+        content = b'unpublished APK'
+        digest = hashlib.sha256(content).hexdigest()
+        artifact = isolate_updates_file.parent / 'artifacts' / (digest + '.apk')
+        artifact.parent.mkdir()
+        artifact.write_bytes(content)
+        response = await admin_client.get('/api/v1/updates/artifacts/' + digest)
+        assert response.status_code == 404
+
+    async def test_unknown_relative_url_is_rejected(self, admin_client):
+        response = await admin_client.post('/api/v1/updates/', json={**_VALID_RELEASE,
+            'download_url': '/private/not-an-ota-artifact'})
+        assert response.status_code == 422
 
 
 # ===========================================================================

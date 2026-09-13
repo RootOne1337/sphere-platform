@@ -14,6 +14,10 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Security / runtime
 
+- AUD-105: serve published APK artifacts to authenticated device JWTs from an
+  operator-staged immutable store. Verify staged SHA/size before registration,
+  reject missing/unpublished files and construct managed URLs on the current
+  ingress host. Two failing baseline cases become 56 passing HTTP/runtime tests.
 - AUD-104: retry OTA metadata HTTP/refresh failures instead of delaying for the
   next six-hour period, read the recovered route after refresh, propagate
   cancellation and skip stale versions. Nine regressions fail before; all 14
