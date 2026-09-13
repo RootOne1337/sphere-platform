@@ -4,6 +4,11 @@
 Исходная ревизия: `28f8cc46ab65496e00297960fd94d87d1605cc83`.
 Ветка исправлений: `codex/enterprise-audit-20260905`; [draft PR #19](https://github.com/RootOne1337/sphere-platform/pull/19).
 
+**AUD-102:** native-проверка нового Android воспроизвела ручной projection dialog.
+Добавлена подготовка app-op внутри APK; 8 regression tests pass. Полная native-приёмка
+ожидается. Отдельно подтверждены открытые проблемы межпроцессного стрима и отсутствие
+опубликованных OTA-релизов. [Состояние автономной APK](ANDROID-UNATTENDED-CAPABILITIES.md).
+
 **AUD-101:** устранены консольные пути наших scheduled tasks/Gradle helpers;
 обе задачи переведены на `pythonw`, child processes без консоли. 97 tests,
 успешные scheduled cycles. [Evidence и границы](WINDOWS-BACKGROUND-WINDOWS.md).

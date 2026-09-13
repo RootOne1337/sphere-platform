@@ -14,6 +14,13 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Security / runtime
 
+- AUD-102: prepare and verify this APK's `PROJECT_MEDIA` app-op through its own
+  authorized root process before requesting a fresh capture token. Bound the root
+  wait, keep it off the UI thread and retain normal consent when root is unavailable.
+  Native Android 9 before-fix reproduces a blocking consent dialog; 8 regression
+  tests pass. Advance Android version to 10201 / 1.2.1 for the next candidate.
+  [Acceptance status and remaining OTA/streaming work](docs/audits/2026-09-05/ANDROID-UNATTENDED-CAPABILITIES.md).
+
 - AUD-101: run Windows publisher/NAT tasks directly with `pythonw.exe` and suppress
   console creation in publisher child commands. Migrate only exact owned actions,
   comparing account SIDs. Both pilot tasks pass; 97 related tests pass, including

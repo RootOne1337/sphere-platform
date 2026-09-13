@@ -177,7 +177,7 @@ class CommandDispatcher @Inject constructor(
                 return
             }
             "start_stream" -> {
-                Timber.i("Received start_stream — launching screen capture permission dialog")
+                Timber.i("Received start_stream — preparing screen capture permission")
                 val intent = Intent(appContext, ScreenCaptureRequestActivity::class.java).apply {
                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 }
