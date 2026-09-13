@@ -7669,6 +7669,63 @@
         }
       }
     },
+    "/api/v1/updates/artifacts/{sha256}": {
+      "get": {
+        "tags": [
+          "updates"
+        ],
+        "summary": "Download Artifact",
+        "description": "Download a published, operator-staged APK using the agent's own JWT.",
+        "operationId": "download_artifact_api_v1_updates_artifacts__sha256__get",
+        "parameters": [
+          {
+            "name": "sha256",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Sha256"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/updates/": {
       "get": {
         "tags": [
