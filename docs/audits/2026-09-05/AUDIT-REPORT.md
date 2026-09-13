@@ -4,6 +4,11 @@
 Исходная ревизия: `28f8cc46ab65496e00297960fd94d87d1605cc83`.
 Ветка исправлений: `codex/enterprise-audit-20260905`; [draft PR #19](https://github.com/RootOne1337/sphere-platform/pull/19).
 
+**Native OTA AUD-104–106 принято:** оба Android установили 1.2.3 через сервер
+без ADB install: возврат команд 6.641 / 10.125 s. Reboot после OTA → 22.000 s;
+IDs/cache сохранены, 12/12 команд и журналы pass. Опубликован 1 release, каталог
+и файл пережили replacement backend. [Полная приёмка и границы](ANDROID-OTA-DELIVERY.md).
+
 **AUD-106:** native final check нашёл localhost в download URL через tunnel.
 Remote gateway сохраняет public Host; настоящий isolated Nginx regression
 падает до fix и проходит после. Через рабочий ingress URL корректен, 12/12

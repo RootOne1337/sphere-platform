@@ -14,6 +14,12 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Security / runtime
 
+- Native OTA acceptance: both Android 9 devices self-install published 1.2.3-dev
+  from the authenticated server using their own su; no ADB install/manual UI,
+  commands return in 6.641 / 10.125 s. Post-OTA reboot returns in 22.000 s.
+  Preserve identities/cache; verify 12/12 commands, journals and APK hashes.
+  Catalog/artifact survive backend replacement. LATEST advances to a1a40ff;
+  periodic work is enqueued, but the full six-hour interval was not waited.
 - AUD-106: preserve the public Host through the remote pilot gateway so managed
   OTA URLs do not point Android at localhost. Reproduce with actual Nginx on an
   isolated network, reload only the new gateway, and verify latest metadata

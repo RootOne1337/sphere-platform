@@ -1,0 +1,59 @@
+{
+  "source_commit": "a1a40ff0c2be51f62d9a8098f9240eba585fc00f",
+  "built_at_utc": "2026-09-13T13:02:05.198847+00:00",
+  "file": "SphereAgent-signed-discovery-a1a40ff-dev-debug.apk",
+  "sha256": "44126e952376667a8f8cb7bcfd2923ac4343ecfa0a9e5eda6ff79008e2f826ee",
+  "bytes": 8383485,
+  "package": "com.sphereplatform.agent.pilot.debug",
+  "config_url": "https://raw.githubusercontent.com/RootOne1337/sphere-agent-config/codex/pilot-bootstrap-20260911/pilots/sphere-pilot-20260911/discovery.json",
+  "config_mirror_url": "https://conditions-nest-calendar-explanation.trycloudflare.com/bootstrap/agent.signed.json",
+  "discovery_key_id": "pilot-20260911-v1",
+  "installation_id": "ce58a96d-fd02-4f7c-ac86-111c4f7fa37e",
+  "baked_management_urls": [],
+  "signing": "Android Debug; v2 signature verified; same certificate as previous pilot",
+  "version_name": "1.2.3-dev",
+  "version_code": 10203,
+  "min_sdk": 26,
+  "target_sdk": 35,
+  "default_dev_suite": {
+    "tests": 547,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "suites": 40,
+    "seconds": 122.047
+  },
+  "signed_build_tests": {
+    "dev": {
+      "signed_discovery_tests": 19,
+      "file_logging_tests": 10,
+      "root_projection_tests": 8,
+      "native_boot_tests": 10,
+      "ota_worker_tests": 14,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "enterprise": {
+      "signed_discovery_tests": 19,
+      "file_logging_tests": 10,
+      "root_projection_tests": 8,
+      "native_boot_tests": 10,
+      "ota_worker_tests": 14,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "installed_on_device": true,
+  "independent_fallback_verified": false,
+  "warning": "Signed bootstrap pilot; one temporary ingress. No fleet or independent provider acceptance.",
+  "installed_sha256": "44126e952376667a8f8cb7bcfd2923ac4343ecfa0a9e5eda6ff79008e2f826ee",
+  "native_cached_version": 9,
+  "native_signed_cache_verified": true,
+  "ota_self_install_verified": true,
+  "ota_transport": "server-triggered APK HTTPS download and own su install; no ADB install",
+  "native_boot_recovery_after_ota_verified": true,
+  "periodic_full_interval_observed": false,
+  "published_release_id": "d7f66365-ef5a-4b21-9137-25e2be565d37"
+}

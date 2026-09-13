@@ -85,22 +85,29 @@ admin и enrollment bootstrap; копирование одного overlay не 
 `com.sphereplatform.agent.pilot.debug` позволяет установить его рядом с обычными
 dev/enterprise сборками, сохраняя отдельные credentials и identity.
 
-Свежий файл: **`SphereAgent-signed-discovery-8d93e48-dev-debug.apk`**.
+Свежий файл: **`SphereAgent-signed-discovery-a1a40ff-dev-debug.apk`**.
 Указатель на ту же сборку: **`LATEST-SphereAgent-pilot.apk`** в том же каталоге.
-SHA-256: `34ee14cf3d14c4ccf68f8be45da96291a400ee2c8c8658c57c5ad8fdd8ac6aa1`.
-Размер 8,382,997 bytes; versionCode 10202 / 1.2.2-dev, minSdk 26, targetSdk 35.
-Обновлена на обоих LDPlayer поверх прежней через ADB: возврат команд за
-7.609 / 7.797 s, прежние IDs, signed cache v9, без новых регистраций.
-Настоящий Android reboot каждого при отключённом Windows watchdog: APK сама
-запускается через persisted JobScheduler, команда за 25.375 / 20.859 s.
-SIGKILL второго процесса → самостоятельный возврат за 5.453 s. Никаких app-launch
-команд или ручного UI в этих drills; затем 12/12 команд и реальные журналы.
-[Manifest и native evidence](../audits/2026-09-05/ANDROID-BOOT-RECOVERY.md).
+SHA-256: `44126e952376667a8f8cb7bcfd2923ac4343ecfa0a9e5eda6ff79008e2f826ee`.
+Размер 8,383,485 bytes; versionCode 10203 / 1.2.3-dev, minSdk 26, targetSdk 35.
+**Оба Android обновились с 10202 через OTA:** APK сама скачала файл с сервера,
+проверила SHA и установила через свой `su`; возврат команд за 10.125 / 6.641 s.
+ADB install, Windows app launcher и ручные разрешения в этих trials не применялись.
+Прежние device IDs и signed cache v9 сохранены. После OTA reboot второго Android
+→ самостоятельный `BootRecoveryJobService` → команда за 22.000 s, без регистрации.
+Затем 12/12 команд, журналы и хеши обоих installed APK проверены.
+[Artifact, native OTA и ограничения](../audits/2026-09-05/ANDROID-OTA-DELIVERY.md).
 
-Root projection принят на предыдущей APK `ce26a9e`; реализация сохранена,
-8 regression tests пройдены в обоих signed flavors новой сборки.
-**OTA self-install не принят:** каталог пока пуст; локальный LATEST не является
-публикацией OTA. [Остальные возможности](../audits/2026-09-05/ANDROID-UNATTENDED-CAPABILITIES.md).
+В серверном каталоге опубликован **1 release android/dev 10203**. Файл и каталог
+хранятся в `.local-pilot/updates/`, backend bind mount `/var/lib/sphere/updates`;
+пересоздание backend сохранило release и авторизованное скачивание. Backend image
+закреплён на `c2d412f`, public-gateway использует Host fix `985e4fc`.
+На обоих Android сохранён periodic update worker: 6 h при сети, retry от 30 s.
+Полный шестичасовой период не выжидался; native установка инициирована сервером.
+Будущие APK надо публиковать в этот каталог: один git commit или локальный LATEST
+не являются выпуском OTA. Раздача проверенного файла требует действующего JWT.
+
+Root projection принят на предыдущей APK `ce26a9e`; реализация сохранена и её
+regression tests пройдены в обоих signed flavors текущей сборки.
 
 Management URL и fallback в APK пусты. `SPHERE_CONFIG_URL` указывает на подписанный
 документ в ветке `codex/pilot-bootstrap-20260911` отдельного config repository;

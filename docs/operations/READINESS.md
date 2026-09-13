@@ -36,7 +36,14 @@ repair → возврат второго за 6.08 s, затем 12/12 кома�
 100 строк и последний marker после. Полный JVM suite 515 passed; signed flavors
 по 29 passed. [Доказательства и границы](../audits/2026-09-05/APK-UTF8-LOG-TAIL.md).
 
-**AUD-103, текущая APK `8d93e48` / 1.2.2-dev:** исправлен самостоятельный запуск
+**AUD-104–106, текущая APK `a1a40ff` / 1.2.3-dev:** оба Android сами установили
+опубликованный release через HTTPS + собственный su, без ADB install и manual UI.
+Возврат команд 6.641 / 10.125 s; reboot после OTA → 22.000 s. Native `/latest`
+исправлен с localhost на current public host; 12/12 команд и оба журнала pass.
+Каталог/файл пережили replacement backend; periodic worker 6 h зарегистрирован.
+[Evidence и точные границы](../audits/2026-09-05/ANDROID-OTA-DELIVERY.md).
+
+**AUD-103, APK `8d93e48` / 1.2.2-dev:** исправлен самостоятельный запуск
 после Android boot. Native reboot обоих → команда за 20.859 / 25.375 s,
 SIGKILL → 5.453 s при отключённом Windows watchdog и без app-launch команд.
 533 JVM tests; затем 12/12 команд и журналы.
@@ -46,8 +53,8 @@ SIGKILL → 5.453 s при отключённом Windows watchdog и без app
 запускается без ручного consent: разрешение выдаёт сама APK через собственный su.
 523 full JVM tests и по 37 tests в signed flavors pass; затем 12/12 команд.
 **Открыто:** подтверждённые ложные offline ответы streaming REST между workers;
-0 опубликованных OTA releases и отсутствие native self-install; VPN и независимый
-резервный ingress. [Фактическая автономность Android](../audits/2026-09-05/ANDROID-UNATTENDED-CAPABILITIES.md).
+OTA interruption/concurrency, полный естественный periodic cycle и fleet rollout;
+VPN и независимый резервный ingress. [Фактическая автономность Android](../audits/2026-09-05/ANDROID-UNATTENDED-CAPABILITIES.md).
 
 [Главная](../../README.md) · [Доказательства аудита](../audits/2026-09-05/AUDIT-REPORT.md) ·
 [APK](../android-agent.md) · [PC-agent](../pc-agent.md) · [Будущий AI-контур](../architecture/AI-READINESS.md)

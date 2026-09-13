@@ -77,7 +77,7 @@ API вернул настоящие 100-строчные журналы. ADB н�
 [Установка и команды](evidence/apk-projection-native-rollout-20260913.json) ·
 [APK manifest](evidence/apk-ce26a9e-manifest.json).
 
-Свежая local APK: `SphereAgent-signed-discovery-ce26a9e-dev-debug.apk`, 8,380,169 bytes,
+Историческая APK приёмки AUD-102: `SphereAgent-signed-discovery-ce26a9e-dev-debug.apk`, 8,380,169 bytes,
 SHA-256 `24ef116ed28777b94f43715e1f5ae326d25d4d04c579d14e7937139188d7a19d`.
 `LATEST-SphereAgent-pilot.apk` переключён только после приёмки обоих устройств.
 
@@ -87,13 +87,21 @@ SHA-256 `24ef116ed28777b94f43715e1f5ae326d25d4d04c579d14e7937139188d7a19d`.
 [Официальный контракт MediaProjection](https://developer.android.com/media/grow/media-projection).
 Этот fix не подтверждает ещё передачу/декодирование кадров в браузере.
 
+## OTA принято на двух устройствах
+
+Текущая APK `a1a40ff` / 1.2.3-dev установлена обоими Android самостоятельно
+через сервер, HTTPS и свой su. Команды вернулись за 6.641 / 10.125 s, ADB install
+и manual UI не использовались. В каталоге 1 release; `LATEST` обновлён после
+приёмки. Backend replacement сохранил metadata/file; Android reboot после OTA
+восстановил связь за 22.000 s. [Evidence](ANDROID-OTA-DELIVERY.md).
+
 ## Открытые эксплуатационные блокеры
 
 | Приоритет | Подтверждённое состояние | Следующая приёмка |
 | --- | --- | --- |
 | High | Streaming REST использует process-local `ConnectionManager` при четырёх workers. На online APK keyframe дал 14 HTTP 200 и 2 HTTP 404; обычные команды до/после прошли. Frame bridge и viewer lifecycle также локальные | Доставка control и кадров между разными workers, reconnect, stop и отсутствие фонового стрима без viewer |
-| High | На pilot сервере **0 OTA-релизов**. `LATEST` на Windows не является публикацией в `/updates/`. Последние установки выполнены через ADB | Реальное скачивание и self-install APK из серверного релиза, автоматическое возвращение с тем же device ID без ADB |
-| High | Каталог OTA по умолчанию `/tmp/sphere_updates.json`; durability и конкурентная публикация не подтверждены | Persistent catalog/artifact, повторная проверка после container replacement, ошибки загрузки и установки |
+| High | OTA self-install принят на двух Android 9, один release опубликован. Полный естественный период 6 h не выжидался; будущие builds требуют публикации | Natural periodic update, staged fleet rollout, ограничения package/flavor/signing identity |
+| High | Pilot persistent bind mount пережил replacement; default `/tmp` других deployments и конкурентная запись JSON остаются ограничениями | Concurrent publication, interruption/cleanup и сбои загрузки/установки |
 | High | Есть подписанные discovery/cache/mirror, но pilot имеет один временный ingress | Отказ независимого пути без потери обоих каналов; текущий резерв адресов не является отдельным живым сервером |
 | High | VPN manager вызывает `wg-quick`; одного root недостаточно для наличия подходящего WireGuard backend | Native VPN на целевой Android-сборке, recovery, проверка сохранения канала управления |
 
@@ -106,5 +114,5 @@ SHA-256 `24ef116ed28777b94f43715e1f5ae326d25d4d04c579d14e7937139188d7a19d`.
 
 1. Выполнено на двух Android 9: новый root permission flow после сброса app-op, без ручной кнопки. Другие версии/OEM и recreation Activity во время задержанного su требуют отдельной проверки.
 2. Исправить межпроцессный путь стрима и проверить реальные кадры в viewer.
-3. Опубликовать и принять OTA от скачивания до автоматического возврата APK; отдельно проверить сбои.
+3. OTA опубликовано и принято на двух Android; далее interruption, concurrent install, natural periodic cycle и rollout на больший парк.
 4. Проверить VPN и независимый резервный ingress на целевой конфигурации.
