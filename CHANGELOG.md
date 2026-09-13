@@ -14,6 +14,11 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Security / runtime
 
+- AUD-109: bound every video queue by 50 frames and 8 MiB, including repeated
+  keyframes; replace polling with Event wait and correct drop accounting.
+  Critical-only baseline retained 200 frames; count/byte/oversize regressions pass.
+  [Evidence and limits](docs/audits/2026-09-05/VIDEO-QUEUE-BOUNDS.md).
+
 - AUD-108: route REST stream start/stop/keyframe through the live PubSub
   channel instead of a worker-local socket map. Preserve tenant/RBAC checks,
   reject unavailable transport with 503 and never queue interactive controls.
