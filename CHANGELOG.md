@@ -14,6 +14,12 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Security / runtime
 
+- AUD-113: prevent a healthy static screen from restarting capture every Redis
+  request timeout. Use bounded Pub/Sub polling without disconnecting on idle;
+  preserve recovery after actual socket loss. Real-service baseline reproduces
+  unsolicited restart after 5 s; 212 related regressions pass after the fix.
+  [Evidence](docs/audits/2026-09-05/STREAM-IDLE-RECOVERY.md).
+
 - AUD-112: reproduce native APK SIGSEGV during image copy and concurrent capture
   teardown on both Androids. Serialize lifecycle, protect acquired-image lifetime,
   reject obsolete callbacks and always unlock the encoder canvas. Two baseline

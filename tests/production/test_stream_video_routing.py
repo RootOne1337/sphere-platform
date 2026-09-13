@@ -53,7 +53,13 @@ async def until(predicate, timeout=4):
 
 @asynccontextmanager
 async def workers(world):
-    binary = Redis.from_url(os.environ["REDIS_URL"], decode_responses=False)
+    # Match production socket settings: idle Pub/Sub must not inherit the
+    # request timeout as a reason to restart an otherwise healthy capture.
+    binary = Redis.from_url(
+        os.environ["REDIS_URL"], decode_responses=False,
+        socket_timeout=5.0, socket_connect_timeout=5.0,
+        retry_on_timeout=True, health_check_interval=30,
+    )
     owner = ConnectionManager()
     commands = []
 
@@ -184,6 +190,23 @@ async def test_redis_connection_loss_restores_frames_and_capture(world):
         assert any(c["type"] == "start_stream" for c in commands)
         await bridges[0].handle_agent_frame(device, FRAME + b"recovered")
         assert await asyncio.wait_for(viewer.frames.get(), 2) == FRAME + b"recovered"
+
+
+async def test_static_screen_does_not_restart_capture_after_redis_read_timeout(world):
+    async with workers(world) as (bridges, commands):
+        device = str(world.dev_a.id)
+        viewer = Viewer("")
+        await bridges[1].register_viewer(device, viewer, "static-screen")
+        await bridges[0].handle_agent_frame(device, FRAME)
+        assert await asyncio.wait_for(viewer.frames.get(), 2) == FRAME
+        await until(lambda: any(c["type"] == "start_stream" for c in commands))
+        commands.clear()
+        # Android ImageReader emits no new frame on an unchanged display.
+        # Wait past the actual production socket timeout with healthy Redis.
+        await asyncio.sleep(6.5)
+        assert not commands, "idle video must not trigger start/viewer_connected/stop"
+        await bridges[0].handle_agent_frame(device, FRAME + b"motion")
+        assert await asyncio.wait_for(viewer.frames.get(), 2) == FRAME + b"motion"
 
 
 async def test_abandoned_viewer_worker_stops_capture(world):

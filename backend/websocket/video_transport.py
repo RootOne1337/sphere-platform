@@ -79,7 +79,15 @@ class VideoTransport:
                         await self._changed.wait()
                         continue
                     assert ps is not None
-                    async for message in ps.listen():
+                    while ps.subscribed:
+                        # ImageReader may emit nothing for a static screen.
+                        # listen() inherits the Redis request socket_timeout;
+                        # redis-py then reconnects and re-subscribes every 5 s,
+                        # which incorrectly restarts the healthy capture below.
+                        # A Pub/Sub poll timeout returns None without reconnect.
+                        message = await ps.get_message(timeout=1.0)
+                        if message is None:
+                            continue
                         channel = message["channel"].decode()
                         device = channel.removeprefix("sphere:stream:video:")
                         if channel not in self._channels:

@@ -1,0 +1,23 @@
+{
+  "finding": "AUD-113",
+  "baseline_source": "343c6e80e4f26ba9c60c5340e791305cd3500d92",
+  "real_redis": true,
+  "production_socket_timeout_seconds": 5,
+  "idle_observation_seconds": 6.5,
+  "unsolicited_commands_before": [
+    "start_stream",
+    "viewer_connected"
+  ],
+  "before": {
+    "tests": 1,
+    "failures": 1,
+    "errors": 0,
+    "skipped": 0
+  },
+  "after": {
+    "tests": 212,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  }
+}
