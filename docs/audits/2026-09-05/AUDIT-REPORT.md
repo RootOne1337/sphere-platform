@@ -4,6 +4,11 @@
 Исходная ревизия: `28f8cc46ab65496e00297960fd94d87d1605cc83`.
 Ветка исправлений: `codex/enterprise-audit-20260905`; [draft PR #19](https://github.com/RootOne1337/sphere-platform/pull/19).
 
+**AUD-114:** Device Stream удалял карточку и Stop при временном offline из-за
+online-only запроса. Карточки сохраняются с явным статусом; старое видео скрывается,
+возврат online восстанавливает только неотменённый просмотр. 3 baseline failures →
+201 passing frontend tests; TypeScript pass. [Поведение и evidence](STREAM-DEVICE-PRESENCE.md).
+
 **AUD-112 — native crash исправлен в pilot APK 1.2.5 (`343c6e8`):**
 оба Android обновлены через OTA. 6 + 4 цикла захвата с движением экрана,
 overlapping viewer и automatic stop прошли без смены PID; installed hashes

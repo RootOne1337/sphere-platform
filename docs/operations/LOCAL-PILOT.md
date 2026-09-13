@@ -1,6 +1,6 @@
 # Локальный стенд для совместного тестирования
 
-**13 сентября 2026 · Windows / Docker Desktop · development, авторизация включена.**
+**14 сентября 2026 · Windows / Docker Desktop · development, авторизация включена.**
 
 [Главная](../../README.md) · [Приёмка](PILOT-ACCEPTANCE.md) ·
 [Готовность](READINESS.md) · [Android](../android-agent.md)
@@ -77,6 +77,17 @@ up` без выбранного project/env. Никакой `down -v` для п�
 Он применяется **после** base и full; требует Compose с `!reset`/`!override`.
 На другом компьютере сначала нужны собственные env, agent config, schema migration,
 admin и enrollment bootstrap; копирование одного overlay не подготавливает БД.
+
+## Текущий веб
+
+Frontend **`9b3afbc`** установлен в новом pilot: Device Stream сохраняет карточки
+при временном offline, показывает статус и позволяет отменить выбранный просмотр.
+После возврата online выбранный поток подключается снова. Пройдены 201 frontend
+tests, type-check и production Docker build; настоящий браузер отображает оба
+экрана, Online и работающие Start/Stop без console warnings/errors. Переходы
+offline/recovery покрыты component tests; сетевой fault в браузере ещё не принят.
+Обновите уже открытую страницу, чтобы загрузить новый интерфейс.
+[Причина и доказательства](../audits/2026-09-05/STREAM-DEVICE-PRESENCE.md).
 
 ## APK именно для нового стенда
 

@@ -36,6 +36,14 @@ repair → возврат второго за 6.08 s, затем 12/12 кома�
 100 строк и последний marker после. Полный JVM suite 515 passed; signed flavors
 по 29 passed. [Доказательства и границы](../audits/2026-09-05/APK-UTF8-LOG-TAIL.md).
 
+**AUD-114:** исправлена потеря карточек Device Stream при временном offline.
+Устройство остаётся видимым с причиной, Stop доступен, выбранный просмотр
+возобновляется после online. Frontend **`9b3afbc`** установлен в новом pilot;
+201 frontend tests, type-check и production build pass. Браузер показывает оба
+экрана и статусы, Start/Stop работают без console errors. Переходы offline/recovery
+воспроизведены component tests; сетевой fault в браузере ещё не принят.
+[Тесты и границы](../audits/2026-09-05/STREAM-DEVICE-PRESENCE.md).
+
 **AUD-112, текущая APK `343c6e8` / 1.2.5-dev:** оба устройства обновлены через
 OTA; исправлена гонка ImageReader copy/teardown, приводившая к SIGSEGV всего APK.
 6 + 4 native цикла захвата, движение экрана, повторный зритель и auto-stop прошли

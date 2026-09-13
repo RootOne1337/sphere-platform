@@ -52,6 +52,8 @@
 > Backend передаёт кадры между workers; [пауза на статичном экране](docs/audits/2026-09-05/STREAM-IDLE-RECOVERY.md)
 > больше не должна вызывать restart каждые 5 s. Длительный soak, truthful stream
 > status между workers, VPN и массовый rollout ещё открыты.
+> [Device Stream сохраняет карточки при offline](docs/audits/2026-09-05/STREAM-DEVICE-PRESENCE.md):
+> виден статус обрыва, Stop остаётся доступен, выбранный просмотр возвращается после online.
 
 ## Для чего Sphere
 

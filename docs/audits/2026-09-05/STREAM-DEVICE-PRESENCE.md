@@ -33,5 +33,12 @@ API-boundary mock соблюдает запрошенный status filter. До 
 Статус обновляется существующим опросом раз в 30 s: это не мгновенная детекция
 потери кадров. Пагинация, лимит выборки, перестановка при сортировке по изменяемому
 полю и truthful cross-worker stream-status требуют отдельных улучшений.
-Production build/deployment и проверка браузера оформляются после установки.
+Frontend **9b3afbc** собран из tracked git archive и установлен только в новом
+pilot. Production build и HTTP health checks прошли; backend, OTA catalog и
+старые Sphere containers сохранены. В настоящем браузере проверены оба экрана,
+два статуса Online, Start/Stop и отсутствие console warnings/errors. После
+проверки наши viewers остановлены. Offline/recovery в этой приёмке воспроизведены
+component tests; принудительный сетевой fault в браузере ещё не проверен.
+Все required CI checks исходной ревизии прошли:
+[workflow/job archive](evidence/ci-9b3afbc-summary.json).
 Это исправление интерфейса; оно не заменяет устранение причины падения APK.

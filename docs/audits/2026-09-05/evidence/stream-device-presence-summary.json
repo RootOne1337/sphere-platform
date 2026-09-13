@@ -16,5 +16,27 @@
     "numFailedTests": 0,
     "numTotalTestSuites": 24,
     "success": true
+  },
+  "deployment": {
+    "at": "2026-09-13T23:28:11.759918+00:00",
+    "source": "9b3afbcabd3231b503ec1895207ce9898db6a184",
+    "image": "sha256:642ce0c05227bf1bb413677deb0b87772d29ff0256cb6d274bfce596f9ca388b",
+    "frontend_id": "f3eefacca19e184c1adcc3a781f5894c44a4846c1655c67f680fb54eb9861486",
+    "build_context": "git archive HEAD:frontend; no untracked files or local environment",
+    "only_new_frontend_replaced": true,
+    "backend_and_old_sphere_preserved": true,
+    "ota_catalog_preserved": true,
+    "http_checks_passed": true
+  },
+  "browser_acceptance": {
+    "surface": "real Codex in-app browser, local pilot /stream",
+    "rendered_device_screens": 2,
+    "online_status_labels": 2,
+    "start_and_stop_verified": true,
+    "console_warnings_and_errors": 0,
+    "native_network_fault_injected": false,
+    "offline_recovery_boundary": "component tests with status-filtering API double",
+    "own_viewers_stopped_after_check": true,
+    "screenshot": "retained privately in .local-pilot/remote/stream-presence-browser.png"
   }
 }
