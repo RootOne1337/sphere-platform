@@ -14,6 +14,11 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Security / runtime
 
+- AUD-110: bind the verified viewer tenant before PostgreSQL RLS lookup. A valid
+  login previously failed to enter streaming on the restricted runtime role.
+  Real PostgreSQL regression accepts own device and rejects foreign device.
+  [Reproduction](docs/audits/2026-09-05/STREAM-VIEWER-RLS.md).
+
 - AUD-109: bound every video queue by 50 frames and 8 MiB, including repeated
   keyframes; replace polling with Event wait and correct drop accounting.
   Critical-only baseline retained 200 frames; count/byte/oversize regressions pass.

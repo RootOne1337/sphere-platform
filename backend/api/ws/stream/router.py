@@ -44,22 +44,30 @@ async def _authenticate_viewer(token: str, db: AsyncSession):
     import jwt as pyjwt
 
     from backend.core.security import decode_access_token
+    from backend.database.tenant import bind_tenant_context
     from backend.models.user import User
     from backend.services.cache_service import CacheService
 
     try:
         payload = decode_access_token(token)
+        if payload.get("type") != "access":
+            raise pyjwt.InvalidTokenError("Expected a user access token")
+        user_id = uuid.UUID(payload["sub"])
+        org_id = uuid.UUID(payload["org_id"])
     except pyjwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token expired")
     except pyjwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid token")
+    except (KeyError, ValueError, TypeError, AttributeError):
+        raise HTTPException(status_code=401, detail="Invalid identity claims")
 
     cache = CacheService()
     if await cache.is_token_blacklisted(payload["jti"]):
         raise HTTPException(status_code=401, detail="Token revoked")
 
-    user = await db.get(User, uuid.UUID(payload["sub"]))
-    if not user or not user.is_active:
+    await bind_tenant_context(db, str(org_id))
+    user = await db.get(User, user_id)
+    if not user or not user.is_active or user.org_id != org_id:
         raise HTTPException(status_code=401, detail="User inactive")
     return user
 
