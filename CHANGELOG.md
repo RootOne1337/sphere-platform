@@ -14,6 +14,11 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Security / runtime
 
+- AUD-114: retain Device Stream cards across online/offline transitions, expose
+  connection status, hide stale video and preserve the operator's Start/Stop intent.
+  Three baseline component cases fail; all 201 frontend tests and type checking pass.
+  [Evidence](docs/audits/2026-09-05/STREAM-DEVICE-PRESENCE.md).
+
 - AUD-113: prevent a healthy static screen from restarting capture every Redis
   request timeout. Use bounded Pub/Sub polling without disconnecting on idle;
   preserve recovery after actual socket loss. Real-service baseline reproduces

@@ -1,0 +1,20 @@
+{
+  "finding": "AUD-114",
+  "baseline_source": "edb546881cebab8ea2be14ce470c8f0ec3702599",
+  "runtime_boundary": "real React page with status-filtering API hook and codec boundary doubles",
+  "type_check": "passed",
+  "before": {
+    "numTotalTests": 3,
+    "numPassedTests": 0,
+    "numFailedTests": 3,
+    "numTotalTestSuites": 1,
+    "success": false
+  },
+  "after": {
+    "numTotalTests": 201,
+    "numPassedTests": 201,
+    "numFailedTests": 0,
+    "numTotalTestSuites": 24,
+    "success": true
+  }
+}
