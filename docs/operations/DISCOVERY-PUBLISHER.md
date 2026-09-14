@@ -1,6 +1,6 @@
 # Автоматическая публикация адреса Android-сервера
 
-**12 сентября 2026 · host-side publisher для одного явно выбранного Quick Tunnel.**
+**14 сентября 2026 · host-side publisher для одного явно выбранного Quick Tunnel.**
 
 [Подписанный contract](../architecture/ANDROID-SIGNED-DISCOVERY.md) ·
 [Локальный стенд](LOCAL-PILOT.md) · [Открытая задержка GitHub](../audits/2026-09-05/DISCOVERY-CDN-FRESHNESS.md)
@@ -20,8 +20,12 @@ credential используется через текущий `gh` context, не
 этот процесс не перестраивает; новый web origin требует отдельной приёмки.
 
 Старый `sync-tunnel-url.sh` оперирует именами другой установки и не участвует в
-этом процессе. Новый publisher **не выполняет** Docker restart/exec, Redis clear,
-изменения `.env`, портов, VPN или signing/installation key rotation.
+этом процессе. При явном `"recover_unhealthy_connector": true` publisher может
+перезапустить только свой running/unhealthy `cloudflare-quick`: после 180 секунд
+наблюдения, с сохранённым backoff 5–60 минут и повторной проверкой ID/labels.
+По умолчанию восстановление выключено. Backend, другие проекты, paused/stopped
+контейнеры и healthy connector при отказе API не перезапускаются.
+`.env`, порты, VPN и ключи не меняются. [AUD-122 и границы восстановления](../audits/2026-09-05/CONNECTOR-RECOVERY.md).
 
 ## Цикл работы
 

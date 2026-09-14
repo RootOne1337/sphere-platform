@@ -1,7 +1,8 @@
 """Publish signed routes for one explicitly scoped outbound Quick Tunnel.
 
-Run on the Docker host with its existing GitHub CLI credential. No Docker mutations,
-backend restarts, enrollment secrets or global tunnel names. Journal before remote
+Run on the Docker host with its existing GitHub CLI credential. Optional bounded
+recovery restarts only its unhealthy connector, never backend or other projects.
+No enrollment secrets or global tunnel names. Journal before remote
 CAS; recover ambiguous publication without signing two payloads at the same version.
 """
 from __future__ import annotations
@@ -246,7 +247,7 @@ class QuickTunnelSource:
         self.last_url: str | None = None
         self.cache_path = cache_path
 
-    def observe(self) -> str:
+    def inspect(self) -> dict:
         ids = run_command([self.docker, "ps", "-q", "--filter", "label=com.docker.compose.project=" + self.project,
             "--filter", "label=com.docker.compose.service=" + self.service]).decode().split()
         if len(ids) != 1:
@@ -255,8 +256,14 @@ class QuickTunnelSource:
         labels, state = container["Config"]["Labels"], container["State"]
         if (labels.get("com.docker.compose.project") != self.project
                 or labels.get("com.docker.compose.service") != self.service
-                or not state["Running"] or state["Paused"]
-                or state.get("Health", {}).get("Status") != "healthy"):
+                or not state["Running"] or state["Paused"]):
+            raise PublicationError("Scoped connector is not healthy")
+        return container
+
+    def observe(self) -> str:
+        container = self.inspect()
+        state = container["State"]
+        if state.get("Health", {}).get("Status") != "healthy":
             raise PublicationError("Scoped connector is not healthy")
         identity = (container["Id"], state["StartedAt"])
         if self.last_identity is None and self.cache_path and self.cache_path.exists():
@@ -285,6 +292,51 @@ class QuickTunnelSource:
         if self.last_url is None:
             raise PublicationError("Missing observed route")
         return self.last_url
+
+
+class QuickTunnelRecovery:
+    """Persistent, opt-in recovery for Docker's non-restarting unhealthy state.
+
+    Call under the publisher process lock. Never restart for API/DB health failures.
+    An attempted restart is journaled first; uncertain CLI outcomes observe cooldown.
+    """
+
+    def __init__(self, source: QuickTunnelSource, state_path: Path):
+        self.source, self.state_path = source, state_path
+        if source.service != "cloudflare-quick":
+            raise ValueError("Automatic recovery is limited to cloudflare-quick")
+
+    def reconcile(self, now: int) -> dict:
+        container = self.source.inspect()
+        state = container["State"]
+        identity = [container["Id"], state["StartedAt"]]
+        scope = [self.source.project, self.source.service]
+        saved = strict_json(read_bounded(self.state_path, 4096)) if self.state_path.exists() else {"scope": scope}
+        if saved.get("scope") != scope:
+            raise PublicationError("Connector recovery journal scope mismatch")
+        health = state.get("Health", {}).get("Status")
+        if health == "healthy":
+            if saved.get("unhealthy_since") is not None or saved.get("attempts", 0):
+                atomic_write(self.state_path, json.dumps({"scope": scope, "identity": identity}).encode())
+            return {"state": "healthy"}
+        if health != "unhealthy":
+            return {"state": "waiting_for_health"}
+        if saved.get("identity") != identity or saved.get("unhealthy_since") is None:
+            saved.update(identity=identity, unhealthy_since=now)
+            atomic_write(self.state_path, json.dumps(saved).encode())
+        due = max(saved["unhealthy_since"] + 180, saved.get("retry_after", 0))
+        if now < due:
+            return {"state": "waiting_for_recovery", "retry_after": due}
+        # Container selection may change while the scheduled task is running.
+        fresh = self.source.inspect()
+        if ([fresh["Id"], fresh["State"]["StartedAt"]] != identity
+                or fresh["State"].get("Health", {}).get("Status") != "unhealthy"):
+            return {"state": "connector_changed"}
+        attempts = min(saved.get("attempts", 0) + 1, 5)
+        saved.update(attempts=attempts, retry_after=now + min(300 * 2 ** (attempts - 1), 3600))
+        atomic_write(self.state_path, json.dumps(saved).encode())
+        run_command([self.source.docker, "restart", "--timeout", "10", container["Id"]], timeout=30)
+        return {"state": "connector_restarted", "retry_after": saved["retry_after"]}
 
 
 def verify_route(client: httpx.Client, url: str, installation_id: str) -> None:
@@ -319,6 +371,9 @@ def run(config: dict, *, once: bool) -> None:
     store = GitHubDocumentStore(config["repository"], config["branch"], config["document_path"], config.get("gh", "gh"))
     source = QuickTunnelSource(config["compose_project"], config["compose_service"], config.get("docker", "docker"),
         state_dir / "source.json")
+    if not isinstance(config.get("recover_unhealthy_connector", False), bool):
+        raise ValueError("recover_unhealthy_connector must be boolean")
+    recovery = QuickTunnelRecovery(source, state_dir / "recovery.json") if config.get("recover_unhealthy_connector") else None
     publisher = Publisher(store, key, config["key_id"], config["installation_id"],
         state_dir / "journal.json", mirror)
     with exclusive_lock(state_dir / "publisher.lock"), httpx.Client(timeout=8, follow_redirects=False) as client:
@@ -332,7 +387,10 @@ def run(config: dict, *, once: bool) -> None:
                 pass
         while True:
             started = time.monotonic()
+            recovery_status = None
             try:
+                if recovery:
+                    recovery_status = recovery.reconcile(int(time.time()))
                 route = source.observe()
                 verify_route(client, route, config["installation_id"])
                 fallback = config.get("fallback_url")
@@ -350,6 +408,8 @@ def run(config: dict, *, once: bool) -> None:
             status.update(checked_at=int(time.time()), last_success_at=last_success,
                 duration_seconds=round(time.monotonic() - started, 3), scope=publisher.scope,
                 compose_project=source.project, compose_service=source.service)
+            if recovery_status is not None:
+                status["connector_recovery"] = recovery_status
             atomic_write(state_dir / "status.json", json.dumps(status, indent=2).encode())
             if once:
                 print(json.dumps(status))

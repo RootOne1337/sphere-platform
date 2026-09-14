@@ -4,6 +4,11 @@
 Исходная ревизия: `28f8cc46ab65496e00297960fd94d87d1605cc83`.
 Ветка исправлений: `codex/enterprise-audit-20260905`; [draft PR #19](https://github.com/RootOne1337/sphere-platform/pull/19).
 
+**AUD-122 High / reconnect:** живой unhealthy Quick Tunnel сам не восстановился,
+оба APK offline при healthy backend. Добавлен opt-in bounded restart строго
+своего connector, 42 tests pass. APK после ручного ремонта сами приняли новый
+адрес с прежними PID. [Инцидент и отдельная runtime-приёмка](CONNECTOR-RECOVERY.md).
+
 **Полный разбор ночного профиля:** [Engine, UI и фактическое покрытие](NIGHT-RUN-ANALYSIS.md).
 AUD-119 High: 513-й claim после 512 ACK блокируется — JVM reproduction сохранён,
 исправление и миграция описаны в [AUD-119](ANDROID-JOURNAL-CAPACITY.md);
