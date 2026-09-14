@@ -2,6 +2,13 @@
 
 **Срез: 14 сентября 2026 · аудит продолжается · приоритеты согласованы с владельцем.**
 
+**После полного разбора приоритеты изменены:** воспроизведена блокировка APK после
+512 уже подтверждённых задач (AUD-119, High); Task Engine скрывает историю за
+первой сотней и показывает недостоверные источники/индикаторы (AUD-120, High).
+Оба fixes пока открыты. Windows snapshot writer исправлен AUD-118 (`b8e0d0b`,
+18 local tests); шум 1,555 интерактивных warnings AUD-121 остаётся открытым.
+[Полный отчёт, evidence и порядок следующей приёмки](../audits/2026-09-05/NIGHT-RUN-ANALYSIS.md).
+
 **Ночной прогон остановлен:** `night-20260914-001`, 05:06–07:40 Asia/Yekaterinburg.
 77 циклов, 156 batch tasks, 16 pipeline controls; Python helper завершился с
 `PermissionError`. Причина OS-отказа неизвестна из-за неполной диагностики,
@@ -108,9 +115,9 @@ VPN и независимый резервный ingress. [Фактическа�
 [Главная](../../README.md) · [Доказательства аудита](../audits/2026-09-05/AUDIT-REPORT.md) ·
 [APK](../android-agent.md) · [PC-agent](../pc-agent.md) · [Будущий AI-контур](../architecture/AI-READINESS.md)
 
-**Последний архивированный CI исходников: `c4c10e8` — все обязательные checks success:**
+**Последний архивированный CI исходников: `3e442d1` — все обязательные checks success:**
 backend, Android, frontend, lint/security/RLS, Alembic и image bootstrap.
-[Архив с run links](../audits/2026-09-05/evidence/ci-c4c10e8-summary.json).
+[Архив с run links](../audits/2026-09-05/evidence/ci-3e442d1-summary.json).
 Включает ночной harness и AUD-115/116; установленный backend остаётся `12249b1`.
 Включает cross-worker video и capture lifecycle, OTA/root projection/boot recovery.
 Включает также idle video recovery AUD-113.

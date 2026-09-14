@@ -4,6 +4,15 @@
 Исходная ревизия: `28f8cc46ab65496e00297960fd94d87d1605cc83`.
 Ветка исправлений: `codex/enterprise-audit-20260905`; [draft PR #19](https://github.com/RootOne1337/sphere-platform/pull/19).
 
+**Полный разбор ночного профиля:** [Engine, UI и фактическое покрытие](NIGHT-RUN-ANALYSIS.md).
+AUD-119 High: 513-й claim после 512 ACK блокируется — JVM reproduction сохранён,
+fix открыт. AUD-120 High: браузер показывает только 100 задач, API отдаёт 174;
+CRON/Active Pipeline/Workflow элементы недостоверны или не подключены, fix открыт.
+AUD-118 Medium: native Windows snapshot lock → bounded local replace retry,
+`b8e0d0b`, 18 tests pass. AUD-121 Medium: 1,555 interactive warnings, fix открыт.
+Сверены все 164 native results; отдельно два безопасных задания доказали видимую
+шторку на обоих Android. Это 9/32 типов действий и не полная приёмка Engine.
+
 **Ночной прогон FAILED / AUD-117:** после 2 ч 35 мин Python helper остановился
 с `PermissionError`. 77 циклов и 156 batch tasks завершены; независимая сверка
 164 native results, обоих PID и crash buffers прошла. Потеря location/OS codes

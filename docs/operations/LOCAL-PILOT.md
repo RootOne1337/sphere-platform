@@ -128,6 +128,10 @@ Asia/Yekaterinburg запущен конечный восьмичасовой п
 Его статус и evidence: `.local-pilot/soak/night-20260914-001/`. В 07:40 helper
 завершился с `PermissionError` после 77 циклов; статус **failed**, без повтора.
 Оба APK сохранили PID, результаты перепроверены. [Разбор и AUD-117](../audits/2026-09-05/ANDROID-SOAK-TERMINAL.md).
+[Расширенный анализ](../audits/2026-09-05/NIGHT-RUN-ANALYSIS.md) подтверждает
+ограничения Task Engine и 512 ACK receipts; их fixes ещё не установлены.
+После отдельного визуального контроля добавлены два безопасных задания;
+исходные ночные counters не менялись. Новый длинный прогон пока не запускался.
 [Программа, остановка и чтение результатов](ANDROID-OVERNIGHT-SOAK.md).
 [Передача кадров между workers](../audits/2026-09-05/STREAM-VIDEO-ROUTING.md) исправлена;
 [AUD-113](../audits/2026-09-05/STREAM-IDLE-RECOVERY.md) устраняет restart здорового
