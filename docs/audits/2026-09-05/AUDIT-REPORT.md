@@ -4,6 +4,9 @@
 Исходная ревизия: `28f8cc46ab65496e00297960fd94d87d1605cc83`.
 Ветка исправлений: `codex/enterprise-audit-20260905`; [draft PR #19](https://github.com/RootOne1337/sphere-platform/pull/19).
 
+**AUD-123 High / web:** четыре failing reconnect regressions → 208 frontend tests pass,
+TypeScript pass. [Backoff, silent sockets и корректный статус](WEB-STREAM-RECOVERY.md).
+
 **AUD-122 High / reconnect:** живой unhealthy Quick Tunnel сам не восстановился,
 оба APK offline при healthy backend. Добавлен opt-in bounded restart строго
 своего connector, 42 tests pass. APK после ручного ремонта сами приняли новый
