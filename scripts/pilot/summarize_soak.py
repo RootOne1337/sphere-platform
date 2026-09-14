@@ -6,6 +6,8 @@ import json
 import math
 from pathlib import Path
 
+from scripts.pilot.atomic_json import write_json
+
 
 def distribution(values):
     values = sorted(values)
@@ -54,9 +56,7 @@ def main():
     args = parser.parse_args()
     summary = summarize(args.directory)
     destination = args.directory / "summary.json"
-    temporary = destination.with_suffix(".json.tmp")
-    temporary.write_text(json.dumps(summary, indent=2), encoding="utf-8")
-    temporary.replace(destination)
+    write_json(destination, summary)
     print(json.dumps(summary, indent=2))
 
 

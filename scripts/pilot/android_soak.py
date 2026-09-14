@@ -29,6 +29,7 @@ from backend.schemas.dag import DAGScript
 from backend.schemas.pipeline import PipelineStepSchema
 from scripts.discovery_manifest import verify_manifest
 from scripts.discovery_publisher import verify_route
+from scripts.pilot.atomic_json import write_json
 from scripts.pilot.summarize_soak import summarize
 
 FIXTURE = Path(__file__).with_name("android-safe-soak.json")
@@ -50,12 +51,6 @@ def require(condition, reason):
 
 def utc():
     return datetime.now(timezone.utc).isoformat()
-
-
-def write_json(path, data):
-    temporary = path.with_suffix(path.suffix + ".tmp")
-    temporary.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
-    temporary.replace(path)
 
 
 def failure_detail(exc):
