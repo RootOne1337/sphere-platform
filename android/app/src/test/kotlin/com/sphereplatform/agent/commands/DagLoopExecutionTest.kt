@@ -1,6 +1,5 @@
 package com.sphereplatform.agent.commands
 
-import androidx.security.crypto.EncryptedSharedPreferences
 import com.sphereplatform.agent.lua.LuaEngine
 import com.sphereplatform.agent.ws.SphereWebSocketClient
 import io.mockk.*
@@ -18,9 +17,8 @@ import org.junit.Test
 class DagLoopExecutionTest {
     private val adb = mockk<AdbActionExecutor>(relaxed = true)
     private val ws = mockk<SphereWebSocketClient>(relaxed = true)
-    private val prefs = mockk<EncryptedSharedPreferences>(relaxed = true)
     private val lua = mockk<LuaEngine>(relaxed = true)
-    private val runner = DagRunner(lua, adb, ws, prefs, mockk(relaxed = true))
+    private val runner = DagRunner(lua, adb, ws, mockk(relaxed = true), mockk(relaxed = true))
 
     private fun bodyNode(id: String, type: String, abort: Boolean = false, fields: JsonObjectBuilder.() -> Unit = {}) =
         buildJsonObject {

@@ -11,6 +11,7 @@ class CommandJournalTest {
     private val disk = mutableMapOf<String, String?>()
     private var writable = true
     private var legacy = emptySet<String>()
+    private val receipts = ReceiptStoreFixture()
     private fun journal(): CommandJournal {
         val prefs = mockk<EncryptedSharedPreferences>(relaxed = true)
         val editor = mockk<SharedPreferences.Editor>(relaxed = true)
@@ -25,7 +26,7 @@ class CommandJournalTest {
             if (writable) { disk.putAll(staged); stagedLegacy?.let { legacy = it } }
             writable
         }
-        return CommandJournal(prefs)
+        return CommandJournal(prefs, receipts.store)
     }
 
     @Test fun restartDoesNotRepeatAnAmbiguousExecution() {
@@ -96,5 +97,95 @@ class CommandJournalTest {
         journal().pending()
         assertEquals(1, legacy.size)
         assertTrue(disk.isEmpty())
+    }
+
+    @Test fun acknowledgedTasksDoNotExhaustCapacityAndOldDuplicatesSurviveRestart() {
+        val first = journal()
+        repeat(2_048) {
+            val id = "ack-$it"
+            assertTrue(first.claim(id) is CommandJournal.Claim.Started)
+            first.complete(id, if (it == 0) "failed" else "completed", null, null)
+            first.acknowledge(id)
+        }
+        val restarted = journal()
+        assertEquals("failed", (restarted.claim("ack-0") as CommandJournal.Claim.Existing).response["status"]!!.jsonPrimitive.content)
+        assertTrue(restarted.pending().isEmpty())
+        assertTrue(restarted.claim("new-task") is CommandJournal.Claim.Started)
+        assertTrue(disk.getValue("command_journal_v1")!!.length < 100)
+    }
+
+    private fun seedAcknowledgedV1() {
+        disk["command_journal_v1"] = buildJsonObject {
+            repeat(512) { n -> put("old-$n", buildJsonObject {
+                put("created_at", System.currentTimeMillis())
+                put("acknowledged", true)
+                put("response", buildJsonObject { put("status", if (n == 0) "failed" else "completed") })
+            }) }
+        }.toString()
+    }
+
+    @Test fun fullOldJournalMigratesAndStillRejectsDuplicates() {
+        seedAcknowledgedV1()
+        val first = journal()
+        assertTrue(first.claim("new-task") is CommandJournal.Claim.Started)
+        assertEquals(512, receipts.rows.size)
+        assertEquals("failed", (journal().claim("old-0") as CommandJournal.Claim.Existing).response["status"]!!.jsonPrimitive.content)
+        assertEquals("execution_outcome_unknown_after_restart", journal().pending().single()["error"]!!.jsonPrimitive.content)
+    }
+
+    @Test fun failedReceiptMigrationLeavesAllOldEvidenceAndAdmitsNoTask() {
+        seedAcknowledgedV1()
+        val before = disk.toMap()
+        receipts.writable = false
+        assertThrows(IllegalStateException::class.java) { journal().claim("new-task") }
+        assertEquals(before, disk)
+        receipts.writable = true
+        assertTrue(journal().claim("new-task") is CommandJournal.Claim.Started)
+    }
+
+    @Test fun migrationInterruptedBetweenStoresCanResumeWithoutReplay() {
+        seedAcknowledgedV1()
+        val before = disk.toMap()
+        writable = false
+        assertThrows(IllegalStateException::class.java) { journal().claim("new-task") }
+        assertEquals(before, disk)
+        assertEquals(512, receipts.rows.size)
+        writable = true
+        assertTrue(journal().claim("old-0") is CommandJournal.Claim.Existing)
+        assertTrue(journal().claim("new-task") is CommandJournal.Claim.Started)
+    }
+
+    @Test fun failedAckStorageNeverDiscardsPendingResults() {
+        val first = journal()
+        first.claim("task")
+        val result = first.complete("task", "failed", "original error", null)
+        receipts.writable = false
+        assertThrows(IllegalStateException::class.java) { first.acknowledge("task") }
+        assertEquals(result, journal().pending().single())
+        receipts.writable = true
+        writable = false
+        assertThrows(IllegalStateException::class.java) { first.acknowledge("task") }
+        assertEquals(result, journal().pending().single())
+        writable = true
+        journal().acknowledge("task")
+        assertTrue(journal().pending().isEmpty())
+        assertTrue(journal().claim("task") is CommandJournal.Claim.Existing)
+    }
+
+    @Test fun acknowledgingOneOf512PendingResultsReleasesOneSlotOnly() {
+        val first = journal()
+        repeat(512) { first.claim("task-$it"); first.complete("task-$it", "completed", null, null) }
+        first.acknowledge("task-0")
+        assertTrue(first.claim("new-task") is CommandJournal.Claim.Started)
+        first.complete("new-task", "completed", null, null)
+        assertThrows(IllegalStateException::class.java) { first.claim("overflow") }
+        assertEquals(512, journal().pending().size)
+        assertTrue(journal().claim("task-0") is CommandJournal.Claim.Existing)
+    }
+
+    @Test fun malformedOldJournalFailsClosed() {
+        disk["command_journal_v1"] = "broken json"
+        assertThrows(Exception::class.java) { journal() }
+        assertEquals("broken json", disk["command_journal_v1"])
     }
 }

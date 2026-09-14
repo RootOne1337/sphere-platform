@@ -6,7 +6,8 @@
 
 **Полный разбор ночного профиля:** [Engine, UI и фактическое покрытие](NIGHT-RUN-ANALYSIS.md).
 AUD-119 High: 513-й claim после 512 ACK блокируется — JVM reproduction сохранён,
-fix открыт. AUD-120 High: браузер показывает только 100 задач, API отдаёт 174;
+исправление и миграция описаны в [AUD-119](ANDROID-JOURNAL-CAPACITY.md);
+проверка установленной версии учитывается отдельно. AUD-120 High: браузер показывает только 100 задач, API отдаёт 174;
 CRON/Active Pipeline/Workflow элементы недостоверны или не подключены, fix открыт.
 AUD-118 Medium: native Windows snapshot lock → bounded local replace retry,
 `b8e0d0b`, 18 tests pass. AUD-121 Medium: 1,555 interactive warnings, fix открыт.

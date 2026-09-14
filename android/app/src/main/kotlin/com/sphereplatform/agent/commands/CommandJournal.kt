@@ -6,15 +6,17 @@ import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/** Durable, bounded receipts for DAGs. IDs are deduplicated for seven days.
+/** Bounded encrypted pending results plus indexed receipts retained for seven days after ACK.
  * A recovered running receipt has an unknown outcome and must never be rerun.
  * Pending results are retained until the server acknowledges its DB commit.
  */
 @Singleton
-class CommandJournal @Inject constructor(private val prefs: EncryptedSharedPreferences) {
+class CommandJournal @Inject constructor(
+    private val prefs: EncryptedSharedPreferences,
+    private val receipts: CommandReceiptStore,
+) {
     companion object {
         private const val KEY = "command_journal_v1"
-        private const val RETENTION_MS = 7L * 24 * 60 * 60 * 1000
         private const val MAX_ENTRIES = 512
         private const val MAX_BYTES = 1024 * 1024
         private const val MAX_RESULT_BYTES = 64 * 1024
@@ -32,19 +34,18 @@ class CommandJournal @Inject constructor(private val prefs: EncryptedSharedPrefe
     } ?: mutableMapOf<String, JsonElement>()
 
     @Synchronized fun claim(id: String): Claim {
+        migrateAcknowledged()
+        receipts.prune(System.currentTimeMillis())
         val existing = records[id]?.jsonObject
         if (existing != null) {
             existing["response"]?.let { return Claim.Existing(it.jsonObject) }
             if (id in active) return Claim.Existing(response(id, "running"))
             return Claim.Existing(complete(id, "failed", "execution_outcome_unknown_after_restart", null))
         }
+        receipts.find(id)?.let { return Claim.Existing(response(id, it)) }
         check(active.isEmpty()) { "device_execution_busy" }
         val now = System.currentTimeMillis()
-        val next = records.filterValues { value ->
-            val entry = value.jsonObject
-            entry["acknowledged"]?.jsonPrimitive?.booleanOrNull != true ||
-                now - entry.getValue("created_at").jsonPrimitive.long < RETENTION_MS
-        }.toMutableMap()
+        val next = records.toMutableMap()
         check(next.size < MAX_ENTRIES) { "command_journal_capacity_exhausted" }
         next[id] = buildJsonObject { put("created_at", now) }
         persist(next, reserveResult = true) // Confirm durable receipt before any device action.
@@ -74,6 +75,7 @@ class CommandJournal @Inject constructor(private val prefs: EncryptedSharedPrefe
     }
 
     @Synchronized fun pending(): List<JsonObject> {
+        migrateAcknowledged()
         importLegacyResults()
         records.keys.toList().filter { it !in active && records[it]?.jsonObject?.get("response") == null }
             .forEach { complete(it, "failed", "execution_outcome_unknown_after_restart", null) }
@@ -92,7 +94,7 @@ class CommandJournal @Inject constructor(private val prefs: EncryptedSharedPrefe
                 val id = old.getValue("command_id").jsonPrimitive.content
                 val result = old.getValue("result").jsonObject
                 val next = records.toMutableMap()
-                if (id !in next) {
+                if (id !in next && receipts.find(id) == null) {
                     if (next.size >= MAX_ENTRIES) break
                     val status = if (result["success"]?.jsonPrimitive?.booleanOrNull == true) "completed" else "failed"
                     var payload = response(id, status, result = result)
@@ -117,18 +119,29 @@ class CommandJournal @Inject constructor(private val prefs: EncryptedSharedPrefe
     }
 
     @Synchronized fun acknowledge(id: String) {
+        migrateAcknowledged()
         val entry = records[id]?.jsonObject ?: return
         val terminal = entry["response"]?.jsonObject ?: return
-        if (entry["acknowledged"]?.jsonPrimitive?.booleanOrNull == true) return
+        receipts.record(listOf(CommandReceiptStore.Receipt(
+            id, terminal.getValue("status").jsonPrimitive.content, System.currentTimeMillis(),
+        )))
         val next = records.toMutableMap()
-        next[id] = buildJsonObject {
-            put("created_at", entry.getValue("created_at"))
-            // Keep a compact terminal receipt for duplicate deliveries.
-            put("response", response(id, terminal.getValue("status").jsonPrimitive.content,
-                terminal["error"]?.jsonPrimitive?.contentOrNull))
-            put("acknowledged", true)
-        }
+        next.remove(id)
         persist(next)
+    }
+
+    private fun migrateAcknowledged() {
+        val acknowledged = records.filterValues {
+            it.jsonObject["acknowledged"]?.jsonPrimitive?.booleanOrNull == true
+        }
+        if (acknowledged.isEmpty()) return
+        val now = System.currentTimeMillis()
+        receipts.record(acknowledged.map { (id, entry) ->
+            CommandReceiptStore.Receipt(id,
+                entry.jsonObject.getValue("response").jsonObject.getValue("status").jsonPrimitive.content, now)
+        })
+        // A crash/write failure between these commits leaves both copies, never neither.
+        persist(records.filterKeys { it !in acknowledged }.toMutableMap())
     }
 
     private fun persist(next: MutableMap<String, JsonElement>, reserveResult: Boolean = false,

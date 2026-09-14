@@ -1,6 +1,5 @@
 package com.sphereplatform.agent.commands
 
-import androidx.security.crypto.EncryptedSharedPreferences
 import com.sphereplatform.agent.lua.LuaEngine
 import com.sphereplatform.agent.ws.SphereWebSocketClient
 import com.sphereplatform.agent.lua.executeWithTimeout
@@ -62,7 +61,7 @@ class DagRunner @Inject constructor(
     private val luaEngine: LuaEngine,
     private val adbActions: AdbActionExecutor,
     private val wsClient: SphereWebSocketClient,
-    private val prefs: EncryptedSharedPreferences,
+    private val commandJournal: CommandJournal,
     private val httpClient: okhttp3.OkHttpClient,
 ) {
     companion object {
@@ -368,7 +367,7 @@ class DagRunner @Inject constructor(
      * Вызывается из CommandDispatcher → wsClient.onConnected.
      */
     suspend fun flushPendingResults() {
-        for (result in CommandJournal(prefs).pending()) {
+        for (result in commandJournal.pending()) {
             if (!wsClient.sendJson(result)) break
         }
     }

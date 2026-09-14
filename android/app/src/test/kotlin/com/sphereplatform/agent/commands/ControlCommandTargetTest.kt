@@ -29,11 +29,12 @@ class ControlCommandTargetTest {
         every { editor.commit() } returns true
         every { ws.onJsonMessage = captureNullable(callback) } just Runs
         every { ws.sendJson(capture(messages)) } returns true
-        val runner = DagRunner(mockk(relaxed = true), adb, ws, prefs, mockk(relaxed = true))
+        val journal = CommandJournal(prefs, ReceiptStoreFixture().store)
+        val runner = DagRunner(mockk(relaxed = true), adb, ws, journal, mockk(relaxed = true))
         return CommandDispatcher(ws, adb, runner, mockk(relaxed = true),
             mockk(relaxed = true), mockk(relaxed = true), mockk(relaxed = true),
             mockk(relaxed = true), mockk(relaxed = true), mockk(relaxed = true),
-            mockk(relaxed = true), scope, mockk(relaxed = true), mockk(relaxed = true), CommandJournal(prefs))
+            mockk(relaxed = true), scope, mockk(relaxed = true), mockk(relaxed = true), journal)
             .also { it.start() }
     }
 

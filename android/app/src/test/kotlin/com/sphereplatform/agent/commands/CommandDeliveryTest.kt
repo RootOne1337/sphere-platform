@@ -20,6 +20,7 @@ class CommandDeliveryTest {
     private val messages = mutableListOf<JsonObject>()
     private val callback = slot<((JsonObject) -> Unit)?>()
     private val disk = mutableMapOf<String, String?>()
+    private val receipts = ReceiptStoreFixture()
     private fun journal(): CommandJournal {
         val prefs = mockk<androidx.security.crypto.EncryptedSharedPreferences>(relaxed = true)
         val editor = mockk<android.content.SharedPreferences.Editor>(relaxed = true)
@@ -29,7 +30,7 @@ class CommandDeliveryTest {
             disk[firstArg()] = secondArg(); editor
         }
         every { editor.commit() } returns true
-        return CommandJournal(prefs)
+        return CommandJournal(prefs, receipts.store)
     }
 
     private fun dispatcher(scope: kotlinx.coroutines.CoroutineScope): CommandDispatcher {
@@ -139,5 +140,25 @@ class CommandDeliveryTest {
         runCurrent()
         verify(exactly = 1) { adb.swipe(1, 2, 3, 4, 300) }
         dispatcher.stop()
+    }
+
+    @Test fun failedAcknowledgementWriteKeepsResultAndDoesNotCrashApplicationScope() = runTest {
+        coEvery { dag.execute(any(), any(), any()) } returns buildJsonObject { put("success", true) }
+        val dispatcher = dispatcher(backgroundScope)
+        callback.captured!!(command())
+        runCurrent()
+        val ack = buildJsonObject {
+            put("type", "result_ack"); put("command_id", command().getValue("command_id"))
+        }
+        receipts.writable = false
+        callback.captured!!(ack)
+        runCurrent()
+        assertEquals(1, journal().pending().size)
+        receipts.writable = true
+        callback.captured!!(ack)
+        runCurrent()
+        assertTrue(journal().pending().isEmpty())
+        dispatcher.stop()
+        // runTest fails on an uncaught exception from the application's launch callback.
     }
 }

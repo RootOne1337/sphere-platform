@@ -173,7 +173,13 @@ class CommandDispatcher @Inject constructor(
         // System streaming messages — NOT IncomingCommand format, handle first
         when (msg["type"]?.jsonPrimitive?.contentOrNull) {
             "result_ack" -> {
-                msg["command_id"]?.jsonPrimitive?.contentOrNull?.let { commandJournal.acknowledge(it) }
+                try {
+                    msg["command_id"]?.jsonPrimitive?.contentOrNull?.let { commandJournal.acknowledge(it) }
+                } catch (e: Exception) {
+                    // Storage remains authoritative: retain and resend the pending result.
+                    // An ACK write failure must not escape launch and crash the entire APK.
+                    Timber.e(e, "Cannot persist command acknowledgement; result retained")
+                }
                 return
             }
             "start_stream" -> {
