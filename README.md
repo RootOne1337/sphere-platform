@@ -72,6 +72,7 @@ Sphere объединяет управление Android-устройствам�
 | Вам нужно | Начните здесь |
 | --- | --- |
 | Открыть подготовленный локальный стенд рядом со старым Docker project | [Local pilot: веб, APK, вход и границы проверки](docs/operations/LOCAL-PILOT.md) |
+| Проверить ночной прогон Android, остановить его или прочитать результаты | [Безопасные DAG, pipeline controls, стрим и evidence](docs/operations/ANDROID-OVERNIGHT-SOAK.md) |
 | Понять, что уже работает и что мешает эксплуатации | [Эксплуатационная готовность](docs/operations/READINESS.md) |
 | Дойти до первого рабочего пилота и понять сроки | [План приёмки: веб → APK → задача → VPN](docs/operations/PILOT-ACCEPTANCE.md) |
 | Подготовить локальный стек | [Разработка](docs/development.md) → [Конфигурация](docs/configuration.md) |

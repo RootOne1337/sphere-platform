@@ -2,6 +2,14 @@
 
 **Срез: 14 сентября 2026 · аудит продолжается · приоритеты согласованы с владельцем.**
 
+**Ночной прогон:** 05:06–примерно 13:06 Asia/Yekaterinburg, `night-20260914-001`.
+Два APK исполняют безопасный системный DAG, waves и stream cycles; периодически
+проверяются pipeline pause/resume/cancel. Совместный preflight прошёл; длительный
+результат пока **running**, не принят. [Программа и evidence](ANDROID-OVERNIGHT-SOAK.md).
+Текущий backend **`12249b1`** исправляет HTTP 500 после создания script и после
+pipeline controls (AUD-115/116). 92 связанных локальных tests pass, native
+результаты сохранены. [Сводка](../audits/2026-09-05/evidence/overnight-preflight-summary.json).
+
 **Стенд работает:** отдельный `sphere-pilot-20260911`, девять healthy сервисов,
 browser login/reload и два установленных APK. После AUD-92 прошли 12/12 HTTPS
 `echo`; gateway restart → автоматический возврат за 9.03 s без новой регистрации.
@@ -50,7 +58,7 @@ OTA; исправлена гонка ImageReader copy/teardown, приводив
 без смены PID; 560 JVM tests и по 74 signed-flavor tests.
 [Доказательства и границы](../audits/2026-09-05/ANDROID-CAPTURE-LIFECYCLE.md).
 
-**AUD-109–113, текущий backend `fa099aa`:** bounded очереди видео, restricted-role
+**AUD-109–113, приняты на backend `fa099aa` и сохранены в текущем:** bounded очереди видео, restricted-role
 viewer login и передача кадров/controls между workers исправлены. Пауза кадров
 более 5 s больше не должна вызывать повторный start через Redis request timeout.
 212 связанных tests pass, включая настоящий socket loss и idle baseline до/после.
@@ -94,11 +102,12 @@ VPN и независимый резервный ingress. [Фактическа�
 [Главная](../../README.md) · [Доказательства аудита](../audits/2026-09-05/AUDIT-REPORT.md) ·
 [APK](../android-agent.md) · [PC-agent](../pc-agent.md) · [Будущий AI-контур](../architecture/AI-READINESS.md)
 
-**Последний архивированный CI исходников: `fa099aa` — все обязательные checks success:**
+**Последний архивированный CI исходников: `12249b1` — все обязательные checks success:**
 backend, Android, frontend, lint/security/RLS, Alembic и image bootstrap.
-[Архив с run links](../audits/2026-09-05/evidence/ci-fa099aa-summary.json).
+[Архив с run links](../audits/2026-09-05/evidence/ci-12249b1-summary.json).
 Включает cross-worker video и capture lifecycle, OTA/root projection/boot recovery.
 Включает также idle video recovery AUD-113.
+Включает script create и pipeline control response fixes AUD-115/116.
 Проверки последующего documentation head отслеживаются отдельно.
 Предыдущий `f20b3b9`: JUnit **1591 tests / 0 failures / 0 errors / 0 skipped / 261.517 s**
 ([архив](../audits/2026-09-05/evidence/ci-f20b3b9-summary.json)).

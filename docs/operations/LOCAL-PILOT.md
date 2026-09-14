@@ -117,8 +117,17 @@ AUD-112 устраняет SIGSEGV при конкурирующих frame copy 
 В каталоге **3 release android/dev: 10203, 10204 и актуальный 10205**; canary retired.
 Файл и каталог хранятся в `.local-pilot/updates/`, backend bind mount
 `/var/lib/sphere/updates`. Пересоздание только нового backend сохранило каталог
-и авторизованное скачивание актуального APK. Backend закреплён на **`fa099aa`**,
+и авторизованное скачивание актуального APK. Backend закреплён на **`12249b1`**,
 public-gateway использует Host fix `985e4fc`.
+
+В текущем backend исправлены ответы создания сценария и управления pipeline
+([AUD-115](../audits/2026-09-05/SCRIPT-CREATE-RESPONSE.md),
+[AUD-116](../audits/2026-09-05/PIPELINE-CONTROL-RESPONSE.md)). Native batch и
+pipeline pause/resume/cancel приняты в описанных границах. 14 сентября в 05:06
+Asia/Yekaterinburg запущен конечный восьмичасовой прогон `night-20260914-001`.
+Его статус и evidence: `.local-pilot/soak/night-20260914-001/`; плановый конец
+около 13:06 плюс последний цикл. На момент публикации — **running, не passed**.
+[Программа, остановка и чтение результатов](ANDROID-OVERNIGHT-SOAK.md).
 [Передача кадров между workers](../audits/2026-09-05/STREAM-VIDEO-ROUTING.md) исправлена;
 [AUD-113](../audits/2026-09-05/STREAM-IDLE-RECOVERY.md) устраняет restart здорового
 захвата по Redis read timeout. Native 75 s на обоих: ровно один start на устройство,

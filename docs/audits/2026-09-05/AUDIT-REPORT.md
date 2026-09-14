@@ -9,6 +9,12 @@
 5 pass после refresh серверного `updated_at` перед сериализацией.
 [Причина и границы](PIPELINE-CONTROL-RESPONSE.md).
 
+Native после AUD-115/116: созданный script выполнен обоими Android; отдельный
+pipeline pause/resume/cancel и совместный preflight с batch/стримом прошли.
+С 05:06 14 сентября (Asia/Yekaterinburg) работает восьмичасовой профиль;
+итог ночи пока не принят. [Программа](../../operations/ANDROID-OVERNIGHT-SOAK.md) ·
+[Evidence](evidence/overnight-preflight-summary.json).
+
 **AUD-115:** создание сценария возвращало HTTP 500 после commit из-за lazy load
 текущей версии при сериализации. Явная async-загрузка отношения устраняет ошибку;
 create/update/rollback и отдельный GET проверены на PostgreSQL, 42 tests pass.
