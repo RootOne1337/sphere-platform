@@ -2,10 +2,13 @@
 
 **Срез: 14 сентября 2026 · аудит продолжается · приоритеты согласованы с владельцем.**
 
-**Ночной прогон:** 05:06–примерно 13:06 Asia/Yekaterinburg, `night-20260914-001`.
-Два APK исполняют безопасный системный DAG, waves и stream cycles; периодически
-проверяются pipeline pause/resume/cancel. Совместный preflight прошёл; длительный
-результат пока **running**, не принят. [Программа и evidence](ANDROID-OVERNIGHT-SOAK.md).
+**Ночной прогон остановлен:** `night-20260914-001`, 05:06–07:40 Asia/Yekaterinburg.
+77 циклов, 156 batch tasks, 16 pipeline controls; Python helper завершился с
+`PermissionError`. Причина OS-отказа неизвестна из-за неполной диагностики,
+исправленной AUD-117 (2 failing regressions → 15 passing harness tests).
+Независимо подтверждены 164 native task results, прежние PID и отсутствие новых
+fatal entries в проверенных crash buffers. **Восемь часов не пройдены; повтора нет.**
+[Итог и открытые вопросы](../audits/2026-09-05/ANDROID-SOAK-TERMINAL.md).
 [Промежуточная независимая сверка 05:23](../audits/2026-09-05/ANDROID-SOAK-CHECKPOINT.md):
 19 native DAG results сохранены, PID обоих APK неизменны; лишние предупреждения
 интерактивных ответов `task.result.not_found` зафиксированы как открытая проблема.

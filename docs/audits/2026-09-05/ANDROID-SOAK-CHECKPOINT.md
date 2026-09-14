@@ -2,6 +2,9 @@
 
 **14 сентября 2026, 00:23 UTC / 05:23 Asia/Yekaterinburg. Прогон ещё работает.**
 
+Историческое окно. Позже прогон остановился с PermissionError:
+[итог и AUD-117](ANDROID-SOAK-TERMINAL.md). Ниже сохранены исходные наблюдения.
+
 [Профиль и ограничения](../../operations/ANDROID-OVERNIGHT-SOAK.md) ·
 [Проверенная сводка](evidence/overnight-checkpoint-20260914T0023Z.json) ·
 [Готовность](../../operations/READINESS.md)

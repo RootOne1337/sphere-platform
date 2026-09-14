@@ -125,8 +125,9 @@ public-gateway использует Host fix `985e4fc`.
 [AUD-116](../audits/2026-09-05/PIPELINE-CONTROL-RESPONSE.md)). Native batch и
 pipeline pause/resume/cancel приняты в описанных границах. 14 сентября в 05:06
 Asia/Yekaterinburg запущен конечный восьмичасовой прогон `night-20260914-001`.
-Его статус и evidence: `.local-pilot/soak/night-20260914-001/`; плановый конец
-около 13:06 плюс последний цикл. На момент публикации — **running, не passed**.
+Его статус и evidence: `.local-pilot/soak/night-20260914-001/`. В 07:40 helper
+завершился с `PermissionError` после 77 циклов; статус **failed**, без повтора.
+Оба APK сохранили PID, результаты перепроверены. [Разбор и AUD-117](../audits/2026-09-05/ANDROID-SOAK-TERMINAL.md).
 [Программа, остановка и чтение результатов](ANDROID-OVERNIGHT-SOAK.md).
 [Передача кадров между workers](../audits/2026-09-05/STREAM-VIDEO-ROUTING.md) исправлена;
 [AUD-113](../audits/2026-09-05/STREAM-IDLE-RECOVERY.md) устраняет restart здорового

@@ -58,6 +58,21 @@ def write_json(path, data):
     temporary.replace(path)
 
 
+def failure_detail(exc):
+    """Keep the failing operation and OS codes without URLs, paths or exception text."""
+    frames = []
+    cursor = exc.__traceback__
+    while cursor is not None:
+        code = cursor.tb_frame.f_code
+        frames.append({"file": Path(code.co_filename).name,
+                       "function": code.co_name, "line": cursor.tb_lineno})
+        cursor = cursor.tb_next
+    return {"type": type(exc).__name__, "frames": frames[-12:],
+            **{name: value if isinstance(value := getattr(exc, name, None), int)
+               and not isinstance(value, bool) else None
+               for name in ("errno", "winerror")}}
+
+
 def safe_dag():
     dag = json.loads(FIXTURE.read_text(encoding="utf-8"))
     # Reviewed actions only. A fixture edit must not silently broaden night work.
@@ -459,7 +474,8 @@ class Runner:
             self.state["status"] = "failed"
             # Never record arbitrary HTTP exception text containing private URLs/tokens.
             self.state["failure"] = str(exc) if isinstance(exc, SoakFailure) else type(exc).__name__
-            self.event("failed", reason=self.state["failure"])
+            self.state["failure_detail"] = failure_detail(exc)
+            self.event("failed", reason=self.state["failure"], detail=self.state["failure_detail"])
         finally:
             for run_id in self.active_pipelines:
                 try:

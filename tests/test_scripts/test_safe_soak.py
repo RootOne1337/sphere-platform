@@ -88,6 +88,48 @@ async def test_failure_finishes_with_diagnostics_and_stops_admission(tmp_path):
     assert runner.state["cycles_passed"] == 0
 
 
+@pytest.mark.parametrize("operation", ["status_replace", "socket_connect"])
+async def test_os_failure_preserves_location_and_codes_without_private_text(tmp_path, operation):
+    config = {"devices": [{"id": "85f2f935-7739-400e-9389-0d71227e8f0a"}],
+              "package": "com.sphereplatform.agent.pilot.debug", "script_id": "script", "version_id": "version"}
+    runner = Runner(config, tmp_path, 120)
+    runner.authenticate = AsyncMock()
+    runner.check_script = AsyncMock()
+    runner.no_existing_tasks = AsyncMock()
+    runner.sample = AsyncMock()
+    runner.diagnostics = AsyncMock()
+
+    def status_replace():
+        raise PermissionError(13, "PRIVATE_VALUE_DO_NOT_LOG", "PRIVATE_FILENAME")
+
+    def socket_connect():
+        error = PermissionError(13, "PRIVATE_VALUE_DO_NOT_LOG", "PRIVATE_FILENAME")
+        error.winerror = 10013
+        raise error
+
+    async def fail_cycle(number):
+        {"status_replace": status_replace, "socket_connect": socket_connect}[operation]()
+
+    runner.cycle = AsyncMock(side_effect=fail_cycle)
+    assert await runner.run() == 1
+    saved = json.loads((tmp_path / "status.json").read_text())
+    detail = saved["failure_detail"]
+    assert detail["type"] == "PermissionError"
+    assert detail["errno"] == 13
+    assert detail["winerror"] == (10013 if operation == "socket_connect" else None)
+    assert detail["frames"][-1]["function"] == operation
+    assert detail["frames"][-1]["file"] == "test_safe_soak.py"
+    assert detail["frames"][-1]["line"] > 0
+    for path in tmp_path.glob("*.json*"):
+        assert "PRIVATE_VALUE_DO_NOT_LOG" not in path.read_text()
+        assert "PRIVATE_FILENAME" not in path.read_text()
+    failed = next(json.loads(line) for line in (tmp_path / "events.jsonl").read_text().splitlines()
+                  if json.loads(line)["event"] == "failed")
+    assert failed["detail"] == detail
+    runner.cycle.assert_awaited_once()
+    runner.diagnostics.assert_awaited_once()
+
+
 async def test_modified_pipeline_is_rejected_before_run_admission(tmp_path):
     config = {"devices": [{"id": "85f2f935-7739-400e-9389-0d71227e8f0a"}],
               "package": "com.sphereplatform.agent.pilot.debug", "script_id": "script",

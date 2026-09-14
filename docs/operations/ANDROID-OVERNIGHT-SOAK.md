@@ -4,9 +4,10 @@
 
 [Стенд](LOCAL-PILOT.md) · [Готовность](READINESS.md) · [Аудит](../audits/2026-09-05/AUDIT-REPORT.md)
 
-Активный прогон `night-20260914-001`: начало 14 сентября 05:06, плановый конец
-около 13:06 Asia/Yekaterinburg. [Промежуточная сверка 05:23](../audits/2026-09-05/ANDROID-SOAK-CHECKPOINT.md)
-подтверждает сохранённые результаты и неизменные PID; итог ночи ещё не принят.
+Прогон `night-20260914-001` **остановился с PermissionError** 14 сентября в 07:40
+Asia/Yekaterinburg после 2 ч 35 мин. 77 циклов, 156 batch tasks; оба APK сохранили
+PID. Восьмичасовая приёмка не пройдена, автоматического повтора нет.
+[Итог, AUD-117 и evidence](../audits/2026-09-05/ANDROID-SOAK-TERMINAL.md).
 
 ## Что проверяется
 
@@ -86,6 +87,10 @@ python -m scripts.pilot.android_soak --config .local-pilot/overnight-config.json
 | `memory-*.txt` | Исходные снимки dumpsys meminfo |
 | `diagnostic-*.txt` | Ограниченный crash buffer, PID и projection после завершения |
 | `STOP` | Запрос мягкой остановки |
+
+После AUD-117 событие `failed` и `status.json.failure_detail` сохраняют класс,
+OS codes и расположение исключения без private текста и locals. У исходного
+`night-20260914-001` этих полей нет: старую причину задним числом не восстанавливаем.
 
 Сырые evidence и credentials остаются в игнорируемой `.local-pilot/`; публично
 публикуется только проверенная сводка. Наличие старых записей SIGSEGV не означает

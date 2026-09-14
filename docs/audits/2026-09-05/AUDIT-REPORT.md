@@ -4,6 +4,12 @@
 Исходная ревизия: `28f8cc46ab65496e00297960fd94d87d1605cc83`.
 Ветка исправлений: `codex/enterprise-audit-20260905`; [draft PR #19](https://github.com/RootOne1337/sphere-platform/pull/19).
 
+**Ночной прогон FAILED / AUD-117:** после 2 ч 35 мин Python helper остановился
+с `PermissionError`. 77 циклов и 156 batch tasks завершены; независимая сверка
+164 native results, обоих PID и crash buffers прошла. Потеря location/OS codes
+ошибки исправлена (2 baseline failures → 15 harness tests pass), но исходная
+причина PermissionError ещё неизвестна. [Итог, fix и residual risk](ANDROID-SOAK-TERMINAL.md).
+
 **AUD-116:** Pause pipeline возвращал HTTP 500 после сохранения состояния.
 На PostgreSQL воспроизведены также resume/cancel/update/toggle: 5 failures →
 5 pass после refresh серверного `updated_at` перед сериализацией.
@@ -11,8 +17,8 @@
 
 Native после AUD-115/116: созданный script выполнен обоими Android; отдельный
 pipeline pause/resume/cancel и совместный preflight с batch/стримом прошли.
-С 05:06 14 сентября (Asia/Yekaterinburg) работает восьмичасовой профиль;
-итог ночи пока не принят. [Программа](../../operations/ANDROID-OVERNIGHT-SOAK.md) ·
+Восьмичасовой профиль, начатый в 05:06 14 сентября (Asia/Yekaterinburg),
+остановился в 07:40; итог ночи не принят. [Программа](../../operations/ANDROID-OVERNIGHT-SOAK.md) ·
 [Evidence](evidence/overnight-preflight-summary.json).
 [Промежуточная сверка 05:23](ANDROID-SOAK-CHECKPOINT.md): 19 native DAG results
 повторно прочитаны через API, PID обоих APK неизменны, новых fatal-записей нет.
