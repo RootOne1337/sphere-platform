@@ -6,6 +6,9 @@
 Два APK исполняют безопасный системный DAG, waves и stream cycles; периодически
 проверяются pipeline pause/resume/cancel. Совместный preflight прошёл; длительный
 результат пока **running**, не принят. [Программа и evidence](ANDROID-OVERNIGHT-SOAK.md).
+[Промежуточная независимая сверка 05:23](../audits/2026-09-05/ANDROID-SOAK-CHECKPOINT.md):
+19 native DAG results сохранены, PID обоих APK неизменны; лишние предупреждения
+интерактивных ответов `task.result.not_found` зафиксированы как открытая проблема.
 Текущий backend **`12249b1`** исправляет HTTP 500 после создания script и после
 pipeline controls (AUD-115/116). 92 связанных локальных tests pass, native
 результаты сохранены. [Сводка](../audits/2026-09-05/evidence/overnight-preflight-summary.json).
@@ -102,9 +105,10 @@ VPN и независимый резервный ingress. [Фактическа�
 [Главная](../../README.md) · [Доказательства аудита](../audits/2026-09-05/AUDIT-REPORT.md) ·
 [APK](../android-agent.md) · [PC-agent](../pc-agent.md) · [Будущий AI-контур](../architecture/AI-READINESS.md)
 
-**Последний архивированный CI исходников: `12249b1` — все обязательные checks success:**
+**Последний архивированный CI исходников: `c4c10e8` — все обязательные checks success:**
 backend, Android, frontend, lint/security/RLS, Alembic и image bootstrap.
-[Архив с run links](../audits/2026-09-05/evidence/ci-12249b1-summary.json).
+[Архив с run links](../audits/2026-09-05/evidence/ci-c4c10e8-summary.json).
+Включает ночной harness и AUD-115/116; установленный backend остаётся `12249b1`.
 Включает cross-worker video и capture lifecycle, OTA/root projection/boot recovery.
 Включает также idle video recovery AUD-113.
 Включает script create и pipeline control response fixes AUD-115/116.

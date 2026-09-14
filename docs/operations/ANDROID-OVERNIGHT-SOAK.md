@@ -4,6 +4,10 @@
 
 [Стенд](LOCAL-PILOT.md) · [Готовность](READINESS.md) · [Аудит](../audits/2026-09-05/AUDIT-REPORT.md)
 
+Активный прогон `night-20260914-001`: начало 14 сентября 05:06, плановый конец
+около 13:06 Asia/Yekaterinburg. [Промежуточная сверка 05:23](../audits/2026-09-05/ANDROID-SOAK-CHECKPOINT.md)
+подтверждает сохранённые результаты и неизменные PID; итог ночи ещё не принят.
+
 ## Что проверяется
 
 Harness [android_soak.py](../../scripts/pilot/android_soak.py) выполняет настоящие
@@ -98,5 +102,6 @@ python -m scripts.pilot.summarize_soak .local-pilot/soak/UNIQUE-RUN
 
 Это прогон двух реальных устройств и основного task/stream пути. VPN, OTA/reboot,
 нативный отказ сети, Redis/PostgreSQL faults, n8n, UI-ввод/поиск элементов и
-fleet capacity требуют отдельных приёмок. Pipeline pause/resume/cancel также
-проверяются отдельно: pause имеет семантику границы шага, а не мгновенной паузы APK.
+fleet capacity требуют отдельных приёмок. Включённые pipeline controls проверяют
+границу шага; early concurrent resume и остановка выполняющегося APK-узла требуют
+отдельных сценариев.

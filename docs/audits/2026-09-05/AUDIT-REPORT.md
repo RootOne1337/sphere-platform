@@ -14,6 +14,10 @@ pipeline pause/resume/cancel и совместный preflight с batch/стри
 С 05:06 14 сентября (Asia/Yekaterinburg) работает восьмичасовой профиль;
 итог ночи пока не принят. [Программа](../../operations/ANDROID-OVERNIGHT-SOAK.md) ·
 [Evidence](evidence/overnight-preflight-summary.json).
+[Промежуточная сверка 05:23](ANDROID-SOAK-CHECKPOINT.md): 19 native DAG results
+повторно прочитаны через API, PID обоих APK неизменны, новых fatal-записей нет.
+В bounded log window обнаружен шум `task.result.not_found` для интерактивных
+UUID-команд; исправление и отдельная регрессия пока открыты. Ночной runtime не менялся.
 
 **AUD-115:** создание сценария возвращало HTTP 500 после commit из-за lazy load
 текущей версии при сериализации. Явная async-загрузка отношения устраняет ошибку;
