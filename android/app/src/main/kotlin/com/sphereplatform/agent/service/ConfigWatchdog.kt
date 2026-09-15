@@ -1,32 +1,20 @@
 package com.sphereplatform.agent.service
 
-import com.sphereplatform.agent.BuildConfig
 import com.sphereplatform.agent.provisioning.ZeroTouchProvisioner
 import com.sphereplatform.agent.store.AuthTokenStore
 import com.sphereplatform.agent.ws.SphereWebSocketClient
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
+import kotlinx.coroutines.sync.Mutex
 import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * ConfigWatchdog — периодический опрос удалённого конфига (GitHub Raw / Config Endpoint).
- *
- * Цикл работы:
- *   1. Каждые [DEFAULT_POLL_INTERVAL_MS] (5 мин) запрашивает CONFIG_URL
- *   2. Парсит ответ через [ZeroTouchProvisioner.fetchServerConfig]
- *   3. Если server_url в ответе отличается от сохранённого в [AuthTokenStore]:
- *      - Атомарно обновляет store
- *      - Вызывает [SphereWebSocketClient.forceReconnectNow] для немедленного переподключения
- *
- * Когда WS не подключён — интервал сокращается до 60с (ускоренный поиск нового адреса).
- *
- * Гарантирует отказоустойчивость: если tunnel/server сменился, агент автоматически
- * подхватит новый URL из Git-репозитория без ручного вмешательства.
+ * Polls the configured public discovery endpoint, without device credentials.
+ * Periodic and forced checks share one cancellable request. A response may save
+ * route candidates only within its service generation and store revision.
+ * A healthy selected route remains active until the WS loop authenticates another.
+ * Local MDM/file candidates are read at service start; this does not provide server HA.
  */
 @Singleton
 class ConfigWatchdog @Inject constructor(
@@ -36,112 +24,105 @@ class ConfigWatchdog @Inject constructor(
     private val scope: CoroutineScope,
 ) {
     companion object {
-        /** Минимальный интервал опроса (защита от слишком частых запросов) */
-        private const val MIN_POLL_INTERVAL_MS = 15_000L
-
-        /** Стандартный интервал когда WS подключён (2 минуты) */
         private const val DEFAULT_POLL_INTERVAL_MS = 120_000L
-
-        /** Ускоренный интервал когда WS отключён.
-         * FIX M4: 60с вместо 30с — на слабых эмуляторах 30с polling
-         * вместе с WS reconnect loop создаёт избыточный network/CPU pressure.
-         */
         private const val DISCONNECTED_POLL_INTERVAL_MS = 60_000L
     }
 
-    @Volatile
-    private var running = false
+    private val stateLock = Any()
+    private val runMutex = Mutex()
+    private var generation = 0L
+    private var stopped = false
+    private var checkJob: Job? = null
+    private var runJob: Job? = null
 
-    /**
-     * Основной цикл. Запускается как coroutine в [SphereAgentService].
-     * Все исключения обрабатываются внутри — наружу не пробрасываются.
-     */
-    suspend fun run() {
-        if (BuildConfig.CONFIG_URL.isBlank()) {
-            Timber.w("ConfigWatchdog: CONFIG_URL пуст — remote config отключён")
-            return
+    /** The service owns this loop; cancelling it also cancels forced checks. */
+    suspend fun run() = coroutineScope {
+        if (!runMutex.tryLock()) return@coroutineScope
+        val owner = currentCoroutineContext()[Job]!!
+        val runGeneration = synchronized(stateLock) {
+            checkJob?.cancel()
+            checkJob = null
+            stopped = false
+            runJob = owner
+            ++generation
         }
-
-        running = true
-        Timber.i("ConfigWatchdog: запущен, CONFIG_URL=${BuildConfig.CONFIG_URL.take(80)}…")
-
-        // Первичная задержка — даём WS-клиенту установить начальное соединение
-        // FIX-CONFIG: 5с вместо 15с — быстрее обнаруживаем новый URL при смене туннеля
-        delay(5_000L)
-
-        while (running) {
+        try {
+            val initialRoute = authStore.serverUrlSnapshot()
             try {
-                checkAndUpdate()
+                withContext(Dispatchers.IO) { provisioner.discoverLocalConfig() }?.let { local ->
+                    applyCandidates(runGeneration, initialRoute, local.serverUrl, local.fallbackServerUrl)
+                }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
-                Timber.w(e, "ConfigWatchdog: ошибка проверки конфига")
+                Timber.w("ConfigWatchdog: local route config failed (%s)", e.javaClass.simpleName)
             }
-
-            // Ускоренный polling если WS не подключён (ищем новый server_url)
-            val interval = if (wsClient.isConnected) {
-                DEFAULT_POLL_INTERVAL_MS
-            } else {
-                DISCONNECTED_POLL_INTERVAL_MS
+            if (!provisioner.hasConfigEndpoint) return@coroutineScope
+            delay(5_000L)
+            while (isActive) {
+                requestCheck(runGeneration)?.join()
+                delay(if (wsClient.isConnected) DEFAULT_POLL_INTERVAL_MS else DISCONNECTED_POLL_INTERVAL_MS)
             }
-            delay(interval.coerceAtLeast(MIN_POLL_INTERVAL_MS))
+        } finally {
+            synchronized(stateLock) {
+                if (generation == runGeneration) stopLocked(cancelLoop = false)
+            }
+            runMutex.unlock()
         }
     }
 
-    /** Остановка цикла (вызывается при onDestroy сервиса). */
-    fun stop() {
-        running = false
+    fun stop() = synchronized(stateLock) { stopLocked() }
+
+    private fun stopLocked(cancelLoop: Boolean = true) {
+        stopped = true
+        ++generation
+        checkJob?.cancel()
+        checkJob = null
+        if (cancelLoop) runJob?.cancel()
+        runJob = null
     }
 
-    /**
-     * Принудительная проверка конфига — вызывается при circuit breaker open
-     * или при длительном отсутствии соединения.
-     *
-     * FIX-RECONNECT: Запускается через IO dispatcher чтобы не блокировать WS reconnect loop.
-     */
+    /** Repeated notifications coalesce while a request is active. */
     fun forceCheck() {
-        Timber.d("ConfigWatchdog: принудительная проверка конфига")
-        scope.launch(Dispatchers.IO) {
-            try {
-                checkAndUpdate()
-            } catch (e: Exception) {
-                Timber.w(e, "ConfigWatchdog: ошибка принудительной проверки")
-            }
-        }
+        requestCheck()
     }
 
-    /**
-     * Запрашивает конфиг с сервера и при необходимости обновляет server_url.
-     *
-     * Выполняется синхронно (блокирующий HTTP-вызов) — вызывать из IO-контекста.
-     */
-    private fun checkAndUpdate() {
-        val serverConfig = provisioner.fetchServerConfig(
-            apiKey = authStore.getToken()
-        )
+    private fun requestCheck(expectedGeneration: Long? = null): Job? = synchronized(stateLock) {
+        if (stopped || (expectedGeneration != null && expectedGeneration != generation)) return null
+        checkJob?.takeIf { it.isActive }?.let { return it }
+        val checkGeneration = generation
+        scope.launch(Dispatchers.IO, start = CoroutineStart.LAZY) {
+            try {
+                checkAndUpdate(checkGeneration)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Timber.w("ConfigWatchdog: check failed (%s)", e.javaClass.simpleName)
+            }
+        }.also { checkJob = it; it.start() }
+    }
 
-        if (serverConfig == null) {
-            Timber.d("ConfigWatchdog: config endpoint недоступен")
-            return
-        }
+    private suspend fun checkAndUpdate(checkGeneration: Long) {
+        val route = authStore.serverUrlSnapshot()
+        val config = provisioner.fetchServerConfig() ?: return
+        val remoteUrl = config.serverUrl.trimEnd('/')
+        applyCandidates(checkGeneration, route, remoteUrl, config.fallbackServerUrl, config.verifiedInstallation)
+    }
 
-        val currentUrl = authStore.getServerUrl().trimEnd('/')
-        val remoteUrl = serverConfig.serverUrl.trimEnd('/')
-
-        if (remoteUrl.isBlank()) {
-            Timber.d("ConfigWatchdog: remote server_url пуст — пропускаем")
-            return
-        }
-
-        if (currentUrl.isNotBlank() && currentUrl != remoteUrl) {
-            Timber.w(
-                "ConfigWatchdog: SERVER_URL ИЗМЕНИЛСЯ! " +
-                    "old=$currentUrl → new=$remoteUrl — обновляем и переподключаемся"
-            )
-            authStore.saveServerUrl(remoteUrl)
-
-            // Форсируем немедленный reconnect на новый адрес (прерывает текущий backoff/circuit)
-            wsClient.forceReconnectNow()
-        } else {
-            Timber.d("ConfigWatchdog: server_url актуален ($remoteUrl)")
+    private suspend fun applyCandidates(checkGeneration: Long, route: AuthTokenStore.ServerUrlSnapshot,
+                                        remoteUrl: String, fallbackUrl: String?, replaceFallback: Boolean = false) {
+        val context = currentCoroutineContext()
+        synchronized(stateLock) {
+            context.ensureActive()
+            if (stopped || generation != checkGeneration) return
+            if (route.url.isBlank()) return
+            if (!authStore.replaceDiscoveredRoutes(route, remoteUrl, fallbackUrl, replaceFallback)) {
+                Timber.d("ConfigWatchdog: route candidates unchanged or superseded")
+                return
+            }
+            Timber.i("ConfigWatchdog: management route candidates saved")
+            // A candidate must not tear down a working authenticated connection.
+            if (!wsClient.isConnected) wsClient.forceReconnectNow()
         }
     }
 }

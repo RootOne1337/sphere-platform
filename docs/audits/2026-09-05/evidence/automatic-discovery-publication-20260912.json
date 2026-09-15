@@ -1,0 +1,105 @@
+{
+  "date": "2026-09-12",
+  "runtime": {
+    "started_at": "2026-09-12T17:49:38.234552+00:00",
+    "apk": "0f1410e31ec079107c5fb00567cb47c7efc2262e",
+    "before_version": 7,
+    "before_url": "https://mart-consecutive-kate-ships.trycloudflare.com",
+    "device_id": "85f2f935-7739-400e-9389-0d71227e8f0a",
+    "events": [
+      {
+        "event": "scoped_quick_connector_restarted",
+        "utc": "2026-09-12T17:49:40.191412+00:00",
+        "container_id": "f5f9954eef5b83c4d53c4a39b41f47f1e70e0e5270e0a2a257e904e20b3c34ce"
+      },
+      {
+        "event": "waiting_for_scheduled_publication",
+        "utc": "2026-09-12T17:50:10.202853+00:00",
+        "status": "ok",
+        "error_type": null
+      },
+      {
+        "event": "automatic_publication",
+        "utc": "2026-09-12T17:50:18.206242+00:00",
+        "version": 8,
+        "new_url": "https://reach-further-loads-ran.trycloudflare.com",
+        "seconds": 39.97
+      },
+      {
+        "event": "waiting_for_native_recovery",
+        "utc": "2026-09-12T17:50:49.030441+00:00",
+        "observed_version": 7
+      },
+      {
+        "event": "waiting_for_native_recovery",
+        "utc": "2026-09-12T17:51:19.694613+00:00",
+        "observed_version": 7
+      },
+      {
+        "event": "waiting_for_native_recovery",
+        "utc": "2026-09-12T17:51:48.451700+00:00",
+        "observed_version": 7
+      },
+      {
+        "event": "waiting_for_native_recovery",
+        "utc": "2026-09-12T17:52:19.145069+00:00",
+        "observed_version": 7
+      },
+      {
+        "event": "waiting_for_native_recovery",
+        "utc": "2026-09-12T17:52:49.814659+00:00",
+        "observed_version": 7
+      },
+      {
+        "event": "waiting_for_native_recovery",
+        "utc": "2026-09-12T17:53:18.379895+00:00",
+        "observed_version": 7
+      },
+      {
+        "event": "native_recovered",
+        "utc": "2026-09-12T17:53:49.062316+00:00",
+        "seconds": 250.83,
+        "same_pid": true,
+        "new_registrations": 0,
+        "signed_version": 8,
+        "real_shell": {
+          "http_status": 200,
+          "expected_output": true
+        }
+      }
+    ],
+    "manual_config_write": false,
+    "manual_publisher_invocation": false,
+    "passed": true,
+    "final_url": "https://reach-further-loads-ran.trycloudflare.com",
+    "final_version": 8,
+    "scheduler_only_publication": true,
+    "independent_provider_tested": false
+  },
+  "subsequent_cycle": {
+    "status": "ok",
+    "action": "unchanged",
+    "config_version": 8,
+    "server_url": "https://reach-further-loads-ran.trycloudflare.com",
+    "expires_at": 1791827415,
+    "mirror_verified": true,
+    "desired_route_pending": false,
+    "checked_at": 1789235715,
+    "last_success_at": 1789235715,
+    "duration_seconds": 1.672,
+    "scope": "RootOne1337/sphere-agent-config:codex/pilot-bootstrap-20260911:pilots/sphere-pilot-20260911/discovery.json:ce58a96d-fd02-4f7c-ac86-111c4f7fa37e:pilot-20260911-v1",
+    "compose_project": "sphere-pilot-20260911",
+    "compose_service": "cloudflare-quick"
+  },
+  "tests": {
+    "publisher": 29,
+    "signer": 21,
+    "passed": 50,
+    "during_development_pending_before_failures": 2
+  },
+  "scheduler_task": "Sphere-Publisher-pilot-20260911",
+  "requires_user_logon": true,
+  "last_task_result": 0,
+  "backend_restarted": false,
+  "old_installation_targeted": false
+}

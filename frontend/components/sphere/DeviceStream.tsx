@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import { H264Decoder } from '@/lib/h264-decoder';
 import { useAuthStore } from '@/lib/store';
 
@@ -17,12 +17,17 @@ export function DeviceStream({
   const decoderRef = useRef<H264Decoder | null>(null);
   const dragRef = useRef<{ x: number; y: number } | null>(null);
   const { accessToken } = useAuthStore();
+  const [connection, setConnection] = useState<'connecting' | 'live' | 'retrying' | 'unavailable'>('connecting');
 
   useEffect(() => {
     // Defer WS creation by one tick to avoid React StrictMode double-invoke.
     let ignore = false;
     let ws: WebSocket | null = null;
     let decoder: H264Decoder | null = null;
+    let retryTimer: ReturnType<typeof setTimeout> | undefined;
+    let watchdog: ReturnType<typeof setInterval> | undefined;
+    let attempt = 0;
+    setConnection('connecting');
 
     const timer = setTimeout(() => {
       if (ignore) return;
@@ -33,6 +38,8 @@ export function DeviceStream({
       const ctx = canvas.getContext('2d')!;
 
       decoder = new H264Decoder((frame) => {
+        if (ignore || wsRef.current?.readyState !== WebSocket.OPEN) return;
+        setConnection('live');
         // Mutate canvas directly for performance, avoid React state re-renders
         if (canvas.width !== frame.displayWidth || canvas.height !== frame.displayHeight) {
           canvas.width = frame.displayWidth;
@@ -49,54 +56,60 @@ export function DeviceStream({
           : 'ws://localhost');
       const wsUrl = `${wsBase}/ws/stream/${deviceId}`;
 
-      // FIX-CLOUDFLARE: Общая функция создания WS (для initial и reconnect).
-      // Decoder НЕ пересоздаётся при reconnect — сохраняет SPS/PPS конфигурацию.
-      // Бэкенд шлёт кэшированные SPS→PPS→IDR при register_viewer, что позволяет
-      // декодеру показать картинку без ожидания нового IDR от агента.
+      // One connection generation owns its callbacks and timers. A TCP open is
+      // not proof of a usable stream: reset backoff only after server traffic.
       const createWs = () => {
         if (ignore) return;
         const newWs = new WebSocket(wsUrl);
         newWs.binaryType = 'arraybuffer';
         ws = newWs;
         wsRef.current = newWs;
-
+        let ended = false;
+        let lastReceived = Date.now();
+        let opened = false;
+        const finish = (retry: boolean) => {
+          if (ended) return;
+          ended = true;
+          clearInterval(watchdog);
+          newWs.onopen = newWs.onmessage = newWs.onclose = newWs.onerror = null;
+          if (wsRef.current === newWs) wsRef.current = null;
+          if (newWs.readyState === WebSocket.OPEN || newWs.readyState === WebSocket.CONNECTING) {
+            newWs.close();
+          }
+          if (ignore) return;
+          setConnection(retry ? 'retrying' : 'unavailable');
+          if (retry) {
+            const delay = Math.min(500 * 2 ** Math.min(attempt++, 6), 15_000);
+            retryTimer = setTimeout(createWs, delay * (0.8 + Math.random() * 0.4));
+          }
+        };
+        watchdog = setInterval(() => {
+          if (Date.now() - lastReceived >= (opened ? 30_000 : 15_000)) finish(true);
+        }, 5_000);
         newWs.onopen = () => {
+          if (ignore || ended) return;
+          opened = true;
+          lastReceived = Date.now();
           newWs.send(JSON.stringify({ token: accessToken }));
         };
         newWs.onmessage = (evt) => {
-          if (evt.data instanceof ArrayBuffer) {
-            decoder?.handleBinary(evt.data);
-          }
-          // Сервер шлёт JSON ping — отвечаем pong для keepalive через Cloudflare
+          if (ignore || ended) return;
+          lastReceived = Date.now();
+          attempt = 0;
+          if (evt.data instanceof ArrayBuffer) decoder?.handleBinary(evt.data);
           if (typeof evt.data === 'string') {
             try {
               const msg = JSON.parse(evt.data);
-              if (msg.type === 'ping') {
+              if (msg.type === 'ping' && newWs.readyState === WebSocket.OPEN) {
                 newWs.send(JSON.stringify({ type: 'pong' }));
               }
-            } catch { /* не JSON binary — игнорируем */ }
+            } catch { /* Ignore malformed control messages. */ }
           }
         };
-        newWs.onclose = (event) => {
-          const isAuthError = [4001, 4003, 4004].includes(event.code);
-          if (!ignore && event.code !== 1000 && !isAuthError) {
-            // FIX-CLOUDFLARE: Aggressive reconnect — Cloudflare Quick Tunnel дропает
-            // WS через 5-50 секунд. Быстрый backoff: 500ms → 1s → 2s → ... → max 5s.
-            let attempt = 0;
-            const maxAttempts = 100; // Бесконечный reconnect пока компонент жив
-            const tryReconnect = () => {
-              if (ignore || attempt >= maxAttempts) return;
-              const backoff = Math.min(500 * Math.pow(1.5, attempt), 5000);
-              attempt++;
-              setTimeout(() => {
-                if (ignore) return;
-                createWs();
-              }, backoff);
-            };
-            tryReconnect();
-          }
-        };
-        newWs.onerror = () => {};
+        // A remote normal close can be a server restart. Only effect cleanup
+        // means the user stopped viewing; access/device rejections remain terminal.
+        newWs.onclose = event => finish(![4001, 4003, 4004].includes(event.code));
+        newWs.onerror = () => finish(true);
       };
 
       createWs();
@@ -105,6 +118,9 @@ export function DeviceStream({
     return () => {
       ignore = true;
       clearTimeout(timer);
+      clearTimeout(retryTimer);
+      clearInterval(watchdog);
+      wsRef.current = null;
       ws?.close();
       decoder?.destroy();
     };
@@ -150,19 +166,22 @@ export function DeviceStream({
       if (dist < 12) {
         // Tap
         onTap?.(start.x, start.y);
-        wsRef.current?.send(JSON.stringify({ type: 'click', x: start.x, y: start.y }));
+        if (wsRef.current?.readyState === WebSocket.OPEN) {
+          wsRef.current.send(JSON.stringify({ type: 'click', x: start.x, y: start.y }));
+        }
       } else {
         // Swipe — duration proportional to distance, min 150ms max 600ms
         const duration_ms = Math.min(600, Math.max(150, Math.round(dist * 0.8)));
-        wsRef.current?.send(
-          JSON.stringify({ type: 'swipe', x1: start.x, y1: start.y, x2: pt.x, y2: pt.y, duration_ms }),
-        );
+        if (wsRef.current?.readyState === WebSocket.OPEN) {
+          wsRef.current.send(JSON.stringify({ type: 'swipe', x1: start.x, y1: start.y, x2: pt.x, y2: pt.y, duration_ms }));
+        }
       }
     },
     [toCanvasCoords, onTap],
   );
 
   return (
+    <div className="relative">
     <canvas
       ref={canvasRef}
       onPointerDown={handlePointerDown}
@@ -170,5 +189,11 @@ export function DeviceStream({
       className="cursor-pointer rounded border border-gray-700 bg-black touch-none"
       style={{ width: '100%', height: 'auto' }}
     />
+    {connection !== 'live' && (
+      <div role="status" className="absolute inset-0 flex items-center justify-center bg-black/85 text-sm text-white">
+        {connection === 'connecting' ? 'Подключение…' : connection === 'retrying' ? 'Переподключение…' : 'Стрим недоступен'}
+      </div>
+    )}
+    </div>
   );
 }

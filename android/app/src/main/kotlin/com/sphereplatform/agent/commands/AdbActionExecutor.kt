@@ -18,6 +18,9 @@ import javax.xml.parsers.DocumentBuilderFactory
 import javax.xml.xpath.XPathConstants
 import javax.xml.xpath.XPathFactory
 
+/** The shell may already have consumed the command; do not automatically retry. */
+class RootCommandOutcomeUnknownException : java.io.IOException("Root command delivery outcome is unknown")
+
 /**
  * AdbActionExecutor — выполняет ADB-примитивы через постоянную root-сессию.
  *
@@ -78,6 +81,8 @@ class AdbActionExecutor @Inject constructor(
     private var rootStream: java.io.DataOutputStream = java.io.DataOutputStream(rootProcess.outputStream)
 
     private val rootLock = Any()
+    // Guarded by rootLock; a failed pipe may outlive Process.isAlive == true.
+    private var rootSessionBroken = false
 
     private fun createRootProcess(): Process =
         Runtime.getRuntime().exec("su").also {
@@ -86,10 +91,11 @@ class AdbActionExecutor @Inject constructor(
 
     /** Re-create the root process if it has died. */
     private fun ensureRootAlive() {
-        if (!rootProcess.isAlive) {
+        if (rootSessionBroken || !rootProcess.isAlive) {
             Timber.w("Root process died — restarting")
             rootProcess = createRootProcess()
             rootStream = java.io.DataOutputStream(rootProcess.outputStream)
+            rootSessionBroken = false
         }
     }
 
@@ -125,12 +131,12 @@ class AdbActionExecutor @Inject constructor(
                 rootStream.writeBytes("$cmd\n")
                 rootStream.flush()
             } catch (e: java.io.IOException) {
-                Timber.w("Root stream write failed — reopening: ${e.message}")
-                rootProcess.destroyForcibly()
-                rootProcess = createRootProcess()
-                rootStream = java.io.DataOutputStream(rootProcess.outputStream)
-                rootStream.writeBytes("$cmd\n")
-                rootStream.flush()
+                rootSessionBroken = true
+                Timber.w("Root input write failed; command outcome is unknown")
+                runCatching { rootProcess.destroyForcibly() }
+                // Even a flush error may follow delivery of the full command.
+                // Reopen only for a subsequent explicit command, never replay.
+                throw RootCommandOutcomeUnknownException()
             }
         }
     }
@@ -188,7 +194,9 @@ class AdbActionExecutor @Inject constructor(
         // Spaces must be encoded as %s for Android's input text command.
         val encoded = text.replace(" ", "%s")
         val safe = encoded.replace("'", "'\\''")
-        Timber.d("typeText: typing '${text}' (encoded='$safe')")
+        // Typed values may be account credentials. File logs are uploaded even
+        // in release builds; neither the raw nor shell-encoded value is safe.
+        Timber.d("typeText: input requested")
         executeRootCommand("input text '$safe'")
         delay(150)
     }

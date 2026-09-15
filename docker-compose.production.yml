@@ -1,11 +1,12 @@
 # docker-compose.production.yml — production стек
 # NOTE: поле version устарело в Docker Compose v2+ и убрано намеренно
 # Запуск: docker compose -f docker-compose.yml -f docker-compose.production.yml up -d
+# Требуется Compose 2.24.4+; !reset очищает унаследованные dev-настройки.
 
 services:
   postgres:
     # Production: порт НЕ прокидывается наружу
-    ports: []
+    ports: !reset []
     environment:
       POSTGRES_DB: sphereplatform
       POSTGRES_USER: ${POSTGRES_USER:-sphere}
@@ -19,7 +20,7 @@ services:
 
   redis:
     # Production: порт НЕ прокидывается наружу
-    ports: []
+    ports: !reset []
     restart: always
     deploy:
       resources:
@@ -28,6 +29,22 @@ services:
           memory: 512M
 
   backend:
+    healthcheck:
+      # Probe dependencies through the API; a running process alone is insufficient.
+      test:
+        - CMD
+        - python
+        - -c
+        - "import json, sys, urllib.request; r = urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health/readyz', timeout=3); sys.exit(0 if r.status == 200 and json.load(r).get('status') == 'ready' else 1)"
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    # Also safe when docker-compose.full.yml precedes this final override.
+    ports: !reset []
+    volumes: !reset []
+    command: !reset null
+    user: !reset null
     image: ghcr.io/${GITHUB_OWNER:-local}/sphere-platform-backend:${IMAGE_TAG:-latest}
     build:
       context: .
@@ -37,6 +54,7 @@ services:
       - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
       - REDIS_PASSWORD=${REDIS_PASSWORD}
       - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - ACCOUNT_CREDENTIAL_KEYS=${ACCOUNT_CREDENTIAL_KEYS:-}
       - WG_ROUTER_URL=${WG_ROUTER_URL}
       - WG_ROUTER_API_KEY=${WG_ROUTER_API_KEY}
       - AWG_H1=${AWG_H1}
@@ -44,8 +62,10 @@ services:
       - AWG_H3=${AWG_H3}
       - AWG_H4=${AWG_H4}
       - DEBUG=false
+      - DEV_SKIP_AUTH=false
       - LOG_LEVEL=INFO
       - ENVIRONMENT=production
+      - SPHERE_BOOTSTRAP_ORG_SLUG=${SPHERE_BOOTSTRAP_ORG_SLUG:-default}
       - SERVER_PUBLIC_URL=https://${SERVER_HOSTNAME}
       - AGENT_CONFIG_ENV=production
     depends_on:
@@ -64,6 +84,20 @@ services:
           memory: 2G
 
   frontend:
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3000/login', {redirect: 'manual', signal: AbortSignal.timeout(3000)}).then(r => process.exit(r.status === 200 ? 0 : 1)).catch(() => process.exit(1))"
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    ports: !reset []
+    volumes: !reset []
+    command: !reset null
+    user: !reset null
     image: ghcr.io/${GITHUB_OWNER:-local}/sphere-platform-frontend:${IMAGE_TAG:-latest}
     build:
       context: ./frontend
@@ -71,6 +105,7 @@ services:
     environment:
       - NEXT_PUBLIC_API_URL=https://${SERVER_HOSTNAME}
       - NEXT_PUBLIC_WS_URL=wss://${SERVER_HOSTNAME}
+      - NEXT_PUBLIC_DEV_SKIP_AUTH=false
     networks:
       - frontend-net
     restart: always

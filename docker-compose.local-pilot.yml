@@ -1,0 +1,68 @@
+# Isolated local acceptance overlay: base + full + this file, explicit -p.
+# Secrets/config live in ignored .local-pilot; never use the legacy project name.
+services:
+  postgres:
+    ports: !reset []
+    restart: unless-stopped
+  redis:
+    ports: !reset []
+    restart: unless-stopped
+  backend:
+    image: ${PILOT_IMAGE_PREFIX:?Set a dedicated image prefix}-backend:${PILOT_REVISION:?Set revision}
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    ports: !reset []
+    volumes: !override
+      - ./.local-pilot/agent-config:/app/agent-config:ro
+    command: !reset null
+    user: !reset null
+    environment:
+      ENVIRONMENT: development
+      DEV_SKIP_AUTH: "false"
+      SERVER_PUBLIC_URL: ${PILOT_AGENT_URL:?Set emulator-visible gateway URL}
+      AGENT_CONFIG_ENV: development
+      CORS_EXTRA_ORIGINS: ${PILOT_BROWSER_URL:?Set browser gateway URL}
+    restart: unless-stopped
+  frontend:
+    image: ${PILOT_IMAGE_PREFIX}-frontend:${PILOT_REVISION}
+    ports: !reset []
+    volumes: !reset []
+    command: !reset null
+    user: !reset null
+    environment:
+      NEXT_PUBLIC_API_URL: /api/v1
+      NEXT_PUBLIC_API_BASE_URL: http://backend:8000
+      NEXT_PUBLIC_WS_URL: ""
+      NEXT_PUBLIC_DEV_SKIP_AUTH: "false"
+    restart: unless-stopped
+  nginx:
+    ports: !override
+      - "127.0.0.1:${PILOT_GATEWAY_PORT:-18080}:80"
+    environment:
+      SERVER_HOSTNAME: sphere-pilot.invalid
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1/api/v1/health/readyz"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+  n8n:
+    ports: !override
+      - "127.0.0.1:${PILOT_N8N_PORT:-15678}:5678"
+    environment:
+      N8N_HOST: localhost
+      N8N_SECURE_COOKIE: "false"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:5678/healthz', {signal: AbortSignal.timeout(3000)}).then(r => process.exit(r.status === 200 ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+  minio:
+    ports: !override
+      - "127.0.0.1:${PILOT_S3_PORT:-19000}:9000"
+      - "127.0.0.1:${PILOT_S3_CONSOLE_PORT:-19001}:9001"
+    restart: unless-stopped
+  certbot:
+    profiles: [public-tls]

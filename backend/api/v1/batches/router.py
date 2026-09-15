@@ -51,7 +51,7 @@ async def start_batch(
     Прогресс: GET /batches/{id} или Events WebSocket.
     """
     batch = await svc.start_batch(body, current_user.org_id, current_user.id)
-    await db.commit()
+    # BatchService commits before launching its independent worker.
     return BatchResponse.model_validate(batch)
 
 
@@ -77,7 +77,6 @@ async def broadcast_batch(
     batch, online_count = await svc.broadcast_batch(
         body, current_user.org_id, current_user.id
     )
-    await db.commit()
     resp = BroadcastBatchResponse.model_validate(batch)
     resp.online_devices = online_count
     return resp

@@ -1,0 +1,11 @@
+{
+  "state": "AUD-79 candidate; full deployment regression directory",
+  "totals": {
+    "tests": 37,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "failures": [],
+  "boundary": "Shipped Bash preamble, IFS/options/functions; only automatic main omitted. Docker is a separate process argument-checking double. No daemon or external API."
+}

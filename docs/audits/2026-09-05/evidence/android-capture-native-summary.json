@@ -1,0 +1,206 @@
+{
+  "at": "2026-09-13T19:52:22.128267+00:00",
+  "apk_source": "343c6e80e4f26ba9c60c5340e791305cd3500d92",
+  "apk_sha256": "bc9abf49821d0774310a3eb2a92889c50b6e755ca971d7982a1ece95c96acfa7",
+  "backend_source": "f8c66b959efb5f908c33ca94f2baf717c862eb1f",
+  "canary_ota_initial_probe_interrupted": true,
+  "canary_later_installed_hash_and_command_verified": true,
+  "stable_ota_seconds": 10.39,
+  "adb_install_commands": 0,
+  "manual_permission_actions": 0,
+  "devices": [
+    {
+      "index": 0,
+      "version_code": 10205,
+      "installed_hash_verified": true,
+      "pid": "31803",
+      "new_crashes_after_ota": 0,
+      "cycles": [
+        {
+          "cycle": 0,
+          "frames": 14,
+          "bytes": 179317,
+          "nal_types": {
+            "7": 1,
+            "8": 1,
+            "5": 1,
+            "1": 11
+          },
+          "frame_errors": [],
+          "first_frame_seconds": 1.687,
+          "projection_active": true,
+          "automatic_stop_seconds": 2.204,
+          "same_pid": true
+        },
+        {
+          "cycle": 1,
+          "frames": 18,
+          "bytes": 225035,
+          "nal_types": {
+            "7": 1,
+            "8": 1,
+            "5": 1,
+            "1": 15
+          },
+          "frame_errors": [],
+          "first_frame_seconds": 1.329,
+          "projection_active": true,
+          "overlapping_viewer_got_frame": true,
+          "automatic_stop_seconds": 1.75,
+          "same_pid": true
+        },
+        {
+          "cycle": 2,
+          "frames": 17,
+          "bytes": 236896,
+          "nal_types": {
+            "7": 1,
+            "8": 1,
+            "5": 1,
+            "1": 14
+          },
+          "frame_errors": [],
+          "first_frame_seconds": 1.328,
+          "projection_active": true,
+          "automatic_stop_seconds": 2.266,
+          "same_pid": true
+        },
+        {
+          "cycle": 3,
+          "frames": 17,
+          "bytes": 252296,
+          "nal_types": {
+            "7": 1,
+            "8": 1,
+            "5": 1,
+            "1": 14
+          },
+          "frame_errors": [],
+          "first_frame_seconds": 1.375,
+          "projection_active": true,
+          "overlapping_viewer_got_frame": true,
+          "automatic_stop_seconds": 1.594,
+          "same_pid": true
+        },
+        {
+          "cycle": 4,
+          "frames": 15,
+          "bytes": 261908,
+          "nal_types": {
+            "7": 1,
+            "8": 1,
+            "5": 1,
+            "1": 12
+          },
+          "frame_errors": [],
+          "first_frame_seconds": 1.344,
+          "projection_active": true,
+          "automatic_stop_seconds": 2.203,
+          "same_pid": true
+        },
+        {
+          "cycle": 5,
+          "frames": 16,
+          "bytes": 184822,
+          "nal_types": {
+            "7": 1,
+            "8": 1,
+            "5": 1,
+            "1": 13
+          },
+          "frame_errors": [],
+          "first_frame_seconds": 1.406,
+          "projection_active": true,
+          "overlapping_viewer_got_frame": true,
+          "automatic_stop_seconds": 1.75,
+          "same_pid": true
+        }
+      ],
+      "fallback_stop": false
+    },
+    {
+      "index": 1,
+      "version_code": 10205,
+      "installed_hash_verified": true,
+      "pid": "386",
+      "new_crashes_after_ota": 0,
+      "cycles": [
+        {
+          "cycle": 0,
+          "frames": 13,
+          "bytes": 158765,
+          "nal_types": {
+            "7": 1,
+            "8": 1,
+            "5": 1,
+            "1": 10
+          },
+          "frame_errors": [],
+          "first_frame_seconds": 1.328,
+          "projection_active": true,
+          "automatic_stop_seconds": 2.203,
+          "same_pid": true
+        },
+        {
+          "cycle": 1,
+          "frames": 15,
+          "bytes": 209257,
+          "nal_types": {
+            "7": 1,
+            "8": 1,
+            "5": 1,
+            "1": 12
+          },
+          "frame_errors": [],
+          "first_frame_seconds": 1.328,
+          "projection_active": true,
+          "overlapping_viewer_got_frame": true,
+          "automatic_stop_seconds": 1.75,
+          "same_pid": true
+        },
+        {
+          "cycle": 2,
+          "frames": 13,
+          "bytes": 158765,
+          "nal_types": {
+            "7": 1,
+            "8": 1,
+            "5": 1,
+            "1": 10
+          },
+          "frame_errors": [],
+          "first_frame_seconds": 1.312,
+          "projection_active": true,
+          "automatic_stop_seconds": 2.204,
+          "same_pid": true
+        },
+        {
+          "cycle": 3,
+          "frames": 17,
+          "bytes": 193547,
+          "nal_types": {
+            "7": 2,
+            "8": 2,
+            "5": 1,
+            "1": 12
+          },
+          "frame_errors": [],
+          "first_frame_seconds": 1.516,
+          "projection_active": true,
+          "overlapping_viewer_got_frame": true,
+          "automatic_stop_seconds": 1.718,
+          "same_pid": true
+        }
+      ],
+      "fallback_stop": false
+    }
+  ],
+  "accepted_scope": "two rooted Android 9/API28 emulators; lifecycle cycles and native commands, not fleet or continuous farming soak",
+  "browser_after": {
+    "at": "2026-09-13T19:58:00Z",
+    "both_screens_decoded": true,
+    "crash_dialogs_visible": false,
+    "console_errors_or_warnings": 0,
+    "own_viewers_stopped": true
+  }
+}

@@ -203,7 +203,6 @@ class OrchestrationEngine:
             org_id=org_id,
             game="black_russia",
             login=nickname,
-            password_encrypted=password,
             server_name=device.server_name,
             nickname=nickname,
             status=AccountStatus.pending_registration,
@@ -213,29 +212,22 @@ class OrchestrationEngine:
             assigned_at=datetime.now(timezone.utc),
             target_level=settings.default_target_level,
         )
+        from backend.services.account_credentials import set_account_password
+        set_account_password(account, password)
         db.add(account)
         await db.flush()
 
         # Задача регистрации
-        task = Task(
+        from backend.services.task_service import TaskService
+        task = await TaskService(db).create_task(
             org_id=org_id,
             device_id=device.id,
             script_id=settings.registration_script_id,
-            status=TaskStatus.QUEUED,
             priority=10,
-            timeout_seconds=settings.registration_timeout_seconds,
-            input_params={
-                "account_id": str(account.id),
-                "nickname": nickname,
-                "password": password,
-                "server_name": device.server_name,
-            },
+            account_id=account.id,
         )
-        db.add(task)
+        task.timeout_seconds = settings.registration_timeout_seconds
         await db.flush()
-
-        # Enqueue в per-device Redis очередь
-        await self._enqueue_task(org_id, device.id, task.id, task.priority)
 
         logger.info(
             "orchestration.reg_created",
@@ -318,28 +310,19 @@ class OrchestrationEngine:
         self, db, settings: PipelineSettings, account: GameAccount
     ) -> None:
         """Создать задачу фарма — аккаунт переходит в in_use."""
-        account.status = AccountStatus.in_use
-        account.status_reason = "Фарм-сессия через оркестратор"
-        account.status_changed_at = datetime.now(timezone.utc)
-
-        task = Task(
+        from backend.services.task_service import TaskService
+        task = await TaskService(db).create_task(
             org_id=settings.org_id,
             device_id=account.device_id,
             script_id=settings.farming_script_id,
-            status=TaskStatus.QUEUED,
             priority=5,
-            timeout_seconds=settings.farming_session_duration_seconds,
-            input_params={
-                "account_id": str(account.id),
-                "nickname": account.nickname,
-                "password": account.password_encrypted,
-                "server_name": account.server_name,
-            },
+            account_id=account.id,
         )
-        db.add(task)
+        task.timeout_seconds = settings.farming_session_duration_seconds
+        account.status = AccountStatus.in_use
+        account.status_reason = "Фарм-сессия через оркестратор"
+        account.status_changed_at = datetime.now(timezone.utc)
         await db.flush()
-
-        await self._enqueue_task(settings.org_id, account.device_id, task.id, task.priority)
 
         logger.info(
             "orchestration.farm_created",
@@ -357,8 +340,8 @@ class OrchestrationEngine:
     async def _process_completed_tasks(self, db, settings: PipelineSettings) -> None:
         """
         Обрабатывает завершённые задачи (COMPLETED/FAILED/TIMEOUT) и обновляет
-        статусы аккаунтов. После обработки задача помечается CANCELLED, чтобы
-        не обрабатываться повторно.
+        статусы аккаунтов. Отдельная отметка обработки сохраняет terminal outcome;
+        row locks исключают повторный учёт конкурентными workers.
 
         Регистрация:
           COMPLETED + success=true → аккаунт free (готов к фарму)
@@ -378,23 +361,26 @@ class OrchestrationEngine:
                     Task.org_id == org_id,
                     Task.script_id == settings.registration_script_id,
                     Task.status.in_([TaskStatus.COMPLETED, TaskStatus.FAILED, TaskStatus.TIMEOUT]),
-                ).limit(50)
+                ).where(Task.orchestration_processed_at.is_(None))
+                .order_by(Task.id).limit(50).with_for_update(skip_locked=True)
             )
             for task in result.scalars().all():
                 account_id = (task.input_params or {}).get("account_id")
                 if not account_id:
                     # Помечаем задачу как обработанную
-                    task.status = TaskStatus.CANCELLED
+                    task.orchestration_processed_at = datetime.now(timezone.utc)
                     continue
 
                 res = await db.execute(
-                    select(GameAccount).where(GameAccount.id == account_id)
+                    select(GameAccount).where(
+                        GameAccount.id == account_id, GameAccount.org_id == org_id,
+                    ).with_for_update().execution_options(populate_existing=True)
                 )
                 account = res.scalar_one_or_none()
 
                 # Guard: обрабатываем только pending_registration
                 if not account or account.status != AccountStatus.pending_registration:
-                    task.status = TaskStatus.CANCELLED
+                    task.orchestration_processed_at = datetime.now(timezone.utc)
                     continue
 
                 now = datetime.now(timezone.utc)
@@ -432,7 +418,7 @@ class OrchestrationEngine:
 
                 account.status_changed_at = now
                 # Помечаем задачу как обработанную
-                task.status = TaskStatus.CANCELLED
+                task.orchestration_processed_at = datetime.now(timezone.utc)
 
         # ── Задачи фарма ─────────────────────────────────────────────────────
         if settings.farming_script_id:
@@ -441,21 +427,24 @@ class OrchestrationEngine:
                     Task.org_id == org_id,
                     Task.script_id == settings.farming_script_id,
                     Task.status.in_([TaskStatus.COMPLETED, TaskStatus.FAILED, TaskStatus.TIMEOUT]),
-                ).limit(50)
+                ).where(Task.orchestration_processed_at.is_(None))
+                .order_by(Task.id).limit(50).with_for_update(skip_locked=True)
             )
             for task in result.scalars().all():
                 account_id = (task.input_params or {}).get("account_id")
                 if not account_id:
-                    task.status = TaskStatus.CANCELLED
+                    task.orchestration_processed_at = datetime.now(timezone.utc)
                     continue
 
                 res = await db.execute(
-                    select(GameAccount).where(GameAccount.id == account_id)
+                    select(GameAccount).where(
+                        GameAccount.id == account_id, GameAccount.org_id == org_id,
+                    ).with_for_update().execution_options(populate_existing=True)
                 )
                 account = res.scalar_one_or_none()
 
                 if not account or account.status != AccountStatus.in_use:
-                    task.status = TaskStatus.CANCELLED
+                    task.orchestration_processed_at = datetime.now(timezone.utc)
                     continue
 
                 now = datetime.now(timezone.utc)
@@ -523,7 +512,7 @@ class OrchestrationEngine:
                 account.status_changed_at = now
                 account.total_sessions += 1
                 account.last_session_end = now
-                task.status = TaskStatus.CANCELLED
+                task.orchestration_processed_at = datetime.now(timezone.utc)
 
     # ── Кулдаун → free ───────────────────────────────────────────────────────
 

@@ -16,6 +16,8 @@ RUN pip install --no-cache-dir -r /tmp/requirements.txt
 COPY backend/ ./backend/
 COPY alembic/ ./alembic/
 COPY agent-config/ ./agent-config/
+# Bootstrap is executed inside this image by full-deploy (no dev source mount).
+COPY scripts/create_admin.py scripts/seed_enrollment_key.py ./scripts/
 
 # Запуск от non-root пользователя
 RUN useradd -r -u 1001 sphere

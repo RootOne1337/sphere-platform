@@ -1,0 +1,20 @@
+{
+  "state": "AUD-76 first candidate, before queue assertion correction",
+  "totals": {
+    "tests": 465,
+    "failures": 1,
+    "errors": 0,
+    "skipped": 0
+  },
+  "failures": [
+    {
+      "suite": "com.sphereplatform.agent.provisioning.RegistrationRecoveryTest",
+      "case": "queued registration cancellation leaves the dispatcher owner intact",
+      "failure": {
+        "message": "java.lang.AssertionError: Cancelled queued request must never reach HTTP expected:<1> but was:<2>",
+        "type": "java.lang.AssertionError"
+      }
+    }
+  ],
+  "interpretation": "Application interceptor observed cancelled queued Call; invocation count does not prove network send. Runtime cancellation and state isolation assertions passed; final test drains callbacks and rechecks no mutation."
+}

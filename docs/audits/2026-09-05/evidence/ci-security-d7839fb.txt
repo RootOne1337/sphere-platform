@@ -1,0 +1,348 @@
+﻿2026-09-06T17:46:22.9265227Z Current runner version: '2.337.0'
+2026-09-06T17:46:22.9292063Z ##[group]Runner Image Provisioner
+2026-09-06T17:46:22.9293052Z Hosted Compute Agent
+2026-09-06T17:46:22.9293669Z Version: 20260828.587
+2026-09-06T17:46:22.9294338Z Commit: abac92662cab4cc7352de4f9f9d2e2419aad9c29
+2026-09-06T17:46:22.9295165Z Build Date: 2026-08-28T16:44:25Z
+2026-09-06T17:46:22.9295863Z Worker ID: {3a2ad879-19f4-4614-a824-a538f0af50f4}
+2026-09-06T17:46:22.9296615Z Azure Region: northcentralus
+2026-09-06T17:46:22.9297268Z ##[endgroup]
+2026-09-06T17:46:22.9299456Z ##[group]Operating System
+2026-09-06T17:46:22.9300237Z Ubuntu
+2026-09-06T17:46:22.9300898Z 24.04.4
+2026-09-06T17:46:22.9301463Z LTS
+2026-09-06T17:46:22.9302010Z ##[endgroup]
+2026-09-06T17:46:22.9302608Z ##[group]Runner Image
+2026-09-06T17:46:22.9303301Z Image: ubuntu-24.04
+2026-09-06T17:46:22.9303881Z Version: 20260831.293.1
+2026-09-06T17:46:22.9305208Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260831.293/images/ubuntu/Ubuntu2404-Readme.md
+2026-09-06T17:46:22.9306821Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260831.293
+2026-09-06T17:46:22.9307863Z ##[endgroup]
+2026-09-06T17:46:22.9309342Z ##[group]GITHUB_TOKEN Permissions
+2026-09-06T17:46:22.9311535Z Contents: read
+2026-09-06T17:46:22.9312172Z Metadata: read
+2026-09-06T17:46:22.9312753Z ##[endgroup]
+2026-09-06T17:46:22.9315093Z Secret source: Actions
+2026-09-06T17:46:22.9316220Z Prepare workflow directory
+2026-09-06T17:46:22.9667142Z Prepare all required actions
+2026-09-06T17:46:22.9715802Z Getting action download info
+2026-09-06T17:46:23.2587093Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-09-06T17:46:23.3606373Z Download action repository 'actions/setup-python@v5' (SHA:a26af69be951a213d495a4c3e4e4022e16d87065)
+2026-09-06T17:46:23.5741718Z Complete job name: Security (bandit + pip-audit)
+2026-09-06T17:46:23.6707422Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-09-06T17:46:23.6716911Z ##[group]Run actions/checkout@v4
+2026-09-06T17:46:23.6717713Z with:
+2026-09-06T17:46:23.6718528Z   repository: RootOne1337/sphere-platform
+2026-09-06T17:46:23.6722315Z   token: ***
+2026-09-06T17:46:23.6722771Z   ssh-strict: true
+2026-09-06T17:46:23.6723223Z   ssh-user: git
+2026-09-06T17:46:23.6723713Z   persist-credentials: true
+2026-09-06T17:46:23.6724201Z   clean: true
+2026-09-06T17:46:23.6724668Z   sparse-checkout-cone-mode: true
+2026-09-06T17:46:23.6725198Z   fetch-depth: 1
+2026-09-06T17:46:23.6725703Z   fetch-tags: false
+2026-09-06T17:46:23.6726160Z   show-progress: true
+2026-09-06T17:46:23.6726612Z   lfs: false
+2026-09-06T17:46:23.6727087Z   submodules: false
+2026-09-06T17:46:23.6727544Z   set-safe-directory: true
+2026-09-06T17:46:23.6728072Z   allow-unsafe-pr-checkout: false
+2026-09-06T17:46:23.6729443Z ##[endgroup]
+2026-09-06T17:46:23.7755186Z Syncing repository: RootOne1337/sphere-platform
+2026-09-06T17:46:23.7757257Z ##[group]Getting Git version info
+2026-09-06T17:46:23.7758477Z Working directory is '/home/runner/work/sphere-platform/sphere-platform'
+2026-09-06T17:46:23.7759746Z [command]/usr/bin/git version
+2026-09-06T17:46:23.7835523Z git version 2.55.0
+2026-09-06T17:46:23.7858802Z ##[endgroup]
+2026-09-06T17:46:23.7874475Z Temporarily overriding HOME='/home/runner/work/_temp/93f4f884-dda7-4f77-8ad0-bdfd051617b9' before making global git config changes
+2026-09-06T17:46:23.7876815Z Adding repository directory to the temporary git global config as a safe directory
+2026-09-06T17:46:23.7880588Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/sphere-platform/sphere-platform
+2026-09-06T17:46:23.7931490Z Deleting the contents of '/home/runner/work/sphere-platform/sphere-platform'
+2026-09-06T17:46:23.7936807Z ##[group]Initializing the repository
+2026-09-06T17:46:23.7942471Z [command]/usr/bin/git init /home/runner/work/sphere-platform/sphere-platform
+2026-09-06T17:46:23.8044303Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-09-06T17:46:23.8045939Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-09-06T17:46:23.8046955Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-09-06T17:46:23.8048566Z hint: call:
+2026-09-06T17:46:23.8049280Z hint:
+2026-09-06T17:46:23.8050127Z hint: 	git config --global init.defaultBranch <name>
+2026-09-06T17:46:23.8051130Z hint:
+2026-09-06T17:46:23.8051850Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-09-06T17:46:23.8053016Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-09-06T17:46:23.8053951Z hint:
+2026-09-06T17:46:23.8054442Z hint: 	git branch -m <name>
+2026-09-06T17:46:23.8054946Z hint:
+2026-09-06T17:46:23.8055610Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-09-06T17:46:23.8056844Z Initialized empty Git repository in /home/runner/work/sphere-platform/sphere-platform/.git/
+2026-09-06T17:46:23.8059920Z [command]/usr/bin/git remote add origin https://github.com/RootOne1337/sphere-platform
+2026-09-06T17:46:23.8106824Z ##[endgroup]
+2026-09-06T17:46:23.8107643Z ##[group]Disabling automatic garbage collection
+2026-09-06T17:46:23.8113173Z [command]/usr/bin/git config --local gc.auto 0
+2026-09-06T17:46:23.8144811Z ##[endgroup]
+2026-09-06T17:46:23.8146176Z ##[group]Setting up auth
+2026-09-06T17:46:23.8153246Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-09-06T17:46:23.8186485Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-09-06T17:46:23.8523038Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-09-06T17:46:23.8554491Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-09-06T17:46:23.8778009Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-09-06T17:46:23.8813365Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-09-06T17:46:23.9059932Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-09-06T17:46:23.9096351Z ##[endgroup]
+2026-09-06T17:46:23.9097214Z ##[group]Fetching the repository
+2026-09-06T17:46:23.9106491Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +ac32d3dafaf1bf4a5972241c7320e0d4f647206b:refs/remotes/pull/19/merge
+2026-09-06T17:46:24.7757469Z From https://github.com/RootOne1337/sphere-platform
+2026-09-06T17:46:24.7760294Z  * [new ref]         ac32d3dafaf1bf4a5972241c7320e0d4f647206b -> pull/19/merge
+2026-09-06T17:46:24.7765420Z ##[endgroup]
+2026-09-06T17:46:24.7767370Z ##[group]Determining the checkout info
+2026-09-06T17:46:24.7769823Z ##[endgroup]
+2026-09-06T17:46:24.7771725Z [command]/usr/bin/git sparse-checkout disable
+2026-09-06T17:46:24.7821284Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-09-06T17:46:24.7850499Z ##[group]Checking out the ref
+2026-09-06T17:46:24.7854054Z [command]/usr/bin/git checkout --progress --force refs/remotes/pull/19/merge
+2026-09-06T17:46:24.8606072Z Note: switching to 'refs/remotes/pull/19/merge'.
+2026-09-06T17:46:24.8607007Z 
+2026-09-06T17:46:24.8607722Z You are in 'detached HEAD' state. You can look around, make experimental
+2026-09-06T17:46:24.8609926Z changes and commit them, and you can discard any commits you make in this
+2026-09-06T17:46:24.8611713Z state without impacting any branches by switching back to a branch.
+2026-09-06T17:46:24.8613067Z 
+2026-09-06T17:46:24.8613765Z If you want to create a new branch to retain commits you create, you may
+2026-09-06T17:46:24.8616240Z do so (now or later) by using -c with the switch command. Example:
+2026-09-06T17:46:24.8617767Z 
+2026-09-06T17:46:24.8618716Z   git switch -c <new-branch-name>
+2026-09-06T17:46:24.8619726Z 
+2026-09-06T17:46:24.8620414Z Or undo this operation with:
+2026-09-06T17:46:24.8621548Z 
+2026-09-06T17:46:24.8622300Z   git switch -
+2026-09-06T17:46:24.8623267Z 
+2026-09-06T17:46:24.8624609Z Turn off this advice by setting config variable advice.detachedHead to false
+2026-09-06T17:46:24.8626722Z 
+2026-09-06T17:46:24.8629256Z HEAD is now at ac32d3d Merge d7839fb96fe03eb3bb726706288f6a5a8e165672 into 28f8cc46ab65496e00297960fd94d87d1605cc83
+2026-09-06T17:46:24.8636245Z ##[endgroup]
+2026-09-06T17:46:24.8669107Z [command]/usr/bin/git log -1 --format=%H
+2026-09-06T17:46:24.8694186Z ac32d3dafaf1bf4a5972241c7320e0d4f647206b
+2026-09-06T17:46:24.9093749Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-09-06T17:46:24.9099997Z ##[group]Run actions/setup-python@v5
+2026-09-06T17:46:24.9101207Z with:
+2026-09-06T17:46:24.9102086Z   python-version: 3.12
+2026-09-06T17:46:24.9103069Z   cache: pip
+2026-09-06T17:46:24.9103964Z   check-latest: false
+2026-09-06T17:46:24.9113765Z   token: ***
+2026-09-06T17:46:24.9114731Z   update-environment: true
+2026-09-06T17:46:24.9115836Z   allow-prereleases: false
+2026-09-06T17:46:24.9189301Z   freethreaded: false
+2026-09-06T17:46:24.9191159Z ##[endgroup]
+2026-09-06T17:46:25.0599357Z ##[group]Installed versions
+2026-09-06T17:46:25.0708720Z (node:2266) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-09-06T17:46:25.0711860Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-09-06T17:46:25.0713674Z Successfully set up CPython (3.12.14)
+2026-09-06T17:46:25.0715570Z ##[endgroup]
+2026-09-06T17:46:25.2457502Z [command]/opt/hostedtoolcache/Python/3.12.14/x64/bin/pip cache dir
+2026-09-06T17:46:25.5417776Z /home/runner/.cache/pip
+2026-09-06T17:46:25.6806789Z Cache hit for: setup-python-Linux-x64-24.04-Ubuntu-python-3.12.14-pip-fa56b37663ef2b7b0ee77018cc987d399300977215633229094a6ba268067208
+2026-09-06T17:46:25.6926326Z (node:2266) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-09-06T17:46:26.3700086Z Received 28664084 of 28664084 (100.0%), 48.4 MBs/sec
+2026-09-06T17:46:26.3701885Z Cache Size: ~27 MB (28664084 B)
+2026-09-06T17:46:26.3732394Z [command]/usr/bin/tar -xf /home/runner/work/_temp/28ebf75f-f307-47e1-9ba2-d940caee17e2/cache.tzst -P -C /home/runner/work/sphere-platform/sphere-platform --use-compress-program unzstd
+2026-09-06T17:46:26.4221724Z Cache restored successfully
+2026-09-06T17:46:26.4240102Z Cache restored from key: setup-python-Linux-x64-24.04-Ubuntu-python-3.12.14-pip-fa56b37663ef2b7b0ee77018cc987d399300977215633229094a6ba268067208
+2026-09-06T17:46:26.4431357Z ##[group]Run pip install bandit pip-audit
+2026-09-06T17:46:26.4431829Z [36;1mpip install bandit pip-audit[0m
+2026-09-06T17:46:26.4476545Z shell: /usr/bin/bash -e {0}
+2026-09-06T17:46:26.4476865Z env:
+2026-09-06T17:46:26.4477156Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-09-06T17:46:26.4477657Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib/pkgconfig
+2026-09-06T17:46:26.4478472Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-09-06T17:46:26.4478998Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-09-06T17:46:26.4479413Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-09-06T17:46:26.4480122Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib
+2026-09-06T17:46:26.4480473Z ##[endgroup]
+2026-09-06T17:46:27.0859908Z Collecting bandit
+2026-09-06T17:46:27.1449983Z   Downloading bandit-1.9.4-py3-none-any.whl.metadata (7.1 kB)
+2026-09-06T17:46:27.1687234Z Collecting pip-audit
+2026-09-06T17:46:27.1721626Z   Downloading pip_audit-2.10.1-py3-none-any.whl.metadata (28 kB)
+2026-09-06T17:46:27.2303651Z Collecting PyYAML>=5.3.1 (from bandit)
+2026-09-06T17:46:27.2347372Z   Downloading pyyaml-6.0.3-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.4 kB)
+2026-09-06T17:46:27.2618769Z Collecting stevedore>=1.20.0 (from bandit)
+2026-09-06T17:46:27.2653110Z   Downloading stevedore-5.9.1-py3-none-any.whl.metadata (2.3 kB)
+2026-09-06T17:46:27.2987938Z Collecting rich (from bandit)
+2026-09-06T17:46:27.3023164Z   Downloading rich-15.0.0-py3-none-any.whl.metadata (18 kB)
+2026-09-06T17:46:27.3183834Z Collecting CacheControl>=0.13.0 (from CacheControl[filecache]>=0.13.0->pip-audit)
+2026-09-06T17:46:27.3217711Z   Downloading cachecontrol-0.14.4-py3-none-any.whl.metadata (3.1 kB)
+2026-09-06T17:46:27.3511890Z Collecting cyclonedx-python-lib<12,>=5 (from pip-audit)
+2026-09-06T17:46:27.3548317Z   Downloading cyclonedx_python_lib-11.12.0-py3-none-any.whl.metadata (6.9 kB)
+2026-09-06T17:46:27.3703681Z Collecting packaging>=23.0.0 (from pip-audit)
+2026-09-06T17:46:27.3736884Z   Downloading packaging-26.3-py3-none-any.whl.metadata (3.5 kB)
+2026-09-06T17:46:27.3863573Z Collecting pip-api>=0.0.28 (from pip-audit)
+2026-09-06T17:46:27.3897519Z   Downloading pip_api-0.0.34-py3-none-any.whl.metadata (6.6 kB)
+2026-09-06T17:46:27.4000850Z Collecting pip-requirements-parser>=32.0.0 (from pip-audit)
+2026-09-06T17:46:27.4036352Z   Downloading pip_requirements_parser-32.0.1-py3-none-any.whl.metadata (9.3 kB)
+2026-09-06T17:46:27.4363612Z Collecting requests>=2.31.0 (from pip-audit)
+2026-09-06T17:46:27.4398163Z   Downloading requests-2.34.2-py3-none-any.whl.metadata (4.8 kB)
+2026-09-06T17:46:27.4663560Z Collecting tomli>=2.2.1 (from pip-audit)
+2026-09-06T17:46:27.4705828Z   Downloading tomli-2.4.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (10 kB)
+2026-09-06T17:46:27.4824590Z Collecting tomli-w>=1.2.0 (from pip-audit)
+2026-09-06T17:46:27.4857404Z   Downloading tomli_w-1.2.0-py3-none-any.whl.metadata (5.7 kB)
+2026-09-06T17:46:27.5030303Z Collecting platformdirs>=4.2.0 (from pip-audit)
+2026-09-06T17:46:27.5066570Z   Downloading platformdirs-4.11.7-py3-none-any.whl.metadata (5.5 kB)
+2026-09-06T17:46:27.5219636Z Collecting license-expression<31,>=30 (from cyclonedx-python-lib<12,>=5->pip-audit)
+2026-09-06T17:46:27.5255120Z   Downloading license_expression-30.4.4-py3-none-any.whl.metadata (11 kB)
+2026-09-06T17:46:27.5440912Z Collecting packageurl-python<2,>=0.11 (from cyclonedx-python-lib<12,>=5->pip-audit)
+2026-09-06T17:46:27.5473259Z   Downloading packageurl_python-0.17.6-py3-none-any.whl.metadata (5.1 kB)
+2026-09-06T17:46:27.5637776Z Collecting py-serializable<3.0.0,>=2.1.0 (from cyclonedx-python-lib<12,>=5->pip-audit)
+2026-09-06T17:46:27.5680143Z   Downloading py_serializable-2.1.0-py3-none-any.whl.metadata (4.3 kB)
+2026-09-06T17:46:27.5807424Z Collecting sortedcontainers<3.0.0,>=2.4.0 (from cyclonedx-python-lib<12,>=5->pip-audit)
+2026-09-06T17:46:27.5839312Z   Downloading sortedcontainers-2.4.0-py2.py3-none-any.whl.metadata (10 kB)
+2026-09-06T17:46:27.6013587Z Collecting typing_extensions<5.0,>=4.6 (from cyclonedx-python-lib<12,>=5->pip-audit)
+2026-09-06T17:46:27.6027041Z   Using cached typing_extensions-4.16.0-py3-none-any.whl.metadata (3.3 kB)
+2026-09-06T17:46:27.6148712Z Collecting boolean.py>=4.0 (from license-expression<31,>=30->cyclonedx-python-lib<12,>=5->pip-audit)
+2026-09-06T17:46:27.6184357Z   Downloading boolean_py-5.0-py3-none-any.whl.metadata (2.3 kB)
+2026-09-06T17:46:27.6313287Z Collecting defusedxml<0.8.0,>=0.7.1 (from py-serializable<3.0.0,>=2.1.0->cyclonedx-python-lib<12,>=5->pip-audit)
+2026-09-06T17:46:27.6346487Z   Downloading defusedxml-0.7.1-py2.py3-none-any.whl.metadata (32 kB)
+2026-09-06T17:46:27.7150345Z Collecting msgpack<2.0.0,>=0.5.2 (from CacheControl>=0.13.0->CacheControl[filecache]>=0.13.0->pip-audit)
+2026-09-06T17:46:27.7185472Z   Downloading msgpack-1.2.2-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (8.3 kB)
+2026-09-06T17:46:27.7416626Z Collecting filelock>=3.8.0 (from CacheControl[filecache]>=0.13.0->pip-audit)
+2026-09-06T17:46:27.7454369Z   Downloading filelock-3.32.5-py3-none-any.whl.metadata (2.0 kB)
+2026-09-06T17:46:27.7504617Z Requirement already satisfied: pip in /opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages (from pip-api>=0.0.28->pip-audit) (26.2.1)
+2026-09-06T17:46:27.7712279Z Collecting pyparsing (from pip-requirements-parser>=32.0.0->pip-audit)
+2026-09-06T17:46:27.7745835Z   Downloading pyparsing-3.3.2-py3-none-any.whl.metadata (5.8 kB)
+2026-09-06T17:46:27.8869124Z Collecting charset_normalizer<4,>=2 (from requests>=2.31.0->pip-audit)
+2026-09-06T17:46:27.8905943Z   Downloading charset_normalizer-3.5.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (45 kB)
+2026-09-06T17:46:27.9069087Z Collecting idna<4,>=2.5 (from requests>=2.31.0->pip-audit)
+2026-09-06T17:46:27.9102225Z   Downloading idna-3.19-py3-none-any.whl.metadata (9.2 kB)
+2026-09-06T17:46:27.9306199Z Collecting urllib3<3,>=1.26 (from requests>=2.31.0->pip-audit)
+2026-09-06T17:46:27.9343232Z   Downloading urllib3-2.7.0-py3-none-any.whl.metadata (6.9 kB)
+2026-09-06T17:46:27.9530892Z Collecting certifi>=2023.5.7 (from requests>=2.31.0->pip-audit)
+2026-09-06T17:46:27.9566717Z   Downloading certifi-2026.7.22-py3-none-any.whl.metadata (2.5 kB)
+2026-09-06T17:46:27.9734870Z Collecting markdown-it-py>=2.2.0 (from rich->bandit)
+2026-09-06T17:46:27.9768715Z   Downloading markdown_it_py-4.2.0-py3-none-any.whl.metadata (7.4 kB)
+2026-09-06T17:46:27.9974126Z Collecting pygments<3.0.0,>=2.13.0 (from rich->bandit)
+2026-09-06T17:46:28.0013126Z   Downloading pygments-2.21.0-py3-none-any.whl.metadata (2.5 kB)
+2026-09-06T17:46:28.0123542Z Collecting mdurl~=0.1 (from markdown-it-py>=2.2.0->rich->bandit)
+2026-09-06T17:46:28.0155512Z   Downloading mdurl-0.1.2-py3-none-any.whl.metadata (1.6 kB)
+2026-09-06T17:46:28.0253061Z Downloading bandit-1.9.4-py3-none-any.whl (134 kB)
+2026-09-06T17:46:28.0321689Z Downloading pip_audit-2.10.1-py3-none-any.whl (62 kB)
+2026-09-06T17:46:28.0378097Z Downloading cyclonedx_python_lib-11.12.0-py3-none-any.whl (529 kB)
+2026-09-06T17:46:28.0458282Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 529.5/529.5 kB 70.0 MB/s  0:00:00
+2026-09-06T17:46:28.0490149Z Downloading license_expression-30.4.4-py3-none-any.whl (120 kB)
+2026-09-06T17:46:28.0545382Z Downloading packageurl_python-0.17.6-py3-none-any.whl (36 kB)
+2026-09-06T17:46:28.0613312Z Downloading py_serializable-2.1.0-py3-none-any.whl (23 kB)
+2026-09-06T17:46:28.0681512Z Downloading defusedxml-0.7.1-py2.py3-none-any.whl (25 kB)
+2026-09-06T17:46:28.0736059Z Downloading sortedcontainers-2.4.0-py2.py3-none-any.whl (29 kB)
+2026-09-06T17:46:28.0770214Z Using cached typing_extensions-4.16.0-py3-none-any.whl (45 kB)
+2026-09-06T17:46:28.0814444Z Downloading boolean_py-5.0-py3-none-any.whl (26 kB)
+2026-09-06T17:46:28.0867775Z Downloading cachecontrol-0.14.4-py3-none-any.whl (22 kB)
+2026-09-06T17:46:28.0929813Z Downloading msgpack-1.2.2-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (420 kB)
+2026-09-06T17:46:28.1003600Z Downloading filelock-3.32.5-py3-none-any.whl (100 kB)
+2026-09-06T17:46:28.1060194Z Downloading packaging-26.3-py3-none-any.whl (129 kB)
+2026-09-06T17:46:28.1114830Z Downloading pip_api-0.0.34-py3-none-any.whl (120 kB)
+2026-09-06T17:46:28.1170575Z Downloading pip_requirements_parser-32.0.1-py3-none-any.whl (35 kB)
+2026-09-06T17:46:28.1227293Z Downloading platformdirs-4.11.7-py3-none-any.whl (23 kB)
+2026-09-06T17:46:28.1280234Z Downloading pyyaml-6.0.3-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (807 kB)
+2026-09-06T17:46:28.1359582Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 807.9/807.9 kB 97.8 MB/s  0:00:00
+2026-09-06T17:46:28.1395513Z Downloading requests-2.34.2-py3-none-any.whl (73 kB)
+2026-09-06T17:46:28.1479508Z Downloading charset_normalizer-3.5.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (248 kB)
+2026-09-06T17:46:28.1536500Z Downloading idna-3.19-py3-none-any.whl (68 kB)
+2026-09-06T17:46:28.1589774Z Downloading urllib3-2.7.0-py3-none-any.whl (131 kB)
+2026-09-06T17:46:28.1645481Z Downloading certifi-2026.7.22-py3-none-any.whl (136 kB)
+2026-09-06T17:46:28.1700157Z Downloading rich-15.0.0-py3-none-any.whl (310 kB)
+2026-09-06T17:46:28.1761514Z Downloading pygments-2.21.0-py3-none-any.whl (1.3 MB)
+2026-09-06T17:46:28.1839476Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.3/1.3 MB 185.2 MB/s  0:00:00
+2026-09-06T17:46:28.1872634Z Downloading markdown_it_py-4.2.0-py3-none-any.whl (91 kB)
+2026-09-06T17:46:28.1930778Z Downloading mdurl-0.1.2-py3-none-any.whl (10.0 kB)
+2026-09-06T17:46:28.1983092Z Downloading stevedore-5.9.1-py3-none-any.whl (54 kB)
+2026-09-06T17:46:28.2036232Z Downloading tomli-2.4.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (253 kB)
+2026-09-06T17:46:28.2096585Z Downloading tomli_w-1.2.0-py3-none-any.whl (6.7 kB)
+2026-09-06T17:46:28.2148162Z Downloading pyparsing-3.3.2-py3-none-any.whl (122 kB)
+2026-09-06T17:46:28.3693376Z Installing collected packages: sortedcontainers, boolean.py, urllib3, typing_extensions, tomli-w, tomli, stevedore, PyYAML, pyparsing, pygments, platformdirs, pip-api, packaging, packageurl-python, msgpack, mdurl, license-expression, idna, filelock, defusedxml, charset_normalizer, certifi, requests, py-serializable, pip-requirements-parser, markdown-it-py, rich, cyclonedx-python-lib, CacheControl, bandit, pip-audit
+2026-09-06T17:46:30.5816442Z 
+2026-09-06T17:46:30.5849584Z Successfully installed CacheControl-0.14.4 PyYAML-6.0.3 bandit-1.9.4 boolean.py-5.0 certifi-2026.7.22 charset_normalizer-3.5.1 cyclonedx-python-lib-11.12.0 defusedxml-0.7.1 filelock-3.32.5 idna-3.19 license-expression-30.4.4 markdown-it-py-4.2.0 mdurl-0.1.2 msgpack-1.2.2 packageurl-python-0.17.6 packaging-26.3 pip-api-0.0.34 pip-audit-2.10.1 pip-requirements-parser-32.0.1 platformdirs-4.11.7 py-serializable-2.1.0 pygments-2.21.0 pyparsing-3.3.2 requests-2.34.2 rich-15.0.0 sortedcontainers-2.4.0 stevedore-5.9.1 tomli-2.4.1 tomli-w-1.2.0 typing_extensions-4.16.0 urllib3-2.7.0
+2026-09-06T17:46:30.6658691Z ##[group]Run bandit -r backend/ -c .bandit -ll
+2026-09-06T17:46:30.6659111Z [36;1mbandit -r backend/ -c .bandit -ll[0m
+2026-09-06T17:46:30.6696835Z shell: /usr/bin/bash -e {0}
+2026-09-06T17:46:30.6697098Z env:
+2026-09-06T17:46:30.6697369Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-09-06T17:46:30.6697815Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib/pkgconfig
+2026-09-06T17:46:30.6698536Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-09-06T17:46:30.6698948Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-09-06T17:46:30.6699356Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-09-06T17:46:30.6699751Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib
+2026-09-06T17:46:30.6700099Z ##[endgroup]
+2026-09-06T17:46:30.8494228Z [main]	INFO	profile include tests: None
+2026-09-06T17:46:30.8495157Z [main]	INFO	profile exclude tests: B104,B601,B101
+2026-09-06T17:46:30.8495839Z [main]	INFO	cli include tests: None
+2026-09-06T17:46:30.8496329Z [main]	INFO	cli exclude tests: None
+2026-09-06T17:46:30.8497275Z [main]	INFO	using config: .bandit
+2026-09-06T17:46:30.8497797Z [main]	INFO	running on Python 3.12.14
+2026-09-06T17:46:31.0440200Z [tester]	WARNING	nosec encountered (B108), but no failed test on file backend/api/v1/logs/router.py:42
+2026-09-06T17:46:31.2193185Z [tester]	WARNING	nosec encountered (B108), but no failed test on file backend/api/v1/updates/router.py:30
+2026-09-06T17:46:32.7281612Z Working... ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:01
+2026-09-06T17:46:32.7289645Z Run started:2026-09-06 17:46:32.728776+00:00
+2026-09-06T17:46:32.7290011Z 
+2026-09-06T17:46:32.7290159Z Test results:
+2026-09-06T17:46:32.7290524Z 	No issues identified.
+2026-09-06T17:46:32.7290775Z 
+2026-09-06T17:46:32.7290911Z Code scanned:
+2026-09-06T17:46:32.7291264Z 	Total lines of code: 20783
+2026-09-06T17:46:32.7291706Z 	Total lines skipped (#nosec): 0
+2026-09-06T17:46:32.7292475Z 	Total potential issues skipped due to specifically being disabled (e.g., #nosec BXXX): 2
+2026-09-06T17:46:32.7293115Z 
+2026-09-06T17:46:32.7293252Z Run metrics:
+2026-09-06T17:46:32.7293607Z 	Total issues (by severity):
+2026-09-06T17:46:32.7294023Z 		Undefined: 0
+2026-09-06T17:46:32.7294221Z 		Low: 32
+2026-09-06T17:46:32.7294402Z 		Medium: 0
+2026-09-06T17:46:32.7294581Z 		High: 0
+2026-09-06T17:46:32.7294789Z 	Total issues (by confidence):
+2026-09-06T17:46:32.7295035Z 		Undefined: 0
+2026-09-06T17:46:32.7295230Z 		Low: 0
+2026-09-06T17:46:32.7295408Z 		Medium: 6
+2026-09-06T17:46:32.7295612Z 		High: 26
+2026-09-06T17:46:32.7295800Z Files skipped (0):
+2026-09-06T17:46:32.7877428Z ##[group]Run pip-audit -r backend/requirements.txt
+2026-09-06T17:46:32.7877859Z [36;1mpip-audit -r backend/requirements.txt[0m
+2026-09-06T17:46:32.7914269Z shell: /usr/bin/bash -e {0}
+2026-09-06T17:46:32.7914526Z env:
+2026-09-06T17:46:32.7914826Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-09-06T17:46:32.7915281Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib/pkgconfig
+2026-09-06T17:46:32.7915722Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-09-06T17:46:32.7916113Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-09-06T17:46:32.7916513Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-09-06T17:46:32.7916913Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib
+2026-09-06T17:46:32.7917244Z ##[endgroup]
+2026-09-06T17:46:47.6597883Z Found 17 known vulnerabilities in 3 packages
+2026-09-06T17:46:47.6601088Z Name      Version ID              Fix Versions
+2026-09-06T17:46:47.6601832Z --------- ------- --------------- ------------
+2026-09-06T17:46:47.6602348Z pyjwt     2.12.0  PYSEC-2026-179  2.13.0
+2026-09-06T17:46:47.6602786Z pyjwt     2.12.0  PYSEC-2026-175  2.13.0
+2026-09-06T17:46:47.6603229Z pyjwt     2.12.0  PYSEC-2026-177  2.13.0
+2026-09-06T17:46:47.6603663Z pyjwt     2.12.0  PYSEC-2026-178  2.13.0
+2026-09-06T17:46:47.6604095Z pyjwt     2.12.0  PYSEC-2026-176  2.12.1
+2026-09-06T17:46:47.6604526Z pyjwt     2.12.0  PYSEC-2026-177  2.13.0
+2026-09-06T17:46:47.6604961Z pyjwt     2.12.0  PYSEC-2026-179  2.13.0
+2026-09-06T17:46:47.6605390Z pyjwt     2.12.0  PYSEC-2026-176  2.13.0
+2026-09-06T17:46:47.6605811Z pyjwt     2.12.0  PYSEC-2026-178  2.13.0
+2026-09-06T17:46:47.6606248Z pytest    8.0.2   PYSEC-2026-1845 9.0.3
+2026-09-06T17:46:47.6606701Z starlette 0.50.0  PYSEC-2026-161  1.0.1
+2026-09-06T17:46:47.6607138Z starlette 0.50.0  PYSEC-2026-161  1.0.1
+2026-09-06T17:46:47.6607560Z starlette 0.50.0  PYSEC-2026-248  1.3.0
+2026-09-06T17:46:47.6608007Z starlette 0.50.0  PYSEC-2026-249  1.3.1
+2026-09-06T17:46:47.6608753Z starlette 0.50.0  PYSEC-2026-248  1.3.0
+2026-09-06T17:46:47.6609198Z starlette 0.50.0  PYSEC-2026-2281 1.1.0
+2026-09-06T17:46:47.6609650Z starlette 0.50.0  PYSEC-2026-2280 1.1.0
+2026-09-06T17:46:47.7126596Z ##[error]Process completed with exit code 1.
+2026-09-06T17:46:47.7296624Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-09-06T17:46:47.7297908Z Post job cleanup.
+2026-09-06T17:46:47.8187052Z [command]/usr/bin/git version
+2026-09-06T17:46:47.8225504Z git version 2.55.0
+2026-09-06T17:46:47.8267018Z Temporarily overriding HOME='/home/runner/work/_temp/88a20104-108f-4b1e-94f0-e3736a4042a1' before making global git config changes
+2026-09-06T17:46:47.8268713Z Adding repository directory to the temporary git global config as a safe directory
+2026-09-06T17:46:47.8274108Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/sphere-platform/sphere-platform
+2026-09-06T17:46:47.8312708Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-09-06T17:46:47.8347488Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-09-06T17:46:47.8579336Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-09-06T17:46:47.8606151Z http.https://github.com/.extraheader
+2026-09-06T17:46:47.8618001Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-09-06T17:46:47.8652159Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-09-06T17:46:47.8882008Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-09-06T17:46:47.8914951Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-09-06T17:46:47.9295978Z Cleaning up orphan processes
+2026-09-06T17:46:47.9590824Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-python@v5. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

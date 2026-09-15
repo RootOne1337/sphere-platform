@@ -1,0 +1,110 @@
+FFFFFFFF......                                                           [100%]
+================================== FAILURES ===================================
+_ test_stale_cancellation_cannot_overwrite_a_terminal_result[completed-cancel_task-assigned] _
+tests\production\test_cancellation_serialization.py:50: in test_stale_cancellation_cannot_overwrite_a_terminal_result
+    assert stored.status == terminal, "Cancellation overwrote a newer committed terminal state"
+E   AssertionError: Cancellation overwrote a newer committed terminal state
+E   assert <TaskStatus.C...: 'cancelled'> == <TaskStatus.C...: 'completed'>
+E     
+E     - completed
+E     + cancelled
+---------------------------- Captured stdout call -----------------------------
+{"task_id": "afd772e1-a9c1-4aba-a038-bdea7b896fde", "was_in_queue": "<AsyncMock name='mock.cancel_task()' id='1649903782416'>", "event": "task.cancelled", "level": "info", "logger": "backend.services.task_service", "timestamp": "2026-09-06T17:37:02.432340Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.services.task_service:task_service.py:528 {'task_id': 'afd772e1-a9c1-4aba-a038-bdea7b896fde', 'was_in_queue': <AsyncMock name='mock.cancel_task()' id='1649903782416'>, 'event': 'task.cancelled', 'level': 'info', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-06T17:37:02.432340Z'}
+_ test_stale_cancellation_cannot_overwrite_a_terminal_result[completed-force_stop_task-running] _
+tests\production\test_cancellation_serialization.py:50: in test_stale_cancellation_cannot_overwrite_a_terminal_result
+    assert stored.status == terminal, "Cancellation overwrote a newer committed terminal state"
+E   AssertionError: Cancellation overwrote a newer committed terminal state
+E   assert <TaskStatus.C...: 'cancelled'> == <TaskStatus.C...: 'completed'>
+E     
+E     - completed
+E     + cancelled
+---------------------------- Captured stdout call -----------------------------
+{"task_id": "02f1abcc-6fa7-424c-86ff-a26f80279b0f", "device_id": "bd46e53a-ed7c-4349-8a94-8506ef697a51", "event": "task.force_stopped", "level": "info", "logger": "backend.services.task_service", "timestamp": "2026-09-06T17:37:03.284931Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.services.task_service:task_service.py:582 {'task_id': '02f1abcc-6fa7-424c-86ff-a26f80279b0f', 'device_id': 'bd46e53a-ed7c-4349-8a94-8506ef697a51', 'event': 'task.force_stopped', 'level': 'info', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-06T17:37:03.284931Z'}
+_ test_stale_cancellation_cannot_overwrite_a_terminal_result[failed-cancel_task-assigned] _
+tests\production\test_cancellation_serialization.py:50: in test_stale_cancellation_cannot_overwrite_a_terminal_result
+    assert stored.status == terminal, "Cancellation overwrote a newer committed terminal state"
+E   AssertionError: Cancellation overwrote a newer committed terminal state
+E   assert <TaskStatus.C...: 'cancelled'> == <TaskStatus.FAILED: 'failed'>
+E     
+E     - failed
+E     + cancelled
+---------------------------- Captured stdout call -----------------------------
+{"task_id": "0ef452fa-d020-4d43-976d-28683b64b17b", "was_in_queue": "<AsyncMock name='mock.cancel_task()' id='1649899719280'>", "event": "task.cancelled", "level": "info", "logger": "backend.services.task_service", "timestamp": "2026-09-06T17:37:03.761215Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.services.task_service:task_service.py:528 {'task_id': '0ef452fa-d020-4d43-976d-28683b64b17b', 'was_in_queue': <AsyncMock name='mock.cancel_task()' id='1649899719280'>, 'event': 'task.cancelled', 'level': 'info', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-06T17:37:03.761215Z'}
+_ test_stale_cancellation_cannot_overwrite_a_terminal_result[failed-force_stop_task-running] _
+tests\production\test_cancellation_serialization.py:50: in test_stale_cancellation_cannot_overwrite_a_terminal_result
+    assert stored.status == terminal, "Cancellation overwrote a newer committed terminal state"
+E   AssertionError: Cancellation overwrote a newer committed terminal state
+E   assert <TaskStatus.C...: 'cancelled'> == <TaskStatus.FAILED: 'failed'>
+E     
+E     - failed
+E     + cancelled
+---------------------------- Captured stdout call -----------------------------
+{"task_id": "63468cb4-431d-4a44-bb10-fb24926b91ac", "device_id": "66003c86-db0b-4752-aad8-7b39e2878dd9", "event": "task.force_stopped", "level": "info", "logger": "backend.services.task_service", "timestamp": "2026-09-06T17:37:04.211422Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.services.task_service:task_service.py:582 {'task_id': '63468cb4-431d-4a44-bb10-fb24926b91ac', 'device_id': '66003c86-db0b-4752-aad8-7b39e2878dd9', 'event': 'task.force_stopped', 'level': 'info', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-06T17:37:04.211422Z'}
+_ test_stale_cancellation_cannot_overwrite_a_terminal_result[timeout-cancel_task-assigned] _
+tests\production\test_cancellation_serialization.py:50: in test_stale_cancellation_cannot_overwrite_a_terminal_result
+    assert stored.status == terminal, "Cancellation overwrote a newer committed terminal state"
+E   AssertionError: Cancellation overwrote a newer committed terminal state
+E   assert <TaskStatus.C...: 'cancelled'> == <TaskStatus.T...UT: 'timeout'>
+E     
+E     - timeout
+E     + cancelled
+---------------------------- Captured stdout call -----------------------------
+{"task_id": "a73adce6-f71e-40fb-88b6-9b7c184090e0", "was_in_queue": "<AsyncMock name='mock.cancel_task()' id='1649899725760'>", "event": "task.cancelled", "level": "info", "logger": "backend.services.task_service", "timestamp": "2026-09-06T17:37:04.635073Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.services.task_service:task_service.py:528 {'task_id': 'a73adce6-f71e-40fb-88b6-9b7c184090e0', 'was_in_queue': <AsyncMock name='mock.cancel_task()' id='1649899725760'>, 'event': 'task.cancelled', 'level': 'info', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-06T17:37:04.635073Z'}
+_ test_stale_cancellation_cannot_overwrite_a_terminal_result[timeout-force_stop_task-running] _
+tests\production\test_cancellation_serialization.py:50: in test_stale_cancellation_cannot_overwrite_a_terminal_result
+    assert stored.status == terminal, "Cancellation overwrote a newer committed terminal state"
+E   AssertionError: Cancellation overwrote a newer committed terminal state
+E   assert <TaskStatus.C...: 'cancelled'> == <TaskStatus.T...UT: 'timeout'>
+E     
+E     - timeout
+E     + cancelled
+---------------------------- Captured stdout call -----------------------------
+{"task_id": "6610520b-037e-4a0e-a52c-de9a314810cd", "device_id": "d1d32c0d-375e-48d2-87cd-c136a9d39210", "event": "task.force_stopped", "level": "info", "logger": "backend.services.task_service", "timestamp": "2026-09-06T17:37:05.083279Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.services.task_service:task_service.py:582 {'task_id': '6610520b-037e-4a0e-a52c-de9a314810cd', 'device_id': 'd1d32c0d-375e-48d2-87cd-c136a9d39210', 'event': 'task.force_stopped', 'level': 'info', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-06T17:37:05.083279Z'}
+_ test_cancellation_waits_for_the_result_owner_before_external_effects[cancel_task-assigned] _
+tests\production\test_cancellation_serialization.py:84: in test_cancellation_waits_for_the_result_owner_before_external_effects
+    assert await asyncio.wait_for(pending, 3) == 409
+E   assert 200 == 409
+---------------------------- Captured stdout call -----------------------------
+{"task_id": "c7003c49-0414-454b-bb88-2c7614e78113", "was_in_queue": "<AsyncMock name='mock.cancel_task()' id='1649915826480'>", "event": "task.cancelled", "level": "info", "logger": "backend.services.task_service", "timestamp": "2026-09-06T17:37:05.475973Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.services.task_service:task_service.py:528 {'task_id': 'c7003c49-0414-454b-bb88-2c7614e78113', 'was_in_queue': <AsyncMock name='mock.cancel_task()' id='1649915826480'>, 'event': 'task.cancelled', 'level': 'info', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-06T17:37:05.475973Z'}
+_ test_cancellation_waits_for_the_result_owner_before_external_effects[force_stop_task-running] _
+tests\production\test_cancellation_serialization.py:84: in test_cancellation_waits_for_the_result_owner_before_external_effects
+    assert await asyncio.wait_for(pending, 3) == 409
+E   assert 200 == 409
+---------------------------- Captured stdout call -----------------------------
+{"task_id": "7bdf053c-4332-4977-b132-ef68421ee02d", "device_id": "a342cb39-1ba9-4d3a-823b-e296f11a162d", "event": "task.force_stopped", "level": "info", "logger": "backend.services.task_service", "timestamp": "2026-09-06T17:37:05.954188Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.services.task_service:task_service.py:582 {'task_id': '7bdf053c-4332-4977-b132-ef68421ee02d', 'device_id': 'a342cb39-1ba9-4d3a-823b-e296f11a162d', 'event': 'task.force_stopped', 'level': 'info', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-06T17:37:05.954188Z'}
+============================== warnings summary ===============================
+.venv-audit\Lib\site-packages\pydantic\fields.py:754: 484 warnings
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\pydantic\fields.py:754: PydanticDeprecatedSince20: Using extra keyword arguments on `Field` is deprecated and will be removed. Use `json_schema_extra` instead. (Extra keys: 'deprecated'). Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.6/migration/
+    warn(
+
+backend\api\v1\game_accounts\router.py:95
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\api\v1\game_accounts\router.py:95: DeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+    sort_dir: str = Query("desc", regex="^(asc|desc)$", description="Направление сортировки"),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/production/test_cancellation_serialization.py::test_stale_cancellation_cannot_overwrite_a_terminal_result[completed-cancel_task-assigned]
+FAILED tests/production/test_cancellation_serialization.py::test_stale_cancellation_cannot_overwrite_a_terminal_result[completed-force_stop_task-running]
+FAILED tests/production/test_cancellation_serialization.py::test_stale_cancellation_cannot_overwrite_a_terminal_result[failed-cancel_task-assigned]
+FAILED tests/production/test_cancellation_serialization.py::test_stale_cancellation_cannot_overwrite_a_terminal_result[failed-force_stop_task-running]
+FAILED tests/production/test_cancellation_serialization.py::test_stale_cancellation_cannot_overwrite_a_terminal_result[timeout-cancel_task-assigned]
+FAILED tests/production/test_cancellation_serialization.py::test_stale_cancellation_cannot_overwrite_a_terminal_result[timeout-force_stop_task-running]
+FAILED tests/production/test_cancellation_serialization.py::test_cancellation_waits_for_the_result_owner_before_external_effects[cancel_task-assigned]
+FAILED tests/production/test_cancellation_serialization.py::test_cancellation_waits_for_the_result_owner_before_external_effects[force_stop_task-running]
+8 failed, 6 passed, 485 warnings in 6.15s

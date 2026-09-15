@@ -15,6 +15,7 @@ services:
       - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
       - REDIS_PASSWORD=${REDIS_PASSWORD}
       - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - ACCOUNT_CREDENTIAL_KEYS=${ACCOUNT_CREDENTIAL_KEYS:-}
       - WG_ROUTER_URL=${WG_ROUTER_URL}
       - WG_ROUTER_API_KEY=${WG_ROUTER_API_KEY}
       - AWG_H1=${AWG_H1}
@@ -24,9 +25,10 @@ services:
       - DEBUG=${DEBUG:-false}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - ENVIRONMENT=${ENVIRONMENT:-production}
+      - SPHERE_BOOTSTRAP_ORG_SLUG=${SPHERE_BOOTSTRAP_ORG_SLUG:-default}
       - WEB_CONCURRENCY=${WEB_CONCURRENCY:-4}
       - CORS_EXTRA_ORIGINS=${CORS_EXTRA_ORIGINS:-}
-      - DEV_SKIP_AUTH=${DEV_SKIP_AUTH:-}
+      - DEV_SKIP_AUTH=${DEV_SKIP_AUTH:-false}
     ports:
       - "${BACKEND_PORT:-8000}:8000"
     depends_on:
@@ -59,6 +61,17 @@ services:
       - frontend-net
       - backend-net
     restart: unless-stopped
+    healthcheck:
+      # Probe dependencies through the API; a running process alone is insufficient.
+      test:
+        - CMD
+        - python
+        - -c
+        - "import json, sys, urllib.request; r = urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health/readyz', timeout=3); sys.exit(0 if r.status == 200 and json.load(r).get('status') == 'ready' else 1)"
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -84,6 +97,16 @@ services:
       - frontend_next_cache:/app/.next            # изолируем .next/ — хостовые артефакты prod-build ломают dev-сервер
     # Turbopack вместо webpack: нет eval() → нет "Code generation from strings disallowed" в Edge runtime
     command: ["sh", "-c", "npm install && npx next dev --turbopack -p 3000"]
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3000/login', {redirect: 'manual', signal: AbortSignal.timeout(3000)}).then(r => process.exit(r.status === 200 ? 0 : 1)).catch(() => process.exit(1))"
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
     networks:
       - frontend-net
 

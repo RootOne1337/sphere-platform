@@ -138,6 +138,7 @@ async def get_agent_config(
 
     base_config = AgentConfigResponse(
         server_url=server_url,
+        fallback_server_url=file_config.get("fallback_server_url") or None,
         ws_path=file_config.get("ws_path", "/ws/android"),
         config_version=file_config.get("config_version", 1),
         environment=env,

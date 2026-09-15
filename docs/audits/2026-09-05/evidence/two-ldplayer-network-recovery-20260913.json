@@ -1,0 +1,171 @@
+{
+  "finding": "AUD-99",
+  "verified_at": "2026-09-12T21:55:05.401012+00:00",
+  "initial_observation": {
+    "ldplayer_running_indices": [
+      0,
+      1
+    ],
+    "adb_serials": [
+      "emulator-5554"
+    ],
+    "nat_networks_running": [
+      "LdNatNetwork0"
+    ],
+    "dhcp_networks_running": [
+      "LdNatNetwork0",
+      "LdNatNetwork1"
+    ],
+    "second_vm_network": "LdNatNetwork1",
+    "vbox_start_error": "DHCP server already running, pid 35376",
+    "why_original_nat_process_exited": "not established",
+    "diagnostic_window_utc": "2026-09-12T18:34:17Z onward"
+  },
+  "installed_agents": [
+    {
+      "serial": "emulator-5554",
+      "installed_sha256": "3fea6b1be345bec99a71e1926a386dd070c361887d875d5b46a7c18d83d0d36b",
+      "latest_sha_matches": true,
+      "signed_config_version": 8
+    },
+    {
+      "serial": "emulator-5556",
+      "installed_sha256": "3fea6b1be345bec99a71e1926a386dd070c361887d875d5b46a7c18d83d0d36b",
+      "latest_sha_matches": true,
+      "signed_config_version": 8
+    }
+  ],
+  "initial_parallel_acceptance": {
+    "checked_at": "2026-09-12T21:48:50.765023+00:00",
+    "devices": [
+      {
+        "id": "ba1346c1-1581-452f-adee-451d36622aaf",
+        "name": "auto-ph-001",
+        "status": "online",
+        "model": null,
+        "last_seen": null
+      },
+      {
+        "id": "85f2f935-7739-400e-9389-0d71227e8f0a",
+        "name": "auto-ph-000",
+        "status": "online",
+        "model": null,
+        "last_seen": null
+      }
+    ],
+    "commands": [
+      {
+        "device_id": "ba1346c1-1581-452f-adee-451d36622aaf",
+        "status": 200,
+        "correct_marker": true,
+        "duration_seconds": 0.719
+      },
+      {
+        "device_id": "85f2f935-7739-400e-9389-0d71227e8f0a",
+        "status": 200,
+        "correct_marker": true,
+        "duration_seconds": 0.672
+      }
+    ]
+  },
+  "controlled_reproduction_and_repair": {
+    "started_at": "2026-09-12T21:53:11.187467+00:00",
+    "events": [
+      {
+        "event": "second_nat_stopped",
+        "at": "2026-09-12T21:53:12.905722+00:00",
+        "process_id": 52152
+      },
+      {
+        "event": "orphan_dhcp_reproduced",
+        "at": "2026-09-12T21:53:13.994613+00:00",
+        "diagnosis": {
+          "instance": 1,
+          "network": "LdNatNetwork1",
+          "nat_running": false,
+          "dhcp_running": true,
+          "action": "missing_nat",
+          "internet_verified": false,
+          "apk_connection_verified": false
+        },
+        "first_agent_during_outage": {
+          "index": 0,
+          "http_status": 200,
+          "expected_output": true,
+          "duration_seconds": 0.5
+        }
+      },
+      {
+        "event": "scoped_repair_finished",
+        "at": "2026-09-12T21:53:32.051019+00:00",
+        "result": {
+          "instance": 1,
+          "network": "LdNatNetwork1",
+          "nat_running": true,
+          "dhcp_running": true,
+          "action": "started_existing_network",
+          "internet_verified": false,
+          "apk_connection_verified": false
+        }
+      },
+      {
+        "event": "second_agent_probe",
+        "at": "2026-09-12T21:53:32.446583+00:00",
+        "command": {
+          "index": 1,
+          "http_status": 503,
+          "expected_output": false,
+          "duration_seconds": 0.391
+        },
+        "since_repair_seconds": 0.39
+      },
+      {
+        "event": "second_agent_probe",
+        "at": "2026-09-12T21:53:38.124539+00:00",
+        "command": {
+          "index": 1,
+          "http_status": 200,
+          "expected_output": true,
+          "duration_seconds": 0.687
+        },
+        "since_repair_seconds": 6.08
+      },
+      {
+        "event": "both_agents_verified",
+        "at": "2026-09-12T21:53:42.378621+00:00",
+        "successful_parallel_commands": 12,
+        "pids_preserved": true,
+        "first_nat_process_preserved": true,
+        "healthy_repair_is_noop": true
+      }
+    ],
+    "device_ids": [
+      "85f2f935-7739-400e-9389-0d71227e8f0a",
+      "ba1346c1-1581-452f-adee-451d36622aaf"
+    ],
+    "apk_pids_before": [
+      "3062",
+      "3143"
+    ],
+    "passed": true
+  },
+  "device_model_mapping": [
+    {
+      "device_id": "85f2f935-7739-400e-9389-0d71227e8f0a",
+      "observed_model": "V2266A"
+    },
+    {
+      "device_id": "ba1346c1-1581-452f-adee-451d36622aaf",
+      "observed_model": "HD1910"
+    }
+  ],
+  "regression_tests": {
+    "passed": 15,
+    "warnings": 1,
+    "seconds": 0.05
+  },
+  "automatic_host_monitor_installed": false,
+  "apk_reinstall_or_manual_reconnect_in_drill": false,
+  "router_firewall_or_public_ports_changed": false,
+  "docker_old_installation_targeted": false
+}

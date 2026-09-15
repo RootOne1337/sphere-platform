@@ -1,8 +1,20 @@
 # Deployment Guide
 
-> **Sphere Platform v4.7** — Production Deployment Reference
+> **Статус на 11 сентября 2026:** аудит продолжается; этот справочник не является
+> подтверждением production readiness. RLS runtime-role rollout заблокирован до
+> проверки остальных auth callers, фоновых задач и provisioning ролей: [условия и доказательства](security/postgresql-rls.md).
+> Текущий общий PostgreSQL owner/superuser не пройдёт production startup guard.
+> Не применять generic rolling deploy/rollback к этим security migrations.
 
 ---
+
+> Migration `20260909_user_auth_bootstrap` требует explicit runtime EXECUTE grants
+> на две user функции в дополнение к двум device-функциям:
+> [user auth и MFA cutover](security/user-auth-bootstrap.md),
+> [device credential runbook](security/device-credential-bootstrap.md).
+> Текущий head — `20260910_device_refresh_retry`: сохраняет существующие grants
+> и добавляет recoverable device rotation. [Rollout/rollback](security/device-refresh-recovery.md):
+> migration → все backend workers → APK. Полный runtime-role rollout этим не завершается.
 
 ## Table of Contents
 
@@ -33,12 +45,12 @@
 | Production | 8 cores | 16 GB | 100 GB SSD | Ubuntu 22.04 LTS |
 | **Enterprise (10k+ Devices)** | **16 Cores / 32 Threads** | **64 GB** | **2 TB NVMe** | **Ubuntu 22.04 LTS** |
 
-> *Note on Enterprise Hardware:* For orchestrating 10,000+ devices, 64 GB RAM provides ample headroom for Redis Pub/Sub queues and PostgreSQL shared buffers. NVMe storage is critical to avoid write-locks during mass task execution. A dedicated GPU (e.g., Nvidia RTX 4000 series or Tesla T4) is highly recommended if hardware-accelerated video transcoding or AI-based screen analysis is planned for the streaming pipeline.
+> Эти конфигурации — прежние ориентиры, а не измеренная ёмкость. Работа 10–64 эмуляторов, 10 000 устройств, CPU/RAM/FPS и запас производительности не подтверждены текущими тестами. NVMe сам по себе не устраняет блокировки PostgreSQL.
 
 ### Required Software
 
 ```bash
-# Docker Engine 24+ with Compose Plugin V2
+# Docker Engine 24+ with Compose Plugin 2.24.4+ (supports !reset overrides)
 docker --version          # >= 24.0
 docker compose version    # >= 2.20
 
@@ -68,7 +80,7 @@ $EDITOR .env.local
 ### Required Variables
 
 All variables are documented in [configuration.md](configuration.md).
-Minimally required for any environment:
+Development/bootstrap example only; this shared PostgreSQL role is not safe for production runtime. See the [RLS rollout blockers](security/postgresql-rls.md) before separating migration/runtime credentials:
 
 ```bash
 POSTGRES_USER=sphere
@@ -99,7 +111,6 @@ Uses `docker-compose.override.yml` which enables:
 # Start full dev stack
 docker compose \
   -f docker-compose.yml \
-  -f docker-compose.full.yml \
   -f docker-compose.override.yml \
   up -d --build
 
@@ -168,11 +179,24 @@ DB_MAX_OVERFLOW=20
 
 `docker-compose.production.yml` differences from dev:
 
-- No exposed DB/Redis ports
-- Resource limits (`mem_limit`, `cpus`)
-- Restart policy `unless-stopped`
-- Read-only root filesystems where possible
+- No published PostgreSQL/Redis or application ports; nginx reaches the applications on their Docker network
+- Resource limits under `deploy.resources.limits`
+- Restart policy `always` for the production overrides
+- Image-defined application command and user, without development source/cache mounts
 - Named volumes for data persistence
+
+Keep the production override last. It uses Compose `!reset` to clear inherited
+ports, source mounts, development commands and root-user overrides, including
+when an existing script still includes `docker-compose.full.yml` before it.
+See the [official Compose merge rules](https://docs.docker.com/reference/compose-file/merge/).
+`tests/deployment/test_compose_production.py` validates both file combinations by
+running `docker compose config` with synthetic values; it does not start services.
+
+This configuration check is not a deployment sign-off. n8n and MinIO still inherit
+their base host-port mappings and require an explicit ingress/access design.
+The image root filesystem is not declared read-only here. Runtime database roles,
+durable OTA/log storage and backup restore verification remain open audit items.
+Do not rely on the removed development bind mounts for production persistence.
 
 ### 5.2 Pre-flight Checklist
 
@@ -205,6 +229,29 @@ ufw enable
 
 Alembic is used for all schema changes.
 
+The audit migration `20260906_vpn_intents` requires a controlled VPN writer
+maintenance window, not a mixed-version rolling deployment. Reconcile held
+PostgreSQL addresses with actual router inventory, including orphan peers absent
+from SQL, and stop legacy allocation writers before applying it. Duplicate held
+addresses, invalid addresses or network prefixes make this migration fail
+atomically; it does not delete or renumber peers. Downgrade is refused while
+PROVISIONING/REVOKING intents exist. See the
+[VPN runbook](runbooks/02-vpn-incident.md) and
+[transaction/rollout design](audits/2026-09-05/VPN-LEASE-DESIGN.md).
+
+The next revision, `20260906_account_ciphertext`, adds encrypted account storage.
+Provision the independent `ACCOUNT_CREDENTIAL_KEYS` key ring, stop account and
+dispatch/orchestrator writers, and run the explicit backfill/verification from
+[the credential runbook](security/account-credentials.md). Applying Alembic alone
+does not encrypt legacy rows; credential reveal and dispatch fail closed until
+they are migrated. The maintenance CLI ships in the backend image as
+`python -m backend.cli.account_credentials`. Downgrade refuses encrypted rows.
+Do not use the generic rolling-deploy/rollback examples below for this transition.
+
+From the repository root, use the repository's explicit Alembic configuration:
+`python -m alembic -c alembic/alembic.ini upgrade head`. In a container use the
+equivalent path for its working directory and the selected Compose stack.
+
 ```bash
 # Apply all pending migrations
 docker compose exec backend alembic upgrade head
@@ -215,11 +262,9 @@ docker compose exec backend alembic current
 # View migration history
 docker compose exec backend alembic history --verbose
 
-# Rollback one step
-docker compose exec backend alembic downgrade -1
-
-# Rollback to specific revision
-docker compose exec backend alembic downgrade 0001
+# Security revision 20260908_tenant_policies blocks downgrade.
+# Use a reviewed forward migration; encrypted credentials and VPN intents
+# have additional rollback constraints documented above.
 ```
 
 ### Migration after production deploy
@@ -246,26 +291,32 @@ ALTER TABLE vpn_peers
 
 ## 7. First-Time Bootstrap
 
-After fresh deploy on any environment:
+For the first development pilot, use the [acceptance plan](operations/PILOT-ACCEPTANCE.md).
+This sequence assumes prepared database bootstrap credentials and selected Compose
+files/environment. Production runtime credentials must remain separate from the
+migration/bootstrap role; the snippets do not replace that rollout.
 
-```bash
-# 1. Run migrations
-docker compose exec backend alembic upgrade head
+1. Apply the reviewed migrations using `python -m alembic -c alembic/alembic.ini upgrade head`
+   with the bootstrap connection, before starting ordinary application work.
+2. Run `python scripts/create_admin.py --create-only` in the prepared backend environment.
+   Interactive mode prompts for email/password. For unattended mode supply
+   `ADMIN_EMAIL`/`ADMIN_PASSWORD`; with a one-off Compose run forward them using
+   `-e ADMIN_EMAIL -e ADMIN_PASSWORD`, not only host `SPHERE_ADMIN_*` variables.
+3. Run `python -m scripts.seed_enrollment_key`. Both scripts use
+   `SPHERE_BOOTSTRAP_ORG_SLUG` (default `default`). The organization must already
+   exist and the effective agent-config environment must contain the intended key.
+   Existing conflicting/revoked/expired keys are errors, not silently repaired.
+4. Check `/api/v1/health/readyz`, then actual login, device registration and device
+   visibility. `/api/v1/health` is a static liveness response. `/vpn/health` is also
+   static and cannot establish that a VPN tunnel works.
+5. Complete the browser → APK → task/result and actual VPN acceptance scenarios.
 
-# 2. Create super admin (interactive)
-docker compose exec backend python scripts/create_admin.py
-# Prompts for: email, username, password
-
-# 3. Verify health
-curl http://localhost/api/v1/health
-# Expected: {"status":"ok","checks":{"database":{"status":"ok"},"redis":{"status":"ok"}}}
-
-# 4. Verify VPN health
-curl -H "Authorization: Bearer <token>" http://localhost/api/v1/vpn/health
-
-# 5. Open Web UI
-open http://localhost
-```
+AUD-78 repairs the bootstrap functions in both full-deploy launchers. It does not
+validate their complete env-file selection, migration ordering, final health,
+autostart or production role setup. AUD-85 makes both launchers preserve existing
+admin credentials with `--create-only`. Direct CLI without that flag intentionally
+updates password/role/active. A different organization is rejected; old users/devices
+are not automatically moved. [Current admin outcome contract](operations/STARTUP.md).
 
 ---
 
@@ -379,15 +430,11 @@ docker compose up -d --no-deps frontend
 
 ### Rollback
 
-```bash
-# Rollback database
-docker compose exec backend alembic downgrade -1
-
-# Rollback to previous image
-docker compose down
-git checkout <previous-tag>
-docker compose -f docker-compose.yml -f docker-compose.full.yml up -d
-```
+Automatic schema/image rollback is not supported across the current security
+transitions. Tenant policy downgrade is explicitly blocked; encrypted credentials
+and pending VPN intents also have guards. Prepare a reviewed forward repair or a
+verified isolated restore with matching application version, keys and role policy.
+Do not disable RLS/startup checks to make an older image start.
 
 ---
 
@@ -605,3 +652,75 @@ docker compose exec postgres psql -U sphere sphereplatform \
 # Redis: check memory
 docker compose exec redis redis-cli info memory
 ```
+
+### Windows configuration selection (AUD-80)
+
+The full-deploy Compose wrapper and normal start-dev config/build/up path explicitly
+select checkout `.env.local`, then `.env`, matching Makefile priority. Files are not
+merged. Process environment overrides retain Compose precedence. Full-deploy refuses
+to invoke Compose without either file; start-dev creates a template only when both
+are missing and requires the operator to fill it before retry. The real Compose
+renderer is tested with synthetic files, without starting services. This does not
+certify full startup, legacy branches or deployment roles/migrations.
+
+### Immutable image bootstrap tools (AUD-81)
+
+The production backend image ships the two administrative CLIs used by full-deploy:
+`scripts/create_admin.py` and `scripts/seed_enrollment_key.py`. A separate backend CI
+job builds that Dockerfile and executes four CLI/migration/user probes without
+network, source mounts or a writable root filesystem. The probe validates packaged
+entry points; SQL initialization, migration privileges and rollout order still
+require their own acceptance. Unrelated scripts are not included.
+
+### Full-deploy phase contract (AUD-82)
+
+Both full-deploy launchers now build, wait for PostgreSQL/Redis (180 s), execute
+migration/admin/enrollment with `compose run --rm --no-deps -T backend`, then start
+the full stack with `up --wait --wait-timeout 300`. A phase failure stops later work;
+host Alembic fallback is removed. The production overlay includes internal backend
+readyz/frontend login probes, so readiness does not depend on host port publication.
+The final output reports selected-project Compose status, not universal readiness.
+These limits exclude image build/pull and do not validate ingress/TLS, device/tasks
+or services without probes. Existing workers are not stopped: incompatible upgrades
+still require a coordinated rollout and explicit runtime/migration roles/grants.
+
+### Enrollment identity during development startup
+
+AUD-83 makes the dev hook use the same configured key, exact bootstrap org and SQL
+serialization as the explicit CLI. Both Compose overlays forward
+`SPHERE_BOOTSTRAP_ORG_SLUG`; persist it in the installation env file. Known key or
+configuration conflicts are warnings in the hook and errors in the explicit CLI.
+Check actual device registration after API readiness. [Diagnostic events and limits](operations/STARTUP.md).
+
+### Preserve existing installation configuration
+
+AUD-84 prevents full-deploy from generating a higher-priority `.env.local` when
+the installation already uses `.env`. Existing files are retained on unattended
+startup; fresh generation still works. This does not rotate database credentials
+or validate persistent-volume recovery. See [repeat-startup contract](operations/STARTUP.md).
+
+### Packaged SQL bootstrap acceptance
+
+The production Dockerfile is now exercised against disposable PostgreSQL/Redis,
+with fresh migrations, both real bootstrap CLIs, full application lifespan and ASGI
+login/device visibility across two processes. This development-mode scenario uses
+an internal Docker network, no host ports and no source mounts. It complements the
+four no-network image probes. [Run it and read the limits](../tests/containers/README.md).
+Full Compose, browser/APK, VPN and production DB-role rollout remain separate gates.
+
+### Fresh configuration parsing
+
+AUD-86 fixes a startup failure in the full overlay: missing/empty `DEV_SKIP_AUTH`
+now renders to `false`, preserving the backend's strict boolean validation and
+production's forced false. The real generator → Compose → Settings path is retained
+as eight regression cases; all 93 deployment cases pass locally. This is separate
+from daemon startup and installed-APK acceptance.
+
+### PostgreSQL init.sql with a configured user
+
+AUD-87 removes hardcoded n8n ownership from init.sql; a fresh cluster assigns the
+database to the entrypoint's POSTGRES_USER. Two real PostgreSQL container cases
+verify default/custom users, n8n ownership, required extensions and a restart with
+retained data. [Probe and cleanup](../tests/containers/README.md). No existing volume
+is changed. Partially initialized installations need inspection/repair separately;
+init.sql is not an application migration or production role-provisioning mechanism.

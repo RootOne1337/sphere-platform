@@ -1,0 +1,5 @@
+Backend run 34518711631, head 93a487268fe4505e5e6e9470bffaf9cd3a9799e6, attempt 1
+Full unchanged backend/PC suite for the Android registration persistence revision.
+
+Tests	Unit and real-service regression tests	2026-09-10T19:15:28.6850779Z Required test coverage of 65% reached. Total coverage: 69.40%
+Tests	Unit and real-service regression tests	2026-09-10T19:15:28.6851283Z ================= 1390 passed, 4 warnings in 296.33s (0:04:56) =================

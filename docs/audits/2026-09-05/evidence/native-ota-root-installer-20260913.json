@@ -1,0 +1,12 @@
+{
+  "at": "2026-09-13T12:51:41.764505+00:00",
+  "source_commit": "8d93e48f2ed586cffe24fe055f9c77b90e42df3d",
+  "scope": "exact legacy installer path under own app UID; ADB-triggered component probe, not OTA delivery",
+  "app_uid": 10072,
+  "destination": "/data/user/0/com.sphereplatform.agent.pilot.debug/files/ota/audit-install-path.apk",
+  "returncode": 0,
+  "seconds": 0.359,
+  "stdout": "Success\n",
+  "stderr": "",
+  "scoped_apk_copy_removed": true
+}

@@ -16,6 +16,9 @@ import com.sphereplatform.agent.ota.OtaUpdateService
 import com.sphereplatform.agent.store.AuthTokenStore
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONObject
@@ -74,16 +77,16 @@ class UpdateCheckWorker @AssistedInject constructor(
         }
     }
 
-    override suspend fun doWork(): Result {
-        val serverUrl = authStore.getServerUrl().trimEnd('/')
-        val apiKey = authStore.getToken()
-
-        if (serverUrl.isBlank() || apiKey.isNullOrBlank()) {
-            Timber.d("UpdateCheckWorker: skipped (not enrolled)")
-            return Result.success()
-        }
-
-        return try {
+    override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
+        try {
+            // Refresh may suspend while discovery changes the active management route.
+            // Read the route afterwards, and include refresh failures in retry policy.
+            val apiKey = authStore.getFreshToken()
+            val serverUrl = authStore.getServerUrl().trimEnd('/')
+            if (serverUrl.isBlank() || apiKey.isNullOrBlank()) {
+                Timber.d("UpdateCheckWorker: skipped (not enrolled)")
+                return@withContext Result.success()
+            }
             val flavor = BuildConfig.FLAVOR_LABEL
             val versionCode = BuildConfig.VERSION_CODE
             val url = "$serverUrl/api/v1/updates/latest" +
@@ -97,15 +100,23 @@ class UpdateCheckWorker @AssistedInject constructor(
 
             httpClient.newCall(request).execute().use { response ->
                 if (!response.isSuccessful) {
-                    Timber.d("UpdateCheckWorker: server returned HTTP ${response.code} — no update info")
+                    Timber.w("UpdateCheckWorker: HTTP %d; retry with WorkManager backoff", response.code)
+                    return@use Result.retry()
+                }
+                val body = response.body ?: return@use Result.retry()
+                val source = body.source()
+                check(!source.request(MAX_RESPONSE_CHARS.toLong() + 1)) { "Update response too large" }
+                val json = JSONObject(source.readUtf8())
+
+                if (!json.getBoolean("update_available")) {
+                    Timber.i("UpdateCheckWorker: already on latest version ($versionCode)")
                     return@use Result.success()
                 }
-                val body = response.body?.string()?.take(MAX_RESPONSE_CHARS)
-                    ?: return@use Result.success()
-                val json = JSONObject(body)
 
-                if (!json.optBoolean("update_available", false)) {
-                    Timber.i("UpdateCheckWorker: already on latest version ($versionCode)")
+                // A delayed/cached catalog response must not reinstall or downgrade
+                // an APK which already has the advertised version.
+                if (json.getInt("version_code") <= versionCode) {
+                    Timber.i("UpdateCheckWorker: ignoring stale release metadata")
                     return@use Result.success()
                 }
 
@@ -119,6 +130,8 @@ class UpdateCheckWorker @AssistedInject constructor(
                 otaUpdateService.performUpdate(payload)
                 Result.success()
             }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Timber.w(e, "UpdateCheckWorker: check failed")
             Result.retry()

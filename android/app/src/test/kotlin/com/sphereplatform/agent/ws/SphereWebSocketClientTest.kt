@@ -1,6 +1,8 @@
 package com.sphereplatform.agent.ws
 
 import org.junit.Assert.*
+import io.mockk.mockk
+import kotlinx.serialization.json.Json
 import org.junit.Test
 
 /**
@@ -19,76 +21,87 @@ import org.junit.Test
  *  - AuthException / AuthRejectedException
  */
 class SphereWebSocketClientTest {
+    private val client = SphereWebSocketClient(mockk(relaxed = true), mockk(relaxed = true), Json)
+
+    private fun field(name: String): Long {
+        val field = SphereWebSocketClient::class.java.getDeclaredField(name)
+        field.isAccessible = true
+        return (field.get(client) as Number).toLong()
+    }
+
 
     // ── calculateBackoff ─────────────────────────────────────────────────────
 
     @Test
-    fun `calculateBackoff attempt=1 → 2000ms`() {
-        assertEquals(2000L, calculateBackoff(1))
+    fun `calculateBackoff attempt=1 → 1000–2000ms`() {
+        assertTrue(calculateBackoff(1) in 1000L..2000L)
     }
 
     @Test
-    fun `calculateBackoff attempt=2 → 4000ms`() {
-        assertEquals(4000L, calculateBackoff(2))
+    fun `calculateBackoff attempt=2 → 2000–4000ms`() {
+        assertTrue(calculateBackoff(2) in 2000L..4000L)
     }
 
     @Test
-    fun `calculateBackoff attempt=3 → 8000ms`() {
-        assertEquals(8000L, calculateBackoff(3))
+    fun `calculateBackoff attempt=3 → 4000–8000ms`() {
+        assertTrue(calculateBackoff(3) in 4000L..8000L)
     }
 
     @Test
-    fun `calculateBackoff attempt=4 → 16000ms`() {
-        assertEquals(16000L, calculateBackoff(4))
+    fun `calculateBackoff attempt=4 → 8000–16000ms`() {
+        assertTrue(calculateBackoff(4) in 8000L..16000L)
     }
 
     @Test
-    fun `calculateBackoff attempt=5 → 30000ms cap`() {
+    fun `calculateBackoff attempt=5 → 15000–30000ms cap`() {
         // 1000 * 2^5 = 32000, cap = 30000
-        assertEquals(30000L, calculateBackoff(5))
+        assertTrue(calculateBackoff(5) in 15000L..30000L)
     }
 
     @Test
-    fun `calculateBackoff attempt=10 → 30000ms cap`() {
-        assertEquals(30000L, calculateBackoff(10))
+    fun `calculateBackoff attempt=10 → 15000–30000ms cap`() {
+        assertTrue(calculateBackoff(10) in 15000L..30000L)
     }
 
     @Test
-    fun `calculateBackoff attempt=100 → 30000ms cap`() {
-        assertEquals(30000L, calculateBackoff(100))
+    fun `calculateBackoff attempt=100 → 15000–30000ms cap`() {
+        assertTrue(calculateBackoff(100) in 15000L..30000L)
     }
 
     @Test
-    fun `calculateBackoff attempt=0 → 1000ms`() {
-        assertEquals(1000L, calculateBackoff(0))
+    fun `calculateBackoff attempt=0 → 500–1000ms`() {
+        assertTrue(calculateBackoff(0) in 500L..1000L)
     }
 
-    /** Реплика private calculateBackoff из SphereWebSocketClient */
-    private fun calculateBackoff(attempt: Int): Long =
-        (1000L * (1L shl attempt.coerceAtMost(5))).coerceAtMost(30_000L)
+    /** Invoke production policy; never duplicate its formula in the test. */
+    private fun calculateBackoff(attempt: Int): Long {
+        val method = SphereWebSocketClient::class.java.getDeclaredMethod("calculateBackoff", Int::class.javaPrimitiveType)
+        method.isAccessible = true
+        return method.invoke(client, attempt) as Long
+    }
 
     // ── Constants ────────────────────────────────────────────────────────────
 
     @Test
     fun `CIRCUIT_OPEN_THRESHOLD = 10`() {
-        assertEquals(10, 10)
+        assertEquals(10L, field("CIRCUIT_OPEN_THRESHOLD"))
     }
 
     @Test
     fun `CIRCUIT_COOL_DOWN_MS = 60 секунд`() {
-        assertEquals(60_000L, 60 * 1000L)
+        assertEquals(60_000L, field("CIRCUIT_COOL_DOWN_MS"))
     }
 
     @Test
     fun `FORCE_RECONNECT_DEBOUNCE_MS = 5 секунд`() {
-        assertEquals(5_000L, 5_000L)
+        assertEquals(5_000L, field("FORCE_RECONNECT_DEBOUNCE_MS"))
     }
 
     // ── Close codes ──────────────────────────────────────────────────────────
 
     @Test
     fun `AUTH codes не должны вызывать circuit break`() {
-        val authCodes = setOf(4001, 4003, 4004, 4008)
+        val authCodes = setOf("CODE_INVALID_TOKEN", "CODE_AUTH_TIMEOUT", "CODE_DEVICE_NOT_FOUND", "CODE_HEARTBEAT_TIMEOUT").map { field(it).toInt() }.toSet()
         assertTrue(authCodes.contains(4001))
         assertTrue(authCodes.contains(4003))
         assertTrue(authCodes.contains(4004))

@@ -1,0 +1,25 @@
+{
+  "at": "2026-09-13T02:22:46.978256+00:00",
+  "device_id": "ba1346c1-1581-452f-adee-451d36622aaf",
+  "backend_workers": 4,
+  "commands_before_after_success": true,
+  "keyframe_http_statuses": [
+    404,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    404
+  ],
+  "projection_not_started": true
+}

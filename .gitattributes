@@ -1,0 +1,6 @@
+docs/openapi.json linguist-generated=true
+docs/api-endpoints.md linguist-generated=true
+
+# Bind-mounted Linux entrypoints must remain executable after Windows checkout.
+*.sh text eol=lf
+android/gradlew text eol=lf

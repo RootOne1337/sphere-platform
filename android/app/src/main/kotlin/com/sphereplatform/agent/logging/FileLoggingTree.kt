@@ -4,6 +4,10 @@ import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
 import timber.log.Timber
 import java.io.File
+import java.io.IOException
+import java.io.RandomAccessFile
+import java.nio.ByteBuffer
+import java.nio.charset.CodingErrorAction
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -31,6 +35,7 @@ class FileLoggingTree @Inject constructor(
         private const val MAX_FILE_SIZE = 2 * 1024 * 1024L   // 2 MB
         private const val MAX_FILE_COUNT = 5
         private const val MAX_QUEUE_SIZE = 4096
+        private const val MAX_READ_BYTES = 256 * 1024
         private const val LOG_DIR = "sphere_logs"
         private const val LOG_PREFIX = "sphere_"
         private const val LOG_EXT = ".log"
@@ -80,36 +85,42 @@ class FileLoggingTree @Inject constructor(
         queue.offer(entry)
     }
 
-    /** Read up to [maxBytes] of the most recent log content (newest data last). */
+    /** UTF-8 byte budget across all files, capped at 256 KiB; newest content last. */
+    @Synchronized
     fun readRecentLogs(maxBytes: Int = 64 * 1024): String {
         val files = logFiles().sortedBy { it.lastModified() }
-        val result = StringBuilder()
-        var remaining = maxBytes
+        val chunks = mutableListOf<String>()
+        var remaining = maxBytes.coerceIn(0, MAX_READ_BYTES)
         for (file in files.reversed()) {
             if (remaining <= 0) break
             try {
-                // FIX H5: Читаем только нужную часть файла, а не весь целиком.
-                // Файлы до 2MB — readText() грузит всё в память. На 1GB эмуляторе
-                // при 5 файлах × 2MB = 10MB UTF-16 String = 20MB heap pressure.
-                val fileLen = file.length().toInt()
-                if (fileLen <= remaining) {
-                    val content = file.readText(Charsets.UTF_8)
-                    result.insert(0, content)
-                    remaining -= content.length
-                } else {
-                    // Читаем только хвост файла (самые свежие записи)
-                    file.reader(Charsets.UTF_8).use { reader ->
-                        val skip = (fileLen - remaining).toLong().coerceAtLeast(0)
-                        reader.skip(skip)
-                        val tail = CharArray(remaining)
-                        val read = reader.read(tail)
-                        if (read > 0) result.insert(0, String(tail, 0, read))
+                // File lengths and seek offsets are bytes. Reader.skip counts
+                // characters and can skip beyond EOF on Cyrillic/emoji logs.
+                // The same monitor as writeEntry prevents partial UTF-8 appends
+                // and internal rotation while taking this bounded snapshot.
+                RandomAccessFile(file, "r").use { input ->
+                    val length = input.length()
+                    val count = minOf(length, remaining.toLong()).toInt()
+                    if (count > 0) {
+                        val bytes = ByteArray(count)
+                        input.seek(length - count)
+                        input.readFully(bytes)
+                        // A byte-tail may start inside a code point; a previous
+                        // process crash may leave an incomplete final code point.
+                        // Drop incomplete/malformed sequences without expanding
+                        // the byte budget through replacement characters.
+                        val decoder = Charsets.UTF_8.newDecoder()
+                            .onMalformedInput(CodingErrorAction.IGNORE)
+                            .onUnmappableCharacter(CodingErrorAction.IGNORE)
+                        chunks.add(decoder.decode(ByteBuffer.wrap(bytes)).toString())
+                        remaining -= count
                     }
-                    remaining = 0
                 }
-            } catch (_: Exception) {}
+            } catch (_: IOException) {
+                // A missing/unreadable file must not hide other retained logs.
+            }
         }
-        return result.toString()
+        return chunks.asReversed().joinToString("")
     }
 
     /** All log files, sorted oldest-first. */

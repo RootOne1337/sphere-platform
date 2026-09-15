@@ -184,6 +184,7 @@ async def cancel_pipeline_run(
 ) -> PipelineRunResponse:
     run = await svc.cancel_run(run_id, current_user.org_id)
     await db.commit()
+    await db.refresh(run)
     return PipelineRunResponse.model_validate(run)
 
 
@@ -200,6 +201,7 @@ async def pause_pipeline_run(
 ) -> PipelineRunResponse:
     run = await svc.pause_run(run_id, current_user.org_id)
     await db.commit()
+    await db.refresh(run)
     return PipelineRunResponse.model_validate(run)
 
 
@@ -216,6 +218,7 @@ async def resume_pipeline_run(
 ) -> PipelineRunResponse:
     run = await svc.resume_run(run_id, current_user.org_id)
     await db.commit()
+    await db.refresh(run)
     return PipelineRunResponse.model_validate(run)
 
 
@@ -255,6 +258,7 @@ async def update_pipeline(
         update_data["steps"] = [s.model_dump() if hasattr(s, "model_dump") else s for s in update_data["steps"]]
     pipeline = await svc.update(pipeline_id, current_user.org_id, **update_data)
     await db.commit()
+    await db.refresh(pipeline)
     return PipelineResponse.model_validate(pipeline)
 
 
@@ -289,6 +293,7 @@ async def toggle_pipeline(
     """Переключить is_active у pipeline. Сохраняется в БД, переживает рестарт."""
     pipeline = await svc.toggle(pipeline_id, current_user.org_id, active)
     await db.commit()
+    await db.refresh(pipeline)
     return PipelineResponse.model_validate(pipeline)
 
 

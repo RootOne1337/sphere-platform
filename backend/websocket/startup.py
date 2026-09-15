@@ -4,7 +4,7 @@
 # CRIT-3: Не трогаем frozen main.py — регистрируем через lifespan_registry.
 from __future__ import annotations
 
-from backend.core.lifespan_registry import register_startup
+from backend.core.lifespan_registry import register_shutdown, register_startup
 
 
 async def _startup_ws_components() -> None:
@@ -27,3 +27,14 @@ async def _startup_ws_components() -> None:
 
 
 register_startup("ws_components", _startup_ws_components)
+
+
+async def _shutdown_ws_components() -> None:
+    from backend.websocket.stream_bridge import get_stream_bridge
+
+    bridge = get_stream_bridge()
+    if bridge:
+        await bridge.close()
+
+
+register_shutdown("ws_components", _shutdown_ws_components)

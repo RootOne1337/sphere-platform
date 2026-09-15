@@ -1,191 +1,155 @@
 package com.sphereplatform.agent.logging
 
-import android.util.Log
+import android.content.Context
+import io.mockk.every
+import io.mockk.mockk
+import org.junit.After
 import org.junit.Assert.*
 import org.junit.Before
-import org.junit.Test
 import org.junit.Rule
+import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.io.File
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
-/**
- * Тесты FileLoggingTree — персистентный Timber-tree с ротацией.
- *
- * Покрытие:
- *  - priorityChar: все уровни логирования
- *  - Формат лог-записи
- *  - MAX_FILE_SIZE = 2 MB
- *  - MAX_FILE_COUNT = 5
- *  - MAX_QUEUE_SIZE = 4096
- *  - readRecentLogs: чтение из файлов
- *  - Ротация файлов: pruneOldFiles
- *  - resolveCurrentFile: выбор файла для записи
- */
+/** Real production tree, files and writer thread; only Android Context is mocked. */
 class FileLoggingTreeTest {
+    @get:Rule val temporary = TemporaryFolder()
+    private lateinit var tree: FileLoggingTree
+    private lateinit var directory: File
 
-    // ── priorityChar ─────────────────────────────────────────────────────────
+    @Before
+    fun setUp() {
+        val context = mockk<Context>()
+        every { context.filesDir } returns temporary.root
+        tree = FileLoggingTree(context)
+        directory = File(temporary.root, "sphere_logs")
+    }
+
+    @After
+    fun stopWriter() {
+        // Stop the actual app-lifetime worker, without adding a production test API.
+        val field = FileLoggingTree::class.java.getDeclaredField("writerThread").apply { isAccessible = true }
+        val thread = field.get(tree) as Thread
+        thread.interrupt()
+        thread.join(2000)
+        assertFalse("Test must not leak a log writer", thread.isAlive)
+    }
+
+    private fun fixture(name: String, content: String, timestamp: Long = 1000): File =
+        File(directory, "sphere_$name.log").apply {
+            writeText(content, Charsets.UTF_8)
+            assertTrue(setLastModified(timestamp))
+        }
 
     @Test
-    fun `priorityChar VERBOSE → V`() {
-        assertEquals('V', priorityChar(Log.VERBOSE))
+    fun `empty directory and unrelated files return empty logs`() {
+        File(directory, "unrelated.txt").writeText("not an app log")
+        assertEquals("", tree.readRecentLogs())
     }
 
     @Test
-    fun `priorityChar DEBUG → D`() {
-        assertEquals('D', priorityChar(Log.DEBUG))
+    fun `ASCII tail preserves latest marker within byte budget`() {
+        fixture("ascii", "old".repeat(10000) + "LATEST_ASCII\n")
+        val tail = tree.readRecentLogs(100)
+        assertTrue(tail.endsWith("LATEST_ASCII\n"))
+        assertEquals(100, tail.toByteArray(Charsets.UTF_8).size)
     }
 
     @Test
-    fun `priorityChar INFO → I`() {
-        assertEquals('I', priorityChar(Log.INFO))
+    fun `large Cyrillic log does not skip past the newest records`() {
+        fixture("unicode", "Соединение потеряно 🚗\n".repeat(10000) + "LATEST_RECONNECT_OK\n")
+        val tail = tree.readRecentLogs(64 * 1024)
+        assertTrue("Last event must survive a large UTF-8 prefix", tail.endsWith("LATEST_RECONNECT_OK\n"))
+        assertTrue(tail.toByteArray(Charsets.UTF_8).size <= 64 * 1024)
+        assertFalse(tail.contains('\uFFFD'))
     }
 
     @Test
-    fun `priorityChar WARN → W`() {
-        assertEquals('W', priorityChar(Log.WARN))
+    fun `rotated files share one byte budget rather than character budget`() {
+        fixture("older", "x".repeat(100), 1000)
+        fixture("newer", "Я".repeat(40), 2000)
+        val tail = tree.readRecentLogs(100)
+        assertEquals("x".repeat(20) + "Я".repeat(40), tail)
+        assertEquals(100, tail.toByteArray(Charsets.UTF_8).size)
     }
 
     @Test
-    fun `priorityChar ERROR → E`() {
-        assertEquals('E', priorityChar(Log.ERROR))
-    }
-
-    @Test
-    fun `priorityChar ASSERT → A`() {
-        assertEquals('A', priorityChar(Log.ASSERT))
-    }
-
-    @Test
-    fun `priorityChar неизвестный → вопрос`() {
-        assertEquals('?', priorityChar(99))
-    }
-
-    /** Реплика private priorityChar из FileLoggingTree */
-    private fun priorityChar(priority: Int): Char = when (priority) {
-        Log.VERBOSE -> 'V'
-        Log.DEBUG   -> 'D'
-        Log.INFO    -> 'I'
-        Log.WARN    -> 'W'
-        Log.ERROR   -> 'E'
-        Log.ASSERT  -> 'A'
-        else        -> '?'
-    }
-
-    // ── Constants ────────────────────────────────────────────────────────────
-
-    @Test
-    fun `MAX_FILE_SIZE = 2 MB`() {
-        assertEquals(2 * 1024 * 1024L, 2_097_152L)
-    }
-
-    @Test
-    fun `MAX_FILE_COUNT = 5`() {
-        assertEquals(5, 5)
-    }
-
-    @Test
-    fun `MAX_QUEUE_SIZE = 4096`() {
-        assertEquals(4096, 4096)
-    }
-
-    // ── Формат лог-записи ────────────────────────────────────────────────────
-
-    @Test
-    fun `формат записи содержит timestamp level tag и message`() {
-        // Проверяем формат: "2026-02-23T10:15:30.123 D/Tag: message\n"
-        val regex = Regex("""\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3} [VDIWEA?]/.+: .+""")
-        val sample = "2026-02-23T10:15:30.123 D/TestTag: hello world"
-        assertTrue(regex.matches(sample))
-    }
-
-    @Test
-    fun `формат без tag использует вопрос`() {
-        val sample = "2026-02-23T10:15:30.123 I/?: no tag"
-        assertTrue(sample.contains("/?:"))
-    }
-
-    // ── readRecentLogs ───────────────────────────────────────────────────────
-
-    @get:Rule
-    val tmpDir = TemporaryFolder()
-
-    @Test
-    fun `readRecentLogs из пустого каталога → пустая строка`() {
-        val dir = tmpDir.newFolder("sphere_logs")
-        // Нет файлов → пустой результат
-        val files = dir.listFiles { f -> f.name.startsWith("sphere_") && f.name.endsWith(".log") }
-            ?.toList() ?: emptyList()
-        assertTrue(files.isEmpty())
-    }
-
-    @Test
-    fun `readRecentLogs читает содержимое log файлов`() {
-        val dir = tmpDir.newFolder("logs")
-        val file = File(dir, "sphere_20260223.log")
-        file.writeText("line1\nline2\nline3\n")
-
-        val content = file.readText()
-        assertEquals("line1\nline2\nline3\n", content)
-    }
-
-    @Test
-    fun `readRecentLogs с maxBytes ограничивает размер`() {
-        val dir = tmpDir.newFolder("logs2")
-        val file = File(dir, "sphere_test.log")
-        val longContent = "A".repeat(10000)
-        file.writeText(longContent)
-
-        val maxBytes = 100
-        // Читаем только хвост файла
-        file.reader(Charsets.UTF_8).use { reader ->
-            val skip = (file.length() - maxBytes).coerceAtLeast(0)
-            reader.skip(skip)
-            val tail = CharArray(maxBytes)
-            val read = reader.read(tail)
-            assertEquals(maxBytes, read)
+    fun `all UTF-8 cut positions preserve complete characters and latest content`() {
+        val content = "old:Я漢🚗:LATEST\n"
+        fixture("boundaries", content)
+        for (limit in 1..content.toByteArray(Charsets.UTF_8).size) {
+            val tail = tree.readRecentLogs(limit)
+            assertTrue("Output exceeds $limit bytes", tail.toByteArray(Charsets.UTF_8).size <= limit)
+            assertFalse("Malformed UTF-8 at limit $limit", tail.contains('\uFFFD'))
+            assertTrue("Tail is not a suffix at limit $limit", content.endsWith(tail))
+            assertTrue(tail.endsWith("\n"))
         }
     }
 
-    // ── Ротация ──────────────────────────────────────────────────────────────
+    @Test
+    fun `truncated UTF-8 write does not inflate response with replacement characters`() {
+        val file = fixture("partial", "OK\n")
+        file.appendBytes(byteArrayOf(0xF0.toByte(), 0x9F.toByte()))
+        assertEquals("OK\n", tree.readRecentLogs(5))
+    }
 
     @Test
-    fun `pruneOldFiles удаляет файлы сверх MAX_FILE_COUNT`() {
-        val dir = tmpDir.newFolder("logs3")
-        // Создаём 7 файлов (MAX_FILE_COUNT = 5)
-        val files = (1..7).map { i ->
-            File(dir, "sphere_${String.format("%02d", i)}.log").also {
-                it.writeText("data $i")
-                // Разносим lastModified чтобы сортировка была стабильной
-                it.setLastModified(System.currentTimeMillis() - (8 - i) * 1000L)
+    fun `logs spanning rotations remain oldest first`() {
+        fixture("a", "one\n", 1000)
+        fixture("b", "two\n", 2000)
+        fixture("c", "three\n", 3000)
+        assertEquals("one\ntwo\nthree\n", tree.readRecentLogs(100))
+        assertEquals("three\n", tree.readRecentLogs(6))
+    }
+
+    @Test
+    fun `nonpositive budgets are empty and oversized requests are capped`() {
+        fixture("large", "x".repeat(400000) + "LATEST\n")
+        assertEquals("", tree.readRecentLogs(0))
+        assertEquals("", tree.readRecentLogs(-1))
+        val tail = tree.readRecentLogs(Int.MAX_VALUE)
+        assertEquals(256 * 1024, tail.toByteArray(Charsets.UTF_8).size)
+        assertTrue(tail.endsWith("LATEST\n"))
+    }
+
+    @Test
+    fun `real asynchronous writer includes timestamp level tag and message`() {
+        tree.w("RECONNECT_NATIVE_TREE")
+        awaitMarker("RECONNECT_NATIVE_TREE")
+        val tail = tree.readRecentLogs()
+        assertTrue(tail.contains(" W/?: RECONNECT_NATIVE_TREE\n"))
+        assertTrue(Regex("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}").containsMatchIn(tail))
+    }
+
+    @Test
+    fun `concurrent UTF-8 writes and reads preserve final marker and bounded responses`() {
+        val workers = Executors.newFixedThreadPool(2)
+        try {
+            val writer = workers.submit {
+                repeat(300) { tree.i("строка 🚗 $it") }
+                tree.i("FINAL_CONCURRENT_MARKER")
             }
+            val reader = workers.submit {
+                repeat(300) {
+                    val tail = tree.readRecentLogs(127)
+                    assertTrue(tail.toByteArray(Charsets.UTF_8).size <= 127)
+                    assertFalse(tail.contains('\uFFFD'))
+                }
+            }
+            writer.get(5, TimeUnit.SECONDS)
+            reader.get(5, TimeUnit.SECONDS)
+            awaitMarker("FINAL_CONCURRENT_MARKER")
+        } finally {
+            workers.shutdownNow()
+            assertTrue(workers.awaitTermination(5, TimeUnit.SECONDS))
         }
-
-        // Прунинг: удаляем 2 самых старых
-        val sorted = files.sortedBy { it.lastModified() }
-        val toPrune = sorted.take(sorted.size - 5)
-        toPrune.forEach { it.delete() }
-
-        val remaining = dir.listFiles()?.size ?: 0
-        assertEquals(5, remaining)
     }
 
-    @Test
-    fun `resolveCurrentFile выбирает неполный файл`() {
-        val dir = tmpDir.newFolder("logs4")
-        val full = File(dir, "sphere_full.log")
-        full.writeText("X".repeat(2 * 1024 * 1024)) // 2 MB — полный
-
-        val partial = File(dir, "sphere_partial.log")
-        partial.writeText("small data")
-        partial.setLastModified(System.currentTimeMillis())
-
-        // resolveCurrentFile должен вернуть файл < MAX_FILE_SIZE
-        val candidates = dir.listFiles()
-            ?.filter { it.name.startsWith("sphere_") && it.name.endsWith(".log") }
-            ?.filter { it.length() < 2 * 1024 * 1024L }
-            ?.maxByOrNull { it.lastModified() }
-
-        assertNotNull(candidates)
-        assertEquals("sphere_partial.log", candidates!!.name)
+    private fun awaitMarker(marker: String) {
+        val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5)
+        while (!tree.readRecentLogs().contains(marker) && System.nanoTime() < deadline) Thread.sleep(5)
+        assertTrue("Writer did not persist $marker", tree.readRecentLogs().contains(marker))
     }
 }

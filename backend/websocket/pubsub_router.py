@@ -74,8 +74,20 @@ class PubSubRouter:
             return
         backoff = 1.0
         max_backoff = 30.0
+        recovery_needed = False
         while True:
             try:
+                # Keep recovery pending until EVERY subscription is restored.
+                # A failed first subscribe leaves subscribed=False; a partial
+                # restore may stay live forever while silently missing channels.
+                if recovery_needed:
+                    await self._pubsub.aclose()
+                    self._pubsub = self.redis.pubsub()
+                    for ch in list(self._subscribed_channels):
+                        await self._pubsub.subscribe(ch)
+                    recovery_needed = False
+                    logger.info("PubSub listen loop restarted", channels=len(self._subscribed_channels))
+
                 # FIX: если нет подписок — ждём, иначе listen() вернётся немедленно
                 # и while True образует CPU spinloop без единого await, блокируя event loop.
                 if not self._pubsub.subscribed:
@@ -97,6 +109,7 @@ class PubSubRouter:
             except asyncio.CancelledError:
                 return
             except Exception as e:
+                recovery_needed = True
                 logger.error(
                     "PubSub listen loop crashed — restarting",
                     error=str(e),
@@ -104,17 +117,6 @@ class PubSubRouter:
                 )
                 await asyncio.sleep(backoff)
                 backoff = min(backoff * 2, max_backoff)
-                # Re-create pubsub connection after crash
-                try:
-                    if self._pubsub:
-                        await self._pubsub.aclose()
-                    self._pubsub = self.redis.pubsub()
-                    # Re-subscribe to all channels
-                    for ch in list(self._subscribed_channels):
-                        await self._pubsub.subscribe(ch)
-                    logger.info("PubSub listen loop restarted", channels=len(self._subscribed_channels))
-                except Exception as re_err:
-                    logger.error("PubSub reconnect failed", error=str(re_err))
 
     async def _route_message(self, channel: str, data: bytes | str) -> None:
         # MED-7: removeprefix() вместо split(":")[-1] — безопасно для device_id вида "192.168.1.1:5555"
@@ -216,40 +218,49 @@ class PubSubPublisher:
         device_id: str,
         command: dict,
         timeout: float = 30.0,
+        *,
+        live_only: bool = False,
+        accept_progress: bool = False,
     ) -> dict:
         """
         Отправить команду и ждать ответ.
         Если устройство offline — возвращает 503, не ждёт timeout впустую.
         Использует временный канал sphere:agent:result:{device_id}:{command_id}.
         """
-        command_id = command.setdefault("id", secrets.token_hex(8))
+        command_id = command.setdefault("command_id", command.get("id") or secrets.token_hex(8))
         result_channel = f"sphere:agent:result:{device_id}:{command_id}"
 
         # Подписаться ДО публикации во избежание race condition
         ps = self.redis.pubsub()
-        await ps.subscribe(result_channel)
-
         try:
-            success, was_queued = await self._send_command_inner(device_id, command)
-            if not success:
-                raise HTTPException(503, f"Device '{device_id}' is offline and queue unavailable")
-            if was_queued:
-                raise HTTPException(
-                    503,
-                    f"Device '{device_id}' is offline — command queued for delivery on reconnect",
-                )
-
-            loop = asyncio.get_running_loop()
-            deadline = loop.time() + timeout
-            async for msg in ps.listen():
-                if msg["type"] == "message":
-                    return json.loads(msg["data"])
-                if loop.time() > deadline:
-                    raise asyncio.TimeoutError()
+            async with asyncio.timeout(timeout):
+                await ps.subscribe(result_channel)
+                # subscribe() writes the command; wait for Redis to confirm it
+                # before another connection can publish a very fast result.
+                async for message in ps.listen():
+                    if message["type"] == "subscribe":
+                        break
+                if live_only:
+                    success, was_queued = await self.send_command_live(device_id, command), False
+                else:
+                    success, was_queued = await self._send_command_inner(device_id, command)
+                if not success:
+                    raise HTTPException(503, f"Device '{device_id}' command channel is unavailable")
+                if was_queued:
+                    raise HTTPException(
+                        503,
+                        f"Device '{device_id}' is offline — command queued for delivery on reconnect",
+                    )
+                async for msg in ps.listen():
+                    if msg["type"] == "message":
+                        result = json.loads(msg["data"])
+                        if accept_progress or result.get("status") not in {"received", "running"}:
+                            return result
         except asyncio.TimeoutError:
             raise HTTPException(504, f"Command timeout after {timeout}s")
         finally:
-            await ps.unsubscribe(result_channel)
+            # Closing the dedicated connection drops its subscriptions without
+            # an extra round trip that could hang during a network outage.
             await ps.aclose()
 
         raise HTTPException(504, "No response received")

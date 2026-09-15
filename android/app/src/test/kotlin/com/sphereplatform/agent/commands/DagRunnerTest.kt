@@ -1,6 +1,5 @@
 package com.sphereplatform.agent.commands
 
-import androidx.security.crypto.EncryptedSharedPreferences
 import com.sphereplatform.agent.lua.LuaEngine
 import com.sphereplatform.agent.lua.executeWithTimeout
 import com.sphereplatform.agent.ws.SphereWebSocketClient
@@ -31,32 +30,23 @@ class DagRunnerTest {
     private lateinit var luaEngine: LuaEngine
     private lateinit var adbActions: AdbActionExecutor
     private lateinit var wsClient: SphereWebSocketClient
-    private lateinit var prefs: EncryptedSharedPreferences
+    private lateinit var journal: CommandJournal
     private lateinit var httpClient: OkHttpClient
     private lateinit var runner: DagRunner
 
-    private val prefsStorage = mutableMapOf<String, Any?>()
 
     @Before
     fun setUp() {
         luaEngine = mockk(relaxed = true)
         adbActions = mockk(relaxed = true)
         wsClient = mockk(relaxed = true)
-        prefs = mockk(relaxed = true)
+        journal = mockk(relaxed = true)
         httpClient = mockk(relaxed = true)
 
         every { wsClient.isConnected } returns true
         every { wsClient.sendJson(any()) } returns true
 
-        // SharedPreferences mock
-        val editor = mockk<android.content.SharedPreferences.Editor>(relaxed = true)
-        every { prefs.edit() } returns editor
-        every { editor.putStringSet(any(), any()) } returns editor
-        every { editor.remove(any()) } returns editor
-        every { editor.apply() } just Runs
-        every { prefs.getStringSet(any(), any()) } returns emptySet()
-
-        runner = DagRunner(luaEngine, adbActions, wsClient, prefs, httpClient)
+        runner = DagRunner(luaEngine, adbActions, wsClient, journal, httpClient)
     }
 
     // ── Хелперы для построения DAG ──────────────────────────────────────────
@@ -415,12 +405,11 @@ class DagRunnerTest {
     // ── Pending results ──────────────────────────────────────────────────────
 
     @Test
-    fun `при offline сохраняет pending result`() = runTest {
+    fun `при offline возвращает результат для журнала диспетчера`() = runTest {
         every { wsClient.isConnected } returns false
         val dag = buildDag("n1", node("n1", "start"))
-        runner.execute("cmd-24", dag)
-        // Должен был вызваться prefs.edit().putStringSet("pending_dag_results", ...)
-        verify { prefs.edit() }
+        val result = runner.execute("cmd-24", dag)
+        assertTrue(result["success"]!!.jsonPrimitive.boolean)
     }
 
     // ── find_element в DAG ───────────────────────────────────────────────────
@@ -507,7 +496,7 @@ class DagRunnerTest {
 
     @Test
     fun `flushPendingResults при пустом списке — noop`() = runTest {
-        every { prefs.getStringSet("pending_dag_results", any()) } returns emptySet()
+        every { journal.pending() } returns emptyList()
         runner.flushPendingResults()
         verify(exactly = 0) { wsClient.sendJson(match { it.containsKey("command_id") }) }
     }

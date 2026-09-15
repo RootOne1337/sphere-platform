@@ -1,0 +1,74 @@
+{
+  "baseline_source": "a48d872 stream bridge and viewer-auth implementations",
+  "video_before": {
+    "tests": 6.0,
+    "failures": 4.0,
+    "errors": 0.0,
+    "skipped": 0.0,
+    "time": 9.918
+  },
+  "queue_before": {
+    "tests": 1.0,
+    "failures": 1.0,
+    "errors": 0.0,
+    "skipped": 0.0,
+    "time": 0.375
+  },
+  "viewer_rls_before": {
+    "tests": 2.0,
+    "failures": 1.0,
+    "errors": 0.0,
+    "skipped": 0.0,
+    "time": 0.932
+  },
+  "combined_after": {
+    "tests": 211.0,
+    "failures": 0.0,
+    "errors": 0.0,
+    "skipped": 0.0,
+    "time": 28.788
+  },
+  "native_before": {
+    "at": "2026-09-13T18:19:58.356775+00:00",
+    "phase": "before",
+    "backend_source": "1310016e757b6d2e70dc57573d2689aaee097ca3",
+    "apk_version": 10204,
+    "samples": [
+      {
+        "device": "85f2f935-7739-400e-9389-0d71227e8f0a",
+        "trial": 0,
+        "binary_frames": 0,
+        "bytes": 0,
+        "nal_types": {},
+        "close": null,
+        "timeout": true,
+        "elapsed_seconds": 15.766
+      },
+      {
+        "device": "ba1346c1-1581-452f-adee-451d36622aaf",
+        "trial": 0,
+        "binary_frames": 0,
+        "bytes": 0,
+        "nal_types": {},
+        "close": null,
+        "timeout": true,
+        "elapsed_seconds": 15.781
+      }
+    ],
+    "adb_mutations": 0,
+    "cleanup": [
+      {
+        "device": "85f2f935-7739-400e-9389-0d71227e8f0a",
+        "http": 200
+      },
+      {
+        "device": "ba1346c1-1581-452f-adee-451d36622aaf",
+        "http": 200
+      }
+    ]
+  },
+  "native_after_accepted": false,
+  "apk_changed": false,
+  "runtime_backend_before": "1310016",
+  "scope": "real isolated PostgreSQL/Redis; socket-boundary doubles for regressions; actual public pilot ingress for native baseline"
+}

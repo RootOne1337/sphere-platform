@@ -46,6 +46,7 @@ class Task(Base, UUIDMixin, TimestampMixin):
     priority: Mapped[int] = mapped_column(Integer, default=5, nullable=False)
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    orchestration_processed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     timeout_seconds: Mapped[int] = mapped_column(Integer, default=300, nullable=False)
     input_params: Mapped[dict] = mapped_column(JSONB, server_default="{}", nullable=False)
     result: Mapped[dict | None] = mapped_column(JSONB, nullable=True)

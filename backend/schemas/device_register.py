@@ -115,7 +115,7 @@ class DeviceRegisterResponse(BaseModel):
     device_id: uuid.UUID = Field(description="UUID зарегистрированного устройства.")
     name: str = Field(description="Имя устройства (автоматическое или пользовательское).")
     access_token: str = Field(description="JWT access token для WS-аутентификации.")
-    refresh_token: str = Field(description="JWT refresh token.")
+    refresh_token: str = Field(description="Opaque rotating refresh token; not a JWT.")
     expires_in: int = Field(description="Время жизни access_token в секундах.")
     server_url: str = Field(description="Актуальный server_url для WS-подключения.")
     is_new: bool = Field(

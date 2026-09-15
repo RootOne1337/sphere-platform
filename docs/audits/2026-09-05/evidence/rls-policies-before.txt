@@ -1,0 +1,225 @@
+FFFFFFFFFFFFFFFFFFF..                                                    [100%]
+================================== FAILURES ===================================
+_______ test_every_mapped_table_has_active_rls_and_policies_for_runtime _______
+tests\production\test_rls_policies.py:73: in test_every_mapped_table_has_active_rls_and_policies_for_runtime
+    assert [(name, active, policy) for name, active, policy in rows if not active or not policy] == []
+E   AssertionError: assert [('device_gro..., False), ...] == []
+E
+E     Left contains 18 more items, first extra item: ('device_group_members', False, False)
+E     Use -v to get more diff
+_ test_runtime_can_read_its_own_rows_without_explicit_tenant_filter[devices-id] _
+tests\production\test_rls_policies.py:85: in test_runtime_can_read_its_own_rows_without_explicit_tenant_filter
+    assert values == expected
+E   AssertionError: assert set() == {UUID('0f2f96...6fb63930477')}
+E
+E     Extra items in the right set:
+E     UUID('8dc8ece6-3de9-4496-b2dd-26fb63930477')
+E     UUID('0f2f962c-9b57-4acb-9020-e39d867f6902')
+E     Use -v to get more diff
+_ test_runtime_can_read_its_own_rows_without_explicit_tenant_filter[users-org_id] _
+tests\production\test_rls_policies.py:85: in test_runtime_can_read_its_own_rows_without_explicit_tenant_filter
+    assert values == expected
+E   AssertionError: assert set() == {UUID('f82eba...8e96819b020')}
+E
+E     Extra items in the right set:
+E     UUID('f82ebaaf-734a-4435-a9f3-68e96819b020')
+E     Use -v to get more diff
+_ test_runtime_can_read_its_own_rows_without_explicit_tenant_filter[organizations-id] _
+tests\production\test_rls_policies.py:85: in test_runtime_can_read_its_own_rows_without_explicit_tenant_filter
+    assert values == expected
+E   AssertionError: assert set() == {UUID('f7257e...0ca12c0a21a')}
+E
+E     Extra items in the right set:
+E     UUID('f7257e21-8452-4f98-afbb-c0ca12c0a21a')
+E     Use -v to get more diff
+_ test_runtime_can_read_its_own_rows_without_explicit_tenant_filter[pipeline_settings-org_id] _
+tests\production\test_rls_policies.py:85: in test_runtime_can_read_its_own_rows_without_explicit_tenant_filter
+    assert values == expected
+E   AssertionError: assert {UUID('02a44a...2bcc9a'), ...} == {UUID('30e425...dce59ebbc0a')}
+E
+E     Extra items in the left set:
+E     UUID('446e11bb-e2ba-4012-8aef-4e755f14d23c')
+E     UUID('52b620a8-b69d-4e62-a548-4f190b696f14')
+E     UUID('b7312836-e8c9-48c3-b399-2ac20f2bcc9a')
+E     UUID('70b3c07a-680b-4694-9b79-784c86d1cfa8')
+E     UUID('02a44ad8-aa90-4769-aa11-8982d50f6b9d')...
+E
+E     ...Full output truncated (5 lines hidden), use '-vv' to show
+_ test_runtime_can_read_its_own_rows_without_explicit_tenant_filter[audit_logs-org_id] _
+tests\production\test_rls_policies.py:85: in test_runtime_can_read_its_own_rows_without_explicit_tenant_filter
+    assert values == expected
+E   AssertionError: assert set() == {UUID('1c765f...d0fdec258af')}
+E
+E     Extra items in the right set:
+E     UUID('1c765f40-4f1c-468e-8276-4d0fdec258af')
+E     Use -v to get more diff
+_ test_association_reads_and_deletes_are_tenant_scoped[device_group_members-group_id-groups] _
+tests\production\test_rls_policies.py:95: in test_association_reads_and_deletes_are_tenant_scoped
+    assert (await db.scalars(text(f'SELECT "{key}" FROM "{table}"'))).all() == [getattr(w, index)[0].id]
+E   AssertionError: assert [UUID('de95cd...8cc6fb'), ...] == [UUID('4510d2...7873fe97786')]
+E
+E     At index 0 diff: UUID('de95cd24-dc30-4015-88af-63fed0e18b5b') != UUID('4510d231-444b-4e55-a420-37873fe97786')
+E     Left contains 13 more items, first extra item: UUID('44b9e470-d3ad-4bad-a086-bc6379cbb7f8')
+E     Use -v to get more diff
+_ test_association_reads_and_deletes_are_tenant_scoped[device_location_members-location_id-locations] _
+tests\production\test_rls_policies.py:95: in test_association_reads_and_deletes_are_tenant_scoped
+    assert (await db.scalars(text(f'SELECT "{key}" FROM "{table}"'))).all() == [getattr(w, index)[0].id]
+E   AssertionError: assert [UUID('a399c2...c74631'), ...] == [UUID('12fbb7...8461e6c3407')]
+E
+E     At index 0 diff: UUID('a399c21c-f9f9-4461-9627-6f6339d7d493') != UUID('12fbb70d-3aed-4cf7-8c6e-08461e6c3407')
+E     Left contains 15 more items, first extra item: UUID('fae0eb97-fde5-4587-bf7e-22bf9aed8031')
+E     Use -v to get more diff
+_ test_association_insert_requires_both_endpoints_in_current_tenant[False-device_group_members-group_id-groups] _
+tests\production\test_rls_policies.py:111: in test_association_insert_requires_both_endpoints_in_current_tenant
+    with pytest.raises(DBAPIError, match="row-level security"):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE <class 'sqlalchemy.exc.DBAPIError'>
+_ test_association_insert_requires_both_endpoints_in_current_tenant[False-device_location_members-location_id-locations] _
+tests\production\test_rls_policies.py:111: in test_association_insert_requires_both_endpoints_in_current_tenant
+    with pytest.raises(DBAPIError, match="row-level security"):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE <class 'sqlalchemy.exc.DBAPIError'>
+_ test_association_insert_requires_both_endpoints_in_current_tenant[True-device_group_members-group_id-groups] _
+tests\production\test_rls_policies.py:111: in test_association_insert_requires_both_endpoints_in_current_tenant
+    with pytest.raises(DBAPIError, match="row-level security"):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE <class 'sqlalchemy.exc.DBAPIError'>
+_ test_association_insert_requires_both_endpoints_in_current_tenant[True-device_location_members-location_id-locations] _
+tests\production\test_rls_policies.py:111: in test_association_insert_requires_both_endpoints_in_current_tenant
+    with pytest.raises(DBAPIError, match="row-level security"):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE <class 'sqlalchemy.exc.DBAPIError'>
+_ test_same_tenant_association_crud_remains_available[device_group_members-group_id-groups] _
+tests\production\test_rls_policies.py:125: in test_same_tenant_association_crud_remains_available
+    assert await db.scalar(text(f'SELECT count(*) FROM "{table}"')) == 2
+E   assert 27 == 2
+_ test_same_tenant_association_crud_remains_available[device_location_members-location_id-locations] _
+tests\production\test_rls_policies.py:125: in test_same_tenant_association_crud_remains_available
+    assert await db.scalar(text(f'SELECT count(*) FROM "{table}"')) == 2
+E   assert 29 == 2
+______ test_runtime_cannot_read_or_change_foreign_orchestration_settings ______
+tests\production\test_rls_policies.py:135: in test_runtime_cannot_read_or_change_foreign_orchestration_settings
+    assert result.rowcount == 0
+E   assert 1 == 0
+E    +  where 1 = <sqlalchemy.engine.cursor.CursorResult object at 0x000001F53ACE00C0>.rowcount
+__________ test_absent_empty_or_malformed_context_fails_closed[None] __________
+tests\production\test_rls_policies.py:148: in test_absent_empty_or_malformed_context_fails_closed
+    assert await db.scalar(text(f'SELECT count(*) FROM "{table}"')) == 0, table
+E   AssertionError: device_group_members
+E   assert 32 == 0
+____________ test_absent_empty_or_malformed_context_fails_closed[] ____________
+tests\production\test_rls_policies.py:148: in test_absent_empty_or_malformed_context_fails_closed
+    assert await db.scalar(text(f'SELECT count(*) FROM "{table}"')) == 0, table
+E   AssertionError: device_group_members
+E   assert 34 == 0
+______ test_absent_empty_or_malformed_context_fails_closed[invalid-uuid] ______
+tests\production\test_rls_policies.py:148: in test_absent_empty_or_malformed_context_fails_closed
+    assert await db.scalar(text(f'SELECT count(*) FROM "{table}"')) == 0, table
+E   AssertionError: device_group_members
+E   assert 36 == 0
+___ test_audit_insert_requires_current_tenant_and_audit_is_append_only[own] ___
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py:538: in _prepare_and_execute
+    self._rows = await prepared_stmt.fetch(*parameters)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\asyncpg\prepared_stmt.py:176: in fetch
+    data = await self.__bind_execute(args, 0, timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\asyncpg\prepared_stmt.py:241: in __bind_execute
+    data, status, _ = await self.__do_execute(
+.venv-audit\dependency-upgrade\Lib\site-packages\asyncpg\prepared_stmt.py:230: in __do_execute
+    return await executor(protocol)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+asyncpg\protocol\protocol.pyx:207: in bind_execute
+    ???
+E   asyncpg.exceptions.InsufficientPrivilegeError: new row violates row-level security policy for table "audit_logs"
+
+The above exception was the direct cause of the following exception:
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\engine\base.py:1970: in _exec_single_context
+    self.dialect.do_execute(
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\engine\default.py:924: in do_execute
+    cursor.execute(statement, parameters)
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py:572: in execute
+    self._adapt_connection.await_(
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\util\_concurrency_py3k.py:127: in await_only
+    return current.driver.switch(awaitable)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\util\_concurrency_py3k.py:192: in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py:550: in _prepare_and_execute
+    self._handle_exception(error)
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py:501: in _handle_exception
+    self._adapt_connection._handle_exception(error)
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py:789: in _handle_exception
+    raise translated_error from error
+E   sqlalchemy.dialects.postgresql.asyncpg.AsyncAdapt_asyncpg_dbapi.ProgrammingError: <class 'asyncpg.exceptions.InsufficientPrivilegeError'>: new row violates row-level security policy for table "audit_logs"
+
+The above exception was the direct cause of the following exception:
+tests\production\test_rls_policies.py:161: in test_audit_insert_requires_current_tenant_and_audit_is_append_only
+    await db.execute(stmt, {"org": org})
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\ext\asyncio\engine.py:654: in execute
+    result = await greenlet_spawn(
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\util\_concurrency_py3k.py:197: in greenlet_spawn
+    result = context.throw(*sys.exc_info())
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\engine\base.py:1421: in execute
+    return meth(
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\sql\elements.py:514: in _execute_on_connection
+    return connection._execute_clauseelement(
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\engine\base.py:1643: in _execute_clauseelement
+    ret = self._execute_context(
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\engine\base.py:1849: in _execute_context
+    return self._exec_single_context(
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\engine\base.py:1989: in _exec_single_context
+    self._handle_dbapi_exception(
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\engine\base.py:2356: in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\engine\base.py:1970: in _exec_single_context
+    self.dialect.do_execute(
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\engine\default.py:924: in do_execute
+    cursor.execute(statement, parameters)
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py:572: in execute
+    self._adapt_connection.await_(
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\util\_concurrency_py3k.py:127: in await_only
+    return current.driver.switch(awaitable)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\util\_concurrency_py3k.py:192: in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py:550: in _prepare_and_execute
+    self._handle_exception(error)
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py:501: in _handle_exception
+    self._adapt_connection._handle_exception(error)
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py:789: in _handle_exception
+    raise translated_error from error
+E   sqlalchemy.exc.ProgrammingError: (sqlalchemy.dialects.postgresql.asyncpg.ProgrammingError) <class 'asyncpg.exceptions.InsufficientPrivilegeError'>: new row violates row-level security policy for table "audit_logs"
+E   [SQL: INSERT INTO audit_logs (org_id, action) VALUES ($1, 'audit.rls.insert')]
+E   [parameters: (UUID('634aac5a-b279-465c-bd84-319f2d161a91'),)]
+E   (Background on this error at: https://sqlalche.me/e/20/f405)
+============================== warnings summary ===============================
+backend\api\v1\game_accounts\router.py:95
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\api\v1\game_accounts\router.py:95: FastAPIDeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+    sort_dir: str = Query("desc", regex="^(asc|desc)$", description="Направление сортировки"),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/production/test_rls_policies.py::test_every_mapped_table_has_active_rls_and_policies_for_runtime
+FAILED tests/production/test_rls_policies.py::test_runtime_can_read_its_own_rows_without_explicit_tenant_filter[devices-id]
+FAILED tests/production/test_rls_policies.py::test_runtime_can_read_its_own_rows_without_explicit_tenant_filter[users-org_id]
+FAILED tests/production/test_rls_policies.py::test_runtime_can_read_its_own_rows_without_explicit_tenant_filter[organizations-id]
+FAILED tests/production/test_rls_policies.py::test_runtime_can_read_its_own_rows_without_explicit_tenant_filter[pipeline_settings-org_id]
+FAILED tests/production/test_rls_policies.py::test_runtime_can_read_its_own_rows_without_explicit_tenant_filter[audit_logs-org_id]
+FAILED tests/production/test_rls_policies.py::test_association_reads_and_deletes_are_tenant_scoped[device_group_members-group_id-groups]
+FAILED tests/production/test_rls_policies.py::test_association_reads_and_deletes_are_tenant_scoped[device_location_members-location_id-locations]
+FAILED tests/production/test_rls_policies.py::test_association_insert_requires_both_endpoints_in_current_tenant[False-device_group_members-group_id-groups]
+FAILED tests/production/test_rls_policies.py::test_association_insert_requires_both_endpoints_in_current_tenant[False-device_location_members-location_id-locations]
+FAILED tests/production/test_rls_policies.py::test_association_insert_requires_both_endpoints_in_current_tenant[True-device_group_members-group_id-groups]
+FAILED tests/production/test_rls_policies.py::test_association_insert_requires_both_endpoints_in_current_tenant[True-device_location_members-location_id-locations]
+FAILED tests/production/test_rls_policies.py::test_same_tenant_association_crud_remains_available[device_group_members-group_id-groups]
+FAILED tests/production/test_rls_policies.py::test_same_tenant_association_crud_remains_available[device_location_members-location_id-locations]
+FAILED tests/production/test_rls_policies.py::test_runtime_cannot_read_or_change_foreign_orchestration_settings
+FAILED tests/production/test_rls_policies.py::test_absent_empty_or_malformed_context_fails_closed[None]
+FAILED tests/production/test_rls_policies.py::test_absent_empty_or_malformed_context_fails_closed[]
+FAILED tests/production/test_rls_policies.py::test_absent_empty_or_malformed_context_fails_closed[invalid-uuid]
+FAILED tests/production/test_rls_policies.py::test_audit_insert_requires_current_tenant_and_audit_is_append_only[own]
+19 failed, 2 passed, 1 warning in 7.49s

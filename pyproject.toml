@@ -8,6 +8,11 @@ ignore = [
     "E501",   # line too long — handled by formatter
 ]
 
+[tool.ruff.lint.isort]
+# The local migration directory is not the imported Alembic distribution.
+# Keep classification deterministic across Ruff versions and environments.
+known-third-party = ["alembic"]
+
 [tool.ruff.lint.per-file-ignores]
 # SQLAlchemy models use string-quoted forward references for relationships.
 # Ruff cannot resolve cross-model names without a full import graph; the
@@ -43,3 +48,8 @@ ignore_missing_imports = true  # third-party libs without bundled stubs
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+
+[tool.coverage.report]
+# Use the same precision for the pass/fail decision and the displayed percentage.
+# With precision=0, 64.98% rounded up and incorrectly passed --cov-fail-under=65.
+precision = 2

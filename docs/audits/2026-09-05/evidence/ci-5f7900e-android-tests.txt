@@ -1,0 +1,9 @@
+Android push run 34489386473, head 5f7900e84c15f903a7b9ac19285cc0225e20a4a5, attempt 1
+Push task excerpts; PR attempt 1 failed with one discovery test race and is recorded separately. Per-case counts come from the separate local XML summary.
+
+Build APK	Build debug APK	2026-09-10T14:32:49.5562098Z BUILD SUCCESSFUL in 3m 14s
+Build APK	Run unit tests	2026-09-10T14:34:18.7192195Z > Task :app:testDevDebugUnitTest
+Build APK	Run unit tests	2026-09-10T14:34:18.8144941Z > Task :app:testEnterpriseDebugUnitTest
+Build APK	Run unit tests	2026-09-10T14:34:47.1130249Z > Task :app:testDevReleaseUnitTest
+Build APK	Run unit tests	2026-09-10T14:34:47.2128411Z > Task :app:testEnterpriseReleaseUnitTest
+Build APK	Run unit tests	2026-09-10T14:35:55.1533700Z BUILD SUCCESSFUL in 3m 5s

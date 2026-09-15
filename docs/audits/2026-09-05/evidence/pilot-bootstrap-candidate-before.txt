@@ -1,0 +1,67 @@
+FFFFFF....F...                                                           [100%]
+================================== FAILURES ===================================
+____ test_shipped_seed_runs_and_device_is_visible_to_the_intended_operator ____
+tests\production\test_pilot_enrollment_bootstrap.py:37: in test_shipped_seed_runs_and_device_is_visible_to_the_intended_operator
+    await seed_enrollment_key.main()
+scripts\seed_enrollment_key.py:46: in main
+    if not org.is_active:
+           ^^^^^^^^^^^^^
+E   AttributeError: 'Organization' object has no attribute 'is_active'
+_______ test_repeated_seed_reuses_one_key_without_printing_key_material _______
+tests\production\test_pilot_enrollment_bootstrap.py:54: in test_repeated_seed_reuses_one_key_without_printing_key_material
+    await seed_enrollment_key.main()
+scripts\seed_enrollment_key.py:46: in main
+    if not org.is_active:
+           ^^^^^^^^^^^^^
+E   AttributeError: 'Organization' object has no attribute 'is_active'
+_ test_retry_does_not_silently_reactivate_or_rebind_an_existing_key[revoked] __
+tests\production\test_pilot_enrollment_bootstrap.py:67: in test_retry_does_not_silently_reactivate_or_rebind_an_existing_key
+    await seed_enrollment_key.main()
+scripts\seed_enrollment_key.py:46: in main
+    if not org.is_active:
+           ^^^^^^^^^^^^^
+E   AttributeError: 'Organization' object has no attribute 'is_active'
+_ test_retry_does_not_silently_reactivate_or_rebind_an_existing_key[expired] __
+tests\production\test_pilot_enrollment_bootstrap.py:67: in test_retry_does_not_silently_reactivate_or_rebind_an_existing_key
+    await seed_enrollment_key.main()
+scripts\seed_enrollment_key.py:46: in main
+    if not org.is_active:
+           ^^^^^^^^^^^^^
+E   AttributeError: 'Organization' object has no attribute 'is_active'
+_ test_retry_does_not_silently_reactivate_or_rebind_an_existing_key[permissions] _
+tests\production\test_pilot_enrollment_bootstrap.py:67: in test_retry_does_not_silently_reactivate_or_rebind_an_existing_key
+    await seed_enrollment_key.main()
+scripts\seed_enrollment_key.py:46: in main
+    if not org.is_active:
+           ^^^^^^^^^^^^^
+E   AttributeError: 'Organization' object has no attribute 'is_active'
+_ test_retry_does_not_silently_reactivate_or_rebind_an_existing_key[organization] _
+tests\production\test_pilot_enrollment_bootstrap.py:67: in test_retry_does_not_silently_reactivate_or_rebind_an_existing_key
+    await seed_enrollment_key.main()
+scripts\seed_enrollment_key.py:46: in main
+    if not org.is_active:
+           ^^^^^^^^^^^^^
+E   AttributeError: 'Organization' object has no attribute 'is_active'
+_ test_failed_bootstrap_stops_before_claiming_working_credentials[powershell-admin] _
+tests\deployment\test_bootstrap_launchers.py:103: in test_failed_bootstrap_stops_before_claiming_working_credentials
+    assert "ADMIN_PASSWORD" not in result.stdout
+E   AssertionError: assert 'ADMIN_PASSWORD' not in '\\n\u2550\u2550\u2550 \u0428\u0430\u0433 7... code: 17)\\n'
+E
+E     'ADMIN_PASSWORD' is contained here:
+E       _EMAIL -e ADMIN_PASSWORD backend python scripts/create_admin.py ���������� (exit code: 17)
+E     ?           ++++++++++++++
+============================== warnings summary ===============================
+backend\api\v1\game_accounts\router.py:95
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\api\v1\game_accounts\router.py:95: FastAPIDeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+    sort_dir: str = Query("desc", regex="^(asc|desc)$", description="����������� ����������"),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/production/test_pilot_enrollment_bootstrap.py::test_shipped_seed_runs_and_device_is_visible_to_the_intended_operator
+FAILED tests/production/test_pilot_enrollment_bootstrap.py::test_repeated_seed_reuses_one_key_without_printing_key_material
+FAILED tests/production/test_pilot_enrollment_bootstrap.py::test_retry_does_not_silently_reactivate_or_rebind_an_existing_key[revoked]
+FAILED tests/production/test_pilot_enrollment_bootstrap.py::test_retry_does_not_silently_reactivate_or_rebind_an_existing_key[expired]
+FAILED tests/production/test_pilot_enrollment_bootstrap.py::test_retry_does_not_silently_reactivate_or_rebind_an_existing_key[permissions]
+FAILED tests/production/test_pilot_enrollment_bootstrap.py::test_retry_does_not_silently_reactivate_or_rebind_an_existing_key[organization]
+FAILED tests/deployment/test_bootstrap_launchers.py::test_failed_bootstrap_stops_before_claiming_working_credentials[powershell-admin]
+7 failed, 7 passed, 1 warning in 5.25s

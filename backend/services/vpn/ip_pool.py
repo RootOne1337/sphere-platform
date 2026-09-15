@@ -5,10 +5,16 @@ import ipaddress
 import time
 from typing import Optional
 
+from sqlalchemy import select, text
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from backend.models.vpn_peer import VPNPeer, VPNPeerStatus
+
 
 class IPPoolAllocator:
     """
-    Manages a pool of VPN IP addresses stored in a Redis Sorted Set.
+    PostgreSQL reservations are authoritative for VPN lifecycle operations.
+    Legacy Redis free-list methods remain for cache diagnosis only.
     - ZADD NX: idempotent initialization (won't re-add existing IPs)
     - ZPOPMIN: atomic O(1) allocation
     - ZADD: return IPs to pool
@@ -20,6 +26,35 @@ class IPPoolAllocator:
     def __init__(self, redis, subnet: str = "10.100.0.0/16") -> None:
         self.redis = redis
         self.network = ipaddress.ip_network(subnet, strict=False)
+
+    async def reserve_ip(self, db: AsyncSession) -> str | None:
+        """Choose an address inside the caller's short intent transaction.
+
+        The global unique index protects held addresses, including unknown
+        outcomes. The transaction lock avoids selecting the same candidate in
+        concurrent PostgreSQL requests, including different organizations.
+        """
+        if self.network.version != 4 or self.network.num_addresses > 65536:
+            raise ValueError("VPN allocation requires an IPv4 subnet of /16 or smaller")
+        if db.get_bind().dialect.name == "postgresql":
+            await db.execute(text("SELECT pg_advisory_xact_lock(736743829104)"))
+        held = await self._held_addresses(db)
+        return next((str(ip) for ip in self.network.hosts() if str(ip) not in held), None)
+
+    async def _held_addresses(self, db: AsyncSession) -> set[str]:
+        addresses = await db.scalars(select(VPNPeer.tunnel_ip).where(
+            VPNPeer.status != VPNPeerStatus.FREE, VPNPeer.tunnel_ip.isnot(None),
+        ))
+        return {str(ipaddress.ip_address(ip)) for ip in addresses}
+
+    async def capacity(self, db: AsyncSession) -> tuple[int, int]:
+        """Global configured capacity/free count; independent of Redis contents."""
+        if self.network.version != 4 or self.network.num_addresses > 65536:
+            raise ValueError("VPN allocation requires an IPv4 subnet of /16 or smaller")
+        held = await self._held_addresses(db)
+        total = self.network.num_addresses - (2 if self.network.prefixlen < 31 else 0)
+        occupied = sum(ipaddress.ip_address(ip) in self.network for ip in held)
+        return total, max(0, total - occupied)
 
     async def initialize_pool(self, org_id: str, count: int = 1000) -> int:
         """
