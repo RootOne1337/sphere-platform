@@ -149,4 +149,43 @@ class WebSocketLifecycleTest {
         verify(exactly = 2) { http.newWebSocket(any(), any()) }
         job.cancelAndJoin()
     }
+
+    @Test fun authenticatedRecoveriesResetOldFailureDebt() = runTest {
+        val job = launch { client.connect() }
+        var discoveryRequests = 0
+        client.onCircuitBreakerOpen = { discoveryRequests++ }
+        try {
+            runCurrent()
+            repeat(12) { index ->
+                authenticateSocket()
+                runCurrent()
+                listener.onFailure(socket, IOException("isolated network outage"), null)
+                runCurrent()
+                advanceTimeBy(999); runCurrent()
+                verify(exactly = index + 1) { http.newWebSocket(any(), any()) }
+                advanceTimeBy(1002); runCurrent()
+                verify(exactly = index + 2) { http.newWebSocket(any(), any()) }
+            }
+            assertEquals("Every independent outage should refresh discovery", 12, discoveryRequests)
+        } finally { job.cancelAndJoin() }
+    }
+
+    @Test fun tcpOpenWithoutAuthenticationDoesNotResetFailureDebt() = runTest {
+        val job = launch { client.connect() }
+        try {
+            runCurrent()
+            repeat(2) { index ->
+                listener.onOpen(socket, mockk(relaxed = true))
+                runCurrent()
+                assertFalse(client.isConnected)
+                listener.onFailure(socket, IOException("lost before auth ack"), null)
+                runCurrent()
+                if (index == 0) { advanceTimeBy(2001); runCurrent() }
+            }
+            advanceTimeBy(1999); runCurrent()
+            verify(exactly = 2) { http.newWebSocket(any(), any()) }
+            advanceTimeBy(2002); runCurrent()
+            verify(exactly = 3) { http.newWebSocket(any(), any()) }
+        } finally { job.cancelAndJoin() }
+    }
 }

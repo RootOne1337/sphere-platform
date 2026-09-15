@@ -131,7 +131,15 @@ class SphereWebSocketClient @Inject constructor(
             val route = routes.urls.getOrNull(if (previousIndex >= 0) (previousIndex + 1) % routes.urls.size else 0)
             try {
                 if (route == null) throw AuthException("No management route stored")
-                connectOnce(routes, route)
+                connectOnce(routes, route) {
+                    // A validated session ends the previous outage. Reset on this
+                    // coroutine after auth, not only when the later close is clean:
+                    // network failures usually complete disconnected exceptionally.
+                    consecutiveFailures = 0
+                    circuitOpenUntil = 0L
+                    attempt = 0
+                    failedRoute = null
+                }
                 // A clean server restart still needs a paced retry. Resetting to
                 // zero bypassed all delay and synchronized reconnecting devices.
                 consecutiveFailures = 0
@@ -184,7 +192,11 @@ class SphereWebSocketClient @Inject constructor(
      * First-message auth: JWT отправляется первым сообщением в [onOpen],
      * НЕ в URL (токен в query-param виден в логах сервера и прокси).
      */
-    private suspend fun connectOnce(routes: AuthTokenStore.ConnectionRoutes, route: String) {
+    private suspend fun connectOnce(
+        routes: AuthTokenStore.ConnectionRoutes,
+        route: String,
+        onAuthenticated: () -> Unit,
+    ) {
         // Service may start before enrollment. Re-read the assigned UUID on every attempt.
         val expectedDeviceId = authStore.getDeviceId() ?: throw AuthException("No assigned device ID stored")
         val token = authStore.getFreshTokenForRoute(routes, route)
@@ -329,6 +341,7 @@ class SphereWebSocketClient @Inject constructor(
                 currentCoroutineContext().ensureActive()
                 throw IOException("WebSocket authentication handshake timeout", e)
             }
+            onAuthenticated()
             disconnected.await()
         } finally {
             synchronized(wsLock) {

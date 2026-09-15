@@ -2,6 +2,10 @@
 
 **16 сентября 2026 · Windows / Docker Desktop · development, авторизация включена.**
 
+**AUD-124 source fix:** APK 1.2.7 сбрасывает накопленные ошибки после подтверждённой
+авторизации. 579 dev / 578 enterprise tests passed, один ожидаемый skip.
+Установка и повторные сетевые отказы ещё проверяются. [Причина и regression](../audits/2026-09-05/ANDROID-RECONNECT-DEBT.md).
+
 Текущий срез: backend `12249b1`, frontend `6dea6b4`; первый APK пока 1.2.5,
 второй canary — 1.2.6 (`d2cd798`, SHA начинается `e604410b`). Ниже сохранена история
 предыдущих приёмок. [Последние network-fault проверки](../audits/2026-09-05/NETWORK-RECOVERY-NATIVE.md)
