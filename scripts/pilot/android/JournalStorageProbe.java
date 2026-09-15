@@ -1,6 +1,7 @@
 package com.sphereplatform.audit;
 
 import android.content.Context;
+import android.content.ContextWrapper;
 import android.os.Looper;
 import androidx.security.crypto.EncryptedSharedPreferences;
 import androidx.security.crypto.MasterKey;
@@ -16,6 +17,10 @@ import org.json.JSONObject;
  * No network, dispatcher, device actions, real journal or real credentials are accessed.
  */
 public final class JournalStorageProbe {
+    private static final class ProbeContext extends ContextWrapper {
+        ProbeContext(Context base) { super(base); }
+        @Override public Context getApplicationContext() { return this; }
+    }
     private static void require(boolean condition, String message) {
         if (!condition) throw new IllegalStateException(message);
     }
@@ -28,11 +33,19 @@ public final class JournalStorageProbe {
         CommandReceiptStore store = null;
         try {
             require(args.length == 1 && args[0].startsWith("com.sphereplatform.agent."), "owned_package_required");
+            require(android.os.Build.VERSION.SDK_INT == 28, "probe_bootstrap_requires_api_28");
             Looper.prepareMainLooper();
             Class<?> threadType = Class.forName("android.app.ActivityThread");
             Object thread = threadType.getMethod("systemMain").invoke(null);
             Context system = (Context) threadType.getMethod("getSystemContext").invoke(thread);
-            context = system.createPackageContext(args[0], Context.CONTEXT_IGNORE_SECURITY);
+            context = new ProbeContext(system.createPackageContext(args[0], Context.CONTEXT_IGNORE_SECURITY));
+            // app_process does not inherit Zygote's JCA provider initialization.
+            Class.forName("android.security.keystore.AndroidKeyStoreProvider")
+                .getMethod("install").invoke(null);
+            // API 28's compatibility-WAL initializer otherwise asks ActivityManager
+            // for a registered app thread. This separate test process uses defaults.
+            Class.forName("android.database.sqlite.SQLiteCompatibilityWalFlags")
+                .getMethod("init", String.class).invoke(null, "");
             MasterKey key = new MasterKey.Builder(context, name).setKeyScheme(MasterKey.KeyScheme.AES256_GCM).build();
             EncryptedSharedPreferences prefs = (EncryptedSharedPreferences) EncryptedSharedPreferences.create(
                 context, name, key, EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,

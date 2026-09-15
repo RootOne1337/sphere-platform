@@ -49,9 +49,14 @@ serializes publishers and recovery. Recovery is disabled unless explicitly set.
 
 42 publisher/recovery tests pass, including persistence across one-shot runs,
 grace period, cooldown, transient recovery, scope checks, disk failure, uncertain
-CLI result and connector replacement before restart. Ruff passes. Native automatic
-repair and separate client/server network fault scenarios are subsequent checks;
-they must be recorded independently of the manual incident repair above.
+CLI result and connector replacement before restart. Ruff passes. The enabled scheduler subsequently restarted the exact unhealthy connector after
+364.95 s in a scoped Docker-network disconnection trial. Automatic restart was
+observed, but the test's network reattachment raced the restarting container and
+failed with a missing sandbox. Cleanup required a scoped Compose recreation of
+only that connector. Signed v11 was then published; other containers were preserved.
+This is proof of automatic restart, **not** fully unattended repair of that fixture.
+Later client/server/common-ingress trials use reversible UID rules/container pauses:
+[native recovery and residual delay](NETWORK-RECOVERY-NATIVE.md).
 
 The healthcheck itself already has its own detection delay; this fix adds a
 three-minute grace and up to one scheduler interval. GitHub CDN/polling then adds

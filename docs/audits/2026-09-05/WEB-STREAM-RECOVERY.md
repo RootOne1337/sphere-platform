@@ -36,9 +36,10 @@ scenarios. All 25 frontend test suites / 208 tests pass; TypeScript passes.
 
 ## Residual risk and acceptance boundary
 
-These tests exercise the component with a controlled socket and decoder. Actual
-browser decoding/reconnection after Android and server network faults is recorded
-separately; unit tests are not a substitute for that observation. An expired or
+These tests exercise the component with a controlled socket and decoder. Web 6dea6b4 is deployed to the isolated pilot. Actual browser decoding and
+reconnection after Android, server and common-ingress faults have now been
+[observed in the same tab](NETWORK-RECOVERY-NATIVE.md), without F5 or another Start
+click. Common-ingress recovery exposed the separate Android delay AUD-124. An expired or
 rejected token relies on the existing authentication flow supplying a new token.
 A browser cannot recover a changed public origin automatically; use a stable
 origin for deployment. This change does not provide an independent second ingress.

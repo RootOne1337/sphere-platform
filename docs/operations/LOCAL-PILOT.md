@@ -1,6 +1,12 @@
 # Локальный стенд для совместного тестирования
 
-**14 сентября 2026 · Windows / Docker Desktop · development, авторизация включена.**
+**16 сентября 2026 · Windows / Docker Desktop · development, авторизация включена.**
+
+Текущий срез: backend `12249b1`, frontend `6dea6b4`; первый APK пока 1.2.5,
+второй canary — 1.2.6 (`d2cd798`, SHA начинается `e604410b`). Ниже сохранена история
+предыдущих приёмок. [Последние network-fault проверки](../audits/2026-09-05/NETWORK-RECOVERY-NATIVE.md)
+вернули реальные команды/DAG/кадры без новых крашей. Повторные обрывы выявили
+лишний накопленный backoff APK (AUD-124); исправление проверяется. LATEST пока 1.2.5.
 
 [Главная](../../README.md) · [Приёмка](PILOT-ACCEPTANCE.md) ·
 [Готовность](READINESS.md) · [Android](../android-agent.md)

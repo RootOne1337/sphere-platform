@@ -77,8 +77,14 @@ existing baked-route fixture skipped because that build has no baked server/key.
 Both flavors have 43 suites and zero failures/errors. The ACK failure probe fails
 before containment and passes in the full run after the fix.
 [Machine-readable results](evidence/android-journal-capacity-regression.json).
-Installed-device acceptance is recorded separately; it is still pending at this
-source checkpoint. Do not infer a completed overnight/fleet test from a
+Native storage acceptance now passes on API28: 512 migrated ACKs, 2,048 new
+ACKs, reopen, duplicate rejection and retained pending result. The standalone
+probe initializes AndroidKeyStore and a wrapped application context because
+`app_process` does not inherit the normal application bootstrap; compatibility-WAL
+uses platform defaults. It is explicitly API28-only and does not replace testing
+the production process. [Native evidence](evidence/android-journal-native-storage.json).
+The 1.2.6 canary updated through its own HTTPS/root OTA installer in 6.422 s,
+then passed actual DAGs and [network fault trials](NETWORK-RECOVERY-NATIVE.md). Do not infer a completed overnight/fleet test from a
 successful build or a small number of real tasks.
 
 The seven-day deduplication window is finite; delayed redelivery after expiry
