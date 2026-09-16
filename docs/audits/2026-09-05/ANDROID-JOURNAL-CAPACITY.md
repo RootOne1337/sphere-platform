@@ -87,6 +87,9 @@ The 1.2.6 canary updated through its own HTTPS/root OTA installer in 6.422 s,
 then passed actual DAGs and [network fault trials](NETWORK-RECOVERY-NATIVE.md). Do not infer a completed overnight/fleet test from a
 successful build or a small number of real tasks.
 
+Both devices now run forward release 1.2.7, which retains this receipt store and
+fixes the independent retry-debt finding. [OTA and repeated fault acceptance](ANDROID-RECONNECT-DEBT.md).
+
 The seven-day deduplication window is finite; delayed redelivery after expiry
 still requires the server's task lifecycle and TTL checks. Loss of application
 data, forced APK downgrade or restoration of inconsistent app storage is not a

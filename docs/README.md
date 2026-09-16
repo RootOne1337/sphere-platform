@@ -1,7 +1,7 @@
 # Документация Sphere Platform
 
 **Навигация по текущим контрактам, эксплуатационным ограничениям и доказательствам.**
-Обновлено 13 сентября 2026. [Вернуться на главную](../README.md).
+Обновлено 16 сентября 2026. [Вернуться на главную](../README.md).
 
 ## С чего начать
 
@@ -19,6 +19,12 @@
 | Подготовить rollout | [Deployment](deployment.md), [Full guide](../FULL-DEPLOYMENT-GUIDE.md) |
 | Разобрать сбой | [Observability contract](operations/READINESS.md), [Runbooks](runbooks/README.md) |
 | Спроектировать будущий AI-контур | [AI readiness](architecture/AI-READINESS.md) |
+
+## Последняя эксплуатационная приёмка
+
+- [Сетевые отказы Android/сервера/обоих и возврат веб-стрима](audits/2026-09-05/NETWORK-RECOVERY-NATIVE.md).
+- [APK1.2.7: причина накопленных задержек, regression, OTA и native checks](audits/2026-09-05/ANDROID-RECONNECT-DEBT.md).
+- [Компактные ACK receipts и безопасная миграция](audits/2026-09-05/ANDROID-JOURNAL-CAPACITY.md).
 
 ## Технические контракты
 
@@ -58,7 +64,8 @@
 Сначала используйте operational matrix и свежий audit report. Старые отчёты,
 load-test документы и руководства отдельных модулей сохраняют историю;
 их метрики нельзя автоматически переносить на текущую ветку. Runbooks сверены
-с текущими health paths и Compose service names; recovery drills ещё не пройдены. API
+с текущими health paths и Compose service names; отдельные recovery drills
+пройдены и перечислены в матрице, полная программа ещё открыта. API
 catalog генерируется из registered routes, но не удостоверяет успех всех операций.
 Систематическая сверка остальных руководств продолжается.
 

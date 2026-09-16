@@ -2,17 +2,15 @@
 
 Статус на 16 сентября 2026: **аудит продолжается; production readiness не подтверждена**.
 
-**AUD-124 source fix:** APK 1.2.7 сбрасывает накопленные ошибки после подтверждённой
-авторизации. 579 dev / 578 enterprise tests passed, один ожидаемый skip.
-Установка и повторные сетевые отказы ещё проверяются. [Причина и regression](ANDROID-RECONNECT-DEBT.md).
+**AUD-119/124 установлены и проверены на двух APK1.2.7.** Через собственный OTA,
+без ADB install; native journal migration, safe DAG, repeated network loss и три
+capture/stop цикла на каждом прошли. Full tests: 579 dev / 578 enterprise passed,
+один ожидаемый skip; 164 signed-build tests на каждый flavor; CI `0f257fe` зелёный.
+[Retry debt: cause, regression, native acceptance](ANDROID-RECONNECT-DEBT.md).
+Веб `6dea6b4` восстанавливает кадры без F5. [Матрица сетевых проверок](NETWORK-RECOVERY-NATIVE.md)
+сохраняет и исходные задержки74–80s, и исправление, и failed fixture. Fleet/восемь
+часов/независимый ingress/VPN не приняты. AUD-120/121 остаются открыты.
 
-**Runtime reconnect:** реальные отказы Android, серверного входа, обоих и общего
-Nginx восстановились с командами, DAG и видео. Новых крашей в проверенных окнах нет.
-Повторные отказы выявили AUD-124 — накопленный retry/circuit счётчик между успешными
-сессиями; задержка 74–80 s подтверждена логами, regression воспроизведён, fix проходит
-приёмку. [Полные результаты и ограничения](NETWORK-RECOVERY-NATIVE.md).
-AUD-119 native storage проверен (512 + 2,048 ACK); 1.2.6 canary OTA и три
-capture/stop цикла прошли. Fleet/восемь часов этим не подтверждены.
 Исходная ревизия: `28f8cc46ab65496e00297960fd94d87d1605cc83`.
 Ветка исправлений: `codex/enterprise-audit-20260905`; [draft PR #19](https://github.com/RootOne1337/sphere-platform/pull/19).
 

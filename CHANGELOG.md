@@ -6,13 +6,23 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [Unreleased] — enterprise audit, 2026-09-14
+## [Unreleased] — enterprise audit, 2026-09-16
 
 Изменения находятся в draft PR; это не опубликованный production release.
 Полный перечень предыдущих audit fixes, доказательства и residual risks:
 [audit report](docs/audits/2026-09-05/AUDIT-REPORT.md).
 
 ### Security / runtime
+
+- AUD-119/124: APK1.2.7 keeps compact acknowledged receipts without consuming the
+  pending-command buffer and clears retry/circuit debt after validated recovery.
+  Failing capacity/ACK-write/repeated-outage regressions precede the fixes. Native
+  migration512+2,048, two-device OTA, repeated network faults and six capture/stop
+  cycles passed. [Release evidence](docs/audits/2026-09-05/ANDROID-RECONNECT-DEBT.md).
+- AUD-122/123: scoped unhealthy-connector recovery with durable cooldown; browser
+  exponential retry, normal-close recovery, silence deadline and timer cleanup.
+  Actual browser streams return after scoped network faults. Independent ingress,
+  a full night and fleet capacity remain open. [Matrix](docs/audits/2026-09-05/NETWORK-RECOVERY-NATIVE.md).
 
 - AUD-114: retain Device Stream cards across online/offline transitions, expose
   connection status, hide stale video and preserve the operator's Start/Stop intent.

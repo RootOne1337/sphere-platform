@@ -45,8 +45,27 @@ Both flavors' complete WebSocket suites pass after the fix. Full Android run:
 579 dev tests pass; enterprise has 578 passed and one existing baked-route fixture
 skipped. There are zero failures/errors across 43 suites per flavor.
 [Machine-readable regression evidence](evidence/android-reconnect-debt-regression.json).
-Native 1.2.7 OTA/fault acceptance is recorded separately; no installed fix is claimed
-at this source checkpoint.
+Native 1.2.7 acceptance now passes on both owned Android9 devices. Canary and
+stable OTA returned commands in 9.687 / 9.671 s, with installed hashes
+verified and no ADB install, launcher or manual permission action. After a 75 s
+Android UID block the canary returned in 2.015 s; the subsequent combined outage
+on the updated pair returned in 0.516 / 5.141 s (sequential observation upper bounds).
+Each affected device executed echo and the pinned DAG, resumed frames, kept its
+process and had unchanged crash buffers. Three capture/stop cycles per device,
+including overlapping viewers, passed and released projection automatically.
+[Installed release evidence](evidence/android-reconnect-native-10207.json).
+
+The original shared-Nginx failure scenario was then repeated on both 1.2.7 APKs:
+76.411 s blocked, recovery observed at 0.531 / 6.062 s. Both returned new
+sessions, commands, ordered DAG receipts and frames, with unchanged processes and
+crash buffers. This final drill used protocol viewers; the separate real-browser
+acceptance of the unchanged web build is recorded in the network matrix.
+The second APK's logs independently confirm the reset: the first retry of the
+three separate outages starts at attempt 1, with 1,788 / 1,262 / 1,093 ms backoff.
+Further failed handshakes during each outage still increase backoff normally.
+Sanitized sequences and source-log hashes are retained in the release evidence.
+
+All workflows for source 0f257fe passed: [CI archive](evidence/ci-0f257fe-summary.json).
 
 ## Residual risk
 

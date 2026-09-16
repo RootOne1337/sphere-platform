@@ -2,19 +2,20 @@
 
 **Срез: 16 сентября 2026 · аудит продолжается · приоритеты согласованы с владельцем.**
 
-**AUD-124 source fix:** APK 1.2.7 сбрасывает накопленные ошибки после подтверждённой
-авторизации. 579 dev / 578 enterprise tests passed, один ожидаемый skip.
-Установка и повторные сетевые отказы ещё проверяются. [Причина и regression](../audits/2026-09-05/ANDROID-RECONNECT-DEBT.md).
+**Свежая приёмка: оба APK 1.2.7 / 10207 (`0f257fe`) установлены через собственный
+OTA.** Исправлены предел 512 подтверждённых задач (AUD-119) и накопление задержек
+между успешными подключениями (AUD-124). Native storage: 512 + 2,048 ACK; полный
+Android: 579 dev / 578 enterprise passed, один ожидаемый skip; signed build:
+164 tests на каждый flavor. Все workflows для source commit `0f257fe` прошли.
+[Причина, regression и установленная версия](../audits/2026-09-05/ANDROID-RECONNECT-DEBT.md).
 
-**Свежая runtime-приёмка связи:** проверены обрыв сети второго APK, серверного
-входа, обеих сторон и общего Nginx с вебом. Во всех сценариях вернулись команды,
-13-node DAG и кадры; PID APK сохранены, crash buffers не изменились. Веб восстановил
-два потока без F5. Повторные обрывы выявили задержку AUD-124: старые ошибки
-накапливались между успешными сессиями, возврат дошёл до 74–80 s. Исправление
-и его приёмка идут первым приоритетом. [Матрица и ограничения](../audits/2026-09-05/NETWORK-RECOVERY-NATIVE.md).
-APK 1.2.6 установлена пока на одном canary: native migration 512 + 2,048 ACK,
-OTA за 6.422 s, реальные DAG и три capture/stop цикла прошли. Второй APK пока 1.2.5;
-LATEST ещё не заменён. Frontend нового стенда — `6dea6b4`, backend — `12249b1`.
+Реальные раздельные/совмещённые отказы Android, серверного входа и общего Nginx
+проверены с командами, 13-node DAG и кадрами. На 1.2.7: Android-only возврат 2.015 s;
+повторный combined fault — 0.516 / 5.141 s, без смены PID/новых crash entries.
+Три capture/stop цикла на каждом APK прошли. Веб восстановил два потока без F5;
+frontend `6dea6b4`, backend `12249b1`. LATEST указывает на 1.2.7.
+[Матрица и ограничения](../audits/2026-09-05/NETWORK-RECOVERY-NATIVE.md).
+Проверены два Android 9; сотни устройств, остальные Android и восемь часов ещё не приняты.
 
 **Новый высший приоритет — восстановление сети:** реальный отказ Quick Tunnel
 оставил оба APK offline, хотя backend работал. После одного ручного restart
@@ -28,8 +29,8 @@ connector оба APK сами приняли signed v10 без переуста�
 **После полного разбора приоритеты изменены:** воспроизведена блокировка APK после
 512 уже подтверждённых задач (AUD-119, High); Task Engine скрывает историю за
 первой сотней и показывает недостоверные источники/индикаторы (AUD-120, High).
-AUD-119 исправлен в исходниках APK 1.2.6 (577 dev / 576 enterprise passed, 1 expected skip): [хранилище, миграция и проверки](../audits/2026-09-05/ANDROID-JOURNAL-CAPACITY.md).
-AUD-120 пока открыт; установленная версия фиксируется отдельно. Windows snapshot writer исправлен AUD-118 (`b8e0d0b`,
+AUD-119 впервые исправлен в APK 1.2.6 и сохранён в установленной 1.2.7: [хранилище, миграция и проверки](../audits/2026-09-05/ANDROID-JOURNAL-CAPACITY.md).
+AUD-120 пока открыт. Windows snapshot writer исправлен AUD-118 (`b8e0d0b`,
 18 local tests); шум 1,555 интерактивных warnings AUD-121 остаётся открытым.
 [Полный отчёт, evidence и порядок следующей приёмки](../audits/2026-09-05/NIGHT-RUN-ANALYSIS.md).
 
@@ -81,15 +82,12 @@ repair → возврат второго за 6.08 s, затем 12/12 кома�
 100 строк и последний marker после. Полный JVM suite 515 passed; signed flavors
 по 29 passed. [Доказательства и границы](../audits/2026-09-05/APK-UTF8-LOG-TAIL.md).
 
-**AUD-114:** исправлена потеря карточек Device Stream при временном offline.
-Устройство остаётся видимым с причиной, Stop доступен, выбранный просмотр
-возобновляется после online. Frontend **`9b3afbc`** установлен в новом pilot;
-201 frontend tests, type-check и production build pass. Браузер показывает оба
-экрана и статусы, Start/Stop работают без console errors. Переходы offline/recovery
-воспроизведены component tests; сетевой fault в браузере ещё не принят.
-[Тесты и границы](../audits/2026-09-05/STREAM-DEVICE-PRESENCE.md).
+**AUD-114/123:** выбранные Device Stream карточки переживают временный offline;
+веб показывает потерю связи и восстанавливает потоки без F5. Текущий frontend
+`6dea6b4`: 208 tests и TypeScript прошли; реальный network drill принят в пределах
+двух устройств. [Восстановление веб-стрима](../audits/2026-09-05/WEB-STREAM-RECOVERY.md).
 
-**AUD-112, текущая APK `343c6e8` / 1.2.5-dev:** оба устройства обновлены через
+**AUD-112, историческая приёмка APK `343c6e8` / 1.2.5-dev:** оба устройства обновлены через
 OTA; исправлена гонка ImageReader copy/teardown, приводившая к SIGSEGV всего APK.
 6 + 4 native цикла захвата, движение экрана, повторный зритель и auto-stop прошли
 без смены PID; 560 JVM tests и по 74 signed-flavor tests.
@@ -198,7 +196,7 @@ README и руководства обновляются по реализова�
 
 | Приоритет | Сценарий | Что найдено / подтверждено | Следующее доказательство готовности |
 | --- | --- | --- | --- |
-| P0 | Первый пользователь должен получить полный результат задания | Fresh-volume pilot, browser login/reload и два APK уже работают; [актуальная 1.2.5](LOCAL-PILOT.md) прошла OTA/команды | [Пилот](PILOT-ACCEPTANCE.md): web → DAG → физическое действие → persisted result → UI, error/cancel/retry |
+| P0 | Первый пользователь должен получить полный результат задания | Fresh-volume pilot, browser login/reload и два APK уже работают; [актуальная 1.2.7](LOCAL-PILOT.md) прошла OTA/команды | [Пилот](PILOT-ACCEPTANCE.md): web → DAG → физическое действие → persisted result → UI, error/cancel/retry |
 | P0 | Регистрация теряет credentials после остановки или ответы меняют identity в обратном порядке | AUD-77: один проверяемый commit UUID/tokens/routes, serialization с refresh, local revision fence; 20 новых JVM cases | [Контракт](../architecture/ANDROID-BACKGROUND-ENROLLMENT.md); initial server response loss, failed re-enrollment recovery, реальные disk/keystore/OS |
 | P0 | Registration зависает или поздний ответ записывает credentials после stop | AUD-76: async Call, HTTP budget 10 s, byte limit до parse, cancellation и освобождение worker mutex; 15 новых JVM cases | [Контракт](../architecture/ANDROID-BACKGROUND-ENROLLMENT.md); AUD-77 добавляет единый commit и serialization; initial response loss и реальные sockets/OS открыты |
 | P0 | APK должен сам запускаться после Android boot | AUD-75/77/91 согласуют enrollment, AUD-103 добавляет persisted JobScheduler; native reboot двух Android 9 и предыдущей 1.2.4 принят с прежними IDs | [Контракт](../architecture/ANDROID-BACKGROUND-ENROLLMENT.md); initial response loss, fresh/never-launched package, другие Android/OEM и force-stop |

@@ -1,6 +1,6 @@
-# Bidirectional recovery · native acceptance, 15 September 2026
+# Bidirectional recovery · native acceptance, 15–16 September 2026
 
-These bounded trials target only the new pilot and the two owned Android 9
+The initial 15 September trials target only the new pilot and the two owned Android 9
 emulators. APK versions were 1.2.5 on the first and 1.2.6 on the second. Backend
 12249b1 and web 6dea6b4 were running. Old containers retained IDs/images/start times.
 
@@ -28,6 +28,26 @@ that badge is not a frame-delivery acknowledgement. Python viewers reconnected i
 the common-ingress case. Temporary connection/timeout/control-unavailable messages
 are retained in evidence, not hidden. Crash buffers stayed unchanged and APK PIDs
 remained stable during each trial.
+
+## Forward release 1.2.7: repeated acceptance, 16 September
+
+Both devices received source `0f257fe` / versionCode 10207 through their own OTA.
+The second device first passed Android-only loss while the first was still 1.2.5;
+the combined and shared-Nginx trials below used 1.2.7 on both. Each affected device
+returned a new authenticated session, executed echo and the pinned native DAG,
+resumed frames, retained its process and had unchanged crash buffers.
+
+| Fault | Actual blocked interval | Observed return after restore |
+| --- | --- | --- |
+| Second APK UID, IPv4 + IPv6 | 75.786 s | 2.015 s |
+| APK UID plus public gateway | 76.729 s | 0.516 / 5.141 s |
+| Shared Nginx, same pre-fix scenario | 76.411 s | 0.531 / 6.062 s |
+
+These are bounded observations with the same sequential timing caveat above.
+The final shared-Nginx retest used protocol viewers, not a new browser UI trial.
+All injected rules/pauses were removed and protected container identities remained
+unchanged. Six capture/stop cycles on the new APK, including overlapping viewers,
+released MediaProjection automatically. [Installed release evidence](evidence/android-reconnect-native-10207.json).
 
 ## Test corrections and reproducibility
 
@@ -57,13 +77,15 @@ reconnect, install, permission grants or scenario actions. The cleanup guard can
 run while Windows/Docker is down; after host failure inspect the private guard
 journal before another drill. This is a development fault tool, not a startup service.
 
-## Remaining work
+## Defect found and remaining work
 
-The fourth trial exposed **AUD-124**: the Android retry loop resets its attempt
-and circuit counters only when a session returns normally. A healthy authenticated
-session later ending with a network exception retains failures from earlier outages.
-The tenth accumulated failure opens a 60 s circuit pause plus the old backoff.
-This is a real runtime recovery delay; source regression and fix are tracked next.
+The fourth trial exposed **AUD-124**, subsequently fixed and accepted on installed
+APK 1.2.7: [regression, OTA and repeated fault results](ANDROID-RECONNECT-DEBT.md).
+Before the fix, the Android retry loop reset its attempt and circuit counters only
+when a session returned normally. A healthy authenticated session later ending
+with a network exception retained failures from earlier outages. The tenth
+accumulated failure opened a 60 s circuit pause plus the old backoff.
+The failing source regression, fix and installed retest are retained in [AUD-124](ANDROID-RECONNECT-DEBT.md).
 
 These checks do not establish independent provider failover, host reboot recovery,
 physical-device/API26–35 compatibility, hundreds of simultaneous reconnects, packet

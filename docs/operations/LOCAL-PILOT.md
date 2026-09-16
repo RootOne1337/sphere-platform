@@ -2,15 +2,10 @@
 
 **16 сентября 2026 · Windows / Docker Desktop · development, авторизация включена.**
 
-**AUD-124 source fix:** APK 1.2.7 сбрасывает накопленные ошибки после подтверждённой
-авторизации. 579 dev / 578 enterprise tests passed, один ожидаемый skip.
-Установка и повторные сетевые отказы ещё проверяются. [Причина и regression](../audits/2026-09-05/ANDROID-RECONNECT-DEBT.md).
-
-Текущий срез: backend `12249b1`, frontend `6dea6b4`; первый APK пока 1.2.5,
-второй canary — 1.2.6 (`d2cd798`, SHA начинается `e604410b`). Ниже сохранена история
-предыдущих приёмок. [Последние network-fault проверки](../audits/2026-09-05/NETWORK-RECOVERY-NATIVE.md)
-вернули реальные команды/DAG/кадры без новых крашей. Повторные обрывы выявили
-лишний накопленный backoff APK (AUD-124); исправление проверяется. LATEST пока 1.2.5.
+Текущий срез: backend `12249b1`, frontend `6dea6b4`, оба APK **1.2.7 / 10207
+(`0f257fe`)**. [Приёмка нового APK](../audits/2026-09-05/ANDROID-RECONNECT-DEBT.md)
+подтверждает native OTA, команды/DAG/видео после обрывов и освобождение захвата.
+Ниже сохранена датированная история предыдущих приёмок.
 
 [Главная](../../README.md) · [Приёмка](PILOT-ACCEPTANCE.md) ·
 [Готовность](READINESS.md) · [Android](../android-agent.md)
@@ -90,14 +85,14 @@ admin и enrollment bootstrap; копирование одного overlay не 
 
 ## Текущий веб
 
-Frontend **`9b3afbc`** установлен в новом pilot: Device Stream сохраняет карточки
-при временном offline, показывает статус и позволяет отменить выбранный просмотр.
-После возврата online выбранный поток подключается снова. Пройдены 201 frontend
-tests, type-check и production Docker build; настоящий браузер отображает оба
-экрана, Online и работающие Start/Stop без console warnings/errors. Переходы
-offline/recovery покрыты component tests; сетевой fault в браузере ещё не принят.
-Обновите уже открытую страницу, чтобы загрузить новый интерфейс.
-[Причина и доказательства](../audits/2026-09-05/STREAM-DEVICE-PRESENCE.md).
+Frontend **`6dea6b4`** установлен в новом pilot. Device Stream сохраняет выбранные
+карточки при offline, показывает переподключение и оставляет Stop доступным.
+Исправлены backoff, восстановление после remote normal close, обнаружение
+молчащего сокета и очистка retry timers. 208 frontend tests и TypeScript прошли.
+Реальный браузер восстановил оба экрана после сетевого отказа без F5 или нового
+нажатия Start. Online badge обновляется отдельно и не подтверждает свежесть кадров.
+[Причина, runtime и ограничения](../audits/2026-09-05/WEB-STREAM-RECOVERY.md) ·
+[Матрица сетевых проверок](../audits/2026-09-05/NETWORK-RECOVERY-NATIVE.md).
 
 ## APK именно для нового стенда
 
@@ -106,25 +101,31 @@ offline/recovery покрыты component tests; сетевой fault в бра�
 `com.sphereplatform.agent.pilot.debug` позволяет установить его рядом с обычными
 dev/enterprise сборками, сохраняя отдельные credentials и identity.
 
-Свежий файл: **`SphereAgent-signed-discovery-343c6e8-dev-debug.apk`**.
+Свежий файл: **`SphereAgent-signed-discovery-0f257fe-dev-debug.apk`**.
 Указатель на ту же сборку: **`LATEST-SphereAgent-pilot.apk`** в том же каталоге.
-SHA-256: `bc9abf49821d0774310a3eb2a92889c50b6e755ca971d7982a1ece95c96acfa7`.
-Размер 8,386,661 bytes; versionCode 10205 / 1.2.5-dev, minSdk 26, targetSdk 35.
-**Оба Android обновились с 10204 через OTA**, без ADB install, Windows launcher,
-ручных разрешений, очистки данных и новой регистрации. Installed hash и signed
-cache v9 проверены на обоих. Первый вернулся к командам через 10.390 s.
-Начальная canary-проверка второго прервалась из-за потери команд на ещё старом
-первом APK; последующий независимый hash/PID/command check подтвердил установку.
-Эта прерванная проверка не засчитана как непрерывный OTA success.
+SHA-256: `7964ede8c621754da616493dcbff958df8a1d8da1dd823c229fd253bd99855c6`.
+Размер 8,392,449 bytes; versionCode 10207 / 1.2.7-dev, minSdk 26, targetSdk 35.
+**Оба Android обновились через собственный OTA**, без ADB install, Windows
+launcher, ручных разрешений, очистки данных и новой регистрации. Первый перешёл
+с 1.2.5, второй — с canary 1.2.6. Installed hashes и signed cache v14 проверены;
+команды после OTA вернулись через 9.671 / 9.687 s соответственно.
 
-AUD-112 устраняет SIGSEGV при конкурирующих frame copy и stop: **6 + 4 native
-цикла** с движением экрана, overlapping viewer и автоматической остановкой
-прошли с теми же PID; новых crash-записей после OTA нет. Full JVM: **560 tests**,
-оба signed flavors: **74 selected tests**. [Root cause и native evidence](../audits/2026-09-05/ANDROID-CAPTURE-LIFECYCLE.md).
-Проверки reboot, прерванной/параллельной OTA на предыдущей 1.2.4 остаются
-историческими: [AUD-107](../audits/2026-09-05/ANDROID-OTA-RECOVERY.md).
+AUD-119 снимает предел подтверждённых задач с сохранением migration/replay защиты;
+AUD-124 сбрасывает старую retry debt после подтверждённого соединения. Полный
+Android: 579 dev passed, enterprise 578 passed/один ожидаемый skip. Signed build:
+164 выбранных теста на каждый flavor. Три native capture/stop цикла на каждом
+устройстве прошли с тем же PID; repeated network faults вернули реальные команды,
+DAG и кадры без новых crash records. [Evidence и границы](../audits/2026-09-05/ANDROID-RECONNECT-DEBT.md).
 
-В каталоге **3 release android/dev: 10203, 10204 и актуальный 10205**; canary retired.
+Проверки boot и прерванной/параллельной OTA на 1.2.4, исправление SIGSEGV и 10
+циклов захвата на 1.2.5 остаются историческими; это не новые прогоны на 1.2.7.
+[Capture incident](../audits/2026-09-05/ANDROID-CAPTURE-LIFECYCLE.md) ·
+[OTA interruption](../audits/2026-09-05/ANDROID-OTA-RECOVERY.md).
+
+В каталоге **4 release android/dev: 10203, 10204, 10205 и актуальный 10207**;
+оба промежуточных canary retired. Публикация в канал даёт версию периодическому
+OTA worker; эти конкретные установки запущены серверной командой. Полный шестичасовой
+интервал auto-check этой проверкой не измерялся.
 Файл и каталог хранятся в `.local-pilot/updates/`, backend bind mount
 `/var/lib/sphere/updates`. Пересоздание только нового backend сохранило каталог
 и авторизованное скачивание актуального APK. Backend закреплён на **`12249b1`**,
