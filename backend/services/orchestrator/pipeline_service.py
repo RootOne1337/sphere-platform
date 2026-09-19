@@ -288,6 +288,7 @@ class PipelineService:
         pipeline_id: uuid.UUID | None = None,
         device_id: uuid.UUID | None = None,
         status: PipelineRunStatus | None = None,
+        active_only: bool = False,
         page: int = 1,
         per_page: int = 50,
     ) -> tuple[list[PipelineRun], int]:
@@ -304,11 +305,18 @@ class PipelineService:
         if status:
             base = base.where(PipelineRun.status == status)
             count_q = count_q.where(PipelineRun.status == status)
+        if active_only:
+            active = PipelineRun.status.in_([
+                PipelineRunStatus.QUEUED, PipelineRunStatus.RUNNING,
+                PipelineRunStatus.WAITING, PipelineRunStatus.PAUSED,
+            ])
+            base = base.where(active)
+            count_q = count_q.where(active)
 
         total = await self.db.scalar(count_q) or 0
         items = (
             await self.db.scalars(
-                base.order_by(PipelineRun.created_at.desc())
+                base.order_by(PipelineRun.created_at.desc(), PipelineRun.id.desc())
                 .offset((page - 1) * per_page)
                 .limit(per_page)
             )

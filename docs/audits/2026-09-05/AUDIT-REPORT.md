@@ -2,6 +2,12 @@
 
 Статус на 16 сентября 2026: **аудит продолжается; production readiness не подтверждена**.
 
+**19 сентября · AUD-120 source fix:** история задач, фильтры и показатели теперь
+вычисляются по всему серверному набору; активные pipeline запрашиваются отдельно.
+10 PostgreSQL/API и 7 UI failures воспроизведены до исправления; после — 81 backend
+и 218 frontend tests passed, TypeScript pass. Развёртывание и browser acceptance
+ещё проверяются. [Контракт, доказательства и ограничения](TASK-HISTORY.md).
+
 **AUD-119/124 установлены и проверены на двух APK1.2.7.** Через собственный OTA,
 без ADB install; native journal migration, safe DAG, repeated network loss и три
 capture/stop цикла на каждом прошли. Full tests: 579 dev / 578 enterprise passed,

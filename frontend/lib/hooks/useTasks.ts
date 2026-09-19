@@ -38,12 +38,13 @@ export interface NodeExecutionLog {
   output: unknown;
 }
 
-interface TasksResponse {
+export interface TasksResponse {
   items: Task[];
   total: number;
   page: number;
   per_page: number;
   pages: number;
+  status_counts?: Record<string, number> | null;
 }
 
 export function useTasks(params: {
@@ -53,6 +54,11 @@ export function useTasks(params: {
   device_id?: string;
   script_id?: string;
   batch_id?: string;
+  search?: string;
+  sort_by?: 'created_at' | 'script_name' | 'status' | 'priority';
+  sort_dir?: 'asc' | 'desc';
+  active_only?: boolean;
+  include_counts?: boolean;
 }) {
   return useQuery<TasksResponse>({
     queryKey: ['tasks', params],

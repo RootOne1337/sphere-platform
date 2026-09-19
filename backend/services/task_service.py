@@ -22,7 +22,7 @@ from typing import Any
 
 import structlog
 from fastapi import HTTPException
-from sqlalchemy import select
+from sqlalchemy import String, and_, cast, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -606,10 +606,25 @@ class TaskService:
         batch_id: uuid.UUID | None = None,
         page: int = 1,
         per_page: int = 50,
-    ) -> tuple[list[Task], int]:
-        from sqlalchemy import func
-
+        search: str = "",
+        sort_by: str = "created_at",
+        sort_dir: str = "desc",
+        active_only: bool = False,
+        include_counts: bool = False,
+    ) -> tuple[list[Task], int, dict[str, int] | None]:
+        # Filter before count/order/limit. Join names only inside this tenant;
+        # unknown or cross-tenant relations must not enter search results.
         stmt = select(Task).where(Task.org_id == org_id)
+        if search.strip() or sort_by == "script_name":
+            stmt = stmt.outerjoin(Script, and_(Task.script_id == Script.id, Script.org_id == org_id))
+        if search.strip():
+            stmt = stmt.outerjoin(Device, and_(Task.device_id == Device.id, Device.org_id == org_id))
+            query = search.strip()
+            stmt = stmt.where(or_(
+                cast(Task.id, String).icontains(query, autoescape=True),
+                Script.name.icontains(query, autoescape=True),
+                Device.name.icontains(query, autoescape=True),
+            ))
 
         if device_id:
             stmt = stmt.where(Task.device_id == device_id)
@@ -619,12 +634,30 @@ class TaskService:
             stmt = stmt.where(Task.status == status)
         if batch_id:
             stmt = stmt.where(Task.batch_id == batch_id)
+        if active_only:
+            stmt = stmt.where(Task.status.in_([
+                TaskStatus.QUEUED, TaskStatus.ASSIGNED, TaskStatus.RUNNING,
+            ]))
 
-        count = (
-            await self.db.scalar(
-                select(func.count()).select_from(stmt.subquery())
-            )
-        ) or 0
+        filtered = stmt.with_only_columns(Task.id, Task.status).subquery()
+        counts = None
+        if include_counts:
+            counts = {status.value: 0 for status in TaskStatus}
+            for grouped_status, total in (await self.db.execute(
+                select(filtered.c.status, func.count()).group_by(filtered.c.status)
+            )).all():
+                counts[grouped_status.value] = total
+            count = sum(counts.values())
+        else:
+            count = (await self.db.scalar(select(func.count()).select_from(filtered))) or 0
+
+        # API accepts an allowlist; keep the service safe for internal callers too.
+        columns: dict[str, Any] = {"created_at": Task.created_at, "status": Task.status,
+                                   "script_name": Script.name, "priority": Task.priority}
+        column = columns[sort_by]
+        if sort_dir not in {"asc", "desc"}:
+            raise ValueError("Unsupported task sort direction")
+        order = [column.asc(), Task.id.asc()] if sort_dir == "asc" else [column.desc(), Task.id.desc()]
 
         items = list(
             (
@@ -633,13 +666,13 @@ class TaskService:
                         selectinload(Task.device),
                         selectinload(Task.script),
                     )
-                    .order_by(Task.created_at.desc())
+                    .order_by(*order)
                     .offset((page - 1) * per_page)
                     .limit(per_page)
                 )
             ).scalars().all()
         )
-        return items, count
+        return items, count, counts
 
 
 # ── Dispatcher loop (ARCH-3) ─────────────────────────────────────────────────

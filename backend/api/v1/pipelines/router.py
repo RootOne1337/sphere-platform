@@ -134,6 +134,7 @@ async def list_pipeline_runs(
     pipeline_id: uuid.UUID | None = None,
     device_id: uuid.UUID | None = None,
     status: PipelineRunStatus | None = None,
+    active_only: bool = False,
     page: int = Query(1, ge=1),
     per_page: int = Query(50, ge=1, le=200),
     current_user: User = require_permission("pipeline:read"),
@@ -144,6 +145,7 @@ async def list_pipeline_runs(
         pipeline_id=pipeline_id,
         device_id=device_id,
         status=status,
+        active_only=active_only,
         page=page,
         per_page=per_page,
     )

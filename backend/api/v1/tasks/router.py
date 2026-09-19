@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import uuid
+from typing import Literal
 
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -135,10 +136,15 @@ async def list_tasks(
     batch_id: uuid.UUID | None = None,
     page: int = Query(1, ge=1),
     per_page: int = Query(50, ge=1, le=200),
+    search: str = Query("", max_length=200),
+    sort_by: Literal["created_at", "status", "script_name", "priority"] = "created_at",
+    sort_dir: Literal["asc", "desc"] = "desc",
+    active_only: bool = False,
+    include_counts: bool = False,
     current_user: User = require_permission("script:read"),
     svc: TaskService = Depends(get_task_service),
 ) -> TaskListResponse:
-    tasks, total = await svc.list_tasks(
+    tasks, total, counts = await svc.list_tasks(
         org_id=current_user.org_id,
         device_id=device_id,
         script_id=script_id,
@@ -146,6 +152,11 @@ async def list_tasks(
         batch_id=batch_id,
         page=page,
         per_page=per_page,
+        search=search,
+        sort_by=sort_by,
+        sort_dir=sort_dir,
+        active_only=active_only,
+        include_counts=include_counts,
     )
     pages = (total + per_page - 1) // per_page if total > 0 else 0
     return TaskListResponse(
@@ -154,6 +165,7 @@ async def list_tasks(
         page=page,
         per_page=per_page,
         pages=pages,
+        status_counts=counts,
     )
 
 

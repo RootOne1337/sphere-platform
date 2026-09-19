@@ -63,3 +63,6 @@ class TaskListResponse(BaseModel):
     page: int
     per_page: int
     pages: int
+    status_counts: dict[str, int] | None = Field(
+        None, description="Counts over the full filtered tenant history, before pagination; opt-in include_counts",
+    )
