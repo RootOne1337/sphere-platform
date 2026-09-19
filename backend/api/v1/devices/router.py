@@ -403,7 +403,9 @@ async def _request_interactive_command(
         raise HTTPException(503, "Device command transport is unavailable")
     result = await publisher.send_command_wait_result(str(device_id), {
         "type": kind,
-        "command_id": str(uuid.uuid4()),
+        # Bare UUIDs identify durable SQL tasks in the result handler. These
+        # live-only RPC receipts must remain distinct even after waiter timeout.
+        "command_id": f"interactive_{uuid.uuid4()}",
         "payload": payload,
         "signed_at": int(time.time()),
         "ttl_seconds": max(15, int(timeout)),

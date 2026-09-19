@@ -19,6 +19,14 @@ stop could falsely complete a task if cancellation rolled back after delivery.
 User stop, scheduler stop and watchdog stop use prefixed control IDs. The
 timestamp above is illustrative; senders generate a fresh timestamp.
 
+Live shell/logcat/reboot RPCs use `interactive_<uuid>` correlation IDs. They have
+no SQL Task row and no durable `result_ack`. Replies still publish to the
+device-specific Redis result channel before the existing non-task check. This
+distinction survives a timed-out HTTP waiter and requires no Redis classification
+cache. Bare UUIDs continue through task ownership/storage checks; unknown UUIDs
+still warn. Legacy in-flight RPC UUIDs may warn once during rollout.
+See [AUD-121 reproduction and limits](../audits/2026-09-05/INTERACTIVE-RESULT-IDENTITY.md).
+
 The Android dispatcher requires a nonblank string target for CANCEL_DAG,
 PAUSE_DAG and RESUME_DAG. It returns `invalid_task_target` for a missing/malformed
 target and `task_not_running` when that ID is not the active execution. There is
