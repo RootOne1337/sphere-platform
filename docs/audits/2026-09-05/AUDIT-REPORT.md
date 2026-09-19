@@ -2,11 +2,11 @@
 
 Статус на 16 сентября 2026: **аудит продолжается; production readiness не подтверждена**.
 
-**19 сентября · AUD-120 source fix:** история задач, фильтры и показатели теперь
-вычисляются по всему серверному набору; активные pipeline запрашиваются отдельно.
-10 PostgreSQL/API и 7 UI failures воспроизведены до исправления; после — 81 backend
-и 218 frontend tests passed, TypeScript pass. Развёртывание и browser acceptance
-ещё проверяются. [Контракт, доказательства и ограничения](TASK-HISTORY.md).
+**20 сентября · AUD-120 принят на стенде:** backend и frontend `03b161e` показывают
+все 190 задач на восьми страницах; поиск самой старой задачи, фильтр и переход в
+редактор проверены в браузере. Настоящий delay-only pipeline появился в панели и
+исчез после отмены. Оба APK 1.2.7 выполнили команду. До fix — 10 API/7 UI failures;
+после — 81 backend/218 frontend tests, TypeScript и все source workflows прошли. [Контракт, доказательства и ограничения](TASK-HISTORY.md).
 
 **AUD-119/124 установлены и проверены на двух APK1.2.7.** Через собственный OTA,
 без ADB install; native journal migration, safe DAG, repeated network loss и три
@@ -15,7 +15,7 @@ capture/stop цикла на каждом прошли. Full tests: 579 dev / 57
 [Retry debt: cause, regression, native acceptance](ANDROID-RECONNECT-DEBT.md).
 Веб `6dea6b4` восстанавливает кадры без F5. [Матрица сетевых проверок](NETWORK-RECOVERY-NATIVE.md)
 сохраняет и исходные задержки74–80s, и исправление, и failed fixture. Fleet/восемь
-часов/независимый ingress/VPN не приняты. AUD-120/121 остаются открыты.
+часов/независимый ingress/VPN не приняты. AUD-120 принят выше; AUD-121 остаётся открытым.
 
 Исходная ревизия: `28f8cc46ab65496e00297960fd94d87d1605cc83`.
 Ветка исправлений: `codex/enterprise-audit-20260905`; [draft PR #19](https://github.com/RootOne1337/sphere-platform/pull/19).
@@ -32,7 +32,8 @@ TypeScript pass. [Backoff, silent sockets и корректный статус](
 AUD-119 High: 513-й claim после 512 ACK блокируется — JVM reproduction сохранён,
 исправление и миграция описаны в [AUD-119](ANDROID-JOURNAL-CAPACITY.md);
 проверка установленной версии учитывается отдельно. AUD-120 High: браузер показывает только 100 задач, API отдаёт 174;
-CRON/Active Pipeline/Workflow элементы недостоверны или не подключены, fix открыт.
+CRON/Active Pipeline/Workflow были недостоверны или не подключены.
+Исправление `03b161e` и приёмка: [полная история задач](TASK-HISTORY.md).
 AUD-118 Medium: native Windows snapshot lock → bounded local replace retry,
 `b8e0d0b`, 18 tests pass. AUD-121 Medium: 1,555 interactive warnings, fix открыт.
 Сверены все 164 native results; отдельно два безопасных задания доказали видимую

@@ -6,13 +6,21 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [Unreleased] — enterprise audit, 2026-09-16
+## [Unreleased] — enterprise audit, 2026-09-20
 
 Изменения находятся в draft PR; это не опубликованный production release.
 Полный перечень предыдущих audit fixes, доказательства и residual risks:
 [audit report](docs/audits/2026-09-05/AUDIT-REPORT.md).
 
 ### Security / runtime
+
+- AUD-120: server-side task history search, filtering, pagination and whole-result
+  status counts replace the newest-100 slice. Active tasks and pipelines query
+  real state; priority no longer invents a CRON origin, and the editor button
+  opens the existing builder. 10 API/7 UI baseline failures; 81 backend/218 frontend
+  tests pass. Deployed 03b161e: eight pages/190 tasks, old-task search, live pipeline
+  appearance/removal and both APK command responses accepted.
+  [Contract and residual risks](docs/audits/2026-09-05/TASK-HISTORY.md).
 
 - AUD-119/124: APK1.2.7 keeps compact acknowledged receipts without consuming the
   pending-command buffer and clears retry/circuit debt after validated recovery.
