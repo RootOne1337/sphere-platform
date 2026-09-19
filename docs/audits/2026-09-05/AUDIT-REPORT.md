@@ -2,6 +2,13 @@
 
 Статус на 16 сентября 2026: **аудит продолжается; production readiness не подтверждена**.
 
+**20 сентября · AUD-121 принят:** backend `eacf692`, frontend `03b161e`, APK 1.2.7.
+Одинаковые 12 shell/logcat-запросов: до fix 12 ложных `task.result.not_found`, после
+0. Затем два безопасных 13-node DAG завершились с неизменными PID; результаты и
+настоящие записи завершения сохранены. Веб без reload показывает 192 задачи.
+52 связанных regression tests passed; неизвестные task UUID по-прежнему дают
+предупреждение. [Контракт, evidence и ограничения](INTERACTIVE-RESULT-IDENTITY.md).
+
 **20 сентября · AUD-120 принят на стенде:** backend и frontend `03b161e` показывают
 все 190 задач на восьми страницах; поиск самой старой задачи, фильтр и переход в
 редактор проверены в браузере. Настоящий delay-only pipeline появился в панели и
@@ -15,7 +22,7 @@ capture/stop цикла на каждом прошли. Full tests: 579 dev / 57
 [Retry debt: cause, regression, native acceptance](ANDROID-RECONNECT-DEBT.md).
 Веб `6dea6b4` восстанавливает кадры без F5. [Матрица сетевых проверок](NETWORK-RECOVERY-NATIVE.md)
 сохраняет и исходные задержки74–80s, и исправление, и failed fixture. Fleet/восемь
-часов/независимый ingress/VPN не приняты. AUD-120 принят выше; AUD-121 остаётся открытым.
+часов/независимый ingress/VPN не приняты. AUD-120/121 приняты выше в ограниченном пилоте.
 
 Исходная ревизия: `28f8cc46ab65496e00297960fd94d87d1605cc83`.
 Ветка исправлений: `codex/enterprise-audit-20260905`; [draft PR #19](https://github.com/RootOne1337/sphere-platform/pull/19).
@@ -35,7 +42,7 @@ AUD-119 High: 513-й claim после 512 ACK блокируется — JVM rep
 CRON/Active Pipeline/Workflow были недостоверны или не подключены.
 Исправление `03b161e` и приёмка: [полная история задач](TASK-HISTORY.md).
 AUD-118 Medium: native Windows snapshot lock → bounded local replace retry,
-`b8e0d0b`, 18 tests pass. AUD-121 Medium: 1,555 interactive warnings, fix открыт.
+`b8e0d0b`, 18 tests pass. AUD-121 Medium: 1,555 interactive warnings; [fix и native retest](INTERACTIVE-RESULT-IDENTITY.md).
 Сверены все 164 native results; отдельно два безопасных задания доказали видимую
 шторку на обоих Android. Это 9/32 типов действий и не полная приёмка Engine.
 

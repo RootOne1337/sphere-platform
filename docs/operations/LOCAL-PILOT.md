@@ -2,12 +2,15 @@
 
 **20 сентября 2026 · Windows / Docker Desktop · development, авторизация включена.**
 
-Текущий срез: backend и frontend `03b161e`, оба APK **1.2.7 / 10207
+Текущий срез: backend `eacf692`, frontend `03b161e`, оба APK **1.2.7 / 10207
 (`0f257fe`)**. [Приёмка нового APK](../audits/2026-09-05/ANDROID-RECONNECT-DEBT.md)
 подтверждает native OTA, команды/DAG/видео после обрывов и освобождение захвата.
 Task Engine сверён с API: 190 задач, восемь страниц, поиск старой задачи и
 настоящий активный pipeline. Оба устройства выполнили echo после обновления.
 [Приёмка истории и ограничения](../audits/2026-09-05/TASK-HISTORY.md).
+Дополнительно: 12 shell/logcat-запросов без ложных missing-task warnings и два
+13-node DAG с неизменными PID. Текущий total — 192, веб обновился без reload.
+[Разделение RPC и заданий](../audits/2026-09-05/INTERACTIVE-RESULT-IDENTITY.md).
 Ниже сохранена датированная история предыдущих приёмок.
 
 [Главная](../../README.md) · [Приёмка](PILOT-ACCEPTANCE.md) ·

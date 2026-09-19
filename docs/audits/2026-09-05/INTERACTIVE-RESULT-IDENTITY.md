@@ -49,7 +49,26 @@ late duplicates with and without Redis, unknown UUID diagnostics, PostgreSQL
 durable ACK/rollback/isolation, device diagnostics, deadline, cancellation and
 Android WS handlers. [Evidence](evidence/interactive-identity-regression.json).
 
-Source acceptance is complete; installed-backend acceptance is recorded separately.
+Backend `eacf692` is installed on the new pilot; frontend remains `03b161e` and
+both APKs remain 1.2.7 / 10207. The same 12 native RPCs succeeded with **zero**
+missing-task warnings, versus 12 before. Each APK then completed the existing
+reviewed 13-node system-UI DAG with ordered native receipts and unchanged PID.
+The two durable completions appear in the same container log window, positively
+verifying collection rather than interpreting an empty log as success. Browser
+polling displayed both new tasks and total 192 without reload. No active task or
+pipeline remains. [Runtime evidence](evidence/interactive-identity-runtime.json).
+
+The first rollout reverted on transient public-route readiness: the helper did
+not retry `PublicationError`. Its bounded read-only retry now includes that
+exception and still verifies the installation identity. The repeat deployment
+preserved all other container IDs/images/start times/status/mounts and the OTA
+catalog. The failed attempt remains recorded.
+
+Local Ruff passed. Local mypy reported an existing inferred logcat-payload type
+error, reproduced against the archived baseline router, plus existing full-tree
+Windows/environment type errors. GitHub source lint/mypy passed; full workflow
+results are tracked separately from local runtime acceptance.
+
 Legacy interactive UUID replies already in flight may still emit a final warning
 after rollout. Direct third-party command producers must use non-task IDs for RPC.
 Interactive commands remain live-only and non-durable: loss after a side effect

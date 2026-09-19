@@ -14,6 +14,13 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Security / runtime
 
+- AUD-121: prefixed interactive RPC identities keep shell/logcat/reboot replies
+  out of durable Task lookup without suppressing unknown-task warnings. Six
+  failing real-service regressions precede the fix; 52 related tests pass.
+  Installed eacf692: the same 12 native calls go from 12 false warnings to zero,
+  while two 13-node DAGs preserve native results, database completion and APK PIDs.
+  [Evidence and non-durable RPC limits](docs/audits/2026-09-05/INTERACTIVE-RESULT-IDENTITY.md).
+
 - AUD-120: server-side task history search, filtering, pagination and whole-result
   status counts replace the newest-100 slice. Active tasks and pipelines query
   real state; priority no longer invents a CRON origin, and the editor button
