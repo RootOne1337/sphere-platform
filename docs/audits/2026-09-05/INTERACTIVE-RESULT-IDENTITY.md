@@ -66,8 +66,9 @@ catalog. The failed attempt remains recorded.
 
 Local Ruff passed. Local mypy reported an existing inferred logcat-payload type
 error, reproduced against the archived baseline router, plus existing full-tree
-Windows/environment type errors. GitHub source lint/mypy passed; full workflow
-results are tracked separately from local runtime acceptance.
+Windows/environment type errors. All GitHub source workflows passed, including
+lint/mypy, backend unit/real-service tests, image bootstrap, Android and frontend.
+[Exact source CI archive](evidence/ci-eacf692-summary.json).
 
 Legacy interactive UUID replies already in flight may still emit a final warning
 after rollout. Direct third-party command producers must use non-task IDs for RPC.
