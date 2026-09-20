@@ -2,6 +2,12 @@
 
 Статус на 20 сентября 2026: **аудит продолжается; production readiness не подтверждена**.
 
+**AUD-128 · High · исходный код исправлен, ещё не установлен:** отказ/неопределённый
+исход live stop publication теперь даёт 503 и сохраняет RUNNING/device lock.
+Восемь before failures → 26 связанных tests passed. Фактическая остановка после
+успешного publish, durable cancel intent и pipeline child остаются открытыми.
+[Причина, evidence и границы частичного F32-01 fix](../2026-09-20/STOP-DELIVERY-FAILURE.md).
+
 **Следующий этап — 32 одновременно видимых устройства.**
 [Новый комплексный preflight](../2026-09-20/FLEET32-PREFLIGHT.md) объединяет backend,
 БД/Redis, APK/video, UI, VPN, PC-agent, deployment и observability: 24 приоритетных

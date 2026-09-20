@@ -39,6 +39,10 @@ logger = structlog.get_logger()
 # Глобальный set для фоновых webhook-задач — защита от GC (HIGH-5)
 _pending_webhook_tasks: set[asyncio.Task] = set()
 
+# Stop is a live control, not a retried transport mutation. A timed-out publish
+# may already have reached Redis; keep the task active until its outcome is known.
+_STOP_PUBLISH_TIMEOUT_SECONDS = 2.0
+
 
 class TaskService:
     def __init__(
@@ -566,20 +570,35 @@ class TaskService:
             logger.info("task.force_stopped.queued", task_id=str(task_id))
             return task
 
-        # RUNNING — отправляем CANCEL_DAG агенту через WebSocket
+        # Refuse false stop success if live publication is unavailable. Even a
+        # successful publish proves only a subscriber, not physical termination;
+        # durable cancellation/terminal receipt reconciliation is a separate contract.
         device_id_str = str(task.device_id)
-        if self.publisher:
-            await self.publisher.send_command_live(
-                device_id_str,
-                {
-                    # A control receipt must not enter the DAG result handler,
-                    # including when cancellation's SQL transaction rolls back.
-                    "command_id": f"user_cancel_{task_id}",
-                    "type": "CANCEL_DAG",
-                    "signed_at": int(datetime.now(timezone.utc).timestamp()),
-                    "payload": {"task_id": str(task_id)},
-                },
+        unavailable = "Task stop is unconfirmed; task remains active. Check its status before retrying."
+        if self.publisher is None:
+            raise HTTPException(status_code=503, detail=unavailable)
+        try:
+            async with asyncio.timeout(_STOP_PUBLISH_TIMEOUT_SECONDS):
+                sent = await self.publisher.send_command_live(
+                    device_id_str,
+                    {
+                        # A control receipt must not enter the DAG result handler,
+                        # including when cancellation's SQL transaction rolls back.
+                        "command_id": f"user_cancel_{task_id}",
+                        "type": "CANCEL_DAG",
+                        "signed_at": int(datetime.now(timezone.utc).timestamp()),
+                        "payload": {"task_id": str(task_id)},
+                    },
+                )
+        except Exception as exc:
+            logger.warning(
+                "task.stop.publication_unconfirmed", task_id=str(task_id),
+                device_id=device_id_str, error_type=type(exc).__name__,
             )
+            raise HTTPException(status_code=503, detail=unavailable) from exc
+        if sent is not True:
+            logger.warning("task.stop.not_published", task_id=str(task_id), device_id=device_id_str)
+            raise HTTPException(status_code=503, detail=unavailable)
 
         # Освобождаем Redis lock
         await self.queue.mark_completed(str(task_id), device_id_str)

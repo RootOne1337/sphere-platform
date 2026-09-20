@@ -108,7 +108,9 @@ async def test_locked_cancellation_preserves_the_tenant_boundary(world, method):
 ])
 async def test_current_active_task_can_still_be_cancelled(world, method, initial):
     task = await seed_task(world, initial)
+    publisher = AsyncMock()
+    publisher.send_command_live.return_value = True
     async with world.sessions() as db:
-        result = await getattr(TaskService(db, AsyncMock(), publisher=AsyncMock()), method)(task.id, world.org_a.id)
+        result = await getattr(TaskService(db, AsyncMock(), publisher=publisher), method)(task.id, world.org_a.id)
         await db.commit()
         assert result.status == TaskStatus.CANCELLED

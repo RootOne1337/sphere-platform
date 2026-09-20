@@ -26,6 +26,7 @@ async def seed_running_task(world):
 async def test_stop_ack_cannot_complete_a_task_after_cancellation_rollback(world, failure):
     task = await seed_running_task(world)
     queue, publisher, manager = AsyncMock(), AsyncMock(), AsyncMock()
+    publisher.send_command_live.return_value = True
     if failure == "redis_release":
         queue.mark_completed.side_effect = ConnectionError("isolated Redis failure")
     async with world.sessions() as db:

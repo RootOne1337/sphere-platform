@@ -1,5 +1,12 @@
 # DAG control identity and cancellation limits
 
+**20 September update (AUD-128):** user stop of a RUNNING task now returns HTTP503
+when live publication is unavailable, rejected or unconfirmed after its deadline.
+The active SQL status and device lock are preserved; the command is not retried
+automatically. A successful publish still does not prove physical termination:
+durable cancellation and final device receipt reconciliation remain open.
+[Reproduction, regression and deployment boundary](../audits/2026-09-20/STOP-DELIVERY-FAILURE.md).
+
 The management WebSocket uses two identities for a DAG control:
 
 ```json

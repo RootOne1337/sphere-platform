@@ -24,6 +24,12 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Security / runtime
 
+- AUD-128: reject unavailable or unconfirmed RUNNING-task stop publication with
+  HTTP503; preserve SQL state and device lock, bound the publish wait and avoid
+  automatic retries. Eight before failures precede 26 passing related tests.
+  Successful publication is still not physical stop confirmation; durable cancel
+  reconciliation remains open. Source change only, not yet deployed.
+
 - AUD-121: prefixed interactive RPC identities keep shell/logcat/reboot replies
   out of durable Task lookup without suppressing unknown-task warnings. Six
   failing real-service regressions precede the fix; 52 related tests pass.
