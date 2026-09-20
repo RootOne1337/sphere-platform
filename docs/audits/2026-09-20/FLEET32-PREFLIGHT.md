@@ -31,6 +31,11 @@ generation fencing и явное `unknown` для неоднозначных э�
 pipeline startup не находит QUEUED без tenant context. Исходный реестр из
 24 пунктов дополнен этим blocker; AUD-131 не закрывает данный путь.
 
+**Последующий source fix — AUD-133:** [pipeline RLS](PIPELINE-RLS.md) исправляет
+F32-25: ограниченный discovery и tenant-bound claim/renew/reconcile/recovery.
+Три baseline failures → 76 связанных passing tests, включая non-owner OS-kill.
+Другие background workers, nested capacity и native rollout остаются OPEN.
+
 ## Что проверяем и что уже известно
 
 Сценарий владельца: **32 настоящих эмулятора, 32 живых экрана в одном веб-интерфейсе,
@@ -543,7 +548,11 @@ audit report, а не переименовывает прошлые failed runs 
 
 ### F32-25 — pipeline-worker без tenant context не видит очередь
 
-**21 сентября · P0 / High / воспроизведено · OPEN.**
+**21 сентября · P0 / High / воспроизведено · source fix AUD-133, runtime gate OPEN.**
+
+[AUD-133](PIPELINE-RLS.md) реализует контракт ниже и сохраняет regressions для
+startup, heartbeat, recovery, cancellation и pool isolation. Описание причины
+и первоначальной пробы ниже относится к состоянию до исправления.
 
 **Root cause:** `PipelineExecutor._poll_and_dispatch`, recovery и cancellation
 создают обычные `AsyncSessionLocal` без trusted tenant context. Policy требует
@@ -566,6 +575,7 @@ tasks executor пусты. **1 ожидаемый failure**, это не про�
 проверить startup/restart/cancel под настоящей runtime ролью и pool reuse между
 двумя tenants. Не отключать RLS и не выдавать BYPASSRLS для обхода проблемы.
 
-**Residual:** AUD-132 реализует этот контракт только для batch admission. Pilot
-на старой dev-конфигурации не подтверждает работоспособность production DB-role.
+**Residual:** AUD-132 реализует контракт для batch admission, AUD-133 — для
+pipeline. Остальные workers требуют отдельной проверки. Pilot на старой
+dev-конфигурации не подтверждает работоспособность production DB-role.
 Полный migration/runtime-role canary обязателен до заявления о готовности.

@@ -2,12 +2,19 @@
 
 **Срез: 21 сентября 2026 · аудит продолжается · приоритеты согласованы с владельцем.**
 
+**AUD-133, source-only:** pipeline discovery, claim, heartbeat, cancellation и
+recovery работают под non-owner/NOBYPASSRLS ролью. Три failures до fix → 76
+связанных passing tests, включая настоящий OS-kill и изоляцию двух tenants.
+[Контракт, grants и ограничения](../audits/2026-09-20/PIPELINE-RLS.md).
+F32-25 исправлен в коде; обязательны runtime-role canary и согласованный rollout.
+Далее — другие background workers, nested capacity, bounded decoder/preview.
+
 **AUD-132, source-only:** batch сохраняет полный план, версию script, Task IDs,
 cursor и due time; волна и admission receipts коммитятся вместе. Проверены
 потеря commit ACK, настоящий OS-kill между волнами, отмена и non-owner RLS role.
 [Контракт, миграция/grants и residual risks](../audits/2026-09-20/BATCH-RECOVERY.md).
-На pilot не установлено. Отдельная проба выявила **F32-25**: pipeline-worker
-без tenant context оставляет QUEUED под RLS; это следующий P0, не закрытый AUD-131.
+На pilot не установлено. Выявленный этим checkpoint **F32-25** исправлен
+отдельно в AUD-133; результат owner/dev тестов AUD-131 сам по себе RLS не доказывает.
 
 **AUD-131, source-only:** pipeline получает lease/generation и атомарную точку
 восстановления. После потери worker продолжает ожидание того же child; неизвестный

@@ -138,7 +138,7 @@ async def test_claim_preserves_original_global_timeout_origin(world, monkeypatch
         await asyncio.Event().wait()
     monkeypatch.setattr(executor, "_execute_run", hold)
     try:
-        await executor._poll_and_dispatch()
+        await executor._poll_and_dispatch(org_id=world.org_a.id)
         async with world.sessions() as db:
             assert (await db.get(PipelineRun, run.id)).started_at == origin
     finally:
@@ -154,7 +154,7 @@ async def test_fresh_executor_does_not_leave_unowned_running_work_forever(world,
     monkeypatch.setattr("backend.services.orchestrator.pipeline_executor.AsyncSessionLocal", isolated_sessions(world))
     fresh = PipelineExecutor()
     try:
-        await fresh._poll_and_dispatch()
+        await fresh._poll_and_dispatch(org_id=world.org_a.id)
         async with world.sessions() as db:
             stored = await db.get(PipelineRun, run.id)
             assert stored.status != PipelineRunStatus.RUNNING or fresh._tasks
@@ -224,7 +224,7 @@ async def test_hard_killed_worker_recovers_same_persisted_task_without_redis_or_
             assert await finish_child(world, run.id) == child_id
             await expire(world, run.id)  # Deterministic expiry after confirmed OS death.
             monkeypatch.setattr("backend.services.orchestrator.pipeline_executor.AsyncSessionLocal", isolated_sessions(world))
-            await fresh._poll_and_dispatch()
+            await fresh._poll_and_dispatch(org_id=world.org_a.id)
             result = await asyncio.wait_for(wait_for_completion(world, run.id), 5)
             assert result.status == PipelineRunStatus.COMPLETED
             assert result.context["last_task_id"] == str(child_id)
@@ -254,7 +254,7 @@ async def test_unknown_external_effect_is_paused_for_review_not_replayed(world, 
     monkeypatch.setattr(StepHandlerRegistry, "execute", unexpected)
     fresh = PipelineExecutor()
     try:
-        await fresh._poll_and_dispatch()
+        await fresh._poll_and_dispatch(org_id=world.org_a.id)
         async with world.sessions() as db:
             stored = await db.get(PipelineRun, run.id)
             assert stored.status == PipelineRunStatus.PAUSED and stored.execution_phase == "unknown"
@@ -307,7 +307,7 @@ async def test_late_old_result_cannot_overwrite_recovered_generation(world, monk
     try:
         await asyncio.wait_for(entered.wait(), 3)
         await expire(world, run.id)
-        await fresh._poll_and_dispatch()
+        await fresh._poll_and_dispatch(org_id=world.org_a.id)
         result = await asyncio.wait_for(wait_for_completion(world, run.id), 3)
         assert result.context["owner_result"] == "current"
         release.set()
@@ -358,7 +358,7 @@ async def test_checkpoint_survives_loss_after_commit_before_next_step(world, mon
     fresh = PipelineExecutor()
     monkeypatch.setattr("backend.services.orchestrator.pipeline_executor.AsyncSessionLocal", isolated_sessions(world))
     try:
-        await fresh._poll_and_dispatch()
+        await fresh._poll_and_dispatch(org_id=world.org_a.id)
         result = await asyncio.wait_for(wait_for_completion(world, run.id), 3)
         assert result.status == PipelineRunStatus.COMPLETED
         assert calls == ["first", "second"]
@@ -377,7 +377,7 @@ async def test_two_recovery_workers_do_not_execute_one_expired_run_twice(world, 
     monkeypatch.setattr(StepHandlerRegistry, "execute", handler)
     workers = [PipelineExecutor(), PipelineExecutor()]
     try:
-        await asyncio.gather(*(worker._poll_and_dispatch() for worker in workers))
+        await asyncio.gather(*(worker._poll_and_dispatch(org_id=world.org_a.id) for worker in workers))
         await wait_until(lambda: bool(entered))
         assert entered == [run.id]
         assert sum(len(worker._tasks) for worker in workers) == 1
@@ -421,7 +421,7 @@ async def test_heartbeat_renews_live_owner_and_cannot_renew_expired_generation(w
         async with world.sessions() as db:
             initial = await db.get(PipelineRun, run.id)
         await asyncio.sleep(0.16)
-        await other._poll_and_dispatch()
+        await other._poll_and_dispatch(org_id=world.org_a.id)
         async with world.sessions() as db:
             current = await db.get(PipelineRun, run.id)
             assert current.execution_lease_until > initial.execution_lease_until
@@ -454,7 +454,7 @@ async def test_recovery_reuses_persisted_nested_run(world, monkeypatch):
     monkeypatch.setattr("backend.services.orchestrator.pipeline_executor.AsyncSessionLocal", isolated_sessions(world))
     fresh = PipelineExecutor()
     try:
-        await fresh._poll_and_dispatch()
+        await fresh._poll_and_dispatch(org_id=world.org_a.id)
         result = await asyncio.wait_for(wait_for_completion(world, parent.id), 4)
         assert result.status == PipelineRunStatus.COMPLETED
         assert result.context["sub_pipeline_result"]["native_result"] == "retained"
@@ -484,7 +484,7 @@ async def test_elapsed_delay_is_not_restarted_after_worker_loss(world, monkeypat
     monkeypatch.setattr("backend.services.orchestrator.pipeline_executor.AsyncSessionLocal", isolated_sessions(world))
     fresh = PipelineExecutor()
     try:
-        await fresh._poll_and_dispatch()
+        await fresh._poll_and_dispatch(org_id=world.org_a.id)
         result = await asyncio.wait_for(wait_for_completion(world, run.id), 3)
         assert result.status == PipelineRunStatus.COMPLETED
     finally:
@@ -510,7 +510,7 @@ async def test_recovered_task_link_never_creates_replacement_for_wrong_device_or
     monkeypatch.setattr("backend.services.orchestrator.pipeline_executor.AsyncSessionLocal", isolated_sessions(world))
     fresh = PipelineExecutor()
     try:
-        await fresh._poll_and_dispatch()
+        await fresh._poll_and_dispatch(org_id=world.org_a.id)
         result = await asyncio.wait_for(wait_for_completion(world, run.id), 3)
         assert result.status == PipelineRunStatus.PAUSED and result.execution_phase == "unknown"
         assert result.current_task_id == task.id
@@ -527,7 +527,7 @@ async def test_shutdown_drains_then_releases_coroutines_without_losing_native_ch
     monkeypatch.setattr("backend.services.orchestrator.pipeline_executor._DRAIN_SECONDS", 0.01)
     owner, fresh = PipelineExecutor(), PipelineExecutor()
     try:
-        await owner._poll_and_dispatch()
+        await owner._poll_and_dispatch(org_id=world.org_a.id)
         async def admitted():
             while True:
                 async with world.sessions() as db:
@@ -545,7 +545,7 @@ async def test_shutdown_drains_then_releases_coroutines_without_losing_native_ch
             assert (await db.get(Task, child_id)).status == TaskStatus.QUEUED
         await expire(world, run.id)
         await finish_child(world, run.id)
-        await fresh._poll_and_dispatch()
+        await fresh._poll_and_dispatch(org_id=world.org_a.id)
         result = await asyncio.wait_for(wait_for_completion(world, run.id), 4)
         assert result.status == PipelineRunStatus.COMPLETED
         assert result.context["last_task_id"] == str(child_id)
@@ -583,7 +583,7 @@ async def test_failed_heartbeat_stops_owner_without_fabricating_failed_outcome(w
             assert current.status == PipelineRunStatus.RUNNING
             assert current.execution_phase == "in_flight" and current.finished_at is None
         await expire(world, run.id)
-        await fresh._poll_and_dispatch()
+        await fresh._poll_and_dispatch(org_id=world.org_a.id)
         result = await wait_for_completion(world, run.id)
         assert result.status == PipelineRunStatus.PAUSED and result.execution_phase == "unknown"
         assert not fresh._tasks

@@ -102,7 +102,7 @@ async def test_repeated_polls_leave_excess_work_durable_and_queued(world, monkey
     executor, entered, _ = held_executor(monkeypatch)
     try:
         for _ in range(5):
-            await executor._poll_and_dispatch()
+            await executor._poll_and_dispatch(org_id=world.org_a.id)
         await wait_until(lambda: len(entered) == 10)
         assert await counts(world) == {PipelineRunStatus.RUNNING: 10, PipelineRunStatus.QUEUED: total - 10}
         assert len(executor._tasks) == 10
@@ -115,7 +115,7 @@ async def test_concurrent_polls_share_one_capacity_reservation(world, monkeypatc
     monkeypatch.setattr("backend.services.orchestrator.pipeline_executor.AsyncSessionLocal", isolated_sessions(world))
     executor, entered, _ = held_executor(monkeypatch)
     try:
-        await asyncio.gather(*(executor._poll_and_dispatch() for _ in range(4)))
+        await asyncio.gather(*(executor._poll_and_dispatch(org_id=world.org_a.id) for _ in range(4)))
         await wait_until(lambda: len(entered) == 10)
         assert await counts(world) == {PipelineRunStatus.RUNNING: 10, PipelineRunStatus.QUEUED: 22}
         assert len(executor._tasks) == 10
@@ -130,7 +130,7 @@ async def test_four_workers_claim_disjoint_bounded_sets(world, monkeypatch):
     executors = [worker[0] for worker in workers]
     try:
         for _ in range(3):
-            await asyncio.gather(*(executor._poll_and_dispatch() for executor in executors))
+            await asyncio.gather(*(executor._poll_and_dispatch(org_id=world.org_a.id) for executor in executors))
         await wait_until(lambda: all(len(entered) == 10 for _, entered, _ in workers))
         all_ids = [run_id for _, entered, _ in workers for run_id in entered]
         assert len(set(all_ids)) == 40
@@ -156,12 +156,12 @@ async def test_only_released_slots_admit_new_runs(world, monkeypatch):
 
     monkeypatch.setattr(executor, "_execute_run", finish_after_release)
     try:
-        await executor._poll_and_dispatch()
+        await executor._poll_and_dispatch(org_id=world.org_a.id)
         await wait_until(lambda: len(releases) == 10)
         for release in list(releases.values())[:3]:
             release.set()
         await wait_until(lambda: len(executor._tasks) == 7)
-        await executor._poll_and_dispatch()
+        await executor._poll_and_dispatch(org_id=world.org_a.id)
         await wait_until(lambda: len(releases) == 13)
         assert await counts(world) == {
             PipelineRunStatus.RUNNING: 10, PipelineRunStatus.QUEUED: 19, PipelineRunStatus.COMPLETED: 3,
@@ -184,11 +184,11 @@ async def test_failed_claim_commit_starts_no_work_and_does_not_leak_slots(world,
     executor, entered, _ = held_executor(monkeypatch)
     try:
         with pytest.raises(ConnectionError):
-            await executor._poll_and_dispatch()
+            await executor._poll_and_dispatch(org_id=world.org_a.id)
         assert not entered and not executor._tasks
         assert await counts(world) == {PipelineRunStatus.QUEUED: 12}
         fail = False
-        await executor._poll_and_dispatch()
+        await executor._poll_and_dispatch(org_id=world.org_a.id)
         await wait_until(lambda: len(entered) == 10)
         assert await counts(world) == {PipelineRunStatus.RUNNING: 10, PipelineRunStatus.QUEUED: 2}
     finally:
@@ -200,10 +200,10 @@ async def test_full_executor_still_reconciles_cancellation(world, monkeypatch):
     monkeypatch.setattr("backend.services.orchestrator.pipeline_executor.AsyncSessionLocal", isolated_sessions(world))
     executor, _, _ = held_executor(monkeypatch)
     try:
-        await executor._poll_and_dispatch()
+        await executor._poll_and_dispatch(org_id=world.org_a.id)
         reconcile = AsyncMock()
         monkeypatch.setattr(executor, "_reconcile_cancellations", reconcile)
-        await executor._poll_and_dispatch()
+        await executor._poll_and_dispatch(org_id=world.org_a.id)
         reconcile.assert_awaited_once()
         assert await counts(world) == {PipelineRunStatus.RUNNING: 10, PipelineRunStatus.QUEUED: 2}
     finally:
@@ -216,7 +216,7 @@ async def test_stopped_executor_does_not_claim_any_runs(world, monkeypatch):
     executor, entered, _ = held_executor(monkeypatch)
     try:
         await executor.stop()
-        await executor._poll_and_dispatch()
+        await executor._poll_and_dispatch(org_id=world.org_a.id)
         assert not executor._tasks and not entered
         assert await counts(world) == {PipelineRunStatus.QUEUED: 2}
     finally:
@@ -234,7 +234,7 @@ async def test_stop_during_claim_rolls_back_uncommitted_admission(world, monkeyp
     monkeypatch.setattr("backend.services.orchestrator.pipeline_executor.AsyncSessionLocal",
                         isolated_sessions(world, before_claim=blocked_select))
     executor, entered, _ = held_executor(monkeypatch)
-    poll = asyncio.create_task(executor._poll_and_dispatch())
+    poll = asyncio.create_task(executor._poll_and_dispatch(org_id=world.org_a.id))
     stop = None
     try:
         await asyncio.wait_for(selecting.wait(), 5)
@@ -270,7 +270,7 @@ async def test_stop_waits_for_work_already_committed_by_inflight_poll(world, mon
         await finish.wait()
 
     monkeypatch.setattr(executor, "_execute_run", execute)
-    poll = asyncio.create_task(executor._poll_and_dispatch())
+    poll = asyncio.create_task(executor._poll_and_dispatch(org_id=world.org_a.id))
     stop = None
     try:
         await asyncio.wait_for(committed.wait(), 5)

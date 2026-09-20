@@ -19,12 +19,17 @@ from sqlalchemy import select
 
 from backend.database.engine import AsyncSessionLocal
 from backend.models.pipeline import PipelineRun, PipelineRunStatus
-from backend.services.orchestrator.pipeline_ownership import database_now, scheduled_generation
+from backend.services.orchestrator.pipeline_ownership import (
+    database_now,
+    scheduled_generation,
+    scheduled_tenant,
+)
 from backend.services.orchestrator.pipeline_recovery import (
     LEASE_SECONDS,
     OwnedPipelineRunner,
     recover_expired,
 )
+from backend.services.orchestrator.pipeline_tenants import discover_work, tenant_sessions
 from backend.services.orchestrator.step_handlers import (
     StepHandlerRegistry,  # noqa: F401 — public patch point
 )
@@ -90,7 +95,7 @@ class PipelineExecutor:
             logger.info("pipeline_executor.admission_stopped",
                         pending_coroutines=sum(not task.done() for task in pending))
 
-    async def _poll_and_dispatch(self) -> None:
+    async def _poll_and_dispatch(self, *, org_id: uuid.UUID | None = None) -> None:
         """Выбрать QUEUED runs и запустить в параллель (с ограничением _MAX_CONCURRENT_RUNS)."""
         # Reserve capacity across SELECT, commit and task registration. Otherwise
         # concurrent polls can both see the same free slots. Semaphore alone only
@@ -99,55 +104,55 @@ class PipelineExecutor:
             if self._stopping:
                 return
             # Cancellation reconciliation must run even when every slot is busy.
-            await self._reconcile_cancellations()
-            await recover_expired(AsyncSessionLocal)
+            await self._reconcile_cancellations(org_id=org_id)
+            await recover_expired(AsyncSessionLocal, org_id=org_id)
             available = _MAX_CONCURRENT_RUNS - len(self._tasks)
             if self._stopping or available <= 0:
                 return
-            async with AsyncSessionLocal() as db:
-                result = await db.execute(
-                    select(PipelineRun)
-                    .where(PipelineRun.status == PipelineRunStatus.QUEUED)
-                    .where(PipelineRun.cancel_requested_at.is_(None))
-                    .order_by(PipelineRun.created_at, PipelineRun.id)
-                    .limit(available)
-                    .with_for_update(skip_locked=True)
-                )
-                runs = result.scalars().all()
-                if self._stopping:
-                    await db.rollback()
-                    return
-                now = await database_now(db)
-                for run in runs:
-                    run.status = PipelineRunStatus.RUNNING
-                    run.started_at = run.started_at or now
-                    run.execution_owner = self._owner
-                    run.execution_generation += 1
-                    run.execution_lease_until = now + timedelta(seconds=LEASE_SECONDS)
-                await db.commit()
+            candidates = await discover_work(AsyncSessionLocal, "queued", org_id=org_id)
+            grouped: dict[uuid.UUID, list[uuid.UUID]] = {}
+            for run_id, tenant_id in candidates:
+                grouped.setdefault(tenant_id, []).append(run_id)
+            for tenant_id, run_ids in grouped.items():
+                available = _MAX_CONCURRENT_RUNS - len(self._tasks)
+                if self._stopping or available <= 0:
+                    break
+                async with tenant_sessions(AsyncSessionLocal, tenant_id)() as db:
+                    result = await db.execute(
+                        select(PipelineRun)
+                        .where(PipelineRun.id.in_(run_ids), PipelineRun.org_id == tenant_id)
+                        .where(PipelineRun.status == PipelineRunStatus.QUEUED)
+                        .where(PipelineRun.cancel_requested_at.is_(None))
+                        .order_by(PipelineRun.created_at, PipelineRun.id)
+                        .limit(available).with_for_update(skip_locked=True)
+                    )
+                    runs = result.scalars().all()
+                    if self._stopping:
+                        await db.rollback()
+                        return
+                    now = await database_now(db)
+                    for run in runs:
+                        run.status = PipelineRunStatus.RUNNING
+                        run.started_at = run.started_at or now
+                        run.execution_owner = self._owner
+                        run.execution_generation += 1
+                        run.execution_lease_until = now + timedelta(seconds=LEASE_SECONDS)
+                    await db.commit()
 
-            # No await between registration operations: each task is a reserved
-            # slot, including the short interval before its coroutine starts.
-            for run in runs:
-                task = asyncio.create_task(self._execute_run_safe(run.id, run.execution_generation))
-                self._tasks.add(task)
-                task.add_done_callback(self._tasks.discard)
+                # Register each committed group before awaiting another tenant.
+                # A later group's SQL failure cannot lose these reserved slots.
+                for run in runs:
+                    task = asyncio.create_task(self._execute_run_safe(run.id, run.execution_generation, tenant_id))
+                    self._tasks.add(task)
+                    task.add_done_callback(self._tasks.discard)
 
     async def _reconcile_cancellations(self, *, org_id: uuid.UUID | None = None) -> None:
         """Finish persisted cancellations after restart, without replaying a step."""
         from backend.services.orchestrator.pipeline_service import PipelineService
 
-        async with AsyncSessionLocal() as db:
-            query = select(PipelineRun.id, PipelineRun.org_id).where(
-                PipelineRun.cancel_requested_at.is_not(None),
-                PipelineRun.status.in_([PipelineRunStatus.QUEUED, PipelineRunStatus.RUNNING,
-                                       PipelineRunStatus.WAITING, PipelineRunStatus.PAUSED]),
-            )
-            if org_id is not None:
-                query = query.where(PipelineRun.org_id == org_id)
-            candidates = list((await db.execute(query.order_by(PipelineRun.updated_at, PipelineRun.id).limit(64))).all())
+        candidates = await discover_work(AsyncSessionLocal, "cancel", org_id=org_id)
         for run_id, tenant_id in candidates:
-            async with AsyncSessionLocal() as db:
+            async with tenant_sessions(AsyncSessionLocal, tenant_id)() as db:
                 children = list(await db.scalars(select(PipelineRun.id).where(
                     PipelineRun.org_id == tenant_id,
                     PipelineRun.context["parent_run_id"].astext == str(run_id),
@@ -157,14 +162,14 @@ class PipelineExecutor:
             # Separate transactions preserve Task -> Run lock ordering at every
             # depth; a parent's run lock is never held while acquiring its child.
             for child_id in children:
-                async with AsyncSessionLocal() as db:
+                async with tenant_sessions(AsyncSessionLocal, tenant_id)() as db:
                     try:
                         await PipelineService(db).cancel_run(child_id, tenant_id)
                         await db.commit()
                     except Exception as exc:
                         await db.rollback()
                         logger.warning("pipeline.cancel.child_pending", run_id=str(child_id), error_type=type(exc).__name__)
-            async with AsyncSessionLocal() as db:
+            async with tenant_sessions(AsyncSessionLocal, tenant_id)() as db:
                 try:
                     await PipelineService(db).cancel_run(run_id, tenant_id)
                     await db.commit()
@@ -172,9 +177,11 @@ class PipelineExecutor:
                     await db.rollback()
                     logger.warning("pipeline.cancel.reconcile_pending", run_id=str(run_id), error_type=type(exc).__name__)
 
-    async def _execute_run_safe(self, run_id: uuid.UUID, generation: int | None = None) -> None:
+    async def _execute_run_safe(self, run_id: uuid.UUID, generation: int | None = None,
+                                org_id: uuid.UUID | None = None) -> None:
         async with self._semaphore:
             token = scheduled_generation.set(generation)
+            tenant_token = scheduled_tenant.set(org_id)
             try:
                 await self._execute_run(run_id)
             except Exception as exc:
@@ -184,6 +191,9 @@ class PipelineExecutor:
                              error_type=type(exc).__name__)
             finally:
                 scheduled_generation.reset(token)
+                scheduled_tenant.reset(tenant_token)
 
     async def _execute_run(self, run_id: uuid.UUID) -> None:
-        await OwnedPipelineRunner(self._owner, AsyncSessionLocal, scheduled_generation.get()).run(run_id)
+        org_id = scheduled_tenant.get()
+        sessions = tenant_sessions(AsyncSessionLocal, org_id) if org_id is not None else AsyncSessionLocal
+        await OwnedPipelineRunner(self._owner, sessions, scheduled_generation.get()).run(run_id)

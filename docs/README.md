@@ -1,12 +1,13 @@
 # Документация Sphere Platform
 
 **Навигация по текущим контрактам, эксплуатационным ограничениям и доказательствам.**
-Обновлено 20 сентября 2026. [Вернуться на главную](../README.md).
+Обновлено 21 сентября 2026. [Вернуться на главную](../README.md).
 
 ## С чего начать
 
 | Задача | Документ |
 | --- | --- |
+| Подготовить права и проверить pipeline под рабочей ролью PostgreSQL | [RLS worker contract AUD-133](audits/2026-09-20/PIPELINE-RLS.md) |
 | Понять восстановление pipeline после потери worker и статус неизвестного результата | [Lease/checkpoint recovery AUD-131](audits/2026-09-20/PIPELINE-RECOVERY.md) |
 | Понять лимит pipeline на worker и проверку SQL-ожиданий | [Admission и ограничения AUD-130](audits/2026-09-20/PIPELINE-ADMISSION.md) |
 | Различать запрос отмены и подтверждённое окончание DAG | [Контракт и приёмка AUD-129](audits/2026-09-20/DURABLE-CANCELLATION.md) |
@@ -27,7 +28,7 @@
 ## Текущие source fixes перед Fleet32
 
 - [AUD-132: batch plan, atomic admission, OS-kill recovery, RLS и rollout](audits/2026-09-20/BATCH-RECOVERY.md).
-- [F32-25: воспроизведённый RLS bootstrap blocker pipeline](audits/2026-09-20/FLEET32-PREFLIGHT.md#f32-25--pipeline-worker-без-tenant-context-не-видит-очередь).
+- [AUD-133 / F32-25: pipeline discovery, heartbeat и recovery под настоящей RLS ролью](audits/2026-09-20/PIPELINE-RLS.md).
 
 ## Последняя эксплуатационная приёмка
 

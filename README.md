@@ -39,8 +39,10 @@
 > и защиту от повторения неопределённого эффекта; проверен OS-kill тестового worker.
 > [AUD-132](docs/audits/2026-09-20/BATCH-RECOVERY.md) сохраняет batch wave plan,
 > версию script и cursor; проверен перезапуск отдельного процесса между волнами.
-> Дополнительный P0 **F32-25**: pipeline startup под RLS требует tenant discovery;
-> воспроизведён и остаётся открытым. Эти source fixes ещё не установлены.
+> [AUD-133](docs/audits/2026-09-20/PIPELINE-RLS.md) исправляет pipeline startup,
+> heartbeat и recovery под non-owner RLS ролью; 76 связанных tests прошли.
+> Все эти source fixes требуют согласованной установки и native-приёмки;
+> nested capacity, остальные background workers и video/preview остаются в работе. Эти source fixes ещё не установлены.
 > Rollout, nested capacity и кластерная квота остаются открытыми.
 
 > **Повторная ночь остановилась через 3 ч 33 мин:** 106 циклов, 223 native DAG

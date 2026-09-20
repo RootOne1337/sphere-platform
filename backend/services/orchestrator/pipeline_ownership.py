@@ -22,10 +22,12 @@ class Ownership:
     owner: uuid.UUID
     generation: int
     session_lock: asyncio.Lock = field(default_factory=asyncio.Lock)
+    org_id: uuid.UUID | None = None
 
 
 current_ownership: ContextVar[Ownership | None] = ContextVar("pipeline_ownership", default=None)
 scheduled_generation: ContextVar[int | None] = ContextVar("pipeline_scheduled_generation", default=None)
+scheduled_tenant: ContextVar[uuid.UUID | None] = ContextVar("pipeline_scheduled_tenant", default=None)
 
 
 async def database_now(db: AsyncSession) -> datetime:

@@ -138,4 +138,6 @@ lint/type checks и dependency audit. Это не установка на pilot;
 
 **Уточнение 21 сентября:** отдельная non-owner RLS probe выявила [F32-25](FLEET32-PREFLIGHT.md#f32-25--pipeline-worker-без-tenant-context-не-видит-очередь): unscoped startup worker не видит QUEUED.
 Проверки lease/checkpoint выше использовали owner fixture sessions и этого
-не доказывают. Исправление tenant discovery/propagation остаётся обязательным.
+не доказывают. Последующий [AUD-133](PIPELINE-RLS.md) исправляет tenant
+discovery/propagation и проверяет настоящий non-owner worker, в том числе OS-kill.
+Runtime-role canary и native rollout остаются обязательными.

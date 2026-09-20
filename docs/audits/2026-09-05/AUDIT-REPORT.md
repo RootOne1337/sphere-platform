@@ -2,12 +2,19 @@
 
 Статус на 21 сентября 2026: **аудит продолжается; production readiness не подтверждена**.
 
+**AUD-133 · High / F32-25 · source fix, не установлен:** pipeline находит очередь
+под ограниченной RLS ролью и сохраняет tenant в claim/heartbeat/recovery/cancel.
+Три baseline failures → 76 связанных tests passed; реальный OS-kill non-owner
+worker, тот же child ID, два tenants, pool reuse, отказ/grant и migration проверены.
+[Root cause, evidence, файлы, rollout и residual risks](../2026-09-20/PIPELINE-RLS.md).
+Остальные background workers, nested capacity и native fleet gates остаются OPEN.
+
 **AUD-132 · High · source fix, не установлен:** сохранённый batch wave plan,
 pinned version, атомарный cursor/receipts и bounded startup worker. Crash/lost
 commit ACK больше не требуют повтора исходного списка устройств.
 [Доказательства и RLS/rollout](../2026-09-20/BATCH-RECOVERY.md).
-**Новый открытый P0 F32-25:** unscoped pipeline-worker не видит QUEUED под RLS;
-воспроизведено отдельной non-owner ролью. Это ограничение предыдущей source-приёмки.
+**Выявленный P0 F32-25:** unscoped pipeline-worker не видел QUEUED под RLS.
+Отдельный source fix AUD-133 приведён выше; runtime rollout ещё открыт.
 
 **AUD-131 · High · source fix, не установлен:** lease/generation, атомарные step/child
 checkpoints, безопасное восстановление после потери worker, запрет blind replay

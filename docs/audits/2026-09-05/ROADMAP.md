@@ -11,8 +11,10 @@ Redis/observability/backup и staged load acceptance. Для VPN/OTA/PC/n8n от
 
 **Актуализация 21 сентября:** [AUD-132](../2026-09-20/BATCH-RECOVERY.md) сохраняет
 batch waves и проверяет recovery двумя OS-процессами. Source-only, native
-rollout остаётся OPEN. Следом **F32-25: RLS bootstrap pipeline/background workers**,
-затем nested WAITING/capacity и video/preview/Redis budgets. Остальные записи
+rollout остаётся OPEN. [AUD-133](../2026-09-20/PIPELINE-RLS.md) исправляет
+**F32-25 для pipeline**: scoped claim/renew/reconcile/recovery под настоящей
+non-owner ролью; 76 связанных tests прошли. Следом — остальные background workers,
+nested WAITING/capacity и video/preview/Redis budgets. Остальные записи
 ниже — история checkpoints, не утверждение об отсутствии более поздних fixes.
 
 **Первый source fix — [AUD-129](../2026-09-20/DURABLE-CANCELLATION.md):** сохранённая

@@ -35,4 +35,11 @@ async def scoped_sessions():
 
 
 pipeline_executor.AsyncSessionLocal = scoped_sessions
-asyncio.run(pipeline_executor.PipelineExecutor().start())
+async def run_scoped():
+    executor = pipeline_executor.PipelineExecutor()
+    while True:
+        await executor._poll_and_dispatch(org_id=tenant)
+        await asyncio.sleep(0.1)
+
+
+asyncio.run(run_scoped())

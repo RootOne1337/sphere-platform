@@ -24,13 +24,23 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Security / runtime
 
+- AUD-133 / F32-25: restore pipeline startup, cancellation and lease renewal under
+  non-owner RLS roles. Explicitly granted, bounded ID discovery is followed by
+  tenant-bound sessions for claims, steps, recovery and heartbeat. Preserve
+  generation fencing and register committed claims before the next tenant's SQL.
+  Three baseline failures precede 76 passing related tests, including actual
+  non-owner worker OS kill, two-tenant pool reuse and migration ACL/data checks.
+  Source only; runtime grants, other workers and native acceptance remain open.
+  [Evidence, affected files and rollout](docs/audits/2026-09-20/PIPELINE-RLS.md).
+
 - AUD-132: persist batch targets, pinned script version, stable Task IDs and
   wave cursor before HTTP 202. Admit one due wave per batch with atomic SQL
   receipts/progress, cancellation fencing and bounded startup polling. Retain
   saved delay after lost commit ACK; scoped RLS processing uses an explicitly
   granted due-ID lookup. Actual worker OS-kill and migration tests pass.
   [Evidence, rollout and limits](docs/audits/2026-09-20/BATCH-RECOVERY.md).
-  Source only; separate pipeline RLS bootstrap defect F32-25 remains open.
+  Source only; separate pipeline RLS bootstrap defect F32-25 is addressed by
+  AUD-133 above. Native acceptance remains open.
 
 - AUD-131: persist pipeline owner/generation leases and atomic step/child checkpoints.
   Recover safe waits using the same child identity, preserve deadlines, fence stale

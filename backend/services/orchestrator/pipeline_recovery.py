@@ -12,8 +12,9 @@ import uuid
 from datetime import timedelta
 
 import structlog
-from sqlalchemy import and_, or_, select, update
+from sqlalchemy import or_, select, update
 
+from backend.database.tenant import bind_tenant_context
 from backend.models.pipeline import Pipeline, PipelineRun, PipelineRunStatus
 from backend.models.task import Task, TaskStatus
 from backend.services.orchestrator.pipeline_ownership import (
@@ -22,6 +23,11 @@ from backend.services.orchestrator.pipeline_ownership import (
     current_ownership,
     database_now,
     fence_write,
+)
+from backend.services.orchestrator.pipeline_tenants import (
+    discover_work,
+    recovery_predicate,
+    tenant_sessions,
 )
 from backend.services.orchestrator.step_handlers import StepHandlerRegistry, StepResult
 
@@ -47,35 +53,38 @@ def require_review(run: PipelineRun, reason: str, now) -> None:
                      "reason": reason, "timestamp": now.isoformat()})
 
 
-async def recover_expired(sessions) -> None:
-    async with sessions() as db:
-        now = await database_now(db)
-        rows = list(await db.scalars(select(PipelineRun).where(
-            PipelineRun.cancel_requested_at.is_(None),
-            or_(PipelineRun.status.in_([PipelineRunStatus.RUNNING, PipelineRunStatus.WAITING]),
-                and_(PipelineRun.status == PipelineRunStatus.PAUSED, PipelineRun.execution_owner.is_not(None))),
-            or_(PipelineRun.execution_owner.is_(None), PipelineRun.execution_lease_until.is_(None),
-                PipelineRun.execution_lease_until <= now),
-        ).order_by(PipelineRun.updated_at, PipelineRun.id).limit(64).with_for_update(skip_locked=True)))
-        for run in rows:
-            step = next((s for s in run.steps_snapshot if s.get("id") == run.current_step_id), None)
-            resumable = run.execution_phase == "ready" or (
-                run.execution_phase == "in_flight" and step and step.get("type") in RECOVERABLE_STEPS
-            )
-            run.execution_generation += 1
-            run.execution_owner = None
-            run.execution_lease_until = None
-            if not resumable:
-                require_review(run, "worker_lost_with_unconfirmed_step_outcome", now)
-            elif run.status in (PipelineRunStatus.RUNNING, PipelineRunStatus.WAITING):
-                run.status = PipelineRunStatus.QUEUED
-                append_log(run, {"event": "lease_recovered", "step_id": run.current_step_id,
-                                 "generation": run.execution_generation, "timestamp": now.isoformat()})
-        await db.commit()
+async def recover_expired(sessions, *, org_id: uuid.UUID | None = None) -> None:
+    candidates = await discover_work(sessions, "recovery", org_id=org_id)
+    grouped: dict[uuid.UUID, list[uuid.UUID]] = {}
+    for run_id, tenant_id in candidates:
+        grouped.setdefault(tenant_id, []).append(run_id)
+    for tenant_id, run_ids in grouped.items():
+        async with tenant_sessions(sessions, tenant_id)() as db:
+            now = await database_now(db)
+            rows = list(await db.scalars(select(PipelineRun).where(
+                PipelineRun.id.in_(run_ids), PipelineRun.org_id == tenant_id, recovery_predicate(now),
+            ).order_by(PipelineRun.updated_at, PipelineRun.id).with_for_update(skip_locked=True)))
+            for run in rows:
+                step = next((s for s in run.steps_snapshot if s.get("id") == run.current_step_id), None)
+                resumable = run.execution_phase == "ready" or (
+                    run.execution_phase == "in_flight" and step and step.get("type") in RECOVERABLE_STEPS
+                )
+                run.execution_generation += 1
+                run.execution_owner = None
+                run.execution_lease_until = None
+                if not resumable:
+                    require_review(run, "worker_lost_with_unconfirmed_step_outcome", now)
+                elif run.status in (PipelineRunStatus.RUNNING, PipelineRunStatus.WAITING):
+                    run.status = PipelineRunStatus.QUEUED
+                    append_log(run, {"event": "lease_recovered", "step_id": run.current_step_id,
+                                     "generation": run.execution_generation, "timestamp": now.isoformat()})
+            await db.commit()
 
 
 async def renew_lease(sessions, ownership: Ownership) -> bool:
     async with sessions() as db:
+        if ownership.org_id is not None:
+            await bind_tenant_context(db, str(ownership.org_id))
         run = await db.get(PipelineRun, ownership.run_id, with_for_update=True)
         now = await database_now(db)
         if (run is None or run.execution_owner != ownership.owner
@@ -122,7 +131,7 @@ class OwnedPipelineRunner:
                 return
             if self.generation is not None and run.execution_generation != self.generation:
                 return
-            ownership = Ownership(run.id, self.owner, run.execution_generation)
+            ownership = Ownership(run.id, self.owner, run.execution_generation, org_id=run.org_id)
             await db.commit()
 
         token = current_ownership.set(ownership)

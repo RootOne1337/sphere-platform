@@ -1,7 +1,9 @@
-"""F32-25 diagnostic: expected failure until unscoped pipeline recovery is fixed.
+"""Historical F32-25 reproduction on source 6ebca1b, before AUD-133.
 
 Run explicitly with disposable loopback PostgreSQL/Redis and SPHERE_RUN_INTEGRATION=1.
-Outside tests/ deliberately: this is an OPEN finding, not a passing regression.
+Retained as original evidence, not a current passing test or rollout check.
+Current regressions: tests/production/test_pipeline_rls.py (includes discovery grant).
+Without that grant this historical probe cannot exercise the new worker contract.
 """
 
 import asyncio

@@ -77,6 +77,9 @@ GRANT EXECUTE ON FUNCTION sphere_auth.due_batch_admissions() TO sphere_runtime;
 последнего теста и `greatest`-исправления retry delay; финальные 75 связанных
 tests проверены после него. Это разграничение сохранено в [evidence](evidence/batch-recovery.json).
 Batch hooks frontend: четыре теста прошли, TypeScript без ошибок; UI не расширялся.
+Позже проверены все четыре GitHub workflows точного source `6ebca1b`: success;
+[архив CI](../2026-09-05/evidence/ci-6ebca1b-summary.json) относится к финальному
+AUD-132, а не к последующим изменениям.
 
 - [Durable admission](../../../backend/services/batch_admission.py),
   [BatchService](../../../backend/services/batch_service.py),
@@ -116,8 +119,9 @@ Batch hooks frontend: четыре теста прошли, TypeScript без о
    batch не означает exactly-once любого внешнего/Android эффекта.
 4. RLS bootstrap других workers, nested pipeline capacity, общая/per-device квота,
    browser decoder/preview profile, Redis budget и 32-device fault/soak остаются
-   открытыми. Отдельная RLS-проба pipeline зафиксирована как **F32-25**, не исправлена
-   переносом batch на tenant sessions.
+   открытыми. Отдельная RLS-проба pipeline зафиксирована как **F32-25**;
+   последующий [AUD-133](PIPELINE-RLS.md) исправляет pipeline отдельно от batch.
+   Другие background workers и runtime-role canary всё ещё требуют проверки.
 5. Нагрузка 32/64 и справедливость очереди не измерены. Poll ограничивает размер
    выборки, не заменяет performance budget; перезапуск PostgreSQL/сетевой blackhole
    на реальном fleet ещё требуют приёмки. SQL failure и lost response здесь
