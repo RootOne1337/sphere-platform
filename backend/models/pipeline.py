@@ -193,6 +193,8 @@ class PipelineRun(Base, UUIDMixin, TimestampMixin):
     # unknown = operator review required, never blindly replay this step.
     execution_phase: Mapped[str] = mapped_column(String(16), default="ready", server_default="ready", nullable=False)
     step_started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # Persisted nested wait deadline; waiting consumes no executor slot or lease.
+    wait_deadline_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     # Тайминги
     cancel_requested_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
@@ -214,6 +216,7 @@ class PipelineRun(Base, UUIDMixin, TimestampMixin):
         Index("ix_pipeline_runs_device_status", "device_id", "status"),
         Index("ix_pipeline_runs_org_status", "org_id", "status"),
         Index("ix_pipeline_runs_recovery", "status", "execution_lease_until"),
+        Index("ix_pipeline_runs_wait_deadline", "status", "wait_deadline_at"),
     )
 
 

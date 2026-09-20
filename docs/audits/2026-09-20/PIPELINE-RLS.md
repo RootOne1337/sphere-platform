@@ -116,6 +116,8 @@ Canary должен создать задание под фактической 
    Лимит discovery 64 ограничивает poll, но не гарантирует отсутствие starvation.
    После source fix это отдельно [воспроизведено](evidence/pipeline-nested-capacity.json):
    десять родителей удерживают все слоты, десять пустых children остаются QUEUED.
+   Последующий [AUD-134](PIPELINE-NESTED-WAIT.md) исправляет checkpointed nested
+   waiting; compound loop/parallel и общие квоты остаются открытыми.
 3. SQL/Redis/network fault matrix, время восстановления и SQL-нагрузка heartbeat
    на 32/64 не приняты. Scoped child fixture не доказывает delivery на Android.
 4. При неизвестном внешнем эффекте сохраняется review, не автоматический replay.

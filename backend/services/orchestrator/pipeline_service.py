@@ -379,8 +379,8 @@ class PipelineService:
     async def pause_run(self, run_id: uuid.UUID, org_id: uuid.UUID) -> PipelineRun:
         """Приостановить pipeline run."""
         run = await self.get_run(run_id, org_id, for_update=True)
-        if run.status != PipelineRunStatus.RUNNING or run.cancel_requested_at is not None:
-            raise HTTPException(status_code=400, detail="Можно приостановить только RUNNING run")
+        if run.status not in (PipelineRunStatus.RUNNING, PipelineRunStatus.WAITING) or run.cancel_requested_at is not None:
+            raise HTTPException(status_code=400, detail="Можно приостановить только RUNNING или WAITING run")
         run.status = PipelineRunStatus.PAUSED
         await self.db.flush()
         logger.info("pipeline_run.paused", run_id=str(run_id))
@@ -395,7 +395,8 @@ class PipelineService:
             raise HTTPException(status_code=409, detail="Previous executor has not released this step; wait for recovery")
         if run.execution_phase == "unknown":
             raise HTTPException(status_code=409, detail="Step outcome requires review; automatic replay is unsafe")
-        run.status = PipelineRunStatus.QUEUED
+        run.status = (PipelineRunStatus.WAITING if run.wait_deadline_at and run.current_child_run_id
+                      else PipelineRunStatus.QUEUED)
         await self.db.flush()
         logger.info("pipeline_run.resumed", run_id=str(run_id))
         return run

@@ -71,8 +71,20 @@ python -m pytest -p tests.conftest -p tests.production.conftest docs/audits/2026
 `parents_completed > 0`. Это не fault на pilot, не Android automation и не
 часть проходящего стандартного CI. После исправления сценарий нужно перенести
 в regression suite и дополнить restart/cancel/deadline проверками.
+Последующий [AUD-134](../PIPELINE-NESTED-WAIT.md) сохраняет этот сценарий и дополнительные
+regressions в `tests/production/test_pipeline_nested_wait.py`. Та же историческая
+проба после fix проходит; before-сводка не переписана. [After evidence](pipeline-nested-wait.json).
 
 ## Сохранность evidence
+
+Отдельное открытое продолжение F32-25 — [scheduler RLS](scheduler-rls.json).
+`scheduler_runtime_probe.py` запускается теми же `-p tests.conftest
+-p tests.production.conftest` и disposable-service guards; на базе `294bd15`
+ожидается один final assertion failure (due exhausted schedule остаётся active).
+Эта проба не создаёт Android-задачи и не считается passing regression.
+Аналогично запускается `dispatcher_runtime_probe.py`: [evidence](dispatcher-rls.json)
+фиксирует QUEUED без binding и ASSIGNED с ним. Transport/presence — заглушки;
+ожидается один финальный assertion failure, не отказ реального устройства.
 
 Сырые pytest logs, Android meminfo/crash buffers, operator credentials и deployment
 configuration оставлены приватными. `runtime-summary.json` — исторический snapshot,

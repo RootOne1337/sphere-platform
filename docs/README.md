@@ -27,6 +27,8 @@
 
 ## Текущие source fixes перед Fleet32
 
+- [AUD-134: durable nested WAITING, освобождение слота, deadline и recovery](audits/2026-09-20/PIPELINE-NESTED-WAIT.md).
+
 - [AUD-132: batch plan, atomic admission, OS-kill recovery, RLS и rollout](audits/2026-09-20/BATCH-RECOVERY.md).
 - [AUD-133 / F32-25: pipeline discovery, heartbeat и recovery под настоящей RLS ролью](audits/2026-09-20/PIPELINE-RLS.md).
 

@@ -68,7 +68,8 @@ async def test_wait_releases_single_pool_slot_and_survives_sql_idle_timeout(worl
             async with sessions() as control:
                 assert await control.scalar(text("SELECT 1")) == 1
                 current = await control.get(PipelineRun, run.id)
-                assert current.status == PipelineRunStatus.RUNNING
+                expected = PipelineRunStatus.WAITING if kind == "sub_pipeline" else PipelineRunStatus.RUNNING
+                assert current.status == expected
 
         async with sessions() as control:
             if kind == "execute_script":
@@ -86,10 +87,18 @@ async def test_wait_releases_single_pool_slot_and_survives_sql_idle_timeout(worl
                 child.status = PipelineRunStatus.COMPLETED
             await control.commit()
         await asyncio.wait_for(worker, 5)
+        if kind == "sub_pipeline":
+            resumed = PipelineExecutor()
+            await resumed._poll_and_dispatch(org_id=world.org_a.id)
+            await asyncio.wait_for(asyncio.gather(*resumed._tasks), 5)
         async with sessions() as control:
             final = await control.get(PipelineRun, run.id)
             assert final.status == PipelineRunStatus.COMPLETED
-            assert len(final.step_logs) == 1 and final.step_logs[0]["status"] == "success"
+            steps = [entry for entry in final.step_logs if "status" in entry]
+            assert len(steps) == 1 and steps[0]["status"] == "success"
+            if kind == "sub_pipeline":
+                assert steps[0]["duration_ms"] >= 1000
+                assert [entry["event"] for entry in final.step_logs if "event" in entry] == ["wait_resumed"]
     finally:
         if not worker.done():
             worker.cancel()

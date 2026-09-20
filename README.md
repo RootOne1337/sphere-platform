@@ -41,9 +41,11 @@
 > версию script и cursor; проверен перезапуск отдельного процесса между волнами.
 > [AUD-133](docs/audits/2026-09-20/PIPELINE-RLS.md) исправляет pipeline startup,
 > heartbeat и recovery под non-owner RLS ролью; 76 связанных tests прошли.
-> Все эти source fixes требуют согласованной установки и native-приёмки;
-> nested capacity, остальные background workers и video/preview остаются в работе. Эти source fixes ещё не установлены.
-> Rollout, nested capacity и кластерная квота остаются открытыми.
+> [AUD-134](docs/audits/2026-09-20/PIPELINE-NESTED-WAIT.md) освобождает слоты
+> ожидающих родителей: десять nested runs и три уровня с одним слотом прошли.
+> Compound loop/parallel, остальные workers, общие квоты и video/preview остаются
+> в работе. Эти source fixes ещё не установлены; требуются согласованный rollout
+> и native-приёмка.
 
 > **Повторная ночь остановилась через 3 ч 33 мин:** 106 циклов, 223 native DAG
 > подтверждены; в цикле 107 не запустился второй стрим. Оба APK сохранили PID,

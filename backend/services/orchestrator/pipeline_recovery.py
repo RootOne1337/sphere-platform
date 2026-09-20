@@ -20,6 +20,7 @@ from backend.models.task import Task, TaskStatus
 from backend.services.orchestrator.pipeline_ownership import (
     Ownership,
     PipelineLeaseLost,
+    PipelineSuspended,
     current_ownership,
     database_now,
     fence_write,
@@ -72,11 +73,15 @@ async def recover_expired(sessions, *, org_id: uuid.UUID | None = None) -> None:
                 run.execution_generation += 1
                 run.execution_owner = None
                 run.execution_lease_until = None
-                if not resumable:
+                if (run.status == PipelineRunStatus.WAITING and run.wait_deadline_at is not None
+                        and run.current_child_run_id is None):
+                    require_review(run, "waiting_child_identity_missing", now)
+                elif not resumable:
                     require_review(run, "worker_lost_with_unconfirmed_step_outcome", now)
                 elif run.status in (PipelineRunStatus.RUNNING, PipelineRunStatus.WAITING):
+                    event = "wait_resumed" if run.status == PipelineRunStatus.WAITING else "lease_recovered"
                     run.status = PipelineRunStatus.QUEUED
-                    append_log(run, {"event": "lease_recovered", "step_id": run.current_step_id,
+                    append_log(run, {"event": event, "step_id": run.current_step_id,
                                      "generation": run.execution_generation, "timestamp": now.isoformat()})
             await db.commit()
 
@@ -140,6 +145,8 @@ class OwnedPipelineRunner:
         heartbeat = asyncio.create_task(self._heartbeat(ownership, worker))
         try:
             await self._steps(run_id)
+        except PipelineSuspended:
+            logger.info("pipeline.waiting_for_child", run_id=str(run_id))
         except PipelineLeaseLost:
             logger.info("pipeline.owner_fenced", run_id=str(run_id), generation=ownership.generation)
         finally:
@@ -230,9 +237,17 @@ class OwnedPipelineRunner:
                     return
                 run.execution_phase = "in_flight"
                 run.step_started_at = run.step_started_at or now
+                if step.get("type") == "sub_pipeline":
+                    deadline = min(
+                        run.step_started_at + timedelta(milliseconds=step.get("timeout_ms", 60000)),
+                        started + timedelta(milliseconds=global_timeout),
+                    )
+                    run.wait_deadline_at = min(run.wait_deadline_at, deadline) if run.wait_deadline_at else deadline
                 elapsed_ms = max(0, (now - run.step_started_at).total_seconds() * 1000)
                 remaining_ms = min(step.get("timeout_ms", 60_000) - elapsed_ms,
                                    global_timeout - (now - started).total_seconds() * 1000)
+                if step.get("type") == "sub_pipeline" and run.wait_deadline_at is not None:
+                    remaining_ms = min(remaining_ms, (run.wait_deadline_at - now).total_seconds() * 1000)
                 call_step = {**step, "timeout_ms": max(1, remaining_ms)}
                 delay_complete = False
                 if step.get("type") == "delay":
@@ -249,6 +264,10 @@ class OwnedPipelineRunner:
                     outcome = StepResult()
                 else:
                     outcome = await StepHandlerRegistry.execute(step=call_step, run=run, db=db)
+                if outcome.status != "success":
+                    # wait_for can cancel an in-flight SQL request, invalidating
+                    # its transaction. Discard it before reloading the fence.
+                    await db.rollback()
                 await fence_write(db, run)
                 now = await database_now(db)
                 if run.cancel_requested_at is not None:
@@ -264,8 +283,10 @@ class OwnedPipelineRunner:
                     await db.commit()
                     return
 
+                duration_ms = (int((now - run.step_started_at).total_seconds() * 1000)
+                               if step.get("type") == "sub_pipeline" else int((time.monotonic() - began) * 1000))
                 append_log(run, {"step_id": step_id, "step_type": step.get("type"), "status": outcome.status,
-                                 "duration_ms": int((time.monotonic() - began) * 1000), "output": outcome.output,
+                                 "duration_ms": duration_ms, "output": outcome.output,
                                  "error": outcome.error, "timestamp": now.isoformat()})
                 run.context = {**(run.context or {}), **outcome.context_updates}
                 if outcome.status == "success":
@@ -292,6 +313,7 @@ class OwnedPipelineRunner:
                 run.current_child_run_id = None
                 run.execution_phase = "ready"
                 run.step_started_at = None
+                run.wait_deadline_at = None
                 if next_step is None:
                     if run.status != PipelineRunStatus.FAILED:
                         run.status = PipelineRunStatus.COMPLETED

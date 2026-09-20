@@ -21,6 +21,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.models.pipeline import PipelineRun, PipelineRunStatus
 from backend.models.task import Task, TaskStatus
 from backend.services.orchestrator.pipeline_ownership import (
+    PipelineSuspended,
     current_ownership,
     fence_write,
     is_checkpointed_child,
@@ -599,8 +600,7 @@ async def handle_sub_pipeline(
         ))
         if sub_run is None:
             return StepResult(status="failure", error="pipeline_child_identity_unavailable")
-        await db.commit()
-        return await _wait_for_sub_pipeline(sub_run, db)
+        return await _checkpoint_nested_wait(sub_run, run, db)
     params = step.get("params", {})
     pipeline_id_str = params.get("pipeline_id")
     sub_input = params.get("input_params", {})
@@ -636,9 +636,28 @@ async def handle_sub_pipeline(
     await db.flush()
     if checkpointed:
         run.current_child_run_id = sub_run.id
+        return await _checkpoint_nested_wait(sub_run, run, db)
     await db.commit()
 
     return await _wait_for_sub_pipeline(sub_run, db)
+
+
+async def _checkpoint_nested_wait(sub_run: PipelineRun, run: PipelineRun, db: AsyncSession) -> StepResult:
+    if sub_run.status in (PipelineRunStatus.COMPLETED, PipelineRunStatus.FAILED,
+                          PipelineRunStatus.CANCELLED, PipelineRunStatus.TIMED_OUT):
+        await db.commit()
+        return _nested_result(sub_run)
+    # Child INSERT, parent identity, waiting state and owner release share a
+    # commit. Losing its ACK is safe: recovery reuses the saved child identity.
+    # handle_sub_pipeline already holds the fenced parent row lock. Do not refresh
+    # away its just-assigned current_child_run_id before the shared commit.
+    if run.status == PipelineRunStatus.RUNNING:
+        run.status = PipelineRunStatus.WAITING
+    run.execution_owner = None
+    run.execution_lease_until = None
+    run.execution_generation += 1
+    await db.commit()
+    raise PipelineSuspended()
 
 
 async def _wait_for_sub_pipeline(sub_run: PipelineRun, db: AsyncSession) -> StepResult:
@@ -657,6 +676,10 @@ async def _wait_for_sub_pipeline(sub_run: PipelineRun, db: AsyncSession) -> Step
         ):
             break
 
+    return _nested_result(sub_run)
+
+
+def _nested_result(sub_run: PipelineRun) -> StepResult:
     if sub_run.status == PipelineRunStatus.COMPLETED:
         return StepResult(
             status="success",

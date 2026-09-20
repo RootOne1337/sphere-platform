@@ -2,15 +2,22 @@
 
 **Срез: 21 сентября 2026 · аудит продолжается · приоритеты согласованы с владельцем.**
 
+**AUD-134, source-only:** checkpointed nested pipeline сохраняет WAITING/deadline
+и освобождает executor slot. Десять родителей и три уровня с одним слотом теперь
+завершаются; 87 связанных tests и первоначальная проба прошли. Проверены
+restart, cancel/pause/deadline, commit rollback/lost ACK и реальный SQL timeout.
+[Контракт, миграция и ограничения](../audits/2026-09-20/PIPELINE-NESTED-WAIT.md).
+Не установлен; compound loop/parallel, квоты и native acceptance остаются OPEN.
+
 **AUD-133, source-only:** pipeline discovery, claim, heartbeat, cancellation и
 recovery работают под non-owner/NOBYPASSRLS ролью. Три failures до fix → 76
 связанных passing tests, включая настоящий OS-kill и изоляцию двух tenants.
 [Контракт, grants и ограничения](../audits/2026-09-20/PIPELINE-RLS.md).
 F32-25 исправлен в коде; обязательны runtime-role canary и согласованный rollout.
 Следующая SQL-проба подтвердила nested starvation: 10 родителей занимают все
-слоты; 10 пустых children остаются QUEUED после восьми polls. Это открытый P0,
-не исправленный RLS: [счётчики и границы](../audits/2026-09-20/evidence/pipeline-nested-capacity.json).
-Далее — durable nested waiting, другие background workers, bounded decoder/preview.
+слоты; 10 пустых children остаются QUEUED после восьми polls. Это отдельный
+от RLS дефект, исправленный позже AUD-134: [счётчики и границы](../audits/2026-09-20/evidence/pipeline-nested-capacity.json).
+Далее — другие background workers, compound orchestration и bounded decoder/preview.
 
 **AUD-132, source-only:** batch сохраняет полный план, версию script, Task IDs,
 cursor и due time; волна и admission receipts коммитятся вместе. Проверены

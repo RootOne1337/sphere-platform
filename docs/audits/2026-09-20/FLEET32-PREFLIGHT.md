@@ -36,6 +36,11 @@ F32-25: ограниченный discovery и tenant-bound claim/renew/reconcile
 Три baseline failures → 76 связанных passing tests, включая non-owner OS-kill.
 Другие background workers, nested capacity и native rollout остаются OPEN.
 
+**Следующий source fix — AUD-134:** [durable nested waiting](PIPELINE-NESTED-WAIT.md)
+устраняет подтверждённое насыщение родителями. 87 связанных tests и первоначальная
+проба прошли; checkpointed nested wait освобождает слот и сохраняет child/deadline.
+Compound loop/parallel, квоты и native rollout остаются OPEN.
+
 ## Что проверяем и что уже известно
 
 Сценарий владельца: **32 настоящих эмулятора, 32 живых экрана в одном веб-интерфейсе,
@@ -219,6 +224,9 @@ nested WAITING/recovery и rollout открыты. [Исправление и ev
 Требуется сохраняемое ожидание с освобождением executor capacity, корректным
 возвратом по child receipt/deadline и сохранением cancel/recovery fencing.
 Просто поднять лимит или разрешить неограниченное число coroutine недостаточно.
+**Последующий AUD-134** реализует сохраняемый WAITING для checkpointed sub_pipeline;
+[исходная проба после fix](evidence/pipeline-nested-wait.json) завершается успешно.
+Compound loop/parallel, общая квота и native runtime остаются отдельными gates.
 
 **Root cause / файлы:** [PipelineExecutor._poll_and_dispatch](../../../backend/services/orchestrator/pipeline_executor.py)
 на каждом poll помечает до десяти runs RUNNING и создаёт tasks **до** захвата semaphore.
@@ -591,3 +599,16 @@ tasks executor пусты. **1 ожидаемый failure**, это не про�
 pipeline. Остальные workers требуют отдельной проверки. Pilot на старой
 dev-конфигурации не подтверждает работоспособность production DB-role.
 Полный migration/runtime-role canary обязателен до заявления о готовности.
+
+**Открытое продолжение F32-25, scheduler:** на неизменённом `scheduler_engine.py`
+базы `294bd15` реальная non-owner роль не отключает due schedule с уже достигнутым
+`max_runs`: после `_tick` оно остаётся active. Причина — тот же unscoped startup
+SELECT. [Одна failing probe и ограничения](evidence/scheduler-rls.json),
+[исходник](evidence/scheduler_runtime_probe.py). Android-задания не создавались.
+Следующий P0 для rollout рабочей DB-роли; AUD-133/134 исправляют pipeline, не scheduler.
+
+**Task dispatcher также воспроизведён:** unscoped poll оставляет Task в QUEUED,
+transport calls=0. После tenant binding под той же non-owner ролью тот же Task
+становится ASSIGNED, transport double calls=1. [Evidence](evidence/dispatcher-rls.json),
+[probe](evidence/dispatcher_runtime_probe.py). Это подтверждённый P0 доставки,
+не Android/network тест; следующий fix должен охватить dispatch и cancellation.

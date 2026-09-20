@@ -1,0 +1,122 @@
+{
+  "finding": "AUD-134 / F32-05 nested waiting residual",
+  "recorded_at": "2026-09-20T23:26:02.860953+00:00",
+  "source_base": "294bd154bd620f61f972c4757a416bcf35933333",
+  "source_scope": "Working tree in same commit as evidence; hashes normalize UTF-8 LF.",
+  "source_sha256": {
+    "alembic/versions/20260921_pipeline_wait.py": "e8f45c74d2a4e2c42ba9699598489f67dd62acdc68503f51d821790318347e67",
+    "backend/models/pipeline.py": "c9ed52d3339d6cd023509c650eb3f8abb8afed8f21a3587b18e551256f65aec1",
+    "backend/services/orchestrator/pipeline_recovery.py": "93e7c12b7bedd06dd057a9944d5c481c9aa164efe75157ab18180a6f3414f0d6",
+    "backend/services/orchestrator/pipeline_ownership.py": "c97d07dadd2bc8b992449e9032ebbe5bb3d3e737c2688f60a02061bbc6e4a25a",
+    "backend/services/orchestrator/pipeline_service.py": "66087afd24e62bc92998770e2736ed2fd1c88fa8731d4be1f4f33098b1172ec8",
+    "backend/services/orchestrator/pipeline_tenants.py": "bbacd26f69bd5c75423cdd03a1287888cba9864778938e92a66f42a10265b098",
+    "backend/services/orchestrator/step_handlers.py": "8e19abf060bc54d74b674168fe8d7c8912ff89f5821388aa04cd72705719cc0d",
+    "tests/production/test_pipeline_nested_wait.py": "03f5561511ab8db2af633f4433ea6da1f1e32afc2e296d40b3c048a1dd9b585a",
+    "tests/production/test_pipeline_wait_migration.py": "f79dacba10c024071a83be3d9a4cd8adccb0e69e62bb1a9e69f55ae74e389ac8",
+    "tests/production/test_pipeline_wait_connections.py": "309183d645f28a48207b29899b1523dc492bc1fcd6766a597abdb6e6e22afc6b"
+  },
+  "severity": "High / P0 before mixed Fleet32 acceptance",
+  "baseline_probe": "pipeline-nested-capacity.json",
+  "before_regressions": {
+    "tests": 5,
+    "failures": 5,
+    "errors": 0,
+    "skipped": 0,
+    "passed": 0,
+    "duration_seconds": 26.494
+  },
+  "after_related": {
+    "tests": 87,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "passed": 87,
+    "duration_seconds": 75.958
+  },
+  "after_missing_identity_guard": {
+    "tests": 12,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "passed": 12,
+    "duration_seconds": 9.991
+  },
+  "after_full_backend_final": {
+    "tests": 1892,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "passed": 1892,
+    "duration_seconds": 511.832
+  },
+  "after_original_probe": {
+    "tests": 1,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "passed": 1,
+    "duration_seconds": 6.494
+  },
+  "after_original_probe_counters": {
+    "before_polls": {
+      "active_coroutines": 0,
+      "parents_running": 0,
+      "children_queued": 10,
+      "parents_completed": 0
+    },
+    "after_eight_polls": {
+      "active_coroutines": 0,
+      "parents_running": 0,
+      "children_queued": 0,
+      "parents_completed": 10
+    }
+  },
+  "intermediate_failures": [
+    {
+      "passed": 60,
+      "failed": 2,
+      "causes": [
+        "SQL timeout left invalid transaction; rollback before fenced reload added",
+        "SQL-wait test still expected RUNNING for newly durable WAITING"
+      ]
+    },
+    {
+      "passed": 43,
+      "failed": 1,
+      "causes": [
+        "Old SQL-wait assertion counted diagnostic wake event as another step result; now validates one successful step and separate wait_resumed event"
+      ]
+    },
+    {
+      "passed": 0,
+      "failed": 1,
+      "causes": [
+        "Extended source timeout could disagree with persisted waiting deadline; runner now also caps remaining time by the saved absolute deadline"
+      ]
+    }
+  ],
+  "static_validation": {
+    "ruff": "changed Python files pass",
+    "mypy": "five orchestrator modules, --follow-imports=silent: pass"
+  },
+  "verification": [
+    "Real non-owner PostgreSQL role and one-connection pool.",
+    "Ten parents/children complete without expanding capacity; three nesting levels complete with one slot.",
+    "New executor continues same saved child; cancel/pause/resume preserve identity and deadline.",
+    "Global and scoped recovery lookup exclude a healthy waiting parent until child terminal or deadline.",
+    "Commit rollback admits no child; lost commit ACK preserves exactly one child identity.",
+    "Missing identity while WAITING becomes unknown/review rather than creating another child.",
+    "Actual PostgreSQL pg_sleep query cancelled by handler timeout; transaction rolled back before fence reload.",
+    "Migration retains function ACLs, validates deadline/child predicates and preserves runs on downgrade/re-upgrade.",
+    "One-pool-connection SQL idle-timeout regression retains connection release and truthful step duration."
+  ],
+  "limitations": [
+    "Source only; pilot backend/APK and old Docker projects unchanged.",
+    "New restart scenario replaces executor object; prior AUD-131/133 separately exercise OS-worker death.",
+    "No Android commands in these regressions; child completion in control/edge tests is supplied by SQL fixtures.",
+    "Checkpointed top-level sub_pipeline only; compound loop/parallel do not gain durable nested waiting.",
+    "Graph cycle/depth admission, global/per-device quotas, fairness and runtime-role rollout remain open.",
+    "Deadline with active child stays unknown/review; no claim of physically stopping Android.",
+    "No 32-device capacity/fault/soak or real-time AI latency acceptance."
+  ]
+}

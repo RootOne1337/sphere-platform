@@ -24,6 +24,16 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Security / runtime
 
+- AUD-134: persist nested pipeline waiting/deadline and release parent execution
+  slots atomically with child identity. Wake only actionable parents, retain the
+  same child across replacement/commit-ACK loss, support WAITING pause/cancel and
+  preserve deadlines. Record wait_resumed separately and include waiting in step
+  duration. Roll back failed handler SQL before reloading the generation fence.
+  Baseline starvation and five regressions failed before the fix; 87 related
+  tests and the original ten-parent probe pass. Source only; compound loop/parallel,
+  global quotas and native fleet acceptance remain open.
+  [Evidence, migration and limits](docs/audits/2026-09-20/PIPELINE-NESTED-WAIT.md).
+
 - AUD-133 / F32-25: restore pipeline startup, cancellation and lease renewal under
   non-owner RLS roles. Explicitly granted, bounded ID discovery is followed by
   tenant-bound sessions for claims, steps, recovery and heartbeat. Preserve

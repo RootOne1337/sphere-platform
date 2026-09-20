@@ -2,6 +2,13 @@
 
 Статус на 21 сентября 2026: **аудит продолжается; production readiness не подтверждена**.
 
+**AUD-134 · High / F32-05 residual · source fix, не установлен:** nested parents
+сохраняют WAITING/deadline и освобождают slots для детей. Baseline: 10 родителей,
+10 QUEUED children, 0 completed после восьми polls; после fix исходная проба и
+87 связанных tests проходят. Restart/commit ACK/pause/cancel/deadline, три уровня
+с одним слотом и настоящий SQL timeout проверены. [Evidence и residual risks](../2026-09-20/PIPELINE-NESTED-WAIT.md).
+Compound loop/parallel, квоты, другие RLS workers и native acceptance остаются OPEN.
+
 **AUD-133 · High / F32-25 · source fix, не установлен:** pipeline находит очередь
 под ограниченной RLS ролью и сохраняет tenant в claim/heartbeat/recovery/cancel.
 Три baseline failures → 76 связанных tests passed; реальный OS-kill non-owner

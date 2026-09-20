@@ -16,6 +16,10 @@ class PipelineLeaseLost(asyncio.CancelledError):
     """Control flow, not a failed step eligible for retry."""
 
 
+class PipelineSuspended(asyncio.CancelledError):
+    """A durable waiting checkpoint replaced this coroutine, not a step failure."""
+
+
 @dataclass(frozen=True)
 class Ownership:
     run_id: uuid.UUID

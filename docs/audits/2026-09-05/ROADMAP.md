@@ -15,9 +15,18 @@ rollout остаётся OPEN. [AUD-133](../2026-09-20/PIPELINE-RLS.md) испр
 **F32-25 для pipeline**: scoped claim/renew/reconcile/recovery под настоящей
 non-owner ролью; 76 связанных tests прошли. Отдельная SQL-проба на `d859a52`
 [воспроизвела nested starvation](../2026-09-20/evidence/pipeline-nested-capacity.json):
-10 родителей удерживают все слоты, 10 children не принимаются. Следом — durable
-nested WAITING/capacity, остальные background workers и video/preview/Redis budgets. Остальные записи
+10 родителей удерживают все слоты, 10 children не принимаются.
+[AUD-134](../2026-09-20/PIPELINE-NESTED-WAIT.md) исправляет checkpointed nested
+WAITING/capacity; 87 связанных tests и исходная проба прошли. Следом — остальные
+background workers, compound loop/parallel и video/preview/Redis budgets. Остальные записи
 ниже — история checkpoints, не утверждение об отсутствии более поздних fixes.
+
+Для следующего worker fix уже есть отдельное [scheduler RLS evidence](../2026-09-20/evidence/scheduler-rls.json):
+ограниченная роль не обрабатывает due exhausted schedule. Никаких device tasks
+эта проба не создаёт; ожидаемый failure не включён в проходящий CI.
+[Task dispatcher](../2026-09-20/evidence/dispatcher-rls.json) отдельно подтвердил
+тот же operational blocker с контрольным запуском под bound tenant. Исправить
+доставку/cancellation и scheduler до runtime-role rollout; transport в пробе mocked.
 
 **Первый source fix — [AUD-129](../2026-09-20/DURABLE-CANCELLATION.md):** сохранённая
 отмена task, APK pre-arrival fence, child/nested reconciliation и pending UI.

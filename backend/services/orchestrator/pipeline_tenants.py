@@ -3,7 +3,8 @@
 import uuid
 from contextlib import asynccontextmanager
 
-from sqlalchemy import and_, or_, select, text
+from sqlalchemy import String, and_, or_, select, text
+from sqlalchemy.orm import aliased
 
 from backend.database.tenant import bind_tenant_context
 from backend.models.pipeline import PipelineRun, PipelineRunStatus
@@ -44,9 +45,19 @@ async def discover_work(sessions, kind: str, *, org_id: uuid.UUID | None = None)
 
 
 def recovery_predicate(now):
+    child = aliased(PipelineRun)
+    active_child = select(child.id).where(
+        child.id == PipelineRun.current_child_run_id, child.org_id == PipelineRun.org_id,
+        child.device_id == PipelineRun.device_id,
+        child.context["parent_run_id"].astext == PipelineRun.id.cast(String),
+        child.status.in_([PipelineRunStatus.QUEUED, PipelineRunStatus.RUNNING,
+                          PipelineRunStatus.WAITING, PipelineRunStatus.PAUSED]),
+    ).exists()
     return and_(
         PipelineRun.cancel_requested_at.is_(None),
-        or_(PipelineRun.status.in_([PipelineRunStatus.RUNNING, PipelineRunStatus.WAITING]),
+        or_(PipelineRun.status == PipelineRunStatus.RUNNING,
+            and_(PipelineRun.status == PipelineRunStatus.WAITING,
+                 or_(PipelineRun.wait_deadline_at.is_(None), PipelineRun.wait_deadline_at <= now, ~active_child)),
             and_(PipelineRun.status == PipelineRunStatus.PAUSED, PipelineRun.execution_owner.is_not(None))),
         or_(PipelineRun.execution_owner.is_(None), PipelineRun.execution_lease_until.is_(None),
             PipelineRun.execution_lease_until <= now),
