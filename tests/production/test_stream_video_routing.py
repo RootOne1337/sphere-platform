@@ -71,6 +71,11 @@ async def workers(world):
     command_router = PubSubRouter(world.redis, owner)
     await command_router.start()
     await command_router.subscribe_device(device, str(world.org_a.id))
+    # The isolation/backpressure cases also view these devices. Give each a
+    # real command receiver; an offline capture start must now be rejected.
+    for other in (world.dev_a2, world.dev_b):
+        await owner.connect(AsyncMock(send_json=receive), str(other.id), "android", str(other.org_id))
+        await command_router.subscribe_device(str(other.id), str(other.org_id))
     async with asyncio.timeout(3):
         while not dict(await world.redis.pubsub_numsub(f"sphere:agent:cmd:{device}"))[f"sphere:agent:cmd:{device}"]:
             await asyncio.sleep(0.01)

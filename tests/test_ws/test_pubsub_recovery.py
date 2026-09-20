@@ -18,6 +18,7 @@ class FaultySubscription:
         self.close_failure = close_failure
         self.channels = set()
         self.closed = False
+        self.messages = None
 
     @property
     def subscribed(self):
@@ -46,6 +47,11 @@ class FaultySubscription:
         # A partially restored subscription remains live but never receives the
         # missing channels. The listener must finish recovery before listening.
         await asyncio.Future()
+
+    async def get_message(self, **kwargs):
+        if self.messages is None:
+            self.messages = self.listen()
+        return await anext(self.messages)
 
 
 @pytest.mark.parametrize("kind", ["commands", "browser_events"])

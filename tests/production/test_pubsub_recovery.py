@@ -39,6 +39,12 @@ async def test_real_redis_delivery_resumes_for_existing_client(world, monkeypatc
             async for message in self.delegate.listen():
                 yield message
 
+        async def get_message(self, **kwargs):
+            if self.index == 0:
+                await fault.wait()
+                raise ConnectionError("Isolated established connection failure")
+            return await self.delegate.get_message(**kwargs)
+
     class RedisConnections:
         def pubsub(self):
             result = Subscription(len(attempts))

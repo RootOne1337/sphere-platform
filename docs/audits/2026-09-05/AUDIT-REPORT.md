@@ -1,14 +1,14 @@
 # Sphere Platform: аудит готовности к эксплуатации
 
-Статус на 16 сентября 2026: **аудит продолжается; production readiness не подтверждена**.
+Статус на 20 сентября 2026: **аудит продолжается; production readiness не подтверждена**.
 
-**Повторный длительный прогон запущен 20 сентября, 03:04–11:04 по Екатеринбургу.**
-`night-20260920-001`: backend `eacf692`, frontend `03b161e`, оба APK 1.2.7.
-Предварительный цикл прошёл: 30 команд, три native DAG (два batch + один pipeline),
-pause/resume/cancel, видео и освобождение projection; PID и crash buffers прежние.
-Первый цикл новой ночи завершён, статус **running**, восемь часов ещё не приняты.
-Контроль каждые 20 минут сообщает только о сбое или завершении.
-[Текущий запуск и границы](../../operations/ANDROID-OVERNIGHT-SOAK.md).
+**20 сентября · повторная ночь FAILED после 3 ч 33 мин.**
+`night-20260920-001`: 106 циклов; API независимо подтвердил 212 batch + 11 pipeline
+DAG, 22 pipeline controls; оба APK online с прежними PID и crash buffers.
+Таймаут второго viewer в цикле 107, до нового batch. AUD-125 устраняет idle
+пересоздание командной Redis-подписки и игнорирование отказа `start_stream`: два
+failing regressions → 105 связанных tests passed. Rollout ещё не принят;
+восьмичасовая проверка остаётся непройденной. [Разбор и evidence](STREAM-START-DELIVERY.md).
 
 **20 сентября · AUD-121 принят:** backend `eacf692`, frontend `03b161e`, APK 1.2.7.
 Одинаковые 12 shell/logcat-запросов: до fix 12 ложных `task.result.not_found`, после

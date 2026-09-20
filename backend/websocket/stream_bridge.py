@@ -54,9 +54,12 @@ class VideoStreamBridge:
             if self.transport:
                 await self.transport.subscribe(device_id)
             if self._sessions.get(device_id) == session_id:
-                await self.send_control(device_id, {
+                sent = await self.send_control(device_id, {
                     "type": "start_stream", "quality": "720p", "bitrate": 2_000_000,
                 })
+                if not sent:
+                    logger.warning("stream_start_unavailable", device_id=device_id, session_id=session_id)
+                    raise ConnectionError("Capture command transport unavailable")
         except BaseException:
             await self.unregister_viewer(device_id, session_id)
             raise

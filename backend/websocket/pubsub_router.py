@@ -94,8 +94,13 @@ class PubSubRouter:
                     await asyncio.sleep(1.0)
                     continue
 
-                async for message in self._pubsub.listen():
-                    if message["type"] != "message":
+                while self._pubsub.subscribed:
+                    # The shared client has a 5 s request socket timeout.
+                    # Blocking listen() reconnects on ordinary command silence,
+                    # briefly removing subscriptions and losing live controls.
+                    # A bounded Pub/Sub poll waits without resetting the socket.
+                    message = await self._pubsub.get_message(timeout=1.0)
+                    if message is None or message["type"] != "message":
                         continue
 
                     channel: str = message["channel"]
