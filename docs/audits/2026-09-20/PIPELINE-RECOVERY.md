@@ -103,6 +103,13 @@ delay (он уже истёк, поэтому handler не вызывался); 
 проверки позднего результата. Два heartbeat tests первоначально инжектировали отказ
 до входа в шаг; добавлено ожидание его старта. Повторный расширенный набор прошёл.
 
+**CI исходного коммита `f16279d` прошёл:** backend, frontend, Android и
+preview guard; deployment для draft PR пропущен по условию workflow.
+[Архив результатов точного source SHA](../2026-09-05/evidence/ci-f16279d-summary.json)
+включает отдельные jobs: production image/bootstrap, SQL migrations, tests,
+lint/type checks и dependency audit. Это не установка на pilot; результаты
+относятся к указанному SHA, не автоматически к более поздним коммитам.
+
 ## Rollout и остаточные ограничения
 
 1. Миграция консервативно помечает старые RUNNING/PAUSED/WAITING и уже стартовавшие

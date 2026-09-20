@@ -96,5 +96,8 @@
     "backend": "85fb1ea",
     "frontend": "03b161e",
     "apk": "1.2.7/10207"
-  }
+  },
+  "verified_source": "f16279deff6e7369d89b31b8d174aae8877156ac",
+  "ci_archive": "docs/audits/2026-09-05/evidence/ci-f16279d-summary.json",
+  "ci_scope": "All four workflows succeeded; draft preview deployment was skipped. No pilot rollout."
 }
