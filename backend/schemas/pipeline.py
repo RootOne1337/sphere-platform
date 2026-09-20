@@ -107,6 +107,7 @@ class PipelineRunResponse(BaseModel):
     current_task_id: uuid.UUID | None = None
     started_at: datetime | None = None
     finished_at: datetime | None = None
+    cancel_requested_at: datetime | None = None
     retry_count: int
     created_at: datetime
     updated_at: datetime

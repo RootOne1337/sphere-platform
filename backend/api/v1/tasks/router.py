@@ -10,7 +10,7 @@ import uuid
 from typing import Literal
 
 import structlog
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -349,13 +349,17 @@ async def cancel_task(
     "/{task_id}/stop",
     status_code=200,
     summary="Принудительно остановить задачу (QUEUED/ASSIGNED/RUNNING)",
+    responses={202: {"description": "Cancellation persisted; waiting for the device's terminal result"}},
 )
 async def force_stop_task(
     task_id: uuid.UUID,
+    response: Response,
     current_user: User = require_permission("script:execute"),
     svc: TaskService = Depends(get_task_service),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     task = await svc.force_stop_task(task_id, current_user.org_id)
     await db.commit()
-    return {"status": "stopped", "task_id": str(task.id)}
+    stopped = task.status == TaskStatus.CANCELLED
+    response.status_code = 200 if stopped else 202
+    return {"status": "stopped" if stopped else "cancelling", "task_id": str(task.id)}

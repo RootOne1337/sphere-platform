@@ -183,6 +183,7 @@ class PipelineRun(Base, UUIDMixin, TimestampMixin):
     )
 
     # Тайминги
+    cancel_requested_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     started_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True,
     )

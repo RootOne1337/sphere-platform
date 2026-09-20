@@ -514,9 +514,9 @@ class SchedulerEngine:
         """
         Отменить все незавершённые задачи предыдущего запуска расписания.
 
-        Для RUNNING задач отправляет CANCEL_DAG через WebSocket агенту.
-        Для QUEUED/ASSIGNED — отменяет из Redis-очереди.
-        Возвращает количество отменённых задач.
+        Records durable cancellation intent for ASSIGNED/RUNNING work.
+        Only never-dispatched QUEUED work becomes terminal immediately.
+        Returns the number of accepted requests, not physical stop confirmations.
         """
         cancelled = 0
 
@@ -553,69 +553,11 @@ class SchedulerEngine:
                 )
             ).all()
 
-            # Получить publisher и queue для отмены
-            publisher = None
-            queue = None
-            try:
-                from backend.database.redis_client import redis_binary
-                if redis_binary:
-                    from backend.services.task_queue import TaskQueue
-                    from backend.websocket.pubsub_router import get_pubsub_publisher
-                    publisher = get_pubsub_publisher()
-                    queue = TaskQueue(redis_binary)
-            except Exception as exc:
-                logger.warning("scheduler.cancel_deps_failed", error=str(exc))
+            from backend.services.task_service import TaskService
 
             for task in running_tasks:
-                # The lock wait may exceed the control TTL; timestamp at dispatch.
-                now = datetime.now(timezone.utc)
-                try:
-                    if task.status == TaskStatus.RUNNING and publisher:
-                        # Отправить CANCEL_DAG агенту через WebSocket.
-                        # command_id = "sched_cancel_{task_id}" — уникальный, чтобы ack
-                        # от CANCEL_DAG не перезаписал статус задачи в handle_task_result.
-                        # FIX BUG-3: Проверяем возврат send_command_live.
-                        cancel_delivered = await publisher.send_command_live(
-                            str(task.device_id),
-                            {
-                                "command_id": f"sched_cancel_{task.id}",
-                                "type": "CANCEL_DAG",
-                                "signed_at": int(now.timestamp()),
-                                "ttl_seconds": 30,
-                                "payload": {"task_id": str(task.id)},
-                            },
-                        )
-                        if not cancel_delivered:
-                            logger.warning(
-                                "scheduler.cancel_dag_not_delivered",
-                                task_id=str(task.id),
-                                device_id=str(task.device_id),
-                                reason="Устройство offline или нет PubSub-подписчиков",
-                            )
-
-                    if task.status in (TaskStatus.QUEUED, TaskStatus.ASSIGNED) and queue:
-                        await queue.cancel_task(str(task.id), str(task.org_id), str(task.device_id))
-
-                    # Освободить running lock
-                    if queue:
-                        await queue.mark_completed(str(task.id), str(task.device_id))
-
-                    task.status = TaskStatus.CANCELLED
-                    task.finished_at = now
-                    task.error_message = "Отменено планировщиком (conflict_policy=cancel)"
-                    cancelled += 1
-
-                    logger.info(
-                        "scheduler.task_cancelled",
-                        task_id=str(task.id),
-                        device_id=str(task.device_id),
-                    )
-                except Exception as exc:
-                    logger.error(
-                        "scheduler.cancel_task_error",
-                        task_id=str(task.id),
-                        error=str(exc),
-                    )
+                await TaskService(db)._request_cancellation(task)
+                cancelled += 1
 
         if last_exec.pipeline_batch_id:
             from backend.models.pipeline import PipelineRun, PipelineRunStatus
@@ -629,6 +571,7 @@ class SchedulerEngine:
                             PipelineRunStatus.QUEUED,
                             PipelineRunStatus.RUNNING,
                             PipelineRunStatus.WAITING,
+                            PipelineRunStatus.PAUSED,
                         ]),
                     ).order_by(PipelineRun.id).with_for_update().execution_options(populate_existing=True)
                 )
@@ -636,8 +579,11 @@ class SchedulerEngine:
 
             for run in running_runs:
                 now = datetime.now(timezone.utc)
-                run.status = PipelineRunStatus.CANCELLED
-                run.finished_at = now
+                run.cancel_requested_at = run.cancel_requested_at or now
+                # Do not acquire Task after PipelineRun. The cancellation
+                # reconciler uses Task -> PipelineRun ordering and stops children.
+                # A run with no current_task_id can still own an active nested
+                # pipeline. Only the reconciler can establish terminality.
                 cancelled += 1
 
         return cancelled

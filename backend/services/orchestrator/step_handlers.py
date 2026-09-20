@@ -18,7 +18,7 @@ import structlog
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.models.pipeline import PipelineRun
+from backend.models.pipeline import PipelineRun, PipelineRunStatus
 from backend.models.task import Task, TaskStatus
 
 logger = structlog.get_logger()
@@ -110,6 +110,14 @@ async def handle_execute_script(
 
     Создаёт Task, ожидает его завершения (polling), возвращает результат.
     """
+    # Serialize admission with cancellation: no child may be created after the
+    # run's cancellation intent has committed.
+    await db.refresh(run, with_for_update=True)
+    if run.cancel_requested_at is not None or run.status in (
+        PipelineRunStatus.CANCELLED, PipelineRunStatus.TIMED_OUT,
+    ):
+        await db.commit()
+        return StepResult(status="failure", error="pipeline_cancelled_before_admission")
     params = step.get("params", {})
     script_id_str = params.get("script_id")
     if not script_id_str:
@@ -166,6 +174,10 @@ async def handle_execute_script(
     while True:
         await asyncio.sleep(poll_interval)
         await db.refresh(task)
+
+        # Polling sleeps must not pin a connection/idle transaction for the
+        # lifetime of a native task. expire_on_commit=False preserves this read.
+        await db.commit()
 
         if task.status in (TaskStatus.COMPLETED, TaskStatus.FAILED, TaskStatus.TIMEOUT, TaskStatus.CANCELLED):
             break
@@ -391,6 +403,9 @@ async def handle_parallel(
     if not sub_steps:
         return StepResult(status="failure", error="Подшаги не найдены в steps_snapshot")
 
+    if any(ss.get("type") not in ("action", "delay") for ss in sub_steps):
+        return StepResult(status="failure", error="parallel supports only action/delay; stateful steps require sequential execution")
+
     # Параллельное исполнение
     tasks = [
         StepHandlerRegistry.execute(step=ss, run=run, db=db)
@@ -539,6 +554,12 @@ async def handle_sub_pipeline(
       - pipeline_id: UUID вложенного pipeline
       - input_params: параметры для вложенного (можно ссылаться на context)
     """
+    await db.refresh(run, with_for_update=True)
+    if run.cancel_requested_at is not None or run.status in (
+        PipelineRunStatus.CANCELLED, PipelineRunStatus.TIMED_OUT,
+    ):
+        await db.commit()
+        return StepResult(status="failure", error="pipeline_cancelled_before_admission")
     params = step.get("params", {})
     pipeline_id_str = params.get("pipeline_id")
     sub_input = params.get("input_params", {})
@@ -551,7 +572,7 @@ async def handle_sub_pipeline(
     except (ValueError, TypeError):
         return StepResult(status="failure", error=f"Некорректный pipeline_id: {pipeline_id_str}")
 
-    from backend.models.pipeline import Pipeline, PipelineRunStatus
+    from backend.models.pipeline import Pipeline
 
     pipeline = await db.scalar(
         select(Pipeline).where(Pipeline.id == pipeline_id, Pipeline.org_id == run.org_id)
@@ -578,6 +599,7 @@ async def handle_sub_pipeline(
     while True:
         await asyncio.sleep(poll_interval)
         await db.refresh(sub_run)
+        await db.commit()
         if sub_run.status in (
             PipelineRunStatus.COMPLETED,
             PipelineRunStatus.FAILED,

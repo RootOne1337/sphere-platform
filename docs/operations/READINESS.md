@@ -2,10 +2,10 @@
 
 **Срез: 20 сентября 2026 · аудит продолжается · приоритеты согласованы с владельцем.**
 
-**AUD-128, source-only:** stop с недоступной/неподтверждённой публикацией больше не
-снимает running lock и не объявляет CANCELLED; API отвечает 503. 26 related tests
-прошли. На pilot пока не установлено; полный контракт подтверждённой остановки
-ещё открыт. [Доказательства](../audits/2026-09-20/STOP-DELIVERY-FAILURE.md).
+**AUD-129, source-only:** отмена ASSIGNED/RUNNING сохраняется в PostgreSQL, API
+отвечает 202 и ждёт terminal DAG receipt. APK сохраняет отмену до EXECUTE_DAG;
+pipeline ждёт child/nested runs, веб показывает ожидание. На pilot не установлено;
+native/root-path приёмка открыта. [Доказательства и ограничения](../audits/2026-09-20/DURABLE-CANCELLATION.md).
 
 **Актуальный следующий рубеж: 32 живых экрана одновременно, с задачами и recovery.**
 [Fleet32 preflight](../audits/2026-09-20/FLEET32-PREFLIGHT.md) задаёт текущую очередность:

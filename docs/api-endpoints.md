@@ -161,7 +161,7 @@ for tested behavior and remaining limits.
 | `GET` | `/api/v1/tasks/{task_id}/logs` | tasks | 200, 422 | Логи выполнения задачи (per-node) |
 | `GET` | `/api/v1/tasks/{task_id}/progress` | tasks | 200, 422 | Live-прогресс выполнения задачи (из Redis кэша) |
 | `GET` | `/api/v1/tasks/{task_id}/screenshots` | tasks | 200, 422 | Presigned URLs к скриншотам задачи (TTL 1 час) |
-| `POST` | `/api/v1/tasks/{task_id}/stop` | tasks | 200, 422 | Принудительно остановить задачу (QUEUED/ASSIGNED/RUNNING) |
+| `POST` | `/api/v1/tasks/{task_id}/stop` | tasks | 200, 202, 422 | Принудительно остановить задачу (QUEUED/ASSIGNED/RUNNING) |
 | `GET` | `/api/v1/updates/` | updates | 200, 422 | List Releases |
 | `POST` | `/api/v1/updates/` | updates | 201, 422 | Create Release |
 | `GET` | `/api/v1/updates/artifacts/{sha256}` | updates | 200, 422 | Download Artifact |

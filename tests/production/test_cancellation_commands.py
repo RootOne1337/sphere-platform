@@ -22,21 +22,22 @@ async def seed_running_task(world):
     return task
 
 
-@pytest.mark.parametrize("failure", ["redis_release", "sql_commit"])
-async def test_stop_ack_cannot_complete_a_task_after_cancellation_rollback(world, failure):
+@pytest.mark.parametrize("committed", [True, False])
+async def test_stop_ack_cannot_complete_a_task_with_committed_or_rolled_back_intent(world, committed):
     task = await seed_running_task(world)
     queue, publisher, manager = AsyncMock(), AsyncMock(), AsyncMock()
     publisher.send_command_live.return_value = True
-    if failure == "redis_release":
-        queue.mark_completed.side_effect = ConnectionError("isolated Redis failure")
     async with world.sessions() as db:
-        with pytest.raises(ConnectionError):
-            await TaskService(db, queue, publisher=publisher).force_stop_task(task.id, world.org_a.id)
-            with patch.object(db, "commit", AsyncMock(side_effect=ConnectionError("isolated SQL failure"))):
-                await db.commit()
-        await db.rollback()
-    command = publisher.send_command_live.await_args.args[1]
-    assert command["payload"]["task_id"] == str(task.id)
+        await TaskService(db, queue, publisher=publisher).force_stop_task(task.id, world.org_a.id)
+        if committed:
+            await db.commit()
+            await TaskService(db, queue, publisher=publisher).dispatch_pending_cancellations(org_id=world.org_a.id)
+            command = publisher.send_command_live.await_args.args[1]
+            assert command["payload"]["task_id"] == str(task.id)
+        else:
+            await db.rollback()
+            publisher.send_command_live.assert_not_awaited()
+            command = {"command_id": f"user_cancel_{task.id}"}
     # The APK acknowledged the control command, not execution of the DAG.
     ack = {"type": "command_ack", "command_id": command["command_id"], "status": "completed"}
     with patch("backend.database.engine.AsyncSessionLocal", world.sessions):
@@ -45,6 +46,8 @@ async def test_stop_ack_cannot_complete_a_task_after_cancellation_rollback(world
         stored = await verify.get(Task, task.id)
         assert stored.status == TaskStatus.RUNNING, "Stop ACK forged a successful DAG outcome after rollback"
         assert stored.result is None
+        assert (stored.cancel_requested_at is not None) == committed
+    queue.mark_completed.assert_not_awaited()
     manager.send_to_device.assert_not_awaited()  # Must not acknowledge the DAG journal either.
     assert command["command_id"] != str(task.id)
 

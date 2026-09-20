@@ -7649,6 +7649,9 @@
               }
             }
           },
+          "202": {
+            "description": "Cancellation persisted; waiting for the device's terminal result"
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -14563,6 +14566,18 @@
             ],
             "title": "Finished At"
           },
+          "cancel_requested_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cancel Requested At"
+          },
           "retry_count": {
             "type": "integer",
             "title": "Retry Count"
@@ -16008,6 +16023,18 @@
             ],
             "title": "Finished At"
           },
+          "cancel_requested_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cancel Requested At"
+          },
           "wave_index": {
             "anyOf": [
               {
@@ -16227,6 +16254,18 @@
               }
             ],
             "title": "Finished At"
+          },
+          "cancel_requested_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cancel Requested At"
           },
           "wave_index": {
             "anyOf": [

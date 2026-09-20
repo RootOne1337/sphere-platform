@@ -7,6 +7,7 @@
 
 | Задача | Документ |
 | --- | --- |
+| Различать запрос отмены и подтверждённое окончание DAG | [Контракт и приёмка AUD-129](audits/2026-09-20/DURABLE-CANCELLATION.md) |
 | Подготовить 32 одновременно видимых Android: blockers, evidence, fixes и load gates | [Fleet32 preflight · 20 сентября](audits/2026-09-20/FLEET32-PREFLIGHT.md) |
 | Оценить реальную готовность и порядок работ | [Эксплуатационная матрица](operations/READINESS.md) |
 | Найти подтверждённый дефект/исправление | [Audit report и evidence](audits/2026-09-05/AUDIT-REPORT.md) |

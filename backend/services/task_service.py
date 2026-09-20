@@ -39,9 +39,10 @@ logger = structlog.get_logger()
 # Глобальный set для фоновых webhook-задач — защита от GC (HIGH-5)
 _pending_webhook_tasks: set[asyncio.Task] = set()
 
-# Stop is a live control, not a retried transport mutation. A timed-out publish
-# may already have reached Redis; keep the task active until its outcome is known.
+# Only the durable, task-targeted cancellation command is safe to redeliver.
+# The Android journal fences a late EXECUTE_DAG even if cancel arrives first.
 _STOP_PUBLISH_TIMEOUT_SECONDS = 2.0
+_STOP_REDELIVERY_SECONDS = 5
 
 
 class TaskService:
@@ -249,18 +250,20 @@ class TaskService:
 
     # ── Dispatch ──────────────────────────────────────────────────────────────
 
-    async def dispatch_pending_tasks(self) -> None:
+    async def dispatch_pending_tasks(self, *, org_id: uuid.UUID | None = None) -> None:
         """Dispatch committed intent using this dispatcher's dedicated DB session.
 
         A device row serializes competing dispatchers. ASSIGNED is committed
         before sending; until the agent acknowledges receipt, the same task ID
         is retried. Redis is transport/presence, never the source of task intent.
         """
+        await self.dispatch_pending_cancellations(org_id=org_id)
         if not self.status_cache:
             return
 
         candidates = list(await self.db.scalars(
             select(Task.device_id).where(
+                *([Task.org_id == org_id] if org_id is not None else []),
                 Task.status.in_([TaskStatus.QUEUED, TaskStatus.ASSIGNED]),
             ).distinct()
         ))
@@ -295,6 +298,7 @@ class TaskService:
                     .execution_options(populate_existing=True))
                 now = datetime.now(timezone.utc)
                 if task is not None and (
+                    task.cancel_requested_at is not None or
                     task.status == TaskStatus.RUNNING or
                     task.updated_at > now - timedelta(seconds=30)
                 ):
@@ -409,7 +413,20 @@ class TaskService:
             return True
 
         success = result.get("success", False)
-        task.status = TaskStatus.COMPLETED if success else TaskStatus.FAILED
+        # An interrupted root/process outcome is not proof of physical stop.
+        # Retain the active task and pending APK receipt for operator reconciliation.
+        unknown_errors = {
+            "execution_outcome_unknown_after_restart",
+            "execution_interrupted_outcome_unknown",
+            "Root command delivery outcome is unknown",
+        }
+        if (task.cancel_requested_at is not None and isinstance(result.get("error"), str)
+                and result["error"] in unknown_errors):
+            task.result = result
+            task.error_message = "Cancellation outcome unknown; execution requires reconciliation"
+            return False
+        cancelled = result.get("cancelled") is True and success is False
+        task.status = TaskStatus.CANCELLED if cancelled else (TaskStatus.COMPLETED if success else TaskStatus.FAILED)
         task.finished_at = datetime.now(timezone.utc)
         task.result = result
         task.error_message = result.get("error")
@@ -532,87 +549,68 @@ class TaskService:
                 detail=f"Cannot cancel task in status '{task.status}'",
             )
 
-        removed = await self.queue.cancel_task(str(task_id), str(org_id), str(task.device_id))
-        task.status = TaskStatus.CANCELLED
-        task.finished_at = datetime.now(timezone.utc)
+        return await self._request_cancellation(task)
 
-        logger.info(
-            "task.cancelled",
-            task_id=str(task_id),
-            was_in_queue=removed,
-        )
-        return task
-
-    # ── Force Stop (running task) ─────────────────────────────────────────
-
-    async def force_stop_task(
-        self, task_id: uuid.UUID, org_id: uuid.UUID
-    ) -> Task:
-        """
-        Принудительная остановка RUNNING задачи:
-        1. Отправляет CANCEL_DAG через WebSocket агенту
-        2. Освобождает Redis lock
-        3. Обновляет статус в БД
-        """
+    async def force_stop_task(self, task_id: uuid.UUID, org_id: uuid.UUID) -> Task:
         task = await self._get_task(task_id, org_id, for_update=True)
-
         if task.status not in (TaskStatus.RUNNING, TaskStatus.QUEUED, TaskStatus.ASSIGNED):
-            raise HTTPException(
-                status_code=409,
-                detail=f"Cannot stop task in status '{task.status}'",
-            )
+            raise HTTPException(status_code=409, detail=f"Cannot stop task in status '{task.status}'")
+        return await self._request_cancellation(task)
 
-        # Если задача QUEUED/ASSIGNED — просто отменяем через обычный путь
-        if task.status in (TaskStatus.QUEUED, TaskStatus.ASSIGNED):
-            await self.queue.cancel_task(str(task_id), str(org_id), str(task.device_id))
+    async def _request_cancellation(self, task: Task) -> Task:
+        """Caller holds Task row lock and owns commit; no external effect here."""
+        if task.cancel_requested_at is None:
+            task.cancel_requested_at = datetime.now(timezone.utc)
+        if task.status == TaskStatus.QUEUED:
+            # Dispatcher commits ASSIGNED before any delivery. A locked QUEUED
+            # row is therefore the only execution we can stop locally with certainty.
             task.status = TaskStatus.CANCELLED
-            task.finished_at = datetime.now(timezone.utc)
-            logger.info("task.force_stopped.queued", task_id=str(task_id))
-            return task
-
-        # Refuse false stop success if live publication is unavailable. Even a
-        # successful publish proves only a subscriber, not physical termination;
-        # durable cancellation/terminal receipt reconciliation is a separate contract.
-        device_id_str = str(task.device_id)
-        unavailable = "Task stop is unconfirmed; task remains active. Check its status before retrying."
-        if self.publisher is None:
-            raise HTTPException(status_code=503, detail=unavailable)
-        try:
-            async with asyncio.timeout(_STOP_PUBLISH_TIMEOUT_SECONDS):
-                sent = await self.publisher.send_command_live(
-                    device_id_str,
-                    {
-                        # A control receipt must not enter the DAG result handler,
-                        # including when cancellation's SQL transaction rolls back.
-                        "command_id": f"user_cancel_{task_id}",
-                        "type": "CANCEL_DAG",
-                        "signed_at": int(datetime.now(timezone.utc).timestamp()),
-                        "payload": {"task_id": str(task_id)},
-                    },
-                )
-        except Exception as exc:
-            logger.warning(
-                "task.stop.publication_unconfirmed", task_id=str(task_id),
-                device_id=device_id_str, error_type=type(exc).__name__,
-            )
-            raise HTTPException(status_code=503, detail=unavailable) from exc
-        if sent is not True:
-            logger.warning("task.stop.not_published", task_id=str(task_id), device_id=device_id_str)
-            raise HTTPException(status_code=503, detail=unavailable)
-
-        # Освобождаем Redis lock
-        await self.queue.mark_completed(str(task_id), device_id_str)
-
-        task.status = TaskStatus.CANCELLED
-        task.finished_at = datetime.now(timezone.utc)
-        task.error_message = "Force stopped by user"
-
-        logger.info(
-            "task.force_stopped",
-            task_id=str(task_id),
-            device_id=device_id_str,
-        )
+            task.finished_at = task.cancel_requested_at
+            if task.batch_id:
+                await self._aggregate_batch(task.batch_id, False)
+        logger.info("task.cancel.requested", task_id=str(task.id), status=task.status)
         return task
+
+    async def dispatch_pending_cancellations(self, *, org_id: uuid.UUID | None = None) -> None:
+        """Persist dispatch lease before I/O; bounded idempotent retries after restart.
+
+        A publication/ACK never completes the task. Terminal DAG results are the
+        authority. Commit before send also avoids holding SQL locks over Redis.
+        """
+        publisher = self.publisher
+        if publisher is None:
+            return
+        now = datetime.now(timezone.utc)
+        rows = list(await self.db.scalars(select(Task).where(
+            *([Task.org_id == org_id] if org_id is not None else []),
+            Task.cancel_requested_at.is_not(None),
+            Task.status.in_([TaskStatus.ASSIGNED, TaskStatus.RUNNING]),
+            or_(Task.cancel_last_sent_at.is_(None),
+                Task.cancel_last_sent_at < now - timedelta(seconds=_STOP_REDELIVERY_SECONDS)),
+        ).order_by(Task.cancel_last_sent_at.asc().nullsfirst(), Task.cancel_requested_at, Task.id)
+            .limit(16).with_for_update(skip_locked=True).execution_options(populate_existing=True)))
+        deliveries = [(str(task.id), str(task.device_id)) for task in rows]
+        for task in rows:
+            task.cancel_last_sent_at = now
+        await self.db.commit()
+        async def deliver(task_id: str, device_id: str) -> None:
+            command = {
+                "command_id": f"user_cancel_{task_id}", "type": "CANCEL_DAG",
+                "signed_at": int(datetime.now(timezone.utc).timestamp()), "ttl_seconds": 30,
+                "payload": {"task_id": task_id, "durable": True},
+            }
+            try:
+                async with asyncio.timeout(_STOP_PUBLISH_TIMEOUT_SECONDS):
+                    sent = await publisher.send_command_live(device_id, command)
+                logger.info("task.cancel.published", task_id=task_id, accepted=sent is True)
+            except Exception as exc:
+                logger.warning("task.cancel.delivery_pending", task_id=task_id,
+                               error_type=type(exc).__name__)
+
+        # A failed station must not serialize 32 two-second waits. Bound each
+        # group and finish it before admitting the next; no detached send tasks.
+        for offset in range(0, len(deliveries), 8):
+            await asyncio.gather(*(deliver(*item) for item in deliveries[offset:offset + 8]))
 
     # ── Query ─────────────────────────────────────────────────────────────────
 

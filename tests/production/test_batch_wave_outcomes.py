@@ -146,7 +146,7 @@ async def test_batch_can_still_be_cancelled_after_last_wave_is_enqueued(world, w
     async with world.sessions() as db:
         assert (await db.get(TaskBatch, batch.id)).status == TaskBatchStatus.CANCELLED
         assert (await db.scalar(select(Task).where(Task.batch_id == batch.id))).status == TaskStatus.CANCELLED
-    queue.cancel_task.assert_awaited_once()
+    queue.cancel_task.assert_not_awaited()
 
 
 async def test_database_fault_aborts_current_wave_without_false_success(world, webhook, monkeypatch):

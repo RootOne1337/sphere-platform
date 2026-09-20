@@ -30,6 +30,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.int
@@ -242,6 +243,21 @@ class CommandDispatcher @Inject constructor(
                     ?.takeIf { it.isString }?.contentOrNull
                 if (target.isNullOrBlank()) {
                     ack(cmdId, "failed", error = "invalid_task_target")
+                    return
+                }
+                if (msg["type"]?.jsonPrimitive?.content == "CANCEL_DAG" &&
+                    (msg["payload"] as? JsonObject)?.get("durable")?.jsonPrimitive?.booleanOrNull == true) {
+                    try {
+                        val terminal = commandJournal.requestCancellation(target)
+                        if (terminal != null) wsClient.sendJson(terminal)
+                        else dagRunner.requestCancel(target)
+                        ack(cmdId, "completed", result = buildJsonObject {
+                            put("task_id", target); put("control_accepted", true)
+                        })
+                    } catch (e: Exception) {
+                        ack(cmdId, "failed", error = "cancel_intent_not_persisted")
+                        Timber.e(e, "Cannot persist cancellation fence")
+                    }
                     return
                 }
                 val accepted = when (msg["type"]?.jsonPrimitive?.content) {

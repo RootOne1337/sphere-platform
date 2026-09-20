@@ -6,10 +6,10 @@
 
 [Главная](../../../README.md) · [Документация](../../README.md) · [Readiness](../../operations/READINESS.md) · [История исправлений](../2026-09-05/AUDIT-REPORT.md)
 
-**После исходного среза:** [AUD-128](STOP-DELIVERY-FAILURE.md) исправляет ложный
-успех при отказе публикации stop: 8 before failures → 26 related tests passed.
-Source fix ещё не установлен; весь F32-01 остаётся OPEN до durable cancellation
-и подтверждения физической остановки. Остальные данные ниже относятся к исходному
+**После исходного среза:** [AUD-129](DURABLE-CANCELLATION.md) добавляет сохранённую
+отмену, APK fence до EXECUTE_DAG, ожидание child/nested runs и pending status в UI.
+Он заменяет частичный [AUD-128](STOP-DELIVERY-FAILURE.md). Source fix не установлен;
+F32-01 остаётся OPEN до native/root-path приёмки. Остальные данные ниже относятся к исходному
 аудиту `1c93cf0`; они не заменены результатами более поздней работы.
 
 ## Что проверяем и что уже известно

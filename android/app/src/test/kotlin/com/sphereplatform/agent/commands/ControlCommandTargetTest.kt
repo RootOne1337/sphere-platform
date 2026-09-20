@@ -63,6 +63,31 @@ class ControlCommandTargetTest {
     }
 
     private fun send(message: JsonObject) { callback.captured!!(message) }
+    private fun durableCancel(target: String = currentId) = JsonObject(control("CANCEL_DAG") +
+        ("payload" to buildJsonObject { put("task_id", target); put("durable", true) }))
+
+    @Test fun durableCancelBeforeExecutePreventsAllDeviceActions() = runTest {
+        val dispatcher = start(backgroundScope)
+        send(durableCancel()); runCurrent()
+        val cancelled = terminal(currentId)
+        assertTrue(cancelled!!["result"]!!.jsonObject["cancelled"]!!.jsonPrimitive.boolean)
+        repeat(3) { send(execute(currentId)); runCurrent(); advanceTimeBy(150); runCurrent() }
+        verify(exactly = 0) { adb.tap(any(), any()) }
+        assertEquals(cancelled, terminal(currentId))
+        dispatcher.stop()
+    }
+
+    @Test fun durableCancelAcceptancePrecedesActualTerminalReceipt() = runTest {
+        val dispatcher = start(backgroundScope)
+        send(execute(currentId)); runCurrent()
+        send(durableCancel()); runCurrent()
+        assertNull(terminal(currentId)) // Still inside the sleep action.
+        assertEquals("completed", terminal("control_CANCEL_DAG_test")!!["status"]!!.jsonPrimitive.content)
+        advanceTimeBy(150); runCurrent()
+        assertTrue(terminal(currentId)!!["result"]!!.jsonObject["cancelled"]!!.jsonPrimitive.boolean)
+        verify(exactly = 0) { adb.tap(any(), any()) }
+        dispatcher.stop()
+    }
     private fun terminal(id: String) = messages.lastOrNull {
         it["command_id"]?.jsonPrimitive?.content == id &&
             it["status"]?.jsonPrimitive?.content in listOf("completed", "failed")

@@ -24,7 +24,14 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Security / runtime
 
-- AUD-128: reject unavailable or unconfirmed RUNNING-task stop publication with
+- AUD-129: persist task/pipeline cancellation before delivery, retry targeted stop
+  after worker/network recovery, fence late EXECUTE_DAG in the Android journal,
+  wait for native child/nested results and display cancellation pending in the UI.
+  ASSIGNED/RUNNING stop now returns HTTP202, superseding AUD-128's temporary 503
+  contract. Source only; native rollout and root-process termination remain gates.
+  [Evidence and residual risks](docs/audits/2026-09-20/DURABLE-CANCELLATION.md).
+
+- AUD-128 (historical, superseded by AUD-129): reject unavailable or unconfirmed RUNNING-task stop publication with
   HTTP503; preserve SQL state and device lock, bound the publish wait and avoid
   automatic retries. Eight before failures precede 26 passing related tests.
   Successful publication is still not physical stop confirmation; durable cancel

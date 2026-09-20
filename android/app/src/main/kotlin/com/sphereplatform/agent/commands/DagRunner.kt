@@ -143,7 +143,10 @@ class DagRunner @Inject constructor(
 
     private suspend fun checkCancellation() {
         currentCoroutineContext().ensureActive()
-        if (cancelRequested) throw DagControlCancelledException()
+        val target = synchronized(executionLock) { activeCommandId }
+        if (cancelRequested || (target != null && commandJournal.isCancellationRequested(target))) {
+            throw DagControlCancelledException()
+        }
     }
 
     private suspend fun awaitExecutionPermission() {
@@ -353,6 +356,7 @@ class DagRunner @Inject constructor(
         val finalResult = buildJsonObject {
             put("nodes_executed", nodeLogs.size)
             put("success", success)
+            if (nodeLogs.any { it["action_type"]?.jsonPrimitive?.content == "CANCELLED" }) put("cancelled", true)
             failedNode?.let { put("failed_node", it) }
             put("node_logs", nodeLogsArray)
         }

@@ -13,7 +13,6 @@ import asyncio
 import hashlib
 import random
 import uuid
-from datetime import datetime, timezone
 
 import structlog
 from fastapi import HTTPException
@@ -309,10 +308,11 @@ class BatchService:
         self, batch_id: uuid.UUID, org_id: uuid.UUID
     ) -> None:
         """
-        Отменяет QUEUED/ASSIGNED задачи; RUNNING завершаются самостоятельно.
-        ASSIGNED может быть в доставке: SQL отмена не доказывает остановку APK.
+        Cancels never-dispatched work and records durable stops for ASSIGNED.
+        Already RUNNING tasks retain this endpoint's finish-current-work policy.
         """
         batch = await self.get_batch(batch_id, org_id)
+        from backend.services.task_service import TaskService
 
         if batch.status not in (TaskBatchStatus.PENDING, TaskBatchStatus.RUNNING):
             raise HTTPException(
@@ -326,10 +326,6 @@ class BatchService:
 
         # Result handlers acquire Task -> TaskBatch. Keep the same order and
         # deterministic task ordering so cancellation cannot invert those locks.
-        from backend.database.redis_client import redis as _redis
-        from backend.services.task_queue import TaskQueue
-
-        queue = TaskQueue(_redis)
         queued_tasks = list(
             (
                 await self.db.execute(
@@ -349,11 +345,8 @@ class BatchService:
                 status_code=409,
                 detail=f"Batch already in terminal status '{batch.status}'",
             )
-        now = datetime.now(timezone.utc)
         for task in queued_tasks:
-            await queue.cancel_task(str(task.id), str(org_id), str(task.device_id))
-            task.status = TaskStatus.CANCELLED
-            task.finished_at = now
+            await TaskService(self.db)._request_cancellation(task)
 
         batch.status = TaskBatchStatus.CANCELLED
         logger.info("batch.cancelled", batch_id=str(batch_id), tasks_cancelled=len(queued_tasks))

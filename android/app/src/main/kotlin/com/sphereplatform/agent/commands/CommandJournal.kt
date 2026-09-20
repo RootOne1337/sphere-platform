@@ -61,6 +61,7 @@ class CommandJournal @Inject constructor(
             payload = response(id, status, error?.take(512), buildJsonObject {
                 put("success", status == "completed")
                 put("result_truncated", true)
+                if (result?.get("cancelled")?.jsonPrimitive?.booleanOrNull == true) put("cancelled", true)
             })
         }
         val next = records.toMutableMap()
@@ -73,6 +74,34 @@ class CommandJournal @Inject constructor(
         active.remove(id)
         return payload
     }
+
+    /** Persist the fence before acknowledging cancel. Null means execution must
+     * still reach its cooperative stop boundary; a returned receipt is terminal.
+     * Never label a process-interrupted execution as definitely stopped.
+     */
+    @Synchronized fun requestCancellation(id: String): JsonObject? {
+        migrateAcknowledged()
+        val existing = records[id]?.jsonObject
+        existing?.get("response")?.let { return it.jsonObject }
+        receipts.find(id)?.let { return response(id, it) }
+        if (existing == null) {
+            check(records.size < MAX_ENTRIES) { "command_journal_capacity_exhausted" }
+            val next = records.toMutableMap()
+            next[id] = buildJsonObject { put("created_at", System.currentTimeMillis()) }
+            persist(next, reserveResult = true)
+            return complete(id, "failed", "cancelled_by_user", buildJsonObject {
+                put("success", false); put("cancelled", true); put("cancelled_before_start", true)
+            })
+        }
+        if (id !in active) return complete(id, "failed", "execution_outcome_unknown_after_restart", null)
+        val next = records.toMutableMap()
+        next[id] = JsonObject(existing + ("cancel_requested" to JsonPrimitive(true)))
+        persist(next, reserveResult = true)
+        return null
+    }
+
+    @Synchronized fun isCancellationRequested(id: String): Boolean =
+        records[id]?.jsonObject?.get("cancel_requested")?.jsonPrimitive?.booleanOrNull == true
 
     @Synchronized fun pending(): List<JsonObject> {
         migrateAcknowledged()

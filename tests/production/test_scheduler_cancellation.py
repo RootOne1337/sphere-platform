@@ -124,19 +124,12 @@ async def test_scheduler_still_cancels_eligible_tasks_with_scoped_control(world,
         assert await cancel(db, schedule) == 1
     async with world.sessions() as db:
         stored = await db.get(Task, task.id)
-        assert stored.status == TaskStatus.CANCELLED
-        assert stored.finished_at is not None
-    queue.mark_completed.assert_awaited_once_with(str(task.id), str(task.device_id))
-    if initial == TaskStatus.RUNNING:
-        queue.cancel_task.assert_not_awaited()
-        publisher.send_command_live.assert_awaited_once()
-        device, message = publisher.send_command_live.call_args.args
-        assert device == str(task.device_id)
-        assert message["command_id"] == f"sched_cancel_{task.id}"
-        assert message["payload"] == {"task_id": str(task.id)}
-    else:
-        queue.cancel_task.assert_awaited_once_with(str(task.id), str(world.org_a.id), str(task.device_id))
-        publisher.send_command_live.assert_not_awaited()
+        assert stored.status == (TaskStatus.CANCELLED if initial == TaskStatus.QUEUED else initial)
+        assert (stored.finished_at is not None) == (initial == TaskStatus.QUEUED)
+        assert stored.cancel_requested_at is not None
+    queue.mark_completed.assert_not_awaited()
+    queue.cancel_task.assert_not_awaited()
+    publisher.send_command_live.assert_not_awaited()
 
 
 @pytest.mark.parametrize("terminal", [PipelineRunStatus.COMPLETED, PipelineRunStatus.FAILED,
@@ -172,15 +165,16 @@ async def test_scheduler_cannot_overwrite_committing_pipeline_outcome(world, por
 
 
 @pytest.mark.parametrize("initial", [PipelineRunStatus.QUEUED, PipelineRunStatus.RUNNING,
-                                    PipelineRunStatus.WAITING])
+                                    PipelineRunStatus.WAITING, PipelineRunStatus.PAUSED])
 async def test_scheduler_still_cancels_eligible_pipeline_runs(world, ports, initial):
     schedule, run = await seed(world, pipeline_status=initial)
     async with world.sessions() as db:
         assert await cancel(db, schedule) == 1
     async with world.sessions() as db:
         stored = await db.get(PipelineRun, run.id)
-        assert stored.status == PipelineRunStatus.CANCELLED
-        assert stored.finished_at is not None
+        assert stored.status == initial
+        assert stored.cancel_requested_at is not None
+        assert stored.finished_at is None
     for port in ports:
         assert not port.mock_calls
 
@@ -206,7 +200,7 @@ async def test_scheduler_does_not_follow_cross_tenant_legacy_batch_links(world, 
         assert not port.mock_calls
 
 
-async def test_scheduler_stamps_stop_after_waiting_for_task_owner(world, ports, monkeypatch):
+async def test_scheduler_records_intent_after_waiting_without_external_effect(world, ports, monkeypatch):
     queue, publisher = ports
     schedule, task = await seed(world, task_status=TaskStatus.RUNNING)
     clock_time = datetime.now(timezone.utc)
@@ -233,8 +227,8 @@ async def test_scheduler_stamps_stop_after_waiting_for_task_owner(world, ports, 
         finally:
             pending.cancel()
             await asyncio.gather(pending, return_exceptions=True)
-    publisher.send_command_live.assert_awaited_once()
-    message = publisher.send_command_live.call_args.args[1]
-    assert message["signed_at"] == int(clock_time.timestamp())
-    assert message["ttl_seconds"] == 30
-    queue.mark_completed.assert_awaited_once()
+    publisher.send_command_live.assert_not_awaited()
+    queue.mark_completed.assert_not_awaited()
+    async with world.sessions() as db:
+        stored = await db.get(Task, task.id)
+        assert stored.status == TaskStatus.RUNNING and stored.cancel_requested_at is not None

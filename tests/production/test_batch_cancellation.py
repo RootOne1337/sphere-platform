@@ -122,11 +122,14 @@ async def test_batch_cancel_records_terminal_time_for_eligible_tasks(world, queu
         assert await cancel(db, world, batch) == 204
     async with world.sessions() as db:
         stored = await db.get(Task, task.id)
-        assert stored.status == TaskStatus.CANCELLED
-        assert stored.finished_at is not None
-        assert before <= stored.finished_at <= datetime.now(timezone.utc)
+        assert stored.status == (TaskStatus.CANCELLED if initial == TaskStatus.QUEUED else initial)
+        assert stored.cancel_requested_at is not None
+        if initial == TaskStatus.QUEUED:
+            assert before <= stored.finished_at <= datetime.now(timezone.utc)
+        else:
+            assert stored.finished_at is None
         assert (await db.get(TaskBatch, batch.id)).status == TaskBatchStatus.CANCELLED
-    queue.cancel_task.assert_awaited_once_with(str(task.id), str(world.org_a.id), str(task.device_id))
+    queue.cancel_task.assert_not_awaited()
 
 
 async def test_batch_cancel_keeps_running_tasks_active(world, queue):

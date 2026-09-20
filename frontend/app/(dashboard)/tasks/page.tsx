@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 
 import { useTasks, useRetryTask, type Task } from '@/lib/hooks/useTasks';
+import { executionStatusLabel } from '@/lib/task-status';
 import { useActivePipelineRuns } from '@/lib/hooks/usePipelineRuns';
 import { useDebounce } from '@/lib/hooks/useDebounce';
 import { useBroadcastBatch } from '@/lib/hooks/useBatches';
@@ -200,7 +201,7 @@ export default function TaskEnginePage() {
               <p className="text-xs text-muted-foreground">Показано {active.data.items.length} из {active.data.total}. Queued / assigned / running.</p>
               {active.data.total === 0 && <p>Нет активных задач</p>}
               {active.data.items.map(task => <button key={task.id} onClick={() => router.push(`/tasks/${task.id}`)} className="block w-full text-left border-t border-border pt-2">
-                <span className="text-sm">{taskName(task)}</span><span className="ml-2 text-xs font-mono">{task.status}</span>
+                <span className="text-sm">{taskName(task)}</span><span className="ml-2 text-xs font-mono">{executionStatusLabel(task)}</span>
                 <span className="block text-xs text-muted-foreground">{task.device_name || task.device_id} · {task.id}</span>
               </button>)}
             </>}
@@ -211,7 +212,7 @@ export default function TaskEnginePage() {
               <p className="text-xs text-muted-foreground">Показано {pipelines.data.items.length} из {pipelines.data.total}. Включая waiting и paused.</p>
               {pipelines.data.total === 0 && <p>Нет активных pipeline</p>}
               {pipelines.data.items.map(run => <div key={run.id} className="border-t border-border pt-2 text-xs space-y-1">
-                <div className="font-mono break-all">{run.id}</div><Badge variant="outline">{run.status}</Badge>
+                <div className="font-mono break-all">{run.id}</div><Badge variant="outline">{executionStatusLabel(run)}</Badge>
                 <p className="text-muted-foreground break-all">Pipeline {run.pipeline_id} · устройство {run.device_id}</p>
                 {run.current_step_id && <p>Шаг: {run.current_step_id}</p>}
                 {run.current_task_id && <Button variant="outline" size="sm" aria-label={`Текущая задача pipeline ${run.id}`} onClick={() => router.push(`/tasks/${run.current_task_id}`)}>Открыть задачу</Button>}
@@ -240,7 +241,7 @@ export default function TaskEnginePage() {
               {isLoading ? <tr><td colSpan={7} className="p-6 text-center">Загрузка задач…</td></tr> : <>
                 {tasks.length===0 && <tr><td colSpan={7} className="p-6 text-center">Задачи не найдены</td></tr>}
                 {tasks.map(task => <tr key={task.id} className="hover:bg-muted">
-                  <td className="p-3"><Badge variant="outline">{task.status.toUpperCase()}</Badge></td>
+                  <td className="p-3"><Badge variant="outline">{executionStatusLabel(task).toUpperCase()}</Badge></td>
                   <td className="p-3"><button onClick={() => router.push(`/tasks/${task.id}`)} className="text-left hover:text-primary">
                     <span className="font-semibold">{taskName(task)}</span><span className="block text-xs font-mono text-muted-foreground">{task.id}</span>
                   </button></td>

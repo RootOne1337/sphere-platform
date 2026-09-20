@@ -8,6 +8,54 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class CommandJournalTest {
+    @Test fun oversizedCancelledResultStillCarriesPhysicalStopConfirmation() {
+        val instance = journal()
+        instance.claim("large-cancelled")
+        val terminal = instance.complete("large-cancelled", "failed", null, buildJsonObject {
+            put("success", false); put("cancelled", true); put("output", "x".repeat(100_000))
+        })
+        assertTrue(terminal["result"]!!.jsonObject["cancelled"]!!.jsonPrimitive.boolean)
+        assertTrue(terminal["result"]!!.jsonObject["result_truncated"]!!.jsonPrimitive.boolean)
+        assertEquals(terminal, journal().pending().single())
+    }
+    @Test fun durableCancelBeforeDeliverySurvivesRestartAndBlocksExecution() {
+        val terminal = journal().requestCancellation("task-1")!!
+        assertTrue(terminal["result"]!!.jsonObject["cancelled"]!!.jsonPrimitive.boolean)
+        val restarted = journal()
+        assertEquals(terminal, (restarted.claim("task-1") as CommandJournal.Claim.Existing).response)
+        assertEquals(terminal, restarted.pending().single())
+        restarted.acknowledge("task-1")
+        assertTrue(journal().claim("task-1") is CommandJournal.Claim.Existing)
+    }
+
+    @Test fun cancelDuringClaimDoesNotForgeATerminalReceipt() {
+        val journal = journal()
+        journal.claim("task-1")
+        assertNull(journal.requestCancellation("task-1"))
+        assertTrue(journal.isCancellationRequested("task-1"))
+        assertEquals("running", (journal.claim("task-1") as CommandJournal.Claim.Existing).response["status"]!!.jsonPrimitive.content)
+        val recovered = journal().pending().single()
+        assertEquals("execution_outcome_unknown_after_restart", recovered["error"]!!.jsonPrimitive.content)
+        assertNull(recovered["result"])
+    }
+
+    @Test fun cancellationCannotReplaceACompletedOutcomeOrCancelAnotherActiveTask() {
+        val journal = journal()
+        journal.claim("old")
+        val done = journal.complete("old", "completed", null, null)
+        journal.claim("current")
+        assertEquals(done, journal.requestCancellation("old"))
+        assertNotNull(journal.requestCancellation("future"))
+        assertFalse(journal.isCancellationRequested("current"))
+    }
+
+    @Test fun cancellationWriteFailureDoesNotAcknowledgeOrForgetExecution() {
+        val journal = journal()
+        journal.claim("task-1")
+        writable = false
+        assertThrows(IllegalStateException::class.java) { journal.requestCancellation("task-1") }
+        assertFalse(journal.isCancellationRequested("task-1"))
+    }
     private val disk = mutableMapOf<String, String?>()
     private var writable = true
     private var legacy = emptySet<String>()

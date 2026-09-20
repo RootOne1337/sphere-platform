@@ -9,6 +9,12 @@
 Redis/observability/backup и staged load acceptance. Для VPN/OTA/PC/n8n отдельные
 условия включения. 64 экрана и AI — после 32; ниже сохранён контекст ранних этапов.
 
+**Первый source fix — [AUD-129](../2026-09-20/DURABLE-CANCELLATION.md):** сохранённая
+отмена task, APK pre-arrival fence, child/nested reconciliation и pending UI.
+Перед закрытием F32-01 нужны native stop/reconnect и разбор root outcome unknown.
+Следом остаются lease/restart recovery обычных pipeline, durable batch waves и
+ограничение видеодекодера; эти пункты не объявлены исправленными данным коммитом.
+
 **Приоритет владельца от 9 сентября: реальная эксплуатация.** Порядок P0–P3 теперь
 задаёт [эксплуатационная матрица](../../operations/READINESS.md): APK recovery/fallback,
 сохранность заданий, запуск и наблюдаемость → достоверность UI → capacity → будущий AI.

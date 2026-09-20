@@ -31,7 +31,7 @@ async def committed_task(world):
 
 async def dispatch(world, publisher):
     async with world.sessions() as db:
-        await TaskService(db, TaskQueue(world.redis), online_cache(world), publisher).dispatch_pending_tasks()
+        await TaskService(db, TaskQueue(world.redis), online_cache(world), publisher).dispatch_pending_tasks(org_id=world.org_a.id)
         await db.commit()
 
 

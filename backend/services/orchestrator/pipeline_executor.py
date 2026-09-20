@@ -66,11 +66,13 @@ class PipelineExecutor:
 
     async def _poll_and_dispatch(self) -> None:
         """Выбрать QUEUED runs и запустить в параллель (с ограничением _MAX_CONCURRENT_RUNS)."""
+        await self._reconcile_cancellations()
         async with AsyncSessionLocal() as db:
             # FOR UPDATE SKIP LOCKED — безопасно для нескольких инстансов бэкенда
             result = await db.execute(
                 select(PipelineRun)
                 .where(PipelineRun.status == PipelineRunStatus.QUEUED)
+                .where(PipelineRun.cancel_requested_at.is_(None))
                 .order_by(PipelineRun.created_at)
                 .limit(_MAX_CONCURRENT_RUNS)
                 .with_for_update(skip_locked=True)
@@ -88,6 +90,45 @@ class PipelineExecutor:
             self._tasks.add(task)
             task.add_done_callback(self._tasks.discard)
 
+    async def _reconcile_cancellations(self, *, org_id: uuid.UUID | None = None) -> None:
+        """Finish persisted cancellations after restart, without replaying a step."""
+        from backend.services.orchestrator.pipeline_service import PipelineService
+
+        async with AsyncSessionLocal() as db:
+            query = select(PipelineRun.id, PipelineRun.org_id).where(
+                PipelineRun.cancel_requested_at.is_not(None),
+                PipelineRun.status.in_([PipelineRunStatus.QUEUED, PipelineRunStatus.RUNNING,
+                                       PipelineRunStatus.WAITING, PipelineRunStatus.PAUSED]),
+            )
+            if org_id is not None:
+                query = query.where(PipelineRun.org_id == org_id)
+            candidates = list((await db.execute(query.order_by(PipelineRun.updated_at, PipelineRun.id).limit(64))).all())
+        for run_id, tenant_id in candidates:
+            async with AsyncSessionLocal() as db:
+                children = list(await db.scalars(select(PipelineRun.id).where(
+                    PipelineRun.org_id == tenant_id,
+                    PipelineRun.context["parent_run_id"].astext == str(run_id),
+                    PipelineRun.status.in_([PipelineRunStatus.QUEUED, PipelineRunStatus.RUNNING,
+                                           PipelineRunStatus.WAITING, PipelineRunStatus.PAUSED]),
+                )))
+            # Separate transactions preserve Task -> Run lock ordering at every
+            # depth; a parent's run lock is never held while acquiring its child.
+            for child_id in children:
+                async with AsyncSessionLocal() as db:
+                    try:
+                        await PipelineService(db).cancel_run(child_id, tenant_id)
+                        await db.commit()
+                    except Exception as exc:
+                        await db.rollback()
+                        logger.warning("pipeline.cancel.child_pending", run_id=str(child_id), error_type=type(exc).__name__)
+            async with AsyncSessionLocal() as db:
+                try:
+                    await PipelineService(db).cancel_run(run_id, tenant_id)
+                    await db.commit()
+                except Exception as exc:
+                    await db.rollback()
+                    logger.warning("pipeline.cancel.reconcile_pending", run_id=str(run_id), error_type=type(exc).__name__)
+
     async def _execute_run_safe(self, run_id: uuid.UUID) -> None:
         """Обёртка: исполнение с семафором и обработкой ошибок."""
         async with self._semaphore:
@@ -101,8 +142,8 @@ class PipelineExecutor:
                 )
                 # Пометить как FAILED
                 async with AsyncSessionLocal() as db:
-                    run = await db.get(PipelineRun, run_id)
-                    if run and run.status == PipelineRunStatus.RUNNING:
+                    run = await db.get(PipelineRun, run_id, with_for_update=True)
+                    if run and run.status == PipelineRunStatus.RUNNING and run.cancel_requested_at is None:
                         run.status = PipelineRunStatus.FAILED
                         run.finished_at = datetime.now(timezone.utc)
                         _append_step_log(run, {
@@ -124,8 +165,8 @@ class PipelineExecutor:
         5. Финальный статус: COMPLETED / FAILED
         """
         async with AsyncSessionLocal() as db:
-            run = await db.get(PipelineRun, run_id)
-            if not run or run.status != PipelineRunStatus.RUNNING:
+            run = await db.get(PipelineRun, run_id, with_for_update=True)
+            if not run or run.status != PipelineRunStatus.RUNNING or run.cancel_requested_at is not None:
                 return
 
             steps = run.steps_snapshot
@@ -143,7 +184,10 @@ class PipelineExecutor:
 
             while current_step_id:
                 # Проверка на паузу / отмену
-                await db.refresh(run)
+                await db.refresh(run, with_for_update=True)
+                if run.cancel_requested_at is not None:
+                    await db.commit()
+                    return
                 if run.status == PipelineRunStatus.PAUSED:
                     run.current_step_id = current_step_id
                     await db.commit()
@@ -178,6 +222,10 @@ class PipelineExecutor:
                     )
                     timeout_ms = pipeline.global_timeout_ms if pipeline else 86_400_000
                     if elapsed_ms > timeout_ms:
+                        await db.refresh(run, with_for_update=True)
+                        if run.cancel_requested_at is not None or run.status != PipelineRunStatus.RUNNING:
+                            await db.commit()
+                            return
                         run.status = PipelineRunStatus.TIMED_OUT
                         run.finished_at = datetime.now(timezone.utc)
                         _append_step_log(run, {
@@ -192,6 +240,9 @@ class PipelineExecutor:
                         return
 
                 # Исполнить шаг
+                # A timeout-config read must not retain a SQL transaction during
+                # a delay or other external wait. Each handler owns its writes.
+                await db.commit()
                 step_start = time.monotonic()
                 step_result = await StepHandlerRegistry.execute(
                     step=step,
@@ -199,6 +250,15 @@ class PipelineExecutor:
                     db=db,
                 )
                 step_duration_ms = int((time.monotonic() - step_start) * 1000)
+
+                # Never let an in-flight handler overwrite a newer cancellation
+                # or admit the next step from an obsolete ORM snapshot.
+                await db.refresh(run, with_for_update=True)
+                if run.cancel_requested_at is not None or run.status in (
+                    PipelineRunStatus.CANCELLED, PipelineRunStatus.TIMED_OUT,
+                ):
+                    await db.commit()
+                    return
 
                 # Записать лог шага
                 log_entry = {
@@ -217,8 +277,6 @@ class PipelineExecutor:
                     ctx = dict(run.context)
                     ctx.update(step_result.context_updates)
                     run.context = ctx
-
-                await db.commit()
 
                 # Определить следующий шаг
                 if step_result.status == "success":
@@ -262,9 +320,13 @@ class PipelineExecutor:
                     await db.commit()
                     return
 
+                # Persist the step log/context and routing decision under the
+                # same lock, then release it before the next cancellation check.
+                await db.commit()
+
             # Все шаги пройдены — pipeline завершён
-            await db.refresh(run)
-            if run.status == PipelineRunStatus.RUNNING:
+            await db.refresh(run, with_for_update=True)
+            if run.status == PipelineRunStatus.RUNNING and run.cancel_requested_at is None:
                 run.status = PipelineRunStatus.COMPLETED
                 run.finished_at = datetime.now(timezone.utc)
                 run.current_step_id = None

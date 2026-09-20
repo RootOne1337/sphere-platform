@@ -12,6 +12,7 @@ export interface Task {
   priority: number;
   started_at: string | null;
   finished_at: string | null;
+  cancel_requested_at?: string | null;
   wave_index: number | null;
   created_at: string;
   updated_at: string;

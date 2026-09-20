@@ -37,7 +37,7 @@ async def test_dispatched_hash_identifies_resolved_account_payload(world, accoun
         }
         publisher = AsyncMock()
         publisher.send_command_live.return_value = True
-        await TaskService(db, queue, status_cache=cache, publisher=publisher).dispatch_pending_tasks()
+        await TaskService(db, queue, status_cache=cache, publisher=publisher).dispatch_pending_tasks(org_id=world.org_a.id)
         payload = publisher.send_command_live.call_args.args[1]["payload"]
         assert payload["dag"]["nodes"][0]["action"]["text"] == "resolved-account"
         expected = hashlib.sha256(json.dumps(payload["dag"], sort_keys=True, ensure_ascii=False).encode()).hexdigest()

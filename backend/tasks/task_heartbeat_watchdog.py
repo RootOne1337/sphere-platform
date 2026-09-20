@@ -93,6 +93,7 @@ async def _process_stale_tasks(
         select(Task)
         .where(
             Task.status == TaskStatus.RUNNING,
+            Task.cancel_requested_at.is_(None),
             Task.started_at.is_not(None),
         )
     )
@@ -139,6 +140,7 @@ async def _process_stale_tasks(
         select(Task)
         .where(
             Task.status.in_([TaskStatus.QUEUED, TaskStatus.ASSIGNED]),
+            Task.cancel_requested_at.is_(None),
             # asyncpg interprets naive timestamptz values in the host timezone.
             # Keep UTC explicit; SQLite's DateTime adapter also accepts it.
             Task.created_at < queued_cutoff,

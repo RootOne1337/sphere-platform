@@ -113,7 +113,7 @@ async def test_cancel_waits_for_inflight_wave_then_cancels_its_committed_tasks(w
         assert task.status == TaskStatus.CANCELLED
         assert (await db.get(TaskBatch, batch.id)).status == TaskBatchStatus.CANCELLED
     assert not early_cancel
-    queue.cancel_task.assert_awaited_once()
+    queue.cancel_task.assert_not_awaited()
 
 
 async def test_wave_waits_for_cancel_commit_before_task_creation(world, queue, monkeypatch):

@@ -106,6 +106,20 @@ it('marks loading metrics as unavailable rather than zero', () => {
   expect(within(card).queryByText('0')).not.toBeInTheDocument();
 });
 
+it('keeps cancelling native work and its waiting pipeline visible until terminal receipts', () => {
+  mockRows = [{ ...mockRows[0], status: 'running', cancel_requested_at: '2026-09-20T12:00:00Z' }];
+  mockPipelines = {data: {total: 1, items: [{id: 'run-stop', pipeline_id: 'pipe', device_id: 'agent',
+    status: 'waiting', current_task_id: 'task-0', cancel_requested_at: '2026-09-20T12:00:00Z'}]}, isLoading: false, isError: false};
+  const view = render(<TaskEnginePage />);
+  expect(screen.getAllByText(/Cancelling — awaiting device result/i)).toHaveLength(3);
+  expect(screen.getByRole('button', {name: 'Текущая задача pipeline run-stop'})).toBeEnabled();
+  mockRows[0] = {...mockRows[0], status: 'cancelled'};
+  mockPipelines = {...mockPipelines, data: {total: 0, items: []}};
+  view.rerender(<TaskEnginePage />);
+  expect(screen.queryByText(/Cancelling — awaiting device result/i)).not.toBeInTheDocument();
+  expect(screen.getByText('Нет активных задач')).toBeInTheDocument();
+});
+
 it('returns to a valid server page when polling shrinks the result set', () => {
   const view = render(<TaskEnginePage />);
   for (let i=0;i<7;i++) fireEvent.click(screen.getByRole('button',{name:'Следующая страница'}));

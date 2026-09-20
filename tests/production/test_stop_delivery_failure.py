@@ -5,9 +5,10 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
 import pytest
-from fastapi import HTTPException
+from fastapi import Depends
 
 from backend.api.v1.tasks.router import get_task_service
+from backend.database.engine import get_db
 from backend.main import app
 from backend.models.task import Task, TaskStatus
 from backend.services.task_queue import TaskQueue
@@ -39,20 +40,22 @@ async def assert_preserved(world, task, key):
     assert await world.redis.get(key) == str(task.id)
 
 
-async def test_stop_api_rejects_real_redis_zero_subscribers(world):
+async def test_stop_api_retains_durable_intent_with_real_redis_zero_subscribers(world):
     task, key = await seed(world)
 
-    async def service():
-        async with world.sessions() as db:
-            yield TaskService(db, TaskQueue(world.redis), publisher=PubSubPublisher(world.redis))
+    async def service(db=Depends(get_db)):
+        return TaskService(db, TaskQueue(world.redis), publisher=PubSubPublisher(world.redis))
 
     app.dependency_overrides[get_task_service] = service
     try:
         response = await world.client.post(
             f"/api/v1/tasks/{task.id}/stop", headers=world.auth(world.users["org_admin"]),
         )
-        assert response.status_code == 503, response.text
-        assert "unconfirmed" in response.json()["detail"].lower()
+        assert response.status_code == 202, response.text
+        assert response.json()["status"] == "cancelling"
+        async with world.sessions() as db:
+            assert (await db.get(Task, task.id)).cancel_requested_at is not None
+            await TaskService(db, publisher=PubSubPublisher(world.redis)).dispatch_pending_cancellations(org_id=world.org_a.id)
         await assert_preserved(world, task, key)
     finally:
         app.dependency_overrides.pop(get_task_service, None)
@@ -77,15 +80,10 @@ async def test_unconfirmed_stop_retains_sql_and_device_lock(world, outcome, monk
         monkeypatch.setattr("backend.services.task_service._STOP_PUBLISH_TIMEOUT_SECONDS", .02, raising=False)
     try:
         async with world.sessions() as db:
-            with pytest.raises(HTTPException) as caught:
-                await asyncio.wait_for(
-                    TaskService(db, TaskQueue(world.redis), publisher=publisher).force_stop_task(task.id, world.org_a.id),
-                    timeout=1,
-                )
-            assert caught.value.status_code == 503
-            assert "private transport" not in caught.value.detail
-            # Even if a caller commits after handling the exception, state must remain active.
+            service = TaskService(db, TaskQueue(world.redis), publisher=publisher)
+            await service.force_stop_task(task.id, world.org_a.id)
             await db.commit()
+            await asyncio.wait_for(service.dispatch_pending_cancellations(org_id=world.org_a.id), 1)
         await assert_preserved(world, task, key)
         assert send.await_count == (0 if publisher is None else 1), "No automatic mutation retries"
     finally:
@@ -97,10 +95,9 @@ async def test_genuine_completion_is_still_accepted_after_rejected_stop(world):
     try:
         async with world.sessions() as db:
             service = TaskService(db, TaskQueue(world.redis), publisher=PubSubPublisher(world.redis))
-            with pytest.raises(HTTPException) as caught:
-                await service.force_stop_task(task.id, world.org_a.id)
-            assert caught.value.status_code == 503
-            await db.rollback()
+            await service.force_stop_task(task.id, world.org_a.id)
+            await db.commit()
+            await service.dispatch_pending_cancellations(org_id=world.org_a.id)
         async with world.sessions() as db:
             accepted = await TaskService(db, TaskQueue(world.redis)).handle_task_result(
                 str(task.id), str(task.device_id), {"success": True, "result": "finished on device"},
@@ -128,9 +125,11 @@ async def test_request_cancellation_does_not_report_success_or_retry_publish(wor
     send = AsyncMock(side_effect=publish)
     try:
         async with world.sessions() as db:
+            await TaskService(db).force_stop_task(task.id, world.org_a.id)
+            await db.commit()
             pending = asyncio.create_task(TaskService(
                 db, TaskQueue(world.redis), publisher=SimpleNamespace(send_command_live=send),
-            ).force_stop_task(task.id, world.org_a.id))
+            ).dispatch_pending_cancellations(org_id=world.org_a.id))
             try:
                 await asyncio.wait_for(entered.wait(), 1)
                 pending.cancel()

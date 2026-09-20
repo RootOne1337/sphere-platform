@@ -1,11 +1,10 @@
 # DAG control identity and cancellation limits
 
-**20 September update (AUD-128):** user stop of a RUNNING task now returns HTTP503
-when live publication is unavailable, rejected or unconfirmed after its deadline.
-The active SQL status and device lock are preserved; the command is not retried
-automatically. A successful publish still does not prove physical termination:
-durable cancellation and final device receipt reconciliation remain open.
-[Reproduction, regression and deployment boundary](../audits/2026-09-20/STOP-DELIVERY-FAILURE.md).
+**20 September update (AUD-129, source only):** stop persists cancellation in SQL.
+QUEUED can finish locally (HTTP200); ASSIGNED/RUNNING return HTTP202 and remain
+active until a terminal DAG receipt. Network failure does not discard the intent.
+This supersedes AUD-128's temporary HTTP503 contract. It is not yet installed on
+the pilot. [Evidence and rollout](../audits/2026-09-20/DURABLE-CANCELLATION.md).
 
 The management WebSocket uses two identities for a DAG control:
 
@@ -15,7 +14,7 @@ The management WebSocket uses two identities for a DAG control:
   "command_id": "user_cancel_22222222-2222-4222-8222-222222222222",
   "signed_at": 1788717000,
   "ttl_seconds": 30,
-  "payload": {"task_id": "22222222-2222-4222-8222-222222222222"}
+  "payload": {"task_id": "22222222-2222-4222-8222-222222222222", "durable": true}
 }
 ```
 
@@ -36,8 +35,11 @@ See [AUD-121 reproduction and limits](../audits/2026-09-05/INTERACTIVE-RESULT-ID
 
 The Android dispatcher requires a nonblank string target for CANCEL_DAG,
 PAUSE_DAG and RESUME_DAG. It returns `invalid_task_target` for a missing/malformed
-target and `task_not_running` when that ID is not the active execution. There is
-no implicit fallback to whichever DAG currently occupies the device.
+target. Legacy controls return `task_not_running` when that ID is not active.
+Durable CANCEL_DAG first saves a journal fence: unseen tasks receive a cancelled
+receipt without executing, active tasks stop cooperatively, terminal receipts are
+replayed, interrupted executions report an unknown outcome. There is no fallback
+to whichever DAG currently occupies the device.
 
 DagRunner matches the target and changes its control flags under the same lock
 used to establish and clear the active execution. Cleanup runs on success,
@@ -49,7 +51,8 @@ control request, **not confirmation that device effects have stopped**.
 Cancellation is cooperative. A checkpoint runs before each action/retry,
 including nested loop bodies; pause waits at that boundary until resume or cancel.
 A cancellation observed during the final action produces `success=false` with
-`CANCELLED`/`cancelled_by_user`, so the dispatcher persists a failed DAG receipt.
+`CANCELLED`/`cancelled_by_user` and `cancelled=true`; the dispatcher persists a failed
+DAG wire receipt, which the backend stores as SQL CANCELLED.
 The separate control ACK still records acceptance only. The current synchronous,
 root or Lua action may continue until it returns. Checkpoint-to-action races are
 possible; root pipe flushes do not prove execution or shell exit status. Pause
@@ -72,8 +75,10 @@ without another queue or command effect. Ordinary GETs do not take this lock.
 Batch DELETE authorizes the organization, locks QUEUED/ASSIGNED tasks in UUID
 order, then locks/refreshes the batch. Only PENDING/RUNNING batches are mutable;
 terminal batches return 409 before queue effects. Result writers acquire Task
-before TaskBatch, and cancellation retains that order. Cancelled tasks receive a
-UTC finished_at; RUNNING tasks continue. ASSIGNED may already be in transit.
+before TaskBatch, and cancellation retains that order. QUEUED tasks receive a
+UTC finished_at; ASSIGNED retains an active status with a cancel intent. RUNNING
+tasks continue by the existing batch policy. CANCELLED batch stops wave admission;
+it does not claim all already-running children have stopped.
 Wave submission now keeps a batch active until device outcomes arrive and counts
 admission failures under the result aggregation lock. It does not emit a false
 completion webhook. Parent commit precedes worker launch. Producer/cancel share
@@ -88,20 +93,25 @@ order and refreshes them before mutation. A concurrently committed terminal row
 is excluded after the lock wait, with no queue/control effect for that row.
 The latest execution lookup also retains the schedule organization. Stop signing
 time is generated after waiting so a long SQL wait does not consume its TTL.
-The scheduler still uses prefixed control IDs and explicit task targets.
-Pipeline row cancellation does not itself stop an in-flight child task or fence
-all executor writes. See AUD-44 and test_scheduler_cancellation.py.
+The scheduler saves cancellation intent instead of publishing in its transaction.
+The dispatcher commits a bounded attempt lease before publishing; retries use the
+same target/control ID with a fresh timestamp, at least five seconds apart.
+Publish/control ACK never finishes a task. Pending cancellation blocks subsequent
+dispatch and ordinary stale-task expiry. SQL rollback publishes nothing.
 
-These changes do not introduce a cancellation outbox. In particular:
+Pipeline cancellation locks Task before PipelineRun, fences child admission and
+waits for terminal child/nested runs. A fresh executor reconciles saved cancellation
+without replaying pipeline steps. UI exposes the pending intent instead of hiding
+the still-active run. Parallel native task children are rejected before admission.
 
-- TaskService still sends the running stop before its caller commits. A failed
-  commit can leave SQL RUNNING after the APK accepted cancellation. Distinct
-  control IDs prevent a forged success outcome, but do not reconcile the states.
-- Redis failure can still abort cancellation, and transport acceptance does not
-  prove device receipt. Watchdog sends after timeout commit, without a durable
-  retry/stop acknowledgement. The scheduler has its own cancellation path.
-- A stop delivered before the DAG becomes active is rejected, not persisted as
-  a future cancellation intent. ASSIGNED work may already be in transit.
+Remaining failure cases:
+
+- A process/root outcome reported as unknown remains active for reconciliation;
+  no automatic unlock or APK result ACK can discard that evidence.
+- Ordinary watchdog timeout without a saved cancellation retains its older
+  contract: TIMEOUT and best-effort stop do not prove physical termination.
+- Legacy pipeline `action` publication has no native terminal task receipt;
+  cancellation cannot withdraw an already-published action.
 - Controls are not durably deduplicated or ordered within the same execution.
   A delayed resume for the same task may override a later pause. TTL is only an
   age bound, not an execution generation or ordering guarantee.
@@ -111,14 +121,13 @@ These changes do not introduce a cancellation outbox. In particular:
 
 ## Rollout and verification
 
-Update all backend workers before adopting the Android target requirement: old
-watchdogs send no `payload.task_id`, which the new APK rejects. Pause/resume
-integrations must also send a target and a distinct control ID. Old APKs still
-ignore the target, so delayed-control protection requires the APK update too.
-All backend workers must also adopt the batch production/cancellation fence; an
-old wave worker can still admit work after cancellation. Mixed versions do not
-provide the complete guarantee. No production rollout was
-performed during this audit.
+Pause new admission for coordinated rollout. Install and verify the APK journal
+fence on canaries, apply both nullable-column migrations, then update every backend
+worker and frontend. Existing 1.2.7 supports targeted controls but not the new
+durable pre-arrival fence. Older legacy agents may ignore targets altogether.
+Mixed workers/agents do not provide the complete contract. Do not downgrade away
+pending intent columns before reconciling active work. Native fault acceptance
+and 32-device capacity remain open; this change did not update pilot runtime.
 
 `ControlCommandTargetTest` exercises the real dispatcher, journal and DAG runner
 through their WebSocket callback with virtual coroutine time and fake OS/storage.

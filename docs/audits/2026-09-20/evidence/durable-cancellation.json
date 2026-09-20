@@ -1,0 +1,117 @@
+{
+  "finding": "AUD-129 / F32-01 durable task and pipeline cancellation",
+  "before_source": "68158798e0310f0241bdb0c176ec5e43f97ee7bd",
+  "before": {
+    "tests": 5,
+    "failed": 5,
+    "errors": 0,
+    "skipped": 0,
+    "seconds": 1.564
+  },
+  "after": {
+    "all_backend_tests_except_explicit_load_profiles": {
+      "tests": 1802,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 422.028
+    },
+    "focused_cancellation_delivery_batch": {
+      "tests": 122,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 43.632
+    },
+    "pipeline_orchestration_and_reversible_migration": {
+      "tests": 83,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 8.936
+    },
+    "frontend": {
+      "numTotalTests": 229,
+      "numPassedTests": 229,
+      "numFailedTests": 0,
+      "numTotalTestSuites": 28,
+      "success": true
+    },
+    "android_unit_tests": {
+      "Dev": {
+        "tests": 586,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "Enterprise": {
+        "tests": 586,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 1
+      }
+    }
+  },
+  "intermediate_failures_retained": {
+    "first_full_backend_run": {
+      "tests": 1797,
+      "failed": 26,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 440.957
+    },
+    "causes": {
+      "powershell_output_decoding": 23,
+      "old_redis_queue_expectation": 1,
+      "unscoped_fixture_cancel_delivery": 2
+    },
+    "corrections": [
+      "UTF-8 PowerShell test wrappers in c730e10",
+      "Assert durable SQL cancellation, not an obsolete Redis write",
+      "Scope test dispatch to its random tenant and clear fixture cancellation intents"
+    ],
+    "powershell_suites_after": {
+      "tests": 66,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 62.242
+    }
+  },
+  "static_validation": {
+    "ruff_changed_sources": "passed",
+    "mypy_eight_changed_backend_modules": "passed",
+    "frontend_typescript": "passed",
+    "openapi_export": "updated from registered HTTP schema",
+    "full_windows_ruff": "one E721 diagnostic in unchanged account_credentials.py, reproduced on 6815879 with the same local toolchain",
+    "full_windows_mypy": {
+      "errors": 14,
+      "files": 8,
+      "diagnostics_equal_to_6815879": true
+    },
+    "ci": "Exact new commit CI is separate from local tests; do not reuse previous-head CI as evidence"
+  },
+  "runtime": {
+    "deployed": false,
+    "native_acceptance": "pending",
+    "backend": "85fb1ea",
+    "frontend": "03b161e",
+    "apk": "1.2.7 / 10207"
+  },
+  "residual_limits": [
+    "Cooperative DAG boundary is not proof that every root child process exited",
+    "Unknown interruption remains active and requires operator reconciliation",
+    "Legacy watchdog timeout without cancel intent and legacy pipeline action are not terminal device-stop guarantees",
+    "Batch cancellation retains the finish-current-RUNNING-task policy",
+    "Native/mixed-version rollout, ordinary pipeline lease recovery, durable batch waves and 32-device soak remain open"
+  ],
+  "regression_sha256_lf": {
+    "tests/production/test_durable_task_cancellation.py": "5645e8c906713805dd5e8a5bc3c482387e7d7d65d8d45a81a2f24084fc8220b4",
+    "tests/production/test_pipeline_cancel_intent.py": "bd5a03b7a51432d8807f061749ca6fa6039979596ed3f8c9cd5ae66d58e6eb5b",
+    "tests/production/test_cancellation_migrations.py": "fc13cc0f47c8989a8f277387291446f32d69c359616cc4cb6ebf2335fc942b8b",
+    "android/app/src/test/kotlin/com/sphereplatform/agent/commands/CommandJournalTest.kt": "5ed6d51445f2075a3141aa84ccdb597db9afb3fc5cbf9f1d862793855a39d331",
+    "android/app/src/test/kotlin/com/sphereplatform/agent/commands/ControlCommandTargetTest.kt": "db128c81fc9d2a8a1f6f1cff90caa08d1d565bf1d1dde0f9f381e27237151185",
+    "frontend/__tests__/tasks/history.test.tsx": "d53444a506b68012d9f2ee71d9cca1a2ebf37b1d6e2fa4392a91ec1dfc155997",
+    "frontend/__tests__/tasks/cancellation-status.test.ts": "b5c8f6073a5718d73423d63293a9a0da0460f5e2a7cd07c74c4c5631dde70217"
+  }
+}

@@ -113,4 +113,5 @@ async def test_current_active_task_can_still_be_cancelled(world, method, initial
     async with world.sessions() as db:
         result = await getattr(TaskService(db, AsyncMock(), publisher=publisher), method)(task.id, world.org_a.id)
         await db.commit()
-        assert result.status == TaskStatus.CANCELLED
+        assert result.status == (TaskStatus.CANCELLED if initial == TaskStatus.QUEUED else initial)
+        assert result.cancel_requested_at is not None

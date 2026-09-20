@@ -77,7 +77,7 @@ async def test_account_writers_do_not_persist_plaintext(world, writer):
         cache = AsyncMock()
         cache.bulk_get_status.side_effect = lambda ids: {
             device: SimpleNamespace(status="online") if device == str(world.dev_a.id) else None for device in ids}
-        await TaskService(dispatch, status_cache=cache, publisher=publisher).dispatch_pending_tasks()
+        await TaskService(dispatch, status_cache=cache, publisher=publisher).dispatch_pending_tasks(org_id=world.org_a.id)
         payload = publisher.send_command_live.call_args.args[1]["payload"]
         assert payload["dag"]["nodes"][0]["action"]["text"] == expected
         task = await dispatch.scalar(select(Task).where(Task.device_id == world.dev_a.id))
@@ -114,6 +114,6 @@ async def test_legacy_account_remains_visible_but_cannot_be_revealed_or_dispatch
         cache = AsyncMock()
         cache.bulk_get_status.side_effect = lambda ids: {
             device: SimpleNamespace(status="online") if device == str(world.dev_a.id) else None for device in ids}
-        await TaskService(db, status_cache=cache, publisher=publisher).dispatch_pending_tasks()
+        await TaskService(db, status_cache=cache, publisher=publisher).dispatch_pending_tasks(org_id=world.org_a.id)
         publisher.send_command_live.assert_not_called()
         assert (await db.get(Task, task.id)).status == TaskStatus.QUEUED

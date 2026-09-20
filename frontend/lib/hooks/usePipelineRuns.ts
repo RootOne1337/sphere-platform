@@ -6,6 +6,7 @@ export interface PipelineRunSummary {
   pipeline_id: string;
   device_id: string;
   status: string;
+  cancel_requested_at?: string | null;
   current_step_id: string | null;
   current_task_id: string | null;
 }
