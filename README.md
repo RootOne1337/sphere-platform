@@ -35,7 +35,9 @@
 > Изменение исходного кода ещё не установлено на стенд; native-приёмка открыта.
 > [AUD-130](docs/audits/2026-09-20/PIPELINE-ADMISSION.md) дополнительно ограничивает
 > очередь принятых pipeline; 10 admission и 3 SQL-wait regressions прошли.
-> Lease/restart recovery и кластерная квота остаются открытыми.
+> [AUD-131](docs/audits/2026-09-20/PIPELINE-RECOVERY.md) добавляет lease/checkpoint recovery
+> и защиту от повторения неопределённого эффекта; проверен OS-kill тестового worker.
+> Rollout, nested capacity и кластерная квота остаются открытыми.
 
 > **Повторная ночь остановилась через 3 ч 33 мин:** 106 циклов, 223 native DAG
 > подтверждены; в цикле 107 не запустился второй стрим. Оба APK сохранили PID,

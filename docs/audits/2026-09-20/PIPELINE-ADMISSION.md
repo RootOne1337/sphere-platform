@@ -4,6 +4,11 @@
 
 [Fleet32 preflight](FLEET32-PREFLIGHT.md) · [Отмена AUD-129](DURABLE-CANCELLATION.md) · [Readiness](../../operations/READINESS.md)
 
+**Последующее изменение:** [AUD-131](PIPELINE-RECOVERY.md) добавляет lease/checkpoint
+recovery, generation fencing и shutdown hook. Ограничения ниже описывают исходный
+AUD-130; nested capacity и cluster/device quota остаются открытыми и после AUD-131.
+CI исходного `7290f1e` прошёл полностью: [точные SHA и runs](../2026-09-05/evidence/ci-7290f1e-summary.json).
+
 ## Дефект и причина
 
 В [PipelineExecutor](../../../backend/services/orchestrator/pipeline_executor.py)

@@ -2,6 +2,12 @@
 
 **Срез: 20 сентября 2026 · аудит продолжается · приоритеты согласованы с владельцем.**
 
+**AUD-131, source-only:** pipeline получает lease/generation и атомарную точку
+восстановления. После потери worker продолжает ожидание того же child; неизвестный
+внешний эффект требует проверки. 120 связанных backend и 234 frontend tests прошли,
+включая OS-kill test worker. [Контракт, rollout и residual risks](../audits/2026-09-20/PIPELINE-RECOVERY.md).
+Не установлен; nested capacity, durable batch и 32-device приёмка остаются OPEN.
+
 **AUD-130, source-only:** ограничена очередь принятых pipeline на worker; 10 PostgreSQL
 regressions прошли. Ещё три теста проверили освобождение SQL connection при ожидании
 с пулом из одного соединения и timeout 900ms. [Доказательства и открытые recovery gates](../audits/2026-09-20/PIPELINE-ADMISSION.md).

@@ -18,6 +18,12 @@ F32-01 остаётся OPEN до native/root-path приёмки. Осталь�
 для delay/task/sub-pipeline с idle-timeout 900ms (изменение AUD-129). F32-04/05
 продвинуты в исходном коде, но rollout и остаточные gates открыты; F32-02 не исправлен.
 
+**Следующий source fix — AUD-131:** [lease/checkpoint recovery pipeline](PIPELINE-RECOVERY.md).
+F32-02 теперь имеет проверенное восстановление безопасных checkpoint/child ожиданий,
+generation fencing и явное `unknown` для неоднозначных эффектов. 120 связанных tests,
+включая OS-kill изолированного worker; native rollout и nested capacity остаются OPEN.
+Фраза о неисправленном F32-02 выше описывает checkpoint AUD-130, не текущий source.
+
 ## Что проверяем и что уже известно
 
 Сценарий владельца: **32 настоящих эмулятора, 32 живых экрана в одном веб-интерфейсе,
@@ -122,6 +128,12 @@ release вызван; pipeline=CANCELLED, child=RUNNING. Отказ transport з
 **Residual:** root action может уже завершиться; нельзя обещать откат внешнего действия.
 
 ### F32-02 — осиротевшие RUNNING pipeline
+
+**Последующий source status:** [AUD-131](PIPELINE-RECOVERY.md) добавляет lease,
+generation и атомарные step/child checkpoints. Проверен OS-kill отдельного test worker,
+сохранение одного child ID, fencing позднего результата, pause/resume и timeout.
+Внешний неизвестный эффект переводится в review, не повторяется. Native rollout,
+nested capacity и общая политика admission остаются открытыми. Ниже — исходная проблема.
 
 **Root cause / файлы:** [PipelineExecutor](../../../backend/services/orchestrator/pipeline_executor.py)
 выбирает только QUEUED; [PipelineRun](../../../backend/models/pipeline.py) не имеет

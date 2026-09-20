@@ -2,6 +2,12 @@
 
 Статус на 20 сентября 2026: **аудит продолжается; production readiness не подтверждена**.
 
+**AUD-131 · High · source fix, не установлен:** lease/generation, атомарные step/child
+checkpoints, безопасное восстановление после потери worker, запрет blind replay
+неопределённого эффекта. Пять SQL failures и один lifecycle failure до изменения;
+120 связанных backend / 234 frontend tests passed. [Причина, OS-kill evidence и rollout](../2026-09-20/PIPELINE-RECOVERY.md).
+Nested capacity, durable batch waves и native/32-device acceptance остаются OPEN.
+
 **AUD-130 · High · source fix, не установлен:** bounded pipeline admission; 9 before
 failures → 10 passing PostgreSQL regressions, плюс три one-connection/idle-timeout
 проверки ожиданий из AUD-129. [Root cause, fix и residual risks](../2026-09-20/PIPELINE-ADMISSION.md).

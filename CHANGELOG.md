@@ -24,6 +24,15 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Security / runtime
 
+- AUD-131: persist pipeline owner/generation leases and atomic step/child checkpoints.
+  Recover safe waits using the same child identity, preserve deadlines, fence stale
+  workers and pause unconfirmed external effects for review instead of blind replay.
+  Wire executor shutdown and expose recovery state in orchestration UI. Five SQL
+  baseline failures plus one missing-shutdown-hook failure precede 120 related
+  backend tests; 234 frontend tests pass. Includes actual isolated worker OS kill.
+  Source only; nested capacity, durable batch and native fleet acceptance remain open.
+  [Evidence, migration and residual risks](docs/audits/2026-09-20/PIPELINE-RECOVERY.md).
+
 - AUD-130: bound pipeline claims to free executor slots, serialize concurrent polls
   and fence admission during stop. Nine baseline failures precede ten passing real
   PostgreSQL regressions; three further one-slot-pool/idle-timeout tests verify the

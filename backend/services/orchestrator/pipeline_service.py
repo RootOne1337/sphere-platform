@@ -391,6 +391,10 @@ class PipelineService:
         run = await self.get_run(run_id, org_id, for_update=True)
         if run.status != PipelineRunStatus.PAUSED or run.cancel_requested_at is not None:
             raise HTTPException(status_code=400, detail="Можно возобновить только PAUSED run")
+        if run.execution_owner is not None:
+            raise HTTPException(status_code=409, detail="Previous executor has not released this step; wait for recovery")
+        if run.execution_phase == "unknown":
+            raise HTTPException(status_code=409, detail="Step outcome requires review; automatic replay is unsafe")
         run.status = PipelineRunStatus.QUEUED
         await self.db.flush()
         logger.info("pipeline_run.resumed", run_id=str(run_id))

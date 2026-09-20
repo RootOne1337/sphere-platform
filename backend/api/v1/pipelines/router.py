@@ -12,7 +12,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.dependencies import require_permission
-from backend.core.lifespan_registry import register_startup
+from backend.core.lifespan_registry import register_shutdown, register_startup
 from backend.database.engine import get_db
 from backend.models.pipeline import PipelineRunStatus
 from backend.models.user import User
@@ -51,8 +51,21 @@ async def _startup_pipeline_executor() -> None:
     from backend.services.orchestrator.pipeline_executor import PipelineExecutor
 
     executor = PipelineExecutor()
-    asyncio.create_task(executor.start())
+    task = asyncio.create_task(executor.start())
     logger.info("pipeline_executor.registered")
+
+    async def shutdown_pipeline_executor() -> None:
+        try:
+            # Admission closes before cancellation of the loop, so a commit
+            # already in flight is included in the drain when possible.
+            await asyncio.wait_for(executor.stop(), timeout=35)
+        except asyncio.TimeoutError:
+            logger.warning("pipeline_executor.shutdown_timeout")
+        finally:
+            task.cancel()
+            await asyncio.gather(task, return_exceptions=True)
+
+    register_shutdown("pipeline_executor", shutdown_pipeline_executor)
 
 
 register_startup("pipeline_executor", _startup_pipeline_executor)

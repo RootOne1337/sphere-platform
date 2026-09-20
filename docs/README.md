@@ -7,6 +7,7 @@
 
 | Задача | Документ |
 | --- | --- |
+| Понять восстановление pipeline после потери worker и статус неизвестного результата | [Lease/checkpoint recovery AUD-131](audits/2026-09-20/PIPELINE-RECOVERY.md) |
 | Понять лимит pipeline на worker и проверку SQL-ожиданий | [Admission и ограничения AUD-130](audits/2026-09-20/PIPELINE-ADMISSION.md) |
 | Различать запрос отмены и подтверждённое окончание DAG | [Контракт и приёмка AUD-129](audits/2026-09-20/DURABLE-CANCELLATION.md) |
 | Подготовить 32 одновременно видимых Android: blockers, evidence, fixes и load gates | [Fleet32 preflight · 20 сентября](audits/2026-09-20/FLEET32-PREFLIGHT.md) |

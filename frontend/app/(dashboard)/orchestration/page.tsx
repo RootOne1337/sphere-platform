@@ -49,6 +49,7 @@ import {
 } from 'lucide-react';
 import { DeviceSelector } from '@/components/sphere/DeviceSelector';
 import { useScripts, Script } from '@/lib/hooks/useScripts';
+import { PipelineResumeControl } from '@/components/orchestration/PipelineResumeControl';
 
 // ============================================================================
 //  ТИПЫ
@@ -86,12 +87,17 @@ interface PipelineRun {
     device_id: string;
     status: string;
     current_step_id: string | null;
+    execution_phase?: string;
+    execution_lease_until?: string | null;
+    cancel_requested_at?: string | null;
     context: Record<string, any>;
     input_params: Record<string, any>;
     step_logs: Array<{
         step_id: string;
         type?: string;
-        status: string;
+        status?: string;
+        event?: string;
+        reason?: string;
         started_at?: string;
         finished_at?: string;
         duration_ms?: number;
@@ -598,7 +604,10 @@ function RunsTab({
     // Мутации управления
     const cancelMut = useMutation({
         mutationFn: (runId: string) => api.post(`/pipelines/runs/${runId}/cancel`),
-        onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['pipeline-runs'] }); toast.success('Run отменён'); },
+        onSuccess: ({ data }) => {
+            queryClient.invalidateQueries({ queryKey: ['pipeline-runs'] });
+            toast.success(data.status === 'cancelled' ? 'Run отменён' : 'Отмена запрошена; ожидаем завершение дочерней работы');
+        },
         onError: () => toast.error('Ошибка отмены'),
     });
 
@@ -665,6 +674,7 @@ function RunsTab({
                                 onCancel={() => cancelMut.mutate(run.id)}
                                 onPause={() => pauseMut.mutate(run.id)}
                                 onResume={() => resumeMut.mutate(run.id)}
+                                resumePending={resumeMut.isPending}
                             />
                         );
                     })}
@@ -675,7 +685,7 @@ function RunsTab({
 }
 
 function RunRow({
-    run, pipelineName, expanded, onToggle, isActive, isPaused, onCancel, onPause, onResume
+    run, pipelineName, expanded, onToggle, isActive, isPaused, onCancel, onPause, onResume, resumePending
 }: {
     run: PipelineRun;
     pipelineName?: string;
@@ -686,6 +696,7 @@ function RunRow({
     onCancel: () => void;
     onPause: () => void;
     onResume: () => void;
+    resumePending: boolean;
 }) {
     return (
         <>
@@ -725,9 +736,13 @@ function RunRow({
                             </>
                         )}
                         {isPaused && (
-                            <Button variant="ghost" size="tiny" className="text-muted-foreground hover:text-success hover:bg-success/10" onClick={onResume} title="Возобновить">
-                                <Play className="w-3 h-3" />
-                            </Button>
+                            <>
+                                <PipelineResumeControl run={run} onResume={onResume} pending={resumePending} />
+                                <Button variant="ghost" size="tiny" disabled={!!run.cancel_requested_at}
+                                    onClick={onCancel} title="Отменить pipeline">
+                                    <XCircle className="w-3 h-3" />
+                                </Button>
+                            </>
                         )}
                     </div>
                 </td>
@@ -745,7 +760,9 @@ function RunRow({
                                 {run.step_logs.map((log, idx) => (
                                     <div key={idx} className="flex items-center gap-3 text-[11px] font-mono">
                                         <span className="w-5 text-muted-foreground/50 text-right">{idx + 1}</span>
-                                        <StatusBadge status={log.status === 'success' ? 'completed' : log.status === 'failed' ? 'failed' : 'running'} />
+                                        {log.event
+                                            ? <Badge variant="outline">{log.event}</Badge>
+                                            : <StatusBadge status={log.status === 'success' ? 'completed' : ['failed', 'failure'].includes(log.status || '') ? 'failed' : 'running'} />}
                                         <span className="text-foreground font-bold">{log.step_id}</span>
                                         {log.type && (
                                             <Badge variant="outline" className={`text-[8px] ${STEP_TYPE_COLORS[log.type] || ''}`}>{log.type}</Badge>
@@ -756,6 +773,7 @@ function RunRow({
                                         {log.error && (
                                             <span className="text-destructive text-[10px] truncate max-w-[200px]" title={log.error}>⚠ {log.error}</span>
                                         )}
+                                        {log.reason && <span className="text-warning text-[10px]" title={log.reason}>{log.reason}</span>}
                                     </div>
                                 ))}
                             </div>

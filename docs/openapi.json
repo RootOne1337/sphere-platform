@@ -14542,6 +14542,52 @@
             ],
             "title": "Current Task Id"
           },
+          "current_child_run_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Child Run Id"
+          },
+          "execution_phase": {
+            "type": "string",
+            "title": "Execution Phase",
+            "default": "ready"
+          },
+          "execution_generation": {
+            "type": "integer",
+            "title": "Execution Generation",
+            "default": 0
+          },
+          "execution_lease_until": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Execution Lease Until"
+          },
+          "step_started_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Step Started At"
+          },
           "started_at": {
             "anyOf": [
               {

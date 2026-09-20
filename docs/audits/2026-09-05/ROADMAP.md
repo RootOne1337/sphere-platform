@@ -21,6 +21,13 @@ admission ограничен свободными слотами executor. Ре�
 nested WAITING, общая/per-device квота и F32-03 durable waves остаются первыми
 задачами; source fix не означает выполненный rollout или допуск 32 устройств.
 
+**AUD-131 — [pipeline recovery source fix](../2026-09-20/PIPELINE-RECOVERY.md):**
+lease/generation, atomic step/child checkpoint, OS-kill regression, pause/resume
+fencing и review неизвестного эффекта. 120 связанных backend / 234 frontend tests.
+Следом: сохраняемый WAITING для nested capacity, durable batch wave plan, затем
+bounded decoder/preview/Redis budgets. Согласованный rollout и native stop/recovery
+остаются обязательными; выше сохранены результаты предыдущих checkpoints.
+
 **Приоритет владельца от 9 сентября: реальная эксплуатация.** Порядок P0–P3 теперь
 задаёт [эксплуатационная матрица](../../operations/READINESS.md): APK recovery/fallback,
 сохранность заданий, запуск и наблюдаемость → достоверность UI → capacity → будущий AI.

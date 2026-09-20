@@ -34,20 +34,24 @@ def isolated_sessions(world, *, before_claim=None, before_commit=None, after_com
     async def factory():
         async with world.sessions() as db:
             execute, commit = db.execute, db.commit
+            claiming = False
 
             async def scoped(statement, *args, **kwargs):
+                nonlocal claiming
                 if any(d.get("entity") is PipelineRun
                        for d in getattr(statement, "column_descriptions", [])):
                     statement = statement.where(PipelineRun.org_id == world.org_a.id)
-                    if before_claim and statement._for_update_arg is not None:
+                    claiming = (statement._for_update_arg is not None
+                                and PipelineRunStatus.QUEUED in statement.compile().params.values())
+                    if before_claim and claiming:
                         await before_claim()
                 return await execute(statement, *args, **kwargs)
 
             async def checked_commit():
-                if before_commit:
+                if before_commit and claiming:
                     await before_commit()
                 await commit()
-                if after_commit:
+                if after_commit and claiming:
                     await after_commit()
 
             db.execute, db.commit = scoped, checked_commit
