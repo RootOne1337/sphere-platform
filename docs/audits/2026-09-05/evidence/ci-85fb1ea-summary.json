@@ -1,0 +1,87 @@
+{
+  "head": "85fb1ea537c2f7961057432e8317f44a44c74c54",
+  "checked_at": "2026-09-20T09:50:01.410973+00:00",
+  "runs": [
+    {
+      "conclusion": "success",
+      "databaseId": 35502864308,
+      "headSha": "85fb1ea537c2f7961057432e8317f44a44c74c54",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/35502864308",
+      "workflowName": "Preview \u2014 Deploy",
+      "jobs": [
+        {
+          "name": "guard",
+          "conclusion": "success"
+        },
+        {
+          "name": "deploy",
+          "conclusion": "skipped"
+        }
+      ]
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 35502864374,
+      "headSha": "85fb1ea537c2f7961057432e8317f44a44c74c54",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/35502864374",
+      "workflowName": "CI \u2014 Frontend",
+      "jobs": [
+        {
+          "name": "Frontend tests, types and build",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 35502864398,
+      "headSha": "85fb1ea537c2f7961057432e8317f44a44c74c54",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/35502864398",
+      "workflowName": "CI \u2014 Android",
+      "jobs": [
+        {
+          "name": "Build APK",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 35502864402,
+      "headSha": "85fb1ea537c2f7961057432e8317f44a44c74c54",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/35502864402",
+      "workflowName": "CI \u2014 Backend",
+      "jobs": [
+        {
+          "name": "RLS Policy Coverage",
+          "conclusion": "success"
+        },
+        {
+          "name": "Production image bootstrap",
+          "conclusion": "success"
+        },
+        {
+          "name": "Security (bandit + pip-audit)",
+          "conclusion": "success"
+        },
+        {
+          "name": "Lint (ruff + mypy)",
+          "conclusion": "success"
+        },
+        {
+          "name": "Tests",
+          "conclusion": "success"
+        },
+        {
+          "name": "Alembic Single Head",
+          "conclusion": "success"
+        }
+      ]
+    }
+  ],
+  "note": "Workflow/job conclusions from GitHub. No inferred JUnit count; preview deploy may be intentionally skipped."
+}
