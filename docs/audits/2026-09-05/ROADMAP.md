@@ -13,8 +13,10 @@ Redis/observability/backup и staged load acceptance. Для VPN/OTA/PC/n8n от
 batch waves и проверяет recovery двумя OS-процессами. Source-only, native
 rollout остаётся OPEN. [AUD-133](../2026-09-20/PIPELINE-RLS.md) исправляет
 **F32-25 для pipeline**: scoped claim/renew/reconcile/recovery под настоящей
-non-owner ролью; 76 связанных tests прошли. Следом — остальные background workers,
-nested WAITING/capacity и video/preview/Redis budgets. Остальные записи
+non-owner ролью; 76 связанных tests прошли. Отдельная SQL-проба на `d859a52`
+[воспроизвела nested starvation](../2026-09-20/evidence/pipeline-nested-capacity.json):
+10 родителей удерживают все слоты, 10 children не принимаются. Следом — durable
+nested WAITING/capacity, остальные background workers и video/preview/Redis budgets. Остальные записи
 ниже — история checkpoints, не утверждение об отсутствии более поздних fixes.
 
 **Первый source fix — [AUD-129](../2026-09-20/DURABLE-CANCELLATION.md):** сохранённая

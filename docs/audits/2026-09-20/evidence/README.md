@@ -54,6 +54,24 @@ Probe компилирует настоящий `frontend/lib/h264-decoder.ts`; 
 браузера, исключение после codec error выходит наружу. Никакого реального codec
 или 32-device нагрузочного теста эта проверка не изображает.
 
+## Pipeline RLS и nested capacity, 21 сентября
+
+[AUD-133 evidence](pipeline-rls.json) фиксирует три baseline failures и 1880
+passing backend tests после исправления RLS. Отдельная
+[nested capacity probe](pipeline_nested_capacity_probe.py) на source `d859a52`
+проверяет следующий открытый сценарий: десять родителей держат все слоты,
+их пустые children не получают executor. [Сводка](pipeline-nested-capacity.json).
+Запускать только с disposable loopback PostgreSQL/Redis и теми же guards:
+
+```powershell
+python -m pytest -p tests.conftest -p tests.production.conftest docs/audits/2026-09-20/evidence/pipeline_nested_capacity_probe.py -q --no-cov
+```
+
+На указанном source ожидается **1 failed, 0 errors** на финальном assertion
+`parents_completed > 0`. Это не fault на pilot, не Android automation и не
+часть проходящего стандартного CI. После исправления сценарий нужно перенести
+в regression suite и дополнить restart/cancel/deadline проверками.
+
 ## Сохранность evidence
 
 Сырые pytest logs, Android meminfo/crash buffers, operator credentials и deployment

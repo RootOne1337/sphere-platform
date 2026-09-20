@@ -8,6 +8,9 @@
 worker, тот же child ID, два tenants, pool reuse, отказ/grant и migration проверены.
 [Root cause, evidence, файлы, rollout и residual risks](../2026-09-20/PIPELINE-RLS.md).
 Остальные background workers, nested capacity и native fleet gates остаются OPEN.
+Для nested capacity после fix сохранено отдельное [воспроизведение](../2026-09-20/evidence/pipeline-nested-capacity.json):
+10 родителей / 10 пустых children / 0 завершённых родителей после восьми polls;
+это ожидаемый diagnostic failure, не регрессия в 1880 passing backend tests.
 
 **AUD-132 · High · source fix, не установлен:** сохранённый batch wave plan,
 pinned version, атомарный cursor/receipts и bounded startup worker. Crash/lost

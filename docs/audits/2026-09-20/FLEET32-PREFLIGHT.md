@@ -208,6 +208,18 @@ idle transaction=0 и ограниченное ожидание checkout. **Resi
 и сериализует poll/stop; 10 passing real-SQL regressions. Cluster/per-device limit,
 nested WAITING/recovery и rollout открыты. [Исправление и evidence](PIPELINE-ADMISSION.md).
 
+**Повторная проверка 21 сентября, source `d859a52`:** оставшаяся nested capacity
+проблема теперь воспроизведена реальным executor/SQL. Десять родителей создают
+десять пустых children и занимают все десять слотов. После восьми следующих polls
+сохраняется 10 RUNNING parents / 10 QUEUED children / 0 completed parents.
+Пустой child сам не требует Android и мог бы завершиться сразу, но не получает
+слот. Это **1 ожидаемый failing assertion**, не часть passing backend-набора.
+[Сводка и границы](evidence/pipeline-nested-capacity.json),
+[сохранённая проба](evidence/pipeline_nested_capacity_probe.py).
+Требуется сохраняемое ожидание с освобождением executor capacity, корректным
+возвратом по child receipt/deadline и сохранением cancel/recovery fencing.
+Просто поднять лимит или разрешить неограниченное число coroutine недостаточно.
+
 **Root cause / файлы:** [PipelineExecutor._poll_and_dispatch](../../../backend/services/orchestrator/pipeline_executor.py)
 на каждом poll помечает до десяти runs RUNNING и создаёт tasks **до** захвата semaphore.
 **Evidence:** четыре poll, 32 queued runs → 32 RUNNING и 32 background tasks при

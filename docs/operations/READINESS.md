@@ -7,7 +7,10 @@ recovery работают под non-owner/NOBYPASSRLS ролью. Три failur
 связанных passing tests, включая настоящий OS-kill и изоляцию двух tenants.
 [Контракт, grants и ограничения](../audits/2026-09-20/PIPELINE-RLS.md).
 F32-25 исправлен в коде; обязательны runtime-role canary и согласованный rollout.
-Далее — другие background workers, nested capacity, bounded decoder/preview.
+Следующая SQL-проба подтвердила nested starvation: 10 родителей занимают все
+слоты; 10 пустых children остаются QUEUED после восьми polls. Это открытый P0,
+не исправленный RLS: [счётчики и границы](../audits/2026-09-20/evidence/pipeline-nested-capacity.json).
+Далее — durable nested waiting, другие background workers, bounded decoder/preview.
 
 **AUD-132, source-only:** batch сохраняет полный план, версию script, Task IDs,
 cursor и due time; волна и admission receipts коммитятся вместе. Проверены

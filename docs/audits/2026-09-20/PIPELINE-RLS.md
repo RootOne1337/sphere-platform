@@ -46,7 +46,9 @@ tenant-группа сразу регистрируется в executor до о�
 `--follow-imports=silent` прошли. Проверка с анализом импортов отдельно выдаёт две
 ошибки `union-attr` в неизменённом `backend/database/redis_client.py:50–51`;
 они воспроизводятся и при проверке только этого файла в локальном окружении.
-Это не полный зелёный mypy всего backend; точный CI проверяется после push.
+Локальный полный mypy не объявлен зелёным. После push все четыре workflows
+точного source `d859a52` прошли, включая CI lint/mypy и Production image bootstrap:
+[архив выводов GitHub](../2026-09-05/evidence/ci-d859a52-summary.json).
 Полный backend-набор: **1880 passed**, 0 failures, 0 errors; 0 skipped. Точные результаты — в [evidence](evidence/pipeline-rls.json).
 
 | Сценарий | Проверяемый результат |
@@ -112,6 +114,8 @@ Canary должен создать задание под фактической 
 2. Nested WAITING всё ещё занимает executor capacity; родители могут не оставить
    места детям. Общая/per-device квота и справедливость между tenants не реализованы.
    Лимит discovery 64 ограничивает poll, но не гарантирует отсутствие starvation.
+   После source fix это отдельно [воспроизведено](evidence/pipeline-nested-capacity.json):
+   десять родителей удерживают все слоты, десять пустых children остаются QUEUED.
 3. SQL/Redis/network fault matrix, время восстановления и SQL-нагрузка heartbeat
    на 32/64 не приняты. Scoped child fixture не доказывает delivery на Android.
 4. При неизвестном внешнем эффекте сохраняется review, не автоматический replay.
