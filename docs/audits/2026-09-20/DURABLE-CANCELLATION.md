@@ -98,6 +98,12 @@ Redis-очереди и глобальная доставка старых fixtu
 списки mypy совпали. Это не зелёный global static check. Exact-commit CI проверяется
 отдельно; результаты старого HEAD не переносятся на новый коммит.
 
+**CI исходного исправления `232ddb8` полностью прошёл:** Backend (tests, lint/mypy,
+security, production image bootstrap, RLS, Alembic single head), Frontend и оба
+запуска Android workflow. Preview guard прошёл, deployment намеренно skipped для
+draft PR. [Архив результатов с точным SHA и ссылками на runs](../2026-09-05/evidence/ci-232ddb8-summary.json).
+Это CI указанного исходного коммита; последующий коммит архива меняет только документы.
+
 Основные regressions: [task](../../../tests/production/test_durable_task_cancellation.py),
 [pipeline](../../../tests/production/test_pipeline_cancel_intent.py), delivery/serialization,
 scheduler/batch; Android `CommandJournalTest` и `ControlCommandTargetTest`; веб `tasks/history`.

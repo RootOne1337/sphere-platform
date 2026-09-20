@@ -89,7 +89,12 @@
       "files": 8,
       "diagnostics_equal_to_6815879": true
     },
-    "ci": "Exact new commit CI is separate from local tests; do not reuse previous-head CI as evidence"
+    "ci": {
+      "source_commit": "232ddb8b34c19a519e5dbd6485e925f0aef447c6",
+      "all_workflows_success": true,
+      "archive": "../../2026-09-05/evidence/ci-232ddb8-summary.json",
+      "scope": "Source commit only; later documentation-only archival commit has separate checks. No native deployment implied."
+    }
   },
   "runtime": {
     "deployed": false,
