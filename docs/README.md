@@ -7,6 +7,7 @@
 
 | Задача | Документ |
 | --- | --- |
+| Подготовить 32 одновременно видимых Android: blockers, evidence, fixes и load gates | [Fleet32 preflight · 20 сентября](audits/2026-09-20/FLEET32-PREFLIGHT.md) |
 | Оценить реальную готовность и порядок работ | [Эксплуатационная матрица](operations/READINESS.md) |
 | Найти подтверждённый дефект/исправление | [Audit report и evidence](audits/2026-09-05/AUDIT-REPORT.md) |
 | Узнать, что осталось до первого рабочего запуска | [Пилот: этапы, ориентиры сроков и критерии](operations/PILOT-ACCEPTANCE.md) |

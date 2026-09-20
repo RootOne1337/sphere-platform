@@ -1,0 +1,63 @@
+# Воспроизведения F32: запуск и ограничения
+
+Исходный код проверен на `1c93cf0a04b07e6a005627d45be511364efe111d`.
+[Основной отчёт](../FLEET32-PREFLIGHT.md).
+
+| Файл | Содержание |
+| --- | --- |
+| [runtime-summary.json](runtime-summary.json) | Read-only snapshot только нового pilot; без credentials, host URLs и сырых crash/log buffers |
+| [reproductions.json](reproductions.json) | Семь ожидаемых failing assertions, факты и ограничения controlled reproductions |
+| [sql_probes.py](sql_probes.py) | Шесть сценариев с настоящей PostgreSQL и один с временным OTA JSON; явно запускаемые диагностические tests |
+| [decoder_probe.cjs](decoder_probe.cjs) | Текущий активный TypeScript decoder со stalled codec double |
+| [decoder-result.json](decoder-result.json) | Очереди, timestamp replacement и ошибка codec; не browser benchmark |
+
+## Backend
+
+Подготовить **отдельные локальные PostgreSQL/Redis** и схему по
+[инструкции integration tests](../../../../tests/production/README.md).
+`POSTGRES_URL`/`REDIS_URL` должны указывать на эти сервисы, а не pilot.
+Fixture дополнительно требует loopback host и слово `audit` в имени disposable БД.
+Нужны backend test dependencies и обычные test environment settings из этой инструкции.
+URL/пароли не добавлять в репозиторий или публичные logs.
+
+Из корня репозитория, после безопасной настройки окружения:
+
+```powershell
+$env:SPHERE_RUN_INTEGRATION = '1'
+python -m pytest -p tests.conftest -p tests.production.conftest docs/audits/2026-09-20/evidence/sql_probes.py -q --no-cov
+```
+
+Ожидаемый результат на указанном source commit: **7 failed, 0 errors**.
+Failures должны быть именно финальными assertions; import/fixture/connection error
+не считается воспроизведением. Один тест специально заменяет результат отправки
+stop на `False`; delay probe блокирует только handler sleep; остальные SQL writes
+и выборки настоящие. Poll query ограничен случайной test organization, чтобы
+исторические fixtures не влияли на результаты. OTA использует только `tmp_path`.
+
+Эти probes находятся вне стандартного `testpaths=["tests"]` и не ломают обычный CI.
+При исправлении переносить соответствующий сценарий в regression suite, дополняя
+проверкой безопасного recovery и гонок. Assertions описывают отсутствующий контракт;
+конкретное состояние `cancelling`/durable plan после fix может потребовать уточнения
+проверки. Сам факт отказа текущего кода это не меняет.
+
+## Активный frontend decoder
+
+После установки frontend dependencies (`npm ci` в `frontend`), из корня:
+
+```powershell
+node docs/audits/2026-09-20/evidence/decoder_probe.cjs
+```
+
+Probe компилирует настоящий `frontend/lib/h264-decoder.ts`; `VideoDecoder` заменён
+только для моделирования невычитываемой очереди и ошибки. На указанном коде:
+2048 pending NAL / 2 MiB, 1000 decode submissions, source timestamp заменён временем
+браузера, исключение после codec error выходит наружу. Никакого реального codec
+или 32-device нагрузочного теста эта проверка не изображает.
+
+## Сохранность evidence
+
+Сырые pytest logs, Android meminfo/crash buffers, operator credentials и deployment
+configuration оставлены приватными. `runtime-summary.json` — исторический snapshot,
+не постоянный health status. Данные старого Docker проекта не используются.
+`reproductions.json` сохраняет точный source SHA; актуальность после новых fixes
+проверяется повторным запуском, а не редактированием прошлых результатов.

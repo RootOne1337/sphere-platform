@@ -12,6 +12,16 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 Полный перечень предыдущих audit fixes, доказательства и residual risks:
 [audit report](docs/audits/2026-09-05/AUDIT-REPORT.md).
 
+### Audit / documentation
+
+- [Fleet32 preflight](docs/audits/2026-09-20/FLEET32-PREFLIGHT.md): 24 prioritized
+  operational findings and acceptance gaps across backend, database, Android,
+  streaming/UI, VPN and deployment. Seven isolated backend probes reproduce open
+  defects; the active browser decoder is exercised with a stalled codec double.
+  Retained diagnostic sources, sanitized evidence, fix contracts and 32/64 load
+  gates are included. This checkpoint changes no runtime code and claims no fleet
+  capacity or eight-hour pass.
+
 ### Security / runtime
 
 - AUD-121: prefixed interactive RPC identities keep shell/logcat/reboot replies
