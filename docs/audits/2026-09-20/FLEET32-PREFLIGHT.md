@@ -12,6 +12,12 @@
 F32-01 остаётся OPEN до native/root-path приёмки. Остальные данные ниже относятся к исходному
 аудиту `1c93cf0`; они не заменены результатами более поздней работы.
 
+**AUD-130, source-only:** [ограничен admission на executor](PIPELINE-ADMISSION.md):
+десять принятых runs, остальные QUEUED; 9 baseline failures → 10 passing regressions.
+Три дополнительных SQL runtime tests проверяют освобождение единственного connection
+для delay/task/sub-pipeline с idle-timeout 900ms (изменение AUD-129). F32-04/05
+продвинуты в исходном коде, но rollout и остаточные gates открыты; F32-02 не исправлен.
+
 ## Что проверяем и что уже известно
 
 Сценарий владельца: **32 настоящих эмулятора, 32 живых экрана в одном веб-интерфейсе,
@@ -147,6 +153,10 @@ wave settings, но не полная адресуемая программа о
 
 ### F32-04 — SQL connection занят во время ожидания
 
+**Последующий source status:** AUD-129 освобождает транзакции перед handler и между
+child polls; AUD-130 добавляет три passing real-SQL regressions с маленьким пулом и
+коротким timeout. [Доказательство и границы](PIPELINE-ADMISSION.md). Ниже — исходная проблема.
+
 **Root cause / файлы:** `_execute_run` в [executor](../../../backend/services/orchestrator/pipeline_executor.py)
 после commit читает Pipeline timeout, открывая следующую транзакцию, затем ждёт
 [step handler](../../../backend/services/orchestrator/step_handlers.py). Delay допускает
@@ -163,6 +173,10 @@ idle transaction=0 и ограниченное ожидание checkout. **Resi
 транзакций нужна явная защита от stale ORM state.
 
 ### F32-05 — semaphore не ограничивает admission
+
+**Последующий source status:** AUD-130 ограничивает число claims свободными слотами
+и сериализует poll/stop; 10 passing real-SQL regressions. Cluster/per-device limit,
+nested WAITING/recovery и rollout открыты. [Исправление и evidence](PIPELINE-ADMISSION.md).
 
 **Root cause / файлы:** [PipelineExecutor._poll_and_dispatch](../../../backend/services/orchestrator/pipeline_executor.py)
 на каждом poll помечает до десяти runs RUNNING и создаёт tasks **до** захвата semaphore.

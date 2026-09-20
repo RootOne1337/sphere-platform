@@ -27,7 +27,7 @@ logger = structlog.get_logger()
 # Интервал опроса очереди QUEUED runs
 _POLL_INTERVAL_SECONDS = 2.0
 
-# Максимум параллельных pipeline runs одновременно
+# Максимум принятых runs на executor/process, не на весь кластер.
 _MAX_CONCURRENT_RUNS = 10
 
 
@@ -42,11 +42,15 @@ class PipelineExecutor:
 
     def __init__(self) -> None:
         self._running = False
+        self._stopping = False
+        self._poll_lock = asyncio.Lock()
         self._semaphore = asyncio.Semaphore(_MAX_CONCURRENT_RUNS)
         self._tasks: set[asyncio.Task] = set()
 
     async def start(self) -> None:
         """Запуск фонового loop."""
+        if self._running or self._stopping:
+            raise RuntimeError("Use one loop per executor and a fresh instance after stop")
         self._running = True
         logger.info("pipeline_executor.started")
         while self._running:
@@ -58,37 +62,54 @@ class PipelineExecutor:
 
     async def stop(self) -> None:
         """Остановка executor."""
+        self._stopping = True
         self._running = False
+        # Include a claim whose commit was already in flight when stop began.
+        # A claim not yet committed observes the fence and rolls back instead.
+        async with self._poll_lock:
+            tasks = set(self._tasks)
         # Дождаться завершения активных задач (с таймаутом)
-        if self._tasks:
-            await asyncio.wait(self._tasks, timeout=30)
-        logger.info("pipeline_executor.stopped")
+        if tasks:
+            await asyncio.wait(tasks, timeout=30)
+        logger.info("pipeline_executor.admission_stopped", pending_runs=sum(not task.done() for task in tasks))
 
     async def _poll_and_dispatch(self) -> None:
         """Выбрать QUEUED runs и запустить в параллель (с ограничением _MAX_CONCURRENT_RUNS)."""
-        await self._reconcile_cancellations()
-        async with AsyncSessionLocal() as db:
-            # FOR UPDATE SKIP LOCKED — безопасно для нескольких инстансов бэкенда
-            result = await db.execute(
-                select(PipelineRun)
-                .where(PipelineRun.status == PipelineRunStatus.QUEUED)
-                .where(PipelineRun.cancel_requested_at.is_(None))
-                .order_by(PipelineRun.created_at)
-                .limit(_MAX_CONCURRENT_RUNS)
-                .with_for_update(skip_locked=True)
-            )
-            runs = result.scalars().all()
+        # Reserve capacity across SELECT, commit and task registration. Otherwise
+        # concurrent polls can both see the same free slots. Semaphore alone only
+        # bounds execution, leaving an unbounded in-memory queue marked RUNNING.
+        async with self._poll_lock:
+            if self._stopping:
+                return
+            # Cancellation reconciliation must run even when every slot is busy.
+            await self._reconcile_cancellations()
+            available = _MAX_CONCURRENT_RUNS - len(self._tasks)
+            if self._stopping or available <= 0:
+                return
+            async with AsyncSessionLocal() as db:
+                result = await db.execute(
+                    select(PipelineRun)
+                    .where(PipelineRun.status == PipelineRunStatus.QUEUED)
+                    .where(PipelineRun.cancel_requested_at.is_(None))
+                    .order_by(PipelineRun.created_at, PipelineRun.id)
+                    .limit(available)
+                    .with_for_update(skip_locked=True)
+                )
+                runs = result.scalars().all()
+                if self._stopping:
+                    await db.rollback()
+                    return
+                for run in runs:
+                    run.status = PipelineRunStatus.RUNNING
+                    run.started_at = datetime.now(timezone.utc)
+                await db.commit()
 
+            # No await between registration operations: each task is a reserved
+            # slot, including the short interval before its coroutine starts.
             for run in runs:
-                run.status = PipelineRunStatus.RUNNING
-                run.started_at = datetime.now(timezone.utc)
-            await db.commit()
-
-        # Запустить каждый run в отдельной задаче
-        for run in runs:
-            task = asyncio.create_task(self._execute_run_safe(run.id))
-            self._tasks.add(task)
-            task.add_done_callback(self._tasks.discard)
+                task = asyncio.create_task(self._execute_run_safe(run.id))
+                self._tasks.add(task)
+                task.add_done_callback(self._tasks.discard)
 
     async def _reconcile_cancellations(self, *, org_id: uuid.UUID | None = None) -> None:
         """Finish persisted cancellations after restart, without replaying a step."""

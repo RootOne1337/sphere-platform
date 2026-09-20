@@ -2,6 +2,11 @@
 
 **Срез: 20 сентября 2026 · аудит продолжается · приоритеты согласованы с владельцем.**
 
+**AUD-130, source-only:** ограничена очередь принятых pipeline на worker; 10 PostgreSQL
+regressions прошли. Ещё три теста проверили освобождение SQL connection при ожидании
+с пулом из одного соединения и timeout 900ms. [Доказательства и открытые recovery gates](../audits/2026-09-20/PIPELINE-ADMISSION.md).
+На pilot не установлено; это не кластерная квота и не восстановление после crash.
+
 **AUD-129, source-only:** отмена ASSIGNED/RUNNING сохраняется в PostgreSQL, API
 отвечает 202 и ждёт terminal DAG receipt. APK сохраняет отмену до EXECUTE_DAG;
 pipeline ждёт child/nested runs, веб показывает ожидание. На pilot не установлено;

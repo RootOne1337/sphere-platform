@@ -15,6 +15,12 @@ Redis/observability/backup и staged load acceptance. Для VPN/OTA/PC/n8n от
 Следом остаются lease/restart recovery обычных pipeline, durable batch waves и
 ограничение видеодекодера; эти пункты не объявлены исправленными данным коммитом.
 
+**Следующее source исправление — [AUD-130](../2026-09-20/PIPELINE-ADMISSION.md):**
+admission ограничен свободными слотами executor. Реальные SQL tests: 10 admission,
+три проверки ожиданий с одним соединением и idle-timeout. F32-02 lease/checkpoint,
+nested WAITING, общая/per-device квота и F32-03 durable waves остаются первыми
+задачами; source fix не означает выполненный rollout или допуск 32 устройств.
+
 **Приоритет владельца от 9 сентября: реальная эксплуатация.** Порядок P0–P3 теперь
 задаёт [эксплуатационная матрица](../../operations/READINESS.md): APK recovery/fallback,
 сохранность заданий, запуск и наблюдаемость → достоверность UI → capacity → будущий AI.

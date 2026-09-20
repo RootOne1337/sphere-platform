@@ -2,6 +2,11 @@
 
 Статус на 20 сентября 2026: **аудит продолжается; production readiness не подтверждена**.
 
+**AUD-130 · High · source fix, не установлен:** bounded pipeline admission; 9 before
+failures → 10 passing PostgreSQL regressions, плюс три one-connection/idle-timeout
+проверки ожиданий из AUD-129. [Root cause, fix и residual risks](../2026-09-20/PIPELINE-ADMISSION.md).
+Lease/restart recovery, nested capacity и общая квота остаются открытыми.
+
 **AUD-129 · High · source fix, не установлен:** SQL cancellation intent → адресный
 повтор stop → APK journal fence → terminal DAG receipt. Pipeline ждёт child/nested
 runs, UI сохраняет активную работу на экране до результата. Пять before failures;

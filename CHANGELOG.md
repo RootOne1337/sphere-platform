@@ -24,6 +24,13 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Security / runtime
 
+- AUD-130: bound pipeline claims to free executor slots, serialize concurrent polls
+  and fence admission during stop. Nine baseline failures precede ten passing real
+  PostgreSQL regressions; three further one-slot-pool/idle-timeout tests verify the
+  wait-transaction release introduced in AUD-129. Ten runs is a per-worker limit;
+  cluster/device quotas, nested capacity and crash recovery remain open. Source only.
+  [Evidence and residual risks](docs/audits/2026-09-20/PIPELINE-ADMISSION.md).
+
 - AUD-129: persist task/pipeline cancellation before delivery, retry targeted stop
   after worker/network recovery, fence late EXECUTE_DAG in the Android journal,
   wait for native child/nested results and display cancellation pending in the UI.
