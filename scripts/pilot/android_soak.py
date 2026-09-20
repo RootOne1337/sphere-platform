@@ -386,6 +386,31 @@ class Runner:
                 await asyncio.sleep(0.1)
         return viewer
 
+    async def verify_viewer_motion(self, viewers, stage):
+        """Require every live viewer to receive fresh frames after known UI motion."""
+        before = [v.frames for v in viewers]
+        self.event("viewer_motion_started", stage=stage, viewers=len(viewers))
+        for device in dict.fromkeys(v.device for v in viewers):
+            try:
+                await self.shell(device, "cmd statusbar expand-notifications")
+                await asyncio.sleep(1)
+            finally:
+                await self.shell(device, "cmd statusbar collapse")
+        try:
+            async with asyncio.timeout(5):
+                while True:
+                    for viewer in viewers:
+                        viewer.check()
+                    if all(v.frames > count for v, count in zip(viewers, before)):
+                        break
+                    await asyncio.sleep(0.1)
+        except TimeoutError:
+            raise SoakFailure(f"No fresh video for every viewer during {stage}") from None
+        self.event("viewer_motion_verified", stage=stage, viewers=[
+            {"device": v.device, "viewer_index": i, "new_frames": v.frames-count}
+            for i, (v, count) in enumerate(zip(viewers, before))
+        ])
+
     async def cycle(self, number):
         started = time.monotonic()
         require(shutil.disk_usage(self.out).free > 1_000_000_000, "Less than 1 GB evidence disk free")
@@ -407,9 +432,13 @@ class Runner:
             await self.sample("stream", memory=True)
             if number % 4 == 0:
                 async with AsyncExitStack() as overlap:
+                    extras = []
                     for device in self.devices:
-                        extra = await self.open_viewer(overlap, device["id"])
+                        extras.append(await self.open_viewer(overlap, device["id"]))
+                    await self.verify_viewer_motion([*viewers, *extras], "overlap")
+                    for extra in extras:
                         self.event("overlap_verified", **extra.summary())
+                await self.verify_viewer_motion(viewers, "after_overlap_close")
             while time.monotonic() - started < 75 and not self.stopping():
                 for viewer in viewers:
                     viewer.check()
