@@ -96,13 +96,7 @@ async def workers(world):
             yield bridges, commands
         finally:
             for bridge in bridges:
-                if hasattr(bridge, "close"):
-                    await bridge.close()
-                else:  # Baseline reproduction must also release its background tasks.
-                    tasks = [*bridge._viewer_tasks.values(), *bridge._delayed_stop_tasks.values()]
-                    for task in tasks:
-                        task.cancel()
-                    await asyncio.gather(*tasks, return_exceptions=True)
+                await bridge.close()
             await command_router.stop()
             await binary.aclose()
 
@@ -153,7 +147,7 @@ async def test_closing_one_worker_does_not_stop_other_viewer(world):
         await until(lambda: any(c["type"] == "stop_stream" for c in commands))
 
 
-async def test_old_browser_finally_cannot_remove_replacement(world):
+async def test_browser_handlers_share_frames_and_close_only_their_own_session(world):
     module = importlib.import_module("backend.api.ws.stream.router")
     token = world.auth(world.users["org_admin"])["Authorization"].split()[1]
     old, new = Viewer(token), Viewer(token)
@@ -164,12 +158,15 @@ async def test_old_browser_finally_cannot_remove_replacement(world):
             old_task = asyncio.create_task(module.stream_viewer_ws(old, device))
             new_task = None
             try:
-                await until(lambda: bridge._viewer_sockets.get(device) is old)
+                await until(lambda: len(bridge._viewers.get(device, {})) == 1)
                 new_task = asyncio.create_task(module.stream_viewer_ws(new, device))
-                await until(lambda: bridge._viewer_sockets.get(device) is new)
+                await until(lambda: len(bridge._viewers.get(device, {})) == 2)
+                await bridge.handle_agent_frame(device, FRAME)
+                for viewer in (old, new):
+                    assert await asyncio.wait_for(viewer.frames.get(), 2) == FRAME
                 old.incoming.put_nowait(None)
                 await asyncio.wait_for(old_task, 3)
-                assert bridge._viewer_sockets.get(device) is new
+                assert [v.socket for v in bridge._viewers[device].values()] == [new]
                 await bridge.handle_agent_frame(device, FRAME)
                 assert await asyncio.wait_for(new.frames.get(), 2) == FRAME
             finally:
@@ -269,7 +266,7 @@ async def test_slow_browser_does_not_block_other_device_or_commands(world):
         assert await asyncio.wait_for(fast.frames.get(), 2) == FRAME + b"other"
         await bridges[1].send_control(device, {"type": "request_keyframe"})
         await until(lambda: any(c["type"] == "request_keyframe" for c in commands))
-        assert bridges[1]._queues[device].size <= 50
+        assert bridges[1]._viewers[device]["slow"].queue.size <= 50
         stuck.set()
 
 

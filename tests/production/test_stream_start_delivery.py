@@ -66,7 +66,7 @@ async def test_missing_initial_command_subscription_closes_viewer_for_recovery(w
             assert viewer.closed == (1013, "stream_transport_unavailable")
             await asyncio.wait_for(task, 2)
             assert not bridge.is_streaming(device)
-            assert device not in bridge._viewer_tasks
+            assert device not in bridge._viewers
         finally:
             task.cancel()
             await asyncio.gather(task, return_exceptions=True)

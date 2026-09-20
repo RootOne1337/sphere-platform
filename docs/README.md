@@ -22,6 +22,8 @@
 
 ## Последняя эксплуатационная приёмка
 
+- [Несколько окон одного устройства: подтверждённая потеря видео и fix AUD-126](audits/2026-09-05/STREAM-MULTI-VIEWER.md).
+
 - [Повторная ночь: FAILED, сохранённые результаты и исправление запуска стрима AUD-125](audits/2026-09-05/STREAM-START-DELIVERY.md).
 
 - [Интерактивные ответы без ложных missing-task warnings](audits/2026-09-05/INTERACTIVE-RESULT-IDENTITY.md).
