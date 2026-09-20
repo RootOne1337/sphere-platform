@@ -36,6 +36,7 @@ Path(".env.local").write_text("ENVIRONMENT=production\\nPOSTGRES_PASSWORD=synthe
     script = root / ("stage.ps1" if shell == "powershell" else "stage.sh")
     if shell == "powershell":
         script.write_text('''$ErrorActionPreference = 'Stop'
+[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
 $PSNativeCommandUseErrorActionPreference = $false
 $ProjectDir = $env:BOOTSTRAP_ROOT
 $LogFile = Join-Path $ProjectDir 'stage.log'

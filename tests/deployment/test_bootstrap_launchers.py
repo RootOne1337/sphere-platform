@@ -48,6 +48,7 @@ if stage == 'admin':
     script = tmp_path / ("run.ps1" if shell == "powershell" else "run.sh")
     if shell == "powershell":
         script.write_text('''$ErrorActionPreference = 'Stop'
+[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
 $PSNativeCommandUseErrorActionPreference = $false
 $ProjectDir = $env:PILOT_ROOT
 $LogFile = Join-Path $ProjectDir 'deploy.log'

@@ -74,6 +74,7 @@ if stage != 'other':
     if shell == "powershell":
         shutil.copyfile(REPOSITORY / "scripts/full-deploy.ps1", root / "scripts/full-deploy.ps1")
         wrapper.write_text('''$ErrorActionPreference = 'Stop'
+[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
 $PSNativeCommandUseErrorActionPreference = $false
 function global:docker { & $env:SEQUENCE_PYTHON $env:SEQUENCE_BOUNDARY @args }
 function global:python { & $env:SEQUENCE_PYTHON $env:SEQUENCE_BOUNDARY host-python @args }

@@ -88,6 +88,7 @@ print("Synthetic enrollment completed")
     script = root / ("bootstrap.ps1" if shell == "powershell" else "bootstrap.sh")
     if shell == "powershell":
         script.write_text('''$ErrorActionPreference = 'Stop'
+[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
 $PSNativeCommandUseErrorActionPreference = $false
 $ProjectDir = $env:ADMIN_TEST_ROOT
 $LogFile = Join-Path $ProjectDir 'deploy.log'

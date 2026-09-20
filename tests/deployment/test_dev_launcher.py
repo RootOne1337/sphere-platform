@@ -48,6 +48,7 @@ if failed:
 ''', encoding="utf-8")
     wrapper = tmp_path / "run.ps1"
     wrapper.write_text('''$ErrorActionPreference = 'Stop'
+[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
 $PSNativeCommandUseErrorActionPreference = $false
 function global:docker { & $env:LAUNCHER_PYTHON $env:LAUNCHER_FAKE @args }
 & $env:LAUNCHER_SCRIPT -Rebuild
