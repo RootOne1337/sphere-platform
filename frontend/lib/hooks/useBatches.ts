@@ -11,6 +11,17 @@ export interface Batch {
   succeeded: number;
   failed: number;
   wave_config: Record<string, unknown>;
+  script_version_id?: string | null;
+  next_wave_index?: number;
+  next_wave_at?: string | null;
+  admission_state?: 'pending' | 'submitted' | 'cancelled' | 'legacy_unknown' | 'review_required';
+  admission_receipts?: Array<{
+    device_id: string;
+    task_id: string;
+    wave_index: number;
+    outcome: 'admitted' | 'rejected';
+    http_status?: number;
+  }>;
   created_at: string;
   updated_at: string;
 }

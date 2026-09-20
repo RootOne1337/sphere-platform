@@ -6,7 +6,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [Unreleased] — enterprise audit, 2026-09-20
+## [Unreleased] — enterprise audit, 2026-09-21
 
 Изменения находятся в draft PR; это не опубликованный production release.
 Полный перечень предыдущих audit fixes, доказательства и residual risks:
@@ -23,6 +23,14 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   capacity or eight-hour pass.
 
 ### Security / runtime
+
+- AUD-132: persist batch targets, pinned script version, stable Task IDs and
+  wave cursor before HTTP 202. Admit one due wave per batch with atomic SQL
+  receipts/progress, cancellation fencing and bounded startup polling. Retain
+  saved delay after lost commit ACK; scoped RLS processing uses an explicitly
+  granted due-ID lookup. Actual worker OS-kill and migration tests pass.
+  [Evidence, rollout and limits](docs/audits/2026-09-20/BATCH-RECOVERY.md).
+  Source only; separate pipeline RLS bootstrap defect F32-25 remains open.
 
 - AUD-131: persist pipeline owner/generation leases and atomic step/child checkpoints.
   Recover safe waits using the same child identity, preserve deadlines, fence stale

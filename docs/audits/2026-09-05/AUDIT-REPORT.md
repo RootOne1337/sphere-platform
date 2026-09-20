@@ -1,6 +1,13 @@
 # Sphere Platform: аудит готовности к эксплуатации
 
-Статус на 20 сентября 2026: **аудит продолжается; production readiness не подтверждена**.
+Статус на 21 сентября 2026: **аудит продолжается; production readiness не подтверждена**.
+
+**AUD-132 · High · source fix, не установлен:** сохранённый batch wave plan,
+pinned version, атомарный cursor/receipts и bounded startup worker. Crash/lost
+commit ACK больше не требуют повтора исходного списка устройств.
+[Доказательства и RLS/rollout](../2026-09-20/BATCH-RECOVERY.md).
+**Новый открытый P0 F32-25:** unscoped pipeline-worker не видит QUEUED под RLS;
+воспроизведено отдельной non-owner ролью. Это ограничение предыдущей source-приёмки.
 
 **AUD-131 · High · source fix, не установлен:** lease/generation, атомарные step/child
 checkpoints, безопасное восстановление после потери worker, запрет blind replay

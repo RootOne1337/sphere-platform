@@ -1,6 +1,6 @@
 # Приоритеты продолжающегося аудита
 
-Обновлено 20 сентября 2026. Этот документ хранит исторический backlog; наличие пункта
+Обновлено 21 сентября 2026. Этот документ хранит исторический backlog; наличие пункта
 не означает, что его эксплуатация уже доказана. Для закрытия нужен воспроизводимый
 сценарий, исправление, regression test и повторная проверка.
 
@@ -8,6 +8,12 @@
 Сначала stop/recovery и durable orchestration, затем bounded video/preview/latency,
 Redis/observability/backup и staged load acceptance. Для VPN/OTA/PC/n8n отдельные
 условия включения. 64 экрана и AI — после 32; ниже сохранён контекст ранних этапов.
+
+**Актуализация 21 сентября:** [AUD-132](../2026-09-20/BATCH-RECOVERY.md) сохраняет
+batch waves и проверяет recovery двумя OS-процессами. Source-only, native
+rollout остаётся OPEN. Следом **F32-25: RLS bootstrap pipeline/background workers**,
+затем nested WAITING/capacity и video/preview/Redis budgets. Остальные записи
+ниже — история checkpoints, не утверждение об отсутствии более поздних fixes.
 
 **Первый source fix — [AUD-129](../2026-09-20/DURABLE-CANCELLATION.md):** сохранённая
 отмена task, APK pre-arrival fence, child/nested reconciliation и pending UI.

@@ -11,6 +11,7 @@ from sqlalchemy.exc import DBAPIError
 
 from backend.models.task import Task, TaskStatus
 from backend.models.task_batch import TaskBatch, TaskBatchStatus
+from backend.services.batch_admission import advance_batch
 from backend.services.batch_service import BatchService
 from backend.services.task_service import TaskService
 from backend.tasks.task_heartbeat_watchdog import _aggregate_batches
@@ -40,7 +41,8 @@ async def test_terminal_batch_cannot_admit_new_wave(world, queue, terminal):
 
 
 async def test_cancel_between_waves_prevents_next_device_admission(world, queue):
-    batch, request = await seed(world, [world.dev_a.id, world.dev_a2.id])
+    batch, request = await seed(world, [world.dev_a.id, world.dev_a2.id],
+                                waves=[[world.dev_a.id], [world.dev_a2.id]])
     cancelled = False
 
     @asynccontextmanager
@@ -61,10 +63,7 @@ async def test_cancel_between_waves_prevents_next_device_admission(world, queue)
             db.commit = commit_then_cancel
             yield db
 
-    async with world.sessions() as db:
-        await BatchService(db, sessions)._execute_waves(
-            batch.id, [[world.dev_a.id], [world.dev_a2.id]], request, world.org_a.id,
-        )
+    await run_waves(world, batch, request, sessions)
     async with world.sessions() as db:
         tasks = list(await db.scalars(select(Task).where(Task.batch_id == batch.id)))
         assert [(task.device_id, task.status) for task in tasks] == [(world.dev_a.id, TaskStatus.CANCELLED)]
@@ -184,10 +183,7 @@ async def test_running_task_outcome_cannot_reopen_cancelled_batch(world, queue, 
 
 async def test_foreign_worker_context_cannot_modify_batch_counts(world, queue):
     batch, request = await seed(world, [world.dev_a.id])
-    async with world.sessions() as db:
-        await BatchService(db, world.sessions)._execute_waves(
-            batch.id, [[world.dev_a.id]], request, world.org_b.id,
-        )
+    await advance_batch(world.sessions, batch.id, world.org_b.id)
     async with world.sessions() as db:
         stored = await db.get(TaskBatch, batch.id)
         assert (stored.status, stored.succeeded, stored.failed) == (TaskBatchStatus.RUNNING, 0, 0)

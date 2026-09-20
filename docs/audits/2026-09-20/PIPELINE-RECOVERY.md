@@ -135,3 +135,7 @@ lint/type checks и dependency audit. Это не установка на pilot;
 Новый pilot не обновлялся: backend `85fb1ea`, frontend `03b161e`, оба APK `1.2.7/10207`.
 Старые `sphere-platform` и `sphere-tunnel` не изменялись. F32-02 продвинут в исходном
 коде и изолированных тестах; это **не native rollout и не GO для длительного 32-device теста**.
+
+**Уточнение 21 сентября:** отдельная non-owner RLS probe выявила [F32-25](FLEET32-PREFLIGHT.md#f32-25--pipeline-worker-без-tenant-context-не-видит-очередь): unscoped startup worker не видит QUEUED.
+Проверки lease/checkpoint выше использовали owner fixture sessions и этого
+не доказывают. Исправление tenant discovery/propagation остаётся обязательным.

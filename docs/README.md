@@ -24,6 +24,11 @@
 | Разобрать сбой | [Observability contract](operations/READINESS.md), [Runbooks](runbooks/README.md) |
 | Спроектировать будущий AI-контур | [AI readiness](architecture/AI-READINESS.md) |
 
+## Текущие source fixes перед Fleet32
+
+- [AUD-132: batch plan, atomic admission, OS-kill recovery, RLS и rollout](audits/2026-09-20/BATCH-RECOVERY.md).
+- [F32-25: воспроизведённый RLS bootstrap blocker pipeline](audits/2026-09-20/FLEET32-PREFLIGHT.md#f32-25--pipeline-worker-без-tenant-context-не-видит-очередь).
+
 ## Последняя эксплуатационная приёмка
 
 - [Несколько окон одного устройства: подтверждённая потеря видео и fix AUD-126](audits/2026-09-05/STREAM-MULTI-VIEWER.md).

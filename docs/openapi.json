@@ -9512,6 +9512,40 @@
             "type": "object",
             "title": "Wave Config"
           },
+          "script_version_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Script Version Id"
+          },
+          "next_wave_index": {
+            "type": "integer",
+            "title": "Next Wave Index",
+            "default": 0
+          },
+          "next_wave_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Wave At"
+          },
+          "admission_state": {
+            "type": "string",
+            "title": "Admission State",
+            "default": "legacy_unknown"
+          },
           "created_at": {
             "type": "string",
             "format": "date-time",
@@ -9532,6 +9566,13 @@
               }
             ],
             "title": "Notes"
+          },
+          "admission_receipts": {
+            "items": {
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Admission Receipts"
           }
         },
         "type": "object",
@@ -9686,6 +9727,40 @@
             "type": "object",
             "title": "Wave Config"
           },
+          "script_version_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Script Version Id"
+          },
+          "next_wave_index": {
+            "type": "integer",
+            "title": "Next Wave Index",
+            "default": 0
+          },
+          "next_wave_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Wave At"
+          },
+          "admission_state": {
+            "type": "string",
+            "title": "Admission State",
+            "default": "legacy_unknown"
+          },
           "created_at": {
             "type": "string",
             "format": "date-time",
@@ -9836,6 +9911,40 @@
           "wave_config": {
             "type": "object",
             "title": "Wave Config"
+          },
+          "script_version_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Script Version Id"
+          },
+          "next_wave_index": {
+            "type": "integer",
+            "title": "Next Wave Index",
+            "default": 0
+          },
+          "next_wave_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Wave At"
+          },
+          "admission_state": {
+            "type": "string",
+            "title": "Admission State",
+            "default": "legacy_unknown"
           },
           "created_at": {
             "type": "string",

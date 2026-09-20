@@ -190,10 +190,18 @@ class TaskService:
         account_id: uuid.UUID | None = None,
         batch_id: uuid.UUID | None = None,
         wave_index: int | None = None,
+        script_version_id: uuid.UUID | None = None,
+        task_id: uuid.UUID | None = None,
     ) -> Task:
         script = await self._get_script(script_id, org_id)
-        if not script.current_version_id:
+        version_id = script_version_id or script.current_version_id
+        if not version_id:
             raise HTTPException(status_code=400, detail="Script has no versions")
+        if script_version_id and not await self.db.scalar(select(ScriptVersion.id).where(
+            ScriptVersion.id == script_version_id, ScriptVersion.script_id == script_id,
+            ScriptVersion.org_id == org_id,
+        )):
+            raise HTTPException(status_code=404, detail="Script version not found")
 
         await self._get_device(device_id, org_id)
         if account_id and not await self.db.scalar(select(GameAccount.id).where(
@@ -208,7 +216,7 @@ class TaskService:
             select(Task).where(
                 Task.device_id == device_id,
                 Task.org_id == org_id,
-                Task.script_version_id == script.current_version_id,
+                Task.script_version_id == version_id,
                 Task.status.in_([TaskStatus.QUEUED, TaskStatus.RUNNING, TaskStatus.ASSIGNED]),
             ).limit(1)
         )
@@ -225,9 +233,10 @@ class TaskService:
             input_params["account_id"] = str(account_id)
 
         task = Task(
+            id=task_id or uuid.uuid4(),
             org_id=org_id,
             script_id=script_id,
-            script_version_id=script.current_version_id,
+            script_version_id=version_id,
             device_id=device_id,
             priority=priority,
             input_params=input_params,

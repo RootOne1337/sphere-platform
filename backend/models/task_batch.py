@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import enum
 import uuid
+from datetime import datetime
 
-from sqlalchemy import Enum, ForeignKey, Integer, String, Text
+from sqlalchemy import DateTime, Enum, ForeignKey, Index, Integer, String, Text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -28,6 +29,7 @@ class TaskBatch(Base, UUIDMixin, TimestampMixin):
     Детальная логика: TZ-04 SPLIT-4.
     """
     __tablename__ = "task_batches"
+    __table_args__ = (Index("ix_task_batches_admission", "admission_state", "next_wave_at"),)
 
     org_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("organizations.id"), index=True)
     script_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("scripts.id"), index=True)
@@ -40,6 +42,13 @@ class TaskBatch(Base, UUIDMixin, TimestampMixin):
     )
     # волновая конфигурация (concurrency, delay, wave_size)
     wave_config: Mapped[dict] = mapped_column(JSONB, server_default="{}", nullable=False)
+    # NULL plan identifies old batches; their missing targets cannot be inferred.
+    wave_plan: Mapped[list | None] = mapped_column(JSONB, nullable=True)
+    script_version_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("script_versions.id"), nullable=True)
+    next_wave_index: Mapped[int] = mapped_column(Integer, server_default="0", nullable=False)
+    next_wave_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    admission_state: Mapped[str] = mapped_column(String(24), server_default="legacy_unknown", nullable=False)
+    admission_receipts: Mapped[list] = mapped_column(JSONB, server_default="[]", nullable=False)
     total: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     succeeded: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     failed: Mapped[int] = mapped_column(Integer, default=0, nullable=False)

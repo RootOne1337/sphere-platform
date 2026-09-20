@@ -53,7 +53,7 @@ async def get_db_session(
     Если передан org_id, Session привязана к tenant на всех её транзакциях.
     Без org_id сессия остаётся unscoped; это не разрешение обходить RLS.
 
-    Usage (TZ-04 _execute_waves, TZ-02 sync_device_status_to_db):
+    Usage (tenant-scoped background work):
         async with get_db_session(org_id=str(batch.org_id)) as db:
             await db.get(TaskBatch, batch_id)
     """

@@ -12,6 +12,7 @@ from sqlalchemy.exc import DBAPIError
 from backend.models.task import Task, TaskStatus
 from backend.models.task_batch import TaskBatch, TaskBatchStatus
 from backend.schemas.batch import BatchExecutionRequest
+from backend.services.batch_admission import advance_batch, initialize_plan
 from backend.services.batch_service import BatchService
 from backend.services.task_service import TaskService
 
@@ -23,7 +24,7 @@ def webhook(monkeypatch):
     return deliver
 
 
-async def seed(world, device_ids):
+async def seed(world, device_ids, *, waves=None):
     request = BatchExecutionRequest(
         script_id=world.script.id, device_ids=device_ids, wave_delay_ms=0,
         jitter_ms=0, stagger_by_workstation=False, webhook_url="https://audit.invalid/hook",
@@ -32,15 +33,16 @@ async def seed(world, device_ids):
         batch = TaskBatch(org_id=world.org_a.id, script_id=world.script.id,
                           total=len(device_ids), status=TaskBatchStatus.RUNNING)
         db.add(batch)
+        await db.flush()
+        initialize_plan(batch, waves if waves is not None else [device_ids], world.version.id)
+        batch.wave_config = {"priority": 5, "wave_delay_ms": 0, "jitter_ms": 0}
         await db.commit()
     return batch, request
 
 
 async def run_waves(world, batch, request, sessions=None):
-    async with world.sessions() as unused_request_session:
-        await BatchService(unused_request_session, sessions or world.sessions)._execute_waves(
-            batch.id, [request.device_ids], request, world.org_a.id,
-        )
+    while await advance_batch(sessions or world.sessions, batch.id, world.org_a.id, skip_locked=False):
+        pass
 
 
 async def finish(world, task, success):
@@ -150,7 +152,8 @@ async def test_batch_can_still_be_cancelled_after_last_wave_is_enqueued(world, w
 
 
 async def test_database_fault_aborts_current_wave_without_false_success(world, webhook, monkeypatch):
-    batch, request = await seed(world, [world.dev_a.id, world.dev_a2.id])
+    batch, request = await seed(world, [world.dev_a.id, world.dev_a2.id],
+                                waves=[[world.dev_a.id], [world.dev_a2.id]])
     create = TaskService.create_task
 
     async def create_with_database_fault(service, **kwargs):
@@ -160,11 +163,8 @@ async def test_database_fault_aborts_current_wave_without_false_success(world, w
         return await create(service, **kwargs)
 
     monkeypatch.setattr(TaskService, "create_task", create_with_database_fault)
-    async with world.sessions() as db:
-        with pytest.raises(DBAPIError):
-            await BatchService(db, world.sessions)._execute_waves(
-                batch.id, [[world.dev_a.id], [world.dev_a2.id]], request, world.org_a.id,
-            )
+    with pytest.raises(DBAPIError):
+        await run_waves(world, batch, request)
     async with world.sessions() as db:
         stored = await db.get(TaskBatch, batch.id)
         tasks = list(await db.scalars(select(Task).where(Task.batch_id == batch.id)))
@@ -176,12 +176,14 @@ async def test_database_fault_aborts_current_wave_without_false_success(world, w
 @pytest.mark.parametrize("success", [True, False])
 async def test_admission_failure_serializes_with_previous_wave_result(world, webhook, success):
     missing = uuid.uuid4()
-    batch, request = await seed(world, [world.dev_a.id, missing])
+    batch, request = await seed(world, [world.dev_a.id, missing], waves=[[world.dev_a.id], [missing]])
     async with world.sessions() as db:
         task = Task(org_id=world.org_a.id, script_id=world.script.id,
                     script_version_id=world.version.id, device_id=world.dev_a.id,
                     batch_id=batch.id, status=TaskStatus.RUNNING)
         db.add(task)
+        stored = await db.get(TaskBatch, batch.id)
+        stored.next_wave_index = 1  # Earlier wave's Task and cursor have committed.
         await db.commit()
 
     producer_pid = None
@@ -192,14 +194,12 @@ async def test_admission_failure_serializes_with_previous_wave_result(world, web
             producer_pid = await db.scalar(text("SELECT pg_backend_pid()"))
             yield db
 
-    async with world.sessions() as result_owner, world.sessions() as request_session:
+    async with world.sessions() as result_owner:
         await TaskService(result_owner, AsyncMock(), publisher=AsyncMock()).handle_task_result(
             str(task.id), str(task.device_id), {"success": success}, str(world.org_a.id),
         )
         await result_owner.flush()
-        pending = asyncio.create_task(BatchService(request_session, sessions)._execute_waves(
-            batch.id, [[missing]], request, world.org_a.id,
-        ))
+        pending = asyncio.create_task(run_waves(world, batch, request, sessions))
         try:
             async def observe():
                 while True:

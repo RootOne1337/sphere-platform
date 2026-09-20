@@ -10,6 +10,7 @@ from backend.api.v1.batches.router import start_batch
 from backend.models.task import Task, TaskStatus
 from backend.models.task_batch import TaskBatch
 from backend.schemas.batch import BatchExecutionRequest
+from backend.services.batch_admission import BatchAdmissionWorker
 from backend.services.batch_service import BatchService
 
 
@@ -24,7 +25,7 @@ def launches(monkeypatch):
             started.append(task)
         return task
 
-    monkeypatch.setattr("backend.services.batch_service.asyncio.create_task", capture)
+    monkeypatch.setattr(asyncio, "create_task", capture)
     return started
 
 
@@ -34,26 +35,20 @@ def request(world):
 
 
 async def test_background_worker_observes_committed_parent_without_caller_commit(world, launches, monkeypatch):
-    observed = []
-
-    async def inspect_parent(service, batch_id, *args):
-        async with world.sessions() as observer:
-            observed.append(await observer.scalar(select(TaskBatch.id).where(TaskBatch.id == batch_id)))
-
-    monkeypatch.setattr(BatchService, "_execute_waves", inspect_parent)
     async with world.sessions() as db:
         batch = await BatchService(db, world.sessions).start_batch(
             request(world), world.org_a.id, world.users["org_admin"].id,
         )
-        await asyncio.wait_for(asyncio.gather(*launches), 3)
-        assert observed == [batch.id]
+        assert launches == []
     async with world.sessions() as db:
-        assert await db.get(TaskBatch, batch.id) is not None
+        stored = await db.get(TaskBatch, batch.id)
+        assert stored.wave_plan and stored.admission_state == "pending"
+    await BatchAdmissionWorker(world.sessions).poll(org_id=world.org_a.id)
+    async with world.sessions() as db:
+        assert await db.scalar(select(Task.id).where(Task.batch_id == batch.id)) is not None
 
 
 async def test_commit_failure_does_not_launch_background_work(world, launches, monkeypatch):
-    worker = AsyncMock()
-    monkeypatch.setattr(BatchService, "_execute_waves", worker)
     async with world.sessions() as db:
         db.commit = AsyncMock(side_effect=RuntimeError("isolated injected commit failure"))
         try:
@@ -65,7 +60,9 @@ async def test_commit_failure_does_not_launch_background_work(world, launches, m
         finally:
             await asyncio.gather(*launches, return_exceptions=True)
         assert launches == []
-        worker.assert_not_awaited()
+    await BatchAdmissionWorker(world.sessions).poll(org_id=world.org_a.id)
+    async with world.sessions() as db:
+        assert await db.scalar(select(Task.id).where(Task.org_id == world.org_a.id)) is None
 
 
 async def test_wave_mapping_failure_does_not_commit_or_launch(world, launches, monkeypatch):
@@ -88,8 +85,8 @@ async def test_http_batch_start_commits_and_admits_real_task(world, launches, mo
         json=request(world).model_dump(mode="json"),
     )
     assert response.status_code == 202, response.text
-    assert len(launches) == 1
-    await asyncio.wait_for(asyncio.gather(*launches), 3)
+    assert launches == []
+    await BatchAdmissionWorker(world.sessions).poll(org_id=world.org_a.id)
     async with world.sessions() as db:
         task = await db.scalar(select(Task).where(Task.batch_id == response.json()["id"]))
         assert task is not None

@@ -24,6 +24,13 @@ generation fencing и явное `unknown` для неоднозначных э�
 включая OS-kill изолированного worker; native rollout и nested capacity остаются OPEN.
 Фраза о неисправленном F32-02 выше описывает checkpoint AUD-130, не текущий source.
 
+**Актуализация 21 сентября — AUD-132:** [batch plan/recovery](BATCH-RECOVERY.md)
+продвигает F32-03 в исходном коде: сохранены цели, version, cursor, Task IDs
+и receipts; OS-kill между волнами проверен. Native rollout открыт.
+**Дополнительный P0 F32-25** воспроизведён под non-owner RLS ролью:
+pipeline startup не находит QUEUED без tenant context. Исходный реестр из
+24 пунктов дополнен этим blocker; AUD-131 не закрывает данный путь.
+
 ## Что проверяем и что уже известно
 
 Сценарий владельца: **32 настоящих эмулятора, 32 живых экрана в одном веб-интерфейсе,
@@ -102,6 +109,7 @@ Compose/monitoring/backup и нагрузочный harness. Это провер
 | F32-22 | P0, профиль 32 / gate / G | Нет совместного CPU/GPU/RAM/network профиля станций, APK и браузера |
 | F32-23 | P0, fault/soak / gate / G | Нет полной 32-device матрицы SQL/Redis/restart/idempotency/retention |
 | F32-24 | P2, будущий AI / gate / G | Нет observation/action контракта свежести и владения управлением |
+| F32-25 | P0, RLS runtime / High / R | Pipeline-worker без tenant context не видит сохранённую очередь |
 
 ## Backend, оркестрация и БД
 
@@ -148,6 +156,11 @@ lease; необратимый шаг с неизвестным исходом т
 поздний старый owner. **Residual:** exactly-once внешнего эффекта не получается одной SQL-блокировкой.
 
 ### F32-03 — batch теряет ещё не отправленные цели
+
+**Последующий source status:** [AUD-132](BATCH-RECOVERY.md) сохраняет wave plan,
+pinned version и atomic cursor/receipts; проверен настоящий worker OS-kill.
+Смешанный rollout, legacy reconciliation и native acceptance остаются открытыми.
+Ниже — исходная проблема, на основе которой внесён fix.
 
 **Root cause / файлы:** [BatchService.start_batch/_execute_waves](../../../backend/services/batch_service.py)
 коммитит batch и запускает `asyncio.create_task`; список целей/план волн остаются
@@ -527,3 +540,32 @@ audit report, а не переименовывает прошлые failed runs 
 приёмкой. Процент «всё почти готово» или срок по числу коммитов не выводится:
 основная неопределённость — video capacity конкретных станций/браузера и поведение
 при отказах с параллельной работой.
+
+### F32-25 — pipeline-worker без tenant context не видит очередь
+
+**21 сентября · P0 / High / воспроизведено · OPEN.**
+
+**Root cause:** `PipelineExecutor._poll_and_dispatch`, recovery и cancellation
+создают обычные `AsyncSessionLocal` без trusted tenant context. Policy требует
+`app.current_org_id`. Под non-owner ролью запрос успешно возвращает пустую очередь;
+ошибки SQL нет, admission не начинается. Owner/dev tests этого не показывают.
+
+**Evidence:** [отдельная diagnostic probe](evidence/pipeline_rls_probe.py) создала
+QUEUED run в случайной fixture organization, вызвала настоящий executor с реальной
+non-owner/NOBYPASSRLS ролью и затем сверила запись через owner: статус остался QUEUED,
+tasks executor пусты. **1 ожидаемый failure**, это не пройденный regression и не
+часть обычного passing `tests/` набора. Сырые логи приватные; результат сохранён
+рядом с [AUD-132 evidence](evidence/batch-recovery.json).
+
+**Affected files:** `backend/services/orchestrator/pipeline_executor.py`,
+`pipeline_recovery.py`, startup selection; другие unscoped background workers
+требуют такого же отдельного анализа. Это ограничение source-приёмки AUD-131.
+
+**Fix / regression:** ограниченный discovery ожидающей/recoverable работы и
+отдельная tenant-bound session на каждом этапе claim/renew/reconcile/write;
+проверить startup/restart/cancel под настоящей runtime ролью и pool reuse между
+двумя tenants. Не отключать RLS и не выдавать BYPASSRLS для обхода проблемы.
+
+**Residual:** AUD-132 реализует этот контракт только для batch admission. Pilot
+на старой dev-конфигурации не подтверждает работоспособность production DB-role.
+Полный migration/runtime-role canary обязателен до заявления о готовности.
