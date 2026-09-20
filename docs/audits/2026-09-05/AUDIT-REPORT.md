@@ -7,7 +7,8 @@
 DAG, 22 pipeline controls; оба APK online с прежними PID и crash buffers.
 Таймаут второго viewer в цикле 107, до нового batch. AUD-125 устраняет idle
 пересоздание командной Redis-подписки и игнорирование отказа `start_stream`: два
-failing regressions → 105 связанных tests passed. Rollout ещё не принят;
+failing regressions → 105 связанных tests passed. Backend `8a6b30e` установлен:
+шесть парных запусков захвата после простоя прошли, оба APK сохранили PID;
 восьмичасовая проверка остаётся непройденной. [Разбор и evidence](STREAM-START-DELIVERY.md).
 
 **20 сентября · AUD-121 принят:** backend `eacf692`, frontend `03b161e`, APK 1.2.7.

@@ -1,6 +1,6 @@
 # AUD-125 · Потерянный запуск захвата после простоя командного канала
 
-**20 сентября 2026 · High / P1 · regression подтверждён; rollout отдельно.**
+**20 сентября 2026 · High / P1 · regression и ограниченная native-приёмка пройдены.**
 
 Ночной `night-20260920-001` завершился **failed**, не пройдя восемь часов.
 Начало: 19 сентября 22:04:03 UTC, завершение: 20 сентября 01:37:31 UTC
@@ -87,11 +87,36 @@ SPS/PPS/IDR в `Runner.open_viewer`. Первый viewer успел пройти
 `tests/production/test_stream_start_delivery.py` и связанные recovery/video fixtures.
 [Regression evidence](evidence/stream-start-regression.json).
 
+Повторить две регрессии можно командой
+`pytest tests/production/test_stream_start_delivery.py -q --no-cov` с
+`SPHERE_RUN_INTEGRATION=1` и `POSTGRES_URL`/`REDIS_URL`, направленными на отдельные
+тестовые сервисы. Эти production-тесты используют disposable fixtures;
+адреса рабочего стенда для них не подходят.
+
+## Проверка установленного исправления
+
+После сохранения terminal evidence новый backend обновлён до **`8a6b30e`**
+в 03:21 UTC. Только его контейнер был заменён; IDs/images/start times/mounts
+остальных контейнеров, включая старый стенд и `sphere-tunnel`, сохранены.
+Frontend остался `03b161e`, APK — 1.2.7; OTA catalog и скачиваемый APK hash проверены.
+
+В отдельном 80-секундном сценарии оба APK прошли **шесть парных запусков захвата**
+после семисекундных пауз. Все 12 viewers получили SPS/PPS/IDR; готовность от
+начала ожидания заняла 1,062–1,390 с. После закрытия собственных viewers захват
+освобождён на обоих APK. Два контрольных echo верны; PID 2182/2187, crash buffers
+и online status сохранены. ADB использовался только для чтения состояния.
+Это проверка протокола видео, не декодирование кадров браузером и не SLA latency.
+[Runtime evidence](evidence/stream-start-runtime.json).
+
+Все четыре workflow исходного **`8a6b30e`** завершились успешно: Backend
+(включая реальные сервисы, lint/mypy, image bootstrap и Alembic), Android,
+Frontend и Preview guard. [Архив CI](evidence/ci-8a6b30e-summary.json).
+Это статус точного source commit, не будущих documentation commits.
+
 ## Границы результата
 
 Изменение кода и 105 тестов не являются новой восьмичасовой приёмкой.
-На момент этого checkpoint исправление ещё не развёрнуто на пилоте.
-Требуются отдельная проверка установленного backend и новый конечный прогон.
+Установленный backend прошёл ограниченную проверку выше. Требуется новый конечный прогон.
 Старую ночь нельзя продолжить или переименовать в passed.
 
 Redis Pub/Sub остаётся недолговечным: subscriber count не подтверждает выполнение

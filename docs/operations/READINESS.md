@@ -7,7 +7,8 @@
 DAG, 22 pipeline controls; оба APK online с прежними PID и crash buffers.
 Таймаут второго viewer в цикле 107, до нового batch. AUD-125 устраняет idle
 пересоздание командной Redis-подписки и игнорирование отказа `start_stream`: два
-failing regressions → 105 связанных tests passed. Rollout ещё не принят;
+failing regressions → 105 связанных tests passed. Backend `8a6b30e` установлен:
+шесть парных запусков захвата после простоя прошли, оба APK сохранили PID;
 восьмичасовая проверка остаётся непройденной.
 [Разбор и evidence](../audits/2026-09-05/STREAM-START-DELIVERY.md).
 
@@ -36,7 +37,7 @@ Android: 579 dev / 578 enterprise passed, один ожидаемый skip; sign
 повторный combined fault — 0.516 / 5.141 s, без смены PID/новых crash entries.
 Три capture/stop цикла на каждом APK прошли. Веб восстановил два потока без F5;
 сетевая приёмка выполнена на frontend `6dea6b4`, backend `12249b1`.
-Текущий backend `eacf692`, frontend `03b161e`; LATEST указывает на 1.2.7.
+Текущий backend `8a6b30e`, frontend `03b161e`; LATEST указывает на 1.2.7.
 [Матрица и ограничения](../audits/2026-09-05/NETWORK-RECOVERY-NATIVE.md).
 Проверены два Android 9; сотни устройств, остальные Android и восемь часов ещё не приняты.
 
@@ -67,7 +68,7 @@ fatal entries в проверенных crash buffers. **Восемь часов
 [Промежуточная независимая сверка 05:23](../audits/2026-09-05/ANDROID-SOAK-CHECKPOINT.md):
 19 native DAG results сохранены, PID обоих APK неизменны; лишние предупреждения
 интерактивных ответов `task.result.not_found` зафиксированы как открытая проблема.
-Backend **`12249b1`**, предшествующий текущему `eacf692`, исправил HTTP 500 после создания script и после
+Backend **`12249b1`**, предшествующий текущему `8a6b30e`, исправил HTTP 500 после создания script и после
 pipeline controls (AUD-115/116). 92 связанных локальных tests pass, native
 результаты сохранены. [Сводка](../audits/2026-09-05/evidence/overnight-preflight-summary.json).
 
