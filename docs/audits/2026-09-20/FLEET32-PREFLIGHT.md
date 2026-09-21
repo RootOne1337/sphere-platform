@@ -611,4 +611,9 @@ SELECT. [Одна failing probe и ограничения](evidence/scheduler-rl
 transport calls=0. После tenant binding под той же non-owner ролью тот же Task
 становится ASSIGNED, transport double calls=1. [Evidence](evidence/dispatcher-rls.json),
 [probe](evidence/dispatcher_runtime_probe.py). Это подтверждённый P0 доставки,
-не Android/network тест; следующий fix должен охватить dispatch и cancellation.
+не Android/network тест. Последующий [AUD-135](TASK-DISPATCH-RLS.md) исправляет
+dispatch/cancellation через bounded discovery и tenant-bound sessions, а также
+регистрацию worker без Redis на старте. Три failing startup regressions до fix →
+101 связанных passing tests, включая реальный SQL timeout, lost commit ACK,
+две организации, два workers и 64 offline devices перед online. Source-only;
+scheduler RLS и native/runtime-role acceptance остаются открытыми.

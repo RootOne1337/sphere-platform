@@ -58,62 +58,19 @@ def get_task_service(
 # ── Startup: запустить диспетчер задач ───────────────────────────────────────
 
 async def _startup_dispatcher() -> None:
-    """
-    Creates a dispatch function that opens a fresh DB session for each
-    dispatcher tick and closes it properly after dispatch completes.
-    On startup, recovers orphaned task_running locks (task stuck after restart).
-    """
-    from backend.database.redis_client import redis as _redis
-    from backend.database.redis_client import redis_binary as _redis_bin
+    """Always register; resolve current dependencies on every recovery tick."""
+    from backend.services.task_dispatcher import TaskDispatchWorker
 
-    if _redis is None:
-        return
-
-    # Recovery: find task_running:* keys where DB task is still queued (not running)
-    # This handles the case where backend restarted mid-dispatch
-    try:
-        running_keys = await _redis.keys("task_running:*")
-        if running_keys:
-            async with AsyncSessionLocal() as db:
-                from backend.models.task import Task as _Task
-                from backend.models.task import TaskStatus as _TS
-                queue_tmp = TaskQueue(_redis)
-                for key in running_keys:
-                    key_str = key if isinstance(key, str) else key.decode()
-                    task_id_bytes = await _redis.get(key_str)
-                    if not task_id_bytes:
-                        continue
-                    task_id_str = task_id_bytes if isinstance(task_id_bytes, str) else task_id_bytes.decode()
-                    device_id_str = key_str.removeprefix("task_running:")
-                    try:
-                        import uuid as _uuid
-                        task = await db.get(_Task, _uuid.UUID(task_id_str))
-                        if task and task.status in (_TS.QUEUED, _TS.ASSIGNED):
-                            # Orphaned lock: task not actually running, requeue
-                            await queue_tmp.mark_completed(task_id_str, device_id_str)
-                            await queue_tmp.enqueue(
-                                task_id_str, device_id_str, str(task.org_id), task.priority
-                            )
-                            logger.warning(
-                                "task.orphaned_lock_recovered",
-                                task_id=task_id_str,
-                                device_id=device_id_str,
-                            )
-                    except Exception as exc:
-                        logger.error("task.recovery_error", key=key_str, error=str(exc))
-    except Exception as exc:
-        logger.error("task.startup_recovery_failed", error=str(exc))
+    worker = TaskDispatchWorker(AsyncSessionLocal)
 
     async def _dispatch_once() -> None:
-        from backend.database.redis_client import redis as _redis
+        from backend.database.redis_client import redis_binary
         from backend.websocket.pubsub_router import get_pubsub_publisher
-        async with AsyncSessionLocal() as db:
-            queue = TaskQueue(_redis)
-            cache = DeviceStatusCache(_redis_bin)
-            publisher = get_pubsub_publisher()
-            svc = TaskService(db, queue, status_cache=cache, publisher=publisher)
-            await svc.dispatch_pending_tasks()
-            await db.commit()
+
+        await worker.poll(
+            status_cache=DeviceStatusCache(redis_binary) if redis_binary is not None else None,
+            publisher=get_pubsub_publisher(),
+        )
 
     start_dispatcher(_dispatch_once)
     logger.info("task_dispatcher.registered")

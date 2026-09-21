@@ -25,8 +25,11 @@ background workers, compound loop/parallel и video/preview/Redis budgets. Ос�
 ограниченная роль не обрабатывает due exhausted schedule. Никаких device tasks
 эта проба не создаёт; ожидаемый failure не включён в проходящий CI.
 [Task dispatcher](../2026-09-20/evidence/dispatcher-rls.json) отдельно подтвердил
-тот же operational blocker с контрольным запуском под bound tenant. Исправить
-доставку/cancellation и scheduler до runtime-role rollout; transport в пробе mocked.
+тот же operational blocker с контрольным запуском под bound tenant.
+[AUD-135](../2026-09-20/TASK-DISPATCH-RLS.md) исправляет dispatch/cancellation и
+Redis startup recovery; 101 related tests passed, transport в пробах mocked.
+Следующий подтверждённый P0 — scheduler RLS; затем проверить watchdog и остальные
+background SQL-пути. До native rollout — migration/grants и runtime-role canary.
 
 **Первый source fix — [AUD-129](../2026-09-20/DURABLE-CANCELLATION.md):** сохранённая
 отмена task, APK pre-arrival fence, child/nested reconciliation и pending UI.

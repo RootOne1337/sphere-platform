@@ -27,6 +27,7 @@
 
 ## Текущие source fixes перед Fleet32
 
+- [AUD-135: task dispatch/cancellation под RLS, Redis startup recovery и bounded delivery](audits/2026-09-20/TASK-DISPATCH-RLS.md).
 - [AUD-134: durable nested WAITING, освобождение слота, deadline и recovery](audits/2026-09-20/PIPELINE-NESTED-WAIT.md).
 
 - [AUD-132: batch plan, atomic admission, OS-kill recovery, RLS и rollout](audits/2026-09-20/BATCH-RECOVERY.md).

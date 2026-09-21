@@ -111,6 +111,8 @@ Canary должен создать задание под фактической 
 
 1. Аналогичные RLS startup-пути scheduler, task dispatcher и watchdog требуют
    отдельного воспроизведения и проверки; этот fix распространяется на pipeline.
+   Позже [AUD-135](TASK-DISPATCH-RLS.md) исправил dispatcher/cancellation и Redis
+   startup recovery. Scheduler воспроизведён и остаётся OPEN; watchdog ещё проверяется.
 2. Nested WAITING всё ещё занимает executor capacity; родители могут не оставить
    места детям. Общая/per-device квота и справедливость между tenants не реализованы.
    Лимит discovery 64 ограничивает poll, но не гарантирует отсутствие starvation.

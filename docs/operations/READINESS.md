@@ -2,6 +2,14 @@
 
 **Срез: 21 сентября 2026 · аудит продолжается · приоритеты согласованы с владельцем.**
 
+**AUD-135, source-only:** task assignment/cancellation теперь используют bounded
+UUID discovery и отдельные tenant-bound sessions. Worker запускается даже без
+Redis и получает актуальные зависимости при каждом tick. Три failures до fix,
+101 связанный test passed; реальные RLS/commit/SQL timeout и две организации,
+transport doubles. [Evidence, grants и границы](../audits/2026-09-20/TASK-DISPATCH-RLS.md).
+Следующий подтверждённый P0 — scheduler RLS; watchdog ещё требует проверки.
+Pilot не обновлён, native stop/reconnect и допуск к массовому прогону остаются OPEN.
+
 **AUD-134, source-only:** checkpointed nested pipeline сохраняет WAITING/deadline
 и освобождает executor slot. Десять родителей и три уровня с одним слотом теперь
 завершаются; 87 связанных tests и первоначальная проба прошли. Проверены
@@ -13,7 +21,7 @@ restart, cancel/pause/deadline, commit rollback/lost ACK и реальный SQL
 recovery работают под non-owner/NOBYPASSRLS ролью. Три failures до fix → 76
 связанных passing tests, включая настоящий OS-kill и изоляцию двух tenants.
 [Контракт, grants и ограничения](../audits/2026-09-20/PIPELINE-RLS.md).
-F32-25 исправлен в коде; обязательны runtime-role canary и согласованный rollout.
+Pipeline-часть F32-25 исправлена в коде; обязательны runtime-role canary и согласованный rollout.
 Следующая SQL-проба подтвердила nested starvation: 10 родителей занимают все
 слоты; 10 пустых children остаются QUEUED после восьми polls. Это отдельный
 от RLS дефект, исправленный позже AUD-134: [счётчики и границы](../audits/2026-09-20/evidence/pipeline-nested-capacity.json).

@@ -43,6 +43,9 @@
 > heartbeat и recovery под non-owner RLS ролью; 76 связанных tests прошли.
 > [AUD-134](docs/audits/2026-09-20/PIPELINE-NESTED-WAIT.md) освобождает слоты
 > ожидающих родителей: десять nested runs и три уровня с одним слотом прошли.
+> [AUD-135](docs/audits/2026-09-20/TASK-DISPATCH-RLS.md) восстанавливает task dispatch
+> и отмену под рабочей ролью БД, включая появление Redis после startup;
+> 101 связанный тест прошёл. Scheduler RLS остаётся следующим подтверждённым P0.
 > Compound loop/parallel, остальные workers, общие квоты и video/preview остаются
 > в работе. Эти source fixes ещё не установлены; требуются согласованный rollout
 > и native-приёмка.

@@ -24,6 +24,16 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Security / runtime
 
+- AUD-135 / F32-25: restore task assignment and persisted cancellation under
+  non-owner RLS through explicitly granted UUID discovery and tenant-bound sessions.
+  Always register the worker, refresh Redis/publisher dependencies each tick,
+  rotate bounded pages past offline devices and cap assignment sends/SQL discovery.
+  Remove obsolete startup Redis KEYS/requeue recovery; PostgreSQL owns intent.
+  Three pre-fix failures; 101 related tests pass, including two tenants/workers,
+  lost commit/transport replies, real SQL timeout and offline-first pagination.
+  Source only; migration/grant and native rollout required. Scheduler RLS remains open.
+  [Evidence, rollout and limits](docs/audits/2026-09-20/TASK-DISPATCH-RLS.md).
+
 - AUD-134: persist nested pipeline waiting/deadline and release parent execution
   slots atomically with child identity. Wake only actionable parents, retain the
   same child across replacement/commit-ACK loss, support WAITING pause/cancel and

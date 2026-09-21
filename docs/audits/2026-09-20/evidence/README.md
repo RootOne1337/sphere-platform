@@ -86,6 +86,16 @@ regressions в `tests/production/test_pipeline_nested_wait.py`. Та же ист
 фиксирует QUEUED без binding и ASSIGNED с ним. Transport/presence — заглушки;
 ожидается один финальный assertion failure, не отказ реального устройства.
 
+[AUD-135](../TASK-DISPATCH-RLS.md) исправляет зарегистрированный startup dispatcher:
+[сводка до/после](task-dispatch-rls.json), regressions в
+`tests/production/test_task_dispatcher_runtime.py` и migration regression. Baseline
+из трёх startup failures сохранён; полный suite проверяет новый worker, RLS,
+Redis startup, pagination, commit/transport ambiguity и настоящий SQL timeout.
+Историческая `dispatcher_runtime_probe.py` намеренно вызывает unscoped TaskService
+напрямую; это прежнее доказательство причины, а не проверка нового startup contract.
+Транспорт — doubles, pilot/APK не обновлялись. CI предыдущего точного head `b08a773`
+[прошёл все четыре workflows](../../2026-09-05/evidence/ci-b08a773-summary.json).
+
 Сырые pytest logs, Android meminfo/crash buffers, operator credentials и deployment
 configuration оставлены приватными. `runtime-summary.json` — исторический snapshot,
 не постоянный health status. Данные старого Docker проекта не используются.

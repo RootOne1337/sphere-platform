@@ -2,6 +2,15 @@
 
 Статус на 21 сентября 2026: **аудит продолжается; production readiness не подтверждена**.
 
+**AUD-135 · High / F32-25 dispatcher · source fix, не установлен:** task assignment
+и persisted cancellation проходят под реальной non-owner RLS ролью. Startup без
+Redis больше не выключает dispatcher; новые зависимости читаются каждый tick.
+Три baseline failures → 101 related tests passed. Две организации/один SQL pool,
+конкурентные workers, lost commit/transport ACK, 64 offline перед online устройством,
+SQL timeout и зависшая отправка проверены. [Root cause, affected files, evidence,
+миграция/grants и residual risks](../2026-09-20/TASK-DISPATCH-RLS.md).
+Следующий подтверждённый P0 — scheduler RLS; watchdog и native rollout остаются OPEN.
+
 **AUD-134 · High / F32-05 residual · source fix, не установлен:** nested parents
 сохраняют WAITING/deadline и освобождают slots для детей. Baseline: 10 родителей,
 10 QUEUED children, 0 completed после восьми polls; после fix исходная проба и

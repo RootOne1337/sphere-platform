@@ -43,6 +43,7 @@ _pending_webhook_tasks: set[asyncio.Task] = set()
 # The Android journal fences a late EXECUTE_DAG even if cancel arrives first.
 _STOP_PUBLISH_TIMEOUT_SECONDS = 2.0
 _STOP_REDELIVERY_SECONDS = 5
+_ASSIGN_PUBLISH_TIMEOUT_SECONDS = 2.0
 
 
 class TaskService:
@@ -259,20 +260,25 @@ class TaskService:
 
     # ── Dispatch ──────────────────────────────────────────────────────────────
 
-    async def dispatch_pending_tasks(self, *, org_id: uuid.UUID | None = None) -> None:
+    async def dispatch_pending_tasks(
+        self, *, org_id: uuid.UUID | None = None, device_id: uuid.UUID | None = None,
+        include_cancellations: bool = True,
+    ) -> None:
         """Dispatch committed intent using this dispatcher's dedicated DB session.
 
         A device row serializes competing dispatchers. ASSIGNED is committed
         before sending; until the agent acknowledges receipt, the same task ID
         is retried. Redis is transport/presence, never the source of task intent.
         """
-        await self.dispatch_pending_cancellations(org_id=org_id)
+        if include_cancellations:
+            await self.dispatch_pending_cancellations(org_id=org_id, device_id=device_id)
         if not self.status_cache:
             return
 
         candidates = list(await self.db.scalars(
             select(Task.device_id).where(
                 *([Task.org_id == org_id] if org_id is not None else []),
+                *([Task.device_id == device_id] if device_id is not None else []),
                 Task.status.in_([TaskStatus.QUEUED, TaskStatus.ASSIGNED]),
             ).distinct()
         ))
@@ -360,9 +366,10 @@ class TaskService:
                 task.updated_at = now
                 await self.db.commit()
 
-                delivered = bool(self.publisher and await self.publisher.send_command_live(
-                    str(device_id), command,
-                ))
+                async with asyncio.timeout(_ASSIGN_PUBLISH_TIMEOUT_SECONDS):
+                    delivered = bool(self.publisher and await self.publisher.send_command_live(
+                        str(device_id), command,
+                    ))
                 logger.info("task.assignment_sent", task_id=task_id_str,
                             device_id=str(device_id), transport_accepted=delivered)
                 # Only the device's received/running acknowledgement advances
@@ -580,7 +587,9 @@ class TaskService:
         logger.info("task.cancel.requested", task_id=str(task.id), status=task.status)
         return task
 
-    async def dispatch_pending_cancellations(self, *, org_id: uuid.UUID | None = None) -> None:
+    async def dispatch_pending_cancellations(
+        self, *, org_id: uuid.UUID | None = None, device_id: uuid.UUID | None = None,
+    ) -> None:
         """Persist dispatch lease before I/O; bounded idempotent retries after restart.
 
         A publication/ACK never completes the task. Terminal DAG results are the
@@ -592,6 +601,7 @@ class TaskService:
         now = datetime.now(timezone.utc)
         rows = list(await self.db.scalars(select(Task).where(
             *([Task.org_id == org_id] if org_id is not None else []),
+            *([Task.device_id == device_id] if device_id is not None else []),
             Task.cancel_requested_at.is_not(None),
             Task.status.in_([TaskStatus.ASSIGNED, TaskStatus.RUNNING]),
             or_(Task.cancel_last_sent_at.is_(None),
@@ -703,7 +713,7 @@ class TaskService:
 
 # ── Dispatcher loop (ARCH-3) ─────────────────────────────────────────────────
 # Запускается один раз при старте через register_startup (см. tasks/router.py).
-# Периодически раздаёт задачи из Redis очереди онлайн-агентам.
+# Периодически доставляет сохранённые в PostgreSQL задачи онлайн-агентам.
 
 _dispatcher_task: asyncio.Task | None = None   # global ref — защита от GC
 
