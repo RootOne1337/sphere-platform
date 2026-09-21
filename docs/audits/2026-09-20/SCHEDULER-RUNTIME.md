@@ -88,6 +88,10 @@ runtime-модуля прошли; OpenAPI export не изменил контр
 предыдущего точного head `57f2730` прошли:
 [архив CI](../2026-09-05/evidence/ci-57f2730-summary.json).
 
+Повторный общий прогон при AUD-137 выявил расхождение тестового пула с production:
+отсутствовал `pool_pre_ping`. [Разбор и отдельный regression](RUNTIME-POOL-HARNESS.md)
+фиксируют failure/recovery без изменения рабочего engine; старые evidence не переписаны.
+
 ## Rollout и остаточные риски
 
 **Source fix; backend/APK pilot не обновлялись. Массовый 32-device прогон ещё не допущен.**
@@ -109,9 +113,10 @@ Watchdog RLS отдельно [воспроизведён](evidence/watchdog-rls
 QUEUED task остаётся QUEUED после unscoped tick и становится TIMEOUT после того же
 tick с tenant binding. Это одна ожидаемо падающая diagnostic probe вне passing
 suite; ни команды APK, ни timeout физически выполняемой задачи она не проверяет.
-Следующий fix должен отдельно проверить ASSIGNED/RUNNING и stop/reconciliation.
+Последующий [AUD-137](WATCHDOG-STOP-RECOVERY.md) исправляет watchdog RLS и
+преждевременное освобождение ASSIGNED/RUNNING по таймеру; native stop/reconciliation OPEN.
 
-Открыты watchdog и остальные background SQL-пути, cluster/per-device quotas,
+Открыты native watchdog acceptance, остальные background SQL-пути, cluster/per-device quotas,
 большие fan-out schedules и bounded latency на 32 устройствах. Cursor даёт
 продвижение при конечной очереди, но не SLA или межорганизационную квоту.
 Device group targeting и legacy helper callers требуют отдельной проверки;

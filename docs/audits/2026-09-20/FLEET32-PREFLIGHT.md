@@ -44,8 +44,11 @@ Compound loop/parallel, квоты и native rollout остаются OPEN.
 **AUD-135/136, source-only:** [task dispatcher](TASK-DISPATCH-RLS.md) и
 [scheduler](SCHEDULER-RUNTIME.md) находят работу под runtime RLS; проверены
 dependency recovery, атомарность, commit failure и ограниченная обработка страниц.
-Следующий worker blocker — [watchdog RLS](evidence/watchdog-rls.json): startup tick
-не видит просроченную QUEUED задачу. Native acceptance и общий допуск остаются OPEN.
+Выявленный worker blocker — [watchdog RLS](evidence/watchdog-rls.json): startup tick
+не видит просроченную QUEUED задачу. [AUD-137](WATCHDOG-STOP-RECOVERY.md) исправляет
+это и premature timeout: stop intent сохраняется, устройство ждёт terminal APK
+receipt. 22 новых backend и 239 frontend tests прошли. Native acceptance и общий
+допуск остаются OPEN.
 
 ## Что проверяем и что уже известно
 
@@ -627,10 +630,14 @@ dispatch/cancellation через bounded discovery и tenant-bound sessions, а 
 две организации, два workers и 64 offline devices перед online. Source-only;
 scheduler RLS исправлен последующим AUD-136; native/runtime-role acceptance открыта.
 
-**Открытое продолжение F32-25 — watchdog:** реальная non-owner роль после
+**Продолжение F32-25 — watchdog (source fix AUD-137):** реальная non-owner роль после
 `_expire_stale_tasks` сохраняет двухчасовой QUEUED task без изменений при лимите
 60 минут. Контрольный вызов под той же ролью с tenant binding переводит его в
 TIMEOUT. [Evidence](evidence/watchdog-rls.json), [probe](evidence/watchdog_runtime_probe.py).
 Один ожидаемый failure вне стандартного CI; никаких заданий APK/Redis effects.
-Далее нужны bounded discovery/scoped обработка и отдельное доказательство поведения
-ASSIGNED/RUNNING при timeout: терминальный SQL status сам по себе не доказывает stop.
+Последующий [AUD-137](WATCHDOG-STOP-RECOVERY.md) реализует bounded discovery/scoped
+обработку. До fix ещё два regressions подтвердили: timeout ASSIGNED/RUNNING
+разрешал выдачу следующего DAG до физического результата. Теперь сохраняется stop
+intent и execution fence; TIMEOUT delivered задачи требует terminal APK receipt.
+Старая диагностическая проба относится к прежнему source; текущий контракт проверяют
+22 новых tests в passing suite. Native stop/reconnect и legacy TIMEOUT reconciliation OPEN.

@@ -24,6 +24,17 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Security / runtime
 
+- AUD-137 / F32-01/25: watchdog discovers overdue work under runtime RLS and
+  persists timeout stop intent for ASSIGNED/RUNNING instead of releasing the
+  device on a timer. Only undispatched QUEUED expires locally. Durable cancellation
+  is retried by the dispatcher; a terminal cancelled APK receipt records TIMEOUT
+  once, successful completion wins, and unknown outcome retains the execution fence.
+  Handle missing-start RUNNING, filter healthy rows before locks, bound discovery
+  and tenant transactions. Expose nullable timeout_requested_at and a pending
+  deadline label in the UI. Four before failures; 22 new runtime/migration and
+  all 239 frontend tests pass. Source only; coordinated APK/native rollout required.
+  [Evidence, migration/grant and residual risks](docs/audits/2026-09-20/WATCHDOG-STOP-RECOVERY.md).
+
 - AUD-136 / F32-25: discover scheduled work under a non-owner RLS role and commit
   each firing in its own tenant-bound transaction. Roll back child/receipt/cancel
   writes on failure, retain committed identity after lost responses and process

@@ -30,10 +30,11 @@ background workers, compound loop/parallel и video/preview/Redis budgets. Ос�
 Redis startup recovery; 101 related tests passed, transport в пробах mocked.
 [AUD-136](../2026-09-20/SCHEDULER-RUNTIME.md) исправляет scheduler RLS, атомарность
 firing, presence failures, conflict SQL и продвижение SKIP interval; 86 related
-tests passed, включая реальный SQL connection termination. Теперь исправить
-[воспроизведённый watchdog RLS](../2026-09-20/evidence/watchdog-rls.json), предварительно
-проверив ASSIGNED/RUNNING timeout/physical stop, и проверить остальные background
-SQL-пути; следом — video/preview/Redis budgets.
+tests passed, включая реальный SQL connection termination. [AUD-137](../2026-09-20/WATCHDOG-STOP-RECOVERY.md)
+исправляет [watchdog RLS](../2026-09-20/evidence/watchdog-rls.json) и раннее завершение
+ASSIGNED/RUNNING по таймеру; ожидание stop receipt сохраняет execution fence.
+22 новых backend и 239 frontend tests прошли. Следом — остальные background
+SQL-пути, bounded video/preview и Redis budgets; native physical stop ещё не принят.
 До native rollout — migration/grants и runtime-role canary.
 
 **Первый source fix — [AUD-129](../2026-09-20/DURABLE-CANCELLATION.md):** сохранённая

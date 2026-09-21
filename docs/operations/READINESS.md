@@ -2,15 +2,23 @@
 
 **Срез: 21 сентября 2026 · аудит продолжается · приоритеты согласованы с владельцем.**
 
+**AUD-137, source-only:** watchdog обнаруживает due work под RLS; для
+ASSIGNED/RUNNING сохраняет stop intent и ждёт terminal APK receipt. Истечение
+таймера больше не разрешает следующий DAG и не завершает batch без результата.
+Четыре failures до fix → 22 новых passing regressions; весь frontend — 239 passed.
+[Контракт, evidence и rollback](../audits/2026-09-20/WATCHDOG-STOP-RECOVERY.md).
+Нужны coordinated backend/APK rollout, сверка старых TIMEOUT rows и native fault
+acceptance. Следом — остальные background SQL-пути и video/preview/Redis gates.
+
 **AUD-136, source-only:** scheduler теперь обрабатывает due schedules под RLS
 в отдельных атомарных транзакциях. Исправлены commit после ошибки handler,
 обход `only_online` при отказе Redis, SQL conflict check и просроченный SKIP interval.
 Семь baseline failures → 86 связанных tests passed, включая принудительный обрыв
 собственного тестового SQL connection и восстановление. [Evidence, grants,
 runtime contract](../audits/2026-09-20/SCHEDULER-RUNTIME.md).
-Следом — подтверждённый [watchdog RLS](../audits/2026-09-20/evidence/watchdog-rls.json):
-просроченная QUEUED задача невидима до tenant binding. Проверить также физический
-timeout/stop и остальные SQL workers, затем video/preview gates.
+Выявленный [watchdog RLS](../audits/2026-09-20/evidence/watchdog-rls.json) и
+преждевременное завершение timeout исправлены последующим AUD-137;
+physical stop/native acceptance и остальные SQL workers ещё требуют проверки.
 Стенд не обновлён; native приёмка на 32 остаётся OPEN.
 
 **AUD-135, source-only:** task assignment/cancellation теперь используют bounded
@@ -18,7 +26,7 @@ UUID discovery и отдельные tenant-bound sessions. Worker запуск�
 Redis и получает актуальные зависимости при каждом tick. Три failures до fix,
 101 связанный test passed; реальные RLS/commit/SQL timeout и две организации,
 transport doubles. [Evidence, grants и границы](../audits/2026-09-20/TASK-DISPATCH-RLS.md).
-Scheduler RLS исправлен последующим AUD-136; watchdog RLS воспроизведён и открыт.
+Scheduler RLS исправлен AUD-136, watchdog — AUD-137; native rollout открыт.
 Pilot не обновлён, native stop/reconnect и допуск к массовому прогону остаются OPEN.
 
 **AUD-134, source-only:** checkpointed nested pipeline сохраняет WAITING/deadline
@@ -65,11 +73,23 @@ native/root-path приёмка открыта. [Доказательства и
 [Fleet32 preflight](../audits/2026-09-20/FLEET32-PREFLIGHT.md) задаёт текущую очередность:
 достоверная остановка и восстановление batch/pipeline → ограниченный decoder и
 сквозной preview profile → ресурсы/наблюдение → ramp 4/8/16/32 и конечный soak.
-24 пункта разделены на воспроизведённые дефекты, подтверждённые свойства кода/конфига
-и открытые gates. Семь backend diagnostic assertions воспроизводят отсутствующие
+Исходные 24 пункта и добавленный F32-25 разделяют воспроизведённые дефекты,
+подтверждённые свойства кода/конфига и открытые gates. Семь backend diagnostic assertions воспроизводят отсутствующие
 контракты; это ожидаемые failures, не прошедшая приёмка. Код и runtime этим
 документальным срезом не изменены. VPN, fleet OTA и будущий AI имеют отдельные gates.
 Исторические результаты ниже сохраняются со своими версиями и границами.
+
+**Ближайшее обновление — согласованная canary на двух устройствах, затем масштаб.**
+После итоговой проверки исходников собрать backend/frontend и pilot APK одного
+source manifest. APK должен сохранять установленный package/signing identity и
+иметь versionCode выше 10207; общий CI APK не заменяет pilot artifact автоматически.
+Перед миграциями сохранить backup нового pilot и проверить порядок grants/rollout
+из [AUD-129](../audits/2026-09-20/DURABLE-CANCELLATION.md) и
+[AUD-137](../audits/2026-09-20/WATCHDOG-STOP-RECOVERY.md).
+На двух APK подтвердить обычный DAG, stop/timeout при потере связи, reconnect,
+сохранность identity после OTA/reboot и отсутствие новых crashes. Только затем
+переходить к ramp 4/8/16/32 после video/preview/resource gates. Это план следующей
+приёмки; новые версии ещё не установлены и её результаты пока отсутствуют.
 
 **AUD-126 установлен и проверен:** при нескольких просмотрах одного Android первое
 окно теряло кадры без закрытия WebSocket. Дефект воспроизведён на обоих APK;

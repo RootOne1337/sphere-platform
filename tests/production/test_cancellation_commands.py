@@ -52,20 +52,25 @@ async def test_stop_ack_cannot_complete_a_task_with_committed_or_rolled_back_int
     assert command["command_id"] != str(task.id)
 
 
-async def test_watchdog_stop_names_the_expired_task_after_timeout_commit(world):
+async def test_watchdog_stop_names_the_overdue_task_after_intent_commit(world):
     task = await seed_running_task(world)
     queue, publisher = AsyncMock(), AsyncMock()
     with (
         patch("backend.tasks.task_heartbeat_watchdog.AsyncSessionLocal", world.sessions),
+        patch("backend.tasks.task_heartbeat_watchdog._discover_stale_tasks", AsyncMock(return_value=[(task.id, task.org_id)])),
         patch("backend.database.redis_client.redis_binary", object()),
         patch("backend.services.task_queue.TaskQueue", return_value=queue),
         patch("backend.websocket.pubsub_router.get_pubsub_publisher", return_value=publisher),
     ):
         await _expire_stale_tasks()
     async with world.sessions() as verify:
-        assert (await verify.get(Task, task.id)).status == TaskStatus.TIMEOUT
+        current = await verify.get(Task, task.id)
+        assert current.status == TaskStatus.RUNNING and current.timeout_requested_at is not None
+        publisher.send_command_live.assert_not_awaited()
+        queue.mark_completed.assert_not_awaited()
+        await TaskService(verify, publisher=publisher).dispatch_pending_cancellations(org_id=world.org_a.id)
     sent = [call.args[1] for call in publisher.send_command_live.await_args_list
             if call.args[0] == str(task.device_id)]
     assert len(sent) == 1
-    assert sent[0].get("payload") == {"task_id": str(task.id)}, "Watchdog emits an untargeted device stop"
+    assert sent[0].get("payload") == {"task_id": str(task.id), "durable": True}
     assert sent[0]["command_id"] != str(task.id)

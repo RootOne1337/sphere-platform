@@ -158,6 +158,7 @@ GRANT EXECUTE ON FUNCTION sphere_auth.due_batch_admissions() TO sphere_runtime;
 GRANT EXECUTE ON FUNCTION sphere_auth.pipeline_work(text) TO sphere_runtime;
 GRANT EXECUTE ON FUNCTION sphere_auth.task_dispatch_work(text,uuid) TO sphere_runtime;
 GRANT EXECUTE ON FUNCTION sphere_auth.schedule_work(uuid) TO sphere_runtime;
+GRANT EXECUTE ON FUNCTION sphere_auth.watchdog_work(integer,integer,uuid) TO sphere_runtime;
 ```
 
 Применять migrations до запуска совместимого кода. Один HTTP readyz не доказывает,
@@ -169,6 +170,13 @@ GRANT EXECUTE ON FUNCTION sphere_auth.schedule_work(uuid) TO sphere_runtime;
 [task dispatch](../audits/2026-09-20/TASK-DISPATCH-RLS.md),
 [scheduler](../audits/2026-09-20/SCHEDULER-RUNTIME.md) описывают rollback,
 regressions и ограничения. На существующий pilot эти source fixes ещё не установлены.
+
+Для [watchdog AUD-137](../audits/2026-09-20/WATCHDOG-STOP-RECOVERY.md) дополнительно
+проверить native timeout → сохранённый stop → terminal receipt: до результата APK
+следующая задача не должна получить исполнение. Нужен APK с durable cancellation
+journal из AUD-129 и сверка исторических TIMEOUT rows; старый watchdog нельзя
+оставлять параллельно с новым. Nullable marker и lookup добавляет migration
+`20260921_watchdog_stop`; один HTTP readyz этот контракт не проверяет.
 
 ## Единая enrollment identity при старте (AUD-83)
 

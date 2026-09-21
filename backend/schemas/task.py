@@ -38,6 +38,7 @@ class TaskResponse(BaseModel):
     started_at: datetime | None = None
     finished_at: datetime | None = None
     cancel_requested_at: datetime | None = None
+    timeout_requested_at: datetime | None = None
     wave_index: int | None = None
     created_at: datetime
     updated_at: datetime

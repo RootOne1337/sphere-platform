@@ -2,6 +2,16 @@
 
 Статус на 21 сентября 2026: **аудит продолжается; production readiness не подтверждена**.
 
+**AUD-137 · High / P0, F32-01/25 · source fix, не установлен:** watchdog сохраняет
+stop intent для overdue ASSIGNED/RUNNING, удерживает устройство и batch до DAG
+receipt, работает через bounded RLS discovery. Четыре regressions до fix доказали
+невидимость QUEUED, преждевременный dispatch следующей задачи и пропуск RUNNING
+без start. 22 новых regressions, полный backend **1952 passed** и frontend
+**239 passed**. Проверены commit/SQL
+failures, repeated stop/terminal receipt, unknown outcome, две организации и
+конкурентные workers. [Root cause, affected files, evidence, rollout/residuals](../2026-09-20/WATCHDOG-STOP-RECOVERY.md).
+Старые TIMEOUT rows автоматически не реабилитируются; native stop/32-device gates OPEN.
+
 **AUD-136 · High / P0, F32-25 scheduler · source fix, не установлен:** due schedules
 обнаруживаются под рабочей RLS ролью; children, execution, cancel intent и следующее
 время сохраняются атомарно. Исправлены commit после ошибки, fail-open `only_online`,
@@ -10,7 +20,7 @@
 реальные SQL timeout и termination собственного audit-соединения, Redis recovery.
 [Root cause, affected files, evidence, rollout и residual risks](../2026-09-20/SCHEDULER-RUNTIME.md).
 Полный backend: 1929 passed. Watchdog RLS [отдельно воспроизведён](../2026-09-20/evidence/watchdog-rls.json)
-и открыт; остальные workers, video/preview и native acceptance тоже OPEN.
+и исправлен последующим AUD-137; остальные workers, video/preview и native acceptance OPEN.
 
 **AUD-135 · High / F32-25 dispatcher · source fix, не установлен:** task assignment
 и persisted cancellation проходят под реальной non-owner RLS ролью. Startup без
@@ -19,7 +29,7 @@ Redis больше не выключает dispatcher; новые зависим
 конкурентные workers, lost commit/transport ACK, 64 offline перед online устройством,
 SQL timeout и зависшая отправка проверены. [Root cause, affected files, evidence,
 миграция/grants и residual risks](../2026-09-20/TASK-DISPATCH-RLS.md).
-Scheduler RLS исправлен последующим AUD-136; watchdog и native rollout остаются OPEN.
+Scheduler RLS исправлен AUD-136, watchdog — AUD-137; native rollout остаётся OPEN.
 
 **AUD-134 · High / F32-05 residual · source fix, не установлен:** nested parents
 сохраняют WAITING/deadline и освобождают slots для детей. Baseline: 10 родителей,

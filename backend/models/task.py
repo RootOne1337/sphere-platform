@@ -47,6 +47,7 @@ class Task(Base, UUIDMixin, TimestampMixin):
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     cancel_requested_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, index=True)
+    timeout_requested_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     cancel_last_sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     orchestration_processed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     timeout_seconds: Mapped[int] = mapped_column(Integer, default=300, nullable=False)

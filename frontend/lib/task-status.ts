@@ -3,6 +3,9 @@ export function isCancellationPending(task: { status: string; cancel_requested_a
   return Boolean(task.cancel_requested_at) && ['queued', 'assigned', 'running', 'waiting', 'paused'].includes(task.status);
 }
 
-export function executionStatusLabel(task: { status: string; cancel_requested_at?: string | null }): string {
-  return isCancellationPending(task) ? 'Cancelling — awaiting device result' : task.status;
+export function executionStatusLabel(task: { status: string; cancel_requested_at?: string | null; timeout_requested_at?: string | null }): string {
+  if (!isCancellationPending(task)) return task.status;
+  return task.timeout_requested_at
+    ? 'Deadline exceeded — awaiting device result'
+    : 'Cancelling — awaiting device result';
 }

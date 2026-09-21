@@ -48,6 +48,9 @@
 > 101 связанный тест прошёл. [AUD-136](docs/audits/2026-09-20/SCHEDULER-RUNTIME.md)
 > исправляет scheduler RLS, атомарность запуска и обработку отказов presence;
 > 86 связанных tests прошли, включая принудительный обрыв тестового SQL connection.
+> [AUD-137](docs/audits/2026-09-20/WATCHDOG-STOP-RECOVERY.md) исправляет watchdog:
+> просроченный ASSIGNED/RUNNING сохраняет stop intent и удерживает устройство
+> до окончательного результата APK; 22 новых backend и 239 frontend tests прошли.
 > Compound loop/parallel, остальные workers, общие квоты и video/preview остаются
 > в работе. Эти source fixes ещё не установлены; требуются согласованный rollout
 > и native-приёмка.

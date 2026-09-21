@@ -16190,6 +16190,18 @@
             ],
             "title": "Cancel Requested At"
           },
+          "timeout_requested_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timeout Requested At"
+          },
           "wave_index": {
             "anyOf": [
               {
@@ -16421,6 +16433,18 @@
               }
             ],
             "title": "Cancel Requested At"
+          },
+          "timeout_requested_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timeout Requested At"
           },
           "wave_index": {
             "anyOf": [

@@ -1,0 +1,125 @@
+{
+  "finding": "AUD-137 / F32-01 and F32-25 watchdog RLS and durable timeout stop",
+  "source_base": "8f37426b9ec660ed524e330d59a62cd21fea115d",
+  "recorded_at": "2026-09-21T10:12:16.269586+00:00",
+  "source_scope": "Working tree in same commit as evidence; SHA-256 normalizes UTF-8 LF.",
+  "source_sha256": {
+    "alembic/versions/20260921_watchdog_stop.py": "7e02dfad3726616ea0dc902db82953bb4b063bdf3cc7d7396382c1d9638cd746",
+    "backend/tasks/task_heartbeat_watchdog.py": "3ad2ba05bd58b4d1c0d9a872c5418919ee7a80ec63afc97f746063a09907bd0c",
+    "backend/services/task_service.py": "4722fffa8dd056a41b18ca470a20728cce367ce12a1995fab4b4ed72f39bc1af",
+    "backend/models/task.py": "ec8e98de0c7b26138c4227dacea2a0df0dafe046d6beb1900b2d73f3302de8ee",
+    "backend/schemas/task.py": "ff5407d06dcb341aee61fa4728e48d1ab146e3d1668db7cd571e228d2b787a09",
+    "frontend/lib/hooks/useTasks.ts": "d5b7ef90af2c4aee677a606ce87e306c9808db767e42c671fea06b82e3f47255",
+    "frontend/lib/task-status.ts": "f1ecd3b5ecf28276311e9bf7791c6b1bd208cc20e485f462d81fc078c401d521",
+    "frontend/__tests__/tasks/cancellation-status.test.ts": "a954736c5b955b0d3d166d3e0665795d341d3abb6d45822577db2aac3ec559ec",
+    "tests/production/test_watchdog_stop_recovery.py": "7b084ef03db9a42dbd76ec6f24c5483dec1c249e7559aac239d90b96106342cb",
+    "tests/production/test_watchdog_stop_migration.py": "bbf9e4c88e5dc0e2195591e81cfd998b4362c7886b8d0ea1fea65b062de1bb78",
+    "tests/production/test_watchdog_runtime.py": "83310a9913b7ed9799068338b272d2c6bd52ae622b363063d297c78e4679d468",
+    "tests/production/test_cancellation_commands.py": "88b26158d5e6cca01258810c76dd7d60bbfeccd3311552307358878b2787b9ad"
+  },
+  "severity": "High / P0 before coordinated backend and durable-journal APK rollout",
+  "before_regressions": {
+    "tests": 4,
+    "failures": 4,
+    "errors": 0,
+    "skipped": 0,
+    "passed": 0,
+    "duration_seconds": 2.348
+  },
+  "before_outcomes": [
+    "Real RLS startup tick cannot expire two-hour-old QUEUED task",
+    "ASSIGNED deadline releases device and permits successor EXECUTE_DAG before stop receipt",
+    "RUNNING deadline releases device and permits successor EXECUTE_DAG before stop receipt",
+    "Old RUNNING task with NULL started_at never gets a stop intent"
+  ],
+  "after_related": {
+    "tests": 86,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "passed": 86,
+    "duration_seconds": 48.638
+  },
+  "after_final_targeted": {
+    "tests": 22,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "passed": 22,
+    "duration_seconds": 17.878
+  },
+  "after_full_backend": {
+    "tests": 1952,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "passed": 1952,
+    "duration_seconds": 536.476
+  },
+  "first_full_backend_attempt": {
+    "tests": 1951,
+    "failures": 1,
+    "errors": 0,
+    "skipped": 0,
+    "passed": 1950,
+    "duration_seconds": 543.645
+  },
+  "validation_followup": {
+    "commit": "412e4288e0797f6d3894ba523c5aee29a205ac08",
+    "report": "../RUNTIME-POOL-HARNESS.md",
+    "root_cause": "Runtime-role fixture lacked production pool_pre_ping; next scheduler discovery reused closed connection",
+    "before_idle_disconnect": {
+      "tests": 1,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0,
+      "passed": 0,
+      "duration_seconds": 1.026
+    },
+    "after_scheduler_and_pool": {
+      "tests": 22,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "passed": 22,
+      "duration_seconds": 18.678
+    },
+    "production_engine_changed": false
+  },
+  "new_backend_regressions": 22,
+  "frontend": {
+    "tests": 239,
+    "passed": 239,
+    "new_cases": 5,
+    "typecheck": "pass"
+  },
+  "verification": [
+    "Actual non-owner NOBYPASSRLS login, two tenants, one SQL pool connection and competing ticks",
+    "Persisted targeted durable CANCEL survives failed delivery; same command ID after recovery",
+    "No successor EXECUTE_DAG or batch failure before terminal APK receipt; repeated receipt counts once",
+    "Unknown execution outcome retains fence; successful outcome wins; earlier user cancel retains its reason",
+    "Before-commit failure and lost reply after actual commit reconcile from SQL without replayed effects",
+    "Result-owner row lock wins over watchdog; healthy RUNNING row stays writable during watchdog transaction",
+    "64-item page followed by 65th task, with pending stops excluded",
+    "Explicit grant removal/recovery without worker restart",
+    "Actual pg_sleep(5) interrupted in discovery and after intent flush; rollback and pool recovery",
+    "API returns pending deadline marker while task remains RUNNING",
+    "Migration deadline boundaries, ACL, search_path, cursor and down/up preserve rows and cancel intent"
+  ],
+  "validation": {
+    "ruff": "pass",
+    "mypy_scoped_runtime_modules": 4,
+    "openapi_export": "pass; additive optional response marker",
+    "isolated_migration_upgrade": "pass",
+    "previous_head_ci": "../../2026-09-05/evidence/ci-8f37426-summary.json"
+  },
+  "limitations": [
+    "Source only; pilot, APK and old Docker projects unchanged",
+    "Transport doubles prove dispatch/receipt protocol, not physical Android stop or root outcome",
+    "Coordinated migration, explicit runtime function grant and durable-journal APK required",
+    "Old TIMEOUT rows require explicit reconciliation with devices before rollout; no automatic reopening",
+    "Stop intent can remain pending until a known device outcome; no blind timeout-based fence release",
+    "Legacy Redis queue metadata/helper retention is separate; SQL dispatcher does not consume it",
+    "Full backend excludes tests/load; native 32/64 scale and fault soak remain unaccepted"
+  ]
+}

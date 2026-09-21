@@ -442,7 +442,10 @@ class TaskService:
             task.error_message = "Cancellation outcome unknown; execution requires reconciliation"
             return False
         cancelled = result.get("cancelled") is True and success is False
-        task.status = TaskStatus.CANCELLED if cancelled else (TaskStatus.COMPLETED if success else TaskStatus.FAILED)
+        if cancelled:
+            task.status = TaskStatus.TIMEOUT if task.timeout_requested_at is not None else TaskStatus.CANCELLED
+        else:
+            task.status = TaskStatus.COMPLETED if success else TaskStatus.FAILED
         task.finished_at = datetime.now(timezone.utc)
         task.result = result
         task.error_message = result.get("error")

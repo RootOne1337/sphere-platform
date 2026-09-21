@@ -106,12 +106,13 @@ configuration оставлены приватными. `runtime-summary.json` �
 `reproductions.json` сохраняет точный source SHA; актуальность после новых fixes
 проверяется повторным запуском, а не редактированием прошлых результатов.
 
-## Watchdog RLS: следующий воспроизведённый blocker
+## Watchdog RLS: историческое воспроизведение и исправление
 
 [Сводка](watchdog-rls.json) и [диагностическая проба](watchdog_runtime_probe.py)
 проверяют `_expire_stale_tasks` на source `57f2730` (watchdog не изменён AUD-136).
 Двухчасовая QUEUED задача остаётся QUEUED под unscoped runtime login; та же роль
-с tenant binding переводит её в TIMEOUT. Запуск с теми же disposable guards:
+с tenant binding переводит её в TIMEOUT. Следующая команда относится к указанному
+старому source, с теми же disposable guards:
 
 ```powershell
 python -m pytest -p tests.conftest -p tests.production.conftest docs/audits/2026-09-20/evidence/watchdog_runtime_probe.py -q --no-cov
@@ -119,4 +120,13 @@ python -m pytest -p tests.conftest -p tests.production.conftest docs/audits/2026
 
 Ожидается **1 failed / 0 errors** на финальном assertion. Это не часть 1929 passing
 backend tests AUD-136. Redis отсутствует; task никогда не отправлялся Android.
-ASSIGNED/RUNNING, физический stop, recovery и runtime fix ещё требуют работы.
+Последующий [AUD-137](../WATCHDOG-STOP-RECOVERY.md) исправляет RLS discovery и
+сохраняет stop intent для ASSIGNED/RUNNING до результата APK.
+[Новая сводка](watchdog-stop-recovery.json) содержит четыре baseline failures и
+проверки recovery, конкуренции, SQL timeout и повторных terminal receipts.
+Актуальные regressions — `tests/production/test_watchdog_stop_recovery.py` и
+`tests/production/test_watchdog_stop_migration.py`; прежняя проба не выдаёт grant
+новой lookup-функции и не проверяет новый startup contract. Before evidence
+сохранено неизменным. Физический stop/reconnect требует отдельной APK canary.
+CI предыдущего точного head `8f37426`
+[прошёл все четыре workflows](../../2026-09-05/evidence/ci-8f37426-summary.json).

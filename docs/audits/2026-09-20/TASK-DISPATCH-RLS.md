@@ -106,8 +106,9 @@ APK receipt, запросить отмену, получить terminal receipt,
 удалить функцию миграцией; task rows миграция не меняет.
 
 Последующий [AUD-136](SCHEDULER-RUNTIME.md) исправляет подтверждённый
-[scheduler RLS](evidence/scheduler-rls.json) и атомарность firing; watchdog и
-другие background SQL-пути требуют отдельной проверки. Также открыты decoder queue,
+[scheduler RLS](evidence/scheduler-rls.json) и атомарность firing;
+[AUD-137](WATCHDOG-STOP-RECOVERY.md) исправляет watchdog RLS и premature timeout.
+Другие background SQL-пути требуют проверки. Также открыты decoder queue,
 APK preview profile, свежесть кадров, Redis budget, смешанный native-прогон и
 SQL-нагрузка/latency на 32 устройствах. 65 SQL-fixture devices не являются тестом
 65 Android. Отправка/ACK transport не доказывает физический stop или exactly-once
