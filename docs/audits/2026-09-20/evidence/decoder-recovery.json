@@ -1,0 +1,132 @@
+{
+  "finding": "AUD-138 / F32-06",
+  "baseline": "cb07eae07daba3eda1b106ab1fd0eb5c3d527686",
+  "before": {
+    "numTotalTests": 16,
+    "numPassedTests": 2,
+    "numFailedTests": 14,
+    "numRuntimeErrorTestSuites": 0
+  },
+  "after_full_frontend": {
+    "numTotalTests": 264,
+    "numPassedTests": 264,
+    "numFailedTests": 0,
+    "numRuntimeErrorTestSuites": 0
+  },
+  "typecheck": "passed",
+  "native": "pending; do not infer from unit tests",
+  "limits": {
+    "preconfig_buffer_frames": 0,
+    "pending_inputs": 8,
+    "encoded_bytes": 2097152,
+    "packet_bytes_excluding_header": 1048576,
+    "input_output_age_ms": 500,
+    "codec_cooldown_ms": 1000
+  },
+  "test_scope": "Real TypeScript decoder, stalled/failing codec double; no GPU capacity inference",
+  "regressions": [
+    {
+      "title": "does not retain and replay frames received before SPS/PPS",
+      "status": "passed"
+    },
+    {
+      "title": "bounds submissions when a codec stops consuming input",
+      "status": "passed"
+    },
+    {
+      "title": "also bounds internal pending output when decodeQueueSize reports zero",
+      "status": "passed"
+    },
+    {
+      "title": "discards an expired reference chain and resumes only from a new IDR",
+      "status": "passed"
+    },
+    {
+      "title": "bounds retained encoded bytes even when every frame is an IDR",
+      "status": "passed"
+    },
+    {
+      "title": "recovers from an async closed-codec error without throwing on new packets",
+      "status": "passed"
+    },
+    {
+      "title": "closes frames even when rendering throws",
+      "status": "passed"
+    },
+    {
+      "title": "ignores delayed output after destroy and closes every frame exactly once",
+      "status": "passed"
+    },
+    {
+      "title": "ignores output from a replaced codec generation",
+      "status": "passed"
+    },
+    {
+      "title": "preserves the source timestamp as microseconds without claiming wall-clock latency",
+      "status": "passed"
+    },
+    {
+      "title": "ignores repeated identical parameter sets instead of losing reference state",
+      "status": "passed"
+    },
+    {
+      "title": "rejects invalid size packets before configuring or decoding",
+      "status": "passed"
+    },
+    {
+      "title": "rejects invalid version packets before configuring or decoding",
+      "status": "passed"
+    },
+    {
+      "title": "rejects invalid empty packets before configuring or decoding",
+      "status": "passed"
+    },
+    {
+      "title": "rejects invalid timestamp packets before configuring or decoding",
+      "status": "passed"
+    },
+    {
+      "title": "rejects invalid oversize packets before configuring or decoding",
+      "status": "passed"
+    },
+    {
+      "title": "converts all NALs in an access unit into one AVCC picture",
+      "status": "passed"
+    },
+    {
+      "title": "waits for fresh PPS and IDR after changed SPS, and fences old output",
+      "status": "passed"
+    },
+    {
+      "title": "clears configuration and pending frames for a different socket generation",
+      "status": "passed"
+    },
+    {
+      "title": "contains a synchronous configure failure and recovers on a new keyframe",
+      "status": "passed"
+    },
+    {
+      "title": "contains a synchronous decode failure and recovers on a new keyframe",
+      "status": "passed"
+    },
+    {
+      "title": "renders sustained output without growing submissions in flight",
+      "status": "passed"
+    },
+    {
+      "title": "drops stale decoded output instead of rendering an old image",
+      "status": "passed"
+    }
+  ],
+  "file_sha256": {
+    "frontend/lib/h264-decoder.ts": "ffddc6ad3f375d1aab8e57dce102e59b71477e31f453e35801e5b58b559a8bcb",
+    "frontend/components/sphere/DeviceStream.tsx": "7fa9af47f2a39e64a33f8273abbf6e097700cc57dad57be0f1bdb69abcf62903",
+    "frontend/__tests__/stream/h264-decoder.test.ts": "da6cde87345467e81599a2a597d49dd145be6572e666e852158f199fb419a325",
+    "frontend/__tests__/stream/reconnect.test.tsx": "76dda5b965674d2a01c349c6d9da17388195a13e4f7168c5109117a9892d89e0"
+  },
+  "private_logs_sha256": {
+    "decoder-before.json": "50bb87860368fbdd279a78a5196a756fbea7452dd1e7ae33a63d96126b358631",
+    "decoder-full.json": "d295823b8f0d789870f80ae8c34272e12cdb5042e8418c7d46a9d2a1a3554cd6",
+    "decoder-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

@@ -27,6 +27,8 @@
 
 ## Текущие исправления перед Fleet32
 
+- [AUD-138: bounded active decoder, codec recovery, keyframe requests и regression tests](audits/2026-09-20/DECODER-RECOVERY.md).
+
 Backend/frontend и APK 1.2.8 установлены: [canary 21 сентября](audits/2026-09-20/CANARY-20260921.md).
 15 task receipts и два pipeline независимо сверены; массовая нагрузка ещё не принята.
 

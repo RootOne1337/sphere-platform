@@ -25,6 +25,7 @@ export function DeviceStream({
     let ws: WebSocket | null = null;
     let decoder: H264Decoder | null = null;
     let retryTimer: ReturnType<typeof setTimeout> | undefined;
+    let keyFrameTimer: ReturnType<typeof setTimeout> | undefined;
     let watchdog: ReturnType<typeof setInterval> | undefined;
     let attempt = 0;
     setConnection('connecting');
@@ -40,12 +41,25 @@ export function DeviceStream({
       decoder = new H264Decoder((frame) => {
         if (ignore || wsRef.current?.readyState !== WebSocket.OPEN) return;
         setConnection('live');
+        clearTimeout(keyFrameTimer);
         // Mutate canvas directly for performance, avoid React state re-renders
         if (canvas.width !== frame.displayWidth || canvas.height !== frame.displayHeight) {
           canvas.width = frame.displayWidth;
           canvas.height = frame.displayHeight;
         }
         ctx.drawImage(frame, 0, 0, canvas.width, canvas.height);
+      }, () => {
+        if (ignore) return;
+        setConnection('retrying');
+        // A static Android screen may not produce another IDR spontaneously.
+        // Wait for the codec cooldown, then request one at a bounded cadence.
+        clearTimeout(keyFrameTimer);
+        const requestKeyFrame = () => {
+          if (ignore || wsRef.current?.readyState !== WebSocket.OPEN) return;
+          wsRef.current.send(JSON.stringify({ type: 'request_keyframe' }));
+          keyFrameTimer = setTimeout(requestKeyFrame, 2000);
+        };
+        keyFrameTimer = setTimeout(requestKeyFrame, 1100);
       });
       decoder.init();
       decoderRef.current = decoder;
@@ -71,8 +85,10 @@ export function DeviceStream({
           if (ended) return;
           ended = true;
           clearInterval(watchdog);
+          clearTimeout(keyFrameTimer);
           newWs.onopen = newWs.onmessage = newWs.onclose = newWs.onerror = null;
           if (wsRef.current === newWs) wsRef.current = null;
+          decoder?.reset();
           if (newWs.readyState === WebSocket.OPEN || newWs.readyState === WebSocket.CONNECTING) {
             newWs.close();
           }
@@ -119,10 +135,12 @@ export function DeviceStream({
       ignore = true;
       clearTimeout(timer);
       clearTimeout(retryTimer);
+      clearTimeout(keyFrameTimer);
       clearInterval(watchdog);
       wsRef.current = null;
       ws?.close();
       decoder?.destroy();
+      decoderRef.current = null;
     };
   }, [deviceId, accessToken]);
 

@@ -285,6 +285,10 @@ duplicate delivery и недоступность n8n. **Residual:** внешни
 
 ### F32-06 — неограниченные очереди и codec error
 
+**Последующий AUD-138:** [активный decoder ограничен и восстанавливается](DECODER-RECOVERY.md).
+14 before failures → 264 frontend tests passed; native rollout проверяется отдельно.
+Исходные root cause/evidence ниже сохранены, масштаб 32 остаётся OPEN.
+
 **Root cause / файлы:** страница использует [DeviceStream](../../../frontend/components/sphere/DeviceStream.tsx)
 и **[frontend/lib/h264-decoder.ts](../../../frontend/lib/h264-decoder.ts)**.
 Другая реализация в `src/lib/streaming` не исправляет этот import. До SPS/PPS массив
