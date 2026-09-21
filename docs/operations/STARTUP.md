@@ -157,15 +157,17 @@ GRANT USAGE ON SCHEMA sphere_auth TO sphere_runtime;
 GRANT EXECUTE ON FUNCTION sphere_auth.due_batch_admissions() TO sphere_runtime;
 GRANT EXECUTE ON FUNCTION sphere_auth.pipeline_work(text) TO sphere_runtime;
 GRANT EXECUTE ON FUNCTION sphere_auth.task_dispatch_work(text,uuid) TO sphere_runtime;
+GRANT EXECUTE ON FUNCTION sphere_auth.schedule_work(uuid) TO sphere_runtime;
 ```
 
 Применять migrations до запуска совместимого кода. Один HTTP readyz не доказывает,
 что фоновые workers видят задания. Проверить canary task/receipt/cancel, pipeline
-и batch recovery под фактической ролью. На момент AUD-135 scheduler RLS ещё
-остаётся подтверждённым блокером; этот список grants его не исправляет.
+и batch recovery под фактической ролью. Scheduler исправлен в AUD-136; дополнительно
+проверить его SCRIPT/PIPELINE firing, конфликт и recovery после Redis/worker restart.
 [Batch](../audits/2026-09-20/BATCH-RECOVERY.md),
 [pipeline](../audits/2026-09-20/PIPELINE-RLS.md) и
-[task dispatch](../audits/2026-09-20/TASK-DISPATCH-RLS.md) описывают rollback,
+[task dispatch](../audits/2026-09-20/TASK-DISPATCH-RLS.md),
+[scheduler](../audits/2026-09-20/SCHEDULER-RUNTIME.md) описывают rollback,
 regressions и ограничения. На существующий pilot эти source fixes ещё не установлены.
 
 ## Единая enrollment identity при старте (AUD-83)

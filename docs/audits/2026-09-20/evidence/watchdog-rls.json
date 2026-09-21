@@ -1,0 +1,38 @@
+{
+  "finding": "F32-25 continuation: watchdog runtime visibility",
+  "status": "Reproduced, open; scheduler fix does not repair watchdog",
+  "source_base": "57f2730a21cc2d1fb021f5092baf24e06bedbdc1",
+  "scope_note": "Watchdog unchanged by AUD-136 working tree",
+  "recorded_at": "2026-09-21T03:24:08.053789+00:00",
+  "probe": "watchdog_runtime_probe.py",
+  "result": {
+    "tests": 1,
+    "failures": 1,
+    "errors": 0,
+    "skipped": 0,
+    "passed": 0,
+    "duration_seconds": 0.791
+  },
+  "before": {
+    "status": "queued",
+    "age_hours": 2,
+    "queued_stale_minutes": 60
+  },
+  "after_actual_unscoped_tick": {
+    "status": "queued"
+  },
+  "after_bound_control_same_role": {
+    "status": "timeout"
+  },
+  "root_cause": "_expire_stale_tasks creates an unscoped Session; RLS hides expired task rows",
+  "affected_files": [
+    "backend/tasks/task_heartbeat_watchdog.py"
+  ],
+  "required_next": "Bounded trusted discovery and tenant-bound expiration/reconciliation; separately prove ASSIGNED/RUNNING timeout and physical-stop behavior before changing it",
+  "limitations": [
+    "Real disposable loopback PostgreSQL and random fixture org; no backend/APK pilot changes",
+    "QUEUED task was never sent; Redis absent and no APK commands issued",
+    "One expected final assertion failure outside passing tests; not included in full 1929-test pass",
+    "Only queued visibility reproduced here; no claim that physical timeout/cancellation is safe"
+  ]
+}

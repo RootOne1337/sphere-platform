@@ -77,11 +77,15 @@ regressions в `tests/production/test_pipeline_nested_wait.py`. Та же ист
 
 ## Сохранность evidence
 
-Отдельное открытое продолжение F32-25 — [scheduler RLS](scheduler-rls.json).
+Отдельное воспроизведение F32-25 — [scheduler RLS](scheduler-rls.json).
 `scheduler_runtime_probe.py` запускается теми же `-p tests.conftest
 -p tests.production.conftest` и disposable-service guards; на базе `294bd15`
 ожидается один final assertion failure (due exhausted schedule остаётся active).
 Эта проба не создаёт Android-задачи и не считается passing regression.
+Последующий [AUD-136](../SCHEDULER-RUNTIME.md) исправляет scheduler:
+[семь before failures, runtime regressions и итог](scheduler-runtime.json).
+Историческая baseline-сводка не переписана. Новый suite проверяет RLS, атомарность
+firing, SQL connection termination/timeout, commit/Redis failure и конкуренцию.
 Аналогично запускается `dispatcher_runtime_probe.py`: [evidence](dispatcher-rls.json)
 фиксирует QUEUED без binding и ASSIGNED с ним. Transport/presence — заглушки;
 ожидается один финальный assertion failure, не отказ реального устройства.
@@ -101,3 +105,18 @@ configuration оставлены приватными. `runtime-summary.json` �
 не постоянный health status. Данные старого Docker проекта не используются.
 `reproductions.json` сохраняет точный source SHA; актуальность после новых fixes
 проверяется повторным запуском, а не редактированием прошлых результатов.
+
+## Watchdog RLS: следующий воспроизведённый blocker
+
+[Сводка](watchdog-rls.json) и [диагностическая проба](watchdog_runtime_probe.py)
+проверяют `_expire_stale_tasks` на source `57f2730` (watchdog не изменён AUD-136).
+Двухчасовая QUEUED задача остаётся QUEUED под unscoped runtime login; та же роль
+с tenant binding переводит её в TIMEOUT. Запуск с теми же disposable guards:
+
+```powershell
+python -m pytest -p tests.conftest -p tests.production.conftest docs/audits/2026-09-20/evidence/watchdog_runtime_probe.py -q --no-cov
+```
+
+Ожидается **1 failed / 0 errors** на финальном assertion. Это не часть 1929 passing
+backend tests AUD-136. Redis отсутствует; task никогда не отправлялся Android.
+ASSIGNED/RUNNING, физический stop, recovery и runtime fix ещё требуют работы.

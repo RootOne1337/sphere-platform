@@ -41,6 +41,12 @@ F32-25: ограниченный discovery и tenant-bound claim/renew/reconcile
 проба прошли; checkpointed nested wait освобождает слот и сохраняет child/deadline.
 Compound loop/parallel, квоты и native rollout остаются OPEN.
 
+**AUD-135/136, source-only:** [task dispatcher](TASK-DISPATCH-RLS.md) и
+[scheduler](SCHEDULER-RUNTIME.md) находят работу под runtime RLS; проверены
+dependency recovery, атомарность, commit failure и ограниченная обработка страниц.
+Следующий worker blocker — [watchdog RLS](evidence/watchdog-rls.json): startup tick
+не видит просроченную QUEUED задачу. Native acceptance и общий допуск остаются OPEN.
+
 ## Что проверяем и что уже известно
 
 Сценарий владельца: **32 настоящих эмулятора, 32 живых экрана в одном веб-интерфейсе,
@@ -600,12 +606,15 @@ pipeline. Остальные workers требуют отдельной пров�
 dev-конфигурации не подтверждает работоспособность production DB-role.
 Полный migration/runtime-role canary обязателен до заявления о готовности.
 
-**Открытое продолжение F32-25, scheduler:** на неизменённом `scheduler_engine.py`
+**Продолжение F32-25, scheduler (source fix AUD-136):** на неизменённом `scheduler_engine.py`
 базы `294bd15` реальная non-owner роль не отключает due schedule с уже достигнутым
 `max_runs`: после `_tick` оно остаётся active. Причина — тот же unscoped startup
 SELECT. [Одна failing probe и ограничения](evidence/scheduler-rls.json),
 [исходник](evidence/scheduler_runtime_probe.py). Android-задания не создавались.
-Следующий P0 для rollout рабочей DB-роли; AUD-133/134 исправляют pipeline, не scheduler.
+Последующий [AUD-136](SCHEDULER-RUNTIME.md) исправляет эту RLS-видимость,
+атомарность firing, обработку недоступного presence и conflict/interval defects.
+Семь regressions упали до fix, 86 связанных tests после прошли. Миграция,
+worker grant и native rollout остаются gates; исходная failing probe сохранена.
 
 **Task dispatcher также воспроизведён:** unscoped poll оставляет Task в QUEUED,
 transport calls=0. После tenant binding под той же non-owner ролью тот же Task
@@ -616,4 +625,12 @@ dispatch/cancellation через bounded discovery и tenant-bound sessions, а 
 регистрацию worker без Redis на старте. Три failing startup regressions до fix →
 101 связанных passing tests, включая реальный SQL timeout, lost commit ACK,
 две организации, два workers и 64 offline devices перед online. Source-only;
-scheduler RLS и native/runtime-role acceptance остаются открытыми.
+scheduler RLS исправлен последующим AUD-136; native/runtime-role acceptance открыта.
+
+**Открытое продолжение F32-25 — watchdog:** реальная non-owner роль после
+`_expire_stale_tasks` сохраняет двухчасовой QUEUED task без изменений при лимите
+60 минут. Контрольный вызов под той же ролью с tenant binding переводит его в
+TIMEOUT. [Evidence](evidence/watchdog-rls.json), [probe](evidence/watchdog_runtime_probe.py).
+Один ожидаемый failure вне стандартного CI; никаких заданий APK/Redis effects.
+Далее нужны bounded discovery/scoped обработка и отдельное доказательство поведения
+ASSIGNED/RUNNING при timeout: терминальный SQL status сам по себе не доказывает stop.

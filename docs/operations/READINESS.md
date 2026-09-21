@@ -2,12 +2,23 @@
 
 **Срез: 21 сентября 2026 · аудит продолжается · приоритеты согласованы с владельцем.**
 
+**AUD-136, source-only:** scheduler теперь обрабатывает due schedules под RLS
+в отдельных атомарных транзакциях. Исправлены commit после ошибки handler,
+обход `only_online` при отказе Redis, SQL conflict check и просроченный SKIP interval.
+Семь baseline failures → 86 связанных tests passed, включая принудительный обрыв
+собственного тестового SQL connection и восстановление. [Evidence, grants,
+runtime contract](../audits/2026-09-20/SCHEDULER-RUNTIME.md).
+Следом — подтверждённый [watchdog RLS](../audits/2026-09-20/evidence/watchdog-rls.json):
+просроченная QUEUED задача невидима до tenant binding. Проверить также физический
+timeout/stop и остальные SQL workers, затем video/preview gates.
+Стенд не обновлён; native приёмка на 32 остаётся OPEN.
+
 **AUD-135, source-only:** task assignment/cancellation теперь используют bounded
 UUID discovery и отдельные tenant-bound sessions. Worker запускается даже без
 Redis и получает актуальные зависимости при каждом tick. Три failures до fix,
 101 связанный test passed; реальные RLS/commit/SQL timeout и две организации,
 transport doubles. [Evidence, grants и границы](../audits/2026-09-20/TASK-DISPATCH-RLS.md).
-Следующий подтверждённый P0 — scheduler RLS; watchdog ещё требует проверки.
+Scheduler RLS исправлен последующим AUD-136; watchdog RLS воспроизведён и открыт.
 Pilot не обновлён, native stop/reconnect и допуск к массовому прогону остаются OPEN.
 
 **AUD-134, source-only:** checkpointed nested pipeline сохраняет WAITING/deadline

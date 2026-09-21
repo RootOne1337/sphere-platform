@@ -24,6 +24,17 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Security / runtime
 
+- AUD-136 / F32-25: discover scheduled work under a non-owner RLS role and commit
+  each firing in its own tenant-bound transaction. Roll back child/receipt/cancel
+  writes on failure, retain committed identity after lost responses and process
+  other schedules independently. Defer online-only firing on missing/failed Redis,
+  batch presence reads, repair the conflict SQL expression and advance skipped
+  interval slots into the future. Runtime tick relies on SQL task delivery.
+  Seven pre-fix failures; 86 related tests pass, including terminated PostgreSQL
+  connection, SQL timeout, commit failure, competing workers and two tenants.
+  Source only; migration/grant and native rollout remain required.
+  [Evidence and limits](docs/audits/2026-09-20/SCHEDULER-RUNTIME.md).
+
 - AUD-135 / F32-25: restore task assignment and persisted cancellation under
   non-owner RLS through explicitly granted UUID discovery and tenant-bound sessions.
   Always register the worker, refresh Redis/publisher dependencies each tick,
@@ -31,7 +42,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   Remove obsolete startup Redis KEYS/requeue recovery; PostgreSQL owns intent.
   Three pre-fix failures; 101 related tests pass, including two tenants/workers,
   lost commit/transport replies, real SQL timeout and offline-first pagination.
-  Source only; migration/grant and native rollout required. Scheduler RLS remains open.
+  Source only; migration/grant and native rollout required. Scheduler RLS is addressed by AUD-136.
   [Evidence, rollout and limits](docs/audits/2026-09-20/TASK-DISPATCH-RLS.md).
 
 - AUD-134: persist nested pipeline waiting/deadline and release parent execution

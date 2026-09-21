@@ -105,7 +105,8 @@ APK receipt, запросить отмену, получить terminal receipt,
 Для downgrade сначала остановить новый worker/вернуть совместимый код, затем
 удалить функцию миграцией; task rows миграция не меняет.
 
-Остаётся подтверждённый P0 [scheduler RLS](evidence/scheduler-rls.json); watchdog и
+Последующий [AUD-136](SCHEDULER-RUNTIME.md) исправляет подтверждённый
+[scheduler RLS](evidence/scheduler-rls.json) и атомарность firing; watchdog и
 другие background SQL-пути требуют отдельной проверки. Также открыты decoder queue,
 APK preview profile, свежесть кадров, Redis budget, смешанный native-прогон и
 SQL-нагрузка/latency на 32 устройствах. 65 SQL-fixture devices не являются тестом
