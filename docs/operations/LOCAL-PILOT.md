@@ -2,10 +2,13 @@
 
 **21 сентября 2026 · Windows / Docker Desktop · development, авторизация включена.**
 
-Текущий срез: backend/frontend **`c42bb5b`**, оба APK **1.2.8 / 10208**.
+Текущий срез: backend **`c42bb5b`**, frontend **`9924eb1`**, оба APK **1.2.8 / 10208**.
 [Canary 21 сентября](../audits/2026-09-20/CANARY-20260921.md): 15 task receipts,
 два pipeline, pending stop/deadline и backend restart проверены; PID после OTA
 сохранились, crash buffers прежние. Свежая APK и обычный OTA-каталог обновлены.
+[AUD-138](../audits/2026-09-20/DECODER-RECOVERY.md) установлен поверх canary:
+ограничение очереди и recovery decoder, 264 frontend tests, два реальных потока
+и возврат после backend restart без F5 проверены.
 32-device/8h acceptance открыта; sleep пока задерживает отмену до конца действия.
 
 История 20 сентября: backend `85fb1ea`, frontend `03b161e`, APK 1.2.7 (`0f257fe`). [Приёмка нового APK](../audits/2026-09-05/ANDROID-RECONNECT-DEBT.md)

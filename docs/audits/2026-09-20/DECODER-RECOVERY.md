@@ -1,6 +1,6 @@
 # AUD-138: ограничение очереди и восстановление активного видеодекодера
 
-**21 сентября 2026 · F32-06 · P0 / High · source fix; native rollout проверяется отдельно.**
+**21 сентября 2026 · F32-06 · P0 / High · установлен frontend `9924eb1`; приёмка двух потоков выполнена.**
 
 [Fleet32](FLEET32-PREFLIGHT.md) · [Установленная canary 1.2.8](CANARY-20260921.md) · [Evidence](evidence/decoder-recovery.json)
 
@@ -59,12 +59,27 @@ malformed headers и 1000 последовательных output без лож�
 keyframe cooldown/retry и очистку timers/references.
 
 Полный frontend: **264 passed**, 30 suites; TypeScript без ошибок.
+Все четыре workflow исходного commit `9924eb1` завершились успешно:
+[CI evidence](../2026-09-05/evidence/ci-9924eb1-summary.json).
 Initial failing suite и итоговые hashes/counters сохранены в evidence; сырые логи
 приватные. Автоматические тесты не используют настоящий browser codec.
 
+## Приёмка установленного frontend
+
+Образ собран из `git archive 9924eb1728d95b4220cd11db2be8a9a372889569`.
+Заменён только frontend нового pilot; backend и APK остаются `c42bb5b` / 1.2.8.
+В настоящем браузере открыты оба Android-экрана. Затем при отсутствии активных
+задач/runs штатно перезапущен только новый backend; оба потока восстановились
+**без F5**, часы на картинке сменились с 13:21 на 13:22. Просмотры закрыты;
+ADB независимо подтвердил освобождение projection, прежние PID 24613 / 22567
+и неизменные crash buffers. Старый проект не изменён. Image ID и hashes
+приватных подтверждений — в [evidence](evidence/decoder-recovery.json).
+
+Это normal/reconnect проверка настоящего codec. Намеренное зависание/ошибка
+кодека проверялись unit double, а не подменой кода в открытом браузере.
+
 ## Остаточные риски
 
-Native приёмку свежего frontend надо фиксировать с точным source/image отдельно.
 Два потока не подтверждают 32 аппаратных decoder sessions. Лимиты относятся к
 принятым encoded inputs; это не общий предел GPU/RAM, WebSocket/network backlog
 или гарантия end-to-end latency. Возраст проверяется на input/output, а не

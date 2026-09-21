@@ -2,6 +2,32 @@
 
 Статус на 21 сентября 2026: **аудит продолжается; production readiness не подтверждена**.
 
+## Текущее установленное состояние, 21 сентября
+
+Backend `c42bb5b`, frontend `9924eb1`, оба APK 1.2.8 / 10208. Накопленные
+AUD-129–137 развёрнуты с backup/restore и согласованными миграциями;
+[canary](../2026-09-20/CANARY-20260921.md) независимо подтверждает 15 task receipts,
+два pipeline, cancel/timeout/reconnect/restart и сохранность APK процессов.
+`LATEST` и обычный OTA-каталог обновлены. Pilot DB superuser не подтверждает
+native RLS; 32 устройства/8h и общая production readiness остаются OPEN.
+
+**AUD-138 · P0 / High / F32-06, установлен:** активный frontend decoder ограничивает
+count/bytes/age, содержит codec errors, закрывает stale frames и восстанавливается
+с IDR. 14 failing regressions до fix; 264 frontend tests и TypeScript прошли.
+Два реальных экрана восстановились после backend restart без F5; захват освобождён,
+PID/crash buffers APK не изменились. [Root cause, файлы, evidence и residuals](../2026-09-20/DECODER-RECOVERY.md).
+
+**F32-26 · P1 / Medium, открыт:** native stop при долгом sleep ждёт границы действия.
+Следующий эффект запрещён, но latency около 10s connected / до 70s в сетевых
+пробах требует отдельного fix и regression. [Измерения](../2026-09-20/CANARY-20260921.md#найденное-ограничение-f32-26).
+Следующие основные gates: preview profile, command/video budgets, Redis resources,
+observability, runtime-role/compound recovery и масштабный fault/soak.
+
+## История source checkpoints до установки
+
+Фразы «source-only»/«не установлен» ниже описывают состояние на момент той
+контрольной точки; текущие версии и точная native приёмка приведены выше.
+
 **AUD-137 · High / P0, F32-01/25 · source fix, не установлен:** watchdog сохраняет
 stop intent для overdue ASSIGNED/RUNNING, удерживает устройство и batch до DAG
 receipt, работает через bounded RLS discovery. Четыре regressions до fix доказали

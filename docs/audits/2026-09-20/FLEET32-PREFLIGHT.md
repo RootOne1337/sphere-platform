@@ -9,6 +9,7 @@
 **Текущий rollout, 21 сентября:** [backend/frontend `c42bb5b`, оба APK 1.2.8](CANARY-20260921.md)
 установлены. 15 task receipts и два pipeline подтверждены; F32-01 продвинут native
 stop/reconnect/restart проверками, но physical interruption и масштаб не закрыты.
+Frontend затем обновлён до `9924eb1`: [AUD-138 decoder native acceptance](DECODER-RECOVERY.md).
 Добавлен **F32-26 / P1 / Medium**: долгий sleep задерживает кооперативную отмену.
 Предыдущие source-only формулировки ниже — история до rollout. Этот документ
 по-прежнему не даёт допуска к 32: video/preview/Redis и полный fault/soak открыты.
@@ -286,7 +287,8 @@ duplicate delivery и недоступность n8n. **Residual:** внешни
 ### F32-06 — неограниченные очереди и codec error
 
 **Последующий AUD-138:** [активный decoder ограничен и восстанавливается](DECODER-RECOVERY.md).
-14 before failures → 264 frontend tests passed; native rollout проверяется отдельно.
+14 before failures → 264 frontend tests passed; frontend `9924eb1` установлен.
+Два настоящих потока, reconnect после backend restart и освобождение захвата прошли.
 Исходные root cause/evidence ниже сохранены, масштаб 32 остаётся OPEN.
 
 **Root cause / файлы:** страница использует [DeviceStream](../../../frontend/components/sphere/DeviceStream.tsx)

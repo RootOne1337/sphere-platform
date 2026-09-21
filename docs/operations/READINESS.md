@@ -4,14 +4,18 @@
 
 ## Текущее состояние после обновления
 
-**Установлены backend/frontend `c42bb5b` и оба APK 1.2.8 / 10208.**
+**Установлены backend `c42bb5b`, frontend `9924eb1` и оба APK 1.2.8 / 10208.**
 [Canary 21 сентября](../audits/2026-09-20/CANARY-20260921.md): backup/restore и миграции
 прошли, 15 task receipts и два pipeline независимо сверены, отмена/timeout при
 потере сети и backend restart сохранили порядок работы. Оба APK online, PID после
 OTA прежние, crash buffers не изменились. Веб показывает два декодированных экрана;
 после закрытия просмотров захват освобождён. `LATEST` и обычный OTA-каталог обновлены.
 
-**До Fleet32 остаются P0:** decoder queue/error recovery, сквозной preview profile,
+**AUD-138 установлен:** [bounded decoder/recovery](../audits/2026-09-20/DECODER-RECOVERY.md),
+14 before failures → 264 frontend tests passed. Два экрана восстановились после
+backend restart без F5, projection освобождена, APK PID/crash buffers прежние.
+
+**До Fleet32 остаются P0:** приёмка decoder под 32 потоками, сквозной preview profile,
 command/video budget, Redis memory и достоверные метрики. Native runtime-role RLS,
 compound orchestration и полный fault/soak ещё не приняты. Дополнительно F32-26:
 отмена длинного sleep ждёт конца действия (проверено), быстрая остановка не обещается.
