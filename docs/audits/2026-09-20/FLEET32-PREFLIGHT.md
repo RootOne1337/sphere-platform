@@ -6,6 +6,13 @@
 
 [Главная](../../../README.md) · [Документация](../../README.md) · [Readiness](../../operations/READINESS.md) · [История исправлений](../2026-09-05/AUDIT-REPORT.md)
 
+**Текущий rollout, 21 сентября:** [backend/frontend `c42bb5b`, оба APK 1.2.8](CANARY-20260921.md)
+установлены. 15 task receipts и два pipeline подтверждены; F32-01 продвинут native
+stop/reconnect/restart проверками, но physical interruption и масштаб не закрыты.
+Добавлен **F32-26 / P1 / Medium**: долгий sleep задерживает кооперативную отмену.
+Предыдущие source-only формулировки ниже — история до rollout. Этот документ
+по-прежнему не даёт допуска к 32: video/preview/Redis и полный fault/soak открыты.
+
 **После исходного среза:** [AUD-129](DURABLE-CANCELLATION.md) добавляет сохранённую
 отмену, APK fence до EXECUTE_DAG, ожидание child/nested runs и pending status в UI.
 Он заменяет частичный [AUD-128](STOP-DELIVERY-FAILURE.md). Source fix не установлен;
@@ -50,7 +57,7 @@ dependency recovery, атомарность, commit failure и ограниче�
 receipt. 22 новых backend и 239 frontend tests прошли. Native acceptance и общий
 допуск остаются OPEN.
 
-## Что проверяем и что уже известно
+## Что проверяли в исходном срезе и что уже известно
 
 Сценарий владельца: **32 настоящих эмулятора, 32 живых экрана в одном веб-интерфейсе,
 параллельные локальные DAG и оркестрация, самостоятельное восстановление связи**.
@@ -129,6 +136,7 @@ Compose/monitoring/backup и нагрузочный harness. Это провер
 | F32-23 | P0, fault/soak / gate / G | Нет полной 32-device матрицы SQL/Redis/restart/idempotency/retention |
 | F32-24 | P2, будущий AI / gate / G | Нет observation/action контракта свежести и владения управлением |
 | F32-25 | P0, RLS runtime / High / R | Pipeline-worker без tenant context не видит сохранённую очередь |
+| F32-26 | P1 / Medium / R, 21 сентября | Долгий sleep задерживает отмену до конца действия |
 
 ## Backend, оркестрация и БД
 
@@ -641,3 +649,15 @@ TIMEOUT. [Evidence](evidence/watchdog-rls.json), [probe](evidence/watchdog_runti
 intent и execution fence; TIMEOUT delivered задачи требует terminal APK receipt.
 Старая диагностическая проба относится к прежнему source; текущий контракт проверяют
 22 новых tests в passing suite. Native stop/reconnect и legacy TIMEOUT reconciliation OPEN.
+
+
+### F32-26 — задержка отмены внутри долгого sleep
+
+Native canary `c42bb5b`, APK 1.2.8: отмена 10-секундного sleep завершается примерно
+через 10 секунд после stop, хотя intent уже принят. При сетевых пробах задержка
+stop → terminal достигала примерно 70 секунд (включая восстановление транспорта).
+[Сценарии, точные latency samples и root cause](CANARY-20260921.md#найденное-ограничение-f32-26).
+`DagRunner.executeNode(sleep)` ждёт полный delay без cancellation checkpoint;
+последующий эффект не выполняется, SQL fence остаётся до terminal результата.
+Нужен bounded cooperative wait и regression на latency/no-next-effect; fix открыт.
+Нельзя ускорять UI фиктивным CANCELLED или отпускать устройство раньше APK.

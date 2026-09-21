@@ -4,6 +4,9 @@
 
 [Fleet32 preflight](FLEET32-PREFLIGHT.md) · [Предыдущее частичное исправление](STOP-DELIVERY-FAILURE.md) · [Протокол](../../security/task-control-protocol.md)
 
+**Последующая установка:** [canary 21 сентября, APK 1.2.8](CANARY-20260921.md).
+Ниже сохранён исходный source checkpoint; native границы и F32-26 уточнены в canary.
+
 ## Проблема и причина
 
 После AUD-128 отрицательная публикация stop уже не давала ложный успех, но положительная
@@ -83,7 +86,7 @@ device result**. Активная задача остаётся видимой; 
 | Связанные cancel/delivery/batch сценарии | 122 passed |
 | Pipeline/orchestration и обратимость миграций | 83 passed; частично пересекаются с предыдущим набором |
 | Полный frontend | **229 passed**, TypeScript без ошибок |
-| Android Dev / Enterprise unit tests | **586 / 586 passed**; одни и те же проверки в двух конфигурациях |
+| Android Dev / Enterprise unit tests | Dev **586 passed**, Enterprise **585 passed + 1 skipped**; по 586 всего |
 | Изменённые backend modules | Целевые Ruff и mypy прошли |
 
 Первый общий backend-прогон не был зелёным: 1771 passed / 26 failed. Двадцать три

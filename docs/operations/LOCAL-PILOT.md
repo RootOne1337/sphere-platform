@@ -1,9 +1,14 @@
 # Локальный стенд для совместного тестирования
 
-**20 сентября 2026 · Windows / Docker Desktop · development, авторизация включена.**
+**21 сентября 2026 · Windows / Docker Desktop · development, авторизация включена.**
 
-Текущий срез: backend `85fb1ea`, frontend `03b161e`, оба APK **1.2.7 / 10207
-(`0f257fe`)**. [Приёмка нового APK](../audits/2026-09-05/ANDROID-RECONNECT-DEBT.md)
+Текущий срез: backend/frontend **`c42bb5b`**, оба APK **1.2.8 / 10208**.
+[Canary 21 сентября](../audits/2026-09-20/CANARY-20260921.md): 15 task receipts,
+два pipeline, pending stop/deadline и backend restart проверены; PID после OTA
+сохранились, crash buffers прежние. Свежая APK и обычный OTA-каталог обновлены.
+32-device/8h acceptance открыта; sleep пока задерживает отмену до конца действия.
+
+История 20 сентября: backend `85fb1ea`, frontend `03b161e`, APK 1.2.7 (`0f257fe`). [Приёмка нового APK](../audits/2026-09-05/ANDROID-RECONNECT-DEBT.md)
 подтверждает native OTA, команды/DAG/видео после обрывов и освобождение захвата.
 Повторная ночь завершилась FAILED через 3 ч 33 мин; 223 DAG сверены, новых APK crash
 нет. Исправление доставки старта захвата развёрнуто: 12 viewer-сессий после простоя
@@ -116,10 +121,22 @@ Frontend **`6dea6b4`** установлен в новом pilot. Device Stream �
 `com.sphereplatform.agent.pilot.debug` позволяет установить его рядом с обычными
 dev/enterprise сборками, сохраняя отдельные credentials и identity.
 
-Свежий файл: **`SphereAgent-signed-discovery-0f257fe-dev-debug.apk`**.
+Свежий файл: **`SphereAgent-pilot-1.2.8-c42bb5b.apk`**.
 Указатель на ту же сборку: **`LATEST-SphereAgent-pilot.apk`** в том же каталоге.
-SHA-256: `7964ede8c621754da616493dcbff958df8a1d8da1dd823c229fd253bd99855c6`.
-Размер 8,392,449 bytes; versionCode 10207 / 1.2.7-dev, minSdk 26, targetSdk 35.
+SHA-256: `2f958bef697243fcbf6d449410f557aaa4f71bbd02b7df632909a79506a4987a`.
+Размер 8,393,685 bytes; versionCode 10208 / 1.2.8-dev, minSdk 26, targetSdk 35.
+Оба APK обновлены адресной OTA-командой при отключённом Windows watchdog:
+без ADB install, ручного запуска, разрешений и новой регистрации. Обычный канал
+`android/dev` теперь выдаёт 10208; обязательность не включена. Полный шестичасовой
+период worker не выжидался. Signed cache v23 и installed hashes подтверждены.
+Точные source, certificate, результаты и ограничения: [canary report](../audits/2026-09-20/CANARY-20260921.md).
+
+### История предыдущих APK и приёмок
+
+Следующие версии, counters и ожидания относятся к датированным предыдущим
+проверкам, а не к текущему manifest 1.2.8.
+
+**1.2.7 / 10207 (`0f257fe`):**
 **Оба Android обновились через собственный OTA**, без ADB install, Windows
 launcher, ручных разрешений, очистки данных и новой регистрации. Первый перешёл
 с 1.2.5, второй — с canary 1.2.6. Installed hashes и signed cache v14 проверены;
@@ -137,13 +154,13 @@ DAG и кадры без новых crash records. [Evidence и границы](
 [Capture incident](../audits/2026-09-05/ANDROID-CAPTURE-LIFECYCLE.md) ·
 [OTA interruption](../audits/2026-09-05/ANDROID-OTA-RECOVERY.md).
 
-В каталоге **4 release android/dev: 10203, 10204, 10205 и актуальный 10207**;
+На приёмке 1.2.7 в каталоге было **4 release android/dev: 10203, 10204, 10205 и актуальный 10207**;
 оба промежуточных canary retired. Публикация в канал даёт версию периодическому
 OTA worker; эти конкретные установки запущены серверной командой. Полный шестичасовой
 интервал auto-check этой проверкой не измерялся.
 Файл и каталог хранятся в `.local-pilot/updates/`, backend bind mount
 `/var/lib/sphere/updates`. Пересоздание только нового backend сохранило каталог
-и авторизованное скачивание актуального APK. Backend закреплён на **`12249b1`**,
+и авторизованное скачивание актуального APK. На той приёмке backend был закреплён на **`12249b1`**,
 public-gateway использует Host fix `985e4fc`.
 
 В текущем backend исправлены ответы создания сценария и управления pipeline
@@ -168,6 +185,8 @@ Asia/Yekaterinburg запущен конечный восьмичасовой п
 Полный шестичасовой период не выжидался; native установка инициирована сервером.
 Будущие APK надо публиковать в этот каталог: один git commit или локальный LATEST
 не являются выпуском OTA. Раздача проверенного файла требует действующего JWT.
+
+### Параметры текущего подключения
 
 Root projection принят на предыдущей APK `ce26a9e`; реализация сохранена и её
 regression tests пройдены в обоих signed flavors текущей сборки.

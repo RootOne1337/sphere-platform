@@ -25,7 +25,10 @@
 | Разобрать сбой | [Observability contract](operations/READINESS.md), [Runbooks](runbooks/README.md) |
 | Спроектировать будущий AI-контур | [AI readiness](architecture/AI-READINESS.md) |
 
-## Текущие source fixes перед Fleet32
+## Текущие исправления перед Fleet32
+
+Backend/frontend и APK 1.2.8 установлены: [canary 21 сентября](audits/2026-09-20/CANARY-20260921.md).
+15 task receipts и два pipeline независимо сверены; массовая нагрузка ещё не принята.
 
 - [AUD-137: watchdog RLS, сохраняемая остановка и отсутствие раннего освобождения APK](audits/2026-09-20/WATCHDOG-STOP-RECOVERY.md).
 - [AUD-136: scheduler RLS, атомарные запуски, online-only recovery и интервалы](audits/2026-09-20/SCHEDULER-RUNTIME.md).
@@ -36,6 +39,8 @@
 - [AUD-133 / F32-25: pipeline discovery, heartbeat и recovery под настоящей RLS ролью](audits/2026-09-20/PIPELINE-RLS.md).
 
 ## Последняя эксплуатационная приёмка
+
+- [Согласованное обновление 1.2.8: OTA, backup/restore, отмена, timeout, reconnect и backend restart](audits/2026-09-20/CANARY-20260921.md).
 
 - [Несколько окон одного устройства: подтверждённая потеря видео и fix AUD-126](audits/2026-09-05/STREAM-MULTI-VIEWER.md).
 - [Ночной overlap: проверка новых кадров вместо ложного успеха AUD-127](audits/2026-09-05/SOAK-VIEWER-MOTION.md).
