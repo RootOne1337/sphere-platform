@@ -428,7 +428,8 @@ async def test_terminated_sql_connection_rolls_back_children_and_recovers(schedu
             assert await db.scalar(text("SELECT current_user")) == r.r.role
             backend_pid = await db.scalar(text("SELECT pg_backend_pid()"))
             async with r.r.world.engine.begin() as control:
-                assert await control.scalar(text("SELECT pg_terminate_backend(:pid)"), {"pid": backend_pid})
+                # Wait for termination; a signal acknowledgement alone is not a disconnect barrier.
+                assert await control.scalar(text("SELECT pg_terminate_backend(:pid, 2000)"), {"pid": backend_pid})
             killed = True
     monkeypatch.setattr(engine, "_process_schedule", disconnect)
     await engine._tick()

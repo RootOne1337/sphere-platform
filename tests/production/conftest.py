@@ -40,6 +40,7 @@ async def runtime_db(world):
     engine = create_async_engine(
         world.engine.url.set(username=role, password=password),
         pool_size=1, max_overflow=0, pool_timeout=5,
+        pool_pre_ping=True,  # Match production recovery of disconnected idle connections.
     )
     sessions = async_sessionmaker(engine, expire_on_commit=False)
     try:
