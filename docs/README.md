@@ -1,109 +1,89 @@
-# Документация Sphere Platform
+<div align="center">
 
-**Навигация по текущим контрактам, эксплуатационным ограничениям и доказательствам.**
-Обновлено 21 сентября 2026. [Вернуться на главную](../README.md).
+# 📚 Документация Sphere
 
-## С чего начать
+**От первого подключения до воспроизводимого разбора отказа.**
 
-| Задача | Документ |
+[Главная](../README.md) · [Готовность](operations/READINESS.md) · [Открытые работы](audits/2026-09-20/FLEET32-PREFLIGHT.md) · [Помощь](../SUPPORT.md)
+
+</div>
+
+> [!NOTE]
+> **Срез навигации: 21 сентября 2026.** Текущий pilot и границы его приёмки описаны
+> в [Local pilot](operations/LOCAL-PILOT.md). Старые отчёты сохраняют свои даты и
+> версии; их показатели нельзя переносить на текущий код. [Правила актуальности](DOCUMENTATION.md).
+
+## 🧭 Выберите задачу
+
+| Мне нужно | Начать здесь | Дальше |
+| --- | --- | --- |
+| Войти в готовый pilot и взять APK | [Local pilot](operations/LOCAL-PILOT.md) | [Приёмка первого устройства](operations/PILOT-ACCEPTANCE.md) |
+| Поднять новую установку | [Startup / bootstrap](operations/STARTUP.md#first-install) | [Configuration](configuration.md) · [Deployment](deployment.md) |
+| Подключить удалённые Android | [Remote pilot](operations/REMOTE-PILOT.md) | [Signed discovery](architecture/ANDROID-SIGNED-DISCOVERY.md) |
+| Понять оставшиеся проблемы | [Fleet32: актуальная таблица](audits/2026-09-20/FLEET32-PREFLIGHT.md) | [Roadmap](../ROADMAP.md) · [Readiness](operations/READINESS.md) |
+| Разобрать сбой по времени и устройству | [Support: что собрать](../SUPPORT.md) | [Runbooks](runbooks/README.md) |
+| Изменить код | [Contributing](../CONTRIBUTING.md) | [Development](development.md) · [Тесты](../tests/production/README.md) |
+
+## 🚀 Запуск и эксплуатация
+
+| Руководство | Что внутри |
 | --- | --- |
-| Подготовить права и проверить pipeline под рабочей ролью PostgreSQL | [RLS worker contract AUD-133](audits/2026-09-20/PIPELINE-RLS.md) |
-| Понять восстановление pipeline после потери worker и статус неизвестного результата | [Lease/checkpoint recovery AUD-131](audits/2026-09-20/PIPELINE-RECOVERY.md) |
-| Понять лимит pipeline на worker и проверку SQL-ожиданий | [Admission и ограничения AUD-130](audits/2026-09-20/PIPELINE-ADMISSION.md) |
-| Различать запрос отмены и подтверждённое окончание DAG | [Контракт и приёмка AUD-129](audits/2026-09-20/DURABLE-CANCELLATION.md) |
-| Подготовить 32 одновременно видимых Android: blockers, evidence, fixes и load gates | [Fleet32 preflight · 20 сентября](audits/2026-09-20/FLEET32-PREFLIGHT.md) |
-| Оценить реальную готовность и порядок работ | [Эксплуатационная матрица](operations/READINESS.md) |
-| Найти подтверждённый дефект/исправление | [Audit report и evidence](audits/2026-09-05/AUDIT-REPORT.md) |
-| Узнать, что осталось до первого рабочего запуска | [Пилот: этапы, ориентиры сроков и критерии](operations/PILOT-ACCEPTANCE.md) |
-| Открыть текущий стенд / получить APK | [Local pilot](operations/LOCAL-PILOT.md), [Remote profile и native acceptance](operations/REMOTE-PILOT.md) |
-| Запустить и понимать readiness | [Startup contract](operations/STARTUP.md) |
-| Подготовить окружение | [Development](development.md), [Configuration](configuration.md) |
-| Подключить устройство/станцию | [Android](android-agent.md), [PC-agent](pc-agent.md) |
-| Использовать интерфейс | [Web UI](web-ui-guide.md) |
-| Найти API | [Генерируемый каталог](api-endpoints.md), [OpenAPI](openapi.json), [Обзор API](api-reference.md) |
-| Подготовить rollout | [Deployment](deployment.md), [Full guide](../FULL-DEPLOYMENT-GUIDE.md) |
-| Разобрать сбой | [Observability contract](operations/READINESS.md), [Runbooks](runbooks/README.md) |
-| Спроектировать будущий AI-контур | [AI readiness](architecture/AI-READINESS.md) |
+| [Startup](operations/STARTUP.md) | Первый запуск, повторный старт, env precedence и значение readiness |
+| [Local pilot](operations/LOCAL-PILOT.md) | Установленные версии, веб, APK, учётная запись и отдельный Compose project |
+| [Remote pilot](operations/REMOTE-PILOT.md) | Устройства в другой сети, ingress и ограничения резервирования |
+| [Deployment](deployment.md) · [Полный guide](../FULL-DEPLOYMENT-GUIDE.md) | Bootstrap, конфигурации и обслуживание; оценки масштаба требуют своей приёмки |
+| [Discovery publisher](operations/DISCOVERY-PUBLISHER.md) | Публикация подписанных маршрутов и восстановление publisher |
+| [Redis memory](operations/REDIS-MEMORY.md) | Dataset/container budget, persistence, pressure test и остаточные риски |
+| [LDPlayer network recovery](operations/LDPLAYER-NETWORK-RECOVERY.md) | Диагностика сети станции и границы Windows watchdog |
+| [Overnight soak](operations/ANDROID-OVERNIGHT-SOAK.md) | Безопасные DAG, receipts, видео, завершение и evidence |
+| [Runbooks](runbooks/README.md) | Backend outage, PostgreSQL, fleet offline и VPN incidents |
 
-## Текущие исправления перед Fleet32
+## 🧩 Компоненты и интерфейсы
 
-- [AUD-139: Redis OOM reproduction, согласованный memory budget, persistence/restart](audits/2026-09-20/REDIS-MEMORY.md). [Эксплуатация](operations/REDIS-MEMORY.md).
-- [AUD-138: bounded active decoder, codec recovery, keyframe requests и regression tests](audits/2026-09-20/DECODER-RECOVERY.md).
+| Компонент | Документы |
+| --- | --- |
+| Общая архитектура | [Обзор](architecture.md) · [Архитектурные решения](adr/README.md) |
+| Backend | [Генерируемый API-каталог](api-endpoints.md) · [OpenAPI JSON](openapi.json) · [Обзор API](api-reference.md) |
+| Web UI | [Экранные сценарии](web-ui-guide.md) · [Сессии и cache lifecycle](security/frontend-sessions.md) |
+| Android | [Agent guide](android-agent.md) · [Протокол соединения](architecture/ANDROID-CONNECTION-PROTOCOL.md) |
+| Discovery / recovery | [Подписанный manifest](architecture/ANDROID-SIGNED-DISCOVERY.md) · [Сохранённые маршруты](architecture/ANDROID-SAVED-ROUTES.md) · [Фоновая регистрация](architecture/ANDROID-BACKGROUND-ENROLLMENT.md) |
+| PC-agent | [Workstation identity, локальные инструменты и подключение](pc-agent.md) |
+| PostgreSQL | [RLS / runtime roles](security/postgresql-rls.md) · [Worker RLS](audits/2026-09-20/PIPELINE-RLS.md) |
+| Задачи | [Task control protocol](security/task-control-protocol.md) · [Durable cancellation](audits/2026-09-20/DURABLE-CANCELLATION.md) |
+| Оркестрация | [Pipeline recovery](audits/2026-09-20/PIPELINE-RECOVERY.md) · [Batch recovery](audits/2026-09-20/BATCH-RECOVERY.md) · [Nested waiting](audits/2026-09-20/PIPELINE-NESTED-WAIT.md) |
+| Identity / credentials | [User bootstrap](security/user-auth-bootstrap.md) · [Device bootstrap](security/device-credential-bootstrap.md) · [Device refresh](security/device-refresh-recovery.md) · [Account credentials](security/account-credentials.md) |
+| VPN | [Реестр ограничений F32-11/12/21](audits/2026-09-20/FLEET32-PREFLIGHT.md) · [VPN intents](audits/2026-09-05/VPN-LEASE-DESIGN.md) · [Runbook](runbooks/02-vpn-incident.md) |
 
-Backend/frontend и APK 1.2.8 установлены: [canary 21 сентября](audits/2026-09-20/CANARY-20260921.md).
-15 task receipts и два pipeline независимо сверены; массовая нагрузка ещё не принята.
+## 🔬 Что подтверждено проверкой
 
-- [AUD-137: watchdog RLS, сохраняемая остановка и отсутствие раннего освобождения APK](audits/2026-09-20/WATCHDOG-STOP-RECOVERY.md).
-- [AUD-136: scheduler RLS, атомарные запуски, online-only recovery и интервалы](audits/2026-09-20/SCHEDULER-RUNTIME.md).
-- [AUD-135: task dispatch/cancellation под RLS, Redis startup recovery и bounded delivery](audits/2026-09-20/TASK-DISPATCH-RLS.md).
-- [AUD-134: durable nested WAITING, освобождение слота, deadline и recovery](audits/2026-09-20/PIPELINE-NESTED-WAIT.md).
+| Последняя контрольная точка | Доказательства и границы |
+| --- | --- |
+| Согласованный rollout backend/APK 1.2.8 | [Canary 21 сентября](audits/2026-09-20/CANARY-20260921.md): OTA, backup/restore, 15 tasks, два pipeline |
+| Frontend `9924eb1` | [AUD-138](audits/2026-09-20/DECODER-RECOVERY.md): decoder bounds/recovery и два живых потока после restart |
+| Redis budget `93551e0` | [AUD-139](audits/2026-09-20/REDIS-MEMORY.md): OOM до fix, pressure/persistence/restart после; live update без restart |
+| Сетевые отказы | [Native matrix](audits/2026-09-05/NETWORK-RECOVERY-NATIVE.md) · [Reconnect debt](audits/2026-09-05/ANDROID-RECONNECT-DEBT.md) |
+| Автозапуск и разрешения | [Boot recovery](audits/2026-09-05/ANDROID-BOOT-RECOVERY.md) · [Root capabilities](audits/2026-09-05/ANDROID-UNATTENDED-CAPABILITIES.md) |
+| Несколько viewers | [AUD-126](audits/2026-09-05/STREAM-MULTI-VIEWER.md) · [Критерий новых кадров](audits/2026-09-05/SOAK-VIEWER-MOTION.md) |
+| Последний длинный прогон | [FAILED через 3 ч 33 мин](audits/2026-09-05/STREAM-START-DELIVERY.md); восемь часов не приняты |
 
-- [AUD-132: batch plan, atomic admission, OS-kill recovery, RLS и rollout](audits/2026-09-20/BATCH-RECOVERY.md).
-- [AUD-133 / F32-25: pipeline discovery, heartbeat и recovery под настоящей RLS ролью](audits/2026-09-20/PIPELINE-RLS.md).
+Полная история: **[Audit report](audits/2026-09-05/AUDIT-REPORT.md)**.
+Тестовая база: [PostgreSQL/Redis regressions](../tests/production/README.md) ·
+[Container probes](../tests/containers/README.md) · [CI workflows](../.github/workflows/).
 
-## Последняя эксплуатационная приёмка
+## 🛠️ Участие в проекте
 
-- [Согласованное обновление 1.2.8: OTA, backup/restore, отмена, timeout, reconnect и backend restart](audits/2026-09-20/CANARY-20260921.md).
+[Contributing](../CONTRIBUTING.md) · [Support и диагностические формы](../SUPPORT.md) ·
+[Security policy](../SECURITY.md) · [Changelog](../CHANGELOG.md) ·
+[Как поддерживать документацию](DOCUMENTATION.md) · [Устройство GitHub-репозитория](../.github/README.md).
 
-- [Несколько окон одного устройства: подтверждённая потеря видео и fix AUD-126](audits/2026-09-05/STREAM-MULTI-VIEWER.md).
-- [Ночной overlap: проверка новых кадров вместо ложного успеха AUD-127](audits/2026-09-05/SOAK-VIEWER-MOTION.md).
+## 🗂️ Проекты и исторические материалы
 
-- [Повторная ночь: FAILED, сохранённые результаты и исправление запуска стрима AUD-125](audits/2026-09-05/STREAM-START-DELIVERY.md).
+Эти документы полезны для контекста. Они не подтверждают установленную возможность
+или достигнутую производительность:
 
-- [Интерактивные ответы без ложных missing-task warnings](audits/2026-09-05/INTERACTIVE-RESULT-IDENTITY.md).
+- [AI readiness](architecture/AI-READINESS.md) — будущие observation/action consumers; реализация отложена.
+- [Synthetic load architecture](load-test/01-ARCHITECTURE.md) · [сценарии](load-test/02-SCENARIOS.md) · [KPI](load-test/03-METRICS-AND-CRITERIA.md) · [исторический execution report](load-test/04-EXECUTION-REPORT.md).
+- [Bootstrap discovery design](architecture/ANDROID-BOOTSTRAP-DISCOVERY.md) · [Discovery recovery design](architecture/ANDROID-DISCOVERY-RECOVERY.md).
+- [Предметный анализ автоматизации](ANALYSIS-FARMING-SUMMARY.md) · [подробный анализ](ANALYSIS-FARMING-PLATFORM.md).
 
-- [Task Engine: полная история, достоверные показатели и активные pipeline](audits/2026-09-05/TASK-HISTORY.md).
-
-- [Сетевые отказы Android/сервера/обоих и возврат веб-стрима](audits/2026-09-05/NETWORK-RECOVERY-NATIVE.md).
-- [APK1.2.7: причина накопленных задержек, regression, OTA и native checks](audits/2026-09-05/ANDROID-RECONNECT-DEBT.md).
-- [Компактные ACK receipts и безопасная миграция](audits/2026-09-05/ANDROID-JOURNAL-CAPACITY.md).
-
-## Технические контракты
-
-- [Архитектура платформы](architecture.md) и [ADR](adr/README.md).
-- [Подтверждение Android-соединения / порядок обновления](architecture/ANDROID-CONNECTION-PROTOCOL.md).
-- [Фоновая регистрация APK: повторный запуск, конкуренция и device identity](architecture/ANDROID-BACKGROUND-ENROLLMENT.md).
-- [Основной и резервный адрес APK: настройка, переключение, ограничения](architecture/ANDROID-SAVED-ROUTES.md).
-- [Android discovery: HTTP budget, конкуренция и остановка](architecture/ANDROID-DISCOVERY-RECOVERY.md).
-- [Смена адресов без переустановки: архитектура](architecture/ANDROID-BOOTSTRAP-DISCOVERY.md).
-- [Signed discovery: реализованный opt-in контракт, CLI и проверки](architecture/ANDROID-SIGNED-DISCOVERY.md).
-- [Task control / rollout](security/task-control-protocol.md).
-- [Device credential bootstrap](security/device-credential-bootstrap.md).
-- [Device refresh recovery / rollout](security/device-refresh-recovery.md).
-- [User login/refresh/MFA](security/user-auth-bootstrap.md).
-- [PostgreSQL runtime roles и RLS](security/postgresql-rls.md).
-- [Account credential storage/backfill](security/account-credentials.md).
-- [Frontend session/cache lifecycle](security/frontend-sessions.md).
-- [VPN intents и recovery](audits/2026-09-05/VPN-LEASE-DESIGN.md).
-- [Тесты на выделенных PostgreSQL/Redis](../tests/production/README.md).
-- [Восстановление команд и событий после отказа Redis: AUD-97](audits/2026-09-05/REDIS-SUBSCRIPTION-RECOVERY.md).
-- [Источник журнала APK в Device Inspector: AUD-98](audits/2026-09-05/DEVICE-DIAGNOSTICS-SOURCE.md).
-- [LDPlayer запущен без выхода в сеть: диагностика, ремонт и Windows watchdog](operations/LDPLAYER-NETWORK-RECOVERY.md).
-- [Автоматическое восстановление NAT: native fault, команды двух APK и ресурсы](audits/2026-09-05/LDPLAYER-AUTOMATIC-RECOVERY.md).
-- [Большой UTF-8 журнал APK: исправленный byte-tail и native приёмка новой сборки](audits/2026-09-05/APK-UTF8-LOG-TAIL.md).
-- [Android запускает APK после reboot без Windows launcher](audits/2026-09-05/ANDROID-BOOT-RECOVERY.md).
-- [Root capture и границы автоматической выдачи разрешений](audits/2026-09-05/ANDROID-UNATTENDED-CAPABILITIES.md).
-- [Binary video между workers: воспроизведение, recovery и границы приёмки](audits/2026-09-05/STREAM-VIDEO-ROUTING.md).
-- [Stream REST controls между workers: native start/stop на двух Android](audits/2026-09-05/STREAM-CONTROL-ROUTING.md).
-- [OTA 1.2.4: обрыв, конкуренция, очистка и самостоятельная установка на двух Android](audits/2026-09-05/ANDROID-OTA-RECOVERY.md).
-
-## Как читать статус
-
-**Реализовано** означает наличие кода. **Проверено** всегда имеет сценарий,
-окружение, ревизию и результат. **Предложено** — проектное решение, которое ещё не
-является возможностью продукта. Успешная сборка не доказывает runtime и capacity.
-
-Сначала используйте operational matrix и свежий audit report. Старые отчёты,
-load-test документы и руководства отдельных модулей сохраняют историю;
-их метрики нельзя автоматически переносить на текущую ветку. Runbooks сверены
-с текущими health paths и Compose service names; отдельные recovery drills
-пройдены и перечислены в матрице, полная программа ещё открыта. API
-catalog генерируется из registered routes, но не удостоверяет успех всех операций.
-Систематическая сверка остальных руководств продолжается.
-
-Каждый следующий PR обновляет затронутый контракт, команды воспроизведения,
-миграционные ограничения и remaining risks. Изменение цели парка или deployment
-топологии отражается сначала в operational matrix, затем в runbooks и тестах.
-
-- [Автоматический publisher: настройка, supervision и восстановление](operations/DISCOVERY-PUBLISHER.md).
-- [Signed discovery на установленном APK: отказ, миграция и возврат](audits/2026-09-05/SIGNED-DISCOVERY-NATIVE.md).
+Не нашли ответ или нашли противоречие? [Открыть замечание к документации](https://github.com/RootOne1337/sphere-platform/issues/new?template=documentation.yml).

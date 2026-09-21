@@ -1,646 +1,143 @@
-# Developer Guide
+# Разработка Sphere
 
-> **Sphere Platform** — Local Development Setup & Coding Standards
->
-> RLS policies are installed by Alembic `20260908_tenant_policies` on all 28 model
-> tables. Non-owner runtime credentials and HTTP/auth/job tenant propagation remain
-> rollout blockers. Read [the RLS contract](security/postgresql-rls.md); neither an
-> explicit ORM filter nor middleware proves full database isolation.
->
-> `get_tenant_db()` / `get_db_session(org_id=...)` now keep one tenant per Session
-> across commit/rollback/recovery. Bind before data access and before savepoints;
-> use a fresh Session for another tenant. Plain `get_db()` remains unscoped.
-> User access JWT authentication now binds its verified organization before loading
-> the user; handlers sharing that request Session inherit the binding. User login,
-> refresh/logout and MFA bootstrap are covered by AUD-62. Global jobs and other auth
-> callers still require review. Apply through `20260910_device_refresh_retry` and review the
-> [user function grants and MFA cutover](security/user-auth-bootstrap.md) alongside
-> [device function grants](security/device-credential-bootstrap.md). Android WS
-> authenticates before target lookup. [Device refresh recovery](security/device-refresh-recovery.md)
-> requires the new migration and backend before APK; no new runtime EXECUTE grant is added.
-> Android task progress, receipts/results and device events bind their own fresh
-> Sessions from authenticated connection identity; the closed auth Session cannot
-> pass its SQL context to the receive loop. Terminal ACK follows SQL commit.
-> SQLite's test-only `set_config` adapter does not implement RLS. HTTP fixtures
-> serving different tenants must create a fresh Session for each request.
+**Сверено 21 сентября 2026.** [Каталог](README.md) · [Contributing](../CONTRIBUTING.md) · [Архитектура](architecture.md)
 
----
+## Среда
 
-## Table of Contents
+| Компонент | Локальные инструменты | Источник фактических проверок |
+| --- | --- | --- |
+| Backend / PC-agent | Python 3.12, отдельный virtualenv | [Backend CI](../.github/workflows/ci-backend.yml) |
+| Frontend | Node.js 24, npm с lockfile | [Frontend CI](../.github/workflows/ci-frontend.yml) |
+| Android | JDK 17, Android SDK, Gradle wrapper | [Android CI](../.github/workflows/ci-android.yml) |
+| Runtime regressions | Отдельные PostgreSQL 15 и Redis 7.2 | [Инструкция и защитные ограничения](../tests/production/README.md) |
+| Windows deployment | PowerShell 7, Docker Compose v2 | [Startup](operations/STARTUP.md) |
 
-1. [Local Setup](#1-local-setup)
-2. [Project Structure in Depth](#2-project-structure-in-depth)
-3. [Backend Development](#3-backend-development)
-4. [Frontend Development](#4-frontend-development)
-5. [Testing](#5-testing)
-6. [Code Quality](#6-code-quality)
-7. [Migrations](#7-migrations)
-8. [Conventional Commits](#8-conventional-commits)
-9. [Branch Strategy](#9-branch-strategy)
-10. [Pre-commit Hooks](#10-pre-commit-hooks)
-11. [Debugging Tips](#11-debugging-tips)
+Для production overlay требуется Compose 2.24.4+ из-за `!reset`.
+Версии SDK и плагины Android задаются в Gradle, а не устанавливаются произвольно.
 
----
-
-## 1. Local Setup
-
-### Clone and configure
+## Checkout и первый запуск
 
 ```bash
-git clone https://github.com/your-org/sphere-platform.git
+git clone https://github.com/RootOne1337/sphere-platform.git
 cd sphere-platform
+git switch codex/enterprise-audit-20260905
+```
 
-# Create Python virtualenv (for scripts, tests, local tools)
+Последняя команда переключает новый checkout на ветку текущего аудита из draft
+[PR #19](https://github.com/RootOne1337/sphere-platform/pull/19), ветка
+`codex/enterprise-audit-20260905`. Выбирайте revision явно; `main` и установленный
+pilot могут отличаться.
+
+**Новая установка:** следуйте [порядку bootstrap](operations/STARTUP.md#first-install).
+**Готовый pilot:** используйте его [отдельную инструкцию](operations/LOCAL-PILOT.md).
+Не объединяйте `full` и `override` Compose recipes и не запускайте миграции без
+явного project/env. `start-dev.ps1` предназначен для уже подготовленного стека.
+
+## Backend и PC-agent
+
+```bash
 python -m venv .venv
-source .venv/bin/activate            # Linux/macOS
-.venv\Scripts\Activate.ps1           # Windows PowerShell
-
-pip install -r backend/requirements.txt
-pip install -r requirements-dev.txt  # if exists
-
-# Generate secrets
-python scripts/generate_secrets.py
 ```
 
-### Start the stack
+Активация: `.venv\Scripts\Activate.ps1` в PowerShell или
+`source .venv/bin/activate` в Bash. Из корня репозитория:
 
 ```bash
-# Windows (PowerShell)
-$compose = "C:\Program Files\Docker\Docker\resources\cli-plugins\docker-compose.exe"
-& $compose -f docker-compose.yml -f docker-compose.full.yml -f docker-compose.override.yml up -d --build
-
-# Linux/macOS
-docker compose -f docker-compose.yml -f docker-compose.full.yml -f docker-compose.override.yml up -d --build
+python -m pip install -r backend/requirements.txt -r pc-agent/requirements.txt
+python -m pip check
 ```
 
-### Run migrations and bootstrap
+Зависимости устанавливаются совместно: последовательная установка скрывала
+конфликтующие pins. Для запуска приложения нужны параметры из
+[configuration](configuration.md); не берите рабочие secrets для тестов.
+
+| Каталог | Назначение |
+| --- | --- |
+| `backend/api`, `schemas` | HTTP/WebSocket границы, валидация входа/выхода |
+| `backend/services`, `tasks` | Бизнес-правила, оркестрация и фоновые workers |
+| `backend/models`, `database`, `alembic/` | Состояние, транзакции, миграции |
+| `backend/websocket` | Соединения и доставка событий/команд |
+| `backend/core`, `middleware`, `monitoring` | Настройки, identity, контекст и наблюдаемость |
+
+### База и конкурентность
+
+Tenant context привязывается до первого доступа к данным. Одна Session обслуживает
+одного tenant; после commit/rollback контекст должен сохраняться корректно.
+Для другой организации нужна новая Session. Обычный `get_db()` сам по себе не
+доказывает изоляцию. Смотрите [RLS contract](security/postgresql-rls.md),
+[user bootstrap](security/user-auth-bootstrap.md) и
+[worker RLS](audits/2026-09-20/PIPELINE-RLS.md).
+
+SQLite adapter в тестах не реализует PostgreSQL RLS/locks. Для race, commit-ACK loss,
+таймаутов SQL и фоновых workers используйте [runtime regressions](../tests/production/README.md).
+Receipt об исполнении, принятие команды транспортом и сохранение результата —
+разные события; [task control contract](security/task-control-protocol.md).
+
+### Проверки backend
+
+В отдельном virtualenv для lint установите `ruff` и `mypy`. Основные команды:
 
 ```bash
-docker compose exec backend alembic upgrade head
-docker compose exec backend python scripts/create_admin.py
+python -m ruff check backend/ tests/ scripts/export_api_docs.py scripts/discovery_manifest.py scripts/discovery_publisher.py scripts/ldplayer_network.py scripts/ldplayer_watchdog.py
+python -m mypy backend/ --ignore-missing-imports
+python scripts/check_rls.py
 ```
 
-### Verify
-
-```bash
-curl http://localhost/api/v1/health
-# {"status":"ok","checks":{"database":{"status":"ok"},"redis":{"status":"ok"}}}
-```
-
----
-
-## 2. Project Structure in Depth
-
-### Backend modules
-
-```
-backend/
-├── api/
-│   └── v1/                  # API version 1 routers
-│       ├── auth/
-│       │   ├── router.py    # Route definitions
-│       │   └── service.py   # Business logic
-│       ├── devices/
-│       │   ├── router.py
-│       │   └── service.py
-│       └── ...
-├── core/
-│   ├── config.py            # pydantic-settings Settings class
-│   ├── constants.py         # App-wide constants
-│   ├── cors.py              # CORS middleware config
-│   ├── dependencies.py      # FastAPI Depends() — auth, DB session, etc.
-│   ├── exceptions.py        # Custom exception classes
-│   ├── rbac.py              # Role enum + PERMISSIONS matrix
-│   └── security.py          # JWT encode/decode, bcrypt helpers
-├── database/
-│   ├── engine.py            # AsyncEngine factory
-│   └── redis_client.py      # Redis connection pool
-├── middleware/
-│   ├── audit.py             # Auto-audit-log middleware
-│   ├── logging_context.py   # Request context for structlog
-│   ├── metrics.py           # Prometheus request metrics
-│   ├── request_id.py        # X-Request-ID injection
-│   └── tenant_middleware.py # Sets app.current_org_id in PG session
-├── models/                  # SQLAlchemy ORM models (one file per table)
-├── schemas/                 # Pydantic v2 request/response schemas
-├── services/                # Бизнес-логика (called from routers)
-│   ├── orchestrator/        # PipelineService, PipelineExecutor, StepHandler-ы
-│   ├── scheduler/           # ScheduleService, SchedulerEngine (croniter + pytz)
-│   └── vpn/                 # VPN-сервисы (IP pool, config, health)
-├── tasks/                   # Фоновые asyncio-задачи
-├── websocket/
-│   ├── connection_manager.py
-│   └── pubsub_router.py
-└── main.py                  # FastAPI app factory + lifespan
-```
-
-### Adding a new API endpoint
-
-1. Create `backend/api/v1/<feature>/router.py`:
-
-```python
-from fastapi import APIRouter, Depends
-from backend.core.dependencies import require_permission, get_db
-from backend.models.mymodel import MyModel
-from backend.schemas.mymodel import MyModelCreate, MyModelResponse
-from sqlalchemy.ext.asyncio import AsyncSession
-
-router = APIRouter(prefix="/my-feature", tags=["my-feature"])
-
-@router.get("/", response_model=list[MyModelResponse])
-async def list_items(
-    db: AsyncSession = Depends(get_db),
-    current_user = Depends(require_permission("myfeature:read")),
-):
-    # Explicit tenant filter is required; get_db alone does not establish RLS context.
-    result = await db.execute(
-        select(MyModel).where(MyModel.org_id == current_user.org_id)
-    )
-    return result.scalars().all()
-```
-
-2. Register in `backend/main.py`:
-
-```python
-from backend.api.v1.my_feature.router import router as myfeature_router
-app.include_router(myfeature_router, prefix="/api/v1")
-```
-
-3. Add permission to `backend/core/rbac.py`.
-
-4. Write tests in `tests/my_feature/`.
-
----
-
-## 3. Backend Development
-
-### Running locally (outside Docker)
-
-```bash
-cd backend
-uvicorn main:app --reload --port 8000
-```
-
-Requires a running PostgreSQL and Redis. Point `POSTGRES_URL` and `REDIS_URL` at
-localhost (exposed in dev docker-compose).
-
-### Environment for local run
-
-```bash
-export POSTGRES_URL="postgresql+asyncpg://sphere:password@localhost:5432/sphereplatform"
-export REDIS_URL="redis://:password@localhost:6379/0"
-export JWT_SECRET_KEY="dev-secret-key-min-64-chars-xxxxxxxxxxxxxxxxxxxxxxxxxx"
-```
-
-### Common patterns
-
-**Paginated list response:**
-```python
-from backend.schemas.pagination import PaginationResponse
-
-@router.get("/", response_model=PaginationResponse[DeviceResponse])
-async def list_devices(page: int = 1, per_page: int = 50, ...):
-    offset = (page - 1) * per_page
-    total = await db.scalar(select(func.count()).select_from(Device)...)
-    items = (await db.execute(
-        select(Device).offset(offset).limit(per_page)...
-    )).scalars().all()
-    return PaginationResponse(items=items, total=total, page=page, per_page=per_page)
-```
-
-**Async service call:**
-```python
-class DeviceService:
-    def __init__(self, db: AsyncSession, redis: Redis):
-        self.db = db
-        self.redis = redis
-
-    async def get_status(self, device_id: UUID) -> DeviceStatus:
-        cached = await self.redis.get(f"device:status:{device_id}")
-        if cached:
-            return DeviceStatus.model_validate_json(cached)
-        # fallback to DB...
-```
-
----
-
-## 4. Frontend Development
-
-### Running locally
-
-```bash
-cd frontend
-# Node 24 is used for the audited frontend checks
-npm ci --ignore-scripts
-cp .env.example .env.local    # set NEXT_PUBLIC_API_URL=http://localhost/api/v1
-npm run dev                   # starts on :3000 with hot reload
-```
-
-### Adding a new page
-
-1. Create `frontend/app/(dashboard)/my-page/page.tsx`
-2. Add nav item in `frontend/src/features/navigation/NOCSidebar.tsx`
-3. Create data hook in `frontend/lib/hooks/useMyFeature.ts`:
-
-```typescript
-import { useQuery } from "@tanstack/react-query";
-import { api } from "@/lib/api";
-
-export function useMyFeature() {
-  return useQuery({
-    queryKey: ["my-feature"],
-    queryFn: async () => {
-      const { data } = await api.get("/my-feature");
-      return data;
-    },
-  });
-}
-```
-
-### Auth-protected API calls
-
-Use the `api` axios instance from `frontend/lib/api.ts` — it automatically
-attaches the access token, fences requests/responses by session version, and shares
-a bounded refresh across concurrent 401s. See the [session contract](security/frontend-sessions.md)
-for private page/cache boundaries, login/MFA, logout, storage fallback and limitations.
-
-Run `npm run type-check`, `npx --no-install jest --runInBand`, and `npm run build`
-from `frontend`. The Frontend CI workflow repeats these checks on Node 24/Linux.
-Jest TSX uses `tsconfig.jest.json`; application JSX settings remain controlled by Next.js.
-The tests use JSDOM and transport adapters, not a deployed browser/backend.
-
-```typescript
-import { api } from "@/lib/api";
-
-const { data } = await api.get("/devices?page=1&per_page=50");
-```
-
-### TypeScript types
-
-Generate types from the OpenAPI spec:
-```bash
-npm run gen:types
-# Reads from http://localhost:8000/openapi.json
-# Writes to src/api/types.ts
-```
-
----
-
-## 5. Testing
-
-### Backend tests
-
-```bash
-cd sphere-platform
-
-# Run all tests
-pytest
-
-# Run specific module
-pytest tests/auth/ -v
-
-# Run with coverage
-pytest --cov=backend --cov-report=html
-
-# Run fast (skip slow integration tests)
-pytest -m "not slow"
-
-# Run load tests (mock server)
-pytest tests/load/ -v
-
-# Run load tests (real backend — requires Docker stack)
-pytest tests/load/test_real_backend.py -v --tb=short
-```
-
-### Test structure
-
-```
-tests/                          # 94 файла, 1 231 тест
-├── conftest.py                 # Shared fixtures (test DB, HTTP client, auth tokens)
-├── auth/
-│   ├── test_login.py
-│   ├── test_refresh.py
-│   └── test_mfa.py
-├── devices/
-│   ├── test_crud.py
-│   └── test_bulk.py
-├── test_scripts/
-│   └── test_pipeline_*.py        # Pipeline CRUD, executor, step handlers
-├── test_scripts/
-│   └── test_schedule_*.py        # Schedule CRUD, engine, dry-run
-├── vpn/
-│   └── test_vpn_api.py
-├── test_ws/
-│   └── test_connection_manager.py
-└── load/                       # 🔥 Нагрузочное тестирование (68 тестов)
-    ├── core/                   # VirtualAgent, AgentPool, Orchestrator, MetricsCollector
-    ├── protocols/              # WS/REST клиенты, MessageFactory, H.264 эмулятор
-    ├── scenarios/              # 6 бизнес-сценариев
-    ├── config/                 # YAML-конфигурации нагрузки
-    ├── mock_server.py          # Mock Sphere Platform (REST + WS)
-    ├── test_unit_core.py       # 30 юнит-тестов
-    ├── test_integration.py     # 10 интеграционных тестов
-    ├── test_load_mock.py       # E2E mock: 256→1024 агентов
-    └── test_real_backend.py    # Real backend: 1024 агентов + DAG
-```
-
-### Общая статистика тестов
-
-| Компонент | Файлов | Тестов | Фреймворк |
-|-----------|--------|--------|----------|
-| Android APK | 16 | 272 | JUnit, MockK, Turbine, Robolectric |
-| Backend | 50 | 759 | pytest, httpx, asyncio |
-| Frontend | 18 | 132 | Jest, Testing Library |
-| Load tests | 10 | 68 | pytest, asyncio, websockets |
-| **Итого** | **94** | **1 231** | |
-
-### Writing a test
-
-```python
-import pytest
-from httpx import AsyncClient
-
-@pytest.mark.asyncio
-async def test_create_device(client: AsyncClient, auth_headers: dict):
-    response = await client.post(
-        "/api/v1/devices",
-        json={"name": "Test Device", "serial": "test-001"},
-        headers=auth_headers,
-    )
-    assert response.status_code == 201
-    data = response.json()
-    assert data["name"] == "Test Device"
-    assert data["serial"] == "test-001"
-```
-
-### Frontend tests
-
-```bash
-cd frontend
-npm test          # Jest
-npm run type-check  # TypeScript strict check
-npm run lint        # ESLint
-```
-
----
-
-## 6. Code Quality
-
-### Linting and formatting
-
-```bash
-# Python
-ruff check backend/ tests/          # lint
-ruff format backend/ tests/         # format
-mypy backend/ --strict              # type check
-bandit -r backend/                  # security lint
-
-# TypeScript
-cd frontend && npm run lint
-```
-
-### Style guide
-
-**Python:**
-- Ruff rules: `E`, `F`, `I`, `N`, `S` (bandit rules via ruff extension)
-- Max line length: 100 characters
-- All public functions must have type annotations
-- Use `async def` for all I/O operations — no blocking calls in async context
-
-**TypeScript:**
-- Strict mode: `"strict": true` in tsconfig
-- Prefer `const` over `let`, avoid `var`
-- React components: function components only (no class components)
-- Hooks: prefix with `use`, one hook per feature
-
-### Pre-commit (auto-run on git commit)
-
-```bash
-pre-commit install    # install hooks
-pre-commit run --all-files  # run manually
-```
-
-Hooks configured in `.pre-commit-config.yaml`:
-- `ruff` — Python linting + formatting
-- `mypy` — type checking
-- `detect-secrets` — secret scanning
-- `commitlint` — commit message format
-- `prettier` — TypeScript/JSON formatting
-
----
-
-## 7. Migrations
-
-### Create a new migration
-
-```bash
-# Auto-generate from model changes
-docker compose exec backend alembic revision --autogenerate -m "add_device_model_field"
-
-# Or create empty migration for manual SQL
-docker compose exec backend alembic revision -m "alter_table_x"
-```
-
-### Migration file template
-
-```python
-# alembic/versions/XXXX_description.py
-"""Add field to devices
-
-Revision ID: xxxx
-Revises: yyyy
-"""
-from alembic import op
-import sqlalchemy as sa
-
-def upgrade() -> None:
-    op.add_column("devices", sa.Column("new_field", sa.String(100), nullable=True))
-
-def downgrade() -> None:
-    op.drop_column("devices", "new_field")
-```
-
-### Rules for migrations
-
-- **Always** implement `downgrade()`
-- **Never** delete columns in the same migration that removes their usage from code
-  (two-phase deploy required)
-- **Test** both `upgrade` and `downgrade` on a dev database before committing
-- **Never** modify existing migration files — always create a new one
-
----
-
-## 8. Conventional Commits
-
-All commits must follow [Conventional Commits v1.0](https://www.conventionalcommits.org/).
-
-```
-<type>(<scope>): <short description>
-
-[optional body]
-
-[optional footer: issue references]
-```
-
-**Types:**
-
-| Type | Description |
-|------|-------------|
-| `feat` | New feature |
-| `fix` | Bug fix |
-| `docs` | Documentation only |
-| `chore` | Build, tooling, CI, deps |
-| `refactor` | Code restructure (no behavior change) |
-| `test` | Add or fix tests |
-| `perf` | Performance improvement |
-| `security` | Security fix |
-
-**Scopes:** `auth`, `devices`, `vpn`, `scripts`, `ws`, `frontend`, `android`, `pc-agent`, `infra`, `ci`, `pipelines`, `schedules`
-
-**Examples:**
-```
-feat(devices): add bulk tag assignment endpoint
-fix(vpn): use require_permission instead of require_role on /peers
-docs(api): add bulk actions reference to API docs
-chore(ci): add pip-audit to security scan workflow
-security(auth): rate-limit /auth/login to 10 req/min per IP
-```
-
----
-
-## 9. Branch Strategy
-
-```
-main           ─── stable production releases (tags: v4.0.0)
-  └── develop  ─── integration branch (all features merged here)
-        └── feat/SPHERE-123-short-description   ← feature
-        └── fix/SPHERE-456-short-description    ← bug fix
-        └── chore/update-deps                   ← chores
-        └── security/patch-jwt-vuln             ← security fixes
-```
-
-### Naming rules
-
-```
-feat/SPHERE-<id>-<kebab-case-description>
-fix/SPHERE-<id>-<kebab-case-description>
-chore/<kebab-case-description>
-security/<kebab-case-description>
-docs/<kebab-case-description>
-release/v<major>.<minor>.<patch>
-```
-
-### PR rules
-
-- **Target:** always `develop` (never `main` directly)
-- **Squash merge:** preferred for feat/fix branches
-- **Merge commit:** used for release branches into main
-- **Required reviews:** 1 (staging), 2 (production releases)
-- **Required checks:** CI backend, CI Android, lint, type-check
-
----
-
-## 10. Pre-commit Hooks
-
-```bash
-# Install
-pip install pre-commit
-pre-commit install
-pre-commit install --hook-type commit-msg  # for commitlint
-```
-
-On every `git commit`, hooks run automatically:
-1. `ruff` — lint + format Python
-2. `mypy` — type check changed Python files
-3. `detect-secrets` — scan for leaked secrets
-4. `commitlint` — validate commit message format
-5. `prettier` — format TypeScript/JSON/CSS
-6. `eslint` — lint TypeScript
-
-To bypass in emergencies (document why in PR):
-```bash
-git commit --no-verify -m "emergency: hotfix XYZ"
-```
-
----
-
-## 11. Debugging Tips
-
-### Inspect running backend
-
-```bash
-# Enter the backend container
-docker compose exec backend bash
-
-# Check Python environment
-python -c "from backend.core.config import settings; print(settings.ENVIRONMENT)"
-
-# Test DB connection
-python -c "
-import asyncio
-from backend.database.engine import get_engine
-from sqlalchemy import text
-async def test():
-    async with get_engine().connect() as conn:
-        result = await conn.execute(text('SELECT 1'))
-        print('DB OK:', result.scalar())
-asyncio.run(test())
-"
-```
-
-### Inspect WebSocket connections
-
-```bash
-# List active WS connections in Redis
-docker compose exec redis redis-cli PUBSUB CHANNELS "device:*"
-
-# Check pending messages
-docker compose exec redis redis-cli LLEN celery
-```
-
-### Watch real-time logs
-
-```bash
-# All services
-docker compose logs -f
-
-# Specific service
-docker compose logs -f backend | grep -E "ERROR|WARNING|device"
-
-# With timestamps
-docker compose logs -f --timestamps backend
-```
-
-### Reset to clean state (dev only)
-
-```bash
-# Destroy all volumes and start fresh
-docker compose down -v
-docker compose -f docker-compose.yml -f docker-compose.full.yml up -d --build
-docker compose exec backend alembic upgrade head
-docker compose exec backend python scripts/create_admin.py
-```
-
-
-## Generated HTTP API documentation
-
-With the jointly compatible backend/PC dependencies installed and required
-application configuration supplied, run from the repository root:
+Для тестов сначала подготовьте **изолированные** PG/Redis, test env и migrations
+по [инструкции](../tests/production/README.md), затем используйте команду CI из неё.
+Без `SPHERE_RUN_INTEGRATION=1` реальные DB cases пропускаются. Фактический coverage
+gate — 65% backend; это не гарантия достаточного покрытия каждого компонента.
+`tests/load` не входит в обычную regression suite.
+
+После изменения HTTP routes, в настроенной тестовой среде:
 
 ```bash
 python -m scripts.export_api_docs
 python -m scripts.export_api_docs --check
 ```
 
-The first command updates `docs/openapi.json` and `docs/api-endpoints.md`; the
-second fails when either artifact is missing or stale. Use disposable development
-configuration (including a non-production `JWT_SECRET_KEY`). The exporter imports
-the registered application and calls `app.openapi()` without entering lifespan,
-starting workers or making HTTP/database requests. It is not a runtime test.
+Проверяйте сгенерированный diff [каталога](api-endpoints.md) и [OpenAPI](openapi.json).
 
-Commit both generated files with route/schema changes. Backend CI runs `--check`
-using its pinned dependencies. OpenAPI covers declared HTTP operations, excludes
-WebSocket/plain ASGI routes and does not fully express permission/error behavior.
-Keep operator explanations and [task-control limits](security/task-control-protocol.md)
-up to date separately. Component review status is in the
-[audit roadmap](audits/2026-09-05/ROADMAP.md).
+## Frontend
+
+В каталоге `frontend`:
+
+```bash
+npm ci --ignore-scripts --no-audit --no-fund
+npx --no-install jest --ci --runInBand
+npm run type-check
+npm run build
+```
+
+Это команды [текущего CI](../.github/workflows/ci-frontend.yml). Настройка dev proxy
+и окружения — в [configuration](configuration.md). UI-изменения проверяйте в браузере:
+loading/error/empty, права пользователя, reconnect, отсутствие устаревших данных.
+Для стримов нужны новые decoded frames и освобождение capture после последнего viewer.
+
+## Android
+
+В каталоге `android` с установленными JDK/SDK:
+
+```powershell
+./gradlew.bat assembleDebug test
+```
+
+В Bash используется `./gradlew assembleDebug test`. Debug artifact не равен
+подписанной pilot OTA-сборке. Настройки discovery/signing, установка и limitations —
+в [Android guide](android-agent.md) и [Local pilot](operations/LOCAL-PILOT.md).
+Не меняйте signing key при обновлении уже установленного APK.
+
+Unit tests не доказывают boot, root grants, screen capture или OTA конкретного Android.
+Для native приёмки фиксируйте версию APK, PID/crash buffers, device ID, receipts,
+recovery и ресурсы. [Безопасный soak](operations/ANDROID-OVERNIGHT-SOAK.md).
+
+## Перед PR
+
+Сохраните воспроизведение и regression, обновите документ соответствующего контракта,
+отдельно назовите не выполненные проверки. Для migrations проверьте единственный
+Alembic head, grants runtime-role, upgrade существующего volume и rollback-план.
+Не запускайте downgrade или очистку на ценных данных ради теста.
+
+[Contributing](../CONTRIBUTING.md) задаёт коммиты/review;
+[актуальность документов](DOCUMENTATION.md) — статусы source/installed/accepted;
+[Support](../SUPPORT.md) — минимальные данные для разбора инцидента.

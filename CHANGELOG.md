@@ -14,7 +14,14 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Audit / documentation
 
-- [Fleet32 preflight](docs/audits/2026-09-20/FLEET32-PREFLIGHT.md): 24 prioritized
+- Переработан вход в репозиторий: SVG-обложка, README с подтверждённым состоянием,
+  каталог документации, roadmap, support и правила актуальности. Обновлены формы
+  bugs/performance/docs/features/questions, PR template, CODEOWNERS и политики
+  участия/безопасности. Удалены фиктивные контакты, версии поддержки и SLA;
+  исправлены команды первого запуска. Открытые Fleet32 gaps сохранены явно.
+
+
+- [Fleet32 preflight](docs/audits/2026-09-20/FLEET32-PREFLIGHT.md): 27 prioritized
   operational findings and acceptance gaps across backend, database, Android,
   streaming/UI, VPN and deployment. Seven isolated backend probes reproduce open
   defects; the active browser decoder is exercised with a stalled codec double.
@@ -23,6 +30,19 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   capacity or eight-hour pass.
 
 ### Security / runtime
+
+- AUD-139 / F32-09: разделён Redis dataset budget 512 MiB и container budget
+  1536 MiB. До fix воспроизведён OOM; после пройдены eviction, RDB/AOF, persistence
+  и restart на изолированном Redis. Pilot limit обновлён без restart. Запас при
+  production pressure и профиль на 32 устройствах ещё не приняты.
+  [Evidence и ограничения](docs/audits/2026-09-20/REDIS-MEMORY.md).
+
+- AUD-138 / F32-06: ограничены decode queue и работа активного H264 decoder;
+  stale callbacks закрываются, перегрузка/ошибка восстанавливает синхронизацию.
+  Frontend `9924eb1` установлен: два живых потока вернулись после restart backend
+  без F5, capture освобождён после просмотра. Это не приёмка 32 viewers.
+  [Regression и native evidence](docs/audits/2026-09-20/DECODER-RECOVERY.md).
+
 
 - AUD-137 / F32-01/25: watchdog discovers overdue work under runtime RLS and
   persists timeout stop intent for ASSIGNED/RUNNING instead of releasing the

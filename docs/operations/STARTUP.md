@@ -1,9 +1,55 @@
-# Запуск development-стека и значение readiness
+# Запуск Sphere: bootstrap, повторный старт и readiness
 
-**Сверено 11 сентября 2026 · AUD-68/78–80.** [Эксплуатационный план](READINESS.md) ·
+**Входной путь сверён 21 сентября 2026.** Датированные AUD ниже описывают отдельные проверки, а не общую приёмку всех launchers. [Эксплуатационный план](READINESS.md) ·
 [Runbooks](../runbooks/README.md) · [Deployment](../deployment.md).
 
-## Подготовка
+<a id="first-install"></a>
+## Новая установка
+
+Для существующего `sphere-pilot-20260911` сразу переходите к
+[Local pilot](LOCAL-PILOT.md): его env/порты/volumes отличаются. Следующие команды —
+для **отдельного нового checkout/Compose project**, без старой установки на тех же портах.
+
+Нужны Git, Python 3.12, Docker с Compose v2 и PowerShell 7. Сначала прочитайте
+[configuration](../configuration.md), выберите свободные host ports и постоянное
+имя project. `COMPOSE_PROJECT_NAME` разделяет ресурсы Compose, но сам по себе
+не устраняет конфликт опубликованных портов. Для production дополнительно нужны
+домен/TLS, runtime DB credentials/grants и собственная приёмка; флаг `-Production`
+не подтверждает готовность.
+
+Из корня checkout в PowerShell:
+
+```powershell
+# Пример имени отдельной новой установки, не существующего pilot.
+$env:COMPOSE_PROJECT_NAME = 'sphere-sandbox'
+# Только в новой установке без прежних env/volumes:
+python scripts/generate_secrets.py --output .env.local
+# Перед запуском настройте .env.local по configuration guide.
+./scripts/full-deploy.ps1 -SkipSecrets
+```
+
+`full-deploy.ps1` использует base + full для development; с `-Production` — base +
+production. Он собирает images, поднимает PG/Redis, применяет Alembic, выполняет
+admin/enrollment bootstrap в one-off backend containers, затем запускает приложения
+и ждёт readiness. При ошибке последующие стадии прекращаются; данные автоматически
+не удаляются. Выбор env: `.env.local` → `.env`, без объединения файлов.
+
+Для новой административной учётной записи можно задать `SPHERE_ADMIN_EMAIL` и
+`SPHERE_ADMIN_PASSWORD` в процессе launcher. Без них используется `admin@example.com`
+и сгенерированный пароль. PowerShell показывает пароль после подтверждённого
+создания — сохраните его приватно; при существующем admin прежний пароль сохраняется.
+Не публикуйте вывод bootstrap. Публичная регистрация не является способом получить
+super_admin. [Подробности повторного bootstrap ниже](#повторный-admin-bootstrap-aud-85).
+
+После запуска отдельно проверьте вход в веб, health readyz, регистрацию одного APK,
+задание с terminal receipt, новый видеокадр и recovery. Общий recipe не присваивает
+порт 18080 автоматически — это адрес специально настроенного pilot.
+[Порядок приёмки](PILOT-ACCEPTANCE.md) · [Remote access](REMOTE-PILOT.md).
+
+Для Linux/Bash есть `scripts/full-deploy.sh`; его отличия и ограничения описаны
+ниже. Не переносите параметры PowerShell в Bash дословно.
+
+## Подготовка к повторному dev-start
 
 Для уже подготовленного отдельного Windows-стенда `sphere-pilot-20260911` используйте
 [локальную инструкцию](LOCAL-PILOT.md): другой project/env и порт 18080 позволяют
