@@ -2,6 +2,11 @@
 
 [Главная](../README.md) · [Contributing](../CONTRIBUTING.md) · [Support](../SUPPORT.md)
 
+Этот служебный документ намеренно называется `REPOSITORY-GUIDE.md`.
+GitHub выбирает главный README в порядке `.github/` → корень → `docs/`.
+Файл `.github/README.md` перекрыл бы презентацию продукта в корне репозитория.
+[Правило GitHub](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-readmes).
+
 | Элемент | Назначение |
 | --- | --- |
 | [README](../README.md) и [обложка](../docs/assets/sphere-cover.svg) | Главный вход, состояние продукта и маршруты по документации |

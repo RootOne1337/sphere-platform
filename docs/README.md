@@ -74,7 +74,7 @@
 
 [Contributing](../CONTRIBUTING.md) · [Support и диагностические формы](../SUPPORT.md) ·
 [Security policy](../SECURITY.md) · [Changelog](../CHANGELOG.md) ·
-[Как поддерживать документацию](DOCUMENTATION.md) · [Устройство GitHub-репозитория](../.github/README.md).
+[Как поддерживать документацию](DOCUMENTATION.md) · [Устройство GitHub-репозитория](../.github/REPOSITORY-GUIDE.md).
 
 ## 🗂️ Проекты и исторические материалы
 
