@@ -142,12 +142,15 @@ jobs:
           --cov-fail-under=65
       - name: Verify generated HTTP API documentation
         run: python -m scripts.export_api_docs --check
+      - name: Redis container memory and persistence acceptance
+        run: python tests/containers/run_redis_memory_probe.py --evidence-dir redis-memory-evidence
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: backend-test-results
           path: |
             test-results.xml
+            redis-memory-evidence/
             coverage.xml
           if-no-files-found: warn
       - uses: codecov/codecov-action@v4

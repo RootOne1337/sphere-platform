@@ -1,0 +1,130 @@
+{
+  "finding": "AUD-139 / F32-09",
+  "baseline": "071d47cf4722bee410ceab0364d15afa21f6086a",
+  "before": {
+    "container_bytes": 134217728,
+    "maxmemory": 536870912,
+    "final_state": {
+      "Status": "exited",
+      "ExitCode": 137,
+      "OOMKilled": true
+    },
+    "fill_exit": 137,
+    "removed": true
+  },
+  "after": {
+    "container_bytes": 1610612736,
+    "maxmemory": 536870912,
+    "swap_bytes": 1610612736,
+    "fill_exit": 0,
+    "evicted_keys_after_fill": 7380,
+    "cgroup_peak": {
+      "bytes": 1439367168,
+      "source": "/sys/fs/cgroup/memory/memory.max_usage_in_bytes"
+    },
+    "final_rss": 517607424,
+    "persistence": [
+      {
+        "operation": "BGREWRITEAOF",
+        "rdb": "ok",
+        "aof_rewrite": "ok",
+        "aof_write": "ok"
+      },
+      {
+        "operation": "BGSAVE",
+        "rdb": "ok",
+        "aof_rewrite": "ok",
+        "aof_write": "ok"
+      }
+    ],
+    "persisted_key_count": 6531,
+    "marker_survived_restart": true,
+    "final_state": {
+      "Status": "running",
+      "ExitCode": 0,
+      "OOMKilled": false
+    },
+    "removed": true,
+    "passed": true
+  },
+  "regressions": {
+    "initial_extended_suite": {
+      "failed": 8,
+      "passed": 1,
+      "budget_assertions": 7,
+      "unrelated_preview_render_failure": 1
+    },
+    "final_runtime_budget_scope": {
+      "passed": 8,
+      "failed": 0,
+      "compose_combinations": 7
+    },
+    "broader_deployment_before_scope_correction": {
+      "passed": 110,
+      "failed": 1,
+      "failure": "known preview template schema rejection; F32-27"
+    }
+  },
+  "live_before": {
+    "at": "2026-09-21T11:41:38.770192+00:00",
+    "memory_limit": 134217728,
+    "redis_memory": {
+      "used_memory": "1784960",
+      "used_memory_rss": "13463552",
+      "maxmemory": "536870912",
+      "maxmemory_policy": "allkeys-lru"
+    }
+  },
+  "live_after": null,
+  "harness_boundary_errors": [
+    "First test invocation lacked synthetic JWT_SECRET_KEY; no test collection.",
+    "First native probe failed NOAUTH: redis-benchmark ignores REDISCLI_AUTH; corrected with fixture password before verified baseline.",
+    "First after probe could not read v2 memory.peak after pressure stages; full rerun used v1 fallback."
+  ],
+  "limits": [
+    "Isolated Redis SET workload; not 32 streams or PubSub slow-client pressure.",
+    "LRU control-key eviction semantics unchanged.",
+    "Graceful restart; not power-loss or API/SQL recovery acceptance.",
+    "Preview template excluded after confirmed schema failure, separately registered F32-27."
+  ],
+  "files": [
+    {
+      "path": "tests/deployment/test_redis_memory_budget.py",
+      "sha256": "979092c31c29a0fab856dab9d26ac7f223dc24318e24a080bda560066c64f349"
+    },
+    {
+      "path": "tests/containers/run_redis_memory_probe.py",
+      "sha256": "8eaeac43825d9766ce36bec2afa78ed810379b6de637e018a6b5c9bc593a6ae6"
+    },
+    {
+      "path": "docker-compose.yml",
+      "sha256": "35a15ac6808b2516d7f79e12b6cf9289d18018df5c6f36bbd0758b39bd2e5a20"
+    },
+    {
+      "path": "docker-compose.production.yml",
+      "sha256": "178490926d3ded5479700c193acba1fa3fa9e6fb38ddf97816a9bfc1e782681b"
+    },
+    {
+      "path": ".github/workflows/ci-backend.yml",
+      "sha256": "f31b91e8ae215f7328867b588918e7ed26a68105eaa370ddce54aaa957d6df37"
+    }
+  ],
+  "private_artifacts": [
+    {
+      "name": "redis-memory-before-verified/result.json",
+      "sha256": "c956cb9356035a339259bc4de4963a18f45c3bb7b3c0418258f24903c17f88ed"
+    },
+    {
+      "name": "redis-memory-after-portable/result.json",
+      "sha256": "8d2790b6162ee4b521d8429d3d38da5a9462d1affe711af1c9cb3facbed304c8"
+    },
+    {
+      "name": "redis-budget-before.xml",
+      "sha256": "1fdee26065d02bd06bdbbc54a006ef85f9c8578e55aca048b68b397f2eb76b5f"
+    },
+    {
+      "name": "redis-budget-final.xml",
+      "sha256": "fe3337479ea86c504b57401a3fd6f9c6d4c0ee53a61bf5fcc393befdf768d6db"
+    }
+  ]
+}

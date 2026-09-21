@@ -26,7 +26,8 @@ services:
       resources:
         limits:
           cpus: "0.5"
-          memory: 512M
+          # Same 512 MiB dataset + persistence/process headroom as the base stack.
+          memory: 1536M
 
   backend:
     healthcheck:

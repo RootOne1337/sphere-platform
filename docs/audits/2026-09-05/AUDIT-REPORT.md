@@ -4,6 +4,12 @@
 
 ## Текущее установленное состояние, 21 сентября
 
+**AUD-139 · P0 / High / F32-09, source fix:** Redis с dataset 512 MiB и container
+128 MiB получил OOMKilled/137 в изолированной пробе. Ceiling увеличен до 1536 MiB
+с сохранением dataset/policy/persistence; восемь regressions и pressure с
+AOF/RDB/restart прошли. [Файлы, evidence, rollout и остаточные риски](../2026-09-20/REDIS-MEMORY.md).
+Дополнительно записан F32-27: preview Compose невалиден; текущий pilot не затронут.
+
 Backend `c42bb5b`, frontend `9924eb1`, оба APK 1.2.8 / 10208. Накопленные
 AUD-129–137 развёрнуты с backup/restore и согласованными миграциями;
 [canary](../2026-09-20/CANARY-20260921.md) независимо подтверждает 15 task receipts,

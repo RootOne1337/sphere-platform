@@ -10,6 +10,10 @@
 установлены. 15 task receipts и два pipeline подтверждены; F32-01 продвинут native
 stop/reconnect/restart проверками, но physical interruption и масштаб не закрыты.
 Frontend затем обновлён до `9924eb1`: [AUD-138 decoder native acceptance](DECODER-RECOVERY.md).
+**AUD-139:** [Redis memory budget](REDIS-MEMORY.md) воспроизвёл OOM в отдельном
+контейнере и согласовал 512 MiB dataset / 1536 MiB container. Pressure/persistence/
+restart прошли; live rollout, slow clients и eviction semantics отмечены отдельно.
+Добавлен **F32-27 / P1 preview / Medium**: preview template не проходит Compose render.
 Добавлен **F32-26 / P1 / Medium**: долгий sleep задерживает кооперативную отмену.
 Предыдущие source-only формулировки ниже — история до rollout. Этот документ
 по-прежнему не даёт допуска к 32: video/preview/Redis и полный fault/soak открыты.
@@ -138,6 +142,7 @@ Compose/monitoring/backup и нагрузочный harness. Это провер
 | F32-24 | P2, будущий AI / gate / G | Нет observation/action контракта свежести и владения управлением |
 | F32-25 | P0, RLS runtime / High / R | Pipeline-worker без tenant context не видит сохранённую очередь |
 | F32-26 | P1 / Medium / R, 21 сентября | Долгий sleep задерживает отмену до конца действия |
+| F32-27 | P1, preview / Medium / R, 21 сентября | Переменная в top-level volume key делает preview Compose невалидным |
 
 ## Backend, оркестрация и БД
 
@@ -256,6 +261,11 @@ Compound loop/parallel, общая квота и native runtime остаются
 **Residual:** просто увеличить semaphore или DB pool — не исправление восстановления.
 
 ### F32-09 — Redis может получить OOM раньше прикладного лимита
+
+**Обновление 21 сентября:** [AUD-139](REDIS-MEMORY.md) воспроизвёл isolated OOM
+137 до fix; budget исправлен, pressure/AOF/RDB/restart прошли. Это заменяет
+первоначальный статус «OOM не наблюдался» для isolated reproduction; live pilot
+OOM не испытывал. Eviction semantics и slow-client/32-device gate остаются OPEN.
 
 **Root cause / файл:** [docker-compose.yml](../../../docker-compose.yml):
 `--maxmemory 512mb`, memory limit `128M`; это подтверждено `docker inspect` и Redis CONFIG.

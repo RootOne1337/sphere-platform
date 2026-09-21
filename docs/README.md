@@ -27,6 +27,7 @@
 
 ## Текущие исправления перед Fleet32
 
+- [AUD-139: Redis OOM reproduction, согласованный memory budget, persistence/restart](audits/2026-09-20/REDIS-MEMORY.md). [Эксплуатация](operations/REDIS-MEMORY.md).
 - [AUD-138: bounded active decoder, codec recovery, keyframe requests и regression tests](audits/2026-09-20/DECODER-RECOVERY.md).
 
 Backend/frontend и APK 1.2.8 установлены: [canary 21 сентября](audits/2026-09-20/CANARY-20260921.md).
