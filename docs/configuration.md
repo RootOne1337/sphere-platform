@@ -44,6 +44,12 @@ POSTGRES_URL=postgresql+asyncpg://sphere:super_secure_password_here@postgres:543
 
 ## Redis
 
+The shipped runtime Compose profiles use a **512 MiB dataset cap and a 1536 MiB
+container ceiling**. The ceiling is not a memory reservation. Persistence,
+allocator and client buffers require headroom outside the dataset; see the
+[memory contract and measured acceptance](operations/REDIS-MEMORY.md). This does
+not establish capacity for 32 streams or validate the separate preview template.
+
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
 | `REDIS_PASSWORD` | ✓ | — | Redis AUTH password (32+ chars) |

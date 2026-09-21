@@ -12,11 +12,41 @@ stop/reconnect/restart проверками, но physical interruption и ма�
 Frontend затем обновлён до `9924eb1`: [AUD-138 decoder native acceptance](DECODER-RECOVERY.md).
 **AUD-139:** [Redis memory budget](REDIS-MEMORY.md) воспроизвёл OOM в отдельном
 контейнере и согласовал 512 MiB dataset / 1536 MiB container. Pressure/persistence/
-restart прошли; live rollout, slow clients и eviction semantics отмечены отдельно.
+restart прошли; `93551e0` применён к новому pilot без restart, оба APK online с
+прежними PID/crash buffers. Slow clients и eviction semantics остаются OPEN.
 Добавлен **F32-27 / P1 preview / Medium**: preview template не проходит Compose render.
 Добавлен **F32-26 / P1 / Medium**: долгий sleep задерживает кооперативную отмену.
 Предыдущие source-only формулировки ниже — история до rollout. Этот документ
 по-прежнему не даёт допуска к 32: video/preview/Redis и полный fault/soak открыты.
+
+## Что осталось сейчас, после установленных исправлений
+
+Это актуальная сводка на 21 сентября. Последующие разделы сохраняют историю
+воспроизведений; наличие строки в исходном реестре **не означает, что её root
+cause всё ещё не исправлен**. Установленный fix и закрытая приёмка масштаба —
+разные результаты.
+
+| Пункты | Подтверждённый результат | Оставшаяся работа |
+| --- | --- | --- |
+| F32-01 | Durable stop/timeout установлен; offline/reconnect/backend restart проверены на двух APK | Прерывание физического действия, F32-26 и 32-device fault acceptance |
+| F32-02/03 | Pipeline leases/checkpoints и durable batch plan установлены; isolated OS-kill tests прошли | Native потеря executor в активном mixed pipeline/batch на целевом масштабе |
+| F32-04/05 | Короткие SQL sessions, bounded admission и nested WAITING установлены | Compound loop/parallel, общие квоты, нагрузка SQL pool |
+| F32-06 | Decoder bounds/recovery установлен; два native streams вернулись без F5 | 32 настоящих decoder sessions, GPU/RAM и длительная приёмка |
+| F32-07/08 | Подтверждены разрыв профиля и общий канал video/control; source timestamp decoder исправлен | Сквозной облегчённый профиль, frame-chain integrity, измерение свежести и управление при насыщении сети — следующий основной fix |
+| F32-09 | OOM воспроизведён; согласованный budget применён без restart; isolated pressure/persistence/restart passed | Slow consumers, смысл eviction управляющих ключей, общий Redis/network fault test |
+| F32-10/17/18 | Метрики, monitoring и backup/logging gaps подтверждены | Подключить фактический pilot, worker/fleet метрики, ротацию и backup/restore runbook |
+| F32-11/12/21 | VPN integration/routing gaps зарегистрированы | Реальный provider, kill switch/recovery, UDP/DNS/MTU и end-to-end приёмка |
+| F32-13 | UI выдаёт отсутствие VPN-измерений за нули; 64-grid limit зарегистрирован | Достоверные состояния VPN; 64-grid после этапа 32 |
+| F32-14 | Конкурентная потеря OTA catalog entry воспроизведена | Атомарный каталог и concurrent/kill-during-write regression |
+| F32-15/16 | PC-agent recovery и completion webhook durability gaps подтверждены | Durable receipt/topology recovery и post-commit outbox |
+| F32-19/22/23 | Новые fixes приняты только в указанных isolated/two-device сценариях | Harness 32, совместный ресурсный профиль, полный fault/soak; 8h пока не passed |
+| F32-20 | Текущий ingress работает; независимый failover не принят | Проверить потерю провайдера/config host и возврат без ручной перенастройки |
+| F32-24 | Требования будущего AI описаны | Реализация отложена владельцем; сейчас только совместимость observation/action контура |
+| F32-25 | RLS discovery/claim/recovery fixes установлены и проверены isolated non-owner tests | Native pilot всё ещё использует DB superuser; production runtime-role приёмка открыта |
+| F32-26 | Задержка отмены внутри sleep измерена | Кооперативный interruptible wait и native regression |
+| F32-27 | Preview template отвергнут реальным Compose renderer | Отдельный preview deployment fix; текущий pilot этим файлом не пользуется |
+
+## История source checkpoints до rollout
 
 **После исходного среза:** [AUD-129](DURABLE-CANCELLATION.md) добавляет сохранённую
 отмену, APK fence до EXECUTE_DAG, ожидание child/nested runs и pending status в UI.
@@ -339,6 +369,16 @@ ACK фактически применённых width/height/fps/bitrate, отд
 несовместимый codec; сверка применённого профиля и настоящего bitrate.
 **Residual:** ABR APK реагирует на его send queue, не на нагрузку decoder браузера.
 
+**Уточнение следующего fix, 21 сентября:** параметры должны пройти также через
+`ScreenCaptureRequestActivity` и `ScreenCaptureService`; сейчас service вызывает
+`StreamingManager.start(projection)` без профиля. `FrameThrottle` используется в
+`onFrameReady`, после MediaCodec, а до copyPixels/draw/encode ограничения нет.
+Следовательно, такая отсечка не экономит стоимость захвата/кодирования и может
+пропускать зависимые encoded P-frames. Требуется admission до bitmap copy/encoder
+и сохранение целой цепочки ссылочных кадров при backpressure. Это подтверждение
+пути по исходникам, не новый измеренный crash или артефакт на экране; отдельная
+regression и native moving-screen проверка ещё не выполнены.
+
 ### F32-08 — свежесть и задержка управления пока не контролируются
 
 **Root cause / файлы:** [SphereWebSocketClient](../../../android/app/src/main/kotlin/com/sphereplatform/agent/ws/SphereWebSocketClient.kt)
@@ -352,6 +392,10 @@ ACK фактически применённых width/height/fps/bitrate, отд
 Browser decoder подставляет свой `performance.now()`; probe показывает
 12345000 → 999999000 microseconds. Из этих значений нельзя восстановить время
 «экран Android → показ оператору» и отделить frozen frame от здорового transport ping.
+
+После [AUD-138](DECODER-RECOVERY.md) browser сохраняет source timestamp; исходная
+подстановка выше устранена. Capture-to-render age и clock uncertainty всё ещё
+не измеряются, поэтому F32-08 не закрыт.
 
 **Fix:** измеряемые capture/encode/send/receive/decode/render stages, stream epoch и
 frame ID; оценка clock offset с uncertainty либо честный round-trip proxy. Ограничить

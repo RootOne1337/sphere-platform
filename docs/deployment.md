@@ -640,6 +640,11 @@ docker compose logs backend | grep "vpn"
 
 ### High memory usage
 
+The current runtime Redis budget is 512 MiB dataset / 1536 MiB container. Compare
+Redis RSS and the Docker ceiling as well as `used_memory`; persistence forks and
+buffers are not covered by the dataset number alone. See the
+[measured memory contract and rollout](operations/REDIS-MEMORY.md).
+
 ```bash
 # Check per-container memory
 docker stats --no-stream
@@ -650,7 +655,7 @@ docker compose exec postgres psql -U sphere sphereplatform \
       WHERE state='active' ORDER BY dur DESC LIMIT 10;"
 
 # Redis: check memory
-docker compose exec redis redis-cli info memory
+docker compose exec redis sh -c 'REDISCLI_AUTH="$REDIS_PASSWORD" redis-cli INFO memory'
 ```
 
 ### Windows configuration selection (AUD-80)

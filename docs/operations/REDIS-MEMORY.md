@@ -1,6 +1,6 @@
 # Redis: память, сохранение и приёмка
 
-**21 сентября 2026 · AUD-139 / F32-09 · конфигурация исправлена, rollout указан в audit evidence.**
+**21 сентября 2026 · AUD-139 / F32-09 · `93551e0` применён к новому pilot без restart.**
 
 [Readiness](READINESS.md) · [Fleet32](../audits/2026-09-20/FLEET32-PREFLIGHT.md) · [Доказательства](../audits/2026-09-20/REDIS-MEMORY.md)
 
@@ -70,6 +70,8 @@ CI запускает эту проверку и сохраняет артефа
   восстановимыми. Нужна проверка назначения ключей и политики по их смыслу.
 - Slow PubSub consumers, суммарные buffers 32 streams и reconnect storm в этом
   probe не моделируются. Их бюджеты и latency остаются gate для Fleet32.
+  CI probe прошёл без OOM, но cgroup peak достиг ceiling 1536 MiB (включая cache
+  и прочую charged memory); дополнительный запас для stream workload не доказан.
 - Graceful restart не доказывает отсутствие потери последней секунды AOF при
   аварийном отключении питания и не является backup/restore-проверкой всего проекта.
 - Отдельный preview template не входит в исправленные runtime combinations:

@@ -585,6 +585,12 @@ pgbouncer:
 
 ### Рекомендации по масштабированию
 
+**Таблица ниже — исторические ориентиры, не измеренная capacity и не настройки
+контейнеров.** Рабочий Compose теперь использует Redis dataset 512 MiB / container
+1536 MiB с запасом под persistence. [Текущий контракт и evidence](docs/operations/REDIS-MEMORY.md).
+Допуск к 32 реальным экранам определяется [Fleet32 gates](docs/audits/2026-09-20/FLEET32-PREFLIGHT.md),
+а не числом устройств в этой таблице.
+
 | Устройств | Backend replicas | DB connections | Redis memory |
 |-----------|-----------------|----------------|--------------|
 | < 100 | 1 | 30 | 256 MB |

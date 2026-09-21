@@ -1,6 +1,6 @@
 # AUD-139: OOM Redis до прикладного лимита
 
-**21 сентября 2026 · F32-09 · P0 / High · source fix и изолированная runtime-приёмка.**
+**21 сентября 2026 · F32-09 · P0 / High · `93551e0` применён к новому pilot без restart.**
 
 [Fleet32](FLEET32-PREFLIGHT.md) · [Эксплуатационный контракт](../../operations/REDIS-MEMORY.md) · [Evidence](evidence/redis-memory.json)
 
@@ -44,6 +44,16 @@ Runtime probe добавлен в [backend CI](../../../.github/workflows/ci-bac
 
 ## Результат
 
+Все четыре workflow source commit `93551e0` завершились успешно, включая новый
+Redis container pressure/persistence шаг: [CI evidence](../2026-09-05/evidence/ci-93551e0-summary.json).
+JUnit CI: 1960 cases, **1945 passed / 15 skipped / 0 failures / 0 errors**;
+skips относятся к Windows GUI/Task Scheduler/file sharing на Linux runner.
+CI Redis также сохранил 6531 ключ и marker после restart, OOM=false. Его cgroup
+peak достиг 1 610 612 736 bytes, то есть ceiling; final RSS Redis 505 634 816 bytes.
+Peak cgroup включает filesystem cache и прочую charged memory, поэтому не равен
+dataset/RSS. Успех probe **не доказывает запас** для дополнительных subscribers:
+общий stream workload и reclaim/latency должны быть измерены отдельно.
+
 - Восемь итоговых budget/capacity regressions passed. В более широком deployment
   запуске 110 passed и один подтверждённый preview render failure; preview затем
   вынесен из runtime-budget scope, а не замаскирован успешной проверкой.
@@ -58,9 +68,17 @@ Runtime probe добавлен в [backend CI](../../../.github/workflows/ci-bac
 
 ## Rollout и residual risk
 
-Source fix подготовлен для нового pilot. Для применения достаточно поднять
-container ceiling без перезапуска Redis; после применения будет сохранён
-отдельный runtime receipt. Backend/frontend/APK менять для этого не требуется.
+В 11:45:03 UTC container ceiling нового pilot поднят до 1536 MiB через Docker
+update без restart. CONFIG maxmemory по-прежнему 512 MiB; Redis process PID/start,
+все container IDs/images/start times и оба APK PID/crash buffers сохранились.
+Оба Android online, readiness=`ready`, активных tasks/runs нет. Два отдельных
+безопасных echo-запроса через API/agent WebSocket вернули точные уникальные
+markers с HTTP 200 после изменения; это проверка живой команды, не только presence.
+Установленный
+RSS Redis после изменения — 13 287 424 bytes: потолок не резервирует 1.5 GiB RAM.
+MemorySwap=3 GiB (memory+swap, стандартное соотношение Docker); отдельная нагрузочная
+проба была строже — swap отключён. Source Compose сохраняет лимит при будущем
+recreate. Backend/frontend/APK для этого не заменялись; старые установки не изменены.
 
 **F32-09 продвинут, но весь gate не закрыт:** бюджет buffers/slow subscribers,
 семантика eviction управляющих ключей и 32-device Redis fault/reconnect ещё

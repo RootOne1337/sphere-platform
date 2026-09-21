@@ -18,7 +18,8 @@ backend restart без F5, projection освобождена, APK PID/crash buff
 **До Fleet32 остаются P0:** приёмка decoder под 32 потоками, сквозной preview profile,
 command/video budget, Redis pressure/recovery и достоверные метрики. [AUD-139](../audits/2026-09-20/REDIS-MEMORY.md)
 исправляет memory mismatch: isolated OOM до fix, pressure/persistence/restart после
-fix прошли; live rollout и политика buffers/eviction учитываются отдельно. Native runtime-role RLS,
+fix прошли; новый ceiling применён без restart. Политика buffers/eviction остаётся
+открытой. Native runtime-role RLS,
 compound orchestration и полный fault/soak ещё не приняты. Дополнительно F32-26:
 отмена длинного sleep ждёт конца действия (проверено), быстрая остановка не обещается.
 Ни 32 устройства, ни восемь часов этот rollout не подтверждает.

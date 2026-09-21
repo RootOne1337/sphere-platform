@@ -11,6 +11,10 @@
 и возврат после backend restart без F5 проверены.
 32-device/8h acceptance открыта; sleep пока задерживает отмену до конца действия.
 
+**Redis AUD-139 (`93551e0`):** ceiling 1536 MiB при прежних maxmemory 512 MiB
+применён без restart. Redis и APK PID/crash buffers прежние, оба устройства online.
+[Изолированная OOM/persistence приёмка и ограничения](../audits/2026-09-20/REDIS-MEMORY.md).
+
 История 20 сентября: backend `85fb1ea`, frontend `03b161e`, APK 1.2.7 (`0f257fe`). [Приёмка нового APK](../audits/2026-09-05/ANDROID-RECONNECT-DEBT.md)
 подтверждает native OTA, команды/DAG/видео после обрывов и освобождение захвата.
 Повторная ночь завершилась FAILED через 3 ч 33 мин; 223 DAG сверены, новых APK crash

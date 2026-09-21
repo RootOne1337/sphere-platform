@@ -75,7 +75,54 @@
       "maxmemory_policy": "allkeys-lru"
     }
   },
-  "live_after": null,
+  "live_after": {
+    "at": "2026-09-21T11:45:03.212536+00:00",
+    "source": "93551e043473742d5640e0dc3c4cfff7f3b8b84d",
+    "memory_limit": 1610612736,
+    "memory_swap_limit": 3221225472,
+    "redis_memory": {
+      "used_memory": "1686720",
+      "used_memory_rss": "13287424",
+      "maxmemory": "536870912",
+      "maxmemory_policy": "allkeys-lru"
+    },
+    "redis_process_unchanged": true,
+    "all_containers_unchanged": true,
+    "devices": [
+      {
+        "serial": "emulator-5554",
+        "id": "85f2f935-7739-400e-9389-0d71227e8f0a",
+        "pid": "24613",
+        "online": true,
+        "crash_sha256": "21cb8fca861543a2b141b00f4b52c162b178e5586d7f03d4243f3e3795f240b1"
+      },
+      {
+        "serial": "emulator-5556",
+        "id": "ba1346c1-1581-452f-adee-451d36622aaf",
+        "pid": "22567",
+        "online": true,
+        "crash_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    ],
+    "readyz": "ready",
+    "no_active_tasks_or_runs": true,
+    "restart_performed": false,
+    "source_config_persists_on_next_compose_up": true,
+    "control_receipts": [
+      {
+        "device": "85f2f935-7739-400e-9389-0d71227e8f0a",
+        "http_status": 200,
+        "exact_output": true,
+        "at": "2026-09-21T11:49:10.907204+00:00"
+      },
+      {
+        "device": "ba1346c1-1581-452f-adee-451d36622aaf",
+        "http_status": 200,
+        "exact_output": true,
+        "at": "2026-09-21T11:49:11.197161+00:00"
+      }
+    ]
+  },
   "harness_boundary_errors": [
     "First test invocation lacked synthetic JWT_SECRET_KEY; no test collection.",
     "First native probe failed NOAUTH: redis-benchmark ignores REDISCLI_AUTH; corrected with fixture password before verified baseline.",
@@ -125,6 +172,51 @@
     {
       "name": "redis-budget-final.xml",
       "sha256": "fe3337479ea86c504b57401a3fd6f9c6d4c0ee53a61bf5fcc393befdf768d6db"
+    },
+    {
+      "name": "rollout/redis-memory-20260921/after.json",
+      "sha256": "f7316a6d6a51dd0f0a756ad1c0c1633439bc7ea67d3b3c928a9a0dd354019269"
+    },
+    {
+      "name": "redis-ci-93551e0/test-results.xml",
+      "sha256": "2b0988af0072348e708f21b195c9afa1e94cf7c09cba7436b4f79fd1924158bf"
+    },
+    {
+      "name": "redis-ci-93551e0/redis-memory-evidence/result.json",
+      "sha256": "558206f0e6ee345af2ce5a07156586d2500f05ea1915c562dd934e391e93a34e"
     }
-  ]
+  ],
+  "ci": {
+    "source": "93551e043473742d5640e0dc3c4cfff7f3b8b84d",
+    "run": 35595693102,
+    "junit": {
+      "tests": 1960,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 15,
+      "passed": 1945
+    },
+    "skip_reasons": [
+      "Real Windows file sharing semantics",
+      "Windows GUI subsystem and console handles",
+      "Windows Task Scheduler installer"
+    ],
+    "runtime_probe": {
+      "passed": true,
+      "cgroup_peak": {
+        "bytes": 1610612736,
+        "source": "/sys/fs/cgroup/memory.peak"
+      },
+      "final_rss": 505634816,
+      "persisted_key_count": 6531,
+      "marker_survived_restart": true,
+      "final_state": {
+        "Status": "running",
+        "ExitCode": 0,
+        "OOMKilled": false
+      },
+      "removed": true
+    },
+    "limit": "CI cgroup peak reached ceiling; no extra stream-buffer headroom proven."
+  }
 }
