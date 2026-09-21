@@ -14,6 +14,13 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Audit / documentation
 
+- Исправлен выбор главной страницы GitHub: служебный `.github/README.md`
+  перекрывал корневой README. Guide переименован; readme API до fix возвращал
+  `.github/README.md`, после — `README.md`. Главная расширена до обзора продукта:
+  карта системы, компоненты, связь/OTA APK, жизненный цикл заданий, веб/видео,
+  первый запуск, readiness, каталог и FAQ. Исторические вводные Android/Web/
+  architecture guides отделены от актуальной приёмки.
+
 - Переработан вход в репозиторий: SVG-обложка, README с подтверждённым состоянием,
   каталог документации, roadmap, support и правила актуальности. Обновлены формы
   bugs/performance/docs/features/questions, PR template, CODEOWNERS и политики

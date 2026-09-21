@@ -1,5 +1,11 @@
 # Android Agent
 
+> **Текущий срез, 21 сентября 2026:** оба pilot APK обновлены до **1.2.8-dev / 10208**.
+> Версии и native проверки — в [Local pilot](operations/LOCAL-PILOT.md) и
+> [Canary](audits/2026-09-20/CANARY-20260921.md).
+> Описанные ниже результаты 1.2.4/1.2.5 сохранены как история соответствующих проверок;
+> они не являются актуальной установленной версией или общей приёмкой всех Android.
+
 14 September 2026 pilot: signed APK **`343c6e8`, 1.2.5-dev / 10205** is
 installed on both owned Android 9 devices through authenticated server OTA and
 the APK's own `su`, with no ADB install/manual permissions or app launcher.

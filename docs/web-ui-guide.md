@@ -9,9 +9,14 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=flat-square&logo=typescript)](../frontend/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.x-06B6D4?style=flat-square&logo=tailwindcss)](../frontend/)
 
-*Версия документа: 4.7.0 · Последнее обновление: Март 2026*
+*Исторический справочник интерфейса, март 2026; актуальные проверки вынесены отдельно.*
 
 </div>
+
+> **Актуальность, 21 сентября 2026:** этот справочник описывает структуру экранов
+> и содержит исторические показатели. Они не подтверждают текущее поведение всех кнопок.
+> Установленный frontend: **`9924eb1`**; [stream acceptance](audits/2026-09-20/DECODER-RECOVERY.md),
+> [состояние pilot](operations/LOCAL-PILOT.md), [открытые UI/video/VPN gaps](audits/2026-09-20/FLEET32-PREFLIGHT.md).
 
 ---
 
