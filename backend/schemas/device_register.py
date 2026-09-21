@@ -31,6 +31,10 @@ class DeviceRegisterRequest(BaseModel):
         max_length=200,
         description="Уникальный отпечаток устройства (SHA-256 composite fingerprint).",
     )
+    instance_binding: str | None = Field(
+        default=None, pattern=r"^[0-9a-f]{64}$",
+        description="SHA-256 привязки экземпляра вне копируемых данных APK; не IP и не boot ID.",
+    )
     name: str | None = Field(
         default=None,
         max_length=255,
@@ -113,6 +117,7 @@ class DeviceRegisterResponse(BaseModel):
     """
 
     device_id: uuid.UUID = Field(description="UUID зарегистрированного устройства.")
+    instance_binding: str | None = Field(default=None, description="Подтверждённая сервером привязка экземпляра.")
     name: str = Field(description="Имя устройства (автоматическое или пользовательское).")
     access_token: str = Field(description="JWT access token для WS-аутентификации.")
     refresh_token: str = Field(description="Opaque rotating refresh token; not a JWT.")

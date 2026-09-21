@@ -54,6 +54,23 @@ class DeviceRegistrationService:
         )
         existing = await self._find_by_fingerprint(org_id, data.fingerprint)
 
+        # Старый APK копирует fingerprint вместе с /data. Первый обновлённый
+        # экземпляр сохраняет существующую карточку; остальные получают отдельную
+        # регистрацию по паре (шаблон, привязка VM). Org-lock выше охватывает
+        # поиск, миграцию и создание, в том числе между процессами backend.
+        source_device_id = None
+        if data.instance_binding and existing:
+            binding = (existing.meta or {}).get("instance_binding")
+            if binding and binding != data.instance_binding:
+                source_device_id = str(existing.id)
+                scoped = hashlib.sha256(
+                    ("sphere-instance-v1\0" + data.fingerprint + "\0" + data.instance_binding).encode()
+                ).hexdigest()
+                data = data.model_copy(update={"fingerprint": scoped})
+                existing = await self._find_by_fingerprint(org_id, scoped)
+            elif not binding:
+                existing.meta = {**(existing.meta or {}), "instance_binding": data.instance_binding}
+
         if existing:
             # Re-enrollment: обновляем метаданные
             await self._update_device_meta(existing, data)
@@ -62,6 +79,8 @@ class DeviceRegistrationService:
 
         # Новая регистрация
         device = await self._create_device(org_id, data)
+        if source_device_id:
+            device.meta = {**device.meta, "clone_source_device_id": source_device_id}
         await self.db.flush()
         return self._build_response(device, is_new=True)
 
@@ -90,6 +109,8 @@ class DeviceRegistrationService:
             "type": data.device_type,
             "fingerprint": data.fingerprint,
             "auto_registered": True,
+            "instance_binding": data.instance_binding,
+            "clone_source_device_id": None,
         }
         if data.workstation_id:
             meta["workstation_id"] = data.workstation_id
@@ -211,6 +232,7 @@ class DeviceRegistrationService:
 
         return DeviceRegisterResponse(
             device_id=device.id,
+            instance_binding=(device.meta or {}).get("instance_binding"),
             name=device.name,
             access_token=access_token,
             refresh_token=refresh_token,

@@ -212,7 +212,8 @@ async def refresh_device(
     description=(
         "Автоматическая регистрация нового устройства. "
         "Аутентификация по enrollment API-ключу (X-API-Key с правом device:register). "
-        "Идемпотентна: если fingerprint уже зарегистрирован — re-enrollment с новыми токенами."
+        "Идемпотентна по fingerprint и instance_binding. "
+        "Копии APK с разными привязками VM получают отдельные устройства."
     ),
 )
 async def register_device(
@@ -228,7 +229,8 @@ async def register_device(
     - Активный, не истёкший
 
     Идемпотентность:
-    - Повторный вызов с тем же fingerprint → возвращает существующее устройство + новые токены
+    - Повторный вызов с тем же fingerprint и instance_binding возвращает то же устройство.
+    - Первый bound-клиент сохраняет старую карточку; остальные клоны получают новые.
     """
     from fastapi import HTTPException
 

@@ -75,6 +75,29 @@ async def issue_device(w):
         return result
 
 
+async def test_32_clones_register_concurrently_and_retry_without_duplicates(runtime_parallel):
+    """Реальные PostgreSQL row locks и RLS, 32 копии и повтор потерянного ответа."""
+    w = runtime_parallel.world
+    _, raw = await issue_key(w)
+    headers = {"X-API-Key": raw}
+    bodies = [{"fingerprint": w.suffix, "instance_binding": hashlib.sha256(str(i).encode()).hexdigest()}
+              for i in range(32)]
+    replies = await asyncio.gather(*[
+        w.client.post("/api/v1/devices/register", headers=headers, json=body) for body in bodies
+    ])
+    assert all(r.status_code == 201 for r in replies), [r.status_code for r in replies]
+    ids = [r.json()["device_id"] for r in replies]
+    assert len(set(ids)) == 32
+    # Другой запрос/соединение после завершённого commit возвращает тот же UUID.
+    repeated = await asyncio.gather(*[
+        w.client.post("/api/v1/devices/register", headers=headers, json=body) for body in reversed(bodies)
+    ])
+    assert [r.json()["device_id"] for r in repeated] == list(reversed(ids))
+    _, foreign = await issue_key(w, w.org_b)
+    other = await w.client.post("/api/v1/devices/register", headers={"X-API-Key": foreign}, json=bodies[0])
+    assert other.status_code == 201 and other.json()["device_id"] not in ids
+
+
 @pytest.mark.parametrize("foreign_org", [False, True])
 async def test_runtime_enrollment_and_reenrollment_uses_secret_tenant(runtime_http, foreign_org):
     w = runtime_http

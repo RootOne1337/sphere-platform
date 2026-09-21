@@ -14,6 +14,12 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Audit / documentation
 
+- F32-28: подтверждено слияние 20 удалённых копий APK в один device_id с
+  непрерывным вытеснением WS и отсутствием видеокадров. Backend разделяет
+  регистрацию по шаблону и instance_binding, сохраняя одну старую карточку;
+  добавлены API и конкурентные PostgreSQL/RLS регрессии. Native rollout пока
+  не завершён; [доказательства и ограничения](docs/audits/2026-09-20/CLONE-IDENTITY.md).
+
 - Исправлен выбор главной страницы GitHub: служебный `.github/README.md`
   перекрывал корневой README. Guide переименован; readme API до fix возвращал
   `.github/README.md`, после — `README.md`. Главная расширена до обзора продукта:
