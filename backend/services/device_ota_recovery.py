@@ -31,6 +31,14 @@ def recovery_failure_code(error: object) -> str | None:
     match = re.search(r"ota download failed: (\d{3})\b", value)
     if match:
         return "download_http_" + match.group(1)
+    reset = re.search(r"stream was reset: (\w+)", value)
+    if reset and reset.group(1) in {
+        "no_error", "protocol_error", "internal_error", "flow_control_error",
+        "refused_stream", "cancel", "compression_error", "enhance_your_calm",
+    }:
+        return "http2_reset_" + reset.group(1)
+    if "unexpected end of stream" in value:
+        return "download_unexpected_eof"
     for fragments, code in (
         (("sha-256 mismatch",), "checksum_mismatch"),
         (("ssrf protection", "download must use https"), "download_origin_rejected"),
