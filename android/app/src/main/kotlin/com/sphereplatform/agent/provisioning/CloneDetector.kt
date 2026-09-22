@@ -17,15 +17,17 @@ import javax.inject.Singleton
  * Build.MODEL и другие стандартные идентификаторы. Без дополнительных мер
  * невозможно отличить один клон от другого.
  *
- * Решение: составной fingerprint из нескольких слоёв:
+ * Совместимый fingerprint шаблона из нескольких слоёв:
  * 1. app_instance_id — уникальный UUID, сгенерированный при первой установке APK
  * 2. ANDROID_ID — может совпадать у клонов, но полезен как часть хеша
  * 3. Build.FINGERPRINT — содержит информацию о системном образе
- * 4. ro.boot.serialno / ro.serialno — аппаратный serial (часто уникален у клонов)
- * 5. Внутренний mac-адрес или другие runtime-данные
+ * 4. Доступный приложению серийный номер и параметры образа
  *
  * Финальный fingerprint = SHA-256(app_instance_id + android_id + build_fingerprint + ...)
- * Гарантирует уникальность даже для полностью идентичных клонов.
+ * Сам по себе НЕ различает копии /data. Разделение выполняет сервер по
+ * instance_binding из [InstanceBindingReader], до подключения через
+ * [InstanceRegistrationGuard]. После миграции fingerprint фиксируется:
+ * смена модели, Android ID или сборки не пересоздаёт регистрацию.
  */
 @Singleton
 class CloneDetector @Inject constructor(
@@ -35,13 +37,17 @@ class CloneDetector @Inject constructor(
     companion object {
         private const val PREFS_NAME = "sphere_clone_detector"
         private const val KEY_APP_INSTANCE_ID = "app_instance_id"
+        private const val KEY_TEMPLATE_FINGERPRINT = "template_fingerprint_v1"
     }
 
     /**
-     * Составной fingerprint устройства. Уникален даже среди клонов LDPlayer.
+     * Совместимый fingerprint шаблона, сохраняющий старую серверную карточку.
      * Детерминистичен: повторные вызовы возвращают одинаковое значение.
      */
+    @Synchronized
     fun getFingerprint(): String {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        prefs.getString(KEY_TEMPLATE_FINGERPRINT, null)?.let { return it }
         val components = buildList {
             add("instance:${getOrCreateInstanceId()}")
             add("android_id:${getAndroidId()}")
@@ -54,6 +60,9 @@ class CloneDetector @Inject constructor(
 
         val raw = components.joinToString("|")
         val hash = sha256(raw)
+        check(prefs.edit().putString(KEY_TEMPLATE_FINGERPRINT, hash).commit()) {
+            "Cannot persist template fingerprint"
+        }
 
         Timber.d("CloneDetector: fingerprint=$hash (components=${components.size})")
         return hash
@@ -93,14 +102,14 @@ class CloneDetector @Inject constructor(
     /**
      * Уникальный ID экземпляра приложения.
      * Генерируется один раз при первом запуске и сохраняется в SharedPreferences.
-     * Разные клоны LDPlayer имеют изолированные данные приложений → разные instance_id.
+     * Полная копия VM копирует и этот ID; он обозначает общий шаблон.
      */
     private fun getOrCreateInstanceId(): String {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         prefs.getString(KEY_APP_INSTANCE_ID, null)?.let { return it }
 
         val newId = java.util.UUID.randomUUID().toString()
-        prefs.edit().putString(KEY_APP_INSTANCE_ID, newId).apply()
+        check(prefs.edit().putString(KEY_APP_INSTANCE_ID, newId).commit()) { "Cannot persist instance seed" }
         Timber.i("CloneDetector: generated new app_instance_id=$newId")
         return newId
     }

@@ -47,6 +47,16 @@ class WebSocketAuthenticationTest {
     private var commandEvents = 0
     private var binaryEvents = 0
 
+    @Test fun instanceMigrationFailurePreventsCopiedIdentityFromOpeningSocket() = runTest {
+        val guarded = SphereWebSocketClient(http, auth, Json) { throw IOException("binding unavailable") }
+        val job = launch { guarded.connect() }
+        try {
+            runCurrent()
+            assertTrue(listeners.isEmpty())
+            assertFalse(guarded.isConnected)
+        } finally { job.cancelAndJoin() }
+    }
+
     init {
         client.onConnected = { connectedEvents++ }
         client.onJsonMessage = { commandEvents++ }

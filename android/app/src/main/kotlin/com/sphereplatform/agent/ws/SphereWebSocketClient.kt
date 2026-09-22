@@ -26,7 +26,6 @@ import okhttp3.WebSocketListener
 import okio.ByteString
 import okio.ByteString.Companion.toByteString
 import timber.log.Timber
-import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.random.Random
 
@@ -40,10 +39,11 @@ import kotlin.random.Random
  * - Безопасная остановка через [disconnect]
  */
 @Singleton
-class SphereWebSocketClient @Inject constructor(
+class SphereWebSocketClient(
     private val httpClient: OkHttpClient,
     private val authStore: AuthTokenStore,
     private val json: Json,
+    private val ensureInstance: suspend () -> Unit = {},
 ) {
     private var webSocket: WebSocket? = null
 
@@ -126,10 +126,12 @@ class SphereWebSocketClient @Inject constructor(
                 if (shouldStop) return
             }
 
-            val routes = authStore.connectionRoutesSnapshot()
-            val previousIndex = routes.urls.indexOf(failedRoute)
-            val route = routes.urls.getOrNull(if (previousIndex >= 0) (previousIndex + 1) % routes.urls.size else 0)
+            var route: String? = null
             try {
+                ensureInstance()
+                val routes = authStore.connectionRoutesSnapshot()
+                val previousIndex = routes.urls.indexOf(failedRoute)
+                route = routes.urls.getOrNull(if (previousIndex >= 0) (previousIndex + 1) % routes.urls.size else 0)
                 if (route == null) throw AuthException("No management route stored")
                 connectOnce(routes, route) {
                     // A validated session ends the previous outage. Reset on this

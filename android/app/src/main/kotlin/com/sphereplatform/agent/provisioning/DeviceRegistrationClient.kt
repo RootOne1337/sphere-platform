@@ -72,6 +72,7 @@ class DeviceRegistrationClient @Inject constructor(
         val expiresIn: Long,
         val serverUrl: String,
         val isNew: Boolean,
+        val instanceBinding: String? = null,
     )
 
     /**
@@ -92,9 +93,10 @@ class DeviceRegistrationClient @Inject constructor(
         instanceIndex: Int? = null,
         location: String? = null,
         fallbackServerUrl: String? = null,
+        instanceBinding: String? = null,
     ): RegistrationResult = withContext(Dispatchers.IO) {
         authStore.withRegistration {
-            registerLocked(serverUrl, enrollmentApiKey, workstationId, instanceIndex, location, fallbackServerUrl)
+            registerLocked(serverUrl, enrollmentApiKey, workstationId, instanceIndex, location, fallbackServerUrl, instanceBinding)
         }
     }
 
@@ -105,6 +107,7 @@ class DeviceRegistrationClient @Inject constructor(
         instanceIndex: Int?,
         location: String?,
         fallbackServerUrl: String?,
+        instanceBinding: String?,
     ): RegistrationResult {
         val version = authStore.registrationVersion()
         val fingerprint = cloneDetector.getFingerprint()
@@ -112,6 +115,7 @@ class DeviceRegistrationClient @Inject constructor(
 
         val bodyMap = buildMap<String, Any> {
             put("fingerprint", fingerprint)
+            instanceBinding?.let { put("instance_binding", it) }
             put("device_type", deviceType)
             put("android_version", android.os.Build.VERSION.RELEASE)
             put("model", "${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}")
@@ -138,9 +142,12 @@ class DeviceRegistrationClient @Inject constructor(
         // Storage failure/cancellation must never cause another remote enrollment.
         currentCoroutineContext().ensureActive()
         val result = reply.result
+        if (instanceBinding != null && result.instanceBinding != instanceBinding) {
+            throw IOException("Server did not confirm instance binding; backend upgrade required")
+        }
         val alternate = routes.firstOrNull { it != result.serverUrl } ?: reply.advertisedUrl
         authStore.saveRegistration(version, result.deviceId, result.accessToken, result.refreshToken,
-            result.expiresIn, result.serverUrl, alternate, currentCoroutineContext())
+            result.expiresIn, result.serverUrl, alternate, currentCoroutineContext(), instanceBinding)
 
         Timber.i(
             "DeviceRegistration: %s device_id=%s name=%s",
@@ -229,6 +236,7 @@ class DeviceRegistrationClient @Inject constructor(
             expiresIn = jsonResponse["expires_in"]!!.jsonPrimitive.long,
             serverUrl = normalizeManagementUrl(serverUrl),
             isNew = jsonResponse["is_new"]!!.jsonPrimitive.boolean,
+            instanceBinding = (jsonResponse["instance_binding"] as? JsonPrimitive)?.takeIf { it.isString }?.content,
         )
         // Keep the successful LAN request route; advertised public URL is a candidate.
         val advertised = jsonResponse["server_url"]?.jsonPrimitive?.content

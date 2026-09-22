@@ -52,6 +52,7 @@ class RegistrationPersistenceTest {
     private var refreshJson: String? = null
     private var expiresIn = 900L
     private var status = 201
+    private var replyBinding: String? = null
     private lateinit var prefs: EncryptedSharedPreferences
     private lateinit var client: OkHttpClient
     private lateinit var store: AuthTokenStore
@@ -100,8 +101,9 @@ class RegistrationPersistenceTest {
             }
             val access = accessJson ?: "\"access-$issued\""
             val refresh = refreshJson ?: "\"refresh-$issued\""
+            val binding = replyBinding?.let { "\"$it\"" } ?: "null"
             val body = """{"device_id":"$replyId","name":"isolated","access_token":$access,
-                "refresh_token":$refresh,"expires_in":$expiresIn,"server_url":"$primary","is_new":true}"""
+                "refresh_token":$refresh,"expires_in":$expiresIn,"server_url":"$primary","is_new":true,"instance_binding":$binding}"""
             Response.Builder().request(chain.request()).protocol(Protocol.HTTP_1_1)
                 .code(status).message("isolated").body(body.toResponseBody()).build()
         }.build()
@@ -122,6 +124,39 @@ class RegistrationPersistenceTest {
     }
 
     private suspend fun register() = registration.register(primary, "sphr_isolated", fallbackServerUrl = backup)
+
+    @Test fun boundRegistrationCommitsBindingAndIdentityTogether() = runBlocking {
+        replyBinding = "a".repeat(64)
+        registration.register(primary, "sphr_isolated", instanceBinding = replyBinding)
+        memory.clear(); memory.putAll(disk)
+        assertEquals(replyBinding, store.getInstanceBinding())
+        assertEquals(id, store.getDeviceId())
+        assertEquals("access-1", store.getToken())
+    }
+
+    @Test fun oldServerWithoutBindingAcknowledgementCannotOverwriteCopiedCredentials() = runBlocking {
+        seedOldIdentity()
+        assertTrue(runCatching {
+            registration.register(primary, "sphr_isolated", instanceBinding = "a".repeat(64))
+        }.exceptionOrNull() is IOException)
+        assertEquals(oldId, store.getDeviceId())
+        assertEquals("old-access", store.getToken())
+        assertNull(store.getInstanceBinding())
+    }
+
+    @Test fun failedBoundCommitRestoresOldBindingAndCredentials() = runBlocking {
+        seedOldIdentity()
+        memory["instance_binding"] = "b".repeat(64)
+        disk.putAll(memory)
+        replyBinding = "a".repeat(64)
+        failCredentialCommit = true
+        assertTrue(runCatching {
+            registration.register(primary, "sphr_isolated", instanceBinding = replyBinding)
+        }.exceptionOrNull() is IOException)
+        assertEquals("b".repeat(64), store.getInstanceBinding())
+        assertEquals(oldId, store.getDeviceId())
+        assertEquals("old-access", store.getToken())
+    }
     private suspend fun awaitIdle() = withTimeout(5_000) {
         while (client.dispatcher.runningCallsCount() != 0 || client.dispatcher.queuedCallsCount() != 0) delay(5)
     }

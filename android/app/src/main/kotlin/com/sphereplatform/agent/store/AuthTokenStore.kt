@@ -57,6 +57,7 @@ class AuthTokenStore @Inject constructor(
         private const val KEY_PRIMARY_SERVER_URL = "primary_server_url"
         private const val KEY_FALLBACK_SERVER_URL = "fallback_server_url"
         private const val KEY_DEVICE_ID = "device_id"
+        private const val KEY_INSTANCE_BINDING = "instance_binding"
 
         private const val REFRESH_THRESHOLD_MS = 5 * 60 * 1000L  // 5 минут
         private const val REFRESH_TIMEOUT_MS = 10_000L
@@ -101,6 +102,7 @@ class AuthTokenStore @Inject constructor(
         primaryUrl: String,
         fallbackUrl: String?,
         context: CoroutineContext,
+        instanceBinding: String? = null,
     ) {
         context.ensureActive()
         if (expected != registrationVersion()) throw IOException("Registration state changed")
@@ -108,6 +110,9 @@ class AuthTokenStore @Inject constructor(
             throw IOException("Invalid registration identity or credentials")
         }
         val expiresAt = try {
+            if (instanceBinding != null && !instanceBinding.matches(Regex("[0-9a-f]{64}"))) {
+                throw IOException("Invalid instance binding")
+            }
             Math.addExact(System.currentTimeMillis(), Math.multiplyExact(expiresIn, 1000L))
         } catch (e: ArithmeticException) {
             throw IOException("Invalid registration expiry", e)
@@ -115,7 +120,7 @@ class AuthTokenStore @Inject constructor(
         val primary = normalizeManagementUrl(primaryUrl)
         val fallback = fallbackUrl?.let(::normalizeManagementUrl)?.takeIf { it != primary }
         val keys = listOf(KEY_SERVER_URL, KEY_PRIMARY_SERVER_URL, KEY_FALLBACK_SERVER_URL,
-            KEY_DEVICE_ID, KEY_ACCESS_TOKEN, KEY_REFRESH_TOKEN, KEY_REFRESH_ROTATION_ID)
+            KEY_DEVICE_ID, KEY_ACCESS_TOKEN, KEY_REFRESH_TOKEN, KEY_REFRESH_ROTATION_ID, KEY_INSTANCE_BINDING)
         val previous = keys.associateWith { prefs.getString(it, null) }
         val previousExpiry = if (prefs.contains(KEY_ACCESS_TOKEN_EXPIRES_AT)) {
             prefs.getLong(KEY_ACCESS_TOKEN_EXPIRES_AT, 0L)
@@ -124,6 +129,7 @@ class AuthTokenStore @Inject constructor(
             val committed = prefs.edit()
                 .putString(KEY_SERVER_URL, primary).putString(KEY_PRIMARY_SERVER_URL, primary)
                 .putString(KEY_FALLBACK_SERVER_URL, fallback).putString(KEY_DEVICE_ID, deviceId)
+                .putString(KEY_INSTANCE_BINDING, instanceBinding)
                 .putString(KEY_ACCESS_TOKEN, accessToken).putString(KEY_REFRESH_TOKEN, refreshToken)
                 .putLong(KEY_ACCESS_TOKEN_EXPIRES_AT, expiresAt).remove(KEY_REFRESH_ROTATION_ID)
                 .commit()
@@ -221,6 +227,10 @@ class AuthTokenStore @Inject constructor(
     /** Возвращает текущий access token без проверки срока истечения (для заголовков HTTP). */
     @Synchronized
     fun getToken(): String? = prefs.getString(KEY_ACCESS_TOKEN, null)
+
+    /** Привязка хранится одной транзакцией с выданными device_id и токенами. */
+    @Synchronized
+    fun getInstanceBinding(): String? = prefs.getString(KEY_INSTANCE_BINDING, null)
 
     /**
      * Возвращает свежий access token, обновляя его через refresh endpoint
