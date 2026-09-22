@@ -9,7 +9,7 @@
 </div>
 
 > [!NOTE]
-> **Срез навигации: 21 сентября 2026.** Текущий pilot и границы его приёмки описаны
+> **Срез навигации: 23 сентября 2026.** Текущий pilot и границы его приёмки описаны
 > в [Local pilot](operations/LOCAL-PILOT.md). Старые отчёты сохраняют свои даты и
 > версии; их показатели нельзя переносить на текущий код. [Правила актуальности](DOCUMENTATION.md).
 
@@ -60,6 +60,7 @@
 | --- | --- |
 | Согласованный rollout backend/APK 1.2.8 | [Canary 21 сентября](audits/2026-09-20/CANARY-20260921.md): OTA, backup/restore, 15 tasks, два pipeline |
 | Frontend `9924eb1` | [AUD-138](audits/2026-09-20/DECODER-RECOVERY.md): decoder bounds/recovery и два живых потока после restart |
+| Повтор запроса первого IDR | [AUD-140 / F32-29](audits/2026-09-20/STREAM-FIRST-FRAME.md): воспроизведение до исправления, повторы с растущей паузой и UI ожидания; удалённая приёмка ещё OPEN |
 | Redis budget `93551e0` | [AUD-139](audits/2026-09-20/REDIS-MEMORY.md): OOM до fix, pressure/persistence/restart после; live update без restart |
 | Сетевые отказы | [Native matrix](audits/2026-09-05/NETWORK-RECOVERY-NATIVE.md) · [Reconnect debt](audits/2026-09-05/ANDROID-RECONNECT-DEBT.md) |
 | Автозапуск и разрешения | [Boot recovery](audits/2026-09-05/ANDROID-BOOT-RECOVERY.md) · [Root capabilities](audits/2026-09-05/ANDROID-UNATTENDED-CAPABILITIES.md) |

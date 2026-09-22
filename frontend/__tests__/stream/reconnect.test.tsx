@@ -1,4 +1,4 @@
-import { act, render } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import { DeviceStream } from '@/components/sphere/DeviceStream';
 
 jest.mock('@/lib/store', () => ({ useAuthStore: () => ({ accessToken: 'fixture-token' }) }));
@@ -50,6 +50,24 @@ it('reconnects after a server normal-close without requiring F5', () => {
   advance(500); expect(Socket.instances).toHaveLength(2); view.unmount();
 });
 
+it('retries the initial keyframe request when the viewer connects but no image arrives', () => {
+  const view = render(<DeviceStream deviceId="fixture" />); advance(0);
+  act(() => Socket.instances[0].open());
+  expect(screen.getByRole('status')).toHaveTextContent('Ожидание видеокадра…');
+  advance(1100);
+  expect(Socket.instances[0].send).toHaveBeenLastCalledWith('{"type":"request_keyframe"}');
+  advance(2000);
+  expect(Socket.instances[0].send).toHaveBeenCalledTimes(3); // auth + two keyframe requests
+  advance(4999);
+  expect(Socket.instances[0].send).toHaveBeenCalledTimes(3);
+  advance(1);
+  expect(Socket.instances[0].send).toHaveBeenCalledTimes(4); // next request backs off to 5 s
+  act(() => mockFrame?.({ displayWidth: 100, displayHeight: 200 }));
+  advance(40_000);
+  expect(Socket.instances[0].send).toHaveBeenCalledTimes(4);
+  view.unmount();
+});
+
 it('requests a fresh key frame after codec cooldown, stops after output, and clears timers on unmount', () => {
   const view = render(<DeviceStream deviceId="fixture" />); advance(0);
   act(() => Socket.instances[0].open());
@@ -59,7 +77,9 @@ it('requests a fresh key frame after codec cooldown, stops after output, and cle
   advance(2000); expect(Socket.instances[0].send).toHaveBeenCalledTimes(3);
   act(() => mockFrame?.({ displayWidth: 100, displayHeight: 200 }));
   advance(4000); expect(Socket.instances[0].send).toHaveBeenCalledTimes(3);
-  act(() => mockRecovery?.()); view.unmount();
+  act(() => mockRecovery?.()); advance(1100);
+  expect(Socket.instances[0].send).toHaveBeenCalledTimes(4);
+  act(() => mockFrame?.({ displayWidth: 100, displayHeight: 200 })); view.unmount();
   expect(jest.getTimerCount()).toBe(0);
 });
 

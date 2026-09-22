@@ -17,7 +17,9 @@ export function DeviceStream({
   const decoderRef = useRef<H264Decoder | null>(null);
   const dragRef = useRef<{ x: number; y: number } | null>(null);
   const { accessToken } = useAuthStore();
-  const [connection, setConnection] = useState<'connecting' | 'live' | 'retrying' | 'unavailable'>('connecting');
+  const [connection, setConnection] = useState<
+    'connecting' | 'waiting' | 'live' | 'retrying' | 'unavailable'
+  >('connecting');
 
   useEffect(() => {
     // Defer WS creation by one tick to avoid React StrictMode double-invoke.
@@ -27,6 +29,7 @@ export function DeviceStream({
     let retryTimer: ReturnType<typeof setTimeout> | undefined;
     let keyFrameTimer: ReturnType<typeof setTimeout> | undefined;
     let watchdog: ReturnType<typeof setInterval> | undefined;
+    let scheduleKeyFrameRecovery: ((delayMs?: number) => void) | undefined;
     let attempt = 0;
     setConnection('connecting');
 
@@ -50,16 +53,10 @@ export function DeviceStream({
         ctx.drawImage(frame, 0, 0, canvas.width, canvas.height);
       }, () => {
         if (ignore) return;
-        setConnection('retrying');
-        // A static Android screen may not produce another IDR spontaneously.
-        // Wait for the codec cooldown, then request one at a bounded cadence.
-        clearTimeout(keyFrameTimer);
-        const requestKeyFrame = () => {
-          if (ignore || wsRef.current?.readyState !== WebSocket.OPEN) return;
-          wsRef.current.send(JSON.stringify({ type: 'request_keyframe' }));
-          keyFrameTimer = setTimeout(requestKeyFrame, 2000);
-        };
-        keyFrameTimer = setTimeout(requestKeyFrame, 1100);
+        setConnection('waiting');
+        // Кодек может быть исправен, но первый серверный запрос IDR мог
+        // прийти до готовности захвата. Повторяем запрос до первого output.
+        scheduleKeyFrameRecovery?.();
       });
       decoder.init();
       decoderRef.current = decoder;
@@ -81,11 +78,30 @@ export function DeviceStream({
         let ended = false;
         let lastReceived = Date.now();
         let opened = false;
+        let keyFrameAttempts = 0;
+        const requestKeyFrame = () => {
+          if (
+            ignore || ended || newWs !== wsRef.current || newWs.readyState !== WebSocket.OPEN
+          ) return;
+          newWs.send(JSON.stringify({ type: 'request_keyframe' }));
+          keyFrameAttempts += 1;
+          const nextDelay = keyFrameAttempts === 1
+            ? 2000
+            : Math.min(5000 * 2 ** Math.min(keyFrameAttempts - 2, 2), 20_000);
+          keyFrameTimer = setTimeout(requestKeyFrame, nextDelay);
+        };
+        const scheduleKeyFrameRequests = (delayMs = 1100) => {
+          clearTimeout(keyFrameTimer);
+          keyFrameAttempts = 0;
+          keyFrameTimer = setTimeout(requestKeyFrame, delayMs);
+        };
+        scheduleKeyFrameRecovery = scheduleKeyFrameRequests;
         const finish = (retry: boolean) => {
           if (ended) return;
           ended = true;
           clearInterval(watchdog);
           clearTimeout(keyFrameTimer);
+          if (scheduleKeyFrameRecovery === scheduleKeyFrameRequests) scheduleKeyFrameRecovery = undefined;
           newWs.onopen = newWs.onmessage = newWs.onclose = newWs.onerror = null;
           if (wsRef.current === newWs) wsRef.current = null;
           decoder?.reset();
@@ -107,6 +123,8 @@ export function DeviceStream({
           opened = true;
           lastReceived = Date.now();
           newWs.send(JSON.stringify({ token: accessToken }));
+          setConnection('waiting');
+          scheduleKeyFrameRequests();
         };
         newWs.onmessage = (evt) => {
           if (ignore || ended) return;
@@ -209,7 +227,10 @@ export function DeviceStream({
     />
     {connection !== 'live' && (
       <div role="status" className="absolute inset-0 flex items-center justify-center bg-black/85 text-sm text-white">
-        {connection === 'connecting' ? 'Подключение…' : connection === 'retrying' ? 'Переподключение…' : 'Стрим недоступен'}
+        {connection === 'connecting' && 'Подключение…'}
+        {connection === 'waiting' && 'Ожидание видеокадра…'}
+        {connection === 'retrying' && 'Переподключение…'}
+        {connection === 'unavailable' && 'Стрим недоступен'}
       </div>
     )}
     </div>
