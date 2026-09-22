@@ -61,14 +61,15 @@ def test_runtime_redis_profiles_leave_process_and_persistence_headroom(tmp_path,
     dataset = maxmemory_bytes(service)
     container = int(service["deploy"]["resources"]["limits"]["memory"])
     assert dataset > 0
-    # Project budget: dataset plus a full COW copy plus allocator/client/AOF margin.
+    # Four times dataset leaves room for COW, AOF buffers and charged filesystem cache.
     # This is a baseline admission rule, not a bound on arbitrary client buffers.
-    assert container >= 3 * dataset, {"profile": mode, "maxmemory": dataset, "container": container}
+    assert container >= 4 * dataset, {"profile": mode, "maxmemory": dataset, "container": container}
 
 
 def test_pilot_keeps_existing_dataset_capacity_and_persistence(tmp_path):
     service = render_redis(tmp_path)
     assert maxmemory_bytes(service) == 512 * 1024**2
+    assert int(service["deploy"]["resources"]["limits"]["memory"]) == 2048 * 1024**2
     command = service["command"]
     assert command[command.index("--appendonly") + 1] == "yes"
     assert command[command.index("--appendfsync") + 1] == "everysec"

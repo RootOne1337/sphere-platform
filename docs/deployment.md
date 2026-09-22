@@ -640,9 +640,11 @@ docker compose logs backend | grep "vpn"
 
 ### High memory usage
 
-The current runtime Redis budget is 512 MiB dataset / 1536 MiB container. Compare
-Redis RSS and the Docker ceiling as well as `used_memory`; persistence forks and
-buffers are not covered by the dataset number alone. See the
+The source Compose Redis budget is 512 MiB dataset / 2048 MiB container after a
+1536 MiB isolated persistence probe was OOM-killed. CI must re-accept this budget;
+the existing pilot remains at 1536 MiB until a separately verified rollout.
+Compare Redis RSS and the Docker ceiling as well as `used_memory`; persistence
+forks and buffers are not covered by the dataset number alone. See the
 [measured memory contract and rollout](operations/REDIS-MEMORY.md).
 
 ```bash

@@ -66,9 +66,9 @@ services:
     deploy:
       resources:
         limits:
-          # Keep 512 MiB dataset capacity plus COW and allocator/client/AOF headroom.
+          # Keep 512 MiB dataset capacity plus COW, AOF and filesystem-cache headroom.
           # A ceiling, not a reservation; see docs/operations/REDIS-MEMORY.md.
-          memory: 1536M
+          memory: 2048M
     networks:
       - backend-net
 

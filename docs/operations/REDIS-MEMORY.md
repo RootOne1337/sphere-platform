@@ -1,21 +1,21 @@
 # Redis: память, сохранение и приёмка
 
-**21 сентября 2026 · AUD-139 / F32-09 · `93551e0` применён к новому pilot без restart.**
+**Обновлено 23 сентября 2026 · AUD-139 / AUD-143 · live pilot остаётся на 1536 MiB.**
 
 [Readiness](READINESS.md) · [Fleet32](../audits/2026-09-20/FLEET32-PREFLIGHT.md) · [Доказательства](../audits/2026-09-20/REDIS-MEMORY.md)
 
 ## Бюджет
 
-| Настройка | Base / development / full / production / local и remote pilot |
+| Настройка | Source Compose profiles (не фактический runtime limit уже работающих контейнеров) |
 | --- | --- |
 | Redis `maxmemory` | 512 MiB, прежняя ёмкость |
-| Container memory limit | 1536 MiB |
+| Compose container memory limit | 2048 MiB |
 | Eviction | `allkeys-lru`, без изменения семантики |
 | Persistence | AOF / `everysec` и прежние RDB schedules |
 
-Лимит контейнера — верхняя граница, **не резервирование** 1.5 GiB при старте.
+Лимит контейнера — верхняя граница, **не резервирование** 2 GiB при старте.
 Он покрывает dataset, возможную копию изменённых страниц при fork и запас под
-allocator, процесс, AOF/client buffers. Это правило проекта, а не универсальная
+allocator, процесс, AOF/client buffers и charged filesystem cache. Это правило проекта, а не универсальная
 гарантия для любого числа clients/подписок. Проверяйте общий бюджет Docker VM и
 станции вместе с PostgreSQL, backend, браузером и эмуляторами.
 
@@ -63,15 +63,29 @@ Probe удаляет только созданный container/anonymous volume 
 Отсутствующий kernel peak counter отмечается `null`, а не нулевым потреблением.
 CI запускает эту проверку и сохраняет артефакты.
 
+## Текущая CI-проверка и live граница
+
+На PR head `e635de8` unit/real-service suite завершился: **1 996 tests, 0 failures,
+0 errors, 15 skipped**. Последующий isolated Redis probe при лимите 1536 MiB
+завершился `ExitCode=137`, `OOMKilled=true` во время AOF persistence с параллельными
+14 000 SET по 64 KiB. Перед persistence в сохранённом результате было около
+704 MiB `used_memory`, включая около 192 MiB AOF buffer; сам контейнер был удалён
+probe. Это подтверждённая нехватка headroom в этой нагрузочной точке, не live outage.
+
+Source Compose budget повышен до **2048 MiB**, при прежних 512 MiB dataset.
+`test_redis_memory_budget.py` требует 4× dataset для всех семи runtime profiles.
+Новая CI runtime-проба ещё должна пройти. Сохранённый локальный pilot фактически
+остаётся на 1536 MiB до отдельного проверенного rollout; это изменение файлов
+Compose само по себе не меняет уже запущенный контейнер.
+
 ## Открытые ограничения
 
 - Cache eviction и отказ самого Redis — разные сценарии. `allkeys-lru` по-прежнему
   допускает удаление управляющих ключей; SQL intents не делают все Redis-ключи
   восстановимыми. Нужна проверка назначения ключей и политики по их смыслу.
 - Slow PubSub consumers, суммарные buffers 32 streams и reconnect storm в этом
-  probe не моделируются. Их бюджеты и latency остаются gate для Fleet32.
-  CI probe прошёл без OOM, но cgroup peak достиг ceiling 1536 MiB (включая cache
-  и прочую charged memory); дополнительный запас для stream workload не доказан.
+  probe не моделируются. Их бюджеты и latency остаются gate для Fleet32 даже если
+  новый 2048 MiB persistence probe пройдёт.
 - Graceful restart не доказывает отсутствие потери последней секунды AOF при
   аварийном отключении питания и не является backup/restore-проверкой всего проекта.
 - Отдельный preview template не входит в исправленные runtime combinations:

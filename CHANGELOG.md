@@ -6,7 +6,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [Unreleased] — enterprise audit, 2026-09-21
+## [Unreleased] — enterprise audit, 2026-09-23
 
 Изменения находятся в draft PR; это не опубликованный production release.
 Полный перечень предыдущих audit fixes, доказательства и residual risks:
@@ -55,6 +55,12 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   capacity or eight-hour pass.
 
 ### Security / runtime
+
+- AUD-143 / F32-32: отдельный Redis runtime probe воспроизвёл OOM (`exit 137`,
+  `OOMKilled=true`) при одновременных SET/AOF rewrite/BGSAVE на потолке 1536 MiB.
+  Source Compose поднят до 2048 MiB при прежнем dataset 512 MiB; regression требует
+  4× headroom. Новый runtime CI и pilot rollout ещё не приняты; старый pilot не менялся.
+  [Evidence, причина и остаточные риски](docs/audits/2026-09-20/REDIS-PERSISTENCE-HEADROOM.md).
 
 - AUD-139 / F32-09: разделён Redis dataset budget 512 MiB и container budget
   1536 MiB. До fix воспроизведён OOM; после пройдены eviction, RDB/AOF, persistence

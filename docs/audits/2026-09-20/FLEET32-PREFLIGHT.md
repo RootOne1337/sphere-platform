@@ -10,10 +10,14 @@
 установлены. 15 task receipts и два pipeline подтверждены; F32-01 продвинут native
 stop/reconnect/restart проверками, но physical interruption и масштаб не закрыты.
 Frontend затем обновлён до `9924eb1`: [AUD-138 decoder native acceptance](DECODER-RECOVERY.md).
-**AUD-139:** [Redis memory budget](REDIS-MEMORY.md) воспроизвёл OOM в отдельном
-контейнере и согласовал 512 MiB dataset / 1536 MiB container. Pressure/persistence/
-restart прошли; `93551e0` применён к новому pilot без restart, оба APK online с
-прежними PID/crash buffers. Slow clients и eviction semantics остаются OPEN.
+**AUD-139 (историческая приёмка):** [Redis memory budget](REDIS-MEMORY.md)
+воспроизвёл OOM в отдельном контейнере и согласовал 512 MiB dataset / 1536 MiB
+container. Pressure/persistence/restart прошли на её нагрузке; `93551e0` применён
+к pilot без restart. Следующий CI probe на PR head `e635de8` обнаружил OOM во время
+одновременных writes/AOF persistence при потолке 1536 MiB. **AUD-143 / F32-32** ниже
+фиксирует новый предел: source Compose поднят до 2048 MiB, но повторная CI-приёмка
+pending, live pilot не менялся. Старый результат AUD-139 не распространяется на
+новый concurrent workload. Slow clients и eviction semantics остаются OPEN.
 Добавлен **F32-27 / P1 preview / Medium**: preview template не проходит Compose render.
 Добавлен **F32-26 / P1 / Medium**: долгий sleep задерживает кооперативную отмену.
 Предыдущие source-only формулировки ниже — история до rollout. Этот документ
@@ -47,6 +51,12 @@ SPS/PPS без IDR. Новый frontend ещё не установлен; уда
 Корень трассировки теперь задан явно; standalone-сервер и четыре маршрута прошли
 локальную HTTP-проверку. Предупреждение о trace-файле на Windows и новая CI-сборка
 для Linux ещё не закрыты; pilot не менялся.
+
+**23 сентября — P1 F32-32 / AUD-143:** isolated Redis CI probe OOM-killed при
+1536 MiB во время параллельного dataset fill и AOF persistence. Source Compose и
+профильный regression budget повышены до 2048 MiB при прежнем 512 MiB maxmemory.
+Это source change до повторной CI-проверки; live pilot по-прежнему 1536 MiB и не
+менялся. [Root cause, evidence и остаточные риски](REDIS-PERSISTENCE-HEADROOM.md).
 
 Ниже приведена контрольная точка исходного аудита на 21 сентября. Последующие разделы сохраняют историю
 воспроизведений; наличие строки в исходном реестре **не означает, что её root
@@ -204,6 +214,7 @@ Compose/monitoring/backup и нагрузочный harness. Это провер
 | F32-29 | P0, первый кадр / High / R, 23 сентября | Интерфейс полагался на одноразовый IDR; исправление добавило повторы, удалённая приёмка OPEN |
 | F32-30 | P2, сборка frontend / Medium / R, 23 сентября | Standalone попадал во вложенный путь при внешнем lockfile; корень закреплён, сборка CI для Linux ещё ожидается |
 | F32-31 | P0, ранний IDR / High / R, 23 сентября | Android мог потерять `viewer_connected` до готовности encoder; отложенная команда и регрессии добавлены, удалённая приёмка OPEN |
+| F32-32 | P1, Redis persistence headroom / High / R, 23 сентября | Concurrent AOF/write CI probe OOM-killed при 1536 MiB; source budget 2048 MiB, повторная CI и pilot rollout pending |
 
 ## Backend, оркестрация и БД
 
