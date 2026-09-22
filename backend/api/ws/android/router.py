@@ -451,6 +451,37 @@ async def handle_agent_binary(
         logger.warning("handle_agent_binary error", device_id=device_id, error=str(e))
 
 
+async def serve_ota_recovery(ws: WebSocket, device_id: str, grant) -> None:
+    """Доставить один разрешённый APK; heartbeat не публикует online/задачи."""
+    import time
+
+    command = {"type": "OTA_UPDATE", "command_id": str(grant.command_id),
+               "signed_at": int(time.time()), "ttl_seconds": 180,
+               "payload": {"download_url": str(ws.base_url.replace(scheme="https")).rstrip("/") +
+                           "/api/v1/updates/artifacts/" + grant.sha256,
+                           "version": grant.version_name, "sha256": grant.sha256}}
+    try:
+        async with asyncio.timeout(min(180, max(1, grant.expires_at - int(time.time())))):
+            await ws.send_json({"type": "auth_ok", "device_id": device_id, "protocol_version": 1})
+            await ws.send_json(command)
+            logger.info("android_ws.ota_recovery_sent", device_id=device_id, grant_id=str(grant.command_id))
+            while True:
+                try:
+                    message = await asyncio.wait_for(ws.receive_json(), timeout=10)
+                    if isinstance(message, dict) and message.get("command_id") == str(grant.command_id):
+                        logger.info("android_ws.ota_recovery_receipt", device_id=device_id,
+                                    grant_id=str(grant.command_id), status=str(message.get("status"))[:24])
+                except asyncio.TimeoutError:
+                    await ws.send_json({"type": "ping", "ts": time.time()})
+    except (TimeoutError, WebSocketDisconnect):
+        pass
+    finally:
+        try:
+            await ws.close(code=1012, reason="ota_recovery_reconnect")
+        except Exception:
+            pass
+
+
 @router.websocket("/ws/android/{device_id}")
 async def android_agent_ws(
     ws: WebSocket,
@@ -489,6 +520,19 @@ async def android_agent_ws(
 
     token = first_msg.get("token")
     logger.debug("android_ws: first message получен", device_id=device_id, has_token=bool(token))
+
+    # Отдельный временный канал только установки APK: не регистрируется в
+    # ConnectionManager, не вытесняет другие копии и не принимает их результаты.
+    from backend.services.device_ota_recovery import get_ota_recovery
+    try:
+        async with AsyncSessionLocal() as recovery_db:
+            recovery = await get_ota_recovery(token, recovery_db, device_id=device_id)
+        if recovery is not None:
+            await serve_ota_recovery(ws, device_id, recovery[1])
+            return
+    except Exception:
+        await _close(1011, "auth_error")
+        return
 
     # Auth phase: DB session scoped to auth only — not held for WS lifetime
     import uuid

@@ -19,11 +19,14 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request, Response, status
 from fastapi.responses import FileResponse, JSONResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.dependencies import require_permission, require_roles
 from backend.database.engine import get_db
+from backend.models.device import Device
+from backend.services.device_ota_recovery import OtaRecoveryGrant, get_ota_recovery
 
 router = APIRouter(prefix="/updates", tags=["updates"])
 
@@ -74,6 +77,55 @@ class CreateReleaseRequest(BaseModel):
     changelog: Optional[str] = None
 
 
+class CreateRecoveryRequest(BaseModel):
+    """Явное разрешение восстановления ровно одним опубликованным APK."""
+
+    device_id: uuid.UUID
+    sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    duration_seconds: int = Field(default=1800, ge=60, le=3600)
+
+
+@router.post("/recovery", status_code=201)
+async def create_recovery(
+    payload: CreateRecoveryRequest, user=require_roles(["super_admin"]), db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Включить OTA-only recovery для старых копий; обычные права JWT не меняются."""
+    device = await db.scalar(select(Device).where(Device.id == payload.device_id,
+                                                 Device.org_id == user.org_id,
+                                                 Device.is_active.is_(True)).with_for_update())
+    if device is None:
+        raise HTTPException(status_code=404, detail="Device not found")
+    release = next((r for r in _load_releases() if r.get("sha256") == payload.sha256 and
+                    r.get("download_url") == _ARTIFACT_PREFIX + payload.sha256), None)
+    if release is None:
+        raise HTTPException(status_code=422, detail="Published managed artifact required")
+    _artifact_path(payload.sha256)
+    now = int(datetime.now(timezone.utc).timestamp())
+    active = (device.meta or {}).get("ota_recovery", {})
+    if isinstance(active, dict) and active.get("expires_at", 0) > now:
+        raise HTTPException(status_code=409, detail="Recovery grant already active; inspect before another request")
+    grant = OtaRecoveryGrant(command_id=uuid.uuid4(), sha256=payload.sha256,
+                             version_name=release["version_name"], created_at=now,
+                             expires_at=now + payload.duration_seconds, issued_before=now - 1).signed(device)
+    device.meta = {**(device.meta or {}), "ota_recovery": grant.model_dump(mode="json")}
+    await db.commit()
+    return {"device_id": str(device.id), **grant.model_dump(mode="json")}
+
+
+@router.delete("/recovery/{device_id}", status_code=204)
+async def revoke_recovery(
+    device_id: uuid.UUID, user=require_roles(["super_admin"]), db: AsyncSession = Depends(get_db),
+) -> Response:
+    """Отключить аварийную доставку после сверки установленных копий."""
+    device = await db.scalar(select(Device).where(Device.id == device_id,
+                                                 Device.org_id == user.org_id).with_for_update())
+    if device is None:
+        raise HTTPException(status_code=404, detail="Device not found")
+    device.meta = {k: v for k, v in (device.meta or {}).items() if k != "ota_recovery"}
+    await db.commit()
+    return Response(status_code=204)
+
+
 # ── Latest version check (called by UpdateCheckWorker) ──────────────────────
 
 @router.get("/latest")
@@ -95,7 +147,9 @@ async def get_latest(
 
     # Verify API key
     from backend.api.ws.android.router import authenticate_ws_token
-    await authenticate_ws_token(x_api_key, db)
+    recovery = await get_ota_recovery(x_api_key, db)
+    if recovery is None:
+        await authenticate_ws_token(x_api_key, db)
 
     releases = _load_releases()
     # Filter by platform + flavor, sorted by version_code desc
@@ -103,6 +157,8 @@ async def get_latest(
         r for r in releases
         if r.get("platform") == platform and r.get("flavor") == flavor
     ]
+    if recovery is not None:
+        matching = [r for r in matching if r.get("sha256") == recovery[1].sha256]
     if not matching:
         return JSONResponse({"update_available": False})
 
@@ -139,7 +195,9 @@ async def download_artifact(
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Bearer token required")
     from backend.api.ws.android.router import authenticate_ws_token
-    await authenticate_ws_token(authorization.removeprefix("Bearer "), db)
+    token = authorization.removeprefix("Bearer ")
+    if await get_ota_recovery(token, db, sha256=sha256) is None:
+        await authenticate_ws_token(token, db)
     if not any(r.get("sha256") == sha256 and r.get("download_url") == _ARTIFACT_PREFIX + sha256
                for r in _load_releases()):
         raise HTTPException(status_code=404, detail="Published artifact not found")

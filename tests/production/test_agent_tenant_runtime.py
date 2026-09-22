@@ -63,6 +63,54 @@ async def websocket(device_id, token, messages=(), *, on_send=None):
     return sent
 
 
+async def test_recovery_twenty_copied_tokens_receive_only_ota_without_registry_eviction(agent_runtime, monkeypatch):
+    """20 копий старого JWT: отдельные OTA-сокеты, никаких общих командных сессий."""
+    import hashlib
+    import time
+
+    import jwt
+
+    from backend.core.config import settings
+    from backend.services.device_ota_recovery import OtaRecoveryGrant
+
+    r = agent_runtime
+    enrolled = await issue_device(r.world)
+    content = b"isolated-apk-payload"
+    digest = hashlib.sha256(content).hexdigest()
+    artifacts = r.path / "artifacts"
+    artifacts.mkdir()
+    (artifacts / (digest + ".apk")).write_bytes(content)
+    (r.path / "updates.json").write_text(json.dumps([{"sha256": digest, "version_code": 10209,
+        "version_name": "1.2.9-dev", "platform": "android", "flavor": "dev",
+        "download_url": "/api/v1/updates/artifacts/" + digest}]))
+    now = int(time.time())
+    grant = OtaRecoveryGrant(command_id=uuid.uuid4(), sha256=digest, version_name="1.2.9-dev",
+                             created_at=now, expires_at=now + 1800, issued_before=now - 1)
+    async with r.world.sessions() as db:
+        device = await db.get(Device, enrolled.device_id)
+        device.meta = {**device.meta, "ota_recovery": grant.signed(device).model_dump(mode="json")}
+        await db.commit()
+    claims = jwt.decode(enrolled.access_token, settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
+    claims.update(iat=now - 3600, exp=now - 1)
+    token = jwt.encode(claims, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
+    for _ in range(20):
+        sent = await websocket(enrolled.device_id, token, [{"type": "command_result", "command_id": str(uuid.uuid4()), "status": "completed"}])
+        payloads = [json.loads(m["text"]) for m in sent if m["type"] == "websocket.send"]
+        assert [m["type"] for m in payloads] == ["auth_ok", "OTA_UPDATE"]
+        assert payloads[1]["payload"]["sha256"] == digest
+    r.manager.connect.assert_not_awaited()
+    r.manager.disconnect.assert_not_awaited()
+    download = await r.world.client.get("/api/v1/updates/artifacts/" + digest, headers={"Authorization": "Bearer " + token})
+    assert download.status_code == 200 and download.content == content
+    latest = await r.world.client.get("/api/v1/updates/latest?platform=android&flavor=dev&version_code=10208", headers={"X-API-Key": token})
+    assert latest.status_code == 200 and latest.json()["sha256"] == digest
+    denied = await r.world.client.get("/api/v1/updates/artifacts/" + "b" * 64, headers={"Authorization": "Bearer " + token})
+    assert denied.status_code == 401
+    # Прочие API не получают исключение для просроченного JWT.
+    api = await r.world.client.get("/api/v1/devices", headers={"Authorization": "Bearer " + token})
+    assert api.status_code == 401
+
+
 @pytest.mark.parametrize("credential", ["device", "refreshed", "enrollment_key", "user"])
 async def test_auth_ack_precedes_registry_publication_and_commands(agent_runtime, credential):
     r = agent_runtime

@@ -173,6 +173,37 @@ _VALID_RELEASE = {
 
 
 class TestManagedArtifacts:
+    async def test_recovery_grant_is_explicit_single_artifact_bounded_and_revocable(
+        self, admin_client, isolate_updates_file, db_session, updates_org,
+    ):
+        from backend.models.device import Device
+        device = Device(org_id=updates_org.id, name="copied-template")
+        db_session.add(device)
+        await db_session.flush()
+        body = {"device_id": str(device.id), "sha256": "a" * 64}
+        assert (await admin_client.post("/api/v1/updates/recovery", json=body)).status_code == 422
+        content = b"recovery APK fixture"
+        digest = hashlib.sha256(content).hexdigest()
+        artifact = isolate_updates_file.parent / "artifacts" / f"{digest}.apk"
+        artifact.parent.mkdir()
+        artifact.write_bytes(content)
+        release = await admin_client.post("/api/v1/updates/", json={**_VALID_RELEASE,
+            "download_url": "/api/v1/updates/artifacts/" + digest, "sha256": digest})
+        assert release.status_code == 201
+        body["sha256"] = digest
+        assert (await admin_client.post("/api/v1/updates/recovery", json={**body, "duration_seconds": 3601})).status_code == 422
+        granted = await admin_client.post("/api/v1/updates/recovery", json=body)
+        assert granted.status_code == 201, granted.text
+        assert granted.json()["expires_at"] - granted.json()["created_at"] == 1800
+        assert (await admin_client.post("/api/v1/updates/recovery", json=body)).status_code == 409
+        assert (await admin_client.delete("/api/v1/updates/recovery/" + str(device.id))).status_code == 204
+        assert "ota_recovery" not in device.meta
+
+    async def test_viewer_cannot_enable_recovery(self, viewer_client):
+        import uuid
+        response = await viewer_client.post("/api/v1/updates/recovery", json={"device_id": str(uuid.uuid4()), "sha256": "a" * 64})
+        assert response.status_code == 403
+
     async def test_published_artifact_download_requires_agent_auth(self, admin_client, isolate_updates_file):
         content = b"owned APK fixture"
         digest = hashlib.sha256(content).hexdigest()
