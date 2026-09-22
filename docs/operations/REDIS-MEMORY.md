@@ -73,10 +73,13 @@ CI запускает эту проверку и сохраняет артефа
 probe. Это подтверждённая нехватка headroom в этой нагрузочной точке, не live outage.
 
 Source Compose budget повышен до **2048 MiB**, при прежних 512 MiB dataset.
-`test_redis_memory_budget.py` требует 4× dataset для всех семи runtime profiles.
-Новая CI runtime-проба ещё должна пройти. Сохранённый локальный pilot фактически
-остаётся на 1536 MiB до отдельного проверенного rollout; это изменение файлов
-Compose само по себе не меняет уже запущенный контейнер.
+`test_redis_memory_budget.py` требует минимум 4× dataset для всех семи runtime
+profiles; восемь regressions прошли. На PR head `bee9bc0` повторная isolated probe
+прошла: AOF rewrite, BGSAVE и restart successful, `OOMKilled=false`, 6,531 ключ
+сохранён. Однако kernel peak был ровно **2048 MiB**, то есть дошёл до лимита.
+Подтверждён именно этот bounded persistence сценарий; spare memory и 32 stream
+capacity не доказаны. Сохранённый live pilot остаётся на 1536 MiB до отдельного
+проверенного rollout; Compose-файлы не меняют запущенный контейнер.
 
 ## Открытые ограничения
 
@@ -84,8 +87,8 @@ Compose само по себе не меняет уже запущенный к�
   допускает удаление управляющих ключей; SQL intents не делают все Redis-ключи
   восстановимыми. Нужна проверка назначения ключей и политики по их смыслу.
 - Slow PubSub consumers, суммарные buffers 32 streams и reconnect storm в этом
-  probe не моделируются. Их бюджеты и latency остаются gate для Fleet32 даже если
-  новый 2048 MiB persistence probe пройдёт.
+  probe не моделируются. Их budgets и latency остаются gate для Fleet32; новый
+  2048 MiB probe прошёл, но measured peak достиг лимита.
 - Graceful restart не доказывает отсутствие потери последней секунды AOF при
   аварийном отключении питания и не является backup/restore-проверкой всего проекта.
 - Отдельный preview template не входит в исправленные runtime combinations:

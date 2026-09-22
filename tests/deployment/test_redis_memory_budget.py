@@ -56,13 +56,13 @@ def maxmemory_bytes(service):
 
 
 @pytest.mark.parametrize("mode", MATRIX)
-def test_runtime_redis_profiles_leave_process_and_persistence_headroom(tmp_path, mode):
+def test_runtime_redis_profiles_meet_minimum_container_budget(tmp_path, mode):
     service = render_redis(tmp_path, mode)
     dataset = maxmemory_bytes(service)
     container = int(service["deploy"]["resources"]["limits"]["memory"])
     assert dataset > 0
-    # Four times dataset leaves room for COW, AOF buffers and charged filesystem cache.
-    # This is a baseline admission rule, not a bound on arbitrary client buffers.
+    # Four times dataset is a minimum admission rule, not measured spare headroom.
+    # CI's 2 GiB probe hit its ceiling; arbitrary client/stream buffers remain open.
     assert container >= 4 * dataset, {"profile": mode, "maxmemory": dataset, "container": container}
 
 

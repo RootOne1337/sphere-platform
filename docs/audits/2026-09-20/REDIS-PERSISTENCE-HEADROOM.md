@@ -1,6 +1,6 @@
 # AUD-143: Redis OOM under concurrent AOF rewrite
 
-**23 September 2026 · F32-32 · P1 / High · source fix; CI and pilot rollout pending.**
+**23 September 2026 · F32-32 · P1 / High · isolated persistence gate passed; fleet/pilot gates remain open.**
 
 [Fleet32](FLEET32-PREFLIGHT.md) · [Redis contract](../../operations/REDIS-MEMORY.md) ·
 [Prior AUD-139 evidence](REDIS-MEMORY.md) · [CI run](https://github.com/RootOne1337/sphere-platform/actions/runs/35789088762)
@@ -40,17 +40,23 @@ subscribers, reconnect bursts, or arbitrary client buffers.
 - **Before fix:** isolated CI runtime probe reproduced OOM; exit 137 and
   `OOMKilled=true` were read from the exact harness-owned container state.
 - **Source regression:** `tests/deployment/test_redis_memory_budget.py` renders
-  the runtime Compose combinations and checks the 4× budget plus the unchanged
-  512 MiB dataset and AOF/everysec/allkeys-lru settings. Re-run is pending.
-- **After fix:** the 2048 MiB runtime probe and fresh CI run are pending. This report
-  does not mark the fix accepted.
+  the seven runtime Compose combinations and checks the 4× minimum plus the
+  unchanged 512 MiB dataset and AOF/everysec/allkeys-lru settings; all 8 tests pass.
+- **After fix:** PR head `bee9bc0`, CI run `35792035327` passed the 2048 MiB runtime
+  probe. Both concurrent persistence operations finished with status `ok`; graceful
+  restart preserved 6,531 keys and the marker; final state had `OOMKilled=false`.
+  The cgroup peak was exactly **2,147,483,648 bytes**, equal to its hard limit. This
+  closes the reproduced isolated OOM case but demonstrates no spare cgroup margin.
+  Backend JUnit: 1,997 tests, 0 failures/errors, 15 skipped. Android build and unit
+  test job passed; frontend, security, lint, RLS and Alembic gates passed.
 - **Pilot:** remains at 1536 MiB; no Compose recreation, Docker update, or service
   restart was performed. Rollout requires a separate evidence-backed operation.
 
 ## Residual risk / mass-test gate
 
-Keep Fleet32 at **NO-GO** until the isolated 2048 MiB probe passes including both
-concurrent persistence operations and restart, then evaluate aggregate Docker-host
-memory under the intended 32-viewer profile. Redis eviction can still remove
+Keep Fleet32 at **NO-GO** until Redis is measured with the intended 32-viewer profile
+and Docker host aggregate memory. The isolated 2048 MiB test passed, but its peak
+saturated the ceiling; do not present this as spare headroom or stream capacity.
+Redis eviction can still remove
 application keys under pressure; slow subscribers, buffers and network recovery are
 separate tests. An abrupt power loss is not covered by graceful restart validation.

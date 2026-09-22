@@ -3,8 +3,8 @@
 **Актуализация 23 сентября:** ниже сохранено проектное ТЗ от марта, не подтверждение
 пропускной способности. План `maxmemory 2gb` не является текущим dataset budget.
 Source Compose задаёт [Redis contract](../operations/REDIS-MEMORY.md) 512 MiB dataset /
-2048 MiB container после OOM на 1536 MiB; новый runtime budget ожидает повторного CI
-probe и не развёрнут на pilot. Массовый native допуск описан в
+2048 MiB container после OOM на 1536 MiB; изолированный CI probe прошёл, но cgroup
+peak достиг нового ceiling и pilot не обновлялся. Это не stream capacity. Массовый native допуск описан в
 [Fleet32](../audits/2026-09-20/FLEET32-PREFLIGHT.md).
 
 > **Sphere Platform — Synthetic Fleet Load Test**

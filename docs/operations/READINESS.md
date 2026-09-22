@@ -38,10 +38,10 @@ standalone-сервер и четыре маршрута прошли HTTP-пр�
 Linux ожидается; предупреждение о копировании trace-файла на Windows зафиксировано
 как остаточный риск. [Детали](../audits/2026-09-20/FRONTEND-STANDALONE.md).
 
-**P1 F32-32 / AUD-143:** следующий isolated Redis CI probe был OOM-killed во время
-параллельной записи и AOF persistence при container limit 1536 MiB. Source Compose
-budget увеличен до 2048 MiB с прежним dataset cap 512 MiB; regression требует 4×
-headroom. Повторная CI-приёмка pending, а работающий pilot остался на 1536 MiB.
+**P1 F32-32 / AUD-143:** isolated Redis probe воспроизвёл OOM при 1536 MiB. На
+2048 MiB CI прошёл concurrent write/AOF/BGSAVE и restart без OOM, сохранив 6,531
+ключ; peak достиг ровно потолка. Это закрывает воспроизведённый workload, но не
+даёт запаса для 32 streams; live pilot остался на 1536 MiB.
 [Причина и точное доказательство](../audits/2026-09-20/REDIS-PERSISTENCE-HEADROOM.md).
 
 
@@ -52,7 +52,8 @@ backend restart без F5, projection освобождена, APK PID/crash buff
 **До Fleet32 остаются P0:** приёмка decoder под 32 потоками, сквозной preview profile,
 command/video budget, Redis pressure/recovery и достоверные метрики. [AUD-139](../audits/2026-09-20/REDIS-MEMORY.md)
 закрыл исходный memory mismatch, но [AUD-143](../audits/2026-09-20/REDIS-PERSISTENCE-HEADROOM.md)
-выявил OOM на более тяжёлой конкурентной AOF нагрузке; новый budget ещё не прошёл CI.
+выявил OOM на более тяжёлой конкурентной AOF нагрузке; 2 GiB теперь проходит этот
+isolation test, но peak упирается в потолок и stream margin остаётся непроверенным.
 Политика buffers/eviction остаётся
 открытой. Native runtime-role RLS,
 compound orchestration и полный fault/soak ещё не приняты. Дополнительно F32-26:

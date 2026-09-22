@@ -16,8 +16,9 @@
 применён без restart. Redis и APK PID/crash buffers прежние, оба устройства online.
 [Изолированная OOM/persistence приёмка и ограничения](../audits/2026-09-20/REDIS-MEMORY.md).
 Поздний CI probe на PR head `e635de8` воспроизвёл OOM при параллельных AOF/write
-операциях в отдельном контейнере. Source Compose теперь задаёт 2048 MiB, но **этот
-pilot остаётся на 1536 MiB** до повторной проверки и отдельного rollout.
+операциях в отдельном контейнере. Source Compose теперь задаёт 2048 MiB; новый
+isolated CI probe прошёл без OOM, но cgroup peak достиг потолка. **Этот pilot
+остаётся на 1536 MiB** до отдельного rollout и 32-stream acceptance.
 [AUD-143 evidence и статус](../audits/2026-09-20/REDIS-PERSISTENCE-HEADROOM.md).
 
 История 20 сентября: backend `85fb1ea`, frontend `03b161e`, APK 1.2.7 (`0f257fe`). [Приёмка нового APK](../audits/2026-09-05/ANDROID-RECONNECT-DEBT.md)
