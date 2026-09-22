@@ -18,8 +18,8 @@
 [Изолированная OOM/persistence приёмка и ограничения](../audits/2026-09-20/REDIS-MEMORY.md).
 Поздний CI probe на PR head `e635de8` воспроизвёл OOM при параллельных AOF/write
 операциях в отдельном контейнере. Source Compose теперь задаёт 2048 MiB; новый
-оба isolated CI probe прошли без OOM. Один cgroup peak достиг потолка 2 GiB,
-повторный составил ~1.49 GiB; худшее наблюдение остаётся потолком. **Этот pilot
+все три isolated CI probe прошли без OOM. Cgroup peaks: 2.00, 1.49 и 1.84 GiB;
+худшее наблюдение остаётся потолком 2 GiB. **Этот pilot
 остаётся на 1536 MiB** до отдельного rollout и 32-stream acceptance.
 [AUD-143 evidence и статус](../audits/2026-09-20/REDIS-PERSISTENCE-HEADROOM.md).
 

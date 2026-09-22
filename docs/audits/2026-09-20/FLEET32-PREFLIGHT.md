@@ -15,9 +15,9 @@ Frontend затем обновлён до `9924eb1`: [AUD-138 decoder native acc
 container. Pressure/persistence/restart прошли на её нагрузке; `93551e0` применён
 к pilot без restart. Следующий CI probe на PR head `e635de8` обнаружил OOM во время
 одновременных writes/AOF persistence при потолке 1536 MiB. **AUD-143 / F32-32**:
-source Compose повышен до 2048 MiB; оба isolated CI probe прошли. Первый достиг
-потолка; повтор на `6868f92` peaked at 1,603,907,584 bytes (~1.49 GiB). Максимум
-наблюдений — 2 GiB, live pilot не менялся. Старый результат AUD-139 не распространяется
+source Compose повышен до 2048 MiB; все три isolated CI probe прошли. Пики:
+2,147,483,648 bytes (2.00 GiB), 1,603,907,584 (~1.49 GiB) и 1,974,636,544 (~1.84 GiB).
+Максимум наблюдений — 2 GiB, live pilot не менялся. Старый результат AUD-139 не распространяется
 на concurrent нагрузку, а 32-stream headroom всё ещё не измерен. Slow clients
 и eviction semantics остаются OPEN.
 Добавлен **F32-27 / P1 preview / Medium**: preview template не проходит Compose render.
@@ -57,10 +57,10 @@ SPS/PPS без IDR. Новый frontend ещё не установлен; уда
 
 **23 сентября — P1 F32-32 / AUD-143:** isolated Redis CI probe OOM-killed при
 1536 MiB во время параллельного dataset fill и AOF persistence. При 2048 MiB
-оба isolated CI probe прошли AOF rewrite, BGSAVE и restart без OOM, сохранили 6,531
-ключ и marker. Первый `memory.peak` достиг потолка 2 GiB; повтор на `6868f92` составил
-1,603,907,584 bytes (~1.49 GiB). Худший наблюдавшийся пик остаётся потолком, поэтому
-32-stream buffer margin не принят; live pilot не менялся.
+все три isolated CI probe прошли AOF rewrite, BGSAVE и restart без OOM; ключи и marker
+сохранились (6,531 / 6,531 / 6,532). Пики `memory.peak`: 2.00 / 1.49 / 1.84 GiB.
+Худший наблюдавшийся пик остаётся потолком, поэтому 32-stream buffer margin не принят;
+live pilot не менялся.
 [Root cause, evidence и остаточные риски](REDIS-PERSISTENCE-HEADROOM.md).
 
 **23 сентября — P0 F32-33 / AUD-144:** remote OTA evidence показал, что HTTP 200
@@ -72,8 +72,8 @@ source candidate повторяет только одну прерванную I
 enterprise flavors. APK version поднята до **1.2.10 / 10210**, поскольку OTA
 игнорирует тот же versionCode. Полный CI для `2cb4a9d` и documentation head `6868f92`
 прошёл: backend — 1,997 tests, 0 failures/errors, 15 skipped. Redis AOF/BGSAVE/restart
-прошли без OOM в обоих прогонах; `memory.peak` был 2.00 GiB и 1.49 GiB, максимальный
-пик равен потолку. Локальные и CI dev/enterprise debug APK
+прошли без OOM в трёх прогонах; пики — 2.00, 1.49 и 1.84 GiB, максимальный пик равен
+потолку. Локальные и CI dev/enterprise debug APK
 собраны; публикация catalog, совместимость подписи с установленной APK и удалённое подтверждение
 ещё ожидаются. HTTP/1.1 retry не обходит TLS/provider block. Ни одна удалённая VM
 не обновлялась, 20 отдельных ID и первый кадр не подтверждены.
@@ -235,7 +235,7 @@ Compose/monitoring/backup и нагрузочный harness. Это провер
 | F32-29 | P0, первый кадр / High / R, 23 сентября | Интерфейс полагался на одноразовый IDR; исправление добавило повторы, удалённая приёмка OPEN |
 | F32-30 | P2, сборка frontend / Medium / R, 23 сентября | Standalone попадал во вложенный путь при внешнем lockfile; Linux CI build/root-entrypoint check passed, Windows warning и frontend Docker-image check open |
 | F32-31 | P0, ранний IDR / High / R, 23 сентября | Android мог потерять `viewer_connected` до готовности encoder; отложенная команда и регрессии добавлены, удалённая приёмка OPEN |
-| F32-32 | P1, Redis persistence headroom / High / R, 23 сентября | Two 2048 MiB AOF probes pass; observed peak ranges 1.49–2.00 GiB, 32-stream and pilot acceptance remain open |
+| F32-32 | P1, Redis persistence headroom / High / R, 23 сентября | Three 2048 MiB AOF probes pass; observed peak ranges 1.49–2.00 GiB, 32-stream and pilot acceptance remain open |
 | F32-33 | P0, remote OTA body recovery / High / R, 23 сентября | Local/CI bounded HTTP/1.1 retry passes; TLS reachability, signer compatibility, catalog publication and remote install remain unaccepted |
 
 ## Backend, оркестрация и БД

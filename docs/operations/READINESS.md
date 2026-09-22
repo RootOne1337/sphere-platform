@@ -39,11 +39,12 @@ standalone-сервер и четыре маршрута прошли HTTP-пр�
 из этого артефакта не собирался. Предупреждение Windows о trace-файле зафиксировано как
 остаточный риск. [Детали](../audits/2026-09-20/FRONTEND-STANDALONE.md).
 
-**P1 F32-32 / AUD-143:** isolated Redis probe воспроизвёл OOM при 1536 MiB. На
-2048 MiB CI прошёл concurrent write/AOF/BGSAVE и restart без OOM, сохранив 6,531
-ключ. Два post-fix probe показали peak 2,147,483,648 bytes (лимит) и
-1,603,907,584 bytes (~1.49 GiB); используем худшее наблюдение, а не предполагаемый
-запас от меньшего повтора. Это закрывает воспроизведённый workload, но не доказывает
+**P1 F32-32 / AUD-143:** isolated Redis probe воспроизвёл OOM при 1536 MiB. Три
+2048 MiB CI probes прошли concurrent write/AOF/BGSAVE и restart без OOM. В них
+сохранились 6,531, 6,531 и 6,532 ключа и marker. Пики составили
+2,147,483,648 bytes (лимит), 1,603,907,584 bytes (~1.49 GiB) и 1,974,636,544 bytes
+(~1.84 GiB); используем худшее наблюдение, а не предполагаемый запас от меньших
+повторов. Это закрывает воспроизведённый workload, но не доказывает
 запас для 32 streams; live pilot остался на 1536 MiB.
 [Причина и точное доказательство](../audits/2026-09-20/REDIS-PERSISTENCE-HEADROOM.md).
 
@@ -66,7 +67,7 @@ backend restart без F5, projection освобождена, APK PID/crash buff
 command/video budget, Redis pressure/recovery и достоверные метрики. [AUD-139](../audits/2026-09-20/REDIS-MEMORY.md)
 закрыл исходный memory mismatch, но [AUD-143](../audits/2026-09-20/REDIS-PERSISTENCE-HEADROOM.md)
 выявил OOM на более тяжёлой конкурентной AOF нагрузке; 2 GiB теперь проходит этот
-isolation test. Два CI пика различались (1.49 и 2.00 GiB), худший достигает потолка;
+isolation test. Три CI пика различались (1.49, 1.84 и 2.00 GiB), худший достигает потолка;
 stream margin остаётся непроверенным.
 Политика buffers/eviction остаётся
 открытой. Native runtime-role RLS,
