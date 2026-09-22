@@ -16,7 +16,7 @@
 </div>
 
 > [!NOTE]
-> **Активная разработка · подготовка к 32 реальным эмуляторам.** На 21 сентября 2026
+> **Активная разработка · подготовка к 32 реальным эмуляторам.** На 23 сентября 2026
 > подтверждены отдельные сценарии на двух rooted Android 9. Массовый прогон, полный
 > успешный 8h soak и VPN end-to-end ещё предстоят. [Установленные версии и доказательства ↓](#status)
 
@@ -300,18 +300,19 @@ identity, доверенный ключ и параметры enrollment; APK и
 <a id="status"></a>
 ## 🔬 Состояние проекта и границы проверки
 
-**Контрольная точка: 21 сентября 2026.** CI-badges относятся к ветке аудита;
+**Контрольная точка: 23 сентября 2026.** CI-badges относятся к ветке аудита;
 ниже указаны установленные версии и выполненные сценарии.
 
 | Установлено в pilot | Версия / результат | Доказательство |
 | --- | --- | --- |
-| Backend | `c42bb5b` | [Canary и миграции](docs/audits/2026-09-20/CANARY-20260921.md) |
+| Backend | `3be0e29` (локальный pilot) | [Клоны, recovery и WAN ограничения](docs/audits/2026-09-20/CLONE-IDENTITY.md) |
 | Frontend | `9924eb1` | [Decoder recovery](docs/audits/2026-09-20/DECODER-RECOVERY.md) |
-| Android, оба устройства | **1.2.8-dev / 10208** | [OTA и native сценарии](docs/audits/2026-09-20/CANARY-20260921.md) |
+| Android, оба локальных устройства | **1.2.9-dev / 10209** | [OTA и clone identity](docs/audits/2026-09-20/CLONE-IDENTITY.md) |
 | Task / pipeline | 15 terminal task receipts; два pipeline runs | [Независимая сверка результатов](docs/audits/2026-09-20/CANARY-20260921.md) |
 | Видео | Два потока восстановились после restart без F5; capture освобождён | [Native acceptance](docs/audits/2026-09-20/DECODER-RECOVERY.md) |
 | Redis | 512 MiB dataset / 1536 MiB container; pressure/persistence/restart в изоляции | [OOM до fix и результат после](docs/audits/2026-09-20/REDIS-MEMORY.md) |
 | Сетевые отказы | Проверены отдельные отказы Android, серверного входа и обеих сторон | [Матрица и версии проверок](docs/audits/2026-09-05/NETWORK-RECOVERY-NATIVE.md) |
+| Удалённые клоны/видео | **NO-GO:** общий device ID, viewer без IDR, WAN OTA обрывается | [F32-28 evidence и остаточные риски](docs/audits/2026-09-20/CLONE-IDENTITY.md) |
 
 ### Ближайшие эксплуатационные задачи
 

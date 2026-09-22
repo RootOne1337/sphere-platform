@@ -4,7 +4,7 @@ Generated from `backend.main.app.openapi()` by `scripts/export_api_docs.py`.
 Regenerate with `python -m scripts.export_api_docs`; verify with `--check`.
 The exporter does not run startup hooks or send HTTP requests.
 
-**163 HTTP operations across 127 paths.**
+**165 HTTP operations across 129 paths.**
 
 Full parameters, request bodies, response schemas and declared security schemes:
 [OpenAPI JSON](openapi.json). Manual explanations:
@@ -166,6 +166,8 @@ for tested behavior and remaining limits.
 | `POST` | `/api/v1/updates/` | updates | 201, 422 | Create Release |
 | `GET` | `/api/v1/updates/artifacts/{sha256}` | updates | 200, 422 | Download Artifact |
 | `GET` | `/api/v1/updates/latest` | updates | 200, 422 | Get Latest |
+| `POST` | `/api/v1/updates/recovery` | updates | 201, 422 | Create Recovery |
+| `DELETE` | `/api/v1/updates/recovery/{device_id}` | updates | 204, 422 | Revoke Recovery |
 | `DELETE` | `/api/v1/updates/{release_id}` | updates | 200, 422 | Delete Release |
 | `GET` | `/api/v1/users` | users | 200, 422 | Список пользователей организации |
 | `POST` | `/api/v1/users` | users | 201, 422 | Создать пользователя |

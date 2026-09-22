@@ -2069,7 +2069,7 @@
           "devices"
         ],
         "summary": "Автоматическая регистрация устройства (для агентов)",
-        "description": "Автоматическая регистрация нового устройства. Аутентификация по enrollment API-ключу (X-API-Key с правом device:register). Идемпотентна: если fingerprint уже зарегистрирован — re-enrollment с новыми токенами.",
+        "description": "Автоматическая регистрация нового устройства. Аутентификация по enrollment API-ключу (X-API-Key с правом device:register). Идемпотентна по fingerprint и instance_binding. Копии APK с разными привязками VM получают отдельные устройства.",
         "operationId": "register_device_api_v1_devices_register_post",
         "parameters": [
           {
@@ -7665,6 +7665,96 @@
         }
       }
     },
+    "/api/v1/updates/recovery": {
+      "post": {
+        "tags": [
+          "updates"
+        ],
+        "summary": "Create Recovery",
+        "description": "Включить OTA-only recovery для старых копий; обычные права JWT не меняются.",
+        "operationId": "create_recovery_api_v1_updates_recovery_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRecoveryRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Create Recovery Api V1 Updates Recovery Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/updates/recovery/{device_id}": {
+      "delete": {
+        "tags": [
+          "updates"
+        ],
+        "summary": "Revoke Recovery",
+        "description": "Отключить аварийную доставку после сверки установленных копий.",
+        "operationId": "revoke_recovery_api_v1_updates_recovery__device_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "device_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Device Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/updates/latest": {
       "get": {
         "tags": [
@@ -10917,6 +11007,34 @@
         "title": "CreatePipelineRequest",
         "description": "Создание нового pipeline."
       },
+      "CreateRecoveryRequest": {
+        "properties": {
+          "device_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Device Id"
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Sha256"
+          },
+          "duration_seconds": {
+            "type": "integer",
+            "maximum": 3600.0,
+            "minimum": 60.0,
+            "title": "Duration Seconds",
+            "default": 1800
+          }
+        },
+        "type": "object",
+        "required": [
+          "device_id",
+          "sha256"
+        ],
+        "title": "CreateRecoveryRequest",
+        "description": "Явное разрешение восстановления ровно одним опубликованным APK."
+      },
       "CreateReleaseRequest": {
         "properties": {
           "platform": {
@@ -11643,6 +11761,19 @@
             "title": "Fingerprint",
             "description": "Уникальный отпечаток устройства (SHA-256 composite fingerprint)."
           },
+          "instance_binding": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Instance Binding",
+            "description": "SHA-256 привязки экземпляра вне копируемых данных APK; не IP и не boot ID."
+          },
           "name": {
             "anyOf": [
               {
@@ -11745,6 +11876,18 @@
             "format": "uuid",
             "title": "Device Id",
             "description": "UUID зарегистрированного устройства."
+          },
+          "instance_binding": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Instance Binding",
+            "description": "Подтверждённая сервером привязка экземпляра."
           },
           "name": {
             "type": "string",

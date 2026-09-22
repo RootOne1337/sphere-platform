@@ -1,8 +1,9 @@
 # Локальный стенд для совместного тестирования
 
-**21 сентября 2026 · Windows / Docker Desktop · development, авторизация включена.**
+**23 сентября 2026 · Windows / Docker Desktop · development, авторизация включена.**
 
-Текущий срез: backend **`c42bb5b`**, frontend **`9924eb1`**, оба APK **1.2.8 / 10208**.
+Текущий локальный pilot: backend **`3be0e29`**, frontend **`9924eb1`**, оба локальных APK **1.2.9 / 10209**.
+[F32-28](../audits/2026-09-20/CLONE-IDENTITY.md): clone identity fix установлен; OTA-only recovery добавлен, но удалённым копиям надёжно доставить APK пока не удалось. Viewer общей карточки получил SPS/PPS без IDR; кадр и декодирование не приняты. На 32 устройства допуск закрыт.
 [Canary 21 сентября](../audits/2026-09-20/CANARY-20260921.md): 15 task receipts,
 два pipeline, pending stop/deadline и backend restart проверены; PID после OTA
 сохранились, crash buffers прежние. Свежая APK и обычный OTA-каталог обновлены.
@@ -128,20 +129,20 @@ Frontend **`6dea6b4`** установлен в новом pilot. Device Stream �
 `com.sphereplatform.agent.pilot.debug` позволяет установить его рядом с обычными
 dev/enterprise сборками, сохраняя отдельные credentials и identity.
 
-Свежий файл: **`SphereAgent-pilot-1.2.8-c42bb5b.apk`**.
+Свежий файл: **`SphereAgent-pilot-1.2.9-a53f165.apk`**.
 Указатель на ту же сборку: **`LATEST-SphereAgent-pilot.apk`** в том же каталоге.
-SHA-256: `2f958bef697243fcbf6d449410f557aaa4f71bbd02b7df632909a79506a4987a`.
-Размер 8,393,685 bytes; versionCode 10208 / 1.2.8-dev, minSdk 26, targetSdk 35.
-Оба APK обновлены адресной OTA-командой при отключённом Windows watchdog:
+SHA-256: `b4bf3f319f92e1f3ac24b7d68dffdc6f6d93a113ad59b10b132ea8f60e641078`.
+Размер 8,403,373 bytes; versionCode 10209 / 1.2.9-dev, minSdk 26, targetSdk 35.
+Оба локальных APK обновлены адресной OTA-командой при отключённом Windows watchdog:
 без ADB install, ручного запуска, разрешений и новой регистрации. Обычный канал
-`android/dev` теперь выдаёт 10208; обязательность не включена. Полный шестичасовой
-период worker не выжидался. Signed cache v23 и installed hashes подтверждены.
+`android/dev` теперь выдаёт 10209; обязательность не включена. Полный шестичасовой
+период worker не выжидался. Installed hashes, прежние device IDs, PID и crash buffers локальных APK подтверждены.
 Точные source, certificate, результаты и ограничения: [canary report](../audits/2026-09-20/CANARY-20260921.md).
 
 ### История предыдущих APK и приёмок
 
 Следующие версии, counters и ожидания относятся к датированным предыдущим
-проверкам, а не к текущему manifest 1.2.8.
+проверкам, а не к текущему manifest 1.2.9.
 
 **1.2.7 / 10207 (`0f257fe`):**
 **Оба Android обновились через собственный OTA**, без ADB install, Windows
