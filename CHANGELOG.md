@@ -19,7 +19,8 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   APK digest validation remains mandatory before install. New recovery tests first
   reproduced failure before the fix, then passed for dev and enterprise flavors.
   Candidate version is 1.2.10 / 10210 so installed 1.2.9 agents can receive it;
-  this is source/CI validation only, not a published catalog entry or remote rollout.
+  both local debug flavors and CI APK build passed, and all PR checks passed on
+  `2cb4a9d`; debug artifacts are not a published OTA catalog entry or remote rollout.
   TLS/provider reachability and delivery to the 20 remote clones remain unaccepted.
   [Evidence and limits](docs/audits/2026-09-20/OTA-TRANSPORT-RETRY.md).
 

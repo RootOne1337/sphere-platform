@@ -50,8 +50,9 @@ SPS/PPS без IDR. Новый frontend ещё не установлен; уда
 
 **23 сентября — P2 F32-30:** [локальная standalone-сборка выбирала корень workspace выше frontend](FRONTEND-STANDALONE.md).
 Корень трассировки теперь задан явно; standalone-сервер и четыре маршрута прошли
-локальную HTTP-проверку. Предупреждение о trace-файле на Windows и новая CI-сборка
-для Linux ещё не закрыты; pilot не менялся.
+локальную HTTP-проверку. Linux CI на `2cb4a9d` прошёл build и проверку root entrypoint;
+полный frontend Docker image из этого артефакта не собирался. Предупреждение Windows
+о trace-файле остаётся отдельным остаточным риском; pilot не менялся.
 
 **23 сентября — P1 F32-32 / AUD-143:** isolated Redis CI probe OOM-killed при
 1536 MiB во время параллельного dataset fill и AOF persistence. При 2048 MiB
@@ -67,10 +68,13 @@ source candidate повторяет только одну прерванную I
 частичный файл перезаписывается, digest проверяется до установки. До fix новая
 регрессия падала; после fix OTA recovery class прошёл 11 tests на каждом из dev и
 enterprise flavors. APK version поднята до **1.2.10 / 10210**, поскольку OTA
-игнорирует тот же versionCode. Это пока локальная source/test проверка: CI и
-каталог/удалённое подтверждение ещё ожидаются; TLS блокировку такая попытка не
-обходит. Ни одна удалённая VM не обновлялась, 20 отдельных ID и первый кадр не
-подтверждены. [AUD-144 evidence, implementation и остаточный риск](OTA-TRANSPORT-RETRY.md).
+игнорирует тот же versionCode. Полный CI для `2cb4a9d` прошёл: backend — 1,997 tests,
+0 failures/errors, 15 skipped; Redis runtime probe прошёл AOF/BGSAVE/restart без OOM,
+но cgroup peak достиг потолка 2 GiB. Локальные и CI dev/enterprise debug APK
+собраны; публикация catalog, совместимость подписи с установленной APK и удалённое подтверждение
+ещё ожидаются. HTTP/1.1 retry не обходит TLS/provider block. Ни одна удалённая VM
+не обновлялась, 20 отдельных ID и первый кадр не подтверждены.
+[AUD-144 evidence, implementation и остаточный риск](OTA-TRANSPORT-RETRY.md).
 
 Ниже приведена контрольная точка исходного аудита на 21 сентября. Последующие разделы сохраняют историю
 воспроизведений; наличие строки в исходном реестре **не означает, что её root
@@ -226,10 +230,10 @@ Compose/monitoring/backup и нагрузочный harness. Это провер
 | F32-27 | P1, preview / Medium / R, 21 сентября | Переменная в top-level volume key делает preview Compose невалидным |
 | F32-28 | P0, identity/remote stream/OTA / High / R, 22 сентября | Копии APK используют общий ID; удалённая миграция и WAN OTA не приняты |
 | F32-29 | P0, первый кадр / High / R, 23 сентября | Интерфейс полагался на одноразовый IDR; исправление добавило повторы, удалённая приёмка OPEN |
-| F32-30 | P2, сборка frontend / Medium / R, 23 сентября | Standalone попадал во вложенный путь при внешнем lockfile; корень закреплён, сборка CI для Linux ещё ожидается |
+| F32-30 | P2, сборка frontend / Medium / R, 23 сентября | Standalone попадал во вложенный путь при внешнем lockfile; Linux CI build/root-entrypoint check passed, Windows warning и frontend Docker-image check open |
 | F32-31 | P0, ранний IDR / High / R, 23 сентября | Android мог потерять `viewer_connected` до готовности encoder; отложенная команда и регрессии добавлены, удалённая приёмка OPEN |
 | F32-32 | P1, Redis persistence headroom / High / R, 23 сентября | 2048 MiB isolated AOF probe passes, but cgroup peak reaches ceiling; 32-stream and pilot acceptance remain open |
-| F32-33 | P0, remote OTA body recovery / High / R, 23 сентября | Bounded HTTP/1.1 retry fixes transient body resets locally; CI, TLS reachability, catalog publication and remote install remain unaccepted |
+| F32-33 | P0, remote OTA body recovery / High / R, 23 сентября | Local/CI bounded HTTP/1.1 retry passes; TLS reachability, signer compatibility, catalog publication and remote install remain unaccepted |
 
 ## Backend, оркестрация и БД
 

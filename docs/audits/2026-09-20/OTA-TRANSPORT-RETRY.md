@@ -52,7 +52,17 @@ The bump does not publish a catalog entry or install the APK.
   and one install. The repeated-reset case stops after two requests, installs
   nothing, and leaves no partial staging file.
 - Existing SHA-256 validation and serialized install regressions remain in the same
-  test class. Full PR CI on this candidate has not yet completed at this checkpoint.
+  test class. Full PR CI on `2cb4a9d` passed: Android APK build/tests, frontend
+  tests/types/build, backend/real-service suite, API-doc check, isolated Redis AOF
+  acceptance, RLS, lint, security, production-image bootstrap, and Alembic
+  single-head. Backend JUnit evidence records **1,997 tests, 0 failures, 0 errors,
+  15 skipped**. The isolated Redis probe reports no OOM and successful
+  persistence/restart, while its 2 GiB `memory.peak` reaches the configured ceiling;
+  this is not 32-stream headroom.
+- Local `devDebug` and `enterpriseDebug` packages were independently built and
+  inspected with `aapt`: both report versionCode 10210 (`1.2.10-dev` and `1.2.10`).
+  CI build also passed. These debug-signed packages are not published OTA artifacts;
+  their signer has not been compared with the currently installed pilot APK.
 - No APK was installed on the local or remote pilot during this change. The two local
   agents remain on 1.2.9 / 10209; the remote clone identities and update status are
   unconfirmed.

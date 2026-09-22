@@ -149,9 +149,12 @@ ingress GET 200; первоначальный ingress timeout также сох�
 Проверка до исправления падала на разорванном теле. После исправления recovery test
 class прошёл: 11 tests для `dev` и 11 для `enterprise`; повторный разрыв не вызывает
 установку. Version candidate поднят с 1.2.9/10209 до 1.2.10/10210, чтобы OTA
-не отбрасывала исправление как ту же версию. Это не доказательство доступности
-TLS ingress и не remote OTA acceptance: свежая CI, публикация каталога и установка
-на удалённую станцию ещё не подтверждены. Подробный контракт и риск: [AUD-144](OTA-TRANSPORT-RETRY.md).
+не отбрасывала исправление как ту же версию. Оба локальных debug APK собраны и
+manifest подтверждает versionCode 10210. Полный CI `2cb4a9d` прошёл: 1,997 backend
+tests, 0 failures/errors, 15 skipped; APK, frontend, security, RLS, lint, image
+bootstrap и Redis runtime checks зелёные. Это всё ещё не доказательство доступности
+TLS ingress или remote OTA acceptance: compatible-signature/catalog publication и
+установка на удалённую станцию не выполнялись. Подробный контракт и риск: [AUD-144](OTA-TRANSPORT-RETRY.md).
 
 ## Residual risk и следующий шаг
 

@@ -4,7 +4,7 @@
 
 Текущий локальный pilot: backend **`3be0e29`**, frontend **`9924eb1`**, оба локальных APK **1.2.9 / 10209**.
 [F32-28](../audits/2026-09-20/CLONE-IDENTITY.md): clone identity fix установлен; OTA-only recovery добавлен, но удалённым копиям надёжно доставить APK пока не удалось. Viewer общей карточки получил SPS/PPS без IDR; кадр и декодирование не приняты. На 32 устройства допуск закрыт.
-**Новый исходный кандидат:** APK **1.2.10 / 10210** включает ограниченный recovery прерванной OTA-загрузки (AUD-144); он ещё не собран/опубликован/установлен на pilot. Оба локальных устройства остаются на 1.2.9/10209, 20 удалённых копий — без подтверждённых новых ID и обновления. [Доказательства OTA transport retry](../audits/2026-09-20/OTA-TRANSPORT-RETRY.md).
+**Новый debug candidate:** APK **1.2.10 / 10210** включает ограниченный recovery прерванной OTA-загрузки (AUD-144). Локальные `devDebug` и `enterpriseDebug` артефакты собраны; CI APK build прошёл, manifest показывает versionCode 10210. Они не опубликованы в managed OTA catalog и не установлены на pilot; для OTA требуется signing certificate, совместимый с установленной APK, и опубликованный catalog entry. Оба локальных устройства остаются на 1.2.9/10209, 20 удалённых копий — без подтверждённых новых ID и обновления. [Доказательства OTA transport retry](../audits/2026-09-20/OTA-TRANSPORT-RETRY.md).
 [Canary 21 сентября](../audits/2026-09-20/CANARY-20260921.md): 15 task receipts,
 два pipeline, pending stop/deadline и backend restart проверены; PID после OTA
 сохранились, crash buffers прежние. Свежая APK и обычный OTA-каталог обновлены.

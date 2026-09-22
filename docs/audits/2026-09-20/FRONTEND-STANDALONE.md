@@ -39,9 +39,11 @@ HTTP 200 для `/`, `/dashboard`, `/devices` и `/stream`; после smoke-п�
 - На Windows Next.js продолжил печатать предупреждение о неудачном копировании
   отсутствующего `page_client-reference-manifest.js` для группы маршрутов. Это отдельное
   предупреждение: проверенные маршруты работали, но полный Docker image из этого
-  Windows-артефакта здесь не собирался. Сборка CI для Linux и Docker-образ текущего
-  commit ещё должны пройти после push.
+  Windows-артефакта здесь не собирался.
+- Linux frontend CI на `2cb4a9d` прошёл `npm run build` и `test -f
+  .next/standalone/server.js`; frontend unit tests и type check также прошли. Отдельный
+  frontend Docker-image build из этого артефакта не запускался.
 
 Исправление не меняет существующий контейнер или pilot. Оно стабилизирует путь
-локальной standalone-сборки; перед развёртыванием текущей ветки ожидается новый CI
-workflow, который повторно проверит сборку и корневой `server.js`.
+локальной standalone-сборки; Linux CI подтвердил root entrypoint, тогда как Windows
+trace-copy warning и frontend Docker-image validation остаются открытыми.

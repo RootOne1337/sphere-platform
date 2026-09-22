@@ -63,7 +63,7 @@
 | Согласованный rollout backend/APK 1.2.8 | [Canary 21 сентября](audits/2026-09-20/CANARY-20260921.md): OTA, backup/restore, 15 tasks, два pipeline |
 | Frontend `9924eb1` | [AUD-138](audits/2026-09-20/DECODER-RECOVERY.md): decoder bounds/recovery и два живых потока после restart |
 | Первый IDR и восстановление | [AUD-140 / F32-29](audits/2026-09-20/STREAM-FIRST-FRAME.md) · [AUD-142 / F32-31](audits/2026-09-20/ANDROID-KEYFRAME-STARTUP.md): browser retry, отложенный Android keyframe до старта encoder, backend forwarding regression; удалённая приёмка ещё OPEN |
-| Standalone-сборка frontend | [AUD-141 / F32-30](audits/2026-09-20/FRONTEND-STANDALONE.md): явный корень артефакта и HTTP-проверка; CI для Linux ещё ожидается |
+| Standalone-сборка frontend | [AUD-141 / F32-30](audits/2026-09-20/FRONTEND-STANDALONE.md): Linux CI build/root-entrypoint passed; отдельный frontend Docker image не проверен; Windows trace warning remains |
 | Redis budget | [AUD-143](audits/2026-09-20/REDIS-PERSISTENCE-HEADROOM.md): 1536 MiB воспроизвёл OOM; 2048 MiB probe прошёл, peak достиг потолка; 32-stream/live rollout open |
 | OTA transfer | [AUD-144 / F32-33](audits/2026-09-20/OTA-TRANSPORT-RETRY.md): local before/after regression and bounded retry; candidate 1.2.10/10210 is not yet published or remotely installed |
 | Сетевые отказы | [Native matrix](audits/2026-09-05/NETWORK-RECOVERY-NATIVE.md) · [Reconnect debt](audits/2026-09-05/ANDROID-RECONNECT-DEBT.md) |
