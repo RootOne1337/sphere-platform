@@ -14,6 +14,21 @@ from backend.models import Device, Organization
 from backend.services.device_ota_recovery import OtaRecoveryGrant, get_ota_recovery
 
 
+@pytest.mark.parametrize(("error", "expected"), [
+    (None, None), ({"token": "private"}, None),
+    ("OTA download failed: 401", "download_http_401"),
+    ("SHA-256 mismatch: private payload", "checksum_mismatch"),
+    ("SSRF protection: secret host", "download_origin_rejected"),
+    ("unexpected end of stream on private URL", "download_stream_interrupted"),
+    ("Permission denied /private/path", "permission_denied"),
+    ("create install session failed", "package_install_failure"),
+    ("arbitrary credential never copied", "unclassified"),
+])
+def test_recovery_diagnostics_never_emit_agent_error_text(error, expected):
+    from backend.services.device_ota_recovery import recovery_failure_code
+    assert recovery_failure_code(error) == expected
+
+
 @pytest.fixture
 async def recovery_case(db_session, monkeypatch):
     now = int(time.time())

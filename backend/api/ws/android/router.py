@@ -455,6 +455,8 @@ async def serve_ota_recovery(ws: WebSocket, device_id: str, grant) -> None:
     """Доставить один разрешённый APK; heartbeat не публикует online/задачи."""
     import time
 
+    from backend.services.device_ota_recovery import recovery_failure_code
+
     command = {"type": "OTA_UPDATE", "command_id": str(grant.command_id),
                "signed_at": int(time.time()), "ttl_seconds": 180,
                "payload": {"download_url": str(ws.base_url.replace(scheme="https")).rstrip("/") +
@@ -470,7 +472,8 @@ async def serve_ota_recovery(ws: WebSocket, device_id: str, grant) -> None:
                     message = await asyncio.wait_for(ws.receive_json(), timeout=10)
                     if isinstance(message, dict) and message.get("command_id") == str(grant.command_id):
                         logger.info("android_ws.ota_recovery_receipt", device_id=device_id,
-                                    grant_id=str(grant.command_id), status=str(message.get("status"))[:24])
+                                    grant_id=str(grant.command_id), status=str(message.get("status"))[:24],
+                                    failure_code=recovery_failure_code(message.get("error")))
                 except asyncio.TimeoutError:
                     await ws.send_json({"type": "ping", "ts": time.time()})
     except (TimeoutError, WebSocketDisconnect):

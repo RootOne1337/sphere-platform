@@ -9,6 +9,7 @@ from __future__ import annotations
 import hashlib
 import hmac
 import json
+import re
 import time
 import uuid
 
@@ -20,6 +21,33 @@ from backend.core.config import settings
 from backend.database.tenant import bind_tenant_context
 from backend.models.device import Device
 from backend.services.cache_service import CacheService
+
+
+def recovery_failure_code(error: object) -> str | None:
+    """Классифицировать ответ старого APK, не записывая произвольный текст/секреты."""
+    if not isinstance(error, str) or not error:
+        return None
+    value = error[:2048].lower()
+    match = re.search(r"ota download failed: (\d{3})\b", value)
+    if match:
+        return "download_http_" + match.group(1)
+    for fragments, code in (
+        (("sha-256 mismatch",), "checksum_mismatch"),
+        (("ssrf protection", "download must use https"), "download_origin_rejected"),
+        (("timeout", "timed out"), "timeout"),
+        (("unexpected end of stream", "stream was reset", "stream closed"), "download_stream_interrupted"),
+        (("permission", "eacces", "not allowed"), "permission_denied"),
+        (("space", "enospc"), "storage_full"),
+        (("certificate", "ssl", "trust anchor"), "tls_failure"),
+        (("resolve host", "unknownhost"), "dns_failure"),
+        (("connect", "unreachable", "network"), "connection_failure"),
+        (("install", "session"), "package_install_failure"),
+        (("execution_interrupted", "cancel"), "execution_interrupted"),
+        (("expired",), "command_expired"),
+    ):
+        if any(fragment in value for fragment in fragments):
+            return code
+    return "unclassified"
 
 
 class OtaRecoveryGrant(BaseModel):
