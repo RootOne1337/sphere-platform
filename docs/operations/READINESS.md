@@ -41,8 +41,10 @@ standalone-сервер и четыре маршрута прошли HTTP-пр�
 
 **P1 F32-32 / AUD-143:** isolated Redis probe воспроизвёл OOM при 1536 MiB. На
 2048 MiB CI прошёл concurrent write/AOF/BGSAVE и restart без OOM, сохранив 6,531
-ключ; peak достиг ровно потолка. Это закрывает воспроизведённый workload, но не
-даёт запаса для 32 streams; live pilot остался на 1536 MiB.
+ключ. Два post-fix probe показали peak 2,147,483,648 bytes (лимит) и
+1,603,907,584 bytes (~1.49 GiB); используем худшее наблюдение, а не предполагаемый
+запас от меньшего повтора. Это закрывает воспроизведённый workload, но не доказывает
+запас для 32 streams; live pilot остался на 1536 MiB.
 [Причина и точное доказательство](../audits/2026-09-20/REDIS-PERSISTENCE-HEADROOM.md).
 
 **P0 F32-33 / AUD-144:** transfer-level OTA regression теперь имеет bounded retry:
@@ -64,7 +66,8 @@ backend restart без F5, projection освобождена, APK PID/crash buff
 command/video budget, Redis pressure/recovery и достоверные метрики. [AUD-139](../audits/2026-09-20/REDIS-MEMORY.md)
 закрыл исходный memory mismatch, но [AUD-143](../audits/2026-09-20/REDIS-PERSISTENCE-HEADROOM.md)
 выявил OOM на более тяжёлой конкурентной AOF нагрузке; 2 GiB теперь проходит этот
-isolation test, но peak упирается в потолок и stream margin остаётся непроверенным.
+isolation test. Два CI пика различались (1.49 и 2.00 GiB), худший достигает потолка;
+stream margin остаётся непроверенным.
 Политика buffers/eviction остаётся
 открытой. Native runtime-role RLS,
 compound orchestration и полный fault/soak ещё не приняты. Дополнительно F32-26:
