@@ -44,6 +44,15 @@ Linux ожидается; предупреждение о копировании
 даёт запаса для 32 streams; live pilot остался на 1536 MiB.
 [Причина и точное доказательство](../audits/2026-09-20/REDIS-PERSISTENCE-HEADROOM.md).
 
+**P0 F32-33 / AUD-144:** transfer-level OTA regression теперь имеет bounded retry:
+до fix разрыв HTTP body завершал единственную загрузку; после fix выполняется одна
+повторная попытка на HTTP/1.1 с очисткой partial APK и обязательной проверкой
+SHA-256. Recovery tests прошли на обоих Android flavors; candidate 1.2.10/10210
+нужен, чтобы установленная 1.2.9 приняла обновление. Это ещё не CI, не публикация
+в OTA catalog и не удалённая установка. TLS/доступность провайдера не исправлены
+и не проверены; 20 удалённых устройств, отдельные ID и первые декодируемые кадры
+остаются NO-GO. [Доказательства и границы](../audits/2026-09-20/OTA-TRANSPORT-RETRY.md).
+
 
 **AUD-138 установлен:** [bounded decoder/recovery](../audits/2026-09-20/DECODER-RECOVERY.md),
 14 before failures → 264 frontend tests passed. Два экрана восстановились после

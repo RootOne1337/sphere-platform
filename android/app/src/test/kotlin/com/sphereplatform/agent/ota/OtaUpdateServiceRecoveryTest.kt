@@ -97,6 +97,38 @@ class OtaUpdateServiceRecoveryTest {
         assertTrue(dir.listFiles().isNullOrEmpty())
     }
 
+    @Test fun `one transient body reset is retried before waiting for the next work manager run`() = runBlocking {
+        val attempts = AtomicInteger()
+        val ota = service(client({
+            if (attempts.getAndIncrement() == 0) brokenBody() else bytes.toResponseBody()
+        }))
+
+        ota.performUpdate(payload())
+
+        assertEquals("the first interrupted transfer must trigger one bounded retry", 2, attempts.get())
+        assertEquals(1, installs.get())
+        assertTrue("Successful OTA leaves no staging file", dir.listFiles().isNullOrEmpty())
+    }
+
+    @Test fun `repeated body resets stop after one fallback and remove both partial attempts`() = runBlocking {
+        val attempts = AtomicInteger()
+        val ota = service(client({
+            attempts.incrementAndGet()
+            brokenBody()
+        }))
+
+        try {
+            ota.performUpdate(payload())
+            fail("Repeated body resets must not be accepted")
+        } catch (expected: IOException) {
+            assertTrue(expected.message!!.contains("connection reset"))
+        }
+
+        assertEquals("each OTA execution gets at most one fallback", 2, attempts.get())
+        assertEquals(0, installs.get())
+        assertTrue("Failed OTA removes all partial staging data", dir.listFiles().isNullOrEmpty())
+    }
+
     @Test fun `overlapping requests cannot overwrite or remove an APK being installed`() = runBlocking {
         val firstEntered = CountDownLatch(1)
         val releaseFirst = CountDownLatch(1)

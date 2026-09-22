@@ -308,11 +308,12 @@ identity, доверенный ключ и параметры enrollment; APK и
 | Backend | `3be0e29` (локальный pilot) | [Клоны, recovery и WAN ограничения](docs/audits/2026-09-20/CLONE-IDENTITY.md) |
 | Frontend | `9924eb1` | [Decoder recovery](docs/audits/2026-09-20/DECODER-RECOVERY.md) |
 | Android, оба локальных устройства | **1.2.9-dev / 10209** | [OTA и clone identity](docs/audits/2026-09-20/CLONE-IDENTITY.md) |
+| Android source candidate | **1.2.10 / 10210**, OTA retry; not published or installed | [AUD-144 transport retry and limits](docs/audits/2026-09-20/OTA-TRANSPORT-RETRY.md) |
 | Task / pipeline | 15 terminal task receipts; два pipeline runs | [Независимая сверка результатов](docs/audits/2026-09-20/CANARY-20260921.md) |
 | Видео | Два потока восстановились после restart без F5; capture освобождён | [Native acceptance](docs/audits/2026-09-20/DECODER-RECOVERY.md) |
 | Redis | Source Compose: 512 MiB dataset / 2048 MiB ceiling; isolated AOF passes but peak hits limit; 32-stream/live rollout open | [AUD-143 evidence and rollout boundary](docs/audits/2026-09-20/REDIS-PERSISTENCE-HEADROOM.md) |
 | Сетевые отказы | Проверены отдельные отказы Android, серверного входа и обеих сторон | [Матрица и версии проверок](docs/audits/2026-09-05/NETWORK-RECOVERY-NATIVE.md) |
-| Удалённые клоны/видео | **NO-GO:** общий device ID, viewer без IDR, WAN OTA обрывается | [F32-28 evidence и остаточные риски](docs/audits/2026-09-20/CLONE-IDENTITY.md) |
+| Удалённые клоны/видео | **NO-GO:** отдельные IDs и кадр не приняты; bounded OTA retry локально проверен, WAN acceptance remains open | [F32-28 / F32-33 evidence и остаточные риски](docs/audits/2026-09-20/CLONE-IDENTITY.md) |
 
 ### Ближайшие эксплуатационные задачи
 

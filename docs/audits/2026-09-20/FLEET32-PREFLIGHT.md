@@ -60,6 +60,18 @@ SPS/PPS без IDR. Новый frontend ещё не установлен; уда
 проверку, но 32-stream buffer margin и live pilot rollout остаются открытыми;
 pilot не менялся. [Root cause, evidence и остаточные риски](REDIS-PERSISTENCE-HEADROOM.md).
 
+**23 сентября — P0 F32-33 / AUD-144:** remote OTA evidence показал, что HTTP 200
+от ingress не означает полного чтения APK: тело обрывалось с HTTP/2 protocol reset
+или TLS error, и загрузчик завершал попытку без восстановления. Новый Android
+source candidate повторяет только одну прерванную I/O передачу через HTTP/1.1;
+частичный файл перезаписывается, digest проверяется до установки. До fix новая
+регрессия падала; после fix OTA recovery class прошёл 11 tests на каждом из dev и
+enterprise flavors. APK version поднята до **1.2.10 / 10210**, поскольку OTA
+игнорирует тот же versionCode. Это пока локальная source/test проверка: CI и
+каталог/удалённое подтверждение ещё ожидаются; TLS блокировку такая попытка не
+обходит. Ни одна удалённая VM не обновлялась, 20 отдельных ID и первый кадр не
+подтверждены. [AUD-144 evidence, implementation и остаточный риск](OTA-TRANSPORT-RETRY.md).
+
 Ниже приведена контрольная точка исходного аудита на 21 сентября. Последующие разделы сохраняют историю
 воспроизведений; наличие строки в исходном реестре **не означает, что её root
 cause всё ещё не исправлен**. Установленный fix и закрытая приёмка масштаба —
@@ -217,6 +229,7 @@ Compose/monitoring/backup и нагрузочный harness. Это провер
 | F32-30 | P2, сборка frontend / Medium / R, 23 сентября | Standalone попадал во вложенный путь при внешнем lockfile; корень закреплён, сборка CI для Linux ещё ожидается |
 | F32-31 | P0, ранний IDR / High / R, 23 сентября | Android мог потерять `viewer_connected` до готовности encoder; отложенная команда и регрессии добавлены, удалённая приёмка OPEN |
 | F32-32 | P1, Redis persistence headroom / High / R, 23 сентября | 2048 MiB isolated AOF probe passes, but cgroup peak reaches ceiling; 32-stream and pilot acceptance remain open |
+| F32-33 | P0, remote OTA body recovery / High / R, 23 сентября | Bounded HTTP/1.1 retry fixes transient body resets locally; CI, TLS reachability, catalog publication and remote install remain unaccepted |
 
 ## Backend, оркестрация и БД
 

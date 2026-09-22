@@ -14,6 +14,15 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Audit / documentation
 
+- AUD-144 / F32-33: OTA body transfers now get one bounded retry after an I/O
+  interruption, with an HTTP/1.1 fallback and partial-file truncation before retry.
+  APK digest validation remains mandatory before install. New recovery tests first
+  reproduced failure before the fix, then passed for dev and enterprise flavors.
+  Candidate version is 1.2.10 / 10210 so installed 1.2.9 agents can receive it;
+  this is source/CI validation only, not a published catalog entry or remote rollout.
+  TLS/provider reachability and delivery to the 20 remote clones remain unaccepted.
+  [Evidence and limits](docs/audits/2026-09-20/OTA-TRANSPORT-RETRY.md).
+
 - F32-28: добавлен явно включаемый super_admin канал доставки одного APK старым
   копиям с истёкшим access и потерянным refresh. Подписанное разрешение ограничено
   устройством, организацией, digest и одним часом; не открывает командный канал.

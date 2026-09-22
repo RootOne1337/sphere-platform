@@ -11,17 +11,23 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
+import okhttp3.Protocol
 import okhttp3.Request
 import timber.log.Timber
 import java.io.File
+import java.io.IOException
+import java.net.ProtocolException
+import java.net.SocketTimeoutException
 import java.security.MessageDigest
 import java.util.concurrent.TimeUnit
+import javax.net.ssl.SSLException
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -102,47 +108,72 @@ class OtaUpdateService @Inject constructor(
             .header("Authorization", "Bearer ${authStore.getToken()}")
             .build()
 
-        val call = httpClient.newCall(request)
-        // Blocking execute/read must be interrupted when WorkManager or the
-        // command scope stops. A child observes cancellation while IO is blocked;
-        // coroutineScope waits for the IO/writer to close before staging deletion.
-        val cancellation = launch(start = CoroutineStart.UNDISPATCHED) {
-            try { awaitCancellation() } finally { call.cancel() }
-        }
-        try {
-            // FIX 7.2: response.use {} гарантирует закрытие при ошибках HTTP
-            call.execute().use { response ->
-                check(response.isSuccessful) { "OTA download failed: ${response.code}" }
-                // FIX D6: Проверяем Content-Length перед скачиванием — защита от переполнения /data
-                val contentLength = response.body!!.contentLength()
-                if (contentLength > MAX_APK_SIZE_BYTES) {
-                    throw IllegalStateException(
-                        "OTA APK слишком большой: ${contentLength / (1024 * 1024)}MB > ${MAX_APK_SIZE_BYTES / (1024 * 1024)}MB"
-                    )
-                }
-                response.body!!.byteStream().use { input ->
-                    dest.outputStream().use { output ->
-                        // FIX D6: Контроль размера при копировании (Content-Length может быть -1)
-                        val buffer = ByteArray(8192)
-                        var totalRead = 0L
-                        var read: Int
-                        while (input.read(buffer).also { read = it } != -1) {
-                            currentCoroutineContext().ensureActive()
-                            totalRead += read
-                            if (totalRead > MAX_APK_SIZE_BYTES) {
-                                throw IllegalStateException(
-                                    "OTA APK превысил лимит ${MAX_APK_SIZE_BYTES / (1024 * 1024)}MB при скачивании"
-                                )
+        // A proxy can reset a large HTTP/2 body after returning headers. Retry
+        // once over HTTP/1.1; outputStream() truncates any partial first attempt.
+        val clients = listOf(
+            httpClient,
+            httpClient.newBuilder().protocols(listOf(Protocol.HTTP_1_1)).build(),
+        )
+        for ((attempt, client) in clients.withIndex()) {
+            val call = client.newCall(request)
+            // Blocking execute/read must be interrupted when WorkManager or the
+            // command scope stops. A child observes cancellation while IO is blocked;
+            // coroutineScope waits for the IO/writer to close before staging deletion.
+            val cancellation = launch(start = CoroutineStart.UNDISPATCHED) {
+                try { awaitCancellation() } finally { call.cancel() }
+            }
+            try {
+                // FIX 7.2: response.use {} гарантирует закрытие при ошибках HTTP
+                call.execute().use { response ->
+                    check(response.isSuccessful) { "OTA download failed: ${response.code}" }
+                    // FIX D6: Проверяем Content-Length перед скачиванием — защита от переполнения /data
+                    val body = response.body ?: throw IOException("OTA response body missing")
+                    val contentLength = body.contentLength()
+                    if (contentLength > MAX_APK_SIZE_BYTES) {
+                        throw IllegalStateException(
+                            "OTA APK слишком большой: ${contentLength / (1024 * 1024)}MB > ${MAX_APK_SIZE_BYTES / (1024 * 1024)}MB"
+                        )
+                    }
+                    body.byteStream().use { input ->
+                        dest.outputStream().use { output ->
+                            // FIX D6: Контроль размера при копировании (Content-Length может быть -1)
+                            val buffer = ByteArray(8192)
+                            var totalRead = 0L
+                            var read: Int
+                            while (input.read(buffer).also { read = it } != -1) {
+                                currentCoroutineContext().ensureActive()
+                                totalRead += read
+                                if (totalRead > MAX_APK_SIZE_BYTES) {
+                                    throw IllegalStateException(
+                                        "OTA APK превысил лимит ${MAX_APK_SIZE_BYTES / (1024 * 1024)}MB при скачивании"
+                                    )
+                                }
+                                output.write(buffer, 0, read)
                             }
-                            output.write(buffer, 0, read)
                         }
                     }
                 }
+                Timber.i("OTA: downloaded ${dest.length()} bytes → ${dest.name}")
+                return@coroutineScope
+            } catch (error: IOException) {
+                currentCoroutineContext().ensureActive()
+                if (attempt == clients.lastIndex) throw error
+                Timber.w(
+                    "OTA: transport failure (${classifyTransportFailure(error)}); retrying once over HTTP/1.1",
+                )
+                delay(250L)
+            } finally {
+                cancellation.cancel()
             }
-            Timber.i("OTA: downloaded ${dest.length()} bytes → ${dest.name}")
-        } finally {
-            cancellation.cancel()
         }
+    }
+
+    private fun classifyTransportFailure(error: IOException): String = when {
+        error is SSLException -> "tls_failure"
+        error is ProtocolException || error.message.orEmpty().contains("PROTOCOL_ERROR", ignoreCase = true) ->
+            "protocol_failure"
+        error is SocketTimeoutException -> "timeout"
+        else -> "io_failure"
     }
 
     /**
