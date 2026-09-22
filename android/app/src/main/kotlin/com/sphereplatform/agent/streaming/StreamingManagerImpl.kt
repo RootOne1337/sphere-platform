@@ -31,6 +31,7 @@ class StreamingManagerImpl @Inject constructor(
 ) : StreamingManager {
 
     private var encoder: H264Encoder? = null
+    private val viewerKeyFrameCoordinator = ViewerKeyFrameCoordinator()
     private var adaptiveBitrate: AdaptiveBitrateController? = null
     private var virtualDisplayManager: VirtualDisplayManager? = null
     private var imageReader: ImageReader? = null
@@ -214,6 +215,7 @@ class StreamingManagerImpl @Inject constructor(
         virtualDisplayManager = vdm
 
         streaming = true
+        viewerKeyFrameCoordinator.markEncoderReady { requestKeyFrameNow() }
         Timber.i("StreamingManagerImpl: started")
     }
 
@@ -259,10 +261,22 @@ class StreamingManagerImpl @Inject constructor(
      * an immediate keyframe so the viewer can start decoding without waiting
      * for the next I-frame interval.
      */
+    @Synchronized
     fun onViewerConnected() {
-        encoder?.requestKeyFrame()
+        val dispatched = viewerKeyFrameCoordinator.request { requestKeyFrameNow() }
+        if (!dispatched) {
+            Timber.i("StreamingManagerImpl: viewer key-frame request deferred until encoder is ready")
+        }
+    }
 
+    private fun requestKeyFrameNow() {
         val enc = encoder ?: return
+        if (!streaming) return
+        if (enc.requestKeyFrame()) {
+            Timber.i("StreamingManagerImpl: encoder accepted viewer sync-frame request")
+        } else {
+            Timber.w("StreamingManagerImpl: encoder did not accept viewer key-frame request")
+        }
         val fakeMeta = H264Encoder.FrameMetadata(
             isKeyFrame = true,
             presentationTimeUs = 0L,
@@ -284,6 +298,7 @@ class StreamingManagerImpl @Inject constructor(
     // -------------------------------------------------------------------------
 
     private fun stopInternal() {
+        viewerKeyFrameCoordinator.markEncoderStopped()
         streaming = false
         // PERF: Индивидуальный try-catch на каждый ресурс.
         // До: один try-catch → если virtualDisplayManager.release() бросает,

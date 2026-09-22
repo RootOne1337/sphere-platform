@@ -232,6 +232,7 @@ class CommandDispatcher @Inject constructor(
                 return
             }
             "request_keyframe" -> {
+                Timber.i("Received request_keyframe — requesting sync frame")
                 (streamingManager as? StreamingManagerImpl)?.onViewerConnected()
                 return
             }
