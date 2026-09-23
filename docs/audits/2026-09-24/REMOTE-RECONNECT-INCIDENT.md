@@ -166,7 +166,10 @@ sample: seven gateway HTTP 101 upgrades and seven backend connect/disconnect pai
 All gateway close timestamps were within 2 ms, and the owner confirmed a batch
 start followed by a batch stop after seeing a blank image. The pattern is
 consistent with intentional UI closure and is not evidence of a Cloudflare timeout.
-Details and limits are recorded in
+A 60-minute correlation by anonymized device ID matched all seven gateway targets
+to backend viewer events; one target also appeared in the `invalid_token` events.
+That overlap may explain this target's auth/reconnect instability, but not the
+near-simultaneous viewer closes. Details and limits are recorded in
 [the first-frame follow-up](../2026-09-20/STREAM-FIRST-FRAME.md).
 
 The local pilot frontend was rebuilt from clean source revision `48c9480` and
