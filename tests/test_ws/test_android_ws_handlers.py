@@ -331,6 +331,22 @@ class TestHandleDeviceEvent:
 class TestHandleAgentBinary:
     _SAMPLE_FRAME = b"\x00\x00\x00\x01\x65" + b"\xAB" * 200  # NAL IDR start code
 
+    async def test_video_traffic_does_not_emit_per_frame_info_logs(self):
+        """A 30-FPS stream must not turn every frame into a production log row."""
+        mock_bridge = AsyncMock()
+        with (
+            patch(
+                "backend.websocket.stream_bridge.get_stream_bridge",
+                return_value=mock_bridge,
+            ),
+            patch("backend.api.ws.android.router.logger.info") as log_info,
+        ):
+            for _ in range(250):
+                await handle_agent_binary(DEVICE_ID, self._SAMPLE_FRAME, MagicMock())
+
+        assert mock_bridge.handle_agent_frame.await_count == 250
+        log_info.assert_not_called()
+
     async def test_routes_frame_to_bridge(self):
         """Frame bytes forwarded to stream bridge handle_agent_frame."""
         mock_bridge = AsyncMock()

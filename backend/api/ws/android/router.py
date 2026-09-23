@@ -400,10 +400,6 @@ async def handle_device_event(device_id: str, org_id: str, msg: dict) -> None:
         )
 
 
-# Счётчик бинарных фреймов для периодического логирования (не спамить на каждый фрейм)
-_frame_counters: dict[str, int] = {}
-
-
 async def handle_agent_binary(
     device_id: str,
     data: bytes,
@@ -416,35 +412,6 @@ async def handle_agent_binary(
         if not bridge:
             logger.warning("handle_agent_binary: stream_bridge не инициализирован", device_id=device_id)
             return
-
-        count = _frame_counters.get(device_id, 0) + 1
-        _frame_counters[device_id] = count
-
-        # FIX-LOGGING: логируем КАЖДЫЙ фрейм (первые 50) для debug Cloudflare tunnel issues.
-        # После отладки — вернуть порог на 100.
-        has_viewer = bridge.is_streaming(device_id)
-        if count <= 50 or count % 100 == 0:
-            # Определяем NAL type из payload (после 14-byte Sphere header)
-            nal_info = "unknown"
-            if len(data) > 18:  # 14 header + 4 start code
-                # Ищем NAL type после Annex-B start code в payload
-                payload = data[14:] if len(data) > 14 else data
-                if len(payload) >= 5 and payload[0:4] == b"\x00\x00\x00\x01":
-                    nal_type = payload[4] & 0x1F
-                    nal_names = {1: "P-frame", 5: "IDR", 6: "SEI", 7: "SPS", 8: "PPS"}
-                    nal_info = nal_names.get(nal_type, f"NAL-{nal_type}")
-                elif len(payload) >= 4 and payload[0:3] == b"\x00\x00\x01":
-                    nal_type = payload[3] & 0x1F
-                    nal_names = {1: "P-frame", 5: "IDR", 6: "SEI", 7: "SPS", 8: "PPS"}
-                    nal_info = nal_names.get(nal_type, f"NAL-{nal_type}")
-            logger.info(
-                "Binary frame from agent",
-                device_id=device_id,
-                frame_num=count,
-                size_bytes=len(data),
-                nal_type=nal_info,
-                has_viewer=has_viewer,
-            )
 
         await bridge.handle_agent_frame(device_id, data)
     except Exception as e:
@@ -612,9 +579,6 @@ async def android_agent_ws(
         return
 
     session_id = await manager.connect(ws, device_id, "android", org_id_str)
-
-    # Сброс счётчика фреймов при новом подключении — для корректного логирования
-    _frame_counters[device_id] = 0
 
     await status_cache.set_status(device_id, DeviceLiveStatus(
         device_id=device_id,
