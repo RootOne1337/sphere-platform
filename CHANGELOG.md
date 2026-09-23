@@ -14,6 +14,16 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Audit / documentation
 
+- AUD-145 / F32-34: clone identity binding v2 now includes emulator VM serial and
+  permanent virtual NIC when available. Backend upgrades the legacy registration
+  once, splits later clones idempotently, and rejects stale v1 re-registration;
+  APK persists the new binding only after server acknowledgment. Android unit suites
+  and focused backend tests passed locally. A 32-clone PostgreSQL regression is
+  added but still requires CI; APK 1.2.11-dev / 10211 is a local package/signature
+  verified candidate only. Backend-first pilot rollout, remote serial uniqueness,
+  and first decoded stream frame remain unverified.
+  [Evidence and residual risks](docs/audits/2026-09-20/CLONE-BINDING-V2.md).
+
 - AUD-144 / F32-33: OTA body transfers now get one bounded retry after an I/O
   interruption, with an HTTP/1.1 fallback and partial-file truncation before retry.
   APK digest validation remains mandatory before install. New recovery tests first

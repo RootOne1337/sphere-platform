@@ -156,6 +156,21 @@ bootstrap и Redis runtime checks зелёные. Это всё ещё не до
 TLS ingress или remote OTA acceptance: compatible-signature/catalog publication и
 установка на удалённую станцию не выполнялись. Подробный контракт и риск: [AUD-144](OTA-TRANSPORT-RETRY.md).
 
+### AUD-145 / F32-34 · serial-based binding v2
+
+23 сентября обнаружено, что предыдущая binding использовала только постоянный MAC
+или Android ID и не включала serial эмулятора. Исправление и ограничения описаны в
+[отдельном отчёте AUD-145](CLONE-BINDING-V2.md): backend мигрирует старую карточку
+один раз и затем разводит клоны по versioned binding; Android принимает credentials
+только после подтверждения v2. Локальные dev/enterprise наборы содержат по 609
+test cases в каждом flavor без failures/errors (один existing enterprise test skipped);
+backend registration — 21 passed. Конкурентный PostgreSQL-тест
+на 32 клона добавлен, но локально пропущен без изолированной БД и остаётся
+обязательным CI gate. APK-кандидат 1.2.11-dev собран в package ID и подписи
+локального pilot, но не устанавливался. Backend rollout, уникальность serial
+20 удалённых LDPlayer и проверка первого декодированного кадра не подтверждены.
+До этих шагов массовая установка не допускается.
+
 ## Residual risk и следующий шаг
 
 1. Не объявлять 20 удалённых копий исправленными до 22 отдельных online-ID и

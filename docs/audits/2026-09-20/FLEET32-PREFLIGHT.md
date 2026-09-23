@@ -79,6 +79,15 @@ enterprise flavors. APK version поднята до **1.2.10 / 10210**, поск
 не обновлялась, 20 отдельных ID и первый кадр не подтверждены.
 [AUD-144 evidence, implementation и остаточный риск](OTA-TRANSPORT-RETRY.md).
 
+**23 сентября — P0 F32-34 / AUD-145:** Android v1 identity не использовала serial
+эмулятора, поэтому одинаковые MAC/Android ID клонированного образа могли снова
+схлопывать разные VM. Подготовлена versioned v2 binding и backend-first миграция;
+кандидат APK **1.2.11-dev / 10211** собран с локальным pilot package ID/signature.
+Android suites: 609 тестов в каждом flavor без failures/errors (один existing
+enterprise test skipped); backend registration: 21 passed. Отдельный PostgreSQL-тест 32 конкурентных экземпляров написан, но локально
+пропущен за отсутствием изолированных сервисов и ожидает CI. Удалённые serial,
+backend rollout и video IDR/frame delivery не подтверждены. [Evidence, fix и gates](CLONE-BINDING-V2.md).
+
 Ниже приведена контрольная точка исходного аудита на 21 сентября. Последующие разделы сохраняют историю
 воспроизведений; наличие строки в исходном реестре **не означает, что её root
 cause всё ещё не исправлен**. Установленный fix и закрытая приёмка масштаба —
@@ -237,6 +246,7 @@ Compose/monitoring/backup и нагрузочный harness. Это провер
 | F32-31 | P0, ранний IDR / High / R, 23 сентября | Android мог потерять `viewer_connected` до готовности encoder; отложенная команда и регрессии добавлены, удалённая приёмка OPEN |
 | F32-32 | P1, Redis persistence headroom / High / R, 23 сентября | Three 2048 MiB AOF probes pass; observed peak ranges 1.49–2.00 GiB, 32-stream and pilot acceptance remain open |
 | F32-33 | P0, remote OTA body recovery / High / R, 23 сентября | Local/CI bounded HTTP/1.1 retry passes; TLS reachability, signer compatibility, catalog publication and remote install remain unaccepted |
+| F32-34 | P0, cloned emulator identity / High / R, 23 сентября | Serial-based binding v2 and 32-way PostgreSQL regression added; CI, unique remote serials, backend-first rollout and video canary remain open |
 
 ## Backend, оркестрация и БД
 
