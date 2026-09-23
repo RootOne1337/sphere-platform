@@ -33,6 +33,14 @@ def _nonnegative_number(value: object, *, maximum: int = _MAX_SESSION_COUNTER) -
     return int(value)
 
 
+def _bounded_ratio(value: object) -> float | None:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return None
+    if not 0 <= value <= 1:
+        return None
+    return float(value)
+
+
 class StreamMetrics:
     """Store active-session snapshots; these values are not delivery receipts."""
 
@@ -52,12 +60,7 @@ class StreamMetrics:
             return
 
         fps = _nonnegative_number(stream_data.get("encoder_fps"), maximum=_MAX_ENCODER_FPS)
-        keyframe_ratio = stream_data.get("key_frame_ratio")
-        valid_keyframe_ratio = (
-            isinstance(keyframe_ratio, (int, float))
-            and not isinstance(keyframe_ratio, bool)
-            and 0 <= keyframe_ratio <= 1
-        )
+        keyframe_ratio = _bounded_ratio(stream_data.get("key_frame_ratio"))
 
         metric_fields = (
             ("encoded_frames_total", stream_encoder_frames_session),
@@ -78,8 +81,11 @@ class StreamMetrics:
         rejected = values.get("ws_queue_rejected_total")
         if (
             fps is None
-            or not valid_keyframe_ratio
+            or keyframe_ratio is None
             or len(values) != len(metric_fields)
+            or attempts is None
+            or accepted is None
+            or rejected is None
             or attempts != accepted + rejected
         ):
             # Do not leave an old healthy snapshot visible after malformed telemetry.
