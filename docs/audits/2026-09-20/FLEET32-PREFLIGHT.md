@@ -83,14 +83,15 @@ enterprise flavors. APK version поднята до **1.2.10 / 10210**, поск
 **23 сентября — P0 F32-34 / AUD-145:** Android v1 identity не использовала serial
 эмулятора, поэтому одинаковые MAC/Android ID клонированного образа могли снова
 схлопывать разные VM. Versioned v2 backend migration готова; финальная Android
-binding требует VM serial без MAC/root fallback и перепроверяется полными suites.
+binding требует VM serial без MAC/root fallback и прошла полные suites.
 Новый APK **1.2.11-dev / 10211** собран с strict-serial поведением; package ID и
 подпись совпадают с локальным pilot baseline, но APK не устанавливался. Предыдущий
 артефакт с MAC fallback устарел. Android suites прошли (610 tests на flavor, один
 existing enterprise skip). На PR head `114c48f` Android и frontend checks прошли;
 backend остановился на рассинхронизации generated OpenAPI до запуска тестов. Spec
 обновлена на закреплённых CI-зависимостях. PostgreSQL regression для 32 concurrent
-registrations написан, но локально не запускался без изолированных сервисов.
+registrations прошёл локально **1/1** после полной миграции на временных PostgreSQL
+15/Redis 7.2; полный code CI на head `633bf34` прошёл.
 Удалённые serial, backend rollout и video IDR/frame delivery не подтверждены.
 [Evidence, fix и gates](CLONE-BINDING-V2.md).
 
@@ -252,7 +253,7 @@ Compose/monitoring/backup и нагрузочный harness. Это провер
 | F32-31 | P0, ранний IDR / High / R, 23 сентября | Android мог потерять `viewer_connected` до готовности encoder; отложенная команда и регрессии добавлены, удалённая приёмка OPEN |
 | F32-32 | P1, Redis persistence headroom / High / R, 23 сентября | Three 2048 MiB AOF probes pass; observed peak ranges 1.49–2.00 GiB, 32-stream and pilot acceptance remain open |
 | F32-33 | P0, remote OTA body recovery / High / R, 23 сентября | Local/CI bounded HTTP/1.1 retry passes; TLS reachability, signer compatibility, catalog publication and remote install remain unaccepted |
-| F32-34 | P0, cloned emulator identity / High / R, 23 сентября | Serial-based binding v2 and 32-way PostgreSQL regression added; CI, unique remote serials, backend-first rollout and video canary remain open |
+| F32-34 | P0, cloned emulator identity / High / R, 23 сентября | Strict serial binding, Android suites, local 32-way PostgreSQL and CI pass; unique remote serials, backend-first rollout and video canary remain open |
 
 ## Backend, оркестрация и БД
 
