@@ -103,6 +103,19 @@ class WebSocketLifecycleTest {
         job.cancelAndJoin()
     }
 
+    @Test fun explicitRouteSwitchCanBypassReconnectDebounce() = runTest {
+        val job = launch { client.connect() }
+        runCurrent()
+        authenticateSocket()
+        runCurrent()
+
+        client.forceReconnectNow()
+        client.forceReconnectNow(bypassDebounce = true)
+
+        verify(exactly = 2) { socket.cancel() }
+        job.cancelAndJoin()
+    }
+
     @Test fun closingHandshakeIsAcknowledged() = runTest {
         val job = launch { client.connect() }
         runCurrent()

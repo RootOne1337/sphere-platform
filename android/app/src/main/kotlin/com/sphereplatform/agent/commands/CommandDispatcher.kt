@@ -59,6 +59,11 @@ class CommandDispatcher @Inject constructor(
     @ApplicationContext private val appContext: Context,
     private val commandJournal: CommandJournal,
 ) {
+    private companion object {
+        /** Let the signed route-change receipt enter OkHttp's queue before closing its socket. */
+        const val ROUTE_RECONNECT_ACK_GRACE_MS = 750L
+    }
+
     private val json = Json {
         ignoreUnknownKeys = true
         coerceInputValues = true
@@ -491,9 +496,22 @@ class CommandDispatcher @Inject constructor(
 
         CommandType.UPDATE_CONFIG -> {
             val serverUrl = cmd.payload["server_url"]?.jsonPrimitive?.contentOrNull
+            val fallbackServerUrl = cmd.payload["fallback_server_url"]?.jsonPrimitive?.contentOrNull
             val apiKey = cmd.payload["api_key"]?.jsonPrimitive?.contentOrNull
             val deviceId = cmd.payload["device_id"]?.jsonPrimitive?.contentOrNull
-            if (serverUrl != null) authStore.saveServerUrl(serverUrl)
+            if (serverUrl != null) {
+                val previousRoutes = authStore.connectionRoutesSnapshot().urls
+                if (fallbackServerUrl != null) authStore.saveServerRoutes(serverUrl, fallbackServerUrl)
+                else authStore.saveServerUrl(serverUrl)
+                val updatedRoutes = authStore.connectionRoutesSnapshot().urls
+                if (updatedRoutes != previousRoutes) {
+                    scope.launch {
+                        delay(ROUTE_RECONNECT_ACK_GRACE_MS)
+                        wsClient.forceReconnectNow(bypassDebounce = true)
+                    }
+                    Timber.i("Management routes changed; reconnect scheduled")
+                }
+            }
             if (apiKey != null) authStore.saveApiKey(apiKey)
             if (deviceId != null) authStore.saveDeviceId(deviceId)
             buildJsonObject { put("updated", true) }

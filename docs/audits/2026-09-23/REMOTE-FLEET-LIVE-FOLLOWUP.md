@@ -2,6 +2,10 @@
 
 **23 сентября 2026 · pilot `sphere-pilot-20260911` · результат: регистрация восстановлена, видеоприёмка не пройдена.**
 
+[Следующий source-level follow-up: AUD-160 route update/fallback regression](REMOTE-INGRESS-FAILOVER.md).
+Он исправляет адресное применение маршрута, но не меняет результат live-приёмки
+и не подтверждает причину отсутствия удалённых видеокадров.
+
 [Предыдущий срез AUD-147](REMOTE-FLEET-LIVE-AUDIT.md) ·
 [Fleet32 gates](../2026-09-20/FLEET32-PREFLIGHT.md) ·
 [Текущий pilot](../../operations/LOCAL-PILOT.md) ·

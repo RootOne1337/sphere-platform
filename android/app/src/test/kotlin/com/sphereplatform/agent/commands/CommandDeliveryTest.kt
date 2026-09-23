@@ -3,9 +3,11 @@ package com.sphereplatform.agent.commands
 import com.sphereplatform.agent.ws.SphereWebSocketClient
 import com.sphereplatform.agent.streaming.StreamQualityMonitor
 import com.sphereplatform.agent.streaming.StreamingManager
+import com.sphereplatform.agent.store.AuthTokenStore
 import io.mockk.*
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.*
@@ -39,14 +41,75 @@ class CommandDeliveryTest {
     private fun dispatcher(
         scope: kotlinx.coroutines.CoroutineScope,
         streamingManager: StreamingManager = mockk(relaxed = true),
+        authStore: AuthTokenStore = mockk(relaxed = true),
     ): CommandDispatcher {
         every { ws.onJsonMessage = captureNullable(callback) } just Runs
         every { ws.sendJson(capture(messages)) } returns true
         return CommandDispatcher(ws, adb, dag, cache,
-            mockk(relaxed = true), mockk(relaxed = true), mockk(relaxed = true),
+            mockk(relaxed = true), mockk(relaxed = true), authStore,
             mockk(relaxed = true), mockk(relaxed = true), mockk(relaxed = true),
             mockk(relaxed = true), scope, streamingManager, mockk(relaxed = true), journal())
             .also { it.start() }
+    }
+
+    @Test fun discoveredRouteUpdateKeepsFallbackAndReconnectsAfterAcknowledgement() = runTest {
+        val authStore = mockk<AuthTokenStore>(relaxed = true)
+        every { authStore.connectionRoutesSnapshot() } returnsMany listOf(
+            AuthTokenStore.ConnectionRoutes(1, listOf("https://cloudflare.invalid")),
+            AuthTokenStore.ConnectionRoutes(2, listOf("https://alternate.invalid", "https://cloudflare.invalid")),
+        )
+        val dispatcher = dispatcher(backgroundScope, authStore = authStore)
+        val update = buildJsonObject {
+            put("type", "UPDATE_CONFIG")
+            put("command_id", "22222222-2222-4222-8222-222222222222")
+            put("signed_at", System.currentTimeMillis() / 1000)
+            put("ttl_seconds", 60)
+            put("payload", buildJsonObject {
+                put("server_url", "https://alternate.invalid")
+                put("fallback_server_url", "https://cloudflare.invalid")
+            })
+        }
+
+        callback.captured!!(update)
+        runCurrent()
+
+        verify(exactly = 1) {
+            authStore.saveServerRoutes("https://alternate.invalid", "https://cloudflare.invalid")
+        }
+        verify(exactly = 0) { authStore.saveServerUrl(any()) }
+        assertEquals("completed", messages.last()["status"]?.jsonPrimitive?.content)
+        verify(exactly = 0) { ws.forceReconnectNow(any()) }
+
+        advanceTimeBy(750)
+        runCurrent()
+        verifyOrder {
+            ws.sendJson(match { it["status"]?.jsonPrimitive?.content == "completed" })
+            ws.forceReconnectNow(bypassDebounce = true)
+        }
+        dispatcher.stop()
+    }
+
+    @Test fun unchangedRouteUpdateDoesNotDisconnectHealthySession() = runTest {
+        val authStore = mockk<AuthTokenStore>(relaxed = true)
+        val currentRoutes = AuthTokenStore.ConnectionRoutes(4, listOf("https://primary.invalid"))
+        every { authStore.connectionRoutesSnapshot() } returnsMany listOf(currentRoutes, currentRoutes)
+        val dispatcher = dispatcher(backgroundScope, authStore = authStore)
+        val update = buildJsonObject {
+            put("type", "UPDATE_CONFIG")
+            put("command_id", "33333333-3333-4333-8333-333333333333")
+            put("signed_at", System.currentTimeMillis() / 1000)
+            put("ttl_seconds", 60)
+            put("payload", buildJsonObject { put("server_url", "https://primary.invalid") })
+        }
+
+        callback.captured!!(update)
+        runCurrent()
+        advanceTimeBy(1_000)
+        runCurrent()
+
+        verify(exactly = 1) { authStore.saveServerUrl("https://primary.invalid") }
+        verify(exactly = 0) { ws.forceReconnectNow(any()) }
+        dispatcher.stop()
     }
 
     @Test fun activeStreamStatsAreIncludedInHeartbeatPong() = runTest {

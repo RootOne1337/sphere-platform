@@ -395,10 +395,10 @@ class SphereWebSocketClient(
      * или при обнаружении нового server_url из ConfigWatchdog.
      * Прерывает текущий backoff delay и сбрасывает circuit breaker.
      */
-    fun forceReconnectNow() {
+    fun forceReconnectNow(bypassDebounce: Boolean = false) {
         // FIX AUDIT-1.2: Debounce — защита от reconnect flood при мигании Wi-Fi
         val now = System.currentTimeMillis()
-        if (now - lastForceReconnectAt < FORCE_RECONNECT_DEBOUNCE_MS) {
+        if (!bypassDebounce && now - lastForceReconnectAt < FORCE_RECONNECT_DEBOUNCE_MS) {
             Timber.d("forceReconnectNow: debounced (last ${now - lastForceReconnectAt}ms ago)")
             return
         }

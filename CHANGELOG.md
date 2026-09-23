@@ -14,6 +14,15 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Audit / documentation
 
+- AUD-160: `UPDATE_CONFIG` can now atomically set a primary and fallback management
+  route, then reconnect only that agent after its command-completion receipt has had
+  750 ms to enter the WebSocket queue. An explicit route change bypasses the ordinary
+  five-second reconnect debounce; unchanged routes do not tear down a live session.
+  This enables a single-device ingress A/B without changing the fleet-wide discovery
+  document. APK candidate version is 1.2.12-dev / 10212; build, OTA publication, and
+  remote acceptance remain separate gates.
+  [Evidence and residual risk](docs/audits/2026-09-23/REMOTE-INGRESS-FAILOVER.md).
+
 - AUD-145 / F32-34: clone identity v2 for x86 emulators now requires the VM serial
   and fails closed when it is missing; it does not fall back to cloneable MAC/Android ID
   or request root. Backend upgrades the legacy registration
