@@ -9,6 +9,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.*
 import org.junit.Assert.*
 import org.junit.Test
+import timber.log.Timber
 
 /** Exercise the production dispatcher through its WebSocket callback. */
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -160,5 +161,26 @@ class CommandDeliveryTest {
         assertTrue(journal().pending().isEmpty())
         dispatcher.stop()
         // runTest fails on an uncaught exception from the application's launch callback.
+    }
+
+    @Test fun backendNoopKeepaliveIsIgnoredWithoutCommandParseWarning() = runTest {
+        val warnings = mutableListOf<String>()
+        val tree = object : Timber.Tree() {
+            override fun log(priority: Int, tag: String?, message: String, t: Throwable?) {
+                if (priority >= android.util.Log.WARN) warnings += message
+            }
+        }
+        Timber.plant(tree)
+        try {
+            val dispatcher = dispatcher(backgroundScope)
+            callback.captured!!(buildJsonObject { put("type", "noop") })
+            runCurrent()
+            assertTrue(warnings.none { it.contains("Cannot parse command") })
+            assertTrue(messages.isEmpty())
+            coVerify(exactly = 0) { dag.execute(any(), any(), any()) }
+            dispatcher.stop()
+        } finally {
+            Timber.uproot(tree)
+        }
     }
 }
