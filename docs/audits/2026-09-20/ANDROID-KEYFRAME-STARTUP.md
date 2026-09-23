@@ -1,8 +1,15 @@
 # AUD-142 — Android терял ранний запрос ключевого кадра
 
-**23 сентября 2026 · F32-31 · P0 / High до Fleet32 · исправление в исходниках PR19; удалённая приёмка OPEN.**
+**23 сентября 2026 · F32-31 · P0 / High до Fleet32 · source-pinned APK собран; удалённая приёмка OPEN.**
 
 [Fleet32 readiness](FLEET32-PREFLIGHT.md) · [Эксплуатационная готовность](../../operations/READINESS.md) · [Связанный browser fix AUD-140](STREAM-FIRST-FRAME.md)
+
+Исправление включено в APK `1.2.11-dev / 10211`, собранный из полного source commit
+`6788c90704319b5cf17ea0d92c7803220ba1c9a0`. Локальные dev/enterprise suites прошли
+по 610 тестов, 0 failures/errors и по одному существующему skip; полный GitHub CI
+этого source head прошёл. Артефакт `.local-pilot/apk/SphereAgent-pilot-candidate-1.2.11-dev-6788c90.apk`
+не устанавливался и не публиковался. Сборка и CI подтверждают исходники, но не
+подтверждают выход IDR с удалённого LDPlayer или декодирование кадра в браузере.
 
 ## Влияние и доказательство
 
