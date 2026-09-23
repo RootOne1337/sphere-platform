@@ -707,6 +707,8 @@ async def android_agent_ws(
         removed = await manager.disconnect(device_id, session_id=session_id)
         if removed:
             await status_cache.mark_offline(device_id)
+            from backend.websocket.stream_metrics import StreamMetrics
+            StreamMetrics(device_id).cleanup()
 
             # FIX-WATCHDOG: При реальном disconnect немедленно освобождаем Redis running lock.
             # Это позволяет dispatcher-у (цикл каждые 5с) выдать следующую задачу сразу

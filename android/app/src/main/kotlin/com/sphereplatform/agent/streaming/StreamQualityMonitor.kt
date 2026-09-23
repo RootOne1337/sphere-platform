@@ -15,33 +15,62 @@ import javax.inject.Singleton
 class StreamQualityMonitor @Inject constructor() {
 
     private val frameTimestamps = ArrayDeque<Long>()
-    private var bytesSentTotal = 0L
-    private var frameCount = 0
-    private var keyFrameCount = 0
+    private var encodedBytesTotal = 0L
+    private var frameCount = 0L
+    private var keyFrameCount = 0L
+    private var webSocketQueueAttemptsTotal = 0L
+    private var webSocketQueueAcceptedTotal = 0L
+    private var webSocketQueueRejectedTotal = 0L
+    private var webSocketQueueAcceptedBytesTotal = 0L
 
     @Synchronized
-    fun recordFrame(sizeBytes: Int, isKeyFrame: Boolean) {
+    fun recordFrame(sizeBytes: Int, isKeyFrame: Boolean, isCodecConfig: Boolean = false) {
+        // SPS/PPS describe the decoder configuration, not a displayed media frame.
+        if (isCodecConfig) return
         val now = SystemClock.elapsedRealtime()
         frameTimestamps.addLast(now)
+        evictExpiredFrames(now)
 
-        // Evict frames outside the 1-second window
-        while (frameTimestamps.isNotEmpty() && (now - frameTimestamps.peekFirst()!!) > 1_000) {
-            frameTimestamps.removeFirst()
-        }
-
-        bytesSentTotal += sizeBytes
+        encodedBytesTotal += sizeBytes.coerceAtLeast(0)
         frameCount++
         if (isKeyFrame) keyFrameCount++
     }
 
+    /** Records whether OkHttp accepted an encoded frame into its local WS queue. */
     @Synchronized
-    fun getStats(): StreamStats = StreamStats(
-        currentFps = frameTimestamps.size,
-        totalFrames = frameCount,
-        totalBytesSent = bytesSentTotal,
-        keyFrameRatio = keyFrameCount.toFloat() / frameCount.coerceAtLeast(1),
-        avgFrameSizeKb = if (frameCount > 0) bytesSentTotal / frameCount / 1024f else 0f,
-    )
+    fun recordWebSocketQueueResult(sizeBytes: Int, accepted: Boolean) {
+        webSocketQueueAttemptsTotal++
+        if (accepted) {
+            webSocketQueueAcceptedTotal++
+            webSocketQueueAcceptedBytesTotal += sizeBytes.coerceAtLeast(0)
+        } else {
+            webSocketQueueRejectedTotal++
+        }
+    }
+
+    @Synchronized
+    fun getStats(): StreamStats {
+        // Prune during reads too: after an encoder stalls, no new frame arrives to
+        // evict the old timestamps, so otherwise FPS would remain falsely non-zero.
+        evictExpiredFrames(SystemClock.elapsedRealtime())
+        return StreamStats(
+            currentFps = frameTimestamps.size,
+            totalFrames = frameCount,
+            totalEncodedBytes = encodedBytesTotal,
+            keyFrameRatio = keyFrameCount.toFloat() / frameCount.coerceAtLeast(1L),
+            avgEncodedFrameSizeKb = if (frameCount > 0) encodedBytesTotal / frameCount / 1024f else 0f,
+            webSocketQueueAttemptsTotal = webSocketQueueAttemptsTotal,
+            webSocketQueueAcceptedTotal = webSocketQueueAcceptedTotal,
+            webSocketQueueRejectedTotal = webSocketQueueRejectedTotal,
+            webSocketQueueAcceptedBytesTotal = webSocketQueueAcceptedBytesTotal,
+        )
+    }
+
+    private fun evictExpiredFrames(nowElapsedMs: Long) {
+        while (frameTimestamps.isNotEmpty() && nowElapsedMs - frameTimestamps.peekFirst()!! > 1_000) {
+            frameTimestamps.removeFirst()
+        }
+    }
 
     /**
      * FIX F3: Сброс счётчиков при остановке стрима.
@@ -51,16 +80,24 @@ class StreamQualityMonitor @Inject constructor() {
     @Synchronized
     fun reset() {
         frameTimestamps.clear()
-        bytesSentTotal = 0L
+        encodedBytesTotal = 0L
         frameCount = 0
         keyFrameCount = 0
+        webSocketQueueAttemptsTotal = 0L
+        webSocketQueueAcceptedTotal = 0L
+        webSocketQueueRejectedTotal = 0L
+        webSocketQueueAcceptedBytesTotal = 0L
     }
 
     data class StreamStats(
         val currentFps: Int,
-        val totalFrames: Int,
-        val totalBytesSent: Long,
+        val totalFrames: Long,
+        val totalEncodedBytes: Long,
         val keyFrameRatio: Float,
-        val avgFrameSizeKb: Float,
+        val avgEncodedFrameSizeKb: Float,
+        val webSocketQueueAttemptsTotal: Long,
+        val webSocketQueueAcceptedTotal: Long,
+        val webSocketQueueRejectedTotal: Long,
+        val webSocketQueueAcceptedBytesTotal: Long,
     )
 }

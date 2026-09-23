@@ -56,6 +56,7 @@ class H264Encoder(
         val isKeyFrame: Boolean,
         val presentationTimeUs: Long,
         val sizeBytes: Int,
+        val isCodecConfig: Boolean = false,
     )
 
     // -------------------------------------------------------------------------
@@ -234,6 +235,7 @@ class H264Encoder(
                     isKeyFrame = true,
                     presentationTimeUs = info.presentationTimeUs,
                     sizeBytes = nal.size,
+                    isCodecConfig = true,
                 )
             )
         }

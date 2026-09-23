@@ -59,10 +59,12 @@ project и старый tunnel не менялись. Удалённые APK в�
 видны `SSLException: Read error ... Connection reset by peer` и OkHttp ping timeout,
 после которых агент переподключается. Сервер не получил image NALs; имеющихся логов
 недостаточно, чтобы определить, не сформировал ли MediaProjection/MediaCodec IDR
-или он сформировался, но не прошёл через конкретное WS/WAN-соединение. Android
-`StreamQualityMonitor` считает кадры локально, однако его статистика нигде не
-публикуется и backend не может сопоставить `ImageReader → encoder → sendBinary`.
-Это следующий конкретный пробел диагностики.
+или он сформировался, но не прошёл через конкретное WS/WAN-соединение. На момент
+этих live-сессий backend не получал Android-счётчики между encoder и `sendBinary`.
+Следующая source-версия добавляет encoder и локальную очередь OkHttp в pong
+(`AUD-151`), но эти значения ещё не были собраны на удалённых устройствах и не
+заменяют server receipt или browser decode. См. [Fleet operations / observability
+spec](../../architecture/FLEET-OPERATIONS-AND-OBSERVABILITY.md).
 
 Cloudflare описывает возможное throttling соединений через некоторые российские
 сети примерно на уровне 16 KiB; это делает WAN гипотезу правдоподобной, но локальная
@@ -84,8 +86,23 @@ Cloudflare описывает возможное throttling соединений
   parser команд и не создавал ложный `Cannot parse command` warning. Код уже в
   проверенном source, но **APK с этим изменением ещё не собран, не OTA-опубликован и
   на устройства не установлен**. Этот change не объявляется исправлением видео.
+- `AUD-151` добавляет в heartbeat версионированные snapshots реальных media-frame
+  encoder output (SPS/PPS configuration NALs не искажают FPS) и каждого результата
+  `sendBinary` в локальную очередь OkHttp, включая повторную отправку кэшированных
+  SPS/PPS при входе viewer. Backend сохраняет только bounded per-device session
+  gauges; он больше не выводит потери из
+  условных 30 FPS и не выдаёт локально принятые байты за доставленные. Regression
+  проверки доказали отсутствие payload до изменения и очищение FPS после остановки
+  encoder. Для обоих Android flavor проверены unit tests и локальная debug-package
+  сборка. **Release/candidate APK ещё не собран, на пилот не развернут и на PH006 не
+  проверен.**
 - Backend regression: `24 passed` для бюджета диагностики и binding/registration;
   Ruff и `git diff --check` прошли.
+- Для AUD-151 целевые backend stream/Android-handler/monitoring тесты: `44 passed`;
+  Android focused command/stream/capture-lifecycle tests: `29/29` в каждом из
+  `devDebug` и `enterpriseDebug`; debug APK packages также собираются. Полный frontend
+  набор — `266 passed` в 31 suite. Это source/test evidence: signed release APK,
+  OTA publication, installation и live rollout не выполнялись.
 - Android `CommandDeliveryTest`: `10/10` для dev и `10/10` для enterprise flavor.
   При сборке остаётся предупреждение: AGP 8.3.2 официально проверен до compileSdk 34,
   проект использует compileSdk 35. Это не блокировало тесты, но требует отдельного
@@ -93,11 +110,11 @@ Cloudflare описывает возможное throttling соединений
 
 ## Остаточный риск и следующий критерий
 
-1. Нужны app-side counters или журнал с агрегатами по текущей capture session:
-   `ImageReader` acquired/rendered, encoder outputs by NAL class, `sendBinary`
-   accepted/rejected, bytes and monotonic timestamps. Не логировать сами кадры,
-   credentials или непрерывные per-frame записи. Это позволит локализовать пропажу
-   данных до encoder, в WS sender или после sender.
+1. Нужна новая APK с AUD-151 и удалённая correlated-приёмка. Она даст агрегаты
+   encoder output и локального `sendBinary` accepted/rejected; следующие открытые
+   границы — `ImageReader`, server binary receipt, bridge/viewer delivery и browser
+   decode. Не логировать сами кадры, credentials или непрерывные per-frame записи.
+   Каждый этап должен подтверждаться собственным receipt, чтобы локализовать пропажу.
 2. Одновременно собирать transport counters по одной viewer-сессии и проверять
    первый декодированный browser frame. Backend receipt IDR сам по себе не является
    browser decode acceptance.

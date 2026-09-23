@@ -6,6 +6,7 @@ import android.media.Image
 import android.media.ImageReader
 import android.media.projection.MediaProjection
 import android.view.Surface
+import com.sphereplatform.agent.ws.SphereWebSocketClientContract
 import io.mockk.*
 import org.junit.After
 import org.junit.Assert.*
@@ -24,6 +25,8 @@ import java.util.concurrent.TimeUnit
 @Config(sdk = [28], manifest = Config.NONE, application = Application::class)
 class StreamingCaptureLifecycleTest {
     private lateinit var manager: StreamingManagerImpl
+    private val wsClient = mockk<SphereWebSocketClientContract>(relaxed = true)
+    private val qualityMonitor = StreamQualityMonitor()
     private val reader = mockk<ImageReader>(relaxed = true)
     private val bitmap = mockk<Bitmap>(relaxed = true)
     private val listeners = mutableListOf<ImageReader.OnImageAvailableListener>()
@@ -36,6 +39,7 @@ class StreamingCaptureLifecycleTest {
         mockkConstructor(VirtualDisplayManager::class)
         every { anyConstructed<H264Encoder>().start() } returns mockk<Surface>(relaxed = true)
         every { anyConstructed<H264Encoder>().stop() } just Runs
+        every { anyConstructed<H264Encoder>().requestKeyFrame() } returns true
         every { anyConstructed<VirtualDisplayManager>().createDisplay(any(), any()) } returns mockk(relaxed = true)
         every { anyConstructed<VirtualDisplayManager>().release() } just Runs
         every { ImageReader.newInstance(any(), any(), any(), any()) } returns reader
@@ -53,8 +57,8 @@ class StreamingCaptureLifecycleTest {
         every { reader.acquireLatestImage() } returns image
         every { Bitmap.createBitmap(any<Int>(), any<Int>(), Bitmap.Config.ARGB_8888) } returns bitmap
         every { bitmap.isRecycled } returns false
-        manager = StreamingManagerImpl(RuntimeEnvironment.getApplication(), mockk(relaxed = true),
-            mockk(relaxed = true), mockk(relaxed = true))
+        manager = StreamingManagerImpl(RuntimeEnvironment.getApplication(), wsClient,
+            mockk(relaxed = true), qualityMonitor)
     }
 
     @After fun cleanup() {
@@ -121,5 +125,20 @@ class StreamingCaptureLifecycleTest {
         verify(exactly = 1) { reader.close() }
         verify(exactly = 1) { bitmap.recycle() }
         assertFalse(manager.isActive())
+    }
+
+    @Test fun `cached codec config resend is included in websocket queue telemetry`() {
+        every { anyConstructed<H264Encoder>().cachedSps } returns byteArrayOf(0, 0, 0, 1, 0x67)
+        every { anyConstructed<H264Encoder>().cachedPps } returns byteArrayOf(0, 0, 0, 1, 0x68)
+        every { wsClient.sendBinary(any()) } returns false
+
+        manager.start(projection)
+        manager.onViewerConnected()
+
+        val stats = manager.getQualityStats()
+        assertEquals(2L, stats.webSocketQueueAttemptsTotal)
+        assertEquals(0L, stats.webSocketQueueAcceptedTotal)
+        assertEquals(2L, stats.webSocketQueueRejectedTotal)
+        verify(exactly = 2) { wsClient.sendBinary(any()) }
     }
 }

@@ -1,6 +1,8 @@
 package com.sphereplatform.agent.commands
 
 import com.sphereplatform.agent.ws.SphereWebSocketClient
+import com.sphereplatform.agent.streaming.StreamQualityMonitor
+import com.sphereplatform.agent.streaming.StreamingManager
 import io.mockk.*
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -34,14 +36,46 @@ class CommandDeliveryTest {
         return CommandJournal(prefs, receipts.store)
     }
 
-    private fun dispatcher(scope: kotlinx.coroutines.CoroutineScope): CommandDispatcher {
+    private fun dispatcher(
+        scope: kotlinx.coroutines.CoroutineScope,
+        streamingManager: StreamingManager = mockk(relaxed = true),
+    ): CommandDispatcher {
         every { ws.onJsonMessage = captureNullable(callback) } just Runs
         every { ws.sendJson(capture(messages)) } returns true
         return CommandDispatcher(ws, adb, dag, cache,
             mockk(relaxed = true), mockk(relaxed = true), mockk(relaxed = true),
             mockk(relaxed = true), mockk(relaxed = true), mockk(relaxed = true),
-            mockk(relaxed = true), scope, mockk(relaxed = true), mockk(relaxed = true), journal())
+            mockk(relaxed = true), scope, streamingManager, mockk(relaxed = true), journal())
             .also { it.start() }
+    }
+
+    @Test fun activeStreamStatsAreIncludedInHeartbeatPong() = runTest {
+        val streaming = mockk<StreamingManager>(relaxed = true)
+        every { streaming.isActive() } returns true
+        every { streaming.getQualityStats() } returns StreamQualityMonitor.StreamStats(
+            currentFps = 17,
+            totalFrames = 88,
+            totalEncodedBytes = 456_789L,
+            keyFrameRatio = 0.125f,
+            avgEncodedFrameSizeKb = 5.2f,
+            webSocketQueueAttemptsTotal = 30,
+            webSocketQueueAcceptedTotal = 29,
+            webSocketQueueRejectedTotal = 1,
+            webSocketQueueAcceptedBytesTotal = 450_000,
+        )
+
+        val dispatcher = dispatcher(backgroundScope, streaming)
+        callback.captured!!(buildJsonObject { put("type", "ping"); put("ts", 123.0) })
+
+        val stream = messages.last()["stream"]?.jsonObject
+        assertNotNull("active capture telemetry must reach backend", stream)
+        assertEquals(1, stream!!["schema_version"]?.jsonPrimitive?.int)
+        assertEquals(17, stream["encoder_fps"]?.jsonPrimitive?.int)
+        assertEquals(88L, stream["encoded_frames_total"]?.jsonPrimitive?.long)
+        assertEquals(456_789L, stream["encoded_bytes_total"]?.jsonPrimitive?.long)
+        assertEquals(29L, stream["ws_queue_accepted_total"]?.jsonPrimitive?.long)
+        assertEquals(1L, stream["ws_queue_rejected_total"]?.jsonPrimitive?.long)
+        dispatcher.stop()
     }
 
     private fun command() = buildJsonObject {

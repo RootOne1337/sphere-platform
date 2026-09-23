@@ -14,7 +14,6 @@ import com.sphereplatform.agent.store.AuthTokenStore
 import com.sphereplatform.agent.streaming.ScreenCaptureRequestActivity
 import com.sphereplatform.agent.streaming.ScreenCaptureService
 import com.sphereplatform.agent.streaming.StreamingManager
-import com.sphereplatform.agent.streaming.StreamingManagerImpl
 import com.sphereplatform.agent.vpn.KillSwitchManager
 import com.sphereplatform.agent.vpn.SphereVpnManager
 import com.sphereplatform.agent.ws.SphereWebSocketClient
@@ -167,6 +166,22 @@ class CommandDispatcher @Inject constructor(
             put("ram_mb", deviceStatusProvider.getRamUsageMb())
             put("screen_on", deviceStatusProvider.isScreenOn())
             put("vpn_active", deviceStatusProvider.isVpnActive())
+            val stats = if (streamingManager.isActive()) streamingManager.getQualityStats() else null
+            if (stats != null) {
+                put("stream", buildJsonObject {
+                    put("schema_version", 1)
+                    put("active", true)
+                    put("stage", "encoder_and_ws_queue")
+                    put("encoder_fps", stats.currentFps)
+                    put("encoded_frames_total", stats.totalFrames)
+                    put("encoded_bytes_total", stats.totalEncodedBytes)
+                    put("key_frame_ratio", stats.keyFrameRatio.toDouble())
+                    put("ws_queue_attempts_total", stats.webSocketQueueAttemptsTotal)
+                    put("ws_queue_accepted_total", stats.webSocketQueueAcceptedTotal)
+                    put("ws_queue_rejected_total", stats.webSocketQueueRejectedTotal)
+                    put("ws_queue_accepted_bytes_total", stats.webSocketQueueAcceptedBytesTotal)
+                })
+            }
         })
     }
 
@@ -204,7 +219,7 @@ class CommandDispatcher @Inject constructor(
             }
             "viewer_connected" -> {
                 Timber.i("Received viewer_connected — requesting keyframe")
-                (streamingManager as? StreamingManagerImpl)?.onViewerConnected()
+                streamingManager.onViewerConnected()
                 return
             }
             "touch_tap" -> {
@@ -236,7 +251,7 @@ class CommandDispatcher @Inject constructor(
             }
             "request_keyframe" -> {
                 Timber.i("Received request_keyframe — requesting sync frame")
-                (streamingManager as? StreamingManagerImpl)?.onViewerConnected()
+                streamingManager.onViewerConnected()
                 return
             }
             // Controls bypass dagMutex but are fenced to a particular execution.

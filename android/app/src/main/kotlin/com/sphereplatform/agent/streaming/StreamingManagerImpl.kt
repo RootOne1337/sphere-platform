@@ -241,10 +241,14 @@ class StreamingManagerImpl @Inject constructor(
         // на фронтенде не инициализировался → чёрный экран.
         if (!metadata.isKeyFrame && !frameThrottle.shouldRenderFrame(System.nanoTime())) return
 
-        qualityMonitor.recordFrame(metadata.sizeBytes, metadata.isKeyFrame)
+        qualityMonitor.recordFrame(
+            metadata.sizeBytes,
+            metadata.isKeyFrame,
+            metadata.isCodecConfig,
+        )
 
         val packed = FramePackager.pack(nalData, metadata, streamStartMs)
-        val sent = wsClient.sendBinary(packed)
+        val sent = sendFrameBinary(packed)
 
         if (!sent) {
             adaptiveBitrate?.onFrameDropDetected()
@@ -262,7 +266,7 @@ class StreamingManagerImpl @Inject constructor(
      * for the next I-frame interval.
      */
     @Synchronized
-    fun onViewerConnected() {
+    override fun onViewerConnected() {
         val dispatched = viewerKeyFrameCoordinator.request { requestKeyFrameNow() }
         if (!dispatched) {
             Timber.i("StreamingManagerImpl: viewer key-frame request deferred until encoder is ready")
@@ -281,17 +285,24 @@ class StreamingManagerImpl @Inject constructor(
             isKeyFrame = true,
             presentationTimeUs = 0L,
             sizeBytes = 0,
+            isCodecConfig = true,
         )
         enc.cachedSps?.let { sps ->
-            wsClient.sendBinary(FramePackager.pack(sps, fakeMeta.copy(sizeBytes = sps.size), streamStartMs))
+            sendFrameBinary(FramePackager.pack(sps, fakeMeta.copy(sizeBytes = sps.size), streamStartMs))
         }
         enc.cachedPps?.let { pps ->
-            wsClient.sendBinary(FramePackager.pack(pps, fakeMeta.copy(sizeBytes = pps.size), streamStartMs))
+            sendFrameBinary(FramePackager.pack(pps, fakeMeta.copy(sizeBytes = pps.size), streamStartMs))
         }
     }
 
-    fun getQualityStats(): StreamQualityMonitor.StreamStats =
+    override fun getQualityStats(): StreamQualityMonitor.StreamStats =
         qualityMonitor.getStats()
+
+    private fun sendFrameBinary(payload: ByteArray): Boolean {
+        val acceptedByLocalQueue = wsClient.sendBinary(payload)
+        qualityMonitor.recordWebSocketQueueResult(payload.size, acceptedByLocalQueue)
+        return acceptedByLocalQueue
+    }
 
     // -------------------------------------------------------------------------
     // Internal helpers

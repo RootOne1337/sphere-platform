@@ -151,9 +151,8 @@ class HeartbeatManager:
 
         # TZ-05 SPLIT-4: обновить Prometheus stream-метрики из pong телеметрии
         stream_data = msg.get("stream")
-        if stream_data and isinstance(stream_data, dict):
-            try:
-                from backend.websocket.stream_metrics import StreamMetrics
-                StreamMetrics(self.device_id).update_from_pong(stream_data)
-            except Exception as e:
-                logger.debug("stream_metrics update failed", error=str(e))
+        try:
+            from backend.websocket.stream_metrics import StreamMetrics
+            StreamMetrics(self.device_id).update_from_pong(stream_data)
+        except Exception as e:
+            logger.debug("stream_metrics update failed", device_id=self.device_id, error=str(e))

@@ -16,4 +16,10 @@ interface StreamingManager {
 
     /** Returns true when a streaming session is currently active. */
     fun isActive(): Boolean
+
+    /** Returns stage-specific counters for the current stream, if available. */
+    fun getQualityStats(): StreamQualityMonitor.StreamStats? = null
+
+    /** Notify an active stream that a new viewer needs codec configuration and a keyframe. */
+    fun onViewerConnected() {}
 }
