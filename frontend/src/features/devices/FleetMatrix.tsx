@@ -21,7 +21,6 @@ import { Button } from "@/src/shared/ui/button";
 import { cn } from "@/src/shared/lib/utils";
 import { useInspectorStore } from "@/src/features/inspector/inspectorStore";
 import { Activity, Wifi, Battery, Tag, Hash, Shield, Columns3, MoreHorizontal, Pencil, FolderOpen, MapPin, Trash2, Server } from "lucide-react";
-import { GridSparkline } from "./GridSparkline";
 import {
     DropdownMenu,
     DropdownMenuCheckboxItem,
@@ -112,21 +111,13 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
                     if (lvl === null) return <span className="text-muted-foreground">—</span>;
                     const isLow = lvl < 20;
 
-                    // Mock battery history (Slowly draining)
-                    const batteryHistory = React.useMemo(() => Array.from({ length: 8 }, (_, i) => lvl + (7 - i)), [lvl]);
-
                     return (
                         <div className="flex items-center justify-between w-full h-full pr-2">
-                            <div className="flex flex-col gap-1 w-10 shrink-0">
-                                <div className="flex items-center gap-1">
-                                    <Battery className={cn("w-3 h-3", isLow ? "text-destructive" : "text-success")} />
-                                    <span className={cn("font-mono text-[10px]", isLow && "text-destructive font-bold")}>
-                                        {lvl}%
-                                    </span>
-                                </div>
-                            </div>
-                            <div className="flex-1 max-w-[50px] opacity-70">
-                                <GridSparkline data={batteryHistory} color={isLow ? '#ef4444' : '#22c55e'} height={16} />
+                            <div className="flex items-center gap-1">
+                                <Battery className={cn("w-3 h-3", isLow ? "text-destructive" : "text-success")} />
+                                <span className={cn("font-mono text-[10px]", isLow && "text-destructive font-bold")}>
+                                    {lvl}%
+                                </span>
                             </div>
                         </div>
                     );
@@ -134,30 +125,23 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
             },
             {
                 accessorKey: "network",
-                header: "Net Quality",
+                header: "Access",
                 size: 140,
                 cell: ({ row }) => {
                     const { adb_connected, vpn_assigned } = row.original;
-                    // Deterministic ping pattern based on row index
-                    const idx = row.index;
-                    const pingHistory = React.useMemo(() => [18, 22, 19, 25, 21, 17, 23, 20].map((v, i) => v + ((idx * 7 + i * 3) % 10)), [idx]);
-                    const pingSum = pingHistory.reduce((a, b) => a + b, 0);
-                    const avgPing = Math.round(pingSum / pingHistory.length);
 
                     return (
-                        <div className="flex items-center justify-between w-full h-full pr-2">
-                            <div className="flex flex-col gap-1 w-12 shrink-0">
-                                <div className="flex items-center gap-1.5">
-                                    {adb_connected ? <Wifi className="w-3 h-3 text-success" /> : <Wifi className="w-3 h-3 text-muted-foreground/30" />}
-                                    {vpn_assigned ? <Shield className="w-3 h-3 text-primary" /> : <Shield className="w-3 h-3 text-muted-foreground/30" />}
-                                </div>
-                                <span className="text-[9px] font-mono text-muted-foreground">{adb_connected ? `${avgPing}ms` : 'OFF'}</span>
+                        <div className="flex items-center gap-2 w-full h-full pr-2">
+                            <div className="flex items-center gap-1.5" aria-label="Reported access flags">
+                                <span className="inline-flex items-center gap-1" title={`ADB ${adb_connected ? "linked" : "not linked"}`}>
+                                    {adb_connected ? <Wifi className="w-3 h-3 text-success" aria-hidden="true" /> : <Wifi className="w-3 h-3 text-muted-foreground/30" aria-hidden="true" />}
+                                    <span className="text-[9px] font-mono text-muted-foreground">ADB {adb_connected ? "linked" : "—"}</span>
+                                </span>
+                                <span className="inline-flex items-center gap-1" title={`VPN ${vpn_assigned ? "assigned" : "not assigned"}`}>
+                                    {vpn_assigned ? <Shield className="w-3 h-3 text-primary" aria-hidden="true" /> : <Shield className="w-3 h-3 text-muted-foreground/30" aria-hidden="true" />}
+                                    <span className="text-[9px] font-mono text-muted-foreground">VPN {vpn_assigned ? "assigned" : "—"}</span>
+                                </span>
                             </div>
-                            {adb_connected && (
-                                <div className="flex-1 max-w-[60px] opacity-70">
-                                    <GridSparkline data={pingHistory} color="#22c55e" height={16} />
-                                </div>
-                            )}
                         </div>
                     );
                 },
