@@ -12,7 +12,7 @@ import pytest
 ROOT = Path(__file__).resolve().parents[2]
 
 
-def test_remote_gateway_preserves_request_host_and_overwrites_forwarded_host(tmp_path):
+def test_remote_gateway_preserves_host_without_triggering_public_http_redirect(tmp_path):
     docker = shutil.which("docker")
     if not docker:
         pytest.skip("Docker is unavailable")
@@ -28,9 +28,20 @@ def test_remote_gateway_preserves_request_host_and_overwrites_forwarded_host(tmp
     suffix = uuid.uuid4().hex[:12]
     network, upstream, edge = [f"sphere-audit-host-{suffix}-{part}" for part in ("net", "upstream", "edge")]
     upstream_config = tmp_path / "nginx.conf"
-    upstream_config.write_text('''events {} http { server { listen 80; location / {
-        return 200 "$http_host|$http_x_forwarded_host";
-    } } }
+    upstream_config.write_text('''events {} http {
+    server {
+        listen 80;
+        server_name primary.example.test recovered.example.test pilot.example.test;
+        return 301 https://$host$request_uri;
+    }
+    server { listen 80 default_server; server_name _; return 200 "wrong-http-listener"; }
+    server {
+        listen 8081 default_server;
+        server_name _;
+        location /api/ { return 200 "$http_host|$http_x_forwarded_host"; }
+        location /ws/ { return 200 "$http_host|$http_x_forwarded_host|$http_upgrade|$http_connection"; }
+    }
+}
 ''', encoding="utf-8")
     try:
         run("network", "create", "--internal", network)
@@ -40,17 +51,41 @@ def test_remote_gateway_preserves_request_host_and_overwrites_forwarded_host(tmp
             "--mount", f"type=bind,source={ROOT / 'infrastructure/nginx/remote-pilot.conf'},target=/etc/nginx/remote-pilot.conf,readonly",
             "nginx:alpine", "nginx", "-c", "/etc/nginx/remote-pilot.conf", "-g", "daemon off;")
         run("exec", edge, "nginx", "-t", "-c", "/etc/nginx/remote-pilot.conf")
+        deadline = time.monotonic() + 15
+        while True:
+            ready = run("exec", edge, "wget", "-T", "2", "-qO-", "--header", "Host: probe.example.test",
+                        "http://127.0.0.1:8080/api/v1/updates/latest", check=False)
+            if ready.returncode == 0:
+                break
+            assert time.monotonic() < deadline, ready.stderr
+            time.sleep(0.1)
+
         for host in ("primary.example.test", "recovered.example.test", "pilot.example.test:8443"):
-            deadline = time.monotonic() + 15
-            while True:
-                response = run("exec", edge, "wget", "-T", "2", "-qO-", "--header", f"Host: {host}",
-                               "--header", "X-Forwarded-Host: untrusted.invalid",
-                               "http://127.0.0.1:8080/api/v1/updates/latest", check=False)
-                if response.returncode == 0:
-                    break
-                assert time.monotonic() < deadline, response.stderr
-                time.sleep(0.1)
+            response = run("exec", edge, "wget", "-T", "2", "-qO-",
+                           "--header", f"Host: {host}", "--header", "X-Forwarded-Host: untrusted.invalid",
+                           "http://127.0.0.1:8080/api/v1/updates/latest", check=False)
+            assert response.returncode == 0, response.stderr
             assert response.stdout == f"{host}|{host}"
+
+            response = run("exec", edge, "wget", "-T", "2", "-qO-",
+                           "--header", f"Host: {host}", "--header", "X-Forwarded-Host: untrusted.invalid",
+                           "--header", "Upgrade: websocket", "--header", "Connection: Upgrade",
+                           "http://127.0.0.1:8080/ws/stream/test-device", check=False)
+            assert response.returncode == 0, response.stderr
+            assert response.stdout == f"{host}|{host}|websocket|upgrade"
+
+        gateway = (ROOT / "infrastructure/nginx/remote-pilot.conf").read_text(encoding="utf-8")
+        main_nginx = (ROOT / "infrastructure/nginx/nginx.conf").read_text(encoding="utf-8")
+        assert "http://nginx:8081" in gateway
+        assert "listen 8081 default_server;" in main_nginx
+        for compose_name in (
+            "docker-compose.yml",
+            "docker-compose.production.yml",
+            "docker-compose.local-pilot.yml",
+            "docker-compose.remote-pilot.yml",
+        ):
+            compose = (ROOT / compose_name).read_text(encoding="utf-8")
+            assert "8081:8081" not in compose
     finally:
         run("rm", "-f", edge, upstream, check=False)
         run("network", "rm", network, check=False)

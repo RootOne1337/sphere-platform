@@ -28,6 +28,15 @@ config backend находится в другом каталоге. Автори
 Не включайте все profiles как якобы готовый резерв. Для текущего стенда включён
 только `quick`; два постоянных profiles — подготовка для следующего этапа.
 
+`public-gateway` сохраняет публичный `Host` для backend, но передаёт запросы на
+отдельный внутренний listener `nginx:8081`. Это важно для named-hostname профилей:
+если передать такой `Host` на обычный HTTP-порт 80, основной Nginx выберет vhost
+`SERVER_HOSTNAME` и отправит браузерный WebSocket на HTTPS-редирект вместо backend.
+Listener 8081 доступен только внутри Docker-сети и не опубликован на host ports;
+он сохраняет `/ws/` upgrade и обычные `/api/` маршруты. Проверка этого пути описана
+в [AUD-146](../audits/2026-09-20/REMOTE-PILOT-WEBSOCKET-REDIRECT.md). Это исправление
+конфигурации исходников, само по себе не подтверждает обновление живого remote pilot.
+
 Реализация signed APK (`f61cd5a`, итоговый APK `0f1410e`) прошла миграцию через GitHub
 при недоступном исходном ingress и его config mirror; затем вернулся без
 переустановки. [Native evidence и границы](../audits/2026-09-05/SIGNED-DISCOVERY-NATIVE.md).

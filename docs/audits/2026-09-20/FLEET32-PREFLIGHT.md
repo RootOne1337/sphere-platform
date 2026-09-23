@@ -95,6 +95,13 @@ registrations прошёл локально **1/1** после полной ми
 Удалённые serial, backend rollout и video IDR/frame delivery не подтверждены.
 [Evidence, fix и gates](CLONE-BINDING-V2.md).
 
+**23 сентября — P1 F32-35 / AUD-146:** named remote-pilot Host мог попасть на
+HTTP redirect vhost Nginx и не завершить browser WSS upgrade, хотя Android уже
+получил `start_stream`. Добавлен отдельный внутренний listener и regression, который
+проверяет сохранение Host и заголовков WebSocket Upgrade. Это условный дефект
+поддерживаемого named-hostname ingress; текущий удалённый маршрут владельца не
+сопоставлен с ним, а сам pilot не выкатывался. [Root cause и проверка](REMOTE-PILOT-WEBSOCKET-REDIRECT.md).
+
 Ниже приведена контрольная точка исходного аудита на 21 сентября. Последующие разделы сохраняют историю
 воспроизведений; наличие строки в исходном реестре **не означает, что её root
 cause всё ещё не исправлен**. Установленный fix и закрытая приёмка масштаба —
