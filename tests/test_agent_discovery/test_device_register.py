@@ -51,6 +51,41 @@ class TestClonedInstanceRegistration:
         assert clone.json()["name"] != legacy["name"]
 
     @pytest.mark.asyncio
+    async def test_v2_binding_migrates_legacy_row_once_then_splits_copies(self, reg_client, enrollment_key):
+        headers = {"X-API-Key": enrollment_key}
+        template = {"fingerprint": "copied-v1-template", "name": "master"}
+        legacy = (await reg_client.post("/api/v1/devices/register", headers=headers, json=template)).json()
+        v1_binding = hashlib.sha256(b"legacy-v1").hexdigest()
+        v1 = await reg_client.post("/api/v1/devices/register", headers=headers,
+                                   json={**template, "instance_binding": v1_binding})
+        assert v1.json()["device_id"] == legacy["device_id"]
+
+        first_binding = hashlib.sha256(b"vm-serial-one+same-nic").hexdigest()
+        first = await reg_client.post("/api/v1/devices/register", headers=headers,
+                                      json={**template, "instance_binding": first_binding,
+                                            "instance_binding_version": 2})
+        assert first.status_code == 201
+        assert first.json()["device_id"] == legacy["device_id"]
+        assert first.json()["instance_binding"] == first_binding
+        assert first.json()["instance_binding_version"] == 2
+
+        second_binding = hashlib.sha256(b"vm-serial-two+same-nic").hexdigest()
+        second = await reg_client.post("/api/v1/devices/register", headers=headers,
+                                       json={**template, "instance_binding": second_binding,
+                                             "instance_binding_version": 2})
+        retry = await reg_client.post("/api/v1/devices/register", headers=headers,
+                                      json={**template, "instance_binding": second_binding,
+                                            "instance_binding_version": 2})
+        assert second.status_code == 201
+        assert second.json()["device_id"] != legacy["device_id"]
+        assert retry.json()["device_id"] == second.json()["device_id"]
+
+        stale = await reg_client.post("/api/v1/devices/register", headers=headers,
+                                      json={**template, "instance_binding": v1_binding,
+                                            "instance_binding_version": 1})
+        assert stale.status_code == 409
+
+    @pytest.mark.asyncio
     async def test_user_meta_cannot_inject_internal_binding(self, reg_client, enrollment_key):
         headers = {"X-API-Key": enrollment_key}
         body = {"fingerprint": "protected-binding-test", "meta": {"instance_binding": "b" * 64}}
@@ -66,6 +101,16 @@ class TestClonedInstanceRegistration:
         response = await reg_client.post("/api/v1/devices/register",
                                         headers={"X-API-Key": enrollment_key},
                                         json={"fingerprint": "binding-validation", "instance_binding": binding})
+        assert response.status_code == 422
+
+    @pytest.mark.parametrize("version", [0, 3])
+    @pytest.mark.asyncio
+    async def test_unsupported_instance_binding_version_is_rejected(self, reg_client, enrollment_key, version):
+        response = await reg_client.post("/api/v1/devices/register",
+                                        headers={"X-API-Key": enrollment_key},
+                                        json={"fingerprint": "binding-version-validation",
+                                              "instance_binding": "a" * 64,
+                                              "instance_binding_version": version})
         assert response.status_code == 422
 
 

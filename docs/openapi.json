@@ -2379,6 +2379,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
+                  "additionalProperties": true,
                   "title": "Response Take Screenshot Api V1 Devices  Device Id  Screenshot Get"
                 }
               }
@@ -2438,6 +2439,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
+                  "additionalProperties": true,
                   "title": "Response Execute Shell Api V1 Devices  Device Id  Shell Post"
                 }
               }
@@ -2497,6 +2499,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
+                  "additionalProperties": true,
                   "title": "Response Request Logcat Api V1 Devices  Device Id  Logcat Post"
                 }
               }
@@ -2546,6 +2549,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
+                  "additionalProperties": true,
                   "title": "Response Reboot Device Api V1 Devices  Device Id  Reboot Post"
                 }
               }
@@ -3783,6 +3787,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
+                  "additionalProperties": true,
                   "title": "Response Move Devices Api V1 Groups  Group Id  Devices Move Post"
                 }
               }
@@ -4155,6 +4160,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
+                  "additionalProperties": true,
                   "title": "Response Assign Devices Api V1 Locations  Location Id  Devices Post"
                 }
               }
@@ -4212,6 +4218,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
+                  "additionalProperties": true,
                   "title": "Response Remove Devices Api V1 Locations  Location Id  Devices Delete"
                 }
               }
@@ -4476,6 +4483,7 @@
             "content": {
               "application/json": {
                 "schema": {
+                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Receive Alerts Api V1 Monitoring Alerts Post"
                 }
@@ -4509,6 +4517,7 @@
             "content": {
               "application/json": {
                 "schema": {
+                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Get Monitoring Metrics Api V1 Monitoring Metrics Get"
                 }
@@ -4533,6 +4542,7 @@
               "application/json": {
                 "schema": {
                   "items": {
+                    "additionalProperties": true,
                     "type": "object"
                   },
                   "type": "array",
@@ -6975,6 +6985,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
+                  "additionalProperties": true,
                   "title": "Response Request Stream Start Api V1 Streaming  Device Id  Start Post"
                 }
               }
@@ -7024,6 +7035,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
+                  "additionalProperties": true,
                   "title": "Response Request Stream Stop Api V1 Streaming  Device Id  Stop Post"
                 }
               }
@@ -7073,6 +7085,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
+                  "additionalProperties": true,
                   "title": "Response Request Keyframe Api V1 Streaming  Device Id  Keyframe Post"
                 }
               }
@@ -7494,6 +7507,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
+                  "additionalProperties": true,
                   "title": "Response Get Task Progress Api V1 Tasks  Task Id  Progress Get"
                 }
               }
@@ -7544,7 +7558,8 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "type": "object"
+                    "type": "object",
+                    "additionalProperties": true
                   },
                   "title": "Response Get Task Live Logs Api V1 Tasks  Task Id  Live Logs Get"
                 }
@@ -7595,6 +7610,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
+                  "additionalProperties": true,
                   "title": "Response Get Task Screenshots Api V1 Tasks  Task Id  Screenshots Get"
                 }
               }
@@ -7644,6 +7660,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
+                  "additionalProperties": true,
                   "title": "Response Force Stop Task Api V1 Tasks  Task Id  Stop Post"
                 }
               }
@@ -7689,6 +7706,7 @@
             "content": {
               "application/json": {
                 "schema": {
+                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Create Recovery Api V1 Updates Recovery Post"
                 }
@@ -8469,6 +8487,7 @@
             "content": {
               "application/json": {
                 "schema": {
+                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Vpn Health Api V1 Vpn Health Get"
                 }
@@ -9231,6 +9250,7 @@
             "title": "Duration Seconds"
           },
           "meta": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Meta"
           },
@@ -9599,6 +9619,7 @@
             "title": "Failed"
           },
           "wave_config": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Wave Config"
           },
@@ -9659,6 +9680,7 @@
           },
           "admission_receipts": {
             "items": {
+              "additionalProperties": true,
               "type": "object"
             },
             "type": "array",
@@ -9814,6 +9836,7 @@
             "title": "Failed"
           },
           "wave_config": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Wave Config"
           },
@@ -9999,6 +10022,7 @@
             "title": "Failed"
           },
           "wave_config": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Wave Config"
           },
@@ -10113,6 +10137,7 @@
             "title": "Device Ids"
           },
           "params": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Params"
           }
@@ -10231,6 +10256,7 @@
             "title": "Latency Ms"
           },
           "details": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Details",
             "default": {}
@@ -10351,6 +10377,7 @@
             "title": "Pipeline Run Id"
           },
           "data": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Data"
           },
@@ -10539,6 +10566,7 @@
             "description": "Pipeline для запуска при срабатывании"
           },
           "input_params_template": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Input Params Template",
             "description": "Шаблон параметров. Плейсхолдеры: {device_id}, {account_id}, {event_type}, {event_id}"
@@ -10786,6 +10814,7 @@
           "meta": {
             "anyOf": [
               {
+                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -10973,6 +11002,7 @@
             "title": "Steps"
           },
           "input_schema": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Input Schema"
           },
@@ -11185,6 +11215,7 @@
             "title": "Pipeline Id"
           },
           "input_params": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Input Params"
           },
@@ -11307,6 +11338,7 @@
             "title": "Description"
           },
           "dag": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Dag"
           },
@@ -11543,6 +11575,7 @@
             "title": "Pipeline Run Id"
           },
           "data": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Data"
           },
@@ -11774,6 +11807,20 @@
             "title": "Instance Binding",
             "description": "SHA-256 привязки экземпляра вне копируемых данных APK; не IP и не boot ID."
           },
+          "instance_binding_version": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 2.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Instance Binding Version",
+            "description": "Версия алгоритма instance_binding; отсутствующее значение означает v1."
+          },
           "name": {
             "anyOf": [
               {
@@ -11857,6 +11904,7 @@
             "default": "ldplayer"
           },
           "meta": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Meta",
             "description": "Дополнительные метаданные (ldplayer_name, clone_source и т.д.)."
@@ -11888,6 +11936,18 @@
             ],
             "title": "Instance Binding",
             "description": "Подтверждённая сервером привязка экземпляра."
+          },
+          "instance_binding_version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Instance Binding Version",
+            "description": "Подтверждённая версия привязки экземпляра."
           },
           "name": {
             "type": "string",
@@ -12641,6 +12701,7 @@
             "title": "Balance After"
           },
           "meta": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Meta"
           }
@@ -12757,6 +12818,7 @@
             "title": "Pipeline Id"
           },
           "input_params_template": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Input Params Template"
           },
@@ -13244,6 +13306,7 @@
             "title": "Registration Provider"
           },
           "meta": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Meta"
           },
@@ -13573,6 +13636,7 @@
             "title": "Registration Provider"
           },
           "meta": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Meta"
           },
@@ -13773,6 +13837,7 @@
           "meta": {
             "anyOf": [
               {
+                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -14342,6 +14407,7 @@
           "output": {
             "anyOf": [
               {
+                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -14514,6 +14580,7 @@
             "title": "Failed"
           },
           "wave_config": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Wave Config"
           },
@@ -14621,12 +14688,14 @@
           },
           "steps": {
             "items": {
+              "additionalProperties": true,
               "type": "object"
             },
             "type": "array",
             "title": "Steps"
           },
           "input_schema": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Input Schema"
           },
@@ -14768,15 +14837,18 @@
             "title": "Current Step Id"
           },
           "context": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Context"
           },
           "input_params": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Input Params"
           },
           "step_logs": {
             "items": {
+              "additionalProperties": true,
               "type": "object"
             },
             "type": "array",
@@ -15027,6 +15099,7 @@
             "title": "Notes"
           },
           "meta": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Meta"
           },
@@ -15089,6 +15162,7 @@
             "description": "Тип шага: execute_script, condition, action, delay, parallel, wait_for_event, n8n_workflow, loop, sub_pipeline"
           },
           "params": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Params",
             "description": "Параметры шага (зависят от type)"
@@ -15276,6 +15350,7 @@
             "title": "Device Tags"
           },
           "input_params": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Input Params"
           },
@@ -15308,6 +15383,7 @@
             "title": "Device Id"
           },
           "input_params": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Input Params"
           }
@@ -15608,6 +15684,7 @@
             "title": "Pipeline Id"
           },
           "input_params": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Input Params"
           },
@@ -15980,6 +16057,7 @@
           "dag": {
             "anyOf": [
               {
+                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -16167,6 +16245,7 @@
             "title": "Pipeline Run Id"
           },
           "meta": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Meta"
           }
@@ -16391,6 +16470,7 @@
           "result": {
             "anyOf": [
               {
+                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -16413,6 +16493,7 @@
           "input_params": {
             "anyOf": [
               {
+                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -16945,6 +17026,7 @@
           "input_params_template": {
             "anyOf": [
               {
+                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -17168,6 +17250,7 @@
           "meta": {
             "anyOf": [
               {
+                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -17371,6 +17454,7 @@
           "input_schema": {
             "anyOf": [
               {
+                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -17772,6 +17856,7 @@
           "input_params": {
             "anyOf": [
               {
+                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -17926,6 +18011,7 @@
           "dag": {
             "anyOf": [
               {
+                "additionalProperties": true,
                 "type": "object"
               },
               {

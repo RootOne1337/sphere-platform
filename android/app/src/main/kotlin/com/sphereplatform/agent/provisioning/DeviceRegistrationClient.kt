@@ -11,9 +11,11 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.boolean
+import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.long
@@ -73,6 +75,7 @@ class DeviceRegistrationClient @Inject constructor(
         val serverUrl: String,
         val isNew: Boolean,
         val instanceBinding: String? = null,
+        val instanceBindingVersion: Int? = null,
     )
 
     /**
@@ -94,9 +97,11 @@ class DeviceRegistrationClient @Inject constructor(
         location: String? = null,
         fallbackServerUrl: String? = null,
         instanceBinding: String? = null,
+        instanceBindingVersion: Int? = null,
     ): RegistrationResult = withContext(Dispatchers.IO) {
         authStore.withRegistration {
-            registerLocked(serverUrl, enrollmentApiKey, workstationId, instanceIndex, location, fallbackServerUrl, instanceBinding)
+            registerLocked(serverUrl, enrollmentApiKey, workstationId, instanceIndex, location,
+                fallbackServerUrl, instanceBinding, instanceBindingVersion)
         }
     }
 
@@ -108,6 +113,7 @@ class DeviceRegistrationClient @Inject constructor(
         location: String?,
         fallbackServerUrl: String?,
         instanceBinding: String?,
+        instanceBindingVersion: Int?,
     ): RegistrationResult {
         val version = authStore.registrationVersion()
         val fingerprint = cloneDetector.getFingerprint()
@@ -115,7 +121,10 @@ class DeviceRegistrationClient @Inject constructor(
 
         val bodyMap = buildMap<String, Any> {
             put("fingerprint", fingerprint)
-            instanceBinding?.let { put("instance_binding", it) }
+            instanceBinding?.let {
+                put("instance_binding", it)
+                instanceBindingVersion?.let { bindingVersion -> put("instance_binding_version", bindingVersion) }
+            }
             put("device_type", deviceType)
             put("android_version", android.os.Build.VERSION.RELEASE)
             put("model", "${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}")
@@ -145,9 +154,13 @@ class DeviceRegistrationClient @Inject constructor(
         if (instanceBinding != null && result.instanceBinding != instanceBinding) {
             throw IOException("Server did not confirm instance binding; backend upgrade required")
         }
+        if (instanceBindingVersion != null && result.instanceBindingVersion != instanceBindingVersion) {
+            throw IOException("Server did not confirm instance binding version; backend upgrade required")
+        }
         val alternate = routes.firstOrNull { it != result.serverUrl } ?: reply.advertisedUrl
         authStore.saveRegistration(version, result.deviceId, result.accessToken, result.refreshToken,
-            result.expiresIn, result.serverUrl, alternate, currentCoroutineContext(), instanceBinding)
+            result.expiresIn, result.serverUrl, alternate, currentCoroutineContext(), instanceBinding,
+            instanceBindingVersion ?: 1)
 
         Timber.i(
             "DeviceRegistration: %s device_id=%s name=%s",
@@ -237,6 +250,8 @@ class DeviceRegistrationClient @Inject constructor(
             serverUrl = normalizeManagementUrl(serverUrl),
             isNew = jsonResponse["is_new"]!!.jsonPrimitive.boolean,
             instanceBinding = (jsonResponse["instance_binding"] as? JsonPrimitive)?.takeIf { it.isString }?.content,
+            instanceBindingVersion = jsonResponse["instance_binding_version"]
+                ?.takeUnless { it is JsonNull }?.jsonPrimitive?.int,
         )
         // Keep the successful LAN request route; advertised public URL is a candidate.
         val advertised = jsonResponse["server_url"]?.jsonPrimitive?.content

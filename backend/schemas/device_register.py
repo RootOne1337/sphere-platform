@@ -35,6 +35,10 @@ class DeviceRegisterRequest(BaseModel):
         default=None, pattern=r"^[0-9a-f]{64}$",
         description="SHA-256 привязки экземпляра вне копируемых данных APK; не IP и не boot ID.",
     )
+    instance_binding_version: int | None = Field(
+        default=None, ge=1, le=2,
+        description="Версия алгоритма instance_binding; отсутствующее значение означает v1.",
+    )
     name: str | None = Field(
         default=None,
         max_length=255,
@@ -118,6 +122,7 @@ class DeviceRegisterResponse(BaseModel):
 
     device_id: uuid.UUID = Field(description="UUID зарегистрированного устройства.")
     instance_binding: str | None = Field(default=None, description="Подтверждённая сервером привязка экземпляра.")
+    instance_binding_version: int | None = Field(default=None, description="Подтверждённая версия привязки экземпляра.")
     name: str = Field(description="Имя устройства (автоматическое или пользовательское).")
     access_token: str = Field(description="JWT access token для WS-аутентификации.")
     refresh_token: str = Field(description="Opaque rotating refresh token; not a JWT.")

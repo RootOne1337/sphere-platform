@@ -19,7 +19,9 @@ class InstanceRegistrationGuard @Inject constructor(
     suspend fun ensureRegistered() = withContext(Dispatchers.IO) {
         authStore.enrollmentMutex.withLock {
             val binding = bindingReader.read()
-            if (authStore.getInstanceBinding() == binding && authStore.getDeviceId() != null &&
+            val bindingVersion = bindingReader.version()
+            if (authStore.getInstanceBinding() == binding &&
+                authStore.getInstanceBindingVersion() == bindingVersion && authStore.getDeviceId() != null &&
                 !authStore.getToken().isNullOrBlank()) return@withLock
             val config = provisioner.discoverConfig()
                 ?: throw IOException("Cannot resolve instance registration without provisioning")
@@ -30,7 +32,7 @@ class InstanceRegistrationGuard @Inject constructor(
             // При сетевом отказе старые токены остаются доступны OTA и discovery,
             // но командное соединение с чужим device_id не открывается.
             registration.register(config.serverUrl, config.apiKey, fallbackServerUrl = config.fallbackServerUrl,
-                instanceBinding = binding)
+                instanceBinding = binding, instanceBindingVersion = bindingVersion)
         }
     }
 }

@@ -58,6 +58,7 @@ class AuthTokenStore @Inject constructor(
         private const val KEY_FALLBACK_SERVER_URL = "fallback_server_url"
         private const val KEY_DEVICE_ID = "device_id"
         private const val KEY_INSTANCE_BINDING = "instance_binding"
+        private const val KEY_INSTANCE_BINDING_VERSION = "instance_binding_version"
 
         private const val REFRESH_THRESHOLD_MS = 5 * 60 * 1000L  // 5 минут
         private const val REFRESH_TIMEOUT_MS = 10_000L
@@ -103,6 +104,7 @@ class AuthTokenStore @Inject constructor(
         fallbackUrl: String?,
         context: CoroutineContext,
         instanceBinding: String? = null,
+        instanceBindingVersion: Int = 1,
     ) {
         context.ensureActive()
         if (expected != registrationVersion()) throw IOException("Registration state changed")
@@ -113,6 +115,9 @@ class AuthTokenStore @Inject constructor(
             if (instanceBinding != null && !instanceBinding.matches(Regex("[0-9a-f]{64}"))) {
                 throw IOException("Invalid instance binding")
             }
+            if (instanceBinding != null && instanceBindingVersion !in 1..2) {
+                throw IOException("Invalid instance binding version")
+            }
             Math.addExact(System.currentTimeMillis(), Math.multiplyExact(expiresIn, 1000L))
         } catch (e: ArithmeticException) {
             throw IOException("Invalid registration expiry", e)
@@ -122,17 +127,22 @@ class AuthTokenStore @Inject constructor(
         val keys = listOf(KEY_SERVER_URL, KEY_PRIMARY_SERVER_URL, KEY_FALLBACK_SERVER_URL,
             KEY_DEVICE_ID, KEY_ACCESS_TOKEN, KEY_REFRESH_TOKEN, KEY_REFRESH_ROTATION_ID, KEY_INSTANCE_BINDING)
         val previous = keys.associateWith { prefs.getString(it, null) }
+        val previousBindingVersion = if (prefs.contains(KEY_INSTANCE_BINDING_VERSION)) {
+            prefs.getInt(KEY_INSTANCE_BINDING_VERSION, 1)
+        } else null
         val previousExpiry = if (prefs.contains(KEY_ACCESS_TOKEN_EXPIRES_AT)) {
             prefs.getLong(KEY_ACCESS_TOKEN_EXPIRES_AT, 0L)
         } else null
         try {
-            val committed = prefs.edit()
+            val editor = prefs.edit()
                 .putString(KEY_SERVER_URL, primary).putString(KEY_PRIMARY_SERVER_URL, primary)
                 .putString(KEY_FALLBACK_SERVER_URL, fallback).putString(KEY_DEVICE_ID, deviceId)
                 .putString(KEY_INSTANCE_BINDING, instanceBinding)
                 .putString(KEY_ACCESS_TOKEN, accessToken).putString(KEY_REFRESH_TOKEN, refreshToken)
                 .putLong(KEY_ACCESS_TOKEN_EXPIRES_AT, expiresAt).remove(KEY_REFRESH_ROTATION_ID)
-                .commit()
+            if (instanceBinding == null) editor.remove(KEY_INSTANCE_BINDING_VERSION)
+            else editor.putInt(KEY_INSTANCE_BINDING_VERSION, instanceBindingVersion)
+            val committed = editor.commit()
             if (!committed) throw IOException("Cannot persist registration")
         } catch (e: Exception) {
             // Failed commit may have changed memory. Readers use the same monitor,
@@ -141,6 +151,8 @@ class AuthTokenStore @Inject constructor(
             try {
                 prefs.edit().also { editor ->
                     previous.forEach { (key, value) -> editor.putString(key, value) }
+                    if (previousBindingVersion == null) editor.remove(KEY_INSTANCE_BINDING_VERSION)
+                    else editor.putInt(KEY_INSTANCE_BINDING_VERSION, previousBindingVersion)
                     if (previousExpiry == null) editor.remove(KEY_ACCESS_TOKEN_EXPIRES_AT)
                     else editor.putLong(KEY_ACCESS_TOKEN_EXPIRES_AT, previousExpiry)
                 }.apply()
@@ -231,6 +243,11 @@ class AuthTokenStore @Inject constructor(
     /** Привязка хранится одной транзакцией с выданными device_id и токенами. */
     @Synchronized
     fun getInstanceBinding(): String? = prefs.getString(KEY_INSTANCE_BINDING, null)
+
+    /** Existing v1 agents did not persist a version number; treat them as v1. */
+    @Synchronized
+    fun getInstanceBindingVersion(): Int = if (getInstanceBinding() == null) 0
+        else prefs.getInt(KEY_INSTANCE_BINDING_VERSION, 1)
 
     /**
      * Возвращает свежий access token, обновляя его через refresh endpoint

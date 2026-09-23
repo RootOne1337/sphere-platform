@@ -53,6 +53,7 @@ class RegistrationPersistenceTest {
     private var expiresIn = 900L
     private var status = 201
     private var replyBinding: String? = null
+    private var replyBindingVersion: Int? = null
     private lateinit var prefs: EncryptedSharedPreferences
     private lateinit var client: OkHttpClient
     private lateinit var store: AuthTokenStore
@@ -62,6 +63,7 @@ class RegistrationPersistenceTest {
         prefs = mockk {
             every { getString(any(), any()) } answers { memory[firstArg()] as? String ?: secondArg() }
             every { getLong(any(), any()) } answers { memory[firstArg()] as? Long ?: secondArg() }
+            every { getInt(any(), any()) } answers { memory[firstArg()] as? Int ?: secondArg() }
             every { contains(any()) } answers { memory.containsKey(firstArg()) }
             every { edit() } answers {
                 val pending = mutableMapOf<String, Any?>()
@@ -69,6 +71,7 @@ class RegistrationPersistenceTest {
                 mockk<SharedPreferences.Editor> editor@ {
                     every { putString(any(), any()) } answers { pending[firstArg()] = secondArg(); this@editor }
                     every { putLong(any(), any()) } answers { pending[firstArg()] = secondArg<Long>(); this@editor }
+                    every { putInt(any(), any()) } answers { pending[firstArg()] = secondArg<Int>(); this@editor }
                     every { remove(any()) } answers { pending[firstArg()] = null; this@editor }
                     every { apply() } answers { applyChanges() }
                     every { commit() } answers {
@@ -102,8 +105,10 @@ class RegistrationPersistenceTest {
             val access = accessJson ?: "\"access-$issued\""
             val refresh = refreshJson ?: "\"refresh-$issued\""
             val binding = replyBinding?.let { "\"$it\"" } ?: "null"
+            val bindingVersion = replyBindingVersion?.toString() ?: "null"
             val body = """{"device_id":"$replyId","name":"isolated","access_token":$access,
-                "refresh_token":$refresh,"expires_in":$expiresIn,"server_url":"$primary","is_new":true,"instance_binding":$binding}"""
+                "refresh_token":$refresh,"expires_in":$expiresIn,"server_url":"$primary","is_new":true,
+                "instance_binding":$binding,"instance_binding_version":$bindingVersion}"""
             Response.Builder().request(chain.request()).protocol(Protocol.HTTP_1_1)
                 .code(status).message("isolated").body(body.toResponseBody()).build()
         }.build()
@@ -127,11 +132,27 @@ class RegistrationPersistenceTest {
 
     @Test fun boundRegistrationCommitsBindingAndIdentityTogether() = runBlocking {
         replyBinding = "a".repeat(64)
-        registration.register(primary, "sphr_isolated", instanceBinding = replyBinding)
+        replyBindingVersion = InstanceBindingReader.CURRENT_VERSION
+        registration.register(primary, "sphr_isolated", instanceBinding = replyBinding,
+            instanceBindingVersion = InstanceBindingReader.CURRENT_VERSION)
         memory.clear(); memory.putAll(disk)
         assertEquals(replyBinding, store.getInstanceBinding())
+        assertEquals(InstanceBindingReader.CURRENT_VERSION, store.getInstanceBindingVersion())
         assertEquals(id, store.getDeviceId())
         assertEquals("access-1", store.getToken())
+    }
+
+    @Test fun v2BindingWithoutServerVersionAcknowledgementCannotReplaceCredentials() = runBlocking {
+        seedOldIdentity()
+        replyBinding = "a".repeat(64)
+        replyBindingVersion = null
+        assertTrue(runCatching {
+            registration.register(primary, "sphr_isolated", instanceBinding = replyBinding,
+                instanceBindingVersion = InstanceBindingReader.CURRENT_VERSION)
+        }.exceptionOrNull() is IOException)
+        assertEquals(oldId, store.getDeviceId())
+        assertEquals("old-access", store.getToken())
+        assertNull(store.getInstanceBinding())
     }
 
     @Test fun oldServerWithoutBindingAcknowledgementCannotOverwriteCopiedCredentials() = runBlocking {

@@ -11,6 +11,7 @@ from typing import Any
 
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
+from fastapi import HTTPException
 from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -54,22 +55,46 @@ class DeviceRegistrationService:
         )
         existing = await self._find_by_fingerprint(org_id, data.fingerprint)
 
-        # Старый APK копирует fingerprint вместе с /data. Первый обновлённый
-        # экземпляр сохраняет существующую карточку; остальные получают отдельную
-        # регистрацию по паре (шаблон, привязка VM). Org-lock выше охватывает
-        # поиск, миграцию и создание, в том числе между процессами backend.
+        # Старый APK копирует fingerprint вместе с /data. The first v2 binding
+        # atomically upgrades that legacy card; subsequent copies get a scoped
+        # identity by (template, binding version, binding). The organization lock
+        # serializes the migration and clone creation across backend processes.
         source_device_id = None
         if data.instance_binding and existing:
-            binding = (existing.meta or {}).get("instance_binding")
-            if binding and binding != data.instance_binding:
+            meta = dict(existing.meta or {})
+            binding = meta.get("instance_binding")
+            try:
+                stored_version = int(meta.get("instance_binding_version", 1 if binding else 0))
+            except (TypeError, ValueError):
+                stored_version = 1 if binding else 0
+            requested_version = data.instance_binding_version or 1
+            if not binding:
+                existing.meta = {
+                    **meta,
+                    "instance_binding": data.instance_binding,
+                    "instance_binding_version": requested_version,
+                }
+            elif requested_version > stored_version:
+                # One upgraded copy retains the old device row. Organization
+                # locking makes this a single winner; later copies are split below.
+                existing.meta = {
+                    **meta,
+                    "instance_binding": data.instance_binding,
+                    "instance_binding_version": requested_version,
+                }
+            elif requested_version < stored_version:
+                raise HTTPException(
+                    status_code=409,
+                    detail="device_instance_binding_upgrade_required",
+                )
+            elif binding != data.instance_binding:
                 source_device_id = str(existing.id)
                 scoped = hashlib.sha256(
-                    ("sphere-instance-v1\0" + data.fingerprint + "\0" + data.instance_binding).encode()
+                    ("sphere-instance-v2\0" + data.fingerprint + "\0" +
+                     str(requested_version) + "\0" + data.instance_binding).encode()
                 ).hexdigest()
                 data = data.model_copy(update={"fingerprint": scoped})
                 existing = await self._find_by_fingerprint(org_id, scoped)
-            elif not binding:
-                existing.meta = {**(existing.meta or {}), "instance_binding": data.instance_binding}
 
         if existing:
             # Re-enrollment: обновляем метаданные
@@ -112,6 +137,8 @@ class DeviceRegistrationService:
             "instance_binding": data.instance_binding,
             "clone_source_device_id": None,
         }
+        if data.instance_binding:
+            meta["instance_binding_version"] = data.instance_binding_version or 1
         if data.workstation_id:
             meta["workstation_id"] = data.workstation_id
         if data.instance_index is not None:
@@ -151,6 +178,9 @@ class DeviceRegistrationService:
             meta["location"] = data.location
         # Обновляем мета
         meta["last_re_enrollment"] = True
+        if data.instance_binding:
+            meta["instance_binding"] = data.instance_binding
+            meta["instance_binding_version"] = data.instance_binding_version or 1
         device.meta = meta
         device.is_active = True
 
@@ -233,6 +263,7 @@ class DeviceRegistrationService:
         return DeviceRegisterResponse(
             device_id=device.id,
             instance_binding=(device.meta or {}).get("instance_binding"),
+            instance_binding_version=(device.meta or {}).get("instance_binding_version"),
             name=device.name,
             access_token=access_token,
             refresh_token=refresh_token,

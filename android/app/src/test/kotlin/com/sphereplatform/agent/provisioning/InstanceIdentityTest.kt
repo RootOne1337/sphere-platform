@@ -21,24 +21,56 @@ class InstanceIdentityTest {
 
     @Test fun copiedPreferencesWithDifferentVirtualCardsGetDifferentBinding() {
         prefs.edit().clear().commit()
-        val original = InstanceBindingReader(prefs, { nic }, { "copied-android-id" }).read()
+        val original = InstanceBindingReader(prefs, { nic }, { "copied-android-id" }, requireVirtualNic = true).read()
         // Клон получает все сохранённые настройки, но другую виртуальную карту.
-        val clone = InstanceBindingReader(prefs, { "wlan0|0|00:db:00:00:00:02" }, { "copied-android-id" }).read()
+        val clone = InstanceBindingReader(prefs, { "wlan0|0|00:db:00:00:00:02" },
+            { "copied-android-id" }, requireVirtualNic = true).read()
         assertNotEquals(original, clone)
+    }
+
+    @Test fun copiedPreferencesWithSameCardButDifferentVmSerialGetDifferentBinding() {
+        prefs.edit().clear().commit()
+        val originalReader = InstanceBindingReader(prefs, { nic }, { "copied-android-id" },
+            requireVirtualNic = true, virtualSerial = { "ldplayer-vm-001" })
+        val original = originalReader.read()
+        val cloneReader = InstanceBindingReader(prefs, { nic }, { "copied-android-id" },
+            requireVirtualNic = true, virtualSerial = { "ldplayer-vm-002" })
+        assertNotEquals(original, cloneReader.read())
+        assertEquals(InstanceBindingReader.CURRENT_VERSION, cloneReader.version())
+    }
+
+    @Test fun bitwiseCloneWithSameCardAndSameVmSerialIsNotFalselyClaimedAsUnique() {
+        prefs.edit().clear().commit()
+        val original = InstanceBindingReader(prefs, { nic }, { "copied-android-id" },
+            requireVirtualNic = true, virtualSerial = { "same-hypervisor-id" }).read()
+        val clone = InstanceBindingReader(prefs, { nic }, { "copied-android-id" },
+            requireVirtualNic = true, virtualSerial = { "same-hypervisor-id" }).read()
+        assertEquals(original, clone)
+    }
+
+    @Test fun emulatorWithSerialButNoReadyNetworkCanBindWithoutUsingBootId() {
+        prefs.edit().clear().commit()
+        var snapshot = ""
+        val reader = InstanceBindingReader(prefs, { snapshot }, { "copied-android-id" },
+            requireVirtualNic = true, virtualSerial = { "ldplayer-vm-003" })
+        val first = reader.read()
+        assertEquals("emulator_serial", prefs.getString("source_v2", null))
+        snapshot = nic
+        assertEquals(first, reader.read())
     }
 
     @Test fun processRestartAndAndroidIdChangeKeepVirtualMachineBinding() {
         prefs.edit().clear().commit()
-        val original = InstanceBindingReader(prefs, { nic }, { "old-android-id" }).read()
-        val restarted = InstanceBindingReader(prefs, { nic }, { "new-android-id" }).read()
+        val original = InstanceBindingReader(prefs, { nic }, { "old-android-id" }, requireVirtualNic = true).read()
+        val restarted = InstanceBindingReader(prefs, { nic }, { "new-android-id" }, requireVirtualNic = true).read()
         assertEquals(original, restarted)
     }
 
     @Test fun temporarilyMissingSelectedCardDoesNotFallBackToAnotherIdentity() {
         prefs.edit().clear().commit()
-        val original = InstanceBindingReader(prefs, { nic }, { "id" }).read()
+        val original = InstanceBindingReader(prefs, { nic }, { "id" }, requireVirtualNic = true).read()
         var snapshot = ""
-        val reader = InstanceBindingReader(prefs, { snapshot }, { "id" })
+        val reader = InstanceBindingReader(prefs, { snapshot }, { "id" }, requireVirtualNic = true)
         assertThrows(IOException::class.java) { reader.read() }
         snapshot = nic
         assertEquals(original, reader.read())
@@ -63,10 +95,10 @@ class InstanceIdentityTest {
         var snapshot = ""
         val reader = InstanceBindingReader(prefs, { snapshot }, { "copied-id" }, requireVirtualNic = true)
         assertThrows(IOException::class.java) { reader.read() }
-        assertNull(prefs.getString("source_v1", null))
+        assertNull(prefs.getString("source_v2", null))
         snapshot = nic
         assertEquals(64, reader.read().length)
-        assertEquals("wlan0", prefs.getString("source_v1", null))
+        assertEquals("emulator_wlan0", prefs.getString("source_v2", null))
     }
 
     @Test fun storedTemplateFingerprintSurvivesChangedAndroidProperties() {
@@ -82,23 +114,32 @@ class InstanceIdentityTest {
         every { store.enrollmentMutex } returns kotlinx.coroutines.sync.Mutex()
         every { store.getDeviceId() } returns "old-device"
         every { store.getToken() } returns "copied-access"
+        var savedVersion = 1
+        every { store.getInstanceBindingVersion() } answers { savedVersion }
         var saved = "a".repeat(64)
         every { store.getInstanceBinding() } answers { saved }
         val binding = "b".repeat(64)
-        val reader = mockk<InstanceBindingReader> { every { read() } returns binding }
+        val reader = mockk<InstanceBindingReader> {
+            every { read() } returns binding
+            every { version() } returns InstanceBindingReader.CURRENT_VERSION
+        }
         val provisioner = mockk<ZeroTouchProvisioner> {
             coEvery { discoverConfig() } returns ZeroTouchProvisioner.ProvisionConfig("https://isolated.invalid", "enrollment")
         }
         val registration = mockk<DeviceRegistrationClient> {
-            coEvery { register(any(), any(), any(), any(), any(), any(), any()) } answers {
+            coEvery { register(any(), any(), any(), any(), any(), any(), any(), any()) } answers {
                 saved = binding
+                savedVersion = InstanceBindingReader.CURRENT_VERSION
                 mockk(relaxed = true)
             }
         }
         val guard = InstanceRegistrationGuard(store, reader, provisioner, registration)
         guard.ensureRegistered()
         guard.ensureRegistered()
-        coVerify(exactly = 1) { registration.register("https://isolated.invalid", "enrollment", null, null, null, null, binding) }
+        coVerify(exactly = 1) {
+            registration.register("https://isolated.invalid", "enrollment", null, null, null, null,
+                binding, InstanceBindingReader.CURRENT_VERSION)
+        }
         verify(exactly = 0) { store.clearTokens() }
     }
 
@@ -106,13 +147,16 @@ class InstanceIdentityTest {
         val store = mockk<AuthTokenStore>(relaxed = true)
         every { store.enrollmentMutex } returns kotlinx.coroutines.sync.Mutex()
         every { store.getInstanceBinding() } returns null
-        val reader = mockk<InstanceBindingReader> { every { read() } returns "b".repeat(64) }
+        val reader = mockk<InstanceBindingReader> {
+            every { read() } returns "b".repeat(64)
+            every { version() } returns InstanceBindingReader.CURRENT_VERSION
+        }
         val provisioner = mockk<ZeroTouchProvisioner> { coEvery { discoverConfig() } returns null }
         val registration = mockk<DeviceRegistrationClient>()
         val guard = InstanceRegistrationGuard(store, reader, provisioner, registration)
         val result = runCatching { guard.ensureRegistered() }
         assertTrue(result.exceptionOrNull() is IOException)
         verify(exactly = 0) { store.clearTokens() }
-        coVerify(exactly = 0) { registration.register(any(), any(), any(), any(), any(), any(), any()) }
+        coVerify(exactly = 0) { registration.register(any(), any(), any(), any(), any(), any(), any(), any()) }
     }
 }
