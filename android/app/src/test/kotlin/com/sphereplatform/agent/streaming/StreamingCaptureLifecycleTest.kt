@@ -2,6 +2,7 @@ package com.sphereplatform.agent.streaming
 
 import android.app.Application
 import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.media.Image
 import android.media.ImageReader
 import android.media.projection.MediaProjection
@@ -29,6 +30,9 @@ class StreamingCaptureLifecycleTest {
     private val qualityMonitor = StreamQualityMonitor()
     private val reader = mockk<ImageReader>(relaxed = true)
     private val bitmap = mockk<Bitmap>(relaxed = true)
+    private val image = mockk<Image>(relaxed = true)
+    private val encoderSurface = mockk<Surface>(relaxed = true)
+    private val canvas = mockk<Canvas>(relaxed = true)
     private val listeners = mutableListOf<ImageReader.OnImageAvailableListener>()
     private val projection = mockk<MediaProjection>(relaxed = true)
 
@@ -37,7 +41,7 @@ class StreamingCaptureLifecycleTest {
         mockkStatic(Bitmap::class)
         mockkConstructor(H264Encoder::class)
         mockkConstructor(VirtualDisplayManager::class)
-        every { anyConstructed<H264Encoder>().start() } returns mockk<Surface>(relaxed = true)
+        every { anyConstructed<H264Encoder>().start() } returns encoderSurface
         every { anyConstructed<H264Encoder>().stop() } just Runs
         every { anyConstructed<H264Encoder>().requestKeyFrame() } returns true
         every { anyConstructed<VirtualDisplayManager>().createDisplay(any(), any()) } returns mockk(relaxed = true)
@@ -46,7 +50,6 @@ class StreamingCaptureLifecycleTest {
         every { reader.setOnImageAvailableListener(any(), any()) } answers {
             firstArg<ImageReader.OnImageAvailableListener?>()?.let { listeners.add(it) }
         }
-        val image = mockk<Image>(relaxed = true)
         val plane = mockk<Image.Plane>()
         every { image.planes } returns arrayOf(plane)
         every { image.width } returns 4
@@ -55,6 +58,7 @@ class StreamingCaptureLifecycleTest {
         every { plane.pixelStride } returns 4
         every { plane.buffer } returns ByteBuffer.allocateDirect(64)
         every { reader.acquireLatestImage() } returns image
+        every { encoderSurface.lockCanvas(null) } returns canvas
         every { Bitmap.createBitmap(any<Int>(), any<Int>(), Bitmap.Config.ARGB_8888) } returns bitmap
         every { bitmap.isRecycled } returns false
         manager = StreamingManagerImpl(RuntimeEnvironment.getApplication(), wsClient,
@@ -96,6 +100,40 @@ class StreamingCaptureLifecycleTest {
         }
         assertTrue(readerClosed.await(1, TimeUnit.SECONDS))
         assertEquals(0L, recycled.count)
+    }
+
+    @Test fun `first ImageReader callback is active and rendered when virtual display starts`() {
+        var streamingAtDisplayStart = false
+        every { anyConstructed<VirtualDisplayManager>().createDisplay(any(), any()) } answers {
+            streamingAtDisplayStart = manager.isActive()
+            listeners.last().onImageAvailable(reader)
+            mockk(relaxed = true)
+        }
+
+        manager.start(projection)
+
+        assertTrue("capture must be active before VirtualDisplay emits its first frame", streamingAtDisplayStart)
+        verify(exactly = 1) { reader.acquireLatestImage() }
+        verify(exactly = 1) { bitmap.copyPixelsFromBuffer(any()) }
+        verify(exactly = 1) { encoderSurface.lockCanvas(null) }
+        verify(exactly = 1) { image.close() }
+    }
+
+    @Test fun `virtual display startup failure rolls back the capture session`() {
+        every { anyConstructed<VirtualDisplayManager>().createDisplay(any(), any()) } throws
+            IllegalStateException("display unavailable")
+
+        try {
+            manager.start(projection)
+            fail("start must propagate VirtualDisplay creation failure")
+        } catch (expected: IllegalStateException) {
+            assertEquals("display unavailable", expected.message)
+        }
+
+        assertFalse(manager.isActive())
+        verify(exactly = 1) { reader.close() }
+        verify(exactly = 1) { anyConstructed<H264Encoder>().stop() }
+        verify(exactly = 1) { anyConstructed<VirtualDisplayManager>().release() }
     }
 
     @Test fun `queued image callback after stop cannot touch released reader`() {

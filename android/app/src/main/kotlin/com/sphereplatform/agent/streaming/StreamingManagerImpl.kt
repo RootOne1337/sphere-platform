@@ -145,7 +145,7 @@ class StreamingManagerImpl @Inject constructor(
             synchronized(frameLock) {
                 // A callback queued before stop/restart may still run after listener
                 // removal. Never acquire or render from an obsolete capture.
-                if (!streaming || captureSession !== session) return@setOnImageAvailableListener
+                if (captureSession !== session) return@setOnImageAvailableListener
                 val image = try {
                     reader.acquireLatestImage()
                 } catch (e: Exception) {
@@ -154,6 +154,10 @@ class StreamingManagerImpl @Inject constructor(
                 if (image == null) return@setOnImageAvailableListener
             
                 try {
+                    // VirtualDisplay may deliver its first buffer synchronously
+                    // while createDisplay() is still starting. Drain and close
+                    // it, but never render it into a session that has stopped.
+                    if (!streaming) return@setOnImageAvailableListener
                     val plane = image.planes[0]
                     val rowStride = plane.rowStride
                     val pixelStride = plane.pixelStride          // 4 for RGBA_8888
@@ -210,11 +214,18 @@ class StreamingManagerImpl @Inject constructor(
         android.os.SystemClock.sleep(100)
 
         val vdm = VirtualDisplayManager(context, projection)
-        // Pass ImageReader surface — keeps AUTO_MIRROR buffer path decoupled from OMX encoder
-        vdm.createDisplay(captureConfig, ir.surface)
         virtualDisplayManager = vdm
-
+        // Mark capture active before creating the display: its first frame can
+        // arrive from the ImageReader callback before createDisplay returns.
         streaming = true
+        try {
+            // Pass ImageReader surface — keeps AUTO_MIRROR buffer path decoupled from OMX encoder
+            vdm.createDisplay(captureConfig, ir.surface)
+        } catch (e: Exception) {
+            stopInternal()
+            throw e
+        }
+
         viewerKeyFrameCoordinator.markEncoderReady { requestKeyFrameNow() }
         Timber.i("StreamingManagerImpl: started")
     }

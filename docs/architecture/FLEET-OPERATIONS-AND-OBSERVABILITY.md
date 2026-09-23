@@ -158,7 +158,8 @@ Implementation references: [Android dispatcher](../../android/app/src/main/kotli
 ### 4.2 Current source audit findings
 
 The records below preserve the distinction between a source fix and a live rollout.
-The next audit ID follows the dated AUD-148 live report.
+The live stream incident began at AUD-148; this register is extended by the dated
+follow-ups AUD-149 through AUD-161.
 
 | ID | Severity | Finding and evidence | Source result | Release / residual gate |
 | --- | --- | --- | --- | --- |
@@ -172,8 +173,9 @@ The next audit ID follows the dated AUD-148 live report.
 | AUD-156 | P1 | Android capture startup and restart have OS permission / foreground-service prerequisites. `targetSdk=35`; MediaProjection is not universally restartable from a boot receiver on modern Android. | Platform constraint, not an APK exception to hide. | Define separate guarantees for rooted emulator builds and stock physical devices; test every supported Android/ROM family. |
 | AUD-157 | P2 | MultiStreamGrid displays a fixed `ERR_CONN_REFUSED` string whenever a device is offline, regardless of the actual cause. | Open. | Change it to an explicitly observed status such as “device offline” plus last-seen time; use a real transport error only when the client recorded that code. |
 | AUD-158 | P2 | Current stream status endpoint reports local viewer presence as `is_streaming` / `viewer_connected`. It does not mean Android capture is active, frames are arriving, or browser decode is fresh. | Naming is narrower than UI wording. | Return separate capture, server-frame, viewer-connected, and decoded-frame ages; preserve compatibility until consumers migrate. |
-| AUD-159 | P1 | Remote PH006 has repeated SPS/PPS but no image NALs on the server, while one local device sent an IDR/P frames through the same Quick Tunnel. | Live reproduction recorded in AUD-148; root boundary remains unknown. | Do not attribute to Cloudflare or Rostelecom without a second independent route and app-side stage counters. |
-| [AUD-160](../audits/2026-09-23/REMOTE-INGRESS-FAILOVER.md) | P1 | `UPDATE_CONFIG` stored only `server_url`, cleared any saved fallback, and left an already-connected WebSocket on its previous route. A signed route change therefore could not be applied to a healthy-but-unusable media path or used for a one-device provider A/B. | Fixed in source: preserve an explicitly supplied primary/fallback pair, give the completion ACK time to queue, then force only that agent to reconnect; unchanged routes do not reconnect. Red/green regressions are recorded in the linked audit. | Version 1.2.12-dev / 10212 is not yet a signed pilot APK, installed or OTA-published. Remote route A/B and a browser-decoded frame remain open. This fix does not itself prove Cloudflare caused the missing frames. |
+| AUD-159 | P1 | Remote PH006 has repeated SPS/PPS but no image NALs on the server, while one local device sent IDR/P frames through the same Quick Tunnel. | Live reproduction recorded in AUD-148. AUD-161 then reproduced a source-level Android startup path that can suppress the first stationary-screen buffer; its causal role on the remote device remains unverified until a new APK canary. | Do not attribute the remaining remote failure to Cloudflare or Rostelecom without a canary that reports Android encoder/queue counters and an independent-route comparison. |
+| [AUD-160](../audits/2026-09-23/REMOTE-INGRESS-FAILOVER.md) | P1 | `UPDATE_CONFIG` stored only `server_url`, cleared any saved fallback, and left an already-connected WebSocket on its previous route. A signed route change therefore could not be applied to a healthy-but-unusable media path or used for a one-device provider A/B. | Fixed in source: preserve an explicitly supplied primary/fallback pair, give the completion ACK time to queue, then force only that agent to reconnect; unchanged routes do not reconnect. Red/green regressions are recorded in the linked audit. | Version 1.2.12-dev / 10212 was not signed or OTA-published. Remote route A/B and a browser-decoded frame remain open. This fix does not itself prove Cloudflare caused the missing frames. |
+| [AUD-161](../audits/2026-09-23/ANDROID-INITIAL-FRAME-RACE.md) | P1 | `StreamingManagerImpl` ignored ImageReader callbacks until `VirtualDisplay.createVirtualDisplay()` returned. The first still-screen buffer could be left unacquired, matching the observed viewer session with SPS/PPS/EOS and no picture NAL. | Fixed in source: mark the current session active before display creation, acquire/close a first buffer safely, and release partially initialized capture if display creation fails. A deterministic early-callback test failed before and passes after the fix. | APK version 1.2.13-dev / 10213 has not yet been signed, installed, or OTA-published. The remote canary must prove Android encoder output, backend receipt, viewer delivery, and a newly decoded browser frame before fleet rollout. |
 
 Severity uses the repository’s operational impact convention: P0 blocks safe service;
 P1 blocks the current 32-device acceptance or makes an important failure hard to
@@ -197,8 +199,13 @@ The comparison narrows the search. It does not rule out remote-specific edge rou
 packet loss, LDPlayer capture/codec differences, resource pressure, or a client sender
 failure. A capture icon, an online card, a `start_stream` command, or a WSS connection
 are different signals; none substitutes for a server-received IDR and a browser-decoded
-frame. The independent device-level timeline in section 9 is designed to make each
-boundary visible.
+frame. The source audit in [AUD-161](../audits/2026-09-23/ANDROID-INITIAL-FRAME-RACE.md)
+reproduced one Android-side startup race: the first ImageReader callback could return
+before acquiring its buffer because the stream was marked active only after display
+creation. The fix and regression now pass in source; no remote runtime acceptance is
+claimed until a canary confirms encoder output, server receipt, and browser decode.
+The independent device-level timeline in section 9 is designed to make each boundary
+visible.
 
 ## 5. Reliability vocabulary and truth model
 

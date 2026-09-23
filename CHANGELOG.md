@@ -14,6 +14,16 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Audit / documentation
 
+- AUD-161: the Android ImageReader callback could discard the first screen buffer
+  while `VirtualDisplay` was being created because capture was marked active only
+  after creation returned. A stationary first screen could then leave a viewer with
+  codec configuration but no picture slices. Capture is now active before display
+  creation, stale-session checks remain in place, and startup failures release the
+  partially initialized capture. The regression is reproduced before the fix and
+  passes in both Android flavors. APK version is 1.2.13-dev / 10213; no signed APK,
+  OTA publication, or remote-device acceptance is claimed yet.
+  [Evidence and residual risk](docs/audits/2026-09-23/ANDROID-INITIAL-FRAME-RACE.md).
+
 - AUD-160: `UPDATE_CONFIG` can now atomically set a primary and fallback management
   route, then reconnect only that agent after its command-completion receipt has had
   750 ms to enter the WebSocket queue. An explicit route change bypasses the ordinary

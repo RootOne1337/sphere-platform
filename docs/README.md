@@ -68,6 +68,7 @@
 | Redis budget | [AUD-143](audits/2026-09-20/REDIS-PERSISTENCE-HEADROOM.md): 1536 MiB воспроизвёл OOM; три 2048 MiB probes прошли с peak 1.49–2.00 GiB; 32-stream/live rollout open |
 | OTA transfer | [AUD-144 / F32-33](audits/2026-09-20/OTA-TRANSPORT-RETRY.md): local before/after regression and bounded retry; 1.2.10/10210 is historical and was not a published OTA catalog entry |
 | Clone binding | [AUD-145 / F32-34](audits/2026-09-20/CLONE-BINDING-V2.md): 1.2.11-dev/10211 candidate built and signer/package verified locally; backend-first rollout and remote acceptance remain open |
+| Первый кадр на Android | [AUD-161](audits/2026-09-23/ANDROID-INITIAL-FRAME-RACE.md): воспроизведено отбрасывание раннего ImageReader callback; source fix и 621 тест на flavor прошли, удалённый canary ещё не принят |
 | Сетевые отказы | [Native matrix](audits/2026-09-05/NETWORK-RECOVERY-NATIVE.md) · [Reconnect debt](audits/2026-09-05/ANDROID-RECONNECT-DEBT.md) |
 | Автозапуск и разрешения | [Boot recovery](audits/2026-09-05/ANDROID-BOOT-RECOVERY.md) · [Root capabilities](audits/2026-09-05/ANDROID-UNATTENDED-CAPABILITIES.md) |
 | Несколько viewers | [AUD-126](audits/2026-09-05/STREAM-MULTI-VIEWER.md) · [Критерий новых кадров](audits/2026-09-05/SOAK-VIEWER-MOTION.md) |
