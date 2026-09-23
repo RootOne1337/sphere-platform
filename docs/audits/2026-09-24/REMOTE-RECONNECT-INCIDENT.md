@@ -266,6 +266,20 @@ Regression tests verify one read for a disconnect and transparent delivery of a
 normal application event. `tests/test_ws/test_android_ws_handlers.py` passed all
 23 cases; it emitted two existing deprecation warnings outside this change.
 
+### Verified pilot APK candidate
+
+The post-commit pilot build is
+`.local-pilot/apk/SphereAgent-pilot-candidate-1.2.15-dev-4c057c5.apk` with a
+private build manifest alongside it. The APK reports package
+`com.sphereplatform.agent.pilot.debug`, version `1.2.15-dev` / code `10215`, and
+8,411,445 bytes. Its SHA-256 is
+`7efc954d2895a60abce31cfbffea2f5d354bea1d1a884e588efbb2a7c43f5202`; APK
+Signature Scheme v2 verification passed, and the signer matches the previously
+recorded pilot signer. Its embedded `GIT_SHA` is `4c057c5`. The manifest records
+633 passing dev tests, 633 passing enterprise tests, one intentional enterprise
+skip, `installed: false`, and `published_to_ota: false`. This is a locally built
+debug pilot candidate, not a release-signed production artifact or remote rollout.
+
 Android's official MediaProjection guidance requires a new user-consented capture
 session on Android 14+ for each projection session. Reconnect handling must
 therefore preserve an active grant instead of attempting a silent projection
