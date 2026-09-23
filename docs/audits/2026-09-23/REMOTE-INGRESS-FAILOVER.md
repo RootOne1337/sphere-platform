@@ -74,7 +74,11 @@ terminal command receipt предшествует принудительному
 
 Полная Android unit matrix и debug package-сборки прошли на исходнике версии
 10212: **619 тестов `devDebug`**, **619 тестов `enterpriseDebug`**, 0 failures,
-0 errors; в `enterpriseDebug` один skipped test, а не failure. Новые regressions
+0 errors; в каждом flavor один skipped test, а не failure. Это
+`ConfigRecoveryTest.public discovery of baked route retains locally provisioned
+enrollment credential`: тест намеренно требует непустой `DEFAULT_SERVER_URL`, а
+оба debug flavor собираются с пустым baked URL и поэтому пропускают только эту
+проверку discovery. Новые regressions
 вошли в оба flavor. Сборка debug APK обоих flavor завершилась успешно; свежая
 пилотная подпись, release/minify сборка, OTA и remote runtime остаются отдельными
 воротами. Все логи сборки и
