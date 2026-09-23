@@ -196,6 +196,62 @@ video-deadline по control ping. Даже после этого отдельн�
 PostgreSQL failover за эти два дня не менялись; их прежние критерии остаются в
 [реестре Fleet32](../2026-09-20/FLEET32-PREFLIGHT.md).
 
+## Проверка гипотезы Cloudflare Quick Tunnel / F32-20
+
+**Вердикт:** непригодность нынешнего Quick Tunnel как гарантированного постоянного
+канала для Fleet32 подтверждена условиями провайдера; **причина конкретного
+отсутствующего IDR пока не установлена**. 23 сентября в новом pilot действительно
+работает контейнер `cloudflare-quick` (healthy), не Serveo. Старые
+[`architecture.md`](../../architecture.md) и [`deployment.md`](../../deployment.md)
+всё ещё описывают Serveo как действующий путь; для текущего стенда их сведения
+устарели. Точный WAN URL и приватные логи здесь не публикуются.
+
+Данные проекта уже позволяют сузить место отказа. За прежние 18 секунд сервер
+получил по Android WebSocket **9 SPS и 9 PPS, но 0 IDR**; значит, через удалённый
+вход прошли хотя бы маленькие бинарные NAL. Отсутствие IDR зафиксировано *до*
+Redis и браузерного WebSocket. Один только браузерный декодер или обратный
+туннель к viewer не объясняет этот конкретный серверный счётчик. Остаются
+MediaCodec, локальный [`sendBinary` с потолком очереди 1 MiB](../../../android/app/src/main/kotlin/com/sphereplatform/agent/ws/SphereWebSocketClient.kt#L384-L390),
+WAN/провайдер и входящий tunnel. При переполнении очереди APK явно может
+отвергнуть IDR, но remote `sendBinary`/encoder receipts пока не собраны. В другом
+сеансе HTTP 200 предшествовал неполному OTA body с HTTP/2 reset/TLS error: это
+независимый признак нестабильности передачи **крупного** тела по тому же публичному
+маршруту, но не доказательство идентичной причины для WebSocket.
+
+История репозитория поддерживает проверку маршрута, но не заменяет свежую
+диагностику: [мартовский commit `b6354db`](https://github.com/RootOne1337/sphere-platform/commit/b6354db4a6ecd1cdbc0262d978d1bb5de63c60d1)
+фиксировал idle-разрывы Cloudflare через 5–50 секунд;
+[`03c736e`](https://github.com/RootOne1337/sphere-platform/commit/03c736ede7fd274b9c26f3097a312d7b429e8256)
+добавил viewer ping каждые 10 секунд и кеширование параметров; проект тогда
+временно перешёл на Serveo. Новый трёхсекундный viewer-сеанс слишком короток,
+чтобы приписать его закрытие прежнему idle timeout. Пришедшие SPS/PPS не
+подтверждают достаточную пропускную способность для IDR.
+
+Проверка документации провайдера 23 сентября:
+
+| Источник | Подтверждённый факт | Вывод для Sphere |
+| --- | --- | --- |
+| [Cloudflare WebSockets](https://developers.cloudflare.com/network/websockets/) и [Tunnel FAQ](https://developers.cloudflare.com/cloudflare-one/faq/cloudflare-tunnels-faq/) | WebSocket через Tunnel поддерживается; idle-соединения закрываются, heartbeat рекомендован. | Тип `wss://` сам по себе не запрещён. Имеющийся 10-секундный ping решает только idle-сценарий, не потерю больших кадров или тела APK. |
+| [Quick Tunnel limits](https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/do-more-with-tunnels/trycloudflare/) | TryCloudflare предназначен для тестов, без SLA/uptime, 200 одновременных in-flight requests, затем HTTP 429; SSE не поддерживается. | 20 APK плюс единичный viewer **не достигают** этого лимита сами по себе; нельзя объявлять 429 причиной нынешнего одного чёрного экрана. Для 32 viewer и APK это минимум ~64 долгоживущих WS плюс API, а гарантии задержки/скорости нет. |
+| [Cloudflare о доступе из России](https://developers.cloudflare.com/support/troubleshooting/general-troubleshooting/service-disruption/) | Cloudflare сообщает о систематическом throttling у российских ISP, ориентировочно до **16 КБ на соединение** для затронутого трафика. | Оба наблюдаемых адреса владельца находятся у Ростелекома в России; это сильная гипотеза для обрыва APK и отсутствия более крупных NAL. Документ **не доказывает**, что ограничение действует именно на этот WebSocket и именно сейчас. |
+| [Tunnel FAQ: video traffic](https://developers.cloudflare.com/cloudflare-one/faq/cloudflare-tunnels-faq/#large-file-and-streaming-traffic-through-tunnel) | Для public-hostname маршрута на Free/Pro/Business Cloudflare указывает требование отдельного платного сервиса для видео/крупных файлов; у private-network routes условие иное. | Бесплатный публичный Quick Tunnel нельзя закладывать как долгосрочную основу 20–32 видеопотоков. Нужно выбрать допустимый постоянный маршрут и отдельно измерить его; смена провайдера без приёмки сама по себе кодек не исправит. |
+
+В [пользовательском сообщении в issue cloudflared #1282](https://github.com/cloudflare/cloudflared/issues/1282)
+описаны долгоживущие WS, которые разрывались только через Tunnel. Это частный
+отчёт, не воспроизведение Sphere. Другие сообщения о потере `Upgrade` до origin
+тоже нельзя переносить на сеанс, где backend уже получил SPS/PPS.
+
+**Разделяющий эксперимент, ещё не выполнен:** на *одной* удалённой VM с
+подтверждённой версией APK держать viewer ≥60 секунд; сопоставить timestamp и
+счётчик `encoder IDR produced` → `sendBinary accepted/rejected` и размер/queue →
+backend `Binary frame` NAL/size → Redis publish/drop → browser decode. Повторить
+на независимом допустимом маршруте при тех же bitrate/устройстве, записать
+WS close code, cloudflared errors, 429, задержку и байты. Если IDR не произведён
+или rejected локально — это APK/codec/backpressure; accepted в APK, но отсутствует
+на backend — WAN/tunnel/ingress; получен backend, но не browser — Redis/viewer
+egress/decoder. Только такое сравнение докажет или отвергнет гипотезу туннеля.
+Пока не запускать массовый 32-viewer тест и не менять работающий ingress вслепую.
+
 ## Условия снятия NO-GO
 
 1. Сверить installed package/version/signature и VM serial **одной** удалённой VM,
