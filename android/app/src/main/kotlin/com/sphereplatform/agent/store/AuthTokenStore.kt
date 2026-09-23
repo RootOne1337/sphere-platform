@@ -48,6 +48,8 @@ class AuthTokenStore @Inject constructor(
     private val prefs: EncryptedSharedPreferences,
     private val lazyHttpClient: Lazy<OkHttpClient>,
 ) {
+    private enum class RejectedCredentialRecovery { CLEARED, CHANGED, PERSISTENCE_FAILED }
+
     companion object {
         private const val KEY_ACCESS_TOKEN = "access_token"
         private const val KEY_REFRESH_TOKEN = "refresh_token"
@@ -285,6 +287,27 @@ class AuthTokenStore @Inject constructor(
             }
         } catch (e: CancellationException) {
             throw e
+        } catch (e: RefreshCredentialsRejectedException) {
+            currentCoroutineContext().ensureActive()
+            val cleared = withContext(Dispatchers.IO) {
+                clearRejectedCredentials(refreshToken)
+            }
+            when (cleared) {
+                RejectedCredentialRecovery.CLEARED -> {
+                    Timber.w("Token refresh credentials rejected (HTTP ${e.httpCode}); clearing device credentials for re-enrollment")
+                    null
+                }
+                RejectedCredentialRecovery.CHANGED -> {
+                    // A registration may have replaced the credentials while the request
+                    // was in flight. Never delete that newer pair or return the rejected one.
+                    Timber.w("Token refresh credentials rejected (HTTP ${e.httpCode}); credentials changed before recovery")
+                    getToken()
+                }
+                RejectedCredentialRecovery.PERSISTENCE_FAILED -> {
+                    Timber.e("Token refresh credentials rejected (HTTP ${e.httpCode}); could not persist credential clearing")
+                    null
+                }
+            }
         } catch (e: Exception) {
             currentCoroutineContext().ensureActive()
             Timber.w(e, "Token refresh failed, using stored token")
@@ -367,6 +390,9 @@ class AuthTokenStore @Inject constructor(
     private data class RefreshedTokens(val accessToken: String, val refreshToken: String, val expiresIn: Long)
 
     private fun readRefreshResponse(response: Response): RefreshedTokens {
+        if (response.code == 401) {
+            throw RefreshCredentialsRejectedException(response.code)
+        }
         check(response.isSuccessful) { "Refresh failed: ${response.code}" }
         // FIX E2: Ограничиваем размер body — защита от OOM при огромном ответе
         val body = response.body ?: error("Empty refresh response")
@@ -420,6 +446,30 @@ class AuthTokenStore @Inject constructor(
     }
 
     /**
+     * Persistently forget only a refresh pair the server explicitly rejected.
+     * Device identity, instance binding, and management routes remain available
+     * so InstanceRegistrationGuard can enroll this installation again.
+     */
+    @Synchronized
+    private fun clearRejectedCredentials(rejectedRefreshToken: String): RejectedCredentialRecovery {
+        if (prefs.getString(KEY_REFRESH_TOKEN, null) != rejectedRefreshToken) {
+            return RejectedCredentialRecovery.CHANGED
+        }
+        return try {
+            if (prefs.edit()
+                .remove(KEY_ACCESS_TOKEN)
+                .remove(KEY_REFRESH_TOKEN)
+                .remove(KEY_REFRESH_ROTATION_ID)
+                .remove(KEY_ACCESS_TOKEN_EXPIRES_AT)
+                .commit()) RejectedCredentialRecovery.CLEARED
+            else RejectedCredentialRecovery.PERSISTENCE_FAILED
+        } finally {
+            // Also invalidate in-flight registration snapshots if disk persistence fails.
+            ++credentialRevision
+        }
+    }
+
+    /**
      * Force next getFreshToken() to refresh via refresh endpoint.
      * Только сбрасывает expiry — не удаляет refresh_token (позволяет обновить access).
      * Вызывается при AUTH_REJECTED (4001) от сервера.
@@ -454,3 +504,6 @@ class AuthTokenStore @Inject constructor(
         prefs.edit().putString(KEY_DEVICE_ID, deviceId).apply()
     }
 }
+
+private class RefreshCredentialsRejectedException(val httpCode: Int) :
+    IOException("Refresh credentials rejected: HTTP $httpCode")

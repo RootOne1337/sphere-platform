@@ -308,7 +308,7 @@ identity, доверенный ключ и параметры enrollment; APK и
 | Backend | `3be0e29` (локальный pilot) | [Клоны, recovery и WAN ограничения](docs/audits/2026-09-20/CLONE-IDENTITY.md) |
 | Frontend | `9924eb1` | [Decoder recovery](docs/audits/2026-09-20/DECODER-RECOVERY.md) |
 | Android, оба локальных устройства | **1.2.9-dev / 10209** | [OTA и clone identity](docs/audits/2026-09-20/CLONE-IDENTITY.md) |
-| Android local verification builds | **1.2.13-dev / 10213** and **1.2.13 / 10213**, dev/enterprise debug-signed; assembled from current source, not release compatibility proof and not published to OTA | [AUD-145 clone identity v2](docs/audits/2026-09-20/CLONE-BINDING-V2.md) · [Android-only golden image plan](docs/architecture/ANDROID-EMULATOR-GOLDEN-IMAGE.md) |
+| Android local verification builds | **1.2.14-dev / 10214** and **1.2.14 / 10214**, dev/enterprise debug-signed; assembled from current source, not release compatibility proof and not published to OTA | [AUD-162 reconnect incident](docs/audits/2026-09-24/REMOTE-RECONNECT-INCIDENT.md) · [AUD-145 clone identity v2](docs/audits/2026-09-20/CLONE-BINDING-V2.md) · [Android-only golden image plan](docs/architecture/ANDROID-EMULATOR-GOLDEN-IMAGE.md) |
 | Task / pipeline | 15 terminal task receipts; два pipeline runs | [Независимая сверка результатов](docs/audits/2026-09-20/CANARY-20260921.md) |
 | Видео | Два потока восстановились после restart без F5; capture освобождён | [Native acceptance](docs/audits/2026-09-20/DECODER-RECOVERY.md) |
 | Redis | Source Compose: 512 MiB dataset / 2048 MiB ceiling; three isolated AOF probes pass (peak 1.49–2.00 GiB); 32-stream/live rollout open | [AUD-143 evidence and rollout boundary](docs/audits/2026-09-20/REDIS-PERSISTENCE-HEADROOM.md) |

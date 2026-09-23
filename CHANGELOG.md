@@ -6,11 +6,20 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [Unreleased] — enterprise audit, 2026-09-23
+## [Unreleased] — enterprise audit, 2026-09-24
 
 Изменения находятся в draft PR; это не опубликованный production release.
 Полный перечень предыдущих audit fixes, доказательства и residual risks:
 [audit report](docs/audits/2026-09-05/AUDIT-REPORT.md).
+
+- AUD-162: terminal `401` from Android device-token refresh no longer falls
+  back to the rejected access token. The APK durably clears only the rejected
+  credential pair, preserves device ID, clone binding and management routes, and
+  lets the existing enrollment guard issue a fresh registration. Network errors
+  and `5xx` keep the transient fallback. The regression first failed against the
+  old behavior, then passed for `401`, policy/ingress `403`, and a failed local
+  preference commit. Candidate version is 1.2.14 / 10214; remote rollout is not claimed.
+  [Live evidence and remaining stream boundary](docs/audits/2026-09-24/REMOTE-RECONNECT-INCIDENT.md).
 
 ### Audit / documentation
 
