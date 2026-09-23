@@ -1,6 +1,6 @@
 # AUD-145 / F32-34 · версия привязки идентичности клонов
 
-**23 сентября 2026 · P0 / High до пилота 32 устройств · исходники изменены; CI и удалённая приёмка ещё открыты.**
+**23 сентября 2026 · P0 / High до пилота 32 устройств · исходники и source-pinned APK проверены; удалённая приёмка открыта.**
 
 [Fleet32 readiness](FLEET32-PREFLIGHT.md) · [Предыдущие clone/WAN доказательства](CLONE-IDENTITY.md) · [Android keyframe startup](ANDROID-KEYFRAME-STARTUP.md) · [Первый кадр в web](STREAM-FIRST-FRAME.md)
 
@@ -88,16 +88,24 @@ baseline. Артефакт не устанавливался и не публи�
   повторные регистрации и отказ устаревшему v1. Полная Alembic-схема была применена
   к отдельным временным PostgreSQL 15 и Redis 7.2, привязанным только к loopback;
   integration test прошёл **1/1**. После проверки остановлены и удалены только два
-  созданных для неё контейнера. CI для текущего PR head ещё выполняется.
-- Strict-serial `assembleDevDebug` прошёл; package ID=`com.sphereplatform.agent.pilot.debug`,
-  versionName=`1.2.11-dev`, versionCode=`10211`. APK signer совпал с локальным pilot
-  baseline. Ни один Android-инстанс не обновлялся и APK не устанавливались.
+  созданных для неё контейнера. Результат был получен до завершения PR CI, см. итог
+  проверок текущего head ниже.
+- Source-pinned candidate собран из полного PR head
+  `6788c90704319b5cf17ea0d92c7803220ba1c9a0`; `GIT_SHA` проверен внутри DEX. Файл:
+  `.local-pilot/apk/SphereAgent-pilot-candidate-1.2.11-dev-6788c90.apk`, SHA-256
+  `18935e44b43b2f731176677a2acf8d306821792eee0477901a4f2606a76e73b7`. Package ID,
+  versionName=`1.2.11-dev`, versionCode=`10211` и v2 signer проверены; сертификат
+  совпадает с локальным pilot baseline. Dev и enterprise suites: **610 тестов на flavor**,
+  0 failures/errors и по одному существующему skip теста baked-route.
+- Новый PR CI на head `6788c90` прошёл backend Tests (включая real-service/Redis
+  persistence), APK build, frontend, Alembic, security, lint, RLS и production-image
+  bootstrap. Deploy job пропущен. Кандидат не установлен, не опубликован в OTA и не
+  менял pilot; от проверки подписи локального baseline нельзя выводить совместимость
+  с APK на удалённой станции.
 
-На предыдущем head `114c48f` backend job остановился на stale OpenAPI до выполнения
-тестов; schema исправлена под pinned CI-зависимости. Полный PR CI для кода на head
-`633bf34` прошёл, включая backend integration, generated API docs, Android/frontend,
-Alembic, security, lint и production-image checks. Следующий docs-only commit запускает
-проверки повторно. Deploy step был пропущен; удалённый pilot не менялся.
+Ранние результаты на `114c48f` и `633bf34` выше оставлены только как история; они не
+заменяют приёмку текущего head. Для этой проверки фактический runtime Android и
+backend/stream на удалённой станции всё ещё отсутствуют.
 
 ## Критерии удалённой приёмки
 

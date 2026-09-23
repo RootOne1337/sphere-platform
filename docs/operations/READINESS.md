@@ -17,6 +17,17 @@ OTA прежние, crash buffers не изменились. Это прежня
 Удалённая группа в неё не входит: при доставке OTA загрузки прерывались, viewer общей
 карточки получил SPS/PPS, но ноль IDR. `LATEST` и обычный OTA-каталог обновлены.
 
+**Последний source-pinned Android candidate:** `1.2.11-dev / 10211`, полный source
+head `6788c90704319b5cf17ea0d92c7803220ba1c9a0`, файл
+`.local-pilot/apk/SphereAgent-pilot-candidate-1.2.11-dev-6788c90.apk`, SHA-256
+`18935e44b43b2f731176677a2acf8d306821792eee0477901a4f2606a76e73b7`. Package, v2
+подпись и совпадение встроенного `GIT_SHA` проверены. Android dev и enterprise:
+610 tests каждый, без failures/errors, по одному существующему skip; CI текущего PR
+прошёл. Это debug candidate, не опубликован и не установлен. `LATEST`/OTA всё ещё
+1.2.9; до backend v2 и одного remote canary новую APK нельзя считать готовой для
+массовой установки. См. [AUD-145](../audits/2026-09-20/CLONE-BINDING-V2.md) и
+[Fleet32 gates](../audits/2026-09-20/FLEET32-PREFLIGHT.md).
+
 F32-28 identity fix прошёл локальные проверки, но 20 удалённых VM пока отображены
 под одной карточкой. Recovery команда доставлена, установка не подтверждена; ошибки
 `HTTP/2`/TLS. Альтернативный бесплатный путь с хоста аудита скачал APK за 210.5 секунд,
@@ -51,10 +62,12 @@ standalone-сервер и четыре маршрута прошли HTTP-пр�
 **P0 F32-33 / AUD-144:** transfer-level OTA regression теперь имеет bounded retry:
 до fix разрыв HTTP body завершал единственную загрузку; после fix выполняется одна
 повторная попытка на HTTP/1.1 с очисткой partial APK и обязательной проверкой
-SHA-256. Recovery tests прошли на обоих Android flavors; candidate 1.2.10/10210
-нужен, чтобы установленная 1.2.9 приняла обновление. Полный PR CI прошёл на
-`2cb4a9d`; локальные и CI APK — debug builds, не опубликованы в OTA catalog и не
-установлены. Deploy job пропущен. TLS/доступность провайдера не исправлены и не
+SHA-256. Recovery tests прошли на обоих Android flavors. Более новый source-pinned
+candidate 1.2.11/10211 также включает strict serial binding и отложенный Android
+keyframe request; его подпись совпадает с локальным pilot baseline. Полный CI на
+текущем head `6788c90` прошёл, включая Android/APK, backend/Redis, frontend, security,
+lint и production-image checks. Candidate остаётся debug: не опубликован и не
+установлен; deploy job пропущен. TLS/доступность провайдера не исправлены и не
 проверены; 20 удалённых устройств, отдельные ID и первые декодируемые кадры
 остаются NO-GO. [Доказательства и границы](../audits/2026-09-20/OTA-TRANSPORT-RETRY.md).
 

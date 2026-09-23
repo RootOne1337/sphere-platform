@@ -4,7 +4,7 @@
 
 Текущий локальный pilot: backend **`3be0e29`**, frontend **`9924eb1`**, оба локальных APK **1.2.9 / 10209**.
 [F32-28](../audits/2026-09-20/CLONE-IDENTITY.md): clone identity fix установлен; OTA-only recovery добавлен, но удалённым копиям надёжно доставить APK пока не удалось. Viewer общей карточки получил SPS/PPS без IDR; кадр и декодирование не приняты. На 32 устройства допуск закрыт.
-**Новый debug candidate:** APK **1.2.10 / 10210** включает ограниченный recovery прерванной OTA-загрузки (AUD-144). Локальные `devDebug` и `enterpriseDebug` артефакты собраны; CI APK build прошёл, manifest показывает versionCode 10210. Они не опубликованы в managed OTA catalog и не установлены на pilot; для OTA требуется signing certificate, совместимый с установленной APK, и опубликованный catalog entry. Оба локальных устройства остаются на 1.2.9/10209, 20 удалённых копий — без подтверждённых новых ID и обновления. [Доказательства OTA transport retry](../audits/2026-09-20/OTA-TRANSPORT-RETRY.md).
+**Последний source-pinned debug candidate:** APK **1.2.11-dev / 10211**, исходники из PR head `6788c90704319b5cf17ea0d92c7803220ba1c9a0`. Включены bounded OTA body retry, strict VM-serial binding и Android backstop для раннего запроса IDR. Dev и enterprise suites: по 610 тестов, без failures/errors, по одному существующему skip теста baked-route. APK подписан сертификатом локального pilot, но **не установлен и не опубликован**. Перед OTA нужен backend v2 и canary с фактически подтверждённым ACK версии identity; 20 удалённых копий и первый browser-декодированный кадр остаются непроверенными. [AUD-145](../audits/2026-09-20/CLONE-BINDING-V2.md) · [AUD-142](../audits/2026-09-20/ANDROID-KEYFRAME-STARTUP.md) · [AUD-144](../audits/2026-09-20/OTA-TRANSPORT-RETRY.md).
 [Canary 21 сентября](../audits/2026-09-20/CANARY-20260921.md): 15 task receipts,
 два pipeline, pending stop/deadline и backend restart проверены; PID после OTA
 сохранились, crash buffers прежние. Свежая APK и обычный OTA-каталог обновлены.
@@ -136,20 +136,28 @@ Frontend **`6dea6b4`** установлен в новом pilot. Device Stream �
 `com.sphereplatform.agent.pilot.debug` позволяет установить его рядом с обычными
 dev/enterprise сборками, сохраняя отдельные credentials и identity.
 
-Свежий файл: **`SphereAgent-pilot-1.2.9-a53f165.apk`**.
-Указатель на ту же сборку: **`LATEST-SphereAgent-pilot.apk`** в том же каталоге.
-SHA-256: `b4bf3f319f92e1f3ac24b7d68dffdc6f6d93a113ad59b10b132ea8f60e641078`.
-Размер 8,403,373 bytes; versionCode 10209 / 1.2.9-dev, minSdk 26, targetSdk 35.
-Оба локальных APK обновлены адресной OTA-командой при отключённом Windows watchdog:
-без ADB install, ручного запуска, разрешений и новой регистрации. Обычный канал
-`android/dev` теперь выдаёт 10209; обязательность не включена. Полный шестичасовой
-период worker не выжидался. Installed hashes, прежние device IDs, PID и crash buffers локальных APK подтверждены.
-Точные source, certificate, результаты и ограничения: [canary report](../audits/2026-09-20/CANARY-20260921.md).
+Актуальный source-pinned кандидат: **`SphereAgent-pilot-candidate-1.2.11-dev-6788c90.apk`**.
+Путь: **`.local-pilot/apk/SphereAgent-pilot-candidate-1.2.11-dev-6788c90.apk`**.
+SHA-256: `18935e44b43b2f731176677a2acf8d306821792eee0477901a4f2606a76e73b7`.
+Размер 8,459,412 bytes; package `com.sphereplatform.agent.pilot.debug`, versionCode
+10211 / `1.2.11-dev`, minSdk 26, targetSdk 35. `GIT_SHA` внутри APK совпадает с
+полным source commit `6788c90704319b5cf17ea0d92c7803220ba1c9a0`; v2 подпись проверена,
+SHA-256 сертификата совпадает с локальным pilot baseline. Полный APK manifest:
+`.local-pilot/apk/SphereAgent-pilot-candidate-1.2.11-dev-6788c90.json`.
+
+`LATEST-SphereAgent-pilot.apk` и публичный `manifest.json` по-прежнему указывают на
+принятую ранее 1.2.9 / 10209; это **не** новый candidate. Alias и OTA-каталог
+намеренно не переключались до backend-first canary. Candidate не ставился ни на
+локальные, ни на удалённые устройства. Не ставить его массово: сначала развернуть
+backend v2, затем на одном удалённом LDPlayer проверить отдельный стабильный device ID,
+identity ACK, reconnect и цепочку реальный IDR → browser decode. Подробные результаты
+предыдущей OTA-приёмки двух локальных APK: [canary report](../audits/2026-09-20/CANARY-20260921.md).
 
 ### История предыдущих APK и приёмок
 
 Следующие версии, counters и ожидания относятся к датированным предыдущим
-проверкам, а не к текущему manifest 1.2.9.
+проверкам; `manifest.json` и alias всё ещё указывают на принятую 1.2.9, пока candidate
+1.2.11 не пройдёт backend-first canary.
 
 **1.2.7 / 10207 (`0f257fe`):**
 **Оба Android обновились через собственный OTA**, без ADB install, Windows
