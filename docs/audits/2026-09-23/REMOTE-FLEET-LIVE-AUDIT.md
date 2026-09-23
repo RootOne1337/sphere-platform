@@ -35,7 +35,7 @@
 | Web UI и видео | `717c5a1` повторяет запрос первого IDR; `a66e460` добавил Android-side backstop; `e635de8` исправил корень standalone-сборки. Frontend tests и CI прошли. | Frontend image **`9924eb1`** healthy, но без нового browser retry и standalone fix. Отдельный реальный первый кадр с удалённого устройства не подтверждён. |
 | Nginx/remote ingress | `6788c90` исправил выбор redirect vhost для named-hostname WebSocket; isolated upgrade regression прошёл. | Живой gateway не пересоздавался после fix. Не доказано, что именно этот vhost участвует в текущем Quick Tunnel-сеансе. |
 | Redis/Compose | `bee9bc0` поднял source limit до 2 GiB после OOM при 1.5 GiB; три isolated AOF/BGSAVE прогона прошли, худший `memory.peak` достиг самого лимита 2 GiB. | Живой pilot остаётся на прежнем лимите 1.5 GiB; 32 stream/slow-client нагрузка не принята. |
-| GitHub | Draft [PR #19](https://github.com/RootOne1337/sphere-platform/pull/19) на `375f11e`: APK, backend, frontend, RLS, security, Alembic и image checks successful. | `deploy` **skipped**; PR остаётся draft/unmerged. CI не устанавливает APK и не заменяет pilot. |
+| GitHub | Draft [PR #19](https://github.com/RootOne1337/sphere-platform/pull/19): последний code head `6788c90` прошёл APK, backend, frontend, RLS, security, Alembic и image checks; затем следуют только документальные коммиты. | `deploy` **skipped**; PR остаётся draft/unmerged. CI не устанавливает APK и не заменяет pilot. |
 
 Это инвентаризация изменений указанного периода. PC agent, VPN, PostgreSQL failover,
 оркестрация задач и другие пункты общего [реестра Fleet32](../2026-09-20/FLEET32-PREFLIGHT.md)
@@ -146,6 +146,55 @@ backend receive → browser decode`. Поэтому причину трёх offl
 потери нынешнего кадра нельзя доказать только серверными логами. Нужно сохранить
 связанные, ограниченные по объёму события с приватными ID/токенами вне публичных
 логов; это критерий будущей реализации, **в этом аудите код не менялся**.
+
+### P1 · F32-37: открытый viewer может ждать кадр бесконечно при живых ping
+
+Это **новый дефект именно source frontend**, не доказанная причина отсутствия кадров
+в старом запущенном frontend. В
+[`DeviceStream.tsx`](../../../frontend/components/sphere/DeviceStream.tsx#L118-L146)
+watchdog закрывает сокет только после 30 секунд *без любого серверного сообщения*.
+Обработчик `onmessage` обновляет `lastReceived` и обнуляет счётчик reconnect до
+разбора типа сообщения. Серверный
+[`_viewer_ping_loop`](../../../backend/api/ws/stream/router.py#L174-L188) посылает
+`ping` каждые 10 секунд. Поэтому при исправном control WS, но нуле видеокадров,
+watchdog не срабатывает, статус остаётся «Ожидание видеокадра…», запрос IDR
+продолжается каждые 20 секунд без конечного результата или диагностического
+сообщения. Это следует из конкретной пары таймеров 10 < 30 секунд; повторное
+подключение при таком условии не начинается.
+
+**Покрытие:** 33 целевых frontend теста повторно прошли 23 сентября; имеющийся
+[`reconnect.test.tsx`](../../../frontend/__tests__/stream/reconnect.test.tsx#L94-L98)
+проверяет обрыв *без ping*, а тест
+[`без первого кадра`](../../../frontend/__tests__/stream/reconnect.test.tsx#L53-L69)
+вызывает callback кадра перед проверкой через 40 секунд. Комбинация «ping есть,
+кадра нет часами» не покрыта. **Требуемый fix и регрессия:** отдельный deadline
+до первого *декодированного* кадра, явное состояние деградации и ограниченный
+recovery; тест с непрерывными ping без binary/decoder output. Нельзя сбрасывать
+video-deadline по control ping. Даже после этого отдельная приёмка причины
+нулевого IDR на удалённом Android обязательна.
+
+## Ревью качества кода 22–23 сентября
+
+Проверены изменённые Android, backend, frontend, Nginx и Compose файлы в диапазоне
+`ed3d544^..6788c90`, соответствующие регрессии и текущие CI checks. Это ревью
+реального поведения кода и границ теста; отсутствие замечания не является
+доказательством готовности каждого компонента к 32 устройствам.
+
+| Изменение | Что подтверждено кодом/тестом | Что пока не подтверждено |
+| --- | --- | --- |
+| Clone identity v2 и PostgreSQL | [`InstanceBindingReader`](../../../android/app/src/main/kotlin/com/sphereplatform/agent/provisioning/InstanceBindingReader.kt#L47-L78) отвергает отсутствие VM serial на x86; [`DeviceRegistrationClient`](../../../android/app/src/main/kotlin/com/sphereplatform/agent/provisioning/DeviceRegistrationClient.kt#L146-L163) требует ACK версии до атомарного сохранения. [`32-way regression`](../../../tests/production/test_clone_registration_migration.py#L40-L66) проверяет уникальность ID, повтор и отклонение устаревшего v1. Это хороший fail-closed контракт и тест серверной конкуренции. | Тест подставляет **32 заведомо различных serial-хеша**; равенство/доступность serial на 20 реальных LDPlayer не измерены. Android test с mock response и backend test новой версии не составляют end-to-end матрицу «новый APK + старый backend». Код действительно откажется сохранять ответ старого backend *после* создания/обновления серверной строки; поэтому backend-first rollout — обязательный, пока не выполненный gate. Для non-x86 источником остаётся Android ID, его устойчивость к битовому клонированию этим тестом не доказана. |
+| OTA/recovery | [`OtaUpdateService`](../../../android/app/src/main/kotlin/com/sphereplatform/agent/ota/OtaUpdateService.kt#L102-L168) ограничивает повтор одним HTTP/1.1 запросом, перезаписывает partial APK, проверяет checksum перед install и закрывает вызов при отмене. Тесты моделируют обрыв body, повтор, отмену и cleanup. Recovery grant связан с org/device/digest/сроком, обычный WS/задачи не разрешает. | Mocked body/изолированный HTTP не воспроизводят реальный TLS/HTTP2 маршрут провайдера и не доказывают доставку/установку 1.2.11 на удалённые VM. Старый серверный OTA каталог остаётся 1.2.9. |
+| Первый кадр и браузер | Отложенный Android запрос не теряется до готовности encoder; браузер повторяет запрос IDR с ограниченной частотой; 33 целевых теста frontend decoder/reconnect прошли повторно. Декодер требует SPS/PPS и IDR, поэтому старые девять SPS/PPS без IDR не могут дать изображение. | Нативный `MediaCodec` и end-to-end путь APK → gateway → backend → браузер на удалённом LDPlayer не приняты. Регрессии не моделируют ping-only без кадра (F32-37). Даже I-frame interval 1 секунда в конфигурации не доказывает фактическую выдачу encoder под этой VM. |
+| Nginx ingress | Regression запускает отдельный edge Nginx с реальным `remote-pilot.conf`, проверяет Host/Upgrade и отсутствие redirect в **модельном upstream**. Исправление слушателя присутствует в настоящем `nginx.conf`. | [`test_remote_gateway_host.py`](../../../tests/deployment/test_remote_gateway_host.py#L29-L80) пишет **синтетический** upstream config с ответом `200`, а не запускает настоящий `nginx.conf` и полный WebSocket handshake. Тест доказывает конфигурационную идею, но не реальный named-host/TLS/tunnel путь текущего pilot; причина нынешнего чёрного экрана по нему не установлена. |
+| Redis/Compose | Повышение cgroup ceiling до 2 GiB прошло три изолированных AOF/BGSAVE/restart прогона после OOM на 1.5 GiB; сохранность ключей проверена. | Один из трёх `memory.peak` равен **ровно 2 GiB**, так что запас на 32 streams не доказан. Pilot по-прежнему на 1.5 GiB, нагрузочный профиль и отказоустойчивость не приняты. |
+
+Тесты подтверждают несколько локальных исправлений; **интеграционное качество для
+удалённого парка остаётся неудовлетворительным**, потому что актуальные source
+версии не совпадают с работающим стендом и не пройдены регистрация → online →
+первый кадр → reconnect → OTA на реальных клонах. Это вывод по наблюдению, а не
+оценка стиля или числа коммитов. Отдельные PC agent, task orchestration, VPN и
+PostgreSQL failover за эти два дня не менялись; их прежние критерии остаются в
+[реестре Fleet32](../2026-09-20/FLEET32-PREFLIGHT.md).
 
 ## Условия снятия NO-GO
 

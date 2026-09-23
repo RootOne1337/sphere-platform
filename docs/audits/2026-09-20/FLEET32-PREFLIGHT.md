@@ -11,7 +11,7 @@
 удалённый ID дал 22 вытеснения WS и 565 истёкших токенов; новые три ID не прошли
 WS auth, а реальный remote viewer не получил кадра. Это наблюдение новее
 исторического трёхкарточного среза ниже. Source fixes и CI не изменили pilot;
-**F32-28, F32-29/31 и новый F32-36 остаются открыты.**
+**F32-28, F32-29/31, F32-36 и F32-37 остаются открыты.**
 
 **Предыдущий rollout, 21 сентября:** [backend/frontend `c42bb5b`, оба APK 1.2.8](CANARY-20260921.md)
 установлены. 15 task receipts и два pipeline подтверждены; F32-01 продвинут native
@@ -279,6 +279,9 @@ Compose/monitoring/backup и нагрузочный harness. Это провер
 | F32-32 | P1, Redis persistence headroom / High / R, 23 сентября | Three 2048 MiB AOF probes pass; observed peak ranges 1.49–2.00 GiB, 32-stream and pilot acceptance remain open |
 | F32-33 | P0, remote OTA body recovery / High / R, 23 сентября | Local/CI bounded HTTP/1.1 retry passes; TLS reachability, signer compatibility, catalog publication and remote install remain unaccepted |
 | F32-34 | P0, cloned emulator identity / High / R, 23 сентября | Strict serial binding, Android suites, local 32-way PostgreSQL and CI pass; unique remote serials, backend-first rollout and video canary remain open |
+| F32-35 | P1, named-host ingress / High / R, 23 сентября | Изолированный gateway regression прошёл с модельным upstream; настоящий Nginx и live WSS route ещё не приняты |
+| F32-36 | P0, registration-to-WS / High / R, 23 сентября | Три новые разные карточки созданы, но остаются offline без WS auth/Redis presence; причина на APK пока неизвестна |
+| F32-37 | P1, browser first-frame deadline / Medium / R, 23 сентября | При ping каждые 10 секунд и нуле кадров watchdog на 30 секунд не сработает; UI ждёт бесконечно. [Source proof и недостающая регрессия](../2026-09-23/REMOTE-FLEET-LIVE-AUDIT.md#p1--f32-37-открытый-viewer-может-ждать-кадр-бесконечно-при-живых-ping) |
 
 ## Backend, оркестрация и БД
 
