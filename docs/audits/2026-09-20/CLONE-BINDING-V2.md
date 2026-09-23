@@ -64,8 +64,8 @@ keyframe в browser и удержания раннего запроса до г�
 
 ## Проверки
 
-- Android `testDevDebugUnitTest`: **609 tests, 0 failures/errors/skips**.
-- Android `testEnterpriseDebugUnitTest`: **609 tests, 0 failures/errors, 1
+- Android `testDevDebugUnitTest`: **610 tests, 0 failures/errors/skips**.
+- Android `testEnterpriseDebugUnitTest`: **610 tests, 0 failures/errors, 1
   existing test skipped**.
 - Backend registration regressions: **21 passed**; Ruff и проверка экспорта
   OpenAPI прошли.

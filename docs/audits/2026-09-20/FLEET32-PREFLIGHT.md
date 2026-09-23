@@ -83,7 +83,7 @@ enterprise flavors. APK version поднята до **1.2.10 / 10210**, поск
 эмулятора, поэтому одинаковые MAC/Android ID клонированного образа могли снова
 схлопывать разные VM. Подготовлена versioned v2 binding и backend-first миграция;
 кандидат APK **1.2.11-dev / 10211** собран с локальным pilot package ID/signature.
-Android suites: 609 тестов в каждом flavor без failures/errors (один existing
+Android suites: 610 тестов в каждом flavor без failures/errors (один existing
 enterprise test skipped); backend registration: 21 passed. Отдельный PostgreSQL-тест 32 конкурентных экземпляров написан, но локально
 пропущен за отсутствием изолированных сервисов и ожидает CI. Удалённые serial,
 backend rollout и video IDR/frame delivery не подтверждены. [Evidence, fix и gates](CLONE-BINDING-V2.md).

@@ -162,7 +162,7 @@ TLS ingress или remote OTA acceptance: compatible-signature/catalog publicati
 или Android ID и не включала serial эмулятора. Исправление и ограничения описаны в
 [отдельном отчёте AUD-145](CLONE-BINDING-V2.md): backend мигрирует старую карточку
 один раз и затем разводит клоны по versioned binding; Android принимает credentials
-только после подтверждения v2. Локальные dev/enterprise наборы содержат по 609
+только после подтверждения v2. Локальные dev/enterprise наборы содержат по 610
 test cases в каждом flavor без failures/errors (один existing enterprise test skipped);
 backend registration — 21 passed. Конкурентный PostgreSQL-тест
 на 32 клона добавлен, но локально пропущен без изолированной БД и остаётся

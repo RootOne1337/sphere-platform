@@ -48,6 +48,15 @@ class InstanceIdentityTest {
         assertEquals(original, clone)
     }
 
+    @Test fun clonesWithoutUniqueSerialAndWithSamePermanentCardRemainIndistinguishable() {
+        prefs.edit().clear().commit()
+        val original = InstanceBindingReader(prefs, { nic }, { "copied-android-id" },
+            requireVirtualNic = true, virtualSerial = { null }).read()
+        val clone = InstanceBindingReader(prefs, { nic }, { "copied-android-id" },
+            requireVirtualNic = true, virtualSerial = { null }).read()
+        assertEquals(original, clone)
+    }
+
     @Test fun emulatorWithSerialButNoReadyNetworkCanBindWithoutUsingBootId() {
         prefs.edit().clear().commit()
         var snapshot = ""
