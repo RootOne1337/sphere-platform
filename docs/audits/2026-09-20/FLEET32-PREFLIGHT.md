@@ -6,6 +6,13 @@
 
 [Главная](../../../README.md) · [Документация](../../README.md) · [Readiness](../../operations/READINESS.md) · [История исправлений](../2026-09-05/AUDIT-REPORT.md)
 
+**Последний live-срез, 23 сентября 16:12:** [AUD-147](../2026-09-23/REMOTE-FLEET-LIVE-AUDIT.md)
+подтвердил 6 записей: 3 прежних online и 3 новых offline. За 30 минут общий
+удалённый ID дал 22 вытеснения WS и 565 истёкших токенов; новые три ID не прошли
+WS auth, а реальный remote viewer не получил кадра. Это наблюдение новее
+исторического трёхкарточного среза ниже. Source fixes и CI не изменили pilot;
+**F32-28, F32-29/31 и новый F32-36 остаются открыты.**
+
 **Предыдущий rollout, 21 сентября:** [backend/frontend `c42bb5b`, оба APK 1.2.8](CANARY-20260921.md)
 установлены. 15 task receipts и два pipeline подтверждены; F32-01 продвинут native
 stop/reconnect/restart проверками, но physical interruption и масштаб не закрыты.
