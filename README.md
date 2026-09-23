@@ -358,6 +358,7 @@ identity, доверенный ключ и параметры enrollment; APK и
 <p><a href="docs/development.md">Среда и команды проверок</a><br />
 <a href="docs/api-endpoints.md">Генерируемый API-каталог</a> · <a href="docs/openapi.json">OpenAPI</a><br />
 <a href="docs/security/postgresql-rls.md">PostgreSQL и tenant isolation</a><br />
+<a href="docs/architecture/FLEET-OPERATIONS-AND-OBSERVABILITY.md">Fleet, стримы и единая диагностика: целевая архитектура и gates</a><br />
 <a href="docs/architecture/AI-READINESS.md">Будущий AI-контур: анализ</a></p>
 </td>
 <td width="50%" valign="top">

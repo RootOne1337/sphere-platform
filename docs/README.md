@@ -21,7 +21,7 @@
 | Поднять новую установку | [Startup / bootstrap](operations/STARTUP.md#first-install) | [Configuration](configuration.md) · [Deployment](deployment.md) |
 | Подключить удалённые Android | [Remote pilot](operations/REMOTE-PILOT.md) | [Signed discovery](architecture/ANDROID-SIGNED-DISCOVERY.md) |
 | Понять оставшиеся проблемы | [Fleet32: актуальная таблица](audits/2026-09-20/FLEET32-PREFLIGHT.md) | [Live follow-up 23 сентября](audits/2026-09-23/REMOTE-FLEET-LIVE-FOLLOWUP.md) · [Исходный live-аудит](audits/2026-09-23/REMOTE-FLEET-LIVE-AUDIT.md) · [Readiness](operations/READINESS.md) · [Roadmap](../ROADMAP.md) |
-| Разобрать сбой по времени и устройству | [Support: что собрать](../SUPPORT.md) | [Runbooks](runbooks/README.md) |
+| Разобрать сбой по времени и устройству | [Support: что собрать](../SUPPORT.md) | [Runbooks](runbooks/README.md) · [Fleet operations, stream и observability](architecture/FLEET-OPERATIONS-AND-OBSERVABILITY.md) |
 | Изменить код | [Contributing](../CONTRIBUTING.md) | [Development](development.md) · [Тесты](../tests/production/README.md) |
 
 ## 🚀 Запуск и эксплуатация
@@ -45,7 +45,7 @@
 
 | Компонент | Документы |
 | --- | --- |
-| Общая архитектура | [Обзор](architecture.md) · [Архитектурные решения](adr/README.md) |
+| Общая архитектура | [Обзор](architecture.md) · [Fleet operations / observability](architecture/FLEET-OPERATIONS-AND-OBSERVABILITY.md) · [Архитектурные решения](adr/README.md) |
 | Backend | [Генерируемый API-каталог](api-endpoints.md) · [OpenAPI JSON](openapi.json) · [Обзор API](api-reference.md) |
 | Web UI | [Экранные сценарии](web-ui-guide.md) · [Сессии и cache lifecycle](security/frontend-sessions.md) |
 | Android | [Agent guide](android-agent.md) · [Протокол соединения](architecture/ANDROID-CONNECTION-PROTOCOL.md) |
