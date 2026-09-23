@@ -87,19 +87,26 @@ return the rejected token. A separate test verifies `403` preserves the token pa
 The existing HTTP `500` fallback regression remains in the same class.
 
 Full dev and enterprise Android unit suites each passed 630 tests, with zero
-failures/errors; enterprise retained one intentional skip. Both debug APK variants
-assembled successfully as version 1.2.14 / 10214, and APK Signature Scheme v2
-verification passed. Their package IDs are `com.sphereplatform.agent.dev.debug` and
-`com.sphereplatform.agent.debug`; both use the local debug certificate whose
-SHA-256 is `3ab40797d26e4f52f9e440afc6fe69f197caef71a5a27c63c86735bb1801871f`.
-The APK file SHA-256 values are recorded below. These are local debug packages, not
-release-signed APKs; they are not published to the OTA catalog, installed on remote
-devices, or accepted as a fleet rollout.
+failures/errors; enterprise retained one intentional skip. Afterward, the dev suite
+was rerun while building a pilot-compatible candidate. Both artifacts use version
+code 10214 and passed APK Signature Scheme v2 verification. The pilot candidate is
+`1.2.14-dev`, package `com.sphereplatform.agent.pilot.debug`; the enterprise debug
+variant is `1.2.14`, package `com.sphereplatform.agent.debug`. Both use the local
+debug certificate whose SHA-256 is
+`3ab40797d26e4f52f9e440afc6fe69f197caef71a5a27c63c86735bb1801871f`.
 
-| Artifact | Bytes | SHA-256 |
-| --- | ---: | --- |
-| `android/app/build/outputs/apk/dev/debug/app-dev-debug.apk` | 8,437,232 | `e6cc790611c382f66a452ee08319cedbe5316715a8f16d4f487b60c7b68a65ab` |
-| `android/app/build/outputs/apk/enterprise/debug/app-enterprise-debug.apk` | 8,437,112 | `ac231d46d423508f8ac6639b1c16e269f35860dd9dba353a4d9b70abd64062e7` |
+The pilot candidate's package ID and signer match the current local pilot baseline
+APK (`1.2.9-dev` / 10209), and its version code is higher. The remotely installed
+APK version has not been observed. Its manifest records 630 dev unit tests, zero
+failures/errors, one skipped test, and `installed: false`, `published_to_ota: false`.
+The candidate and its manifest remain in the ignored
+`.local-pilot/apk/` directory. The enterprise APK is a separate debug artifact.
+Neither is a release-signed build or a fleet rollout.
+
+| Artifact | Package | Version | Bytes | SHA-256 |
+| --- | --- | --- | ---: | --- |
+| `.local-pilot/apk/SphereAgent-pilot-candidate-1.2.14-dev-552362f.apk` | `com.sphereplatform.agent.pilot.debug` | `1.2.14-dev` / 10214 | 8,413,081 | `0419f5ee8e966d0a45da91752e593e1ff5303cfd9034b62f9d4878c0ba130d1a` |
+| `android/app/build/outputs/apk/enterprise/debug/app-enterprise-debug.apk` | `com.sphereplatform.agent.debug` | `1.2.14` / 10214 | 8,437,112 | `ac231d46d423508f8ac6639b1c16e269f35860dd9dba353a4d9b70abd64062e7` |
 
 Reproducible full-matrix command:
 
