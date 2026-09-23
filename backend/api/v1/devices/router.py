@@ -465,7 +465,10 @@ async def request_logcat(
     # misses both those logs and the class tags emitted by debug builds.
     sphere_logs = body.mode == "sphere"
     command_type = "REQUEST_LOGS" if sphere_logs else "UPLOAD_LOGCAT"
-    payload = {"max_bytes": 64 * 1024} if sphere_logs else {"lines": body.lines, "mode": body.mode}
+    # The APK reads this byte tail before returning it over its command WS.
+    # Sending 64 KiB for a one-line request can time out on a degraded WAN.
+    byte_budget = min(64 * 1024, max(4 * 1024, body.lines * 256))
+    payload = {"max_bytes": byte_budget} if sphere_logs else {"lines": body.lines, "mode": body.mode}
     result = await _request_interactive_command(
         device_id, current_user, svc, command_type, payload, 15.0,
     )

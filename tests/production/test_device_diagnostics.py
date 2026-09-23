@@ -20,8 +20,21 @@ async def test_sphere_diagnostics_returns_bounded_recent_persisted_logs(world, b
     assert response.status_code == 200
     command = publisher.send_command_wait_result.await_args.args[1]
     assert command['type'] == 'REQUEST_LOGS'
-    assert command['payload'] == {'max_bytes': 64 * 1024}
+    assert command['payload'] == {'max_bytes': 4 * 1024}
     assert response.json() == {'logcat': expected}
+
+
+async def test_default_sphere_diagnostics_retains_bounded_64k_budget(world):
+    publisher = AsyncMock()
+    publisher.send_command_wait_result.return_value = {
+        "status": "completed", "result": {"logs": "recent\n"},
+    }
+    with patch("backend.websocket.pubsub_router.get_pubsub_publisher", return_value=publisher):
+        response = await world.client.post(f"/api/v1/devices/{world.dev_a.id}/logcat",
+            headers=world.auth(world.users['org_admin']), json={})
+    assert response.status_code == 200
+    command = publisher.send_command_wait_result.await_args.args[1]
+    assert command['payload'] == {'max_bytes': 64 * 1024}
 
 
 async def test_system_logcat_mode_keeps_existing_agent_command(world):
