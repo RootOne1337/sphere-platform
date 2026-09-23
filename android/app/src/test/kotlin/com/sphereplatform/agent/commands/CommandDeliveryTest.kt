@@ -1,9 +1,11 @@
 package com.sphereplatform.agent.commands
 
-import com.sphereplatform.agent.ws.SphereWebSocketClient
+import android.content.Context
+import android.content.Intent
 import com.sphereplatform.agent.streaming.StreamQualityMonitor
 import com.sphereplatform.agent.streaming.StreamingManager
 import com.sphereplatform.agent.store.AuthTokenStore
+import com.sphereplatform.agent.ws.SphereWebSocketClient
 import io.mockk.*
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -24,6 +26,7 @@ class CommandDeliveryTest {
     private val adb = mockk<AdbActionExecutor>(relaxed = true)
     private val messages = mutableListOf<JsonObject>()
     private val callback = slot<((JsonObject) -> Unit)?>()
+    private val appContext = mockk<Context>(relaxed = true)
     private val disk = mutableMapOf<String, String?>()
     private val receipts = ReceiptStoreFixture()
     private fun journal(): CommandJournal {
@@ -38,17 +41,23 @@ class CommandDeliveryTest {
         return CommandJournal(prefs, receipts.store)
     }
 
+    private fun mockIntentFlags() {
+        mockkConstructor(Intent::class)
+        every { anyConstructed<Intent>().addFlags(any()) } answers { self as Intent }
+    }
+
     private fun dispatcher(
         scope: kotlinx.coroutines.CoroutineScope,
         streamingManager: StreamingManager = mockk(relaxed = true),
         authStore: AuthTokenStore = mockk(relaxed = true),
+        context: Context = appContext,
     ): CommandDispatcher {
         every { ws.onJsonMessage = captureNullable(callback) } just Runs
         every { ws.sendJson(capture(messages)) } returns true
         return CommandDispatcher(ws, adb, dag, cache,
             mockk(relaxed = true), mockk(relaxed = true), authStore,
             mockk(relaxed = true), mockk(relaxed = true), mockk(relaxed = true),
-            mockk(relaxed = true), scope, streamingManager, mockk(relaxed = true), journal())
+            mockk(relaxed = true), scope, streamingManager, context, journal())
             .also { it.start() }
     }
 
@@ -139,6 +148,40 @@ class CommandDeliveryTest {
         assertEquals(29L, stream["ws_queue_accepted_total"]?.jsonPrimitive?.long)
         assertEquals(1L, stream["ws_queue_rejected_total"]?.jsonPrimitive?.long)
         dispatcher.stop()
+    }
+
+    @Test fun duplicateStartStreamDoesNotRestartActiveCapture() = runTest {
+        mockIntentFlags()
+        val streaming = mockk<StreamingManager>(relaxed = true)
+        every { streaming.isActive() } returns true
+        val dispatcher = dispatcher(backgroundScope, streaming)
+
+        try {
+            callback.captured!!(buildJsonObject { put("type", "start_stream") })
+            runCurrent()
+
+            verify(exactly = 0) { appContext.startActivity(any()) }
+        } finally {
+            dispatcher.stop()
+            unmockkConstructor(Intent::class)
+        }
+    }
+
+    @Test fun startStreamRequestsProjectionWhenCaptureIsNotActive() = runTest {
+        mockIntentFlags()
+        val streaming = mockk<StreamingManager>(relaxed = true)
+        every { streaming.isActive() } returns false
+        val dispatcher = dispatcher(backgroundScope, streaming)
+
+        try {
+            callback.captured!!(buildJsonObject { put("type", "start_stream") })
+            runCurrent()
+
+            verify(exactly = 1) { appContext.startActivity(any()) }
+        } finally {
+            dispatcher.stop()
+            unmockkConstructor(Intent::class)
+        }
     }
 
     private fun command() = buildJsonObject {

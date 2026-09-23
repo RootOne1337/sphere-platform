@@ -178,3 +178,113 @@ returns HTTP 200 on the tested routes. Backend image `ff87b56dbbd7`, Cloudflare,
 APK/OTA catalog, and remote emulators were left unchanged. This frontend rollout
 does not validate the Android refresh fix or prove remote frame delivery; both
 remain open acceptance gates.
+
+## Follow-up: stream-only remote failure — 2026-09-24
+
+The operator supplied a Fleet Matrix capture showing seven registered endpoints:
+two tiles had images, while five remained in the first-frame wait/no-signal state.
+This is evidence of a frame-delivery gap for those viewer sessions, not evidence
+that the five Android agents were offline.
+
+### What the current pilot proves
+
+Read-only inspection of the pilot config endpoint returned HTTP 200. Its primary
+agent route is a public DNS endpoint and it has no configured fallback route. The
+APK uses its persisted/configured route list; it does not automatically choose a
+LAN address because it happens to be near the server. Existing installations may
+still have older persisted routes, so the config response describes new provisioning
+and does not prove the route used by every current device.
+
+For `2026-09-23T22:52:50Z` through `23:07:50Z`, the public gateway recorded 315
+closed Android WebSocket upgrades with status `101`. Their connection-lifetime
+median was 0.33 seconds and p90 was 72.171 seconds. There were no new viewer
+upgrades in that exact later interval; already-open viewer sessions are not counted
+as new upgrades. Backend logs in the same 15-minute query returned 74 successful
+agent authentications and stream-resume events, 242 `invalid_token` events all for
+one anonymized device identity, and 74 receive-loop warnings. There were no
+`device_not_found` or auth-timeout events. Backend authentication occurs after the
+`101` upgrade, so the 242 credential rejections are application-level failures,
+not Cloudflare failing the WebSocket handshake. The 74-vs-315 totals differ because
+the public access log records at socket close and the rolling windows are not a
+shared request/session join. Device IDs remain omitted from this report.
+
+A `101` confirms only the WebSocket handshake; these logs do not measure binary
+frame bytes or prove that a browser decoded one. A separate Cloudflared metrics
+snapshot showed one HA connection, nine concurrent requests, 15 cumulative request
+errors, and 152,122 cumulative requests. Those counters have no session-level frame
+attribution; the 15 errors cannot be tied to a video session. Cloudflared emitted
+no log lines in the preceding 30-minute query. This is insufficient to blame or
+exonerate Cloudflare for video loss, while the 242 auth rejections are a confirmed
+independent connection problem.
+
+The running backend image is tagged `ff87b56dbbd7`. The repository contains the
+idle Redis Pub/Sub polling fix in `fa099aa`; ancestry and the running image's
+source confirm it already uses `get_message(timeout=1.0)`. Therefore the previously
+identified idle-subscriber reconnect loop is not missing from this backend image.
+The checked-in integration regression
+`test_static_screen_does_not_restart_capture_after_redis_read_timeout` covers this
+case, but it requires disposable local PostgreSQL and Redis services and was not
+run against the live pilot.
+
+### Confirmed APK defect and fix
+
+Backend reconnect recovery intentionally sends `start_stream` followed by
+`viewer_connected` when an authenticated Android WebSocket reconnects while a
+viewer is waiting. Before this change, the APK unconditionally opened
+`ScreenCaptureRequestActivity`, even if capture was already active. The capture
+service then stopped the working encoder and MediaProjection before trying to
+start a replacement. Thus ordinary reconnect recovery could tear down a valid
+stream and require another Android capture grant. This is a confirmed source-level
+reconnect/idempotency defect and a plausible contributor to the remote first-frame
+failure; current remote device telemetry does not prove it was the only cause.
+
+The APK now ignores duplicate starts while `StreamingManager` is active, and the
+capture service independently refuses to stop an active projection if a duplicate
+start reaches it. A fresh start still opens the permission flow when capture is
+inactive. The regression was run against the old dispatcher first and failed:
+`Context.startActivity` was called for an already active stream. After the fix, all
+15 `CommandDeliveryTest` cases, the capture-service idempotency test, and all seven
+`StreamingCaptureLifecycleTest` cases passed in the dev flavor. Full dev and
+enterprise unit suites then passed 633 tests each, with zero failures/errors and
+one intentional enterprise skip. The pilot candidate is built separately below;
+it has not been published or installed on remote devices.
+
+### Disconnect logging correction
+
+The same sample contained 74 receive-loop warnings whose error text was
+`Cannot call "receive" once a disconnect message has been received`. The Android
+route reads raw ASGI WebSocket events but previously handled only text and binary
+messages. On a peer close, Starlette returns a `websocket.disconnect` event; the
+loop ignored it, called `receive()` again, then logged the resulting local
+RuntimeError as a WebSocket receive failure. That warning is emitted after the
+socket has already closed and does not identify which peer or network component
+closed it.
+
+The route now treats `websocket.disconnect` as terminal, logs the close code at
+info level, and continues normal session cleanup without a second receive call.
+Regression tests verify one read for a disconnect and transparent delivery of a
+normal application event. `tests/test_ws/test_android_ws_handlers.py` passed all
+23 cases; it emitted two existing deprecation warnings outside this change.
+
+Android's official MediaProjection guidance requires a new user-consented capture
+session on Android 14+ for each projection session. Reconnect handling must
+therefore preserve an active grant instead of attempting a silent projection
+restart. See [Android 14 behavior changes](https://developer.android.com/about/versions/14/behavior-changes-14)
+and the [Cloudflare Tunnel FAQ](https://developers.cloudflare.com/cloudflare-one/faq/cloudflare-tunnels-faq/)
+and [WebSockets guidance](https://developers.cloudflare.com/network/websockets/).
+
+### Acceptance still required
+
+This source fix does not yet prove that the remote cohort displays video. The
+running Android version and saved route on those remote instances are unknown.
+The server-side `stream resumed` event and visible Android capture notification do
+not prove encoder output, socket queue acceptance, backend binary-frame receipt,
+Redis publish, viewer send, browser receive, or decode. A one-device remote canary
+must record those stages under one redacted session correlation ID, along with
+installed APK version and route class, before a 32-device update. Keep the existing
+pilot services and remote fleet unchanged until that evidence is collected.
+
+Cloudflare documents full WebSocket support, but also documents idle-connection
+closures and edge/server restarts. The pilot's public route is therefore a valid
+transport candidate but is not independently exonerated: only correlated frame
+counters or a controlled A/B path test on owned infrastructure can localize loss.

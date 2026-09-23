@@ -207,6 +207,13 @@ class CommandDispatcher @Inject constructor(
                 return
             }
             "start_stream" -> {
+                // Viewer registration is retried after an agent reconnect. The
+                // current capture owns a one-shot MediaProjection grant; launching
+                // the consent Activity again would replace it and reset the encoder.
+                if (streamingManager.isActive()) {
+                    Timber.i("Ignoring duplicate start_stream — capture is already active")
+                    return
+                }
                 Timber.i("Received start_stream — preparing screen capture permission")
                 val intent = Intent(appContext, ScreenCaptureRequestActivity::class.java).apply {
                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)

@@ -35,6 +35,7 @@ from backend.api.ws.android.router import (
     handle_command_result,
     handle_device_event,
     handle_telemetry,
+    receive_android_ws_event,
 )
 from backend.schemas.device_status import DeviceLiveStatus
 from backend.services.device_status_cache import DeviceStatusCache
@@ -62,6 +63,30 @@ def status_cache(binary_redis):
 # ===========================================================================
 # handle_telemetry
 # ===========================================================================
+
+class TestReceiveAndroidWsEvent:
+    async def test_disconnect_event_ends_receive_without_a_second_read(self):
+        socket = MagicMock()
+        socket.receive = AsyncMock(return_value={"type": "websocket.disconnect", "code": 1001})
+
+        with patch("backend.api.ws.android.router.logger.info") as info:
+            event = await receive_android_ws_event(socket, DEVICE_ID)
+
+        assert event is None
+        socket.receive.assert_awaited_once()
+        info.assert_called_once_with(
+            "android_ws.disconnected",
+            device_id=DEVICE_ID,
+            close_code=1001,
+        )
+
+    async def test_application_event_is_returned_unchanged(self):
+        payload = {"type": "websocket.receive", "text": '{"type":"pong"}'}
+        socket = MagicMock()
+        socket.receive = AsyncMock(return_value=payload)
+
+        assert await receive_android_ws_event(socket, DEVICE_ID) == payload
+        socket.receive.assert_awaited_once()
 
 class TestHandleTelemetry:
     async def test_updates_battery(self, status_cache):

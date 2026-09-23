@@ -27,6 +27,22 @@ logger = structlog.get_logger()
 router = APIRouter(tags=["websocket"])
 
 
+async def receive_android_ws_event(ws: WebSocket, device_id: str) -> dict | None:
+    """Read one ASGI event; represent a peer disconnect as end-of-stream."""
+    data = await ws.receive()
+    if data.get("type") == "websocket.disconnect":
+        # Starlette's low-level receive() returns this ASGI event. Calling
+        # receive() again raises RuntimeError and mislabels a normal close as an
+        # application failure, so make the disconnect terminal here.
+        logger.info(
+            "android_ws.disconnected",
+            device_id=device_id,
+            close_code=data.get("code"),
+        )
+        return None
+    return data
+
+
 async def authenticate_ws_token(token: str, db: AsyncSession):
     """
     Проверить JWT токен или API ключ из first-message WebSocket авторизации.
@@ -656,7 +672,9 @@ async def android_agent_ws(
 
     try:
         while True:
-            data = await ws.receive()
+            data = await receive_android_ws_event(ws, device_id)
+            if data is None:
+                break
             if "text" in data:
                 try:
                     msg = json.loads(data["text"])
