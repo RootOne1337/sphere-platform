@@ -17,97 +17,102 @@ import java.io.IOException
 class InstanceIdentityTest {
     private val context: Context = org.robolectric.RuntimeEnvironment.getApplication()
     private val prefs get() = context.getSharedPreferences("instance-test", Context.MODE_PRIVATE)
-    private val nic = "wlan0|0|00:db:00:00:00:01"
-
-    @Test fun copiedPreferencesWithDifferentVirtualCardsGetDifferentBinding() {
-        prefs.edit().clear().commit()
-        val original = InstanceBindingReader(prefs, { nic }, { "copied-android-id" }, requireVirtualNic = true).read()
-        // Клон получает все сохранённые настройки, но другую виртуальную карту.
-        val clone = InstanceBindingReader(prefs, { "wlan0|0|00:db:00:00:00:02" },
-            { "copied-android-id" }, requireVirtualNic = true).read()
-        assertNotEquals(original, clone)
-    }
 
     @Test fun copiedPreferencesWithSameCardButDifferentVmSerialGetDifferentBinding() {
         prefs.edit().clear().commit()
-        val originalReader = InstanceBindingReader(prefs, { nic }, { "copied-android-id" },
-            requireVirtualNic = true, virtualSerial = { "ldplayer-vm-001" })
+        val originalReader = InstanceBindingReader(prefs, { "copied-android-id" },
+            isEmulator = true, virtualSerial = { "ldplayer-vm-001" })
         val original = originalReader.read()
-        val cloneReader = InstanceBindingReader(prefs, { nic }, { "copied-android-id" },
-            requireVirtualNic = true, virtualSerial = { "ldplayer-vm-002" })
+        val cloneReader = InstanceBindingReader(prefs, { "copied-android-id" },
+            isEmulator = true, virtualSerial = { "ldplayer-vm-002" })
         assertNotEquals(original, cloneReader.read())
         assertEquals(InstanceBindingReader.CURRENT_VERSION, cloneReader.version())
     }
 
     @Test fun bitwiseCloneWithSameCardAndSameVmSerialIsNotFalselyClaimedAsUnique() {
         prefs.edit().clear().commit()
-        val original = InstanceBindingReader(prefs, { nic }, { "copied-android-id" },
-            requireVirtualNic = true, virtualSerial = { "same-hypervisor-id" }).read()
-        val clone = InstanceBindingReader(prefs, { nic }, { "copied-android-id" },
-            requireVirtualNic = true, virtualSerial = { "same-hypervisor-id" }).read()
+        val original = InstanceBindingReader(prefs, { "copied-android-id" },
+            isEmulator = true, virtualSerial = { "same-hypervisor-id" }).read()
+        val clone = InstanceBindingReader(prefs, { "copied-android-id" },
+            isEmulator = true, virtualSerial = { "same-hypervisor-id" }).read()
         assertEquals(original, clone)
     }
 
-    @Test fun clonesWithoutUniqueSerialAndWithSamePermanentCardRemainIndistinguishable() {
+    @Test fun emulatorWithoutStableSerialFailsClosedInsteadOfUsingCopiedAndroidOrMacIdentity() {
         prefs.edit().clear().commit()
-        val original = InstanceBindingReader(prefs, { nic }, { "copied-android-id" },
-            requireVirtualNic = true, virtualSerial = { null }).read()
-        val clone = InstanceBindingReader(prefs, { nic }, { "copied-android-id" },
-            requireVirtualNic = true, virtualSerial = { null }).read()
-        assertEquals(original, clone)
+        val reader = InstanceBindingReader(prefs, { "copied-android-id" },
+            isEmulator = true, virtualSerial = { null })
+        assertThrows(IOException::class.java) { reader.read() }
+        assertNull(prefs.getString("source_v2", null))
+    }
+
+    @Test fun oldMacBasedV2MarkerMigratesToSerialInsteadOfKeepingAmbiguousBinding() {
+        prefs.edit().clear().putString("source_v2", "emulator_eth0").commit()
+        val serial = "ldplayer-vm-migration-001"
+        val upgraded = InstanceBindingReader(prefs, { "copied-android-id" },
+            isEmulator = true, virtualSerial = { serial })
+
+        val first = upgraded.read()
+        assertEquals("emulator_serial", prefs.getString("source_v2", null))
+        assertEquals(first, InstanceBindingReader(prefs, { "copied-android-id" },
+            isEmulator = true, virtualSerial = { serial }).read())
     }
 
     @Test fun emulatorWithSerialButNoReadyNetworkCanBindWithoutUsingBootId() {
         prefs.edit().clear().commit()
-        var snapshot = ""
-        val reader = InstanceBindingReader(prefs, { snapshot }, { "copied-android-id" },
-            requireVirtualNic = true, virtualSerial = { "ldplayer-vm-003" })
+        val reader = InstanceBindingReader(prefs, { "copied-android-id" },
+            isEmulator = true, virtualSerial = { "ldplayer-vm-003" })
         val first = reader.read()
         assertEquals("emulator_serial", prefs.getString("source_v2", null))
-        snapshot = nic
         assertEquals(first, reader.read())
     }
 
     @Test fun processRestartAndAndroidIdChangeKeepVirtualMachineBinding() {
         prefs.edit().clear().commit()
-        val original = InstanceBindingReader(prefs, { nic }, { "old-android-id" }, requireVirtualNic = true).read()
-        val restarted = InstanceBindingReader(prefs, { nic }, { "new-android-id" }, requireVirtualNic = true).read()
+        val serial = { "ldplayer-vm-004" }
+        val original = InstanceBindingReader(prefs, { "old-android-id" }, isEmulator = true,
+            virtualSerial = serial).read()
+        val restarted = InstanceBindingReader(prefs, { "new-android-id" }, isEmulator = true,
+            virtualSerial = serial).read()
         assertEquals(original, restarted)
     }
 
     @Test fun temporarilyMissingSelectedCardDoesNotFallBackToAnotherIdentity() {
         prefs.edit().clear().commit()
-        val original = InstanceBindingReader(prefs, { nic }, { "id" }, requireVirtualNic = true).read()
-        var snapshot = ""
-        val reader = InstanceBindingReader(prefs, { snapshot }, { "id" }, requireVirtualNic = true)
+        var serial: String? = "ldplayer-vm-005"
+        val original = InstanceBindingReader(prefs, { "id" }, isEmulator = true,
+            virtualSerial = { serial }).read()
+        serial = null
+        val reader = InstanceBindingReader(prefs, { "id" }, isEmulator = true,
+            virtualSerial = { serial })
         assertThrows(IOException::class.java) { reader.read() }
-        snapshot = nic
+        serial = "ldplayer-vm-005"
         assertEquals(original, reader.read())
     }
 
-    @Test fun randomizedAndPlaceholderAddressesCannotBecomeBinding() {
-        assertTrue(InstanceBindingReader.parsePermanentAddresses("wlan0|3|00:db:00:00:00:01").isEmpty())
-        for (mac in listOf("02:00:00:00:00:00", "00:00:00:00:00:00", "ff:ff:ff:ff:ff:ff", "01:00:00:00:00:01")) {
-            assertNull(InstanceBindingReader.normalizeAddress(mac))
+    @Test fun placeholderAndMalformedSerialsCannotBecomeEmulatorBinding() {
+        for (serial in listOf(null, "unknown", "none", "00:00", "invalid value")) {
+            assertNull(InstanceBindingReader.normalizeVirtualSerial(serial))
         }
     }
 
     @Test fun physicalFallbackDoesNotSwitchWhenAnotherNetworkAppears() {
         prefs.edit().clear().commit()
-        val first = InstanceBindingReader(prefs, { "" }, { "physical-android-id" }).read()
-        val next = InstanceBindingReader(prefs, { nic }, { "physical-android-id" }).read()
+        val first = InstanceBindingReader(prefs, { "physical-android-id" }).read()
+        val next = InstanceBindingReader(prefs, { "physical-android-id" }).read()
         assertEquals(first, next)
     }
 
-    @Test fun emulatorBootWithoutNetworkWaitsInsteadOfPersistingCopiedAndroidId() {
+    @Test fun emulatorWithoutStableSerialWaitsInsteadOfPersistingCopiedAndroidId() {
         prefs.edit().clear().commit()
-        var snapshot = ""
-        val reader = InstanceBindingReader(prefs, { snapshot }, { "copied-id" }, requireVirtualNic = true)
+        var serial: String? = null
+        val reader = InstanceBindingReader(prefs, { "copied-id" }, isEmulator = true,
+            virtualSerial = { serial })
         assertThrows(IOException::class.java) { reader.read() }
         assertNull(prefs.getString("source_v2", null))
-        snapshot = nic
+        serial = "ldplayer-vm-006"
         assertEquals(64, reader.read().length)
-        assertEquals("emulator_wlan0", prefs.getString("source_v2", null))
+        assertEquals("emulator_serial", prefs.getString("source_v2", null))
     }
 
     @Test fun storedTemplateFingerprintSurvivesChangedAndroidProperties() {
