@@ -28,12 +28,13 @@ source Compose повышен до 2048 MiB; все три isolated CI probe п�
 ## Что осталось сейчас, после установленных исправлений
 
 **22–23 сентября — P0 F32-28:** [копии APK используют общий device_id, а удалённые видео и OTA пока не приняты](CLONE-IDENTITY.md).
-20 удалённых + 2 локальных VM представлены тремя карточками; подтверждены
-вытеснения соединений, SPS/PPS без IDR и ошибки WAN-загрузки. Backend/APK fix
-прошёл локальные проверки; OTA двух локальных Android прошла. Ни один из 20 клонов
-пока не получил подтверждённый отдельный ID. Приоритет — рабочий WAN маршрут OTA,
-миграция клонов, изображение с одного удалённого APK; затем прежние F32-07/08.
-Исправление исходников и локальная OTA не закрывают удалённую приёмку.
+сохранённый API-срез от 22 сентября показывал три карточки вместо ожидаемых 22;
+пользователь 23 сентября подтвердил, что удалённые клоны по-прежнему схлопываются,
+а удалённый viewer остаётся на «Подключение». Старые stream evidence показывали
+SPS/PPS без IDR; это отдельная проблема доставки кадра. Source fixes для регистрации,
+keyframe и browser reconnect ещё не выкатывались в удалённую среду. Приоритет —
+backend-first миграция одного удалённого клона, затем отдельный ID и реальный кадр;
+локальная сборка не закрывает remote acceptance.
 
 **23 сентября — P0 F32-29:** [браузер не повторял запрос первого IDR](STREAM-FIRST-FRAME.md).
 Регрессия воспроизведена тестом без первого кадра и без ошибки декодера; исправление
@@ -81,12 +82,17 @@ enterprise flavors. APK version поднята до **1.2.10 / 10210**, поск
 
 **23 сентября — P0 F32-34 / AUD-145:** Android v1 identity не использовала serial
 эмулятора, поэтому одинаковые MAC/Android ID клонированного образа могли снова
-схлопывать разные VM. Подготовлена versioned v2 binding и backend-first миграция;
-кандидат APK **1.2.11-dev / 10211** собран с локальным pilot package ID/signature.
-Android suites: 610 тестов в каждом flavor без failures/errors (один existing
-enterprise test skipped); backend registration: 21 passed. Отдельный PostgreSQL-тест 32 конкурентных экземпляров написан, но локально
-пропущен за отсутствием изолированных сервисов и ожидает CI. Удалённые serial,
-backend rollout и video IDR/frame delivery не подтверждены. [Evidence, fix и gates](CLONE-BINDING-V2.md).
+схлопывать разные VM. Versioned v2 backend migration готова; финальная Android
+binding требует VM serial без MAC/root fallback и перепроверяется полными suites.
+Новый APK **1.2.11-dev / 10211** собран с strict-serial поведением; package ID и
+подпись совпадают с локальным pilot baseline, но APK не устанавливался. Предыдущий
+артефакт с MAC fallback устарел. Android suites прошли (610 tests на flavor, один
+existing enterprise skip). На PR head `114c48f` Android и frontend checks прошли;
+backend остановился на рассинхронизации generated OpenAPI до запуска тестов. Spec
+обновлена на закреплённых CI-зависимостях. PostgreSQL regression для 32 concurrent
+registrations написан, но локально не запускался без изолированных сервисов.
+Удалённые serial, backend rollout и video IDR/frame delivery не подтверждены.
+[Evidence, fix и gates](CLONE-BINDING-V2.md).
 
 Ниже приведена контрольная точка исходного аудита на 21 сентября. Последующие разделы сохраняют историю
 воспроизведений; наличие строки в исходном реестре **не означает, что её root

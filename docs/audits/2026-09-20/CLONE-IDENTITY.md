@@ -158,18 +158,23 @@ TLS ingress или remote OTA acceptance: compatible-signature/catalog publicati
 
 ### AUD-145 / F32-34 · serial-based binding v2
 
-23 сентября обнаружено, что предыдущая binding использовала только постоянный MAC
-или Android ID и не включала serial эмулятора. Исправление и ограничения описаны в
+23 сентября обнаружено, что прежняя binding использовала постоянный MAC или
+Android ID и не включала serial эмулятора. Исправление и ограничения описаны в
 [отдельном отчёте AUD-145](CLONE-BINDING-V2.md): backend мигрирует старую карточку
-один раз и затем разводит клоны по versioned binding; Android принимает credentials
-только после подтверждения v2. Локальные dev/enterprise наборы содержат по 610
-test cases в каждом flavor без failures/errors (один existing enterprise test skipped);
-backend registration — 21 passed. Конкурентный PostgreSQL-тест
-на 32 клона добавлен, но локально пропущен без изолированной БД и остаётся
-обязательным CI gate. APK-кандидат 1.2.11-dev собран в package ID и подписи
-локального pilot, но не устанавливался. Backend rollout, уникальность serial
-20 удалённых LDPlayer и проверка первого декодированного кадра не подтверждены.
-До этих шагов массовая установка не допускается.
+один раз, затем разводит разные v2 binding по отдельным карточкам; Android принимает
+credentials только после подтверждения версии. Финальная Android binding для x86
+требует `ro.boot.serialno`/`ro.serialno`, не просит root и не использует MAC fallback;
+если serial нет, регистрация не должна притворяться отдельным устройством.
+
+Строгая миграция persisted identity и fail-closed поведение покрыты; полные Android
+suites прошли — 610 tests на flavor (один existing enterprise skip). Новый strict-serial
+APK 1.2.11-dev собран и подписан тем же сертификатом, что локальный pilot; прежний
+артефакт 1.2.11 с MAC fallback устарел. На PR head `114c48f` Android и frontend CI
+прошли, backend CI остановился до тестов из-за устаревшей OpenAPI-генерации; спецификация
+обновлена закреплёнными CI-зависимостями. 32-way PostgreSQL regression локально не
+запускался без изолированных PostgreSQL/Redis и остаётся CI gate. В удалённой среде
+backend/APK не обновлялись; уникальность serial удалённых LDPlayer и первый
+декодированный кадр не подтверждены. Массовая установка остаётся NO-GO.
 
 ## Residual risk и следующий шаг
 

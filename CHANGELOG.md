@@ -14,8 +14,9 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Audit / documentation
 
-- AUD-145 / F32-34: clone identity binding v2 now includes emulator VM serial and
-  permanent virtual NIC when available. Backend upgrades the legacy registration
+- AUD-145 / F32-34: clone identity v2 for x86 emulators now requires the VM serial
+  and fails closed when it is missing; it does not fall back to cloneable MAC/Android ID
+  or request root. Backend upgrades the legacy registration
   once, splits later clones idempotently, and rejects stale v1 re-registration;
   APK persists the new binding only after server acknowledgment. Android unit suites
   and focused backend tests passed locally. A 32-clone PostgreSQL regression is

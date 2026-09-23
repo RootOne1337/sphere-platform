@@ -26,6 +26,11 @@ Read-only проверка двух Android-инстансов, доступны
 свойства для этих двух экземпляров, но **не доказывает**, что удалённые клоны LDPlayer
 имеют уникальные serial. Их значения не собирались и не публикуются.
 
+Последний сохранённый crash-buffer baseline двух доступных устройств датирован
+22 сентября 22:29 UTC: Android 9, APK 1.2.9-dev / 10209, по нулю marker-ов падения.
+Он относится только к двум локальным экземплярам и не подтверждает состояние 20
+удалённых клонов или получение ими видеокадров.
+
 Отсутствие stream-кадра — связанный симптом, но отдельная граница отказа. Ранее
 сохранённый viewer-срез содержал SPS/PPS и ноль IDR; исправления повторного запроса
 keyframe в browser и удержания раннего запроса до готовности Android encoder уже
@@ -35,13 +40,15 @@ keyframe в browser и удержания раннего запроса до г�
 
 ## Исправление
 
-- Android отправляет `instance_binding_version=2`. Для эмулятора binding включает
-  нормализованный `ro.boot.serialno` или запасной `ro.serialno` и постоянный MAC
-  `eth0`/`wlan0`, когда он доступен; если сеть ещё не поднялась, допустим serial-only
-  binding. При недоступности уже выбранного источника агент ждёт, а не меняет ID.
-- Для обычного физического устройства остаётся Android ID; если у эмулятора serial
-  недоступен, используется постоянный MAC. Это запасные пути совместимости, но они
-  не гарантируют различение побитовых клонов с одинаковыми свойствами.
+- Android отправляет `instance_binding_version=2`. Для x86/x86_64 эмулятора
+  binding строится только из нормализованного `ro.boot.serialno` или запасного
+  `ro.serialno`, прочитанного обычным `getprop`. MAC и скопированный Android ID
+  не используются как резервная identity. Если VM serial отсутствует, регистрация
+  явно откладывается с ошибкой; приложение не создаёт ложную общую карточку.
+- Идентичность не вызывает `su`, не просит root-разрешение и не зависит от сети.
+  При обновлении старой сохранённой MAC-based метки binding переводится на VM serial.
+  Для физического устройства остаётся Android ID; неизвестное или неполное значение
+  не принимается.
 - Сырые свойства устройства не отправляются: backend получает только SHA-256
   binding и номер версии. Android сохраняет номер подтверждённой сервером версии
   вместе с credentials атомарно и не принимает новые credentials без ACK версии.
@@ -57,28 +64,36 @@ keyframe в browser и удержания раннего запроса до г�
 Затронуты: `InstanceBindingReader`, `InstanceRegistrationGuard`,
 `DeviceRegistrationClient`, `AuthTokenStore`, схема и сервис регистрации,
 регрессионные тесты Android/backend, OpenAPI и `android/version.properties`.
-Кандидат — **1.2.11-dev / 10211**, пакет `com.sphereplatform.agent.pilot.debug`.
-Локальная сборка и подпись совпали с локальным pilot-пакетом; файл находится в
-приватном `.local-pilot/apk/SphereAgent-pilot-candidate-1.2.11-dev.apk`. Он ещё не
-установлен, не опубликован в OTA-каталог и не подтверждён для удалённого signer.
+Версия кандидата — **1.2.11-dev / 10211**, пакет
+`com.sphereplatform.agent.pilot.debug`. Предыдущий APK 1.2.11-dev был собран до
+ужесточения правила идентичности и считается устаревшим. Новый strict-serial артефакт
+находится в приватном `.local-pilot/apk/SphereAgent-pilot-candidate-1.2.11-dev-strict-serial.apk`,
+SHA-256 `401F08C191DE9B74D36AC1698C13952D694B565E9FE048E9AF64B06A628C4F53`.
+Package ID, versionCode и локальная подпись проверены, сертификат совпал с pilot
+baseline. Артефакт не устанавливался и не публиковался в OTA-каталог; совместимость
+с подписью на удалённой станции и новый backend там ещё не проверены.
 
 ## Проверки
 
-- Android `testDevDebugUnitTest`: **610 tests, 0 failures/errors/skips**.
-- Android `testEnterpriseDebugUnitTest`: **610 tests, 0 failures/errors, 1
-  existing test skipped**.
-- Backend registration regressions: **21 passed**; Ruff и проверка экспорта
-  OpenAPI прошли.
+- `InstanceIdentityTest`: **13/13** passed в dev и enterprise. Полный Android
+  `testDevDebugUnitTest`: **610 tests, 0 failures/errors/skips**;
+  `testEnterpriseDebugUnitTest`: **610 tests, 0 failures/errors, 1 existing skip**.
+- Backend registration regressions: **21 passed**; Ruff прошёл.
+  На PR head `114c48f` Android и frontend CI прошли, но backend job остановился
+  на stale `docs/openapi.json`, до backend/integration tests. Документация API
+  пересобрана и повторно проверена на закреплённых CI-версиях FastAPI 0.136.3,
+  Pydantic 2.9.2 и Starlette 1.3.1.
 - Добавлен PostgreSQL integration regression: **32 конкурентных клона**, отдельные
   повторные регистрации и отказ устаревшему v1. Локально этот тест **пропущен**:
   изолированные PostgreSQL/Redis не были запущены. До прохождения integration job
   в CI это доказательство не считается зелёным.
-- `assembleDevDebug` собрал APK с ожидаемым package ID/versionCode. APK-подпись
-  совпала с сохранённым локальным pilot baseline. Ни один Android-инстанс не
-  обновлялся и никаких APK не устанавливалось.
+- Strict-serial `assembleDevDebug` прошёл; package ID=`com.sphereplatform.agent.pilot.debug`,
+  versionName=`1.2.11-dev`, versionCode=`10211`. APK signer совпал с локальным pilot
+  baseline. Ни один Android-инстанс не обновлялся и APK не устанавливались.
 
-Предыдущий зелёный GitHub CI относится к старому head `fc31e59`; он не проверяет
-эти новые изменения. После push обязательны свежие PR checks и PostgreSQL integration.
+Последний CI относится к head `114c48f` и не проверяет текущие source changes.
+После push нужны свежие PR checks, включая изолированную PostgreSQL/Redis проверку
+32 конкурентных регистраций.
 
 ## Критерии удалённой приёмки
 
@@ -97,9 +112,9 @@ keyframe в browser и удержания раннего запроса до г�
 
 ## Остаточный риск
 
-Если шаблон LDPlayer копирует также serial и постоянный MAC, вычислить различие
-побитовых копий из Android-приложения невозможно. Нужен уникальный идентификатор,
-который выдаёт сам hypervisor каждому экземпляру, либо отдельный управляемый процесс
-провиженинга. До проверки serial именно на удалённой станции нельзя обещать, что
-установка этого APK создаст 20 записей. Два локальных serial и 32 concurrent HTTP
-регистрации не заменяют реальную приёмку WAN, codec, browser и всей группы.
+Если LDPlayer-клон копирует VM serial, приложение не может безопасно придумать
+уникальный ID из скопированных данных: clone останется тем же устройством. Если же
+serial вообще недоступен, strict mode не зарегистрирует такой эмулятор, пока LDPlayer
+не предоставит уникальную VM identity. Удалённые serial ещё не проверены. Два локальных
+serial и 32 concurrent HTTP регистрации не заменяют WAN, codec, browser и fleet
+приёмку.
