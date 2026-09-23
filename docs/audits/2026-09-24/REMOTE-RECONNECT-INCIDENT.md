@@ -24,8 +24,9 @@ decoder, or Android capture for the current remote session.
 
 ## Runtime evidence
 
-Read-only observation of the local pilot stack; no container, tunnel, backend, APK,
-or remote emulator was restarted or updated for this audit.
+The baseline in this table was collected read-only, before the later frontend-only
+pilot rollout documented below. At baseline time no container, tunnel, backend,
+APK, or remote emulator was restarted or updated.
 
 | Evidence | Observed value | What it proves |
 | --- | --- | --- |
@@ -148,3 +149,29 @@ old-session evictions are not attributed to duplicate clones versus normal recon
 overlap; and the deployed pilot still uses a Quick Tunnel without an independent
 media-path comparison. The source fix reduces the known terminal-token reconnect
 loop, but no remote recovery or 32-device readiness claim is made here.
+
+## Follow-up runtime check — 2026-09-24
+
+A later rolling 30-minute sample recorded 463 refresh HTTP 401 responses and 9
+refresh HTTP 200 responses at the public gateway. Backend logs contained 483
+`android_ws: invalid_token` events, all associated with one anonymized device
+identity, plus 143 successful authentications and 97 old-connection evictions.
+Gateway request logs do not carry the device ID or a shared request ID, so the
+refresh and WebSocket counts cannot be joined one-to-one. These recurring rejects
+keep the stale-client/re-enrollment defect operationally relevant; the remote APK
+version is still unknown, so deployment of the 1.2.14 candidate is unproven.
+
+The same investigation found seven short viewer sessions in an earlier 30-minute
+sample: seven gateway HTTP 101 upgrades and seven backend connect/disconnect pairs.
+All gateway close timestamps were within 2 ms, and the owner confirmed a batch
+start followed by a batch stop after seeing a blank image. The pattern is
+consistent with intentional UI closure and is not evidence of a Cloudflare timeout.
+Details and limits are recorded in
+[the first-frame follow-up](../2026-09-20/STREAM-FIRST-FRAME.md).
+
+The local pilot frontend was rebuilt from clean source revision `48c9480` and
+replaced to deploy the existing browser keyframe-retry fix. It is healthy and
+returns HTTP 200 on the tested routes. Backend image `ff87b56dbbd7`, Cloudflare,
+APK/OTA catalog, and remote emulators were left unchanged. This frontend rollout
+does not validate the Android refresh fix or prove remote frame delivery; both
+remain open acceptance gates.
