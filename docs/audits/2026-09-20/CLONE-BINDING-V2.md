@@ -122,76 +122,75 @@ backend/stream на удалённой станции всё ещё отсутс
    backend/сети, stream latency, crash buffers и нагрузки Redis. Сейчас Fleet32
    остаётся **NO-GO**.
 
-## Golden image, массовое клонирование и OTA
+## Master image и Android-only identity
 
-**Не удалять старые клоны до инвентаризации их единственной общей карточки.**
-Она может быть нужна для контролируемой миграции/OTA recovery; удаление не
-исправит копию токенов или одинаковую hypervisor identity и уничтожит полезную
-диагностику. Сначала сохранить mapping «имя LDPlayer → текущая карточка/версия»,
-не включая токены и сырые serial в публичный отчёт.
+Уточнение от 24 сентября: требуемый сценарий — запускать и настраивать APK в master,
+затем клонировать этот готовый образ без повторной ручной установки. Такой master
+допустим. Критично не само наличие сохранённых credentials, а то, чтобы каждый clone
+прошёл rebind по собственной стабильной identity до любого использования этих
+credentials. В этой ветке закрыты найденные пробелы для WebSocket, OTA, загрузки логов
+и первичного enrollment-запроса; регрессии блокируют использование старого token при
+недоступном rebind и не отправляют master bearer на регистрацию. Для обычной работы
+не нужен отдельный Windows/Linux сервис: APK использует исходящее подключение.
 
-Безопасный LDPlayer-шаблон может содержать настроенный Android/root и установленный
-APK, но не должен содержать прошедшую production enrollment личность. `SphereApp`
-планирует `AutoEnrollmentWorker` при старте незарегистрированного приложения; если
-конфигурация уже доступна, мастер может зарегистрироваться до клонирования. Поэтому
-до отдельного template-only режима APK в master надо установить, но не запускать с
-боевой enrollment-конфигурацией. Затем создать три пробных клона и один раз запустить
-приложение в каждом через контроллер станции. После первого запуска агент сам
-использует Android boot-recovery; контроллер нужен для пакетного создания VM и
-первого запуска, но не для дальнейшего сетевого подключения APK. Для LDPlayer
-есть официальный [command-line interface](https://www.ldplayer.net/support/introduction-to-ldplayer-command-line-interface.html),
-который можно использовать в локальном контроллере станции.
+Текущая реализация v2 использует VM serial на эмуляторах. На двух доступных локальных
+LDPlayer 9 Android 9 instances serial различался, при этом Android ID совпадал. Это
+подтверждение 2/2 локальных VM, а не доказательство поведения клона. Если клон
+получает тот же serial и скопированные binding/credentials, APK v2 не сможет отличить
+его от master. Массовое использование до проверки serial/binding для 3 disposable
+canary остаётся **NO-GO**.
 
-APK v2 обязан до WebSocket проверить отдельный стабильный VM serial. На каждой из
-трёх пробных VM должны получиться разные binding и разные backend `device_id`; после
-повторной загрузки тот же экземпляр должен сохранить прежнюю карточку. При пустом
-или повторяющемся serial остановить batch с явной ошибкой, не использовать скопированный
-`ANDROID_ID`, MAC или локально сгенерированный в master UUID в качестве подмены.
-До получения этого доказательства старые клоны сохранять и не масштабировать новый
-образ дальше.
+APK и backend остаются одинаковыми для телефонов и эмуляторов. Поддержка конкретной
+Android image зависит от доступной APK стабильной per-instance identity: локальная
+пара LDPlayer имеет разные serial, но удалённые клоны ещё не проверены. Если сам
+эмулятор копирует один и тот же serial и всё app state, никакой только-серверный
+алгоритм или GitHub endpoint не может узнать, что это разные VM. Оператору нужно
+показать `identity_conflict`, а не скрыто свести их в одну карточку. Отдельный host
+adapter остаётся необязательной интеграцией для специальных сред, а не требованием
+обычного подключения.
 
-Пакетно grantable Android permissions можно подготовить на уровне установленного
-пакета/образа, если их разрешает данная версия Android. Это не переносит допустимый
-MediaProjection runtime token: наш код подготавливает `PROJECT_MEDIA` app-op через
-root, но всё равно вызывает `createScreenCaptureIntent()`. Проверить реальный захват
-нужно на свежем LDPlayer клоне. Для Android 14+ системное согласие требуется для
-каждой новой MediaProjection-сессии ([Android MediaProjection guide](https://developer.android.com/media/grow/media-projection),
-[Android 14 behavior changes](https://developer.android.com/about/versions/14/behavior-changes-14)),
-поэтому универсально обещать полностью тихий захват на физических устройствах нельзя.
+Официальная справка LDPlayer описывает copy/modify/launch/runapp/getprop и другие CLI
+команды, но не гарантирует уникальность serial клона или переносимость permission
+state. Схема Android-only identity, ограничения server-side discovery,
+MediaProjection и acceptance gates описаны в
+[Golden image и portable clone provisioning](../../architecture/ANDROID-EMULATOR-GOLDEN-IMAGE.md).
 
-OTA в текущем коде выбирается по `platform` + `flavor` + `version_code`, не по
-`device_id`; общий ID сам по себе не выключает проверку релиза. Но OTA требует
-работающих credentials, а общий refresh token у конкурирующих клонов может давать
-гонки ротации. `UpdateCheckWorker` запускается по расписанию раз в шесть часов после
-инициализации приложения. В read-only снимке pilot каталога на 24 сентября последняя
-запись `android/dev` — **1.2.9-dev / 10209**; strict-serial APK v2 **1.2.11-dev /
-10211** там не опубликован. Поэтому устройство с уже установленным 10211 закономерно
-не увидит его как обновление в этом каталоге. Это отдельная от clone identity причина;
-перед публикацией следующего APK сверять flavor, version code, подпись и scope
-каталога, чтобы не сделать массовый незапланированный rollout.
+Разрешения надо принимать по категориям. Root и package permissions проверяются
+после clone; PROJECT_MEDIA AppOp не является MediaProjection session token. Приложение
+всё ещё вызывает createScreenCaptureIntent(), а официальная Android документация
+требует согласие для сессии и запрещает повторно применять token. LDPlayer Android 9
+clone должен пройти runtime тест; Android 14+ отдельно следует своей более строгой
+модели.
 
-### Необходимые acceptance gates
+OTA остаётся отдельной стадией: после rebind каждый clone опрашивает catalog по
+platform/flavor/version_code. Текущий пилотный каталог и выпуск должны быть сверены
+до canary; публикация APK не выводится из сборки артефакта. Старые клоны и общую
+карточку сохранять до инвентаризации и доказанного миграционного плана.
 
-1. Без удаления текущих VM создать три canary-клона от незарегистрированного master.
-2. Подтвердить три различных VM serial/binding/device ID и ноль взаимных session
-   evictions; перезапустить каждый клон и убедиться, что ID не меняются.
-3. На одном canary проверить обновление только после появления в каталоге релиза с
-   правильным `platform`/`flavor` и большим `version_code`; записать installed
-   version до/после и server download/install outcome.
-4. На одном canary проверить capture prompt/AppOp, получение первого декодируемого
-   кадра и восстановление после Android/network restart.
-5. Только после gates 1–4 мигрировать оставшиеся VM ступенями 5 → 20 → 32. Старую
-   общую запись деактивировать после доказательства, что все её физические экземпляры
-   переехали и credentials/очереди заданий не потеряны.
+### Follow-up finding: enrollment inherited the master's bearer
 
-Пока нет этих runtime evidence и candidate OTA rollout, пересоздание всех эмуляторов
-не является безопасным исправлением; Fleet32 остаётся **NO-GO**.
+**Severity: P2.** The shared OkHttp network interceptor automatically added the
+saved device bearer to every request sent to the configured management origin.
+`DeviceRegistrationClient` correctly authenticates clone registration with
+`X-API-Key`, but before this follow-up the same POST also carried the master's
+copied `Authorization: Bearer …` header. The backend registration route currently
+authenticates with the enrollment key, so this did not by itself prove a duplicate
+device record; it did violate the credential boundary and could expose the copied
+device token to reverse-proxy, tracing, or request-capture layers.
 
-## Остаточный риск
-
-Если LDPlayer-клон копирует VM serial, приложение не может безопасно придумать
-уникальный ID из скопированных данных: clone останется тем же устройством. Если же
-serial вообще недоступен, strict mode не зарегистрирует такой эмулятор, пока LDPlayer
-не предоставит уникальную VM identity. Удалённые serial ещё не проверены. Два локальных
-serial и 32 concurrent HTTP регистрации не заменяют WAN, codec, browser и fleet
-приёмку.
+- **Root cause:** automatic origin-wide bearer injection did not exclude the
+  enrollment endpoint.
+- **Reproduction:** `ServerCredentialScopeTest.cloneEnrollmentDoesNotReceiveCopiedDeviceBearer`
+  failed before the fix because the interceptor attached the saved token to
+  `POST /api/v1/devices/register`.
+- **Fix:** `AppModule` strips `Authorization` on the registration POST. The request
+  continues to carry only its explicit, organization-scoped enrollment key. Normal
+  authenticated management requests still receive the bearer.
+- **Regression:** the same test now passes and existing scope tests still verify
+  bearer injection for `/api/v1/devices/me` and removal on a different origin.
+- **Affected files:** `android/app/src/main/kotlin/com/sphereplatform/agent/di/AppModule.kt`,
+  `android/app/src/test/kotlin/com/sphereplatform/agent/network/ServerCredentialScopeTest.kt`.
+- **Residual risk:** this source-level test does not inspect the remote proxy's
+  logging policy. Remote clone identity, endpoint behavior and stream acceptance
+  remain open; the enrollment key itself must remain protected by the existing
+  config/discovery controls.

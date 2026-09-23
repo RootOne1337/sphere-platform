@@ -4,6 +4,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageInstaller
+import com.sphereplatform.agent.provisioning.InstanceRegistrationGuard
 import com.sphereplatform.agent.store.AuthTokenStore
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineStart
@@ -52,6 +53,7 @@ class OtaUpdateService @Inject constructor(
     @ApplicationContext private val context: Context,
     private val httpClient: OkHttpClient,
     private val authStore: AuthTokenStore,
+    private val instanceRegistrationGuard: InstanceRegistrationGuard,
 ) {
     private val apkDir = File(context.filesDir, "ota")
     private val updateMutex = Mutex()
@@ -83,6 +85,9 @@ class OtaUpdateService @Inject constructor(
         // Periodic checks and WebSocket commands share this singleton. Waiting
         // callers remain cancellable and cannot overwrite an installer's input.
         updateMutex.withLock {
+            // Enforce clone rebind at the credential-use boundary as well as at
+            // the periodic catalog check; command-triggered updates share this path.
+            instanceRegistrationGuard.ensureRegistered()
             Timber.i("OTA: starting update → version=${payload.version}")
             check(apkDir.isDirectory || apkDir.mkdirs()) { "Cannot create OTA staging directory" }
             val apkFile = File.createTempFile("update_", ".apk", apkDir)

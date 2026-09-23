@@ -5,6 +5,7 @@ import androidx.work.ListenableWorker.Result
 import androidx.work.WorkerParameters
 import com.sphereplatform.agent.BuildConfig
 import com.sphereplatform.agent.ota.OtaUpdateService
+import com.sphereplatform.agent.provisioning.InstanceRegistrationGuard
 import com.sphereplatform.agent.store.AuthTokenStore
 import io.mockk.*
 import kotlinx.coroutines.CancellationException
@@ -27,6 +28,7 @@ import java.io.IOException
 @Config(sdk = [28], manifest = Config.NONE, application = Application::class)
 class UpdateCheckWorkerTest {
     private val auth = mockk<AuthTokenStore>(relaxed = true)
+    private val registrationGuard = mockk<InstanceRegistrationGuard>(relaxed = true)
     private val ota = mockk<OtaUpdateService>(relaxed = true)
     private val requests = mutableListOf<Request>()
     private var code = 200
@@ -41,11 +43,12 @@ class UpdateCheckWorkerTest {
 
     @Before fun setup() {
         every { auth.getServerUrl() } returns "https://management.test"
+        every { auth.getToken() } returns "copied-access-token"
         coEvery { auth.getFreshToken() } returns "fresh-device-token"
     }
 
     private fun worker() = UpdateCheckWorker(RuntimeEnvironment.getApplication(),
-        mockk<WorkerParameters>(relaxed = true), auth, ota, client)
+        mockk<WorkerParameters>(relaxed = true), auth, registrationGuard, ota, client)
 
     private fun release(versionCode: Int = BuildConfig.VERSION_CODE + 1) = """
         {"update_available":true,"version_code":$versionCode,"version_name":"next",
@@ -56,6 +59,16 @@ class UpdateCheckWorkerTest {
         code = 503
         assertEquals(Result.retry(), worker().doWork())
         coVerify(exactly = 0) { ota.performUpdate(any()) }
+    }
+
+    @Test fun `copied credentials are not used for OTA catalog before clone rebind succeeds`() = runTest {
+        coEvery { registrationGuard.ensureRegistered() } throws IOException("clone rebind unavailable")
+
+        assertEquals(Result.retry(), worker().doWork())
+
+        coVerify(exactly = 1) { registrationGuard.ensureRegistered() }
+        coVerify(exactly = 0) { auth.getFreshToken() }
+        assertTrue("OTA catalog request must not use copied credentials", requests.isEmpty())
     }
 
     @Test fun `rate limiting requests backoff`() = runTest {

@@ -372,33 +372,47 @@ when an operator or AI evaluation explicitly enables retention.
 
 ## 7. Device identity and clone lifecycle
 
-### 7.1 The master-image rule
+### 7.1 The master-image and clone-rebind rule
 
-The golden emulator image is a **template**, not a registered device. Before cloning it,
-it must contain the APK and safe static configuration but no live server-issued
-credential, current device ID, active lease, session token, incident identifier, or
-per-install signing material that is supposed to be unique.
+The golden emulator image may be fully configured and the Sphere APK may be launched
+in the master so an operator can grant the permissions available on that Android image.
+Cloning an enrolled master is supported only after a canary proves that each VM gets a
+different stable identity. The clone can contain copied device credentials; every
+credential consumer must wait for clone rebind before network use. Do not treat
+credentials copied from a master as proof that two clones are the same device.
 
 On the first boot of a clone:
 
-1. The APK reads any surviving binding and detects whether the binding is valid for the
-   current instance proof.
-2. The station agent, if enabled, reports `{station_id, vm_id, vm_generation}` from the
-   emulator manager through its authenticated outbound connection.
-3. The APK sends a one-time enrollment challenge and a set of hardware / OS / VM
-   identity signals allowed by that target.
-4. The backend binds the new instance to one tenant and returns a new device ID,
+1. Before opening a management WebSocket, refreshing a token, checking OTA, uploading
+   logs, or downloading an APK, the app reads the target's current stable identity.
+2. If the saved identity differs, or is missing, the app discovers the management
+   route and re-enrolls using a supported enrollment credential.
+3. The backend binds the new instance to one tenant and returns a new device ID,
    credential, binding version, and expiry metadata.
-5. The APK persists the new binding before starting normal command delivery.
+4. The APK persists the acknowledged binding and credentials atomically before
+   starting normal command delivery.
+5. If rebind cannot complete, the app retains the old local credentials for retry but
+   sends no management request using them. It reports a retryable identity/bootstrap
+   state instead of showing the clone as fully online.
 6. The next heartbeat includes the server-assigned ID, binding version, APK identity,
    and boot/session ID. A mismatched acknowledgement does not silently fall back to
    a copied master ID.
 
+The current Android v2 path uses emulator VM serial. It separates the two locally
+observed LDPlayer 9 Android 9 instances, but remote clone uniqueness is not yet
+proven. If a hypervisor returns the same serial for the master and clone, v2 cannot
+infer a new identity from copied app state. The Android-only product path must report
+an identity conflict and block silent merging; a host adapter may exist later as an
+optional integration for environments that need it. The common identity contract,
+LDPlayer clone acceptance, Android permission limits and test matrix are in
+[Golden image and portable clone provisioning](ANDROID-EMULATOR-GOLDEN-IMAGE.md).
+
 Android `ANDROID_ID` has documented scope by app-signing key, Android user, and
 device. It is a useful signal but does not prove that a snapshot-based VM clone has
-unique underlying identity. [Android identifier behavior](https://developer.android.com/about/versions/oreo/android-8.0-changes)
-The project’s v2 binding design must be tested against real LDPlayer serials and clone
-behavior: [Clone binding v2](../audits/2026-09-20/CLONE-BINDING-V2.md).
+unique underlying identity; the current two-instance read found the same value on
+both local LDPlayers. [Android identifier behavior](https://developer.android.com/about/versions/oreo/android-8.0-changes)
+The v2 source fix and open remote acceptance gates are recorded in
+[Clone binding v2](../audits/2026-09-20/CLONE-BINDING-V2.md).
 
 ### 7.2 Identity records
 
@@ -1665,7 +1679,7 @@ boundaries and leave a useful report after each phase.
 
 - Station inventory sees all 32 intended VMs, including stopped instances.
 - Each running VM yields a unique stable device binding.
-- The master image has no live enrollment token or credential.
+- Each clone completes its own identity rebind before any copied device credential is used; enrollment itself uses only the scoped enrollment key.
 - Online and offline card counts match station inventory and backend records.
 - Clone collision tests and concurrent reconnect pass.
 - Backend, frontend, APK, station versions and artifact SHA are recorded.

@@ -12,9 +12,11 @@ import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.sphereplatform.agent.logging.FileLoggingTree
 import com.sphereplatform.agent.logging.LogcatCollector
+import com.sphereplatform.agent.provisioning.InstanceRegistrationGuard
 import com.sphereplatform.agent.store.AuthTokenStore
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import kotlinx.coroutines.CancellationException
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -39,6 +41,7 @@ class LogUploadWorker @AssistedInject constructor(
     @Assisted context: Context,
     @Assisted params: WorkerParameters,
     private val authStore: AuthTokenStore,
+    private val instanceRegistrationGuard: InstanceRegistrationGuard,
     private val loggingTree: FileLoggingTree,
     private val logcatCollector: LogcatCollector,
     private val httpClient: OkHttpClient,
@@ -67,16 +70,23 @@ class LogUploadWorker @AssistedInject constructor(
     }
 
     override suspend fun doWork(): Result {
-        val serverUrl = authStore.getServerUrl().trimEnd('/')
-        val apiKey = authStore.getFreshToken()
-        val deviceId = authStore.getDeviceId()
+        try {
+            // The Android app-data copied by an emulator clone includes the master's
+            // tokens. Fail closed before refresh or upload until clone rebind succeeds.
+            if (authStore.getToken().isNullOrBlank()) {
+                Timber.d("LogUploadWorker: skipped (not enrolled yet)")
+                return Result.success()
+            }
+            instanceRegistrationGuard.ensureRegistered()
 
-        if (serverUrl.isBlank() || apiKey.isNullOrBlank() || deviceId.isNullOrBlank()) {
-            Timber.d("LogUploadWorker: skipped (not enrolled yet)")
-            return Result.success()
-        }
+            val serverUrl = authStore.getServerUrl().trimEnd('/')
+            val apiKey = authStore.getFreshToken()
+            val deviceId = authStore.getDeviceId()
+            if (serverUrl.isBlank() || apiKey.isNullOrBlank() || deviceId.isNullOrBlank()) {
+                Timber.d("LogUploadWorker: skipped (not enrolled yet)")
+                return Result.success()
+            }
 
-        return try {
             val logs = buildString {
                 append("=== FILE LOGS ===\n")
                 append(loggingTree.readRecentLogs(32 * 1024))
@@ -98,15 +108,17 @@ class LogUploadWorker @AssistedInject constructor(
             httpClient.newCall(request).execute().use { response ->
                 if (response.isSuccessful) {
                     Timber.i("LogUploadWorker: uploaded ${logs.length} bytes (HTTP ${response.code})")
-                    Result.success()
+                    return Result.success()
                 } else {
                     Timber.w("LogUploadWorker: server returned HTTP ${response.code}")
-                    Result.retry()
+                    return Result.retry()
                 }
             }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Timber.w(e, "LogUploadWorker: upload failed")
-            Result.retry()
+            return Result.retry()
         }
     }
 }

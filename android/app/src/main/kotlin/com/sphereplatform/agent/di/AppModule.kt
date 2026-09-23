@@ -85,7 +85,14 @@ object AppModule {
                 val sameOrigin = server != null && server.scheme == request.url.scheme &&
                     server.host == request.url.host && server.port == request.url.port
                 val builder = request.newBuilder()
-                if (token != null && sameOrigin) {
+                // Enrollment authenticates with the scoped X-API-Key. A golden-image
+                // clone may still hold the master's bearer until rebind succeeds;
+                // never attach that copied device credential to the registration call.
+                val isDeviceEnrollment = request.method == "POST" &&
+                    request.url.encodedPath.endsWith("/api/v1/devices/register")
+                if (isDeviceEnrollment) {
+                    builder.removeHeader("Authorization")
+                } else if (token != null && sameOrigin) {
                     builder.header("Authorization", "Bearer $token")
                 } else if (token != null && request.header("Authorization") == "Bearer $token") {
                     builder.removeHeader("Authorization")

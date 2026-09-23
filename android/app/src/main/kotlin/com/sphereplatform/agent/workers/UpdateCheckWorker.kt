@@ -13,6 +13,7 @@ import androidx.work.WorkerParameters
 import com.sphereplatform.agent.BuildConfig
 import com.sphereplatform.agent.ota.OtaUpdatePayload
 import com.sphereplatform.agent.ota.OtaUpdateService
+import com.sphereplatform.agent.provisioning.InstanceRegistrationGuard
 import com.sphereplatform.agent.store.AuthTokenStore
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
@@ -51,6 +52,7 @@ class UpdateCheckWorker @AssistedInject constructor(
     @Assisted context: Context,
     @Assisted params: WorkerParameters,
     private val authStore: AuthTokenStore,
+    private val instanceRegistrationGuard: InstanceRegistrationGuard,
     private val otaUpdateService: OtaUpdateService,
     private val httpClient: OkHttpClient,
 ) : CoroutineWorker(context, params) {
@@ -79,6 +81,14 @@ class UpdateCheckWorker @AssistedInject constructor(
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
         try {
+            // A golden-image clone contains the master's issued credentials. Never
+            // refresh or use them until this VM has claimed its own device identity.
+            if (authStore.getToken().isNullOrBlank()) {
+                Timber.d("UpdateCheckWorker: skipped (not enrolled)")
+                return@withContext Result.success()
+            }
+            instanceRegistrationGuard.ensureRegistered()
+
             // Refresh may suspend while discovery changes the active management route.
             // Read the route afterwards, and include refresh failures in retry policy.
             val apiKey = authStore.getFreshToken()

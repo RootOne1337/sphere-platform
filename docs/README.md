@@ -9,7 +9,7 @@
 </div>
 
 > [!NOTE]
-> **Срез навигации: 23 сентября 2026.** Текущий pilot и границы его приёмки описаны
+> **Срез навигации: 24 сентября 2026.** Текущий pilot и границы его приёмки описаны
 > в [Local pilot](operations/LOCAL-PILOT.md). Старые отчёты сохраняют свои даты и
 > версии; их показатели нельзя переносить на текущий код. [Правила актуальности](DOCUMENTATION.md).
 
@@ -37,6 +37,7 @@
 | [Redis concurrent AOF follow-up](audits/2026-09-20/REDIS-PERSISTENCE-HEADROOM.md) | AUD-143: CI OOM, source budget and pilot rollout boundary |
 | [OTA transport retry](audits/2026-09-20/OTA-TRANSPORT-RETRY.md) | AUD-144 / F32-33: bounded retry after interrupted APK body, candidate and remote-acceptance gates |
 | [Clone binding v2](audits/2026-09-20/CLONE-BINDING-V2.md) | AUD-145 / F32-34: emulator serial binding, backend-first migration and 32-clone acceptance gate |
+| [Golden image and portable clone provisioning](architecture/ANDROID-EMULATOR-GOLDEN-IMAGE.md) | Master can be launched and configured; portable identity contract, clone-rebind gates, LDPlayer adapter evidence and cross-emulator acceptance matrix |
 | [LDPlayer network recovery](operations/LDPLAYER-NETWORK-RECOVERY.md) | Диагностика сети станции и границы Windows watchdog |
 | [Overnight soak](operations/ANDROID-OVERNIGHT-SOAK.md) | Безопасные DAG, receipts, видео, завершение и evidence |
 | [Runbooks](runbooks/README.md) | Backend outage, PostgreSQL, fleet offline и VPN incidents |
@@ -67,7 +68,7 @@
 | Standalone-сборка frontend | [AUD-141 / F32-30](audits/2026-09-20/FRONTEND-STANDALONE.md): Linux CI build/root-entrypoint passed; отдельный frontend Docker image не проверен; Windows trace warning remains |
 | Redis budget | [AUD-143](audits/2026-09-20/REDIS-PERSISTENCE-HEADROOM.md): 1536 MiB воспроизвёл OOM; три 2048 MiB probes прошли с peak 1.49–2.00 GiB; 32-stream/live rollout open |
 | OTA transfer | [AUD-144 / F32-33](audits/2026-09-20/OTA-TRANSPORT-RETRY.md): local before/after regression and bounded retry; 1.2.10/10210 is historical and was not a published OTA catalog entry |
-| Clone binding | [AUD-145 / F32-34](audits/2026-09-20/CLONE-BINDING-V2.md): 1.2.11-dev/10211 candidate built and signer/package verified locally; backend-first rollout and remote acceptance remain open |
+| Clone binding | [AUD-145 / F32-34](audits/2026-09-20/CLONE-BINDING-V2.md) · [Android-only clone plan](architecture/ANDROID-EMULATOR-GOLDEN-IMAGE.md): rebind gates cover OTA/log credentials, enrollment strips copied bearer; 1.2.13 debug builds are local-only, remote identity and 3-clone acceptance remain open |
 | Первый кадр на Android | [AUD-161](audits/2026-09-23/ANDROID-INITIAL-FRAME-RACE.md): воспроизведено отбрасывание раннего ImageReader callback; source fix и 621 тест на flavor прошли, удалённый canary ещё не принят |
 | Сетевые отказы | [Native matrix](audits/2026-09-05/NETWORK-RECOVERY-NATIVE.md) · [Reconnect debt](audits/2026-09-05/ANDROID-RECONNECT-DEBT.md) |
 | Автозапуск и разрешения | [Boot recovery](audits/2026-09-05/ANDROID-BOOT-RECOVERY.md) · [Root capabilities](audits/2026-09-05/ANDROID-UNATTENDED-CAPABILITIES.md) |

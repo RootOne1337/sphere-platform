@@ -2,7 +2,9 @@ package com.sphereplatform.agent.ota
 
 import android.app.Application
 import com.sphereplatform.agent.store.AuthTokenStore
+import com.sphereplatform.agent.provisioning.InstanceRegistrationGuard
 import io.mockk.every
+import io.mockk.coEvery
 import io.mockk.mockk
 import io.mockk.spyk
 import kotlinx.coroutines.*
@@ -36,6 +38,7 @@ import java.util.concurrent.atomic.AtomicInteger
 @Config(sdk = [28], manifest = Config.NONE, application = Application::class)
 class OtaUpdateServiceRecoveryTest {
     private val auth = mockk<AuthTokenStore>(relaxed = true)
+    private val registrationGuard = mockk<InstanceRegistrationGuard>(relaxed = true)
     private val bytes = ByteArray(32768) { (it % 127).toByte() }
     private val installs = AtomicInteger()
     private val dir get() = File(RuntimeEnvironment.getApplication().filesDir, "ota")
@@ -43,6 +46,7 @@ class OtaUpdateServiceRecoveryTest {
     @Before fun setup() {
         every { auth.getServerUrl() } returns "https://management.test"
         every { auth.getToken() } returns "fixture-token"
+        coEvery { registrationGuard.ensureRegistered() } returns Unit
         // Robolectric application data is isolated for each test.
         assertTrue(dir.listFiles().isNullOrEmpty())
     }
@@ -54,7 +58,7 @@ class OtaUpdateServiceRecoveryTest {
         assertArrayEquals(bytes, it.readBytes())
         installs.incrementAndGet()
     }): OtaUpdateService {
-        val ota = spyk(OtaUpdateService(RuntimeEnvironment.getApplication(), client, auth), recordPrivateCalls = true)
+        val ota = spyk(OtaUpdateService(RuntimeEnvironment.getApplication(), client, auth, registrationGuard), recordPrivateCalls = true)
         every { ota["install"](any<File>()) } answers { install(firstArg()) }
         return ota
     }
@@ -108,6 +112,22 @@ class OtaUpdateServiceRecoveryTest {
         assertEquals("the first interrupted transfer must trigger one bounded retry", 2, attempts.get())
         assertEquals(1, installs.get())
         assertTrue("Successful OTA leaves no staging file", dir.listFiles().isNullOrEmpty())
+    }
+
+    @Test fun `OTA download is blocked until copied clone credentials are rebound`() = runBlocking {
+        val networkCalls = AtomicInteger()
+        coEvery { registrationGuard.ensureRegistered() } throws IOException("clone rebind unavailable")
+        val ota = service(client({
+            networkCalls.incrementAndGet()
+            bytes.toResponseBody()
+        }))
+
+        val failure = runCatching { ota.performUpdate(payload()) }.exceptionOrNull()
+
+        assertTrue(failure is IOException)
+        assertEquals("No download may use the copied bearer token", 0, networkCalls.get())
+        assertEquals(0, installs.get())
+        assertTrue(dir.listFiles().isNullOrEmpty())
     }
 
     @Test fun `repeated body resets stop after one fallback and remove both partial attempts`() = runBlocking {
