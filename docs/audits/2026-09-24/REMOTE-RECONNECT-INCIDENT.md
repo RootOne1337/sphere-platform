@@ -217,6 +217,17 @@ no log lines in the preceding 30-minute query. This is insufficient to blame or
 exonerate Cloudflare for video loss, while the 242 auth rejections are a confirmed
 independent connection problem.
 
+A later redacted join for `2026-09-23T23:02:39Z` through `23:17:39Z` found five
+unique Android identities in the public gateway and the same five identities in
+backend successful-auth logs. The one identity with `invalid_token` events also
+had 252 public-gateway WebSocket upgrades and 238 backend token rejections in that
+window. This confirms that the observed clients, including the rejected identity,
+were using the same public ingress and that its token failures occurred after the
+WebSocket upgrade. It weakens the claim that Cloudflare categorically cannot carry
+the application's stream/control WebSocket, but it still does not prove binary
+video delivery for any specific tile: the screenshot has not been joined to these
+redacted IDs and neither gateway nor auth logs record frame bytes.
+
 The running backend image is tagged `ff87b56dbbd7`. The repository contains the
 idle Redis Pub/Sub polling fix in `fa099aa`; ancestry and the running image's
 source confirm it already uses `get_message(timeout=1.0)`. Therefore the previously
