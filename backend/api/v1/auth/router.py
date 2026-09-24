@@ -10,6 +10,7 @@ from fastapi import APIRouter, Cookie, Depends, HTTPException, Request, Response
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from backend.core.config import settings
 from backend.core.dependencies import get_auth_service, get_current_user, require_permission
 from backend.core.exceptions import (
     InvalidCredentialsError,
@@ -44,12 +45,13 @@ bearer_scheme = HTTPBearer(auto_error=False)
 REFRESH_COOKIE_NAME = "refresh_token"
 
 
-def _cookie_settings() -> dict:
-    """Cookie настройки с учётом окружения (Secure через config)."""
+def _cookie_settings(request: Request) -> dict:
+    """Set refresh-cookie policy from the effective request transport."""
+    secure = bool(settings.COOKIE_SECURE or request.url.scheme.lower() == "https")
     return {
         "httponly": True,
-        "secure": True, # Force True for Serveo HTTPS tunnel
-        "samesite": "none", # Required for cross-site cookies over HTTPS tunnel
+        "secure": secure,
+        "samesite": "none" if secure else "lax",
         "path": "/",
         "max_age": 7 * 24 * 3600,  # 7 дней
     }
@@ -91,7 +93,7 @@ async def login(
         return MFARequiredResponse(state_token=result["state_token"])
 
     # Refresh token — cookie + тело ответа (dual mode для tunnel/proxy совместимости)
-    response.set_cookie(REFRESH_COOKIE_NAME, result["refresh_token"], **_cookie_settings())
+    response.set_cookie(REFRESH_COOKIE_NAME, result["refresh_token"], **_cookie_settings(request))
     user_resp = None
     if result.get("user"):
         from backend.schemas.auth import UserResponse
@@ -111,6 +113,7 @@ async def login(
     summary="Второй шаг MFA login: подтвердить TOTP-код",
 )
 async def login_mfa(
+    request: Request,
     body: MFALoginRequest,
     response: Response,
     auth_svc: AuthService = Depends(get_auth_service),
@@ -127,7 +130,7 @@ async def login_mfa(
             detail=str(exc) or "Invalid MFA code or session expired",
         )
 
-    response.set_cookie(REFRESH_COOKIE_NAME, result["refresh_token"], **_cookie_settings())
+    response.set_cookie(REFRESH_COOKIE_NAME, result["refresh_token"], **_cookie_settings(request))
     user_resp = None
     if result.get("user"):
         from backend.schemas.auth import UserResponse
@@ -190,7 +193,7 @@ async def refresh(
             detail=str(exc),
         )
 
-    response.set_cookie(REFRESH_COOKIE_NAME, result["refresh_token"], **_cookie_settings())
+    response.set_cookie(REFRESH_COOKIE_NAME, result["refresh_token"], **_cookie_settings(request))
     user_resp = None
     if result.get("user"):
         from backend.schemas.auth import UserResponse
@@ -237,7 +240,7 @@ async def logout(
             # Невалидный токен — продолжаем удалять cookie
             pass
 
-    cookie_options = _cookie_settings()
+    cookie_options = _cookie_settings(request)
     cookie_options.pop("max_age")
     response.delete_cookie(REFRESH_COOKIE_NAME, **cookie_options)
     response.status_code = status.HTTP_204_NO_CONTENT
