@@ -1,6 +1,5 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { useDevices } from '@/lib/hooks/useDevices';
 import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -70,22 +69,6 @@ function useReleases(platform?: string, flavor?: string) {
   return { data, loading, error, refetch: fetchReleases };
 }
 
-// ── Push OTA command to device/group ─────────────────────────────────────────
-
-async function pushOtaUpdate(deviceId: string, release: Release) {
-  const { data } = await api.post('/tasks/', {
-    device_id: deviceId,
-    type: 'OTA_UPDATE',
-    payload: {
-      download_url: release.download_url,
-      version: release.version_name,
-      sha256: release.sha256,
-      force: release.mandatory,
-    },
-  });
-  return data;
-}
-
 // ── Create Release Form ───────────────────────────────────────────────────────
 
 function CreateReleaseDialog({ onCreated }: { onCreated: () => void }) {
@@ -106,7 +89,7 @@ function CreateReleaseDialog({ onCreated }: { onCreated: () => void }) {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await api.post('/updates/', {
+      await api.post('/updates/', {
           ...form,
           version_code: parseInt(form.version_code, 10),
         });
@@ -229,9 +212,6 @@ export default function UpdatesPage() {
     'android',
     flavorFilter === 'all' ? undefined : flavorFilter,
   );
-  const { data: devicesData } = useDevices({});
-  const devices = devicesData?.items ?? [];
-  const [pushStatus, setPushStatus] = useState<Record<string, string>>({});
 
   const releases = data?.releases ?? [];
 
@@ -245,18 +225,6 @@ export default function UpdatesPage() {
     }
   };
 
-  const handlePushToDevice = async (release: Release, deviceId: string) => {
-    const key = `${release.id}:${deviceId}`;
-    setPushStatus((s) => ({ ...s, [key]: 'pushing' }));
-    try {
-      await pushOtaUpdate(deviceId, release);
-      setPushStatus((s) => ({ ...s, [key]: 'queued' }));
-    } catch (e: unknown) {
-      setPushStatus((s) => ({ ...s, [key]: 'error' }));
-      alert(e instanceof Error ? e.message : 'Push failed');
-    }
-  };
-
   return (
     <div className="flex flex-col gap-6">
       {/* Header */}
@@ -264,10 +232,17 @@ export default function UpdatesPage() {
         <div>
           <h1 className="text-2xl font-semibold">OTA Updates</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Manage APK releases and push silent updates to devices
+            Manage the releases offered by agents&apos; scheduled update checks
           </p>
         </div>
         <CreateReleaseDialog onCreated={refetch} />
+      </div>
+
+      <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 px-4 py-3 text-sm text-muted-foreground">
+        Publishing a release makes it eligible for all agents of that flavor on their next
+        scheduled check. Android scheduling and connectivity can delay delivery. This page
+        does not target a single device or confirm installation; verify the installed version
+        before expanding a rollout.
       </div>
 
       {/* Filters */}
@@ -328,35 +303,6 @@ export default function UpdatesPage() {
               </Button>
             </div>
 
-            {/* Push to device */}
-            <div className="border-t pt-3">
-              <div className="text-xs font-medium text-muted-foreground mb-2">Push OTA to device:</div>
-              <div className="flex flex-wrap gap-2">
-                {devices.slice(0, 8).map((device) => {
-                  const key = `${release.id}:${device.id}`;
-                  const st = pushStatus[key];
-                  return (
-                    <Button
-                      key={device.id}
-                      variant="outline"
-                      size="sm"
-                      className="text-xs h-7"
-                      disabled={st === 'pushing'}
-                      onClick={() => handlePushToDevice(release, device.id)}
-                    >
-                      {st === 'pushing' ? '⏳ ' : st === 'queued' ? '✓ ' : st === 'error' ? '✗ ' : ''}
-                      {device.name}
-                    </Button>
-                  );
-                })}
-                {devices.length === 0 && (
-                  <span className="text-xs text-muted-foreground">No enrolled devices</span>
-                )}
-                {devices.length > 8 && (
-                  <span className="text-xs text-muted-foreground">+{devices.length - 8} more</span>
-                )}
-              </div>
-            </div>
           </div>
         ))}
       </div>
