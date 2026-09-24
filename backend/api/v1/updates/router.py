@@ -12,6 +12,7 @@ import hashlib
 import json
 import os
 import re
+import tempfile
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -19,6 +20,7 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request, Response, status
 from fastapi.responses import FileResponse, JSONResponse
+from filelock import FileLock, Timeout
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -43,6 +45,7 @@ def _resolve_updates_path(configured: str | None = None) -> Path:
 _UPDATES_PATH = _resolve_updates_path()
 _ARTIFACT_PREFIX = "/api/v1/updates/artifacts/"
 _MAX_ARTIFACT_BYTES = 200 * 1024 * 1024
+_CATALOG_LOCK_TIMEOUT_SECONDS = 5
 
 
 def _artifact_path(digest: str) -> Path:
@@ -59,17 +62,75 @@ def _artifact_path(digest: str) -> Path:
 # ── In-memory store backed by JSON file ──────────────────────────────────────
 
 def _load_releases() -> list[dict]:
-    if not _UPDATES_PATH.exists():
-        return []
     try:
-        return json.loads(_UPDATES_PATH.read_text())
-    except (json.JSONDecodeError, OSError):
+        releases = json.loads(_UPDATES_PATH.read_text(encoding="utf-8"))
+    except FileNotFoundError:
         return []
+    except (json.JSONDecodeError, UnicodeError) as exc:
+        raise HTTPException(status_code=503, detail="OTA release catalog is invalid") from exc
+    except OSError as exc:
+        raise HTTPException(status_code=503, detail="OTA release catalog is unavailable") from exc
+    if not isinstance(releases, list) or any(not isinstance(release, dict) for release in releases):
+        raise HTTPException(status_code=503, detail="OTA release catalog is invalid")
+    return releases
 
 
 def _save_releases(releases: list[dict]) -> None:
     _UPDATES_PATH.parent.mkdir(parents=True, exist_ok=True)
-    _UPDATES_PATH.write_text(json.dumps(releases, indent=2))
+    descriptor, temporary_name = tempfile.mkstemp(
+        prefix=f".{_UPDATES_PATH.name}.",
+        suffix=".tmp",
+        dir=_UPDATES_PATH.parent,
+    )
+    temporary_path = Path(temporary_name)
+    try:
+        with os.fdopen(descriptor, "w", encoding="utf-8", newline="\n") as stream:
+            stream.write(json.dumps(releases, indent=2) + "\n")
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temporary_path, _UPDATES_PATH)
+        if os.name == "posix":
+            directory_descriptor = os.open(
+                _UPDATES_PATH.parent,
+                os.O_RDONLY | getattr(os, "O_DIRECTORY", 0),
+            )
+            try:
+                os.fsync(directory_descriptor)
+            finally:
+                os.close(directory_descriptor)
+    finally:
+        temporary_path.unlink(missing_ok=True)
+
+
+def _append_release(release: dict) -> None:
+    try:
+        with FileLock(f"{_UPDATES_PATH}.lock", timeout=_CATALOG_LOCK_TIMEOUT_SECONDS):
+            releases = _load_releases()
+            releases.append(release)
+            _save_releases(releases)
+    except Timeout as exc:
+        raise HTTPException(
+            status_code=503,
+            detail="OTA release catalog is busy; retry shortly",
+            headers={"Retry-After": "1"},
+        ) from exc
+
+
+def _remove_release(release_id: str) -> bool:
+    try:
+        with FileLock(f"{_UPDATES_PATH}.lock", timeout=_CATALOG_LOCK_TIMEOUT_SECONDS):
+            releases = _load_releases()
+            filtered = [release for release in releases if release.get("id") != release_id]
+            if len(filtered) == len(releases):
+                return False
+            _save_releases(filtered)
+            return True
+    except Timeout as exc:
+        raise HTTPException(
+            status_code=503,
+            detail="OTA release catalog is busy; retry shortly",
+            headers={"Retry-After": "1"},
+        ) from exc
 
 
 # ── Schemas ───────────────────────────────────────────────────────────────────
@@ -259,7 +320,6 @@ async def create_release(
             detail="download_url must use HTTPS",
         )
 
-    releases = _load_releases()
     new_release = {
         "id": str(uuid.uuid4()),
         "platform": payload.platform,
@@ -272,8 +332,7 @@ async def create_release(
         "changelog": payload.changelog,
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
-    releases.append(new_release)
-    _save_releases(releases)
+    _append_release(new_release)
     return JSONResponse(new_release, status_code=status.HTTP_201_CREATED)
 
 
@@ -284,9 +343,6 @@ async def delete_release(
     release_id: str,
     _user=require_roles(["super_admin"]),
 ) -> Response:
-    releases = _load_releases()
-    filtered = [r for r in releases if r.get("id") != release_id]
-    if len(filtered) == len(releases):
+    if not _remove_release(release_id):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Release not found")
-    _save_releases(filtered)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
