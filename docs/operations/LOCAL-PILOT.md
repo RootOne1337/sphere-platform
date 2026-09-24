@@ -5,9 +5,10 @@
 **Актуальная граница pilot:** backend image `ff87b56dbbd7`, frontend image
 `48c9480`, Cloudflare Quick Tunnel healthy; два локальных APK 1.2.9/10209.
 Текущий OTA catalog `android/dev` также максимум 1.2.9/10209. APK 1.2.15/10215
-адресно опубликован только в `android-canary/dev`: PH006 получал OTA и скачивал
-артефакт, но установка не подтверждена; grant отозван. Новый локальный кандидат
-1.2.16/10216 собран и проверен, однако нигде не установлен и не опубликован в
+размещён только в `android-canary/dev`; для PH006 выдавался адресный recovery
+grant. Команда дошла, gateway отдавал артефакт, но полное скачивание удалённым
+APK и установка не доказаны; grant отозван. Новый локальный кандидат
+1.2.18/10218 собран и проверен, однако нигде не установлен и не опубликован в
 OTA. Удалённое видео и все 20 клонов не приняты: PH006 в
 сохранённых viewer-сессиях дал SPS/PPS без IDR/P, хотя локальный Android через
 тот же публичный tunnel передал IDR/P. Подробные evidence, GitHub/OTA маршруты
@@ -153,14 +154,19 @@ Frontend **`6dea6b4`** установлен в новом pilot. Device Stream �
 `com.sphereplatform.agent.pilot.debug` позволяет установить его рядом с обычными
 dev/enterprise сборками, сохраняя отдельные credentials и identity.
 
-Актуальный проверенный source-pinned кандидат: **1.2.16-dev / 10216**,
-локальный файл `.local-pilot/apk/SphereAgent-pilot-candidate-1.2.16-dev-f4c5357.apk`.
-SHA-256 `0bf9907b9756708e45b3d55c52f899cf3fbcd4ad4391ec3c52888d4261dcf1d3`;
-8 413 165 bytes; debug signer совпадает с локальным pilot. Он не установлен
-удалённо и не опубликован в OTA. `LATEST-SphereAgent-pilot.apk` и публичный
+Актуальный проверенный source-pinned кандидат: **1.2.18-dev / 10218**,
+локальный файл `.local-pilot/apk/SphereAgent-pilot-candidate-1.2.18-dev-250c328.apk`.
+SHA-256 `a2741f8ec954f79a62278d6d00ee4685573b8206bf77363f2683452a2f8ab79c`;
+8 413 649 bytes; debug signer совпадает с локальным pilot. Оба Android flavor
+прошли по 637 unit tests, ноль failures/errors и один штатный skip на flavor.
+Он не установлен удалённо и не опубликован в OTA.
+`LATEST-SphereAgent-pilot.apk` и публичный
 `manifest.json` по-прежнему указывают на локально принятую 1.2.9/10209;
-не путайте alias с кандидатом. 1.2.15 опубликован отдельно лишь в
-`android-canary/dev`, но адресная попытка не подтвердила установку.
+не путайте alias с кандидатом. 1.2.16 и 1.2.17 были промежуточными локальными
+кандидатами, заменёнными до публикации после исправлений очереди OTA receipts.
+1.2.15
+опубликован отдельно лишь в `android-canary/dev`, но адресная попытка не
+подтвердила установку.
 Не ставить кандидат массово: сначала на одном удалённом LDPlayer проверить
 уникальный ID, installed version, reconnect и реальный IDR → browser decode.
 Подробности: [AUD-163](../audits/2026-09-24/REMOTE-VIDEO-OTA-DECISION.md).
