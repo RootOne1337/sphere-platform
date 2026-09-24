@@ -12,6 +12,14 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 Полный перечень предыдущих audit fixes, доказательства и residual risks:
 [audit report](docs/audits/2026-09-05/AUDIT-REPORT.md).
 
+- AUD-165: APK checks for updates at app startup and on the first authenticated
+  management connection per service lifetime, with network constraints, unique
+  WorkManager work, retry backoff and up to two minutes of jitter. The existing
+  six-hour check remains the fallback. Candidate version is 1.2.19-dev / 10219;
+  it is not published to either the common OTA channel or a remote fleet. Both
+  Android flavor suites pass (639 tests each; one enterprise skip).
+  [OTA reliability architecture and acceptance gates](docs/architecture/ANDROID-OTA-RELIABILITY.md).
+
 - AUD-162: terminal `401` from Android device-token refresh no longer falls
   back to the rejected access token. The APK durably clears only the rejected
   credential pair, preserves device ID, clone binding and management routes, and

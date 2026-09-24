@@ -1,6 +1,7 @@
 package com.sphereplatform.agent.commands
 
 import androidx.security.crypto.EncryptedSharedPreferences
+import com.sphereplatform.agent.workers.UpdateCheckScheduler
 import com.sphereplatform.agent.ws.SphereWebSocketClient
 import io.mockk.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -34,7 +35,8 @@ class ControlCommandTargetTest {
         return CommandDispatcher(ws, adb, runner, mockk(relaxed = true),
             mockk(relaxed = true), mockk(relaxed = true), mockk(relaxed = true),
             mockk(relaxed = true), mockk(relaxed = true), mockk(relaxed = true),
-            mockk(relaxed = true), scope, mockk(relaxed = true), mockk(relaxed = true), journal)
+            mockk(relaxed = true), scope, mockk(relaxed = true), mockk(relaxed = true), journal,
+            mockk<UpdateCheckScheduler>(relaxed = true))
             .also { it.start() }
     }
 

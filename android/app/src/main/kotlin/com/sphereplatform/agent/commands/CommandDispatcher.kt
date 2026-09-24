@@ -16,6 +16,7 @@ import com.sphereplatform.agent.streaming.ScreenCaptureService
 import com.sphereplatform.agent.streaming.StreamingManager
 import com.sphereplatform.agent.vpn.KillSwitchManager
 import com.sphereplatform.agent.vpn.SphereVpnManager
+import com.sphereplatform.agent.workers.UpdateCheckScheduler
 import com.sphereplatform.agent.ws.SphereWebSocketClient
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
@@ -38,6 +39,7 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import timber.log.Timber
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -58,6 +60,7 @@ class CommandDispatcher @Inject constructor(
     private val streamingManager: StreamingManager,
     @ApplicationContext private val appContext: Context,
     private val commandJournal: CommandJournal,
+    private val updateCheckScheduler: UpdateCheckScheduler,
 ) {
     private companion object {
         /** Let the signed route-change receipt enter OkHttp's queue before closing its socket. */
@@ -80,8 +83,10 @@ class CommandDispatcher @Inject constructor(
 
     /** FIX D1: Job heartbeat watchdog — отменяется в stop(). */
     private var heartbeatJob: kotlinx.coroutines.Job? = null
+    private val updateCheckQueuedForService = AtomicBoolean(false)
 
     fun start() {
+        updateCheckQueuedForService.set(false)
         wsClient.onJsonMessage = { msg ->
             val type = msg["type"]?.jsonPrimitive?.contentOrNull
             if (type == "ping") {
@@ -94,6 +99,9 @@ class CommandDispatcher @Inject constructor(
         // При reconnect — отправляем накопленные результаты DAG и сбрасываем heartbeat
         wsClient.onConnected = {
             lastPingAt = System.currentTimeMillis()
+            if (updateCheckQueuedForService.compareAndSet(false, true)) {
+                updateCheckScheduler.scheduleImmediate()
+            }
             scope.launch { flushResults() }
         }
 

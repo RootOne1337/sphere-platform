@@ -6,6 +6,7 @@ import com.sphereplatform.agent.streaming.StreamQualityMonitor
 import com.sphereplatform.agent.streaming.StreamingManager
 import com.sphereplatform.agent.ota.OtaUpdateService
 import com.sphereplatform.agent.store.AuthTokenStore
+import com.sphereplatform.agent.workers.UpdateCheckScheduler
 import com.sphereplatform.agent.ws.SphereWebSocketClient
 import io.mockk.*
 import kotlinx.coroutines.CompletableDeferred
@@ -29,6 +30,7 @@ class CommandDeliveryTest {
     private val callback = slot<((JsonObject) -> Unit)?>()
     private val connected = slot<(() -> Unit)?>()
     private val appContext = mockk<Context>(relaxed = true)
+    private val updateCheckScheduler = mockk<UpdateCheckScheduler>(relaxed = true)
     private val disk = mutableMapOf<String, String?>()
     private val receipts = ReceiptStoreFixture()
     private fun journal(): CommandJournal {
@@ -61,8 +63,23 @@ class CommandDeliveryTest {
         return CommandDispatcher(ws, adb, dag, cache,
             mockk(relaxed = true), mockk(relaxed = true), authStore,
             otaService, mockk(relaxed = true), mockk(relaxed = true),
-            mockk(relaxed = true), scope, streamingManager, context, journal())
+            mockk(relaxed = true), scope, streamingManager, context, journal(), updateCheckScheduler)
             .also { it.start() }
+    }
+
+    @Test fun authenticatedReconnectQueuesOneUpdateCheckPerServiceLifetime() = runTest {
+        val first = dispatcher(backgroundScope)
+        connected.captured!!()
+        connected.captured!!()
+        runCurrent()
+        verify(exactly = 1) { updateCheckScheduler.scheduleImmediate() }
+        first.stop()
+
+        val restarted = dispatcher(backgroundScope)
+        connected.captured!!()
+        runCurrent()
+        verify(exactly = 2) { updateCheckScheduler.scheduleImmediate() }
+        restarted.stop()
     }
 
     @Test fun discoveredRouteUpdateKeepsFallbackAndReconnectsAfterAcknowledgement() = runTest {

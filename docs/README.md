@@ -32,6 +32,7 @@
 | [Local pilot](operations/LOCAL-PILOT.md) | Установленные версии, веб, APK, учётная запись и отдельный Compose project |
 | [Remote pilot](operations/REMOTE-PILOT.md) | Устройства в другой сети, ingress и ограничения резервирования |
 | [Удалённое видео и OTA](audits/2026-09-24/REMOTE-VIDEO-OTA-DECISION.md) | AUD-163: публичный tunnel против Android first-frame, что реально опубликовано и почему общий OTA rollout пока остановлен |
+| [Отказоустойчивая OTA-архитектура](architecture/ANDROID-OTA-RELIABILITY.md) | Слои bootstrap/control/artifact/install, подтверждённый canary, быстрые проверки, резервные origins, receipts и Fleet32 gates |
 | [A/B ingress и три remote VM](audits/2026-09-24/REMOTE-INGRESS-AB.md) | AUD-164: локальный/альтернативный viewer, SPS/PPS без IDR на удалённом агенте, reconnect rate и гейт для проверки Cloudflare |
 | [Deployment](deployment.md) · [Полный guide](../FULL-DEPLOYMENT-GUIDE.md) | Bootstrap, конфигурации и обслуживание; оценки масштаба требуют своей приёмки |
 | [Discovery publisher](operations/DISCOVERY-PUBLISHER.md) | Публикация подписанных маршрутов и восстановление publisher |
@@ -53,6 +54,7 @@
 | Web UI | [Экранные сценарии](web-ui-guide.md) · [Сессии и cache lifecycle](security/frontend-sessions.md) |
 | Android | [Agent guide](android-agent.md) · [Протокол соединения](architecture/ANDROID-CONNECTION-PROTOCOL.md) |
 | Discovery / recovery | [Подписанный manifest](architecture/ANDROID-SIGNED-DISCOVERY.md) · [Сохранённые маршруты](architecture/ANDROID-SAVED-ROUTES.md) · [Фоновая регистрация](architecture/ANDROID-BACKGROUND-ENROLLMENT.md) |
+| APK updates | [Отказоустойчивая OTA](architecture/ANDROID-OTA-RELIABILITY.md) · [Transport retry](audits/2026-09-20/OTA-TRANSPORT-RETRY.md) |
 | PC-agent | [Workstation identity, локальные инструменты и подключение](pc-agent.md) |
 | PostgreSQL | [RLS / runtime roles](security/postgresql-rls.md) · [Worker RLS](audits/2026-09-20/PIPELINE-RLS.md) |
 | Задачи | [Task control protocol](security/task-control-protocol.md) · [Durable cancellation](audits/2026-09-20/DURABLE-CANCELLATION.md) |

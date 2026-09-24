@@ -1,12 +1,13 @@
 # AUD-163 · Удалённое видео и решение по OTA-публикации
 
-**24 сентября 2026 · pilot `sphere-pilot-20260911` · P0 для Fleet32 · статус: причина потери удалённого изображения не локализована, массовый rollout — NO-GO. Адресная OTA-проверка ниже завершилась без доказанной установки.**
+**24 сентября 2026 · pilot `sphere-pilot-20260911` · P0 для Fleet32 · статус: причина потери удалённого изображения не локализована, массовый rollout — NO-GO. 1.2.18 установлена на одном локальном rooted canary; удалённая OTA и terminal receipt не подтверждены.**
 
 [Текущий pilot](../../operations/LOCAL-PILOT.md) · [Readiness](../../operations/READINESS.md) ·
 [Live-сравнение кадров AUD-148](../2026-09-23/REMOTE-FLEET-LIVE-FOLLOWUP.md) ·
 [Первый Android-кадр AUD-161](../2026-09-23/ANDROID-INITIAL-FRAME-RACE.md) ·
 [Reconnect и кандидат APK AUD-162](REMOTE-RECONNECT-INCIDENT.md) ·
 [Новый A/B ingress и три remote VM AUD-164](REMOTE-INGRESS-AB.md) ·
+[Отказоустойчивая OTA-архитектура](../../architecture/ANDROID-OTA-RELIABILITY.md) ·
 [Fleet32 gates](../2026-09-20/FLEET32-PREFLIGHT.md)
 
 **Дополнение 13:41–13:54 UTC:** независимый viewer ingress получил от локального
@@ -104,8 +105,38 @@ bytes, SHA-256 `a2741f8ec954f79a62278d6d00ee4685573b8206bf77363f2683452a2f8ab79c
 Package `com.sphereplatform.agent.pilot.debug`, versionCode 10218, APK Signature
 Scheme v2 и совпадение signer с действующим pilot APK подтверждены; встроенный
 source commit `250c328`. Промежуточные 1.2.16 и 1.2.17 не публиковались и
-заменены этой версией. Новый кандидат **не установлен**, **не опубликован в OTA** и не
-доказывает runtime fix. Живой инцидент видео остаётся OPEN.
+заменены этой версией. В момент описанной выше PH006 попытки кандидат **ещё не был
+установлен** и **не был опубликован в обычный OTA-канал**. Последующий отдельный
+локальный canary зафиксирован ниже; живой инцидент видео остаётся OPEN.
+
+## Последующая локальная адресная OTA-проверка 1.2.18
+
+На одном изолированном local pilot emulator `emulator-5554` (device `auto-ph-000`)
+проверено обновление с 1.2.9/10209 на 1.2.18/10218. Проверенный APK помещён только
+в local pilot artifact store и доступен как `android-canary/dev`; обычный
+`android/dev` канал не менялся. Recovery grant был выдан только этому устройству и
+после проверки отозван (HTTP 204). Соседний `emulator-5556` остался на
+1.2.9/10209.
+
+Успех подтверждён независимо по PackageManager `versionCode=10218`, новому PID
+процесса агента, обычной последующей WebSocket-аутентификации и отсутствию нового
+совпадения в crash buffer. Backend получил только `received` и `running` receipts;
+terminal `completed` receipt отсутствовал. Поэтому локальная установка доказана,
+а end-to-end серверное подтверждение завершения всё ещё не доказано. Удалённые
+LDPlayer этой проверкой не опрашивались и не обновлялись; этот результат не
+подтверждает исправление чёрного экрана или доставку за пределами локального
+emulator network.
+
+Эта проверка выявила и эксплуатационную задержку: до текущего source fix обычный
+`UpdateCheckWorker` запускался только периодически раз в 6 часов. Теперь источник
+дополнительно планирует сетевую one-time проверку на старте приложения и после
+успешной авторизации management WS. Pending проверки объединяются WorkManager
+`KEEP`; за одно время жизни сервиса `onConnected` вызывает такую проверку только
+один раз, а запуск получает до 120 секунд jitter для распределения одновременного
+переподключения флота. Шестичасовая периодическая задача и backoff остаются
+fallback. Это пока source-level изменение с regression test; уже установленные
+устройства должны получить APK с этим кодом, а расписание WorkManager всё равно
+может задерживаться Android.
 
 Отдельно исправлен ложный операторский путь во вкладке Updates: кнопка раньше
 отправляла `OTA_UPDATE` на `/tasks/`, где обязательный `script_id` давал 422.
@@ -129,7 +160,7 @@ OTA-каталога, локальные APK, ограниченный API/ло�
 | Измерено локально | Состав pilot-контейнеров, 7 зарегистрированных устройств (6 online во время проверки), 2 локальных APK 1.2.9/10209, серверный OTA max 1.2.9/10209, hash и размер кандидата 1.2.15 | Что все заявленные 20 удалённых клонов представлены уникально; какая версия стоит на каждом из них |
 | Сохранённая live-приёмка AUD-148 | PH006 получал stream/keyframe команды, viewer видел SPS/PPS без picture NAL; локальный агент через тот же публичный tunnel передал IDR/P | Где именно исчез удалённый picture NAL; что браузер удалённого потока уже декодировал картинку |
 | Текущий 30-минутный логовый срез | Android WS и viewer WS выполняли HTTP 101; многочисленные refresh 401/invalid-token; нет активных media-counter series в точечной выборке | Успешную авторизацию каждой WS-сессии, живой поток кадров, причинную связь всех 401 с конкретной машиной или отказ Cloudflare |
-| Source/CI | Исправления AUD-160–162 и duplicate-start в 1.2.15-кандидате с регрессиями; PR checks зелёные до этого документа | Что исправления установлены на удалённой станции и проходят runtime-приёмку через её WAN |
+| Source/CI | Исправления AUD-160–162 и duplicate-start в кандидате 1.2.18 с регрессиями; локальный emulator-5554 подтвердил установку 10218; prompt OTA scheduling fix добавлен в текущий source diff | Что эти исправления установлены на удалённой станции и проходят runtime-приёмку через её WAN; prompt scheduling fix ещё не попал в собранный/установленный APK |
 
 Сырые журналы, устройства, ключи и подписанный manifest в отчёт не копируются.
 Состояние online — моментальный снимок API, а не доказательство непрерывной связи.
@@ -246,18 +277,20 @@ Cloudflare также описывает нарушения доступност
 | ID / severity | Root cause или проверяемая гипотеза | Evidence / reproduction | Затронуто и минимальное действие | Regression / residual risk |
 | --- | --- | --- | --- | --- |
 | RV-1 / P0, OPEN | У удалённого PH006 отсутствует picture NAL на viewer. Граница Android encoder → socket → ingress пока неизвестна. | Три viewer-сессии SPS/PPS без IDR/P; local public-tunnel control с IDR/P. | Android capture/encoder/OkHttp, WAN, backend `websocket/stream_bridge.py` / `video_transport.py`; сначала один инструментированный canary, не массовая смена tunnel. | Гейт: IDR/P и живое движение на browser canvas, повтор после reconnect. Root cause и устойчивость остальных 20 не доказаны. |
-| RV-2 / P1, source-fixed, rollout OPEN | Ранний ImageReader callback отбрасывался до завершения `createVirtualDisplay`; неподвижный первый экран мог остаться без буфера. | Детерминированная red/green regression AUD-161; симптом совместим с RV-1, но связь с PH006 не подтверждена. | Android `StreamingManagerImpl`; fix уже в candidate 1.2.15. | Удалённый canary должен получить первый IDR на статичном и движущемся экране; без этого нельзя назвать fix причиной восстановления. |
-| RV-3 / P1, source-fixed, rollout OPEN | Refresh 401 повторно использовал отвергнутые credentials; reconnect мог зациклиться. Дублирующий `start_stream` ронял уже активную projection. | AUD-162 red/green тесты; live 401/invalid-token и source duplicate-start regression. | Android `AuthTokenStore`, `ScreenCaptureService`, `CommandDispatcher`; candidate 1.2.15. | После canary сверить installed version, refresh/re-enrollment, PID/crash buffer, отсутствие повторной projection и новый IDR после reconnect. Старые remote APK всё ещё под риском. |
-| RV-4 / P1, OPEN | Обычная OTA-публикация не имеет device/cohort gate; текущий catalog застрял на 1.2.9 и часть check отвечает 401. | `get_latest` фильтрует platform/flavor, выбирает max; 44/66 check за сутки = 401; APK проверяет раз в 6 часов. | Backend updates router/catalog и Android UpdateCheckWorker; не публиковать global latest как canary, сначала подтверждённый целевой путь/ручной один canary. | Тест staged policy, отказа auth, SHA/signature и post-install reconnect; часть 401 может не относиться к нужному устройству. Каталожная lost-update race F32-14 остаётся отдельно. |
+| RV-2 / P1, source-fixed, rollout OPEN | Ранний ImageReader callback отбрасывался до завершения `createVirtualDisplay`; неподвижный первый экран мог остаться без буфера. | Детерминированная red/green regression AUD-161; симптом совместим с RV-1, но связь с PH006 не подтверждена. | Android `StreamingManagerImpl`; fix входит в candidate 1.2.18 и установлен на одном local emulator-5554. | Удалённый canary должен получить первый IDR на статичном и движущемся экране; без этого нельзя назвать fix причиной восстановления. |
+| RV-3 / P1, source-fixed, rollout OPEN | Refresh 401 повторно использовал отвергнутые credentials; reconnect мог зациклиться. Дублирующий `start_stream` ронял уже активную projection. | AUD-162 red/green тесты; live 401/invalid-token и source duplicate-start regression; 1.2.18 подтверждён на одном локальном устройстве. | Android `AuthTokenStore`, `ScreenCaptureService`, `CommandDispatcher`; candidate 1.2.18. | На удалённом canary сверить installed version, refresh/re-enrollment, PID/crash buffer, отсутствие повторной projection и новый IDR после reconnect. Remote APK ещё не измерены. |
+| RV-4 / P1, PARTIALLY SOURCE-FIXED | Нет device/cohort gate в обычной публикации; `android/dev` latest застрял на 1.2.9 и часть check отвечает 401. До текущего diff OTA-проверка планировалась только раз в 6 часов. | `get_latest` фильтрует platform/flavor, выбирает max; 44/66 check за сутки = 401; локальный targeted 1.2.18 подтвердил, что отдельный grant доставляет APK только выбранному устройству. | Добавлена immediate one-time check на app start и authenticated reconnect с `KEEP`, network constraint и jitter; далее нужны backend cohort rollout и terminal receipt. Не публиковать global latest как canary. | Regression на schedule dedup/network constraint; тест staged policy, auth recovery, SHA/signature и post-install receipt остаётся открытым. Часть 401 может не относиться к нужному устройству. Каталожная lost-update race F32-14 остаётся отдельно. |
 | RV-5 / P1, OPEN | Один Quick Tunnel route без независимого public fallback, плюс ограничения test-сервиса. | Signed config v24 с одним route; старый Serveo commit; официальные ограничения Cloudflare. | Discovery manifest, ingress, `docs/operations/REMOTE-PILOT.md`; сравнить второй owned endpoint лишь после проверки его доступности. | A/B на одном устройстве с одновременным frame-level evidence; смена провайдера сама по себе не считается fix. |
 | RV-6 / P1, OPEN | Неполная live-наблюдаемость: старые APK не сообщают все encoder/queue counters; нет сквозного receipt на каждый frame stage. | В моментальной metrics выборке media series пусты; 101/Redis subscriber не говорят о кадре. | Android counters AUD-151, backend metrics, viewer browser; сохранять redacted session IDs и bounded counters. | Один canary должен сопоставить frame generation, local enqueue, backend receipt, Redis publish, viewer send, browser decode; без каждого звена причина останется вероятностной. |
 | RV-7 / P1, OPEN | 7 backend-карточек не равны 22 физическим инстансам; clone binding на всех remote VM не принят. | Моментальный API: 7 records, 6 online; пользователь ожидает 20 remote + 2 local. | Android identity/binding и backend registration; отдельная приёмка 3/20/32 клонов по AUD-145. | Проверить независимые ID, одновременный online, OTA и stream на каждом; не удалять/пересоздавать старые VM вслепую. |
-| RV-8 / P1, source-fixed, rollout OPEN | Старый Android `CommandDispatcher` не журналировал `OTA_UPDATE` по command ID; reconnect повторно запускал download/install. Recovery-канал не шлёт SQL `result_ack`, что оставляло terminal receipt в outbox и после reconnect flush. | Адресный grant PH006: четыре `received`/`running` одного ID, девять artifact HTTP 200 за окно, один `timeout`; red/green Android regression для duplicate install и освобождения outbox после queue failure/restart. | APK 1.2.18 ведёт локальный durable receipt и локально закрывает поставленный в WS-очередь terminal result, включая flush; серверная блокировка по общему ID отвергнута, потому что она лишит обновления остальные клоны. | 637 тестов/flavor; remote 1.2.18 не установлен, old APK всё ещё может повторять OTA; после restart «unknown» требует проверки версии перед новым grant. Успех `sendJson` означает локальную очередь, не подтверждение получения сервером. |
+| RV-8 / P1, source-fixed, rollout OPEN | Старый Android `CommandDispatcher` не журналировал `OTA_UPDATE` по command ID; reconnect повторно запускал download/install. Recovery-канал не шлёт SQL `result_ack`, что оставляло terminal receipt в outbox и после reconnect flush. | Адресный grant PH006: четыре `received`/`running` одного ID, девять artifact HTTP 200 за окно, один `timeout`; red/green Android regression для duplicate install и освобождения outbox после queue failure/restart. | APK 1.2.18 ведёт локальный durable receipt и локально закрывает поставленный в WS-очередь terminal result, включая flush; серверная блокировка по общему ID отвергнута, потому что она лишит обновления остальные клоны. | 637 тестов/flavor; 1.2.18 подтверждён только на одном local emulator, версия удалённых APK неизвестна. После restart «unknown» требует проверки версии перед новым grant. Успех `sendJson` означает локальную очередь, не подтверждение получения сервером. |
 | RV-9 / P2, source-fixed, deployment OPEN | Updates UI отправлял `OTA_UPDATE` в `/tasks/`, где обязателен `script_id`; кнопка не могла выполнить обещанный push. | Контракт API + red/green frontend regression: старый UI предлагал device button и ложный статус, запрос давал 422. | Убрана кнопка и показана действительная catalog-wide семантика плановой проверки. | 32/32 frontend suites, 267 tests, type-check; запущенный frontend image ещё прежний. Настоящий targeted rollout API остаётся будущей работой. |
 | RV-10 / P1, OPEN | Online присваивается при WS auth до первого heartbeat; частый reconnect сохраняет online без подтверждённого pong. | После отзыва grant API показывал 7/7 online, у трёх `last_heartbeat=null`, включая PH006; исходник `android_agent_ws` публикует online при auth. | Backend presence и frontend fleet health: отделить недавно открытый socket от heartbeat-confirmed/stream-healthy и показывать reconnect age. | Не считать online приёмкой удалённого канала; нужен тест при reconnect <30 s, пропущенном pong и разрыве сети. |
+| RV-11 / P1, OPEN | OTA metadata и APK artifact используют один backend host; нет независимого разрешённого mirror set. Потеря management tunnel/host блокирует и проверку каталога, и APK download. | `OtaUpdateService.validateDownloadUrl` требует совпадения host с сохранённым server URL; локальный test tunnel передал APK, но альтернативный artifact origin не проверен. | Следовать [OTA reliability architecture](../../architecture/ANDROID-OTA-RELIABILITY.md): подписанные immutable metadata, точный allowlist origins, scoped download authorization и один отдельно работающий mirror. | Fault injection для каждого ingress/mirror; доказать byte-identical SHA и успешный install при недоступности primary. В полном сетевом partition обновление недоступно. |
 
-RV-2/RV-3 — доказанные **исходные** дефекты и покрытые source-фиксы, не
-доказанное завершение runtime-инцидента. RV-1 — реальный наблюдаемый отказ с
+RV-2/RV-3 — доказанные **исходные** дефекты и покрытые source-фиксы; одна локальная
+установка подтверждена, но remote rollout и устранение текущего runtime-инцидента
+не доказаны. RV-1 — реальный наблюдаемый отказ с
 пока неизвестной точкой потери. RV-5 — эксплуатационный риск и гипотеза, а не
 объявленный виновник. F32-14, F32-20, F32-28–29, F32-33–34, F32-37 остаются
 в [общем Fleet32 реестре](../2026-09-20/FLEET32-PREFLIGHT.md).
@@ -272,7 +305,7 @@ RV-2/RV-3 — доказанные **исходные** дефекты и пок
    публикации нового release. Если 401, классифицировать refresh/re-enrollment и
    добиться подтверждённого ответа именно этого canary. Не повторять слепо
    изменяющие запросы.
-3. Обновить только canary проверенным pilot-compatible APK 1.2.18/10218 по
+3. Обновить только canary проверенным pilot-compatible APK 1.2.19/10219 по
    контролируемому каналу после фиксации старой версии и rollback-возможности.
    Глобальный `android/dev` latest не переключать. Убедиться в установленной
    версии, сохранении ID и новом авторизованном WS.
@@ -298,12 +331,14 @@ RV-2/RV-3 — доказанные **исходные** дефекты и пок
 - Read-only: состояние девяти новых pilot-контейнеров, локальная версия двух APK,
   каталог backend, GitHub config branch/Releases, ограниченные API/gateway/backend
   метрики и история коммитов. Старый Compose project/tunnel не менялись.
-- SHA-256 и размер актуального 1.2.18 candidate повторно сверены с локальным
-  файлом; package, versionCode, v2 signature и совпадение pilot signer — с
-  source-pinned build manifest. Full dev и enterprise suites: по 637 тестов,
-  ноль failures/errors, один intentional skip в каждом flavor. Проверки
-  предыдущего PR head не заменяют CI для новой ревизии; сборка и unit tests
-  являются source-проверкой, не удалённой приёмкой.
+- Local OTA 1.2.18 was confirmed on emulator-5554 by PackageManager, process restart,
+  normal WS auth and unchanged crash buffer; grant revoked. Backend terminal receipt
+  is still missing, emulator-5556 stays 1.2.9, and remote versions are unknown.
+- Текущая правка prompt OTA scheduling проверена полной dev и enterprise suite:
+  по 639 тестов, ноль failures/errors, один штатный skip в enterprise. APK 1.2.19
+  ещё не опубликована и remote install не проводился. Проверки предыдущего PR head
+  не заменяют CI для новой ревизии; сборка и unit tests не являются удалённой
+  приёмкой.
 - Не проверялись установленная версия и crash buffer remote APK, свежий
   browser decode после candidate, независимый WAN route и 20–32 уникальных клонов.
   Пока эти факты отсутствуют, заявлять «обновление уже придёт само» или

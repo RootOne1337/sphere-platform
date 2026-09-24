@@ -6,7 +6,9 @@ import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
@@ -24,6 +26,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONObject
 import timber.log.Timber
+import java.util.concurrent.ThreadLocalRandom
 import java.util.concurrent.TimeUnit
 
 private const val MAX_RESPONSE_CHARS = 64 * 1024  // 64KB — защита от OOM
@@ -59,6 +62,37 @@ class UpdateCheckWorker @AssistedInject constructor(
 
     companion object {
         private const val WORK_NAME = "sphere_update_check"
+        internal const val IMMEDIATE_WORK_NAME = "sphere_update_check_immediate"
+        private const val MAX_IMMEDIATE_JITTER_MS = 120_000L
+
+        /**
+         * Request a prompt OTA catalog check at app start and after an authenticated
+         * management reconnect. CONNECTED keeps it queued through offline periods;
+         * KEEP coalesces reconnect bursts into one pending check.
+         */
+        fun scheduleImmediate(context: Context) {
+            val constraints = Constraints.Builder()
+                .setRequiredNetworkType(NetworkType.CONNECTED)
+                .build()
+
+            val request = OneTimeWorkRequestBuilder<UpdateCheckWorker>()
+                .setConstraints(constraints)
+                // Spread a fleet-wide boot/reconnect over two minutes instead of
+                // stampeding the catalog and artifact store at the same instant.
+                .setInitialDelay(
+                    ThreadLocalRandom.current().nextLong(MAX_IMMEDIATE_JITTER_MS + 1),
+                    TimeUnit.MILLISECONDS,
+                )
+                .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.SECONDS)
+                .build()
+
+            WorkManager.getInstance(context).enqueueUniqueWork(
+                IMMEDIATE_WORK_NAME,
+                ExistingWorkPolicy.KEEP,
+                request,
+            )
+            Timber.d("UpdateCheckWorker immediate check queued")
+        }
 
         fun schedule(context: Context) {
             val constraints = Constraints.Builder()

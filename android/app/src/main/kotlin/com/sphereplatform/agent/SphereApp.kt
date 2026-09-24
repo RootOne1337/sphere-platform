@@ -11,6 +11,7 @@ import com.sphereplatform.agent.service.BootRecoveryJobService
 import com.sphereplatform.agent.workers.KeepAliveWorker
 import com.sphereplatform.agent.workers.LogUploadWorker
 import com.sphereplatform.agent.workers.UpdateCheckWorker
+import com.sphereplatform.agent.workers.UpdateCheckScheduler
 import dagger.hilt.android.HiltAndroidApp
 import timber.log.Timber
 import javax.inject.Inject
@@ -27,6 +28,9 @@ class SphereApp : Application(), Configuration.Provider {
 
     @Inject
     lateinit var fileLoggingTree: FileLoggingTree
+
+    @Inject
+    lateinit var updateCheckScheduler: UpdateCheckScheduler
 
     override fun onCreate() {
         super.onCreate()
@@ -49,6 +53,7 @@ class SphereApp : Application(), Configuration.Provider {
         // Schedule background workers (KEEP policy — idempotent)
         LogUploadWorker.schedule(this)
         UpdateCheckWorker.schedule(this)
+        updateCheckScheduler.scheduleImmediate()
 
         // ── КРИТИЧНО: KeepAliveWorker планируется БЕЗУСЛОВНО ───────────────────
         // WorkManager хранит своё расписание в SQLite, но его JobScheduler jobs
