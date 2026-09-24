@@ -1,6 +1,6 @@
 # AUD-164 · Удалённый Android: где исчезает видеокадр
 
-**24 сентября 2026, 13:41–13:54 UTC · P0 для удалённого видео и Fleet32 · OPEN.**
+**24 сентября 2026, дополнено 25 сентября · P0 для удалённого видео и Fleet32 · OPEN.**
 
 [Исходный инцидент и OTA](REMOTE-VIDEO-OTA-DECISION.md) ·
 [Remote pilot](../../operations/REMOTE-PILOT.md) ·
@@ -94,6 +94,33 @@ Cloudflare connector остался работать. Cloudflare сам обоз
 Простая смена бесплатного сервиса без проверенного второго маршрута и rollback
 не равна устранению P0.
 
+### Повторная проверка временного маршрута, 24 сентября
+
+Отдельный LocalTunnel процесс был направлен на тот же локальный
+`public-gateway`. Его HTTPS health-check и WSS upgrade прошли до backend. Через
+этот viewer ingress один короткий просмотр `PH008` получил **2 валидных Sphere
+wire-пакета, 61 байт всего: SPS=1, PPS=1, IDR/P=0**. Кадра для декодирования не
+было. Это подтверждает доступность альтернативного viewer ingress, но само по
+себе не меняет egress удалённого Android.
+
+Для попытки проверить egress была отправлена одна `UPDATE_CONFIG` только на
+логическую запись `PH008`: LocalTunnel как primary и прежний Cloudflare URL как
+fallback. Backend вернул `504` через 18 секунд, без терминального receipt; факт
+применения конфигурации неизвестен. Отдельный read-only запрос логов к `PH007`
+также завершился `504` через 15 секунд. Перепосылать команду без receipt не
+стали. После завершения временного LocalTunnel его URL стал отвечать `503`, а
+локальных соединений к gateway не осталось. Основной Cloudflare connector не
+менялся; его контейнер healthy, текущий signed public endpoint вернул HTTPS
+`200`, а WSS прошёл upgrade и закрыл тестовую сессию ожидаемым кодом авторизации
+`4001`.
+
+**Вывод:** Android-egress A/B не состоялся. Viewer через LocalTunnel тоже увидел
+только SPS/PPS, но это не доказывает ни вину Cloudflare, ни успешный перевод
+агента на новый маршрут. Ключевой эксплуатационный блокер для такой проверки —
+удалённые команды и их receipts сейчас не подтверждаются. Глобальный manifest,
+APK и backend при тесте не менялись. Подробный текущий статус — в
+[readiness](../../operations/READINESS.md).
+
 `RootOne1337/sphere-agent-config` — **не APK-хранилище**. Его `main` содержит
 историческую конфигурацию марта; draft PR #1 содержит подписанный manifest v24
 с одним текущим Cloudflare management URL и без fallback. Менять этот документ
@@ -110,18 +137,19 @@ Cloudflare connector остался работать. Cloudflare сам обоз
 выпасть из очереди после задержки; теперь Sphere header, оба вида prefix и флаг
 keyframe обрабатываются корректно. 83 профильных backend stream-теста проходят.
 
-Это объясняет, как WAN backpressure может обрезать поток, но сохранённый remote
-capture не содержит сырого IDR и его prefix. Поэтому причина конкретного сеанса
-PH006 ещё не локализована, а Cloudflare остаётся гипотезой. Исправление находится
-в исходниках PR и **ещё не развёрнуто** в работающем pilot. Подробная первопричина,
-воспроизведение и residual risk описаны в
+Это объясняет, как WAN backpressure мог обрезать поток, но сохранённый remote
+capture не содержит сырого IDR и его prefix. Очередь с исправлением сейчас
+развёрнута в здоровом backend image `b2562ca04f5f`; работающий контейнер прошёл
+read-only классификацию синтетического 3-byte IDR как critical. Причина
+конкретного удалённого сеанса всё ещё не локализована, а Cloudflare остаётся
+гипотезой. Подробная первопричина, воспроизведение и residual risk описаны в
 [AUD-167](H264-ANNEXB-QUEUE-CLASSIFICATION.md).
 
 ## Риски, исправление и gate
 
 | Severity | Defect / root cause status | Minimal next action | Regression / acceptance |
 | --- | --- | --- | --- |
-| P0 | Удалённый picture NAL не достигает viewer; точка потери между Android encoder/WS и backend не установлена | На **одном** удалённом canary сверить PackageManager version, encoder IDR bytes, WS enqueue, backend binary ingress; затем переключить только его Android egress на проверенный независимый маршрут с прежним Cloudflare fallback | IDR/P и движущееся изображение после первичного connect и reconnect; одинаковый тест на двух маршрутах |
+| P0 | Удалённый picture NAL не достигает viewer; точка потери между Android encoder/WS и backend не установлена | Сначала получить подтверждённый command receipt и установленную версию APK для одного стабильного уникального remote ID; затем переключить только его Android egress на проверенный независимый маршрут с прежним Cloudflare fallback | IDR/P и движущееся изображение после первичного connect и reconnect; одинаковый тест на двух маршрутах |
 | P0 | Три новых remote WS постоянно пересоздаются; online присваивается раньше подтверждённого heartbeat | Разделить socket-auth, heartbeat-confirmed и stream-health в API/UI; найти причину разрыва на canary | Без pong и при 20 reconnect/15 min UI не объявляет машину здоровой; команда возвращает явную ошибку |
 | P1 | Один временный Quick Tunnel в signed config; независимого рабочего постоянного ingress нет | Поднять зарегистрированный/владельческий постоянный HTTPS/WSS endpoint, проверить `/health`, auth, binary frames, rollback, затем подписать новую версию manifest | Тот же canary продолжает задачи и стрим при выключении primary; возврат без переустановки APK |
 | P1 | 1.2.18 не в общем OTA; нынешний каталог без cohort/device gate | Создать адресную публикацию/доставку с одним command ID, receipt и проверкой установленного versionCode; начать с локального canary | Никакой remote APK не получает canary до решения оператора; локальный post-install reconnect и сохранение ID подтверждены |

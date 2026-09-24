@@ -1,6 +1,6 @@
 # AUD-167 · Backend queue misclassified 3-byte H.264 NAL units
 
-**24 September 2026 · P1 video availability · source fix verified; remote acceptance OPEN.**
+**Updated 25 September 2026 · P1 video availability · backend fix deployed; remote acceptance OPEN.**
 
 [Remote ingress investigation](REMOTE-INGRESS-AB.md) ·
 [First-frame recovery](../2026-09-20/STREAM-FIRST-FRAME.md) ·
@@ -39,6 +39,28 @@ The pre-fix run of `tests/test_ws/test_video_queue.py` was **red: 5 failed, 26
 passed**. This proves the parser and queue behavior without relying on tunnel
 assumptions or a production stream.
 
+### Reproduction against the running pilot image
+
+At **2026-09-24 17:08 UTC**, the same synthetic packet was evaluated in a separate
+Python process inside the running backend container
+`sphere-pilot-20260911-backend:ff87b56dbbd7`. It contained a valid 14-byte Sphere
+header with the keyframe bit set and a three-byte `00 00 01 65` IDR payload. The
+live image classified it as `UNKNOWN` (`nal_type=0`, `critical=false`); the
+four-byte-prefix control was classified as IDR (`nal_type=5`, `critical=true`).
+An in-memory queue test aged that IDR by ten seconds and inserted a P-frame; the
+running image logged one stale-frame eviction and dropped the IDR. No service
+state, database, or remote device was changed by this probe.
+
+This confirmed that the then-active `ff87b56` image contained the queue defect.
+The fix was later built and deployed as
+`sphere-pilot-20260911-backend:b2562ca04f5f`; the running container reports
+healthy. A read-only probe inside that running image constructed a complete
+Sphere wire packet with a three-byte IDR prefix and verified `nal_type=5` and
+`is_critical=true`; a four-byte P-frame control verified `nal_type=1` and
+`is_critical=false`. This confirms the deployed classifier behavior. It does
+**not** prove that PH006/PH008 sent an IDR: the saved remote capture contains no
+raw IDR bytes.
+
 ## Fix
 
 `backend/websocket/frames.py` now:
@@ -63,13 +85,17 @@ unbounded.
 - The focused Android capture lifecycle and command-delivery suite passed **32
   tests**; Android source and APK were not changed by this fix.
 - `git diff --check` passed.
+- Pilot candidate image `sphere-pilot-20260911-backend:b2562ca04f5f` was built
+  from an allowlisted `git archive`; the packaged `frames.py` SHA-256 matched
+  the source. In a separate read-only container with networking disabled, the
+  three-byte IDR classified as critical and survived the stale-queue scenario;
+  the four-byte control also passed and the queue dropped zero frames.
 
 ## Acceptance and residual risk
 
-The checked-in fix has not been deployed to the running pilot. The remote fleet's
-installed APK versions and exact H.264 start-code bytes remain unverified. After
-the backend candidate is deployed through the normal review gate, one remote
-canary must show an IDR reaching backend ingress and then the viewer, with an
-actual decoded frame on both the initial connection and one reconnect. Keep the
+The queue fix is deployed to the running pilot. The remote fleet's installed APK
+versions and exact H.264 start-code bytes remain unverified. One remote canary
+must show an IDR reaching backend ingress and then the viewer, with an actual
+decoded frame on both the initial connection and one reconnect. Keep the
 Cloudflare A/B question open until the same canary is measured across the Android
-egress path; the previous test changed viewer ingress only.
+egress path; changing only viewer ingress does not isolate that path.
