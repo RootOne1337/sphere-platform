@@ -310,8 +310,8 @@ identity, доверенный ключ и параметры enrollment; APK и
 | Backend pilot | Image `ff87b56dbbd7`, healthy | [Runtime и границы](docs/audits/2026-09-24/REMOTE-VIDEO-OTA-DECISION.md) |
 | Frontend pilot | Image `48c9480`, healthy | [Runtime и границы](docs/audits/2026-09-24/REMOTE-VIDEO-OTA-DECISION.md) |
 | Android, оба локальных устройства | **1.2.9-dev / 10209** | [OTA и clone identity](docs/audits/2026-09-20/CLONE-IDENTITY.md) |
-| Android local candidate | **1.2.15-dev / 10215**, pilot-compatible debug APK; тесты и signature прошли, но remote установка и OTA-публикация не выполнялись | [AUD-162](docs/audits/2026-09-24/REMOTE-RECONNECT-INCIDENT.md) · [AUD-163](docs/audits/2026-09-24/REMOTE-VIDEO-OTA-DECISION.md) |
-| Backend OTA catalog | Latest `android/dev`: **1.2.9-dev / 10209**; не предлагает candidate | [AUD-163](docs/audits/2026-09-24/REMOTE-VIDEO-OTA-DECISION.md) |
+| Android local candidate | **1.2.16-dev / 10216**, pilot-compatible debug APK; полный test suite и signature прошли, remote установка и OTA-публикация не выполнялись | [AUD-163](docs/audits/2026-09-24/REMOTE-VIDEO-OTA-DECISION.md) |
+| Backend OTA catalog | Latest `android/dev`: **1.2.9-dev / 10209**; 1.2.15/10215 изолирован в `android-canary/dev`, адресная попытка PH006 без доказанной установки | [AUD-163](docs/audits/2026-09-24/REMOTE-VIDEO-OTA-DECISION.md) |
 | Task / pipeline · приёмка 21 сентября | 15 terminal task receipts; два pipeline runs | [Независимая сверка результатов](docs/audits/2026-09-20/CANARY-20260921.md) |
 | Видео | Два локальных потока восстановились после restart без F5; PH006 remote имел SPS/PPS без IDR/P, приёмка удалённого browser decode открыта | [AUD-148](docs/audits/2026-09-23/REMOTE-FLEET-LIVE-FOLLOWUP.md) · [AUD-163](docs/audits/2026-09-24/REMOTE-VIDEO-OTA-DECISION.md) |
 | Redis | Source Compose: 512 MiB dataset / 2048 MiB ceiling; three isolated AOF probes pass (peak 1.49–2.00 GiB); 32-stream/live rollout open | [AUD-143 evidence and rollout boundary](docs/audits/2026-09-20/REDIS-PERSISTENCE-HEADROOM.md) |

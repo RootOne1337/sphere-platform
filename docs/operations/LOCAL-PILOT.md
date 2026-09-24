@@ -4,9 +4,11 @@
 
 **Актуальная граница pilot:** backend image `ff87b56dbbd7`, frontend image
 `48c9480`, Cloudflare Quick Tunnel healthy; два локальных APK 1.2.9/10209.
-Текущий OTA catalog `android/dev` также максимум 1.2.9/10209. APK-кандидат
-1.2.15/10215 собран локально и проверен, но не установлен на удалённые LDPlayer
-и не опубликован в OTA. Удалённое видео и все 20 клонов не приняты: PH006 в
+Текущий OTA catalog `android/dev` также максимум 1.2.9/10209. APK 1.2.15/10215
+адресно опубликован только в `android-canary/dev`: PH006 получал OTA и скачивал
+артефакт, но установка не подтверждена; grant отозван. Новый локальный кандидат
+1.2.16/10216 собран и проверен, однако нигде не установлен и не опубликован в
+OTA. Удалённое видео и все 20 клонов не приняты: PH006 в
 сохранённых viewer-сессиях дал SPS/PPS без IDR/P, хотя локальный Android через
 тот же публичный tunnel передал IDR/P. Подробные evidence, GitHub/OTA маршруты
 и порядок одного canary: [AUD-163](../audits/2026-09-24/REMOTE-VIDEO-OTA-DECISION.md).
@@ -146,13 +148,26 @@ Frontend **`6dea6b4`** установлен в новом pilot. Device Stream �
 
 ## APK именно для нового стенда
 
-Готовый файл и `manifest.json` находятся в **`.local-pilot/apk/`**. Это подписанный
+Локальные файлы и `manifest.json` находятся в **`.local-pilot/apk/`**. Это подписанные
 **dev debug APK**, а не production release. Пакет
 `com.sphereplatform.agent.pilot.debug` позволяет установить его рядом с обычными
 dev/enterprise сборками, сохраняя отдельные credentials и identity.
 
-Актуальный source-pinned кандидат: **`SphereAgent-pilot-candidate-1.2.11-dev-6788c90.apk`**.
-Путь: **`.local-pilot/apk/SphereAgent-pilot-candidate-1.2.11-dev-6788c90.apk`**.
+Актуальный проверенный source-pinned кандидат: **1.2.16-dev / 10216**,
+локальный файл `.local-pilot/apk/SphereAgent-pilot-candidate-1.2.16-dev-f4c5357.apk`.
+SHA-256 `0bf9907b9756708e45b3d55c52f899cf3fbcd4ad4391ec3c52888d4261dcf1d3`;
+8 413 165 bytes; debug signer совпадает с локальным pilot. Он не установлен
+удалённо и не опубликован в OTA. `LATEST-SphereAgent-pilot.apk` и публичный
+`manifest.json` по-прежнему указывают на локально принятую 1.2.9/10209;
+не путайте alias с кандидатом. 1.2.15 опубликован отдельно лишь в
+`android-canary/dev`, но адресная попытка не подтвердила установку.
+Не ставить кандидат массово: сначала на одном удалённом LDPlayer проверить
+уникальный ID, installed version, reconnect и реальный IDR → browser decode.
+Подробности: [AUD-163](../audits/2026-09-24/REMOTE-VIDEO-OTA-DECISION.md).
+
+### Исторический кандидат 1.2.11 (срез 22 сентября)
+
+Путь: `.local-pilot/apk/SphereAgent-pilot-candidate-1.2.11-dev-6788c90.apk`.
 SHA-256: `18935e44b43b2f731176677a2acf8d306821792eee0477901a4f2606a76e73b7`.
 Размер 8,459,412 bytes; package `com.sphereplatform.agent.pilot.debug`, versionCode
 10211 / `1.2.11-dev`, minSdk 26, targetSdk 35. `GIT_SHA` внутри APK совпадает с
@@ -160,19 +175,15 @@ SHA-256: `18935e44b43b2f731176677a2acf8d306821792eee0477901a4f2606a76e73b7`.
 SHA-256 сертификата совпадает с локальным pilot baseline. Полный APK manifest:
 `.local-pilot/apk/SphereAgent-pilot-candidate-1.2.11-dev-6788c90.json`.
 
-`LATEST-SphereAgent-pilot.apk` и публичный `manifest.json` по-прежнему указывают на
-принятую ранее 1.2.9 / 10209; это **не** новый candidate. Alias и OTA-каталог
-намеренно не переключались до backend-first canary. Candidate не ставился ни на
-локальные, ни на удалённые устройства. Не ставить его массово: сначала развернуть
-backend v2, затем на одном удалённом LDPlayer проверить отдельный стабильный device ID,
-identity ACK, reconnect и цепочку реальный IDR → browser decode. Подробные результаты
-предыдущей OTA-приёмки двух локальных APK: [canary report](../audits/2026-09-20/CANARY-20260921.md).
+На том срезе `LATEST-SphereAgent-pilot.apk` и публичный `manifest.json` указывали
+на принятую ранее 1.2.9/10209. Подробные результаты предыдущей OTA-приёмки двух
+локальных APK: [canary report](../audits/2026-09-20/CANARY-20260921.md).
 
 ### История предыдущих APK и приёмок
 
 Следующие версии, counters и ожидания относятся к датированным предыдущим
-проверкам; `manifest.json` и alias всё ещё указывают на принятую 1.2.9, пока candidate
-1.2.11 не пройдёт backend-first canary.
+проверкам; `manifest.json` и alias указывают на принятую 1.2.9. Старый кандидат
+1.2.11 не следует использовать как актуальный файл для нового canary.
 
 **1.2.7 / 10207 (`0f257fe`):**
 **Оба Android обновились через собственный OTA**, без ADB install, Windows

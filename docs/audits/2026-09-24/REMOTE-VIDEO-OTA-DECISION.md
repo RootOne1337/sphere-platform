@@ -1,6 +1,6 @@
 # AUD-163 · Удалённое видео и решение по OTA-публикации
 
-**24 сентября 2026 · pilot `sphere-pilot-20260911` · P0 для Fleet32 · статус: причина потери удалённого изображения не локализована, массовый rollout — NO-GO.**
+**24 сентября 2026 · pilot `sphere-pilot-20260911` · P0 для Fleet32 · статус: причина потери удалённого изображения не локализована, массовый rollout — NO-GO. Адресная OTA-проверка ниже завершилась без доказанной установки.**
 
 [Текущий pilot](../../operations/LOCAL-PILOT.md) · [Readiness](../../operations/READINESS.md) ·
 [Live-сравнение кадров AUD-148](../2026-09-23/REMOTE-FLEET-LIVE-FOLLOWUP.md) ·
@@ -33,8 +33,62 @@ Android capture/encoder у конкретного эмулятора. Наблю
 версией, адресом соединения и счётчиками на каждой границе кадра. Если он
 не проходит, сравнить тот же canary через независимый ingress, не меняя все
 устройства. Только после успешного browser decode и reconnect переходить к
-контролируемой волне и затем к Fleet32. В этом отчёте код, контейнеры, APK на
-устройствах и OTA-каталог не изменялись.
+контролируемой волне и затем к Fleet32. В исходном срезе код, контейнеры, APK на
+устройствах и OTA-каталог не изменялись. Последующая проверка описана ниже.
+
+## Адресная OTA-проверка после исходного среза
+
+В 00:59–01:02 UTC 24 сентября проверен один **логический** device ID PH006.
+Проверенный APK 1.2.15/10215 (8 411 445 bytes, SHA-256
+`7efc954d2895a60abce31cfbffea2f5d354bea1d1a884e588efbb2a7c43f5202`)
+размещён в управляемом artifact store и опубликован только как
+`android-canary/dev`. Обычный `android/dev` latest остался 1.2.9/10209; тест
+`test_canary_platform_release_is_excluded_from_regular_dev_checks_and_grant_is_targeted`
+прошёл вместе с 26 остальными API-тестами. Это не публикация в GitHub
+`sphere-agent-config`: тот репозиторий содержит подписанные адреса, а не APK.
+
+С текущей станции файл был скачан через публичный tunnel: HTTP 200, полный размер
+и совпадающий SHA-256. После одного краткосрочного recovery grant для PH006 backend
+четырежды отправил **один и тот же** `OTA_UPDATE` command ID после reconnect и
+получил четыре пары `received`/`running`; один поздний `failed` классифицирован
+как `timeout`. Публичный gateway записал девять HTTP 200 для этого artifact за
+всё окно, включая один известный локальный probe. Access log фиксирует отправку
+ответа на gateway, но не доказывает полное чтение, проверку SHA или установку на
+удалённом Android. `completed`, post-install versionCode и свежий удалённый
+IDR/browser decode **не получены**. Запрос собственных логов PH006 не вернулся
+в пределах 15 секунд; повторять shell/logcat вслепую не стали.
+
+В 01:02 UTC grant явно отозван (HTTP 204), после чего PH006 снова прошёл обычную
+WS-авторизацию. Контейнеры pilot и общий OTA-каталог не обновлялись; старый
+Compose project/tunnel не трогались. Сырые ответы, доступы и журналы сохранены
+только в игнорируемой `.local-pilot/remote/ota-canary-20260924-ph006/`.
+
+**Вывод:** публичный route и backend способны отдать файл; это сужает, но не
+закрывает гипотезу о WAN/Cloudflare для бинарного видео. Повторный OTA-download
+при нестабильном WS является отдельным воспроизведённым дефектом старого APK.
+Сервер не может безопасно подавить все повторы для одного ID: до rebind несколько
+физических клонов могут предъявлять один и тот же ID/token, и существующий
+production regression намеренно проверяет доставку всем 20 копиям. Поэтому
+защита должна храниться **на каждом Android-экземпляре**. В PR добавлено
+журналирование `OTA_UPDATE` по command ID в APK 1.2.16/10216; red/green-тест
+подтвердил отсутствие второго install на одном экземпляре и отказ от replay
+после перезапуска с неизвестным исходом. Обе полные Android suites прошли по
+635 тестов (один штатный skip в каждом flavor при финальной сборке). Собранный
+pilot candidate лежит в игнорируемом каталоге
+`.local-pilot/apk/SphereAgent-pilot-candidate-1.2.16-dev-f4c5357.apk`: 8 413 165
+bytes, SHA-256 `0bf9907b9756708e45b3d55c52f899cf3fbcd4ad4391ec3c52888d4261dcf1d3`.
+Package `com.sphereplatform.agent.pilot.debug`, versionCode 10216, APK Signature
+Scheme v2 и совпадение signer с действующим pilot APK подтверждены; встроенный
+source commit `f4c5357`. Он **не установлен**, **не опубликован в OTA** и не
+доказывает runtime fix. Живой инцидент видео остаётся OPEN.
+
+Отдельно исправлен ложный операторский путь во вкладке Updates: кнопка раньше
+отправляла `OTA_UPDATE` на `/tasks/`, где обязательный `script_id` давал 422.
+Теперь UI описывает фактическую публикацию релиза всем агентам выбранного flavor
+при их плановой проверке и не выдаёт отправку несуществующей команды за успех.
+Frontend regression и type-check прошли. Для настоящего адресного rollout нужен
+отдельный API с устройством/когортой, версией, receipt и проверкой установки;
+recovery grant не следует маскировать под обычную UI-кнопку.
 
 ## Область проверки и качество свидетельств
 
@@ -110,9 +164,9 @@ accepted/rejected не имели активных series; Redis video channels 
 создавался: до canary установленной версии повторный `start_stream` мог прерывать
 активный захват из-за исправленного только в candidate дефекта AUD-162.
 
-## Развёрнутые, собранные и опубликованные версии
+## Версии в исходном срезе до адресной OTA-проверки
 
-| Поверхность | Фактическое состояние 24 сентября | Значение для инцидента |
+| Поверхность | Исходное состояние 24 сентября до canary | Значение для инцидента |
 | --- | --- | --- |
 | Pilot backend | Образ `sphere-pilot-20260911-backend:ff87b56dbbd7` healthy; commit включает поддержку телеметрии AUD-151 и Redis recovery | Не путать с HEAD PR: backend-часть `4c057c5` о корректном disconnect log ещё не применена |
 | Pilot frontend | Образ `sphere-pilot-20260911-frontend:48c9480` healthy; включает повторный keyframe request до первого кадра | UI retry сам не создаст IDR, если Android/сеть его не передаёт |
@@ -173,6 +227,8 @@ Cloudflare также описывает нарушения доступност
 | RV-5 / P1, OPEN | Один Quick Tunnel route без независимого public fallback, плюс ограничения test-сервиса. | Signed config v24 с одним route; старый Serveo commit; официальные ограничения Cloudflare. | Discovery manifest, ingress, `docs/operations/REMOTE-PILOT.md`; сравнить второй owned endpoint лишь после проверки его доступности. | A/B на одном устройстве с одновременным frame-level evidence; смена провайдера сама по себе не считается fix. |
 | RV-6 / P1, OPEN | Неполная live-наблюдаемость: старые APK не сообщают все encoder/queue counters; нет сквозного receipt на каждый frame stage. | В моментальной metrics выборке media series пусты; 101/Redis subscriber не говорят о кадре. | Android counters AUD-151, backend metrics, viewer browser; сохранять redacted session IDs и bounded counters. | Один canary должен сопоставить frame generation, local enqueue, backend receipt, Redis publish, viewer send, browser decode; без каждого звена причина останется вероятностной. |
 | RV-7 / P1, OPEN | 7 backend-карточек не равны 22 физическим инстансам; clone binding на всех remote VM не принят. | Моментальный API: 7 records, 6 online; пользователь ожидает 20 remote + 2 local. | Android identity/binding и backend registration; отдельная приёмка 3/20/32 клонов по AUD-145. | Проверить независимые ID, одновременный online, OTA и stream на каждом; не удалять/пересоздавать старые VM вслепую. |
+| RV-8 / P1, source-fixed, rollout OPEN | Старый Android `CommandDispatcher` не журналировал `OTA_UPDATE` по command ID; reconnect повторно запускал download/install. | Адресный grant PH006: четыре `received`/`running` одного ID, девять artifact HTTP 200 за окно, один `timeout`; red/green Android regression. | APK 1.2.16 ведёт локальный durable receipt; серверная блокировка по общему ID отвергнута, потому что она лишит обновления остальные клоны. | 635 тестов/flavor; remote 1.2.16 не установлен, old APK всё ещё может повторять OTA; после restart «unknown» требует проверки версии перед новым grant. |
+| RV-9 / P2, source-fixed, deployment OPEN | Updates UI отправлял `OTA_UPDATE` в `/tasks/`, где обязателен `script_id`; кнопка не могла выполнить обещанный push. | Контракт API + red/green frontend regression: старый UI предлагал device button и ложный статус, запрос давал 422. | Убрана кнопка и показана действительная catalog-wide семантика плановой проверки. | 32/32 frontend suites, 267 tests, type-check; запущенный frontend image ещё прежний. Настоящий targeted rollout API остаётся будущей работой. |
 
 RV-2/RV-3 — доказанные **исходные** дефекты и покрытые source-фиксы, не
 доказанное завершение runtime-инцидента. RV-1 — реальный наблюдаемый отказ с

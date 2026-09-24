@@ -8,9 +8,11 @@
 В новом pilot healthy backend `ff87b56dbbd7`, frontend `48c9480` и Cloudflare
 Quick Tunnel; два локальных APK остаются 1.2.9/10209. API в момент проверки
 показал 7 зарегистрированных устройств, из них 6 online, но это не приёмка
-20 удалённых клонов. Backend OTA catalog предлагает максимум 1.2.9/10209;
-проверенный локальный candidate 1.2.15/10215 ещё не опубликован и его версия
-на remote не измерена. PH006 ранее получал только SPS/PPS без IDR/P; локальный
+20 удалённых клонов. Обычный backend OTA catalog `android/dev` предлагает максимум
+1.2.9/10209; 1.2.15/10215 есть только в изолированном `android-canary/dev`.
+Адресная доставка PH006 дала `received`/`running` и один `timeout`, но не доказала
+установку. Локальный candidate 1.2.16/10216 проверен, но не опубликован.
+PH006 ранее получал только SPS/PPS без IDR/P; локальный
 контроль через тот же публичный tunnel передал IDR. Причина удалённого отказа
 остаётся между Android capture/отправкой и его WAN/ingress путём. Глобальная
 OTA-публикация без canary и удалённого browser decode запрещена текущим gate.
@@ -46,14 +48,14 @@ OTA прежние, crash buffers не изменились. Это прежня
 Удалённая группа в неё не входит: при доставке OTA загрузки прерывались, viewer общей
 карточки получил SPS/PPS, но ноль IDR. `LATEST` и обычный OTA-каталог обновлены.
 
-**Последний source-pinned Android candidate:** `1.2.11-dev / 10211`, полный source
+**Кандидат на срез 22 сентября (исторический):** `1.2.11-dev / 10211`, полный source
 head `6788c90704319b5cf17ea0d92c7803220ba1c9a0`, файл
 `.local-pilot/apk/SphereAgent-pilot-candidate-1.2.11-dev-6788c90.apk`, SHA-256
 `18935e44b43b2f731176677a2acf8d306821792eee0477901a4f2606a76e73b7`. Package, v2
 подпись и совпадение встроенного `GIT_SHA` проверены. Android dev и enterprise:
 610 tests каждый, без failures/errors, по одному существующему skip; CI текущего PR
-прошёл. Это debug candidate, не опубликован и не установлен. `LATEST`/OTA всё ещё
-1.2.9; до backend v2 и одного remote canary новую APK нельзя считать готовой для
+прошёл. Это debug candidate, не опубликован и не установлен на том срезе. `LATEST`/обычный OTA всё ещё
+1.2.9; до одного remote canary APK нельзя считать готовой для
 массовой установки. См. [AUD-145](../audits/2026-09-20/CLONE-BINDING-V2.md) и
 [Fleet32 gates](../audits/2026-09-20/FLEET32-PREFLIGHT.md).
 
