@@ -12,6 +12,14 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 Полный перечень предыдущих audit fixes, доказательства и residual risks:
 [audit report](docs/audits/2026-09-05/AUDIT-REPORT.md).
 
+- AUD-167: backend now recognizes both legal Annex-B H.264 start-code lengths in
+  Sphere wire frames and preserves the wire keyframe flag for queue priority.
+  Before the fix, a reproducible stale 3-byte IDR was classified as `UNKNOWN` and
+  evicted by the 200 ms queue policy; after the fix, 83 focused backend stream
+  regressions pass. This source fix is not deployed, and the exact remote packet
+  prefix has not been captured, so remote video acceptance remains open.
+  [Evidence and residual risk](docs/audits/2026-09-24/H264-ANNEXB-QUEUE-CLASSIFICATION.md).
+
 - AUD-165: APK checks for updates at app startup and on the first authenticated
   management connection per service lifetime, with network constraints, unique
   WorkManager work, retry backoff and up to two minutes of jitter. The existing

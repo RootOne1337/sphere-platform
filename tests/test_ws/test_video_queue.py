@@ -38,6 +38,12 @@ def make_sps_frame(device_id: str = "dev-1") -> VideoFrame:
     return frame
 
 
+def make_wire_frame(nal: bytes, *, keyframe: bool = False, device_id: str = "dev-1") -> VideoFrame:
+    """Build the Android Sphere header around one Annex-B NAL unit."""
+    header = bytes((0x01, 0x01 if keyframe else 0x00)) + bytes(8) + len(nal).to_bytes(4, "big")
+    return VideoFrame(header + nal, device_id)
+
+
 # ── FrameType detection ───────────────────────────────────────────────────────
 
 class TestNALDetection:
@@ -60,6 +66,30 @@ class TestNALDetection:
     def test_detect_sei(self):
         data = b"\x00\x00\x00\x01\x06abc"
         assert detect_nal_type(data) == FrameType.SEI
+
+    @pytest.mark.parametrize(
+        ("nal_header", "expected"),
+        [
+            (b"\x65", FrameType.IDR_SLICE),
+            (b"\x41", FrameType.NON_IDR),
+            (b"\x67", FrameType.SPS),
+            (b"\x68", FrameType.PPS),
+        ],
+    )
+    @pytest.mark.parametrize("start_code", [b"\x00\x00\x01", b"\x00\x00\x00\x01"])
+    def test_detects_three_and_four_byte_start_codes_in_sphere_wire_frames(self, start_code, nal_header, expected):
+        frame = make_wire_frame(start_code + nal_header + b"payload", keyframe=expected == FrameType.IDR_SLICE)
+
+        assert frame.nal_type == expected
+        assert frame.is_critical is (expected in (FrameType.IDR_SLICE, FrameType.SPS, FrameType.PPS))
+
+    def test_malformed_sphere_length_does_not_trust_keyframe_flag(self):
+        malformed = bytes((0x01, 0x01)) + bytes(8) + (999).to_bytes(4, "big") + b"not-a-nal"
+
+        frame = VideoFrame(malformed, "dev-1")
+
+        assert frame.nal_type == FrameType.UNKNOWN
+        assert frame.is_critical is False
 
     def test_unknown_for_short_data(self):
         assert detect_nal_type(b"\x00\x01") == FrameType.UNKNOWN
@@ -191,6 +221,23 @@ class TestVideoStreamQueue:
             if f is None:
                 break
             frames.append(f)
+        assert old_idr in frames
+
+    async def test_stale_three_byte_idr_remains_critical_under_remote_queue_delay(self, queue):
+        """A WAN-delayed Annex-B IDR must not be treated as a disposable P-frame."""
+        old_idr = make_wire_frame(b"\x00\x00\x01\x65" + b"\xff" * 100, keyframe=True)
+        old_idr.timestamp = time.monotonic() - 10.0
+        await queue.put(old_idr)
+
+        await queue.put(make_p_frame())
+
+        frames = []
+        while True:
+            frame = await queue.get()
+            if frame is None:
+                break
+            frames.append(frame)
+
         assert old_idr in frames
 
     async def test_queue_size_property(self, queue):

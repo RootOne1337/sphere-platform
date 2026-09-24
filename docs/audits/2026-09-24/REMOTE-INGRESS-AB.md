@@ -103,6 +103,20 @@ Cloudflare connector остался работать. Cloudflare сам обоз
 также заканчивается 1.2.9. Поэтому отсутствие 1.2.18 на них сейчас ожидаемо,
 но адресный rollout и post-install receipt всё ещё отсутствуют.
 
+## Подтверждённый backend queue-дефект — AUD-167
+
+В локальной red/green-регрессии подтверждено, что backend раньше распознавал
+только 4-байтовый Annex-B prefix. Трёхбайтовый IDR становился `UNKNOWN` и мог
+выпасть из очереди после задержки; теперь Sphere header, оба вида prefix и флаг
+keyframe обрабатываются корректно. 83 профильных backend stream-теста проходят.
+
+Это объясняет, как WAN backpressure может обрезать поток, но сохранённый remote
+capture не содержит сырого IDR и его prefix. Поэтому причина конкретного сеанса
+PH006 ещё не локализована, а Cloudflare остаётся гипотезой. Исправление находится
+в исходниках PR и **ещё не развёрнуто** в работающем pilot. Подробная первопричина,
+воспроизведение и residual risk описаны в
+[AUD-167](H264-ANNEXB-QUEUE-CLASSIFICATION.md).
+
 ## Риски, исправление и gate
 
 | Severity | Defect / root cause status | Minimal next action | Regression / acceptance |
