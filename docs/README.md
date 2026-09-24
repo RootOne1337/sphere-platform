@@ -20,7 +20,7 @@
 | Войти в готовый pilot и взять APK | [Local pilot](operations/LOCAL-PILOT.md) | [Приёмка первого устройства](operations/PILOT-ACCEPTANCE.md) |
 | Поднять новую установку | [Startup / bootstrap](operations/STARTUP.md#first-install) | [Configuration](configuration.md) · [Deployment](deployment.md) |
 | Подключить удалённые Android | [Remote pilot](operations/REMOTE-PILOT.md) | [Signed discovery](architecture/ANDROID-SIGNED-DISCOVERY.md) |
-| Понять оставшиеся проблемы | [Fleet32: актуальная таблица](audits/2026-09-20/FLEET32-PREFLIGHT.md) | [Live follow-up 23 сентября](audits/2026-09-23/REMOTE-FLEET-LIVE-FOLLOWUP.md) · [Исходный live-аудит](audits/2026-09-23/REMOTE-FLEET-LIVE-AUDIT.md) · [Readiness](operations/READINESS.md) · [Roadmap](../ROADMAP.md) |
+| Понять оставшиеся проблемы | [Fleet32: актуальная таблица](audits/2026-09-20/FLEET32-PREFLIGHT.md) | [Удалённое видео и OTA: решение 24 сентября](audits/2026-09-24/REMOTE-VIDEO-OTA-DECISION.md) · [Live follow-up 23 сентября](audits/2026-09-23/REMOTE-FLEET-LIVE-FOLLOWUP.md) · [Readiness](operations/READINESS.md) · [Roadmap](../ROADMAP.md) |
 | Разобрать сбой по времени и устройству | [Support: что собрать](../SUPPORT.md) | [Runbooks](runbooks/README.md) · [Fleet operations, stream и observability](architecture/FLEET-OPERATIONS-AND-OBSERVABILITY.md) |
 | Изменить код | [Contributing](../CONTRIBUTING.md) | [Development](development.md) · [Тесты](../tests/production/README.md) |
 
@@ -31,6 +31,7 @@
 | [Startup](operations/STARTUP.md) | Первый запуск, повторный старт, env precedence и значение readiness |
 | [Local pilot](operations/LOCAL-PILOT.md) | Установленные версии, веб, APK, учётная запись и отдельный Compose project |
 | [Remote pilot](operations/REMOTE-PILOT.md) | Устройства в другой сети, ingress и ограничения резервирования |
+| [Удалённое видео и OTA](audits/2026-09-24/REMOTE-VIDEO-OTA-DECISION.md) | AUD-163: публичный tunnel против Android first-frame, что реально опубликовано и почему общий OTA rollout пока остановлен |
 | [Deployment](deployment.md) · [Полный guide](../FULL-DEPLOYMENT-GUIDE.md) | Bootstrap, конфигурации и обслуживание; оценки масштаба требуют своей приёмки |
 | [Discovery publisher](operations/DISCOVERY-PUBLISHER.md) | Публикация подписанных маршрутов и восстановление publisher |
 | [Redis memory](operations/REDIS-MEMORY.md) | Dataset/container budget, persistence, pressure test и остаточные риски |
@@ -68,7 +69,7 @@
 | Standalone-сборка frontend | [AUD-141 / F32-30](audits/2026-09-20/FRONTEND-STANDALONE.md): Linux CI build/root-entrypoint passed; отдельный frontend Docker image не проверен; Windows trace warning remains |
 | Redis budget | [AUD-143](audits/2026-09-20/REDIS-PERSISTENCE-HEADROOM.md): 1536 MiB воспроизвёл OOM; три 2048 MiB probes прошли с peak 1.49–2.00 GiB; 32-stream/live rollout open |
 | OTA transfer | [AUD-144 / F32-33](audits/2026-09-20/OTA-TRANSPORT-RETRY.md): local before/after regression and bounded retry; 1.2.10/10210 is historical and was not a published OTA catalog entry |
-| Clone binding and reconnect | [AUD-145 / F32-34](audits/2026-09-20/CLONE-BINDING-V2.md) · [AUD-162](audits/2026-09-24/REMOTE-RECONNECT-INCIDENT.md) · [Android-only clone plan](architecture/ANDROID-EMULATOR-GOLDEN-IMAGE.md): local 1.2.14 debug builds contain terminal refresh recovery; OTA rollout, remote identity and 3-clone acceptance remain open |
+| Clone binding and reconnect | [AUD-145 / F32-34](audits/2026-09-20/CLONE-BINDING-V2.md) · [AUD-162](audits/2026-09-24/REMOTE-RECONNECT-INCIDENT.md) · [Android-only clone plan](architecture/ANDROID-EMULATOR-GOLDEN-IMAGE.md): local 1.2.15 debug candidate contains terminal refresh and duplicate-start recovery; OTA rollout, remote identity and 3-clone acceptance remain open |
 | Первый кадр на Android | [AUD-161](audits/2026-09-23/ANDROID-INITIAL-FRAME-RACE.md): воспроизведено отбрасывание раннего ImageReader callback; source fix и 621 тест на flavor прошли, удалённый canary ещё не принят |
 | Сетевые отказы | [Native matrix](audits/2026-09-05/NETWORK-RECOVERY-NATIVE.md) · [Reconnect debt](audits/2026-09-05/ANDROID-RECONNECT-DEBT.md) |
 | Автозапуск и разрешения | [Boot recovery](audits/2026-09-05/ANDROID-BOOT-RECOVERY.md) · [Root capabilities](audits/2026-09-05/ANDROID-UNATTENDED-CAPABILITIES.md) |

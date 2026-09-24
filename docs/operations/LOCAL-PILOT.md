@@ -1,10 +1,23 @@
 # Локальный стенд для совместного тестирования
 
-**23 сентября 2026 · Windows / Docker Desktop · development, авторизация включена.**
+**24 сентября 2026 · Windows / Docker Desktop · development, авторизация включена.**
 
-Текущий локальный pilot: backend исходников **`2f8b6c2`**, frontend **`9924eb1`**, два локальных APK по последней сверке **1.2.9 / 10209**. Новый backend применил обязательный binding-v2 ACK; известные семь записей `auto-ph-000`–`auto-ph-006` после повторной регистрации удалённых устройств показали online без переустановки APK. Установленный SHA удалённых APK не считывался; версия 1.2.11/10211 подтверждена сообщением пользователя.
+**Актуальная граница pilot:** backend image `ff87b56dbbd7`, frontend image
+`48c9480`, Cloudflare Quick Tunnel healthy; два локальных APK 1.2.9/10209.
+Текущий OTA catalog `android/dev` также максимум 1.2.9/10209. APK-кандидат
+1.2.15/10215 собран локально и проверен, но не установлен на удалённые LDPlayer
+и не опубликован в OTA. Удалённое видео и все 20 клонов не приняты: PH006 в
+сохранённых viewer-сессиях дал SPS/PPS без IDR/P, хотя локальный Android через
+тот же публичный tunnel передал IDR/P. Подробные evidence, GitHub/OTA маршруты
+и порядок одного canary: [AUD-163](../audits/2026-09-24/REMOTE-VIDEO-OTA-DECISION.md).
+Датированные записи ниже сохранены как история проверок; их версии не следует
+читать как текущие установленные версии.
 
-Актуальный live-результат: PH006 отвечает на команды stream и keyframe, но за 18–42 секунды viewer получил только SPS/PPS, без IDR/P-frame. Локальный `auto-ph-000` через тот же публичный Quick Tunnel передал первый кадр за 1.406 s, включая IDR и три P-frame. Это исключает полный отказ viewer/backend, но не определяет, теряет ли удалённый APK кадр в MediaProjection/MediaCodec или в его WAN WebSocket. Fleet32 — **NO-GO** до удалённого browser decode и проверки каждого device ID. [AUD-148: live evidence и остаточные gates](../audits/2026-09-23/REMOTE-FLEET-LIVE-FOLLOWUP.md) · [Fleet32 readiness](../audits/2026-09-20/FLEET32-PREFLIGHT.md).
+## История проверок pilot
+
+**Срез 23 сентября:** backend исходников **`2f8b6c2`**, frontend **`9924eb1`**, два локальных APK по той сверке **1.2.9 / 10209**. Тогда новый backend применил обязательный binding-v2 ACK; известные семь записей `auto-ph-000`–`auto-ph-006` после повторной регистрации удалённых устройств показали online без переустановки APK. Установленный SHA удалённых APK не считывался; версия 1.2.11/10211 подтверждена сообщением пользователя.
+
+**Live-результат 23 сентября:** PH006 отвечает на команды stream и keyframe, но за 18–42 секунды viewer получил только SPS/PPS, без IDR/P-frame. Локальный `auto-ph-000` через тот же публичный Quick Tunnel передал первый кадр за 1.406 s, включая IDR и три P-frame. Это исключает полный отказ viewer/backend, но не определяет, теряет ли удалённый APK кадр в MediaProjection/MediaCodec или в его WAN WebSocket. Fleet32 — **NO-GO** до удалённого browser decode и проверки каждого device ID. [AUD-148: live evidence и остаточные gates](../audits/2026-09-23/REMOTE-FLEET-LIVE-FOLLOWUP.md) · [Fleet32 readiness](../audits/2026-09-20/FLEET32-PREFLIGHT.md).
 
 **Backend source** `2f8b6c2` содержит исправление AUD-147, подтверждённое на новом pilot; frontend image остаётся `9924eb1`. APK 1.2.11-dev/10211 остаётся последней опубликованной пользователем remote-копией по его сообщению. Отдельное Android-изменение `2f8b6c2` для `noop` keepalive прошло targeted unit tests, но ещё не собрано в новый APK и не опубликовано в OTA. Candidate APK, alias и update catalog не переключались. [AUD-145](../audits/2026-09-20/CLONE-BINDING-V2.md) · [AUD-142](../audits/2026-09-20/ANDROID-KEYFRAME-STARTUP.md) · [AUD-144](../audits/2026-09-20/OTA-TRANSPORT-RETRY.md).
 [Canary 21 сентября](../audits/2026-09-20/CANARY-20260921.md): 15 task receipts,

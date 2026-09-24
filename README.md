@@ -16,9 +16,10 @@
 </div>
 
 > [!NOTE]
-> **Активная разработка · подготовка к 32 реальным эмуляторам.** На 23 сентября 2026
-> подтверждены отдельные сценарии на двух rooted Android 9. Массовый прогон, полный
-> успешный 8h soak и VPN end-to-end ещё предстоят. [Установленные версии и доказательства ↓](#status)
+> **Активная разработка · подготовка к 32 реальным эмуляторам.** На 24 сентября 2026
+> подтверждены отдельные сценарии на двух rooted Android 9; удалённый видеокадр
+> пока не принят. Массовый прогон, полный успешный 8h soak и VPN end-to-end ещё
+> предстоят. [Установленные версии и доказательства ↓](#status)
 
 ---
 
@@ -300,20 +301,22 @@ identity, доверенный ключ и параметры enrollment; APK и
 <a id="status"></a>
 ## 🔬 Состояние проекта и границы проверки
 
-**Контрольная точка: 23 сентября 2026.** CI-badges относятся к ветке аудита;
-ниже указаны установленные версии и выполненные сценарии.
+**Контрольная точка: 24 сентября 2026.** CI-badges относятся к ветке аудита;
+строки ниже различают текущие установки, локальные candidate и датированную
+приёмку. [Почему удалённое видео и OTA остаются NO-GO](docs/audits/2026-09-24/REMOTE-VIDEO-OTA-DECISION.md).
 
-| Установлено в pilot | Версия / результат | Доказательство |
+| Поверхность / проверка | Версия / результат | Доказательство |
 | --- | --- | --- |
-| Backend | `3be0e29` (локальный pilot) | [Клоны, recovery и WAN ограничения](docs/audits/2026-09-20/CLONE-IDENTITY.md) |
-| Frontend | `9924eb1` | [Decoder recovery](docs/audits/2026-09-20/DECODER-RECOVERY.md) |
+| Backend pilot | Image `ff87b56dbbd7`, healthy | [Runtime и границы](docs/audits/2026-09-24/REMOTE-VIDEO-OTA-DECISION.md) |
+| Frontend pilot | Image `48c9480`, healthy | [Runtime и границы](docs/audits/2026-09-24/REMOTE-VIDEO-OTA-DECISION.md) |
 | Android, оба локальных устройства | **1.2.9-dev / 10209** | [OTA и clone identity](docs/audits/2026-09-20/CLONE-IDENTITY.md) |
-| Android local verification builds | **1.2.14-dev / 10214** and **1.2.14 / 10214**, dev/enterprise debug-signed; assembled from current source, not release compatibility proof and not published to OTA | [AUD-162 reconnect incident](docs/audits/2026-09-24/REMOTE-RECONNECT-INCIDENT.md) · [AUD-145 clone identity v2](docs/audits/2026-09-20/CLONE-BINDING-V2.md) · [Android-only golden image plan](docs/architecture/ANDROID-EMULATOR-GOLDEN-IMAGE.md) |
-| Task / pipeline | 15 terminal task receipts; два pipeline runs | [Независимая сверка результатов](docs/audits/2026-09-20/CANARY-20260921.md) |
-| Видео | Два потока восстановились после restart без F5; capture освобождён | [Native acceptance](docs/audits/2026-09-20/DECODER-RECOVERY.md) |
+| Android local candidate | **1.2.15-dev / 10215**, pilot-compatible debug APK; тесты и signature прошли, но remote установка и OTA-публикация не выполнялись | [AUD-162](docs/audits/2026-09-24/REMOTE-RECONNECT-INCIDENT.md) · [AUD-163](docs/audits/2026-09-24/REMOTE-VIDEO-OTA-DECISION.md) |
+| Backend OTA catalog | Latest `android/dev`: **1.2.9-dev / 10209**; не предлагает candidate | [AUD-163](docs/audits/2026-09-24/REMOTE-VIDEO-OTA-DECISION.md) |
+| Task / pipeline · приёмка 21 сентября | 15 terminal task receipts; два pipeline runs | [Независимая сверка результатов](docs/audits/2026-09-20/CANARY-20260921.md) |
+| Видео | Два локальных потока восстановились после restart без F5; PH006 remote имел SPS/PPS без IDR/P, приёмка удалённого browser decode открыта | [AUD-148](docs/audits/2026-09-23/REMOTE-FLEET-LIVE-FOLLOWUP.md) · [AUD-163](docs/audits/2026-09-24/REMOTE-VIDEO-OTA-DECISION.md) |
 | Redis | Source Compose: 512 MiB dataset / 2048 MiB ceiling; three isolated AOF probes pass (peak 1.49–2.00 GiB); 32-stream/live rollout open | [AUD-143 evidence and rollout boundary](docs/audits/2026-09-20/REDIS-PERSISTENCE-HEADROOM.md) |
 | Сетевые отказы | Проверены отдельные отказы Android, серверного входа и обеих сторон | [Матрица и версии проверок](docs/audits/2026-09-05/NETWORK-RECOVERY-NATIVE.md) |
-| Удалённые клоны/видео | **NO-GO:** v2 candidate local-only; unique remote IDs, backend-first migration and first decoded frame not accepted | [F32-28 / F32-34 evidence и остаточные риски](docs/audits/2026-09-20/CLONE-IDENTITY.md) |
+| Удалённые клоны/видео | **NO-GO:** в момент проверки 7 device records / 6 online, не 20 подтверждённых удалённых VM; unique IDs и первый декодированный удалённый кадр не приняты | [AUD-163](docs/audits/2026-09-24/REMOTE-VIDEO-OTA-DECISION.md) · [F32-28 / F32-34](docs/audits/2026-09-20/CLONE-IDENTITY.md) |
 
 ### Ближайшие эксплуатационные задачи
 
