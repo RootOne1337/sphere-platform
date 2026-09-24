@@ -312,6 +312,44 @@ class TestDeviceStatusEndpoint:
         assert r.status_code == 200
         assert r.json()["live"] == "online"
 
+    async def test_device_list_and_detail_expose_live_agent_version(self, device_client: AsyncClient):
+        from fakeredis.aioredis import FakeRedis
+
+        from backend.api.v1.devices.router import get_status_cache
+        from backend.main import app
+        from backend.schemas.device_status import DeviceLiveStatus
+        from backend.services.device_status_cache import DeviceStatusCache
+
+        created = await device_client.post(
+            "/api/v1/devices", json={"name": "Versioned agent", "serial": "versioned-agent"}
+        )
+        device_id = created.json()["id"]
+        binary_redis = FakeRedis(decode_responses=False)
+        cache = DeviceStatusCache(binary_redis)
+
+        async def _get_status_cache():
+            return cache
+
+        app.dependency_overrides[get_status_cache] = _get_status_cache
+        await cache.set_status(device_id, DeviceLiveStatus(
+            device_id=device_id,
+            status="online",
+            agent_version="1.2.20-dev",
+            agent_version_code=10220,
+        ))
+        try:
+            listed = await device_client.get("/api/v1/devices?per_page=100")
+            row = next(item for item in listed.json()["items"] if item["id"] == device_id)
+            assert row["agent_version"] == "1.2.20-dev"
+            assert row["agent_version_code"] == 10220
+
+            detailed = await device_client.get(f"/api/v1/devices/{device_id}")
+            assert detailed.json()["agent_version"] == "1.2.20-dev"
+            assert detailed.json()["agent_version_code"] == 10220
+        finally:
+            app.dependency_overrides.pop(get_status_cache, None)
+            await binary_redis.aclose()
+
     async def test_status_device_from_other_org_404(
         self,
         device_client: AsyncClient,

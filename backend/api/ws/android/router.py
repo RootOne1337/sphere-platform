@@ -452,7 +452,8 @@ async def serve_ota_recovery(ws: WebSocket, device_id: str, grant) -> None:
                "signed_at": int(time.time()), "ttl_seconds": 180,
                "payload": {"download_url": str(ws.base_url.replace(scheme="https")).rstrip("/") +
                            "/api/v1/updates/artifacts/" + grant.sha256,
-                           "version": grant.version_name, "sha256": grant.sha256}}
+                           "version": grant.version_name, "version_code": grant.version_code,
+                           "sha256": grant.sha256}}
     try:
         async with asyncio.timeout(min(180, max(1, grant.expires_at - int(time.time())))):
             await ws.send_json({"type": "auth_ok", "device_id": device_id, "protocol_version": 1})

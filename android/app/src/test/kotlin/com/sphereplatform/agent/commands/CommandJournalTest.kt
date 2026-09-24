@@ -85,6 +85,31 @@ class CommandJournalTest {
         assertEquals("execution_outcome_unknown_after_restart", result["error"]?.jsonPrimitive?.content)
     }
 
+    @Test fun interruptedOtaInstallIsCompletedAfterNewVersionStarts() {
+        journal().claim("ota-command", acknowledgeWhenQueued = true, otaTargetVersionCode = 10220)
+
+        val restarted = journal()
+        restarted.reconcileCompletedOtaInstalls(installedVersionCode = 10220)
+
+        val receipt = restarted.pending().single()
+        assertEquals("completed", receipt["status"]?.jsonPrimitive?.content)
+        assertEquals(10220, receipt["result"]?.jsonObject?.get("installed_version_code")?.jsonPrimitive?.int)
+        assertEquals(receipt, (restarted.claim(
+            "ota-command", acknowledgeWhenQueued = true, otaTargetVersionCode = 10220,
+        ) as CommandJournal.Claim.Existing).response)
+    }
+
+    @Test fun interruptedOtaInstallIsNeverReportedSuccessfulAtOldVersion() {
+        journal().claim("ota-command", acknowledgeWhenQueued = true, otaTargetVersionCode = 10220)
+
+        val restarted = journal()
+        restarted.reconcileCompletedOtaInstalls(installedVersionCode = 10219)
+
+        val receipt = restarted.pending().single()
+        assertEquals("failed", receipt["status"]?.jsonPrimitive?.content)
+        assertEquals("execution_outcome_unknown_after_restart", receipt["error"]?.jsonPrimitive?.content)
+    }
+
     @Test fun pendingResultSurvivesRestartAndFailedDeliveryUntilServerReceipt() {
         val first = journal()
         first.claim("task-1")

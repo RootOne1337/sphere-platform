@@ -20,6 +20,15 @@ val versionFile = rootProject.file("version.properties")
 if (versionFile.exists()) versionProps.load(versionFile.inputStream())
 val appVersionCode = versionProps.getProperty("VERSION_CODE", "10001").toInt()
 val appVersionName: String = versionProps.getProperty("VERSION_NAME", "1.0.0")
+val enrollmentKey = System.getenv("SPHERE_ENROLLMENT_KEY")?.trim().orEmpty()
+val devConfigUrl = System.getenv("SPHERE_CONFIG_URL")?.trim().orEmpty()
+val bootstrapConfigured = devConfigUrl.isNotBlank() ||
+    System.getenv("SPHERE_CONFIG_MIRROR_URLS")?.split(',')?.any { it.isNotBlank() } == true ||
+    System.getenv("SPHERE_DISCOVERY_INSTALLATION_ID")?.isNotBlank() == true ||
+    System.getenv("SPHERE_DISCOVERY_PUBLIC_KEY")?.isNotBlank() == true
+require(!bootstrapConfigured || enrollmentKey.isNotBlank()) {
+    "Signed/configured Android bootstrap requires SPHERE_ENROLLMENT_KEY; refusing to build an APK that cannot enroll"
+}
 
 fun javaString(value: String): String = "\"" + value.replace("\\", "\\\\")
     .replace("\"", "\\\"").replace("\r", "\\r").replace("\n", "\\n") + "\""
@@ -101,8 +110,8 @@ android {
             buildConfigField("String", "FLAVOR_LABEL", "\"dev\"")
             // Isolated dev builds can select their own server, enrollment and discovery.
             buildConfigField("String", "DEFAULT_SERVER_URL", "\"$serverPublicUrl\"")
-            // Override with the key seeded into the selected development installation.
-            buildConfigField("String", "DEFAULT_API_KEY", "\"${System.getenv("SPHERE_ENROLLMENT_KEY") ?: "sphr_dev_enrollment_key_2025"}\"")
+            // Enrollment keys are injected from a private build environment; never use a stale placeholder.
+            buildConfigField("String", "DEFAULT_API_KEY", javaString(enrollmentKey))
             buildConfigField("String", "DEFAULT_DEVICE_ID", "\"\"")
             // Bootstrap routes belong to a specific installation. Never silently
             // fall back to a public legacy environment that may advertise a retired
@@ -119,8 +128,7 @@ android {
             buildConfigField("String", "FLAVOR_LABEL", "\"enterprise\"")
             // Enterprise: baked-in defaults are blank — provisioned via MDM or config file
             buildConfigField("String", "DEFAULT_SERVER_URL", "\"\"")
-            buildConfigField("String", "DEFAULT_API_KEY", javaString(
-                if (signedDiscovery) System.getenv("SPHERE_ENROLLMENT_KEY") ?: "" else ""))
+            buildConfigField("String", "DEFAULT_API_KEY", javaString(enrollmentKey))
             buildConfigField("String", "DEFAULT_DEVICE_ID", "\"\"")
             // TZ-12: HTTP Config Endpoint — задаётся при сборке через CI/CD
             buildConfigField("String", "CONFIG_URL", "\"${System.getenv("SPHERE_CONFIG_URL") ?: ""}\"")

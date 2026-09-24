@@ -125,6 +125,10 @@ class HeartbeatManager:
             status_update["screen_on"] = msg["screen_on"]
         if "vpn_active" in msg:
             status_update["vpn_active"] = msg["vpn_active"]
+        if "agent_version" in msg:
+            status_update["agent_version"] = msg["agent_version"]
+        if "agent_version_code" in msg:
+            status_update["agent_version_code"] = msg["agent_version_code"]
 
         # Всегда обновляем last_heartbeat при получении pong
         try:

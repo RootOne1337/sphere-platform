@@ -14,6 +14,8 @@ export interface Device {
   group_name: string | null;
   location_ids: string[];
   status: 'online' | 'offline' | 'unknown';
+  agent_version?: string | null;
+  agent_version_code?: number | null;
   battery_level: number | null;
   cpu_usage: number | null;
   ram_usage_mb: number | null;

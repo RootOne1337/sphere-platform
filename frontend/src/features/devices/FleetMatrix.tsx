@@ -86,7 +86,7 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
                                 {device.name}
                             </span>
                             <span className="font-mono text-[10px] text-muted-foreground truncate">
-                                {device.model} • {device.android_version}
+                                {device.model} • Android {device.android_version} • Agent {device.agent_version || "not reported"}
                             </span>
                         </div>
                     );

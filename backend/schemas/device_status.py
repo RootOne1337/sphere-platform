@@ -19,6 +19,8 @@ class DeviceLiveStatus(BaseModel):
     screen_on: bool | None = None
     vpn_active: bool | None = None
     android_version: str | None = None
+    agent_version: str | None = Field(default=None, min_length=1, max_length=100)
+    agent_version_code: int | None = Field(default=None, ge=1, le=2_147_483_647)
     last_heartbeat: datetime | None = None
     ws_session_id: str | None = None    # ID WebSocket сессии агента
     current_task_id: uuid.UUID | None = None

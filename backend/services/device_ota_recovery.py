@@ -65,6 +65,7 @@ class OtaRecoveryGrant(BaseModel):
     command_id: uuid.UUID
     sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     version_name: str = Field(min_length=1, max_length=100)
+    version_code: int = Field(default=0, ge=0, le=2_147_483_647)
     created_at: int
     expires_at: int
     issued_before: int
@@ -75,7 +76,11 @@ class OtaRecoveryGrant(BaseModel):
         return self.model_copy(update={"authorization_tag": self._tag(device)})
 
     def _tag(self, device: Device) -> str:
-        body = self.model_dump(mode="json", exclude={"authorization_tag"})
+        # Keep signatures created before version_code was added valid. New grants
+        # bind the expected installed package version into the signed payload.
+        body = self.model_dump(mode="json", exclude={"authorization_tag", "version_code"})
+        if self.version_code > 0:
+            body["version_code"] = self.version_code
         message = "sphere/ota-recovery/v1\0" + str(device.org_id) + "\0" + str(device.id) + "\0" + json.dumps(body, sort_keys=True)
         return hmac.new(settings.JWT_SECRET_KEY.encode(), message.encode(), hashlib.sha256).hexdigest()
 

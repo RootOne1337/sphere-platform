@@ -1,5 +1,6 @@
 package com.sphereplatform.agent.commands
 
+import com.sphereplatform.agent.BuildConfig
 import android.content.Context
 import android.content.Intent
 import com.sphereplatform.agent.streaming.StreamQualityMonitor
@@ -161,6 +162,8 @@ class CommandDeliveryTest {
         callback.captured!!(buildJsonObject { put("type", "ping"); put("ts", 123.0) })
 
         val stream = messages.last()["stream"]?.jsonObject
+        assertEquals(BuildConfig.VERSION_NAME, messages.last()["agent_version"]?.jsonPrimitive?.content)
+        assertEquals(BuildConfig.VERSION_CODE, messages.last()["agent_version_code"]?.jsonPrimitive?.int)
         assertNotNull("active capture telemetry must reach backend", stream)
         assertEquals(2, stream!!["schema_version"]?.jsonPrimitive?.int)
         assertEquals("capture_encoder_ws_queue", stream["stage"]?.jsonPrimitive?.content)
@@ -224,9 +227,35 @@ class CommandDeliveryTest {
         put("ttl_seconds", 180)
         put("payload", buildJsonObject {
             put("download_url", "https://management.test/update.apk")
-            put("version", "1.2.18-dev")
+            put("version", "1.2.21-dev")
+            put("version_code", BuildConfig.VERSION_CODE + 1)
             put("sha256", "a".repeat(64))
         })
+    }
+
+    @Test fun reconnectAfterSuccessfulPackageReplacementSendsRecoveredOtaReceipt() = runTest {
+        val commandId = "55555555-5555-4555-8555-555555555555"
+        journal().claim(
+            commandId,
+            acknowledgeWhenQueued = true,
+            otaTargetVersionCode = BuildConfig.VERSION_CODE,
+        )
+
+        val dispatcher = dispatcher(backgroundScope)
+        connected.captured!!()
+        runCurrent()
+
+        val receipt = messages.single { it["command_id"]?.jsonPrimitive?.content == commandId }
+        assertEquals("completed", receipt["status"]?.jsonPrimitive?.content)
+        assertEquals(
+            BuildConfig.VERSION_CODE,
+            receipt["result"]?.jsonObject?.get("installed_version_code")?.jsonPrimitive?.int,
+        )
+        assertEquals(
+            true,
+            receipt["result"]?.jsonObject?.get("recovered_after_process_restart")?.jsonPrimitive?.boolean,
+        )
+        dispatcher.stop()
     }
 
     @Test fun otaRetryAfterReconnectCannotDownloadOrInstallTwiceOnOneInstance() = runTest {

@@ -138,7 +138,7 @@ def _remove_release(release_id: str) -> bool:
 class CreateReleaseRequest(BaseModel):
     platform: str = "android"
     flavor: str = "enterprise"           # enterprise | dev
-    version_code: int
+    version_code: int = Field(ge=1, le=2_147_483_647)
     version_name: str
     download_url: str                    # must be https://
     sha256: str                          # SHA-256 of APK
@@ -174,7 +174,7 @@ async def create_recovery(
     if isinstance(active, dict) and active.get("expires_at", 0) > now:
         raise HTTPException(status_code=409, detail="Recovery grant already active; inspect before another request")
     grant = OtaRecoveryGrant(command_id=uuid.uuid4(), sha256=payload.sha256,
-                             version_name=release["version_name"], created_at=now,
+                             version_name=release["version_name"], version_code=release.get("version_code", 0), created_at=now,
                              expires_at=now + payload.duration_seconds, issued_before=now - 1).signed(device)
     device.meta = {**(device.meta or {}), "ota_recovery": grant.model_dump(mode="json")}
     await db.commit()

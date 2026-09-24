@@ -2,6 +2,7 @@ package com.sphereplatform.agent.commands
 
 import android.content.Context
 import android.content.Intent
+import com.sphereplatform.agent.BuildConfig
 import com.sphereplatform.agent.commands.model.CommandAck
 import com.sphereplatform.agent.commands.model.CommandType
 import com.sphereplatform.agent.commands.model.IncomingCommand
@@ -179,6 +180,8 @@ class CommandDispatcher @Inject constructor(
             put("ram_mb", deviceStatusProvider.getRamUsageMb())
             put("screen_on", deviceStatusProvider.isScreenOn())
             put("vpn_active", deviceStatusProvider.isVpnActive())
+            put("agent_version", BuildConfig.VERSION_NAME)
+            put("agent_version_code", BuildConfig.VERSION_CODE)
             val stats = if (streamingManager.isActive()) streamingManager.getQualityStats() else null
             if (stats != null) {
                 put("stream", buildJsonObject {
@@ -337,8 +340,12 @@ class CommandDispatcher @Inject constructor(
         // shared recovery grant can still reach every copy.
         if (cmd.type == CommandType.EXECUTE_DAG || cmd.type == CommandType.OTA_UPDATE) {
             try {
+                commandJournal.reconcileCompletedOtaInstalls(BuildConfig.VERSION_CODE)
                 when (val claim = commandJournal.claim(
                     cmd.command_id, acknowledgeWhenQueued = cmd.type == CommandType.OTA_UPDATE,
+                    otaTargetVersionCode = if (cmd.type == CommandType.OTA_UPDATE) {
+                        cmd.payload["version_code"]?.jsonPrimitive?.intOrNull
+                    } else null,
                 )) {
                     is CommandJournal.Claim.Existing -> {
                         queueDurableResult(claim.response)
@@ -397,6 +404,7 @@ class CommandDispatcher @Inject constructor(
 
     private fun flushResults() {
         try {
+            commandJournal.reconcileCompletedOtaInstalls(BuildConfig.VERSION_CODE)
             for (result in commandJournal.pending()) {
                 if (!queueDurableResult(result)) break
             }

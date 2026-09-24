@@ -222,7 +222,16 @@ class TestManagedArtifacts:
         })
         assert grant.status_code == 201, grant.text
         assert target.meta["ota_recovery"]["sha256"] == digest
+        assert target.meta["ota_recovery"]["version_code"] == 10215
         assert "ota_recovery" not in (other.meta or {})
+
+    async def test_release_version_code_must_be_a_positive_android_int(self, admin_client):
+        for version_code in (0, -1, 2_147_483_648):
+            response = await admin_client.post(
+                "/api/v1/updates/",
+                json={**_VALID_RELEASE, "version_code": version_code},
+            )
+            assert response.status_code == 422
 
     async def test_recovery_grant_is_explicit_single_artifact_bounded_and_revocable(
         self, admin_client, isolate_updates_file, db_session, updates_org,

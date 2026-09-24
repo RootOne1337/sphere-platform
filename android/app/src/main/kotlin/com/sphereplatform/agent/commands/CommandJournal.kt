@@ -34,7 +34,11 @@ class CommandJournal @Inject constructor(
         Json.parseToJsonElement(it).jsonObject.toMutableMap()
     } ?: mutableMapOf<String, JsonElement>()
 
-    @Synchronized fun claim(id: String, acknowledgeWhenQueued: Boolean = false): Claim {
+    @Synchronized fun claim(
+        id: String,
+        acknowledgeWhenQueued: Boolean = false,
+        otaTargetVersionCode: Int? = null,
+    ): Claim {
         migrateAcknowledged()
         receipts.prune(System.currentTimeMillis())
         val existing = records[id]?.jsonObject
@@ -46,11 +50,15 @@ class CommandJournal @Inject constructor(
         receipts.find(id)?.let { return Claim.Existing(response(id, it)) }
         check(active.isEmpty()) { "device_execution_busy" }
         val now = System.currentTimeMillis()
+        require(otaTargetVersionCode == null || (acknowledgeWhenQueued && otaTargetVersionCode > 0)) {
+            "invalid_ota_target_version_code"
+        }
         val next = records.toMutableMap()
         check(next.size < MAX_ENTRIES) { "command_journal_capacity_exhausted" }
         next[id] = buildJsonObject {
             put("created_at", now)
             if (acknowledgeWhenQueued) put("acknowledge_when_queued", true)
+            otaTargetVersionCode?.let { put("ota_target_version_code", it) }
         }
         persist(next, reserveResult = true) // Confirm durable receipt before any device action.
         active.add(id)
@@ -107,6 +115,30 @@ class CommandJournal @Inject constructor(
 
     @Synchronized fun isCancellationRequested(id: String): Boolean =
         records[id]?.jsonObject?.get("cancel_requested")?.jsonPrimitive?.booleanOrNull == true
+
+    /**
+     * A successful package replacement terminates this process before it can
+     * persist/queue OTA's terminal ACK. A new process can prove success from
+     * the monotonic versionCode recorded before installation started.
+     */
+    @Synchronized fun reconcileCompletedOtaInstalls(installedVersionCode: Int) {
+        if (installedVersionCode <= 0) return
+        records.toList().forEach { (id, value) ->
+            val entry = value.jsonObject
+            val targetVersionCode = entry["ota_target_version_code"]?.jsonPrimitive?.intOrNull
+            if (entry["response"] == null &&
+                entry["acknowledge_when_queued"]?.jsonPrimitive?.booleanOrNull == true &&
+                targetVersionCode != null && installedVersionCode >= targetVersionCode
+            ) {
+                complete(id, "completed", error = null, result = buildJsonObject {
+                    put("success", true)
+                    put("installed_version_code", installedVersionCode)
+                    put("target_version_code", targetVersionCode)
+                    put("recovered_after_process_restart", true)
+                })
+            }
+        }
+    }
 
     @Synchronized fun pending(): List<JsonObject> {
         migrateAcknowledged()

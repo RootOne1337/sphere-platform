@@ -313,6 +313,16 @@ export function DeviceInspectorDetail({ device }: DeviceInspectorDetailProps) {
                             <span className="text-xs font-mono font-bold mt-1 text-foreground">{device.android_version}</span>
                         </div>
 
+                        {/* Версия агента подтверждается только heartbeat самого APK */}
+                        <div className="flex flex-col">
+                            <span className="text-[10px] text-muted-foreground uppercase flex items-center gap-1.5"><Smartphone className="w-3 h-3" /> Sphere Agent</span>
+                            <span className="text-xs font-mono font-bold mt-1 text-foreground" title="Reported by the installed APK in its authenticated heartbeat">
+                                {device.agent_version
+                                    ? `${device.agent_version}${device.agent_version_code ? ` (${device.agent_version_code})` : ""}`
+                                    : "NOT REPORTED"}
+                            </span>
+                        </div>
+
                         {/* Батарея */}
                         <div className="flex flex-col">
                             <span className="text-[10px] text-muted-foreground uppercase flex items-center gap-1.5"><Battery className="w-3 h-3" /> Power</span>

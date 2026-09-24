@@ -140,6 +140,8 @@ async def list_devices(
                 d.adb_connected = live.adb_connected
                 d.vpn_active = live.vpn_active
                 d.last_heartbeat = live.last_heartbeat
+                d.agent_version = live.agent_version
+                d.agent_version_code = live.agent_version_code
             enriched.append(d)
         devices = enriched
     pages = (total + per_page - 1) // per_page if total > 0 else 0
@@ -297,6 +299,15 @@ async def get_device(
     live = await status_cache.get_status(str(device_id))
     if live:
         device.status = live.status
+        device.battery_level = live.battery
+        device.cpu_usage = live.cpu_usage
+        device.ram_usage_mb = live.ram_usage_mb
+        device.screen_on = live.screen_on
+        device.adb_connected = live.adb_connected
+        device.vpn_active = live.vpn_active
+        device.last_heartbeat = live.last_heartbeat
+        device.agent_version = live.agent_version
+        device.agent_version_code = live.agent_version_code
     return device
 
 

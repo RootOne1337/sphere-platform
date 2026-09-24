@@ -167,6 +167,7 @@ class UpdateCheckWorker @AssistedInject constructor(
                 val payload = OtaUpdatePayload(
                     download_url = json.getString("download_url"),
                     version = json.optString("version_name", "?"),
+                    version_code = json.getInt("version_code"),
                     sha256 = json.optString("sha256", ""),
                     force = json.optBoolean("mandatory", false),
                 )

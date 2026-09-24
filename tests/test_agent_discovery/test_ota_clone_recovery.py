@@ -1,5 +1,8 @@
 """Аварийный OTA не должен превращать старый JWT в доступ к управлению."""
 
+import hashlib
+import hmac
+import json
 import time
 import uuid
 from unittest.mock import AsyncMock
@@ -38,6 +41,7 @@ async def recovery_case(db_session, monkeypatch):
     db_session.add(org)
     await db_session.flush()
     grant = OtaRecoveryGrant(command_id=uuid.uuid4(), sha256="a" * 64, version_name="isolated",
+                             version_code=10220,
                              created_at=now, expires_at=now + 1800, issued_before=now - 1)
     device = Device(org_id=org.id, name="isolated-copy", meta={"ota_recovery": grant.model_dump(mode="json")})
     db_session.add(device)
@@ -63,6 +67,27 @@ async def test_expired_device_token_only_gets_exact_recovery_grant(db_session, r
         decode_access_token(encode(claims))
     assert await get_ota_recovery(encode(claims), db_session, sha256="b" * 64) is None
     assert await get_ota_recovery(encode(claims), db_session, device_id=str(uuid.uuid4())) is None
+
+
+async def test_legacy_grant_signature_without_version_code_remains_valid(db_session):
+    now = int(time.time())
+    org = Organization(name="legacy recovery", slug=uuid.uuid4().hex)
+    db_session.add(org)
+    await db_session.flush()
+    device = Device(org_id=org.id, name="legacy-copy")
+    db_session.add(device)
+    await db_session.flush()
+    grant = OtaRecoveryGrant(
+        command_id=uuid.uuid4(), sha256="c" * 64, version_name="legacy",
+        created_at=now, expires_at=now + 600, issued_before=now - 1,
+    )
+    old_body = grant.model_dump(mode="json", exclude={"authorization_tag", "version_code"})
+    old_message = (
+        "sphere/ota-recovery/v1\0" + str(org.id) + "\0" + str(device.id) + "\0"
+        + json.dumps(old_body, sort_keys=True)
+    )
+    old_tag = hmac.new(settings.JWT_SECRET_KEY.encode(), old_message.encode(), hashlib.sha256).hexdigest()
+    assert grant.model_copy(update={"authorization_tag": old_tag}).is_authorized(device)
 
 
 @pytest.mark.parametrize("change", ["user", "foreign_org", "fresh", "too_old", "missing_exp", "bad_signature",
@@ -108,4 +133,5 @@ async def test_ota_channel_sends_only_granted_update_and_ignores_copied_task_rec
     messages = [c.args[0] for c in ws.send_json.await_args_list]
     assert [m["type"] for m in messages] == ["auth_ok", "OTA_UPDATE"]
     assert messages[1]["payload"]["sha256"] == grant.sha256
+    assert messages[1]["payload"]["version_code"] == 10220
     assert messages[1]["payload"]["download_url"] == "https://isolated.invalid/api/v1/updates/artifacts/" + grant.sha256

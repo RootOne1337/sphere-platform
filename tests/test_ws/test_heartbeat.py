@@ -82,6 +82,23 @@ class TestHeartbeatManager:
         assert status.screen_on is True
         assert status.vpn_active is False
 
+    async def test_pong_updates_agent_build_metadata(self, heartbeat, fake_cache):
+        await fake_cache.set_status(
+            "dev-1",
+            DeviceLiveStatus(device_id="dev-1", status="online"),
+        )
+        await heartbeat.handle_pong({
+            "type": "pong",
+            "ts": time.time(),
+            "agent_version": "1.2.20-dev",
+            "agent_version_code": 10220,
+        })
+
+        status = await fake_cache.get_status("dev-1")
+        assert status is not None
+        assert status.agent_version == "1.2.20-dev"
+        assert status.agent_version_code == 10220
+
     async def test_pong_updates_last_heartbeat_timestamp(self, heartbeat, fake_cache):
         from datetime import datetime, timezone
         before = datetime.now(timezone.utc)
