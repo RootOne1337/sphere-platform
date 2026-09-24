@@ -160,7 +160,7 @@ OTA-каталога, локальные APK, ограниченный API/ло�
 | Измерено локально | Состав pilot-контейнеров, 7 зарегистрированных устройств (6 online во время проверки), 2 локальных APK 1.2.9/10209, серверный OTA max 1.2.9/10209, hash и размер кандидата 1.2.15 | Что все заявленные 20 удалённых клонов представлены уникально; какая версия стоит на каждом из них |
 | Сохранённая live-приёмка AUD-148 | PH006 получал stream/keyframe команды, viewer видел SPS/PPS без picture NAL; локальный агент через тот же публичный tunnel передал IDR/P | Где именно исчез удалённый picture NAL; что браузер удалённого потока уже декодировал картинку |
 | Текущий 30-минутный логовый срез | Android WS и viewer WS выполняли HTTP 101; многочисленные refresh 401/invalid-token; нет активных media-counter series в точечной выборке | Успешную авторизацию каждой WS-сессии, живой поток кадров, причинную связь всех 401 с конкретной машиной или отказ Cloudflare |
-| Source/CI | Исправления AUD-160–162 и duplicate-start в кандидате 1.2.18 с регрессиями; локальный emulator-5554 подтвердил установку 10218; prompt OTA scheduling fix добавлен в текущий source diff | Что эти исправления установлены на удалённой станции и проходят runtime-приёмку через её WAN; prompt scheduling fix ещё не попал в собранный/установленный APK |
+| Source/CI | Кандидат 1.2.19/10219 из `6c000ea` собран с startup/auth reconnect OTA check; package `com.sphereplatform.agent.pilot.debug`, pilot signer и signed discovery v24 подтверждены; 639 тестов/flavor прошли | Кандидат не установлен и не опубликован; это не подтверждает remote OTA, кадры или runtime на WAN |
 
 Сырые журналы, устройства, ключи и подписанный manifest в отчёт не копируются.
 Состояние online — моментальный снимок API, а не доказательство непрерывной связи.
@@ -239,8 +239,11 @@ accepted/rejected не имели активных series; Redis video channels 
 с host сохранённого server URL. Поэтому простая загрузка APK как GitHub Release
 и ссылка на неё из каталога нарушили бы проверку клиента. Рабочая публикация
 требует согласованного backend artifact и catalog entry, а не только GitHub commit.
-`UpdateCheckWorker` планирует проверку раз в 6 часов через WorkManager с сетевым
-условием и retry; это не обещание немедленной установки, особенно при 401.
+`UpdateCheckWorker` сохраняет периодическую проверку раз в 6 часов через WorkManager
+как резерв и retry-путь. Candidate 1.2.19 дополнительно запускает сетевую проверку
+при старте приложения и после первой авторизованной WS-связи в service lifetime;
+это не обещание мгновенной установки, особенно при 401, Android defer или потере всех
+маршрутов. [Дизайн и точные ограничения](../../architecture/ANDROID-OTA-RELIABILITY.md).
 
 Кодовые опоры: `backend/api/v1/updates/router.py`,
 `android/app/src/main/kotlin/com/sphereplatform/agent/workers/UpdateCheckWorker.kt`,
@@ -335,8 +338,8 @@ RV-2/RV-3 — доказанные **исходные** дефекты и пок
   normal WS auth and unchanged crash buffer; grant revoked. Backend terminal receipt
   is still missing, emulator-5556 stays 1.2.9, and remote versions are unknown.
 - Текущая правка prompt OTA scheduling проверена полной dev и enterprise suite:
-  по 639 тестов, ноль failures/errors, один штатный skip в enterprise. APK 1.2.19
-  ещё не опубликована и remote install не проводился. Проверки предыдущего PR head
+  по 639 тестов, ноль failures/errors, один штатный skip на flavor. Candidate 1.2.19
+  собран, но не опубликован и не установлен. Проверки предыдущего PR head
   не заменяют CI для новой ревизии; сборка и unit tests не являются удалённой
   приёмкой.
 - Не проверялись установленная версия и crash buffer remote APK, свежий

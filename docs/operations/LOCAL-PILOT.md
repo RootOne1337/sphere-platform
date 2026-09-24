@@ -7,9 +7,9 @@
 до 1.2.18/10218; соседний `emulator-5556` остаётся на 1.2.9/10209. Terminal
 backend `completed` receipt для canary отсутствует. Обычный OTA catalog
 `android/dev` по-прежнему максимум 1.2.9/10209; 1.2.15/10215 и 1.2.18/10218 не
-переключались в общий канал. Текущая source-правка кандидата 1.2.19 добавляет
-проверку при старте и после первой авторизованной связи, но этот APK ещё не
-опубликован или установлен. Удалённое видео и все 20 клонов не приняты: PH006 в
+переключались в общий канал. Кандидат 1.2.19-dev/10219 собран из `6c000ea`,
+подписан тем же pilot signer и содержит быстрый update check, но ещё не установлен
+или опубликован. Удалённое видео и все 20 клонов не приняты: PH006 в
 сохранённых viewer-сессиях дал SPS/PPS без IDR/P, хотя локальный Android через
 тот же публичный tunnel передал IDR/P. Подробные evidence, GitHub/OTA маршруты
 и архитектура OTA: [AUD-163](../audits/2026-09-24/REMOTE-VIDEO-OTA-DECISION.md) ·
@@ -167,15 +167,17 @@ Frontend **`6dea6b4`** установлен в новом pilot. Device Stream �
 `com.sphereplatform.agent.pilot.debug` позволяет установить его рядом с обычными
 dev/enterprise сборками, сохраняя отдельные credentials и identity.
 
-Актуальный проверенный source-pinned кандидат: **1.2.18-dev / 10218**,
-локальный файл `.local-pilot/apk/SphereAgent-pilot-candidate-1.2.18-dev-250c328.apk`.
-SHA-256 `a2741f8ec954f79a62278d6d00ee4685573b8206bf77363f2683452a2f8ab79c`;
-8 413 649 bytes; debug signer совпадает с локальным pilot. Оба Android flavor
-прошли по 637 unit tests, ноль failures/errors и один штатный skip на flavor.
-Он не установлен удалённо и не опубликован в OTA.
+Актуальный проверенный source-pinned кандидат: **1.2.19-dev / 10219**,
+локальный файл `.local-pilot/apk/SphereAgent-pilot-candidate-1.2.19-dev-6c000ea.apk`.
+Package `com.sphereplatform.agent.pilot.debug`, SHA-256
+`c7875046dd7bb5807d1ff6bbda428a6dd397c5cb51b4b0a5dbb345633a673d95`, 8 415 361
+bytes; APK Signature Scheme v2 проверен, signer совпадает с локальным pilot.
+Manifest discovery version 24, baked management URL отсутствуют. Dev и enterprise
+полные suites прошли по 639 тестов, ноль failures/errors и один штатный skip в
+каждом flavor. Кандидат собран, но не установлен и не опубликован в OTA.
 `LATEST-SphereAgent-pilot.apk` и публичный
 `manifest.json` по-прежнему указывают на локально принятую 1.2.9/10209;
-не путайте alias с кандидатом. 1.2.16 и 1.2.17 были промежуточными локальными
+не путайте alias с кандидатом. 1.2.16–1.2.18 были промежуточными локальными
 кандидатами, заменёнными до публикации после исправлений очереди OTA receipts.
 1.2.15
 опубликован отдельно лишь в `android-canary/dev`, но адресная попытка не
