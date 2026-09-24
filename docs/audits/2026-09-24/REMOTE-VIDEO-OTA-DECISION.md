@@ -292,10 +292,34 @@ Cloudflare также описывает нарушения доступност
 | RV-11 / P1, OPEN | OTA metadata и APK artifact используют один backend host; нет независимого разрешённого mirror set. Потеря management tunnel/host блокирует и проверку каталога, и APK download. | `OtaUpdateService.validateDownloadUrl` требует совпадения host с сохранённым server URL; локальный test tunnel передал APK, но альтернативный artifact origin не проверен. | Следовать [OTA reliability architecture](../../architecture/ANDROID-OTA-RELIABILITY.md): подписанные immutable metadata, точный allowlist origins, scoped download authorization и один отдельно работающий mirror. | Fault injection для каждого ingress/mirror; доказать byte-identical SHA и успешный install при недоступности primary. В полном сетевом partition обновление недоступно. |
 | RV-12 / P1, SOURCE-FIXED, DEPLOYMENT NOT RESTART-VERIFIED | Каталог OTA по умолчанию и APK-файлы находились в `/tmp`, а актуальные Compose overlays не все направляли приложение в persistent storage. Пересоздание backend container могло удалить опубликованные releases/artifacts. | До fix regression проверяла эффективный Compose и падала: `SPHERE_UPDATES_PATH` отсутствовал в local-pilot/production config, а production backend не имел каталога данных. После fix resolver и pilot/production volume проверены тестами. Это доказывает конфигурационную причину и исправленный source contract, но не фактический live restart. | `backend/api/v1/updates/router.py`, `backend/Dockerfile`, `docker-compose*.yml`; default теперь `/app/backend/updates/releases.json`, local pilot и production используют project-scoped `ota_data`. | 9 targeted regressions passed. Перед первым пересозданием старого контейнера надо перенести и проверить `/tmp/sphere_updates.json` и `/tmp/artifacts`; это не проверено на live runtime. Остались JSON lost-update race при параллельной публикации/нескольких workers (F32-14), отсутствие off-host mirror и проверенного restore. Смена project name требует миграции volume. |
 
+### RV-13 / P1 — Backend H.264 Annex-B classification
+
+**Статус:** исходный дефект исправлен в PR #19 (`7a9bfea`), но работающий pilot ещё
+не обновлён: его backend image помечен `ff87b56`. **Доказательство:** до fix
+red/green queue regression дала 5 failed/26 passed; после fix прошли 83 stream-теста.
+Сохранённый PH006 capture не содержит сырых IDR bytes, поэтому связь именно этого
+пропуска картинки с трёхбайтовым prefix не доказана. **Файлы:**
+`backend/websocket/frames.py`, `tests/test_ws/test_video_queue.py`; полное
+воспроизведение — в [AUD-167](H264-ANNEXB-QUEUE-CLASSIFICATION.md). **Приёмка:**
+после CI один удалённый canary должен показать IDR на backend ingress, viewer и
+фактический browser decode; до этого RV-1 остаётся открытым.
+
+**Свежий runtime-срез (24 Sep 2026, около 16:58 UTC, последние 30 минут):**
+в агрегированных логах pilot было 147 событий успешной Android WS-аутентификации
+и 147 попыток возобновить стрим от семи device ID; 475 `invalid_token` событий
+исходили от одного device ID. Это подтверждает отдельный цикл отказа credentials
+одного агента, но не объясняет отсутствие изображения у остальных. В этом окне
+логи не содержали viewer-connect/frame-delivery событий, а `/metrics` не показывал
+активных `sphere_stream_*` рядов. Действующий backend не даёт покадрового
+подтверждения ingress → queue → Redis → viewer, поэтому черный экран по нему
+нельзя локализовать. Идентификаторы и сырые логи не публиковались.
+
 RV-2/RV-3 — доказанные **исходные** дефекты и покрытые source-фиксы; одна локальная
 установка подтверждена, но remote rollout и устранение текущего runtime-инцидента
 не доказаны. RV-1 — реальный наблюдаемый отказ с
-пока неизвестной точкой потери. RV-5 — эксплуатационный риск и гипотеза, а не
+пока неизвестной точкой потери. RV-13 — доказанный source-дефект с локальным fix,
+но он ещё не развёрнут и его связь с конкретным удалённым кадром не подтверждена.
+RV-5 — эксплуатационный риск и гипотеза, а не
 объявленный виновник. F32-14, F32-20, F32-28–29, F32-33–34, F32-37 остаются
 в [общем Fleet32 реестре](../2026-09-20/FLEET32-PREFLIGHT.md).
 
