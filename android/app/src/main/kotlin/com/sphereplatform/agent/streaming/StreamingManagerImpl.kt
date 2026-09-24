@@ -109,6 +109,7 @@ class StreamingManagerImpl @Inject constructor(
         // FIX D4: Используем поле currentProjection вместо closure-захвата.
         // При длительном стриме projection из closure может быть отозвана (Android 14+).
         enc.onEncoderError = { error ->
+            qualityMonitor.recordEncoderError()
             Timber.e(error, "StreamingManagerImpl: encoder error — restarting stream")
             android.os.Handler(android.os.Looper.getMainLooper()).post {
                 try {
@@ -149,15 +150,17 @@ class StreamingManagerImpl @Inject constructor(
                 val image = try {
                     reader.acquireLatestImage()
                 } catch (e: Exception) {
+                    qualityMonitor.recordCaptureReadFailure()
                     null
                 }
                 if (image == null) return@setOnImageAvailableListener
-            
+
                 try {
                     // VirtualDisplay may deliver its first buffer synchronously
                     // while createDisplay() is still starting. Drain and close
                     // it, but never render it into a session that has stopped.
                     if (!streaming) return@setOnImageAvailableListener
+                    qualityMonitor.recordCapturedFrame()
                     val plane = image.planes[0]
                     val rowStride = plane.rowStride
                     val pixelStride = plane.pixelStride          // 4 for RGBA_8888
@@ -194,10 +197,15 @@ class StreamingManagerImpl @Inject constructor(
                             } finally {
                                 encoderSurface.unlockCanvasAndPost(canvas)
                             }
+                            // Count only after the frame was posted successfully.
+                            qualityMonitor.recordRenderedFrame()
+                        } else {
+                            qualityMonitor.recordRenderFailure()
                         }
                     }
                     if (needRecycle) bmp.recycle()
                 } catch (e: Exception) {
+                    qualityMonitor.recordRenderFailure()
                     Timber.e(e, "StreamingManagerImpl: frame render error")
                 } finally {
                     try {
@@ -242,6 +250,14 @@ class StreamingManagerImpl @Inject constructor(
     private fun onFrameReady(nalData: ByteArray, metadata: H264Encoder.FrameMetadata) {
         if (!streaming) return
 
+        // Count MediaCodec output before FPS throttling. The encoder stage must
+        // remain distinguishable from intentional agent-side frame drops.
+        qualityMonitor.recordFrame(
+            metadata.sizeBytes,
+            metadata.isKeyFrame,
+            metadata.isCodecConfig,
+        )
+
         // FIX C2: L1 backpressure — ограничиваем FPS на стороне агента.
         // Без этого каждый кадр из MediaCodec безусловно пакуется в WS,
         // что на слабых эмуляторах съедает 100% CPU.
@@ -250,13 +266,12 @@ class StreamingManagerImpl @Inject constructor(
         // handleCodecConfig() отправляет SPS и PPS подряд за наносекунды —
         // throttle дропал PPS (elapsed < minFrameInterval) → H.264 декодер
         // на фронтенде не инициализировался → чёрный экран.
-        if (!metadata.isKeyFrame && !frameThrottle.shouldRenderFrame(System.nanoTime())) return
-
-        qualityMonitor.recordFrame(
-            metadata.sizeBytes,
-            metadata.isKeyFrame,
-            metadata.isCodecConfig,
-        )
+        if (!metadata.isKeyFrame && !metadata.isCodecConfig &&
+            !frameThrottle.shouldRenderFrame(System.nanoTime())
+        ) {
+            qualityMonitor.recordFrameThrottleDrop()
+            return
+        }
 
         val packed = FramePackager.pack(nalData, metadata, streamStartMs)
         val sent = sendFrameBinary(packed)

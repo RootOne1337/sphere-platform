@@ -15,6 +15,13 @@ viewer. Android egress оставался Cloudflare, поэтому его ви
 `android/dev` OTA заканчивается 1.2.9; кандидат 1.2.18 не опубликован. Fleet32
 по-прежнему **NO-GO** до одного удалённого A/B canary и 32 независимых VM.
 
+**25 сентября добавлена source-диагностика AUD-168/AUD-169**:
+[Android stages, crash upload, API/Grafana and remaining limits](../2026-09-25/ANDROID-STREAM-OBSERVABILITY.md).
+Эти изменения ещё не установлены на удалённый canary; они не меняют вывод live
+среза и не являются приёмкой P0 удалённого видео. Массовая публикация APK и
+Fleet32 soak остаются NO-GO до адресного version/receipt check и движения IDR/P
+на remote canary.
+
 **Актуальный live-срез, 23 сентября после 18:00:** [AUD-148 follow-up](../2026-09-23/REMOTE-FLEET-LIVE-FOLLOWUP.md)
 заменяет предыдущие текущие формулировки, но сохраняет их как историю. Backend
 `2f8b6c2` подтвердил binding-v2 и WS auth; семь известных записей `auto-ph-000`–`006`

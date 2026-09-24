@@ -12,6 +12,13 @@ from redis.exceptions import RedisError
 
 from backend.websocket.connection_manager import ConnectionManager
 from backend.websocket.frames import VideoFrame
+from backend.websocket.stream_observability import (
+    record_active_viewer_delta,
+    record_redis_publish,
+    record_redis_publish_failure,
+    record_viewer_send,
+    record_viewer_send_failure,
+)
 from backend.websocket.video_queue import VideoStreamQueue
 from backend.websocket.video_transport import VideoTransport
 
@@ -60,6 +67,7 @@ class VideoStreamBridge:
             queue = VideoStreamQueue(device_id)
             task = asyncio.create_task(self._viewer_send_loop(device_id, session_id, queue, viewer_ws))
             viewers[session_id] = ViewerSession(queue, viewer_ws, task)
+            record_active_viewer_delta(device_id, 1)
             try:
                 if self.transport and len(viewers) == 1:
                     await self.transport.subscribe(device_id)
@@ -91,6 +99,7 @@ class VideoStreamBridge:
         sessions = [session_id] if session_id is not None else list(viewers)
         for session in sessions:
             viewer = viewers.pop(session)
+            record_active_viewer_delta(device_id, -1)
             if viewer.task is not asyncio.current_task():
                 viewer.task.cancel()
         if viewers:
@@ -128,7 +137,9 @@ class VideoStreamBridge:
             return
         queue = self._publish_queues.get(device_id)
         if queue is None:
-            queue = self._publish_queues[device_id] = VideoStreamQueue(device_id)
+            queue = self._publish_queues[device_id] = VideoStreamQueue(
+                device_id, queue_stage="agent_to_redis",
+            )
             self._publish_tasks[device_id] = asyncio.create_task(self._publish_loop(device_id, queue))
         await queue.put(VideoFrame(frame_data, device_id))
 
@@ -147,6 +158,7 @@ class VideoStreamBridge:
                 try:
                     async with asyncio.timeout(1):
                         viewers = await transport.publish(device_id, frame.data)
+                        record_redis_publish(device_id, len(frame.data), viewers)
                         if viewers:
                             unused_since = None
                         else:
@@ -155,6 +167,7 @@ class VideoStreamBridge:
                                 await transport.stop_if_unused(device_id)
                                 unused_since = time.monotonic()
                 except (RedisError, TimeoutError):
+                    record_redis_publish_failure(device_id)
                     if time.monotonic() - last_error_log >= 30:
                         logger.warning("stream_frame_transport_unavailable", device_id=device_id)
                         last_error_log = time.monotonic()
@@ -176,9 +189,11 @@ class VideoStreamBridge:
                 frame = await queue.wait()
                 async with asyncio.timeout(5):
                     await viewer_ws.send_bytes(frame.data)
+                record_viewer_send(device_id, len(frame.data))
         except asyncio.CancelledError:
             pass
         except Exception:
+            record_viewer_send_failure(device_id)
             logger.warning("stream_viewer_send_failed", device_id=device_id, session_id=session_id)
             await self.unregister_viewer(device_id, session_id)
             try:

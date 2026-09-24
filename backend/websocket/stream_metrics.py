@@ -1,45 +1,31 @@
 """Apply bounded, stage-specific metrics from Android stream heartbeats."""
 from __future__ import annotations
 
-import math
-
 import structlog
+from pydantic import ValidationError
 
 from backend.metrics import (
     cleanup_stream_metrics,
+    stream_capture_fps,
+    stream_capture_frames_session,
+    stream_capture_read_failures_session,
     stream_encoder_bytes_session,
+    stream_encoder_errors_session,
     stream_encoder_frames_session,
     stream_fps,
+    stream_frame_throttle_drops_session,
     stream_keyframe_ratio,
+    stream_render_failures_session,
+    stream_render_fps,
+    stream_render_frames_session,
     stream_ws_queue_accepted_bytes_session,
     stream_ws_queue_accepted_session,
     stream_ws_queue_attempts_session,
     stream_ws_queue_rejected_session,
 )
+from backend.schemas.stream_diagnostics import AgentStreamTelemetry
 
 logger = structlog.get_logger()
-
-_MAX_SESSION_COUNTER = 2**53
-_MAX_ENCODER_FPS = 240
-
-
-def _nonnegative_number(value: object, *, maximum: int = _MAX_SESSION_COUNTER) -> int | None:
-    if isinstance(value, bool) or not isinstance(value, (int, float)):
-        return None
-    if value < 0 or value > maximum:
-        return None
-    if isinstance(value, float) and not math.isfinite(value):
-        return None
-    return int(value)
-
-
-def _bounded_ratio(value: object) -> float | None:
-    if isinstance(value, bool) or not isinstance(value, (int, float)):
-        return None
-    if not 0 <= value <= 1:
-        return None
-    return float(value)
-
 
 class StreamMetrics:
     """Store active-session snapshots; these values are not delivery receipts."""
@@ -47,20 +33,19 @@ class StreamMetrics:
     def __init__(self, device_id: str) -> None:
         self.device_id = device_id
 
-    def update_from_pong(self, stream_data: object) -> None:
-        """Record encoder outputs and local WebSocket queue acceptance separately."""
-        if (
-            not isinstance(stream_data, dict)
-            or type(stream_data.get("schema_version")) is not int
-            or stream_data.get("schema_version") != 1
-            or stream_data.get("active") is not True
-            or stream_data.get("stage") != "encoder_and_ws_queue"
-        ):
+    def update_from_pong(self, stream_data: object) -> AgentStreamTelemetry | None:
+        """Record validated stage counters; return the sanitized snapshot for Redis."""
+        if not isinstance(stream_data, dict) or stream_data.get("active") is not True:
             self.cleanup()
-            return
+            return None
 
-        fps = _nonnegative_number(stream_data.get("encoder_fps"), maximum=_MAX_ENCODER_FPS)
-        keyframe_ratio = _bounded_ratio(stream_data.get("key_frame_ratio"))
+        try:
+            telemetry = AgentStreamTelemetry.model_validate(stream_data)
+        except ValidationError:
+            # Do not leave an old healthy snapshot visible after malformed telemetry.
+            self.cleanup()
+            logger.warning("stream.invalid_session_telemetry", device_id=self.device_id)
+            return None
 
         metric_fields = (
             ("encoded_frames_total", stream_encoder_frames_session),
@@ -70,42 +55,35 @@ class StreamMetrics:
             ("ws_queue_rejected_total", stream_ws_queue_rejected_session),
             ("ws_queue_accepted_bytes_total", stream_ws_queue_accepted_bytes_session),
         )
-        values: dict[str, int] = {}
+        stream_fps.labels(device_id=self.device_id).set(telemetry.encoder_fps)
+        stream_keyframe_ratio.labels(device_id=self.device_id).set(telemetry.key_frame_ratio)
         for field, metric in metric_fields:
-            value = _nonnegative_number(stream_data.get(field))
+            metric.labels(device_id=self.device_id).set(getattr(telemetry, field))
+
+        optional_metric_fields = (
+            ("capture_fps", stream_capture_fps),
+            ("render_fps", stream_render_fps),
+            ("capture_frames_total", stream_capture_frames_session),
+            ("rendered_frames_total", stream_render_frames_session),
+            ("capture_read_failures_total", stream_capture_read_failures_session),
+            ("render_failures_total", stream_render_failures_session),
+            ("encoder_errors_total", stream_encoder_errors_session),
+            ("frame_throttle_drops_total", stream_frame_throttle_drops_session),
+        )
+        for field, metric in optional_metric_fields:
+            value = getattr(telemetry, field)
             if value is not None:
-                values[field] = value
-
-        attempts = values.get("ws_queue_attempts_total")
-        accepted = values.get("ws_queue_accepted_total")
-        rejected = values.get("ws_queue_rejected_total")
-        if (
-            fps is None
-            or keyframe_ratio is None
-            or len(values) != len(metric_fields)
-            or attempts is None
-            or accepted is None
-            or rejected is None
-            or attempts != accepted + rejected
-        ):
-            # Do not leave an old healthy snapshot visible after malformed telemetry.
-            self.cleanup()
-            logger.warning("stream.invalid_session_telemetry", device_id=self.device_id)
-            return
-
-        stream_fps.labels(device_id=self.device_id).set(fps)
-        stream_keyframe_ratio.labels(device_id=self.device_id).set(keyframe_ratio)
-        for field, metric in metric_fields:
-            metric.labels(device_id=self.device_id).set(values[field])
+                metric.labels(device_id=self.device_id).set(value)
 
         logger.debug(
             "stream.session_metrics_updated",
             device_id=self.device_id,
-            encoder_fps=fps,
-            encoded_frames=stream_data.get("encoded_frames_total"),
-            ws_queue_accepted=stream_data.get("ws_queue_accepted_total"),
-            ws_queue_rejected=stream_data.get("ws_queue_rejected_total"),
+            encoder_fps=telemetry.encoder_fps,
+            encoded_frames=telemetry.encoded_frames_total,
+            ws_queue_accepted=telemetry.ws_queue_accepted_total,
+            ws_queue_rejected=telemetry.ws_queue_rejected_total,
         )
+        return telemetry
 
     def cleanup(self) -> None:
         """Remove per-device gauge series when capture or its agent session ends."""

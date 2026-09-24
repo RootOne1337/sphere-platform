@@ -9,7 +9,7 @@
 </div>
 
 > [!NOTE]
-> **Срез навигации: 24 сентября 2026.** Текущий pilot и границы его приёмки описаны
+> **Срез навигации: 25 сентября 2026.** Текущий pilot и границы его приёмки описаны
 > в [Local pilot](operations/LOCAL-PILOT.md). Старые отчёты сохраняют свои даты и
 > версии; их показатели нельзя переносить на текущий код. [Правила актуальности](DOCUMENTATION.md).
 
@@ -21,6 +21,7 @@
 | Поднять новую установку | [Startup / bootstrap](operations/STARTUP.md#first-install) | [Configuration](configuration.md) · [Deployment](deployment.md) |
 | Подключить удалённые Android | [Remote pilot](operations/REMOTE-PILOT.md) | [Signed discovery](architecture/ANDROID-SIGNED-DISCOVERY.md) |
 | Понять оставшиеся проблемы | [Fleet32: актуальная таблица](audits/2026-09-20/FLEET32-PREFLIGHT.md) | [A/B ingress и три remote VM](audits/2026-09-24/REMOTE-INGRESS-AB.md) · [Удалённое видео и OTA](audits/2026-09-24/REMOTE-VIDEO-OTA-DECISION.md) · [Readiness](operations/READINESS.md) · [Roadmap](../ROADMAP.md) |
+| Разобрать чёрный экран стрима по стадиям | [Android stream observability](audits/2026-09-25/ANDROID-STREAM-OBSERVABILITY.md) | APK capture/encode/queue · browser decode/render · ограничения доказательств |
 | Разобрать сбой по времени и устройству | [Support: что собрать](../SUPPORT.md) | [Runbooks](runbooks/README.md) · [Fleet operations, stream и observability](architecture/FLEET-OPERATIONS-AND-OBSERVABILITY.md) |
 | Изменить код | [Contributing](../CONTRIBUTING.md) | [Development](development.md) · [Тесты](../tests/production/README.md) |
 
@@ -34,6 +35,7 @@
 | [Удалённое видео и OTA](audits/2026-09-24/REMOTE-VIDEO-OTA-DECISION.md) | AUD-163: публичный tunnel против Android first-frame, что реально опубликовано и почему общий OTA rollout пока остановлен |
 | [Отказоустойчивая OTA-архитектура](architecture/ANDROID-OTA-RELIABILITY.md) | Слои bootstrap/control/artifact/install, подтверждённый canary, быстрые проверки, резервные origins, receipts и Fleet32 gates |
 | [A/B ingress и три remote VM](audits/2026-09-24/REMOTE-INGRESS-AB.md) | AUD-164: локальный/альтернативный viewer, SPS/PPS без IDR на удалённом агенте, reconnect rate и гейт для проверки Cloudflare |
+| [Android stream observability](audits/2026-09-25/ANDROID-STREAM-OBSERVABILITY.md) | AUD-168: stage counters, protected diagnostics API, viewer decode metrics, crash upload and what remains unproven remotely |
 | [Deployment](deployment.md) · [Полный guide](../FULL-DEPLOYMENT-GUIDE.md) | Bootstrap, конфигурации и обслуживание; оценки масштаба требуют своей приёмки |
 | [Discovery publisher](operations/DISCOVERY-PUBLISHER.md) | Публикация подписанных маршрутов и восстановление publisher |
 | [Redis memory](operations/REDIS-MEMORY.md) | Dataset/container budget, persistence, pressure test и остаточные риски |

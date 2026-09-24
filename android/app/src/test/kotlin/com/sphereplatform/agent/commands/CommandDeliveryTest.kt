@@ -162,7 +162,12 @@ class CommandDeliveryTest {
 
         val stream = messages.last()["stream"]?.jsonObject
         assertNotNull("active capture telemetry must reach backend", stream)
-        assertEquals(1, stream!!["schema_version"]?.jsonPrimitive?.int)
+        assertEquals(2, stream!!["schema_version"]?.jsonPrimitive?.int)
+        assertEquals("capture_encoder_ws_queue", stream["stage"]?.jsonPrimitive?.content)
+        assertEquals(0, stream["capture_fps"]?.jsonPrimitive?.int)
+        assertEquals(0, stream["render_fps"]?.jsonPrimitive?.int)
+        assertEquals(0L, stream["capture_frames_total"]?.jsonPrimitive?.long)
+        assertEquals(0L, stream["frame_throttle_drops_total"]?.jsonPrimitive?.long)
         assertEquals(17, stream["encoder_fps"]?.jsonPrimitive?.int)
         assertEquals(88L, stream["encoded_frames_total"]?.jsonPrimitive?.long)
         assertEquals(456_789L, stream["encoded_bytes_total"]?.jsonPrimitive?.long)

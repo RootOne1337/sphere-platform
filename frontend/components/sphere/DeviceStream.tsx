@@ -1,16 +1,62 @@
 'use client';
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { H264Decoder } from '@/lib/h264-decoder';
+import type { StreamDecoderStats } from '@/lib/h264-decoder';
 import { useAuthStore } from '@/lib/store';
+import { api } from '@/lib/api';
 
 interface DeviceStreamProps {
   deviceId: string;
   onTap?: (x: number, y: number) => void;
+  enableDiagnostics?: boolean;
+}
+
+interface StreamDiagnosticResponse {
+  state: 'active_report' | 'not_streaming' | 'stale' | 'unavailable';
+  agent_status: string | null;
+  last_heartbeat: string | null;
+  age_seconds: number | null;
+  diagnostics: {
+    observed_at: string;
+    telemetry: {
+      schema_version: number;
+      capture_fps?: number | null;
+      render_fps?: number | null;
+      capture_frames_total?: number | null;
+      rendered_frames_total?: number | null;
+      capture_read_failures_total?: number | null;
+      render_failures_total?: number | null;
+      encoder_errors_total?: number | null;
+      frame_throttle_drops_total?: number | null;
+      encoder_fps: number;
+      encoded_frames_total: number;
+      encoded_bytes_total: number;
+      ws_queue_attempts_total: number;
+      ws_queue_accepted_total: number;
+      ws_queue_rejected_total: number;
+      ws_queue_accepted_bytes_total: number;
+    };
+  } | null;
+}
+
+function formatTimestampAgo(timestamp: number | null): string {
+  if (timestamp == null) return 'никогда';
+  const ageSeconds = Math.max(0, Math.floor((Date.now() - timestamp) / 1000));
+  if (ageSeconds < 60) return `${ageSeconds} сек назад`;
+  return `${Math.floor(ageSeconds / 60)} мин назад`;
+}
+
+function formatIsoTimestampAgo(timestamp: string | null | undefined): string {
+  if (!timestamp) return 'нет данных';
+  const parsed = Date.parse(timestamp);
+  if (!Number.isFinite(parsed)) return 'время неизвестно';
+  return formatTimestampAgo(parsed);
 }
 
 export function DeviceStream({
   deviceId,
   onTap,
+  enableDiagnostics = false,
 }: DeviceStreamProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const wsRef = useRef<WebSocket | null>(null);
@@ -20,6 +66,10 @@ export function DeviceStream({
   const [connection, setConnection] = useState<
     'connecting' | 'waiting' | 'live' | 'retrying' | 'unavailable'
   >('connecting');
+  const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
+  const [agentDiagnostics, setAgentDiagnostics] = useState<StreamDiagnosticResponse | null>(null);
+  const [diagnosticsError, setDiagnosticsError] = useState<string | null>(null);
+  const [browserStats, setBrowserStats] = useState<StreamDecoderStats | null>(null);
 
   useEffect(() => {
     // Defer WS creation by one tick to avoid React StrictMode double-invoke.
@@ -162,6 +212,35 @@ export function DeviceStream({
     };
   }, [deviceId, accessToken]);
 
+  useEffect(() => {
+    if (!enableDiagnostics || !diagnosticsOpen) return;
+    let active = true;
+    const refreshAgent = async () => {
+      try {
+        const { data } = await api.get<StreamDiagnosticResponse>(
+          `/devices/${deviceId}/stream-diagnostics`,
+        );
+        if (active) {
+          setAgentDiagnostics(data);
+          setDiagnosticsError(null);
+        }
+      } catch {
+        if (active) setDiagnosticsError('Не удалось получить телеметрию устройства');
+      }
+    };
+    void refreshAgent();
+    const agentTimer = window.setInterval(() => void refreshAgent(), 15_000);
+    const browserTimer = window.setInterval(() => {
+      if (active) setBrowserStats(decoderRef.current?.stats ?? null);
+    }, 1000);
+    setBrowserStats(decoderRef.current?.stats ?? null);
+    return () => {
+      active = false;
+      window.clearInterval(agentTimer);
+      window.clearInterval(browserTimer);
+    };
+  }, [deviceId, diagnosticsOpen, enableDiagnostics]);
+
   // ── coordinate helpers ───────────────────────────────────────────────────
   const toCanvasCoords = useCallback(
     (clientX: number, clientY: number) => {
@@ -231,6 +310,80 @@ export function DeviceStream({
         {connection === 'waiting' && 'Ожидание видеокадра…'}
         {connection === 'retrying' && 'Переподключение…'}
         {connection === 'unavailable' && 'Стрим недоступен'}
+      </div>
+    )}
+    {enableDiagnostics && (
+      <div className="absolute right-2 top-2 z-20">
+        <button
+          type="button"
+          aria-expanded={diagnosticsOpen}
+          aria-controls={`stream-diagnostics-${deviceId}`}
+          onClick={() => setDiagnosticsOpen(value => !value)}
+          className="rounded border border-white/20 bg-black/80 px-2 py-1 text-xs text-white"
+        >
+          {diagnosticsOpen ? 'Скрыть диагностику' : 'Диагностика'}
+        </button>
+        {diagnosticsOpen && (
+          <div
+            id={`stream-diagnostics-${deviceId}`}
+            role="status"
+            aria-live="polite"
+            className="mt-2 max-h-[70vh] w-[min(92vw,34rem)] overflow-auto rounded border border-white/20 bg-black/95 p-3 text-left font-mono text-[11px] leading-5 text-white shadow-xl"
+          >
+            <div className="mb-2 font-semibold">Сквозная диагностика кадра</div>
+            {diagnosticsError ? <div className="text-red-300">{diagnosticsError}</div> : (
+              <>
+                <div>Отчёт APK: {agentDiagnostics?.state === 'active_report' ? 'захват активен' : agentDiagnostics?.state ?? 'загрузка…'}
+                  {agentDiagnostics?.age_seconds != null && ` · snapshot ${Math.floor(agentDiagnostics.age_seconds)} сек назад`}
+                </div>
+                <div>Последний Android heartbeat: {formatIsoTimestampAgo(agentDiagnostics?.last_heartbeat)}</div>
+                {agentDiagnostics?.diagnostics ? (() => {
+                  const t = agentDiagnostics.diagnostics.telemetry;
+                  return (
+                    <div className="mt-1 grid grid-cols-2 gap-x-3">
+                      <span>Capture FPS: {t.capture_fps ?? '—'}</span>
+                      <span>Surface FPS: {t.render_fps ?? '—'}</span>
+                      <span>Encoder FPS: {t.encoder_fps}</span>
+                      <span>Encoded: {t.encoded_frames_total}</span>
+                      <span>Captured: {t.capture_frames_total ?? '—'}</span>
+                      <span>Rendered: {t.rendered_frames_total ?? '—'}</span>
+                      <span>Local WS accepted: {t.ws_queue_accepted_total}/{t.ws_queue_attempts_total}</span>
+                      <span>Local WS rejected: {t.ws_queue_rejected_total}</span>
+                      <span>Capture errors: {t.capture_read_failures_total ?? '—'}</span>
+                      <span>Surface errors: {t.render_failures_total ?? '—'}</span>
+                      <span>Encoder errors: {t.encoder_errors_total ?? '—'}</span>
+                      <span>FPS-throttle drops: {t.frame_throttle_drops_total ?? '—'}</span>
+                    </div>
+                  );
+                })() : <div>Нет свежего отчёта активного захвата от APK.</div>}
+                <div className="mt-2 border-t border-white/15 pt-2">
+                  <div>Браузерный viewer: {browserStats ? `${browserStats.binaryMessagesReceived} пакетов · ${browserStats.binaryBytesReceived} байт` : 'нет данных'}</div>
+                  {browserStats && (
+                    <div className="grid grid-cols-2 gap-x-3">
+                      <span>Последний пакет: {formatTimestampAgo(browserStats.lastBinaryAtMs)}</span>
+                      <span>Последний canvas frame: {formatTimestampAgo(browserStats.lastRenderedAtMs)}</span>
+                      <span>NAL SPS/PPS: {browserStats.spsUnits}/{browserStats.ppsUnits}</span>
+                      <span>IDR/delta: {browserStats.idrUnits}/{browserStats.deltaUnits}</span>
+                      <span>Decode submitted: {browserStats.decodeSubmitted}</span>
+                      <span>Decoded output: {browserStats.decodedOutputs}</span>
+                      <span>Drawn to canvas: {browserStats.renderedFrames}</span>
+                      <span>Invalid packets: {browserStats.invalidPackets}</span>
+                      <span>Decode/render errors: {browserStats.decodeErrors}/{browserStats.renderErrors}</span>
+                      <span>WebCodecs queue: {browserStats.decoderQueueSize}</span>
+                      <span>Pending outputs: {browserStats.pendingOutputCount}</span>
+                      <span>Queue recoveries: {browserStats.queueRecoveries}</span>
+                      <span>Stale output drops: {browserStats.staleOutputDrops}</span>
+                      <span>Dropped before SPS/PPS: {browserStats.framesDroppedBeforeConfiguration}</span>
+                    </div>
+                  )}
+                </div>
+                <p className="mt-2 border-t border-white/15 pt-2 text-white/70">
+                  Принятие кадра локальной очередью APK не подтверждает получение сервером. Сейчас серверный receipt каждого кадра и браузерный декодер не связаны общим frame ID; сравнивайте Android counters с viewer counters.
+                </p>
+              </>
+            )}
+          </div>
+        )}
       </div>
     )}
     </div>

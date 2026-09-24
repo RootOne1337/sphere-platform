@@ -2,6 +2,29 @@
 export type FrameCallback = (frame: VideoFrame) => void;
 type PendingDecode = { timestamp: number; receivedAt: number; bytes: number };
 
+export interface StreamDecoderStats {
+  binaryMessagesReceived: number;
+  binaryBytesReceived: number;
+  validPackets: number;
+  invalidPackets: number;
+  spsUnits: number;
+  ppsUnits: number;
+  idrUnits: number;
+  deltaUnits: number;
+  decodeSubmitted: number;
+  decodedOutputs: number;
+  renderedFrames: number;
+  decodeErrors: number;
+  renderErrors: number;
+  queueRecoveries: number;
+  staleOutputDrops: number;
+  framesDroppedBeforeConfiguration: number;
+  decoderQueueSize: number;
+  pendingOutputCount: number;
+  lastBinaryAtMs: number | null;
+  lastRenderedAtMs: number | null;
+}
+
 const HEADER_BYTES = 14;
 const MAX_FRAME_BYTES = 1024 * 1024;
 const MAX_DECODE_FRAMES = 8;
@@ -21,6 +44,26 @@ export class H264Decoder {
   private spsNal: Uint8Array | null = null;
   private ppsNal: Uint8Array | null = null;
   private lastTimestamp: number | null = null;
+  private counters = {
+    binaryMessagesReceived: 0,
+    binaryBytesReceived: 0,
+    validPackets: 0,
+    invalidPackets: 0,
+    spsUnits: 0,
+    ppsUnits: 0,
+    idrUnits: 0,
+    deltaUnits: 0,
+    decodeSubmitted: 0,
+    decodedOutputs: 0,
+    renderedFrames: 0,
+    decodeErrors: 0,
+    renderErrors: 0,
+    queueRecoveries: 0,
+    staleOutputDrops: 0,
+    framesDroppedBeforeConfiguration: 0,
+    lastBinaryAtMs: null as number | null,
+    lastRenderedAtMs: null as number | null,
+  };
 
   constructor(private onFrame: FrameCallback, private onRecovery: () => void = () => {}) {}
 
@@ -36,25 +79,41 @@ export class H264Decoder {
         output: frame => {
           try {
             if (this.destroyed || generation !== this.generation) return;
+            this.counters.decodedOutputs++;
             const index = this.pending.findIndex(p => p.timestamp === frame.timestamp);
-            if (index < 0) return;
+            if (index < 0) {
+              this.counters.staleOutputDrops++;
+              return;
+            }
             const [entry] = this.pending.splice(index, 1);
             this.pendingBytes -= entry.bytes;
             if (performance.now() - entry.receivedAt > MAX_DECODE_AGE_MS) {
+              this.counters.staleOutputDrops++;
               this.recover();
               return;
             }
-            this.onFrame(frame);
+            try {
+              this.onFrame(frame);
+              this.counters.renderedFrames++;
+              this.counters.lastRenderedAtMs = Date.now();
+            } catch {
+              this.counters.renderErrors++;
+              this.recover();
+            }
           } finally {
             frame.close(); // Includes stale callbacks, unmount and canvas exceptions.
           }
         },
         error: () => {
-          if (!this.destroyed && generation === this.generation) this.recover();
+          if (!this.destroyed && generation === this.generation) {
+            this.counters.decodeErrors++;
+            this.recover();
+          }
         },
       });
       return true;
     } catch {
+      this.counters.decodeErrors++;
       this.recover();
       return false;
     }
@@ -86,16 +145,37 @@ export class H264Decoder {
   }
 
   handleBinary(data: ArrayBuffer) {
-    if (this.destroyed || data.byteLength <= HEADER_BYTES || data.byteLength > HEADER_BYTES + MAX_FRAME_BYTES) return;
+    if (this.destroyed) return;
+    this.counters.binaryMessagesReceived++;
+    this.counters.binaryBytesReceived += data.byteLength;
+    this.counters.lastBinaryAtMs = Date.now();
+    if (data.byteLength <= HEADER_BYTES || data.byteLength > HEADER_BYTES + MAX_FRAME_BYTES) {
+      this.counters.invalidPackets++;
+      return;
+    }
     const view = new DataView(data);
-    if (view.getUint8(0) !== 1 || view.getUint32(10, false) !== data.byteLength - HEADER_BYTES) return;
+    if (view.getUint8(0) !== 1 || view.getUint32(10, false) !== data.byteLength - HEADER_BYTES) {
+      this.counters.invalidPackets++;
+      return;
+    }
     const timestamp = Number(view.getBigInt64(2, false)) * 1000;
-    if (!Number.isSafeInteger(timestamp) || timestamp < 0) return;
+    if (!Number.isSafeInteger(timestamp) || timestamp < 0) {
+      this.counters.invalidPackets++;
+      return;
+    }
     const nals = splitAccessUnit(new Uint8Array(data, HEADER_BYTES));
-    if (!nals) return;
+    if (!nals) {
+      this.counters.invalidPackets++;
+      return;
+    }
+    this.counters.validPackets++;
 
     for (const nal of nals) {
       const type = nal[0] & 0x1f;
+      if (type === 7) this.counters.spsUnits++;
+      else if (type === 8) this.counters.ppsUnits++;
+      else if (type === 5) this.counters.idrUnits++;
+      else if (type === 1) this.counters.deltaUnits++;
       if (type === 7 || type === 8) this.parameterSet(type, nal);
     }
     const picture = nals.filter(nal => ![7, 8].includes(nal[0] & 0x1f));
@@ -103,7 +183,10 @@ export class H264Decoder {
     if (!picture.some(nal => [1, 5].includes(nal[0] & 0x1f))) return;
 
     // No pre-config frame queue: discard until valid SPS/PPS and a fresh IDR.
-    if (!this.spsNal || !this.ppsNal || performance.now() < this.retryAt) return;
+    if (!this.spsNal || !this.ppsNal || performance.now() < this.retryAt) {
+      this.counters.framesDroppedBeforeConfiguration++;
+      return;
+    }
     if (isKeyFrame && this.lastTimestamp !== null && timestamp < this.lastTimestamp) this.retireDecoder();
     if (this.needsKeyFrame && !isKeyFrame) return;
 
@@ -114,6 +197,7 @@ export class H264Decoder {
     if ((this.decoder?.decodeQueueSize ?? 0) >= MAX_DECODE_FRAMES ||
         this.pending.length >= MAX_DECODE_FRAMES || this.pendingBytes + bytes > MAX_DECODE_BYTES ||
         (this.pending.length > 0 && now - this.pending[0].receivedAt > MAX_DECODE_AGE_MS)) {
+      this.counters.queueRecoveries++;
       this.recover();
       return; // Drop the entire reference chain; never resume on a delta frame.
     }
@@ -137,9 +221,11 @@ export class H264Decoder {
       this.pending.push({ timestamp, receivedAt: now, bytes });
       this.pendingBytes += bytes;
       codec.decode(new EncodedVideoChunk({ type: isKeyFrame ? 'key' : 'delta', timestamp, data: avcc }));
+      this.counters.decodeSubmitted++;
       this.needsKeyFrame = false;
       this.lastTimestamp = timestamp;
     } catch {
+      this.counters.decodeErrors++;
       this.recover();
     }
   }
@@ -163,6 +249,14 @@ export class H264Decoder {
     if (this.destroyed) return;
     this.destroyed = true;
     this.reset();
+  }
+
+  get stats(): StreamDecoderStats {
+    return {
+      ...this.counters,
+      decoderQueueSize: this.decoder?.decodeQueueSize ?? 0,
+      pendingOutputCount: this.pending.length,
+    };
   }
 }
 

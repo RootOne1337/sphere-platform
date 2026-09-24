@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import uuid
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Cookie, Depends, Header, HTTPException, Query
 from fastapi import status as http_status
@@ -30,6 +31,7 @@ from backend.schemas.devices import (
     DeviceStatusResponse,
     UpdateDeviceRequest,
 )
+from backend.schemas.stream_diagnostics import StreamDiagnosticsResponse
 from backend.services.api_key_service import APIKeyService
 from backend.services.cache_service import CacheService
 from backend.services.device_registration_service import DeviceRegistrationService
@@ -351,6 +353,61 @@ async def get_device_status(
     svc: DeviceService = Depends(get_device_service),
 ) -> DeviceStatusResponse:
     return await svc.get_device_with_live_status(device_id, current_user.org_id)
+
+
+@router.get(
+    "/{device_id}/stream-diagnostics",
+    response_model=StreamDiagnosticsResponse,
+    summary="Последний подтверждённый heartbeat-отчёт о стадиях Android-стрима",
+)
+async def get_device_stream_diagnostics(
+    device_id: uuid.UUID,
+    current_user: User = require_permission("device:read"),
+    svc: DeviceService = Depends(get_device_service),
+    status_cache: DeviceStatusCache = Depends(get_status_cache),
+) -> StreamDiagnosticsResponse:
+    """Return bounded Android stage counters with explicit freshness semantics."""
+    # Verify tenant ownership before looking up any device-keyed live telemetry.
+    await svc.get_device(device_id, current_user.org_id)
+    device_key = str(device_id)
+    live = await status_cache.get_status(device_key)
+    snapshot = await status_cache.get_stream_diagnostics(device_key)
+    now = datetime.now(timezone.utc)
+
+    def age_seconds(observed_at: datetime | None) -> float | None:
+        if observed_at is None:
+            return None
+        if observed_at.tzinfo is None:
+            observed_at = observed_at.replace(tzinfo=timezone.utc)
+        return max(0.0, (now - observed_at).total_seconds())
+
+    heartbeat_age = age_seconds(live.last_heartbeat if live else None)
+    snapshot_age = age_seconds(snapshot.observed_at if snapshot else None)
+    heartbeat_fresh = (
+        live is not None
+        and live.status in ("online", "busy")
+        and heartbeat_age is not None
+        and heartbeat_age <= 75
+    )
+    if not heartbeat_fresh:
+        state = "stale" if snapshot is not None else "unavailable"
+    elif snapshot is None:
+        state = "not_streaming"
+    elif snapshot_age is None or snapshot_age > 75:
+        state = "stale"
+    else:
+        # The agent only reports its local capture stages. This does not prove
+        # the backend received a picture NAL or that a viewer rendered it.
+        state = "active_report"
+
+    return StreamDiagnosticsResponse(
+        device_id=device_key,
+        state=state,
+        agent_status=live.status if live else None,
+        last_heartbeat=live.last_heartbeat if live else None,
+        age_seconds=snapshot_age,
+        diagnostics=snapshot,
+    )
 
 
 # ── ADB Connect ───────────────────────────────────────────────────────────────

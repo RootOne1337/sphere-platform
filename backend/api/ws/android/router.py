@@ -422,6 +422,14 @@ async def handle_agent_binary(
     manager: ConnectionManager,
 ) -> None:
     """Обработать бинарные данные (видеофрейм) от Android агента."""
+    # Count at the ASGI boundary even if the bridge is unavailable. This is a
+    # backend-ingress receipt, not evidence that Redis or a browser got the frame.
+    try:
+        from backend.websocket.stream_observability import record_backend_ingress
+
+        record_backend_ingress(device_id, data)
+    except Exception as e:
+        logger.debug("stream ingress metric update failed", device_id=device_id, error=str(e))
     try:
         from backend.websocket.stream_bridge import get_stream_bridge
         bridge = get_stream_bridge()

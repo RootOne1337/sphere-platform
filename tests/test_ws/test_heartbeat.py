@@ -97,6 +97,47 @@ class TestHeartbeatManager:
         assert status.last_heartbeat is not None
         assert status.last_heartbeat >= before
 
+    async def test_pong_persists_sanitized_stream_snapshot_with_session_identity(
+        self, ws, fake_cache
+    ):
+        heartbeat = HeartbeatManager(ws, "dev-stream", fake_cache, session_id="ws-session-7")
+        await heartbeat.handle_pong({
+            "type": "pong",
+            "ts": time.time(),
+            "stream": {
+                "schema_version": 2,
+                "active": True,
+                "stage": "capture_encoder_ws_queue",
+                "capture_fps": 16,
+                "render_fps": 15,
+                "capture_frames_total": 320,
+                "rendered_frames_total": 300,
+                "capture_read_failures_total": 1,
+                "render_failures_total": 2,
+                "encoder_errors_total": 0,
+                "frame_throttle_drops_total": 12,
+                "encoder_fps": 15,
+                "encoded_frames_total": 300,
+                "encoded_bytes_total": 1_000_000,
+                "key_frame_ratio": 0.05,
+                "ws_queue_attempts_total": 305,
+                "ws_queue_accepted_total": 304,
+                "ws_queue_rejected_total": 1,
+                "ws_queue_accepted_bytes_total": 990_000,
+                "private_token": "must-not-be-persisted",
+            },
+        })
+
+        snapshot = await fake_cache.get_stream_diagnostics("dev-stream")
+        assert snapshot is not None
+        assert snapshot.agent_session_id == "ws-session-7"
+        assert snapshot.telemetry.capture_fps == 16
+        assert "private_token" not in snapshot.telemetry.model_dump()
+        assert await fake_cache.redis.ttl("device:stream-diagnostics:dev-stream") > 0
+
+        await heartbeat.handle_pong({"type": "pong", "ts": time.time()})
+        assert await fake_cache.get_stream_diagnostics("dev-stream") is None
+
     async def test_pong_no_status_in_cache_is_noop(self, heartbeat, fake_cache):
         """Если статус не в кэше — pong не должен падать."""
         await heartbeat.handle_pong({"type": "pong", "ts": time.time(), "battery": 90})

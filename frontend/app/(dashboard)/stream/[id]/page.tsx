@@ -12,7 +12,7 @@ export default function DeviceStreamPage({ params }: Props) {
     <div className="p-4 space-y-4">
       <h1 className="text-xl font-bold">Remote View — {id}</h1>
       <div className="max-w-3xl">
-        <DeviceStream deviceId={id} />
+        <DeviceStream deviceId={id} enableDiagnostics />
       </div>
     </div>
   );

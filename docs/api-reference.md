@@ -349,6 +349,27 @@ Content-Type: application/json
 
 Get a single device by ID.
 
+### GET /devices/{id}/stream-diagnostics
+
+Return the latest authenticated Android stream-stage snapshot. Requires
+`device:read`; the handler checks that the device belongs to the caller's
+organization before reading its Redis keys.
+
+```http
+GET /devices/{id}/stream-diagnostics
+Authorization: Bearer <token>
+```
+
+The response distinguishes `active_report`, `not_streaming`, `stale`, and
+`unavailable`. `active_report` means the APK recently reported an active local
+capture session; it does **not** certify server receipt or browser rendering.
+The snapshot has a 24-hour Redis TTL and becomes stale after 75 seconds without
+a fresh heartbeat. Version 1 agents omit capture/surface fields; version 2 adds
+capture, render, encoder-error, throttle-drop and local WebSocket-queue counters.
+No raw frames or per-frame database rows are stored. Field definitions and
+operator diagnosis steps are in the
+[stream observability audit](audits/2026-09-25/ANDROID-STREAM-OBSERVABILITY.md).
+
 ---
 
 ### PATCH /devices/{id}

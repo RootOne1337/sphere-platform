@@ -316,6 +316,38 @@ is available from this audit. Start the future load matrix with idle connections
 then DAG actions, then selected concurrent streams; retain per-device and host
 measurements plus failure/reconnect timings.
 
+### Stream and crash diagnostics (25 September 2026)
+
+The current source adds Android capture, encoder-surface, MediaCodec output,
+intentional FPS-throttle, and local WebSocket-queue counters to the periodic
+heartbeat. The authenticated operator endpoint
+`GET /api/v1/devices/{id}/stream-diagnostics` returns only the latest validated
+snapshot. Redis retains that small snapshot for 24 hours; the API marks it stale
+after 75 seconds without a fresh heartbeat. Version 1 agents remain readable,
+but have no capture/surface counters. See the
+[evidence, field semantics, and acceptance limits](audits/2026-09-25/ANDROID-STREAM-OBSERVABILITY.md).
+
+`active_report` means the APK reports an active local capture session. It is not
+evidence that the server received an IDR/P-frame or that a browser rendered it.
+The per-device stream page's opt-in diagnostics panel compares those counters
+with browser packet validation, NAL types, WebCodecs submissions/outputs and
+canvas callbacks. A shared frame ID and server-side byte/NAL receipt are still
+absent; a mismatch narrows the boundary but does not prove which network hop
+dropped a particular frame.
+
+The periodic log uploader now includes the persisted uncaught-crash file and
+removes only the uploaded unchanged snapshot after a successful response. Its
+complete UTF-8 body is capped at 480 KiB, below the backend's 512 KiB entry
+limit; failed uploads retain crash evidence. The Android app log tail and crash
+file are bounded on-device. The backend currently keeps daily files for 30 days
+and caps each daily file at 50 MiB, but does not enforce a total per-device or
+global log-storage quota; treat that as an open capacity/retention risk.
+
+Android `READ_LOGS` is signature/privileged. A regular phone install cannot be
+assumed to read full system logcat; this source collects Sphere-tagged output,
+and broader system logs need an authorized root or managed-device grant. See
+[Android's permission model](https://developer.android.com/reference/android/Manifest.permission#READ_LOGS).
+
 ## 10. Troubleshooting
 
 | Symptom | Inspect first |

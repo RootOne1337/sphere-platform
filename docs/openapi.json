@@ -2307,6 +2307,55 @@
         }
       }
     },
+    "/api/v1/devices/{device_id}/stream-diagnostics": {
+      "get": {
+        "tags": [
+          "devices"
+        ],
+        "summary": "Последний подтверждённый heartbeat-отчёт о стадиях Android-стрима",
+        "description": "Return bounded Android stage counters with explicit freshness semantics.",
+        "operationId": "get_device_stream_diagnostics_api_v1_devices__device_id__stream_diagnostics_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "device_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Device Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StreamDiagnosticsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/devices/{device_id}/connect": {
       "post": {
         "tags": [
@@ -2379,6 +2428,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
+                  "additionalProperties": true,
                   "title": "Response Take Screenshot Api V1 Devices  Device Id  Screenshot Get"
                 }
               }
@@ -2438,6 +2488,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
+                  "additionalProperties": true,
                   "title": "Response Execute Shell Api V1 Devices  Device Id  Shell Post"
                 }
               }
@@ -2497,6 +2548,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
+                  "additionalProperties": true,
                   "title": "Response Request Logcat Api V1 Devices  Device Id  Logcat Post"
                 }
               }
@@ -2546,6 +2598,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
+                  "additionalProperties": true,
                   "title": "Response Reboot Device Api V1 Devices  Device Id  Reboot Post"
                 }
               }
@@ -3783,6 +3836,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
+                  "additionalProperties": true,
                   "title": "Response Move Devices Api V1 Groups  Group Id  Devices Move Post"
                 }
               }
@@ -4155,6 +4209,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
+                  "additionalProperties": true,
                   "title": "Response Assign Devices Api V1 Locations  Location Id  Devices Post"
                 }
               }
@@ -4212,6 +4267,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
+                  "additionalProperties": true,
                   "title": "Response Remove Devices Api V1 Locations  Location Id  Devices Delete"
                 }
               }
@@ -4476,6 +4532,7 @@
             "content": {
               "application/json": {
                 "schema": {
+                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Receive Alerts Api V1 Monitoring Alerts Post"
                 }
@@ -4509,6 +4566,7 @@
             "content": {
               "application/json": {
                 "schema": {
+                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Get Monitoring Metrics Api V1 Monitoring Metrics Get"
                 }
@@ -4533,6 +4591,7 @@
               "application/json": {
                 "schema": {
                   "items": {
+                    "additionalProperties": true,
                     "type": "object"
                   },
                   "type": "array",
@@ -6975,6 +7034,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
+                  "additionalProperties": true,
                   "title": "Response Request Stream Start Api V1 Streaming  Device Id  Start Post"
                 }
               }
@@ -7024,6 +7084,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
+                  "additionalProperties": true,
                   "title": "Response Request Stream Stop Api V1 Streaming  Device Id  Stop Post"
                 }
               }
@@ -7073,6 +7134,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
+                  "additionalProperties": true,
                   "title": "Response Request Keyframe Api V1 Streaming  Device Id  Keyframe Post"
                 }
               }
@@ -7494,6 +7556,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
+                  "additionalProperties": true,
                   "title": "Response Get Task Progress Api V1 Tasks  Task Id  Progress Get"
                 }
               }
@@ -7544,7 +7607,8 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "type": "object"
+                    "type": "object",
+                    "additionalProperties": true
                   },
                   "title": "Response Get Task Live Logs Api V1 Tasks  Task Id  Live Logs Get"
                 }
@@ -7595,6 +7659,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
+                  "additionalProperties": true,
                   "title": "Response Get Task Screenshots Api V1 Tasks  Task Id  Screenshots Get"
                 }
               }
@@ -7644,6 +7709,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
+                  "additionalProperties": true,
                   "title": "Response Force Stop Task Api V1 Tasks  Task Id  Stop Post"
                 }
               }
@@ -7689,6 +7755,7 @@
             "content": {
               "application/json": {
                 "schema": {
+                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Create Recovery Api V1 Updates Recovery Post"
                 }
@@ -8469,6 +8536,7 @@
             "content": {
               "application/json": {
                 "schema": {
+                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Vpn Health Api V1 Vpn Health Get"
                 }
@@ -9231,6 +9299,7 @@
             "title": "Duration Seconds"
           },
           "meta": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Meta"
           },
@@ -9431,6 +9500,199 @@
         "title": "AgentConfigResponse",
         "description": "Ответ эндпоинта GET /api/v1/config/agent.\n\nАгент использует этот конфиг для:\n- Определения актуального server_url\n- Получения feature flags\n- Проверки необходимости обновления (min_agent_version)"
       },
+      "AgentStreamTelemetry": {
+        "properties": {
+          "schema_version": {
+            "type": "integer",
+            "enum": [
+              1,
+              2
+            ],
+            "title": "Schema Version"
+          },
+          "active": {
+            "type": "boolean",
+            "const": true,
+            "title": "Active"
+          },
+          "stage": {
+            "type": "string",
+            "enum": [
+              "encoder_and_ws_queue",
+              "capture_encoder_ws_queue"
+            ],
+            "title": "Stage"
+          },
+          "encoder_fps": {
+            "type": "integer",
+            "maximum": 240.0,
+            "minimum": 0.0,
+            "title": "Encoder Fps"
+          },
+          "encoded_frames_total": {
+            "type": "integer",
+            "maximum": 9007199254740992.0,
+            "minimum": 0.0,
+            "title": "Encoded Frames Total"
+          },
+          "encoded_bytes_total": {
+            "type": "integer",
+            "maximum": 9007199254740992.0,
+            "minimum": 0.0,
+            "title": "Encoded Bytes Total"
+          },
+          "key_frame_ratio": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Key Frame Ratio"
+          },
+          "ws_queue_attempts_total": {
+            "type": "integer",
+            "maximum": 9007199254740992.0,
+            "minimum": 0.0,
+            "title": "Ws Queue Attempts Total"
+          },
+          "ws_queue_accepted_total": {
+            "type": "integer",
+            "maximum": 9007199254740992.0,
+            "minimum": 0.0,
+            "title": "Ws Queue Accepted Total"
+          },
+          "ws_queue_rejected_total": {
+            "type": "integer",
+            "maximum": 9007199254740992.0,
+            "minimum": 0.0,
+            "title": "Ws Queue Rejected Total"
+          },
+          "ws_queue_accepted_bytes_total": {
+            "type": "integer",
+            "maximum": 9007199254740992.0,
+            "minimum": 0.0,
+            "title": "Ws Queue Accepted Bytes Total"
+          },
+          "capture_fps": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 240.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Capture Fps"
+          },
+          "render_fps": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 240.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Render Fps"
+          },
+          "capture_frames_total": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 9007199254740992.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Capture Frames Total"
+          },
+          "rendered_frames_total": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 9007199254740992.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rendered Frames Total"
+          },
+          "capture_read_failures_total": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 9007199254740992.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Capture Read Failures Total"
+          },
+          "render_failures_total": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 9007199254740992.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Render Failures Total"
+          },
+          "encoder_errors_total": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 9007199254740992.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Encoder Errors Total"
+          },
+          "frame_throttle_drops_total": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 9007199254740992.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Frame Throttle Drops Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "schema_version",
+          "active",
+          "stage",
+          "encoder_fps",
+          "encoded_frames_total",
+          "encoded_bytes_total",
+          "key_frame_ratio",
+          "ws_queue_attempts_total",
+          "ws_queue_accepted_total",
+          "ws_queue_rejected_total",
+          "ws_queue_accepted_bytes_total"
+        ],
+        "title": "AgentStreamTelemetry",
+        "description": "Cumulative counters reported by one Android capture session.\n\nVersion 1 is accepted for already-installed agents. Version 2 adds capture\nand surface-render stages so a zero encoder rate can be localized."
+      },
       "Alert": {
         "properties": {
           "status": {
@@ -9599,6 +9861,7 @@
             "title": "Failed"
           },
           "wave_config": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Wave Config"
           },
@@ -9659,6 +9922,7 @@
           },
           "admission_receipts": {
             "items": {
+              "additionalProperties": true,
               "type": "object"
             },
             "type": "array",
@@ -9814,6 +10078,7 @@
             "title": "Failed"
           },
           "wave_config": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Wave Config"
           },
@@ -9999,6 +10264,7 @@
             "title": "Failed"
           },
           "wave_config": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Wave Config"
           },
@@ -10113,6 +10379,7 @@
             "title": "Device Ids"
           },
           "params": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Params"
           }
@@ -10231,6 +10498,7 @@
             "title": "Latency Ms"
           },
           "details": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Details",
             "default": {}
@@ -10351,6 +10619,7 @@
             "title": "Pipeline Run Id"
           },
           "data": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Data"
           },
@@ -10539,6 +10808,7 @@
             "description": "Pipeline для запуска при срабатывании"
           },
           "input_params_template": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Input Params Template",
             "description": "Шаблон параметров. Плейсхолдеры: {device_id}, {account_id}, {event_type}, {event_id}"
@@ -10786,6 +11056,7 @@
           "meta": {
             "anyOf": [
               {
+                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -10973,6 +11244,7 @@
             "title": "Steps"
           },
           "input_schema": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Input Schema"
           },
@@ -11185,6 +11457,7 @@
             "title": "Pipeline Id"
           },
           "input_params": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Input Params"
           },
@@ -11307,6 +11580,7 @@
             "title": "Description"
           },
           "dag": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Dag"
           },
@@ -11543,6 +11817,7 @@
             "title": "Pipeline Run Id"
           },
           "data": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Data"
           },
@@ -11871,6 +12146,7 @@
             "default": "ldplayer"
           },
           "meta": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Meta",
             "description": "Дополнительные метаданные (ldplayer_name, clone_source и т.д.)."
@@ -12667,6 +12943,7 @@
             "title": "Balance After"
           },
           "meta": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Meta"
           }
@@ -12783,6 +13060,7 @@
             "title": "Pipeline Id"
           },
           "input_params_template": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Input Params Template"
           },
@@ -13270,6 +13548,7 @@
             "title": "Registration Provider"
           },
           "meta": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Meta"
           },
@@ -13599,6 +13878,7 @@
             "title": "Registration Provider"
           },
           "meta": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Meta"
           },
@@ -13799,6 +14079,7 @@
           "meta": {
             "anyOf": [
               {
+                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -14368,6 +14649,7 @@
           "output": {
             "anyOf": [
               {
+                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -14540,6 +14822,7 @@
             "title": "Failed"
           },
           "wave_config": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Wave Config"
           },
@@ -14647,12 +14930,14 @@
           },
           "steps": {
             "items": {
+              "additionalProperties": true,
               "type": "object"
             },
             "type": "array",
             "title": "Steps"
           },
           "input_schema": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Input Schema"
           },
@@ -14794,15 +15079,18 @@
             "title": "Current Step Id"
           },
           "context": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Context"
           },
           "input_params": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Input Params"
           },
           "step_logs": {
             "items": {
+              "additionalProperties": true,
               "type": "object"
             },
             "type": "array",
@@ -15053,6 +15341,7 @@
             "title": "Notes"
           },
           "meta": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Meta"
           },
@@ -15115,6 +15404,7 @@
             "description": "Тип шага: execute_script, condition, action, delay, parallel, wait_for_event, n8n_workflow, loop, sub_pipeline"
           },
           "params": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Params",
             "description": "Параметры шага (зависят от type)"
@@ -15302,6 +15592,7 @@
             "title": "Device Tags"
           },
           "input_params": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Input Params"
           },
@@ -15334,6 +15625,7 @@
             "title": "Device Id"
           },
           "input_params": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Input Params"
           }
@@ -15634,6 +15926,7 @@
             "title": "Pipeline Id"
           },
           "input_params": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Input Params"
           },
@@ -16006,6 +16299,7 @@
           "dag": {
             "anyOf": [
               {
+                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -16193,6 +16487,7 @@
             "title": "Pipeline Run Id"
           },
           "meta": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Meta"
           }
@@ -16204,6 +16499,106 @@
         ],
         "title": "StartSessionRequest",
         "description": "Запрос на начало сессии (вызывается при assign аккаунта)."
+      },
+      "StoredStreamDiagnostics": {
+        "properties": {
+          "telemetry": {
+            "$ref": "#/components/schemas/AgentStreamTelemetry"
+          },
+          "observed_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Observed At"
+          },
+          "agent_session_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 128
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Agent Session Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "telemetry",
+          "observed_at"
+        ],
+        "title": "StoredStreamDiagnostics",
+        "description": "Latest small snapshot; never contains video data or credentials."
+      },
+      "StreamDiagnosticsResponse": {
+        "properties": {
+          "device_id": {
+            "type": "string",
+            "title": "Device Id"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "active_report",
+              "not_streaming",
+              "stale",
+              "unavailable"
+            ],
+            "title": "State"
+          },
+          "agent_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Agent Status"
+          },
+          "last_heartbeat": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Heartbeat"
+          },
+          "age_seconds": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Age Seconds"
+          },
+          "diagnostics": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StoredStreamDiagnostics"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "device_id",
+          "state"
+        ],
+        "title": "StreamDiagnosticsResponse"
       },
       "StreamStatusResponse": {
         "properties": {
@@ -16417,6 +16812,7 @@
           "result": {
             "anyOf": [
               {
+                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -16439,6 +16835,7 @@
           "input_params": {
             "anyOf": [
               {
+                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -16971,6 +17368,7 @@
           "input_params_template": {
             "anyOf": [
               {
+                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -17194,6 +17592,7 @@
           "meta": {
             "anyOf": [
               {
+                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -17397,6 +17796,7 @@
           "input_schema": {
             "anyOf": [
               {
+                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -17798,6 +18198,7 @@
           "input_params": {
             "anyOf": [
               {
+                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -17952,6 +18353,7 @@
           "dag": {
             "anyOf": [
               {
+                "additionalProperties": true,
                 "type": "object"
               },
               {

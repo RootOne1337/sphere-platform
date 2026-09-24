@@ -9,6 +9,7 @@ from collections import deque
 import structlog
 
 from backend.websocket.frames import VideoFrame
+from backend.websocket.stream_observability import record_server_queue_drop
 
 logger = structlog.get_logger()
 
@@ -31,8 +32,11 @@ class VideoStreamQueue:
     MAX_LATENCY_MS = 200  # Дроп фреймов старше 200ms
     MAX_BYTES = 8 * 1024 * 1024
 
-    def __init__(self, device_id: str) -> None:
+    def __init__(self, device_id: str, queue_stage: str = "viewer") -> None:
+        if queue_stage not in {"viewer", "agent_to_redis"}:
+            raise ValueError("unsupported stream queue stage")
         self.device_id = device_id
+        self.queue_stage = queue_stage
         self._queue: deque[VideoFrame] = deque()
         self._lock = asyncio.Lock()
         self._ready = asyncio.Event()
@@ -51,7 +55,7 @@ class VideoStreamQueue:
         async with self._lock:
             self.frames_received += 1
             if len(frame.data) > self.MAX_BYTES:
-                self.frames_dropped += 1
+                self._record_drop("oversize")
                 return False
             # Сначала выбросить устаревшие фреймы
             self._evict_stale_sync()
@@ -61,7 +65,7 @@ class VideoStreamQueue:
                 dropped = self._drop_one_droppable_sync()
                 if not dropped and not frame.is_critical:
                     # Нет что дропать, дропаем входящий P-frame
-                    self.frames_dropped += 1
+                    self._record_drop("backpressure")
                     logger.debug(
                         "Frame dropped (queue full)",
                         device_id=self.device_id,
@@ -71,7 +75,7 @@ class VideoStreamQueue:
                 if not dropped:
                     # Retaining every IDR is unbounded with a stalled consumer.
                     self._bytes -= len(self._queue.popleft().data)
-                    self.frames_dropped += 1
+                    self._record_drop("critical_eviction")
 
             self._queue.append(frame)
             self._bytes += len(frame.data)
@@ -108,7 +112,7 @@ class VideoStreamQueue:
         for frame in self._queue:
             age_ms = (now - frame.timestamp) * 1000
             if not frame.is_critical and age_ms > self.MAX_LATENCY_MS:
-                self.frames_dropped += 1
+                self._record_drop("stale")
                 self._bytes -= len(frame.data)
                 stale_count += 1
             else:
@@ -128,9 +132,13 @@ class VideoStreamQueue:
             if not frame.is_critical:
                 self._bytes -= len(frame.data)
                 del self._queue[i]
-                self.frames_dropped += 1
+                self._record_drop("backpressure")
                 return True
         return False
+
+    def _record_drop(self, reason: str) -> None:
+        self.frames_dropped += 1
+        record_server_queue_drop(self.device_id, self.queue_stage, reason)
 
     @property
     def drop_ratio(self) -> float:

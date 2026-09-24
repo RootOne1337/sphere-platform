@@ -182,9 +182,17 @@ class CommandDispatcher @Inject constructor(
             val stats = if (streamingManager.isActive()) streamingManager.getQualityStats() else null
             if (stats != null) {
                 put("stream", buildJsonObject {
-                    put("schema_version", 1)
+                    put("schema_version", 2)
                     put("active", true)
-                    put("stage", "encoder_and_ws_queue")
+                    put("stage", "capture_encoder_ws_queue")
+                    put("capture_fps", stats.currentCaptureFps)
+                    put("render_fps", stats.currentRenderFps)
+                    put("capture_frames_total", stats.captureFramesTotal)
+                    put("rendered_frames_total", stats.renderedFramesTotal)
+                    put("capture_read_failures_total", stats.captureReadFailuresTotal)
+                    put("render_failures_total", stats.renderFailuresTotal)
+                    put("encoder_errors_total", stats.encoderErrorsTotal)
+                    put("frame_throttle_drops_total", stats.frameThrottleDropsTotal)
                     put("encoder_fps", stats.currentFps)
                     put("encoded_frames_total", stats.totalFrames)
                     put("encoded_bytes_total", stats.totalEncodedBytes)

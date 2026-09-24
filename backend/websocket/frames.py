@@ -65,6 +65,23 @@ def detect_nal_type(data: bytes) -> FrameType:
     return _detect_nal_type(payload)
 
 
+def detect_first_nal_type(data: bytes) -> FrameType:
+    """Classify an access unit's leading NAL in O(1), for hot-path telemetry."""
+    payload, _ = _unwrap_sphere_frame(data)
+    if payload.startswith(_ANNEX_B_START_CODE_4):
+        nal_offset = 4
+    elif payload.startswith(_ANNEX_B_START_CODE_3):
+        nal_offset = 3
+    else:
+        return FrameType.UNKNOWN
+    if nal_offset >= len(payload):
+        return FrameType.UNKNOWN
+    try:
+        return FrameType(payload[nal_offset] & 0x1F)
+    except ValueError:
+        return FrameType.UNKNOWN
+
+
 class VideoFrame:
     __slots__ = ("data", "nal_type", "keyframe_flag", "timestamp", "device_id")
 

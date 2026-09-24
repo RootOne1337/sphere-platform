@@ -60,6 +60,30 @@ it('does not retain and replay frames received before SPS/PPS', () => {
   expect(newest().chunks).toHaveLength(1);
 });
 
+it('separates binary receipt, decode submission, decoded output and rendered output', () => {
+  configure(decoder);
+  decoder.handleBinary(packet([0x65, 1]));
+
+  const beforeOutput = decoder.stats;
+  expect(beforeOutput.binaryMessagesReceived).toBe(3);
+  expect(beforeOutput.idrUnits).toBe(1);
+  expect(beforeOutput.decodeSubmitted).toBe(1);
+  expect(beforeOutput.decodedOutputs).toBe(0);
+  expect(beforeOutput.renderedFrames).toBe(0);
+
+  newest().output(newest().chunks[0].timestamp);
+  expect(decoder.stats.decodedOutputs).toBe(1);
+  expect(decoder.stats.renderedFrames).toBe(1);
+  expect(decoder.stats.pendingOutputCount).toBe(0);
+});
+
+it('counts malformed binary packets instead of silently losing evidence', () => {
+  decoder.handleBinary(new Uint8Array([1, 2, 3]).buffer);
+  expect(decoder.stats.binaryMessagesReceived).toBe(1);
+  expect(decoder.stats.binaryBytesReceived).toBe(3);
+  expect(decoder.stats.invalidPackets).toBe(1);
+});
+
 it('bounds submissions when a codec stops consuming input', () => {
   configure(decoder);
   for (let i = 0; i < 1000; i++) decoder.handleBinary(packet([0x65, 1], i));

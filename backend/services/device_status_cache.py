@@ -7,6 +7,7 @@ from typing import Any
 import msgpack
 
 from backend.schemas.device_status import DeviceLiveStatus
+from backend.schemas.stream_diagnostics import StoredStreamDiagnostics
 
 
 class DeviceStatusCache:
@@ -24,12 +25,49 @@ class DeviceStatusCache:
     KEY_PREFIX = "device:status:"
     TTL_ONLINE = 120
     TTL_OFFLINE = 3600
+    STREAM_DIAGNOSTICS_PREFIX = "device:stream-diagnostics:"
+    TTL_STREAM_DIAGNOSTICS = 86400
 
     def __init__(self, redis: Any) -> None:
         self.redis = redis
 
     def _key(self, device_id: str) -> str:
         return f"{self.KEY_PREFIX}{device_id}"
+
+    def _stream_diagnostics_key(self, device_id: str) -> str:
+        return f"{self.STREAM_DIAGNOSTICS_PREFIX}{device_id}"
+
+    async def set_stream_diagnostics(
+        self, device_id: str, snapshot: StoredStreamDiagnostics
+    ) -> None:
+        """Keep only the latest tiny telemetry snapshot for post-reconnect diagnosis."""
+        if self.redis is None:
+            return
+        data = msgpack.packb(snapshot.model_dump(mode="json"), use_bin_type=True)
+        await self.redis.set(
+            self._stream_diagnostics_key(device_id),
+            data,
+            ex=self.TTL_STREAM_DIAGNOSTICS,
+        )
+
+    async def get_stream_diagnostics(
+        self, device_id: str
+    ) -> StoredStreamDiagnostics | None:
+        if self.redis is None:
+            return None
+        raw = await self.redis.get(self._stream_diagnostics_key(device_id))
+        if raw is None:
+            return None
+        try:
+            unpacked = msgpack.unpackb(raw, raw=False)
+            return StoredStreamDiagnostics.model_validate(unpacked)
+        except Exception:
+            # Bad or old cached data is unavailable, never a fatal API error.
+            return None
+
+    async def clear_stream_diagnostics(self, device_id: str) -> None:
+        if self.redis is not None:
+            await self.redis.delete(self._stream_diagnostics_key(device_id))
 
     # ── Single device ─────────────────────────────────────────────────────────
 

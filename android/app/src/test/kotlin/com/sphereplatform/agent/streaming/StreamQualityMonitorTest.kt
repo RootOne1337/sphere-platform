@@ -97,6 +97,31 @@ class StreamQualityMonitorTest {
         assertEquals(1536L, stats.webSocketQueueAcceptedBytesTotal)
     }
 
+    @Test
+    fun `capture render encode and queue stages keep independent counters`() {
+        monitor.recordCapturedFrame()
+        monitor.recordCapturedFrame()
+        monitor.recordCaptureReadFailure()
+        monitor.recordRenderedFrame()
+        monitor.recordRenderFailure()
+        monitor.recordEncoderError()
+        monitor.recordFrame(900, isKeyFrame = false)
+        monitor.recordFrameThrottleDrop()
+        monitor.recordWebSocketQueueResult(900, accepted = true)
+
+        val stats = monitor.getStats()
+        assertEquals(2, stats.currentCaptureFps)
+        assertEquals(1, stats.currentRenderFps)
+        assertEquals(2L, stats.captureFramesTotal)
+        assertEquals(1L, stats.renderedFramesTotal)
+        assertEquals(1L, stats.captureReadFailuresTotal)
+        assertEquals(1L, stats.renderFailuresTotal)
+        assertEquals(1L, stats.encoderErrorsTotal)
+        assertEquals(1L, stats.frameThrottleDropsTotal)
+        assertEquals(1L, stats.totalFrames)
+        assertEquals(1L, stats.webSocketQueueAcceptedTotal)
+    }
+
     // ── currentFps (скользящее окно) ─────────────────────────────────────────
     // Примечание: используем recordFrame напрямую, SystemClock.elapsedRealtime()
     // внутри будет возвращать реальное время. Для unit-теста мы просто быстро
@@ -138,17 +163,31 @@ class StreamQualityMonitorTest {
         monitor.recordFrame(3000, false)
         monitor.recordWebSocketQueueResult(100, true)
         monitor.recordWebSocketQueueResult(200, false)
+        monitor.recordCapturedFrame()
+        monitor.recordRenderedFrame()
+        monitor.recordCaptureReadFailure()
+        monitor.recordRenderFailure()
+        monitor.recordEncoderError()
+        monitor.recordFrameThrottleDrop()
 
         monitor.reset()
 
         val stats = monitor.getStats()
         assertEquals(0, stats.currentFps)
+        assertEquals(0, stats.currentCaptureFps)
+        assertEquals(0, stats.currentRenderFps)
         assertEquals(0L, stats.totalFrames)
         assertEquals(0L, stats.totalEncodedBytes)
         assertEquals(0L, stats.webSocketQueueAttemptsTotal)
         assertEquals(0L, stats.webSocketQueueAcceptedTotal)
         assertEquals(0L, stats.webSocketQueueRejectedTotal)
         assertEquals(0L, stats.webSocketQueueAcceptedBytesTotal)
+        assertEquals(0L, stats.captureFramesTotal)
+        assertEquals(0L, stats.renderedFramesTotal)
+        assertEquals(0L, stats.captureReadFailuresTotal)
+        assertEquals(0L, stats.renderFailuresTotal)
+        assertEquals(0L, stats.encoderErrorsTotal)
+        assertEquals(0L, stats.frameThrottleDropsTotal)
         assertEquals(0f, stats.keyFrameRatio, 0.001f)
         assertEquals(0f, stats.avgEncodedFrameSizeKb, 0.001f)
     }

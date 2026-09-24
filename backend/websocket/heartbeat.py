@@ -153,6 +153,19 @@ class HeartbeatManager:
         stream_data = msg.get("stream")
         try:
             from backend.websocket.stream_metrics import StreamMetrics
-            StreamMetrics(self.device_id).update_from_pong(stream_data)
+            telemetry = StreamMetrics(self.device_id).update_from_pong(stream_data)
+            if telemetry is None:
+                await self.status_cache.clear_stream_diagnostics(self.device_id)
+            else:
+                from backend.schemas.stream_diagnostics import StoredStreamDiagnostics
+
+                await self.status_cache.set_stream_diagnostics(
+                    self.device_id,
+                    StoredStreamDiagnostics(
+                        telemetry=telemetry,
+                        observed_at=datetime.now(timezone.utc),
+                        agent_session_id=self._session_id,
+                    ),
+                )
         except Exception as e:
             logger.debug("stream_metrics update failed", device_id=self.device_id, error=str(e))
