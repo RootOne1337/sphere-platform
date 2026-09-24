@@ -78,7 +78,8 @@ Android-агенты при этом **оставались на прежнем 
 Serveo на SSH-порту 443 предъявил ED25519 fingerprint
 `SHA256:GnmVK+70U6GqbupoV+gg7LnHHUsW1IjrK0cLqvDJxIk`, совпадающий с
 [его документацией](https://serveo.net/docs/). Но подключение без ключа,
-с новым отдельным ключом и с другим SSH username завершилось
+с новым отдельным ключом на портах 22/443, с другим SSH username и даже с
+существующим **отдельным ключом нового pilot** завершилось
 `Permission denied (publickey,keyboard-interactive)`. Действующий Serveo route
 для **нового** pilot не поднят. Ключи/контейнеры прежнего `sphere-tunnel` не
 использовались. Подставить старый Serveo hostname нельзя: он не доказывает
