@@ -8,7 +8,8 @@ import javax.inject.Singleton
 
 /** Bounded encrypted pending results plus indexed receipts retained for seven days after ACK.
  * A recovered running receipt has an unknown outcome and must never be rerun.
- * Pending results are retained until the server acknowledges its DB commit.
+ * DAG results await the server's DB ACK; OTA recovery receipts have no SQL task
+ * and are locally retired once queued to the WebSocket.
  */
 @Singleton
 class CommandJournal @Inject constructor(
@@ -33,7 +34,7 @@ class CommandJournal @Inject constructor(
         Json.parseToJsonElement(it).jsonObject.toMutableMap()
     } ?: mutableMapOf<String, JsonElement>()
 
-    @Synchronized fun claim(id: String): Claim {
+    @Synchronized fun claim(id: String, acknowledgeWhenQueued: Boolean = false): Claim {
         migrateAcknowledged()
         receipts.prune(System.currentTimeMillis())
         val existing = records[id]?.jsonObject
@@ -47,7 +48,10 @@ class CommandJournal @Inject constructor(
         val now = System.currentTimeMillis()
         val next = records.toMutableMap()
         check(next.size < MAX_ENTRIES) { "command_journal_capacity_exhausted" }
-        next[id] = buildJsonObject { put("created_at", now) }
+        next[id] = buildJsonObject {
+            put("created_at", now)
+            if (acknowledgeWhenQueued) put("acknowledge_when_queued", true)
+        }
         persist(next, reserveResult = true) // Confirm durable receipt before any device action.
         active.add(id)
         return Claim.Started
@@ -67,6 +71,7 @@ class CommandJournal @Inject constructor(
         val next = records.toMutableMap()
         next[id] = buildJsonObject {
             put("created_at", entry.getValue("created_at"))
+            entry["acknowledge_when_queued"]?.let { put("acknowledge_when_queued", it) }
             put("response", payload)
             put("acknowledged", false)
         }
@@ -157,6 +162,16 @@ class CommandJournal @Inject constructor(
         val next = records.toMutableMap()
         next.remove(id)
         persist(next)
+    }
+
+    /** Called after a terminal receipt enters OkHttp's queue, including a later
+     * reconnect flush. Never retire a running receipt or a DAG awaiting DB ACK.
+     */
+    @Synchronized fun acknowledgeQueuedLocalResult(id: String) {
+        val entry = records[id]?.jsonObject ?: return
+        if (entry["acknowledge_when_queued"]?.jsonPrimitive?.booleanOrNull != true) return
+        if (entry["response"] == null) return
+        acknowledge(id)
     }
 
     private fun migrateAcknowledged() {

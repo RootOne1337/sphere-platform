@@ -27,6 +27,7 @@ class CommandDeliveryTest {
     private val adb = mockk<AdbActionExecutor>(relaxed = true)
     private val messages = mutableListOf<JsonObject>()
     private val callback = slot<((JsonObject) -> Unit)?>()
+    private val connected = slot<(() -> Unit)?>()
     private val appContext = mockk<Context>(relaxed = true)
     private val disk = mutableMapOf<String, String?>()
     private val receipts = ReceiptStoreFixture()
@@ -55,6 +56,7 @@ class CommandDeliveryTest {
         otaService: OtaUpdateService = mockk(relaxed = true),
     ): CommandDispatcher {
         every { ws.onJsonMessage = captureNullable(callback) } just Runs
+        every { ws.onConnected = captureNullable(connected) } just Runs
         every { ws.sendJson(capture(messages)) } returns true
         return CommandDispatcher(ws, adb, dag, cache,
             mockk(relaxed = true), mockk(relaxed = true), authStore,
@@ -200,7 +202,7 @@ class CommandDeliveryTest {
         put("ttl_seconds", 180)
         put("payload", buildJsonObject {
             put("download_url", "https://management.test/update.apk")
-            put("version", "1.2.16-dev")
+            put("version", "1.2.18-dev")
             put("sha256", "a".repeat(64))
         })
     }
@@ -262,6 +264,24 @@ class CommandDeliveryTest {
         dispatcher.stop()
     }
 
+    @Test fun queuedOtaReceiptAfterReconnectReleasesPendingSlot() = runTest {
+        val ota = mockk<OtaUpdateService>(relaxed = true)
+        coEvery { ota.performUpdate(any()) } returns Unit
+        val first = dispatcher(backgroundScope, otaService = ota)
+        every { ws.sendJson(any()) } returns false
+        callback.captured!!(otaCommand())
+        runCurrent()
+        assertEquals(1, journal().pending().size)
+
+        first.stop()
+        val restarted = dispatcher(backgroundScope, otaService = ota)
+        connected.captured!!()
+        runCurrent()
+        assertTrue("queued recovery receipt must not exhaust the durable outbox", journal().pending().isEmpty())
+        coVerify(exactly = 1) { ota.performUpdate(any()) }
+        restarted.stop()
+    }
+
     @Test fun failedDagIsReportedAsFailed() = runTest {
         coEvery { dag.execute(any(), any(), any()) } returns buildJsonObject { put("success", false) }
         val dispatcher = dispatcher(backgroundScope)
@@ -292,6 +312,7 @@ class CommandDeliveryTest {
         repeat(2) { callback.captured!!(command()); runCurrent() }
         coVerify(exactly = 1) { dag.execute(any(), any(), any()) }
         assertEquals("completed", messages.last()["status"]?.jsonPrimitive?.content)
+        assertEquals("DAG requires backend result_ack", 1, journal().pending().size)
         dispatcher.stop()
     }
 
