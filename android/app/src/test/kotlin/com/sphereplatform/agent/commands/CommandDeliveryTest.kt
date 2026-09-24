@@ -218,6 +218,7 @@ class CommandDeliveryTest {
         coVerify(exactly = 1) { ota.performUpdate(any()) }
         finish.complete(Unit)
         runCurrent()
+        assertTrue("OTA terminal receipt must not occupy the task outbox forever", journal().pending().isEmpty())
         first.stop()
 
         val restarted = dispatcher(backgroundScope, otaService = ota)
@@ -248,6 +249,17 @@ class CommandDeliveryTest {
         assertEquals("failed", messages.last()["status"]?.jsonPrimitive?.content)
         assertEquals("execution_outcome_unknown_after_restart", messages.last()["error"]?.jsonPrimitive?.content)
         restarted.stop()
+    }
+
+    @Test fun otaTerminalReceiptRemainsPendingWhenSocketCannotQueueIt() = runTest {
+        val ota = mockk<OtaUpdateService>(relaxed = true)
+        coEvery { ota.performUpdate(any()) } returns Unit
+        val dispatcher = dispatcher(backgroundScope, otaService = ota)
+        every { ws.sendJson(any()) } returns false
+        callback.captured!!(otaCommand())
+        runCurrent()
+        assertEquals("completed", journal().pending().single()["status"]?.jsonPrimitive?.content)
+        dispatcher.stop()
     }
 
     @Test fun failedDagIsReportedAsFailed() = runTest {

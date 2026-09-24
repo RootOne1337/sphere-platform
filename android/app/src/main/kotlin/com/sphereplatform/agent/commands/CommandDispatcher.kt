@@ -358,7 +358,19 @@ class CommandDispatcher @Inject constructor(
 
     private fun terminalAck(cmd: IncomingCommand, status: String, error: String? = null, result: JsonObject? = null) {
         if (cmd.type == CommandType.EXECUTE_DAG || cmd.type == CommandType.OTA_UPDATE) {
-            wsClient.sendJson(commandJournal.complete(cmd.command_id, status, error, result))
+            val receipt = commandJournal.complete(cmd.command_id, status, error, result)
+            val queued = wsClient.sendJson(receipt)
+            if (cmd.type == CommandType.OTA_UPDATE && queued) {
+                // The recovery channel has no SQL task to commit and therefore
+                // sends no result_ack. Keep the terminal status in the local
+                // receipt index, but release its bounded pending-result slot.
+                // A later replay still receives that status without reinstalling.
+                try {
+                    commandJournal.acknowledge(cmd.command_id)
+                } catch (e: Exception) {
+                    Timber.e(e, "Cannot finalize local OTA receipt; result retained for retry")
+                }
+            }
         } else ack(cmd.command_id, status, error, result)
     }
 
