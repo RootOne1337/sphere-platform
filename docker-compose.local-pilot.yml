@@ -15,6 +15,7 @@ services:
     ports: !reset []
     volumes: !override
       - ./.local-pilot/agent-config:/app/agent-config:ro
+      - ota_data:/app/backend/updates
     command: !reset null
     user: !reset null
     environment:
@@ -23,6 +24,7 @@ services:
       SERVER_PUBLIC_URL: ${PILOT_AGENT_URL:?Set emulator-visible gateway URL}
       AGENT_CONFIG_ENV: development
       CORS_EXTRA_ORIGINS: ${PILOT_BROWSER_URL:?Set browser gateway URL}
+      SPHERE_UPDATES_PATH: /app/backend/updates/releases.json
     restart: unless-stopped
   frontend:
     image: ${PILOT_IMAGE_PREFIX}-frontend:${PILOT_REVISION}

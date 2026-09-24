@@ -20,7 +20,9 @@ COPY agent-config/ ./agent-config/
 COPY scripts/create_admin.py scripts/seed_enrollment_key.py ./scripts/
 
 # Запуск от non-root пользователя
-RUN useradd -r -u 1001 sphere
+RUN useradd -r -u 1001 sphere \
+    && mkdir -p /app/backend/updates \
+    && chown sphere:sphere /app/backend/updates
 USER sphere
 
 ENV PYTHONPATH=/app

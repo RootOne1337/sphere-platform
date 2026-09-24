@@ -20,6 +20,15 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   Android flavor suites pass (639 tests each; one enterprise skip).
   [OTA reliability architecture and acceptance gates](docs/architecture/ANDROID-OTA-RELIABILITY.md).
 
+- AUD-166: the OTA catalog/artifact directory no longer defaults to ephemeral
+  `/tmp`; local pilot and production use a project-scoped persistent Docker volume,
+  while full development points to its mounted update directory. Compose
+  regressions first failed because the effective local/production configurations
+  omitted the path and persistent mount, then passed after the fix. This survives
+  backend container recreation in the same Compose project; it does not yet provide
+  a transactional multi-replica catalog or an independent off-host artifact mirror.
+  [OTA reliability architecture](docs/architecture/ANDROID-OTA-RELIABILITY.md).
+
 - AUD-162: terminal `401` from Android device-token refresh no longer falls
   back to the rejected access token. The APK durably clears only the rejected
   credential pair, preserves device ID, clone binding and management routes, and

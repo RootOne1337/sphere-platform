@@ -17,6 +17,18 @@ backend `completed` receipt для canary отсутствует. Обычный
 Датированные записи ниже сохранены как история проверок; их версии не следует
 читать как текущие установленные версии.
 
+**OTA storage source-fix:** Compose теперь направляет catalog в
+`/app/backend/updates/releases.json`; local-pilot и production используют
+project-scoped `ota_data` named volume, который сохраняет каталог и APK при
+пересоздании backend в том же Compose project. Перед первым пересозданием старого
+контейнера нужно отдельно сохранить `/tmp/sphere_updates.json` и `/tmp/artifacts`
+из него и перенести проверенные данные в volume: прежний runtime ещё использовал
+эфемерный путь. Проверена эффективная Compose-конфигурация и повторно выполнены
+regressions; уже запущенный pilot не перезапускался, поэтому live persistence и
+миграция не подтверждены. Смена Compose project name создаёт другой volume.
+Каталог по-прежнему JSON и не рассчитан на конкурентные публикации из нескольких
+backend workers.
+
 **Срез 24 сентября, 13:54 UTC:** три новые remote-карточки `PH007`–`009`
 имеют 19–21 переподключение за 15 минут и чёрный стрим; независимый viewer
 ingress не получил от `PH008` IDR/P, хотя получил их от локального `PH000`.

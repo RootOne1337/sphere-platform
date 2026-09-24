@@ -6,6 +6,17 @@
 опубликован. Независимое резервирование artifact delivery, staged rollout,
 terminal receipt и удалённая приёмка остаются открыты.
 
+Compose OTA storage source-fix в текущей ветке задаёт единый путь
+`/app/backend/updates/releases.json`; local pilot и production используют
+project-scoped named volume `ota_data`. Before/after Compose regressions проверяют,
+что каталог и `artifacts/` останутся при пересоздании backend в том же Compose
+project. До первого обновления действующего старого контейнера его `/tmp`-каталог
+и `artifacts/` нужно экспортировать и проверить, затем перенести в volume; этот
+migration шаг не запускался. Runtime pilot не перезапускался. Смена Compose
+project name выберет другой volume. Локальный JSON каталог пока не транзакционен
+между несколькими Gunicorn workers/репликами, а том не защищает от потери всего
+хоста.
+
 [Решение по видео и OTA AUD-163](../audits/2026-09-24/REMOTE-VIDEO-OTA-DECISION.md) ·
 [Подписанный bootstrap](ANDROID-SIGNED-DISCOVERY.md) ·
 [Сохранённые серверные маршруты](ANDROID-SAVED-ROUTES.md) ·
@@ -39,7 +50,7 @@ terminal receipt и удалённая приёмка остаются откр�
 | Management | Агент использует сохранённые management routes и допускает переключение только после target-bound `auth_ok`. | В текущем pilot подписанный manifest содержал один публичный tunnel route; рабочего независимого WAN ingress не было. |
 | Проверка OTA | `UpdateCheckWorker` запрашивает `/api/v1/updates/latest`; раньше он запускался по периодическому WorkManager расписанию раз в 6 часов. Источник и candidate 1.2.19 теперь дополнительно ставят сетевую one-time проверку при старте приложения и после первой авторизованной WS-связи в service lifetime. Запросы объединяются `KEEP`, а reconnect/boot получают случайную задержку до 120 секунд, чтобы флот не ударил в каталог одновременно. | WorkManager соблюдает ограничения ОС, поэтому время запуска периодической работы не является точным. Ошибки HTTP/auth или отсутствие сети всё ещё задерживают проверку. Candidate ещё не установлен на устройствах. |
 | Выбор релиза | Backend выбирает наибольший `version_code` для platform/flavor. В локальном pilot `android/dev` оставался 1.2.9/10209; `android-canary/dev` получил только адресную проверку кандидата 1.2.18/10218. | Нет полноценного per-device/per-cohort rollout в обычном `latest`; публикация максимума в общем канале затрагивает всех соответствующих агентов. |
-| Доставка APK | Клиент проверяет HTTPS, ограничивает URL тем же host, что и management server, ограничивает размер и проверяет SHA-256. При транспортном сбое делает ограниченный повтор через HTTP/1.1. APK хранится в artifact store backend. | Нет независимого списка разрешённых artifact mirrors; смена tunnel/DNS меняет и control plane, и download path. Внешнее зеркало не пройдёт текущую same-host проверку. |
+| Доставка APK | Клиент проверяет HTTPS, ограничивает URL тем же host, что и management server, ограничивает размер и проверяет SHA-256. При транспортном сбое делает ограниченный повтор через HTTP/1.1. Compose source теперь монтирует каталог OTA и APK в project-scoped named volume, сохраняемый при пересоздании контейнера в том же Compose project. | Нет независимого списка разрешённых artifact mirrors; смена tunnel/DNS меняет и control plane, и download path. Внешнее зеркало не пройдёт текущую same-host проверку. Один локальный том не переживает потерю host; смена project name требует миграции; file catalog также не даёт транзакционной конкурентности между backend workers/репликами. |
 | Установка | На rooted pilot-эмуляторе root `pm install` сработал; при отказе есть PackageInstaller путь. После установки Android заменяет процесс, а агент стартует и заново авторизуется. | Без root/Device Owner/системной привилегии нельзя обещать бесшумную установку на любом обычном Android-телефоне. User-mediated PackageInstaller может требовать подтверждения. |
 | Runtime-подтверждение | В ограниченном локальном canary emulator-5554 PackageManager после OTA показал 1.2.18/10218, процесс агента поднялся и обычный WS заново авторизовался; crash buffer не показал нового падения приложения. Recovery grant был отозван. | Backend сохранил `received`/`running`, но терминального `completed` receipt не было. Второй локальный emulator-5556 остался 1.2.9/10209; удалённые устройства этой проверкой не подтверждены. Это не доказывает remote OTA или исправление video stream. |
 

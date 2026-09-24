@@ -20,6 +20,7 @@ Enterprise rationale
 from __future__ import annotations
 
 import hashlib
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -170,6 +171,16 @@ _VALID_RELEASE = {
     "mandatory": False,
     "changelog": "Bug fixes",
 }
+
+
+def test_default_update_store_is_not_container_tmp(monkeypatch):
+    monkeypatch.delenv("SPHERE_UPDATES_PATH", raising=False)
+    expected = Path(updates_module.__file__).resolve().parents[3] / "updates" / "releases.json"
+    assert updates_module._resolve_updates_path() == expected
+
+    override = Path("/durable/ota/releases.json")
+    monkeypatch.setenv("SPHERE_UPDATES_PATH", str(override))
+    assert updates_module._resolve_updates_path() == override
 
 
 class TestManagedArtifacts:

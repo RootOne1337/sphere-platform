@@ -75,13 +75,30 @@ def test_pilot_runs_built_images_with_real_auth_and_healthchecks(pilot):
     assert backend["environment"]["DEV_SKIP_AUTH"] == "false"
     assert backend["environment"]["SERVER_PUBLIC_URL"] == "http://10.0.2.2:18080"
     assert backend["build"]["dockerfile"] == "backend/Dockerfile"
-    assert len(backend["volumes"]) == 1
-    assert backend["volumes"][0]["target"] == "/app/agent-config"
-    assert backend["volumes"][0]["read_only"]
+    assert {mount["target"] for mount in backend["volumes"]} == {
+        "/app/agent-config", "/app/backend/updates",
+    }
+    config_mount = next(mount for mount in backend["volumes"] if mount["target"] == "/app/agent-config")
+    ota_mount = next(mount for mount in backend["volumes"] if mount["target"] == "/app/backend/updates")
+    assert config_mount["read_only"]
+    assert ota_mount["type"] == "volume" and ota_mount["source"] == "ota_data"
+    assert not ota_mount.get("read_only", False)
     assert not pilot["services"]["frontend"].get("volumes")
     for service in pilot["services"].values():
         assert service["healthcheck"]["test"]
         assert not service["healthcheck"].get("disable")
+
+
+def test_pilot_persists_ota_catalog_and_artifacts(pilot):
+    backend = pilot["services"]["backend"]
+    assert backend["environment"]["SPHERE_UPDATES_PATH"] == "/app/backend/updates/releases.json"
+    update_mounts = [mount for mount in backend["volumes"]
+                     if mount["target"] == "/app/backend/updates"]
+    assert len(update_mounts) == 1
+    assert update_mounts[0]["type"] == "volume"
+    assert update_mounts[0]["source"] == "ota_data"
+    assert update_mounts[0]["target"] == "/app/backend/updates"
+    assert not update_mounts[0].get("read_only", False)
 
 
 @pytest.mark.parametrize("profile,tunnel", [

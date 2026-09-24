@@ -30,9 +30,17 @@ from backend.services.device_ota_recovery import OtaRecoveryGrant, get_ota_recov
 
 router = APIRouter(prefix="/updates", tags=["updates"])
 
-# Релизы хранятся в JSON-файле (нет нужды в отдельной таблице)
-# В production заменяется на путь из env-переменной SPHERE_UPDATES_PATH
-_UPDATES_PATH = Path(os.environ.get("SPHERE_UPDATES_PATH", "/tmp/sphere_updates.json"))  # nosec B108
+# Pilot/local file store. Container overlays mount this directory persistently;
+# production deployments should use a durable object/catalog service before scaling
+# backend replicas. Never silently put release state in the container's /tmp.
+def _resolve_updates_path(configured: str | None = None) -> Path:
+    override = configured or os.environ.get("SPHERE_UPDATES_PATH")
+    if override:
+        return Path(override)
+    return Path(__file__).resolve().parents[3] / "updates" / "releases.json"
+
+
+_UPDATES_PATH = _resolve_updates_path()
 _ARTIFACT_PREFIX = "/api/v1/updates/artifacts/"
 _MAX_ARTIFACT_BYTES = 200 * 1024 * 1024
 

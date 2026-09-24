@@ -43,7 +43,8 @@ services:
       start_period: 30s
     # Also safe when docker-compose.full.yml precedes this final override.
     ports: !reset []
-    volumes: !reset []
+    volumes: !override
+      - ota_data:/app/backend/updates
     command: !reset null
     user: !reset null
     image: ghcr.io/${GITHUB_OWNER:-local}/sphere-platform-backend:${IMAGE_TAG:-latest}
@@ -62,6 +63,7 @@ services:
       - AWG_H2=${AWG_H2}
       - AWG_H3=${AWG_H3}
       - AWG_H4=${AWG_H4}
+      - SPHERE_UPDATES_PATH=/app/backend/updates/releases.json
       - DEBUG=false
       - DEV_SKIP_AUTH=false
       - LOG_LEVEL=INFO

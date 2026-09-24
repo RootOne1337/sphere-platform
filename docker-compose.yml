@@ -176,6 +176,7 @@ services:
 volumes:
   postgres_data:
   redis_data:
+  ota_data: # OTA catalog and immutable APK artifacts survive backend container recreation
   minio_data:
   n8n_data:
   # Let's Encrypt сертификаты (certbot)

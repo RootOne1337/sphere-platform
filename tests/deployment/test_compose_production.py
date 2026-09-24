@@ -50,6 +50,14 @@ def test_production_databases_have_no_published_host_ports(production_config):
 def test_production_application_uses_image_defaults_without_source_mounts(production_config, service):
     configuration = production_config[service]
     assert not configuration.get("command"), {service: configuration.get("command")}
-    assert not configuration.get("volumes"), {service: configuration.get("volumes")}
+    if service == "backend":
+        assert configuration["environment"]["SPHERE_UPDATES_PATH"] == "/app/backend/updates/releases.json"
+        mounts = configuration.get("volumes", [])
+        assert len(mounts) == 1, mounts
+        assert mounts[0]["type"] == "volume"
+        assert mounts[0]["source"] == "ota_data"
+        assert mounts[0]["target"] == "/app/backend/updates"
+    else:
+        assert not configuration.get("volumes"), {service: configuration.get("volumes")}
     assert configuration.get("user") not in {"0", "root"}
     assert not configuration.get("ports"), {service: configuration.get("ports")}

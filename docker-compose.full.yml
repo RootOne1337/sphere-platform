@@ -29,6 +29,7 @@ services:
       - WEB_CONCURRENCY=${WEB_CONCURRENCY:-4}
       - CORS_EXTRA_ORIGINS=${CORS_EXTRA_ORIGINS:-}
       - DEV_SKIP_AUTH=${DEV_SKIP_AUTH:-false}
+      - SPHERE_UPDATES_PATH=/app/backend/updates/releases.json
     ports:
       - "${BACKEND_PORT:-8000}:8000"
     depends_on:
@@ -39,7 +40,7 @@ services:
     volumes:
       - .:/app                          # весь проект — backend.* импорты работают
       - /app/backend/__pycache__        # изолируем кэш
-      - ./backend/updates:/app/backend/updates  # OTA APK файлы
+      - ./backend/updates:/app/backend/updates  # OTA catalog + APK artifacts
     command: >
       sh -c '
         if [ "$ENVIRONMENT" = "development" ]; then
