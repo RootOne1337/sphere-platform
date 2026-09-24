@@ -173,6 +173,46 @@ _VALID_RELEASE = {
 
 
 class TestManagedArtifacts:
+    async def test_canary_platform_release_is_excluded_from_regular_dev_checks_and_grant_is_targeted(
+        self, admin_client, anon_client, agent_api_key, isolate_updates_file, db_session, updates_org,
+    ):
+        """Stage one APK without offering it to every dev-flavor agent."""
+        from backend.models.device import Device
+
+        content = b"isolated canary APK fixture"
+        digest = hashlib.sha256(content).hexdigest()
+        artifact = isolate_updates_file.parent / "artifacts" / f"{digest}.apk"
+        artifact.parent.mkdir()
+        artifact.write_bytes(content)
+        created = await admin_client.post("/api/v1/updates/", json={
+            **_VALID_RELEASE,
+            "platform": "android-canary",
+            "flavor": "dev",
+            "version_code": 10215,
+            "version_name": "1.2.15-dev",
+            "download_url": "/api/v1/updates/artifacts/" + digest,
+            "sha256": digest,
+        })
+        assert created.status_code == 201, created.text
+
+        regular = await anon_client.get(
+            "/api/v1/updates/latest?platform=android&flavor=dev&version_code=10209",
+            headers={"X-API-Key": agent_api_key},
+        )
+        assert regular.status_code == 200, regular.text
+        assert regular.json()["update_available"] is False
+
+        target = Device(org_id=updates_org.id, name="selected-canary")
+        other = Device(org_id=updates_org.id, name="ordinary-dev")
+        db_session.add_all([target, other])
+        await db_session.flush()
+        grant = await admin_client.post("/api/v1/updates/recovery", json={
+            "device_id": str(target.id), "sha256": digest, "duration_seconds": 600,
+        })
+        assert grant.status_code == 201, grant.text
+        assert target.meta["ota_recovery"]["sha256"] == digest
+        assert "ota_recovery" not in (other.meta or {})
+
     async def test_recovery_grant_is_explicit_single_artifact_bounded_and_revocable(
         self, admin_client, isolate_updates_file, db_session, updates_org,
     ):
