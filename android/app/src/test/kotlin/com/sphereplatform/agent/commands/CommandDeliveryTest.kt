@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import com.sphereplatform.agent.streaming.StreamQualityMonitor
 import com.sphereplatform.agent.streaming.StreamingManager
+import com.sphereplatform.agent.ota.OtaUpdateService
 import com.sphereplatform.agent.store.AuthTokenStore
 import com.sphereplatform.agent.ws.SphereWebSocketClient
 import io.mockk.*
@@ -51,12 +52,13 @@ class CommandDeliveryTest {
         streamingManager: StreamingManager = mockk(relaxed = true),
         authStore: AuthTokenStore = mockk(relaxed = true),
         context: Context = appContext,
+        otaService: OtaUpdateService = mockk(relaxed = true),
     ): CommandDispatcher {
         every { ws.onJsonMessage = captureNullable(callback) } just Runs
         every { ws.sendJson(capture(messages)) } returns true
         return CommandDispatcher(ws, adb, dag, cache,
             mockk(relaxed = true), mockk(relaxed = true), authStore,
-            mockk(relaxed = true), mockk(relaxed = true), mockk(relaxed = true),
+            otaService, mockk(relaxed = true), mockk(relaxed = true),
             mockk(relaxed = true), scope, streamingManager, context, journal())
             .also { it.start() }
     }
@@ -189,6 +191,63 @@ class CommandDeliveryTest {
         put("command_id", "11111111-1111-4111-8111-111111111111")
         put("signed_at", System.currentTimeMillis() / 1000)
         put("payload", buildJsonObject { put("dag", buildJsonObject { put("fixture", true) }) })
+    }
+
+    private fun otaCommand() = buildJsonObject {
+        put("type", "OTA_UPDATE")
+        put("command_id", "44444444-4444-4444-8444-444444444444")
+        put("signed_at", System.currentTimeMillis() / 1000)
+        put("ttl_seconds", 180)
+        put("payload", buildJsonObject {
+            put("download_url", "https://management.test/update.apk")
+            put("version", "1.2.16-dev")
+            put("sha256", "a".repeat(64))
+        })
+    }
+
+    @Test fun otaRetryAfterReconnectCannotDownloadOrInstallTwiceOnOneInstance() = runTest {
+        val ota = mockk<OtaUpdateService>(relaxed = true)
+        val finish = CompletableDeferred<Unit>()
+        coEvery { ota.performUpdate(any()) } coAnswers { finish.await() }
+        val first = dispatcher(backgroundScope, otaService = ota)
+        val update = otaCommand()
+        callback.captured!!(update)
+        runCurrent()
+        callback.captured!!(update)
+        runCurrent()
+        coVerify(exactly = 1) { ota.performUpdate(any()) }
+        finish.complete(Unit)
+        runCurrent()
+        first.stop()
+
+        val restarted = dispatcher(backgroundScope, otaService = ota)
+        callback.captured!!(update)
+        runCurrent()
+        coVerify(exactly = 1) { ota.performUpdate(any()) }
+        assertEquals("completed", messages.last()["status"]?.jsonPrimitive?.content)
+        restarted.stop()
+    }
+
+    @Test fun interruptedOtaAfterProcessRestartReportsUnknownWithoutReinstall() = runTest {
+        val ota = mockk<OtaUpdateService>(relaxed = true)
+        val finish = CompletableDeferred<Unit>()
+        coEvery { ota.performUpdate(any()) } coAnswers { finish.await() }
+        val first = dispatcher(backgroundScope, otaService = ota)
+        val update = otaCommand()
+        callback.captured!!(update)
+        runCurrent()
+        coVerify(exactly = 1) { ota.performUpdate(any()) }
+        first.stop()
+
+        // A new process sees a durable started receipt but cannot know whether
+        // the previous process installed the package before it disappeared.
+        val restarted = dispatcher(backgroundScope, otaService = ota)
+        callback.captured!!(update)
+        runCurrent()
+        coVerify(exactly = 1) { ota.performUpdate(any()) }
+        assertEquals("failed", messages.last()["status"]?.jsonPrimitive?.content)
+        assertEquals("execution_outcome_unknown_after_restart", messages.last()["error"]?.jsonPrimitive?.content)
+        restarted.stop()
     }
 
     @Test fun failedDagIsReportedAsFailed() = runTest {

@@ -314,7 +314,12 @@ class CommandDispatcher @Inject constructor(
         }
 
         // TTL check — отбрасываем устаревшие команды
-        if (cmd.type == CommandType.EXECUTE_DAG) {
+        // An OTA command can restart this process during installation. Fence it
+        // in this instance's durable journal just like a DAG: a reconnect must
+        // not start a second download/install with the same command ID. Each
+        // cloned Android instance has its own journal after cloning, so the
+        // shared recovery grant can still reach every copy.
+        if (cmd.type == CommandType.EXECUTE_DAG || cmd.type == CommandType.OTA_UPDATE) {
             try {
                 when (val claim = commandJournal.claim(cmd.command_id)) {
                     is CommandJournal.Claim.Existing -> {
@@ -352,7 +357,7 @@ class CommandDispatcher @Inject constructor(
     }
 
     private fun terminalAck(cmd: IncomingCommand, status: String, error: String? = null, result: JsonObject? = null) {
-        if (cmd.type == CommandType.EXECUTE_DAG) {
+        if (cmd.type == CommandType.EXECUTE_DAG || cmd.type == CommandType.OTA_UPDATE) {
             wsClient.sendJson(commandJournal.complete(cmd.command_id, status, error, result))
         } else ack(cmd.command_id, status, error, result)
     }
