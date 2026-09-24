@@ -104,11 +104,14 @@ android {
             // Override with the key seeded into the selected development installation.
             buildConfigField("String", "DEFAULT_API_KEY", "\"${System.getenv("SPHERE_ENROLLMENT_KEY") ?: "sphr_dev_enrollment_key_2025"}\"")
             buildConfigField("String", "DEFAULT_DEVICE_ID", "\"\"")
-            // A local SPHERE_CONFIG_URL avoids contacting the shared GitHub environment.
-            // Legacy default: HTTP Config Endpoint через GitHub Raw.
-            // Signed mode authenticates mutable manifests; pinning a manifest commit
-            // would prevent that APK from discovering future address changes.
-            buildConfigField("String", "CONFIG_URL", "\"${System.getenv("SPHERE_CONFIG_URL") ?: "https://raw.githubusercontent.com/RootOne1337/sphere-agent-config/main/environments/development.json"}\"")
+            // Bootstrap routes belong to a specific installation. Never silently
+            // fall back to a public legacy environment that may advertise a retired
+            // tunnel; pilot builds must pass their signed discovery URL explicitly.
+            buildConfigField(
+                "String",
+                "CONFIG_URL",
+                javaString(System.getenv("SPHERE_CONFIG_URL")?.trim().orEmpty()),
+            )
         }
         create("enterprise") {
             dimension = "env"

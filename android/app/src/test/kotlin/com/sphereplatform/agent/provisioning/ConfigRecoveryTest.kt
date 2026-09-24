@@ -350,6 +350,14 @@ class ConfigRecoveryTest {
     }
 
     @Test
+    fun `development build never defaults to the retired shared environment document`() {
+        assertFalse(
+            "A pilot bootstrap URL must be supplied explicitly; the shared legacy document can point to a retired tunnel",
+            BuildConfig.CONFIG_URL.contains("sphere-agent-config/main/environments/development.json"),
+        )
+    }
+
+    @Test
     fun `local route change and restore still invalidates older response`() = runBlocking {
         holdHeaders()
         watchdog.forceCheck()
