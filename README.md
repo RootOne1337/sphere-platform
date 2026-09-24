@@ -303,7 +303,8 @@ identity, доверенный ключ и параметры enrollment; APK и
 
 **Контрольная точка: 24 сентября 2026.** CI-badges относятся к ветке аудита;
 строки ниже различают текущие установки, локальные candidate и датированную
-приёмку. [Почему удалённое видео и OTA остаются NO-GO](docs/audits/2026-09-24/REMOTE-VIDEO-OTA-DECISION.md).
+приёмку. [Почему удалённое видео и OTA остаются NO-GO](docs/audits/2026-09-24/REMOTE-VIDEO-OTA-DECISION.md) ·
+[свежий A/B ingress и reconnect трёх VM](docs/audits/2026-09-24/REMOTE-INGRESS-AB.md).
 
 | Поверхность / проверка | Версия / результат | Доказательство |
 | --- | --- | --- |
@@ -313,10 +314,10 @@ identity, доверенный ключ и параметры enrollment; APK и
 | Android local candidate | **1.2.18-dev / 10218**, pilot-compatible debug APK; обе полные suites и signature прошли, remote установка и OTA-публикация не выполнялись | [AUD-163](docs/audits/2026-09-24/REMOTE-VIDEO-OTA-DECISION.md) |
 | Backend OTA catalog | Latest `android/dev`: **1.2.9-dev / 10209**; 1.2.15/10215 изолирован в `android-canary/dev`, адресная попытка PH006 без доказанной установки | [AUD-163](docs/audits/2026-09-24/REMOTE-VIDEO-OTA-DECISION.md) |
 | Task / pipeline · приёмка 21 сентября | 15 terminal task receipts; два pipeline runs | [Независимая сверка результатов](docs/audits/2026-09-20/CANARY-20260921.md) |
-| Видео | Два локальных потока восстановились после restart без F5; PH006 remote имел SPS/PPS без IDR/P, приёмка удалённого browser decode открыта | [AUD-148](docs/audits/2026-09-23/REMOTE-FLEET-LIVE-FOLLOWUP.md) · [AUD-163](docs/audits/2026-09-24/REMOTE-VIDEO-OTA-DECISION.md) |
+| Видео | Локальный `PH000` дал IDR/P через независимый viewer ingress; удалённый `PH008` на локальном и альтернативном viewer дал только SPS/PPS. Его Android ingress пока оставался Cloudflare | [AUD-164](docs/audits/2026-09-24/REMOTE-INGRESS-AB.md) · [AUD-163](docs/audits/2026-09-24/REMOTE-VIDEO-OTA-DECISION.md) |
 | Redis | Source Compose: 512 MiB dataset / 2048 MiB ceiling; three isolated AOF probes pass (peak 1.49–2.00 GiB); 32-stream/live rollout open | [AUD-143 evidence and rollout boundary](docs/audits/2026-09-20/REDIS-PERSISTENCE-HEADROOM.md) |
 | Сетевые отказы | Проверены отдельные отказы Android, серверного входа и обеих сторон | [Матрица и версии проверок](docs/audits/2026-09-05/NETWORK-RECOVERY-NATIVE.md) |
-| Удалённые клоны/видео | **NO-GO:** в момент проверки 7 device records / 6 online, не 20 подтверждённых удалённых VM; unique IDs и первый декодированный удалённый кадр не приняты | [AUD-163](docs/audits/2026-09-24/REMOTE-VIDEO-OTA-DECISION.md) · [F32-28 / F32-34](docs/audits/2026-09-20/CLONE-IDENTITY.md) |
+| Удалённые клоны/видео | **NO-GO:** 10 device records в последней API-выборке, не 22 подтверждённых физических VM; новые `PH007`–`009` переподключались 19–21 раз за 15 мин, без подтверждённого heartbeat | [AUD-164](docs/audits/2026-09-24/REMOTE-INGRESS-AB.md) · [F32-28 / F32-34](docs/audits/2026-09-20/CLONE-IDENTITY.md) |
 
 ### Ближайшие эксплуатационные задачи
 

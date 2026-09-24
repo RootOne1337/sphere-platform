@@ -6,7 +6,15 @@
 [Live-сравнение кадров AUD-148](../2026-09-23/REMOTE-FLEET-LIVE-FOLLOWUP.md) ·
 [Первый Android-кадр AUD-161](../2026-09-23/ANDROID-INITIAL-FRAME-RACE.md) ·
 [Reconnect и кандидат APK AUD-162](REMOTE-RECONNECT-INCIDENT.md) ·
+[Новый A/B ingress и три remote VM AUD-164](REMOTE-INGRESS-AB.md) ·
 [Fleet32 gates](../2026-09-20/FLEET32-PREFLIGHT.md)
+
+**Дополнение 13:41–13:54 UTC:** независимый viewer ingress получил от локального
+Android IDR/P, но от нового удалённого `PH008` — только SPS/PPS, как и локальный
+viewer. `PH007`–`009` переподключались 19–21 раз за 15 минут, у них отсутствовал
+подтверждённый heartbeat; запрос версии APK у `PH008` завершился timeout.
+Подробные измерения и ограничения гипотезы Cloudflare — в [AUD-164](REMOTE-INGRESS-AB.md).
+APK на удалённых устройствах не обновлялась этой проверкой.
 
 ## Решение на этот срез
 

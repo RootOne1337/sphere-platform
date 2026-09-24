@@ -20,7 +20,7 @@
 | Войти в готовый pilot и взять APK | [Local pilot](operations/LOCAL-PILOT.md) | [Приёмка первого устройства](operations/PILOT-ACCEPTANCE.md) |
 | Поднять новую установку | [Startup / bootstrap](operations/STARTUP.md#first-install) | [Configuration](configuration.md) · [Deployment](deployment.md) |
 | Подключить удалённые Android | [Remote pilot](operations/REMOTE-PILOT.md) | [Signed discovery](architecture/ANDROID-SIGNED-DISCOVERY.md) |
-| Понять оставшиеся проблемы | [Fleet32: актуальная таблица](audits/2026-09-20/FLEET32-PREFLIGHT.md) | [Удалённое видео и OTA: решение 24 сентября](audits/2026-09-24/REMOTE-VIDEO-OTA-DECISION.md) · [Live follow-up 23 сентября](audits/2026-09-23/REMOTE-FLEET-LIVE-FOLLOWUP.md) · [Readiness](operations/READINESS.md) · [Roadmap](../ROADMAP.md) |
+| Понять оставшиеся проблемы | [Fleet32: актуальная таблица](audits/2026-09-20/FLEET32-PREFLIGHT.md) | [A/B ingress и три remote VM](audits/2026-09-24/REMOTE-INGRESS-AB.md) · [Удалённое видео и OTA](audits/2026-09-24/REMOTE-VIDEO-OTA-DECISION.md) · [Readiness](operations/READINESS.md) · [Roadmap](../ROADMAP.md) |
 | Разобрать сбой по времени и устройству | [Support: что собрать](../SUPPORT.md) | [Runbooks](runbooks/README.md) · [Fleet operations, stream и observability](architecture/FLEET-OPERATIONS-AND-OBSERVABILITY.md) |
 | Изменить код | [Contributing](../CONTRIBUTING.md) | [Development](development.md) · [Тесты](../tests/production/README.md) |
 
@@ -32,6 +32,7 @@
 | [Local pilot](operations/LOCAL-PILOT.md) | Установленные версии, веб, APK, учётная запись и отдельный Compose project |
 | [Remote pilot](operations/REMOTE-PILOT.md) | Устройства в другой сети, ingress и ограничения резервирования |
 | [Удалённое видео и OTA](audits/2026-09-24/REMOTE-VIDEO-OTA-DECISION.md) | AUD-163: публичный tunnel против Android first-frame, что реально опубликовано и почему общий OTA rollout пока остановлен |
+| [A/B ingress и три remote VM](audits/2026-09-24/REMOTE-INGRESS-AB.md) | AUD-164: локальный/альтернативный viewer, SPS/PPS без IDR на удалённом агенте, reconnect rate и гейт для проверки Cloudflare |
 | [Deployment](deployment.md) · [Полный guide](../FULL-DEPLOYMENT-GUIDE.md) | Bootstrap, конфигурации и обслуживание; оценки масштаба требуют своей приёмки |
 | [Discovery publisher](operations/DISCOVERY-PUBLISHER.md) | Публикация подписанных маршрутов и восстановление publisher |
 | [Redis memory](operations/REDIS-MEMORY.md) | Dataset/container budget, persistence, pressure test и остаточные риски |

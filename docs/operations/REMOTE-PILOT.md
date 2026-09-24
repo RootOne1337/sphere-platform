@@ -25,6 +25,14 @@ config backend находится в другом каталоге. Автори
 | `cloudflare` | Рецепт named connector и isolated runtime credential mount; постоянный DNS route не создан: текущие credentials не дают доступа к DNS-зоне |
 | `serveo` | Рецепт autossh и отдельный secret/volume; SSH доступен, но provider требует регистрацию ключа; действующий публичный маршрут не получен |
 
+Повторная проверка 24 сентября: Serveo fingerprint на SSH/443 совпал с
+официальным; три изолированных попытки без зарегистрированного ключа получили
+`Permission denied`. Независимый временный localhost.run прошёл HTTPS, WSS auth,
+heartbeat и reconnect, а локальный Android через него передал IDR/P. Удалённый
+`PH008` через viewer этого провайдера по-прежнему дал только SPS/PPS, поскольку
+его **агент** оставался на Cloudflare; это не A/B Android egress. Подробности
+и закрывающий P0 gate: [AUD-164](../audits/2026-09-24/REMOTE-INGRESS-AB.md).
+
 Не включайте все profiles как якобы готовый резерв. Для текущего стенда включён
 только `quick`; два постоянных profiles — подготовка для следующего этапа.
 
