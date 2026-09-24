@@ -23,6 +23,7 @@ class Socket {
   close = jest.fn(() => { this.readyState = Socket.CLOSED; this.onclose?.({ code: 1000 }); });
   constructor(_url: string) { Socket.instances.push(this); }
   open() { this.readyState = Socket.OPEN; this.onopen?.(); }
+  message(data: string) { this.onmessage?.({ data }); }
   fail(code = 1006) { this.readyState = Socket.CLOSED; this.onclose?.({ code }); }
 }
 
@@ -68,6 +69,18 @@ it('retries the initial keyframe request when the viewer connects but no image a
   view.unmount();
 });
 
+it('shows the server control error instead of hiding it behind an endless frame wait', () => {
+  const view = render(<DeviceStream deviceId="fixture" />); advance(0);
+  act(() => Socket.instances[0].open());
+  act(() => Socket.instances[0].message(JSON.stringify({
+    type: 'error', error: 'stream_control_unavailable',
+  })));
+  expect(screen.getByRole('status')).toHaveTextContent(
+    'Сервер не смог передать запрос видеопотока Android-агенту.',
+  );
+  view.unmount();
+});
+
 it('requests a fresh key frame after codec cooldown, stops after output, and clears timers on unmount', () => {
   const view = render(<DeviceStream deviceId="fixture" />); advance(0);
   act(() => Socket.instances[0].open());
@@ -108,4 +121,13 @@ it.each([4001, 4003, 4004])('does not loop on a terminal access/device rejection
   const view = render(<DeviceStream deviceId="fixture" />); advance(0);
   act(() => Socket.instances[0].fail(code)); advance(60_000);
   expect(Socket.instances).toHaveLength(1); view.unmount();
+});
+
+it('explains a terminal device lookup rejection on the Open page', () => {
+  const view = render(<DeviceStream deviceId="fixture" />); advance(0);
+  act(() => Socket.instances[0].fail(4004));
+  expect(screen.getByRole('status')).toHaveTextContent(
+    'Устройство не найдено или недоступно в этой организации.',
+  );
+  view.unmount();
 });

@@ -66,6 +66,7 @@ export function DeviceStream({
   const [connection, setConnection] = useState<
     'connecting' | 'waiting' | 'live' | 'retrying' | 'unavailable'
   >('connecting');
+  const [streamError, setStreamError] = useState<string | null>(null);
   const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
   const [agentDiagnostics, setAgentDiagnostics] = useState<StreamDiagnosticResponse | null>(null);
   const [diagnosticsError, setDiagnosticsError] = useState<string | null>(null);
@@ -82,6 +83,7 @@ export function DeviceStream({
     let scheduleKeyFrameRecovery: ((delayMs?: number) => void) | undefined;
     let attempt = 0;
     setConnection('connecting');
+    setStreamError(null);
 
     const timer = setTimeout(() => {
       if (ignore) return;
@@ -94,6 +96,7 @@ export function DeviceStream({
       decoder = new H264Decoder((frame) => {
         if (ignore || wsRef.current?.readyState !== WebSocket.OPEN) return;
         setConnection('live');
+        setStreamError(null);
         clearTimeout(keyFrameTimer);
         // Mutate canvas directly for performance, avoid React state re-renders
         if (canvas.width !== frame.displayWidth || canvas.height !== frame.displayHeight) {
@@ -121,6 +124,7 @@ export function DeviceStream({
       // not proof of a usable stream: reset backoff only after server traffic.
       const createWs = () => {
         if (ignore) return;
+        setStreamError(null);
         const newWs = new WebSocket(wsUrl);
         newWs.binaryType = 'arraybuffer';
         ws = newWs;
@@ -146,7 +150,7 @@ export function DeviceStream({
           keyFrameTimer = setTimeout(requestKeyFrame, delayMs);
         };
         scheduleKeyFrameRecovery = scheduleKeyFrameRequests;
-        const finish = (retry: boolean) => {
+        const finish = (retry: boolean, terminalMessage?: string) => {
           if (ended) return;
           ended = true;
           clearInterval(watchdog);
@@ -163,6 +167,8 @@ export function DeviceStream({
           if (retry) {
             const delay = Math.min(500 * 2 ** Math.min(attempt++, 6), 15_000);
             retryTimer = setTimeout(createWs, delay * (0.8 + Math.random() * 0.4));
+          } else {
+            setStreamError(terminalMessage ?? null);
           }
         };
         watchdog = setInterval(() => {
@@ -186,13 +192,27 @@ export function DeviceStream({
               const msg = JSON.parse(evt.data);
               if (msg.type === 'ping' && newWs.readyState === WebSocket.OPEN) {
                 newWs.send(JSON.stringify({ type: 'pong' }));
+              } else if (msg.type === 'error') {
+                const messages: Record<string, string> = {
+                  stream_control_unavailable: 'Сервер не смог передать запрос видеопотока Android-агенту.',
+                  stream_control_denied: 'У этой учётной записи нет права управлять видеопотоком.',
+                };
+                const code = typeof msg.error === 'string' ? msg.error.slice(0, 80) : '';
+                setStreamError(messages[code] ?? 'Сервер сообщил об ошибке видеосессии.');
               }
             } catch { /* Ignore malformed control messages. */ }
           }
         };
         // A remote normal close can be a server restart. Only effect cleanup
         // means the user stopped viewing; access/device rejections remain terminal.
-        newWs.onclose = event => finish(![4001, 4003, 4004].includes(event.code));
+        newWs.onclose = event => {
+          const closeMessages: Record<number, string> = {
+            4001: 'Сессия просмотра не авторизована. Обновите вход и откройте устройство снова.',
+            4003: 'У этой учётной записи нет доступа к просмотру устройства.',
+            4004: 'Устройство не найдено или недоступно в этой организации.',
+          };
+          finish(![4001, 4003, 4004].includes(event.code), closeMessages[event.code]);
+        };
         newWs.onerror = () => finish(true);
       };
 
@@ -304,12 +324,13 @@ export function DeviceStream({
       className="cursor-pointer rounded border border-gray-700 bg-black touch-none"
       style={{ width: '100%', height: 'auto' }}
     />
-    {connection !== 'live' && (
+    {(connection !== 'live' || streamError) && (
       <div role="status" className="absolute inset-0 flex items-center justify-center bg-black/85 text-sm text-white">
-        {connection === 'connecting' && 'Подключение…'}
-        {connection === 'waiting' && 'Ожидание видеокадра…'}
-        {connection === 'retrying' && 'Переподключение…'}
-        {connection === 'unavailable' && 'Стрим недоступен'}
+        {streamError ?? (
+          connection === 'connecting' ? 'Подключение…' :
+          connection === 'waiting' ? 'Ожидание видеокадра…' :
+          connection === 'retrying' ? 'Переподключение…' : 'Стрим недоступен'
+        )}
       </div>
     )}
     {enableDiagnostics && (
