@@ -111,6 +111,46 @@ async def test_recovery_twenty_copied_tokens_receive_only_ota_without_registry_e
     assert api.status_code == 401
 
 
+async def test_persisted_ota_result_replay_ack_is_tenant_scoped(agent_runtime):
+    from backend.database.tenant import bind_tenant_context
+    from backend.services.device_ota_recovery import is_persisted_ota_recovery_replay
+
+    r = agent_runtime
+    enrolled = await issue_device(r.world)
+    command_id = str(uuid.uuid4())
+    message = {
+        "type": "command_result",
+        "ota_recovery_receipt": True,
+        "command_id": command_id,
+        "status": "completed",
+        "result": {"success": True, "installed_version_code": 10220},
+    }
+    async with r.db.sessions() as db:
+        await bind_tenant_context(db, str(r.world.org_a.id))
+        device = await db.get(Device, enrolled.device_id)
+        device.meta = {**(device.meta or {}), "ota_recovery_receipts": [{
+            "command_id": command_id,
+            "sha256": "a" * 64,
+            "version_name": "1.2.20-dev",
+            "version_code": 10220,
+            "status": "completed",
+            "failure_code": None,
+            "installed_version_code": 10220,
+            "recovered_after_process_restart": True,
+            "recorded_at": "2026-09-25T00:00:00+00:00",
+        }]}
+        await db.commit()
+
+    async with r.db.sessions() as db:
+        assert await is_persisted_ota_recovery_replay(
+            db, device_id=str(enrolled.device_id), org_id=str(r.world.org_a.id), message=message,
+        )
+    async with r.db.sessions() as db:
+        assert not await is_persisted_ota_recovery_replay(
+            db, device_id=str(enrolled.device_id), org_id=str(r.world.org_b.id), message=message,
+        )
+
+
 @pytest.mark.parametrize("credential", ["device", "refreshed", "enrollment_key", "user"])
 async def test_auth_ack_precedes_registry_publication_and_commands(agent_runtime, credential):
     r = agent_runtime
