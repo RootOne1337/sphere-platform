@@ -36,10 +36,12 @@ describe('DeviceBulkDeleteButton', () => {
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'Удалить выбранные устройства (2)' }));
-    expect(screen.getByRole('dialog')).toHaveTextContent('APK и приложения на Android останутся установленными');
+    expect(screen.getByRole('dialog')).toHaveTextContent('Обновления и приложения на Android не затрагиваются');
+    expect(screen.getByRole('dialog')).toHaveTextContent('история задач и событий сохранится');
+    expect(screen.getByRole('dialog')).toHaveTextContent('refresh-доступ отзывается');
     expect(onDelete).not.toHaveBeenCalled();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Удалить записи (2)' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Убрать из каталога (2)' }));
     expect(onDelete).toHaveBeenCalledWith(deviceIds);
     expect(onDeleted).not.toHaveBeenCalled();
     expect(await screen.findByRole('button', { name: 'Удаление…' })).toBeDisabled();
@@ -47,7 +49,7 @@ describe('DeviceBulkDeleteButton', () => {
     resolveDelete({ deleted: 2 });
 
     await waitFor(() => expect(onDeleted).toHaveBeenCalledTimes(1));
-    expect(toast.success).toHaveBeenCalledWith('Удалено устройств: 2');
+    expect(toast.success).toHaveBeenCalledWith('Убрано из активного каталога: 2');
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
@@ -64,14 +66,14 @@ describe('DeviceBulkDeleteButton', () => {
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'Удалить выбранные устройства (2)' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Удалить записи (2)' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Убрать из каталога (2)' }));
 
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith(
       'Не удалось удалить устройства',
       { description: 'Forbidden' },
     ));
     expect(screen.getByRole('alert')).toHaveTextContent('Forbidden');
-    expect(screen.getByRole('button', { name: 'Удалить записи (2)' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Убрать из каталога (2)' })).toBeEnabled();
     expect(onDeleted).not.toHaveBeenCalled();
   });
 
@@ -125,11 +127,11 @@ describe('DeviceBulkDeleteButton', () => {
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'Удалить выбранные устройства (2)' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Удалить записи (2)' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Убрать из каталога (2)' }));
 
     await waitFor(() => expect(toast.warning).toHaveBeenCalledWith(
-      'Удаление завершено частично',
-      expect.objectContaining({ description: expect.stringContaining('Удалено 1 из 2') }),
+      'Каталог обновлён частично',
+      expect.objectContaining({ description: expect.stringContaining('Убрано 1 из 2') }),
     ));
     expect(onDeleted).not.toHaveBeenCalled();
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
@@ -148,7 +150,7 @@ describe('DeviceBulkDeleteButton', () => {
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'Удалить выбранные устройства (2)' }));
-    const confirmButton = screen.getByRole('button', { name: 'Удалить записи (2)' });
+    const confirmButton = screen.getByRole('button', { name: 'Убрать из каталога (2)' });
     fireEvent.click(confirmButton);
     fireEvent.click(confirmButton);
 

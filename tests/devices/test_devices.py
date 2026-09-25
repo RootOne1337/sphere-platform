@@ -204,7 +204,7 @@ class TestDevicesCRUD:
     async def test_delete_device(
         self, device_client: AsyncClient, admin_client: AsyncClient
     ):
-        """DELETE /devices/{id} → 204, затем GET → 404.
+        """DELETE /devices/{id} archives the record and removes it from inventory.
         device_manager не имеет device:delete, поэтому удаление выполняет org_admin.
         """
         create_r = await device_client.post(
@@ -216,7 +216,12 @@ class TestDevicesCRUD:
         assert del_r.status_code == 204
 
         get_r = await device_client.get(f"/api/v1/devices/{device_id}")
-        assert get_r.status_code == 404
+        assert get_r.status_code == 200
+        assert get_r.json()["is_active"] is False
+
+        inventory = await device_client.get("/api/v1/devices")
+        assert inventory.status_code == 200
+        assert device_id not in {item["id"] for item in inventory.json()["items"]}
 
     async def test_list_devices_pagination(self, device_client: AsyncClient):
         """GET /devices?page=1&per_page=2 → корректная пагинация."""

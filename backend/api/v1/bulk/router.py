@@ -56,7 +56,7 @@ async def bulk_action(
 @router.delete(
     "",
     response_model=BulkDeleteResponse,
-    summary="Массовое удаление устройств (требует org_admin или выше)",
+    summary="Убрать устройства из активного каталога, сохранив историю (org_admin+)",
 )
 async def bulk_delete(
     body: BulkDeleteRequest,

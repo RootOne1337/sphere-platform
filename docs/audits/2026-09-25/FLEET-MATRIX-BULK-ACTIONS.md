@@ -50,13 +50,29 @@ The affected controls now use explicit API contracts, per-device outcomes, visib
 
 **Evidence / reproduction:** select one or more rows, confirm delete, and make the endpoint return 403 or a network error. The old handler had no error path and selection was cleared before the response. Regression tests exercise cancel, failure, retained selection, duplicate submission, the 500-item limit, and partial results.
 
-**Fix:** single and bulk delete use an accessible in-app confirmation dialog. A failure remains visible in the dialog and selection is retained; successful deletion clears selection only after the API confirms the deleted count. Partial results are reported. Renamed the service method to `bulk_delete`; the UI states the true scope: Sphere catalog records are removed, Android apps remain installed, and an active agent can register again.
+**Fix:** single and bulk removal use an accessible in-app confirmation dialog. A failure remains visible in the dialog and selection is retained; successful removal clears selection only after the API confirms the count. Partial results are reported. The action now retires records from active inventory, revokes device refresh credentials, and preserves task/event history and foreign-key references.
 
 **Affected files:** `frontend/src/features/devices/DeviceBulkDeleteButton.tsx`, `frontend/src/features/devices/DeviceDeleteConfirmationDialog.tsx`, `frontend/app/(dashboard)/devices/page.tsx`, `backend/services/device_service.py`, `backend/api/v1/bulk/router.py`, `tests/bulk/test_bulk.py`.
 
 **Regression:** `DeviceBulkDeleteButton.test.tsx`, `DeviceDeleteConfirmationDialog.test.tsx`, and `TestBulkDelete` including organization isolation and idempotent repeated deletion. A production-browser smoke test verified that cancel sent zero DELETE requests, a 403 left the selection available, and a later 200 cleared it.
 
-**Residual risk:** delete is intentionally a hard delete of the Sphere device record, not a device wipe or APK uninstall. Audit/retention policy for deleted inventory records remains a product decision.
+**Residual risk:** archived rows are omitted from the default inventory list but remain addressable by ID for history and can be reactivated by an authorized update. This action does not uninstall the Android app or remove its game data. An online device may retain its already-issued short-lived access token until its normal expiry; WebSocket and task admission paths still enforce active-device state.
+
+### FLEET-009 — bulk removal returned HTTP 500 for devices with task history
+
+**Severity:** P1 — observed in the active pilot and blocks fleet cleanup for devices with retained work history.
+
+**Root cause:** both single and bulk removal called `AsyncSession.delete(Device)`. PostgreSQL correctly rejected the parent-row delete when `tasks.device_id` or `pipeline_runs.device_id` still referenced the device. Bulk deletion is one transaction, so one referenced row rolled back the whole selected batch. The usual SQLite test engine did not enforce PostgreSQL foreign keys, which left this path uncovered.
+
+**Evidence / reproduction:** the supplied browser console shows `DELETE /api/v1/devices/bulk` returning HTTP 500. The active pilot backend log records `ForeignKeyViolationError` for `tasks_device_id_fkey` on that same route. A new regression test was first run against the isolated local PostgreSQL test database and failed with the same constraint error when one selected device had a task and a second selected device did not.
+
+**Fix:** removal now marks owned active device rows inactive, sets the stored status offline, clears refresh-token hashes and rotation state, and preserves task, pipeline, event, and account history. The default device inventory query excludes inactive rows. Repeating the request returns zero without deleting history. Single-device removal uses the same retirement path.
+
+**Affected files:** `backend/services/device_service.py`, `backend/api/v1/bulk/router.py`, `backend/api/v1/devices/router.py`, `backend/schemas/bulk.py`, `frontend/src/features/devices/DeviceBulkDeleteButton.tsx`, `tests/production/test_device_bulk_retirement.py`, `tests/bulk/test_bulk.py`, `tests/devices/test_devices.py`.
+
+**Regression:** the isolated PostgreSQL test asserts bulk removal succeeds with linked history, retained task rows, hidden inventory rows, refresh-token rejection, and idempotent replay. The backend unit tests cover single removal, tenant scoping, and repeat requests.
+
+**Residual risk:** the fix must be deployed to the pilot backend before the live button can work. At audit time the active containers still use image tag `e308b1b`, while PR #19 is ahead at `d8c2562`; the public page also served a different Devices chunk than the local build. No live deletion was replayed during this audit.
 
 ### FLEET-004 — stopping broadcast did not unmount the streams
 

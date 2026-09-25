@@ -47,14 +47,14 @@ for tested behavior and remaining limits.
 | `POST` | `/api/v1/device-events/{event_id}/processed` | device-events | 200, 422 | Mark Event Processed |
 | `GET` | `/api/v1/devices` | devices | 200, 422 | Список устройств с пагинацией и фильтрацией |
 | `POST` | `/api/v1/devices` | devices | 201, 422 | Создать устройство |
-| `DELETE` | `/api/v1/devices/bulk` | devices, bulk | 200, 422 | Массовое удаление устройств (требует org_admin или выше) |
+| `DELETE` | `/api/v1/devices/bulk` | devices, bulk | 200, 422 | Убрать устройства из активного каталога, сохранив историю (org_admin+) |
 | `POST` | `/api/v1/devices/bulk/action` | devices, bulk | 200, 422 | Массовая операция над устройствами (max 500 за раз) |
 | `GET` | `/api/v1/devices/me` | devices, devices | 200, 422 | Информация об устройстве по X-API-Key (для агента) |
 | `POST` | `/api/v1/devices/refresh` | devices | 200, 422 | Refresh Device |
 | `POST` | `/api/v1/devices/register` | devices | 201, 422 | Автоматическая регистрация устройства (для агентов) |
 | `POST` | `/api/v1/devices/status/bulk` | devices | 200, 422 | Live статус для batch устройств (MGET — одна RTT до Redis) |
 | `GET` | `/api/v1/devices/status/fleet` | devices | 200 | Сводный статус всего fleet организации |
-| `DELETE` | `/api/v1/devices/{device_id}` | devices | 204, 422 | Удалить устройство |
+| `DELETE` | `/api/v1/devices/{device_id}` | devices | 204, 422 | Убрать устройство из активного каталога, сохранив историю |
 | `GET` | `/api/v1/devices/{device_id}` | devices | 200, 422 | Получить устройство по ID |
 | `PUT` | `/api/v1/devices/{device_id}` | devices | 200, 422 | Обновить устройство |
 | `POST` | `/api/v1/devices/{device_id}/connect` | devices | 204, 422 | Инициировать ADB подключение через PC Agent (TZ-03 stub) |

@@ -46,11 +46,11 @@ export function DeviceBulkDeleteButton({
       if (result.deleted === ids.length) {
         onDeleted();
         setConfirmationOpen(false);
-        toast.success(`Удалено устройств: ${result.deleted}`);
+        toast.success(`Убрано из активного каталога: ${result.deleted}`);
       } else {
         setConfirmationOpen(false);
-        toast.warning('Удаление завершено частично', {
-          description: `Удалено ${result.deleted} из ${ids.length}. Список обновится; оставшиеся устройства останутся выделенными, если они ещё существуют.`,
+        toast.warning('Каталог обновлён частично', {
+          description: `Убрано ${result.deleted} из ${ids.length}. Оставшиеся записи сохранятся выделенными, если они ещё существуют.`,
         });
       }
     } catch (error) {
@@ -90,8 +90,8 @@ export function DeviceBulkDeleteButton({
       <DeviceDeleteConfirmationDialog
         open={confirmationOpen}
         title="Удалить устройства из каталога?"
-        description="Будут удалены записи выбранных устройств из каталога Sphere. APK и приложения на Android останутся установленными. Запущенный агент может зарегистрировать устройство снова."
-        confirmLabel={`Удалить записи (${deviceIds.length})`}
+        description="Устройства будут убраны из активного каталога, а история задач и событий сохранится. Обновления и приложения на Android не затрагиваются; refresh-доступ отзывается."
+        confirmLabel={`Убрать из каталога (${deviceIds.length})`}
         pendingLabel="Удаление…"
         isPending={busy}
         errorMessage={errorMessage ? `${errorMessage} Выделение сохранено.` : null}

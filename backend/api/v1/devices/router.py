@@ -339,7 +339,7 @@ async def update_device(
     "/{device_id}",
     status_code=204,
     response_model=None,
-    summary="Удалить устройство",
+    summary="Убрать устройство из активного каталога, сохранив историю",
 )
 async def delete_device(
     device_id: uuid.UUID,

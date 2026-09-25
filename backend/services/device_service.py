@@ -147,7 +147,7 @@ class DeviceService:
         page: int = 1,
         per_page: int = 50,
     ) -> tuple[list[DeviceResponse], int]:
-        base_conditions = [Device.org_id == org_id]
+        base_conditions = [Device.org_id == org_id, Device.is_active.is_(True)]
 
         if status:
             try:
@@ -269,7 +269,8 @@ class DeviceService:
 
     async def delete_device(self, device_id: uuid.UUID, org_id: uuid.UUID) -> None:
         device = await self._get_device(device_id, org_id)
-        await self.db.delete(device)
+        self._retire_device(device)
+        await self.db.flush()
 
     # ── Status (live Redis) ──────────────────────────────────────────────────
 
@@ -339,7 +340,7 @@ class DeviceService:
     async def bulk_delete(
         self, device_ids: list[str], org_id: uuid.UUID
     ) -> int:
-        """Hard-delete owned device records from the catalog; Android agents are untouched."""
+        """Remove owned devices from active inventory while retaining task history."""
         uuids: list[uuid.UUID] = []
         for did in device_ids:
             try:
@@ -350,13 +351,27 @@ class DeviceService:
             return 0
         stmt = (
             select(Device)
-            .where(Device.id.in_(uuids), Device.org_id == org_id)
+            .where(
+                Device.id.in_(uuids),
+                Device.org_id == org_id,
+                Device.is_active.is_(True),
+            )
         )
         devices = (await self.db.execute(stmt)).scalars().all()
         for device in devices:
-            await self.db.delete(device)
+            self._retire_device(device)
         await self.db.flush()
         return len(devices)
+
+    @staticmethod
+    def _retire_device(device: Device) -> None:
+        """Deactivate an inventory record without deleting referenced history."""
+        device.is_active = False
+        device.last_status = DeviceStatus.OFFLINE
+        device.refresh_token_hash = None
+        device.refresh_previous_token_hash = None
+        device.refresh_rotation_key_hash = None
+        device.refresh_token_expires_at = None
 
     # ── Screenshot ───────────────────────────────────────────────────────────
 

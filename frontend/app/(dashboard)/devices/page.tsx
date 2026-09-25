@@ -168,7 +168,7 @@ export default function DevicesPage() {
     try {
       await deleteDevice.mutateAsync(target.deviceId);
       setSingleDeleteDialog(null);
-      toast.success(`Устройство «${target.deviceName}» удалено из каталога`);
+      toast.success(`Устройство «${target.deviceName}» убрано из активного каталога`);
     } catch (error) {
       const message = getApiErrorMessage(
         error,
@@ -542,9 +542,9 @@ export default function DevicesPage() {
       {/* Диалог удаления одной записи */}
       <DeviceDeleteConfirmationDialog
         open={singleDeleteDialog !== null}
-        title={singleDeleteDialog ? `Удалить «${singleDeleteDialog.deviceName}» из каталога?` : 'Удалить устройство из каталога?'}
-        description="Будет удалена запись устройства из каталога Sphere. APK и приложения на Android останутся установленными; работающий агент может зарегистрироваться снова."
-        confirmLabel="Удалить запись"
+        title={singleDeleteDialog ? `Убрать «${singleDeleteDialog.deviceName}» из активного каталога?` : 'Убрать устройство из активного каталога?'}
+        description="История задач и событий сохранится. Refresh-доступ устройства будет отозван; приложение и данные Android не затрагиваются."
+        confirmLabel="Убрать запись"
         pendingLabel="Удаление…"
         isPending={deleteDevice.isPending}
         errorMessage={singleDeleteError}
