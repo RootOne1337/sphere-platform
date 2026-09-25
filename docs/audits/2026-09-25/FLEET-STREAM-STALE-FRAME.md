@@ -1,7 +1,7 @@
 # AUD-175 · Fleet viewer мог показывать остановившееся видео как live
 
 **Дата:** 25 сентября 2026 · **Severity:** P1 · **Статус:** исправлено в source,
-локально проверено; pilot rollout ещё не выполнен.
+GitHub CI пройден; frontend image `e308b1b` развёрнут в изолированном pilot.
 
 [Fleet stream implementation](../../../frontend/components/sphere/DeviceStream.tsx) ·
 [Regression](../../../frontend/__tests__/stream/reconnect.test.tsx) ·
@@ -40,9 +40,13 @@ unmount. До первого кадра UI остаётся в состояни�
   stop, then recovers on a new frame` проходит.
 - Полный frontend Jest: **35 suites / 277 tests passed**; `npm run type-check`
   passed.
-- GitHub frontend CI на предыдущем commit прошёл; новый source change требует
-  отдельного CI прогона.
-- Изменение ещё не развёрнуто в pilot.
+- Полный GitHub CI для head `e308b1b` прошёл: frontend tests/types/build,
+  backend integration и Redis acceptance, Android debug build/tests, security,
+  RLS, lint и production-image bootstrap. Deploy job был пропущен по guard; pilot
+  обновлён отдельно и вручную.
+- Собранный production frontend container и pilot runtime вернули HTTP 200 для
+  `/login`, `/stream` и `/stream/test-device`; контейнер healthy. Это подтверждает
+  загрузку страниц, но не наличие удалённых кадров или browser decode.
 
 Этот fix делает статус после потери уже начавшегося видео достоверным и запускает
 повторный запрос keyframe. Он не объясняет отсутствие первого IDR/P от удалённого

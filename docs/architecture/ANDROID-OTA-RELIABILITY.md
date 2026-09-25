@@ -1,44 +1,48 @@
 # Отказоустойчивое обновление Android-агента
 
-**Актуальный read-only срез: 25 сентября 2026, 04:11 Asia/Yekaterinburg.**
-Изолированные backend и frontend pilot работают на image `b491a66`, оба healthy;
-`/api/v1/health/readyz` ответил `200`. Локально собран и подписан candidate
-`1.2.20-dev / 10220` (`.local-pilot/apk/SphereAgent-pilot-candidate-1.2.20-dev-b491a66.apk`,
-SHA-256 `17566CF7022AEDF27BB6F298251F2EAD1B6101BDB4555A1ADDF3436A28CB032A`):
-на `emulator-5554` версия 10220 установлена вручную, а `emulator-5556` пока имеет
-10219. Candidate 10220 отсутствует в OTA catalog. В работающем каталоге максимум
-`android/dev` — 1.2.9/10209, максимум `android-canary/dev` — 1.2.19/10219.
+**Проверенный runtime snapshot: 25 сентября 2026, 15:38 Asia/Yekaterinburg.**
+Backend/frontend pilot image `e308b1b` healthy; readiness вернул `status=ready`,
+`/login`, `/stream`, `/stream/test-device` и `/fleet` — HTTP 200. Это не доказывает
+открытый WebSocket или декодированный видеокадр. После пересоздания backend в том
+же Compose project OTA catalog сохранил все 11 записей; runtime mount использует
+project-scoped `ota_data` volume. Содержимое каждого старого APK artifact отдельно
+не checksum-verified. Остальные pilot dependencies остались healthy.
 
-Дополнительная диагностика 04:26 обнаружила HTTP 401 при повторной регистрации
-`emulator-5556`; одинаковые локальные bootstrap credentials лежат на обоих
-локальных клонах и не совпадают с конфигурацией этого pilot. Причина и безопасный
-порядок route-bound восстановления описаны в
-[AUD-172](../audits/2026-09-25/CLONED-ENROLLMENT-401.md). Этот отказ мешает
-повторно привязать устройство до проверки и обновления enrollment-конфигурации.
+ADB на этом хосте видит только два локальных эмулятора. Candidate
+`1.2.21-dev/10221` по SHA-256
+`69a275b052477f8b0ce445149369ecba3b566c42f3d2a0fae0b6f5641deb98f8` содержит полный
+GIT_SHA `182d40b7ccd8be27c490eb8cacfd9f1da674a644`; Android-код после этого commit
+не менялся. Адресный install на `emulator-5554` прошёл, и установленная версия
+теперь 1.2.21/10221. APK использует debug-сертификат
+`3ab40797d26e4f52f9e440afc6fe69f197caef71a5a27c63c86735bb1801871f`, совпавший с
+обоими прежними локальными пакетами. PID приложения оставался прежним в коротком
+наблюдении, crash buffer был пуст до/после. Это install/start smoke, не доказательство
+свежего auth heartbeat или потока. `emulator-5556` оставлен 1.2.19/10219.
 
-API-срез содержит 10 записей: 6 `online`, 4 `offline`; только у 3 heartbeat моложе
-90 секунд, у 7 heartbeat старше порога или отсутствует. Только одна запись
-сообщает `agent_version_code=10220`, у 9 версия неизвестна. Запись локального
-`emulator-5556` находится в `offline` без heartbeat. Поэтому OTA на этом canary
-пока нельзя подтвердить, а массовое обновление 20 заявленных удалённых экземпляров
-не начато: сервер не видит 20 свежих уникальных записей и не знает их версии.
+Runtime OTA catalog: `android/dev` latest 1.2.9/10209;
+`android-canary/dev` latest 1.2.19/10219. Candidate 10221 отсутствует в обычном
+`android/dev`, который запрашивает агент; поэтому автоматическое обновление на
+1.2.21 не начнётся. `sphere-agent-config` не содержит APK и остаётся источником
+bootstrap/discovery. Массовая OTA остаётся **NO-GO** до безопасной публикации в
+канал с адресным canary и подтверждённым remote post-install.
 
-В source есть два пока не развёрнутых изменения: серверное сохранение и повторное
-подтверждение терминальных OTA receipts ([AUD-171](../audits/2026-09-25/OTA-TERMINAL-RECEIPTS.md))
-и честное состояние первого/устаревшего кадра в `Open`
-([AUD-170](../audits/2026-09-25/ANDROID-STREAM-OBSERVABILITY.md)). Независимые
-artifact origins, staged rollout и удалённая приёмка остаются открыты.
+Исторический API-срез 14:30:39 и повторная регистрация 5556 с HTTP 401 описаны
+ниже по датам и отдельно в [AUD-172](../audits/2026-09-25/CLONED-ENROLLMENT-401.md).
+Свежий авторизованный fleet aggregate после этого rollout не получен; 20 удалённых
+уникальных устройств ADB этого хоста не подтверждает.
 
-Compose OTA storage source-fix в текущей ветке задаёт единый путь
-`/app/backend/updates/releases.json`; local pilot и production используют
-project-scoped named volume `ota_data`. Before/after Compose regressions проверяют,
-что каталог и `artifacts/` останутся при пересоздании backend в том же Compose
-project. До первого обновления действующего старого контейнера его `/tmp`-каталог
-и `artifacts/` нужно экспортировать и проверить, затем перенести в volume; этот
-migration шаг не запускался. Runtime pilot не перезапускался. Смена Compose
-project name выберет другой volume. Локальный JSON каталог пока не транзакционен
-между несколькими Gunicorn workers/репликами, а том не защищает от потери всего
-хоста.
+Изменения `e308b1b` развёрнуты на pilot вручную после полного зелёного GitHub CI.
+Fleet32 и remote video остаются открыты: PH008 ранее передавал SPS/PPS без IDR/P,
+а Android egress A/B не выполнен. См. [AUD-164](../audits/2026-09-24/REMOTE-INGRESS-AB.md),
+[AUD-171](../audits/2026-09-25/OTA-TERMINAL-RECEIPTS.md), [AUD-175](../audits/2026-09-25/FLEET-STREAM-STALE-FRAME.md).
+
+Compose source задаёт `/app/backend/updates/releases.json` и project-scoped named
+volume `ota_data`. До и после пересоздания backend в том же pilot Compose project
+mount был `/app/backend/updates`, а OTA catalog сохранил 11 записей. Это подтверждает
+сохранение каталога при текущем rollout; хеш каждого APK artifact отдельно не
+проверяли. Смена Compose project name выбирает другой volume и требует миграции.
+Локальный JSON catalog не обеспечивает транзакционную конкурентность между
+несколькими Gunicorn workers/репликами, а том не защищает от потери всего хоста.
 
 [Решение по видео и OTA AUD-163](../audits/2026-09-24/REMOTE-VIDEO-OTA-DECISION.md) ·
 [Подписанный bootstrap](ANDROID-SIGNED-DISCOVERY.md) ·
@@ -71,17 +75,18 @@ project name выберет другой volume. Локальный JSON кат�
 | --- | --- | --- |
 | Bootstrap/config | APK умеет проверять несколько HTTPS источников подписанной конфигурации; принятая конфигурация и версия сохраняются атомарно. См. [signed discovery](ANDROID-SIGNED-DISCOVERY.md). | Валидный локальный bootstrap предшествует config endpoint. Если в golden image остался отозванный или устаревший credential, клон получает 401 на повторной регистрации и не умеет безопасно обновить его из route-bound discovery; см. [AUD-172](../audits/2026-09-25/CLONED-ENROLLMENT-401.md). |
 | Management | Агент использует сохранённые management routes и допускает переключение только после target-bound `auth_ok`. | В текущем pilot подписанный manifest содержал один публичный tunnel route; рабочего независимого WAN ingress не было. |
-| Проверка OTA | `UpdateCheckWorker` запрашивает `/api/v1/updates/latest`; раньше он запускался по периодическому WorkManager расписанию раз в 6 часов. Источник и candidate 1.2.19 теперь дополнительно ставят сетевую one-time проверку при старте приложения и после первой авторизованной WS-связи в service lifetime. Запросы объединяются `KEEP`, а reconnect/boot получают случайную задержку до 120 секунд, чтобы флот не ударил в каталог одновременно. | WorkManager соблюдает ограничения ОС, поэтому время запуска периодической работы не является точным. Ошибки HTTP/auth или отсутствие сети всё ещё задерживают проверку. Candidate ещё не установлен на устройствах. |
-| Выбор релиза | Backend выбирает наибольший `version_code` для platform/flavor. В локальном pilot `android/dev` оставался 1.2.9/10209; `android-canary/dev` получил только адресную проверку кандидата 1.2.18/10218. | Нет полноценного per-device/per-cohort rollout в обычном `latest`; публикация максимума в общем канале затрагивает всех соответствующих агентов. |
+| Проверка OTA | `UpdateCheckWorker` запрашивает `/api/v1/updates/latest`; periodic check раз в 6 часов дополнен сетевой one-time проверкой при старте приложения и после первой авторизованной WS-связи. Запросы объединяются `KEEP`, reconnect/boot получают jitter до 120 секунд. | WorkManager не гарантирует точное время. Candidate 1.2.21 отсутствует в обычном OTA catalog; успешный check не создаёт запись релиза. Ошибки HTTP/auth или отсутствие сети задерживают проверку. |
+| Выбор релиза | Backend выбирает наибольший `version_code` по platform/flavor. Проверенный каталог содержит `android/dev` 1.2.9/10209 и `android-canary/dev` 1.2.19/10219. | Полноценного per-device/per-cohort rollout в `latest` нет; публикация максимума в `android/dev` затронет все соответствующие dev-агенты. |
 | Доставка APK | Клиент проверяет HTTPS, ограничивает URL тем же host, что и management server, ограничивает размер и проверяет SHA-256. При транспортном сбое делает ограниченный повтор через HTTP/1.1. Compose source теперь монтирует каталог OTA и APK в project-scoped named volume, сохраняемый при пересоздании контейнера в том же Compose project. | Нет независимого списка разрешённых artifact mirrors; смена tunnel/DNS меняет и control plane, и download path. Внешнее зеркало не пройдёт текущую same-host проверку. Один локальный том не переживает потерю host; смена project name требует миграции; file catalog также не даёт транзакционной конкурентности между backend workers/репликами. |
 | Установка | На rooted pilot-эмуляторе root `pm install` сработал; при отказе есть PackageInstaller путь. После установки Android заменяет процесс, а агент стартует и заново авторизуется. | Без root/Device Owner/системной привилегии нельзя обещать бесшумную установку на любом обычном Android-телефоне. User-mediated PackageInstaller может требовать подтверждения. |
-| Runtime-подтверждение | На дату среза ADB показывает 1.2.20/10220 на локальном `emulator-5554` и 1.2.19/10219 на `emulator-5556`. Установка 10220 на 5554 была ручной; это не доказывает OTA. | Серверная запись 5556 — `offline` без heartbeat и версии. 10220 ещё не зарегистрирован в catalog, terminal receipt fix пока только в source. Canary по OTA и remote devices не подтверждены. |
+| Runtime-подтверждение | Локальный canary 5554 обновлён `adb install -r` до 1.2.21/10221; package/signature совпали с прежней установкой, PID был стабилен 12 секунд, crash buffer пуст. 5556 оставлен на 1.2.19/10219. | Это install/start smoke, не OTA и не backend heartbeat/video acceptance. Нет свежего авторизованного aggregate, а версии и сертификаты удалённых устройств неизвестны. |
 
-Исходная причина отсутствия обновы на локальном устройстве была конкретной:
-кандидат 1.2.18 не находился в обычном `android/dev` latest, а periodic-only
-проверка могла ждать до следующего окна. APK из CI и релиз в `sphere-agent-config`
-не публикуют запись в работающий backend OTA catalog. Репозиторий
-`sphere-agent-config` — bootstrap/discovery configuration, не источник APK.
+Текущий проверенный release gap: обычный `android/dev` catalog содержит только
+1.2.9/10209, а `android-canary/dev` — 1.2.19/10219; кандидат 1.2.21/10221 в
+каталоге отсутствует. APK запрашивает platform `android`, поэтому запись в отдельном
+`android-canary` platform не является доступной заменой. GitHub Actions debug APK и
+изменение `sphere-agent-config` сами по себе не публикуют release в OTA catalog.
+`sphere-agent-config` — bootstrap/discovery configuration, не APK store.
 
 ## Целевая схема
 

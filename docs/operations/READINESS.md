@@ -4,49 +4,46 @@
 
 ## Текущее состояние после обновления
 
-**Контейнеры и readiness проверены: 25 сентября 2026, 14:37:51 Asia/Yekaterinburg.**
-Изолированный pilot backend и frontend всё ещё работают на image `b491a66`, оба
-контейнера healthy; readiness — `200`. Последний read-only API aggregate устройств
-датирован 14:30:39, локальный ADB — 14:37. Health check не подтверждает состояние
-удалённого парка. Текущие source changes для OTA receipts, Open first-frame и
-presence ещё не развёрнуты. Исторический viewer A/B —
-[AUD-164](../audits/2026-09-24/REMOTE-INGRESS-AB.md); текущее решение по удалённому
-видео и OTA — [AUD-163](../audits/2026-09-24/REMOTE-VIDEO-OTA-DECISION.md).
+**Проверка runtime: 25 сентября 2026, 15:38 Asia/Yekaterinburg.** Изолированный
+Compose project `sphere-pilot-20260911` использует backend и frontend images
+`e308b1b`; оба контейнера healthy. Readiness `status=ready`, `/login`, `/stream`,
+`/stream/test-device` и `/fleet` вернули HTTP 200. Это подтверждает HTTP runtime и
+загрузку страниц, но не WebSocket-сессию и не декодированный видеокадр. Остальные
+семь pilot-контейнеров остались healthy; Quick Tunnel не менялся. Legacy
+`sphere-platform` и `sphere-tunnel` не тронуты. Полный GitHub CI для `e308b1b`
+прошёл; deploy job был намеренно пропущен guard, pilot обновлён вручную.
 
-Последний API aggregate содержал 10 активных DB-записей: Redis имел 5 `online`,
-1 `offline` и 4 записи без status key. Heartbeat не старше 90 секунд был у 3
-online-записей; ещё у 2 online-записей timestamp heartbeat отсутствовал. APK
-version code был известен только у одной записи (`10220`). Это не подтверждает
-20 удалённых уникальных эмуляторов. Исправление преждевременного `online` теперь
-показывает `connecting` отдельно, но pilot ещё работает на старом backend и
-повторный API aggregate после rollout пока не сделан. См. [AUD-173](../audits/2026-09-25/DEVICE-PRESENCE-FIRST-HEARTBEAT.md).
+Свежий авторизованный aggregate устройств после rollout не снимался. Последний
+сохранённый API-срез от 14:30:39 содержал 10 активных DB-записей: Redis имел 5
+`online`, 1 `offline` и 4 записи без status key; только 3 online-записи имели
+heartbeat не старше 90 секунд, у двух online-записей timestamp отсутствовал.
+Он не доказывает 20 удалённых уникальных эмуляторов или состояние после текущего
+rollout. Исправление presence AUD-173 теперь развёрнуто, но повторный API aggregate
+после deploy ещё не подтверждён.
 
-Текущий локальный ADB read-only check видит `emulator-5554` на 1.2.20-dev/10220
-и `emulator-5556` на 1.2.19-dev/10219. Последняя проверка в сохранённом API
-snapshot 04:11 показывала для записи, сопоставлявшейся с 5556, `offline` без
-heartbeat и версии; новые удалённые device IDs этим локальным ADB check не
-подтверждаются.
+Локальный ADB видит только `emulator-5554` и `emulator-5556`; удалённые станции
+недоступны этому ADB. До canary версии были 1.2.20/10220 и 1.2.19/10219.
+Candidate `1.2.21-dev/10221` содержит полный GIT_SHA `182d40b7ccd8be27c490eb8cacfd9f1da674a644`; после этого commit Android-файлы не менялись.
+Его SHA-256 — `69a275b052477f8b0ce445149369ecba3b566c42f3d2a0fae0b6f5641deb98f8`,
+SHA-256 сертификата — `3ab40797d26e4f52f9e440afc6fe69f197caef71a5a27c63c86735bb1801871f`.
+Сертификат совпал с обоими APK, извлечёнными до обновления. Адресный `adb install -r`
+на `5554` успешен; пакет стал 1.2.21/10221. После запуска PID 19349 оставался
+стабильным 12 секунд, crash buffer до и после пуст, agent service работал. Это
+проверяет локальную совместимость/запуск, но не свежий серверный heartbeat и не
+видеокадр. `5556` оставлен на 1.2.19 как контроль.
 
-Дополнительный ADB-срез 04:26: у 5556 сохранены 13 ошибок регистрации HTTP 401.
-У 5554 и 5556 совпадают локальные bootstrap credential fingerprints, а сами
-файлы не совпадают с конфигурацией изолированного pilot. Это подтверждает отказ
-ключа на шаге регистрации и несоответствие локального bootstrap этому pilot;
-точный сервер, ответивший на старый 401, не известен. [AUD-172](../audits/2026-09-25/CLONED-ENROLLMENT-401.md).
+Текущий read-only OTA snapshot: 11 release records; обычный `android/dev` максимум
+1.2.9/10209, `android-canary/dev` максимум 1.2.19/10219. `1.2.21/10221` в каталоге
+отсутствует, поэтому приложение с `platform=android` не может получить этот APK
+автоматически. `sphere-agent-config` остаётся bootstrap/discovery repo, а не APK
+storage. Ни remote stream, ни удалённые подписи/версии, ни автоматическая OTA
+доставка не приняты. Fleet32 и массовая OTA остаются **NO-GO**.
 
-Новый локальный candidate 1.2.21/10221 собран из `182d40b`, подписан пилотным
-ключом и прошёл полный Dev Android suite, но не установлен и не опубликован.
-Предыдущий ADB snapshot остаётся: 5554 на 10220 и 5556 на 10219. Candidate
-1.2.20/10220 на 5554 ставился вручную и не опубликован в OTA catalog;
-Последний сохранённый OTA catalog snapshot (04:11; повторно не запрашивался): `android/dev` latest —
-1.2.9/10209, `android-canary/dev` latest — 1.2.19/10219.
-Глобальная OTA и Fleet32 — **NO-GO**: требуется адресный canary с persisted
-terminal receipt, затем свежие версии и уникальные identities устройств.
-
-Удалённый PH008 ранее отдал viewers только SPS/PPS, без IDR/P; Android egress на
-независимом маршруте не проверен. Cloudflare остаётся гипотезой. Временный ingress
-не является резервом. GitHub CI на предшествующем head `384759c` прошёл; новый CI
-должен включить AUD-173 и следующие source changes. Датированные результаты ниже остаются историческими и не
-переносятся на текущий snapshot.
+Подробности: [AUD-163](../audits/2026-09-24/REMOTE-VIDEO-OTA-DECISION.md) ·
+[AUD-164](../audits/2026-09-24/REMOTE-INGRESS-AB.md) ·
+[AUD-175](../audits/2026-09-25/FLEET-STREAM-STALE-FRAME.md) ·
+[AUD-173](../audits/2026-09-25/DEVICE-PRESENCE-FIRST-HEARTBEAT.md).
+Датированные записи ниже сохраняют прежние даты и версии.
 
 ### История срезов 22–23 сентября
 
