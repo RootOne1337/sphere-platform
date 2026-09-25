@@ -93,9 +93,11 @@ signer SHA-256 `3ab40797d26e4f52f9e440afc6fe69f197caef71a5a27c63c86735bb1801871f
 остаётся на image `b491a66`; последний ADB snapshot показывал `emulator-5554` на 10220 после ручной
 установки, `emulator-5556` — 10219, а серверная запись 5556 `offline` без heartbeat
 и agent version. Новая сборка использует действующий в локальном bootstrap mirror
-вместо ранее сохранённого устаревшего mirror; GitHub Raw primary и текущий gateway
-mirror оба отдавали signed manifest v24. Оба адреса пока зависят от одного
-Quick Tunnel, поэтому это не независимые fault domains. Адресный canary ещё не
+вместо ранее сохранённого устаревшего mirror; GitHub Raw primary и gateway mirror
+— два источника manifest, оба отдали signed manifest v24. Это разные config
+origins. При этом service API/WSS endpoint внутри signed manifest указывает на
+тот же Quick Tunnel, поэтому ingress control/video plane остаётся одним fault
+domain. Адресный canary ещё не
 принят; общая OTA-публикация не выполнялась. Удалённые устройства и поток кадров
 этим исправлением не проверены.
 
