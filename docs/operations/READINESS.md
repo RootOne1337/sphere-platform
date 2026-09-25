@@ -760,3 +760,21 @@ security barrier. [Evidence](../audits/2026-09-05/evidence/compose-settings-befo
 с сохранением данных. Два новых mandatory-container cases учитываются отдельно от
 pytest и image 4 + 1. [Локальное доказательство](../audits/2026-09-05/evidence/postgres-init-after.txt).
 Старые частичные установки и полный Compose/APK/VPN требуют отдельной приёмки.
+
+## Android APK release gate — 25 сентября 2026
+
+Собран локальный приватный candidate `1.2.22-dev` / `10222`, package
+`com.sphereplatform.agent.pilot.debug`, source commit `5365de4`. SHA-256,
+подпись, четыре варианта unit-тестов и pilot lint зафиксированы в
+[полном APK-аудите](../audits/2026-09-25/ANDROID-APK-RELEASE-AUDIT.md).
+APK не устанавливался и не публиковался в OTA/GitHub; signing key в этом
+окружении — debug pilot signer, а не production release key.
+
+**Массовое обновление пока закрыто.** До canary нужно подтвердить отдельным
+Android runtime-тестом повторное подключение, crash-upload и OTA на одном
+устройстве; проверить уникальный LDPlayer VM serial на клонах; заменить
+единственный Quick Tunnel и draft-branch discovery на стабильный primary плюс
+независимый fallback; настроить production signing/release artifact. APK
+собирает логи Sphere и uncaught Java/Kotlin exceptions, но не обещает читать
+system/native crash, ANR или LMK buffers. Полный список gates и recovery
+ограничений — в отчёте выше.
