@@ -1,7 +1,8 @@
 # AUD-168 · Диагностика Android-стрима от захвата до браузера
 
-**Дата:** 25 сентября 2026 · **Статус:** source implementation + unit/regression
-tests; remote APK acceptance **OPEN** · **Fleet32 gate:** NO-GO до canary.
+**Дата:** 25 сентября 2026 · **Статус:** source diagnostics and Open-view frame-state
+fixes have local regression coverage; remote APK acceptance **OPEN** · **Fleet32
+gate:** NO-GO до canary.
 
 [Документация](../../README.md) · [Текущий удалённый A/B](../2026-09-24/REMOTE-INGRESS-AB.md) ·
 [Fleet32 readiness](../2026-09-20/FLEET32-PREFLIGHT.md) ·
@@ -29,6 +30,31 @@ APK ещё не принят на удалённом canary. Нельзя наз
 | AUD-164 / P0, OPEN | В разных сохранённых ingress-срезах локальный `auto-ph-000` доставлял IDR/P через Cloudflare, а удалённый `auto-ph-008` — только SPS/PPS через локальный, Cloudflare и LocalTunnel viewers. В одном 25 Sep конкурентном snapshot PH000 получил 12–13 пакетов и IDR около 40.5 KiB; PH008 на всех трёх viewer ingress получил по 2 пакета / 61 B, SPS/PPS без picture NAL. Это указывает на отсутствие picture NAL выше browser decoder, но Android egress в том сравнении не переключался. Смотрите [A/B evidence](../2026-09-24/REMOTE-INGRESS-AB.md); сырые сетевые captures остаются в локальном ignored evidence. | Новые counters позволяют локализовать часть Android pipeline при установке candidate APK. | Нужны подтверждённый remote APK version, стабильный device identity, подтверждённый command receipt и A/B самого Android egress на независимом маршруте. Cloudflare остаётся гипотезой, не выводом. |
 | AUD-168 / P1 | Старые FPS/queue counters показывали только суммарный результат у APK; очередь OkHttp могла принять кадр, но это не доказывало отправку, получение backend или вывод browser. Счётчик encoded frames также обновлялся после FPS throttle и скрывал намеренно отброшенные кадры. В backend не было API для свежего snapshot, UI не показывал decoder stages. | v2 Android counters считаются на стадиях; backend проверяет схему и tenant, кеширует последний snapshot; UI показывает APK и browser отдельно; Grafana и alerts разделяют capture/render/encoder/queue. Counter encoder теперь снимается до throttle, а throttle drops учитываются отдельно. | Нет server-side per-frame receipt, общего `frame_id`, tunnel hop receipts или корреляции кадра в UI. Remote acceptance остаётся OPEN. |
 | AUD-169 / P2 | `CrashHandler` писал uncaught exception в `sphere_crash.log`, а `LogUploadWorker` отправлял file logs/logcat без этого файла. Кроме того, Android logcat collector допускает до 2 MiB, а `/api/v1/logs/upload` отклоняет тело свыше 512 KiB; шумный пакет мог получать HTTP 413 и повторяться без конца. | Worker добавляет tail crash record, держит полный UTF-8 body не более 480 KiB и удаляет crash snapshot только после успешного HTTP ответа, если файл не изменился во время передачи. Новая crash запись и неуспешный upload сохраняются к следующей попытке. | Worker планируется WorkManager; отправка не мгновенная и зависит от сети, регистрации и следующего успешного запуска. Размер retention на сервере всё ещё требует quota. |
+| AUD-170 / P1 | Вкладка `Open` в `DeviceInspectorDetail` объявляла `streaming` после открытия WebSocket. На пустом потоке пользователь видел чёрный canvas без указания, что видеокадра не было; после остановки кадров статус также не устаревал. | Состояние меняется на `streaming` только после декодированного `VideoFrame`, отрисованного на canvas. До первого кадра показывается ожидание; при отсутствии новых кадров 10 секунд — stale; reconnect сбрасывает ожидание. | Это исправляет достоверность UI, но не создаёт удалённый IDR/P и не меняет Android egress, backend или tunnel. Runtime-приёмка пилота ещё не выполнена. |
+
+### AUD-170 — достоверность вкладки Open
+
+`frontend/src/features/devices/DeviceInspectorDetail.tsx` использует legacy
+`frontend/src/components/streaming/DeviceStream.tsx`. До фикса `decoder.init()`
+резолвился при успешном открытии WebSocket, и `.then()` выставлял `streaming`, хотя
+`H264Decoder` ещё не передал ни одного кадра в canvas. Поэтому индикатор Android о
+запущенном MediaProjection и чёрное окно в браузере могли сопровождаться ложным
+статусом «стрим работает».
+
+Регрессия воспроизведена тестом `device-stream-first-frame.test.tsx`: разрешение
+`init()` без вызова `onFrame` должно оставлять экран в ожидании и скрывать controls.
+Исправление ждёт callback из `renderFrame()` после `drawImage`, возвращает статус
+ожидания после reconnect, показывает `stale` через 10 секунд без новых кадров и
+игнорирует callbacks уже уничтоженного decoder. При окончательном disconnect
+таймер устаревания очищается, чтобы offline не сменился ложным stale через 10 секунд.
+Пять stream suites: 44 passed; frontend type-check прошёл. Изолированный standalone smoke вернул HTTP 200 для `/`,
+`/login`, `/devices`, `/stream/test-device`; все 24 подключённых JS assets ответили
+200.
+
+Это диагностический фикс интерфейса. Он помогает отличить «WebSocket открыт, кадра
+нет» от «кадр действительно декодирован», но не является доказательством причины
+чёрного экрана на удалённом Android и не меняет Cloudflare, маршрут APK или backend.
+В момент аудита source changes ещё не были развёрнуты в pilot.
 
 ## Доказательная цепочка видеокадра
 
@@ -204,17 +230,16 @@ Source regression должен доказать все границы, а не �
 5. `python -m scripts.export_api_docs --check` сверяет route с `docs/openapi.json`
    и `docs/api-endpoints.md`; `promtool check rules` проверяет новые alert rules.
 
-Проверка этой ревизии 25 сентября 2026: Android `:app:testDevDebugUnitTest` —
-644 теста, 0 failures/errors; backend stream/heartbeat/queue/API regression —
-71 passed; frontend decoder/diagnostics — 26 passed; `npm run type-check`, Ruff,
-OpenAPI export check и `git diff --check` завершились успешно. `promtool check
-rules` на Prometheus 2.48.0 проверил все 16 alert rules; JSON dashboard и YAML
-rules также успешно разобраны. Локальный `assembleDevDebug` собрал
-`1.2.19-dev` / versionCode `10219`; это debug candidate, не опубликованный и не
-установленный на удалённые устройства. Для диагностики его нужно координированно
-сочетать с backend и frontend из этой же ревизии. Android Gradle Plugin 8.3.2
-предупреждает, что compileSdk 35 выше его проверенной версии 34; тесты и сборка
-прошли, но обновление toolchain остаётся отдельной задачей.
+Проверка актуальных source changes 25 сентября 2026: Android
+`:app:testDevDebugUnitTest` — **650 tests, 0 failures, 0 errors, 1 skipped**;
+frontend stream suites — **44 passed**, `npm run type-check` прошёл; backend
+OTA/recovery suites — **91 passed**, PostgreSQL/Redis receipt regressions — **3
+passed**. Ruff и OpenAPI export check прошли. Ранее собранный `1.2.19-dev` /
+10219 относится к более старому commit и не содержит всех текущих изменений.
+Новый `1.2.21-dev / 10221` собирается отдельно после изменения versionCode; до
+проверки signer, package ID, SHA-256 и runtime canary он не считается релизом.
+Android Gradle Plugin 8.3.2 предупреждает, что compileSdk 35 выше его проверенной
+версии 34; тесты и сборка прошли, обновление toolchain остаётся отдельной задачей.
 
 После установки candidate нужен remote canary с подтверждённым versionCode:
 
