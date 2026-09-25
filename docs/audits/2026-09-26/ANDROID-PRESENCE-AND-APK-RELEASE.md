@@ -8,13 +8,16 @@ video-packet evidence. Sphere's device client in this workflow is the Android
 APK on an emulator or phone. A PC Agent is not a prerequisite or part of this
 diagnosis.
 
-**Fleet rollout: NO-GO.** The source and two attached local emulators are at
-1.2.22-dev, but that candidate is not the promoted APK and is absent from the
-running pilot OTA catalog. The last promoted local APK alias and the main OTA
-channel are both still 1.2.9-dev. Separately, a reproducible cross-worker
-disconnect race could overwrite a newer Android session's Redis presence. The
-source fix and regression test are recorded below; remote video remains a
-separate unresolved issue.
+**Fleet rollout: NO-GO.** The checked-out APK source and private candidate are
+`1.2.23 / 10223`; canary `5554` now runs that candidate and reports a fresh
+heartbeat. Control `5556` remains on `1.2.22-dev / 10222`. The latest aggregate
+at 21:05:48 UTC has 12 records in `connecting` without a fresh heartbeat, so their installed
+versions remain unknown. The promoted pilot alias and default `android/dev` OTA
+channel still point to `1.2.9-dev / 10209`; `android-canary/dev` points to
+`1.2.19-dev / 10219`. The 1.2.23 candidate is debug-signed and includes a
+private development enrollment credential, so it remains local and is not a
+fleet release. Backend fixes `7722d50` and `2168c33` are live in the isolated
+pilot, but presence remains degraded and remote video is unresolved.
 
 ## Findings
 
@@ -55,44 +58,68 @@ not replaced by a session-scoped stale disconnect.
 - Existing Android WebSocket, connection manager and heartbeat tests.
 
 **Validation:** the affected backend set passed **70 tests**, including the
-two-client WATCH race; Ruff passed for all changed Python files. This validates
-the Redis ownership transition in an isolated test. It does not prove the
-remote fleet has stopped flapping until the new backend is deployed and its
-reconnect behavior is observed.
+two-client WATCH race; Ruff passed for all changed Python files. The fix was
+deployed to the isolated `sphere-pilot-20260911` backend on 25 September at
+20:11 UTC as image `sphere-pilot-20260911-backend:7722d50`; the container became
+healthy and local/public readiness returned HTTP 200. The rollout preserved all
+37 other containers and the 12-file OTA inventory, with zero active stream
+viewers before or after. This proves the new image is running in that pilot; it
+does not prove the remote fleet has stopped flapping.
+
+**Post-deploy observation:** a read-only Redis summary at 20:31 UTC found 14
+tracked status records: 2 `online` with heartbeat younger than 45 seconds and 12
+`connecting` with no heartbeat. The two reporting devices identify as
+`1.2.22-dev`; the other twelve have no version because they have sent no
+heartbeat. A structured-log summary over the preceding ten minutes found 142
+successful Android auth events across 12 device IDs, 99 old-connection
+evictions, 99 closes with code `4001`, and 41 disconnects with code `1005` across
+12 IDs. No `invalid_token` or `auth_error` events appeared. The initial rollout
+script reported zero reconnecting IDs because its regex did not match JSON's
+quoted `"device_id"` key; that counter is invalid and is not used as evidence.
+The later JSON-field summary is the corrected measurement. This directly shows
+repeated reconnect/eviction churn after the backend restart, but does not prove
+the presence race is the sole cause.
 
 **Residual risk:** this fix does not make the process-local connection registry
 shared, and does not prove task execution recovery across a reconnect. The
-current pilot has multiple Uvicorn workers. Reconnect/load acceptance across
-workers is still required after deployment.
+current pilot has multiple Uvicorn workers. The 12 degraded records and repeated
+disconnects remain open; cross-worker reconnect/load acceptance is still
+required.
 
-### AUD-2026-09-26-02 — P1 release readiness: candidate 1.2.22 is not in the OTA channel
+### AUD-2026-09-26-02 — P1 release readiness: APK candidate is not in the OTA channel
 
 **Verified version facts (read-only checks):**
 
 | Source | Observed version | Meaning |
 | --- | --- | --- |
-| `android/version.properties` | `1.2.22`, code `10222` | Current source version; dev builds append `-dev`. |
-| `emulator-5554` PackageManager | `1.2.22-dev`, code `10222` | Installed local Android package. |
+| `android/version.properties` | `1.2.23`, code `10223` | Current source version after the session-replacement protocol fix; dev builds append `-dev`. |
+| `emulator-5554` PackageManager | `1.2.23-dev`, code `10223` | Addressed `adb install -r` canary; process remained alive after launch. |
 | `emulator-5556` PackageManager | `1.2.22-dev`, code `10222` | Installed local Android package. |
 | `.local-pilot/apk/manifest.json` and `LATEST-SphereAgent-pilot.apk` | `1.2.9-dev`, code `10209` | Last promoted local pilot artifact, not the current source candidate. |
 | Running `sphere-pilot-20260911` catalog, `android/dev` | max `1.2.9-dev`, code `10209` | Main automatic OTA channel. |
 | Same catalog, `android-canary/dev` | max `1.2.19-dev`, code `10219` | Canary channel; not the default `android/dev` query. |
-| Private candidate JSON/APK | `1.2.22-dev`, code `10222`, source `5365de4` | Built candidate, not promoted to the OTA catalog. |
+| Previous private candidate JSON/APK | `1.2.22-dev`, code `10222`, source `5365de4` | Earlier candidate, not promoted. |
+| Current private candidate JSON/APK | `1.2.23-dev`, code `10223`, source `2168c33` | Exact source-pinned debug candidate; SHA-256 `b3eefd9ebaa569e822254ba6dd7439572db1147fde1782758496d31a044318c1`; not promoted. |
 
 The Android `UpdateCheckWorker` asks for the exact pair
 `platform=android&flavor=dev` and ignores releases whose version code is not
 greater than the installed code. Consequently, this pilot cannot discover
-1.2.22 through normal automatic catalog update. The report that an emulator is
-already on 1.2.22 is true for the two local PackageManager reads; it does not
-mean the 1.2.22 artifact is published or that remote devices installed it.
+1.2.23 through normal automatic catalog update. The report that both local
+devices were on 1.2.22 was true before the canary install; it did not mean that
+artifact was published or that remote devices installed it. After the addressed
+canary update, a transient snapshot reported three fresh heartbeats. At
+21:05:48 UTC only two records were online: one 1.2.23 and one 1.2.22. The other
+twelve were connecting without a reported version; their APK versions cannot
+be confirmed.
 
-**Why the candidate was not promoted:** the inspected 1.2.22 artifact is
-`devDebug`, debug-signed and marked `debuggable`; its build metadata records an
-embedded private development enrollment credential. It has not had a remote
-canary/runtime acceptance. Publishing it as a stable release or making it the
-fleet-wide automatic update would expose the development credential and roll
-out an unaccepted debug artifact. This audit did not alter the OTA catalog or
-publish the APK.
+**Why the candidate was not promoted:** the 1.2.23 artifact is `devDebug`,
+debug-signed and marked `debuggable`; its build metadata records an embedded
+private development enrollment credential. It has only passed one local canary
+install/launch and heartbeat check, not a remote canary, extended soak, signed
+production release or update-recovery drill. Publishing it as a stable release
+or fleet-wide automatic update would expose the development credential and
+roll out an unaccepted debug artifact. This audit did not alter the OTA catalog
+or publish the APK.
 
 **Affected artifacts:** ignored local files under `.local-pilot/apk/`; the
 pilot's persistent `updates/releases.json`; `android/app/build.gradle.kts`;
@@ -103,7 +130,7 @@ promotion from candidate to the matching OTA channel.
 **Required release fix:** create a release artifact with the intended signing
 identity and non-shared enrollment bootstrap, verify package/version/signature
 and runtime behavior on one canary, then promote it to `android/dev` only after
-the rollout policy is explicit. Keep the 1.2.22 debug candidate private. Add a
+the rollout policy is explicit. Keep the debug candidates private. Add a
 promotion check that compares the artifact metadata, catalog entry and release
 channel before marking any APK as latest. Until that process exists, the
 catalog and the filename `LATEST-SphereAgent-pilot.apk` can diverge from the
@@ -140,11 +167,58 @@ receipt, matched to backend ingress and browser decoded-frame evidence. This
 must identify the first stage whose counter stops increasing before changing
 the ingress provider or the APK's streaming implementation.
 
+### AUD-2026-09-26-04 — P2 reconnect churn: session replacement reuses the auth rejection code
+
+**Root cause:** `ConnectionManager.connect` closed an older, already
+authenticated socket with code `4001` and reason
+`replaced_by_new_connection`. The Android client treats every `4001` as
+`invalid_token`, clears its token cache and starts the fresh-token path. A normal
+session replacement was therefore interpreted as an authentication failure.
+The latest pilot sample contained 99 old-connection evictions and 99 close
+events with `4001`, while no `invalid_token` or `auth_error` events were logged.
+There were also 41 closes with `1005`. This matches the code path and shows how
+repeated replacement can add avoidable authentication work; it does not explain
+all transport closes or prove that Cloudflare is the root cause.
+
+**Reproduction:** before the change, the backend replacement test failed because
+the old socket received `4001` instead of a distinct session-replacement code.
+The Android integration regression also failed on the legacy
+`4001 + replaced_by_new_connection` pair after a valid auth acknowledgement:
+the client called `clearTokenCache()`. After the fix, the backend uses `4009`;
+the Android client recognizes the legacy replacement reason so a rolling
+upgrade or an older backend cannot misclassify it as an auth failure.
+
+**Fix and regression tests:** `ConnectionManager` now uses `4009` for a normal
+session replacement. `SphereWebSocketClient` excludes the explicit legacy
+replacement reason from `4001` auth handling. Tests cover backend close-code
+selection, legacy replacement without token invalidation, and genuine invalid
+token rejection. The focused backend and Android test runs passed after the fix.
+
+**Status / residual risk:** all PR CI checks passed and backend `2168c33` is
+deployed to the isolated pilot. Between 20:43:56 and 20:54:05 UTC, logs recorded
+95 old-session evictions with `4009`, none with `4001`, and 44 closes with `1005`.
+The earlier 3-online/11-connecting snapshot was transient: at 21:05:48 UTC Redis
+again contained 2 online and 12 connecting records. Only the two local APK
+versions were reported (1.2.22 and 1.2.23). The 1.2.23 local canary kept the same
+process PID for a 181-second window (12/12 process samples; no package-specific
+crash-buffer entries). The previous description of an eight-minute post-deploy
+sample was incorrect: its requested log lookback exceeded the new container's
+age. Use the explicit observation boundaries above instead.
+Reconnect churn, remote heartbeat recovery, and remote video delivery remain open.
+
+## Focused incident follow-up
+
+The [remote control-path diagnosis](REMOTE-CONTROL-PATH-DIAGNOSIS.md) supersedes
+transient fleet counts above and records a local/remote small-command comparison,
+reconnect timing, historical tunnel evidence, and the separate PostgreSQL enum
+failure. It does not declare the remote transport repaired.
+
 ## Validation boundary
 
-This pass did not modify the APK, publish an OTA release, perform a remote ADB
-operation, or claim that remote streaming is fixed. The running pilot observed
-during the release check was `sphere-pilot-20260911`, backend/frontend image tag
-`fc65b55`; older `sphere-platform` and `sphere-tunnel` projects were not used as
-test targets. The session-race source change is not considered live until a
-controlled deployment and post-deploy reconnect check are recorded.
+This pass did not publish an OTA release, perform a remote ADB operation, or
+claim that remote streaming is fixed. The 1.2.23 APK canary is installed only
+on `emulator-5554`; `5556` remains the 1.2.22 control. Backend `2168c33` is
+running in isolated project `sphere-pilot-20260911`; frontend is `fc65b55`.
+The guarded rollout kept 37 other containers and all 12 OTA files unchanged,
+with zero stream viewers before/after and HTTP 200 local/public readiness. Older
+`sphere-platform` and `sphere-tunnel` projects were not used as test targets.

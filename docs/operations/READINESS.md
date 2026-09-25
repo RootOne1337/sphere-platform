@@ -1,45 +1,47 @@
 # Эксплуатационная готовность Sphere
 
-**Срез: 25 сентября 2026 · аудит продолжается · Fleet32 остаётся NO-GO.**
+**Срез: 26 сентября 2026 · аудит продолжается · Fleet32 остаётся NO-GO.**
 
 ## Текущее состояние после обновления
 
-**Проверка runtime: 25 сентября 2026, 21:18 Asia/Yekaterinburg.** Изолированный
-Compose project `sphere-pilot-20260911` использует backend и frontend images
-`fc65b55`; оба контейнера healthy. Локальный адрес и публичный Quick Tunnel
-вернули HTTP 200 для `/api/v1/health/ready` (`postgres=ok`, `redis=ok`) и
-`/devices`; оба отдали текущий route chunk `page-7559fa93610e3f77.js` с новым
-текстом bulk removal. Семь нецелевых контейнеров сохранили IDs, images, состояния,
-время запуска и mounts; tunnel и базы не перезапускались. Эта проверка подтверждает
-пилотный rollout и web bundle, но не выполняла DELETE на живых устройствах и не
-подтверждает WebSocket-сессию или декодированный видеокадр. Legacy
-`sphere-platform` и `sphere-tunnel` не тронуты.
+**Проверка runtime: 26 сентября 2026, 02:05 Asia/Yekaterinburg.** Изолированный
+Compose project `sphere-pilot-20260911` использует backend image
+`2168c33` и frontend `fc65b55`; backend healthy. После rollout локальная и
+публичная readiness вернули HTTP 200. Guard проверил 37 остальных контейнеров:
+IDs, images, health, start times, restart counts и mounts не изменились; все 12
+OTA-файлов совпали с preflight. До и после deploy активных stream viewers было
+0. Старые `sphere-platform` и `sphere-tunnel` не затрагивались.
 
-Свежий авторизованный aggregate устройств после rollout не снимался. Последний
-сохранённый API-срез от 14:30:39 содержал 10 активных DB-записей: Redis имел 5
-`online`, 1 `offline` и 4 записи без status key; только 3 online-записи имели
-heartbeat не старше 90 секунд, у двух online-записей timestamp отсутствовал.
-Он не доказывает 20 удалённых уникальных эмуляторов или состояние после текущего
-rollout. Исправление presence AUD-173 теперь развёрнуто, но повторный API aggregate
-после deploy ещё не подтверждён.
+После canary-установки `1.2.23-dev / 10223` на `emulator-5554` PackageManager
+подтвердил версию, а процесс оставался живым 181 секунду в 12 из 12 выборок с
+неизменным PID; crash buffer этого окна не содержит записей пакета. Сравнение
+до/после установки не заявляется, поскольку предустановочный buffer не был
+сохранён. Redis в 21:05:48 UTC подтвердил 14 записей: 2 `online` и 12 `connecting`;
+версии известны только у двух online: одна `1.2.23-dev` и одна `1.2.22-dev`.
+Ранний результат 3 online / 11 connecting оказался временным. ADB read
+подтверждает canary `5554` на 1.2.23 и контроль `5556` на 1.2.22.
+Удалённые версии APK остаются неизвестны.
 
-Локальный ADB видит только `emulator-5554` и `emulator-5556`; удалённые станции
-недоступны этому ADB. До canary версии были 1.2.20/10220 и 1.2.19/10219.
-Candidate `1.2.21-dev/10221` содержит полный GIT_SHA `182d40b7ccd8be27c490eb8cacfd9f1da674a644`; после этого commit Android-файлы не менялись.
-Его SHA-256 — `69a275b052477f8b0ce445149369ecba3b566c42f3d2a0fae0b6f5641deb98f8`,
-SHA-256 сертификата — `3ab40797d26e4f52f9e440afc6fe69f197caef71a5a27c63c86735bb1801871f`.
-Сертификат совпал с обоими APK, извлечёнными до обновления. Адресный `adb install -r`
-на `5554` успешен; пакет стал 1.2.21/10221. После запуска PID 19349 оставался
-стабильным 12 секунд, crash buffer до и после пуст, agent service работал. Это
-проверяет локальную совместимость/запуск, но не свежий серверный heartbeat и не
-видеокадр. `5556` оставлен на 1.2.19 как контроль.
+Кандидат `1.2.23` собран из commit `2168c3388c2a285f1aba1f98c65bd67a166700a0`,
+SHA-256 `b3eefd9ebaa569e822254ba6dd7439572db1147fde1782758496d31a044318c1`;
+dev и enterprise Android flavors прошли по 661 unit test (0 failures, 0 errors,
+по одному существующему skip), GitHub Android build прошёл. Кандидат debug-
+подписан и включает закрытый dev enrollment credential, поэтому не помещён в
+OTA и не опубликован. Read-only каталог всё ещё содержит `android/dev` максимум
+`1.2.9/10209`, `android-canary/dev` максимум `1.2.19/10219`; production release
+и массовая OTA не готовы. Fleet32 остаётся **NO-GO**.
 
-Текущий read-only OTA snapshot: 11 release records; обычный `android/dev` максимум
-1.2.9/10209, `android-canary/dev` максимум 1.2.19/10219. `1.2.21/10221` в каталоге
-отсутствует, поэтому приложение с `platform=android` не может получить этот APK
-автоматически. `sphere-agent-config` остаётся bootstrap/discovery repo, а не APK
-storage. Ни remote stream, ни удалённые подписи/версии, ни автоматическая OTA
-доставка не приняты. Fleet32 и массовая OTA остаются **NO-GO**.
+В интервале 20:43:56–20:54:05 UTC после backend deploy записано 95 замен
+соединения с новым кодом `4009`, 0 закрытий `4001` и 44 закрытия `1005`.
+Применение close-code fix подтверждено; восстановление remote fleet — нет.
+Последующая парная проверка короткой команды без видео: локальный Android
+ответил за 0,68 секунды, удалённый — HTTP 504 через 30,26 секунды. Значит,
+блокер затрагивает управляющий канал, а не только декодирование изображения.
+
+**Следующий gate:** сравнить один удалённый APK через независимый ingress,
+подтвердив его реальный маршрут, command receipt, heartbeat и затем IDR/картинку.
+Прежние тесты альтернативного viewer этого не проверяли. История, evidence,
+ограничения и отдельный дефект PostgreSQL: [разбор remote control path](../audits/2026-09-26/REMOTE-CONTROL-PATH-DIAGNOSIS.md).
 
 Подробности: [AUD-163](../audits/2026-09-24/REMOTE-VIDEO-OTA-DECISION.md) ·
 [AUD-164](../audits/2026-09-24/REMOTE-INGRESS-AB.md) ·
