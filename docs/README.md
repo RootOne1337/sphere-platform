@@ -24,6 +24,7 @@
 | Разобрать чёрный экран стрима по стадиям | [Android stream observability](audits/2026-09-25/ANDROID-STREAM-OBSERVABILITY.md) | APK capture/encode/queue · browser decode/render · ограничения доказательств |
 | Разобрать offline после clone/re-enrollment | [AUD-172 — enrollment HTTP 401](audits/2026-09-25/CLONED-ENROLLMENT-401.md) | Reject в `/devices/register`, shared bootstrap file и границы подтверждённой причины |
 | Разобрать ложный Online сразу после подключения | [AUD-173 — presence до первого heartbeat](audits/2026-09-25/DEVICE-PRESENCE-FIRST-HEARTBEAT.md) | `connecting` → первый pong → `online`, тесты и rollout gate |
+| Разобрать live-стрим без новых кадров | [AUD-175 — stale frame при живом WebSocket](audits/2026-09-25/FLEET-STREAM-STALE-FRAME.md) | Отдельный таймер декодированного кадра, keyframe recovery и границы доказательств |
 | Проверить, что локальные APK и логи не входят в Docker build context | [AUD-174 — private artifacts и Docker context](audits/2026-09-25/DOCKER-CONTEXT-PRIVATE-ARTIFACTS.md) | Реальный BuildKit `COPY` probe и CI gate для корневого context |
 | Проверить адресный APK OTA и результат установки | [AUD-171 — terminal receipts](audits/2026-09-25/OTA-TERMINAL-RECEIPTS.md) | Receipt commit/ACK, повтор после потери ACK, tenant scope и текущий canary gate |
 | Разобрать сбой по времени и устройству | [Support: что собрать](../SUPPORT.md) | [Runbooks](runbooks/README.md) · [Fleet operations, stream и observability](architecture/FLEET-OPERATIONS-AND-OBSERVABILITY.md) |

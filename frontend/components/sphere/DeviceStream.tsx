@@ -39,6 +39,8 @@ interface StreamDiagnosticResponse {
   } | null;
 }
 
+const FRAME_STALE_TIMEOUT_MS = 10_000;
+
 function formatTimestampAgo(timestamp: number | null): string {
   if (timestamp == null) return 'никогда';
   const ageSeconds = Math.max(0, Math.floor((Date.now() - timestamp) / 1000));
@@ -64,7 +66,7 @@ export function DeviceStream({
   const dragRef = useRef<{ x: number; y: number } | null>(null);
   const { accessToken } = useAuthStore();
   const [connection, setConnection] = useState<
-    'connecting' | 'waiting' | 'live' | 'retrying' | 'unavailable'
+    'connecting' | 'waiting' | 'live' | 'stale' | 'retrying' | 'unavailable'
   >('connecting');
   const [streamError, setStreamError] = useState<string | null>(null);
   const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
@@ -79,6 +81,7 @@ export function DeviceStream({
     let decoder: H264Decoder | null = null;
     let retryTimer: ReturnType<typeof setTimeout> | undefined;
     let keyFrameTimer: ReturnType<typeof setTimeout> | undefined;
+    let frameStaleTimer: ReturnType<typeof setTimeout> | undefined;
     let watchdog: ReturnType<typeof setInterval> | undefined;
     let scheduleKeyFrameRecovery: ((delayMs?: number) => void) | undefined;
     let attempt = 0;
@@ -98,6 +101,12 @@ export function DeviceStream({
         setConnection('live');
         setStreamError(null);
         clearTimeout(keyFrameTimer);
+        clearTimeout(frameStaleTimer);
+        frameStaleTimer = setTimeout(() => {
+          if (ignore || wsRef.current?.readyState !== WebSocket.OPEN) return;
+          setConnection('stale');
+          scheduleKeyFrameRecovery?.();
+        }, FRAME_STALE_TIMEOUT_MS);
         // Mutate canvas directly for performance, avoid React state re-renders
         if (canvas.width !== frame.displayWidth || canvas.height !== frame.displayHeight) {
           canvas.width = frame.displayWidth;
@@ -155,6 +164,7 @@ export function DeviceStream({
           ended = true;
           clearInterval(watchdog);
           clearTimeout(keyFrameTimer);
+          clearTimeout(frameStaleTimer);
           if (scheduleKeyFrameRecovery === scheduleKeyFrameRequests) scheduleKeyFrameRecovery = undefined;
           newWs.onopen = newWs.onmessage = newWs.onclose = newWs.onerror = null;
           if (wsRef.current === newWs) wsRef.current = null;
@@ -224,6 +234,7 @@ export function DeviceStream({
       clearTimeout(timer);
       clearTimeout(retryTimer);
       clearTimeout(keyFrameTimer);
+      clearTimeout(frameStaleTimer);
       clearInterval(watchdog);
       wsRef.current = null;
       ws?.close();
@@ -329,6 +340,7 @@ export function DeviceStream({
         {streamError ?? (
           connection === 'connecting' ? 'Подключение…' :
           connection === 'waiting' ? 'Ожидание видеокадра…' :
+          connection === 'stale' ? 'Нет новых видеокадров более 10 секунд' :
           connection === 'retrying' ? 'Переподключение…' : 'Стрим недоступен'
         )}
       </div>

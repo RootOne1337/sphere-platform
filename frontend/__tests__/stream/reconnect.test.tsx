@@ -51,6 +51,23 @@ it('reconnects after a server normal-close without requiring F5', () => {
   advance(500); expect(Socket.instances).toHaveLength(2); view.unmount();
 });
 
+it('marks video stale when control pings continue but decoded frames stop, then recovers on a new frame', () => {
+  const view = render(<DeviceStream deviceId="fixture" />); advance(0);
+  const socket = Socket.instances[0];
+  act(() => { socket.open(); mockFrame?.({ displayWidth: 100, displayHeight: 200 }); });
+  expect(screen.queryByRole('status')).not.toBeInTheDocument();
+
+  advance(9000);
+  act(() => socket.message(JSON.stringify({ type: 'ping' })));
+  advance(1000);
+  expect(screen.getByRole('status')).toHaveTextContent('Нет новых видеокадров более 10 секунд');
+
+  act(() => mockFrame?.({ displayWidth: 100, displayHeight: 200 }));
+  expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  view.unmount();
+  expect(jest.getTimerCount()).toBe(0);
+});
+
 it('retries the initial keyframe request when the viewer connects but no image arrives', () => {
   const view = render(<DeviceStream deviceId="fixture" />); advance(0);
   act(() => Socket.instances[0].open());
@@ -64,8 +81,13 @@ it('retries the initial keyframe request when the viewer connects but no image a
   advance(1);
   expect(Socket.instances[0].send).toHaveBeenCalledTimes(4); // next request backs off to 5 s
   act(() => mockFrame?.({ displayWidth: 100, displayHeight: 200 }));
-  advance(40_000);
+  advance(9999);
   expect(Socket.instances[0].send).toHaveBeenCalledTimes(4);
+  expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  advance(1);
+  expect(screen.getByRole('status')).toHaveTextContent('Нет новых видеокадров более 10 секунд');
+  advance(1100);
+  expect(Socket.instances[0].send).toHaveBeenCalledTimes(5); // stale output restarts keyframe recovery
   view.unmount();
 });
 
