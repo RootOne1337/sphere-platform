@@ -11,6 +11,11 @@ from fastapi import WebSocket
 
 logger = structlog.get_logger()
 
+# 4001 is reserved by the Android protocol for an invalid enrollment/access
+# token. Replacing a healthy socket is not an authentication failure: Android
+# deliberately clears cached credentials when it receives 4001.
+SESSION_REPLACED_CLOSE_CODE = 4009
+
 
 class ConnectionInfo:
     __slots__ = ("ws", "device_id", "agent_type", "org_id", "connected_at", "session_id")
@@ -68,7 +73,10 @@ class ConnectionManager:
                 async def _evict_old(old_ws: WebSocket) -> None:
                     try:
                         await asyncio.wait_for(
-                            old_ws.close(code=4001, reason="replaced_by_new_connection"),
+                            old_ws.close(
+                                code=SESSION_REPLACED_CLOSE_CODE,
+                                reason="replaced_by_new_connection",
+                            ),
                             timeout=1.0,
                         )
                     except Exception:

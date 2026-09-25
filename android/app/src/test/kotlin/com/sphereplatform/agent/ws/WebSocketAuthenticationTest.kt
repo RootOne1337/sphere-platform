@@ -120,6 +120,22 @@ class WebSocketAuthenticationTest {
         } finally { job.cancelAndJoin() }
     }
 
+    @Test fun replacementCloseAfterAuthenticationDoesNotClearTokenCache() = runTest {
+        val job = launch { client.connect() }
+        try {
+            runCurrent(); open()
+            listeners.last().onMessage(socket, ack()); runCurrent()
+            assertTrue(client.isConnected)
+
+            listeners.last().onClosed(socket, 4001, "replaced_by_new_connection")
+            runCurrent()
+
+            verify(exactly = 0) { auth.clearTokenCache() }
+            assertFalse(client.isConnected)
+            assertTrue("A valid session replacement should reconnect", job.isActive)
+        } finally { job.cancelAndJoin() }
+    }
+
     @Test fun callbacksFromTimedOutHandshakeCannotRestoreConnectedState() = runTest {
         val job = launch { client.connect() }
         try {

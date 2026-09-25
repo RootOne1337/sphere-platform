@@ -33,7 +33,9 @@ import kotlin.random.Random
  * SphereWebSocketClient — надёжный WS-клиент с:
  * - Exponential retry windows with equal jitter (first retry 1–2s, cap 15–30s)
  * - Smart circuit breaker: 10 NETWORK ошибок → 60 секунд паузы
- *   AUTH ошибки (4001) НЕ считаются — вместо этого запрашивается новый токен
+ *   AUTH ошибки (4001) НЕ считаются — вместо этого запрашивается новый токен.
+ *   Legacy backend used 4001 for session replacement too; that reason is not
+ *   an auth rejection and must not invalidate a healthy device credential.
  * - First-message auth and target-bound server acknowledgement before application traffic
  * - Network change detection через [forceReconnectNow]
  * - Безопасная остановка через [disconnect]
@@ -75,6 +77,12 @@ class SphereWebSocketClient(
         private const val CODE_AUTH_TIMEOUT = 4003
         private const val CODE_DEVICE_NOT_FOUND = 4004
         private const val CODE_HEARTBEAT_TIMEOUT = 4008
+        private const val REASON_SESSION_REPLACED = "replaced_by_new_connection"
+
+        private fun isAuthenticationRejection(code: Int, reason: String): Boolean =
+            (code == CODE_INVALID_TOKEN && reason != REASON_SESSION_REPLACED) ||
+                code == CODE_AUTH_TIMEOUT || code == CODE_DEVICE_NOT_FOUND ||
+                code == CODE_HEARTBEAT_TIMEOUT
     }
 
     // Управление reconnect loop
@@ -317,9 +325,7 @@ class SphereWebSocketClient(
                 closeCode = code
                 closeReason = reason
                 if (!connected.isCompleted) {
-                    val failure = if (code == CODE_INVALID_TOKEN || code == CODE_AUTH_TIMEOUT ||
-                        code == CODE_DEVICE_NOT_FOUND || code == CODE_HEARTBEAT_TIMEOUT
-                    ) AuthRejectedException(code, reason)
+                    val failure = if (isAuthenticationRejection(code, reason)) AuthRejectedException(code, reason)
                     else IOException("WebSocket closed before authentication acknowledgement: $code")
                     connected.completeExceptionally(failure)
                 }
@@ -361,9 +367,7 @@ class SphereWebSocketClient(
         }
 
         // After connection closed — check close code for auth/heartbeat rejection
-        if (closeCode == CODE_INVALID_TOKEN || closeCode == CODE_AUTH_TIMEOUT
-            || closeCode == CODE_HEARTBEAT_TIMEOUT || closeCode == CODE_DEVICE_NOT_FOUND
-        ) {
+        if (isAuthenticationRejection(closeCode, closeReason)) {
             throw AuthRejectedException(closeCode, closeReason)
         }
     }
