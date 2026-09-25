@@ -15,15 +15,23 @@ read-only команда `dumpsys package` к `PH008` завершилась HTT
 Повторять команду без новой информации нельзя. Установленную версию не следует
 выводить из имени скачанного APK или значка захвата Android.
 
-Гипотеза о Cloudflare **сильная, но пока не доказанная**. В истории есть
-`1a5a02d` (переход с Cloudflare Quick Tunnel на Serveo после обрывов WebSocket)
-и `1246fc8` (обход Serveo interstitial). Это свидетельство прежнего инцидента,
-а не трассировка текущего кадра. [Cloudflare документирует](https://developers.cloudflare.com/support/troubleshooting/general-troubleshooting/service-disruption/)
-примерно 16 KiB на соединение у части российских ISP. Такой предел совместим с
-прохождением маленьких SPS/PPS и потерей большого IDR, но один локальный Android
-ранее передал IDR 40 351 B через этот же публичный Quick Tunnel. Путь из двух
-квартир может идти через разные сетевые узлы; ни один из этих фактов не снимает
-гипотезу о сбое encoder/отправки на удалённом Android.
+Гипотеза о Cloudflare **правдоподобна, но не доказана как причина отсутствия
+кадров**. В истории есть `1a5a02d` (переход с Quick Tunnel на Serveo после
+обрывов WebSocket) и `1246fc8` (обход Serveo interstitial). Это свидетельство
+прежнего инцидента, а не трассировка текущего кадра. Cloudflare документирует
+поддержку WebSocket для Tunnel и proxied WebSockets, поэтому само отсутствие
+поддержки WSS не объясняет сбой. При этом TryCloudflare Quick Tunnel прямо
+предназначен для тестов и разработки, не имеет SLA и ограничен 200 одновременными
+in-flight запросами; для production Cloudflare рекомендует управляемый Tunnel.
+Ограничение по запросам может стать отдельным пределом при большом числе долгих
+соединений, но его вклад надо измерить на фактическом потоке. Локальный Android
+ранее передал IDR 40 351 B через тот же публичный Quick Tunnel. Поэтому текущие
+данные оставляют открытыми Android capture/encoder, WAN egress и потери в любом
+промежуточном hop.
+
+Ссылки на первичную документацию Cloudflare: [поддержка WebSocket в Tunnel](https://developers.cloudflare.com/cloudflare-one/faq/cloudflare-tunnels-faq/),
+[ограничения Quick Tunnel](https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/do-more-with-tunnels/trycloudflare/)
+и [proxied WebSockets](https://developers.cloudflare.com/network/websockets/).
 
 ## Runtime-доказательства
 
@@ -121,14 +129,34 @@ fallback. Backend вернул `504` через 18 секунд, без терм
 APK и backend при тесте не менялись. Подробный текущий статус — в
 [readiness](../../operations/READINESS.md).
 
-`RootOne1337/sphere-agent-config` — **не APK-хранилище**. Его `main` содержит
-историческую конфигурацию марта; draft PR #1 содержит подписанный manifest v24
-с одним текущим Cloudflare management URL и без fallback. Менять этот документ
-на короткоживущий тестовый URL сразу для всего парка нельзя. Код APK 1.2.18
-есть в PR #19, локальный файл собран, но не опубликован как общая OTA-версия.
-Два локальных эмулятора фактически имеют 1.2.9/10209; `android/dev` catalog
-также заканчивается 1.2.9. Поэтому отсутствие 1.2.18 на них сейчас ожидаемо,
-но адресный rollout и post-install receipt всё ещё отсутствуют.
+`RootOne1337/sphere-agent-config` — **не APK-хранилище**. На 25 сентября draft
+PR #1 содержит подписанный manifest v24 с одним Cloudflare management URL и без
+резервного ingress; оба его GitHub CI прогона прошли. Изменять конфигурацию всего
+парка на короткоживущий тестовый URL нельзя.
+
+### Перепроверка release readiness, 25 сентября 2026
+
+Read-only ADB snapshot на этом рабочем ПК: `emulator-5554` — 1.2.20-dev/10220,
+`emulator-5556` — 1.2.19-dev/10219. Других ADB-устройств этот компьютер не видит;
+удалённые APK версии этим не подтверждены. Сохранённый локальный candidate
+1.2.21-dev/10221 (`69a275b052477f8b0ce445149369ecba3b566c42f3d2a0fae0b6f5641deb98f8`)
+собран из `182d40b`, но после него менялись Android OTA recovery, startup/reconnect
+и streaming diagnostics. Поэтому candidate **не соответствует текущему Android
+source** и не должен называться последней сборкой. Текущий
+`android/version.properties` всё ещё задаёт 10221; для нового содержимого нужен
+новый монотонный versionCode, иначе агент с уже установленным 10221 его не примет.
+
+GitHub Android CI для `c8a1146` собрал debug APK и прошёл unit tests; это не release
+APK и не доказательство совместимости подписи с установленными приложениями.
+`.github/workflows/release.yml` создаёт release notes по Git tag, но не собирает и
+не прикрепляет Android APK. В inventory repo/staging Actions secrets, локальных
+`SPHERE_KEYSTORE_*` переменных и keystore-файлов в `android/`/`.local-pilot/`
+подписывающий материал не обнаружен. Нельзя безопасно заменить его новым ключом:
+установленные Android-пакеты могут отказаться от обновления из-за несовпадающей
+подписи. Поэтому свежего подписанного OTA-кандидата и подтверждённой массовой
+публикации сейчас нет; APK rollout остаётся **NO-GO** до восстановления исходного
+release key, конфигурации enrollment/discovery, новой сборки с повышенным
+versionCode, проверки signature/digest и адресного post-install canary.
 
 ## Подтверждённый backend queue-дефект — AUD-167
 
