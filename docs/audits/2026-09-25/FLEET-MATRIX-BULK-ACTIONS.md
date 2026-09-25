@@ -147,9 +147,9 @@ The affected controls now use explicit API contracts, per-device outcomes, visib
 
 **Fix:** regenerated `docs/openapi.json` using the dependency versions declared by the project and used by CI: FastAPI 0.136.3, Starlette 1.3.1, Pydantic 2.9.2, and Pydantic Settings 2.2.1. The diff removes schema defaults emitted only by the mismatched local package set; it does not change runtime API behavior.
 
-**Regression:** `python -m scripts.export_api_docs --check` passes in the isolated pinned-version environment after regeneration. Follow-up GitHub run `36151375451` on head `a20342e` passed the same check together with the full backend suite and Redis acceptance. Run `36159198104` exposed the later drift; its next-head CI must pass before PR #19 can be considered merge-ready.
+**Regression:** `python -m scripts.export_api_docs --check` passes in the isolated pinned-version environment after regeneration. Follow-up GitHub run `36151375451` on head `a20342e` passed the same check together with the full backend suite and Redis acceptance. Run `36159198104` exposed later schema drift; after regenerating with the repository pins, [backend run `36161331170`](https://github.com/RootOne1337/sphere-platform/actions/runs/36161331170) on `a1d55d1` passed the full unit/real-service suite, generated API documentation verification, and Redis acceptance.
 
-**Residual risk:** the local generation/check now match the declared dependency pins, but the CI run triggered by the corrected artifact remains the final repository-level gate. The pre-existing FastAPI `regex` deprecation warning is unrelated to this schema drift.
+**Residual risk:** none remains for this version-mismatch finding. The pre-existing FastAPI `regex` deprecation warning is unrelated to this schema drift.
 
 ## Validation evidence
 
@@ -168,6 +168,10 @@ The affected controls now use explicit API contracts, per-device outcomes, visib
 | GitHub backend CI (`a20342e`) | Passed: full unit/real-service tests, generated API docs, Redis memory/persistence acceptance, Alembic single-head, Ruff/mypy, RLS, security, and production-image bootstrap |
 | GitHub frontend CI (`a20342e`) | Tests, TypeScript, and production build passed |
 | GitHub Android CI (`a20342e`) | Debug APK build and unit tests passed; CI artifact is not a published release |
+| GitHub backend CI (`a1d55d1`) | [Passed](https://github.com/RootOne1337/sphere-platform/actions/runs/36161331170): unit/real-service tests, pinned OpenAPI check, Redis acceptance, Alembic, Ruff/mypy, RLS, security, and production-image bootstrap |
+| GitHub frontend CI (`a1d55d1`) | [Passed](https://github.com/RootOne1337/sphere-platform/actions/runs/36161331072): Jest, TypeScript, and production build |
+| GitHub Android CI (`a1d55d1`) | [Passed](https://github.com/RootOne1337/sphere-platform/actions/runs/36161331114): debug APK build and unit tests; this is not a published APK release |
+| Preview workflow (`a1d55d1`) | [Workflow passed](https://github.com/RootOne1337/sphere-platform/actions/runs/36161331063); deployment job was skipped by its configured guard. The isolated pilot was updated and checked manually. |
 | Pilot rollout (`fc65b55`) | Linux backend/frontend images built and healthy; local and public readiness plus the current Devices bundle verified. PostgreSQL, Redis, tunnel, other pilot services, and Android devices were not changed. No live removal was replayed. |
 | Android release scope | No APK or `sphere-agent-config` repository change is part of this fix. |
 | Whitespace validation | `git diff --check` passed |
