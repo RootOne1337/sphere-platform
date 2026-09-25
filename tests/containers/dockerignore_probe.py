@@ -16,14 +16,16 @@ def main() -> int:
     sentinel = probe_dir / "private-sentinel.txt"
     dockerfile = ROOT / f".dockerignore-probe-{token}.Dockerfile"
     relative_sentinel = sentinel.relative_to(ROOT).as_posix()
+    dockerfile_created = False
+    probe_dir_created = False
 
     try:
         probe_dir.mkdir(parents=True, exist_ok=False)
+        probe_dir_created = True
         sentinel.write_text("synthetic private context probe\n", encoding="utf-8")
-        dockerfile.write_text(
-            f"FROM scratch\nCOPY {relative_sentinel} /private-sentinel.txt\n",
-            encoding="utf-8",
-        )
+        with dockerfile.open("x", encoding="utf-8") as handle:
+            dockerfile_created = True
+            handle.write(f"FROM scratch\nCOPY {relative_sentinel} /private-sentinel.txt\n")
         result = subprocess.run(
             ["docker", "build", "--no-cache", "--file", dockerfile.name, "."],
             cwd=ROOT,
@@ -35,13 +37,16 @@ def main() -> int:
         )
     finally:
         try:
-            sentinel.unlink(missing_ok=True)
+            if probe_dir_created:
+                sentinel.unlink(missing_ok=True)
         finally:
             try:
-                probe_dir.rmdir()
+                if probe_dir_created:
+                    probe_dir.rmdir()
             finally:
                 try:
-                    dockerfile.unlink(missing_ok=True)
+                    if dockerfile_created:
+                        dockerfile.unlink(missing_ok=True)
                 finally:
                     if not pilot_root_existed:
                         try:
