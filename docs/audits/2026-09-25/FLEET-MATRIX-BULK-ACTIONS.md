@@ -120,6 +120,19 @@ The affected controls now use explicit API contracts, per-device outcomes, visib
 
 **Regression:** local production-browser smoke covered cancel and one per-device provider failure; frontend type-check, lint, and Jest suites passed.
 
+### API-001 — committed OpenAPI schema was generated with a different dependency set
+
+**Severity:** P3 — contract documentation and CI reproducibility.
+**Root cause:** the local Python environment used FastAPI 0.141.1 / Pydantic 2.13.5, while `backend/requirements.txt` and CI pin FastAPI 0.136.3 / Pydantic 2.9.2. OpenAPI output differed even though the local exporter check passed.
+
+**Evidence / reproduction:** GitHub backend run `36149584324` passed its complete unit/real-service test step, then failed `Verify generated HTTP API documentation` with `Stale API documentation: docs/openapi.json`. Re-running the exporter in an isolated environment with the repository's pinned FastAPI, Starlette, Pydantic, and Pydantic Settings versions reproduced the stale-schema result.
+
+**Fix:** regenerated `docs/openapi.json` using the dependency versions declared by the project. The endpoint catalog had no difference.
+
+**Regression:** `python -m scripts.export_api_docs --check` passed in that isolated pinned-version environment. The next GitHub CI run must pass the same check before this documentation fix is considered accepted.
+
+**Residual risk:** Python 3.13 was used for the isolated local reproduction; the exact Python 3.12 CI job is the final cross-runtime confirmation.
+
 ## Validation evidence
 
 | Check | Result |
@@ -131,7 +144,7 @@ The affected controls now use explicit API contracts, per-device outcomes, visib
 | Production-browser smoke | Passed login/refresh fixtures, Fleet Matrix data, VPN cancel/partial failure, delete cancel/403/retry/200, grid stop, FIT canvas style, and 390 px layout |
 | Backend targeted tests | 40 passed (`tests/bulk/test_bulk.py`, `tests/vpn/test_vpn_api.py`) |
 | Backend Ruff | Passed for all changed backend/test files |
-| OpenAPI/catalog verification | `python -m scripts.export_api_docs --check` passed |
+| OpenAPI/catalog verification | Passed with FastAPI 0.136.3 / Starlette 1.3.1 / Pydantic 2.9.2 / Pydantic Settings 2.2.1 in an isolated environment |
 | Whitespace validation | `git diff --check` passed |
 
 The Playwright smoke used a test-only identity, mocked API responses, and no external device traffic. Expected fixture responses include one 401 (signed-out refresh) and one 403 (the deliberate delete-failure case); browser JavaScript raised no exceptions.
