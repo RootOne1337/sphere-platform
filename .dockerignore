@@ -14,6 +14,8 @@
 .env.*
 !.env.example
 .admin-credentials
+# Локальные APK, логи, bootstrap и runtime evidence; Docker не читает .gitignore.
+.local-pilot/
 
 # Node.js (фронтенд зависимости ставятся ВНУТРИ контейнера)
 frontend/node_modules

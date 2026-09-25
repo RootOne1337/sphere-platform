@@ -20,6 +20,8 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+      - name: Verify private local pilot files are excluded from Docker context
+        run: python tests/containers/dockerignore_probe.py
       - name: Build the shipped production image
         run: docker build -f backend/Dockerfile -t sphere-backend-bootstrap-ci .
       - name: Run bootstrap entry points without network or source mounts
