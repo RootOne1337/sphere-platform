@@ -129,9 +129,9 @@ The affected controls now use explicit API contracts, per-device outcomes, visib
 
 **Fix:** regenerated `docs/openapi.json` using the dependency versions declared by the project. The endpoint catalog had no difference.
 
-**Regression:** `python -m scripts.export_api_docs --check` passed in that isolated pinned-version environment. The next GitHub CI run must pass the same check before this documentation fix is considered accepted.
+**Regression:** `python -m scripts.export_api_docs --check` passed in that isolated pinned-version environment. Follow-up GitHub run `36151375451` on head `a20342e` passed the same check together with the full backend suite and Redis acceptance.
 
-**Residual risk:** Python 3.13 was used for the isolated local reproduction; the exact Python 3.12 CI job is the final cross-runtime confirmation.
+**Residual risk:** none remains for this version-mismatch finding; the exact Python 3.12 CI job passed after regeneration.
 
 ## Validation evidence
 
@@ -145,6 +145,9 @@ The affected controls now use explicit API contracts, per-device outcomes, visib
 | Backend targeted tests | 40 passed (`tests/bulk/test_bulk.py`, `tests/vpn/test_vpn_api.py`) |
 | Backend Ruff | Passed for all changed backend/test files |
 | OpenAPI/catalog verification | Passed with FastAPI 0.136.3 / Starlette 1.3.1 / Pydantic 2.9.2 / Pydantic Settings 2.2.1 in an isolated environment |
+| GitHub backend CI (`a20342e`) | Passed: full unit/real-service tests, generated API docs, Redis memory/persistence acceptance, Alembic single-head, Ruff/mypy, RLS, security, and production-image bootstrap |
+| GitHub frontend CI (`a20342e`) | Tests, TypeScript, and production build passed |
+| GitHub Android CI (`a20342e`) | Debug APK build and unit tests passed; CI artifact is not a published release |
 | Whitespace validation | `git diff --check` passed |
 
 The Playwright smoke used a test-only identity, mocked API responses, and no external device traffic. Expected fixture responses include one 401 (signed-out refresh) and one 403 (the deliberate delete-failure case); browser JavaScript raised no exceptions.
@@ -156,7 +159,7 @@ The Playwright smoke used a test-only identity, mocked API responses, and no ext
 3. **Repository lint debt remains visible.** The full production build completed with 99 ESLint warning lines across legacy files. The changed frontend files lint clean. Warnings include unused imports, `any`, and hook dependencies; they were not silently fixed as part of this focused Fleet pass.
 4. **Next standalone trace warning remains.** Next 15.5.13 reports `ENOENT` while copying the dashboard segment's `page_client-reference-manifest.js` into `.next/standalone`. Build exits successfully and `/devices`, `/login`, `/stream`, and its CSS asset were served in a local runtime smoke after applying the same `.next/static`/`public` copies as the Dockerfile, but the warning needs a CI/container investigation before release.
 5. **Tooling warnings remain.** `next lint` is deprecated for Next 16, the installed Browserslist database is stale, and API doc export surfaces an existing FastAPI `regex` deprecation in `game_accounts/router.py`.
-6. **No rollout occurred.** No APK was built or published, no second GitHub repository was changed, and no remote backend or emulator was modified in this audit pass.
+6. **No rollout occurred.** Android CI produced a debug APK artifact only; no production APK release or second GitHub repository was published or changed, and no remote backend or emulator was modified in this audit pass.
 
 ## Related documentation
 
