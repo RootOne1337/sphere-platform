@@ -27,8 +27,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.dependencies import require_permission, require_roles
 from backend.database.engine import get_db
+from backend.database.tenant import bind_tenant_context
 from backend.models.device import Device
-from backend.services.device_ota_recovery import OtaRecoveryGrant, get_ota_recovery
+from backend.services.device_ota_recovery import (
+    OtaRecoveryGrant,
+    get_ota_recovery,
+    ota_recovery_receipts,
+)
 
 router = APIRouter(prefix="/updates", tags=["updates"])
 
@@ -179,6 +184,59 @@ async def create_recovery(
     device.meta = {**(device.meta or {}), "ota_recovery": grant.model_dump(mode="json")}
     await db.commit()
     return {"device_id": str(device.id), **grant.model_dump(mode="json")}
+
+
+@router.get("/recovery/{device_id}")
+async def get_recovery_status(
+    device_id: uuid.UUID,
+    user=require_permission("device:read"),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Read bounded per-device recovery state without exposing its authorization tag."""
+    await bind_tenant_context(db, str(user.org_id))
+    device = await db.scalar(select(Device).where(
+        Device.id == device_id,
+        Device.org_id == user.org_id,
+    ))
+    if device is None:
+        raise HTTPException(status_code=404, detail="Device not found")
+
+    meta = device.meta or {}
+    raw_grant = meta.get("ota_recovery")
+    active = None
+    if isinstance(raw_grant, dict):
+        active = {
+            key: raw_grant.get(key)
+            for key in ("command_id", "sha256", "version_name", "version_code", "created_at", "expires_at")
+        }
+    raw_result = meta.get("ota_recovery_result")
+    result = None
+    if isinstance(raw_result, dict):
+        result = {
+            key: raw_result.get(key)
+            for key in (
+                "command_id", "sha256", "version_name", "version_code", "status",
+                "failure_code", "installed_version_code", "recovered_after_process_restart", "recorded_at",
+            )
+        }
+    recent_results = [
+        {
+            key: receipt.get(key)
+            for key in (
+                "command_id", "sha256", "version_name", "version_code", "status",
+                "failure_code", "installed_version_code", "recovered_after_process_restart", "recorded_at",
+            )
+        }
+        for receipt in ota_recovery_receipts(meta)
+    ]
+    state = "active" if active else (result.get("status") if result else "none")
+    return {
+        "device_id": str(device.id),
+        "state": state,
+        "active": active,
+        "last_result": result,
+        "recent_results": recent_results,
+    }
 
 
 @router.delete("/recovery/{device_id}", status_code=204)

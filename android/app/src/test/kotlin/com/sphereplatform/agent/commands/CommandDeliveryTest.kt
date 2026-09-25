@@ -271,7 +271,14 @@ class CommandDeliveryTest {
         coVerify(exactly = 1) { ota.performUpdate(any()) }
         finish.complete(Unit)
         runCurrent()
-        assertTrue("OTA terminal receipt must not occupy the task outbox forever", journal().pending().isEmpty())
+        assertEquals(true, messages.last()["ota_recovery_receipt"]?.jsonPrimitive?.boolean)
+        assertEquals("OTA terminal result must remain durable until server commit ACK", 1, journal().pending().size)
+        callback.captured!!(buildJsonObject {
+            put("type", "result_ack")
+            put("command_id", update["command_id"]!!.jsonPrimitive.content)
+        })
+        runCurrent()
+        assertTrue(journal().pending().isEmpty())
         first.stop()
 
         val restarted = dispatcher(backgroundScope, otaService = ota)
@@ -315,7 +322,7 @@ class CommandDeliveryTest {
         dispatcher.stop()
     }
 
-    @Test fun queuedOtaReceiptAfterReconnectReleasesPendingSlot() = runTest {
+    @Test fun queuedOtaReceiptAfterReconnectStaysPendingUntilServerAcknowledges() = runTest {
         val ota = mockk<OtaUpdateService>(relaxed = true)
         coEvery { ota.performUpdate(any()) } returns Unit
         val first = dispatcher(backgroundScope, otaService = ota)
@@ -328,7 +335,15 @@ class CommandDeliveryTest {
         val restarted = dispatcher(backgroundScope, otaService = ota)
         connected.captured!!()
         runCurrent()
-        assertTrue("queued recovery receipt must not exhaust the durable outbox", journal().pending().isEmpty())
+        assertEquals("replayed recovery receipt still awaits durable server ACK", 1, journal().pending().size)
+        val receipt = journal().pending().single()
+        assertEquals(true, receipt["ota_recovery_receipt"]?.jsonPrimitive?.boolean)
+        callback.captured!!(buildJsonObject {
+            put("type", "result_ack")
+            put("command_id", receipt["command_id"]!!.jsonPrimitive.content)
+        })
+        runCurrent()
+        assertTrue(journal().pending().isEmpty())
         coVerify(exactly = 1) { ota.performUpdate(any()) }
         restarted.stop()
     }

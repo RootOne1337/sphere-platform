@@ -268,6 +268,53 @@ async def handle_command_result(
     if not command_id:
         return
     status = msg.get("status")
+    if status in ("completed", "failed") and msg.get("ota_recovery_receipt") is True:
+        # Recovery receipts are already durable on the Device record. A reconnect
+        # can replay one after its first result_ack was lost; acknowledge that
+        # exact replay instead of trying to persist it as a DAG task result.
+        try:
+            from backend.database.engine import AsyncSessionLocal
+            from backend.services.device_ota_recovery import is_persisted_ota_recovery_replay
+
+            async with AsyncSessionLocal() as db:
+                already_persisted = await is_persisted_ota_recovery_replay(
+                    db, device_id=device_id, org_id=org_id, message=msg,
+                )
+            if already_persisted:
+                if manager is None:
+                    logger.warning(
+                        "android_ws.ota_recovery_receipt_ack_unavailable",
+                        device_id=device_id,
+                        grant_id=command_id,
+                    )
+                    return
+                await manager.send_to_device(
+                    device_id, {"type": "result_ack", "command_id": command_id},
+                )
+                logger.info(
+                    "android_ws.ota_recovery_receipt_replay_acked",
+                    device_id=device_id,
+                    grant_id=command_id,
+                    status=status,
+                )
+            else:
+                logger.warning(
+                    "android_ws.ota_recovery_receipt_unrecognized",
+                    device_id=device_id,
+                    grant_id=command_id,
+                    status=status,
+                )
+            # A recovery receipt is not a DAG result. If it is unknown or the
+            # database check failed, keep it in the Android outbox for retry.
+            return
+        except Exception as exc:
+            logger.warning(
+                "android_ws.ota_recovery_replay_check_failed",
+                device_id=device_id,
+                grant_id=command_id,
+                error_class=type(exc).__name__,
+            )
+            return
     # Publish to Redis result channel (for any waiting HTTP-request polls)
     try:
         from backend.database.redis_client import redis
@@ -442,11 +489,14 @@ async def handle_agent_binary(
         logger.warning("handle_agent_binary error", device_id=device_id, error=str(e))
 
 
-async def serve_ota_recovery(ws: WebSocket, device_id: str, grant) -> None:
+async def serve_ota_recovery(ws: WebSocket, device_id: str, grant, org_id: str) -> None:
     """Доставить один разрешённый APK; heartbeat не публикует online/задачи."""
     import time
 
-    from backend.services.device_ota_recovery import recovery_failure_code
+    from backend.services.device_ota_recovery import (
+        persist_ota_recovery_result,
+        recovery_failure_code,
+    )
 
     command = {"type": "OTA_UPDATE", "command_id": str(grant.command_id),
                "signed_at": int(time.time()), "ttl_seconds": 180,
@@ -463,9 +513,52 @@ async def serve_ota_recovery(ws: WebSocket, device_id: str, grant) -> None:
                 try:
                     message = await asyncio.wait_for(ws.receive_json(), timeout=10)
                     if isinstance(message, dict) and message.get("command_id") == str(grant.command_id):
-                        logger.info("android_ws.ota_recovery_receipt", device_id=device_id,
-                                    grant_id=str(grant.command_id), status=str(message.get("status"))[:24],
-                                    failure_code=recovery_failure_code(message.get("error")))
+                        receipt_status = message.get("status")
+                        if receipt_status in ("received", "running"):
+                            logger.info(
+                                "android_ws.ota_recovery_progress",
+                                device_id=device_id,
+                                grant_id=str(grant.command_id),
+                                status=receipt_status,
+                            )
+                            continue
+                        if receipt_status not in ("completed", "failed"):
+                            continue
+                        async with AsyncSessionLocal() as db:
+                            persisted = await persist_ota_recovery_result(
+                                db,
+                                device_id=device_id,
+                                org_id=org_id,
+                                grant=grant,
+                                message=message,
+                            )
+                        if persisted:
+                            # The result is durable on the device until this explicit
+                            # acknowledgement. Persist on the server before clearing it.
+                            await ws.send_json({"type": "result_ack", "command_id": str(grant.command_id)})
+                            logger.info(
+                                "android_ws.ota_recovery_receipt_persisted",
+                                device_id=device_id,
+                                grant_id=str(grant.command_id),
+                                status=receipt_status,
+                                failure_code=(
+                                    recovery_failure_code(message.get("error"))
+                                    if receipt_status == "failed"
+                                    else None
+                                ),
+                            )
+                            return
+                        logger.warning(
+                            "android_ws.ota_recovery_receipt_rejected",
+                            device_id=device_id,
+                            grant_id=str(grant.command_id),
+                            status=receipt_status,
+                            failure_code=(
+                                recovery_failure_code(message.get("error"))
+                                if receipt_status == "failed"
+                                else None
+                            ),
+                        )
                 except asyncio.TimeoutError:
                     await ws.send_json({"type": "ping", "ts": time.time()})
     except (TimeoutError, WebSocketDisconnect):
@@ -523,7 +616,7 @@ async def android_agent_ws(
         async with AsyncSessionLocal() as recovery_db:
             recovery = await get_ota_recovery(token, recovery_db, device_id=device_id)
         if recovery is not None:
-            await serve_ota_recovery(ws, device_id, recovery[1])
+            await serve_ota_recovery(ws, device_id, recovery[1], str(recovery[0].org_id))
             return
     except Exception:
         await _close(1011, "auth_error")

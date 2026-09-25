@@ -390,15 +390,6 @@ class CommandDispatcher @Inject constructor(
 
     private fun queueDurableResult(receipt: JsonObject): Boolean {
         val queued = wsClient.sendJson(receipt)
-        if (queued) {
-            try {
-                receipt["command_id"]?.jsonPrimitive?.contentOrNull?.let {
-                    commandJournal.acknowledgeQueuedLocalResult(it)
-                }
-            } catch (e: Exception) {
-                Timber.e(e, "Cannot finalize local OTA receipt; result retained for retry")
-            }
-        }
         return queued
     }
 

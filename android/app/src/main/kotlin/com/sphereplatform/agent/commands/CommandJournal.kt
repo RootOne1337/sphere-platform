@@ -8,8 +8,7 @@ import javax.inject.Singleton
 
 /** Bounded encrypted pending results plus indexed receipts retained for seven days after ACK.
  * A recovered running receipt has an unknown outcome and must never be rerun.
- * DAG results await the server's DB ACK; OTA recovery receipts have no SQL task
- * and are locally retired once queued to the WebSocket.
+ * DAG results and OTA recovery receipts await an explicit server result_ack.
  */
 @Singleton
 class CommandJournal @Inject constructor(
@@ -39,6 +38,7 @@ class CommandJournal @Inject constructor(
         acknowledgeWhenQueued: Boolean = false,
         otaTargetVersionCode: Int? = null,
     ): Claim {
+        migrateOtaReceiptMarkers()
         migrateAcknowledged()
         receipts.prune(System.currentTimeMillis())
         val existing = records[id]?.jsonObject
@@ -68,13 +68,14 @@ class CommandJournal @Inject constructor(
     @Synchronized fun complete(id: String, status: String, error: String?, result: JsonObject?): JsonObject {
         val entry = records[id]?.jsonObject ?: error("command_receipt_missing")
         entry["response"]?.let { return it.jsonObject }
-        var payload = response(id, status, error, result)
+        val isOtaRecoveryReceipt = entry["acknowledge_when_queued"]?.jsonPrimitive?.booleanOrNull == true
+        var payload = response(id, status, error, result, isOtaRecoveryReceipt)
         if (payload.toString().toByteArray(Charsets.UTF_8).size > MAX_RESULT_BYTES) {
             payload = response(id, status, error?.take(512), buildJsonObject {
                 put("success", status == "completed")
                 put("result_truncated", true)
                 if (result?.get("cancelled")?.jsonPrimitive?.booleanOrNull == true) put("cancelled", true)
-            })
+            }, isOtaRecoveryReceipt)
         }
         val next = records.toMutableMap()
         next[id] = buildJsonObject {
@@ -141,6 +142,7 @@ class CommandJournal @Inject constructor(
     }
 
     @Synchronized fun pending(): List<JsonObject> {
+        migrateOtaReceiptMarkers()
         migrateAcknowledged()
         importLegacyResults()
         records.keys.toList().filter { it !in active && records[it]?.jsonObject?.get("response") == null }
@@ -196,16 +198,6 @@ class CommandJournal @Inject constructor(
         persist(next)
     }
 
-    /** Called after a terminal receipt enters OkHttp's queue, including a later
-     * reconnect flush. Never retire a running receipt or a DAG awaiting DB ACK.
-     */
-    @Synchronized fun acknowledgeQueuedLocalResult(id: String) {
-        val entry = records[id]?.jsonObject ?: return
-        if (entry["acknowledge_when_queued"]?.jsonPrimitive?.booleanOrNull != true) return
-        if (entry["response"] == null) return
-        acknowledge(id)
-    }
-
     private fun migrateAcknowledged() {
         val acknowledged = records.filterValues {
             it.jsonObject["acknowledged"]?.jsonPrimitive?.booleanOrNull == true
@@ -218,6 +210,26 @@ class CommandJournal @Inject constructor(
         })
         // A crash/write failure between these commits leaves both copies, never neither.
         persist(records.filterKeys { it !in acknowledged }.toMutableMap())
+    }
+
+    /** Older builds retired a recovery result when it entered the socket queue.
+     * If such a result remains after a failed queue attempt, mark it before replay
+     * so the backend can distinguish it from a DAG result with the same UUID.
+     */
+    private fun migrateOtaReceiptMarkers() {
+        val next = records.toMutableMap()
+        var changed = false
+        for ((id, raw) in records) {
+            val entry = raw.jsonObject
+            if (entry["acknowledge_when_queued"]?.jsonPrimitive?.booleanOrNull != true) continue
+            val response = entry["response"]?.jsonObject ?: continue
+            if (response["ota_recovery_receipt"]?.jsonPrimitive?.booleanOrNull == true) continue
+            next[id] = JsonObject(entry + ("response" to JsonObject(
+                response + ("ota_recovery_receipt" to JsonPrimitive(true)),
+            )))
+            changed = true
+        }
+        if (changed) persist(next)
     }
 
     private fun persist(next: MutableMap<String, JsonElement>, reserveResult: Boolean = false,
@@ -234,11 +246,18 @@ class CommandJournal @Inject constructor(
         records.putAll(next)
     }
 
-    private fun response(id: String, status: String, error: String? = null, result: JsonObject? = null) =
+    private fun response(
+        id: String,
+        status: String,
+        error: String? = null,
+        result: JsonObject? = null,
+        otaRecoveryReceipt: Boolean = false,
+    ) =
         buildJsonObject {
             put("type", "command_result")
             put("command_id", id)
             put("status", status)
+            if (otaRecoveryReceipt) put("ota_recovery_receipt", true)
             error?.let { put("error", it) }
             result?.let { put("result", it) }
         }

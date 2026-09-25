@@ -225,6 +225,14 @@ class TestManagedArtifacts:
         assert target.meta["ota_recovery"]["version_code"] == 10215
         assert "ota_recovery" not in (other.meta or {})
 
+        recovery_status = await admin_client.get(f"/api/v1/updates/recovery/{target.id}")
+        assert recovery_status.status_code == 200, recovery_status.text
+        status_body = recovery_status.json()
+        assert status_body["state"] == "active"
+        assert status_body["active"]["sha256"] == digest
+        assert "authorization_tag" not in status_body["active"]
+        assert status_body["last_result"] is None
+
     async def test_release_version_code_must_be_a_positive_android_int(self, admin_client):
         for version_code in (0, -1, 2_147_483_648):
             response = await admin_client.post(
@@ -258,6 +266,41 @@ class TestManagedArtifacts:
         assert (await admin_client.post("/api/v1/updates/recovery", json=body)).status_code == 409
         assert (await admin_client.delete("/api/v1/updates/recovery/" + str(device.id))).status_code == 204
         assert "ota_recovery" not in device.meta
+        status = await admin_client.get(f"/api/v1/updates/recovery/{device.id}")
+        assert status.status_code == 200
+        assert status.json()["state"] == "none"
+        assert status.json()["active"] is None
+
+    async def test_recovery_status_returns_only_sanitized_terminal_receipt(
+        self, admin_client, db_session, updates_org,
+    ):
+        from backend.models.device import Device
+
+        device = Device(org_id=updates_org.id, name="recovered-copy", meta={
+            "ota_recovery_result": {
+                "command_id": "f7d55d4d-8c24-4523-a908-a18d6a9bd432",
+                "sha256": "b" * 64,
+                "version_name": "1.2.20-dev",
+                "version_code": 10220,
+                "status": "completed",
+                "failure_code": None,
+                "installed_version_code": 10220,
+                "recovered_after_process_restart": True,
+                "recorded_at": "2026-09-25T00:00:00+00:00",
+            },
+        })
+        db_session.add(device)
+        await db_session.flush()
+
+        response = await admin_client.get(f"/api/v1/updates/recovery/{device.id}")
+
+        assert response.status_code == 200, response.text
+        body = response.json()
+        assert body["state"] == "completed"
+        assert body["active"] is None
+        assert body["last_result"]["installed_version_code"] == 10220
+        assert body["recent_results"][0]["command_id"] == body["last_result"]["command_id"]
+        assert "authorization_tag" not in response.text
 
     async def test_viewer_cannot_enable_recovery(self, viewer_client):
         import uuid

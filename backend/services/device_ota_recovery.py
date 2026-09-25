@@ -12,15 +12,19 @@ import json
 import re
 import time
 import uuid
+from datetime import datetime, timezone
 
 import jwt
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.config import settings
 from backend.database.tenant import bind_tenant_context
 from backend.models.device import Device
 from backend.services.cache_service import CacheService
+
+MAX_OTA_RECOVERY_RECEIPTS = 32
 
 
 def recovery_failure_code(error: object) -> str | None:
@@ -133,3 +137,150 @@ async def get_ota_recovery(
         return device, grant
     except (jwt.InvalidTokenError, ValueError, TypeError, KeyError, ValidationError):
         return None
+
+
+def ota_recovery_receipts(meta: object) -> list[dict]:
+    """Return a bounded, deduplicated terminal receipt history from device metadata."""
+    if not isinstance(meta, dict):
+        return []
+    raw_history = meta.get("ota_recovery_receipts")
+    values = list(raw_history) if isinstance(raw_history, list) else []
+    legacy = meta.get("ota_recovery_result")
+    if isinstance(legacy, dict):
+        values.append(legacy)
+
+    by_command: dict[str, dict] = {}
+    for value in values:
+        if not isinstance(value, dict):
+            continue
+        command_id = value.get("command_id")
+        status = value.get("status")
+        if not isinstance(command_id, str) or status not in {"completed", "failed"}:
+            continue
+        try:
+            if str(uuid.UUID(command_id)) != command_id:
+                continue
+        except ValueError:
+            continue
+        by_command[command_id] = value
+    return list(by_command.values())[-MAX_OTA_RECOVERY_RECEIPTS:]
+
+
+def matches_ota_recovery_receipt(receipt: dict, message: dict) -> bool:
+    """Recognize only a replay of the terminal result already durable on the server."""
+    command_id = message.get("command_id")
+    status = message.get("status")
+    if command_id != receipt.get("command_id") or status != receipt.get("status"):
+        return False
+    result = message.get("result")
+    if not isinstance(result, dict):
+        result = {}
+    installed = result.get("installed_version_code")
+    if isinstance(installed, bool) or not isinstance(installed, int):
+        installed = None
+    if status == "completed":
+        return installed == receipt.get("installed_version_code")
+    return recovery_failure_code(message.get("error")) == receipt.get("failure_code")
+
+
+async def is_persisted_ota_recovery_replay(
+    db: AsyncSession, *, device_id: str, org_id: str, message: dict,
+) -> bool:
+    """Check a replay against the tenant-owned bounded receipt history."""
+    if message.get("ota_recovery_receipt") is not True:
+        return False
+    command_id = message.get("command_id")
+    if not isinstance(command_id, str):
+        return False
+    try:
+        uuid.UUID(command_id)
+        device_uuid, org_uuid = uuid.UUID(device_id), uuid.UUID(org_id)
+    except ValueError:
+        return False
+    await bind_tenant_context(db, str(org_uuid))
+    meta = await db.scalar(select(Device.meta).where(
+        Device.id == device_uuid,
+        Device.org_id == org_uuid,
+        Device.is_active.is_(True),
+    ))
+    return any(
+        matches_ota_recovery_receipt(receipt, message)
+        for receipt in ota_recovery_receipts(meta)
+        if receipt.get("command_id") == command_id
+    )
+
+
+async def persist_ota_recovery_result(
+    db: AsyncSession,
+    *,
+    device_id: str,
+    org_id: str,
+    grant: OtaRecoveryGrant,
+    message: dict,
+) -> bool:
+    """Persist a terminal receipt before acknowledging it to the Android outbox.
+
+    A recovery command is deliberately not a task, so the ordinary task-result
+    handler cannot be its source of truth. Store a bounded, sanitized receipt on
+    the owned device record and consume the grant atomically. Retain enough
+    history to re-ack a client outbox replay if the first ACK was lost.
+    """
+    command_id = str(grant.command_id)
+    status = message.get("status")
+    if message.get("command_id") != command_id or status not in {"completed", "failed"}:
+        return False
+
+    result = message.get("result")
+    if not isinstance(result, dict):
+        result = {}
+    installed_version_code = result.get("installed_version_code")
+    if isinstance(installed_version_code, bool) or not isinstance(installed_version_code, int):
+        installed_version_code = None
+    if status == "completed" and grant.version_code > 0:
+        if installed_version_code is None or installed_version_code < grant.version_code:
+            return False
+
+    await bind_tenant_context(db, org_id)
+    device = await db.scalar(
+        select(Device)
+        .where(Device.id == uuid.UUID(device_id), Device.org_id == uuid.UUID(org_id))
+        .with_for_update()
+    )
+    if device is None or not device.is_active:
+        return False
+
+    meta = dict(device.meta or {})
+    history = ota_recovery_receipts(meta)
+    previous = next((item for item in history if item.get("command_id") == command_id), None)
+    if previous is not None:
+        return matches_ota_recovery_receipt(previous, message)
+
+    active_raw = meta.get("ota_recovery")
+    try:
+        active = OtaRecoveryGrant.model_validate(active_raw)
+    except (ValidationError, TypeError):
+        return False
+    if (
+        active.command_id != grant.command_id
+        or active.sha256 != grant.sha256
+        or not active.is_authorized(device)
+    ):
+        return False
+
+    receipt = {
+        "command_id": command_id,
+        "sha256": grant.sha256,
+        "version_name": grant.version_name,
+        "version_code": grant.version_code,
+        "status": status,
+        "failure_code": recovery_failure_code(message.get("error")) if status == "failed" else None,
+        "installed_version_code": installed_version_code,
+        "recovered_after_process_restart": bool(result.get("recovered_after_process_restart")),
+        "recorded_at": datetime.now(timezone.utc).isoformat(),
+    }
+    meta.pop("ota_recovery", None)
+    meta["ota_recovery_result"] = receipt
+    meta["ota_recovery_receipts"] = (history + [receipt])[-MAX_OTA_RECOVERY_RECEIPTS:]
+    device.meta = meta
+    await db.commit()
+    return True

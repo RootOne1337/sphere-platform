@@ -93,10 +93,31 @@ class CommandJournalTest {
 
         val receipt = restarted.pending().single()
         assertEquals("completed", receipt["status"]?.jsonPrimitive?.content)
+        assertEquals(true, receipt["ota_recovery_receipt"]?.jsonPrimitive?.boolean)
         assertEquals(10220, receipt["result"]?.jsonObject?.get("installed_version_code")?.jsonPrimitive?.int)
         assertEquals(receipt, (restarted.claim(
             "ota-command", acknowledgeWhenQueued = true, otaTargetVersionCode = 10220,
         ) as CommandJournal.Claim.Existing).response)
+    }
+
+    @Test fun legacyPendingOtaReceiptIsMarkedBeforeReplay() {
+        val first = journal()
+        first.claim("ota-command", acknowledgeWhenQueued = true, otaTargetVersionCode = 10220)
+        first.complete("ota-command", "completed", null, buildJsonObject {
+            put("success", true)
+        })
+
+        // Simulate the prior release's serialized receipt, which had no marker.
+        val records = Json.parseToJsonElement(disk.getValue("command_journal_v1")!!).jsonObject
+        val entry = records.getValue("ota-command").jsonObject
+        val legacyResponse = JsonObject(entry.getValue("response").jsonObject - "ota_recovery_receipt")
+        disk["command_journal_v1"] = JsonObject(records + ("ota-command" to JsonObject(
+            entry + ("response" to legacyResponse),
+        ))).toString()
+
+        val pending = journal().pending().single()
+        assertEquals(true, pending["ota_recovery_receipt"]?.jsonPrimitive?.boolean)
+        assertEquals("completed", pending["status"]?.jsonPrimitive?.content)
     }
 
     @Test fun interruptedOtaInstallIsNeverReportedSuccessfulAtOldVersion() {
@@ -119,6 +140,15 @@ class CommandJournalTest {
         restarted.acknowledge("task-1")
         assertTrue(journal().pending().isEmpty())
         assertTrue(journal().claim("task-1") is CommandJournal.Claim.Existing)
+    }
+
+    @Test fun normalTaskReceiptDoesNotCarryOtaRecoveryMarker() {
+        val instance = journal()
+        instance.claim("dag-command")
+        val receipt = instance.complete("dag-command", "completed", null, buildJsonObject {
+            put("success", true)
+        })
+        assertEquals(null, receipt["ota_recovery_receipt"])
     }
 
     @Test fun writeFailurePreventsExecutionReceipt() {

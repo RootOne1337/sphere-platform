@@ -5,6 +5,7 @@ import hmac
 import json
 import time
 import uuid
+from contextlib import asynccontextmanager
 from unittest.mock import AsyncMock
 
 import jwt
@@ -129,9 +130,195 @@ async def test_ota_channel_sends_only_granted_update_and_ignores_copied_task_rec
     ws.base_url = URL("wss://isolated.invalid/")
     ws.receive_json.side_effect = [{"type": "command_result", "command_id": "foreign-task", "status": "completed"},
                                    WebSocketDisconnect(1000)]
-    await serve_ota_recovery(ws, str(device.id), grant)
+    await serve_ota_recovery(ws, str(device.id), grant, str(device.org_id))
     messages = [c.args[0] for c in ws.send_json.await_args_list]
     assert [m["type"] for m in messages] == ["auth_ok", "OTA_UPDATE"]
     assert messages[1]["payload"]["sha256"] == grant.sha256
     assert messages[1]["payload"]["version_code"] == 10220
     assert messages[1]["payload"]["download_url"] == "https://isolated.invalid/api/v1/updates/artifacts/" + grant.sha256
+
+
+async def test_terminal_recovery_receipt_is_persisted_before_result_ack(
+    db_session, recovery_case, monkeypatch,
+):
+    from backend.api.ws import android as android_ws
+    device, grant, _ = recovery_case
+    ws = AsyncMock()
+    ws.base_url = URL("wss://isolated.invalid/")
+    ws.receive_json.side_effect = [{
+        "type": "command_result",
+        "command_id": str(grant.command_id),
+        "status": "completed",
+        "result": {
+            "success": True,
+            "installed_version_code": grant.version_code,
+            "target_version_code": grant.version_code,
+            "recovered_after_process_restart": True,
+        },
+        "error": "private diagnostic text must not be persisted",
+    }]
+    @asynccontextmanager
+    async def use_test_session():
+        yield db_session
+
+    monkeypatch.setattr(android_ws.router, "AsyncSessionLocal", use_test_session)
+
+    await android_ws.router.serve_ota_recovery(ws, str(device.id), grant, str(device.org_id))
+
+    messages = [call.args[0] for call in ws.send_json.await_args_list]
+    assert messages[-1] == {"type": "result_ack", "command_id": str(grant.command_id)}
+    await db_session.refresh(device)
+    assert "ota_recovery" not in device.meta
+    receipt = device.meta["ota_recovery_result"]
+    assert receipt["status"] == "completed"
+    assert receipt["version_code"] == grant.version_code
+    assert receipt["installed_version_code"] == grant.version_code
+    assert receipt["recovered_after_process_restart"] is True
+    assert "private diagnostic text" not in json.dumps(device.meta)
+
+
+async def test_recovery_receipt_commit_failure_keeps_android_outbox_unacked(
+    db_session, recovery_case, monkeypatch,
+):
+    from backend.api.ws import android as android_ws
+
+    device, grant, _ = recovery_case
+    ws = AsyncMock()
+    ws.base_url = URL("wss://isolated.invalid/")
+    ws.receive_json.side_effect = [{
+        "type": "command_result",
+        "command_id": str(grant.command_id),
+        "status": "completed",
+        "result": {"success": True, "installed_version_code": grant.version_code},
+    }]
+
+    @asynccontextmanager
+    async def use_test_session():
+        yield db_session
+
+    async def fail_commit():
+        raise RuntimeError("isolated database commit failure")
+
+    monkeypatch.setattr(android_ws.router, "AsyncSessionLocal", use_test_session)
+    monkeypatch.setattr(db_session, "commit", fail_commit)
+
+    with pytest.raises(RuntimeError, match="isolated database commit failure"):
+        await android_ws.router.serve_ota_recovery(
+            ws, str(device.id), grant, str(device.org_id),
+        )
+
+    messages = [call.args[0] for call in ws.send_json.await_args_list]
+    assert not any(message.get("type") == "result_ack" for message in messages)
+
+
+async def test_lost_recovery_ack_is_idempotently_replayed_on_normal_agent_channel(
+    db_session, recovery_case, monkeypatch,
+):
+    from backend.api.ws import android as android_ws
+    from backend.services.device_ota_recovery import (
+        is_persisted_ota_recovery_replay,
+        persist_ota_recovery_result,
+    )
+
+    device, grant, _ = recovery_case
+    message = {
+        "type": "command_result",
+        "ota_recovery_receipt": True,
+        "command_id": str(grant.command_id),
+        "status": "completed",
+        "result": {"success": True, "installed_version_code": grant.version_code},
+    }
+    assert await persist_ota_recovery_result(
+        db_session, device_id=str(device.id), org_id=str(device.org_id), grant=grant, message=message,
+    )
+    await db_session.refresh(device)
+
+    # This is the regular authenticated WebSocket after the recovery socket's
+    # result_ack was lost. Its duplicate receipt must clear the local outbox.
+    @asynccontextmanager
+    async def use_test_session():
+        yield db_session
+
+    monkeypatch.setattr("backend.database.engine.AsyncSessionLocal", use_test_session)
+    manager = type("Manager", (), {"send_to_device": AsyncMock()})()
+    await android_ws.router.handle_command_result(
+        str(device.id), str(device.org_id), message, manager,
+    )
+    manager.send_to_device.assert_awaited_once_with(
+        str(device.id), {"type": "result_ack", "command_id": str(grant.command_id)},
+    )
+    assert await is_persisted_ota_recovery_replay(
+        db_session, device_id=str(device.id), org_id=str(device.org_id), message=message,
+    )
+    unmarked = {key: value for key, value in message.items() if key != "ota_recovery_receipt"}
+    assert not await is_persisted_ota_recovery_replay(
+        db_session, device_id=str(device.id), org_id=str(device.org_id), message=unmarked,
+    )
+
+    contradictory = {**message, "status": "failed"}
+    assert not await is_persisted_ota_recovery_replay(
+        db_session, device_id=str(device.id), org_id=str(device.org_id), message=contradictory,
+    )
+
+
+async def test_unrecognized_recovery_receipt_never_falls_through_to_task_result(
+    db_session, recovery_case, monkeypatch,
+):
+    from backend.api.ws import android as android_ws
+    from backend.database import redis_client
+
+    device, grant, _ = recovery_case
+    message = {
+        "type": "command_result",
+        "ota_recovery_receipt": True,
+        "command_id": str(grant.command_id),
+        "status": "completed",
+        "result": {"success": True, "installed_version_code": grant.version_code},
+    }
+
+    @asynccontextmanager
+    async def use_test_session():
+        yield db_session
+
+    monkeypatch.setattr("backend.database.engine.AsyncSessionLocal", use_test_session)
+    monkeypatch.setattr(
+        "backend.services.device_ota_recovery.is_persisted_ota_recovery_replay",
+        AsyncMock(return_value=False),
+    )
+    fake_redis = type("Redis", (), {"publish": AsyncMock()})()
+    monkeypatch.setattr(redis_client, "redis", fake_redis)
+    manager = type("Manager", (), {"send_to_device": AsyncMock()})()
+
+    await android_ws.router.handle_command_result(
+        str(device.id), str(device.org_id), message, manager,
+    )
+
+    manager.send_to_device.assert_not_awaited()
+    fake_redis.publish.assert_not_awaited()
+
+
+async def test_recovery_completion_for_older_installed_version_is_not_acked(
+    db_session, recovery_case, monkeypatch,
+):
+    from backend.api.ws import android as android_ws
+    device, grant, _ = recovery_case
+    ws = AsyncMock()
+    ws.base_url = URL("wss://isolated.invalid/")
+    ws.receive_json.side_effect = [{
+        "command_id": str(grant.command_id),
+        "status": "completed",
+        "result": {"success": True, "installed_version_code": grant.version_code - 1},
+    }, WebSocketDisconnect(1000)]
+    @asynccontextmanager
+    async def use_test_session():
+        yield db_session
+
+    monkeypatch.setattr(android_ws.router, "AsyncSessionLocal", use_test_session)
+
+    await android_ws.router.serve_ota_recovery(ws, str(device.id), grant, str(device.org_id))
+
+    messages = [call.args[0] for call in ws.send_json.await_args_list]
+    assert not any(message.get("type") == "result_ack" for message in messages)
+    await db_session.refresh(device)
+    assert device.meta["ota_recovery"]["command_id"] == str(grant.command_id)
+    assert "ota_recovery_result" not in device.meta
