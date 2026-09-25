@@ -179,11 +179,11 @@ canary подтверждён, но автоматическая OTA-публи�
 keyframe обрабатываются корректно. 83 профильных backend stream-теста проходят.
 
 Это объясняет, как WAN backpressure мог обрезать поток, но сохранённый remote
-capture не содержит сырого IDR и его prefix. Очередь с исправлением сейчас
-развёрнута в здоровом backend image `b2562ca04f5f`; работающий контейнер прошёл
-read-only классификацию синтетического 3-byte IDR как critical. Причина
-конкретного удалённого сеанса всё ещё не локализована, а Cloudflare остаётся
-гипотезой. Подробная первопричина, воспроизведение и residual risk описаны в
+capture не содержит сырого IDR и его prefix. Исправление классификации включено
+в текущий pilot backend image `e308b1b`; регрессия остаётся частью полного backend
+CI. Сохранённое evidence относится к более раннему runtime image
+`b2562ca04f5f`. Причина конкретного удалённого сеанса всё ещё не локализована, а
+Cloudflare остаётся гипотезой. Подробная первопричина, воспроизведение и residual risk описаны в
 [AUD-167](H264-ANNEXB-QUEUE-CLASSIFICATION.md).
 
 ## Риски, исправление и gate
@@ -191,9 +191,9 @@ read-only классификацию синтетического 3-byte IDR к�
 | Severity | Defect / root cause status | Minimal next action | Regression / acceptance |
 | --- | --- | --- | --- |
 | P0 | Удалённый picture NAL не достигает viewer; точка потери между Android encoder/WS и backend не установлена | Сначала получить подтверждённый command receipt и установленную версию APK для одного стабильного уникального remote ID; затем переключить только его Android egress на проверенный независимый маршрут с прежним Cloudflare fallback | IDR/P и движущееся изображение после первичного connect и reconnect; одинаковый тест на двух маршрутах |
-| P0 | Три новых remote WS постоянно пересоздаются; online присваивается раньше подтверждённого heartbeat | Разделить socket-auth, heartbeat-confirmed и stream-health в API/UI; найти причину разрыва на canary | Без pong и при 20 reconnect/15 min UI не объявляет машину здоровой; команда возвращает явную ошибку |
+| P1 | Преждевременный `online` исправлен в AUD-173 и включён в pilot image `e308b1b`; текущую стабильность удалённых heartbeat и прежние reconnect-flaps свежий авторизованный API snapshot не подтверждает | Снять один свежий snapshot и сопоставить heartbeat/pong, WS disconnect reason и reconnect timeline одного удалённого canary | Устройство не становится `online` до pong; после сетевых разрывов heartbeat и соединение восстанавливаются без ручного перезапуска; затем повторить на 20 устройствах |
 | P1 | Один временный Quick Tunnel в signed config; независимого рабочего постоянного ingress нет | Поднять зарегистрированный/владельческий постоянный HTTPS/WSS endpoint, проверить `/health`, auth, binary frames, rollback, затем подписать новую версию manifest | Тот же canary продолжает задачи и стрим при выключении primary; возврат без переустановки APK |
-| P1 | 1.2.18 не в общем OTA; нынешний каталог без cohort/device gate | Создать адресную публикацию/доставку с одним command ID, receipt и проверкой установленного versionCode; начать с локального canary | Никакой remote APK не получает canary до решения оператора; локальный post-install reconnect и сохранение ID подтверждены |
+| P1 | Кандидат 1.2.21/10221 отсутствует в runtime OTA catalog: `android/dev` содержит максимум 1.2.9/10209, а `android-canary/dev` не выбирается агентом с platform `android`; адресный cohort/device gate отсутствует | После настройки production signing добавить cohort/device-targeted публикацию через OTA API и начать с одного удалённого canary | Server receipt, фактические versionCode/signature и heartbeat подтверждены для выбранного ID; остальные устройства не изменились; после этого разрешать следующую волну |
 
 Сейчас массовое переключение provider или `android/dev` latest — **NO-GO**.
 Нужно не просто HTTP 101 или значок MediaProjection, а IDR/P в backend и
