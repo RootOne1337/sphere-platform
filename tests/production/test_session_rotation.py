@@ -75,6 +75,9 @@ async def test_concurrent_refresh_consumes_one_parent_only_once(world, preload):
     # Prove the winning child is usable through the HTTP contract, then single-use too.
     child = await world.client.post("/api/v1/auth/refresh", headers={"X-Refresh-Token": winner["refresh_token"]})
     assert child.status_code == 200
+    # A successful rotation updates the persistent HTTP client's cookie jar.
+    # Clear it to exercise replay of the raw parent through the fallback header.
+    world.client.cookies.clear()
     replay = await world.client.post("/api/v1/auth/refresh", headers={"X-Refresh-Token": raw})
     assert replay.status_code == 401
 

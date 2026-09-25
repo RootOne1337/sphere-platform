@@ -6,6 +6,7 @@ from http.cookies import SimpleCookie
 import pytest
 from sqlalchemy import select
 
+from backend.core.config import settings
 from backend.models.refresh_token import RefreshToken
 from backend.services.auth_service import AuthService
 from backend.services.cache_service import CacheService
@@ -17,14 +18,17 @@ async def issue(world):
 
 
 @pytest.mark.parametrize("authorization", ["valid", "invalid", "absent"])
-async def test_logout_returns_cookie_expiration_on_actual_http_response(world, authorization):
+@pytest.mark.parametrize("scheme", ["http", "https"])
+async def test_logout_returns_cookie_expiration_on_actual_http_response(world, authorization, scheme):
     tokens = await issue(world)
     headers = {"Cookie": "refresh_token=" + tokens["refresh_token"]}
     if authorization != "absent":
         headers["Authorization"] = "Bearer " + (
             tokens["access_token"] if authorization == "valid" else "invalid-local-token"
         )
-    response = await world.client.post("/api/v1/auth/logout", headers=headers)
+    response = await world.client.post(
+        f"{scheme}://audit.local/api/v1/auth/logout", headers=headers,
+    )
     assert response.status_code == 204
     cookie = SimpleCookie()
     cookie.load(response.headers.get("set-cookie", ""))
@@ -32,7 +36,9 @@ async def test_logout_returns_cookie_expiration_on_actual_http_response(world, a
     assert cookie["refresh_token"]["max-age"] == "0"
     assert cookie["refresh_token"]["path"] == "/"
     assert cookie["refresh_token"]["httponly"]
-    assert cookie["refresh_token"]["secure"]
+    secure = bool(settings.COOKIE_SECURE or scheme == "https")
+    assert bool(cookie["refresh_token"]["secure"]) is secure
+    assert cookie["refresh_token"]["samesite"] == ("none" if secure else "lax")
     assert response.content == b""
 
 

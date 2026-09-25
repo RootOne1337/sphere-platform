@@ -82,6 +82,8 @@ async def test_runtime_login_me_refresh_logout_chain(user_runtime, role):
     assert refreshed.status_code == 200, refreshed.text
     second = refreshed.json()
     assert second["refresh_token"] != first["refresh_token"]
+    # The rotated cookie must not mask the old credential in this header-only replay check.
+    w.client.cookies.clear()
     assert (await w.client.post("/api/v1/auth/refresh", headers={"X-Refresh-Token": first["refresh_token"]})).status_code == 401
     logout = await w.client.post("/api/v1/auth/logout", headers={
         "Authorization": "Bearer " + second["access_token"], "X-Refresh-Token": second["refresh_token"],
@@ -124,6 +126,10 @@ async def test_runtime_refresh_opaque_sources_and_child(user_runtime, source):
     response = await r.world.client.post("/api/v1/auth/refresh", **kwargs)
     assert response.status_code == 200, response.text
     child = response.json()["refresh_token"]
+    # Verify this exact transport cannot replay its parent; don't let a newer
+    # cookie from the shared AsyncClient take precedence over header/body input.
+    if source != "cookie":
+        r.world.client.cookies.clear()
     assert (await r.world.client.post("/api/v1/auth/refresh", **kwargs)).status_code == 401
     assert (await r.world.client.post("/api/v1/auth/refresh", headers={"X-Refresh-Token": child})).status_code == 200
     await unscoped(r)
