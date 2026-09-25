@@ -1,5 +1,28 @@
 # Локальный стенд для совместного тестирования
 
+**Текущая проверка: 26 сентября 2026, 00:54 Asia/Yekaterinburg / 25 сентября, 19:54 UTC.**
+Основной пилот `sphere-pilot-20260911` работает: backend/frontend image `fc65b55`,
+сервисы healthy. В локальном ADB PackageManager у `emulator-5554` и `emulator-5556`
+прочитано `1.2.22-dev / 10222`. Это установленная версия на этих двух Android
+устройствах; удалённую версию из этого локального ADB-среза вывести нельзя.
+
+Важное расхождение релиза: локальные `LATEST-SphereAgent-pilot.apk` и
+`manifest.json`, а также основной runtime OTA channel `android/dev` всё ещё
+указывают на `1.2.9-dev / 10209`; `android-canary/dev` достигает `1.2.19-dev /
+10219`. Кандидат `1.2.22-dev / 10222` собран, но является приватным debug APK с
+development enrollment credential и не прошёл remote runtime acceptance; он не
+опубликован. Поэтому его нельзя считать текущим автоматическим обновлением для
+флота. Подробные доказательства и release gate: [Android presence and APK
+release audit](../audits/2026-09-26/ANDROID-PRESENCE-AND-APK-RELEASE.md).
+
+В коде backend также воспроизведена и исправлена гонка: старое Android WS
+соединение в одном worker могло записать `offline` поверх новой сессии другого
+worker. Регрессия на двух клиентах общего FakeRedis проходит. На момент записи
+новый backend ещё не был развёрнут; не считайте это исправление причиной
+восстановления текущего live-статуса или удалённого видеопотока. Удалённая
+передача кадров остаётся отдельным открытым вопросом: в последнем сохранённом
+срезе сервер пересылал remote SPS/PPS без IDR/P кадров. См. тот же audit report.
+
 **Контрольная точка: 25 сентября 2026, 21:18 Asia/Yekaterinburg · Windows / Docker Desktop.**
 
 Изолированный Compose project `sphere-pilot-20260911` обновлён на commit `fc65b55`:

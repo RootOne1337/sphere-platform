@@ -829,26 +829,50 @@ async def android_agent_ws(
         # старый handler НЕ удалит новую сессию из реестра.
         removed = await manager.disconnect(device_id, session_id=session_id)
         if removed:
-            await status_cache.mark_offline(device_id)
             from backend.websocket.stream_metrics import StreamMetrics
             StreamMetrics(device_id).cleanup()
+
+            # ConnectionManager is process-local. A stale socket in this worker
+            # may close after another worker has published a replacement session.
+            # Only the session that still owns the shared Redis presence may make
+            # the device offline or release its task lock / publish an offline event.
+            try:
+                offline_transitioned = await status_cache.mark_offline(
+                    device_id,
+                    session_id=session_id,
+                )
+            except Exception as exc:
+                offline_transitioned = False
+                logger.warning(
+                    "android_ws.offline_status_update_failed",
+                    device_id=device_id,
+                    error_type=type(exc).__name__,
+                )
+
+            if not offline_transitioned:
+                logger.debug(
+                    "android_ws.offline_status_update_skipped_stale_session",
+                    device_id=device_id,
+                    session_id=session_id,
+                )
 
             # FIX-WATCHDOG: При реальном disconnect немедленно освобождаем Redis running lock.
             # Это позволяет dispatcher-у (цикл каждые 5с) выдать следующую задачу сразу
             # после реконнекта агента, не дожидаясь истечения TTL=3600s.
             # Задача в БД остаётся RUNNING — watchdog (task_heartbeat_watchdog.py) переведёт
             # её в TIMEOUT если агент не пришлёт command_result через flushPendingResults.
-            try:
-                from backend.database.redis_client import redis_binary as _redis_disc
-                if _redis_disc:
-                    from backend.services.task_queue import TaskQueue as _TQ
-                    await _TQ(_redis_disc).release_device_lock(device_id)
-            except Exception as _lock_err:
-                logger.warning(
-                    "android_ws.lock_release_failed",
-                    device_id=device_id,
-                    error=str(_lock_err),
-                )
+            if offline_transitioned:
+                try:
+                    from backend.database.redis_client import redis_binary as _redis_disc
+                    if _redis_disc:
+                        from backend.services.task_queue import TaskQueue as _TQ
+                        await _TQ(_redis_disc).release_device_lock(device_id)
+                except Exception as _lock_err:
+                    logger.warning(
+                        "android_ws.lock_release_failed",
+                        device_id=device_id,
+                        error=str(_lock_err),
+                    )
 
             # Отписать PubSub router от канала устройства
             try:
@@ -860,19 +884,20 @@ async def android_agent_ws(
                 pass
 
             # Опубликовать device.offline событие
-            try:
-                from backend.schemas.events import EventType, FleetEvent
-                from backend.websocket.event_publisher import get_event_publisher
-                publisher = get_event_publisher()
-                if publisher:
-                    await publisher.emit(FleetEvent(
-                        event_type=EventType.DEVICE_OFFLINE,
-                        device_id=device_id,
-                        org_id=org_id_str,
-                        payload={"status": "offline"},
-                    ))
-            except Exception:
-                pass
+            if offline_transitioned:
+                try:
+                    from backend.schemas.events import EventType, FleetEvent
+                    from backend.websocket.event_publisher import get_event_publisher
+                    publisher = get_event_publisher()
+                    if publisher:
+                        await publisher.emit(FleetEvent(
+                            event_type=EventType.DEVICE_OFFLINE,
+                            device_id=device_id,
+                            org_id=org_id_str,
+                            payload={"status": "offline"},
+                        ))
+                except Exception:
+                    pass
         else:
             logger.debug(
                 "android_ws: cleanup skipped — сессия уже заменена новой",

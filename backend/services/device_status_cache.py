@@ -92,18 +92,63 @@ class DeviceStatusCache:
             return None
         return DeviceLiveStatus.model_validate(unpacked)
 
-    async def mark_offline(self, device_id: str) -> None:
-        """Called on WebSocket disconnect (TZ-03 hook)."""
-        existing = await self.get_status(device_id)
-        if existing:
-            existing.status = "offline"
-            existing.adb_connected = False
-            existing.ws_session_id = None
-            await self.set_status(device_id, existing)
-        else:
-            await self.set_status(
-                device_id, DeviceLiveStatus(device_id=device_id, status="offline")
-            )
+    async def mark_offline(self, device_id: str, session_id: str | None = None) -> bool:
+        """Mark a device offline only if the disconnect still owns its live session.
+
+        A connection manager is process-local. With multiple backend workers, an old
+        socket can disconnect after another worker has already stored a newer session
+        in Redis. WATCH/MULTI makes the ownership check and offline write atomic, so the
+        stale worker cannot overwrite the replacement session's status.
+
+        ``session_id=None`` preserves the legacy unconditional behavior for callers
+        that do not represent a particular WebSocket session.
+        """
+        if self.redis is None:
+            return False
+
+        from redis.exceptions import WatchError
+
+        key = self._key(device_id)
+        for _attempt in range(3):
+            async with self.redis.pipeline(transaction=True) as pipe:
+                try:
+                    await pipe.watch(key)
+                    raw = await pipe.get(key)
+                    if raw is None:
+                        # A session-scoped disconnect must not invent an offline
+                        # transition after its presence key has expired or been evicted.
+                        if session_id is not None:
+                            return False
+                        existing = DeviceLiveStatus(device_id=device_id, status="offline")
+                    else:
+                        try:
+                            unpacked = msgpack.unpackb(raw, raw=False)
+                            existing = DeviceLiveStatus.model_validate(unpacked)
+                        except Exception:
+                            # Corrupted presence is unavailable. A stale socket must
+                            # never replace it with data that may belong to a new owner.
+                            if session_id is not None:
+                                return False
+                            existing = DeviceLiveStatus(device_id=device_id, status="offline")
+
+                        if session_id is not None and existing.ws_session_id != session_id:
+                            return False
+
+                        existing.status = "offline"
+                        existing.adb_connected = False
+                        existing.ws_session_id = None
+
+                    data = msgpack.packb(existing.model_dump(mode="json"), use_bin_type=True)
+                    pipe.multi()
+                    pipe.set(key, data, ex=self.TTL_OFFLINE)
+                    await pipe.execute()
+                    return True
+                except WatchError:
+                    # A heartbeat or replacement connect changed the status between
+                    # our read and write. Re-read ownership before attempting again.
+                    continue
+
+        return False
 
     # ── Bulk (MGET — single Redis round-trip) ────────────────────────────────
 
