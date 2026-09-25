@@ -184,10 +184,21 @@ mtime совпадают со снимком, прочитанным до зап
 Загрузка может произойти не сразу: расписание WorkManager — каждые 15 минут
 при наличии сети; Doze, отсутствие регистрации и restart могут задержать её.
 Для немедленной диагностики используйте текущую команду запроса логов или
-локальный crash file через управляемый доступ. `READ_LOGS` — Android
-signature/privileged permission; обычный install не даёт права читать полный
-системный buffer. На phone без root/managed grant считайте доступными логи
-самого Sphere приложения, а не полные логи сторонней игры.
+локальный crash file через управляемый доступ. APK запускает `logcat` с UID
+приложения и не повышает эту команду через `su`; наличие root само по себе не
+означает доступ APK к native crash, ANR, LMK, system или other-app buffers.
+`READ_LOGS` — Android signature/privileged permission. Для таких данных нужен
+отдельный явно разрешённый root/MDM collector либо host-side ADB. Считайте
+удалённо доступными логи Sphere и записанные Java/Kotlin uncaught exceptions,
+а не полный дамп Android или сторонней игры.
+
+Root recovery в новой APK ограничена своим package: она не создаёт постоянно
+работающий shell-watchdog, не снимает stopped-state и не меняет init/system
+разделы. Загрузка восстанавливается Android-managed receiver/jobs/WorkManager в
+best-effort режиме; Doze, OEM policy, force-stop, отозванные permissions и
+foreground-service ограничения могут задержать или остановить перезапуск.
+Известные system-level hooks, оставленные старыми APK, новая версия обнаруживает
+частично, но не удаляет автоматически.
 
 Backend принимает не более 512 KiB на upload, пишет дневной файл не более 50
 MiB и очищает файлы старше 30 дней при следующем upload этого device. У него

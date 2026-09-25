@@ -8,7 +8,6 @@ import androidx.work.ListenableWorker
 import com.sphereplatform.agent.provisioning.CloneDetector
 import com.sphereplatform.agent.provisioning.DeviceRegistrationClient
 import com.sphereplatform.agent.provisioning.ZeroTouchProvisioner
-import com.sphereplatform.agent.root.RootAutoStart
 import com.sphereplatform.agent.service.ServiceWatchdog
 import com.sphereplatform.agent.service.SphereAgentService
 import com.sphereplatform.agent.store.AuthTokenStore
@@ -92,17 +91,16 @@ class BackgroundEnrollmentTest {
         }
         registration = DeviceRegistrationClient(client, store, detector, Json)
         provisioner = mockk(relaxed = true)
-        mockkObject(ServiceWatchdog.Companion, SphereAgentService.Companion, RootAutoStart)
+        mockkObject(ServiceWatchdog.Companion, SphereAgentService.Companion)
         every { ServiceWatchdog.isEnrolled(any()) } answers { enrolled }
         every { ServiceWatchdog.markEnrolled(any()) } answers { enrolled = true }
         every { ServiceWatchdog.schedule(any()) } just Runs
         every { SphereAgentService.start(any()) } answers { startedIds.add(store.getDeviceId() ?: "MISSING"); Unit }
-        every { RootAutoStart.ensureRunning(any()) } just Runs
     }
 
     @After
     fun cleanup() {
-        unmockkObject(ServiceWatchdog.Companion, SphereAgentService.Companion, RootAutoStart)
+        unmockkObject(ServiceWatchdog.Companion, SphereAgentService.Companion)
         client.dispatcher.executorService.shutdown()
         assertTrue(client.dispatcher.executorService.awaitTermination(5, TimeUnit.SECONDS))
         client.connectionPool.evictAll()

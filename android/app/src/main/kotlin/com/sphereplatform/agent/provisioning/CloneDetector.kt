@@ -21,7 +21,7 @@ import javax.inject.Singleton
  * 1. app_instance_id — уникальный UUID, сгенерированный при первой установке APK
  * 2. ANDROID_ID — может совпадать у клонов, но полезен как часть хеша
  * 3. Build.FINGERPRINT — содержит информацию о системном образе
- * 4. Доступный приложению серийный номер и параметры образа
+ * 4. Параметры системного образа
  *
  * Финальный fingerprint = SHA-256(app_instance_id + android_id + build_fingerprint + ...)
  * Сам по себе НЕ различает копии /data. Разделение выполняет сервер по
@@ -52,7 +52,6 @@ class CloneDetector @Inject constructor(
             add("instance:${getOrCreateInstanceId()}")
             add("android_id:${getAndroidId()}")
             add("build_fp:${Build.FINGERPRINT}")
-            add("serial:${getSerialNumber()}")
             add("board:${Build.BOARD}")
             add("bootloader:${Build.BOOTLOADER}")
             add("host:${Build.HOST}")
@@ -121,17 +120,6 @@ class CloneDetector @Inject constructor(
             Settings.Secure.ANDROID_ID,
         ) ?: "unknown"
     }
-
-    @SuppressLint("HardwareIds")
-    @Suppress("DEPRECATION")
-    private fun getSerialNumber(): String = runCatching {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            Build.getSerial()
-        } else {
-            Build.SERIAL
-        }
-    }.getOrDefault("unknown")
-
     private fun sha256(input: String): String {
         val digest = MessageDigest.getInstance("SHA-256")
         val hash = digest.digest(input.toByteArray(Charsets.UTF_8))

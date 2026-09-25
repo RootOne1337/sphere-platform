@@ -6,7 +6,9 @@ import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
@@ -62,6 +64,7 @@ class LogUploadWorker @AssistedInject constructor(
 
     companion object {
         private const val WORK_NAME = "sphere_log_upload"
+        internal const val CRASH_UPLOAD_WORK_NAME = "sphere_crash_log_upload"
         private const val MAX_CRASH_LOG_BYTES = 128 * 1024
         // Backend rejects a log entry above 512 KiB. Leave room for its
         // upload separator and keep the entire request below that hard limit.
@@ -77,12 +80,43 @@ class LogUploadWorker @AssistedInject constructor(
                 .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 15, TimeUnit.SECONDS)
                 .build()
 
-            WorkManager.getInstance(context).enqueueUniquePeriodicWork(
+            val workManager = WorkManager.getInstance(context)
+            workManager.enqueueUniquePeriodicWork(
                 WORK_NAME,
                 ExistingPeriodicWorkPolicy.KEEP,
                 request,
             )
             Timber.d("LogUploadWorker scheduled (every 15 min)")
+
+            schedulePendingCrashUpload(context, workManager)
+        }
+
+        /** Upload a persisted crash on the next process start, without waiting for
+         * the 15-minute periodic diagnostics window. WorkManager retries while
+         * offline and KEEP coalesces boot/package-replacement bursts.
+         */
+        internal fun schedulePendingCrashUpload(context: Context) {
+            schedulePendingCrashUpload(context, WorkManager.getInstance(context))
+        }
+
+        private fun schedulePendingCrashUpload(context: Context, workManager: WorkManager) {
+            val crashFile = CrashHandler.crashLogFile(context)
+            if (!crashFile.isFile || crashFile.length() == 0L) return
+
+            val constraints = Constraints.Builder()
+                .setRequiredNetworkType(NetworkType.CONNECTED)
+                .build()
+            val request = OneTimeWorkRequestBuilder<LogUploadWorker>()
+                .setConstraints(constraints)
+                .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 15, TimeUnit.SECONDS)
+                .build()
+
+            workManager.enqueueUniqueWork(
+                CRASH_UPLOAD_WORK_NAME,
+                ExistingWorkPolicy.KEEP,
+                request,
+            )
+            Timber.i("LogUploadWorker: pending crash upload queued")
         }
     }
 

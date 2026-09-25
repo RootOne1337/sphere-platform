@@ -1,9 +1,11 @@
 package com.sphereplatform.agent
 
 import android.app.Application
+import android.content.Context
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import com.sphereplatform.agent.BuildConfig
+import com.sphereplatform.agent.logging.CrashHandler
 import com.sphereplatform.agent.logging.FileLoggingTree
 import com.sphereplatform.agent.root.RootAutoStart
 import com.sphereplatform.agent.service.ServiceWatchdog
@@ -32,6 +34,13 @@ class SphereApp : Application(), Configuration.Provider {
     @Inject
     lateinit var updateCheckScheduler: UpdateCheckScheduler
 
+    override fun attachBaseContext(base: Context) {
+        super.attachBaseContext(base)
+        // Install before onCreate/Hilt/WorkManager so startup crashes are persisted
+        // and can be uploaded by the next process start.
+        CrashHandler.install(this)
+    }
+
     override fun onCreate() {
         super.onCreate()
         // Always plant file tree first so logs are never lost
@@ -44,10 +53,8 @@ class SphereApp : Application(), Configuration.Provider {
         // A vendor may filter BOOT_COMPLETED, including WorkManager's receiver.
         BootRecoveryJobService.schedule(this)
 
-        // ── ROOT: снятие ВСЕХ системных ограничений на рутованных устройствах ─────
-        // На LDPlayer / Android 9 с root: снимает Stopped State, whitelist battery,
-        // разрешает фоновую работу, включает BootReceiver. Идемпотентно.
-        // Без root — тихо пропускается.
+        // Optional package-scoped root recovery for owner-managed rooted devices.
+        // Standard Android boot/job recovery remains the normal lifecycle path.
         Thread { RootAutoStart.configure(this) }.start()
 
         // Schedule background workers (KEEP policy — idempotent)

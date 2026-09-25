@@ -164,4 +164,19 @@ class ScriptCacheManagerTest {
         assertTrue(result is ScriptCacheManager.CacheResult.Hit)
         assertEquals(dag2, (result as ScriptCacheManager.CacheResult.Hit).dag)
     }
+
+    @Test
+    fun `LRU eviction removes the least recently used entry`() {
+        (1..20).forEach { index ->
+            cache.put("script_$index", "hash_$index", sampleDag())
+        }
+        assertTrue(cache.get("script_1", "hash_1") is ScriptCacheManager.CacheResult.Hit)
+
+        cache.put("script_21", "hash_21", sampleDag())
+
+        assertTrue(cache.get("script_1", "hash_1") is ScriptCacheManager.CacheResult.Hit)
+        assertTrue(cache.get("script_2", "hash_2") is ScriptCacheManager.CacheResult.Miss)
+        assertTrue(cache.get("script_3", "hash_3") is ScriptCacheManager.CacheResult.Hit)
+        assertEquals(20, cache.listCached().size)
+    }
 }

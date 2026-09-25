@@ -41,8 +41,10 @@ artifacts are not configured for that isolated installation.
 
 The Kotlin APK connects managed devices to Sphere Platform, executes DAGs and
 input commands, captures screens and manages WireGuard-compatible tunnels.
-The main service is declared as `dataSync`; screen capture has a separate
-`mediaProjection` service. Watchdogs and foreground declarations are recovery
+The long-lived agent channel uses Android's declared `specialUse` foreground
+service subtype; screen capture has a separate `mediaProjection` service.
+WorkManager's short recovery work still uses `dataSync` and remains subject to
+Android execution quotas. Watchdogs and foreground declarations are recovery
 mechanisms, not an uptime guarantee.
 
 The current build declares **minSdk 26**, **targetSdk/compileSdk 35**. These are
@@ -343,10 +345,21 @@ file are bounded on-device. The backend currently keeps daily files for 30 days
 and caps each daily file at 50 MiB, but does not enforce a total per-device or
 global log-storage quota; treat that as an open capacity/retention risk.
 
-Android `READ_LOGS` is signature/privileged. A regular phone install cannot be
-assumed to read full system logcat; this source collects Sphere-tagged output,
-and broader system logs need an authorized root or managed-device grant. See
+Android `READ_LOGS` is signature/privileged. This APK runs `logcat` as its app
+UID and does not elevate that command through `su`; even on a rooted emulator it
+does not promise access to native crash, ANR, LMK, system, or other-app buffers.
+The APK collects Sphere-visible output and its own Java/Kotlin uncaught-exception
+file. Broader buffers need a separately authorized root/MDM collector or
+host-side ADB access. See
 [Android's permission model](https://developer.android.com/reference/android/Manifest.permission#READ_LOGS).
+
+Root recovery is package-scoped. It does not install a resident shell daemon,
+clear Android's stopped state, or edit init/system partitions. Boot recovery
+uses Android-managed receivers/jobs/WorkManager and is best-effort: Doze, OEM
+policy, force-stop, revoked permissions, and foreground-service rules can delay
+or prevent restart. Older APKs may already have left system-level root hooks;
+the new APK detects some known artifacts and reports them but does not remove
+them automatically.
 
 ## 10. Troubleshooting
 

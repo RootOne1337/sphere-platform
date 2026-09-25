@@ -17,7 +17,6 @@ import com.sphereplatform.agent.R
 import com.sphereplatform.agent.provisioning.DeviceRegistrationClient
 import com.sphereplatform.agent.provisioning.RegistrationException
 import com.sphereplatform.agent.provisioning.ZeroTouchProvisioner
-import com.sphereplatform.agent.root.RootAutoStart
 import com.sphereplatform.agent.service.ServiceWatchdog
 import com.sphereplatform.agent.service.SphereAgentService
 import com.sphereplatform.agent.store.AuthTokenStore
@@ -179,7 +178,6 @@ class KeepAliveWorker @AssistedInject constructor(
      */
     private fun ensureServiceRunning() {
         try {
-            RootAutoStart.ensureRunning(applicationContext)
             SphereAgentService.start(applicationContext)
             ServiceWatchdog.schedule(applicationContext)
             Timber.d("KeepAliveWorker: запуск сервиса запрошен, watchdog запланирован")
