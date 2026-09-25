@@ -301,23 +301,27 @@ identity, доверенный ключ и параметры enrollment; APK и
 <a id="status"></a>
 ## 🔬 Состояние проекта и границы проверки
 
-**Контрольная точка: 24 сентября 2026.** CI-badges относятся к ветке аудита;
-строки ниже различают текущие установки, локальные candidate и датированную
-приёмку. [Почему удалённое видео и OTA остаются NO-GO](docs/audits/2026-09-24/REMOTE-VIDEO-OTA-DECISION.md) ·
-[свежий A/B ingress и reconnect трёх VM](docs/audits/2026-09-24/REMOTE-INGRESS-AB.md).
+**Контрольная точка: 25 сентября 2026, 14:17 Asia/Yekaterinburg.** Состояние
+контейнеров и readiness проверены в это время; API и ADB snapshot устройств ниже
+остаются последними ранее сохранёнными read-only срезами. Source fixes, которые
+ещё не развёрнуты, отдельно помечены ниже. [Решение по удалённому видео и OTA](docs/audits/2026-09-24/REMOTE-VIDEO-OTA-DECISION.md) ·
+[A/B ingress](docs/audits/2026-09-24/REMOTE-INGRESS-AB.md) ·
+[Open и кадры](docs/audits/2026-09-25/ANDROID-STREAM-OBSERVABILITY.md) ·
+[Enrollment 401](docs/audits/2026-09-25/CLONED-ENROLLMENT-401.md) ·
+[OTA receipts](docs/audits/2026-09-25/OTA-TERMINAL-RECEIPTS.md).
 
 | Поверхность / проверка | Версия / результат | Доказательство |
 | --- | --- | --- |
-| Backend pilot | Image `ff87b56dbbd7`, healthy | [Runtime и границы](docs/audits/2026-09-24/REMOTE-VIDEO-OTA-DECISION.md) |
-| Frontend pilot | Image `48c9480`, healthy | [Runtime и границы](docs/audits/2026-09-24/REMOTE-VIDEO-OTA-DECISION.md) |
-| Android, оба локальных устройства | **1.2.9-dev / 10209** | [OTA и clone identity](docs/audits/2026-09-20/CLONE-IDENTITY.md) |
-| Android local candidate | **1.2.18-dev / 10218**, pilot-compatible debug APK; обе полные suites и signature прошли, remote установка и OTA-публикация не выполнялись | [AUD-163](docs/audits/2026-09-24/REMOTE-VIDEO-OTA-DECISION.md) |
-| Backend OTA catalog | Latest `android/dev`: **1.2.9-dev / 10209**; 1.2.15/10215 изолирован в `android-canary/dev`, адресная попытка PH006 без доказанной установки | [AUD-163](docs/audits/2026-09-24/REMOTE-VIDEO-OTA-DECISION.md) |
+| Backend / frontend pilot | Image `b491a66`, healthy; readiness `200` при контрольной проверке; source fixes ещё не развёрнуты | [Local pilot](docs/operations/LOCAL-PILOT.md) |
+| Android, локальные устройства | `emulator-5554`: **1.2.20-dev / 10220** (ручная установка); `emulator-5556`: **1.2.19-dev / 10219** | [OTA и текущий gate](docs/architecture/ANDROID-OTA-RELIABILITY.md) |
+| Android candidate | **1.2.21-dev / 10221**, SHA-256 `69A275B0…1DEB98F8`; собран и подписан, не установлен и не опубликован | [OTA receipts](docs/audits/2026-09-25/OTA-TERMINAL-RECEIPTS.md) |
+| Clone/re-enrollment · read-only ADB check 04:26 | `emulator-5556` repeatedly receives HTTP 401 at registration; both local emulators have the same bootstrap credential fingerprint, which does not match isolated-pilot config. Exact server for the saved 401 is not proven | [AUD-172 evidence and limits](docs/audits/2026-09-25/CLONED-ENROLLMENT-401.md) |
+| Backend OTA catalog · last read-only snapshot 04:11 | Latest `android/dev`: **1.2.9-dev / 10209**; latest `android-canary/dev`: **1.2.19-dev / 10219** | [OTA reliability](docs/architecture/ANDROID-OTA-RELIABILITY.md) |
 | Task / pipeline · приёмка 21 сентября | 15 terminal task receipts; два pipeline runs | [Независимая сверка результатов](docs/audits/2026-09-20/CANARY-20260921.md) |
-| Видео | Локальный `PH000` дал IDR/P через независимый viewer ingress; удалённый `PH008` на локальном и альтернативном viewer дал только SPS/PPS. Его Android ingress пока оставался Cloudflare | [AUD-164](docs/audits/2026-09-24/REMOTE-INGRESS-AB.md) · [AUD-163](docs/audits/2026-09-24/REMOTE-VIDEO-OTA-DECISION.md) |
+| Видео | В независимых viewer-сессиях локальный `PH000` передавал IDR/P, удалённый `PH008` — SPS/PPS без IDR/P. Android egress A/B не завершён; Cloudflare не доказан причиной | [AUD-164](docs/audits/2026-09-24/REMOTE-INGRESS-AB.md) · [AUD-170](docs/audits/2026-09-25/ANDROID-STREAM-OBSERVABILITY.md) |
 | Redis | Source Compose: 512 MiB dataset / 2048 MiB ceiling; three isolated AOF probes pass (peak 1.49–2.00 GiB); 32-stream/live rollout open | [AUD-143 evidence and rollout boundary](docs/audits/2026-09-20/REDIS-PERSISTENCE-HEADROOM.md) |
 | Сетевые отказы | Проверены отдельные отказы Android, серверного входа и обеих сторон | [Матрица и версии проверок](docs/audits/2026-09-05/NETWORK-RECOVERY-NATIVE.md) |
-| Удалённые клоны/видео | **NO-GO:** 10 device records в последней API-выборке, не 22 подтверждённых физических VM; новые `PH007`–`009` переподключались 19–21 раз за 15 мин, без подтверждённого heartbeat | [AUD-164](docs/audits/2026-09-24/REMOTE-INGRESS-AB.md) · [F32-28 / F32-34](docs/audits/2026-09-20/CLONE-IDENTITY.md) |
+| Fleet / identities | **NO-GO:** 10 records; 6 со статусом `online`, но только 3 свежих heartbeat; у 9 APK version code неизвестен. Это не подтверждает 20 удалённых уникальных устройств | [Readiness](docs/operations/READINESS.md) · [Clone identity](docs/audits/2026-09-20/CLONE-IDENTITY.md) |
 
 ### Ближайшие эксплуатационные задачи
 

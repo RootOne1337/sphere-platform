@@ -1,21 +1,47 @@
 # Локальный стенд для совместного тестирования
 
-**24 сентября 2026 · Windows / Docker Desktop · development, авторизация включена.**
+**Контрольная точка контейнеров: 25 сентября 2026, 14:17 Asia/Yekaterinburg · Windows / Docker Desktop.**
 
-**Актуальная граница pilot:** backend image `ff87b56dbbd7`, frontend image
-`48c9480`, Cloudflare Quick Tunnel healthy. Local `emulator-5554` подтвердил OTA
-до 1.2.18/10218; соседний `emulator-5556` остаётся на 1.2.9/10209. Terminal
-backend `completed` receipt для canary отсутствует. Обычный OTA catalog
-`android/dev` по-прежнему максимум 1.2.9/10209; 1.2.15/10215 и 1.2.18/10218 не
-переключались в общий канал. Кандидат 1.2.19-dev/10219 собран из `6c000ea`,
-подписан тем же pilot signer и содержит быстрый update check, но ещё не установлен
-или опубликован. Удалённое видео и все 20 клонов не приняты: PH006 в
-сохранённых viewer-сессиях дал SPS/PPS без IDR/P, хотя локальный Android через
-тот же публичный tunnel передал IDR/P. Подробные evidence, GitHub/OTA маршруты
-и архитектура OTA: [AUD-163](../audits/2026-09-24/REMOTE-VIDEO-OTA-DECISION.md) ·
-[целевой дизайн и gates](../architecture/ANDROID-OTA-RELIABILITY.md).
-Датированные записи ниже сохранены как история проверок; их версии не следует
-читать как текущие установленные версии.
+Изолированный pilot backend и frontend работают на image `b491a66`; оба контейнера
+healthy, readiness вернул `200`. Старые `sphere-platform` и `sphere-tunnel` не
+перезапускались. Read-only API snapshot: 10 device records, 6 со статусом `online`,
+4 `offline`; heartbeat моложе 90 секунд только у 3, старше порога или отсутствует
+у 7. APK version code известен только для одной записи (`10220`), для остальных 9
+неизвестен. Эти записи не доказывают заявленные 20 удалённых уникальных экземпляров.
+
+Последний сохранённый ADB snapshot (04:26): `emulator-5554` — 1.2.20/10220, `emulator-5556` —
+1.2.19/10219. 1.2.20 на 5554 установлена вручную; candidate APK
+`SphereAgent-pilot-candidate-1.2.20-dev-b491a66.apk` имеет SHA-256
+`17566CF7022AEDF27BB6F298251F2EAD1B6101BDB4555A1ADDF3436A28CB032A`, но пока
+не опубликована в OTA catalog. На сервере `android/dev` latest — 1.2.9/10209,
+`android-canary/dev` latest — 1.2.19/10219. В сохранённом API snapshot запись
+5556 была `offline`, без heartbeat и версии; адресная OTA-приёмка поэтому пока
+не выполнена.
+
+Source-кандидат `182d40b` включает сохранение/replay terminal OTA receipt (AUD-171)
+и корректную индикацию первого и устаревшего видеокадра в Open (AUD-170). CI на
+исходном кодовом коммите завершился ошибкой только на проверке сгенерированных
+OpenAPI-файлов; она воспроизведена под зависимостями Python 3.12 из CI и локально
+исправлена генерацией файлов. Повторный GitHub CI ожидает commit с документацией.
+Backend/frontend этого кандидата и APK ещё не установлены на pilot. Глобальная
+публикация OTA и Fleet32 остаются **NO-GO**.
+Удалённая A/B-сессия по-прежнему получила от PH008 только SPS/PPS без IDR/P, а
+Android egress не переключался; Cloudflare не доказан причиной.
+Подробности: [AUD-163](../audits/2026-09-24/REMOTE-VIDEO-OTA-DECISION.md) ·
+[AUD-164](../audits/2026-09-24/REMOTE-INGRESS-AB.md) ·
+[OTA reliability](../architecture/ANDROID-OTA-RELIABILITY.md) ·
+[Open stream observability](../audits/2026-09-25/ANDROID-STREAM-OBSERVABILITY.md) ·
+[Clone registration 401](../audits/2026-09-25/CLONED-ENROLLMENT-401.md) ·
+[OTA receipts](../audits/2026-09-25/OTA-TERMINAL-RECEIPTS.md).
+Исторические записи ниже сохраняют прежние даты и версии.
+
+Дополнительная read-only проверка ADB в 04:26: на обоих локальных эмуляторах
+присутствует один и тот же `/sdcard/sphere-agent-config.json` с одинаковым
+credential fingerprint; его route и key не совпадают с текущим config endpoint
+изолированного pilot. В сохранённом logcat 5556 повторяется HTTP 401 регистрации.
+Точный сервер, ответивший на тот logcat, не установлен; эти эмуляторы и данные
+не менялись. Это поддерживает гипотезу о stale clone bootstrap, но пока не
+доказывает отзыв ключа или неисправность туннеля.
 
 **OTA storage source-fix:** Compose теперь направляет catalog в
 `/app/backend/updates/releases.json`; local-pilot и production используют
@@ -179,14 +205,19 @@ Frontend **`6dea6b4`** установлен в новом pilot. Device Stream �
 `com.sphereplatform.agent.pilot.debug` позволяет установить его рядом с обычными
 dev/enterprise сборками, сохраняя отдельные credentials и identity.
 
-Актуальный проверенный source-pinned кандидат: **1.2.19-dev / 10219**,
-локальный файл `.local-pilot/apk/SphereAgent-pilot-candidate-1.2.19-dev-6c000ea.apk`.
+Актуальный source-pinned кандидат: **1.2.21-dev / 10221**, файл
+`.local-pilot/apk/SphereAgent-pilot-candidate-1.2.21-dev-182d40b.apk`.
 Package `com.sphereplatform.agent.pilot.debug`, SHA-256
-`c7875046dd7bb5807d1ff6bbda428a6dd397c5cb51b4b0a5dbb345633a673d95`, 8 415 361
+`69a275b052477f8b0ce445149369ecba3b566c42f3d2a0fae0b6f5641deb98f8`, 8 504 385
 bytes; APK Signature Scheme v2 проверен, signer совпадает с локальным pilot.
-Manifest discovery version 24, baked management URL отсутствуют. Dev и enterprise
-полные suites прошли по 639 тестов, ноль failures/errors и один штатный skip в
-каждом flavor. Кандидат собран, но не установлен и не опубликован в OTA.
+Dev Android suite: 650 тестов, 0 failures/errors и один штатный skip; Dev и
+Enterprise signed-discovery build/test tasks завершились успешно. Manifest
+discovery version 24; baked management URL отсутствуют. В локальных build metadata
+обновлён mirror endpoint: сохранённый ранее адрес завершался сетевой ошибкой в
+read-only probe. GitHub Raw primary и текущий gateway mirror вернули manifest v24.
+Оба пока используют один Quick Tunnel и не являются
+независимыми fault domains. Candidate собран, но не установлен и не опубликован
+в OTA.
 `LATEST-SphereAgent-pilot.apk` и публичный
 `manifest.json` по-прежнему указывают на локально принятую 1.2.9/10209;
 не путайте alias с кандидатом. 1.2.16–1.2.18 были промежуточными локальными
