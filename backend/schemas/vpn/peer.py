@@ -5,7 +5,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 # ── Assign / Revoke ──────────────────────────────────────────────────────────
 
@@ -21,6 +21,29 @@ class VPNAssignResponse(BaseModel):
     public_key: str | None = None
     config: str = Field(..., description="AmneziaWG .conf для клиента")
     qr_code: str = Field(..., description="Base64 PNG QR-код")
+
+
+class VPNBulkRevokeRequest(BaseModel):
+    device_ids: list[uuid.UUID] = Field(min_length=1, max_length=500)
+
+    @model_validator(mode="after")
+    def require_unique_device_ids(self) -> "VPNBulkRevokeRequest":
+        if len(set(self.device_ids)) != len(self.device_ids):
+            raise ValueError("device_ids must not contain duplicates")
+        return self
+
+
+class VPNBulkRevokeItemResult(BaseModel):
+    device_id: uuid.UUID
+    success: bool
+    error: str | None = None
+
+
+class VPNBulkRevokeResponse(BaseModel):
+    total: int
+    succeeded: int
+    failed: int
+    results: list[VPNBulkRevokeItemResult]
 
 
 # ── Peer listing ─────────────────────────────────────────────────────────────

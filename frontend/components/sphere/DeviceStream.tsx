@@ -9,6 +9,7 @@ interface DeviceStreamProps {
   deviceId: string;
   onTap?: (x: number, y: number) => void;
   enableDiagnostics?: boolean;
+  fit?: 'contain' | 'cover' | 'fill';
 }
 
 interface StreamDiagnosticResponse {
@@ -59,6 +60,7 @@ export function DeviceStream({
   deviceId,
   onTap,
   enableDiagnostics = false,
+  fit,
 }: DeviceStreamProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const wsRef = useRef<WebSocket | null>(null);
@@ -327,13 +329,18 @@ export function DeviceStream({
   );
 
   return (
-    <div className="relative">
+    <div className={fit ? 'relative h-full w-full min-h-0 min-w-0' : 'relative'}>
     <canvas
       ref={canvasRef}
       onPointerDown={handlePointerDown}
       onPointerUp={handlePointerUp}
       className="cursor-pointer rounded border border-gray-700 bg-black touch-none"
-      style={{ width: '100%', height: 'auto' }}
+      style={{
+        display: 'block',
+        width: '100%',
+        height: fit ? '100%' : 'auto',
+        objectFit: fit ?? 'contain',
+      }}
     />
     {(connection !== 'live' || streamError) && (
       <div role="status" className="absolute inset-0 flex items-center justify-center bg-black/85 text-sm text-white">

@@ -336,10 +336,10 @@ class DeviceService:
         rows = (await self.db.execute(stmt)).scalars().all()
         return [str(r) for r in rows]
 
-    async def bulk_soft_delete(
+    async def bulk_delete(
         self, device_ids: list[str], org_id: uuid.UUID
     ) -> int:
-        """Delete all owned devices from the list. Returns count deleted."""
+        """Hard-delete owned device records from the catalog; Android agents are untouched."""
         uuids: list[uuid.UUID] = []
         for did in device_ids:
             try:

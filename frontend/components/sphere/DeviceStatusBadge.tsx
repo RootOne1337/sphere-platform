@@ -27,6 +27,12 @@ export function DeviceStatusBadge({ status }: { status: string }) {
       label: 'Busy',
       className: 'border-amber-500 text-amber-500',
     },
+    maintenance: {
+      variant: 'outline' as const,
+      icon: Activity,
+      label: 'Maintenance',
+      className: 'border-primary/60 text-primary',
+    },
     error: {
       variant: 'destructive' as const,
       icon: HelpCircle,
@@ -46,7 +52,7 @@ export function DeviceStatusBadge({ status }: { status: string }) {
 
   return (
     <Badge variant={cfg.variant} className={`gap-1 ${cfg.className}`}>
-      <Icon className={`w-3 h-3 ${status === 'connecting' ? 'animate-spin' : ''}`} />
+      <Icon className={`w-3 h-3 ${status === 'connecting' ? 'animate-spin motion-reduce:animate-none' : ''}`} aria-hidden="true" />
       {cfg.label}
     </Badge>
   );

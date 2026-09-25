@@ -6,6 +6,7 @@
 # SPLIT-5: Full VPN REST API
 from __future__ import annotations
 
+import logging
 import uuid
 from datetime import datetime, timedelta, timezone
 
@@ -15,7 +16,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.config import settings
-from backend.core.dependencies import require_permission, require_role
+from backend.core.dependencies import require_permission
 from backend.database.engine import get_db, get_db_session
 from backend.models.vpn_peer import VPNPeer, VPNPeerStatus
 from backend.schemas.vpn import (
@@ -24,6 +25,9 @@ from backend.schemas.vpn import (
     RotateDetail,
     VPNAssignRequest,
     VPNAssignResponse,
+    VPNBulkRevokeItemResult,
+    VPNBulkRevokeRequest,
+    VPNBulkRevokeResponse,
     VPNBulkRotateRequest,
     VPNBulkRotateResponse,
     VPNPeerResponse,
@@ -43,6 +47,7 @@ from backend.services.vpn.killswitch_service import KillSwitchService
 from backend.services.vpn.pool_service import VPNPoolService
 
 router = APIRouter(prefix="/vpn", tags=["vpn"])
+logger = logging.getLogger(__name__)
 
 # Register background health loop (SPLIT-3) — side-effect on import
 import backend.tasks.vpn_health  # noqa: F401, E402
@@ -137,7 +142,7 @@ async def preview_config(
 )
 async def assign_vpn(
     req: VPNAssignRequest,
-    current_user=Depends(require_role("org_admin")),
+    current_user=require_permission("vpn:write"),
     pool_service: VPNPoolService = Depends(get_pool_service),
 ) -> VPNAssignResponse:
     try:
@@ -168,7 +173,7 @@ async def assign_vpn(
 )
 async def revoke_vpn(
     device_id: uuid.UUID,
-    current_user=Depends(require_role("org_admin")),
+    current_user=require_permission("vpn:write"),
     pool_service: VPNPoolService = Depends(get_pool_service),
 ):
     try:
@@ -177,6 +182,50 @@ async def revoke_vpn(
         raise
     except Exception:
         raise HTTPException(status_code=503, detail="VPN revocation unavailable; inspect operation state")
+
+
+@router.post(
+    "/revoke/bulk",
+    response_model=VPNBulkRevokeResponse,
+    summary="Revoke VPN peers for selected devices",
+)
+async def bulk_revoke_vpn(
+    req: VPNBulkRevokeRequest,
+    current_user=require_permission("vpn:mass_operation"),
+    pool_service: VPNPoolService = Depends(get_pool_service),
+) -> VPNBulkRevokeResponse:
+    """Revoke peers sequentially so one failed provider operation cannot corrupt a shared DB session."""
+    results: list[VPNBulkRevokeItemResult] = []
+    for device_id in req.device_ids:
+        try:
+            await pool_service.revoke_vpn(str(device_id), current_user.org_id)
+            results.append(VPNBulkRevokeItemResult(device_id=device_id, success=True))
+        except HTTPException as exc:
+            results.append(VPNBulkRevokeItemResult(
+                device_id=device_id,
+                success=False,
+                error=str(exc.detail),
+            ))
+        except Exception as exc:
+            logger.warning(
+                "Bulk VPN revoke failed for device %s in org %s (%s)",
+                device_id,
+                current_user.org_id,
+                type(exc).__name__,
+            )
+            results.append(VPNBulkRevokeItemResult(
+                device_id=device_id,
+                success=False,
+                error="VPN revocation unavailable; inspect operation state",
+            ))
+
+    succeeded = sum(1 for result in results if result.success)
+    return VPNBulkRevokeResponse(
+        total=len(results),
+        succeeded=succeeded,
+        failed=len(results) - succeeded,
+        results=results,
+    )
 
 
 @router.get(
@@ -285,7 +334,7 @@ async def pool_stats(
 async def bulk_rotate(
     req: VPNBulkRotateRequest,
     db: AsyncSession = Depends(get_db),
-    current_user=Depends(require_role("org_admin")),
+    current_user=require_permission("vpn:mass_operation"),
     pool_service: VPNPoolService = Depends(get_pool_service),
 ) -> VPNBulkRotateResponse:
     device_ids: list[uuid.UUID] = list(req.device_ids)
@@ -349,7 +398,7 @@ async def bulk_rotate(
 )
 async def manage_killswitch(
     req: KillSwitchRequest,
-    current_user=Depends(require_role("org_admin")),
+    current_user=require_permission("vpn:mass_operation"),
     ks_service: KillSwitchService = Depends(get_killswitch_service),
 ) -> KillSwitchResponse:
     if req.action not in ("enable", "disable"):

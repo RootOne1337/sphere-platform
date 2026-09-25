@@ -66,9 +66,9 @@ export function useDeleteLocation() {
 export function useAssignDevicesToLocation() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ locationId, deviceIds }: { locationId: string; deviceIds: string[] }) => {
+    mutationFn: async ({ locationId, deviceIds }: { locationId: string; deviceIds: string[] }): Promise<{ assigned: number }> => {
       const { data } = await api.post(`/locations/${locationId}/devices`, { device_ids: deviceIds });
-      return data;
+      return data as { assigned: number };
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['locations'] });

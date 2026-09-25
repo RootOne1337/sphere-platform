@@ -28,6 +28,13 @@ export interface Device {
   server_name: string | null;
 }
 
+export interface BulkActionResponse {
+  total: number;
+  succeeded: number;
+  failed: number;
+  results: Array<{ device_id: string; success: boolean; error: string | null }>;
+}
+
 interface DevicesResponse {
   items: Device[];
   total: number;
@@ -66,9 +73,9 @@ export function useBulkAction() {
       device_ids: string[];
       action: string;
       params?: object;
-    }) => {
+    }): Promise<BulkActionResponse> => {
       const { data } = await api.post('/devices/bulk/action', body);
-      return data;
+      return data as BulkActionResponse;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['devices'] });

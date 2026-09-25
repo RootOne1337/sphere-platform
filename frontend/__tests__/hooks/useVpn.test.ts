@@ -11,6 +11,7 @@ import {
   useVpnHealth,
   useAssignVpn,
   useRevokeVpn,
+  useBulkRevokeVpn,
   useVpnRotate,
   useVpnKillSwitch,
 } from '@/lib/hooks/useVpn';
@@ -156,6 +157,33 @@ describe('useRevokeVpn', () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(mockApi.delete).toHaveBeenCalledWith('/vpn/revoke/dev-001');
+  });
+});
+
+describe('useBulkRevokeVpn', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it('revokes selected VPN peers through the supported bulk API', async () => {
+    mockApi.post.mockResolvedValueOnce({
+      data: {
+        total: 2,
+        succeeded: 1,
+        failed: 1,
+        results: [
+          { device_id: 'dev-001', success: true, error: null },
+          { device_id: 'dev-002', success: false, error: 'VPN operation unavailable' },
+        ],
+      },
+    });
+
+    const { result } = renderQueryHook(() => useBulkRevokeVpn());
+    result.current.mutate(['dev-001', 'dev-002']);
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(mockApi.post).toHaveBeenCalledWith('/vpn/revoke/bulk', {
+      device_ids: ['dev-001', 'dev-002'],
+    });
+    expect(result.current.data?.failed).toBe(1);
   });
 });
 

@@ -86,6 +86,83 @@ class TestVPNRevokeEndpoint:
         )
         assert resp.status_code == 403
 
+    @pytest.mark.asyncio
+    async def test_revoke_allows_org_owner_from_permission_matrix(self, vpn_owner_client, test_device):
+        with patch(
+            "backend.services.vpn.pool_service.VPNPoolService.revoke_vpn",
+            new_callable=AsyncMock,
+            return_value=None,
+        ):
+            resp = await vpn_owner_client.delete(
+                f"/api/v1/vpn/revoke/{test_device.id}"
+            )
+        assert resp.status_code == 204
+
+
+class TestVPNBulkRevokeEndpoint:
+
+    @pytest.mark.asyncio
+    async def test_bulk_revoke_reports_per_device_outcomes(self, vpn_admin_client):
+        device_ids = [uuid.uuid4(), uuid.uuid4()]
+        with patch(
+            "backend.services.vpn.pool_service.VPNPoolService.revoke_vpn",
+            new_callable=AsyncMock,
+            side_effect=[None, RuntimeError("provider detail must not leak")],
+        ) as revoke:
+            resp = await vpn_admin_client.post(
+                "/api/v1/vpn/revoke/bulk",
+                json={"device_ids": [str(device_id) for device_id in device_ids]},
+            )
+
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["total"] == 2
+        assert body["succeeded"] == 1
+        assert body["failed"] == 1
+        assert body["results"][0] == {
+            "device_id": str(device_ids[0]),
+            "success": True,
+            "error": None,
+        }
+        assert body["results"][1]["success"] is False
+        assert body["results"][1]["error"] == "VPN revocation unavailable; inspect operation state"
+        assert "provider detail must not leak" not in resp.text
+        assert revoke.await_count == 2
+
+    @pytest.mark.asyncio
+    async def test_bulk_revoke_requires_org_admin(self, vpn_manager_client):
+        resp = await vpn_manager_client.post(
+            "/api/v1/vpn/revoke/bulk",
+            json={"device_ids": [str(uuid.uuid4())]},
+        )
+        assert resp.status_code == 403
+
+    @pytest.mark.asyncio
+    async def test_bulk_revoke_allows_org_owner(self, vpn_owner_client, test_org):
+        device_id = uuid.uuid4()
+        with patch(
+            "backend.services.vpn.pool_service.VPNPoolService.revoke_vpn",
+            new_callable=AsyncMock,
+            return_value=None,
+        ) as revoke:
+            resp = await vpn_owner_client.post(
+                "/api/v1/vpn/revoke/bulk",
+                json={"device_ids": [str(device_id)]},
+            )
+
+        assert resp.status_code == 200
+        assert resp.json()["succeeded"] == 1
+        revoke.assert_awaited_once_with(str(device_id), test_org.id)
+
+    @pytest.mark.asyncio
+    async def test_bulk_revoke_rejects_duplicate_ids(self, vpn_admin_client):
+        device_id = str(uuid.uuid4())
+        resp = await vpn_admin_client.post(
+            "/api/v1/vpn/revoke/bulk",
+            json={"device_ids": [device_id, device_id]},
+        )
+        assert resp.status_code == 422
+
 
 class TestVPNPeersEndpoint:
 

@@ -6,3 +6,10 @@ it('shows connecting separately from online and offline', () => {
 
   expect(screen.getByText('Connecting')).toBeInTheDocument();
 });
+
+it('renders maintenance as its own backend status', () => {
+  render(<DeviceStatusBadge status="maintenance" />);
+
+  expect(screen.getByText('Maintenance')).toBeInTheDocument();
+  expect(screen.queryByText('Unknown')).not.toBeInTheDocument();
+});

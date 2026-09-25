@@ -25,6 +25,13 @@ export interface VpnHealthResponse {
   checks: Record<string, { status: string; detail?: string }>;
 }
 
+export interface VPNBulkRevokeResponse {
+  total: number;
+  succeeded: number;
+  failed: number;
+  results: Array<{ device_id: string; success: boolean; error: string | null }>;
+}
+
 // ── Запросы (Query) ─────────────────────────────────────────────────────────
 
 /** Список VPN-пиров с опциональной фильтрацией */
@@ -86,6 +93,23 @@ export function useRevokeVpn() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['vpn'] });
       qc.invalidateQueries({ queryKey: ['devices'] });
+    },
+  });
+}
+
+/** Отозвать VPN у выбранных устройств. Каждая операция фиксируется отдельно на backend. */
+export function useBulkRevokeVpn() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (device_ids: string[]) => {
+      const { data } = await api.post('/vpn/revoke/bulk', { device_ids });
+      return data as VPNBulkRevokeResponse;
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ['vpn'] }),
+        qc.invalidateQueries({ queryKey: ['devices'] }),
+      ]);
     },
   });
 }

@@ -76,3 +76,12 @@ it('shows agent and browser stages only when operator opens diagnostics', async 
   expect(screen.getByText('Decoded output: 4')).toBeInTheDocument();
   expect(api.get).toHaveBeenCalledWith('/devices/device-1/stream-diagnostics');
 });
+
+it('applies the requested fit mode to the actual canvas surface', () => {
+  const { container } = render(<DeviceStream deviceId="device-fit" fit="cover" />);
+  act(() => jest.advanceTimersByTime(0));
+
+  const canvas = container.querySelector('canvas');
+  expect(canvas).toHaveStyle({ width: '100%', height: '100%', objectFit: 'cover' });
+  expect(canvas?.parentElement).toHaveClass('h-full', 'w-full', 'min-h-0', 'min-w-0');
+});
