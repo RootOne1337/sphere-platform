@@ -234,7 +234,13 @@ export default function FleetStreamPage() {
                   {device.name}
                 </p>
                 <span className={`text-xs font-mono ${isOnline ? 'text-green-500' : 'text-muted-foreground'}`}>
-                  {isOnline ? 'Online' : device.status === 'offline' ? 'Offline' : 'Статус неизвестен'}
+                  {isOnline
+                    ? 'Online'
+                    : device.status === 'connecting'
+                      ? 'Connecting'
+                      : device.status === 'offline'
+                        ? 'Offline'
+                        : 'Статус неизвестен'}
                 </span>
                 {isActive ? (
                   <button

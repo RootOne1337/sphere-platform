@@ -39,6 +39,7 @@ class FleetStatusResponse(BaseModel):
     total: int
     online: int
     busy: int
+    connecting: int = 0
     offline: int
     devices: dict[str, DeviceLiveStatus | None]
 
@@ -47,4 +48,5 @@ class FleetSummaryResponse(BaseModel):
     total: int
     online: int
     busy: int
+    connecting: int = 0
     offline: int

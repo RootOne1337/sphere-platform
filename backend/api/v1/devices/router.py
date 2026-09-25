@@ -180,13 +180,14 @@ async def get_fleet_status(
     svc: DeviceService = Depends(get_device_service),
     status_cache: DeviceStatusCache = Depends(get_status_cache),
 ) -> FleetSummaryResponse:
-    """Total/online/busy/offline aggregation for Fleet Dashboard."""
+    """Total/online/busy/connecting/offline aggregation for Fleet Dashboard."""
     all_ids = await svc.get_all_device_ids(current_user.org_id)
     summary = await status_cache.get_fleet_summary(all_ids)
     return FleetSummaryResponse(
         total=summary["total"],
         online=summary["online"],
         busy=summary["busy"],
+        connecting=summary["connecting"],
         offline=summary["offline"],
     )
 

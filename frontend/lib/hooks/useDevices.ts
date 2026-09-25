@@ -13,7 +13,7 @@ export interface Device {
   group_ids: string[];
   group_name: string | null;
   location_ids: string[];
-  status: 'online' | 'offline' | 'unknown';
+  status: 'online' | 'offline' | 'connecting' | 'busy' | 'error' | 'maintenance' | 'unknown';
   agent_version?: string | null;
   agent_version_code?: number | null;
   battery_level: number | null;

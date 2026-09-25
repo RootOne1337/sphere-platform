@@ -23,6 +23,7 @@
 | Понять оставшиеся проблемы | [Fleet32: актуальная таблица](audits/2026-09-20/FLEET32-PREFLIGHT.md) | [A/B ingress и три remote VM](audits/2026-09-24/REMOTE-INGRESS-AB.md) · [Удалённое видео и OTA](audits/2026-09-24/REMOTE-VIDEO-OTA-DECISION.md) · [Readiness](operations/READINESS.md) · [Roadmap](../ROADMAP.md) |
 | Разобрать чёрный экран стрима по стадиям | [Android stream observability](audits/2026-09-25/ANDROID-STREAM-OBSERVABILITY.md) | APK capture/encode/queue · browser decode/render · ограничения доказательств |
 | Разобрать offline после clone/re-enrollment | [AUD-172 — enrollment HTTP 401](audits/2026-09-25/CLONED-ENROLLMENT-401.md) | Reject в `/devices/register`, shared bootstrap file и границы подтверждённой причины |
+| Разобрать ложный Online сразу после подключения | [AUD-173 — presence до первого heartbeat](audits/2026-09-25/DEVICE-PRESENCE-FIRST-HEARTBEAT.md) | `connecting` → первый pong → `online`, тесты и rollout gate |
 | Проверить адресный APK OTA и результат установки | [AUD-171 — terminal receipts](audits/2026-09-25/OTA-TERMINAL-RECEIPTS.md) | Receipt commit/ACK, повтор после потери ACK, tenant scope и текущий canary gate |
 | Разобрать сбой по времени и устройству | [Support: что собрать](../SUPPORT.md) | [Runbooks](runbooks/README.md) · [Fleet operations, stream и observability](architecture/FLEET-OPERATIONS-AND-OBSERVABILITY.md) |
 | Изменить код | [Contributing](../CONTRIBUTING.md) | [Development](development.md) · [Тесты](../tests/production/README.md) |
@@ -39,6 +40,7 @@
 | [A/B ingress и три remote VM](audits/2026-09-24/REMOTE-INGRESS-AB.md) | AUD-164: локальный/альтернативный viewer, SPS/PPS без IDR на удалённом агенте, reconnect rate и гейт для проверки Cloudflare |
 | [Android stream observability](audits/2026-09-25/ANDROID-STREAM-OBSERVABILITY.md) | AUD-168: stage counters, protected diagnostics API, viewer decode metrics, crash upload and what remains unproven remotely |
 | [Cloned enrollment HTTP 401](audits/2026-09-25/CLONED-ENROLLMENT-401.md) | AUD-172: rejected enrollment credential, identical clone bootstrap and unresolved route/key source |
+| [Presence до первого heartbeat](audits/2026-09-25/DEVICE-PRESENCE-FIRST-HEARTBEAT.md) | AUD-173: не считать authenticated socket живым устройством до первого pong; отдельный fleet `connecting` count |
 | [OTA terminal receipts](audits/2026-09-25/OTA-TERMINAL-RECEIPTS.md) | AUD-171: persist-before-ACK, bounded replay history, lost-ACK recovery and pilot rollout gate |
 | [Deployment](deployment.md) · [Полный guide](../FULL-DEPLOYMENT-GUIDE.md) | Bootstrap, конфигурации и обслуживание; оценки масштаба требуют своей приёмки |
 | [Discovery publisher](operations/DISCOVERY-PUBLISHER.md) | Публикация подписанных маршрутов и восстановление publisher |

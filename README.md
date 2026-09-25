@@ -301,14 +301,15 @@ identity, доверенный ключ и параметры enrollment; APK и
 <a id="status"></a>
 ## 🔬 Состояние проекта и границы проверки
 
-**Контрольная точка: 25 сентября 2026, 14:17 Asia/Yekaterinburg.** Состояние
-контейнеров и readiness проверены в это время; API и ADB snapshot устройств ниже
-остаются последними ранее сохранёнными read-only срезами. Source fixes, которые
-ещё не развёрнуты, отдельно помечены ниже. [Решение по удалённому видео и OTA](docs/audits/2026-09-24/REMOTE-VIDEO-OTA-DECISION.md) ·
+**Контрольная точка: 25 сентября 2026, 14:37:51 Asia/Yekaterinburg.** Pilot
+containers и readiness проверены в это время; последний read-only API aggregate
+датирован 14:30:39, локальные ADB-версии проверены в 14:37. Source fixes ещё не
+развёрнуты на pilot. [Решение по удалённому видео и OTA](docs/audits/2026-09-24/REMOTE-VIDEO-OTA-DECISION.md) ·
 [A/B ingress](docs/audits/2026-09-24/REMOTE-INGRESS-AB.md) ·
 [Open и кадры](docs/audits/2026-09-25/ANDROID-STREAM-OBSERVABILITY.md) ·
 [Enrollment 401](docs/audits/2026-09-25/CLONED-ENROLLMENT-401.md) ·
-[OTA receipts](docs/audits/2026-09-25/OTA-TERMINAL-RECEIPTS.md).
+[OTA receipts](docs/audits/2026-09-25/OTA-TERMINAL-RECEIPTS.md) ·
+[Presence до первого heartbeat](docs/audits/2026-09-25/DEVICE-PRESENCE-FIRST-HEARTBEAT.md).
 
 | Поверхность / проверка | Версия / результат | Доказательство |
 | --- | --- | --- |
@@ -321,7 +322,8 @@ identity, доверенный ключ и параметры enrollment; APK и
 | Видео | В независимых viewer-сессиях локальный `PH000` передавал IDR/P, удалённый `PH008` — SPS/PPS без IDR/P. Android egress A/B не завершён; Cloudflare не доказан причиной | [AUD-164](docs/audits/2026-09-24/REMOTE-INGRESS-AB.md) · [AUD-170](docs/audits/2026-09-25/ANDROID-STREAM-OBSERVABILITY.md) |
 | Redis | Source Compose: 512 MiB dataset / 2048 MiB ceiling; three isolated AOF probes pass (peak 1.49–2.00 GiB); 32-stream/live rollout open | [AUD-143 evidence and rollout boundary](docs/audits/2026-09-20/REDIS-PERSISTENCE-HEADROOM.md) |
 | Сетевые отказы | Проверены отдельные отказы Android, серверного входа и обеих сторон | [Матрица и версии проверок](docs/audits/2026-09-05/NETWORK-RECOVERY-NATIVE.md) |
-| Fleet / identities | **NO-GO:** 10 records; 6 со статусом `online`, но только 3 свежих heartbeat; у 9 APK version code неизвестен. Это не подтверждает 20 удалённых уникальных устройств | [Readiness](docs/operations/READINESS.md) · [Clone identity](docs/audits/2026-09-20/CLONE-IDENTITY.md) |
+| Fleet / identities | **NO-GO:** 10 DB records; последний Redis aggregate: 5 `online`, 1 `offline`, 4 без status key; только 3 свежих heartbeat, 2 online без heartbeat timestamp; APK version code известен у одной записи. Это не подтверждает 20 удалённых устройств | [Readiness](docs/operations/READINESS.md) · [Clone identity](docs/audits/2026-09-20/CLONE-IDENTITY.md) |
+| Presence UI | Source fix показывает `connecting` до первого heartbeat pong; pilot ещё не обновлён | [AUD-173: evidence и регрессии](docs/audits/2026-09-25/DEVICE-PRESENCE-FIRST-HEARTBEAT.md) |
 
 ### Ближайшие эксплуатационные задачи
 

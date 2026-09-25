@@ -1974,7 +1974,7 @@
           "devices"
         ],
         "summary": "Сводный статус всего fleet организации",
-        "description": "Total/online/busy/offline aggregation for Fleet Dashboard.",
+        "description": "Total/online/busy/connecting/offline aggregation for Fleet Dashboard.",
         "operationId": "get_fleet_status_api_v1_devices_status_fleet_get",
         "responses": {
           "200": {
@@ -13239,6 +13239,11 @@
             "type": "integer",
             "title": "Busy"
           },
+          "connecting": {
+            "type": "integer",
+            "title": "Connecting",
+            "default": 0
+          },
           "offline": {
             "type": "integer",
             "title": "Offline"
@@ -13281,6 +13286,11 @@
           "busy": {
             "type": "integer",
             "title": "Busy"
+          },
+          "connecting": {
+            "type": "integer",
+            "title": "Connecting",
+            "default": 0
           },
           "offline": {
             "type": "integer",

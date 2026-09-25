@@ -25,15 +25,19 @@ def agent_runtime(runtime_db, monkeypatch, tmp_path):
     monkeypatch.setattr("backend.api.ws.android.router.AsyncSessionLocal", runtime_db.sessions)
     monkeypatch.setattr("backend.api.ws.android.router.get_redis_binary", AsyncMock(return_value=runtime_db.world.redis))
     manager = SimpleNamespace(connect=AsyncMock(return_value="runtime-session"), disconnect=AsyncMock(return_value=False))
+    status_cache = SimpleNamespace(set_status=AsyncMock())
     monkeypatch.setattr("backend.api.ws.android.router.get_connection_manager", lambda: manager)
-    monkeypatch.setattr("backend.api.ws.android.router.DeviceStatusCache", lambda _: SimpleNamespace(set_status=AsyncMock()))
+    monkeypatch.setattr("backend.api.ws.android.router.DeviceStatusCache", lambda _: status_cache)
     monkeypatch.setattr("backend.websocket.heartbeat.HeartbeatManager", lambda *args, **kwargs: SimpleNamespace(start=AsyncMock(), stop=AsyncMock()))
     # No delivery side effects or listeners; the actual ASGI router and SQL auth run.
     for module, factory in [("pubsub_router", "get_pubsub_router"), ("event_publisher", "get_event_publisher"), ("offline_queue", "get_offline_queue"), ("stream_bridge", "get_stream_bridge")]:
         monkeypatch.setattr(f"backend.websocket.{module}.{factory}", lambda: None)
     monkeypatch.setattr("backend.api.v1.logs.router._LOGS_DIR", tmp_path)
     monkeypatch.setattr("backend.api.v1.updates.router._UPDATES_PATH", tmp_path / "updates.json")
-    return SimpleNamespace(db=runtime_db, world=runtime_db.world, manager=manager, path=tmp_path)
+    return SimpleNamespace(
+        db=runtime_db, world=runtime_db.world, manager=manager,
+        status_cache=status_cache, path=tmp_path,
+    )
 
 
 async def websocket(device_id, token, messages=(), *, on_send=None):
@@ -179,6 +183,20 @@ async def test_auth_ack_precedes_registry_publication_and_commands(agent_runtime
             {"type": "execute_dag", "id": "isolated-command"},
         ]
         assert token not in json.dumps(payloads)
+
+
+async def test_new_android_session_is_connecting_until_first_heartbeat_pong(agent_runtime):
+    """Authentication opens a socket; only a heartbeat pong proves live presence."""
+    r = agent_runtime
+    enrolled = await issue_device(r.world)
+
+    await websocket(enrolled.device_id, enrolled.access_token)
+
+    assert r.status_cache.set_status.await_count == 1
+    _, initial_status = r.status_cache.set_status.await_args.args
+    assert initial_status.status == "connecting"
+    assert initial_status.last_heartbeat is None
+    assert initial_status.ws_session_id == "runtime-session"
 
 
 async def test_auth_ack_delivery_failure_does_not_publish_or_evict_session(agent_runtime):

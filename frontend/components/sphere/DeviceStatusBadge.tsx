@@ -1,5 +1,5 @@
 import { Badge } from '@/components/ui/badge';
-import { Wifi, WifiOff, HelpCircle } from 'lucide-react';
+import { Activity, HelpCircle, LoaderCircle, Wifi, WifiOff } from 'lucide-react';
 
 export function DeviceStatusBadge({ status }: { status: string }) {
   const variants = {
@@ -15,6 +15,24 @@ export function DeviceStatusBadge({ status }: { status: string }) {
       label: 'Offline',
       className: 'bg-gray-600',
     },
+    connecting: {
+      variant: 'outline' as const,
+      icon: LoaderCircle,
+      label: 'Connecting',
+      className: 'border-amber-500 text-amber-500',
+    },
+    busy: {
+      variant: 'outline' as const,
+      icon: Activity,
+      label: 'Busy',
+      className: 'border-amber-500 text-amber-500',
+    },
+    error: {
+      variant: 'destructive' as const,
+      icon: HelpCircle,
+      label: 'Error',
+      className: '',
+    },
     unknown: {
       variant: 'outline' as const,
       icon: HelpCircle,
@@ -28,7 +46,7 @@ export function DeviceStatusBadge({ status }: { status: string }) {
 
   return (
     <Badge variant={cfg.variant} className={`gap-1 ${cfg.className}`}>
-      <Icon className="w-3 h-3" />
+      <Icon className={`w-3 h-3 ${status === 'connecting' ? 'animate-spin' : ''}`} />
       {cfg.label}
     </Badge>
   );

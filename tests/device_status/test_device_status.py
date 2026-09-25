@@ -77,12 +77,14 @@ class TestDeviceStatusCache:
         await cache.set_status("d1", DeviceLiveStatus(device_id="d1", status="online"))
         await cache.set_status("d2", DeviceLiveStatus(device_id="d2", status="online"))
         await cache.set_status("d3", DeviceLiveStatus(device_id="d3", status="busy"))
-        # d4 has no Redis entry → offline
+        await cache.set_status("d4", DeviceLiveStatus(device_id="d4", status="connecting"))
+        # d5 has no Redis entry → offline
 
-        summary = await cache.get_fleet_summary(["d1", "d2", "d3", "d4"])
-        assert summary["total"] == 4
+        summary = await cache.get_fleet_summary(["d1", "d2", "d3", "d4", "d5"])
+        assert summary["total"] == 5
         assert summary["online"] == 2
         assert summary["busy"] == 1
+        assert summary["connecting"] == 1
         assert summary["offline"] == 1
 
     async def test_msgpack_round_trip_with_none_fields(self, cache):
@@ -117,6 +119,7 @@ class TestFleetEndpoints:
         assert "total" in data
         assert "online" in data
         assert "busy" in data
+        assert "connecting" in data
         assert "offline" in data
         assert data["total"] == len(status_devices)
         assert data["offline"] == len(status_devices)  # no Redis entries → all offline

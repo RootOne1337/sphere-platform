@@ -138,11 +138,13 @@ class DeviceStatusCache:
         statuses = await self.bulk_get_status(device_ids)
         online = sum(1 for s in statuses.values() if s and s.status == "online")
         busy = sum(1 for s in statuses.values() if s and s.status == "busy")
+        connecting = sum(1 for s in statuses.values() if s and s.status == "connecting")
         return {
             "total": len(device_ids),
             "online": online,
             "busy": busy,
-            "offline": len(device_ids) - online - busy,
+            "connecting": connecting,
+            "offline": len(device_ids) - online - busy - connecting,
             "devices": statuses,
         }
 

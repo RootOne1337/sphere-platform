@@ -1,28 +1,30 @@
 # Локальный стенд для совместного тестирования
 
-**Контрольная точка контейнеров: 25 сентября 2026, 14:17 Asia/Yekaterinburg · Windows / Docker Desktop.**
+**Контрольная точка: 25 сентября 2026, 14:37:51 Asia/Yekaterinburg · Windows / Docker Desktop.**
 
 Изолированный pilot backend и frontend работают на image `b491a66`; оба контейнера
 healthy, readiness вернул `200`. Старые `sphere-platform` и `sphere-tunnel` не
-перезапускались. Read-only API snapshot: 10 device records, 6 со статусом `online`,
-4 `offline`; heartbeat моложе 90 секунд только у 3, старше порога или отсутствует
-у 7. APK version code известен только для одной записи (`10220`), для остальных 9
-неизвестен. Эти записи не доказывают заявленные 20 удалённых уникальных экземпляров.
+перезапускались. Последний read-only API aggregate (14:30:39) содержал 10 active
+DB records: 5 Redis statuses `online`, 1 `offline`, 4 status keys отсутствовали.
+Только 3 online records имели heartbeat не старше 90 секунд; у 2 online records
+heartbeat timestamp отсутствовал. APK version code известен у одной записи
+(`10220`). Эти данные не доказывают заявленные 20 удалённых уникальных экземпляров.
+Source fix AUD-173 различает `connecting` и `online`, но ещё не развёрнут на pilot.
 
-Последний сохранённый ADB snapshot (04:26): `emulator-5554` — 1.2.20/10220, `emulator-5556` —
-1.2.19/10219. 1.2.20 на 5554 установлена вручную; candidate APK
-`SphereAgent-pilot-candidate-1.2.20-dev-b491a66.apk` имеет SHA-256
-`17566CF7022AEDF27BB6F298251F2EAD1B6101BDB4555A1ADDF3436A28CB032A`, но пока
-не опубликована в OTA catalog. На сервере `android/dev` latest — 1.2.9/10209,
-`android-canary/dev` latest — 1.2.19/10219. В сохранённом API snapshot запись
-5556 была `offline`, без heartbeat и версии; адресная OTA-приёмка поэтому пока
-не выполнена.
+Локальный ADB read-only check в 14:37:51: `emulator-5554` — 1.2.20/10220,
+`emulator-5556` — 1.2.19/10219. APK 1.2.20 на 5554 установлена вручную. Последний
+local pilot candidate — 1.2.21-dev/10221, built from `182d40b`; SHA-256
+`69a275b052477f8b0ce445149369ecba3b566c42f3d2a0fae0b6f5641deb98f8`. Он подписан
+pilot key, но не установлен и не опубликован. Последний сохранённый OTA catalog
+snapshot (04:11; повторно не запрашивался): `android/dev` — 1.2.9/10209,
+`android-canary/dev` — 1.2.19/10219. В API snapshot запись 5556 была `offline`,
+без heartbeat и версии; адресная OTA-приёмка поэтому пока не выполнена.
 
-Source-кандидат `182d40b` включает сохранение/replay terminal OTA receipt (AUD-171)
-и корректную индикацию первого и устаревшего видеокадра в Open (AUD-170). CI на
-исходном кодовом коммите завершился ошибкой только на проверке сгенерированных
-OpenAPI-файлов; она воспроизведена под зависимостями Python 3.12 из CI и локально
-исправлена генерацией файлов. Повторный GitHub CI ожидает commit с документацией.
+Source-кандидат включает сохранение/replay terminal OTA receipt (AUD-171),
+индикацию первого/устаревшего видеокадра в Open (AUD-170) и разделение нового
+WebSocket presence на `connecting` до первого pong (AUD-173). GitHub CI для
+предыдущего head `384759c` прошёл; новый CI, включающий AUD-173 и актуальный OpenAPI
+snapshot, ожидает отдельный commit.
 Backend/frontend этого кандидата и APK ещё не установлены на pilot. Глобальная
 публикация OTA и Fleet32 остаются **NO-GO**.
 Удалённая A/B-сессия по-прежнему получила от PH008 только SPS/PPS без IDR/P, а
@@ -32,7 +34,8 @@ Android egress не переключался; Cloudflare не доказан п�
 [OTA reliability](../architecture/ANDROID-OTA-RELIABILITY.md) ·
 [Open stream observability](../audits/2026-09-25/ANDROID-STREAM-OBSERVABILITY.md) ·
 [Clone registration 401](../audits/2026-09-25/CLONED-ENROLLMENT-401.md) ·
-[OTA receipts](../audits/2026-09-25/OTA-TERMINAL-RECEIPTS.md).
+[OTA receipts](../audits/2026-09-25/OTA-TERMINAL-RECEIPTS.md) ·
+[Heartbeat presence](../audits/2026-09-25/DEVICE-PRESENCE-FIRST-HEARTBEAT.md).
 Исторические записи ниже сохраняют прежние даты и версии.
 
 Дополнительная read-only проверка ADB в 04:26: на обоих локальных эмуляторах

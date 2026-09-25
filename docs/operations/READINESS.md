@@ -4,21 +4,28 @@
 
 ## Текущее состояние после обновления
 
-**Контейнеры и readiness проверены: 25 сентября 2026, 14:17 Asia/Yekaterinburg.**
-Pilot backend и frontend всё ещё работают на image `b491a66`, контейнеры healthy;
-readiness — `200`. Последний сохранённый read-only API snapshot устройств датирован
-04:11, а ADB snapshot — 04:26; новых удалённых устройств этим текущим health-check
-не подтверждено. Source fixes для терминальных OTA receipts и Open first-frame
-status ещё не развёрнуты. Исторический viewer A/B —
+**Контейнеры и readiness проверены: 25 сентября 2026, 14:37:51 Asia/Yekaterinburg.**
+Изолированный pilot backend и frontend всё ещё работают на image `b491a66`, оба
+контейнера healthy; readiness — `200`. Последний read-only API aggregate устройств
+датирован 14:30:39, локальный ADB — 14:37. Health check не подтверждает состояние
+удалённого парка. Текущие source changes для OTA receipts, Open first-frame и
+presence ещё не развёрнуты. Исторический viewer A/B —
 [AUD-164](../audits/2026-09-24/REMOTE-INGRESS-AB.md); текущее решение по удалённому
 видео и OTA — [AUD-163](../audits/2026-09-24/REMOTE-VIDEO-OTA-DECISION.md).
 
-API вернул 10 device records: 6 `online`, 4 `offline`; свежий heartbeat (до 90 с)
-есть у 3, у 7 heartbeat старше порога или отсутствует. У одной записи известен
-APK code `10220`, у 9 code неизвестен. Это не подтверждает 20 удалённых уникальных
-эмуляторов. Локальный ADB snapshot видит `emulator-5554` на 10220 и
-`emulator-5556` на 10219; в сохранённом API snapshot 04:11 запись 5556 была
-`offline` без heartbeat и версии.
+Последний API aggregate содержал 10 активных DB-записей: Redis имел 5 `online`,
+1 `offline` и 4 записи без status key. Heartbeat не старше 90 секунд был у 3
+online-записей; ещё у 2 online-записей timestamp heartbeat отсутствовал. APK
+version code был известен только у одной записи (`10220`). Это не подтверждает
+20 удалённых уникальных эмуляторов. Исправление преждевременного `online` теперь
+показывает `connecting` отдельно, но pilot ещё работает на старом backend и
+повторный API aggregate после rollout пока не сделан. См. [AUD-173](../audits/2026-09-25/DEVICE-PRESENCE-FIRST-HEARTBEAT.md).
+
+Текущий локальный ADB read-only check видит `emulator-5554` на 1.2.20-dev/10220
+и `emulator-5556` на 1.2.19-dev/10219. Последняя проверка в сохранённом API
+snapshot 04:11 показывала для записи, сопоставлявшейся с 5556, `offline` без
+heartbeat и версии; новые удалённые device IDs этим локальным ADB check не
+подтверждаются.
 
 Дополнительный ADB-срез 04:26: у 5556 сохранены 13 ошибок регистрации HTTP 401.
 У 5554 и 5556 совпадают локальные bootstrap credential fingerprints, а сами
@@ -30,14 +37,15 @@ APK code `10220`, у 9 code неизвестен. Это не подтвержд
 ключом и прошёл полный Dev Android suite, но не установлен и не опубликован.
 Предыдущий ADB snapshot остаётся: 5554 на 10220 и 5556 на 10219. Candidate
 1.2.20/10220 на 5554 ставился вручную и не опубликован в OTA catalog;
-Последний сохранённый OTA catalog snapshot (04:11): `android/dev` latest —
+Последний сохранённый OTA catalog snapshot (04:11; повторно не запрашивался): `android/dev` latest —
 1.2.9/10209, `android-canary/dev` latest — 1.2.19/10219.
 Глобальная OTA и Fleet32 — **NO-GO**: требуется адресный canary с persisted
 terminal receipt, затем свежие версии и уникальные identities устройств.
 
 Удалённый PH008 ранее отдал viewers только SPS/PPS, без IDR/P; Android egress на
 независимом маршруте не проверен. Cloudflare остаётся гипотезой. Временный ingress
-не является резервом. Датированные результаты ниже остаются историческими и не
+не является резервом. GitHub CI на предшествующем head `384759c` прошёл; новый CI
+должен включить AUD-173 и следующие source changes. Датированные результаты ниже остаются историческими и не
 переносятся на текущий snapshot.
 
 ### История срезов 22–23 сентября

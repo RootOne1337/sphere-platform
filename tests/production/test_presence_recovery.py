@@ -37,6 +37,23 @@ async def test_next_pong_recreates_evicted_presence_without_reconnecting(world, 
     assert 0 < await cache.redis.ttl(cache._key(device_id)) <= cache.TTL_ONLINE
 
 
+async def test_first_pong_promotes_connecting_presence_to_online(world, presence_cache):
+    device_id = str(world.dev_a.id)
+    await presence_cache.set_status(device_id, DeviceLiveStatus(
+        device_id=device_id, status="connecting", ws_session_id="session-1",
+    ))
+    heartbeat = HeartbeatManager(
+        AsyncMock(), device_id, presence_cache, session_id="session-1",
+    )
+
+    await heartbeat.handle_pong({"type": "pong", "ts": time.time()})
+
+    online = await presence_cache.get_status(device_id)
+    assert online is not None
+    assert online.status == "online"
+    assert online.last_heartbeat is not None
+
+
 async def test_redis_outage_does_not_kill_heartbeat_and_next_pong_recovers(world, presence_cache):
     device_id = str(world.dev_a.id)
     heartbeat = HeartbeatManager(AsyncMock(), device_id, presence_cache)

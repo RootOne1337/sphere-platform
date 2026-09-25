@@ -700,7 +700,10 @@ async def android_agent_ws(
 
     await status_cache.set_status(device_id, DeviceLiveStatus(
         device_id=device_id,
-        status="online",
+        # Auth proves identity, but only the first heartbeat pong proves that
+        # the newly published socket is responsive. Do not report false-online
+        # devices while a connection is established but has not yet answered.
+        status="connecting",
         ws_session_id=session_id,
     ))
 
