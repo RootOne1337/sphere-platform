@@ -4,14 +4,16 @@
 
 ## Текущее состояние после обновления
 
-**Проверка runtime: 25 сентября 2026, 15:38 Asia/Yekaterinburg.** Изолированный
+**Проверка runtime: 25 сентября 2026, 21:18 Asia/Yekaterinburg.** Изолированный
 Compose project `sphere-pilot-20260911` использует backend и frontend images
-`e308b1b`; оба контейнера healthy. Readiness `status=ready`, `/login`, `/stream`,
-`/stream/test-device` и `/fleet` вернули HTTP 200. Это подтверждает HTTP runtime и
-загрузку страниц, но не WebSocket-сессию и не декодированный видеокадр. Остальные
-семь pilot-контейнеров остались healthy; Quick Tunnel не менялся. Legacy
-`sphere-platform` и `sphere-tunnel` не тронуты. Полный GitHub CI для `e308b1b`
-прошёл; deploy job был намеренно пропущен guard, pilot обновлён вручную.
+`fc65b55`; оба контейнера healthy. Локальный адрес и публичный Quick Tunnel
+вернули HTTP 200 для `/api/v1/health/ready` (`postgres=ok`, `redis=ok`) и
+`/devices`; оба отдали текущий route chunk `page-7559fa93610e3f77.js` с новым
+текстом bulk removal. Семь нецелевых контейнеров сохранили IDs, images, состояния,
+время запуска и mounts; tunnel и базы не перезапускались. Эта проверка подтверждает
+пилотный rollout и web bundle, но не выполняла DELETE на живых устройствах и не
+подтверждает WebSocket-сессию или декодированный видеокадр. Legacy
+`sphere-platform` и `sphere-tunnel` не тронуты.
 
 Свежий авторизованный aggregate устройств после rollout не снимался. Последний
 сохранённый API-срез от 14:30:39 содержал 10 активных DB-записей: Redis имел 5

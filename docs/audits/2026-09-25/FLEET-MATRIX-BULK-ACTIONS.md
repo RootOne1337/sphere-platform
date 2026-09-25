@@ -72,7 +72,9 @@ The affected controls now use explicit API contracts, per-device outcomes, visib
 
 **Regression:** the isolated PostgreSQL test asserts bulk removal succeeds with linked history, retained task rows, hidden inventory rows, refresh-token rejection, and idempotent replay. The backend unit tests cover single removal, tenant scoping, and repeat requests.
 
-**Residual risk:** the fix must be deployed to the pilot backend before the live button can work. At audit time the active containers still use image tag `e308b1b`, while PR #19 is ahead at `d8c2562`; the public page also served a different Devices chunk than the local build. No live deletion was replayed during this audit.
+**Deployment evidence (25 September 2026, 21:18 Asia/Yekaterinburg):** backend and frontend of the isolated Compose project `sphere-pilot-20260911` now run image tag `fc65b55` and both report healthy. `GET /api/v1/health/ready` returned HTTP 200 with PostgreSQL and Redis `ok` through both `http://127.0.0.1:18080` and the public Quick Tunnel. `GET /devices` returned HTTP 200 and served route chunk `page-7559fa93610e3f77.js`; the loaded JavaScript contains the updated removal confirmation copy. Seven non-target services retained their container IDs, image tags, state, start times, restart counts, and mounts. No live DELETE was replayed, so the user's current inventory and history were not changed by this verification.
+
+**Residual risk:** this is an isolated development pilot, not a production release or Fleet32 sign-off. The user should retry removal in the refreshed page; PostgreSQL behavior is proven by the isolated regression, while no live inventory mutation was performed during rollout verification.
 
 ### FLEET-004 — stopping broadcast did not unmount the streams
 
@@ -141,13 +143,13 @@ The affected controls now use explicit API contracts, per-device outcomes, visib
 **Severity:** P3 — contract documentation and CI reproducibility.
 **Root cause:** the local Python environment used FastAPI 0.141.1 / Pydantic 2.13.5, while `backend/requirements.txt` and CI pin FastAPI 0.136.3 / Pydantic 2.9.2. OpenAPI output differed even though the local exporter check passed.
 
-**Evidence / reproduction:** GitHub backend run `36149584324` passed its complete unit/real-service test step, then failed `Verify generated HTTP API documentation` with `Stale API documentation: docs/openapi.json`. Re-running the exporter in an isolated environment with the repository's pinned FastAPI, Starlette, Pydantic, and Pydantic Settings versions reproduced the stale-schema result.
+**Evidence / reproduction:** GitHub backend run `36149584324` passed its complete unit/real-service test step, then failed `Verify generated HTTP API documentation` with `Stale API documentation: docs/openapi.json`. The later backend run `36159198104` reproduced the same documentation-only failure on `fc65b55`; its failing log points to `python -m scripts.export_api_docs --check`, after which the committed JSON was stale. In a fresh Python 3.12 environment installed from both repository requirement files, the check failed before regeneration and passed after regeneration. The endpoint catalog did not change.
 
-**Fix:** regenerated `docs/openapi.json` using the dependency versions declared by the project. The endpoint catalog had no difference.
+**Fix:** regenerated `docs/openapi.json` using the dependency versions declared by the project and used by CI: FastAPI 0.136.3, Starlette 1.3.1, Pydantic 2.9.2, and Pydantic Settings 2.2.1. The diff removes schema defaults emitted only by the mismatched local package set; it does not change runtime API behavior.
 
-**Regression:** `python -m scripts.export_api_docs --check` passed in that isolated pinned-version environment. Follow-up GitHub run `36151375451` on head `a20342e` passed the same check together with the full backend suite and Redis acceptance.
+**Regression:** `python -m scripts.export_api_docs --check` passes in the isolated pinned-version environment after regeneration. Follow-up GitHub run `36151375451` on head `a20342e` passed the same check together with the full backend suite and Redis acceptance. Run `36159198104` exposed the later drift; its next-head CI must pass before PR #19 can be considered merge-ready.
 
-**Residual risk:** none remains for this version-mismatch finding; the exact Python 3.12 CI job passed after regeneration.
+**Residual risk:** the local generation/check now match the declared dependency pins, but the CI run triggered by the corrected artifact remains the final repository-level gate. The pre-existing FastAPI `regex` deprecation warning is unrelated to this schema drift.
 
 ## Validation evidence
 
@@ -159,11 +161,15 @@ The affected controls now use explicit API contracts, per-device outcomes, visib
 | Production build | Exit 0; optimized build completed; 30/30 static pages generated |
 | Production-browser smoke | Passed login/refresh fixtures, Fleet Matrix data, VPN cancel/partial failure, delete cancel/403/retry/200, grid stop, FIT canvas style, and 390 px layout |
 | Backend targeted tests | 40 passed (`tests/bulk/test_bulk.py`, `tests/vpn/test_vpn_api.py`) |
+| Full backend unit suite for `fc65b55` | 1,247 passed, 813 skipped; opt-in real-service tests were run separately |
+| PostgreSQL retirement regression | 2 passed against isolated local PostgreSQL; the pre-fix bulk case reproduced `tasks_device_id_fkey` failure |
 | Backend Ruff | Passed for all changed backend/test files |
 | OpenAPI/catalog verification | Passed with FastAPI 0.136.3 / Starlette 1.3.1 / Pydantic 2.9.2 / Pydantic Settings 2.2.1 in an isolated environment |
 | GitHub backend CI (`a20342e`) | Passed: full unit/real-service tests, generated API docs, Redis memory/persistence acceptance, Alembic single-head, Ruff/mypy, RLS, security, and production-image bootstrap |
 | GitHub frontend CI (`a20342e`) | Tests, TypeScript, and production build passed |
 | GitHub Android CI (`a20342e`) | Debug APK build and unit tests passed; CI artifact is not a published release |
+| Pilot rollout (`fc65b55`) | Linux backend/frontend images built and healthy; local and public readiness plus the current Devices bundle verified. PostgreSQL, Redis, tunnel, other pilot services, and Android devices were not changed. No live removal was replayed. |
+| Android release scope | No APK or `sphere-agent-config` repository change is part of this fix. |
 | Whitespace validation | `git diff --check` passed |
 
 The Playwright smoke used a test-only identity, mocked API responses, and no external device traffic. Expected fixture responses include one 401 (signed-out refresh) and one 403 (the deliberate delete-failure case); browser JavaScript raised no exceptions.
@@ -175,7 +181,7 @@ The Playwright smoke used a test-only identity, mocked API responses, and no ext
 3. **Repository lint debt remains visible.** The full production build completed with 99 ESLint warning lines across legacy files. The changed frontend files lint clean. Warnings include unused imports, `any`, and hook dependencies; they were not silently fixed as part of this focused Fleet pass.
 4. **Next standalone trace warning remains.** Next 15.5.13 reports `ENOENT` while copying the dashboard segment's `page_client-reference-manifest.js` into `.next/standalone`. Build exits successfully and `/devices`, `/login`, `/stream`, and its CSS asset were served in a local runtime smoke after applying the same `.next/static`/`public` copies as the Dockerfile, but the warning needs a CI/container investigation before release.
 5. **Tooling warnings remain.** `next lint` is deprecated for Next 16, the installed Browserslist database is stale, and API doc export surfaces an existing FastAPI `regex` deprecation in `game_accounts/router.py`.
-6. **No rollout occurred.** Android CI produced a debug APK artifact only; no production APK release or second GitHub repository was published or changed, and no remote backend or emulator was modified in this audit pass.
+6. **Release scope:** this focused fix updates only backend/frontend on the isolated local pilot. It does not change Android code or claim production, OTA, remote-stream, or Fleet32 acceptance.
 
 ## Related documentation
 

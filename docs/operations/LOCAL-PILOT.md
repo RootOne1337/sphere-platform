@@ -1,15 +1,17 @@
 # Локальный стенд для совместного тестирования
 
-**Контрольная точка: 25 сентября 2026, 15:38 Asia/Yekaterinburg · Windows / Docker Desktop.**
+**Контрольная точка: 25 сентября 2026, 21:18 Asia/Yekaterinburg · Windows / Docker Desktop.**
 
-Изолированный Compose project `sphere-pilot-20260911` обновлён вручную на head
-`e308b1b`: backend/frontend images healthy. Все девять запущенных pilot-контейнеров
-healthy; `readyz` вернул `status=ready`, а `/login`, `/stream`,
-`/stream/test-device` и `/fleet` — HTTP 200. Эти проверки подтверждают страницы и
-готовность сервиса, но не подключение viewer или видеокадр. Cloudflare Quick Tunnel
-и остальные зависимости не перезапускались. Старые `sphere-platform` и
-`sphere-tunnel` не тронуты. GitHub CI для этого head прошёл; автоматический deploy
-job пропущен guard.
+Изолированный Compose project `sphere-pilot-20260911` обновлён на commit `fc65b55`:
+backend и frontend images healthy. `GET /api/v1/health/ready` вернул HTTP 200 и
+`postgres=ok`, `redis=ok`; `/devices` вернул HTTP 200 на `http://127.0.0.1:18080`
+и `https://deviation-news-turning-booking.trycloudflare.com`. Оба ответа отдали
+route chunk `page-7559fa93610e3f77.js`, содержащий новое подтверждение удаления из
+каталога. Это подтверждает rollout и свежий bundle, но не удаление живой записи,
+подключение viewer или удалённый видеокадр. Семь остальных pilot-сервисов сохранили
+container IDs, images, health, start times, restart counts и mounts; PostgreSQL,
+Redis, nginx и Quick Tunnel не перезапускались. Старые `sphere-platform` и
+`sphere-tunnel` не тронуты. Живой DELETE в этой проверке не выполнялся.
 
 Свежий авторизованный API aggregate после rollout недоступен. Последний
 сохранённый срез 14:30:39 содержал 10 DB records: 5 Redis `online`, 1 `offline`,
