@@ -1,6 +1,6 @@
 # Android presence and APK release audit — 26 September 2026
 
-## Scope and current decision
+## Scope and latest live decision
 
 This check covers Android APK identity/version, the active pilot OTA catalog,
 the backend Android WebSocket disconnect path, and the last retained remote
@@ -8,16 +8,36 @@ video-packet evidence. Sphere's device client in this workflow is the Android
 APK on an emulator or phone. A PC Agent is not a prerequisite or part of this
 diagnosis.
 
-**Fleet rollout: NO-GO.** The checked-out APK source and private candidate are
-`1.2.23 / 10223`; canary `5554` now runs that candidate and reports a fresh
-heartbeat. Control `5556` remains on `1.2.22-dev / 10222`. The latest aggregate
-at 21:05:48 UTC has 12 records in `connecting` without a fresh heartbeat, so their installed
-versions remain unknown. The promoted pilot alias and default `android/dev` OTA
-channel still point to `1.2.9-dev / 10209`; `android-canary/dev` points to
-`1.2.19-dev / 10219`. The 1.2.23 candidate is debug-signed and includes a
-private development enrollment credential, so it remains local and is not a
-fleet release. Backend fixes `7722d50` and `2168c33` are live in the isolated
-pilot, but presence remains degraded and remote video is unresolved.
+**Live correlation: 26 September 2026, 00:59 UTC. Fleet rollout: NO-GO.** The
+pilot API reports 15 device records: `010/011/022/023` are `online`, seven
+(`012/013/014/016/017/019/020`) are `connecting`, and four (`015/018/021/024`)
+are offline or lack a live status key. The operator identifies `010/011` as
+local and `022/023` as remote. The user sees remote image and click control on
+`022/023`; backend runtime counters independently record ingress and viewer-send
+video frames for both. Both report APK `1.2.22-dev / 10222`, and both answered
+application-level heartbeat/PING. This confirms a working remote stream path
+through the current Cloudflare ingress for these two devices; it does not prove
+browser FPS/continuity, fleet-wide stability, or a successful fallback-route
+switch.
+
+The seven `connecting` records have no fresh heartbeat or reported APK version.
+Server logs show recurring authenticated WebSocket connections followed mostly
+by close `1005`; the targeted probe for `019` published PING to one subscriber
+but received no command receipt within eight seconds. Here
+`connecting` means that authentication/subscribe happened but the APK did not
+complete application-level heartbeat readiness. The precise client-side reason
+is still unknown; the available evidence does not prove Cloudflare is the cause.
+
+The checked-out APK candidate remains `1.2.23 / 10223`; local canary `5554` runs
+it and control `5556` remains on `1.2.22-dev / 10222`. The promoted pilot alias
+and default `android/dev` OTA channel still point to `1.2.9-dev / 10209`, while
+`android-canary/dev` points to `1.2.19-dev / 10219`. The candidate is debug-signed
+and includes private development enrollment material, so it remains local and
+is not a fleet release. A signed discovery v25 with independent LocalTunnel
+fallback is published, but gateway logs show no Android WebSocket using it;
+fallback delivery and failover remain unverified. A PostgreSQL presence-sync
+fix is implemented locally and passes its targeted regression tests, but is not
+deployed. No APK build or OTA channel was changed in this pass.
 
 ## Findings
 
@@ -204,21 +224,27 @@ process PID for a 181-second window (12/12 process samples; no package-specific
 crash-buffer entries). The previous description of an eight-minute post-deploy
 sample was incorrect: its requested log lookback exceeded the new container's
 age. Use the explicit observation boundaries above instead.
-Reconnect churn, remote heartbeat recovery, and remote video delivery remain open.
+Reconnect churn and remote heartbeat recovery remain open for the degraded fleet;
+remote video/control is confirmed only on `022/023` and remains unverified for
+the other remote devices.
 
 ## Focused incident follow-up
 
 The [remote control-path diagnosis](REMOTE-CONTROL-PATH-DIAGNOSIS.md) supersedes
-transient fleet counts above and records a local/remote small-command comparison,
-reconnect timing, historical tunnel evidence, and the separate PostgreSQL enum
-failure. It does not declare the remote transport repaired.
+transient fleet counts above and records the later success for remote `022/023`,
+the still-unresponsive `connecting` group, observed ingress, reconnect timing,
+historical tunnel evidence, and the separate PostgreSQL enum failure. It confirms
+partial remote stream/control recovery for two devices, not fleet-wide recovery.
 
 ## Validation boundary
 
 This pass did not publish an OTA release, perform a remote ADB operation, or
-claim that remote streaming is fixed. The 1.2.23 APK canary is installed only
-on `emulator-5554`; `5556` remains the 1.2.22 control. Backend `2168c33` is
-running in isolated project `sphere-pilot-20260911`; frontend is `fc65b55`.
+change the APK. Remote streaming and click control were observed on `022/023`
+through Cloudflare, while the larger `connecting` group remains unresolved.
+The 1.2.23 APK canary is installed only on `emulator-5554`; `5556` remains the
+1.2.22 control, and remote `022/023` report `1.2.22-dev / 10222`. Backend
+`2168c33` is running in isolated project `sphere-pilot-20260911`; frontend is
+`fc65b55`. The targeted PostgreSQL sync fix passes locally but is not deployed.
 The guarded rollout kept 37 other containers and all 12 OTA files unchanged,
 with zero stream viewers before/after and HTTP 200 local/public readiness. Older
 `sphere-platform` and `sphere-tunnel` projects were not used as test targets.

@@ -1,6 +1,39 @@
 # Локальный стенд для совместного тестирования
 
-**Снимок: 26 сентября 2026, 02:05 Asia/Yekaterinburg / 25 сентября 21:05 UTC.**
+## Live-корреляция: 26 сентября, 05:59 Asia/Yekaterinburg / 00:59 UTC
+
+Изолированный pilot `sphere-pilot-20260911` не перезапускался в этой проверке;
+backend остаётся на healthy image `2168c33`, frontend — `fc65b55`. Старые
+`sphere-platform` и `sphere-tunnel` не затрагивались.
+
+API-срез содержит 15 записей: `010/011/022/023` online, семь устройств
+(`012/013/014/016/017/019/020`) connecting и четыре offline/без live status key
+(`015/018/021/024`). Оператор идентифицирует `010/011` как локальные, `022/023`
+как удалённые. На двух удалённых `022/023` пользователь подтвердил картинку и
+работающие клики; backend counters независимо фиксируют 290/35 ingress frames
+и 276/14 viewer-send frames соответственно с момента старта контейнера backend
+25 сентября в 20:43 UTC. Оба сейчас сообщают `1.2.22-dev / 10222`, имеют свежий
+heartbeat и прошли контрольный PING. Это подтверждает рабочий удалённый путь
+через Cloudflare для этих двух устройств, но не плавность/FPS, длительную
+стабильность или исправность остальных.
+
+Семь connecting-устройств проходят авторизацию WebSocket, но не подтверждают
+application heartbeat. `019` получил публикацию PING в один Redis subscriber,
+но не вернул receipt за 8 секунд; у группы повторяются успешные auth и закрытия
+с кодом `1005`. У них не сообщается версия APK. Поэтому UI-статус объясняется
+backend readiness contract, а точная клиентская причина остаётся открытой.
+Gateway видел Android WSS только через cloudflared; новая signed discovery v25
+с LocalTunnel fallback опубликована, но ни одно Android-соединение через
+sidecar не подтверждено.
+
+Исправление PostgreSQL sync локально переводит временный `connecting` в durable
+`offline`; регрессионный тест сначала падал до фикса, теперь целевой файл даёт
+6 passed, Ruff проходит. Это не раскатано в pilot и не меняет Redis/Fleet API.
+Новый APK и OTA не выпускались в этой проходке; 32-устройственный тест, soak и
+профиль CPU/RAM остаются следующими release gates. Полная матрица доказательств:
+[диагностика remote control path](../audits/2026-09-26/REMOTE-CONTROL-PATH-DIAGNOSIS.md).
+
+## Исторический rollout-снимок: 26 сентября, 02:05 Asia/Yekaterinburg / 25 сентября 21:05 UTC
 Изолированный pilot `sphere-pilot-20260911` работает на backend image
 `sphere-pilot-20260911-backend:2168c33` (healthy); frontend остаётся на
 `fc65b55`. GitHub CI для PR #19 на head `2168c3388c2a285f1aba1f98c65bd67a166700a0`
