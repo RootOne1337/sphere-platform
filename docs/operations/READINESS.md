@@ -855,9 +855,18 @@ DevDebug и EnterpriseDebug прошли по 665 unit tests (0 failures/errors;
 `.local-pilot/apk/SphereAgent-pilot-candidate-1.2.25-dev-9c447f5.apk`, SHA-256
 `07c0047054dfc1162cb56673e30b5353e51a20db911f8e69dc226c26270d6dcd`.
 Он использует локальную debug/pilot подпись, не production signer. Production
-release key в этой среде не настроен; OTA не публиковался и установка не
-выполнялась. Хотя signed discovery v25 включён в candidate, реальное
-переключение Android-клиента на независимый резервный маршрут не доказано.
-Следующий gate — установка только на одно выбранное canary-устройство,
-60-секундная стабильная сессия, heartbeat и command receipt; video/frame/decode
-проверяются отдельно. До этого Fleet32 остаётся NO-GO.
+release key в этой среде не настроен; OTA не публиковался. Candidate установлен
+только на одно локальное Android 9 canary-устройство под тем же package/signature
+с сохранением app data. В шести API-срезах (`14:05:00Z`, `14:06:08Z`, `14:08:45Z`,
+`14:09:13Z`, `14:10:13Z`, `14:11:14Z`) устройство было `online`, heartbeat ages —
+7, 15, 23, 20, 21 и 21 секунда; за предыдущие 120 секунд в каждом срезе не было его
+connect/disconnect/timeout/eviction. Android process и версия 1.2.25 подтверждены;
+agent service работал, ScreenCaptureService не запускался. Это чуть более семи
+минут наблюдения control channel, не длительный soak.
+
+В этих срезах было 0 активных web viewers, поэтому video/frame/decode не
+проверялись. На здоровом соединении новых `ws_lifecycle` записей не было; нужно
+отдельно подтвердить их при reconnect и доставку диагностик на сервер. Реальное
+переключение на независимый резерв discovery route не доказано. Следующие gates:
+более длительный canary soak, корреляция клиента и backend при reconnect, и
+отдельная проверка stream/frame/decode. До этого Fleet32 остаётся NO-GO.
