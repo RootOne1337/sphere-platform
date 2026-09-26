@@ -36,12 +36,19 @@ class FileLoggingTree @Inject constructor(
         private const val MAX_FILE_COUNT = 5
         private const val MAX_QUEUE_SIZE = 4096
         private const val MAX_READ_BYTES = 256 * 1024
+        private const val MAX_WS_LIFECYCLE_FILE_BYTES = 64 * 1024
+        private const val RETAIN_WS_LIFECYCLE_FILE_BYTES = 32 * 1024
         private const val LOG_DIR = "sphere_logs"
         private const val LOG_PREFIX = "sphere_"
         private const val LOG_EXT = ".log"
+        private const val WS_LIFECYCLE_FILE = "ws_lifecycle.log"
     }
 
     private val logDir: File = File(context.filesDir, LOG_DIR).also { it.mkdirs() }
+    // Keep sparse transport incident records outside the noisy rolling log tail.
+    // This sidecar is bounded and is intentionally excluded from logFiles().
+    private val wsLifecycleFile = File(logDir, WS_LIFECYCLE_FILE)
+    private val wsLifecycleLock = Any()
     /**
      * FIX E1: ThreadLocal вместо shared SimpleDateFormat.
      * SimpleDateFormat НЕ потокобезопасен — format() мутирует внутренний Calendar.
@@ -123,6 +130,32 @@ class FileLoggingTree @Inject constructor(
         return chunks.asReversed().joinToString("")
     }
 
+    /**
+     * Return the bounded, newest WebSocket lifecycle records independent of
+     * routine log volume. The sidecar is capped at 64 KiB and is read only by
+     * diagnostics upload; callers must not expose it without normal log ACLs.
+     */
+    fun readRecentWebSocketLifecycleLogs(maxBytes: Int = 32 * 1024): String {
+        val budget = maxBytes.coerceIn(0, MAX_WS_LIFECYCLE_FILE_BYTES)
+        if (budget == 0) return ""
+        return synchronized(wsLifecycleLock) {
+            runCatching {
+                if (!wsLifecycleFile.isFile) return@synchronized ""
+                val bytes = wsLifecycleFile.readBytes()
+                var start = (bytes.size - budget).coerceAtLeast(0)
+                if (start > 0) {
+                    val nextLine = indexOfLineFeed(bytes, start)
+                    if (nextLine < 0) return@synchronized ""
+                    start = nextLine + 1
+                }
+                val decoder = Charsets.UTF_8.newDecoder()
+                    .onMalformedInput(CodingErrorAction.IGNORE)
+                    .onUnmappableCharacter(CodingErrorAction.IGNORE)
+                decoder.decode(ByteBuffer.wrap(bytes, start, bytes.size - start)).toString()
+            }.getOrDefault("")
+        }
+    }
+
     /** All log files, sorted oldest-first. */
     fun getLogFiles(): List<File> = logFiles().sortedBy { it.lastModified() }
 
@@ -130,10 +163,47 @@ class FileLoggingTree @Inject constructor(
 
     @Synchronized
     private fun writeEntry(entry: String) {
+        // Persist the sparse incident signal first so a failure in the noisy
+        // rolling file does not discard the only reconnect evidence as well.
+        if (entry.contains("ws_lifecycle ")) appendWebSocketLifecycleEntry(entry)
         if (currentFile.length() >= MAX_FILE_SIZE) {
             rotate()
         }
         currentFile.appendText(entry, Charsets.UTF_8)
+    }
+
+    private fun appendWebSocketLifecycleEntry(entry: String) {
+        // Lifecycle events are generated as one structured line. Do not copy a
+        // possible throwable stack trace into the priority sidecar.
+        val line = entry.substringBefore('\n').let { "$it\n" }.toByteArray(Charsets.UTF_8)
+        if (line.size > MAX_WS_LIFECYCLE_FILE_BYTES) return
+        synchronized(wsLifecycleLock) {
+            runCatching {
+                var existing = if (wsLifecycleFile.isFile) wsLifecycleFile.readBytes() else ByteArray(0)
+                if (existing.size + line.size > MAX_WS_LIFECYCLE_FILE_BYTES) {
+                    val retainBytes = minOf(
+                        RETAIN_WS_LIFECYCLE_FILE_BYTES,
+                        MAX_WS_LIFECYCLE_FILE_BYTES - line.size,
+                    )
+                    val keepFrom = (existing.size - retainBytes).coerceAtLeast(0)
+                    val lineStart = if (keepFrom == 0) 0 else {
+                        val nextLine = indexOfLineFeed(existing, keepFrom)
+                        if (nextLine < 0) existing.size else nextLine + 1
+                    }
+                    existing = existing.copyOfRange(lineStart, existing.size)
+                }
+                wsLifecycleFile.writeBytes(existing + line)
+            }.onFailure { error ->
+                System.err.println("Sphere lifecycle log write error: ${error.javaClass.simpleName}")
+            }
+        }
+    }
+
+    private fun indexOfLineFeed(bytes: ByteArray, start: Int): Int {
+        for (index in start.coerceAtLeast(0) until bytes.size) {
+            if (bytes[index] == '\n'.code.toByte()) return index
+        }
+        return -1
     }
 
     private fun rotate() {

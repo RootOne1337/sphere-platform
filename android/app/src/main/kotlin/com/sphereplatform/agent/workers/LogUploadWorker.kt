@@ -145,6 +145,8 @@ class LogUploadWorker @AssistedInject constructor(
                 append(loggingTree.readRecentLogs(32 * 1024))
                 append("\n=== SPHERE LOGCAT ===\n")
                 append(logcatCollector.collectSphereOnly(lines = 300))
+                append("\n=== PRIORITY WS LIFECYCLE ===\n")
+                append(loggingTree.readRecentWebSocketLifecycleLogs(32 * 1024))
                 append("\n=== RECENT SPHERE CRASH ===\n")
                 append(crashSnapshot?.text ?: "No persisted uncaught crash record")
             })

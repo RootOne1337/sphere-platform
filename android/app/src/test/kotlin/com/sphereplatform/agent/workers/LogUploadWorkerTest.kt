@@ -135,6 +135,8 @@ class LogUploadWorkerTest {
     @Test fun `large logcat cannot exceed server entry cap or hide crash tail`() = runTest {
         prepareUploadCredentials()
         every { logcatCollector.collectSphereOnly(lines = 300) } returns "x".repeat(600 * 1024)
+        every { loggingTree.readRecentWebSocketLifecycleLogs(any()) } returns
+            "2026-09-26T16:28:08.033 I/SphereWebSocketClient: ws_lifecycle event=onFailure route_slot=0 phase=authenticated error_type=SocketTimeoutException\n"
         val crashFile = CrashHandler.crashLogFile(RuntimeEnvironment.getApplication())
         crashFile.writeText(
             "OLD_CRASH_MARKER" + "y".repeat(140 * 1024) + "NEW_CRASH_TAIL_MARKER",
@@ -147,6 +149,7 @@ class LogUploadWorkerTest {
             assertTrue("request must leave headroom under the backend 512 KiB limit", body.size <= 480 * 1024)
             val text = body.toString(Charsets.UTF_8)
             assertTrue("newest crash evidence must survive whole-request truncation", text.contains("NEW_CRASH_TAIL_MARKER"))
+            assertTrue("priority WebSocket evidence must survive a saturated logcat upload", text.contains("ws_lifecycle event=onFailure"))
             assertTrue("oldest crash bytes are intentionally outside the bounded tail", !text.contains("OLD_CRASH_MARKER"))
         } finally {
             crashFile.delete()

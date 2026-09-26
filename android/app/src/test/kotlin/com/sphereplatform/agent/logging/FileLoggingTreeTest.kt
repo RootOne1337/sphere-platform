@@ -124,6 +124,38 @@ class FileLoggingTreeTest {
     }
 
     @Test
+    fun `websocket lifecycle evidence survives noisy regular log tail`() {
+        val event = "ws_lifecycle event=onFailure attempt_id=incident-42 route_slot=1 route_count=2 phase=authenticated elapsed_ms=9001 error_type=SocketTimeoutException"
+        tree.i(event)
+        awaitLifecycleMarker("incident-42")
+
+        repeat(600) { index -> tree.i("routine-heartbeat-$index " + "x".repeat(160)) }
+        awaitMarker("routine-heartbeat-599")
+
+        assertFalse("the routine tail must reproduce the observed truncation", tree.readRecentLogs(32 * 1024).contains("incident-42"))
+        val priority = tree.readRecentWebSocketLifecycleLogs(32 * 1024)
+        assertTrue("sparse transport evidence must remain available for the next upload", priority.contains("incident-42"))
+        assertTrue(priority.contains("error_type=SocketTimeoutException"))
+        assertTrue(priority.toByteArray(Charsets.UTF_8).size <= 32 * 1024)
+    }
+
+    @Test
+    fun `websocket lifecycle sidecar is bounded and keeps the newest records`() {
+        repeat(140) { index ->
+            tree.i(
+                "ws_lifecycle event=onFailure attempt_id=incident-$index route_slot=0 " +
+                    "phase=pre_auth error_type=IOException detail=${"x".repeat(512)}",
+            )
+        }
+        awaitLifecycleMarker("incident-139")
+
+        val priority = tree.readRecentWebSocketLifecycleLogs(Int.MAX_VALUE)
+        assertTrue(priority.contains("incident-139"))
+        assertFalse(priority.contains("incident-0 "))
+        assertTrue(priority.toByteArray(Charsets.UTF_8).size <= 64 * 1024)
+    }
+
+    @Test
     fun `concurrent UTF-8 writes and reads preserve final marker and bounded responses`() {
         val workers = Executors.newFixedThreadPool(2)
         try {
@@ -151,5 +183,11 @@ class FileLoggingTreeTest {
         val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5)
         while (!tree.readRecentLogs().contains(marker) && System.nanoTime() < deadline) Thread.sleep(5)
         assertTrue("Writer did not persist $marker", tree.readRecentLogs().contains(marker))
+    }
+
+    private fun awaitLifecycleMarker(marker: String) {
+        val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5)
+        while (!tree.readRecentWebSocketLifecycleLogs().contains(marker) && System.nanoTime() < deadline) Thread.sleep(5)
+        assertTrue("Writer did not persist lifecycle marker $marker", tree.readRecentWebSocketLifecycleLogs().contains(marker))
     }
 }
