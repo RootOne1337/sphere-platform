@@ -22,6 +22,7 @@ import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import okhttp3.Request
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import timber.log.Timber
 import java.io.File
 import java.io.IOException
@@ -37,13 +38,14 @@ import javax.inject.Singleton
  * OtaUpdateService — самообновление агента.
  *
  * Порядок:
- * 1. Скачать APK с SSRF-защитой (только с хоста сервера управления, только HTTPS)
+ * 1. Скачать APK с SSRF-защитой (HTTPS origin одного из сохранённых маршрутов управления)
  * 2. Проверить SHA-256
  * 3. Установить через root (pm install) или PackageInstaller (fallback)
  * 4. Удалить APK после установки
  *
  * # Безопасность
- * - [validateDownloadUrl]: хост URL == хост сервера → нет утечки Bearer-токена
+ * - [validateDownloadUrl]: scheme/host/port URL совпадают с сохранённым маршрутом →
+ *   Bearer-токен не отправляется произвольному внешнему origin
  * - Staging filename generated locally; version metadata never selects a path
  * - SHA-256 mismatch → exception, APK удаляется
  * - Загрузка только с Bearer-токеном (не открытый URL)
@@ -184,24 +186,25 @@ class OtaUpdateService @Inject constructor(
     }
 
     /**
-     * SSRF-защита: download_url должен указывать на тот же хост, что и сервер управления.
+     * SSRF-защита: download_url должен указывать на один из сохранённых маршрутов
+     * управления. Активный резервный маршрут не должен блокировать APK с основного.
      *
      * Без этой проверки: сервер мог бы передать произвольный URL → Bearer-токен
      * агента утёк бы на сторонний сервер.
      */
     private fun validateDownloadUrl(url: String) {
-        require(url.startsWith("https://")) {
-            "OTA download must use HTTPS, got: $url"
+        val download = url.toHttpUrlOrNull()
+            ?: throw IllegalArgumentException("Invalid OTA download URL")
+        require(download.scheme == "https" && download.username.isEmpty() && download.password.isEmpty()) {
+            "OTA download must use HTTPS without URL credentials"
         }
-
-        val serverUrl = authStore.getServerUrl()
-        val serverHost = runCatching { java.net.URI(serverUrl).host }.getOrNull()
-            ?: throw IllegalArgumentException("Cannot determine server host from: $serverUrl")
-        val downloadHost = runCatching { java.net.URI(url).host }.getOrNull()
-            ?: throw IllegalArgumentException("Invalid OTA download URL (no host): $url")
-
-        require(downloadHost == serverHost) {
-            "SSRF protection: download host '$downloadHost' != server host '$serverHost'"
+        val allowed = authStore.connectionRoutesSnapshot().urls
+            .mapNotNull { it.toHttpUrlOrNull() }
+            .any { route ->
+                route.scheme == "https" && route.host == download.host && route.port == download.port
+            }
+        require(allowed) {
+            "SSRF protection: OTA origin is not a saved management route"
         }
     }
 

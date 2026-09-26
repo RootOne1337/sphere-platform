@@ -46,6 +46,8 @@ class OtaUpdateServiceRecoveryTest {
 
     @Before fun setup() {
         every { auth.getServerUrl() } returns "https://management.test"
+        every { auth.connectionRoutesSnapshot() } returns
+            AuthTokenStore.ConnectionRoutes(1L, listOf("https://management.test"))
         every { auth.getToken() } returns "fixture-token"
         coEvery { registrationGuard.ensureRegistered() } returns Unit
         // Robolectric application data is isolated for each test.
@@ -92,6 +94,39 @@ class OtaUpdateServiceRecoveryTest {
             override fun timeout() = Timeout.NONE
             override fun close() = Unit
         }.buffer()
+    }
+
+    @Test fun `OTA accepts signed primary artifact while management uses fallback`() = runBlocking {
+        every { auth.getServerUrl() } returns "https://fallback.test"
+        every { auth.connectionRoutesSnapshot() } returns AuthTokenStore.ConnectionRoutes(
+            2L, listOf("https://fallback.test", "https://management.test"),
+        )
+
+        service(client({ bytes.toResponseBody() })).performUpdate(payload())
+
+        assertEquals(1, installs.get())
+    }
+
+    @Test fun `OTA rejects an artifact on an untrusted origin before network access`() = runBlocking {
+        every { auth.connectionRoutesSnapshot() } returns AuthTokenStore.ConnectionRoutes(
+            2L, listOf("https://management.test", "https://fallback.test"),
+        )
+        val requests = AtomicInteger()
+        val ota = service(client({ requests.incrementAndGet(); bytes.toResponseBody() }))
+        for (url in listOf(
+            "https://management.test:8443/update.apk",
+            "https://third-party.test/update.apk",
+            "http://management.test/update.apk",
+            "https://user:password@management.test/update.apk",
+        )) {
+            try {
+                ota.performUpdate(payload().copy(download_url = url))
+                fail("Untrusted OTA URL was accepted: $url")
+            } catch (expected: IllegalArgumentException) {
+                assertEquals(0, requests.get())
+                assertEquals(0, installs.get())
+            }
+        }
     }
 
     @Test fun `interrupted body removes partial file and a subsequent attempt can install`() = runBlocking {
