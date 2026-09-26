@@ -419,18 +419,54 @@ API-вызов, не визуальное отображение в браузе
 разбора reconnect событие из файла, который уходит периодически. Это подтверждённый
 дефект доставки диагностики (P2): live/on-demand путь работал, периодическая
 выгрузка работала, но её ограниченный хвост не сохранил проверяемую причину.
-Приватные сырые строки и ID не копировались в отчёт. На момент этой записи
-исправление ещё не внесено; regression и повторная проверка должны подтвердить,
-что lifecycle-записи переживают обычный логовый шум и лимит тела upload.
+Приватные сырые строки и ID не копировались в отчёт.
 
-Отдельно при проверке sidecar найден вторичный дефект точности счётчиков (P3):
-те же два последних `onFailure` лежат и в обычных `sphere_*.log`, и в
-`ws_lifecycle.log`. В обычном источнике было 19 lifecycle-строк; в sidecar — 2.
-Обе последние записи находились в пределах 32 KiB от конца обычного файла
-(29,302 и 27,197 байт), поэтому текущий состав upload включил бы их второй раз.
-Это локально воспроизводимое дублирование из двух источников, а не два отдельных
-обрыва. Server-side periodic upload после нового fault test ещё не наблюдался;
-нужен regression-тест, который доказывает единственную запись в собранном теле.
+**P2 исправлен в `872c965`**: `FileLoggingTree` теперь сначала сохраняет
+структурированные `ws_lifecycle` строки в отдельный sidecar `ws_lifecycle.log`
+размером не более 64 KiB, удерживая последние записи; periodic worker добавляет
+до 32 KiB этого приоритетного журнала после обычных секций. Unit tests проверяют,
+что lifecycle-события переживают шумный обычный хвост, а sidecar остаётся
+ограниченным и сохраняет последние записи. Затронутые файлы:
+`android/app/src/main/kotlin/com/sphereplatform/agent/logging/FileLoggingTree.kt`,
+`android/app/src/main/kotlin/com/sphereplatform/agent/workers/LogUploadWorker.kt`,
+`android/app/src/test/kotlin/com/sphereplatform/agent/logging/FileLoggingTreeTest.kt`
+и `android/app/src/test/kotlin/com/sphereplatform/agent/workers/LogUploadWorkerTest.kt`.
+
+Повторная серверная проверка после изменения подтвердила восстановление доставки:
+секция в `15:21:41Z` содержит обе lifecycle-записи app-only теста (два уникальных
+события, без дублирования внутри секции). Предыдущая секция `14:36:37Z` после того
+же outage содержала ноль таких записей. Это подтверждает периодический upload на
+одной локальной canary; не доказывает доставку при длительном офлайне или
+переключение ingress.
+
+**P3 — совпадение двух источников** сначала было воспроизведено unit-тестом:
+одна и та же строка присутствовала в 32-KiB обычном хвосте и priority sidecar,
+поэтому собранный body содержал её дважды. На сервере этот эффект не был доказан:
+серверная секция после outage содержала две уникальные записи, а не четыре.
+Исправление в `d9e5c63` исключает из приоритетной секции строки, уже присутствующие
+в обычном хвосте, сохраняя sidecar-only события. Regression до изменения падал
+(две строки вместо одной), после изменения проходит с ровно одной строкой.
+Зафиксированная regression — `LogUploadWorkerTest.priority websocket events are
+not duplicated when present in the regular tail`: до fix она ожидала 1 запись,
+но получила 2. Версия APK поднята в `android/version.properties`.
+
+Для runtime-проверки собран и установлен только на локальный `emulator-5556`
+candidate `1.2.27-dev` / `10227`, package
+`com.sphereplatform.agent.pilot.debug`, source `d9e5c63`. Локальный APK
+`.local-pilot/apk/SphereAgent-pilot-candidate-1.2.27-dev-d9e5c63.apk`,
+8,422,681 bytes, SHA-256
+`e9f156b15e42a6db4e2c612835bf068ac788ca7ee512b6f5132f7c11af13fe40`; подпись
+совпадает с private local pilot baseline, discovery manifest v25, baked
+management URL отсутствует. Полные debug unit suites: 668 тестов на flavor,
+0 failures/errors, 1 skipped; candidate builder завершил `assembleDevDebug`,
+`assembleEnterpriseDebug`, `assembleDevRelease` и `lintDevDebug`.
+OTA/GitHub Releases не менялись.
+
+После обновления APK его `lastUpdateTime` был `17:36:37 +02:00` (`15:36:37Z`),
+а сервер принял следующую upload-секцию в `15:36:42Z`. В ней две записи из
+сохранённого reconnect были представлены двумя уникальными строками; внутри
+этой секции — 0 дубликатов. Один локальный runtime upload подтверждён, но это не
+длительный soak и не удалённый маршрут.
 
 Сырые строки и идентификаторы остались в private pilot evidence.
 

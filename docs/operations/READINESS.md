@@ -895,18 +895,37 @@ heartbeat подряд (последний age 5 s); сервер зарегис
 диагностику ошибки и reconnect на одном устройстве; это не доказывает, что два
 route slot являются независимыми ingress или что fallback slot подключился.
 
-Worker выполнил периодическую выгрузку после теста в `14:36:37Z` (12-я секция),
-но в новом payload не было ни одной `ws_lifecycle` записи. Проверка локального
-файла показала 84,001 байт обычных логов после последнего lifecycle-события при
-том, что worker брал только последние 32 KiB. Это подтверждённая потеря
-диагностики из-за шумного хвоста, а не отказ API: on-demand путь через endpoint,
-который использует log viewer, ранее вернул HTTP 200 и обе записи. Отдельный
-ограниченный приоритетный буфер и regression-тест ещё предстоит внести и проверить.
-При проверке sidecar также обнаружено возможное удвоение новых callback в upload:
-19 строк есть в `sphere_*.log`, две последние — ещё и в `ws_lifecycle.log`; обе
-попадают в 32-KiB обычный хвост. Это отдельная точность диагностики P3, которую
-надо покрыть проверкой числа событий в собранном upload body.
-Визуальная отрисовка log viewer отдельно не проверялась. Видео/FPS, удалённая
-сеть, Android 14+, длительная нагрузка и fleet recovery не проверялись.
-**Тест — ограниченный local control-channel PASS; Fleet32 и mass OTA остаются
-NO-GO.** Подробности: [remote control path diagnosis](../audits/2026-09-26/REMOTE-CONTROL-PATH-DIAGNOSIS.md).
+Первый periodic upload после теста в `14:36:37Z` (12-я секция) не содержал
+`ws_lifecycle`: локальный шумовой хвост уже превысил 32 KiB. Это подтверждённая
+потеря центральной диагностики (P2), а не отказ API; on-demand API-вызов ранее
+вернул обе записи. Исправление `872c965` добавило ограниченный 64-KiB sidecar и
+приоритетное включение последних 32 KiB в periodic upload. Последующая секция
+`15:21:41Z` на canary `1.2.26-dev` передала обе reconnect-записи: 2 уникальные,
+0 дублированных внутри секции.
+
+При композиции обычного 32-KiB хвоста с sidecar один и тот же callback мог попасть
+в body повторно. Это было доказано regression fixture (до исправления body
+содержал событие дважды), но не было доказано в серверной секции `1.2.26` — она
+содержала две строки. Исправление `d9e5c63` фильтрует из priority-секции только
+строки, уже присутствующие в обычном хвосте; sidecar-only события сохраняются.
+После обновления локальной canary до `1.2.27-dev` periodic upload в `15:36:42Z`
+(APK update time `15:36:37Z`) содержал reconnect-события по одному: 2 строки,
+2 уникальные, 0 дубликатов в этой секции.
+
+`1.2.27-dev` / `10227`, package `com.sphereplatform.agent.pilot.debug`, собран
+из source `d9e5c63`. Local-only artifact:
+`.local-pilot/apk/SphereAgent-pilot-candidate-1.2.27-dev-d9e5c63.apk`,
+SHA-256 `e9f156b15e42a6db4e2c612835bf068ac788ca7ee512b6f5132f7c11af13fe40`;
+подпись совпадает с локальной pilot-базой, discovery manifest v25, URL сервера
+в APK не зашит. Полные unit suites `devDebug` и `enterpriseDebug`: по 668 тестов,
+0 failures/errors, 1 skipped. `assembleDevDebug`, `assembleEnterpriseDebug`,
+`assembleDevRelease` и `lintDevDebug` успешны. Candidate не опубликован в OTA,
+GitHub Releases или production.
+
+На canary после `adb install -r` подтверждена версия `1.2.27-dev`; app data
+сохранены, backend status — `online`. ScreenCaptureService в preflight не работал,
+поэтому video/FPS/decode этим тестом не подтверждались. Проверена одна локальная
+Android 9 canary и один штатный periodic upload; remote ingress, Android 14+,
+длительный soak, stream recovery и fleet load остаются открытыми gates.
+**Fleet32 и mass OTA остаются NO-GO.** Подробности и точные границы:
+[remote control path diagnosis](../audits/2026-09-26/REMOTE-CONTROL-PATH-DIAGNOSIS.md).
