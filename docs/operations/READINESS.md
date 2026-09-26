@@ -2,23 +2,38 @@
 
 **Срез: 26 сентября 2026 · аудит продолжается · Fleet32 остаётся NO-GO.**
 
-**Контроль APK и rollout — 26 сентября, 15:58 UTC.** Source на PR #19 —
-`1.2.27 / 10227`; локальный `emulator-5556` подтверждает `1.2.27-dev`, а
-`emulator-5554` всё ещё `1.2.23-dev`. Текущий локальный promoted-artifact
-manifest указывает на `1.2.9-dev / 10209`. APK `1.2.27` собран и проверен на
-одной локальной canary, но остаётся debug-кандидатом: он не опубликован в OTA
-или GitHub Releases и не установлен на удалённые устройства. Их версии в этом
-срезе неизвестны. Значит, говорить «удалённые обновились» или «OTA доказанно
-работает» нельзя. Прошедшие CI и локальная canary подтверждают source/build и
-один локальный сценарий, но не доставку релиза на удалённый парк.
+**Контроль APK и rollout — 26 сентября, 16:59 UTC.** Source на PR #19 сейчас
+`1.2.28 / 10228` и включает исправление подтверждения результата системной
+установки Android. Последние локальные версии, измеренные в 15:58 UTC, были
+`emulator-5556 = 1.2.27-dev` и `emulator-5554 = 1.2.23-dev`; новых запросов к
+эмуляторам в этом проходе не делалось. Локальный promoted-artifact manifest
+по-прежнему показывает `1.2.9-dev / 10209`. Удалённые версии не измерялись.
+Следовательно, наличие исправления в source не означает, что оно установлено
+на canary или удалённом устройстве; OTA-раскатка остаётся **NO-GO** до сборки,
+проверки артефакта, контролируемой установки и per-device post-install
+heartbeat.
 
 OTA worker запускает проверку при старте и аутентифицированном reconnect, затем
-периодически раз в 6 часов. Для получения `1.2.27` соответствующий backend OTA
+периодически раз в 6 часов. Для получения `1.2.28` соответствующий backend OTA
 каталог сначала должен содержать именно этот проверенный артефакт; далее для
 каждого удалённого device ID нужны receipts проверки, скачивания, SHA-256,
 установки и heartbeat с новой версией. Массовая раскатка остаётся **NO-GO**.
 См. актуальную таблицу и доказательства в
 [APK/presence release audit](../audits/2026-09-26/ANDROID-PRESENCE-AND-APK-RELEASE.md).
+
+**Новое OTA-ограничение:** до source fix Android `PackageInstaller.commit()`
+мог быть принят за завершённую установку, хотя ОС ещё ждала подтверждения либо
+позже завершала операцию ошибкой. Исправление в текущем source ожидает
+асинхронный callback и сверяет установленный versionCode. Локальные unit/build
+результаты не подтверждают remote OTA; release gate остаётся закрыт, пока
+каждое устройство не сообщит фактически установленную версию.
+
+**Build-toolchain follow-up (P2):** Gradle completed the 1.2.28 debug builds and
+`lintDevDebug`, but AGP `8.3.2` warns that it was tested only through
+`compileSdk 34`; the app targets 35. SDK tooling also warned that installed
+command-line tools read SDK XML through v3 while the current SDK uses v4. This
+did not fail validation, but upgrade the AGP/Gradle/Kotlin combination and
+revalidate before production signing/promotion.
 
 **Source follow-up (26 сентября, после live-среза):** исправлены ложное событие
 `device.online` до первого heartbeat, несоответствие backend event payload

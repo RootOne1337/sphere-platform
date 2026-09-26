@@ -1,6 +1,6 @@
 # Android presence and APK release audit — 26 September 2026
 
-## Current release and device checkpoint — 26 September 2026, 15:58 UTC
+## Current release and device checkpoint — 26 September 2026, 16:59 UTC
 
 This checkpoint supersedes the older snapshots below for APK source and the two
 Android emulators attached to the audit workstation. It does **not** claim a
@@ -8,11 +8,11 @@ current observation of the remote fleet or the public pilot catalog.
 
 | Evidence source | Observed state | What it proves |
 | --- | --- | --- |
-| `android/version.properties` from code commit `d9e5c63` | `1.2.27 / 10227` | Source version only. |
-| `adb` PackageManager, `emulator-5554` | `1.2.23-dev / 10223` | Installed on one local emulator; it is behind current source. |
-| `adb` PackageManager, `emulator-5556` | `1.2.27-dev / 10227` | Installed on the local canary; package data was preserved by `adb install -r`. |
+| `android/version.properties` on PR #19 | `1.2.28 / 10228` | Source candidate for the PackageInstaller-result fix; source version only until the post-commit APK is fingerprinted. |
+| `adb` PackageManager, `emulator-5554` | Last observed `1.2.23-dev / 10223` at 15:58 UTC | No newer device query was run in this review. |
+| `adb` PackageManager, `emulator-5556` | Last observed `1.2.27-dev / 10227` at 15:58 UTC | No newer device query was run in this review. |
 | `.local-pilot/apk/manifest.json` | `1.2.9-dev / 10209`, SHA-256 `b4bf3f319f92e1f3ac24b7d68dffdc6f6d93a113ad59b10b132ea8f60e641078` | The local promoted-artifact pointer is stale relative to source; it is not proof of the public pilot's current catalog. |
-| Remote devices | Current installed versions not independently sampled in this checkpoint | Online/connecting UI state does not establish APK version or successful OTA. |
+| Remote devices | Not sampled during this review | Online/connecting UI state does not establish APK version or successful OTA. |
 
 The exact `1.2.27-dev` candidate was built from `d9e5c63`, SHA-256
 `e9f156b15e42a6db4e2c612835bf068ac788ca7ee512b6f5132f7c11af13fe40`, and kept
@@ -21,6 +21,11 @@ uploaded to GitHub Releases, or rolled out remotely. The Android worker polls on
 startup/authenticated reconnect and every six hours, but it can only install an
 artifact already published in the server's matching `android/dev` catalog; a
 successful check or a green CI run is not an installation receipt.
+
+The `1.2.28 / 10228` source candidate adds a fix to the Android
+`PackageInstaller` fallback result path. It has not been promoted to the pilot
+catalog or rolled out. The previous `1.2.27` file is not this build and must not
+be reused as the new candidate.
 
 For this reason, the currently available evidence does not support saying that
 remote devices have received `1.2.27`, or that their update/recovery path works.
@@ -258,6 +263,96 @@ age. Use the explicit observation boundaries above instead.
 Reconnect churn and remote heartbeat recovery remain open for the degraded fleet;
 remote video/control is confirmed only on `022/023` and remains unverified for
 the other remote devices.
+
+### AUD-2026-09-26-05 — P1 OTA correctness: PackageInstaller commit was reported as completion
+
+**Scope and trigger:** Android installations that use the non-root
+`PackageInstaller` fallback. Rooted LDPlayer devices normally use `su pm install`
+instead, so this finding does not by itself explain their stream or heartbeat
+state. It matters for ordinary Android phones and any emulator where root install
+is unavailable or denied.
+
+**Evidence / deterministic source reproduction:** at PR parent `fd92cf1`,
+`OtaUpdateService.installViaPackageInstaller()` called `session.commit()` and
+returned without waiting for the PackageInstaller status callback. The existing
+`InstallReceiver` logged `STATUS_SUCCESS` / failure, but did not hand the result
+back to the OTA caller. `performUpdate()` therefore completed after session
+submission, and periodic OTA returned `Result.success()`; manual `OTA_UPDATE`
+then emitted `{status: "download_complete"}` and the command dispatcher marked
+it `completed`. Android's PackageInstaller contract treats commit as an
+asynchronous operation; `STATUS_PENDING_USER_ACTION` explicitly requires user
+approval and `STATUS_SUCCESS` is the completed install result ([PackageInstaller](https://developer.android.com/reference/android/content/pm/PackageInstaller),
+[Session.commit](https://developer.android.com/reference/android/content/pm/PackageInstaller.Session#commit(android.content.IntentSender))).
+This is a code-path proof, not a claim that this fallback was observed failing
+on a particular remote device.
+
+**Root cause:** OTA conflated "the OS accepted a package session" with "the OS
+installed the target APK." The receiver and the worker had no shared durable
+session result, version verification, or distinct pending-user-action outcome.
+
+**Fix:** `InstallStatusStore` persists callback status scoped to the active
+session ID and ignores stale session callbacks. `PackageInstallerResultAwaiter`
+waits up to 120 seconds for the OS result, requires the installed PackageManager
+version to reach the requested version after `STATUS_SUCCESS`, and turns failure
+or callback timeout into an OTA failure. The receiver attempts to present the OS
+approval intent when provided, catches and records any launch failure, records
+only numeric status/session data, and queues a network-constrained diagnostic
+upload with up to two minutes of jitter.
+The root path also verifies the installed version after `pm install` reports
+success. Periodic checks treat pending user approval as a handled state rather
+than retrying into repeated approval prompts; the status is not reported as an
+installed APK.
+
+**Regression tests and validation:**
+
+- `PackageInstallerResultAwaiterTest`: remains pending until callback; verifies
+  actual installed version; consumes status delivered before the waiter starts;
+  rejects a success callback with an old installed version; distinguishes
+  pending user action; preserves a failure status; ignores an old session
+  callback; checks timeout and connected-network diagnostic scheduling.
+- `OtaUpdateServiceRecoveryTest`: OTA does not complete while the simulated
+  installer result is still pending.
+- `UpdateCheckWorkerTest`: pending user action does not schedule a prompt loop;
+  transport/install failures still request WorkManager retry.
+- Full `devDebug` and `enterpriseDebug` unit suites: 678 tests each, zero
+  failures/errors, one skipped each. `assembleDevDebug`,
+  `assembleEnterpriseDebug`, and `lintDevDebug` passed. These are local build
+  and Robolectric results, not a device installation or remote rollout proof.
+
+**Affected files:** `OtaUpdateService.kt`, `InstallReceiver.kt`,
+`InstallStatusStore.kt`, `PackageInstallerResultAwaiter.kt`,
+`OtaUserActionRequiredException.kt`, `LogUploadWorker.kt`,
+`UpdateCheckWorker.kt`, and the three corresponding Android test classes.
+
+**Residual risk / release gate:** Android still controls whether unattended
+installation is allowed. On a standard non-root phone, this flow cannot silently
+bypass Android's approval UI. `STATUS_PENDING_USER_ACTION` is returned
+immediately as `ota_install_requires_user_action`; if the OS provides no callback
+at all, the awaiter times out after two minutes. This review did not install
+the candidate on Android 14+, test approval UX on a physical phone, query remote
+APK versions, publish the candidate to the OTA catalog, or verify remote
+diagnostic upload. Per-device OTA acceptance still requires catalog SHA-256,
+download/checksum/install outcome and a post-install heartbeat reporting at
+least `10228`.
+
+### AUD-2026-09-26-06 — P2 build validation: Android Gradle Plugin is older than compileSdk support
+
+**Evidence:** local `assembleDevDebug`, `assembleEnterpriseDebug`, and
+`lintDevDebug` completed, but Gradle emitted that the repository uses Android
+Gradle Plugin `8.3.2`, which was tested through `compileSdk 34`, while this app
+targets `compileSdk 35`. The Android SDK command-line tooling also warned that
+it only understands SDK XML through version 3 while the installed SDK emits
+version 4.
+
+**Impact and status:** this did not fail the current build or tests, and no
+runtime defect is demonstrated. It reduces confidence in toolchain validation
+for API 35 and can surface compatibility problems on a later build-tool update.
+Keep it as a release-engineering follow-up; do not interpret today's green local
+tasks as proof that this unsupported toolchain combination is vendor-validated.
+
+**Required follow-up:** upgrade AGP/Gradle/Kotlin as a separate change to a
+compatible, officially tested combination, then rerun both Android flavors,
+lint, APK metadata/signature checks, and CI before production promotion.
 
 ## Focused incident follow-up
 

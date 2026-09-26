@@ -4,6 +4,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageInstaller
+import android.os.Build
 import com.sphereplatform.agent.provisioning.InstanceRegistrationGuard
 import com.sphereplatform.agent.store.AuthTokenStore
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -54,6 +55,7 @@ class OtaUpdateService @Inject constructor(
     private val httpClient: OkHttpClient,
     private val authStore: AuthTokenStore,
     private val instanceRegistrationGuard: InstanceRegistrationGuard,
+    private val installResultAwaiter: PackageInstallerResultAwaiter,
 ) {
     private val apkDir = File(context.filesDir, "ota")
     private val updateMutex = Mutex()
@@ -95,7 +97,7 @@ class OtaUpdateService @Inject constructor(
                 downloadApk(payload, apkFile)
                 verifyChecksum(apkFile, payload.sha256)
                 currentCoroutineContext().ensureActive()
-                install(apkFile)
+                install(apkFile, payload.version_code)
             } finally {
                 // Includes partial downloads, cancellation and failed installs.
                 if (!apkFile.delete() && apkFile.exists()) Timber.w("OTA: staging cleanup failed")
@@ -220,13 +222,19 @@ class OtaUpdateService @Inject constructor(
         Timber.i("OTA: SHA-256 verified ✓")
     }
 
-    private fun install(apkFile: File) {
+    private suspend fun install(apkFile: File, targetVersionCode: Int) {
         if (tryRootInstall(apkFile)) {
-            Timber.i("OTA: root install SUCCESS")
+            val installedVersionCode = installResultAwaiter.verifyInstalledVersion(targetVersionCode)
+            Timber.i("OTA: root install verified version_code=$installedVersionCode")
             return
         }
-        Timber.w("OTA: root install failed, falling back to PackageInstaller")
-        installViaPackageInstaller(apkFile)
+        Timber.w("OTA: root install unavailable, falling back to PackageInstaller")
+        when (val outcome = installViaPackageInstaller(apkFile, targetVersionCode)) {
+            is PackageInstallOutcome.Installed ->
+                Timber.i("OTA: PackageInstaller install verified version_code=${outcome.versionCode}")
+            is PackageInstallOutcome.RequiresUserAction ->
+                throw OtaUserActionRequiredException(outcome.sessionId)
+        }
     }
 
     private fun tryRootInstall(apkFile: File): Boolean {
@@ -256,27 +264,46 @@ class OtaUpdateService @Inject constructor(
         }
     }
 
-    private fun installViaPackageInstaller(apkFile: File) {
+    private suspend fun installViaPackageInstaller(apkFile: File, targetVersionCode: Int): PackageInstallOutcome {
         val installer = context.packageManager.packageInstaller
         val params = PackageInstaller.SessionParams(
             PackageInstaller.SessionParams.MODE_FULL_INSTALL
         )
         val sessionId = installer.createSession(params)
 
-        installer.openSession(sessionId).use { session ->
-            session.openWrite("package", 0, apkFile.length()).use { output ->
-                apkFile.inputStream().use { input -> input.copyTo(output) }
-                session.fsync(output)
-            }
-
-            val intent = Intent(context, InstallReceiver::class.java)
-            val pi = PendingIntent.getBroadcast(
-                context,
-                sessionId,
-                intent,
-                PendingIntent.FLAG_MUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
-            )
-            session.commit(pi.intentSender)
+        check(InstallStatusStore.begin(context, sessionId)) {
+            "package_installer_status_store_unavailable"
         }
+
+        try {
+            installer.openSession(sessionId).use { session ->
+                session.openWrite("package", 0, apkFile.length()).use { output ->
+                    apkFile.inputStream().use { input -> input.copyTo(output) }
+                    session.fsync(output)
+                }
+
+                val intent = Intent(context, InstallReceiver::class.java).apply {
+                    action = "${context.packageName}.OTA_INSTALL_STATUS.$sessionId"
+                    putExtra(PackageInstaller.EXTRA_SESSION_ID, sessionId)
+                }
+                val mutableFlag = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    PendingIntent.FLAG_MUTABLE
+                } else {
+                    0
+                }
+                val pi = PendingIntent.getBroadcast(
+                    context,
+                    sessionId,
+                    intent,
+                    mutableFlag or PendingIntent.FLAG_UPDATE_CURRENT,
+                )
+                session.commit(pi.intentSender)
+            }
+        } catch (e: Exception) {
+            runCatching { installer.abandonSession(sessionId) }
+            throw e
+        }
+
+        return installResultAwaiter.await(sessionId, targetVersionCode)
     }
 }

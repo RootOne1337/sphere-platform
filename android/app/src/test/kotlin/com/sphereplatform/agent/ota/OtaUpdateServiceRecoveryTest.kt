@@ -1,6 +1,7 @@
 package com.sphereplatform.agent.ota
 
 import android.app.Application
+import com.sphereplatform.agent.BuildConfig
 import com.sphereplatform.agent.store.AuthTokenStore
 import com.sphereplatform.agent.provisioning.InstanceRegistrationGuard
 import io.mockk.every
@@ -52,14 +53,23 @@ class OtaUpdateServiceRecoveryTest {
     }
 
     private fun payload(version: String = "next", hash: String = sha256(bytes)) =
-        OtaUpdatePayload("https://management.test/update.apk", version, hash)
+        OtaUpdatePayload(
+            "https://management.test/update.apk", version, hash,
+            version_code = BuildConfig.VERSION_CODE + 1,
+        )
 
     private fun service(client: OkHttpClient, install: (File) -> Unit = {
         assertArrayEquals(bytes, it.readBytes())
         installs.incrementAndGet()
     }): OtaUpdateService {
-        val ota = spyk(OtaUpdateService(RuntimeEnvironment.getApplication(), client, auth, registrationGuard), recordPrivateCalls = true)
-        every { ota["install"](any<File>()) } answers { install(firstArg()) }
+        val ota = spyk(
+            OtaUpdateService(
+                RuntimeEnvironment.getApplication(), client, auth, registrationGuard,
+                mockk<PackageInstallerResultAwaiter>(),
+            ),
+            recordPrivateCalls = true,
+        )
+        coEvery { ota["install"](any<File>(), any<Int>()) } coAnswers { install(firstArg()) }
         return ota
     }
 
@@ -175,6 +185,36 @@ class OtaUpdateServiceRecoveryTest {
                 first.await()
                 second?.await()
             }
+        }
+        assertTrue(dir.listFiles().isNullOrEmpty())
+    }
+
+    @Test fun `OTA operation does not complete before the installer reports its outcome`() = runBlocking {
+        val installStarted = CompletableDeferred<File>()
+        val releaseInstaller = CompletableDeferred<Unit>()
+        val ota = spyk(
+            OtaUpdateService(
+                RuntimeEnvironment.getApplication(), client({ bytes.toResponseBody() }), auth,
+                registrationGuard, mockk<PackageInstallerResultAwaiter>(),
+            ),
+            recordPrivateCalls = true,
+        )
+        coEvery { ota["install"](any<File>(), any<Int>()) } coAnswers {
+            installStarted.complete(firstArg())
+            releaseInstaller.await()
+        }
+
+        val update = async(Dispatchers.IO) { ota.performUpdate(payload()) }
+        try {
+            val stagedApk = withTimeout(2_000) { installStarted.await() }
+            assertArrayEquals(bytes, stagedApk.readBytes())
+            assertFalse("OTA must not report completion while Android installation is pending", update.isCompleted)
+            releaseInstaller.complete(Unit)
+            withTimeout(2_000) { update.await() }
+            assertTrue(update.isCompleted)
+        } finally {
+            releaseInstaller.complete(Unit)
+            update.cancelAndJoin()
         }
         assertTrue(dir.listFiles().isNullOrEmpty())
     }

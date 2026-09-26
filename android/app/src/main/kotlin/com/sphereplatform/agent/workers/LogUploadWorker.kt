@@ -30,6 +30,7 @@ import java.io.RandomAccessFile
 import java.nio.ByteBuffer
 import java.nio.charset.CodingErrorAction
 import java.nio.charset.StandardCharsets
+import java.util.concurrent.ThreadLocalRandom
 import java.util.concurrent.TimeUnit
 
 /**
@@ -64,8 +65,10 @@ class LogUploadWorker @AssistedInject constructor(
 
     companion object {
         private const val WORK_NAME = "sphere_log_upload"
+        internal const val IMMEDIATE_WORK_NAME = "sphere_log_upload_immediate"
         internal const val CRASH_UPLOAD_WORK_NAME = "sphere_crash_log_upload"
         private const val MAX_CRASH_LOG_BYTES = 128 * 1024
+        private const val MAX_IMMEDIATE_JITTER_MS = 120_000L
         // Backend rejects a log entry above 512 KiB. Leave room for its
         // upload separator and keep the entire request below that hard limit.
         private const val MAX_UPLOAD_BYTES = 480 * 1024
@@ -89,6 +92,27 @@ class LogUploadWorker @AssistedInject constructor(
             Timber.d("LogUploadWorker scheduled (every 15 min)")
 
             schedulePendingCrashUpload(context, workManager)
+        }
+
+        /** Upload a fresh OTA installer result promptly, while spreading fleet callbacks over two minutes. */
+        fun scheduleImmediate(context: Context) {
+            val constraints = Constraints.Builder()
+                .setRequiredNetworkType(NetworkType.CONNECTED)
+                .build()
+            val request = OneTimeWorkRequestBuilder<LogUploadWorker>()
+                .setConstraints(constraints)
+                .setInitialDelay(
+                    ThreadLocalRandom.current().nextLong(MAX_IMMEDIATE_JITTER_MS + 1),
+                    TimeUnit.MILLISECONDS,
+                )
+                .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 15, TimeUnit.SECONDS)
+                .build()
+            WorkManager.getInstance(context).enqueueUniqueWork(
+                IMMEDIATE_WORK_NAME,
+                ExistingWorkPolicy.KEEP,
+                request,
+            )
+            Timber.d("LogUploadWorker immediate diagnostic upload queued")
         }
 
         /** Upload a persisted crash on the next process start, without waiting for

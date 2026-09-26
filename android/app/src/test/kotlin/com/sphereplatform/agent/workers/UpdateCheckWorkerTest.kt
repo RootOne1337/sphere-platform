@@ -5,6 +5,7 @@ import androidx.work.ListenableWorker.Result
 import androidx.work.WorkerParameters
 import com.sphereplatform.agent.BuildConfig
 import com.sphereplatform.agent.ota.OtaUpdateService
+import com.sphereplatform.agent.ota.OtaUserActionRequiredException
 import com.sphereplatform.agent.provisioning.InstanceRegistrationGuard
 import com.sphereplatform.agent.store.AuthTokenStore
 import io.mockk.*
@@ -144,6 +145,15 @@ class UpdateCheckWorkerTest {
         body = release()
         coEvery { ota.performUpdate(any()) } throws IOException("download interrupted")
         assertEquals(Result.retry(), worker().doWork())
+    }
+
+    @Test fun `installer user action is surfaced without retrying into repeated approval prompts`() = runTest {
+        body = release()
+        coEvery { ota.performUpdate(any()) } throws OtaUserActionRequiredException(sessionId = 42)
+
+        assertEquals(Result.success(), worker().doWork())
+
+        coVerify(exactly = 1) { ota.performUpdate(any()) }
     }
 
     @Test fun `worker cancellation during install is propagated to WorkManager`() = runTest {

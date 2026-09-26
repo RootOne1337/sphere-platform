@@ -15,6 +15,7 @@ import androidx.work.WorkerParameters
 import com.sphereplatform.agent.BuildConfig
 import com.sphereplatform.agent.ota.OtaUpdatePayload
 import com.sphereplatform.agent.ota.OtaUpdateService
+import com.sphereplatform.agent.ota.OtaUserActionRequiredException
 import com.sphereplatform.agent.provisioning.InstanceRegistrationGuard
 import com.sphereplatform.agent.store.AuthTokenStore
 import dagger.assisted.Assisted
@@ -177,6 +178,11 @@ class UpdateCheckWorker @AssistedInject constructor(
             }
         } catch (e: CancellationException) {
             throw e
+        } catch (e: OtaUserActionRequiredException) {
+            // The receiver already persisted/upload-queued the exact OS status.
+            // Do not retry into repeated installer prompts while Android awaits approval.
+            Timber.w("UpdateCheckWorker: PackageInstaller awaits user action (session=${e.sessionId})")
+            Result.success()
         } catch (e: Exception) {
             Timber.w(e, "UpdateCheckWorker: check failed")
             Result.retry()
