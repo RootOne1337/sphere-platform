@@ -1,6 +1,6 @@
 # Android presence and APK release audit — 26 September 2026
 
-## Current release and device checkpoint — 26 September 2026, 16:59 UTC
+## Current release and device checkpoint — 26 September 2026, 17:07 UTC
 
 This checkpoint supersedes the older snapshots below for APK source and the two
 Android emulators attached to the audit workstation. It does **not** claim a
@@ -8,10 +8,11 @@ current observation of the remote fleet or the public pilot catalog.
 
 | Evidence source | Observed state | What it proves |
 | --- | --- | --- |
-| `android/version.properties` on PR #19 | `1.2.28 / 10228` | Source candidate for the PackageInstaller-result fix; source version only until the post-commit APK is fingerprinted. |
+| `android/version.properties` on PR #19 | `1.2.28 / 10228` at source commit `add00b3b304e0f741b3bd03e843134f9188b5e8f` | Source contains the PackageInstaller-result fix. |
 | `adb` PackageManager, `emulator-5554` | Last observed `1.2.23-dev / 10223` at 15:58 UTC | No newer device query was run in this review. |
 | `adb` PackageManager, `emulator-5556` | Last observed `1.2.27-dev / 10227` at 15:58 UTC | No newer device query was run in this review. |
-| `.local-pilot/apk/manifest.json` | `1.2.9-dev / 10209`, SHA-256 `b4bf3f319f92e1f3ac24b7d68dffdc6f6d93a113ad59b10b132ea8f60e641078` | The local promoted-artifact pointer is stale relative to source; it is not proof of the public pilot's current catalog. |
+| Local pilot APK candidate built at 17:05:51 UTC | `1.2.28-dev / 10228`, SHA-256 `15abeee280bf743e67e544ed94b36575590557c3353d73e911d1279ab2946ce9` | Exact candidate is fingerprinted below; it has not been installed or published. |
+| `.local-pilot/apk/manifest.json`, read at 17:07 UTC | `1.2.9-dev / 10209`, SHA-256 `b4bf3f319f92e1f3ac24b7d68dffdc6f6d93a113ad59b10b132ea8f60e641078` | This local promoted-artifact pointer is stale relative to source; it does not establish the backend or public pilot catalog state. |
 | Remote devices | Not sampled during this review | Online/connecting UI state does not establish APK version or successful OTA. |
 
 The exact `1.2.27-dev` candidate was built from `d9e5c63`, SHA-256
@@ -22,10 +23,26 @@ startup/authenticated reconnect and every six hours, but it can only install an
 artifact already published in the server's matching `android/dev` catalog; a
 successful check or a green CI run is not an installation receipt.
 
-The `1.2.28 / 10228` source candidate adds a fix to the Android
-`PackageInstaller` fallback result path. It has not been promoted to the pilot
-catalog or rolled out. The previous `1.2.27` file is not this build and must not
-be reused as the new candidate.
+The exact local candidate for the `1.2.28 / 10228` PackageInstaller-result fix
+is `.local-pilot/apk/SphereAgent-pilot-candidate-1.2.28-dev-add00b3.apk` (8,430,789
+bytes), built from the commit above. Its package is
+`com.sphereplatform.agent.pilot.debug`; the v2 APK signature verifies and its
+signer SHA-256 matches the previous local pilot signer. It uses signed discovery
+manifest v25 and has no baked management URLs. The artifact and metadata sidecar
+are private local build outputs, not repository release files. It contains
+development pilot enrollment configuration and a debug/pilot signing identity:
+do not distribute it as a production release or upload it to a public release
+channel.
+
+This candidate has **not** been installed on either local emulator, promoted to
+the pilot catalog, published to GitHub Releases, or rolled out remotely. The
+previous `1.2.27` APK is not this build. The source-pinned build passed both
+Android unit-test flavors (678 each, 0 failures/errors, 1 skipped per flavor),
+`assembleDevDebug`, `assembleEnterpriseDebug`, and `lintDevDebug`. These checks
+prove build and tested code paths only; they do not prove PackageInstaller
+runtime behavior or delivery to any device. Latest PR CI still has Android
+`Build APK` and backend `Tests` in progress; the other reported checks are
+green and deployment is skipped by the preview guard.
 
 For this reason, the currently available evidence does not support saying that
 remote devices have received `1.2.27`, or that their update/recovery path works.
