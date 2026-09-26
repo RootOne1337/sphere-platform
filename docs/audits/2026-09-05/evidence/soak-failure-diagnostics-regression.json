@@ -1,0 +1,31 @@
+{
+  "finding": "AUD-117",
+  "before_source": "2bf983f",
+  "before": {
+    "tests": "2",
+    "failures": "2",
+    "errors": "0",
+    "skipped": "0",
+    "time": "0.278"
+  },
+  "after": {
+    "tests": "15",
+    "failures": "0",
+    "errors": "0",
+    "skipped": "0",
+    "time": "0.120"
+  },
+  "targeted_ruff": "passed",
+  "cases": [
+    "Injected PermissionError at a named status_replace call site",
+    "Injected PermissionError with Windows socket code"
+  ],
+  "verified": [
+    "failed status and one cycle attempt retained",
+    "diagnostics still run",
+    "operation/line/errno/winerror in status and events",
+    "private exception message and filename absent"
+  ],
+  "scope": "Injected OS failures verify diagnostics, not the original PermissionError cause or its remediation.",
+  "initial_setup": "First collection lacked a test JWT key; retained privately, excluded from regression counts."
+}

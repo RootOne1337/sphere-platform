@@ -55,13 +55,12 @@ class ScreenCaptureService : Service() {
     }
 
     private fun handleStart(intent: Intent) {
-        // Повторный старт при уже активном стриминге — корректный restart
+        // Reconnect recovery can redeliver start_stream while this projection is
+        // still healthy. MediaProjection consent is session-scoped, so restarting
+        // here would tear down the working encoder and demand a new user grant.
         if (streamingManager.isActive()) {
-            Timber.d("ScreenCaptureService: restart requested while active — stopping first")
-            streamingManager.stop()
-            mediaProjection?.unregisterCallback(projectionCallback)
-            mediaProjection?.stop()
-            mediaProjection = null
+            Timber.i("ScreenCaptureService: ignoring duplicate start while capture is active")
+            return
         }
 
         startForeground(NOTIFICATION_ID, buildNotification())

@@ -16,10 +16,11 @@ import uuid
 from datetime import datetime, timedelta, timezone
 
 import structlog
-from sqlalchemy import func, select
+from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.database.engine import AsyncSessionLocal
+from backend.database.tenant import bind_tenant_context
 from backend.models.schedule import (
     Schedule,
     ScheduleConflictPolicy,
@@ -32,6 +33,10 @@ logger = structlog.get_logger()
 
 # Интервал поллинга расписаний
 _POLL_INTERVAL_SECONDS = 5.0
+_DISCOVERY_TIMEOUT_SECONDS = 5.0
+_FIRING_TIMEOUT_SECONDS = 15.0
+_PAGE_SIZE = 50
+_CONCURRENCY = 4
 
 
 class SchedulerEngine:
@@ -44,6 +49,7 @@ class SchedulerEngine:
 
     def __init__(self) -> None:
         self._running = False
+        self._cursor: uuid.UUID | None = None
 
     async def start(self) -> None:
         """Запуск фонового loop."""
@@ -61,56 +67,43 @@ class SchedulerEngine:
         self._running = False
         logger.info("scheduler_engine.stopped")
 
+    async def _discover_schedules(self) -> list[tuple[uuid.UUID, uuid.UUID]]:
+        async with asyncio.timeout(_DISCOVERY_TIMEOUT_SECONDS), AsyncSessionLocal() as db:
+            query = text("SELECT * FROM sphere_auth.schedule_work(:after)")
+            rows = list((await db.execute(query, {"after": self._cursor})).all())
+            if not rows and self._cursor is not None:
+                rows = list((await db.execute(query, {"after": None})).all())
+        return [(row[0], row[1]) for row in rows]
+
     async def _tick(self) -> None:
-        """Один тик: найти созревшие расписания и обработать."""
-        now = datetime.now(timezone.utc)
+        """Discover UUIDs, then atomically process each firing in its own tenant."""
+        candidates = await self._discover_schedules()
+        for offset in range(0, len(candidates), _CONCURRENCY):
+            await asyncio.gather(*(self._fire_schedule(*item)
+                                   for item in candidates[offset:offset + _CONCURRENCY]))
+        # A broken schedule must not permanently hide the next due page.
+        self._cursor = candidates[-1][0] if len(candidates) == _PAGE_SIZE else None
 
-        # FIX BUG-1: Собираем задачи для enqueue ПОСЛЕ коммита.
-        # Ранее enqueue происходил до db.commit() → dispatcher мог попить задачу
-        # из Redis, не найти её в БД (не закоммичена) и потерять навсегда.
-        pending_enqueue: list[tuple[str, str, str, int]] = []  # (task_id, device_id, org_id, priority)
-
-        async with AsyncSessionLocal() as db:
-            result = await db.execute(
-                select(Schedule)
-                .where(
-                    Schedule.is_active.is_(True),
-                    Schedule.next_fire_at <= now,
-                )
-                .order_by(Schedule.next_fire_at)
-                .limit(50)
-                .with_for_update(skip_locked=True)
-            )
-            schedules = result.scalars().all()
-
-            for schedule in schedules:
-                try:
-                    await self._process_schedule(schedule, now, db, pending_enqueue)
-                except Exception as exc:
-                    logger.error(
-                        "scheduler_engine.schedule_error",
-                        schedule_id=str(schedule.id),
-                        error=str(exc),
-                    )
-
-            await db.commit()
-
-        # FIX BUG-1: Redis enqueue ПОСЛЕ коммита — dispatcher гарантированно
-        # найдёт задачу в БД при dequeue.
-        if pending_enqueue:
-            try:
-                from backend.database.redis_client import redis_binary
-                if redis_binary:
-                    from backend.services.task_queue import TaskQueue
-                    queue = TaskQueue(redis_binary)
-                    for task_id, device_id, org_id, priority in pending_enqueue:
-                        await queue.enqueue(task_id, device_id, org_id, priority)
-                    logger.debug(
-                        "scheduler.enqueued_after_commit",
-                        count=len(pending_enqueue),
-                    )
-            except Exception as exc:
-                logger.error("scheduler.enqueue_failed", error=str(exc))
+    async def _fire_schedule(self, schedule_id: uuid.UUID, org_id: uuid.UUID) -> None:
+        try:
+            async with asyncio.timeout(_FIRING_TIMEOUT_SECONDS), AsyncSessionLocal() as db:
+                await bind_tenant_context(db, str(org_id))
+                schedule = await db.scalar(select(Schedule).where(
+                    Schedule.id == schedule_id, Schedule.org_id == org_id,
+                    Schedule.is_active.is_(True), Schedule.next_fire_at <= func.clock_timestamp(),
+                ).with_for_update(skip_locked=True).execution_options(populate_existing=True))
+                if schedule is None:
+                    return
+                # All child rows, the execution receipt and next-fire state
+                # commit together. The SQL dispatcher owns subsequent delivery;
+                # a Redis enqueue is unnecessary and cannot acknowledge a firing.
+                await self._process_schedule(schedule, datetime.now(timezone.utc), db, [])
+                await db.commit()
+        except Exception as exc:
+            # Session exit rolls back partial writes. A lost commit ACK is
+            # resolved by rereading the schedule, never by blind immediate replay.
+            logger.error("scheduler_engine.schedule_error", schedule_id=str(schedule_id),
+                         org_id=str(org_id), error_type=type(exc).__name__)
 
     async def _process_schedule(
         self,
@@ -273,23 +266,26 @@ class SchedulerEngine:
                 )
                 result.update(tagged.all())
 
-        # Фильтр only_online — проверяем через Redis кэш
         if schedule.only_online and result:
-            try:
-                from backend.database.redis_client import redis_binary
-                if redis_binary:
-                    from backend.services.device_status_cache import DeviceStatusCache
-                    cache = DeviceStatusCache(redis_binary)
-                    online_ids = set()
-                    for did in result:
-                        status = await cache.get_status(str(did))
-                        if status and status.status == "online":
-                            online_ids.add(did)
-                    return list(online_ids)
-            except Exception as exc:
-                logger.warning("scheduler.online_check_failed", error=str(exc))
+            from backend.database.redis_client import redis_binary
+            from backend.services.device_status_cache import DeviceStatusCache
 
-        return list(result)
+            if redis_binary is None:
+                raise RuntimeError("schedule_presence_unavailable")
+            cache = DeviceStatusCache(redis_binary)
+            device_ids = sorted(result)
+            online_ids: list[uuid.UUID] = []
+            # Keep the firing atomic, but cap presence I/O while holding its lock.
+            # Failure defers the whole firing; it must not mean "all online".
+            async with asyncio.timeout(2):
+                for offset in range(0, len(device_ids), 512):
+                    page = device_ids[offset:offset + 512]
+                    presence = await cache.bulk_get_status([str(did) for did in page])
+                    online_ids.extend(did for did in page if (status := presence.get(str(did)))
+                                      is not None and status.status == "online")
+            return online_ids
+
+        return sorted(result)
 
     async def _create_script_tasks(
         self,
@@ -477,9 +473,8 @@ class SchedulerEngine:
                     Task.batch_id == last_exec.batch_id,
                     Task.status.in_([TaskStatus.QUEUED, TaskStatus.RUNNING, TaskStatus.ASSIGNED]),
                     # Задача НЕ зависшая если: created_at + timeout + buffer > now()
-                    Task.created_at + func.make_interval(
-                        secs=Task.timeout_seconds + self._STALE_BUFFER_SECONDS
-                    ) > func.now(),
+                    Task.created_at + (Task.timeout_seconds + self._STALE_BUFFER_SECONDS)
+                    * timedelta(seconds=1) > func.now(),
                 )
             )
             return (running_count or 0) > 0
@@ -514,9 +509,9 @@ class SchedulerEngine:
         """
         Отменить все незавершённые задачи предыдущего запуска расписания.
 
-        Для RUNNING задач отправляет CANCEL_DAG через WebSocket агенту.
-        Для QUEUED/ASSIGNED — отменяет из Redis-очереди.
-        Возвращает количество отменённых задач.
+        Records durable cancellation intent for ASSIGNED/RUNNING work.
+        Only never-dispatched QUEUED work becomes terminal immediately.
+        Returns the number of accepted requests, not physical stop confirmations.
         """
         cancelled = 0
 
@@ -525,6 +520,7 @@ class SchedulerEngine:
             select(ScheduleExecution)
             .where(
                 ScheduleExecution.schedule_id == schedule.id,
+                ScheduleExecution.org_id == schedule.org_id,
                 ScheduleExecution.status == ScheduleExecutionStatus.TRIGGERED,
             )
             .order_by(ScheduleExecution.fire_time.desc())
@@ -533,85 +529,30 @@ class SchedulerEngine:
         if not last_exec:
             return 0
 
-        now = datetime.now(timezone.utc)
-
         if last_exec.batch_id:
             from backend.models.task import Task, TaskStatus
 
+            # Serialize against result handlers before any queue/stop effect.
+            # Refresh identity-map values after waiting; never cancel a committed outcome.
             running_tasks = (
                 await db.scalars(
                     select(Task).where(
                         Task.batch_id == last_exec.batch_id,
+                        Task.org_id == schedule.org_id,
                         Task.status.in_([
                             TaskStatus.QUEUED,
                             TaskStatus.RUNNING,
                             TaskStatus.ASSIGNED,
                         ]),
-                    )
+                    ).order_by(Task.id).with_for_update().execution_options(populate_existing=True)
                 )
             ).all()
 
-            # Получить publisher и queue для отмены
-            publisher = None
-            queue = None
-            try:
-                from backend.database.redis_client import redis_binary
-                if redis_binary:
-                    from backend.services.task_queue import TaskQueue
-                    from backend.websocket.pubsub_router import get_pubsub_publisher
-                    publisher = get_pubsub_publisher()
-                    queue = TaskQueue(redis_binary)
-            except Exception as exc:
-                logger.warning("scheduler.cancel_deps_failed", error=str(exc))
+            from backend.services.task_service import TaskService
 
             for task in running_tasks:
-                try:
-                    if task.status == TaskStatus.RUNNING and publisher:
-                        # Отправить CANCEL_DAG агенту через WebSocket.
-                        # command_id = "sched_cancel_{task_id}" — уникальный, чтобы ack
-                        # от CANCEL_DAG не перезаписал статус задачи в handle_task_result.
-                        # FIX BUG-3: Проверяем возврат send_command_live.
-                        cancel_delivered = await publisher.send_command_live(
-                            str(task.device_id),
-                            {
-                                "command_id": f"sched_cancel_{task.id}",
-                                "type": "CANCEL_DAG",
-                                "signed_at": int(now.timestamp()),
-                                "ttl_seconds": 30,
-                                "payload": {"task_id": str(task.id)},
-                            },
-                        )
-                        if not cancel_delivered:
-                            logger.warning(
-                                "scheduler.cancel_dag_not_delivered",
-                                task_id=str(task.id),
-                                device_id=str(task.device_id),
-                                reason="Устройство offline или нет PubSub-подписчиков",
-                            )
-
-                    if task.status in (TaskStatus.QUEUED, TaskStatus.ASSIGNED) and queue:
-                        await queue.cancel_task(str(task.id), str(task.org_id), str(task.device_id))
-
-                    # Освободить running lock
-                    if queue:
-                        await queue.mark_completed(str(task.id), str(task.device_id))
-
-                    task.status = TaskStatus.CANCELLED
-                    task.finished_at = now
-                    task.error_message = "Отменено планировщиком (conflict_policy=cancel)"
-                    cancelled += 1
-
-                    logger.info(
-                        "scheduler.task_cancelled",
-                        task_id=str(task.id),
-                        device_id=str(task.device_id),
-                    )
-                except Exception as exc:
-                    logger.error(
-                        "scheduler.cancel_task_error",
-                        task_id=str(task.id),
-                        error=str(exc),
-                    )
+                await TaskService(db)._request_cancellation(task)
+                cancelled += 1
 
         if last_exec.pipeline_batch_id:
             from backend.models.pipeline import PipelineRun, PipelineRunStatus
@@ -620,18 +561,24 @@ class SchedulerEngine:
                 await db.scalars(
                     select(PipelineRun).where(
                         PipelineRun.context["batch_id"].astext == str(last_exec.pipeline_batch_id),
+                        PipelineRun.org_id == schedule.org_id,
                         PipelineRun.status.in_([
                             PipelineRunStatus.QUEUED,
                             PipelineRunStatus.RUNNING,
                             PipelineRunStatus.WAITING,
+                            PipelineRunStatus.PAUSED,
                         ]),
-                    )
+                    ).order_by(PipelineRun.id).with_for_update().execution_options(populate_existing=True)
                 )
             ).all()
 
             for run in running_runs:
-                run.status = PipelineRunStatus.CANCELLED
-                run.finished_at = now
+                now = datetime.now(timezone.utc)
+                run.cancel_requested_at = run.cancel_requested_at or now
+                # Do not acquire Task after PipelineRun. The cancellation
+                # reconciler uses Task -> PipelineRun ordering and stops children.
+                # A run with no current_task_id can still own an active nested
+                # pipeline. Only the reconciler can establish terminality.
                 cancelled += 1
 
         return cancelled
@@ -640,4 +587,10 @@ class SchedulerEngine:
     def _advance_fire_time(schedule: Schedule) -> None:
         """Пересчитать next_fire_at после срабатывания."""
         from backend.services.scheduler.schedule_service import ScheduleService
-        schedule.next_fire_at = ScheduleService._compute_next_fire(schedule)
+        next_fire = ScheduleService._compute_next_fire(schedule)
+        now = datetime.now(timezone.utc)
+        if schedule.interval_seconds and next_fire is not None and next_fire <= now:
+            period = timedelta(seconds=schedule.interval_seconds)
+            # Preserve cadence, skip missed slots, and retain last actual firing.
+            next_fire += ((now - next_fire) // period + 1) * period
+        schedule.next_fire_at = next_fire

@@ -1,0 +1,30 @@
+FF                                                                       [100%]
+================================== FAILURES ===================================
+____ test_late_health_response_cannot_overwrite_a_newer_observation[stale] ____
+tests\production\test_vpn_health_recovery.py:198: in test_late_health_response_cannot_overwrite_a_newer_observation
+    assert peer.last_handshake_at == fresh
+E   assert datetime.datetime(2026, 9, 6, 11, 32, 36, 557067, tzinfo=datetime.timezone.utc) == datetime.datetime(2026, 9, 6, 11, 37, 36, 619473, tzinfo=datetime.timezone.utc)
+E    +  where datetime.datetime(2026, 9, 6, 11, 32, 36, 557067, tzinfo=datetime.timezone.utc) = <backend.models.vpn_peer.VPNPeer object at 0x00000205F6C46F00>.last_handshake_at
+---------------------------- Captured stdout call -----------------------------
+{"device_id": "0d549817-efaf-4374-87ab-68d930804b18", "since_handshake_s": 300.168743, "event": "VPN stale handshake", "level": "warning", "logger": "backend.services.vpn.health_monitor", "timestamp": "2026-09-06T11:37:36.730928Z"}
+------------------------------ Captured log call ------------------------------
+WARNING  backend.services.vpn.health_monitor:health_monitor.py:113 {'device_id': '0d549817-efaf-4374-87ab-68d930804b18', 'since_handshake_s': 300.168743, 'event': 'VPN stale handshake', 'level': 'warning', 'logger': 'backend.services.vpn.health_monitor', 'timestamp': '2026-09-06T11:37:36.730928Z'}
+___ test_late_health_response_cannot_overwrite_a_newer_observation[missing] ___
+tests\production\test_vpn_health_recovery.py:199: in test_late_health_response_cannot_overwrite_a_newer_observation
+    assert peer.is_active is True
+E   assert False is True
+E    +  where False = <backend.models.vpn_peer.VPNPeer object at 0x00000205F769CC80>.is_active
+============================== warnings summary ===============================
+.venv-audit\Lib\site-packages\pydantic\fields.py:754: 484 warnings
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\pydantic\fields.py:754: PydanticDeprecatedSince20: Using extra keyword arguments on `Field` is deprecated and will be removed. Use `json_schema_extra` instead. (Extra keys: 'deprecated'). Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.6/migration/
+    warn(
+
+backend\api\v1\game_accounts\router.py:94
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\api\v1\game_accounts\router.py:94: DeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+    sort_dir: str = Query("desc", regex="^(asc|desc)$", description="Направление сортировки"),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/production/test_vpn_health_recovery.py::test_late_health_response_cannot_overwrite_a_newer_observation[stale]
+FAILED tests/production/test_vpn_health_recovery.py::test_late_health_response_cannot_overwrite_a_newer_observation[missing]
+2 failed, 20 deselected, 485 warnings in 1.10s

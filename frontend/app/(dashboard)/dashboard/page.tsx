@@ -10,6 +10,7 @@ import {
   Smartphone,
   Wifi,
   WifiOff,
+  LoaderCircle,
   Activity,
   ShieldCheck,
   ShieldAlert,
@@ -23,6 +24,7 @@ import {
 interface FleetStats {
   total: number;
   online: number;
+  connecting: number;
   offline: number;
   busy: number;
   vpn_active: number;
@@ -86,6 +88,18 @@ function DeviceDistribution({ stats }: { stats: FleetStats }) {
           </div>
           <Progress value={pctOnline} className="flex-1 mx-4 h-1 bg-border [&>div]:bg-success" />
           <span className="font-mono font-bold w-12 text-right">{stats.online}</span>
+        </div>
+
+        <div className="flex items-center justify-between text-xs">
+          <div className="flex items-center gap-2 w-24">
+            <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+            <span className="font-medium text-muted-foreground uppercase tracking-wider text-[10px]">Connecting</span>
+          </div>
+          <Progress
+            value={stats.total > 0 ? (stats.connecting / stats.total) * 100 : 0}
+            className="flex-1 mx-4 h-1 bg-border [&>div]:bg-amber-500"
+          />
+          <span className="font-mono font-bold w-12 text-right">{stats.connecting}</span>
         </div>
 
         <div className="flex items-center justify-between text-xs">
@@ -232,7 +246,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Top stat cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         <StatCard
           title="Total Devices"
           value={fleet?.total ?? '—'}
@@ -251,6 +265,12 @@ export default function DashboardPage() {
           color="text-green-500"
         />
         <StatCard
+          title="Connecting"
+          value={fleet?.connecting ?? '—'}
+          icon={LoaderCircle}
+          color="text-amber-500"
+        />
+        <StatCard
           title="Offline"
           value={fleet?.offline ?? '—'}
           icon={WifiOff}
@@ -266,7 +286,7 @@ export default function DashboardPage() {
 
       {/* Detail sections */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <DeviceDistribution stats={fleet ?? { total: 0, online: 0, offline: 0, busy: 0, vpn_active: 0 }} />
+        <DeviceDistribution stats={fleet ?? { total: 0, online: 0, connecting: 0, offline: 0, busy: 0, vpn_active: 0 }} />
         <VpnOverview />
         <SystemHealth />
       </div>

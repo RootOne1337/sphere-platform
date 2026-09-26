@@ -5,6 +5,7 @@ import { useQueryClient } from '@tanstack/react-query';
 export type FleetEventType =
   | 'device.online'
   | 'device.offline'
+  | 'device.status_change'
   | 'device.status_changed'
   | 'task.queued'
   | 'task.started'
@@ -19,12 +20,17 @@ export type FleetEventType =
   | 'alert.triggered';
 
 export interface FleetEvent {
-  type: FleetEventType;
+  event_type: FleetEventType;
   device_id?: string;
   task_id?: string;
   payload?: Record<string, unknown>;
-  timestamp: string;
+  ts: string;
 }
+
+type FleetEventMessage = Partial<FleetEvent> & {
+  type?: FleetEventType;
+  timestamp?: string;
+};
 
 type EventHandler = (event: FleetEvent) => void;
 
@@ -43,13 +49,21 @@ export function useFleetEvents(onEvent?: EventHandler) {
     (evt: MessageEvent) => {
       if (typeof evt.data !== 'string') return;
       try {
-        const event: FleetEvent = JSON.parse(evt.data);
+        const wireEvent = JSON.parse(evt.data) as FleetEventMessage;
+        const eventType = wireEvent.event_type ?? wireEvent.type;
+        if (!eventType) return;
+        const event: FleetEvent = {
+          ...wireEvent,
+          event_type: eventType,
+          ts: wireEvent.ts ?? wireEvent.timestamp ?? '',
+        };
         onEvent?.(event);
 
         // Auto-invalidate relevant queries on events
-        switch (event.type) {
+        switch (eventType) {
           case 'device.online':
           case 'device.offline':
+          case 'device.status_change':
           case 'device.status_changed':
             qc.invalidateQueries({ queryKey: ['devices'] });
             break;

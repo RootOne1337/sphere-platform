@@ -1,7 +1,7 @@
 'use client';
 import { useState, useCallback, useMemo } from 'react';
 import { DeviceStream } from '@/components/sphere/DeviceStream';
-import { useDevices, type Device } from '@/lib/hooks/useDevices';
+import { useDevices } from '@/lib/hooks/useDevices';
 import { useGroups } from '@/lib/hooks/useGroups';
 import { useLocations } from '@/lib/hooks/useLocations';
 
@@ -32,10 +32,11 @@ export default function FleetStreamPage() {
   const [sortField, setSortField] = useState<SortField>('name');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
 
-  // Загружаем все онлайн-устройства (до 5000)
-  const { data } = useDevices({ status: 'online', page_size: 5000 });
+  // Keep the same device cards through a temporary connection loss. An
+  // online-only API query removes the selected card and its Stop control.
+  const { data } = useDevices({ page_size: 5000 });
   const allDevices = data?.items ?? [];
-  const totalOnline = data?.total ?? 0;
+  const totalOnline = allDevices.filter(device => device.status === 'online').length;
 
   // Группы и локации для фильтров
   const { data: groups } = useGroups();
@@ -225,12 +226,22 @@ export default function FleetStreamPage() {
       >
         {pagedDevices.slice(0, gridSize).map((device) => {
           const isActive = activeStreams.has(device.id);
+          const isOnline = device.status === 'online';
           return (
             <div key={device.id} className="space-y-2">
               <div className="flex items-center justify-between gap-2">
                 <p className="text-xs text-muted-foreground truncate flex-1 font-mono" title={device.name}>
                   {device.name}
                 </p>
+                <span className={`text-xs font-mono ${isOnline ? 'text-green-500' : 'text-muted-foreground'}`}>
+                  {isOnline
+                    ? 'Online'
+                    : device.status === 'connecting'
+                      ? 'Connecting'
+                      : device.status === 'offline'
+                        ? 'Offline'
+                        : 'Статус неизвестен'}
+                </span>
                 {isActive ? (
                   <button
                     onClick={() => stopStream(device.id)}
@@ -241,18 +252,23 @@ export default function FleetStreamPage() {
                 ) : (
                   <button
                     onClick={() => startStream(device.id)}
-                    className="shrink-0 px-2 py-0.5 rounded text-xs bg-primary text-primary-foreground"
+                    disabled={!isOnline}
+                    className="shrink-0 px-2 py-0.5 rounded text-xs bg-primary text-primary-foreground disabled:opacity-40"
                   >
                     Start
                   </button>
                 )}
               </div>
-              {isActive ? (
+              {isActive && isOnline ? (
                 <DeviceStream deviceId={device.id} />
               ) : (
                 <div className="rounded border border-border bg-black flex items-center justify-center text-xs text-muted-foreground font-mono"
                   style={{ aspectRatio: '9/16' }}>
-                  Нажми Start для начала стрима
+                  {!isOnline
+                    ? isActive
+                      ? 'Связь потеряна. Стрим возобновится после подключения.'
+                      : 'Устройство не в сети.'
+                    : 'Нажми Start для начала стрима'}
                 </div>
               )}
             </div>

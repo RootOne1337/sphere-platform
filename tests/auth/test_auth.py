@@ -332,6 +332,57 @@ class TestAuthService:
 
 # ── Integration tests: HTTP endpoints с mocked services ─────────────────────
 
+class TestRefreshCookieSettings:
+    """Refresh-cookie attributes must match the effective request transport."""
+
+    @staticmethod
+    def _request(scheme: str):
+        from starlette.requests import Request
+
+        return Request(
+            {
+                "type": "http",
+                "http_version": "1.1",
+                "method": "POST",
+                "scheme": scheme,
+                "path": "/api/v1/auth/login",
+                "raw_path": b"/api/v1/auth/login",
+                "query_string": b"",
+                "headers": [],
+                "server": ("testserver", 443 if scheme == "https" else 80),
+                "client": ("testclient", 1234),
+            }
+        )
+
+    def test_http_cookie_is_usable_without_secure_attribute(self, monkeypatch):
+        from backend.api.v1.auth.router import _cookie_settings
+
+        monkeypatch.setattr(settings, "COOKIE_SECURE", False)
+        cookie = _cookie_settings(self._request("http"))
+
+        assert cookie["httponly"] is True
+        assert cookie["secure"] is False
+        assert cookie["samesite"] == "lax"
+
+    def test_https_cookie_is_secure_and_cross_site_compatible(self, monkeypatch):
+        from backend.api.v1.auth.router import _cookie_settings
+
+        monkeypatch.setattr(settings, "COOKIE_SECURE", False)
+        cookie = _cookie_settings(self._request("https"))
+
+        assert cookie["httponly"] is True
+        assert cookie["secure"] is True
+        assert cookie["samesite"] == "none"
+
+    def test_explicit_secure_policy_wins_on_http(self, monkeypatch):
+        from backend.api.v1.auth.router import _cookie_settings
+
+        monkeypatch.setattr(settings, "COOKIE_SECURE", True)
+        cookie = _cookie_settings(self._request("http"))
+
+        assert cookie["secure"] is True
+        assert cookie["samesite"] == "none"
+
 class TestLoginEndpoint:
     """Тесты HTTP /auth/login с моком AuthService."""
 
@@ -361,6 +412,10 @@ class TestLoginEndpoint:
         assert data["token_type"] == "bearer"
         # Refresh token выставлен как HTTPOnly cookie (не в теле ответа)
         assert "refresh_token" in resp.cookies
+        cookie_header = resp.headers["set-cookie"].lower()
+        assert "httponly" in cookie_header
+        assert "samesite=lax" in cookie_header
+        assert "; secure" not in cookie_header
 
         app.dependency_overrides.pop(get_auth_service, None)
 
@@ -454,6 +509,37 @@ class TestRefreshEndpoint:
 
         resp = await mock_auth_client.post("/api/v1/auth/refresh")
         assert resp.status_code == 401
+
+    @pytest.mark.asyncio
+    async def test_refresh_rotates_http_cookie_and_keeps_it_usable(
+        self, mock_auth_client: AsyncClient
+    ):
+        from backend.core.dependencies import get_auth_service
+
+        mock_svc = AsyncMock()
+        mock_svc.refresh = AsyncMock(return_value={
+            "access_token": "new-access.jwt.token",
+            "token_type": "bearer",
+            "expires_in": 1800,
+            "refresh_token": "new-opaque-refresh-token",
+        })
+        app.dependency_overrides[get_auth_service] = lambda: mock_svc
+        mock_auth_client.cookies.set(
+            "refresh_token",
+            "old-opaque-refresh-token",
+            domain="testserver.local",
+            path="/",
+        )
+
+        resp = await mock_auth_client.post("/api/v1/auth/refresh")
+
+        assert resp.status_code == 200, resp.text
+        mock_svc.refresh.assert_awaited_once_with("old-opaque-refresh-token")
+        cookie_header = resp.headers["set-cookie"].lower()
+        assert "httponly" in cookie_header
+        assert "samesite=lax" in cookie_header
+        assert "; secure" not in cookie_header
+        assert mock_auth_client.cookies.get("refresh_token") == "new-opaque-refresh-token"
 
 
 class TestMeEndpoint:

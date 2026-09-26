@@ -1,0 +1,69 @@
+{
+  "finding": "AUD-126",
+  "severity": "High",
+  "baseline_source": "687877a",
+  "deployed_baseline_source": "8a6b30e",
+  "isolated_services": true,
+  "tests": {
+    "before": {
+      "tests": "3",
+      "failures": "3",
+      "errors": "0",
+      "skipped": "0",
+      "time": "9.854",
+      "report_sha256": "2721d6ae1b0e1126482c357f508d1fddb5f93fe48f948281770ba4434fb6203a"
+    },
+    "after": {
+      "tests": "112",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "65.832",
+      "report_sha256": "9ff244e5e1b87aa3e42fe22b8f7a77651b93c631d2c8467e23d4816846580701"
+    }
+  },
+  "native_before": {
+    "started_at": "2026-09-20T09:35:09.316910+00:00",
+    "finished_at": "2026-09-20T09:36:08.069447+00:00",
+    "passed": false,
+    "errors": [],
+    "new_frames_by_stage": [
+      {
+        "0": 0,
+        "1": 0,
+        "2": 11
+      },
+      {
+        "0": 0,
+        "1": 0
+      },
+      {
+        "1": 0
+      },
+      {
+        "0": 0,
+        "1": 0,
+        "2": 7
+      },
+      {
+        "0": 0,
+        "1": 0
+      },
+      {
+        "1": 0
+      }
+    ],
+    "all_apk_pids_unchanged": true,
+    "all_crash_buffers_unchanged": true,
+    "all_echo_verified": true,
+    "backend_log_sha256": "fe13b3f9a0b7c1209462a46b5f4e4b8758057c83512a2d774f04edd60ccb55f4"
+  },
+  "typecheck": {
+    "local": "two existing union-attr errors in unchanged redis_client.py:50-51",
+    "source_ci": "pending"
+  },
+  "limitations": [
+    "No deployment claim in this regression record.",
+    "No full eight-hour or fleet-capacity pass."
+  ]
+}

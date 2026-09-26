@@ -1,0 +1,621 @@
+{
+  "date": "2026-09-12",
+  "apk": {
+    "source_commit": "0f1410e31ec079107c5fb00567cb47c7efc2262e",
+    "built_at_utc": "2026-09-12T17:07:30.497930+00:00",
+    "file": "SphereAgent-signed-discovery-0f1410e-dev-debug.apk",
+    "sha256": "3fea6b1be345bec99a71e1926a386dd070c361887d875d5b46a7c18d83d0d36b",
+    "bytes": 8418510,
+    "package": "com.sphereplatform.agent.pilot.debug",
+    "config_url": "https://raw.githubusercontent.com/RootOne1337/sphere-agent-config/codex/pilot-bootstrap-20260911/pilots/sphere-pilot-20260911/discovery.json",
+    "config_mirror_url": "https://mart-consecutive-kate-ships.trycloudflare.com/bootstrap/agent.signed.json",
+    "discovery_key_id": "pilot-20260911-v1",
+    "installation_id": "ce58a96d-fd02-4f7c-ac86-111c4f7fa37e",
+    "baked_management_urls": [],
+    "signing": "Android Debug; v2 signature verified; same certificate as previous pilot",
+    "version_name": "1.2.0-dev",
+    "version_code": 10200,
+    "min_sdk": 26,
+    "target_sdk": 35,
+    "default_dev_suite": {
+      "tests": 522,
+      "suites": 37,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "signed_build_tests": {
+      "dev": {
+        "signed_discovery_tests": 19,
+        "failures": 0,
+        "skipped": 0
+      },
+      "enterprise": {
+        "signed_discovery_tests": 19,
+        "failures": 0,
+        "skipped": 0
+      }
+    },
+    "installed_on_device": true,
+    "independent_fallback_verified": false,
+    "warning": "Signed bootstrap pilot; one temporary ingress. No fleet or independent provider acceptance.",
+    "installed_sha256": "3fea6b1be345bec99a71e1926a386dd070c361887d875d5b46a7c18d83d0d36b",
+    "native_cached_version": 7,
+    "native_signed_cache_verified": true
+  },
+  "installed": {
+    "commit": "0f1410e31ec079107c5fb00567cb47c7efc2262e",
+    "installed_sha256": "3fea6b1be345bec99a71e1926a386dd070c361887d875d5b46a7c18d83d0d36b",
+    "same_device_id": "85f2f935-7739-400e-9389-0d71227e8f0a",
+    "cached_version": 7,
+    "cached_signature_valid": true,
+    "baked_management_urls": [],
+    "real_shell": {
+      "http_status": 200,
+      "expected_output": true
+    },
+    "pid": "23410",
+    "enrollment_events_current_process": 0
+  },
+  "before_http_revalidation": {
+    "started_at_utc": "2026-09-12T16:24:12.999996+00:00",
+    "commit": "b8e8fe2edbda2761073cf5d190c7b0d69acef20d",
+    "device_id": "85f2f935-7739-400e-9389-0d71227e8f0a",
+    "independent_provider_tested": false,
+    "events": [
+      {
+        "event": "temporary_endpoint_ready",
+        "utc": "2026-09-12T16:24:23.860536+00:00",
+        "server_url": "https://watts-naples-roland-location.trycloudflare.com"
+      },
+      {
+        "event": "original_connector_paused",
+        "utc": "2026-09-12T16:24:24.141395+00:00",
+        "cached_version": 1
+      },
+      {
+        "event": "published",
+        "utc": "2026-09-12T16:24:27.029266+00:00",
+        "config_version": 2,
+        "server_url": "https://watts-naples-roland-location.trycloudflare.com",
+        "fallback_url": "https://mart-consecutive-kate-ships.trycloudflare.com"
+      },
+      {
+        "event": "waiting_for_native_cache",
+        "utc": "2026-09-12T16:24:53.781984+00:00",
+        "target_version": 2,
+        "observed_version": 1
+      },
+      {
+        "event": "waiting_for_native_cache",
+        "utc": "2026-09-12T16:25:18.405821+00:00",
+        "target_version": 2,
+        "observed_version": 1
+      },
+      {
+        "event": "waiting_for_native_cache",
+        "utc": "2026-09-12T16:25:43.041949+00:00",
+        "target_version": 2,
+        "observed_version": 1
+      },
+      {
+        "event": "waiting_for_native_cache",
+        "utc": "2026-09-12T16:26:07.543364+00:00",
+        "target_version": 2,
+        "observed_version": 1
+      },
+      {
+        "event": "waiting_for_native_cache",
+        "utc": "2026-09-12T16:26:34.045094+00:00",
+        "target_version": 2,
+        "observed_version": 1
+      },
+      {
+        "event": "native_cache_verified",
+        "utc": "2026-09-12T16:26:46.271096+00:00",
+        "config_version": 2,
+        "seconds": 139.23
+      },
+      {
+        "event": "migrated_during_old_endpoint_outage",
+        "utc": "2026-09-12T16:26:49.439813+00:00",
+        "outage_to_command_seconds": 145.53,
+        "same_pid": true,
+        "new_registrations": 0,
+        "shell": {
+          "http_status": 200,
+          "expected_output": true
+        },
+        "config_mirror_inside_paused_tunnel": true
+      },
+      {
+        "event": "original_connector_restored",
+        "utc": "2026-09-12T16:26:49.720125+00:00"
+      },
+      {
+        "event": "published",
+        "utc": "2026-09-12T16:26:52.688407+00:00",
+        "config_version": 3,
+        "server_url": "https://mart-consecutive-kate-ships.trycloudflare.com",
+        "fallback_url": null
+      },
+      {
+        "event": "waiting_for_native_cache",
+        "utc": "2026-09-12T16:27:19.558340+00:00",
+        "target_version": 3,
+        "observed_version": 2
+      },
+      {
+        "event": "waiting_for_native_cache",
+        "utc": "2026-09-12T16:27:44.274635+00:00",
+        "target_version": 3,
+        "observed_version": 2
+      },
+      {
+        "event": "native_cache_verified",
+        "utc": "2026-09-12T16:27:46.317950+00:00",
+        "config_version": 3,
+        "seconds": 53.62
+      },
+      {
+        "event": "returned_to_original_route",
+        "utc": "2026-09-12T16:28:28.247032+00:00",
+        "config_version": 3,
+        "same_pid": true,
+        "new_registrations": 0,
+        "retired_fallback_removed": true,
+        "shell": {
+          "http_status": 200,
+          "expected_output": true
+        }
+      },
+      {
+        "event": "temporary_connector_removed",
+        "utc": "2026-09-12T16:28:28.912036+00:00"
+      }
+    ],
+    "migration_passed": true,
+    "return_passed": true,
+    "finished_at_utc": "2026-09-12T16:28:28.913094+00:00"
+  },
+  "after_http_revalidation": {
+    "started_at_utc": "2026-09-12T16:47:42.345515+00:00",
+    "commit": "f61cd5addf9f49593d46e4693ed2527e5c9ac99d",
+    "device_id": "85f2f935-7739-400e-9389-0d71227e8f0a",
+    "independent_provider_tested": false,
+    "events": [
+      {
+        "event": "temporary_endpoint_ready",
+        "utc": "2026-09-12T16:47:53.108631+00:00",
+        "server_url": "https://science-tanks-hypothetical-endorsement.trycloudflare.com"
+      },
+      {
+        "event": "original_connector_paused",
+        "utc": "2026-09-12T16:47:53.378596+00:00",
+        "cached_version": 3
+      },
+      {
+        "event": "published",
+        "utc": "2026-09-12T16:47:56.147077+00:00",
+        "config_version": 4,
+        "server_url": "https://science-tanks-hypothetical-endorsement.trycloudflare.com",
+        "fallback_url": "https://mart-consecutive-kate-ships.trycloudflare.com"
+      },
+      {
+        "event": "waiting_for_native_cache",
+        "utc": "2026-09-12T16:48:22.675118+00:00",
+        "target_version": 4,
+        "observed_version": 3
+      },
+      {
+        "event": "waiting_for_native_cache",
+        "utc": "2026-09-12T16:48:47.396923+00:00",
+        "target_version": 4,
+        "observed_version": 3
+      },
+      {
+        "event": "waiting_for_native_cache",
+        "utc": "2026-09-12T16:49:12.004054+00:00",
+        "target_version": 4,
+        "observed_version": 3
+      },
+      {
+        "event": "waiting_for_native_cache",
+        "utc": "2026-09-12T16:49:36.604622+00:00",
+        "target_version": 4,
+        "observed_version": 3
+      },
+      {
+        "event": "waiting_for_native_cache",
+        "utc": "2026-09-12T16:50:03.120685+00:00",
+        "target_version": 4,
+        "observed_version": 3
+      },
+      {
+        "event": "waiting_for_native_cache",
+        "utc": "2026-09-12T16:50:27.792538+00:00",
+        "target_version": 4,
+        "observed_version": 3
+      },
+      {
+        "event": "waiting_for_native_cache",
+        "utc": "2026-09-12T16:50:52.265220+00:00",
+        "target_version": 4,
+        "observed_version": 3
+      },
+      {
+        "event": "waiting_for_native_cache",
+        "utc": "2026-09-12T16:51:16.857449+00:00",
+        "target_version": 4,
+        "observed_version": 3
+      },
+      {
+        "event": "waiting_for_native_cache",
+        "utc": "2026-09-12T16:51:41.351342+00:00",
+        "target_version": 4,
+        "observed_version": 3
+      },
+      {
+        "event": "waiting_for_native_cache",
+        "utc": "2026-09-12T16:52:07.911477+00:00",
+        "target_version": 4,
+        "observed_version": 3
+      },
+      {
+        "event": "native_cache_verified",
+        "utc": "2026-09-12T16:52:22.344935+00:00",
+        "config_version": 4,
+        "seconds": 266.2
+      },
+      {
+        "event": "migrated_during_old_endpoint_outage",
+        "utc": "2026-09-12T16:52:24.755991+00:00",
+        "outage_to_command_seconds": 271.61,
+        "same_pid": true,
+        "new_registrations": 0,
+        "shell": {
+          "http_status": 200,
+          "expected_output": true
+        },
+        "config_mirror_inside_paused_tunnel": true
+      },
+      {
+        "event": "original_connector_restored",
+        "utc": "2026-09-12T16:52:24.998715+00:00"
+      },
+      {
+        "event": "published",
+        "utc": "2026-09-12T16:52:27.448346+00:00",
+        "config_version": 5,
+        "server_url": "https://mart-consecutive-kate-ships.trycloudflare.com",
+        "fallback_url": null
+      },
+      {
+        "event": "waiting_for_native_cache",
+        "utc": "2026-09-12T16:52:54.013488+00:00",
+        "target_version": 5,
+        "observed_version": 4
+      },
+      {
+        "event": "waiting_for_native_cache",
+        "utc": "2026-09-12T16:53:18.622520+00:00",
+        "target_version": 5,
+        "observed_version": 4
+      },
+      {
+        "event": "native_cache_verified",
+        "utc": "2026-09-12T16:53:22.998075+00:00",
+        "config_version": 5,
+        "seconds": 55.56
+      },
+      {
+        "event": "returned_to_original_route",
+        "utc": "2026-09-12T16:54:02.089661+00:00",
+        "config_version": 5,
+        "same_pid": true,
+        "new_registrations": 0,
+        "retired_fallback_removed": true,
+        "shell": {
+          "http_status": 200,
+          "expected_output": true
+        }
+      },
+      {
+        "event": "temporary_connector_removed",
+        "utc": "2026-09-12T16:54:02.581328+00:00"
+      }
+    ],
+    "migration_passed": true,
+    "return_passed": true,
+    "finished_at_utc": "2026-09-12T16:54:02.584203+00:00"
+  },
+  "after_cdn_bucket": {
+    "started_at_utc": "2026-09-12T16:58:33.451957+00:00",
+    "commit": "9af3ee2cbc6a29a8e08410e83af884ff05b36d9a",
+    "device_id": "85f2f935-7739-400e-9389-0d71227e8f0a",
+    "independent_provider_tested": false,
+    "events": [
+      {
+        "event": "temporary_endpoint_ready",
+        "utc": "2026-09-12T16:58:44.199987+00:00",
+        "server_url": "https://binding-collar-lenses-cars.trycloudflare.com"
+      },
+      {
+        "event": "original_connector_paused",
+        "utc": "2026-09-12T16:58:44.475581+00:00",
+        "cached_version": 5
+      },
+      {
+        "event": "published",
+        "utc": "2026-09-12T16:58:47.028162+00:00",
+        "config_version": 6,
+        "server_url": "https://binding-collar-lenses-cars.trycloudflare.com",
+        "fallback_url": "https://mart-consecutive-kate-ships.trycloudflare.com"
+      },
+      {
+        "event": "waiting_for_native_cache",
+        "utc": "2026-09-12T16:59:13.807492+00:00",
+        "target_version": 6,
+        "observed_version": 5
+      },
+      {
+        "event": "waiting_for_native_cache",
+        "utc": "2026-09-12T16:59:38.408634+00:00",
+        "target_version": 6,
+        "observed_version": 5
+      },
+      {
+        "event": "waiting_for_native_cache",
+        "utc": "2026-09-12T17:00:03.085093+00:00",
+        "target_version": 6,
+        "observed_version": 5
+      },
+      {
+        "event": "waiting_for_native_cache",
+        "utc": "2026-09-12T17:00:27.559662+00:00",
+        "target_version": 6,
+        "observed_version": 5
+      },
+      {
+        "event": "waiting_for_native_cache",
+        "utc": "2026-09-12T17:00:52.149404+00:00",
+        "target_version": 6,
+        "observed_version": 5
+      },
+      {
+        "event": "waiting_for_native_cache",
+        "utc": "2026-09-12T17:01:18.705735+00:00",
+        "target_version": 6,
+        "observed_version": 5
+      },
+      {
+        "event": "waiting_for_native_cache",
+        "utc": "2026-09-12T17:01:43.166573+00:00",
+        "target_version": 6,
+        "observed_version": 5
+      },
+      {
+        "event": "waiting_for_native_cache",
+        "utc": "2026-09-12T17:02:07.627249+00:00",
+        "target_version": 6,
+        "observed_version": 5
+      },
+      {
+        "event": "waiting_for_native_cache",
+        "utc": "2026-09-12T17:02:32.578490+00:00",
+        "target_version": 6,
+        "observed_version": 5
+      },
+      {
+        "event": "waiting_for_native_cache",
+        "utc": "2026-09-12T17:02:57.158586+00:00",
+        "target_version": 6,
+        "observed_version": 5
+      },
+      {
+        "event": "waiting_for_native_cache",
+        "utc": "2026-09-12T17:03:24.059050+00:00",
+        "target_version": 6,
+        "observed_version": 5
+      },
+      {
+        "event": "native_cache_verified",
+        "utc": "2026-09-12T17:03:26.234673+00:00",
+        "config_version": 6,
+        "seconds": 279.2
+      },
+      {
+        "event": "migrated_during_old_endpoint_outage",
+        "utc": "2026-09-12T17:03:28.490362+00:00",
+        "outage_to_command_seconds": 284.23,
+        "same_pid": true,
+        "new_registrations": 0,
+        "shell": {
+          "http_status": 200,
+          "expected_output": true
+        },
+        "config_mirror_inside_paused_tunnel": true
+      },
+      {
+        "event": "original_connector_restored",
+        "utc": "2026-09-12T17:03:28.745123+00:00"
+      },
+      {
+        "event": "published",
+        "utc": "2026-09-12T17:03:31.112807+00:00",
+        "config_version": 7,
+        "server_url": "https://mart-consecutive-kate-ships.trycloudflare.com",
+        "fallback_url": null
+      },
+      {
+        "event": "waiting_for_native_cache",
+        "utc": "2026-09-12T17:03:57.630658+00:00",
+        "target_version": 7,
+        "observed_version": 6
+      },
+      {
+        "event": "waiting_for_native_cache",
+        "utc": "2026-09-12T17:04:22.201323+00:00",
+        "target_version": 7,
+        "observed_version": 6
+      },
+      {
+        "event": "native_cache_verified",
+        "utc": "2026-09-12T17:04:26.274640+00:00",
+        "config_version": 7,
+        "seconds": 55.16
+      },
+      {
+        "event": "returned_to_original_route",
+        "utc": "2026-09-12T17:05:02.853008+00:00",
+        "config_version": 7,
+        "same_pid": true,
+        "new_registrations": 0,
+        "retired_fallback_removed": true,
+        "shell": {
+          "http_status": 200,
+          "expected_output": true
+        }
+      },
+      {
+        "event": "temporary_connector_removed",
+        "utc": "2026-09-12T17:05:03.330787+00:00"
+      }
+    ],
+    "migration_passed": true,
+    "return_passed": true,
+    "finished_at_utc": "2026-09-12T17:05:03.332420+00:00"
+  },
+  "cdn_bucket_in_final_apk": false,
+  "android_source_equivalent_to": "f61cd5a",
+  "freshness_probe": [
+    {
+      "transport": "host",
+      "suffix": "",
+      "status": 200,
+      "version": 6,
+      "headers": {
+        "cache-control": "max-age=300",
+        "etag": "W/\"bb1a55bd584fb0cc82491a2b8d7c3b14fcc9a6eacb34413f1e938cad60bd5718\"",
+        "date": "Sat, 12 Sep 2026 17:01:43 GMT",
+        "x-cache": "MISS",
+        "x-cache-hits": "0"
+      }
+    },
+    {
+      "transport": "android",
+      "suffix": "",
+      "status": 200,
+      "version": 6,
+      "headers": {
+        "cache-control": "max-age=300",
+        "etag": "\"83ff7fcdba4c47b5a417f099d10ad7053a6880d29ec3c79e680c5539babb6d83\"",
+        "date": "Sat, 12 Sep 2026 17:01:44 GMT",
+        "x-cache": "MISS",
+        "x-cache-hits": "0"
+      }
+    },
+    {
+      "transport": "host",
+      "suffix": "?sphere_bootstrap_epoch=29820541",
+      "status": 200,
+      "version": 6,
+      "headers": {
+        "cache-control": "max-age=300",
+        "etag": "W/\"bb1a55bd584fb0cc82491a2b8d7c3b14fcc9a6eacb34413f1e938cad60bd5718\"",
+        "date": "Sat, 12 Sep 2026 17:01:44 GMT",
+        "x-cache": "HIT",
+        "x-cache-hits": "1"
+      }
+    },
+    {
+      "transport": "android",
+      "suffix": "?sphere_bootstrap_epoch=29820541",
+      "status": 200,
+      "version": 6,
+      "headers": {
+        "cache-control": "max-age=300",
+        "etag": "\"83ff7fcdba4c47b5a417f099d10ad7053a6880d29ec3c79e680c5539babb6d83\"",
+        "date": "Sat, 12 Sep 2026 17:01:45 GMT",
+        "x-cache": "MISS",
+        "x-cache-hits": "0"
+      }
+    },
+    {
+      "transport": "host",
+      "suffix": "?sphere_bootstrap_epoch=29820542",
+      "status": 200,
+      "version": 6,
+      "headers": {
+        "cache-control": "max-age=300",
+        "etag": "W/\"bb1a55bd584fb0cc82491a2b8d7c3b14fcc9a6eacb34413f1e938cad60bd5718\"",
+        "date": "Sat, 12 Sep 2026 17:01:45 GMT",
+        "x-cache": "MISS",
+        "x-cache-hits": "0"
+      }
+    },
+    {
+      "transport": "android",
+      "suffix": "?sphere_bootstrap_epoch=29820542",
+      "status": 200,
+      "version": 6,
+      "headers": {
+        "cache-control": "max-age=300",
+        "etag": "\"83ff7fcdba4c47b5a417f099d10ad7053a6880d29ec3c79e680c5539babb6d83\"",
+        "date": "Sat, 12 Sep 2026 17:01:46 GMT",
+        "x-cache": "HIT",
+        "x-cache-hits": "1"
+      }
+    }
+  ],
+  "python_signer_tests": 21,
+  "deployment_tests": 101,
+  "pilot_services_healthy": 9,
+  "old_resource_check": {
+    "ids_images_states_mounts_preserved": true,
+    "exact_baseline_matches": 27,
+    "observed_restarts": [
+      {
+        "name": "/sphere-tunnel",
+        "before": "2026-09-11T15:04:53.800963077Z",
+        "after": "2026-09-12T16:42:38.584654966Z",
+        "restart_count": 80,
+        "cause": "not established"
+      }
+    ],
+    "missing_unrelated_containers": [
+      {
+        "id": "a2fdbf6b8f471082a02a80ed8a59330e79330b843c63016bc41ebd0d51cb44fe",
+        "name": "/reverent_colden",
+        "project": null
+      }
+    ]
+  },
+  "limits": [
+    "one Android 9 emulator",
+    "same-provider temporary migration route removed after test",
+    "no independent ingress or backend HA",
+    "no automatic publisher or renewal yet",
+    "signed APK uses debug signing and is not a fleet release"
+  ],
+  "final_apk_process_recovery": {
+    "time_utc": "2026-09-12T17:10:38.518655+00:00",
+    "apk": "0f1410e31ec079107c5fb00567cb47c7efc2262e",
+    "automatic_process_recovery": true,
+    "fault": "kill -9 owned package PID through run-as",
+    "old_pid": "23410",
+    "new_pid": "24211",
+    "new_ws_session": true,
+    "device_id": "85f2f935-7739-400e-9389-0d71227e8f0a",
+    "signed_cache_version": 7,
+    "same_signed_cache": true,
+    "new_registrations": 0,
+    "manual_start_or_reconnect": false,
+    "seconds_to_echo": 7.2,
+    "shell": {
+      "http_status": 200,
+      "expected_output": true
+    },
+    "host_or_android_reboot_tested": false
+  }
+}

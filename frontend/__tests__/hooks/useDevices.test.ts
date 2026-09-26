@@ -40,6 +40,8 @@ const MOCK_DEVICES_RESPONSE = {
       group_name: null,
       location_ids: [],
       status: 'online' as const,
+      agent_version: '1.2.20-dev',
+      agent_version_code: 10220,
       battery_level: 85,
       cpu_usage: 12.5,
       ram_usage_mb: 512,
@@ -71,6 +73,8 @@ describe('useDevices', () => {
     });
     expect(result.current.data?.items).toHaveLength(1);
     expect(result.current.data?.items[0].name).toBe('Pixel 7');
+    expect(result.current.data?.items[0].agent_version).toBe('1.2.20-dev');
+    expect(result.current.data?.items[0].agent_version_code).toBe(10220);
   });
 
   it('возвращает ошибку при неудачном запросе', async () => {

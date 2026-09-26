@@ -67,6 +67,114 @@ class TestDeviceStatusCache:
         assert result.adb_connected is False
         assert result.ws_session_id is None
 
+    async def test_stale_session_disconnect_does_not_overwrite_newer_session(self, cache):
+        """A worker closing its old socket must not mark a new worker's socket offline."""
+        await cache.set_status(
+            "dev-reconnected",
+            DeviceLiveStatus(
+                device_id="dev-reconnected",
+                status="online",
+                ws_session_id="new-session",
+            ),
+        )
+
+        changed = await cache.mark_offline("dev-reconnected", session_id="old-session")
+
+        current = await cache.get_status("dev-reconnected")
+        assert changed is False
+        assert current is not None
+        assert current.status == "online"
+        assert current.ws_session_id == "new-session"
+
+    async def test_concurrent_reconnect_wins_disconnect_watch_race(self, cache, monkeypatch):
+        """A reconnect committed after WATCH must invalidate the stale offline write."""
+        from fakeredis import FakeServer
+
+        # Both clients must share one Redis server, like two backend workers.
+        server = FakeServer()
+        cache = DeviceStatusCache(FakeRedis(server=server))
+        replacement_cache = DeviceStatusCache(FakeRedis(server=server))
+        await cache.set_status(
+            "dev-watch-race",
+            DeviceLiveStatus(
+                device_id="dev-watch-race",
+                status="online",
+                ws_session_id="old-session",
+            ),
+        )
+
+        original_pipeline = cache.redis.pipeline
+        reconnect_committed = False
+
+        class ReconnectBeforeExecute:
+            def __init__(self, pipeline):
+                self.pipeline = pipeline
+
+            async def __aenter__(self):
+                await self.pipeline.__aenter__()
+                return self
+
+            async def __aexit__(self, *args):
+                return await self.pipeline.__aexit__(*args)
+
+            def __getattr__(self, name):
+                attribute = getattr(self.pipeline, name)
+                if name != "execute":
+                    return attribute
+
+                async def execute():
+                    nonlocal reconnect_committed
+                    if not reconnect_committed:
+                        reconnect_committed = True
+                        await replacement_cache.set_status(
+                            "dev-watch-race",
+                            DeviceLiveStatus(
+                                device_id="dev-watch-race",
+                                status="connecting",
+                                ws_session_id="new-session",
+                            ),
+                        )
+                    return await attribute()
+
+                return execute
+
+        monkeypatch.setattr(
+            cache.redis,
+            "pipeline",
+            lambda *args, **kwargs: ReconnectBeforeExecute(
+                original_pipeline(*args, **kwargs)
+            ),
+        )
+
+        changed = await cache.mark_offline("dev-watch-race", session_id="old-session")
+
+        current = await cache.get_status("dev-watch-race")
+        assert reconnect_committed is True
+        assert changed is False
+        assert current is not None
+        assert current.status == "connecting"
+        assert current.ws_session_id == "new-session"
+
+    async def test_current_session_disconnect_marks_only_its_session_offline(self, cache):
+        await cache.set_status(
+            "dev-current-session",
+            DeviceLiveStatus(
+                device_id="dev-current-session",
+                status="online",
+                adb_connected=True,
+                ws_session_id="current-session",
+            ),
+        )
+
+        changed = await cache.mark_offline("dev-current-session", session_id="current-session")
+
+        current = await cache.get_status("dev-current-session")
+        assert changed is True
+        assert current is not None
+        assert current.status == "offline"
+        assert current.adb_connected is False
+        assert current.ws_session_id is None
+
     async def test_mark_offline_creates_entry_if_missing(self, cache):
         await cache.mark_offline("brand-new-device")
         result = await cache.get_status("brand-new-device")
@@ -77,12 +185,14 @@ class TestDeviceStatusCache:
         await cache.set_status("d1", DeviceLiveStatus(device_id="d1", status="online"))
         await cache.set_status("d2", DeviceLiveStatus(device_id="d2", status="online"))
         await cache.set_status("d3", DeviceLiveStatus(device_id="d3", status="busy"))
-        # d4 has no Redis entry → offline
+        await cache.set_status("d4", DeviceLiveStatus(device_id="d4", status="connecting"))
+        # d5 has no Redis entry → offline
 
-        summary = await cache.get_fleet_summary(["d1", "d2", "d3", "d4"])
-        assert summary["total"] == 4
+        summary = await cache.get_fleet_summary(["d1", "d2", "d3", "d4", "d5"])
+        assert summary["total"] == 5
         assert summary["online"] == 2
         assert summary["busy"] == 1
+        assert summary["connecting"] == 1
         assert summary["offline"] == 1
 
     async def test_msgpack_round_trip_with_none_fields(self, cache):
@@ -104,6 +214,17 @@ class TestDeviceStatusCache:
         assert DeviceStatusCache.TTL_ONLINE == 120
         assert DeviceStatusCache.TTL_OFFLINE == 3600
 
+    async def test_connecting_presence_has_a_short_recovery_ttl(self, cache):
+        persisted = await cache.set_status(
+            "connecting-device",
+            DeviceLiveStatus(device_id="connecting-device", status="connecting"),
+        )
+
+        ttl = await cache.redis.ttl(cache._key("connecting-device"))
+        assert persisted is True
+        assert DeviceStatusCache.TTL_CONNECTING == 90
+        assert 0 < ttl <= DeviceStatusCache.TTL_CONNECTING
+
 
 class TestFleetEndpoints:
     """Integration tests for fleet status endpoints."""
@@ -117,6 +238,7 @@ class TestFleetEndpoints:
         assert "total" in data
         assert "online" in data
         assert "busy" in data
+        assert "connecting" in data
         assert "offline" in data
         assert data["total"] == len(status_devices)
         assert data["offline"] == len(status_devices)  # no Redis entries → all offline

@@ -1,37 +1,26 @@
-﻿<!-- .github/pull_request_template.md -->
-## Description
-<!-- Brief description of changes -->
+## Что сделано
 
-## Type of change
-- [ ] feat: new feature
-- [ ] fix: bug fix
-- [ ] security: security fix
-- [ ] refactor: refactoring
-- [ ] docs: documentation
-- [ ] perf: performance improvement
-- [ ] chore: build / infra / tooling
+<!-- Конкретное итоговое изменение для человека, который не читал обсуждение. -->
 
-## Linked to
-<!-- SPHERE-XXX or link to issue -->
+## Зачем сделано
 
-## Checklist
-- [ ] Tests written and passing
-- [ ] `ruff check` passes without errors
-- [ ] `mypy` passes without errors
-- [ ] No secrets in code (detect-secrets clean)
-- [ ] Migrations are reversible (downgrade works)
-- [ ] API is backward-compatible (or BREAKING CHANGE noted below)
+<!-- Проблема/сценарий, влияние, issue или AUD/F32. Для бага — ожидаемое и фактическое поведение до fix. -->
 
-## Security Checklist
-- [ ] No SQL injection (ORM / parameterized queries only)
-- [ ] No XSS (templates sanitize output)
-- [ ] No IDOR (org_id/user_id verified on every request)
-- [ ] RBAC checks on all endpoints
-- [ ] Rate limiting on public endpoints
+## Как протестировано
 
-## Breaking Changes
-<!-- List any breaking API changes or migration steps. Write "None" if N/A -->
-None
+<!-- Команды, среда/версии, результат до и после, сохранённый regression/evidence.
+Для runtime: что реально установлено и проверено. Mock/CI/native разделяйте.
+Не выполненные проверки называйте явно; для docs — ссылки, формы и отображение. -->
 
-## Deployment Notes
-<!-- DB migrations, env vars, infra changes required for this PR -->
+## Развёртывание и ограничения
+
+<!-- Миграции/grants, порядок backend/APK/frontend, rollback и совместимость.
+Остаточный риск/непроверенные режимы. Если runtime не меняется, укажите это. -->
+
+## Документация
+
+<!-- Обновлённый контракт/runbook/readiness/changelog либо причина, почему обновление не требуется. -->
+
+- [ ] В diff только файлы этой задачи; секреты, APK и raw logs исключены.
+- [ ] Описание и результаты соответствуют финальному коду, незавершённые проверки отмечены.
+- [ ] Для бага сохранён regression или явно объяснён способ повторной проверки.

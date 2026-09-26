@@ -17,6 +17,16 @@ import uuid
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+
+async def _publish_version(db: AsyncSession, script) -> None:
+    from backend.models.script import ScriptVersion
+    version = ScriptVersion(org_id=script.org_id, script_id=script.id,
+                            dag={"entry_node": "end", "nodes": [{"id": "end", "action": {"type": "end"}}]})
+    db.add(version)
+    await db.flush()
+    script.current_version_id = version.id
+    await db.flush()
+
 _WEBHOOK_BODY = {
     "name": "My CI Hook",
     "url": "https://n8n.example.com/webhook/abc123",
@@ -230,6 +240,7 @@ class TestN8nTaskCreate:
         db_session.add(device)
         db_session.add(script)
         await db_session.flush()
+        await _publish_version(db_session, script)
 
         resp = await n8n_client.post(
             "/api/v1/n8n/tasks",
@@ -259,6 +270,7 @@ class TestN8nTaskCreate:
         db_session.add(device)
         db_session.add(script)
         await db_session.flush()
+        await _publish_version(db_session, script)
 
         resp = await n8n_client.post(
             "/api/v1/n8n/tasks",
@@ -283,6 +295,7 @@ class TestN8nTaskPoll:
         db_session.add(device)
         db_session.add(script)
         await db_session.flush()
+        await _publish_version(db_session, script)
 
         create_resp = await n8n_client.post(
             "/api/v1/n8n/tasks",
@@ -311,6 +324,7 @@ class TestN8nTaskPoll:
         db_session.add(device)
         db_session.add(script)
         await db_session.flush()
+        await _publish_version(db_session, script)
 
         create_resp = await n8n_client.post(
             "/api/v1/n8n/tasks",

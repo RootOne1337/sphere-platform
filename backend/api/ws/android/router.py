@@ -5,14 +5,19 @@ from __future__ import annotations
 
 import asyncio
 import json
+import uuid
 
 import structlog
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from pydantic import BaseModel, Field, ValidationError
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.database.engine import AsyncSessionLocal
 from backend.database.redis_client import get_redis_binary
+from backend.database.tenant import bind_tenant_context
 from backend.models.device import Device
+from backend.models.task import Task, TaskStatus
 from backend.schemas.device_status import DeviceLiveStatus
 from backend.services.device_status_cache import DeviceStatusCache
 from backend.websocket.connection_manager import ConnectionManager, get_connection_manager
@@ -20,6 +25,22 @@ from backend.websocket.connection_manager import ConnectionManager, get_connecti
 logger = structlog.get_logger()
 
 router = APIRouter(tags=["websocket"])
+
+
+async def receive_android_ws_event(ws: WebSocket, device_id: str) -> dict | None:
+    """Read one ASGI event; represent a peer disconnect as end-of-stream."""
+    data = await ws.receive()
+    if data.get("type") == "websocket.disconnect":
+        # Starlette's low-level receive() returns this ASGI event. Calling
+        # receive() again raises RuntimeError and mislabels a normal close as an
+        # application failure, so make the disconnect terminal here.
+        logger.info(
+            "android_ws.disconnected",
+            device_id=device_id,
+            close_code=data.get("code"),
+        )
+        return None
+    return data
 
 
 async def authenticate_ws_token(token: str, db: AsyncSession):
@@ -34,12 +55,14 @@ async def authenticate_ws_token(token: str, db: AsyncSession):
     import jwt as pyjwt
     from fastapi import HTTPException
 
+    if not isinstance(token, str):
+        raise HTTPException(status_code=401, detail="Invalid token")
     # API key path — токены вида sphr_<env>_<hex>
     if token.startswith("sphr_"):
         from backend.services.api_key_service import APIKeyService
         svc = APIKeyService(db)
         api_key = await svc.authenticate(token)
-        if not api_key:
+        if not api_key or api_key.type != "agent" or "device:register" not in api_key.permissions:
             raise HTTPException(status_code=401, detail="Invalid or expired API key")
 
         class _ApiKeyPrincipal:
@@ -54,9 +77,17 @@ async def authenticate_ws_token(token: str, db: AsyncSession):
 
     try:
         payload = decode_access_token(token)
+        if payload.get("type") != "access":
+            raise pyjwt.InvalidTokenError("Expected an access token")
+        if not isinstance(payload.get("sub"), str) or not isinstance(payload.get("org_id"), str):
+            raise pyjwt.InvalidTokenError("Missing identity claims")
+        subject_id = uuid.UUID(payload["sub"])
+        org_id = uuid.UUID(payload["org_id"])
     except pyjwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token expired")
     except pyjwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    except ValueError:
         raise HTTPException(status_code=401, detail="Invalid token")
 
     # Проверить blacklist
@@ -64,13 +95,16 @@ async def authenticate_ws_token(token: str, db: AsyncSession):
     cache = CacheService()
     if await cache.is_token_blacklisted(payload["jti"]):
         raise HTTPException(status_code=401, detail="Token revoked")
+    await bind_tenant_context(db, str(org_id))
 
     # Устройства получают JWT с role="device" и sub=device_id.
     # Для них ищем в таблице devices, а не users.
     role = payload.get("role", "")
     if role == "device":
-        device_subject = await db.get(Device, uuid.UUID(payload["sub"]))
-        if not device_subject:
+        device_subject = await db.scalar(select(Device).where(
+            Device.id == subject_id, Device.org_id == org_id,
+        ).execution_options(populate_existing=True))
+        if not device_subject or not device_subject.is_active:
             raise HTTPException(
                 status_code=401, detail="Device not found",
             )
@@ -78,14 +112,20 @@ async def authenticate_ws_token(token: str, db: AsyncSession):
         class _DevicePrincipal:
             """Принципал для устройства — совместим с user.org_id проверкой."""
 
-            def __init__(self, org_id: uuid.UUID) -> None:
+            def __init__(self, org_id: uuid.UUID, device_id: uuid.UUID) -> None:
                 self.org_id = org_id
+                self.device_id = device_id
 
-        return _DevicePrincipal(device_subject.org_id)
+        return _DevicePrincipal(device_subject.org_id, device_subject.id)
 
-    user = await db.get(User, uuid.UUID(payload["sub"]))
+    user = await db.scalar(select(User).where(
+        User.id == subject_id, User.org_id == org_id,
+    ).execution_options(populate_existing=True))
     if not user or not user.is_active:
         raise HTTPException(status_code=401, detail="User not found or inactive")
+    from backend.core.rbac import has_permission
+    if not has_permission(user.role, "device:write"):
+        raise HTTPException(status_code=403, detail="Agent access denied")
     return user
 
 
@@ -103,7 +143,7 @@ async def handle_agent_message(
     elif msg_type == "task_progress":
         await handle_task_progress(device_id, org_id, msg)
     elif msg_type == "command_result":
-        await handle_command_result(device_id, org_id, msg)
+        await handle_command_result(device_id, org_id, msg, manager)
     elif msg_type == "event":
         await handle_device_event(device_id, org_id, msg)
     else:
@@ -131,12 +171,38 @@ async def handle_telemetry(
         await status_cache.set_status(device_id, current)
 
 
+class TaskProgressMessage(BaseModel):
+    task_id: uuid.UUID
+    nodes_done: int = Field(default=0, strict=True, ge=0, le=2**31 - 1)
+    total_nodes: int = Field(default=1, strict=True, ge=1, le=2**31 - 1)
+    current_node: str = Field(default="", max_length=512)
+
+
 async def handle_task_progress(device_id: str, org_id: str, msg: dict) -> None:
     """Обработать прогресс выполнения DAG от агента."""
-    task_id = msg.get("task_id")
-    nodes_done = msg.get("nodes_done", 0)
-    total_nodes = msg.get("total_nodes", 1)
-    current_node = msg.get("current_node", "")
+    try:
+        message = TaskProgressMessage.model_validate(msg)
+        device_uuid, org_uuid = uuid.UUID(device_id), uuid.UUID(org_id)
+    except (ValidationError, ValueError, TypeError):
+        logger.warning("Invalid task progress", device_id=device_id)
+        return
+
+    # Redis keys are globally addressed by task ID. Authenticate ownership before
+    # writing any cache entry or publishing an event, including within one tenant.
+    async with AsyncSessionLocal() as db:
+        await bind_tenant_context(db, str(org_uuid))
+        owned = await db.scalar(select(Task.id).where(
+            Task.id == message.task_id,
+            Task.device_id == device_uuid,
+            Task.org_id == org_uuid,
+            Task.status.in_([TaskStatus.ASSIGNED, TaskStatus.RUNNING]),
+        ))
+    if owned is None:
+        return
+    task_id = str(message.task_id)
+    nodes_done = message.nodes_done
+    total_nodes = message.total_nodes
+    current_node = message.current_node
     # For cyclic DAGs: cap progress at 100%, track cycles
     progress = min(int(nodes_done / max(total_nodes, 1) * 100), 100)
     cycles = nodes_done // max(total_nodes, 1)
@@ -194,12 +260,61 @@ async def handle_task_progress(device_id: str, org_id: str, msg: dict) -> None:
         logger.debug("task_progress publish skipped", device_id=device_id, error=str(e))
 
 
-async def handle_command_result(device_id: str, org_id: str, msg: dict) -> None:
+async def handle_command_result(
+    device_id: str, org_id: str, msg: dict, manager: ConnectionManager | None = None,
+) -> None:
     """Обработать результат команды/задачи от агента."""
     command_id = msg.get("command_id") or msg.get("id")
     if not command_id:
         return
     status = msg.get("status")
+    if status in ("completed", "failed") and msg.get("ota_recovery_receipt") is True:
+        # Recovery receipts are already durable on the Device record. A reconnect
+        # can replay one after its first result_ack was lost; acknowledge that
+        # exact replay instead of trying to persist it as a DAG task result.
+        try:
+            from backend.database.engine import AsyncSessionLocal
+            from backend.services.device_ota_recovery import is_persisted_ota_recovery_replay
+
+            async with AsyncSessionLocal() as db:
+                already_persisted = await is_persisted_ota_recovery_replay(
+                    db, device_id=device_id, org_id=org_id, message=msg,
+                )
+            if already_persisted:
+                if manager is None:
+                    logger.warning(
+                        "android_ws.ota_recovery_receipt_ack_unavailable",
+                        device_id=device_id,
+                        grant_id=command_id,
+                    )
+                    return
+                await manager.send_to_device(
+                    device_id, {"type": "result_ack", "command_id": command_id},
+                )
+                logger.info(
+                    "android_ws.ota_recovery_receipt_replay_acked",
+                    device_id=device_id,
+                    grant_id=command_id,
+                    status=status,
+                )
+            else:
+                logger.warning(
+                    "android_ws.ota_recovery_receipt_unrecognized",
+                    device_id=device_id,
+                    grant_id=command_id,
+                    status=status,
+                )
+            # A recovery receipt is not a DAG result. If it is unknown or the
+            # database check failed, keep it in the Android outbox for retry.
+            return
+        except Exception as exc:
+            logger.warning(
+                "android_ws.ota_recovery_replay_check_failed",
+                device_id=device_id,
+                grant_id=command_id,
+                error_class=type(exc).__name__,
+            )
+            return
     # Publish to Redis result channel (for any waiting HTTP-request polls)
     try:
         from backend.database.redis_client import redis
@@ -209,6 +324,33 @@ async def handle_command_result(device_id: str, org_id: str, msg: dict) -> None:
     except Exception as e:
         logger.warning("Failed to publish command result", device_id=device_id, error=str(e))
     # Persist task result to DB on final status (completed or failed)
+    if status in ("received", "running"):
+        try:
+            import uuid
+            from datetime import datetime, timezone
+
+            from sqlalchemy import select
+
+            from backend.database.engine import AsyncSessionLocal
+            from backend.models.task import Task, TaskStatus
+
+            task_uuid = uuid.UUID(command_id)
+            async with AsyncSessionLocal() as db:
+                await bind_tenant_context(db, org_id)
+                task = await db.scalar(select(Task).where(
+                    Task.id == task_uuid, Task.device_id == uuid.UUID(device_id),
+                    Task.org_id == uuid.UUID(org_id), Task.status == TaskStatus.ASSIGNED,
+                ).with_for_update())
+                if task is not None:
+                    task.status = TaskStatus.RUNNING
+                    task.started_at = datetime.now(timezone.utc)
+                    await db.commit()
+        except (ValueError, TypeError):
+            return
+        except Exception as exc:
+            logger.warning("task.receipt.persistence_failed", command_id=command_id, error=str(exc))
+        return
+
     if status in ("completed", "failed"):
         # FIX BUG-A: управляющие команды (CANCEL_DAG, PAUSE_DAG, etc.) используют
         # command_id вида "sched_cancel_UUID" / "watchdog_cancel_UUID".
@@ -232,6 +374,7 @@ async def handle_command_result(device_id: str, org_id: str, msg: dict) -> None:
             from backend.database.redis_client import redis as _redis
             from backend.services.task_queue import TaskQueue
             async with AsyncSessionLocal() as db:
+                await bind_tenant_context(db, org_id)
                 queue = TaskQueue(_redis)
                 from backend.services.task_service import TaskService
                 svc = TaskService(db=db, queue=queue)
@@ -239,12 +382,16 @@ async def handle_command_result(device_id: str, org_id: str, msg: dict) -> None:
                 if error_msg:
                     final_result["error"] = error_msg
                 final_result["success"] = (status == "completed")
-                await svc.handle_task_result(
+                accepted = await svc.handle_task_result(
                     task_id=command_id,
                     device_id=device_id,
                     result=final_result,
+                    org_id=org_id,
                 )
                 await db.commit()
+            # Only the committed, owned task can release the device's outbox.
+            if accepted and manager is not None:
+                await manager.send_to_device(device_id, {"type": "result_ack", "command_id": command_id})
         except Exception as e:
             logger.error("Failed to persist task result", command_id=command_id, device_id=device_id, error=str(e))
 
@@ -286,6 +433,7 @@ async def handle_device_event(device_id: str, org_id: str, msg: dict) -> None:
         pipeline_run_id = uuid.UUID(pipeline_run_id_raw) if pipeline_run_id_raw else None
 
         async with AsyncSessionLocal() as db:
+            await bind_tenant_context(db, org_id)
             reactor = EventReactor(db)
             await reactor.process_event(
                 org_id=uuid.UUID(org_id),
@@ -315,16 +463,20 @@ async def handle_device_event(device_id: str, org_id: str, msg: dict) -> None:
         )
 
 
-# Счётчик бинарных фреймов для периодического логирования (не спамить на каждый фрейм)
-_frame_counters: dict[str, int] = {}
-
-
 async def handle_agent_binary(
     device_id: str,
     data: bytes,
     manager: ConnectionManager,
 ) -> None:
     """Обработать бинарные данные (видеофрейм) от Android агента."""
+    # Count at the ASGI boundary even if the bridge is unavailable. This is a
+    # backend-ingress receipt, not evidence that Redis or a browser got the frame.
+    try:
+        from backend.websocket.stream_observability import record_backend_ingress
+
+        record_backend_ingress(device_id, data)
+    except Exception as e:
+        logger.debug("stream ingress metric update failed", device_id=device_id, error=str(e))
     try:
         from backend.websocket.stream_bridge import get_stream_bridge
         bridge = get_stream_bridge()
@@ -332,38 +484,90 @@ async def handle_agent_binary(
             logger.warning("handle_agent_binary: stream_bridge не инициализирован", device_id=device_id)
             return
 
-        count = _frame_counters.get(device_id, 0) + 1
-        _frame_counters[device_id] = count
-
-        # FIX-LOGGING: логируем КАЖДЫЙ фрейм (первые 50) для debug Cloudflare tunnel issues.
-        # После отладки — вернуть порог на 100.
-        has_viewer = bridge.is_streaming(device_id)
-        if count <= 50 or count % 100 == 0:
-            # Определяем NAL type из payload (после 14-byte Sphere header)
-            nal_info = "unknown"
-            if len(data) > 18:  # 14 header + 4 start code
-                # Ищем NAL type после Annex-B start code в payload
-                payload = data[14:] if len(data) > 14 else data
-                if len(payload) >= 5 and payload[0:4] == b"\x00\x00\x00\x01":
-                    nal_type = payload[4] & 0x1F
-                    nal_names = {1: "P-frame", 5: "IDR", 6: "SEI", 7: "SPS", 8: "PPS"}
-                    nal_info = nal_names.get(nal_type, f"NAL-{nal_type}")
-                elif len(payload) >= 4 and payload[0:3] == b"\x00\x00\x01":
-                    nal_type = payload[3] & 0x1F
-                    nal_names = {1: "P-frame", 5: "IDR", 6: "SEI", 7: "SPS", 8: "PPS"}
-                    nal_info = nal_names.get(nal_type, f"NAL-{nal_type}")
-            logger.info(
-                "Binary frame from agent",
-                device_id=device_id,
-                frame_num=count,
-                size_bytes=len(data),
-                nal_type=nal_info,
-                has_viewer=has_viewer,
-            )
-
         await bridge.handle_agent_frame(device_id, data)
     except Exception as e:
         logger.warning("handle_agent_binary error", device_id=device_id, error=str(e))
+
+
+async def serve_ota_recovery(ws: WebSocket, device_id: str, grant, org_id: str) -> None:
+    """Доставить один разрешённый APK; heartbeat не публикует online/задачи."""
+    import time
+
+    from backend.services.device_ota_recovery import (
+        persist_ota_recovery_result,
+        recovery_failure_code,
+    )
+
+    command = {"type": "OTA_UPDATE", "command_id": str(grant.command_id),
+               "signed_at": int(time.time()), "ttl_seconds": 180,
+               "payload": {"download_url": str(ws.base_url.replace(scheme="https")).rstrip("/") +
+                           "/api/v1/updates/artifacts/" + grant.sha256,
+                           "version": grant.version_name, "version_code": grant.version_code,
+                           "sha256": grant.sha256}}
+    try:
+        async with asyncio.timeout(min(180, max(1, grant.expires_at - int(time.time())))):
+            await ws.send_json({"type": "auth_ok", "device_id": device_id, "protocol_version": 1})
+            await ws.send_json(command)
+            logger.info("android_ws.ota_recovery_sent", device_id=device_id, grant_id=str(grant.command_id))
+            while True:
+                try:
+                    message = await asyncio.wait_for(ws.receive_json(), timeout=10)
+                    if isinstance(message, dict) and message.get("command_id") == str(grant.command_id):
+                        receipt_status = message.get("status")
+                        if receipt_status in ("received", "running"):
+                            logger.info(
+                                "android_ws.ota_recovery_progress",
+                                device_id=device_id,
+                                grant_id=str(grant.command_id),
+                                status=receipt_status,
+                            )
+                            continue
+                        if receipt_status not in ("completed", "failed"):
+                            continue
+                        async with AsyncSessionLocal() as db:
+                            persisted = await persist_ota_recovery_result(
+                                db,
+                                device_id=device_id,
+                                org_id=org_id,
+                                grant=grant,
+                                message=message,
+                            )
+                        if persisted:
+                            # The result is durable on the device until this explicit
+                            # acknowledgement. Persist on the server before clearing it.
+                            await ws.send_json({"type": "result_ack", "command_id": str(grant.command_id)})
+                            logger.info(
+                                "android_ws.ota_recovery_receipt_persisted",
+                                device_id=device_id,
+                                grant_id=str(grant.command_id),
+                                status=receipt_status,
+                                failure_code=(
+                                    recovery_failure_code(message.get("error"))
+                                    if receipt_status == "failed"
+                                    else None
+                                ),
+                            )
+                            return
+                        logger.warning(
+                            "android_ws.ota_recovery_receipt_rejected",
+                            device_id=device_id,
+                            grant_id=str(grant.command_id),
+                            status=receipt_status,
+                            failure_code=(
+                                recovery_failure_code(message.get("error"))
+                                if receipt_status == "failed"
+                                else None
+                            ),
+                        )
+                except asyncio.TimeoutError:
+                    await ws.send_json({"type": "ping", "ts": time.time()})
+    except (TimeoutError, WebSocketDisconnect):
+        pass
+    finally:
+        try:
+            await ws.close(code=1012, reason="ota_recovery_reconnect")
+        except Exception:
+            pass
 
 
 @router.websocket("/ws/android/{device_id}")
@@ -405,6 +609,19 @@ async def android_agent_ws(
     token = first_msg.get("token")
     logger.debug("android_ws: first message получен", device_id=device_id, has_token=bool(token))
 
+    # Отдельный временный канал только установки APK: не регистрируется в
+    # ConnectionManager, не вытесняет другие копии и не принимает их результаты.
+    from backend.services.device_ota_recovery import get_ota_recovery
+    try:
+        async with AsyncSessionLocal() as recovery_db:
+            recovery = await get_ota_recovery(token, recovery_db, device_id=device_id)
+        if recovery is not None:
+            await serve_ota_recovery(ws, device_id, recovery[1], str(recovery[0].org_id))
+            return
+    except Exception:
+        await _close(1011, "auth_error")
+        return
+
     # Auth phase: DB session scoped to auth only — not held for WS lifetime
     import uuid
 
@@ -422,14 +639,12 @@ async def android_agent_ws(
                 await _close(4004, "invalid_device_id")
                 return
 
-            device = await db.get(Device, device_uuid)
-            if not device:
-                logger.warning("android_ws: device_not_found", device_id=device_id)
-                await _close(4004, "device_not_found")
-                return
-
             if _is_dev_skip_auth():
                 # DEV-режим: пропускаем валидацию токена, берём org из устройства
+                device = await db.get(Device, device_uuid)
+                if not device or not device.is_active:
+                    await _close(4004, "device_not_found")
+                    return
                 org_id_str = str(device.org_id)
                 logger.info("android_ws: DEV_SKIP_AUTH — auth bypassed", device_id=device_id, org_id=org_id_str)
             else:
@@ -445,8 +660,17 @@ async def android_agent_ws(
                     await _close(4001, "invalid_token")
                     return
 
-                if str(device.org_id) != str(user.org_id):
-                    logger.warning("android_ws: org mismatch", device_id=device_id)
+                # Authentication binds the Session before any target-device SQL.
+                device = await db.scalar(select(Device).where(
+                    Device.id == device_uuid, Device.org_id == user.org_id,
+                    Device.is_active.is_(True),
+                ).execution_options(populate_existing=True))
+                if device is None:
+                    await _close(4004, "device_not_found")
+                    return
+
+                subject_device_id = getattr(user, "device_id", None)
+                if subject_device_id is not None and subject_device_id != device.id:
                     await _close(4004, "device_not_found")
                     return
 
@@ -460,20 +684,51 @@ async def android_agent_ws(
         return
     # DB session is now CLOSED — safe to enter long-lived WS loop
 
+    # Confirm the authenticated target before publishing the socket: another
+    # producer may send work as soon as manager.connect exposes this connection.
+    # This confirms identity, not readiness of every downstream service.
+    try:
+        await asyncio.wait_for(ws.send_json({
+            "type": "auth_ok", "device_id": device_id, "protocol_version": 1,
+        }), timeout=5.0)
+    except Exception:
+        logger.warning("android_ws.auth_ack_failed", device_id=device_id)
+        await _close(1011, "auth_ack_failed")
+        return
+
     session_id = await manager.connect(ws, device_id, "android", org_id_str)
 
-    # Сброс счётчика фреймов при новом подключении — для корректного логирования
-    _frame_counters[device_id] = 0
-
-    await status_cache.set_status(device_id, DeviceLiveStatus(
+    connecting_status_persisted = await status_cache.set_status(device_id, DeviceLiveStatus(
         device_id=device_id,
-        status="online",
+        # Auth proves identity, but only the first heartbeat pong proves that
+        # the newly published socket is responsive. Do not report false-online
+        # devices while a connection is established but has not yet answered.
+        status="connecting",
         ws_session_id=session_id,
     ))
+    if connecting_status_persisted:
+        try:
+            from backend.schemas.events import EventType, FleetEvent
+            from backend.websocket.event_publisher import get_event_publisher
+            publisher = get_event_publisher()
+            if publisher:
+                await publisher.emit(FleetEvent(
+                    event_type=EventType.DEVICE_STATUS_CHANGE,
+                    device_id=device_id,
+                    org_id=org_id_str,
+                    payload={"status": "connecting", "session_id": session_id},
+                ))
+        except Exception as exc:
+            logger.warning(
+                "android_ws.connecting_event_publish_failed",
+                device_id=device_id,
+                session_id=session_id,
+                error_type=type(exc).__name__,
+            )
 
     # Запустить heartbeat (SPLIT-4)
     from backend.websocket.heartbeat import HeartbeatManager
-    heartbeat = HeartbeatManager(ws, device_id, status_cache)
+    heartbeat = HeartbeatManager(ws, device_id, status_cache, session_id=session_id)
     await heartbeat.start()
 
     # Подписать PubSub router на командный канал этого устройства
@@ -482,21 +737,6 @@ async def android_agent_ws(
         pubsub_router = get_pubsub_router()
         if pubsub_router:
             await pubsub_router.subscribe_device(device_id, org_id_str)
-    except Exception:
-        pass
-
-    # Опубликовать device.online событие (SPLIT-5)
-    try:
-        from backend.schemas.events import EventType, FleetEvent
-        from backend.websocket.event_publisher import get_event_publisher
-        publisher = get_event_publisher()
-        if publisher:
-            await publisher.emit(FleetEvent(
-                event_type=EventType.DEVICE_ONLINE,
-                device_id=device_id,
-                org_id=org_id_str,
-                payload={"status": "online", "session_id": session_id},
-            ))
     except Exception:
         pass
 
@@ -517,7 +757,7 @@ async def android_agent_ws(
     try:
         from backend.websocket.stream_bridge import get_stream_bridge
         bridge = get_stream_bridge()
-        if bridge and bridge.is_streaming(device_id):
+        if bridge:
             await bridge.resume_stream_for_device(device_id)
             logger.info("android_ws: stream resumed for reconnected agent", device_id=device_id)
     except Exception as e:
@@ -538,10 +778,13 @@ async def android_agent_ws(
             pass
 
     keepalive_task = asyncio.create_task(_agent_keepalive_loop())
+    online_event_published = False
 
     try:
         while True:
-            data = await ws.receive()
+            data = await receive_android_ws_event(ws, device_id)
+            if data is None:
+                break
             if "text" in data:
                 try:
                     msg = json.loads(data["text"])
@@ -551,19 +794,41 @@ async def android_agent_ws(
                 try:
                     match msg.get("type"):
                         case "pong":
-                            await heartbeat.handle_pong(msg)
+                            first_pong_persisted = await heartbeat.handle_pong(msg)
+                            if first_pong_persisted and not online_event_published:
+                                try:
+                                    from backend.schemas.events import EventType, FleetEvent
+                                    from backend.websocket.event_publisher import (
+                                        get_event_publisher,
+                                    )
+                                    publisher = get_event_publisher()
+                                    if publisher:
+                                        await publisher.emit(FleetEvent(
+                                            event_type=EventType.DEVICE_ONLINE,
+                                            device_id=device_id,
+                                            org_id=org_id_str,
+                                            payload={"status": "online", "session_id": session_id},
+                                        ))
+                                        online_event_published = True
+                                except Exception as exc:
+                                    logger.warning(
+                                        "android_ws.online_event_publish_failed",
+                                        device_id=device_id,
+                                        session_id=session_id,
+                                        error_type=type(exc).__name__,
+                                    )
                         case "telemetry":
                             await handle_telemetry(device_id, msg, status_cache)
                         case "task_progress":
                             await handle_task_progress(device_id, org_id_str, msg)
                         case "command_result":
-                            await handle_command_result(device_id, org_id_str, msg)
+                            await handle_command_result(device_id, org_id_str, msg, manager)
                         case "event":
                             await handle_device_event(device_id, org_id_str, msg)
                         case _:
                             # CommandAck from APK has no "type" field — detect by command_id + status
                             if msg.get("command_id") and msg.get("status") in ("completed", "failed", "running", "received"):
-                                await handle_command_result(device_id, org_id_str, msg)
+                                await handle_command_result(device_id, org_id_str, msg, manager)
                             else:
                                 logger.debug(
                                     "Unknown message type",
@@ -591,24 +856,50 @@ async def android_agent_ws(
         # старый handler НЕ удалит новую сессию из реестра.
         removed = await manager.disconnect(device_id, session_id=session_id)
         if removed:
-            await status_cache.mark_offline(device_id)
+            from backend.websocket.stream_metrics import StreamMetrics
+            StreamMetrics(device_id).cleanup()
+
+            # ConnectionManager is process-local. A stale socket in this worker
+            # may close after another worker has published a replacement session.
+            # Only the session that still owns the shared Redis presence may make
+            # the device offline or release its task lock / publish an offline event.
+            try:
+                offline_transitioned = await status_cache.mark_offline(
+                    device_id,
+                    session_id=session_id,
+                )
+            except Exception as exc:
+                offline_transitioned = False
+                logger.warning(
+                    "android_ws.offline_status_update_failed",
+                    device_id=device_id,
+                    error_type=type(exc).__name__,
+                )
+
+            if not offline_transitioned:
+                logger.debug(
+                    "android_ws.offline_status_update_skipped_stale_session",
+                    device_id=device_id,
+                    session_id=session_id,
+                )
 
             # FIX-WATCHDOG: При реальном disconnect немедленно освобождаем Redis running lock.
             # Это позволяет dispatcher-у (цикл каждые 5с) выдать следующую задачу сразу
             # после реконнекта агента, не дожидаясь истечения TTL=3600s.
             # Задача в БД остаётся RUNNING — watchdog (task_heartbeat_watchdog.py) переведёт
             # её в TIMEOUT если агент не пришлёт command_result через flushPendingResults.
-            try:
-                from backend.database.redis_client import redis_binary as _redis_disc
-                if _redis_disc:
-                    from backend.services.task_queue import TaskQueue as _TQ
-                    await _TQ(_redis_disc).release_device_lock(device_id)
-            except Exception as _lock_err:
-                logger.warning(
-                    "android_ws.lock_release_failed",
-                    device_id=device_id,
-                    error=str(_lock_err),
-                )
+            if offline_transitioned:
+                try:
+                    from backend.database.redis_client import redis_binary as _redis_disc
+                    if _redis_disc:
+                        from backend.services.task_queue import TaskQueue as _TQ
+                        await _TQ(_redis_disc).release_device_lock(device_id)
+                except Exception as _lock_err:
+                    logger.warning(
+                        "android_ws.lock_release_failed",
+                        device_id=device_id,
+                        error=str(_lock_err),
+                    )
 
             # Отписать PubSub router от канала устройства
             try:
@@ -620,19 +911,20 @@ async def android_agent_ws(
                 pass
 
             # Опубликовать device.offline событие
-            try:
-                from backend.schemas.events import EventType, FleetEvent
-                from backend.websocket.event_publisher import get_event_publisher
-                publisher = get_event_publisher()
-                if publisher:
-                    await publisher.emit(FleetEvent(
-                        event_type=EventType.DEVICE_OFFLINE,
-                        device_id=device_id,
-                        org_id=org_id_str,
-                        payload={"status": "offline"},
-                    ))
-            except Exception:
-                pass
+            if offline_transitioned:
+                try:
+                    from backend.schemas.events import EventType, FleetEvent
+                    from backend.websocket.event_publisher import get_event_publisher
+                    publisher = get_event_publisher()
+                    if publisher:
+                        await publisher.emit(FleetEvent(
+                            event_type=EventType.DEVICE_OFFLINE,
+                            device_id=device_id,
+                            org_id=org_id_str,
+                            payload={"status": "offline"},
+                        ))
+                except Exception:
+                    pass
         else:
             logger.debug(
                 "android_ws: cleanup skipped — сессия уже заменена новой",

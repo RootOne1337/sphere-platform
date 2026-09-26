@@ -1,0 +1,27 @@
+Code revision: eda33a7d361558f5522de6ab6faea3f9dbe8b7b5
+Source: https://github.com/RootOne1337/sphere-platform/actions/runs/34383128767
+
+Tests	Unit and real-service regression tests	2026-09-09T17:31:29.4937534Z tests/production/test_pc_result_protocol.py::test_pc_dispatch_result_reaches_waiting_server_channel[False] PASSED [ 34%]
+Tests	Unit and real-service regression tests	2026-09-09T17:31:29.8689264Z tests/production/test_pc_result_protocol.py::test_pc_dispatch_result_reaches_waiting_server_channel[True] PASSED [ 34%]
+Tests	Unit and real-service regression tests	2026-09-09T17:31:30.2375513Z tests/production/test_pc_result_protocol.py::test_server_accepts_legacy_pc_terminal_reply[completed] PASSED [ 34%]
+Tests	Unit and real-service regression tests	2026-09-09T17:31:30.6088732Z tests/production/test_pc_result_protocol.py::test_server_accepts_legacy_pc_terminal_reply[failed] PASSED [ 35%]
+Tests	Unit and real-service regression tests	2026-09-09T17:31:30.9736981Z tests/production/test_pc_result_protocol.py::test_server_preserves_typed_pc_reply PASSED [ 35%]
+Tests	Unit and real-service regression tests	2026-09-09T17:31:31.4364352Z tests/production/test_pc_result_protocol.py::test_untyped_nonterminal_message_is_not_a_pc_result[received] PASSED [ 35%]
+Tests	Unit and real-service regression tests	2026-09-09T17:31:31.9035710Z tests/production/test_pc_result_protocol.py::test_untyped_nonterminal_message_is_not_a_pc_result[running] PASSED [ 35%]
+Tests	Unit and real-service regression tests	2026-09-09T17:31:32.3690879Z tests/production/test_pc_result_protocol.py::test_untyped_nonterminal_message_is_not_a_pc_result[unknown] PASSED [ 35%]
+Tests	Unit and real-service regression tests	2026-09-09T17:31:32.8419187Z tests/production/test_pc_result_protocol.py::test_untyped_nonterminal_message_is_not_a_pc_result[None] PASSED [ 35%]
+Tests	Unit and real-service regression tests	2026-09-09T17:31:33.3110681Z tests/production/test_pc_result_protocol.py::test_telemetry_with_result_fields_is_not_reclassified PASSED [ 35%]
+Tests	Unit and real-service regression tests	2026-09-09T17:31:33.9275986Z tests/production/test_pc_tenant_runtime.py::test_runtime_pc_auth_connects_and_reconnects PASSED [ 35%]
+Tests	Unit and real-service regression tests	2026-09-09T17:31:34.4467102Z tests/production/test_pc_tenant_runtime.py::test_runtime_pc_auth_denies_bad_key_or_workstation[inactive] PASSED [ 35%]
+Tests	Unit and real-service regression tests	2026-09-09T17:31:34.9718963Z tests/production/test_pc_tenant_runtime.py::test_runtime_pc_auth_denies_bad_key_or_workstation[expired] PASSED [ 35%]
+Tests	Unit and real-service regression tests	2026-09-09T17:31:35.5125043Z tests/production/test_pc_tenant_runtime.py::test_runtime_pc_auth_denies_bad_key_or_workstation[permissions] PASSED [ 35%]
+Tests	Unit and real-service regression tests	2026-09-09T17:31:36.0519985Z tests/production/test_pc_tenant_runtime.py::test_runtime_pc_auth_denies_bad_key_or_workstation[type] PASSED [ 35%]
+Tests	Unit and real-service regression tests	2026-09-09T17:31:36.5633028Z tests/production/test_pc_tenant_runtime.py::test_runtime_pc_auth_denies_bad_key_or_workstation[unknown] PASSED [ 35%]
+Tests	Unit and real-service regression tests	2026-09-09T17:31:37.0954396Z tests/production/test_pc_tenant_runtime.py::test_runtime_pc_auth_denies_bad_key_or_workstation[foreign_workstation] PASSED [ 36%]
+Tests	Unit and real-service regression tests	2026-09-09T17:31:37.5382274Z tests/production/test_pc_tenant_runtime.py::test_runtime_pc_registration_persists_and_caches_owned_instances PASSED [ 36%]
+Tests	Unit and real-service regression tests	2026-09-09T17:31:37.9685383Z tests/production/test_pc_tenant_runtime.py::test_runtime_pc_registration_cannot_write_foreign_workstation PASSED [ 36%]
+Tests	Unit and real-service regression tests	2026-09-09T17:31:38.4606184Z tests/production/test_pc_tenant_runtime.py::test_runtime_pc_registration_sql_abort_then_new_session_recovers PASSED [ 36%]
+Tests	Unit and real-service regression tests	2026-09-09T17:31:38.9018219Z tests/production/test_pc_tenant_runtime.py::test_runtime_pc_cache_failure_does_not_undo_registration PASSED [ 36%]
+Tests	Unit and real-service regression tests	2026-09-09T17:31:39.5899438Z tests/production/test_pc_tenant_runtime.py::test_runtime_pc_auth_uses_revocation_committed_during_key_wait PASSED [ 36%]
+Tests	Unit and real-service regression tests	2026-09-09T17:33:59.3935877Z Required test coverage of 65% reached. Total coverage: 69.27%
+Tests	Unit and real-service regression tests	2026-09-09T17:33:59.3936555Z ================= 1322 passed, 4 warnings in 264.00s (0:04:24) =================

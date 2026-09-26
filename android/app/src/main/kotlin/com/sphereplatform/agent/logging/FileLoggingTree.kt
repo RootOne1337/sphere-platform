@@ -4,6 +4,10 @@ import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
 import timber.log.Timber
 import java.io.File
+import java.io.IOException
+import java.io.RandomAccessFile
+import java.nio.ByteBuffer
+import java.nio.charset.CodingErrorAction
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -31,12 +35,20 @@ class FileLoggingTree @Inject constructor(
         private const val MAX_FILE_SIZE = 2 * 1024 * 1024L   // 2 MB
         private const val MAX_FILE_COUNT = 5
         private const val MAX_QUEUE_SIZE = 4096
+        private const val MAX_READ_BYTES = 256 * 1024
+        private const val MAX_WS_LIFECYCLE_FILE_BYTES = 64 * 1024
+        private const val RETAIN_WS_LIFECYCLE_FILE_BYTES = 32 * 1024
         private const val LOG_DIR = "sphere_logs"
         private const val LOG_PREFIX = "sphere_"
         private const val LOG_EXT = ".log"
+        private const val WS_LIFECYCLE_FILE = "ws_lifecycle.log"
     }
 
     private val logDir: File = File(context.filesDir, LOG_DIR).also { it.mkdirs() }
+    // Keep sparse transport incident records outside the noisy rolling log tail.
+    // This sidecar is bounded and is intentionally excluded from logFiles().
+    private val wsLifecycleFile = File(logDir, WS_LIFECYCLE_FILE)
+    private val wsLifecycleLock = Any()
     /**
      * FIX E1: ThreadLocal вместо shared SimpleDateFormat.
      * SimpleDateFormat НЕ потокобезопасен — format() мутирует внутренний Calendar.
@@ -80,36 +92,68 @@ class FileLoggingTree @Inject constructor(
         queue.offer(entry)
     }
 
-    /** Read up to [maxBytes] of the most recent log content (newest data last). */
+    /** UTF-8 byte budget across all files, capped at 256 KiB; newest content last. */
+    @Synchronized
     fun readRecentLogs(maxBytes: Int = 64 * 1024): String {
         val files = logFiles().sortedBy { it.lastModified() }
-        val result = StringBuilder()
-        var remaining = maxBytes
+        val chunks = mutableListOf<String>()
+        var remaining = maxBytes.coerceIn(0, MAX_READ_BYTES)
         for (file in files.reversed()) {
             if (remaining <= 0) break
             try {
-                // FIX H5: Читаем только нужную часть файла, а не весь целиком.
-                // Файлы до 2MB — readText() грузит всё в память. На 1GB эмуляторе
-                // при 5 файлах × 2MB = 10MB UTF-16 String = 20MB heap pressure.
-                val fileLen = file.length().toInt()
-                if (fileLen <= remaining) {
-                    val content = file.readText(Charsets.UTF_8)
-                    result.insert(0, content)
-                    remaining -= content.length
-                } else {
-                    // Читаем только хвост файла (самые свежие записи)
-                    file.reader(Charsets.UTF_8).use { reader ->
-                        val skip = (fileLen - remaining).toLong().coerceAtLeast(0)
-                        reader.skip(skip)
-                        val tail = CharArray(remaining)
-                        val read = reader.read(tail)
-                        if (read > 0) result.insert(0, String(tail, 0, read))
+                // File lengths and seek offsets are bytes. Reader.skip counts
+                // characters and can skip beyond EOF on Cyrillic/emoji logs.
+                // The same monitor as writeEntry prevents partial UTF-8 appends
+                // and internal rotation while taking this bounded snapshot.
+                RandomAccessFile(file, "r").use { input ->
+                    val length = input.length()
+                    val count = minOf(length, remaining.toLong()).toInt()
+                    if (count > 0) {
+                        val bytes = ByteArray(count)
+                        input.seek(length - count)
+                        input.readFully(bytes)
+                        // A byte-tail may start inside a code point; a previous
+                        // process crash may leave an incomplete final code point.
+                        // Drop incomplete/malformed sequences without expanding
+                        // the byte budget through replacement characters.
+                        val decoder = Charsets.UTF_8.newDecoder()
+                            .onMalformedInput(CodingErrorAction.IGNORE)
+                            .onUnmappableCharacter(CodingErrorAction.IGNORE)
+                        chunks.add(decoder.decode(ByteBuffer.wrap(bytes)).toString())
+                        remaining -= count
                     }
-                    remaining = 0
                 }
-            } catch (_: Exception) {}
+            } catch (_: IOException) {
+                // A missing/unreadable file must not hide other retained logs.
+            }
         }
-        return result.toString()
+        return chunks.asReversed().joinToString("")
+    }
+
+    /**
+     * Return the bounded, newest WebSocket lifecycle records independent of
+     * routine log volume. The sidecar is capped at 64 KiB and is read only by
+     * diagnostics upload; callers must not expose it without normal log ACLs.
+     */
+    fun readRecentWebSocketLifecycleLogs(maxBytes: Int = 32 * 1024): String {
+        val budget = maxBytes.coerceIn(0, MAX_WS_LIFECYCLE_FILE_BYTES)
+        if (budget == 0) return ""
+        return synchronized(wsLifecycleLock) {
+            runCatching {
+                if (!wsLifecycleFile.isFile) return@synchronized ""
+                val bytes = wsLifecycleFile.readBytes()
+                var start = (bytes.size - budget).coerceAtLeast(0)
+                if (start > 0) {
+                    val nextLine = indexOfLineFeed(bytes, start)
+                    if (nextLine < 0) return@synchronized ""
+                    start = nextLine + 1
+                }
+                val decoder = Charsets.UTF_8.newDecoder()
+                    .onMalformedInput(CodingErrorAction.IGNORE)
+                    .onUnmappableCharacter(CodingErrorAction.IGNORE)
+                decoder.decode(ByteBuffer.wrap(bytes, start, bytes.size - start)).toString()
+            }.getOrDefault("")
+        }
     }
 
     /** All log files, sorted oldest-first. */
@@ -119,10 +163,47 @@ class FileLoggingTree @Inject constructor(
 
     @Synchronized
     private fun writeEntry(entry: String) {
+        // Persist the sparse incident signal first so a failure in the noisy
+        // rolling file does not discard the only reconnect evidence as well.
+        if (entry.contains("ws_lifecycle ")) appendWebSocketLifecycleEntry(entry)
         if (currentFile.length() >= MAX_FILE_SIZE) {
             rotate()
         }
         currentFile.appendText(entry, Charsets.UTF_8)
+    }
+
+    private fun appendWebSocketLifecycleEntry(entry: String) {
+        // Lifecycle events are generated as one structured line. Do not copy a
+        // possible throwable stack trace into the priority sidecar.
+        val line = entry.substringBefore('\n').let { "$it\n" }.toByteArray(Charsets.UTF_8)
+        if (line.size > MAX_WS_LIFECYCLE_FILE_BYTES) return
+        synchronized(wsLifecycleLock) {
+            runCatching {
+                var existing = if (wsLifecycleFile.isFile) wsLifecycleFile.readBytes() else ByteArray(0)
+                if (existing.size + line.size > MAX_WS_LIFECYCLE_FILE_BYTES) {
+                    val retainBytes = minOf(
+                        RETAIN_WS_LIFECYCLE_FILE_BYTES,
+                        MAX_WS_LIFECYCLE_FILE_BYTES - line.size,
+                    )
+                    val keepFrom = (existing.size - retainBytes).coerceAtLeast(0)
+                    val lineStart = if (keepFrom == 0) 0 else {
+                        val nextLine = indexOfLineFeed(existing, keepFrom)
+                        if (nextLine < 0) existing.size else nextLine + 1
+                    }
+                    existing = existing.copyOfRange(lineStart, existing.size)
+                }
+                wsLifecycleFile.writeBytes(existing + line)
+            }.onFailure { error ->
+                System.err.println("Sphere lifecycle log write error: ${error.javaClass.simpleName}")
+            }
+        }
+    }
+
+    private fun indexOfLineFeed(bytes: ByteArray, start: Int): Int {
+        for (index in start.coerceAtLeast(0) until bytes.size) {
+            if (bytes[index] == '\n'.code.toByte()) return index
+        }
+        return -1
     }
 
     private fun rotate() {

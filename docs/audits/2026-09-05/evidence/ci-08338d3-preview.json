@@ -1,0 +1,51 @@
+{
+  "attempt": 1,
+  "conclusion": "success",
+  "databaseId": 34630665035,
+  "event": "pull_request",
+  "headSha": "08338d3161a0916e0ed7ff026a78bb2780884584",
+  "jobs": [
+    {
+      "completedAt": "2026-09-11T17:58:31Z",
+      "conclusion": "success",
+      "databaseId": 103366415528,
+      "name": "guard",
+      "startedAt": "2026-09-11T17:58:28Z",
+      "status": "completed",
+      "steps": [
+        {
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Run echo \"enabled=\" >> $GITHUB_OUTPUT",
+          "number": 2,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 3,
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/34630665035/job/103366415528"
+    },
+    {
+      "completedAt": "2026-09-11T17:58:32Z",
+      "conclusion": "skipped",
+      "databaseId": 103366448798,
+      "name": "deploy",
+      "startedAt": "2026-09-11T17:58:32Z",
+      "status": "completed",
+      "steps": [],
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/34630665035/job/103366448798"
+    }
+  ],
+  "status": "completed",
+  "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/34630665035",
+  "workflowName": "Preview — Deploy"
+}

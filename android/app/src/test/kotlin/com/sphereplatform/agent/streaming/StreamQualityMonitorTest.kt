@@ -6,6 +6,8 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import org.robolectric.shadows.ShadowSystemClock
+import java.time.Duration
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 
@@ -31,9 +33,10 @@ class StreamQualityMonitorTest {
     fun `пустой монитор — все метрики нулевые`() {
         val stats = monitor.getStats()
         assertEquals(0, stats.currentFps)
-        assertEquals(0, stats.totalFrames)
-        assertEquals(0L, stats.totalBytesSent)
-        assertEquals(0f, stats.avgFrameSizeKb, 0.001f)
+        assertEquals(0L, stats.totalFrames)
+        assertEquals(0L, stats.totalEncodedBytes)
+        assertEquals(0f, stats.avgEncodedFrameSizeKb, 0.001f)
+        assertEquals(0L, stats.webSocketQueueAttemptsTotal)
     }
 
     @Test
@@ -48,8 +51,8 @@ class StreamQualityMonitorTest {
     fun `запись одного фрейма — totalFrames = 1`() {
         monitor.recordFrame(1024, false)
         val stats = monitor.getStats()
-        assertEquals(1, stats.totalFrames)
-        assertEquals(1024L, stats.totalBytesSent)
+        assertEquals(1L, stats.totalFrames)
+        assertEquals(1024L, stats.totalEncodedBytes)
     }
 
     @Test
@@ -59,26 +62,64 @@ class StreamQualityMonitorTest {
         monitor.recordFrame(1000, false)
         monitor.recordFrame(1000, false)
         val stats = monitor.getStats()
-        assertEquals(4, stats.totalFrames)
+        assertEquals(4L, stats.totalFrames)
         // 1 keyframe / 4 total = 0.25
         assertEquals(0.25f, stats.keyFrameRatio, 0.001f)
     }
 
     @Test
-    fun `totalBytesSent — суммирует все фреймы`() {
+    fun `totalEncodedBytes — суммирует encoder outputs`() {
         monitor.recordFrame(1000, false)
         monitor.recordFrame(2000, true)
         monitor.recordFrame(3000, false)
-        assertEquals(6000L, monitor.getStats().totalBytesSent)
+        assertEquals(6000L, monitor.getStats().totalEncodedBytes)
     }
 
     @Test
-    fun `avgFrameSizeKb — среднее в килобайтах`() {
+    fun `avgEncodedFrameSizeKb — среднее в килобайтах`() {
         // 3 фрейма по 1024 байт = 1024 * 3 / 3 / 1024 = 1.0 KB
         monitor.recordFrame(1024, false)
         monitor.recordFrame(1024, false)
         monitor.recordFrame(1024, true)
-        assertEquals(1.0f, monitor.getStats().avgFrameSizeKb, 0.01f)
+        assertEquals(1.0f, monitor.getStats().avgEncodedFrameSizeKb, 0.01f)
+    }
+
+    @Test
+    fun `socket queue counters distinguish accepted and rejected frames`() {
+        monitor.recordWebSocketQueueResult(1024, true)
+        monitor.recordWebSocketQueueResult(2048, false)
+        monitor.recordWebSocketQueueResult(512, true)
+
+        val stats = monitor.getStats()
+        assertEquals(3L, stats.webSocketQueueAttemptsTotal)
+        assertEquals(2L, stats.webSocketQueueAcceptedTotal)
+        assertEquals(1L, stats.webSocketQueueRejectedTotal)
+        assertEquals(1536L, stats.webSocketQueueAcceptedBytesTotal)
+    }
+
+    @Test
+    fun `capture render encode and queue stages keep independent counters`() {
+        monitor.recordCapturedFrame()
+        monitor.recordCapturedFrame()
+        monitor.recordCaptureReadFailure()
+        monitor.recordRenderedFrame()
+        monitor.recordRenderFailure()
+        monitor.recordEncoderError()
+        monitor.recordFrame(900, isKeyFrame = false)
+        monitor.recordFrameThrottleDrop()
+        monitor.recordWebSocketQueueResult(900, accepted = true)
+
+        val stats = monitor.getStats()
+        assertEquals(2, stats.currentCaptureFps)
+        assertEquals(1, stats.currentRenderFps)
+        assertEquals(2L, stats.captureFramesTotal)
+        assertEquals(1L, stats.renderedFramesTotal)
+        assertEquals(1L, stats.captureReadFailuresTotal)
+        assertEquals(1L, stats.renderFailuresTotal)
+        assertEquals(1L, stats.encoderErrorsTotal)
+        assertEquals(1L, stats.frameThrottleDropsTotal)
+        assertEquals(1L, stats.totalFrames)
+        assertEquals(1L, stats.webSocketQueueAcceptedTotal)
     }
 
     // ── currentFps (скользящее окно) ─────────────────────────────────────────
@@ -94,6 +135,25 @@ class StreamQualityMonitorTest {
         assertEquals("currentFps = количество фреймов в окне 1с", 30, stats.currentFps)
     }
 
+    @Test
+    fun `currentFps falls to zero after encoder stops producing frames`() {
+        monitor.recordFrame(500, false)
+        ShadowSystemClock.advanceBy(Duration.ofMillis(1_100))
+
+        assertEquals(0, monitor.getStats().currentFps)
+    }
+
+    @Test
+    fun `codec config is excluded from encoded frame and fps counters`() {
+        monitor.recordFrame(24, isKeyFrame = true, isCodecConfig = true)
+
+        val stats = monitor.getStats()
+        assertEquals(0L, stats.totalFrames)
+        assertEquals(0L, stats.totalEncodedBytes)
+        assertEquals(0, stats.currentFps)
+        assertEquals(0f, stats.keyFrameRatio, 0.001f)
+    }
+
     // ── Reset ────────────────────────────────────────────────────────────────
 
     @Test
@@ -101,15 +161,35 @@ class StreamQualityMonitorTest {
         monitor.recordFrame(1000, true)
         monitor.recordFrame(2000, false)
         monitor.recordFrame(3000, false)
+        monitor.recordWebSocketQueueResult(100, true)
+        monitor.recordWebSocketQueueResult(200, false)
+        monitor.recordCapturedFrame()
+        monitor.recordRenderedFrame()
+        monitor.recordCaptureReadFailure()
+        monitor.recordRenderFailure()
+        monitor.recordEncoderError()
+        monitor.recordFrameThrottleDrop()
 
         monitor.reset()
 
         val stats = monitor.getStats()
         assertEquals(0, stats.currentFps)
-        assertEquals(0, stats.totalFrames)
-        assertEquals(0L, stats.totalBytesSent)
+        assertEquals(0, stats.currentCaptureFps)
+        assertEquals(0, stats.currentRenderFps)
+        assertEquals(0L, stats.totalFrames)
+        assertEquals(0L, stats.totalEncodedBytes)
+        assertEquals(0L, stats.webSocketQueueAttemptsTotal)
+        assertEquals(0L, stats.webSocketQueueAcceptedTotal)
+        assertEquals(0L, stats.webSocketQueueRejectedTotal)
+        assertEquals(0L, stats.webSocketQueueAcceptedBytesTotal)
+        assertEquals(0L, stats.captureFramesTotal)
+        assertEquals(0L, stats.renderedFramesTotal)
+        assertEquals(0L, stats.captureReadFailuresTotal)
+        assertEquals(0L, stats.renderFailuresTotal)
+        assertEquals(0L, stats.encoderErrorsTotal)
+        assertEquals(0L, stats.frameThrottleDropsTotal)
         assertEquals(0f, stats.keyFrameRatio, 0.001f)
-        assertEquals(0f, stats.avgFrameSizeKb, 0.001f)
+        assertEquals(0f, stats.avgEncodedFrameSizeKb, 0.001f)
     }
 
     @Test
@@ -119,8 +199,8 @@ class StreamQualityMonitorTest {
         monitor.recordFrame(2000, false)
 
         val stats = monitor.getStats()
-        assertEquals(1, stats.totalFrames)
-        assertEquals(2000L, stats.totalBytesSent)
+        assertEquals(1L, stats.totalFrames)
+        assertEquals(2000L, stats.totalEncodedBytes)
         assertEquals(0f, stats.keyFrameRatio, 0.001f) // 0 keyframes из 1
     }
 
@@ -160,6 +240,6 @@ class StreamQualityMonitorTest {
         executor.shutdown()
 
         val stats = monitor.getStats()
-        assertEquals(threadCount * framesPerThread, stats.totalFrames)
+        assertEquals((threadCount * framesPerThread).toLong(), stats.totalFrames)
     }
 }

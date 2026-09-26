@@ -8,6 +8,11 @@
 **Блокирует:** TZ-02 SPLIT-5
 **Интеграция при merge:** TZ-10 Frontend работает с mock bulk API
 
+> **Исторический план:** примеры ниже фиксируют исходную декомпозицию задачи и не являются
+> актуальной реализацией. Текущие endpoint, лимиты, права и результаты массовых действий
+> описаны в [API-каталоге](../../docs/api-endpoints.md), [руководстве Fleet Matrix](../../docs/web-ui-guide.md#4-fleet-matrix--управление-устройствами)
+> и [аудите Fleet Matrix от 25.09.2026](../../docs/audits/2026-09-25/FLEET-MATRIX-BULK-ACTIONS.md).
+
 ---
 
 ## Цель Сплита
@@ -158,8 +163,8 @@ async def bulk_delete(
     current_user: User = require_permission("device:delete"),  # Требует org_admin или выше
     svc: DeviceService = Depends(get_device_service),
 ):
-    """Массовое удаление устройств (soft delete — ставит deleted_at)."""
-    deleted = await svc.bulk_soft_delete(body.device_ids, current_user.org_id)
+    """Массовое удаление записей из каталога (hard delete; APK не затрагивается)."""
+    deleted = await svc.bulk_delete(body.device_ids, current_user.org_id)
     return {"deleted": deleted}
 ```
 
@@ -167,7 +172,7 @@ async def bulk_delete(
 
 ## Критерии готовности
 
-- [ ] 500 устройств: bulk reboot завершается за < 10 секунд (asyncio.gather с semaphore=50)
+- [ ] Для online устройств bulk reboot отправляет live Android command и учитывает per-device receipt; offline и timeout явно отмечаются неуспешными
 - [ ] Устройства не из своей org → `success=False, error="Device not found"` (не 403)
 - [ ] Один failed device не отменяет остальные
 - [ ] Bulk delete требует роли `org_admin` или выше

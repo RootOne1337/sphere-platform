@@ -1,0 +1,9 @@
+{
+  "tests": 523,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "suites": 38,
+  "seconds": 120.176,
+  "configuration": "default dev debug; production permission helper on IO; native APK acceptance separate"
+}

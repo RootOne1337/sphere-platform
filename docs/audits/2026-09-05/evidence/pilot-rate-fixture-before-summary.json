@@ -1,0 +1,17 @@
+{
+  "state": "Combined AUD-78 candidate: earlier test collection before four login-input cases were added; fixture clients shared loopback rate-limit key",
+  "totals": {
+    "tests": 1409,
+    "failures": 1,
+    "errors": 0,
+    "skipped": 0
+  },
+  "failures": [
+    {
+      "name": "test_actual_admin_cli_login_and_enrollment_share_one_organization[new_organization]",
+      "failure": {
+        "message": "AssertionError: {\"detail\":\"Too many login attempts. Try again in 60 seconds.\"}\nassert 429 == 200\n +  where 429 = <Response [429 Too Many Requests]>.status_code"
+      }
+    }
+  ]
+}

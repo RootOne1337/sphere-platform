@@ -3,14 +3,15 @@
 # full-deploy.ps1 — Полное развёртывание Sphere Platform (Windows PowerShell)
 # =============================================================================
 #
-# Скрипт автоматизирует ВСЕ шаги от нуля до работающей системы:
+# Скрипт выполняет подготовку и запуск выбранного Compose project:
 #   1. Проверка зависимостей (Docker Desktop, Python, Git)
 #   2. Генерация криптографических секретов
-#   3. Сборка и запуск Docker-контейнеров
-#   4. Ожидание готовности PostgreSQL и Redis
-#   5. Применение Alembic-миграций
-#   6. Создание суперадминистратора
-#   7. Health-check всех сервисов
+#   3. Сборка Docker-образов
+#   4. Запуск PostgreSQL/Redis и ожидание readiness
+#   5. Alembic-миграции в one-off backend container
+#   6. Администратор и enrollment key в one-off containers
+#   7. Запуск приложений и ожидание Compose running/healthy
+#   8. Статус выбранного project (APK/VPN проверяются отдельно)
 #
 # Использование:
 #   .\scripts\full-deploy.ps1              # Интерактивный
@@ -34,9 +35,9 @@ $LogFile = Join-Path $ProjectDir ".deploy.log"
 $StopWatch = [System.Diagnostics.Stopwatch]::StartNew()
 
 if ($Production) {
-    $ComposeFiles = @("-f", "docker-compose.yml", "-f", "docker-compose.production.yml")
+    $ComposeFiles = @("-f", (Join-Path $ProjectDir "docker-compose.yml"), "-f", (Join-Path $ProjectDir "docker-compose.production.yml"))
 } else {
-    $ComposeFiles = @("-f", "docker-compose.yml", "-f", "docker-compose.full.yml")
+    $ComposeFiles = @("-f", (Join-Path $ProjectDir "docker-compose.yml"), "-f", (Join-Path $ProjectDir "docker-compose.full.yml"))
 }
 
 # ── Справка ───────────────────────────────────────────────────────────────────
@@ -104,7 +105,16 @@ function Show-Banner {
 # ── Docker Compose обёртка ────────────────────────────────────────────────────
 function Invoke-Compose {
     param([string[]]$Arguments)
-    $allArgs = $ComposeFiles + $Arguments
+    # Match make setup: generated .env.local takes precedence over .env.
+    # Let Compose parse dotenv; never execute it or print resolved secrets.
+    $selectedEnvFile = @('.env.local', '.env') | ForEach-Object {
+        $candidate = Join-Path $ProjectDir $_
+        if (Test-Path -LiteralPath $candidate -PathType Leaf) { $candidate }
+    } | Select-Object -First 1
+    if (-not $selectedEnvFile) {
+        throw "No .env.local or .env in the installation directory. Prepare configuration before Compose."
+    }
+    $allArgs = @('--env-file', $selectedEnvFile) + $ComposeFiles + $Arguments
     & docker compose @allArgs
     if ($LASTEXITCODE -ne 0) {
         throw "docker compose $($Arguments -join ' ') провалился (exit code: $LASTEXITCODE)"
@@ -173,6 +183,14 @@ function Step-GenerateSecrets {
 
     $envFile = Join-Path $ProjectDir ".env.local"
 
+    # The Compose wrapper also accepts .env. Do not shadow an existing
+    # installation with new credentials for already initialized volumes.
+    if (-not (Test-Path -LiteralPath $envFile) -and
+        (Test-Path -LiteralPath (Join-Path $ProjectDir ".env") -PathType Leaf)) {
+        Write-Log "INFO" "Используется существующий .env — новые секреты не генерируются"
+        return
+    }
+
     if ((Test-Path $envFile) -and $SkipSecrets) {
         Write-Log "INFO" "Секреты уже существуют (.env.local) — пропуск"
         return
@@ -221,206 +239,97 @@ function Step-BuildImages {
 }
 
 # =============================================================================
-# ШАГ 4: Запуск контейнеров
+# ШАГ 7: Запуск приложений после bootstrap
 # =============================================================================
 function Step-StartContainers {
-    Write-Log "STEP" "Шаг 4/8 — Запуск контейнеров"
-
-    Invoke-Compose @("up", "-d")
-
-    Write-Log "INFO" "Контейнеры запущены"
-    docker ps --format "table {{.Names}}\t{{.Status}}" 2>$null
+    Write-Log "STEP" "Шаг 7/8 — Запуск приложений после bootstrap"
+    Invoke-Compose @("up", "-d", "--wait", "--wait-timeout", "300")
+    Write-Log "INFO" "Compose running/healthy достигнуты"
 }
 
 # =============================================================================
-# ШАГ 5: Ожидание готовности сервисов
+# ШАГ 4: PostgreSQL и Redis до миграций
 # =============================================================================
 function Step-WaitForServices {
-    Write-Log "STEP" "Шаг 5/8 — Ожидание готовности сервисов"
-
-    $maxWait = 120
-
-    # PostgreSQL
-    Write-Log "INFO" "Ожидание PostgreSQL..."
-    $waited = 0
-    while ($waited -lt $maxWait) {
-        $health = docker inspect --format='{{.State.Health.Status}}' sphere-platform-postgres-1 2>$null
-        if ($health -eq "healthy") {
-            Write-Log "INFO" "PostgreSQL: ready (${waited}s)"
-            break
-        }
-        Start-Sleep -Seconds 3
-        $waited += 3
-        Write-Host "    PostgreSQL... ${waited}s / ${maxWait}s" -ForegroundColor Gray -NoNewline
-        Write-Host "`r" -NoNewline
-    }
-    if ($waited -ge $maxWait) {
-        Write-Log "ERROR" "PostgreSQL не стал ready за ${maxWait}s"
-        exit 1
-    }
-
-    # Redis
-    Write-Log "INFO" "Ожидание Redis..."
-    $waited = 0
-    while ($waited -lt $maxWait) {
-        $health = docker inspect --format='{{.State.Health.Status}}' sphere-platform-redis-1 2>$null
-        if ($health -eq "healthy") {
-            Write-Log "INFO" "Redis: ready (${waited}s)"
-            break
-        }
-        Start-Sleep -Seconds 3
-        $waited += 3
-    }
-    if ($waited -ge $maxWait) {
-        Write-Log "ERROR" "Redis не стал ready за ${maxWait}s"
-        exit 1
-    }
-
-    # Backend (HTTP health)
-    Write-Log "INFO" "Ожидание Backend..."
-    $waited = 0
-    while ($waited -lt $maxWait) {
-        try {
-            $r = Invoke-WebRequest -Uri "http://localhost:8000/api/v1/health" -TimeoutSec 3 -UseBasicParsing -ErrorAction SilentlyContinue
-            if ($r.StatusCode -eq 200) {
-                Write-Log "INFO" "Backend: ready (${waited}s)"
-                break
-            }
-        } catch { }
-        Start-Sleep -Seconds 3
-        $waited += 3
-    }
-    if ($waited -ge $maxWait) {
-        Write-Log "WARN" "Backend не ответил за ${maxWait}s — продолжаем"
-    }
+    Write-Log "STEP" "Шаг 4/8 — PostgreSQL и Redis до миграций"
+    Invoke-Compose @("up", "-d", "--wait", "--wait-timeout", "180", "postgres", "redis")
+    Write-Log "INFO" "Зависимости готовы в выбранном Compose project"
 }
 
 # =============================================================================
-# ШАГ 6: Миграции
+# ШАГ 5: Миграции
 # =============================================================================
 function Step-RunMigrations {
-    Write-Log "STEP" "Шаг 6/8 — Миграции базы данных (Alembic)"
-
-    try {
-        Invoke-Compose @("exec", "-T", "backend", "alembic", "-c", "alembic/alembic.ini", "upgrade", "head")
-        Write-Log "INFO" "Миграции применены"
-    } catch {
-        Write-Log "WARN" "Миграции через контейнер не прошли — пробуем с хоста..."
-        $env:PYTHONPATH = $ProjectDir
-        & python -m alembic -c alembic/alembic.ini upgrade head
-        if ($LASTEXITCODE -ne 0) {
-            Write-Log "ERROR" "Миграции провалились"
-            exit 1
-        }
-        Write-Log "INFO" "Миграции применены (с хоста)"
-    }
+    Write-Log "STEP" "Шаг 5/8 — Миграции до запуска API"
+    Invoke-Compose @("run", "--rm", "--no-deps", "-T", "backend", "alembic", "-c", "alembic/alembic.ini", "upgrade", "head")
+    Write-Log "INFO" "Миграции применены выбранным backend image/configuration"
 }
 
 # =============================================================================
-# ШАГ 7: Инициализация данных
+# ШАГ 6: Инициализация данных
 # =============================================================================
 function Step-SeedData {
-    Write-Log "STEP" "Шаг 7/8 — Инициализация данных"
+    Write-Log "STEP" "Шаг 6/8 — Инициализация данных"
 
-    $adminEmail = if ($env:SPHERE_ADMIN_EMAIL) { $env:SPHERE_ADMIN_EMAIL } else { "admin@sphere.local" }
+    $adminEmail = if ($env:SPHERE_ADMIN_EMAIL) { $env:SPHERE_ADMIN_EMAIL } else { "admin@example.com" }
     $adminPassword = if ($env:SPHERE_ADMIN_PASSWORD) { $env:SPHERE_ADMIN_PASSWORD } else {
         & python -c "import secrets; print(secrets.token_urlsafe(16))" 2>$null
     }
 
     Write-Log "INFO" "Создание администратора ($adminEmail)..."
 
+    $previousAdminEmail = $env:ADMIN_EMAIL
+    $previousAdminPassword = $env:ADMIN_PASSWORD
+    $bootstrapOrgEnv = @()
+    if ($env:SPHERE_BOOTSTRAP_ORG_SLUG) { $bootstrapOrgEnv = @('-e', 'SPHERE_BOOTSTRAP_ORG_SLUG') }
     try {
-        Invoke-Compose @("exec", "-T", "backend", "python", "scripts/create_admin.py")
-    } catch {
-        Write-Log "WARN" "Администратор может уже существовать"
+        $env:ADMIN_EMAIL = $adminEmail
+        $env:ADMIN_PASSWORD = $adminPassword
+        $adminOutput = @(Invoke-Compose (@("run", "--rm", "--no-deps", "-T", "-e", "ADMIN_EMAIL", "-e", "ADMIN_PASSWORD") + $bootstrapOrgEnv + @("backend", "python", "scripts/create_admin.py", "--create-only")))
+    } finally {
+        $env:ADMIN_EMAIL = $previousAdminEmail
+        $env:ADMIN_PASSWORD = $previousAdminPassword
+    }
+
+    $adminOutput | ForEach-Object { Write-Host $_ }
+    $outcomes = @($adminOutput | Where-Object {
+        $_ -in @('SPHERE_ADMIN_BOOTSTRAP=created', 'SPHERE_ADMIN_BOOTSTRAP=existing')
+    })
+    if ($outcomes.Count -ne 1) {
+        throw "Admin bootstrap returned no unambiguous committed outcome; candidate credentials are not confirmed"
+    }
+    if ($outcomes[0] -eq 'SPHERE_ADMIN_BOOTSTRAP=created') {
+        Write-Log "INFO" "Новый администратор сохранён; остальные этапы bootstrap ещё выполняются"
+        Write-Host ""
+        Write-Host "  ╔══════════════════════════════════════════════════╗" -ForegroundColor Green
+        Write-Host "  ║           УЧЁТНЫЕ ДАННЫЕ АДМИНИСТРАТОРА          ║" -ForegroundColor Green
+        Write-Host "  ╠══════════════════════════════════════════════════╣" -ForegroundColor Green
+        Write-Host "  ║  Email:    $adminEmail" -ForegroundColor Green
+        Write-Host "  ║  Пароль:   $adminPassword" -ForegroundColor Green
+        Write-Host "  ╠══════════════════════════════════════════════════╣" -ForegroundColor Green
+        Write-Host "  ║  Сохраните пароль нового администратора         ║" -ForegroundColor Yellow
+        Write-Host "  ╚══════════════════════════════════════════════════╝" -ForegroundColor Green
+        Write-Host ""
+    } else {
+        Write-Log "INFO" "Администратор уже существует — пароль и настройки сохранены; используйте прежние учётные данные"
     }
 
     # Enrollment ключ
     Write-Log "INFO" "Генерация enrollment-ключа..."
-    try {
-        Invoke-Compose @("exec", "-T", "-e", "AGENT_CONFIG_ENV=development", "backend", "python", "-m", "scripts.seed_enrollment_key")
-    } catch {
-        Write-Log "WARN" "Enrollment-ключ не сгенерирован"
-    }
-
-    Write-Host ""
-    Write-Host "  ╔══════════════════════════════════════════════════╗" -ForegroundColor Green
-    Write-Host "  ║           УЧЁТНЫЕ ДАННЫЕ АДМИНИСТРАТОРА          ║" -ForegroundColor Green
-    Write-Host "  ╠══════════════════════════════════════════════════╣" -ForegroundColor Green
-    Write-Host "  ║  Email:    $adminEmail" -ForegroundColor Green
-    Write-Host "  ║  Пароль:   $adminPassword" -ForegroundColor Green
-    Write-Host "  ╠══════════════════════════════════════════════════╣" -ForegroundColor Green
-    Write-Host "  ║  ⚠  СОХРАНИ — пароль не хранится в системе!     ║" -ForegroundColor Yellow
-    Write-Host "  ╚══════════════════════════════════════════════════╝" -ForegroundColor Green
-    Write-Host ""
+    Invoke-Compose (@("run", "--rm", "--no-deps", "-T") + $bootstrapOrgEnv + @("backend", "python", "-m", "scripts.seed_enrollment_key"))
 }
 
 # =============================================================================
 # ШАГ 8: Финальная проверка
 # =============================================================================
 function Step-FinalHealthcheck {
-    Write-Log "STEP" "Шаг 8/8 — Финальная проверка"
-
-    $allOk = $true
-
-    # Backend
-    try {
-        $r = Invoke-WebRequest -Uri "http://localhost:8000/api/v1/health" -TimeoutSec 5 -UseBasicParsing
-        Write-Log "INFO" "Backend API:    ✅ $($r.Content)"
-    } catch {
-        Write-Log "ERROR" "Backend API:    ❌ Не отвечает"
-        $allOk = $false
-    }
-
-    # Frontend
-    try {
-        $null = Invoke-WebRequest -Uri "http://localhost:3000" -TimeoutSec 5 -UseBasicParsing
-        Write-Log "INFO" "Frontend:       ✅ Доступен на :3000"
-    } catch {
-        Write-Log "ERROR" "Frontend:       ❌ Не отвечает"
-        $allOk = $false
-    }
-
-    # Nginx
-    try {
-        $null = Invoke-WebRequest -Uri "http://localhost" -TimeoutSec 5 -UseBasicParsing
-        Write-Log "INFO" "Nginx Proxy:    ✅ Доступен на :80"
-    } catch {
-        Write-Log "WARN" "Nginx Proxy:    ⚠  Может ждать SSL"
-    }
-
-    # n8n
-    try {
-        $null = Invoke-WebRequest -Uri "http://localhost:5678" -TimeoutSec 5 -UseBasicParsing
-        Write-Log "INFO" "n8n:            ✅ Доступен"
-    } catch {
-        Write-Log "WARN" "n8n:            ⚠  Не критично"
-    }
-
-    # Docker containers
-    Write-Host "`n  Контейнеры:" -ForegroundColor Cyan
-    docker ps --format "    {{.Names}}: {{.Status}}" 2>$null
-
-    Write-Host ""
-    if ($allOk) {
-        Write-Host "  ╔═══════════════════════════════════════════════════════════╗" -ForegroundColor Green
-        Write-Host "  ║                                                           ║" -ForegroundColor Green
-        Write-Host "  ║         🚀 SPHERE PLATFORM РАЗВЁРНУТА УСПЕШНО 🚀          ║" -ForegroundColor Green
-        Write-Host "  ║                                                           ║" -ForegroundColor Green
-        Write-Host "  ╠═══════════════════════════════════════════════════════════╣" -ForegroundColor Green
-        Write-Host "  ║   Web UI:     http://localhost                            ║" -ForegroundColor White
-        Write-Host "  ║   API:        http://localhost:8000/api/v1                ║" -ForegroundColor White
-        Write-Host "  ║   Swagger:    http://localhost:8000/docs                  ║" -ForegroundColor White
-        Write-Host "  ║   n8n:        http://localhost:5678                       ║" -ForegroundColor White
-        Write-Host "  ║   MinIO:      http://localhost:9001                       ║" -ForegroundColor White
-        Write-Host "  ╚═══════════════════════════════════════════════════════════╝" -ForegroundColor Green
-    } else {
-        Write-Host "  ⚠  Некоторые сервисы не прошли проверку." -ForegroundColor Yellow
-        Write-Host "  Проверь: docker compose logs <service>" -ForegroundColor Yellow
-    }
-
+    Write-Log "STEP" "Шаг 8/8 — Статус выбранного Compose project"
+    Invoke-Compose @("ps", "--all")
+    Write-Log "INFO" "Schema/bootstrap завершены; Compose readiness пройдена"
+    Write-Host "  Следующая проверка: вход в веб, регистрация APK и задание с результатом."
+    Write-Host "  Адреса и ограничения: docs/operations/STARTUP.md"
     $elapsed = $StopWatch.Elapsed
-    Write-Host "`n  Развёртывание завершено за $($elapsed.Minutes)m $($elapsed.Seconds)s" -ForegroundColor Cyan
+    Write-Host "  Подготовка и запуск завершены за $($elapsed.Minutes)m $($elapsed.Seconds)s"
 }
 
 # =============================================================================
@@ -435,8 +344,8 @@ Show-Banner
 Step-CheckDependencies
 Step-GenerateSecrets
 Step-BuildImages
-Step-StartContainers
 Step-WaitForServices
 Step-RunMigrations
 Step-SeedData
+Step-StartContainers
 Step-FinalHealthcheck

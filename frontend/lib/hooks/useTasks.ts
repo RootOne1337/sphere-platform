@@ -12,6 +12,8 @@ export interface Task {
   priority: number;
   started_at: string | null;
   finished_at: string | null;
+  cancel_requested_at?: string | null;
+  timeout_requested_at?: string | null;
   wave_index: number | null;
   created_at: string;
   updated_at: string;
@@ -38,12 +40,13 @@ export interface NodeExecutionLog {
   output: unknown;
 }
 
-interface TasksResponse {
+export interface TasksResponse {
   items: Task[];
   total: number;
   page: number;
   per_page: number;
   pages: number;
+  status_counts?: Record<string, number> | null;
 }
 
 export function useTasks(params: {
@@ -53,6 +56,11 @@ export function useTasks(params: {
   device_id?: string;
   script_id?: string;
   batch_id?: string;
+  search?: string;
+  sort_by?: 'created_at' | 'script_name' | 'status' | 'priority';
+  sort_dir?: 'asc' | 'desc';
+  active_only?: boolean;
+  include_counts?: boolean;
 }) {
   return useQuery<TasksResponse>({
     queryKey: ['tasks', params],

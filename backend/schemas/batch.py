@@ -5,7 +5,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 # ── Запросы ──────────────────────────────────────────────────────────────────
 
@@ -38,13 +38,20 @@ class BatchExecutionRequest(BaseModel):
     webhook_url: str | None = Field(
         None,
         max_length=2048,
-        description="URL callback при завершении всего батча",
+        description="Зарезервированный URL callback; доставка ещё не реализована, используйте GET /batches/{id}",
     )
     stagger_by_workstation: bool = Field(
         default=True,
         description="Распределять волны по рабочим станциям равномерно",
     )
     name: str | None = Field(None, max_length=255)
+
+    @field_validator("device_ids")
+    @classmethod
+    def unique_devices(cls, value: list[uuid.UUID]) -> list[uuid.UUID]:
+        if len(value) != len(set(value)):
+            raise ValueError("device_ids must be unique")
+        return value
 
 
 class BroadcastBatchRequest(BaseModel):
@@ -73,7 +80,7 @@ class BroadcastBatchRequest(BaseModel):
     webhook_url: str | None = Field(
         None,
         max_length=2048,
-        description="URL callback при завершении всего батча",
+        description="Зарезервированный URL callback; доставка ещё не реализована, используйте GET /batches/{id}",
     )
     stagger_by_workstation: bool = Field(
         default=True,
@@ -94,6 +101,10 @@ class BatchResponse(BaseModel):
     succeeded: int
     failed: int
     wave_config: dict
+    script_version_id: uuid.UUID | None = None
+    next_wave_index: int = 0
+    next_wave_at: datetime | None = None
+    admission_state: str = "legacy_unknown"
     created_at: datetime
     updated_at: datetime
 
@@ -103,6 +114,7 @@ class BatchResponse(BaseModel):
 class BatchDetailResponse(BatchResponse):
     """Расширенный ответ с прогрессом волн."""
     notes: str | None = None
+    admission_receipts: list[dict] = Field(default_factory=list)
 
     model_config = ConfigDict(from_attributes=True)
 

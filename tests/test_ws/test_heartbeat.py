@@ -47,10 +47,54 @@ class TestHeartbeatManager:
     # ── handle_pong ───────────────────────────────────────────────────────────
 
     async def test_pong_updates_last_pong_timestamp(self, heartbeat):
+        heartbeat._last_pong = asyncio.get_running_loop().time() - 10
         before = heartbeat._last_pong
-        await asyncio.sleep(0.01)
         await heartbeat.handle_pong({"type": "pong", "ts": time.time()})
         assert heartbeat._last_pong > before
+
+    async def test_first_persisted_pong_is_reported_once(self, heartbeat, fake_cache):
+        await fake_cache.set_status(
+            "dev-1",
+            DeviceLiveStatus(device_id="dev-1", status="connecting", ws_session_id=None),
+        )
+
+        assert await heartbeat.handle_pong({"type": "pong", "ts": time.time()}) is True
+        assert await heartbeat.handle_pong({"type": "pong", "ts": time.time()}) is False
+
+        status = await fake_cache.get_status("dev-1")
+        assert status is not None and status.status == "online"
+
+    async def test_pong_retries_presence_write_after_redis_failure(self, ws, fake_cache, monkeypatch):
+        await fake_cache.set_status(
+            "dev-1",
+            DeviceLiveStatus(device_id="dev-1", status="connecting"),
+        )
+        heartbeat = HeartbeatManager(ws, "dev-1", fake_cache)
+        set_status = AsyncMock(side_effect=[ConnectionError("isolated Redis write loss"), True])
+        monkeypatch.setattr(fake_cache, "set_status", set_status)
+
+        assert await heartbeat.handle_pong({"type": "pong", "ts": time.time()}) is False
+        assert await heartbeat.handle_pong({"type": "pong", "ts": time.time()}) is True
+        assert set_status.await_count == 2
+
+    async def test_replaced_session_pong_does_not_confirm_online(self, ws, fake_cache):
+        await fake_cache.set_status(
+            "dev-1",
+            DeviceLiveStatus(device_id="dev-1", status="online", ws_session_id="new-session"),
+        )
+        stale = HeartbeatManager(ws, "dev-1", fake_cache, session_id="old-session")
+
+        assert await stale.handle_pong({"type": "pong", "ts": time.time()}) is False
+
+    async def test_first_heartbeat_ping_is_sent_immediately(self, heartbeat, ws):
+        from unittest.mock import patch
+
+        sleep = AsyncMock(side_effect=asyncio.CancelledError())
+        with patch("backend.websocket.heartbeat.asyncio.sleep", sleep):
+            await heartbeat._heartbeat_loop()
+
+        ws.send_json.assert_awaited_once()
+        assert ws.send_json.await_args.args[0]["type"] == "ping"
 
     async def test_pong_updates_battery_in_cache(self, heartbeat, fake_cache):
         await fake_cache.set_status(
@@ -82,6 +126,23 @@ class TestHeartbeatManager:
         assert status.screen_on is True
         assert status.vpn_active is False
 
+    async def test_pong_updates_agent_build_metadata(self, heartbeat, fake_cache):
+        await fake_cache.set_status(
+            "dev-1",
+            DeviceLiveStatus(device_id="dev-1", status="online"),
+        )
+        await heartbeat.handle_pong({
+            "type": "pong",
+            "ts": time.time(),
+            "agent_version": "1.2.20-dev",
+            "agent_version_code": 10220,
+        })
+
+        status = await fake_cache.get_status("dev-1")
+        assert status is not None
+        assert status.agent_version == "1.2.20-dev"
+        assert status.agent_version_code == 10220
+
     async def test_pong_updates_last_heartbeat_timestamp(self, heartbeat, fake_cache):
         from datetime import datetime, timezone
         before = datetime.now(timezone.utc)
@@ -96,6 +157,47 @@ class TestHeartbeatManager:
         assert status is not None
         assert status.last_heartbeat is not None
         assert status.last_heartbeat >= before
+
+    async def test_pong_persists_sanitized_stream_snapshot_with_session_identity(
+        self, ws, fake_cache
+    ):
+        heartbeat = HeartbeatManager(ws, "dev-stream", fake_cache, session_id="ws-session-7")
+        await heartbeat.handle_pong({
+            "type": "pong",
+            "ts": time.time(),
+            "stream": {
+                "schema_version": 2,
+                "active": True,
+                "stage": "capture_encoder_ws_queue",
+                "capture_fps": 16,
+                "render_fps": 15,
+                "capture_frames_total": 320,
+                "rendered_frames_total": 300,
+                "capture_read_failures_total": 1,
+                "render_failures_total": 2,
+                "encoder_errors_total": 0,
+                "frame_throttle_drops_total": 12,
+                "encoder_fps": 15,
+                "encoded_frames_total": 300,
+                "encoded_bytes_total": 1_000_000,
+                "key_frame_ratio": 0.05,
+                "ws_queue_attempts_total": 305,
+                "ws_queue_accepted_total": 304,
+                "ws_queue_rejected_total": 1,
+                "ws_queue_accepted_bytes_total": 990_000,
+                "private_token": "must-not-be-persisted",
+            },
+        })
+
+        snapshot = await fake_cache.get_stream_diagnostics("dev-stream")
+        assert snapshot is not None
+        assert snapshot.agent_session_id == "ws-session-7"
+        assert snapshot.telemetry.capture_fps == 16
+        assert "private_token" not in snapshot.telemetry.model_dump()
+        assert await fake_cache.redis.ttl("device:stream-diagnostics:dev-stream") > 0
+
+        await heartbeat.handle_pong({"type": "pong", "ts": time.time()})
+        assert await fake_cache.get_stream_diagnostics("dev-stream") is None
 
     async def test_pong_no_status_in_cache_is_noop(self, heartbeat, fake_cache):
         """Если статус не в кэше — pong не должен падать."""

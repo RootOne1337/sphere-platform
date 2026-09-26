@@ -1,6 +1,6 @@
 # tests/auth/conftest.py
 # Переопределяет async_engine для SQLite-совместимости:
-# заменяет PostgreSQL-специфичные типы (JSONB, INET, ARRAY) на их SQLite-аналоги.
+# использует SQLite-варианты типов из tests/conftest.py.
 # Также добавляет недостающие SQLAlchemy relationships (TZ-02 stub).
 from __future__ import annotations
 
@@ -39,36 +39,13 @@ def _patch_missing_relationships() -> None:
 _patch_missing_relationships()
 
 
-def _patch_pg_types_for_sqlite() -> None:
-    """
-    Заменить PostgreSQL-специфичные типы в метаданных на SQLite-совместимые.
-    Вызывается однажды перед create_all на SQLite.
-    JSONB  → JSON
-    INET   → String(45)
-    ARRAY  → JSON  (хранится как JSON-массив)
-    """
-    from sqlalchemy import JSON, String
-    from sqlalchemy.dialects.postgresql import ARRAY, INET, JSONB
-
-    for table in Base.metadata.tables.values():
-        for column in table.columns:
-            col_type = type(column.type)
-            if col_type is JSONB or col_type.__name__ == "JSONB":
-                column.type = JSON()
-            elif col_type is INET or col_type.__name__ == "INET":
-                column.type = String(45)
-            elif col_type is ARRAY or col_type.__name__ == "ARRAY":
-                column.type = JSON()
-
-
 @pytest_asyncio.fixture(scope="session")
 async def async_engine():
     """
     Переопределение базового async_engine из tests/conftest.py.
-    Патчит missing relationships и PG-типы перед созданием SQLite схемы.
+    Проверяет relationships перед созданием SQLite схемы.
     """
     _patch_missing_relationships()
-    _patch_pg_types_for_sqlite()
 
     engine = create_async_engine(
         "sqlite+aiosqlite:///:memory:",

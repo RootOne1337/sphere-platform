@@ -19,6 +19,8 @@ Enterprise rationale
 """
 from __future__ import annotations
 
+import hashlib
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -28,32 +30,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 import backend.api.v1.updates.router as updates_module
 from backend.core.security import create_access_token
-from backend.database.engine import Base, get_db
+from backend.database.engine import get_db
 from backend.database.redis_client import get_redis
 from backend.main import app
 from backend.models import *  # noqa: F401,F403
 from backend.models.api_key import APIKey
 from backend.models.organization import Organization
 from backend.models.user import User
-
-
-def _patch_pg_types_for_sqlite() -> None:
-    from sqlalchemy import JSON, String
-    from sqlalchemy.dialects.postgresql import ARRAY, JSONB
-
-    for table in Base.metadata.tables.values():
-        for column in table.columns:
-            col_type = type(column.type)
-            if col_type is JSONB or col_type.__name__ == "JSONB":
-                column.type = JSON()
-            elif col_type.__name__ == "INET":
-                column.type = String(45)
-            elif col_type is ARRAY or col_type.__name__ == "ARRAY":
-                column.type = JSON()
-
-
-_patch_pg_types_for_sqlite()
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -73,7 +56,7 @@ async def updates_admin(db_session: AsyncSession, updates_org):
         org_id=updates_org.id,
         email="updates-admin@sphere.local",
         password_hash="$2b$12$placeholder",
-        role="org_admin",
+        role="super_admin",
     )
     db_session.add(user)
     await db_session.flush()
@@ -104,6 +87,7 @@ async def agent_api_key(db_session: AsyncSession, updates_org):
         key_hash=hashlib.sha256(raw.encode()).hexdigest(),
         key_prefix="sphr_test",
         type="agent",
+        permissions=["device:register"],
         is_active=True,
     )
     db_session.add(api_key)
@@ -187,6 +171,202 @@ _VALID_RELEASE = {
     "mandatory": False,
     "changelog": "Bug fixes",
 }
+
+
+def test_default_update_store_is_not_container_tmp(monkeypatch):
+    monkeypatch.delenv("SPHERE_UPDATES_PATH", raising=False)
+    expected = Path(updates_module.__file__).resolve().parents[3] / "updates" / "releases.json"
+    assert updates_module._resolve_updates_path() == expected
+
+    override = Path("/durable/ota/releases.json")
+    monkeypatch.setenv("SPHERE_UPDATES_PATH", str(override))
+    assert updates_module._resolve_updates_path() == override
+
+
+class TestManagedArtifacts:
+    async def test_canary_platform_release_is_excluded_from_regular_dev_checks_and_grant_is_targeted(
+        self, admin_client, anon_client, agent_api_key, isolate_updates_file, db_session, updates_org,
+    ):
+        """Stage one APK without offering it to every dev-flavor agent."""
+        from backend.models.device import Device
+
+        content = b"isolated canary APK fixture"
+        digest = hashlib.sha256(content).hexdigest()
+        artifact = isolate_updates_file.parent / "artifacts" / f"{digest}.apk"
+        artifact.parent.mkdir()
+        artifact.write_bytes(content)
+        created = await admin_client.post("/api/v1/updates/", json={
+            **_VALID_RELEASE,
+            "platform": "android-canary",
+            "flavor": "dev",
+            "version_code": 10215,
+            "version_name": "1.2.15-dev",
+            "download_url": "/api/v1/updates/artifacts/" + digest,
+            "sha256": digest,
+        })
+        assert created.status_code == 201, created.text
+
+        regular = await anon_client.get(
+            "/api/v1/updates/latest?platform=android&flavor=dev&version_code=10209",
+            headers={"X-API-Key": agent_api_key},
+        )
+        assert regular.status_code == 200, regular.text
+        assert regular.json()["update_available"] is False
+
+        target = Device(org_id=updates_org.id, name="selected-canary")
+        other = Device(org_id=updates_org.id, name="ordinary-dev")
+        db_session.add_all([target, other])
+        await db_session.flush()
+        grant = await admin_client.post("/api/v1/updates/recovery", json={
+            "device_id": str(target.id), "sha256": digest, "duration_seconds": 600,
+        })
+        assert grant.status_code == 201, grant.text
+        assert target.meta["ota_recovery"]["sha256"] == digest
+        assert target.meta["ota_recovery"]["version_code"] == 10215
+        assert "ota_recovery" not in (other.meta or {})
+
+        recovery_status = await admin_client.get(f"/api/v1/updates/recovery/{target.id}")
+        assert recovery_status.status_code == 200, recovery_status.text
+        status_body = recovery_status.json()
+        assert status_body["state"] == "active"
+        assert status_body["active"]["sha256"] == digest
+        assert "authorization_tag" not in status_body["active"]
+        assert status_body["last_result"] is None
+
+    async def test_release_version_code_must_be_a_positive_android_int(self, admin_client):
+        for version_code in (0, -1, 2_147_483_648):
+            response = await admin_client.post(
+                "/api/v1/updates/",
+                json={**_VALID_RELEASE, "version_code": version_code},
+            )
+            assert response.status_code == 422
+
+    async def test_recovery_grant_is_explicit_single_artifact_bounded_and_revocable(
+        self, admin_client, isolate_updates_file, db_session, updates_org,
+    ):
+        from backend.models.device import Device
+        device = Device(org_id=updates_org.id, name="copied-template")
+        db_session.add(device)
+        await db_session.flush()
+        body = {"device_id": str(device.id), "sha256": "a" * 64}
+        assert (await admin_client.post("/api/v1/updates/recovery", json=body)).status_code == 422
+        content = b"recovery APK fixture"
+        digest = hashlib.sha256(content).hexdigest()
+        artifact = isolate_updates_file.parent / "artifacts" / f"{digest}.apk"
+        artifact.parent.mkdir()
+        artifact.write_bytes(content)
+        release = await admin_client.post("/api/v1/updates/", json={**_VALID_RELEASE,
+            "download_url": "/api/v1/updates/artifacts/" + digest, "sha256": digest})
+        assert release.status_code == 201
+        body["sha256"] = digest
+        assert (await admin_client.post("/api/v1/updates/recovery", json={**body, "duration_seconds": 3601})).status_code == 422
+        granted = await admin_client.post("/api/v1/updates/recovery", json=body)
+        assert granted.status_code == 201, granted.text
+        assert granted.json()["expires_at"] - granted.json()["created_at"] == 1800
+        assert (await admin_client.post("/api/v1/updates/recovery", json=body)).status_code == 409
+        assert (await admin_client.delete("/api/v1/updates/recovery/" + str(device.id))).status_code == 204
+        assert "ota_recovery" not in device.meta
+        status = await admin_client.get(f"/api/v1/updates/recovery/{device.id}")
+        assert status.status_code == 200
+        assert status.json()["state"] == "none"
+        assert status.json()["active"] is None
+
+    async def test_recovery_status_returns_only_sanitized_terminal_receipt(
+        self, admin_client, db_session, updates_org,
+    ):
+        from backend.models.device import Device
+
+        device = Device(org_id=updates_org.id, name="recovered-copy", meta={
+            "ota_recovery_result": {
+                "command_id": "f7d55d4d-8c24-4523-a908-a18d6a9bd432",
+                "sha256": "b" * 64,
+                "version_name": "1.2.20-dev",
+                "version_code": 10220,
+                "status": "completed",
+                "failure_code": None,
+                "installed_version_code": 10220,
+                "recovered_after_process_restart": True,
+                "recorded_at": "2026-09-25T00:00:00+00:00",
+            },
+        })
+        db_session.add(device)
+        await db_session.flush()
+
+        response = await admin_client.get(f"/api/v1/updates/recovery/{device.id}")
+
+        assert response.status_code == 200, response.text
+        body = response.json()
+        assert body["state"] == "completed"
+        assert body["active"] is None
+        assert body["last_result"]["installed_version_code"] == 10220
+        assert body["recent_results"][0]["command_id"] == body["last_result"]["command_id"]
+        assert "authorization_tag" not in response.text
+
+    async def test_viewer_cannot_enable_recovery(self, viewer_client):
+        import uuid
+        response = await viewer_client.post("/api/v1/updates/recovery", json={"device_id": str(uuid.uuid4()), "sha256": "a" * 64})
+        assert response.status_code == 403
+
+    async def test_published_artifact_download_requires_agent_auth(self, admin_client, isolate_updates_file):
+        content = b"owned APK fixture"
+        digest = hashlib.sha256(content).hexdigest()
+        artifact = isolate_updates_file.parent / "artifacts" / f"{digest}.apk"
+        artifact.parent.mkdir()
+        artifact.write_bytes(content)
+        path = f"/api/v1/updates/artifacts/{digest}"
+        created = await admin_client.post("/api/v1/updates/", json={**_VALID_RELEASE,
+            "download_url": path, "sha256": digest})
+        assert created.status_code == 201, created.text
+        downloaded = await admin_client.get(path)
+        assert downloaded.status_code == 200, downloaded.text
+        assert downloaded.content == content
+        assert downloaded.headers["cache-control"] == "private, no-store"
+        denied = await admin_client.get(path, headers={"Authorization": ""})
+        assert denied.status_code == 401
+
+    async def test_managed_url_follows_current_request_host(self, admin_client, isolate_updates_file):
+        content = b"APK current ingress fixture"
+        digest = hashlib.sha256(content).hexdigest()
+        artifact = isolate_updates_file.parent / "artifacts" / f"{digest}.apk"
+        artifact.parent.mkdir()
+        artifact.write_bytes(content)
+        path = f"/api/v1/updates/artifacts/{digest}"
+        created = await admin_client.post("/api/v1/updates/", json={**_VALID_RELEASE,
+            "download_url": path, "sha256": digest})
+        assert created.status_code == 201, created.text
+        token = admin_client.headers['Authorization'].removeprefix('Bearer ')
+        for hostname in ('primary.test', 'recovered.test'):
+            latest = await admin_client.get('/api/v1/updates/latest',
+                headers={'Host': hostname, 'X-API-Key': token})
+            assert latest.status_code == 200, latest.text
+            assert latest.json()['download_url'] == f'https://{hostname}{path}'
+
+    async def test_missing_managed_artifact_cannot_be_published(self, admin_client):
+        response = await admin_client.post('/api/v1/updates/', json={**_VALID_RELEASE,
+            'download_url': '/api/v1/updates/artifacts/' + 'a' * 64})
+        assert response.status_code == 422
+
+    async def test_wrong_file_hash_cannot_be_published(self, admin_client, isolate_updates_file):
+        artifact = isolate_updates_file.parent / 'artifacts' / ('a' * 64 + '.apk')
+        artifact.parent.mkdir()
+        artifact.write_bytes(b'wrong checksum')
+        response = await admin_client.post('/api/v1/updates/', json={**_VALID_RELEASE,
+            'download_url': '/api/v1/updates/artifacts/' + 'a' * 64})
+        assert response.status_code == 422
+
+    async def test_unpublished_file_is_not_downloadable(self, admin_client, isolate_updates_file):
+        content = b'unpublished APK'
+        digest = hashlib.sha256(content).hexdigest()
+        artifact = isolate_updates_file.parent / 'artifacts' / (digest + '.apk')
+        artifact.parent.mkdir()
+        artifact.write_bytes(content)
+        response = await admin_client.get('/api/v1/updates/artifacts/' + digest)
+        assert response.status_code == 404
+
+    async def test_unknown_relative_url_is_rejected(self, admin_client):
+        response = await admin_client.post('/api/v1/updates/', json={**_VALID_RELEASE,
+            'download_url': '/private/not-an-ota-artifact'})
+        assert response.status_code == 422
 
 
 # ===========================================================================

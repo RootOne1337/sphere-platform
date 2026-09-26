@@ -1,0 +1,17 @@
+backend\database\redis_client.py:50: error: Item "None" of "Redis | None" has no attribute "ping"  [union-attr]
+backend\database\redis_client.py:50: note: Error code "union-attr" not covered by "type: ignore" comment
+backend\database\redis_client.py:51: error: Item "None" of "Redis | None" has no attribute "ping"  [union-attr]
+backend\database\redis_client.py:51: note: Error code "union-attr" not covered by "type: ignore" comment
+backend\services\vpn\ip_pool.py:48: error: Argument 1 to "ip_address" has incompatible type "str | None"; expected "int | str | bytes | IPv4Address | IPv6Address"  [arg-type]
+backend\services\device_event_service.py:173: error: "object" has no attribute "desc"  [attr-defined]
+backend\services\device_event_service.py:173: error: "object" has no attribute "asc"  [attr-defined]
+backend\services\account_session_service.py:277: error: "object" has no attribute "desc"  [attr-defined]
+backend\services\account_session_service.py:277: error: "object" has no attribute "asc"  [attr-defined]
+backend\api\v1\monitoring\router.py:282: error: Module has no attribute "statvfs"  [attr-defined]
+backend\services\game_account_service.py:240: error: "object" has no attribute "desc"  [attr-defined]
+backend\services\game_account_service.py:240: error: "object" has no attribute "asc"  [attr-defined]
+backend\services\orchestrator\orchestration_engine.py:225: error: Argument "script_id" to "create_task" of "TaskService" has incompatible type "UUID | None"; expected "UUID"  [arg-type]
+backend\services\orchestrator\orchestration_engine.py:316: error: Argument "device_id" to "create_task" of "TaskService" has incompatible type "UUID | None"; expected "UUID"  [arg-type]
+backend\services\orchestrator\orchestration_engine.py:317: error: Argument "script_id" to "create_task" of "TaskService" has incompatible type "UUID | None"; expected "UUID"  [arg-type]
+backend\main.py:115: note: By default the bodies of untyped functions are not checked, consider using --check-untyped-defs  [annotation-unchecked]
+Found 13 errors in 7 files (checked 207 source files)

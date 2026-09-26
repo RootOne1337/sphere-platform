@@ -105,8 +105,14 @@ class PipelineRunResponse(BaseModel):
     input_params: dict[str, Any]
     step_logs: list[dict[str, Any]]
     current_task_id: uuid.UUID | None = None
+    current_child_run_id: uuid.UUID | None = None
+    execution_phase: str = "ready"
+    execution_generation: int = 0
+    execution_lease_until: datetime | None = None
+    step_started_at: datetime | None = None
     started_at: datetime | None = None
     finished_at: datetime | None = None
+    cancel_requested_at: datetime | None = None
     retry_count: int
     created_at: datetime
     updated_at: datetime

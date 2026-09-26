@@ -1,0 +1,12 @@
+{
+  "baseline": "f811320fc82f545694c4919fa9c5b7ff6de4b772",
+  "state": "after",
+  "totals": {
+    "tests": 44,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "failures": [],
+  "boundaries": "Actual PowerShell Invoke-Compose with actual docker compose config using only synthetic temp dotenv/YAML; no daemon operations. Full start-dev subprocess uses process-backed Docker double."
+}

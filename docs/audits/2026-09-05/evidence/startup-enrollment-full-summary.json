@@ -1,0 +1,16 @@
+{
+  "baseline_sha": "8c2b647c93b09506f8266fd594beae5934232ed1",
+  "state": "startup-enrollment-full",
+  "totals": {
+    "tests": 1466,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "groups": {
+    "tests.production": 524,
+    "tests.deployment": 67
+  },
+  "failures": [],
+  "boundary": "Disposable loopback PostgreSQL/Redis; actual dev hook and ASGI registration, independent SQL Sessions. Compose config renderer only; process/HTTP doubles for deployment. No installed APK, API listener or full daemon deployment."
+}

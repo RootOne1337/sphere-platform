@@ -135,7 +135,7 @@ redis_errors_total = Counter(
 # ---------------------------------------------------------------------------
 stream_fps = Gauge(
     "sphere_stream_fps",
-    "Current encoding/delivery FPS for active stream",
+    "Android encoder output FPS over its trailing one-second window",
     ["device_id"],
 )
 stream_bitrate_kbps = Gauge(
@@ -145,18 +145,148 @@ stream_bitrate_kbps = Gauge(
 )
 stream_frame_drops_total = Counter(
     "sphere_stream_frame_drops_total",
-    "Total number of dropped frames (WS send failures or queue overflows)",
+    "Legacy metric; no longer populated from estimated FPS differences",
     ["device_id"],
 )
 stream_bytes_sent_total = Counter(
     "sphere_stream_bytes_sent_total",
-    "Total bytes forwarded from agent to viewer",
+    "Legacy metric; stage-specific session gauges report current stream bytes",
     ["device_id"],
 )
 stream_keyframe_ratio = Gauge(
     "sphere_stream_keyframe_ratio",
     "Ratio of keyframes to total frames in the current session",
     ["device_id"],
+)
+stream_encoder_frames_session = Gauge(
+    "sphere_stream_encoder_frames_session",
+    "Encoder output frames counted in the current Android capture session",
+    ["device_id"],
+)
+stream_encoder_bytes_session = Gauge(
+    "sphere_stream_encoder_bytes_session",
+    "Encoded bytes counted in the current Android capture session",
+    ["device_id"],
+)
+stream_ws_queue_attempts_session = Gauge(
+    "sphere_stream_ws_queue_attempts_session",
+    "Binary frame send attempts in the current Android capture session",
+    ["device_id"],
+)
+stream_ws_queue_accepted_session = Gauge(
+    "sphere_stream_ws_queue_accepted_session",
+    "Frames accepted by the Android WebSocket client's local queue in this session",
+    ["device_id"],
+)
+stream_ws_queue_rejected_session = Gauge(
+    "sphere_stream_ws_queue_rejected_session",
+    "Frames rejected by the Android WebSocket client's local queue in this session",
+    ["device_id"],
+)
+stream_ws_queue_accepted_bytes_session = Gauge(
+    "sphere_stream_ws_queue_accepted_bytes_session",
+    "Bytes accepted by the Android WebSocket client's local queue in this session",
+    ["device_id"],
+)
+stream_capture_fps = Gauge(
+    "sphere_stream_capture_fps",
+    "ImageReader frames acquired in the current one-second Android window",
+    ["device_id"],
+)
+stream_render_fps = Gauge(
+    "sphere_stream_render_fps",
+    "Frames posted to the encoder surface in the current one-second Android window",
+    ["device_id"],
+)
+stream_capture_frames_session = Gauge(
+    "sphere_stream_capture_frames_session",
+    "ImageReader frames acquired in the current Android capture session",
+    ["device_id"],
+)
+stream_render_frames_session = Gauge(
+    "sphere_stream_render_frames_session",
+    "Frames posted to the encoder surface in the current Android capture session",
+    ["device_id"],
+)
+stream_capture_read_failures_session = Gauge(
+    "sphere_stream_capture_read_failures_session",
+    "ImageReader acquisition failures in the current Android capture session",
+    ["device_id"],
+)
+stream_render_failures_session = Gauge(
+    "sphere_stream_render_failures_session",
+    "Capture-to-encoder-surface render failures in the current Android session",
+    ["device_id"],
+)
+stream_encoder_errors_session = Gauge(
+    "sphere_stream_encoder_errors_session",
+    "MediaCodec errors reported in the current Android capture session",
+    ["device_id"],
+)
+stream_frame_throttle_drops_session = Gauge(
+    "sphere_stream_frame_throttle_drops_session",
+    "Encoded frames intentionally dropped by the Android FPS throttle in this session",
+    ["device_id"],
+)
+stream_backend_ingress_frames_total = Counter(
+    "sphere_stream_backend_ingress_frames_total",
+    "Binary video packets received from Android WebSocket connections",
+    ["device_id"],
+)
+stream_backend_ingress_bytes_total = Counter(
+    "sphere_stream_backend_ingress_bytes_total",
+    "Binary video bytes received from Android WebSocket connections",
+    ["device_id"],
+)
+stream_backend_ingress_packets_by_nal_total = Counter(
+    "sphere_stream_backend_ingress_packets_by_nal_total",
+    "Android ingress packets classified by their first recognized H.264 NAL type",
+    ["device_id", "nal_type"],
+)
+stream_redis_publish_calls_total = Counter(
+    "sphere_stream_redis_publish_calls_total",
+    "Video messages successfully passed to Redis Pub/Sub publish",
+    ["device_id"],
+)
+stream_redis_published_bytes_total = Counter(
+    "sphere_stream_redis_published_bytes_total",
+    "Video bytes successfully passed to Redis Pub/Sub publish",
+    ["device_id"],
+)
+stream_redis_publish_subscribers = Gauge(
+    "sphere_stream_redis_publish_subscribers",
+    "Subscriber count returned by the latest successful Redis video publish",
+    ["device_id"],
+)
+stream_redis_publish_failures_total = Counter(
+    "sphere_stream_redis_publish_failures_total",
+    "Redis Pub/Sub video publish errors",
+    ["device_id"],
+)
+stream_viewer_send_frames_total = Counter(
+    "sphere_stream_viewer_send_frames_total",
+    "Video frames whose ASGI WebSocket send_bytes call completed for browser viewers",
+    ["device_id"],
+)
+stream_viewer_send_bytes_total = Counter(
+    "sphere_stream_viewer_send_bytes_total",
+    "Video bytes whose ASGI WebSocket send_bytes call completed for browser viewers",
+    ["device_id"],
+)
+stream_viewer_send_failures_total = Counter(
+    "sphere_stream_viewer_send_failures_total",
+    "Browser viewer WebSocket send_bytes failures",
+    ["device_id"],
+)
+stream_active_viewers = Gauge(
+    "sphere_stream_active_viewers",
+    "Browser viewer sessions currently registered in this backend process",
+    ["device_id"],
+)
+stream_server_queue_drops_total = Counter(
+    "sphere_stream_server_queue_drops_total",
+    "Video packets dropped from bounded server queues by stage and reason",
+    ["device_id", "queue_stage", "reason"],
 )
 
 
@@ -165,7 +295,25 @@ def cleanup_stream_metrics(device_id: str) -> None:
     Удалить Prometheus time series устройства при завершении стрима.
     Gauge метрики удаляются. Counter метрики остаются (accumulate by design).
     """
-    for metric in (stream_fps, stream_bitrate_kbps, stream_keyframe_ratio):
+    for metric in (
+        stream_fps,
+        stream_bitrate_kbps,
+        stream_keyframe_ratio,
+        stream_encoder_frames_session,
+        stream_encoder_bytes_session,
+        stream_ws_queue_attempts_session,
+        stream_ws_queue_accepted_session,
+        stream_ws_queue_rejected_session,
+        stream_ws_queue_accepted_bytes_session,
+        stream_capture_fps,
+        stream_render_fps,
+        stream_capture_frames_session,
+        stream_render_frames_session,
+        stream_capture_read_failures_session,
+        stream_render_failures_session,
+        stream_encoder_errors_session,
+        stream_frame_throttle_drops_session,
+    ):
         with contextlib.suppress(KeyError, ValueError):
             metric.remove(device_id)
 

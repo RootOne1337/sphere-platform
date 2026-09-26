@@ -1,0 +1,45 @@
+FF.F                                                                     [100%]
+================================== FAILURES ===================================
+___ test_production_databases_have_no_published_host_ports[base-production] ___
+tests\deployment\test_compose_production.py:46: in test_production_databases_have_no_published_host_ports
+    assert not production_config[service].get("ports"), production_config[service].get("ports")
+E   AssertionError: [{'mode': 'ingress', 'protocol': 'tcp', 'published': '5432', 'target': 5432}]
+E   assert not [{'mode': 'ingress', 'protocol': 'tcp', 'published': '5432', 'target': 5432}]
+E    +  where [{'mode': 'ingress', 'protocol': 'tcp', 'published': '5432', 'target': 5432}] = <built-in method get of dict object at 0x0000020001850F80>('ports')
+E    +    where <built-in method get of dict object at 0x0000020001850F80> = {'command': ['postgres', '-c', 'max_connections=200', '-c', 'shared_buffers=256MB', '-c', ...], 'deploy': {'placement'...nment': {'POSTGRES_DB': 'sphereplatform', 'POSTGRES_PASSWORD': 'audit-fixture', 'POSTGRES_USER': 'audit-fixture'}, ...}.get
+_ test_production_databases_have_no_published_host_ports[base-full-production] _
+tests\deployment\test_compose_production.py:46: in test_production_databases_have_no_published_host_ports
+    assert not production_config[service].get("ports"), production_config[service].get("ports")
+E   AssertionError: [{'mode': 'ingress', 'protocol': 'tcp', 'published': '5432', 'target': 5432}]
+E   assert not [{'mode': 'ingress', 'protocol': 'tcp', 'published': '5432', 'target': 5432}]
+E    +  where [{'mode': 'ingress', 'protocol': 'tcp', 'published': '5432', 'target': 5432}] = <built-in method get of dict object at 0x0000020001B93940>('ports')
+E    +    where <built-in method get of dict object at 0x0000020001B93940> = {'command': ['postgres', '-c', 'max_connections=200', '-c', 'shared_buffers=256MB', '-c', ...], 'deploy': {'placement'...nment': {'POSTGRES_DB': 'sphereplatform', 'POSTGRES_PASSWORD': 'audit-fixture', 'POSTGRES_USER': 'audit-fixture'}, ...}.get
+_ test_production_application_uses_image_defaults_without_source_mounts[base-full-production] _
+tests\deployment\test_compose_production.py:52: in test_production_application_uses_image_defaults_without_source_mounts
+    assert not configuration.get("command"), {service: configuration.get("command")}
+E   AssertionError: {'backend': ['sh', '-c', '
+E       if [ "production" = "development" ]; then
+E         uvicorn backend.main:app --host 0.0.0.0 -...     --keep-alive 65
+E           --max-requests 10000
+E           --max-requests-jitter 1000
+E           --access-logfile -
+E       fi
+E     ']}
+E   assert not ['sh', '-c', '\n  if [ "production" = "development" ]; then\n    uvicorn backend.main:app --host 0.0.0.0 --port 8000 -...      --keep-alive 65\n      --max-requests 10000\n      --max-requests-jitter 1000\n      --access-logfile -\n  fi\n']
+E    +  where ['sh', '-c', '\n  if [ "production" = "development" ]; then\n    uvicorn backend.main:app --host 0.0.0.0 --port 8000 -...      --keep-alive 65\n      --max-requests 10000\n      --max-requests-jitter 1000\n      --access-logfile -\n  fi\n'] = <built-in method get of dict object at 0x0000020001BA9080>('command')
+E    +    where <built-in method get of dict object at 0x0000020001BA9080> = {'build': {'context': 'C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform', 'dockerfile': 'backend/Dockerfile'}, 'c...ment': {}, 'resources': {'limits': {'cpus': 2, 'memory': '2147483648'}, 'reservations': {'memory': '536870912'}}}, ...}.get
+============================== warnings summary ===============================
+.venv-audit\Lib\site-packages\pydantic\fields.py:754: 484 warnings
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\pydantic\fields.py:754: PydanticDeprecatedSince20: Using extra keyword arguments on `Field` is deprecated and will be removed. Use `json_schema_extra` instead. (Extra keys: 'deprecated'). Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.6/migration/
+    warn(
+
+backend\api\v1\game_accounts\router.py:94
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\api\v1\game_accounts\router.py:94: DeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+    sort_dir: str = Query("desc", regex="^(asc|desc)$", description="Направление сортировки"),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/deployment/test_compose_production.py::test_production_databases_have_no_published_host_ports[base-production]
+FAILED tests/deployment/test_compose_production.py::test_production_databases_have_no_published_host_ports[base-full-production]
+FAILED tests/deployment/test_compose_production.py::test_production_application_uses_image_defaults_without_source_mounts[base-full-production]
+3 failed, 1 passed, 485 warnings in 1.80s

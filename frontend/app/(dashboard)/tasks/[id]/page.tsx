@@ -15,6 +15,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { executionStatusLabel, isCancellationPending } from '@/lib/task-status';
 import {
   Play,
   Square,
@@ -144,7 +145,7 @@ export default function TaskDetailPage({ params }: Props) {
                       <span className="relative inline-flex rounded-full h-2 w-2 bg-current" />
                     </span>
                   )}
-                  {statusCfg.label}
+                  {isCancellationPending(task) ? executionStatusLabel(task) : statusCfg.label}
                 </span>
               </h1>
             </div>
@@ -159,11 +160,11 @@ export default function TaskDetailPage({ params }: Props) {
               <Button
                 variant="destructive"
                 onClick={() => stopTask.mutate(task.id)}
-                disabled={stopTask.isPending}
+                disabled={stopTask.isPending || isCancellationPending(task)}
                 className="gap-2 shadow-[0_0_20px_rgba(239,68,68,0.3)] hover:shadow-[0_0_30px_rgba(239,68,68,0.5)] transition-all bg-red-600/90 hover:bg-red-500 text-white"
               >
                 <Square className="w-4 h-4 fill-current" />
-                {stopTask.isPending ? 'Halting...' : 'Force Stop'}
+                {isCancellationPending(task) ? 'Awaiting device result' : stopTask.isPending ? 'Requesting stop...' : 'Force Stop'}
               </Button>
             )}
 
@@ -171,11 +172,11 @@ export default function TaskDetailPage({ params }: Props) {
               <Button
                 variant="destructive"
                 onClick={() => cancelTask.mutate(task.id)}
-                disabled={cancelTask.isPending}
+                disabled={cancelTask.isPending || isCancellationPending(task)}
                 className="gap-2 bg-red-950 text-red-400 hover:bg-red-900/80 border border-red-900/50"
               >
                 <Ban className="w-4 h-4" />
-                {cancelTask.isPending ? 'Aborting...' : 'Cancel Task'}
+                {isCancellationPending(task) ? 'Awaiting device result' : cancelTask.isPending ? 'Requesting stop...' : 'Cancel Task'}
               </Button>
             )}
 

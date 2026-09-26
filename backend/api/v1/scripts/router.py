@@ -91,6 +91,7 @@ async def create_script(
     script = await svc.create_script(current_user.org_id, current_user.id, body)
     await db.commit()
     await db.refresh(script)
+    await db.refresh(script, attribute_names=["current_version"])
     return ScriptResponse.model_validate(script)
 
 

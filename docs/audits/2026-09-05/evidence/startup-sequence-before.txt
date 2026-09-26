@@ -1,0 +1,302 @@
+FFFFFFFFFFFFFF.......FFFFFFF                                             [100%]
+================================== FAILURES ===================================
+_ test_fresh_full_deploy_orders_dependency_migration_bootstrap_and_application[powershell] _
+tests\deployment\test_full_deploy_sequence.py:114: in test_fresh_full_deploy_orders_dependency_migration_bootstrap_and_application
+    assert result.returncode == 0, result.stdout + result.stderr
+E   AssertionError:
+E       \u2554\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2557
+E       \u2551                                                           \u2551
+E       \u2551         \u25cf SPHERE PLATFORM \u2014 Full Deployment \u25cf             \u2551
+E       \u2551                                                           \u2551
+E       \u2551   Enterprise Android Device Management & Automation       \u2551
+E       \u2551                                                           \u2551
+E       \u255a\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u255d
+E
+E       ������:   isolated-test
+E       �����:    DEVELOPMENT
+E       ����:     2026-09-11 15:07:53
+E
+E
+E     \u2550\u2550\u2550 \u0428\u0430\u0433 1/8 \u2014 \u041f\u0440\u043e\u0432\u0435\u0440\u043a\u0430 \u0437\u0430\u0432\u0438\u0441\u0438\u043c\u043e\u0441\u0442\u0435\u0439 \u2550\u2550\u2550
+E     [\u2713] Docker: v29.2.1
+E     [\u2713] Docker Compose: v2.36.0
+E     [\u2713] Python: v3.12.12 (main, Nov 19 2025, 22:43:30) [MSC v.1944 64 bit (AMD64)]
+E     [\u2713] Git: v2.45.1.windows.1
+E     [\u2713] \u0412\u0441\u0435 \u0437\u0430\u0432\u0438\u0441\u0438\u043c\u043e\u0441\u0442\u0438 \u043f\u0440\u043e\u0432\u0435\u0440\u0435\u043d\u044b
+E
+E     \u2550\u2550\u2550 \u0428\u0430\u0433 2/8 \u2014 \u0413\u0435\u043d\u0435\u0440\u0430\u0446\u0438\u044f \u0441\u0435\u043a\u0440\u0435\u0442\u043e\u0432 \u2550\u2550\u2550
+E     [\u2713] \u0421\u0435\u043a\u0440\u0435\u0442\u044b \u0443\u0436\u0435 \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u044e\u0442 (.env.local) \u2014 \u043f\u0440\u043e\u043f\u0443\u0441\u043a (headless)
+E
+E     \u2550\u2550\u2550 \u0428\u0430\u0433 3/8 \u2014 \u0421\u0431\u043e\u0440\u043a\u0430 Docker-\u043e\u0431\u0440\u0430\u0437\u043e\u0432 \u2550\u2550\u2550
+E     [\u2713] \u0421\u0431\u043e\u0440\u043a\u0430 \u043e\u0431\u0440\u0430\u0437\u043e\u0432 (\u043f\u0435\u0440\u0432\u044b\u0439 \u0440\u0430\u0437 \u043c\u043e\u0436\u0435\u0442 \u0437\u0430\u043d\u044f\u0442\u044c 3-5 \u043c\u0438\u043d\u0443\u0442)...
+E     [\u2713] Docker-\u043e\u0431\u0440\u0430\u0437\u044b \u0433\u043e\u0442\u043e\u0432\u044b
+E
+E     \u2550\u2550\u2550 \u0428\u0430\u0433 4/8 \u2014 \u0417\u0430\u043f\u0443\u0441\u043a \u043a\u043e\u043d\u0442\u0435\u0439\u043d\u0435\u0440\u043e\u0432 \u2550\u2550\u2550
+E     docker compose up -d ���������� (exit code: 71)
+E     API was started before schema and bootstrap were ready
+E
+E   assert 1 == 0
+E    +  where 1 = CompletedProcess(args=['C:\\Users\\dimas\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\native\\powersh...ndocker compose up -d ���������� (exit code: 71)\n', stderr='API was started before schema and bootstrap were ready\n').returncode
+_ test_fresh_full_deploy_orders_dependency_migration_bootstrap_and_application[bash] _
+tests\deployment\test_full_deploy_sequence.py:114: in test_fresh_full_deploy_orders_dependency_migration_bootstrap_and_application
+    assert result.returncode == 0, result.stdout + result.stderr
+E   AssertionError: [0;36m
+E       \u2554\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2557
+E       \u2551                                                           \u2551
+E       \u2551         \u25cf SPHERE PLATFORM \u2014 Full Deployment \u25cf             \u2551
+E       \u2551                                                           \u2551
+E       \u2551   Enterprise Android Device Management & Automation       \u2551
+E       \u2551                                                           \u2551
+E       \u255a\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u255d
+E     [0m
+E       ������:   isolated-test
+E       �����:    DEVELOPMENT
+E       ����:     2026-09-11 15:07:54 RTZ
+E
+E
+E     \x1b[0;36m\x1b[1m\u2550\u2550\u2550 \u0428\u0430\u0433 1/8 \u2014 \u041f\u0440\u043e\u0432\u0435\u0440\u043a\u0430 \u0437\u0430\u0432\u0438\u0441\u0438\u043c\u043e\u0441\u0442\u0435\u0439 \u2550\u2550\u2550\x1b[0m
+E     \x1b[0;32m[\u2713]\x1b[0m Docker: v29.2.1
+E     \x1b[0;32m[\u2713]\x1b[0m Docker Compose: v2.36.0
+E     \x1b[0;32m[\u2713]\x1b[0m Python: v(main,
+E     \x1b[0;32m[\u2713]\x1b[0m Git: 2.45.1.windows.1
+E     \x1b[0;32m[\u2713]\x1b[0m Docker daemon: \u0434\u043e\u0441\u0442\u0443\u043f\u0435\u043d
+E
+E     \x1b[0;36m\x1b[1m\u2550\u2550\u2550 \u0428\u0430\u0433 2/8 \u2014 \u0413\u0435\u043d\u0435\u0440\u0430\u0446\u0438\u044f \u0441\u0435\u043a\u0440\u0435\u0442\u043e\u0432 \u2550\u2550\u2550\x1b[0m
+E     \x1b[0;32m[\u2713]\x1b[0m \u0421\u0435\u043a\u0440\u0435\u0442\u044b \u0443\u0436\u0435 \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u044e\u0442 (.env.local) \u2014 \u043f\u0440\u043e\u043f\u0443\u0441\u043a\u0430\u0435\u043c (headless)
+E
+E     \x1b[0;36m\x1b[1m\u2550\u2550\u2550 \u0428\u0430\u0433 3/8 \u2014 \u0421\u0431\u043e\u0440\u043a\u0430 Docker-\u043e\u0431\u0440\u0430\u0437\u043e\u0432 \u2550\u2550\u2550\x1b[0m
+E     \x1b[0;32m[\u2713]\x1b[0m \u0421\u0431\u043e\u0440\u043a\u0430 \u043e\u0431\u0440\u0430\u0437\u043e\u0432 (\u043f\u0435\u0440\u0432\u044b\u0439 \u0440\u0430\u0437 \u043c\u043e\u0436\u0435\u0442 \u0437\u0430\u043d\u044f\u0442\u044c 3-5 \u043c\u0438\u043d\u0443\u0442)...
+E     \x1b[0;32m[\u2713]\x1b[0m Docker-\u043e\u0431\u0440\u0430\u0437\u044b \u0433\u043e\u0442\u043e\u0432\u044b
+E
+E     \x1b[0;36m\x1b[1m\u2550\u2550\u2550 \u0428\u0430\u0433 4/8 \u2014 \u0417\u0430\u043f\u0443\u0441\u043a \u043a\u043e\u043d\u0442\u0435\u0439\u043d\u0435\u0440\u043e\u0432 \u2550\u2550\u2550\x1b[0m
+E     API was started before schema and bootstrap were ready
+E
+E   assert 71 == 0
+E    +  where 71 = CompletedProcess(args=['C:\\\\Program Files\\\\Git\\\\bin\\\\bash.exe', 'C:/Users/dimas/AppData/Local/Temp/pytest-of-dimas/pyt...1b[1m\u2550\u2550\u2550 \u0428\u0430\u0433 4/8 \u2014 \u0417\u0430\u043f\u0443\u0441\u043a \u043a\u043e\u043d\u0442\u0435\u0439\u043d\u0435\u0440\u043e\u0432 \u2550\u2550\u2550\\x1b[0m\\nAPI was started before schema and bootstrap were ready\\n', stderr='').returncode
+_ test_full_deploy_stops_on_phase_failure_without_host_fallback_or_false_success[powershell-dependencies] _
+tests\deployment\test_full_deploy_sequence.py:122: in test_full_deploy_stops_on_phase_failure_without_host_fallback_or_false_success
+    assert phases(calls)[-1] == failure, calls
+E   AssertionError: [{'args': ['compose', '--env-file', 'C:\\Users\\dimas\\AppData\\Local\\Temp\\pytest-of-dimas\\pytest-96\\test_full_dep...st-96\\test_full_deploy_stops_on_phas0\\checkout with spaces\\docker-compose.yml', '-f', ...], 'stage': 'application'}]
+E   assert 'application' == 'dependencies'
+E
+E     - dependencies
+E     + application
+_ test_full_deploy_stops_on_phase_failure_without_host_fallback_or_false_success[powershell-migration] _
+tests\deployment\test_full_deploy_sequence.py:122: in test_full_deploy_stops_on_phase_failure_without_host_fallback_or_false_success
+    assert phases(calls)[-1] == failure, calls
+E   AssertionError: [{'args': ['compose', '--env-file', 'C:\\Users\\dimas\\AppData\\Local\\Temp\\pytest-of-dimas\\pytest-96\\test_full_dep...st-96\\test_full_deploy_stops_on_phas1\\checkout with spaces\\docker-compose.yml', '-f', ...], 'stage': 'application'}]
+E   assert 'application' == 'migration'
+E
+E     - migration
+E     + application
+_ test_full_deploy_stops_on_phase_failure_without_host_fallback_or_false_success[powershell-admin] _
+tests\deployment\test_full_deploy_sequence.py:122: in test_full_deploy_stops_on_phase_failure_without_host_fallback_or_false_success
+    assert phases(calls)[-1] == failure, calls
+E   AssertionError: [{'args': ['compose', '--env-file', 'C:\\Users\\dimas\\AppData\\Local\\Temp\\pytest-of-dimas\\pytest-96\\test_full_dep...st-96\\test_full_deploy_stops_on_phas2\\checkout with spaces\\docker-compose.yml', '-f', ...], 'stage': 'application'}]
+E   assert 'application' == 'admin'
+E
+E     - admin
+E     + application
+_ test_full_deploy_stops_on_phase_failure_without_host_fallback_or_false_success[powershell-enrollment] _
+tests\deployment\test_full_deploy_sequence.py:122: in test_full_deploy_stops_on_phase_failure_without_host_fallback_or_false_success
+    assert phases(calls)[-1] == failure, calls
+E   AssertionError: [{'args': ['compose', '--env-file', 'C:\\Users\\dimas\\AppData\\Local\\Temp\\pytest-of-dimas\\pytest-96\\test_full_dep...st-96\\test_full_deploy_stops_on_phas3\\checkout with spaces\\docker-compose.yml', '-f', ...], 'stage': 'application'}]
+E   assert 'application' == 'enrollment'
+E
+E     - enrollment
+E     + application
+_ test_full_deploy_stops_on_phase_failure_without_host_fallback_or_false_success[powershell-application] _
+tests\deployment\test_full_deploy_sequence.py:123: in test_full_deploy_stops_on_phase_failure_without_host_fallback_or_false_success
+    assert "Synthetic failure at " + failure in result.stdout + result.stderr
+E   AssertionError: assert ('Synthetic failure at ' + 'application') in ('\\n  \u2554\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2557\\n  \u2551                                               ....\\n[\u2713] Docker-\u043e\u0431\u0440\u0430\u0437\u044b \u0433\u043e\u0442\u043e\u0432\u044b\\n\\n\u2550\u2550\u2550 \u0428\u0430\u0433 4/8 \u2014 \u0417\u0430\u043f\u0443\u0441\u043a \u043a\u043e\u043d\u0442\u0435\u0439\u043d\u0435\u0440\u043e\u0432 \u2550\u2550\u2550\\ndocker compose up -d \u043f\u0440\u043e\u0432\u0430\u043b\u0438\u043b\u0441\u044f (exit code: 71)\\n' + 'API was started before schema and bootstrap were ready\\n')
+E    +  where '\\n  \u2554\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2557\\n  \u2551                                               ....\\n[\u2713] Docker-\u043e\u0431\u0440\u0430\u0437\u044b \u0433\u043e\u0442\u043e\u0432\u044b\\n\\n\u2550\u2550\u2550 \u0428\u0430\u0433 4/8 \u2014 \u0417\u0430\u043f\u0443\u0441\u043a \u043a\u043e\u043d\u0442\u0435\u0439\u043d\u0435\u0440\u043e\u0432 \u2550\u2550\u2550\\ndocker compose up -d \u043f\u0440\u043e\u0432\u0430\u043b\u0438\u043b\u0441\u044f (exit code: 71)\\n' = CompletedProcess(args=['C:\\\\Users\\\\dimas\\\\.cache\\\\codex-runtimes\\\\codex-primary-runtime\\\\dependencies\\\\native\\\\powersh...ndocker compose up -d \u043f\u0440\u043e\u0432\u0430\u043b\u0438\u043b\u0441\u044f (exit code: 71)\\n', stderr='API was started before schema and bootstrap were ready\\n').stdout
+E    +  and   'API was started before schema and bootstrap were ready\n' = CompletedProcess(args=['C:\\Users\\dimas\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\native\\powersh...ndocker compose up -d ���������� (exit code: 71)\n', stderr='API was started before schema and bootstrap were ready\n').stderr
+_ test_full_deploy_stops_on_phase_failure_without_host_fallback_or_false_success[bash-dependencies] _
+tests\deployment\test_full_deploy_sequence.py:122: in test_full_deploy_stops_on_phase_failure_without_host_fallback_or_false_success
+    assert phases(calls)[-1] == failure, calls
+E   AssertionError: [{'args': ['info'], 'stage': 'other'}, {'args': ['compose', '-f', 'docker-compose.yml', '-f', 'docker-compose.full.yml... {'args': ['compose', '-f', 'docker-compose.yml', '-f', 'docker-compose.full.yml', 'up', ...], 'stage': 'application'}]
+E   assert 'application' == 'dependencies'
+E
+E     - dependencies
+E     + application
+_ test_full_deploy_stops_on_phase_failure_without_host_fallback_or_false_success[bash-migration] _
+tests\deployment\test_full_deploy_sequence.py:122: in test_full_deploy_stops_on_phase_failure_without_host_fallback_or_false_success
+    assert phases(calls)[-1] == failure, calls
+E   AssertionError: [{'args': ['info'], 'stage': 'other'}, {'args': ['compose', '-f', 'docker-compose.yml', '-f', 'docker-compose.full.yml... {'args': ['compose', '-f', 'docker-compose.yml', '-f', 'docker-compose.full.yml', 'up', ...], 'stage': 'application'}]
+E   assert 'application' == 'migration'
+E
+E     - migration
+E     + application
+_ test_full_deploy_stops_on_phase_failure_without_host_fallback_or_false_success[bash-admin] _
+tests\deployment\test_full_deploy_sequence.py:122: in test_full_deploy_stops_on_phase_failure_without_host_fallback_or_false_success
+    assert phases(calls)[-1] == failure, calls
+E   AssertionError: [{'args': ['info'], 'stage': 'other'}, {'args': ['compose', '-f', 'docker-compose.yml', '-f', 'docker-compose.full.yml... {'args': ['compose', '-f', 'docker-compose.yml', '-f', 'docker-compose.full.yml', 'up', ...], 'stage': 'application'}]
+E   assert 'application' == 'admin'
+E
+E     - admin
+E     + application
+_ test_full_deploy_stops_on_phase_failure_without_host_fallback_or_false_success[bash-enrollment] _
+tests\deployment\test_full_deploy_sequence.py:122: in test_full_deploy_stops_on_phase_failure_without_host_fallback_or_false_success
+    assert phases(calls)[-1] == failure, calls
+E   AssertionError: [{'args': ['info'], 'stage': 'other'}, {'args': ['compose', '-f', 'docker-compose.yml', '-f', 'docker-compose.full.yml... {'args': ['compose', '-f', 'docker-compose.yml', '-f', 'docker-compose.full.yml', 'up', ...], 'stage': 'application'}]
+E   assert 'application' == 'enrollment'
+E
+E     - enrollment
+E     + application
+_ test_full_deploy_stops_on_phase_failure_without_host_fallback_or_false_success[bash-application] _
+tests\deployment\test_full_deploy_sequence.py:123: in test_full_deploy_stops_on_phase_failure_without_host_fallback_or_false_success
+    assert "Synthetic failure at " + failure in result.stdout + result.stderr
+E   AssertionError: assert ('Synthetic failure at ' + 'application') in ('\\x1b[0;36m\\n  \u2554\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2557\\n  \u2551                                     ...\\x1b[0;36m\\x1b[1m\u2550\u2550\u2550 \u0428\u0430\u0433 4/8 \u2014 \u0417\u0430\u043f\u0443\u0441\u043a \u043a\u043e\u043d\u0442\u0435\u0439\u043d\u0435\u0440\u043e\u0432 \u2550\u2550\u2550\\x1b[0m\\nAPI was started before schema and bootstrap were ready\\n' + '')
+E    +  where '\\x1b[0;36m\\n  \u2554\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2557\\n  \u2551                                     ...\\x1b[0;36m\\x1b[1m\u2550\u2550\u2550 \u0428\u0430\u0433 4/8 \u2014 \u0417\u0430\u043f\u0443\u0441\u043a \u043a\u043e\u043d\u0442\u0435\u0439\u043d\u0435\u0440\u043e\u0432 \u2550\u2550\u2550\\x1b[0m\\nAPI was started before schema and bootstrap were ready\\n' = CompletedProcess(args=['C:\\\\Program Files\\\\Git\\\\bin\\\\bash.exe', 'C:/Users/dimas/AppData/Local/Temp/pytest-of-dimas/pyt...1b[1m\u2550\u2550\u2550 \u0428\u0430\u0433 4/8 \u2014 \u0417\u0430\u043f\u0443\u0441\u043a \u043a\u043e\u043d\u0442\u0435\u0439\u043d\u0435\u0440\u043e\u0432 \u2550\u2550\u2550\\x1b[0m\\nAPI was started before schema and bootstrap were ready\\n', stderr='').stdout
+E    +  and   '' = CompletedProcess(args=['C:\\\\Program Files\\\\Git\\\\bin\\\\bash.exe', 'C:/Users/dimas/AppData/Local/Temp/pytest-of-dimas/pyt...1b[1m\u2550\u2550\u2550 \u0428\u0430\u0433 4/8 \u2014 \u0417\u0430\u043f\u0443\u0441\u043a \u043a\u043e\u043d\u0442\u0435\u0439\u043d\u0435\u0440\u043e\u0432 \u2550\u2550\u2550\\x1b[0m\\nAPI was started before schema and bootstrap were ready\\n', stderr='').stderr
+__________ test_repeat_full_deploy_keeps_the_same_order[powershell] ___________
+tests\deployment\test_full_deploy_sequence.py:129: in test_repeat_full_deploy_keeps_the_same_order
+    assert first.returncode == 0, first.stdout + first.stderr
+E   AssertionError:
+E       \u2554\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2557
+E       \u2551                                                           \u2551
+E       \u2551         \u25cf SPHERE PLATFORM \u2014 Full Deployment \u25cf             \u2551
+E       \u2551                                                           \u2551
+E       \u2551   Enterprise Android Device Management & Automation       \u2551
+E       \u2551                                                           \u2551
+E       \u255a\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u255d
+E
+E       ������:   isolated-test
+E       �����:    DEVELOPMENT
+E       ����:     2026-09-11 15:08:14
+E
+E
+E     \u2550\u2550\u2550 \u0428\u0430\u0433 1/8 \u2014 \u041f\u0440\u043e\u0432\u0435\u0440\u043a\u0430 \u0437\u0430\u0432\u0438\u0441\u0438\u043c\u043e\u0441\u0442\u0435\u0439 \u2550\u2550\u2550
+E     [\u2713] Docker: v29.2.1
+E     [\u2713] Docker Compose: v2.36.0
+E     [\u2713] Python: v3.12.12 (main, Nov 19 2025, 22:43:30) [MSC v.1944 64 bit (AMD64)]
+E     [\u2713] Git: v2.45.1.windows.1
+E     [\u2713] \u0412\u0441\u0435 \u0437\u0430\u0432\u0438\u0441\u0438\u043c\u043e\u0441\u0442\u0438 \u043f\u0440\u043e\u0432\u0435\u0440\u0435\u043d\u044b
+E
+E     \u2550\u2550\u2550 \u0428\u0430\u0433 2/8 \u2014 \u0413\u0435\u043d\u0435\u0440\u0430\u0446\u0438\u044f \u0441\u0435\u043a\u0440\u0435\u0442\u043e\u0432 \u2550\u2550\u2550
+E     [\u2713] \u0421\u0435\u043a\u0440\u0435\u0442\u044b \u0443\u0436\u0435 \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u044e\u0442 (.env.local) \u2014 \u043f\u0440\u043e\u043f\u0443\u0441\u043a (headless)
+E
+E     \u2550\u2550\u2550 \u0428\u0430\u0433 3/8 \u2014 \u0421\u0431\u043e\u0440\u043a\u0430 Docker-\u043e\u0431\u0440\u0430\u0437\u043e\u0432 \u2550\u2550\u2550
+E     [\u2713] \u0421\u0431\u043e\u0440\u043a\u0430 \u043e\u0431\u0440\u0430\u0437\u043e\u0432 (\u043f\u0435\u0440\u0432\u044b\u0439 \u0440\u0430\u0437 \u043c\u043e\u0436\u0435\u0442 \u0437\u0430\u043d\u044f\u0442\u044c 3-5 \u043c\u0438\u043d\u0443\u0442)...
+E     [\u2713] Docker-\u043e\u0431\u0440\u0430\u0437\u044b \u0433\u043e\u0442\u043e\u0432\u044b
+E
+E     \u2550\u2550\u2550 \u0428\u0430\u0433 4/8 \u2014 \u0417\u0430\u043f\u0443\u0441\u043a \u043a\u043e\u043d\u0442\u0435\u0439\u043d\u0435\u0440\u043e\u0432 \u2550\u2550\u2550
+E     docker compose up -d ���������� (exit code: 71)
+E     API was started before schema and bootstrap were ready
+E
+E   assert 1 == 0
+E    +  where 1 = CompletedProcess(args=['C:\\Users\\dimas\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\native\\powersh...ndocker compose up -d ���������� (exit code: 71)\n', stderr='API was started before schema and bootstrap were ready\n').returncode
+_____________ test_repeat_full_deploy_keeps_the_same_order[bash] ______________
+tests\deployment\test_full_deploy_sequence.py:129: in test_repeat_full_deploy_keeps_the_same_order
+    assert first.returncode == 0, first.stdout + first.stderr
+E   AssertionError: [0;36m
+E       \u2554\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2557
+E       \u2551                                                           \u2551
+E       \u2551         \u25cf SPHERE PLATFORM \u2014 Full Deployment \u25cf             \u2551
+E       \u2551                                                           \u2551
+E       \u2551   Enterprise Android Device Management & Automation       \u2551
+E       \u2551                                                           \u2551
+E       \u255a\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u255d
+E     [0m
+E       ������:   isolated-test
+E       �����:    DEVELOPMENT
+E       ����:     2026-09-11 15:08:15 RTZ
+E
+E
+E     \x1b[0;36m\x1b[1m\u2550\u2550\u2550 \u0428\u0430\u0433 1/8 \u2014 \u041f\u0440\u043e\u0432\u0435\u0440\u043a\u0430 \u0437\u0430\u0432\u0438\u0441\u0438\u043c\u043e\u0441\u0442\u0435\u0439 \u2550\u2550\u2550\x1b[0m
+E     \x1b[0;32m[\u2713]\x1b[0m Docker: v29.2.1
+E     \x1b[0;32m[\u2713]\x1b[0m Docker Compose: v2.36.0
+E     \x1b[0;32m[\u2713]\x1b[0m Python: v(main,
+E     \x1b[0;32m[\u2713]\x1b[0m Git: 2.45.1.windows.1
+E     \x1b[0;32m[\u2713]\x1b[0m Docker daemon: \u0434\u043e\u0441\u0442\u0443\u043f\u0435\u043d
+E
+E     \x1b[0;36m\x1b[1m\u2550\u2550\u2550 \u0428\u0430\u0433 2/8 \u2014 \u0413\u0435\u043d\u0435\u0440\u0430\u0446\u0438\u044f \u0441\u0435\u043a\u0440\u0435\u0442\u043e\u0432 \u2550\u2550\u2550\x1b[0m
+E     \x1b[0;32m[\u2713]\x1b[0m \u0421\u0435\u043a\u0440\u0435\u0442\u044b \u0443\u0436\u0435 \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u044e\u0442 (.env.local) \u2014 \u043f\u0440\u043e\u043f\u0443\u0441\u043a\u0430\u0435\u043c (headless)
+E
+E     \x1b[0;36m\x1b[1m\u2550\u2550\u2550 \u0428\u0430\u0433 3/8 \u2014 \u0421\u0431\u043e\u0440\u043a\u0430 Docker-\u043e\u0431\u0440\u0430\u0437\u043e\u0432 \u2550\u2550\u2550\x1b[0m
+E     \x1b[0;32m[\u2713]\x1b[0m \u0421\u0431\u043e\u0440\u043a\u0430 \u043e\u0431\u0440\u0430\u0437\u043e\u0432 (\u043f\u0435\u0440\u0432\u044b\u0439 \u0440\u0430\u0437 \u043c\u043e\u0436\u0435\u0442 \u0437\u0430\u043d\u044f\u0442\u044c 3-5 \u043c\u0438\u043d\u0443\u0442)...
+E     \x1b[0;32m[\u2713]\x1b[0m Docker-\u043e\u0431\u0440\u0430\u0437\u044b \u0433\u043e\u0442\u043e\u0432\u044b
+E
+E     \x1b[0;36m\x1b[1m\u2550\u2550\u2550 \u0428\u0430\u0433 4/8 \u2014 \u0417\u0430\u043f\u0443\u0441\u043a \u043a\u043e\u043d\u0442\u0435\u0439\u043d\u0435\u0440\u043e\u0432 \u2550\u2550\u2550\x1b[0m
+E     API was started before schema and bootstrap were ready
+E
+E   assert 71 == 0
+E    +  where 71 = CompletedProcess(args=['C:\\\\Program Files\\\\Git\\\\bin\\\\bash.exe', 'C:/Users/dimas/AppData/Local/Temp/pytest-of-dimas/pyt...1b[1m\u2550\u2550\u2550 \u0428\u0430\u0433 4/8 \u2014 \u0417\u0430\u043f\u0443\u0441\u043a \u043a\u043e\u043d\u0442\u0435\u0439\u043d\u0435\u0440\u043e\u0432 \u2550\u2550\u2550\\x1b[0m\\nAPI was started before schema and bootstrap were ready\\n', stderr='').returncode
+__ test_backend_healthcheck_requires_readiness_response[production-ready-0] ___
+tests\deployment\test_dev_readiness.py:43: in test_backend_healthcheck_requires_readiness_response
+    assert check.get("test"), "Backend has no readiness gate in the effective Compose configuration"
+E   AssertionError: Backend has no readiness gate in the effective Compose configuration
+E   assert None
+E    +  where None = <built-in method get of dict object at 0x000002523F2429C0>('test')
+E    +    where <built-in method get of dict object at 0x000002523F2429C0> = {}.get
+_ test_backend_healthcheck_requires_readiness_response[production-unready-1] __
+tests\deployment\test_dev_readiness.py:43: in test_backend_healthcheck_requires_readiness_response
+    assert check.get("test"), "Backend has no readiness gate in the effective Compose configuration"
+E   AssertionError: Backend has no readiness gate in the effective Compose configuration
+E   assert None
+E    +  where None = <built-in method get of dict object at 0x000002523F293180>('test')
+E    +    where <built-in method get of dict object at 0x000002523F293180> = {}.get
+__ test_backend_healthcheck_requires_readiness_response[production-error-1] ___
+tests\deployment\test_dev_readiness.py:43: in test_backend_healthcheck_requires_readiness_response
+    assert check.get("test"), "Backend has no readiness gate in the effective Compose configuration"
+E   AssertionError: Backend has no readiness gate in the effective Compose configuration
+E   assert None
+E    +  where None = <built-in method get of dict object at 0x000002523F262E80>('test')
+E    +    where <built-in method get of dict object at 0x000002523F262E80> = {}.get
+_ test_frontend_healthcheck_rejects_redirects_errors_and_network_failure[production-200] _
+tests\deployment\test_dev_readiness.py:66: in test_frontend_healthcheck_rejects_redirects_errors_and_network_failure
+    assert check.get("test"), "Frontend has no HTTP readiness gate in the effective Compose configuration"
+E   AssertionError: Frontend has no HTTP readiness gate in the effective Compose configuration
+E   assert None
+E    +  where None = <built-in method get of dict object at 0x000002523F23A940>('test')
+E    +    where <built-in method get of dict object at 0x000002523F23A940> = {}.get
+_ test_frontend_healthcheck_rejects_redirects_errors_and_network_failure[production-302] _
+tests\deployment\test_dev_readiness.py:66: in test_frontend_healthcheck_rejects_redirects_errors_and_network_failure
+    assert check.get("test"), "Frontend has no HTTP readiness gate in the effective Compose configuration"
+E   AssertionError: Frontend has no HTTP readiness gate in the effective Compose configuration
+E   assert None
+E    +  where None = <built-in method get of dict object at 0x000002523F26DCC0>('test')
+E    +    where <built-in method get of dict object at 0x000002523F26DCC0> = {}.get
+_ test_frontend_healthcheck_rejects_redirects_errors_and_network_failure[production-503] _
+tests\deployment\test_dev_readiness.py:66: in test_frontend_healthcheck_rejects_redirects_errors_and_network_failure
+    assert check.get("test"), "Frontend has no HTTP readiness gate in the effective Compose configuration"
+E   AssertionError: Frontend has no HTTP readiness gate in the effective Compose configuration
+E   assert None
+E    +  where None = <built-in method get of dict object at 0x000002523F289EC0>('test')
+E    +    where <built-in method get of dict object at 0x000002523F289EC0> = {}.get
+_ test_frontend_healthcheck_rejects_redirects_errors_and_network_failure[production-error] _
+tests\deployment\test_dev_readiness.py:66: in test_frontend_healthcheck_rejects_redirects_errors_and_network_failure
+    assert check.get("test"), "Frontend has no HTTP readiness gate in the effective Compose configuration"
+E   AssertionError: Frontend has no HTTP readiness gate in the effective Compose configuration
+E   assert None
+E    +  where None = <built-in method get of dict object at 0x000002523F263FC0>('test')
+E    +    where <built-in method get of dict object at 0x000002523F263FC0> = {}.get
+============================== warnings summary ===============================
+backend\api\v1\game_accounts\router.py:95
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\api\v1\game_accounts\router.py:95: FastAPIDeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+    sort_dir: str = Query("desc", regex="^(asc|desc)$", description="����������� ����������"),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/deployment/test_full_deploy_sequence.py::test_fresh_full_deploy_orders_dependency_migration_bootstrap_and_application[powershell]
+FAILED tests/deployment/test_full_deploy_sequence.py::test_fresh_full_deploy_orders_dependency_migration_bootstrap_and_application[bash]
+FAILED tests/deployment/test_full_deploy_sequence.py::test_full_deploy_stops_on_phase_failure_without_host_fallback_or_false_success[powershell-dependencies]
+FAILED tests/deployment/test_full_deploy_sequence.py::test_full_deploy_stops_on_phase_failure_without_host_fallback_or_false_success[powershell-migration]
+FAILED tests/deployment/test_full_deploy_sequence.py::test_full_deploy_stops_on_phase_failure_without_host_fallback_or_false_success[powershell-admin]
+FAILED tests/deployment/test_full_deploy_sequence.py::test_full_deploy_stops_on_phase_failure_without_host_fallback_or_false_success[powershell-enrollment]
+FAILED tests/deployment/test_full_deploy_sequence.py::test_full_deploy_stops_on_phase_failure_without_host_fallback_or_false_success[powershell-application]
+FAILED tests/deployment/test_full_deploy_sequence.py::test_full_deploy_stops_on_phase_failure_without_host_fallback_or_false_success[bash-dependencies]
+FAILED tests/deployment/test_full_deploy_sequence.py::test_full_deploy_stops_on_phase_failure_without_host_fallback_or_false_success[bash-migration]
+FAILED tests/deployment/test_full_deploy_sequence.py::test_full_deploy_stops_on_phase_failure_without_host_fallback_or_false_success[bash-admin]
+FAILED tests/deployment/test_full_deploy_sequence.py::test_full_deploy_stops_on_phase_failure_without_host_fallback_or_false_success[bash-enrollment]
+FAILED tests/deployment/test_full_deploy_sequence.py::test_full_deploy_stops_on_phase_failure_without_host_fallback_or_false_success[bash-application]
+FAILED tests/deployment/test_full_deploy_sequence.py::test_repeat_full_deploy_keeps_the_same_order[powershell]
+FAILED tests/deployment/test_full_deploy_sequence.py::test_repeat_full_deploy_keeps_the_same_order[bash]
+FAILED tests/deployment/test_dev_readiness.py::test_backend_healthcheck_requires_readiness_response[production-ready-0]
+FAILED tests/deployment/test_dev_readiness.py::test_backend_healthcheck_requires_readiness_response[production-unready-1]
+FAILED tests/deployment/test_dev_readiness.py::test_backend_healthcheck_requires_readiness_response[production-error-1]
+FAILED tests/deployment/test_dev_readiness.py::test_frontend_healthcheck_rejects_redirects_errors_and_network_failure[production-200]
+FAILED tests/deployment/test_dev_readiness.py::test_frontend_healthcheck_rejects_redirects_errors_and_network_failure[production-302]
+FAILED tests/deployment/test_dev_readiness.py::test_frontend_healthcheck_rejects_redirects_errors_and_network_failure[production-503]
+FAILED tests/deployment/test_dev_readiness.py::test_frontend_healthcheck_rejects_redirects_errors_and_network_failure[production-error]
+21 failed, 7 passed, 1 warning in 26.45s

@@ -17,6 +17,7 @@ from sqlalchemy import (
     Integer,
     String,
     Text,
+    Uuid,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -182,7 +183,21 @@ class PipelineRun(Base, UUIDMixin, TimestampMixin):
         ForeignKey("tasks.id"), nullable=True,
     )
 
+    current_child_run_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("pipeline_runs.id"), nullable=True,
+    )
+    execution_owner: Mapped[uuid.UUID | None] = mapped_column(Uuid, nullable=True)
+    execution_generation: Mapped[int] = mapped_column(Integer, default=0, server_default="0", nullable=False)
+    execution_lease_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # ready = durable next step; in_flight = effect/result may already exist;
+    # unknown = operator review required, never blindly replay this step.
+    execution_phase: Mapped[str] = mapped_column(String(16), default="ready", server_default="ready", nullable=False)
+    step_started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # Persisted nested wait deadline; waiting consumes no executor slot or lease.
+    wait_deadline_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
     # Тайминги
+    cancel_requested_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     started_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True,
     )
@@ -200,6 +215,8 @@ class PipelineRun(Base, UUIDMixin, TimestampMixin):
     __table_args__ = (
         Index("ix_pipeline_runs_device_status", "device_id", "status"),
         Index("ix_pipeline_runs_org_status", "org_id", "status"),
+        Index("ix_pipeline_runs_recovery", "status", "execution_lease_until"),
+        Index("ix_pipeline_runs_wait_deadline", "status", "wait_deadline_at"),
     )
 
 

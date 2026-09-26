@@ -10,12 +10,14 @@ from fastapi import APIRouter, Cookie, Depends, HTTPException, Request, Response
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.core.dependencies import get_auth_service, get_current_user
+from backend.core.config import settings
+from backend.core.dependencies import get_auth_service, get_current_user, require_permission
 from backend.core.exceptions import (
     InvalidCredentialsError,
     InvalidTokenError,
     TooManyAttemptsError,
 )
+from backend.core.rbac import has_permission
 from backend.core.security import decode_expired_access_token
 from backend.database.engine import get_db
 from backend.models.user import User
@@ -43,12 +45,13 @@ bearer_scheme = HTTPBearer(auto_error=False)
 REFRESH_COOKIE_NAME = "refresh_token"
 
 
-def _cookie_settings() -> dict:
-    """Cookie настройки с учётом окружения (Secure через config)."""
+def _cookie_settings(request: Request) -> dict:
+    """Set refresh-cookie policy from the effective request transport."""
+    secure = bool(settings.COOKIE_SECURE or request.url.scheme.lower() == "https")
     return {
         "httponly": True,
-        "secure": True, # Force True for Serveo HTTPS tunnel
-        "samesite": "none", # Required for cross-site cookies over HTTPS tunnel
+        "secure": secure,
+        "samesite": "none" if secure else "lax",
         "path": "/",
         "max_age": 7 * 24 * 3600,  # 7 дней
     }
@@ -90,7 +93,7 @@ async def login(
         return MFARequiredResponse(state_token=result["state_token"])
 
     # Refresh token — cookie + тело ответа (dual mode для tunnel/proxy совместимости)
-    response.set_cookie(REFRESH_COOKIE_NAME, result["refresh_token"], **_cookie_settings())
+    response.set_cookie(REFRESH_COOKIE_NAME, result["refresh_token"], **_cookie_settings(request))
     user_resp = None
     if result.get("user"):
         from backend.schemas.auth import UserResponse
@@ -110,6 +113,7 @@ async def login(
     summary="Второй шаг MFA login: подтвердить TOTP-код",
 )
 async def login_mfa(
+    request: Request,
     body: MFALoginRequest,
     response: Response,
     auth_svc: AuthService = Depends(get_auth_service),
@@ -126,7 +130,7 @@ async def login_mfa(
             detail=str(exc) or "Invalid MFA code or session expired",
         )
 
-    response.set_cookie(REFRESH_COOKIE_NAME, result["refresh_token"], **_cookie_settings())
+    response.set_cookie(REFRESH_COOKIE_NAME, result["refresh_token"], **_cookie_settings(request))
     user_resp = None
     if result.get("user"):
         from backend.schemas.auth import UserResponse
@@ -189,7 +193,7 @@ async def refresh(
             detail=str(exc),
         )
 
-    response.set_cookie(REFRESH_COOKIE_NAME, result["refresh_token"], **_cookie_settings())
+    response.set_cookie(REFRESH_COOKIE_NAME, result["refresh_token"], **_cookie_settings(request))
     user_resp = None
     if result.get("user"):
         from backend.schemas.auth import UserResponse
@@ -207,10 +211,12 @@ async def refresh(
 
 @router.post(
     "/logout",
+    status_code=status.HTTP_204_NO_CONTENT,
     response_model=None,
     summary="Logout: инвалидировать токены",
 )
 async def logout(
+    request: Request,
     response: Response,
     credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
     refresh_token: str | None = Cookie(default=None, alias=REFRESH_COOKIE_NAME),
@@ -227,19 +233,19 @@ async def logout(
             await auth_svc.logout(
                 jti=payload["jti"],
                 token_exp=payload["exp"],
-                refresh_token_raw=refresh_token,
+                # Match the browser's cookie + header fallback refresh contract.
+                refresh_token_raw=refresh_token or request.headers.get("x-refresh-token"),
             )
         except (jwt.InvalidTokenError, KeyError):
             # Невалидный токен — продолжаем удалять cookie
             pass
 
-    response.delete_cookie(
-        REFRESH_COOKIE_NAME,
-        httponly=True,
-        secure=True,
-        samesite="strict",
-    )
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
+    cookie_options = _cookie_settings(request)
+    cookie_options.pop("max_age")
+    response.delete_cookie(REFRESH_COOKIE_NAME, **cookie_options)
+    response.status_code = status.HTTP_204_NO_CONTENT
+    # Returning a new Response would silently discard the deletion header.
+    return response
 
 
 # ── Me ────────────────────────────────────────────────────────────────────────
@@ -341,7 +347,7 @@ async def mfa_disable(
 )
 async def create_api_key(
     body: CreateAPIKeyRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = require_permission("api_key:write"),
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -349,6 +355,8 @@ async def create_api_key(
     raw_key показывается ОДИН РАЗ в ответе — после этого получить его невозможно.
     """
     from backend.services.api_key_service import APIKeyService
+    if any(not has_permission(current_user.role, permission) for permission in body.permissions):
+        raise HTTPException(status_code=403, detail="Cannot delegate requested permissions")
     svc = APIKeyService(db)
     api_key, raw_key = await svc.create_api_key(
         org_id=current_user.org_id,
@@ -377,7 +385,7 @@ async def create_api_key(
     summary="SPLIT-4: Список API ключей",
 )
 async def list_api_keys(
-    current_user: User = Depends(get_current_user),
+    current_user: User = require_permission("api_key:read"),
     db: AsyncSession = Depends(get_db),
 ):
     """Список активных API ключей для org текущего пользователя."""
@@ -394,7 +402,7 @@ async def list_api_keys(
 )
 async def revoke_api_key(
     key_id: uuid.UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: User = require_permission("api_key:write"),
     db: AsyncSession = Depends(get_db),
 ):
     """Отозвать (деактивировать) API ключ."""

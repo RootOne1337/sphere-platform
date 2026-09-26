@@ -269,14 +269,12 @@ class PipelineService:
 
     # ── Pipeline Run management ──────────────────────────────────────────────
 
-    async def get_run(self, run_id: uuid.UUID, org_id: uuid.UUID) -> PipelineRun:
+    async def get_run(self, run_id: uuid.UUID, org_id: uuid.UUID, *, for_update: bool = False) -> PipelineRun:
         """Получить pipeline run."""
-        run = await self.db.scalar(
-            select(PipelineRun).where(
-                PipelineRun.id == run_id,
-                PipelineRun.org_id == org_id,
-            )
-        )
+        query = select(PipelineRun).where(PipelineRun.id == run_id, PipelineRun.org_id == org_id)
+        if for_update:
+            query = query.with_for_update().execution_options(populate_existing=True)
+        run = await self.db.scalar(query)
         if not run:
             raise HTTPException(status_code=404, detail="Pipeline run не найден")
         return run
@@ -288,6 +286,7 @@ class PipelineService:
         pipeline_id: uuid.UUID | None = None,
         device_id: uuid.UUID | None = None,
         status: PipelineRunStatus | None = None,
+        active_only: bool = False,
         page: int = 1,
         per_page: int = 50,
     ) -> tuple[list[PipelineRun], int]:
@@ -304,11 +303,18 @@ class PipelineService:
         if status:
             base = base.where(PipelineRun.status == status)
             count_q = count_q.where(PipelineRun.status == status)
+        if active_only:
+            active = PipelineRun.status.in_([
+                PipelineRunStatus.QUEUED, PipelineRunStatus.RUNNING,
+                PipelineRunStatus.WAITING, PipelineRunStatus.PAUSED,
+            ])
+            base = base.where(active)
+            count_q = count_q.where(active)
 
         total = await self.db.scalar(count_q) or 0
         items = (
             await self.db.scalars(
-                base.order_by(PipelineRun.created_at.desc())
+                base.order_by(PipelineRun.created_at.desc(), PipelineRun.id.desc())
                 .offset((page - 1) * per_page)
                 .limit(per_page)
             )
@@ -316,8 +322,30 @@ class PipelineService:
         return list(items), total
 
     async def cancel_run(self, run_id: uuid.UUID, org_id: uuid.UUID) -> PipelineRun:
-        """Отменить pipeline run."""
-        run = await self.get_run(run_id, org_id)
+        """Persist cancellation of run and current child without publishing controls.
+
+        Lock Task before PipelineRun, consistently with result/scheduler writers.
+        If admission changed the child while waiting, reject before mutation.
+        """
+        from backend.models.task import Task, TaskStatus
+        from backend.services.task_service import TaskService
+
+        initial_run = await self.get_run(run_id, org_id)
+        child_id = initial_run.current_task_id
+        child = None
+        if child_id:
+            child = await self.db.scalar(select(Task).where(
+                Task.id == child_id, Task.org_id == org_id,
+            ).with_for_update().execution_options(populate_existing=True))
+        run = await self.db.scalar(select(PipelineRun).where(
+            PipelineRun.id == run_id, PipelineRun.org_id == org_id,
+        ).with_for_update().execution_options(populate_existing=True))
+        if run is None:
+            raise HTTPException(status_code=404, detail="Pipeline run не найден")
+        if run.current_task_id != child_id:
+            raise HTTPException(status_code=409, detail="Pipeline child changed; refresh before retrying cancellation")
+        if child_id is not None and child is None:
+            raise HTTPException(status_code=409, detail="Pipeline child unavailable; cannot confirm cancellation")
         terminal_statuses = {
             PipelineRunStatus.COMPLETED,
             PipelineRunStatus.FAILED,
@@ -326,17 +354,33 @@ class PipelineService:
         }
         if run.status in terminal_statuses:
             raise HTTPException(status_code=400, detail=f"Нельзя отменить run в статусе {run.status}")
-        run.status = PipelineRunStatus.CANCELLED
-        run.finished_at = datetime.now(timezone.utc)
+        if run.cancel_requested_at is None:
+            run.cancel_requested_at = datetime.now(timezone.utc)
+        active_child = False
+        if child is not None and child.status in (TaskStatus.QUEUED, TaskStatus.ASSIGNED, TaskStatus.RUNNING):
+            await TaskService(self.db)._request_cancellation(child)
+            active_child = child.status in (TaskStatus.ASSIGNED, TaskStatus.RUNNING)
+        # Nested runs carry a durable parent link. Parent cancellation is not
+        # terminal until their cancellations/results have been reconciled too.
+        active_nested = await self.db.scalar(select(PipelineRun.id).where(
+            PipelineRun.org_id == org_id,
+            PipelineRun.context["parent_run_id"].astext == str(run.id),
+            PipelineRun.status.in_([PipelineRunStatus.QUEUED, PipelineRunStatus.RUNNING,
+                                   PipelineRunStatus.WAITING, PipelineRunStatus.PAUSED]),
+        ).limit(1))
+        run.updated_at = datetime.now(timezone.utc)
+        if not active_child and active_nested is None:
+            run.status = PipelineRunStatus.CANCELLED
+            run.finished_at = datetime.now(timezone.utc)
         await self.db.flush()
         logger.info("pipeline_run.cancelled", run_id=str(run_id))
         return run
 
     async def pause_run(self, run_id: uuid.UUID, org_id: uuid.UUID) -> PipelineRun:
         """Приостановить pipeline run."""
-        run = await self.get_run(run_id, org_id)
-        if run.status != PipelineRunStatus.RUNNING:
-            raise HTTPException(status_code=400, detail="Можно приостановить только RUNNING run")
+        run = await self.get_run(run_id, org_id, for_update=True)
+        if run.status not in (PipelineRunStatus.RUNNING, PipelineRunStatus.WAITING) or run.cancel_requested_at is not None:
+            raise HTTPException(status_code=400, detail="Можно приостановить только RUNNING или WAITING run")
         run.status = PipelineRunStatus.PAUSED
         await self.db.flush()
         logger.info("pipeline_run.paused", run_id=str(run_id))
@@ -344,10 +388,15 @@ class PipelineService:
 
     async def resume_run(self, run_id: uuid.UUID, org_id: uuid.UUID) -> PipelineRun:
         """Возобновить pipeline run."""
-        run = await self.get_run(run_id, org_id)
-        if run.status != PipelineRunStatus.PAUSED:
+        run = await self.get_run(run_id, org_id, for_update=True)
+        if run.status != PipelineRunStatus.PAUSED or run.cancel_requested_at is not None:
             raise HTTPException(status_code=400, detail="Можно возобновить только PAUSED run")
-        run.status = PipelineRunStatus.QUEUED
+        if run.execution_owner is not None:
+            raise HTTPException(status_code=409, detail="Previous executor has not released this step; wait for recovery")
+        if run.execution_phase == "unknown":
+            raise HTTPException(status_code=409, detail="Step outcome requires review; automatic replay is unsafe")
+        run.status = (PipelineRunStatus.WAITING if run.wait_deadline_at and run.current_child_run_id
+                      else PipelineRunStatus.QUEUED)
         await self.db.flush()
         logger.info("pipeline_run.resumed", run_id=str(run_id))
         return run

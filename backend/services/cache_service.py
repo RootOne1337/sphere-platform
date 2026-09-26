@@ -98,10 +98,10 @@ class CacheService:
         redis = await get_redis()
         return await redis.get(key)
 
-    async def delete(self, key: str) -> None:
-        """Удалить ключ."""
+    async def delete(self, key: str) -> int:
+        """Удалить ключ и вернуть число удалённых записей (атомарный Redis DEL)."""
         redis = await get_redis()
-        await redis.delete(key)
+        return await redis.delete(key)
 
 
 cache_service = CacheService()

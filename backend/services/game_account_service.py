@@ -24,6 +24,12 @@ from backend.schemas.game_accounts import (
     ReleaseAccountRequest,
     UpdateGameAccountRequest,
 )
+from backend.services.account_credentials import (
+    AccountCredentialUnavailable,
+    get_account_cipher,
+    read_account_password,
+    set_account_password,
+)
 
 
 class GameAccountService:
@@ -107,7 +113,7 @@ class GameAccountService:
         base = self._to_response(account)
         return GameAccountWithPasswordResponse(
             **base.model_dump(),
-            password=account.password_encrypted,
+            password=read_account_password(account),
         )
 
     # ── Create ───────────────────────────────────────────────────────────────
@@ -136,7 +142,6 @@ class GameAccountService:
             org_id=org_id,
             game=data.game,
             login=data.login,
-            password_encrypted=data.password,
             status=AccountStatus.free,
             status_changed_at=datetime.now(timezone.utc),
             # Сервер и персонаж
@@ -161,6 +166,7 @@ class GameAccountService:
             registration_provider=data.registration_provider,
             meta=data.meta or {},
         )
+        set_account_password(account, data.password)
         self.db.add(account)
         await self.db.flush()
         await self.db.refresh(account)
@@ -292,7 +298,7 @@ class GameAccountService:
             account.login = data.login
 
         if data.password is not None:
-            account.password_encrypted = data.password
+            set_account_password(account, data.password)
 
         if data.status is not None:
             new_status = AccountStatus(data.status)
@@ -444,6 +450,9 @@ class GameAccountService:
         skipped = 0
         errors: list[str] = []
 
+        # Configuration failure must abort the import before any partial writes.
+        get_account_cipher()
+
         for idx, item in enumerate(items):
             try:
                 # Проверка дубля
@@ -465,7 +474,6 @@ class GameAccountService:
                     org_id=org_id,
                     game=item.game,
                     login=item.login,
-                    password_encrypted=item.password,
                     status=AccountStatus.free,
                     status_changed_at=datetime.now(timezone.utc),
                     server_name=item.server_name,
@@ -476,9 +484,12 @@ class GameAccountService:
                     last_balance_update=datetime.now(timezone.utc) if item.balance_rub is not None else None,
                     meta=item.meta or {},
                 )
+                set_account_password(account, item.password)
                 self.db.add(account)
                 created += 1
 
+            except AccountCredentialUnavailable:
+                raise
             except Exception as e:
                 errors.append(f"Строка {idx + 1}: {str(e)}")
 

@@ -1,0 +1,88 @@
+{"event": "startup_check (non-production): SECURITY: DB role 'audit' has SUPERUSER or BYPASSRLS; use a separate non-owner runtime role with tenant policies."}
+{"hook": "redis", "event": "startup", "level": "info", "logger": "backend.core.lifespan_registry", "timestamp": "2026-09-11T18:03:06.905628Z"}
+{"hook": "pubsub_router", "event": "startup", "level": "info", "logger": "backend.core.lifespan_registry", "timestamp": "2026-09-11T18:03:06.909413Z"}
+{"event": "PubSub router started", "level": "info", "logger": "backend.websocket.pubsub_router", "timestamp": "2026-09-11T18:03:06.909624Z"}
+{"hook": "pipeline_executor", "event": "startup", "level": "info", "logger": "backend.core.lifespan_registry", "timestamp": "2026-09-11T18:03:06.909708Z"}
+{"event": "pipeline_executor.registered", "level": "info", "logger": "backend.api.v1.pipelines.router", "timestamp": "2026-09-11T18:03:06.912640Z"}
+{"hook": "scheduler_engine", "event": "startup", "level": "info", "logger": "backend.core.lifespan_registry", "timestamp": "2026-09-11T18:03:06.912818Z"}
+{"event": "scheduler_engine.registered", "level": "info", "logger": "backend.api.v1.schedules.router", "timestamp": "2026-09-11T18:03:06.913941Z"}
+{"hook": "task_dispatcher", "event": "startup", "level": "info", "logger": "backend.core.lifespan_registry", "timestamp": "2026-09-11T18:03:06.914033Z"}
+{"event": "pipeline_executor.started", "level": "info", "logger": "backend.services.orchestrator.pipeline_executor", "timestamp": "2026-09-11T18:03:06.914177Z"}
+{"event": "scheduler_engine.started", "level": "info", "logger": "backend.services.scheduler.scheduler_engine", "timestamp": "2026-09-11T18:03:06.915047Z"}
+{"event": "task_dispatcher.registered", "level": "info", "logger": "backend.api.v1.tasks.router", "timestamp": "2026-09-11T18:03:06.916441Z"}
+{"hook": "ws_components", "event": "startup", "level": "info", "logger": "backend.core.lifespan_registry", "timestamp": "2026-09-11T18:03:06.916532Z"}
+{"hook": "events_manager", "event": "startup", "level": "info", "logger": "backend.core.lifespan_registry", "timestamp": "2026-09-11T18:03:06.917386Z"}
+{"event": "EventsManager PubSub listener started", "level": "info", "logger": "backend.api.ws.events.router", "timestamp": "2026-09-11T18:03:06.917521Z"}
+{"hook": "pool_metrics_collector", "event": "startup", "level": "info", "logger": "backend.core.lifespan_registry", "timestamp": "2026-09-11T18:03:06.917601Z"}
+{"interval_seconds": 15, "event": "pool_metrics.started", "level": "info", "logger": "backend.monitoring.pool_metrics", "timestamp": "2026-09-11T18:03:06.917854Z"}
+{"hook": "ensure_enrollment_key", "event": "startup", "level": "info", "logger": "backend.core.lifespan_registry", "timestamp": "2026-09-11T18:03:06.917952Z"}
+{"interval_s": 5, "event": "task_dispatcher.started", "level": "info", "logger": "backend.services.task_service", "timestamp": "2026-09-11T18:03:06.918911Z"}
+{"key_id": "01555475-3b25-40af-a6ec-3c8e8960d0ee", "org_id": "bb593c43-3158-4183-9eaf-cdf6ee9a40f7", "event": "enrollment_bootstrap_ready", "level": "info", "logger": "backend.tasks.ensure_enrollment_key", "timestamp": "2026-09-11T18:03:07.053825Z"}
+{"hook": "orchestration_engine", "event": "startup", "level": "info", "logger": "backend.core.lifespan_registry", "timestamp": "2026-09-11T18:03:07.053993Z"}
+{"event": "orchestration_engine.registered"}
+{"hook": "device_status_sync", "event": "startup", "level": "info", "logger": "backend.core.lifespan_registry", "timestamp": "2026-09-11T18:03:07.054606Z"}
+{"event": "device_status_sync.started"}
+{"hook": "task_heartbeat_watchdog", "event": "startup", "level": "info", "logger": "backend.core.lifespan_registry", "timestamp": "2026-09-11T18:03:07.054755Z"}
+{"stale_buffer_s": 300, "queued_stale_m": 60, "event": "task_heartbeat_watchdog.registered", "level": "info", "logger": "backend.tasks.task_heartbeat_watchdog", "timestamp": "2026-09-11T18:03:07.054864Z"}
+{"hook": "offline_queue", "event": "startup", "level": "info", "logger": "backend.core.lifespan_registry", "timestamp": "2026-09-11T18:03:07.054951Z"}
+{"event": "orchestration_engine.started", "level": "info", "logger": "backend.services.orchestrator.orchestration_engine", "timestamp": "2026-09-11T18:03:07.067163Z"}
+{"interval_s": 60, "stale_buffer_s": 300, "queued_stale_m": 60, "event": "task_heartbeat_watchdog.started", "level": "info", "logger": "backend.tasks.task_heartbeat_watchdog", "timestamp": "2026-09-11T18:03:07.067691Z"}
+IMAGE_RUNTIME_PHASE=first: ready/login/device-visible
+{"hook": "scheduler_engine", "event": "shutdown", "path": "/api/v1/devices/c90043a6-999c-440e-96cb-3cb0adf17800", "request_id": "8a7cb8e0", "method": "GET", "level": "info", "logger": "backend.core.lifespan_registry", "timestamp": "2026-09-11T18:03:07.322931Z"}
+{"event": "scheduler_engine.stopped", "path": "/api/v1/devices/c90043a6-999c-440e-96cb-3cb0adf17800", "request_id": "8a7cb8e0", "method": "GET", "level": "info", "logger": "backend.services.scheduler.scheduler_engine", "timestamp": "2026-09-11T18:03:07.323076Z"}
+{"event": "scheduler_engine.stopped", "path": "/api/v1/devices/c90043a6-999c-440e-96cb-3cb0adf17800", "request_id": "8a7cb8e0", "method": "GET", "level": "info", "logger": "backend.api.v1.schedules.router", "timestamp": "2026-09-11T18:03:07.323194Z"}
+{"hook": "task_heartbeat_watchdog", "event": "shutdown", "path": "/api/v1/devices/c90043a6-999c-440e-96cb-3cb0adf17800", "request_id": "8a7cb8e0", "method": "GET", "level": "info", "logger": "backend.core.lifespan_registry", "timestamp": "2026-09-11T18:03:07.323282Z"}
+{"event": "task_heartbeat_watchdog.stopped", "path": "/api/v1/devices/c90043a6-999c-440e-96cb-3cb0adf17800", "request_id": "8a7cb8e0", "method": "GET", "level": "info", "logger": "backend.tasks.task_heartbeat_watchdog", "timestamp": "2026-09-11T18:03:07.323388Z"}
+{"hook": "pool_metrics_collector", "event": "shutdown", "path": "/api/v1/devices/c90043a6-999c-440e-96cb-3cb0adf17800", "request_id": "8a7cb8e0", "method": "GET", "level": "info", "logger": "backend.core.lifespan_registry", "timestamp": "2026-09-11T18:03:07.323467Z"}
+{"event": "pool_metrics.stopped", "path": "/api/v1/devices/c90043a6-999c-440e-96cb-3cb0adf17800", "request_id": "8a7cb8e0", "method": "GET", "level": "info", "logger": "backend.monitoring.pool_metrics", "timestamp": "2026-09-11T18:03:07.323567Z"}
+{"hook": "events_manager", "event": "shutdown", "path": "/api/v1/devices/c90043a6-999c-440e-96cb-3cb0adf17800", "request_id": "8a7cb8e0", "method": "GET", "level": "info", "logger": "backend.core.lifespan_registry", "timestamp": "2026-09-11T18:03:07.323728Z"}
+{"hook": "pubsub_router", "event": "shutdown", "path": "/api/v1/devices/c90043a6-999c-440e-96cb-3cb0adf17800", "request_id": "8a7cb8e0", "method": "GET", "level": "info", "logger": "backend.core.lifespan_registry", "timestamp": "2026-09-11T18:03:07.323845Z"}
+{"hook": "redis", "event": "shutdown", "path": "/api/v1/devices/c90043a6-999c-440e-96cb-3cb0adf17800", "request_id": "8a7cb8e0", "method": "GET", "level": "info", "logger": "backend.core.lifespan_registry", "timestamp": "2026-09-11T18:03:07.323961Z"}
+
+{"event": "startup_check (non-production): SECURITY: DB role 'audit' has SUPERUSER or BYPASSRLS; use a separate non-owner runtime role with tenant policies."}
+{"hook": "redis", "event": "startup", "level": "info", "logger": "backend.core.lifespan_registry", "timestamp": "2026-09-11T18:03:11.640588Z"}
+{"hook": "pubsub_router", "event": "startup", "level": "info", "logger": "backend.core.lifespan_registry", "timestamp": "2026-09-11T18:03:11.644324Z"}
+{"event": "PubSub router started", "level": "info", "logger": "backend.websocket.pubsub_router", "timestamp": "2026-09-11T18:03:11.644552Z"}
+{"hook": "pipeline_executor", "event": "startup", "level": "info", "logger": "backend.core.lifespan_registry", "timestamp": "2026-09-11T18:03:11.644646Z"}
+{"event": "pipeline_executor.registered", "level": "info", "logger": "backend.api.v1.pipelines.router", "timestamp": "2026-09-11T18:03:11.647053Z"}
+{"hook": "scheduler_engine", "event": "startup", "level": "info", "logger": "backend.core.lifespan_registry", "timestamp": "2026-09-11T18:03:11.647156Z"}
+{"event": "scheduler_engine.registered", "level": "info", "logger": "backend.api.v1.schedules.router", "timestamp": "2026-09-11T18:03:11.647623Z"}
+{"hook": "task_dispatcher", "event": "startup", "level": "info", "logger": "backend.core.lifespan_registry", "timestamp": "2026-09-11T18:03:11.647726Z"}
+{"event": "pipeline_executor.started", "level": "info", "logger": "backend.services.orchestrator.pipeline_executor", "timestamp": "2026-09-11T18:03:11.647866Z"}
+{"event": "scheduler_engine.started", "level": "info", "logger": "backend.services.scheduler.scheduler_engine", "timestamp": "2026-09-11T18:03:11.648934Z"}
+{"event": "task_dispatcher.registered", "level": "info", "logger": "backend.api.v1.tasks.router", "timestamp": "2026-09-11T18:03:11.650615Z"}
+{"hook": "ws_components", "event": "startup", "level": "info", "logger": "backend.core.lifespan_registry", "timestamp": "2026-09-11T18:03:11.650740Z"}
+{"hook": "events_manager", "event": "startup", "level": "info", "logger": "backend.core.lifespan_registry", "timestamp": "2026-09-11T18:03:11.651358Z"}
+{"event": "EventsManager PubSub listener started", "level": "info", "logger": "backend.api.ws.events.router", "timestamp": "2026-09-11T18:03:11.651518Z"}
+{"hook": "pool_metrics_collector", "event": "startup", "level": "info", "logger": "backend.core.lifespan_registry", "timestamp": "2026-09-11T18:03:11.651641Z"}
+{"interval_seconds": 15, "event": "pool_metrics.started", "level": "info", "logger": "backend.monitoring.pool_metrics", "timestamp": "2026-09-11T18:03:11.651755Z"}
+{"hook": "ensure_enrollment_key", "event": "startup", "level": "info", "logger": "backend.core.lifespan_registry", "timestamp": "2026-09-11T18:03:11.651877Z"}
+{"interval_s": 5, "event": "task_dispatcher.started", "level": "info", "logger": "backend.services.task_service", "timestamp": "2026-09-11T18:03:11.653323Z"}
+{"key_id": "01555475-3b25-40af-a6ec-3c8e8960d0ee", "org_id": "bb593c43-3158-4183-9eaf-cdf6ee9a40f7", "event": "enrollment_bootstrap_ready", "level": "info", "logger": "backend.tasks.ensure_enrollment_key", "timestamp": "2026-09-11T18:03:11.849051Z"}
+{"hook": "orchestration_engine", "event": "startup", "level": "info", "logger": "backend.core.lifespan_registry", "timestamp": "2026-09-11T18:03:11.849213Z"}
+{"event": "orchestration_engine.registered"}
+{"hook": "device_status_sync", "event": "startup", "level": "info", "logger": "backend.core.lifespan_registry", "timestamp": "2026-09-11T18:03:11.849768Z"}
+{"event": "device_status_sync.started"}
+{"hook": "task_heartbeat_watchdog", "event": "startup", "level": "info", "logger": "backend.core.lifespan_registry", "timestamp": "2026-09-11T18:03:11.849918Z"}
+{"stale_buffer_s": 300, "queued_stale_m": 60, "event": "task_heartbeat_watchdog.registered", "level": "info", "logger": "backend.tasks.task_heartbeat_watchdog", "timestamp": "2026-09-11T18:03:11.850021Z"}
+{"hook": "offline_queue", "event": "startup", "level": "info", "logger": "backend.core.lifespan_registry", "timestamp": "2026-09-11T18:03:11.850104Z"}
+{"event": "orchestration_engine.started", "level": "info", "logger": "backend.services.orchestrator.orchestration_engine", "timestamp": "2026-09-11T18:03:11.862331Z"}
+{"interval_s": 60, "stale_buffer_s": 300, "queued_stale_m": 60, "event": "task_heartbeat_watchdog.started", "level": "info", "logger": "backend.tasks.task_heartbeat_watchdog", "timestamp": "2026-09-11T18:03:11.862879Z"}
+IMAGE_RUNTIME_PHASE=repeat: ready/login/device-visible
+{"hook": "scheduler_engine", "event": "shutdown", "method": "GET", "path": "/api/v1/devices/c90043a6-999c-440e-96cb-3cb0adf17800", "request_id": "7b5d3764", "level": "info", "logger": "backend.core.lifespan_registry", "timestamp": "2026-09-11T18:03:12.273266Z"}
+{"event": "scheduler_engine.stopped", "method": "GET", "path": "/api/v1/devices/c90043a6-999c-440e-96cb-3cb0adf17800", "request_id": "7b5d3764", "level": "info", "logger": "backend.services.scheduler.scheduler_engine", "timestamp": "2026-09-11T18:03:12.273459Z"}
+{"event": "scheduler_engine.stopped", "method": "GET", "path": "/api/v1/devices/c90043a6-999c-440e-96cb-3cb0adf17800", "request_id": "7b5d3764", "level": "info", "logger": "backend.api.v1.schedules.router", "timestamp": "2026-09-11T18:03:12.273566Z"}
+{"hook": "task_heartbeat_watchdog", "event": "shutdown", "method": "GET", "path": "/api/v1/devices/c90043a6-999c-440e-96cb-3cb0adf17800", "request_id": "7b5d3764", "level": "info", "logger": "backend.core.lifespan_registry", "timestamp": "2026-09-11T18:03:12.273647Z"}
+{"event": "task_heartbeat_watchdog.stopped", "method": "GET", "path": "/api/v1/devices/c90043a6-999c-440e-96cb-3cb0adf17800", "request_id": "7b5d3764", "level": "info", "logger": "backend.tasks.task_heartbeat_watchdog", "timestamp": "2026-09-11T18:03:12.273749Z"}
+{"hook": "pool_metrics_collector", "event": "shutdown", "method": "GET", "path": "/api/v1/devices/c90043a6-999c-440e-96cb-3cb0adf17800", "request_id": "7b5d3764", "level": "info", "logger": "backend.core.lifespan_registry", "timestamp": "2026-09-11T18:03:12.273826Z"}
+{"event": "pool_metrics.stopped", "method": "GET", "path": "/api/v1/devices/c90043a6-999c-440e-96cb-3cb0adf17800", "request_id": "7b5d3764", "level": "info", "logger": "backend.monitoring.pool_metrics", "timestamp": "2026-09-11T18:03:12.273909Z"}
+{"hook": "events_manager", "event": "shutdown", "method": "GET", "path": "/api/v1/devices/c90043a6-999c-440e-96cb-3cb0adf17800", "request_id": "7b5d3764", "level": "info", "logger": "backend.core.lifespan_registry", "timestamp": "2026-09-11T18:03:12.273961Z"}
+{"hook": "pubsub_router", "event": "shutdown", "method": "GET", "path": "/api/v1/devices/c90043a6-999c-440e-96cb-3cb0adf17800", "request_id": "7b5d3764", "level": "info", "logger": "backend.core.lifespan_registry", "timestamp": "2026-09-11T18:03:12.274049Z"}
+{"hook": "redis", "event": "shutdown", "method": "GET", "path": "/api/v1/devices/c90043a6-999c-440e-96cb-3cb0adf17800", "request_id": "7b5d3764", "level": "info", "logger": "backend.core.lifespan_registry", "timestamp": "2026-09-11T18:03:12.274166Z"}
+
+test_fresh_image_bootstrap_and_process_restart_preserve_operator_and_device (__main__.BackendRuntimeImageTests.test_fresh_image_bootstrap_and_process_restart_preserve_operator_and_device) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 10.456s
+
+OK

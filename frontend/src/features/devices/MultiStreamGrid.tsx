@@ -5,7 +5,7 @@ import { Play, Pause, X, MonitorPlay, Activity, Cpu } from 'lucide-react';
 import { Device } from '@/lib/hooks/useDevices';
 import { Badge } from '@/src/shared/ui/badge';
 import { Button } from '@/src/shared/ui/button';
-import { useStreamStore, GRID_SIZE_OPTIONS, gridColumns, gridLabel, type GridSize } from '@/src/shared/store/useStreamStore';
+import { useStreamStore, GRID_SIZE_OPTIONS, gridColumns, gridLabel } from '@/src/shared/store/useStreamStore';
 import { DeviceStream } from '@/components/sphere/DeviceStream';
 
 interface MultiStreamGridProps {
@@ -30,8 +30,25 @@ export function MultiStreamGrid({ devices, selectedIds, onClose }: MultiStreamGr
     // Количество колонок по таблице gridColumns из стора
     const columns = gridColumns(gridSize);
 
-    // На какие устройства подключаемся (первые N по размеру сетки)
-    const visibleDevices = devices.slice(0, gridSize);
+    // Если оператор выделил устройства в таблице, стримим именно их. Без
+    // выделения сетка показывает начало текущего отфильтрованного списка.
+    const selectedSet = new Set(selectedIds ?? []);
+    const streamCandidates = selectedSet.size > 0
+        ? devices.filter((device) => selectedSet.has(device.id))
+        : devices;
+    const visibleDevices = streamCandidates.slice(0, gridSize);
+
+    const formatHeartbeatAge = (timestamp: string | null) => {
+        if (!timestamp) return 'нет данных';
+        const seenAt = Date.parse(timestamp);
+        if (!Number.isFinite(seenAt)) return 'время неизвестно';
+        const seconds = Math.max(0, Math.floor((Date.now() - seenAt) / 1000));
+        if (seconds < 60) return `${seconds} сек назад`;
+        const minutes = Math.floor(seconds / 60);
+        if (minutes < 60) return `${minutes} мин назад`;
+        const hours = Math.floor(minutes / 60);
+        return `${hours} ч назад`;
+    };
 
     return (
         <div className="flex flex-col h-full bg-card border rounded-sm border-border">
@@ -44,7 +61,7 @@ export function MultiStreamGrid({ devices, selectedIds, onClose }: MultiStreamGr
                     </div>
                     <Badge
                         variant="outline"
-                        className={`text-[10px] ${broadcastActive
+                        className={`text-[10px] motion-reduce:animate-none ${broadcastActive
                             ? 'bg-primary/10 text-primary border-primary/20 animate-pulse'
                             : 'bg-muted text-muted-foreground border-border'}`}
                     >
@@ -58,6 +75,7 @@ export function MultiStreamGrid({ devices, selectedIds, onClose }: MultiStreamGr
                         variant={broadcastActive ? 'destructive' : 'noc'}
                         size="sm"
                         onClick={() => setBroadcastActive(!broadcastActive)}
+                        aria-label={broadcastActive ? 'Остановить вещание' : 'Запустить вещание'}
                         className="h-7 text-[10px] tracking-wider uppercase font-bold gap-1.5"
                     >
                         {broadcastActive ? (
@@ -70,25 +88,37 @@ export function MultiStreamGrid({ devices, selectedIds, onClose }: MultiStreamGr
                     <div className="h-4 w-px bg-border hidden md:block" />
 
                     {/* View Options — динамические кнопки из GRID_SIZE_OPTIONS */}
-                    <div className="items-center gap-1 hidden md:flex">
+                    <div role="group" aria-label="Размер сетки потоков" className="items-center gap-1 hidden md:flex">
                         {GRID_SIZE_OPTIONS.map((s) => (
-                            <Button key={s} variant="ghost" size="sm" onClick={() => setGridSize(s)} className={`h-6 text-[10px] px-2 ${gridSize === s ? 'bg-background text-foreground' : 'text-muted-foreground'}`}>{gridLabel(s)}</Button>
+                            <Button key={s} type="button" variant="ghost" size="sm" aria-pressed={gridSize === s} title={`Показывать до ${s} потоков`} onClick={() => setGridSize(s)} className={`h-7 text-[10px] px-2 ${gridSize === s ? 'bg-background text-foreground' : 'text-muted-foreground'}`}>{gridLabel(s)}</Button>
                         ))}
 
                         <div className="h-3 w-px bg-border mx-1" />
 
-                        <Button variant="ghost" size="sm" onClick={toggleHUD} className={`h-6 text-[10px] px-2 ${showHUD ? 'bg-primary/20 text-primary border border-primary/30' : 'bg-transparent text-muted-foreground'}`}>HUD</Button>
-                        <Button variant="ghost" size="sm" onClick={toggleStats} className={`h-6 text-[10px] px-2 ${showStats ? 'bg-primary/20 text-primary border border-primary/30' : 'bg-transparent text-muted-foreground'}`}>STATS</Button>
-                        <Button variant="ghost" size="sm" onClick={() => setObjectFit(objectFit === 'contain' ? 'cover' : 'contain')} className="h-6 text-[10px] px-2 text-muted-foreground hover:bg-border">FIT: {objectFit.toUpperCase()}</Button>
+                        <Button variant="ghost" size="sm" aria-pressed={showHUD} onClick={toggleHUD} className={`h-7 text-[10px] px-2 ${showHUD ? 'bg-primary/20 text-primary border border-primary/30' : 'bg-transparent text-muted-foreground'}`}>HUD</Button>
+                        <Button variant="ghost" size="sm" aria-pressed={showStats} onClick={toggleStats} className={`h-7 text-[10px] px-2 ${showStats ? 'bg-primary/20 text-primary border border-primary/30' : 'bg-transparent text-muted-foreground'}`}>Статистика</Button>
+                        <Button variant="ghost" size="sm" aria-label="Изменить масштаб видео" aria-pressed={objectFit === 'cover'} onClick={() => setObjectFit(objectFit === 'contain' ? 'cover' : 'contain')} className="h-7 text-[10px] px-2 text-muted-foreground hover:bg-border">FIT: {objectFit.toUpperCase()}</Button>
                     </div>
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">
-                    <Button variant="destructive" size="sm" className="h-7 text-[10px] tracking-wider uppercase font-bold" onClick={onClose}>
-                        <X className="w-3 h-3 mr-1" /> End Broadcast
+                    <Button
+                        variant="destructive"
+                        size="sm"
+                        className="h-8 text-xs tracking-wide font-semibold"
+                        onClick={() => { setBroadcastActive(false); onClose?.(); }}
+                        disabled={!broadcastActive}
+                        aria-label="Остановить потоки"
+                    >
+                        <X className="w-3.5 h-3.5 mr-1.5" /> Остановить потоки
                     </Button>
                 </div>
             </div>
+            {streamCandidates.length > visibleDevices.length && (
+                <p role="status" className="shrink-0 border-b border-border bg-card px-3 py-2 text-xs text-muted-foreground">
+                    Показаны первые {visibleDevices.length} из {streamCandidates.length} устройств. Увеличьте размер сетки или сузьте выбор, чтобы открыть остальные потоки.
+                </p>
+            )}
 
             {/* Matrix Grid */}
             <div
@@ -101,11 +131,10 @@ export function MultiStreamGrid({ devices, selectedIds, onClose }: MultiStreamGr
                         {/* Video Layer */}
                         <div
                             className="flex-1 relative bg-black/80 flex flex-col items-center justify-center overflow-hidden"
-                            style={{ objectFit }}
                         >
                             {broadcastActive && (device.status || '').toLowerCase() === 'online' ? (
                                 /* Реальный видео-стрим через WebSocket H.264 */
-                                <DeviceStream deviceId={device.id} />
+                                <DeviceStream deviceId={device.id} fit={objectFit} />
                             ) : (device.status || '').toLowerCase() === 'online' ? (
                                 /* Онлайн, но стрим не включён — показываем готовность */
                                 <div className="flex flex-col items-center justify-center text-muted-foreground gap-2">
@@ -118,7 +147,7 @@ export function MultiStreamGrid({ devices, selectedIds, onClose }: MultiStreamGr
                                 <div className="flex flex-col items-center justify-center text-muted-foreground gap-2">
                                     <X className="w-6 h-6 opacity-30" />
                                     <span className="text-[10px] font-mono font-bold tracking-widest uppercase">Stream Offline</span>
-                                    <span className="text-[8px] text-[#555] font-mono">ERR_CONN_REFUSED</span>
+                                    <span className="text-xs text-muted-foreground">Проверьте heartbeat и доступность устройства</span>
                                 </div>
                             )}
 
@@ -138,7 +167,7 @@ export function MultiStreamGrid({ devices, selectedIds, onClose }: MultiStreamGr
                             {showStats && (device.status || '').toLowerCase() === 'online' && (
                                 <div className="flex items-center gap-3">
                                     <div className="flex items-center gap-1 text-[8px] font-mono text-warning">
-                                        <Activity className="w-2.5 h-2.5" /> {device.last_heartbeat ? '< 5s' : '—'}
+                                        <Activity className="w-2.5 h-2.5" /> {formatHeartbeatAge(device.last_heartbeat)}
                                     </div>
                                     <div className="flex items-center gap-1 text-[8px] font-mono text-muted-foreground">
                                         <Cpu className="w-2.5 h-2.5" /> {device.cpu_usage != null ? `${device.cpu_usage}%` : '—'}
@@ -151,7 +180,7 @@ export function MultiStreamGrid({ devices, selectedIds, onClose }: MultiStreamGr
                 ))}
 
                 {/* Пустые слоты если устройств меньше чем ячеек сетки */}
-                {Array.from({ length: Math.max(0, gridSize - Math.min(devices.length, gridSize)) }).map((_, i) => (
+                {Array.from({ length: Math.max(0, gridSize - Math.min(visibleDevices.length, gridSize)) }).map((_, i) => (
                     <div key={`empty-${i}`} className="bg-muted/30 border border-border border-dashed rounded-sm aspect-video flex items-center justify-center min-h-[150px]">
                         <span className="text-[10px] font-mono text-[#555] uppercase tracking-widest">No Signal</span>
                     </div>

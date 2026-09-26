@@ -4,8 +4,9 @@
 from __future__ import annotations
 
 import uuid
+from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, Header, Query
+from fastapi import APIRouter, Cookie, Depends, Header, HTTPException, Query
 from fastapi import status as http_status
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -30,6 +31,7 @@ from backend.schemas.devices import (
     DeviceStatusResponse,
     UpdateDeviceRequest,
 )
+from backend.schemas.stream_diagnostics import StreamDiagnosticsResponse
 from backend.services.api_key_service import APIKeyService
 from backend.services.cache_service import CacheService
 from backend.services.device_registration_service import DeviceRegistrationService
@@ -74,9 +76,13 @@ async def get_device_me(
     Используется агентом при zero-touch enrollment для верификации ключа.
     """
     from fastapi import HTTPException
+
     if not x_api_key:
-        raise HTTPException(status_code=http_status.HTTP_401_UNAUTHORIZED, detail="X-API-Key required")
+        raise HTTPException(
+            status_code=http_status.HTTP_401_UNAUTHORIZED, detail="X-API-Key required"
+        )
     from backend.services.api_key_service import APIKeyService
+
     api_key_svc = APIKeyService(db)
     key = await api_key_svc.authenticate(x_api_key)
     if not key:
@@ -134,17 +140,18 @@ async def list_devices(
                 d.adb_connected = live.adb_connected
                 d.vpn_active = live.vpn_active
                 d.last_heartbeat = live.last_heartbeat
+                d.agent_version = live.agent_version
+                d.agent_version_code = live.agent_version_code
             enriched.append(d)
         devices = enriched
     pages = (total + per_page - 1) // per_page if total > 0 else 0
-    return DeviceListResponse(
-        items=devices, total=total, page=page, per_page=per_page, pages=pages
-    )
+    return DeviceListResponse(items=devices, total=total, page=page, per_page=per_page, pages=pages)
 
 
 # ── Fleet status (bulk MGET) ──────────────────────────────────────────────────
 # NOTE: These routes MUST appear before /{device_id} routes so FastAPI
 # doesn't try to coerce "status" into a UUID.
+
 
 @router.post(
     "/status/bulk",
@@ -173,15 +180,30 @@ async def get_fleet_status(
     svc: DeviceService = Depends(get_device_service),
     status_cache: DeviceStatusCache = Depends(get_status_cache),
 ) -> FleetSummaryResponse:
-    """Total/online/busy/offline aggregation for Fleet Dashboard."""
+    """Total/online/busy/connecting/offline aggregation for Fleet Dashboard."""
     all_ids = await svc.get_all_device_ids(current_user.org_id)
     summary = await status_cache.get_fleet_summary(all_ids)
     return FleetSummaryResponse(
         total=summary["total"],
         online=summary["online"],
         busy=summary["busy"],
+        connecting=summary["connecting"],
         offline=summary["offline"],
     )
+
+
+@router.post("/refresh", response_model=DeviceRegisterResponse)
+async def refresh_device(
+    refresh_token: str | None = Cookie(default=None),
+    refresh_request_id: uuid.UUID | None = Header(
+        default=None, alias="X-Refresh-Request-Id",
+        description="Persist before sending; reuse with the same refresh token to recover a lost response.",
+    ),
+    db: AsyncSession = Depends(get_db),
+) -> DeviceRegisterResponse:
+    if not refresh_token or len(refresh_token) > 512:
+        raise HTTPException(status_code=401, detail="Device refresh token required")
+    return await DeviceRegistrationService(db).refresh_device_token(refresh_token, refresh_request_id)
 
 
 # ── Auto-register (TZ-12 Agent Discovery) ────────────────────────────────────
@@ -195,7 +217,8 @@ async def get_fleet_status(
     description=(
         "Автоматическая регистрация нового устройства. "
         "Аутентификация по enrollment API-ключу (X-API-Key с правом device:register). "
-        "Идемпотентна: если fingerprint уже зарегистрирован — re-enrollment с новыми токенами."
+        "Идемпотентна по fingerprint и instance_binding. "
+        "Копии APK с разными привязками VM получают отдельные устройства."
     ),
 )
 async def register_device(
@@ -211,7 +234,8 @@ async def register_device(
     - Активный, не истёкший
 
     Идемпотентность:
-    - Повторный вызов с тем же fingerprint → возвращает существующее устройство + новые токены
+    - Повторный вызов с тем же fingerprint и instance_binding возвращает то же устройство.
+    - Первый bound-клиент сохраняет старую карточку; остальные клоны получают новые.
     """
     from fastapi import HTTPException
 
@@ -240,6 +264,7 @@ async def register_device(
 
 # ── Create ────────────────────────────────────────────────────────────────────
 
+
 @router.post(
     "",
     response_model=DeviceResponse,
@@ -259,6 +284,7 @@ async def create_device(
 
 # ── Get one ───────────────────────────────────────────────────────────────────
 
+
 @router.get(
     "/{device_id}",
     response_model=DeviceResponse,
@@ -274,10 +300,20 @@ async def get_device(
     live = await status_cache.get_status(str(device_id))
     if live:
         device.status = live.status
+        device.battery_level = live.battery
+        device.cpu_usage = live.cpu_usage
+        device.ram_usage_mb = live.ram_usage_mb
+        device.screen_on = live.screen_on
+        device.adb_connected = live.adb_connected
+        device.vpn_active = live.vpn_active
+        device.last_heartbeat = live.last_heartbeat
+        device.agent_version = live.agent_version
+        device.agent_version_code = live.agent_version_code
     return device
 
 
 # ── Update ────────────────────────────────────────────────────────────────────
+
 
 @router.put(
     "/{device_id}",
@@ -298,11 +334,12 @@ async def update_device(
 
 # ── Delete ────────────────────────────────────────────────────────────────────
 
+
 @router.delete(
     "/{device_id}",
     status_code=204,
     response_model=None,
-    summary="Удалить устройство",
+    summary="Убрать устройство из активного каталога, сохранив историю",
 )
 async def delete_device(
     device_id: uuid.UUID,
@@ -315,6 +352,7 @@ async def delete_device(
 
 
 # ── Status (live Redis) ───────────────────────────────────────────────────────
+
 
 @router.get(
     "/{device_id}/status",
@@ -329,7 +367,63 @@ async def get_device_status(
     return await svc.get_device_with_live_status(device_id, current_user.org_id)
 
 
+@router.get(
+    "/{device_id}/stream-diagnostics",
+    response_model=StreamDiagnosticsResponse,
+    summary="Последний подтверждённый heartbeat-отчёт о стадиях Android-стрима",
+)
+async def get_device_stream_diagnostics(
+    device_id: uuid.UUID,
+    current_user: User = require_permission("device:read"),
+    svc: DeviceService = Depends(get_device_service),
+    status_cache: DeviceStatusCache = Depends(get_status_cache),
+) -> StreamDiagnosticsResponse:
+    """Return bounded Android stage counters with explicit freshness semantics."""
+    # Verify tenant ownership before looking up any device-keyed live telemetry.
+    await svc.get_device(device_id, current_user.org_id)
+    device_key = str(device_id)
+    live = await status_cache.get_status(device_key)
+    snapshot = await status_cache.get_stream_diagnostics(device_key)
+    now = datetime.now(timezone.utc)
+
+    def age_seconds(observed_at: datetime | None) -> float | None:
+        if observed_at is None:
+            return None
+        if observed_at.tzinfo is None:
+            observed_at = observed_at.replace(tzinfo=timezone.utc)
+        return max(0.0, (now - observed_at).total_seconds())
+
+    heartbeat_age = age_seconds(live.last_heartbeat if live else None)
+    snapshot_age = age_seconds(snapshot.observed_at if snapshot else None)
+    heartbeat_fresh = (
+        live is not None
+        and live.status in ("online", "busy")
+        and heartbeat_age is not None
+        and heartbeat_age <= 75
+    )
+    if not heartbeat_fresh:
+        state = "stale" if snapshot is not None else "unavailable"
+    elif snapshot is None:
+        state = "not_streaming"
+    elif snapshot_age is None or snapshot_age > 75:
+        state = "stale"
+    else:
+        # The agent only reports its local capture stages. This does not prove
+        # the backend received a picture NAL or that a viewer rendered it.
+        state = "active_report"
+
+    return StreamDiagnosticsResponse(
+        device_id=device_key,
+        state=state,
+        agent_status=live.status if live else None,
+        last_heartbeat=live.last_heartbeat if live else None,
+        age_seconds=snapshot_age,
+        diagnostics=snapshot,
+    )
+
+
 # ── ADB Connect ───────────────────────────────────────────────────────────────
+
 
 @router.post(
     "/{device_id}/connect",
@@ -349,6 +443,7 @@ async def connect_device(
 
 # ── Screenshot ────────────────────────────────────────────────────────────────
 
+
 @router.get(
     "/{device_id}/screenshot",
     summary="Запросить скриншот устройства (TZ-03 stub)",
@@ -364,8 +459,37 @@ async def take_screenshot(
 # ── Shell (TTY over HTTP) ─────────────────────────────────────────────────────
 
 
+async def _request_interactive_command(
+    device_id: uuid.UUID, user: User, svc: DeviceService,
+    kind: str, payload: dict, timeout: float, *, accept_progress: bool = False,
+) -> dict:
+    import time
+
+    from backend.websocket.pubsub_router import get_pubsub_publisher
+
+    # Authorize against SQL before publishing to any worker's device channel.
+    await svc.get_device(device_id, user.org_id)
+    publisher = get_pubsub_publisher()
+    if publisher is None:
+        raise HTTPException(503, "Device command transport is unavailable")
+    result = await publisher.send_command_wait_result(str(device_id), {
+        "type": kind,
+        # Bare UUIDs identify durable SQL tasks in the result handler. These
+        # live-only RPC receipts must remain distinct even after waiter timeout.
+        "command_id": f"interactive_{uuid.uuid4()}",
+        "payload": payload,
+        "signed_at": int(time.time()),
+        "ttl_seconds": max(15, int(timeout)),
+    }, timeout=timeout, live_only=True, accept_progress=accept_progress)
+    allowed = {"completed", "failed"} | ({"received", "running"} if accept_progress else set())
+    if result.get("status") not in allowed:
+        raise HTTPException(502, "Invalid device command result")
+    return result
+
+
 class ExecuteShellRequest(BaseModel):
     command: str = Field(..., min_length=1, max_length=4096)
+
 
 @router.post(
     "/{device_id}/shell",
@@ -378,65 +502,21 @@ async def execute_shell(
     db: AsyncSession = Depends(get_db),
     svc: DeviceService = Depends(get_device_service),
 ) -> dict:
-    import asyncio
-    import json
-    import time
-
-    from fastapi import HTTPException
-
-    from backend.database.redis_client import get_redis_binary
-    from backend.websocket.connection_manager import get_connection_manager
-
-    device = await svc.get_device(device_id, current_user.org_id)
-    if not device:
-        raise HTTPException(status_code=404, detail="Device not found")
-
-    manager = get_connection_manager()
-    if not manager.is_connected(str(device_id)):
-        raise HTTPException(status_code=400, detail="Device is offline")
-
-    command_id = str(uuid.uuid4())
-    send_ok = await manager.send_to_device(str(device_id), {
-        "type": "SHELL",
-        "command_id": command_id,
-        "payload": {"cmd": body.command},
-        "signed_at": int(time.time()),
-        "ttl_seconds": 30,
-    })
-    if not send_ok:
-        raise HTTPException(status_code=504, detail=f"Failed to send shell command to device {device_id}")
-
-    redis = await get_redis_binary()
-    if not redis:
-        raise HTTPException(status_code=500, detail="Redis unavailable")
-
-    pubsub = redis.pubsub()
-    result_channel = f"sphere:agent:result:{device_id}:{command_id}"
-    await pubsub.subscribe(result_channel)
-
-    try:
-        async def wait_for_result():
-            async for message in pubsub.listen():
-                if message["type"] == "message":
-                    data = json.loads(message["data"])
-                    if data.get("status") == "completed":
-                        return {"output": data.get("result", {}).get("output", "")}
-                    elif data.get("status") == "failed":
-                        return {"error": data.get("error", "Unknown error")}
-
-        return await asyncio.wait_for(wait_for_result(), timeout=30.0)
-    except asyncio.TimeoutError:
-        raise HTTPException(status_code=504, detail="Shell command timeout")
-    finally:
-        await pubsub.unsubscribe(result_channel)
-        await pubsub.aclose()
+    result = await _request_interactive_command(
+        device_id, current_user, svc, "SHELL", {"cmd": body.command}, 30.0,
+    )
+    if result.get("status") == "failed":
+        return {"error": result.get("error", "Unknown error")}
+    return {"output": result.get("result", {}).get("output", "")}
 
 
 # ── Logcat Viewer ─────────────────────────────────────────────────────────────
 
+
 class RequestLogcatRequest(BaseModel):
     lines: int = Field(500, ge=1, le=10000)
     mode: str = "sphere"
+
 
 @router.post(
     "/{device_id}/logcat",
@@ -449,61 +529,28 @@ async def request_logcat(
     db: AsyncSession = Depends(get_db),
     svc: DeviceService = Depends(get_device_service),
 ) -> dict:
-    import asyncio
-    import json
-    import time
-
-    from fastapi import HTTPException
-
-    from backend.database.redis_client import get_redis_binary
-    from backend.websocket.connection_manager import get_connection_manager
-
-    device = await svc.get_device(device_id, current_user.org_id)
-    if not device:
-        raise HTTPException(status_code=404, detail="Device not found")
-
-    manager = get_connection_manager()
-    if not manager.is_connected(str(device_id)):
-        raise HTTPException(status_code=400, detail="Device is offline")
-
-    command_id = str(uuid.uuid4())
-    send_ok = await manager.send_to_device(str(device_id), {
-        "type": "UPLOAD_LOGCAT",
-        "command_id": command_id,
-        "payload": {"lines": body.lines, "mode": body.mode},
-        "signed_at": int(time.time()),
-        "ttl_seconds": 15,
-    })
-    if not send_ok:
-        raise HTTPException(status_code=504, detail=f"Failed to send logcat request to device {device_id}")
-
-    redis = await get_redis_binary()
-    if not redis:
-        raise HTTPException(status_code=500, detail="Redis unavailable")
-
-    pubsub = redis.pubsub()
-    result_channel = f"sphere:agent:result:{device_id}:{command_id}"
-    await pubsub.subscribe(result_channel)
-
-    try:
-        async def wait_for_result():
-            async for message in pubsub.listen():
-                if message["type"] == "message":
-                    data = json.loads(message["data"])
-                    if data.get("status") == "completed":
-                        return {"logcat": data.get("result", {}).get("logcat", "")}
-                    elif data.get("status") == "failed":
-                        return {"error": data.get("error", "Unknown error")}
-
-        return await asyncio.wait_for(wait_for_result(), timeout=15.0)
-    except asyncio.TimeoutError:
-        raise HTTPException(status_code=504, detail="Logcat request timeout")
-    finally:
-        await pubsub.unsubscribe(result_channel)
-        await pubsub.aclose()
+    # SphereApp always persists its own logs, including release builds where
+    # Timber.DebugTree/logcat output is disabled. A fixed logcat tag allowlist
+    # misses both those logs and the class tags emitted by debug builds.
+    sphere_logs = body.mode == "sphere"
+    command_type = "REQUEST_LOGS" if sphere_logs else "UPLOAD_LOGCAT"
+    # The APK reads this byte tail before returning it over its command WS.
+    # Sending 64 KiB for a one-line request can time out on a degraded WAN.
+    byte_budget = min(64 * 1024, max(4 * 1024, body.lines * 256))
+    payload = {"max_bytes": byte_budget} if sphere_logs else {"lines": body.lines, "mode": body.mode}
+    result = await _request_interactive_command(
+        device_id, current_user, svc, command_type, payload, 15.0,
+    )
+    if result.get("status") == "failed":
+        return {"error": result.get("error", "Unknown error")}
+    content = result.get("result", {}).get("logs" if sphere_logs else "logcat", "")
+    if sphere_logs:
+        content = "\n".join(content.splitlines()[-body.lines:])
+    return {"logcat": content}
 
 
 # ── Reboot ────────────────────────────────────────────────────────────────────
+
 
 @router.post(
     "/{device_id}/reboot",
@@ -515,66 +562,14 @@ async def reboot_device(
     db: AsyncSession = Depends(get_db),
     svc: DeviceService = Depends(get_device_service),
 ) -> dict:
-    import asyncio
-    import json
-    import time
-
-    from fastapi import HTTPException
-
-    from backend.database.redis_client import get_redis_binary
-    from backend.websocket.connection_manager import get_connection_manager
-
-    device = await svc.get_device(device_id, current_user.org_id)
-    if not device:
-        raise HTTPException(status_code=404, detail="Device not found")
-
-    manager = get_connection_manager()
-    if not manager.is_connected(str(device_id)):
-        raise HTTPException(status_code=400, detail="Device is offline")
-
-    command_id = str(uuid.uuid4())
-    send_ok = await manager.send_to_device(str(device_id), {
-        "type": "REBOOT",
-        "command_id": command_id,
-        "payload": {},
-        "signed_at": int(time.time()),
-        "ttl_seconds": 15,
-    })
-    if not send_ok:
-        raise HTTPException(
-            status_code=504,
-            detail=f"Failed to send reboot command to device {device_id}",
-        )
-
-    redis = await get_redis_binary()
-    if not redis:
-        raise HTTPException(status_code=500, detail="Redis unavailable")
-
-    pubsub = redis.pubsub()
-    result_channel = f"sphere:agent:result:{device_id}:{command_id}"
-    await pubsub.subscribe(result_channel)
-
     try:
-        async def wait_for_result():
-            async for message in pubsub.listen():
-                if message["type"] == "message":
-                    data = json.loads(message["data"])
-                    if data.get("status") in ("completed", "received", "running"):
-                        return {
-                            "status": "reboot_initiated",
-                            "device_id": str(device_id),
-                        }
-                    elif data.get("status") == "failed":
-                        return {"error": data.get("error", "Reboot failed")}
-
-        return await asyncio.wait_for(wait_for_result(), timeout=10.0)
-    except asyncio.TimeoutError:
-        # Устройство могло перезагрузиться до отправки ACK — это нормально
-        return {
-            "status": "reboot_initiated",
-            "device_id": str(device_id),
-            "note": "Device may have rebooted before acknowledging",
-        }
-    finally:
-        await pubsub.unsubscribe(result_channel)
-        await pubsub.aclose()
+        result = await _request_interactive_command(
+            device_id, current_user, svc, "REBOOT", {}, 10.0, accept_progress=True,
+        )
+    except HTTPException as exc:
+        if exc.status_code == 504:
+            raise HTTPException(504, "Reboot outcome unknown: device did not acknowledge") from exc
+        raise
+    if result.get("status") == "failed":
+        return {"error": result.get("error", "Reboot failed")}
+    return {"status": "reboot_initiated", "device_id": str(device_id)}

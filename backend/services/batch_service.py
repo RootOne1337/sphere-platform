@@ -2,20 +2,18 @@
 # ВЛАДЕЛЕЦ: TZ-04 SPLIT-4. Wave Batch Execution — волновой запуск на флите.
 #
 # Архитектурные особенности:
-#   — start_batch() возвращает 202 немедленно, волны запускаются в фоне
-#   — FIX-4.1: фоновая задача использует ИЗОЛИРОВАННУЮ сессию (не DI-сессию)
-#   — FIX-4.3: глобальный set _background_tasks защищает задачи от GC
-#   — FIX-4.2: статус батча обновляется С КОММИТОМ после завершения волн
+#   — start_batch() сохраняет план до HTTP 202
+#   — startup worker восстанавливает волны из SQL, без coroutine на каждый batch
+#   — Завершение волн означает создание intent, а не выполнение на устройстве
 #   — Частичный прогресс сохраняется (коммит каждой волны отдельно)
 from __future__ import annotations
 
-import asyncio
-import random
+import hashlib
 import uuid
 
 import structlog
 from fastapi import HTTPException
-from sqlalchemy import select
+from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from backend.models.script import Script
@@ -26,8 +24,15 @@ from backend.services.workstation_mapping import WorkstationMappingService
 
 logger = structlog.get_logger()
 
-# FIX-4.3: Глобальный set фоновых задач — переживает HTTP-запрос, защита от GC
-_background_tasks: set[asyncio.Task] = set()
+async def _lock_batch_production(db: AsyncSession, batch_id: uuid.UUID) -> None:
+    """Fence wave admission and cancellation, even when no Task row exists yet.
+
+    This transaction lock precedes task/device locks. Do not lock TaskBatch
+    before Task: result handlers already use Task -> TaskBatch ordering.
+    """
+    key = int.from_bytes(hashlib.sha256(f"batch-production:{batch_id}".encode()).digest()[:8],
+                         "big", signed=True)
+    await db.execute(text("SELECT pg_advisory_xact_lock(:key)"), {"key": key})
 
 
 class BatchService:
@@ -46,6 +51,11 @@ class BatchService:
         org_id: uuid.UUID,
         user_id: uuid.UUID,
     ) -> TaskBatch:
+        """Persist the full plan before returning; startup workers admit due waves.
+
+        This entry point owns its transaction boundary because its worker uses
+        a different session. A successful return is already durable.
+        """
         # Проверить скрипт
         script = await self.db.scalar(
             select(Script).where(
@@ -59,8 +69,15 @@ class BatchService:
         if not script.current_version_id:
             raise HTTPException(status_code=400, detail="Script has no versions")
 
+        mapping_svc = WorkstationMappingService(self.db)
+        waves = await mapping_svc.create_waves(
+            device_ids=request.device_ids, org_id=org_id, wave_size=request.wave_size,
+            stagger_by_workstation=request.stagger_by_workstation,
+        )
+
         # Создать batch-запись (в рамках текущей DI-сессии — запрос ещё жив)
         batch = TaskBatch(
+            id=uuid.uuid4(),
             org_id=org_id,
             script_id=request.script_id,
             name=request.name,
@@ -76,26 +93,14 @@ class BatchService:
             },
             created_by_id=user_id,
         )
+        from backend.services.batch_admission import initialize_plan
+
+        initialize_plan(batch, waves, script.current_version_id)
         self.db.add(batch)
         await self.db.flush()
-        batch_id = batch.id
-
-        # Разбить на волны
-        mapping_svc = WorkstationMappingService(self.db)
-        waves = await mapping_svc.create_waves(
-            device_ids=request.device_ids,
-            org_id=org_id,
-            wave_size=request.wave_size,
-            stagger_by_workstation=request.stagger_by_workstation,
-        )
-
-        # FIX-4.3: Запустить фоновую задачу, защитить от GC через глобальный set
-        bg_task = asyncio.create_task(
-            self._execute_waves(batch_id, waves, request, org_id),
-            name=f"batch_waves_{batch_id}",
-        )
-        _background_tasks.add(bg_task)
-        bg_task.add_done_callback(_background_tasks.discard)
+        # Plan and fixed version are durable before HTTP 202. The bounded
+        # startup worker discovers intent even if this process dies right here.
+        await self.db.commit()
 
         return batch
 
@@ -164,83 +169,6 @@ class BatchService:
         batch = await self.start_batch(batch_request, org_id, user_id)
         return batch, len(online_ids)
 
-    async def _execute_waves(
-        self,
-        batch_id: uuid.UUID,
-        waves: list[list[uuid.UUID]],
-        request: BatchExecutionRequest,
-        org_id: uuid.UUID,
-    ) -> None:
-        """
-        FIX-4.1: Фоновая задача с ИЗОЛИРОВАННОЙ сессией.
-        DI-сессия self.db уже закрыта к этому моменту!
-        """
-        succeeded = 0
-        failed = 0
-
-        async with self._session_maker() as db:
-            from backend.database.redis_client import redis as _redis
-            from backend.services.task_queue import TaskQueue
-            from backend.services.task_service import TaskService
-
-            queue = TaskQueue(_redis)
-            task_svc = TaskService(db, queue)
-
-            for wave_num, wave_devices in enumerate(waves):
-                logger.info(
-                    "batch.wave.start",
-                    batch_id=str(batch_id),
-                    wave=f"{wave_num + 1}/{len(waves)}",
-                    devices=len(wave_devices),
-                )
-
-                for device_id in wave_devices:
-                    try:
-                        await task_svc.create_task(
-                            script_id=request.script_id,
-                            device_id=device_id,
-                            org_id=org_id,
-                            priority=request.priority,
-                            webhook_url=None,   # webhook только для батча в целом
-                            batch_id=batch_id,
-                            wave_index=wave_num,
-                        )
-                    except Exception as exc:
-                        logger.warning(
-                            "batch.wave.task_create_failed",
-                            device_id=str(device_id),
-                            error=str(exc),
-                        )
-                        failed += 1
-
-                # Коммит каждой волны — частичный прогресс сохраняется
-                await db.commit()
-
-                # Ждать задержку между волнами с jitter (кроме последней волны)
-                if wave_num < len(waves) - 1:
-                    jitter = random.randint(0, request.jitter_ms)
-                    delay_s = (request.wave_delay_ms + jitter) / 1000
-                    await asyncio.sleep(delay_s)
-
-        # FIX-4.2: Обновить статус батча С КОММИТОМ — без этого статус зависнет в RUNNING
-        async with self._session_maker() as db:
-            batch = await db.get(TaskBatch, batch_id)
-            if batch:
-                batch.status = TaskBatchStatus.COMPLETED
-                await db.commit()
-
-        # Финальный webhook
-        webhook_url = request.webhook_url
-        if webhook_url:
-            await self._send_batch_complete_webhook(
-                batch_id, webhook_url, succeeded, failed
-            )
-        logger.info(
-            "batch.completed",
-            batch_id=str(batch_id),
-            waves=len(waves),
-        )
-
     async def _send_batch_complete_webhook(
         self,
         batch_id: uuid.UUID,
@@ -262,14 +190,15 @@ class BatchService:
         )
 
     async def get_batch(
-        self, batch_id: uuid.UUID, org_id: uuid.UUID
+        self, batch_id: uuid.UUID, org_id: uuid.UUID, *, for_update: bool = False
     ) -> TaskBatch:
-        batch = await self.db.scalar(
-            select(TaskBatch).where(
-                TaskBatch.id == batch_id,
-                TaskBatch.org_id == org_id,
-            )
+        statement = select(TaskBatch).where(
+            TaskBatch.id == batch_id,
+            TaskBatch.org_id == org_id,
         )
+        if for_update:
+            statement = statement.with_for_update().execution_options(populate_existing=True)
+        batch = await self.db.scalar(statement)
         if not batch:
             raise HTTPException(status_code=404, detail="Batch not found")
         return batch
@@ -278,35 +207,47 @@ class BatchService:
         self, batch_id: uuid.UUID, org_id: uuid.UUID
     ) -> None:
         """
-        Отменяет батч: помечает незапущенные задачи CANCELLED.
-        Уже запущенные задачи завершатся сами.
+        Cancels never-dispatched work and records durable stops for ASSIGNED.
+        Already RUNNING tasks retain this endpoint's finish-current-work policy.
         """
         batch = await self.get_batch(batch_id, org_id)
+        from backend.services.task_service import TaskService
 
-        if batch.status in (TaskBatchStatus.COMPLETED, TaskBatchStatus.CANCELLED):
+        if batch.status not in (TaskBatchStatus.PENDING, TaskBatchStatus.RUNNING):
             raise HTTPException(
                 status_code=409,
                 detail=f"Batch already in terminal status '{batch.status}'",
             )
 
-        # Отменить QUEUED задачи этого батча
-        from backend.database.redis_client import redis as _redis
-        from backend.services.task_queue import TaskQueue
+        # A task-only SELECT cannot see an in-flight wave's uncommitted inserts.
+        # Wait for admission first so the subsequent query includes its commit.
+        await _lock_batch_production(self.db, batch_id)
 
-        queue = TaskQueue(_redis)
+        # Result handlers acquire Task -> TaskBatch. Keep the same order and
+        # deterministic task ordering so cancellation cannot invert those locks.
         queued_tasks = list(
             (
                 await self.db.execute(
                     select(Task).where(
                         Task.batch_id == batch_id,
+                        Task.org_id == org_id,
                         Task.status.in_([TaskStatus.QUEUED, TaskStatus.ASSIGNED]),
-                    )
+                    ).order_by(Task.id).with_for_update().execution_options(populate_existing=True)
                 )
             ).scalars().all()
         )
+        # A result/cancellation may have committed while we waited for tasks.
+        # Refresh any identity-map snapshot before validating or touching Redis.
+        batch = await self.get_batch(batch_id, org_id, for_update=True)
+        if batch.status not in (TaskBatchStatus.PENDING, TaskBatchStatus.RUNNING):
+            raise HTTPException(
+                status_code=409,
+                detail=f"Batch already in terminal status '{batch.status}'",
+            )
         for task in queued_tasks:
-            await queue.cancel_task(str(task.id), str(org_id), str(task.device_id))
-            task.status = TaskStatus.CANCELLED
+            await TaskService(self.db)._request_cancellation(task)
 
         batch.status = TaskBatchStatus.CANCELLED
+        batch.admission_state = "cancelled"
+        batch.next_wave_at = None
         logger.info("batch.cancelled", batch_id=str(batch_id), tasks_cancelled=len(queued_tasks))

@@ -1,0 +1,90 @@
+{
+  "finding": "AUD-132 / F32-03 durable batch admission",
+  "before_source": "d962451239369095759c0c340cdf02a016cb0572",
+  "before": {
+    "tests": 3,
+    "failures": 3,
+    "errors": 0,
+    "skipped": 0,
+    "seconds": 0.817
+  },
+  "final_related_backend": {
+    "tests": 75,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "seconds": 30.834
+  },
+  "full_backend_iteration_before_final_retry_delay_guard": {
+    "tests": 1865,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "seconds": 482.243
+  },
+  "full_suite_scope": "Full tests excluding explicit load profiles, collected before one final retry-delay regression and one greatest() guard. Final 75-case related suite includes that guard; exact-source CI is separate.",
+  "frontend_batch_hooks": {
+    "numTotalTests": 4,
+    "numPassedTests": 4,
+    "numFailedTests": 0,
+    "success": true
+  },
+  "checks": {
+    "targeted_ruff": "passed",
+    "mypy_changed_runtime_modules": 4,
+    "mypy": "passed",
+    "frontend_tsc": "passed",
+    "generated_api_docs": "updated"
+  },
+  "intermediate_failures": {
+    "first_expanded": {
+      "tests": 60,
+      "failures": 2,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 21.064
+    },
+    "cause_and_fix": "early flush expired updated_at after UPDATE and a mock lacked batch UUID; construct complete plan with explicit UUID before INSERT",
+    "retry_delay_before_guard": {
+      "tests": 1,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 0.805
+    },
+    "retry_delay_fix": "greatest(saved due time, retry deadline) prevents lost-commit recovery from shortening the requested wave delay"
+  },
+  "runtime_evidence": {
+    "worker_kill": "Own disposable subprocess killed after first SQL wave, then a second subprocess recovers only remaining target; original task ID retained",
+    "child_results": "fixture SQL status, not Android execution",
+    "due_time": "persisted delay checked; OS-kill test explicitly expedites next due time after process death",
+    "sql_failure": "real PostgreSQL division-by-zero rolls back wave/tasks/cursor/receipts",
+    "lost_commit_ack": "commit succeeds before injected ConnectionError; stored cursor and due time retained",
+    "rls": "non-owner NOBYPASSRLS role; denied lookup before explicit grant, due IDs afterward, tenant-scoped writes and foreign-tenant denial",
+    "migration": "upgrade/downgrade/re-upgrade in rolled-back namespace; legacy unknown preserved, PUBLIC execute revoked"
+  },
+  "new_open_finding": {
+    "id": "F32-25",
+    "severity": "High",
+    "priority": "P0",
+    "status": "open",
+    "probe": {
+      "tests": 1,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 3.273
+    },
+    "result": "Actual pipeline poll under non-owner RLS role leaves queued run unseen; not fixed by batch admission",
+    "source": "docs/audits/2026-09-20/evidence/pipeline_rls_probe.py"
+  },
+  "limits": [
+    "Source only; pilot/backend/APK unchanged",
+    "HTTP POST retries lack a request idempotency key",
+    "Legacy missing targets cannot be reconstructed",
+    "No mixed-version rollout acceptance",
+    "Other worker RLS/bootstrap, nested capacity and global/device quota still open",
+    "No 32-device benchmark or eight-hour acceptance",
+    "SQL admission is not native completion or external exactly-once"
+  ]
+}

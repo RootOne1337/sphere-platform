@@ -9,6 +9,7 @@ from collections import deque
 import structlog
 
 from backend.websocket.frames import VideoFrame
+from backend.websocket.stream_observability import record_server_queue_drop
 
 logger = structlog.get_logger()
 
@@ -20,7 +21,7 @@ class VideoStreamQueue:
     Стратегия дропа при переполнении:
     1. Дроп устаревших P-frames сначала
     2. SEI metadata дропается первым
-    3. I-frames (IDR/SPS/PPS) НИКОГДА не дропаются
+    3. IDR/SPS/PPS имеют приоритет, но также подчиняются лимиту памяти.
 
     MERGE-1 (TZ-05): Это L2 server-side backpressure.
     FrameThrottle (TZ-05 SPLIT-4) = L1 agent-side throttle.
@@ -29,11 +30,18 @@ class VideoStreamQueue:
 
     MAX_SIZE = 50         # Макс фреймов в буфере
     MAX_LATENCY_MS = 200  # Дроп фреймов старше 200ms
+    MAX_BYTES = 8 * 1024 * 1024
 
-    def __init__(self, device_id: str) -> None:
+    def __init__(self, device_id: str, queue_stage: str = "viewer") -> None:
+        if queue_stage not in {"viewer", "agent_to_redis"}:
+            raise ValueError("unsupported stream queue stage")
         self.device_id = device_id
+        self.queue_stage = queue_stage
         self._queue: deque[VideoFrame] = deque()
         self._lock = asyncio.Lock()
+        self._ready = asyncio.Event()
+        self._bytes = 0
+        self.frames_received = 0
 
         # Метрики
         self.frames_queued = 0
@@ -45,23 +53,33 @@ class VideoStreamQueue:
         Добавить фрейм. Returns True если добавлен, False если дропнут.
         """
         async with self._lock:
+            self.frames_received += 1
+            if len(frame.data) > self.MAX_BYTES:
+                self._record_drop("oversize")
+                return False
             # Сначала выбросить устаревшие фреймы
             self._evict_stale_sync()
 
-            if len(self._queue) >= self.MAX_SIZE:
+            while len(self._queue) >= self.MAX_SIZE or self._bytes + len(frame.data) > self.MAX_BYTES:
                 # Очередь полная — нужно дропнуть что-то
                 dropped = self._drop_one_droppable_sync()
                 if not dropped and not frame.is_critical:
                     # Нет что дропать, дропаем входящий P-frame
-                    self.frames_dropped += 1
+                    self._record_drop("backpressure")
                     logger.debug(
                         "Frame dropped (queue full)",
                         device_id=self.device_id,
                         nal_type=frame.nal_type,
                     )
                     return False
+                if not dropped:
+                    # Retaining every IDR is unbounded with a stalled consumer.
+                    self._bytes -= len(self._queue.popleft().data)
+                    self._record_drop("critical_eviction")
 
             self._queue.append(frame)
+            self._bytes += len(frame.data)
+            self._ready.set()
             self.frames_queued += 1
             return True
 
@@ -71,8 +89,19 @@ class VideoStreamQueue:
             if not self._queue:
                 return None
             frame = self._queue.popleft()
+            self._bytes -= len(frame.data)
+            if not self._queue:
+                self._ready.clear()
             self.frames_sent += 1
             return frame
+
+    async def wait(self) -> VideoFrame:
+        """Sleep until a frame is available instead of polling every 5 ms."""
+        while True:
+            await self._ready.wait()
+            frame = await self.get()
+            if frame is not None:
+                return frame
 
     def _evict_stale_sync(self) -> None:
         """Удалить P-frames старше MAX_LATENCY_MS (вызывается под lock)."""
@@ -83,7 +112,8 @@ class VideoStreamQueue:
         for frame in self._queue:
             age_ms = (now - frame.timestamp) * 1000
             if not frame.is_critical and age_ms > self.MAX_LATENCY_MS:
-                self.frames_dropped += 1
+                self._record_drop("stale")
+                self._bytes -= len(frame.data)
                 stale_count += 1
             else:
                 fresh_queue.append(frame)
@@ -100,14 +130,19 @@ class VideoStreamQueue:
         """Дропнуть один не-критичный фрейм из очереди (вызывается под lock)."""
         for i, frame in enumerate(self._queue):
             if not frame.is_critical:
+                self._bytes -= len(frame.data)
                 del self._queue[i]
-                self.frames_dropped += 1
+                self._record_drop("backpressure")
                 return True
         return False
 
+    def _record_drop(self, reason: str) -> None:
+        self.frames_dropped += 1
+        record_server_queue_drop(self.device_id, self.queue_stage, reason)
+
     @property
     def drop_ratio(self) -> float:
-        total = self.frames_queued
+        total = self.frames_received
         return self.frames_dropped / total if total > 0 else 0.0
 
     @property

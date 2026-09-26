@@ -1,0 +1,82 @@
+FF..FFFFFFF..                                                            [100%]
+================================== FAILURES ===================================
+__ test_full_deploy_repeat_preserves_the_working_operator_login[powershell] ___
+tests\production\test_admin_bootstrap_restart.py:135: in test_full_deploy_repeat_preserves_the_working_operator_login
+    assert (await login(w, FIRST_PASSWORD)).status_code == 200, "Working operator password was replaced"
+E   AssertionError: Working operator password was replaced
+E   assert 401 == 200
+E    +  where 401 = <Response [401 Unauthorized]>.status_code
+_____ test_full_deploy_repeat_preserves_the_working_operator_login[bash] ______
+tests\production\test_admin_bootstrap_restart.py:135: in test_full_deploy_repeat_preserves_the_working_operator_login
+    assert (await login(w, FIRST_PASSWORD)).status_code == 200, "Working operator password was replaced"
+E   AssertionError: Working operator password was replaced
+E   assert 401 == 200
+E    +  where 401 = <Response [401 Unauthorized]>.status_code
+__ test_created_login_remains_recoverable_when_enrollment_fails[powershell] ___
+tests\production\test_admin_bootstrap_restart.py:154: in test_created_login_remains_recoverable_when_enrollment_fails
+    assert NEXT_PASSWORD in result.stdout, "Committed admin credentials were never presented"
+E   AssertionError: Committed admin credentials were never presented
+E   assert 'isolated-new-candidate-password' in '\n═══ Шаг 6/8 — Инициализация данных ═══\n[✓] Создание администратора (bootstrap-restart-0059f380a932427390232ed1a249...m --no-deps -T -e SPHERE_BOOTSTRAP_ORG_SLUG backend python -m scripts.seed_enrollment_key провалился (exit code: 17)\n'
+E    +  where '\n═══ Шаг 6/8 — Инициализация данных ═══\n[✓] Создание администратора (bootstrap-restart-0059f380a932427390232ed1a249...m --no-deps -T -e SPHERE_BOOTSTRAP_ORG_SLUG backend python -m scripts.seed_enrollment_key провалился (exit code: 17)\n' = CompletedProcess(args=['C:\\Users\\dimas\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\native\\powersh...G backend python -m scripts.seed_enrollment_key провалился (exit code: 17)\n', stderr='Synthetic enrollment failure\n').stdout
+_____ test_created_login_remains_recoverable_when_enrollment_fails[bash] ______
+tests\production\test_admin_bootstrap_restart.py:154: in test_created_login_remains_recoverable_when_enrollment_fails
+    assert NEXT_PASSWORD in result.stdout, "Committed admin credentials were never presented"
+E   AssertionError: Committed admin credentials were never presented
+E   assert 'isolated-new-candidate-password' in '\n\x1b[0;36m\x1b[1m═══ Шаг 6/8 — Инициализация данных ═══\x1b[0m\n\x1b[0;32m[✓]\x1b[0m Создание администратора (boots...1e72401ccf27ba0@example.org\nDone.\n\x1b[0;32m[✓]\x1b[0m Генерация enrollment-ключа...\nSynthetic enrollment failure\n'
+E    +  where '\n\x1b[0;36m\x1b[1m═══ Шаг 6/8 — Инициализация данных ═══\x1b[0m\n\x1b[0;32m[✓]\x1b[0m Создание администратора (boots...1e72401ccf27ba0@example.org\nDone.\n\x1b[0;32m[✓]\x1b[0m Генерация enrollment-ключа...\nSynthetic enrollment failure\n' = CompletedProcess(args=['C:\\Program Files\\Git\\bin\\bash.exe', 'C:/Users/dimas/AppData/Local/Temp/pytest-of-dimas/pyt...ba0@example.org\nDone.\n\x1b[0;32m[✓]\x1b[0m Генерация enrollment-ключа...\nSynthetic enrollment failure\n', stderr='').stdout
+________ test_create_only_does_not_reset_existing_admin_state[change0] ________
+tests\production\test_admin_bootstrap_restart.py:168: in test_create_only_does_not_reset_existing_admin_state
+    assert await user_snapshot(w) == before
+E   AssertionError: assert (UUID('50f3cc..., True, False) == (UUID('50f3cc... False, False)
+E
+E     At index 2 diff: '$2b$12$qpzKZV3iIvvZQXeWY2UdWu.hkUWgnNMXbZfi97VJkBNRC2ur1eXa6' != '$2b$12$l/ogIZ.p9MCYEyrZpYY7NOuELwt/fNWxGPK8w.U4aZdQj8JVohgK2'
+E     Use -v to get more diff
+________ test_create_only_does_not_reset_existing_admin_state[change1] ________
+tests\production\test_admin_bootstrap_restart.py:168: in test_create_only_does_not_reset_existing_admin_state
+    assert await user_snapshot(w) == before
+E   AssertionError: assert (UUID('e36c09..., True, False) == (UUID('e36c09..., True, False)
+E
+E     At index 2 diff: '$2b$12$yQ5zIZqYEhBv2tKph7fFzesrfp6jzv5RDEXMATwEDNcR3FNIjEisa' != '$2b$12$BGHvBH4P2JlfLdNkl9LaLOUP.h7DEOIVxE7r7jlWWevrzOfHwBE/e'
+E     Use -v to get more diff
+________ test_create_only_does_not_reset_existing_admin_state[change2] ________
+tests\production\test_admin_bootstrap_restart.py:168: in test_create_only_does_not_reset_existing_admin_state
+    assert await user_snapshot(w) == before
+E   AssertionError: assert (UUID('b34c94...', True, True) == (UUID('b34c94...', True, True)
+E
+E     At index 2 diff: '$2b$12$cT.weFLt.0VMyxbEgR2l1e/FxrBMu7Qr/g9xcRkern0aI.BWKWQD.' != '$2b$12$2CYSi83/Vo53CZuvfcU6fu56CSCBc7xaQC69qlIdH8E1Xq8uvKkjC'
+E     Use -v to get more diff
+_ test_concurrent_create_only_commands_converge_without_resetting_the_winner[False] _
+tests\production\test_admin_bootstrap_restart.py:184: in test_concurrent_create_only_commands_converge_without_resetting_the_winner
+    assert all(r.returncode == 0 for r in results), [r.stderr for r in results]
+E   AssertionError: ['Traceback (most recent call last):
+E       File "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.venv-audit\\depe...ojAhYxflF5sJEOEu3Qn.lffeTOyZB46.hVgow4Otn/Lyy\')]
+E     (Background on this error at: https://sqlalche.me/e/20/gkpj)
+E     ', '']
+E   assert False
+E    +  where False = all(<generator object test_concurrent_create_only_commands_converge_without_resetting_the_winner.<locals>.<genexpr> at 0x000001AD5B02E4D0>)
+_ test_concurrent_create_only_commands_converge_without_resetting_the_winner[True] _
+tests\production\test_admin_bootstrap_restart.py:184: in test_concurrent_create_only_commands_converge_without_resetting_the_winner
+    assert all(r.returncode == 0 for r in results), [r.stderr for r in results]
+E   AssertionError: ['Traceback (most recent call last):
+E       File "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.venv-audit\\depe... \'bootstrap-new-3f99012e3b574b44833960da95567c54\')]
+E     (Background on this error at: https://sqlalche.me/e/20/gkpj)
+E     ']
+E   assert False
+E    +  where False = all(<generator object test_concurrent_create_only_commands_converge_without_resetting_the_winner.<locals>.<genexpr> at 0x000001AD5B037E00>)
+============================== warnings summary ===============================
+backend\api\v1\game_accounts\router.py:95
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\api\v1\game_accounts\router.py:95: FastAPIDeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+    sort_dir: str = Query("desc", regex="^(asc|desc)$", description="Направление сортировки"),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/production/test_admin_bootstrap_restart.py::test_full_deploy_repeat_preserves_the_working_operator_login[powershell]
+FAILED tests/production/test_admin_bootstrap_restart.py::test_full_deploy_repeat_preserves_the_working_operator_login[bash]
+FAILED tests/production/test_admin_bootstrap_restart.py::test_created_login_remains_recoverable_when_enrollment_fails[powershell]
+FAILED tests/production/test_admin_bootstrap_restart.py::test_created_login_remains_recoverable_when_enrollment_fails[bash]
+FAILED tests/production/test_admin_bootstrap_restart.py::test_create_only_does_not_reset_existing_admin_state[change0]
+FAILED tests/production/test_admin_bootstrap_restart.py::test_create_only_does_not_reset_existing_admin_state[change1]
+FAILED tests/production/test_admin_bootstrap_restart.py::test_create_only_does_not_reset_existing_admin_state[change2]
+FAILED tests/production/test_admin_bootstrap_restart.py::test_concurrent_create_only_commands_converge_without_resetting_the_winner[False]
+FAILED tests/production/test_admin_bootstrap_restart.py::test_concurrent_create_only_commands_converge_without_resetting_the_winner[True]
+9 failed, 4 passed, 1 warning in 25.08s

@@ -1,0 +1,324 @@
+FFFFFFFFF...FFF                                                          [100%]
+================================== FAILURES ===================================
+___________ test_runtime_task_receipt_persists_start[True-received] ___________
+tests\production\test_agent_messages_runtime.py:68: in test_runtime_task_receipt_persists_start
+    assert saved.status == TaskStatus.RUNNING
+E   AssertionError: assert <TaskStatus.A...D: 'assigned'> == <TaskStatus.R...NG: 'running'>
+E
+E     - running
+E     + assigned
+---------------------------- Captured stdout call -----------------------------
+{"device_id": "c3617eb7-f54a-4021-9d0b-fec199584260", "org_id": "b595580e-75c9-4eb1-831b-4f1a0dec56c3", "event": "android_ws: auth passed", "level": "info", "logger": "backend.api.ws.android.router", "timestamp": "2026-09-09T11:54:14.431122Z"}
+{"device_id": "c3617eb7-f54a-4021-9d0b-fec199584260", "error": "Cannot call \"receive\" once a disconnect message has been received.", "event": "WS receive loop error", "level": "warning", "logger": "backend.api.ws.android.router", "timestamp": "2026-09-09T11:54:14.528089Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.api.ws.android.router:router.py:542 {'device_id': 'c3617eb7-f54a-4021-9d0b-fec199584260', 'org_id': 'b595580e-75c9-4eb1-831b-4f1a0dec56c3', 'event': 'android_ws: auth passed', 'level': 'info', 'logger': 'backend.api.ws.android.router', 'timestamp': '2026-09-09T11:54:14.431122Z'}
+WARNING  backend.api.ws.android.router:router.py:673 {'device_id': 'c3617eb7-f54a-4021-9d0b-fec199584260', 'error': 'Cannot call "receive" once a disconnect message has been received.', 'event': 'WS receive loop error', 'level': 'warning', 'logger': 'backend.api.ws.android.router', 'timestamp': '2026-09-09T11:54:14.528089Z'}
+___________ test_runtime_task_receipt_persists_start[True-running] ____________
+tests\production\test_agent_messages_runtime.py:68: in test_runtime_task_receipt_persists_start
+    assert saved.status == TaskStatus.RUNNING
+E   AssertionError: assert <TaskStatus.A...D: 'assigned'> == <TaskStatus.R...NG: 'running'>
+E
+E     - running
+E     + assigned
+---------------------------- Captured stdout call -----------------------------
+{"device_id": "a9425acd-5c9a-4c91-b73d-88bd2c11e343", "org_id": "377697bd-4a64-4d55-b3e3-14a233eb1ae4", "event": "android_ws: auth passed", "level": "info", "logger": "backend.api.ws.android.router", "timestamp": "2026-09-09T11:54:15.424832Z"}
+{"device_id": "a9425acd-5c9a-4c91-b73d-88bd2c11e343", "error": "Cannot call \"receive\" once a disconnect message has been received.", "event": "WS receive loop error", "level": "warning", "logger": "backend.api.ws.android.router", "timestamp": "2026-09-09T11:54:15.436590Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.api.ws.android.router:router.py:542 {'device_id': 'a9425acd-5c9a-4c91-b73d-88bd2c11e343', 'org_id': '377697bd-4a64-4d55-b3e3-14a233eb1ae4', 'event': 'android_ws: auth passed', 'level': 'info', 'logger': 'backend.api.ws.android.router', 'timestamp': '2026-09-09T11:54:15.424832Z'}
+WARNING  backend.api.ws.android.router:router.py:673 {'device_id': 'a9425acd-5c9a-4c91-b73d-88bd2c11e343', 'error': 'Cannot call "receive" once a disconnect message has been received.', 'event': 'WS receive loop error', 'level': 'warning', 'logger': 'backend.api.ws.android.router', 'timestamp': '2026-09-09T11:54:15.436590Z'}
+__________ test_runtime_task_receipt_persists_start[False-received] ___________
+tests\production\test_agent_messages_runtime.py:68: in test_runtime_task_receipt_persists_start
+    assert saved.status == TaskStatus.RUNNING
+E   AssertionError: assert <TaskStatus.A...D: 'assigned'> == <TaskStatus.R...NG: 'running'>
+E
+E     - running
+E     + assigned
+---------------------------- Captured stdout call -----------------------------
+{"device_id": "4b1c3a29-e68c-4226-9f34-9969b50e5d00", "org_id": "ec8edd4f-233e-4e02-bbe4-6d9475a8bf16", "event": "android_ws: auth passed", "level": "info", "logger": "backend.api.ws.android.router", "timestamp": "2026-09-09T11:54:15.955984Z"}
+{"device_id": "4b1c3a29-e68c-4226-9f34-9969b50e5d00", "error": "Cannot call \"receive\" once a disconnect message has been received.", "event": "WS receive loop error", "level": "warning", "logger": "backend.api.ws.android.router", "timestamp": "2026-09-09T11:54:15.968151Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.api.ws.android.router:router.py:542 {'device_id': '4b1c3a29-e68c-4226-9f34-9969b50e5d00', 'org_id': 'ec8edd4f-233e-4e02-bbe4-6d9475a8bf16', 'event': 'android_ws: auth passed', 'level': 'info', 'logger': 'backend.api.ws.android.router', 'timestamp': '2026-09-09T11:54:15.955984Z'}
+WARNING  backend.api.ws.android.router:router.py:673 {'device_id': '4b1c3a29-e68c-4226-9f34-9969b50e5d00', 'error': 'Cannot call "receive" once a disconnect message has been received.', 'event': 'WS receive loop error', 'level': 'warning', 'logger': 'backend.api.ws.android.router', 'timestamp': '2026-09-09T11:54:15.968151Z'}
+___________ test_runtime_task_receipt_persists_start[False-running] ___________
+tests\production\test_agent_messages_runtime.py:68: in test_runtime_task_receipt_persists_start
+    assert saved.status == TaskStatus.RUNNING
+E   AssertionError: assert <TaskStatus.A...D: 'assigned'> == <TaskStatus.R...NG: 'running'>
+E
+E     - running
+E     + assigned
+---------------------------- Captured stdout call -----------------------------
+{"device_id": "eca8b65e-792f-49fa-a090-c571d2706a57", "org_id": "2068001f-d6bb-492f-b16d-9f05999657dc", "event": "android_ws: auth passed", "level": "info", "logger": "backend.api.ws.android.router", "timestamp": "2026-09-09T11:54:16.495475Z"}
+{"device_id": "eca8b65e-792f-49fa-a090-c571d2706a57", "error": "Cannot call \"receive\" once a disconnect message has been received.", "event": "WS receive loop error", "level": "warning", "logger": "backend.api.ws.android.router", "timestamp": "2026-09-09T11:54:16.506648Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.api.ws.android.router:router.py:542 {'device_id': 'eca8b65e-792f-49fa-a090-c571d2706a57', 'org_id': '2068001f-d6bb-492f-b16d-9f05999657dc', 'event': 'android_ws: auth passed', 'level': 'info', 'logger': 'backend.api.ws.android.router', 'timestamp': '2026-09-09T11:54:16.495475Z'}
+WARNING  backend.api.ws.android.router:router.py:673 {'device_id': 'eca8b65e-792f-49fa-a090-c571d2706a57', 'error': 'Cannot call "receive" once a disconnect message has been received.', 'event': 'WS receive loop error', 'level': 'warning', 'logger': 'backend.api.ws.android.router', 'timestamp': '2026-09-09T11:54:16.506648Z'}
+____ test_runtime_result_commit_ack_and_reconnect_replay[False-completed] _____
+tests\production\test_agent_messages_runtime.py:109: in test_runtime_result_commit_ack_and_reconnect_replay
+    assert r.manager.send_to_device.await_count == 2
+E   AssertionError: assert 0 == 2
+E    +  where 0 = <AsyncMock id='1684192284112'>.await_count
+E    +    where <AsyncMock id='1684192284112'> = namespace(connect=<AsyncMock id='1684193590976'>, disconnect=<AsyncMock id='1684193676848'>, send_to_device=<AsyncMock id='1684192284112'>).send_to_device
+E    +      where namespace(connect=<AsyncMock id='1684193590976'>, disconnect=<AsyncMock id='1684193676848'>, send_to_device=<AsyncMock id='1684192284112'>) = namespace(db=namespace(engine=<sqlalchemy.ext.asyncio.engine.AsyncEngine object at 0x0000018821BFED50>, sessions=async...12'>), path=WindowsPath('C:/Users/dimas/AppData/Local/Temp/pytest-of-dimas/pytest-57/test_runtime_result_commit_ack0')).manager
+---------------------------- Captured stdout call -----------------------------
+{"device_id": "9671371b-91e9-4eb7-98e8-1ab6ccffe4a7", "org_id": "06bf1127-48a8-4b00-b4aa-083e0490e2f6", "event": "android_ws: auth passed", "level": "info", "logger": "backend.api.ws.android.router", "timestamp": "2026-09-09T11:54:17.036761Z"}
+{"task_id": "a72c45a0-f5a7-48cf-9031-d1c8d24d7ff8", "event": "task.result.not_found", "level": "warning", "logger": "backend.services.task_service", "timestamp": "2026-09-09T11:54:17.052454Z"}
+{"device_id": "9671371b-91e9-4eb7-98e8-1ab6ccffe4a7", "error": "Cannot call \"receive\" once a disconnect message has been received.", "event": "WS receive loop error", "level": "warning", "logger": "backend.api.ws.android.router", "timestamp": "2026-09-09T11:54:17.053511Z"}
+{"device_id": "9671371b-91e9-4eb7-98e8-1ab6ccffe4a7", "org_id": "06bf1127-48a8-4b00-b4aa-083e0490e2f6", "event": "android_ws: auth passed", "level": "info", "logger": "backend.api.ws.android.router", "timestamp": "2026-09-09T11:54:17.059306Z"}
+{"task_id": "a72c45a0-f5a7-48cf-9031-d1c8d24d7ff8", "event": "task.result.not_found", "level": "warning", "logger": "backend.services.task_service", "timestamp": "2026-09-09T11:54:17.063471Z"}
+{"device_id": "9671371b-91e9-4eb7-98e8-1ab6ccffe4a7", "error": "Cannot call \"receive\" once a disconnect message has been received.", "event": "WS receive loop error", "level": "warning", "logger": "backend.api.ws.android.router", "timestamp": "2026-09-09T11:54:17.065033Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.api.ws.android.router:router.py:542 {'device_id': '9671371b-91e9-4eb7-98e8-1ab6ccffe4a7', 'org_id': '06bf1127-48a8-4b00-b4aa-083e0490e2f6', 'event': 'android_ws: auth passed', 'level': 'info', 'logger': 'backend.api.ws.android.router', 'timestamp': '2026-09-09T11:54:17.036761Z'}
+WARNING  backend.services.task_service:task_service.py:390 {'task_id': 'a72c45a0-f5a7-48cf-9031-d1c8d24d7ff8', 'event': 'task.result.not_found', 'level': 'warning', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-09T11:54:17.052454Z'}
+WARNING  backend.api.ws.android.router:router.py:673 {'device_id': '9671371b-91e9-4eb7-98e8-1ab6ccffe4a7', 'error': 'Cannot call "receive" once a disconnect message has been received.', 'event': 'WS receive loop error', 'level': 'warning', 'logger': 'backend.api.ws.android.router', 'timestamp': '2026-09-09T11:54:17.053511Z'}
+INFO     backend.api.ws.android.router:router.py:542 {'device_id': '9671371b-91e9-4eb7-98e8-1ab6ccffe4a7', 'org_id': '06bf1127-48a8-4b00-b4aa-083e0490e2f6', 'event': 'android_ws: auth passed', 'level': 'info', 'logger': 'backend.api.ws.android.router', 'timestamp': '2026-09-09T11:54:17.059306Z'}
+WARNING  backend.services.task_service:task_service.py:390 {'task_id': 'a72c45a0-f5a7-48cf-9031-d1c8d24d7ff8', 'event': 'task.result.not_found', 'level': 'warning', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-09T11:54:17.063471Z'}
+WARNING  backend.api.ws.android.router:router.py:673 {'device_id': '9671371b-91e9-4eb7-98e8-1ab6ccffe4a7', 'error': 'Cannot call "receive" once a disconnect message has been received.', 'event': 'WS receive loop error', 'level': 'warning', 'logger': 'backend.api.ws.android.router', 'timestamp': '2026-09-09T11:54:17.065033Z'}
+______ test_runtime_result_commit_ack_and_reconnect_replay[False-failed] ______
+tests\production\test_agent_messages_runtime.py:109: in test_runtime_result_commit_ack_and_reconnect_replay
+    assert r.manager.send_to_device.await_count == 2
+E   AssertionError: assert 0 == 2
+E    +  where 0 = <AsyncMock id='1684194149056'>.await_count
+E    +    where <AsyncMock id='1684194149056'> = namespace(connect=<AsyncMock id='1684194124688'>, disconnect=<AsyncMock id='1684194128624'>, send_to_device=<AsyncMock id='1684194149056'>).send_to_device
+E    +      where namespace(connect=<AsyncMock id='1684194124688'>, disconnect=<AsyncMock id='1684194128624'>, send_to_device=<AsyncMock id='1684194149056'>) = namespace(db=namespace(engine=<sqlalchemy.ext.asyncio.engine.AsyncEngine object at 0x0000018821D19BD0>, sessions=async...56'>), path=WindowsPath('C:/Users/dimas/AppData/Local/Temp/pytest-of-dimas/pytest-57/test_runtime_result_commit_ack1')).manager
+---------------------------- Captured stdout call -----------------------------
+{"device_id": "b0ed296b-1a95-4980-a1a7-c0943ccb60b0", "org_id": "647b0c31-f309-4335-9bfe-aff2f58bb259", "event": "android_ws: auth passed", "level": "info", "logger": "backend.api.ws.android.router", "timestamp": "2026-09-09T11:54:17.608889Z"}
+{"task_id": "645105fd-06ac-45ae-aaee-d6af06dd8a61", "event": "task.result.not_found", "level": "warning", "logger": "backend.services.task_service", "timestamp": "2026-09-09T11:54:17.620531Z"}
+{"device_id": "b0ed296b-1a95-4980-a1a7-c0943ccb60b0", "error": "Cannot call \"receive\" once a disconnect message has been received.", "event": "WS receive loop error", "level": "warning", "logger": "backend.api.ws.android.router", "timestamp": "2026-09-09T11:54:17.621592Z"}
+{"device_id": "b0ed296b-1a95-4980-a1a7-c0943ccb60b0", "org_id": "647b0c31-f309-4335-9bfe-aff2f58bb259", "event": "android_ws: auth passed", "level": "info", "logger": "backend.api.ws.android.router", "timestamp": "2026-09-09T11:54:17.625813Z"}
+{"task_id": "645105fd-06ac-45ae-aaee-d6af06dd8a61", "event": "task.result.not_found", "level": "warning", "logger": "backend.services.task_service", "timestamp": "2026-09-09T11:54:17.628995Z"}
+{"device_id": "b0ed296b-1a95-4980-a1a7-c0943ccb60b0", "error": "Cannot call \"receive\" once a disconnect message has been received.", "event": "WS receive loop error", "level": "warning", "logger": "backend.api.ws.android.router", "timestamp": "2026-09-09T11:54:17.630090Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.api.ws.android.router:router.py:542 {'device_id': 'b0ed296b-1a95-4980-a1a7-c0943ccb60b0', 'org_id': '647b0c31-f309-4335-9bfe-aff2f58bb259', 'event': 'android_ws: auth passed', 'level': 'info', 'logger': 'backend.api.ws.android.router', 'timestamp': '2026-09-09T11:54:17.608889Z'}
+WARNING  backend.services.task_service:task_service.py:390 {'task_id': '645105fd-06ac-45ae-aaee-d6af06dd8a61', 'event': 'task.result.not_found', 'level': 'warning', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-09T11:54:17.620531Z'}
+WARNING  backend.api.ws.android.router:router.py:673 {'device_id': 'b0ed296b-1a95-4980-a1a7-c0943ccb60b0', 'error': 'Cannot call "receive" once a disconnect message has been received.', 'event': 'WS receive loop error', 'level': 'warning', 'logger': 'backend.api.ws.android.router', 'timestamp': '2026-09-09T11:54:17.621592Z'}
+INFO     backend.api.ws.android.router:router.py:542 {'device_id': 'b0ed296b-1a95-4980-a1a7-c0943ccb60b0', 'org_id': '647b0c31-f309-4335-9bfe-aff2f58bb259', 'event': 'android_ws: auth passed', 'level': 'info', 'logger': 'backend.api.ws.android.router', 'timestamp': '2026-09-09T11:54:17.625813Z'}
+WARNING  backend.services.task_service:task_service.py:390 {'task_id': '645105fd-06ac-45ae-aaee-d6af06dd8a61', 'event': 'task.result.not_found', 'level': 'warning', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-09T11:54:17.628995Z'}
+WARNING  backend.api.ws.android.router:router.py:673 {'device_id': 'b0ed296b-1a95-4980-a1a7-c0943ccb60b0', 'error': 'Cannot call "receive" once a disconnect message has been received.', 'event': 'WS receive loop error', 'level': 'warning', 'logger': 'backend.api.ws.android.router', 'timestamp': '2026-09-09T11:54:17.630090Z'}
+_____ test_runtime_result_commit_ack_and_reconnect_replay[True-completed] _____
+tests\production\test_agent_messages_runtime.py:109: in test_runtime_result_commit_ack_and_reconnect_replay
+    assert r.manager.send_to_device.await_count == 2
+E   AssertionError: assert 0 == 2
+E    +  where 0 = <AsyncMock id='1684194388944'>.await_count
+E    +    where <AsyncMock id='1684194388944'> = namespace(connect=<AsyncMock id='1684194388800'>, disconnect=<AsyncMock id='1684194123872'>, send_to_device=<AsyncMock id='1684194388944'>).send_to_device
+E    +      where namespace(connect=<AsyncMock id='1684194388800'>, disconnect=<AsyncMock id='1684194123872'>, send_to_device=<AsyncMock id='1684194388944'>) = namespace(db=namespace(engine=<sqlalchemy.ext.asyncio.engine.AsyncEngine object at 0x0000018821DA9A10>, sessions=async...44'>), path=WindowsPath('C:/Users/dimas/AppData/Local/Temp/pytest-of-dimas/pytest-57/test_runtime_result_commit_ack2')).manager
+---------------------------- Captured stdout call -----------------------------
+{"device_id": "64573824-c134-49d0-b871-f02cc7f418a5", "org_id": "c0101e76-4d8b-49a3-8522-c12411645d58", "event": "android_ws: auth passed", "level": "info", "logger": "backend.api.ws.android.router", "timestamp": "2026-09-09T11:54:18.152193Z"}
+{"device_id": "64573824-c134-49d0-b871-f02cc7f418a5", "error": "isolated Redis outage", "event": "Failed to publish command result", "level": "warning", "logger": "backend.api.ws.android.router", "timestamp": "2026-09-09T11:54:18.153267Z"}
+{"task_id": "593daff3-04ed-4b21-a2c9-049486da0a58", "event": "task.result.not_found", "level": "warning", "logger": "backend.services.task_service", "timestamp": "2026-09-09T11:54:18.162255Z"}
+{"device_id": "64573824-c134-49d0-b871-f02cc7f418a5", "error": "Cannot call \"receive\" once a disconnect message has been received.", "event": "WS receive loop error", "level": "warning", "logger": "backend.api.ws.android.router", "timestamp": "2026-09-09T11:54:18.162842Z"}
+{"device_id": "64573824-c134-49d0-b871-f02cc7f418a5", "org_id": "c0101e76-4d8b-49a3-8522-c12411645d58", "event": "android_ws: auth passed", "level": "info", "logger": "backend.api.ws.android.router", "timestamp": "2026-09-09T11:54:18.167628Z"}
+{"device_id": "64573824-c134-49d0-b871-f02cc7f418a5", "error": "isolated Redis outage", "event": "Failed to publish command result", "level": "warning", "logger": "backend.api.ws.android.router", "timestamp": "2026-09-09T11:54:18.168675Z"}
+{"task_id": "593daff3-04ed-4b21-a2c9-049486da0a58", "event": "task.result.not_found", "level": "warning", "logger": "backend.services.task_service", "timestamp": "2026-09-09T11:54:18.170243Z"}
+{"device_id": "64573824-c134-49d0-b871-f02cc7f418a5", "error": "Cannot call \"receive\" once a disconnect message has been received.", "event": "WS receive loop error", "level": "warning", "logger": "backend.api.ws.android.router", "timestamp": "2026-09-09T11:54:18.171286Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.api.ws.android.router:router.py:542 {'device_id': '64573824-c134-49d0-b871-f02cc7f418a5', 'org_id': 'c0101e76-4d8b-49a3-8522-c12411645d58', 'event': 'android_ws: auth passed', 'level': 'info', 'logger': 'backend.api.ws.android.router', 'timestamp': '2026-09-09T11:54:18.152193Z'}
+WARNING  backend.api.ws.android.router:router.py:261 {'device_id': '64573824-c134-49d0-b871-f02cc7f418a5', 'error': 'isolated Redis outage', 'event': 'Failed to publish command result', 'level': 'warning', 'logger': 'backend.api.ws.android.router', 'timestamp': '2026-09-09T11:54:18.153267Z'}
+WARNING  backend.services.task_service:task_service.py:390 {'task_id': '593daff3-04ed-4b21-a2c9-049486da0a58', 'event': 'task.result.not_found', 'level': 'warning', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-09T11:54:18.162255Z'}
+WARNING  backend.api.ws.android.router:router.py:673 {'device_id': '64573824-c134-49d0-b871-f02cc7f418a5', 'error': 'Cannot call "receive" once a disconnect message has been received.', 'event': 'WS receive loop error', 'level': 'warning', 'logger': 'backend.api.ws.android.router', 'timestamp': '2026-09-09T11:54:18.162842Z'}
+INFO     backend.api.ws.android.router:router.py:542 {'device_id': '64573824-c134-49d0-b871-f02cc7f418a5', 'org_id': 'c0101e76-4d8b-49a3-8522-c12411645d58', 'event': 'android_ws: auth passed', 'level': 'info', 'logger': 'backend.api.ws.android.router', 'timestamp': '2026-09-09T11:54:18.167628Z'}
+WARNING  backend.api.ws.android.router:router.py:261 {'device_id': '64573824-c134-49d0-b871-f02cc7f418a5', 'error': 'isolated Redis outage', 'event': 'Failed to publish command result', 'level': 'warning', 'logger': 'backend.api.ws.android.router', 'timestamp': '2026-09-09T11:54:18.168675Z'}
+WARNING  backend.services.task_service:task_service.py:390 {'task_id': '593daff3-04ed-4b21-a2c9-049486da0a58', 'event': 'task.result.not_found', 'level': 'warning', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-09T11:54:18.170243Z'}
+WARNING  backend.api.ws.android.router:router.py:673 {'device_id': '64573824-c134-49d0-b871-f02cc7f418a5', 'error': 'Cannot call "receive" once a disconnect message has been received.', 'event': 'WS receive loop error', 'level': 'warning', 'logger': 'backend.api.ws.android.router', 'timestamp': '2026-09-09T11:54:18.171286Z'}
+______ test_runtime_result_commit_ack_and_reconnect_replay[True-failed] _______
+tests\production\test_agent_messages_runtime.py:109: in test_runtime_result_commit_ack_and_reconnect_replay
+    assert r.manager.send_to_device.await_count == 2
+E   AssertionError: assert 0 == 2
+E    +  where 0 = <AsyncMock id='1684194148432'>.await_count
+E    +    where <AsyncMock id='1684194148432'> = namespace(connect=<AsyncMock id='1684195168656'>, disconnect=<AsyncMock id='1684173095808'>, send_to_device=<AsyncMock id='1684194148432'>).send_to_device
+E    +      where namespace(connect=<AsyncMock id='1684195168656'>, disconnect=<AsyncMock id='1684173095808'>, send_to_device=<AsyncMock id='1684194148432'>) = namespace(db=namespace(engine=<sqlalchemy.ext.asyncio.engine.AsyncEngine object at 0x0000018821E2CB10>, sessions=async...32'>), path=WindowsPath('C:/Users/dimas/AppData/Local/Temp/pytest-of-dimas/pytest-57/test_runtime_result_commit_ack3')).manager
+---------------------------- Captured stdout call -----------------------------
+{"device_id": "95f61bc0-04ef-4462-8ff3-5193e8b1a2a2", "org_id": "54656286-f459-4026-80b6-3a9331a1a0e0", "event": "android_ws: auth passed", "level": "info", "logger": "backend.api.ws.android.router", "timestamp": "2026-09-09T11:54:18.622251Z"}
+{"device_id": "95f61bc0-04ef-4462-8ff3-5193e8b1a2a2", "error": "isolated Redis outage", "event": "Failed to publish command result", "level": "warning", "logger": "backend.api.ws.android.router", "timestamp": "2026-09-09T11:54:18.623873Z"}
+{"task_id": "d4c02a19-00d2-4f69-be08-47d897285bdf", "event": "task.result.not_found", "level": "warning", "logger": "backend.services.task_service", "timestamp": "2026-09-09T11:54:18.634698Z"}
+{"device_id": "95f61bc0-04ef-4462-8ff3-5193e8b1a2a2", "error": "Cannot call \"receive\" once a disconnect message has been received.", "event": "WS receive loop error", "level": "warning", "logger": "backend.api.ws.android.router", "timestamp": "2026-09-09T11:54:18.635803Z"}
+{"device_id": "95f61bc0-04ef-4462-8ff3-5193e8b1a2a2", "org_id": "54656286-f459-4026-80b6-3a9331a1a0e0", "event": "android_ws: auth passed", "level": "info", "logger": "backend.api.ws.android.router", "timestamp": "2026-09-09T11:54:18.640634Z"}
+{"device_id": "95f61bc0-04ef-4462-8ff3-5193e8b1a2a2", "error": "isolated Redis outage", "event": "Failed to publish command result", "level": "warning", "logger": "backend.api.ws.android.router", "timestamp": "2026-09-09T11:54:18.642250Z"}
+{"task_id": "d4c02a19-00d2-4f69-be08-47d897285bdf", "event": "task.result.not_found", "level": "warning", "logger": "backend.services.task_service", "timestamp": "2026-09-09T11:54:18.643819Z"}
+{"device_id": "95f61bc0-04ef-4462-8ff3-5193e8b1a2a2", "error": "Cannot call \"receive\" once a disconnect message has been received.", "event": "WS receive loop error", "level": "warning", "logger": "backend.api.ws.android.router", "timestamp": "2026-09-09T11:54:18.644367Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.api.ws.android.router:router.py:542 {'device_id': '95f61bc0-04ef-4462-8ff3-5193e8b1a2a2', 'org_id': '54656286-f459-4026-80b6-3a9331a1a0e0', 'event': 'android_ws: auth passed', 'level': 'info', 'logger': 'backend.api.ws.android.router', 'timestamp': '2026-09-09T11:54:18.622251Z'}
+WARNING  backend.api.ws.android.router:router.py:261 {'device_id': '95f61bc0-04ef-4462-8ff3-5193e8b1a2a2', 'error': 'isolated Redis outage', 'event': 'Failed to publish command result', 'level': 'warning', 'logger': 'backend.api.ws.android.router', 'timestamp': '2026-09-09T11:54:18.623873Z'}
+WARNING  backend.services.task_service:task_service.py:390 {'task_id': 'd4c02a19-00d2-4f69-be08-47d897285bdf', 'event': 'task.result.not_found', 'level': 'warning', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-09T11:54:18.634698Z'}
+WARNING  backend.api.ws.android.router:router.py:673 {'device_id': '95f61bc0-04ef-4462-8ff3-5193e8b1a2a2', 'error': 'Cannot call "receive" once a disconnect message has been received.', 'event': 'WS receive loop error', 'level': 'warning', 'logger': 'backend.api.ws.android.router', 'timestamp': '2026-09-09T11:54:18.635803Z'}
+INFO     backend.api.ws.android.router:router.py:542 {'device_id': '95f61bc0-04ef-4462-8ff3-5193e8b1a2a2', 'org_id': '54656286-f459-4026-80b6-3a9331a1a0e0', 'event': 'android_ws: auth passed', 'level': 'info', 'logger': 'backend.api.ws.android.router', 'timestamp': '2026-09-09T11:54:18.640634Z'}
+WARNING  backend.api.ws.android.router:router.py:261 {'device_id': '95f61bc0-04ef-4462-8ff3-5193e8b1a2a2', 'error': 'isolated Redis outage', 'event': 'Failed to publish command result', 'level': 'warning', 'logger': 'backend.api.ws.android.router', 'timestamp': '2026-09-09T11:54:18.642250Z'}
+WARNING  backend.services.task_service:task_service.py:390 {'task_id': 'd4c02a19-00d2-4f69-be08-47d897285bdf', 'event': 'task.result.not_found', 'level': 'warning', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-09T11:54:18.643819Z'}
+WARNING  backend.api.ws.android.router:router.py:673 {'device_id': '95f61bc0-04ef-4462-8ff3-5193e8b1a2a2', 'error': 'Cannot call "receive" once a disconnect message has been received.', 'event': 'WS receive loop error', 'level': 'warning', 'logger': 'backend.api.ws.android.router', 'timestamp': '2026-09-09T11:54:18.644367Z'}
+_______________ test_runtime_progress_and_result_ownership[own] _______________
+tests\production\test_agent_messages_runtime.py:127: in test_runtime_progress_and_result_ownership
+    assert cached["progress"] == "50"
+           ^^^^^^^^^^^^^^^^^^
+E   KeyError: 'progress'
+---------------------------- Captured stdout call -----------------------------
+{"device_id": "88929085-14d1-45f4-a748-93ccfb1e3ffc", "org_id": "5de547eb-e9dc-42e4-90fd-cb0334cffb08", "event": "android_ws: auth passed", "level": "info", "logger": "backend.api.ws.android.router", "timestamp": "2026-09-09T11:54:19.112178Z"}
+{"device_id": "88929085-14d1-45f4-a748-93ccfb1e3ffc", "error": "Cannot call \"receive\" once a disconnect message has been received.", "event": "WS receive loop error", "level": "warning", "logger": "backend.api.ws.android.router", "timestamp": "2026-09-09T11:54:19.123489Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.api.ws.android.router:router.py:542 {'device_id': '88929085-14d1-45f4-a748-93ccfb1e3ffc', 'org_id': '5de547eb-e9dc-42e4-90fd-cb0334cffb08', 'event': 'android_ws: auth passed', 'level': 'info', 'logger': 'backend.api.ws.android.router', 'timestamp': '2026-09-09T11:54:19.112178Z'}
+WARNING  backend.api.ws.android.router:router.py:673 {'device_id': '88929085-14d1-45f4-a748-93ccfb1e3ffc', 'error': 'Cannot call "receive" once a disconnect message has been received.', 'event': 'WS receive loop error', 'level': 'warning', 'logger': 'backend.api.ws.android.router', 'timestamp': '2026-09-09T11:54:19.123489Z'}
+_______________ test_runtime_event_uses_authenticated_identity ________________
+tests\production\test_agent_messages_runtime.py:154: in test_runtime_event_uses_authenticated_identity
+    assert event is not None
+E   assert None is not None
+---------------------------- Captured stdout call -----------------------------
+{"device_id": "7977bab7-77a0-450e-91e7-7278eb491fd1", "org_id": "61f49cbb-a060-41c0-973d-d4793208da87", "event": "android_ws: auth passed", "level": "info", "logger": "backend.api.ws.android.router", "timestamp": "2026-09-09T11:54:21.283456Z"}
+{"device_id": "7977bab7-77a0-450e-91e7-7278eb491fd1", "error": "(sqlalchemy.dialects.postgresql.asyncpg.ProgrammingError) <class 'asyncpg.exceptions.InsufficientPrivilegeError'>: new row violates row-level security policy for table \"device_events\"\n[SQL: INSERT INTO device_events (org_id, device_id, event_type, severity, message, account_id, task_id, pipeline_run_id, data, occurred_at, processed, id) VALUES ($1::UUID, $2::UUID, $3::VARCHAR, $4::event_severity, $5::VARCHAR, $6::UUID, $7::UUID, $8::UUID, $9::JSONB, $10::TIMESTAMP WITH TIME ZONE, $11::BOOLEAN, $12::UUID) RETURNING device_events.created_at, device_events.updated_at]\n[parameters: (UUID('61f49cbb-a060-41c0-973d-d4793208da87'), UUID('7977bab7-77a0-450e-91e7-7278eb491fd1'), 'device.audit_probe', 'info', 'isolated event', None, None, None, '{\"sample\": 1}', datetime.datetime(2026, 9, 9, 11, 54, 21, 286162, tzinfo=datetime.timezone.utc), False, UUID('680f56ee-62cd-4c51-88aa-785f2c529dd6'))]\n(Background on this error at: https://sqlalche.me/e/20/f405)", "exc_info": true, "event": "event_reactor.ws_event_failed", "level": "error", "logger": "backend.api.ws.android.router", "timestamp": "2026-09-09T11:54:21.296769Z"}
+{"device_id": "7977bab7-77a0-450e-91e7-7278eb491fd1", "error": "Cannot call \"receive\" once a disconnect message has been received.", "event": "WS receive loop error", "level": "warning", "logger": "backend.api.ws.android.router", "timestamp": "2026-09-09T11:54:21.297286Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.api.ws.android.router:router.py:542 {'device_id': '7977bab7-77a0-450e-91e7-7278eb491fd1', 'org_id': '61f49cbb-a060-41c0-973d-d4793208da87', 'event': 'android_ws: auth passed', 'level': 'info', 'logger': 'backend.api.ws.android.router', 'timestamp': '2026-09-09T11:54:21.283456Z'}
+ERROR    backend.api.ws.android.router:router.py:391 {'device_id': '7977bab7-77a0-450e-91e7-7278eb491fd1', 'error': '(sqlalchemy.dialects.postgresql.asyncpg.ProgrammingError) <class \'asyncpg.exceptions.InsufficientPrivilegeError\'>: new row violates row-level security policy for table "device_events"\n[SQL: INSERT INTO device_events (org_id, device_id, event_type, severity, message, account_id, task_id, pipeline_run_id, data, occurred_at, processed, id) VALUES ($1::UUID, $2::UUID, $3::VARCHAR, $4::event_severity, $5::VARCHAR, $6::UUID, $7::UUID, $8::UUID, $9::JSONB, $10::TIMESTAMP WITH TIME ZONE, $11::BOOLEAN, $12::UUID) RETURNING device_events.created_at, device_events.updated_at]\n[parameters: (UUID(\'61f49cbb-a060-41c0-973d-d4793208da87\'), UUID(\'7977bab7-77a0-450e-91e7-7278eb491fd1\'), \'device.audit_probe\', \'info\', \'isolated event\', None, None, None, \'{"sample": 1}\', datetime.datetime(2026, 9, 9, 11, 54, 21, 286162, tzinfo=datetime.timezone.utc), False, UUID(\'680f56ee-62cd-4c51-88aa-785f2c529dd6\'))]\n(Background on this error at: https://sqlalche.me/e/20/f405)', 'exc_info': True, 'event': 'event_reactor.ws_event_failed', 'level': 'error', 'logger': 'backend.api.ws.android.router', 'timestamp': '2026-09-09T11:54:21.296769Z'}
+WARNING  backend.api.ws.android.router:router.py:673 {'device_id': '7977bab7-77a0-450e-91e7-7278eb491fd1', 'error': 'Cannot call "receive" once a disconnect message has been received.', 'event': 'WS receive loop error', 'level': 'warning', 'logger': 'backend.api.ws.android.router', 'timestamp': '2026-09-09T11:54:21.297286Z'}
+________ test_runtime_result_sql_abort_has_no_ack_and_replay_recovers _________
+..\..\..\AppData\Roaming\uv\python\cpython-3.12.12-windows-x86_64-none\Lib\unittest\mock.py:2334: in assert_awaited_once
+    raise AssertionError(msg)
+E   AssertionError: Expected mock to have been awaited once. Awaited 0 times.
+
+During handling of the above exception, another exception occurred:
+tests\production\test_agent_messages_runtime.py:188: in test_runtime_result_sql_abort_has_no_ack_and_replay_recovers
+    r.manager.send_to_device.assert_awaited_once()
+E   AssertionError: Expected mock to have been awaited once. Awaited 0 times.
+---------------------------- Captured stdout call -----------------------------
+{"device_id": "afd45734-a588-41f0-8072-36b5d008afba", "org_id": "22c564a9-b920-4907-8052-20dac298a449", "event": "android_ws: auth passed", "level": "info", "logger": "backend.api.ws.android.router", "timestamp": "2026-09-09T11:54:21.805522Z"}
+{"task_id": "e623e525-c5ee-4867-a19b-471f1a68d056", "event": "task.result.not_found", "level": "warning", "logger": "backend.services.task_service", "timestamp": "2026-09-09T11:54:21.816849Z"}
+{"command_id": "e623e525-c5ee-4867-a19b-471f1a68d056", "device_id": "afd45734-a588-41f0-8072-36b5d008afba", "error": "(sqlalchemy.dialects.postgresql.asyncpg.Error) <class 'asyncpg.exceptions.DivisionByZeroError'>: division by zero\n[SQL: SELECT 1/0]\n(Background on this error at: https://sqlalche.me/e/20/dbapi)", "event": "Failed to persist task result", "level": "error", "logger": "backend.api.ws.android.router", "timestamp": "2026-09-09T11:54:21.819525Z"}
+{"device_id": "afd45734-a588-41f0-8072-36b5d008afba", "error": "Cannot call \"receive\" once a disconnect message has been received.", "event": "WS receive loop error", "level": "warning", "logger": "backend.api.ws.android.router", "timestamp": "2026-09-09T11:54:21.820083Z"}
+{"device_id": "afd45734-a588-41f0-8072-36b5d008afba", "org_id": "22c564a9-b920-4907-8052-20dac298a449", "event": "android_ws: auth passed", "level": "info", "logger": "backend.api.ws.android.router", "timestamp": "2026-09-09T11:54:21.892781Z"}
+{"task_id": "e623e525-c5ee-4867-a19b-471f1a68d056", "event": "task.result.not_found", "level": "warning", "logger": "backend.services.task_service", "timestamp": "2026-09-09T11:54:21.896502Z"}
+{"device_id": "afd45734-a588-41f0-8072-36b5d008afba", "error": "Cannot call \"receive\" once a disconnect message has been received.", "event": "WS receive loop error", "level": "warning", "logger": "backend.api.ws.android.router", "timestamp": "2026-09-09T11:54:21.897020Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.api.ws.android.router:router.py:542 {'device_id': 'afd45734-a588-41f0-8072-36b5d008afba', 'org_id': '22c564a9-b920-4907-8052-20dac298a449', 'event': 'android_ws: auth passed', 'level': 'info', 'logger': 'backend.api.ws.android.router', 'timestamp': '2026-09-09T11:54:21.805522Z'}
+WARNING  backend.services.task_service:task_service.py:390 {'task_id': 'e623e525-c5ee-4867-a19b-471f1a68d056', 'event': 'task.result.not_found', 'level': 'warning', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-09T11:54:21.816849Z'}
+ERROR    backend.api.ws.android.router:router.py:330 {'command_id': 'e623e525-c5ee-4867-a19b-471f1a68d056', 'device_id': 'afd45734-a588-41f0-8072-36b5d008afba', 'error': "(sqlalchemy.dialects.postgresql.asyncpg.Error) <class 'asyncpg.exceptions.DivisionByZeroError'>: division by zero\n[SQL: SELECT 1/0]\n(Background on this error at: https://sqlalche.me/e/20/dbapi)", 'event': 'Failed to persist task result', 'level': 'error', 'logger': 'backend.api.ws.android.router', 'timestamp': '2026-09-09T11:54:21.819525Z'}
+WARNING  backend.api.ws.android.router:router.py:673 {'device_id': 'afd45734-a588-41f0-8072-36b5d008afba', 'error': 'Cannot call "receive" once a disconnect message has been received.', 'event': 'WS receive loop error', 'level': 'warning', 'logger': 'backend.api.ws.android.router', 'timestamp': '2026-09-09T11:54:21.820083Z'}
+INFO     backend.api.ws.android.router:router.py:542 {'device_id': 'afd45734-a588-41f0-8072-36b5d008afba', 'org_id': '22c564a9-b920-4907-8052-20dac298a449', 'event': 'android_ws: auth passed', 'level': 'info', 'logger': 'backend.api.ws.android.router', 'timestamp': '2026-09-09T11:54:21.892781Z'}
+WARNING  backend.services.task_service:task_service.py:390 {'task_id': 'e623e525-c5ee-4867-a19b-471f1a68d056', 'event': 'task.result.not_found', 'level': 'warning', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-09T11:54:21.896502Z'}
+WARNING  backend.api.ws.android.router:router.py:673 {'device_id': 'afd45734-a588-41f0-8072-36b5d008afba', 'error': 'Cannot call "receive" once a disconnect message has been received.', 'event': 'WS receive loop error', 'level': 'warning', 'logger': 'backend.api.ws.android.router', 'timestamp': '2026-09-09T11:54:21.897020Z'}
+______________ test_runtime_concurrent_result_replay_counts_once ______________
+..\..\..\AppData\Roaming\uv\python\cpython-3.12.12-windows-x86_64-none\Lib\asyncio\tasks.py:520: in wait_for
+    return await fut
+           ^^^^^^^^^
+tests\production\test_device_bootstrap_runtime.py:49: in observe
+    count = await db.scalar(text(
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\ext\asyncio\session.py:508: in scalar
+    return await greenlet_spawn(
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\util\_concurrency_py3k.py:197: in greenlet_spawn
+    result = context.throw(*sys.exc_info())
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\orm\session.py:2354: in scalar
+    return self._execute_internal(
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\orm\session.py:2181: in _execute_internal
+    conn = self._connection_for_bind(bind)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\orm\session.py:2050: in _connection_for_bind
+    return trans._connection_for_bind(engine, execution_options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\orm\state_changes.py:139: in _go
+    ret_value = fn(self, *arg, **kw)
+                ^^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\orm\session.py:1144: in _connection_for_bind
+    conn = bind.connect()
+           ^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\engine\base.py:3279: in connect
+    return self._connection_cls(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\engine\base.py:145: in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ^^^^^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\engine\base.py:3303: in raw_connection
+    return self.pool.connect()
+           ^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\pool\base.py:449: in connect
+    return _ConnectionFairy._checkout(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\pool\base.py:1263: in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\pool\base.py:712: in checkout
+    rec = pool._do_get()
+          ^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\pool\impl.py:308: in _do_get
+    return self._create_connection()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\pool\base.py:390: in _create_connection
+    return _ConnectionRecord(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\pool\base.py:674: in __init__
+    self.__connect()
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\pool\base.py:900: in __connect
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\util\langhelpers.py:146: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\pool\base.py:896: in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\engine\create.py:643: in connect
+    return dialect.connect(*cargs, **cparams)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\engine\default.py:616: in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py:937: in connect
+    await_only(creator_fn(*arg, **kw)),
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\util\_concurrency_py3k.py:127: in await_only
+    return current.driver.switch(awaitable)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\util\_concurrency_py3k.py:192: in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\asyncpg\connection.py:2329: in connect
+    return await connect_utils._connect(
+.venv-audit\dependency-upgrade\Lib\site-packages\asyncpg\connect_utils.py:991: in _connect
+    conn = await _connect_addr(
+.venv-audit\dependency-upgrade\Lib\site-packages\asyncpg\connect_utils.py:828: in _connect_addr
+    return await __connect_addr(params, True, *args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\asyncpg\connect_utils.py:876: in __connect_addr
+    await connected
+E   asyncio.exceptions.CancelledError
+
+The above exception was the direct cause of the following exception:
+tests\production\test_agent_messages_runtime.py:207: in test_runtime_concurrent_result_replay_counts_once
+    await wait_for_two_runtime_locks(r.db)
+tests\production\test_device_bootstrap_runtime.py:55: in wait_for_two_runtime_locks
+    await asyncio.wait_for(observe(), 5)
+..\..\..\AppData\Roaming\uv\python\cpython-3.12.12-windows-x86_64-none\Lib\asyncio\tasks.py:519: in wait_for
+    async with timeouts.timeout(timeout):
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\AppData\Roaming\uv\python\cpython-3.12.12-windows-x86_64-none\Lib\asyncio\timeouts.py:115: in __aexit__
+    raise TimeoutError from exc_val
+E   TimeoutError
+---------------------------- Captured stdout call -----------------------------
+{"device_id": "31b729e0-ae22-4bab-bef0-950b123ff9f6", "org_id": "63c7aaf8-62c5-433e-bbd1-9130a9e9822d", "event": "android_ws: auth passed", "level": "info", "logger": "backend.api.ws.android.router", "timestamp": "2026-09-09T11:54:22.504293Z"}
+{"device_id": "31b729e0-ae22-4bab-bef0-950b123ff9f6", "org_id": "63c7aaf8-62c5-433e-bbd1-9130a9e9822d", "event": "android_ws: auth passed", "level": "info", "logger": "backend.api.ws.android.router", "timestamp": "2026-09-09T11:54:22.540961Z"}
+{"task_id": "cc3b4047-9a2b-4e41-9a51-224bcd9cec43", "event": "task.result.not_found", "level": "warning", "logger": "backend.services.task_service", "timestamp": "2026-09-09T11:54:22.645370Z"}
+{"task_id": "cc3b4047-9a2b-4e41-9a51-224bcd9cec43", "event": "task.result.not_found", "level": "warning", "logger": "backend.services.task_service", "timestamp": "2026-09-09T11:54:22.646496Z"}
+{"device_id": "31b729e0-ae22-4bab-bef0-950b123ff9f6", "error": "Cannot call \"receive\" once a disconnect message has been received.", "event": "WS receive loop error", "level": "warning", "logger": "backend.api.ws.android.router", "timestamp": "2026-09-09T11:54:22.676694Z"}
+{"device_id": "31b729e0-ae22-4bab-bef0-950b123ff9f6", "error": "Cannot call \"receive\" once a disconnect message has been received.", "event": "WS receive loop error", "level": "warning", "logger": "backend.api.ws.android.router", "timestamp": "2026-09-09T11:54:22.678901Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.api.ws.android.router:router.py:542 {'device_id': '31b729e0-ae22-4bab-bef0-950b123ff9f6', 'org_id': '63c7aaf8-62c5-433e-bbd1-9130a9e9822d', 'event': 'android_ws: auth passed', 'level': 'info', 'logger': 'backend.api.ws.android.router', 'timestamp': '2026-09-09T11:54:22.504293Z'}
+INFO     backend.api.ws.android.router:router.py:542 {'device_id': '31b729e0-ae22-4bab-bef0-950b123ff9f6', 'org_id': '63c7aaf8-62c5-433e-bbd1-9130a9e9822d', 'event': 'android_ws: auth passed', 'level': 'info', 'logger': 'backend.api.ws.android.router', 'timestamp': '2026-09-09T11:54:22.540961Z'}
+WARNING  backend.services.task_service:task_service.py:390 {'task_id': 'cc3b4047-9a2b-4e41-9a51-224bcd9cec43', 'event': 'task.result.not_found', 'level': 'warning', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-09T11:54:22.645370Z'}
+WARNING  backend.services.task_service:task_service.py:390 {'task_id': 'cc3b4047-9a2b-4e41-9a51-224bcd9cec43', 'event': 'task.result.not_found', 'level': 'warning', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-09T11:54:22.646496Z'}
+WARNING  backend.api.ws.android.router:router.py:673 {'device_id': '31b729e0-ae22-4bab-bef0-950b123ff9f6', 'error': 'Cannot call "receive" once a disconnect message has been received.', 'event': 'WS receive loop error', 'level': 'warning', 'logger': 'backend.api.ws.android.router', 'timestamp': '2026-09-09T11:54:22.676694Z'}
+WARNING  backend.api.ws.android.router:router.py:673 {'device_id': '31b729e0-ae22-4bab-bef0-950b123ff9f6', 'error': 'Cannot call "receive" once a disconnect message has been received.', 'event': 'WS receive loop error', 'level': 'warning', 'logger': 'backend.api.ws.android.router', 'timestamp': '2026-09-09T11:54:22.678901Z'}
+============================== warnings summary ===============================
+backend\api\v1\game_accounts\router.py:95
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\api\v1\game_accounts\router.py:95: FastAPIDeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+    sort_dir: str = Query("desc", regex="^(asc|desc)$", description="Направление сортировки"),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/production/test_agent_messages_runtime.py::test_runtime_task_receipt_persists_start[True-received]
+FAILED tests/production/test_agent_messages_runtime.py::test_runtime_task_receipt_persists_start[True-running]
+FAILED tests/production/test_agent_messages_runtime.py::test_runtime_task_receipt_persists_start[False-received]
+FAILED tests/production/test_agent_messages_runtime.py::test_runtime_task_receipt_persists_start[False-running]
+FAILED tests/production/test_agent_messages_runtime.py::test_runtime_result_commit_ack_and_reconnect_replay[False-completed]
+FAILED tests/production/test_agent_messages_runtime.py::test_runtime_result_commit_ack_and_reconnect_replay[False-failed]
+FAILED tests/production/test_agent_messages_runtime.py::test_runtime_result_commit_ack_and_reconnect_replay[True-completed]
+FAILED tests/production/test_agent_messages_runtime.py::test_runtime_result_commit_ack_and_reconnect_replay[True-failed]
+FAILED tests/production/test_agent_messages_runtime.py::test_runtime_progress_and_result_ownership[own]
+FAILED tests/production/test_agent_messages_runtime.py::test_runtime_event_uses_authenticated_identity
+FAILED tests/production/test_agent_messages_runtime.py::test_runtime_result_sql_abort_has_no_ack_and_replay_recovers
+FAILED tests/production/test_agent_messages_runtime.py::test_runtime_concurrent_result_replay_counts_once
+12 failed, 3 passed, 1 warning in 14.09s

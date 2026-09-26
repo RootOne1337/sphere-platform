@@ -18,6 +18,7 @@ import kotlinx.serialization.json.Json
 import okhttp3.CertificatePinner
 import okhttp3.ConnectionPool
 import okhttp3.OkHttpClient
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
 
@@ -68,15 +69,35 @@ object AppModule {
             // значит при потере связи WS умрёт по TCP keepalive/OS timeout).
             .pingInterval(15, TimeUnit.SECONDS)
             .addInterceptor { chain ->
-                val token = lazyAuthStore.get().getToken()
                 val requestBuilder = chain.request().newBuilder()
                     // FIX: Accept: application/json — обход Serveo free-tier interstitial.
                     // Без этого заголовка Serveo отдаёт HTML-страницу вместо API-ответа.
                     .addHeader("Accept", "application/json")
-                if (token != null) {
-                    requestBuilder.addHeader("Authorization", "Bearer $token")
-                }
                 chain.proceed(requestBuilder.build())
+            }
+            .addNetworkInterceptor { chain ->
+                // Runs for each redirect too. DAG HTTP requests share this client
+                // but must never receive the device's management credential.
+                val auth = lazyAuthStore.get()
+                val token = auth.getToken()
+                val server = auth.getServerUrl().toHttpUrlOrNull()
+                val request = chain.request()
+                val sameOrigin = server != null && server.scheme == request.url.scheme &&
+                    server.host == request.url.host && server.port == request.url.port
+                val builder = request.newBuilder()
+                // Enrollment authenticates with the scoped X-API-Key. A golden-image
+                // clone may still hold the master's bearer until rebind succeeds;
+                // never attach that copied device credential to the registration call.
+                val isDeviceEnrollment = request.method == "POST" &&
+                    request.url.encodedPath.endsWith("/api/v1/devices/register")
+                if (isDeviceEnrollment) {
+                    builder.removeHeader("Authorization")
+                } else if (token != null && sameOrigin) {
+                    builder.header("Authorization", "Bearer $token")
+                } else if (token != null && request.header("Authorization") == "Bearer $token") {
+                    builder.removeHeader("Authorization")
+                }
+                chain.proceed(builder.build())
             }
 
         // Certificate pinning — loaded from res/raw/pinned_certs.txt

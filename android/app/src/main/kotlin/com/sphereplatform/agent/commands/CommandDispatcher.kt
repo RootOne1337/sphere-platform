@@ -2,6 +2,7 @@ package com.sphereplatform.agent.commands
 
 import android.content.Context
 import android.content.Intent
+import com.sphereplatform.agent.BuildConfig
 import com.sphereplatform.agent.commands.model.CommandAck
 import com.sphereplatform.agent.commands.model.CommandType
 import com.sphereplatform.agent.commands.model.IncomingCommand
@@ -14,9 +15,9 @@ import com.sphereplatform.agent.store.AuthTokenStore
 import com.sphereplatform.agent.streaming.ScreenCaptureRequestActivity
 import com.sphereplatform.agent.streaming.ScreenCaptureService
 import com.sphereplatform.agent.streaming.StreamingManager
-import com.sphereplatform.agent.streaming.StreamingManagerImpl
 import com.sphereplatform.agent.vpn.KillSwitchManager
 import com.sphereplatform.agent.vpn.SphereVpnManager
+import com.sphereplatform.agent.workers.UpdateCheckScheduler
 import com.sphereplatform.agent.ws.SphereWebSocketClient
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
@@ -28,7 +29,9 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.int
@@ -37,6 +40,7 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import timber.log.Timber
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -56,7 +60,14 @@ class CommandDispatcher @Inject constructor(
     private val scope: CoroutineScope,
     private val streamingManager: StreamingManager,
     @ApplicationContext private val appContext: Context,
+    private val commandJournal: CommandJournal,
+    private val updateCheckScheduler: UpdateCheckScheduler,
 ) {
+    private companion object {
+        /** Let the signed route-change receipt enter OkHttp's queue before closing its socket. */
+        const val ROUTE_RECONNECT_ACK_GRACE_MS = 750L
+    }
+
     private val json = Json {
         ignoreUnknownKeys = true
         coerceInputValues = true
@@ -73,8 +84,10 @@ class CommandDispatcher @Inject constructor(
 
     /** FIX D1: Job heartbeat watchdog — отменяется в stop(). */
     private var heartbeatJob: kotlinx.coroutines.Job? = null
+    private val updateCheckQueuedForService = AtomicBoolean(false)
 
     fun start() {
+        updateCheckQueuedForService.set(false)
         wsClient.onJsonMessage = { msg ->
             val type = msg["type"]?.jsonPrimitive?.contentOrNull
             if (type == "ping") {
@@ -87,7 +100,10 @@ class CommandDispatcher @Inject constructor(
         // При reconnect — отправляем накопленные результаты DAG и сбрасываем heartbeat
         wsClient.onConnected = {
             lastPingAt = System.currentTimeMillis()
-            scope.launch { dagRunner.flushPendingResults() }
+            if (updateCheckQueuedForService.compareAndSet(false, true)) {
+                updateCheckScheduler.scheduleImmediate()
+            }
+            scope.launch { flushResults() }
         }
 
         // FIX AUDIT-2.5: Heartbeat watchdog — если сервер не шлёт ping > 90с,
@@ -100,6 +116,7 @@ class CommandDispatcher @Inject constructor(
             while (true) {
                 delay(30_000L) // Проверяем каждые 30с
                 if (wsClient.isConnected) {
+                    flushResults()
                     val elapsed = System.currentTimeMillis() - lastPingAt
                     if (elapsed > HEARTBEAT_TIMEOUT_MS) {
                         Timber.w("Heartbeat watchdog: no ping for ${elapsed/1000}s — forcing reconnect")
@@ -163,14 +180,60 @@ class CommandDispatcher @Inject constructor(
             put("ram_mb", deviceStatusProvider.getRamUsageMb())
             put("screen_on", deviceStatusProvider.isScreenOn())
             put("vpn_active", deviceStatusProvider.isVpnActive())
+            put("agent_version", BuildConfig.VERSION_NAME)
+            put("agent_version_code", BuildConfig.VERSION_CODE)
+            val stats = if (streamingManager.isActive()) streamingManager.getQualityStats() else null
+            if (stats != null) {
+                put("stream", buildJsonObject {
+                    put("schema_version", 2)
+                    put("active", true)
+                    put("stage", "capture_encoder_ws_queue")
+                    put("capture_fps", stats.currentCaptureFps)
+                    put("render_fps", stats.currentRenderFps)
+                    put("capture_frames_total", stats.captureFramesTotal)
+                    put("rendered_frames_total", stats.renderedFramesTotal)
+                    put("capture_read_failures_total", stats.captureReadFailuresTotal)
+                    put("render_failures_total", stats.renderFailuresTotal)
+                    put("encoder_errors_total", stats.encoderErrorsTotal)
+                    put("frame_throttle_drops_total", stats.frameThrottleDropsTotal)
+                    put("encoder_fps", stats.currentFps)
+                    put("encoded_frames_total", stats.totalFrames)
+                    put("encoded_bytes_total", stats.totalEncodedBytes)
+                    put("key_frame_ratio", stats.keyFrameRatio.toDouble())
+                    put("ws_queue_attempts_total", stats.webSocketQueueAttemptsTotal)
+                    put("ws_queue_accepted_total", stats.webSocketQueueAcceptedTotal)
+                    put("ws_queue_rejected_total", stats.webSocketQueueRejectedTotal)
+                    put("ws_queue_accepted_bytes_total", stats.webSocketQueueAcceptedBytesTotal)
+                })
+            }
         })
     }
 
     private suspend fun handleMessage(msg: JsonObject) {
         // System streaming messages — NOT IncomingCommand format, handle first
         when (msg["type"]?.jsonPrimitive?.contentOrNull) {
+            // Transport keepalive emitted by the backend. It is intentionally
+            // outside IncomingCommand and requires no acknowledgement.
+            "noop" -> return
+            "result_ack" -> {
+                try {
+                    msg["command_id"]?.jsonPrimitive?.contentOrNull?.let { commandJournal.acknowledge(it) }
+                } catch (e: Exception) {
+                    // Storage remains authoritative: retain and resend the pending result.
+                    // An ACK write failure must not escape launch and crash the entire APK.
+                    Timber.e(e, "Cannot persist command acknowledgement; result retained")
+                }
+                return
+            }
             "start_stream" -> {
-                Timber.i("Received start_stream — launching screen capture permission dialog")
+                // Viewer registration is retried after an agent reconnect. The
+                // current capture owns a one-shot MediaProjection grant; launching
+                // the consent Activity again would replace it and reset the encoder.
+                if (streamingManager.isActive()) {
+                    Timber.i("Ignoring duplicate start_stream — capture is already active")
+                    return
+                }
+                Timber.i("Received start_stream — preparing screen capture permission")
                 val intent = Intent(appContext, ScreenCaptureRequestActivity::class.java).apply {
                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 }
@@ -187,13 +250,19 @@ class CommandDispatcher @Inject constructor(
             }
             "viewer_connected" -> {
                 Timber.i("Received viewer_connected — requesting keyframe")
-                (streamingManager as? StreamingManagerImpl)?.onViewerConnected()
+                streamingManager.onViewerConnected()
                 return
             }
             "touch_tap" -> {
                 val x = msg["x"]?.jsonPrimitive?.intOrNull ?: return
                 val y = msg["y"]?.jsonPrimitive?.intOrNull ?: return
-                scope.launch { adbActions.tap(x, y) }
+                scope.launch {
+                    try {
+                        adbActions.tap(x, y)
+                    } catch (_: RootCommandOutcomeUnknownException) {
+                        Timber.w("Live tap outcome is unknown; command was not replayed")
+                    }
+                }
                 return
             }
             "touch_swipe" -> {
@@ -202,39 +271,56 @@ class CommandDispatcher @Inject constructor(
                 val x2 = msg["x2"]?.jsonPrimitive?.intOrNull ?: return
                 val y2 = msg["y2"]?.jsonPrimitive?.intOrNull ?: return
                 val duration = msg["duration_ms"]?.jsonPrimitive?.intOrNull ?: 300
-                scope.launch { adbActions.swipe(x1, y1, x2, y2, duration) }
+                scope.launch {
+                    try {
+                        adbActions.swipe(x1, y1, x2, y2, duration)
+                    } catch (_: RootCommandOutcomeUnknownException) {
+                        Timber.w("Live swipe outcome is unknown; command was not replayed")
+                    }
+                }
                 return
             }
             "request_keyframe" -> {
-                (streamingManager as? StreamingManagerImpl)?.onViewerConnected()
+                Timber.i("Received request_keyframe — requesting sync frame")
+                streamingManager.onViewerConnected()
                 return
             }
-            // ── CANCEL_DAG: bypass dagMutex ──
-            "CANCEL_DAG" -> {
-                val cmdId = msg["command_id"]?.jsonPrimitive?.contentOrNull ?: ""
-                // FIX D7: TTL-проверка для управляющих команд (защита от replay attack)
+            // Controls bypass dagMutex but are fenced to a particular execution.
+            "CANCEL_DAG", "PAUSE_DAG", "RESUME_DAG" -> {
+                val cmdId = (msg["command_id"] as? JsonPrimitive)?.contentOrNull ?: ""
                 if (isControlCommandExpired(msg, cmdId)) return
-                Timber.i("[CANCEL_DAG] Received cancel for command=$cmdId")
-                dagRunner.requestCancel()
-                ack(cmdId, "completed")
-                return
-            }
-            // ── PAUSE_DAG: bypass dagMutex, пауза работающего DAG между нодами ──
-            "PAUSE_DAG" -> {
-                val cmdId = msg["command_id"]?.jsonPrimitive?.contentOrNull ?: ""
-                if (isControlCommandExpired(msg, cmdId)) return
-                Timber.i("[PAUSE_DAG] Received pause for command=$cmdId")
-                dagRunner.requestPause()
-                ack(cmdId, "completed")
-                return
-            }
-            // ── RESUME_DAG: bypass dagMutex, снятие паузы ──
-            "RESUME_DAG" -> {
-                val cmdId = msg["command_id"]?.jsonPrimitive?.contentOrNull ?: ""
-                if (isControlCommandExpired(msg, cmdId)) return
-                Timber.i("[RESUME_DAG] Received resume for command=$cmdId")
-                dagRunner.requestResume()
-                ack(cmdId, "completed")
+                val target = ((msg["payload"] as? JsonObject)?.get("task_id") as? JsonPrimitive)
+                    ?.takeIf { it.isString }?.contentOrNull
+                if (target.isNullOrBlank()) {
+                    ack(cmdId, "failed", error = "invalid_task_target")
+                    return
+                }
+                if (msg["type"]?.jsonPrimitive?.content == "CANCEL_DAG" &&
+                    (msg["payload"] as? JsonObject)?.get("durable")?.jsonPrimitive?.booleanOrNull == true) {
+                    try {
+                        val terminal = commandJournal.requestCancellation(target)
+                        if (terminal != null) wsClient.sendJson(terminal)
+                        else dagRunner.requestCancel(target)
+                        ack(cmdId, "completed", result = buildJsonObject {
+                            put("task_id", target); put("control_accepted", true)
+                        })
+                    } catch (e: Exception) {
+                        ack(cmdId, "failed", error = "cancel_intent_not_persisted")
+                        Timber.e(e, "Cannot persist cancellation fence")
+                    }
+                    return
+                }
+                val accepted = when (msg["type"]?.jsonPrimitive?.content) {
+                    "CANCEL_DAG" -> dagRunner.requestCancel(target)
+                    "PAUSE_DAG" -> dagRunner.requestPause(target)
+                    else -> dagRunner.requestResume(target)
+                }
+                if (accepted) {
+                    // This acknowledges the control request, not physical stop.
+                    ack(cmdId, "completed", result = buildJsonObject {
+                        put("task_id", target); put("control_accepted", true)
+                    })
+                } else ack(cmdId, "failed", error = "task_not_running")
                 return
             }
         }
@@ -247,26 +333,74 @@ class CommandDispatcher @Inject constructor(
         }
 
         // TTL check — отбрасываем устаревшие команды
+        // An OTA command can restart this process during installation. Fence it
+        // in this instance's durable journal just like a DAG: a reconnect must
+        // not start a second download/install with the same command ID. Each
+        // cloned Android instance has its own journal after cloning, so the
+        // shared recovery grant can still reach every copy.
+        if (cmd.type == CommandType.EXECUTE_DAG || cmd.type == CommandType.OTA_UPDATE) {
+            try {
+                commandJournal.reconcileCompletedOtaInstalls(BuildConfig.VERSION_CODE)
+                when (val claim = commandJournal.claim(
+                    cmd.command_id, acknowledgeWhenQueued = cmd.type == CommandType.OTA_UPDATE,
+                    otaTargetVersionCode = if (cmd.type == CommandType.OTA_UPDATE) {
+                        cmd.payload["version_code"]?.jsonPrimitive?.intOrNull
+                    } else null,
+                )) {
+                    is CommandJournal.Claim.Existing -> {
+                        queueDurableResult(claim.response)
+                        return
+                    }
+                    CommandJournal.Claim.Started -> Unit
+                }
+            } catch (e: Exception) {
+                ack(cmd.command_id, "failed", error = e.message ?: "command_receipt_unavailable")
+                return
+            }
+        }
         val ageSeconds = System.currentTimeMillis() / 1000 - cmd.signed_at
         if (ageSeconds > cmd.ttl_seconds) {
             Timber.w("[${cmd.command_id}] Expired (age=${ageSeconds}s > ttl=${cmd.ttl_seconds}s)")
-            ack(cmd.command_id, "failed", error = "expired")
+            terminalAck(cmd, "failed", error = "expired")
             return
         }
 
         ack(cmd.command_id, "received")
 
-        val result = runCatching {
+        try {
             ack(cmd.command_id, "running")
-            dispatch(cmd)
+            val result = dispatch(cmd)
+            val failed = result?.get("success")?.jsonPrimitive?.content == "false"
+            terminalAck(cmd, if (failed) "failed" else "completed", result = result)
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            terminalAck(cmd, "failed", error = "execution_interrupted_outcome_unknown")
+            throw e
+        } catch (e: Exception) {
+            Timber.e(e, "[${cmd.command_id}] Failed")
+            terminalAck(cmd, "failed", error = e.message ?: "unknown")
         }
+    }
 
-        if (result.isSuccess) {
-            ack(cmd.command_id, "completed", result = result.getOrNull())
-        } else {
-            val err = result.exceptionOrNull()?.message ?: "unknown"
-            Timber.e(result.exceptionOrNull(), "[${cmd.command_id}] Failed")
-            ack(cmd.command_id, "failed", error = err)
+    private fun terminalAck(cmd: IncomingCommand, status: String, error: String? = null, result: JsonObject? = null) {
+        if (cmd.type == CommandType.EXECUTE_DAG || cmd.type == CommandType.OTA_UPDATE) {
+            val receipt = commandJournal.complete(cmd.command_id, status, error, result)
+            queueDurableResult(receipt)
+        } else ack(cmd.command_id, status, error, result)
+    }
+
+    private fun queueDurableResult(receipt: JsonObject): Boolean {
+        val queued = wsClient.sendJson(receipt)
+        return queued
+    }
+
+    private fun flushResults() {
+        try {
+            commandJournal.reconcileCompletedOtaInstalls(BuildConfig.VERSION_CODE)
+            for (result in commandJournal.pending()) {
+                if (!queueDurableResult(result)) break
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "Cannot flush durable command results")
         }
     }
 
@@ -315,7 +449,13 @@ class CommandDispatcher @Inject constructor(
             val timeoutMs = cmd.payload["timeout_ms"]?.jsonPrimitive?.longOrNull
 
             // Контент-адресабльный кеш: если имя + hash присланы — ищем в кеше
-            val dagJson: JsonObject = if (dagName != null && dagHash != null) {
+            val suppliedDag = cmd.payload["dag"]?.jsonObject
+            val dagJson: JsonObject = if (suppliedDag != null) {
+                // Explicit payload is authoritative, including during migration
+                // from servers that hashed a template before account substitution.
+                if (dagName != null && dagHash != null) scriptCache.put(dagName, dagHash, suppliedDag)
+                suppliedDag
+            } else if (dagName != null && dagHash != null) {
                 when (val cacheResult = scriptCache.get(dagName, dagHash)) {
                     is ScriptCacheManager.CacheResult.Hit -> {
                         // Кеш-хит: DAG актуален, запускаем без пердачи по WS
@@ -400,9 +540,22 @@ class CommandDispatcher @Inject constructor(
 
         CommandType.UPDATE_CONFIG -> {
             val serverUrl = cmd.payload["server_url"]?.jsonPrimitive?.contentOrNull
+            val fallbackServerUrl = cmd.payload["fallback_server_url"]?.jsonPrimitive?.contentOrNull
             val apiKey = cmd.payload["api_key"]?.jsonPrimitive?.contentOrNull
             val deviceId = cmd.payload["device_id"]?.jsonPrimitive?.contentOrNull
-            if (serverUrl != null) authStore.saveServerUrl(serverUrl)
+            if (serverUrl != null) {
+                val previousRoutes = authStore.connectionRoutesSnapshot().urls
+                if (fallbackServerUrl != null) authStore.saveServerRoutes(serverUrl, fallbackServerUrl)
+                else authStore.saveServerUrl(serverUrl)
+                val updatedRoutes = authStore.connectionRoutesSnapshot().urls
+                if (updatedRoutes != previousRoutes) {
+                    scope.launch {
+                        delay(ROUTE_RECONNECT_ACK_GRACE_MS)
+                        wsClient.forceReconnectNow(bypassDebounce = true)
+                    }
+                    Timber.i("Management routes changed; reconnect scheduled")
+                }
+            }
             if (apiKey != null) authStore.saveApiKey(apiKey)
             if (deviceId != null) authStore.saveDeviceId(deviceId)
             buildJsonObject { put("updated", true) }

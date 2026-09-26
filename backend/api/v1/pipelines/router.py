@@ -12,7 +12,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.dependencies import require_permission
-from backend.core.lifespan_registry import register_startup
+from backend.core.lifespan_registry import register_shutdown, register_startup
 from backend.database.engine import get_db
 from backend.models.pipeline import PipelineRunStatus
 from backend.models.user import User
@@ -51,8 +51,21 @@ async def _startup_pipeline_executor() -> None:
     from backend.services.orchestrator.pipeline_executor import PipelineExecutor
 
     executor = PipelineExecutor()
-    asyncio.create_task(executor.start())
+    task = asyncio.create_task(executor.start())
     logger.info("pipeline_executor.registered")
+
+    async def shutdown_pipeline_executor() -> None:
+        try:
+            # Admission closes before cancellation of the loop, so a commit
+            # already in flight is included in the drain when possible.
+            await asyncio.wait_for(executor.stop(), timeout=35)
+        except asyncio.TimeoutError:
+            logger.warning("pipeline_executor.shutdown_timeout")
+        finally:
+            task.cancel()
+            await asyncio.gather(task, return_exceptions=True)
+
+    register_shutdown("pipeline_executor", shutdown_pipeline_executor)
 
 
 register_startup("pipeline_executor", _startup_pipeline_executor)
@@ -134,6 +147,7 @@ async def list_pipeline_runs(
     pipeline_id: uuid.UUID | None = None,
     device_id: uuid.UUID | None = None,
     status: PipelineRunStatus | None = None,
+    active_only: bool = False,
     page: int = Query(1, ge=1),
     per_page: int = Query(50, ge=1, le=200),
     current_user: User = require_permission("pipeline:read"),
@@ -144,6 +158,7 @@ async def list_pipeline_runs(
         pipeline_id=pipeline_id,
         device_id=device_id,
         status=status,
+        active_only=active_only,
         page=page,
         per_page=per_page,
     )
@@ -184,6 +199,7 @@ async def cancel_pipeline_run(
 ) -> PipelineRunResponse:
     run = await svc.cancel_run(run_id, current_user.org_id)
     await db.commit()
+    await db.refresh(run)
     return PipelineRunResponse.model_validate(run)
 
 
@@ -200,6 +216,7 @@ async def pause_pipeline_run(
 ) -> PipelineRunResponse:
     run = await svc.pause_run(run_id, current_user.org_id)
     await db.commit()
+    await db.refresh(run)
     return PipelineRunResponse.model_validate(run)
 
 
@@ -216,6 +233,7 @@ async def resume_pipeline_run(
 ) -> PipelineRunResponse:
     run = await svc.resume_run(run_id, current_user.org_id)
     await db.commit()
+    await db.refresh(run)
     return PipelineRunResponse.model_validate(run)
 
 
@@ -255,6 +273,7 @@ async def update_pipeline(
         update_data["steps"] = [s.model_dump() if hasattr(s, "model_dump") else s for s in update_data["steps"]]
     pipeline = await svc.update(pipeline_id, current_user.org_id, **update_data)
     await db.commit()
+    await db.refresh(pipeline)
     return PipelineResponse.model_validate(pipeline)
 
 
@@ -289,6 +308,7 @@ async def toggle_pipeline(
     """Переключить is_active у pipeline. Сохраняется в БД, переживает рестарт."""
     pipeline = await svc.toggle(pipeline_id, current_user.org_id, active)
     await db.commit()
+    await db.refresh(pipeline)
     return PipelineResponse.model_validate(pipeline)
 
 

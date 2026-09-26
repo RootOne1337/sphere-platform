@@ -2,6 +2,7 @@
 # TZ-01 SPLIT-1: Unit-тесты для AuthService (login, refresh, logout, MFA).
 from __future__ import annotations
 
+import json
 import uuid
 from datetime import datetime, timedelta, timezone
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -15,6 +16,13 @@ from backend.core.exceptions import (
 )
 from backend.services.auth_service import AuthService
 from backend.services.cache_service import CacheService
+
+
+@pytest.fixture(autouse=True)
+def mocked_tenant_boundaries(monkeypatch):
+    """These raw AsyncMock service tests do not implement SQL/RLS session events."""
+    for name in ("bind_credential_tenant", "bind_user_login_tenant", "bind_tenant_context"):
+        monkeypatch.setattr(f"backend.services.auth_service.{name}", AsyncMock(return_value=uuid.uuid4()))
 
 
 def _make_user(
@@ -40,6 +48,7 @@ def _make_user(
 def _make_rt(*, revoked: bool = False, expired: bool = False) -> MagicMock:
     rt = MagicMock()
     rt.user_id = uuid.uuid4()
+    rt.org_id = uuid.uuid4()
     rt.revoked = revoked
     rt.revoked_at = None
     rt.expires_at = (
@@ -196,6 +205,7 @@ class TestRefresh:
         rt = _make_rt()
         user = _make_user()
         rt.user_id = user.id
+        rt.org_id = user.org_id
 
         db.execute.return_value.scalar_one_or_none = MagicMock(return_value=rt)
         db.get.return_value = user
@@ -259,7 +269,7 @@ class TestCompleteMfaLogin:
         db = _make_db()
         cache = _make_cache()
         user = _make_user(mfa_enabled=True)
-        cache.get.return_value = str(user.id)
+        cache.get.return_value = json.dumps({"user_id": str(user.id), "org_id": str(user.org_id)})
         db.get.return_value = user
         svc = AuthService(db, cache)
 
@@ -272,7 +282,8 @@ class TestCompleteMfaLogin:
         db = _make_db()
         cache = _make_cache()
         user = _make_user(mfa_enabled=True)
-        cache.get.return_value = str(user.id)
+        cache.get.return_value = json.dumps({"user_id": str(user.id), "org_id": str(user.org_id)})
+        cache.delete.return_value = 1
         db.get.return_value = user
         svc = AuthService(db, cache)
 
@@ -287,7 +298,7 @@ class TestCompleteMfaLogin:
         """complete_mfa_login: user_id в Redis есть, но User не найден в DB."""
         db = _make_db()
         cache = _make_cache()
-        cache.get.return_value = str(uuid.uuid4())
+        cache.get.return_value = json.dumps({"user_id": str(uuid.uuid4()), "org_id": str(uuid.uuid4())})
         db.get.return_value = None
         svc = AuthService(db, cache)
 

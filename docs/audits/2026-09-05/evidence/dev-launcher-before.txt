@@ -1,0 +1,379 @@
+FFFFFFFFFF                                                               [100%]
+================================== FAILURES ===================================
+____________ test_launcher_stops_after_native_docker_failure[info] ____________
+tests\deployment\test_dev_launcher.py:80: in test_launcher_stops_after_native_docker_failure
+    assert result.returncode != 0, result.stdout
+E   AssertionError:
+E     ╔══════════════════════════════════════════════════════════╗
+E     ║          Sphere Platform — Dev Starter v1.0             ║
+E     ╚══════════════════════════════════════════════════════════╝
+E
+E       ▶ Проверяю Docker Desktop...
+E       ✓ Docker запущен
+E       ▶ Проверяю .env файл...
+E       ✓ .env найден
+E       ▶ Пересобираю образы backend + frontend...
+E       ✓ Образы пересобраны
+E       ▶ Запускаю полный стек (infra + backend + frontend)...
+E       ✓ Стек запущен
+E
+E       ⏳ Жду sphere-platform-postgres-1 healthy ✓
+E       ⏳ Жду sphere-platform-redis-1 healthy ✓
+E
+E       ╔══════════════════════════════════════════════════════════╗
+E       ║                    СТЕК ЗАПУЩЕН ✓                       ║
+E       ╠══════════════════════════════════════════════════════════╣
+E       ║  Frontend:   http://localhost:3000                       ║
+E       ║  Backend:    http://localhost:8000                       ║
+E       ║  API Docs:   http://localhost:8000/docs                  ║
+E       ║  n8n:        http://localhost:5678                       ║
+E       ║  MinIO:      http://localhost:9001                       ║
+E       ╠══════════════════════════════════════════════════════════╣
+E       ║  Перекомпиляция — НЕ нужна при изменении кода:          ║
+E       ║  · Backend: uvicorn --reload (авто-перезагрузка)        ║
+E       ║  · Frontend: Turbopack HMR (hot reload в браузере)      ║
+E       ║  Нужна только при: pip install / npm install             ║
+E       ║  Команда: .\scripts\start-dev.ps1 -Rebuild              ║
+E       ╚══════════════════════════════════════════════════════════╝
+E
+E
+E   assert 0 != 0
+E    +  where 0 = CompletedProcess(args=['C:\\Users\\dimas\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\native\\powersh...\start-dev.ps1 -Rebuild              ║\n  ╚══════════════════════════════════════════════════════════╝\n\n', stderr='').returncode
+___________ test_launcher_stops_after_native_docker_failure[config] ___________
+tests\deployment\test_dev_launcher.py:80: in test_launcher_stops_after_native_docker_failure
+    assert result.returncode != 0, result.stdout
+E   AssertionError:
+E     ╔══════════════════════════════════════════════════════════╗
+E     ║          Sphere Platform — Dev Starter v1.0             ║
+E     ╚══════════════════════════════════════════════════════════╝
+E
+E       ▶ Проверяю Docker Desktop...
+E       ✓ Docker запущен
+E       ▶ Проверяю .env файл...
+E       ✓ .env найден
+E       ▶ Пересобираю образы backend + frontend...
+E       ✓ Образы пересобраны
+E       ▶ Запускаю полный стек (infra + backend + frontend)...
+E       ✓ Стек запущен
+E
+E       ⏳ Жду sphere-platform-postgres-1 healthy ✓
+E       ⏳ Жду sphere-platform-redis-1 healthy ✓
+E
+E       ╔══════════════════════════════════════════════════════════╗
+E       ║                    СТЕК ЗАПУЩЕН ✓                       ║
+E       ╠══════════════════════════════════════════════════════════╣
+E       ║  Frontend:   http://localhost:3000                       ║
+E       ║  Backend:    http://localhost:8000                       ║
+E       ║  API Docs:   http://localhost:8000/docs                  ║
+E       ║  n8n:        http://localhost:5678                       ║
+E       ║  MinIO:      http://localhost:9001                       ║
+E       ╠══════════════════════════════════════════════════════════╣
+E       ║  Перекомпиляция — НЕ нужна при изменении кода:          ║
+E       ║  · Backend: uvicorn --reload (авто-перезагрузка)        ║
+E       ║  · Frontend: Turbopack HMR (hot reload в браузере)      ║
+E       ║  Нужна только при: pip install / npm install             ║
+E       ║  Команда: .\scripts\start-dev.ps1 -Rebuild              ║
+E       ╚══════════════════════════════════════════════════════════╝
+E
+E
+E   assert 0 != 0
+E    +  where 0 = CompletedProcess(args=['C:\\Users\\dimas\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\native\\powersh...\start-dev.ps1 -Rebuild              ║\n  ╚══════════════════════════════════════════════════════════╝\n\n', stderr='').returncode
+___________ test_launcher_stops_after_native_docker_failure[build] ____________
+tests\deployment\test_dev_launcher.py:80: in test_launcher_stops_after_native_docker_failure
+    assert result.returncode != 0, result.stdout
+E   AssertionError:
+E     ╔══════════════════════════════════════════════════════════╗
+E     ║          Sphere Platform — Dev Starter v1.0             ║
+E     ╚══════════════════════════════════════════════════════════╝
+E
+E       ▶ Проверяю Docker Desktop...
+E       ✓ Docker запущен
+E       ▶ Проверяю .env файл...
+E       ✓ .env найден
+E       ▶ Пересобираю образы backend + frontend...
+E     Synthetic native CLI failure: build
+E       ✓ Образы пересобраны
+E       ▶ Запускаю полный стек (infra + backend + frontend)...
+E       ✓ Стек запущен
+E
+E       ⏳ Жду sphere-platform-postgres-1 healthy ✓
+E       ⏳ Жду sphere-platform-redis-1 healthy ✓
+E
+E       ╔══════════════════════════════════════════════════════════╗
+E       ║                    СТЕК ЗАПУЩЕН ✓                       ║
+E       ╠══════════════════════════════════════════════════════════╣
+E       ║  Frontend:   http://localhost:3000                       ║
+E       ║  Backend:    http://localhost:8000                       ║
+E       ║  API Docs:   http://localhost:8000/docs                  ║
+E       ║  n8n:        http://localhost:5678                       ║
+E       ║  MinIO:      http://localhost:9001                       ║
+E       ╠══════════════════════════════════════════════════════════╣
+E       ║  Перекомпиляция — НЕ нужна при изменении кода:          ║
+E       ║  · Backend: uvicorn --reload (авто-перезагрузка)        ║
+E       ║  · Frontend: Turbopack HMR (hot reload в браузере)      ║
+E       ║  Нужна только при: pip install / npm install             ║
+E       ║  Команда: .\scripts\start-dev.ps1 -Rebuild              ║
+E       ╚══════════════════════════════════════════════════════════╝
+E
+E
+E   assert 0 != 0
+E    +  where 0 = CompletedProcess(args=['C:\\Users\\dimas\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\native\\powersh...\start-dev.ps1 -Rebuild              ║\n  ╚══════════════════════════════════════════════════════════╝\n\n', stderr='').returncode
+_____________ test_launcher_stops_after_native_docker_failure[up] _____________
+tests\deployment\test_dev_launcher.py:80: in test_launcher_stops_after_native_docker_failure
+    assert result.returncode != 0, result.stdout
+E   AssertionError:
+E     ╔══════════════════════════════════════════════════════════╗
+E     ║          Sphere Platform — Dev Starter v1.0             ║
+E     ╚══════════════════════════════════════════════════════════╝
+E
+E       ▶ Проверяю Docker Desktop...
+E       ✓ Docker запущен
+E       ▶ Проверяю .env файл...
+E       ✓ .env найден
+E       ▶ Пересобираю образы backend + frontend...
+E       ✓ Образы пересобраны
+E       ▶ Запускаю полный стек (infra + backend + frontend)...
+E     Synthetic native CLI failure: up
+E       ✓ Стек запущен
+E
+E       ⏳ Жду sphere-platform-postgres-1 healthy ✓
+E       ⏳ Жду sphere-platform-redis-1 healthy ✓
+E
+E       ╔══════════════════════════════════════════════════════════╗
+E       ║                    СТЕК ЗАПУЩЕН ✓                       ║
+E       ╠══════════════════════════════════════════════════════════╣
+E       ║  Frontend:   http://localhost:3000                       ║
+E       ║  Backend:    http://localhost:8000                       ║
+E       ║  API Docs:   http://localhost:8000/docs                  ║
+E       ║  n8n:        http://localhost:5678                       ║
+E       ║  MinIO:      http://localhost:9001                       ║
+E       ╠══════════════════════════════════════════════════════════╣
+E       ║  Перекомпиляция — НЕ нужна при изменении кода:          ║
+E       ║  · Backend: uvicorn --reload (авто-перезагрузка)        ║
+E       ║  · Frontend: Turbopack HMR (hot reload в браузере)      ║
+E       ║  Нужна только при: pip install / npm install             ║
+E       ║  Команда: .\scripts\start-dev.ps1 -Rebuild              ║
+E       ╚══════════════════════════════════════════════════════════╝
+E
+E
+E   assert 0 != 0
+E    +  where 0 = CompletedProcess(args=['C:\\Users\\dimas\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\native\\powersh...\start-dev.ps1 -Rebuild              ║\n  ╚══════════════════════════════════════════════════════════╝\n\n', stderr='').returncode
+_ test_launcher_does_not_report_success_when_service_readiness_fails[postgres] _
+tests\deployment\test_dev_launcher.py:88: in test_launcher_does_not_report_success_when_service_readiness_fails
+    assert result.returncode != 0, result.stdout
+E   AssertionError:
+E     ╔══════════════════════════════════════════════════════════╗
+E     ║          Sphere Platform — Dev Starter v1.0             ║
+E     ╚══════════════════════════════════════════════════════════╝
+E
+E       ▶ Проверяю Docker Desktop...
+E       ✓ Docker запущен
+E       ▶ Проверяю .env файл...
+E       ✓ .env найден
+E       ▶ Пересобираю образы backend + frontend...
+E       ✓ Образы пересобраны
+E       ▶ Запускаю полный стек (infra + backend + frontend)...
+E       ✓ Стек запущен
+E
+E       ⏳ Жду sphere-platform-postgres-1 healthy ✓
+E       ⏳ Жду sphere-platform-redis-1 healthy ✓
+E
+E       ╔══════════════════════════════════════════════════════════╗
+E       ║                    СТЕК ЗАПУЩЕН ✓                       ║
+E       ╠══════════════════════════════════════════════════════════╣
+E       ║  Frontend:   http://localhost:3000                       ║
+E       ║  Backend:    http://localhost:8000                       ║
+E       ║  API Docs:   http://localhost:8000/docs                  ║
+E       ║  n8n:        http://localhost:5678                       ║
+E       ║  MinIO:      http://localhost:9001                       ║
+E       ╠══════════════════════════════════════════════════════════╣
+E       ║  Перекомпиляция — НЕ нужна при изменении кода:          ║
+E       ║  · Backend: uvicorn --reload (авто-перезагрузка)        ║
+E       ║  · Frontend: Turbopack HMR (hot reload в браузере)      ║
+E       ║  Нужна только при: pip install / npm install             ║
+E       ║  Команда: .\scripts\start-dev.ps1 -Rebuild              ║
+E       ╚══════════════════════════════════════════════════════════╝
+E
+E
+E   assert 0 != 0
+E    +  where 0 = CompletedProcess(args=['C:\\Users\\dimas\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\native\\powersh...\start-dev.ps1 -Rebuild              ║\n  ╚══════════════════════════════════════════════════════════╝\n\n', stderr='').returncode
+__ test_launcher_does_not_report_success_when_service_readiness_fails[redis] __
+tests\deployment\test_dev_launcher.py:88: in test_launcher_does_not_report_success_when_service_readiness_fails
+    assert result.returncode != 0, result.stdout
+E   AssertionError:
+E     ╔══════════════════════════════════════════════════════════╗
+E     ║          Sphere Platform — Dev Starter v1.0             ║
+E     ╚══════════════════════════════════════════════════════════╝
+E
+E       ▶ Проверяю Docker Desktop...
+E       ✓ Docker запущен
+E       ▶ Проверяю .env файл...
+E       ✓ .env найден
+E       ▶ Пересобираю образы backend + frontend...
+E       ✓ Образы пересобраны
+E       ▶ Запускаю полный стек (infra + backend + frontend)...
+E       ✓ Стек запущен
+E
+E       ⏳ Жду sphere-platform-postgres-1 healthy ✓
+E       ⏳ Жду sphere-platform-redis-1 healthy ✓
+E
+E       ╔══════════════════════════════════════════════════════════╗
+E       ║                    СТЕК ЗАПУЩЕН ✓                       ║
+E       ╠══════════════════════════════════════════════════════════╣
+E       ║  Frontend:   http://localhost:3000                       ║
+E       ║  Backend:    http://localhost:8000                       ║
+E       ║  API Docs:   http://localhost:8000/docs                  ║
+E       ║  n8n:        http://localhost:5678                       ║
+E       ║  MinIO:      http://localhost:9001                       ║
+E       ╠══════════════════════════════════════════════════════════╣
+E       ║  Перекомпиляция — НЕ нужна при изменении кода:          ║
+E       ║  · Backend: uvicorn --reload (авто-перезагрузка)        ║
+E       ║  · Frontend: Turbopack HMR (hot reload в браузере)      ║
+E       ║  Нужна только при: pip install / npm install             ║
+E       ║  Команда: .\scripts\start-dev.ps1 -Rebuild              ║
+E       ╚══════════════════════════════════════════════════════════╝
+E
+E
+E   assert 0 != 0
+E    +  where 0 = CompletedProcess(args=['C:\\Users\\dimas\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\native\\powersh...\start-dev.ps1 -Rebuild              ║\n  ╚══════════════════════════════════════════════════════════╝\n\n', stderr='').returncode
+_ test_launcher_does_not_report_success_when_service_readiness_fails[backend] _
+tests\deployment\test_dev_launcher.py:88: in test_launcher_does_not_report_success_when_service_readiness_fails
+    assert result.returncode != 0, result.stdout
+E   AssertionError:
+E     ╔══════════════════════════════════════════════════════════╗
+E     ║          Sphere Platform — Dev Starter v1.0             ║
+E     ╚══════════════════════════════════════════════════════════╝
+E
+E       ▶ Проверяю Docker Desktop...
+E       ✓ Docker запущен
+E       ▶ Проверяю .env файл...
+E       ✓ .env найден
+E       ▶ Пересобираю образы backend + frontend...
+E       ✓ Образы пересобраны
+E       ▶ Запускаю полный стек (infra + backend + frontend)...
+E       ✓ Стек запущен
+E
+E       ⏳ Жду sphere-platform-postgres-1 healthy ✓
+E       ⏳ Жду sphere-platform-redis-1 healthy ✓
+E
+E       ╔══════════════════════════════════════════════════════════╗
+E       ║                    СТЕК ЗАПУЩЕН ✓                       ║
+E       ╠══════════════════════════════════════════════════════════╣
+E       ║  Frontend:   http://localhost:3000                       ║
+E       ║  Backend:    http://localhost:8000                       ║
+E       ║  API Docs:   http://localhost:8000/docs                  ║
+E       ║  n8n:        http://localhost:5678                       ║
+E       ║  MinIO:      http://localhost:9001                       ║
+E       ╠══════════════════════════════════════════════════════════╣
+E       ║  Перекомпиляция — НЕ нужна при изменении кода:          ║
+E       ║  · Backend: uvicorn --reload (авто-перезагрузка)        ║
+E       ║  · Frontend: Turbopack HMR (hot reload в браузере)      ║
+E       ║  Нужна только при: pip install / npm install             ║
+E       ║  Команда: .\scripts\start-dev.ps1 -Rebuild              ║
+E       ╚══════════════════════════════════════════════════════════╝
+E
+E
+E   assert 0 != 0
+E    +  where 0 = CompletedProcess(args=['C:\\Users\\dimas\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\native\\powersh...\start-dev.ps1 -Rebuild              ║\n  ╚══════════════════════════════════════════════════════════╝\n\n', stderr='').returncode
+_ test_launcher_does_not_report_success_when_service_readiness_fails[frontend] _
+tests\deployment\test_dev_launcher.py:88: in test_launcher_does_not_report_success_when_service_readiness_fails
+    assert result.returncode != 0, result.stdout
+E   AssertionError:
+E     ╔══════════════════════════════════════════════════════════╗
+E     ║          Sphere Platform — Dev Starter v1.0             ║
+E     ╚══════════════════════════════════════════════════════════╝
+E
+E       ▶ Проверяю Docker Desktop...
+E       ✓ Docker запущен
+E       ▶ Проверяю .env файл...
+E       ✓ .env найден
+E       ▶ Пересобираю образы backend + frontend...
+E       ✓ Образы пересобраны
+E       ▶ Запускаю полный стек (infra + backend + frontend)...
+E       ✓ Стек запущен
+E
+E       ⏳ Жду sphere-platform-postgres-1 healthy ✓
+E       ⏳ Жду sphere-platform-redis-1 healthy ✓
+E
+E       ╔══════════════════════════════════════════════════════════╗
+E       ║                    СТЕК ЗАПУЩЕН ✓                       ║
+E       ╠══════════════════════════════════════════════════════════╣
+E       ║  Frontend:   http://localhost:3000                       ║
+E       ║  Backend:    http://localhost:8000                       ║
+E       ║  API Docs:   http://localhost:8000/docs                  ║
+E       ║  n8n:        http://localhost:5678                       ║
+E       ║  MinIO:      http://localhost:9001                       ║
+E       ╠══════════════════════════════════════════════════════════╣
+E       ║  Перекомпиляция — НЕ нужна при изменении кода:          ║
+E       ║  · Backend: uvicorn --reload (авто-перезагрузка)        ║
+E       ║  · Frontend: Turbopack HMR (hot reload в браузере)      ║
+E       ║  Нужна только при: pip install / npm install             ║
+E       ║  Команда: .\scripts\start-dev.ps1 -Rebuild              ║
+E       ╚══════════════════════════════════════════════════════════╝
+E
+E
+E   assert 0 != 0
+E    +  where 0 = CompletedProcess(args=['C:\\Users\\dimas\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\native\\powersh...\start-dev.ps1 -Rebuild              ║\n  ╚══════════════════════════════════════════════════════════╝\n\n', stderr='').returncode
+______ test_launcher_requires_configuration_after_creating_env_template _______
+tests\deployment\test_dev_launcher.py:95: in test_launcher_requires_configuration_after_creating_env_template
+    assert result.returncode != 0, result.stdout
+E   AssertionError:
+E     ╔══════════════════════════════════════════════════════════╗
+E     ║          Sphere Platform — Dev Starter v1.0             ║
+E     ╚══════════════════════════════════════════════════════════╝
+E
+E       ▶ Проверяю Docker Desktop...
+E       ✓ Docker запущен
+E       ▶ Проверяю .env файл...
+E       · .env создан из .env.example — заполни POSTGRES_PASSWORD и REDIS_PASSWORD!
+E       ▶ Пересобираю образы backend + frontend...
+E       ✓ Образы пересобраны
+E       ▶ Запускаю полный стек (infra + backend + frontend)...
+E       ✓ Стек запущен
+E
+E       ⏳ Жду sphere-platform-postgres-1 healthy ✓
+E       ⏳ Жду sphere-platform-redis-1 healthy ✓
+E
+E       ╔══════════════════════════════════════════════════════════╗
+E       ║                    СТЕК ЗАПУЩЕН ✓                       ║
+E       ╠══════════════════════════════════════════════════════════╣
+E       ║  Frontend:   http://localhost:3000                       ║
+E       ║  Backend:    http://localhost:8000                       ║
+E       ║  API Docs:   http://localhost:8000/docs                  ║
+E       ║  n8n:        http://localhost:5678                       ║
+E       ║  MinIO:      http://localhost:9001                       ║
+E       ╠══════════════════════════════════════════════════════════╣
+E       ║  Перекомпиляция — НЕ нужна при изменении кода:          ║
+E       ║  · Backend: uvicorn --reload (авто-перезагрузка)        ║
+E       ║  · Frontend: Turbopack HMR (hot reload в браузере)      ║
+E       ║  Нужна только при: pip install / npm install             ║
+E       ║  Команда: .\scripts\start-dev.ps1 -Rebuild              ║
+E       ╚══════════════════════════════════════════════════════════╝
+E
+E
+E   assert 0 != 0
+E    +  where 0 = CompletedProcess(args=['C:\\Users\\dimas\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\native\\powersh...\start-dev.ps1 -Rebuild              ║\n  ╚══════════════════════════════════════════════════════════╝\n\n', stderr='').returncode
+_________ test_launcher_success_waits_in_the_selected_compose_project _________
+tests\deployment\test_dev_launcher.py:104: in test_launcher_success_waits_in_the_selected_compose_project
+    assert any("config" in call and "--quiet" in call for call in calls), calls
+E   AssertionError: [['info'], ['compose', '-f', 'C:\\Users\\dimas\\AppData\\Local\\Temp\\pytest-of-dimas\\pytest-65\\test_launcher_succes...atus}}', 'sphere-platform-postgres-1'], ['inspect', '--format', '{{.State.Health.Status}}', 'sphere-platform-redis-1']]
+E   assert False
+E    +  where False = any(<generator object test_launcher_success_waits_in_the_selected_compose_project.<locals>.<genexpr> at 0x0000026DA3836330>)
+============================== warnings summary ===============================
+backend\api\v1\game_accounts\router.py:95
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\api\v1\game_accounts\router.py:95: FastAPIDeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+    sort_dir: str = Query("desc", regex="^(asc|desc)$", description="Направление сортировки"),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/deployment/test_dev_launcher.py::test_launcher_stops_after_native_docker_failure[info]
+FAILED tests/deployment/test_dev_launcher.py::test_launcher_stops_after_native_docker_failure[config]
+FAILED tests/deployment/test_dev_launcher.py::test_launcher_stops_after_native_docker_failure[build]
+FAILED tests/deployment/test_dev_launcher.py::test_launcher_stops_after_native_docker_failure[up]
+FAILED tests/deployment/test_dev_launcher.py::test_launcher_does_not_report_success_when_service_readiness_fails[postgres]
+FAILED tests/deployment/test_dev_launcher.py::test_launcher_does_not_report_success_when_service_readiness_fails[redis]
+FAILED tests/deployment/test_dev_launcher.py::test_launcher_does_not_report_success_when_service_readiness_fails[backend]
+FAILED tests/deployment/test_dev_launcher.py::test_launcher_does_not_report_success_when_service_readiness_fails[frontend]
+FAILED tests/deployment/test_dev_launcher.py::test_launcher_requires_configuration_after_creating_env_template
+FAILED tests/deployment/test_dev_launcher.py::test_launcher_success_waits_in_the_selected_compose_project
+10 failed, 1 warning in 10.69s

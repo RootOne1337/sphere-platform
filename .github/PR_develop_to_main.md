@@ -1,3 +1,10 @@
+> [!NOTE]
+> **Исторический документ первоначального PR.** Указанные ниже версии, показатели
+> и заявления о готовности относятся к его описанию, а не к текущей приёмке.
+> Актуальны [Readiness](../docs/operations/READINESS.md) и
+> [Fleet32](../docs/audits/2026-09-20/FLEET32-PREFLIGHT.md).
+> Новый PR оформляйте по [действующему шаблону](pull_request_template.md).
+
 # PR: feat — Sphere Platform v1.0 — Full TZ-00..TZ-11 implementation
 
 **Branch:** `develop` → `main`

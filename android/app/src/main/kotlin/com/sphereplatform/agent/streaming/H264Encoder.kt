@@ -56,6 +56,7 @@ class H264Encoder(
         val isKeyFrame: Boolean,
         val presentationTimeUs: Long,
         val sizeBytes: Int,
+        val isCodecConfig: Boolean = false,
     )
 
     // -------------------------------------------------------------------------
@@ -133,10 +134,20 @@ class H264Encoder(
         }
     }
 
-    fun requestKeyFrame() {
-        codec?.setParameters(Bundle().apply {
-            putInt(MediaCodec.PARAMETER_KEY_REQUEST_SYNC_FRAME, 0)
-        })
+    fun requestKeyFrame(): Boolean {
+        val activeCodec = codec ?: return false
+        return try {
+            activeCodec.setParameters(Bundle().apply {
+                putInt(MediaCodec.PARAMETER_KEY_REQUEST_SYNC_FRAME, 0)
+            })
+            true
+        } catch (error: IllegalStateException) {
+            Timber.w(error, "H264Encoder: sync-frame request rejected by codec state")
+            false
+        } catch (error: IllegalArgumentException) {
+            Timber.w(error, "H264Encoder: sync-frame request rejected by codec")
+            false
+        }
     }
 
     fun adjustBitrate(newBitrateBps: Int) {
@@ -224,6 +235,7 @@ class H264Encoder(
                     isKeyFrame = true,
                     presentationTimeUs = info.presentationTimeUs,
                     sizeBytes = nal.size,
+                    isCodecConfig = true,
                 )
             )
         }

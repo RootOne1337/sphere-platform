@@ -13,7 +13,9 @@ export interface Device {
   group_ids: string[];
   group_name: string | null;
   location_ids: string[];
-  status: 'online' | 'offline' | 'unknown';
+  status: 'online' | 'offline' | 'connecting' | 'busy' | 'error' | 'maintenance' | 'unknown';
+  agent_version?: string | null;
+  agent_version_code?: number | null;
   battery_level: number | null;
   cpu_usage: number | null;
   ram_usage_mb: number | null;
@@ -24,6 +26,13 @@ export interface Device {
   vpn_assigned: boolean;
   vpn_active: boolean | null;
   server_name: string | null;
+}
+
+export interface BulkActionResponse {
+  total: number;
+  succeeded: number;
+  failed: number;
+  results: Array<{ device_id: string; success: boolean; error: string | null }>;
 }
 
 interface DevicesResponse {
@@ -64,9 +73,9 @@ export function useBulkAction() {
       device_ids: string[];
       action: string;
       params?: object;
-    }) => {
+    }): Promise<BulkActionResponse> => {
       const { data } = await api.post('/devices/bulk/action', body);
-      return data;
+      return data as BulkActionResponse;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['devices'] });

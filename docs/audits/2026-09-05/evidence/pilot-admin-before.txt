@@ -1,0 +1,119 @@
+.........F........                                                       [100%]
+================================== FAILURES ===================================
+__ test_actual_admin_cli_login_and_enrollment_share_one_organization[False] ___
+tests\production\test_pilot_enrollment_bootstrap.py:132: in test_actual_admin_cli_login_and_enrollment_share_one_organization
+    assert result.returncode == 0, result.stdout + result.stderr
+E   AssertionError: Traceback (most recent call last):
+E       File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py", line 538, in _prepare_and_execute
+E         self._rows = await prepared_stmt.fetch(*parameters)
+E                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\asyncpg\prepared_stmt.py", line 176, in fetch
+E         data = await self.__bind_execute(args, 0, timeout)
+E                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\asyncpg\prepared_stmt.py", line 241, in __bind_execute
+E         data, status, _ = await self.__do_execute(
+E                           ^^^^^^^^^^^^^^^^^^^^^^^^
+E       File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\asyncpg\prepared_stmt.py", line 230, in __do_execute
+E         return await executor(protocol)
+E                ^^^^^^^^^^^^^^^^^^^^^^^^
+E       File "asyncpg\protocol\protocol.pyx", line 207, in bind_execute
+E     asyncpg.exceptions.NotNullViolationError: null value in column "id" of relation "users" violates not-null constraint
+E     DETAIL:  Failing row contains (null, 2026-09-10 19:30:55.523524+00, 2026-09-10 19:30:55.523524+00, 7120c33b-597b-476b-9941-d82344d1044c, pilot-452f31b3fba74b4f96998d409bc2b117@example.org, $2b$12$z/mSza0lsIw8q875.t16duZlDwHWdCSO6OgMdhyHnhUPzhRDvekkC, super_admin, t, null, null, null).
+E
+E     The above exception was the direct cause of the following exception:
+E
+E     Traceback (most recent call last):
+E       File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\engine\base.py", line 1970, in _exec_single_context
+E         self.dialect.do_execute(
+E       File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\engine\default.py", line 924, in do_execute
+E         cursor.execute(statement, parameters)
+E       File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py", line 572, in execute
+E         self._adapt_connection.await_(
+E       File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\util\_concurrency_py3k.py", line 127, in await_only
+E         return current.driver.switch(awaitable)  # type: ignore[no-any-return]
+E                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\util\_concurrency_py3k.py", line 192, in greenlet_spawn
+E         value = await result
+E                 ^^^^^^^^^^^^
+E       File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py", line 550, in _prepare_and_execute
+E         self._handle_exception(error)
+E       File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py", line 501, in _handle_exception
+E         self._adapt_connection._handle_exception(error)
+E       File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py", line 789, in _handle_exception
+E         raise translated_error from error
+E     sqlalchemy.dialects.postgresql.asyncpg.AsyncAdapt_asyncpg_dbapi.IntegrityError: <class 'asyncpg.exceptions.NotNullViolationError'>: null value in column "id" of relation "users" violates not-null constraint
+E     DETAIL:  Failing row contains (null, 2026-09-10 19:30:55.523524+00, 2026-09-10 19:30:55.523524+00, 7120c33b-597b-476b-9941-d82344d1044c, pilot-452f31b3fba74b4f96998d409bc2b117@example.org, $2b$12$z/mSza0lsIw8q875.t16duZlDwHWdCSO6OgMdhyHnhUPzhRDvekkC, super_admin, t, null, null, null).
+E
+E     The above exception was the direct cause of the following exception:
+E
+E     Traceback (most recent call last):
+E       File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\scripts\create_admin.py", line 89, in <module>
+E         asyncio.run(main())
+E       File "C:\Users\dimas\AppData\Roaming\uv\python\cpython-3.12.12-windows-x86_64-none\Lib\asyncio\runners.py", line 195, in run
+E         return runner.run(main)
+E                ^^^^^^^^^^^^^^^^
+E       File "C:\Users\dimas\AppData\Roaming\uv\python\cpython-3.12.12-windows-x86_64-none\Lib\asyncio\runners.py", line 118, in run
+E         return self._loop.run_until_complete(task)
+E                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       File "C:\Users\dimas\AppData\Roaming\uv\python\cpython-3.12.12-windows-x86_64-none\Lib\asyncio\base_events.py", line 691, in run_until_complete
+E         return future.result()
+E                ^^^^^^^^^^^^^^^
+E       File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\scripts\create_admin.py", line 75, in main
+E         await conn.execute(
+E       File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\ext\asyncio\engine.py", line 654, in execute
+E         result = await greenlet_spawn(
+E                  ^^^^^^^^^^^^^^^^^^^^^
+E       File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\util\_concurrency_py3k.py", line 197, in greenlet_spawn
+E         result = context.throw(*sys.exc_info())
+E                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\engine\base.py", line 1421, in execute
+E         return meth(
+E                ^^^^^
+E       File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\sql\elements.py", line 514, in _execute_on_connection
+E         return connection._execute_clauseelement(
+E                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\engine\base.py", line 1643, in _execute_clauseelement
+E         ret = self._execute_context(
+E               ^^^^^^^^^^^^^^^^^^^^^^
+E       File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\engine\base.py", line 1849, in _execute_context
+E         return self._exec_single_context(
+E                ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\engine\base.py", line 1989, in _exec_single_context
+E         self._handle_dbapi_exception(
+E       File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\engine\base.py", line 2356, in _handle_dbapi_exception
+E         raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+E       File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\engine\base.py", line 1970, in _exec_single_context
+E         self.dialect.do_execute(
+E       File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\engine\default.py", line 924, in do_execute
+E         cursor.execute(statement, parameters)
+E       File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py", line 572, in execute
+E         self._adapt_connection.await_(
+E       File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\util\_concurrency_py3k.py", line 127, in await_only
+E         return current.driver.switch(awaitable)  # type: ignore[no-any-return]
+E                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\util\_concurrency_py3k.py", line 192, in greenlet_spawn
+E         value = await result
+E                 ^^^^^^^^^^^^
+E       File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py", line 550, in _prepare_and_execute
+E         self._handle_exception(error)
+E       File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py", line 501, in _handle_exception
+E         self._adapt_connection._handle_exception(error)
+E       File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py", line 789, in _handle_exception
+E         raise translated_error from error
+E     sqlalchemy.exc.IntegrityError: (sqlalchemy.dialects.postgresql.asyncpg.IntegrityError) <class 'asyncpg.exceptions.NotNullViolationError'>: null value in column "id" of relation "users" violates not-null constraint
+E     DETAIL:  Failing row contains (null, 2026-09-10 19:30:55.523524+00, 2026-09-10 19:30:55.523524+00, 7120c33b-597b-476b-9941-d82344d1044c, pilot-452f31b3fba74b4f96998d409bc2b117@example.org, $2b$12$z/mSza0lsIw8q875.t16duZlDwHWdCSO6OgMdhyHnhUPzhRDvekkC, super_admin, t, null, null, null).
+E     [SQL: INSERT INTO users (org_id, email, password_hash, role, is_active) VALUES ($1, $2, $3, 'super_admin', true)]
+E     [parameters: (UUID('7120c33b-597b-476b-9941-d82344d1044c'), 'pilot-452f31b3fba74b4f96998d409bc2b117@example.org', '$2b$12$z/mSza0lsIw8q875.t16duZlDwHWdCSO6OgMdhyHnhUPzhRDvekkC')]
+E     (Background on this error at: https://sqlalche.me/e/20/gkpj)
+E
+E   assert 1 == 0
+E    +  where 1 = CompletedProcess(args=['C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.venv-audit\\dependency-upgrade\\Script...za0lsIw8q875.t16duZlDwHWdCSO6OgMdhyHnhUPzhRDvekkC\')]\n(Background on this error at: https://sqlalche.me/e/20/gkpj)\n').returncode
+============================== warnings summary ===============================
+backend\api\v1\game_accounts\router.py:95
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\api\v1\game_accounts\router.py:95: FastAPIDeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+    sort_dir: str = Query("desc", regex="^(asc|desc)$", description="����������� ����������"),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/production/test_pilot_enrollment_bootstrap.py::test_actual_admin_cli_login_and_enrollment_share_one_organization[False]
+1 failed, 17 passed, 1 warning in 9.93s

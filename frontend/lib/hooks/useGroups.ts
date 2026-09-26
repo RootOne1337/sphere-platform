@@ -62,9 +62,9 @@ export function useUpdateGroup() {
 export function useMoveDevices() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ groupId, deviceIds }: { groupId: string; deviceIds: string[] }) => {
+    mutationFn: async ({ groupId, deviceIds }: { groupId: string; deviceIds: string[] }): Promise<{ moved: number }> => {
       const { data } = await api.post(`/groups/${groupId}/devices/move`, { device_ids: deviceIds });
-      return data;
+      return data as { moved: number };
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['groups'] });

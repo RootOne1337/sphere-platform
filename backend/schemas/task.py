@@ -37,6 +37,8 @@ class TaskResponse(BaseModel):
     priority: int
     started_at: datetime | None = None
     finished_at: datetime | None = None
+    cancel_requested_at: datetime | None = None
+    timeout_requested_at: datetime | None = None
     wave_index: int | None = None
     created_at: datetime
     updated_at: datetime
@@ -63,3 +65,6 @@ class TaskListResponse(BaseModel):
     page: int
     per_page: int
     pages: int
+    status_counts: dict[str, int] | None = Field(
+        None, description="Counts over the full filtered tenant history, before pagination; opt-in include_counts",
+    )
