@@ -128,54 +128,70 @@ class UpdateCheckWorker @AssistedInject constructor(
             // Read the route afterwards, and include refresh failures in retry policy.
             val apiKey = authStore.getFreshToken()
             val serverUrl = authStore.getServerUrl().trimEnd('/')
-            if (serverUrl.isBlank() || apiKey.isNullOrBlank()) {
+            val routes = (listOf(serverUrl) + authStore.connectionRoutesSnapshot().urls)
+                .map { it.trimEnd('/') }.filter { it.isNotBlank() }.distinct()
+            if (routes.isEmpty() || apiKey.isNullOrBlank()) {
                 Timber.d("UpdateCheckWorker: skipped (not enrolled)")
                 return@withContext Result.success()
             }
             val flavor = BuildConfig.FLAVOR_LABEL
             val versionCode = BuildConfig.VERSION_CODE
-            val url = "$serverUrl/api/v1/updates/latest" +
-                "?platform=android&flavor=$flavor&version_code=$versionCode"
-
-            val request = Request.Builder()
-                .url(url)
-                .addHeader("X-API-Key", apiKey)
-                .get()
-                .build()
-
-            httpClient.newCall(request).execute().use { response ->
-                if (!response.isSuccessful) {
-                    Timber.w("UpdateCheckWorker: HTTP %d; retry with WorkManager backoff", response.code)
-                    return@use Result.retry()
+            var catalog: JSONObject? = null
+            for (route in routes) {
+                val url = "$route/api/v1/updates/latest" +
+                    "?platform=android&flavor=$flavor&version_code=$versionCode"
+                val request = Request.Builder().url(url)
+                    .addHeader("X-API-Key", apiKey).get().build()
+                val response = try {
+                    httpClient.newCall(request).execute()
+                } catch (e: java.io.IOException) {
+                    Timber.w("UpdateCheckWorker: catalog route unavailable (%s)", e.javaClass.simpleName)
+                    continue
                 }
-                val body = response.body ?: return@use Result.retry()
-                val source = body.source()
-                check(!source.request(MAX_RESPONSE_CHARS.toLong() + 1)) { "Update response too large" }
-                val json = JSONObject(source.readUtf8())
-
-                if (!json.getBoolean("update_available")) {
-                    Timber.i("UpdateCheckWorker: already on latest version ($versionCode)")
-                    return@use Result.success()
+                response.use {
+                    if (!response.isSuccessful) {
+                        Timber.w("UpdateCheckWorker: catalog HTTP %d", response.code)
+                        // Authentication or rate limiting is not a reason to
+                        // spray the same credential/request over other routes.
+                        if (response.code == 401 || response.code == 403 || response.code == 429) {
+                            return@withContext Result.retry()
+                        }
+                    } else {
+                        val source = response.body?.source()
+                        if (source != null) {
+                            check(!source.request(MAX_RESPONSE_CHARS.toLong() + 1)) {
+                                "Update response too large"
+                            }
+                            catalog = JSONObject(source.readUtf8())
+                        }
+                    }
                 }
-
-                // A delayed/cached catalog response must not reinstall or downgrade
-                // an APK which already has the advertised version.
-                if (json.getInt("version_code") <= versionCode) {
-                    Timber.i("UpdateCheckWorker: ignoring stale release metadata")
-                    return@use Result.success()
-                }
-
-                val payload = OtaUpdatePayload(
-                    download_url = json.getString("download_url"),
-                    version = json.optString("version_name", "?"),
-                    version_code = json.getInt("version_code"),
-                    sha256 = json.optString("sha256", ""),
-                    force = json.optBoolean("mandatory", false),
-                )
-                Timber.i("UpdateCheckWorker: update available → ${payload.version}, starting OTA")
-                otaUpdateService.performUpdate(payload)
-                Result.success()
+                if (catalog != null) break
             }
+            val json = catalog ?: return@withContext Result.retry()
+
+            if (!json.getBoolean("update_available")) {
+                Timber.i("UpdateCheckWorker: already on latest version ($versionCode)")
+                return@withContext Result.success()
+            }
+
+            // A delayed/cached catalog response must not reinstall or downgrade
+            // an APK which already has the advertised version.
+            if (json.getInt("version_code") <= versionCode) {
+                Timber.i("UpdateCheckWorker: ignoring stale release metadata")
+                return@withContext Result.success()
+            }
+
+            val payload = OtaUpdatePayload(
+                download_url = json.getString("download_url"),
+                version = json.optString("version_name", "?"),
+                version_code = json.getInt("version_code"),
+                sha256 = json.optString("sha256", ""),
+                force = json.optBoolean("mandatory", false),
+            )
+            Timber.i("UpdateCheckWorker: update available → ${payload.version}, starting OTA")
+            otaUpdateService.performUpdate(payload)
+            Result.success()
         } catch (e: CancellationException) {
             throw e
         } catch (e: OtaUserActionRequiredException) {

@@ -33,17 +33,24 @@ class UpdateCheckWorkerTest {
     private val ota = mockk<OtaUpdateService>(relaxed = true)
     private val requests = mutableListOf<Request>()
     private var code = 200
+    private val routeCodes = mutableMapOf<String, Int>()
+    private val routeFailures = mutableMapOf<String, IOException>()
     private var body = """{"update_available":false}"""
     private var networkFailure: IOException? = null
     private val client = OkHttpClient.Builder().addInterceptor { chain ->
         requests.add(chain.request())
+        routeFailures[chain.request().url.host]?.let { throw it }
         networkFailure?.let { throw it }
         Response.Builder().request(chain.request()).protocol(Protocol.HTTP_1_1)
-            .code(code).message("fixture").body(body.toResponseBody()).build()
+            .code(routeCodes[chain.request().url.host] ?: code).message("fixture")
+            .body(body.toResponseBody()).build()
     }.build()
 
     @Before fun setup() {
         every { auth.getServerUrl() } returns "https://management.test"
+        every { auth.connectionRoutesSnapshot() } returns AuthTokenStore.ConnectionRoutes(
+            0, listOf("https://management.test"),
+        )
         every { auth.getToken() } returns "copied-access-token"
         coEvery { auth.getFreshToken() } returns "fresh-device-token"
     }
@@ -60,6 +67,40 @@ class UpdateCheckWorkerTest {
         code = 503
         assertEquals(Result.retry(), worker().doWork())
         coVerify(exactly = 0) { ota.performUpdate(any()) }
+    }
+
+    @Test fun `catalog check tries saved primary when active fallback returns gateway error`() = runTest {
+        every { auth.getServerUrl() } returns "https://fallback.test"
+        every { auth.connectionRoutesSnapshot() } returns AuthTokenStore.ConnectionRoutes(
+            1, listOf("https://fallback.test", "https://management.test"),
+        )
+        routeCodes["fallback.test"] = 502
+        body = release()
+
+        assertEquals(Result.success(), worker().doWork())
+        assertEquals(listOf("fallback.test", "management.test"), requests.map { it.url.host })
+        coVerify(exactly = 1) { ota.performUpdate(any()) }
+    }
+
+    @Test fun `catalog check tries saved primary after active route connection reset`() = runTest {
+        every { auth.getServerUrl() } returns "https://fallback.test"
+        every { auth.connectionRoutesSnapshot() } returns AuthTokenStore.ConnectionRoutes(
+            1, listOf("https://fallback.test", "https://management.test"),
+        )
+        routeFailures["fallback.test"] = IOException("connection reset")
+
+        assertEquals(Result.success(), worker().doWork())
+        assertEquals(listOf("fallback.test", "management.test"), requests.map { it.url.host })
+    }
+
+    @Test fun `authentication failure does not retry credential against alternate route`() = runTest {
+        every { auth.connectionRoutesSnapshot() } returns AuthTokenStore.ConnectionRoutes(
+            1, listOf("https://management.test", "https://fallback.test"),
+        )
+        code = 401
+
+        assertEquals(Result.retry(), worker().doWork())
+        assertEquals(listOf("management.test"), requests.map { it.url.host })
     }
 
     @Test fun `copied credentials are not used for OTA catalog before clone rebind succeeds`() = runTest {
