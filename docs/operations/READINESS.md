@@ -864,9 +864,43 @@ connect/disconnect/timeout/eviction. Android process и версия 1.2.25 по
 agent service работал, ScreenCaptureService не запускался. Это чуть более семи
 минут наблюдения control channel, не длительный soak.
 
-В этих срезах было 0 активных web viewers, поэтому video/frame/decode не
+Начальный полный inventory-срез в `14:03:51Z` показал 0 active web viewers;
+поздние heartbeat-срезы viewers не измеряли. Поэтому video/frame/decode не
 проверялись. На здоровом соединении новых `ws_lifecycle` записей не было; нужно
-отдельно подтвердить их при reconnect и доставку диагностик на сервер. Реальное
-переключение на независимый резерв discovery route не доказано. Следующие gates:
-более длительный canary soak, корреляция клиента и backend при reconnect, и
-отдельная проверка stream/frame/decode. До этого Fleet32 остаётся NO-GO.
+отдельно подтвердить их при reconnect и доставку диагностик на сервер.
+Последующий контролируемый outage/recovery тест с тем же canary подтвердил локальные
+redacted callbacks и control reconnect без перезапуска; полный evidence и границы
+теста ниже. Поступление именно этих новых lifecycle-записей на backend ещё ожидает
+следующего цикла log uploader. Реальное переключение на независимый резерв discovery
+route не доказано. Следующие gates: подтвердить central upload новых событий,
+многочасовой soak, независимый ingress A/B и отдельная проверка stream/frame/decode.
+До этого Fleet32 остаётся NO-GO.
+
+## Android 1.2.25 app-only reconnect fault test — 26 сентября 2026
+
+Тест выполнен на одной локальной Android 9 canary (`emulator-5556`), APK
+`1.2.25-dev` / `10225`, без активного stream viewer. Первичная попытка через
+`svc wifi disable` оборвала также управляющий ADB-транспорт LDPlayer, поэтому она
+отброшена как неподходящий метод; canary восстановлена точечной перезагрузкой
+LDPlayer, а не засчитана как reconnect APK.
+
+Повторный тест временно фильтровал только UID приложения (`10074`) по IPv4 и
+IPv6 на 30 секунд. Wi-Fi и ADB оставались доступны; backend показал canary
+`offline`, heartbeat age 51 s. После снятия обеих правил APK автоматически
+переподключился без перезапуска Android/LDPlayer: за 20.1 s появились два свежих
+heartbeat подряд (последний age 5 s); сервер зарегистрировал одно закрытие `1005`,
+один новый connect и первый pong. В сохранённом локальном файле есть redacted
+`ws_lifecycle`: authenticated `SocketTimeoutException`, затем pre-auth
+`IOException` с `EOFException` на следующем route slot. Это подтверждает локальную
+диагностику ошибки и reconnect на одном устройстве; это не доказывает, что два
+route slot являются независимыми ingress или что fallback slot подключился.
+
+Worker ранее загрузил 11 секций логов canary, включая диагностические события от
+предыдущего сетевого прерывания. Периодическая загрузка именно двух новых
+событий ещё не наблюдалась. Зато on-demand путь через тот же endpoint, который
+использует log viewer, проверен в `14:30:58Z`: HTTP 200, 380 строк / 65,466
+символов, включая обе свежие lifecycle-записи. Это прямой API/Redis/APK round
+trip; визуальная отрисовка страницы отдельно не проверялась. Видео/FPS, удалённая
+сеть, Android 14+, длительная нагрузка и fleet recovery не проверялись.
+**Тест — ограниченный local control-channel PASS; Fleet32 и mass OTA остаются
+NO-GO.** Подробности: [remote control path diagnosis](../audits/2026-09-26/REMOTE-CONTROL-PATH-DIAGNOSIS.md).

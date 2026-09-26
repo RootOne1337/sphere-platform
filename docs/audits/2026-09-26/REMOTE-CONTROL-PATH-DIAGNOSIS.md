@@ -365,8 +365,9 @@ Android process и installed version подтверждены отдельно; 
 отсутствие наблюдаемого reconnect в период чуть более семи минут, но не multi-hour
 soak и не видео.
 
-Во время срезов в вебе было 0 активных viewers, поэтому доставку/декодирование
-кадров, клики, FPS и плавность эта canary не проверяла. Клиентских
+В начальном полном срезе в `14:03:51Z` было 0 активных web viewers; остальные
+health-срезы число viewers не запрашивали. Поэтому доставку/декодирование кадров,
+клики, FPS и плавность эта canary не проверяла. Клиентских
 `ws_lifecycle` записей в коротком здоровом окне не было; проверка их появления
 при реальном сетевом отказе и загрузки этих логов на backend остаётся отдельным
 gate. Независимость резервного маршрута также остаётся неподтверждённой.
@@ -374,3 +375,43 @@ gate. Независимость резервного маршрута такж�
 Следующий шаг — расширить canary soak и при reconnect сопоставить redacted
 `ws_lifecycle`, серверный pong и API heartbeat; видео проверить отдельно при
 явном запуске ScreenCaptureService. Fleet32 и mass OTA остаются **NO-GO**.
+
+### Контролируемое восстановление control channel — 26 сентября
+
+Первый эксперимент с `svc wifi disable` признан **недействительным**: вместе
+с Wi-Fi пропал управляемый shell LDPlayer, и скрипт не смог выполнить обратную
+команду. Сервер увидел canary `offline` и одно закрытие `1005`; для возврата
+потребовалась точечная перезагрузка `LDPlayer-1` через host management. Это не
+считается reconnect APK без перезапуска. После неё Wi-Fi снова был включён,
+Android загрузился, процесс APK работал; в `14:21:12Z` API увидел устройство
+`online`, свежий heartbeat и первый pong.
+
+Повторный fault injection ограничивал исходящий трафик только Android UID APK
+`10074` правилами owner-match в IPv4 и IPv6 `OUTPUT`; Wi-Fi и ADB shell оставались
+доступны. До теста canary была `online` (heartbeat age 20 s), активного stream
+viewer не было. Правила действовали 30 s; API зафиксировал `offline` при heartbeat
+age 51 s. После удаления правил Android и LDPlayer не перезапускались: через
+20.1 s два последовательных API-среза снова подтвердили `online` и свежий
+heartbeat (последний age 5 s). Backend увидел один `1005`, один новый connect и
+первый pong. Wi-Fi остался включён, `sys.boot_completed=1`, ADB отвечал.
+
+Сохранившийся файл журнала APK содержит два redacted lifecycle callback для этой
+попытки: authenticated `SocketTimeoutException` на slot 0 (session age 434.8 s),
+затем pre-auth `IOException`/`EOFException` на slot 1. Это подтверждает локальную
+диагностику client-side сбоя и failover-попытки; два route slot не доказывают
+разные ingress, а успешный маршрут по slot 1 не подтверждён. Последняя
+периодическая серверная загрузка (14:21:36Z) предшествовала этому fault test.
+Однако on-demand путь проверен отдельно: в `14:30:58Z` запрос
+`POST /api/v1/devices/{id}/logcat` с `mode=sphere` вернул HTTP 200, 380 строк /
+65,466 символов, включая оба этих redacted callback. Это подтвердило доступный
+control-channel запрос журналов через API/Redis к APK и обратно; проверен прямой
+API-вызов, не визуальное отображение в браузере. Поступление новых двух строк в
+архив периодического `LogUploadWorker` после теста остаётся отдельной проверкой;
+worker запускается примерно раз в 15 min с ограничениями Android scheduling и
+сети. Сырые строки и идентификаторы остались в private pilot evidence.
+
+Итог этого узкого теста: **одна локальная Android 9 canary восстановила control
+channel без перезапуска после 30-секундной потери egress приложения**. Это не
+доказывает remote ingress/Cloudflare, независимость резервного маршрута,
+видеокадры/FPS, Android 14+ или multi-hour/fleet recovery. Fleet32 и mass OTA
+остаются **NO-GO**. Детали и ограничения — в [readiness](../../operations/READINESS.md).
