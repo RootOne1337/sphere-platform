@@ -17,10 +17,20 @@ API вернул 16 зарегистрированных записей: 12 `onl
 | Приоритет | Дефект / ограничение | Доказательство | Текущее действие |
 | --- | --- | --- | --- |
 | P1 | Remote WSS закрывается, устройство колеблется между состояниями | PH022/PH025: по 20 завершённых сеансов за 20 минут на public gateway; все HTTP 101, большинство длиной ровно 40 или 60 секунд; backend close 1005. У локальных PH010/PH011 за тот же интервал не было завершившихся WSS-сеансов | Требуется контролируемый A/B ingress одного remote canary с client-side close/failure и gateway timing; Cloudflare как единственная причина **не доказан** |
-| P1 | Резервный ingress неработоспособен | Primary `/readyz` → 200; подписанный fallback LocalTunnel → 502; ни Docker-sidecar, ни host-process LocalTunnel на pilot не запущен | Не считать опубликованный fallback отказоустойчивым; восстановить управляемый второй ingress и принять health/WSS/command/frame на одном canary |
+| P1 | Резервный ingress неработоспособен | Primary `/readyz` → 200; подписанный fallback LocalTunnel → 502. `sphere-pilot-alt-ingress-20260926` запущен и из него origin gateway отвечает 200, но у контейнера нет healthcheck и restart policy | Не считать опубликованный fallback отказоустойчивым; восстановить управляемый второй ingress и принять health/WSS/command/frame на одном canary |
 | P1 | Дистанционная OTA не доказана | `android/dev` каталог отдаёт только 10209, а 10228 лежит в `android-canary/dev`; удалённые APK остаются на 10222. PH025 после двух контролируемых адресных попыток не дал post-install receipt | Не открывать общий канал до адресной установки с PackageManager, SHA и свежим heartbeat |
 | P1 | Обычная OTA-квитанция повторяется | За 20 минут backend записал 37 `ota_recovery_receipt_unrecognized` для remote PH025 и 40 для local PH010; исходник Android помечает все `OTA_UPDATE` как recovery, сервер признаёт только квитанцию существующего recovery grant | Отдельный протокольный fix после regression на normal/recovery/duplicate/foreign receipts; не ACK неизвестное сообщение вслепую |
 | P2 | Веб скрывал canary-релизы | `/updates` запрашивал только `android`; backend хранит 12 релизов, включая `android-canary` 10228 | Исправлено `213402b`, regression до/после; pilot frontend развёрнут из `8fef5eb` |
+
+У PH025 за тот же интервал backend записал 21 успешную аутентификацию и 21
+`Agent heartbeat established`; у PH022 — 20 и 20. Событий `Agent heartbeat
+timeout` для этих устройств в срезе нет. Следовательно, каждый новый сокет
+хотя бы раз доставлял `ping`/`pong`; проблема возникает **после** установления
+живой сессии. Код `1005` сообщает об отсутствии штатного close-frame, но сам
+по себе не указывает, какая сторона первой оборвала TCP/WSS. Счётчики gateway
+собраны по завершённым сеансам; отсутствие локальных строк за окно также не
+доказывает, что локальный Android шёл в обход gateway — его длинный сокет мог
+оставаться открытым и поэтому не попасть в access log.
 
 ### Что именно удалось и не удалось проверить в вебе
 
