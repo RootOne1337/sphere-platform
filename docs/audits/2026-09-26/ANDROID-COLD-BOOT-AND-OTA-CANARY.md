@@ -26,6 +26,7 @@ heartbeat и crash buffer. Второй эмулятор оставался ра
 | `emulator-5554` / `auto-ph-011` | `1.2.28-dev / 10228` | Android boot completed `18:03:50Z`; новый процесс от persisted job; API `online` со свежим heartbeat `18:03:56Z`, foreground service; новый crash Sphere отсутствует | **PASS** для этого экземпляра |
 | `emulator-5556` / `auto-ph-010` | `1.2.27-dev / 10227` | Android boot completed `18:05:10Z`; новый процесс от persisted job; API `online` со свежим heartbeat `18:05:13Z`, foreground service; новый crash Sphere отсутствует | **PASS** для этого экземпляра |
 | `emulator-5556` после адресной OTA | `1.2.28-dev / 10228` | Android boot completed `18:27:59Z`; persisted job запустил APK, PID `3244`, foreground service; сервер зафиксировал auth и первый heartbeat `18:28:14Z`; Redis позже подтвердил `online`/10228 | **Runtime boot подтверждён; тестовый harness помечен failed из-за HTTP 429 на повторных admin login** |
+| `emulator-5554` после локальной установки нового кандидата | `1.2.29-dev / 10229` | Новый Android boot ID и `boot_completed` в `18:50:24Z`; persisted job поднял PID `3312` и foreground service без запуска Activity; Redis зафиксировал `online`/10229 и heartbeat в `18:50:43Z`; нового Sphere crash нет | **PASS** для этого локального экземпляра |
 
 Последняя строка сознательно не помечена `harness PASS`: скрипт опрашивал
 авторизованный API новым login каждые три секунды и достиг лимита 429. Независимые
@@ -33,6 +34,12 @@ Android и backend/Redis доказательства показывают ав�
 15 секунд после завершения загрузки Android; ошибка harness не является crash APK.
 Для будущего soak harness должен переиспользовать токен или читать Redis через
 контролируемый read-only probe.
+
+Для последнего прогона 10229 harness сверял Redis напрямую и не выполнял частых
+admin login. Установленный `base.apk` на `emulator-5554` совпал по SHA-256 с
+локальным source-pinned кандидатом `056ba253b2c7faf78132f5b32d8c21110d79647cad518beb6fd572089c6f7ad2`.
+Это проверяет автономный фоновой старт на одном LDPlayer после полного OFF/ON;
+удалённые машины этим тестом не охвачены.
 
 Ограничение: установленная APK должна хотя бы раз запуститься для регистрации
 persisted job. Never-launched, административно force-stopped пакет, OEM-политики
@@ -49,6 +56,13 @@ persisted job. Never-launched, административно force-stopped па
 heartbeat. В pilot-каталоге опубликован только канал `android-canary/dev`;
 обычный `android/dev` при проверке всё ещё указывал на 10209. Это не массовый
 релиз и не публикация в GitHub Releases.
+
+Страница `/updates` до изменения принудительно запрашивала только `android` и
+скрывала опубликованный `android-canary` 10228. UI теперь показывает все платформы
+по умолчанию и явно маркирует canary как канал, который обычные Android agents
+не опрашивают. Регрессионный UI-тест падал до изменения и проходит после него;
+полный frontend suite: 39 suites / 297 tests, type-check и production build прошли.
+Это исправление видимости каталога **не публикует APK и не меняет маршрут OTA**.
 
 Удалённый `auto-ph-025` оставался на `1.2.22-dev / 10222`. Первая адресная OTA
 вернула клиентский `failed` **до скачивания**. Сохранённый в APK активный адрес
