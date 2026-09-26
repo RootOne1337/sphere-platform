@@ -302,9 +302,10 @@ circuit breaker. `4008` больше не очищает token cache; насто
 rejection по `4001/4003/4004` по-прежнему запускает обновление токена. После
 изменения проходят все 663 Android unit tests, три целевых WebSocket suites и
 `lintDevDebug`; `assembleDevDebug` успешен. Source version увеличена до
-`1.2.24-dev` / `10224`, но OTA не публиковался, APK на устройства не
-устанавливался, а pilot signing/discovery конфигурация не была повторно
-подтверждена в этой первичной локальной сборке. Lint завершился без ошибок, но
+`1.2.24-dev` / `10224`. Первичная обычная сборка не включала подтверждённый
+pilot discovery; после неё выполнен отдельный candidate pipeline с подписанным
+discovery manifest v25 и локальной pilot-подписью. OTA не публиковался, APK на
+устройства не устанавливался. Lint завершился без ошибок, но
 содержит 65 предупреждений (36 `GradleDependency`, 12 `UnusedResources` и 17
 прочих); ни одно из них не относится к изменённым WebSocket-файлам. Это отдельный
 технический долг, не основание считать reconnect-fix lint-clean во всём APK.
@@ -324,5 +325,29 @@ rejection по `4001/4003/4004` по-прежнему запускает обн�
    60 секунд стабильной сессии, отсутствие reconnect-storm, свежий heartbeat и
    командный receipt; video/FPS проверяются отдельно.
 
-До такой canary-валидации Fleet32 остаётся **NO-GO**. Debug APK не является
-production-signed OTA artifact и не должен раскатываться на весь парк.
+До такой canary-валидации Fleet32 остаётся **NO-GO**. Pilot debug APK не
+является production-signed OTA artifact и не должен раскатываться на весь парк.
+
+### Подписанный локальный canary candidate — 26 сентября
+
+Построен из source commit `8f5daf8501667551640eeb9d8b06f46fc24aae6b` файл
+`.local-pilot/apk/SphereAgent-pilot-candidate-1.2.24-dev-8f5daf8.apk`:
+
+- package `com.sphereplatform.agent.pilot.debug`, version `1.2.24-dev` / code
+  `10224`, размер 8,502,672 байта;
+- SHA-256 `49e0197e3066ff3e0551b8e47da7f80e6bb2ba171c294883d69cc755d6f14a29`;
+- APK signature проверена Android `apksigner`; сертификат совпадает с локальным
+  pilot baseline signer. Это debug/pilot signer, не production release key;
+- встроен проверенный подписанный discovery manifest v25; management URL в APK
+  не зашит;
+- DevDebug и EnterpriseDebug: по 663 unit tests, 0 failures/errors и по 1
+  skipped test;
+- локальный candidate и metadata находятся в ignored `.local-pilot/`; APK не
+  установлен, не загружен в GitHub/OTA и не опубликован.
+
+Это подтверждает воспроизводимость подписанного pilot candidate и его состав,
+но не подтверждает обновление/переподключение на Android. Следующий безопасный
+шаг — установка только на одно выбранное canary-устройство с тем же package и
+подписью; затем проверить 60 секунд стабильной сессии, heartbeat, command
+receipt и отдельно получение/декодирование кадров. Независимость резервного
+маршрута также остаётся неподтверждённой реальным APK.

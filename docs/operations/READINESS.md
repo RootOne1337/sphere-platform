@@ -843,11 +843,15 @@ transport recovery, token не очищается на `4008`. До fix новы
 unit tests, целевые WebSocket suites, lint и debug-сборка прошли. Версия source
 увеличена до `1.2.24-dev` / `10224`.
 
-**Это не rollout и не разрешение массово обновлять устройства.** OTA не
-публиковался; в локальной среде нет настроенного production signer, а параметры
-signed discovery для новой сборки не были подтверждены. Pilot primary/fallback
-сейчас указывает на один URL, поэтому независимый backup path не доказан.
-Следующий gate — подписанная canary-сборка с корректной discovery-конфигурацией,
-установка на одно выбранное устройство, 60-секундная стабильная сессия и
-command receipt; video/frame/decode проверяются отдельно. До этого Fleet32
-остаётся NO-GO.
+**Это не rollout и не разрешение массово обновлять устройства.** Локальный
+pilot candidate 1.2.24-dev/code 10224 собран из commit `8f5daf8` с подписанным
+discovery manifest v25; его APK подпись совпадает с локальным pilot baseline.
+Артефакт `.local-pilot/apk/SphereAgent-pilot-candidate-1.2.24-dev-8f5daf8.apk`,
+SHA-256 `49e0197e3066ff3e0551b8e47da7f80e6bb2ba171c294883d69cc755d6f14a29`.
+Он использует локальную debug/pilot подпись, не production signer. Production
+release key в этой среде не настроен; OTA не публиковался и установка не
+выполнялась. Хотя signed discovery v25 включён в candidate, реальное
+переключение Android-клиента на независимый резервный маршрут не доказано.
+Следующий gate — установка только на одно выбранное canary-устройство,
+60-секундная стабильная сессия, heartbeat и command receipt; video/frame/decode
+проверяются отдельно. До этого Fleet32 остаётся NO-GO.
