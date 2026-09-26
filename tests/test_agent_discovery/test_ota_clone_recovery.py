@@ -6,7 +6,7 @@ import json
 import time
 import uuid
 from contextlib import asynccontextmanager
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, Mock
 
 import jwt
 import pytest
@@ -295,6 +295,37 @@ async def test_unrecognized_recovery_receipt_never_falls_through_to_task_result(
 
     manager.send_to_device.assert_not_awaited()
     fake_redis.publish.assert_not_awaited()
+
+
+async def test_unrecognized_ota_receipt_logs_only_bounded_failure_code(
+    db_session, recovery_case, monkeypatch,
+):
+    from backend.api.ws import android as android_ws
+
+    device, grant, _ = recovery_case
+    @asynccontextmanager
+    async def use_test_session():
+        yield db_session
+
+    monkeypatch.setattr("backend.database.engine.AsyncSessionLocal", use_test_session)
+    monkeypatch.setattr(
+        "backend.services.device_ota_recovery.is_persisted_ota_recovery_replay",
+        AsyncMock(return_value=False),
+    )
+    # structlog warning is synchronous; a normal mock retains its call arguments.
+    warning = Mock()
+    monkeypatch.setattr(android_ws.router.logger, "warning", warning)
+    await android_ws.router.handle_command_result(
+        str(device.id), str(device.org_id), {
+            "type": "command_result", "ota_recovery_receipt": True,
+            "command_id": str(grant.command_id), "status": "failed",
+            "error": "unexpected end of stream on https://secret.example/private?token=hidden",
+        },
+    )
+    event = next(call for call in warning.call_args_list
+                 if call.args[0] == "android_ws.ota_recovery_receipt_unrecognized")
+    assert event.kwargs["failure_code"] == "download_unexpected_eof"
+    assert "secret.example" not in str(event)
 
 
 async def test_recovery_completion_for_older_installed_version_is_not_acked(

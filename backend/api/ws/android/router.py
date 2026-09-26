@@ -274,7 +274,10 @@ async def handle_command_result(
         # exact replay instead of trying to persist it as a DAG task result.
         try:
             from backend.database.engine import AsyncSessionLocal
-            from backend.services.device_ota_recovery import is_persisted_ota_recovery_replay
+            from backend.services.device_ota_recovery import (
+                is_persisted_ota_recovery_replay,
+                recovery_failure_code,
+            )
 
             async with AsyncSessionLocal() as db:
                 already_persisted = await is_persisted_ota_recovery_replay(
@@ -303,6 +306,10 @@ async def handle_command_result(
                     device_id=device_id,
                     grant_id=command_id,
                     status=status,
+                    # Older APKs mark normal OTA results as recovery receipts.
+                    # Preserve a bounded failure category without logging the
+                    # agent's free-form error, URL, or credentials.
+                    failure_code=recovery_failure_code(msg.get("error")) if status == "failed" else None,
                 )
             # A recovery receipt is not a DAG result. If it is unknown or the
             # database check failed, keep it in the Android outbox for retry.
