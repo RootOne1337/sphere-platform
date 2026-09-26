@@ -8,6 +8,7 @@ import kotlinx.serialization.json.Json
 import okhttp3.*
 import org.junit.Assert.*
 import org.junit.Test
+import timber.log.Timber
 import java.io.IOException
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -166,6 +167,77 @@ class WebSocketLifecycleTest {
         runCurrent()
         verify(exactly = 2) { http.newWebSocket(any(), any()) }
         job.cancelAndJoin()
+    }
+
+    @Test fun websocketFailureLogsRedactedLifecycleEvidence() = runTest {
+        every { auth.connectionRoutesSnapshot() } returns AuthTokenStore.ConnectionRoutes(
+            0,
+            listOf("http://primary.example", "http://fallback.example"),
+        )
+        val messages = mutableListOf<String>()
+        val tree = object : Timber.Tree() {
+            override fun log(priority: Int, tag: String?, message: String, t: Throwable?) {
+                messages += message
+            }
+        }
+        Timber.plant(tree)
+        val job = launch { client.connect() }
+        try {
+            runCurrent()
+            val response = Response.Builder()
+                .request(requests.single())
+                .protocol(Protocol.HTTP_1_1)
+                .code(502)
+                .message("Bad Gateway")
+                .build()
+            listener.onFailure(socket, IOException("private-route-marker"), response)
+            runCurrent()
+
+            val lifecycle = messages.singleOrNull { it.startsWith("ws_lifecycle ") }
+            assertNotNull("A transport failure must produce a structured lifecycle record", lifecycle)
+            assertTrue(lifecycle!!.contains("event=onFailure"))
+            assertTrue(lifecycle.contains("phase=pre_auth"))
+            assertTrue(lifecycle.contains("route_slot=0"))
+            assertTrue(lifecycle.contains("route_count=2"))
+            assertTrue(lifecycle.contains("response_code=502"))
+            assertTrue(lifecycle.contains("error_type=IOException"))
+            assertFalse(lifecycle.contains("primary.example"))
+            assertFalse(lifecycle.contains("private-route-marker"))
+            assertFalse(lifecycle.contains("test-token"))
+        } finally {
+            job.cancelAndJoin()
+            Timber.uproot(tree)
+        }
+    }
+
+    @Test fun websocketCloseLogsCodeAndAuthenticatedPhaseWithoutReason() = runTest {
+        val messages = mutableListOf<String>()
+        val tree = object : Timber.Tree() {
+            override fun log(priority: Int, tag: String?, message: String, t: Throwable?) {
+                messages += message
+            }
+        }
+        Timber.plant(tree)
+        val job = launch { client.connect() }
+        try {
+            runCurrent()
+            authenticateSocket()
+            listener.onClosed(socket, 1005, "private-close-reason")
+            runCurrent()
+
+            val lifecycle = messages.singleOrNull { it.startsWith("ws_lifecycle ") }
+            assertNotNull("A WebSocket close must produce a structured lifecycle record", lifecycle)
+            assertTrue(lifecycle!!.contains("event=onClosed"))
+            assertTrue(lifecycle.contains("phase=authenticated"))
+            assertTrue(lifecycle.contains("close_code=1005"))
+            assertTrue(lifecycle.contains("reason_present=true"))
+            assertFalse(lifecycle.contains("private-close-reason"))
+            assertFalse(lifecycle.contains("test-token"))
+            assertFalse(lifecycle.contains("127.0.0.1"))
+        } finally {
+            job.cancelAndJoin()
+            Timber.uproot(tree)
+        }
     }
 
     @Test fun videoBackpressureDoesNotFillOkHttpQueue() = runTest {

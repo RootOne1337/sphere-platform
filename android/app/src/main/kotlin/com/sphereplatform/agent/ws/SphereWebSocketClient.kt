@@ -27,6 +27,7 @@ import okio.ByteString
 import okio.ByteString.Companion.toByteString
 import timber.log.Timber
 import javax.inject.Singleton
+import java.util.concurrent.atomic.AtomicLong
 import kotlin.random.Random
 
 /**
@@ -223,10 +224,42 @@ class SphereWebSocketClient(
 
         val connected = CompletableDeferred<Unit>()
         val disconnected = CompletableDeferred<Unit>()
+        val attemptStartedAtMs = monotonicTimeMs()
+        val authenticatedAtMs = AtomicLong(0L)
+        val routeSlot = routes.urls.indexOf(route)
         var closeCode = 0
         var closeReason = ""
         var stableSession: Boolean
         var authSent = false // guarded by wsLock
+
+        fun logLifecycle(
+            event: String,
+            closeCode: Int? = null,
+            reasonPresent: Boolean? = null,
+            error: Throwable? = null,
+            responseCode: Int? = null,
+        ) {
+            val now = monotonicTimeMs()
+            val authenticatedAt = authenticatedAtMs.get()
+            val fields = buildString {
+                append("ws_lifecycle event=$event attempt_id=$attemptGeneration ")
+                append("route_slot=$routeSlot route_count=${routes.urls.size} ")
+                append("phase=${if (authenticatedAt > 0L) "authenticated" else "pre_auth"} ")
+                append("elapsed_ms=${(now - attemptStartedAtMs).coerceAtLeast(0L)} ")
+                if (authenticatedAt > 0L) {
+                    append("authenticated_ms=${(now - authenticatedAt).coerceAtLeast(0L)} ")
+                }
+                if (closeCode != null) append("close_code=$closeCode ")
+                if (reasonPresent != null) append("reason_present=$reasonPresent ")
+                if (responseCode != null) append("response_code=$responseCode ")
+                if (error != null) {
+                    append("error_type=${error.javaClass.simpleName} ")
+                    error.cause?.let { append("cause_type=${it.javaClass.simpleName} ") }
+                }
+            }.trimEnd()
+            // Never include the route URL, device ID, token, close reason, or exception message.
+            Timber.i(fields)
+        }
 
         val listener = object : WebSocketListener() {
             override fun onOpen(ws: WebSocket, response: Response) {
@@ -270,6 +303,7 @@ class SphereWebSocketClient(
                                 return
                             }
                             isConnected = true
+                            authenticatedAtMs.compareAndSet(0L, monotonicTimeMs())
                             connected.complete(Unit)
                             true
                         } else {
@@ -311,6 +345,13 @@ class SphereWebSocketClient(
                         }
                     }
                 }
+                if (current) {
+                    logLifecycle(
+                        event = "onFailure",
+                        error = t,
+                        responseCode = response?.code,
+                    )
+                }
                 if (!connected.isCompleted) connected.completeExceptionally(t)
                 else if (!disconnected.isCompleted) disconnected.completeExceptionally(t)
                 if (current) onDisconnected?.invoke(-1, t.message ?: "failure")
@@ -331,6 +372,13 @@ class SphereWebSocketClient(
                 }
                 closeCode = code
                 closeReason = reason
+                if (current) {
+                    logLifecycle(
+                        event = "onClosed",
+                        closeCode = code,
+                        reasonPresent = reason.isNotBlank(),
+                    )
+                }
                 if (!connected.isCompleted) {
                     val failure = if (isAuthenticationRejection(code, reason)) AuthRejectedException(code, reason)
                     else IOException("WebSocket closed before authentication acknowledgement: $code")
@@ -354,6 +402,7 @@ class SphereWebSocketClient(
                 withTimeout(20_000L) { connected.await() }
             } catch (e: TimeoutCancellationException) {
                 currentCoroutineContext().ensureActive()
+                logLifecycle(event = "handshake_timeout", error = e)
                 throw IOException("WebSocket authentication handshake timeout", e)
             }
             stableSession = withTimeoutOrNull(STABLE_CONNECTION_WINDOW_MS) {
@@ -394,6 +443,8 @@ class SphereWebSocketClient(
         // prevents busy retries even when the server repeatedly closes cleanly.
         return Random.nextLong(ceiling / 2, ceiling + 1)
     }
+
+    private fun monotonicTimeMs(): Long = System.nanoTime() / 1_000_000L
 
     fun sendJson(message: JsonObject): Boolean {
         if (!isConnected) return false
