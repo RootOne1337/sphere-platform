@@ -17,7 +17,7 @@ import org.junit.Test
  *  - CIRCUIT_OPEN_THRESHOLD = 10
  *  - CIRCUIT_COOL_DOWN_MS = 60s
  *  - FORCE_RECONNECT_DEBOUNCE_MS = 5s
- *  - Close codes: 4001, 4003, 4004, 4008
+ *  - Credential rejection codes: 4001, 4003, 4004; heartbeat timeout is transport
  *  - AuthException / AuthRejectedException
  */
 class SphereWebSocketClientTest {
@@ -101,11 +101,11 @@ class SphereWebSocketClientTest {
 
     @Test
     fun `AUTH codes не должны вызывать circuit break`() {
-        val authCodes = setOf("CODE_INVALID_TOKEN", "CODE_AUTH_TIMEOUT", "CODE_DEVICE_NOT_FOUND", "CODE_HEARTBEAT_TIMEOUT").map { field(it).toInt() }.toSet()
+        val authCodes = setOf("CODE_INVALID_TOKEN", "CODE_AUTH_TIMEOUT", "CODE_DEVICE_NOT_FOUND").map { field(it).toInt() }.toSet()
         assertTrue(authCodes.contains(4001))
         assertTrue(authCodes.contains(4003))
         assertTrue(authCodes.contains(4004))
-        assertTrue(authCodes.contains(4008))
+        assertFalse("Heartbeat timeout is transport loss, not credential rejection", authCodes.contains(4008))
         assertFalse(authCodes.contains(1000)) // нормальное закрытие
     }
 

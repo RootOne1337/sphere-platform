@@ -24,6 +24,7 @@ class WebSocketLifecycleTest {
         every { queueSize() } returns 0L
     }
     private lateinit var listener: WebSocketListener
+    private val requests = mutableListOf<Request>()
     private val http: OkHttpClient = mockk<OkHttpClient> {
         val baseClient = this
         every { certificatePinner } returns CertificatePinner.DEFAULT
@@ -35,6 +36,7 @@ class WebSocketLifecycleTest {
             }
         }
         every { newWebSocket(any(), any()) } answers {
+            requests.add(firstArg<Request>())
             listener = secondArg()
             socket
         }
@@ -103,6 +105,30 @@ class WebSocketLifecycleTest {
         job.cancelAndJoin()
     }
 
+    @Test fun abnormalCloseWithoutStatusFailsOverToNextSavedRoute() = runTest {
+        every { auth.connectionRoutesSnapshot() } returns AuthTokenStore.ConnectionRoutes(
+            0,
+            listOf("http://primary.example", "http://fallback.example"),
+        )
+        val job = launch { client.connect() }
+        try {
+            runCurrent()
+            assertTrue(requests.single().url.toString().startsWith("http://primary.example/"))
+            authenticateSocket()
+            runCurrent()
+
+            listener.onClosed(socket, 1005, "")
+            runCurrent()
+            advanceTimeBy(2_001)
+            runCurrent()
+
+            assertEquals("A no-status close must rotate to the saved fallback", 2, requests.size)
+            assertTrue(requests[1].url.toString().startsWith("http://fallback.example/"))
+        } finally {
+            job.cancelAndJoin()
+        }
+    }
+
     @Test fun explicitRouteSwitchCanBypassReconnectDebounce() = runTest {
         val job = launch { client.connect() }
         runCurrent()
@@ -163,23 +189,31 @@ class WebSocketLifecycleTest {
         job.cancelAndJoin()
     }
 
-    @Test fun authenticatedRecoveriesResetOldFailureDebt() = runTest {
+    @Test fun shortAuthenticatedSessionsAccumulateFailureDebtUntilStableSession() = runTest {
         val job = launch { client.connect() }
-        var discoveryRequests = 0
-        client.onCircuitBreakerOpen = { discoveryRequests++ }
         try {
             runCurrent()
-            repeat(12) { index ->
+            repeat(2) { index ->
                 authenticateSocket()
                 runCurrent()
-                listener.onFailure(socket, IOException("isolated network outage"), null)
+                listener.onFailure(socket, IOException("unexpected end of stream"), null)
                 runCurrent()
-                advanceTimeBy(999); runCurrent()
-                verify(exactly = index + 1) { http.newWebSocket(any(), any()) }
-                advanceTimeBy(1002); runCurrent()
-                verify(exactly = index + 2) { http.newWebSocket(any(), any()) }
+                val debt = SphereWebSocketClient::class.java.getDeclaredField("consecutiveFailures").apply { isAccessible = true }
+                assertEquals(index + 1, debt.getInt(client))
+                advanceTimeBy(4_001)
+                runCurrent()
             }
-            assertEquals("Every independent outage should refresh discovery", 12, discoveryRequests)
+
+            authenticateSocket()
+            runCurrent()
+            advanceTimeBy(60_001)
+            runCurrent()
+            val debt = SphereWebSocketClient::class.java.getDeclaredField("consecutiveFailures").apply { isAccessible = true }
+            assertEquals("A full stable window ends the previous failure streak", 0, debt.getInt(client))
+
+            listener.onFailure(socket, IOException("unexpected end of stream"), null)
+            runCurrent()
+            assertEquals("A new failure after a stable session starts a fresh streak", 1, debt.getInt(client))
         } finally { job.cancelAndJoin() }
     }
 

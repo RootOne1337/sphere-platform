@@ -825,3 +825,29 @@ Android runtime-тестом повторное подключение, crash-up
 собирает логи Sphere и uncaught Java/Kotlin exceptions, но не обещает читать
 system/native crash, ANR или LMK buffers. Полный список gates и recovery
 ограничений — в отчёте выше.
+
+## Android reconnect churn — 26 сентября 2026
+
+После rollout backend/frontend `64ea436` pilot продолжает принимать устройства,
+но live-срез показывает transport churn: за последнюю минуту 11 соединений и 11
+закрытий `1005`; в 12-минутном окне 215 из 229 закрытий были без close status.
+Установленный парк на этом срезе: 13 устройств `1.2.22-dev`, одно `1.2.23-dev`,
+два без версии. Отсутствие heartbeat-timeout и receive-loop ошибок не объясняет
+причину клиентского/сетевого закрытия. Подробное доказательство и ограничения —
+в [диагностике remote control path](../audits/2026-09-26/REMOTE-CONTROL-PATH-DIAGNOSIS.md).
+
+Android reconnect policy исправлена в source: короткая авторизованная сессия
+больше не обнуляет retry debt, abnormal close и heartbeat timeout используют
+transport recovery, token не очищается на `4008`. До fix новые regression tests
+падали на failover для `1005` и сохранении token cache для `4008`; после — 663
+unit tests, целевые WebSocket suites, lint и debug-сборка прошли. Версия source
+увеличена до `1.2.24-dev` / `10224`.
+
+**Это не rollout и не разрешение массово обновлять устройства.** OTA не
+публиковался; в локальной среде нет настроенного production signer, а параметры
+signed discovery для новой сборки не были подтверждены. Pilot primary/fallback
+сейчас указывает на один URL, поэтому независимый backup path не доказан.
+Следующий gate — подписанная canary-сборка с корректной discovery-конфигурацией,
+установка на одно выбранное устройство, 60-секундная стабильная сессия и
+command receipt; video/frame/decode проверяются отдельно. До этого Fleet32
+остаётся NO-GO.

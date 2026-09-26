@@ -32,8 +32,9 @@ import kotlin.random.Random
 /**
  * SphereWebSocketClient — надёжный WS-клиент с:
  * - Exponential retry windows with equal jitter (first retry 1–2s, cap 15–30s)
- * - Smart circuit breaker: 10 NETWORK ошибок → 60 секунд паузы
- *   AUTH ошибки (4001) НЕ считаются — вместо этого запрашивается новый токен.
+ * - Smart circuit breaker: 10 consecutive transport failures → 60 seconds cooldown
+ *   Short authenticated sessions count as failures; only 60 seconds of stable
+ *   transport resets retry debt. Credential rejections refresh the token.
  *   Legacy backend used 4001 for session replacement too; that reason is not
  *   an auth rejection and must not invalidate a healthy device credential.
  * - First-message auth and target-bound server acknowledgement before application traffic
@@ -76,13 +77,17 @@ class SphereWebSocketClient(
         private const val CODE_INVALID_TOKEN = 4001
         private const val CODE_AUTH_TIMEOUT = 4003
         private const val CODE_DEVICE_NOT_FOUND = 4004
-        private const val CODE_HEARTBEAT_TIMEOUT = 4008
+        private const val CODE_NORMAL_CLOSURE = 1000
+        private const val CODE_GOING_AWAY = 1001
+        private const val STABLE_CONNECTION_WINDOW_MS = 60_000L
         private const val REASON_SESSION_REPLACED = "replaced_by_new_connection"
 
         private fun isAuthenticationRejection(code: Int, reason: String): Boolean =
             (code == CODE_INVALID_TOKEN && reason != REASON_SESSION_REPLACED) ||
-                code == CODE_AUTH_TIMEOUT || code == CODE_DEVICE_NOT_FOUND ||
-                code == CODE_HEARTBEAT_TIMEOUT
+                code == CODE_AUTH_TIMEOUT || code == CODE_DEVICE_NOT_FOUND
+
+        private fun requiresTransportRetry(code: Int): Boolean =
+            code != CODE_NORMAL_CLOSURE && code != CODE_GOING_AWAY
     }
 
     // Управление reconnect loop
@@ -142,9 +147,10 @@ class SphereWebSocketClient(
                 route = routes.urls.getOrNull(if (previousIndex >= 0) (previousIndex + 1) % routes.urls.size else 0)
                 if (route == null) throw AuthException("No management route stored")
                 connectOnce(routes, route) {
-                    // A validated session ends the previous outage. Reset on this
-                    // coroutine after auth, not only when the later close is clean:
-                    // network failures usually complete disconnected exceptionally.
+                    // An auth acknowledgement alone is not evidence of a healthy
+                    // route. Retain retry debt until the transport survives a full
+                    // stability window so rapid close/reopen loops reach failover
+                    // and the circuit breaker instead of retrying forever at 1–2s.
                     consecutiveFailures = 0
                     circuitOpenUntil = 0L
                     attempt = 0
@@ -219,6 +225,7 @@ class SphereWebSocketClient(
         val disconnected = CompletableDeferred<Unit>()
         var closeCode = 0
         var closeReason = ""
+        var stableSession: Boolean
         var authSent = false // guarded by wsLock
 
         val listener = object : WebSocketListener() {
@@ -349,8 +356,12 @@ class SphereWebSocketClient(
                 currentCoroutineContext().ensureActive()
                 throw IOException("WebSocket authentication handshake timeout", e)
             }
-            onAuthenticated()
-            disconnected.await()
+            stableSession = withTimeoutOrNull(STABLE_CONNECTION_WINDOW_MS) {
+                disconnected.await()
+                false
+            } ?: true
+            if (stableSession) onAuthenticated()
+            if (!disconnected.isCompleted) disconnected.await()
         } finally {
             synchronized(wsLock) {
                 if (attemptGeneration == generation) {
@@ -366,9 +377,14 @@ class SphereWebSocketClient(
             socket.cancel()
         }
 
-        // After connection closed — check close code for auth/heartbeat rejection
+        // Auth rejection refreshes credentials. Heartbeat timeout (4008), missing
+        // close status (1005), and other non-graceful closes are transport failures:
+        // retain auth and use the existing jitter/failover/circuit-breaker path.
         if (isAuthenticationRejection(closeCode, closeReason)) {
             throw AuthRejectedException(closeCode, closeReason)
+        }
+        if (!stableSession || requiresTransportRetry(closeCode)) {
+            throw IOException("WebSocket closed before a stable session: code=$closeCode")
         }
     }
 

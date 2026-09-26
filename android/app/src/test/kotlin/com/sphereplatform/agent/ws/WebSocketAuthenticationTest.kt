@@ -136,6 +136,22 @@ class WebSocketAuthenticationTest {
         } finally { job.cancelAndJoin() }
     }
 
+    @Test fun heartbeatTimeoutAfterAuthenticationPreservesTokenCache() = runTest {
+        val job = launch { client.connect() }
+        try {
+            runCurrent(); open()
+            listeners.last().onMessage(socket, ack()); runCurrent()
+            assertTrue(client.isConnected)
+
+            listeners.last().onClosed(socket, 4008, "heartbeat_timeout")
+            runCurrent()
+
+            verify(exactly = 0) { auth.clearTokenCache() }
+            assertFalse(client.isConnected)
+            assertTrue("A heartbeat miss is transport loss, not a credential rejection", job.isActive)
+        } finally { job.cancelAndJoin() }
+    }
+
     @Test fun callbacksFromTimedOutHandshakeCannotRestoreConnectedState() = runTest {
         val job = launch { client.connect() }
         try {
