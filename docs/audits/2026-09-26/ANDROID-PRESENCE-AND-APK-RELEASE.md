@@ -1,6 +1,37 @@
 # Android presence and APK release audit — 26 September 2026
 
-## Scope and latest live decision
+## Current release and device checkpoint — 26 September 2026, 15:58 UTC
+
+This checkpoint supersedes the older snapshots below for APK source and the two
+Android emulators attached to the audit workstation. It does **not** claim a
+current observation of the remote fleet or the public pilot catalog.
+
+| Evidence source | Observed state | What it proves |
+| --- | --- | --- |
+| `android/version.properties` from code commit `d9e5c63` | `1.2.27 / 10227` | Source version only. |
+| `adb` PackageManager, `emulator-5554` | `1.2.23-dev / 10223` | Installed on one local emulator; it is behind current source. |
+| `adb` PackageManager, `emulator-5556` | `1.2.27-dev / 10227` | Installed on the local canary; package data was preserved by `adb install -r`. |
+| `.local-pilot/apk/manifest.json` | `1.2.9-dev / 10209`, SHA-256 `b4bf3f319f92e1f3ac24b7d68dffdc6f6d93a113ad59b10b132ea8f60e641078` | The local promoted-artifact pointer is stale relative to source; it is not proof of the public pilot's current catalog. |
+| Remote devices | Current installed versions not independently sampled in this checkpoint | Online/connecting UI state does not establish APK version or successful OTA. |
+
+The exact `1.2.27-dev` candidate was built from `d9e5c63`, SHA-256
+`e9f156b15e42a6db4e2c612835bf068ac788ca7ee512b6f5132f7c11af13fe40`, and kept
+as a local-only debug artifact. It has **not** been promoted to the OTA catalog,
+uploaded to GitHub Releases, or rolled out remotely. The Android worker polls on
+startup/authenticated reconnect and every six hours, but it can only install an
+artifact already published in the server's matching `android/dev` catalog; a
+successful check or a green CI run is not an installation receipt.
+
+For this reason, the currently available evidence does not support saying that
+remote devices have received `1.2.27`, or that their update/recovery path works.
+Release acceptance must correlate, per device ID: reported version/build after
+the next authenticated heartbeat; the exact catalog version and SHA-256; OTA
+check/download/checksum/install outcomes; and a post-install heartbeat. Stream
+acceptance additionally requires capture/encoder/video-frame ingress, viewer
+delivery and browser-decoded-frame counters. Keep the current fleet and mass OTA
+at **NO-GO** until those receipts are collected.
+
+## Scope and historical live snapshot
 
 This check covers Android APK identity/version, the active pilot OTA catalog,
 the backend Android WebSocket disconnect path, and the last retained remote
@@ -8,7 +39,7 @@ video-packet evidence. Sphere's device client in this workflow is the Android
 APK on an emulator or phone. A PC Agent is not a prerequisite or part of this
 diagnosis.
 
-**Live correlation: 26 September 2026, 00:59 UTC. Fleet rollout: NO-GO.** The
+**Historical live correlation: 26 September 2026, 00:59 UTC (not current). Fleet rollout: NO-GO.** The
 pilot API reports 15 device records: `010/011/022/023` are `online`, seven
 (`012/013/014/016/017/019/020`) are `connecting`, and four (`015/018/021/024`)
 are offline or lack a live status key. The operator identifies `010/011` as
