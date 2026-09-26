@@ -28,15 +28,23 @@ def agent_runtime(runtime_db, monkeypatch, tmp_path):
     status_cache = SimpleNamespace(set_status=AsyncMock())
     monkeypatch.setattr("backend.api.ws.android.router.get_connection_manager", lambda: manager)
     monkeypatch.setattr("backend.api.ws.android.router.DeviceStatusCache", lambda _: status_cache)
-    monkeypatch.setattr("backend.websocket.heartbeat.HeartbeatManager", lambda *args, **kwargs: SimpleNamespace(start=AsyncMock(), stop=AsyncMock()))
+    heartbeat = SimpleNamespace(
+        start=AsyncMock(),
+        stop=AsyncMock(),
+        handle_pong=AsyncMock(return_value=False),
+    )
+    monkeypatch.setattr("backend.websocket.heartbeat.HeartbeatManager", lambda *args, **kwargs: heartbeat)
+    event_publisher = SimpleNamespace(emit=AsyncMock())
     # No delivery side effects or listeners; the actual ASGI router and SQL auth run.
-    for module, factory in [("pubsub_router", "get_pubsub_router"), ("event_publisher", "get_event_publisher"), ("offline_queue", "get_offline_queue"), ("stream_bridge", "get_stream_bridge")]:
+    for module, factory in [("pubsub_router", "get_pubsub_router"), ("offline_queue", "get_offline_queue"), ("stream_bridge", "get_stream_bridge")]:
         monkeypatch.setattr(f"backend.websocket.{module}.{factory}", lambda: None)
+    monkeypatch.setattr("backend.websocket.event_publisher.get_event_publisher", lambda: event_publisher)
     monkeypatch.setattr("backend.api.v1.logs.router._LOGS_DIR", tmp_path)
     monkeypatch.setattr("backend.api.v1.updates.router._UPDATES_PATH", tmp_path / "updates.json")
     return SimpleNamespace(
         db=runtime_db, world=runtime_db.world, manager=manager,
-        status_cache=status_cache, path=tmp_path,
+        status_cache=status_cache, heartbeat=heartbeat,
+        event_publisher=event_publisher, path=tmp_path,
     )
 
 
@@ -197,6 +205,25 @@ async def test_new_android_session_is_connecting_until_first_heartbeat_pong(agen
     assert initial_status.status == "connecting"
     assert initial_status.last_heartbeat is None
     assert initial_status.ws_session_id == "runtime-session"
+    agent_runtime.event_publisher.emit.assert_awaited_once()
+    event = agent_runtime.event_publisher.emit.await_args.args[0]
+    assert event.event_type.value == "device.status_change"
+    assert event.payload == {"status": "connecting", "session_id": "runtime-session"}
+
+
+async def test_device_online_event_is_emitted_only_after_first_heartbeat_pong(agent_runtime):
+    r = agent_runtime
+    enrolled = await issue_device(r.world)
+
+    r.heartbeat.handle_pong.return_value = True
+    await websocket(enrolled.device_id, enrolled.access_token, [{"type": "pong", "ts": 1}])
+
+    r.heartbeat.handle_pong.assert_awaited_once()
+    assert r.event_publisher.emit.await_count == 2
+    event = r.event_publisher.emit.await_args_list[1].args[0]
+    assert event.event_type.value == "device.online"
+    assert event.device_id == str(enrolled.device_id)
+    assert event.payload == {"status": "online", "session_id": "runtime-session"}
 
 
 async def test_auth_ack_delivery_failure_does_not_publish_or_evict_session(agent_runtime):

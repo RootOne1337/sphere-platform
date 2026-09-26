@@ -49,6 +49,7 @@ class HeartbeatManager:
         self.status_cache = status_cache
         self._session_id = session_id
         self._last_pong: float = time.monotonic()
+        self._first_pong_persisted = False
         self._task: asyncio.Task | None = None
 
     async def start(self) -> None:
@@ -65,8 +66,6 @@ class HeartbeatManager:
     async def _heartbeat_loop(self) -> None:
         while True:
             try:
-                await asyncio.sleep(HEARTBEAT_INTERVAL)
-
                 # Проверить когда был последний pong
                 since_pong = time.monotonic() - self._last_pong
                 if since_pong > (HEARTBEAT_INTERVAL + HEARTBEAT_TIMEOUT):
@@ -87,6 +86,9 @@ class HeartbeatManager:
                     "type": "ping",
                     "ts": ping_ts,
                 })
+                # Probe immediately so a healthy reconnect leaves `connecting`
+                # as soon as the agent responds instead of waiting a full interval.
+                await asyncio.sleep(HEARTBEAT_INTERVAL)
             except (WebSocketDisconnect, asyncio.CancelledError):
                 return
             except Exception as e:
@@ -98,15 +100,17 @@ class HeartbeatManager:
                 )
                 return
 
-    async def handle_pong(self, msg: dict) -> None:
-        """Вызвать при получении pong от агента."""
+    async def handle_pong(self, msg: dict) -> bool:
+        """Persist liveness and return True only for this session's first saved pong."""
         now = time.monotonic()
         self._last_pong = now
+        latency_ms: float | None = None
 
         # Логировать latency для мониторинга
         timestamp = msg.get("ts")
         if isinstance(timestamp, (int, float)) and not isinstance(timestamp, bool) and 0 <= timestamp <= 253402300799:
             server_latency_ms = round((time.time() - timestamp) * 1000, 2)
+            latency_ms = server_latency_ms
             logger.debug(
                 "Heartbeat pong received",
                 device_id=self.device_id,
@@ -131,10 +135,12 @@ class HeartbeatManager:
             status_update["agent_version_code"] = msg["agent_version_code"]
 
         # Всегда обновляем last_heartbeat при получении pong
+        first_pong_persisted = False
+        status_update_persisted = False
         try:
             current = await self.status_cache.get_status(self.device_id)
             if current and self._session_id and current.ws_session_id not in (None, self._session_id):
-                return  # A replaced socket must not overwrite known newer presence.
+                return False  # A replaced socket must not overwrite known newer presence.
             if current is None:
                 # Presence is disposable: an authenticated live socket can rebuild
                 # it after eviction/restart. Durable task state remains in PostgreSQL.
@@ -147,11 +153,24 @@ class HeartbeatManager:
                 current = DeviceLiveStatus.model_validate(current.model_dump() | status_update)
             except ValidationError:
                 logger.warning("Invalid pong telemetry ignored", device_id=self.device_id)
-            await self.status_cache.set_status(self.device_id, current)
+            status_update_persisted = await self.status_cache.set_status(self.device_id, current)
+            if status_update_persisted and not self._first_pong_persisted:
+                self._first_pong_persisted = True
+                first_pong_persisted = True
         except Exception as exc:
             # A Redis outage must not change transport liveness. Retry the cache
             # update on the next pong without accumulating an in-memory queue.
             logger.warning("Heartbeat presence update failed", device_id=self.device_id, error=str(exc))
+
+        if first_pong_persisted:
+            logger.info(
+                "Agent heartbeat established",
+                device_id=self.device_id,
+                session_id=self._session_id,
+                latency_ms=latency_ms,
+                agent_version=status_update.get("agent_version"),
+                agent_version_code=status_update.get("agent_version_code"),
+            )
 
         # TZ-05 SPLIT-4: обновить Prometheus stream-метрики из pong телеметрии
         stream_data = msg.get("stream")
@@ -173,3 +192,5 @@ class HeartbeatManager:
                 )
         except Exception as e:
             logger.debug("stream_metrics update failed", device_id=self.device_id, error=str(e))
+
+        return first_pong_persisted

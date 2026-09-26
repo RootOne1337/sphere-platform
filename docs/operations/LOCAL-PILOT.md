@@ -33,6 +33,16 @@ sidecar не подтверждено.
 профиль CPU/RAM остаются следующими release gates. Полная матрица доказательств:
 [диагностика remote control path](../audits/2026-09-26/REMOTE-CONTROL-PATH-DIAGNOSIS.md).
 
+Последующий локальный source-аудит presence добавил новые regressions и fixes:
+старый код посылал `device.online` до первого APK `pong`; frontend пропускал
+backend `{event_type, ts}` payload и wire-событие `device.status_change`;
+первый server ping ожидал 30 секунд;
+`connecting` оставался в Redis до часа после аварийного обрыва. Теперь online
+событие следует только за первым сохранённым pong, connecting/online переходы
+инвалидируют Fleet UI, первый ping отправляется немедленно, а connecting TTL
+равен 90 секундам. Эти изменения не выкатывались в данный pilot, не меняли APK
+или OTA и пока не являются live-подтверждением восстановления удалённых устройств.
+
 ## Исторический rollout-снимок: 26 сентября, 02:05 Asia/Yekaterinburg / 25 сентября 21:05 UTC
 Изолированный pilot `sphere-pilot-20260911` работает на backend image
 `sphere-pilot-20260911-backend:2168c33` (healthy); frontend остаётся на

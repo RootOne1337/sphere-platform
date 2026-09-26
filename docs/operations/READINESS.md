@@ -2,6 +2,15 @@
 
 **Срез: 26 сентября 2026 · аудит продолжается · Fleet32 остаётся NO-GO.**
 
+**Source follow-up (26 сентября, после live-среза):** исправлены ложное событие
+`device.online` до первого heartbeat, несоответствие backend event payload
+`{event_type, ts}` frontend parser и wire-события `device.status_change` listener,
+30-секундная задержка первого server ping и часовой TTL для transient
+`connecting`. Regression tests сначала воспроизводили ложное online, отсутствие UI invalidation и задержанный probe;
+после fix целевые backend/frontend тесты проходят. Изменение source/PR-only,
+pilot не перезапускался. Оно повышает точность и скорость отображения presence,
+но не доказывает, что удалённые устройства с отсутствующим `pong` восстановились.
+
 ## Последний live-срез — 26 сентября, 05:59 Asia/Yekaterinburg
 
 Pilot `sphere-pilot-20260911` всё ещё использует backend `2168c33` и frontend

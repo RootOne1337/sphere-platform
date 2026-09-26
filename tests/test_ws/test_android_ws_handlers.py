@@ -26,6 +26,8 @@ Enterprise rationale
 from __future__ import annotations
 
 import json
+from contextlib import asynccontextmanager
+from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -87,6 +89,139 @@ class TestReceiveAndroidWsEvent:
 
         assert await receive_android_ws_event(socket, DEVICE_ID) == payload
         socket.receive.assert_awaited_once()
+
+
+class TestAndroidAgentPresenceEvents:
+    @pytest.fixture
+    def route_dependencies(self, db_session, test_device, mock_redis, monkeypatch):
+        from backend.api.ws.android import router as android_router
+
+        manager = SimpleNamespace(
+            connect=AsyncMock(return_value="unit-session"),
+            disconnect=AsyncMock(return_value=False),
+        )
+        status_cache = SimpleNamespace(set_status=AsyncMock(return_value=True))
+        heartbeat = SimpleNamespace(
+            start=AsyncMock(),
+            stop=AsyncMock(),
+            handle_pong=AsyncMock(return_value=True),
+        )
+        publisher = SimpleNamespace(emit=AsyncMock())
+
+        @asynccontextmanager
+        async def db_scope():
+            yield db_session
+
+        monkeypatch.setattr(android_router, "AsyncSessionLocal", db_scope)
+        monkeypatch.setattr(android_router, "get_redis_binary", AsyncMock(return_value=mock_redis))
+        monkeypatch.setattr(android_router, "DeviceStatusCache", lambda _redis: status_cache)
+        monkeypatch.setattr(android_router, "get_connection_manager", lambda: manager)
+        monkeypatch.setattr("backend.core.dependencies._is_dev_skip_auth", lambda: True)
+        monkeypatch.setattr(
+            "backend.services.device_ota_recovery.get_ota_recovery",
+            AsyncMock(return_value=None),
+        )
+        monkeypatch.setattr(
+            "backend.websocket.heartbeat.HeartbeatManager",
+            lambda *_args, **_kwargs: heartbeat,
+        )
+        monkeypatch.setattr("backend.websocket.pubsub_router.get_pubsub_router", lambda: None)
+        monkeypatch.setattr("backend.websocket.event_publisher.get_event_publisher", lambda: publisher)
+        monkeypatch.setattr("backend.websocket.offline_queue.get_offline_queue", lambda: None)
+        monkeypatch.setattr("backend.websocket.stream_bridge.get_stream_bridge", lambda: None)
+        return SimpleNamespace(
+            router=android_router,
+            device=test_device,
+            manager=manager,
+            status_cache=status_cache,
+            heartbeat=heartbeat,
+            publisher=publisher,
+        )
+
+    @pytest.fixture
+    def route_socket(self):
+        class Socket:
+            def __init__(self, messages):
+                self.messages = iter(messages)
+                self.sent = []
+
+            async def accept(self):
+                pass
+
+            async def receive_json(self):
+                return {"token": "test-token"}
+
+            async def send_json(self, message):
+                self.sent.append(message)
+
+            async def close(self, **_kwargs):
+                pass
+
+            async def receive(self):
+                try:
+                    message = next(self.messages)
+                except StopIteration:
+                    return {"type": "websocket.disconnect", "code": 1000}
+                return {"type": "websocket.receive", "text": json.dumps(message)}
+
+        return Socket
+
+    async def test_socket_authentication_publishes_connecting_but_not_online_until_pong(
+        self, route_dependencies, route_socket
+    ):
+        deps = route_dependencies
+        socket = route_socket([])
+
+        await deps.router.android_agent_ws(socket, str(deps.device.id))
+
+        deps.status_cache.set_status.assert_awaited_once()
+        assert deps.status_cache.set_status.await_args.args[1].status == "connecting"
+        deps.publisher.emit.assert_awaited_once()
+        event = deps.publisher.emit.await_args.args[0]
+        assert event.event_type.value == "device.status_change"
+        assert event.payload == {"status": "connecting", "session_id": "unit-session"}
+
+    async def test_failed_connecting_presence_write_does_not_publish_status_event(
+        self, route_dependencies, route_socket
+    ):
+        deps = route_dependencies
+        deps.status_cache.set_status.return_value = False
+
+        await deps.router.android_agent_ws(route_socket([]), str(deps.device.id))
+
+        deps.publisher.emit.assert_not_awaited()
+
+    async def test_unpersisted_pong_does_not_publish_device_online(
+        self, route_dependencies, route_socket
+    ):
+        deps = route_dependencies
+        deps.heartbeat.handle_pong.return_value = False
+
+        await deps.router.android_agent_ws(
+            route_socket([{"type": "pong", "ts": 1}]), str(deps.device.id)
+        )
+
+        assert deps.publisher.emit.await_count == 1
+        event = deps.publisher.emit.await_args.args[0]
+        assert event.event_type.value == "device.status_change"
+        assert event.payload["status"] == "connecting"
+
+    async def test_first_successful_pong_publishes_device_online_once(
+        self, route_dependencies, route_socket
+    ):
+        deps = route_dependencies
+        deps.heartbeat.handle_pong = AsyncMock(side_effect=[True, True])
+        socket = route_socket([{"type": "pong", "ts": 1}, {"type": "pong", "ts": 2}])
+
+        await deps.router.android_agent_ws(socket, str(deps.device.id))
+
+        assert deps.heartbeat.handle_pong.await_count == 2
+        assert deps.publisher.emit.await_count == 2
+        connecting, online = [call.args[0] for call in deps.publisher.emit.await_args_list]
+        assert connecting.event_type.value == "device.status_change"
+        assert online.event_type.value == "device.online"
+        assert online.device_id == str(deps.device.id)
+        assert online.payload == {"status": "online", "session_id": "unit-session"}
 
 class TestHandleTelemetry:
     async def test_updates_battery(self, status_cache):

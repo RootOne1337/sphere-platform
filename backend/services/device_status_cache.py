@@ -19,11 +19,13 @@ class DeviceStatusCache:
 
     TTL:
         online  → 120s  (агент шлёт heartbeat каждые 30s)
+        connecting → 90s (transient socket state; expire after a failed handshake)
         другой  → 3600s (хранить оффлайн статус 1 час)
     """
 
     KEY_PREFIX = "device:status:"
     TTL_ONLINE = 120
+    TTL_CONNECTING = 90
     TTL_OFFLINE = 3600
     STREAM_DIAGNOSTICS_PREFIX = "device:stream-diagnostics:"
     TTL_STREAM_DIAGNOSTICS = 86400
@@ -71,13 +73,17 @@ class DeviceStatusCache:
 
     # ── Single device ─────────────────────────────────────────────────────────
 
-    async def set_status(self, device_id: str, status: DeviceLiveStatus) -> None:
+    async def set_status(self, device_id: str, status: DeviceLiveStatus) -> bool:
         if self.redis is None:
-            return
+            return False
         key = self._key(device_id)
         data = msgpack.packb(status.model_dump(mode="json"), use_bin_type=True)
-        ttl = self.TTL_ONLINE if status.status == "online" else self.TTL_OFFLINE
-        await self.redis.set(key, data, ex=ttl)
+        ttl = {
+            "online": self.TTL_ONLINE,
+            "busy": self.TTL_ONLINE,
+            "connecting": self.TTL_CONNECTING,
+        }.get(status.status, self.TTL_OFFLINE)
+        return bool(await self.redis.set(key, data, ex=ttl))
 
     async def get_status(self, device_id: str) -> DeviceLiveStatus | None:
         if self.redis is None:

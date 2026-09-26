@@ -698,7 +698,7 @@ async def android_agent_ws(
 
     session_id = await manager.connect(ws, device_id, "android", org_id_str)
 
-    await status_cache.set_status(device_id, DeviceLiveStatus(
+    connecting_status_persisted = await status_cache.set_status(device_id, DeviceLiveStatus(
         device_id=device_id,
         # Auth proves identity, but only the first heartbeat pong proves that
         # the newly published socket is responsive. Do not report false-online
@@ -706,6 +706,25 @@ async def android_agent_ws(
         status="connecting",
         ws_session_id=session_id,
     ))
+    if connecting_status_persisted:
+        try:
+            from backend.schemas.events import EventType, FleetEvent
+            from backend.websocket.event_publisher import get_event_publisher
+            publisher = get_event_publisher()
+            if publisher:
+                await publisher.emit(FleetEvent(
+                    event_type=EventType.DEVICE_STATUS_CHANGE,
+                    device_id=device_id,
+                    org_id=org_id_str,
+                    payload={"status": "connecting", "session_id": session_id},
+                ))
+        except Exception as exc:
+            logger.warning(
+                "android_ws.connecting_event_publish_failed",
+                device_id=device_id,
+                session_id=session_id,
+                error_type=type(exc).__name__,
+            )
 
     # Запустить heartbeat (SPLIT-4)
     from backend.websocket.heartbeat import HeartbeatManager
@@ -718,21 +737,6 @@ async def android_agent_ws(
         pubsub_router = get_pubsub_router()
         if pubsub_router:
             await pubsub_router.subscribe_device(device_id, org_id_str)
-    except Exception:
-        pass
-
-    # Опубликовать device.online событие (SPLIT-5)
-    try:
-        from backend.schemas.events import EventType, FleetEvent
-        from backend.websocket.event_publisher import get_event_publisher
-        publisher = get_event_publisher()
-        if publisher:
-            await publisher.emit(FleetEvent(
-                event_type=EventType.DEVICE_ONLINE,
-                device_id=device_id,
-                org_id=org_id_str,
-                payload={"status": "online", "session_id": session_id},
-            ))
     except Exception:
         pass
 
@@ -774,6 +778,7 @@ async def android_agent_ws(
             pass
 
     keepalive_task = asyncio.create_task(_agent_keepalive_loop())
+    online_event_published = False
 
     try:
         while True:
@@ -789,7 +794,29 @@ async def android_agent_ws(
                 try:
                     match msg.get("type"):
                         case "pong":
-                            await heartbeat.handle_pong(msg)
+                            first_pong_persisted = await heartbeat.handle_pong(msg)
+                            if first_pong_persisted and not online_event_published:
+                                try:
+                                    from backend.schemas.events import EventType, FleetEvent
+                                    from backend.websocket.event_publisher import (
+                                        get_event_publisher,
+                                    )
+                                    publisher = get_event_publisher()
+                                    if publisher:
+                                        await publisher.emit(FleetEvent(
+                                            event_type=EventType.DEVICE_ONLINE,
+                                            device_id=device_id,
+                                            org_id=org_id_str,
+                                            payload={"status": "online", "session_id": session_id},
+                                        ))
+                                        online_event_published = True
+                                except Exception as exc:
+                                    logger.warning(
+                                        "android_ws.online_event_publish_failed",
+                                        device_id=device_id,
+                                        session_id=session_id,
+                                        error_type=type(exc).__name__,
+                                    )
                         case "telemetry":
                             await handle_telemetry(device_id, msg, status_cache)
                         case "task_progress":

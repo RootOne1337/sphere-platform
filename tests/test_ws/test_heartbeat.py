@@ -52,6 +52,50 @@ class TestHeartbeatManager:
         await heartbeat.handle_pong({"type": "pong", "ts": time.time()})
         assert heartbeat._last_pong > before
 
+    async def test_first_persisted_pong_is_reported_once(self, heartbeat, fake_cache):
+        await fake_cache.set_status(
+            "dev-1",
+            DeviceLiveStatus(device_id="dev-1", status="connecting", ws_session_id=None),
+        )
+
+        assert await heartbeat.handle_pong({"type": "pong", "ts": time.time()}) is True
+        assert await heartbeat.handle_pong({"type": "pong", "ts": time.time()}) is False
+
+        status = await fake_cache.get_status("dev-1")
+        assert status is not None and status.status == "online"
+
+    async def test_pong_retries_presence_write_after_redis_failure(self, ws, fake_cache, monkeypatch):
+        await fake_cache.set_status(
+            "dev-1",
+            DeviceLiveStatus(device_id="dev-1", status="connecting"),
+        )
+        heartbeat = HeartbeatManager(ws, "dev-1", fake_cache)
+        set_status = AsyncMock(side_effect=[ConnectionError("isolated Redis write loss"), True])
+        monkeypatch.setattr(fake_cache, "set_status", set_status)
+
+        assert await heartbeat.handle_pong({"type": "pong", "ts": time.time()}) is False
+        assert await heartbeat.handle_pong({"type": "pong", "ts": time.time()}) is True
+        assert set_status.await_count == 2
+
+    async def test_replaced_session_pong_does_not_confirm_online(self, ws, fake_cache):
+        await fake_cache.set_status(
+            "dev-1",
+            DeviceLiveStatus(device_id="dev-1", status="online", ws_session_id="new-session"),
+        )
+        stale = HeartbeatManager(ws, "dev-1", fake_cache, session_id="old-session")
+
+        assert await stale.handle_pong({"type": "pong", "ts": time.time()}) is False
+
+    async def test_first_heartbeat_ping_is_sent_immediately(self, heartbeat, ws):
+        from unittest.mock import patch
+
+        sleep = AsyncMock(side_effect=asyncio.CancelledError())
+        with patch("backend.websocket.heartbeat.asyncio.sleep", sleep):
+            await heartbeat._heartbeat_loop()
+
+        ws.send_json.assert_awaited_once()
+        assert ws.send_json.await_args.args[0]["type"] == "ping"
+
     async def test_pong_updates_battery_in_cache(self, heartbeat, fake_cache):
         await fake_cache.set_status(
             "dev-1",

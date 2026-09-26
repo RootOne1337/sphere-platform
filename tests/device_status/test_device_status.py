@@ -214,6 +214,17 @@ class TestDeviceStatusCache:
         assert DeviceStatusCache.TTL_ONLINE == 120
         assert DeviceStatusCache.TTL_OFFLINE == 3600
 
+    async def test_connecting_presence_has_a_short_recovery_ttl(self, cache):
+        persisted = await cache.set_status(
+            "connecting-device",
+            DeviceLiveStatus(device_id="connecting-device", status="connecting"),
+        )
+
+        ttl = await cache.redis.ttl(cache._key("connecting-device"))
+        assert persisted is True
+        assert DeviceStatusCache.TTL_CONNECTING == 90
+        assert 0 < ttl <= DeviceStatusCache.TTL_CONNECTING
+
 
 class TestFleetEndpoints:
     """Integration tests for fleet status endpoints."""

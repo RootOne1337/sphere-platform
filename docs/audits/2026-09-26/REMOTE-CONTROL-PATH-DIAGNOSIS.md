@@ -45,6 +45,48 @@ Cloudflare не является общим отказом: gateway зафикс
 не развёрнуто на pilot backend. Оно убирает ошибки и rollback в фоновой
 синхронизации БД, но **не чинит отсутствующий pong или reconnect churn**.
 
+## Дополнительная проверка presence-событий — source fix, ещё не развёрнут
+
+Проверка полного WebSocket lifecycle выявила два дополнительных дефекта статуса:
+
+1. При успешной авторизации backend уже записывал Redis `connecting`, но до
+   любого ответа APK публиковал событие `device.online`. Локальный route-level
+   regression сначала воспроизвёл это: подключение без единого `pong` всё равно
+   вызывало `device.online` (1 failed до исправления). Это могло посылать ложный
+   онлайн-сигнал подписчикам/webhook, хотя Fleet API ещё возвращал `connecting`.
+2. Backend сериализует `FleetEvent` как `{event_type, ts}`, а frontend разбирал
+   только `{type, timestamp}`. Regression с точным backend wire payload
+   (`device.status_change`) завершался без invalidation (0 вызовов до исправления),
+   то есть hook пропускал все серверные события.
+3. После восстановления wire parsing оставался несовпадающий event name:
+   backend фактически посылает `device.status_change`, а frontend слушал только
+   `device.status_changed`. Оба дефекта исправлены: hook нормализует реальный
+   backend payload и инвалидирует devices для серверного event name, сохраняя
+   backward compatibility для прежнего `{type, timestamp}` формата.
+
+Source fix: после успешной записи presence backend отправляет `device.status_change`
+со статусом `connecting`; `device.online` публикуется только после первого `pong`,
+который удалось сохранить для текущей WebSocket-сессии. Повторные pong не
+дублируют онлайн-событие, устаревшая заменённая сессия не подтверждает online, а
+неудачная запись Redis не публикуется как успешное состояние. Frontend принимает
+точное серверное имя события и сохраняет совместимость со старым spelling.
+Первый server heartbeat теперь отправляется сразу после соединения, а не после
+ожидания полного 30-секундного интервала. Сохранившийся `connecting` имеет TTL
+90 секунд вместо общего часового TTL offline-состояний; это ограничивает время
+залипания после аварийного завершения worker без cleanup. Первый сохранённый pong
+даёт INFO-диагностику с device/session, RTT и версией APK, если она передана.
+
+После изменений тесты подтверждают: 1) backend-shaped JSON event payload
+инвалидирует device query, 2) без pong публикуется только connecting,
+3) первый сохранённый pong переводит состояние online ровно один раз,
+4) потеря Redis записи допускает retry на следующем pong, 5) stale session и
+неуспешная запись не порождают ложный online, 6) Fleet UI инвалидирует query по
+фактическому `device.status_change`, 7) connecting TTL ограничен. Это улучшает
+точность и скорость presence-диагностики, но **не доказывает, что Android из
+группы `012–020` начнёт отвечать на heartbeat** и не объясняет чёрный экран.
+Изменение остаётся source/PR-only до отдельного rollout и повторного live-среза;
+pilot не перезапускался, APK не менялся.
+
 ## Live-корреляция 26 сентября, 00:59 UTC
 
 | Сигнал | Наблюдение | Что доказывает / не доказывает |
