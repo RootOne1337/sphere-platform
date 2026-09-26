@@ -1,10 +1,31 @@
 # Android presence and APK release audit — 26 September 2026
 
-## Current release and device checkpoint — 26 September 2026, 17:07 UTC
+## Current checkpoint — 26 September 2026, 18:37 UTC
 
-This checkpoint supersedes the older snapshots below for APK source and the two
-Android emulators attached to the audit workstation. It does **not** claim a
-current observation of the remote fleet or the public pilot catalog.
+The two local Android 9 LDPlayer instances are now on pilot
+`1.2.28-dev / 10228`. `emulator-5554` received the candidate by controlled ADB
+install; `emulator-5556` self-installed it by addressable OTA, with PackageManager,
+installed-file SHA-256 and a fresh authenticated heartbeat checked afterward.
+Full emulator OFF/ON without opening the APK brought both agents back through
+their persisted boot job. A third post-OTA boot showed the same Android process,
+foreground service and backend heartbeat, although its API-based harness hit
+operator-login rate limiting. These facts and their exact limits are in
+[the boot and OTA acceptance](ANDROID-COLD-BOOT-AND-OTA-CANARY.md).
+
+The remote canary `auto-ph-025` remains on `1.2.22-dev / 10222`. Its first OTA
+failed before download because the active LocalTunnel host differed from the
+Cloudflare artifact host. A route update was acknowledged, but the next command
+had no Android receipt or version change within 240 seconds, and a separate
+on-demand log request returned 504 while the device reported `online`. The
+source-level trusted-route OTA correction is versioned `1.2.29 / 10229` and is
+not yet installed remotely. The default `android/dev` catalog is still 10209;
+10228 exists only in `android-canary/dev`. **Remote and mass rollout remain NO-GO.**
+
+## Earlier release checkpoint — 26 September 2026, 17:07 UTC
+
+This historical checkpoint covered APK source and the two Android emulators
+attached to the audit workstation. It did **not** sample the remote fleet or
+the public pilot catalog, and has been superseded by the checkpoint above.
 
 | Evidence source | Observed state | What it proves |
 | --- | --- | --- |

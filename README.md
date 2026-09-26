@@ -301,6 +301,22 @@ identity, доверенный ключ и параметры enrollment; APK и
 <a id="status"></a>
 ## 🔬 Состояние проекта и границы проверки
 
+**Текущий срез: 26 сентября 2026, 18:37 UTC.** Локальный pilot backend/frontend
+`64ea436` работает; это не означает, что вся ветка PR #19 развёрнута. На обоих
+локальных LDPlayer установлен pilot APK `1.2.28-dev / 10228`. Полное выключение
+и включение эмуляторов проверено без ручного запуска APK: persisted job поднял
+агент и вернул свежий серверный heartbeat. Удалённый `auto-ph-025` остаётся на
+`1.2.22-dev / 10222`: OTA не подтверждена, запрос журнала при `online` получил 504.
+Обычный OTA-канал `android/dev` остаётся на 10209; 10228 опубликован только в
+`android-canary/dev`. Source fix для переключения доверенных OTA-маршрутов поднят
+до 10229, но **не развёрнут на удалённом парке**. 32-устройственный rollout и
+массовое обновление — **NO-GO** до подтверждённой доставки и post-install receipts.
+[Boot, OTA и точные границы приёмки](docs/audits/2026-09-26/ANDROID-COLD-BOOT-AND-OTA-CANARY.md) ·
+[Удалённый control path](docs/audits/2026-09-26/REMOTE-CONTROL-PATH-DIAGNOSIS.md).
+
+<details>
+<summary>Архивная контрольная точка 25 сентября 2026</summary>
+
 **Контрольная точка: 25 сентября 2026, 14:37:51 Asia/Yekaterinburg.** Pilot
 containers и readiness проверены в это время; последний read-only API aggregate
 датирован 14:30:39, локальные ADB-версии проверены в 14:37. Source fixes ещё не
@@ -324,6 +340,8 @@ containers и readiness проверены в это время; последн�
 | Сетевые отказы | Проверены отдельные отказы Android, серверного входа и обеих сторон | [Матрица и версии проверок](docs/audits/2026-09-05/NETWORK-RECOVERY-NATIVE.md) |
 | Fleet / identities | **NO-GO:** 10 DB records; последний Redis aggregate: 5 `online`, 1 `offline`, 4 без status key; только 3 свежих heartbeat, 2 online без heartbeat timestamp; APK version code известен у одной записи. Это не подтверждает 20 удалённых устройств | [Readiness](docs/operations/READINESS.md) · [Clone identity](docs/audits/2026-09-20/CLONE-IDENTITY.md) |
 | Presence UI | Source fix показывает `connecting` до первого heartbeat pong; pilot ещё не обновлён | [AUD-173: evidence и регрессии](docs/audits/2026-09-25/DEVICE-PRESENCE-FIRST-HEARTBEAT.md) |
+
+</details>
 
 ### Ближайшие эксплуатационные задачи
 
