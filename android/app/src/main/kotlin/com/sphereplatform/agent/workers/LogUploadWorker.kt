@@ -139,14 +139,19 @@ class LogUploadWorker @AssistedInject constructor(
             }
 
             val crashSnapshot = readCrashLogSnapshot()
+            val fileLogs = loggingTree.readRecentLogs(32 * 1024)
+            val priorityLifecycleLogs = withoutFileTailDuplicates(
+                fileLogs,
+                loggingTree.readRecentWebSocketLifecycleLogs(32 * 1024),
+            )
 
             val logs = capUtf8Tail(buildString {
                 append("=== FILE LOGS ===\n")
-                append(loggingTree.readRecentLogs(32 * 1024))
+                append(fileLogs)
                 append("\n=== SPHERE LOGCAT ===\n")
                 append(logcatCollector.collectSphereOnly(lines = 300))
                 append("\n=== PRIORITY WS LIFECYCLE ===\n")
-                append(loggingTree.readRecentWebSocketLifecycleLogs(32 * 1024))
+                append(priorityLifecycleLogs)
                 append("\n=== RECENT SPHERE CRASH ===\n")
                 append(crashSnapshot?.text ?: "No persisted uncaught crash record")
             })
@@ -213,6 +218,16 @@ class LogUploadWorker @AssistedInject constructor(
             ) return@runCatching false
             snapshot.file.delete() || !snapshot.file.exists()
         }.getOrDefault(false)
+    }
+
+    private fun withoutFileTailDuplicates(fileLogs: String, priorityLogs: String): String {
+        val fileLifecycleLines = fileLogs.lineSequence()
+            .filter { it.contains("ws_lifecycle ") }
+            .toSet()
+        val missingLines = priorityLogs.lineSequence()
+            .filter { it.contains("ws_lifecycle ") && it !in fileLifecycleLines }
+            .toList()
+        return if (missingLines.isEmpty()) "" else missingLines.joinToString(separator = "\n", postfix = "\n")
     }
 
     private fun capUtf8Tail(value: String): String {

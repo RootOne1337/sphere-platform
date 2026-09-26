@@ -156,6 +156,22 @@ class LogUploadWorkerTest {
         }
     }
 
+    @Test fun `priority websocket events are not duplicated when present in the regular tail`() = runTest {
+        prepareUploadCredentials()
+        val event = "2026-09-26T17:08:19.567 I/SphereWebSocketClient: ws_lifecycle event=onFailure attempt_id=1 route_slot=0 phase=authenticated error_type=SocketTimeoutException"
+        every { loggingTree.readRecentLogs(any()) } returns "ordinary log line\n$event\n"
+        every { loggingTree.readRecentWebSocketLifecycleLogs(any()) } returns "$event\n"
+
+        assertEquals(Result.success(), worker().doWork())
+
+        val body = Buffer().also { requests.single().body!!.writeTo(it) }.readUtf8()
+        assertEquals(
+            "upload must contain a lifecycle event once even when both bounded sources return it",
+            1,
+            body.lineSequence().count { it.contains("ws_lifecycle event=onFailure") },
+        )
+    }
+
     private fun prepareUploadCredentials() {
         every { auth.getToken() } returns "access-token"
         every { auth.getServerUrl() } returns "https://management.test"
