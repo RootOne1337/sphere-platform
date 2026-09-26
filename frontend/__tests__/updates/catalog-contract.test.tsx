@@ -21,3 +21,17 @@ it('describes catalog-wide periodic delivery without offering a broken direct pu
   expect(screen.queryByRole('button', { name: 'PH006' })).not.toBeInTheDocument();
   expect(api.post).not.toHaveBeenCalled();
 });
+
+it('shows canary releases in the default catalog view without implying normal agents poll them', async () => {
+  (api.get as jest.Mock).mockResolvedValue({ data: { releases: [{
+    id: 'canary-10228', platform: 'android-canary', flavor: 'dev', version_code: 10228,
+    version_name: '1.2.28-dev', download_url: '/api/v1/updates/artifacts/' + 'b'.repeat(64),
+    sha256: 'b'.repeat(64), mandatory: false, changelog: null,
+    created_at: '2026-09-26T18:07:01Z',
+  }], total: 1 } });
+
+  render(<UpdatesPage />);
+  expect(await screen.findByText('v1.2.28-dev')).toBeInTheDocument();
+  expect(screen.getByText(/normal Android agents do not poll this channel/i)).toBeInTheDocument();
+  expect(api.get).toHaveBeenCalledWith('/updates/?');
+});

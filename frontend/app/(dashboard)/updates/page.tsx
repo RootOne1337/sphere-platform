@@ -120,6 +120,7 @@ function CreateReleaseDialog({ onCreated }: { onCreated: () => void }) {
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="android">Android</SelectItem>
+                  <SelectItem value="android-canary">Android canary</SelectItem>
                   <SelectItem value="pc">PC (Windows)</SelectItem>
                 </SelectContent>
               </Select>
@@ -207,9 +208,10 @@ function CreateReleaseDialog({ onCreated }: { onCreated: () => void }) {
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function UpdatesPage() {
+  const [platformFilter, setPlatformFilter] = useState<string>('all');
   const [flavorFilter, setFlavorFilter] = useState<string>('all');
   const { data, loading, error, refetch } = useReleases(
-    'android',
+    platformFilter === 'all' ? undefined : platformFilter,
     flavorFilter === 'all' ? undefined : flavorFilter,
   );
 
@@ -240,13 +242,25 @@ export default function UpdatesPage() {
 
       <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 px-4 py-3 text-sm text-muted-foreground">
         Publishing a release makes it eligible for all agents of that flavor on their next
-        scheduled check. Android scheduling and connectivity can delay delivery. This page
-        does not target a single device or confirm installation; verify the installed version
-        before expanding a rollout.
+        scheduled check <strong>only when the platform also matches</strong>. Registering a
+        release does not upload the APK. Android scheduling and connectivity can delay
+        delivery. This page does not target a single device or confirm installation;
+        verify the installed version before expanding a rollout.
       </div>
 
       {/* Filters */}
       <div className="flex gap-3 items-center">
+        <Select value={platformFilter} onValueChange={setPlatformFilter}>
+          <SelectTrigger className="w-[180px]" aria-label="Platform filter">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All platforms</SelectItem>
+            <SelectItem value="android">Android</SelectItem>
+            <SelectItem value="android-canary">Android canary</SelectItem>
+            <SelectItem value="pc">PC</SelectItem>
+          </SelectContent>
+        </Select>
         <Select value={flavorFilter} onValueChange={setFlavorFilter}>
           <SelectTrigger className="w-[160px]">
             <SelectValue />
@@ -283,6 +297,11 @@ export default function UpdatesPage() {
                     <Badge variant="destructive" className="text-xs">Mandatory</Badge>
                   )}
                 </div>
+                {release.platform === 'android-canary' && (
+                  <div className="text-xs text-amber-500 mt-1">
+                    Canary catalog only: normal Android agents do not poll this channel.
+                  </div>
+                )}
                 <div className="text-xs text-muted-foreground mt-1">
                   Version code {release.version_code} · Released {new Date(release.created_at).toLocaleString()}
                 </div>
