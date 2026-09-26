@@ -1,5 +1,9 @@
 # Android presence and APK release audit — 26 September 2026
 
+> This is a dated acceptance checkpoint. For later installed versions,
+> 40–60-second remote WSS churn, OTA catalog state, and the 1.2.30 local boot
+> proof, see the [27 September operational follow-up](../2026-09-27/REMOTE-CONNECTION-AND-OTA-GATES.md).
+
 ## Current checkpoint — 26 September 2026, 18:37 UTC
 
 The two local Android 9 LDPlayer instances are now on pilot
