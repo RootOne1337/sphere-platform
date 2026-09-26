@@ -839,15 +839,21 @@ system/native crash, ANR или LMK buffers. Полный список gates и 
 Android reconnect policy исправлена в source: короткая авторизованная сессия
 больше не обнуляет retry debt, abnormal close и heartbeat timeout используют
 transport recovery, token не очищается на `4008`. До fix новые regression tests
-падали на failover для `1005` и сохранении token cache для `4008`; после — 663
-unit tests, целевые WebSocket suites, lint и debug-сборка прошли. Версия source
-увеличена до `1.2.24-dev` / `10224`.
+падали на failover для `1005` и сохранении token cache для `4008`; после — 665
+unit tests для каждого flavor, целевые WebSocket suites, lint и сборки прошли.
+Версия source увеличена до `1.2.25-dev` / `10225`. В APK добавлены
+redacted `ws_lifecycle` логи для handshake/transport failures и close 1005;
+регрессии проверяют phase, route slot/status и отсутствие URL, device ID, token
+и close reason в структурированной записи.
 
 **Это не rollout и не разрешение массово обновлять устройства.** Локальный
-pilot candidate 1.2.24-dev/code 10224 собран из commit `8f5daf8` с подписанным
+pilot candidate 1.2.25-dev/code 10225 собран из commit `9c447f5` с подписанным
 discovery manifest v25; его APK подпись совпадает с локальным pilot baseline.
-Артефакт `.local-pilot/apk/SphereAgent-pilot-candidate-1.2.24-dev-8f5daf8.apk`,
-SHA-256 `49e0197e3066ff3e0551b8e47da7f80e6bb2ba171c294883d69cc755d6f14a29`.
+DevDebug и EnterpriseDebug прошли по 665 unit tests (0 failures/errors; один
+пропуск в каждом flavor), `assembleDevRelease` и `lintDevDebug` завершились
+успешно. Артефакт
+`.local-pilot/apk/SphereAgent-pilot-candidate-1.2.25-dev-9c447f5.apk`, SHA-256
+`07c0047054dfc1162cb56673e30b5353e51a20db911f8e69dc226c26270d6dcd`.
 Он использует локальную debug/pilot подпись, не production signer. Production
 release key в этой среде не настроен; OTA не публиковался и установка не
 выполнялась. Хотя signed discovery v25 включён в candidate, реальное

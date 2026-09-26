@@ -300,12 +300,18 @@ threshold.
 экспоненциальный jitter, поворот на следующий сохранённый route и существующий
 circuit breaker. `4008` больше не очищает token cache; настоящий credential
 rejection по `4001/4003/4004` по-прежнему запускает обновление токена. После
-изменения проходят все 663 Android unit tests, три целевых WebSocket suites и
-`lintDevDebug`; `assembleDevDebug` успешен. Source version увеличена до
-`1.2.24-dev` / `10224`. Первичная обычная сборка не включала подтверждённый
-pilot discovery; после неё выполнен отдельный candidate pipeline с подписанным
-discovery manifest v25 и локальной pilot-подписью. OTA не публиковался, APK на
-устройства не устанавливался. Lint завершился без ошибок, но
+изменения проходят все 665 Android unit tests, целевые WebSocket suites и
+`lintDevDebug`; `assembleDevDebug`, `assembleDevRelease` и `assembleEnterpriseDebug`
+успешны. Source version увеличена до `1.2.25-dev` / `10225`. APK теперь пишет
+компактные `ws_lifecycle` события для `onFailure`, `onClosed` и handshake
+timeout: attempt, слот/число маршрутов, фазу, длительности, HTTP-статус, тип
+исключения и close code. Структурированная запись не содержит URL, device ID,
+token, текста исключения или close reason; два новых regression tests проверяют
+обе callback-ветки и редактирование чувствительных значений. Первичная обычная
+сборка не включала подтверждённый pilot discovery; после неё выполнен отдельный
+candidate pipeline с подписанным discovery manifest v25 и локальной
+pilot-подписью. OTA не публиковался, APK на устройства не устанавливался. Lint
+завершился без ошибок, но
 содержит 65 предупреждений (36 `GradleDependency`, 12 `UnusedResources` и 17
 прочих); ни одно из них не относится к изменённым WebSocket-файлам. Это отдельный
 технический долг, не основание считать reconnect-fix lint-clean во всём APK.
@@ -330,17 +336,17 @@ discovery manifest v25 и локальной pilot-подписью. OTA не п
 
 ### Подписанный локальный canary candidate — 26 сентября
 
-Построен из source commit `8f5daf8501667551640eeb9d8b06f46fc24aae6b` файл
-`.local-pilot/apk/SphereAgent-pilot-candidate-1.2.24-dev-8f5daf8.apk`:
+Построен из source commit `9c447f569a69811287da4c14c2341723f262a7eb` файл
+`.local-pilot/apk/SphereAgent-pilot-candidate-1.2.25-dev-9c447f5.apk`:
 
-- package `com.sphereplatform.agent.pilot.debug`, version `1.2.24-dev` / code
-  `10224`, размер 8,502,672 байта;
-- SHA-256 `49e0197e3066ff3e0551b8e47da7f80e6bb2ba171c294883d69cc755d6f14a29`;
+- package `com.sphereplatform.agent.pilot.debug`, version `1.2.25-dev` / code
+  `10225`, размер 8,420,301 байт;
+- SHA-256 `07c0047054dfc1162cb56673e30b5353e51a20db911f8e69dc226c26270d6dcd`;
 - APK signature проверена Android `apksigner`; сертификат совпадает с локальным
   pilot baseline signer. Это debug/pilot signer, не production release key;
 - встроен проверенный подписанный discovery manifest v25; management URL в APK
   не зашит;
-- DevDebug и EnterpriseDebug: по 663 unit tests, 0 failures/errors и по 1
+- DevDebug и EnterpriseDebug: по 665 unit tests, 0 failures/errors и по 1
   skipped test;
 - локальный candidate и metadata находятся в ignored `.local-pilot/`; APK не
   установлен, не загружен в GitHub/OTA и не опубликован.
