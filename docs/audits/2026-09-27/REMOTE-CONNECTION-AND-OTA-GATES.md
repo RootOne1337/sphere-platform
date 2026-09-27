@@ -20,7 +20,8 @@ API вернул 16 зарегистрированных записей: 12 `onl
 | P1 | Резервный ingress неработоспособен | Primary `/api/v1/health/readyz` → 200; подписанный fallback LocalTunnel → 502. `sphere-pilot-alt-ingress-20260926` запущен и из него origin gateway отвечает 200, но у контейнера нет healthcheck и restart policy | Не считать опубликованный fallback отказоустойчивым; восстановить управляемый второй ingress и принять health/WSS/command/frame на одном canary |
 | P1 | Дистанционная OTA не доказана | `android/dev` каталог отдаёт только 10209. 10230 опубликован только в `android-canary/dev`; одна адресная попытка на PH022 завершилась `failed/timeout`, версия осталась 10222 | Не открывать общий канал до адресной установки с PackageManager, SHA и свежим heartbeat |
 | P2 | Прямой Redis OTA обходил сохранённую выдачу | За 20 минут backend записал 37 `ota_recovery_receipt_unrecognized` для remote PH025 и 40 для local PH010. Android помечает все `OTA_UPDATE` как recovery receipt, backend признаёт только подписанный и сохранённый grant. Путь `POST /updates/recovery` уже существует; прямой Redis dispatch его обходит. `966e56f` классифицирует отказ, но **не ACK** | Не использовать прямой Redis как rollout-путь; испытать адресный recovery grant и receipt, сохранив fail-closed проверку |
-| P1 | Удалённые кадры не достигают backend | PH022: Android сообщил 15 encoded frames / 142002 байта, 17/17 локально принятых WS queue calls; backend получил 9 NAL-пакетов / 281 байт, только SPS/PPS. Redis и viewer передали те же 9/281; local PH010 дал IDR/P и 80774 байта ingress | Локализовать разрыв между очередью OkHttp и ASGI ingress; отдельный ingress A/B и packet/ack probes, без предположения, что виноват один Cloudflare |
+| P1 | Удалённый viewer не получает IDR/P | PH022: Android сообщил 15 encoded frames / 142002 байта и 17/17 локально принятых WS queue calls; оба прямых viewer получили только SPS. Один scrape backend worker показал 9 NAL-пакетов / 281 байт, но его нельзя считать суммой четырёх процессов | Разделить ingress каждого backend worker и Redis/viewer; затем локализовать потерю между Android queue и viewer без предположения о единственной причине Cloudflare |
+| P1 | `/metrics` показывает неполные счётчики | 120 параллельных GET показали четыре разных `process_start_time_seconds`, а deployment не включает Prometheus multiprocess mode; один scrape читает память одного Gunicorn worker. Поэтому прошлые ingress/Redis/viewer totals нельзя выдавать за общие | Спроектировать worker-safe сбор без бесконечной per-device cardinality; проверить 4-worker aggregation на изолированном runtime до pilot rollout |
 | P2 | Веб скрывал canary-релизы | `/updates` запрашивал только `android`; backend хранит 12 релизов, включая `android-canary` 10228 | Исправлено `213402b`, regression до/после; pilot frontend развёрнут из `8fef5eb` |
 
 У PH025 за тот же интервал backend записал 21 успешную аутентификацию и 21
@@ -100,13 +101,24 @@ GitHub Releases; на remote он не установлен.
 Для **одного и того же удалённого PH022** локальный и публичный viewer получили
 только один SPS-пакет (37 байт), без IDR/P. Android сообщил 15 encoded frames /
 142002 байта и 17 успешных постановок в локальную WebSocket-очередь. Это ещё
-не подтверждает сетевую доставку. Backend ingress получил 9 NAL-пакетов /
-281 байт, все SPS/PPS; Redis publish и viewer send совпали с ingress. У
-локального PH010 в том же срезе ingress содержал 8 пакетов / 80774 байта,
-включая IDR/P. Значит, чёрный экран PH022 в этом пробе вызван отсутствием
-кадров уже на входе backend. Потеря локализована между `OkHttp.enqueue` и
-ASGI binary receive. Конкретный сетевой узел ещё не доказан; гипотеза о
-Cloudflare как единственной причине остаётся гипотезой.
+не подтверждает сетевую доставку. Один scrape `/metrics` показал для PH022
+9 NAL-пакетов / 281 байт, все SPS/PPS, и равные счётчики Redis/viewer; для
+локального PH010 в том scrape были IDR/P и 80774 байта ingress.
+
+**Ограничение измерения обнаружено позже.** Gunicorn запускает четыре worker,
+а `/metrics` используется без `PROMETHEUS_MULTIPROC_DIR` и отдельного
+`MultiProcessCollector`. В 120 параллельных GET обнаружены четыре разных
+`process_start_time_seconds`: scrape читает один процесс. Следовательно,
+9/281 и 8/80774 — показатели одного worker, **не глобальные суммы backend**.
+Нельзя утверждать, что кадры потеряны обязательно до ASGI. Доказаны только
+локальная постановка Android в очередь и отсутствие IDR/P у двух viewer;
+разрыв находится где-то между ними, включая возможную backend/Redis-доставку.
+Точный сетевой узел и гипотеза о Cloudflare как единственной причине не доказаны.
+Официальные [Prometheus Python multiprocess constraints](https://prometheus.github.io/client_python/multiprocess/)
+и [интеграция starlette-exporter](https://github.com/stephenhillier/starlette_exporter#multi-process-mode-gunicorn-deployments)
+требуют предварительной очистки каталога и Gunicorn `child_exit`; кроме того,
+`Gauge.remove` и `Counter` с `device_id` в текущем коде требуют отдельного
+решения по cardinality до включения multiprocess mode.
 
 Попытка `REQUEST_LOGS` к PH022 вернула HTTP 504 через 15 секунд, а сохранённый
 log upload устройства был пуст. Это отдельный пробел управляемости: состояние
@@ -165,8 +177,9 @@ ignored `.local-pilot/remote/live-stream-canary-20260927-ph022/` и
    delivery/download/SHA/PackageInstaller,
    установленный versionCode и heartbeat после перезапуска APK. Только после
    этого открыть общий `android/dev` канал по ступеням 1→4→8→16→32 с rollback.
-4. Проверить moving frames независимо: encoder на Android, исходящий счётчик,
-   ingress/backend, первый IDR/P, декодирование в браузере и поведение после
+4. Исправить worker-safe метрики, затем проверить moving frames независимо:
+   encoder на Android, исходящий счётчик, ingress каждого worker, первый IDR/P,
+   декодирование в браузере и поведение после
    40/60-секундного reconnect. `online` не является доказательством видео.
 
 [Приёмка boot и прежней OTA](../2026-09-26/ANDROID-COLD-BOOT-AND-OTA-CANARY.md) ·
