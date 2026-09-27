@@ -105,6 +105,7 @@ class TestAndroidAgentPresenceEvents:
             start=AsyncMock(),
             stop=AsyncMock(),
             handle_pong=AsyncMock(return_value=True),
+            note_transport_activity=MagicMock(),
         )
         publisher = SimpleNamespace(emit=AsyncMock())
 
@@ -222,6 +223,27 @@ class TestAndroidAgentPresenceEvents:
         assert online.event_type.value == "device.online"
         assert online.device_id == str(deps.device.id)
         assert online.payload == {"status": "online", "session_id": "unit-session"}
+
+    async def test_keepalive_ack_refreshes_transport_only_and_does_not_publish_presence(
+        self, route_dependencies, route_socket
+    ):
+        deps = route_dependencies
+
+        await deps.router.android_agent_ws(
+            route_socket([{"type": "keepalive_ack", "ts": 1}]), str(deps.device.id)
+        )
+
+        deps.heartbeat.note_transport_activity.assert_called_once_with(
+            {"type": "keepalive_ack", "ts": 1}
+        )
+        deps.heartbeat.handle_pong.assert_not_awaited()
+        # Authentication publishes only "connecting"; ACK is not device-online evidence.
+        assert deps.publisher.emit.await_count == 1
+        event = deps.publisher.emit.await_args.args[0]
+        assert event.event_type.value == "device.status_change"
+        assert event.payload["status"] == "connecting"
+        # The only cache write is the initial connecting state.
+        assert deps.status_cache.set_status.await_count == 1
 
 class TestHandleTelemetry:
     async def test_updates_battery(self, status_cache):

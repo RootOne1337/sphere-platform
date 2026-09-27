@@ -516,13 +516,64 @@ installed version отсутствует, heartbeat всё ещё сообщае
 использовал разрешённый `tail`, но ответ не пришёл. Поэтому диагностический
 журнал не даёт установить, где именно возник timeout скачивания/установки.
 
+### Граница потери remote-видео и двусторонний keepalive · 2026-09-27
+
+Это сравнение относится к pilot backend и canary `1.2.32-dev / 10232`, не к
+массовому парку. На локальном PH011 короткая 20-секундная viewer-сессия дала
+7 бинарных пакетов (44 590 байт: SPS, PPS, IDR и 4 non-IDR). Для remote PH028
+60-секундная сессия дала viewer 4 бинарных пакета общим объёмом 122 байта —
+только SPS/PPS, без IDR/P. Последний полученный Android stream snapshot
+сообщал накопленные 13 capture/render/encode кадров и 107 694 encoded bytes,
+15 принятых OkHttp queue submissions, 0 отказов и 0 capture/render/encoder
+ошибок. При этом текущие FPS в этом snapshot уже были нулевыми. Queue accepted
+означает только постановку в очередь клиента, не доставку на сервер.
+
+На проверенном backend worker счётчики lifetime ingress показывали 17 кадров
+и 525 байт, только SPS/PPS; эти же данные были опубликованы в Redis и отправлены
+viewer. Значит обработка и пересылка фактически полученных metadata кадров
+сработала. Расхождение с Android cumulative 107 694 encoded bytes помещает
+наблюдаемую потерю между локальной очередью OkHttp и binary ingress ASGI. Это
+не доказывает, что виноват Cloudflare: счётчики Prometheus process-local,
+один worker не представляет весь многопроцессный backend, а lifetime Android
+счётчик не является точным receipt одной viewer-сессии.
+
+В локальной и удалённой установках совпадают APK и backend, но не сетевой путь:
+локальная проверка не проходит публичный Cloudflare Quick Tunnel и внешний
+gateway. При этом nginx pilot gateway настроен на HTTP/1.1 Upgrade, без
+buffering, с proxy timeouts 120 секунд; в его журнале есть WSS-сеансы
+39,999–59,998 секунды. Эти настройки не объясняют потерю конкретных frame bytes
+и не показывают, дошли ли Android uploads до туннеля.
+
+Обнаружен отдельный дефект двусторонней живости: backend отправлял `noop` каждые
+10 секунд как tunnel keepalive, а APK намеренно игнорировал сообщение. Ответ
+возвращался только с полным heartbeat примерно раз в 30 секунд. Исправление
+добавляет безтелеметрийный `keepalive_ack`; backend использует его только для
+сброса transport watchdog и не меняет online presence или Redis-состояние.
+Android version code поднят до `10233` (`1.2.33-dev`) для отдельного
+`android-canary/dev` эксперимента. Низкокардинальные метрики
+`sphere_android_ws_keepalive_ack_total` и
+`sphere_android_ws_keepalive_ack_rtt_seconds` дают счётчик ответов и RTT без
+device ID labels; метрики всё ещё process-local. ACK может уменьшить разрывы при
+асимметричном/idle маршруте, но пока не доказано, что именно этот дефект терял
+видеокадры. Ни локальные тесты, ни успешный WebSocket ACK не являются приёмкой
+видеопотока.
+
+Перед объявлением результата требуется одна remote canary-сессия на `10233`:
+подтвердить установленный build, несколько минут WSS без 40/60-секундного
+разрыва, поступление ACK с интервалом около 10 секунд, затем кадры IDR и P в
+ASGI ingress и движущиеся кадры у viewer. Сверить Android submitted bytes с
+per-session/per-worker ingress bytes, а не только Prometheus single-worker
+lifetime totals. Если ACK приходит, но binary ingress остаётся пустым,
+keepalive-гипотеза отвергнута для видеопотери; следующий эксперимент должен
+измерить Android queue growth/close reason и параллельно сравнить независимый
+публичный ingress. Production OTA и Fleet32 остаются **NO-GO**.
+
 ## Контрольные шаги для следующей итерации
 
-1. На одной удалённой canary 10232 измерить исчезновение 15-секундного
-   control-pong timeout, длительность WSS, backend heartbeat и команду; затем
-   доказать доставку IDR/P и движущихся кадров. Если сессия всё ещё рвётся,
-   сравнить `onFailure`, route slot, gateway duration и независимый ingress.
-   Краткий WSS upgrade не является приёмкой.
+1. На одной удалённой canary 10233 проверить двусторонний keepalive ACK,
+   длительность WSS, обычный heartbeat и команду; отдельно доказать remote
+   binary ingress IDR/P и движущиеся кадры viewer. Краткий WSS upgrade/ACK не
+   является приёмкой.
 2. Локальная OTA через сохранённый grant прошла; remote PH017 доказал нормальную
    доставку команды и durable `failed/timeout` receipt без установки APK.
    Следующий шаг — определить, завершилось ли чтение тела APK и какой именно
@@ -532,10 +583,9 @@ installed version отсутствует, heartbeat всё ещё сообщае
    delivery/download/SHA/PackageInstaller,
    установленный versionCode и heartbeat после перезапуска APK. Только после
    этого открыть общий `android/dev` канал по ступеням 1→4→8→16→32 с rollback.
-4. Исправить worker-safe метрики, затем проверить moving frames независимо:
-   encoder на Android, исходящий счётчик, ingress каждого worker, первый IDR/P,
-   декодирование в браузере и поведение после
-   40/60-секундного reconnect. `online` не является доказательством видео.
+4. Согласовать Android submitted bytes с ingress на каждом backend worker;
+   проверить первый IDR/P, декодирование, moving frames и reconnect после
+   40/60 секунд. `online` не является доказательством видео.
 
 [Приёмка boot и прежней OTA](../2026-09-26/ANDROID-COLD-BOOT-AND-OTA-CANARY.md) ·
 [Подробный remote control path](../2026-09-26/REMOTE-CONTROL-PATH-DIAGNOSIS.md) ·

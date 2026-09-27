@@ -39,6 +39,15 @@ ws_messages_total = Counter(
     "WebSocket messages processed",
     ["direction", "role"],
 )
+android_ws_keepalive_ack_total = Counter(
+    "sphere_android_ws_keepalive_ack_total",
+    "Authenticated Android WebSocket keepalive acknowledgements received",
+)
+android_ws_keepalive_ack_rtt_seconds = Histogram(
+    "sphere_android_ws_keepalive_ack_rtt_seconds",
+    "Round-trip time for the 10-second Android WebSocket keepalive",
+    buckets=[0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0],
+)
 
 # ---------------------------------------------------------------------------
 # Devices

@@ -46,11 +46,35 @@ class TestHeartbeatManager:
 
     # ── handle_pong ───────────────────────────────────────────────────────────
 
-    async def test_pong_updates_last_pong_timestamp(self, heartbeat):
-        heartbeat._last_pong = asyncio.get_running_loop().time() - 10
-        before = heartbeat._last_pong
+    async def test_pong_updates_last_agent_response_timestamp(self, heartbeat):
+        heartbeat._last_agent_response = asyncio.get_running_loop().time() - 10
+        before = heartbeat._last_agent_response
         await heartbeat.handle_pong({"type": "pong", "ts": time.time()})
-        assert heartbeat._last_pong > before
+        assert heartbeat._last_agent_response > before
+
+    async def test_transport_activity_refreshes_watchdog_and_metrics_without_presence_write(
+        self, heartbeat, fake_cache, monkeypatch
+    ):
+        from unittest.mock import Mock
+
+        ack_count = Mock()
+        ack_rtt = Mock()
+        monkeypatch.setattr(
+            "backend.websocket.heartbeat.android_ws_keepalive_ack_total.inc", ack_count
+        )
+        monkeypatch.setattr(
+            "backend.websocket.heartbeat.android_ws_keepalive_ack_rtt_seconds.observe",
+            ack_rtt,
+        )
+        heartbeat._last_agent_response = time.monotonic() - 10
+        before = heartbeat._last_agent_response
+
+        heartbeat.note_transport_activity({"type": "keepalive_ack", "ts": time.time()})
+
+        assert heartbeat._last_agent_response > before
+        assert await fake_cache.get_status("dev-1") is None
+        ack_count.assert_called_once_with()
+        ack_rtt.assert_called_once()
 
     async def test_first_persisted_pong_is_reported_once(self, heartbeat, fake_cache):
         await fake_cache.set_status(

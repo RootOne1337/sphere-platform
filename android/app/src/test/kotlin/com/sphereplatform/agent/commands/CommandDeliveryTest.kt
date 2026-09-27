@@ -481,7 +481,7 @@ class CommandDeliveryTest {
         // runTest fails on an uncaught exception from the application's launch callback.
     }
 
-    @Test fun backendNoopKeepaliveIsIgnoredWithoutCommandParseWarning() = runTest {
+    @Test fun backendNoopKeepaliveGetsTransportAckWithoutCommandDispatch() = runTest {
         val warnings = mutableListOf<String>()
         val tree = object : Timber.Tree() {
             override fun log(priority: Int, tag: String?, message: String, t: Throwable?) {
@@ -491,10 +491,11 @@ class CommandDeliveryTest {
         Timber.plant(tree)
         try {
             val dispatcher = dispatcher(backgroundScope)
-            callback.captured!!(buildJsonObject { put("type", "noop") })
+            callback.captured!!(buildJsonObject { put("type", "noop"); put("ts", 123.5) })
             runCurrent()
             assertTrue(warnings.none { it.contains("Cannot parse command") })
-            assertTrue(messages.isEmpty())
+            assertEquals("keepalive_ack", messages.single()["type"]?.jsonPrimitive?.content)
+            assertEquals(123.5, messages.single()["ts"]!!.jsonPrimitive.double, 0.0)
             coVerify(exactly = 0) { dag.execute(any(), any(), any()) }
             dispatcher.stop()
         } finally {

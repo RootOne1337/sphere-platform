@@ -11,6 +11,10 @@ import structlog
 from fastapi import WebSocket, WebSocketDisconnect
 from pydantic import ValidationError
 
+from backend.metrics import (
+    android_ws_keepalive_ack_rtt_seconds,
+    android_ws_keepalive_ack_total,
+)
 from backend.schemas.device_status import DeviceLiveStatus
 from backend.services.device_status_cache import DeviceStatusCache
 
@@ -94,7 +98,7 @@ class HeartbeatManager:
         self.device_id = device_id
         self.status_cache = status_cache
         self._session_id = session_id
-        self._last_pong: float = time.monotonic()
+        self._last_agent_response: float = time.monotonic()
         self._first_pong_persisted = False
         self._previous_failure_reported = False
         self._task: asyncio.Task | None = None
@@ -113,13 +117,14 @@ class HeartbeatManager:
     async def _heartbeat_loop(self) -> None:
         while True:
             try:
-                # Проверить когда был последний pong
-                since_pong = time.monotonic() - self._last_pong
-                if since_pong > (HEARTBEAT_INTERVAL + HEARTBEAT_TIMEOUT):
+                # Any authenticated agent response keeps the transport alive.
+                # Only a full pong persists device presence/telemetry below.
+                since_response = time.monotonic() - self._last_agent_response
+                if since_response > (HEARTBEAT_INTERVAL + HEARTBEAT_TIMEOUT):
                     logger.warning(
-                        "Agent heartbeat timeout",
+                        "Agent response timeout",
                         device_id=self.device_id,
-                        since_pong_s=round(since_pong, 1),
+                        since_response_s=round(since_response, 1),
                     )
                     try:
                         await self.ws.close(code=4008, reason="heartbeat_timeout")
@@ -147,10 +152,26 @@ class HeartbeatManager:
                 )
                 return
 
+    def note_transport_activity(self, msg: dict) -> None:
+        """Refresh the socket watchdog without persisting presence or telemetry.
+
+        The 10-second keepalive ACK proves that an authenticated application
+        message traversed the route in both directions. Device status remains
+        owned by ``handle_pong`` and its regular telemetry heartbeat. A
+        low-cardinality counter and RTT histogram expose the canary behavior.
+        """
+        self._last_agent_response = time.monotonic()
+        android_ws_keepalive_ack_total.inc()
+        sent_at = msg.get("ts")
+        if isinstance(sent_at, (int, float)) and not isinstance(sent_at, bool):
+            elapsed = time.time() - sent_at
+            if 0 <= elapsed <= 300:
+                android_ws_keepalive_ack_rtt_seconds.observe(elapsed)
+
     async def handle_pong(self, msg: dict) -> bool:
         """Persist liveness and return True only for this session's first saved pong."""
         now = time.monotonic()
-        self._last_pong = now
+        self._last_agent_response = now
         latency_ms: float | None = None
 
         # Логировать latency для мониторинга

@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import time
 import uuid
 
 import structlog
@@ -824,15 +825,15 @@ async def android_agent_ws(
     except Exception as e:
         logger.debug("Stream resume skipped", device_id=device_id, error=str(e))
 
-    # FIX-CLOUDFLARE: Lightweight keepalive ping каждые 10 секунд.
-    # Cloudflare Quick Tunnel дропает WebSocket при отсутствии upstream трафика.
-    # Heartbeat (30s) слишком редкий. Этот ping — просто empty JSON для поддержания TCP.
+    # Lightweight application keepalive every 10 seconds. The agent ACKs it so
+    # the public route carries traffic in both directions between full
+    # telemetry heartbeats. This is not proof that a media frame was delivered.
     async def _agent_keepalive_loop() -> None:
         try:
             while True:
                 await asyncio.sleep(10)
                 try:
-                    await ws.send_json({"type": "noop"})
+                    await ws.send_json({"type": "noop", "ts": time.time()})
                 except Exception:
                     break
         except asyncio.CancelledError:
@@ -878,6 +879,8 @@ async def android_agent_ws(
                                         session_id=session_id,
                                         error_type=type(exc).__name__,
                                     )
+                        case "keepalive_ack":
+                            heartbeat.note_transport_activity(msg)
                         case "telemetry":
                             await handle_telemetry(device_id, msg, status_cache)
                         case "task_progress":

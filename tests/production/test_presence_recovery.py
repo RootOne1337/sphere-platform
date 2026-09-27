@@ -57,10 +57,10 @@ async def test_first_pong_promotes_connecting_presence_to_online(world, presence
 async def test_redis_outage_does_not_kill_heartbeat_and_next_pong_recovers(world, presence_cache):
     device_id = str(world.dev_a.id)
     heartbeat = HeartbeatManager(AsyncMock(), device_id, presence_cache)
-    previous = heartbeat._last_pong
+    previous = heartbeat._last_agent_response
     with patch.object(presence_cache.redis, "get", AsyncMock(side_effect=ConnectionError("isolated Redis outage"))):
         await heartbeat.handle_pong({"type": "pong", "ts": time.time()})
-    assert heartbeat._last_pong >= previous
+    assert heartbeat._last_agent_response >= previous
     await heartbeat.handle_pong({"type": "pong", "ts": time.time()})
     assert (await presence_cache.get_status(device_id)).status == "online"
 

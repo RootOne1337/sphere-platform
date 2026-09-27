@@ -213,9 +213,16 @@ class CommandDispatcher @Inject constructor(
     private suspend fun handleMessage(msg: JsonObject) {
         // System streaming messages — NOT IncomingCommand format, handle first
         when (msg["type"]?.jsonPrimitive?.contentOrNull) {
-            // Transport keepalive emitted by the backend. It is intentionally
-            // outside IncomingCommand and requires no acknowledgement.
-            "noop" -> return
+            // Keep the backend's authenticated WebSocket path bidirectional.
+            // This tiny ACK is transport-only: it carries no telemetry and does
+            // not create a command receipt or a Redis presence write.
+            "noop" -> {
+                wsClient.sendJson(buildJsonObject {
+                    put("type", "keepalive_ack")
+                    msg["ts"]?.let { put("ts", it) }
+                })
+                return
+            }
             "result_ack" -> {
                 try {
                     msg["command_id"]?.jsonPrimitive?.contentOrNull?.let { commandJournal.acknowledge(it) }
