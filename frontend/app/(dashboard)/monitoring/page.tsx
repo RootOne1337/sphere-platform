@@ -1,51 +1,42 @@
 'use client';
-import { useState, useEffect } from 'react';
-import { Activity, Server, Database, HardDrive, Cpu, Terminal, ArrowUpRight, ShieldCheck, Wifi, AlertTriangle } from 'lucide-react';
+import { Activity, Server, Database, HardDrive, Cpu, ArrowUpRight, Wifi, AlertTriangle } from 'lucide-react';
 import { Badge } from '@/src/shared/ui/badge';
 
 import { ClusterHeatmap } from '@/src/features/monitoring/ClusterHeatmap';
+import { formatBytes, MonitoringMetrics, summarizeMonitoringHealth } from '@/src/features/monitoring/monitoringTypes';
+import type { ClusterNode } from '@/src/features/monitoring/monitoringTypes';
 
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 
-const DEFAULT_METRICS = {
-    cpu: { current: 0, history: Array(12).fill(0) },
-    ram: { current: 0, total: 32, history: Array(8).fill(0) },
-    redis: { ops: 0, memory: '0 MB', clients: 0 },
-    network: { tx: '0 Mbps', rx: '0 Mbps', activeTunnels: 0 },
-};
-
 export default function MonitoringPage() {
-    const { data: metrics = DEFAULT_METRICS, isLoading: metricsLoading } = useQuery({
+    const { data: metrics, isError: metricsError } = useQuery<MonitoringMetrics>({
         queryKey: ['monitoring-metrics'],
         queryFn: async () => {
-            try {
-                const { data } = await api.get('/monitoring/metrics');
-                return data;
-            } catch (e) {
-                console.warn('Failed to fetch metrics (backend might be offline)', e);
-                return DEFAULT_METRICS;
-            }
+            const { data } = await api.get<MonitoringMetrics>('/monitoring/metrics');
+            return data;
         },
         refetchInterval: 10000
     });
 
-    const { data: nodes = [], isLoading: nodesLoading } = useQuery({
+    const { data: nodes, isLoading: nodesLoading, isError: nodesError } = useQuery<ClusterNode[]>({
         queryKey: ['monitoring-nodes'],
         queryFn: async () => {
-            try {
-                const { data } = await api.get('/monitoring/nodes');
-                return data;
-            } catch (e) {
-                console.warn('Failed to fetch nodes (backend might be offline)', e);
-                return [];
-            }
+            const { data } = await api.get<ClusterNode[]>('/monitoring/nodes');
+            return data;
         },
         refetchInterval: 10000
+    });
+
+    const systemHealth = summarizeMonitoringHealth(nodes, {
+        loading: nodesLoading,
+        failed: nodesError,
+        telemetryFailed: metricsError,
     });
 
     // Simple sparkline generator for NOC feel
     const renderSparkline = (data: number[], colorClass: string) => {
+        if (!data.length) return <p className="mt-4 text-[10px] text-muted-foreground">History is not retained by this endpoint.</p>;
         const max = Math.max(...data, 100);
         return (
             <div className="flex items-end h-12 gap-[2px] mt-4">
@@ -78,20 +69,10 @@ export default function MonitoringPage() {
                     <div className="flex items-center gap-4 bg-black/40 px-4 py-2 rounded-sm border border-border">
                         <div className="flex flex-col hidden sm:flex">
                             <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">System Status</span>
-                            {(() => {
-                                const critical = Array.isArray(nodes) ? nodes.filter((n: any) => n.status === 'critical' || n.status === 'down').length : 0;
-                                if (critical > 0) return (
-                                    <span className="text-xs text-warning font-mono font-bold flex items-center gap-2">
-                                        <AlertTriangle className="w-3 h-3 text-warning animate-pulse" />
-                                        {critical} NODE{critical > 1 ? 'S' : ''} CRITICAL
-                                    </span>
-                                );
-                                return (
-                                    <span className="text-xs text-success font-mono font-bold flex items-center gap-2">
-                                        ALL SYSTEMS NOMINAL
-                                    </span>
-                                );
-                            })()}
+                            <span className={`text-xs font-mono font-bold flex items-center gap-2 ${systemHealth.tone === 'healthy' ? 'text-success' : systemHealth.tone === 'critical' ? 'text-destructive' : systemHealth.tone === 'warning' ? 'text-warning' : 'text-muted-foreground'}`}>
+                                {systemHealth.tone === 'critical' || systemHealth.tone === 'warning' ? <AlertTriangle className="w-3 h-3" /> : <Activity className={`w-3 h-3 ${systemHealth.tone === 'loading' ? 'animate-pulse' : ''}`} />}
+                                {systemHealth.label}
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -107,15 +88,15 @@ export default function MonitoringPage() {
                         <div className="flex justify-between items-start mb-2 relative z-10">
                             <div className="flex items-center gap-2 text-muted-foreground">
                                 <Cpu className="w-4 h-4" />
-                                <span className="text-[10px] uppercase font-bold tracking-widest">CPU Compute</span>
+                                <span className="text-[10px] uppercase font-bold tracking-widest" title="Linux 1-minute host load divided by reported logical CPUs; not container CPU utilization.">Linux Load · 1m</span>
                             </div>
-                            <Badge variant="outline" className="text-[9px] border-warning text-warning">MODERATE</Badge>
+                            <Badge variant="outline" className="text-[9px] border-border text-muted-foreground">HOST LOAD</Badge>
                         </div>
                         <div className="flex items-baseline gap-1 relative z-10">
-                            <span className="text-3xl font-mono font-bold text-foreground">{metrics.cpu.current}</span>
-                            <span className="text-xs text-muted-foreground font-mono">%</span>
+                            <span className="text-3xl font-mono font-bold text-foreground">{metrics?.cpu?.linuxLoad1mPerCpu == null ? '—' : metrics.cpu.linuxLoad1mPerCpu.toFixed(2)}</span>
+                            <span className="text-xs text-muted-foreground font-mono">per logical CPU</span>
                         </div>
-                        {renderSparkline(metrics.cpu.history, 'bg-warning')}
+                        {metricsError ? <p className="mt-4 text-[10px] text-warning">Metric request failed. Values are not available.</p> : renderSparkline(metrics?.cpu?.history ?? [], 'bg-warning')}
                     </div>
 
                     {/* RAM Widget */}
@@ -125,13 +106,13 @@ export default function MonitoringPage() {
                                 <HardDrive className="w-4 h-4" />
                                 <span className="text-[10px] uppercase font-bold tracking-widest">Memory (RAM)</span>
                             </div>
-                            <Badge variant="outline" className="text-[9px] border-primary text-primary">STABLE</Badge>
+                            <Badge variant="outline" className="text-[9px] border-border text-muted-foreground">CGROUP MEMORY</Badge>
                         </div>
                         <div className="flex items-baseline gap-1 relative z-10">
-                            <span className="text-3xl font-mono font-bold text-foreground">{metrics.ram.current}</span>
-                            <span className="text-xs text-muted-foreground font-mono">/ {metrics.ram.total} GB</span>
+                            <span className="text-3xl font-mono font-bold text-foreground">{formatBytes(metrics?.ram?.currentBytes)}</span>
+                            <span className="text-xs text-muted-foreground font-mono">/ {formatBytes(metrics?.ram?.totalBytes)}</span>
                         </div>
-                        {renderSparkline(metrics.ram.history, 'bg-primary')}
+                        {metricsError ? <p className="mt-4 text-[10px] text-warning">Metric request failed. Values are not available.</p> : renderSparkline(metrics?.ram?.history ?? [], 'bg-primary')}
                     </div>
 
                     {/* Redis State */}
@@ -141,20 +122,20 @@ export default function MonitoringPage() {
                                 <Database className="w-4 h-4" />
                                 <span className="text-[10px] uppercase font-bold tracking-widest">Redis Cache</span>
                             </div>
-                            <div className="w-2 h-2 rounded-full bg-success" />
+                            <div className={`w-2 h-2 rounded-full ${String(metrics?.redis?.status ?? 'UNKNOWN').toUpperCase() === 'HEALTHY' ? 'bg-success' : String(metrics?.redis?.status ?? '').toUpperCase() === 'CRITICAL' ? 'bg-destructive' : 'bg-muted-foreground'}`} />
                         </div>
                         <div className="space-y-3">
                             <div className="flex justify-between text-xs font-mono">
                                 <span className="text-muted-foreground">Operations/sec</span>
-                                <span className="text-foreground">{metrics.redis.ops}</span>
+                                <span className="text-foreground">{metrics?.redis?.ops ?? 'Unavailable'}</span>
                             </div>
                             <div className="flex justify-between text-xs font-mono">
                                 <span className="text-muted-foreground">Memory Used</span>
-                                <span className="text-foreground">{metrics.redis.memory}</span>
+                                <span className="text-foreground">{metrics?.redis?.memory ?? 'Unavailable'}</span>
                             </div>
                             <div className="flex justify-between text-xs font-mono">
                                 <span className="text-muted-foreground">Active Clients</span>
-                                <span className="text-success">{metrics.redis.clients}</span>
+                                <span className="text-foreground">{metrics?.redis?.clients ?? 'Unavailable'}</span>
                             </div>
                         </div>
                     </div>
@@ -164,22 +145,22 @@ export default function MonitoringPage() {
                         <div className="flex justify-between items-start mb-4">
                             <div className="flex items-center gap-2 text-muted-foreground">
                                 <Wifi className="w-4 h-4" />
-                                <span className="text-[10px] uppercase font-bold tracking-widest">Global Network</span>
+                                <span className="text-[10px] uppercase font-bold tracking-widest">Container Network</span>
                             </div>
                             <ArrowUpRight className="w-4 h-4 text-primary" />
                         </div>
                         <div className="space-y-3">
                             <div className="flex justify-between text-xs font-mono">
-                                <span className="text-muted-foreground">Bandwidth TX</span>
-                                <span className="text-foreground">{metrics.network.tx}</span>
+                                <span className="text-muted-foreground">Bytes sent · cumulative</span>
+                                <span className="text-foreground">{formatBytes(metrics?.network?.txTotalBytes)}</span>
                             </div>
                             <div className="flex justify-between text-xs font-mono">
-                                <span className="text-muted-foreground">Bandwidth RX</span>
-                                <span className="text-foreground">{metrics.network.rx}</span>
+                                <span className="text-muted-foreground">Bytes received · cumulative</span>
+                                <span className="text-foreground">{formatBytes(metrics?.network?.rxTotalBytes)}</span>
                             </div>
                             <div className="flex justify-between text-xs font-mono">
                                 <span className="text-muted-foreground">Active Tunnels</span>
-                                <span className="text-primary font-bold">{metrics.network.activeTunnels}</span>
+                                <span className="text-muted-foreground font-bold">{metrics?.network?.activeTunnels ?? 'Not instrumented'}</span>
                             </div>
                         </div>
                     </div>
@@ -191,7 +172,7 @@ export default function MonitoringPage() {
                     <div className="flex items-center justify-between mb-4 border-b border-border pb-4">
                         <div className="flex items-center gap-2 text-muted-foreground">
                             <Server className="w-4 h-4" />
-                            <span className="text-xs uppercase font-bold tracking-widest text-foreground">Cluster Topology & Nodes</span>
+                            <span className="text-xs uppercase font-bold tracking-widest text-foreground">Verified Service Checks</span>
                         </div>
                         <div className="flex items-center gap-3">
                             <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-success"></div><span className="text-[10px] text-muted-foreground font-mono">HEALTHY</span></div>
@@ -205,8 +186,10 @@ export default function MonitoringPage() {
                         <div className="py-10 text-center text-xs text-muted-foreground animate-pulse">
                             Fetching cluster topology...
                         </div>
+                    ) : nodesError ? (
+                        <div className="py-10 text-center text-sm text-warning" role="alert">Service health could not be loaded. No healthy status is inferred from a failed request.</div>
                     ) : (
-                        <ClusterHeatmap nodes={nodes} />
+                        nodes?.length ? <ClusterHeatmap nodes={nodes} /> : <div className="py-10 text-center text-sm text-muted-foreground">No service health checks were returned.</div>
                     )}
                 </div>
 

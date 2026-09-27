@@ -166,7 +166,7 @@ follow-ups AUD-149 through AUD-161.
 | AUD-149 | P2 | Android binary frame handler logged the first 50 and every 100th video message at INFO. The 250-frame regression reproduced 52 INFO calls. The log field `has_viewer` also held an un-awaited coroutine because `is_streaming()` is synchronous. | Fixed in commit `61bb667`; all 250 frames still reach the bridge and the INFO assertion passes. | Source-only at the time of this document. It was not part of the running pilot until a new backend image is built and rolled out. |
 | AUD-150 | P2 | Fleet Matrix generated a deterministic millisecond value from row index and generated battery / ping sparklines from one current sample. The device API exposes current battery and access flags, not those histories or an RTT measurement. | Fixed in commit `0e0e043`; the component regression requires no generated ms value or polylines. | Source-only at the time of this document. Existing deployed frontend may still show the old values. |
 | AUD-151 | P1 | Android quality counters were not sent in pong; backend expected them. Byte counter performed `inc(0)`, and frame drops were approximated as `30 - fps`. Android labeled encoder output as bytes sent although it was counted before `sendBinary`. FPS history did not expire on reads when the encoder stopped. Cached SPS/PPS replay on viewer join also bypassed the initial queue counters. | Source fix now reports versioned encoder output separately from every `StreamingManagerImpl.sendBinary` attempt, including cached codec-config replay; it clears invalid/inactive metrics and evicts stale FPS timestamps on read. Red/green tests reproduced missing telemetry, stale FPS, and uncounted codec-config replay. | Focused Android dev and enterprise tests and backend stream/handler/monitoring regressions pass. Build, signed APK, OTA catalog update, install, and remote acceptance are still OPEN. Local queue acceptance remains weaker than a server receipt. |
-| AUD-152 | P1 | Infrastructure Monitoring fabricates CPU/RAM history from random jitter around the current sample, hard-codes active tunnels to zero, uses cumulative interface bytes as “bandwidth”, and the frontend substitutes zero values and “ALL SYSTEMS NOMINAL” when API requests fail. | Open. The values can mislead an operator during an outage. | Replace with measured samples and explicit `unknown / unavailable`; do not display a green system status when topology fetch failed. |
+| AUD-152 | P1 | Infrastructure Monitoring fabricated CPU/RAM history from random jitter, hard-coded active tunnels to zero, labeled cumulative interface bytes as bandwidth, and substituted zero values plus “ALL SYSTEMS NOMINAL” when requests failed. | Fixed in source in this PR: Linux 1-minute host load is explicitly labeled per system-reported logical CPU, not CPU utilization; RAM uses cgroup counters or `unavailable`; network counters are cumulative bytes; unsupported tunnel rate/history remains unavailable; node states use the existing PostgreSQL/Redis/disk health probes; a failed request cannot produce a green status. Regression tests cover dependency status mapping, null measurements, cumulative interface counters, cgroup-unlimited memory, load values above 100%, empty/error states, and uppercase critical statuses. | Source-only until backend and frontend are built and deployed together. Verify the live Monitoring page after rollout. Prometheus history, CPU quota-aware utilization, true bandwidth deltas, and a tunnel-session exporter remain separate follow-ups. |
 | AUD-153 | P1 | Backend is launched with four Gunicorn workers. The Prometheus client uses the default process registry; no `PROMETHEUS_MULTIPROC_DIR` or `MultiProcessCollector` integration was found in the app source. A scrape routed to one worker can miss metrics held by the other workers. | Open. | Verify actual pilot scrape behavior, then either configure supported multiprocess collection with startup/worker cleanup or scrape every worker separately. Never aggregate counters by summing repeated snapshots. |
 | AUD-154 | P1 | A disconnected Android app cannot upload new logs or answer a diagnostics command. PC-agent source can invoke host tools, but there is no accepted Windows LDPlayer station-inventory and offline-diagnostics rollout. | Open capability / acceptance gap. | Optional station agent with outbound-only control connection, explicit least-privilege permissions, signed updates, host/VM inventory and evidence TTL. |
 | AUD-155 | P1 | The current local pilot uses a Cloudflare Quick Tunnel for testing. Quick Tunnel has no SLA and is explicitly intended for testing/development. | Open deployment risk, not proof of current packet loss. | Keep the route for controlled diagnosis; select managed tunnel or independent ingress only after measuring a second path. |
@@ -1116,20 +1116,26 @@ The fleet matrix is not a substitute for Device Stream:
 
 ### 13.5 Monitoring and topology
 
-Infrastructure Monitoring should derive its status from real dependency probes and
-measured history. It must not:
+Infrastructure Monitoring must derive status from real dependency probes and show
+the measurement scope. Current source follows these rules; the runtime state is not
+proven until the matching frontend and backend are deployed. It must not:
 
 - generate random sparkline values around a CPU/RAM sample;
 - present missing metrics as 0;
 - claim “ALL SYSTEMS NOMINAL” when the topology request failed or returned no nodes;
-- show `activeTunnels=0` when no tunnel exporter is configured;
+- show `activeTunnels=0` when no tunnel exporter is configured (the current source reports unavailable);
 - call cumulative network bytes “Mbps”;
 - assign fixed `HEALTHY`, `STABLE`, or `MODERATE` badges based on constants.
 
-Historical data should be queried from Prometheus over a defined interval. A single
-sample should be presented as a single sample, with no fabricated trend. Network rate
-requires two time-separated byte-counter samples and elapsed time. The monitoring page
-must show which host/container interface was measured.
+Historical data should be queried from Prometheus over a defined interval. Until then,
+the API returns an empty history and the page explains that history is not retained. A
+single sample is shown as a single sample, with no fabricated trend. Network rate
+requires two time-separated byte-counter samples and elapsed time; the current API
+shows cumulative non-loopback container-interface bytes and does not call them a rate.
+Container RAM is read from cgroup usage/limit when available; CPU is identified as the
+Linux host load average normalized by the system-reported logical CPU count, not CPU
+utilization or cgroup quota-aware container usage. Unsupported or missing readings
+remain unavailable.
 
 ## 14. Offline diagnostics and evidence limits
 
@@ -1765,8 +1771,9 @@ rollback path before staging the next cohort.
 
 ### Phase 1 — correct operational truth surfaces
 
-1. Replace synthetic monitoring histories, fixed zero tunnel count, and fabricated
-   failure defaults with measured/unavailable values (AUD-152).
+1. Source correction for synthetic monitoring histories, zero tunnel count, and
+   fabricated failure defaults is implemented under AUD-152; build/deploy both
+   components and verify that production displays probe results and unavailable fields.
 2. Roll out the AUD-157 source fix and verify the displayed heartbeat age against the
    API response; show a transport error only when the viewer observed one.
 3. Rename stream state and expose capture/receipt/decoder dimensions (AUD-158).
@@ -1833,7 +1840,7 @@ rollback path before staging the next cohort.
 | Remote encoder sends config only | Observed on remote PH006 | Black viewer despite online device | Encoder/queue/ingress/viewer/decode stage telemetry; remote test. |
 | WAN path blocks or resets long WebSocket stream | Plausible, not proved | Missing frames and reconnect | Same-device route A/B, tunnel metrics, WebRTC/TURN prototype if measured. |
 | Tunnel process or provider unavailable | Expected failure class | Remote fleet cannot reconnect | Signed cached routes, independent ingress, deployment HA acceptance. |
-| Synthetic monitoring values mislead operator | Confirmed in source | False “healthy” incident response | AUD-152 correction and UI regression. |
+| Synthetic monitoring values mislead operator | Source correction is in PR; rollout not yet verified | False “healthy” incident response before deployment | AUD-152 regression suite, then verify deployed backend/frontend build and live probe states. |
 | Prometheus misses Gunicorn worker metrics | Strong source-level concern | Incorrect dashboards and alert decisions | Multiprocess scrape acceptance with known request counters. |
 | Per-device labels leak series after device churn | Possible | Prometheus memory growth and stale dashboard | Active-session gauge cleanup, churn test, no device label on unbounded counters. |
 | Local queue acceptance mistaken for delivery | Easy semantic error | Wrong root-cause claim | Explicit metric names and separate server receipt counter. |
