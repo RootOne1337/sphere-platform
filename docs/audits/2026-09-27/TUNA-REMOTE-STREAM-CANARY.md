@@ -34,6 +34,12 @@ Tuna is a useful alternate ingress for this pilot, but the evidence does not jus
 
 On Windows, this pilot's Tuna connectors were started as hidden user-session processes; automatic recovery after logout/reboot has not been tested. Tuna's [service guide](https://tuna.am/en/docs/tunnels/guides/service/) says installing a Windows service requires an elevated PowerShell session. Its [Docker Compose example](https://tuna.am/docs/tunnels/guides/service/) uses host networking and notes that Windows/macOS Docker Desktop require the host-networking development feature. We have not enabled that feature or installed a machine-level service, so the current canary must not be described as a persistent, supervised tunnel deployment.
 
+### Runtime recheck — 28 September 2026
+
+The local Sphere gateway still answered `/health` and `/devices` with HTTP 200, and `tuna whoami` succeeded using the saved local credential. No Tuna process or Windows scheduled task/service was active at the time of this recheck; the private PID marker was stale. The earlier canary ran while the CLI reported paid access, so it did not establish behavior under the free-plan limit.
+
+The prior private Tuna log records a 15-second SSH keepalive timeout followed by `Connection restored` about three seconds later. That is direct evidence that the running client recovered from one transient tunnel interruption. It is not evidence of unattended start after reboot/logoff, survival past a plan's 30-minute dynamic-tunnel limit, a stable hostname on a free plan, or Android-agent failover. The public [HTTP tunnel documentation](https://tuna.am/en/docs/tunnels/http/) explicitly limits free dynamically named HTTP tunnels to 30 minutes; reserved names require a subscription. Keep the free route as a bounded connectivity experiment only. Production needs an address that remains stable across tunnel restarts and a supervised connector on an always-on host, or an independently hosted ingress; neither was configured by this recheck.
+
 ## Findings
 
 1. **No proof that Cloudflare dropped the H.264 payload in this canary.** The Cloudflare and local viewers received the same four encoded video frames that the Tuna viewer received.
