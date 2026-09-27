@@ -60,7 +60,12 @@ it('marks video stale when control pings continue but decoded frames stop, then 
   advance(9000);
   act(() => socket.message(JSON.stringify({ type: 'ping' })));
   advance(1000);
-  expect(screen.getByRole('status')).toHaveTextContent('Нет новых видеокадров более 10 секунд');
+  const staleStatus = screen.getByRole('status');
+  expect(staleStatus).toHaveTextContent('Нет новых видеокадров более 10 секунд');
+  expect(staleStatus).toHaveTextContent('показан последний кадр');
+  expect(staleStatus).toHaveClass('pointer-events-none', 'left-3', 'top-3');
+  expect(staleStatus).not.toHaveClass('inset-0');
+  expect(document.querySelector('canvas')).toBeInTheDocument();
 
   act(() => mockFrame?.({ displayWidth: 100, displayHeight: 200 }));
   expect(screen.queryByRole('status')).not.toBeInTheDocument();

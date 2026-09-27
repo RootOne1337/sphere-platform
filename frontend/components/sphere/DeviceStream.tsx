@@ -70,6 +70,7 @@ export function DeviceStream({
   const [connection, setConnection] = useState<
     'connecting' | 'waiting' | 'live' | 'stale' | 'retrying' | 'unavailable'
   >('connecting');
+  const [hasRenderedFrame, setHasRenderedFrame] = useState(false);
   const [streamError, setStreamError] = useState<string | null>(null);
   const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
   const [agentDiagnostics, setAgentDiagnostics] = useState<StreamDiagnosticResponse | null>(null);
@@ -88,6 +89,7 @@ export function DeviceStream({
     let scheduleKeyFrameRecovery: ((delayMs?: number) => void) | undefined;
     let attempt = 0;
     setConnection('connecting');
+    setHasRenderedFrame(false);
     setStreamError(null);
 
     const timer = setTimeout(() => {
@@ -101,6 +103,7 @@ export function DeviceStream({
       decoder = new H264Decoder((frame) => {
         if (ignore || wsRef.current?.readyState !== WebSocket.OPEN) return;
         setConnection('live');
+        setHasRenderedFrame(true);
         setStreamError(null);
         clearTimeout(keyFrameTimer);
         clearTimeout(frameStaleTimer);
@@ -343,14 +346,41 @@ export function DeviceStream({
       }}
     />
     {(connection !== 'live' || streamError) && (
-      <div role="status" className="absolute inset-0 flex items-center justify-center bg-black/85 text-sm text-white">
-        {streamError ?? (
-          connection === 'connecting' ? 'Подключение…' :
-          connection === 'waiting' ? 'Ожидание видеокадра…' :
-          connection === 'stale' ? 'Нет новых видеокадров более 10 секунд' :
-          connection === 'retrying' ? 'Переподключение…' : 'Стрим недоступен'
-        )}
-      </div>
+      hasRenderedFrame ? (
+        <div
+          role="status"
+          aria-live="polite"
+          className={`pointer-events-none absolute left-3 top-3 z-10 flex max-w-[calc(100%-1.5rem)] items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium shadow-lg backdrop-blur ${
+            streamError || connection === 'unavailable'
+              ? 'border-red-300/25 bg-red-950/85 text-red-100'
+              : 'border-amber-300/25 bg-black/80 text-amber-100'
+          }`}
+        >
+          <span
+            aria-hidden="true"
+            className={`h-2 w-2 shrink-0 rounded-full ${
+              streamError || connection === 'unavailable' ? 'bg-red-400' : 'bg-amber-400'
+            }`}
+          />
+          <span className="truncate">
+            {streamError ?? (
+              connection === 'stale' ? 'Нет новых видеокадров более 10 секунд · показан последний кадр' :
+              connection === 'retrying' ? 'Переподключение · показан последний кадр' :
+              connection === 'unavailable' ? 'Стрим недоступен · показан последний кадр' :
+              'Ожидание нового кадра · показан последний кадр'
+            )}
+          </span>
+        </div>
+      ) : (
+        <div role="status" aria-live="polite" className="absolute inset-0 flex items-center justify-center bg-black/85 text-sm text-white">
+          {streamError ?? (
+            connection === 'connecting' ? 'Подключение…' :
+            connection === 'waiting' ? 'Ожидание видеокадра…' :
+            connection === 'stale' ? 'Нет новых видеокадров более 10 секунд' :
+            connection === 'retrying' ? 'Переподключение…' : 'Стрим недоступен'
+          )}
+        </div>
+      )
     )}
     {enableDiagnostics && (
       <div className="absolute right-2 top-2 z-20">
