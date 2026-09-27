@@ -1,6 +1,7 @@
 """Exercise the actual remote gateway config on an isolated Docker network."""
 
 import os
+import re
 import shutil
 import subprocess
 import time
@@ -73,6 +74,15 @@ def test_remote_gateway_preserves_host_without_triggering_public_http_redirect(t
                            "http://127.0.0.1:8080/ws/stream/test-device", check=False)
             assert response.returncode == 0, response.stderr
             assert response.stdout == f"{host}|{host}|websocket|upgrade"
+
+        # A 200 only records response headers. The gateway log must also show
+        # which public ingress was used and whether its response completed.
+        access_lines = run("logs", edge).stdout
+        assert re.search(
+            r"primary\.example\.test GET /api/v1/updates/latest 200 "
+            r"[0-9.]+ [1-9][0-9]* [1-9][0-9]* OK",
+            access_lines,
+        ), access_lines
 
         gateway = (ROOT / "infrastructure/nginx/remote-pilot.conf").read_text(encoding="utf-8")
         main_nginx = (ROOT / "infrastructure/nginx/nginx.conf").read_text(encoding="utf-8")
