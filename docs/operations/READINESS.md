@@ -15,6 +15,10 @@
 > 504. После fix `40357ca` PH017 получил grant по обычному WS и ответил
 > `failed/timeout`; версия осталась 10230. **Клиентская причина remote-обрывов
 > ещё не измерена, remote video и адресная remote OTA 10231 не приняты.**
+> Одно remote A/B на отдельном Cloudflare HTTP/2 connector повторило WSS-обрыв
+> через 40,001 с; переключение с QUIC не помогло. Serveo в этом pilot отверг
+> SSH-ключи, а короткий localhost.run сеанс не прошёл приёмку. Второго рабочего
+> ingress пока нет; PH013 возвращён на исходный маршрут.
 > Точные gates — в
 > [аудите 27 сентября](../audits/2026-09-27/REMOTE-CONNECTION-AND-OTA-GATES.md).
 

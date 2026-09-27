@@ -33,6 +33,18 @@ heartbeat и reconnect, а локальный Android через него пер
 его **агент** оставался на Cloudflare; это не A/B Android egress. Подробности
 и закрывающий P0 gate: [AUD-164](../audits/2026-09-24/REMOTE-INGRESS-AB.md).
 
+27 сентября повторили Serveo/443 в отдельном pilot-only контейнере: fingerprint
+снова совпал с официальным, но без ключа и с новым эфемерным ключом SSH ответил
+`Permission denied`. Указанный оператором остановленный старый `sphere-tunnel`
+не запускали и не использовали. Резервного Serveo ingress сейчас **нет**.
+Второй pilot-only Quick Tunnel с `--protocol http2` прошёл HTTPS/WSS preflight;
+адресный PH013 10230 подтвердил `UPDATE_CONFIG`, затем auth и heartbeat через
+HTTP/2, но WSS закрылся ровно через 40,001 с. Следующий сеанс на прежнем QUIC
+маршруте завершился через 40,000 с. Изменение транспорта connector не устранило
+обрыв. PH013 возвращён на исходный URL по подтверждённой квитанции; оба
+временных тестовых connector остановлены. Это не замена независимого A/B с
+доставкой кадров. [Полное доказательство и ограничения](../audits/2026-09-27/REMOTE-CONNECTION-AND-OTA-GATES.md).
+
 Дополнительная короткая проверка 24 сентября через временный LocalTunnel viewer
 получила от `PH008` только два codec-config пакета (SPS/PPS), без IDR/P. Одна
 адресная команда с LocalTunnel primary и сохранённым Cloudflare fallback не
