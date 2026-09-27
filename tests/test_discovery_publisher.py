@@ -271,6 +271,19 @@ def test_health_probe_sends_no_credentials_and_checks_both_paths():
     assert all("authorization" not in r.headers and "x-api-key" not in r.headers for r in requests)
 
 
+def test_fixed_primary_uses_scoped_quick_tunnel_as_automatic_fallback():
+    assert module.resolve_routes({"primary_url": NEW}, PRIMARY) == (NEW, PRIMARY)
+
+
+def test_fixed_primary_respects_explicit_fallback_instead_of_quick_tunnel():
+    explicit_fallback = "https://archive.trycloudflare.com"
+    assert module.resolve_routes({"primary_url": NEW, "fallback_url": explicit_fallback}, PRIMARY) == (NEW, explicit_fallback)
+
+
+def test_quick_tunnel_only_configuration_keeps_existing_route_contract():
+    assert module.resolve_routes({}, PRIMARY) == (PRIMARY, None)
+
+
 def test_github_transport_uses_exact_branch_cas_and_stdin_body(monkeypatch):
     commands = []
     def run(args, **kwargs):

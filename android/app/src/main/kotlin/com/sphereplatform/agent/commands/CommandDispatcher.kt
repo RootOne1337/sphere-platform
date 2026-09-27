@@ -551,22 +551,34 @@ class CommandDispatcher @Inject constructor(
             val fallbackServerUrl = cmd.payload["fallback_server_url"]?.jsonPrimitive?.contentOrNull
             val apiKey = cmd.payload["api_key"]?.jsonPrimitive?.contentOrNull
             val deviceId = cmd.payload["device_id"]?.jsonPrimitive?.contentOrNull
+            var routeCandidatesChanged = false
+            var reconnectScheduled = false
             if (serverUrl != null) {
+                val previousSelectedRoute = authStore.getServerUrl()
                 val previousRoutes = authStore.connectionRoutesSnapshot().urls
                 if (fallbackServerUrl != null) authStore.saveServerRoutes(serverUrl, fallbackServerUrl)
                 else authStore.saveServerUrl(serverUrl)
                 val updatedRoutes = authStore.connectionRoutesSnapshot().urls
-                if (updatedRoutes != previousRoutes) {
+                val selectedRouteChanged = authStore.getServerUrl() != previousSelectedRoute
+                routeCandidatesChanged = updatedRoutes != previousRoutes
+                if (selectedRouteChanged) {
                     scope.launch {
                         delay(ROUTE_RECONNECT_ACK_GRACE_MS)
                         wsClient.forceReconnectNow(bypassDebounce = true)
                     }
                     Timber.i("Management routes changed; reconnect scheduled")
                 }
+                reconnectScheduled = selectedRouteChanged
             }
             if (apiKey != null) authStore.saveApiKey(apiKey)
             if (deviceId != null) authStore.saveDeviceId(deviceId)
-            buildJsonObject { put("updated", true) }
+            buildJsonObject {
+                put("updated", true)
+                if (serverUrl != null) {
+                    put("route_candidates_changed", routeCandidatesChanged)
+                    put("reconnect_scheduled", reconnectScheduled)
+                }
+            }
         }
 
         CommandType.SHELL -> {

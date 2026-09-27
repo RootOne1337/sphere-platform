@@ -1,9 +1,11 @@
-"""Publish signed routes for one explicitly scoped outbound Quick Tunnel.
+"""Publish signed routes for one explicitly scoped outbound tunnel installation.
 
-Run on the Docker host with its existing GitHub CLI credential. Optional bounded
-recovery restarts only its unhealthy connector, never backend or other projects.
-No enrollment secrets or global tunnel names. Journal before remote
-CAS; recover ambiguous publication without signing two payloads at the same version.
+Run on the Docker host with its existing GitHub CLI credential. The scoped Quick
+Tunnel can be published as the primary or used as the changing fallback for a
+fixed primary ingress. Optional bounded recovery restarts only its unhealthy
+connector, never backend or other projects. No enrollment secrets or global
+tunnel names. Journal before remote CAS; recover ambiguous publication without
+signing two payloads at the same version.
 """
 from __future__ import annotations
 
@@ -354,6 +356,17 @@ def verify_route(client: httpx.Client, url: str, installation_id: str) -> None:
                 raise PublicationError("Candidate route belongs to a different installation")
 
 
+def resolve_routes(config: dict, observed_route: str) -> tuple[str, str | None]:
+    """Resolve fixed/dynamic ingress policy without ever dropping the fallback."""
+    primary = config.get("primary_url") or observed_route
+    fallback = config.get("fallback_url")
+    if not fallback and primary != observed_route:
+        fallback = observed_route
+    if fallback == primary:
+        fallback = None
+    return primary, fallback
+
+
 def run(config: dict, *, once: bool) -> None:
     private = Path(config["private_key"])
     state_dir, mirror = Path(config["state_dir"]), Path(config["mirror"])
@@ -391,13 +404,18 @@ def run(config: dict, *, once: bool) -> None:
             try:
                 if recovery:
                     recovery_status = recovery.reconcile(int(time.time()))
-                route = source.observe()
+                observed_route = source.observe()
+                # A reserved, long-lived ingress can be the stable primary while
+                # the scoped Quick Tunnel remains a rotating recovery route.
+                # Without primary_url this keeps the historic Quick-Tunnel-only
+                # behavior. A fixed primary defaults its fallback to the current
+                # Quick Tunnel unless an explicit fallback_url is configured.
+                route, fallback = resolve_routes(config, observed_route)
                 verify_route(client, route, config["installation_id"])
-                fallback = config.get("fallback_url")
                 if fallback and fallback != route:
                     verify_route(client, fallback, config["installation_id"])
                 # A restarted/replaced connector must not publish a just-observed stale URL.
-                if source.observe() != route:
+                if source.observe() != observed_route:
                     raise PublicationError("Connector changed during readiness verification")
                 result = publisher.reconcile(route, fallback, int(time.time()))
                 last_success = int(time.time())

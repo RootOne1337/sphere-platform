@@ -89,6 +89,9 @@ class CommandDeliveryTest {
             AuthTokenStore.ConnectionRoutes(1, listOf("https://cloudflare.invalid")),
             AuthTokenStore.ConnectionRoutes(2, listOf("https://alternate.invalid", "https://cloudflare.invalid")),
         )
+        every { authStore.getServerUrl() } returnsMany listOf(
+            "https://cloudflare.invalid", "https://alternate.invalid",
+        )
         val dispatcher = dispatcher(backgroundScope, authStore = authStore)
         val update = buildJsonObject {
             put("type", "UPDATE_CONFIG")
@@ -124,6 +127,9 @@ class CommandDeliveryTest {
         val authStore = mockk<AuthTokenStore>(relaxed = true)
         val currentRoutes = AuthTokenStore.ConnectionRoutes(4, listOf("https://primary.invalid"))
         every { authStore.connectionRoutesSnapshot() } returnsMany listOf(currentRoutes, currentRoutes)
+        every { authStore.getServerUrl() } returnsMany listOf(
+            "https://primary.invalid", "https://primary.invalid",
+        )
         val dispatcher = dispatcher(backgroundScope, authStore = authStore)
         val update = buildJsonObject {
             put("type", "UPDATE_CONFIG")
@@ -141,6 +147,85 @@ class CommandDeliveryTest {
         verify(exactly = 1) { authStore.saveServerUrl("https://primary.invalid") }
         verify(exactly = 0) { ws.forceReconnectNow(any()) }
         dispatcher.stop()
+    }
+
+    @Test fun routeUpdateReconnectsWhenSelectionChangesEvenIfCandidatesAreUnchanged() = runTest {
+        val authStore = mockk<AuthTokenStore>(relaxed = true)
+        val sameCandidates = AuthTokenStore.ConnectionRoutes(
+            8, listOf("https://tuna.invalid", "https://cloudflare.invalid"),
+        )
+        every { authStore.connectionRoutesSnapshot() } returnsMany listOf(sameCandidates, sameCandidates)
+        // Discovery has already published Tuna as primary, but the authenticated
+        // socket is still on Cloudflare. The old code compared only candidate lists
+        // and therefore acknowledged the route update without reconnecting.
+        every { authStore.getServerUrl() } returnsMany listOf(
+            "https://cloudflare.invalid", "https://tuna.invalid",
+        )
+        val dispatcher = dispatcher(backgroundScope, authStore = authStore)
+        val update = buildJsonObject {
+            put("type", "UPDATE_CONFIG")
+            put("command_id", "88888888-8888-4888-8888-888888888888")
+            put("signed_at", System.currentTimeMillis() / 1000)
+            put("ttl_seconds", 60)
+            put("payload", buildJsonObject {
+                put("server_url", "https://tuna.invalid")
+                put("fallback_server_url", "https://cloudflare.invalid")
+            })
+        }
+
+        try {
+            callback.captured!!(update)
+            runCurrent()
+
+            val result = messages.last()["result"]?.jsonObject
+            assertEquals(false, result?.get("route_candidates_changed")?.jsonPrimitive?.booleanOrNull)
+            assertEquals(true, result?.get("reconnect_scheduled")?.jsonPrimitive?.booleanOrNull)
+            verify(exactly = 0) { ws.forceReconnectNow(any()) }
+            advanceTimeBy(750)
+            runCurrent()
+            verifyOrder {
+                ws.sendJson(match { it["status"]?.jsonPrimitive?.content == "completed" })
+                ws.forceReconnectNow(bypassDebounce = true)
+            }
+        } finally {
+            dispatcher.stop()
+        }
+    }
+
+    @Test fun fallbackOnlyRouteChangeDoesNotRestartTheSelectedPrimary() = runTest {
+        val authStore = mockk<AuthTokenStore>(relaxed = true)
+        every { authStore.connectionRoutesSnapshot() } returnsMany listOf(
+            AuthTokenStore.ConnectionRoutes(10, listOf("https://primary.invalid", "https://backup.invalid")),
+            AuthTokenStore.ConnectionRoutes(11, listOf("https://primary.invalid", "https://new-backup.invalid")),
+        )
+        every { authStore.getServerUrl() } returnsMany listOf(
+            "https://primary.invalid", "https://primary.invalid",
+        )
+        val dispatcher = dispatcher(backgroundScope, authStore = authStore)
+        val update = buildJsonObject {
+            put("type", "UPDATE_CONFIG")
+            put("command_id", "99999999-9999-4999-8999-999999999999")
+            put("signed_at", System.currentTimeMillis() / 1000)
+            put("ttl_seconds", 60)
+            put("payload", buildJsonObject {
+                put("server_url", "https://primary.invalid")
+                put("fallback_server_url", "https://new-backup.invalid")
+            })
+        }
+
+        try {
+            callback.captured!!(update)
+            runCurrent()
+            advanceTimeBy(1_000)
+            runCurrent()
+
+            val result = messages.last()["result"]?.jsonObject
+            assertEquals(true, result?.get("route_candidates_changed")?.jsonPrimitive?.booleanOrNull)
+            assertEquals(false, result?.get("reconnect_scheduled")?.jsonPrimitive?.booleanOrNull)
+            verify(exactly = 0) { ws.forceReconnectNow(any()) }
+        } finally {
+            dispatcher.stop()
+        }
     }
 
     @Test fun activeStreamStatsAreIncludedInHeartbeatPong() = runTest {

@@ -183,13 +183,21 @@ class AuthTokenStore @Inject constructor(
             ?.let(::normalizeManagementUrl)?.takeIf { it != primary }
         val currentPrimary = prefs.getString(KEY_PRIMARY_SERVER_URL, null) ?: getServerUrl()
         if (primary == currentPrimary && backup == prefs.getString(KEY_FALLBACK_SERVER_URL, null)) return false
-        commitRoutes(getServerUrl(), primary, backup)
+        // A newly signed primary is an intentional route migration. Select it
+        // now, while retaining the prior ingress as the advertised fallback.
+        // A fallback-only refresh must not dislodge a route that is already
+        // carrying the live session.
+        val selected = if (primary != currentPrimary) primary else getServerUrl()
+        commitRoutes(selected, primary, backup)
         return true
     }
 
     @Synchronized
     internal fun connectionRoutesSnapshot(): ConnectionRoutes {
-        val urls = listOf(getServerUrl(), prefs.getString(KEY_PRIMARY_SERVER_URL, null),
+        // Keep the published primary first on every reconnect so a device that
+        // temporarily fell back can return to the preferred ingress. The last
+        // authenticated route remains next as a fast recovery path.
+        val urls = listOf(prefs.getString(KEY_PRIMARY_SERVER_URL, null), getServerUrl(),
             prefs.getString(KEY_FALLBACK_SERVER_URL, null))
             .mapNotNull { value -> value?.let { runCatching { normalizeManagementUrl(it) }.getOrNull() } }
             .distinct()

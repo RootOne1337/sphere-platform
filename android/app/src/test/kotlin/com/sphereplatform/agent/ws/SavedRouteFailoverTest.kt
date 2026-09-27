@@ -107,8 +107,16 @@ class SavedRouteFailoverTest {
         every { http.newBuilder() } returns builder
         every { http.newCall(any()) } answers { realHttp.newCall(firstArg()) }
         every { http.newWebSocket(any(), any()) } answers {
-            val socket = mockk<WebSocket>(relaxed = true) { every { send(any<String>()) } returns true }
-            attempts.add(Attempt(firstArg(), socket, secondArg()))
+            val listener = secondArg<WebSocketListener>()
+            val socket = mockk<WebSocket>(relaxed = true)
+            every { socket.send(any<String>()) } returns true
+            // OkHttp cancel terminates the active attempt; model its terminal
+            // callback so route-migration tests cannot strand the reconnect loop.
+            every { socket.cancel() } answers {
+                listener.onFailure(socket, IOException("isolated cancel"), null)
+                true
+            }
+            attempts.add(Attempt(firstArg(), socket, listener))
             socket
         }
         store = AuthTokenStore(prefs, Lazy { http })
@@ -181,13 +189,14 @@ class SavedRouteFailoverTest {
     }
 
     @Test
-    fun `discovery saves candidate pair without overwriting last selected route`() = runBlocking {
+    fun `discovery promotes changed primary and retains the fallback`() = runBlocking {
         configPayload = """{"server_url":"https://candidate.invalid","fallback_server_url":"$secondary"}"""
         watchdog.forceCheck()
         settleConfig()
-        assertEquals(primary, store.getServerUrl())
+        assertEquals("https://candidate.invalid", store.getServerUrl())
         assertEquals("https://candidate.invalid", disk["primary_server_url"])
         assertEquals(secondary, disk["fallback_server_url"])
+        assertEquals(listOf("https://candidate.invalid", secondary), store.connectionRoutesSnapshot().urls)
     }
 
     @Test
@@ -197,6 +206,21 @@ class SavedRouteFailoverTest {
         settleConfig()
         assertEquals(primary, store.getServerUrl())
         assertEquals(secondary, disk["fallback_server_url"])
+    }
+
+    @Test
+    fun `fallback-only discovery update preserves live route but keeps primary first for next reconnect`() = runBlocking {
+        store.saveServerRoutes(primary, secondary)
+        // Simulate a prior authenticated fallback selection.
+        store.acceptConnectionRoute(store.connectionRoutesSnapshot(), secondary)
+        configPayload = """{"server_url":"$primary","fallback_server_url":"https://new-secondary.invalid"}"""
+
+        watchdog.forceCheck()
+        settleConfig()
+
+        assertEquals(secondary, store.getServerUrl())
+        assertEquals(listOf(primary, secondary, "https://new-secondary.invalid"),
+            store.connectionRoutesSnapshot().urls)
     }
 
     @Test
@@ -285,19 +309,23 @@ class SavedRouteFailoverTest {
     }
 
     @Test
-    fun `working authenticated connection survives discovery change`() = runBlocking {
+    fun `signed primary change reconnects a healthy session and falls back on failure`() = runBlocking {
         start()
         val first = attempt(0)
         open(first)
         acknowledge(first)
         configPayload = """{"server_url":"https://unreachable.invalid","fallback_server_url":"$secondary"}"""
         watchdog.forceCheck()
-        withTimeout(3_000) {
-            while (disk["primary_server_url"] != "https://unreachable.invalid") delay(10)
-        }
+        val promoted = attempt(1)
+        assertEquals("unreachable.invalid", promoted.request.url.host)
+        assertEquals(secondary, disk["fallback_server_url"])
+        fail(promoted)
+        val backup = attempt(2)
+        assertEquals("secondary.invalid", backup.request.url.host)
+        open(backup)
+        acknowledge(backup)
         assertTrue(client.isConnected)
-        verify(exactly = 0) { first.socket.cancel() }
-        assertEquals(primary, store.getServerUrl())
+        assertEquals(secondary, store.getServerUrl())
     }
 
     @Test
@@ -322,7 +350,7 @@ class SavedRouteFailoverTest {
     }
 
     @Test
-    fun `persisted successful backup is first after recreation and can return to primary`() = runBlocking {
+    fun `published primary is retried before persisted backup after recreation`() = runBlocking {
         applyPersists = true
         val job = start()
         fail(attempt(0))
@@ -335,11 +363,16 @@ class SavedRouteFailoverTest {
         attempts.clear()
         start()
         val resumed = attempt(0)
-        assertEquals("secondary.invalid", resumed.request.url.host)
+        assertEquals("primary.invalid", resumed.request.url.host)
         fail(resumed)
-        val primaryAttempt = attempt(1)
-        assertEquals("primary.invalid", primaryAttempt.request.url.host)
-        open(primaryAttempt); acknowledge(primaryAttempt)
+        val backupAttempt = attempt(1)
+        assertEquals("secondary.invalid", backupAttempt.request.url.host)
+        open(backupAttempt); acknowledge(backupAttempt)
+        assertEquals(secondary, store.getServerUrl())
+        client.forceReconnectNow(bypassDebounce = true)
+        val returnedPrimary = attempt(2)
+        assertEquals("primary.invalid", returnedPrimary.request.url.host)
+        open(returnedPrimary); acknowledge(returnedPrimary)
         assertEquals(primary, store.getServerUrl())
     }
 
