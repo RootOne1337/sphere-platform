@@ -4,9 +4,11 @@
 
 > [!IMPORTANT]
 > Ниже сохранены датированные контрольные точки 26 сентября. Последний pilot:
-> backend `966e56f`, frontend `8fef5eb`, 10230 только в `android-canary/dev`,
-> удалённый PH022 всё ещё 10222 после `failed/timeout`. В video probe его backend
-> получил только SPS/PPS, без IDR/P. Точные границы доказательств и следующие
+> backend `7a3d761`, frontend `8fef5eb`, 10230 только в `android-canary/dev`;
+> оператор установил APK 10230 на remote PH013/PH017/PH019. PH022 всё ещё 10222
+> после `failed/timeout`. Для PH013 10230 video probe дал 0 ingress и 0 кадров
+> у local/public viewer, management WS оборвался около 40 с; запрос журналов
+> к PH013 и PH025 вернул 504. Точные границы доказательств и следующие
 > gates — в [аудите 27 сентября](../audits/2026-09-27/REMOTE-CONNECTION-AND-OTA-GATES.md).
 
 **Контроль APK и rollout — 26 сентября, 17:07 UTC.** Source на PR #19 —

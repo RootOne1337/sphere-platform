@@ -138,6 +138,13 @@ ingress пока нельзя. После probe все данные оставл
 Попытка `REQUEST_LOGS` к PH022 вернула HTTP 504 через 15 секунд, а сохранённый
 log upload устройства был пуст. Это отдельный пробел управляемости: состояние
 `online` не гарантирует ответ интерактивной диагностической команды.
+В 00:28 UTC повторена **одна** короткая read-only проверка на другом удалённом
+PH025, который до вызова был `online`: `mode=sphere`, `lines=1`, 4 KiB budget.
+Через 15 секунд API снова вернул HTTP 504. Контрольные данные остались в
+ignored `.local-pilot/rollout/ota-ui-20260927/remote-short-logs-private.json`.
+Повторного запроса не было; причина потери ответа между сервером и APK не
+установлена. В тот же момент read-only inventory: 16 устройств, 9 online,
+7 offline; PH022 сообщил 10222 и был offline.
 
 Одна экспериментальная команда `OTA_UPDATE` для PH022 отправлена напрямую через
 Redis 26 сентября в 19:37:14 UTC. Этот способ **обошёл сохранение server-side
@@ -158,6 +165,18 @@ HTTP 200 не доказывает полную загрузку. PH022 оста
 являются доказательством причины отказа PH022. `timeout` пока не различает
 сетевое чтение и стадию установки. Повторной OTA-команды не было.
 
+**Новый диагностический fix `7a3d761`.** Regression сначала воспроизвёл, что
+`package_installer_result_timeout` и `root install timed out` классифицируются
+как общий `timeout`. Теперь backend сохраняет соответственно
+`package_install_callback_timeout` и `root_install_timeout`; 238 targeted
+WS/recovery tests и Ruff прошли. Source-pinned pilot backend image `7a3d761`
+развёрнут с проверкой исходника, внутреннего health и неизменности APK-каталога,
+frontend и legacy-контейнеров. После deploy именно старая квитанция PH022
+несколько раз снова имела `failure_code=timeout`, не новые install-коды.
+PH022 использует APK 10222, в котором ещё нет позднего
+`PackageInstallerResultAwaiter`: это сужает гипотезу, но не доказывает, что
+таймаут возник при загрузке. Не выдавать классификатор за успешную OTA.
+
 Regression для `966e56f` сначала воспроизвёл отсутствие категории, затем
 прошли 32 targeted и 235 backend WS/recovery тестов, Ruff и diff check.
 Source-pinned pilot backend образ `sphere-pilot-20260911-backend:966e56f`
@@ -177,6 +196,50 @@ ignored `.local-pilot/remote/live-stream-canary-20260927-ph022/` и
 не опубликованы.
 
 ## Следующий доказательный шаг
+
+### Ручная установка 10230 на remote и контроль без картинки · 00:30–00:35 UTC
+
+Оператор установил свежую APK на несколько удалённых Android. API независимо
+подтвердил `1.2.30-dev / 10230` на PH013, PH017 и PH019; локальный PH011 тоже
+сообщает 10230. Следовательно, это **не только проблема старой установленной
+APK**. Статусы трёх remote 10230 колебались между online/offline даже в соседних
+read-only снимках. PH019 был `online` при inventory и `offline` к preflight
+видеопроба; поэтому для него проба без viewer не засчитана как результат видео.
+
+Для PH013, когда API показал `online`, провели отдельный local/public viewer
+probe. Локальный viewer за ~20 секунд получил 0 бинарных пакетов; публичный
+viewer получил 0 и закрылся с `ConnectionClosedError` через 0,862 с.
+Worker-safe delta counters по четырём процессам backend для PH013 за пробу:
+**0 ingress packets, 0 ingress bytes, 0 Redis publish, 0 viewer bytes**.
+После пробы heartbeat snapshot Android был `stale` (~62 с) и устройство offline;
+за этот capture-session Android указал 20 закодированных кадров / 253619 байт,
+24 попытки отправки в локальную WS-очередь, 15 принятых / 80359 байт и
+9 отвергнутых, encoder errors 0. Это локальное принятие OkHttp, не wire ACK;
+нельзя утверждать, что эти 15 пакетов вышли в сеть.
+
+Логи backend по тому же device ID: соединение в 00:30:10 UTC прошло auth и
+первый heartbeat (`latency_ms` ~166), viewer в 00:30:35 запросил `start_stream`,
+management WS закрылся в 00:30:49 с code 1005 (без штатного close-frame).
+Public gateway для нескольких management WS PH013 записал успешный HTTP 101
+и длительности **39,999 и 39,998 с**; origin nginx имеет
+`proxy_read_timeout=3600s`, public gateway — `120s`. Это доказывает частые
+обрывы уже установленного соединения, но не определяет, какая сторона первой
+его оборвала. После авторизации короткий `REQUEST_LOGS` к PH013 10230 всё же
+вернул HTTP 504 через 15 с. Тот же результат ранее получен на PH022/PH025.
+Временные файлы проб и wire payload оставлены только в ignored `.local-pilot`.
+
+**Вывод для приоритета:** обновление APK подтвердило версию, но не восстановило
+передачу кадров и ответ интерактивной диагностики на удалённом маршруте.
+Первый следующий шаг — получить клиентский `ws_lifecycle` (`onFailure` тип,
+route slot, elapsed, close code) из периодического upload либо адресного
+доступного журнала; затем A/B на втором живом ingress. Не менять туннель
+массово по одному совпадению 40 секунд. Официальная документация Cloudflare
+[подтверждает WebSocket](https://developers.cloudflare.com/cloudflare-one/faq/cloudflare-tunnels-faq/)
+и [рекомендует heartbeat/проверку idle timeout](https://developers.cloudflare.com/network/websockets/),
+а [Quick Tunnel описывает как тестовый без SLA](https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/do-more-with-tunnels/trycloudflare/);
+она не доказывает конкретный 40-секундный лимит этого инцидента.
+
+## Контрольные шаги для следующей итерации
 
 1. Поднять и постоянно проверять независимый второй ingress, не меняя старый
    Docker; провести на одном удалённом Android сравнительные WSS-сеансы с
