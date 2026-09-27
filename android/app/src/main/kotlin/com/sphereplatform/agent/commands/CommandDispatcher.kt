@@ -182,6 +182,7 @@ class CommandDispatcher @Inject constructor(
             put("vpn_active", deviceStatusProvider.isVpnActive())
             put("agent_version", BuildConfig.VERSION_NAME)
             put("agent_version_code", BuildConfig.VERSION_CODE)
+            wsClient.previousFailureEvidence()?.let { put("previous_ws_failure", it) }
             val stats = if (streamingManager.isActive()) streamingManager.getQualityStats() else null
             if (stats != null) {
                 put("stream", buildJsonObject {

@@ -179,6 +179,26 @@ class CommandDeliveryTest {
         dispatcher.stop()
     }
 
+    @Test fun nextHeartbeatCarriesBoundedPreviousTransportFailure() = runTest {
+        every { ws.previousFailureEvidence() } returns buildJsonObject {
+            put("event", "onFailure")
+            put("phase", "authenticated")
+            put("route_slot", 0)
+            put("route_count", 2)
+            put("elapsed_ms", 40_000)
+            put("error_type", "EOFException")
+            put("age_ms", 1_500)
+        }
+        val dispatcher = dispatcher(backgroundScope)
+        callback.captured!!(buildJsonObject { put("type", "ping"); put("ts", 123.0) })
+
+        val evidence = messages.last()["previous_ws_failure"]?.jsonObject
+        assertNotNull("next authenticated PONG must deliver prior failure", evidence)
+        assertEquals("EOFException", evidence!!["error_type"]?.jsonPrimitive?.content)
+        assertEquals(40_000, evidence["elapsed_ms"]?.jsonPrimitive?.int)
+        dispatcher.stop()
+    }
+
     @Test fun duplicateStartStreamDoesNotRestartActiveCapture() = runTest {
         mockIntentFlags()
         val streaming = mockk<StreamingManager>(relaxed = true)

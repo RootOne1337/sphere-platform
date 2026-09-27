@@ -169,6 +169,25 @@ class WebSocketLifecycleTest {
         job.cancelAndJoin()
     }
 
+    @Test fun reconnectEvidenceIsBoundedAndDoesNotContainTransportSecrets() = runTest {
+        val job = launch { client.connect() }
+        try {
+            runCurrent()
+            authenticateSocket()
+            listener.onFailure(socket, IOException("secret-token-and-private-route"), null)
+            val evidence = client.previousFailureEvidence()
+            assertNotNull(evidence)
+            assertEquals("onFailure", evidence!!["event"]?.toString()?.trim('"'))
+            assertEquals("authenticated", evidence["phase"]?.toString()?.trim('"'))
+            assertEquals("IOException", evidence["error_type"]?.toString()?.trim('"'))
+            assertFalse(evidence.toString().contains("secret-token"))
+            assertFalse(evidence.toString().contains("private-route"))
+            assertTrue(evidence.toString().length < 320)
+        } finally {
+            job.cancelAndJoin()
+        }
+    }
+
     @Test fun websocketFailureLogsRedactedLifecycleEvidence() = runTest {
         every { auth.connectionRoutesSnapshot() } returns AuthTokenStore.ConnectionRoutes(
             0,

@@ -14,6 +14,8 @@ import kotlinx.coroutines.sync.Mutex
 import java.io.IOException
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.contentOrNull
@@ -55,6 +57,19 @@ class SphereWebSocketClient(
     private val wsLock = Any()
     private val connectMutex = Mutex()
     private var generation = 0L
+
+    private data class FailureEvidence(val payload: JsonObject, val recordedAtMs: Long)
+
+    @Volatile private var previousFailure: FailureEvidence? = null
+
+    /** Last transport failure for the next authenticated heartbeat; no URL or exception text. */
+    fun previousFailureEvidence(): JsonObject? {
+        val snapshot = previousFailure ?: return null
+        return buildJsonObject {
+            snapshot.payload.forEach { (key, value) -> put(key, value) }
+            put("age_ms", (monotonicTimeMs() - snapshot.recordedAtMs).coerceIn(0L, 86_400_000L))
+        }
+    }
 
     @Volatile
     var isConnected = false
@@ -259,6 +274,22 @@ class SphereWebSocketClient(
             }.trimEnd()
             // Never include the route URL, device ID, token, close reason, or exception message.
             Timber.i(fields)
+            previousFailure = FailureEvidence(buildJsonObject {
+                put("event", event)
+                put("route_slot", routeSlot)
+                put("route_count", routes.urls.size)
+                put("phase", if (authenticatedAt > 0L) "authenticated" else "pre_auth")
+                put("elapsed_ms", (now - attemptStartedAtMs).coerceIn(0L, 86_400_000L))
+                if (authenticatedAt > 0L) {
+                    put("authenticated_ms", (now - authenticatedAt).coerceIn(0L, 86_400_000L))
+                }
+                if (closeCode != null) put("close_code", closeCode)
+                if (responseCode != null) put("response_code", responseCode)
+                if (error != null) {
+                    put("error_type", error.javaClass.simpleName.take(64))
+                    error.cause?.let { put("cause_type", it.javaClass.simpleName.take(64)) }
+                }
+            }, now)
         }
 
         val listener = object : WebSocketListener() {

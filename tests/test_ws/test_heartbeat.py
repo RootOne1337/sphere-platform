@@ -64,6 +64,46 @@ class TestHeartbeatManager:
         status = await fake_cache.get_status("dev-1")
         assert status is not None and status.status == "online"
 
+    async def test_previous_client_ws_failure_is_logged_once_with_bounded_fields(
+        self, heartbeat, monkeypatch
+    ):
+        records = []
+        monkeypatch.setattr(
+            "backend.websocket.heartbeat.logger.info",
+            lambda event, **fields: records.append((event, fields)),
+        )
+        pong = {
+            "type": "pong", "ts": time.time(),
+            "previous_ws_failure": {
+                "event": "onFailure", "route_slot": 0, "route_count": 2,
+                "phase": "authenticated", "elapsed_ms": 40001,
+                "authenticated_ms": 39500, "error_type": "SocketTimeoutException",
+                "age_ms": 1500, "private_url": "should-not-be-logged",
+            },
+        }
+        await heartbeat.handle_pong(pong)
+        await heartbeat.handle_pong(pong)
+        matching = [fields for event, fields in records if event == "android_ws.previous_failure"]
+        assert len(matching) == 1
+        assert matching[0]["error_type"] == "SocketTimeoutException"
+        assert "private_url" not in matching[0]
+
+    async def test_malformed_previous_ws_failure_is_not_logged(self, heartbeat, monkeypatch):
+        records = []
+        monkeypatch.setattr(
+            "backend.websocket.heartbeat.logger.info",
+            lambda event, **fields: records.append((event, fields)),
+        )
+        await heartbeat.handle_pong({
+            "type": "pong", "ts": time.time(),
+            "previous_ws_failure": {
+                "event": "onFailure", "route_slot": 0, "route_count": 2,
+                "phase": "authenticated", "elapsed_ms": 40001,
+                "error_type": "bad\nlog=inject",
+            },
+        })
+        assert not any(event == "android_ws.previous_failure" for event, _ in records)
+
     async def test_pong_retries_presence_write_after_redis_failure(self, ws, fake_cache, monkeypatch):
         await fake_cache.set_status(
             "dev-1",
@@ -73,9 +113,24 @@ class TestHeartbeatManager:
         set_status = AsyncMock(side_effect=[ConnectionError("isolated Redis write loss"), True])
         monkeypatch.setattr(fake_cache, "set_status", set_status)
 
-        assert await heartbeat.handle_pong({"type": "pong", "ts": time.time()}) is False
-        assert await heartbeat.handle_pong({"type": "pong", "ts": time.time()}) is True
+        records = []
+        monkeypatch.setattr(
+            "backend.websocket.heartbeat.logger.info",
+            lambda event, **fields: records.append((event, fields)),
+        )
+        pong = {
+            "type": "pong", "ts": time.time(),
+            "previous_ws_failure": {
+                "event": "onFailure", "route_slot": 0, "route_count": 2,
+                "phase": "authenticated", "elapsed_ms": 20000,
+                "error_type": "EOFException",
+            },
+        }
+
+        assert await heartbeat.handle_pong(pong) is False
+        assert await heartbeat.handle_pong(pong) is True
         assert set_status.await_count == 2
+        assert sum(event == "android_ws.previous_failure" for event, _ in records) == 1
 
     async def test_replaced_session_pong_does_not_confirm_online(self, ws, fake_cache):
         await fake_cache.set_status(

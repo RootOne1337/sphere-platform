@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import re
 import time
 from datetime import datetime, timezone
 
@@ -27,6 +28,47 @@ logger = structlog.get_logger()
 HEARTBEAT_INTERVAL = 30.0   # Секунды между ping
 HEARTBEAT_TIMEOUT = 15.0    # Секунды ожидания pong
 
+_SAFE_ERROR_TYPE = re.compile(r"[A-Za-z][A-Za-z0-9_]{0,63}\Z")
+
+
+def _bounded_previous_ws_failure(value: object) -> dict | None:
+    """Accept only the small, non-secret transport evidence contract from Android."""
+    if not isinstance(value, dict) or len(value) > 12:
+        return None
+    event = value.get("event")
+    phase = value.get("phase")
+    slot = value.get("route_slot")
+    count = value.get("route_count")
+    elapsed = value.get("elapsed_ms")
+    if event not in ("onFailure", "onClosed", "handshake_timeout") or phase not in (
+        "authenticated", "pre_auth"
+    ):
+        return None
+    if not all(type(number) is int for number in (slot, count, elapsed)):
+        return None
+    if not (1 <= count <= 3 and 0 <= slot < count and 0 <= elapsed <= 86_400_000):
+        return None
+    result = {"event": event, "phase": phase, "route_slot": slot,
+              "route_count": count, "elapsed_ms": elapsed}
+    for key, lower, upper in (
+        ("authenticated_ms", 0, 86_400_000),
+        ("age_ms", 0, 86_400_000),
+        ("close_code", 1000, 4999),
+        ("response_code", 100, 599),
+    ):
+        number = value.get(key)
+        if number is not None:
+            if type(number) is not int or not lower <= number <= upper:
+                return None
+            result[key] = number
+    for key in ("error_type", "cause_type"):
+        name = value.get(key)
+        if name is not None:
+            if not isinstance(name, str) or not _SAFE_ERROR_TYPE.fullmatch(name):
+                return None
+            result[key] = name
+    return result
+
 
 class HeartbeatManager:
     """
@@ -50,6 +92,7 @@ class HeartbeatManager:
         self._session_id = session_id
         self._last_pong: float = time.monotonic()
         self._first_pong_persisted = False
+        self._previous_failure_reported = False
         self._task: asyncio.Task | None = None
 
     async def start(self) -> None:
@@ -171,6 +214,18 @@ class HeartbeatManager:
                 agent_version=status_update.get("agent_version"),
                 agent_version_code=status_update.get("agent_version_code"),
             )
+
+        if status_update_persisted and not self._previous_failure_reported:
+            previous_failure = _bounded_previous_ws_failure(msg.get("previous_ws_failure"))
+            if previous_failure is not None:
+                self._previous_failure_reported = True
+                logger.info(
+                    "android_ws.previous_failure",
+                    device_id=self.device_id,
+                    session_id=self._session_id,
+                    client_event=previous_failure["event"],
+                    **{key: value for key, value in previous_failure.items() if key != "event"},
+                )
 
         # TZ-05 SPLIT-4: обновить Prometheus stream-метрики из pong телеметрии
         stream_data = msg.get("stream")
