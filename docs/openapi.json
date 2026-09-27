@@ -4550,7 +4550,7 @@
           "monitoring"
         ],
         "summary": "Агрегированные метрики инфраструктуры",
-        "description": "Возвращает CPU, RAM, Redis-статистику и данные о сети.\nCPU/RAM — из /proc (Linux-контейнер) или fallback-оценки.\nRedis — из команды INFO.",
+        "description": "Возвращает CPU, RAM, Redis-статистику и данные о сети.\nLoad average не является CPU utilization и публикуется отдельно.\nИстория не хранится этим endpoint и поэтому намеренно пуста.",
         "operationId": "get_monitoring_metrics_api_v1_monitoring_metrics_get",
         "responses": {
           "200": {
@@ -4573,7 +4573,7 @@
           "monitoring"
         ],
         "summary": "Топология кластера (список нод)",
-        "description": "Возвращает backend-сервисы как ноды кластера.\nСтатус определяется проверкой доступности (Redis ping, DB и т.д.).",
+        "description": "Возвращает только backend и зависимости, для которых реально выполняется\nhealth probe. Worker и edge probes не настроены и не объявляются healthy.",
         "operationId": "get_monitoring_nodes_api_v1_monitoring_nodes_get",
         "responses": {
           "200": {
