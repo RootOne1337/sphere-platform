@@ -1,7 +1,7 @@
 package com.sphereplatform.agent.ws
 
 import com.sphereplatform.agent.store.AuthTokenStore
-import com.sphereplatform.agent.network.forManagementRoute
+import com.sphereplatform.agent.network.forManagementWebSocket
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.channels.Channel
@@ -420,7 +420,7 @@ class SphereWebSocketClient(
             }
         }
 
-        val socket = httpClient.forManagementRoute(route).newWebSocket(request, listener)
+        val socket = httpClient.forManagementWebSocket(route).newWebSocket(request, listener)
         synchronized(wsLock) {
             if (attemptGeneration == generation && !shouldStop && !disconnected.isCompleted) {
                 webSocket = socket

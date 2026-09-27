@@ -53,20 +53,16 @@ object AppModule {
             // VirtualBox NAT блокирует UDP/53 → системный DNS не работает.
             // FallbackDns: System DNS → DoH (Cloudflare/Google) → UDP DNS → exception
             .dns(FallbackDns())
-            // FIX AUDIT-1.1: readTimeout=60s вместо бесконечного.
-            // OkHttp WS ping (15s) + readTimeout(60s) = детектирование мёртвого
-            // соединения за ~60с. Раньше при readTimeout=0 зависшие WS жили часами.
+            // Bounded HTTP reads; the management WebSocket has a separate
+            // application heartbeat watchdog and route-specific ping policy.
             .readTimeout(60, TimeUnit.SECONDS)
             .writeTimeout(30, TimeUnit.SECONDS)
             // FIX AUDIT-1.1: Один idle connection, 30s keep-alive.
             // Агент использует только одно WS-соединение, лишние TCP в пуле — waste.
             .connectionPool(ConnectionPool(1, 30, TimeUnit.SECONDS))
-            // FIX-PING: WebSocket-level RFC 6455 ping каждые 15 секунд.
-            // Cloudflare/nginx прозрачно пропускают WS ping/pong фреймы.
-            // Это держит TCP-соединение живым через все прокси и NAT,
-            // а также быстро детектирует мёртвые соединения (OkHttp закроет WS
-            // если pong не придёт в течение readTimeout, который у нас infinite →
-            // значит при потере связи WS умрёт по TCP keepalive/OS timeout).
+            // Other WebSockets retain RFC 6455 ping. Management WebSocket
+            // explicitly disables it because remote pilot connections repeatedly
+            // lost control pong despite authenticated application heartbeats.
             .pingInterval(15, TimeUnit.SECONDS)
             .addInterceptor { chain ->
                 val requestBuilder = chain.request().newBuilder()

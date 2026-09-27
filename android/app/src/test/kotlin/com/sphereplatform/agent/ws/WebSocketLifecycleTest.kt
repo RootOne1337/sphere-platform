@@ -33,6 +33,7 @@ class WebSocketLifecycleTest {
             mockk<OkHttpClient.Builder> {
                 every { followRedirects(any()) } returns this
                 every { followSslRedirects(any()) } returns this
+                every { pingInterval(any(), any()) } returns this
                 every { build() } returns baseClient
             }
         }

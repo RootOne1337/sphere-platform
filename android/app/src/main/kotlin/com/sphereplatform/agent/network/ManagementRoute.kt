@@ -3,6 +3,7 @@ package com.sphereplatform.agent.network
 import okhttp3.CertificatePinner
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
+import java.util.concurrent.TimeUnit
 
 /** Operator-provisioned HTTP(S) base URL, never credentials or a redirect target. */
 internal fun normalizeManagementUrl(value: String): String {
@@ -24,3 +25,12 @@ internal fun OkHttpClient.forManagementRoute(url: String): OkHttpClient {
     }
     return builder.build()
 }
+
+/**
+ * Management traffic already has server JSON ping/pong and a client watchdog.
+ * A remote transport that fails to relay RFC 6455 control pong must not kill an
+ * otherwise authenticated session after OkHttp's short ping interval. Keep the
+ * base HTTP client unchanged; only the management WebSocket omits control pings.
+ */
+internal fun OkHttpClient.forManagementWebSocket(url: String): OkHttpClient =
+    forManagementRoute(url).newBuilder().pingInterval(0, TimeUnit.MILLISECONDS).build()

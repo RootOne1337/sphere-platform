@@ -11,6 +11,7 @@ import com.sphereplatform.agent.provisioning.ZeroTouchProvisioner
 import com.sphereplatform.agent.service.ConfigWatchdog
 import com.sphereplatform.agent.store.AuthTokenStore
 import com.sphereplatform.agent.network.forManagementRoute
+import com.sphereplatform.agent.network.forManagementWebSocket
 import dagger.Lazy
 import io.mockk.*
 import kotlinx.coroutines.*
@@ -98,6 +99,7 @@ class SavedRouteFailoverTest {
         val builder = mockk<OkHttpClient.Builder> {
             every { followRedirects(any()) } returns this
             every { followSslRedirects(any()) } returns this
+            every { pingInterval(any(), any()) } returns this
             every { certificatePinner(any()) } returns this
             every { build() } answers { http }
         }
@@ -406,6 +408,19 @@ class SavedRouteFailoverTest {
         assertEquals(listOf(pin), routed.certificatePinner.findMatchingPins("secondary.invalid").map { it.toString() })
         assertSame(pinned.dispatcher, routed.dispatcher)
         assertSame(pinned.connectionPool, routed.connectionPool)
+    }
+
+    @Test
+    fun `management websocket uses application heartbeat instead of short control pong deadline`() {
+        val shared = realHttp.newBuilder().pingInterval(15, TimeUnit.SECONDS).build()
+        val routed = shared.forManagementWebSocket(secondary)
+
+        assertEquals(15_000, shared.pingIntervalMillis)
+        assertEquals(0, routed.pingIntervalMillis)
+        assertFalse(routed.followRedirects)
+        assertFalse(routed.followSslRedirects)
+        assertSame(shared.dispatcher, routed.dispatcher)
+        assertSame(shared.connectionPool, routed.connectionPool)
     }
 
     @Test
