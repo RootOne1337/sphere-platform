@@ -19,7 +19,7 @@ API вернул 16 зарегистрированных записей: 12 `onl
 | P1 | Remote WSS закрывается, устройство колеблется между состояниями | PH022/PH025: по 20 завершённых сеансов за 20 минут на public gateway; все HTTP 101, большинство длиной ровно 40 или 60 секунд; backend close 1005. У локальных PH010/PH011 за тот же интервал не было завершившихся WSS-сеансов | Требуется контролируемый A/B ingress одного remote canary с client-side close/failure и gateway timing; Cloudflare как единственная причина **не доказан** |
 | P1 | Резервный ingress неработоспособен | Primary `/api/v1/health/readyz` → 200; подписанный fallback LocalTunnel → 502. `sphere-pilot-alt-ingress-20260926` запущен и из него origin gateway отвечает 200, но у контейнера нет healthcheck и restart policy | Не считать опубликованный fallback отказоустойчивым; восстановить управляемый второй ingress и принять health/WSS/command/frame на одном canary |
 | P1 | Дистанционная OTA не доказана | `android/dev` каталог отдаёт только 10209. 10230 опубликован только в `android-canary/dev`; одна адресная попытка на PH022 завершилась `failed/timeout`, версия осталась 10222 | Не открывать общий канал до адресной установки с PackageManager, SHA и свежим heartbeat |
-| P1 | Нет поддерживаемого пути адресной OTA для активного устройства | За 20 минут backend записал 37 `ota_recovery_receipt_unrecognized` для remote PH025 и 40 для local PH010. Android помечает все `OTA_UPDATE` как recovery receipt, а backend признаёт лишь ранее выданный и сохранённый recovery grant. Прямой Redis dispatch обходит эту выдачу; `966e56f` безопасно классифицирует отказ, но **не ACK** | Спроектировать durable per-device issuance/result/ACK и отдельный recovery path; не ACK неизвестное сообщение вслепую |
+| P2 | Прямой Redis OTA обходил сохранённую выдачу | За 20 минут backend записал 37 `ota_recovery_receipt_unrecognized` для remote PH025 и 40 для local PH010. Android помечает все `OTA_UPDATE` как recovery receipt, backend признаёт только подписанный и сохранённый grant. Путь `POST /updates/recovery` уже существует; прямой Redis dispatch его обходит. `966e56f` классифицирует отказ, но **не ACK** | Не использовать прямой Redis как rollout-путь; испытать адресный recovery grant и receipt, сохранив fail-closed проверку |
 | P1 | Удалённые кадры не достигают backend | PH022: Android сообщил 15 encoded frames / 142002 байта, 17/17 локально принятых WS queue calls; backend получил 9 NAL-пакетов / 281 байт, только SPS/PPS. Redis и viewer передали те же 9/281; local PH010 дал IDR/P и 80774 байта ingress | Локализовать разрыв между очередью OkHttp и ASGI ingress; отдельный ingress A/B и packet/ack probes, без предположения, что виноват один Cloudflare |
 | P2 | Веб скрывал canary-релизы | `/updates` запрашивал только `android`; backend хранит 12 релизов, включая `android-canary` 10228 | Исправлено `213402b`, regression до/после; pilot frontend развёрнут из `8fef5eb` |
 
@@ -114,7 +114,12 @@ log upload устройства был пуст. Это отдельный пр�
 
 Одна экспериментальная команда `OTA_UPDATE` для PH022 отправлена напрямую через
 Redis 26 сентября в 19:37:14 UTC. Этот способ **обошёл сохранение server-side
-выдачи** и потому не является поддерживаемым production-путём OTA. Public
+выдачи** и потому не является поддерживаемым production-путём OTA. В коде уже
+есть `POST /api/v1/updates/recovery`, который сохраняет подписанный grant;
+`get_ota_recovery` до обычного WS auth проверяет и действительный токен,
+выпущенный раньше grant. Characterization regression для этого случая прошёл
+(33 теста recovery suite). **Runtime-доставку через этот путь на удалённом
+устройстве мы ещё не проверили.** Public
 gateway записал два HTTP 200 GET управляемого APK за 2,831 и
 2,129 с; его журнал не подтверждает число байт, полученных Android, поэтому
 HTTP 200 не доказывает полную загрузку. PH022 остался на 10222. После
@@ -150,12 +155,12 @@ ignored `.local-pilot/remote/live-stream-canary-20260927-ph022/` и
    Docker; провести на одном удалённом Android сравнительные WSS-сеансы с
    замером Android `onFailure`/close, gateway duration, backend heartbeat и
    command receipt. Внешний Quick Tunnel или LocalTunnel без health недостаточен.
-2. Добавить поддерживаемую адресную OTA для действующего device JWT:
-   сохранить выдачу команды до доставки, проверить tenant/device/command/status,
-   записать bounded receipt, только затем ACK. Recovery grant для старого JWT
-   оставить отдельным; исторические 10222-квитанции
-   требуют отдельной миграционной стратегии; неизвестный recovery grant не
-   следует подтверждать без проверки.
+2. Проверить существующий `POST /updates/recovery` и специализированный
+   OTA-only WS path сначала на локальном canary: grant до доставки, совпадение
+   tenant/device/command/status, persist-before-ACK, повтор после reconnect.
+   Код допускает действительный device JWT, выпущенный до grant, но runtime
+   для active remote не принят. Исторические 10222-квитанции требуют отдельной
+   миграционной стратегии; неизвестный grant не подтверждать.
 3. На одном remote canary уточнить стадию `timeout`, затем подтвердить
    delivery/download/SHA/PackageInstaller,
    установленный versionCode и heartbeat после перезапуска APK. Только после

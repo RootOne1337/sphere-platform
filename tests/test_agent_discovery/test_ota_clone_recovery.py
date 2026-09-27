@@ -70,6 +70,21 @@ async def test_expired_device_token_only_gets_exact_recovery_grant(db_session, r
     assert await get_ota_recovery(encode(claims), db_session, device_id=str(uuid.uuid4())) is None
 
 
+async def test_recovery_grant_also_matches_earlier_unexpired_device_token(
+    db_session, recovery_case,
+):
+    """Characterize today's route: a grant intercepts reconnect before normal WS auth."""
+    device, grant, claims = recovery_case
+    claims["exp"] = int(time.time()) + 3600
+    from backend.core.security import decode_access_token
+
+    token = encode(claims)
+    assert decode_access_token(token)["sub"] == str(device.id)
+    matched = await get_ota_recovery(token, db_session, device_id=str(device.id))
+    assert matched and matched[0].id == device.id and matched[1] == grant
+    assert await get_ota_recovery(token, db_session, device_id=str(uuid.uuid4())) is None
+
+
 async def test_legacy_grant_signature_without_version_code_remains_valid(db_session):
     now = int(time.time())
     org = Organization(name="legacy recovery", slug=uuid.uuid4().hex)
