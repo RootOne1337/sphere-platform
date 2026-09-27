@@ -20,7 +20,7 @@ API вернул 16 зарегистрированных записей: 12 `onl
 | P1 | Резервный ingress неработоспособен | Primary `/api/v1/health/readyz` → 200; подписанный fallback LocalTunnel → 502. `sphere-pilot-alt-ingress-20260926` запущен и из него origin gateway отвечает 200, но у контейнера нет healthcheck и restart policy | Не считать опубликованный fallback отказоустойчивым; восстановить управляемый второй ingress и принять health/WSS/command/frame на одном canary |
 | P1 | Дистанционная OTA не доказана | `android/dev` каталог отдаёт только 10209. 10230 опубликован только в `android-canary/dev`; одна адресная попытка на PH022 завершилась `failed/timeout`, версия осталась 10222 | Не открывать общий канал до адресной установки с PackageManager, SHA и свежим heartbeat |
 | P2 | Прямой Redis OTA обходил сохранённую выдачу | За 20 минут backend записал 37 `ota_recovery_receipt_unrecognized` для remote PH025 и 40 для local PH010. Android помечает все `OTA_UPDATE` как recovery receipt, backend признаёт только подписанный и сохранённый grant. Путь `POST /updates/recovery` уже существует; прямой Redis dispatch его обходит. `966e56f` классифицирует отказ, но **не ACK** | Не использовать прямой Redis как rollout-путь; испытать адресный recovery grant и receipt, сохранив fail-closed проверку |
-| P1 | Удалённый viewer не получает IDR/P | PH022: Android сообщил 15 encoded frames / 142002 байта и 17/17 локально принятых WS queue calls; оба прямых viewer получили только SPS. Один scrape backend worker показал 9 NAL-пакетов / 281 байт, но его нельзя считать суммой четырёх процессов | Разделить ingress каждого backend worker и Redis/viewer; затем локализовать потерю между Android queue и viewer без предположения о единственной причине Cloudflare |
+| P1 | Удалённый viewer не получает IDR/P | Повторный PH022-пробник: Android сообщил 11 encoded frames / 67906 байт и 13/13 локально принятых WS queue calls; сводка четырёх backend worker показала только SPS/PPS — 2 пакета / 61 байт, Redis и public viewer те же 61 байт | Потеря между локальной очередью OkHttp и ASGI binary ingress; проверить отправку/разрыв на Android и сравнить независимый ingress, не объявляя Cloudflare доказанной причиной |
 | P1 | `/metrics` показывает неполные счётчики | 120 параллельных GET показали четыре разных `process_start_time_seconds`, а deployment не включает Prometheus multiprocess mode; один scrape читает память одного Gunicorn worker. Поэтому прошлые ingress/Redis/viewer totals нельзя выдавать за общие | Спроектировать worker-safe сбор без бесконечной per-device cardinality; проверить 4-worker aggregation на изолированном runtime до pilot rollout |
 | P2 | Веб скрывал canary-релизы | `/updates` запрашивал только `android`; backend хранит 12 релизов, включая `android-canary` 10228 | Исправлено `213402b`, regression до/после; pilot frontend развёрнут из `8fef5eb` |
 
@@ -119,6 +119,21 @@ GitHub Releases; на remote он не установлен.
 требуют предварительной очистки каталога и Gunicorn `child_exit`; кроме того,
 `Gauge.remove` и `Counter` с `device_id` в текущем коде требуют отдельного
 решения по cardinality до включения multiprocess mode.
+
+**Повтор после выявления ограничения `/metrics`.** В 00:20 UTC выполнен новый
+изолированный просмотр PH022, затем 120 параллельных scrape покрыли все четыре
+различных Gunicorn worker (по `process_start_time_seconds`). Сумма их counters:
+ASGI ingress — **2 пакета / 61 байт**, SPS и PPS; Redis publish — 2/61;
+viewer send — 2/61. Прямой локальный viewer не получил видеопакетов, публичный
+получил только эти два SPS/PPS. Свежий report Android в 00:20:42 UTC: 11
+encoded frames / 67906 байт, 13/13 локально принятых WS queue calls /
+68121 байт, `encoder_errors_total=0`. Это локальная очередь, не transport ACK.
+Результат повторяет отсутствие IDR/P в браузере и теперь **локализует потерю
+до ASGI ingress** для данного проба. Различить stale/недоставленную очередь
+OkHttp, WAN, edge tunnel и gateway без client-side отправочных ACK и второго
+ingress пока нельзя. После probe все данные оставлены приватно в
+`.local-pilot/remote/live-stream-canary-20260927-ph022-multiprocess/` и
+`.local-pilot/rollout/ota-ui-20260927/metrics-worker-aggregated-private.json`.
 
 Попытка `REQUEST_LOGS` к PH022 вернула HTTP 504 через 15 секунд, а сохранённый
 log upload устройства был пуст. Это отдельный пробел управляемости: состояние
