@@ -12091,6 +12091,18 @@
             ],
             "title": "Last Heartbeat"
           },
+          "connected_since": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Connected Since"
+          },
           "ws_session_id": {
             "anyOf": [
               {
@@ -12565,6 +12577,18 @@
             ],
             "title": "Last Heartbeat"
           },
+          "connected_since": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Connected Since"
+          },
           "agent_version": {
             "anyOf": [
               {
@@ -12823,6 +12847,18 @@
               }
             ],
             "title": "Last Heartbeat"
+          },
+          "connected_since": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Connected Since"
           },
           "agent_version": {
             "anyOf": [
