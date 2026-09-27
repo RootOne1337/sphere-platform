@@ -142,6 +142,7 @@ class DeviceStatusCache:
 
                         existing.status = "offline"
                         existing.adb_connected = False
+                        existing.connected_since = None
                         existing.ws_session_id = None
 
                     data = msgpack.packb(existing.model_dump(mode="json"), use_bin_type=True)

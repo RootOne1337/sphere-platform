@@ -237,6 +237,31 @@ class TestHeartbeatManager:
         assert status.last_heartbeat is not None
         assert status.last_heartbeat >= before
 
+    async def test_connected_since_starts_at_first_pong_and_survives_heartbeats(self, ws, fake_cache):
+        from datetime import datetime, timezone
+
+        heartbeat = HeartbeatManager(ws, "dev-session-age", fake_cache, session_id="session-1")
+        await fake_cache.set_status(
+            "dev-session-age",
+            DeviceLiveStatus(
+                device_id="dev-session-age",
+                status="connecting",
+                ws_session_id="session-1",
+            ),
+        )
+
+        before = datetime.now(timezone.utc)
+        assert await heartbeat.handle_pong({"type": "pong", "ts": time.time()}) is True
+        first = await fake_cache.get_status("dev-session-age")
+        assert first is not None and first.connected_since is not None
+        assert before <= first.connected_since <= datetime.now(timezone.utc)
+
+        assert await heartbeat.handle_pong({"type": "pong", "ts": time.time()}) is False
+        second = await fake_cache.get_status("dev-session-age")
+        assert second is not None
+        assert second.connected_since == first.connected_since
+        await heartbeat.stop()
+
     async def test_pong_persists_sanitized_stream_snapshot_with_session_identity(
         self, ws, fake_cache
     ):

@@ -140,6 +140,7 @@ async def list_devices(
                 d.adb_connected = live.adb_connected
                 d.vpn_active = live.vpn_active
                 d.last_heartbeat = live.last_heartbeat
+                d.connected_since = live.connected_since
                 d.agent_version = live.agent_version
                 d.agent_version_code = live.agent_version_code
             enriched.append(d)
@@ -307,6 +308,7 @@ async def get_device(
         device.adb_connected = live.adb_connected
         device.vpn_active = live.vpn_active
         device.last_heartbeat = live.last_heartbeat
+        device.connected_since = live.connected_since
         device.agent_version = live.agent_version
         device.agent_version_code = live.agent_version_code
     return device

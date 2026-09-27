@@ -213,10 +213,19 @@ class HeartbeatManager:
                 # Presence is disposable: an authenticated live socket can rebuild
                 # it after eviction/restart. Durable task state remains in PostgreSQL.
                 current = DeviceLiveStatus(device_id=self.device_id, status="online")
+            now = datetime.now(timezone.utc)
+            if (
+                current.connected_since is None
+                or current.status not in ("online", "busy")
+                or (self._session_id and current.ws_session_id != self._session_id)
+            ):
+                # The first accepted pong is the start of a confirmed connection;
+                # an authenticated WebSocket that never answers stays "connecting".
+                current.connected_since = now
             current.status = "busy" if current.status == "busy" else "online"
             if self._session_id:
                 current.ws_session_id = self._session_id
-            current.last_heartbeat = datetime.now(timezone.utc)
+            current.last_heartbeat = now
             try:
                 current = DeviceLiveStatus.model_validate(current.model_dump() | status_update)
             except ValidationError:

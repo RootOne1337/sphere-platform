@@ -32,6 +32,7 @@ const device = {
   screen_on: true,
   last_seen: '2026-09-23T10:00:00Z',
   last_heartbeat: '2026-09-23T10:00:00Z',
+  connected_since: new Date(Date.now() - 23 * 60_000).toISOString(),
   adb_connected: true,
   vpn_assigned: false,
   vpn_active: null,
@@ -49,9 +50,35 @@ it('does not present generated ping or history as measurements', () => {
   );
 
   expect(screen.getByText('56%')).toBeInTheDocument();
+  expect(screen.getByText(/В сети 23 мин/)).toBeInTheDocument();
+  expect(screen.getByText(/heartbeat .* назад/)).toBeInTheDocument();
   expect(container.textContent).not.toMatch(/\d+\s?ms/);
   expect(document.querySelectorAll('svg polyline')).toHaveLength(0);
   expect(screen.getByText('ADB linked')).toBeInTheDocument();
+});
+
+it('does not invent an uptime when the server has no confirmed session timestamp', () => {
+  const { rerender } = render(
+    <FleetMatrix
+      data={[{ ...device, connected_since: null, last_heartbeat: null } as Device]}
+      isLoading={false}
+      rowSelection={{}}
+      onRowSelectionChange={jest.fn()}
+    />,
+  );
+
+  expect(screen.getByText('Сессия подтверждена · heartbeat нет данных')).toBeInTheDocument();
+  expect(screen.queryByText(/В сети .* мин/)).not.toBeInTheDocument();
+
+  rerender(
+    <FleetMatrix
+      data={[{ ...device, status: 'connecting', connected_since: null } as Device]}
+      isLoading={false}
+      rowSelection={{}}
+      onRowSelectionChange={jest.fn()}
+    />,
+  );
+  expect(screen.getByText('Ожидание первого heartbeat')).toBeInTheDocument();
 });
 
 it('shows an honest empty state when the registry has no devices', () => {

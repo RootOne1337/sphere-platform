@@ -33,6 +33,21 @@ import {
 
 export type DeviceAction = 'rename' | 'assign_group' | 'assign_location' | 'assign_server' | 'delete';
 
+function formatElapsedSince(timestamp: string | null | undefined, now: number): string | null {
+    if (!timestamp) return null;
+    const parsed = Date.parse(timestamp);
+    if (!Number.isFinite(parsed) || parsed > now + 60_000) return null;
+
+    const seconds = Math.max(0, Math.floor((now - parsed) / 1000));
+    if (seconds < 60) return `${seconds} с`;
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes} мин`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours} ч ${minutes % 60} мин`;
+    const days = Math.floor(hours / 24);
+    return `${days} д ${hours % 24} ч`;
+}
+
 interface FleetMatrixProps {
     data: Device[];
     isLoading: boolean;
@@ -46,6 +61,12 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
     const parentRef = React.useRef<HTMLDivElement>(null);
     const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
     const [sorting, setSorting] = React.useState<SortingState>([]);
+    const [clockNow, setClockNow] = React.useState(() => Date.now());
+
+    React.useEffect(() => {
+        const timer = window.setInterval(() => setClockNow(Date.now()), 15_000);
+        return () => window.clearInterval(timer);
+    }, []);
 
     const columns = React.useMemo<ColumnDef<Device>[]>(
         () => [
@@ -103,12 +124,28 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
             {
                 accessorKey: "status",
                 header: "Status",
-                size: 100,
-                cell: ({ row }) => (
-                    <div className="flex items-center h-full">
-                        <DeviceStatusBadge status={row.original.status} />
-                    </div>
-                ),
+                size: 168,
+                cell: ({ row }) => {
+                    const device = row.original;
+                    const uptime = formatElapsedSince(device.connected_since, clockNow);
+                    const heartbeatAge = formatElapsedSince(device.last_heartbeat, clockNow);
+                    const detail = device.status === "online" || device.status === "busy"
+                        ? `${uptime ? `В сети ${uptime}` : "Сессия подтверждена"} · heartbeat ${heartbeatAge ? `${heartbeatAge} назад` : "нет данных"}`
+                        : device.status === "connecting"
+                            ? "Ожидание первого heartbeat"
+                            : heartbeatAge
+                                ? `Последний heartbeat ${heartbeatAge} назад`
+                                : "Heartbeat не получен";
+
+                    return (
+                        <div className="flex h-full min-w-0 flex-col justify-center gap-0.5" title={detail}>
+                            <DeviceStatusBadge status={device.status} />
+                            <span className="truncate font-mono text-[9px] leading-3 text-muted-foreground" aria-label={detail}>
+                                {detail}
+                            </span>
+                        </div>
+                    );
+                },
             },
             {
                 accessorKey: "battery_level",
@@ -293,7 +330,7 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
     const virtualizer = useVirtualizer({
         count: rows.length,
         getScrollElement: () => parentRef.current,
-        estimateSize: () => 48,
+        estimateSize: () => 56,
         overscan: 20,
     });
 

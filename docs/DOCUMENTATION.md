@@ -7,6 +7,7 @@
 | Вопрос | Основной документ |
 | --- | --- |
 | Что реально установлено и как войти | [Local pilot](operations/LOCAL-PILOT.md) |
+| Проверка Tuna как альтернативного remote ingress | [Tuna remote stream canary](audits/2026-09-27/TUNA-REMOTE-STREAM-CANARY.md) |
 | Какие проблемы остались перед 32 устройствами | [Fleet32: актуальная таблица](audits/2026-09-20/FLEET32-PREFLIGHT.md) |
 | Что принимаем за готовность | [Readiness](operations/READINESS.md) |
 | Какую работу делаем следующей | [Roadmap](../ROADMAP.md) |

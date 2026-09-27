@@ -51,12 +51,16 @@ class TestDeviceStatusCache:
         assert results["missing-2"] is None
 
     async def test_mark_offline_existing(self, cache):
+        from datetime import datetime, timezone
+
+        connected_since = datetime.now(timezone.utc)
         await cache.set_status(
             "dev-online",
             DeviceLiveStatus(
                 device_id="dev-online",
                 status="online",
                 adb_connected=True,
+                connected_since=connected_since,
                 ws_session_id="sess-123",
             ),
         )
@@ -65,6 +69,7 @@ class TestDeviceStatusCache:
         assert result is not None
         assert result.status == "offline"
         assert result.adb_connected is False
+        assert result.connected_since is None
         assert result.ws_session_id is None
 
     async def test_stale_session_disconnect_does_not_overwrite_newer_session(self, cache):

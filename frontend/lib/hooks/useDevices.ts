@@ -22,6 +22,7 @@ export interface Device {
   screen_on: boolean | null;
   last_seen: string | null;
   last_heartbeat: string | null;
+  connected_since?: string | null;
   adb_connected: boolean;
   vpn_assigned: boolean;
   vpn_active: boolean | null;

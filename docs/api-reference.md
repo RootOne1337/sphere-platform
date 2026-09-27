@@ -306,6 +306,8 @@ Authorization: Bearer <token>
       "group_id": "uuid",
       "org_id": "uuid",
       "last_seen": "2026-02-23T10:00:00Z",
+      "last_heartbeat": "2026-02-23T10:00:02Z",
+      "connected_since": "2026-02-23T09:58:10Z",
       "vpn_ip": "10.100.0.5",
       "battery_level": 87,
       "android_version": "13"
@@ -316,6 +318,11 @@ Authorization: Bearer <token>
   "per_page": 50
 }
 ```
+
+`last_heartbeat` is the timestamp of the latest accepted Android pong.
+`connected_since` is nullable and starts at the first accepted pong of the
+current WebSocket session; it is cleared when that session is marked offline.
+Older Redis status entries may omit it until the next agent heartbeat.
 
 ---
 

@@ -31,7 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { AlertTriangle, Cpu, Filter, FolderOpen, LayoutGrid, List, Loader2, MapPin, Pencil, RefreshCcw, Search, Server, ShieldOff, Wifi, WifiOff } from 'lucide-react';
+import { Activity, AlertTriangle, Cpu, Filter, FolderOpen, LayoutGrid, List, Loader2, MapPin, Pencil, RefreshCcw, Search, Server, ShieldOff, Wifi, WifiOff } from 'lucide-react';
 import { useGameServers } from '@/lib/hooks/usePipelineSettings';
 import { toast } from 'sonner';
 
@@ -124,7 +124,9 @@ export default function DevicesPage() {
   const exceedsBulkLimit = selectedIds.length > MAX_BULK_DEVICE_OPERATION_COUNT;
 
   const statusCounts = useMemo(() => ({
-    online: filteredItems.filter((device) => device.status === 'online').length,
+    online: filteredItems.filter((device) => device.status === 'online' || device.status === 'busy').length,
+    busy: filteredItems.filter((device) => device.status === 'busy').length,
+    connecting: filteredItems.filter((device) => device.status === 'connecting').length,
     offline: filteredItems.filter((device) => device.status === 'offline').length,
     issues: filteredItems.filter((device) => device.status === 'error' || device.status === 'unknown').length,
   }), [filteredItems]);
@@ -356,10 +358,12 @@ export default function DevicesPage() {
           </div>
         </div>
 
-        <section aria-label="Состояние устройств" className="grid grid-cols-2 gap-2 sm:gap-3 xl:grid-cols-4">
+        <section aria-label="Состояние устройств" className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 xl:grid-cols-6">
           {[
             { label: 'В каталоге', value: isLoading ? '—' : data?.total ?? 0, note: 'результат поиска', icon: Cpu, tone: 'text-primary' },
-            { label: 'В сети', value: isLoading ? '—' : statusCounts.online, note: 'текущий статус API', icon: Wifi, tone: 'text-emerald-400' },
+            { label: 'В сети', value: isLoading ? '—' : statusCounts.online, note: 'online + busy по API', icon: Wifi, tone: 'text-emerald-400' },
+            { label: 'В работе', value: isLoading ? '—' : statusCounts.busy, note: 'busy, входит в «В сети»', icon: Activity, tone: 'text-primary' },
+            { label: 'Подключаются', value: isLoading ? '—' : statusCounts.connecting, note: 'ждём первый heartbeat', icon: Loader2, tone: 'text-amber-400' },
             { label: 'Не в сети', value: isLoading ? '—' : statusCounts.offline, note: 'нет активного heartbeat', icon: WifiOff, tone: 'text-muted-foreground' },
             { label: 'Требуют внимания', value: isLoading ? '—' : statusCounts.issues, note: 'ошибка или статус неизвестен', icon: AlertTriangle, tone: 'text-amber-400' },
           ].map(({ label, value, note, icon: Icon, tone }) => (

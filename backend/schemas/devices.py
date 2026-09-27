@@ -152,6 +152,7 @@ class DeviceResponse(BaseModel):
     adb_connected: bool = False
     vpn_active: bool | None = None
     last_heartbeat: datetime | None = None
+    connected_since: datetime | None = None
     agent_version: str | None = None
     agent_version_code: int | None = None
 
