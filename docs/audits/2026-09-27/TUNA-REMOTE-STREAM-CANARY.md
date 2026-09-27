@@ -32,6 +32,8 @@ Tuna's [HTTP tunnel documentation](https://tuna.am/en/docs/tunnels/http/) says H
 
 Tuna is a useful alternate ingress for this pilot, but the evidence does not justify replacing Cloudflare for every device. The user's subscription is not renewed by this experiment. Do not publish the local CLI token or the canary hostname in the repository, APK, public build metadata, or ordinary logs.
 
+On Windows, this pilot's Tuna connectors were started as hidden user-session processes; automatic recovery after logout/reboot has not been tested. Tuna's [service guide](https://tuna.am/en/docs/tunnels/guides/service/) says installing a Windows service requires an elevated PowerShell session. Its [Docker Compose example](https://tuna.am/docs/tunnels/guides/service/) uses host networking and notes that Windows/macOS Docker Desktop require the host-networking development feature. We have not enabled that feature or installed a machine-level service, so the current canary must not be described as a persistent, supervised tunnel deployment.
+
 ## Findings
 
 1. **No proof that Cloudflare dropped the H.264 payload in this canary.** The Cloudflare and local viewers received the same four encoded video frames that the Tuna viewer received.
