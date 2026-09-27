@@ -9,7 +9,8 @@
 </div>
 
 > [!NOTE]
-> **Срез навигации: 25 сентября 2026.** Текущий pilot и границы его приёмки описаны
+> **Срез навигации: 27 сентября 2026.** Текущие remote/video/OTA gates описаны
+> в [live-аудите](audits/2026-09-27/REMOTE-CONNECTION-AND-OTA-GATES.md), pilot —
 > в [Local pilot](operations/LOCAL-PILOT.md). Старые отчёты сохраняют свои даты и
 > версии; их показатели нельзя переносить на текущий код. [Правила актуальности](DOCUMENTATION.md).
 
@@ -20,7 +21,7 @@
 | Войти в готовый pilot и взять APK | [Local pilot](operations/LOCAL-PILOT.md) | [Приёмка первого устройства](operations/PILOT-ACCEPTANCE.md) |
 | Поднять новую установку | [Startup / bootstrap](operations/STARTUP.md#first-install) | [Configuration](configuration.md) · [Deployment](deployment.md) |
 | Подключить удалённые Android | [Remote pilot](operations/REMOTE-PILOT.md) | [Signed discovery](architecture/ANDROID-SIGNED-DISCOVERY.md) |
-| Понять оставшиеся проблемы | [Fleet32: актуальная таблица](audits/2026-09-20/FLEET32-PREFLIGHT.md) | [A/B ingress и три remote VM](audits/2026-09-24/REMOTE-INGRESS-AB.md) · [Удалённое видео и OTA](audits/2026-09-24/REMOTE-VIDEO-OTA-DECISION.md) · [Readiness](operations/READINESS.md) · [Roadmap](../ROADMAP.md) |
+| Понять оставшиеся проблемы | [Текущие remote/video/OTA gates](audits/2026-09-27/REMOTE-CONNECTION-AND-OTA-GATES.md) | [Fleet32](audits/2026-09-20/FLEET32-PREFLIGHT.md) · [A/B ingress](audits/2026-09-24/REMOTE-INGRESS-AB.md) · [Readiness](operations/READINESS.md) · [Roadmap](../ROADMAP.md) |
 | Разобрать чёрный экран стрима по стадиям | [Android stream observability](audits/2026-09-25/ANDROID-STREAM-OBSERVABILITY.md) | APK capture/encode/queue · browser decode/render · ограничения доказательств |
 | Разобрать offline после clone/re-enrollment | [AUD-172 — enrollment HTTP 401](audits/2026-09-25/CLONED-ENROLLMENT-401.md) | Reject в `/devices/register`, shared bootstrap file и границы подтверждённой причины |
 | Разобрать ложный Online сразу после подключения | [AUD-173 — presence до первого heartbeat](audits/2026-09-25/DEVICE-PRESENCE-FIRST-HEARTBEAT.md) | `connecting` → первый pong → `online`, тесты и rollout gate |

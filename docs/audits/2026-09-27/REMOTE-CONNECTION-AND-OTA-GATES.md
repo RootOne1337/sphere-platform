@@ -17,9 +17,10 @@ API вернул 16 зарегистрированных записей: 12 `onl
 | Приоритет | Дефект / ограничение | Доказательство | Текущее действие |
 | --- | --- | --- | --- |
 | P1 | Remote WSS закрывается, устройство колеблется между состояниями | PH022/PH025: по 20 завершённых сеансов за 20 минут на public gateway; все HTTP 101, большинство длиной ровно 40 или 60 секунд; backend close 1005. У локальных PH010/PH011 за тот же интервал не было завершившихся WSS-сеансов | Требуется контролируемый A/B ingress одного remote canary с client-side close/failure и gateway timing; Cloudflare как единственная причина **не доказан** |
-| P1 | Резервный ingress неработоспособен | Primary `/readyz` → 200; подписанный fallback LocalTunnel → 502. `sphere-pilot-alt-ingress-20260926` запущен и из него origin gateway отвечает 200, но у контейнера нет healthcheck и restart policy | Не считать опубликованный fallback отказоустойчивым; восстановить управляемый второй ingress и принять health/WSS/command/frame на одном canary |
-| P1 | Дистанционная OTA не доказана | `android/dev` каталог отдаёт только 10209, а 10228 лежит в `android-canary/dev`; удалённые APK остаются на 10222. PH025 после двух контролируемых адресных попыток не дал post-install receipt | Не открывать общий канал до адресной установки с PackageManager, SHA и свежим heartbeat |
-| P1 | Обычная OTA-квитанция повторяется | За 20 минут backend записал 37 `ota_recovery_receipt_unrecognized` для remote PH025 и 40 для local PH010; исходник Android помечает все `OTA_UPDATE` как recovery, сервер признаёт только квитанцию существующего recovery grant | Отдельный протокольный fix после regression на normal/recovery/duplicate/foreign receipts; не ACK неизвестное сообщение вслепую |
+| P1 | Резервный ingress неработоспособен | Primary `/api/v1/health/readyz` → 200; подписанный fallback LocalTunnel → 502. `sphere-pilot-alt-ingress-20260926` запущен и из него origin gateway отвечает 200, но у контейнера нет healthcheck и restart policy | Не считать опубликованный fallback отказоустойчивым; восстановить управляемый второй ingress и принять health/WSS/command/frame на одном canary |
+| P1 | Дистанционная OTA не доказана | `android/dev` каталог отдаёт только 10209. 10230 опубликован только в `android-canary/dev`; одна адресная попытка на PH022 завершилась `failed/timeout`, версия осталась 10222 | Не открывать общий канал до адресной установки с PackageManager, SHA и свежим heartbeat |
+| P1 | Обычная OTA-квитанция повторяется | За 20 минут backend записал 37 `ota_recovery_receipt_unrecognized` для remote PH025 и 40 для local PH010; исходник Android помечает все `OTA_UPDATE` как recovery, сервер признаёт только квитанцию существующего recovery grant. Исправление `966e56f` даёт безопасный `failure_code`, но **не ACK** | Отдельный протокольный fix после regression на normal/recovery/duplicate/foreign receipts; не ACK неизвестное сообщение вслепую |
+| P1 | Удалённые кадры не достигают backend | PH022: Android сообщил 15 encoded frames / 142002 байта, 17/17 локально принятых WS queue calls; backend получил 9 NAL-пакетов / 281 байт, только SPS/PPS. Redis и viewer передали те же 9/281; local PH010 дал IDR/P и 80774 байта ingress | Локализовать разрыв между очередью OkHttp и ASGI ingress; отдельный ingress A/B и packet/ack probes, без предположения, что виноват один Cloudflare |
 | P2 | Веб скрывал canary-релизы | `/updates` запрашивал только `android`; backend хранит 12 релизов, включая `android-canary` 10228 | Исправлено `213402b`, regression до/после; pilot frontend развёрнут из `8fef5eb` |
 
 У PH025 за тот же интервал backend записал 21 успешную аутентификацию и 21
@@ -49,7 +50,7 @@ timeout` для этих устройств в срезе нет. Следова
 соединении с jitter до 120 секунд и периодически каждые шесть часов при сети.
 Его запрос — `platform=android&flavor=dev`. На pilot этот канал всё ещё указывает
 на **10209**, поэтому версия 10222 правомерно получает `update_available=false`.
-Canary 10228 доступен через отдельный platform и не выбирается штатным worker.
+Canary 10230 доступен через отдельный platform и не выбирается штатным worker.
 Регистрация релиза в каталоге не загружает APK в GitHub или на Android.
 
 Второй репозиторий `sphere-agent-config` содержит **конфигурацию обнаружения
@@ -87,8 +88,57 @@ SHA. После полного LDPlayer quit/launch без открытия Sphe
 новый Android boot ID, persisted boot job, PID `2224`, foreground service и
 server heartbeat `online`/10230 в `19:22:26Z`, без нового crash Sphere.
 Это доказывает автономный запуск на одном локальном Android 9, **не на удалённых
-клонах и не на Android 14+**. Кандидат 10230 не опубликован в OTA-каталоге или
-GitHub Releases и не установлен на remote.
+клонах и не на Android 14+**. Позднее 10230 опубликован в управляемом
+`android-canary/dev` pilot-каталоге, но не в общем `android/dev` и не на
+GitHub Releases; на remote он не установлен.
+
+## Дополнительная live-проверка 26–27 сентября
+
+После публикации 10230 в canary-каталог API возвращает **13** релизов.
+Указанные выше 12 относятся к снимку перед публикацией.
+
+Для **одного и того же удалённого PH022** локальный и публичный viewer получили
+только один SPS-пакет (37 байт), без IDR/P. Android сообщил 15 encoded frames /
+142002 байта и 17 успешных постановок в локальную WebSocket-очередь. Это ещё
+не подтверждает сетевую доставку. Backend ingress получил 9 NAL-пакетов /
+281 байт, все SPS/PPS; Redis publish и viewer send совпали с ingress. У
+локального PH010 в том же срезе ingress содержал 8 пакетов / 80774 байта,
+включая IDR/P. Значит, чёрный экран PH022 в этом пробе вызван отсутствием
+кадров уже на входе backend. Потеря локализована между `OkHttp.enqueue` и
+ASGI binary receive. Конкретный сетевой узел ещё не доказан; гипотеза о
+Cloudflare как единственной причине остаётся гипотезой.
+
+Попытка `REQUEST_LOGS` к PH022 вернула HTTP 504 через 15 секунд, а сохранённый
+log upload устройства был пуст. Это отдельный пробел управляемости: состояние
+`online` не гарантирует ответ интерактивной диагностической команды.
+
+Одна адресная команда `OTA_UPDATE` для PH022 отправлена 26 сентября в 19:37:14
+UTC. Public gateway записал два HTTP 200 GET управляемого APK за 2,831 и
+2,129 с; его журнал не подтверждает число байт, полученных Android, поэтому
+HTTP 200 не доказывает полную загрузку. PH022 остался на 10222. После
+развёртывания backend `966e56f` повторная квитанция **того же device/command ID**
+имеет `status=failed`, bounded `failure_code=timeout`. Квитанции
+`download_origin_rejected` принадлежат другим командам/устройствам и не
+являются доказательством причины отказа PH022. `timeout` пока не различает
+сетевое чтение и стадию установки. Повторной OTA-команды не было.
+
+Regression для `966e56f` сначала воспроизвёл отсутствие категории, затем
+прошли 32 targeted и 235 backend WS/recovery тестов, Ruff и diff check.
+Source-pinned pilot backend образ `sphere-pilot-20260911-backend:966e56f`
+развёрнут с проверкой SHA исходника в образе, внутреннего readiness,
+неизменности каталога, артефакта, frontend и непилотных контейнеров.
+Два первых deploy-check откатились: сначала использовался неверный HTTP path,
+затем gateway задержал ответ во время замены backend. Устаревший image tag в
+частном compose override заставил откат временно поднять `2168c33`; после
+исправления проверки финальный deploy `966e56f` прошёл. Следующий deploy
+должен сохранять фактический предыдущий image ID, а не доверять старому
+override. Сразу после замены было 2/16 online, после reconnect — 12/16;
+это лишь моментальные снимки, не доказательство длительной стабильности.
+
+Сырые wire-пакеты, OTA intent, gateway access и backend logs оставлены в
+ignored `.local-pilot/remote/live-stream-canary-20260927-ph022/` и
+`.local-pilot/rollout/ota-ui-20260927/`; идентификаторы и параметры доступа
+не опубликованы.
 
 ## Следующий доказательный шаг
 
@@ -101,7 +151,8 @@ GitHub Releases и не установлен на remote.
    записать bounded receipt, только затем ACK. Исторические 10222-квитанции
    требуют отдельной миграционной стратегии; неизвестный recovery grant не
    следует подтверждать без проверки.
-3. На одном remote canary подтвердить delivery/download/SHA/PackageInstaller,
+3. На одном remote canary уточнить стадию `timeout`, затем подтвердить
+   delivery/download/SHA/PackageInstaller,
    установленный versionCode и heartbeat после перезапуска APK. Только после
    этого открыть общий `android/dev` канал по ступеням 1→4→8→16→32 с rollback.
 4. Проверить moving frames независимо: encoder на Android, исходящий счётчик,
