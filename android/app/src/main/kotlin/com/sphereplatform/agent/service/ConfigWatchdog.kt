@@ -117,13 +117,16 @@ class ConfigWatchdog @Inject constructor(
             context.ensureActive()
             if (stopped || generation != checkGeneration) return
             if (route.url.isBlank()) return
+            val previousPreferredRoute = authStore.connectionRoutesSnapshot().urls.firstOrNull()
             if (!authStore.replaceDiscoveredRoutes(route, remoteUrl, fallbackUrl, replaceFallback)) {
                 Timber.d("ConfigWatchdog: route candidates unchanged or superseded")
                 return
             }
+            val updatedPreferredRoute = authStore.connectionRoutesSnapshot().urls.firstOrNull()
+            val preferredRouteChanged = previousPreferredRoute != updatedPreferredRoute
             val selectedRouteChanged = authStore.getServerUrl() != route.url
-            if (selectedRouteChanged && wsClient.isConnected) {
-                Timber.i("ConfigWatchdog: verified primary changed; reconnecting with saved fallback")
+            if ((selectedRouteChanged || preferredRouteChanged) && wsClient.isConnected) {
+                Timber.i("ConfigWatchdog: verified route preference changed; reconnecting with prior route retained")
                 wsClient.forceReconnectNow(bypassDebounce = true)
             } else if (!wsClient.isConnected) {
                 Timber.i("ConfigWatchdog: route candidates saved; reconnecting")

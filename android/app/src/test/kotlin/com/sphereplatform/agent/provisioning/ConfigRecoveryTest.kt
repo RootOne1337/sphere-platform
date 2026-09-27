@@ -132,7 +132,7 @@ class ConfigRecoveryTest {
     @Test fun `complete signed route set retires old fallback but preserves working active address`() {
         store.saveServerRoutes(initialUrl, "https://retired-backup.invalid")
         assertTrue(store.replaceDiscoveredRoutes(store.serverUrlSnapshot(), discoveredUrl, null, replaceFallback = true))
-        assertEquals(listOf(initialUrl, discoveredUrl), store.connectionRoutesSnapshot().urls)
+        assertEquals(listOf(discoveredUrl, initialUrl), store.connectionRoutesSnapshot().urls)
         assertEquals(initialUrl, store.getServerUrl())
         assertEquals("issued-device-jwt", store.getToken())
     }

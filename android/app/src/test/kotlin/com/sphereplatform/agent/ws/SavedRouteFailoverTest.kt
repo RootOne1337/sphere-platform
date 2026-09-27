@@ -189,14 +189,14 @@ class SavedRouteFailoverTest {
     }
 
     @Test
-    fun `discovery promotes changed primary and retains the fallback`() = runBlocking {
+    fun `discovery orders changed primary first and preserves the authenticated route`() = runBlocking {
         configPayload = """{"server_url":"https://candidate.invalid","fallback_server_url":"$secondary"}"""
         watchdog.forceCheck()
         settleConfig()
-        assertEquals("https://candidate.invalid", store.getServerUrl())
+        assertEquals(primary, store.getServerUrl())
         assertEquals("https://candidate.invalid", disk["primary_server_url"])
         assertEquals(secondary, disk["fallback_server_url"])
-        assertEquals(listOf("https://candidate.invalid", secondary), store.connectionRoutesSnapshot().urls)
+        assertEquals(listOf("https://candidate.invalid", primary, secondary), store.connectionRoutesSnapshot().urls)
     }
 
     @Test
@@ -309,7 +309,7 @@ class SavedRouteFailoverTest {
     }
 
     @Test
-    fun `signed primary change reconnects a healthy session and falls back on failure`() = runBlocking {
+    fun `signed primary change reconnects first and retains the working route before configured fallback`() = runBlocking {
         start()
         val first = attempt(0)
         open(first)
@@ -320,7 +320,10 @@ class SavedRouteFailoverTest {
         assertEquals("unreachable.invalid", promoted.request.url.host)
         assertEquals(secondary, disk["fallback_server_url"])
         fail(promoted)
-        val backup = attempt(2)
+        val retained = attempt(2)
+        assertEquals("primary.invalid", retained.request.url.host)
+        fail(retained)
+        val backup = attempt(3)
         assertEquals("secondary.invalid", backup.request.url.host)
         open(backup)
         acknowledge(backup)

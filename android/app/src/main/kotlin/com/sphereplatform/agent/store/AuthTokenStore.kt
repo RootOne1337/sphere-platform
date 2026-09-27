@@ -183,12 +183,10 @@ class AuthTokenStore @Inject constructor(
             ?.let(::normalizeManagementUrl)?.takeIf { it != primary }
         val currentPrimary = prefs.getString(KEY_PRIMARY_SERVER_URL, null) ?: getServerUrl()
         if (primary == currentPrimary && backup == prefs.getString(KEY_FALLBACK_SERVER_URL, null)) return false
-        // A newly signed primary is an intentional route migration. Select it
-        // now, while retaining the prior ingress as the advertised fallback.
-        // A fallback-only refresh must not dislodge a route that is already
-        // carrying the live session.
-        val selected = if (primary != currentPrimary) primary else getServerUrl()
-        commitRoutes(selected, primary, backup)
+        // Do not claim the new primary is active until its WebSocket authenticates.
+        // connectionRoutesSnapshot() tries the signed primary first while keeping
+        // the last authenticated route next in the ordered recovery candidates.
+        commitRoutes(getServerUrl(), primary, backup)
         return true
     }
 

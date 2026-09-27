@@ -29,6 +29,7 @@ import okio.ByteString
 import okio.ByteString.Companion.toByteString
 import timber.log.Timber
 import javax.inject.Singleton
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.random.Random
 
@@ -57,6 +58,7 @@ class SphereWebSocketClient(
     private val wsLock = Any()
     private val connectMutex = Mutex()
     private var generation = 0L
+    private val retryPreferredRoute = AtomicBoolean(false)
 
     private data class FailureEvidence(val payload: JsonObject, val recordedAtMs: Long)
 
@@ -155,6 +157,15 @@ class SphereWebSocketClient(
                 if (shouldStop) return
             }
 
+            if (retryPreferredRoute.getAndSet(false)) {
+                // A requested route/config refresh is a new route cycle, not a
+                // transport failure of the currently authenticated ingress.
+                failedRoute = null
+                attempt = 0
+                consecutiveFailures = 0
+                circuitOpenUntil = 0L
+            }
+
             var route: String? = null
             try {
                 ensureInstance()
@@ -194,6 +205,17 @@ class SphereWebSocketClient(
                 attempt++
                 withTimeoutOrNull(10_000L) { reconnectTrigger.receive() }
             } catch (e: Exception) {
+                if (retryPreferredRoute.getAndSet(false)) {
+                    // forceReconnectNow() cancels the in-flight socket on purpose.
+                    // Do not count that cancellation as a failed route or skip the
+                    // newly published primary on the next attempt.
+                    Timber.i("Management route refresh: restarting from preferred route")
+                    failedRoute = null
+                    attempt = 0
+                    consecutiveFailures = 0
+                    circuitOpenUntil = 0L
+                    continue
+                }
                 // Network/unknown failure — circuit breaker applies
                 Timber.w(e, "WS connect failed (attempt=$attempt)")
                 failedRoute = route
@@ -510,12 +532,14 @@ class SphereWebSocketClient(
         // подтвердил что переподключение имеет смысл
         circuitOpenUntil = 0L
         consecutiveFailures = 0
+        retryPreferredRoute.set(true)
         synchronized(wsLock) { webSocket }?.cancel()
         reconnectTrigger.trySend(Unit)
     }
 
     fun disconnect() {
         shouldStop = true
+        retryPreferredRoute.set(false)
         synchronized(wsLock) {
             webSocket?.cancel()
             webSocket = null
