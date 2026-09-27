@@ -275,7 +275,9 @@ async def handle_command_result(
         try:
             from backend.database.engine import AsyncSessionLocal
             from backend.services.device_ota_recovery import (
+                get_device_ota_grant,
                 is_persisted_ota_recovery_replay,
+                persist_ota_recovery_result,
                 recovery_failure_code,
             )
 
@@ -283,7 +285,15 @@ async def handle_command_result(
                 already_persisted = await is_persisted_ota_recovery_replay(
                     db, device_id=device_id, org_id=org_id, message=msg,
                 )
-            if already_persisted:
+                grant = None if already_persisted else await get_device_ota_grant(
+                    db, device_id=device_id, org_id=org_id, require_unexpired=False,
+                )
+                newly_persisted = bool(grant and str(grant.command_id) == command_id and
+                                       await persist_ota_recovery_result(
+                                           db, device_id=device_id, org_id=org_id,
+                                           grant=grant, message=msg,
+                                       ))
+            if already_persisted or newly_persisted:
                 if manager is None:
                     logger.warning(
                         "android_ws.ota_recovery_receipt_ack_unavailable",
@@ -295,10 +305,11 @@ async def handle_command_result(
                     device_id, {"type": "result_ack", "command_id": command_id},
                 )
                 logger.info(
-                    "android_ws.ota_recovery_receipt_replay_acked",
+                    "android_ws.ota_recovery_receipt_acked",
                     device_id=device_id,
                     grant_id=command_id,
                     status=status,
+                    replay=already_persisted,
                 )
             else:
                 logger.warning(
@@ -577,6 +588,40 @@ async def serve_ota_recovery(ws: WebSocket, device_id: str, grant, org_id: str) 
             pass
 
 
+async def send_pending_ota_on_normal_connection(
+    ws: WebSocket, device_id: str, org_id: str,
+) -> None:
+    """Deliver the existing grant on a healthy device socket, without a new ID.
+
+    Android's durable command journal fences repeated reconnect delivery. This
+    path does not let an expired device JWT into the management channel.
+    """
+    import time
+
+    from backend.services.device_ota_recovery import get_device_ota_grant
+
+    async with AsyncSessionLocal() as db:
+        grant = await get_device_ota_grant(db, device_id=device_id, org_id=org_id)
+    if grant is None:
+        return
+    remaining = grant.expires_at - int(time.time())
+    if remaining <= 0:
+        return
+    command = {
+        "type": "OTA_UPDATE", "command_id": str(grant.command_id),
+        "signed_at": int(time.time()), "ttl_seconds": min(180, remaining),
+        "payload": {
+            "download_url": str(ws.base_url.replace(scheme="https")).rstrip("/") +
+                            "/api/v1/updates/artifacts/" + grant.sha256,
+            "version": grant.version_name, "version_code": grant.version_code,
+            "sha256": grant.sha256,
+        },
+    }
+    await asyncio.wait_for(ws.send_json(command), timeout=5.0)
+    logger.info("android_ws.ota_grant_sent_normal", device_id=device_id,
+                grant_id=str(grant.command_id))
+
+
 @router.websocket("/ws/android/{device_id}")
 async def android_agent_ws(
     ws: WebSocket,
@@ -702,6 +747,15 @@ async def android_agent_ws(
         logger.warning("android_ws.auth_ack_failed", device_id=device_id)
         await _close(1011, "auth_ack_failed")
         return
+
+    # A signed per-device grant also reaches copies with a current JWT. The
+    # dedicated recovery socket remains only for pre-grant/expired tokens.
+    # Send before publishing the socket to avoid concurrent WS writers.
+    try:
+        await send_pending_ota_on_normal_connection(ws, device_id, org_id_str)
+    except Exception as exc:
+        logger.warning("android_ws.ota_grant_send_failed", device_id=device_id,
+                       error_class=type(exc).__name__)
 
     session_id = await manager.connect(ws, device_id, "android", org_id_str)
 

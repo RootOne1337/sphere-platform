@@ -141,6 +141,41 @@ async def get_ota_recovery(
         return None
 
 
+async def get_device_ota_grant(
+    db: AsyncSession, *, device_id: str, org_id: str, require_unexpired: bool = True,
+) -> OtaRecoveryGrant | None:
+    """Read only a signed grant for this authenticated, tenant-owned device.
+
+    Normal management sockets may deliver a live grant. A terminal receipt can
+    arrive after expiry, so it may match the signed grant until it is consumed
+    or explicitly revoked; persist_ota_recovery_result checks it again under lock.
+    """
+    try:
+        device_uuid, org_uuid = uuid.UUID(device_id), uuid.UUID(org_id)
+    except ValueError:
+        return None
+    await bind_tenant_context(db, org_id)
+    device = await db.scalar(select(Device).where(
+        Device.id == device_uuid,
+        Device.org_id == org_uuid,
+        Device.is_active.is_(True),
+    ))
+    if device is None:
+        return None
+    try:
+        grant = OtaRecoveryGrant.model_validate((device.meta or {}).get("ota_recovery"))
+    except (ValidationError, TypeError):
+        return None
+    if not grant.is_authorized(device):
+        return None
+    now = int(time.time())
+    if grant.created_at > now or grant.expires_at > grant.created_at + 3600:
+        return None
+    if require_unexpired and now >= grant.expires_at:
+        return None
+    return grant
+
+
 def ota_recovery_receipts(meta: object) -> list[dict]:
     """Return a bounded, deduplicated terminal receipt history from device metadata."""
     if not isinstance(meta, dict):

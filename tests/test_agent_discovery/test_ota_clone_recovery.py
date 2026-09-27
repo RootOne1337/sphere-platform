@@ -87,6 +87,95 @@ async def test_recovery_grant_also_matches_earlier_unexpired_device_token(
     assert await get_ota_recovery(token, db_session, device_id=str(uuid.uuid4())) is None
 
 
+async def test_active_grant_is_delivered_on_normal_authenticated_connection(
+    db_session, recovery_case, monkeypatch,
+):
+    from backend.api.ws import android as android_ws
+
+    device, grant, _ = recovery_case
+    ws = AsyncMock()
+    ws.base_url = URL("wss://isolated.invalid/")
+
+    @asynccontextmanager
+    async def use_test_session():
+        yield db_session
+
+    monkeypatch.setattr(android_ws.router, "AsyncSessionLocal", use_test_session)
+    await android_ws.router.send_pending_ota_on_normal_connection(
+        ws, str(device.id), str(device.org_id),
+    )
+    command = ws.send_json.await_args.args[0]
+    assert command == {
+        "type": "OTA_UPDATE", "command_id": str(grant.command_id),
+        "signed_at": command["signed_at"], "ttl_seconds": command["ttl_seconds"],
+        "payload": {
+            "download_url": "https://isolated.invalid/api/v1/updates/artifacts/" + grant.sha256,
+            "version": grant.version_name,
+            "version_code": grant.version_code,
+            "sha256": grant.sha256,
+        },
+    }
+    assert 0 < command["ttl_seconds"] <= 180
+    assert "authorization_tag" not in str(command)
+
+
+async def test_normal_channel_persists_active_grant_before_ack(
+    db_session, recovery_case, monkeypatch,
+):
+    from backend.api.ws import android as android_ws
+
+    device, grant, _ = recovery_case
+    message = {
+        "type": "command_result", "ota_recovery_receipt": True,
+        "command_id": str(grant.command_id), "status": "completed",
+        "result": {"success": True, "installed_version_code": grant.version_code},
+    }
+
+    @asynccontextmanager
+    async def use_test_session():
+        yield db_session
+
+    monkeypatch.setattr("backend.database.engine.AsyncSessionLocal", use_test_session)
+    manager = type("Manager", (), {"send_to_device": AsyncMock()})()
+    await android_ws.router.handle_command_result(
+        str(device.id), str(device.org_id), message, manager,
+    )
+    manager.send_to_device.assert_awaited_once_with(
+        str(device.id), {"type": "result_ack", "command_id": str(grant.command_id)},
+    )
+    await db_session.refresh(device)
+    assert "ota_recovery" not in device.meta
+    assert device.meta["ota_recovery_result"]["status"] == "completed"
+
+
+@pytest.mark.parametrize("change", ["wrong_tenant", "tampered", "expired", "inactive"])
+async def test_normal_connection_never_sends_unauthorized_or_expired_grant(
+    db_session, recovery_case, monkeypatch, change,
+):
+    from backend.api.ws import android as android_ws
+
+    device, grant, _ = recovery_case
+    if change == "tampered":
+        device.meta = {"ota_recovery": {**device.meta["ota_recovery"], "sha256": "b" * 64}}
+    if change == "expired":
+        monkeypatch.setattr("backend.services.device_ota_recovery.time.time", lambda: grant.expires_at + 1)
+    if change == "inactive":
+        device.is_active = False
+    org_id = str(uuid.uuid4()) if change == "wrong_tenant" else str(device.org_id)
+    ws = AsyncMock()
+    ws.base_url = URL("wss://isolated.invalid/")
+
+    @asynccontextmanager
+    async def use_test_session():
+        yield db_session
+
+    monkeypatch.setattr(android_ws.router, "AsyncSessionLocal", use_test_session)
+    await android_ws.router.send_pending_ota_on_normal_connection(
+        ws, str(device.id), org_id,
+    )
+    ws.send_json.assert_not_awaited()
+
+
 async def test_legacy_grant_signature_without_version_code_remains_valid(db_session):
     now = int(time.time())
     org = Organization(name="legacy recovery", slug=uuid.uuid4().hex)
@@ -288,7 +377,7 @@ async def test_unrecognized_recovery_receipt_never_falls_through_to_task_result(
     message = {
         "type": "command_result",
         "ota_recovery_receipt": True,
-        "command_id": str(grant.command_id),
+        "command_id": str(uuid.uuid4()),
         "status": "completed",
         "result": {"success": True, "installed_version_code": grant.version_code},
     }
@@ -335,7 +424,7 @@ async def test_unrecognized_ota_receipt_logs_only_bounded_failure_code(
     await android_ws.router.handle_command_result(
         str(device.id), str(device.org_id), {
             "type": "command_result", "ota_recovery_receipt": True,
-            "command_id": str(grant.command_id), "status": "failed",
+            "command_id": str(uuid.uuid4()), "status": "failed",
             "error": "unexpected end of stream on https://secret.example/private?token=hidden",
         },
     )
