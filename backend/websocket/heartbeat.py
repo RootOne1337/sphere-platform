@@ -170,8 +170,8 @@ class HeartbeatManager:
 
     async def handle_pong(self, msg: dict) -> bool:
         """Persist liveness and return True only for this session's first saved pong."""
-        now = time.monotonic()
-        self._last_agent_response = now
+        monotonic_now = time.monotonic()
+        self._last_agent_response = monotonic_now
         latency_ms: float | None = None
 
         # Логировать latency для мониторинга
@@ -213,7 +213,7 @@ class HeartbeatManager:
                 # Presence is disposable: an authenticated live socket can rebuild
                 # it after eviction/restart. Durable task state remains in PostgreSQL.
                 current = DeviceLiveStatus(device_id=self.device_id, status="online")
-            now = datetime.now(timezone.utc)
+            heartbeat_at = datetime.now(timezone.utc)
             if (
                 current.connected_since is None
                 or current.status not in ("online", "busy")
@@ -221,11 +221,11 @@ class HeartbeatManager:
             ):
                 # The first accepted pong is the start of a confirmed connection;
                 # an authenticated WebSocket that never answers stays "connecting".
-                current.connected_since = now
+                current.connected_since = heartbeat_at
             current.status = "busy" if current.status == "busy" else "online"
             if self._session_id:
                 current.ws_session_id = self._session_id
-            current.last_heartbeat = now
+            current.last_heartbeat = heartbeat_at
             try:
                 current = DeviceLiveStatus.model_validate(current.model_dump() | status_update)
             except ValidationError:
