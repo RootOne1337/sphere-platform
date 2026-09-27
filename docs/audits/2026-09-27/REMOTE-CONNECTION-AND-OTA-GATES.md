@@ -336,6 +336,33 @@ route slot, elapsed, close code) из периодического upload либ
 а [Quick Tunnel описывает как тестовый без SLA](https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/do-more-with-tunnels/trycloudflare/);
 она не доказывает конкретный 40-секундный лимит этого инцидента.
 
+### Сбой pilot ingress при проверке · 10:54–10:56 UTC
+
+При reload только `public-gateway` после изменения access log оба внешних пути
+временно возвращали `502`. Внутренний upstream `nginx:8081` был недоступен:
+проверка socket в работающем pilot Nginx показала только 80/443, а его
+`/tmp/nginx.generated.conf` не содержал listener 8081. Шаблон из репозитория
+уже содержал его. Причина — старый сгенерированный runtime config; прежний
+Docker health статус не проверял gateway→upstream. Старый `sphere-platform` и
+`sphere-tunnel` не менялись.
+
+Сгенерированный конфиг **только** pilot Nginx был синхронизирован с исходным
+шаблоном и проверен `nginx -t`, затем graceful reload восстановил socket 8081.
+Внутренний readyz и внешний Cloudflare route снова вернули 200; read-only guard
+`scripts/check_pilot_gateway_runtime.py` теперь сверяет source и файл generated
+config, затем проверяет действующий внутренний HTTP-маршрут до следующего gateway
+reload. Регрессионный тест
+воспроизводит stale listener. Инструкция восстановления —
+[Remote pilot runbook](../../operations/REMOTE-PILOT.md).
+
+Новый access format `public-gateway` содержит hostname, method/path без query,
+статус, время, байты gateway→connector, размер upstream-ответа и completion.
+Из него можно проверить, передал ли gateway всё тело на свой выход, но нельзя
+объявлять успешное скачивание Android или работоспособный видеоканал. Контрольный
+LocalTunnel в этот день ответил HTTP readyz, однако WSS upgrade не подтвердился;
+временный контейнер остановлен, второго рабочего ingress нет. Эти факты не
+закрывают remote OTA `failed/timeout` и чёрный stream.
+
 ## Контрольные шаги для следующей итерации
 
 1. Поднять и постоянно проверять независимый второй ingress, не меняя старый

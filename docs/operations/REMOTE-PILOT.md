@@ -54,6 +54,38 @@ Listener 8081 доступен только внутри Docker-сети и не
 в [AUD-146](../audits/2026-09-20/REMOTE-PILOT-WEBSOCKET-REDIRECT.md). Это исправление
 конфигурации исходников, само по себе не подтверждает обновление живого remote pilot.
 
+### Проверка загруженного конфига до reload · 27 сентября
+
+После изменения `remote-pilot.conf` пилотный `public-gateway` начал отдавать `502`:
+его upstream был `nginx:8081`, но **запущенный** внутренний Nginx всё ещё использовал
+старый `/tmp/nginx.generated.conf` и слушал только 80/443. Bind-mounted шаблон
+`infrastructure/nginx/nginx.conf` уже содержал `8081`; наличие строки в репозитории
+и даже состояние Docker `healthy` не доказывали работу upstream. Это runtime drift,
+а не подтверждённая причина потери кадров на удалённом Android.
+
+Перед reload gateway и после любого изменения шаблона проверяйте весь фактический
+маршрут только для нужного Compose project:
+
+```powershell
+python scripts/check_pilot_gateway_runtime.py --project sphere-pilot-20260911
+```
+
+Скрипт только читает Compose labels/status, файл сгенерированного конфига,
+gateway config и внутренний `/api/v1/health/readyz`. Успех означает, что порт совпадает и backend
+ответил через gateway; это **не** проверка WAN, WebSocket, OTA или стрима.
+При `running nginx generated config is stale` сначала проверьте точное имя и labels
+контейнера, исходный шаблон и `nginx -t`; затем регенерируйте конфиг только пилотного
+Nginx и сделайте graceful reload. Повторите guard, HTTPS `/readyz` через публичный
+адрес и отдельный WSS handshake, прежде чем менять внешний connector. Не делайте
+reload только публичного gateway при несовпадении upstream listener.
+
+С 27 сентября access log `public-gateway` показывает host, HTTP status, duration,
+`body_bytes_sent`, `upstream_response_length` и `request_completion` без query
+string. Это позволяет отделять запросы разных ingress и частичную передачу тела
+на участке gateway→connector. Даже полный `body_bytes_sent` **не доказывает**,
+что удалённый Android получил APK, проверил SHA или установил его: нужны
+квитанция клиента и Android PackageManager.
+
 Реализация signed APK (`f61cd5a`, итоговый APK `0f1410e`) прошла миграцию через GitHub
 при недоступном исходном ingress и его config mirror; затем вернулся без
 переустановки. [Native evidence и границы](../audits/2026-09-05/SIGNED-DISCOVERY-NATIVE.md).
