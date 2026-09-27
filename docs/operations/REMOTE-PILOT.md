@@ -45,6 +45,13 @@ HTTP/2, но WSS закрылся ровно через 40,001 с. Следую�
 временных тестовых connector остановлены. Это не замена независимого A/B с
 доставкой кадров. [Полное доказательство и ограничения](../audits/2026-09-27/REMOTE-CONNECTION-AND-OTA-GATES.md).
 
+Позднее read-only журнал **самого** PH013 показал `SocketTimeoutException`:
+OkHttp отправил RFC 6455 control ping и не получил pong за 15 с; резервный
+маршрут иногда завершался `EOFException` до auth. В APK source `7c4d9cb`
+control ping отключён только на management WSS; JSON heartbeat и watchdog
+оставлены. Полные unit suites/lint прошли, но это **ещё не проверено на
+удалённом APK**. Развёртывание 32 устройств и массовая OTA остаются NO-GO.
+
 Дополнительная короткая проверка 24 сентября через временный LocalTunnel viewer
 получила от `PH008` только два codec-config пакета (SPS/PPS), без IDR/P. Одна
 адресная команда с LocalTunnel primary и сохранённым Cloudflare fallback не

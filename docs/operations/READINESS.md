@@ -5,20 +5,30 @@
 > [!IMPORTANT]
 > Ниже сохранены датированные контрольные точки 26 сентября. Последний pilot:
 > backend `40357ca`, frontend `8fef5eb`; обычный `android/dev` остаётся 10209,
-> canary-каталог содержит 10231. APK 10231 из `3dbb915` установлена на
-> локальные PH010/PH011: PH010 — через сохранённый OTA-grant с квитанцией
-> `completed`, PH011 — поверх 10230; backend получил ограниченную причину
+> canary-каталог содержит 10232. APK 10231 из `3dbb915` установлена на
+> локальный PH010 через сохранённый OTA-grant с квитанцией `completed`.
+> PH011 после 10231 вручную обновлён до pilot APK 10232 из `7c4d9cb`:
+> PackageManager показал 10232, сервер сообщил `1.2.32-dev` и свежий heartbeat,
+> crash buffer пуст. Backend ранее получил ограниченную причину
 > прежнего WS-разрыва через heartbeat PH011. Оператор установил
 > APK 10230 на remote PH013/PH017/PH019, но видео PH013 в контролируемой пробе
 > не дошло до backend; несколько remote WS-сессий длились около 40 с. PH022
 > всё ещё 10222 после `failed/timeout`; запрос журналов к PH013/PH025 вернул
 > 504. После fix `40357ca` PH017 получил grant по обычному WS и ответил
-> `failed/timeout`; версия осталась 10230. **Клиентская причина remote-обрывов
-> ещё не измерена, remote video и адресная remote OTA 10231 не приняты.**
+> `failed/timeout`; версия осталась 10230. Позднее read-only Android shell
+> журнал PH013 показал `SocketTimeoutException`: OkHttp не получил control pong
+> за 15 с. Узкий APK source fix `7c4d9cb` отключает control ping только для
+> management WSS; JSON heartbeat и watchdog остаются. Обе полные Android
+> unit suites и lint прошли. **Новый APK на удалённом устройстве, remote video
+> и адресная remote OTA не приняты.**
 > Одно remote A/B на отдельном Cloudflare HTTP/2 connector повторило WSS-обрыв
 > через 40,001 с; переключение с QUIC не помогло. Serveo в этом pilot отверг
 > SSH-ключи, а короткий localhost.run сеанс не прошёл приёмку. Второго рабочего
 > ingress пока нет; PH013 возвращён на исходный маршрут.
+> После публикации 10232 в canary-каталоге адресный grant для remote PH025
+> дошёл до `received/running`, но завершился `failed/timeout`; устройство
+> осталось на 10222. Полный публичный download с этого ПК прошёл и совпал по
+> SHA, но не доказывает скачивание на удалённом Android.
 > Точные gates — в
 > [аудите 27 сентября](../audits/2026-09-27/REMOTE-CONNECTION-AND-OTA-GATES.md).
 
