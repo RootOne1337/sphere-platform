@@ -1,7 +1,8 @@
 # Remote WSS и OTA: срез перед расширением pilot · 27 сентября 2026
 
 **Область:** только изолированная установка `sphere-pilot-20260911`.
-Legacy Docker-проекты и удалённые Android-устройства не переустанавливались.
+Legacy Docker-проекты не менялись. Оператор вручную установил 10230 на несколько
+удалённых Android; в этом проходе агент не переустанавливался массово.
 Сырые журналы, идентификаторы сессий и параметры доступа хранятся только в
 ignored `.local-pilot/rollout/ota-ui-20260927/`.
 
@@ -18,10 +19,12 @@ API вернул 16 зарегистрированных записей: 12 `onl
 | --- | --- | --- | --- |
 | P1 | Remote WSS закрывается, устройство колеблется между состояниями | PH022/PH025: по 20 завершённых сеансов за 20 минут на public gateway; все HTTP 101, большинство длиной ровно 40 или 60 секунд; backend close 1005. У локальных PH010/PH011 за тот же интервал не было завершившихся WSS-сеансов | Требуется контролируемый A/B ingress одного remote canary с client-side close/failure и gateway timing; Cloudflare как единственная причина **не доказан** |
 | P1 | Резервный ingress неработоспособен | Primary `/api/v1/health/readyz` → 200; подписанный fallback LocalTunnel → 502. `sphere-pilot-alt-ingress-20260926` запущен и из него origin gateway отвечает 200, но у контейнера нет healthcheck и restart policy | Не считать опубликованный fallback отказоустойчивым; восстановить управляемый второй ingress и принять health/WSS/command/frame на одном canary |
-| P1 | Дистанционная OTA не доказана | `android/dev` каталог отдаёт только 10209. 10230 опубликован только в `android-canary/dev`; одна адресная попытка на PH022 завершилась `failed/timeout`, версия осталась 10222 | Не открывать общий канал до адресной установки с PackageManager, SHA и свежим heartbeat |
+| P1 | Дистанционная OTA не доказана | `android/dev` каталог отдаёт только 10209. Canary-каталог содержит 10231; PH022 ранее вернул `failed/timeout` на 10230, PH017 теперь вернул `failed/timeout` на 10231, версии остались 10222/10230 | Не открывать общий канал до адресной установки с PackageManager, SHA и свежим heartbeat |
+| P1 | Новый адресный grant дошёл до PH017, но APK не установилась | `40357ca` отправил тот же подписанный command ID через обычный WS; PH017 вернул `failed/timeout`, durable receipt сохранён и ACK отправлен; версия осталась 10230. Два artifact GET на public gateway дали HTTP 200, но полная доставка байтов клиенту не измерена | Разделить download body / installer timeout клиентскими bounded стадиями и проверить независимый ingress; общего rollout нет |
 | P2 | Прямой Redis OTA обходил сохранённую выдачу | За 20 минут backend записал 37 `ota_recovery_receipt_unrecognized` для remote PH025 и 40 для local PH010. Android помечает все `OTA_UPDATE` как recovery receipt, backend признаёт только подписанный и сохранённый grant. Путь `POST /updates/recovery` уже существует; прямой Redis dispatch его обходит. `966e56f` классифицирует отказ, но **не ACK** | Не использовать прямой Redis как rollout-путь; испытать адресный recovery grant и receipt, сохранив fail-closed проверку |
 | P1 | Удалённый viewer не получает IDR/P | Повторный PH022-пробник: Android сообщил 11 encoded frames / 67906 байт и 13/13 локально принятых WS queue calls; сводка четырёх backend worker показала только SPS/PPS — 2 пакета / 61 байт, Redis и public viewer те же 61 байт | Потеря между локальной очередью OkHttp и ASGI binary ingress; проверить отправку/разрыв на Android и сравнить независимый ingress, не объявляя Cloudflare доказанной причиной |
 | P1 | `/metrics` показывает неполные счётчики | 120 параллельных GET показали четыре разных `process_start_time_seconds`, а deployment не включает Prometheus multiprocess mode; один scrape читает память одного Gunicorn worker. Поэтому прошлые ingress/Redis/viewer totals нельзя выдавать за общие | Спроектировать worker-safe сбор без бесконечной per-device cardinality; проверить 4-worker aggregation на изолированном runtime до pilot rollout |
+| P2 | Удалённые журналы недоступны в момент обрыва | Для PH013/PH017/PH019 после установки 10230 нет periodic upload в контейнере, а адресный `REQUEST_LOGS` к PH013/PH025 завершается 504; локальный PH011 upload имеет. Каталог `/tmp/sphere_device_logs` не переживает пересоздание backend container | Перед deploy сохранять приватный snapshot; перенести bounded storage в управляемый volume с retention, дать heartbeat-диагностику результата HTTP upload и проверить remote delivery |
 | P2 | Веб скрывал canary-релизы | `/updates` запрашивал только `android`; backend хранит 12 релизов, включая `android-canary` 10228 | Исправлено `213402b`, regression до/после; pilot frontend развёрнут из `8fef5eb` |
 
 У PH025 за тот же интервал backend записал 21 успешную аутентификацию и 21
@@ -228,6 +231,100 @@ Public gateway для нескольких management WS PH013 записал у
 вернул HTTP 504 через 15 с. Тот же результат ранее получен на PH022/PH025.
 Временные файлы проб и wire payload оставлены только в ignored `.local-pilot`.
 
+Расширенная выборка gateway за 00:25–00:39 UTC подтверждает, что PH013 имел
+12 завершённых WSS-сеансов (медиана 41,824 с, 6 около 40 с), PH017 — 13
+(медиана 40,000 с, 8 около 40 с), PH019 — 13 (медиана 40,001 с, 6 около
+40 с). У локальных PH010/PH011 за тот же интервал завершённых WSS-сессий не
+было. Это сильная корреляция remote route и частых обрывов, **не** измерение
+первопричины и **не** универсальный лимит Cloudflare. В конфигурации наших
+nginx proxy 40-секундного read timeout нет.
+
+Периодическая HTTP-выгрузка журналов создаёт отдельный диагностический пробел:
+на 05:05 UTC в `/tmp/sphere_device_logs` пилотного backend не найдено файлов
+PH013, PH017, PH019 с новой `ws_lifecycle` записью; у локального PH011 файл
+существует и содержит категории закрытий. `REQUEST_LOGS` к PH013/PH025
+завершился 504. Нельзя выводить точную клиентскую причину из одного серверного
+`1005` и нельзя считать отсутствие файлов отсутствием сбоев Android.
+
+### Адресная диагностика через heartbeat · 05:17–05:20 UTC
+
+Регрессии сначала показали отсутствие прежней клиентской ошибки в `PONG` и в
+серверном журнале. Fix `3dbb915` передаёт после reconnect только bounded поля:
+тип/фазу lifecycle, номер маршрута, длительность, код закрытия/HTTP и имя
+класса исключения; URL, token, close reason и exception message не передаются.
+Backend валидирует значения и пишет одно структурированное событие на WS-сеанс
+только после успешного Redis presence write. При временном отказе Redis запись
+повторно рассматривается на следующем PONG. Следующий коммит `9d8874a`
+устранил ошибку статического сужения `int | None` в CI без изменения runtime
+контракта. Пилотный backend image `:9d8874a` собран из Git archive, SHA
+`backend/websocket/heartbeat.py` проверен внутри образа; readiness 200,
+frontend, APK-каталог и непилотные контейнеры не изменились. Перед каждым
+пересозданием контейнера его прежние журналы сохранены приватно в `.local-pilot`.
+
+Canary `1.2.31-dev / 10231` собрана из Android source `3dbb915` с неизменным
+signed discovery v25 и тем же pilot debug signer, что у 10230. Файл
+`.local-pilot/apk/SphereAgent-pilot-candidate-1.2.31-dev-3dbb915.apk`,
+SHA-256 `6439fc7234ba863123f6f47bbb95931bbdf986f3dfce26157dda9a640e41d5b6`.
+Unit suites devDebug/enterpriseDebug: по 685 тестов, 0 failures/errors;
+`lintDevDebug`, обе debug assemblies, 205 backend WS tests и Ruff прошли.
+Локальный PH011 обновлён поверх 10230 с сохранением app data: Android
+PackageManager показывает 10231, процесс и `SphereAgentService` работают,
+backend видит `online / 1.2.31-dev`. После deploy backend принял его первый
+реальный отчёт `android_ws.previous_failure`: `onFailure`, route slot 1/2,
+`pre_auth`, `IOException` с `EOFException`, elapsed 1004 ms. Это доказывает
+сериализацию и доставку канала **на одном локальном Android**; оно не объясняет
+обрывы удалённых PH013/PH017/PH019. В локальном canary не запускали видео.
+APK 10231 опубликована только в `android-canary/dev`, не в общем `android/dev`;
+на remote она не установлена, считать её исправлением стрима нельзя. CI
+`9d8874a` прошёл.
+Один idle-снимок PH011 без захвата экрана после установки дал 47 678 KiB PSS
+(`dumpsys meminfo`) и 0,0% CPU (`top`); выборка не характеризует среднее,
+стриминг или 32–64 эмулятора и не закрывает performance gate.
+
+### Реальная адресная OTA и закрытый пробел обычного WS · 05:35–10:45 UTC
+
+Сначала локальный PH010 (1.2.28) получил ровно один подписанный grant на 10231.
+Специализированный recovery-сеанс выдал команду; backend записал `received`,
+`running`, terminal `completed`, сохранил receipt перед ACK, затем Android
+PackageManager, API и новый процесс подтвердили 10231. Это **локальная** приёмка.
+
+На удалённом PH017 (1.2.30) такой же адресный grant был активен, однако агент
+подключался с действительным JWT и проходил обычный management WS: специальный
+OTA-only путь его не выбирал. Предполагаемое несоответствие `issued_before`
+не проверено декодированием токена и не считается доказанной причиной. До fix
+обычный путь grant не отправлял. Два новых
+регрессионных теста сначала падали: команда не отправлялась и terminal receipt
+не сохранялся. Fix `40357ca` проверяет подпись, tenant/device и срок grant на
+обычном соединении и отправляет **тот же** command ID до публикации сокета;
+Android журнал защищает от повторного исполнения после reconnect. Сервер
+распознаёт terminal receipt по сохранённому grant, атомарно сохраняет его до
+ACK; неизвестные receipts по-прежнему не превращаются в DAG task result.
+Boundary tests закрывают чужую организацию, изменённый digest, истёкший grant,
+неактивное устройство и replay. Локально 71 recovery/OTA API test passed;
+полный CI коммита `40357ca`, включая Tests, APK build, mypy, security,
+Alembic и frontend, прошёл. Pilot backend пересобран из Git archive и
+развёрнут как `:40357ca`, внутренний readiness 200; frontend и OTA-каталог
+побайтно не изменились, legacy containers не затронуты.
+
+PH017 переподключился в 05:46:35 и 05:48:03 UTC. На обоих соединениях backend
+записал `android_ws.ota_grant_sent_normal`. Public gateway увидел GET точного
+APK digest в 05:46:37 и 05:47:07, оба со статусом HTTP 200 и временем запроса
+1,912/1,724 с. Текущий access format не содержит числа байтов, дошедших до
+Android; `200` на gateway не является доказательством полного скачивания.
+В 05:48:06 агент прислал terminal `failed`; сервер сохранил sanitized
+`failure_code=timeout`, убрал активный grant и отправил ACK. На 10:44 API
+по-прежнему показывает PH017 1.2.30, `offline`; до этого он продолжал
+циклически устанавливать heartbeat и терять WSS примерно через 40 секунд.
+Это доказывает доставку команды и квитанции, но **не** доставку APK или видео.
+
+Адресный `REQUEST_LOGS` PH017 в 10:45 UTC вернул HTTP 504; его periodic файл
+в `/tmp/sphere_device_logs` отсутствует. По одному bounded `timeout` нельзя
+строго выбрать между HTTP-body read и установщиком. Два GET с интервалом ~30 с
+согласуются с предусмотренным Android retry через HTTP/1.1 после IOException,
+но этот вывод пока только гипотеза. Повторный grant без новой диагностики
+бессмысленен и не выполнялся. Сырые идентификаторы, intent, receipt и журналы
+хранятся только в ignored `.local-pilot/rollout/ota-ui-20260927/`.
+
 **Вывод для приоритета:** обновление APK подтвердило версию, но не восстановило
 передачу кадров и ответ интерактивной диагностики на удалённом маршруте.
 Первый следующий шаг — получить клиентский `ws_lifecycle` (`onFailure` тип,
@@ -245,11 +342,10 @@ route slot, elapsed, close code) из периодического upload либ
    Docker; провести на одном удалённом Android сравнительные WSS-сеансы с
    замером Android `onFailure`/close, gateway duration, backend heartbeat и
    command receipt. Внешний Quick Tunnel или LocalTunnel без health недостаточен.
-2. Проверить существующий `POST /updates/recovery` и специализированный
-   OTA-only WS path сначала на локальном canary: grant до доставки, совпадение
-   tenant/device/command/status, persist-before-ACK, повтор после reconnect.
-   Код допускает действительный device JWT, выпущенный до grant, но runtime
-   для active remote не принят. Исторические 10222-квитанции требуют отдельной
+2. Локальная OTA через сохранённый grant прошла; remote PH017 доказал нормальную
+   доставку команды и durable `failed/timeout` receipt без установки APK.
+   Следующий шаг — определить, завершилось ли чтение тела APK и какой именно
+   таймаут случился на Android. Исторические 10222-квитанции требуют отдельной
    миграционной стратегии; неизвестный grant не подтверждать.
 3. На одном remote canary уточнить стадию `timeout`, затем подтвердить
    delivery/download/SHA/PackageInstaller,

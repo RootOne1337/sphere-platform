@@ -4,12 +4,19 @@
 
 > [!IMPORTANT]
 > Ниже сохранены датированные контрольные точки 26 сентября. Последний pilot:
-> backend `7a3d761`, frontend `8fef5eb`, 10230 только в `android-canary/dev`;
-> оператор установил APK 10230 на remote PH013/PH017/PH019. PH022 всё ещё 10222
-> после `failed/timeout`. Для PH013 10230 video probe дал 0 ingress и 0 кадров
-> у local/public viewer, management WS оборвался около 40 с; запрос журналов
-> к PH013 и PH025 вернул 504. Точные границы доказательств и следующие
-> gates — в [аудите 27 сентября](../audits/2026-09-27/REMOTE-CONNECTION-AND-OTA-GATES.md).
+> backend `40357ca`, frontend `8fef5eb`; обычный `android/dev` остаётся 10209,
+> canary-каталог содержит 10231. APK 10231 из `3dbb915` установлена на
+> локальные PH010/PH011: PH010 — через сохранённый OTA-grant с квитанцией
+> `completed`, PH011 — поверх 10230; backend получил ограниченную причину
+> прежнего WS-разрыва через heartbeat PH011. Оператор установил
+> APK 10230 на remote PH013/PH017/PH019, но видео PH013 в контролируемой пробе
+> не дошло до backend; несколько remote WS-сессий длились около 40 с. PH022
+> всё ещё 10222 после `failed/timeout`; запрос журналов к PH013/PH025 вернул
+> 504. После fix `40357ca` PH017 получил grant по обычному WS и ответил
+> `failed/timeout`; версия осталась 10230. **Клиентская причина remote-обрывов
+> ещё не измерена, remote video и адресная remote OTA 10231 не приняты.**
+> Точные gates — в
+> [аудите 27 сентября](../audits/2026-09-27/REMOTE-CONNECTION-AND-OTA-GATES.md).
 
 **Контроль APK и rollout — 26 сентября, 17:07 UTC.** Source на PR #19 —
 `1.2.28 / 10228` (`add00b3`) с исправлением ожидания результата
