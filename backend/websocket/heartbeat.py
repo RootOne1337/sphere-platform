@@ -44,7 +44,11 @@ def _bounded_previous_ws_failure(value: object) -> dict | None:
         "authenticated", "pre_auth"
     ):
         return None
-    if not all(type(number) is int for number in (slot, count, elapsed)):
+    if (
+        not isinstance(slot, int) or isinstance(slot, bool)
+        or not isinstance(count, int) or isinstance(count, bool)
+        or not isinstance(elapsed, int) or isinstance(elapsed, bool)
+    ):
         return None
     if not (1 <= count <= 3 and 0 <= slot < count and 0 <= elapsed <= 86_400_000):
         return None
