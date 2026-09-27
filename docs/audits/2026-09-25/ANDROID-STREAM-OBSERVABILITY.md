@@ -8,6 +8,12 @@ gate:** NO-GO до canary.
 [Fleet32 readiness](../2026-09-20/FLEET32-PREFLIGHT.md) ·
 [Android guide](../../android-agent.md) · [Операционный observability-дизайн](../../architecture/FLEET-OPERATIONS-AND-OBSERVABILITY.md)
 
+> **Сверено с наблюдением 28 сентября:** этот отчёт описывает исходную source
+> диагностику и проверки от 25 сентября. Более позднее operator-confirmed видео
+> на одном browser canary отражено в [текущем состоянии](../../operations/CURRENT-STATE.md)
+> и [Tuna canary timeline](../2026-09-27/TUNA-REMOTE-STREAM-CANARY.md); это не
+> отменяет указанные здесь ограничения корреляции и не означает fleet acceptance.
+
 ## Результат
 
 В source добавлена диагностика, которая разделяет стадии Android-захвата,

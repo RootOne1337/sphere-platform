@@ -1,5 +1,12 @@
 # Отказоустойчивое обновление Android-агента
 
+> **Текущая граница, 28 сентября 2026:** Android source задаёт `1.2.34/10234`,
+> а записанный canary report описывает приватный candidate и три server reports
+> с этой версией. Текущий OTA catalog этим проходом не читался, массовая
+> публикация/установка не подтверждена. Все приведённые ниже catalog versions,
+> image IDs и installed packages являются dated snapshots. См. [каноническое
+> состояние](../operations/CURRENT-STATE.md) перед любым rollout.
+
 **Проверенный runtime snapshot: 25 сентября 2026, 15:38 Asia/Yekaterinburg.**
 Backend/frontend pilot image `e308b1b` healthy; readiness вернул `status=ready`,
 `/login`, `/stream`, `/stream/test-device` и `/fleet` — HTTP 200. Это не доказывает

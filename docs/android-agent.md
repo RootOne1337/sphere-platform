@@ -1,13 +1,17 @@
 # Android Agent
 
-> Последняя зафиксированная установка пилотных устройств — **1.2.8-dev / 10208**
-> от 21 сентября; новая установка на устройства не выполнялась. 25 сентября
-> собран приватный APK-кандидат **1.2.22-dev / 10222** с SHA-256 и подписью,
-> сверенными в [аудите выпуска](audits/2026-09-25/ANDROID-APK-RELEASE-AUDIT.md).
-> Кандидат не опубликован в OTA-каталоге и не прошёл runtime-canary; он не является
-> production-релизом или доказательством совместимости со всеми Android.
+> **Состояние на 28 сентября 2026:** исходники задают Android `1.2.34 / 10234`;
+> приватный dev candidate `1.2.34-dev / 10234` был собран из `cc456c6` и вручную
+> установлен оператором на несколько удалённых эмуляторов. Сервер видел три
+> свежих сообщения этой версии, а оператор видел видео в браузере как минимум
+> на одном canary. Установленный SHA не сверялся независимо, кандидат не
+> массово опубликован в OTA; эта запись не означает fleet rollout. См.
+> [каноническое состояние и границы доказательств](operations/CURRENT-STATE.md)
+> и [canary evidence](audits/2026-09-27/TUNA-REMOTE-STREAM-CANARY.md).
 
-14 September 2026 pilot: signed APK **`343c6e8`, 1.2.5-dev / 10205** is
+### Исторический pilot snapshot — 14 сентября 2026
+
+Signed APK **`343c6e8`, 1.2.5-dev / 10205** is
 installed on both owned Android 9 devices through authenticated server OTA and
 the APK's own `su`, with no ADB install/manual permissions or app launcher.
 It fixes a native SIGSEGV caused by frame copying racing with capture teardown.

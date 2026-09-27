@@ -1,5 +1,10 @@
 # Удалённый пилот: исходящий туннель и реальные проверки
 
+> **Указатель на 28 сентября 2026:** provider/runtime факты ниже — dated
+> observations, а не инвентаризация работающих ingress сейчас. Последний
+> записанный remote video canary и его ограничения описаны в
+> [каноническом состоянии](CURRENT-STATE.md) и [canary report](../audits/2026-09-27/TUNA-REMOTE-STREAM-CANARY.md).
+
 **12 сентября 2026 · один временный ingress проверен; постоянный резерв не готов.**
 
 [Локальный стенд и APK](LOCAL-PILOT.md) · [План discovery](../architecture/ANDROID-BOOTSTRAP-DISCOVERY.md) ·

@@ -6,7 +6,28 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [Unreleased] — enterprise audit, 2026-09-24
+## [Unreleased] — updated 2026-09-28 (PR #19)
+
+This section records source and documentation changes; it does not indicate a
+production deployment or OTA publication. See the [current state](docs/operations/CURRENT-STATE.md)
+for the separate source, artifact, catalog, installed-device, and runtime evidence.
+
+- AUD-152: monitoring source no longer fabricates CPU/RAM trends or health for
+  unprobed components. Unavailable data is labelled explicitly and failed
+  metrics collection degrades the page. Backend monitoring tests (52), frontend
+  tests (41 suites / 306 tests), type-check and Ruff passed locally; GitHub CI
+  passed at `b562864`. This has not been deployed. [Evidence and gaps](docs/audits/2026-09-28/INFRASTRUCTURE-MONITORING-TRUTHFUL-TELEMETRY.md).
+- Documentation now distinguishes Android source `1.2.34/10234` from the
+  private `1.2.34-dev/10234` canary artifact, OTA catalog publication and
+  versions actually reported by devices. Operator-visible video on one remote
+  browser canary is recorded, without claiming route attribution, FPS or fleet
+  acceptance. [Current state](docs/operations/CURRENT-STATE.md) · [Canary record](docs/audits/2026-09-27/TUNA-REMOTE-STREAM-CANARY.md).
+
+### Historical audit entries recorded 2026-09-24
+
+The entries below preserve their original audit-time facts and candidate
+versions. They are not the current installed APK, active OTA catalog, or
+production rollout status.
 
 Изменения находятся в draft PR; это не опубликованный production release.
 Полный перечень предыдущих audit fixes, доказательства и residual risks:

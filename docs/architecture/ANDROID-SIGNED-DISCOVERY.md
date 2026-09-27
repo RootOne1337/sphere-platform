@@ -1,5 +1,11 @@
 # Подписанная конфигурация Android и резервные источники
 
+> **Runtime note, 28 September 2026:** this page contains the opt-in implementation
+> design and historical pilot results; the active config source, publisher state,
+> and OTA catalog were not re-read in this documentation pass. Use the
+> [current-state record](../operations/CURRENT-STATE.md) for the latest bounded
+> evidence before changing a live route.
+
 **12 сентября 2026 · opt-in реализация в audit branch; постоянный WAN резерв ещё не принят.**
 
 [Архитектурное решение](ANDROID-BOOTSTRAP-DISCOVERY.md) · [Сохранённые маршруты](ANDROID-SAVED-ROUTES.md) ·
@@ -115,7 +121,7 @@ gateway, публичный JSON или репозиторий. При публ�
 проверьте новый ingress, затем обновите mirrors. Старый адрес выводится только
 после rollout, а не сразу после commit документа.
 
-## Текущий pilot и оставшиеся ограничения
+## Историческая конфигурация pilot и оставшиеся ограничения
 
 Для `sphere-pilot-20260911` создан отдельный подписанный документ в
 [config PR #1](https://github.com/RootOne1337/sphere-agent-config/pull/1), ветка

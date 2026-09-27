@@ -1,5 +1,13 @@
 # Локальный стенд для совместного тестирования
 
+> **Документационный указатель, 28 сентября 2026:** фактические текущие версии
+> исходников, последний записанный remote canary и границы live-проверки собраны
+> в [каноническом состоянии](CURRENT-STATE.md). Ниже сохранён исторический pilot
+> ledger: каждая версия, hostname, container digest, OTA catalog и device count
+> относится к своему записанному времени и не является текущей конфигурацией.
+> Внешний tunnel hostname удалён из этого журнала, так как Quick Tunnel URL
+> эфемерен; активный runtime endpoint 28 сентября не перечитывался.
+
 ## Live-корреляция: 26 сентября, 05:59 Asia/Yekaterinburg / 00:59 UTC
 
 Изолированный pilot `sphere-pilot-20260911` не перезапускался в этой проверке;
@@ -107,7 +115,7 @@ release audit](../audits/2026-09-26/ANDROID-PRESENCE-AND-APK-RELEASE.md).
 Изолированный Compose project `sphere-pilot-20260911` обновлён на commit `fc65b55`:
 backend и frontend images healthy. `GET /api/v1/health/ready` вернул HTTP 200 и
 `postgres=ok`, `redis=ok`; `/devices` вернул HTTP 200 на `http://127.0.0.1:18080`
-и `https://deviation-news-turning-booking.trycloudflare.com`. Оба ответа отдали
+и на временном Quick Tunnel hostname (эфемерный URL удалён из документа). Оба ответа отдали
 route chunk `page-7559fa93610e3f77.js`, содержащий новое подтверждение удаления из
 каталога. Это подтверждает rollout и свежий bundle, но не удаление живой записи,
 подключение viewer или удалённый видеокадр. Семь остальных pilot-сервисов сохранили
@@ -301,7 +309,7 @@ up` без выбранного project/env. Никакой `down -v` для п�
 На другом компьютере сначала нужны собственные env, agent config, schema migration,
 admin и enrollment bootstrap; копирование одного overlay не подготавливает БД.
 
-## Текущий веб
+## Исторический web snapshot — не перечитывался 28 сентября
 
 Frontend **`6dea6b4`** установлен в новом pilot. Device Stream сохраняет выбранные
 карточки при offline, показывает переподключение и оставляет Stop доступным.
@@ -416,7 +424,7 @@ Asia/Yekaterinburg запущен конечный восьмичасовой п
 Будущие APK надо публиковать в этот каталог: один git commit или локальный LATEST
 не являются выпуском OTA. Раздача проверенного файла требует действующего JWT.
 
-### Параметры текущего подключения
+### Исторический snapshot параметров подключения
 
 Root projection принят на предыдущей APK `ce26a9e`; реализация сохранена и её
 regression tests пройдены в обоих signed flavors текущей сборки.
@@ -438,15 +446,20 @@ Installation ID/public verification key заданы при сборке; enroll
 использует такую сборку или старое provisioning. Обновление требует того же package
 и signing identity; не очищайте app data ради смены маршрута.
 
-**Текущий внешний адрес временный.** Он работает через исходящий Quick Tunnel,
-но изменится при restart connector. Основной signed config находится на GitHub вне туннеля;
-копия — на gateway. Автопубликация включена для этого стенда: задача
-`Sphere-Publisher-pilot-20260911`, цикл 60 s и logon текущего Windows-пользователя.
-[Контракт, состояние и остановка](DISCOVERY-PUBLISHER.md). Старый baked gateway
-mirror APK после смены hostname недоступен; её основной GitHub source стабилен. [Remote profile, реальные проверки и ограничения](REMOTE-PILOT.md).
+**Историческая tunnel-конфигурация:** в одном из прежних снимков использовался
+исходящий Quick Tunnel, чей hostname менялся при перезапуске connector. Не
+используйте прежний URL или задачу publisher как текущие operational values:
+состояние publisher, его scheduler и активный hostname на 28 сентября не
+проверялись. Основной signed config и зеркала описаны в
+[контракте discovery publisher](DISCOVERY-PUBLISHER.md); фактический runtime
+маршрут сверяйте с [актуальным состоянием](CURRENT-STATE.md) и новым live evidence.
+[Remote profile, прежние проверки и ограничения](REMOTE-PILOT.md).
 [Подписанный bootstrap и открытая инфраструктурная работа](../architecture/ANDROID-BOOTSTRAP-DISCOVERY.md).
 
-## Доказательства и следующий тест
+## Архивные доказательства локального стенда — не обновлялись 28 сентября
+
+Факты ниже сохранены как audit history. Они не утверждают, что соответствующие
+контейнеры, APK, publisher или endpoints активны сейчас; см. [текущий статус](CURRENT-STATE.md).
 
 - На свежих volumes применена schema до `20260910_device_refresh_retry`, CLI
   создали admin и enrollment key. Browser login/dashboard/devices и refresh после
@@ -463,7 +476,7 @@ mirror APK после смены hostname недоступен; её основ�
 - Объединённый локальный Python-прогон: **1526 passed / 368.66 s**, `tests/load`
   исключён как отдельный opt-in профиль. Deployment subset: **101 passed**.
   Coverage в этом локальном прогоне не измерялась; точный CI результат отмечается в PR.
-- Текущая signed APK `9618a57`: 515 JVM tests / 37 suites, по 29 signed
+- На этой контрольной точке signed APK `9618a57`: 515 JVM tests / 37 suites, по 29 signed
   dev/enterprise tests (discovery и реальный logger). 17 прежних replica tests
   заменены 10 production-class проверками; native before/after диагностики принят.
 - Историческая signed APK `0f1410e`: 522 JVM tests / 37 suites; в signed dev/enterprise
@@ -477,10 +490,10 @@ mirror APK после смены hostname недоступен; её основ�
   Команды управления им в тест не входили. 27 baseline containers полностью совпали,
   `/reverent_colden` отсутствует. Исходная inventory сохранена без подмены.
 
-**Автоматическая публикация:** реальный restart коннектора → новый signed v8
-за 39.97 s → APK echo за 250.83 s; без ручного config update и регистрации.
-Текущий внешний адрес: `https://reach-further-loads-ran.trycloudflare.com`.
-Last-known route/expiry/version publisher видны в
+**Автоматическая публикация на той контрольной точке:** реальный restart
+коннектора → новый signed v8 за 39.97 s → APK echo за 250.83 s; без ручного
+config update и регистрации. Эфемерный tunnel URL намеренно не сохраняется.
+Last-known route/expiry/version publisher тогда были записаны в
 `.local-pilot/remote/publisher/state/status.json`.
 
 **Дальше:** постоянные независимые ingress/config hosts, приёмка host reboot и renewal; второй

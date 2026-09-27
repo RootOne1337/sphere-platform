@@ -9,19 +9,21 @@
 </div>
 
 > [!NOTE]
-> **Срез навигации: 27 сентября 2026.** Текущие remote/video/OTA gates описаны
-> в [live-аудите](audits/2026-09-27/REMOTE-CONNECTION-AND-OTA-GATES.md), pilot —
-> в [Local pilot](operations/LOCAL-PILOT.md). Старые отчёты сохраняют свои даты и
-> версии; их показатели нельзя переносить на текущий код. [Правила актуальности](DOCUMENTATION.md).
+> **Срез навигации: 28 сентября 2026.** Канонические source/runtime факты,
+> версии Android, ограничения диагностики и будущий этап 20–30 устройств собраны
+> в [актуальном состоянии](operations/CURRENT-STATE.md). Runtime не перечитывался
+> этим документационным проходом; старые аудиты сохраняют собственные даты и
+> версии и не должны читаться как текущий deploy. [Правила актуальности](DOCUMENTATION.md).
 
 ## 🧭 Выберите задачу
 
 | Мне нужно | Начать здесь | Дальше |
 | --- | --- | --- |
-| Войти в готовый pilot и взять APK | [Local pilot](operations/LOCAL-PILOT.md) | [Приёмка первого устройства](operations/PILOT-ACCEPTANCE.md) |
+| Узнать актуальные версии, что APK может диагностировать/исполнять и что реально подтверждено | [Текущее состояние на 28 сентября](operations/CURRENT-STATE.md) | [Readiness](operations/READINESS.md) · [PR #19](https://github.com/RootOne1337/sphere-platform/pull/19) |
+| Сверить версию и OTA перед pilot install | [Текущее состояние](operations/CURRENT-STATE.md) | [Local pilot ledger](operations/LOCAL-PILOT.md) · [Приёмка первого устройства](operations/PILOT-ACCEPTANCE.md) |
 | Поднять новую установку | [Startup / bootstrap](operations/STARTUP.md#first-install) | [Configuration](configuration.md) · [Deployment](deployment.md) |
 | Подключить удалённые Android | [Remote pilot](operations/REMOTE-PILOT.md) | [Signed discovery](architecture/ANDROID-SIGNED-DISCOVERY.md) |
-| Понять оставшиеся проблемы | [Текущие remote/video/OTA gates](audits/2026-09-27/REMOTE-CONNECTION-AND-OTA-GATES.md) | [Fleet32](audits/2026-09-20/FLEET32-PREFLIGHT.md) · [A/B ingress](audits/2026-09-24/REMOTE-INGRESS-AB.md) · [Readiness](operations/READINESS.md) · [Roadmap](../ROADMAP.md) |
+| Понять оставшиеся проблемы | [Текущее состояние и границы доказательств](operations/CURRENT-STATE.md) | [Fleet32](audits/2026-09-20/FLEET32-PREFLIGHT.md) · [A/B ingress](audits/2026-09-24/REMOTE-INGRESS-AB.md) · [Readiness](operations/READINESS.md) · [Roadmap](../ROADMAP.md) |
 | Разобрать чёрный экран стрима по стадиям | [Android stream observability](audits/2026-09-25/ANDROID-STREAM-OBSERVABILITY.md) | APK capture/encode/queue · browser decode/render · ограничения доказательств |
 | Разобрать offline после clone/re-enrollment | [AUD-172 — enrollment HTTP 401](audits/2026-09-25/CLONED-ENROLLMENT-401.md) | Reject в `/devices/register`, shared bootstrap file и границы подтверждённой причины |
 | Разобрать ложный Online сразу после подключения | [AUD-173 — presence до первого heartbeat](audits/2026-09-25/DEVICE-PRESENCE-FIRST-HEARTBEAT.md) | `connecting` → первый pong → `online`, тесты и rollout gate |
