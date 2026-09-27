@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import { FleetMatrix } from '@/src/features/devices/FleetMatrix';
 import type { Device } from '@/lib/hooks/useDevices';
 
@@ -12,6 +12,8 @@ jest.mock('@tanstack/react-virtual', () => ({
 jest.mock('@/src/features/inspector/inspectorStore', () => ({
   useInspectorStore: () => ({ openInspector: jest.fn() }),
 }));
+
+afterEach(() => jest.useRealTimers());
 
 const device = {
   id: 'device-1',
@@ -55,6 +57,24 @@ it('does not present generated ping or history as measurements', () => {
   expect(container.textContent).not.toMatch(/\d+\s?ms/);
   expect(document.querySelectorAll('svg polyline')).toHaveLength(0);
   expect(screen.getByText('ADB linked')).toBeInTheDocument();
+});
+
+it('refreshes heartbeat age on the visible connection clock', () => {
+  jest.useFakeTimers();
+  jest.setSystemTime(new Date('2026-09-23T10:00:00Z'));
+
+  render(
+    <FleetMatrix
+      data={[{ ...device, connected_since: '2026-09-23T09:00:00Z', last_heartbeat: '2026-09-23T10:00:00Z' } as Device]}
+      isLoading={false}
+      rowSelection={{}}
+      onRowSelectionChange={jest.fn()}
+    />,
+  );
+
+  expect(screen.getByText(/heartbeat 0 с назад/)).toBeInTheDocument();
+  act(() => jest.advanceTimersByTime(15_000));
+  expect(screen.getByText(/heartbeat 15 с назад/)).toBeInTheDocument();
 });
 
 it('does not invent an uptime when the server has no confirmed session timestamp', () => {

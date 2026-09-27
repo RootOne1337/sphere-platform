@@ -310,7 +310,7 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
                 },
             },
         ],
-        [onDeviceAction, openInspector]
+        [clockNow, onDeviceAction, openInspector]
     );
 
     const table = useReactTable({
