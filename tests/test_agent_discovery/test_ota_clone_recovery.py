@@ -26,6 +26,8 @@ from backend.services.device_ota_recovery import OtaRecoveryGrant, get_ota_recov
     ("unexpected end of stream on private URL", "download_unexpected_eof"),
     ("stream was reset: PROTOCOL_ERROR", "http2_reset_protocol_error"),
     ("stream was reset: private", "download_stream_interrupted"),
+    ("package_installer_result_timeout", "package_install_callback_timeout"),
+    ("OTA: root install timed out after 120s", "root_install_timeout"),
     ("Permission denied /private/path", "permission_denied"),
     ("create install session failed", "package_install_failure"),
     ("arbitrary credential never copied", "unclassified"),

@@ -44,6 +44,8 @@ def recovery_failure_code(error: object) -> str | None:
     if "unexpected end of stream" in value:
         return "download_unexpected_eof"
     for fragments, code in (
+        (("package_installer_result_timeout",), "package_install_callback_timeout"),
+        (("root install timed out",), "root_install_timeout"),
         (("sha-256 mismatch",), "checksum_mismatch"),
         (("ssrf protection", "download must use https"), "download_origin_rejected"),
         (("timeout", "timed out"), "timeout"),
