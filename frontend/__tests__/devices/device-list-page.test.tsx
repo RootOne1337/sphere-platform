@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import DevicesPage from '@/app/(dashboard)/devices/page';
 import {
   useBulkAction,
@@ -26,13 +26,35 @@ jest.mock('@/lib/hooks/useLocations', () => ({ useLocations: jest.fn(), useAssig
 jest.mock('@/lib/hooks/usePipelineSettings', () => ({ useGameServers: jest.fn() }));
 jest.mock('@/lib/hooks/useDebounce', () => ({ useDebounce: (value: string) => value }));
 jest.mock('@/src/features/devices/FleetMatrix', () => ({
-  FleetMatrix: ({ data }: { data: Device[] }) => (
-    <ul aria-label="Filtered devices">{data.map((device) => <li key={device.id}>{device.name}</li>)}</ul>
+  FleetMatrix: ({
+    data,
+    rowSelection,
+    onRowSelectionChange,
+  }: {
+    data: Device[];
+    rowSelection: Record<string, boolean>;
+    onRowSelectionChange: (updater: (current: Record<string, boolean>) => Record<string, boolean>) => void;
+  }) => (
+    <>
+      <ul aria-label="Filtered devices">
+        {data.map((device) => <li key={device.id}>{device.name}</li>)}
+      </ul>
+      {data.map((device) => (
+        <button
+          key={`selection-${device.id}`}
+          type="button"
+          aria-label={`Переключить выбор ${device.name}`}
+          aria-pressed={Boolean(rowSelection[device.id])}
+          onClick={() => onRowSelectionChange((current) => ({
+            ...current,
+            [device.id]: !current[device.id],
+          }))}
+        />
+      ))}
+    </>
   ),
 }));
 jest.mock('@/src/features/devices/MultiStreamGrid', () => ({ MultiStreamGrid: () => null }));
-jest.mock('@/src/features/devices/DeviceBulkDeleteButton', () => ({ DeviceBulkDeleteButton: () => null }));
-jest.mock('@/src/features/devices/DeviceDeleteConfirmationDialog', () => ({ DeviceDeleteConfirmationDialog: () => null }));
 
 function makeDevice(id: string, status: Device['status'], groupId: string | null = null): Device {
   return {
@@ -68,6 +90,8 @@ const devices = [
   makeDevice('phone-maintenance', 'maintenance', 'group-b'),
 ];
 
+const bulkDeleteMutation = jest.fn<Promise<{ deleted: number }>, [string[]]>();
+
 beforeEach(() => {
   jest.mocked(useDevices).mockReturnValue({
     data: { items: devices, total: devices.length, page: 1, page_size: 5000, pages: 1 },
@@ -80,6 +104,8 @@ beforeEach(() => {
   for (const hook of [useBulkAction, useDeleteDevice, useUpdateDevice, useBulkDeleteDevices, useBulkRevokeVpn, useMoveDevices, useAssignDevicesToLocation]) {
     jest.mocked(hook).mockReturnValue({ isPending: false, mutateAsync: jest.fn() } as never);
   }
+  bulkDeleteMutation.mockResolvedValue({ deleted: 2 });
+  jest.mocked(useBulkDeleteDevices).mockReturnValue({ isPending: false, mutateAsync: bulkDeleteMutation } as never);
   jest.mocked(useGroups).mockReturnValue({ data: [], isLoading: false, isError: false, refetch: jest.fn() } as never);
   jest.mocked(useLocations).mockReturnValue({ data: [], isLoading: false, isError: false, refetch: jest.fn() } as never);
   jest.mocked(useGameServers).mockReturnValue({ data: [] } as never);
@@ -103,4 +129,25 @@ it('wires fleet status cards to the visible device list and clears attention thr
   fireEvent.click(cardButton('Требуют внимания'));
   expect(within(list).getAllByRole('listitem').map((item) => item.textContent)).toEqual(['phone-maintenance']);
   expect(cardButton('Требуют внимания')).toHaveAttribute('aria-pressed', 'true');
+});
+
+it('connects visible row selection to confirmed bulk deletion and clears selection only after server success', async () => {
+  render(<DevicesPage />);
+
+  fireEvent.click(screen.getByRole('button', { name: 'Переключить выбор phone-online' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Переключить выбор phone-busy' }));
+
+  const deleteButton = screen.getByRole('button', { name: 'Удалить выбранные устройства (2)' });
+  expect(deleteButton).toBeEnabled();
+  fireEvent.click(deleteButton);
+
+  expect(screen.getByRole('dialog')).toHaveTextContent('Обновления и приложения на Android не затрагиваются');
+  expect(bulkDeleteMutation).not.toHaveBeenCalled();
+
+  fireEvent.click(screen.getByRole('button', { name: 'Убрать из каталога (2)' }));
+
+  await waitFor(() => expect(bulkDeleteMutation).toHaveBeenCalledTimes(1));
+  expect(bulkDeleteMutation).toHaveBeenCalledTimes(1);
+  expect(bulkDeleteMutation).toHaveBeenCalledWith(['phone-online', 'phone-busy']);
+  await waitFor(() => expect(screen.queryByRole('button', { name: 'Удалить выбранные устройства (2)' })).not.toBeInTheDocument());
 });
