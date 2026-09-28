@@ -39,10 +39,10 @@ class LogUploadWorkerTest {
     private val logcatCollector = mockk<LogcatCollector>(relaxed = true)
     private val requests = mutableListOf<Request>()
     private var responseCode = 200
-    private var beforeResponse: (() -> Unit)? = null
+    private var beforeResponse: ((Request) -> Unit)? = null
     private val client = OkHttpClient.Builder().addInterceptor { chain ->
         requests += chain.request()
-        beforeResponse?.invoke()
+        beforeResponse?.invoke(chain.request())
         Response.Builder().request(chain.request()).protocol(Protocol.HTTP_1_1)
             .code(responseCode).message("fixture").body("accepted".toResponseBody()).build()
     }.build()
@@ -59,15 +59,17 @@ class LogUploadWorkerTest {
         assertEquals(Result.retry(), worker().doWork())
 
         coVerify(exactly = 1) { registrationGuard.ensureRegistered() }
-        coVerify(exactly = 0) { auth.getFreshToken() }
+        coVerify(exactly = 0) { auth.getFreshTokenForRoute(any(), any()) }
         assertTrue("Log upload must not use the copied device identity", requests.isEmpty())
     }
 
     @Test fun `log upload occurs only after clone credentials have been rebound`() = runTest {
         every { auth.getToken() } returns "copied-access-token"
         every { auth.getServerUrl() } returns "https://management.test"
+        every { auth.connectionRoutesSnapshot() } returns
+            AuthTokenStore.ConnectionRoutes(0, listOf("https://management.test"))
         every { auth.getDeviceId() } returns "device-after-rebind"
-        coEvery { auth.getFreshToken() } returns "fresh-device-token"
+        coEvery { auth.getFreshTokenForRoute(any(), "https://management.test") } returns "fresh-device-token"
         every { loggingTree.readRecentLogs(any()) } returns "sphere-file-logs"
         every { logcatCollector.collectSphereOnly(lines = 300) } returns "sphere-logcat"
 
@@ -75,7 +77,7 @@ class LogUploadWorkerTest {
 
         coVerifyOrder {
             registrationGuard.ensureRegistered()
-            auth.getFreshToken()
+            auth.getFreshTokenForRoute(any(), "https://management.test")
         }
         val request = requests.single()
         assertEquals("https", request.url.scheme)
@@ -97,6 +99,43 @@ class LogUploadWorkerTest {
         } finally {
             crashFile.delete()
         }
+    }
+
+    @Test fun `log upload retries the next saved route after a network failure`() = runTest {
+        prepareUploadCredentials(
+            routes = listOf("https://primary.test", "https://backup.test"),
+        )
+        beforeResponse = { request ->
+            if (request.url.host == "primary.test") throw IOException("primary route unavailable")
+        }
+
+        assertEquals(Result.success(), worker().doWork())
+
+        assertEquals(
+            listOf("https://primary.test/api/v1/logs/upload", "https://backup.test/api/v1/logs/upload"),
+            requests.map { it.url.toString() },
+        )
+        coVerifyOrder {
+            auth.getFreshTokenForRoute(any(), "https://primary.test")
+            auth.getFreshTokenForRoute(any(), "https://backup.test")
+        }
+        requests.forEach { request ->
+            assertEquals("fresh-device-token", request.header("X-API-Key"))
+            assertEquals("device-1", request.header("X-Device-Id"))
+        }
+    }
+
+    @Test fun `authentication rejection does not fan credentials out to backup routes`() = runTest {
+        prepareUploadCredentials(
+            routes = listOf("https://primary.test", "https://backup.test"),
+        )
+        responseCode = 401
+
+        assertEquals(Result.retry(), worker().doWork())
+
+        assertEquals("Do not send credentials to another route after an auth rejection", 1, requests.size)
+        assertEquals("primary.test", requests.single().url.host)
+        coVerify(exactly = 0) { auth.getFreshTokenForRoute(any(), "https://backup.test") }
     }
 
     @Test fun `crash record is retained when server rejects log upload`() = runTest {
@@ -172,11 +211,12 @@ class LogUploadWorkerTest {
         )
     }
 
-    private fun prepareUploadCredentials() {
+    private fun prepareUploadCredentials(routes: List<String> = listOf("https://management.test")) {
         every { auth.getToken() } returns "access-token"
         every { auth.getServerUrl() } returns "https://management.test"
         every { auth.getDeviceId() } returns "device-1"
-        coEvery { auth.getFreshToken() } returns "fresh-device-token"
+        every { auth.connectionRoutesSnapshot() } returns AuthTokenStore.ConnectionRoutes(0, routes)
+        coEvery { auth.getFreshTokenForRoute(any(), any()) } returns "fresh-device-token"
         every { loggingTree.readRecentLogs(any()) } returns "sphere-file-logs"
         every { logcatCollector.collectSphereOnly(lines = 300) } returns "sphere-logcat"
     }

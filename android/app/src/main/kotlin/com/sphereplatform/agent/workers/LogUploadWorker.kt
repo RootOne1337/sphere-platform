@@ -26,6 +26,7 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import timber.log.Timber
 import java.io.File
+import java.io.IOException
 import java.io.RandomAccessFile
 import java.nio.ByteBuffer
 import java.nio.charset.CodingErrorAction
@@ -154,10 +155,13 @@ class LogUploadWorker @AssistedInject constructor(
             }
             instanceRegistrationGuard.ensureRegistered()
 
-            val serverUrl = authStore.getServerUrl().trimEnd('/')
-            val apiKey = authStore.getFreshToken()
             val deviceId = authStore.getDeviceId()
-            if (serverUrl.isBlank() || apiKey.isNullOrBlank() || deviceId.isNullOrBlank()) {
+            val routePlan = authStore.connectionRoutesSnapshot()
+            val routes = routePlan.urls
+                .map { it.trimEnd('/') }
+                .filter { it.isNotBlank() }
+                .distinct()
+            if (routes.isEmpty() || deviceId.isNullOrBlank()) {
                 Timber.d("LogUploadWorker: skipped (not enrolled yet)")
                 return Result.success()
             }
@@ -180,29 +184,69 @@ class LogUploadWorker @AssistedInject constructor(
                 append(crashSnapshot?.text ?: "No persisted uncaught crash record")
             })
 
-            // FIX D3: device_id вынесен из URL в заголовок X-Device-Id.
-            // В URL он логируется nginx access log, Cloudflare dashboard — утечка.
-            val url = "$serverUrl/api/v1/logs/upload"
             val body = logs.toRequestBody("text/plain; charset=utf-8".toMediaType())
-            val request = Request.Builder()
-                .url(url)
-                .addHeader("X-API-Key", apiKey)
-                .addHeader("X-Device-Id", deviceId)
-                .post(body)
-                .build()
-
-            httpClient.newCall(request).execute().use { response ->
-                if (response.isSuccessful) {
-                    if (crashSnapshot != null && !deleteUploadedCrashSnapshot(crashSnapshot)) {
-                        Timber.w("LogUploadWorker: crash log changed during upload; retaining it")
-                    }
-                    Timber.i("LogUploadWorker: uploaded ${logs.length} bytes (HTTP ${response.code})")
+            for ((routeIndex, route) in routes.withIndex()) {
+                // Refresh on the route being used. If access is expiring while
+                // the active origin is down, the signed backup can refresh too.
+                val apiKey = authStore.getFreshTokenForRoute(routePlan, route)
+                if (apiKey.isNullOrBlank()) {
+                    Timber.d("LogUploadWorker: no fresh device credential available")
                     return Result.success()
-                } else {
-                    Timber.w("LogUploadWorker: server returned HTTP ${response.code}")
-                    return Result.retry()
+                }
+
+                // FIX D3: device_id stays in X-Device-Id rather than the URL,
+                // which can otherwise leak into reverse-proxy access logs.
+                val request = Request.Builder()
+                    .url("$route/api/v1/logs/upload")
+                    .addHeader("X-API-Key", apiKey)
+                    .addHeader("X-Device-Id", deviceId)
+                    .post(body)
+                    .build()
+
+                val tryNextRoute = try {
+                    httpClient.newCall(request).execute().use { response ->
+                        if (response.isSuccessful) {
+                            if (crashSnapshot != null && !deleteUploadedCrashSnapshot(crashSnapshot)) {
+                                Timber.w("LogUploadWorker: crash log changed during upload; retaining it")
+                            }
+                            Timber.i(
+                                "LogUploadWorker: uploaded ${logs.length} bytes " +
+                                    "(route_slot=${routeIndex + 1}, HTTP ${response.code})",
+                            )
+                            return Result.success()
+                        }
+
+                        // Never send the same device credential to other routes
+                        // after an authentication failure or rate limit. A route
+                        // outage can use the remaining signed management routes.
+                        if (response.code == 401 || response.code == 403 || response.code == 429) {
+                            Timber.w(
+                                "LogUploadWorker: upload rejected with HTTP ${response.code} " +
+                                    "(route_slot=${routeIndex + 1})",
+                            )
+                            return Result.retry()
+                        }
+
+                        Timber.w(
+                            "LogUploadWorker: server returned HTTP ${response.code} " +
+                                "(route_slot=${routeIndex + 1})",
+                        )
+                        response.code == 404 || response.code in 500..599
+                    }
+                } catch (e: IOException) {
+                    Timber.w(
+                        "LogUploadWorker: route unavailable " +
+                            "(route_slot=${routeIndex + 1}, error=${e.javaClass.simpleName})",
+                    )
+                    true
+                }
+
+                if (!tryNextRoute) return Result.retry()
+                if (routeIndex < routes.lastIndex) {
+                    Timber.i("LogUploadWorker: trying next saved management route")
                 }
             }
+            return Result.retry()
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
