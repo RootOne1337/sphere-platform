@@ -3,7 +3,7 @@
 **Навигация обновлена: 28 сентября 2026. Исторические live-снимки ниже сохранены по датам.**
 
 > [!IMPORTANT]
-> Канонические source/runtime сведения, текущая версия APK в исходниках, последний записанный remote canary, ограничения диагностики и следующий тест 20–30 устройств находятся в [CURRENT-STATE.md](CURRENT-STATE.md). Этот файл — журнал readiness snapshots, не реальное время; перед rollout перечитайте live API, installed artifact hashes, deployed image IDs и receipts. PR #19 прошёл CI на `b562864`, но deploy job был пропущен; 14 устройств остаются операторским baseline, а не заново измеренной метрикой этого документационного прохода.
+> Канонические source/runtime сведения, текущая версия APK в исходниках, последний записанный remote canary, ограничения диагностики и следующий тест 20–30 устройств находятся в [CURRENT-STATE.md](CURRENT-STATE.md). Этот файл — журнал readiness snapshots, не реальное время; перед rollout перечитайте live API, installed artifact hashes, deployed image IDs и receipts. PR #19 прошёл CI на `6b87de7`, но deploy job был пропущен; 14 устройств остаются операторским baseline, а не заново измеренной метрикой этого документационного прохода.
 
 > [!NOTE]
 > Исторический срез, зафиксированный 27 сентября; он не описывает runtime на 28 сентября.
