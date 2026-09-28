@@ -61,7 +61,7 @@ it('shows devices already offline at page load without offering an unavailable s
   mockDevices = [{ ...mockDevices[0], status: 'offline' }];
   render(<FleetStreamPage />);
   expect(screen.getByText('Agent A')).toBeInTheDocument();
-  expect(screen.getByText(/Доступны/)).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Доступны 0' })).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Начать просмотр Agent A' })).toBeDisabled();
 });
 
@@ -84,6 +84,53 @@ it('allows viewing a busy device because busy means reachable while it runs a ta
 
   expect(screen.getByText('Live a')).toBeInTheDocument();
   expect(screen.getAllByText('В работе')).toHaveLength(2);
+});
+
+it('filters the stream catalog by API reachability status and shows matching counts', () => {
+  mockDevices = [
+    { id: 'a', name: 'Online agent', status: 'online', group_ids: [], location_ids: [] },
+    { id: 'b', name: 'Busy agent', status: 'busy', group_ids: [], location_ids: [] },
+    { id: 'c', name: 'Connecting agent', status: 'connecting', group_ids: [], location_ids: [] },
+    { id: 'd', name: 'Offline agent', status: 'offline', group_ids: [], location_ids: [] },
+    { id: 'e', name: 'Error agent', status: 'error', group_ids: [], location_ids: [] },
+  ] as unknown as Device[];
+  render(<FleetStreamPage />);
+
+  expect(screen.getByRole('button', { name: 'Доступны 2' })).toHaveAttribute('aria-pressed', 'false');
+  fireEvent.click(screen.getByRole('button', { name: 'Доступны 2' }));
+  expect(screen.getByText('Online agent')).toBeInTheDocument();
+  expect(screen.getByText('Busy agent')).toBeInTheDocument();
+  expect(screen.queryByText('Connecting agent')).not.toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole('button', { name: 'Подключаются 1' }));
+  expect(screen.getByText('Connecting agent')).toBeInTheDocument();
+  expect(screen.queryByText('Online agent')).not.toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole('button', { name: 'Офлайн 1' }));
+  expect(screen.getByText('Offline agent')).toBeInTheDocument();
+  expect(screen.queryByText('Error agent')).not.toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole('button', { name: 'Проблемы 1' }));
+  expect(screen.getByText('Error agent')).toBeInTheDocument();
+  expect(screen.queryByText('Offline agent')).not.toBeInTheDocument();
+});
+
+it('keeps stream selection across a status filter and resumes it when the device is shown again', () => {
+  mockDevices = [
+    { id: 'a', name: 'Agent A', status: 'online', group_ids: [], location_ids: [] },
+    { id: 'b', name: 'Agent B', status: 'error', group_ids: [], location_ids: [] },
+  ] as unknown as Device[];
+  render(<FleetStreamPage />);
+
+  fireEvent.click(screen.getByRole('button', { name: 'Начать просмотр Agent A' }));
+  expect(screen.getByText('Live a')).toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole('button', { name: 'Проблемы 1' }));
+  expect(screen.queryByText('Live a')).not.toBeInTheDocument();
+  expect(screen.getByText('Agent B')).toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole('button', { name: 'Все 2' }));
+  expect(screen.getByText('Live a')).toBeInTheDocument();
 });
 
 it('uses the selected capacity as the page size so 64-device mode can reach every row', () => {

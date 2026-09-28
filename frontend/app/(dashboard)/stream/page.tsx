@@ -6,7 +6,12 @@ import { DeviceStream } from '@/components/sphere/DeviceStream';
 import { useDevices, type Device } from '@/lib/hooks/useDevices';
 import { useGroups } from '@/lib/hooks/useGroups';
 import { useLocations } from '@/lib/hooks/useLocations';
-import { countDeviceStatuses, isDeviceReachable } from '@/src/features/devices/deviceListFilters';
+import {
+  countDeviceStatuses,
+  filterDevicesByStatus,
+  isDeviceReachable,
+  type DeviceStatusFilter,
+} from '@/src/features/devices/deviceListFilters';
 
 /** Maximum number of viewers opened by this page at once. Streams start only on an explicit user action. */
 const GRID_SIZES = [1, 2, 4, 6, 9, 12, 16, 25, 32, 64] as const;
@@ -43,9 +48,18 @@ const STATUS_TONES: Record<Device['status'], string> = {
   unknown: 'text-muted-foreground',
 };
 
+const STATUS_FILTER_LABELS: Array<{ value: DeviceStatusFilter; label: string }> = [
+  { value: 'all', label: 'Все' },
+  { value: 'online', label: 'Доступны' },
+  { value: 'connecting', label: 'Подключаются' },
+  { value: 'offline', label: 'Офлайн' },
+  { value: 'attention', label: 'Проблемы' },
+];
+
 export default function FleetStreamPage() {
   const [gridSize, setGridSize] = useState<(typeof GRID_SIZES)[number]>(4);
   const [activeStreams, setActiveStreams] = useState<Set<string>>(new Set());
+  const [statusFilter, setStatusFilter] = useState<DeviceStatusFilter>('all');
   const [search, setSearch] = useState('');
   const [listPage, setListPage] = useState(1);
   const [filterGroupId, setFilterGroupId] = useState('');
@@ -61,16 +75,30 @@ export default function FleetStreamPage() {
   const { data: groups } = useGroups();
   const { data: locations } = useLocations();
 
+  const devicesForStatus = useMemo(
+    () => filterDevicesByStatus(allDevices, statusFilter),
+    [allDevices, statusFilter],
+  );
+
   const filteredDevices = useMemo(() => {
     const query = search.trim().toLocaleLowerCase();
-    return allDevices.filter((device) => {
+    return devicesForStatus.filter((device) => {
       const matchesGroup = !filterGroupId || device.group_id === filterGroupId || device.group_ids?.includes(filterGroupId);
       const matchesLocation = !filterLocationId || device.location_ids?.includes(filterLocationId);
       const matchesSearch = !query || [device.name, device.android_id, device.model]
         .some((value) => value?.toLocaleLowerCase().includes(query));
       return matchesGroup && matchesLocation && matchesSearch;
     });
-  }, [allDevices, filterGroupId, filterLocationId, search]);
+  }, [devicesForStatus, filterGroupId, filterLocationId, search]);
+
+  const statusFilterCounts: Record<DeviceStatusFilter, number> = {
+    all: allDevices.length,
+    online: statusCounts.online,
+    busy: statusCounts.busy,
+    connecting: statusCounts.connecting,
+    offline: statusCounts.offline,
+    attention: statusCounts.issues,
+  };
 
   const sortedDevices = useMemo(() => {
     const compare = (a: Device, b: Device) => {
@@ -234,6 +262,21 @@ export default function FleetStreamPage() {
               {locations?.map((location) => <option key={location.id} value={location.id}>{location.name}</option>)}
             </select>
           </label>
+        </div>
+
+        <div role="group" aria-label="Фильтр состояния устройств" className="flex flex-wrap gap-2">
+          {STATUS_FILTER_LABELS.map(({ value, label }) => (
+            <button
+              key={value}
+              type="button"
+              aria-pressed={statusFilter === value}
+              onClick={() => updateFilter(() => setStatusFilter(value))}
+              className={`inline-flex min-h-9 items-center gap-2 rounded-full border px-3 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none ${statusFilter === value ? 'border-primary/50 bg-primary/10 text-primary' : 'border-border bg-background text-muted-foreground hover:bg-accent hover:text-foreground'}`}
+            >
+              <span>{label}</span>
+              <span className="tabular-nums opacity-75">{statusFilterCounts[value]}</span>
+            </button>
+          ))}
         </div>
 
         <div className="flex flex-col gap-2 border-b border-border pb-3 sm:flex-row sm:items-center sm:justify-between">
