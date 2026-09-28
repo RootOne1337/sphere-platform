@@ -76,6 +76,7 @@ export function DeviceStream({
   const [agentDiagnostics, setAgentDiagnostics] = useState<StreamDiagnosticResponse | null>(null);
   const [diagnosticsError, setDiagnosticsError] = useState<string | null>(null);
   const [browserStats, setBrowserStats] = useState<StreamDecoderStats | null>(null);
+  const canInteract = connection === 'live' && hasRenderedFrame && !streamError;
 
   useEffect(() => {
     // Defer WS creation by one tick to avoid React StrictMode double-invoke.
@@ -279,27 +280,56 @@ export function DeviceStream({
 
   // ── coordinate helpers ───────────────────────────────────────────────────
   const toCanvasCoords = useCallback(
-    (clientX: number, clientY: number) => {
+    (clientX: number, clientY: number, clampToFrame = false) => {
       const canvas = canvasRef.current;
       if (!canvas) return null;
       const rect = canvas.getBoundingClientRect();
+      if (rect.width <= 0 || rect.height <= 0 || canvas.width <= 0 || canvas.height <= 0) return null;
+      const localX = clientX - rect.left;
+      const localY = clientY - rect.top;
+      let x: number;
+      let y: number;
+
+      if (fit === 'contain' || fit === 'cover') {
+        const scale = fit === 'contain'
+          ? Math.min(rect.width / canvas.width, rect.height / canvas.height)
+          : Math.max(rect.width / canvas.width, rect.height / canvas.height);
+        const renderedWidth = canvas.width * scale;
+        const renderedHeight = canvas.height * scale;
+        const offsetX = (rect.width - renderedWidth) / 2;
+        const offsetY = (rect.height - renderedHeight) / 2;
+        if (!clampToFrame && (
+          localX < offsetX || localX > offsetX + renderedWidth ||
+          localY < offsetY || localY > offsetY + renderedHeight
+        )) return null;
+        x = (localX - offsetX) / scale;
+        y = (localY - offsetY) / scale;
+      } else {
+        x = localX * (canvas.width / rect.width);
+        y = localY * (canvas.height / rect.height);
+      }
+
       return {
-        x: Math.round((clientX - rect.left) * (canvas.width / rect.width)),
-        y: Math.round((clientY - rect.top) * (canvas.height / rect.height)),
+        x: Math.max(0, Math.min(canvas.width - 1, Math.round(x))),
+        y: Math.max(0, Math.min(canvas.height - 1, Math.round(y))),
       };
     },
-    [],
+    [fit],
   );
 
   // ── pointer down — begin drag / tap ─────────────────────────────────────
   const handlePointerDown = useCallback(
     (e: React.PointerEvent<HTMLCanvasElement>) => {
+      if (!canInteract || e.button !== 0) {
+        dragRef.current = null;
+        return;
+      }
       const pt = toCanvasCoords(e.clientX, e.clientY);
       if (!pt) return;
       dragRef.current = pt;
-      (e.target as HTMLCanvasElement).setPointerCapture(e.pointerId);
+      e.currentTarget.setPointerCapture(e.pointerId);
     },
-    [toCanvasCoords],
+    [canInteract, toCanvasCoords],
   );
 
   // ── pointer up — tap or swipe ────────────────────────────────────────────
@@ -307,9 +337,9 @@ export function DeviceStream({
     (e: React.PointerEvent<HTMLCanvasElement>) => {
       const start = dragRef.current;
       dragRef.current = null;
-      if (!start) return;
+      if (!start || !canInteract || e.button !== 0) return;
 
-      const pt = toCanvasCoords(e.clientX, e.clientY);
+      const pt = toCanvasCoords(e.clientX, e.clientY, true);
       if (!pt) return;
 
       const dist = Math.hypot(pt.x - start.x, pt.y - start.y);
@@ -328,8 +358,12 @@ export function DeviceStream({
         }
       }
     },
-    [toCanvasCoords, onTap],
+    [canInteract, toCanvasCoords, onTap],
   );
+
+  const handlePointerCancel = useCallback(() => {
+    dragRef.current = null;
+  }, []);
 
   return (
     <div className={fit ? 'relative h-full w-full min-h-0 min-w-0' : 'relative'}>
@@ -337,7 +371,10 @@ export function DeviceStream({
       ref={canvasRef}
       onPointerDown={handlePointerDown}
       onPointerUp={handlePointerUp}
-      className="cursor-pointer rounded border border-gray-700 bg-black touch-none"
+      onPointerCancel={handlePointerCancel}
+      aria-label={canInteract ? 'Экран устройства: свежий видеопоток' : 'Экран устройства: управление доступно после получения свежего видеокадра'}
+      aria-disabled={!canInteract}
+      className={`${canInteract ? 'cursor-crosshair' : 'pointer-events-none cursor-not-allowed'} rounded border border-gray-700 bg-black touch-none`}
       style={{
         display: 'block',
         width: '100%',

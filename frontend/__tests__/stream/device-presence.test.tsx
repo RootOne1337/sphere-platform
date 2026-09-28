@@ -127,3 +127,10 @@ it('warns when the API reports more devices than the loaded sample', () => {
 
   expect(screen.getByRole('status')).toHaveTextContent('Загружено 2 из 3 устройств');
 });
+
+it('lets stream cards expand into the available grid width instead of capping them at 21rem', () => {
+  const { container } = render(<FleetStreamPage />);
+  const grid = container.querySelector('[style*="grid-template-columns"]');
+
+  expect(grid).toHaveStyle({ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 17rem), 1fr))' });
+});

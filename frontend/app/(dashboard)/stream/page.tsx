@@ -258,6 +258,11 @@ export default function FleetStreamPage() {
           </div>
         </div>
 
+        <p className="text-xs leading-5 text-muted-foreground">
+          Управление доступно только при поступлении свежих кадров. Выбор сохраняется при временной потере связи и после возврата устройства на текущую страницу.
+          Если карточку скрыть фильтром или перейти на другую страницу, её WebSocket закрывается до следующего показа.
+        </p>
+
         {isLoading && allDevices.length === 0 ? (
           <p role="status" className="rounded-lg border border-dashed border-border py-16 text-center text-sm text-muted-foreground">Загружаем список устройств…</p>
         ) : isError && allDevices.length === 0 ? (
@@ -275,7 +280,7 @@ export default function FleetStreamPage() {
         ) : (
           <div
             className="grid gap-3"
-            style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 17rem), min(100%, 21rem)))' }}
+            style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 17rem), 1fr))' }}
           >
             {visibleDevices.map((device) => {
               const isActive = activeStreams.has(device.id);
