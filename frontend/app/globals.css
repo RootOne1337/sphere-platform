@@ -82,6 +82,17 @@ html {
   animation: indeterminate 1.5s ease-in-out infinite;
 }
 
+@keyframes workspace-route-enter {
+  from { opacity: 0.72; }
+  to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .workspace-route-enter {
+    animation: workspace-route-enter 160ms ease-out both;
+  }
+}
+
 ::selection {
   color: hsl(var(--primary-foreground));
   background: hsl(var(--primary) / 0.85);

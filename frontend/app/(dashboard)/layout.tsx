@@ -155,7 +155,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </header>
 
         <main id="main-content" tabIndex={-1} className="custom-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain bg-background focus:outline-none">
-          {children}
+          <div key={pathname} className="workspace-route-enter min-h-full">
+            {children}
+          </div>
         </main>
       </div>
 
