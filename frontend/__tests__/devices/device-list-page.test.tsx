@@ -151,3 +151,18 @@ it('connects visible row selection to confirmed bulk deletion and clears selecti
   expect(bulkDeleteMutation).toHaveBeenCalledWith(['phone-online', 'phone-busy']);
   await waitFor(() => expect(screen.queryByRole('button', { name: 'Удалить выбранные устройства (2)' })).not.toBeInTheDocument());
 });
+
+it('keeps the selection and reports the server error when bulk deletion is rejected', async () => {
+  bulkDeleteMutation.mockRejectedValueOnce({ response: { data: { detail: 'Forbidden' } } });
+  render(<DevicesPage />);
+
+  fireEvent.click(screen.getByRole('button', { name: 'Переключить выбор phone-online' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Переключить выбор phone-busy' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Удалить выбранные устройства (2)' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Убрать из каталога (2)' }));
+
+  expect(await screen.findByRole('alert')).toHaveTextContent('Forbidden');
+  expect(screen.getByRole('alert')).toHaveTextContent('Выделение сохранено');
+  expect(screen.getByRole('button', { name: 'Удалить выбранные устройства (2)' })).toBeEnabled();
+  expect(bulkDeleteMutation).toHaveBeenCalledWith(['phone-online', 'phone-busy']);
+});
