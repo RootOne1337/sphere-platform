@@ -56,12 +56,13 @@ workstream; no merge was performed.
 | Frontend Jest | 41 suites, 306 tests passed. |
 | TypeScript | `npm run type-check` passed. |
 | npm audit | `npm audit` from `frontend/` reported 0 low/moderate/high/critical findings across the resolved frontend lockfile. |
-| Local production build | `npm run build` exited `0` and generated all 30 static pages/routes. On this Windows host Next.js emitted a warning that it could not copy the route-group `page_client-reference-manifest.js` into `.next/standalone`; the file was absent from the source route directory, and the warning was also recorded on the earlier local build. This is not represented as a clean standalone trace. The Linux GitHub CI build must be checked on this change's own SHA. |
+| Local production build | `npm run build` exited `0` and generated all 30 static pages/routes. On this Windows host Next.js emitted a warning that it could not copy the route-group `page_client-reference-manifest.js` into `.next/standalone`; the file was absent from the source route directory, and the warning was also recorded on the earlier local build. This is not represented as a clean standalone trace. |
+| GitHub CI, PR source | Full CI for `5c9e56c` passed: frontend `npm ci`, tests/types/build and standalone entrypoint; backend tests, lint/security/RLS, production image bootstrap and Alembic; Android build/unit tests. Preview deploy was skipped. |
 
-The PR checks that passed on earlier commits prove only those earlier source
-revisions. The dependency change requires a fresh successful PR CI run. A green
-CI result would still prove build/test behavior only, not that the production
-container was rebuilt or deployed.
+The CI result proves the PR source build/test behavior at `5c9e56c`, including
+the updated frontend lockfile. It does not prove that the production container
+was rebuilt or deployed. The local Windows tracing warning remains a separate
+environment-specific caveat; the Linux CI's standalone entrypoint check passed.
 
 ## Residual scope
 

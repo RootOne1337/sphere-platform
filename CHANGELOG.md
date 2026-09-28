@@ -25,9 +25,10 @@ for the separate source, artifact, catalog, installed-device, and runtime eviden
 - Frontend dependency remediation: Next.js and `eslint-config-next` are pinned
   to `15.5.26`, PostCSS to `8.5.28`, and the lockfile resolves Handlebars to
   `4.7.9`. Local frontend `npm audit` reports zero findings; Jest and type-check
-  pass. This is source-only until the PR checks and deployment are independently
-  confirmed. The local Windows build still reports a standalone tracing copy
-  warning; details and advisory scope are in the
+  pass. PR CI passed on `5c9e56c`, including Linux standalone entrypoint check;
+  Preview deploy was skipped. This remains source-only until deployment is
+  independently confirmed. The local Windows build still reports a standalone
+  tracing copy warning; details and advisory scope are in the
   [dependency security report](docs/audits/2026-09-28/FRONTEND-DEPENDENCY-SECURITY.md).
   GitHub's push response separately reported 145 Dependabot alerts on default
   branch `main`; this frontend-only branch audit does not clear them.
