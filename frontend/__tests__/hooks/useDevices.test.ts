@@ -92,9 +92,9 @@ describe('useDevices', () => {
     renderQueryHook(() => useDevices({ page_size: 50 }));
 
     await waitFor(() => expect(mockApi.get).toHaveBeenCalled());
-    const params = mockApi.get.mock.calls[0][1]?.params;
-    expect(params.per_page).toBe(50);
-    expect(params.page_size).toBeUndefined();
+    const params = mockApi.get.mock.calls[0][1]?.params as Record<string, unknown> | undefined;
+    expect(params?.per_page).toBe(50);
+    expect(params?.page_size).toBeUndefined();
   });
 });
 

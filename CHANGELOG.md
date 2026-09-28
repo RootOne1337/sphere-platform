@@ -22,6 +22,13 @@ for the separate source, artifact, catalog, installed-device, and runtime eviden
   versions actually reported by devices. Operator-visible video on one remote
   browser canary is recorded, without claiming route attribution, FPS or fleet
   acceptance. [Current state](docs/operations/CURRENT-STATE.md) · [Canary record](docs/audits/2026-09-27/TUNA-REMOTE-STREAM-CANARY.md).
+- Frontend dependency remediation: Next.js and `eslint-config-next` are pinned
+  to `15.5.26`, PostCSS to `8.5.28`, and the lockfile resolves Handlebars to
+  `4.7.9`. Local frontend `npm audit` reports zero findings; Jest and type-check
+  pass. This is source-only until the PR checks and deployment are independently
+  confirmed. The local Windows build still reports a standalone tracing copy
+  warning; details and advisory scope are in the
+  [dependency security report](docs/audits/2026-09-28/FRONTEND-DEPENDENCY-SECURITY.md).
 
 ### Historical audit entries recorded 2026-09-24
 
