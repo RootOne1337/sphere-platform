@@ -27,7 +27,7 @@ it('Sign out immediately removes local credentials and revokes the captured serv
     return { config, data: '', status: 204, statusText: 'No Content', headers: {} };
   };
   render(<NOCSidebar />);
-  fireEvent.click(screen.getByTitle('Sign out'));
+  fireEvent.click(screen.getByRole('button', { name: 'Выйти' }));
   expect(useAuthStore.getState().accessToken).toBeNull();
   expect(getRefreshToken()).toBeNull();
   expect(mockReplace).toHaveBeenCalledWith('/login');

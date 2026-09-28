@@ -97,7 +97,7 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
             },
             {
                 accessorKey: "name",
-                header: "Identifier",
+                header: "Устройство",
                 size: 250,
                 cell: ({ row }) => {
                     const device = row.original;
@@ -123,7 +123,7 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
             },
             {
                 accessorKey: "status",
-                header: "Status",
+                header: "Состояние",
                 size: 168,
                 cell: ({ row }) => {
                     const device = row.original;
@@ -149,7 +149,7 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
             },
             {
                 accessorKey: "battery_level",
-                header: "Power",
+                header: "Заряд",
                 size: 120,
                 cell: ({ row }) => {
                     const lvl = row.original.battery_level;
@@ -170,7 +170,7 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
             },
             {
                 accessorKey: "network",
-                header: "Access",
+                header: "Доступ",
                 size: 140,
                 cell: ({ row }) => {
                     const { adb_connected, vpn_assigned } = row.original;
@@ -193,7 +193,7 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
             },
             {
                 accessorKey: "server_name",
-                header: "Game Server",
+                header: "Игровой сервер",
                 size: 130,
                 cell: ({ row }) => {
                     const sn = row.original.server_name;
@@ -208,7 +208,7 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
             },
             {
                 accessorKey: "tags",
-                header: "Classification Tags",
+                header: "Теги",
                 size: 300,
                 cell: ({ row }) => {
                     const tags = row.original.tags;
@@ -231,7 +231,7 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
             },
             {
                 accessorKey: "last_seen",
-                header: "Last Seen",
+                header: "Последний сигнал",
                 size: 150,
                 cell: ({ row }) => {
                     const ts = row.original.last_seen;

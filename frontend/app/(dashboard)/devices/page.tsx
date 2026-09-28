@@ -6,6 +6,7 @@ import { useDevices, useBulkAction, useDeleteDevice, useUpdateDevice, useBulkDel
 import { useBulkRevokeVpn } from '@/lib/hooks/useVpn';
 import { getApiErrorMessage } from '@/lib/apiError';
 import { useDebounce } from '@/lib/hooks/useDebounce';
+import { countDeviceStatuses, filterDevicesByStatus, scopeDevices, type DeviceStatusFilter } from '@/src/features/devices/deviceListFilters';
 import { useGroups, useMoveDevices } from '@/lib/hooks/useGroups';
 import { useLocations, useAssignDevicesToLocation } from '@/lib/hooks/useLocations';
 import { FleetMatrix, type DeviceAction } from '@/src/features/devices/FleetMatrix';
@@ -52,6 +53,7 @@ export default function DevicesPage() {
   const debouncedSearch = useDebounce(search, 300);
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
+  const [statusFilter, setStatusFilter] = useState<DeviceStatusFilter>('all');
 
   // Диалоги
   const [renameDialog, setRenameDialog] = useState<{ open: boolean; deviceId: string; currentName: string }>({ open: false, deviceId: '', currentName: '' });
@@ -91,19 +93,15 @@ export default function DevicesPage() {
   const assignToLocation = useAssignDevicesToLocation();
   const { data: gameServers } = useGameServers();
 
-  // Клиентская фильтрация по группе и локации
-  const filteredItems = useMemo(() => {
-    let items = data?.items ?? [];
-    if (filterGroupId && filterGroupId !== '__all__') {
-      items = items.filter(
-        (d) => d.group_id === filterGroupId || d.group_ids?.includes(filterGroupId),
-      );
-    }
-    if (filterLocationId && filterLocationId !== '__all__') {
-      items = items.filter((d) => d.location_ids?.includes(filterLocationId));
-    }
-    return items;
-  }, [data?.items, filterGroupId, filterLocationId]);
+  // Group/location narrow the current result set; status cards below are quick filters over that same set.
+  const scopedItems = useMemo(
+    () => scopeDevices(data?.items ?? [], filterGroupId, filterLocationId),
+    [data?.items, filterGroupId, filterLocationId],
+  );
+  const filteredItems = useMemo(
+    () => filterDevicesByStatus(scopedItems, statusFilter),
+    [scopedItems, statusFilter],
+  );
 
   const visibleDeviceIds = useMemo(() => new Set(filteredItems.map((device) => device.id)), [filteredItems]);
   const selectedIds = Object.entries(rowSelection)
@@ -123,13 +121,7 @@ export default function DevicesPage() {
 
   const exceedsBulkLimit = selectedIds.length > MAX_BULK_DEVICE_OPERATION_COUNT;
 
-  const statusCounts = useMemo(() => ({
-    online: filteredItems.filter((device) => device.status === 'online' || device.status === 'busy').length,
-    busy: filteredItems.filter((device) => device.status === 'busy').length,
-    connecting: filteredItems.filter((device) => device.status === 'connecting').length,
-    offline: filteredItems.filter((device) => device.status === 'offline').length,
-    issues: filteredItems.filter((device) => device.status === 'error' || device.status === 'unknown').length,
-  }), [filteredItems]);
+  const statusCounts = useMemo(() => countDeviceStatuses(scopedItems), [scopedItems]);
 
   // Обработчик действий из контекстного меню FleetMatrix (для одного устройства)
   const handleDeviceAction = useCallback((deviceId: string, action: DeviceAction) => {
@@ -314,7 +306,7 @@ export default function DevicesPage() {
               Fleet Matrix
             </h1>
             <p className="mt-2 text-sm text-muted-foreground">
-              Устройства организации · показано {filteredItems.length} из {data?.total ?? 0}
+              Устройства организации · показано {filteredItems.length} из {scopedItems.length} в текущей выборке
             </p>
           </div>
 
@@ -360,21 +352,27 @@ export default function DevicesPage() {
 
         <section aria-label="Состояние устройств" className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 xl:grid-cols-6">
           {[
-            { label: 'В каталоге', value: isLoading ? '—' : data?.total ?? 0, note: 'результат поиска', icon: Cpu, tone: 'text-primary' },
-            { label: 'В сети', value: isLoading ? '—' : statusCounts.online, note: 'online + busy по API', icon: Wifi, tone: 'text-emerald-400' },
-            { label: 'В работе', value: isLoading ? '—' : statusCounts.busy, note: 'busy, входит в «В сети»', icon: Activity, tone: 'text-primary' },
-            { label: 'Подключаются', value: isLoading ? '—' : statusCounts.connecting, note: 'ждём первый heartbeat', icon: Loader2, tone: 'text-amber-400' },
-            { label: 'Не в сети', value: isLoading ? '—' : statusCounts.offline, note: 'нет активного heartbeat', icon: WifiOff, tone: 'text-muted-foreground' },
-            { label: 'Требуют внимания', value: isLoading ? '—' : statusCounts.issues, note: 'ошибка или статус неизвестен', icon: AlertTriangle, tone: 'text-amber-400' },
-          ].map(({ label, value, note, icon: Icon, tone }) => (
-            <div key={label} className="rounded-xl border border-border bg-card p-3 transition-colors duration-150 hover:border-primary/30 motion-reduce:transition-none sm:p-4">
+            { filter: 'all' as const, label: 'В выборке', value: isLoading ? '—' : scopedItems.length, note: 'поиск, группа и локация', icon: Cpu, tone: 'text-primary' },
+            { filter: 'online' as const, label: 'В сети', value: isLoading ? '—' : statusCounts.online, note: 'online + busy по API', icon: Wifi, tone: 'text-emerald-400' },
+            { filter: 'busy' as const, label: 'В работе', value: isLoading ? '—' : statusCounts.busy, note: 'подмножество статуса «В сети»', icon: Activity, tone: 'text-primary' },
+            { filter: 'connecting' as const, label: 'Подключаются', value: isLoading ? '—' : statusCounts.connecting, note: 'ждут первый heartbeat', icon: Loader2, tone: 'text-amber-400' },
+            { filter: 'offline' as const, label: 'Не в сети', value: isLoading ? '—' : statusCounts.offline, note: 'нет живого статуса', icon: WifiOff, tone: 'text-muted-foreground' },
+            { filter: 'attention' as const, label: 'Требуют внимания', value: isLoading ? '—' : statusCounts.issues, note: 'ошибка, неизвестно или обслуживание', icon: AlertTriangle, tone: 'text-amber-400' },
+          ].map(({ filter, label, value, note, icon: Icon, tone }) => (
+            <button
+              key={label}
+              type="button"
+              aria-pressed={statusFilter === filter}
+              onClick={() => setStatusFilter((current) => current === filter && filter !== 'all' ? 'all' : filter)}
+              className={`rounded-xl border bg-card p-3 text-left transition-all duration-150 hover:border-primary/40 hover:bg-accent/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none sm:p-4 ${statusFilter === filter ? 'border-primary/50 ring-1 ring-primary/30' : 'border-border'}`}
+            >
               <div className="flex items-center justify-between gap-3">
                 <p className="text-sm font-medium text-muted-foreground">{label}</p>
                 <Icon className={`h-4 w-4 ${tone}`} aria-hidden="true" />
               </div>
               <p className={`mt-2 text-xl font-semibold tabular-nums sm:mt-3 sm:text-2xl ${tone}`} aria-live="polite">{value}</p>
               <p className="mt-1 hidden text-xs text-muted-foreground sm:block">{note}</p>
-            </div>
+            </button>
           ))}
         </section>
       </header>

@@ -35,29 +35,54 @@ import {
     Settings2,
 } from "lucide-react";
 
-const NAV_ITEMS = [
-    { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
-    { href: "/monitoring", label: "Infrastructure", icon: Activity },
-    { href: "/devices", label: "Fleet Matrix", icon: Monitor },
-    { href: "/stream", label: "Device Stream", icon: Monitor },
-    { href: "/tasks", label: "Task Engine", icon: ListTodo },
-    { href: "/orchestration", label: "Orchestration", icon: GitBranch },
-    { href: "/pipeline-settings", label: "Pipeline Config", icon: Settings2 },
-    { href: "/accounts", label: "Game Accounts", icon: Gamepad2 },
-    { href: "/events", label: "Device Events", icon: Zap },
-    { href: "/event-triggers", label: "Event Triggers", icon: ToggleRight },
-    { href: "/sessions", label: "Sessions", icon: History },
-    { href: "/vpn", label: "Tunneling", icon: Wifi },
-    { href: "/scripts", label: "Scripts", icon: Code2 },
-    { href: "/groups", label: "Groups", icon: FolderOpen },
-    { href: "/locations", label: "Locations", icon: MapPin },
-    { href: "/discovery", label: "Discovery", icon: Radar },
-    { href: "/users", label: "Users", icon: Users },
-    { href: "/audit", label: "Audit Log", icon: ScrollText },
-    { href: "/logs", label: "Sys Logs", icon: FileText },
-    { href: "/updates", label: "Updates", icon: RefreshCw },
-    { href: "/webhooks", label: "Webhooks", icon: Webhook },
-    { href: "/settings", label: "Sys Config", icon: UserCog },
+const NAV_GROUPS = [
+    {
+        label: "Обзор",
+        items: [
+            { href: "/dashboard", label: "Главная", icon: LayoutDashboard },
+            { href: "/monitoring", label: "Инфраструктура", icon: Activity },
+        ],
+    },
+    {
+        label: "Устройства",
+        items: [
+            { href: "/devices", label: "Парк устройств", icon: Monitor },
+            { href: "/stream", label: "Видеопоток", icon: Monitor },
+            { href: "/discovery", label: "Обнаружение", icon: Radar },
+            { href: "/groups", label: "Группы", icon: FolderOpen },
+            { href: "/locations", label: "Локации", icon: MapPin },
+        ],
+    },
+    {
+        label: "Автоматизация",
+        items: [
+            { href: "/tasks", label: "Задания", icon: ListTodo },
+            { href: "/orchestration", label: "Оркестрация", icon: GitBranch },
+            { href: "/pipeline-settings", label: "Пайплайны", icon: Settings2 },
+            { href: "/accounts", label: "Игровые аккаунты", icon: Gamepad2 },
+            { href: "/scripts", label: "Скрипты", icon: Code2 },
+        ],
+    },
+    {
+        label: "События и сеть",
+        items: [
+            { href: "/events", label: "События устройств", icon: Zap },
+            { href: "/event-triggers", label: "Триггеры событий", icon: ToggleRight },
+            { href: "/sessions", label: "Сессии", icon: History },
+            { href: "/vpn", label: "Туннели и VPN", icon: Wifi },
+            { href: "/webhooks", label: "Вебхуки", icon: Webhook },
+        ],
+    },
+    {
+        label: "Администрирование",
+        items: [
+            { href: "/users", label: "Пользователи", icon: Users },
+            { href: "/audit", label: "Журнал аудита", icon: ScrollText },
+            { href: "/logs", label: "Системные логи", icon: FileText },
+            { href: "/updates", label: "Обновления", icon: RefreshCw },
+            { href: "/settings", label: "Конфигурация", icon: UserCog },
+        ],
+    },
 ];
 
 interface NOCSidebarProps {
@@ -82,8 +107,10 @@ export function NOCSidebar({ onOpenAppearance, isMobileOpen, onMobileClose }: NO
         <>
             {/* Overlay для мобильного меню */}
             {isMobileOpen && (
-                <div
-                    className="fixed inset-0 bg-foreground/30 z-40 lg:hidden backdrop-blur-sm"
+                <button
+                    type="button"
+                    aria-label="Закрыть меню навигации"
+                    className="fixed inset-0 z-40 cursor-default border-0 bg-foreground/30 p-0 backdrop-blur-sm lg:hidden"
                     onClick={onMobileClose}
                 />
             )}
@@ -101,53 +128,57 @@ export function NOCSidebar({ onOpenAppearance, isMobileOpen, onMobileClose }: NO
                 onMouseEnter={() => !isMobileOpen && setIsCollapsed(false)}
                 onMouseLeave={() => !isMobileOpen && setIsCollapsed(true)}
             >
-                <div className="flex h-12 shrink-0 items-center justify-between lg:justify-center px-4 lg:px-0 border-b border-border">
+                <div className="flex h-14 shrink-0 items-center justify-between border-b border-border px-4 lg:justify-center lg:px-0">
                     {isCollapsed && !isMobileOpen ? (
                         <div className="w-6 h-6 bg-primary rounded-sm flex items-center justify-center font-bold text-primary-foreground text-xs">
                             S
                         </div>
                     ) : (
-                        <div className="flex items-center gap-2 w-full px-4 text-primary font-mono font-bold tracking-wider">
-                            <div className="w-5 h-5 bg-primary rounded-sm text-black flex items-center justify-center">S</div>
-                            SPHERE<span className="text-muted-foreground font-normal text-xs">NOC</span>
+                        <div className="flex w-full items-center gap-2 px-4 font-mono font-bold tracking-wider text-foreground">
+                            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-sm text-primary-foreground">S</div>
+                            <span>SPHERE</span><span className="text-xs font-medium text-muted-foreground">OPS</span>
                         </div>
                     )}
                     {/* Кнопка закрытия на мобилках */}
                     {isMobileOpen && (
-                        <Button variant="ghost" size="icon" className="h-8 w-8 lg:hidden -mr-2 text-muted-foreground hover:text-foreground" onClick={onMobileClose}>
+                        <Button aria-label="Закрыть меню навигации" variant="ghost" size="icon" className="h-8 w-8 lg:hidden -mr-2 text-muted-foreground hover:text-foreground" onClick={onMobileClose}>
                             <X className="w-4 h-4" />
                         </Button>
                     )}
                 </div>
 
-                <nav className="flex-1 overflow-y-auto overflow-x-hidden p-2 space-y-1 custom-scrollbar">
-                    {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
-                        const isActive = pathname.startsWith(href);
-                        return (
-                            <Link
-                                key={href}
-                                href={href}
-                                onClick={handleNavClick}
-                                className={cn(
-                                    "flex items-center gap-3 rounded-sm text-sm transition-colors relative group h-9",
-                                    isCollapsed && !isMobileOpen ? "lg:justify-center lg:px-0" : "px-3",
-                                    isActive
-                                        ? "bg-primary/10 text-primary border border-primary/20"
-                                        : "text-muted-foreground hover:bg-secondary hover:text-foreground border border-transparent"
-                                )}
-                                title={(isCollapsed && !isMobileOpen) ? label : undefined}
-                            >
-                                <Icon className="w-4 h-4 shrink-0" />
-                                {(!isCollapsed || isMobileOpen) && (
-                                    <span className="truncate font-medium">{label}</span>
-                                )}
-
-                                {isActive && isCollapsed && !isMobileOpen && (
-                                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-4 bg-primary rounded-r-md" />
-                                )}
-                            </Link>
-                        );
-                    })}
+                <nav aria-label="Навигация Sphere" className="custom-scrollbar flex-1 space-y-3 overflow-x-hidden overflow-y-auto p-2">
+                    {NAV_GROUPS.map(({ label: groupLabel, items }) => (
+                        <div key={groupLabel} role="group" aria-label={groupLabel} className="space-y-1">
+                            {(!isCollapsed || isMobileOpen) && (
+                                <p className="px-3 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/70">{groupLabel}</p>
+                            )}
+                            {items.map(({ href, label, icon: Icon }) => {
+                                const isActive = pathname === href || pathname.startsWith(`${href}/`);
+                                return (
+                                    <Link
+                                        key={href}
+                                        href={href}
+                                        onClick={handleNavClick}
+                                        aria-label={label}
+                                        aria-current={isActive ? "page" : undefined}
+                                        className={cn(
+                                            "group relative flex h-10 items-center gap-3 rounded-lg border text-sm transition-colors motion-reduce:transition-none",
+                                            isCollapsed && !isMobileOpen ? "lg:justify-center lg:px-0" : "px-3",
+                                            isActive
+                                                ? "border-primary/20 bg-primary/10 text-primary"
+                                                : "border-transparent text-muted-foreground hover:bg-secondary hover:text-foreground"
+                                        )}
+                                        title={isCollapsed && !isMobileOpen ? label : undefined}
+                                    >
+                                        <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
+                                        {(!isCollapsed || isMobileOpen) && <span className="truncate font-medium">{label}</span>}
+                                        {isActive && isCollapsed && !isMobileOpen && <span className="absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-r-md bg-primary" aria-hidden="true" />}
+                                    </Link>
+                                );
+                            })}
+                        </div>
+                    ))}
                 </nav>
 
                 <div className="p-2 border-t border-border space-y-1">
@@ -158,14 +189,15 @@ export function NOCSidebar({ onOpenAppearance, isMobileOpen, onMobileClose }: NO
                             "w-full text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors",
                             (isCollapsed && !isMobileOpen) ? "lg:justify-center lg:px-0" : "justify-start gap-3"
                         )}
-                        title={(isCollapsed && !isMobileOpen) ? "Appearance Settings" : undefined}
+                        title={(isCollapsed && !isMobileOpen) ? "Настройки интерфейса" : undefined}
+                        aria-label="Настройки интерфейса"
                         onClick={() => {
                             handleNavClick();
                             onOpenAppearance?.();
                         }}
                     >
                         <Settings className="w-4 h-4 shrink-0" />
-                        {(!isCollapsed || isMobileOpen) && <span>Preferences</span>}
+                        {(!isCollapsed || isMobileOpen) && <span>Интерфейс</span>}
                     </Button>
 
                     <Button
@@ -175,22 +207,25 @@ export function NOCSidebar({ onOpenAppearance, isMobileOpen, onMobileClose }: NO
                             "w-full text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors",
                             (isCollapsed && !isMobileOpen) ? "lg:justify-center lg:px-0" : "justify-start gap-3"
                         )}
-                        title={(isCollapsed && !isMobileOpen) ? "Sign out" : undefined}
-                        aria-label="Sign out"
+                        title={(isCollapsed && !isMobileOpen) ? "Выйти" : undefined}
+                        aria-label="Выйти"
                         onClick={() => {
                             void signOut();
                             router.replace('/login');
                         }}
                     >
                         <LogOut className="w-4 h-4 shrink-0" />
-                        {(!isCollapsed || isMobileOpen) && <span>Sign Out</span>}
+                        {(!isCollapsed || isMobileOpen) && <span>Выйти</span>}
                     </Button>
                 </div>
 
                 {/* Collapse Toggle Handle - только для Desktop */}
                 <button
+                    type="button"
+                    aria-label={isCollapsed ? "Развернуть навигацию" : "Свернуть навигацию"}
+                    aria-expanded={!isCollapsed}
                     onClick={() => setIsCollapsed(!isCollapsed)}
-                    className="hidden lg:flex absolute -right-3 top-12 h-6 w-6 items-center justify-center rounded-full border border-border bg-card text-muted-foreground hover:text-foreground hover:border-primary z-50 transition-colors focus:outline-none"
+                    className="absolute -right-3 top-14 z-50 hidden h-6 w-6 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition-colors hover:border-primary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:flex"
                 >
                     {isCollapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronLeft className="w-3 h-3" />}
                 </button>
