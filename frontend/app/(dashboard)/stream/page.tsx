@@ -328,6 +328,7 @@ export default function FleetStreamPage() {
             {visibleDevices.map((device) => {
               const isActive = activeStreams.has(device.id);
               const reachable = isDeviceReachable(device);
+              const heartbeat = describeHeartbeat(device.last_heartbeat);
               return (
                 <article key={device.id} className="group min-w-0 overflow-hidden rounded-lg border border-border bg-background shadow-sm transition-[border-color,box-shadow] hover:border-primary/40 hover:shadow-md motion-reduce:transition-none">
                   <div className="flex min-h-12 items-center justify-between gap-2 border-b border-border px-3 py-2">
@@ -352,10 +353,20 @@ export default function FleetStreamPage() {
                   </div>
 
                   <div className="flex items-center justify-between gap-2 px-3 py-2">
-                    <span className="flex min-w-0 items-center gap-1.5 truncate text-[11px] text-muted-foreground">
-                      {reachable ? <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-400" aria-hidden="true" /> : <Activity className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />}
-                      <span className="truncate">{device.model || device.android_version || 'Android'}</span>
-                    </span>
+                    <div className="min-w-0">
+                      <span className="flex min-w-0 items-center gap-1.5 truncate text-[11px] text-muted-foreground">
+                        {reachable ? <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-400" aria-hidden="true" /> : <Activity className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />}
+                        <span className="truncate">{device.model || device.android_version || 'Android'}</span>
+                      </span>
+                      <span
+                        aria-label={`Последний heartbeat: ${heartbeat.label}`}
+                        title={heartbeat.title}
+                        className={`mt-1 flex items-center gap-1.5 truncate text-[10px] ${heartbeat.fresh ? 'text-emerald-400' : 'text-amber-400'}`}
+                      >
+                        <Clock3 className="h-3 w-3 shrink-0" aria-hidden="true" />
+                        <time dateTime={device.last_heartbeat ?? undefined} className="truncate">{heartbeat.label}</time>
+                      </span>
+                    </div>
                     {isActive ? (
                       <button type="button" onClick={() => stopStream(device.id)} aria-label={`Остановить просмотр ${device.name}`} className="min-h-8 shrink-0 rounded-md border border-destructive/30 px-2.5 text-xs font-medium text-destructive transition-colors hover:bg-destructive/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none">Стоп</button>
                     ) : (
@@ -397,4 +408,26 @@ function MetricCard({ label, value, detail, icon: Icon, tone }: {
       <p className="mt-1 line-clamp-2 text-[11px] leading-4 text-muted-foreground">{detail}</p>
     </article>
   );
+}
+
+function describeHeartbeat(value: string | null | undefined): {
+  label: string;
+  fresh: boolean;
+  title?: string;
+} {
+  if (!value) return { label: 'Heartbeat нет', fresh: false };
+  const timestamp = Date.parse(value);
+  if (!Number.isFinite(timestamp)) return { label: 'Время heartbeat неизвестно', fresh: false };
+
+  const ageSeconds = Math.max(0, Math.floor((Date.now() - timestamp) / 1000));
+  const relative = ageSeconds < 60
+    ? `${ageSeconds} с назад`
+    : ageSeconds < 3600
+      ? `${Math.floor(ageSeconds / 60)} мин назад`
+      : `${Math.floor(ageSeconds / 3600)} ч назад`;
+  return {
+    label: `Heartbeat · ${relative}`,
+    fresh: ageSeconds <= 75,
+    title: new Date(timestamp).toLocaleString(),
+  };
 }

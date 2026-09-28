@@ -41,6 +41,28 @@ beforeEach(() => {
   ] as unknown as Device[];
 });
 
+afterEach(() => {
+  jest.restoreAllMocks();
+});
+
+it('shows heartbeat age and separates fresh telemetry from missing or stale heartbeat', () => {
+  const now = Date.parse('2026-09-29T12:00:00.000Z');
+  jest.spyOn(Date, 'now').mockReturnValue(now);
+  mockDevices = [
+    { id: 'fresh', name: 'Fresh device', status: 'online', last_heartbeat: new Date(now - 30_000).toISOString(), group_ids: [], location_ids: [] },
+    { id: 'stale', name: 'Stale device', status: 'online', last_heartbeat: new Date(now - 90_000).toISOString(), group_ids: [], location_ids: [] },
+    { id: 'missing', name: 'Missing heartbeat', status: 'online', last_heartbeat: null, group_ids: [], location_ids: [] },
+    { id: 'invalid', name: 'Invalid heartbeat', status: 'online', last_heartbeat: 'not-a-date', group_ids: [], location_ids: [] },
+  ] as unknown as Device[];
+
+  render(<FleetStreamPage />);
+
+  expect(screen.getByLabelText('Последний heartbeat: Heartbeat · 30 с назад')).toHaveClass('text-emerald-400');
+  expect(screen.getByLabelText('Последний heartbeat: Heartbeat · 1 мин назад')).toHaveClass('text-amber-400');
+  expect(screen.getByLabelText('Последний heartbeat: Heartbeat нет')).toBeInTheDocument();
+  expect(screen.getByLabelText('Последний heartbeat: Время heartbeat неизвестно')).toBeInTheDocument();
+});
+
 it('keeps an offline device visible, hides stale video, and resumes the selected stream on recovery', () => {
   const view = render(<FleetStreamPage />);
   fireEvent.click(screen.getByRole('button', { name: 'Начать просмотр Agent A' }));
