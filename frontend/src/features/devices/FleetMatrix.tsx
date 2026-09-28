@@ -98,7 +98,7 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
             {
                 accessorKey: "name",
                 header: "Устройство",
-                size: 250,
+                size: 220,
                 cell: ({ row }) => {
                     const device = row.original;
                     return (
@@ -110,11 +110,11 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
                                     openInspector("device", device.id, device);
                                 }}
                                 aria-label={`Открыть устройство ${device.name}`}
-                                className="w-fit max-w-full truncate text-left font-mono text-sm font-semibold text-foreground transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary motion-reduce:transition-none"
+                                className="w-fit max-w-full truncate text-left font-mono text-[13px] font-semibold text-foreground transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary motion-reduce:transition-none"
                             >
                                 {device.name}
                             </button>
-                            <span className="font-mono text-[10px] text-muted-foreground truncate">
+                            <span className="font-mono text-[10px] leading-4 text-muted-foreground truncate" title={`${device.model} • Android ${device.android_version} • Agent ${device.agent_version || "not reported"}`}>
                                 {device.model} • Android {device.android_version} • Agent {device.agent_version || "not reported"}
                             </span>
                         </div>
@@ -124,7 +124,7 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
             {
                 accessorKey: "status",
                 header: "Состояние",
-                size: 168,
+                size: 150,
                 cell: ({ row }) => {
                     const device = row.original;
                     const uptime = formatElapsedSince(device.connected_since, clockNow);
@@ -140,7 +140,7 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
                     return (
                         <div className="flex h-full min-w-0 flex-col justify-center gap-0.5" title={detail}>
                             <DeviceStatusBadge status={device.status} />
-                            <span className="truncate font-mono text-[9px] leading-3 text-muted-foreground" aria-label={detail}>
+                            <span className="truncate font-mono text-[10px] leading-4 text-muted-foreground" aria-label={detail}>
                                 {detail}
                             </span>
                         </div>
@@ -150,7 +150,7 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
             {
                 accessorKey: "battery_level",
                 header: "Заряд",
-                size: 120,
+                size: 76,
                 cell: ({ row }) => {
                     const lvl = row.original.battery_level;
                     if (lvl === null) return <span className="text-muted-foreground">—</span>;
@@ -171,20 +171,20 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
             {
                 accessorKey: "network",
                 header: "Доступ",
-                size: 140,
+                size: 145,
                 cell: ({ row }) => {
                     const { adb_connected, vpn_assigned } = row.original;
 
                     return (
-                        <div className="flex items-center gap-2 w-full h-full pr-2">
-                            <div className="flex items-center gap-1.5" aria-label="Reported access flags">
+                        <div className="flex h-full w-full flex-col justify-center gap-0.5 pr-2">
+                            <div className="flex flex-col items-start gap-0.5" aria-label="Reported access flags">
                                 <span className="inline-flex items-center gap-1" title={`ADB ${adb_connected ? "linked" : "not linked"}`}>
                                     {adb_connected ? <Wifi className="w-3 h-3 text-success" aria-hidden="true" /> : <Wifi className="w-3 h-3 text-muted-foreground/30" aria-hidden="true" />}
-                                    <span className="text-[9px] font-mono text-muted-foreground">ADB {adb_connected ? "linked" : "—"}</span>
+                                    <span className="text-[10px] font-mono text-muted-foreground">ADB {adb_connected ? "linked" : "—"}</span>
                                 </span>
                                 <span className="inline-flex items-center gap-1" title={`VPN ${vpn_assigned ? "assigned" : "not assigned"}`}>
                                     {vpn_assigned ? <Shield className="w-3 h-3 text-primary" aria-hidden="true" /> : <Shield className="w-3 h-3 text-muted-foreground/30" aria-hidden="true" />}
-                                    <span className="text-[9px] font-mono text-muted-foreground">VPN {vpn_assigned ? "assigned" : "—"}</span>
+                                    <span className="text-[10px] font-mono text-muted-foreground">VPN {vpn_assigned ? "assigned" : "—"}</span>
                                 </span>
                             </div>
                         </div>
@@ -194,7 +194,7 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
             {
                 accessorKey: "server_name",
                 header: "Игровой сервер",
-                size: 130,
+                size: 125,
                 cell: ({ row }) => {
                     const sn = row.original.server_name;
                     if (!sn) return <span className="text-muted-foreground text-[10px] font-mono">—</span>;
@@ -209,19 +209,19 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
             {
                 accessorKey: "tags",
                 header: "Теги",
-                size: 300,
+                size: 130,
                 cell: ({ row }) => {
                     const tags = row.original.tags;
                     if (!tags || tags.length === 0) return <span className="text-muted-foreground text-[10px]">NO TAGS</span>;
                     return (
                         <div className="flex gap-1.5 items-center flex-wrap h-full overflow-hidden content-center py-1">
                             {tags.slice(0, 3).map((tag) => (
-                                <Badge key={tag} variant="outline" className="text-[9px] bg-muted px-1.5 py-0 border-border">
+                                <Badge key={tag} variant="outline" className="text-[10px] bg-muted px-1.5 py-0 border-border">
                                     {tag}
                                 </Badge>
                             ))}
                             {tags.length > 3 && (
-                                <Badge variant="outline" className="text-[9px] bg-muted px-1.5 py-0 border-border text-muted-foreground">
+                                <Badge variant="outline" className="text-[10px] bg-muted px-1.5 py-0 border-border text-muted-foreground">
                                     +{tags.length - 3}
                                 </Badge>
                             )}
@@ -232,17 +232,17 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
             {
                 accessorKey: "last_seen",
                 header: "Последний сигнал",
-                size: 150,
+                size: 140,
                 cell: ({ row }) => {
                     const ts = row.original.last_seen;
                     if (!ts) return <span className="text-muted-foreground">—</span>;
                     const date = new Date(ts);
                     return (
                         <div className="flex flex-col justify-center h-full">
-                            <span className="font-mono text-[10px] text-foreground">
+                            <span className="font-mono text-[11px] text-foreground">
                                 {date.toLocaleTimeString([], { hour12: false })}
                             </span>
-                            <span className="font-mono text-[9px] text-muted-foreground">
+                            <span className="font-mono text-[10px] text-muted-foreground">
                                 {date.toLocaleDateString()}
                             </span>
                         </div>
@@ -330,7 +330,7 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
     const virtualizer = useVirtualizer({
         count: rows.length,
         getScrollElement: () => parentRef.current,
-        estimateSize: () => 56,
+        estimateSize: () => 60,
         overscan: 20,
     });
 
@@ -363,7 +363,7 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
     return (
         <div role="table" aria-label="Устройства организации" className="relative flex flex-1 flex-col overflow-x-auto overflow-y-hidden rounded-lg border border-border bg-card shadow-sm custom-scrollbar">
             {/* Dynamic Header (Sticky) */}
-            <div role="row" className="sticky top-0 z-10 flex h-10 min-w-max border-b border-border bg-muted pr-8 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <div role="row" className="sticky top-0 z-10 flex h-10 min-w-max border-b border-border bg-muted text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                 {table.getFlatHeaders().map((header) => {
                     const canSort = header.column.getCanSort();
                     const sorted = header.column.getIsSorted();

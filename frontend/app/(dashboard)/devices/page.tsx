@@ -294,20 +294,16 @@ export default function DevicesPage() {
   };
 
   return (
-    <div className="flex min-h-full flex-col gap-5 p-4 md:h-full md:min-h-0 md:p-6">
+    <div className="mx-auto flex min-h-full w-full max-w-[1720px] flex-col gap-5 p-4 md:h-full md:min-h-0 md:p-6 xl:p-8">
       <header className="shrink-0 space-y-5">
-        <div className="flex flex-col gap-4 rounded-xl border border-border bg-card/70 p-5 shadow-sm md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="min-w-0">
-            <p className="mb-1 text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Операционный центр</p>
-            <h1 className="flex items-center gap-3 text-2xl font-semibold tracking-tight text-foreground">
-              <span className="flex h-10 w-10 items-center justify-center rounded-lg border border-primary/20 bg-primary/10 text-primary">
-                <Cpu className="h-5 w-5" aria-hidden="true" />
-              </span>
-              Fleet Matrix
-            </h1>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Устройства организации · показано {filteredItems.length} из {scopedItems.length} в текущей выборке
-            </p>
+            <p className="mb-1 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.13em] text-primary"><span className="h-2 w-2 rounded-full bg-primary" aria-hidden="true" />Управление парком</p>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+              <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">Устройства</h1>
+              <span className="rounded-full border border-border bg-card px-2.5 py-1 text-xs font-medium text-muted-foreground">Fleet Matrix</span>
+            </div>
+            <p className="mt-2 text-sm text-muted-foreground">{filteredItems.length} из {scopedItems.length} устройств в текущей выборке. Статусы и действия берутся из API.</p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
@@ -353,11 +349,11 @@ export default function DevicesPage() {
         <section aria-label="Состояние устройств" className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 xl:grid-cols-6">
           {[
             { filter: 'all' as const, label: 'В выборке', value: isLoading ? '—' : scopedItems.length, note: 'поиск, группа и локация', icon: Cpu, tone: 'text-primary' },
-            { filter: 'online' as const, label: 'В сети', value: isLoading ? '—' : statusCounts.online, note: 'online + busy по API', icon: Wifi, tone: 'text-emerald-400' },
+            { filter: 'online' as const, label: 'В сети', value: isLoading ? '—' : statusCounts.online, note: 'online + busy по API', icon: Wifi, tone: 'text-emerald-700 dark:text-emerald-400' },
             { filter: 'busy' as const, label: 'В работе', value: isLoading ? '—' : statusCounts.busy, note: 'подмножество статуса «В сети»', icon: Activity, tone: 'text-primary' },
-            { filter: 'connecting' as const, label: 'Подключаются', value: isLoading ? '—' : statusCounts.connecting, note: 'ждут первый heartbeat', icon: Loader2, tone: 'text-amber-400' },
+            { filter: 'connecting' as const, label: 'Подключаются', value: isLoading ? '—' : statusCounts.connecting, note: 'ждут первый heartbeat', icon: Loader2, tone: 'text-amber-700 dark:text-amber-400' },
             { filter: 'offline' as const, label: 'Не в сети', value: isLoading ? '—' : statusCounts.offline, note: 'нет живого статуса', icon: WifiOff, tone: 'text-muted-foreground' },
-            { filter: 'attention' as const, label: 'Требуют внимания', value: isLoading ? '—' : statusCounts.issues, note: 'ошибка, неизвестно или обслуживание', icon: AlertTriangle, tone: 'text-amber-400' },
+            { filter: 'attention' as const, label: 'Требуют внимания', value: isLoading ? '—' : statusCounts.issues, note: 'ошибка, неизвестно или обслуживание', icon: AlertTriangle, tone: 'text-amber-700 dark:text-amber-400' },
           ].map(({ filter, label, value, note, icon: Icon, tone }) => (
             <button
               key={label}

@@ -45,7 +45,7 @@ describe('DeviceDeleteConfirmationDialog', () => {
 
     expect(screen.getByRole('button', { name: 'Отмена' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Удаление…' })).toBeDisabled();
-    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Закрыть' }));
     expect(onOpenChange).not.toHaveBeenCalled();
   });
 

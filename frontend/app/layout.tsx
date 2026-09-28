@@ -8,11 +8,11 @@ import '@fontsource/jetbrains-mono/500.css';
 import './globals.css';
 import { Providers } from './providers';
 import { ThemeProvider } from '@/src/shared/ui/ThemeProvider';
-import { Toaster } from 'sonner';
+import { AppToaster } from '@/src/shared/ui/AppToaster';
 
 export const metadata: Metadata = {
-  title: 'Sphere Platform | NOC',
-  description: 'Enterprise Android Fleet Management',
+  title: 'Sphere Platform | Управление устройствами',
+  description: 'Управление Android-устройствами, потоками и автоматизацией Sphere.',
 };
 
 export default function RootLayout({
@@ -21,18 +21,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="ru">
       <body className="font-sans antialiased text-sm bg-background text-foreground transition-colors duration-200">
         <ThemeProvider>
           <Providers>{children}</Providers>
-          <Toaster
-            theme="dark"
-            position="top-right"
-            toastOptions={{
-              className: 'font-mono text-xs',
-              duration: 4000,
-            }}
-          />
+          <AppToaster />
         </ThemeProvider>
       </body>
     </html>

@@ -17,9 +17,15 @@ import { useDebounce } from '@/lib/hooks/useDebounce';
 import { useBroadcastBatch } from '@/lib/hooks/useBatches';
 import { useScripts } from '@/lib/hooks/useScripts';
 import { useDevices } from '@/lib/hooks/useDevices';
+import { summarizeTaskStatuses } from '@/lib/task-status-summary';
+import { getApiErrorMessage } from '@/lib/apiError';
 import { toast } from 'sonner';
 
 const STATUS_OPTIONS = ['ALL', 'RUNNING', 'ASSIGNED', 'QUEUED', 'COMPLETED', 'FAILED', 'TIMEOUT', 'CANCELLED'] as const;
+const STATUS_LABELS: Record<(typeof STATUS_OPTIONS)[number], string> = {
+  ALL: 'Все статусы', RUNNING: 'Выполняются', ASSIGNED: 'Назначены', QUEUED: 'В очереди',
+  COMPLETED: 'Завершены', FAILED: 'Ошибка', TIMEOUT: 'Таймаут', CANCELLED: 'Отменены',
+};
 type SortField = 'script_name' | 'status' | 'priority' | 'created_at';
 type SortDir = 'asc' | 'desc';
 const taskName = (task: Task) => task.script_name || `Task ${task.id.slice(0, 8)}`;
@@ -67,8 +73,7 @@ export default function TaskEnginePage() {
   const onlineCount = onlineData?.total ?? 0;
   // Completion ratio has an explicit denominator: completed + failed + timeout.
   // Queued/active/cancelled work is not silently counted as an execution failure.
-  const resolved = counts ? counts.completed + counts.failed + counts.timeout : 0;
-  const successRate = counts && resolved > 0 ? `${(counts.completed / resolved * 100).toFixed(1)}%` : '—';
+  const taskSummary = summarizeTaskStatuses(counts);
 
   const toggleSort = (field: SortField) => {
     setPage(1);
@@ -112,105 +117,95 @@ export default function TaskEnginePage() {
           setBcWaveDelay(5000);
           setBcPriority(5);
         },
-        onError: (err: any) => {
-          const detail = err?.response?.data?.detail || 'Ошибка запуска батча';
-          toast.error(detail);
+        onError: (err: unknown) => {
+          toast.error(getApiErrorMessage(err, 'Ошибка запуска пакетной задачи'));
         },
       },
     );
   };
 
   return (
-    <div className="flex flex-col h-full bg-card">
-      <div className="px-6 py-5 border-b border-border bg-muted shrink-0">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <ListTodo className="w-5 h-5 text-primary" />
-              <h1 className="text-xl font-bold font-mono tracking-tight text-foreground uppercase pt-1">Task Engine</h1>
-            </div>
-            <p className="text-xs text-muted-foreground font-mono max-w-2xl">
-              История выполнения сценариев, очередь задач и активные pipeline. Обновление каждые 10 секунд.
+    <div className="min-h-full bg-background">
+      <header className="border-b border-border bg-background px-6 py-6 lg:px-8">
+        <div className="mx-auto flex max-w-screen-2xl flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
+          <div className="min-w-0">
+            <p className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-primary">
+              <ListTodo className="h-4 w-4" aria-hidden="true" /> Автоматизация · Задания
+            </p>
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground">Задачи и исполнения</h1>
+            <p className="mt-1.5 max-w-2xl text-sm text-muted-foreground">
+              История запусков, текущая очередь и активные pipeline. Данные обновляются автоматически каждые 10 секунд.
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+          <div className="flex w-full flex-wrap items-center gap-2 xl:w-auto">
             <Input
-              placeholder="Filter tasks..."
-              className="w-full sm:w-64 h-9 bg-black/50 border-border font-mono text-xs focus-visible:ring-primary/50"
+              aria-label="Поиск задач"
+              placeholder="Сценарий, устройство или ID"
+              className="h-10 min-w-[220px] flex-1 rounded-lg bg-background sm:w-64 sm:flex-none"
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             />
-            {/* Фильтр по статусу */}
             <select
               aria-label="Статус задачи"
               value={statusFilter}
               onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-              className="h-9 px-3 rounded border border-border bg-background text-xs font-mono"
+              className="h-10 rounded-lg border border-input bg-background px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              {STATUS_OPTIONS.map((s) => (
-                <option key={s} value={s}>{s}</option>
-              ))}
+              {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{STATUS_LABELS[s]}</option>)}
             </select>
-            <Button variant="default" size="sm" className="h-9" onClick={() => router.push('/scripts/builder')}>
-              <Workflow className="w-4 h-4 mr-2" /> Новый сценарий
+            <Button variant="default" size="sm" className="h-10 rounded-lg" onClick={() => router.push('/scripts/builder')}>
+              <Workflow className="mr-2 h-4 w-4" aria-hidden="true" /> Новый сценарий
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-9 border-primary/50 text-primary hover:bg-primary/10"
-              onClick={() => setBroadcastOpen(true)}
-            >
-              <Radio className="w-4 h-4 mr-2" /> Запустить на всех
-              {onlineCount > 0 && (
-                <span className="ml-2 inline-flex items-center rounded-sm px-1.5 py-0 text-[9px] uppercase font-bold tracking-widest font-mono border border-transparent bg-secondary text-secondary-foreground">
-                  {onlineCount} online
-                </span>
-              )}
+            <Button variant="outline" size="sm" className="h-10 rounded-lg" onClick={() => setBroadcastOpen(true)}>
+              <Radio className="mr-2 h-4 w-4" aria-hidden="true" /> Запустить на парке
+              <span className="ml-2 rounded-md bg-muted px-2 py-0.5 text-xs tabular-nums text-muted-foreground">
+                {onlineCount} в сети
+              </span>
             </Button>
           </div>
         </div>
-      </div>
+      </header>
 
-      <div className="p-6 flex-1 overflow-auto space-y-6">
-        <section aria-label="Показатели выбранной истории" className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="border border-border bg-muted rounded-sm p-4 flex items-center justify-between">
-            <div><div className="text-xs text-muted-foreground">Total Tasks</div>
-              <div className="text-2xl font-mono font-bold">{isLoading || history.isError ? '—' : tasksData?.total ?? '—'}</div>
-              <div className="text-xs text-muted-foreground">Вся история с выбранными фильтрами</div></div>
-            <CalendarClock className="w-8 h-8 text-primary/30" />
+      <div className="mx-auto w-full max-w-screen-2xl space-y-6 px-6 py-6 lg:px-8">
+        <section aria-label="Показатели выбранной истории" className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <div className="flex items-start justify-between rounded-xl border border-border bg-card p-5 shadow-sm">
+            <div><div className="text-sm font-medium text-muted-foreground">Всего задач</div>
+              <div className="mt-2 text-3xl font-semibold tabular-nums tracking-tight text-foreground">{isLoading || history.isError ? '—' : tasksData?.total ?? '—'}</div>
+              <div className="mt-1 text-xs text-muted-foreground">История с текущими фильтрами</div></div>
+            <span className="rounded-lg bg-primary/10 p-2.5 text-primary"><CalendarClock className="h-5 w-5" aria-hidden="true" /></span>
           </div>
-          <div className="border border-border bg-muted rounded-sm p-4 flex items-center justify-between">
-            <div><div className="text-xs text-muted-foreground">Success Rate</div>
-              <div className="text-2xl font-mono font-bold text-success">{successRate}</div>
-              <div className="text-xs text-muted-foreground">Completed / (completed + failed + timeout)</div></div>
-            <CheckCircle2 className="w-8 h-8 text-success/30" />
+          <div className="flex items-start justify-between rounded-xl border border-border bg-card p-5 shadow-sm">
+            <div><div className="text-sm font-medium text-muted-foreground">Успешное выполнение</div>
+              <div className="mt-2 text-3xl font-semibold tabular-nums tracking-tight text-success">{taskSummary.successRate}</div>
+              <div className="mt-1 text-xs text-muted-foreground">Среди завершённых задач</div></div>
+            <span className="rounded-lg bg-success/10 p-2.5 text-success"><CheckCircle2 className="h-5 w-5" aria-hidden="true" /></span>
           </div>
-          <div className="border border-border bg-muted rounded-sm p-4 flex items-center justify-between">
-            <div><div className="text-xs text-muted-foreground">Failed + Timeout</div>
-              <div className="text-2xl font-mono font-bold text-destructive">{counts ? counts.failed + counts.timeout : '—'}</div>
-              <div className="text-xs text-muted-foreground">Во всём выбранном наборе</div></div>
-            <ShieldAlert className="w-8 h-8 text-destructive/30" />
+          <div className="flex items-start justify-between rounded-xl border border-border bg-card p-5 shadow-sm">
+            <div><div className="text-sm font-medium text-muted-foreground">Ошибки и таймауты</div>
+              <div className="mt-2 text-3xl font-semibold tabular-nums tracking-tight text-destructive">{taskSummary.failedAndTimeout ?? '—'}</div>
+              <div className="mt-1 text-xs text-muted-foreground">В выбранной истории</div></div>
+            <span className="rounded-lg bg-destructive/10 p-2.5 text-destructive"><ShieldAlert className="h-5 w-5" aria-hidden="true" /></span>
           </div>
         </section>
 
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-          <section className="border border-border rounded-sm p-4 space-y-3" aria-label="Активные задачи">
-            <h2 className="font-mono text-sm flex items-center gap-2"><Clock className="w-4 h-4" />Активные задачи</h2>
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+          <section className="space-y-3 rounded-xl border border-border bg-card p-5 shadow-sm" aria-label="Активные задачи">
+            <h2 className="flex items-center gap-2 text-base font-semibold tracking-tight"><Clock className="h-4 w-4 text-primary" aria-hidden="true" />Активные задачи</h2>
             {active.isLoading ? <p>Загрузка очереди…</p> : active.isError ? <p role="alert">Не удалось загрузить очередь задач</p> : active.data && <>
-              <p className="text-xs text-muted-foreground">Показано {active.data.items.length} из {active.data.total}. Queued / assigned / running.</p>
-              {active.data.total === 0 && <p>Нет активных задач</p>}
+              <p className="text-sm text-muted-foreground">Показано {active.data.items.length} из {active.data.total}. В очереди, назначены или выполняются.</p>
+              {active.data.total === 0 && <p className="rounded-lg bg-muted/50 px-3 py-4 text-sm text-muted-foreground">Активных задач сейчас нет.</p>}
               {active.data.items.map(task => <button key={task.id} onClick={() => router.push(`/tasks/${task.id}`)} className="block w-full text-left border-t border-border pt-2">
                 <span className="text-sm">{taskName(task)}</span><span className="ml-2 text-xs font-mono">{executionStatusLabel(task)}</span>
                 <span className="block text-xs text-muted-foreground">{task.device_name || task.device_id} · {task.id}</span>
               </button>)}
             </>}
           </section>
-          <section className="border border-border rounded-sm p-4 space-y-3" aria-label="Активные pipeline">
-            <h2 className="font-mono text-sm flex items-center gap-2"><Workflow className="w-4 h-4" />Активные pipeline</h2>
-            {pipelines.isLoading ? <p>Загрузка pipeline…</p> : pipelines.isError ? <p role="alert">Не удалось загрузить pipeline</p> : pipelines.data && <>
-              <p className="text-xs text-muted-foreground">Показано {pipelines.data.items.length} из {pipelines.data.total}. Включая waiting и paused.</p>
-              {pipelines.data.total === 0 && <p>Нет активных pipeline</p>}
+          <section className="space-y-3 rounded-xl border border-border bg-card p-5 shadow-sm" aria-label="Активные pipeline">
+            <h2 className="flex items-center gap-2 text-base font-semibold tracking-tight"><Workflow className="h-4 w-4 text-primary" aria-hidden="true" />Активные pipeline</h2>
+            {pipelines.isLoading ? <p className="text-sm text-muted-foreground">Загрузка активных pipeline…</p> : pipelines.isError ? <p role="alert" className="text-sm text-destructive">Не удалось загрузить pipeline</p> : pipelines.data && <>
+              <p className="text-sm text-muted-foreground">Показано {pipelines.data.items.length} из {pipelines.data.total}. Включая ожидающие и приостановленные.</p>
+              {pipelines.data.total === 0 && <p className="rounded-lg bg-muted/50 px-3 py-4 text-sm text-muted-foreground">Активных pipeline сейчас нет.</p>}
               {pipelines.data.items.map(run => <div key={run.id} className="border-t border-border pt-2 text-xs space-y-1">
                 <div className="font-mono break-all">{run.id}</div><Badge variant="outline">{executionStatusLabel(run)}</Badge>
                 <p className="text-muted-foreground break-all">Pipeline {run.pipeline_id} · устройство {run.device_id}</p>
@@ -221,13 +216,13 @@ export default function TaskEnginePage() {
           </section>
         </div>
 
-        {history.isError && <div role="alert" className="border border-destructive p-4 rounded-sm">
+        {history.isError && <div role="alert" className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
           <p>Не удалось загрузить историю задач</p>
           <Button variant="outline" size="sm" onClick={() => history.refetch()}>Повторить загрузку</Button>
         </div>}
-        {!history.isError && <div className="rounded-sm border border-border overflow-x-auto">
-          <table className="w-full min-w-[950px] text-left text-xs">
-            <thead className="bg-muted border-b border-border"><tr>
+        {!history.isError && <div className="overflow-x-auto rounded-xl border border-border bg-card shadow-sm">
+          <table className="w-full min-w-[950px] text-left text-sm">
+            <thead className="border-b border-border bg-muted/60"><tr>
               {([['status','Статус'],['script_name','Сценарий']] as const).map(([field,label]) => <th key={field} className="p-3" aria-sort={sortField===field ? (sortDir==='asc'?'ascending':'descending') : 'none'}>
                 <button onClick={() => toggleSort(field)}>{label} {sortField===field ? (sortDir==='asc'?'↑':'↓') : ''}</button>
               </th>)}
@@ -238,8 +233,8 @@ export default function TaskEnginePage() {
               <th className="p-3">Начало / завершение</th><th className="p-3">Действия</th>
             </tr></thead>
             <tbody className="divide-y divide-border">
-              {isLoading ? <tr><td colSpan={7} className="p-6 text-center">Загрузка задач…</td></tr> : <>
-                {tasks.length===0 && <tr><td colSpan={7} className="p-6 text-center">Задачи не найдены</td></tr>}
+              {isLoading ? <tr><td colSpan={7} className="p-8 text-center text-sm text-muted-foreground"><span className="inline-flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />Загрузка задач…</span></td></tr> : <>
+                {tasks.length===0 && <tr><td colSpan={7} className="p-8 text-center text-sm text-muted-foreground">По выбранным фильтрам задач нет.</td></tr>}
                 {tasks.map(task => <tr key={task.id} className="hover:bg-muted">
                   <td className="p-3"><Badge variant="outline">{executionStatusLabel(task).toUpperCase()}</Badge></td>
                   <td className="p-3"><button onClick={() => router.push(`/tasks/${task.id}`)} className="text-left hover:text-primary">
@@ -254,7 +249,7 @@ export default function TaskEnginePage() {
             </tbody>
           </table>
         </div>}
-        <div className="flex items-center justify-between text-xs font-mono">
+        <div className="flex items-center justify-between text-sm text-muted-foreground">
           <span>{!history.isError && !isLoading && tasksData ? `${tasksData.total} задач` : '—'}</span>
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon" aria-label="Предыдущая страница" disabled={page<=1 || isLoading || history.isError} onClick={() => setPage(p => p-1)}><ChevronLeft className="w-4 h-4" /></Button>
@@ -274,7 +269,7 @@ export default function TaskEnginePage() {
             </DialogTitle>
             <DialogDescription className="font-mono text-xs">
               Скрипт будет запущен на всех онлайн-устройствах организации волнами.
-              Устройства определяются автоматически из Redis status cache.
+              Список устройств формируется автоматически по актуальному кешу статусов.
             </DialogDescription>
           </DialogHeader>
 
@@ -282,7 +277,7 @@ export default function TaskEnginePage() {
           <div className="flex items-center gap-3 p-3 rounded border border-border bg-muted/50">
             <div className="w-2.5 h-2.5 rounded-full bg-success animate-pulse" />
             <span className="text-sm font-mono font-bold text-foreground">{onlineCount}</span>
-            <span className="text-xs text-muted-foreground font-mono">устройств онлайн</span>
+            <span className="text-xs text-muted-foreground font-mono">устройств в сети</span>
           </div>
 
           <div className="grid gap-4 py-2">

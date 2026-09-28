@@ -51,7 +51,7 @@ export function DeviceStatusBadge({ status }: { status: string }) {
   const Icon = cfg.icon;
 
   return (
-    <Badge variant={cfg.variant} className={`gap-1 ${cfg.className}`}>
+    <Badge variant={cfg.variant} className={`self-start gap-1 ${cfg.className}`}>
       <Icon className={`w-3 h-3 ${status === 'connecting' ? 'animate-spin motion-reduce:animate-none' : ''}`} aria-hidden="true" />
       {cfg.label}
     </Badge>

@@ -24,9 +24,9 @@ beforeEach(() => {
   };
 });
 function submit() {
-  fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'audit@example.test' } });
-  fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'audit-fixture-password' } });
-  fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+  fireEvent.change(screen.getByLabelText('Электронная почта'), { target: { value: 'audit@example.test' } });
+  fireEvent.change(screen.getByLabelText('Пароль'), { target: { value: 'audit-fixture-password' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Войти в Sphere' }));
 }
 const tokens = { access_token: 'access-a', refresh_token: 'refresh-a',
   user: { id: 'a', org_id: 'a', role: 'admin', email: 'audit@example.test' } };
@@ -61,8 +61,8 @@ it('applies the MFA result to the matching login attempt', async () => {
   submit();
   await waitFor(() => expect(requests).toHaveLength(1));
   await act(async () => finish({ mfa_required: true, state_token: 'mfa-a' }));
-  fireEvent.change(screen.getByLabelText('TOTP Code'), { target: { value: '123456' } });
-  fireEvent.click(screen.getByRole('button', { name: 'Verify' }));
+  fireEvent.change(screen.getByLabelText('Код подтверждения'), { target: { value: '123456' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Подтвердить вход' }));
   await waitFor(() => expect(requests).toHaveLength(2));
   expect(requests[1].url).toBe('/auth/login/mfa');
   await act(async () => finish(tokens));
@@ -75,10 +75,10 @@ it('ignores MFA completion after returning to the login form', async () => {
   submit();
   await waitFor(() => expect(requests).toHaveLength(1));
   await act(async () => finish({ mfa_required: true, state_token: 'mfa-a' }));
-  fireEvent.change(screen.getByLabelText('TOTP Code'), { target: { value: '123456' } });
-  fireEvent.click(screen.getByRole('button', { name: 'Verify' }));
+  fireEvent.change(screen.getByLabelText('Код подтверждения'), { target: { value: '123456' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Подтвердить вход' }));
   await waitFor(() => expect(requests).toHaveLength(2));
-  fireEvent.click(screen.getByRole('button', { name: 'Back to login' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Вернуться ко входу' }));
   await act(async () => finish(tokens));
   expect(useAuthStore.getState().accessToken).toBeNull();
   expect(mockReplace).not.toHaveBeenCalled();

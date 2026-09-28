@@ -203,13 +203,13 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="mx-auto flex min-h-full w-full max-w-[1680px] flex-col gap-6 p-4 sm:p-6 xl:p-8">
-      <header className="flex flex-col gap-4 border-b border-border/80 pb-5 sm:flex-row sm:items-end sm:justify-between">
+    <div className="mx-auto flex min-h-full w-full max-w-[1720px] flex-col gap-6 p-4 sm:p-6 xl:p-8">
+      <header className="flex flex-col gap-5 rounded-2xl border border-border bg-card p-5 shadow-sm sm:flex-row sm:items-end sm:justify-between sm:p-6">
         <div className="min-w-0">
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">Sphere operations</p>
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">Обзор парка</h1>
+          <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.13em] text-primary"><span className="h-2 w-2 rounded-full bg-primary" aria-hidden="true" />Операционный центр</p>
+          <h1 className="mt-2 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">Обзор парка</h1>
           <p className="mt-2 max-w-2xl text-sm text-muted-foreground">Состояние устройств и инфраструктуры по последним данным API.</p>
-          <p className="mt-1 inline-flex items-center gap-1.5 text-xs text-muted-foreground"><Clock3 className="h-3.5 w-3.5" aria-hidden="true" />{lastUpdated} · автообновление 15 с</p>
+          <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground"><Clock3 className="h-3.5 w-3.5" aria-hidden="true" />{lastUpdated} · автообновление 15 с</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Button type="button" variant="outline" onClick={() => { void refreshAll(); }} disabled={refreshing} aria-live="polite" className="h-10 rounded-lg">
@@ -231,9 +231,9 @@ export default function DashboardPage() {
 
       <section aria-label="Сводные показатели устройств" className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
         <MetricCard label="Всего устройств" value={fleet.isLoading ? '—' : stats?.total ?? '—'} detail="Записей в организации" icon={Smartphone} tone="text-foreground" />
-        <MetricCard label="Онлайн" value={fleet.isLoading ? '—' : stats?.online ?? '—'} detail="Статус online по API" icon={Wifi} tone="text-emerald-400" />
+        <MetricCard label="Онлайн" value={fleet.isLoading ? '—' : stats?.online ?? '—'} detail="Статус online по API" icon={Wifi} tone="text-emerald-700 dark:text-emerald-400" />
         <MetricCard label="Выполняют задачи" value={fleet.isLoading ? '—' : stats?.busy ?? '—'} detail="Busy по статусу API" icon={Zap} tone="text-primary" />
-        <MetricCard label="Подключаются" value={fleet.isLoading ? '—' : stats?.connecting ?? '—'} detail="Ждут первый heartbeat" icon={ArrowUpRight} tone="text-amber-400" />
+        <MetricCard label="Подключаются" value={fleet.isLoading ? '—' : stats?.connecting ?? '—'} detail="Ждут первый heartbeat" icon={ArrowUpRight} tone="text-amber-700 dark:text-amber-400" />
         <MetricCard label="Не в сети" value={fleet.isLoading ? '—' : stats?.offline ?? '—'} detail="Нет живого статуса" icon={WifiOff} tone="text-muted-foreground" />
       </section>
 
@@ -295,7 +295,7 @@ export default function DashboardPage() {
               </Badge>
             </div>
             {(health.isError || vpnHealth.isError || pool.isError) && (
-              <p className="flex items-start gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 p-3 text-xs text-amber-200">
+              <p className="flex items-start gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 p-3 text-xs text-amber-800 dark:text-amber-200">
                 <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
                 Один или несколько health-запросов завершились ошибкой. Проверьте страницу инфраструктуры перед изменением конфигурации.
               </p>
@@ -320,7 +320,7 @@ export default function DashboardPage() {
           <CardContent className="px-5 pb-5 pt-1">
             <QueryState loading={events.isLoading} error={events.isError && !events.data} empty={!events.data?.items.length}>
               <>
-                {events.isError && events.data && <p role="status" className="mb-2 rounded-lg border border-amber-500/20 bg-amber-500/5 p-2 text-xs text-amber-200">Не удалось обновить журнал; показаны последние полученные события.</p>}
+                {events.isError && events.data && <p role="status" className="mb-2 rounded-lg border border-amber-500/20 bg-amber-500/5 p-2 text-xs text-amber-800 dark:text-amber-200">Не удалось обновить журнал; показаны последние полученные события.</p>}
                 <div>{events.data?.items.map((event) => <EventRow key={event.id} event={event} />)}</div>
               </>
             </QueryState>

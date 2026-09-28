@@ -10,8 +10,10 @@ export function ContextInspector() {
 
     return (
         <aside
+            aria-label="Инспектор Sphere"
+            aria-hidden={!isOpen}
             className={cn(
-                "absolute right-0 top-0 h-full w-[400px] bg-card border-l border-border shadow-2xl transition-transform duration-300 z-40 flex flex-col",
+                "absolute right-0 top-0 z-40 flex h-full w-[min(400px,100vw)] flex-col border-l border-border bg-card shadow-2xl transition-transform duration-300 motion-reduce:transition-none",
                 isOpen ? "translate-x-0" : "translate-x-full"
             )}
         >
@@ -19,11 +21,11 @@ export function ContextInspector() {
             <div className="flex items-center justify-between px-4 py-3 border-b border-border">
                 <div>
                     <h2 className="text-sm font-bold text-foreground">
-                        {contentType === "device" && "Device Inspector"}
-                        {contentType === "task" && "Task Details"}
-                        {contentType === "script" && "Script Viewer"}
-                        {contentType === "vpn" && "Tunnel Config"}
-                        {!contentType && "Inspector"}
+                        {contentType === "device" && "Устройство"}
+                        {contentType === "task" && "Задание"}
+                        {contentType === "script" && "Скрипт"}
+                        {contentType === "vpn" && "VPN"}
+                        {!contentType && "Инспектор"}
                     </h2>
                     {contentId && (
                         <p className="text-[10px] text-muted-foreground font-mono mt-0.5">
@@ -32,8 +34,11 @@ export function ContextInspector() {
                     )}
                 </div>
                 <button
+                    type="button"
+                    aria-label="Закрыть инспектор"
+                    tabIndex={isOpen ? 0 : -1}
                     onClick={closeInspector}
-                    className="p-1 rounded-sm text-muted-foreground hover:bg-secondary hover:text-white transition-colors"
+                    className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none"
                 >
                     <X className="w-4 h-4" />
                 </button>
@@ -45,11 +50,9 @@ export function ContextInspector() {
                     <>
                         {contentType === 'device' && payload && <DeviceInspectorDetail device={payload} />}
                         {contentType !== 'device' && (
-                            <div className="text-xs text-muted-foreground font-mono">
-                                {/* Fallback */}
-                                <p>Content Type: {contentType}</p>
-                                <p>Associated ID: {contentId}</p>
-                                <p className="mt-4 text-muted-foreground/50">Awaiting module initialization...</p>
+                            <div className="space-y-2 text-sm text-muted-foreground">
+                                <p>Данные этой панели пока недоступны.</p>
+                                {contentType && <p className="text-xs">Тип: {contentType}{contentId ? ` · ID ${contentId}` : ''}</p>}
                             </div>
                         )}
                     </>

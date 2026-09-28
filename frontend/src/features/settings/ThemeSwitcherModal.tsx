@@ -1,104 +1,97 @@
 'use client';
 
-import { useThemeStore, ThemeType, DensityType } from '@/src/shared/store/themeStore';
-import { Monitor, Moon, Sun, MonitorSmartphone, LayoutGrid, Shrink, Maximize, PaintBucket } from 'lucide-react';
+import { Code2, LayoutGrid, Maximize, Monitor, Moon, Paintbrush, Shrink, Sun, type LucideIcon } from 'lucide-react';
 import { Button } from '@/src/shared/ui/button';
-import { Badge } from '@/src/shared/ui/badge';
+import { useThemeStore, type DensityType, type ThemeType } from '@/src/shared/store/themeStore';
+import { useUIStore, type UIDensity } from '@/src/shared/store/useUIStore';
 
-const THEMES: { id: ThemeType; label: string; icon: React.ReactNode; color: string }[] = [
-    { id: 'neo-dark', label: 'Neo Dark', icon: <Moon className="w-4 h-4" />, color: 'bg-muted border-border' },
-    { id: 'matrix-green', label: 'Matrix', icon: <TerminalIcon />, color: 'bg-[#001100] border-[#00FF00]' },
-    { id: 'deep-space', label: 'Deep Space', icon: <Monitor className="w-4 h-4" />, color: 'bg-[#050511] border-[#3366FF]' },
-    { id: 'light-corporate', label: 'Corporate', icon: <Sun className="w-4 h-4" />, color: 'bg-[#F0F0F0] border-[#CCC] text-black' },
+const THEMES: { id: ThemeType; label: string; description: string; icon: LucideIcon; swatches: string[] }[] = [
+    { id: 'light-corporate', label: 'Светлая', description: 'Чистая рабочая область', icon: Sun, swatches: ['#f4f7f8', '#ffffff', '#16845d'] },
+    { id: 'neo-dark', label: 'Тёмная', description: 'Нейтральная тёмная тема', icon: Moon, swatches: ['#09090b', '#18181b', '#e4e4e7'] },
+    { id: 'deep-space', label: 'Deep Space', description: 'Тёмно-синяя палитра', icon: Monitor, swatches: ['#080817', '#111126', '#3b82f6'] },
+    { id: 'matrix-green', label: 'Matrix', description: 'Высокий контраст, зелёный', icon: Code2, swatches: ['#001000', '#061b06', '#00d900'] },
 ];
 
-const DENSITIES: { id: DensityType; label: string; icon: React.ReactNode }[] = [
-    { id: 'compact', label: 'Compact', icon: <Shrink className="w-4 h-4" /> },
-    { id: 'cozy', label: 'Cozy', icon: <LayoutGrid className="w-4 h-4" /> },
-    { id: 'spacious', label: 'Spacious', icon: <Maximize className="w-4 h-4" /> },
+const DENSITIES: { id: DensityType; uiId: UIDensity; label: string; description: string; icon: LucideIcon }[] = [
+    { id: 'compact', uiId: 'compact', label: 'Компактная', description: 'Больше строк и данных на экране', icon: Shrink },
+    { id: 'cozy', uiId: 'comfortable', label: 'Обычная', description: 'Сбалансированные интервалы', icon: LayoutGrid },
+    { id: 'spacious', uiId: 'spacious', label: 'Свободная', description: 'Увеличенные отступы и элементы', icon: Maximize },
 ];
-
-function TerminalIcon() {
-    return <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="4 17 10 11 4 5" /><line x1="12" y1="19" x2="20" y2="19" /></svg>
-}
 
 export function ThemeSwitcherModal({ onClose }: { onClose?: () => void }) {
     const { theme, density, setTheme, setDensity } = useThemeStore();
+    const setUiTheme = useUIStore((state) => state.setTheme);
+    const setUiDensity = useUIStore((state) => state.setDensity);
+
+    const chooseTheme = (nextTheme: ThemeType) => {
+        setTheme(nextTheme);
+        setUiTheme(nextTheme === 'light-corporate' ? 'light' : 'dark');
+    };
+
+    const chooseDensity = (nextDensity: DensityType, uiDensity: UIDensity) => {
+        setDensity(nextDensity);
+        setUiDensity(uiDensity);
+    };
 
     return (
-        <div className="flex flex-col gap-6 p-4">
-            {/* Header */}
-            <div className="flex items-center gap-3 border-b border-border pb-4">
-                <div className="bg-primary/10 p-2 rounded-sm ring-1 ring-primary/20">
-                    <PaintBucket className="w-5 h-5 text-primary" />
-                </div>
+        <div className="flex flex-col gap-6 p-5 sm:p-6">
+            <header className="flex items-center gap-3 border-b border-border pb-5">
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary"><Paintbrush className="h-5 w-5" aria-hidden="true" /></span>
                 <div>
-                    <h2 className="text-lg font-bold font-mono tracking-wider">UI Configuration</h2>
-                    <p className="text-xs text-muted-foreground">Adjust the environment to your workstation needs</p>
+                    <h2 className="text-base font-semibold tracking-tight">Оформление интерфейса</h2>
+                    <p className="mt-1 text-xs text-muted-foreground">Изменения сразу применяются в этом браузере.</p>
                 </div>
-            </div>
+            </header>
 
-            {/* Theme Selection */}
-            <div className="space-y-3">
-                <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                    Color Profiles <Badge variant="outline" className="text-[9px] px-1 py-0 border-primary text-primary">LIVE</Badge>
-                </h3>
-                <div className="grid grid-cols-2 gap-2">
-                    {THEMES.map((t) => (
+            <section className="space-y-3" aria-labelledby="palette-theme-title">
+                <h3 id="palette-theme-title" className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">Цветовая тема</h3>
+                <div className="grid grid-cols-2 gap-3">
+                    {THEMES.map(({ id, label, description, icon: Icon, swatches }) => (
                         <button
-                            key={t.id}
-                            onClick={() => setTheme(t.id)}
-                            className={`flex items-center gap-3 p-3 text-left rounded-sm border transition-all duration-200 ${theme === t.id
-                                    ? 'ring-2 ring-primary border-transparent opacity-100 shadow-[0_0_15px_rgba(var(--primary),0.3)]'
-                                    : 'border-border opacity-70 hover:opacity-100 hover:border-primary/50'
-                                } ${t.color}`}
+                            key={id}
+                            type="button"
+                            aria-pressed={theme === id}
+                            onClick={() => chooseTheme(id)}
+                            className={`rounded-xl border p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none ${theme === id ? 'border-primary bg-primary/5 ring-1 ring-primary/20' : 'border-border bg-background hover:border-primary/40'}`}
                         >
-                            <div className={theme === t.id ? 'text-primary' : 'text-foreground'}>{t.icon}</div>
-                            <span className={`text-xs font-mono font-bold ${theme === t.id ? 'text-primary' : ''}`}>
-                                {t.label}
+                            <span className="mb-3 flex h-8 overflow-hidden rounded-md border border-border" aria-hidden="true">
+                                {swatches.map((color) => <span key={color} className="h-full flex-1" style={{ backgroundColor: color }} />)}
                             </span>
+                            <span className="flex items-center gap-2 text-xs font-semibold text-foreground"><Icon className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />{label}</span>
+                            <span className="mt-1 block text-[11px] leading-4 text-muted-foreground">{description}</span>
                         </button>
                     ))}
                 </div>
-            </div>
+            </section>
 
-            {/* Density Selection */}
-            <div className="space-y-3">
-                <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                    Interface Density / Scaling
-                </h3>
-                <div className="grid grid-cols-3 gap-2">
-                    {DENSITIES.map((d) => (
+            <section className="space-y-3" aria-labelledby="palette-density-title">
+                <h3 id="palette-density-title" className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">Плотность интерфейса</h3>
+                <div className="space-y-2">
+                    {DENSITIES.map(({ id, uiId, label, description, icon: Icon }) => (
                         <button
-                            key={d.id}
-                            onClick={() => setDensity(d.id)}
-                            className={`flex flex-col items-center justify-center gap-2 p-3 rounded-sm border transition-all duration-200 ${density === d.id
-                                    ? 'bg-primary/10 border-primary text-primary shadow-[0_0_10px_rgba(var(--primary),0.2)]'
-                                    : 'bg-transparent border-border hover:bg-white/5 text-muted-foreground hover:text-foreground'
-                                }`}
+                            key={id}
+                            type="button"
+                            aria-pressed={density === id}
+                            onClick={() => chooseDensity(id, uiId)}
+                            className={`flex min-h-14 w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none ${density === id ? 'border-primary bg-primary/5' : 'border-border bg-background hover:border-primary/40'}`}
                         >
-                            {d.icon}
-                            <span className="text-[10px] font-mono font-bold uppercase tracking-wider">{d.label}</span>
+                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground"><Icon className="h-4 w-4" aria-hidden="true" /></span>
+                            <span className="min-w-0 flex-1"><span className="block text-sm font-medium text-foreground">{label}</span><span className="mt-0.5 block text-xs text-muted-foreground">{description}</span></span>
+                            <span className={`h-4 w-4 shrink-0 rounded-full border ${density === id ? 'border-[5px] border-primary' : 'border-muted-foreground/40'}`} aria-hidden="true" />
                         </button>
                     ))}
                 </div>
-            </div>
+            </section>
 
-            {/* Visual Demo */}
-            <div className="mt-4 p-4 border border-dashed border-border rounded-sm bg-black/20 space-y-3">
-                <p className="text-[10px] text-muted-foreground uppercase font-bold text-center mb-2">Live Preview Area</p>
-                <div className="flex gap-2 justify-center">
-                    <Button variant="default" size="sm">Primary Action</Button>
-                    <Button variant="outline" size="sm">Secondary</Button>
-                    <Button variant="destructive" size="sm">Danger</Button>
+            <section className="space-y-3 rounded-xl border border-border bg-muted/30 p-4" aria-label="Предпросмотр кнопок">
+                <p className="text-xs font-semibold text-foreground">Предпросмотр элементов</p>
+                <div className="flex flex-wrap gap-2">
+                    <Button variant="default" size="sm">Основное действие</Button>
+                    <Button variant="outline" size="sm">Вторичное</Button>
                 </div>
-            </div>
+            </section>
 
-            {onClose && (
-                <Button variant="outline" className="w-full mt-2" onClick={onClose}>
-                    Close Matrix Configurator
-                </Button>
-            )}
+            {onClose && <Button variant="outline" className="w-full" onClick={onClose}>Закрыть настройки</Button>}
         </div>
     );
 }

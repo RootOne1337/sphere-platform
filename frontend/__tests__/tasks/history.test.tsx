@@ -56,7 +56,7 @@ it('uses the full server total and can reach the eighth page', () => {
 it('searches older history and resets pagination before displaying it', () => {
   render(<TaskEnginePage />);
   fireEvent.click(screen.getByRole('button',{name:'Следующая страница'}));
-  fireEvent.change(screen.getByPlaceholderText('Filter tasks...'),{target:{value:'Old failure'}});
+  fireEvent.change(screen.getByPlaceholderText('Сценарий, устройство или ID'),{target:{value:'Old failure'}});
   expect(screen.getByText('Old failure')).toBeInTheDocument();
   expect(mockQueries).toHaveBeenCalledWith(expect.objectContaining({page:1,search:'Old failure'}));
 });
@@ -102,7 +102,7 @@ it('shows old active work and a real waiting pipeline independently of the histo
 it('marks loading metrics as unavailable rather than zero', () => {
   mockLoading=true;
   render(<TaskEnginePage />);
-  const card = screen.getByText('Total Tasks').parentElement!;
+  const card = screen.getByText('Всего задач').parentElement!;
   expect(within(card).queryByText('0')).not.toBeInTheDocument();
 });
 
@@ -117,7 +117,7 @@ it('keeps cancelling native work and its waiting pipeline visible until terminal
   mockPipelines = {...mockPipelines, data: {total: 0, items: []}};
   view.rerender(<TaskEnginePage />);
   expect(screen.queryByText(/Cancelling — awaiting device result/i)).not.toBeInTheDocument();
-  expect(screen.getByText('Нет активных задач')).toBeInTheDocument();
+  expect(screen.getByText('Активных задач сейчас нет.')).toBeInTheDocument();
 });
 
 it('returns to a valid server page when polling shrinks the result set', () => {

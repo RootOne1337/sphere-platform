@@ -1,31 +1,31 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-type Theme = 'dark' | 'light' | 'system';
-type AccentColor = 'violet' | 'blue' | 'emerald' | 'rose' | 'amber';
-type Density = 'compact' | 'comfortable' | 'spacious';
-type FontSize = 'sm' | 'base' | 'lg';
+export type UIThemeMode = 'dark' | 'light' | 'system';
+export type AccentColor = 'violet' | 'blue' | 'emerald' | 'rose' | 'amber';
+export type UIDensity = 'compact' | 'comfortable' | 'spacious';
+export type FontScale = 'sm' | 'base' | 'lg';
 
 interface UIState {
-    theme: Theme;
+    theme: UIThemeMode;
     accentColor: AccentColor;
-    density: Density;
-    fontSize: FontSize;
+    density: UIDensity;
+    fontSize: FontScale;
     sidebarExpanded: boolean;
 
-    setTheme: (theme: Theme) => void;
+    setTheme: (theme: UIThemeMode) => void;
     setAccentColor: (color: AccentColor) => void;
-    setDensity: (density: Density) => void;
-    setFontSize: (size: FontSize) => void;
+    setDensity: (density: UIDensity) => void;
+    setFontSize: (size: FontScale) => void;
     toggleSidebar: () => void;
 }
 
 export const useUIStore = create<UIState>()(
     persist(
         (set) => ({
-            theme: 'dark',
-            accentColor: 'violet',
-            density: 'compact',
+            theme: 'light',
+            accentColor: 'emerald',
+            density: 'comfortable',
             fontSize: 'base',
             sidebarExpanded: true,
 
