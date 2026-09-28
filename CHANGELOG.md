@@ -29,6 +29,8 @@ for the separate source, artifact, catalog, installed-device, and runtime eviden
   confirmed. The local Windows build still reports a standalone tracing copy
   warning; details and advisory scope are in the
   [dependency security report](docs/audits/2026-09-28/FRONTEND-DEPENDENCY-SECURITY.md).
+  GitHub's push response separately reported 145 Dependabot alerts on default
+  branch `main`; this frontend-only branch audit does not clear them.
 
 ### Historical audit entries recorded 2026-09-24
 

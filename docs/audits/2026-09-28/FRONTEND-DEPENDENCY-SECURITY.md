@@ -29,6 +29,14 @@ that finding does not by itself prove exposure in the production request path.
 The complete finding set and production/development reachability are evaluated
 by npm against the actual lockfile rather than inferred from names alone.
 
+When commit `2cf7e50` was pushed, GitHub's push response reported **145
+Dependabot vulnerabilities on the default branch `main`**: 5 critical, 64 high,
+63 moderate and 13 low. This is a repository/default-branch snapshot, not a
+count for this PR's frontend lockfile; it may include alerts from multiple
+manifests. The branch-local zero result below does not clear the default-branch
+alerts. Review and remediation of the remaining alerts is a separate, broader
+workstream; no merge was performed.
+
 ## Remediation
 
 - Pin `next` and `eslint-config-next` to `15.5.26`, above the Next.js patched
@@ -58,7 +66,7 @@ container was rebuilt or deployed.
 ## Residual scope
 
 This patch covers the frontend npm dependency graph. It does not claim that
-GitHub Dependabot alerts on the default branch, Python/backend dependencies,
+the remaining GitHub Dependabot alerts on the default branch, Python/backend dependencies,
 the Android Gradle graph, deployed images, or production runtime have been
 cleared. Those scopes require their own current lockfile/image evidence. No
 mass device test, server mutation, tunnel change, or APK release was performed.
