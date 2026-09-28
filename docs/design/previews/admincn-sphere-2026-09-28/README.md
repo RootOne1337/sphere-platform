@@ -6,6 +6,8 @@ The separate concept preview at `127.0.0.1:4177` remains a local research artifa
 
 For the current operator review, `http://127.0.0.1:3012/devices` serves the same local production build through a temporary read-only same-machine proxy. It permits read requests needed by the UI and blocks state-changing API calls; do not use it to validate delete, reboot, task launch, or other mutations. Data visible there comes from the already-running local backend and must be treated as real organization data. This preview is not the live site and does not publish or deploy changes.
 
+The Events and Account Sessions screens are also available at `http://127.0.0.1:3012/events` and `http://127.0.0.1:3012/sessions`. Their regression coverage and API-contract limits are recorded in [CONCEPTS-RU.md](CONCEPTS-RU.md); the preview still blocks mutations.
+
 ## Primary frontend QA screenshots
 
 - [Dashboard, 1440 × 1000](screenshots/primary-dashboard-fixture-1440x1000.png)
