@@ -1,8 +1,9 @@
 # Отказоустойчивое обновление Android-агента
 
-> **Текущая граница, 28 сентября 2026:** Android source задаёт `1.2.34/10234`,
-> а записанный canary report описывает приватный candidate и три server reports
-> с этой версией. Текущий OTA catalog этим проходом не читался, массовая
+> **Текущая граница, 28 сентября 2026:** Android source candidate задаёт
+> `1.2.35/10235`, а записанный canary report описывает приватный candidate
+> `1.2.34/10234` и три server reports с этой версией. Текущий OTA catalog этим
+> проходом не читался, массовая
 > публикация/установка не подтверждена. Все приведённые ниже catalog versions,
 > image IDs и installed packages являются dated snapshots. См. [каноническое
 > состояние](../operations/CURRENT-STATE.md) перед любым rollout.

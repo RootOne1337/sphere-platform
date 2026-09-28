@@ -1,11 +1,13 @@
 # Android Agent
 
-> **Состояние на 28 сентября 2026:** исходники задают Android `1.2.34 / 10234`;
+> **Состояние на 28 сентября 2026:** текущий кандидат исходников задаёт Android `1.2.35 / 10235`;
 > приватный dev candidate `1.2.34-dev / 10234` был собран из `cc456c6` и вручную
 > установлен оператором на несколько удалённых эмуляторов. Сервер видел три
 > свежих сообщения этой версии, а оператор видел видео в браузере как минимум
 > на одном canary. Установленный SHA не сверялся независимо, кандидат не
-> массово опубликован в OTA; эта запись не означает fleet rollout. См.
+> массово опубликован в OTA; версия 1.2.35 — изменение исходников, не подписанный
+> APK, OTA-публикация или fleet rollout. Подробная проверка релизного контура:
+> [Android release-readiness audit](audits/2026-09-28/ANDROID-RELEASE-READINESS.md). См.
 > [каноническое состояние и границы доказательств](operations/CURRENT-STATE.md)
 > и [canary evidence](audits/2026-09-27/TUNA-REMOTE-STREAM-CANARY.md).
 
@@ -84,9 +86,11 @@ is authoritative for component contracts.
 ## 3. Build Instructions
 
 Use JDK 17 and Android SDK platform 35 with the committed **Gradle 8.9 wrapper**.
-The current version catalog pins AGP 8.3.2 and Kotlin 1.9.23. Gradle reports an
-AGP/compileSdk compatibility warning in the retained build evidence; toolchain
-modernization remains open. Do not suppress a warning as proof of compatibility.
+The candidate catalog pins AGP 8.7.3, Kotlin 1.9.23 and KSP 1.9.23-1.0.19. AGP
+8.7 aligns with compileSdk 35 while the project retains its previously working
+Kotlin/KSP processor stack. A trial KSP2/Hilt combination failed during code
+generation and was removed; the coordinated migration is tracked in the
+[release-readiness audit](audits/2026-09-28/ANDROID-RELEASE-READINESS.md).
 
 From `android/`:
 
@@ -96,6 +100,8 @@ From `android/`:
 # All debug flavors / all unit-test variants, as used by CI:
 ./gradlew assembleDebug
 ./gradlew test
+# Release packaging must have a valid managed signer configured.
+./gradlew assembleEnterpriseRelease
 ```
 
 On Windows use `gradlew.bat`. Set `JAVA_HOME` and `ANDROID_HOME` for the chosen
@@ -118,18 +124,30 @@ debug test result does not validate release shrinking or release installation.
 
 - `SPHERE_KEYSTORE_PATH` — path to the managed signing keystore;
 - `SPHERE_KEYSTORE_PASSWORD` — keystore password;
-- `SPHERE_KEY_ALIAS` — alias, default `sphere`;
+- `SPHERE_KEY_ALIAS` — mandatory alias;
 - `SPHERE_KEY_PASSWORD` — key password.
 
-Provide these through the release environment/secret manager, then run
-`./gradlew :app:assembleEnterpriseRelease`. Keep signing material out of Git.
-The current build only attaches release signing when the configured store file
-exists; a successful build alone is not proof of a signed, installable update.
-Verify artifact signing and installed-package compatibility before rollout.
+Provide all four through a protected release environment/secret manager, then run
+`./gradlew :app:assembleEnterpriseRelease`. Release-shaped Gradle tasks now fail
+when the keystore is missing instead of emitting an unsigned APK. Keep signing
+material out of Git and chat. Before rollout, verify the package, version, SHA-256
+and signer against the established production certificate; a different signer
+cannot update an already installed package in place.
 
-[Android CI](../.github/workflows/ci-android.yml) builds debug flavors, runs unit
-tests and uploads `app/build/outputs/apk/**/*.apk`. It does not currently provision
-release signing, install an APK or certify a physical-device runtime.
+[Android CI](../.github/workflows/ci-android.yml) runs unit tests/lint and builds
+debug plus both signed release smoke variants with a disposable CI-only key. It
+uploads debug APKs and test reports only; a CI smoke signature is never a
+production-signing identity. The tag [release workflow](../.github/workflows/release.yml)
+requires the production keystore and pinned signer fingerprint, and attaches the
+verified enterprise APK and SHA-256 checksum. Neither workflow proves installation,
+OTA delivery or runtime behavior on a physical/remote device.
+
+The current source candidate is `1.2.35 / 10235`. Local release packaging was
+verified with a disposable non-production certificate after confirming that a
+release task fails when signing inputs are absent. Those temporary APKs and the
+keystore were removed; use only a production-signed artifact with the established
+certificate for in-place update. See the dated [release-readiness audit](audits/2026-09-28/ANDROID-RELEASE-READINESS.md)
+for exact test/lint counts and the remaining OTA/device gates.
 
 ## 4. Configuration
 
@@ -343,7 +361,9 @@ absent; a mismatch narrows the boundary but does not prove which network hop
 dropped a particular frame.
 
 The periodic log uploader now includes the persisted uncaught-crash file and
-removes only the uploaded unchanged snapshot after a successful response. Its
+removes only the uploaded unchanged snapshot after a successful response. It
+tries the persisted management routes after transport, 404 or 5xx failures and
+does not send the same credential to a second route after 401, 403 or 429. Its
 complete UTF-8 body is capped at 480 KiB, below the backend's 512 KiB entry
 limit; failed uploads retain crash evidence. The Android app log tail and crash
 file are bounded on-device. The backend currently keeps daily files for 30 days

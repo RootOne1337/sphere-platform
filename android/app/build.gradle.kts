@@ -55,6 +55,29 @@ if (signedDiscovery) {
     }
 }
 
+// Never let a release-shaped Gradle task silently emit an unsigned APK/AAB.
+// Unit tests and debug builds remain runnable without the production signer.
+val requestedAndroidTasks = gradle.startParameter.taskNames.map { it.substringAfterLast(':') }
+val releaseArtifactRequested = requestedAndroidTasks.any { taskName ->
+    taskName == "assemble" || taskName == "build" || taskName == "bundle" ||
+        taskName.matches(Regex("(?i)^(assemble|bundle|package|install|build|sign).*Release$"))
+}
+if (releaseArtifactRequested) {
+    val signingEnvironment = mapOf(
+        "SPHERE_KEYSTORE_PATH" to System.getenv("SPHERE_KEYSTORE_PATH"),
+        "SPHERE_KEYSTORE_PASSWORD" to System.getenv("SPHERE_KEYSTORE_PASSWORD"),
+        "SPHERE_KEY_ALIAS" to System.getenv("SPHERE_KEY_ALIAS"),
+        "SPHERE_KEY_PASSWORD" to System.getenv("SPHERE_KEY_PASSWORD"),
+    )
+    val missingSigningConfiguration = signingEnvironment.filter { (name, value) ->
+        value.isNullOrBlank() || (name == "SPHERE_KEYSTORE_PATH" && !file(value).isFile)
+    }.keys
+    require(missingSigningConfiguration.isEmpty()) {
+        "Release APK/AAB tasks require a configured signing keystore; missing or invalid: " +
+            missingSigningConfiguration.joinToString(", ")
+    }
+}
+
 // Build-specific URL takes precedence without modifying a shared installation's .env.
 // Legacy fallback: sync-tunnel-url.sh updates SERVER_PUBLIC_URL in the root .env.
 val dotEnvFile = rootProject.file("../.env")
@@ -92,9 +115,9 @@ android {
     signingConfigs {
         create("release") {
             storeFile = System.getenv("SPHERE_KEYSTORE_PATH")?.let { file(it) }
-            storePassword = System.getenv("SPHERE_KEYSTORE_PASSWORD") ?: ""
-            keyAlias = System.getenv("SPHERE_KEY_ALIAS") ?: "sphere"
-            keyPassword = System.getenv("SPHERE_KEY_PASSWORD") ?: ""
+            storePassword = System.getenv("SPHERE_KEYSTORE_PASSWORD")
+            keyAlias = System.getenv("SPHERE_KEY_ALIAS")
+            keyPassword = System.getenv("SPHERE_KEY_PASSWORD")
         }
     }
 
@@ -143,8 +166,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            val rel = signingConfigs.findByName("release")
-            if (rel?.storeFile?.exists() == true) signingConfig = rel
+            signingConfig = signingConfigs.getByName("release")
         }
         debug {
             isMinifyEnabled = false
