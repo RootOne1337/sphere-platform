@@ -3,11 +3,23 @@ import FleetStreamPage from '@/app/(dashboard)/stream/page';
 import type { Device } from '@/lib/hooks/useDevices';
 
 let mockDevices: Device[];
+let mockIsLoading = false;
+let mockIsError = false;
+let mockIsFetching = false;
+let mockDataAvailable = true;
+let mockCatalogTotal: number | null = null;
+const mockRefetch = jest.fn();
 jest.mock('@/lib/hooks/useDevices', () => ({
   useDevices: (params: { status?: string }) => {
     // The real API filters offline rows out of an online-only query.
     const items = mockDevices.filter(d => !params.status || d.status === params.status);
-    return { data: { items, total: items.length } };
+    return {
+      data: mockDataAvailable ? { items, total: mockCatalogTotal ?? items.length } : undefined,
+      isLoading: mockIsLoading,
+      isError: mockIsError,
+      isFetching: mockIsFetching,
+      refetch: mockRefetch,
+    };
   },
 }));
 jest.mock('@/lib/hooks/useGroups', () => ({ useGroups: () => ({ data: [] }) }));
@@ -17,6 +29,12 @@ jest.mock('@/components/sphere/DeviceStream', () => ({
 }));
 
 beforeEach(() => {
+  mockIsLoading = false;
+  mockIsError = false;
+  mockIsFetching = false;
+  mockDataAvailable = true;
+  mockCatalogTotal = null;
+  mockRefetch.mockReset();
   mockDevices = [
     { id: 'a', name: 'Agent A', status: 'online', group_ids: [], location_ids: [] },
     { id: 'b', name: 'Agent B', status: 'online', group_ids: [], location_ids: [] },
@@ -25,14 +43,14 @@ beforeEach(() => {
 
 it('keeps an offline device visible, hides stale video, and resumes the selected stream on recovery', () => {
   const view = render(<FleetStreamPage />);
-  fireEvent.click(screen.getAllByRole('button', { name: 'Start' })[0]);
+  fireEvent.click(screen.getByRole('button', { name: 'Начать просмотр Agent A' }));
   expect(screen.getByText('Live a')).toBeInTheDocument();
   mockDevices = mockDevices.map(d => d.id === 'a' ? { ...d, status: 'offline' } : d);
   view.rerender(<FleetStreamPage />);
   expect(screen.getByText('Agent A')).toBeInTheDocument();
   expect(screen.getByText('Agent B')).toBeInTheDocument();
   expect(screen.queryByText('Live a')).not.toBeInTheDocument();
-  expect(screen.getByText(/Связь потеряна/)).toBeInTheDocument();
+  expect(screen.getByText(/приостановлен до восстановления связи/)).toBeInTheDocument();
   mockDevices = mockDevices.map(d => ({ ...d, status: 'online' }));
   view.rerender(<FleetStreamPage />);
   expect(screen.getByText('Live a')).toBeInTheDocument();
@@ -43,17 +61,69 @@ it('shows devices already offline at page load without offering an unavailable s
   mockDevices = [{ ...mockDevices[0], status: 'offline' }];
   render(<FleetStreamPage />);
   expect(screen.getByText('Agent A')).toBeInTheDocument();
-  expect(screen.getByText(/0 онлайн/)).toBeInTheDocument();
-  expect(screen.getByRole('button', { name: 'Start' })).toBeDisabled();
+  expect(screen.getByText(/Доступны/)).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Начать просмотр Agent A' })).toBeDisabled();
 });
 
 it('honors Stop while offline instead of resuming a cancelled viewer', () => {
   const view = render(<FleetStreamPage />);
-  fireEvent.click(screen.getAllByRole('button', { name: 'Start' })[0]);
+  fireEvent.click(screen.getByRole('button', { name: 'Начать просмотр Agent A' }));
   mockDevices = mockDevices.map(d => d.id === 'a' ? { ...d, status: 'offline' } : d);
   view.rerender(<FleetStreamPage />);
-  fireEvent.click(screen.getByRole('button', { name: 'Stop' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Остановить просмотр Agent A' }));
   mockDevices = mockDevices.map(d => ({ ...d, status: 'online' }));
   view.rerender(<FleetStreamPage />);
   expect(screen.queryByText('Live a')).not.toBeInTheDocument();
+});
+
+it('allows viewing a busy device because busy means reachable while it runs a task', () => {
+  mockDevices = [{ ...mockDevices[0], status: 'busy' }];
+  render(<FleetStreamPage />);
+
+  fireEvent.click(screen.getByRole('button', { name: 'Начать просмотр Agent A' }));
+
+  expect(screen.getByText('Live a')).toBeInTheDocument();
+  expect(screen.getAllByText('В работе')).toHaveLength(2);
+});
+
+it('uses the selected capacity as the page size so 64-device mode can reach every row', () => {
+  mockDevices = Array.from({ length: 65 }, (_, index) => ({
+    id: `device-${String(index + 1).padStart(2, '0')}`,
+    name: `Agent ${String(index + 1).padStart(2, '0')}`,
+    status: 'online',
+    group_ids: [],
+    location_ids: [],
+  })) as unknown as Device[];
+  render(<FleetStreamPage />);
+
+  fireEvent.click(screen.getByRole('button', { name: 'Показывать до 64 устройств' }));
+  expect(screen.getByText('Показано 64 из 65 устройств · страница 1 из 2')).toBeInTheDocument();
+  expect(screen.getByText('Agent 64')).toBeInTheDocument();
+  expect(screen.queryByText('Agent 65')).not.toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole('button', { name: 'Следующая страница' }));
+  expect(screen.getByText('Agent 65')).toBeInTheDocument();
+  expect(screen.getByText('Показано 1 из 65 устройств · страница 2 из 2')).toBeInTheDocument();
+});
+
+it('shows loading and retryable API error states instead of a false empty result', () => {
+  mockIsLoading = true;
+  mockDataAvailable = false;
+  const view = render(<FleetStreamPage />);
+  expect(screen.getByRole('status', { name: '' })).toHaveTextContent('Загружаем список устройств');
+
+  mockIsLoading = false;
+  mockIsError = true;
+  view.rerender(<FleetStreamPage />);
+  expect(screen.getByRole('alert')).toHaveTextContent('Не удалось обновить список устройств');
+  expect(screen.getByText('Список устройств недоступен')).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Повторить' }));
+  expect(mockRefetch).toHaveBeenCalledTimes(1);
+});
+
+it('warns when the API reports more devices than the loaded sample', () => {
+  mockCatalogTotal = 3;
+  render(<FleetStreamPage />);
+
+  expect(screen.getByRole('status')).toHaveTextContent('Загружено 2 из 3 устройств');
 });

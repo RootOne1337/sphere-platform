@@ -10,6 +10,11 @@ export interface DeviceStatusCounts {
   issues: number;
 }
 
+/** The API's busy state is a reachable device executing work, not an offline agent. */
+export function isDeviceReachable(device: Pick<Device, 'status'>): boolean {
+  return device.status === 'online' || device.status === 'busy';
+}
+
 export function scopeDevices(
   devices: Device[],
   groupId: string,
@@ -27,7 +32,7 @@ export function scopeDevices(
 
 export function countDeviceStatuses(devices: Device[]): DeviceStatusCounts {
   return {
-    online: devices.filter((device) => device.status === 'online' || device.status === 'busy').length,
+    online: devices.filter(isDeviceReachable).length,
     busy: devices.filter((device) => device.status === 'busy').length,
     connecting: devices.filter((device) => device.status === 'connecting').length,
     offline: devices.filter((device) => device.status === 'offline').length,
@@ -37,7 +42,7 @@ export function countDeviceStatuses(devices: Device[]): DeviceStatusCounts {
 
 export function filterDevicesByStatus(devices: Device[], status: DeviceStatusFilter): Device[] {
   if (status === 'all') return devices;
-  if (status === 'online') return devices.filter((device) => device.status === 'online' || device.status === 'busy');
+  if (status === 'online') return devices.filter(isDeviceReachable);
   if (status === 'busy') return devices.filter((device) => device.status === 'busy');
   if (status === 'connecting') return devices.filter((device) => device.status === 'connecting');
   if (status === 'offline') return devices.filter((device) => device.status === 'offline');
