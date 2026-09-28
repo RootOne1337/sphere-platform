@@ -23,11 +23,11 @@ describe('Infrastructure Monitoring page failure states', () => {
       </QueryClientProvider>,
     );
 
-    await waitFor(() => expect(screen.getByText('STATUS UNAVAILABLE')).toBeInTheDocument());
-    expect(screen.getByRole('alert')).toHaveTextContent('No healthy status is inferred');
-    expect(screen.queryByText('ALL OBSERVED CHECKS HEALTHY')).not.toBeInTheDocument();
+      await waitFor(() => expect(screen.getByText('Статус недоступен')).toBeInTheDocument());
+    expect(screen.getAllByRole('alert')[1]).toHaveTextContent('Статус здоровья не выводится из ошибки запроса');
+    expect(screen.queryByText('Все полученные проверки в норме')).not.toBeInTheDocument();
     expect(screen.queryByText('0 Mbps')).not.toBeInTheDocument();
-    expect(screen.getAllByText('Unavailable').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Недоступно').length).toBeGreaterThan(0);
   });
 
   it('shows degraded telemetry when metrics fail but verified health probes pass', async () => {
@@ -56,7 +56,27 @@ describe('Infrastructure Monitoring page failure states', () => {
       </QueryClientProvider>,
     );
 
-    await waitFor(() => expect(screen.getByText('HEALTH CHECKS PASS · TELEMETRY DEGRADED')).toBeInTheDocument());
-    expect(screen.getAllByText(/Metric request failed/)).toHaveLength(2);
+    await waitFor(() => expect(screen.getByText('Проверки прошли · метрики частично недоступны')).toBeInTheDocument());
+    expect(screen.getAllByText(/Запрос метрик завершился ошибкой/)).toHaveLength(2);
+  });
+
+  it('fails safely when the monitoring nodes endpoint returns an unexpected envelope', async () => {
+    jest.mocked(api.get).mockImplementation((url) => {
+      if (url.endsWith('/nodes')) return Promise.resolve({ data: { nodes: [] } });
+      return Promise.resolve({ data: {} });
+    });
+
+    const client = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    render(
+      <QueryClientProvider client={client}>
+        <MonitoringPage />
+      </QueryClientProvider>,
+    );
+
+    await waitFor(() => expect(screen.getByText('Статус недоступен')).toBeInTheDocument());
+    expect(screen.getAllByRole('alert').some((alert) => alert.textContent?.includes('пришёл некорректный ответ'))).toBe(true);
+    expect(screen.queryByText('Все полученные проверки в норме')).not.toBeInTheDocument();
   });
 });

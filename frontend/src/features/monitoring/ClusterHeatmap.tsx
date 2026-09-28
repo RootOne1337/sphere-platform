@@ -1,121 +1,132 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import { Server, Cpu, HardDrive, AlertTriangle } from 'lucide-react';
-import { Badge } from '@/src/shared/ui/badge';
-import { ClusterNode } from './monitoringTypes';
+import { useEffect, useMemo, useState } from 'react';
+import { AlertTriangle, Check, CircleHelp, Cpu, HardDrive, Server, Timer, Wifi } from 'lucide-react';
+import type { ClusterNode } from './monitoringTypes';
 
 interface ClusterHeatmapProps {
     nodes: ClusterNode[];
 }
 
+function normalizedStatus(node: ClusterNode) {
+    return String(node.status ?? 'UNKNOWN').toUpperCase();
+}
+
+function statusTone(status: string) {
+    if (status === 'HEALTHY' || status === 'OK') return 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-300';
+    if (status === 'WARNING' || status === 'DEGRADED') return 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-300';
+    if (status === 'CRITICAL' || status === 'DOWN') return 'border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-300';
+    return 'border-border bg-muted text-muted-foreground';
+}
+
+function ResourceValue({ label, value }: { label: string; value: number | null }) {
+    const present = value != null && Number.isFinite(value);
+    const percentage = present ? Math.min(100, Math.max(0, value)) : 0;
+    return (
+        <div className="min-w-0">
+            <div className="flex items-center justify-between gap-2 text-xs">
+                <span className="text-muted-foreground">{label}</span>
+                <span className="shrink-0 font-medium tabular-nums text-foreground">{present ? `${value}%` : 'Unavailable'}</span>
+            </div>
+            <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-muted" aria-hidden="true">
+                <span className={`block h-full rounded-full ${!present ? 'bg-transparent' : value! >= 90 ? 'bg-rose-500' : value! >= 75 ? 'bg-amber-500' : 'bg-emerald-500'}`} style={{ width: `${percentage}%` }} />
+            </div>
+        </div>
+    );
+}
+
 export function ClusterHeatmap({ nodes }: ClusterHeatmapProps) {
-    const [hoveredNode, setHoveredNode] = useState<ClusterNode | null>(null);
+    const groupedNodes = useMemo(() => nodes.reduce<Record<string, ClusterNode[]>>((groups, node) => {
+        const type = node.type || 'OTHER';
+        (groups[type] ??= []).push(node);
+        return groups;
+    }, {}), [nodes]);
+    const [selectedNodeId, setSelectedNodeId] = useState<string | null>(nodes[0]?.id ?? null);
 
-    // Group nodes by type
-    const groupedNodes = useMemo(() => {
-        return nodes.reduce((acc, node) => {
-            if (!acc[node.type]) acc[node.type] = [];
-            acc[node.type].push(node);
-            return acc;
-        }, {} as Record<string, ClusterNode[]>);
-    }, [nodes]);
+    useEffect(() => {
+        if (!nodes.some((node) => node.id === selectedNodeId)) setSelectedNodeId(nodes[0]?.id ?? null);
+    }, [nodes, selectedNodeId]);
 
-    const getColorClass = (status: string, usage: number) => {
-        const normalizedStatus = status.toUpperCase();
-        if (normalizedStatus === 'OFFLINE' || normalizedStatus === 'UNKNOWN') return 'bg-muted/50 border-border text-muted-foreground';
-        if (normalizedStatus === 'CRITICAL' || normalizedStatus === 'DOWN' || usage > 90) return 'bg-destructive/20 border-destructive/50 text-destructive animate-pulse shadow-[0_0_15px_rgba(239,68,68,0.2)]';
-        if (normalizedStatus === 'WARNING' || normalizedStatus === 'DEGRADED' || usage > 75) return 'bg-warning/20 border-warning/50 text-warning';
-
-        // Healthy - gradient based on load (green to yellow)
-        if (usage > 50) return 'bg-[#eab308]/10 border-[#eab308]/30 text-[#eab308]';
-        if (usage > 25) return 'bg-success/20 border-success/40 text-success';
-        return 'bg-success/5 border-success/20 text-success/70';
-    };
+    const selectedNode = nodes.find((node) => node.id === selectedNodeId) ?? nodes[0] ?? null;
 
     return (
-        <div className="flex flex-col h-full space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="grid gap-5 xl:grid-cols-[minmax(0,1.5fr)_minmax(280px,0.8fr)]">
+            <div className="space-y-4">
                 {Object.entries(groupedNodes).map(([type, typeNodes]) => (
-                    <div key={type} className="flex flex-col bg-card border border-border rounded-sm p-4">
-                        <div className="flex items-center justify-between mb-4 pb-2 border-b border-border">
-                            <h3 className="text-xs font-bold font-mono tracking-widest text-muted-foreground uppercase">{type} Layer</h3>
-                            <Badge variant="outline" className="text-[9px] bg-muted border-border">{typeNodes.length} Nodes</Badge>
+                    <section key={type} aria-labelledby={`service-group-${type}`} className="rounded-xl border border-border/80 bg-card">
+                        <div className="flex items-center justify-between gap-3 border-b border-border/70 px-4 py-3">
+                            <div className="flex min-w-0 items-center gap-2.5">
+                                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border bg-muted/70 text-muted-foreground" aria-hidden="true"><Server className="h-4 w-4" /></span>
+                                <div className="min-w-0"><h3 id={`service-group-${type}`} className="truncate text-sm font-semibold text-foreground">{type} layer</h3><p className="text-xs text-muted-foreground">Группа проверок backend</p></div>
+                            </div>
+                            <span className="shrink-0 rounded-full border border-border bg-background px-2.5 py-1 text-xs font-medium tabular-nums text-muted-foreground">{typeNodes.length}</span>
                         </div>
-
-                        <div className="grid grid-cols-4 gap-2">
-                            {typeNodes.map(node => {
-                                const resourceSamples = [node.cpu, node.ram].filter((value): value is number => value != null && Number.isFinite(value));
-                                const avgLoad = resourceSamples.length ? resourceSamples.reduce((sum, value) => sum + value, 0) / resourceSamples.length : 0;
-                                const status = String(node.status).toUpperCase();
+                        <div className="grid gap-2 p-3 sm:grid-cols-2 lg:grid-cols-3">
+                            {typeNodes.map((node) => {
+                                const status = normalizedStatus(node);
+                                const isSelected = node.id === selectedNode?.id;
+                                const icon = status === 'HEALTHY' || status === 'OK' ? <Check className="h-3.5 w-3.5" aria-hidden="true" />
+                                    : status === 'CRITICAL' || status === 'DOWN' ? <AlertTriangle className="h-3.5 w-3.5" aria-hidden="true" />
+                                    : <CircleHelp className="h-3.5 w-3.5" aria-hidden="true" />;
                                 return (
-                                    <div
+                                    <button
                                         key={node.id}
-                                        onMouseEnter={() => setHoveredNode(node)}
-                                        onMouseLeave={() => setHoveredNode(null)}
-                                        className={`aspect-square rounded-sm border flex items-center justify-center cursor-pointer transition-all duration-300 hover:scale-110 relative group ${getColorClass(node.status, avgLoad)}`}
+                                        type="button"
+                                        onClick={() => setSelectedNodeId(node.id)}
+                                        onFocus={() => setSelectedNodeId(node.id)}
+                                        aria-pressed={isSelected}
+                                        aria-label={`${node.name}, ${node.type}, ${status}`}
+                                        title={`${node.name} · ${node.id} · ${status}`}
+                                        className={`min-w-0 rounded-lg border p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background motion-reduce:transition-none ${statusTone(status)} ${isSelected ? 'ring-2 ring-primary/70 ring-offset-1 ring-offset-background' : 'hover:border-primary/40'}`}
                                     >
-                                        <span className="text-[8px] font-mono font-bold opacity-0 group-hover:opacity-100 transition-opacity absolute">{resourceSamples.length ? `${avgLoad.toFixed(0)}%` : status}</span>
-                                        {(status === 'CRITICAL' || status === 'DOWN') && <AlertTriangle className="w-3 h-3 absolute -top-1 -right-1" />}
-                                    </div>
+                                        <span className="flex min-w-0 items-start justify-between gap-2">
+                                            <span className="min-w-0"><span className="block truncate text-sm font-medium">{node.name}</span><span className="mt-0.5 block truncate font-mono text-[11px] opacity-70">{node.id}</span></span>
+                                            <span className="flex shrink-0 items-center gap-1 rounded-full border border-current/20 bg-background/60 px-2 py-1 text-[10px] font-semibold">{icon}{status}</span>
+                                        </span>
+                                        <span className="mt-3 grid grid-cols-2 gap-3 border-t border-current/10 pt-2.5">
+                                            <span className="flex min-w-0 items-center gap-1.5 text-xs"><Cpu className="h-3 w-3 shrink-0 opacity-70" aria-hidden="true" /><span className="truncate">CPU {node.cpu == null ? '—' : `${node.cpu}%`}</span></span>
+                                            <span className="flex min-w-0 items-center gap-1.5 text-xs"><HardDrive className="h-3 w-3 shrink-0 opacity-70" aria-hidden="true" /><span className="truncate">RAM {node.ram == null ? '—' : `${node.ram}%`}</span></span>
+                                        </span>
+                                    </button>
                                 );
                             })}
                         </div>
-                    </div>
+                    </section>
                 ))}
             </div>
 
-            {/* Details Panel */}
-            <div className="bg-muted border border-border rounded-sm p-5 min-h-[140px] flex items-center shadow-inner relative overflow-hidden">
-                {hoveredNode ? (
-                    <div className="w-full flex justify-between items-center z-10 relative">
-                        <div className="flex items-center gap-4">
-                            <div className={`p-4 rounded-sm ${String(hoveredNode.status).toUpperCase() === 'CRITICAL' ? 'bg-destructive/20 text-destructive' : String(hoveredNode.status).toUpperCase() === 'WARNING' ? 'bg-warning/20 text-warning' : String(hoveredNode.status).toUpperCase() === 'HEALTHY' ? 'bg-success/20 text-success' : 'bg-muted text-muted-foreground'}`}>
-                                <Server className="w-8 h-8" />
+            <aside aria-label="Выбранная проверка сервиса" className="h-fit rounded-xl border border-border/80 bg-card xl:sticky xl:top-4">
+                {selectedNode ? (
+                    <>
+                        <div className="flex items-start justify-between gap-3 border-b border-border/70 p-4">
+                            <div className="flex min-w-0 items-center gap-3">
+                                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border bg-muted/70 text-muted-foreground"><Server className="h-5 w-5" aria-hidden="true" /></span>
+                                <div className="min-w-0"><p className="text-xs text-muted-foreground">Выбранный сервис</p><h3 className="truncate text-base font-semibold text-foreground" title={selectedNode.name}>{selectedNode.name}</h3></div>
                             </div>
-                            <div>
-                                <h2 className="text-lg font-bold font-mono text-foreground tracking-tight">{hoveredNode.name}</h2>
-                                <p className="text-xs text-muted-foreground font-mono mt-1 flex items-center gap-2">
-                                    <span className="text-muted-foreground border border-border px-1.5 py-0.5 rounded-sm bg-background">{hoveredNode.id}</span>
-                                    <span>•</span>
-                                    <span className="uppercase tracking-widest">{hoveredNode.type} Node</span>
-                                    <span>•</span>
-                                    <span>{String(hoveredNode.status).toUpperCase()}</span>
-                                </p>
-                                <p className="text-[10px] text-muted-foreground font-mono mt-2">
-                                    Probe latency: {hoveredNode.latencyMs == null ? 'Unavailable' : `${hoveredNode.latencyMs.toFixed(1)} ms`}
-                                </p>
+                            <span className={`shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-semibold ${statusTone(normalizedStatus(selectedNode))}`}>{normalizedStatus(selectedNode)}</span>
+                        </div>
+                        <div className="space-y-5 p-4">
+                            <dl className="grid grid-cols-[5.5rem_minmax(0,1fr)] gap-x-3 gap-y-2 text-xs">
+                                <dt className="text-muted-foreground">ID</dt><dd className="truncate font-mono text-foreground" title={selectedNode.id}>{selectedNode.id}</dd>
+                                <dt className="text-muted-foreground">Тип</dt><dd className="text-foreground">{selectedNode.type}</dd>
+                                <dt className="flex items-center gap-1 text-muted-foreground"><Timer className="h-3 w-3" aria-hidden="true" />Uptime</dt><dd className="text-foreground">{selectedNode.uptime || 'Unavailable'}</dd>
+                                <dt className="flex items-center gap-1 text-muted-foreground"><Wifi className="h-3 w-3" aria-hidden="true" />Задержка</dt><dd className="text-foreground">{selectedNode.latencyMs == null || !Number.isFinite(selectedNode.latencyMs) ? 'Unavailable' : `${selectedNode.latencyMs.toFixed(1)} ms`}</dd>
+                            </dl>
+                            <div className="space-y-4 border-t border-border/70 pt-4">
+                                <ResourceValue label="CPU" value={selectedNode.cpu} />
+                                <ResourceValue label="RAM" value={selectedNode.ram} />
+                                <ResourceValue label="Диск" value={selectedNode.disk} />
                             </div>
                         </div>
-
-                        <div className="flex gap-8">
-                            <div className="flex flex-col">
-                                <span className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground/60 mb-2 flex items-center gap-1"><Cpu className="w-3 h-3" /> CPU Load</span>
-                                <div className="w-32 h-2 bg-border rounded-full overflow-hidden">
-                                    {hoveredNode.cpu != null && <div className={`h-full ${hoveredNode.cpu > 80 ? 'bg-destructive' : hoveredNode.cpu > 50 ? 'bg-warning' : 'bg-success'}`} style={{ width: `${hoveredNode.cpu}%` }}></div>}
-                                </div>
-                                <span className="text-xs mt-1 font-mono text-right">{hoveredNode.cpu == null ? 'Unavailable' : `${hoveredNode.cpu}%`}</span>
-                            </div>
-                            <div className="flex flex-col">
-                                <span className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground/60 mb-2 flex items-center gap-1"><HardDrive className="w-3 h-3" /> Memory</span>
-                                <div className="w-32 h-2 bg-border rounded-full overflow-hidden">
-                                    {hoveredNode.ram != null && <div className={`h-full ${hoveredNode.ram > 80 ? 'bg-destructive' : hoveredNode.ram > 50 ? 'bg-warning' : 'bg-success'}`} style={{ width: `${hoveredNode.ram}%` }}></div>}
-                                </div>
-                                <span className="text-xs mt-1 font-mono text-right">{hoveredNode.ram == null ? 'Unavailable' : `${hoveredNode.ram}%`}</span>
-                            </div>
-                        </div>
-                    </div>
+                    </>
                 ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center opacity-50 z-10 relative">
-                        <Server className="w-6 h-6 text-muted-foreground mb-2" />
-                        <p className="text-xs font-mono uppercase tracking-widest text-muted-foreground">Hover over any node in the matrix to inspect telemetry.</p>
+                    <div className="p-6 text-center">
+                        <Server className="mx-auto h-6 w-6 text-muted-foreground" aria-hidden="true" />
+                        <p className="mt-3 text-sm font-medium text-foreground">Нет выбранных проверок</p>
+                        <p className="mt-1 text-xs text-muted-foreground">Сервисы появятся после ответа backend.</p>
                     </div>
                 )}
-
-                {/* Decorative background logo */}
-                <Server className="w-64 h-64 text-foreground/5 absolute -right-10 -bottom-20 pointer-events-none" />
-            </div>
-
+            </aside>
         </div>
     );
 }

@@ -43,10 +43,22 @@ describe('monitoring status presentation', () => {
   it('renders absent resource samples as unavailable instead of zero', () => {
     render(<ClusterHeatmap nodes={[node('HEALTHY')]} />);
 
-    fireEvent.mouseEnter(screen.getByText('HEALTHY'));
+    const service = screen.getByRole('button', { name: 'PostgreSQL, DB, HEALTHY' });
+    expect(service).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.click(service);
 
-    expect(screen.getAllByText('Unavailable')).toHaveLength(2);
-    expect(screen.getByText(/Probe latency: Unavailable/)).toBeInTheDocument();
+    expect(screen.getAllByText('Unavailable')).toHaveLength(4);
     expect(screen.queryByText('0%')).not.toBeInTheDocument();
+  });
+
+  it('lets keyboard users inspect a service from the registry', () => {
+    const second = { ...node('WARNING'), id: 'worker-2', name: 'Worker 2', type: 'WORKER' as const, latencyMs: 18.4 };
+    render(<ClusterHeatmap nodes={[node('HEALTHY'), second]} />);
+
+    const worker = screen.getByRole('button', { name: 'Worker 2, WORKER, WARNING' });
+    fireEvent.focus(worker);
+
+    expect(worker).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByText('18.4 ms')).toBeInTheDocument();
   });
 });
