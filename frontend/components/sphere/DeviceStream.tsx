@@ -196,6 +196,11 @@ export function DeviceStream({
           lastReceived = Date.now();
           newWs.send(JSON.stringify({ token: accessToken }));
           setConnection('waiting');
+          clearTimeout(frameStaleTimer);
+          frameStaleTimer = setTimeout(() => {
+            if (ignore || ended || newWs !== wsRef.current || newWs.readyState !== WebSocket.OPEN) return;
+            setConnection('stale');
+          }, FRAME_STALE_TIMEOUT_MS);
           scheduleKeyFrameRequests();
         };
         newWs.onmessage = (evt) => {
@@ -413,7 +418,7 @@ export function DeviceStream({
           {streamError ?? (
             connection === 'connecting' ? 'Подключение…' :
             connection === 'waiting' ? 'Ожидание видеокадра…' :
-            connection === 'stale' ? 'Нет новых видеокадров более 10 секунд' :
+            connection === 'stale' ? 'Первый видеокадр не получен за 10 секунд' :
             connection === 'retrying' ? 'Переподключение…' : 'Стрим недоступен'
           )}
         </div>

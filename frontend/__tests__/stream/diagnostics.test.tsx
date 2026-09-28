@@ -17,6 +17,7 @@ jest.mock('@/lib/h264-decoder', () => ({ H264Decoder: class {
 
 class Socket {
   static CONNECTING = 0; static OPEN = 1; static CLOSING = 2; static CLOSED = 3;
+  static instances: Socket[] = [];
   readyState = Socket.CONNECTING;
   binaryType = '';
   onopen: (() => void) | null = null;
@@ -25,11 +26,12 @@ class Socket {
   onmessage: ((event: { data: string | ArrayBuffer }) => void) | null = null;
   send = jest.fn();
   close = jest.fn(() => { this.readyState = Socket.CLOSED; });
-  constructor(_url: string) {}
+  constructor() { Socket.instances.push(this); }
 }
 
 beforeEach(() => {
   jest.useFakeTimers();
+  Socket.instances = [];
   mockStats = {
     binaryMessagesReceived: 7, binaryBytesReceived: 4096, validPackets: 7, invalidPackets: 0,
     spsUnits: 1, ppsUnits: 1, idrUnits: 1, deltaUnits: 4, decodeSubmitted: 5,
@@ -75,6 +77,22 @@ it('shows agent and browser stages only when operator opens diagnostics', async 
   expect(screen.getByText('IDR/delta: 1/4')).toBeInTheDocument();
   expect(screen.getByText('Decoded output: 4')).toBeInTheDocument();
   expect(api.get).toHaveBeenCalledWith('/devices/device-1/stream-diagnostics');
+});
+
+it('reports a missing first frame even when WebSocket pings keep the connection open', () => {
+  render(<DeviceStream deviceId="device-no-frame" />);
+  act(() => jest.advanceTimersByTime(0));
+
+  const socket = Socket.instances[0];
+  socket.readyState = Socket.OPEN;
+  act(() => socket.onopen?.());
+  act(() => socket.onmessage?.({ data: JSON.stringify({ type: 'ping' }) }));
+
+  act(() => jest.advanceTimersByTime(9_999));
+  expect(screen.queryByText('Первый видеокадр не получен за 10 секунд')).not.toBeInTheDocument();
+  act(() => jest.advanceTimersByTime(1));
+
+  expect(screen.getByText('Первый видеокадр не получен за 10 секунд')).toBeInTheDocument();
 });
 
 it('applies the requested fit mode to the actual canvas surface', () => {
