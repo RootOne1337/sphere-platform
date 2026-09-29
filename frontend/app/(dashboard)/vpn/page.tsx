@@ -15,9 +15,11 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { DeviceSearchSelect } from '@/components/sphere/DeviceSearchSelect';
 
 import { useVpnPeers, usePoolStats, useAssignVpn, useVpnRotate, useVpnKillSwitch } from '@/lib/hooks/useVpn';
-import { useDevices, useBulkAction } from '@/lib/hooks/useDevices';
+import { useBulkAction } from '@/lib/hooks/useDevices';
+import { getApiErrorMessage } from '@/lib/apiError';
 
 interface Tunnel {
   id: string;
@@ -39,6 +41,7 @@ export default function VPNManagerPage() {
   const [provisionDialogOpen, setProvisionDialogOpen] = useState(false);
   const [configureDialogOpen, setConfigureDialogOpen] = useState<string | null>(null); // peer id
   const [provisionDeviceId, setProvisionDeviceId] = useState('');
+  const [provisionError, setProvisionError] = useState<string | null>(null);
 
   // Используем хук вместо инлайн-запроса для единообразия и корректного кеширования
   const { data: rawPeers = [], isLoading } = useVpnPeers();
@@ -48,8 +51,7 @@ export default function VPNManagerPage() {
   const killSwitch = useVpnKillSwitch();
   const bulkAction = useBulkAction();
 
-  // Получаем список устройств для диалога Provision
-  const { data: devicesData } = useDevices({ page_size: 5000 });
+  const peerDeviceIds = useMemo(() => new Set(rawPeers.map((peer) => peer.device_id)), [rawPeers]);
 
   const tunnels: Tunnel[] = useMemo(() =>
     rawPeers.map((d) => ({
@@ -74,7 +76,7 @@ export default function VPNManagerPage() {
     }));
   }, []);
 
-  const generateNodeData = (_id: string) => {
+  const generateNodeData = () => {
     return Array.from({ length: 15 }).map((_, i) => ({
       time: `${i}m`,
       rx: 0,
@@ -136,7 +138,11 @@ export default function VPNManagerPage() {
             <Button variant="outline" size="sm" className="h-9 border-border hover:bg-border" onClick={() => setPolicyDialogOpen(true)}>
               <Settings className="w-4 h-4 mr-2" /> Global Policy
             </Button>
-            <Button variant="default" size="sm" className="h-9" onClick={() => setProvisionDialogOpen(true)}>
+            <Button variant="default" size="sm" className="h-9" onClick={() => {
+              setProvisionDeviceId('');
+              setProvisionError(null);
+              setProvisionDialogOpen(true);
+            }}>
               <Plus className="w-4 h-4 mr-2" /> Provision Node
             </Button>
           </div>
@@ -212,7 +218,7 @@ export default function VPNManagerPage() {
                   </div>
                   <div className="col-span-2 h-[45px] opacity-80 pt-1">
                     {/* Mini individual chart per node */}
-                    <ThroughputChart data={generateNodeData(tunnel.id)} />
+                    <ThroughputChart data={generateNodeData()} />
                   </div>
                 </div>
               </div>
@@ -317,7 +323,13 @@ export default function VPNManagerPage() {
       </Dialog>
 
       {/* Диалог Provision Node — назначить VPN устройству */}
-      <Dialog open={provisionDialogOpen} onOpenChange={setProvisionDialogOpen}>
+      <Dialog open={provisionDialogOpen} onOpenChange={(open) => {
+        setProvisionDialogOpen(open);
+        if (!open) {
+          setProvisionDeviceId('');
+          setProvisionError(null);
+        }
+      }}>
         <DialogContent aria-describedby={undefined}>
           <DialogHeader>
             <DialogTitle className="font-mono">Provision VPN Node</DialogTitle>
@@ -325,26 +337,31 @@ export default function VPNManagerPage() {
           <div className="space-y-4 pt-2">
             <div className="space-y-1">
               <Label className="text-xs font-mono">Устройство</Label>
-              <select
+              <DeviceSearchSelect
                 value={provisionDeviceId}
-                onChange={(e) => setProvisionDeviceId(e.target.value)}
-                className="w-full px-3 py-2 rounded border border-border bg-background text-sm font-mono"
-              >
-                <option value="">Выбери устройство…</option>
-                {devicesData?.items
-                  ?.filter((d) => !rawPeers.some((p) => p.device_id === d.id))
-                  .map((d) => (
-                    <option key={d.id} value={d.id}>{d.name} ({d.model})</option>
-                  ))}
-              </select>
+                onChange={(deviceId) => {
+                  setProvisionDeviceId(deviceId);
+                  setProvisionError(null);
+                }}
+                disabled={assignVpn.isPending}
+                excludedIds={peerDeviceIds}
+                placeholder="Выбери устройство…"
+              />
             </div>
+            {provisionError && <p className="text-sm text-destructive" role="alert">{provisionError}</p>}
             <Button
               className="w-full"
-              disabled={!provisionDeviceId || assignVpn.isPending}
+              disabled={!provisionDeviceId || peerDeviceIds.has(provisionDeviceId) || assignVpn.isPending}
               onClick={async () => {
-                await assignVpn.mutateAsync({ device_id: provisionDeviceId });
-                setProvisionDeviceId('');
-                setProvisionDialogOpen(false);
+                if (!provisionDeviceId || peerDeviceIds.has(provisionDeviceId)) return;
+                setProvisionError(null);
+                try {
+                  await assignVpn.mutateAsync({ device_id: provisionDeviceId });
+                  setProvisionDeviceId('');
+                  setProvisionDialogOpen(false);
+                } catch (error) {
+                  setProvisionError(getApiErrorMessage(error, 'Не удалось назначить VPN устройству. Проверьте состояние и повторите вручную.'));
+                }
               }}
             >
               {assignVpn.isPending ? 'Provisioning…' : 'Assign VPN'}

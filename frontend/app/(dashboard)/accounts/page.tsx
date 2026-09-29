@@ -15,7 +15,7 @@ import {
   type AccountStatus,
   type GameAccountParams,
 } from "@/lib/hooks/useGameAccounts";
-import { useDevices } from "@/lib/hooks/useDevices";
+import { DeviceSearchSelect } from "@/components/sphere/DeviceSearchSelect";
 import { Button } from "@/src/shared/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/src/shared/ui/badge";
@@ -171,7 +171,6 @@ export default function AccountsPage() {
   // Данные
   const { data, isLoading, refetch } = useGameAccounts(params);
   const { data: stats } = useAccountStats();
-  const { data: devicesData } = useDevices({ page: 1, page_size: 5000 });
   const { data: serversData } = useServers();
   const serversList = serversData?.servers ?? [];
 
@@ -605,7 +604,6 @@ export default function AccountsPage() {
         }}
         isLoading={updateMut.isPending}
         servers={serversList}
-        devices={devicesData?.items ?? []}
       />
 
       <ImportDialog
@@ -618,7 +616,6 @@ export default function AccountsPage() {
 
       <AssignDialog
         account={assignAccount}
-        devices={devicesData?.items ?? []}
         onClose={() => setAssignAccount(null)}
         onAssign={(deviceId) => {
           if (assignAccount) { assignMut.mutate({ id: assignAccount.id, device_id: deviceId }, { onSuccess: () => setAssignAccount(null) }); }
@@ -867,14 +864,12 @@ function EditAccountDialog({
   onSave,
   isLoading,
   servers,
-  devices,
 }: {
   account: GameAccount | null;
   onClose: () => void;
   onSave: (data: Record<string, unknown>) => void;
   isLoading: boolean;
   servers: Array<{ id: number; name: string }>;
-  devices: Array<{ id: string; name: string; status: string }>;
 }) {
   const [login, setLogin] = useState("");
   const [password, setPassword] = useState("");
@@ -1176,13 +1171,11 @@ function ImportDialog({
 
 function AssignDialog({
   account,
-  devices,
   onClose,
   onAssign,
   isLoading,
 }: {
   account: GameAccount | null;
-  devices: Array<{ id: string; name: string; status: string }>;
   onClose: () => void;
   onAssign: (deviceId: string) => void;
   isLoading: boolean;
@@ -1202,26 +1195,12 @@ function AssignDialog({
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-3 py-2">
-          <Select value={deviceId} onValueChange={setDeviceId}>
-            <SelectTrigger className="text-xs font-mono">
-              <SelectValue placeholder="Выберите устройство (эмулятор)..." />
-            </SelectTrigger>
-            <SelectContent>
-              {devices.map((d) => (
-                <SelectItem key={d.id} value={d.id}>
-                  <span className="flex items-center gap-1.5">
-                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${d.status === "online" ? "bg-emerald-400" : d.status === "offline" ? "bg-red-400" : "bg-gray-400"}`} />
-                    <Monitor className="w-3 h-3" />
-                    {d.name}
-                    <span className="text-muted-foreground/60 text-[9px] ml-1">({d.status})</span>
-                  </span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {devices.length === 0 && (
-            <p className="text-xs text-muted-foreground">Нет зарегистрированных устройств</p>
-          )}
+          <DeviceSearchSelect
+            value={deviceId}
+            onChange={setDeviceId}
+            disabled={isLoading}
+            placeholder="Выберите устройство (эмулятор)…"
+          />
         </div>
         <DialogFooter>
           <Button variant="outline" size="sm" onClick={() => { setDeviceId(""); onClose(); }}>Отмена</Button>
