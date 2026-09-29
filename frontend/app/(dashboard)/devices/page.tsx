@@ -142,6 +142,13 @@ export default function DevicesPage() {
   const pageStart = data && data.total > 0 ? (data.page - 1) * data.page_size + 1 : 0;
   const pageEnd = data ? Math.min(data.page * data.page_size, data.total) : 0;
   const scopeTotal = data?.scope_total ?? data?.total ?? 0;
+  const hasSnapshot = data !== undefined;
+  const presenceLabel = data?.presence_available === true ? 'доступен'
+    : data?.presence_available === false ? 'недоступен' : 'состояние не сообщено API';
+  const offlineNote = data?.presence_available === true ? 'нет активного live presence'
+    : data?.presence_available === false ? 'источник live presence недоступен' : 'по статусам ответа API';
+  const validSnapshotTime = data?.as_of && Number.isFinite(Date.parse(data.as_of))
+    ? new Date(data.as_of).toLocaleString('ru-RU', { timeZone: 'UTC', hour12: false }) + ' UTC' : 'без отметки времени';
 
   // Обработчик действий из контекстного меню FleetMatrix (для одного устройства)
   const handleDeviceAction = useCallback((deviceId: string, action: DeviceAction) => {
@@ -324,7 +331,7 @@ export default function DevicesPage() {
               <span className="rounded-full border border-border bg-card px-2.5 py-1 text-xs font-medium text-muted-foreground">Fleet Matrix</span>
             </div>
             <p className="mt-2 text-sm text-muted-foreground">
-              {data ? `Показано ${pageStart}–${pageEnd} из ${data.total}; в области фильтров ${scopeTotal} устройств.` : 'Загрузка реестра…'}
+              {data ? `Показано ${pageStart}–${pageEnd} из ${data.total}; в области фильтров ${scopeTotal} устройств.` : devicesLoadError ? 'Реестр сейчас недоступен.' : 'Загрузка реестра…'}
               {' '}Live-статусы и счётчики берутся из API.
             </p>
           </div>
@@ -371,12 +378,12 @@ export default function DevicesPage() {
 
         <section aria-label="Состояние устройств" className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 xl:grid-cols-6">
           {[
-            { filter: 'all' as const, label: 'В области', value: isLoading ? '—' : scopeTotal, note: 'поиск, группа и локация', icon: Cpu, tone: 'text-primary' },
-            { filter: 'online' as const, label: 'В сети', value: isLoading ? '—' : statusCounts.online, note: 'online + busy по API', icon: Wifi, tone: 'text-emerald-700 dark:text-emerald-400' },
-            { filter: 'busy' as const, label: 'В работе', value: isLoading ? '—' : statusCounts.busy, note: 'подмножество статуса «В сети»', icon: Activity, tone: 'text-primary' },
-            { filter: 'connecting' as const, label: 'Подключаются', value: isLoading ? '—' : statusCounts.connecting, note: 'ждут первый heartbeat', icon: Loader2, tone: 'text-amber-700 dark:text-amber-400' },
-            { filter: 'offline' as const, label: 'Не в сети', value: isLoading ? '—' : statusCounts.offline, note: data?.presence_available ? 'Redis доступен, live presence отсутствует' : 'источник live presence недоступен', icon: WifiOff, tone: 'text-muted-foreground' },
-            { filter: 'attention' as const, label: 'Требуют внимания', value: isLoading ? '—' : statusCounts.issues, note: 'ошибка, неизвестно или обслуживание', icon: AlertTriangle, tone: 'text-amber-700 dark:text-amber-400' },
+            { filter: 'all' as const, label: 'В области', value: hasSnapshot ? scopeTotal : '—', note: 'поиск, группа и локация', icon: Cpu, tone: 'text-primary' },
+            { filter: 'online' as const, label: 'В сети', value: hasSnapshot ? statusCounts.online : '—', note: 'online + busy по API', icon: Wifi, tone: 'text-emerald-700 dark:text-emerald-400' },
+            { filter: 'busy' as const, label: 'В работе', value: hasSnapshot ? statusCounts.busy : '—', note: 'подмножество статуса «В сети»', icon: Activity, tone: 'text-primary' },
+            { filter: 'connecting' as const, label: 'Подключаются', value: hasSnapshot ? statusCounts.connecting : '—', note: 'ждут первый heartbeat', icon: Loader2, tone: 'text-amber-700 dark:text-amber-400' },
+            { filter: 'offline' as const, label: 'Не в сети', value: hasSnapshot ? statusCounts.offline : '—', note: offlineNote, icon: WifiOff, tone: 'text-muted-foreground' },
+            { filter: 'attention' as const, label: 'Требуют внимания', value: hasSnapshot ? statusCounts.issues : '—', note: 'ошибка, неизвестно или обслуживание', icon: AlertTriangle, tone: 'text-amber-700 dark:text-amber-400' },
           ].map(({ filter, label, value, note, icon: Icon, tone }) => (
             <button
               key={label}
@@ -397,6 +404,9 @@ export default function DevicesPage() {
             </button>
           ))}
         </section>
+        {data && !data.status_counts && <p role="status" className="rounded-lg border border-amber-500/25 bg-amber-500/5 px-4 py-3 text-sm text-muted-foreground">
+          Статусы рассчитаны по загруженной странице ({pageItems.length} строк). API не передал сводку всей области.
+        </p>}
       </header>
 
       <section aria-label="Устройства и операции" className="flex min-h-[28rem] flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm md:min-h-0">
@@ -562,7 +572,7 @@ export default function DevicesPage() {
           )}
           <nav aria-label="Страницы реестра устройств" className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-3">
             <p className="text-xs text-muted-foreground" aria-live="polite">
-              {data ? `Страница ${data.page} из ${Math.max(1, data.pages)} · ${pageItems.length} строк · live presence ${data.presence_available ? 'доступен' : 'недоступен'} · срез API ${data.as_of ? `${new Date(data.as_of).toLocaleTimeString([], { hour12: false, timeZone: 'UTC' })} UTC` : 'без отметки времени'} · обновление каждые 30 с` : 'Пагинация появится после загрузки данных'}
+              {data ? `Страница ${data.page} из ${Math.max(1, data.pages)} · ${pageItems.length} строк · live presence ${presenceLabel} · срез API ${validSnapshotTime} · обновление каждые 30 с` : 'Пагинация появится после загрузки данных'}
             </p>
             <div className="flex items-center gap-2">
               <label htmlFor="device-page-size" className="text-xs text-muted-foreground">Строк на странице</label>

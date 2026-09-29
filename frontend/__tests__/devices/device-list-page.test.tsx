@@ -113,6 +113,38 @@ beforeEach(() => {
 
 afterEach(() => jest.clearAllMocks());
 
+it('does not treat absent legacy metadata as a failed live-presence source', () => {
+  render(<DevicesPage />);
+  expect(screen.getByRole('navigation', { name: 'Страницы реестра устройств' })).toHaveTextContent('live presence состояние не сообщено API');
+  expect(screen.getByText(/Статусы рассчитаны по загруженной странице/)).toBeInTheDocument();
+  expect(screen.queryByText('источник live presence недоступен')).not.toBeInTheDocument();
+});
+
+it.each([true, false])('renders explicit presence metadata %s separately from unsupported metadata', (available) => {
+  jest.mocked(useDevices).mockReturnValue({
+    data: {
+      items: devices, total: 4, page: 1, page_size: 100, pages: 1, scope_total: 4,
+      presence_available: available, as_of: '2026-09-30T10:15:00Z',
+      status_counts: { online: 2, busy: 1, connecting: 1, offline: 0, issues: 1 },
+    },
+    isLoading: false, isFetching: false, isError: false, refetch: jest.fn(),
+  } as never);
+  render(<DevicesPage />);
+  const footer = screen.getByRole('navigation', { name: 'Страницы реестра устройств' });
+  expect(footer).toHaveTextContent(`live presence ${available ? 'доступен' : 'недоступен'}`);
+  expect(footer).toHaveTextContent('30.09.2026, 10:15:00 UTC');
+  expect(screen.queryByText(/Статусы рассчитаны по загруженной странице/)).not.toBeInTheDocument();
+});
+
+it('uses unknown KPI values when the first catalog request fails without a snapshot', () => {
+  jest.mocked(useDevices).mockReturnValue({ data: undefined, isLoading: false, isFetching: false, isError: true, error: new Error('offline'), refetch: jest.fn() } as never);
+  render(<DevicesPage />);
+  const cards = screen.getByRole('region', { name: 'Состояние устройств' });
+  expect(within(cards).getAllByText('—')).toHaveLength(6);
+  expect(within(cards).queryByText('0')).not.toBeInTheDocument();
+  expect(screen.getByRole('alert')).toHaveTextContent('Не удалось загрузить актуальный список устройств');
+});
+
 it('wires fleet status cards to the visible device list and clears attention through the same filter', () => {
   render(<DevicesPage />);
   const list = screen.getByRole('list', { name: 'Filtered devices' });
