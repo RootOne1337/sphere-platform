@@ -1,20 +1,19 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Activity, AlertTriangle, CheckCircle2, Clock3, MonitorPlay, Radio, RefreshCw, Search, Wifi, WifiOff, Zap } from 'lucide-react';
 import { DeviceStream } from '@/components/sphere/DeviceStream';
 import { useDevices, type Device } from '@/lib/hooks/useDevices';
+import { useDebounce } from '@/lib/hooks/useDebounce';
 import { useGroups } from '@/lib/hooks/useGroups';
 import { useLocations } from '@/lib/hooks/useLocations';
 import {
-  countDeviceStatuses,
-  filterDevicesByStatus,
   isDeviceReachable,
   type DeviceStatusFilter,
 } from '@/src/features/devices/deviceListFilters';
 import { getStreamAspectRatio, type StreamFrameDimensions } from '@/src/features/stream/streamAspectRatio';
 
-/** Maximum number of viewers opened by this page at once. Streams start only on an explicit user action. */
+/** Grid capacities also bound the server response; streams start only on an explicit user action. */
 const GRID_SIZES = [1, 2, 4, 6, 9, 12, 16, 25, 32, 64] as const;
 const EMPTY_DEVICES: Device[] = [];
 
@@ -63,44 +62,36 @@ export default function FleetStreamPage() {
   const [frameDimensionsByDevice, setFrameDimensionsByDevice] = useState<Record<string, StreamFrameDimensions>>({});
   const [statusFilter, setStatusFilter] = useState<DeviceStatusFilter>('all');
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search.trim(), 300);
   const [listPage, setListPage] = useState(1);
   const [filterGroupId, setFilterGroupId] = useState('');
   const [filterLocationId, setFilterLocationId] = useState('');
   const [sortField, setSortField] = useState<SortField>('name');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
 
-  const { data, dataUpdatedAt, isLoading, isError, isFetching, refetch } = useDevices({ page_size: 5000 });
+  const liveStatus = statusFilter === 'all' ? undefined : statusFilter;
+  const { data, dataUpdatedAt, isLoading, isError, isFetching, refetch } = useDevices({
+    page: listPage,
+    page_size: gridSize,
+    live_status: liveStatus,
+    search: debouncedSearch || undefined,
+    group_id: filterGroupId || undefined,
+    location_id: filterLocationId || undefined,
+  });
   const catalogUpdatedAt = dataUpdatedAt > 0 ? new Date(dataUpdatedAt) : null;
   const allDevices = data?.items ?? EMPTY_DEVICES;
-  const catalogTotal = data?.total ?? allDevices.length;
-  const hasUnloadedDevices = catalogTotal > allDevices.length;
-  const statusCounts = useMemo(() => countDeviceStatuses(allDevices), [allDevices]);
+  const scopeTotal = data?.scope_total ?? data?.total ?? 0;
+  const statusCounts = data?.status_counts ?? null;
   const { data: groups } = useGroups();
   const { data: locations } = useLocations();
 
-  const devicesForStatus = useMemo(
-    () => filterDevicesByStatus(allDevices, statusFilter),
-    [allDevices, statusFilter],
-  );
-
-  const filteredDevices = useMemo(() => {
-    const query = search.trim().toLocaleLowerCase();
-    return devicesForStatus.filter((device) => {
-      const matchesGroup = !filterGroupId || device.group_id === filterGroupId || device.group_ids?.includes(filterGroupId);
-      const matchesLocation = !filterLocationId || device.location_ids?.includes(filterLocationId);
-      const matchesSearch = !query || [device.name, device.android_id, device.model]
-        .some((value) => value?.toLocaleLowerCase().includes(query));
-      return matchesGroup && matchesLocation && matchesSearch;
-    });
-  }, [devicesForStatus, filterGroupId, filterLocationId, search]);
-
-  const statusFilterCounts: Record<DeviceStatusFilter, number> = {
-    all: allDevices.length,
-    online: statusCounts.online,
-    busy: statusCounts.busy,
-    connecting: statusCounts.connecting,
-    offline: statusCounts.offline,
-    attention: statusCounts.issues,
+  const statusFilterCounts: Record<DeviceStatusFilter, number | null> = {
+    all: scopeTotal,
+    online: statusCounts?.online ?? null,
+    busy: statusCounts?.busy ?? null,
+    connecting: statusCounts?.connecting ?? null,
+    offline: statusCounts?.offline ?? null,
+    attention: statusCounts?.issues ?? null,
   };
 
   const sortedDevices = useMemo(() => {
@@ -124,14 +115,21 @@ export default function FleetStreamPage() {
       }
       return 0;
     };
-    return [...filteredDevices].sort((a, b) => (sortDir === 'asc' ? 1 : -1) * compare(a, b));
-  }, [filteredDevices, sortDir, sortField]);
+    // The API owns global filtering and paging. This optional sort is deliberately
+    // page-local until the backend exposes a validated sort contract.
+    return [...allDevices].sort((a, b) => (sortDir === 'asc' ? 1 : -1) * compare(a, b));
+  }, [allDevices, sortDir, sortField]);
 
-  // The selected grid capacity is also the page size. This keeps every filtered
-  // device reachable through pagination instead of silently skipping rows.
-  const totalPages = Math.max(1, Math.ceil(sortedDevices.length / gridSize));
+  // The selected grid capacity is also the server page size, bounding both the
+  // response body and DOM when the organization has thousands of devices.
+  const totalPages = Math.max(1, data?.pages ?? Math.ceil((data?.total ?? 0) / gridSize));
   const currentPage = Math.min(listPage, totalPages);
-  const visibleDevices = sortedDevices.slice((currentPage - 1) * gridSize, currentPage * gridSize);
+  const visibleDevices = sortedDevices;
+  const queryPending = search.trim() !== debouncedSearch;
+
+  useEffect(() => {
+    if (listPage > totalPages) setListPage(totalPages);
+  }, [listPage, totalPages]);
 
   const startStream = useCallback((deviceId: string) => {
     setActiveStreams((previous) => new Set(previous).add(deviceId));
@@ -210,11 +208,11 @@ export default function FleetStreamPage() {
       </header>
 
       <section aria-label="Состояние устройств" className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
-        <MetricCard label="В каталоге" value={isLoading ? '—' : catalogTotal} detail="Всего устройств по API" icon={MonitorPlay} tone="text-foreground" />
-        <MetricCard label="Доступны" value={isLoading ? '—' : statusCounts.online} detail="В сети или выполняют задачу" icon={Wifi} tone="text-emerald-400" />
-        <MetricCard label="В работе" value={isLoading ? '—' : statusCounts.busy} detail="Статус API: busy" icon={Zap} tone="text-primary" />
-        <MetricCard label="Подключаются" value={isLoading ? '—' : statusCounts.connecting} detail="Ожидают heartbeat" icon={Clock3} tone="text-amber-400" />
-        <MetricCard label="Офлайн / проблемы" value={isLoading ? '—' : statusCounts.offline + statusCounts.issues} detail="Offline, ошибки, обслуживание или неизвестно" icon={WifiOff} tone={statusCounts.issues ? 'text-destructive' : 'text-muted-foreground'} />
+        <MetricCard label="В области" value={isLoading ? '—' : scopeTotal} detail="Устройства после поиска и группировки" icon={MonitorPlay} tone="text-foreground" />
+        <MetricCard label="Доступны" value={isLoading ? '—' : statusCounts?.online ?? '—'} detail="В сети или выполняют задачу" icon={Wifi} tone="text-emerald-400" />
+        <MetricCard label="В работе" value={isLoading ? '—' : statusCounts?.busy ?? '—'} detail="Статус API: busy" icon={Zap} tone="text-primary" />
+        <MetricCard label="Подключаются" value={isLoading ? '—' : statusCounts?.connecting ?? '—'} detail="Ожидают heartbeat" icon={Clock3} tone="text-amber-400" />
+        <MetricCard label="Офлайн / проблемы" value={isLoading ? '—' : statusCounts ? statusCounts.offline + statusCounts.issues : '—'} detail="Offline, ошибки, обслуживание или неизвестно" icon={WifiOff} tone={statusCounts?.issues ? 'text-destructive' : 'text-muted-foreground'} />
       </section>
 
       {isError && (
@@ -224,9 +222,9 @@ export default function FleetStreamPage() {
         </div>
       )}
 
-      {hasUnloadedDevices && (
+      {data?.presence_available === false && (
         <p role="status" className="rounded-lg border border-amber-400/25 bg-amber-400/5 px-3 py-2 text-xs text-amber-200">
-          Загружено {allDevices.length} из {catalogTotal} устройств. Поиск и сортировка охватывают только эту выборку.
+          Live-presence недоступен: API не подтвердил состояние устройств. Не запускайте новые потоки, пока связь со статусным хранилищем не восстановится.
         </p>
       )}
 
@@ -247,7 +245,7 @@ export default function FleetStreamPage() {
               ))}
             </div>
             <p className="text-xs text-muted-foreground" aria-live="polite">
-              {isLoading ? 'Загружаем устройства…' : `${statusCounts.online} доступны · ${activeStreams.size} выбрано для просмотра`}
+              {isLoading ? 'Загружаем устройства…' : `${statusCounts?.online ?? '—'} доступны · ${activeStreams.size} выбрано для просмотра`}
             </p>
           </div>
           {activeStreams.size > 0 && (
@@ -301,18 +299,18 @@ export default function FleetStreamPage() {
               className={`inline-flex min-h-9 items-center gap-2 rounded-full border px-3 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none ${statusFilter === value ? 'border-primary/50 bg-primary/10 text-primary' : 'border-border bg-background text-muted-foreground hover:bg-accent hover:text-foreground'}`}
             >
               <span>{label}</span>
-              <span className="tabular-nums opacity-75">{statusFilterCounts[value]}</span>
+              <span className="tabular-nums opacity-75">{statusFilterCounts[value] ?? '—'}</span>
             </button>
           ))}
         </div>
 
         <div className="flex flex-col gap-2 border-b border-border pb-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-muted-foreground" aria-live="polite">
-            {isLoading ? 'Загрузка…' : `Показано ${visibleDevices.length} из ${sortedDevices.length} устройств`}
-            {sortedDevices.length > 0 && ` · страница ${currentPage} из ${totalPages}`}
+            {queryPending ? 'Применяем поиск…' : isLoading ? 'Загрузка…' : `Показано ${visibleDevices.length} из ${data?.total ?? 0} устройств`}
+            {(data?.total ?? 0) > 0 && ` · страница ${currentPage} из ${totalPages}`}
           </p>
           <div role="group" aria-label="Сортировка устройств" className="flex flex-wrap items-center gap-1">
-            <span className="mr-1 text-xs text-muted-foreground">Сортировка:</span>
+            <span className="mr-1 text-xs text-muted-foreground">Сортировка страницы:</span>
             {SORT_FIELDS.map(({ value, label }) => (
               <button
                 key={value}
@@ -341,7 +339,7 @@ export default function FleetStreamPage() {
             <p className="mt-3 text-sm font-medium">Список устройств недоступен</p>
             <button type="button" onClick={() => { void refetch(); }} className="mt-3 rounded-md border border-border px-3 py-2 text-sm hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">Повторить</button>
           </div>
-        ) : sortedDevices.length === 0 ? (
+        ) : visibleDevices.length === 0 ? (
           <div className="rounded-lg border border-dashed border-border px-4 py-14 text-center">
             <MonitorPlay className="mx-auto h-7 w-7 text-muted-foreground" aria-hidden="true" />
             <p className="mt-3 text-sm font-medium">Устройства не найдены</p>
