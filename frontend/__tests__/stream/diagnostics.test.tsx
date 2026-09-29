@@ -126,3 +126,36 @@ it('reports decoded frame dimensions only when the stream orientation changes', 
   expect(onFrameDimensions).toHaveBeenNthCalledWith(2, { width: 1080, height: 1920 });
   expect(onFrameDimensions).toHaveBeenCalledTimes(2);
 });
+
+it('exports only a freshly rendered canvas frame and sends no screenshot API command', () => {
+  const toBlob = jest.spyOn(HTMLCanvasElement.prototype, 'toBlob').mockImplementation((callback) => callback(new Blob(['fixture'], { type: 'image/png' })));
+  Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: jest.fn(() => 'blob:fixture') });
+  Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: jest.fn() });
+  const download = jest.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+  render(<DeviceStream deviceId="device-png" enableScreenshot />);
+  act(() => jest.advanceTimersByTime(0));
+  const button = screen.getByRole('button', { name: 'Сохранить свежий кадр PNG' });
+  expect(button).toBeDisabled();
+  const socket = Socket.instances[0]; socket.readyState = Socket.OPEN;
+  act(() => socket.onopen?.());
+  expect(button).toBeDisabled();
+  act(() => mockFrameCallback?.({ displayWidth: 1920, displayHeight: 1080 } as VideoFrame));
+  expect(button).toBeEnabled();
+  fireEvent.click(button);
+  expect(toBlob).toHaveBeenCalledWith(expect.any(Function), 'image/png');
+  expect(download).toHaveBeenCalledTimes(1);
+  expect(api.get).not.toHaveBeenCalled();
+  act(() => jest.advanceTimersByTime(10_000));
+  expect(button).toBeDisabled();
+});
+
+it('does not claim a rendered picture when drawing the decoder output fails', () => {
+  jest.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({ drawImage: () => { throw new Error('canvas failure'); } } as never);
+  render(<DeviceStream deviceId="device-draw-failure" enableScreenshot />);
+  act(() => jest.advanceTimersByTime(0));
+  const socket = Socket.instances[0]; socket.readyState = Socket.OPEN;
+  act(() => socket.onopen?.());
+  expect(() => act(() => mockFrameCallback?.({ displayWidth: 1920, displayHeight: 1080 } as VideoFrame))).toThrow('canvas failure');
+  expect(screen.getByRole('button', { name: 'Сохранить свежий кадр PNG' })).toBeDisabled();
+  expect(screen.getByText('Ожидание видеокадра…')).toBeInTheDocument();
+});

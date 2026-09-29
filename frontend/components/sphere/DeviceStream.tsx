@@ -10,6 +10,7 @@ interface DeviceStreamProps {
   deviceId: string;
   onTap?: (x: number, y: number) => void;
   enableDiagnostics?: boolean;
+  enableScreenshot?: boolean;
   fit?: 'contain' | 'cover' | 'fill';
   onFrameDimensions?: (dimensions: StreamFrameDimensions) => void;
 }
@@ -62,6 +63,7 @@ export function DeviceStream({
   deviceId,
   onTap,
   enableDiagnostics = false,
+  enableScreenshot = false,
   fit,
   onFrameDimensions,
 }: DeviceStreamProps) {
@@ -75,6 +77,7 @@ export function DeviceStream({
   >('connecting');
   const [hasRenderedFrame, setHasRenderedFrame] = useState(false);
   const [streamError, setStreamError] = useState<string | null>(null);
+  const [screenshotError, setScreenshotError] = useState<string | null>(null);
   const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
   const [agentDiagnostics, setAgentDiagnostics] = useState<StreamDiagnosticResponse | null>(null);
   const [diagnosticsError, setDiagnosticsError] = useState<string | null>(null);
@@ -113,6 +116,15 @@ export function DeviceStream({
 
       decoder = new H264Decoder((frame) => {
         if (ignore || wsRef.current?.readyState !== WebSocket.OPEN) return;
+        if (!ctx || frame.displayWidth < 1 || frame.displayHeight < 1) throw new Error('Invalid canvas frame.');
+        // Mutate canvas directly for performance, avoid React state re-renders
+        if (canvas.width !== frame.displayWidth || canvas.height !== frame.displayHeight) {
+          canvas.width = frame.displayWidth;
+          canvas.height = frame.displayHeight;
+        }
+        // Only a successful canvas render proves a picture. A decoder output
+        // that throws during drawImage must not unlock clicks or PNG export.
+        ctx.drawImage(frame, 0, 0, canvas.width, canvas.height);
         setConnection('live');
         setHasRenderedFrame(true);
         setStreamError(null);
@@ -123,11 +135,6 @@ export function DeviceStream({
           setConnection('stale');
           scheduleKeyFrameRecovery?.();
         }, FRAME_STALE_TIMEOUT_MS);
-        // Mutate canvas directly for performance, avoid React state re-renders
-        if (canvas.width !== frame.displayWidth || canvas.height !== frame.displayHeight) {
-          canvas.width = frame.displayWidth;
-          canvas.height = frame.displayHeight;
-        }
         if (frame.displayWidth > 0 && frame.displayHeight > 0) {
           const previousDimensions = lastFrameDimensionsRef.current;
           if (
@@ -139,7 +146,6 @@ export function DeviceStream({
             onFrameDimensionsRef.current?.(dimensions);
           }
         }
-        ctx.drawImage(frame, 0, 0, canvas.width, canvas.height);
       }, () => {
         if (ignore) return;
         setConnection('waiting');
@@ -391,6 +397,27 @@ export function DeviceStream({
     dragRef.current = null;
   }, []);
 
+  const saveFrame = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canInteract || !canvas || canvas.width < 1 || canvas.height < 1) return;
+    setScreenshotError(null);
+    try {
+      canvas.toBlob((blob) => {
+        if (!blob) { setScreenshotError('Не удалось сохранить декодированный кадр.'); return; }
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.download = `Sphere-frame-${deviceId.replace(/[^a-zA-Z0-9_-]/g, '_')}-${Date.now()}.png`;
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      }, 'image/png');
+    } catch {
+      setScreenshotError('Не удалось сохранить декодированный кадр.');
+    }
+  }, [canInteract, deviceId]);
+
   return (
     <div className={fit ? 'relative h-full w-full min-h-0 min-w-0' : 'relative'}>
     <canvas
@@ -408,6 +435,10 @@ export function DeviceStream({
         objectFit: fit ?? 'contain',
       }}
     />
+    {enableScreenshot && <div className="absolute bottom-2 left-2 z-20 max-w-[calc(100%-1rem)]">
+      <button type="button" disabled={!canInteract} onClick={saveFrame} className="rounded-lg border border-white/20 bg-black/80 px-3 py-2 text-xs text-white disabled:cursor-not-allowed disabled:opacity-50">Сохранить свежий кадр PNG</button>
+      {screenshotError && <p role="alert" className="mt-1 rounded bg-black/90 p-2 text-xs text-red-200">{screenshotError}</p>}
+    </div>}
     {(connection !== 'live' || streamError) && (
       hasRenderedFrame ? (
         <div
