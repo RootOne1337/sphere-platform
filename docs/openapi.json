@@ -1757,6 +1757,7 @@
           "devices"
         ],
         "summary": "Список устройств с пагинацией и фильтрацией",
+        "description": "Возвращает одну страницу данных и live status counts для всей отфильтрованной области. Для точных live counts backend читает presence всех ID области одним Redis MGET; размер ответа ограничен per_page, но работа подсчёта пока O(N).",
         "operationId": "list_devices_api_v1_devices_get",
         "security": [
           {
@@ -1777,8 +1778,10 @@
                   "type": "null"
                 }
               ],
+              "description": "Legacy DB last_status filter; use live_status for current reachability.",
               "title": "Status"
-            }
+            },
+            "description": "Legacy DB last_status filter; use live_status for current reachability."
           },
           {
             "name": "group_id",
@@ -1794,8 +1797,29 @@
                   "type": "null"
                 }
               ],
+              "description": "Filter by an organization-owned group UUID.",
               "title": "Group Id"
-            }
+            },
+            "description": "Filter by an organization-owned group UUID."
+          },
+          {
+            "name": "location_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by an organization-owned location UUID.",
+              "title": "Location Id"
+            },
+            "description": "Filter by an organization-owned location UUID."
           },
           {
             "name": "type",
@@ -1810,8 +1834,10 @@
                   "type": "null"
                 }
               ],
+              "description": "Device type stored at enrollment, such as ldplayer, physical, or remote.",
               "title": "Type"
-            }
+            },
+            "description": "Device type stored at enrollment, such as ldplayer, physical, or remote."
           },
           {
             "name": "search",
@@ -1826,8 +1852,35 @@
                   "type": "null"
                 }
               ],
+              "description": "Case-insensitive name, serial, or model search; exact full UUID is also supported.",
               "title": "Search"
-            }
+            },
+            "description": "Case-insensitive name, serial, or model search; exact full UUID is also supported."
+          },
+          {
+            "name": "live_status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "online",
+                    "busy",
+                    "connecting",
+                    "offline",
+                    "attention"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Current Redis presence filter. online includes busy; attention includes error, maintenance, and unknown.",
+              "title": "Live Status"
+            },
+            "description": "Current Redis presence filter. online includes busy; attention includes error, maintenance, and unknown."
           },
           {
             "name": "page",
@@ -11994,6 +12047,32 @@
           "pages": {
             "type": "integer",
             "title": "Pages"
+          },
+          "scope_total": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Scope Total",
+            "default": 0
+          },
+          "status_counts": {
+            "$ref": "#/components/schemas/DeviceStatusCounts"
+          },
+          "presence_available": {
+            "type": "boolean",
+            "title": "Presence Available",
+            "default": true
+          },
+          "as_of": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "As Of"
           }
         },
         "type": "object",
@@ -12669,6 +12748,46 @@
         ],
         "title": "DeviceResponse",
         "description": "Ответ на GET/POST/PUT device — все поля из DB + meta + live-телеметрия из Redis."
+      },
+      "DeviceStatusCounts": {
+        "properties": {
+          "online": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Online",
+            "description": "Reachable devices, including busy",
+            "default": 0
+          },
+          "busy": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Busy",
+            "description": "Subset of online devices executing work",
+            "default": 0
+          },
+          "connecting": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Connecting",
+            "default": 0
+          },
+          "offline": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Offline",
+            "default": 0
+          },
+          "issues": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Issues",
+            "description": "Error, maintenance, or unknown state",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "title": "DeviceStatusCounts",
+        "description": "Live status counts over the full server-filtered inventory scope."
       },
       "DeviceStatusResponse": {
         "properties": {

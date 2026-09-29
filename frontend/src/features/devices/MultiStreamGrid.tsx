@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Play, Pause, X, MonitorPlay, Activity, Cpu } from 'lucide-react';
 import { Device } from '@/lib/hooks/useDevices';
+import { isDeviceReachable } from '@/src/features/devices/deviceListFilters';
 import { Badge } from '@/src/shared/ui/badge';
 import { Button } from '@/src/shared/ui/button';
 import { useStreamStore, GRID_SIZE_OPTIONS, gridColumns, gridLabel } from '@/src/shared/store/useStreamStore';
@@ -125,17 +126,18 @@ export function MultiStreamGrid({ devices, selectedIds, onClose }: MultiStreamGr
                 className="flex-1 p-2 bg-background overflow-y-auto overflow-x-hidden custom-scrollbar grid gap-2"
                 style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
             >
-                {visibleDevices.map((device) => (
+                {visibleDevices.map((device) => {
+                    const reachable = isDeviceReachable(device);
+                    return (
                     <div key={device.id} className="relative bg-muted border border-border rounded-sm overflow-hidden group flex flex-col min-h-[150px] aspect-video">
-
                         {/* Video Layer */}
                         <div
                             className="flex-1 relative bg-black/80 flex flex-col items-center justify-center overflow-hidden"
                         >
-                            {broadcastActive && (device.status || '').toLowerCase() === 'online' ? (
+                            {broadcastActive && reachable ? (
                                 /* Реальный видео-стрим через WebSocket H.264 */
                                 <DeviceStream deviceId={device.id} fit={objectFit} />
-                            ) : (device.status || '').toLowerCase() === 'online' ? (
+                            ) : reachable ? (
                                 /* Онлайн, но стрим не включён — показываем готовность */
                                 <div className="flex flex-col items-center justify-center text-muted-foreground gap-2">
                                     <Play className="w-6 h-6 opacity-30" />
@@ -152,7 +154,7 @@ export function MultiStreamGrid({ devices, selectedIds, onClose }: MultiStreamGr
                             )}
 
                             {/* HUD Overlays */}
-                            {(device.status || '').toLowerCase() === 'online' && showHUD && (
+                            {reachable && showHUD && (
                                 <div className="absolute top-2 left-2 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 backdrop-blur-md px-1.5 py-0.5 rounded-sm border border-white/5">
                                     <div className={`w-1.5 h-1.5 rounded-full ${broadcastActive ? 'bg-success animate-pulse' : 'bg-warning'}`} />
                                     <span className="text-[9px] font-mono font-bold text-white shadow-black drop-shadow-md tracking-wider">{device.id.slice(0, 8)}</span>
@@ -164,7 +166,7 @@ export function MultiStreamGrid({ devices, selectedIds, onClose }: MultiStreamGr
                         <div className="h-6 shrink-0 bg-card border-t border-border px-2 flex items-center justify-between">
                             <span className="text-[9px] font-mono text-muted-foreground font-bold tracking-widest truncate">{device.model || 'GENERIC'}</span>
 
-                            {showStats && (device.status || '').toLowerCase() === 'online' && (
+                            {showStats && reachable && (
                                 <div className="flex items-center gap-3">
                                     <div className="flex items-center gap-1 text-[8px] font-mono text-warning">
                                         <Activity className="w-2.5 h-2.5" /> {formatHeartbeatAge(device.last_heartbeat)}
@@ -177,7 +179,8 @@ export function MultiStreamGrid({ devices, selectedIds, onClose }: MultiStreamGr
                         </div>
 
                     </div>
-                ))}
+                    );
+                })}
 
                 {/* Пустые слоты если устройств меньше чем ячеек сетки */}
                 {Array.from({ length: Math.max(0, gridSize - Math.min(visibleDevices.length, gridSize)) }).map((_, i) => (

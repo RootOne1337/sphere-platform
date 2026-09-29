@@ -55,7 +55,8 @@ const MOCK_DEVICES_RESPONSE = {
   ],
   total: 1,
   page: 1,
-  page_size: 20,
+  per_page: 20,
+  pages: 1,
 };
 
 describe('useDevices', () => {
@@ -75,6 +76,8 @@ describe('useDevices', () => {
     expect(result.current.data?.items[0].name).toBe('Pixel 7');
     expect(result.current.data?.items[0].agent_version).toBe('1.2.20-dev');
     expect(result.current.data?.items[0].agent_version_code).toBe(10220);
+    expect(result.current.data?.page_size).toBe(20);
+    expect(result.current.data?.pages).toBe(1);
   });
 
   it('возвращает ошибку при неудачном запросе', async () => {
@@ -95,6 +98,33 @@ describe('useDevices', () => {
     const params = mockApi.get.mock.calls[0][1]?.params as Record<string, unknown> | undefined;
     expect(params?.per_page).toBe(50);
     expect(params?.page_size).toBeUndefined();
+  });
+
+  it('передаёт фильтры каталога на backend, включая live-status и location', async () => {
+    mockApi.get.mockResolvedValueOnce({ data: MOCK_DEVICES_RESPONSE });
+
+    renderQueryHook(() => useDevices({
+      page: 2,
+      page_size: 100,
+      live_status: 'attention',
+      type: 'physical',
+      group_id: 'group-1',
+      location_id: 'location-2',
+      search: 'LDPlayer',
+    }));
+
+    await waitFor(() => expect(mockApi.get).toHaveBeenCalled());
+    expect(mockApi.get).toHaveBeenCalledWith('/devices', {
+      params: expect.objectContaining({
+        page: 2,
+        per_page: 100,
+        live_status: 'attention',
+        type: 'physical',
+        group_id: 'group-1',
+        location_id: 'location-2',
+        search: 'LDPlayer',
+      }),
+    });
   });
 });
 

@@ -6,7 +6,7 @@ import { useDevices, useBulkAction, useDeleteDevice, useUpdateDevice, useBulkDel
 import { useBulkRevokeVpn } from '@/lib/hooks/useVpn';
 import { getApiErrorMessage } from '@/lib/apiError';
 import { useDebounce } from '@/lib/hooks/useDebounce';
-import { countDeviceStatuses, filterDevicesByStatus, scopeDevices, type DeviceStatusFilter } from '@/src/features/devices/deviceListFilters';
+import { countDeviceStatuses, filterDevicesByStatus, type DeviceStatusFilter } from '@/src/features/devices/deviceListFilters';
 import { useGroups, useMoveDevices } from '@/lib/hooks/useGroups';
 import { useLocations, useAssignDevicesToLocation } from '@/lib/hooks/useLocations';
 import { FleetMatrix, type DeviceAction } from '@/src/features/devices/FleetMatrix';
@@ -32,7 +32,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Activity, AlertTriangle, Cpu, Filter, FolderOpen, LayoutGrid, List, Loader2, MapPin, Pencil, RefreshCcw, Search, Server, ShieldOff, Wifi, WifiOff } from 'lucide-react';
+import { Activity, AlertTriangle, ChevronLeft, ChevronRight, Cpu, Filter, FolderOpen, LayoutGrid, List, Loader2, MapPin, Pencil, RefreshCcw, Search, Server, ShieldOff, Wifi, WifiOff } from 'lucide-react';
 import { useGameServers } from '@/lib/hooks/usePipelineSettings';
 import { toast } from 'sonner';
 
@@ -54,6 +54,8 @@ export default function DevicesPage() {
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
   const [statusFilter, setStatusFilter] = useState<DeviceStatusFilter>('all');
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(100);
 
   // Диалоги
   const [renameDialog, setRenameDialog] = useState<{ open: boolean; deviceId: string; currentName: string }>({ open: false, deviceId: '', currentName: '' });
@@ -76,10 +78,18 @@ export default function DevicesPage() {
   const [filterGroupId, setFilterGroupId] = useState<string>('');
   const [filterLocationId, setFilterLocationId] = useState<string>('');
 
-  // Backend поддерживает до 5000 — запрашиваем все устройства одной страницей
+  const liveStatusFilter = statusFilter === 'all' ? undefined : statusFilter;
+  const queryGroupId = filterGroupId && filterGroupId !== '__all__' ? filterGroupId : undefined;
+  const queryLocationId = filterLocationId && filterLocationId !== '__all__' ? filterLocationId : undefined;
+
+  // Keep network payloads bounded. Live counts and status filtering are computed
+  // by the API over the complete matching scope; only one page is serialized.
   const { data, isLoading, isFetching, isError: devicesLoadError, error: devicesError, refetch } = useDevices({
-    page: 1,
-    page_size: 5000,
+    page,
+    page_size: pageSize,
+    live_status: liveStatusFilter,
+    group_id: queryGroupId,
+    location_id: queryLocationId,
     search: debouncedSearch || undefined,
   });
   const bulkMutation = useBulkAction();
@@ -93,17 +103,12 @@ export default function DevicesPage() {
   const assignToLocation = useAssignDevicesToLocation();
   const { data: gameServers } = useGameServers();
 
-  // Group/location narrow the current result set; status cards below are quick filters over that same set.
-  const scopedItems = useMemo(
-    () => scopeDevices(data?.items ?? [], filterGroupId, filterLocationId),
-    [data?.items, filterGroupId, filterLocationId],
-  );
-  const filteredItems = useMemo(
-    () => filterDevicesByStatus(scopedItems, statusFilter),
-    [scopedItems, statusFilter],
+  const pageItems = useMemo(
+    () => filterDevicesByStatus(data?.items ?? [], statusFilter),
+    [data?.items, statusFilter],
   );
 
-  const visibleDeviceIds = useMemo(() => new Set(filteredItems.map((device) => device.id)), [filteredItems]);
+  const visibleDeviceIds = useMemo(() => new Set(pageItems.map((device) => device.id)), [pageItems]);
   const selectedIds = Object.entries(rowSelection)
     .filter(([deviceId, selected]) => selected && visibleDeviceIds.has(deviceId))
     .map(([deviceId]) => deviceId);
@@ -121,7 +126,22 @@ export default function DevicesPage() {
 
   const exceedsBulkLimit = selectedIds.length > MAX_BULK_DEVICE_OPERATION_COUNT;
 
-  const statusCounts = useMemo(() => countDeviceStatuses(scopedItems), [scopedItems]);
+  const statusCounts = useMemo(
+    () => data?.status_counts ?? countDeviceStatuses(pageItems),
+    [data?.status_counts, pageItems],
+  );
+
+  useEffect(() => {
+    if (data?.pages && page > data.pages) setPage(data.pages);
+  }, [data?.pages, page]);
+
+  const resetPage = () => {
+    setPage(1);
+    setRowSelection({});
+  };
+  const pageStart = data && data.total > 0 ? (data.page - 1) * data.page_size + 1 : 0;
+  const pageEnd = data ? Math.min(data.page * data.page_size, data.total) : 0;
+  const scopeTotal = data?.scope_total ?? data?.total ?? 0;
 
   // Обработчик действий из контекстного меню FleetMatrix (для одного устройства)
   const handleDeviceAction = useCallback((deviceId: string, action: DeviceAction) => {
@@ -303,7 +323,10 @@ export default function DevicesPage() {
               <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">Устройства</h1>
               <span className="rounded-full border border-border bg-card px-2.5 py-1 text-xs font-medium text-muted-foreground">Fleet Matrix</span>
             </div>
-            <p className="mt-2 text-sm text-muted-foreground">{filteredItems.length} из {scopedItems.length} устройств в текущей выборке. Статусы и действия берутся из API.</p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {data ? `Показано ${pageStart}–${pageEnd} из ${data.total}; в области фильтров ${scopeTotal} устройств.` : 'Загрузка реестра…'}
+              {' '}Live-статусы и счётчики берутся из API.
+            </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
@@ -348,18 +371,21 @@ export default function DevicesPage() {
 
         <section aria-label="Состояние устройств" className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 xl:grid-cols-6">
           {[
-            { filter: 'all' as const, label: 'В выборке', value: isLoading ? '—' : scopedItems.length, note: 'поиск, группа и локация', icon: Cpu, tone: 'text-primary' },
+            { filter: 'all' as const, label: 'В области', value: isLoading ? '—' : scopeTotal, note: 'поиск, группа и локация', icon: Cpu, tone: 'text-primary' },
             { filter: 'online' as const, label: 'В сети', value: isLoading ? '—' : statusCounts.online, note: 'online + busy по API', icon: Wifi, tone: 'text-emerald-700 dark:text-emerald-400' },
             { filter: 'busy' as const, label: 'В работе', value: isLoading ? '—' : statusCounts.busy, note: 'подмножество статуса «В сети»', icon: Activity, tone: 'text-primary' },
             { filter: 'connecting' as const, label: 'Подключаются', value: isLoading ? '—' : statusCounts.connecting, note: 'ждут первый heartbeat', icon: Loader2, tone: 'text-amber-700 dark:text-amber-400' },
-            { filter: 'offline' as const, label: 'Не в сети', value: isLoading ? '—' : statusCounts.offline, note: 'нет живого статуса', icon: WifiOff, tone: 'text-muted-foreground' },
+            { filter: 'offline' as const, label: 'Не в сети', value: isLoading ? '—' : statusCounts.offline, note: data?.presence_available ? 'Redis доступен, live presence отсутствует' : 'источник live presence недоступен', icon: WifiOff, tone: 'text-muted-foreground' },
             { filter: 'attention' as const, label: 'Требуют внимания', value: isLoading ? '—' : statusCounts.issues, note: 'ошибка, неизвестно или обслуживание', icon: AlertTriangle, tone: 'text-amber-700 dark:text-amber-400' },
           ].map(({ filter, label, value, note, icon: Icon, tone }) => (
             <button
               key={label}
               type="button"
               aria-pressed={statusFilter === filter}
-              onClick={() => setStatusFilter((current) => current === filter && filter !== 'all' ? 'all' : filter)}
+              onClick={() => {
+                setStatusFilter((current) => current === filter && filter !== 'all' ? 'all' : filter);
+                resetPage();
+              }}
               className={`rounded-xl border bg-card p-3 text-left transition-all duration-150 hover:border-primary/40 hover:bg-accent/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none sm:p-4 ${statusFilter === filter ? 'border-primary/50 ring-1 ring-primary/30' : 'border-border'}`}
             >
               <div className="flex items-center justify-between gap-3">
@@ -382,13 +408,13 @@ export default function DevicesPage() {
                 aria-label="Поиск устройств"
                 placeholder="Поиск по имени, модели или идентификатору"
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => { setSearch(e.target.value); resetPage(); }}
                 className="h-11 rounded-lg bg-background pl-9 font-sans text-sm placeholder:text-muted-foreground/70"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-2 xl:ml-auto">
-              <Select value={filterGroupId || '__all__'} onValueChange={setFilterGroupId}>
+              <Select value={filterGroupId || '__all__'} onValueChange={(value) => { setFilterGroupId(value === '__all__' ? '' : value); resetPage(); }}>
                 <SelectTrigger aria-label="Фильтр по группе" className="h-11 w-full rounded-lg bg-background sm:w-[190px]">
                   <SelectValue placeholder="Все группы" />
                 </SelectTrigger>
@@ -406,7 +432,7 @@ export default function DevicesPage() {
                   ))}
                 </SelectContent>
               </Select>
-              <Select value={filterLocationId || '__all__'} onValueChange={setFilterLocationId}>
+              <Select value={filterLocationId || '__all__'} onValueChange={(value) => { setFilterLocationId(value === '__all__' ? '' : value); resetPage(); }}>
                 <SelectTrigger aria-label="Фильтр по локации" className="h-11 w-full rounded-lg bg-background sm:w-[190px]">
                   <SelectValue placeholder="Все локации" />
                 </SelectTrigger>
@@ -427,7 +453,7 @@ export default function DevicesPage() {
               {(filterGroupId && filterGroupId !== '__all__' || filterLocationId && filterLocationId !== '__all__') && (
                 <Button
                   variant="ghost"
-                  onClick={() => { setFilterGroupId('__all__'); setFilterLocationId('__all__'); }}
+                  onClick={() => { setFilterGroupId(''); setFilterLocationId(''); resetPage(); }}
                   className="col-span-2 h-11 rounded-lg px-3 text-sm"
                 >
                   <Filter className="mr-2 h-4 w-4" aria-hidden="true" /> Сбросить фильтры
@@ -473,7 +499,7 @@ export default function DevicesPage() {
                   variant="outline"
                   size="sm"
                   onClick={() => {
-                    const device = data?.items.find((item) => item.id === selectedIds[0]);
+                    const device = pageItems.find((item) => item.id === selectedIds[0]);
                     if (!device) return;
                     setRenameDialog({ open: true, deviceId: device.id, currentName: device.name });
                     setNewName(device.name);
@@ -525,15 +551,37 @@ export default function DevicesPage() {
             </div>
           ) : viewMode === 'table' ? (
             <FleetMatrix
-              data={filteredItems}
+              data={pageItems}
               isLoading={isLoading}
               rowSelection={rowSelection}
               onRowSelectionChange={setRowSelection}
               onDeviceAction={handleDeviceAction}
             />
           ) : (
-            <MultiStreamGrid devices={filteredItems} selectedIds={selectedIds} />
+            <MultiStreamGrid devices={pageItems} selectedIds={selectedIds} />
           )}
+          <nav aria-label="Страницы реестра устройств" className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-3">
+            <p className="text-xs text-muted-foreground" aria-live="polite">
+              {data ? `Страница ${data.page} из ${Math.max(1, data.pages)} · ${pageItems.length} строк · live presence ${data.presence_available ? 'доступен' : 'недоступен'} · срез API ${data.as_of ? `${new Date(data.as_of).toLocaleTimeString([], { hour12: false, timeZone: 'UTC' })} UTC` : 'без отметки времени'} · обновление каждые 30 с` : 'Пагинация появится после загрузки данных'}
+            </p>
+            <div className="flex items-center gap-2">
+              <label htmlFor="device-page-size" className="text-xs text-muted-foreground">Строк на странице</label>
+              <select
+                id="device-page-size"
+                value={pageSize}
+                onChange={(event) => { setPageSize(Number(event.target.value)); resetPage(); }}
+                className="h-9 rounded-md border border-border bg-background px-2 text-sm text-foreground"
+              >
+                {[50, 100, 200].map((size) => <option key={size} value={size}>{size}</option>)}
+              </select>
+              <Button variant="outline" size="sm" onClick={() => { setPage((current) => Math.max(1, current - 1)); setRowSelection({}); }} disabled={!data || data.page <= 1 || isFetching} aria-label="Предыдущая страница">
+                <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => { setPage((current) => current + 1); setRowSelection({}); }} disabled={!data || data.page >= data.pages || isFetching} aria-label="Следующая страница">
+                <ChevronRight className="h-4 w-4" aria-hidden="true" />
+              </Button>
+            </div>
+          </nav>
         </div>
       </section>
 

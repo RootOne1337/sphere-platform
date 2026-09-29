@@ -94,7 +94,7 @@ const bulkDeleteMutation = jest.fn<Promise<{ deleted: number }>, [string[]]>();
 
 beforeEach(() => {
   jest.mocked(useDevices).mockReturnValue({
-    data: { items: devices, total: devices.length, page: 1, page_size: 5000, pages: 1 },
+    data: { items: devices, total: devices.length, page: 1, page_size: 100, pages: 1, scope_total: devices.length },
     isLoading: false,
     isFetching: false,
     isError: false,
@@ -129,6 +129,24 @@ it('wires fleet status cards to the visible device list and clears attention thr
   fireEvent.click(cardButton('Требуют внимания'));
   expect(within(list).getAllByRole('listitem').map((item) => item.textContent)).toEqual(['phone-maintenance']);
   expect(cardButton('Требуют внимания')).toHaveAttribute('aria-pressed', 'true');
+  expect(useDevices).toHaveBeenLastCalledWith(expect.objectContaining({ live_status: 'attention', page: 1, page_size: 100 }));
+});
+
+it('requests bounded server pages and clears stale row selection when moving pages', () => {
+  jest.mocked(useDevices).mockReturnValue({
+    data: { items: devices.slice(0, 1), total: 4, page: 1, page_size: 100, pages: 2, scope_total: 4 },
+    isLoading: false,
+    isFetching: false,
+    isError: false,
+    error: null,
+    refetch: jest.fn(),
+  } as never);
+  render(<DevicesPage />);
+
+  expect(useDevices).toHaveBeenCalledWith(expect.objectContaining({ page: 1, page_size: 100 }));
+  fireEvent.click(screen.getByRole('button', { name: 'Переключить выбор phone-online' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Следующая страница' }));
+  expect(useDevices).toHaveBeenLastCalledWith(expect.objectContaining({ page: 2, page_size: 100 }));
 });
 
 it('connects visible row selection to confirmed bulk deletion and clears selection only after server success', async () => {

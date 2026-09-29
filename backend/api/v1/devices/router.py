@@ -3,12 +3,15 @@
 # Авто-дискавери: main.py подключает все backend/api/v1/*/router.py автоматически.
 from __future__ import annotations
 
+import logging
 import uuid
 from datetime import datetime, timezone
+from typing import Literal
 
 from fastapi import APIRouter, Cookie, Depends, Header, HTTPException, Query
 from fastapi import status as http_status
 from pydantic import BaseModel, Field
+from redis.exceptions import RedisError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.dependencies import require_permission
@@ -39,6 +42,7 @@ from backend.services.device_service import DeviceService
 from backend.services.device_status_cache import DeviceStatusCache
 
 router = APIRouter(prefix="/devices", tags=["devices"])
+logger = logging.getLogger(__name__)
 
 
 def get_device_service(db: AsyncSession = Depends(get_db)) -> DeviceService:
@@ -103,50 +107,123 @@ async def get_device_me(
     "",
     response_model=DeviceListResponse,
     summary="Список устройств с пагинацией и фильтрацией",
+    description=(
+        "Возвращает одну страницу данных и live status counts для всей отфильтрованной области. "
+        "Для точных live counts backend читает presence всех ID области одним Redis MGET; "
+        "размер ответа ограничен per_page, но работа подсчёта пока O(N)."
+    ),
 )
 async def list_devices(
-    status: str | None = None,
-    group_id: uuid.UUID | None = None,
-    type_filter: str | None = Query(None, alias="type"),
-    search: str | None = None,
+    status: str | None = Query(None, description="Legacy DB last_status filter; use live_status for current reachability."),
+    group_id: uuid.UUID | None = Query(None, description="Filter by an organization-owned group UUID."),
+    location_id: uuid.UUID | None = Query(None, description="Filter by an organization-owned location UUID."),
+    type_filter: str | None = Query(None, alias="type", description="Device type stored at enrollment, such as ldplayer, physical, or remote."),
+    search: str | None = Query(None, description="Case-insensitive name, serial, or model search; exact full UUID is also supported."),
+    live_status: Literal["online", "busy", "connecting", "offline", "attention"] | None = Query(
+        None,
+        description="Current Redis presence filter. online includes busy; attention includes error, maintenance, and unknown.",
+    ),
     page: int = Query(1, ge=1),
     per_page: int = Query(50, ge=1, le=5000),
     current_user: User = require_permission("device:read"),
     svc: DeviceService = Depends(get_device_service),
     status_cache: DeviceStatusCache = Depends(get_status_cache),
 ) -> DeviceListResponse:
-    devices, total = await svc.list_devices(
+    # Read the small inventory projection once, then use one Redis MGET for both
+    # exact live-status counts and page selection. The response body remains bounded
+    # by per_page instead of serializing every device for the Fleet Matrix.
+    candidates = await svc.list_device_status_candidates(
         org_id=current_user.org_id,
         status=status,
         group_id=group_id,
+        location_id=location_id,
         type_filter=type_filter,
         search=search,
+    )
+    candidate_ids = [device_id for device_id, _ in candidates]
+    live_statuses = {}
+    presence_available = False
+    if status_cache.redis is not None:
+        try:
+            live_statuses = await status_cache.bulk_get_status([str(device_id) for device_id in candidate_ids])
+            presence_available = True
+        except (RedisError, OSError, TimeoutError) as exc:
+            # An initialized Redis client does not prove the live-presence read
+            # succeeded. Keep the inventory available and surface status as unknown.
+            logger.warning(
+                "Device presence lookup failed (%s); returning unknown live state",
+                type(exc).__name__,
+            )
+    as_of = datetime.now(timezone.utc)
+
+    effective_statuses: dict[uuid.UUID, str] = {}
+    status_counts = {"online": 0, "busy": 0, "connecting": 0, "offline": 0, "issues": 0}
+    for device_id, db_status in candidates:
+        live = live_statuses.get(str(device_id))
+        if live:
+            effective = live.status
+        elif not presence_available:
+            # Without Redis we cannot infer liveness from a stale DB snapshot.
+            effective = "unknown"
+        elif db_status in {"error", "maintenance"}:
+            effective = db_status
+        else:
+            # Redis is reachable and the TTL-backed presence key is absent.
+            effective = "offline"
+        if effective not in {"online", "busy", "connecting", "offline", "error", "maintenance"}:
+            effective = "unknown"
+        effective_statuses[device_id] = effective
+        if effective in {"online", "busy"}:
+            status_counts["online"] += 1
+        if effective == "busy":
+            status_counts["busy"] += 1
+        elif effective == "connecting":
+            status_counts[effective] += 1
+        elif effective == "offline":
+            status_counts["offline"] += 1
+        elif effective in {"error", "maintenance", "unknown"}:
+            status_counts["issues"] += 1
+
+    scope_total = len(candidate_ids)
+    matching_ids = candidate_ids
+    if live_status == "online":
+        matching_ids = [did for did in candidate_ids if effective_statuses[did] in {"online", "busy"}]
+    elif live_status == "attention":
+        matching_ids = [did for did in candidate_ids if effective_statuses[did] in {"error", "maintenance", "unknown"}]
+    elif live_status:
+        matching_ids = [did for did in candidate_ids if effective_statuses[did] == live_status]
+
+    total = len(matching_ids)
+    page_ids = matching_ids[(page - 1) * per_page : page * per_page]
+    devices = await svc.get_devices_by_ids(page_ids, current_user.org_id)
+    # Enrich only the returned page; aggregate candidates were read through one MGET.
+    for device in devices:
+        device.status = effective_statuses.get(device.id, "unknown")
+        live = live_statuses.get(str(device.id))
+        if live:
+            device.status = live.status
+            device.battery_level = live.battery
+            device.cpu_usage = live.cpu_usage
+            device.ram_usage_mb = live.ram_usage_mb
+            device.screen_on = live.screen_on
+            device.adb_connected = live.adb_connected
+            device.vpn_active = live.vpn_active
+            device.last_heartbeat = live.last_heartbeat
+            device.connected_since = live.connected_since
+            device.agent_version = live.agent_version
+            device.agent_version_code = live.agent_version_code
+    pages = (total + per_page - 1) // per_page if total > 0 else 0
+    return DeviceListResponse(
+        items=devices,
+        total=total,
         page=page,
         per_page=per_page,
+        pages=pages,
+        scope_total=scope_total,
+        status_counts=status_counts,
+        presence_available=presence_available,
+        as_of=as_of,
     )
-    # Обогащаем live-статус и телеметрию из Redis (один MGET на все устройства)
-    if devices:
-        device_ids = [str(d.id) for d in devices]
-        live_statuses = await status_cache.bulk_get_status(device_ids)
-        enriched = []
-        for d in devices:
-            live = live_statuses.get(str(d.id))
-            if live:
-                d.status = live.status
-                d.battery_level = live.battery
-                d.cpu_usage = live.cpu_usage
-                d.ram_usage_mb = live.ram_usage_mb
-                d.screen_on = live.screen_on
-                d.adb_connected = live.adb_connected
-                d.vpn_active = live.vpn_active
-                d.last_heartbeat = live.last_heartbeat
-                d.connected_since = live.connected_since
-                d.agent_version = live.agent_version
-                d.agent_version_code = live.agent_version_code
-            enriched.append(d)
-        devices = enriched
-    pages = (total + per_page - 1) // per_page if total > 0 else 0
-    return DeviceListResponse(items=devices, total=total, page=page, per_page=per_page, pages=pages)
 
 
 # ── Fleet status (bulk MGET) ──────────────────────────────────────────────────

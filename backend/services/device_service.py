@@ -12,6 +12,7 @@ from sqlalchemy.orm import selectinload
 
 from backend.models.device import Device, DeviceStatus
 from backend.models.device_group import DeviceGroup
+from backend.models.location import Location
 from backend.schemas.devices import (
     CreateDeviceRequest,
     DeviceResponse,
@@ -72,6 +73,80 @@ class DeviceService:
             created_at=device.created_at,
             updated_at=device.updated_at,
         )
+
+    @staticmethod
+    def _listing_conditions(
+        org_id: uuid.UUID,
+        status: str | None = None,
+        group_id: uuid.UUID | None = None,
+        location_id: uuid.UUID | None = None,
+        type_filter: str | None = None,
+        search: str | None = None,
+    ) -> list[Any]:
+        conditions: list[Any] = [Device.org_id == org_id, Device.is_active.is_(True)]
+        if status:
+            try:
+                conditions.append(Device.last_status == DeviceStatus(status))
+            except ValueError:
+                # Preserve the existing forward-compatible behavior for legacy clients.
+                pass
+        if group_id:
+            conditions.append(Device.groups.any(DeviceGroup.id == group_id))
+        if location_id:
+            conditions.append(Device.locations.any(Location.id == location_id))
+        if type_filter:
+            conditions.append(Device.meta["type"].as_string() == type_filter)
+        if search:
+            like = f"%{search.strip()}%"
+            search_terms = [Device.name.ilike(like), Device.serial.ilike(like), Device.model.ilike(like)]
+            try:
+                search_terms.append(Device.id == uuid.UUID(search.strip()))
+            except ValueError:
+                pass
+            conditions.append(or_(*search_terms))
+        return conditions
+
+    async def list_device_status_candidates(
+        self,
+        org_id: uuid.UUID,
+        status: str | None = None,
+        group_id: uuid.UUID | None = None,
+        location_id: uuid.UUID | None = None,
+        type_filter: str | None = None,
+        search: str | None = None,
+    ) -> list[tuple[uuid.UUID, str]]:
+        """Return the filtered active inventory's IDs and DB fallback status.
+
+        The list route overlays Redis live presence in one bulk read. Keeping this
+        small projection separate avoids loading/serializing every ORM relationship
+        just to produce exact fleet counts for a paginated response.
+        """
+        stmt = (
+            select(Device.id, Device.last_status)
+            .where(*self._listing_conditions(org_id, status, group_id, location_id, type_filter, search))
+            .order_by(Device.created_at.desc(), Device.id.desc())
+        )
+        rows = (await self.db.execute(stmt)).all()
+        return [(row.id, row.last_status.value if isinstance(row.last_status, DeviceStatus) else str(row.last_status)) for row in rows]
+
+    async def get_devices_by_ids(
+        self, device_ids: list[uuid.UUID], org_id: uuid.UUID
+    ) -> list[DeviceResponse]:
+        """Load only one already-authorized inventory page, preserving its order."""
+        if not device_ids:
+            return []
+        stmt = (
+            select(Device)
+            .options(selectinload(Device.groups), selectinload(Device.locations))
+            .where(
+                Device.org_id == org_id,
+                Device.is_active.is_(True),
+                Device.id.in_(device_ids),
+            )
+        )
+        rows = (await self.db.execute(stmt)).scalars().all()
+        by_id = {device.id: device for device in rows}
+        return [self._to_response(by_id[device_id]) for device_id in device_ids if device_id in by_id]
 
     async def _reload_with_groups(self, device_id: uuid.UUID) -> Device:
         """Перезагрузить устройство из БД вместе с группами и локациями."""
@@ -142,18 +217,20 @@ class DeviceService:
         org_id: uuid.UUID,
         status: str | None = None,
         group_id: uuid.UUID | None = None,
+        location_id: uuid.UUID | None = None,
         type_filter: str | None = None,
         search: str | None = None,
         page: int = 1,
         per_page: int = 50,
     ) -> tuple[list[DeviceResponse], int]:
-        base_conditions = [Device.org_id == org_id, Device.is_active.is_(True)]
-
-        if status:
-            try:
-                base_conditions.append(Device.last_status == DeviceStatus(status))
-            except ValueError:
-                pass  # неизвестный статус → пустой список (forward compat)
+        base_conditions = self._listing_conditions(
+            org_id,
+            status=status,
+            group_id=group_id,
+            location_id=location_id,
+            type_filter=type_filter,
+            search=search,
+        )
 
         stmt = (
             select(Device)
@@ -166,23 +243,10 @@ class DeviceService:
             .where(*base_conditions)
         )
 
-        if group_id:
-            stmt = stmt.where(Device.groups.any(DeviceGroup.id == group_id))
-            count_stmt = count_stmt.where(Device.groups.any(DeviceGroup.id == group_id))
-
-        if search:
-            like = f"%{search}%"
-            search_cond = or_(
-                Device.name.ilike(like),
-                Device.serial.ilike(like),
-            )
-            stmt = stmt.where(search_cond)
-            count_stmt = count_stmt.where(search_cond)
-
         total = (await self.db.execute(count_stmt)).scalar_one()
         rows = (
             await self.db.execute(
-                stmt.order_by(Device.created_at.desc())
+                stmt.order_by(Device.created_at.desc(), Device.id.desc())
                 .offset((page - 1) * per_page)
                 .limit(per_page)
             )

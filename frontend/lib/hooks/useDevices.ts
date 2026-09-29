@@ -41,14 +41,28 @@ interface DevicesResponse {
   total: number;
   page: number;
   page_size: number;
+  pages: number;
+  scope_total?: number | null;
+  as_of?: string | null;
+  status_counts?: {
+    online: number;
+    busy: number;
+    connecting: number;
+    offline: number;
+    issues: number;
+  };
+  presence_available?: boolean;
 }
 
 export function useDevices(params: {
   page?: number;
   page_size?: number;
   status?: string;
+  live_status?: 'online' | 'busy' | 'connecting' | 'offline' | 'attention';
   tags?: string;
+  type?: string;
   group_id?: string;
+  location_id?: string;
   search?: string;
 }) {
   const apiParams = {
@@ -60,7 +74,15 @@ export function useDevices(params: {
     queryKey: ['devices', params],
     queryFn: async () => {
       const { data } = await api.get('/devices', { params: apiParams });
-      return data;
+      // The API contract names this field `per_page`; keep `page_size` as the
+      // stable frontend shape used by existing device screens.
+      const payload = data as DevicesResponse & { per_page?: number };
+      const pageSize = payload.page_size ?? payload.per_page ?? params.page_size ?? 50;
+      return {
+        ...payload,
+        page_size: pageSize,
+        pages: payload.pages ?? Math.ceil(payload.total / pageSize),
+      };
     },
     staleTime: 15_000,
     refetchInterval: 30_000,

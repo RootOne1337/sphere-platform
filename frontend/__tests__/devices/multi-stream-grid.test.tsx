@@ -92,6 +92,15 @@ describe('MultiStreamGrid', () => {
     expect(screen.getByTestId('stream-device-1')).toHaveAttribute('data-fit', 'cover');
   });
 
+  it('keeps a busy but reachable device streamable', () => {
+    render(<MultiStreamGrid devices={[makeDevice('working-device', 'busy', null)]} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Запустить вещание' }));
+
+    expect(screen.getByTestId('stream-working-device')).toBeInTheDocument();
+    expect(screen.queryByText('Stream Offline')).not.toBeInTheDocument();
+  });
+
   it('shows the measured heartbeat age instead of a fixed freshness claim or fabricated network error', () => {
     jest.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-09-25T12:01:00Z'));
     render(
