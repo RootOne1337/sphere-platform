@@ -9,7 +9,7 @@
 </div>
 
 > [!NOTE]
-> **Срез навигации: 28 сентября 2026.** Канонические source/runtime факты,
+> **Срез навигации: 30 сентября 2026.** Канонические source/runtime факты,
 > версии Android, ограничения диагностики и будущий этап 20–30 устройств собраны
 > в [актуальном состоянии](operations/CURRENT-STATE.md). Runtime не перечитывался
 > этим документационным проходом; старые аудиты сохраняют собственные даты и
@@ -19,13 +19,14 @@
 
 | Мне нужно | Начать здесь | Дальше |
 | --- | --- | --- |
-| Узнать актуальные версии, что APK может диагностировать/исполнять и что реально подтверждено | [Текущее состояние на 28 сентября](operations/CURRENT-STATE.md) | [Readiness](operations/READINESS.md) · [PR #19](https://github.com/RootOne1337/sphere-platform/pull/19) |
+| Узнать актуальные версии, что APK может диагностировать/исполнять и что реально подтверждено | [Текущее состояние](operations/CURRENT-STATE.md) | [Readiness](operations/READINESS.md) · [PR #19](https://github.com/RootOne1337/sphere-platform/pull/19) |
 | Сверить версию и OTA перед pilot install | [Текущее состояние](operations/CURRENT-STATE.md) | [Local pilot ledger](operations/LOCAL-PILOT.md) · [Приёмка первого устройства](operations/PILOT-ACCEPTANCE.md) |
 | Поднять новую установку | [Startup / bootstrap](operations/STARTUP.md#first-install) | [Configuration](configuration.md) · [Deployment](deployment.md) |
 | Подключить удалённые Android | [Remote pilot](operations/REMOTE-PILOT.md) | [Signed discovery](architecture/ANDROID-SIGNED-DISCOVERY.md) |
 | Понять оставшиеся проблемы | [Текущее состояние и границы доказательств](operations/CURRENT-STATE.md) | [Fleet32](audits/2026-09-20/FLEET32-PREFLIGHT.md) · [A/B ingress](audits/2026-09-24/REMOTE-INGRESS-AB.md) · [Readiness](operations/READINESS.md) · [Roadmap](../ROADMAP.md) |
 | Проверить полноту веб-панели, источники метрик и расхождение preview с checkout | [Web operations / observability audit — 29 сентября](audits/2026-09-29/WEB-OPERATIONS-OBSERVABILITY-AUDIT.md) | Подтверждённые пробелы, риски масштаба 500–1000 устройств и очерёдность следующей работы |
 | Сверить, какая сборка frontend и backend реально открыта | [Build provenance в интерфейсе](operations/BUILD-PROVENANCE.md) | SHA веб-сборки в шапке, SHA API из runtime endpoint и честные состояния unknown/unavailable |
+| Проверить профиль, MFA и API-ключи | [Настройки аккаунта — 30 сентября](audits/2026-09-30/WEB-SETTINGS-ACCOUNT-SECURITY.md) | Контракты API, реальные даты/статусы, подтверждения и отказные сценарии |
 | Проверить пагинацию и значения статусов в Fleet Matrix | [Контракт реестра устройств](operations/DEVICE-CATALOG.md) | Scope/status counts, Redis live presence, поведение при недоступности Redis и пределы текущего масштаба |
 | Проверить frontend dependency advisories и статус исправлений в PR #19 | [Frontend dependency security report](audits/2026-09-28/FRONTEND-DEPENDENCY-SECURITY.md) | [Текущее состояние](operations/CURRENT-STATE.md) · [PR #19](https://github.com/RootOne1337/sphere-platform/pull/19) |
 | Проверить подпись, release APK, CI, OTA и доказательства Android-кандидата | [Android release-readiness audit](audits/2026-09-28/ANDROID-RELEASE-READINESS.md) | [Android agent guide](android-agent.md) · [Текущее состояние](operations/CURRENT-STATE.md) |
