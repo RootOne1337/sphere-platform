@@ -8,6 +8,7 @@ let mockIsError = false;
 let mockIsFetching = false;
 let mockDataAvailable = true;
 let mockCatalogTotal: number | null = null;
+let mockDataUpdatedAt = 0;
 const mockRefetch = jest.fn();
 jest.mock('@/lib/hooks/useDevices', () => ({
   useDevices: (params: { status?: string }) => {
@@ -15,6 +16,7 @@ jest.mock('@/lib/hooks/useDevices', () => ({
     const items = mockDevices.filter(d => !params.status || d.status === params.status);
     return {
       data: mockDataAvailable ? { items, total: mockCatalogTotal ?? items.length } : undefined,
+      dataUpdatedAt: mockDataUpdatedAt,
       isLoading: mockIsLoading,
       isError: mockIsError,
       isFetching: mockIsFetching,
@@ -34,6 +36,7 @@ beforeEach(() => {
   mockIsFetching = false;
   mockDataAvailable = true;
   mockCatalogTotal = null;
+  mockDataUpdatedAt = Date.parse('2026-09-29T12:00:00.000Z');
   mockRefetch.mockReset();
   mockDevices = [
     { id: 'a', name: 'Agent A', status: 'online', group_ids: [], location_ids: [] },
@@ -61,6 +64,23 @@ it('shows heartbeat age and separates fresh telemetry from missing or stale hear
   expect(screen.getByLabelText('Последний heartbeat: Heartbeat · 1 мин назад')).toHaveClass('text-amber-400');
   expect(screen.getByLabelText('Последний heartbeat: Heartbeat нет')).toBeInTheDocument();
   expect(screen.getByLabelText('Последний heartbeat: Время heartbeat неизвестно')).toBeInTheDocument();
+});
+
+it('shows the timestamp of the last successful catalog API response', () => {
+  const updatedAt = Date.parse('2026-09-29T12:00:00.000Z');
+  mockDataUpdatedAt = updatedAt;
+  render(<FleetStreamPage />);
+
+  const apiTimestamp = screen.getByLabelText('Время последнего успешного ответа каталога API');
+  expect(apiTimestamp).toHaveAttribute('title', new Date(updatedAt).toLocaleString());
+  expect(apiTimestamp.querySelector('time')).toHaveAttribute('datetime', new Date(updatedAt).toISOString());
+});
+
+it('explains that the first API response is still pending when no catalog timestamp exists', () => {
+  mockDataUpdatedAt = 0;
+  render(<FleetStreamPage />);
+
+  expect(screen.getByRole('status')).toHaveTextContent('Ожидаем первый ответ API');
 });
 
 it('keeps an offline device visible, hides stale video, and resumes the selected stream on recovery', () => {
@@ -183,8 +203,10 @@ it('shows loading and retryable API error states instead of a false empty result
 
   mockIsLoading = false;
   mockIsError = true;
+  mockDataUpdatedAt = 0;
   view.rerender(<FleetStreamPage />);
   expect(screen.getByRole('alert')).toHaveTextContent('Не удалось обновить список устройств');
+  expect(screen.getByRole('status')).toHaveTextContent('Нет успешного ответа API');
   expect(screen.getByText('Список устройств недоступен')).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Повторить' }));
   expect(mockRefetch).toHaveBeenCalledTimes(1);

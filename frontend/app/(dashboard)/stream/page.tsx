@@ -67,7 +67,8 @@ export default function FleetStreamPage() {
   const [sortField, setSortField] = useState<SortField>('name');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
 
-  const { data, isLoading, isError, isFetching, refetch } = useDevices({ page_size: 5000 });
+  const { data, dataUpdatedAt, isLoading, isError, isFetching, refetch } = useDevices({ page_size: 5000 });
+  const catalogUpdatedAt = dataUpdatedAt > 0 ? new Date(dataUpdatedAt) : null;
   const allDevices = data?.items ?? EMPTY_DEVICES;
   const catalogTotal = data?.total ?? allDevices.length;
   const hasUnloadedDevices = catalogTotal > allDevices.length;
@@ -162,7 +163,7 @@ export default function FleetStreamPage() {
 
   return (
     <main className="min-w-0 space-y-5 p-4 md:p-6">
-      <header className="flex flex-col justify-between gap-4 border-b border-border pb-5 sm:flex-row sm:items-end">
+      <header className="flex flex-col justify-between gap-4 border-b border-border pb-5 lg:flex-row lg:items-end">
         <div className="min-w-0">
           <p className="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-[0.16em] text-primary">
             <Radio className="h-4 w-4" aria-hidden="true" /> Операционный центр
@@ -170,16 +171,32 @@ export default function FleetStreamPage() {
           <h1 className="text-2xl font-semibold tracking-tight text-foreground md:text-3xl">Потоки устройств</h1>
           <p className="mt-1 text-sm text-muted-foreground">Открывайте просмотр только для выбранных устройств. Потоки запускаются по запросу.</p>
         </div>
-        <button
-          type="button"
-          onClick={() => { void refetch(); }}
-          disabled={isFetching}
-          aria-label="Обновить список устройств"
-          className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-border bg-card px-3 text-sm font-medium text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-wait disabled:opacity-60 motion-reduce:transition-none"
-        >
-          <RefreshCw className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} aria-hidden="true" />
-          {isFetching ? 'Обновляем…' : 'Обновить данные'}
-        </button>
+        <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center">
+          {catalogUpdatedAt ? (
+            <span
+              aria-label="Время последнего успешного ответа каталога API"
+              title={catalogUpdatedAt.toLocaleString()}
+              className="inline-flex min-h-9 items-center gap-2 rounded-md border border-border bg-card/60 px-3 text-xs text-muted-foreground"
+            >
+              <Clock3 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              <span>Ответ API · <time dateTime={catalogUpdatedAt.toISOString()}>{catalogUpdatedAt.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}</time></span>
+            </span>
+          ) : (
+            <span role="status" className="inline-flex min-h-9 items-center gap-2 rounded-md border border-border bg-card/60 px-3 text-xs text-muted-foreground">
+              <Clock3 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" /> {isError ? 'Нет успешного ответа API' : 'Ожидаем первый ответ API'}
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={() => { void refetch(); }}
+            disabled={isFetching}
+            aria-label="Обновить список устройств"
+            className="inline-flex h-10 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-md border border-border bg-card px-3 text-sm font-medium text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-wait disabled:opacity-60 motion-reduce:transition-none"
+          >
+            <RefreshCw className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} aria-hidden="true" />
+            {isFetching ? 'Обновляем…' : 'Обновить данные'}
+          </button>
+        </div>
       </header>
 
       <section aria-label="Состояние устройств" className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
