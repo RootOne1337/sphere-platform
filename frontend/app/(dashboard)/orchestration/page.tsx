@@ -50,6 +50,7 @@ import {
 import { DeviceSelector } from '@/components/sphere/DeviceSelector';
 import { useScripts, Script } from '@/lib/hooks/useScripts';
 import { PipelineResumeControl } from '@/components/orchestration/PipelineResumeControl';
+import { parseListItems } from '@/src/features/orchestration/listPayload';
 
 // ============================================================================
 //  ТИПЫ
@@ -146,6 +147,10 @@ interface ScheduleExecution {
     created_at: string;
 }
 
+const EMPTY_PIPELINES: Pipeline[] = [];
+const EMPTY_RUNS: PipelineRun[] = [];
+const EMPTY_SCHEDULES: Schedule[] = [];
+
 // ============================================================================
 //  ХУКИ ДАННЫХ
 // ============================================================================
@@ -154,10 +159,8 @@ function usePipelines() {
     return useQuery<Pipeline[]>({
         queryKey: ['pipelines'],
         queryFn: async () => {
-            try {
-                const { data } = await api.get('/pipelines?per_page=100');
-                return data.items || [];
-            } catch { return []; }
+            const { data } = await api.get('/pipelines?per_page=100');
+            return parseListItems<Pipeline>(data, 'pipelines');
         },
         refetchInterval: 8000,
     });
@@ -167,10 +170,8 @@ function usePipelineRuns() {
     return useQuery<PipelineRun[]>({
         queryKey: ['pipeline-runs'],
         queryFn: async () => {
-            try {
-                const { data } = await api.get('/pipelines/runs?per_page=100');
-                return data.items || [];
-            } catch { return []; }
+            const { data } = await api.get('/pipelines/runs?per_page=100');
+            return parseListItems<PipelineRun>(data, 'pipeline runs');
         },
         refetchInterval: 5000,
     });
@@ -180,10 +181,8 @@ function useSchedules() {
     return useQuery<Schedule[]>({
         queryKey: ['schedules'],
         queryFn: async () => {
-            try {
-                const { data } = await api.get('/schedules?per_page=100');
-                return data.items || [];
-            } catch { return []; }
+            const { data } = await api.get('/schedules?per_page=100');
+            return parseListItems<Schedule>(data, 'schedules');
         },
         refetchInterval: 8000,
     });
@@ -258,9 +257,15 @@ export default function OrchestrationPage() {
     const [showCreateSchedule, setShowCreateSchedule] = useState(false);
     const [editingSchedule, setEditingSchedule] = useState<Schedule | null>(null);
 
-    const { data: pipelines = [], isLoading: pLoading } = usePipelines();
-    const { data: runs = [], isLoading: rLoading } = usePipelineRuns();
-    const { data: schedules = [], isLoading: sLoading } = useSchedules();
+    const pipelinesQuery = usePipelines();
+    const runsQuery = usePipelineRuns();
+    const schedulesQuery = useSchedules();
+    const pipelines = pipelinesQuery.data ?? EMPTY_PIPELINES;
+    const runs = runsQuery.data ?? EMPTY_RUNS;
+    const schedules = schedulesQuery.data ?? EMPTY_SCHEDULES;
+    const pLoading = pipelinesQuery.isLoading;
+    const rLoading = runsQuery.isLoading;
+    const sLoading = schedulesQuery.isLoading;
 
     // Статистика (вычисляемая)
     const stats = useMemo(() => {
@@ -269,22 +274,22 @@ export default function OrchestrationPage() {
         const failedRuns = runs.filter(r => ['failed', 'timed_out'].includes(r.status.toLowerCase()));
         const activeSchedules = schedules.filter(s => s.is_active);
         return {
-            totalPipelines: pipelines.length,
-            activeRuns: activeRuns.length,
-            completedRuns: completedRuns.length,
-            failedRuns: failedRuns.length,
-            totalSchedules: schedules.length,
-            activeSchedules: activeSchedules.length,
-            successRate: runs.length > 0
+            totalPipelines: pipelinesQuery.data === undefined ? '—' : pipelines.length,
+            activeRuns: runsQuery.data === undefined ? '—' : activeRuns.length,
+            completedRuns: runsQuery.data === undefined ? '—' : completedRuns.length,
+            failedRuns: runsQuery.data === undefined ? '—' : failedRuns.length,
+            totalSchedules: schedulesQuery.data === undefined ? '—' : schedules.length,
+            activeSchedules: schedulesQuery.data === undefined ? '—' : activeSchedules.length,
+            successRate: runsQuery.data === undefined ? '—' : runs.length > 0
                 ? ((completedRuns.length / runs.length) * 100).toFixed(1)
                 : '—',
         };
-    }, [pipelines, runs, schedules]);
+    }, [pipelines, runs, schedules, pipelinesQuery.data, runsQuery.data, schedulesQuery.data]);
 
-    const TABS: { key: TabKey; label: string; count: number }[] = [
-        { key: 'pipelines', label: 'Pipelines', count: pipelines.length },
-        { key: 'runs', label: 'Pipeline Runs', count: runs.length },
-        { key: 'schedules', label: 'Schedules', count: schedules.length },
+    const TABS: { key: TabKey; label: string; count: number | string }[] = [
+        { key: 'pipelines', label: 'Pipelines', count: pipelinesQuery.data === undefined ? '—' : pipelines.length },
+        { key: 'runs', label: 'Pipeline Runs', count: runsQuery.data === undefined ? '—' : runs.length },
+        { key: 'schedules', label: 'Schedules', count: schedulesQuery.data === undefined ? '—' : schedules.length },
     ];
 
     return (
@@ -328,10 +333,18 @@ export default function OrchestrationPage() {
                     <StatCard label="Active Runs" value={stats.activeRuns} icon={<Activity className="w-7 h-7 text-primary/30" strokeWidth={1} />} accent />
                     <StatCard label="Completed" value={stats.completedRuns} icon={<CheckCircle2 className="w-7 h-7 text-success/30" strokeWidth={1} />} />
                     <StatCard label="Failed" value={stats.failedRuns} icon={<ShieldAlert className="w-7 h-7 text-destructive/30" strokeWidth={1} />} destructive />
-                    <StatCard label="Success Rate" value={`${stats.successRate}%`} icon={<Zap className="w-7 h-7 text-success/30" strokeWidth={1} />} />
-                    <StatCard label="Schedules Active" value={`${stats.activeSchedules}/${stats.totalSchedules}`} icon={<CalendarClock className="w-7 h-7 text-primary/30" strokeWidth={1} />} />
+                    <StatCard label="Success Rate" value={stats.successRate === '—' ? '—' : `${stats.successRate}%`} icon={<Zap className="w-7 h-7 text-success/30" strokeWidth={1} />} />
+                    <StatCard label="Schedules Active" value={stats.totalSchedules === '—' ? '—' : `${stats.activeSchedules}/${stats.totalSchedules}`} icon={<CalendarClock className="w-7 h-7 text-primary/30" strokeWidth={1} />} />
                 </div>
             </div>
+
+            {(pipelinesQuery.isError || runsQuery.isError || schedulesQuery.isError) && (
+                <div className="space-y-2 px-6 pt-3">
+                    <QueryFailureNotice source="Конвейеры" query={pipelinesQuery} onRetry={() => pipelinesQuery.refetch()} />
+                    <QueryFailureNotice source="Запуски" query={runsQuery} onRetry={() => runsQuery.refetch()} />
+                    <QueryFailureNotice source="Расписания" query={schedulesQuery} onRetry={() => schedulesQuery.refetch()} />
+                </div>
+            )}
 
             {/* ── TABS ───────────────────────────────────────────────────────── */}
             <div className="px-6 border-b border-border shrink-0">
@@ -358,9 +371,9 @@ export default function OrchestrationPage() {
 
             {/* ── CONTENT ────────────────────────────────────────────────────── */}
             <div className="flex-1 overflow-auto p-6">
-                {tab === 'pipelines' && <PipelinesTab pipelines={pipelines} loading={pLoading} search={search} onRunPipeline={setRunPipelineTarget} />}
-                {tab === 'runs' && <RunsTab runs={runs} pipelines={pipelines} loading={rLoading} search={search} />}
-                {tab === 'schedules' && <SchedulesTab schedules={schedules} pipelines={pipelines} loading={sLoading} search={search} onCreateSchedule={() => setShowCreateSchedule(true)} onEditSchedule={setEditingSchedule} />}
+                {tab === 'pipelines' && <PipelinesTab pipelines={pipelines} loading={pLoading} error={pipelinesQuery.isError} hasSnapshot={pipelinesQuery.data !== undefined} search={search} onRunPipeline={setRunPipelineTarget} />}
+                {tab === 'runs' && <RunsTab runs={runs} pipelines={pipelines} loading={rLoading} error={runsQuery.isError} hasSnapshot={runsQuery.data !== undefined} search={search} />}
+                {tab === 'schedules' && <SchedulesTab schedules={schedules} pipelines={pipelines} loading={sLoading} error={schedulesQuery.isError} hasSnapshot={schedulesQuery.data !== undefined} search={search} onCreateSchedule={() => setShowCreateSchedule(true)} onEditSchedule={setEditingSchedule} />}
             </div>
 
             {/* ── МОДАЛКИ (controlled mode — Dialog всегда в DOM, Portal рендерится по open) ── */}
@@ -380,6 +393,28 @@ export default function OrchestrationPage() {
                 onOpenChange={(v) => { if (!v) setEditingSchedule(null); }}
                 pipelines={pipelines}
             />
+        </div>
+    );
+}
+
+function QueryFailureNotice({ source, query, onRetry }: {
+    source: string;
+    query: { isError: boolean; isFetching: boolean; data: unknown };
+    onRetry: () => Promise<unknown>;
+}) {
+    if (!query.isError) return null;
+    const hasCachedData = query.data !== undefined;
+    return (
+        <div role="alert" className="flex flex-col gap-3 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm sm:flex-row sm:items-center sm:justify-between">
+            <div>
+                <p className="font-semibold text-destructive">Не удалось обновить {source}.</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                    {hasCachedData ? 'Показан последний успешно загруженный снимок.' : 'Данные не получены; пустой список не подтверждён.'}
+                </p>
+            </div>
+            <Button type="button" variant="outline" size="sm" aria-label={`Повторить загрузку: ${source}`} onClick={() => { void onRetry(); }} disabled={query.isFetching}>
+                {query.isFetching ? 'Повторяем…' : 'Повторить загрузку'}
+            </Button>
         </div>
     );
 }
@@ -411,7 +446,7 @@ function StatCard({
 //  TAB: PIPELINES
 // ============================================================================
 
-function PipelinesTab({ pipelines, loading, search, onRunPipeline }: { pipelines: Pipeline[]; loading: boolean; search: string; onRunPipeline: (p: Pipeline) => void }) {
+function PipelinesTab({ pipelines, loading, error, hasSnapshot, search, onRunPipeline }: { pipelines: Pipeline[]; loading: boolean; error: boolean; hasSnapshot: boolean; search: string; onRunPipeline: (p: Pipeline) => void }) {
     const [expandedId, setExpandedId] = useState<string | null>(null);
 
     const filtered = useMemo(() => {
@@ -445,7 +480,7 @@ function PipelinesTab({ pipelines, loading, search, onRunPipeline }: { pipelines
                     )}
                     {!loading && filtered.length === 0 && (
                         <tr><td colSpan={8} className="px-4 py-12 text-center text-muted-foreground">
-                            {pipelines.length === 0 ? 'Нет pipelines. Создайте первый!' : 'Ничего не найдено'}
+                            {error && !hasSnapshot ? 'Список pipelines не загружен; пустой каталог не подтверждён.' : error && pipelines.length === 0 ? 'Последний снимок пуст; обновить список не удалось.' : pipelines.length === 0 ? 'Нет pipelines. Создайте первый!' : 'Ничего не найдено'}
                         </td></tr>
                     )}
                     {filtered.map(p => (
@@ -593,9 +628,9 @@ function PipelineRow({ pipeline: p, expanded, onToggle, onRunPipeline }: { pipel
 // ============================================================================
 
 function RunsTab({
-    runs, pipelines, loading, search
+    runs, pipelines, loading, error, hasSnapshot, search
 }: {
-    runs: PipelineRun[]; pipelines: Pipeline[]; loading: boolean; search: string
+    runs: PipelineRun[]; pipelines: Pipeline[]; loading: boolean; error: boolean; hasSnapshot: boolean; search: string
 }) {
     const queryClient = useQueryClient();
     const [expandedRunId, setExpandedRunId] = useState<string | null>(null);
@@ -654,7 +689,7 @@ function RunsTab({
                         <tr><td colSpan={8} className="px-4 py-12 text-center text-muted-foreground animate-pulse">Загрузка runs...</td></tr>
                     )}
                     {!loading && filtered.length === 0 && (
-                        <tr><td colSpan={8} className="px-4 py-12 text-center text-muted-foreground">Нет запусков pipeline</td></tr>
+                        <tr><td colSpan={8} className="px-4 py-12 text-center text-muted-foreground">{error && !hasSnapshot ? 'Список запусков не загружен; пустой результат не подтверждён.' : error && runs.length === 0 ? 'Последний снимок пуст; обновить список не удалось.' : 'Нет запусков pipeline'}</td></tr>
                     )}
                     {filtered.map(run => {
                         const pl = pipelineMap.get(run.pipeline_id);
@@ -789,7 +824,7 @@ function RunRow({
 //  TAB: SCHEDULES
 // ============================================================================
 
-function SchedulesTab({ schedules, pipelines, loading, search, onCreateSchedule, onEditSchedule }: { schedules: Schedule[]; pipelines: Pipeline[]; loading: boolean; search: string; onCreateSchedule: () => void; onEditSchedule: (s: Schedule) => void }) {
+function SchedulesTab({ schedules, pipelines, loading, error, hasSnapshot, search, onCreateSchedule, onEditSchedule }: { schedules: Schedule[]; pipelines: Pipeline[]; loading: boolean; error: boolean; hasSnapshot: boolean; search: string; onCreateSchedule: () => void; onEditSchedule: (s: Schedule) => void }) {
     const queryClient = useQueryClient();
 
     const toggleMut = useMutation({
@@ -849,7 +884,7 @@ function SchedulesTab({ schedules, pipelines, loading, search, onCreateSchedule,
                     )}
                     {!loading && filtered.length === 0 && (
                         <tr><td colSpan={9} className="px-4 py-12 text-center text-muted-foreground">
-                            {schedules.length === 0 ? 'Нет расписаний. Создайте первое!' : 'Ничего не найдено'}
+                            {error && !hasSnapshot ? 'Список расписаний не загружен; пустой каталог не подтверждён.' : error && schedules.length === 0 ? 'Последний снимок пуст; обновить список не удалось.' : schedules.length === 0 ? 'Нет расписаний. Создайте первое!' : 'Ничего не найдено'}
                         </td></tr>
                     )}
                     {filtered.map(s => {
