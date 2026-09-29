@@ -1,5 +1,8 @@
 FROM python:3.12-slim
 
+ARG BUILD_SHA=unknown
+ENV SPHERE_BUILD_SHA=${BUILD_SHA}
+
 WORKDIR /app
 
 # Системные зависимости

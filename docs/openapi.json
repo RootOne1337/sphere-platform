@@ -3930,6 +3930,28 @@
         }
       }
     },
+    "/api/v1/health/build": {
+      "get": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Build Info",
+        "description": "Expose only the immutable source revision used to build this API image.\n\nThe revision is deliberately public and validated as a Git SHA; no runtime\nconfiguration, host identifiers, or deployment secrets are returned.",
+        "operationId": "build_info_api_v1_health_build_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BuildInfoResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/health/healthz": {
       "get": {
         "tags": [
@@ -10408,6 +10430,30 @@
         ],
         "title": "BroadcastBatchResponse",
         "description": "Ответ broadcast-запуска — дополнительно содержит число онлайн-устройств."
+      },
+      "BuildInfoResponse": {
+        "properties": {
+          "service": {
+            "type": "string",
+            "title": "Service",
+            "default": "backend-api"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version",
+            "default": "4.0.0"
+          },
+          "revision": {
+            "type": "string",
+            "pattern": "^(unknown|[0-9a-f]{7,40})$",
+            "title": "Revision"
+          }
+        },
+        "type": "object",
+        "required": [
+          "revision"
+        ],
+        "title": "BuildInfoResponse"
       },
       "BulkActionItemResult": {
         "properties": {

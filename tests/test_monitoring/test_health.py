@@ -168,6 +168,23 @@ async def test_healthz_returns_200(health_client):
 
 
 @pytest.mark.asyncio
+async def test_build_info_reports_only_a_validated_revision(health_client, monkeypatch):
+    monkeypatch.setenv("SPHERE_BUILD_SHA", "7c4d9cb6e9876543210abcdef1234567890abcde")
+    response = await health_client.get("/api/v1/health/build")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "service": "backend-api",
+        "version": "4.0.0",
+        "revision": "7c4d9cb6e9876543210abcdef1234567890abcde",
+    }
+
+    monkeypatch.setenv("SPHERE_BUILD_SHA", "token-like-value")
+    response = await health_client.get("/api/v1/health/build")
+    assert response.json()["revision"] == "unknown"
+
+
+@pytest.mark.asyncio
 async def test_healthz_fast_response(health_client):
     """Liveness probe должна отвечать без обращения к БД."""
     import time

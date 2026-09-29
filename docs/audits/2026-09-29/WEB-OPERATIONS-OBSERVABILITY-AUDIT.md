@@ -125,6 +125,20 @@ Health check отвечает на ограниченный вопрос: «эт
 
 ## Подтверждение после source изменений
 
+### Follow-up: provenance baseline (29 сентября 2026)
+
+До этого изменения CI мог передать `BUILD_SHA` только в backend build action,
+но backend Dockerfile не объявлял аргумент, frontend action не передавал SHA,
+а UI не показывал ни одну из ревизий. Следовательно, старый pilot `3012` нельзя
+было надёжно отличить от текущего checkout по интерфейсу.
+
+В PR #19 добавлен публичный `/api/v1/health/build` с валидацией Git SHA,
+маркировка `WEB`/`API` в общей шапке и передача `github.sha` в оба preview image
+build. Исправлен также backend build context на корень репозитория, которого
+требует `backend/Dockerfile`. Это закрывает source/build plumbing, но не является
+доказательством работающего preview: требуется успешный image build/deploy и
+сверка двух значений на target runtime. См. [runbook provenance](../operations/BUILD-PROVENANCE.md).
+
 - `npm run type-check` — **PASS** после всех текущих изменений.
 - Целевые regression tests — **7 suites / 35 tests PASS** до дополнительного cache-key теста; затем сценарные suites — **3 suites / 19 tests PASS**.
 - Полный `npm test -- --runInBand` — **57 suites / 371 tests PASS** после всех frontend изменений.

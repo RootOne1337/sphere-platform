@@ -13,6 +13,8 @@ RUN npm ci --only=production
 
 # Builder
 FROM base AS builder
+ARG BUILD_SHA=unknown
+ENV NEXT_PUBLIC_BUILD_SHA=${BUILD_SHA}
 COPY package.json package-lock.json* ./
 RUN npm ci
 COPY . .

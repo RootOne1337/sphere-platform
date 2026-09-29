@@ -13,6 +13,7 @@ import { useCommandPaletteStore } from '@/src/features/navigation/commandPalette
 import { useUIStore } from '@/src/shared/store/useUIStore';
 import { useThemeStore } from '@/src/shared/store/themeStore';
 import { Button } from '@/src/shared/ui/button';
+import { BuildProvenance } from '@/src/shared/ui/BuildProvenance';
 
 const ROUTE_TITLES: Record<string, string> = {
   '/dashboard': 'Обзор парка',
@@ -117,6 +118,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
 
           <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+            <BuildProvenance />
             <Button
               type="button"
               variant="outline"

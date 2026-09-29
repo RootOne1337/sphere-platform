@@ -4,7 +4,7 @@ Generated from `backend.main.app.openapi()` by `scripts/export_api_docs.py`.
 Regenerate with `python -m scripts.export_api_docs`; verify with `--check`.
 The exporter does not run startup hooks or send HTTP requests.
 
-**168 HTTP operations across 131 paths.**
+**169 HTTP operations across 132 paths.**
 
 Full parameters, request bodies, response schemas and declared security schemes:
 [OpenAPI JSON](openapi.json). Manual explanations:
@@ -89,6 +89,7 @@ for tested behavior and remaining limits.
 | `PUT` | `/api/v1/groups/{group_id}` | groups | 200, 422 | Обновить группу устройств |
 | `POST` | `/api/v1/groups/{group_id}/devices/move` | groups | 200, 422 | Переместить устройства в группу |
 | `GET` | `/api/v1/health` | health | 200 | Health Check |
+| `GET` | `/api/v1/health/build` | health | 200 | Build Info |
 | `GET` | `/api/v1/health/full` | health | 200 | Full Health |
 | `GET` | `/api/v1/health/healthz` | health | 200 | Liveness |
 | `GET` | `/api/v1/health/ready` | health | 200 | Readiness Check |

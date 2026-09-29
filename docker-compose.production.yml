@@ -51,6 +51,8 @@ services:
     build:
       context: .
       dockerfile: backend/Dockerfile
+      args:
+        BUILD_SHA: ${BUILD_SHA:-unknown}
     environment:
       - POSTGRES_URL=postgresql+asyncpg://${POSTGRES_USER:-sphere}:${POSTGRES_PASSWORD}@postgres:5432/sphereplatform
       - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
@@ -105,6 +107,8 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        BUILD_SHA: ${BUILD_SHA:-unknown}
     environment:
       - NEXT_PUBLIC_API_URL=https://${SERVER_HOSTNAME}
       - NEXT_PUBLIC_WS_URL=wss://${SERVER_HOSTNAME}
