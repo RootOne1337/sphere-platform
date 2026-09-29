@@ -43,6 +43,23 @@ describe('build provenance', () => {
     client.clear();
   });
 
+  it('keeps a compact frontend/backend build stamp available below desktop breakpoints', async () => {
+    mockFetch(async () => ({
+      ok: true,
+      json: async () => ({ service: 'backend-api', revision: '7c4d9cb6e9876543210abcdef1234567890abcde' }),
+    } as Response));
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+
+    render(<QueryClientProvider client={client}><BuildProvenance /></QueryClientProvider>);
+
+    const stamp = await screen.findByRole('status');
+    await waitFor(() => expect(stamp).toHaveTextContent('W:unknown A:7c4d9cb6'));
+    expect(stamp).toHaveClass('flex');
+    expect(stamp).not.toHaveClass('hidden');
+    expect(stamp).toHaveAttribute('title', expect.stringContaining('Backend commit: 7c4d9cb6'));
+    client.clear();
+  });
+
   it('shows an unavailable API stamp instead of inventing a revision', async () => {
     mockFetch(async () => { throw new Error('network unavailable'); });
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
