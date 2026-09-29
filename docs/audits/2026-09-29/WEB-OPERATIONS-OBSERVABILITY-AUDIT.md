@@ -265,6 +265,8 @@ Read-only запрос GitHub Dependabot для default branch `main` верну
 
 Оба read endpoint теперь используют общий `require_permission("monitoring:read")`. Это сохраняет доступ разрешённым ролям из центральной RBAC-матрицы и не меняет внутренний Prometheus scrape endpoint, который закрыт на ingress отдельно. В `tests/test_monitoring/test_dashboard_telemetry.py` добавлены проверки обоих endpoint: отсутствие bearer identity → 401, роль без monitoring permission → 403, разрешённый Viewer → 200. Целевой прогон: **14 passed**; Ruff на изменённых Python-файлах: **PASS**. Остаются две существующие deprecation warnings из несвязанных `game_accounts` и `dateutil` модулей.
 
+Exact-head backend CI обнаружил drift в сгенерированной API-документации после появления bearer dependency. `docs/openapi.json` обновлён в изолированном окружении с зафиксированными CI-версиями FastAPI 0.136.3 и Pydantic 2.9.2; генератор добавил только `HTTPBearer` security metadata двум защищённым endpoint. `python -m scripts.export_api_docs --check` теперь проходит; ручной endpoint catalog не изменился.
+
 Проверено на source-контракте и тестовом ASGI приложении; публичная production конфигурация не менялась и не проверялась активным запросом. Этот fix не добавляет ещё отсутствующую историю метрик, tunnel/worker instrumentation или production rollout; эти задачи остаются открытыми по WEB-04…WEB-06 и WEB-10.
 
 ### Follow-up: измеренная скорость сети на странице инфраструктуры (29 сентября 2026)
