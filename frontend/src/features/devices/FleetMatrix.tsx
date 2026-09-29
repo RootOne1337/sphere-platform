@@ -59,7 +59,7 @@ interface FleetMatrixProps {
 export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChange, onDeviceAction }: FleetMatrixProps) {
     const { openInspector } = useInspectorStore();
     const parentRef = React.useRef<HTMLDivElement>(null);
-    const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
+    const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({ network: false, server_name: false, tags: false });
     const [sorting, setSorting] = React.useState<SortingState>([]);
     const [clockNow, setClockNow] = React.useState(() => Date.now());
 
@@ -98,18 +98,10 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
             {
                 accessorKey: "name",
                 header: "Устройство",
-                size: 220,
+                size: 190,
                 cell: ({ row }) => {
                     const device = row.original;
-                    const metadata = [
-                        device.model?.trim() || "Модель не сообщена",
-                        device.android_version?.trim()
-                            ? `Android ${device.android_version.trim()}`
-                            : "Версия Android не сообщена",
-                        device.agent_version?.trim()
-                            ? `Agent ${device.agent_version.trim()}`
-                            : "Агент не сообщил версию",
-                    ].join(" · ");
+                    const metadata = device.model?.trim() || "Модель не сообщена";
                     return (
                         <div className="flex h-full flex-col justify-center pr-4">
                             <button
@@ -123,7 +115,7 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
                             >
                                 {device.name}
                             </button>
-                            <span className="font-mono text-[10px] leading-4 text-muted-foreground truncate" title={metadata}>
+                            <span className="line-clamp-2 whitespace-normal text-xs leading-4 text-muted-foreground" title={metadata}>
                                 {metadata}
                             </span>
                         </div>
@@ -131,25 +123,37 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
                 },
             },
             {
+                id: "agent_version",
+                header: "Android / агент",
+                accessorFn: (device) => device.agent_version ?? '',
+                size: 190,
+                cell: ({ row }) => {
+                    const device = row.original;
+                    const android = device.android_version?.trim();
+                    const agent = device.agent_version?.trim();
+                    return <div className="flex h-full flex-col justify-center gap-1 whitespace-normal text-xs leading-4">
+                        <span>{android ? `Android ${android.replace(/^Android\s+/i, '')}` : 'Android не сообщён'}</span>
+                        <span className="break-words font-mono text-muted-foreground">{agent ? `Agent ${agent}` : 'Агент не сообщил версию'}</span>
+                    </div>;
+                },
+            },
+            {
                 accessorKey: "status",
                 header: "Состояние",
-                size: 150,
+                size: 190,
                 cell: ({ row }) => {
                     const device = row.original;
                     const uptime = formatElapsedSince(device.connected_since, clockNow);
-                    const heartbeatAge = formatElapsedSince(device.last_heartbeat, clockNow);
                     const detail = device.status === "online" || device.status === "busy"
-                        ? `${uptime ? `В сети ${uptime}` : "Сессия подтверждена"} · heartbeat ${heartbeatAge ? `${heartbeatAge} назад` : "нет данных"}`
+                        ? uptime ? `В сети ${uptime}` : "Начало сессии не сообщено"
                         : device.status === "connecting"
                             ? "Ожидание первого heartbeat"
-                            : heartbeatAge
-                                ? `Последний heartbeat ${heartbeatAge} назад`
-                                : "Heartbeat не получен";
+                            : "По статусу API";
 
                     return (
                         <div className="flex h-full min-w-0 flex-col justify-center gap-0.5" title={detail}>
                             <DeviceStatusBadge status={device.status} />
-                            <span className="truncate font-mono text-[10px] leading-4 text-muted-foreground" aria-label={detail}>
+                            <span className="whitespace-normal text-xs leading-4 text-muted-foreground" aria-label={detail}>
                                 {detail}
                             </span>
                         </div>
@@ -169,7 +173,7 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
                         <div className="flex items-center justify-between w-full h-full pr-2">
                             <div className="flex items-center gap-1">
                                 <Battery className={cn("w-3 h-3", isLow ? "text-destructive" : "text-success")} />
-                                <span className={cn("font-mono text-[10px]", isLow && "text-destructive font-bold")}>
+                                <span className={cn("font-mono text-xs", isLow && "text-destructive font-bold")}>
                                     {lvl}%
                                 </span>
                             </div>
@@ -221,7 +225,7 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
                 size: 130,
                 cell: ({ row }) => {
                     const tags = row.original.tags;
-                    if (!tags || tags.length === 0) return <span className="text-muted-foreground text-[10px]">NO TAGS</span>;
+                    if (!tags || tags.length === 0) return <span className="text-muted-foreground text-xs">Нет тегов</span>;
                     return (
                         <div className="flex gap-1.5 items-center flex-wrap h-full overflow-hidden content-center py-1">
                             {tags.slice(0, 3).map((tag) => (
@@ -239,21 +243,25 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
                 },
             },
             {
-                accessorKey: "last_seen",
-                header: "Последний сигнал",
-                size: 140,
+                id: "last_seen",
+                accessorFn: (device) => {
+                    const timestamp = formatElapsedSince(device.last_heartbeat, clockNow) ? device.last_heartbeat
+                        : formatElapsedSince(device.last_seen, clockNow) ? device.last_seen : null;
+                    return timestamp ? Date.parse(timestamp) : 0;
+                },
+                header: "Heartbeat / контакт",
+                size: 200,
                 cell: ({ row }) => {
-                    const ts = row.original.last_seen;
-                    if (!ts) return <span className="text-muted-foreground">—</span>;
+                    const heartbeatAge = formatElapsedSince(row.original.last_heartbeat, clockNow);
+                    const contactAge = formatElapsedSince(row.original.last_seen, clockNow);
+                    const ts = heartbeatAge ? row.original.last_heartbeat : contactAge ? row.original.last_seen : null;
+                    if (!ts) return <div className="flex h-full items-center text-xs text-muted-foreground">Нет данных о сигнале</div>;
                     const date = new Date(ts);
+                    const label = heartbeatAge ? `heartbeat ${heartbeatAge} назад` : `Контакт ${contactAge} назад`;
                     return (
-                        <div className="flex flex-col justify-center h-full">
-                            <span className="font-mono text-[11px] text-foreground">
-                                {date.toLocaleTimeString([], { hour12: false })}
-                            </span>
-                            <span className="font-mono text-[10px] text-muted-foreground">
-                                {date.toLocaleDateString()}
-                            </span>
+                        <div className="flex h-full flex-col justify-center gap-1 whitespace-normal" title={`${label}\n${date.toISOString()}`}>
+                            <span className="text-xs text-foreground">{label}</span>
+                            <span className="font-mono text-[11px] text-muted-foreground">{date.toLocaleString('ru-RU', { timeZone: 'UTC', hour12: false })} UTC</span>
                         </div>
                     );
                 },
@@ -339,7 +347,7 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
     const virtualizer = useVirtualizer({
         count: rows.length,
         getScrollElement: () => parentRef.current,
-        estimateSize: () => 60,
+        estimateSize: () => 84,
         overscan: 20,
     });
 
@@ -372,7 +380,7 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
     return (
         <div role="table" aria-label="Устройства организации" className="relative flex flex-1 flex-col overflow-x-auto overflow-y-hidden rounded-lg border border-border bg-card shadow-sm custom-scrollbar">
             {/* Dynamic Header (Sticky) */}
-            <div role="row" className="sticky top-0 z-10 flex h-10 min-w-max border-b border-border bg-muted text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <div role="row" className="sticky top-0 z-10 flex h-10 min-w-max border-b border-border bg-muted text-xs font-medium text-muted-foreground">
                 {table.getFlatHeaders().map((header) => {
                     const canSort = header.column.getCanSort();
                     const sorted = header.column.getIsSorted();
@@ -409,7 +417,7 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-40 bg-card border-border">
-                            <DropdownMenuLabel className="font-mono text-[10px] uppercase text-muted-foreground">Toggle Columns</DropdownMenuLabel>
+                            <DropdownMenuLabel className="text-xs text-muted-foreground">Видимые колонки</DropdownMenuLabel>
                             <DropdownMenuSeparator className="bg-border" />
                             {table
                                 .getAllColumns()
@@ -422,7 +430,7 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
                                             checked={column.getIsVisible()}
                                             onCheckedChange={(value) => column.toggleVisibility(!!value)}
                                         >
-                                            {column.id.replace('_', ' ')}
+                                            {typeof column.columnDef.header === 'string' ? column.columnDef.header : column.id}
                                         </DropdownMenuCheckboxItem>
                                     );
                                 })}
@@ -465,7 +473,7 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
                                     <div
                                         key={cell.id}
                                         role="cell"
-                                        className="shrink-0 truncate border-r border-transparent px-3 transition-colors group-hover:border-border last:border-r-0 motion-reduce:transition-none"
+                                        className="shrink-0 overflow-hidden border-r border-transparent px-3 transition-colors group-hover:border-border last:border-r-0 motion-reduce:transition-none"
                                         style={{ width: cell.column.getSize() }}
                                     >
                                         {flexRender(cell.column.columnDef.cell, cell.getContext())}

@@ -1,4 +1,5 @@
 import { act, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { FleetMatrix } from '@/src/features/devices/FleetMatrix';
 import type { Device } from '@/lib/hooks/useDevices';
 
@@ -56,7 +57,7 @@ it('does not present generated ping or history as measurements', () => {
   expect(screen.getByText(/heartbeat .* назад/)).toBeInTheDocument();
   expect(container.textContent).not.toMatch(/\d+\s?ms/);
   expect(document.querySelectorAll('svg polyline')).toHaveLength(0);
-  expect(screen.getByText('ADB linked')).toBeInTheDocument();
+  expect(screen.queryByText('ADB linked')).not.toBeInTheDocument();
 });
 
 it('shows explicit fallbacks for metadata the Android agent has not reported', () => {
@@ -69,7 +70,9 @@ it('shows explicit fallbacks for metadata the Android agent has not reported', (
     />,
   );
 
-  expect(screen.getByText(/Модель не сообщена · Версия Android не сообщена · Агент не сообщил версию/)).toBeInTheDocument();
+  expect(screen.getByText('Модель не сообщена')).toBeInTheDocument();
+  expect(screen.getByText('Android не сообщён')).toBeInTheDocument();
+  expect(screen.getByText('Агент не сообщил версию')).toBeInTheDocument();
   expect(container.textContent).not.toMatch(/\b(undefined|null)\b/);
 });
 
@@ -101,7 +104,8 @@ it('does not invent an uptime when the server has no confirmed session timestamp
     />,
   );
 
-  expect(screen.getByText('Сессия подтверждена · heartbeat нет данных')).toBeInTheDocument();
+  expect(screen.getByText('Начало сессии не сообщено')).toBeInTheDocument();
+  expect(screen.getByText(/Контакт .* назад/)).toBeInTheDocument();
   expect(screen.queryByText(/В сети .* мин/)).not.toBeInTheDocument();
 
   rerender(
@@ -113,6 +117,35 @@ it('does not invent an uptime when the server has no confirmed session timestamp
     />,
   );
   expect(screen.getByText('Ожидание первого heartbeat')).toBeInTheDocument();
+});
+
+it('shows a real heartbeat without last_seen and keeps the agent version in its own column', () => {
+  jest.useFakeTimers();
+  jest.setSystemTime(new Date('2026-09-30T10:00:30Z'));
+  render(<FleetMatrix data={[{ ...device, last_seen: null, last_heartbeat: '2026-09-30T10:00:00Z', agent_version: '1.2.34-dev' }]} isLoading={false} rowSelection={{}} onRowSelectionChange={jest.fn()} />);
+  expect(screen.getByText('heartbeat 30 с назад')).toBeInTheDocument();
+  expect(screen.getByText('30.09.2026, 10:00:00 UTC')).toBeInTheDocument();
+  expect(screen.getByText('Agent 1.2.34-dev')).toBeInTheDocument();
+  expect(screen.getByRole('columnheader', { name: /Android/ })).toBeInTheDocument();
+  expect(screen.queryByText('Android Android 9')).not.toBeInTheDocument();
+});
+
+it('does not format invalid or far-future timestamps as real heartbeat evidence', () => {
+  jest.useFakeTimers();
+  jest.setSystemTime(new Date('2026-09-30T10:00:00Z'));
+  const { container } = render(<FleetMatrix data={[{ ...device, connected_since: 'bad-date', last_heartbeat: '2026-10-01T10:00:00Z', last_seen: 'bad-date' }]} isLoading={false} rowSelection={{}} onRowSelectionChange={jest.fn()} />);
+  expect(screen.getByText('Нет данных о сигнале')).toBeInTheDocument();
+  expect(screen.getByText('Начало сессии не сообщено')).toBeInTheDocument();
+  expect(container.textContent).not.toContain('Invalid Date');
+});
+
+it('keeps optional access columns available through the column menu', async () => {
+  const user = userEvent.setup();
+  render(<FleetMatrix data={[device]} isLoading={false} rowSelection={{}} onRowSelectionChange={jest.fn()} />);
+  expect(screen.queryByText('ADB linked')).not.toBeInTheDocument();
+  await user.click(screen.getByRole('button', { name: 'Настроить видимые колонки' }));
+  await user.click(await screen.findByRole('menuitemcheckbox', { name: 'Доступ' }));
+  expect(screen.getByText('ADB linked')).toBeInTheDocument();
 });
 
 it('shows an honest empty state when the registry has no devices', () => {
