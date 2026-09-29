@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { ClusterHeatmap } from '@/src/features/monitoring/ClusterHeatmap';
-import { formatBytes, getMonitoringTelemetryGaps, summarizeMonitoringHealth } from '@/src/features/monitoring/monitoringTypes';
+import { deriveNetworkRate, formatBytes, formatBytesPerSecond, getMonitoringTelemetryGaps, summarizeMonitoringHealth } from '@/src/features/monitoring/monitoringTypes';
 import type { ClusterNode, MonitoringMetrics } from '@/src/features/monitoring/monitoringTypes';
 
 const node = (status: string): ClusterNode => ({
@@ -43,7 +43,7 @@ describe('monitoring status presentation', () => {
     };
 
     expect(getMonitoringTelemetryGaps(metrics)).toEqual([
-      'история CPU', 'история памяти', 'операции Redis', 'память Redis', 'клиенты Redis', 'активные туннели',
+      'время замера', 'история CPU', 'история памяти', 'операции Redis', 'память Redis', 'клиенты Redis', 'активные туннели',
     ]);
     expect(summarizeMonitoringHealth([node('HEALTHY')], { telemetryIncomplete: true })).toEqual({
       label: 'HEALTH CHECKS PASS · TELEMETRY DEGRADED',
@@ -55,6 +55,38 @@ describe('monitoring status presentation', () => {
     expect(formatBytes(1024)).toBe('1.0 KB');
     expect(formatBytes(null)).toBe('Unavailable');
     expect(formatBytes(Number.NaN)).toBe('Unavailable');
+  });
+
+  it('derives network rates only from valid UTC counter samples', () => {
+    const previous = {
+      observedAt: '2026-09-29T10:00:00.000Z', txTotalBytes: 1_000, rxTotalBytes: 2_000,
+    };
+    const current = {
+      observedAt: '2026-09-29T10:00:10.000Z', txTotalBytes: 2_000, rxTotalBytes: 2_500,
+    };
+
+    expect(deriveNetworkRate(undefined, current).state).toBe('warming');
+    expect(deriveNetworkRate(previous, current)).toEqual({
+      state: 'ready', txBytesPerSecond: 100, rxBytesPerSecond: 50, intervalSeconds: 10,
+    });
+    expect(formatBytesPerSecond(1_024)).toBe('1.0 KB/s');
+    expect(formatBytesPerSecond(Number.NaN)).toBe('—');
+  });
+
+  it('hides a rate after a counter reset, invalid timestamp, or long sample gap', () => {
+    const previous = {
+      observedAt: '2026-09-29T10:00:00.000Z', txTotalBytes: 1_000, rxTotalBytes: 2_000,
+    };
+
+    expect(deriveNetworkRate(previous, {
+      observedAt: '2026-09-29T10:00:10.000Z', txTotalBytes: 10, rxTotalBytes: 2_500,
+    }).state).toBe('counter-reset');
+    expect(deriveNetworkRate(previous, {
+      observedAt: 'not-a-date', txTotalBytes: 2_000, rxTotalBytes: 2_500,
+    }).state).toBe('unavailable');
+    expect(deriveNetworkRate(previous, {
+      observedAt: '2026-09-29T10:02:00.000Z', txTotalBytes: 2_000, rxTotalBytes: 2_500,
+    }).state).toBe('gap');
   });
 
   it('renders absent resource samples as unavailable instead of zero', () => {

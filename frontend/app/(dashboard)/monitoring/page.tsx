@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { AlertTriangle, ArrowDownToLine, ArrowUpFromLine, CheckCircle2, Clock3, Cpu, Database, HardDrive, RefreshCw, Search, Server, Wifi } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
@@ -9,7 +9,7 @@ import { Button } from '@/src/shared/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/src/shared/ui/card';
 import { Input } from '@/src/shared/ui/input';
 import { ClusterHeatmap } from '@/src/features/monitoring/ClusterHeatmap';
-import { formatBytes, getMonitoringTelemetryGaps, type ClusterNode, type MonitoringMetrics, summarizeMonitoringHealth } from '@/src/features/monitoring/monitoringTypes';
+import { deriveNetworkRate, formatBytes, formatBytesPerSecond, getMonitoringTelemetryGaps, type ClusterNode, type MonitoringMetrics, type NetworkCounterSample, type NetworkRate, summarizeMonitoringHealth } from '@/src/features/monitoring/monitoringTypes';
 
 type StatusFilter = 'all' | 'healthy' | 'attention' | 'unavailable';
 
@@ -35,6 +35,25 @@ function parseMonitoringNodes(payload: unknown): ClusterNode[] {
 function formatTime(timestamp: number) {
     if (!timestamp) return 'Ожидаем первые данные';
     return new Intl.DateTimeFormat('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(timestamp);
+}
+
+function formatUtcSampleTime(value: string | null | undefined) {
+    const timestamp = value ? Date.parse(value) : Number.NaN;
+    if (!Number.isFinite(timestamp)) return 'время замера недоступно';
+    const formatted = new Intl.DateTimeFormat('ru-RU', {
+        hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: 'UTC',
+    }).format(timestamp);
+    return `${formatted} UTC`;
+}
+
+function networkRateStateLabel(rate: NetworkRate) {
+    switch (rate.state) {
+        case 'ready': return `Среднее за ${rate.intervalSeconds?.toFixed(0) ?? '—'} с`;
+        case 'warming': return 'Ожидаем второй замер';
+        case 'counter-reset': return 'Счётчик сброшен · собираем базу';
+        case 'gap': return 'Большой интервал · скорость скрыта';
+        default: return 'Время замера API недоступно';
+    }
 }
 
 function healthTone(tone: ReturnType<typeof summarizeMonitoringHealth>['tone']) {
@@ -134,6 +153,29 @@ export default function MonitoringPage() {
     });
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+    const [networkSamples, setNetworkSamples] = useState<{
+        previous?: NetworkCounterSample;
+        current?: NetworkCounterSample;
+    }>({});
+    useEffect(() => {
+        if (!metrics?.observedAt) {
+            setNetworkSamples((samples) => samples.current ? {} : samples);
+            return;
+        }
+        const sample: NetworkCounterSample = {
+            observedAt: metrics.observedAt,
+            txTotalBytes: metrics.network?.txTotalBytes,
+            rxTotalBytes: metrics.network?.rxTotalBytes,
+        };
+        setNetworkSamples((samples) => {
+            if (samples.current?.observedAt === sample.observedAt) return samples;
+            return { previous: samples.current, current: sample };
+        });
+    }, [metrics]);
+    const networkRate = useMemo(
+        () => deriveNetworkRate(networkSamples.previous, networkSamples.current),
+        [networkSamples],
+    );
     const observedNodes = useMemo(() => nodes ?? [], [nodes]);
     const filteredNodes = useMemo(() => {
         const needle = search.trim().toLocaleLowerCase();
@@ -170,9 +212,9 @@ export default function MonitoringPage() {
                     <p className="mt-1 max-w-2xl text-sm text-muted-foreground">Состояние сервисов и реальные метрики backend. Показатели не подменяются нулями, если API их не вернул.</p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
-                    <div className={`inline-flex min-h-10 items-center gap-2 rounded-lg border px-3 text-sm font-medium ${healthTone(systemHealth.tone)}`} role="status" aria-live="polite">
+                    <div className={`inline-flex min-h-10 max-w-full flex-wrap items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium sm:max-w-[19rem] ${healthTone(systemHealth.tone)}`} role="status" aria-live="polite">
                         <span className={`h-2 w-2 rounded-full ${systemHealth.tone === 'healthy' ? 'bg-emerald-500' : systemHealth.tone === 'critical' ? 'bg-rose-500' : systemHealth.tone === 'warning' ? 'bg-amber-500' : 'bg-muted-foreground'}`} />
-                        <span className="max-w-[240px] truncate">{healthLabel(systemHealth.label)}</span>
+                        <span className="max-w-full text-left leading-5">{healthLabel(systemHealth.label)}</span>
                     </div>
                     <Button variant="outline" size="sm" onClick={refreshNow} disabled={isRefreshing} aria-label="Обновить метрики и проверки сервисов">
                         <RefreshCw className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-spin motion-reduce:animate-none' : ''}`} aria-hidden="true" />
@@ -199,20 +241,23 @@ export default function MonitoringPage() {
                 <MetricCard title="Linux load · 1 мин" icon={Cpu} value={metricsQuery.isError ? 'Недоступно' : metrics?.cpu?.linuxLoad1mPerCpu == null ? '—' : metrics.cpu.linuxLoad1mPerCpu.toFixed(2)} detail="Нагрузка хоста на логический CPU; это не процент CPU контейнера.">
                     {metricsQuery.isError ? <p className="mt-4 text-xs text-amber-700 dark:text-amber-300">Запрос метрик завершился ошибкой.</p> : <Sparkline values={metrics?.cpu?.history ?? []} tone="blue" />}
                 </MetricCard>
-                <MetricCard title="Память контейнера" icon={HardDrive} value={metricsQuery.isError ? 'Недоступно' : formatBytes(metrics?.ram?.currentBytes)} detail={metrics?.ram?.totalBytes == null ? 'Лимит cgroup не сообщён.' : `Из ${formatBytes(metrics.ram.totalBytes)} по данным cgroup.`}>
+                <MetricCard title="Память контейнера" icon={HardDrive} value={metricsQuery.isError ? 'Недоступно' : formatBytes(metrics?.ram?.currentBytes)} detail={metricsQuery.isError ? 'Последний запрос метрик завершился ошибкой.' : metrics?.ram?.totalBytes == null ? 'Лимит cgroup не сообщён.' : `Из ${formatBytes(metrics.ram.totalBytes)} по данным cgroup.`}>
                     {metricsQuery.isError ? <p className="mt-4 text-xs text-amber-700 dark:text-amber-300">Запрос метрик завершился ошибкой.</p> : <Sparkline values={metrics?.ram?.history ?? []} tone="violet" />}
                 </MetricCard>
-                <MetricCard title="Redis" icon={Database} value={metricsQuery.isError ? 'Недоступно' : String(metrics?.redis?.status ?? 'Нет данных')} detail={metrics?.redis?.ops == null ? 'Операции/с не сообщаются.' : `${metrics.redis.ops} операций в секунду.`}>
+                <MetricCard title="Redis" icon={Database} value={metricsQuery.isError ? 'Недоступно' : String(metrics?.redis?.status ?? 'Нет данных')} detail={metricsQuery.isError ? 'Последний запрос метрик завершился ошибкой.' : metrics?.redis?.ops == null ? 'Операции/с не сообщаются.' : `${metrics.redis.ops} операций в секунду.`}>
                     <dl className="mt-4 grid grid-cols-2 gap-3 border-t border-border/70 pt-3 text-xs">
-                        <div><dt className="text-muted-foreground">Память</dt><dd className="mt-1 font-medium text-foreground">{metrics?.redis?.memory ?? '—'}</dd></div>
-                        <div><dt className="text-muted-foreground">Клиенты</dt><dd className="mt-1 font-medium text-foreground">{metrics?.redis?.clients ?? '—'}</dd></div>
+                        <div><dt className="text-muted-foreground">Память</dt><dd className="mt-1 font-medium text-foreground">{metricsQuery.isError ? 'Недоступно' : metrics?.redis?.memory ?? '—'}</dd></div>
+                        <div><dt className="text-muted-foreground">Клиенты</dt><dd className="mt-1 font-medium text-foreground">{metricsQuery.isError ? 'Недоступно' : metrics?.redis?.clients ?? '—'}</dd></div>
                     </dl>
                 </MetricCard>
-                <MetricCard title="Сетевые счётчики" icon={Wifi} value={metricsQuery.isError ? 'Недоступно' : `${metrics?.network?.activeTunnels ?? '—'} тунн.`} detail="Активные туннели только если метрика инструментирована.">
+                <MetricCard title="Сетевые счётчики" icon={Wifi} value={metricsQuery.isError ? 'Недоступно' : metrics?.network?.activeTunnels == null ? 'Не измеряется' : `${metrics.network.activeTunnels} активны`} detail={metricsQuery.isError ? 'Последний запрос метрик завершился ошибкой.' : `Срез API: ${formatUtcSampleTime(metrics?.observedAt)}. Байты видны в сетевом namespace backend-контейнера.`}>
                     <dl className="mt-4 grid grid-cols-2 gap-3 border-t border-border/70 pt-3 text-xs">
-                        <div className="min-w-0"><dt className="flex items-center gap-1 text-muted-foreground"><ArrowUpFromLine className="h-3 w-3" aria-hidden="true" />Передано</dt><dd className="mt-1 truncate font-medium text-foreground">{formatBytes(metrics?.network?.txTotalBytes)}</dd></div>
-                        <div className="min-w-0"><dt className="flex items-center gap-1 text-muted-foreground"><ArrowDownToLine className="h-3 w-3" aria-hidden="true" />Получено</dt><dd className="mt-1 truncate font-medium text-foreground">{formatBytes(metrics?.network?.rxTotalBytes)}</dd></div>
+                        <div className="min-w-0"><dt className="flex items-center gap-1 text-muted-foreground"><ArrowUpFromLine className="h-3 w-3" aria-hidden="true" />TX всего</dt><dd className="mt-1 truncate font-medium text-foreground">{metricsQuery.isError ? 'Недоступно' : formatBytes(metrics?.network?.txTotalBytes)}</dd></div>
+                        <div className="min-w-0"><dt className="flex items-center gap-1 text-muted-foreground"><ArrowDownToLine className="h-3 w-3" aria-hidden="true" />RX всего</dt><dd className="mt-1 truncate font-medium text-foreground">{metricsQuery.isError ? 'Недоступно' : formatBytes(metrics?.network?.rxTotalBytes)}</dd></div>
+                        <div className="min-w-0"><dt className="text-muted-foreground">TX / с</dt><dd className="mt-1 truncate font-medium text-foreground">{metricsQuery.isError ? 'Недоступно' : networkRate.state === 'ready' ? formatBytesPerSecond(networkRate.txBytesPerSecond) : '—'}</dd></div>
+                        <div className="min-w-0"><dt className="text-muted-foreground">RX / с</dt><dd className="mt-1 truncate font-medium text-foreground">{metricsQuery.isError ? 'Недоступно' : networkRate.state === 'ready' ? formatBytesPerSecond(networkRate.rxBytesPerSecond) : '—'}</dd></div>
                     </dl>
+                    <p className="mt-3 text-[11px] text-muted-foreground" role="status" aria-live="polite">{metricsQuery.isError ? 'Скорость недоступна: API не вернул свежий замер.' : networkRateStateLabel(networkRate)} · скорость вычисляется по двум замерам во время открытой страницы.</p>
                 </MetricCard>
             </section>
 

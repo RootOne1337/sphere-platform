@@ -142,6 +142,7 @@ async def test_monitoring_metrics_are_measured_or_explicitly_unavailable(monkeyp
         "rxTotalBytes": 1000,
         "activeTunnels": None,
     }
+    assert result["observedAt"].endswith("+00:00")
 
 
 @pytest.mark.asyncio

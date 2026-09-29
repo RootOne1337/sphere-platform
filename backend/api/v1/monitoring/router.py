@@ -8,6 +8,7 @@ from __future__ import annotations
 import math
 import os
 import time
+from datetime import datetime, timezone
 from typing import Any
 
 import structlog
@@ -147,6 +148,7 @@ async def get_monitoring_metrics(
             "clients": redis_clients,
         },
         "network": {"txTotalBytes": tx_bytes, "rxTotalBytes": rx_bytes, "activeTunnels": None},
+        "observedAt": datetime.now(timezone.utc).isoformat(),
     }
 
 

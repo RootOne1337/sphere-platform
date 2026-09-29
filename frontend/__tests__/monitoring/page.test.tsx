@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import MonitoringPage from '@/app/(dashboard)/monitoring/page';
 import { api } from '@/lib/api';
 
@@ -82,6 +82,64 @@ describe('Infrastructure Monitoring page failure states', () => {
     expect(await screen.findByText('Проверки прошли · метрики частично недоступны')).toBeInTheDocument();
     expect(screen.getByText(/Проверки сервисов и покрытие метрик — разные сигналы\./).parentElement).toHaveTextContent('история CPU, история памяти');
     expect(screen.getAllByText('HEALTHY').length).toBeGreaterThan(0);
+  });
+
+  it('shows network rates only after two server-timestamped counter samples', async () => {
+    const firstSample = {
+      observedAt: '2026-09-29T10:00:00.000Z',
+      network: { txTotalBytes: 1000, rxTotalBytes: 2000, activeTunnels: null },
+    };
+    jest.mocked(api.get).mockImplementation((url) => {
+      if (url.endsWith('/nodes')) return Promise.resolve({ data: [] });
+      return Promise.resolve({ data: firstSample });
+    });
+
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(<QueryClientProvider client={client}><MonitoringPage /></QueryClientProvider>);
+
+    expect(await screen.findByText('1000 B')).toBeInTheDocument();
+    expect(screen.getByText(/Ожидаем второй замер/)).toBeInTheDocument();
+    expect(screen.getByText('TX всего').parentElement).toHaveTextContent('1000 B');
+    expect(screen.queryByText('0 B/s')).not.toBeInTheDocument();
+
+    await act(async () => {
+      client.setQueryData(['monitoring-metrics'], {
+        observedAt: '2026-09-29T10:00:10.000Z',
+        network: { txTotalBytes: 2000, rxTotalBytes: 2500, activeTunnels: null },
+      });
+    });
+
+    expect(await screen.findByText('2.0 KB')).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText('TX / с').parentElement).toHaveTextContent('100 B/s'));
+    expect(screen.getByText('RX / с').parentElement).toHaveTextContent('50 B/s');
+    expect(screen.getByText(/Среднее за 10 с/)).toBeInTheDocument();
+    expect(screen.getByText(/Срез API: 10:00:10 UTC/)).toBeInTheDocument();
+  });
+
+  it('does not present cached network totals as current after a metrics request fails', async () => {
+    jest.mocked(api.get).mockImplementation((url) => {
+      if (url.endsWith('/nodes')) return Promise.resolve({ data: [] });
+      return Promise.resolve({ data: {
+        observedAt: '2026-09-29T10:00:00.000Z',
+        network: { txTotalBytes: 123, rxTotalBytes: 456, activeTunnels: null },
+      } });
+    });
+
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(<QueryClientProvider client={client}><MonitoringPage /></QueryClientProvider>);
+    expect(await screen.findByText('123 B')).toBeInTheDocument();
+
+    jest.mocked(api.get).mockRejectedValue(new Error('metrics endpoint unavailable'));
+    await act(async () => {
+      await client.refetchQueries({ queryKey: ['monitoring-metrics'] });
+    });
+
+    await waitFor(() => expect(api.get).toHaveBeenCalledTimes(3));
+    await waitFor(() => expect(client.getQueryState(['monitoring-metrics'])?.status).toBe('error'));
+    await waitFor(() => expect(screen.getByText('TX всего').parentElement).toHaveTextContent('Недоступно'));
+    expect(screen.getByText('TX всего').parentElement).toHaveTextContent('Недоступно');
+    expect(screen.getByText('RX всего').parentElement).toHaveTextContent('Недоступно');
+    expect(screen.getByText(/Скорость недоступна: API не вернул свежий замер/)).toBeInTheDocument();
   });
 
   it('fails safely when the monitoring nodes endpoint returns an unexpected envelope', async () => {
