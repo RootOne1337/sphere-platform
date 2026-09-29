@@ -73,12 +73,13 @@ export function useVpnHealth() {
 // ── Мутации ─────────────────────────────────────────────────────────────────
 
 /** Назначить VPN-пир устройству. Бекенд: POST /vpn/assign */
-export function useAssignVpn() {
+export function useAssignVpn(options: { invalidateOnSuccess?: boolean } = {}) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (params: { device_id: string; split_tunnel?: boolean }) =>
       api.post('/vpn/assign', params),
     onSuccess: () => {
+      if (options.invalidateOnSuccess === false) return;
       qc.invalidateQueries({ queryKey: ['vpn'] });
       qc.invalidateQueries({ queryKey: ['devices'] });
     },
