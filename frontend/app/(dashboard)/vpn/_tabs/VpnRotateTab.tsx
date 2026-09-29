@@ -3,8 +3,6 @@ import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { useVpnPeers } from '@/lib/hooks/useVpn';
 import { RotateCcw } from 'lucide-react';
@@ -62,7 +60,7 @@ export function VpnRotateTab() {
     });
   };
 
-  const assignedPeers = peers?.filter((p) => p.status === 'active' || p.status === 'inactive') ?? [];
+  const assignedPeers = peers?.filter((p) => p.status === 'assigned' && p.device_id !== null) ?? [];
 
   return (
     <div className="space-y-4 pt-4">
@@ -102,7 +100,7 @@ export function VpnRotateTab() {
                     checked={selectedIds.size === assignedPeers.length && assignedPeers.length > 0}
                     onChange={() => {
                       if (selectedIds.size === assignedPeers.length) setSelectedIds(new Set());
-                      else setSelectedIds(new Set(assignedPeers.map((p) => p.device_id)));
+                      else setSelectedIds(new Set(assignedPeers.map((p) => p.device_id!)));
                     }}
                   />
                 </th>
@@ -117,12 +115,12 @@ export function VpnRotateTab() {
                   <td className="p-3">
                     <input
                       type="checkbox"
-                      checked={selectedIds.has(peer.device_id)}
-                      onChange={() => toggleSelect(peer.device_id)}
+                      checked={selectedIds.has(peer.device_id!)}
+                      onChange={() => toggleSelect(peer.device_id!)}
                     />
                   </td>
-                  <td className="p-3 font-mono text-xs">{peer.device_id.slice(0, 12)}…</td>
-                  <td className="p-3 font-mono text-xs">{peer.assigned_ip}</td>
+                  <td className="p-3 font-mono text-xs">{peer.device_id!.slice(0, 12)}…</td>
+                  <td className="p-3 font-mono text-xs">{peer.assigned_ip ?? '—'}</td>
                   <td className="p-3">
                     <Badge variant="outline">{peer.status}</Badge>
                   </td>

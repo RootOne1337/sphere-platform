@@ -2,12 +2,11 @@
 
 import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Network, ArrowUp, ArrowDown, Activity, Settings, Plus, Lock, Globe, Zap, RotateCcw, FileText, Wrench } from 'lucide-react';
+import { Network, Activity, Settings, Plus, Lock, Globe, RotateCcw, FileText, Wrench, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/src/shared/ui/button';
 import { Input } from '@/src/shared/ui/input';
 import { Badge } from '@/src/shared/ui/badge';
 import { VPNMap } from '@/src/features/vpn/VPNMap';
-import { ThroughputChart } from '@/src/features/vpn/ThroughputChart';
 import {
   Dialog,
   DialogContent,
@@ -23,13 +22,18 @@ import { getApiErrorMessage } from '@/lib/apiError';
 
 interface Tunnel {
   id: string;
+  deviceId: string;
   name: string;
-  endpoint: string;
-  clients: number;
-  rx: string;
-  tx: string;
+  endpoint: string | null;
   status: string;
-  uptime: string;
+  active: boolean;
+  lastHandshakeAt: string | null;
+}
+
+function formatHandshake(value: string | null): string {
+  if (!value) return 'No handshake reported';
+  const date = new Date(value);
+  return Number.isNaN(date.valueOf()) ? 'Invalid timestamp' : `${date.toISOString().replace('T', ' ').slice(0, 19)} UTC`;
 }
 
 export default function VPNManagerPage() {
@@ -44,45 +48,41 @@ export default function VPNManagerPage() {
   const [provisionError, setProvisionError] = useState<string | null>(null);
 
   // Используем хук вместо инлайн-запроса для единообразия и корректного кеширования
-  const { data: rawPeers = [], isLoading } = useVpnPeers();
-  const { data: poolStats } = usePoolStats();
+  const { data: rawPeers = [], isLoading, isError: peersError } = useVpnPeers();
+  const { data: poolStats, isLoading: poolStatsLoading, isError: poolStatsError } = usePoolStats();
   const assignVpn = useAssignVpn();
   const rotateVpn = useVpnRotate();
   const killSwitch = useVpnKillSwitch();
   const bulkAction = useBulkAction();
 
-  const peerDeviceIds = useMemo(() => new Set(rawPeers.map((peer) => peer.device_id)), [rawPeers]);
-
-  const tunnels: Tunnel[] = useMemo(() =>
-    rawPeers.map((d) => ({
-      id: d.id,
-      name: `Tunnel ${d.assigned_ip}`,
-      endpoint: d.assigned_ip,
-      clients: d.status === 'active' ? 1 : 0,
-      rx: '0 B',
-      tx: '0 B',
-      status: (d.status || 'unknown').toUpperCase(),
-      uptime: d.last_handshake ? 'Active' : 'N/A',
-    })),
+  const peerDeviceIds = useMemo(
+    () => new Set(rawPeers.flatMap((peer) => peer.device_id ? [peer.device_id] : [])),
     [rawPeers],
   );
 
-  // Placeholder chart data — stable, no Math.random() re-renders
-  const aggregateChartData = useMemo(() => {
-    return Array.from({ length: 24 }).map((_, i) => ({
-      time: `${i}:00`,
-      rx: 0,
-      tx: 0,
-    }));
-  }, []);
-
-  const generateNodeData = () => {
-    return Array.from({ length: 15 }).map((_, i) => ({
-      time: `${i}m`,
-      rx: 0,
-      tx: 0,
-    }));
-  };
+  const tunnels: Tunnel[] = useMemo(() => rawPeers
+    .filter((peer) => peer.device_id !== null && peer.status !== 'free')
+    .map((peer) => ({
+      id: peer.id,
+      deviceId: peer.device_id!,
+      name: `Device ${peer.device_id!.slice(0, 8)}`,
+      endpoint: peer.assigned_ip,
+      status: peer.status === 'assigned' && peer.is_active ? 'ACTIVE' : peer.status.toUpperCase(),
+      active: peer.status === 'assigned' && peer.is_active,
+      lastHandshakeAt: peer.last_handshake_at,
+    })), [rawPeers]);
+  const visibleTunnels = useMemo(() => {
+    const normalizedSearch = search.trim().toLowerCase();
+    if (!normalizedSearch) return tunnels;
+    return tunnels.filter((tunnel) =>
+      tunnel.name.toLowerCase().includes(normalizedSearch)
+      || tunnel.deviceId.toLowerCase().includes(normalizedSearch)
+      || tunnel.id.toLowerCase().includes(normalizedSearch)
+      || (tunnel.endpoint ?? '').toLowerCase().includes(normalizedSearch),
+    );
+  }, [search, tunnels]);
+  const activeTunnelCount = tunnels.filter((tunnel) => tunnel.active).length;
+  const attentionTunnelCount = tunnels.length - activeTunnelCount;
 
   return (
     <div className="flex flex-col h-full bg-card">
@@ -95,7 +95,7 @@ export default function VPNManagerPage() {
               <h1 className="text-xl font-bold font-mono tracking-tight text-foreground uppercase pt-1">VPN Tunneling Manager</h1>
             </div>
             <p className="text-xs text-muted-foreground font-mono max-w-2xl">
-              Secure reverse-tunnel infrastructure. Manage Android fleet connections, IPsec policies, and endpoint health routing.
+              Управление VPN peer assignments и свежестью handshake. Трафик RX/TX пока не публикуется API.
             </p>
           </div>
 
@@ -103,21 +103,21 @@ export default function VPNManagerPage() {
             <div className="flex space-x-6">
               <div className="flex flex-col">
                 <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold flex items-center gap-1">
-                  <ArrowDown className="w-3 h-3" /> Global RX
+                  <Lock className="w-3 h-3" /> Assigned
                 </span>
-                <span className="text-sm text-foreground font-mono font-bold">{tunnels.length > 0 ? tunnels.reduce((sum, t) => sum + parseFloat(t.rx) || 0, 0).toFixed(1) + ' B' : '—'}</span>
+                <span className="text-sm text-foreground font-mono font-bold">{poolStatsLoading ? '…' : poolStatsError ? 'Unavailable' : poolStats?.allocated ?? '—'}</span>
               </div>
               <div className="flex flex-col border-l border-border pl-6">
                 <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold flex items-center gap-1">
-                  <ArrowUp className="w-3 h-3" /> Global TX
+                  <CheckCircle2 className="w-3 h-3" /> Recent handshake
                 </span>
-                <span className="text-sm text-foreground font-mono font-bold">{tunnels.length > 0 ? tunnels.reduce((sum, t) => sum + parseFloat(t.tx) || 0, 0).toFixed(1) + ' B' : '—'}</span>
+                <span className="text-sm text-success font-mono font-bold">{activeTunnelCount}</span>
               </div>
               <div className="flex flex-col border-l border-border pl-6">
                 <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold flex items-center gap-1">
-                  <Lock className="w-3 h-3" /> Peers
+                  <AlertTriangle className="w-3 h-3" /> No recent handshake
                 </span>
-                <span className="text-sm text-success font-mono font-bold">{tunnels.length}</span>
+                <span className="text-sm text-warning font-mono font-bold">{attentionTunnelCount}</span>
               </div>
             </div>
           </div>
@@ -128,7 +128,7 @@ export default function VPNManagerPage() {
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <Input
-              placeholder="Search endpoints or IPs..."
+              placeholder="Search device ID, peer ID, or VPN IP…"
               className="w-72 h-9 bg-black/50 border-border font-mono text-xs focus-visible:ring-primary/50"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -148,35 +148,39 @@ export default function VPNManagerPage() {
           </div>
         </div>
 
-        {/* Top Dashboards: Map & Flow */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-          <div className="col-span-2 flex flex-col">
-            <h2 className="text-xs font-mono font-bold tracking-widest text-muted-foreground mb-3 uppercase flex items-center gap-2">
-              <Globe className="w-4 h-4" /> Global Tunnel Topology
-            </h2>
-            <VPNMap tunnels={tunnels} />
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 mb-6">
+          <div className="xl:col-span-2">
+            <VPNMap tunnels={visibleTunnels} />
           </div>
-
-          <div className="flex flex-col">
-            <h2 className="text-xs font-mono font-bold tracking-widest text-muted-foreground mb-3 uppercase flex items-center gap-2">
-              <Activity className="w-4 h-4" /> Aggregate Throughput
+          <section className="rounded-sm border border-border bg-card p-4" aria-labelledby="vpn-telemetry-title">
+            <h2 id="vpn-telemetry-title" className="flex items-center gap-2 text-sm font-semibold text-foreground">
+              <Activity className="h-4 w-4 text-primary" aria-hidden="true" /> Telemetry coverage
             </h2>
-            <div className="bg-card border border-border rounded-sm p-4 flex-1 shadow-2xl relative overflow-hidden">
-              <div className="absolute top-2 right-4 flex items-center gap-3 z-10">
-                <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-success"></div><span className="text-[10px] text-muted-foreground font-mono">RX</span></div>
-                <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-blue-500"></div><span className="text-[10px] text-muted-foreground font-mono">TX</span></div>
+            <dl className="mt-4 space-y-3 text-xs">
+              <div className="flex items-center justify-between gap-3 border-b border-border pb-2">
+                <dt className="text-muted-foreground">Peer status</dt><dd className="font-mono text-success">Available</dd>
               </div>
-              <ThroughputChart data={aggregateChartData} />
-            </div>
-          </div>
+              <div className="flex items-center justify-between gap-3 border-b border-border pb-2">
+                <dt className="text-muted-foreground">Handshake timestamp</dt><dd className="font-mono text-success">Available</dd>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <dt className="text-muted-foreground">Per-peer RX/TX bytes</dt><dd className="font-mono text-warning">Not exposed</dd>
+              </div>
+            </dl>
+            <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
+              Current `/vpn/peers` contract has no byte counters, gateway coordinates, or latency samples. No traffic graph is drawn from placeholder zeros.
+            </p>
+          </section>
         </div>
 
         {/* VPN Nodes Grid */}
-        <h2 className="text-xs font-mono font-bold tracking-widest text-muted-foreground mb-3 uppercase mt-6 border-b border-border pb-2">Active Provider Nodes</h2>
+        <h2 className="text-xs font-mono font-bold tracking-widest text-muted-foreground mb-3 uppercase mt-6 border-b border-border pb-2">Assigned VPN peers</h2>
 
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-          {isLoading && <div className="col-span-1 xl:col-span-2 text-center text-muted-foreground p-10">Fetching secure tunnels from backend...</div>}
-          {!isLoading && tunnels.filter(t => (t.name || '').toLowerCase().includes(search.toLowerCase()) || (t.endpoint || '').includes(search)).map(tunnel => (
+          {isLoading && <div className="col-span-1 xl:col-span-2 text-center text-muted-foreground p-10">Loading VPN peer state from API…</div>}
+          {peersError && <div className="col-span-1 xl:col-span-2 rounded border border-destructive/30 p-4 text-sm text-destructive" role="alert">Не удалось загрузить VPN peers. Состояние не обновлено; обновите страницу или повторите запрос позже.</div>}
+          {!isLoading && !peersError && visibleTunnels.length === 0 && <div className="col-span-1 xl:col-span-2 rounded border border-dashed border-border p-8 text-center text-sm text-muted-foreground">{search ? 'По этому запросу устройств не найдено.' : 'Назначенных VPN peers нет.'}</div>}
+          {!isLoading && !peersError && visibleTunnels.map(tunnel => (
             <div key={tunnel.id} className="bg-muted border border-border rounded-sm flex flex-col hover:border-[#444] transition-colors relative overflow-hidden group">
               {/* Background Graphic */}
               <Globe className="absolute -right-8 -bottom-8 w-48 h-48 text-[#ffffff03] pointer-events-none group-hover:scale-110 transition-transform duration-700" strokeWidth={1} />
@@ -186,46 +190,41 @@ export default function VPNManagerPage() {
                   <div>
                     <div className="flex items-center gap-2 mb-1">
                       <h3 className="text-base font-bold font-mono text-foreground">{tunnel.name}</h3>
-                      {tunnel.status === 'ACTIVE' && (
+                      {tunnel.active && (
                         <Badge variant="outline" className="text-[9px] border-success text-success bg-success/5 animate-pulse">LIVE</Badge>
                       )}
                     </div>
                     <div className="text-xs text-muted-foreground font-mono flex items-center gap-2">
-                      <span className="font-bold text-primary/80">{tunnel.id}</span>
+                      <span className="font-bold text-primary/80">Peer {tunnel.id.slice(0, 8)}</span>
                       <span>•</span>
-                      <span>{tunnel.endpoint}</span>
+                      <span>{tunnel.endpoint ?? 'Address unavailable'}</span>
                     </div>
                   </div>
-                  <Badge variant="outline" className={`text-[10px] ${tunnel.status === 'ACTIVE' ? 'border-primary text-primary' :
-                    tunnel.status === 'DEGRADED' ? 'border-warning text-warning' :
-                      'border-destructive text-destructive'
-                    }`}>
+                  <Badge variant="outline" className={`text-[10px] ${tunnel.active ? 'border-success text-success' : tunnel.status === 'ERROR' ? 'border-destructive text-destructive' : 'border-warning text-warning'}`}>
                     {tunnel.status}
                   </Badge>
                 </div>
 
-                <div className="grid grid-cols-4 gap-4 mb-2">
-                  <div className="col-span-1 border-r border-border">
-                    <div className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground mb-1">Active Fleet</div>
-                    <div className="text-xl font-mono font-bold text-foreground flex items-center gap-2">
-                      {tunnel.clients}
-                      <Activity className={`w-3 h-3 ${tunnel.clients > 0 ? 'text-success' : 'text-destructive'}`} />
-                    </div>
+                <div className="grid grid-cols-1 gap-3 rounded border border-border/70 bg-background/40 p-3 sm:grid-cols-2">
+                  <div className="min-w-0">
+                    <div className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Device ID</div>
+                    <button type="button" className="mt-1 truncate font-mono text-xs text-primary hover:underline" onClick={() => router.push(`/devices/${tunnel.deviceId}`)}>
+                      {tunnel.deviceId}
+                    </button>
                   </div>
-                  <div className="col-span-1">
-                    <div className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground mb-1 text-success">RX (MB/s)</div>
-                    <div className="text-lg font-mono font-bold text-foreground">{tunnel.rx}</div>
-                  </div>
-                  <div className="col-span-2 h-[45px] opacity-80 pt-1">
-                    {/* Mini individual chart per node */}
-                    <ThroughputChart data={generateNodeData()} />
+                  <div className="min-w-0">
+                    <div className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Last handshake</div>
+                    <time dateTime={tunnel.lastHandshakeAt ?? undefined} className="mt-1 block truncate font-mono text-xs text-foreground">
+                      {formatHandshake(tunnel.lastHandshakeAt)}
+                    </time>
                   </div>
                 </div>
               </div>
 
               <div className="border-t border-border bg-[#151515] p-3 px-5 flex items-center justify-between relative z-10 mt-auto">
                 <div className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground flex items-center gap-2">
-                  <Zap className="w-3.5 h-3.5 text-warning" /> Uptime: <span className="text-muted-foreground font-mono">{tunnel.uptime}</span>
+                  <Activity className={`w-3.5 h-3.5 ${tunnel.active ? 'text-success' : 'text-warning'}`} />
+                  {tunnel.active ? 'Recent handshake (< 3 min)' : 'No recent handshake'}
                 </div>
                 <div className="flex gap-2">
                   <Button
@@ -233,9 +232,9 @@ export default function VPNManagerPage() {
                     size="sm"
                     className="h-8 text-[10px] uppercase font-bold tracking-widest text-muted-foreground hover:text-foreground"
                     onClick={() => {
-                      const peer = rawPeers.find((p) => p.id === tunnel.id);
-                      if (peer) bulkAction.mutate({ device_ids: [peer.device_id], action: 'reboot' });
+                      bulkAction.mutate({ device_ids: [tunnel.deviceId], action: 'reboot' });
                     }}
+                    disabled={bulkAction.isPending}
                   >
                     <RotateCcw className="w-3 h-3 mr-1" /> Reboot
                   </Button>
@@ -244,8 +243,7 @@ export default function VPNManagerPage() {
                     size="sm"
                     className="h-8 text-[10px] uppercase font-bold tracking-widest text-muted-foreground hover:text-foreground"
                     onClick={() => {
-                      const peer = rawPeers.find((p) => p.id === tunnel.id);
-                      if (peer) router.push(`/audit?device_id=${peer.device_id}`);
+                      router.push(`/audit?device_id=${tunnel.deviceId}`);
                     }}
                   >
                     <FileText className="w-3 h-3 mr-1" /> Logs
@@ -287,8 +285,8 @@ export default function VPNManagerPage() {
                   <div className="text-lg font-bold text-success">{poolStats.free}</div>
                 </div>
                 <div className="bg-muted p-3 rounded border border-border">
-                  <div className="text-[10px] text-muted-foreground uppercase">Active Tunnels</div>
-                  <div className="text-lg font-bold">{poolStats.active_tunnels}</div>
+                  <div className="text-[10px] text-muted-foreground uppercase">Recent handshakes (&lt; 3 min)</div>
+                  <div className="text-lg font-bold">{activeTunnelCount}</div>
                 </div>
               </div>
             )}
@@ -298,7 +296,7 @@ export default function VPNManagerPage() {
                 size="sm"
                 className="flex-1"
                 onClick={() => {
-                  const deviceIds = rawPeers.map((p) => p.device_id);
+                  const deviceIds = rawPeers.flatMap((peer) => peer.status === 'assigned' && peer.device_id ? [peer.device_id] : []);
                   if (deviceIds.length > 0) killSwitch.mutate({ device_ids: deviceIds, enabled: true });
                 }}
                 disabled={killSwitch.isPending}
@@ -310,7 +308,7 @@ export default function VPNManagerPage() {
                 size="sm"
                 className="flex-1"
                 onClick={() => {
-                  const deviceIds = rawPeers.map((p) => p.device_id);
+                  const deviceIds = rawPeers.flatMap((peer) => peer.status === 'assigned' && peer.device_id ? [peer.device_id] : []);
                   if (deviceIds.length > 0) killSwitch.mutate({ device_ids: deviceIds, enabled: false });
                 }}
                 disabled={killSwitch.isPending}
@@ -382,9 +380,11 @@ export default function VPNManagerPage() {
             return (
               <div className="space-y-4 pt-2">
                 <div className="text-sm font-mono space-y-1">
-                  <p><span className="text-muted-foreground">IP:</span> {peer.assigned_ip}</p>
-                  <p><span className="text-muted-foreground">Device:</span> {peer.device_name}</p>
+                  <p><span className="text-muted-foreground">IP:</span> {peer.assigned_ip ?? '—'}</p>
+                  <p><span className="text-muted-foreground">Device ID:</span> {peer.device_id ?? 'No device linked'}</p>
                   <p><span className="text-muted-foreground">Status:</span> {peer.status}</p>
+                  <p><span className="text-muted-foreground">Handshake:</span> {peer.is_active ? 'Recent (< 3 min)' : 'No recent handshake'}</p>
+                  <p><span className="text-muted-foreground">Last handshake:</span> {formatHandshake(peer.last_handshake_at)}</p>
                 </div>
                 <div className="flex gap-2">
                   <Button
@@ -392,10 +392,11 @@ export default function VPNManagerPage() {
                     size="sm"
                     className="flex-1"
                     onClick={() => {
+                      if (!peer.device_id || peer.status !== 'assigned') return;
                       rotateVpn.mutate({ device_ids: [peer.device_id] });
                       setConfigureDialogOpen(null);
                     }}
-                    disabled={rotateVpn.isPending}
+                    disabled={rotateVpn.isPending || !peer.device_id || peer.status !== 'assigned'}
                   >
                     <RotateCcw className="w-3 h-3 mr-1" /> Rotate IP
                   </Button>
@@ -404,10 +405,11 @@ export default function VPNManagerPage() {
                     size="sm"
                     className="flex-1"
                     onClick={() => {
+                      if (!peer.device_id || peer.status !== 'assigned') return;
                       killSwitch.mutate({ device_ids: [peer.device_id], enabled: true });
                       setConfigureDialogOpen(null);
                     }}
-                    disabled={killSwitch.isPending}
+                    disabled={killSwitch.isPending || !peer.device_id || peer.status !== 'assigned'}
                   >
                     <Lock className="w-3 h-3 mr-1" /> Kill Switch
                   </Button>

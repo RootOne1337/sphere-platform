@@ -31,18 +31,22 @@ const MOCK_PEERS = [
   {
     id: 'vpn-001',
     device_id: 'dev-001',
-    device_name: 'Pixel 7',
     assigned_ip: '10.8.0.2',
-    status: 'active' as const,
-    last_handshake: '2026-03-04T10:00:00Z',
+    status: 'assigned' as const,
+    is_active: true,
+    last_handshake_at: '2026-03-04T10:00:00Z',
+    public_key: 'peer-key-001',
+    created_at: '2026-03-04T09:00:00Z',
   },
   {
     id: 'vpn-002',
     device_id: 'dev-002',
-    device_name: 'Samsung S24',
     assigned_ip: '10.8.0.3',
-    status: 'inactive' as const,
-    last_handshake: null,
+    status: 'provisioning' as const,
+    is_active: false,
+    last_handshake_at: null,
+    public_key: 'peer-key-002',
+    created_at: '2026-03-04T09:01:00Z',
   },
 ];
 
@@ -79,11 +83,11 @@ describe('useVpnPeers', () => {
   it('передаёт фильтры в параметры запроса', async () => {
     mockApi.get.mockResolvedValueOnce({ data: [MOCK_PEERS[0]] });
 
-    renderQueryHook(() => useVpnPeers({ status: 'active', device_id: 'dev-001' }));
+    renderQueryHook(() => useVpnPeers({ status: 'assigned', device_id: 'dev-001' }));
 
     await waitFor(() => expect(mockApi.get).toHaveBeenCalled());
     expect(mockApi.get).toHaveBeenCalledWith('/vpn/peers', {
-      params: { status: 'active', device_id: 'dev-001' },
+      params: { status: 'assigned', device_id: 'dev-001' },
     });
   });
 });

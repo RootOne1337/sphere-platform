@@ -5,11 +5,13 @@ import { api } from '@/lib/api';
 
 export interface VpnPeer {
   id: string;
-  device_id: string;
-  device_name: string;
-  assigned_ip: string;
-  status: 'active' | 'inactive' | 'error';
-  last_handshake: string | null;
+  device_id: string | null;
+  assigned_ip: string | null;
+  status: 'free' | 'assigned' | 'error' | 'provisioning' | 'revoking';
+  is_active: boolean;
+  last_handshake_at: string | null;
+  public_key: string;
+  created_at: string;
 }
 
 export interface PoolStats {
@@ -35,7 +37,7 @@ export interface VPNBulkRevokeResponse {
 // ── Запросы (Query) ─────────────────────────────────────────────────────────
 
 /** Список VPN-пиров с опциональной фильтрацией */
-export function useVpnPeers(params?: { status?: string; device_id?: string }) {
+export function useVpnPeers(params?: { status?: VpnPeer['status']; device_id?: string }) {
   return useQuery<VpnPeer[]>({
     queryKey: ['vpn', 'peers', params],
     queryFn: async () => {

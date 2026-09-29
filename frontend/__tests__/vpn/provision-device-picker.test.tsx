@@ -79,3 +79,31 @@ it('keeps VPN provisioning open after a rejected request and does not retry impl
   expect(screen.getByRole('heading', { name: 'Provision VPN Node' })).toBeVisible();
   expect(mockMutateAsync).toHaveBeenCalledTimes(1);
 });
+
+it('renders the peer API handshake state and does not invent byte counters or latency', () => {
+  mockUseVpnPeers.mockReturnValue({
+    data: [
+      {
+        id: 'peer-live-001', device_id: 'device-live-001', assigned_ip: '10.8.0.2',
+        status: 'assigned', is_active: true, last_handshake_at: '2026-09-29T12:00:00Z',
+        public_key: 'peer-key-001', created_at: '2026-09-29T11:00:00Z',
+      },
+      {
+        id: 'peer-stale-002', device_id: 'device-stale-002', assigned_ip: '10.8.0.3',
+        status: 'assigned', is_active: false, last_handshake_at: null,
+        public_key: 'peer-key-002', created_at: '2026-09-29T11:01:00Z',
+      },
+    ],
+    isLoading: false,
+    isError: false,
+  } as never);
+  render(<VPNManagerPage />);
+
+  expect(screen.getAllByText('ACTIVE').length).toBeGreaterThan(0);
+  expect(screen.getAllByText('No handshake reported').length).toBeGreaterThan(0);
+  expect(screen.getByText('Per-peer RX/TX bytes')).toBeInTheDocument();
+  expect(screen.getByText('Not exposed')).toBeInTheDocument();
+  expect(screen.queryByText('Aggregate Throughput')).not.toBeInTheDocument();
+  expect(screen.queryByText(/Global Latency/)).not.toBeInTheDocument();
+  expect(screen.queryByText('0 B')).not.toBeInTheDocument();
+});
