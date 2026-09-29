@@ -59,6 +59,11 @@ it('renders current fleet, service and event data from their API queries', async
 
   await waitFor(() => expect(screen.getByText('Heartbeat recovered')).toBeInTheDocument());
   expect(screen.getByText('Обзор парка')).toBeInTheDocument();
+  expect(screen.getByRole('region', { name: 'Свежесть источников данных' })).toBeInTheDocument();
+  expect(screen.getByText('Каталог устройств')).toBeInTheDocument();
+  expect(screen.getByText('Health · backend')).toBeInTheDocument();
+  expect(screen.getByText('Журнал событий')).toBeInTheDocument();
+  expect(screen.getByText(/не подтверждает свежесть heartbeat устройства или видеокадра/i)).toBeInTheDocument();
   expect(screen.getByText('Всего устройств')).toBeInTheDocument();
   expect(screen.getByText('Выполняют задачи')).toBeInTheDocument();
   expect(screen.getByText('PH006')).toBeInTheDocument();

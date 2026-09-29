@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -24,6 +25,8 @@ import {
 import { api } from '@/lib/api';
 import { useDeviceEvents, type DeviceEvent, type EventSeverity } from '@/lib/hooks/useDeviceEvents';
 import { usePoolStats, useVpnHealth } from '@/lib/hooks/useVpn';
+import { API_POLL_INTERVALS } from '@/lib/queryPollIntervals';
+import { formatDataAge, formatDataUpdatedAt, getDataFreshness, type DataFreshnessState } from '@/src/features/dashboard/dataFreshness';
 import { Badge } from '@/src/shared/ui/badge';
 import { Button } from '@/src/shared/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/src/shared/ui/card';
@@ -48,7 +51,7 @@ function useFleetStats() {
       const { data } = await api.get('/devices/status/fleet');
       return data as FleetStats;
     },
-    refetchInterval: 15_000,
+    refetchInterval: API_POLL_INTERVALS.dashboardFleetMs,
     staleTime: 5_000,
   });
 }
@@ -60,7 +63,7 @@ function useSystemHealth() {
       const { data } = await api.get('/health');
       return data as SystemHealthResponse;
     },
-    refetchInterval: 30_000,
+    refetchInterval: API_POLL_INTERVALS.dashboardHealthMs,
     staleTime: 10_000,
   });
 }
@@ -177,6 +180,82 @@ function QueryState({ loading, error, empty, children }: {
   return children;
 }
 
+type DataSourceSnapshot = {
+  id: string;
+  label: string;
+  pollIntervalMs: number;
+  hasData: boolean;
+  dataUpdatedAt: number;
+  isError: boolean;
+  isFetching: boolean;
+};
+
+const FRESHNESS_STYLES: Record<DataFreshnessState, string> = {
+  waiting: 'border-border bg-muted text-muted-foreground',
+  refreshing: 'border-sky-500/30 bg-sky-500/5 text-sky-700 dark:text-sky-300',
+  fresh: 'border-emerald-500/30 bg-emerald-500/5 text-emerald-700 dark:text-emerald-300',
+  stale: 'border-amber-500/30 bg-amber-500/5 text-amber-800 dark:text-amber-200',
+  error: 'border-destructive/30 bg-destructive/5 text-destructive',
+};
+
+function freshnessLabel(state: DataFreshnessState, hasData: boolean) {
+  if (state === 'waiting') return 'Ожидаем ответ';
+  if (state === 'refreshing') return 'Обновляется';
+  if (state === 'fresh') return 'Актуален';
+  if (state === 'stale') return 'Ответ устарел';
+  return hasData ? 'Ошибка обновления' : 'Нет ответа';
+}
+
+function DataFreshnessPanel({ sources }: { sources: DataSourceSnapshot[] }) {
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 10_000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  return (
+    <Card role="region" aria-label="Свежесть источников данных" className="rounded-xl border-border/80 shadow-sm">
+      <CardHeader className="flex flex-col gap-2 border-0 p-5 pb-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <CardTitle className="font-sans text-base font-semibold normal-case tracking-tight text-foreground">Свежесть источников</CardTitle>
+          <p className="mt-1 text-sm text-muted-foreground">Время последнего успешного ответа API по каждому блоку обзора.</p>
+        </div>
+        <Badge variant="outline" className="w-fit rounded-full px-2.5 py-1 text-xs">Ответ браузера</Badge>
+      </CardHeader>
+      <CardContent className="space-y-3 p-5 pt-1">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-5">
+          {sources.map((source) => {
+            const freshness = getDataFreshness({ ...source, now });
+            const hasData = source.hasData && source.dataUpdatedAt > 0;
+            const updatedAt = hasData ? formatDataUpdatedAt(source.dataUpdatedAt) : 'Ещё не получено';
+            return (
+              <article key={source.id} className="min-w-0 rounded-lg border border-border bg-background/70 p-3">
+                <div className="flex min-w-0 items-start justify-between gap-2">
+                  <h3 className="min-w-0 text-xs font-semibold text-foreground">{source.label}</h3>
+                  <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-medium ${FRESHNESS_STYLES[freshness.state]}`}>
+                    {freshnessLabel(freshness.state, hasData)}
+                  </span>
+                </div>
+                <p className="mt-2 break-words text-xs tabular-nums text-muted-foreground" title={hasData ? new Date(source.dataUpdatedAt).toISOString() : undefined}>
+                  {updatedAt}
+                </p>
+                <p className="mt-1 text-[11px] text-muted-foreground">
+                  {hasData ? `Последний успех · ${formatDataAge(freshness.ageMs)}` : source.isFetching ? 'Первый запрос выполняется' : 'Успешного ответа ещё нет'}
+                  {' · опрос '}{source.pollIntervalMs / 1000} с
+                </p>
+              </article>
+            );
+          })}
+        </div>
+        <p className="text-xs leading-5 text-muted-foreground">
+          Это время получения HTTP-ответа в браузере. Оно не подтверждает свежесть heartbeat устройства или видеокадра — для них проверяйте данные устройства и состояние потока.
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function DashboardPage() {
   const fleet = useFleetStats();
   const health = useSystemHealth();
@@ -189,8 +268,15 @@ export default function DashboardPage() {
   const serviceOk = health.data?.status === 'ok';
   const vpnOk = vpnHealth.data?.status === 'ok';
   const lastUpdated = fleet.dataUpdatedAt
-    ? `Последняя проверка ${new Date(fleet.dataUpdatedAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`
+    ? `Каталог · ${formatDataUpdatedAt(fleet.dataUpdatedAt)}`
     : 'Ожидаем первую сводку от API';
+  const freshnessSources: DataSourceSnapshot[] = [
+    { id: 'fleet', label: 'Каталог устройств', pollIntervalMs: API_POLL_INTERVALS.dashboardFleetMs, hasData: fleet.data !== undefined, dataUpdatedAt: fleet.dataUpdatedAt, isError: fleet.isError, isFetching: fleet.isFetching },
+    { id: 'backend-health', label: 'Health · backend', pollIntervalMs: API_POLL_INTERVALS.dashboardHealthMs, hasData: health.data !== undefined, dataUpdatedAt: health.dataUpdatedAt, isError: health.isError, isFetching: health.isFetching },
+    { id: 'vpn-health', label: 'Health · VPN', pollIntervalMs: API_POLL_INTERVALS.vpnHealthMs, hasData: vpnHealth.data !== undefined, dataUpdatedAt: vpnHealth.dataUpdatedAt, isError: vpnHealth.isError, isFetching: vpnHealth.isFetching },
+    { id: 'vpn-pool', label: 'Пул VPN', pollIntervalMs: API_POLL_INTERVALS.vpnPoolStatsMs, hasData: pool.data !== undefined, dataUpdatedAt: pool.dataUpdatedAt, isError: pool.isError, isFetching: pool.isFetching },
+    { id: 'events', label: 'Журнал событий', pollIntervalMs: API_POLL_INTERVALS.deviceEventsMs, hasData: events.data !== undefined, dataUpdatedAt: events.dataUpdatedAt, isError: events.isError, isFetching: events.isFetching },
+  ];
 
   const refreshAll = async () => {
     await Promise.all([
@@ -209,7 +295,7 @@ export default function DashboardPage() {
           <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.13em] text-primary"><span className="h-2 w-2 rounded-full bg-primary" aria-hidden="true" />Операционный центр</p>
           <h1 className="mt-2 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">Обзор парка</h1>
           <p className="mt-2 max-w-2xl text-sm text-muted-foreground">Состояние устройств и инфраструктуры по последним данным API.</p>
-          <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground"><Clock3 className="h-3.5 w-3.5" aria-hidden="true" />{lastUpdated} · автообновление 15 с</p>
+          <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground"><Clock3 className="h-3.5 w-3.5" aria-hidden="true" />{lastUpdated} · интервалы опроса по источникам ниже</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Button type="button" variant="outline" onClick={() => { void refreshAll(); }} disabled={refreshing} aria-live="polite" className="h-10 rounded-lg">
@@ -236,6 +322,8 @@ export default function DashboardPage() {
         <MetricCard label="Подключаются" value={fleet.isLoading ? '—' : stats?.connecting ?? '—'} detail="Ждут первый heartbeat" icon={ArrowUpRight} tone="text-amber-700 dark:text-amber-400" />
         <MetricCard label="Не в сети" value={fleet.isLoading ? '—' : stats?.offline ?? '—'} detail="Нет живого статуса" icon={WifiOff} tone="text-muted-foreground" />
       </section>
+
+      <DataFreshnessPanel sources={freshnessSources} />
 
       <section className="grid grid-cols-1 gap-4 xl:grid-cols-12" aria-label="Состояние и инфраструктура">
         <Card className="rounded-xl xl:col-span-7">

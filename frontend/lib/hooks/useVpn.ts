@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
+import { API_POLL_INTERVALS } from '@/lib/queryPollIntervals';
 
 // ── Типы ────────────────────────────────────────────────────────────────────
 
@@ -44,7 +45,7 @@ export function useVpnPeers(params?: { status?: VpnPeer['status']; device_id?: s
       const { data } = await api.get('/vpn/peers', { params });
       return data;
     },
-    refetchInterval: 30_000,
+    refetchInterval: API_POLL_INTERVALS.vpnPeersMs,
   });
 }
 
@@ -56,7 +57,7 @@ export function usePoolStats() {
       const { data } = await api.get('/vpn/pool/stats');
       return data;
     },
-    refetchInterval: 60_000,
+    refetchInterval: API_POLL_INTERVALS.vpnPoolStatsMs,
   });
 }
 
@@ -68,7 +69,7 @@ export function useVpnHealth() {
       const { data } = await api.get('/vpn/health');
       return data;
     },
-    refetchInterval: 30_000,
+    refetchInterval: API_POLL_INTERVALS.vpnHealthMs,
   });
 }
 
