@@ -14,6 +14,7 @@ import structlog
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
+from backend.core.dependencies import require_permission
 from backend.database.redis_client import get_redis
 from backend.services.health_service import ComponentHealth, HealthService, get_health_service
 
@@ -103,7 +104,10 @@ _BOOT_TIME = time.monotonic()
 
 
 @router.get("/metrics", summary="Агрегированные метрики инфраструктуры")
-async def get_monitoring_metrics(redis_conn=Depends(get_redis)) -> dict[str, Any]:
+async def get_monitoring_metrics(
+    redis_conn=Depends(get_redis),
+    _principal=require_permission("monitoring:read"),
+) -> dict[str, Any]:
     """
     Возвращает CPU, RAM, Redis-статистику и данные о сети.
     Load average не является CPU utilization и публикуется отдельно.
@@ -149,7 +153,10 @@ async def get_monitoring_metrics(redis_conn=Depends(get_redis)) -> dict[str, Any
 # ── GET /monitoring/nodes — топология кластера ──────────────────────────────
 
 @router.get("/nodes", summary="Топология кластера (список нод)")
-async def get_monitoring_nodes(health_svc: HealthService = Depends(get_health_service)) -> list[dict[str, Any]]:
+async def get_monitoring_nodes(
+    health_svc: HealthService = Depends(get_health_service),
+    _principal=require_permission("monitoring:read"),
+) -> list[dict[str, Any]]:
     """
     Возвращает только backend и зависимости, для которых реально выполняется
     health probe. Worker и edge probes не настроены и не объявляются healthy.

@@ -5,8 +5,14 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
 import pytest
+from httpx import ASGITransport, AsyncClient
 
 from backend.api.v1.monitoring import router as monitoring
+from backend.core.dependencies import get_current_user
+from backend.database.engine import get_db
+from backend.database.redis_client import get_redis
+from backend.main import app
+from backend.services.health_service import get_health_service
 
 
 def _health(components):
@@ -20,6 +26,69 @@ def _component(name, status, *, details=None, latency_ms=2.5):
         details=details or {},
         latency_ms=latency_ms,
     )
+
+
+@pytest.fixture
+def restore_dependency_overrides():
+    previous = app.dependency_overrides.copy()
+    yield
+    app.dependency_overrides.clear()
+    app.dependency_overrides.update(previous)
+
+
+async def _monitoring_request(path: str, *, role: str | None):
+    async def user_for_role():
+        return SimpleNamespace(role=role)
+
+    async def no_database():
+        yield None
+
+    async def no_redis():
+        return None
+
+    async def empty_health_service():
+        return SimpleNamespace(check_all=AsyncMock(return_value=_health([])))
+
+    app.dependency_overrides[get_db] = no_database
+    if role is not None:
+        app.dependency_overrides[get_current_user] = user_for_role
+    app.dependency_overrides[get_redis] = no_redis
+    app.dependency_overrides[get_health_service] = empty_health_service
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        return await client.get(path)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("path", [
+    "/api/v1/monitoring/metrics",
+    "/api/v1/monitoring/nodes",
+])
+async def test_monitoring_read_endpoints_require_authentication(path, restore_dependency_overrides):
+    response = await _monitoring_request(path, role=None)
+
+    assert response.status_code == 401
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("path", [
+    "/api/v1/monitoring/metrics",
+    "/api/v1/monitoring/nodes",
+])
+async def test_monitoring_read_endpoints_enforce_monitoring_permission(path, restore_dependency_overrides):
+    response = await _monitoring_request(path, role="api_user")
+
+    assert response.status_code == 403
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("path", [
+    "/api/v1/monitoring/metrics",
+    "/api/v1/monitoring/nodes",
+])
+async def test_viewer_can_read_monitoring_endpoints(path, restore_dependency_overrides):
+    response = await _monitoring_request(path, role="viewer")
+
+    assert response.status_code == 200
 
 
 @pytest.mark.asyncio
