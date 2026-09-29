@@ -95,6 +95,13 @@ Source `0e04459` production compile exit 0, 30 маршрутов; `3012` пок
 Full page открылась из drawer; закрытие по навигации подтверждено. На 390×844
 document width 390, inspector width 390; переполнения страницы нет.
 
+Финальная сборка source `6936cac` также завершила exit 0 (30 маршрутов);
+`3012` показывает `WEB 6936cacd`. В 02:54 UTC+5 mobile → desktop resize заменил
+табличные строки при открытом drawer; Escape вернул фокус к актуальной кнопке
+того же ID (`BUTTON`, «Открыть устройство …»), dialogs 0. Desktop dialog width
+640 px, document width 1440 при viewport 1440. До этого browser regression
+фиксировал body вместо выбранной кнопки.
+
 Source tests и эти canary не означают успешные reboot, autonomous task mission
 или OTA. Удаление и перезагрузка отменены до отправки; OTA не выполнялась.
 
