@@ -288,3 +288,11 @@ Exact-head backend CI обнаружил drift в сгенерированной
 - [Mobile, 390×844 — синтетические данные](screenshots/monitoring-mobile-fixture-390x844.png)
 
 Сетевой rate — оценка по двум снимкам в текущей вкладке, не долговременный ряд и не распределённая агрегация. Нужные дальнейшие шаги WEB-05: постоянная history в Prometheus/совместимом TSDB, measurement labels/retention, реальные worker/edge/tunnel метрики и проверка multi-worker collection. Runtime и production не изменялись.
+
+### Follow-up: устранение security blocker в мониторинговом PR (30 сентября 2026)
+
+Exact-head backend CI на `0489f550b84ea5dabd5afea7630e69b6b5ced5b9` завершил `Security (bandit + pip-audit)` с ошибкой. Сверка активных manifests показала прямую зависимость `pyjwt[crypto]==2.13.0` в `backend/requirements.txt`; `pip-audit` отдельно воспроизвёл advisory PyJWT и указал исправленную версию `2.14.0`. Патч `2.14.0` является минимальной версией, которую maintainer пометил исправленной в [GHSA-r6x4-923q-g947](https://github.com/jpadilla/pyjwt/security/advisories/GHSA-r6x4-923q-g947); обновление этого pin не меняет JWT claims, алгоритм Sphere или срок жизни токенов.
+
+Активный backend manifest закреплён на `pyjwt[crypto]==2.14.0`. После изменения локальные проверки дали `pip-audit -r backend/requirements.txt -r pc-agent/requirements.txt` — **No known vulnerabilities found** и **134 passed** для `tests/auth`, auth service, users API и OTA token-recovery regressions. Остаются две уже существовавшие deprecation warnings в соседнем `game_accounts` router и установленном `dateutil`. Исторический файл `docs/audits/2026-09-05/requirements-candidate.txt` оставлен неизменным: он не является manifest сборки.
+
+Проверка на новом exact head обязательна: пока GitHub Actions для коммита с dependency fix не завершились, security CI и весь PR не считаются зелёными. Это исправление source/dependency lock only; production backend/container, preview и Android APK этим follow-up не обновлялись.
