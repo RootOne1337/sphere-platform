@@ -160,6 +160,7 @@ async def list_devices(
     status_counts = {"online": 0, "busy": 0, "connecting": 0, "offline": 0, "issues": 0}
     for device_id, db_status in candidates:
         live = live_statuses.get(str(device_id))
+        effective: str
         if live:
             effective = live.status
         elif not presence_available:
