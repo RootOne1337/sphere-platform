@@ -1,11 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { Loader2, Play, Users, Monitor, ListChecks } from 'lucide-react';
 
-import { api } from '@/lib/api';
 import { useGroups } from '@/lib/hooks/useGroups';
 import { useDevices, type Device } from '@/lib/hooks/useDevices';
 import { useCreateTask } from '@/lib/hooks/useTasks';
@@ -15,9 +14,11 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -32,6 +33,7 @@ import { Badge } from '@/components/ui/badge';
 // ─── Types ──────────────────────────────────────────────────────────────────
 
 type TargetMode = 'all' | 'group' | 'select';
+const MAX_BATCH_TARGETS = 1000;
 
 interface RunScriptModalProps {
   scriptId: string;
@@ -55,6 +57,8 @@ export function RunScriptModal({
   const [targetMode, setTargetMode] = useState<TargetMode>('all');
   const [selectedGroupId, setSelectedGroupId] = useState<string>('');
   const [selectedDeviceIds, setSelectedDeviceIds] = useState<Set<string>>(new Set());
+  const [deviceSearch, setDeviceSearch] = useState('');
+  const [debouncedDeviceSearch, setDebouncedDeviceSearch] = useState('');
 
   // Options state
   const [priority, setPriority] = useState(5);
@@ -64,11 +68,17 @@ export function RunScriptModal({
   // Result state
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    const timeout = window.setTimeout(() => setDebouncedDeviceSearch(deviceSearch.trim()), 300);
+    return () => window.clearTimeout(timeout);
+  }, [deviceSearch]);
+
   // Data fetching
   const { data: groups } = useGroups();
-  const { data: allDevicesData, isLoading: devicesLoading } = useDevices({
-    page_size: 5000,
+  const { data: allDevicesData, isLoading: devicesLoading, isError: devicesLoadError } = useDevices({
+    page_size: MAX_BATCH_TARGETS,
     group_id: targetMode === 'group' && selectedGroupId ? selectedGroupId : undefined,
+    search: targetMode === 'select' && debouncedDeviceSearch ? debouncedDeviceSearch : undefined,
   });
   const allDevices: Device[] = allDevicesData?.items ?? [];
 
@@ -85,8 +95,16 @@ export function RunScriptModal({
 
   function getTargetCount(): number {
     if (targetMode === 'select') return selectedDeviceIds.size;
-    return allDevices.length;
+    if (targetMode === 'group' && !selectedGroupId) return 0;
+    return allDevicesData?.total ?? allDevices.length;
   }
+
+  const targetCount = getTargetCount();
+  const hasResolvedScope = targetMode === 'all' || (targetMode === 'group' && Boolean(selectedGroupId));
+  const scopeIsIncomplete = hasResolvedScope && Boolean(allDevicesData) && (
+    targetCount > MAX_BATCH_TARGETS || (allDevicesData?.items.length ?? 0) < targetCount
+  );
+  const scopeOverBatchLimit = hasResolvedScope && targetCount > MAX_BATCH_TARGETS;
 
   function toggleDevice(id: string) {
     setSelectedDeviceIds((prev) => {
@@ -101,6 +119,14 @@ export function RunScriptModal({
 
   async function handleRun() {
     setError(null);
+    if (devicesLoading || devicesLoadError || scopeIsIncomplete) {
+      setError('Список устройств неполный или недоступен. Уточните цель и повторите после загрузки полного списка.');
+      return;
+    }
+    if (targetCount > MAX_BATCH_TARGETS) {
+      setError(`За один запуск поддерживается не более ${MAX_BATCH_TARGETS} устройств.`);
+      return;
+    }
     const deviceIds = getTargetDeviceIds();
 
     if (deviceIds.length === 0) {
@@ -142,7 +168,7 @@ export function RunScriptModal({
   }
 
   const isSubmitting = createTask.isPending || startBatch.isPending;
-  const targetCount = getTargetCount();
+  const listIsPartial = Boolean(allDevicesData && allDevicesData.items.length < allDevicesData.total);
 
   // ── Render ───────────────────────────────────────────────────────────────
 
@@ -154,6 +180,9 @@ export function RunScriptModal({
             <Play className="w-4 h-4 text-green-500" />
             Запустить: {scriptName}
           </DialogTitle>
+          <DialogDescription>
+            Выберите полный набор устройств. Массовый запуск ограничен сервером максимумом в {MAX_BATCH_TARGETS} целей.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-5">
@@ -221,8 +250,18 @@ export function RunScriptModal({
                   <Badge variant="secondary">{selectedDeviceIds.size} выбрано</Badge>
                 )}
               </div>
+              <Input
+                aria-label="Поиск устройств"
+                value={deviceSearch}
+                onChange={(event) => setDeviceSearch(event.target.value)}
+                placeholder="Имя, Android ID или модель"
+              />
               {devicesLoading ? (
                 <p className="text-xs text-muted-foreground py-2">Загрузка…</p>
+              ) : devicesLoadError ? (
+                <p role="alert" className="text-xs text-destructive py-2">
+                  Не удалось загрузить каталог устройств. Запуск заблокирован.
+                </p>
               ) : (
                 <div className="max-h-52 overflow-y-auto rounded border divide-y">
                   {allDevices.length === 0 ? (
@@ -254,7 +293,26 @@ export function RunScriptModal({
                   )}
                 </div>
               )}
+              {listIsPartial && !devicesLoadError && (
+                <p role="status" className="text-xs text-muted-foreground">
+                  Показаны первые {allDevices.length} из {allDevicesData?.total}. Уточните поиск; запуск включает только отмеченные устройства.
+                </p>
+              )}
             </div>
+          )}
+
+          {scopeIsIncomplete && (
+            <p role="alert" className="text-sm text-destructive rounded border border-destructive/40 bg-destructive/10 px-3 py-2">
+              {scopeOverBatchLimit
+                ? `В выбранной области ${targetCount} устройств, а один запуск поддерживает максимум ${MAX_BATCH_TARGETS}. Ничего не отправлено: сузьте область или выберите до ${MAX_BATCH_TARGETS} устройств вручную.`
+                : `API вернул неполный список для области из ${targetCount} устройств. Ничего не отправлено; обновите каталог и повторите.`}
+            </p>
+          )}
+
+          {devicesLoadError && targetMode !== 'select' && (
+            <p role="alert" className="text-sm text-destructive rounded border border-destructive/40 bg-destructive/10 px-3 py-2">
+              Не удалось загрузить каталог устройств. Запуск заблокирован.
+            </p>
           )}
 
           {/* ── Options ──────────────────────────────────────────────── */}
@@ -320,7 +378,11 @@ export function RunScriptModal({
               isSubmitting ||
               (targetMode === 'group' && !selectedGroupId) ||
               (targetMode === 'select' && selectedDeviceIds.size === 0) ||
-              devicesLoading
+              devicesLoading ||
+              devicesLoadError ||
+              scopeIsIncomplete ||
+              targetCount > MAX_BATCH_TARGETS ||
+              (hasResolvedScope && targetCount === 0)
             }
             className="gap-2"
           >
