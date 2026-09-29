@@ -208,7 +208,7 @@ it('retains the create form when no usable one-time key receipt is returned', as
   await screen.findByText('Активных API-ключей нет');
   await userEvent.click(screen.getByRole('button', { name: 'Создать ключ' }));
   fireEvent.change(screen.getByLabelText('Название интеграции'), { target: { value: 'CI test' } });
-  await userEvent.click(screen.getByRole('button', { name: 'Создать', exact: true }));
+  await userEvent.click(screen.getByRole('button', { name: /^Создать$/ }));
   expect(await screen.findByRole('alert')).toHaveTextContent('Проверьте список ключей перед повторным запросом');
   expect(screen.getByLabelText('Название интеграции')).toHaveValue('CI test');
   expect(api.post).toHaveBeenCalledTimes(1);

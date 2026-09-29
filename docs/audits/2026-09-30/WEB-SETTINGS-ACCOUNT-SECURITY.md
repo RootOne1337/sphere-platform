@@ -41,16 +41,45 @@
 
 ## Проверки и ограничения
 
-- Полный frontend Jest после source-изменения: **67 suites / 428 tests passed**.
-- Затем добавлены ещё два отказных сценария; целевой settings suite: **12/12 passed**.
+- Полный frontend Jest после добавления всех settings сценариев: **67 suites / 430 tests passed**.
+- Целевой settings suite: **12/12 passed**.
 - `npm run type-check`: **PASS**. Targeted ESLint исходника и settings tests: **0 errors / 0 warnings**;
   отдельный служебный warning напоминает о миграции legacy `.eslintrc`.
 - Проверены enabled/unknown MFA, успешный пустой список, отказ/неверный формат API,
   сохранение cache snapshot, подтверждение/отмена, отказ отзыва, двойной submit, однократный receipt,
   Clipboard rejection, подтверждение TOTP и истёкший setup.
 - API mutations в этих тестах замоканы. Они не создавали реальные ключи и не меняли MFA владельца.
-- Production compile и browser acceptance нового source будут записаны ниже после выполнения.
-  Публичный frontend/backend, туннели и APK этим source-изменением не обновлены.
+- Первый exact-head CI для `29a0f6d` выявил TypeScript-ошибку в дополнительном тесте:
+  параметр `exact` принадлежал browser locator API, а не Testing Library `getByRole`.
+  Он заменён точным regex matcher. Это ошибка типов теста; Jest runtime всех 12 сценариев проходил.
+  Новый CI должен быть оценён отдельно, первый head не считается прошедшим.
+- Production compile и browser acceptance указаны ниже. Публичный frontend/backend,
+  туннели и APK этим source-изменением не обновлены.
+
+## Проверка локальной сборки — 30 сентября, 01:58–02:01 UTC+5
+
+Из commit `29a0f6dccd2ebf860ea31b780c6dbc8bee9eeafd` собран отдельный каталог
+`.local-pilot/live-preview-20260930-29a0f6d/frontend`. Обычная production compile
+завершилась exit 0: 30 маршрутов, `/settings` 14.7 kB / First Load JS 177 kB.
+Для `next start` только в копии отключён `output: standalone`; рабочий frontend config
+не менялся. Исходная standalone build тоже завершилась exit 0, но сохранила известный
+Windows tracing warning для client-reference manifest и старые lint warnings соседних файлов.
+
+Read-only proxy на `127.0.0.1:3012` направляет frontend в `3013`, а API в существующий
+pilot `18080`. Вход разрешён, изменяющие API-запросы и WebSocket upgrades заблокированы.
+Приёмка обычных mutation/stream workflows через этот proxy не заявлена.
+Browser показал `WEB 29a0f6dc`, реальный `/auth/me` и один существующий API-key record.
+Проверены три вкладки, открытие/отмена create dialog без submit, даты и scope keys.
+
+Responsive QA: 1440×900 и 390×844. На телефоне ширина документа 390 px; create dialog
+имеет границы x=16…374 и ширину 358 px. Строки профиля переносятся без горизонтального
+overflow страницы. Обнаруженное обрезание третьей вкладки исправлено мобильной
+раскладкой без декоративных иконок; эту итоговую правку нужно подтвердить новым build.
+Скриншоты остаются приватными в `.local-pilot/ui-review-20260930/` и не коммитятся.
+
+API `/health` вернул 200, `/health/build` — 404: provenance endpoint отсутствует в
+старом backend image `40357ca`. Это отсутствие API revision metadata, а не отказ
+работающего backend. Публичный pilot stack не пересоздавался.
 
 ## Следующие независимые этапы
 

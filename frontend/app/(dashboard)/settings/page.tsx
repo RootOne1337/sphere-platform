@@ -167,9 +167,9 @@ export default function SettingsPage() {
       </section>
       <Tabs value={tab} onValueChange={(value) => { if (!busy) { if (value !== 'mfa') clearSetup(); setTab(value as TabId); setActionError(null); } }}>
         <TabsList aria-label="Разделы настроек" className="mb-5 h-auto w-full justify-start gap-1 overflow-x-auto rounded-lg p-1 sm:w-auto">
-          <TabsTrigger value="profile" disabled={busy} className="gap-2"><UserRound className="h-4 w-4" aria-hidden="true" />Профиль</TabsTrigger>
-          <TabsTrigger value="mfa" disabled={busy} className="gap-2"><ShieldCheck className="h-4 w-4" aria-hidden="true" />Безопасность</TabsTrigger>
-          <TabsTrigger value="apikeys" disabled={busy} className="gap-2"><KeyRound className="h-4 w-4" aria-hidden="true" />API-ключи</TabsTrigger>
+          <TabsTrigger value="profile" disabled={busy} className="flex-1 gap-1 px-2 text-xs sm:flex-none sm:gap-2 sm:px-3 sm:text-sm"><UserRound className="hidden h-4 w-4 sm:block" aria-hidden="true" />Профиль</TabsTrigger>
+          <TabsTrigger value="mfa" disabled={busy} className="flex-1 gap-1 px-2 text-xs sm:flex-none sm:gap-2 sm:px-3 sm:text-sm"><ShieldCheck className="hidden h-4 w-4 sm:block" aria-hidden="true" />Безопасность</TabsTrigger>
+          <TabsTrigger value="apikeys" disabled={busy} className="flex-1 gap-1 px-2 text-xs sm:flex-none sm:gap-2 sm:px-3 sm:text-sm"><KeyRound className="hidden h-4 w-4 sm:block" aria-hidden="true" />API-ключи</TabsTrigger>
         </TabsList>
         <TabsContent value="profile" className="mt-0 space-y-5">
           <Section title="Профиль пользователя" description="Идентификаторы и время последнего входа из серверного профиля. Это не время создания текущей сессии.">
