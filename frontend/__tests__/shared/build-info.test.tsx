@@ -67,6 +67,28 @@ describe('build provenance', () => {
     render(<QueryClientProvider client={client}><BuildProvenance /></QueryClientProvider>);
 
     await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('API unavailable'));
+    expect(screen.getByRole('status')).toHaveAttribute('title', expect.stringContaining('Это не проверка работоспособности API'));
+    client.clear();
+  });
+
+  it('distinguishes a missing metadata endpoint from a failed API service', async () => {
+    const fetchMock = mockFetch(async () => ({ ok: false, status: 404 } as Response));
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(<QueryClientProvider client={client}><BuildProvenance /></QueryClientProvider>);
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('API no metadata'));
+    expect(screen.getByRole('status')).toHaveAttribute('title', expect.stringContaining('HTTP 404'));
+    expect(screen.getByRole('status')).not.toHaveTextContent('MISMATCH');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    client.clear();
+  });
+
+  it.each([503, 403])('does not treat HTTP %s as a missing metadata endpoint', async (status) => {
+    const fetchMock = mockFetch(async () => ({ ok: false, status } as Response));
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(<QueryClientProvider client={client}><BuildProvenance /></QueryClientProvider>);
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('API unavailable'));
+    expect(screen.getByRole('status')).not.toHaveTextContent('no metadata');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
     client.clear();
   });
 });

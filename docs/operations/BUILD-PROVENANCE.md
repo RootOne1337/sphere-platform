@@ -1,6 +1,6 @@
 # Build provenance in the operator UI
 
-**Updated:** 29 September 2026<br>
+**Updated:** 30 September 2026<br>
 **Scope:** source/build traceability for the Sphere web frontend and backend API.
 
 ## What the operator sees
@@ -11,9 +11,14 @@ The authenticated application header shows `WEB <sha>` and `API <sha>`:
 - `API` is returned by `GET /api/v1/health/build` from the running backend image.
 - Revisions are shortened to eight hexadecimal characters for display. The API
   returns its validated full Git SHA so support can compare it exactly.
-- `unknown` means the image was built without a valid Git SHA. `unavailable`
-  means the browser could not reach the API endpoint. Neither state is treated
-  as a successful version match.
+- `unknown` means the image did not report a valid Git SHA. `no metadata` means
+  the revision endpoint returned HTTP 404 (for example, an older backend).
+  `unavailable` means the revision lookup failed, including network errors,
+  authorization errors or server errors. These are metadata states, not API health
+  checks, and none is treated as a successful version match. The tooltip explains
+  the distinction; 403/503 are not silently classified as an unsupported endpoint.
+- Revision metadata refreshes once per minute. A failed refresh is not used to
+  assert a revision mismatch from an older cached response.
 
 The endpoint intentionally exposes only service name, semantic API version, and
 the validated source SHA. It does not return environment variables, container
@@ -55,7 +60,8 @@ uncommitted changes layered into a local image.
 
 ## Current rollout boundary
 
-The implementation is source-level until CI builds images that contain these
-fields and an operator verifies them on the target runtime. No live preview,
-production service, APK, or remote Android device is updated by this change.
-Older running images will not acquire a build stamp without rebuilding them.
+The local read-only frontend preview `3012` was rebuilt on 30 September with a
+known frontend SHA. Its pilot backend `40357ca` returns HTTP 404 for this metadata
+endpoint while `/health` returns 200. Backend provenance, production rollout and
+remote-device acceptance remain open. Older images do not acquire the endpoint
+without rebuilding them. See [current state](CURRENT-STATE.md) for the dated receipt.
