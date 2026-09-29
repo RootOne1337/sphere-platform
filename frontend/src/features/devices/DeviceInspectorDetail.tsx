@@ -16,6 +16,7 @@ import { DeviceStream } from '@/components/sphere/DeviceStream';
 import { WebTerminal } from './WebTerminal';
 import { LogcatViewer } from './LogcatViewer';
 import { RunScriptTab } from './RunScriptTab';
+import { DEVICE_COMMAND_TIMEOUT } from './interactiveResult';
 import { DeviceDiagnosticsPanel, DeviceHistoryPanel, DeviceSavedLogsPanel, Metric, utcTime } from './DeviceOperationsPanels';
 
 type View = 'summary' | 'tasks' | 'events' | 'diagnostics' | 'logs' | 'stream' | 'terminal' | 'logcat' | 'script';
@@ -46,7 +47,7 @@ export function DeviceInspectorDetail({ deviceId, fullPage = false }: { deviceId
     commandLock.current = true;
     setRebootPending(true);
     try {
-      const { data } = await api.post(`/devices/${encodeURIComponent(deviceId)}/reboot`);
+      const { data } = await api.post(`/devices/${encodeURIComponent(deviceId)}/reboot`, undefined, { timeout: DEVICE_COMMAND_TIMEOUT.reboot });
       if (data?.status !== 'reboot_initiated' || data?.device_id !== deviceId) throw new Error('Неподтверждённый ответ команды.');
       toast.success('Команда перезагрузки принята', { description: 'Фактическое восстановление связи проверяется по следующим heartbeat.' });
       setRebootOpen(false);
@@ -75,8 +76,8 @@ export function DeviceInspectorDetail({ deviceId, fullPage = false }: { deviceId
         {!VIEWS.some(([key]) => key === view) ? <>
           <Button variant="outline" size="sm" onClick={() => setView('summary')}>Назад к обзору</Button>
           {view === 'stream' && <div className="overflow-hidden rounded-xl border border-border bg-black"><DeviceStream deviceId={deviceId} enableDiagnostics enableScreenshot /></div>}
-          {view === 'terminal' && <div className="h-[480px] min-w-0"><WebTerminal deviceId={deviceId} /></div>}
-          {view === 'logcat' && <div className="h-[480px] min-w-0"><LogcatViewer deviceId={deviceId} /></div>}
+          {view === 'terminal' && <div className="h-[480px] min-w-0"><WebTerminal deviceId={deviceId} enabled={isReachable} /></div>}
+          {view === 'logcat' && <div className="h-[480px] min-w-0"><LogcatViewer deviceId={deviceId} enabled={isReachable} /></div>}
           {view === 'script' && <RunScriptTab deviceId={deviceId} deviceName={device.name} isOnline={isReachable} onBack={() => setView('summary')} />}
         </> : <>
           <dl className={`grid grid-cols-2 gap-3 ${fullPage ? 'lg:grid-cols-4' : ''}`}>
