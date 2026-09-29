@@ -38,9 +38,14 @@ heartbeat без `last_seen`, отдельная версия APK, unknown metad
 selection/delete workflows. TypeScript passed, targeted ESLint — 0 errors / 0 warnings
 (отдельное предупреждение о legacy конфигурации ESLint).
 
-Production compile, финальный общий Jest и browser QA фиксируются в
-[CURRENT-STATE](../../operations/CURRENT-STATE.md) после пересборки. До этого
-изменение не считается принятой runtime-версией.
+Source `96ea973`: полный frontend Jest — **67 suites / 440 tests passed**;
+production compile в изолированной копии завершилась exit 0, 30 маршрутов.
+В browser `3012` видно `WEB 96ea973c`; настоящий API показал 19 записей,
+14 online / 5 offline. На desktop 1440×1000 версии и heartbeat читаются отдельно;
+колонка «Доступ» включается и выключается через меню. На 390×844 document width
+остаётся 390 px, таблица имеет собственный горизонтальный scroll (934 px).
+Изменение локально показано оператору; production и нагрузочный acceptance
+не заявлены. Подробный receipt и текущий CI — [CURRENT-STATE](../../operations/CURRENT-STATE.md).
 
 ## Открытые границы
 

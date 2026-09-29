@@ -83,6 +83,15 @@ API `/health` вернул 200, `/health/build` — 404: provenance endpoint о�
 
 ## Следующие независимые этапы
 
+Финальный follow-up 30 сентября, 02:16–02:17 UTC+5: `/settings` сохранён в основной
+сборке `96ea973c` на `3012`. Мобильная коррекция tabs подтверждена: все три вкладки
+помещаются, document не шире 390 px; create dialog — 358 px. Просмотр настоящего
+списка ключей, открытия/отмены формы и текущего MFA не менял ключи или защиту входа.
+Общий frontend набор после соседних fleet/provenance fixes — 67 suites / 440 tests;
+types/lint и compile passed. Preview API/WS relay теперь включён для работы оператора;
+его auth boundary проверен отдельно без credentials и без ID устройств. Это смена
+локального preview режима, не rollout backend или Android. [Последний receipt](../../operations/CURRENT-STATE.md).
+
 1. Привести UI и API runtime к известным версиям; старый pilot backend `40357ca` не имеет всех
    новых полей каталога/мониторинга и `/health/build`.
 2. Завершить глубокую карточку устройства и корреляцию события → task/run → diagnostics → stream.

@@ -7,7 +7,7 @@
 [Главная](../../README.md) · [Каталог документации](../README.md) · [Readiness](READINESS.md) · [Fleet32 gates](../audits/2026-09-20/FLEET32-PREFLIGHT.md) · [PR #19](https://github.com/RootOne1337/sphere-platform/pull/19)
 
 > [!IMPORTANT]
-> Это сверка исходников, CI, Dependabot и read-only browser smoke. В этом проходе не отправлялись команды устройствам, не запускались stream/script/reboot/delete, не выполнялись OTA-операции и не изменялись runtime-сервисы. Браузерный просмотр локальных `3012`/`18080` не является доказательством source SHA или production deploy. Ниже отдельно указано, что проверено в исходниках, что видно в preview и что требует авторизованного runtime-приёмочного теста.
+> Это сверка исходников, CI и отдельных runtime-срезов. 30 сентября локальный frontend `3012` пересобран с известным SHA и подключён к прежнему pilot API `18080`. Backend, публичный frontend, APK и туннели не обновлялись. Команды Android/OTA не отправлялись; dialog удаления отменён до submit. Просмотр страницы и успешный source test не означают production rollout или приёмку всех действий/видео. Исторические read-only срезы ниже сохраняют свои даты.
 
 ## Состояние на дату проверки
 
@@ -16,17 +16,45 @@
 Раздел `/settings` переведён на общую систему интерфейса. Профиль и MFA используют
 `/auth/me`; неподтверждённые даты сессии и VERIFIED удалены. Ошибки списка ключей
 отделены от пустого результата, отзыв/отключение требуют подтверждения, мутации
-не повторяются автоматически. Полный source Jest: 67 suites / 430 tests; settings
-suite после двух дополнительных отказных сценариев: 12 passed. Types и targeted lint passed.
+не повторяются автоматически. На source `96ea973`: полный frontend Jest —
+**67 suites / 440 tests passed**; settings — 12 passed, FleetMatrix + DevicesPage —
+17 passed, provenance — 7 passed. Types и targeted lint passed.
 [Отчёт и оставшиеся этапы](../audits/2026-09-30/WEB-SETTINGS-ACCOUNT-SECURITY.md).
-Сборка `29a0f6d` и read-only browser на `3012/settings` проверены с настоящим API;
-мобильный follow-up требует пересборки. Первый CI этого head выявил ошибку типа в
-тесте; исправление прошло локальный type-check и ожидает нового CI. Public deployment не выполнен.
+Последняя локальная production compile: `96ea973c928a80c2e475547398b827691cf4d759`,
+exit 0, 30 маршрутов. В архивной копии frontend для `next start` отключён только
+`output: standalone`; source config сохранён. На `3012` видно `WEB 96ea973c`,
+настоящие профиль и каталог API; mobile tabs и dialog проверены на 390×844,
+desktop — 1440×1000. Ширина документа на телефоне 390 px, таблица прокручивается
+в собственном контейнере (934 px), dialog имеет ширину 358 px.
+
+Preview теперь проксирует обычные API-действия и `/ws/*` в существующий backend,
+а не блокирует их blanket 403. Проверка без device IDs и без авторизации получила
+401; WebSocket с заведомо неверным токеном открылся и был отклонён backend с 4001.
+Это подтверждает relay/auth boundary, а не живой stream или успешную команду.
+Выбор строки → Delete открывает диалог; отмена сохраняет каталог из 19 записей.
+Снимок на 02:16–02:17 UTC+5: 14 online и 5 offline, не измерение длительного uptime.
+
+Первый CI `29a0f6d` обнаружил TypeScript-ошибку matcher в тесте; она исправлена.
+Frontend CI следующего source `80e981e` прошёл tests/types/build. На `96ea973`
+по срезу 02:17 UTC+5 Frontend, backend Tests/image bootstrap и Android ещё pending;
+lint/security/RLS/preview guard прошли, deploy skipped. Полностью зелёный текущий
+PR не заявляется. Public deployment не выполнен.
+
+Повторная сверка в 02:19 UTC+5: на `96ea973` Frontend tests/types/build и
+production-image bootstrap тоже прошли. Backend Tests и Android ещё выполняются;
+по-прежнему нет основания объявлять все проверки завершёнными.
 
 Дополнительно в реестре исправлена совместимость с прежним API: отсутствующий
 `presence_available` не считается отказом Redis; локальные счётчики страницы
 подписаны отдельно от глобальных; первый отказ API оставляет KPI неизвестными.
 Runtime `40357ca` пока не публикует новые метаданные каталога. [Контракт и пределы](DEVICE-CATALOG.md).
+
+Fleet Matrix получила отдельную колонку Android / агент и «Heartbeat / контакт»:
+реальный heartbeat больше не теряется при пустом `last_seen`; отсутствие начала
+сессии не объявляется подтверждённым uptime. Основные данные видны без hover,
+доступ/server/tags доступны через меню. [Доказательства](../audits/2026-09-30/WEB-FLEET-READABILITY.md).
+Header различает отсутствующий revision endpoint (404, `no metadata`) и отказ
+lookup; эти состояния не объявляют API неработающим. [Provenance](BUILD-PROVENANCE.md).
 
 Нижеследующие численные версии/наблюдения относятся к исходному срезу 29 сентября,
 а не к заново измеренному uptime Android-парка. Exact-head CI исходника `e8b4c40`
