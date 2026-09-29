@@ -101,6 +101,15 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
                 size: 220,
                 cell: ({ row }) => {
                     const device = row.original;
+                    const metadata = [
+                        device.model?.trim() || "Модель не сообщена",
+                        device.android_version?.trim()
+                            ? `Android ${device.android_version.trim()}`
+                            : "Версия Android не сообщена",
+                        device.agent_version?.trim()
+                            ? `Agent ${device.agent_version.trim()}`
+                            : "Агент не сообщил версию",
+                    ].join(" · ");
                     return (
                         <div className="flex h-full flex-col justify-center pr-4">
                             <button
@@ -114,8 +123,8 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
                             >
                                 {device.name}
                             </button>
-                            <span className="font-mono text-[10px] leading-4 text-muted-foreground truncate" title={`${device.model} • Android ${device.android_version} • Agent ${device.agent_version || "not reported"}`}>
-                                {device.model} • Android {device.android_version} • Agent {device.agent_version || "not reported"}
+                            <span className="font-mono text-[10px] leading-4 text-muted-foreground truncate" title={metadata}>
+                                {metadata}
                             </span>
                         </div>
                     );

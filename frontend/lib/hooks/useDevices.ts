@@ -5,9 +5,9 @@ export interface Device {
   id: string;
   name: string;
   android_id: string;
-  model: string;
+  model: string | null;
   device_model: string | null;
-  android_version: string;
+  android_version: string | null;
   tags: string[];
   group_id: string | null;
   group_ids: string[];
