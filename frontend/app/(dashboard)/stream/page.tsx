@@ -12,6 +12,7 @@ import {
   isDeviceReachable,
   type DeviceStatusFilter,
 } from '@/src/features/devices/deviceListFilters';
+import { getStreamAspectRatio, type StreamFrameDimensions } from '@/src/features/stream/streamAspectRatio';
 
 /** Maximum number of viewers opened by this page at once. Streams start only on an explicit user action. */
 const GRID_SIZES = [1, 2, 4, 6, 9, 12, 16, 25, 32, 64] as const;
@@ -59,6 +60,7 @@ const STATUS_FILTER_LABELS: Array<{ value: DeviceStatusFilter; label: string }> 
 export default function FleetStreamPage() {
   const [gridSize, setGridSize] = useState<(typeof GRID_SIZES)[number]>(4);
   const [activeStreams, setActiveStreams] = useState<Set<string>>(new Set());
+  const [frameDimensionsByDevice, setFrameDimensionsByDevice] = useState<Record<string, StreamFrameDimensions>>({});
   const [statusFilter, setStatusFilter] = useState<DeviceStatusFilter>('all');
   const [search, setSearch] = useState('');
   const [listPage, setListPage] = useState(1);
@@ -140,6 +142,14 @@ export default function FleetStreamPage() {
       const next = new Set(previous);
       next.delete(deviceId);
       return next;
+    });
+  }, []);
+
+  const updateFrameDimensions = useCallback((deviceId: string, dimensions: StreamFrameDimensions) => {
+    setFrameDimensionsByDevice((previous) => {
+      const current = previous[deviceId];
+      if (current?.width === dimensions.width && current.height === dimensions.height) return previous;
+      return { ...previous, [deviceId]: dimensions };
     });
   }, []);
 
@@ -358,9 +368,18 @@ export default function FleetStreamPage() {
                     </span>
                   </div>
 
-                  <div className="aspect-[9/16] overflow-hidden bg-black">
+                  <div
+                    className="w-full overflow-hidden bg-black"
+                    style={{ aspectRatio: getStreamAspectRatio(frameDimensionsByDevice[device.id]) }}
+                    aria-label={`Видеокадр устройства ${device.name}`}
+                  >
                     {isActive && reachable ? (
-                      <DeviceStream deviceId={device.id} fit="contain" enableDiagnostics />
+                      <DeviceStream
+                        deviceId={device.id}
+                        fit="contain"
+                        enableDiagnostics
+                        onFrameDimensions={(dimensions) => updateFrameDimensions(device.id, dimensions)}
+                      />
                     ) : (
                       <div className="flex h-full flex-col items-center justify-center gap-2 px-3 text-center text-xs text-muted-foreground">
                         {isActive ? <WifiOff className="h-5 w-5 text-amber-400" aria-hidden="true" /> : <MonitorPlay className="h-5 w-5" aria-hidden="true" />}

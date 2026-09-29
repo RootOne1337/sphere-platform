@@ -2,18 +2,20 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ArrowRight, Braces, Play, Plus, RefreshCw, Workflow } from 'lucide-react';
-import { useScripts } from '@/lib/hooks/useScripts';
+import { ArrowRight, Braces, Code2, Play, Plus, RefreshCw, Workflow } from 'lucide-react';
+import { useScript, useScripts, type Script } from '@/lib/hooks/useScripts';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { RunScriptModal } from '@/components/sphere/RunScriptModal';
 import { PageFrame, PageHeading } from '@/src/shared/ui/page-layout';
+import { formatScriptStepCount, getCurrentScriptVersion, getScriptStepCount, redactScriptDag } from '@/src/features/scripts/scriptPresentation';
 
 export default function ScriptsPage() {
   const { data: scriptsData, isLoading, isError, refetch } = useScripts();
   const scripts = scriptsData?.items ?? [];
   const [runTarget, setRunTarget] = useState<{ id: string; name: string } | null>(null);
+  const [inspectedScriptId, setInspectedScriptId] = useState<string | null>(null);
 
   return (
     <PageFrame>
@@ -45,12 +47,23 @@ export default function ScriptsPage() {
                   </div>
                 </div>
                 <div className="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
-                  <Badge variant="outline" className="rounded-full px-3">{script.node_count} {script.node_count % 10 === 1 && script.node_count % 100 !== 11 ? 'шаг' : script.node_count % 10 >= 2 && script.node_count % 10 <= 4 && (script.node_count % 100 < 12 || script.node_count % 100 > 14) ? 'шага' : 'шагов'}</Badge>
+                  <Badge variant="outline" className="rounded-full px-3" title={getScriptStepCount(script) == null ? 'API не сообщило количество шагов' : undefined}>{formatScriptStepCount(getScriptStepCount(script))}</Badge>
                   {script.is_archived && <Badge variant="secondary" className="rounded-full">В архиве</Badge>}
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    aria-expanded={inspectedScriptId === script.id}
+                    onClick={() => setInspectedScriptId((current) => current === script.id ? null : script.id)}
+                  >
+                    <Code2 className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
+                    {inspectedScriptId === script.id ? 'Скрыть DAG' : 'Посмотреть DAG'}
+                  </Button>
                   <Button type="button" size="sm" onClick={() => setRunTarget({ id: script.id, name: script.name })} disabled={script.is_archived}><Play className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />Запустить</Button>
                   <Button asChild size="sm" variant="outline"><Link href={`/scripts/builder?id=${encodeURIComponent(script.id)}`}>Открыть <ArrowRight className="ml-1.5 h-3.5 w-3.5" aria-hidden="true" /></Link></Button>
                 </div>
               </CardContent>
+              {inspectedScriptId === script.id && <ScriptDagInspector script={script} onClose={() => setInspectedScriptId(null)} />}
             </Card>
           ))}
         </section>
@@ -58,5 +71,65 @@ export default function ScriptsPage() {
 
       {runTarget && <RunScriptModal scriptId={runTarget.id} scriptName={runTarget.name} open onClose={() => setRunTarget(null)} />}
     </PageFrame>
+  );
+}
+
+function ScriptDagInspector({ script, onClose }: { script: Script; onClose: () => void }) {
+  const { data, isLoading, isError, refetch, isFetching } = useScript(script.id, { includeDag: true });
+  const currentVersion = data ? getCurrentScriptVersion(data) : getCurrentScriptVersion(script);
+  const legacyVersion = typeof data?.current_version === 'number' ? data.current_version : null;
+  const dag = currentVersion?.dag ?? data?.dag ?? null;
+  const displayedDag = dag == null ? null : JSON.stringify(redactScriptDag(dag), null, 2);
+
+  return (
+    <section aria-label={`Исходник сценария ${script.name}`} className="border-t border-border/70 bg-muted/20 p-4 sm:p-5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="flex items-center gap-2 text-sm font-semibold"><Braces className="h-4 w-4 text-primary" aria-hidden="true" />DAG сценария · только чтение</p>
+          <p className="mt-1 text-xs text-muted-foreground">Версия и хеш взяты из ответа API. Открытие панели не запускает и не меняет сценарий.</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button type="button" size="sm" variant="outline" onClick={() => { void refetch(); }} disabled={isFetching}>
+            <RefreshCw className={`mr-1.5 h-3.5 w-3.5 ${isFetching ? 'animate-spin motion-reduce:animate-none' : ''}`} aria-hidden="true" />Обновить DAG
+          </Button>
+          <Button type="button" size="sm" variant="ghost" onClick={onClose}>Свернуть</Button>
+        </div>
+      </div>
+
+      {isLoading ? (
+        <p role="status" className="mt-4 rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">Загружаем версию сценария…</p>
+      ) : isError ? (
+        <div role="alert" className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm">
+          <span>Не удалось прочитать сценарий из API.</span>
+          <Button type="button" size="sm" variant="outline" onClick={() => { void refetch(); }}>Повторить</Button>
+        </div>
+      ) : (
+        <>
+          <dl className="mt-4 grid gap-3 rounded-lg border border-border/70 bg-background/70 p-3 text-xs sm:grid-cols-3">
+            <div><dt className="text-muted-foreground">Текущая версия</dt><dd className="mt-1 font-medium">{currentVersion?.version ?? legacyVersion ?? 'Не сообщается'}</dd></div>
+            <div className="min-w-0 sm:col-span-2"><dt className="text-muted-foreground">SHA-256 DAG</dt><dd className="mt-1 break-all font-mono">{currentVersion?.dag_hash ?? 'API не вернул хеш'}</dd></div>
+          </dl>
+          {currentVersion?.notes && <p className="mt-3 text-xs text-muted-foreground">Описание версии: {currentVersion.notes}</p>}
+          {displayedDag ? (
+            <pre className="mt-3 max-h-[32rem] overflow-auto rounded-lg border border-border bg-background p-4 text-xs leading-5 text-foreground"><code>{displayedDag}</code></pre>
+          ) : (
+            <p className="mt-3 rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">В текущем ответе API нет DAG для этой версии.</p>
+          )}
+          {data?.versions?.length ? (
+            <details className="mt-3 rounded-lg border border-border/70 bg-background/60 p-3">
+              <summary className="cursor-pointer text-xs font-medium">История версий · {data.versions.length}</summary>
+              <ol className="mt-3 space-y-2">
+                {[...data.versions].sort((a, b) => b.version - a.version).map((version) => (
+                  <li key={version.id} className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-t border-border/60 pt-2 text-xs">
+                    <span className="font-medium">v{version.version}{version.notes ? ` · ${version.notes}` : ''}</span>
+                    <span className="break-all font-mono text-muted-foreground">{version.dag_hash ?? 'Хеш не сообщается'}</span>
+                  </li>
+                ))}
+              </ol>
+            </details>
+          ) : null}
+        </>
+      )}
+    </section>
   );
 }

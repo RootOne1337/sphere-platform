@@ -4,12 +4,14 @@ import { H264Decoder } from '@/lib/h264-decoder';
 import type { StreamDecoderStats } from '@/lib/h264-decoder';
 import { useAuthStore } from '@/lib/store';
 import { api } from '@/lib/api';
+import type { StreamFrameDimensions } from '@/src/features/stream/streamAspectRatio';
 
 interface DeviceStreamProps {
   deviceId: string;
   onTap?: (x: number, y: number) => void;
   enableDiagnostics?: boolean;
   fit?: 'contain' | 'cover' | 'fill';
+  onFrameDimensions?: (dimensions: StreamFrameDimensions) => void;
 }
 
 interface StreamDiagnosticResponse {
@@ -61,6 +63,7 @@ export function DeviceStream({
   onTap,
   enableDiagnostics = false,
   fit,
+  onFrameDimensions,
 }: DeviceStreamProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const wsRef = useRef<WebSocket | null>(null);
@@ -77,6 +80,13 @@ export function DeviceStream({
   const [diagnosticsError, setDiagnosticsError] = useState<string | null>(null);
   const [browserStats, setBrowserStats] = useState<StreamDecoderStats | null>(null);
   const canInteract = connection === 'live' && hasRenderedFrame && !streamError;
+  const onFrameDimensionsRef = useRef(onFrameDimensions);
+  const lastFrameDimensionsRef = useRef<StreamFrameDimensions | null>(null);
+  onFrameDimensionsRef.current = onFrameDimensions;
+
+  useEffect(() => {
+    lastFrameDimensionsRef.current = null;
+  }, [deviceId]);
 
   useEffect(() => {
     // Defer WS creation by one tick to avoid React StrictMode double-invoke.
@@ -117,6 +127,17 @@ export function DeviceStream({
         if (canvas.width !== frame.displayWidth || canvas.height !== frame.displayHeight) {
           canvas.width = frame.displayWidth;
           canvas.height = frame.displayHeight;
+        }
+        if (frame.displayWidth > 0 && frame.displayHeight > 0) {
+          const previousDimensions = lastFrameDimensionsRef.current;
+          if (
+            previousDimensions?.width !== frame.displayWidth
+            || previousDimensions?.height !== frame.displayHeight
+          ) {
+            const dimensions = { width: frame.displayWidth, height: frame.displayHeight };
+            lastFrameDimensionsRef.current = dimensions;
+            onFrameDimensionsRef.current?.(dimensions);
+          }
         }
         ctx.drawImage(frame, 0, 0, canvas.width, canvas.height);
       }, () => {

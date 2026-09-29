@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { ClusterHeatmap } from '@/src/features/monitoring/ClusterHeatmap';
-import { formatBytes, summarizeMonitoringHealth } from '@/src/features/monitoring/monitoringTypes';
-import type { ClusterNode } from '@/src/features/monitoring/monitoringTypes';
+import { formatBytes, getMonitoringTelemetryGaps, summarizeMonitoringHealth } from '@/src/features/monitoring/monitoringTypes';
+import type { ClusterNode, MonitoringMetrics } from '@/src/features/monitoring/monitoringTypes';
 
 const node = (status: string): ClusterNode => ({
   id: 'postgres-db-1',
@@ -29,6 +29,23 @@ describe('monitoring status presentation', () => {
 
   it('keeps partial metrics failures visible even when dependency health checks pass', () => {
     expect(summarizeMonitoringHealth([node('HEALTHY')], { telemetryFailed: true })).toEqual({
+      label: 'HEALTH CHECKS PASS · TELEMETRY DEGRADED',
+      tone: 'warning',
+    });
+  });
+
+  it('marks a successful but incomplete metrics payload as partial coverage', () => {
+    const metrics: MonitoringMetrics = {
+      cpu: { linuxLoad1mPerCpu: 0.25, history: [] },
+      ram: { currentBytes: 1024, totalBytes: null, history: [] },
+      redis: { status: 'HEALTHY', ops: null, memory: null, clients: null },
+      network: { txTotalBytes: 100, rxTotalBytes: 200, activeTunnels: null },
+    };
+
+    expect(getMonitoringTelemetryGaps(metrics)).toEqual([
+      'история CPU', 'история памяти', 'операции Redis', 'память Redis', 'клиенты Redis', 'активные туннели',
+    ]);
+    expect(summarizeMonitoringHealth([node('HEALTHY')], { telemetryIncomplete: true })).toEqual({
       label: 'HEALTH CHECKS PASS · TELEMETRY DEGRADED',
       tone: 'warning',
     });

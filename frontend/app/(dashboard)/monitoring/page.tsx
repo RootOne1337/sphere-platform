@@ -9,7 +9,7 @@ import { Button } from '@/src/shared/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/src/shared/ui/card';
 import { Input } from '@/src/shared/ui/input';
 import { ClusterHeatmap } from '@/src/features/monitoring/ClusterHeatmap';
-import { formatBytes, type ClusterNode, type MonitoringMetrics, summarizeMonitoringHealth } from '@/src/features/monitoring/monitoringTypes';
+import { formatBytes, getMonitoringTelemetryGaps, type ClusterNode, type MonitoringMetrics, summarizeMonitoringHealth } from '@/src/features/monitoring/monitoringTypes';
 
 type StatusFilter = 'all' | 'healthy' | 'attention' | 'unavailable';
 
@@ -125,10 +125,12 @@ export default function MonitoringPage() {
 
     const metrics = metricsQuery.data;
     const nodes = nodesQuery.data;
+    const telemetryGaps = getMonitoringTelemetryGaps(metrics);
     const systemHealth = summarizeMonitoringHealth(nodes, {
-        loading: nodesQuery.isLoading,
+        loading: nodesQuery.isLoading || metricsQuery.isLoading,
         failed: nodesQuery.isError,
         telemetryFailed: metricsQuery.isError,
+        telemetryIncomplete: metricsQuery.isSuccess && telemetryGaps.length > 0,
     });
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
@@ -183,6 +185,13 @@ export default function MonitoringPage() {
                 <div role="alert" className="flex items-start gap-3 rounded-xl border border-amber-300/70 bg-amber-50/70 p-4 text-sm text-amber-950 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
                     <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
                     <div><p className="font-medium">Часть наблюдаемости сейчас недоступна</p><p className="mt-1 opacity-80">Проверьте API и права доступа. Недоступные значения показаны отдельно и не считаются здоровыми.</p></div>
+                </div>
+            )}
+
+            {metricsQuery.isSuccess && telemetryGaps.length > 0 && (
+                <div role="status" className="rounded-xl border border-amber-300/60 bg-amber-50/50 px-4 py-3 text-sm text-amber-950 dark:border-amber-900 dark:bg-amber-950/20 dark:text-amber-200">
+                    <span className="font-medium">Проверки сервисов и покрытие метрик — разные сигналы.</span>{' '}
+                    Не получены: {telemetryGaps.join(', ')}. Отсутствующие измерения не означают ноль или подтверждённо здоровый сервис.
                 </div>
             )}
 

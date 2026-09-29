@@ -6,8 +6,9 @@ jest.mock('@/lib/api', () => ({ api: { get: jest.fn() } }));
 jest.mock('@/lib/store', () => ({ useAuthStore: () => ({ accessToken: 'fixture-token' }) }));
 
 let mockStats: Record<string, number | null>;
+let mockFrameCallback: ((frame: VideoFrame) => void) | null = null;
 jest.mock('@/lib/h264-decoder', () => ({ H264Decoder: class {
-  constructor() {}
+  constructor(onFrame: (frame: VideoFrame) => void) { mockFrameCallback = onFrame; }
   init() {}
   destroy() {}
   reset() {}
@@ -32,6 +33,7 @@ class Socket {
 beforeEach(() => {
   jest.useFakeTimers();
   Socket.instances = [];
+  mockFrameCallback = null;
   mockStats = {
     binaryMessagesReceived: 7, binaryBytesReceived: 4096, validPackets: 7, invalidPackets: 0,
     spsUnits: 1, ppsUnits: 1, idrUnits: 1, deltaUnits: 4, decodeSubmitted: 5,
@@ -102,4 +104,25 @@ it('applies the requested fit mode to the actual canvas surface', () => {
   const canvas = container.querySelector('canvas');
   expect(canvas).toHaveStyle({ width: '100%', height: '100%', objectFit: 'cover' });
   expect(canvas?.parentElement).toHaveClass('h-full', 'w-full', 'min-h-0', 'min-w-0');
+});
+
+it('reports decoded frame dimensions only when the stream orientation changes', () => {
+  const onFrameDimensions = jest.fn();
+  render(<DeviceStream deviceId="device-dimensions" onFrameDimensions={onFrameDimensions} />);
+  act(() => jest.advanceTimersByTime(0));
+
+  const socket = Socket.instances[0];
+  socket.readyState = Socket.OPEN;
+  act(() => socket.onopen?.());
+  const emitFrame = (displayWidth: number, displayHeight: number) => {
+    act(() => mockFrameCallback?.({ displayWidth, displayHeight } as VideoFrame));
+  };
+
+  emitFrame(1920, 1080);
+  emitFrame(1920, 1080);
+  emitFrame(1080, 1920);
+
+  expect(onFrameDimensions).toHaveBeenNthCalledWith(1, { width: 1920, height: 1080 });
+  expect(onFrameDimensions).toHaveBeenNthCalledWith(2, { width: 1080, height: 1920 });
+  expect(onFrameDimensions).toHaveBeenCalledTimes(2);
 });

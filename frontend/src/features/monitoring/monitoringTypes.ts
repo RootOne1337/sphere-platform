@@ -22,9 +22,28 @@ export interface MonitoringMetrics {
 
 export type HealthSummary = { label: string; tone: 'healthy' | 'warning' | 'critical' | 'unknown' | 'loading' };
 
+/** Missing fields are a coverage gap, not a zero-valued measurement. */
+export function getMonitoringTelemetryGaps(metrics: MonitoringMetrics | undefined): string[] {
+    if (!metrics) return ['метрики ещё не получены'];
+
+    const gaps: string[] = [];
+    if (metrics.cpu?.linuxLoad1mPerCpu == null) gaps.push('нагрузка CPU');
+    if (!metrics.cpu?.history?.length) gaps.push('история CPU');
+    if (metrics.ram?.currentBytes == null) gaps.push('память контейнера');
+    if (!metrics.ram?.history?.length) gaps.push('история памяти');
+    if (metrics.redis?.status == null || metrics.redis.status === 'UNKNOWN') gaps.push('статус Redis');
+    if (metrics.redis?.ops == null) gaps.push('операции Redis');
+    if (metrics.redis?.memory == null) gaps.push('память Redis');
+    if (metrics.redis?.clients == null) gaps.push('клиенты Redis');
+    if (metrics.network?.txTotalBytes == null) gaps.push('счётчик передачи');
+    if (metrics.network?.rxTotalBytes == null) gaps.push('счётчик приёма');
+    if (metrics.network?.activeTunnels == null) gaps.push('активные туннели');
+    return gaps;
+}
+
 export function summarizeMonitoringHealth(
     nodes: ClusterNode[] | undefined,
-    state: { loading?: boolean; failed?: boolean; telemetryFailed?: boolean } = {},
+    state: { loading?: boolean; failed?: boolean; telemetryFailed?: boolean; telemetryIncomplete?: boolean } = {},
 ): HealthSummary {
     if (state.loading) return { label: 'CHECKING SYSTEMS', tone: 'loading' };
     if (state.failed) return { label: 'STATUS UNAVAILABLE', tone: 'unknown' };
@@ -38,7 +57,7 @@ export function summarizeMonitoringHealth(
         return { label: 'DEGRADED COMPONENTS', tone: 'warning' };
     }
     if (statuses.every((status) => status === 'HEALTHY' || status === 'OK')) {
-        if (state.telemetryFailed) {
+        if (state.telemetryFailed || state.telemetryIncomplete) {
             return { label: 'HEALTH CHECKS PASS · TELEMETRY DEGRADED', tone: 'warning' };
         }
         return { label: 'ALL OBSERVED CHECKS HEALTHY', tone: 'healthy' };
