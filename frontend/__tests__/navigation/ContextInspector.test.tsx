@@ -37,4 +37,15 @@ describe('ContextInspector', () => {
     rerender(<ContextInspector />);
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
+
+  it('restores focus after a live table refresh replaces the original device button', async () => {
+    const ui = (version: number) => <><button key={version} data-inspector-device="id-1" onClick={() => useInspectorStore.getState().openInspector('device', 'id-1')}>Открыть устройство</button><ContextInspector /></>;
+    const { rerender } = render(ui(1));
+    const first = screen.getByRole('button', { name: 'Открыть устройство' });
+    first.focus(); fireEvent.click(first);
+    rerender(ui(2));
+    expect(first.isConnected).toBe(false);
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape', code: 'Escape' });
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Открыть устройство' })).toHaveFocus());
+  });
 });

@@ -106,6 +106,7 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
                         <div className="flex h-full flex-col justify-center pr-4">
                             <button
                                 type="button"
+                                data-inspector-device={device.id}
                                 onClick={(event) => {
                                     event.stopPropagation();
                                     openInspector("device", device.id, device);

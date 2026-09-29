@@ -20,6 +20,7 @@
 | Shell мог продолжить цепочку после ошибки APK | `{error: ...}` устанавливал hasError, но не прерывал цикл; пустой/malformed ответ мог считаться успехом | Ошибка/неполный ответ останавливают дальнейшие команды; двойная отправка блокируется синхронным lock |
 | Logcat показывал старую строку после пустого ответа | Условие `if (data.logcat)` пропускало валидный `""` | Пустой подтверждённый журнал очищает старые строки; malformed ответ является ошибкой |
 | HTTP ожидание команды завершалось раньше серверного срока | Общий Axios timeout 5 s, backend shell/logs/reboot waits 30/15/10 s | Только для этих операций HTTP budget 35/20/15 s; запросы чтения сохраняют общий timeout. Timeout не доказывает отмену команды |
+| Escape терял фокус после live refresh/resize таблицы | Browser 390 px: drawer закрывался, activeElement оставался body; сохранённая DOM-кнопка была заменена | Resolver возвращает фокус к текущей кнопке с тем же device ID; при смене маршрута — к main. Regression заменяет opener во время открытого dialog |
 
 ## Источники и пределы данных
 
@@ -61,6 +62,9 @@
   comments-only, empty/malformed results, запрет при потере freshness, HTTP wait
   по серверному контракту и защита xterm от управляющих последовательностей.
   Shell editor использует читаемые размеры текста и общие design tokens.
+- Follow-up browser focus regression: **69 suites / 463 tests passed**;
+  TypeScript и targeted ESLint passed. Замена строки при live refresh не теряет
+  идентичность кнопки для возврата фокуса.
 
 ## Runtime acceptance
 
@@ -83,8 +87,16 @@ CPU/RAM/заряд; отсутствующий `connected_since` не превр
 PNG блокируется после stale. Это подтверждение картинки в выбранной сессии,
 не доказательство длительного streaming SLA. Viewer закрыт после проверки.
 
-Source tests не означают успешные reboot, autonomous task mission или OTA.
-Дальнейшие результаты проверки интерактивных контролов добавляются отдельно.
+Source `0e04459` production compile exit 0, 30 маршрутов; `3012` показывает
+`WEB 0e044598`. В 02:49:54 UTC+5 одна read-only shell команда
+`getprop ro.build.version.release` вернула `9` через выбранный APK за 3 777 ms.
+В 02:52 UTC+5 один явный `REQUEST_LOGS` вернул 500 строк / 40 858 символов;
+ошибок в панели нет. Содержимое логов в публичный отчёт не копируется.
+Full page открылась из drawer; закрытие по навигации подтверждено. На 390×844
+document width 390, inspector width 390; переполнения страницы нет.
+
+Source tests и эти canary не означают успешные reboot, autonomous task mission
+или OTA. Удаление и перезагрузка отменены до отправки; OTA не выполнялась.
 
 ## Оставшиеся работы
 
