@@ -7,6 +7,19 @@
 **Объект проверки браузера:** локальный preview `http://127.0.0.1:3012`, только чтение
 **Статус:** source-аудит и точечные исправления; production rollout и проверка удалённых устройств не выполнялись.
 
+> Follow-up 30 сентября, 16:42–16:45 UTC+5: production образ source `e3b4fe7`
+> прошёл изолированную multiprocess acceptance. Четыре HTTP workers обработали
+> по 32 запросов, totals пережили child replacement (128 → 160), после рестарта
+> master registry начал с нуля. Подробная device диагностика остаётся в API;
+> Prometheus получает bounded fleet counters. Отдельный packaged PG/Redis
+> lifecycle probe passed. Это **не rollout** в pilot `40357ca`: старый backend
+> остаётся worker-local, поэтому новые aggregate панели/алерты ещё не включены.
+> 194 targeted regressions passed; окончательный общий suite — **2120 passed**,
+> 5 deprecation warnings, 608.15 s. Это не load/soak или coverage acceptance.
+> Retention mmap files и dependency-aware type debt остаются gates. Все
+> обновлённые факты и версии — в [CURRENT-STATE](../../operations/CURRENT-STATE.md),
+> семантика метрик — в [runbook](../../operations/OBSERVABILITY.md#multiprocess-contract--исходники-30-сентября-2026).
+
 > Follow-up 30 сентября, 15:49 UTC+5: отдельные Prometheus 3.15.0 / Grafana 13.2.3
 > работают; после запуска владельцем `ab0724d` встроенная Grafana и обновление
 > истории каждые 15 s подтверждены в живом Sphere на `3015`. Старый monitoring payload отвергается в новом

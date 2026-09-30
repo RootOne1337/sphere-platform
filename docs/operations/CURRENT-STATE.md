@@ -11,20 +11,49 @@
 
 ## Состояние на дату проверки
 
-### Multiprocess метрики — source fix 30 сентября, image acceptance ещё выполняется
+### Multiprocess метрики — изолированная image acceptance 30 сентября
 
-В исходниках подготовлена агрегация HTTP/DB/аддитивных video counters для
-четырёх Gunicorn workers. Per-device snapshots остаются в diagnostics API;
-production Prometheus использует bounded fleet families. HTTP instrumentation
-теперь использует route templates и учитывает необработанные 500. Два новых
-ASGI regression воспроизводят failures на исходниках до фикса; после изменения
-monitoring/stream suite **75 passed**. Полный Ruff **0.15.2** passed; targeted
-mypy нового кода passed. Полный локальный mypy сообщает **17 errors в 9 старых
-файлах**, за пределами изменённой instrumentation; полностью чистый type gate
-не заявляется. Linux image canary и последующий rollout — отдельные gates.
+Source **`e3b4fe7`** собран из Git archive в production Linux-образ
+**`sha256:638d609659232a9fcf8b2f4969e481b0ae1c39eba9afd4d40353c5b53593dd15`**.
+В контейнере без сети и host ports проверен настоящий Gunicorn: отдельное
+keepalive соединение с каждым worker подтвердило **32 × 4 = 128** requests.
+После SIGTERM child hook удалил live gauges, новый worker появился, а totals
+сохранились; ещё 32 requests дали **160**. После рестарта master сценарий
+повторён: новый private registry начал с нуля. Дублирующихся samples нет.
+Pool gauges **40/4** в этом canary заданы синтетической HTTP fixture: они
+доказывают агрегацию, **не** количество connections живого PostgreSQL.
+
+Свежая packaged PostgreSQL/Redis установка с миграциями, login/enrollment,
+реальным app lifespan, audit/visibility и повтором в новом процессе прошла
+отдельный runtime probe. Bootstrap image checks также passed. В обоих canary
+backend source из checkout не монтировался; mounted только test adapters.
+Созданные контейнеры удалены с проверкой ownership. Private evidence —
+`.local-pilot/metrics-20260930-final-{image,runtime}-evidence`.
+
+Per-device snapshots остаются в diagnostics API; production Prometheus
+использует bounded fleet families. HTTP templates сохраняют параметры `{id}`,
+не создают серии из произвольных URL/method и учитывают необработанные 500.
+Два новых ASGI regressions воспроизвели failures на baseline. Первый полный
+suite выявил четыре несовместимых UUID labels; нормализация восстановлена,
+audit invariants не ослаблены. После этого **194** monitoring/stream/deployment/
+audit-path tests passed. Повторный общий suite окончательного source завершился
+**2120 passed / 5 warnings**, **608.15 s**, exit **0** (`tests`, без load/soak).
+Coverage в этом локальном запуске не измерялось; coverage gate нового CI —
+отдельная проверка. Deprecation warnings не скрыты.
+
+Ruff **0.15.2** и targeted mypy нового кода passed; API docs `--check` passed.
+Полный mypy **1.8.0** дал 17 errors в 9 неизменённых файлах, а **2.3.1** с
+установленными backend dependencies — 14 errors в 8 неизменённых файлах.
+Полностью чистый dependency-aware type gate не заявляется. CI последнего
+remote doc head **`4dff726`** завершил все исполняемые checks success, deploy
+skipped; это не результат нового source. CI lint устанавливает mypy/ruff без
+backend dependencies и не заменяет этот локальный dependency-aware check.
 
 Backend `40357ca`, APK и туннели на этом этапе сохраняют прежний runtime.
-`3015` продолжает работать на принятом frontend `ea7f9cf`. Resource retention
+В браузере **16:42–16:45 UTC+5** `3015` подтвердил frontend `ea7f9cf`, подключённые
+events, обновляемую историю **241 point**, iframe Grafana и **0 console errors**
+в новой вкладке. Backend metadata endpoint отсутствует, legacy monitoring
+payload отвергается; карточки не становятся здоровыми нулями. Resource retention
 при долгом worker recycling ещё требует отдельной приёмки; см.
 [multiprocess contract](OBSERVABILITY.md#multiprocess-contract--исходники-30-сентября-2026).
 
