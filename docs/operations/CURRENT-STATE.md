@@ -11,6 +11,20 @@
 
 ## Состояние на дату проверки
 
+### Android root availability — source follow-up, 30 сентября
+
+На `e3dc143` три regressions воспроизвели IOException ещё при construction
+компонента команд без `su`. Root process теперь создаётся только по явному
+privileged action; startup и unused close не запрашивают root. Missing root
+не превращается в успешное действие. Добавлены проверки idempotent close,
+следующей explicit action, dead session и ошибки получения stdin.
+Input outcome unknown по-прежнему не replayed. Подробнее:
+[APK/video audit, APK-I04](../audits/2026-09-30/ANDROID-INSPECTION-AND-VIDEO-MODES.md#apk-i04--p1--отсутствие-root-не-должно-срывать-запуск-агента).
+Полная local проверка 3m 33s: dev/enterprise debug **719 tests каждый,
+718 passed / 1 skipped / 0 failures / 0 errors**, `assembleDevDebug` completed.
+Установленные APK не заменены; startup/root-grant и постоянные stdout/stderr
+session требуют отдельных device/process gates.
+
 ### UI hierarchy — source integrity/ownership fix, 30 сентября
 
 Новый source follow-up удаляет общий `/sdcard/sphere_ui_dump.xml` и глобальный
@@ -23,6 +37,8 @@ validated DOM используется всеми XPath candidates одного 
 [APK/video audit](../audits/2026-09-30/ANDROID-INSPECTION-AND-VIDEO-MODES.md).
 Real Android root descendants/SELinux/private path cleanup остаются canary gate;
 новая APK не установлена, hierarchy API и визуальный tree/outline ещё не включены.
+Source **`e3dc143`**: все обязательные GitHub backend/frontend/security/Android
+jobs success; preview deploy skipped. CI не заменяет перечисленные device gates.
 
 ### Android process runner — source fix, 30 сентября, 23:12 UTC+5
 

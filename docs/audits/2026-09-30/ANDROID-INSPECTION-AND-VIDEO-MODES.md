@@ -2,13 +2,14 @@
 
 **Дата проверки:** 30 сентября 2026, Asia/Yekaterinburg.<br />
 **Source baseline:** `f092a16`; frontend selection follow-up `3132afc`.<br />
-**Статус:** аудит кода и план приёмки; новый APK этим проходом не выпущен.
+**Статус:** аудит, source fixes и план приёмки; новый APK этим проходом не выпущен.
 
 **Android source follow-up:** APK-I01 исправлен в `3148668`: concurrent bounded
 process runner и запрет продолжения DAG при неопределённом результате shell;
-обязательные GitHub jobs success. Последующий APK-I02 source follow-up добавляет
-private serialized dump и validation. Исходные наблюдения ниже сохранены как
-baseline. CI и device acceptance отмечаются раздельно; runtime APK ещё не заменён.
+обязательные GitHub jobs success. APK-I02 исправлен в `e3dc143`: private serialized
+dump и validation; обязательные GitHub jobs success. APK-I04 follow-up устраняет eager root spawn при создании
+компонента команд. Исходные наблюдения ниже сохранены как baseline. CI и device
+acceptance отмечаются раздельно; runtime APK ещё не заменён.
 
 [Текущее состояние](../../operations/CURRENT-STATE.md) ·
 [Device inspector](WEB-DEVICE-INSPECTOR.md) ·
@@ -165,6 +166,39 @@ duration и upload watermark для различения нового событ
 Нужны реальные quota/retention правила на backend и проверяемая cleanup job;
 еженедельная очистка здесь не объявляется реализованной.
 
+### APK-I04 · P1 · отсутствие root не должно срывать запуск агента
+
+**Воспроизведённый source finding на `e3dc143`.** Конструктор singleton
+`AdbActionExecutor` вызывает `Runtime.exec("su")` до первой команды. Компонент
+инжектируется в `SphereAgentService` и `CommandDispatcher`. Если binary `su`
+отсутствует, constructor выбрасывает IOException; root-dependent input становится
+ненужным prerequisite для создания service dependency. Это не доказанная причина
+LDPlayer cold-start/remote disconnect: там root может быть доступен.
+
+Три regressions с отсутствующим `su` failed до fix: construction, close без
+действий и failure только при явной privileged action. Follow-up откладывает
+spawn до root-команды; unused close не запускает process. Cleanup и смена session
+сериализованы одним lock; ссылки на failed pipe инвалидируются независимо от
+`Process.isAlive`. Неопределённое delivery не replayed, следующая явная команда
+может открыть новую session. Недоступный root остаётся ошибкой requested action,
+а не фиктивной успешной root capability. Инициализация не добавляет idle processes
+или reader threads.
+
+Local full validation APK-I04: dev/enterprise debug **719 tests каждый:
+718 passed / 1 skipped / 0 failures / 0 errors**, `assembleDevDebug` completed,
+3m 33s. Шесть lifecycle/availability tests и прежние unknown-delivery/DAG
+regressions проходят. Это source compile, не production APK, OTA или реальная
+проверка root grant на телефоне.
+
+**Оставшиеся ограничения:** persistent input session пока не дренирует свои
+stdout/stderr, в отличие от bounded one-shot runner APK-I01/I02. Например,
+многословные `monkey` commands могут заполнить pipe; это отдельный lifecycle fix,
+который нельзя считать закрытым lazy spawn. `su` spawn/grant и synchronous stdin
+write не имеют доказанного общего deadline; отсутствие prompt/blocking требует
+root/non-root canary. Успешный flush означает доставку в pipe, не исполнение
+Android action. Close ждёт directly owned process до 250 ms после записи exit;
+это не общий timeout close и не подтверждённое завершение descendants.
+
 ### VIDEO-I01 · P1 перед mass test · разные режимы имеют общий capture demand
 
 **Source finding.** MultiStreamGrid и detail используют одинаковый viewer;
@@ -278,14 +312,15 @@ game-specific сущностей к общей project/workspace основе **
 
 ### Порядок с зависимостями
 
-Сначала воспроизводимые дефекты APK-I01/I02 и metadata/mapping видео; затем
+Сначала воспроизводимые дефекты APK-I01/I02/I04 и metadata/mapping видео; затем
 viewer demand ownership и lightweight snapshot path, protected UI snapshot
 и дерево/outline. После canary — массовая проверка. Debug playback следует
 за inspection contracts. UI и backend не обещают capability, пока установленная
 APK не поддерживает и не подтвердила её. Код, собранный артефакт, опубликованный
 manifest и установленная версия отслеживаются раздельно.
 
-1. APK-I01/I02: unit/process regressions → bounded runner/dump ownership →
+1. APK-I01/I02/I04: unit/process regressions → bounded runner/dump ownership и
+   lazy root lifecycle →
    Android CI → один root remote canary. Не публиковать новый stable APK только
    по JVM tests: signer, version/manifest/hash и фактическая OTA установка отдельны.
 2. APK-I03: log byte budgets/drop counters и server retention; воспроизвести

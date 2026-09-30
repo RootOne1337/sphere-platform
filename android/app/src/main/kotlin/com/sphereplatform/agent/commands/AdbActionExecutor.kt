@@ -70,29 +70,37 @@ class AdbActionExecutor @Inject constructor(
         }
     }
 
-    private var rootProcess: Process = createRootProcess()
-
-    private var rootStream: java.io.DataOutputStream = java.io.DataOutputStream(rootProcess.outputStream)
-
+    // Agent startup and non-root capabilities must not depend on a root grant.
+    // These references are initialized only by an explicit privileged action.
+    private var rootProcess: Process? = null
+    private var rootStream: java.io.DataOutputStream? = null
     private val rootLock = Any()
     private val processRunner = BoundedProcessRunner()
     private val uiDumpOwnership = Mutex()
-    // Guarded by rootLock; a failed pipe may outlive Process.isAlive == true.
-    private var rootSessionBroken = false
 
     private fun createRootProcess(): Process =
         Runtime.getRuntime().exec("su").also {
             Timber.i("Root session opened")
         }
 
-    /** Re-create the root process if it has died. */
-    private fun ensureRootAlive() {
-        if (rootSessionBroken || !rootProcess.isAlive) {
-            Timber.w("Root process died — restarting")
-            rootProcess = createRootProcess()
-            rootStream = java.io.DataOutputStream(rootProcess.outputStream)
-            rootSessionBroken = false
+    /** Called only while holding rootLock, when a privileged action is requested. */
+    private fun ensureRootAlive(): java.io.DataOutputStream {
+        val existing = rootProcess
+        if (existing != null && existing.isAlive) return checkNotNull(rootStream)
+        runCatching { rootStream?.close() }
+        rootStream = null
+        rootProcess = null
+
+        val next = createRootProcess()
+        val stream = try {
+            java.io.DataOutputStream(next.outputStream)
+        } catch (e: Exception) {
+            runCatching { next.destroyForcibly() }
+            throw e
         }
+        rootProcess = next
+        rootStream = stream
+        return stream
     }
 
     private val physicalSize: android.graphics.Point
@@ -122,14 +130,19 @@ class AdbActionExecutor @Inject constructor(
      */
     private fun executeRootCommand(cmd: String) {
         synchronized(rootLock) {
-            ensureRootAlive()
+            val stream = ensureRootAlive()
+            val process = checkNotNull(rootProcess)
             try {
-                rootStream.writeBytes("$cmd\n")
-                rootStream.flush()
+                stream.writeBytes("$cmd\n")
+                stream.flush()
             } catch (e: java.io.IOException) {
-                rootSessionBroken = true
+                // Invalidate independently of isAlive: a failed pipe can outlive
+                // that OS observation. The failed command must never be replayed.
+                rootProcess = null
+                rootStream = null
                 Timber.w("Root input write failed; command outcome is unknown")
-                runCatching { rootProcess.destroyForcibly() }
+                runCatching { stream.close() }
+                runCatching { process.destroyForcibly() }
                 // Even a flush error may follow delivery of the full command.
                 // Reopen only for a subsequent explicit command, never replay.
                 throw RootCommandOutcomeUnknownException()
@@ -139,16 +152,26 @@ class AdbActionExecutor @Inject constructor(
 
     /** Закрыть root-сессию при уничтожении сервиса. */
     fun closeRootSession() {
-        try {
-            synchronized(rootLock) {
-                rootStream.writeBytes("exit\n")
-                rootStream.flush()
+        synchronized(rootLock) {
+            val process = rootProcess ?: return
+            val stream = rootStream
+            // Clear ownership before cleanup. A later explicit action may open
+            // a new session, but cleanup must never start one by itself.
+            rootProcess = null
+            rootStream = null
+            try {
+                stream?.writeBytes("exit\n")
+                stream?.flush()
+                if (!process.waitFor(250, TimeUnit.MILLISECONDS)) {
+                    process.destroyForcibly()
+                }
+                Timber.i("Root session closed")
+            } catch (e: Exception) {
+                runCatching { process.destroyForcibly() }
+                Timber.w("Root session cleanup failed")
+            } finally {
+                runCatching { stream?.close() }
             }
-            rootProcess.waitFor(5, TimeUnit.SECONDS)
-            rootProcess.destroyForcibly()
-            Timber.i("Root session closed")
-        } catch (e: Exception) {
-            Timber.w(e, "Error closing root session")
         }
     }
 
