@@ -45,7 +45,7 @@ class IPPoolAllocator:
         addresses = await db.scalars(select(VPNPeer.tunnel_ip).where(
             VPNPeer.status != VPNPeerStatus.FREE, VPNPeer.tunnel_ip.isnot(None),
         ))
-        return {str(ipaddress.ip_address(ip)) for ip in addresses}
+        return {str(ipaddress.ip_address(ip)) for ip in addresses if ip is not None}
 
     async def capacity(self, db: AsyncSession) -> tuple[int, int]:
         """Global configured capacity/free count; independent of Redis contents."""

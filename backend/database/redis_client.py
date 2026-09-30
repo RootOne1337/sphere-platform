@@ -27,7 +27,7 @@ async def get_redis_binary() -> aioredis.Redis | None:
 async def connect_redis() -> None:
     global redis, redis_binary
 
-    redis = aioredis.from_url(
+    text_client: aioredis.Redis = aioredis.from_url(
         settings.REDIS_URL,
         encoding="utf-8",
         decode_responses=True,
@@ -37,7 +37,7 @@ async def connect_redis() -> None:
         retry_on_timeout=True,
         health_check_interval=30,
     )
-    redis_binary = aioredis.from_url(
+    binary_client: aioredis.Redis = aioredis.from_url(
         settings.REDIS_URL,
         decode_responses=False,
         max_connections=20,
@@ -46,9 +46,11 @@ async def connect_redis() -> None:
         retry_on_timeout=True,
         health_check_interval=30,
     )
-    # Проверяем соединение
-    await redis.ping()  # type: ignore[misc]
-    await redis_binary.ping()  # type: ignore[misc]
+    redis = text_client
+    redis_binary = binary_client
+    # Keep concrete client types at this boundary; DI globals remain optional.
+    await text_client.ping()  # type: ignore[misc]
+    await binary_client.ping()  # type: ignore[misc]
 
 
 async def disconnect_redis() -> None:

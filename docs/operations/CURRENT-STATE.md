@@ -11,6 +11,24 @@
 
 ## Состояние на дату проверки
 
+### Dependency-aware type gate — 30 сентября, следующий source
+
+Полный mypy **2.3.1** с установленными backend dependencies теперь проходит
+**219 source files**, включая `check_untyped_defs`. Исправлены типы SQLAlchemy
+predicate/sort expressions, ASGI Message и Pydantic response boundaries;
+nullable script/device ID проверяются до записи регистрации/фарм-задачи.
+Три новых PostgreSQL regression tests воспроизвели ошибки на исходной версии;
+после исправления **372 tests passed / 1 deprecation warning** в затронутых
+device/WS/VPN/orchestration сценариях. Общий suite ещё выполняется.
+
+CI lint теперь устанавливает backend dependencies и выполняет `pip check`,
+поэтому отсутствующие импорты больше не превращают эти границы в `Any`.
+Версии инструментов закреплены: Ruff **0.15.2**, mypy **2.3.1**.
+Это source validation; live backend/3015/APK на этом этапе не переключались.
+Структурный protocol VPN command publisher сохраняет прежнее поведение:
+существующий stub возвращает `False`, реальная доставка kill-switch не
+объявляется реализованной этой правкой.
+
 ### Multiprocess метрики — изолированная image acceptance 30 сентября
 
 Source **`e3b4fe7`** собран из Git archive в production Linux-образ

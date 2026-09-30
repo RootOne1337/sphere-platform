@@ -1,7 +1,7 @@
 ﻿# backend/services/vpn/killswitch_service.py  TZ-06 SPLIT-4
 from __future__ import annotations
 
-from backend.services.vpn.event_publisher import EventPublisher
+from backend.services.vpn.event_publisher import CommandPublisher
 
 
 class KillSwitchService:
@@ -10,7 +10,7 @@ class KillSwitchService:
     The actual iptables / VpnService logic executes on the Android agent.
     """
 
-    def __init__(self, publisher: EventPublisher) -> None:
+    def __init__(self, publisher: CommandPublisher) -> None:
         self.publisher = publisher
 
     async def enable_killswitch(

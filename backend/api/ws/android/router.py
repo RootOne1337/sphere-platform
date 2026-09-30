@@ -13,6 +13,7 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel, Field, ValidationError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from starlette.types import Message
 
 from backend.database.engine import AsyncSessionLocal
 from backend.database.redis_client import get_redis_binary
@@ -28,7 +29,7 @@ logger = structlog.get_logger()
 router = APIRouter(tags=["websocket"])
 
 
-async def receive_android_ws_event(ws: WebSocket, device_id: str) -> dict | None:
+async def receive_android_ws_event(ws: WebSocket, device_id: str) -> Message | None:
     """Read one ASGI event; represent a peer disconnect as end-of-stream."""
     data = await ws.receive()
     if data.get("type") == "websocket.disconnect":

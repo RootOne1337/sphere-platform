@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.elements import ColumnElement
 
 from backend.models.vpn_peer import VPNPeer, VPNPeerStatus
-from backend.services.vpn.event_publisher import EventPublisher
+from backend.services.vpn.event_publisher import CommandPublisher
 
 logger = structlog.get_logger()
 
@@ -40,7 +40,7 @@ class VPNHealthMonitor:
         self,
         db: AsyncSession,
         pool_service,   # VPNPoolService  avoids circular import via type str
-        publisher: EventPublisher,
+        publisher: CommandPublisher,
         wg_router_url: str,
         redis=None,
     ) -> None:

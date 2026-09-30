@@ -3,11 +3,47 @@
 from types import SimpleNamespace
 from unittest.mock import patch
 
-from sqlalchemy import select
+import pytest
+from sqlalchemy import func, select
 
 from backend.models.game_account import GameAccount
 from backend.models.task import Task
 from backend.services.orchestrator.orchestration_engine import OrchestrationEngine
+
+
+async def test_registration_without_script_does_not_persist_account(world, account_credential_key):
+    w = world
+    async with w.sessions() as db:
+        config = SimpleNamespace(org_id=w.org_a.id, registration_script_id=None,
+                                 nick_generation_enabled=False, default_target_level=1,
+                                 registration_timeout_seconds=300)
+        with pytest.raises(ValueError, match="Registration script is required"):
+            await OrchestrationEngine()._create_registration_task(db, config, w.dev_a)
+        assert await db.scalar(select(func.count()).select_from(GameAccount).where(
+            GameAccount.org_id == w.org_a.id,
+        )) == 0
+        assert await db.scalar(select(func.count()).select_from(Task).where(
+            Task.org_id == w.org_a.id,
+        )) == 0
+
+
+@pytest.mark.parametrize("missing", ["device", "script"])
+async def test_farming_requires_device_and_script_before_mutating_account(world, missing):
+    w = world
+    async with w.sessions() as db:
+        account = GameAccount(org_id=w.org_a.id, device_id=None if missing == "device" else w.dev_a.id,
+                              game="audit", login="precondition", status="free",
+                              password_encrypted="synthetic-password")
+        db.add(account)
+        await db.flush()
+        config = SimpleNamespace(org_id=w.org_a.id,
+                                 farming_script_id=None if missing == "script" else w.script.id)
+        with pytest.raises(ValueError, match="Farming requires a device and script"):
+            await OrchestrationEngine()._create_farming_task(db, config, account)
+        assert account.status == "free"
+        assert await db.scalar(select(func.count()).select_from(Task).where(
+            Task.org_id == w.org_a.id,
+        )) == 0
 
 
 async def test_farming_task_has_version_without_redis_publication(world):

@@ -27,6 +27,7 @@ known-third-party = ["alembic"]
 python_version = "3.12"
 ignore_missing_imports = true
 explicit_package_bases = true
+check_untyped_defs = true
 
 [[tool.mypy.overrides]]
 module = "backend.models.*"

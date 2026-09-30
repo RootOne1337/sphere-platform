@@ -6,11 +6,12 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime, timedelta, timezone
+from typing import Any
 
 from fastapi import HTTPException
 from sqlalchemy import distinct, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import InstrumentedAttribute, selectinload
 
 from backend.models.game_account import AccountStatus, GameAccount, GenderEnum, VipType
 from backend.schemas.game_accounts import (
@@ -219,7 +220,7 @@ class GameAccountService:
             )
 
         # Сортировка (белый список полей)
-        sort_columns = {
+        sort_columns: dict[str, InstrumentedAttribute[Any]] = {
             "created_at": GameAccount.created_at,
             "login": GameAccount.login,
             "game": GameAccount.game,

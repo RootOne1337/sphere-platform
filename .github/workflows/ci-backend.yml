@@ -62,7 +62,10 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
-      - run: pip install ruff mypy
+      # SQLAlchemy/Starlette/Pydantic types must resolve against shipped dependencies.
+      # Installing only mypy hides boundary errors behind missing-import Any.
+      - run: pip install -r backend/requirements.txt
+      - run: pip check
       - run: ruff check backend/ tests/ scripts/export_api_docs.py scripts/discovery_manifest.py scripts/discovery_publisher.py scripts/ldplayer_network.py scripts/ldplayer_watchdog.py
       - run: mypy backend/ --ignore-missing-imports
 

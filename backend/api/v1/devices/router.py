@@ -6,7 +6,7 @@ from __future__ import annotations
 import logging
 import uuid
 from datetime import datetime, timezone
-from typing import Literal
+from typing import Any, Literal
 
 from fastapi import APIRouter, Cookie, Depends, Header, HTTPException, Query
 from fastapi import status as http_status
@@ -31,6 +31,7 @@ from backend.schemas.devices import (
     CreateDeviceRequest,
     DeviceListResponse,
     DeviceResponse,
+    DeviceStatusCounts,
     DeviceStatusResponse,
     UpdateDeviceRequest,
 )
@@ -221,7 +222,7 @@ async def list_devices(
         per_page=per_page,
         pages=pages,
         scope_total=scope_total,
-        status_counts=status_counts,
+        status_counts=DeviceStatusCounts(**status_counts),
         presence_available=presence_available,
         as_of=as_of,
     )
@@ -481,6 +482,7 @@ async def get_device_stream_diagnostics(
         and heartbeat_age is not None
         and heartbeat_age <= 75
     )
+    state: Literal["active_report", "not_streaming", "stale", "unavailable"]
     if not heartbeat_fresh:
         state = "stale" if snapshot is not None else "unavailable"
     elif snapshot is None:
@@ -617,7 +619,9 @@ async def request_logcat(
     # The APK reads this byte tail before returning it over its command WS.
     # Sending 64 KiB for a one-line request can time out on a degraded WAN.
     byte_budget = min(64 * 1024, max(4 * 1024, body.lines * 256))
-    payload = {"max_bytes": byte_budget} if sphere_logs else {"lines": body.lines, "mode": body.mode}
+    payload: dict[str, Any] = (
+        {"max_bytes": byte_budget} if sphere_logs else {"lines": body.lines, "mode": body.mode}
+    )
     result = await _request_interactive_command(
         device_id, current_user, svc, command_type, payload, 15.0,
     )

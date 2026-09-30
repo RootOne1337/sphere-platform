@@ -9,6 +9,7 @@ from fastapi import HTTPException
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
+from sqlalchemy.sql.elements import ColumnElement
 
 from backend.models.device import Device, DeviceStatus
 from backend.models.device_group import DeviceGroup
@@ -98,7 +99,9 @@ class DeviceService:
             conditions.append(Device.meta["type"].as_string() == type_filter)
         if search:
             like = f"%{search.strip()}%"
-            search_terms = [Device.name.ilike(like), Device.serial.ilike(like), Device.model.ilike(like)]
+            search_terms: list[ColumnElement[bool]] = [
+                Device.name.ilike(like), Device.serial.ilike(like), Device.model.ilike(like),
+            ]
             try:
                 search_terms.append(Device.id == uuid.UUID(search.strip()))
             except ValueError:

@@ -6,10 +6,12 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime, timezone
+from typing import Any
 
 import structlog
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import InstrumentedAttribute
 
 from backend.models.account_session import AccountSession, SessionEndReason
 from backend.models.game_account import GameAccount
@@ -268,7 +270,7 @@ class AccountSessionService:
             conditions.append(AccountSession.ended_at.is_(None))
 
         # Сортировка (белый список)
-        sort_columns = {
+        sort_columns: dict[str, InstrumentedAttribute[Any]] = {
             "started_at": AccountSession.started_at,
             "ended_at": AccountSession.ended_at,
             "created_at": AccountSession.created_at,

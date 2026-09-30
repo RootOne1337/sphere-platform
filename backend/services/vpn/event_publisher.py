@@ -2,9 +2,15 @@
 # TZ-03 (WebSocket Layer) provides the real implementation at merge time.
 from __future__ import annotations
 
+from typing import Protocol
+
 import structlog
 
 logger = structlog.get_logger()
+
+
+class CommandPublisher(Protocol):
+    async def send_command_to_device(self, device_id: str, command: dict) -> bool: ...
 
 
 class EventPublisher:

@@ -186,6 +186,9 @@ class OrchestrationEngine:
         self, db, settings: PipelineSettings, device: Device
     ) -> None:
         """Генерация ника + создание аккаунта + задачи регистрации."""
+        script_id = settings.registration_script_id
+        if script_id is None:
+            raise ValueError("Registration script is required")
         from backend.services.nick_generator import NickGenerator
 
         org_id = settings.org_id
@@ -222,7 +225,7 @@ class OrchestrationEngine:
         task = await TaskService(db).create_task(
             org_id=org_id,
             device_id=device.id,
-            script_id=settings.registration_script_id,
+            script_id=script_id,
             priority=10,
             account_id=account.id,
         )
@@ -310,11 +313,15 @@ class OrchestrationEngine:
         self, db, settings: PipelineSettings, account: GameAccount
     ) -> None:
         """Создать задачу фарма — аккаунт переходит в in_use."""
+        device_id = account.device_id
+        script_id = settings.farming_script_id
+        if device_id is None or script_id is None:
+            raise ValueError("Farming requires a device and script")
         from backend.services.task_service import TaskService
         task = await TaskService(db).create_task(
             org_id=settings.org_id,
-            device_id=account.device_id,
-            script_id=settings.farming_script_id,
+            device_id=device_id,
+            script_id=script_id,
             priority=5,
             account_id=account.id,
         )
