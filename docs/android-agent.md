@@ -19,6 +19,12 @@
 > [каноническое состояние и границы доказательств](operations/CURRENT-STATE.md)
 > и [canary evidence](audits/2026-09-27/TUNA-REMOTE-STREAM-CANARY.md).
 
+> **Web navigation follow-up:** UI `c547f5d` на 3015 добавляет Android
+> Back/Home/Recents/Menu через существующий root-dependent command contract.
+> Новая APK для панели не нужна. Native PH025/10238 Back receipt и возврат
+> launcher подтверждены; round trip 1672 ms не является задержкой видеокадра.
+> [Контракт и границы приёмки](operations/ANDROID-NAVIGATION.md).
+
 ### Исторический pilot snapshot — 14 сентября 2026
 
 Signed APK **`343c6e8`, 1.2.5-dev / 10205** is

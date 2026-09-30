@@ -61,6 +61,10 @@ device/session/unmount abort, late response, keyboard activation, transport
 loss/reconnect, first-frame/draw-failure и сохранение geometry/fleet defaults.
 Production compile/deployed source stamp отмечаются отдельно в CURRENT-STATE.
 
+**Compiled runtime:** UI `c547f5d` переключён на 3015 → UI 3021 / API 18080 в
+04:19:15 UTC+5, предыдущий Next 3020 сохранён. API `85c8014`, APK и tunnels этим
+switch не менялись. [Allowlisted control/runtime evidence](../audits/2026-10-01/NAVIGATION-INPUT-CONTROLS.json).
+
 Native remote control на **PH025, reported 10238**: одна private debug Activity
 запущена, её foreground подтверждён read-only Android dump. Один `input keyevent 4`
 получил successful empty output за **1672 ms** полного API round trip; следующий

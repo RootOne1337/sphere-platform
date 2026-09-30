@@ -321,9 +321,12 @@ code source `2bed596` прошёл Backend/Frontend/Android; preview deployment 
 Native 540p поднял wire rate PH010 с 3.4 до 5.65 pictures/s; отдельный штатный
 Android screenrecord дал 5.991 FPS без Sphere video transport. Это локализует
 узкое место Android capture/encoding path, не доказывает отсутствие сетевых
-задержек на удалённых устройствах. Loopback UI `4c79ef6` на 3015 → UI 3020 /
-API 18080 восстановлен в 03:35:34 UTC+5, backend `85c8014`; native FPS,
-browser draw, quality и input latency acceptance остаются открытыми.
+задержек на удалённых устройствах. Loopback UI `c547f5d` на 3015 → UI 3021 /
+API 18080 переключён в **04:19:15 UTC+5**, backend `85c8014`, предыдущий Next 3020
+сохранён. [Навигация Android](docs/operations/ANDROID-NAVIGATION.md) добавлена в
+одиночный поток без новой APK: remote Back execution подтверждён отдельно,
+frontend 567 tests/types/compile passed. Browser review blocked; native FPS,
+browser draw, quality и input-to-visible latency acceptance остаются открытыми.
 Последний опубликованный live snapshot в аудите показывает 14 свежих устройств
 из 19 active catalog records; оператор выбрал эти 14 как baseline. Ни 23 ожидаемых
 устройства, ни ступень 20–30, ни массовая OTA пока не приняты.

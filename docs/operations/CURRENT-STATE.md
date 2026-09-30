@@ -7,7 +7,13 @@
 [Главная](../../README.md) · [Каталог документации](../README.md) · [Readiness](READINESS.md) · [Fleet32 gates](../audits/2026-09-20/FLEET32-PREFLIGHT.md) · [PR #19](https://github.com/RootOne1337/sphere-platform/pull/19)
 
 > [!IMPORTANT]
-> **Текущий loopback runtime, 1 октября:** `3015 → UI 3020 / API 18080`, frontend **`4c79ef6`**, API **`85c8014`**. UI с независимыми receive/draw FPS compiled из Git archive и переключён в **01:52:06 UTC+5**. В 03:35 обнаружено отсутствие прежних Next/relay listeners и старого UI 3019; backend/API/tunnels работали, причина исчезновения процессов не установлена. В **03:35:34 UTC+5** восстановлена та же pinned compile: Next PID 28988 / relay PID 7156, loopback ownership и API build JSON подтверждены. Другие процессы не завершались; backend/public UI/tunnels этим восстановлением не заменены. Старые PID и switch receipt — исторические факты, не текущие listeners. **Browser visual QA заблокирована политикой URL CUA**; обход не выполнялся, нового screenshot или browser FPS benchmark нет.
+> **Текущий loopback runtime, 1 октября:** `3015 → UI 3021 / API 18080`, frontend **`c547f5d`**, API **`85c8014`**. В **04:19:15 UTC+5** переключён compiled Git archive с Android Back/Home/Recents/Menu в карточке и отдельном одиночном потоке. Next PID **45944** / relay PID **28872**, loopback ownership и API build JSON подтверждены. Прежний Next 3020 / PID 28988 сохранён для rollback; заменён только принадлежавший preview relay PID 7156. Backend/public UI/APK/tunnels этим UI switch не заменены. **Browser visual QA заблокирована политикой URL CUA**; обход не выполнялся, нового screenshot или browser FPS benchmark нет. [Navigation contract и native proof](ANDROID-NAVIGATION.md), [allowlisted runtime/control evidence](../audits/2026-10-01/NAVIGATION-INPUT-CONTROLS.json).
+
+Предыдущий UI `4c79ef6` с независимыми receive/draw FPS compiled и переключён в
+01:52:06 UTC+5. В 03:35 обнаружено отсутствие прежних Next/relay listeners и
+старого UI 3019; backend/API/tunnels работали, причина исчезновения процессов не
+установлена. В 03:35:34 восстановлена та же pinned compile: Next PID 28988 /
+relay PID 7156. Это исторический restore, не текущий ingress после 04:19 switch.
 
 Историческая browser acceptance **30 сентября, 22:21–22:29 UTC+5** относится
 к UI `3132afc` на `3015 → UI 3018 / API 18080`: WEB/API stamp, live events,
@@ -62,8 +68,29 @@ Read-only PH025 check **04:00:55 UTC+5** всё ещё сообщает mode 5 H
 online; restart/application нового host limit не подтверждены. Новый целевой
 профиль 10 FPS не принимается как прежнее требование 20–30 source pictures/s.
 Encoder target 30 не устраняет source limit. Владелец также подтвердил отсутствие
-Android Back/Home/Recents navigation в активной карточке; это следующий
-функциональный приоритет вместе с input-to-visible latency.
+Android Back/Home/Recents navigation в активной карточке. Source `c547f5d` добавляет
+эти кнопки и Menu через acknowledged SHELL, без новой APK. Первое frame/current
+WS gate, pending lock, abort/late callback и unknown без автоповтора покрыты
+регрессиями; pointer input на stale video остаётся заблокированным. Native
+PH025 / 10238: подтверждён foreground finite private Activity, одна Back-команда
+дала successful receipt за **1672 ms**, read-only dump подтвердил возврат launcher.
+Это не native acceptance всех клавиш и не browser input-to-visible measurement.
+
+**Навигация / source и runtime `c547f5d`:** 73 frontend suites / **567 tests passed**,
+types/targeted ESLint passed, isolated production compile passed. GitHub frontend
+tests/types/build success; Android/backend jobs на момент UI switch ещё шли.
+Предыдущий Android source `2bed596` уже прошёл все обязательные jobs. Локальная
+компиляция/current listeners и CI source — разные доказательства.
+
+**Read-only input controls, 04:21 UTC+5:** по два full API round trip на command/
+device: PH010 `true` 437/250 ms, `input` без аргументов 500/500 ms; PH025 `true`
+1125/203 ms, `input` 391/390 ms. Последняя команда печатает usage, не вводит событие;
+ни Activity, ни viewer этим control не запускались. Установленный `/system/bin/input`
+на обоих устройствах запускает Java через `app_process`/`input.jar`; startup имеет
+стоимость, но эти измерения **не** локализуют весь latency в нём. Изменчивость даже
+`true` требует разделить доставку, очередь, Android выполнение и receipt. Двух
+samples недостаточно для p95/SLO; 1672 ms Back не объявляется постоянным ping.
+Остаются отдельные Android capture/encoding и input-to-visible latency gates.
 
 ### Одиночный поток: картинка подтверждена, плавность остаётся открытой, 1 октября
 
