@@ -237,6 +237,7 @@ class CommandDeliveryTest {
             totalEncodedBytes = 456_789L,
             keyFrameRatio = 0.125f,
             avgEncodedFrameSizeKb = 5.2f,
+            captureThrottleDropsTotal = 23,
             webSocketQueueAttemptsTotal = 30,
             webSocketQueueAcceptedTotal = 29,
             webSocketQueueRejectedTotal = 1,
@@ -256,6 +257,7 @@ class CommandDeliveryTest {
         assertEquals(0, stream["render_fps"]?.jsonPrimitive?.int)
         assertEquals(0L, stream["capture_frames_total"]?.jsonPrimitive?.long)
         assertEquals(0L, stream["frame_throttle_drops_total"]?.jsonPrimitive?.long)
+        assertEquals(23L, stream["capture_throttle_drops_total"]?.jsonPrimitive?.long)
         assertEquals(17, stream["encoder_fps"]?.jsonPrimitive?.int)
         assertEquals(88L, stream["encoded_frames_total"]?.jsonPrimitive?.long)
         assertEquals(456_789L, stream["encoded_bytes_total"]?.jsonPrimitive?.long)

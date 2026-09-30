@@ -260,6 +260,11 @@ stream_frame_throttle_drops_session = device_gauge(
     "Encoded frames intentionally dropped by the Android FPS throttle in this session",
     ["device_id"],
 )
+stream_capture_throttle_drops_session = device_gauge(
+    "sphere_stream_capture_throttle_drops_session",
+    "Raw images skipped before CPU copy and encoder submission in the Android session",
+    ["device_id"],
+)
 stream_backend_ingress_frames_total = device_counter(
     "sphere_stream_backend_ingress_frames_total",
     "Binary video packets received from Android WebSocket connections",
@@ -345,6 +350,7 @@ def cleanup_stream_metrics(device_id: str) -> None:
         stream_render_failures_session,
         stream_encoder_errors_session,
         stream_frame_throttle_drops_session,
+        stream_capture_throttle_drops_session,
     ):
         with contextlib.suppress(KeyError, ValueError):
             metric.remove(device_id)

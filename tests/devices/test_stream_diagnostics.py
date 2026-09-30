@@ -26,6 +26,7 @@ def _telemetry() -> AgentStreamTelemetry:
         "render_failures_total": 1,
         "encoder_errors_total": 0,
         "frame_throttle_drops_total": 5,
+        "capture_throttle_drops_total": 23,
         "encoder_fps": 15,
         "encoded_frames_total": 149,
         "encoded_bytes_total": 123_456,
@@ -72,6 +73,8 @@ async def test_stream_diagnostics_returns_fresh_stage_counters_and_session(
         assert body["state"] == "active_report"
         assert body["diagnostics"]["agent_session_id"] == "session-123"
         assert body["diagnostics"]["telemetry"]["capture_frames_total"] == 150
+        assert body["diagnostics"]["telemetry"]["capture_throttle_drops_total"] == 23
+        assert body["diagnostics"]["telemetry"]["frame_throttle_drops_total"] == 5
         assert body["diagnostics"]["telemetry"]["ws_queue_accepted_total"] == 150
     finally:
         app.dependency_overrides.pop(get_status_cache, None)

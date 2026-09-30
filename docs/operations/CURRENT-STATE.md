@@ -20,6 +20,29 @@ PostgreSQL details и hide/restore selection. Тогда старые Next PID �
 
 ## Состояние на дату проверки
 
+### Одиночный поток: картинка подтверждена, плавность остаётся открытой, 1 октября
+
+Оператор подтвердил картинку на `3015`, но сообщил слайд-шоу в «Карточке
+устройства», примерно PH025. Требование — 20–30 FPS при движении на слабом
+Android emulator (reported 2 CPU / 2 GB / 540p). Наличие H.264 не заменяет FPS
+acceptance. В **01:08:48–01:09:24 UTC+5** finite wire canary PH025
+(installed **1.2.34-dev**) получил **26 pictures / 28 packets / 395258 bytes**;
+capture/render/encoder=26, local queue accepted=28 и viewer получил те же bytes,
+rejected/errors/encoded FPS drops=0. Короткая шторка возвращена, pixels не
+сохранялись, закрыт только собственный viewer. Это packet-delivery evidence,
+не continuous-motion или browser draw benchmark. Недостаток кадров начинается
+до encoder в этом срезе; Cloudflare/Tuna packet loss им не доказан.
+
+Отдельный source defect исправлен: FPS gate перенесён с encoded H.264 output
+на raw ImageReader frames перед CPU copy/encoder submission. Два regressions
+failed до fix и проходят после. Новый optional raw skip counter отделён от
+legacy encoded drops; older APK без поля остаётся unknown. Оба Android debug
+flavors — **722 tests каждый: 721 passed / 1 skipped**, dev debug compiled;
+backend targeted **40 passed**, frontend **71 suites / 537 passed**, TS/targeted
+lint passed. Эти изменения ещё не удостоверяют installed APK/OTA или 20–30 FPS.
+Подробности, невалидный первый motion probe, неизменённые network queues и
+открытый reference-loss risk: [APK/video audit, VIDEO-I04/I05](../audits/2026-09-30/ANDROID-INSPECTION-AND-VIDEO-MODES.md).
+
 ### Видеопоток: ownership ввода — source follow-up, 1 октября
 
 Четыре pointer regressions failed на `356bd35`: ложный swipe при смене размеров

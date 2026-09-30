@@ -28,6 +28,7 @@ class StreamingCaptureLifecycleTest {
     private lateinit var manager: StreamingManagerImpl
     private val wsClient = mockk<SphereWebSocketClientContract>(relaxed = true)
     private val qualityMonitor = StreamQualityMonitor()
+    private val frameThrottle = mockk<FrameThrottle>(relaxed = true)
     private val reader = mockk<ImageReader>(relaxed = true)
     private val bitmap = mockk<Bitmap>(relaxed = true)
     private val image = mockk<Image>(relaxed = true)
@@ -61,8 +62,9 @@ class StreamingCaptureLifecycleTest {
         every { encoderSurface.lockCanvas(null) } returns canvas
         every { Bitmap.createBitmap(any<Int>(), any<Int>(), Bitmap.Config.ARGB_8888) } returns bitmap
         every { bitmap.isRecycled } returns false
+        every { frameThrottle.shouldRenderFrame(any()) } returns true
         manager = StreamingManagerImpl(RuntimeEnvironment.getApplication(), wsClient,
-            mockk(relaxed = true), qualityMonitor)
+            frameThrottle, qualityMonitor)
     }
 
     @After fun cleanup() {
@@ -178,5 +180,63 @@ class StreamingCaptureLifecycleTest {
         assertEquals(0L, stats.webSocketQueueAcceptedTotal)
         assertEquals(2L, stats.webSocketQueueRejectedTotal)
         verify(exactly = 2) { wsClient.sendBinary(any()) }
+    }
+
+    @Test fun `FPS budget cannot discard an already encoded reference picture`() {
+        val packets = mutableListOf<ByteArray>()
+        every { wsClient.sendBinary(capture(packets)) } returns true
+        every { frameThrottle.shouldRenderFrame(any()) } returns false
+        manager.start(projection)
+        // SPS/PPS, IDR, then two reference slices arriving in a codec callback burst.
+        // Their PTS are distinct even though callbacks need not arrive 33 ms apart.
+        val units = listOf(0x67, 0x68, 0x65, 0x41, 0x41).mapIndexed { index, type ->
+            byteArrayOf(0, 0, 0, 1, type.toByte(), index.toByte())
+        }
+        units.forEachIndexed { index, bytes ->
+            emitEncoded(bytes, H264Encoder.FrameMetadata(
+                isKeyFrame = index < 3, presentationTimeUs = index * 33_333L,
+                sizeBytes = bytes.size, isCodecConfig = index < 2,
+            ))
+        }
+
+        assertEquals("Every encoded NAL must reach the queue in original order", units.size, packets.size)
+        units.zip(packets).forEach { (expected, packet) ->
+            assertArrayEquals(expected, packet.copyOfRange(FramePackager.HEADER_SIZE, packet.size))
+        }
+        assertEquals(3L, manager.getQualityStats().totalFrames)
+        assertEquals(0L, manager.getQualityStats().frameThrottleDropsTotal)
+        verify(exactly = 0) { frameThrottle.shouldRenderFrame(any()) }
+    }
+
+    @Test fun `raw capture over FPS budget closes images without copying or encoding them`() {
+        every { frameThrottle.shouldRenderFrame(any()) } returns false
+        manager.start(projection)
+        repeat(2) { listeners.last().onImageAvailable(reader) }
+
+        verify(exactly = 2) { image.close() }
+        verify(exactly = 0) { bitmap.copyPixelsFromBuffer(any()) }
+        verify(exactly = 0) { encoderSurface.lockCanvas(null) }
+        assertEquals(2L, manager.getQualityStats().captureFramesTotal)
+        assertEquals(0L, manager.getQualityStats().renderedFramesTotal)
+        assertEquals(2L, manager.getQualityStats().captureThrottleDropsTotal)
+        assertEquals(0L, manager.getQualityStats().frameThrottleDropsTotal)
+    }
+
+    @Test fun `stopped capture rejects late encoded output`() {
+        manager.start(projection)
+        manager.stop()
+        val bytes = byteArrayOf(0, 0, 0, 1, 0x41)
+        emitEncoded(bytes, H264Encoder.FrameMetadata(false, 33_333L, bytes.size))
+        verify(exactly = 0) { wsClient.sendBinary(any()) }
+    }
+
+    private fun emitEncoded(bytes: ByteArray, metadata: H264Encoder.FrameMetadata) {
+        // Exercise the manager's codec-output boundary without substituting a
+        // decoder or claiming Robolectric can execute a device's native OMX codec.
+        val callback = StreamingManagerImpl::class.java.getDeclaredMethod(
+            "onFrameReady", ByteArray::class.java, H264Encoder.FrameMetadata::class.java,
+        )
+        callback.isAccessible = true
+        callback.invoke(manager, bytes, metadata)
     }
 }

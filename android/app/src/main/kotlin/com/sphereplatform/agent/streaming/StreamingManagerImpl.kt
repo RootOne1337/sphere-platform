@@ -161,6 +161,13 @@ class StreamingManagerImpl @Inject constructor(
                     // it, but never render it into a session that has stopped.
                     if (!streaming) return@setOnImageAvailableListener
                     qualityMonitor.recordCapturedFrame()
+                    // Budget raw pictures before CPU copy and encoder submission.
+                    // Dropping a coded reference picture corrupts the downstream
+                    // H.264 chain even when SPS/PPS and IDR are preserved.
+                    if (!frameThrottle.shouldRenderFrame(System.nanoTime())) {
+                        qualityMonitor.recordCaptureThrottleDrop()
+                        return@setOnImageAvailableListener // image.close() still runs.
+                    }
                     val plane = image.planes[0]
                     val rowStride = plane.rowStride
                     val pixelStride = plane.pixelStride          // 4 for RGBA_8888
@@ -250,28 +257,13 @@ class StreamingManagerImpl @Inject constructor(
     private fun onFrameReady(nalData: ByteArray, metadata: H264Encoder.FrameMetadata) {
         if (!streaming) return
 
-        // Count MediaCodec output before FPS throttling. The encoder stage must
-        // remain distinguishable from intentional agent-side frame drops.
+        // Once encoded, every access unit retains its position in the reference
+        // chain. Callback scheduling/batching is not the source frame cadence.
         qualityMonitor.recordFrame(
             metadata.sizeBytes,
             metadata.isKeyFrame,
             metadata.isCodecConfig,
         )
-
-        // FIX C2: L1 backpressure — ограничиваем FPS на стороне агента.
-        // Без этого каждый кадр из MediaCodec безусловно пакуется в WS,
-        // что на слабых эмуляторах съедает 100% CPU.
-        //
-        // FIX STREAM-1: Keyframe'ы (SPS/PPS/IDR) ВСЕГДА проходят, минуя throttle.
-        // handleCodecConfig() отправляет SPS и PPS подряд за наносекунды —
-        // throttle дропал PPS (elapsed < minFrameInterval) → H.264 декодер
-        // на фронтенде не инициализировался → чёрный экран.
-        if (!metadata.isKeyFrame && !metadata.isCodecConfig &&
-            !frameThrottle.shouldRenderFrame(System.nanoTime())
-        ) {
-            qualityMonitor.recordFrameThrottleDrop()
-            return
-        }
 
         val packed = FramePackager.pack(nalData, metadata, streamStartMs)
         val sent = sendFrameBinary(packed)

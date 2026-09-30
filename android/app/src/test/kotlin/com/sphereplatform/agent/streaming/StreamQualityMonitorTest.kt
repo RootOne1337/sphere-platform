@@ -107,6 +107,8 @@ class StreamQualityMonitorTest {
         monitor.recordEncoderError()
         monitor.recordFrame(900, isKeyFrame = false)
         monitor.recordFrameThrottleDrop()
+        monitor.recordCaptureThrottleDrop()
+        monitor.recordCaptureThrottleDrop()
         monitor.recordWebSocketQueueResult(900, accepted = true)
 
         val stats = monitor.getStats()
@@ -118,6 +120,7 @@ class StreamQualityMonitorTest {
         assertEquals(1L, stats.renderFailuresTotal)
         assertEquals(1L, stats.encoderErrorsTotal)
         assertEquals(1L, stats.frameThrottleDropsTotal)
+        assertEquals(2L, stats.captureThrottleDropsTotal)
         assertEquals(1L, stats.totalFrames)
         assertEquals(1L, stats.webSocketQueueAcceptedTotal)
     }
@@ -188,6 +191,7 @@ class StreamQualityMonitorTest {
         assertEquals(0L, stats.renderFailuresTotal)
         assertEquals(0L, stats.encoderErrorsTotal)
         assertEquals(0L, stats.frameThrottleDropsTotal)
+        assertEquals(0L, stats.captureThrottleDropsTotal)
         assertEquals(0f, stats.keyFrameRatio, 0.001f)
         assertEquals(0f, stats.avgEncodedFrameSizeKb, 0.001f)
     }

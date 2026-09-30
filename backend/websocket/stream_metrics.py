@@ -1,6 +1,8 @@
 """Apply bounded, stage-specific metrics from Android stream heartbeats."""
 from __future__ import annotations
 
+import contextlib
+
 import structlog
 from pydantic import ValidationError
 
@@ -9,6 +11,7 @@ from backend.metrics import (
     stream_capture_fps,
     stream_capture_frames_session,
     stream_capture_read_failures_session,
+    stream_capture_throttle_drops_session,
     stream_encoder_bytes_session,
     stream_encoder_errors_session,
     stream_encoder_frames_session,
@@ -69,11 +72,17 @@ class StreamMetrics:
             ("render_failures_total", stream_render_failures_session),
             ("encoder_errors_total", stream_encoder_errors_session),
             ("frame_throttle_drops_total", stream_frame_throttle_drops_session),
+            ("capture_throttle_drops_total", stream_capture_throttle_drops_session),
         )
         for field, metric in optional_metric_fields:
             value = getattr(telemetry, field)
             if value is not None:
                 metric.labels(device_id=self.device_id).set(value)
+            else:
+                # Downgrades/legacy snapshots must not retain a previous agent's
+                # optional capture counters as if they were still reported.
+                with contextlib.suppress(KeyError, ValueError):
+                    metric.remove(self.device_id)
 
         logger.debug(
             "stream.session_metrics_updated",

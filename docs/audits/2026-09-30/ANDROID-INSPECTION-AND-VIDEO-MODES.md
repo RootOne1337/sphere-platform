@@ -1,7 +1,7 @@
 # Android: наблюдаемость, два режима видео и UI-инспекция
 
 **Дата проверки:** 30 сентября 2026, Asia/Yekaterinburg.<br />
-**Source follow-up:** 1 октября 2026; browser gesture ownership, без изменения capture.<br />
+**Source follow-up:** 1 октября 2026; browser gesture ownership, raw FPS gate и PH025 wire canary.<br />
 **Source baseline:** `f092a16`; frontend selection follow-up `3132afc`.<br />
 **Статус:** аудит, source fixes и план приёмки; новый APK этим проходом не выпущен.
 
@@ -67,6 +67,99 @@ PC Agent, внешний ADB на станции владельца или ру�
 успешного видео, задания или OTA. FPS capture, encoder и browser draw различаются.
 
 ## Найденные разрывы и порядок исправления
+
+### VIDEO-I04 · P1 · FPS gate на закодированных reference pictures
+
+**Baseline `0a09355`:** `StreamingManagerImpl.onFrameReady` применял
+`FrameThrottle` к неключевым H.264 access units по времени вызова callback.
+MediaCodec может выдавать разные source pictures близко друг к другу. Такой
+drop не равен пропуску сырого изображения: slice с NAL type 1 может быть
+reference picture, используемой последующими pictures. Сохранение SPS/PPS/IDR
+само по себе не делает произвольный drop остальных slices безопасным.
+Это следует из codec semantics и приоритета сохранения reference pictures
+в [RFC 6184, §7.3](https://www.rfc-editor.org/rfc/rfc6184#section-7.3).
+Sphere использует WebSocket, а не RTP; здесь RFC служит источником H.264
+dependency semantics, не описанием реализованного transport protocol.
+
+**Исправление исходников:** FPS gate перенесён в raw ImageReader callback,
+перед доступом к pixels/Bitmap copy/encoder Surface submission. Skipped image
+всегда закрывается через `finally`. Закодированные access units передаются
+в WS queue в исходном порядке без FPS filtering. Bounded WS/network queues
+сохраняются; это не обещание доставки при congestion и не замена GOP recovery.
+
+`capture_throttle_drops_total` — optional v2 extension для raw skips;
+`frame_throttle_drops_total` сохраняет прежнее значение encoded FPS loss.
+Старый APK без нового поля показывает unknown/«—», а не zero. Backend валидирует
+границы counter, сохраняет его в diagnostic snapshot и отдельном Prometheus
+gauge `sphere_stream_capture_throttle_drops_session`; отсутствующий optional
+counter удаляет прежний gauge, в том числе при downgrade. Heartbeat и web
+показывают обе стадии отдельно.
+
+**Доказательство в fixtures:** два regressions failed до fix: callback burst
+терял два encoded reference slices, а raw capture сверх лимита всё равно
+копировался и подавался в encoder. После fix проходят оба и stopped-output
+gate. Пять NAL units (SPS/PPS/IDR/reference/reference) доходят в прежнем порядке;
+raw skip закрывает image без bitmap copy и Surface lock. Это unit boundary
+test с fake native resources, не запуск OMX decoder на LDPlayer.
+Полные dev и enterprise debug suites: **722 tests каждый, 721 passed /
+1 skipped / 0 failures / 0 errors**, dev debug compile. Backend targeted
+**40 passed** (один существующий FastAPI deprecation warning), frontend
+**71 suites / 537 passed**, TypeScript и targeted ESLint passed; legacy ESLint
+config warning сохранён. Configured candidate, installed version и remote
+performance acceptance учитываются отдельно.
+
+### VIDEO-I05 · P1 acceptance · PH025 и границы motion probe, 1 октября
+
+Пользователь подтвердил картинку в браузере, но сообщил, что одиночный поток
+в карточке остаётся слайд-шоу. Требование: примерно 20–30 FPS на движущемся
+экране; reported hardware — 2 CPU / 2 GB, display 540p. Это operator evidence,
+не измерение частоты браузерного draw. CUA URL policy продолжает блокировать
+наш visual QA; никакого обхода или нового browser screenshot не было.
+
+Два JSON-среза **00:47:18 / 00:47:38 UTC+5**: 19 total / 14 online,
+все online APK сообщили not_streaming. Эти срезы не оценивают активный FPS.
+Затем отдельный authenticated viewer подключён к **auto-ph-025**, installed
+**1.2.34-dev**, через backend loopback 18080. Android ingress/туннель не менялись.
+За **01:01:54–01:02:30** получено 8 packets, из них 6 pictures;
+APK snapshot: capture=6, rendered=6, encoded=6, local WS accepted=8,
+rejected=0, encoded FPS drops=0. Неподвижный экран не был motion benchmark.
+
+Первый compound shell motion probe не доказал движение: metacharacters
+запрещены существующим shell boundary, helper не сохранил полный API error.
+Его 12 pictures и пустой output не считаются successful motion acceptance.
+Никакой shell validation для этого теста не ослаблялась.
+
+Исправленный probe **01:08:48–01:09:24 UTC+5** использовал отдельные команды
+`cmd statusbar expand-notifications` и `cmd statusbar collapse`, с возвратом
+шторки; API вернул completed output без error. Apps/accounts/settings не
+менялись. Received **28 packets / 395258 bytes, 26 picture packets**;
+APK snapshot: **capture=26, rendered=26, encoded=26, WS accepted=28 /
+395258 bytes**, rejected=0, capture/render/encoder errors=0 и encoded FPS
+drops=0. Пятьсекундные окна pictures: **3, 5, 3, 5, 10, 0, 0**.
+В этом конечном срезе каждый произведённый encoded picture дошёл до нашего
+viewer. Недостаток непрерывных кадров нельзя приписать потерям этих packets
+в Cloudflare/Tuna или исправленному VIDEO-I04: его drop counter здесь zero.
+
+Всего считались headers/NAL types/bytes; pixels и видеозапись не сохранялись.
+Закрывался только наш viewer; global STOP не отправлялся, teardown решает
+server viewer ownership. Один отсутствующий Prometheus queue-drop series не
+подменяет end-to-end receipt; вывод основан на согласованных session counters.
+
+**Открыто:** короткая шторка не является 30-second continuous-motion workload,
+полный FPS нельзя считать как 26/35 и сравнивать с target во время движения.
+Нужны continuous motion, timestamps по кадрам и capture/render/encoder/wire/
+browser draw rates на одном session/device/profile. Source FPS fix в этом
+прогоне на удалённый APK ещё не установлен. Фиксированный 720p capture и CPU
+ImageReader→Bitmap→Canvas bridge требуют отдельного performance benchmark.
+Следующий scope — готовые Android MediaProjection/MediaCodec Surface tools,
+GPU bridge с проверяемым fallback, codec caps и атомарный geometry/input
+contract; не произвольное подключение нового PC Agent и не CSS-only resize.
+
+**Дополнительный source risk:** backend `VideoStreamQueue` при congestion
+удаляет non-IDR frames без проверки reference dependency. Transport limits
+нужно сохранять, а reference loss завершать whole chain recovery до fresh
+IDR, не продолжать произвольными delta frames. В текущем PH025 probe такой
+drop не установлен; это отдельная gate перед overload/mass acceptance.
 
 ### APK-I01 · P1 · stdout/stderr и пределы root-команд
 

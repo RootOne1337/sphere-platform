@@ -26,6 +26,7 @@ class StreamQualityMonitor @Inject constructor() {
     private var renderFailuresTotal = 0L
     private var encoderErrorsTotal = 0L
     private var frameThrottleDropsTotal = 0L
+    private var captureThrottleDropsTotal = 0L
     private var webSocketQueueAttemptsTotal = 0L
     private var webSocketQueueAcceptedTotal = 0L
     private var webSocketQueueRejectedTotal = 0L
@@ -80,6 +81,12 @@ class StreamQualityMonitor @Inject constructor() {
         frameThrottleDropsTotal++
     }
 
+    /** Raw images skipped before encoder submission; not encoded-picture loss. */
+    @Synchronized
+    fun recordCaptureThrottleDrop() {
+        captureThrottleDropsTotal++
+    }
+
     /** Records whether OkHttp accepted an encoded frame into its local WS queue. */
     @Synchronized
     fun recordWebSocketQueueResult(sizeBytes: Int, accepted: Boolean) {
@@ -114,6 +121,7 @@ class StreamQualityMonitor @Inject constructor() {
             renderFailuresTotal = renderFailuresTotal,
             encoderErrorsTotal = encoderErrorsTotal,
             frameThrottleDropsTotal = frameThrottleDropsTotal,
+            captureThrottleDropsTotal = captureThrottleDropsTotal,
             webSocketQueueAttemptsTotal = webSocketQueueAttemptsTotal,
             webSocketQueueAcceptedTotal = webSocketQueueAcceptedTotal,
             webSocketQueueRejectedTotal = webSocketQueueRejectedTotal,
@@ -150,6 +158,7 @@ class StreamQualityMonitor @Inject constructor() {
         renderFailuresTotal = 0L
         encoderErrorsTotal = 0L
         frameThrottleDropsTotal = 0L
+        captureThrottleDropsTotal = 0L
         webSocketQueueAttemptsTotal = 0L
         webSocketQueueAcceptedTotal = 0L
         webSocketQueueRejectedTotal = 0L
@@ -170,6 +179,7 @@ class StreamQualityMonitor @Inject constructor() {
         val renderFailuresTotal: Long = 0,
         val encoderErrorsTotal: Long = 0,
         val frameThrottleDropsTotal: Long = 0,
+        val captureThrottleDropsTotal: Long = 0,
         val webSocketQueueAttemptsTotal: Long,
         val webSocketQueueAcceptedTotal: Long,
         val webSocketQueueRejectedTotal: Long,

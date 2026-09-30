@@ -53,6 +53,7 @@ beforeEach(() => {
       rendered_frames_total: 850, capture_read_failures_total: 0,
       render_failures_total: 1, encoder_errors_total: 0,
       frame_throttle_drops_total: 50, encoder_fps: 14,
+      capture_throttle_drops_total: 23,
       encoded_frames_total: 850, encoded_bytes_total: 200000,
       ws_queue_attempts_total: 400, ws_queue_accepted_total: 399,
       ws_queue_rejected_total: 1, ws_queue_accepted_bytes_total: 180000,
@@ -72,6 +73,8 @@ it('shows agent and browser stages only when operator opens diagnostics', async 
   expect(await screen.findByText(/Отчёт APK: захват активен/)).toBeInTheDocument();
   act(() => jest.advanceTimersByTime(1000));
   expect(screen.getByText('Capture FPS: 15')).toBeInTheDocument();
+  expect(screen.getByText('Raw capture FPS skips: 23')).toBeInTheDocument();
+  expect(screen.getByText('Encoded FPS drops: 50')).toBeInTheDocument();
   expect(screen.getByText('Local WS rejected: 1')).toBeInTheDocument();
   expect(screen.getByText(/7 пакетов · 4096 байт/)).toBeInTheDocument();
   expect(screen.getByText('Последний пакет: 0 сек назад')).toBeInTheDocument();
@@ -79,6 +82,20 @@ it('shows agent and browser stages only when operator opens diagnostics', async 
   expect(screen.getByText('IDR/delta: 1/4')).toBeInTheDocument();
   expect(screen.getByText('Decoded output: 4')).toBeInTheDocument();
   expect(api.get).toHaveBeenCalledWith('/devices/device-1/stream-diagnostics');
+});
+
+it('keeps raw capture skips unknown for an older agent instead of displaying zero', async () => {
+  (api.get as jest.Mock).mockResolvedValue({ data: {
+    state: 'active_report', age_seconds: 4,
+    diagnostics: { observed_at: '2026-09-25T12:00:00Z', telemetry: {
+      schema_version: 2, frame_throttle_drops_total: 50,
+    } },
+  } });
+  render(<DeviceStream deviceId="device-old" enableDiagnostics />);
+  act(() => jest.advanceTimersByTime(0));
+  fireEvent.click(screen.getByRole('button', { name: 'Диагностика' }));
+  expect(await screen.findByText('Raw capture FPS skips: —')).toBeInTheDocument();
+  expect(screen.getByText('Encoded FPS drops: 50')).toBeInTheDocument();
 });
 
 it('reports a missing first frame even when WebSocket pings keep the connection open', () => {

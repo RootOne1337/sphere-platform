@@ -4,11 +4,14 @@ from __future__ import annotations
 import math
 import uuid
 
+import pytest
+
 from backend.metrics import (
     stream_bytes_sent_total,
     stream_capture_fps,
     stream_capture_frames_session,
     stream_capture_read_failures_session,
+    stream_capture_throttle_drops_session,
     stream_encoder_bytes_session,
     stream_encoder_errors_session,
     stream_encoder_frames_session,
@@ -129,6 +132,48 @@ def test_missing_or_inactive_stream_clears_live_session_gauges():
     assert (device_id,) not in stream_fps._metrics
     assert (device_id,) not in stream_encoder_frames_session._metrics
     assert (device_id,) not in stream_capture_frames_session._metrics
+
+
+def test_raw_capture_skips_are_separate_from_encoded_picture_loss_and_cleaned_up():
+    device_id = _device_id()
+    metrics = StreamMetrics(device_id)
+    try:
+        telemetry = metrics.update_from_pong(_active_stream_data_v2(capture_throttle_drops_total=23))
+        assert telemetry is not None and telemetry.capture_throttle_drops_total == 23
+        assert telemetry.frame_throttle_drops_total == 10
+        assert stream_capture_throttle_drops_session.labels(device_id=device_id)._value.get() == 23
+        assert stream_frame_throttle_drops_session.labels(device_id=device_id)._value.get() == 10
+        metrics.cleanup()
+        assert (device_id,) not in stream_capture_throttle_drops_session._metrics
+    finally:
+        metrics.cleanup()
+
+
+def test_older_v2_agent_keeps_raw_capture_skips_unknown_and_removes_previous_gauge():
+    device_id = _device_id()
+    metrics = StreamMetrics(device_id)
+    try:
+        metrics.update_from_pong(_active_stream_data_v2(capture_throttle_drops_total=23))
+        telemetry = metrics.update_from_pong(_active_stream_data_v2())
+        assert telemetry is not None and telemetry.capture_throttle_drops_total is None
+        assert (device_id,) not in stream_capture_throttle_drops_session._metrics
+        telemetry = metrics.update_from_pong(_active_stream_data())
+        assert telemetry is not None and telemetry.capture_frames_total is None
+        assert (device_id,) not in stream_capture_frames_session._metrics
+    finally:
+        metrics.cleanup()
+
+
+@pytest.mark.parametrize("value", [-1, 2**53 + 1, True, float("nan")])
+def test_invalid_raw_capture_skip_counter_rejects_the_snapshot(value):
+    device_id = _device_id()
+    metrics = StreamMetrics(device_id)
+    try:
+        metrics.update_from_pong(_active_stream_data_v2(capture_throttle_drops_total=23))
+        assert metrics.update_from_pong(_active_stream_data_v2(capture_throttle_drops_total=value)) is None
+        assert (device_id,) not in stream_capture_throttle_drops_session._metrics
+    finally:
+        metrics.cleanup()
 
 
 def test_inactive_capture_clears_live_session_gauges():

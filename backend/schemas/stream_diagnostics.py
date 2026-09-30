@@ -37,6 +37,9 @@ class AgentStreamTelemetry(BaseModel):
     render_failures_total: int | None = Field(default=None, ge=0, le=_MAX_COUNTER)
     encoder_errors_total: int | None = Field(default=None, ge=0, le=_MAX_COUNTER)
     frame_throttle_drops_total: int | None = Field(default=None, ge=0, le=_MAX_COUNTER)
+    # Optional v2 extension: absent in older installed agents means unknown,
+    # not zero. Keep the legacy encoded-drop field's meaning unchanged.
+    capture_throttle_drops_total: int | None = Field(default=None, ge=0, le=_MAX_COUNTER)
 
     @model_validator(mode="after")
     def validate_contract(self) -> "AgentStreamTelemetry":
