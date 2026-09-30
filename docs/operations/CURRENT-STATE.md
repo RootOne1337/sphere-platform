@@ -7,9 +7,34 @@
 [Главная](../../README.md) · [Каталог документации](../README.md) · [Readiness](READINESS.md) · [Fleet32 gates](../audits/2026-09-20/FLEET32-PREFLIGHT.md) · [PR #19](https://github.com/RootOne1337/sphere-platform/pull/19)
 
 > [!IMPORTANT]
-> Это сверка исходников, CI и отдельных runtime-срезов. 30 сентября на отдельном локальном `3015` запущен frontend `ab0724d` с настоящим pilot API `18080` и встроенной Grafana; прежний `3012` сохранён. Backend, публичный frontend, APK и туннели этим этапом не обновлялись. Отдельные canary не являются приёмкой всего парка. Исторические срезы сохраняют свои даты.
+> Это сверка исходников, CI и отдельных runtime-срезов. 30 сентября на отдельном локальном `3015` работает frontend `ea7f9cf` с настоящим pilot API `18080` и встроенной Grafana; прежний `3012` сохранён. Backend, публичный frontend, APK и туннели этим этапом не обновлялись. Отдельные canary не являются приёмкой всего парка. Исторические срезы сохраняют свои даты.
 
 ## Состояние на дату проверки
+
+### Принята локальная сборка ea7f9cf — 30 сентября, 15:54–15:56 UTC+5
+
+Владелец выполнил guarded updater в своей PowerShell-сессии. Receipt **15:54:12**
+и readback портов: Next **5552 / 3014**, прежний relay **31892 / 3015**.
+В браузере виден **`WEB ea7f9cf7`**, события подключены; Grafana открылась,
+показала панели и больше не зарегистрировала OpenFeature error. В сохранённом
+console остаются два исторических errors предыдущей сборки, новых после
+переключения на этом canary нет. Это ограниченный browser smoke, не гарантия
+отсутствия ошибок во всех страницах/сценариях.
+
+Независимый HTTP canary прошёл через **работающий Next**, без импорта handlers
+из checkout: history **200 / 241 points**, anonymous **401**, session **200**,
+Grafana user **200 / isGrafanaAdmin=false**, dashboard **200 / canEdit=false**,
+OFREP **200 / 378 flags**, graph query **200 / 1 frame**. История в браузере
+обновлялась без кнопки refresh: **15:54:51 → 15:55:06 → 15:56:06 → 15:56:36**.
+На новом source повторена mobile-проверка: document width/scrollWidth **390/390**,
+iframe **350 px**; затем обычный viewport восстановлен. Сырые receipts и
+desktop/mobile screenshots остаются в private pilot evidence.
+
+**Живой адрес:** `http://127.0.0.1:3015/monitoring`; `/devices` использует тот же
+реальный API. OFREP rollout gate закрыт для этого локального preview. Это не
+публичный rollout и не приёмка Android OTA/автономного DAG/20–30 stream sessions.
+Старый monitoring contract и multi-worker aggregation остаются P1; следующие
+этапы и частоты обновления описаны в [runbook](OBSERVABILITY.md).
 
 ### Живой веб, встроенная Grafana и следующий фикс — 30 сентября, 15:39–15:49 UTC+5
 
@@ -52,7 +77,8 @@ in progress, deploy skipped. Полностью зелёный PR не заяв�
 возвращает `CommandLine=null`, хотя PID портов и CreationDate совпадают с
 launch receipt. Проверка владельца не ослаблена; подготовленный updater должен
 выполняться в той же PowerShell security context, что и первоначальный запуск.
-Пока такой receipt отсутствует, `3015` остаётся `ab0724d`, не `ea7f9cf`.
+В этом срезе receipt ещё отсутствовал; последующее успешное переключение
+владельцем и проверка `ea7f9cf` зафиксированы в разделе выше.
 
 Карточки старого deployed monitoring API остаются недоступными: payload не
 имеет времени/источника измерения. Новый веб не подменяет это здоровыми нулями.

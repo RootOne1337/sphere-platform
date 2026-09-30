@@ -28,6 +28,13 @@
 > Исправление OFREP ещё не объявляется развёрнутым. Различия live/source и
 > оставшиеся backend gates указаны в CURRENT-STATE. Raw receipts приватны.
 
+> Закрытие локального OFREP rollout gate, 30 сентября 15:56 UTC+5: владелец
+> обновил Next до `ea7f9cf`, browser build stamp совпал. HTTP через живой Next
+> подтвердил flags 200/378, graph query 200/1 frame, anonymous 401 и Viewer
+> без права редактирования. Новых OpenFeature errors после переключения нет,
+> automatic history polling и mobile 390 px проверены повторно. Backend/публичный
+> веб/Android не обновлялись; остальные P1 не объявляются закрытыми.
+
 > Follow-up 30 сентября, 15:33 UTC+5: `/ws/events` через proxy 3012 подтвердил
 > snapshot и три ping/pong за 20 секунд; канал доступен. Source-аудит выявил
 > отсутствие reconciliation после reconnect, неполные invalidations смежных
