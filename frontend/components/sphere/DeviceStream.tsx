@@ -70,7 +70,9 @@ export function DeviceStream({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const decoderRef = useRef<H264Decoder | null>(null);
-  const dragRef = useRef<{ x: number; y: number } | null>(null);
+  const dragRef = useRef<{
+    x: number; y: number; pointerId: number; frameWidth: number; frameHeight: number;
+  } | null>(null);
   const { accessToken } = useAuthStore();
   const [connection, setConnection] = useState<
     'connecting' | 'waiting' | 'live' | 'stale' | 'retrying' | 'unavailable'
@@ -89,6 +91,7 @@ export function DeviceStream({
 
   useEffect(() => {
     lastFrameDimensionsRef.current = null;
+    dragRef.current = null;
   }, [deviceId]);
 
   useEffect(() => {
@@ -119,6 +122,9 @@ export function DeviceStream({
         if (!ctx || frame.displayWidth < 1 || frame.displayHeight < 1) throw new Error('Invalid canvas frame.');
         // Mutate canvas directly for performance, avoid React state re-renders
         if (canvas.width !== frame.displayWidth || canvas.height !== frame.displayHeight) {
+          // Coordinates captured before rotation/resizing belong to the old
+          // frame. Never combine them with a release mapped to the new frame.
+          dragRef.current = null;
           canvas.width = frame.displayWidth;
           canvas.height = frame.displayHeight;
         }
@@ -132,6 +138,7 @@ export function DeviceStream({
         clearTimeout(frameStaleTimer);
         frameStaleTimer = setTimeout(() => {
           if (ignore || wsRef.current?.readyState !== WebSocket.OPEN) return;
+          dragRef.current = null;
           setConnection('stale');
           scheduleKeyFrameRecovery?.();
         }, FRAME_STALE_TIMEOUT_MS);
@@ -148,6 +155,7 @@ export function DeviceStream({
         }
       }, () => {
         if (ignore) return;
+        dragRef.current = null;
         setConnection('waiting');
         // Кодек может быть исправен, но первый серверный запрос IDR мог
         // прийти до готовности захвата. Повторяем запрос до первого output.
@@ -166,6 +174,7 @@ export function DeviceStream({
       // not proof of a usable stream: reset backoff only after server traffic.
       const createWs = () => {
         if (ignore) return;
+        dragRef.current = null;
         setStreamError(null);
         const newWs = new WebSocket(wsUrl);
         newWs.binaryType = 'arraybuffer';
@@ -195,6 +204,7 @@ export function DeviceStream({
         const finish = (retry: boolean, terminalMessage?: string) => {
           if (ended) return;
           ended = true;
+          dragRef.current = null;
           clearInterval(watchdog);
           clearTimeout(keyFrameTimer);
           clearTimeout(frameStaleTimer);
@@ -226,6 +236,7 @@ export function DeviceStream({
           clearTimeout(frameStaleTimer);
           frameStaleTimer = setTimeout(() => {
             if (ignore || ended || newWs !== wsRef.current || newWs.readyState !== WebSocket.OPEN) return;
+            dragRef.current = null;
             setConnection('stale');
           }, FRAME_STALE_TIMEOUT_MS);
           scheduleKeyFrameRequests();
@@ -241,6 +252,7 @@ export function DeviceStream({
               if (msg.type === 'ping' && newWs.readyState === WebSocket.OPEN) {
                 newWs.send(JSON.stringify({ type: 'pong' }));
               } else if (msg.type === 'error') {
+                dragRef.current = null;
                 const messages: Record<string, string> = {
                   stream_control_unavailable: 'Сервер не смог передать запрос видеопотока Android-агенту.',
                   stream_control_denied: 'У этой учётной записи нет права управлять видеопотоком.',
@@ -269,6 +281,7 @@ export function DeviceStream({
 
     return () => {
       ignore = true;
+      dragRef.current = null;
       clearTimeout(timer);
       clearTimeout(retryTimer);
       clearTimeout(keyFrameTimer);
@@ -352,13 +365,17 @@ export function DeviceStream({
   // ── pointer down — begin drag / tap ─────────────────────────────────────
   const handlePointerDown = useCallback(
     (e: React.PointerEvent<HTMLCanvasElement>) => {
-      if (!canInteract || e.button !== 0) {
+      if (!canInteract) {
         dragRef.current = null;
         return;
       }
+      if (e.button !== 0 || dragRef.current) return;
       const pt = toCanvasCoords(e.clientX, e.clientY);
       if (!pt) return;
-      dragRef.current = pt;
+      dragRef.current = {
+        ...pt, pointerId: e.pointerId,
+        frameWidth: e.currentTarget.width, frameHeight: e.currentTarget.height,
+      };
       e.currentTarget.setPointerCapture(e.pointerId);
     },
     [canInteract, toCanvasCoords],
@@ -368,8 +385,11 @@ export function DeviceStream({
   const handlePointerUp = useCallback(
     (e: React.PointerEvent<HTMLCanvasElement>) => {
       const start = dragRef.current;
+      if (!start || e.pointerId !== start.pointerId) return;
       dragRef.current = null;
-      if (!start || !canInteract || e.button !== 0) return;
+      if (!canInteract || e.button !== 0
+        || e.currentTarget.width !== start.frameWidth
+        || e.currentTarget.height !== start.frameHeight) return;
 
       const pt = toCanvasCoords(e.clientX, e.clientY, true);
       if (!pt) return;
@@ -393,8 +413,8 @@ export function DeviceStream({
     [canInteract, toCanvasCoords, onTap],
   );
 
-  const handlePointerCancel = useCallback(() => {
-    dragRef.current = null;
+  const handlePointerCancel = useCallback((e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (e.pointerId === dragRef.current?.pointerId) dragRef.current = null;
   }, []);
 
   const saveFrame = useCallback(() => {
@@ -425,6 +445,7 @@ export function DeviceStream({
       onPointerDown={handlePointerDown}
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerCancel}
+      onLostPointerCapture={handlePointerCancel}
       aria-label={canInteract ? 'Экран устройства: свежий видеопоток' : 'Экран устройства: управление доступно после получения свежего видеокадра'}
       aria-disabled={!canInteract}
       className={`${canInteract ? 'cursor-crosshair' : 'pointer-events-none cursor-not-allowed'} rounded border border-gray-700 bg-black touch-none`}

@@ -1,6 +1,7 @@
 # Android: наблюдаемость, два режима видео и UI-инспекция
 
 **Дата проверки:** 30 сентября 2026, Asia/Yekaterinburg.<br />
+**Source follow-up:** 1 октября 2026; browser gesture ownership, без изменения capture.<br />
 **Source baseline:** `f092a16`; frontend selection follow-up `3132afc`.<br />
 **Статус:** аудит, source fixes и план приёмки; новый APK этим проходом не выпущен.
 
@@ -216,6 +217,28 @@ overview исследовать небольшой поток либо выбо�
 FPS/разрешение/битрейт подобрать на canary, а не объявить обещанными значениями.
 Входные скриншоты будущего AI — отдельный consumer contract; не направлять в
 браузер все AI кадры и не привязывать работу automation к открытой вкладке.
+
+### VIDEO-I03 · P1 · gesture ownership и смена геометрии кадра
+
+**Baseline `356bd35`, 1 октября.** Pointer gesture хранит только x/y. Если между
+down и up приходит кадр 720×1280 вместо 1280×720, endpoint получает ложный swipe,
+составленный из двух координатных пространств. Второй pointer может заменить
+start, завершить или отменить чужой gesture. Четыре regressions failed до fix;
+обычный gesture и обновление кадров того же размера проходят на baseline.
+
+Source follow-up `DeviceStream` закрепляет pointer ID и frame width/height.
+Смена canvas dimensions, stale state, decoder reset/configuration, reconnect,
+server control error и unmount отменяют старый gesture. Up/cancel/lost capture
+другого pointer не исполняют input и не отнимают ownership. Новое движение
+можно начать после fresh frame. Не отправляется дополнительная команда, retry
+или APK update; существующий coordinate wire contract сохраняется.
+
+Полный frontend: **71 suites / 536 tests passed**, TypeScript и targeted ESLint
+passed с прежним eslintrc deprecation warning. Восемь новых scenarios: dimension
+change, pointer release/replace/cancel ownership, normal same-size frames, lost
+capture, stale→fresh и reconnect→fresh. Resize и multitouch проверены React/WS
+fixtures; реальная rotation/system input требуют отдельного canary. Это не
+переход на native capture и не защита от Android-side geometry/session mismatch.
 
 ### VIDEO-I02 · P1 acceptance · static screen, stage correlation и плавность
 

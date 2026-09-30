@@ -44,12 +44,125 @@ beforeEach(() => {
   mockRenderFrame = null;
   MockSocket.instances = [];
   Object.defineProperty(global, 'WebSocket', { configurable: true, value: MockSocket });
-  Object.defineProperty(window, 'PointerEvent', { configurable: true, value: MouseEvent });
+  class TestPointerEvent extends MouseEvent {
+    readonly pointerId: number;
+    constructor(type: string, init: MouseEventInit & { pointerId?: number } = {}) {
+      super(type, init);
+      this.pointerId = init.pointerId ?? 1;
+    }
+  }
+  Object.defineProperty(window, 'PointerEvent', { configurable: true, value: TestPointerEvent });
   jest.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({ drawImage: jest.fn() } as never);
   Object.defineProperty(HTMLCanvasElement.prototype, 'setPointerCapture', {
     configurable: true,
     value: jest.fn(),
   });
+});
+
+function readyGestureFixture() {
+  const view = render(<DeviceStream deviceId="gesture-remote" fit="contain" />);
+  act(() => jest.advanceTimersByTime(0));
+  const socket = MockSocket.instances[0];
+  socket.readyState = MockSocket.OPEN;
+  act(() => socket.onopen?.(new Event('open')));
+  const canvas = view.container.querySelector('canvas')!;
+  jest.spyOn(canvas, 'getBoundingClientRect').mockReturnValue({
+    left: 0, top: 0, right: 100, bottom: 100, width: 100, height: 100, x: 0, y: 0,
+    toJSON: () => ({}),
+  });
+  act(() => mockRenderFrame?.({ displayWidth: 1280, displayHeight: 720 } as VideoFrame));
+  const commands = () => MockSocket.instances.flatMap(instance => instance.send.mock.calls)
+    .map(([message]) => JSON.parse(message as string))
+    .filter(({ type }) => type === 'click' || type === 'swipe');
+  const down = (pointerId: number, clientX = 50) => fireEvent.pointerDown(canvas, { clientX, clientY: 50, pointerId, button: 0 });
+  const up = (pointerId: number, clientX = 50) => fireEvent.pointerUp(canvas, { clientX, clientY: 50, pointerId, button: 0 });
+  return { canvas, socket, commands, down, up };
+}
+
+it('cancels a captured gesture when the decoded frame changes dimensions', () => {
+  const { commands, down, up } = readyGestureFixture();
+  down(1);
+  act(() => mockRenderFrame?.({ displayWidth: 720, displayHeight: 1280 } as VideoFrame));
+  up(1);
+  expect(commands()).toHaveLength(0);
+  down(2);
+  up(2);
+  expect(commands()).toEqual([{ type: 'click', x: 360, y: 640 }]);
+});
+
+it('ignores a different pointer release without consuming the owning gesture', () => {
+  const { commands, down, up } = readyGestureFixture();
+  down(1);
+  up(2, 65);
+  expect(commands()).toHaveLength(0);
+  up(1);
+  expect(commands()).toEqual([{ type: 'click', x: 640, y: 360 }]);
+});
+
+it('a second pointer cannot replace the gesture start or its owner', () => {
+  const { commands, down, up } = readyGestureFixture();
+  down(1);
+  down(2, 65);
+  up(2, 65);
+  expect(commands()).toHaveLength(0);
+  up(1);
+  expect(commands()).toEqual([{ type: 'click', x: 640, y: 360 }]);
+});
+
+it('cancellation of another pointer cannot cancel the owning gesture', () => {
+  const { canvas, commands, down, up } = readyGestureFixture();
+  down(1);
+  fireEvent.pointerCancel(canvas, { pointerId: 2 });
+  up(1);
+  expect(commands()).toEqual([{ type: 'click', x: 640, y: 360 }]);
+});
+
+it('normal changing frames with the same dimensions retain a legitimate gesture', () => {
+  const { commands, down, up } = readyGestureFixture();
+  down(1);
+  act(() => mockRenderFrame?.({ displayWidth: 1280, displayHeight: 720 } as VideoFrame));
+  up(1);
+  expect(commands()).toEqual([{ type: 'click', x: 640, y: 360 }]);
+});
+
+it('loss of the owning pointer capture cancels input and permits a new gesture', () => {
+  const { canvas, commands, down, up } = readyGestureFixture();
+  down(1);
+  fireEvent.lostPointerCapture(canvas, { pointerId: 1 });
+  up(1);
+  expect(commands()).toHaveLength(0);
+  down(2);
+  up(2);
+  expect(commands()).toEqual([{ type: 'click', x: 640, y: 360 }]);
+});
+
+it('a stale frame followed by fresh video cannot revive the old held gesture', () => {
+  const { commands, down, up } = readyGestureFixture();
+  down(1);
+  act(() => jest.advanceTimersByTime(10_000));
+  act(() => mockRenderFrame?.({ displayWidth: 1280, displayHeight: 720 } as VideoFrame));
+  up(1);
+  expect(commands()).toHaveLength(0);
+  down(2);
+  up(2);
+  expect(commands()).toEqual([{ type: 'click', x: 640, y: 360 }]);
+});
+
+it('a reconnected socket with fresh video cannot receive a gesture begun in the old session', () => {
+  const { socket, commands, down, up } = readyGestureFixture();
+  down(1);
+  act(() => socket.onclose?.({ code: 1006 }));
+  act(() => jest.advanceTimersByTime(1500));
+  expect(MockSocket.instances).toHaveLength(2);
+  const recovered = MockSocket.instances[1];
+  recovered.readyState = MockSocket.OPEN;
+  act(() => recovered.onopen?.(new Event('open')));
+  act(() => mockRenderFrame?.({ displayWidth: 1280, displayHeight: 720 } as VideoFrame));
+  up(1);
+  expect(commands()).toHaveLength(0);
+  down(2);
+  up(2);
+  expect(commands()).toEqual([{ type: 'click', x: 640, y: 360 }]);
 });
 
 afterEach(() => {

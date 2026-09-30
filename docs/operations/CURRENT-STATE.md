@@ -1,6 +1,6 @@
 # Sphere: актуальное состояние и критерии приёмки
 
-**Обновлено:** 30 сентября 2026, Asia/Yekaterinburg; даты отдельных runtime/CI срезов указаны ниже.<br />
+**Обновлено:** 1 октября 2026, Asia/Yekaterinburg; даты отдельных runtime/CI срезов указаны ниже.<br />
 **Область:** исходники и документация ветки PR #19, записанные runtime-наблюдения, Android APK и готовность следующего прогона.<br />
 **Канонический документ текущего состояния:** этот файл. Исторические отчёты ниже сохраняют исходные даты и факты.
 
@@ -10,6 +10,20 @@
 > Последний принятый pilot backend — **`85c8014`**, переключён 30 сентября в **21:37 UTC+5**, healthy/readback в **21:37:59**, на `18080`. На локальном `3015` работает frontend **`3132afc`** с настоящим API и встроенной Grafana; UI переключён в **22:21 UTC+5**. Browser подтверждает **WEB 3132afcd / API 85c8014e**, события, обновляемые probe details и возврат выбранного сервиса после пустого фильтра. Вход через `3015/login`; прямой Next на `3018` не содержит API relay. После кратких post-restart обрывов семь срезов **21:40:40–21:41:40** показывали 14 online / 5 offline, новые сессии и свежие heartbeat; отдельный срез **22:29:40** — 14 online / 5 offline / 0 connecting. Это конечные проверки, не SLA или новая stream/scripts/OTA acceptance. Публичный frontend, APK и туннели этим UI rollout не обновлялись; прежние Next-процессы сохранены. Более ранние разделы сохраняют свои версии и даты.
 
 ## Состояние на дату проверки
+
+### Видеопоток: ownership ввода — source follow-up, 1 октября
+
+Четыре pointer regressions failed на `356bd35`: ложный swipe при смене размеров
+кадра и управление gesture другим pointer. `DeviceStream` сохраняет pointer ID
+и geometry, отменяет gesture при resize/stale/reconnect/config reset и не
+переносит held input в восстановленную session. Lost capture прекращает gesture;
+обычные same-size кадры не мешают input. Полный frontend **71 suites / 536 tests
+passed**; TypeScript и targeted ESLint passed (legacy config warning сохранён).
+Подробности и границы fixtures:
+[APK/video audit, VIDEO-I03](../audits/2026-09-30/ANDROID-INSPECTION-AND-VIDEO-MODES.md).
+Живой UI пока сохраняет принятый `3132afc`; source fix не объявляется deployment.
+Native dimensions, Android-side mapping и отдельный fleet snapshot mode не
+закрыты этим browser fix.
 
 ### Android root availability — source follow-up, 30 сентября
 
@@ -24,6 +38,9 @@ Input outcome unknown по-прежнему не replayed. Подробнее:
 718 passed / 1 skipped / 0 failures / 0 errors**, `assembleDevDebug` completed.
 Установленные APK не заменены; startup/root-grant и постоянные stdout/stderr
 session требуют отдельных device/process gates.
+Source **`356bd35`** завершил обязательные GitHub backend/frontend/security/
+Android jobs success; preview deploy skipped. Timestamp CI observation —
+1 октября, source commit создан 30 сентября 23:56 UTC+5.
 
 ### UI hierarchy — source integrity/ownership fix, 30 сентября
 
