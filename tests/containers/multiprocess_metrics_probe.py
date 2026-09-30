@@ -5,6 +5,7 @@ import os
 import signal
 import subprocess
 import time
+import urllib.error
 import urllib.request
 from http.client import HTTPConnection
 from pathlib import Path
@@ -97,10 +98,19 @@ os.kill(retired, signal.SIGTERM)
 deadline = time.monotonic() + 20
 replacement = None
 while time.monotonic() < deadline:
-    receipt = read("/identity")
+    # A new connection can reach the child between SIGTERM and socket close.
+    # Poll only observations within the original deadline; never retry canary
+    # requests, whose exact count is the acceptance criterion below.
+    try:
+        receipt = read("/identity")
+        after = scrape()
+    except (ConnectionError, TimeoutError, urllib.error.URLError) as exc:
+        if isinstance(exc, urllib.error.HTTPError):
+            raise
+        time.sleep(0.1)
+        continue
     if receipt["pid"] not in workers:
         replacement = receipt["pid"]
-    after = scrape()
     retired_gauge = list(Path(directory).glob(f"gauge_live*_{retired}.db"))
     if replacement and not retired_gauge and value(after, "sphere_metrics_worker_processes") == 4:
         break
@@ -131,7 +141,13 @@ for cycle in range(args.recycles):
     os.kill(retired_pid, signal.SIGTERM)
     deadline = time.monotonic() + 20
     while time.monotonic() < deadline:
-        receipt = read("/identity")
+        try:
+            receipt = read("/identity")
+        except (ConnectionError, TimeoutError, urllib.error.URLError) as exc:
+            if isinstance(exc, urllib.error.HTTPError):
+                raise
+            time.sleep(0.05)
+            continue
         new_pid = receipt["pid"]
         if new_pid not in current_workers and not list(Path(directory).glob(f"gauge_live*_{retired_pid}.db")):
             break

@@ -11,6 +11,21 @@
 
 ## Состояние на дату проверки
 
+### Проверка graceful worker replacement — 30 сентября
+
+CI source `c2bf178` прошёл lint, security, frontend и RLS, но packaged-image
+canary остановился на `ConnectionResetError` во время намеренного SIGTERM
+worker. Сохранённый CI receipt первой серии подтвердил totals **176**, четыре
+workers и cleanup; вторая серия прервалась при polling `/identity`. Такой reset
+не доказывает поломку production API и не считается успешной приёмкой.
+
+Canary теперь допускает сетевую ошибку только при чтении `/identity`/`/metrics`
+в пределах исходного **20 s** deadline замены. HTTP errors не скрываются;
+запросы `/canary/*`, для которых проверяются точные totals, не повторяются.
+После правки два локальных прогона с **64 replacements / 224 requests** каждый
+прошли, max scrape **15.79 ms**. Новый CI проверяется отдельно; live backend
+в этом срезе всё ещё `40357ca`.
+
 ### Dependency-aware type gate — source dac2319, 30 сентября
 
 Полный mypy **2.3.1** с установленными backend dependencies теперь проходит
