@@ -39,6 +39,21 @@ Direct handler canary: flags **200 / 378**, graph query 200, Viewer
 passed; до патча regression дал 7 failures с 405. Это source/canary приёмка
 следующего фикса, **не** заявление, что он уже работает на `3015`.
 
+Архивный production build **`ea7f9cf7a457b551610e22f0cfa5bf1d8d7110d1`**
+завершился с exit 0: 33 application routes, build ID
+`N052OkmjfrKz_g01iCqwC`. Source config сохранён; только local artifact отключает
+`output: standalone`. Сохраняются legacy lint warnings других страниц.
+GitHub этого source: Frontend tests/types/build, security, lint, RLS,
+production-image bootstrap и guard success; Backend Tests и Android ещё
+in progress, deploy skipped. Полностью зелёный PR не заявляется.
+
+При попытке обновить только operator-owned Next `44804` проверка процесса
+остановила script **до остановки/запуска**: Windows из сессии ассистента
+возвращает `CommandLine=null`, хотя PID портов и CreationDate совпадают с
+launch receipt. Проверка владельца не ослаблена; подготовленный updater должен
+выполняться в той же PowerShell security context, что и первоначальный запуск.
+Пока такой receipt отсутствует, `3015` остаётся `ab0724d`, не `ea7f9cf`.
+
 Карточки старого deployed monitoring API остаются недоступными: payload не
 имеет времени/источника измерения. Новый веб не подменяет это здоровыми нулями.
 P1 backend rollout и multi-worker aggregation ниже остаются открыты.
