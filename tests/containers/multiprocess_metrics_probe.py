@@ -1,7 +1,9 @@
 """Run inside the disposable Linux container against four real HTTP workers."""
+import argparse
 import json
 import os
 import signal
+import subprocess
 import time
 import urllib.request
 from http.client import HTTPConnection
@@ -9,11 +11,15 @@ from pathlib import Path
 
 from prometheus_client.parser import text_string_to_metric_families
 
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument("--recycles", type=int, default=16)
+args = parser.parse_args()
+assert 0 <= args.recycles <= 512
 BASE = "http://127.0.0.1:8000"
 
 
-def read(path, *, raw=False):
-    request = urllib.request.Request(BASE + path, headers={"Connection": "close"})
+def read(path, *, raw=False, base=BASE):
+    request = urllib.request.Request(base + path, headers={"Connection": "close"})
     with urllib.request.urlopen(request, timeout=3) as response:
         body = response.read().decode()
     return body if raw else json.loads(body)
@@ -109,7 +115,100 @@ for index in range(32):
     read(f"/canary/replacement-{index}")
 after = scrape()
 assert value(after, "sphere_http_requests_total", **labels) == 160
+
+
+def storage():
+    files = list(Path(directory).glob("*.db"))
+    return {"files": len(files), "allocated_bytes": sum(path.stat().st_size for path in files)}
+
+
+initial_storage = storage()
+current_workers = (workers - {retired}) | {replacement}
+latencies = []
+expected = 160
+for cycle in range(args.recycles):
+    retired_pid = min(current_workers)
+    os.kill(retired_pid, signal.SIGTERM)
+    deadline = time.monotonic() + 20
+    while time.monotonic() < deadline:
+        receipt = read("/identity")
+        new_pid = receipt["pid"]
+        if new_pid not in current_workers and not list(Path(directory).glob(f"gauge_live*_{retired_pid}.db")):
+            break
+        time.sleep(0.05)
+    else:
+        raise AssertionError(f"Worker replacement failed in recycle {cycle}")
+    current_workers = (current_workers - {retired_pid}) | {new_pid}
+    read(f"/canary/recycle-{cycle}")
+    expected += 1
+    started = time.perf_counter()
+    after = scrape()
+    latencies.append((time.perf_counter() - started) * 1000)
+    assert value(after, "sphere_metrics_worker_processes") == 4
+    assert value(after, "sphere_db_pool_size") == 40
+    assert value(after, "sphere_http_requests_total", **labels) == expected
+    assert value(after, "sphere_http_request_duration_seconds_count", method="GET", endpoint="/canary/{id}") == expected
+final_storage = storage()
+# Explicit finite workload budgets, not a claim about unbounded master uptime.
+assert final_storage["files"] <= initial_storage["files"] + args.recycles * 2
+assert final_storage["allocated_bytes"] <= initial_storage["allocated_bytes"] + args.recycles * 256 * 1024
+assert not latencies or max(latencies) < 2000, "Scrape exceeded the 2s canary budget"
+
+# A container restart clears tmpfs even without a hook. Exercise master shutdown
+# while this container AND its first master remain alive, so cleanup is proven.
+root = Path("/tmp/sphere-metrics")
+assert Path(directory).parent == root
+assert list(root.glob("master.*")) == [Path(directory)], "Registry survived a container restart"
+sentinel = root / "operator-data"
+sentinel.mkdir(exist_ok=True)
+(sentinel / "keep").write_text("not-owned-by-master")
+
+
+def secondary_master(*, abrupt):
+    process = subprocess.Popen(
+        ["/bin/sh", "/app/backend/docker-entrypoint.sh", "gunicorn", "metrics_canary_app:app",
+         "--config", "backend/gunicorn_conf.py", "--worker-class", "uvicorn.workers.UvicornWorker",
+         "--workers", "2", "--bind", "127.0.0.1:8001", "--graceful-timeout", "5"],
+        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True,
+    )
+    try:
+        deadline = time.monotonic() + 20
+        while time.monotonic() < deadline:
+            assert process.poll() is None, "Secondary master exited before startup"
+            try:
+                identity = read("/identity", base="http://127.0.0.1:8001")
+                break
+            except OSError:
+                time.sleep(0.05)
+        else:
+            raise AssertionError("Secondary master did not start")
+        owned = Path(identity["directory"])
+        assert owned.parent == root and owned != Path(directory)
+        assert (owned / ".owner").read_text().strip() == str(process.pid)
+        assert read("/canary/shutdown", base="http://127.0.0.1:8001")
+        if abrupt:
+            os.killpg(process.pid, signal.SIGKILL)
+        else:
+            process.terminate()
+        code = process.wait(timeout=15)
+        assert code == (-signal.SIGKILL if abrupt else 0)
+        assert owned.exists() == abrupt
+        assert Path(directory).is_dir(), "Shutdown deleted the other active master"
+        assert (sentinel / "keep").read_text() == "not-owned-by-master"
+        return True
+    finally:
+        if process.poll() is None:
+            os.killpg(process.pid, signal.SIGKILL)
+            process.wait(timeout=5)
+
+
+graceful_cleanup = secondary_master(abrupt=False)
+sigkill_residual = secondary_master(abrupt=True)
 print(json.dumps({"workers": sorted(workers), "retired_pid": retired, "replacement_pid": replacement,
-    "directory": directory, "known_requests": 160, "count_after_worker_exit": 128,
+    "directory": directory, "known_requests": expected, "count_after_worker_exit": 128,
     "db_pool_size": 40, "checked_out": 4, "live_workers": 4, "duplicate_samples": False,
-    "master_started_with_zero": True}))
+    "master_started_with_zero": True, "worker_recycles": args.recycles,
+    "storage_before_recycling": initial_storage, "storage_after_recycling": final_storage,
+    "scrape_max_ms": max(latencies, default=0), "graceful_master_cleanup": graceful_cleanup,
+    "sigkill_residual_until_container_stop": sigkill_residual,
+    "adjacent_operator_data_preserved": True, "concurrent_master_preserved": True}))

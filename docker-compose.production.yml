@@ -30,6 +30,10 @@ services:
           memory: 2048M
 
   backend:
+    # Ephemeral per-master registries, including SIGKILL leftovers. Counts toward
+    # the container memory limit; retained counter files require capacity planning.
+    tmpfs:
+      - /tmp/sphere-metrics:rw,nosuid,nodev,noexec,size=128m,uid=1001,gid=1001,mode=0700
     healthcheck:
       # Probe dependencies through the API; a running process alone is insufficient.
       test:

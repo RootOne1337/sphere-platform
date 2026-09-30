@@ -6,6 +6,8 @@
 
 services:
   backend:
+    tmpfs:
+      - /tmp/sphere-metrics:rw,nosuid,nodev,noexec,size=128m,uid=1001,gid=1001,mode=0700
     build:
       context: .
       dockerfile: backend/Dockerfile.dev

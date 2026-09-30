@@ -25,8 +25,8 @@ COPY scripts/create_admin.py scripts/seed_enrollment_key.py ./scripts/
 
 # Запуск от non-root пользователя
 RUN useradd -r -u 1001 sphere \
-    && mkdir -p /app/backend/updates \
-    && chown sphere:sphere /app/backend/updates
+    && mkdir -p /app/backend/updates /tmp/sphere-metrics \
+    && chown sphere:sphere /app/backend/updates /tmp/sphere-metrics
 USER sphere
 
 ENV PYTHONPATH=/app

@@ -237,27 +237,52 @@ Prometheus `rate` обрабатывает этот reset. `--preload` не ис
 поэтому device gauges отделены **до** создания Prometheus objects, а не только
 фильтруются во время scrape.
 
-Ограничение ресурса: counter/histogram файлы умерших workers накапливаются до
-рестарта master; свежий каталог не является автоматическим удалением прежних
-каталогов с writable layer. При высокой нагрузке и recycling нужно измерить
-размер/число файлов, scrape latency и место в `/tmp`, определить maintenance
-окно/retention. Не удалять mmap files работающего master. Короткий canary и
+Lifecycle hardening 30 сентября: registry создаётся в
+`/tmp/sphere-metrics/master.<random>` с private `.owner` marker. После остановки
+children Gunicorn `on_exit` удаляет только каталог своего master: проверяются
+absolute path в заданном root, имя, отсутствие symlink, owner PID/uid, private
+permissions и marker. Чужой каталог или живые children запрещают очистку.
+Neighbouring registry работающего master и operator data не удаляются.
+SIGKILL не запускает hook: production/full Compose использует отдельный
+**128 MiB tmpfs**, который очищается при остановке контейнера. Прямой
+`docker run` должен передать такой же mount; сам image не создаёт tmpfs.
+Память tmpfs входит в memory cgroup limit контейнера.
+
+Ресурсное ограничение сохраняется **внутри срока жизни master**: counter/
+histogram files умерших workers накапливаются. На synthetic fixture source
+`e3b4fe7` два прогона по **64** replacements дали прирост **128 KiB/replacement**,
+registry **9 568 256 bytes / 146 files** и max scrape **21.62 ms** (1 CPU,
+384 MiB, два registry после container restart). Устройство/путь не создают
+дополнительных labels в этой fixture. Большой реальный route/label набор
+может занимать больше; это не универсальная верхняя граница размера.
+
+Не удалять mmap files работающего master и не пытаться compact counters
+неподдерживаемым private API. Размер/число файлов, scrape latency и запас
+tmpfs требуют operational alert/maintenance policy до длительного high-load
+rollout. Hard cap может вызвать ENOSPC при исчерпании и **не** является
+механизмом автоматического восстановления. Контролируемая смена master
+сбрасывает counters; Prometheus `rate` учитывает reset. Короткая fixture и
 тест с тысячами device IDs не доказывают многосуточный ресурсный бюджет.
-Это отдельный gate перед rollout на нагруженный парк.
 
 Acceptance запускается на собранном образе, без сети и source mount backend:
 
 ```powershell
-python tests/containers/run_multiprocess_metrics_probe.py --image <reviewed-image> --evidence-dir <private-evidence>
+python tests/containers/run_multiprocess_metrics_probe.py --image <reviewed-image> --evidence-dir <private-evidence> --recycles 64
 ```
 
 Probe закрепляет отдельное keepalive соединение за каждым из четырёх HTTP
 workers: по 32 requests каждому, затем ещё 32 после replacement. Проверяет реальный exit
 и replacement child, сохранение counters, очистку live gauges, отсутствие
-duplicate samples и новый registry после рестарта master. Он добавлен в
+duplicate samples, storage/scrape budget после worker recycling и новый registry
+после рестарта master. Secondary master проверяет graceful cleanup без остановки
+контейнера и сохранение active neighbour/operator data; SIGKILL проверяется
+отдельно. В CI default — 16 replacements на master, local resource acceptance
+использует 64. Он добавлен в
 Production image bootstrap CI. Результаты source tests и image canary имеют
 разные статусы; текущий pilot `40357ca` этим описанием не обновляется.
 Основание: [официальный multiprocess contract Prometheus Python client](https://prometheus.github.io/client_python/multiprocess/).
+Lifecycle hook: [Gunicorn Arbiter shutdown implementation](https://github.com/benoitc/gunicorn/blob/master/gunicorn/arbiter.py).
+Ephemeral mount и memory budget: [Docker tmpfs documentation](https://docs.docker.com/engine/storage/tmpfs/).
 
 Официальные основания конфигурации:
 [Docker Grafana](https://grafana.com/docs/grafana/latest/setup-grafana/installation/docker/),

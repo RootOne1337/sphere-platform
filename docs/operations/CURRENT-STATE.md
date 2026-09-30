@@ -11,7 +11,7 @@
 
 ## Состояние на дату проверки
 
-### Dependency-aware type gate — 30 сентября, следующий source
+### Dependency-aware type gate — source dac2319, 30 сентября
 
 Полный mypy **2.3.1** с установленными backend dependencies теперь проходит
 **219 source files**, включая `check_untyped_defs`. Исправлены типы SQLAlchemy
@@ -19,7 +19,8 @@ predicate/sort expressions, ASGI Message и Pydantic response boundaries;
 nullable script/device ID проверяются до записи регистрации/фарм-задачи.
 Три новых PostgreSQL regression tests воспроизвели ошибки на исходной версии;
 после исправления **372 tests passed / 1 deprecation warning** в затронутых
-device/WS/VPN/orchestration сценариях. Общий suite ещё выполняется.
+device/WS/VPN/orchestration сценариях. Общий suite завершился:
+**2123 passed / 5 warnings**, **596.50 s**, exit **0**, без load/soak и coverage.
 
 CI lint теперь устанавливает backend dependencies и выполняет `pip check`,
 поэтому отсутствующие импорты больше не превращают эти границы в `Any`.
@@ -28,6 +29,30 @@ CI lint теперь устанавливает backend dependencies и выпо
 Структурный protocol VPN command publisher сохраняет прежнее поведение:
 существующий stub возвращает `False`, реальная доставка kill-switch не
 объявляется реализованной этой правкой.
+
+### Ресурсный lifecycle метрик — source canary 30 сентября
+
+На прежнем packaged image `e3b4fe7` повторены два независимых прогона с
+**64** заменами workers каждый. После каждого сохранены точные HTTP totals,
+четыре live workers и отсутствие duplicate samples. Registry вырос с
+**18 files / 1 179 648 bytes** до **146 files / 9 568 256 bytes**; прирост
+**128 KiB на worker replacement**. Максимальный scrape — **21.62 ms** в
+изолированной fixture с 1 CPU / 384 MiB. Это измерение конечной synthetic
+нагрузки, не production performance SLA.
+
+Новый entrypoint маркирует private registry владельцем/master PID. `on_exit`
+проверяет путь, marker, владельца и отсутствие live children, затем удаляет
+только свой каталог. Неподтверждённый/чужой каталог сохраняется. Production/full
+Compose ограничивает `/tmp/sphere-metrics` отдельным **128 MiB tmpfs**;
+SIGKILL остатки исчезают при остановке контейнера. Пока master работает,
+counter/histogram files сохраняются: tmpfs **не** делает рост бесконечно безопасным.
+При заполнении нужны controlled maintenance/capacity alerts; многосуточный
+высоконагруженный budget ещё не принят.
+
+**188 monitoring/deployment tests passed / 1 warning** для нового lifecycle.
+Проверка graceful/SIGKILL в packaged image выполняется отдельно; source tests
+не выдаются за image/runtime acceptance. Свежий CI прежнего remote head
+`59ba4c7` завершил исполняемые checks success, deploy skipped.
 
 ### Multiprocess метрики — изолированная image acceptance 30 сентября
 

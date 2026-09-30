@@ -18,7 +18,10 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--image", required=True)
     parser.add_argument("--evidence-dir", required=True, type=Path)
+    parser.add_argument("--recycles", type=int, default=16)
     args = parser.parse_args()
+    if not 0 <= args.recycles <= 512:
+        parser.error("--recycles must be between 0 and 512")
     image = docker("image", "inspect", args.image, "--format", "{{.Id}}")
     owner = "sphere-metrics-audit-" + uuid.uuid4().hex[:12]
     evidence = args.evidence_dir.resolve()
@@ -38,7 +41,8 @@ def main():
             "--worker-class", "uvicorn.workers.UvicornWorker", "--workers", "4",
             "--keep-alive", "65", "--bind", "127.0.0.1:8000")
         for run in range(2):
-            output = docker("exec", container, "python", "/tmp/multiprocess_metrics_probe.py", timeout=90)
+            output = docker("exec", container, "python", "/tmp/multiprocess_metrics_probe.py",
+                "--recycles", str(args.recycles), timeout=90 + args.recycles * 25)
             receipt = json.loads(output)
             summary["receipts"].append(receipt)
             print(json.dumps({"run": run + 1, **receipt}), flush=True)

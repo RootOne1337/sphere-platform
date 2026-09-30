@@ -46,6 +46,11 @@ def test_production_databases_have_no_published_host_ports(production_config):
         assert not production_config[service].get("ports"), production_config[service].get("ports")
 
 
+def test_backend_metrics_storage_is_bounded_ephemeral_memory(production_config):
+    mounts = production_config["backend"].get("tmpfs", [])
+    assert mounts == ["/tmp/sphere-metrics:rw,nosuid,nodev,noexec,size=128m,uid=1001,gid=1001,mode=0700"]
+
+
 @pytest.mark.parametrize("service", ["backend", "frontend"])
 def test_production_application_uses_image_defaults_without_source_mounts(production_config, service):
     configuration = production_config[service]
