@@ -7,9 +7,50 @@
 [Главная](../../README.md) · [Каталог документации](../README.md) · [Readiness](READINESS.md) · [Fleet32 gates](../audits/2026-09-20/FLEET32-PREFLIGHT.md) · [PR #19](https://github.com/RootOne1337/sphere-platform/pull/19)
 
 > [!IMPORTANT]
-> Последний принятый pilot backend — **`1ac06ac`**, развёрнут 30 сентября в **18:09 UTC+5** на `18080`. На локальном `3015` работает frontend **`ea7f9cf`** с настоящим API и встроенной Grafana. Публичный frontend, APK и туннели этим rollout не обновлялись; прежние frontend-процессы не заменялись. Отдельные canary и короткие online-срезы не являются приёмкой всего парка. Более ранние разделы сохраняют свои версии и даты.
+> Последний принятый pilot backend — **`1ac06ac`**, развёрнут 30 сентября в **18:09 UTC+5** на `18080`. На локальном `3015` работает frontend **`b650c03`** с настоящим API и встроенной Grafana: UI переключён в **18:55 UTC+5**, browser проверка повторена в **20:22–20:23**. Вход через `3015/login`; прямой Next на `3016` не содержит API relay. Публичный frontend, APK и туннели этим rollout не обновлялись; прежние frontend-процессы не заменялись. Отдельные canary и короткие online-срезы не являются приёмкой всего парка. Более ранние разделы сохраняют свои версии и даты.
 
 ## Состояние на дату проверки
+
+### UI rollout и dashboard provisioning — 30 сентября, 18:55–20:23 UTC+5
+
+Frontend **`b650c03`** собран из committed Git archive; isolated production
+compile exit 0. Владелец запустил Next на `127.0.0.1:3016`, после проверки
+ownership переключён только принадлежащий preview relay:
+`3015 → UI 3016 / API 18080`. Прежний Next `3014` сохранён. Private receipt:
+`.local-pilot/observability-20260930/b650c03-preview-switch-receipt.json`.
+Существующие operator credentials подходят: login через `3015` вернул 200.
+Пароль не менялся; direct `3016` не является полным UI/API ingress.
+
+GitHub Backend/Frontend/Android checks source `b650c03` завершились success;
+preview deploy skipped. Frontend: **71 suites / 523 Jest tests**, отдельный
+Node transport test, types/build passed. Local monitoring: **19 targeted
+passed**, TypeScript и targeted ESLint passed; legacy eslintrc warning остаётся.
+
+Browser подтвердил **WEB b650c03a / API 1ac06acb**, подключённые события,
+обновляемый Prometheus срез и 10-секундное API обновление. Network card
+показывает измеренную сумму TX+RX и скорость по двум срезам отдельно от
+неизвестного числа туннелей. Устаревшее утверждение о worker-local counters
+убрано: coverage warning относится к отсутствующим панелям RPS/p95/CPU/fleet.
+Разные WEB/API SHA обозначают provenance, не отказ сервиса.
+
+**Отдельный подтверждённый дефект Grafana:** новый dashboard JSON был виден
+в Docker bind mount, но Grafana продолжала отдавать старую сохранённую панель.
+Provider теперь использует `updateIntervalSeconds: 30`: polling вместо
+filesystem watch, события которого могут не доходить через Docker bind mount.
+Основание — [официальный provisioning contract Grafana](https://grafana.com/docs/grafana/latest/administration/provisioning/).
+Один guarded restart собственного Grafana выполнен в **19:04 UTC+5**;
+image/auth не изменились, соседние контейнеры сохранили ID/image/start time,
+Grafana healthy. Browser iframe в **20:23** подтвердил новый текст и реальные
+графики. Basic auth не включался, права bridge не расширялись. Private receipt:
+`.local-pilot/observability-20260930/dashboard-provisioning-restart-receipt.json`.
+Будущая смена dashboard файла без restart ещё не проверялась отдельной мутацией.
+
+Actual browser screenshots сохранены приватно:
+`.local-pilot/metrics-20260930-live-network-b650c03.png` (19:14) и
+`.local-pilot/metrics-20260930-live-grafana-b650c03.png` (20:23).
+Карточки сервисов пока не раскрывают имеющиеся API probe `details`: следующий
+UI gap, не отсутствующий ответ backend. Resource budget, длительный fleet soak,
+OTA и 20–30-device stream + scripts gates остаются открытыми.
 
 ### Pilot rollout и реальные данные — 30 сентября, 18:09–18:33 UTC+5
 
@@ -69,11 +110,11 @@ API и запрета replay. Исходный редкий crash синтети
 основание исправления — actual stderr, passing test подтверждает заявленные
 сценарии, а не универсальную безотказность. Linux gate добавлен в frontend CI.
 
-**Оставшиеся расхождения UI:** `WEB ea7f9cf7` и `API 1ac06acb` имеют разные SHA,
+**Расхождения UI до переключения в 18:55:** `WEB ea7f9cf7` и `API 1ac06acb` имеют разные SHA,
 поэтому header показывает MISMATCH; это provenance, не измерение API health.
 В этой старшей frontend-сборке ещё есть устаревшее предупреждение о worker-local
 counters и неоднозначное «Не измеряется» над известными TX/RX (относится к числу
-туннелей). Их нужно обновить в следующем frontend rollout; сам факт backend
+туннелей). Эти labels исправлены rollout `b650c03` выше; сам факт backend
 aggregation не означает готовность всех графиков. Growth counters внутри
 срока master, capacity alerts/maintenance, длительная fleet stability и финальный
 20–30-device stream + scripts acceptance остаются открытыми.

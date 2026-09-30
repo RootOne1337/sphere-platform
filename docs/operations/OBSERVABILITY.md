@@ -22,18 +22,20 @@ Prometheus, цели сбора, активные алерты и Grafana в т�
 | Ряды хранилища | `prometheus_tsdb_head_series` | Размер текущего TSDB head; не размер БД Sphere |
 | Потеря сбора | `SphereBackendMetricsUnavailable` | `up == 0` в течение минуты |
 
-Отдельно подтверждён пробел: текущий backend имеет четыре Gunicorn worker,
-`PROMETHEUS_MULTIPROC_DIR` не задан. `/metrics` возвращает локальный registry
-выбранного worker. Смена процесса выглядит как сброс/скачок счётчика.
-**RPS, p95, CPU и количество устройств по этим счётчикам не заявляются.**
+Исторический пробел до rollout 30 сентября 18:09 UTC+5: backend имел четыре
+Gunicorn worker без multiprocess directory и отдавал registry выбранного worker.
+Backend `1ac06ac` уже использует общий multiprocess registry; exact image и
+live rollout записаны в [CURRENT-STATE](CURRENT-STATE.md).
+**Панели общих RPS, p95, CPU и количества устройств пока не подключены.**
 Сырые HTTP/pool метрики сохраняются для исследования; prepared dashboard и
 веб-показатели не строят по ним общие KPI или алерты. Высококардинальные
 device series не собираются этим профилем.
 
-Старый deployed monitoring API отдельно отдаёт 12/8 точек истории без
+Исторический deployed monitoring API отдельно отдавал 12/8 точек истории без
 `observedAt`, фиксированные worker/edge cards и нулевое число туннелей. Новый
 frontend отвергает такой metrics payload и node list без `details` источника
-probe. Для прежних API-карточек нужен согласованный backend rollout; их отказ
+probe. Новый contract развёрнут в pilot `1ac06ac`; frontend `b650c03` на `3015`
+проверен с настоящими RAM/Redis/TX/RX и четырьмя probes. Неполное покрытие метрик
 не отменяет независимый сбор Prometheus и не превращается в «всё здорово».
 
 ## Доступ и границы интеграции
@@ -294,6 +296,24 @@ rollout имеют разные статусы. Pilot `1ac06ac` принят о�
 Lifecycle hook: [Gunicorn Arbiter shutdown implementation](https://github.com/benoitc/gunicorn/blob/master/gunicorn/arbiter.py).
 Ephemeral mount и memory budget: [Docker tmpfs documentation](https://docs.docker.com/engine/storage/tmpfs/).
 
+### Обновление provisioned dashboard в Docker
+
+Provider [`sphere.yml`](../../infrastructure/monitoring/collection/provisioning/dashboards/sphere.yml)
+задаёт `updateIntervalSeconds: 30`. По [документации Grafana](https://grafana.com/docs/grafana/latest/administration/provisioning/),
+интервал больше 10 s включает polling; filesystem watch при меньшем интервале
+может не получать изменения Docker bind mount. В pilot новый файл читался
+внутри контейнера, но отдавалась старая панель. После изменения provider сделан
+один guarded restart собственной Grafana: healthy, те же image/auth и соседние
+контейнеры. Новый текст подтверждён iframe в 20:23 UTC+5.
+Это приёмка загрузки при restart и конфигурации polling; последующая мутация
+файла без restart не тестировалась отдельным опытом.
+
+Изменения provider требуют reload/restart с проверкой ownership. Native admin
+reload API требует Basic auth; в данном профиле он отключён. Не включайте его
+или write-access bridge ради reload: используйте контролируемый restart своей
+Grafana, затем проверьте health и панель в Sphere. Datasources, queries, доступ
+и image digest этим исправлением не менялись.
+
 ### Локальный UI/API relay и обрывы WebSocket
 
 [`scripts/pilot/preview_relay.cjs`](../../scripts/pilot/preview_relay.cjs) нужен
@@ -308,8 +328,15 @@ Origin/Referer API-запросов заменяются loopback upstream origi
 проверенному preview, пример запуска из root репозитория:
 
 ```powershell
-node scripts/pilot/preview_relay.cjs --listen-port 3015 --ui-port 3014 --api-port 18080
+node scripts/pilot/preview_relay.cjs --listen-port 3015 --ui-port 3016 --api-port 18080
 ```
+
+На 30 сентября 18:55 UTC+5 `3015` передаёт UI в проверенный Next `b650c03`
+на `3016`, API — в `18080`; прежний Next `3014` сохранён. Для входа нужен
+`http://127.0.0.1:3015/login` и существующие operator credentials. Direct Next
+`3016` не проксирует `/api/v1`: это ошибка выбора ingress, не повод сбрасывать
+пароль. Не публикуйте credentials в документации/PR. Пример выше предполагает
+уже запущенный Next на `3016`.
 
 Не останавливать неизвестный процесс и не запускать второй relay на занятом
 порту. Обновление UI требует самостоятельной проверки source SHA/ownership;
