@@ -38,6 +38,23 @@ probe. Новый contract развёрнут в pilot `1ac06ac`; frontend `b650
 проверен с настоящими RAM/Redis/TX/RX и четырьмя probes. Неполное покрытие метрик
 не отменяет независимый сбор Prometheus и не превращается в «всё здорово».
 
+### Structured service probe details
+
+Карточки читают документированные scalar поля `/monitoring/nodes`: pool_size,
+checked_out, pong, used_memory_mb, free_gb, total_gb, usage_percent. Пул относится
+к API worker, disk — к filesystem / внутри backend, Redis latency — к PING.
+Число клиентов Redis находится в отдельной `/monitoring/metrics` card из INFO
+clients; исторический health payload синтезировал 0 из INFO memory, и это поле
+inspector не показывает. Producer исправлен в source, deployment version — в
+[CURRENT-STATE](CURRENT-STATE.md).
+
+Возраст процесса API не является uptime зависимости. Обновление списка сохраняет
+выбранный ID и показывает новые детали. Отрицательные/нечисловые/небезопасные
+числа не отображаются как валидные measurements; настоящий 0 сохраняется.
+Error присутствие видно, raw exception скрыт, поскольку может содержать DSN/
+credentials. Перечень полей ограничен: этот inspector не является универсальным
+экспортом log/error payload и не подменяет защищённые журналы backend.
+
 ## Доступ и границы интеграции
 
 `GET /api/observability?window=1h|6h|24h` проверяет Bearer token через настоящий

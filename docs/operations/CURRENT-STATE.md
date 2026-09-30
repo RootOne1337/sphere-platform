@@ -11,6 +11,30 @@
 
 ## Состояние на дату проверки
 
+### Service probe inspector — source follow-up 30 сентября
+
+Карточки сервисов теперь раскрывают ограниченный контракт `details`: SELECT 1 /
+размер и занятость пула отвечающего API-процесса; Redis PING / память из INFO
+memory; filesystem / свободно/объём/занято. Uptime подписан как возраст
+API-процесса, а не uptime PostgreSQL/Redis. Время отсутствует отдельно от нуля;
+нулевой timing ошибки/timeout не показывается как успешная быстрая проверка.
+Произвольные error strings и nested values не выводятся: могут содержать
+credentials. Unknown/negative/non-finite поля не превращаются в ноль.
+
+Найдена отдельная ошибка производителя: HealthService читал `connected_clients`
+из INFO memory и при отсутствии поля возвращал 0; отсутствующий `used_memory`
+тоже становился 0. Source перестал генерировать эти значения. Правильное число
+клиентов уже берётся через INFO clients в существующей общей Redis card.
+Live backend `1ac06ac` пока сохраняет старый health payload; новый inspector
+игнорирует его `connected_clients`. Новое поведение требует отдельного rollout,
+не объявляется видимым автоматически по факту коммита.
+
+Доказательства: три новых UI tests failed на прежнем компоненте; после исправления
+**19 targeted UI tests passed**, TypeScript/targeted ESLint passed (legacy warning).
+Два новых Redis tests failed на producer baseline; после исправления **73 monitoring
+tests passed / 1 warning**, Ruff и dependency-aware mypy **219 modules clean**.
+Это targeted source validation; новый full CI/compile/browser acceptance отдельны.
+
 ### UI rollout и dashboard provisioning — 30 сентября, 18:55–20:23 UTC+5
 
 Frontend **`b650c03`** собран из committed Git archive; isolated production

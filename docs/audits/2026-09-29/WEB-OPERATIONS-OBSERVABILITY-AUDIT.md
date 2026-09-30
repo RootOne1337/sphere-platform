@@ -146,6 +146,23 @@
 | WEB-16 | P1 | Terminal печатал Connected по таймеру без ответа APK; shell продолжал цепочку после device error; 5 s HTTP timeout был меньше backend waits 30/15/10 s. | Ложное подключение/успех, неизвестный результат раньше серверного deadline и отправка следующих действий после сбоя. | Исправлено: result envelope validation, stop on error/unmount, синхронный lock, отдельные HTTP budgets и отсутствие auto replay. Одна read-only команда выбранному удалённому APK вернула Android 9; журнальный запрос вернул 500 строк. Это не autonomous task/OTA acceptance. |
 | WEB-17 | P2 | На мобильном browser Escape закрывал inspector, но live refresh/resize заменял сохранённую кнопку строки и фокус оставался body. | Клавиатурная навигация теряла выбранное устройство. | Исправлено в source: поиск текущего opener по ID устройства или main при смене route; регрессия заменяет DOM opener во время открытого dialog. Browser acceptance записывается в отчёт инспектора. |
 
+### Follow-up: service details и Redis producer — source 30 сентября
+
+Live browser `b650c03` показал пустые CPU/RAM и нераскрытый `details`, хотя API
+реально отдавал pool_size/checked_out, pong/memory и disk free/total/usage. Source
+inspector теперь раскрывает эти scalar поля, сохраняет выбор при refresh,
+уточняет возраст API worker и не печатает arbitrary exception/credentials.
+Три UI regressions failed на baseline → 19 targeted passed, types/lint passed.
+
+Отдельно подтверждён producer defect: health INFO memory не содержит
+connected_clients, однако `.get(..., 0)` возвращал 0. Live receipt имел это
+значение, пока общий metrics endpoint сообщал реальные clients через INFO
+clients. Также missing used_memory считался 0. Оба fallback удалены из source;
+два producer regressions failed на baseline → 73 monitoring passed / 1 warning,
+Ruff/mypy 219 clean. Inspector игнорирует историческое clients поле. Эти новые
+source changes не объявляются rollout в `1ac06ac` или `b650c03`; актуальная
+приёмка — в CURRENT-STATE.
+
 ### Отдельно: что означает зелёный статус
 
 Health check отвечает на ограниченный вопрос: «этот probe в данный момент получил ожидаемый ответ?». Он не доказывает полноту метрик, свежесть каждого источника, работу мобильного стрима, корректность task worker или стабильность OTA. В интерфейсе эти факты теперь отделены: статус сервисных проб остаётся health-сводкой, а отсутствие конкретных измерений показывает предупреждение о покрытии.
