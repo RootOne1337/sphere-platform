@@ -7,7 +7,19 @@
 **Объект проверки браузера:** локальный preview `http://127.0.0.1:3012`, только чтение
 **Статус:** source-аудит и точечные исправления; production rollout и проверка удалённых устройств не выполнялись.
 
-> Latest follow-up 30 сентября, 18:55–20:23 UTC+5: frontend `b650c03` реально
+> Latest follow-up 30 сентября, 20:49–21:05 UTC+5: UI и API `4024ccf` приняты
+> в local pilot, browser WEB/API 4024ccf8. Service inspector раскрывает настоящие
+> pool/PING/memory/disk поля; исправление Redis false zero развёрнуто. Frontend
+> 71 suites / 526 Jest tests + Node transport/types/build; backend 2120 passed /
+> 15 skipped / 5 warnings, coverage 77.87%; остальные обязательные CI jobs success.
+> Exact image lifecycle / multiprocess acceptance passed. DB head, соседние
+> контейнеры и OTA/APK сохранены. Семь recovery срезов 21:04:49–21:05:49 —
+> 14 online / 5 offline при scope 19. Это не длительная fleet/stream/scripts/OTA
+> acceptance. Выбор inspector сбросился после полной потери API; сохранение
+> выбора через outage и desktop-width QA остаются UX gates. Детали и receipts:
+> [CURRENT-STATE](../../operations/CURRENT-STATE.md).
+
+> Исторический follow-up 30 сентября, 18:55–20:23 UTC+5: frontend `b650c03` реально
 > обслуживает `3015`; direct Next `3016` без API relay не является адресом входа.
 > Backend/frontend/Android CI success; frontend 71 suites / 523 Jest tests +
 > Node transport test, types/build passed. Browser WEB b650c03a / API 1ac06acb:
@@ -160,8 +172,9 @@ connected_clients, однако `.get(..., 0)` возвращал 0. Live receip
 clients. Также missing used_memory считался 0. Оба fallback удалены из source;
 два producer regressions failed на baseline → 73 monitoring passed / 1 warning,
 Ruff/mypy 219 clean. Inspector игнорирует историческое clients поле. Эти новые
-source changes не объявляются rollout в `1ac06ac` или `b650c03`; актуальная
-приёмка — в CURRENT-STATE.
+изменения позже приняты отдельным rollout `4024ccf`: UI 20:49 / API 21:02
+UTC+5. Это не ретроактивная приёмка `1ac06ac` или `b650c03`; фактические
+проверки и границы — в [CURRENT-STATE](../../operations/CURRENT-STATE.md).
 
 ### Отдельно: что означает зелёный статус
 

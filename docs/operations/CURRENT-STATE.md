@@ -7,11 +7,11 @@
 [Главная](../../README.md) · [Каталог документации](../README.md) · [Readiness](READINESS.md) · [Fleet32 gates](../audits/2026-09-20/FLEET32-PREFLIGHT.md) · [PR #19](https://github.com/RootOne1337/sphere-platform/pull/19)
 
 > [!IMPORTANT]
-> Последний принятый pilot backend — **`1ac06ac`**, развёрнут 30 сентября в **18:09 UTC+5** на `18080`. На локальном `3015` работает frontend **`b650c03`** с настоящим API и встроенной Grafana: UI переключён в **18:55 UTC+5**, browser проверка повторена в **20:22–20:23**. Вход через `3015/login`; прямой Next на `3016` не содержит API relay. Публичный frontend, APK и туннели этим rollout не обновлялись; прежние frontend-процессы не заменялись. Отдельные canary и короткие online-срезы не являются приёмкой всего парка. Более ранние разделы сохраняют свои версии и даты.
+> Последний принятый pilot backend — **`4024ccf`**, развёрнут 30 сентября в **21:02 UTC+5** на `18080`. На локальном `3015` работает frontend **`4024ccf`** с настоящим API и встроенной Grafana: UI переключён в **20:49 UTC+5**, browser подтверждает **WEB/API 4024ccf8**. Вход через `3015/login`; прямой Next на `3017` не содержит API relay. Публичный frontend, APK и туннели этим rollout не обновлялись; прежние Next-процессы сохранены. После восстановления семь срезов **21:04:49–21:05:49** показывают 14 online / 5 offline. Это конечная проверка восстановления, не SLA или stream/scripts/OTA acceptance. Более ранние разделы сохраняют свои версии и даты.
 
 ## Состояние на дату проверки
 
-### Service probe inspector — source follow-up 30 сентября
+### Service probe inspector — принятый UI/API rollout 30 сентября, 20:49–21:05 UTC+5
 
 Карточки сервисов теперь раскрывают ограниченный контракт `details`: SELECT 1 /
 размер и занятость пула отвечающего API-процесса; Redis PING / память из INFO
@@ -25,17 +25,45 @@ credentials. Unknown/negative/non-finite поля не превращаются 
 из INFO memory и при отсутствии поля возвращал 0; отсутствующий `used_memory`
 тоже становился 0. Source перестал генерировать эти значения. Правильное число
 клиентов уже берётся через INFO clients в существующей общей Redis card.
-Live backend `1ac06ac` пока сохраняет старый health payload; новый inspector
-игнорирует его `connected_clients`. Новое поведение требует отдельного rollout,
-не объявляется видимым автоматически по факту коммита.
+Backend и frontend `4024ccf` приняты в local pilot: Redis probe возвращает
+PING/настоящую память без ложного clients поля; отдельная общая Redis card
+показывает клиентов из INFO clients. Browser подтвердил pool 10 / checked out 1,
+disk free/total/usage и обновление probe timings. Выбор сервиса сохраняется при
+обычном refresh; после полной потери API и восстановления inspector вернулся
+к первому сервису. Сохранение выбора через outage остаётся отдельной UX задачей.
 
 Доказательства: три новых UI tests failed на прежнем компоненте; после исправления
 **19 targeted UI tests passed**, TypeScript/targeted ESLint passed (legacy warning).
 Два новых Redis tests failed на producer baseline; после исправления **73 monitoring
 tests passed / 1 warning**, Ruff и dependency-aware mypy **219 modules clean**.
-Это targeted source validation; новый full CI/compile/browser acceptance отдельны.
+Полный GitHub CI source `4024ccf`: frontend **71 suites / 526 Jest tests**,
+отдельный Node transport test, types/build success; backend **2120 passed / 15
+Windows-only skipped / 5 warnings**, 667.69 s, coverage **77.87%**. Lint, security,
+RLS, Alembic Single Head, packaged image bootstrap и Android smoke/unit job
+success; preview deploy skipped. Это не production signer или установленная APK.
 
-### UI rollout и dashboard provisioning — 30 сентября, 18:55–20:23 UTC+5
+Exact pilot image **`sha256:438bdd9d82e4e15a95dd815089a7217ccc15b75409add8e00b06bc0a37cc9c7e`**:
+fresh PG/Redis application-process lifecycle passed. Две серии по 4 child
+replacements / 164 known requests каждая: четыре workers, no duplicate samples,
+graceful master cleanup, fresh registry после container restart; max scrape
+**5.10 ms**. Это ограниченная fixture, не high-load/soak.
+
+Rollout заменил только backend image; env diff только SPHERE_BUILD_SHA. Readiness
+ready, DB head `20260921_watchdog_stop` до/после, neighbour IDs/images/StartedAt и
+OTA/APK hashes совпали. Private receipts:
+`.local-pilot/probes-20260930-live-rollout/` и
+`.local-pilot/observability-20260930/4024ccf-preview-switch-receipt.json`.
+Текущий маршрут `3015 → UI 3017 / API 18080`; старые Next 3014/3016 сохранены.
+
+Перед rollout было 14 online; первый post-rollout срез 21:03:54 — 11. Baseline
+14 устройств восстановился с session timestamps и свежими heartbeat к 21:04:49;
+семь срезов до 21:05:49 сохранили 14 / 5 при scope 19. Live scrape: 4 workers,
+16 mmap files / 1 MiB, 236 samples, без дублей. Console errors в просмотренной
+вкладке не зарегистрированы. Браузерная проверка выполнена при фактическом viewport
+647×884; запрошенный override 1440×900 не применился, поэтому desktop-width QA
+этим опытом не считается пройденной. Скриншоты и raw telemetry остаются приватными.
+
+### Исторический UI rollout и dashboard provisioning — 30 сентября, 18:55–20:23 UTC+5
 
 Frontend **`b650c03`** собран из committed Git archive; isolated production
 compile exit 0. Владелец запустил Next на `127.0.0.1:3016`, после проверки

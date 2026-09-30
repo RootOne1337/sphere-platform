@@ -24,7 +24,7 @@ Prometheus, цели сбора, активные алерты и Grafana в т�
 
 Исторический пробел до rollout 30 сентября 18:09 UTC+5: backend имел четыре
 Gunicorn worker без multiprocess directory и отдавал registry выбранного worker.
-Backend `1ac06ac` уже использует общий multiprocess registry; exact image и
+Backend `4024ccf` уже использует общий multiprocess registry; exact image и
 live rollout записаны в [CURRENT-STATE](CURRENT-STATE.md).
 **Панели общих RPS, p95, CPU и количества устройств пока не подключены.**
 Сырые HTTP/pool метрики сохраняются для исследования; prepared dashboard и
@@ -34,7 +34,7 @@ device series не собираются этим профилем.
 Исторический deployed monitoring API отдельно отдавал 12/8 точек истории без
 `observedAt`, фиксированные worker/edge cards и нулевое число туннелей. Новый
 frontend отвергает такой metrics payload и node list без `details` источника
-probe. Новый contract развёрнут в pilot `1ac06ac`; frontend `b650c03` на `3015`
+probe. Новый contract развёрнут в pilot `4024ccf`; frontend `4024ccf` на `3015`
 проверен с настоящими RAM/Redis/TX/RX и четырьмя probes. Неполное покрытие метрик
 не отменяет независимый сбор Prometheus и не превращается в «всё здорово».
 
@@ -45,7 +45,7 @@ checked_out, pong, used_memory_mb, free_gb, total_gb, usage_percent. Пул от
 к API worker, disk — к filesystem / внутри backend, Redis latency — к PING.
 Число клиентов Redis находится в отдельной `/monitoring/metrics` card из INFO
 clients; исторический health payload синтезировал 0 из INFO memory, и это поле
-inspector не показывает. Producer исправлен в source, deployment version — в
+inspector не показывает. Producer исправлен и развёрнут в pilot `4024ccf`; acceptance — в
 [CURRENT-STATE](CURRENT-STATE.md).
 
 Возраст процесса API не является uptime зависимости. Обновление списка сохраняет
@@ -345,15 +345,15 @@ Origin/Referer API-запросов заменяются loopback upstream origi
 проверенному preview, пример запуска из root репозитория:
 
 ```powershell
-node scripts/pilot/preview_relay.cjs --listen-port 3015 --ui-port 3016 --api-port 18080
+node scripts/pilot/preview_relay.cjs --listen-port 3015 --ui-port 3017 --api-port 18080
 ```
 
-На 30 сентября 18:55 UTC+5 `3015` передаёт UI в проверенный Next `b650c03`
-на `3016`, API — в `18080`; прежний Next `3014` сохранён. Для входа нужен
+На 30 сентября 20:49 UTC+5 `3015` передаёт UI в проверенный Next `4024ccf`
+на `3017`, API — в `18080`; прежние Next `3014` и `3016` сохранены. Для входа нужен
 `http://127.0.0.1:3015/login` и существующие operator credentials. Direct Next
-`3016` не проксирует `/api/v1`: это ошибка выбора ingress, не повод сбрасывать
+`3017` не проксирует `/api/v1`: это ошибка выбора ingress, не повод сбрасывать
 пароль. Не публикуйте credentials в документации/PR. Пример выше предполагает
-уже запущенный Next на `3016`.
+уже запущенный Next на `3017`.
 
 Не останавливать неизвестный процесс и не запускать второй relay на занятом
 порту. Обновление UI требует самостоятельной проверки source SHA/ownership;
