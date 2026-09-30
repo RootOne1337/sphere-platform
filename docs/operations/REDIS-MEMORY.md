@@ -1,6 +1,6 @@
 # Redis: память, сохранение и приёмка
 
-**Обновлено 23 сентября 2026 · AUD-139 / AUD-143 · live pilot остаётся на 1536 MiB.**
+**Обновлено 1 октября 2026 · AUD-139 / AUD-143 и новый CI counterexample · live limit проверяется отдельно.**
 
 [Readiness](READINESS.md) · [Fleet32](../audits/2026-09-20/FLEET32-PREFLIGHT.md) · [Доказательства](../audits/2026-09-20/REDIS-MEMORY.md)
 
@@ -9,11 +9,11 @@
 | Настройка | Source Compose profiles (не фактический runtime limit уже работающих контейнеров) |
 | --- | --- |
 | Redis `maxmemory` | 512 MiB, прежняя ёмкость |
-| Compose container memory limit | 2048 MiB |
+| Compose container memory limit | 3072 MiB |
 | Eviction | `allkeys-lru`, без изменения семантики |
 | Persistence | AOF / `everysec` и прежние RDB schedules |
 
-Лимит контейнера — верхняя граница, **не резервирование** 2 GiB при старте.
+Лимит контейнера — верхняя граница, **не резервирование** 3 GiB при старте.
 Он покрывает dataset, возможную копию изменённых страниц при fork и запас под
 allocator, процесс, AOF/client buffers и charged filesystem cache. Это правило проекта, а не универсальная
 гарантия для любого числа clients/подписок. Проверяйте общий бюджет Docker VM и
@@ -72,7 +72,7 @@ CI запускает эту проверку и сохраняет артефа
 704 MiB `used_memory`, включая около 192 MiB AOF buffer; сам контейнер был удалён
 probe. Это подтверждённая нехватка headroom в этой нагрузочной точке, не live outage.
 
-Source Compose budget повышен до **2048 MiB**, при прежних 512 MiB dataset.
+Исторический source Compose budget повышен до **2048 MiB**, при прежних 512 MiB dataset.
 `test_redis_memory_budget.py` требует минимум 4× dataset для всех семи runtime
 profiles; восемь regressions прошли. На PR head `bee9bc0` повторная isolated probe
 прошла: AOF rewrite, BGSAVE и restart successful, `OOMKilled=false`, 6,531 ключ
@@ -80,6 +80,32 @@ profiles; восемь regressions прошли. На PR head `bee9bc0` повт
 Подтверждён именно этот bounded persistence сценарий; spare memory и 32 stream
 capacity не доказаны. Сохранённый live pilot остаётся на 1536 MiB до отдельного
 проверенного rollout; Compose-файлы не меняют запущенный контейнер.
+
+### Новый counterexample, 1 октября 2026
+
+На source `c547f5d` [GitHub backend run 36790270320](https://github.com/RootOne1337/sphere-platform/actions/runs/36790270320)
+unit/real-service шаг прошёл, но неизменённый pressure probe при **2 GiB**
+завершился `ExitCode=137 / OOMKilled=true` во время AOF rewrite с concurrent SET.
+Контейнер удалён; это isolated CI failure, не остановка installed pilot.
+После fill dataset занимал 535,420,640 B, `used_memory` 872,109,392 B;
+`mem_not_counted_for_evict` и AOF buffer — **335,544,320 B** каждый. Сохранённый
+Redis log сообщает долгий asynchronous fsync. Это реальные runtime показатели;
+maxmemory 512 MiB не ограничивает общий RSS/cgroup/persistence working set.
+
+Source ceiling теперь **3072 MiB** во всех семи rendered runtime combinations,
+минимальное admission rule — 6× dataset; dataset 512 MiB, `allkeys-lru`, AOF/
+everysec/RDB schedules и workload probe сохранены. Это правило проекта для
+подтверждённого риска, **не** универсальная формула capacity.
+
+Перед изменением source выполнена та же неизменённая probe с candidate ceiling
+3 GiB в disposable network-none container. SET eviction, BGREWRITEAOF/BGSAVE
+с параллельной записью и restart прошли; 6531 ключ/marker сохранились,
+`OOMKilled=false`, own container/anonymous volume удалены. Docker Desktop kernel
+reported peak **975,912,960 B** (`memory.max_usage_in_bytes`), source/runtime при
+этом тесте не менялись. Это **другой kernel/environment**, его peak не заменяет
+GitHub Linux measurements и не доказывает запас для всех клиентов/32 streams.
+Новая CI probe на source ceiling 3 GiB остаётся обязательной; старый failure не
+стирается повторным запуском. Installed Redis этим source commit не обновляется.
 
 ## Открытые ограничения
 

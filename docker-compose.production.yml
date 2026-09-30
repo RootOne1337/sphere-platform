@@ -27,7 +27,7 @@ services:
         limits:
           cpus: "0.5"
           # Same 512 MiB dataset + persistence/process headroom as the base stack.
-          memory: 2048M
+          memory: 3072M
 
   backend:
     # Ephemeral per-master registries, including SIGKILL leftovers. Counts toward

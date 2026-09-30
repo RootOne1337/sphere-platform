@@ -61,15 +61,16 @@ def test_runtime_redis_profiles_meet_minimum_container_budget(tmp_path, mode):
     dataset = maxmemory_bytes(service)
     container = int(service["deploy"]["resources"]["limits"]["memory"])
     assert dataset > 0
-    # Four times dataset is a minimum admission rule, not measured spare headroom.
-    # CI's 2 GiB probe hit its ceiling; arbitrary client/stream buffers remain open.
-    assert container >= 4 * dataset, {"profile": mode, "maxmemory": dataset, "container": container}
+    # Six times dataset is a project admission rule, not a universal RSS bound.
+    # The 2 GiB CI probe was OOM-killed during AOF rewrite/concurrent SETs;
+    # excluded AOF buffers, fork and dirty pages need separate headroom.
+    assert container >= 6 * dataset, {"profile": mode, "maxmemory": dataset, "container": container}
 
 
 def test_pilot_keeps_existing_dataset_capacity_and_persistence(tmp_path):
     service = render_redis(tmp_path)
     assert maxmemory_bytes(service) == 512 * 1024**2
-    assert int(service["deploy"]["resources"]["limits"]["memory"]) == 2048 * 1024**2
+    assert int(service["deploy"]["resources"]["limits"]["memory"]) == 3072 * 1024**2
     command = service["command"]
     assert command[command.index("--appendonly") + 1] == "yes"
     assert command[command.index("--appendfsync") + 1] == "everysec"
