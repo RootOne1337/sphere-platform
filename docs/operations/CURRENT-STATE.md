@@ -11,6 +11,18 @@
 
 ## Состояние на дату проверки
 
+### Dependency advisory — source follow-up 30 сентября, после 21:11 UTC+5
+
+Повторный security job docs source `60d9698` сообщил CVE-2026-101918 в
+PyJWT 2.14.0. Закреплена 2.15.1, pinned baseline воспроизвёл raw RecursionError;
+после исправления 79 auth/WS/service tests, dependency-aware types, Ruff/pip
+check и полный requirements audit passed. Cache warnings audit сохранены.
+Подробные primary sources, область воздействия и границы source/runtime — в
+[dependency follow-up](../audits/2026-09-30/PYJWT-ADVISORY-FOLLOW-UP.md).
+Это новый gate после принятого `4024ccf`: новый full CI / immutable image /
+rollout пока не объявляются пройденными. Это не доказанная причина Android
+stream/OTA нестабильности.
+
 ### Service probe inspector — принятый UI/API rollout 30 сентября, 20:49–21:05 UTC+5
 
 Карточки сервисов теперь раскрывают ограниченный контракт `details`: SELECT 1 /

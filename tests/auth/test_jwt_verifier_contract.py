@@ -45,3 +45,25 @@ def test_access_verifier_preserves_required_claims(claims, required):
     token = jwt.encode(claims, settings.JWT_SECRET_KEY, algorithm="HS256")
     with pytest.raises(jwt.MissingRequiredClaimError):
         decode_access_token(token)
+
+
+@pytest.mark.parametrize("decoder", [decode_access_token, decode_expired_access_token])
+def test_recursive_signed_payload_uses_the_documented_token_error(claims, decoder):
+    """Auth handlers catch InvalidTokenError, never a raw parser RecursionError."""
+    # A fixed bounded payload also exceeds the C JSON parser's independent
+    # recursion budget on Python 3.12, not only sys.getrecursionlimit().
+    depth = 20_000
+    payload = b'{"nested":' + b"[" * depth + b"]" * depth + b"}"
+    token = jwt.api_jws.PyJWS().encode(payload, settings.JWT_SECRET_KEY, algorithm="HS256")
+    with pytest.raises(jwt.DecodeError):
+        decoder(token)
+
+
+@pytest.mark.parametrize("decoder", [decode_access_token, decode_expired_access_token])
+def test_recursive_payload_with_wrong_signature_is_rejected_before_parsing(claims, decoder):
+    """The application does not use the advisory's pre-verification JWKS path."""
+    depth = 20_000
+    payload = b'{"nested":' + b"[" * depth + b"]" * depth + b"}"
+    token = jwt.api_jws.PyJWS().encode(payload, "not-the-audit-key-" + "b" * 64, algorithm="HS256")
+    with pytest.raises(jwt.InvalidSignatureError):
+        decoder(token)
