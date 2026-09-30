@@ -70,12 +70,54 @@ VirtualDisplay. Native resource ownership, producer timestamp gate и stop
 проверяются отдельно. Четыре resource tests failed на encoder baseline `4c79ef6`,
 после fix проходят; targeted streaming suite passed. Полные debug flavors:
 **735 tests каждый, 734 passed / 1 skipped / 0 failures / 0 errors**, dev APK
-compiled, 4m. Настроенный APK/GPU native canary — отдельные последующие gates, pending не
-считается accepted. Finite 30-second motion activity существует только в debug
+compiled, 4m. Configured GPU APK установлен на PH025; native performance gate
+не прошёл (подробности и display comparison ниже). Finite 30-second motion activity существует только в debug
 source set, private/без recents, с auto finish. Контракт и источники:
 [GPU/video canary](VIDEO-CADENCE-CANARY.md).
 Подробности, невалидный первый motion probe, неизменённые network queues и
 открытый reference-loss risk: [APK/video audit, VIDEO-I04/I05](../audits/2026-09-30/ANDROID-INSPECTION-AND-VIDEO-MODES.md).
+
+
+**GPU native canary, 1 октября 02:29:44–02:30:36 UTC+5:** настроенный debug
+APK `1.2.36-dev / 10236`, source `5118525`, SHA256
+`301097dc1382a966df29ff3a793fcc5e896478cd02de1d9f6743b7426ff52108`,
+8451575 bytes, прежний package и pilot signer. Один адресный OTA grant PH025
+подтвердил completed + online 10236; global android channel/aliases не менялись.
+GPU startup marker найден, CPU fallback marker отсутствует. Private debug
+activity запущена один раз с `am start -W`, Status: ok; auto-return 30 s.
+За 52 s viewer получил 67 packets / 460618 bytes, в выбранных 20 s движения —
+44 picture packets (2.2/s в среднем). Секундные окна включают интервалы без кадров;
+≥20 FPS gate **failed**, читаемость/browser draw не проверены. Это не доказательство
+loss-free всей цепочки: приёмка по GPU marker и wire metadata, один heartbeat
+snapshot capture=43 / rendered=42 / encoded=42 / WS accepted=46, rejected/errors=0,
+FPS stages=3. Поздние API samples повторяют тот же snapshot с age 3–12 s.
+
+**Ключевое различие источников, read-only `dumpsys display`:** PH010/011
+(локальные по оператору) сообщают 960×540, ~60 Hz; PH022/025 (удалённые)
+960×540, **единственный mode 5 Hz**, vsync deadline 201 ms. PH023 offline,
+её capability не получена. Это platform-reported capability, не measured
+animation FPS; тем не менее настоящий 20–30 unique pictures/s source при таком
+режиме не подтверждён. LDPlayer имеет отдельный FPS limit многооконности;
+его фактическая host setting требует проверки оператора. Host settings/APK
+не пытаются обходить незадокументированными properties, новые картинки не
+генерируются дублированием. Нужно изменить лимит на **одном** canary, повторить
+capability readback и тот же motion test; default GPU/mass rollout остаются закрыты.
+
+`gfxinfo` накопленного процесса: 59 frames, 39 janky (66.10%), p50 200 ms,
+p90 2950 ms, p99 4100 ms. Это не изолированная статистика только activity.
+`cpuinfo` показывает исторический accounting window, 23% iowait и load 7.26;
+не трактуется как live CPU Windows/причина stalls. Дополнительные многосекундные
+паузы остаются не локализованы. MediaCodec dump пуст — codec implementation
+не установлена. Wire timestamp сейчас callback wall clock, не producer PTS;
+разделение capture/encode/queue latency требует отдельной instrumentation.
+
+[Sanitized evidence](../audits/2026-10-01/PH025-GPU-CANARY-EVIDENCE.json) содержит
+artifact facts, все секундные окна, dated heartbeat samples и comparison;
+без video pixels, credentials, root logs и signed grant. Source `5118525`
+завершил обязательные GitHub backend/frontend/Android jobs success; preview
+deploy skipped. Android configured build повторно выполнил по 735 tests обеих
+flavors (734 passed / 1 skipped), compile и artifact checks прошли. Эти тесты
+не меняют неуспешный native performance gate.
 
 ### Видеопоток: ownership ввода — source follow-up, 1 октября
 

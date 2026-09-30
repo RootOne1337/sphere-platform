@@ -70,6 +70,48 @@ stale telemetry не выдаётся за согласованность все
 собственный viewer, global STOP не отправляется. Параллельный operator viewer
 и его restart отмечаются в записи теста.
 
+
+**GPU native canary, 1 октября 02:29:44–02:30:36 UTC+5:** настроенный debug
+APK `1.2.36-dev / 10236`, source `5118525`, SHA256
+`301097dc1382a966df29ff3a793fcc5e896478cd02de1d9f6743b7426ff52108`,
+8451575 bytes, прежний package и pilot signer. Один адресный OTA grant PH025
+подтвердил completed + online 10236; global android channel/aliases не менялись.
+GPU startup marker найден, CPU fallback marker отсутствует. Private debug
+activity запущена один раз с `am start -W`, Status: ok; auto-return 30 s.
+За 52 s viewer получил 67 packets / 460618 bytes, в выбранных 20 s движения —
+44 picture packets (2.2/s в среднем). Секундные окна включают интервалы без кадров;
+≥20 FPS gate **failed**, читаемость/browser draw не проверены. Это не доказательство
+loss-free всей цепочки: приёмка по GPU marker и wire metadata, один heartbeat
+snapshot capture=43 / rendered=42 / encoded=42 / WS accepted=46, rejected/errors=0,
+FPS stages=3. Поздние API samples повторяют тот же snapshot с age 3–12 s.
+
+**Ключевое различие источников, read-only `dumpsys display`:** PH010/011
+(локальные по оператору) сообщают 960×540, ~60 Hz; PH022/025 (удалённые)
+960×540, **единственный mode 5 Hz**, vsync deadline 201 ms. PH023 offline,
+её capability не получена. Это platform-reported capability, не measured
+animation FPS; тем не менее настоящий 20–30 unique pictures/s source при таком
+режиме не подтверждён. LDPlayer имеет отдельный FPS limit многооконности;
+его фактическая host setting требует проверки оператора. Host settings/APK
+не пытаются обходить незадокументированными properties, новые картинки не
+генерируются дублированием. Нужно изменить лимит на **одном** canary, повторить
+capability readback и тот же motion test; default GPU/mass rollout остаются закрыты.
+
+`gfxinfo` накопленного процесса: 59 frames, 39 janky (66.10%), p50 200 ms,
+p90 2950 ms, p99 4100 ms. Это не изолированная статистика только activity.
+`cpuinfo` показывает исторический accounting window, 23% iowait и load 7.26;
+не трактуется как live CPU Windows/причина stalls. Дополнительные многосекундные
+паузы остаются не локализованы. MediaCodec dump пуст — codec implementation
+не установлена. Wire timestamp сейчас callback wall clock, не producer PTS;
+разделение capture/encode/queue latency требует отдельной instrumentation.
+
+[Sanitized evidence](../audits/2026-10-01/PH025-GPU-CANARY-EVIDENCE.json) содержит
+artifact facts, все секундные окна, dated heartbeat samples и comparison;
+без video pixels, credentials, root logs и signed grant. Source `5118525`
+завершил обязательные GitHub backend/frontend/Android jobs success; preview
+deploy skipped. Android configured build повторно выполнил по 735 tests обеих
+flavors (734 passed / 1 skipped), compile и artifact checks прошли. Эти тесты
+не меняют неуспешный native performance gate.
+
 ## Приёмка
 
 | Gate | Что требуется | Что не является доказательством |
@@ -77,6 +119,7 @@ stale telemetry не выдаётся за согласованность все
 | Source | Android tests обеих flavors, compile, ресурсы/startup/stop | Native EGL или codec FPS из Robolectric |
 | Artifact | SHA, package, прежний signer, configured discovery, GPU flag | Номер версии в исходниках |
 | Installed | OTA completed receipt + свежая reported version | Принятие grant/download queue |
+| Source display | Capability readback, source workload не ограничен ниже target | Encoder `fps=30` при display mode 5 Hz |
 | Capture/encode/wire | ≥20 pictures/s на движущемся workload, последовательные окна, очередь/errors | Среднее число за idle+motion вместе |
 | Browser | Независимые receive/draw FPS, изображение и input, source/runtime stamp | Native wire count или operator «есть картинка» |
 | Quality | Читаемость мелкого текста, линии и движение без сильных block artifacts | Высокий FPS ценой размытия/низкого bitrate |
@@ -96,3 +139,5 @@ Copyright Google 2013, Apache-2.0; репозиторий archived 15 апрел
 рекомендуется как поддерживаемая runtime dependency. Source Grafika не
 копируется и новая зависимость не добавлена; Kotlin bridge написан в Sphere
 на platform API. Не переносите тесты reference sample на наше устройство.
+
+Host FPS controls: [LDPlayer official multi-instance FPS settings](https://ru.ldplayer.net/support/683.html), checked 1 октября 2026. Статья подтверждает наличие отдельного лимита; конкретное значение 5 Hz получено из Android dump, не из документации.

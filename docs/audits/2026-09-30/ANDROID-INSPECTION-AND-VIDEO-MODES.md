@@ -3,8 +3,10 @@
 **Дата проверки:** 30 сентября 2026, Asia/Yekaterinburg.<br />
 **Source follow-up:** 1 октября 2026; browser gesture ownership, raw FPS gate и PH025 wire canary.<br />
 **Source baseline:** `f092a16`; frontend selection follow-up `3132afc`.<br />
-**Статус:** аудит, source fixes и план приёмки; 1 октября APK 1.2.35-dev установлен
-адресным OTA на PH025. Плавность одиночного потока не принята.
+**Статус:** аудит, source fixes и план приёмки; 1 октября APK 1.2.36-dev установлен
+адресным OTA на PH025. GPU bridge подтверждён; удалённые PH022/025 сообщают
+единственный display mode 5 Hz, локальные PH010/011 — 60 Hz. Плавность и
+чёткость одиночного потока не приняты. [Finite evidence](../2026-10-01/PH025-GPU-CANARY-EVIDENCE.json).
 
 **Android source follow-up:** APK-I01 исправлен в `3148668`: concurrent bounded
 process runner и запрет продолжения DAG при неопределённом результате shell;
@@ -38,7 +40,7 @@ browser acceptance: API `85c8014`, UI `3132afc` на `3015 → UI 3018 / API 180
 post-restart замер находятся в CURRENT-STATE; здесь они не заменены SLA.
 
 **1 октября, 00:24–00:26 UTC+5:** preview восстановлен после отсутствующих старых
-PID/listeners. Текущий ingress `3015 → UI 3019 / API 18080`, UI `3d082c1`,
+PID/listeners. Исторический ingress `3015 → UI 3019 / API 18080`, UI `3d082c1`,
 API `85c8014`. Проверены source archive/compile, login/auth-me, service probes
 и protected observability JSON; fleet 19 total / 14 online / 5 offline /
 0 connecting. CUA отклонил `getTab` для `3015/login` по URL policy. Обход не
@@ -192,6 +194,48 @@ failure, codec stop exception и repeated stop оставляли owned resource
 fixtures. Native EGL, реальный FPS и читаемость fixtures не удостоверяют.
 Default path остаётся CPU, новый configured GPU APK и device acceptance
 учитываются по [отдельным gates](../../operations/VIDEO-CADENCE-CANARY.md).
+
+
+**GPU native canary, 1 октября 02:29:44–02:30:36 UTC+5:** настроенный debug
+APK `1.2.36-dev / 10236`, source `5118525`, SHA256
+`301097dc1382a966df29ff3a793fcc5e896478cd02de1d9f6743b7426ff52108`,
+8451575 bytes, прежний package и pilot signer. Один адресный OTA grant PH025
+подтвердил completed + online 10236; global android channel/aliases не менялись.
+GPU startup marker найден, CPU fallback marker отсутствует. Private debug
+activity запущена один раз с `am start -W`, Status: ok; auto-return 30 s.
+За 52 s viewer получил 67 packets / 460618 bytes, в выбранных 20 s движения —
+44 picture packets (2.2/s в среднем). Секундные окна включают интервалы без кадров;
+≥20 FPS gate **failed**, читаемость/browser draw не проверены. Это не доказательство
+loss-free всей цепочки: приёмка по GPU marker и wire metadata, один heartbeat
+snapshot capture=43 / rendered=42 / encoded=42 / WS accepted=46, rejected/errors=0,
+FPS stages=3. Поздние API samples повторяют тот же snapshot с age 3–12 s.
+
+**Ключевое различие источников, read-only `dumpsys display`:** PH010/011
+(локальные по оператору) сообщают 960×540, ~60 Hz; PH022/025 (удалённые)
+960×540, **единственный mode 5 Hz**, vsync deadline 201 ms. PH023 offline,
+её capability не получена. Это platform-reported capability, не measured
+animation FPS; тем не менее настоящий 20–30 unique pictures/s source при таком
+режиме не подтверждён. LDPlayer имеет отдельный FPS limit многооконности;
+его фактическая host setting требует проверки оператора. Host settings/APK
+не пытаются обходить незадокументированными properties, новые картинки не
+генерируются дублированием. Нужно изменить лимит на **одном** canary, повторить
+capability readback и тот же motion test; default GPU/mass rollout остаются закрыты.
+
+`gfxinfo` накопленного процесса: 59 frames, 39 janky (66.10%), p50 200 ms,
+p90 2950 ms, p99 4100 ms. Это не изолированная статистика только activity.
+`cpuinfo` показывает исторический accounting window, 23% iowait и load 7.26;
+не трактуется как live CPU Windows/причина stalls. Дополнительные многосекундные
+паузы остаются не локализованы. MediaCodec dump пуст — codec implementation
+не установлена. Wire timestamp сейчас callback wall clock, не producer PTS;
+разделение capture/encode/queue latency требует отдельной instrumentation.
+
+[Sanitized evidence](../2026-10-01/PH025-GPU-CANARY-EVIDENCE.json) содержит
+artifact facts, все секундные окна, dated heartbeat samples и comparison;
+без video pixels, credentials, root logs и signed grant. Source `5118525`
+завершил обязательные GitHub backend/frontend/Android jobs success; preview
+deploy skipped. Android configured build повторно выполнил по 735 tests обеих
+flavors (734 passed / 1 skipped), compile и artifact checks прошли. Эти тесты
+не меняют неуспешный native performance gate.
 
 **Дополнительный source risk:** backend `VideoStreamQueue` при congestion
 удаляет non-IDR frames без проверки reference dependency. Transport limits

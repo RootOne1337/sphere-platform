@@ -7,7 +7,10 @@
 > на одном canary. Установленный SHA не сверялся независимо, кандидат не
 > массово опубликован в OTA. Адресное OTA 1.2.35-dev/10235 source `a907736`
 > на PH025 подтвердило completed + fresh version heartbeat; operator продолжает
-> видеть slideshow. 1.2.36 — GPU debug canary в подготовке, не fleet rollout.
+> видеть slideshow. 1.2.36-dev установился на PH025 адресным OTA и запустил
+> GPU bridge: 44 pictures / 20 s движения; его display сообщает единственный
+> mode 5 Hz. Локальные PH010/011 сообщают 60 Hz. Это не fleet rollout и
+> не приёмка smooth video; см. сопоставление в каноническом состоянии.
 > См. [video canary и gates](operations/VIDEO-CADENCE-CANARY.md). Подробная проверка релизного контура:
 > [Android release-readiness audit](audits/2026-09-28/ANDROID-RELEASE-READINESS.md). См.
 > [каноническое состояние и границы доказательств](operations/CURRENT-STATE.md)
