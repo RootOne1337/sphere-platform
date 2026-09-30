@@ -1,8 +1,5 @@
 FROM python:3.12-slim
 
-ARG BUILD_SHA=unknown
-ENV SPHERE_BUILD_SHA=${BUILD_SHA}
-
 WORKDIR /app
 
 # Системные зависимости
@@ -14,6 +11,10 @@ RUN apt-get update && apt-get install -y \
 # Python зависимости (отдельный слой для кэша)
 COPY backend/requirements.txt /tmp/requirements.txt
 RUN pip install --no-cache-dir -r /tmp/requirements.txt
+
+# Stamp source only after dependency layers so each commit can reuse them.
+ARG BUILD_SHA=unknown
+ENV SPHERE_BUILD_SHA=${BUILD_SHA}
 
 # Исходный код (контекст = корень проекта, см. .dockerignore)
 COPY backend/ ./backend/
