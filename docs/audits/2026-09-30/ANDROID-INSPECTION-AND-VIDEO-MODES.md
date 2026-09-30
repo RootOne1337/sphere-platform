@@ -28,12 +28,19 @@ acceptance отмечаются раздельно; runtime APK ещё не за
 выделением элементов. Эти возможности требуют отдельных контрактов и приёмки.
 
 Подтверждение remote video в предыдущих опытах сохраняется. Оно не доказывает
-доставку обновления каждому APK или отсутствие последующих обрывов. Последний
-принятый runtime: API `85c8014`, UI `3132afc` на `3015 → UI 3018 / API 18080`;
+доставку обновления каждому APK или отсутствие последующих обрывов. Историческая
+browser acceptance: API `85c8014`, UI `3132afc` на `3015 → UI 3018 / API 18080`;
 срез 22:29:40 — 14 online / 5 offline / 0 connecting. Ранее конечная
 проверка восстановления 21:40:40–21:41:40 показывала 14 online / 5 offline.
 Точные условия и первый неуспешный
 post-restart замер находятся в CURRENT-STATE; здесь они не заменены SLA.
+
+**1 октября, 00:24–00:26 UTC+5:** preview восстановлен после отсутствующих старых
+PID/listeners. Текущий ingress `3015 → UI 3019 / API 18080`, UI `3d082c1`,
+API `85c8014`. Проверены source archive/compile, login/auth-me, service probes
+и protected observability JSON; fleet 19 total / 14 online / 5 offline /
+0 connecting. CUA отклонил `getTab` для `3015/login` по URL policy. Обход не
+производился; новый screenshot/visual/rotation canary не подтверждены.
 
 Требование продукта сохраняется: Android APK + сервер + браузер. Обязательный
 PC Agent, внешний ADB на станции владельца или ручная установка каждого клона
@@ -321,6 +328,16 @@ Source `VirtualDisplayManager.createConfig` принудительно выби�
 Например, экран 1920×1200 имеет ratio 1.6, а capture 1280×720 — 1.777… .
 Это конкретный geometry gap, который нужно исправлять вместе с input mapping,
 а не одиночной заменой CSS или width/height. Native capture пока не принят.
+
+**Geometry implementation gates, 1 октября:** `H264Encoder.start` принудительно
+задаёт `AVCLevel31`, выбирая encoder by MIME без negotiated geometry. Просто
+подставить native width/height недостаточно. Android
+[VideoCapabilities](https://developer.android.com/reference/android/media/MediaCodecInfo.VideoCapabilities)
+публикует alignment, size/rate support и bitrate range; reported performance
+estimate не является измеренной гарантией плавности. План Sphere: negotiated
+native-or-explicit-scaled профиль, подтверждённые codec dimensions и причины
+fallback, затем atomic geometry/input contract и canary на движущемся экране.
+Новый native профиль не включён и старые скриптовые 720p coordinates не изменены.
 
 Визуальный инспектор должен ограничивать sensitive text и размеры XML; «вся
 информация» означает все доступные разрешённые свойства, не password values,

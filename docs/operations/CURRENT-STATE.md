@@ -7,7 +7,16 @@
 [Главная](../../README.md) · [Каталог документации](../README.md) · [Readiness](READINESS.md) · [Fleet32 gates](../audits/2026-09-20/FLEET32-PREFLIGHT.md) · [PR #19](https://github.com/RootOne1337/sphere-platform/pull/19)
 
 > [!IMPORTANT]
-> Последний принятый pilot backend — **`85c8014`**, переключён 30 сентября в **21:37 UTC+5**, healthy/readback в **21:37:59**, на `18080`. На локальном `3015` работает frontend **`3132afc`** с настоящим API и встроенной Grafana; UI переключён в **22:21 UTC+5**. Browser подтверждает **WEB 3132afcd / API 85c8014e**, события, обновляемые probe details и возврат выбранного сервиса после пустого фильтра. Вход через `3015/login`; прямой Next на `3018` не содержит API relay. После кратких post-restart обрывов семь срезов **21:40:40–21:41:40** показывали 14 online / 5 offline, новые сессии и свежие heartbeat; отдельный срез **22:29:40** — 14 online / 5 offline / 0 connecting. Это конечные проверки, не SLA или новая stream/scripts/OTA acceptance. Публичный frontend, APK и туннели этим UI rollout не обновлялись; прежние Next-процессы сохранены. Более ранние разделы сохраняют свои версии и даты.
+> **Текущий loopback runtime, 1 октября:** `3015 → UI 3019 / API 18080`, frontend **`3d082c1`**, API **`85c8014`**. Preview восстановлен в **00:24 UTC+5** после обнаружения отсутствующих старых PID/listeners 3015/3018; причина их завершения не установлена. В **00:26:04** JSON readback подтвердил login/auth-me прежнего оператора, четыре service probes, protected observability и **19 total / 14 online / 5 offline / 0 connecting**. Это API/source acceptance. **Browser visual QA заблокирована политикой URL CUA** при `getTab` для `3015/login`; обход не выполнялся. Новый screenshot, native capture и live pointer/rotation canary не заявлены. APK, backend, публичный frontend и туннели этим восстановлением не заменены.
+
+Историческая browser acceptance **30 сентября, 22:21–22:29 UTC+5** относится
+к UI `3132afc` на `3015 → UI 3018 / API 18080`: WEB/API stamp, live events,
+PostgreSQL details и hide/restore selection. Тогда старые Next PID были сохранены;
+1 октября они уже отсутствовали. Backend `85c8014` переключён 30 сентября
+**21:37**, healthy/readback **21:37:59**. Семь конечных срезов **21:40:40–21:41:40**
+показывали 14 новых sessions/fresh heartbeat; отдельный срез **22:29:40** —
+14 online / 5 offline / 0 connecting. Это конечные проверки, не uptime SLA,
+не новая stream/scripts/OTA acceptance. Ниже сохранены версии и даты прежних этапов.
 
 ## Состояние на дату проверки
 
@@ -21,7 +30,15 @@
 passed**; TypeScript и targeted ESLint passed (legacy config warning сохранён).
 Подробности и границы fixtures:
 [APK/video audit, VIDEO-I03](../audits/2026-09-30/ANDROID-INSPECTION-AND-VIDEO-MODES.md).
-Живой UI пока сохраняет принятый `3132afc`; source fix не объявляется deployment.
+Source **`3d082c1`** compiled из isolated Git archive, production frontend CI
+tests/types/standalone build success. Обычный Next output для local start
+использован только в private archive, repository config не менялся. В **00:24**
+восстановлен `3015` с UI `3019`, Next PID `26200`, relay PID `37264`;
+backend/APK/tunnels не заменены. API acceptance **00:26:04** и blocked visual
+gate описаны выше. API ответы не выдаются за проверку gestures/picture в браузере.
+Source **`3d082c1`**: все обязательные GitHub backend/frontend/security/Android
+jobs success; preview deploy skipped. 250 относительных documentation targets
+проверены, missing 0; diff whitespace check clean.
 Native dimensions, Android-side mapping и отдельный fleet snapshot mode не
 закрыты этим browser fix.
 
