@@ -70,6 +70,14 @@ scope counts/as-of и build endpoint старым API не возвращают�
 Свежий CI прежнего remote head
 `59ba4c7` завершил исполняемые checks success, deploy skipped.
 
+CI source `a99da81` выявил Bandit B108 на fixed namespace `/tmp/sphere-metrics`.
+Это не создание предсказуемого tempfile: entrypoint использует private mktemp,
+cleanup проверяет owner/permissions/marker. Добавлено только line-specific
+`nosec B108` с объяснением, global rule не отключён. Локальный configured
+`bandit -ll` gate passed (30 low findings остаются вне этого medium/high gate),
+Ruff и dependency-aware mypy clean. Этот CI failure не объявлялся passed;
+в момент его обнаружения backend не переключался.
+
 ### Multiprocess метрики — изолированная image acceptance 30 сентября
 
 Source **`e3b4fe7`** собран из Git archive в production Linux-образ

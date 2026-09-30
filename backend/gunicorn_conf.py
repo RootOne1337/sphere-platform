@@ -8,7 +8,9 @@ from pathlib import Path
 
 from prometheus_client import multiprocess
 
-_REGISTRY_ROOT = Path("/tmp/sphere-metrics")
+# Fixed namespace, not an insecure temporary file: the entrypoint uses mktemp
+# with umask 077, and cleanup verifies private ownership before accessing it.
+_REGISTRY_ROOT = Path("/tmp/sphere-metrics")  # nosec B108
 _REGISTRY_NAME = re.compile(r"master\.[A-Za-z0-9]{8}\Z")
 _logger = logging.getLogger(__name__)
 
