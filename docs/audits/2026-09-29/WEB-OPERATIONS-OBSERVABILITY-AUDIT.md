@@ -18,6 +18,16 @@
 
 ## Вывод для оператора
 
+> Follow-up 30 сентября, 15:33 UTC+5: `/ws/events` через proxy 3012 подтвердил
+> snapshot и три ping/pong за 20 секунд; канал доступен. Source-аудит выявил
+> отсутствие reconciliation после reconnect, неполные invalidations смежных
+> экранов и отсутствие таймаута молча разорванного WS. Исправления и сценарии
+> background/foreground проверены регрессионно; полный frontend 71/511 passed.
+> Live rollout нового frontend заблокирован automatic approval review и не
+> объявляется выполненным. Актуальный статус и проверяемые интервалы обновления:
+> [CURRENT-STATE](../../operations/CURRENT-STATE.md),
+> [realtime contract](../../operations/OBSERVABILITY.md#обновление-данных-в-открытом-вебе).
+
 > Актуализация 30 сентября: основной frontend `3012` пересобирается из проверенных source SHA; последний build и его canary receipt — в [CURRENT-STATE](../../operations/CURRENT-STATE.md). Авторизованные страницы используют настоящий pilot API, API/WS relay включён. Backend остаётся `40357ca`, поэтому согласованная приёмка всей пары source/runtime ещё открыта. Настройки, читаемость таблицы и новые карточки описаны в [отчёте настроек](../2026-09-30/WEB-SETTINGS-ACCOUNT-SECURITY.md), [Fleet Matrix](../2026-09-30/WEB-FLEET-READABILITY.md), [инспекторе](../2026-09-30/WEB-DEVICE-INSPECTOR.md) и [контракте каталога](../../operations/DEVICE-CATALOG.md). Исторические наблюдения ниже сохраняют исходную дату.
 
 Главный риск сейчас — не только недостаток визуальной плотности. Браузерный preview на `3012` и checkout, который разработчик проверяет и меняет, **не согласованы по данным и поведению**. В browser snapshot инфраструктура показывает пять зелёных компонентов, графики истории, `0` туннелей и ресурсы отдельных worker/edge. Текущий backend source возвращает четыре проверки (API responder, PostgreSQL, Redis, диск), пустые массивы истории и `activeTunnels: null`. Локальные pilot-образы помечены `sphere-pilot-20260911-frontend:8fef5eb` и `sphere-pilot-20260911-backend:40357ca`, тогда как source checkout — commit `e27d562` от 29 сентября. Это доказывает расхождение preview/runtime с checkout; пока оно не устранено, screenshot с `3012` нельзя считать приёмкой текущего кода.

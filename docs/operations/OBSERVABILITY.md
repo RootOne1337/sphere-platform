@@ -50,6 +50,54 @@ Tenant administrator/viewer получает `403`; недоступная ав�
 timeout 5 s. Окна 1/6/24 h имеют шаг 15/30/60 s. Ошибка/неполный upstream
 response скрывает прежние графики; `NaN` означает пропуск, а не ноль.
 
+## Обновление данных в открытом вебе
+
+События парка и история метрик имеют разные источники и частоты. Это не
+обещание мгновенного обновления всех таблиц или доставки каждого PubSub event.
+
+| Данные | Доставка / сверка |
+| --- | --- |
+| Presence, задания, команды, VPN, аккаунты/сессии | `/ws/events`; события группируются по затронутым query keys в течение 500 ms |
+| Состояние после обрыва событий | Повторное чтение активных REST queries после подтверждённого snapshot/pong; не повторное исполнение команд |
+| Реестр без события heartbeat | Резервный polling 30 s; карточка устройства 15 s |
+| Задания / progress / live logs | Резервный polling 10 / 2 / 3 s соответственно |
+| Prometheus | Scrape и foreground polling 15 s; история 1/6/24 h имеет resolution 15/30/60 s |
+| Grafana | Dashboard refresh 30 s; подтверждение сессии через Sphere через 60 s после завершения предыдущего запроса |
+| Возврат на вкладку | Перечитываются stale queries; источник Prometheus сверяется всегда, Grafana получает новую cookie до создания iframe |
+
+Канал событий показывает `connecting`, `live`, `reconnecting`, browser
+`offline` и `unauthorized` в шапке. `live` требует ответа API, не только TCP
+open. Auth handshake ограничен 15 s; при отсутствии прикладных сообщений
+проверяется ping каждые 20 s, без ответа за 10 s соединение закрывается и
+восстанавливается с jitter/backoff до 30 s. Close `4001` не повторяет старый
+токен: требуется новая сессия/access token. Token остаётся первым WS message,
+не query string. Статус этого канала не является статусом всех Android,
+видеокадров или исполнения сценариев.
+
+Burst progress events не отменяют незавершённые REST reads. После потери
+событий нет replay cursor: REST восстанавливает текущее состояние, а не
+гарантирует историю каждого пропущенного события. Polling остаётся страховкой
+для обновлений без события и изменений во время уже выполняющегося запроса.
+Неактивные query pages помечаются stale; только mounted queries перечитываются.
+В скрытой вкладке накапливаются лишь query keys, без HTTP fan-out по каждому
+событию. При logout/unmount timers, socket и отложенные refresh очищаются.
+
+Срез Prometheus старше 45 s или с некорректным/будущим временем скрывает
+графики, даже если HTTP response успешен. Target `up` со сбором старше 45 s
+отмечается как задержанный, `unknown` не превращается в healthy. Разрыв серии
+не рисуется непрерывной линией. Скрытый Grafana iframe убирается и заново
+авторизуется на возвращении; просроченная cookie не остаётся в видимом iframe.
+Query cancellation и смена пользователя не допускают показа позднего ответа
+от предыдущей сессии. Проверки этих сценариев не заменяют browser acceptance
+конкретной runtime-сборки.
+
+Поведение перечитывания и invalidation сверено с официальной документацией
+TanStack Query: [возврат на вкладку](https://tanstack.com/query/v5/docs/framework/react/guides/window-focus-refetching)
+и [QueryClient / invalidateQueries](https://tanstack.com/query/v5/docs/reference/QueryClient).
+Wire protocol snapshot/ping/pong проверен по `backend/api/ws/events/router.py`
+и живому авторизованному canary через preview proxy; это основание выбранного
+восстановления без изменения Android или server transport.
+
 Кнопка «Открыть Grafana здесь» получает через `POST /api/observability/session`
 подписанную HttpOnly cookie с `SameSite=Strict`, path `/observability/grafana`,
 TTL 90 s. Она не содержит access token. Пока iframe открыт, Sphere заново

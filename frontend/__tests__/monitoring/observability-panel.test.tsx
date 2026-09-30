@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { api } from '@/lib/api';
 import { HistoryChart, ObservabilityPanel } from '@/src/features/monitoring/ObservabilityPanel';
 import type { ObservabilitySnapshot } from '@/src/features/monitoring/observabilityTypes';
@@ -21,9 +21,15 @@ function mount() {
     return { ...view, client };
 }
 beforeEach(() => {
+    jest.spyOn(Date, 'now').mockReturnValue(Date.parse(fixture.observedAt));
     mockAuth = { user: { id: 'operator', role: 'super_admin' }, sessionVersion: 1 };
     jest.mocked(api.get).mockReset().mockResolvedValue({ data: fixture });
     jest.mocked(api.post).mockReset().mockResolvedValue({ data: { expiresIn: 90 } });
+});
+afterEach(() => {
+    Object.defineProperty(document, 'visibilityState', { value: 'visible', configurable: true });
+    jest.restoreAllMocks();
+    jest.useRealTimers();
 });
 
 it('does not fetch or render platform data for tenant roles', () => {
@@ -72,5 +78,76 @@ it('does not mount an iframe after session renewal fails', async () => {
     mount();
     fireEvent.click(screen.getByRole('button', { name: 'Открыть Grafana здесь' }));
     await screen.findByText('Session denied');
+    expect(screen.queryByTitle('Grafana — наблюдаемость Sphere')).not.toBeInTheDocument();
+});
+
+it('automatically recovers a failed source on the next 15-second poll without a manual refresh', async () => {
+    jest.useFakeTimers({ now: Date.parse(fixture.observedAt) });
+    mount();
+    await act(async () => { await jest.advanceTimersByTimeAsync(1); });
+    expect(screen.getByText('Сбор работает')).toBeInTheDocument();
+    jest.mocked(api.get).mockRejectedValueOnce(new Error('source down'));
+    await act(async () => { await jest.advanceTimersByTimeAsync(15_000); });
+    expect(screen.queryByText('Сбор работает')).not.toBeInTheDocument();
+    expect(screen.getByRole('alert')).toBeInTheDocument();
+    await act(async () => { await jest.advanceTimersByTimeAsync(15_000); });
+    expect(screen.getByText('Сбор работает')).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+});
+
+it('does not show a successful but stale or future-dated snapshot as current', async () => {
+    jest.mocked(api.get).mockResolvedValue({ data: { ...fixture, observedAt: '2026-09-30T03:08:00Z' } });
+    mount();
+    await screen.findByRole('alert');
+    expect(screen.queryByText('Сбор работает')).not.toBeInTheDocument();
+    jest.mocked(api.get).mockResolvedValue({ data: { ...fixture, observedAt: '2026-09-30T03:12:00Z' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Обновить Prometheus' }));
+    await waitFor(() => expect(api.get).toHaveBeenCalledTimes(2));
+    expect(screen.queryByText('Сбор работает')).not.toBeInTheDocument();
+});
+
+it('does not call a target healthy when its last scrape is old or unknown', async () => {
+    jest.mocked(api.get).mockResolvedValue({ data: { ...fixture, targets: [
+        { ...fixture.targets[0], lastScrape: '2026-09-30T03:08:00Z' },
+        { ...fixture.targets[0], job: 'new-source', health: 'unknown', lastScrape: '0001-01-01T00:00:00Z' },
+    ] } });
+    mount();
+    await screen.findByText('Сбор задерживается');
+    expect(screen.getByText('Состояние неизвестно')).toBeInTheDocument();
+    expect(screen.queryByText('Сбор работает')).not.toBeInTheDocument();
+    expect(screen.getByText(/нет подтверждённого времени/)).toBeInTheDocument();
+});
+
+it('unmounts background Grafana and authorizes it again when returning after cookie expiry', async () => {
+    jest.useFakeTimers({ now: Date.parse(fixture.observedAt) });
+    mount();
+    fireEvent.click(screen.getByRole('button', { name: 'Открыть Grafana здесь' }));
+    await act(async () => { await jest.advanceTimersByTimeAsync(1); });
+    expect(screen.getByTitle('Grafana — наблюдаемость Sphere')).toBeInTheDocument();
+    act(() => {
+        Object.defineProperty(document, 'visibilityState', { value: 'hidden', configurable: true });
+        document.dispatchEvent(new Event('visibilitychange'));
+    });
+    expect(screen.queryByTitle('Grafana — наблюдаемость Sphere')).not.toBeInTheDocument();
+    await act(async () => { await jest.advanceTimersByTimeAsync(120_000); });
+    expect(api.post).toHaveBeenCalledTimes(1);
+    act(() => {
+        Object.defineProperty(document, 'visibilityState', { value: 'visible', configurable: true });
+        document.dispatchEvent(new Event('visibilitychange'));
+    });
+    await act(async () => { await jest.advanceTimersByTimeAsync(1); });
+    expect(api.post).toHaveBeenCalledTimes(2);
+    expect(screen.getByTitle('Grafana — наблюдаемость Sphere')).toBeInTheDocument();
+});
+
+it('aborts pending authorization when closing and ignores its late completion', async () => {
+    let resolve!: (value: unknown) => void;
+    jest.mocked(api.post).mockImplementationOnce(() => new Promise(done => { resolve = done; }));
+    mount();
+    fireEvent.click(screen.getByRole('button', { name: 'Открыть Grafana здесь' }));
+    const signal = jest.mocked(api.post).mock.calls[0][2]?.signal as AbortSignal;
+    fireEvent.click(screen.getByRole('button', { name: 'Закрыть Grafana' }));
+    expect(signal.aborted).toBe(true);
+    await act(async () => resolve({ data: { expiresIn: 90 } }));
     expect(screen.queryByTitle('Grafana — наблюдаемость Sphere')).not.toBeInTheDocument();
 });

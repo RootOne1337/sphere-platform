@@ -50,7 +50,8 @@ function SessionQueries({ children }: { children: React.ReactNode }) {
     defaultOptions: {
       queries: {
         retry: 0,
-        refetchOnWindowFocus: false,
+        // Reconcile reads after a suspended tab returns; mutations are not replayed.
+        refetchOnWindowFocus: true,
       },
     },
   }));

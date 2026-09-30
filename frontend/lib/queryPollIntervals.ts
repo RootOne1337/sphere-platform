@@ -1,5 +1,6 @@
 /** Shared UI polling cadence so displayed freshness thresholds cannot drift from queries. */
 export const API_POLL_INTERVALS = {
+  prometheusMs: 15_000,
   dashboardFleetMs: 15_000,
   dashboardHealthMs: 30_000,
   vpnPeersMs: 30_000,
