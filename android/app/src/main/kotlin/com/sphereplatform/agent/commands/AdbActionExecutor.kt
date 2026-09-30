@@ -5,8 +5,9 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.w3c.dom.Element
-import org.xml.sax.InputSource
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserFactory
 import timber.log.Timber
@@ -14,7 +15,6 @@ import java.io.StringReader
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
-import javax.xml.parsers.DocumentBuilderFactory
 import javax.xml.xpath.XPathConstants
 import javax.xml.xpath.XPathFactory
 
@@ -56,18 +56,10 @@ class AdbActionExecutor @Inject constructor(
 
         // UI dump poll interval for findElement
         private const val FIND_ELEMENT_POLL_MS = 500L
-        private const val UI_DUMP_PATH = "/sdcard/sphere_ui_dump.xml"
         // Таймаут одного uiautomator dump: 4s достаточно на LDPlayer.
         // 12s → каждый зависший dump блокировал IO-поток на 12 секунд!
         private const val UI_DUMP_TIMEOUT_SECONDS = 4L
 
-        // Ленивые синглтоны XML-фабрик: DocumentBuilderFactory.newInstance() и
-        // XPathFactory.newInstance() выполняют тяжёлый service discovery через
-        // рефлексию при первом вызове (~30–80ms). Кешируем фабрики — builder и
-        // XPath всё равно создаются каждый раз (не потокобезопасны), но фабрики — нет.
-        private val DOC_BUILDER_FACTORY: DocumentBuilderFactory by lazy {
-            DocumentBuilderFactory.newInstance()
-        }
         private val XPATH_FACTORY: XPathFactory by lazy {
             XPathFactory.newInstance()
         }
@@ -84,6 +76,7 @@ class AdbActionExecutor @Inject constructor(
 
     private val rootLock = Any()
     private val processRunner = BoundedProcessRunner()
+    private val uiDumpOwnership = Mutex()
     // Guarded by rootLock; a failed pipe may outlive Process.isAlive == true.
     private var rootSessionBroken = false
 
@@ -350,46 +343,38 @@ class AdbActionExecutor @Inject constructor(
         null
     }
 
-    /**
-     * UI-дамп: kill zombie uiautomator → dump → wait → read.
-     *
-     * FIX H1: Убийство zombie uiautomator теперь через persistent root session
-     * (без fork). Сам dump + cat всё ещё через отдельный процесс (нужен stdout).
-     * FIX H5: Чтение XML ограничено 512KB для защиты от OOM.
-     */
-    private suspend fun dumpUiXml(): String? = withContext(Dispatchers.IO) {
-        try {
-            // FIX H1: Убиваем зомби через persistent session (нет fork overhead)
-            executeRootCommand("killall uiautomator 2>/dev/null")
-
-            // dump + cat — нужен stdout, поэтому отдельный процесс с timeout
-            val proc = Runtime.getRuntime().exec(
-                arrayOf("su", "-c",
-                    "uiautomator dump $UI_DUMP_PATH >/dev/null 2>&1 && cat $UI_DUMP_PATH")
-            )
-            val finished = proc.waitFor(UI_DUMP_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-            if (!finished) {
-                proc.destroyForcibly()
-                executeRootCommand("killall uiautomator 2>/dev/null")
-                Timber.w("[FindElement] UI dump timed out (${UI_DUMP_TIMEOUT_SECONDS}s)")
-                return@withContext null
-            }
-            // FIX H5: Лимит на размер XML — защита от OOM при раздутом UI-дереве
-            val xml = proc.inputStream.bufferedReader().use { reader ->
-                val buf = CharArray(512 * 1024) // 512KB макс
-                val read = reader.read(buf)
-                if (read > 0) String(buf, 0, read) else ""
-            }
-            if (xml.contains("<hierarchy")) {
-                Timber.d("[FindElement] UI dump OK: ${xml.length} chars")
-                xml
-            } else {
-                Timber.w("[FindElement] UI dump: no <hierarchy> in ${xml.length} chars")
+    /** Serialized private dump with bounded EOF reads, no global process kill. */
+    private suspend fun dumpUiXml(): UiHierarchyXml.Snapshot? = uiDumpOwnership.withLock {
+        withContext(Dispatchers.IO) {
+            val file = java.io.File.createTempFile("sphere-ui-", ".xml", context.cacheDir)
+            try {
+                val quotedPath = "'" + file.absolutePath.replace("'", "'\\''") + "'"
+                val result = processRunner.run(
+                    start = { Runtime.getRuntime().exec(arrayOf("su", "-c",
+                        "uiautomator dump $quotedPath >/dev/null 2>&1 && cat $quotedPath")) },
+                    timeoutMs = UI_DUMP_TIMEOUT_SECONDS * 1000,
+                    stdoutLimit = UiHierarchyXml.MAX_BYTES, stderrLimit = 1024,
+                )
+                if (result.stdout.truncated) {
+                    throw RootCommandOutcomeUnknownException("UI dump exceeded byte budget; result incomplete")
+                }
+                if (result.exitCode != 0) return@withContext null
+                val xml = result.stdout.bytes.toString(Charsets.UTF_8)
+                // One complete validated document is shared by all selectors in this poll.
+                UiHierarchyXml.Snapshot(xml, UiHierarchyXml.parse(xml))
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: ProcessOutputIncompleteException) {
+                throw RootCommandOutcomeUnknownException("UI dump unavailable: ${e.reason}")
+            } catch (e: RootCommandOutcomeUnknownException) {
+                throw e
+            } catch (e: Exception) {
+                Timber.w("[FindElement] UI dump invalid or unavailable")
                 null
+            } finally {
+                // App-owned cache directory permits unlinking even a root-written inode.
+                if (!file.delete() && file.exists()) Timber.w("[FindElement] UI dump cleanup failed")
             }
-        } catch (e: Exception) {
-            Timber.w(e, "[FindElement] UI dump failed")
-            null
         }
     }
 
@@ -404,18 +389,18 @@ class AdbActionExecutor @Inject constructor(
      * - "xpath" — полноценный XPath 1.0 через javax.xml.xpath (встроен в Android SDK).
      *             Поддерживает иерархию, несколько предикатов, позиции, логические операторы.
      *             Примеры (// = descendant-or-self, не используйте / + asterisk в KDoc):
-     *               //android.widget.Button[@text='Login']
-     *               //android.widget.Button[@resource-id='com.example:id/btn_ok']
-     *               //FrameLayout//android.widget.Button[2]
-     *               //android.widget.TextView[contains(@text,'Sign')]
-     *               //android.widget.ListView/android.widget.TextView[last()]
+     *               //node[@class='android.widget.Button' and @text='Login']
+     *               //node[@resource-id='com.example:id/btn_ok']
+     *               //node[@class='android.widget.Button'][2]
+     *               //node[contains(@text,'Sign')]
+     *               //node[@class='android.widget.ListView']/node[last()]
      */
-    private fun parseUiXml(xml: String, selector: String, strategy: String): String? {
+    private fun parseUiXml(snapshot: UiHierarchyXml.Snapshot, selector: String, strategy: String): String? {
         return try {
             if (strategy == "xpath") {
-                parseUiXmlXPath(xml, selector)
+                parseUiXmlXPath(snapshot.document, selector)
             } else {
-                parseUiXmlSimple(xml, selector, strategy)
+                parseUiXmlSimple(snapshot.xml, selector, strategy)
             }
         } catch (e: Exception) {
             Timber.w(e, "[FindElement] XML parse error")
@@ -427,9 +412,7 @@ class AdbActionExecutor @Inject constructor(
      * Полноценный XPath 1.0 через javax.xml.xpath (нет доп. зависимостей, API 8+).
      * Находит первый узел с непустым атрибутом bounds и возвращает координаты центра.
      */
-    private fun parseUiXmlXPath(xml: String, xpath: String): String? {
-        val docBuilder = DOC_BUILDER_FACTORY.newDocumentBuilder()
-        val doc = docBuilder.parse(InputSource(StringReader(xml)))
+    private fun parseUiXmlXPath(doc: org.w3c.dom.Document, xpath: String): String? {
         val xpathExpr = XPATH_FACTORY.newXPath().compile(xpath)
         val nodeList = xpathExpr.evaluate(doc, XPathConstants.NODESET)
             as org.w3c.dom.NodeList
@@ -632,15 +615,14 @@ class AdbActionExecutor @Inject constructor(
 
     /** Считывает произвольный [attribute] из первого узла, найденного по селектору. */
     private fun readNodeAttribute(
-        xml: String,
+        snapshot: UiHierarchyXml.Snapshot,
         selector: String,
         strategy: String,
         attribute: String,
     ): String? {
         return try {
             if (strategy == "xpath") {
-                val doc = DOC_BUILDER_FACTORY.newDocumentBuilder()
-                    .parse(InputSource(StringReader(xml)))
+                val doc = snapshot.document
                 val nodeList = XPATH_FACTORY.newXPath().compile(selector)
                     .evaluate(doc, XPathConstants.NODESET) as org.w3c.dom.NodeList
                 for (i in 0 until nodeList.length) {
@@ -656,7 +638,7 @@ class AdbActionExecutor @Inject constructor(
                     else    -> "text"
                 }
                 val parser = XMLPULL_FACTORY.newPullParser()
-                parser.setInput(StringReader(xml))
+                parser.setInput(StringReader(snapshot.xml))
                 var ev = parser.eventType
                 while (ev != XmlPullParser.END_DOCUMENT) {
                     if (ev == XmlPullParser.START_TAG && parser.name == "node") {

@@ -4,10 +4,11 @@
 **Source baseline:** `f092a16`; frontend selection follow-up `3132afc`.<br />
 **Статус:** аудит кода и план приёмки; новый APK этим проходом не выпущен.
 
-**Android source follow-up после `c500048`:** выполнен первый этап APK-I01 —
-concurrent bounded process runner и запрет продолжения DAG при неопределённом
-результате shell. Исходное наблюдение ниже сохраняется как baseline. Локальная
-и CI/device приёмка отмечаются раздельно; runtime APK ещё не заменён.
+**Android source follow-up:** APK-I01 исправлен в `3148668`: concurrent bounded
+process runner и запрет продолжения DAG при неопределённом результате shell;
+обязательные GitHub jobs success. Последующий APK-I02 source follow-up добавляет
+private serialized dump и validation. Исходные наблюдения ниже сохранены как
+baseline. CI и device acceptance отмечаются раздельно; runtime APK ещё не заменён.
 
 [Текущее состояние](../../operations/CURRENT-STATE.md) ·
 [Device inspector](WEB-DEVICE-INSPECTOR.md) ·
@@ -103,6 +104,32 @@ Fixture обязана проверять большой stdout, большой 
 медленную выдачу, EOF, cancellation и отсутствие живого child/reader после timeout.
 
 ### APK-I02 · P1 · целостность и конкуренция hierarchy dump
+
+**Source follow-up после `3148668`:** общий `/sdcard` path и `killall` удалены.
+Mutex охватывает создание private cache file, process output, parsing и unlink.
+Каждый dump получает свой путь, shell-quoted без operator input; процесс читает
+оба pipes concurrent с execution/read deadline 4 s и retained stdout 512 KiB.
+Oversize/incomplete output не используется для поиска первого элемента.
+
+[UiHierarchyXml](../../../android/app/src/main/kotlin/com/sphereplatform/agent/commands/UiHierarchyXml.kt)
+отвергает DTD/entity declarations и external resolution. SAX preflight проверяет
+полный XML, depth ≤64 / element count ≤10,000 до построения DOM; обход DOM также
+ограничивает полное количество узлов. DOM и XML существуют только в одном poll,
+все XPath candidates этого poll используют один document. Персистентный snapshot
+cache и публичный hierarchy endpoint не добавлены.
+
+Fixtures: partial 7-byte reads, разные private paths, invalid suffix с valid
+first node, oversize output, concurrent ownership, cancellation/unlink. Android
+XML parser через Robolectric API 28: Unicode/predefined entity, DTD/internal/
+external entity rejection, byte budget, root, node и depth limits, включая
+15,000 вложенных nodes. Полные dev/enterprise debug suites: **713 tests каждый,
+712 passed / 1 skipped / 0 failures / 0 errors**, debug compile completed.
+
+**Оставшийся gate:** runner завершает directly owned `su` process, но descendants,
+SELinux/root utility доступ к private cache path и inode cleanup после timeout
+нужно принять на реальном device. Retained XML 512 KiB — не hard limit записи
+нативной утилитой во временный файл. Глобальный kill не возвращается как обход.
+Этот source fix ещё не подтверждает визуальный XPath-inspector или installed APK.
 
 **Source finding.** `dumpUiXml` использует общий `/sdcard/sphere_ui_dump.xml`,
 глобальный `killall uiautomator`, wait до чтения и один `Reader.read(buf)` на

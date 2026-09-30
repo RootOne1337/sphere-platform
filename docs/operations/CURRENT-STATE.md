@@ -11,6 +11,19 @@
 
 ## Состояние на дату проверки
 
+### UI hierarchy — source integrity/ownership fix, 30 сентября
+
+Новый source follow-up удаляет общий `/sdcard/sphere_ui_dump.xml` и глобальный
+`killall uiautomator`. Dump сериализован, пишет private per-request cache file,
+читает до EOF через bounded runner и удаляет файл в finally. XML проходит
+DTD/external entity rejection и SAX depth/node preflight перед DOM; один
+validated DOM используется всеми XPath candidates одного poll.
+Полные dev и enterprise debug suites: **713 tests каждый, 712 passed / 1 skipped,
+0 failures / 0 errors**; dev debug compile completed. Подробнее:
+[APK/video audit](../audits/2026-09-30/ANDROID-INSPECTION-AND-VIDEO-MODES.md).
+Real Android root descendants/SELinux/private path cleanup остаются canary gate;
+новая APK не установлена, hierarchy API и визуальный tree/outline ещё не включены.
+
 ### Android process runner — source fix, 30 сентября, 23:12 UTC+5
 
 После source audit добавлен bounded concurrent stdout/stderr runner для shell,
@@ -23,6 +36,9 @@ Command/stderr больше не включаются в ошибки shell об
 0 failures / 0 errors**; `assembleDevDebug` completed. Это local compiled source,
 не production-signed/настроенный OTA артефакт; установленный парк не обновлялся.
 Android `su` descendants и root timeout cleanup ещё требуют device canary.
+Source **`3148668`** завершил обязательные GitHub backend/frontend/security/
+Android jobs success; preview deploy skipped. Этот CI относится к shell fix,
+а не к последующему hierarchy follow-up и не заменяет device acceptance.
 Продуктовый контракт single-device continuous/native-aspect video, fleet snapshot
 previews и inspect-only XPath зафиксирован в
 [APK/video audit](../audits/2026-09-30/ANDROID-INSPECTION-AND-VIDEO-MODES.md).
@@ -68,7 +84,7 @@ Android unit/signed smoke прошёл с CI signer; это не новая prod
 
 Новый [аудит APK, видео и UI-инспекции](../audits/2026-09-30/ANDROID-INSPECTION-AND-VIDEO-MODES.md)
 связывает actual code paths, текущие limits и следующий план приёмки. Найдены
-root process output/read budget и dump ownership gaps; nominal log retention
+root process output/read budget и dump ownership gaps (source follow-ups выше); nominal log retention
 не гарантирует лимит одной записи или счётчик потерь. Grid/detail используют
 один H.264 тракт, demand profiles ещё не реализованы. XPath в DAG есть; protected
 hierarchy endpoint и визуальный tree/overlay отсутствуют. Готовые OpenATX/Appium/
