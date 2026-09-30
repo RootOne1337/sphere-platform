@@ -35,6 +35,8 @@ jobs:
       - run: npm ci --ignore-scripts --no-audit --no-fund
       - name: React and transport regressions
         run: npx --no-install jest --ci --runInBand
+      - name: Loopback preview relay survives WebSocket resets
+        run: node --test ../tests/containers/test_preview_relay.cjs
       - run: npm run type-check
       - run: npm run build
       - name: Check standalone entry point

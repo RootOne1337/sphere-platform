@@ -7,6 +7,24 @@
 **Объект проверки браузера:** локальный preview `http://127.0.0.1:3012`, только чтение
 **Статус:** source-аудит и точечные исправления; production rollout и проверка удалённых устройств не выполнялись.
 
+> Latest follow-up 30 сентября, 18:09–18:33 UTC+5: pilot backend действительно
+> обновлён до `1ac06ac` после successful CI. Linux suite: 2118 passed / 15
+> Windows-only skipped / 5 warnings, coverage 77.80%; dependency-aware mypy
+> 219 files clean. Exact packaged image и fresh PG/Redis lifecycle прошли;
+> schema/соседние контейнеры/OTA/APK не изменились. Native browser `3015`
+> показывает RAM cgroup, Redis, TX/RX и четыре probes с provenance; anonymous
+> monitoring endpoints теперь 401. Новые scope/as-of/presence и session fields
+> реально видны в реестре: online filter 14/14, область 19. До rollout было
+> 12 online, восстановление до 14 подтверждено семью срезами за одну минуту, не SLA.
+> Найден отдельный unhandled Socket ECONNRESET, завершивший local preview relay;
+> guarded relay восстановлен без остановки Next владельца, RST/no-replay tests
+> добавлены в CI. Exact rare crash синтетически не воспроизведён. Frontend
+> пока `ea7f9cf`, его предупреждение worker-local устарело; разные SHA в header
+> не являются health signal. Public UI/APK/tunnels не обновлялись. Capacity
+> alerts/master maintenance, долгий fleet soak и новые RPS/p95/Android SLO
+> остаются gates. Подробнее: [CURRENT-STATE](../../operations/CURRENT-STATE.md),
+> [relay runbook](../../operations/OBSERVABILITY.md#локальный-uiapi-relay-и-обрывы-websocket).
+
 > Follow-up 30 сентября, 17:26 UTC+5: source `dac2319` устранил 14 dependency-aware
 > type errors и включил проверку тел нетипизированных функций: 219 модулей clean,
 > 372 targeted / 2123 full tests passed. Source `aac52c2` принят в Linux image:

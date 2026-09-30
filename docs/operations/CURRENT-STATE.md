@@ -7,9 +7,79 @@
 [Главная](../../README.md) · [Каталог документации](../README.md) · [Readiness](READINESS.md) · [Fleet32 gates](../audits/2026-09-20/FLEET32-PREFLIGHT.md) · [PR #19](https://github.com/RootOne1337/sphere-platform/pull/19)
 
 > [!IMPORTANT]
-> Это сверка исходников, CI и отдельных runtime-срезов. 30 сентября на отдельном локальном `3015` работает frontend `ea7f9cf` с настоящим pilot API `18080` и встроенной Grafana; прежний `3012` сохранён. Backend, публичный frontend, APK и туннели этим этапом не обновлялись. Отдельные canary не являются приёмкой всего парка. Исторические срезы сохраняют свои даты.
+> Последний принятый pilot backend — **`1ac06ac`**, развёрнут 30 сентября в **18:09 UTC+5** на `18080`. На локальном `3015` работает frontend **`ea7f9cf`** с настоящим API и встроенной Grafana. Публичный frontend, APK и туннели этим rollout не обновлялись; прежние frontend-процессы не заменялись. Отдельные canary и короткие online-срезы не являются приёмкой всего парка. Более ранние разделы сохраняют свои версии и даты.
 
 ## Состояние на дату проверки
+
+### Pilot rollout и реальные данные — 30 сентября, 18:09–18:33 UTC+5
+
+После завершения исполняемых GitHub checks source **`1ac06ac`** пересоздан
+только service `backend` проекта `sphere-pilot-20260911`, без build/dependencies
+при переключении. Развёрнут проверенный image
+**`sha256:69da2cd08f09e151f0fd126a4ae2a001f2bb468f44a8735ff919d97a1194cc3a`**.
+Revision label/env и API build stamp совпали; контейнер healthy, readiness 200.
+Alembic head **`20260921_watchdog_stop`** совпал до/после: миграция не требовалась.
+Соседние container IDs/images/start times, OTA-каталог и hashes APK не изменились.
+Из environment поменялся только `SPHERE_BUILD_SHA`. Старые `sphere-platform`
+и `sphere-tunnel` не изменялись. Private rollout receipt:
+`.local-pilot/metrics-20260930-live-rollout/applied.json`.
+
+**Проверки принятого backend source:** GitHub Backend/Frontend/Android checks
+успешны; deploy job skipped. Linux backend suite — **2118 passed / 15 skipped /
+5 warnings**, **579.94 s**, coverage **77.80%**. Skips — Windows-only проверки,
+не пропущенные отказы Linux. Dependency-aware mypy — **219 files clean**, Ruff,
+security medium/high gate, RLS, Alembic single head и packaged bootstrap прошли.
+Windows full suite source `dac2319` — 2123 passed до добавления десяти lifecycle
+tests; это отдельный результат, не запуск Windows suite на конечном head.
+Exact image canary: две серии по 16 replacements, **176 known requests** каждая,
+четыре workers, totals без дублирования, cleanup/restart; max scrape **22.71 ms**
+при параллельной PG/Redis probe. Fresh packaged PostgreSQL/Redis lifecycle passed.
+Длинный load/soak этими проверками не выполнен.
+
+**Живой API и браузер:** monitoring metrics/nodes без авторизации теперь получают
+**401**; авторизованный ответ содержит `observedAt`, реальные resource counters
+и четыре probes (API/PostgreSQL/Redis/disk) с `details`. В `3015/monitoring`
+видны RAM backend cgroup **546.5 MiB / 2 GiB**, Redis HEALTHY и TX/RX counters;
+сетевая скорость появляется только после двух валидных срезов. Это значения
+backend-контейнера, не всей Windows-станции и не Android. Load average не CPU %.
+В live registry — **4 workers, 16 mmap files / 1 048 576 bytes**, один owner
+directory, duplicate samples нет. Включён **128 MiB tmpfs**. Общие RPS/p95 панели,
+exporters, Loki, tracing и tunnel/Android SLO этим rollout не добавлялись.
+
+**Парк:** фактический pre-rollout snapshot содержал **12 online**, хотя срез
+17:26 показывал 14. После переключения все 14 устройств операторского baseline
+восстановились. Семь API-срезов **18:22:21–18:23:21 UTC+5** показывают 14 online /
+5 offline, presence доступен, даты сессии и свежие heartbeat возвращаются.
+Browser в 18:33 подтвердил online filter **14 из 14**, scope **19**, длительность
+текущей сессии и версии Android-агента. Это наблюдение конечных срезов, не
+доказательство непрерывной связи между ними или устранения причин прошлых
+обрывов. Версии APK смешаны; remote OTA, video и автономные scripts этим
+read-only follow-up заново не принимались.
+
+**Найден и исправлен отдельный отказ preview:** прежний relay завершился при
+`Unhandled 'error' event` / `read ECONNRESET` на Socket во время восстановления
+соединений. Next `ea7f9cf` продолжал работать. Новый
+[`preview_relay.cjs`](../../scripts/pilot/preview_relay.cjs) обрабатывает ошибки
+HTTP/upgraded sockets, закрывает только ошибочную связь и отвечает 502 при
+недоступном upstream, без повторения команд. Он слушает только loopback и
+использует прежние `3014` UI / `18080` API. Relay заменён после проверки,
+что прежний процесс завершён; Next владельца не остановлен. На Windows
+транспортный test прошёл для client/upstream RST с данными в полёте, unavailable
+API и запрета replay. Исходный редкий crash синтетически не воспроизведён:
+основание исправления — actual stderr, passing test подтверждает заявленные
+сценарии, а не универсальную безотказность. Linux gate добавлен в frontend CI.
+
+**Оставшиеся расхождения UI:** `WEB ea7f9cf7` и `API 1ac06acb` имеют разные SHA,
+поэтому header показывает MISMATCH; это provenance, не измерение API health.
+В этой старшей frontend-сборке ещё есть устаревшее предупреждение о worker-local
+counters и неоднозначное «Не измеряется» над известными TX/RX (относится к числу
+туннелей). Их нужно обновить в следующем frontend rollout; сам факт backend
+aggregation не означает готовность всех графиков. Growth counters внутри
+срока master, capacity alerts/maintenance, длительная fleet stability и финальный
+20–30-device stream + scripts acceptance остаются открытыми.
+
+Сырые receipts, operational identity, credentials и полные журналы остаются в
+private `.local-pilot`. Новые screenshots показывают фактический browser runtime.
 
 ### Проверка graceful worker replacement — 30 сентября
 
@@ -23,8 +93,8 @@ Canary теперь допускает сетевую ошибку только 
 в пределах исходного **20 s** deadline замены. HTTP errors не скрываются;
 запросы `/canary/*`, для которых проверяются точные totals, не повторяются.
 После правки два локальных прогона с **64 replacements / 224 requests** каждый
-прошли, max scrape **15.79 ms**. Новый CI проверяется отдельно; live backend
-в этом срезе всё ещё `40357ca`.
+прошли, max scrape **15.79 ms**. Это исторический срез до rollout; успешный CI
+и переключение backend `1ac06ac` записаны в разделе выше.
 
 ### Dependency-aware type gate — source dac2319, 30 сентября
 

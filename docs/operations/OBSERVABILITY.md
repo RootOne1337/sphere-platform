@@ -199,16 +199,17 @@ health, источник dashboard `sphere-prometheus`, provisioned UID
 `sphere-collection`, native роль Viewer, запрет save, авторизацию Sphere и
 историю в iframe. Live receipts фиксируются в CURRENT-STATE с build SHA.
 
-Multi-worker профиль подготовлен в исходниках 30 сентября; см. раздел ниже.
-До проверки нового образа и отдельного rollout HTTP-rate/latency алерты не
-включаются. Затем — структурированные
+Multi-worker профиль прошёл image acceptance и развёрнут в pilot 30 сентября
+18:09 UTC+5 (`1ac06ac`); см. [runtime receipt](CURRENT-STATE.md).
+HTTP-rate/latency панели и алерты требуют отдельной проверки запросов и порогов,
+длительный resource budget ещё не принят. Следующий этап — структурированные
 логи с bounded retention и корреляцией device/task/run/session, DB/cache
 exporters с минимальными правами, tunnel probes и Android stage/SLO metrics.
 
 ### Multiprocess contract — исходники 30 сентября 2026
 
 Production Docker entrypoint перед импортом Python создаёт новый private
-Linux-каталог `/tmp/sphere-prometheus.*` для каждого Gunicorn master.
+Linux-каталог `/tmp/sphere-metrics/master.<random>` для каждого Gunicorn master.
 Заданный извне `PROMETHEUS_MULTIPROC_DIR` не переиспользуется и не удаляется.
 Bootstrap/migration команды проходят без выделения registry. `full.yml` также
 вызывает этот entrypoint в режиме Gunicorn; development/reload остаётся
@@ -278,11 +279,54 @@ duplicate samples, storage/scrape budget после worker recycling и новы
 контейнера и сохранение active neighbour/operator data; SIGKILL проверяется
 отдельно. В CI default — 16 replacements на master, local resource acceptance
 использует 64. Он добавлен в
-Production image bootstrap CI. Результаты source tests и image canary имеют
-разные статусы; текущий pilot `40357ca` этим описанием не обновляется.
+Production image bootstrap CI. Результаты source tests, image canary и live
+rollout имеют разные статусы. Pilot `1ac06ac` принят отдельно: build stamp,
+четыре live workers, один registry и отсутствие duplicate samples проверены
+на развёрнутом контейнере; [даты и ограничения](CURRENT-STATE.md).
 Основание: [официальный multiprocess contract Prometheus Python client](https://prometheus.github.io/client_python/multiprocess/).
 Lifecycle hook: [Gunicorn Arbiter shutdown implementation](https://github.com/benoitc/gunicorn/blob/master/gunicorn/arbiter.py).
 Ephemeral mount и memory budget: [Docker tmpfs documentation](https://docs.docker.com/engine/storage/tmpfs/).
+
+### Локальный UI/API relay и обрывы WebSocket
+
+[`scripts/pilot/preview_relay.cjs`](../../scripts/pilot/preview_relay.cjs) нужен
+только для локального browser preview. Это не PC Agent и не дополнительное
+требование для подключения Android. Он слушает `127.0.0.1`, передаёт
+`/api/v1/*` в pilot backend, `/ws/*` — в тот же backend, остальные HTTP paths —
+в уже запущенный Next (включая `/api/observability/*` и Grafana bridge).
+Backend auth/RBAC сохраняются; для существующего same-origin local routing
+Origin/Referer API-запросов заменяются loopback upstream origin.
+
+После проверки, что listen port свободен и существующий Next принадлежит
+проверенному preview, пример запуска из root репозитория:
+
+```powershell
+node scripts/pilot/preview_relay.cjs --listen-port 3015 --ui-port 3014 --api-port 18080
+```
+
+Не останавливать неизвестный процесс и не запускать второй relay на занятом
+порту. Обновление UI требует самостоятельной проверки source SHA/ownership;
+restart relay не компилирует frontend и не обновляет backend/APK.
+Upgraded socket errors/clientError закрывают только соответствующее соединение;
+ошибка HTTP upstream возвращает 502, если response ещё не начат. Команды не
+повторяются. Разрыв после отправки означает неизвестный исход операции:
+сначала сверить receipt, затем принимать решение о следующем действии.
+SIGINT/SIGTERM закрывают server/proxy и принадлежащие relay sockets.
+
+В реальном старом relay зафиксирован unhandled Socket `ECONNRESET`, после чего
+Next остался alive, а общий preview port перестал отвечать. Новый relay
+развёрнут 30 сентября 18:19 UTC+5 и проверен браузером. Test запускает отдельные
+loopback fixture upstreams и ephemeral relay, проверяет RST с обоих концов,
+сохранение HTTP/страницы UI при потере API и отсутствие POST replay:
+
+```powershell
+node --test tests/containers/test_preview_relay.cjs
+```
+
+Windows test passed; Linux test включён в frontend CI. Exact rare crash не
+воспроизведён baseline test, поэтому результат не объявляется доказательством
+устранения всех транспортных отказов. Private stderr/rollout receipts не
+публикуются. Публичный reverse proxy/Tuna этим локальным relay не заменяются.
 
 Официальные основания конфигурации:
 [Docker Grafana](https://grafana.com/docs/grafana/latest/setup-grafana/installation/docker/),

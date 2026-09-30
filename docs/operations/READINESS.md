@@ -1,9 +1,9 @@
 # Эксплуатационная готовность Sphere
 
-**Навигация обновлена: 28 сентября 2026. Исторические live-снимки ниже сохранены по датам.**
+**Навигация обновлена: 30 сентября 2026. Исторические live-снимки ниже сохранены по датам.**
 
 > [!IMPORTANT]
-> Канонические source/runtime сведения, текущая версия APK в исходниках, последний записанный remote canary, ограничения диагностики и следующий тест 20–30 устройств находятся в [CURRENT-STATE.md](CURRENT-STATE.md). Этот файл — журнал readiness snapshots, не реальное время; перед rollout перечитайте live API, installed artifact hashes, deployed image IDs и receipts. PR #19 прошёл CI на `6b87de7`, но deploy job был пропущен; 14 устройств остаются операторским baseline, а не заново измеренной метрикой этого документационного прохода.
+> Канонические source/runtime сведения, текущая версия APK в исходниках, последний записанный remote canary, ограничения диагностики и следующий тест 20–30 устройств находятся в [CURRENT-STATE.md](CURRENT-STATE.md). Этот файл — журнал readiness snapshots, не реальное время; перед rollout перечитайте live API, installed artifact hashes, deployed image IDs и receipts. Backend `1ac06ac` после successful CI развёрнут в pilot 30 сентября 18:09 UTC+5. На `3015` работает frontend `ea7f9cf`; 14 online подтверждены короткими API/browser срезами после восстановления, не длительным SLA или новым stream/OTA acceptance. Публичный frontend/APK/туннели этим backend rollout не обновлялись.
 
 > [!NOTE]
 > Исторический срез, зафиксированный 27 сентября; он не описывает runtime на 28 сентября.
