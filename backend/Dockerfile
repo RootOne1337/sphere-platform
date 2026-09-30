@@ -32,8 +32,11 @@ ENV PYTHONPATH=/app
 
 EXPOSE 8000
 
+ENTRYPOINT ["/bin/sh", "/app/backend/docker-entrypoint.sh"]
+
 # Production: gunicorn + uvicorn workers, graceful restart при утечке памяти
 CMD ["gunicorn", "backend.main:app", \
+     "--config", "backend/gunicorn_conf.py", \
      "--worker-class", "uvicorn.workers.UvicornWorker", \
      "--workers", "4", \
      "--bind", "0.0.0.0:8000", \

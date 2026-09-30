@@ -5,7 +5,6 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI
-from starlette_exporter import PrometheusMiddleware as _StarlettePrometheus
 from starlette_exporter import handle_metrics
 
 import backend.core.logging_config  # noqa: F401 — TZ-11 SPLIT-4: module-level structlog init
@@ -58,8 +57,8 @@ setup_cors(app)
 # Порядок (add_middleware в Starlette применяется в обратном порядке LIFO):
 #   1) RequestIdMiddleware  — самый внешний (запускается первым)
 #   2) PrometheusMiddleware — timing после request_id
-#   3) StarlettePrometheus  — exposition
-app.add_middleware(_StarlettePrometheus, app_name="sphere", group_paths=True)
+# Exposition uses starlette_exporter's fresh multiprocess registry. Do not add
+# its second HTTP middleware: unmatched raw paths would create unbounded labels.
 app.add_middleware(PrometheusMiddleware)
 app.add_middleware(RequestIdMiddleware)
 app.add_route("/metrics", handle_metrics)

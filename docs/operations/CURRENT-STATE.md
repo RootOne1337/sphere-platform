@@ -11,6 +11,23 @@
 
 ## Состояние на дату проверки
 
+### Multiprocess метрики — source fix 30 сентября, image acceptance ещё выполняется
+
+В исходниках подготовлена агрегация HTTP/DB/аддитивных video counters для
+четырёх Gunicorn workers. Per-device snapshots остаются в diagnostics API;
+production Prometheus использует bounded fleet families. HTTP instrumentation
+теперь использует route templates и учитывает необработанные 500. Два новых
+ASGI regression воспроизводят failures на исходниках до фикса; после изменения
+monitoring/stream suite **75 passed**. Полный Ruff **0.15.2** passed; targeted
+mypy нового кода passed. Полный локальный mypy сообщает **17 errors в 9 старых
+файлах**, за пределами изменённой instrumentation; полностью чистый type gate
+не заявляется. Linux image canary и последующий rollout — отдельные gates.
+
+Backend `40357ca`, APK и туннели на этом этапе сохраняют прежний runtime.
+`3015` продолжает работать на принятом frontend `ea7f9cf`. Resource retention
+при долгом worker recycling ещё требует отдельной приёмки; см.
+[multiprocess contract](OBSERVABILITY.md#multiprocess-contract--исходники-30-сентября-2026).
+
 ### Принята локальная сборка ea7f9cf — 30 сентября, 15:54–15:56 UTC+5
 
 Владелец выполнил guarded updater в своей PowerShell-сессии. Receipt **15:54:12**

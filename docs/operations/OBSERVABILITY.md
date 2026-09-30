@@ -199,13 +199,64 @@ health, источник dashboard `sphere-prometheus`, provisioned UID
 `sphere-collection`, native роль Viewer, запрет save, авторизацию Sphere и
 историю в iframe. Live receipts фиксируются в CURRENT-STATE с build SHA.
 
-Следующий P1 — правильная multi-worker агрегация: общий endpoint registry,
-раздельная семантика gauge (worker/local/global), очистка умерших workers,
-проверка рестартов и отсутствие double counting. Приёмка минимум на четырёх
-worker с известным количеством HTTP requests и сравнению с API receipts.
-До этого HTTP-rate/latency алерты не включаются. Затем — структурированные
+Multi-worker профиль подготовлен в исходниках 30 сентября; см. раздел ниже.
+До проверки нового образа и отдельного rollout HTTP-rate/latency алерты не
+включаются. Затем — структурированные
 логи с bounded retention и корреляцией device/task/run/session, DB/cache
 exporters с минимальными правами, tunnel probes и Android stage/SLO metrics.
+
+### Multiprocess contract — исходники 30 сентября 2026
+
+Production Docker entrypoint перед импортом Python создаёт новый private
+Linux-каталог `/tmp/sphere-prometheus.*` для каждого Gunicorn master.
+Заданный извне `PROMETHEUS_MULTIPROC_DIR` не переиспользуется и не удаляется.
+Bootstrap/migration команды проходят без выделения registry. `full.yml` также
+вызывает этот entrypoint в режиме Gunicorn; development/reload остаётся
+однопроцессным. В `/metrics` `starlette-exporter 0.17.0` создаёт отдельный
+CollectorRegistry с MultiProcessCollector на каждый scrape. Второй HTTP
+middleware удалён: canonical request families — `sphere_http_*`, прежние
+`starlette_*` HTTP families больше не создаются.
+
+| Показатель | Контракт production |
+| --- | --- |
+| `sphere_http_requests_total`, histogram | Сумма всех workers; route template, HTTP method allowlist и `__unmatched__` вместо произвольного URL. Необработанное исключение учитывается как 500 и передаётся handler. |
+| `sphere_http_request_duration_seconds` | Latency до response headers; **не** время передачи streamed body, Android round-trip или end-to-end video latency. |
+| `sphere_db_pool_size`, `sphere_db_pool_checked_out` | `livesum`: общий размер SQLAlchemy pools / текущее число выданных connections. Это не PostgreSQL max connections и не длительность SQL. |
+| `sphere_metrics_worker_processes` | `livesum`: число живых процессов, импортировавших instrumentation; **не** readiness или доступность устройств. |
+| `sphere_fleet_stream_*_total` | Аддитивные счётчики видео всех workers без `device_id`. NAL/stage/reason остаются ограниченными категориями существующей instrumentation. Смена имени явно отделяет их от старых device counters. |
+| `sphere_fleet_stream_active_viewers` | `livesum`, без device labels. Умерший worker исключается через Gunicorn `child_exit`. |
+| Device FPS/session gauges | В multiprocess Prometheus не экспортируются и не создают mmap keys. Подробные Android snapshots и stream diagnostics продолжают работать через device API / Redis. В single-process development старые device metric names сохранены. |
+| Legacy device/task/VPN gauges | `livemax` исключает умножение одинакового global snapshot на число workers, но collector этих семейств ещё не реализован. Их нули **не** являются измерением fleet/queue/VPN; панели и алерты по ним не включать. |
+| Native `process_*`, CPU/RAM | Custom collectors не входят в multiprocess exposition. Нужен отдельный exporter; нельзя выдавать один process за весь backend/host. |
+
+Gunicorn hook удаляет только `live*` gauge files уже завершившегося процесса.
+Counter/histogram files сохраняются до смены master, поэтому recycling worker
+не сбрасывает request totals. Новый master начинает отдельный registry с нуля;
+Prometheus `rate` обрабатывает этот reset. `--preload` не используется.
+Удаление high-cardinality labels самим client в этом режиме не поддерживается,
+поэтому device gauges отделены **до** создания Prometheus objects, а не только
+фильтруются во время scrape.
+
+Ограничение ресурса: counter/histogram файлы умерших workers накапливаются до
+рестарта master; свежий каталог не является автоматическим удалением прежних
+каталогов с writable layer. При высокой нагрузке и recycling нужно измерить
+размер/число файлов, scrape latency и место в `/tmp`, определить maintenance
+окно/retention. Не удалять mmap files работающего master. Короткий canary и
+тест с тысячами device IDs не доказывают многосуточный ресурсный бюджет.
+Это отдельный gate перед rollout на нагруженный парк.
+
+Acceptance запускается на собранном образе, без сети и source mount backend:
+
+```powershell
+python tests/containers/run_multiprocess_metrics_probe.py --image <reviewed-image> --evidence-dir <private-evidence>
+```
+
+Probe проверяет четыре HTTP worker, известные 128 + 32 requests, реальный exit
+и replacement child, сохранение counters, очистку live gauges, отсутствие
+duplicate samples и новый registry после рестарта master. Он добавлен в
+Production image bootstrap CI. Результаты source tests и image canary имеют
+разные статусы; текущий pilot `40357ca` этим описанием не обновляется.
+Основание: [официальный multiprocess contract Prometheus Python client](https://prometheus.github.io/client_python/multiprocess/).
 
 Официальные основания конфигурации:
 [Docker Grafana](https://grafana.com/docs/grafana/latest/setup-grafana/installation/docker/),

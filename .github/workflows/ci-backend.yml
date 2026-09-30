@@ -34,6 +34,10 @@ jobs:
         run: >-
           python tests/containers/run_backend_runtime_probe.py
           --image sphere-backend-bootstrap-ci --evidence-dir image-runtime-evidence
+      - name: Four HTTP workers, child replacement and fresh master metrics
+        run: >-
+          python tests/containers/run_multiprocess_metrics_probe.py
+          --image sphere-backend-bootstrap-ci --evidence-dir multiprocess-metrics-evidence
       - name: PostgreSQL entrypoint initialization and persistent-volume restart
         run: |
           python tests/containers/postgres_init_probe.py --evidence-dir postgres-init-evidence 2>&1 | tee postgres-init-probe.txt
@@ -44,6 +48,7 @@ jobs:
           path: |
             image-bootstrap-probe.txt
             image-runtime-evidence/
+            multiprocess-metrics-evidence/
             postgres-init-evidence/
             postgres-init-probe.txt
           if-no-files-found: warn
