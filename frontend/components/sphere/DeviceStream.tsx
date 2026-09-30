@@ -5,12 +5,14 @@ import type { StreamDecoderStats } from '@/lib/h264-decoder';
 import { useAuthStore } from '@/lib/store';
 import { api } from '@/lib/api';
 import type { StreamFrameDimensions } from '@/src/features/stream/streamAspectRatio';
+import { AndroidNavigationBar } from '@/src/features/stream/AndroidNavigationBar';
 
 interface DeviceStreamProps {
   deviceId: string;
   onTap?: (x: number, y: number) => void;
   enableDiagnostics?: boolean;
   enableScreenshot?: boolean;
+  enableNavigation?: boolean;
   fit?: 'contain' | 'cover' | 'fill';
   onFrameDimensions?: (dimensions: StreamFrameDimensions) => void;
 }
@@ -65,11 +67,13 @@ export function DeviceStream({
   onTap,
   enableDiagnostics = false,
   enableScreenshot = false,
+  enableNavigation = false,
   fit,
   onFrameDimensions,
 }: DeviceStreamProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const wsRef = useRef<WebSocket | null>(null);
+  const renderedSocketRef = useRef<WebSocket | null>(null);
   const decoderRef = useRef<H264Decoder | null>(null);
   const dragRef = useRef<{
     x: number; y: number; pointerId: number; frameWidth: number; frameHeight: number;
@@ -86,6 +90,11 @@ export function DeviceStream({
   const [diagnosticsError, setDiagnosticsError] = useState<string | null>(null);
   const [browserStats, setBrowserStats] = useState<StreamDecoderStats | null>(null);
   const canInteract = connection === 'live' && hasRenderedFrame && !streamError;
+  // Keys need no picture coordinates. A static image may age while the
+  // transport remains healthy; allow navigation, but keep pointer input gated.
+  const canNavigate = hasRenderedFrame && !streamError
+    && (connection === 'live' || connection === 'stale')
+    && renderedSocketRef.current === wsRef.current;
   const onFrameDimensionsRef = useRef(onFrameDimensions);
   const lastFrameDimensionsRef = useRef<StreamFrameDimensions | null>(null);
   onFrameDimensionsRef.current = onFrameDimensions;
@@ -132,6 +141,7 @@ export function DeviceStream({
         // Only a successful canvas render proves a picture. A decoder output
         // that throws during drawImage must not unlock clicks or PNG export.
         ctx.drawImage(frame, 0, 0, canvas.width, canvas.height);
+        renderedSocketRef.current = wsRef.current;
         setConnection('live');
         setHasRenderedFrame(true);
         setStreamError(null);
@@ -212,6 +222,7 @@ export function DeviceStream({
           if (scheduleKeyFrameRecovery === scheduleKeyFrameRequests) scheduleKeyFrameRecovery = undefined;
           newWs.onopen = newWs.onmessage = newWs.onclose = newWs.onerror = null;
           if (wsRef.current === newWs) wsRef.current = null;
+          if (renderedSocketRef.current === newWs) renderedSocketRef.current = null;
           decoder?.reset();
           if (newWs.readyState === WebSocket.OPEN || newWs.readyState === WebSocket.CONNECTING) {
             newWs.close();
@@ -289,6 +300,7 @@ export function DeviceStream({
       clearTimeout(frameStaleTimer);
       clearInterval(watchdog);
       wsRef.current = null;
+      renderedSocketRef.current = null;
       ws?.close();
       decoder?.destroy();
       decoderRef.current = null;
@@ -440,7 +452,8 @@ export function DeviceStream({
   }, [canInteract, deviceId]);
 
   return (
-    <div className={fit ? 'relative h-full w-full min-h-0 min-w-0' : 'relative'}>
+    <div className={fit ? 'flex h-full w-full min-h-0 min-w-0 flex-col' : 'min-w-0'}>
+    <div className={fit ? `relative w-full min-h-0 min-w-0 flex-1${enableNavigation ? '' : ' h-full'}` : 'relative'}>
     <canvas
       ref={canvasRef}
       onPointerDown={handlePointerDown}
@@ -575,6 +588,10 @@ export function DeviceStream({
         )}
       </div>
     )}
+    </div>
+    {enableNavigation && <AndroidNavigationBar key={deviceId} deviceId={deviceId}
+      available={canNavigate && wsRef.current?.readyState === WebSocket.OPEN}
+      isAvailable={() => canNavigate && wsRef.current?.readyState === WebSocket.OPEN} />}
     </div>
   );
 }

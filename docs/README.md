@@ -47,6 +47,7 @@
 
 | Руководство | Что внутри |
 | --- | --- |
+| [Навигация Android в видеопотоке](operations/ANDROID-NAVIGATION.md) | Back/Home/Recents/Menu, root/RBAC, подтверждённый результат, unknown без автоповтора и remote Back proof |
 | [Startup](operations/STARTUP.md) | Первый запуск, повторный старт, env precedence и значение readiness |
 | [Local pilot](operations/LOCAL-PILOT.md) | Установленные версии, веб, APK, учётная запись и отдельный Compose project |
 | [Remote pilot](operations/REMOTE-PILOT.md) | Устройства в другой сети, ingress и ограничения резервирования |
