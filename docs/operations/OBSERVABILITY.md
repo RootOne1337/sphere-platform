@@ -6,8 +6,8 @@
 [Текущее состояние](CURRENT-STATE.md) · [Каталог документации](../README.md) ·
 [Операционный аудит веба](../audits/2026-09-29/WEB-OPERATIONS-OBSERVABILITY-AUDIT.md)
 
-> Принятый runtime 30 сентября, 21:37–21:44 UTC+5: backend `85c8014`, frontend
-> `4024ccf`, маршрут `3015 → UI 3017 / API 18080`. Dependency update не меняет
+> Принятый runtime 30 сентября, UI follow-up 22:21–22:29 UTC+5: backend `85c8014`, frontend
+> `3132afc`, маршрут `3015 → UI 3018 / API 18080`. Dependency update не меняет
 > контракт метрик: PyJWT 2.15.1 / cryptography 50.0.2 проверены в exact image,
 > старый access token и Grafana работают. Семь post-recovery срезов подтвердили
 > 14 **новых** session dates и свежие heartbeat после initial flapping; ранний
@@ -63,6 +63,16 @@ inspector не показывает. Producer исправлен и развёр
 Error присутствие видно, raw exception скрыт, поскольку может содержать DSN/
 credentials. Перечень полей ограничен: этот inspector не является универсальным
 экспортом log/error payload и не подменяет защищённые журналы backend.
+
+UI `3132afc` хранит явный выбор в странице, поэтому ошибка API или пустой фильтр
+не сбрасывают его при размонтировании inspector. Cached probes во время error
+скрываются; восстановление использует свежий payload. Если выбранного ID нет,
+показывается существующий сервис без старых details отсутствующего. Два
+page-level regressions failed на baseline и passed после исправления; 70
+monitoring tests / 528 full Jest tests, types/build и relay test passed.
+Browser подтвердил filter hide/restore и новые PostgreSQL timings, API outage
+покрыт тестом без остановки live backend. Это page session preference, не
+persisted tenant setting. Runtime/receipts — в CURRENT-STATE.
 
 ## Доступ и границы интеграции
 

@@ -7,11 +7,11 @@
 [Главная](../../README.md) · [Каталог документации](../README.md) · [Readiness](READINESS.md) · [Fleet32 gates](../audits/2026-09-20/FLEET32-PREFLIGHT.md) · [PR #19](https://github.com/RootOne1337/sphere-platform/pull/19)
 
 > [!IMPORTANT]
-> Последний принятый pilot backend — **`85c8014`**, переключён 30 сентября в **21:37 UTC+5**, healthy/readback в **21:37:59**, на `18080`. На локальном `3015` работает frontend **`4024ccf`** с настоящим API и встроенной Grafana; UI переключён в **20:49 UTC+5**. Browser подтверждает **WEB 4024ccf8 / API 85c8014e**, события и обновляемые probe details. Вход через `3015/login`; прямой Next на `3017` не содержит API relay. После кратких post-restart обрывов семь срезов **21:40:40–21:41:40** показывают 14 online / 5 offline, новые сессии и свежие heartbeat. Это конечная проверка восстановления, не SLA или stream/scripts/OTA acceptance. Публичный frontend, APK и туннели этим rollout не обновлялись; прежние Next-процессы сохранены. Более ранние разделы сохраняют свои версии и даты.
+> Последний принятый pilot backend — **`85c8014`**, переключён 30 сентября в **21:37 UTC+5**, healthy/readback в **21:37:59**, на `18080`. На локальном `3015` работает frontend **`3132afc`** с настоящим API и встроенной Grafana; UI переключён в **22:21 UTC+5**. Browser подтверждает **WEB 3132afcd / API 85c8014e**, события, обновляемые probe details и возврат выбранного сервиса после пустого фильтра. Вход через `3015/login`; прямой Next на `3018` не содержит API relay. После кратких post-restart обрывов семь срезов **21:40:40–21:41:40** показывали 14 online / 5 offline, новые сессии и свежие heartbeat; отдельный срез **22:29:40** — 14 online / 5 offline / 0 connecting. Это конечные проверки, не SLA или новая stream/scripts/OTA acceptance. Публичный frontend, APK и туннели этим UI rollout не обновлялись; прежние Next-процессы сохранены. Более ранние разделы сохраняют свои версии и даты.
 
 ## Состояние на дату проверки
 
-### Service inspector — сохранение выбора через потерю API, 30 сентября
+### Service inspector — сохранение выбора через потерю API, 30 сентября, 22:21–22:29 UTC+5
 
 Source follow-up исправляет подтверждённую UX ошибку: выбранная проверка
 сервиса терялась, когда ошибка API или пустой результат фильтра размонтировали
@@ -22,12 +22,42 @@ HEALTHY и details по-прежнему скрыты; после восстан
 открытой страницы, не между logout/tenant или полной навигацией.
 
 Два page-level regressions **failed на baseline**, после исправления **70
-monitoring tests passed**, полный frontend **71 suites / 528 Jest tests**;
-TypeScript и targeted ESLint passed (legacy config warning сохранён). Ошибка API
+monitoring tests passed**, полный frontend **71 suites / 528 Jest tests**,
+отдельный Node relay test passed; TypeScript и targeted ESLint passed (legacy
+config warning сохранён). Ошибка API
 воспроизведена через настоящий React Query lifecycle в тесте, без остановки
-живого backend. Browser/compiled rollout этого follow-up ещё не принят;
-работающий UI остаётся `4024ccf`. Последующие receipts должны отдельно подтвердить
-compiled source, маршрут и свежие данные.
+живого backend. GitHub frontend tests/types/production standalone build source
+`3132afc` success. Isolated Git archive compile exit 0, loopback Next `3018`
+и guarded switch собственного relay `3015 → UI 3018 / API 18080` приняты.
+Browser выбрал PostgreSQL, скрыл inspector через пустой фильтр и восстановил
+PostgreSQL после очистки: новые probe timings, pool 10 / checked out 1, ошибок
+console в просмотренном интервале нет. Live API outage этим browser опытом не
+симулировался; его gate покрыт page-level regression. Фактический viewport
+647×884; это не повторная desktop-width приёмка. Старые Next PID/start dates
+сохранены, backend/APK/туннели не перезапускались. Login/auth-me через `3015`
+подтверждён; отдельный finite fleet readback 22:29:40 — 19 total / 14 online /
+5 offline / 0 connecting. Private receipts:
+`.local-pilot/observability-20260930/3132afc-preview-switch-receipt.json`.
+
+Все обязательные GitHub jobs code source **`3132afc`** завершились success:
+backend **2124 passed / 15 skipped / 5 warnings**, **695.96 s**; packaged
+bootstrap, Ruff/mypy, security, RLS и Alembic single head; frontend **71 suites /
+528 Jest tests**, отдельный Node relay test, types и production standalone build.
+Android unit/signed smoke прошёл с CI signer; это не новая production-signed или
+установленная APK. Preview deploy skipped. Этот результат относится к code source,
+а CI последующих documentation-only commits учитывается отдельно.
+
+### Android inspection / video modes — отдельный source-аудит 30 сентября
+
+Новый [аудит APK, видео и UI-инспекции](../audits/2026-09-30/ANDROID-INSPECTION-AND-VIDEO-MODES.md)
+связывает actual code paths, текущие limits и следующий план приёмки. Найдены
+root process output/read budget и dump ownership gaps; nominal log retention
+не гарантирует лимит одной записи или счётчик потерь. Grid/detail используют
+один H.264 тракт, demand profiles ещё не реализованы. XPath в DAG есть; protected
+hierarchy endpoint и визуальный tree/overlay отсутствуют. Готовые OpenATX/Appium/
+AndroidX решения изучены по официальным источникам, лицензии отмечены; чужой
+код не добавлен и обязательный PC Agent/host ADB не введён. Это открытые задачи,
+не принятый новый APK и не доказанная причина исторических обрывов видео.
 
 ### Dependency advisory — source/runtime follow-up 30 сентября, 21:11–21:44 UTC+5
 

@@ -7,7 +7,19 @@
 **Объект проверки браузера:** локальный preview `http://127.0.0.1:3012`, только чтение
 **Статус:** source-аудит и точечные исправления; production rollout и проверка удалённых устройств не выполнялись.
 
-> Latest follow-up 30 сентября, 21:37–21:44 UTC+5: UI `4024ccf` / backend
+> Latest UI follow-up 30 сентября, 22:21–22:29 UTC+5: UI **`3132afc`** / API
+> **`85c8014`**, `3015 → UI 3018 / API 18080`. Выбор service inspector сохраняется
+> после полного пустого фильтра и после ошибки API; cached health при error
+> скрыт. Два regressions failed на baseline; 70 monitoring / 528 full Jest tests,
+> types/lint/build/Node relay test passed, frontend CI success. Browser подтвердил
+> filter restore PostgreSQL + fresh probe data при viewport 647×884; API outage
+> проверен через React Query regression, live backend не останавливался. Login
+> через общий relay работает; срез 22:29:40 — 14 online / 5 offline / 0 connecting.
+> Открытые APK/process/dump/log budgets, grid/detail profiles и реальная UIA2
+> интеграция вынесены в [Android inspection / video audit](../2026-09-30/ANDROID-INSPECTION-AND-VIDEO-MODES.md).
+> Source-аудит не считается новым APK rollout или новым stream/scripts acceptance.
+
+> Backend follow-up 30 сентября, 21:37–21:44 UTC+5: UI `4024ccf` / backend
 > `85c8014` реально работают на `3015 → UI 3017 / API 18080`. PyJWT 2.15.1 и
 > cryptography 50.0.2 проверены в exact image; backend 2124 passed / 15 skipped /
 > 5 warnings, coverage 77.87%, обязательные CI jobs success. Вход со старым
