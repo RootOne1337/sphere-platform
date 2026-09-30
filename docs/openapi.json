@@ -9837,6 +9837,19 @@
               }
             ],
             "title": "Frame Throttle Drops Total"
+          },
+          "capture_throttle_drops_total": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 9007199254740992.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Capture Throttle Drops Total"
           }
         },
         "type": "object",

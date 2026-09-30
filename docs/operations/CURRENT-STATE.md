@@ -39,7 +39,28 @@ failed до fix и проходят после. Новый optional raw skip cou
 legacy encoded drops; older APK без поля остаётся unknown. Оба Android debug
 flavors — **722 tests каждый: 721 passed / 1 skipped**, dev debug compiled;
 backend targeted **40 passed**, frontend **71 suites / 537 passed**, TS/targeted
-lint passed. Эти изменения ещё не удостоверяют installed APK/OTA или 20–30 FPS.
+lint passed. 20–30 FPS этими тестами не удостоверены. Backend CI `a907736`
+остановился на generated OpenAPI: optional counter отсутствовал в schema.
+Экспорт воспроизвёл stale check; schema обновлена, локальный `--check` проходит.
+Frontend и Android CI этого source success. Следующий head проверяется отдельно.
+
+**Адресное OTA PH025:** настроенный APK **1.2.35-dev / 10235**, source
+`a907736`, SHA256 `a8b92f1f3e00859378f1ea45da87ed08c4906dfe300b32cac5ae07aa4981628f`,
+подписан прежним pilot key. Один grant вернул **completed** в **01:27:44 UTC+5**
+с installed code 10235 и recovery-after-process-restart. Свежий JSON readback
+**01:39:53**: PH025 online, 1.2.35, heartbeat 01:39:47, not_streaming после
+закрытия нашего viewer. Опубликован только `android-canary`, global channel,
+GitHub APK/config aliases и остальные устройства не заменялись.
+Последующий короткий motion probe получил 20 picture packets / 22 packets /
+251168 bytes. Его telemetry snapshot был stale и не доказывает совпадение
+всех стадий. Оператор после обновления вновь подтвердил слайд-шоу на PH025.
+
+**Browser FPS source:** независимые last-second receive/draw counters,
+монотонное окно, idle decay до zero, reset при новой session и bounded 1024
+events с явным lower-bound marker. SPS/PPS и invalid packets не считаются
+pictures; failed render не считается draw. Пять новых tests и полный frontend
+**71 suites / 542 passed**, TypeScript/targeted lint passed. Это fixtures,
+не native GPU/WebCodecs benchmark. Source ещё не равен deployed UI.
 Подробности, невалидный первый motion probe, неизменённые network queues и
 открытый reference-loss risk: [APK/video audit, VIDEO-I04/I05](../audits/2026-09-30/ANDROID-INSPECTION-AND-VIDEO-MODES.md).
 

@@ -84,6 +84,47 @@ it('counts malformed binary packets instead of silently losing evidence', () => 
   expect(decoder.stats.invalidPackets).toBe(1);
 });
 
+it('measures picture receipt and successful canvas output over the last second', () => {
+  configure(decoder);
+  for (let index = 0; index < 30; index++) {
+    now = index * 1000 / 30;
+    decoder.handleBinary(packet([index === 0 ? 0x65 : 0x41, index], index * 33));
+    newest().output(newest().chunks[index].timestamp);
+  }
+  expect(decoder.stats).toMatchObject({ receivedPictureFps: 30, renderedFps: 30, renderedFrames: 30 });
+  now = 2_000;
+  expect(decoder.stats).toMatchObject({ receivedPictureFps: 0, renderedFps: 0, renderedFrames: 30 });
+});
+
+it('does not report codec config or malformed traffic as incoming video FPS', () => {
+  configure(decoder);
+  decoder.handleBinary(new Uint8Array([1, 2, 3]).buffer);
+  expect(decoder.stats).toMatchObject({ receivedPictureFps: 0, renderedFps: 0 });
+});
+
+it('reports incoming pictures independently when canvas drawing fails', () => {
+  configure(decoder);
+  rendered.mockImplementationOnce(() => { throw new Error('draw failed'); });
+  decoder.handleBinary(packet([0x65, 1]));
+  newest().output(newest().chunks[0].timestamp);
+  expect(decoder.stats).toMatchObject({ receivedPictureFps: 1, renderedFps: 0, renderErrors: 1 });
+});
+
+it('clears live FPS windows when the socket stream is reset', () => {
+  configure(decoder);
+  decoder.handleBinary(packet([0x65, 1]));
+  newest().output(newest().chunks[0].timestamp);
+  decoder.reset();
+  expect(decoder.stats).toMatchObject({ receivedPictureFps: 0, renderedFps: 0, renderedFrames: 1 });
+});
+
+it('bounds live FPS accounting and explicitly marks a saturated count', () => {
+  for (let index = 0; index < 4000; index++) decoder.handleBinary(packet([0x65, 1], index));
+  expect(decoder.stats).toMatchObject({ receivedPictureFps: 1024, receivedPictureFpsCapped: true, renderedFps: 0 });
+  now = 1000;
+  expect(decoder.stats).toMatchObject({ receivedPictureFps: 0, receivedPictureFpsCapped: false });
+});
+
 it('bounds submissions when a codec stops consuming input', () => {
   configure(decoder);
   for (let i = 0; i < 1000; i++) decoder.handleBinary(packet([0x65, 1], i));

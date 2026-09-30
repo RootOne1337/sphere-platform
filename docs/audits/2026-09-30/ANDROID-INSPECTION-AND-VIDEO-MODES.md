@@ -3,14 +3,15 @@
 **Дата проверки:** 30 сентября 2026, Asia/Yekaterinburg.<br />
 **Source follow-up:** 1 октября 2026; browser gesture ownership, raw FPS gate и PH025 wire canary.<br />
 **Source baseline:** `f092a16`; frontend selection follow-up `3132afc`.<br />
-**Статус:** аудит, source fixes и план приёмки; новый APK этим проходом не выпущен.
+**Статус:** аудит, source fixes и план приёмки; 1 октября APK 1.2.35-dev установлен
+адресным OTA на PH025. Плавность одиночного потока не принята.
 
 **Android source follow-up:** APK-I01 исправлен в `3148668`: concurrent bounded
 process runner и запрет продолжения DAG при неопределённом результате shell;
 обязательные GitHub jobs success. APK-I02 исправлен в `e3dc143`: private serialized
 dump и validation; обязательные GitHub jobs success. APK-I04 follow-up устраняет eager root spawn при создании
 компонента команд. Исходные наблюдения ниже сохранены как baseline. CI и device
-acceptance отмечаются раздельно; runtime APK ещё не заменён.
+acceptance отмечаются раздельно; остальные устройства этим canary не заменены.
 
 [Текущее состояние](../../operations/CURRENT-STATE.md) ·
 [Device inspector](WEB-DEVICE-INSPECTOR.md) ·
@@ -148,12 +149,34 @@ server viewer ownership. Один отсутствующий Prometheus queue-dr
 **Открыто:** короткая шторка не является 30-second continuous-motion workload,
 полный FPS нельзя считать как 26/35 и сравнивать с target во время движения.
 Нужны continuous motion, timestamps по кадрам и capture/render/encoder/wire/
-browser draw rates на одном session/device/profile. Source FPS fix в этом
+browser draw rates на одном session/device/profile. Source FPS fix в исходном
 прогоне на удалённый APK ещё не установлен. Фиксированный 720p capture и CPU
 ImageReader→Bitmap→Canvas bridge требуют отдельного performance benchmark.
 Следующий scope — готовые Android MediaProjection/MediaCodec Surface tools,
 GPU bridge с проверяемым fallback, codec caps и атомарный geometry/input
 contract; не произвольное подключение нового PC Agent и не CSS-only resize.
+
+**Адресный canary после fix:** configured APK 1.2.35-dev / 10235 source
+`a907736`, прежние package/signer, signed discovery v27. Managed artifact hash
+проверен перед единственным PH025 grant. Receipt **01:27:44 UTC+5** completed,
+installed_version_code=10235, recovered_after_process_restart=true. Readback
+**01:39:53** подтвердил свежий online heartbeat с новой версией. Global
+android channel и GitHub manifests не менялись. Следующий short motion probe
+получил 20 pictures / 22 packets / 251168 bytes; оба telemetry samples остались
+со старым heartbeat, поэтому end-to-end stage equality здесь не утверждается.
+Пользователь снова увидел slideshow на PH025 после canary. Это не FPS acceptance.
+
+**Browser FPS follow-up:** decoder считает validated picture access units и
+успешные canvas callbacks за последнюю monotonic секунду отдельно. Idle окна
+затухают до zero, новую session нельзя смешать с предыдущей; bounded 1024
+timestamps показывают lower bound при насыщении. Пять новых regressions,
+полный frontend 71 suites / 542 tests, TS/targeted lint passed. Fake codec
+tests не заменяют настоящий browser draw; visual QA остаётся blocked.
+
+**CI integrity:** backend `a907736` failed generated schema check после
+optional counter. Reproduction failed до regeneration, после `--check`
+passed; endpoint catalog не изменился. Frontend/Android CI source success.
+Full backend tests на failed run не запускались; последующий head отдельно.
 
 **Дополнительный source risk:** backend `VideoStreamQueue` при congestion
 удаляет non-IDR frames без проверки reference dependency. Transport limits

@@ -35,6 +35,7 @@ beforeEach(() => {
   Socket.instances = [];
   mockFrameCallback = null;
   mockStats = {
+    receivedPictureFps: 20, renderedFps: 18,
     binaryMessagesReceived: 7, binaryBytesReceived: 4096, validPackets: 7, invalidPackets: 0,
     spsUnits: 1, ppsUnits: 1, idrUnits: 1, deltaUnits: 4, decodeSubmitted: 5,
     decodedOutputs: 4, renderedFrames: 4, decodeErrors: 0, renderErrors: 0,
@@ -75,6 +76,8 @@ it('shows agent and browser stages only when operator opens diagnostics', async 
   expect(screen.getByText('Capture FPS: 15')).toBeInTheDocument();
   expect(screen.getByText('Raw capture FPS skips: 23')).toBeInTheDocument();
   expect(screen.getByText('Encoded FPS drops: 50')).toBeInTheDocument();
+  expect(screen.getByText('Входной видео FPS (1 с): 20')).toBeInTheDocument();
+  expect(screen.getByText('Отрисовка FPS (1 с): 18')).toBeInTheDocument();
   expect(screen.getByText('Local WS rejected: 1')).toBeInTheDocument();
   expect(screen.getByText(/7 пакетов · 4096 байт/)).toBeInTheDocument();
   expect(screen.getByText('Последний пакет: 0 сек назад')).toBeInTheDocument();

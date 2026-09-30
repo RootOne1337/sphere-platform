@@ -3,6 +3,10 @@ export type FrameCallback = (frame: VideoFrame) => void;
 type PendingDecode = { timestamp: number; receivedAt: number; bytes: number };
 
 export interface StreamDecoderStats {
+  receivedPictureFps: number;
+  renderedFps: number;
+  receivedPictureFpsCapped: boolean;
+  renderedFpsCapped: boolean;
   binaryMessagesReceived: number;
   binaryBytesReceived: number;
   validPackets: number;
@@ -32,6 +36,35 @@ const MAX_DECODE_BYTES = 2 * 1024 * 1024;
 const MAX_DECODE_AGE_MS = 500;
 const RECOVERY_COOLDOWN_MS = 1000;
 
+/** Last-second event count, bounded even before a decoder can be configured. */
+class FrameRateWindow {
+  private times: number[] = [];
+  private cappedAt: number | null = null;
+  private static readonly MAX_SAMPLES = 1024;
+
+  record() {
+    const now = performance.now();
+    this.prune(now);
+    if (this.times.length >= FrameRateWindow.MAX_SAMPLES) {
+      this.times.shift();
+      this.cappedAt = now;
+    }
+    this.times.push(now);
+  }
+
+  private prune(now: number) {
+    while (this.times.length && now - this.times[0] >= 1000) this.times.shift();
+    if (this.cappedAt !== null && now - this.cappedAt >= 1000) this.cappedAt = null;
+  }
+
+  get sample() {
+    this.prune(performance.now());
+    return { fps: this.times.length, capped: this.cappedAt !== null };
+  }
+
+  reset() { this.times = []; this.cappedAt = null; }
+}
+
 export class H264Decoder {
   private decoder: VideoDecoder | null = null;
   private configured = false;
@@ -44,6 +77,8 @@ export class H264Decoder {
   private spsNal: Uint8Array | null = null;
   private ppsNal: Uint8Array | null = null;
   private lastTimestamp: number | null = null;
+  private receivedPictures = new FrameRateWindow();
+  private renderedPictures = new FrameRateWindow();
   private counters = {
     binaryMessagesReceived: 0,
     binaryBytesReceived: 0,
@@ -94,6 +129,7 @@ export class H264Decoder {
             }
             try {
               this.onFrame(frame);
+              this.renderedPictures.record();
               this.counters.renderedFrames++;
               this.counters.lastRenderedAtMs = Date.now();
             } catch {
@@ -140,6 +176,8 @@ export class H264Decoder {
   /** A new socket/encoder must never reuse the previous stream's references. */
   reset() {
     this.retireDecoder();
+    this.receivedPictures.reset();
+    this.renderedPictures.reset();
     this.spsNal = this.ppsNal = null;
     this.retryAt = 0;
   }
@@ -181,6 +219,7 @@ export class H264Decoder {
     const picture = nals.filter(nal => ![7, 8].includes(nal[0] & 0x1f));
     const isKeyFrame = picture.some(nal => (nal[0] & 0x1f) === 5);
     if (!picture.some(nal => [1, 5].includes(nal[0] & 0x1f))) return;
+    this.receivedPictures.record();
 
     // No pre-config frame queue: discard until valid SPS/PPS and a fresh IDR.
     if (!this.spsNal || !this.ppsNal || performance.now() < this.retryAt) {
@@ -252,8 +291,14 @@ export class H264Decoder {
   }
 
   get stats(): StreamDecoderStats {
+    const received = this.receivedPictures.sample;
+    const rendered = this.renderedPictures.sample;
     return {
       ...this.counters,
+      receivedPictureFps: received.fps,
+      renderedFps: rendered.fps,
+      receivedPictureFpsCapped: received.capped,
+      renderedFpsCapped: rendered.capped,
       decoderQueueSize: this.decoder?.decodeQueueSize ?? 0,
       pendingOutputCount: this.pending.length,
     };

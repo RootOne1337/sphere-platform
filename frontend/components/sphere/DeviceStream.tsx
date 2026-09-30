@@ -547,6 +547,8 @@ export function DeviceStream({
                   <div>Браузерный viewer: {browserStats ? `${browserStats.binaryMessagesReceived} пакетов · ${browserStats.binaryBytesReceived} байт` : 'нет данных'}</div>
                   {browserStats && (
                     <div className="grid grid-cols-2 gap-x-3">
+                      <span>Входной видео FPS (1 с): {browserStats.receivedPictureFpsCapped ? '≥' : ''}{browserStats.receivedPictureFps}</span>
+                      <span>Отрисовка FPS (1 с): {browserStats.renderedFpsCapped ? '≥' : ''}{browserStats.renderedFps}</span>
                       <span>Последний пакет: {formatTimestampAgo(browserStats.lastBinaryAtMs)}</span>
                       <span>Последний canvas frame: {formatTimestampAgo(browserStats.lastRenderedAtMs)}</span>
                       <span>NAL SPS/PPS: {browserStats.spsUnits}/{browserStats.ppsUnits}</span>
