@@ -11,6 +11,50 @@
 
 ## Состояние на дату проверки
 
+### Prometheus / Grafana: реальные сервисы и подготовленная интеграция — 30 сентября
+
+На 08:33 UTC+5 запущен отдельный Docker project
+`sphere-observability-20260930`: Prometheus **3.15.0** и Grafana OSS **13.2.3**,
+образы закреплены по digest. Оба контейнера healthy; targets `sphere-backend`
+и `prometheus` — up. Сбор 15 s, TSDB retention 14 d / 2 GB, stdout/stderr
+ограничены 3×10 MB. Backend `40357ca`, APK и туннели не пересоздавались.
+
+Native Prometheus проверен в браузере: `up{job="sphere-backend"}` вернул один
+ряд со значением 1; график показывает реально накопленную историю. Срез 08:19
+содержал 77 точек. Grafana query API вернул 200 и один data frame; provisioned
+dashboard `sphere-collection` содержит пять панелей, Viewer `canEdit=false`,
+попытка save отвергнута 403. `promtool check config` passed. Это приёмка
+отдельных сервисов, **не** встроенной Grafana в основной странице Sphere.
+
+Source **`603a8fc491ae21611886bccd6ef234a5595da00e`** подготовлен: protected
+server history, targets/alerts, iframe с read-only auth proxy, short-lived
+HttpOnly cookie и проверкой super_admin через `/auth/me`. Полный frontend:
+**71 suites / 496 tests passed**, TypeScript и targeted ESLint passed.
+Production builds `459f001` и `603a8fc`: exit 0, 33 маршрута. Для local
+`next start` в архивной копии отключён только `output: standalone`.
+
+**Новая веб-сборка пока не запущена:** переключение Next и параллельный запуск
+не выполнены; ожидается подтверждение локального запуска. Основной `3012`
+сохраняет frontend `6936cac`, Next PID 46164 на 3013, proxy PID 5324.
+Новый iframe, responsive layout и end-to-end auth ещё не прошли browser
+acceptance. Подготовленная сборка не выдаётся за видимый rollout.
+
+Подтверждены два P1:
+
+- Четыре Gunicorn worker без `PROMETHEUS_MULTIPROC_DIR`; общий RPS/p95/CPU/fleet
+  по worker-local counters не подтверждён. Новые графики используют только
+  метрики собственного scrape/TSDB Prometheus, без таких KPI.
+- Старый runtime monitoring API отвечает без авторизации HTTP 200, отдаёт
+  12/8 точек истории без времени среза и Worker/Edge без provenance. Source
+  `603a8fc` отвергает эти старые payloads в UI; source RBAC fix WEB-12 уже есть,
+  но backend rollout не выполнен и runtime endpoint этим не защищён.
+
+На previous head `07ade6f` все GitHub code checks success, deploy skipped
+(сверка 30 сентября); это historical CI, не приёмка нового source. На
+`459f001` Frontend/Backend Tests/bootstrap/lint/security/RLS/guard success,
+Android и Alembic ещё in progress в предыдущем срезе этого прохода. Новый head требует своего CI.
+[Runbook, лицензии, источники и ограничения](OBSERVABILITY.md).
+
 ### Карточка устройства и интерактивные действия — 30 сентября
 
 На `3012` работает production build source **`6936cacd20624ce8de624bcfde2d523b12acf68b`**:

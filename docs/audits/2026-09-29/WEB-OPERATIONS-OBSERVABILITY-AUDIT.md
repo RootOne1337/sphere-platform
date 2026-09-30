@@ -7,6 +7,15 @@
 **Объект проверки браузера:** локальный preview `http://127.0.0.1:3012`, только чтение
 **Статус:** source-аудит и точечные исправления; production rollout и проверка удалённых устройств не выполнялись.
 
+> Follow-up 30 сентября: отдельные Prometheus 3.15.0 / Grafana 13.2.3 уже
+> работают и возвращают реальную историю; source-интеграция в Sphere подготовлена,
+> но новый веб ещё не переключён. Старый monitoring payload отвергается в новом
+> source. Обнаружен отдельный P1: worker-local Prometheus registry при четырёх
+> Gunicorn workers без multiprocess aggregation. Общие RPS/p95/CPU по нему не
+> показываются. Проверки, runtime/CI даты и открытые gates — в
+> [CURRENT-STATE](../../operations/CURRENT-STATE.md), безопасная конфигурация,
+> права доступа и лицензии — в [runbook](../../operations/OBSERVABILITY.md).
+
 ## Вывод для оператора
 
 > Актуализация 30 сентября: основной frontend `3012` пересобирается из проверенных source SHA; последний build и его canary receipt — в [CURRENT-STATE](../../operations/CURRENT-STATE.md). Авторизованные страницы используют настоящий pilot API, API/WS relay включён. Backend остаётся `40357ca`, поэтому согласованная приёмка всей пары source/runtime ещё открыта. Настройки, читаемость таблицы и новые карточки описаны в [отчёте настроек](../2026-09-30/WEB-SETTINGS-ACCOUNT-SECURITY.md), [Fleet Matrix](../2026-09-30/WEB-FLEET-READABILITY.md), [инспекторе](../2026-09-30/WEB-DEVICE-INSPECTOR.md) и [контракте каталога](../../operations/DEVICE-CATALOG.md). Исторические наблюдения ниже сохраняют исходную дату.
