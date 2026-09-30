@@ -20,6 +20,12 @@ PostgreSQL details и hide/restore selection. Тогда старые Next PID �
 
 ## Состояние на дату проверки
 
+**Новый сравнительный срез 1 октября:** одинаковый GPU APK 1.2.36 на local
+PH010 (~60 Hz display) дал 65 pictures / 20 s, remote PH025 (5 Hz) — 44/20 s.
+Оба ниже acceptance: host FPS limit не единственная причина. Source 1.2.37
+готовит bounded texture/draw/swap timing и actual codec name; native результат
+ещё не заявлен. [Workload, ограничения и command RTT](VIDEO-CADENCE-CANARY.md#сравнение-той-же-gpu-сборки-и-измерение-стадий-1-октября).
+
 ### Одиночный поток: картинка подтверждена, плавность остаётся открытой, 1 октября
 
 Оператор подтвердил картинку на `3015`, но сообщил слайд-шоу в «Карточке

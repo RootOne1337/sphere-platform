@@ -112,6 +112,42 @@ deploy skipped. Android configured build повторно выполнил по 
 flavors (734 passed / 1 skipped), compile и artifact checks прошли. Эти тесты
 не меняют неуспешный native performance gate.
 
+## Сравнение той же GPU сборки и измерение стадий, 1 октября
+
+На локальной PH010 установлен **тот же APK 1.2.36 / source 5118525** одним
+адресным OTA, completed + online 10236. Тот же 52-second motion workload
+получил **65 picture packets за 20 s (3.25/s)**, 110 packets / 745483 bytes
+за весь viewer interval, GPU marker найден, CPU fallback отсутствует.
+Следовательно, remote display mode 5 Hz **не единственная причина**:
+общий capture/encode path остаётся медленным даже при local mode ~60 Hz.
+Heartbeat capture=87 / render=85 / encode=83, rates=4, errors/rejected=0 —
+один delayed snapshot, не точная сверка всего viewer interval.
+
+Два отдельных viewer cycles PH025 получили pictures; первые pictures через
+5.625 и 4.704 s, Android PID 31976 до/после одинаков. Operator viewer мог
+работать параллельно: это ограниченное recovery evidence, не leak-free или
+изолированный lifecycle benchmark. Global STOP не отправлялся.
+
+Три read-only echo commands дали local PH010 **375/250/250 ms**, remote PH025
+**313/172/187 ms**. Это полный REST/queue/Android root execution/return путь,
+**не ICMP ping и не input-to-visible latency**; высокая video задержка
+не объясняется этим коротким срезом command RTT.
+
+Source **1.2.37 / 10237** добавляет instrumentation, без изменения bitrate,
+размеров, выбора codec или callback thread: actual MediaCodec name в startup
+log и GPU texture/draw/Surface swap mean/max раз в 5 s. Native calls измеряются
+monotonic clock; aggregate bounded, нет per-frame history/pixels/new timer.
+Skipped submissions не получают вымышленные draw/swap samples; stop flush
+однократный, отдельные counters и negative/capped durations покрыты tests.
+Это измерение вызовов, не producer-to-browser latency. Конфигурированная
+canary APK и native readback проверяются отдельно после сборки; default GPU
+и массовая OTA остаются закрыты до performance/quality acceptance.
+
+Source validation: streaming suite passed; обе debug flavors **739 tests каждая,
+738 passed / 1 skipped / 0 failures / 0 errors**, dev debug compiled, 3m51s.
+126 distinct relative documentation targets существуют. Configured artifact
+validation и native timing evidence не подменяются этим JVM результатом.
+
 ## Приёмка
 
 | Gate | Что требуется | Что не является доказательством |

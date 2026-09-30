@@ -117,6 +117,10 @@ class H264Encoder(
 
         val c = MediaCodec.createEncoderByType(mime)
         try {
+            // Name is platform-selected, not an assumption about hardware. A
+            // bounded startup record makes slow emulator encoders diagnosable.
+            Timber.i("H264Encoder selected codec=%s width=%d height=%d target_fps=%d bitrate_bps=%d",
+                c.name, config.width, config.height, config.fps, config.bitrateBps)
             c.setCallback(encoderCallback)
             c.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
             val surface = c.createInputSurface()

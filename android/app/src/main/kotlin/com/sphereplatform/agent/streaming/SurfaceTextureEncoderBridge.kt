@@ -39,6 +39,14 @@ internal class SurfaceTextureEncoderBridge(
     private val drawQueued = AtomicBoolean(false)
     private val failed = AtomicBoolean(false)
     private val pump = GpuFramePump(throttle, quality)
+    // Only used by the opt-in GPU canary. Separates texture acquisition, GL draw
+    // and codec-Surface swap waits without adding an image buffer or timer.
+    private val timing = GpuCaptureTiming { sample ->
+        Timber.i("GPU capture timing window_ms=%d texture_n=%d texture_mean_ms=%.2f texture_max_ms=%.2f draw_n=%d draw_mean_ms=%.2f draw_max_ms=%.2f swap_n=%d swap_mean_ms=%.2f swap_max_ms=%.2f duration_cap_ms=60000",
+            sample.windowMs, sample.texture.samples, sample.texture.meanMs, sample.texture.maxMs,
+            sample.draw.samples, sample.draw.meanMs, sample.draw.maxMs,
+            sample.swap.samples, sample.swap.meanMs, sample.swap.maxMs)
+    }
     private var display: EGLDisplay? = null
     private var context: EGLContext? = null
     private var window: EGLSurface? = null
@@ -149,6 +157,7 @@ internal class SurfaceTextureEncoderBridge(
     private fun drawFrame() {
         try {
             val texture = checkNotNull(producer)
+            val readStarted = System.nanoTime()
             try {
                 texture.updateTexImage() // Drain producer buffer even if FPS gate skips it.
             } catch (error: Exception) {
@@ -156,25 +165,39 @@ internal class SurfaceTextureEncoderBridge(
                 throw error
             }
             texture.getTransformMatrix(matrix) // Includes producer crop/orientation; no hardcoded flip.
+            val readNs = System.nanoTime() - readStarted
             val timestamp = texture.timestamp
-            pump.frame(timestamp) {
-                GLES20.glViewport(0, 0, width, height)
-                GLES20.glUseProgram(program)
-                GLES20.glActiveTexture(GLES20.GL_TEXTURE0)
-                GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, textureId)
-                GLES20.glUniform1i(samplerLocation, 0)
-                GLES20.glUniformMatrix4fv(matrixLocation, 1, false, matrix, 0)
-                positions.position(0); coordinates.position(0)
-                GLES20.glEnableVertexAttribArray(positionLocation)
-                GLES20.glEnableVertexAttribArray(coordinateLocation)
-                GLES20.glVertexAttribPointer(positionLocation, 2, GLES20.GL_FLOAT, false, 0, positions)
-                GLES20.glVertexAttribPointer(coordinateLocation, 2, GLES20.GL_FLOAT, false, 0, coordinates)
-                GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4)
-                GLES20.glDisableVertexAttribArray(positionLocation)
-                GLES20.glDisableVertexAttribArray(coordinateLocation)
-                checkGl()
-                check(EGLExt.eglPresentationTimeANDROID(display, window, timestamp))
-                check(EGL14.eglSwapBuffers(display, window))
+            var drawNs: Long? = null
+            var swapNs: Long? = null
+            try {
+                pump.frame(timestamp) {
+                    val drawStarted = System.nanoTime()
+                    GLES20.glViewport(0, 0, width, height)
+                    GLES20.glUseProgram(program)
+                    GLES20.glActiveTexture(GLES20.GL_TEXTURE0)
+                    GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, textureId)
+                    GLES20.glUniform1i(samplerLocation, 0)
+                    GLES20.glUniformMatrix4fv(matrixLocation, 1, false, matrix, 0)
+                    positions.position(0); coordinates.position(0)
+                    GLES20.glEnableVertexAttribArray(positionLocation)
+                    GLES20.glEnableVertexAttribArray(coordinateLocation)
+                    GLES20.glVertexAttribPointer(positionLocation, 2, GLES20.GL_FLOAT, false, 0, positions)
+                    GLES20.glVertexAttribPointer(coordinateLocation, 2, GLES20.GL_FLOAT, false, 0, coordinates)
+                    GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4)
+                    GLES20.glDisableVertexAttribArray(positionLocation)
+                    GLES20.glDisableVertexAttribArray(coordinateLocation)
+                    checkGl()
+                    drawNs = System.nanoTime() - drawStarted
+                    val swapStarted = System.nanoTime()
+                    check(EGLExt.eglPresentationTimeANDROID(display, window, timestamp))
+                    try {
+                        check(EGL14.eglSwapBuffers(display, window))
+                    } finally {
+                        swapNs = System.nanoTime() - swapStarted
+                    }
+                }
+            } finally {
+                timing.record(readNs, drawNs, swapNs)
             }
         } catch (error: Exception) {
             // Stop native draws immediately. Manager schedules cleanup/codec
@@ -186,6 +209,7 @@ internal class SurfaceTextureEncoderBridge(
 
     private fun releaseNative() {
         fun release(action: () -> Unit) { runCatching(action).onFailure { Timber.w(it, "GPU capture cleanup failure") } }
+        release { timing.flush() }
         release { producer?.setOnFrameAvailableListener(null) }
         release { input?.release() }; input = null
         release { producer?.release() }; producer = null
