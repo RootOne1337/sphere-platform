@@ -1,0 +1,46 @@
+{
+  "uid": "sphere-collection",
+  "title": "Sphere metrics collection",
+  "tags": ["sphere", "verified-collection"],
+  "timezone": "browser",
+  "schemaVersion": 41,
+  "editable": false,
+  "refresh": "30s",
+  "time": {"from": "now-1h", "to": "now"},
+  "panels": [
+    {
+      "id": 1, "type": "text", "title": "Граница измерений",
+      "gridPos": {"x": 0, "y": 0, "w": 24, "h": 4},
+      "options": {"mode": "markdown", "content": "### Реальный сбор Prometheus\nИстория начинается с запуска этого хранилища. Доступность `/metrics` — не проверка Android-видео или сценария. **Backend имеет несколько процессов без общей агрегации:** RPS, p95, CPU и размер парка по его сырым счётчикам здесь не показываются. Алерт покрывает только потерю сбора метрик."}
+    },
+    {
+      "id": 2, "title": "Доступность backend /metrics", "type": "timeseries",
+      "gridPos": {"x": 0, "y": 4, "w": 12, "h": 8},
+      "datasource": {"type": "prometheus", "uid": "sphere-prometheus"},
+      "targets": [{"refId": "A", "expr": "up{job=\"sphere-backend\"}", "legendFormat": "Сбор backend"}],
+      "fieldConfig": {"defaults": {"min": 0, "max": 1, "custom": {"spanNulls": false}}},
+      "options": {"tooltip": {"mode": "single"}, "legend": {"displayMode": "list", "placement": "bottom"}}
+    },
+    {
+      "id": 3, "title": "Время сбора", "type": "timeseries",
+      "gridPos": {"x": 12, "y": 4, "w": 12, "h": 8},
+      "datasource": {"type": "prometheus", "uid": "sphere-prometheus"},
+      "targets": [{"refId": "A", "expr": "scrape_duration_seconds{job=\"sphere-backend\"}", "legendFormat": "Backend"}],
+      "fieldConfig": {"defaults": {"unit": "s", "min": 0, "custom": {"spanNulls": false}}}
+    },
+    {
+      "id": 4, "title": "Измерений в сборе backend", "type": "timeseries",
+      "gridPos": {"x": 0, "y": 12, "w": 12, "h": 8},
+      "datasource": {"type": "prometheus", "uid": "sphere-prometheus"},
+      "targets": [{"refId": "A", "expr": "scrape_samples_post_metric_relabeling{job=\"sphere-backend\"}", "legendFormat": "После фильтрации"}],
+      "fieldConfig": {"defaults": {"min": 0, "custom": {"spanNulls": false}}}
+    },
+    {
+      "id": 5, "title": "Ряды хранилища Prometheus", "type": "timeseries",
+      "gridPos": {"x": 12, "y": 12, "w": 12, "h": 8},
+      "datasource": {"type": "prometheus", "uid": "sphere-prometheus"},
+      "targets": [{"refId": "A", "expr": "prometheus_tsdb_head_series{job=\"prometheus\"}", "legendFormat": "TSDB head"}],
+      "fieldConfig": {"defaults": {"min": 0, "custom": {"spanNulls": false}}}
+    }
+  ]
+}

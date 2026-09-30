@@ -25,6 +25,7 @@
 | Подключить удалённые Android | [Remote pilot](operations/REMOTE-PILOT.md) | [Signed discovery](architecture/ANDROID-SIGNED-DISCOVERY.md) |
 | Понять оставшиеся проблемы | [Текущее состояние и границы доказательств](operations/CURRENT-STATE.md) | [Fleet32](audits/2026-09-20/FLEET32-PREFLIGHT.md) · [A/B ingress](audits/2026-09-24/REMOTE-INGRESS-AB.md) · [Readiness](operations/READINESS.md) · [Roadmap](../ROADMAP.md) |
 | Проверить полноту веб-панели, источники метрик и расхождение preview с checkout | [Web operations / observability audit — 29 сентября](audits/2026-09-29/WEB-OPERATIONS-OBSERVABILITY-AUDIT.md) | Подтверждённые пробелы, риски масштаба 500–1000 устройств и очерёдность следующей работы |
+| Подключить серверную историю и Grafana прямо в веб | [Prometheus / Grafana](operations/OBSERVABILITY.md) | Docker-стек, права доступа, лицензии, retention и границы multi-worker метрик |
 | Сверить, какая сборка frontend и backend реально открыта | [Build provenance в интерфейсе](operations/BUILD-PROVENANCE.md) | SHA веб-сборки в шапке, SHA API из runtime endpoint и честные состояния unknown/unavailable |
 | Проверить профиль, MFA и API-ключи | [Настройки аккаунта — 30 сентября](audits/2026-09-30/WEB-SETTINGS-ACCOUNT-SECURITY.md) | Контракты API, реальные даты/статусы, подтверждения и отказные сценарии |
 | Проверить читаемость реестра и источники сигнала | [Fleet Matrix — 30 сентября](audits/2026-09-30/WEB-FLEET-READABILITY.md) | Отдельная версия APK, heartbeat/контакт, реальные даты и доступные колонки |

@@ -1,0 +1,22 @@
+global:
+  scrape_interval: 15s
+  scrape_timeout: 5s
+  evaluation_interval: 15s
+rule_files: [/etc/prometheus/rules.yml]
+scrape_configs:
+  - job_name: sphere-backend
+    metrics_path: /metrics
+    sample_limit: 10000
+    static_configs:
+      - targets: [backend:8000]
+    # Current backend is not a multiprocess aggregate. Retain raw counters for
+    # inspection only; no RPS/p95/fleet dashboards or alerts depend on them.
+    # High-cardinality per-device samples are not collected in this first stage.
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: 'process_start_time_seconds|sphere_http_requests_total|sphere_http_request_duration_seconds_(bucket|count|sum)|sphere_db_pool_(size|checked_out)'
+        action: keep
+  - job_name: prometheus
+    sample_limit: 20000
+    static_configs:
+      - targets: [localhost:9090]

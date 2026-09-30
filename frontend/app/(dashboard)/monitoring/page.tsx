@@ -9,6 +9,7 @@ import { Button } from '@/src/shared/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/src/shared/ui/card';
 import { Input } from '@/src/shared/ui/input';
 import { ClusterHeatmap } from '@/src/features/monitoring/ClusterHeatmap';
+import { ObservabilityPanel } from '@/src/features/monitoring/ObservabilityPanel';
 import { deriveNetworkRate, formatBytes, formatBytesPerSecond, getMonitoringTelemetryGaps, type ClusterNode, type MonitoringMetrics, type NetworkCounterSample, type NetworkRate, summarizeMonitoringHealth } from '@/src/features/monitoring/monitoringTypes';
 
 type StatusFilter = 'all' | 'healthy' | 'attention' | 'unavailable';
@@ -222,6 +223,8 @@ export default function MonitoringPage() {
                     </Button>
                 </div>
             </header>
+
+            <ObservabilityPanel />
 
             {(nodesQuery.isError || metricsQuery.isError) && (
                 <div role="alert" className="flex items-start gap-3 rounded-xl border border-amber-300/70 bg-amber-50/70 p-4 text-sm text-amber-950 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">

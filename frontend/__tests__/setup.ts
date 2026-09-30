@@ -12,7 +12,7 @@ const localStorageMock = (() => {
     key: jest.fn((index: number) => Object.keys(store)[index] ?? null),
   };
 })();
-Object.defineProperty(window, 'localStorage', { value: localStorageMock });
+if (typeof window !== 'undefined') Object.defineProperty(window, 'localStorage', { value: localStorageMock });
 
 // ── window.location: мокается локально в тестах, где нужны редиректы ────────
 

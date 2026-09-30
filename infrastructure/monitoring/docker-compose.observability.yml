@@ -1,0 +1,88 @@
+# Isolated, opt-in stack. Does not recreate backend, frontend, DB or tunnels.
+# Supply a private --env-file; see docs/operations/OBSERVABILITY.md.
+services:
+  prometheus:
+    image: prom/prometheus:v3.15.0@sha256:efd719c99d83b060d9daefdcf00360461adf279f45ef5391f8d111892118753e
+    restart: unless-stopped
+    ports: ["127.0.0.1:${OBS_PROMETHEUS_PORT:-19090}:9090"]
+    volumes:
+      - ./collection/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./collection/rules.yml:/etc/prometheus/rules.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=14d
+      - --storage.tsdb.retention.size=2GB
+      - --query.timeout=5s
+      - --query.max-concurrency=4
+      - --query.max-samples=500000
+    networks: [tools, backend]
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 512m
+    cpus: 0.50
+    healthcheck:
+      test: [CMD, wget, -q, --spider, http://localhost:9090/-/ready]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+  grafana:
+    image: grafana/grafana:13.2.3@sha256:b28bae15e219c998fb0e0424ed724930cc61b1f61fb404d47c862f9a23f9e572
+    restart: unless-stopped
+    ports: ["127.0.0.1:${OBS_GRAFANA_PORT:-13000}:3000"]
+    environment:
+      GF_SERVER_ROOT_URL: 'http://127.0.0.1:${OBS_GRAFANA_PORT:-13000}/observability/grafana/'
+      GF_SERVER_SERVE_FROM_SUB_PATH: 'true'
+      GF_SECURITY_ALLOW_EMBEDDING: 'true'
+      GF_SECURITY_ADMIN_USER: sphere-tools-admin
+      GF_SECURITY_ADMIN_PASSWORD__FILE: /run/secrets/grafana_admin_password
+      GF_AUTH_DISABLE_LOGIN_FORM: 'true'
+      GF_AUTH_BASIC_ENABLED: 'false'
+      GF_AUTH_ANONYMOUS_ENABLED: 'false'
+      GF_AUTH_PROXY_ENABLED: 'true'
+      GF_AUTH_PROXY_HEADER_NAME: X-WEBAUTH-USER
+      GF_AUTH_PROXY_HEADER_PROPERTY: username
+      GF_AUTH_PROXY_AUTO_SIGN_UP: 'true'
+      GF_AUTH_PROXY_ENABLE_LOGIN_TOKEN: 'false'
+      GF_AUTH_PROXY_WHITELIST: ${OBS_GRAFANA_PROXY_WHITELIST:?Set exact trusted proxy addresses}
+      GF_USERS_AUTO_ASSIGN_ORG_ROLE: Viewer
+      GF_USERS_ALLOW_SIGN_UP: 'false'
+      GF_USERS_VIEWERS_CAN_EDIT: 'false'
+      GF_ANALYTICS_REPORTING_ENABLED: 'false'
+      GF_ANALYTICS_CHECK_FOR_UPDATES: 'false'
+      GF_NEWS_NEWS_FEED_ENABLED: 'false'
+      GF_PLUGINS_PREINSTALL_DISABLED: 'true'
+      GF_LIVE_MAX_CONNECTIONS: '0'
+      GF_LOG_LEVEL: info
+    volumes:
+      - ./collection/provisioning:/etc/grafana/provisioning:ro
+      - ./collection/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    secrets: [grafana_admin_password]
+    networks: [tools]
+    read_only: true
+    tmpfs: ['/tmp:size=64m,noexec,nosuid']
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 512m
+    cpus: 0.50
+    depends_on:
+      prometheus: { condition: service_healthy }
+    healthcheck:
+      test: [CMD, wget, -q, --spider, http://localhost:3000/observability/grafana/api/health]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+volumes:
+  prometheus-data:
+  grafana-data:
+networks:
+  tools:
+  backend:
+    external: true
+    name: ${OBS_BACKEND_NETWORK:?Set existing backend Docker network}
+secrets:
+  grafana_admin_password:
+    file: ${OBS_GRAFANA_ADMIN_PASSWORD_FILE:?Set private password file}
