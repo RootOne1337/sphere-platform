@@ -6,6 +6,38 @@ Legacy Docker-проекты не менялись. Оператор вручн�
 Сырые журналы, идентификаторы сессий и параметры доступа хранятся только в
 ignored `.local-pilot/rollout/ota-ui-20260927/`.
 
+> [!IMPORTANT]
+> Этот основной срез датирован 27 сентября. Актуальные source/runtime и ingress
+> находятся в [CURRENT-STATE](../../operations/CURRENT-STATE.md); старые версии,
+> маршруты и отказы ниже не выдаются за текущую конфигурацию.
+
+## Live follow-up — 30 сентября, 21:37–21:41 UTC+5
+
+После backend-only rollout `85c8014` (PyJWT 2.15.1 / cryptography 50.0.2)
+первый минутный read-only test не прошёл критерий непрерывности: 14 → 11 →
+14 → 12 online. Его receipt сохранён. Следующая bounded проверка сверяла
+session dates с новым backend StartedAt и heartbeat <45 s: семь срезов
+21:40:40–21:41:40 подтвердили 14 новых сессий / свежих heartbeat при scope 19.
+Это recovery, а не приёмка долгой связи, видео, исполнения скриптов или OTA.
+
+В сохранённом после запуска backend журнале: **26 unrecognized OTA receipts
+от трёх устройств** — 17 failed (8 timeout / 9 download_origin_rejected),
+9 completed. Это сообщения outbox, а не 26 новых установок/rollout requests;
+без подтверждённого grant они не считаются успешной управляемой OTA. Source
+router сохраняет fail-closed поведение: unknown recovery receipt не является
+DAG result и не получает ACK. Direct Redis dispatch не использовался; новые
+OTA commands не отправлялись. Raw logs/grant IDs остаются приватными.
+
+Этот сигнал согласуется с отдельным P2 ниже о старых receipts, но точная
+история происхождения каждого grant не восстановлена данным проходом.
+Следующий OTA gate — read-only reconciliation подписанной выдачи, durable
+receipt, установленной PackageManager версии/SHA и разрешённого artifact origin;
+не стирание очереди и не слепой повтор install. Backend multiprocess registry
+уже принят в pilot и не остаётся worker-local дефектом исходного среза.
+Точные CI/image факты и ограничения — в
+[dependency follow-up](../2026-09-30/PYJWT-ADVISORY-FOLLOW-UP.md) и
+[CURRENT-STATE](../../operations/CURRENT-STATE.md).
+
 ## Решение для оператора
 
 **Fleet32 и массовая OTA пока NO-GO.** На проверке 26 сентября около 19:05 UTC

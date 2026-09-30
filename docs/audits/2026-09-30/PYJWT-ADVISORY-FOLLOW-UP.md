@@ -62,3 +62,35 @@ Full CI и exact packaged-image/runtime acceptance нового dependency sourc
 Нужен новый immutable image, successful gates, controlled backend-only rollout,
 обычный login и восстановление baseline fleet. APK/signing keys, парковые
 команды и public UI этим исправлением не публикуются и не переисполняются.
+
+## Exact-image и живой follow-up — 30 сентября, 21:37–21:44 UTC+5
+
+Source `85c8014` прошёл обязательные GitHub jobs; backend **2124 passed / 15
+Windows-only skipped / 5 warnings**, 703.21 s, coverage **77.87%**. Frontend
+71 suites / 526 Jest tests + Node transport/types/build success, security,
+RLS, Alembic single head, lint/types, packaged bootstrap и Android smoke success.
+Exact image `sha256:b2a0d4bec434c127f522fec5ec8eb3a9c5cc35682b40759acf6c1ee6880e4ccd`
+прошёл fresh PG/Redis lifecycle и две серии по 160 known HTTP requests с четырьмя
+workers, child/master replacement и cleanup; дополнительный recycle loop
+не запускался. Его `scrape_max_ms: 0` не считается измерением производительности.
+
+Readback установленного image выявил также cryptography **50.0.2** вместо
+50.0.1: existing lower-bound requirement допустил выпущенный 30 сентября patch.
+[Changelog производителя](https://cryptography.io/en/latest/changelog/#v50-0-2)
+указывает wheel OpenSSL 4.0.3; это отдельное реальное package difference,
+не скрытое под формулировкой «поменялась только PyJWT». Полный dependency lock
+остаётся воспроизводимостью следующего build, не ретроактивной гарантией.
+
+Пересоздан только собственный pilot backend, DB head/env кроме build SHA/
+соседние контейнеры/OTA hashes сохранены. PyJWT **2.15.1** подтверждена внутри
+работающего контейнера; login, auth-me со старым access token, browser session
+и встроенная Grafana работают. Browser: WEB 4024ccf8 / API 85c8014e.
+
+Начальная проверка 21:38:10–21:39:10 не прошла критерий непрерывности
+(14 → 11 → 14 → 12 online). Последующая bounded read-only проверка требовала
+session date после backend StartedAt и heartbeat <45 s: семь срезов
+21:40:40–21:41:40 — все 14 baseline devices. Первый failure сохранён;
+это recovery acceptance, не uptime/stream/scripts/OTA acceptance. В сохранённом
+backend interval нет raw RecursionError/InvalidSignatureError/traceback, но
+сохранились 26 unknown OTA receipts и две send warnings. Они не замаскированы
+или ACKed. Даты и next gates — в [CURRENT-STATE](../../operations/CURRENT-STATE.md).

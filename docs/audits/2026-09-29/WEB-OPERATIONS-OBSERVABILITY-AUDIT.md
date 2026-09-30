@@ -7,7 +7,20 @@
 **Объект проверки браузера:** локальный preview `http://127.0.0.1:3012`, только чтение
 **Статус:** source-аудит и точечные исправления; production rollout и проверка удалённых устройств не выполнялись.
 
-> Latest follow-up 30 сентября, 20:49–21:05 UTC+5: UI и API `4024ccf` приняты
+> Latest follow-up 30 сентября, 21:37–21:44 UTC+5: UI `4024ccf` / backend
+> `85c8014` реально работают на `3015 → UI 3017 / API 18080`. PyJWT 2.15.1 и
+> cryptography 50.0.2 проверены в exact image; backend 2124 passed / 15 skipped /
+> 5 warnings, coverage 77.87%, обязательные CI jobs success. Вход со старым
+> access token, реальные probe details, обновляемые метрики и Grafana работают.
+> DB head/соседние контейнеры/OTA hashes сохранены. Первые recovery срезы
+> 21:38:10–21:39:10 показали 14 → 11 → 14 → 12; этот failure сохранён.
+> Семь срезов 21:40:40–21:41:40 подтвердили 14 **новых** sessions и свежие
+> heartbeat при scope 19. Это конечная recovery acceptance, не длительный SLA.
+> Unknown OTA receipts сохраняются как отдельный gate; нет нового APK/OTA
+> rollout. Полные версии и evidence: [CURRENT-STATE](../../operations/CURRENT-STATE.md),
+> [dependency follow-up](../2026-09-30/PYJWT-ADVISORY-FOLLOW-UP.md).
+
+> Исторический follow-up 30 сентября, 20:49–21:05 UTC+5: UI и API `4024ccf` приняты
 > в local pilot, browser WEB/API 4024ccf8. Service inspector раскрывает настоящие
 > pool/PING/memory/disk поля; исправление Redis false zero развёрнуто. Frontend
 > 71 suites / 526 Jest tests + Node transport/types/build; backend 2120 passed /

@@ -6,6 +6,15 @@
 [Текущее состояние](CURRENT-STATE.md) · [Каталог документации](../README.md) ·
 [Операционный аудит веба](../audits/2026-09-29/WEB-OPERATIONS-OBSERVABILITY-AUDIT.md)
 
+> Принятый runtime 30 сентября, 21:37–21:44 UTC+5: backend `85c8014`, frontend
+> `4024ccf`, маршрут `3015 → UI 3017 / API 18080`. Dependency update не меняет
+> контракт метрик: PyJWT 2.15.1 / cryptography 50.0.2 проверены в exact image,
+> старый access token и Grafana работают. Семь post-recovery срезов подтвердили
+> 14 **новых** session dates и свежие heartbeat после initial flapping; ранний
+> failure сохранён. Нельзя принимать только первый online count после restart
+> или выдавать минутный recovery за SLA. Полные версии/CI/ресурсные gates — в
+> [CURRENT-STATE](CURRENT-STATE.md); source введения probe UI ниже — `4024ccf`.
+
 ## Что подключается
 
 `/monitoring` сохраняет существующие проверки API и добавляет серверную историю
@@ -24,7 +33,7 @@ Prometheus, цели сбора, активные алерты и Grafana в т�
 
 Исторический пробел до rollout 30 сентября 18:09 UTC+5: backend имел четыре
 Gunicorn worker без multiprocess directory и отдавал registry выбранного worker.
-Backend `4024ccf` уже использует общий multiprocess registry; exact image и
+Backend `85c8014` использует общий multiprocess registry; exact image и
 live rollout записаны в [CURRENT-STATE](CURRENT-STATE.md).
 **Панели общих RPS, p95, CPU и количества устройств пока не подключены.**
 Сырые HTTP/pool метрики сохраняются для исследования; prepared dashboard и
@@ -34,7 +43,7 @@ device series не собираются этим профилем.
 Исторический deployed monitoring API отдельно отдавал 12/8 точек истории без
 `observedAt`, фиксированные worker/edge cards и нулевое число туннелей. Новый
 frontend отвергает такой metrics payload и node list без `details` источника
-probe. Новый contract развёрнут в pilot `4024ccf`; frontend `4024ccf` на `3015`
+probe. Новый contract введён в pilot `4024ccf` и сохранён в текущем `85c8014`; frontend `4024ccf` на `3015`
 проверен с настоящими RAM/Redis/TX/RX и четырьмя probes. Неполное покрытие метрик
 не отменяет независимый сбор Prometheus и не превращается в «всё здорово».
 

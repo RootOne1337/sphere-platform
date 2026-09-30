@@ -7,11 +7,11 @@
 [Главная](../../README.md) · [Каталог документации](../README.md) · [Readiness](READINESS.md) · [Fleet32 gates](../audits/2026-09-20/FLEET32-PREFLIGHT.md) · [PR #19](https://github.com/RootOne1337/sphere-platform/pull/19)
 
 > [!IMPORTANT]
-> Последний принятый pilot backend — **`4024ccf`**, развёрнут 30 сентября в **21:02 UTC+5** на `18080`. На локальном `3015` работает frontend **`4024ccf`** с настоящим API и встроенной Grafana: UI переключён в **20:49 UTC+5**, browser подтверждает **WEB/API 4024ccf8**. Вход через `3015/login`; прямой Next на `3017` не содержит API relay. Публичный frontend, APK и туннели этим rollout не обновлялись; прежние Next-процессы сохранены. После восстановления семь срезов **21:04:49–21:05:49** показывают 14 online / 5 offline. Это конечная проверка восстановления, не SLA или stream/scripts/OTA acceptance. Более ранние разделы сохраняют свои версии и даты.
+> Последний принятый pilot backend — **`85c8014`**, переключён 30 сентября в **21:37 UTC+5**, healthy/readback в **21:37:59**, на `18080`. На локальном `3015` работает frontend **`4024ccf`** с настоящим API и встроенной Grafana; UI переключён в **20:49 UTC+5**. Browser подтверждает **WEB 4024ccf8 / API 85c8014e**, события и обновляемые probe details. Вход через `3015/login`; прямой Next на `3017` не содержит API relay. После кратких post-restart обрывов семь срезов **21:40:40–21:41:40** показывают 14 online / 5 offline, новые сессии и свежие heartbeat. Это конечная проверка восстановления, не SLA или stream/scripts/OTA acceptance. Публичный frontend, APK и туннели этим rollout не обновлялись; прежние Next-процессы сохранены. Более ранние разделы сохраняют свои версии и даты.
 
 ## Состояние на дату проверки
 
-### Dependency advisory — source follow-up 30 сентября, после 21:11 UTC+5
+### Dependency advisory — source/runtime follow-up 30 сентября, 21:11–21:44 UTC+5
 
 Повторный security job docs source `60d9698` сообщил CVE-2026-101918 в
 PyJWT 2.14.0. Закреплена 2.15.1, pinned baseline воспроизвёл raw RecursionError;
@@ -19,9 +19,51 @@ PyJWT 2.14.0. Закреплена 2.15.1, pinned baseline воспроизвё�
 check и полный requirements audit passed. Cache warnings audit сохранены.
 Подробные primary sources, область воздействия и границы source/runtime — в
 [dependency follow-up](../audits/2026-09-30/PYJWT-ADVISORY-FOLLOW-UP.md).
-Это новый gate после принятого `4024ccf`: новый full CI / immutable image /
-rollout пока не объявляются пройденными. Это не доказанная причина Android
-stream/OTA нестабильности.
+Source **`85c8014`** прошёл обязательные GitHub jobs: Linux backend **2124
+passed / 15 Windows-only skipped / 5 warnings**, **703.21 s**, coverage
+**77.87%**; frontend **71 suites / 526 Jest tests**, отдельный Node transport
+test, types/build; security, Ruff/mypy 219, RLS, Alembic single head, packaged
+image bootstrap и Android smoke/unit success. Preview deploy skipped — это
+не установленная или production-signed APK.
+
+Exact image **`sha256:b2a0d4bec434c127f522fec5ec8eb3a9c5cc35682b40759acf6c1ee6880e4ccd`**
+прошёл fresh packaged PG/Redis application lifecycle и две multiprocess серии
+по **160 known requests**: четыре workers, child replacement, no duplicates,
+graceful master cleanup/fresh registry. Дополнительный recycle loop в этом
+dependency проходе не запускался; `scrape_max_ms: 0` fixture не является новым
+замером latency. Более ранние ресурсные измерения ниже сохраняют свои source.
+
+Сверка installed packages выявила **два**, а не одно изменение: PyJWT
+2.14.0 → **2.15.1** и cryptography 50.0.1 → **50.0.2**, разрешённое существующим
+`cryptography>=42.0.0`. [Официальный changelog](https://cryptography.io/en/latest/changelog/#v50-0-2)
+описывает обновление wheel OpenSSL до 4.0.3. Подтверждён именно проверенный
+immutable image; полный dependency lock/reproducible resolution остаётся
+отдельной задачей. Из environment изменился только SPHERE_BUILD_SHA.
+
+Backend-only rollout в 21:37:50 сохранил DB head `20260921_watchdog_stop`,
+neighbour IDs/images/StartedAt и OTA/APK hashes. В работающем контейнере
+подтверждена PyJWT 2.15.1. Обычный login/auth-me и access token, выданный до
+переключения, работают; браузерная сессия и Grafana продолжают работать.
+Private receipts: `.local-pilot/jwt-20260930-live-rollout/`.
+
+**Результат восстановления не сглажен:** первая минутная проверка
+21:38:10–21:39:10 закончилась failure критерия непрерывности: online
+14 → 11 → 14 → 12. В первоначальном readback все 14 session dates уже были
+новее запуска API: объяснение этого среза исключительно старым presence cache
+не подтверждено. Следующая ограниченная read-only проверка потребовала
+`connected_since >= backend StartedAt` и heartbeat младше 45 s: семь срезов
+21:40:40–21:41:40 подтвердили 14 новых sessions / 14 fresh heartbeat при scope
+19. Первый failure receipt сохранён отдельно. Это восстановление после
+перезапуска, не доказанная непрерывность или причина старых сетевых обрывов.
+
+В записанном backend log interval: 21 agent connects / 7 disconnects, 26
+`ota_recovery_receipt_unrecognized` от трёх устройств (17 failed: 8 timeout,
+9 download_origin_rejected; 9 completed), две send warnings. Raw RecursionError,
+InvalidSignatureError и traceback в этом журнале не найдены; это не гарантия
+отсутствия всех ошибок. Старые OTA receipts не превращены в ACK и команды
+обновления не повторялись. Контекст и следующий отдельный gate —
+[remote connection / OTA audit](../audits/2026-09-27/REMOTE-CONNECTION-AND-OTA-GATES.md).
+Это не доказанная причина Android stream/OTA нестабильности.
 
 ### Service probe inspector — принятый UI/API rollout 30 сентября, 20:49–21:05 UTC+5
 
