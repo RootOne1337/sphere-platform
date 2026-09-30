@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import MonitoringPage from '@/app/(dashboard)/monitoring/page';
 import { api } from '@/lib/api';
 
@@ -11,6 +11,66 @@ describe('Infrastructure Monitoring page failure states', () => {
   });
 
   afterEach(() => jest.clearAllMocks());
+
+  it('restores the explicitly selected probe after an API outage without displaying cached health during failure', async () => {
+    const responder = {
+      id: 'backend-api-responder-1', name: 'Backend API responder', type: 'API',
+      cpu: null, ram: null, disk: null, status: 'HEALTHY', uptime: '1m',
+      details: { probe: 'HTTP request served' },
+    };
+    const database = {
+      ...responder, id: 'postgres-db-1', name: 'PostgreSQL', type: 'DB',
+      details: { pool_size: 10, checked_out: 1 },
+    };
+    jest.mocked(api.get).mockImplementation((url) => Promise.resolve({
+      data: url.endsWith('/nodes') ? [responder, database] : { observedAt: '2026-09-30T10:00:00Z' },
+    }));
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(<QueryClientProvider client={client}><MonitoringPage /></QueryClientProvider>);
+    fireEvent.click(await screen.findByRole('button', { name: 'PostgreSQL, DB, HEALTHY' }));
+    expect(within(screen.getByRole('complementary', { name: 'Выбранная проверка сервиса' }))
+      .getByText('Занято соединений').nextElementSibling).toHaveTextContent('1');
+
+    jest.mocked(api.get).mockRejectedValue(new Error('nodes endpoint unavailable'));
+    await act(async () => { await client.refetchQueries({ queryKey: ['monitoring-nodes'] }); });
+    await waitFor(() => expect(screen.queryByRole('complementary', { name: 'Выбранная проверка сервиса' })).not.toBeInTheDocument());
+    expect(screen.getByText('Статус недоступен')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'PostgreSQL, DB, HEALTHY' })).not.toBeInTheDocument();
+
+    jest.mocked(api.get).mockImplementation((url) => Promise.resolve({
+      data: url.endsWith('/nodes') ? [responder, { ...database, details: { pool_size: 10, checked_out: 4 } }]
+        : { observedAt: '2026-09-30T10:00:10Z' },
+    }));
+    await act(async () => { await client.refetchQueries({ queryKey: ['monitoring-nodes'] }); });
+    await waitFor(() => expect(screen.getByRole('button', { name: 'PostgreSQL, DB, HEALTHY' }))
+      .toHaveAttribute('aria-pressed', 'true'));
+    expect(within(screen.getByRole('complementary', { name: 'Выбранная проверка сервиса' }))
+      .getByText('Занято соединений').nextElementSibling).toHaveTextContent('4');
+  });
+
+  it('retains the selected probe through a temporary filter and falls back safely when a fresh list omits it', async () => {
+    const responder = {
+      id: 'backend-api-responder-1', name: 'Backend API responder', type: 'API',
+      cpu: null, ram: null, disk: null, status: 'HEALTHY', uptime: '1m', details: { probe: 'HTTP request served' },
+    };
+    const database = { ...responder, id: 'postgres-db-1', name: 'PostgreSQL', type: 'DB', details: { pool_size: 10 } };
+    jest.mocked(api.get).mockImplementation((url) => Promise.resolve({
+      data: url.endsWith('/nodes') ? [responder, database] : { observedAt: '2026-09-30T10:00:00Z' },
+    }));
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(<QueryClientProvider client={client}><MonitoringPage /></QueryClientProvider>);
+    fireEvent.click(await screen.findByRole('button', { name: 'PostgreSQL, DB, HEALTHY' }));
+    fireEvent.change(screen.getByRole('textbox', { name: 'Поиск сервисов' }), { target: { value: 'no matching probe' } });
+    expect(screen.queryByRole('complementary', { name: 'Выбранная проверка сервиса' })).not.toBeInTheDocument();
+    fireEvent.change(screen.getByRole('textbox', { name: 'Поиск сервисов' }), { target: { value: '' } });
+    expect(screen.getByRole('button', { name: 'PostgreSQL, DB, HEALTHY' })).toHaveAttribute('aria-pressed', 'true');
+
+    await act(async () => { client.setQueryData(['monitoring-nodes'], [responder]); });
+    const inspector = screen.getByRole('complementary', { name: 'Выбранная проверка сервиса' });
+    expect(await within(inspector).findByText('Backend API responder')).toBeInTheDocument();
+    expect(within(inspector).queryByText('PostgreSQL')).not.toBeInTheDocument();
+    expect(within(inspector).queryByText('Размер пула API-процесса')).not.toBeInTheDocument();
+  });
 
   it('does not show healthy or zero telemetry when monitoring APIs fail', async () => {
     const client = new QueryClient({

@@ -11,6 +11,24 @@
 
 ## Состояние на дату проверки
 
+### Service inspector — сохранение выбора через потерю API, 30 сентября
+
+Source follow-up исправляет подтверждённую UX ошибку: выбранная проверка
+сервиса терялась, когда ошибка API или пустой результат фильтра размонтировали
+inspector. Явный выбор теперь хранится в странице. Во время ошибки cached
+HEALTHY и details по-прежнему скрыты; после восстановления используется только
+новый ответ. Если выбранного ID нет в свежем списке, показывается существующая
+проверка, без старых деталей отсутствующего сервиса. Выбор сохраняется в пределах
+открытой страницы, не между logout/tenant или полной навигацией.
+
+Два page-level regressions **failed на baseline**, после исправления **70
+monitoring tests passed**, полный frontend **71 suites / 528 Jest tests**;
+TypeScript и targeted ESLint passed (legacy config warning сохранён). Ошибка API
+воспроизведена через настоящий React Query lifecycle в тесте, без остановки
+живого backend. Browser/compiled rollout этого follow-up ещё не принят;
+работающий UI остаётся `4024ccf`. Последующие receipts должны отдельно подтвердить
+compiled source, маршрут и свежие данные.
+
 ### Dependency advisory — source/runtime follow-up 30 сентября, 21:11–21:44 UTC+5
 
 Повторный security job docs source `60d9698` сообщил CVE-2026-101918 в

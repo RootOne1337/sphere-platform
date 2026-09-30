@@ -160,6 +160,9 @@ export default function MonitoringPage() {
     });
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+    // Keep the explicit choice in the page: the inspector is intentionally
+    // unmounted on failed/empty responses so cached probes cannot look healthy.
+    const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
     const [networkSamples, setNetworkSamples] = useState<{
         previous?: NetworkCounterSample;
         current?: NetworkCounterSample;
@@ -316,7 +319,7 @@ export default function MonitoringPage() {
                         ) : filteredNodes.length === 0 ? (
                             <p className="py-10 text-center text-sm text-muted-foreground">Ничего не найдено. Измените фильтр или поисковый запрос.</p>
                         ) : (
-                            <ClusterHeatmap nodes={filteredNodes} />
+                            <ClusterHeatmap nodes={filteredNodes} selectedNodeId={selectedNodeId} onSelectNode={setSelectedNodeId} />
                         )}
                     </CardContent>
                 </Card>

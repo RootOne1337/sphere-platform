@@ -1,12 +1,14 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { AlertTriangle, Check, CircleHelp, Server, Timer, Wifi } from 'lucide-react';
 import type { ClusterNode } from './monitoringTypes';
 import { hasProbeError, probeDetails, probeLatency, probeSource } from './probePresentation';
 
 interface ClusterHeatmapProps {
     nodes: ClusterNode[];
+    selectedNodeId?: string | null;
+    onSelectNode?: (id: string) => void;
 }
 
 function normalizedStatus(node: ClusterNode) {
@@ -36,18 +38,21 @@ function ResourceValue({ label, value }: { label: string; value: number | null }
     );
 }
 
-export function ClusterHeatmap({ nodes }: ClusterHeatmapProps) {
+export function ClusterHeatmap({ nodes, selectedNodeId: controlledNodeId, onSelectNode }: ClusterHeatmapProps) {
     const groupedNodes = useMemo(() => nodes.reduce<Record<string, ClusterNode[]>>((groups, node) => {
         const type = node.type || 'OTHER';
         (groups[type] ??= []).push(node);
         return groups;
     }, {}), [nodes]);
-    const [selectedNodeId, setSelectedNodeId] = useState<string | null>(nodes[0]?.id ?? null);
+    const [localNodeId, setLocalNodeId] = useState<string | null>(null);
+    const selectedNodeId = controlledNodeId === undefined ? localNodeId : controlledNodeId;
+    const selectNode = (id: string) => {
+        setLocalNodeId(id);
+        onSelectNode?.(id);
+    };
 
-    useEffect(() => {
-        if (!nodes.some((node) => node.id === selectedNodeId)) setSelectedNodeId(nodes[0]?.id ?? null);
-    }, [nodes, selectedNodeId]);
-
+    // Only inspect the current response. A remembered choice may be hidden by a
+    // filter or outage; never keep that node's old health/details on screen.
     const selectedNode = nodes.find((node) => node.id === selectedNodeId) ?? nodes[0] ?? null;
     const selectedDetails = selectedNode ? probeDetails(selectedNode) : [];
     const selectedLatency = selectedNode ? probeLatency(selectedNode) : null;
@@ -77,8 +82,8 @@ export function ClusterHeatmap({ nodes }: ClusterHeatmapProps) {
                                     <button
                                         key={node.id}
                                         type="button"
-                                        onClick={() => setSelectedNodeId(node.id)}
-                                        onFocus={() => setSelectedNodeId(node.id)}
+                                        onClick={() => selectNode(node.id)}
+                                        onFocus={() => selectNode(node.id)}
                                         aria-pressed={isSelected}
                                         aria-label={`${node.name}, ${node.type}, ${status}`}
                                         title={`${node.name} · ${node.id} · ${status}`}
