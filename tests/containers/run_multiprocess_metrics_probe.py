@@ -7,8 +7,11 @@ from pathlib import Path
 
 
 def docker(*args, timeout=60):
-    return subprocess.run(["docker", *args], capture_output=True, text=True,
-        encoding="utf-8", timeout=timeout, check=True).stdout.strip()
+    result = subprocess.run(["docker", *args], capture_output=True, text=True,
+        encoding="utf-8", timeout=timeout)
+    if result.returncode:
+        raise RuntimeError(f"Docker {args[0]} failed: {result.stdout}\n{result.stderr}")
+    return (result.stdout + result.stderr if args[0] == "logs" else result.stdout).strip()
 
 
 def main():
@@ -32,7 +35,8 @@ def main():
             "--memory", "384m", "--cpus", "1", "--tmpfs", "/tmp:rw,nosuid,nodev,size=32m",
             "-e", "PYTHONPATH=/app:/tmp", "-e", "PYTHONDONTWRITEBYTECODE=1", *mounts,
             image, "gunicorn", "metrics_canary_app:app", "--config", "backend/gunicorn_conf.py",
-            "--worker-class", "uvicorn.workers.UvicornWorker", "--workers", "4", "--bind", "127.0.0.1:8000")
+            "--worker-class", "uvicorn.workers.UvicornWorker", "--workers", "4",
+            "--keep-alive", "65", "--bind", "127.0.0.1:8000")
         for run in range(2):
             output = docker("exec", container, "python", "/tmp/multiprocess_metrics_probe.py", timeout=90)
             receipt = json.loads(output)

@@ -17,6 +17,7 @@ _RE_UUID = re.compile(
     re.IGNORECASE,
 )
 _RE_DIGITS = re.compile(r"/\d+")
+_RE_PARAMETER = re.compile(r"\{[^{}]+\}")
 
 
 class PrometheusMiddleware(BaseHTTPMiddleware):
@@ -44,7 +45,7 @@ class PrometheusMiddleware(BaseHTTPMiddleware):
             # Routing has completed: use the declared template, never an
             # attacker-controlled URL, device identifier, or arbitrary method.
             route = request.scope.get("route")
-            endpoint = getattr(route, "path", "__unmatched__")
+            endpoint = _RE_PARAMETER.sub("{id}", getattr(route, "path", "__unmatched__"))
             method = request.method if request.method in _HTTP_METHODS else "OTHER"
             http_requests_total.labels(
                 method=method, endpoint=endpoint, status_code=str(status_code),

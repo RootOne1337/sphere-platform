@@ -18,7 +18,7 @@ async def test_dynamic_routes_and_unknown_urls_have_bounded_labels():
     async def canary(name: str):
         return {"ok": True}
 
-    route_labels = {"method": "GET", "endpoint": "/metric-canary/{name}", "status_code": "200"}
+    route_labels = {"method": "GET", "endpoint": "/metric-canary/{id}", "status_code": "200"}
     other_labels = {"method": "OTHER", "endpoint": "__unmatched__", "status_code": "404"}
     before = REGISTRY.get_sample_value("sphere_http_requests_total", route_labels) or 0
     other_before = REGISTRY.get_sample_value("sphere_http_requests_total", other_labels) or 0

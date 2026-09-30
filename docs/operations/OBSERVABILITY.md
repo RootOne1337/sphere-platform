@@ -219,7 +219,7 @@ middleware удалён: canonical request families — `sphere_http_*`, пре�
 
 | Показатель | Контракт production |
 | --- | --- |
-| `sphere_http_requests_total`, histogram | Сумма всех workers; route template, HTTP method allowlist и `__unmatched__` вместо произвольного URL. Необработанное исключение учитывается как 500 и передаётся handler. |
+| `sphere_http_requests_total`, histogram | Сумма всех workers; route template с параметрами `{id}` сохраняет прежние UUID labels. HTTP method allowlist и `__unmatched__` исключают произвольные URL/method. Необработанное исключение учитывается как 500 и передаётся handler. |
 | `sphere_http_request_duration_seconds` | Latency до response headers; **не** время передачи streamed body, Android round-trip или end-to-end video latency. |
 | `sphere_db_pool_size`, `sphere_db_pool_checked_out` | `livesum`: общий размер SQLAlchemy pools / текущее число выданных connections. Это не PostgreSQL max connections и не длительность SQL. |
 | `sphere_metrics_worker_processes` | `livesum`: число живых процессов, импортировавших instrumentation; **не** readiness или доступность устройств. |
@@ -251,7 +251,8 @@ Acceptance запускается на собранном образе, без �
 python tests/containers/run_multiprocess_metrics_probe.py --image <reviewed-image> --evidence-dir <private-evidence>
 ```
 
-Probe проверяет четыре HTTP worker, известные 128 + 32 requests, реальный exit
+Probe закрепляет отдельное keepalive соединение за каждым из четырёх HTTP
+workers: по 32 requests каждому, затем ещё 32 после replacement. Проверяет реальный exit
 и replacement child, сохранение counters, очистку live gauges, отсутствие
 duplicate samples и новый registry после рестарта master. Он добавлен в
 Production image bootstrap CI. Результаты source tests и image canary имеют

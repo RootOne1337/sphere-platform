@@ -4,6 +4,7 @@ import os
 import signal
 import time
 import urllib.request
+from http.client import HTTPConnection
 from pathlib import Path
 
 from prometheus_client.parser import text_string_to_metric_families
@@ -54,15 +55,35 @@ before = scrape()
 assert value(before, "sphere_metrics_worker_processes") == 4
 assert value(before, "sphere_db_pool_size") == 40
 assert value(before, "sphere_db_pool_checked_out") == 4
-labels = {"method": "GET", "endpoint": "/canary/{name}", "status_code": "200"}
+labels = {"method": "GET", "endpoint": "/canary/{id}", "status_code": "200"}
 assert value(before, "sphere_http_requests_total", **labels) == 0, "Master reused old counters"
-served = set()
-for index in range(128):
-    served.add(read(f"/canary/item-{index}")["pid"])
-assert served == workers
+# Bind a keepalive connection to each worker. Sequential new connections are
+# not fairly distributed by the kernel; counting 128 in one process is no proof
+# that this endpoint aggregates requests from four independent workers.
+connections = {}
+deadline = time.monotonic() + 20
+while len(connections) < 4:
+    assert time.monotonic() < deadline, "Could not bind all four worker connections"
+    connection = HTTPConnection("127.0.0.1", 8000, timeout=3)
+    connection.request("GET", "/identity")
+    response = connection.getresponse()
+    pid = json.loads(response.read())["pid"]
+    if pid in connections:
+        connection.close()
+    else:
+        connections[pid] = connection
+assert set(connections) == workers
+for index in range(32):
+    for pid, connection in connections.items():
+        connection.request("GET", f"/canary/item-{index}")
+        response = connection.getresponse()
+        assert response.status == 200
+        assert json.loads(response.read())["pid"] == pid
+for connection in connections.values():
+    connection.close()
 after = scrape()
 assert value(after, "sphere_http_requests_total", **labels) == 128
-assert value(after, "sphere_http_request_duration_seconds_count", method="GET", endpoint="/canary/{name}") == 128
+assert value(after, "sphere_http_request_duration_seconds_count", method="GET", endpoint="/canary/{id}") == 128
 
 # The Gunicorn master must retire the actual dead child's live gauges.
 retired = next(iter(workers))
