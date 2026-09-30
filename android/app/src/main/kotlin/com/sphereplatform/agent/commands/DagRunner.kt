@@ -780,6 +780,10 @@ class DagRunner @Inject constructor(
             val failOnError = action["fail_on_error"]?.jsonPrimitive?.content?.toBoolean() ?: true
             val output = try {
                 adbActions.shell(command)
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: RootCommandOutcomeUnknownException) {
+                throw e
             } catch (e: Exception) {
                 if (failOnError) throw e
                 Timber.d("[DAG] shell: command failed (fail_on_error=false): ${e.message}")

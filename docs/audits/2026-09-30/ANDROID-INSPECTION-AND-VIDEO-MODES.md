@@ -4,6 +4,11 @@
 **Source baseline:** `f092a16`; frontend selection follow-up `3132afc`.<br />
 **Статус:** аудит кода и план приёмки; новый APK этим проходом не выпущен.
 
+**Android source follow-up после `c500048`:** выполнен первый этап APK-I01 —
+concurrent bounded process runner и запрет продолжения DAG при неопределённом
+результате shell. Исходное наблюдение ниже сохраняется как baseline. Локальная
+и CI/device приёмка отмечаются раздельно; runtime APK ещё не заменён.
+
 [Текущее состояние](../../operations/CURRENT-STATE.md) ·
 [Device inspector](WEB-DEVICE-INSPECTOR.md) ·
 [Stream stage audit](../2026-09-25/ANDROID-STREAM-OBSERVABILITY.md) ·
@@ -54,6 +59,29 @@ PC Agent, внешний ADB на станции владельца или ру�
 ## Найденные разрывы и порядок исправления
 
 ### APK-I01 · P1 · stdout/stderr и пределы root-команд
+
+**Source follow-up:** [BoundedProcessRunner](../../../android/app/src/main/kotlin/com/sphereplatform/agent/commands/BoundedProcessRunner.kt)
+читает stdout/stderr одновременно, сохраняет не более 256 KiB / 1 KiB для shell
+и дочитывает лишние байты, чтобы не заполнить pipe. Mutex ограничивает один
+runner call двумя активными readers; в idle reader threads нет. Один monotonic
+deadline 5 s охватывает execution и output EOF, cancellation закрывает streams
+и напрямую принадлежащий process. Cleanup grace проверяет reader/process exit;
+это не доказанное завершение всех descendants Android `su` daemon.
+
+Полный exit с кодом !=0 остаётся явной ошибкой с exit code, без command/stderr
+в общем журнале. Timeout/read failure и oversize stdout — incomplete outcome:
+DAG не повторяет команду и не идёт в fallback даже при `fail_on_error=false`.
+Cancellation также не превращается в пустой успешный output. Spawn failure
+отделён от ошибки после spawn. На исходном коде два pipe regressions failed;
+после исправления проходят с теми же ограниченными pipes. Дополнительно проверены
+1 MiB в каждом stream при retained budgets 1024/128 bytes, частичные UTF-8 reads,
+nonzero exit, read failure, cancellation и EOF deadline после process exit.
+
+Production artifact и remote root cleanup требуют отдельной проверки;
+Windows/JVM pipes не равны поведению каждой Android `su` реализации.
+Local full validation: dev и enterprise debug **702 tests каждый: 701 passed /
+1 skipped / 0 failures / 0 errors**; dev debug APK compiled. Это unconfigured
+debug verification artifact, не новая версия для ручной установки или OTA.
 
 **Source finding, не доказанная причина старого black screen.** В `shellExec`
 сначала вызывается `waitFor(5 s)`, потом читается stdout и stderr. Команда с
@@ -188,6 +216,47 @@ WebRTC/MJPEG/VNC без A/B и измерения не требуется: эт�
 профилей, backpressure и latency evidence, с оценкой TURN/relay cost и ingress.
 
 ## Следующие атомарные этапы
+
+### Уточнённый продуктовый контракт — запрос владельца 30 сентября
+
+| Режим | Что должен видеть оператор | Что не считается выполнением |
+| --- | --- | --- |
+| Одна выбранная машинка / fullscreen | Непрерывный H.264 видеопоток с реальными пропорциями захвата; native размер, либо явно обозначенное масштабирование с сохранением пропорций. Веб масштабирует изображение через contain; пиксельные размеры и mapping доступны | Периодическое обновление screenshot, fixed 16:9 независимо от экрана, target 30 FPS без измеренного draw |
+| Большой парк / 64+ окон | Ограниченные по частоте и размеру snapshot previews с независимыми presence/freshness сигналами; без 64 полноценных decoder loops по умолчанию | Старый MultiStreamGrid с тем же видеопотоком, только уменьшенный CSS; обещание 64+ throughput по числу tiles |
+| XPath inspection | Явный режим выбора узла, outline и подробная структурированная карточка рядом: все доступные безопасные attributes, bounds, ancestry, XPath, snapshot/device/session/time/source. Клик в этом режиме выбирает узел и не отправляет tap в Android | Пустая кнопка, придуманные nodes, XPath для игровых pixels без семантического дерева, вызов actions от hover |
+| Debug automation, следующий этап | Коррелированные run/node/action events и overlay найденного UI/CV/pixel target с состоянием результата; отдельное включение и ограниченный retention | Объявление debug playback по логам, не связанным со snapshot/frame/session; постоянно включённая запись всех кадров |
+
+Native dimensions и одинаковые пропорции — разные критерии. Изменение размера
+capture требует одновременного input mapping contract: нельзя убрать fixed 720p
+и продолжить масштабировать taps через старые 1280/720 constants. Device rotation,
+Android 14 app-window sharing, insets и codec-supported geometry получают отдельные
+gates; `onCapturedContentResize` не заменяется повторным использованием consent token.
+Основание: [официальный MediaProjection guide](https://developer.android.com/media/grow/media-projection).
+
+Source `VirtualDisplayManager.createConfig` принудительно выбирает 16:9/9:16.
+Например, экран 1920×1200 имеет ratio 1.6, а capture 1280×720 — 1.777… .
+Это конкретный geometry gap, который нужно исправлять вместе с input mapping,
+а не одиночной заменой CSS или width/height. Native capture пока не принят.
+
+Визуальный инспектор должен ограничивать sensitive text и размеры XML; «вся
+информация» означает все доступные разрешённые свойства, не password values,
+содержимое скрытых окон или несуществующие accessibility nodes. Данные automation
+в будущем не должны зависеть от того, открыт ли браузер оператора.
+
+Amnezia/VPN upstream adapter, protocol updates, rotation triggers и переход от
+game-specific сущностей к общей project/workspace основе **отложены по явному
+запросу владельца**. Текущий этап не меняет VPN или удаляет game accounts/pipelines.
+Когда этот этап начнётся, он потребует отдельного upstream/license/update contract;
+сейчас это граница scope, не начатая интеграция.
+
+### Порядок с зависимостями
+
+Сначала воспроизводимые дефекты APK-I01/I02 и metadata/mapping видео; затем
+viewer demand ownership и lightweight snapshot path, protected UI snapshot
+и дерево/outline. После canary — массовая проверка. Debug playback следует
+за inspection contracts. UI и backend не обещают capability, пока установленная
+APK не поддерживает и не подтвердила её. Код, собранный артефакт, опубликованный
+manifest и установленная версия отслеживаются раздельно.
 
 1. APK-I01/I02: unit/process regressions → bounded runner/dump ownership →
    Android CI → один root remote canary. Не публиковать новый stable APK только

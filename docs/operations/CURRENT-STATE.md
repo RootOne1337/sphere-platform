@@ -11,6 +11,23 @@
 
 ## Состояние на дату проверки
 
+### Android process runner — source fix, 30 сентября, 23:12 UTC+5
+
+После source audit добавлен bounded concurrent stdout/stderr runner для shell,
+execution/read deadline и cancellation cleanup напрямую принадлежащего процесса.
+Oversize output не возвращается как успешный усечённый результат; неопределённый
+исход останавливает DAG без retry/fallback даже при `fail_on_error=false`.
+Command/stderr больше не включаются в ошибки shell общего журнала.
+Два новых pipe tests failed на baseline, после fix command suite passed.
+Полные dev/enterprise debug suites: **702 tests в каждом, 701 passed / 1 skipped,
+0 failures / 0 errors**; `assembleDevDebug` completed. Это local compiled source,
+не production-signed/настроенный OTA артефакт; установленный парк не обновлялся.
+Android `su` descendants и root timeout cleanup ещё требуют device canary.
+Продуктовый контракт single-device continuous/native-aspect video, fleet snapshot
+previews и inspect-only XPath зафиксирован в
+[APK/video audit](../audits/2026-09-30/ANDROID-INSPECTION-AND-VIDEO-MODES.md).
+Остальные geometry/profile/hierarchy/log gates не закрыты этим shell fix.
+
 ### Service inspector — сохранение выбора через потерю API, 30 сентября, 22:21–22:29 UTC+5
 
 Source follow-up исправляет подтверждённую UX ошибку: выбранная проверка

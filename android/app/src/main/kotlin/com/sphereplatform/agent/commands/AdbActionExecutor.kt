@@ -19,7 +19,9 @@ import javax.xml.xpath.XPathConstants
 import javax.xml.xpath.XPathFactory
 
 /** The shell may already have consumed the command; do not automatically retry. */
-class RootCommandOutcomeUnknownException : java.io.IOException("Root command delivery outcome is unknown")
+class RootCommandOutcomeUnknownException(
+    message: String = "Root command delivery outcome is unknown",
+) : java.io.IOException(message)
 
 /**
  * AdbActionExecutor — выполняет ADB-примитивы через постоянную root-сессию.
@@ -81,6 +83,7 @@ class AdbActionExecutor @Inject constructor(
     private var rootStream: java.io.DataOutputStream = java.io.DataOutputStream(rootProcess.outputStream)
 
     private val rootLock = Any()
+    private val processRunner = BoundedProcessRunner()
     // Guarded by rootLock; a failed pipe may outlive Process.isAlive == true.
     private var rootSessionBroken = false
 
@@ -508,25 +511,23 @@ class AdbActionExecutor @Inject constructor(
 
     /** Общая реализация shell exec (su -c) с таймаутом. */
     private suspend fun shellExec(command: String): String {
-        return withContext(Dispatchers.IO) {
-            val process = Runtime.getRuntime().exec(arrayOf("su", "-c", command))
-            // 5s достаточно для быстрых команд (pidof, cat, dumpsys).
-            // Прежнее значение 30s приводило к утечке IO потоков при coroutine cancellation.
-            val SHELL_TIMEOUT_SECONDS = 5L
-            val finished = process.waitFor(SHELL_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-            if (!finished) {
-                process.destroyForcibly()
-                error("Shell command timed out after ${SHELL_TIMEOUT_SECONDS}s: $command")
-            }
-            val exitCode = process.exitValue()
-            // FIX H5: Лимит на чтение stdout — защита от OOM на слабых эмуляторах
-            val stdout = process.inputStream.bufferedReader().use { it.readText().take(256 * 1024) }
-            if (exitCode != 0) {
-                val stderr = process.errorStream.bufferedReader().use { it.readText().take(1024) }
-                error("Shell exit=$exitCode cmd=[$command]: ${stderr.ifEmpty { "no stderr" }}")
-            }
-            stdout
+        val result = try {
+            processRunner.run(
+                start = { Runtime.getRuntime().exec(arrayOf("su", "-c", command)) },
+                timeoutMs = 5_000, stdoutLimit = 256 * 1024, stderrLimit = 1024,
+            )
+        } catch (error: ProcessOutputIncompleteException) {
+            // The shell may have performed a side effect. DAG must not retry it.
+            throw RootCommandOutcomeUnknownException("Root command result unavailable: ${error.reason}")
         }
+        if (result.stdout.truncated) {
+            throw RootCommandOutcomeUnknownException("Root command output exceeded 256 KiB; result incomplete")
+        }
+        if (result.exitCode != 0) {
+            // Do not put the command or its potentially sensitive stderr into uploaded logs.
+            throw java.io.IOException("Shell command exited with code ${result.exitCode}")
+        }
+        return result.stdout.bytes.toString(Charsets.UTF_8)
     }
 
     // ── Extended gestures ─────────────────────────────────────────────────────
@@ -724,6 +725,8 @@ class AdbActionExecutor @Inject constructor(
                 "screen_height"   to physicalSize.y,
                 "serial"          to (parts.getOrNull(5)?.ifEmpty { "unknown" } ?: "unknown"),
             )
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
         } catch (e: Exception) {
             Timber.w(e, "getDeviceInfo batch failed — fallback")
             mapOf(
