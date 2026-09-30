@@ -9,6 +9,8 @@ import android.os.Bundle
 import android.os.SystemClock
 import android.view.Choreographer
 import android.view.View
+import android.view.MotionEvent
+import timber.log.Timber
 
 /**
  * Visible continuous-motion/legibility canary, not a synthetic encoder timer.
@@ -38,6 +40,15 @@ class StreamCadenceProbeActivity : Activity(), Choreographer.FrameCallback {
     private class Pattern(context: Context) : View(context) {
         var phase = 0f
         private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+        private var reportedTouches = 0
+        override fun onTouchEvent(event: MotionEvent): Boolean {
+            if (event.actionMasked == MotionEvent.ACTION_UP && reportedTouches < 3) {
+                reportedTouches++
+                // Only this artificial pattern, never another application's UI.
+                Timber.i("Video canary touch x=%d y=%d", event.x.toInt(), event.y.toInt())
+            }
+            return true
+        }
         override fun onDraw(canvas: Canvas) {
             canvas.drawColor(Color.rgb(15, 23, 42))
             paint.color = Color.WHITE

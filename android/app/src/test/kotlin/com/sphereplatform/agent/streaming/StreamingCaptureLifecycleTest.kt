@@ -122,6 +122,14 @@ class StreamingCaptureLifecycleTest {
         verify(exactly = 1) { image.close() }
     }
 
+    @Test fun `live mapping belongs to active capture and stop invalidates it`() {
+        assertNull(manager.mapStreamPoints(listOf(StreamPoint(0, 0))))
+        manager.start(projection)
+        assertEquals(listOf(StreamPoint(0, 0)), manager.mapStreamPoints(listOf(StreamPoint(0, 0))))
+        manager.stop()
+        assertNull(manager.mapStreamPoints(listOf(StreamPoint(0, 0))))
+    }
+
     @Test fun `virtual display startup failure rolls back the capture session`() {
         every { anyConstructed<VirtualDisplayManager>().createDisplay(any(), any()) } throws
             IllegalStateException("display unavailable")

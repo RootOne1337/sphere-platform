@@ -266,8 +266,10 @@ class CommandDispatcher @Inject constructor(
                 val x = msg["x"]?.jsonPrimitive?.intOrNull ?: return
                 val y = msg["y"]?.jsonPrimitive?.intOrNull ?: return
                 scope.launch {
+                    val point = streamingManager.mapStreamPoints(listOf(com.sphereplatform.agent.streaming.StreamPoint(x, y)))
+                        ?.singleOrNull() ?: return@launch
                     try {
-                        adbActions.tap(x, y)
+                        adbActions.tapRaw(point.x, point.y)
                     } catch (_: RootCommandOutcomeUnknownException) {
                         Timber.w("Live tap outcome is unknown; command was not replayed")
                     }
@@ -281,8 +283,12 @@ class CommandDispatcher @Inject constructor(
                 val y2 = msg["y2"]?.jsonPrimitive?.intOrNull ?: return
                 val duration = msg["duration_ms"]?.jsonPrimitive?.intOrNull ?: 300
                 scope.launch {
+                    val points = streamingManager.mapStreamPoints(listOf(
+                        com.sphereplatform.agent.streaming.StreamPoint(x1, y1),
+                        com.sphereplatform.agent.streaming.StreamPoint(x2, y2))) ?: return@launch
+                    if (points.size != 2) return@launch
                     try {
-                        adbActions.swipe(x1, y1, x2, y2, duration)
+                        adbActions.swipeRaw(points[0].x, points[0].y, points[1].x, points[1].y, duration)
                     } catch (_: RootCommandOutcomeUnknownException) {
                         Timber.w("Live swipe outcome is unknown; command was not replayed")
                     }

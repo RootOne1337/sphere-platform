@@ -528,23 +528,53 @@ class CommandDeliveryTest {
     }
 
     @Test fun uncertainLiveTapDoesNotEscapeIntoApplicationScope() = runTest {
-        every { adb.tap(any(), any()) } throws RootCommandOutcomeUnknownException()
-        val dispatcher = dispatcher(backgroundScope)
+        val streaming = mockk<StreamingManager>()
+        every { streaming.mapStreamPoints(any()) } answers { firstArg() }
+        every { adb.tapRaw(any(), any()) } throws RootCommandOutcomeUnknownException()
+        val dispatcher = dispatcher(backgroundScope, streaming)
         callback.captured!!(buildJsonObject { put("type", "touch_tap"); put("x", 10); put("y", 20) })
         runCurrent()
-        verify(exactly = 1) { adb.tap(10, 20) }
+        verify(exactly = 1) { adb.tapRaw(10, 20) }
         dispatcher.stop()
         // runTest also rejects any uncaught child-coroutine failure.
     }
 
     @Test fun uncertainLiveSwipeDoesNotEscapeIntoApplicationScope() = runTest {
-        every { adb.swipe(any(), any(), any(), any(), any()) } throws RootCommandOutcomeUnknownException()
-        val dispatcher = dispatcher(backgroundScope)
+        val streaming = mockk<StreamingManager>()
+        every { streaming.mapStreamPoints(any()) } answers { firstArg() }
+        every { adb.swipeRaw(any(), any(), any(), any(), any()) } throws RootCommandOutcomeUnknownException()
+        val dispatcher = dispatcher(backgroundScope, streaming)
         callback.captured!!(buildJsonObject {
             put("type", "touch_swipe"); put("x1", 1); put("y1", 2); put("x2", 3); put("y2", 4)
         })
         runCurrent()
-        verify(exactly = 1) { adb.swipe(1, 2, 3, 4, 300) }
+        verify(exactly = 1) { adb.swipeRaw(1, 2, 3, 4, 300) }
+        dispatcher.stop()
+    }
+
+    @Test fun inactiveOrResizedLiveCaptureCannotWriteRootInput() = runTest {
+        val streaming = mockk<StreamingManager>()
+        every { streaming.mapStreamPoints(any()) } returns null
+        val dispatcher = dispatcher(backgroundScope, streaming)
+        callback.captured!!(buildJsonObject { put("type", "touch_tap"); put("x", 10); put("y", 20) })
+        callback.captured!!(buildJsonObject {
+            put("type", "touch_swipe"); put("x1", 1); put("y1", 2); put("x2", 3); put("y2", 4)
+        })
+        runCurrent()
+        verify(exactly = 0) { adb.tapRaw(any(), any()) }
+        verify(exactly = 0) { adb.swipeRaw(any(), any(), any(), any(), any()) }
+        dispatcher.stop()
+    }
+
+    @Test fun liveTapUsesCapturedMappingWithoutScalingPhysicalPointTwice() = runTest {
+        val streaming = mockk<StreamingManager>()
+        every { streaming.mapStreamPoints(any()) } returns listOf(com.sphereplatform.agent.streaming.StreamPoint(240, 135))
+        every { adb.tapRaw(any(), any()) } just Runs
+        val dispatcher = dispatcher(backgroundScope, streaming)
+        callback.captured!!(buildJsonObject { put("type", "touch_tap"); put("x", 320); put("y", 180) })
+        runCurrent()
+        verify(exactly = 1) { adb.tapRaw(240, 135) }
+        verify(exactly = 0) { adb.tap(any(), any()) }
         dispatcher.stop()
     }
 

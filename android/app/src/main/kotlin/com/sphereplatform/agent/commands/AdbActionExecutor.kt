@@ -186,6 +186,11 @@ class AdbActionExecutor @Inject constructor(
         executeRootCommand("input tap $x $y")
     }
 
+    /** Live stream maps the complete gesture using its active capture geometry. */
+    fun swipeRaw(x1: Int, y1: Int, x2: Int, y2: Int, durationMs: Int) {
+        executeRootCommand("input swipe $x1 $y1 $x2 $y2 $durationMs")
+    }
+
     fun swipe(x1: Int, y1: Int, x2: Int, y2: Int, durationMs: Int) {
         executeRootCommand(
             "input swipe ${scaleX(x1)} ${scaleY(y1)} ${scaleX(x2)} ${scaleY(y2)} $durationMs"

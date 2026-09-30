@@ -43,6 +43,7 @@ class StreamingManagerImpl @Inject constructor(
     // surface draw. Lifecycle methods serialize separately from codec callbacks.
     private val frameLock = Any()
     @Volatile private var captureSession: Any? = null
+    private var inputGeometry: CaptureInputGeometry? = null
 
     private var streamStartMs: Long = 0L
 
@@ -94,7 +95,16 @@ class StreamingManagerImpl @Inject constructor(
         val session = Any()
         synchronized(frameLock) { captureSession = session }
 
-        val captureConfig = VirtualDisplayManager.createConfig(context)
+        // Canary retains the actual source size; never upscale 540p to 720p
+        // before a slow emulator encoder. Default capture remains unchanged.
+        val captureConfig = VirtualDisplayManager.createConfig(context, nativeSize = gpuBridgeEnabled)
+        val sourceMetrics = android.content.res.Resources.getSystem().displayMetrics
+        val sourceRotation = (context.getSystemService(Context.DISPLAY_SERVICE) as? android.hardware.display.DisplayManager)
+            ?.getDisplay(android.view.Display.DEFAULT_DISPLAY)?.rotation
+        inputGeometry = sourceRotation?.let {
+            CaptureInputGeometry(sourceMetrics.widthPixels, sourceMetrics.heightPixels,
+                captureConfig.width, captureConfig.height, it)
+        }
         val encoderConfig = H264Encoder.EncoderConfig(
             width = captureConfig.width,
             height = captureConfig.height
@@ -349,6 +359,15 @@ class StreamingManagerImpl @Inject constructor(
     override fun getQualityStats(): StreamQualityMonitor.StreamStats =
         qualityMonitor.getStats()
 
+    @Synchronized
+    override fun mapStreamPoints(points: List<StreamPoint>): List<StreamPoint>? {
+        if (!streaming) return null
+        val metrics = android.content.res.Resources.getSystem().displayMetrics
+        val rotation = (context.getSystemService(Context.DISPLAY_SERVICE) as? android.hardware.display.DisplayManager)
+            ?.getDisplay(android.view.Display.DEFAULT_DISPLAY)?.rotation ?: return null
+        return inputGeometry?.map(points, metrics.widthPixels, metrics.heightPixels, rotation)
+    }
+
     private fun sendFrameBinary(payload: ByteArray): Boolean {
         val acceptedByLocalQueue = wsClient.sendBinary(payload)
         qualityMonitor.recordWebSocketQueueResult(payload.size, acceptedByLocalQueue)
@@ -362,6 +381,7 @@ class StreamingManagerImpl @Inject constructor(
     private fun stopInternal() {
         viewerKeyFrameCoordinator.markEncoderStopped()
         streaming = false
+        inputGeometry = null
         // PERF: Индивидуальный try-catch на каждый ресурс.
         // До: один try-catch → если virtualDisplayManager.release() бросает,
         // imageReader, thread и encoder не освобождаются → утечка 5-10MB.

@@ -148,6 +148,26 @@ Source validation: streaming suite passed; обе debug flavors **739 tests ка
 126 distinct relative documentation targets существуют. Configured artifact
 validation и native timing evidence не подменяются этим JVM результатом.
 
+**Установленный 1.2.37 native timing:** адресный PH010 OTA completed + reported
+10237; configured source `9455a96`, SHA256
+`fef080fd9e3655e8752f781cd59372f6a9c7728c257d74fd5fe79816ad09bc5d`, прежний
+pilot signer. Тот же workload: 68 pictures / 20 s (3.4/s), 114 packets /
+849412 bytes за 52 s. Actual selected codec `OMX.google.h264.encoder`,
+1280×720, target 30, initial bitrate 1500000. Во время движения texture read
+mean 0.44–1.77 ms, GL submission 0.36–0.70 ms, **Surface swap 277–306 ms**
+по последовательным 5-second windows. Swap включает driver/consumer waits:
+это локализованная backpressure на Android encoder input path, **не отдельно
+измеренное codec CPU time и не network/browser latency**. После stop короткий
+flush также может присутствовать. [Allowlisted evidence](../audits/2026-10-01/PH010-GPU-STAGE-EVIDENCE.json).
+
+**Следующая canary source 1.2.38:** opt-in GPU capture сохраняет native размеры
+и density (960×540 вместо искусственного 1280×720). Initial bitrate не снижен,
+default CPU resolution не изменён. Live gesture использует snapshot capture
+geometry и raw physical input; DAG legacy coordinate contract сохраняется.
+Inactive capture, resized/rotated source и любой out-of-bounds point отклоняют
+целый gesture. Stop инвалидирует mapping. Native FPS/quality/input acceptance
+для этой source ещё не заявлена; нужен новый configured APK и тот же workload.
+
 ## Приёмка
 
 | Gate | Что требуется | Что не является доказательством |

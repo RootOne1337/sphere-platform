@@ -23,8 +23,11 @@ PostgreSQL details и hide/restore selection. Тогда старые Next PID �
 **Новый сравнительный срез 1 октября:** одинаковый GPU APK 1.2.36 на local
 PH010 (~60 Hz display) дал 65 pictures / 20 s, remote PH025 (5 Hz) — 44/20 s.
 Оба ниже acceptance: host FPS limit не единственная причина. Source 1.2.37
-готовит bounded texture/draw/swap timing и actual codec name; native результат
-ещё не заявлен. [Workload, ограничения и command RTT](VIDEO-CADENCE-CANARY.md#сравнение-той-же-gpu-сборки-и-измерение-стадий-1-октября).
+установлена на PH010 и локализовала Surface swap wait 277–306 ms: 68 pictures /
+20 s, selected `OMX.google.h264.encoder`, capture 1280×720 при source 960×540.
+Следующая source 1.2.38 устраняет upscale только в GPU canary и связывает live
+input с capture geometry; native результат этой source ещё не заявлен.
+[Workload, ограничения и command RTT](VIDEO-CADENCE-CANARY.md#сравнение-той-же-gpu-сборки-и-измерение-стадий-1-октября).
 
 ### Одиночный поток: картинка подтверждена, плавность остаётся открытой, 1 октября
 

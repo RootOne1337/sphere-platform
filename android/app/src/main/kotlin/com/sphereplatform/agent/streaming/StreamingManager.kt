@@ -22,4 +22,7 @@ interface StreamingManager {
 
     /** Notify an active stream that a new viewer needs codec configuration and a keyframe. */
     fun onViewerConnected() {}
+
+    /** Map one whole live gesture; inactive/resized capture returns null. */
+    fun mapStreamPoints(points: List<StreamPoint>): List<StreamPoint>? = null
 }
