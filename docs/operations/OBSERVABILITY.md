@@ -30,6 +30,12 @@ Prometheus, цели сбора, активные алерты и Grafana в т�
 веб-показатели не строят по ним общие KPI или алерты. Высококардинальные
 device series не собираются этим профилем.
 
+Старый deployed monitoring API отдельно отдаёт 12/8 точек истории без
+`observedAt`, фиксированные worker/edge cards и нулевое число туннелей. Новый
+frontend отвергает такой metrics payload и node list без `details` источника
+probe. Для прежних API-карточек нужен согласованный backend rollout; их отказ
+не отменяет независимый сбор Prometheus и не превращается в «всё здорово».
+
 ## Доступ и границы интеграции
 
 `GET /api/observability?window=1h|6h|24h` проверяет Bearer token через настоящий
@@ -85,6 +91,7 @@ Prometheus: retention 14 d **или** 2 GB, что наступит раньше
 запас. Query timeout 5 s, concurrency 4, max samples 500 000. Сбор 15 s.
 Контейнеры имеют `512m` RAM и `0.5` CPU каждый, cap drop и no-new-privileges;
 данные сохраняются в отдельных volumes. Grafana cache/temp ограничен tmpfs.
+Docker stdout/stderr ограничены тремя файлами по 10 MB на контейнер.
 DB exporter, Windows host CPU, tunnel health, Loki и distributed tracing в этом
 этапе **не подключены**; их отсутствие не подменяется нулевыми графиками.
 

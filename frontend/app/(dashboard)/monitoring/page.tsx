@@ -30,6 +30,9 @@ function parseMonitoringNodes(payload: unknown): ClusterNode[] {
     if (!nodes.every(isNode)) {
         throw new Error('Ответ содержит некорректную запись проверки сервиса.');
     }
+    if (nodes.some(node => !node.details || typeof node.details !== 'object' || Array.isArray(node.details))) {
+        throw new Error('Старый API не сообщает источник проверок сервисов. Нужен согласованный backend rollout.');
+    }
     return nodes as ClusterNode[];
 }
 
@@ -130,6 +133,9 @@ export default function MonitoringPage() {
         queryKey: ['monitoring-metrics'],
         queryFn: async () => {
             const { data } = await api.get<MonitoringMetrics>('/monitoring/metrics');
+            if (!data?.observedAt || !Number.isFinite(Date.parse(data.observedAt))) {
+                throw new Error('Время измерения API не сообщено; старый monitoring payload не принимается.');
+            }
             return data;
         },
         refetchInterval: 10000,
@@ -229,7 +235,7 @@ export default function MonitoringPage() {
             {(nodesQuery.isError || metricsQuery.isError) && (
                 <div role="alert" className="flex items-start gap-3 rounded-xl border border-amber-300/70 bg-amber-50/70 p-4 text-sm text-amber-950 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
                     <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-                    <div><p className="font-medium">Часть наблюдаемости сейчас недоступна</p><p className="mt-1 opacity-80">Проверьте API и права доступа. Недоступные значения показаны отдельно и не считаются здоровыми.</p></div>
+                    <div><p className="font-medium">Часть наблюдаемости сейчас недоступна</p><p className="mt-1 opacity-80">Проверьте API, права доступа и версию backend. Старый monitoring payload без времени измерения или источника probe не принимается. Недоступные значения не считаются здоровыми.</p></div>
                 </div>
             )}
 

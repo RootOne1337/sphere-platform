@@ -42,6 +42,7 @@ describe('Infrastructure Monitoring page failure states', () => {
           disk: null,
           status: 'HEALTHY',
           uptime: '1m',
+          details: { probe: 'HTTP request served' },
         }] });
       }
       return Promise.reject(new Error('metrics endpoint unavailable'));
@@ -65,10 +66,11 @@ describe('Infrastructure Monitoring page failure states', () => {
       if (url.endsWith('/nodes')) {
         return Promise.resolve({ data: [{
           id: 'backend-api-responder-1', name: 'Backend API responder', type: 'API',
-          cpu: null, ram: null, disk: null, status: 'HEALTHY', uptime: '1m',
+          cpu: null, ram: null, disk: null, status: 'HEALTHY', uptime: '1m', details: { probe: 'HTTP request served' },
         }] });
       }
       return Promise.resolve({ data: {
+        observedAt: '2026-09-30T03:00:00Z',
         cpu: { linuxLoad1mPerCpu: 0.25, history: [] },
         ram: { currentBytes: 1024, totalBytes: null, history: [] },
         redis: { status: 'HEALTHY', ops: null, memory: null, clients: null },
@@ -160,5 +162,21 @@ describe('Infrastructure Monitoring page failure states', () => {
     await waitFor(() => expect(screen.getByText('Статус недоступен')).toBeInTheDocument());
     expect(screen.getAllByRole('alert').some((alert) => alert.textContent?.includes('пришёл некорректный ответ'))).toBe(true);
     expect(screen.queryByText('Все полученные проверки в норме')).not.toBeInTheDocument();
+  });
+
+  it('does not display legacy synthetic history, tunnel count or worker health without measurement provenance', async () => {
+    jest.mocked(api.get).mockImplementation((url) => Promise.resolve({ data: url.endsWith('/nodes') ? [{
+      id: 'task-worker-1', name: 'Task Worker', type: 'WORKER', status: 'HEALTHY', uptime: '13h 45m',
+    }] : {
+      cpu: { history: Array(12).fill(42) }, ram: { history: Array(8).fill(8) },
+      network: { activeTunnels: 0 },
+    } }));
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(<QueryClientProvider client={client}><MonitoringPage /></QueryClientProvider>);
+    await screen.findByText('Статус недоступен');
+    expect(screen.queryByText('Task Worker')).not.toBeInTheDocument();
+    expect(screen.queryByText('0 активны')).not.toBeInTheDocument();
+    expect(screen.queryByRole('img', { name: /Последние 12 измерений/ })).not.toBeInTheDocument();
+    expect(screen.getByText(/Старый monitoring payload/)).toBeInTheDocument();
   });
 });

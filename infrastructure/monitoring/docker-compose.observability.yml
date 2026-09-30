@@ -1,9 +1,13 @@
 # Isolated, opt-in stack. Does not recreate backend, frontend, DB or tunnels.
 # Supply a private --env-file; see docs/operations/OBSERVABILITY.md.
+x-bounded-logs: &bounded-logs
+  driver: json-file
+  options: { max-size: '10m', max-file: '3' }
 services:
   prometheus:
     image: prom/prometheus:v3.15.0@sha256:efd719c99d83b060d9daefdcf00360461adf279f45ef5391f8d111892118753e
     restart: unless-stopped
+    logging: *bounded-logs
     ports: ["127.0.0.1:${OBS_PROMETHEUS_PORT:-19090}:9090"]
     volumes:
       - ./collection/prometheus.yml:/etc/prometheus/prometheus.yml:ro
@@ -31,6 +35,7 @@ services:
   grafana:
     image: grafana/grafana:13.2.3@sha256:b28bae15e219c998fb0e0424ed724930cc61b1f61fb404d47c862f9a23f9e572
     restart: unless-stopped
+    logging: *bounded-logs
     ports: ["127.0.0.1:${OBS_GRAFANA_PORT:-13000}:3000"]
     environment:
       GF_SERVER_ROOT_URL: 'http://127.0.0.1:${OBS_GRAFANA_PORT:-13000}/observability/grafana/'
