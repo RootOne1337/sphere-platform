@@ -8,6 +8,7 @@ import android.media.ImageReader
 import android.media.projection.MediaProjection
 import android.os.Handler
 import android.os.HandlerThread
+import com.sphereplatform.agent.BuildConfig
 import com.sphereplatform.agent.ws.SphereWebSocketClientContract
 import dagger.hilt.android.qualifiers.ApplicationContext
 import timber.log.Timber
@@ -36,10 +37,12 @@ class StreamingManagerImpl @Inject constructor(
     private var virtualDisplayManager: VirtualDisplayManager? = null
     private var imageReader: ImageReader? = null
     private var imageReaderThread: HandlerThread? = null
+    private var gpuBridge: SurfaceTextureEncoderBridge? = null
+    internal var gpuBridgeEnabled = BuildConfig.STREAM_GPU_BRIDGE
     // Image/Bitmap native storage must stay alive through the complete copy and
     // surface draw. Lifecycle methods serialize separately from codec callbacks.
     private val frameLock = Any()
-    private var captureSession: Any? = null
+    @Volatile private var captureSession: Any? = null
 
     private var streamStartMs: Long = 0L
 
@@ -97,7 +100,7 @@ class StreamingManagerImpl @Inject constructor(
             height = captureConfig.height
         )
         val enc = H264Encoder(encoderConfig) { nalData, metadata ->
-            onFrameReady(nalData, metadata)
+            if (captureSession === session) onFrameReady(nalData, metadata)
         }
         // FIX H3: Передаём фактический битрейт энкодера в ABR — без рассинхрона
         val abr = AdaptiveBitrateController(enc, initialBitrate = encoderConfig.bitrateBps)
@@ -129,6 +132,36 @@ class StreamingManagerImpl @Inject constructor(
         // start() returns the Surface that VirtualDisplay will render into
         val encoderSurface = enc.start()
         encoder = enc
+
+        if (gpuBridgeEnabled) {
+            val bridge = SurfaceTextureEncoderBridge(encoderSurface, captureConfig.width,
+                captureConfig.height, frameThrottle, qualityMonitor) { error ->
+                Timber.e(error, "GPU capture failed; stopping this session")
+                Handler(android.os.Looper.getMainLooper()).post {
+                    if (encoder === enc) stop()
+                }
+            }
+            gpuBridge = bridge
+            try {
+                val captureSurface = bridge.start()
+                val vdm = VirtualDisplayManager(context, projection)
+                virtualDisplayManager = vdm
+                streaming = true
+                vdm.createDisplay(captureConfig, captureSurface)
+                viewerKeyFrameCoordinator.markEncoderReady { requestKeyFrameNow() }
+                Timber.i("StreamingManagerImpl: started GPU SurfaceTexture bridge")
+                return
+            } catch (error: SurfaceTextureEncoderBridge.InitializationFailed) {
+                // Initialization already disconnected EGL before signalling.
+                // No VirtualDisplay has consumed this projection token yet.
+                bridge.close()
+                gpuBridge = null
+                Timber.w(error, "GPU capture unavailable at startup; using CPU bridge")
+            } catch (error: Exception) {
+                stopInternal()
+                throw error // Timeout/VD failure must not reuse a projection or borrowed Surface.
+            }
+        }
 
         // ImageReader sits between VirtualDisplay (AUTO_MIRROR) and the H264 encoder surface.
         // This avoids the GraphicBufferSource acquireBuffer err=-38 crash on LDPlayer x86:
@@ -352,9 +385,17 @@ class StreamingManagerImpl @Inject constructor(
         try { imageReaderThread?.quitSafely() } catch (e: Exception) {
             Timber.w(e, "StreamingManagerImpl: imageReaderThread quit error")
         }
-        try { encoder?.stop() } catch (e: Exception) {
-            Timber.w(e, "StreamingManagerImpl: encoder stop error")
+        val ownedEncoder = encoder
+        val bridge = gpuBridge
+        if (bridge != null) {
+            // Never destroy the codec Surface concurrently with eglSwapBuffers.
+            bridge.close { ownedEncoder?.stop() }
+        } else {
+            try { ownedEncoder?.stop() } catch (e: Exception) {
+                Timber.w(e, "StreamingManagerImpl: encoder stop error")
+            }
         }
+        gpuBridge = null
         virtualDisplayManager = null
         imageReader = null
         imageReaderThread = null

@@ -1,12 +1,14 @@
 # Android Agent
 
-> **Состояние на 28 сентября 2026:** текущий кандидат исходников задаёт Android `1.2.35 / 10235`;
+> **Состояние на 1 октября 2026:** исходники задают Android `1.2.36 / 10236`;
 > приватный dev candidate `1.2.34-dev / 10234` был собран из `cc456c6` и вручную
 > установлен оператором на несколько удалённых эмуляторов. Сервер видел три
 > свежих сообщения этой версии, а оператор видел видео в браузере как минимум
 > на одном canary. Установленный SHA не сверялся независимо, кандидат не
-> массово опубликован в OTA; версия 1.2.35 — изменение исходников, не подписанный
-> APK, OTA-публикация или fleet rollout. Подробная проверка релизного контура:
+> массово опубликован в OTA. Адресное OTA 1.2.35-dev/10235 source `a907736`
+> на PH025 подтвердило completed + fresh version heartbeat; operator продолжает
+> видеть slideshow. 1.2.36 — GPU debug canary в подготовке, не fleet rollout.
+> См. [video canary и gates](operations/VIDEO-CADENCE-CANARY.md). Подробная проверка релизного контура:
 > [Android release-readiness audit](audits/2026-09-28/ANDROID-RELEASE-READINESS.md). См.
 > [каноническое состояние и границы доказательств](operations/CURRENT-STATE.md)
 > и [canary evidence](audits/2026-09-27/TUNA-REMOTE-STREAM-CANARY.md).

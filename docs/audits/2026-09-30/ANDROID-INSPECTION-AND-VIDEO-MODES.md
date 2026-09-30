@@ -17,6 +17,7 @@ acceptance отмечаются раздельно; остальные устр�
 [Device inspector](WEB-DEVICE-INSPECTOR.md) ·
 [Stream stage audit](../2026-09-25/ANDROID-STREAM-OBSERVABILITY.md) ·
 [OTA / remote gates](../2026-09-27/REMOTE-CONNECTION-AND-OTA-GATES.md) ·
+[GPU/video canary](../../operations/VIDEO-CADENCE-CANARY.md) ·
 [Каталог](../../README.md) ·
 [PR #19](https://github.com/RootOne1337/sphere-platform/pull/19)
 
@@ -177,6 +178,20 @@ tests не заменяют настоящий browser draw; visual QA оста�
 optional counter. Reproduction failed до regeneration, после `--check`
 passed; endpoint catalog не изменился. Frontend/Android CI source success.
 Full backend tests на failed run не запускались; последующий head отдельно.
+Source `4c79ef6` завершил все обязательные backend/frontend/Android jobs success,
+preview deploy skipped. Его compiled UI запущен на 3015 → UI 3020 / API 18080
+в **01:52:06**, source/process/API proof отдельно от blocked visual acceptance.
+
+**GPU source follow-up:** opt-in debug SurfaceTexture/EGL bridge подаёт raw
+producer texture в encoder Surface без CPU RGBA readback/Bitmap copy. Все GL
+resources принадлежат одному thread; stop не уничтожает codec во время swap.
+Counter gate закрывается до reset и не учитывает duplicate producer timestamps.
+Четыре новые encoder resource regressions failed на `4c79ef6`: configure/start
+failure, codec stop exception и repeated stop оставляли owned resources.
+После исправления проходят вместе с raw gate/GL startup/fallback/owner-order
+fixtures. Native EGL, реальный FPS и читаемость fixtures не удостоверяют.
+Default path остаётся CPU, новый configured GPU APK и device acceptance
+учитываются по [отдельным gates](../../operations/VIDEO-CADENCE-CANARY.md).
 
 **Дополнительный source risk:** backend `VideoStreamQueue` при congestion
 удаляет non-IDR frames без проверки reference dependency. Transport limits

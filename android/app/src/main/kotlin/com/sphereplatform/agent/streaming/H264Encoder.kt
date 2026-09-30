@@ -69,6 +69,7 @@ class H264Encoder(
         private set
 
     private var codec: MediaCodec? = null
+    private var inputSurface: Surface? = null
 
     // -------------------------------------------------------------------------
     // Lifecycle
@@ -115,23 +116,28 @@ class H264Encoder(
         }
 
         val c = MediaCodec.createEncoderByType(mime)
-        c.setCallback(encoderCallback)
-        c.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
-        val inputSurface = c.createInputSurface()
-        c.start()
-        codec = c
-        return inputSurface
+        try {
+            c.setCallback(encoderCallback)
+            c.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
+            val surface = c.createInputSurface()
+            inputSurface = surface
+            c.start()
+            codec = c
+            return surface
+        } catch (error: Exception) {
+            runCatching { inputSurface?.release() }; inputSurface = null
+            runCatching { c.release() }
+            throw error
+        }
     }
 
     fun stop() {
-        try {
-            codec?.stop()
-            codec?.release()
-        } catch (e: Exception) {
-            Timber.e(e, "H264Encoder.stop() error")
-        } finally {
-            codec = null
-        }
+        val owned = codec
+        codec = null
+        runCatching { owned?.stop() }.onFailure { Timber.w(it, "H264Encoder stop error") }
+        runCatching { owned?.release() }.onFailure { Timber.w(it, "H264Encoder release error") }
+        runCatching { inputSurface?.release() }.onFailure { Timber.w(it, "H264Encoder input Surface release error") }
+        inputSurface = null
     }
 
     fun requestKeyFrame(): Boolean {

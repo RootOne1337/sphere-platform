@@ -65,6 +65,7 @@ class StreamingCaptureLifecycleTest {
         every { frameThrottle.shouldRenderFrame(any()) } returns true
         manager = StreamingManagerImpl(RuntimeEnvironment.getApplication(), wsClient,
             frameThrottle, qualityMonitor)
+        manager.gpuBridgeEnabled = false // CPU fixture is independent of canary build flags.
     }
 
     @After fun cleanup() {
@@ -228,6 +229,68 @@ class StreamingCaptureLifecycleTest {
         val bytes = byteArrayOf(0, 0, 0, 1, 0x41)
         emitEncoded(bytes, H264Encoder.FrameMetadata(false, 33_333L, bytes.size))
         verify(exactly = 0) { wsClient.sendBinary(any()) }
+    }
+
+    @Test fun `GPU capture surface goes directly to VirtualDisplay without CPU images`() {
+        mockkConstructor(SurfaceTextureEncoderBridge::class)
+        val captureSurface = mockk<Surface>(relaxed = true)
+        every { anyConstructed<SurfaceTextureEncoderBridge>().start() } returns captureSurface
+        every { anyConstructed<SurfaceTextureEncoderBridge>().close(any()) } just Runs
+        manager.gpuBridgeEnabled = true
+        manager.start(projection)
+        assertTrue(manager.isActive())
+        verify(exactly = 1) { anyConstructed<VirtualDisplayManager>().createDisplay(any(), captureSurface) }
+        verify(exactly = 0) { ImageReader.newInstance(any(), any(), any(), any()) }
+        verify(exactly = 0) { encoderSurface.lockCanvas(any()) }
+    }
+
+    @Test fun `unavailable EGL falls back before creating the only VirtualDisplay`() {
+        mockkConstructor(SurfaceTextureEncoderBridge::class)
+        every { anyConstructed<SurfaceTextureEncoderBridge>().start() } throws
+            SurfaceTextureEncoderBridge.InitializationFailed(IllegalStateException("no recordable EGL"))
+        every { anyConstructed<SurfaceTextureEncoderBridge>().close(any()) } just Runs
+        manager.gpuBridgeEnabled = true
+        manager.start(projection)
+        assertTrue(manager.isActive())
+        verify(exactly = 1) { anyConstructed<VirtualDisplayManager>().createDisplay(any(), reader.surface) }
+        verify(exactly = 1) { ImageReader.newInstance(any(), any(), any(), any()) }
+        verify(exactly = 0) { anyConstructed<H264Encoder>().stop() }
+    }
+
+    @Test fun `GPU timeout aborts and defers codec release to GL cleanup`() {
+        mockkConstructor(SurfaceTextureEncoderBridge::class)
+        val cleanup = slot<() -> Unit>()
+        every { anyConstructed<SurfaceTextureEncoderBridge>().start() } throws
+            SurfaceTextureEncoderBridge.InitializationTimedOut()
+        every { anyConstructed<SurfaceTextureEncoderBridge>().close(capture(cleanup)) } just Runs
+        manager.gpuBridgeEnabled = true
+        try { manager.start(projection); fail("timeout must not silently reuse borrowed surfaces") }
+        catch (expected: SurfaceTextureEncoderBridge.InitializationTimedOut) { }
+        assertFalse(manager.isActive())
+        verify(exactly = 0) { ImageReader.newInstance(any(), any(), any(), any()) }
+        verify(exactly = 0) { anyConstructed<VirtualDisplayManager>().createDisplay(any(), any()) }
+        verify(exactly = 0) { anyConstructed<H264Encoder>().stop() }
+        cleanup.captured.invoke()
+        verify(exactly = 1) { anyConstructed<H264Encoder>().stop() }
+    }
+
+    @Test fun `GPU stop releases VirtualDisplay before GL and codec in owner order`() {
+        mockkConstructor(SurfaceTextureEncoderBridge::class)
+        val cleanup = slot<() -> Unit>()
+        every { anyConstructed<SurfaceTextureEncoderBridge>().start() } returns mockk(relaxed = true)
+        every { anyConstructed<SurfaceTextureEncoderBridge>().close(capture(cleanup)) } just Runs
+        manager.gpuBridgeEnabled = true
+        manager.start(projection)
+        manager.stop()
+        verifyOrder {
+            anyConstructed<VirtualDisplayManager>().release()
+            anyConstructed<SurfaceTextureEncoderBridge>().close(any())
+        }
+        verify(exactly = 0) { anyConstructed<H264Encoder>().stop() }
+        cleanup.captured.invoke()
+        manager.stop()
+        verify(exactly = 1) { anyConstructed<H264Encoder>().stop() }
+        verify(exactly = 1) { anyConstructed<SurfaceTextureEncoderBridge>().close(any()) }
     }
 
     private fun emitEncoded(bytes: ByteArray, metadata: H264Encoder.FrameMetadata) {

@@ -7,7 +7,7 @@
 [Главная](../../README.md) · [Каталог документации](../README.md) · [Readiness](READINESS.md) · [Fleet32 gates](../audits/2026-09-20/FLEET32-PREFLIGHT.md) · [PR #19](https://github.com/RootOne1337/sphere-platform/pull/19)
 
 > [!IMPORTANT]
-> **Текущий loopback runtime, 1 октября:** `3015 → UI 3019 / API 18080`, frontend **`3d082c1`**, API **`85c8014`**. Preview восстановлен в **00:24 UTC+5** после обнаружения отсутствующих старых PID/listeners 3015/3018; причина их завершения не установлена. В **00:26:04** JSON readback подтвердил login/auth-me прежнего оператора, четыре service probes, protected observability и **19 total / 14 online / 5 offline / 0 connecting**. Это API/source acceptance. **Browser visual QA заблокирована политикой URL CUA** при `getTab` для `3015/login`; обход не выполнялся. Новый screenshot, native capture и live pointer/rotation canary не заявлены. APK, backend, публичный frontend и туннели этим восстановлением не заменены.
+> **Текущий loopback runtime, 1 октября:** `3015 → UI 3020 / API 18080`, frontend **`4c79ef6`**, API **`85c8014`**. UI с независимыми receive/draw FPS compiled из Git archive и переключён в **01:52:06 UTC+5**, Next PID 36908 / relay PID 2368. Старый UI 3019 сохранён; заменён только прежний принадлежащий preview relay с проверкой command line/PID/start time. API build JSON подтверждён, backend/APK/public UI/tunnels этим UI переключением не заменены. Историческое восстановление 00:24 и JSON readback 00:26:04 описаны ниже. **Browser visual QA заблокирована политикой URL CUA**; обход не выполнялся, нового screenshot или browser FPS benchmark нет.
 
 Историческая browser acceptance **30 сентября, 22:21–22:29 UTC+5** относится
 к UI `3132afc` на `3015 → UI 3018 / API 18080`: WEB/API stamp, live events,
@@ -60,7 +60,20 @@ GitHub APK/config aliases и остальные устройства не зам
 events с явным lower-bound marker. SPS/PPS и invalid packets не считаются
 pictures; failed render не считается draw. Пять новых tests и полный frontend
 **71 suites / 542 passed**, TypeScript/targeted lint passed. Это fixtures,
-не native GPU/WebCodecs benchmark. Source ещё не равен deployed UI.
+не native GPU/WebCodecs benchmark. UI `4c79ef6` реально переключён на 3015
+в 01:52:06, но browser/native FPS acceptance остаётся открытой. Все обязательные
+GitHub backend/frontend/Android jobs source `4c79ef6` success; preview deploy skipped.
+
+**GPU follow-up:** source 1.2.36 содержит opt-in debug SurfaceTexture/EGL bridge,
+default false, без CPU Bitmap copy; startup fallback только до создания первого
+VirtualDisplay. Native resource ownership, producer timestamp gate и stop
+проверяются отдельно. Четыре resource tests failed на encoder baseline `4c79ef6`,
+после fix проходят; targeted streaming suite passed. Полные debug flavors:
+**735 tests каждый, 734 passed / 1 skipped / 0 failures / 0 errors**, dev APK
+compiled, 4m. Настроенный APK/GPU native canary — отдельные последующие gates, pending не
+считается accepted. Finite 30-second motion activity существует только в debug
+source set, private/без recents, с auto finish. Контракт и источники:
+[GPU/video canary](VIDEO-CADENCE-CANARY.md).
 Подробности, невалидный первый motion probe, неизменённые network queues и
 открытый reference-loss risk: [APK/video audit, VIDEO-I04/I05](../audits/2026-09-30/ANDROID-INSPECTION-AND-VIDEO-MODES.md).
 
