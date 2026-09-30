@@ -84,6 +84,8 @@ describe('Infrastructure Monitoring page failure states', () => {
     expect(await screen.findByText('Проверки прошли · метрики частично недоступны')).toBeInTheDocument();
     expect(screen.getByText(/Проверки сервисов и покрытие метрик — разные сигналы\./).parentElement).toHaveTextContent('история CPU, история памяти');
     expect(screen.getAllByText('HEALTHY').length).toBeGreaterThan(0);
+    expect(screen.getByText('300 B')).toBeInTheDocument();
+    expect(screen.getByText('Активные туннели').parentElement).toHaveTextContent('Не измеряется');
   });
 
   it('shows network rates only after two server-timestamped counter samples', async () => {

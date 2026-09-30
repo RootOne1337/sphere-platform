@@ -206,6 +206,13 @@ HTTP-rate/latency панели и алерты требуют отдельной
 логи с bounded retention и корреляцией device/task/run/session, DB/cache
 exporters с минимальными правами, tunnel probes и Android stage/SLO metrics.
 
+Network card в новом source показывает суммарные TX + RX bytes backend
+namespace, отдельные counters/rates и отдельно coverage числа туннелей. `null`
+для `activeTunnels` не скрывает измеренный трафик и не превращается в `0`.
+Предупреждение Prometheus описывает неполное покрытие панелей, а не утверждает
+worker-local instrumentation у любого подключённого backend. Дату rollout
+frontend сверяйте в [CURRENT-STATE](CURRENT-STATE.md).
+
 ### Multiprocess contract — исходники 30 сентября 2026
 
 Production Docker entrypoint перед импортом Python создаёт новый private

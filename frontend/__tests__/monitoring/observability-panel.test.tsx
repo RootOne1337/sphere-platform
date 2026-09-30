@@ -38,7 +38,7 @@ it('does not fetch or render platform data for tenant roles', () => {
     expect(screen.getByText(/доступен супер-администратору/)).toBeInTheDocument();
     expect(api.get).not.toHaveBeenCalled();
 });
-it('shows genuine zero/down readings, unknown history and the worker aggregation limitation separately', async () => {
+it('shows genuine zero/down readings, unknown history and panel coverage separately', async () => {
     mount();
     await screen.findByText('Сбор работает');
     expect(screen.getByText('Недоступен')).toBeInTheDocument();
