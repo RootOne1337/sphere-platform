@@ -1,9 +1,18 @@
 # Эксплуатационная готовность Sphere
 
-**Навигация обновлена: 30 сентября 2026. Исторические live-снимки ниже сохранены по датам.**
+**Навигация обновлена: 1 октября 2026. Исторические live-снимки ниже сохранены по датам.**
 
 > [!IMPORTANT]
-> Канонические source/runtime сведения, текущая версия APK в исходниках, последний записанный remote canary, ограничения диагностики и следующий тест 20–30 устройств находятся в [CURRENT-STATE.md](CURRENT-STATE.md). Этот файл — журнал readiness snapshots, не реальное время; перед rollout перечитайте live API, installed artifact hashes, deployed image IDs и receipts. Текущий pilot: frontend `4024ccf` (20:49) / backend `85c8014` (21:37 UTC+5), browser WEB 4024ccf8 / API 85c8014e. Новый backend прошёл обязательный CI (2124 tests) и exact-image acceptance; PyJWT 2.15.1 действительно установлена, обычный вход и старый access token работают. Вход через `3015/login`, direct Next `3017` не содержит API relay. После первых post-restart обрывов семь срезов 21:40:40–21:41:40 подтвердили 14 новых sessions / свежих heartbeat, 14 online / 5 offline. Это восстановление, не длительный SLA или новый stream/OTA acceptance; первый failure сохранён. Реальные probe details и Grafana работают. Публичный frontend/APK/туннели этим rollout не обновлялись; unknown OTA receipts остаются отдельным gate.
+> Канонические source/runtime сведения, текущая версия APK в исходниках, последний записанный remote canary, ограничения диагностики и следующий тест 20–30 устройств находятся в [CURRENT-STATE.md](CURRENT-STATE.md). Этот файл — журнал readiness snapshots, не реальное время; перед rollout перечитайте live API, installed artifact hashes, deployed image IDs и receipts. Последний записанный preview restore 1 октября 03:35:34 UTC+5: UI `4c79ef6` на `3015 → UI 3020 / API 18080`, backend `85c8014`. Адресный GPU canary APK 1.2.38 установлен на PH010/PH025; 20–30 FPS/quality/latency не приняты. [Native controls и открытые gates](VIDEO-CADENCE-CANARY.md#native-540p-и-независимый-android-control-1-октября).
+
+**Историческая отметка 30 сентября, 20:49–21:41 UTC+5:** frontend `4024ccf` /
+backend `85c8014`, browser WEB 4024ccf8 / API 85c8014e. Новый backend прошёл
+обязательный CI (2124 tests) и exact-image acceptance; PyJWT 2.15.1 действительно
+установлена, обычный вход и старый access token работали. После первых
+post-restart обрывов семь срезов 21:40:40–21:41:40 подтвердили 14 новых sessions /
+fresh heartbeat, 14 online / 5 offline. Это восстановление, не длительный SLA
+или новый stream/OTA acceptance; первый failure сохранён. Probe details и
+Grafana работали. Public frontend/APK/tunnels этим rollout не обновлялись.
 
 > [!NOTE]
 > Исторический срез, зафиксированный 27 сентября; он не описывает runtime на 28 сентября.

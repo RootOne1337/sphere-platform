@@ -499,10 +499,15 @@ Android 14 app-window sharing, insets и codec-supported geometry получаю
 gates; `onCapturedContentResize` не заменяется повторным использованием consent token.
 Основание: [официальный MediaProjection guide](https://developer.android.com/media/grow/media-projection).
 
-Source `VirtualDisplayManager.createConfig` принудительно выбирает 16:9/9:16.
+Первоначальный source `VirtualDisplayManager.createConfig` принудительно выбирал
+16:9/9:16; default CPU path сохраняет этот legacy contract.
 Например, экран 1920×1200 имеет ratio 1.6, а capture 1280×720 — 1.777… .
 Это конкретный geometry gap, который нужно исправлять вместе с input mapping,
-а не одиночной заменой CSS или width/height. Native capture пока не принят.
+а не одиночной заменой CSS или width/height. 1 октября source `2bed596` / 1.2.38
+связала native размер **только opt-in GPU canary** с live gesture mapping;
+default CPU/DAG coordinates не заменены. Native 960×540 format принят на двух
+canary, smooth video/quality/Android 14 geometry пока не приняты. Текущие факты:
+[540p control и ограничения](../../operations/VIDEO-CADENCE-CANARY.md#native-540p-и-независимый-android-control-1-октября).
 
 **Geometry implementation gates, 1 октября:** `H264Encoder.start` принудительно
 задаёт `AVCLevel31`, выбирая encoder by MIME без negotiated geometry. Просто
@@ -512,7 +517,9 @@ Source `VirtualDisplayManager.createConfig` принудительно выби�
 estimate не является измеренной гарантией плавности. План Sphere: negotiated
 native-or-explicit-scaled профиль, подтверждённые codec dimensions и причины
 fallback, затем atomic geometry/input contract и canary на движущемся экране.
-Новый native профиль не включён и старые скриптовые 720p coordinates не изменены.
+Новый native размер включён в configured debug GPU canary 1.2.38, но universal
+codec geometry negotiation и Android 14 app-window/insets acceptance остаются
+открытыми. Старые скриптовые 720p coordinates не изменены.
 
 Визуальный инспектор должен ограничивать sensitive text и размеры XML; «вся
 информация» означает все доступные разрешённые свойства, не password values,

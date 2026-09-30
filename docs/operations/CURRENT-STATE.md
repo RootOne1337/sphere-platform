@@ -7,7 +7,7 @@
 [Главная](../../README.md) · [Каталог документации](../README.md) · [Readiness](READINESS.md) · [Fleet32 gates](../audits/2026-09-20/FLEET32-PREFLIGHT.md) · [PR #19](https://github.com/RootOne1337/sphere-platform/pull/19)
 
 > [!IMPORTANT]
-> **Текущий loopback runtime, 1 октября:** `3015 → UI 3020 / API 18080`, frontend **`4c79ef6`**, API **`85c8014`**. UI с независимыми receive/draw FPS compiled из Git archive и переключён в **01:52:06 UTC+5**, Next PID 36908 / relay PID 2368. Старый UI 3019 сохранён; заменён только прежний принадлежащий preview relay с проверкой command line/PID/start time. API build JSON подтверждён, backend/APK/public UI/tunnels этим UI переключением не заменены. Историческое восстановление 00:24 и JSON readback 00:26:04 описаны ниже. **Browser visual QA заблокирована политикой URL CUA**; обход не выполнялся, нового screenshot или browser FPS benchmark нет.
+> **Текущий loopback runtime, 1 октября:** `3015 → UI 3020 / API 18080`, frontend **`4c79ef6`**, API **`85c8014`**. UI с независимыми receive/draw FPS compiled из Git archive и переключён в **01:52:06 UTC+5**. В 03:35 обнаружено отсутствие прежних Next/relay listeners и старого UI 3019; backend/API/tunnels работали, причина исчезновения процессов не установлена. В **03:35:34 UTC+5** восстановлена та же pinned compile: Next PID 28988 / relay PID 7156, loopback ownership и API build JSON подтверждены. Другие процессы не завершались; backend/public UI/tunnels этим восстановлением не заменены. Старые PID и switch receipt — исторические факты, не текущие listeners. **Browser visual QA заблокирована политикой URL CUA**; обход не выполнялся, нового screenshot или browser FPS benchmark нет.
 
 Историческая browser acceptance **30 сентября, 22:21–22:29 UTC+5** относится
 к UI `3132afc` на `3015 → UI 3018 / API 18080`: WEB/API stamp, live events,
@@ -25,9 +25,45 @@ PH010 (~60 Hz display) дал 65 pictures / 20 s, remote PH025 (5 Hz) — 44/20 
 Оба ниже acceptance: host FPS limit не единственная причина. Source 1.2.37
 установлена на PH010 и локализовала Surface swap wait 277–306 ms: 68 pictures /
 20 s, selected `OMX.google.h264.encoder`, capture 1280×720 при source 960×540.
-Следующая source 1.2.38 устраняет upscale только в GPU canary и связывает live
-input с capture geometry; native результат этой source ещё не заявлен.
+Source 1.2.38 устраняет upscale только в GPU canary и связывает live input с
+capture geometry; она собрана, подписана pilot key и установлена адресным OTA
+на PH010 и PH025. PH010: **113 pictures / 20 s (5.65/s)**, Surface swap mean
+**169.62–180.10 ms** в пяти motion windows. Штатный Android screenrecord без
+Sphere video transport дал **47 frames / 7.845044 s (5.991 FPS)**; отдельный
+трёхсекундный control — 18 encoded frames при отрисовке сцены около 60 FPS.
+Это отделяет низкую частоту Android capture/encoding path от сетевого тракта
+для локального control, но не исключает remote network latency.
+На PH025 reported code 10238 подтверждён, display mode остаётся **5 Hz**.
+52-second viewer получил 81 packets / 470417 bytes; GPU startup и native
+960×540 codec format подтверждены. Motion launch вернул execution_read_timeout,
+поэтому motion FPS/input acceptance не присваивается. В stage windows есть
+GL draw max 3064.61 ms и texture read max 1126.49 ms; это конкретные Android
+pauses, не изолированный codec CPU benchmark. Unknown launch не повторялся;
+последующий read-only snapshot — online / not_streaming, private canary не resumed.
+[Allowlisted evidence](../audits/2026-10-01/PH010-PH025-NATIVE-SIZE-EVIDENCE.json).
 [Workload, ограничения и command RTT](VIDEO-CADENCE-CANARY.md#сравнение-той-же-gpu-сборки-и-измерение-стадий-1-октября).
+
+**Validation source `2bed596`:** настроенный APK `1.2.38-dev/10238`, SHA256
+`15c2392be0d8c6e845a84234302d1ccde4b04ed41d3f8b97c38fd76f73c00381`,
+8459015 bytes, прежний pilot package/certificate. Обе configured debug flavors:
+746 tests, 745 passed / 1 skipped / 0 failures / 0 errors; dev debug compiled.
+GitHub Backend run 36784890226, Frontend 36784890290, Android 36784890424 —
+success этого source; preview guard passed, deploy skipped. Source/default,
+configured artifact, installed version и acceptance остаются разными gates.
+
+**Fleet observation 03:44:07 UTC+5:** 19 records, 14 online / 5 offline;
+у online есть версии 1.2.22/30/32/34/36/38. Следующий PH025 update подтвердил
+10238 отдельно. Следовательно, утверждение «весь парк на новейшем APK» неверно;
+массовая OTA и latest aliases этим этапом не изменены. Presence и этот конечный
+срез не заменяют длительный soak, 23 ожидаемых устройства или video acceptance.
+
+**Operator follow-up:** владелец подтвердил LDPlayer limit 5 FPS и выбрал 10.
+Read-only PH025 check **04:00:55 UTC+5** всё ещё сообщает mode 5 Hz, APK 10238
+online; restart/application нового host limit не подтверждены. Новый целевой
+профиль 10 FPS не принимается как прежнее требование 20–30 source pictures/s.
+Encoder target 30 не устраняет source limit. Владелец также подтвердил отсутствие
+Android Back/Home/Recents navigation в активной карточке; это следующий
+функциональный приоритет вместе с input-to-visible latency.
 
 ### Одиночный поток: картинка подтверждена, плавность остаётся открытой, 1 октября
 

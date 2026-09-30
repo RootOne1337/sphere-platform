@@ -17,9 +17,13 @@
 
 > [!NOTE]
 > **Текущий срез: 1 октября 2026.** Кандидат исходников PR #19 задаёт Android
-> `1.2.36 / 10236`. PH025 подтвердил адресное OTA 1.2.36; GPU motion canary
-> получил 44 pictures за 20 s. На PH022/025 Android сообщает только 5 Hz,
-> на локальных PH010/011 — 60 Hz. Плавность и чёткость по-прежнему не приняты.
+> `1.2.38 / 10238`. Настроенный GPU canary установлен адресным OTA на PH010 и
+> удалённый PH025. На PH010 native 960×540 дал 113 pictures / 20 s (5.65/s);
+> штатный Android screenrecord без Sphere video transport — около 6 FPS,
+> при отрисовке тестовой сцены около 60 FPS. PH025 по-прежнему сообщает 5 Hz;
+> его новый motion trial получил timeout и не принят как FPS benchmark.
+> [Измерения и ограничения](docs/audits/2026-10-01/PH010-PH025-NATIVE-SIZE-EVIDENCE.json).
+> Плавность 20–30 FPS, чёткость и input latency по-прежнему не приняты.
 > Новый APK ещё не production-подписан, публичный PR frontend не развёрнут,
 > массовая OTA не опубликована, приёмка парка 20–30 устройств не проведена.
 > Версии APK, подпись, runtime,
@@ -307,21 +311,27 @@ identity, доверенный ключ и параметры enrollment; APK и
 ## 🔬 Состояние проекта и границы проверки
 
 **Текущий срез: 1 октября 2026.** PR #19 открыт как draft. GitHub CI для
-`4c79ef6` прошёл, но preview deployment был пропущен; актуальный SHA и текущие
+code source `2bed596` прошёл Backend/Frontend/Android; preview deployment был
+пропущен. Актуальный SHA и текущие
 проверки смотрите на [странице PR #19](https://github.com/RootOne1337/sphere-platform/pull/19).
 Кандидат исходников задаёт APK
-`1.2.36/10236`; адресное OTA `1.2.35/10235` на PH025 завершилось completed и
-свежим reported version heartbeat. Operator видит картинку, но продолжает
-сообщать slideshow. Loopback UI `4c79ef6` на 3015 → UI 3020 / API 18080,
-backend `85c8014`; native FPS и quality acceptance остаются открытыми.
+`1.2.38/10238`; адресные canary OTA на PH010 и PH025 завершились completed и
+новой reported version 10238. Normal/global каналы и GitHub latest APK aliases
+не заменены. Operator видит картинку, но продолжает сообщать slideshow.
+Native 540p поднял wire rate PH010 с 3.4 до 5.65 pictures/s; отдельный штатный
+Android screenrecord дал 5.991 FPS без Sphere video transport. Это локализует
+узкое место Android capture/encoding path, не доказывает отсутствие сетевых
+задержек на удалённых устройствах. Loopback UI `4c79ef6` на 3015 → UI 3020 /
+API 18080 восстановлен в 03:35:34 UTC+5, backend `85c8014`; native FPS,
+browser draw, quality и input latency acceptance остаются открытыми.
 Последний опубликованный live snapshot в аудите показывает 14 свежих устройств
 из 19 active catalog records; оператор выбрал эти 14 как baseline. Ни 23 ожидаемых
 устройства, ни ступень 20–30, ни массовая OTA пока не приняты.
 
-**Разделение фактов:** candidate `1.2.34-dev/10234` не был массово опубликован в
-OTA; адресный installed SHA, активный video route, точный viewer/device session,
-длительный soak и текущие deployed backend/frontend digest в этом source/docs
-проходе не проверялись. Не переносите старые версии/статусы из исторических
+**Разделение фактов:** hash/package/pilot signer относятся к собранному artifact;
+completed receipt и fresh heartbeat — к адресной установке. Независимый pull/hash
+установленного APK, browser draw/legibility, длительный soak и приёмка 20–30
+устройств этим canary не выполнены. Не переносите старые версии/статусы из исторических
 аудитов на текущий runtime. Подробные даты, source/runtime distinction, диагностика
 APK и acceptance plan: [актуальное состояние Sphere](docs/operations/CURRENT-STATE.md).
 

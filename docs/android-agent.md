@@ -1,16 +1,19 @@
 # Android Agent
 
-> **Состояние на 1 октября 2026:** исходники задают Android `1.2.36 / 10236`;
-> приватный dev candidate `1.2.34-dev / 10234` был собран из `cc456c6` и вручную
-> установлен оператором на несколько удалённых эмуляторов. Сервер видел три
-> свежих сообщения этой версии, а оператор видел видео в браузере как минимум
-> на одном canary. Установленный SHA не сверялся независимо, кандидат не
-> массово опубликован в OTA. Адресное OTA 1.2.35-dev/10235 source `a907736`
-> на PH025 подтвердило completed + fresh version heartbeat; operator продолжает
-> видеть slideshow. 1.2.36-dev установился на PH025 адресным OTA и запустил
-> GPU bridge: 44 pictures / 20 s движения; его display сообщает единственный
-> mode 5 Hz. Локальные PH010/011 сообщают 60 Hz. Это не fleet rollout и
-> не приёмка smooth video; см. сопоставление в каноническом состоянии.
+> **Состояние на 1 октября 2026:** исходники задают Android `1.2.38 / 10238`,
+> source `2bed596`. Настроенный debug GPU canary с прежним pilot signer
+> установлен адресными OTA на PH010 и удалённый PH025: completed + reported
+> code 10238. Normal/global OTA и GitHub latest aliases не менялись; default
+> GPU path остаётся false. Native 960×540 на PH010 дал 113 pictures / 20 s
+> (5.65/s), прежний upscale 1280×720 — 68 / 20 s (3.4/s). Android screenrecord
+> без Sphere video transport дал 47 frames / 7.845 s (5.991 FPS); отдельный
+> контроль подтвердил отрисовку сцены около 60 FPS при encode около 6 FPS.
+> На PH025 дисплей всё ещё 5 Hz, новый motion launch вернул timeout: packets
+> поступили, но FPS benchmark и live input в этом прогоне не приняты.
+> [Sanitized evidence](audits/2026-10-01/PH010-PH025-NATIVE-SIZE-EVIDENCE.json).
+> Android configured tests: 746 каждый flavor, 745 passed / 1 skipped;
+> GitHub Backend/Frontend/Android source `2bed596` success. Это не fleet rollout,
+> не smooth-video/quality/latency acceptance и не production-signed release.
 > См. [video canary и gates](operations/VIDEO-CADENCE-CANARY.md). Подробная проверка релизного контура:
 > [Android release-readiness audit](audits/2026-09-28/ANDROID-RELEASE-READINESS.md). См.
 > [каноническое состояние и границы доказательств](operations/CURRENT-STATE.md)
