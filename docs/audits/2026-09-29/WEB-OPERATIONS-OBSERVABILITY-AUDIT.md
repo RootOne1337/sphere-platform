@@ -7,6 +7,19 @@
 **Объект проверки браузера:** локальный preview `http://127.0.0.1:3012`, только чтение
 **Статус:** source-аудит и точечные исправления; production rollout и проверка удалённых устройств не выполнялись.
 
+> Follow-up 30 сентября, 17:26 UTC+5: source `dac2319` устранил 14 dependency-aware
+> type errors и включил проверку тел нетипизированных функций: 219 модулей clean,
+> 372 targeted / 2123 full tests passed. Source `aac52c2` принят в Linux image:
+> две серии по 64 worker replacements сохранили request totals; secondary master
+> подтвердил graceful cleanup, SIGKILL residual/container restart и сохранение
+> активного neighbour/operator data. Registry growth измерен: 128 KiB на
+> replacement в fixture; 128 MiB tmpfs не снимает high-load maintenance gate.
+> Live backend остаётся `40357ca`, его DB head совпал с source. Browser `3015`
+> показывает 19 / 14 online / 5 offline и свежие heartbeat; новые API metadata
+> и session/scope fields ещё не развёрнуты. Подробные границы приёмки:
+> [CURRENT-STATE](../../operations/CURRENT-STATE.md),
+> [metrics lifecycle](../../operations/OBSERVABILITY.md#multiprocess-contract--исходники-30-сентября-2026).
+
 > Follow-up 30 сентября, 16:42–16:45 UTC+5: production образ source `e3b4fe7`
 > прошёл изолированную multiprocess acceptance. Четыре HTTP workers обработали
 > по 32 запросов, totals пережили child replacement (128 → 160), после рестарта

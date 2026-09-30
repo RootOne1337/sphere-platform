@@ -50,8 +50,24 @@ counter/histogram files сохраняются: tmpfs **не** делает ро
 высоконагруженный budget ещё не принят.
 
 **188 monitoring/deployment tests passed / 1 warning** для нового lifecycle.
-Проверка graceful/SIGKILL в packaged image выполняется отдельно; source tests
-не выдаются за image/runtime acceptance. Свежий CI прежнего remote head
+Source **`aac52c2`** принят в packaged image
+**`sha256:db4b2e125151b4440c1c3c43141178decdf0f8c125b2be5a86da34db942b5ed9`**:
+две серии по 64 replacements, **224** known requests на серию, max scrape
+**15.45 ms**, сохранение totals/live gauges и zero start нового master.
+Отдельный secondary master подтвердил cleanup после graceful shutdown **без**
+остановки контейнера; соседний active master и operator data сохранились.
+После SIGKILL directory остался и исчез после container restart, как заявлено.
+Actual image mypy **219 files passed**; packaged PostgreSQL/Redis runtime probe
+прошёл с exit 0 и ownership-checked cleanup. Private receipts:
+`.local-pilot/metrics-20260930-lifecycle-{image,runtime}-evidence`.
+
+Live preflight: DB Alembic head **`20260921_watchdog_stop`** совпал с source;
+schema migration для этой версии не требуется. Pilot backend по-прежнему
+`40357ca`, без нового metrics tmpfs. В browser на `3015` **17:26 UTC+5**
+подтверждены **19 / 14 online / 5 offline** и реальные heartbeat; начало сессии,
+scope counts/as-of и build endpoint старым API не возвращаются. Это объясняет
+пустые данные нового интерфейса, а не доказывает их live rollout.
+Свежий CI прежнего remote head
 `59ba4c7` завершил исполняемые checks success, deploy skipped.
 
 ### Multiprocess метрики — изолированная image acceptance 30 сентября
