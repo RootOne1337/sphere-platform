@@ -105,8 +105,18 @@ TTL 90 s. Она не содержит access token. Пока iframe откры�
 отзывание доступа для уже выданной cookie ограничено TTL 90 s**; мгновенный
 отзыв такой cookie не реализован. Смена/выход из аккаунта скрывает iframe в UI.
 
-Next route `/observability/grafana/[[...path]]` принимает GET/HEAD и только один
-POST endpoint для чтения dashboard — `api/ds/query`. Запись dashboards/users/
+Next route `/observability/grafana/[[...path]]` принимает GET/HEAD и два точных
+POST endpoints чтения: `api/ds/query` для графиков и
+`apis/features.grafana.app/v0alpha1/namespaces/default/ofrep/v1/evaluate/flags`
+для загрузки feature flags Grafana 13. OFREP читает значения, не меняет флаги;
+body ограничен 16 KiB и проверяется как evaluation context. Контекст браузера
+не передаётся: сервер задаёт `{context: {targetingKey: "default"}}` для своей
+фиксированной Viewer-сессии. Другие namespaces, single-flag paths и write
+methods не разрешены этим исключением. Иной deployment namespace требует
+отдельной адаптации и проверки allowlist. Сверено с
+[Grafana 13.2.3 source](https://github.com/grafana/grafana/blob/v13.2.3/packages/grafana-runtime/src/internal/openFeature/index.ts)
+и [OFREP bulk evaluation](https://openfeature.dev/docs/reference/other-technologies/ofrep/openapi/).
+Запись dashboards/users/
 datasources запрещена; path traversal, external redirect и datasource proxy
 bypass отклоняются. Query body до 100 KB, интервал до 24 h, не более восьми
 queries. Browser identity/cookies/Authorization не передаются в Grafana.

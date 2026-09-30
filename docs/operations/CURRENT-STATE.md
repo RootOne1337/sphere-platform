@@ -7,9 +7,41 @@
 [Главная](../../README.md) · [Каталог документации](../README.md) · [Readiness](READINESS.md) · [Fleet32 gates](../audits/2026-09-20/FLEET32-PREFLIGHT.md) · [PR #19](https://github.com/RootOne1337/sphere-platform/pull/19)
 
 > [!IMPORTANT]
-> Это сверка исходников, CI и отдельных runtime-срезов. 30 сентября локальный frontend `3012` пересобран с известным SHA и подключён к прежнему pilot API `18080`. Backend, публичный frontend, APK и туннели не обновлялись. Удаление и reboot отменены до submit; OTA не отправлялась. Отдельные видеосессия и диагностическая shell-команда проверяются ниже, без заявления о приёмке всего парка. Исторические срезы сохраняют свои даты.
+> Это сверка исходников, CI и отдельных runtime-срезов. 30 сентября на отдельном локальном `3015` запущен frontend `ab0724d` с настоящим pilot API `18080` и встроенной Grafana; прежний `3012` сохранён. Backend, публичный frontend, APK и туннели этим этапом не обновлялись. Отдельные canary не являются приёмкой всего парка. Исторические срезы сохраняют свои даты.
 
 ## Состояние на дату проверки
+
+### Живой веб, встроенная Grafana и следующий фикс — 30 сентября, 15:39–15:49 UTC+5
+
+Владелец выполнил подготовленный launcher после отказа автоматического запуска.
+Readback подтвердил `3015` relay PID **31892**, Next `3014` PID **44804**,
+source **`ab0724dbc148466d3ff3eea5c924c6447e3c3856`**. Production build этого
+source завершился с exit 0, 33 application routes. Старый `3012` не заменён.
+Адрес актуальной живой проверки: `http://127.0.0.1:3015/monitoring`.
+
+В браузере подтверждены `События: подключены`, настоящий каталог **19 / 14
+online / 5 offline**, версия WEB, история Prometheus **241 точка** и обновление
+срезов без ручного refresh: **15:40:30 → 15:40:45 → 15:41:16 → 15:45:01**.
+Встроенная Grafana показывает реальные панели; повторное открытие после
+перехода в реестр успешно. На ширине 390 px document/main имеют ширину 390,
+iframe 350, горизонтального document overflow нет. Screenshot и исходные
+receipts сохранены приватно. Сквозной hidden-tab recovery проверен unit
+regressions; этот browser receipt не выдаётся за тест реального сна компьютера.
+
+Найдена отдельная ошибка загрузки feature flags Grafana: native OFREP endpoint
+отвечает 200, а текущий `ab0724d` bridge отклоняет этот POST с **405**. Это
+объясняет console initialization error; сами графики доступны. Source fix
+разрешает только bulk read для namespace `default`, body до 16 KiB, с фиксированным
+серверным контекстом. Browser identity не пересылается, записи запрещены.
+Direct handler canary: flags **200 / 378**, graph query 200, Viewer
+`canEdit=false`, dashboard write **405**, anonymous history **401**.
+Полный frontend **71 suites / 523 tests passed**, TypeScript и targeted ESLint
+passed; до патча regression дал 7 failures с 405. Это source/canary приёмка
+следующего фикса, **не** заявление, что он уже работает на `3015`.
+
+Карточки старого deployed monitoring API остаются недоступными: payload не
+имеет времени/источника измерения. Новый веб не подменяет это здоровыми нулями.
+P1 backend rollout и multi-worker aggregation ниже остаются открыты.
 
 ### Канал событий и актуальность веб-данных — 30 сентября, 15:33 UTC+5
 
@@ -31,7 +63,7 @@ Frontend regression: **71 suites / 511 tests passed**; TypeScript и targeted
 ESLint прошли в этом проходе. Production build и browser acceptance этой
 новой версии фиксируются отдельным receipt после подготовки артефакта.
 
-**Runtime ещё не переключён:** попытка параллельного старта готового source
+**На момент этого среза runtime ещё не переключён:** попытка параллельного старта готового source
 `603a8fc` на 3014 снова отклонена automatic approval review (`blocked by
 policy`), без более конкретной причины. Последнее разрешение пользователя
 продолжить работу не устранило технический блок запуска. Это не отсутствие
@@ -61,7 +93,7 @@ HttpOnly cookie и проверкой super_admin через `/auth/me`. Пол�
 Production builds `459f001` и `603a8fc`: exit 0, 33 маршрута. Для local
 `next start` в архивной копии отключён только `output: standalone`.
 
-**Новая веб-сборка пока не запущена:** переключение Next и параллельный запуск
+**На 08:33 новая веб-сборка ещё не запущена:** переключение Next и параллельный запуск
 не выполнены из-за automatic approval review. Основной `3012`
 сохраняет frontend `6936cac`, Next PID 46164 на 3013, proxy PID 5324.
 Новый iframe, responsive layout и end-to-end auth ещё не прошли browser

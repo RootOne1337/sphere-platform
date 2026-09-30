@@ -6,6 +6,8 @@ export const GRAFANA_PREFIX = '/observability/grafana';
 const COOKIE = 'sphere_observability';
 const TTL_SECONDS = 90;
 const MAX_JSON_BYTES = 2_000_000;
+// Grafana 13 bootstraps its read-only flags through OFREP POST in this namespace.
+const GRAFANA_FEATURE_READ = 'apis/features.grafana.app/v0alpha1/namespaces/default/ofrep/v1/evaluate/flags';
 const WINDOWS: Record<HistoryWindow, number> = { '1h': 3600, '6h': 21600, '24h': 86400 };
 const QUERIES = {
     availability: 'up{job="sphere-backend"}',
@@ -171,18 +173,32 @@ export async function proxyGrafana(request: Request, path: string[]): Promise<Re
         const route = path.join('/');
         if (route.startsWith('api/datasources/proxy/') || /api\/datasources\/uid\/[^/]+\/resources/.test(route)) throw new ObservationError(403, 'Используйте запросы dashboard через защищённый endpoint.');
         const isQuery = request.method === 'POST' && route === 'api/ds/query';
-        if (!['GET', 'HEAD'].includes(request.method) && !isQuery) throw new ObservationError(405, 'Grafana в Sphere доступна только для чтения.');
+        const isFeatureRead = request.method === 'POST' && route === GRAFANA_FEATURE_READ;
+        if (!['GET', 'HEAD'].includes(request.method) && !isQuery && !isFeatureRead) throw new ObservationError(405, 'Grafana в Sphere доступна только для чтения.');
         // Never forward browser Authorization, Cookie, Origin or proxy identity headers.
         const headers: Record<string, string> = { 'X-WEBAUTH-USER': 'sphere-observer', Accept: request.headers.get('accept') ?? '*/*' };
         let body: string | undefined;
-        if (isQuery) {
+        if (isQuery || isFeatureRead) {
             if (request.headers.get('sec-fetch-site') === 'cross-site') throw new ObservationError(403, 'Запрос отклонён.');
+            headers['Content-Type'] = 'application/json';
+        }
+        if (isQuery) {
             if (Number(request.headers.get('content-length') ?? 0) > 100_000) throw new ObservationError(413, 'Запрос слишком большой.');
             body = await readText(request.body, 100_000);
             let query;
             try { query = object(JSON.parse(body)); } catch { throw new ObservationError(400, 'Некорректный запрос.'); }
             if (!Number.isFinite(Number(query.from)) || !Number.isFinite(Number(query.to)) || Number(query.to) < Number(query.from) || Number(query.to) - Number(query.from) > 86400_000 || !Array.isArray(query.queries) || query.queries.length > 8) throw new ObservationError(400, 'Максимальный интервал Grafana — 24 часа, не более 8 запросов.');
-            headers['Content-Type'] = 'application/json';
+        }
+        if (isFeatureRead) {
+            if (Number(request.headers.get('content-length') ?? 0) > 16_384) throw new ObservationError(413, 'Запрос слишком большой.');
+            const supplied = await readText(request.body, 16_384);
+            try {
+                const context = object(object(JSON.parse(supplied)).context);
+                if (typeof context.targetingKey !== 'string' || !context.targetingKey.trim()) throw new Error('invalid feature context');
+            } catch { throw new ObservationError(400, 'Некорректный запрос feature flags.'); }
+            // The bridge uses one server-owned Viewer namespace. Do not forward
+            // browser user/org attributes or use them to select feature targeting.
+            body = JSON.stringify({ context: { targetingKey: 'default' } });
         }
         const upstream = configuredUrl('OBSERVABILITY_GRAFANA_URL');
         upstream.pathname = `${GRAFANA_PREFIX}/${route}`;

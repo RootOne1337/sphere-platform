@@ -7,9 +7,9 @@
 **Объект проверки браузера:** локальный preview `http://127.0.0.1:3012`, только чтение
 **Статус:** source-аудит и точечные исправления; production rollout и проверка удалённых устройств не выполнялись.
 
-> Follow-up 30 сентября: отдельные Prometheus 3.15.0 / Grafana 13.2.3 уже
-> работают и возвращают реальную историю; source-интеграция в Sphere подготовлена,
-> но новый веб ещё не переключён. Старый monitoring payload отвергается в новом
+> Follow-up 30 сентября, 15:49 UTC+5: отдельные Prometheus 3.15.0 / Grafana 13.2.3
+> работают; после запуска владельцем `ab0724d` встроенная Grafana и обновление
+> истории каждые 15 s подтверждены в живом Sphere на `3015`. Старый monitoring payload отвергается в новом
 > source. Обнаружен отдельный P1: worker-local Prometheus registry при четырёх
 > Gunicorn workers без multiprocess aggregation. Общие RPS/p95/CPU по нему не
 > показываются. Проверки, runtime/CI даты и открытые gates — в
@@ -17,6 +17,16 @@
 > права доступа и лицензии — в [runbook](../../operations/OBSERVABILITY.md).
 
 ## Вывод для оператора
+
+> Live follow-up: веб `3015` показывает 19 устройств / 14 online / 5 offline,
+> подтверждённый канал событий и 241 точку Prometheus; iframe открылся после
+> перехода между разделами. На mobile 390 px document overflow отсутствует.
+> Browser console выявила OFREP POST, ошибочно блокируемый read-only bridge:
+> текущая сборка 405, native Grafana 200. Узкий source fix для bulk evaluation
+> `default` прошёл 71 suites / 523 tests, types/lint и direct upstream canary;
+> browser-selected identity/context отбрасывается, writes остаются 405.
+> Исправление OFREP ещё не объявляется развёрнутым. Различия live/source и
+> оставшиеся backend gates указаны в CURRENT-STATE. Raw receipts приватны.
 
 > Follow-up 30 сентября, 15:33 UTC+5: `/ws/events` через proxy 3012 подтвердил
 > snapshot и три ping/pong за 20 секунд; канал доступен. Source-аудит выявил

@@ -93,6 +93,43 @@ function grafanaRequest(cookie: string, method = 'GET', body?: string) {
 }
 
 describe('Read-only Grafana bridge', () => {
+    const featurePath = ['apis', 'features.grafana.app', 'v0alpha1', 'namespaces', 'default', 'ofrep', 'v1', 'evaluate', 'flags'];
+    it('reads Grafana boot feature flags with a fixed context, never a browser-selected identity', async () => {
+        const cookie = await sessionCookie();
+        mockFetch.mockClear().mockResolvedValueOnce(ok({ flags: [{ key: 'test', value: true }] }));
+        const response = await proxyGrafana(grafanaRequest(cookie, 'POST', JSON.stringify({ context: { targetingKey: 'other-org', userId: 'admin', email: 'private@example.test' } })), featurePath);
+        expect(response.status).toBe(200);
+        const [url, options] = mockFetch.mock.calls[0];
+        expect(url.pathname).toBe('/observability/grafana/' + featurePath.join('/'));
+        expect(options.body).toBe(JSON.stringify({ context: { targetingKey: 'default' } }));
+        expect(options.headers).toEqual({ 'X-WEBAUTH-USER': 'sphere-observer', Accept: '*/*', 'Content-Type': 'application/json' });
+    });
+    it.each(['{}', '[]', '{', '{"context":[]}', '{"context":{"targetingKey":1}}'])('rejects malformed feature evaluation %s', async body => {
+        const cookie = await sessionCookie();
+        mockFetch.mockClear();
+        expect((await proxyGrafana(grafanaRequest(cookie, 'POST', body), featurePath)).status).toBe(400);
+        expect(mockFetch).not.toHaveBeenCalled();
+    });
+    it('bounds feature evaluation and rejects cross-site requests before contacting Grafana', async () => {
+        const cookie = await sessionCookie();
+        mockFetch.mockClear();
+        const crossSite = new Request('http://sphere.test/observability/grafana/' + featurePath.join('/'), { method: 'POST', headers: { cookie, 'sec-fetch-site': 'cross-site' }, body: '{"context":{"targetingKey":"default"}}' });
+        expect((await proxyGrafana(crossSite, featurePath)).status).toBe(403);
+        expect((await proxyGrafana(grafanaRequest(cookie, 'POST', 'x'.repeat(16_385)), featurePath)).status).toBe(413);
+        expect(mockFetch).not.toHaveBeenCalled();
+    });
+    it.each([
+        ['POST', [...featurePath.slice(0, 4), 'other-org', ...featurePath.slice(5)]],
+        ['POST', [...featurePath, 'flag-key']],
+        ['POST', ['ofrep', 'v1', 'evaluate', 'flags']],
+        ['PUT', featurePath],
+        ['DELETE', featurePath],
+    ])('does not widen the feature read allowlist to %s %j', async (method, path) => {
+        const cookie = await sessionCookie();
+        mockFetch.mockClear();
+        expect((await proxyGrafana(grafanaRequest(cookie, method as string, '{}'), path as string[])).status).toBe(405);
+        expect(mockFetch).not.toHaveBeenCalled();
+    });
     it('issues an HttpOnly, path-scoped, short-lived cookie only to a verified admin', async () => {
         process.env.OBSERVABILITY_SECURE_COOKIE = 'true';
         const response = await createGrafanaSession(request());
