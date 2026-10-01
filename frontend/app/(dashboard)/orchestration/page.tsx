@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
@@ -50,6 +50,7 @@ import {
 import { DeviceSelector } from '@/components/sphere/DeviceSelector';
 import { useScripts, Script } from '@/lib/hooks/useScripts';
 import { PipelineResumeControl } from '@/components/orchestration/PipelineResumeControl';
+import { isoToUtcDateTimeInput, utcDateTimeInputToIso, isValidUtcDateTimeInput } from '@/src/features/orchestration/scheduleTime';
 import { parseListItems } from '@/src/features/orchestration/listPayload';
 
 // ============================================================================
@@ -1746,6 +1747,8 @@ function EditScheduleDialog({ schedule, open, onOpenChange, pipelines }: {
     const [cronExpression, setCronExpression] = useState('');
     const [intervalSeconds, setIntervalSeconds] = useState(3600);
     const [oneShotAt, setOneShotAt] = useState('');
+    const [oneShotLoadError, setOneShotLoadError] = useState<string | null>(null);
+    const originalOneShot = useRef<{ raw: string; input: string } | null>(null);
     const [targetType, setTargetType] = useState<'script' | 'pipeline'>('pipeline');
     const [pipelineId, setPipelineId] = useState('');
     const [scriptId, setScriptId] = useState('');
@@ -1759,6 +1762,7 @@ function EditScheduleDialog({ schedule, open, onOpenChange, pipelines }: {
     // Синхронизация состояния формы при смене расписания
     useEffect(() => {
         if (!schedule) return;
+        originalOneShot.current = null;
         setName(schedule.name);
         setDescription(schedule.description || '');
         setTimezone(schedule.timezone || 'UTC');
@@ -1775,7 +1779,15 @@ function EditScheduleDialog({ schedule, open, onOpenChange, pipelines }: {
             setIntervalSeconds(schedule.interval_seconds);
         } else {
             setTriggerType('one_shot');
-            setOneShotAt(schedule.one_shot_at || '');
+            try {
+                const input = schedule.one_shot_at ? isoToUtcDateTimeInput(schedule.one_shot_at) : '';
+                setOneShotAt(input);
+                if (schedule.one_shot_at) originalOneShot.current = { raw: schedule.one_shot_at, input };
+                setOneShotLoadError(null);
+            } catch {
+                setOneShotAt('');
+                setOneShotLoadError('Дата запуска API некорректна. Укажите подтверждённый момент в UTC перед сохранением.');
+            }
         }
     }, [scheduleId]);
 
@@ -1802,13 +1814,9 @@ function EditScheduleDialog({ schedule, open, onOpenChange, pipelines }: {
                 payload.cron_expression = null;
                 payload.one_shot_at = null;
             } else {
-                // datetime-local возвращает строку без timezone (напр. '2026-03-10T15:30').
-                // Добавляем ':00Z' чтобы передать явный UTC ISO 8601 — иначе бэкенд
-                // получает naive datetime и выбрасывает TypeError при расчёте next_fire_at.
-                const oneShotIso = oneShotAt.includes('Z') || oneShotAt.includes('+') || oneShotAt.includes('-', 10)
-                    ? oneShotAt
-                    : oneShotAt + ':00Z';
-                payload.one_shot_at = oneShotIso;
+                // An unchanged source retains backend sub-millisecond precision and its original aware representation.
+                payload.one_shot_at = originalOneShot.current && oneShotAt === originalOneShot.current.input
+                    ? originalOneShot.current.raw : utcDateTimeInputToIso(oneShotAt);
                 payload.cron_expression = null;
                 payload.interval_seconds = null;
             }
@@ -1830,7 +1838,7 @@ function EditScheduleDialog({ schedule, open, onOpenChange, pipelines }: {
     const canSubmit = name.trim().length > 0 && (
         (triggerType === 'cron' && cronExpression.trim()) ||
         (triggerType === 'interval' && intervalSeconds > 0) ||
-        (triggerType === 'one_shot' && oneShotAt)
+        (triggerType === 'one_shot' && isValidUtcDateTimeInput(oneShotAt))
     ) && (
         (targetType === 'pipeline' && pipelineId) ||
         (targetType === 'script' && scriptId)
@@ -1916,13 +1924,17 @@ function EditScheduleDialog({ schedule, open, onOpenChange, pipelines }: {
                     )}
                     {triggerType === 'one_shot' && (
                         <div className="space-y-1.5">
-                            <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Дата/время запуска (ISO) *</Label>
+                            <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Дата/время запуска (UTC) *</Label>
                             <Input
                                 type="datetime-local"
+                                aria-label="Дата и время запуска (UTC)"
+                                step="0.001"
                                 value={oneShotAt}
-                                onChange={e => setOneShotAt(e.target.value)}
+                                onChange={e => { setOneShotAt(e.target.value); setOneShotLoadError(null); }}
                                 className="h-9 bg-black/30 border-border font-mono text-xs"
                             />
+                            <p className="text-xs text-muted-foreground">Часовой пояс расписания применяется к CRON. Разовый запуск задаётся в UTC; часовой пояс браузера не меняет это время.</p>
+                            {oneShotLoadError && <p role="alert" className="text-xs text-destructive">{oneShotLoadError}</p>}
                         </div>
                     )}
 
@@ -2060,13 +2072,7 @@ function CreateScheduleDialog({ open, onOpenChange, pipelines }: { open: boolean
             if (triggerType === 'cron') payload.cron_expression = cronExpression.trim();
             else if (triggerType === 'interval') payload.interval_seconds = intervalSeconds;
             else {
-                // datetime-local возвращает строку без timezone (напр. '2026-03-10T15:30').
-                // Добавляем ':00Z' чтобы передать явный UTC ISO 8601 — иначе бэкенд
-                // получает naive datetime и выбрасывает TypeError при расчёте next_fire_at.
-                const oneShotIso = oneShotAt.includes('Z') || oneShotAt.includes('+') || oneShotAt.includes('-', 10)
-                    ? oneShotAt
-                    : oneShotAt + ':00Z';
-                payload.one_shot_at = oneShotIso;
+                payload.one_shot_at = utcDateTimeInputToIso(oneShotAt);
             }
 
             const { data } = await api.post('/schedules', payload);
@@ -2086,7 +2092,7 @@ function CreateScheduleDialog({ open, onOpenChange, pipelines }: { open: boolean
     const canSubmit = name.trim().length > 0 && (
         (triggerType === 'cron' && cronExpression.trim()) ||
         (triggerType === 'interval' && intervalSeconds > 0) ||
-        (triggerType === 'one_shot' && oneShotAt)
+        (triggerType === 'one_shot' && isValidUtcDateTimeInput(oneShotAt))
     ) && (
         (targetType === 'pipeline' && pipelineId) ||
         (targetType === 'script' && scriptId)
@@ -2172,13 +2178,16 @@ function CreateScheduleDialog({ open, onOpenChange, pipelines }: { open: boolean
                     )}
                     {triggerType === 'one_shot' && (
                         <div className="space-y-1.5">
-                            <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Дата/время запуска (ISO) *</Label>
+                            <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Дата/время запуска (UTC) *</Label>
                             <Input
                                 type="datetime-local"
+                                aria-label="Дата и время запуска (UTC)"
+                                step="0.001"
                                 value={oneShotAt}
                                 onChange={e => setOneShotAt(e.target.value)}
                                 className="h-9 bg-black/30 border-border font-mono text-xs"
                             />
+                            <p className="text-xs text-muted-foreground">Часовой пояс расписания применяется к CRON. Разовый запуск задаётся в UTC; часовой пояс браузера не меняет это время.</p>
                         </div>
                     )}
 
