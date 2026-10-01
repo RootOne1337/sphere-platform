@@ -49,6 +49,7 @@ import {
 } from 'lucide-react';
 import { DeviceSelector } from '@/components/sphere/DeviceSelector';
 import { useScripts, Script } from '@/lib/hooks/useScripts';
+import { ScheduleExecutionHistoryDialog } from '@/components/orchestration/ScheduleExecutionHistoryDialog';
 import { PipelineResumeControl } from '@/components/orchestration/PipelineResumeControl';
 import { isoToUtcDateTimeInput, utcDateTimeInputToIso, isValidUtcDateTimeInput } from '@/src/features/orchestration/scheduleTime';
 import { parseListItems } from '@/src/features/orchestration/listPayload';
@@ -131,20 +132,6 @@ interface Schedule {
     total_runs: number;
     next_fire_at: string | null;
     last_fired_at: string | null;
-    created_at: string;
-}
-
-interface ScheduleExecution {
-    id: string;
-    schedule_id: string;
-    status: string;
-    fire_time: string;
-    actual_time: string;
-    devices_targeted: number;
-    tasks_created: number;
-    tasks_succeeded: number;
-    tasks_failed: number;
-    skip_reason: string | null;
     created_at: string;
 }
 
@@ -827,6 +814,7 @@ function RunRow({
 
 function SchedulesTab({ schedules, pipelines, loading, error, hasSnapshot, search, onCreateSchedule, onEditSchedule }: { schedules: Schedule[]; pipelines: Pipeline[]; loading: boolean; error: boolean; hasSnapshot: boolean; search: string; onCreateSchedule: () => void; onEditSchedule: (s: Schedule) => void }) {
     const queryClient = useQueryClient();
+    const [historySchedule, setHistorySchedule] = useState<Schedule | null>(null);
 
     const toggleMut = useMutation({
         mutationFn: ({ id, active }: { id: string; active: boolean }) =>
@@ -950,6 +938,10 @@ function SchedulesTab({ schedules, pipelines, loading, error, hasSnapshot, searc
                                         >
                                             <Zap className="w-3 h-3" />
                                         </Button>
+                                        <Button variant="ghost" size="tiny" title="История срабатываний"
+                                            aria-label={`История срабатываний: ${s.name}`} onClick={() => setHistorySchedule(s)}>
+                                            <Clock className="w-3 h-3" />
+                                        </Button>
                                         <Button
                                             variant="ghost" size="tiny"
                                             className="text-muted-foreground hover:text-primary hover:bg-primary/10"
@@ -978,6 +970,7 @@ function SchedulesTab({ schedules, pipelines, loading, error, hasSnapshot, searc
                 </tbody>
             </table>
         </div>
+        <ScheduleExecutionHistoryDialog schedule={historySchedule} onClose={() => setHistorySchedule(null)} />
         </div>
     );
 }
