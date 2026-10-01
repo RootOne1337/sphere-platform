@@ -2,7 +2,7 @@
 
 Этот журнал продолжает [замороженный аудит](WEB-FULL-CAPABILITY-AUDIT.md) исходников `1354d66`. Исходный документ и evidence сохраняют свою дату и ограничения; их статусы не переписываются задним числом.
 
-**Срез реализации 2 октября 2026, 00:03 UTC+5:** frontend source `c3bf0e5`; 21 source finding исправлено (все 5 P1 и 16 P2), 20 остаются открытыми. Проверочный веб установлен на `3015 → UI 3028 / API 18080`. Production standalone compile и 87 suites / 687 tests passed; это не визуальная приёмка. [Allowlisted validation/runtime evidence](WEB-AUDIT-FIXES-VALIDATION.json).
+**Срез реализации 2 октября 2026, 00:36 UTC+5:** frontend source `7f30d9d`; 22 source findings исправлено (все 5 P1 и 17 P2), 19 остаются открытыми. Проверочный веб установлен на `3015 → UI 3029 / API 18080`. Production standalone compile и 89 suites / 705 tests passed; это не визуальная приёмка. [Allowlisted validation/runtime evidence](WEB-AUDIT-FIXES-VALIDATION.json).
 
 ## Исходная фиксация
 
@@ -37,7 +37,7 @@
 | [F10](WEB-FULL-CAPABILITY-AUDIT.md#f10) | P2 | Source исправлен; live OPEN | OTA: поздний ответ фильтра может заменить новый |
 | [F11](WEB-FULL-CAPABILITY-AUDIT.md#f11) | P2 | Source исправлен; live OPEN | OTA: ошибка соседствует с ложным empty state |
 | [F12](WEB-FULL-CAPABILITY-AUDIT.md#f12) | P2 | Source исправлен; live OPEN | Сценарии: первая страница без доступа к остальным |
-| [F13](WEB-FULL-CAPABILITY-AUDIT.md#f13) | P2 | Открыто | Оркестрация: три списка обрезаны до 100 записей |
+| [F13](WEB-FULL-CAPABILITY-AUDIT.md#f13) | P2 | Source исправлен; live OPEN | Оркестрация: три списка обрезаны до 100 записей |
 | [F14](WEB-FULL-CAPABILITY-AUDIT.md#f14) | P2 | Source исправлен; live OPEN | Триггеры: поиск ограничен первыми 100 |
 | [F15](WEB-FULL-CAPABILITY-AUDIT.md#f15) | P2 | Source исправлен; live OPEN | Логи: выбрать устройство можно только из первой страницы |
 | [F16](WEB-FULL-CAPABILITY-AUDIT.md#f16) | P2 | Открыто | Задание: несогласованный путь к скриншотам шагов |
@@ -220,7 +220,7 @@
 - Create/Edit interval принимают только целые 60..86400 секунд, как [CreateScheduleRequest/UpdateScheduleRequest](../../../backend/schemas/schedule.py); HTML min/max/step и `canSubmit` согласованы.
 - 5 before failures на `1e1faec` → 5 passed: отсутствие цели, явные device_ids, обе inclusive границы, дробь/59/86401 и снятие единственной цели. Этот дополнительный guard не переписывает frozen F01–F41 и не закрывает другие недостатки orchestration forms.
 
-## Текущая проверка и установка третьего набора
+## Проверка и установка третьего набора, 1 октября
 
 - Source/compiled stamp `55b07d91004b895481c6fd515d332e5af68375be`; full frontend **87 suites / 685 tests**, 0 failures/skips. **36 новых regressions** в третьем наборе, **103 всего** относительно 582-test baseline. TypeScript noEmit и diff check passed.
 - Original production Next.js 15.5.26 standalone config, isolated Git archive, same-origin API и WS fallback; compiled SHA проверен. 44 существующих lint warnings остаются; build gates не отключались.
@@ -232,7 +232,7 @@
 
 ## Ручная приёмка установленного веба
 
-Эти шаги ещё не приняты агентом; автоматизация браузера для Sphere заблокирована URL policy. Они относятся к установленной сборке `55b07d9`, не к замороженному audit baseline.
+Эти шаги ещё не приняты агентом; автоматизация браузера для Sphere заблокирована URL policy. Для текущей установки используйте `7f30d9d`; исторические source/runtime результаты ниже не являются новой визуальной приёмкой.
 
 1. Открыть [Системные логи](http://127.0.0.1:3015/logs), проверить source SHA в шапке. Поиск устройства, переход к следующей странице и выбор меняют источник только по явному выбору; открыть скопированную ссылку в новой вкладке и сопоставить тот же device ID.
 2. На VPN peer нажать Logs и сопоставить ID в URL с ID peer. История пользователя /audit и архив агента /logs — разные данные.
@@ -250,3 +250,15 @@
 - Installed **2 октября 2026, 00:03:15 UTC+5**, 3015 → UI3028/API18080. Next PID47416, relay PID23052; прежний owned relay18164 заменён после проверки PID/start/command/listener, Next42560 сохранён. API8d64ca4, server-only auth/observability config и внешние tunnel/OTA не заменялись.
 - Source fix count остаётся 21/41; F29 дополнен, остальные 20 OPEN. Ранее установленный `55b07d9` и его 685-test результат выше остаются историческими фактами.
 - Frontend CI published `19cd53b` success ([run36910704364](https://github.com/RootOne1337/sphere-platform/actions/runs/36910704364)); это промежуточный 685-test head. Итоговый head после дополнительного source/docs commit требует собственного CI; его результат фиксируется отдельно.
+
+
+## F13 — страницы оркестрации и четвёртый набор, 2 октября
+
+- [Полный отчёт с контрактами, тестами и ограничениями](../2026-10-02/ORCHESTRATION-CATALOG-PAGING.md). Commit `186ce02` сохраняет envelope трёх каталогов, независимые страницы и поддерживаемые серверные фильтры; счётчики не выдают размер страницы за общий итог.
+- Create/Edit расписания имеют собственный paginated pipeline picker. Выбранный ID вне страницы/поиска сохраняется. Неизвестное имя запуска отображается реальным pipeline ID; прежний поиск по известному имени сохранён (`7f30d9d`).
+- 8 before failures на `868f523`; финальные 13 catalog и 5 picker regressions. Дополнительное расширение существующего case поймало потерю name search на `d43626c` и подтвердило её устранение. 9 orchestration suites / 60 tests passed; полный frontend **89 suites / 705 tests**, 0 failures/skips. **18 новых cases / 123 относительно baseline582**.
+- Lint follow-up `d43626c` убрал два новых предупреждения. Original production Next15.5.26 standalone build `7f30d9d5282804d7b477bff665cfea256dd31aeb`, types и SHA stamp passed; 44 прежних lint warnings остаются. Windows trace-copy warnings как в предыдущей сборке; локальный runtime использует workspace dependencies, переносимый Windows package этим не принят.
+- Installed **2 октября 2026, 00:36:17 UTC+5**, `3015 → UI3029/API18080`. Next7416, relay48892. Предыдущий relay23052 проверен по PID/start/command/listener и заменён; Next47416 сохранён. API8d64ca4 и server-only конфигурация прежние. Чтение health/build через новый relay и ownership listeners подтверждены; public UI/APK/OTA/tunnels не менялись.
+- **22 source findings исправлено, 19 OPEN**; browser visual acceptance OPEN по прежнему URL policy. Текстовый поиск ограничен текущей страницей, что явно подписано. Глобальный свободный поиск, snapshot export, backend-wide аналитика не реализованы этим frontend batch. Полнота script pickers остаётся F27.
+- Published `868f523`: 9 checks success, preview deploy skipped. Новый source/docs head требует собственного CI. Это отдельный результат от live API permissions/controls и выполнения Android сценариев.
+- Следующий приоритет: F16/F17 screenshot/restart context; F19/F20 discovery ownership; F24–F28 workflows; F32/F33 outcomes/OTA; F34–F36 video/XPath; F37–F41 export/access/acceptance. Остальные замечания не объявлены устранёнными.

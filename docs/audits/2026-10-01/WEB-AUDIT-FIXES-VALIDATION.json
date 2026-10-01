@@ -1,7 +1,7 @@
 {
-  "observedAt": "2026-10-01T19:03:15.5222533+00:00",
+  "observedAt": "2026-10-01T19:36:17.2110128+00:00",
   "timezone": "Asia/Yekaterinburg",
-  "source": "c3bf0e5c3105dcd80becfb86c743a363d0b2d23c",
+  "source": "7f30d9d5282804d7b477bff665cfea256dd31aeb",
   "frozenAuditSource": "1354d66660041ba17afb64399d567ca29dd91866",
   "auditCommitBeforeProductEdits": "80fb365",
   "implementationCommits": [
@@ -21,7 +21,10 @@
     "16fcac3",
     "1e1faec",
     "55b07d9",
-    "c3bf0e5"
+    "c3bf0e5",
+    "186ce02",
+    "d43626c",
+    "7f30d9d"
   ],
   "sourceFindingsFixed": [
     "F01",
@@ -36,6 +39,7 @@
     "F10",
     "F11",
     "F12",
+    "F13",
     "F14",
     "F15",
     "F18",
@@ -46,12 +50,12 @@
     "F30",
     "F31"
   ],
-  "remainingSourceFindings": 20,
-  "newRegressionTests": 105,
+  "remainingSourceFindings": 19,
+  "newRegressionTests": 123,
   "frontendTests": {
-    "suitesPassed": 87,
+    "suitesPassed": 89,
     "suitesFailed": 0,
-    "testsPassed": 687,
+    "testsPassed": 705,
     "testsFailed": 0,
     "testsSkipped": 0
   },
@@ -68,14 +72,16 @@
     "output": "standalone",
     "sameOriginApi": true,
     "sameOriginWebsocketFallback": true,
-    "buildStamp": "c3bf0e5c3105dcd80becfb86c743a363d0b2d23c",
+    "buildStamp": "7f30d9d5282804d7b477bff665cfea256dd31aeb",
     "compiledStampVerified": true,
     "lintWarnings": 44,
-    "dynamicDialogCssVerified": true
+    "dynamicDialogCssVerified": true,
+    "windowsTraceCopyWarnings": true,
+    "portableWindowsPackageAccepted": false
   },
   "reviewRuntime": {
     "url": "http://127.0.0.1:3015/",
-    "uiPort": 3028,
+    "uiPort": 3029,
     "apiPort": 18080,
     "backendRevision": "8d64ca453e1028f37923c877523dbfe85acaad21",
     "ownedLoopbackListenersVerified": true,
@@ -86,12 +92,12 @@
     "previousOwnedRelayReplaced": true,
     "publicFrontendReplaced": false,
     "browserVisualAcceptance": "OPEN_URL_POLICY_BLOCKED",
-    "nextPid": 47416,
-    "relayPid": 23052,
-    "previousNextPid": 42560
+    "nextPid": 7416,
+    "relayPid": 48892,
+    "previousNextPid": 47416
   },
   "documentValidation": {
-    "relativeTargetsChecked": 373,
+    "relativeTargetsChecked": 394,
     "findingAnchorsChecked": 41,
     "missing": 0
   },
@@ -111,13 +117,13 @@
     "No new remote FPS, input latency, APK, OTA or fleet reliability result is claimed.",
     "Schedule execution counters are server reports, not proof that Android work is currently running.",
     "UTC one-shot editor follows the API contract; the IANA schedule timezone applies to CRON.",
-    "Generic catalog/orchestration paging F13 and global audit export/filter F37 remain open."
+    "Orchestration text search applies to the loaded page; API has no global free-text search. Audit export/filter F37 remains open."
   ],
-  "verificationCommit": "c3bf0e5",
+  "verificationCommit": "7f30d9d",
   "previousReviewRuntime": {
-    "source": "55b07d9",
-    "observedAt": "2026-10-01T18:50:20.9307352+00:00",
-    "uiPort": 3027,
+    "source": "c3bf0e5c3105dcd80becfb86c743a363d0b2d23c",
+    "observedAt": "2026-10-01T19:03:15.5222533+00:00",
+    "uiPort": 3028,
     "port": 3015
   },
   "beforeAfterOtaRegressions": {
@@ -128,7 +134,7 @@
     "existingCatalogTestsPassed": 2
   },
   "previousPublishedCi": {
-    "head": "8582557bdf9b1d324ba27a3849d1aabc2b6352c0",
+    "head": "868f523ef14ac5dda3ac48624c6d2eaeac2a69c6",
     "success": 9,
     "skipped": 1,
     "newHeadCiVerified": false
@@ -189,6 +195,12 @@
       "observedAt": "2026-10-01T18:14:38.2022937+00:00",
       "uiPort": 3026,
       "port": 3015
+    },
+    {
+      "source": "c3bf0e5c3105dcd80becfb86c743a363d0b2d23c",
+      "observedAt": "2026-10-01T19:03:15.5222533+00:00",
+      "uiPort": 3028,
+      "port": 3015
     }
   ],
   "scheduleOutcomeFollowup": {
@@ -201,5 +213,22 @@
     "fullTestsPassed": 687,
     "installedAt": "2026-10-01T19:03:15.5222533+00:00",
     "browserVisualAcceptance": "OPEN_URL_POLICY_BLOCKED"
+  },
+  "fourthBatch": {
+    "source": "7f30d9d5282804d7b477bff665cfea256dd31aeb",
+    "catalogRegressionsAdded": 13,
+    "pickerRegressionsAdded": 5,
+    "baseline": "868f523",
+    "beforeCatalogFailed": 8,
+    "relatedPassed": 60,
+    "fullPassed": 705,
+    "nameSearchCompatibility": {
+      "baseline": "d43626c",
+      "beforeFailed": 1,
+      "afterPassed": 1,
+      "extendsExistingCase": true
+    },
+    "backendChanged": false,
+    "browserAccepted": false
   }
 }

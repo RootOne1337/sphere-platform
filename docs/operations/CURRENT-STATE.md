@@ -7,9 +7,9 @@
 [Главная](../../README.md) · [Каталог документации](../README.md) · [Readiness](READINESS.md) · [Fleet32 gates](../audits/2026-09-20/FLEET32-PREFLIGHT.md) · [PR #19](https://github.com/RootOne1337/sphere-platform/pull/19)
 
 > [!IMPORTANT]
-> **Последний установленный loopback runtime, 2 октября, 00:03:15 UTC+5:** `3015 → standalone UI 3028 / API 18080`, frontend **c3bf0e5**, backend **8d64ca4**. Веб на 3015 обновлён после проверки владельца предыдущего relay; новый Next/relay принадлежат этой сборке, health/build через relay соответствует API. Compiled SHA проверен. Заменён только проверенный relay предыдущей установки; прежний Next сохранён для rollback, посторонние процессы не останавливались. Это проверочный веб [3015/devices](http://127.0.0.1:3015/devices), public frontend не заменён. [Исправления по полному аудиту](../audits/2026-10-01/WEB-AUDIT-REMEDIATION.md) · [Validation/runtime evidence](../audits/2026-10-01/WEB-AUDIT-FIXES-VALIDATION.json).
+> **Последний установленный loopback runtime, 2 октября, 00:36:17 UTC+5:** `3015 → standalone UI 3029 / API 18080`, frontend **7f30d9d**, backend **8d64ca4**. Веб на 3015 обновлён после проверки владельца предыдущего relay; новый Next/relay принадлежат этой сборке, health/build через relay соответствует API. Compiled SHA проверен. Заменён только проверенный relay предыдущей установки; прежний Next сохранён для rollback, посторонние процессы не останавливались. Это проверочный веб [3015/devices](http://127.0.0.1:3015/devices), public frontend не заменён. [Исправления по полному аудиту](../audits/2026-10-01/WEB-AUDIT-REMEDIATION.md) · [Validation/runtime evidence](../audits/2026-10-01/WEB-AUDIT-FIXES-VALIDATION.json).
 
-**Новые frontend batches:** 21 source finding исправлено, включая все 5 P1 полного
+**Новые frontend batches:** 22 source findings исправлено, включая все 5 P1 полного
 аудита: безопасная загрузка DAG, подтверждённый settings baseline и сохранение
 dirty draft, правдивые отчёты шагов и различение ошибок API. Исправлены очистка
 локаций, account payload/debounce, read failures каталогов и command receipts.
@@ -19,12 +19,14 @@ focus containment; все 22 раздела доступны из общего �
 ограничены dynamic viewport и прокручиваются. Источники логов доступны через
 server search/page, VPN Logs сохраняет device ID; история расписаний раскрывает
 серверные execution reports, one-shot time сохраняется в явном UTC. Границы
-интервала и обязательная manual цель согласованы со Schedule API. 105 новых regressions; 44
+интервала и обязательная manual цель согласованы со Schedule API. 123 новых regressions; 44
 существующих lint warnings не скрыты.
-**87 suites / 687 tests**, type-check и production standalone compile passed на
-source **c3bf0e5**; visual/browser acceptance остаётся OPEN по URL policy. API,
-APK и OTA этим batch не менялись; 20 findings остаются открытыми. Это локальные
-регрессии/сборка; предыдущий published head 8582557 имеет 9 success checks / preview
+**89 suites / 705 tests**, type-check и production standalone compile passed на
+source **7f30d9d**; visual/browser acceptance остаётся OPEN по URL policy. Оркестрация сохраняет page/total/серверные фильтры, выбор конвейера
+в формах не сбрасывается при навигации; агрегаты обозначены областью страницы.
+[Доказательства F13](../audits/2026-10-02/ORCHESTRATION-CATALOG-PAGING.md). API,
+APK и OTA этим batch не менялись; 19 findings остаются открытыми. Это локальные
+регрессии/сборка; предыдущий published head 868f523 имеет 9 success checks / preview
 deploy skipped. Новый GitHub CI учитывается отдельно.
 
 **Предыдущая установка 1 октября:** UI 8f615c6 на 3023 / relay3015 установлен
