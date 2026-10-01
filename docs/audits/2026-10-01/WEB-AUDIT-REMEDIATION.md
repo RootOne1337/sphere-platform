@@ -26,8 +26,8 @@
 | [F01](WEB-FULL-CAPABILITY-AUDIT.md#f01) | P1 | Открыто | Задание: недостоверный Pass Rate |
 | [F02](WEB-FULL-CAPABILITY-AUDIT.md#f02) | P1 | Открыто | Задание: ошибка API подменяется отсутствием записи |
 | [F03](WEB-FULL-CAPABILITY-AUDIT.md#f03) | P1 | Source исправлен; live OPEN | Редактор: разрешена запись после провала загрузки DAG |
-| [F04](WEB-FULL-CAPABILITY-AUDIT.md#f04) | P1 | Открыто | Настройки pipeline: можно сохранить неподтверждённые defaults |
-| [F05](WEB-FULL-CAPABILITY-AUDIT.md#f05) | P1 | Открыто | Настройки pipeline: несохранённая форма сбрасывается |
+| [F04](WEB-FULL-CAPABILITY-AUDIT.md#f04) | P1 | Source исправлен; live OPEN | Настройки pipeline: можно сохранить неподтверждённые defaults |
+| [F05](WEB-FULL-CAPABILITY-AUDIT.md#f05) | P1 | Source исправлен; live OPEN | Настройки pipeline: несохранённая форма сбрасывается |
 | [F06](WEB-FULL-CAPABILITY-AUDIT.md#f06) | P2 | Открыто | Локации: очистка текста не передаётся серверу |
 | [F07](WEB-FULL-CAPABILITY-AUDIT.md#f07) | P2 | Открыто | Аккаунты: законопослушность не отправляется при создании |
 | [F08](WEB-FULL-CAPABILITY-AUDIT.md#f08) | P2 | Открыто | Аккаунты: debounce фактически не отменяет прошлые таймеры |
@@ -71,7 +71,17 @@
 
 ### F03 — безопасная загрузка DAG
 
+- Commit реализации: `9593321`.
 - Существующий сценарий доступен для редактирования только после успешного чтения именно его ID и корректного графа. Ошибка API, отсутствующий DAG, неверный entry и ответ другого ресурса оставляют отдельный error/retry экран без Save.
 - Смена ID создаёт отдельного владельца graph/error/save состояния; предыдущий GET отменяется, поздний ответ игнорируется. Завершение старого Save не перенаправляет новый редактор. New-script workflow сохранён.
 - `frontend/__tests__/scripts/builder-load.test.tsx`: 8/8 component regressions passed, 1 октября 2026. Проверены failed-read→retry→original PUT, malformed/wrong target, late response, target failure, создание нового графа и поздний save. ReactFlow/Monaco заменены тестовыми renderers; real Canvas/браузер не принят.
 - Изменений APK/backend/runtime не требуется и этим batch не выполнялось. Conditional/version-safe concurrent PUT остаётся отдельной задачей; новый UI не объявляет атомарную защиту от чужого одновременного редактирования.
+
+### F04/F05 — подтверждённые настройки и сохранение намерения оператора
+
+- После провала первого GET нет редактируемых defaults или активных переключателей. Повтор восстанавливает реальные значения API. Ошибка фонового чтения сохраняет предыдущий снимок и черновик, но блокирует запись до успешного восстановления.
+- Серверный baseline отделён от dirty-полей. Toggle и refetch не сбрасывают несохранённые правки; PATCH содержит только изменённые поля. Явные empty/null, `false` и `0` сохраняют свою семантику. Поле очищается из черновика только после подтверждения равного значения сервером.
+- При обнаруженном изменении редактируемого поля на сервере Save блокируется. Оператор явно принимает серверные значения либо оставляет свои правки, после чего отдельно сохраняет. Неизменённые поля берутся из свежего снимка и не попадают в PATCH.
+- Pending read/write блокирует конкурирующие действия формы. Перед mutation отменяется предыдущий GET; его поздний ответ не заменяет подтверждённый receipt. Ошибки validation показывают безопасный текст и сохраняют черновик для retry.
+- `frontend/__tests__/pipeline-settings/settings-write.test.tsx`: 11/11 regressions passed, 1 октября 2026; настоящие React Query hooks/cache, API transport заменён тестовым. Проверены 401/500, retry, dirty toggle/refetch, конфликт/отмена правок, offline/stale, 422, partial/null/false/zero payload, pending write и late GET.
+- Backend PATCH остаётся без revision/CAS precondition: конфликт определяется по полученным снимкам, атомарная защита между последним GET и записью не заявляется. Runtime/APK/backend этим batch не заменяются; визуальная приёмка ещё открыта.
