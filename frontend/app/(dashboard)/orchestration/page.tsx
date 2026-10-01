@@ -650,9 +650,10 @@ function RunsTab({
         return sorted.filter(r =>
             r.id.toLowerCase().includes(q) ||
             r.status.toLowerCase().includes(q) ||
-            r.pipeline_id.toLowerCase().includes(q) || r.device_id.toLowerCase().includes(q)
+            r.pipeline_id.toLowerCase().includes(q) || r.device_id.toLowerCase().includes(q) ||
+            pipelineMap.get(r.pipeline_id)?.name.toLowerCase().includes(q)
         );
-    }, [runs, search]);
+    }, [runs, search, pipelineMap]);
 
     return (
         <div className="rounded-sm border border-border bg-card shadow-2xl overflow-hidden">

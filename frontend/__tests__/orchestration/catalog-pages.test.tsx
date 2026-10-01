@@ -58,6 +58,14 @@ it('keeps each tab page independent and labels text search as applying to the lo
   expect(screen.getByRole('textbox', { name: 'Поиск на текущей странице' })).toHaveValue('');
   fireEvent.click(screen.getByRole('button', { name: /^Pipelines/ }));
   await screen.findByText('Pipeline pipeline-page-2');
+  const previousRead = jest.mocked(api.get).getMockImplementation()!;
+  jest.mocked(api.get).mockImplementation((url, config) => url === '/pipelines/runs' ? Promise.resolve(envelope(1, [{ ...run('named-run'), pipeline_id: 'pipeline-page-2' }])) as never : previousRead(url, config));
+  // Refresh the independent runs catalog; names already known from pipelines remain searchable.
+  fireEvent.click(screen.getByText('Pipeline Runs'));
+  fireEvent.click(screen.getByRole('button', { name: 'Обновить текущий каталог' }));
+  await screen.findByText('named-run', { exact: false });
+  fireEvent.change(screen.getByRole('textbox', { name: 'Поиск на текущей странице' }), { target: { value: 'Pipeline pipeline-page-2' } });
+  expect(screen.getByText('named-run', { exact: false })).toBeInTheDocument();
 });
 
 it('uses the global active queue and status filters, resets its page and ignores a cancelled old response', async () => {
