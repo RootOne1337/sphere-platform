@@ -2,7 +2,7 @@
 
 [Полный документ](WEB-FULL-CAPABILITY-AUDIT.md) — 21,190 строк, 41 замечание с source anchors и критериями закрытия.
 
-Source: `1354d66660041ba17afb64399d567ca29dd91866`. Режим: документация без изменения приложения и данных.
+Source: `1354d66660041ba17afb64399d567ca29dd91866`. Режим замороженного аудита: документация без изменения приложения и данных.
 
 - 29 маршрутов / 30 page declarations; 22 sidebar sections.
 - 565 AST-контролов, 41 Dialog content declaration.
@@ -16,6 +16,6 @@ Source: `1354d66660041ba17afb64399d567ca29dd91866`. Режим: документ
 
 Текущее продолжение: [журнал исправлений и статусы F01–F41](WEB-AUDIT-REMEDIATION.md). Исторический аудит остаётся неизменным.
 
-В implementation batch `d1cfbee` исправлены 10 source findings, включая все 5 P1;
-79 suites / 629 tests и production standalone compile passed. Review UI восстановлен
-на 3015 → 3025 в 22:35 UTC+5; compiled build SHA проверен, browser visual acceptance открыт. [Fix validation](WEB-AUDIT-FIXES-VALIDATION.json).
+В двух implementation batches, последний source `d6439d2`, исправлены 17 source findings, включая все 5 P1; 24 остаются открытыми.
+82 suites / 649 tests и production standalone compile passed. Review UI установлен
+на 3015 → 3026 в 23:14 UTC+5; compiled build SHA проверен, browser visual acceptance открыт. [Fix validation](WEB-AUDIT-FIXES-VALIDATION.json).

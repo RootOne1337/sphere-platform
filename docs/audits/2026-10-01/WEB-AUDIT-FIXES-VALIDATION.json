@@ -1,32 +1,98 @@
 {
-  "observedAt": "2026-10-01T17:35:03.9331549Z",
+  "observedAt": "2026-10-01T18:14:38.2022937+00:00",
   "timezone": "Asia/Yekaterinburg",
-  "source": "d1cfbeea89a6854c722e0750653b4794b536e316",
+  "source": "d6439d26640900f2a43690a0917d210812e3142c",
   "frozenAuditSource": "1354d66660041ba17afb64399d567ca29dd91866",
   "auditCommitBeforeProductEdits": "80fb365",
-  "implementationCommits": ["9593321", "062ef47", "d53a8d7", "de2f9df", "6ad3018", "d1cfbee"],
-  "sourceFindingsFixed": ["F01", "F02", "F03", "F04", "F05", "F06", "F07", "F08", "F09", "F18"],
-  "remainingSourceFindings": 31,
-  "newRegressionTests": 47,
-  "frontendTests": {"suitesPassed": 79, "suitesFailed": 0, "testsPassed": 629, "testsFailed": 0, "testsSkipped": 0},
-  "typeCheck": {"command": "tsc --noEmit", "exit": 0},
+  "implementationCommits": [
+    "9593321",
+    "062ef47",
+    "d53a8d7",
+    "de2f9df",
+    "6ad3018",
+    "d1cfbee",
+    "a0d833d",
+    "779ffc4",
+    "b8da88f",
+    "1c4e0a8",
+    "b02560c",
+    "09a22e3"
+  ],
+  "sourceFindingsFixed": [
+    "F01",
+    "F02",
+    "F03",
+    "F04",
+    "F05",
+    "F06",
+    "F07",
+    "F08",
+    "F09",
+    "F10",
+    "F11",
+    "F12",
+    "F14",
+    "F18",
+    "F21",
+    "F22",
+    "F23"
+  ],
+  "remainingSourceFindings": 24,
+  "newRegressionTests": 67,
+  "frontendTests": {
+    "suitesPassed": 82,
+    "suitesFailed": 0,
+    "testsPassed": 649,
+    "testsFailed": 0,
+    "testsSkipped": 0
+  },
+  "typeCheck": {
+    "command": "tsc --noEmit",
+    "exit": 0
+  },
   "compile": {
-    "nextVersion": "15.5.26", "mode": "production", "exit": 0,
-    "isolatedGitArchive": true, "productionConfigPreserved": true, "output": "standalone",
-    "sameOriginApi": true, "sameOriginWebsocketFallback": true,
-    "buildStamp": "d1cfbeea89a6854c722e0750653b4794b536e316",
-    "compiledStampVerified": true, "lintWarnings": 44
+    "nextVersion": "15.5.26",
+    "mode": "production",
+    "exit": 0,
+    "isolatedGitArchive": true,
+    "productionConfigPreserved": true,
+    "output": "standalone",
+    "sameOriginApi": true,
+    "sameOriginWebsocketFallback": true,
+    "buildStamp": "d6439d26640900f2a43690a0917d210812e3142c",
+    "compiledStampVerified": true,
+    "lintWarnings": 44,
+    "dynamicDialogCssVerified": true
   },
   "reviewRuntime": {
-    "url": "http://127.0.0.1:3015/", "uiPort": 3025, "apiPort": 18080,
+    "url": "http://127.0.0.1:3015/",
+    "uiPort": 3026,
+    "apiPort": 18080,
     "backendRevision": "8d64ca453e1028f37923c877523dbfe85acaad21",
-    "ownedLoopbackListenersVerified": true, "nextReadyLogVerified": true,
-    "relayHealthBuildMatchesBackend": true, "unrelatedProcessesPreserved": true,
-    "previousNextPreserved": true, "previousOwnedRelayReplaced": true,
-    "publicFrontendReplaced": false, "browserVisualAcceptance": "OPEN_URL_POLICY_BLOCKED"
+    "ownedLoopbackListenersVerified": true,
+    "nextReadyLogVerified": true,
+    "relayHealthBuildMatchesBackend": true,
+    "unrelatedProcessesPreserved": true,
+    "previousNextPreserved": true,
+    "previousOwnedRelayReplaced": true,
+    "publicFrontendReplaced": false,
+    "browserVisualAcceptance": "OPEN_URL_POLICY_BLOCKED",
+    "nextPid": 45528,
+    "relayPid": 10268,
+    "previousNextPid": 33052
   },
-  "documentValidation": {"relativeTargetsChecked": 371, "findingAnchorsChecked": 41, "missing": 0},
-  "scope": {"apkChanged": false, "backendChanged": false, "tunnelChanged": false, "otaPromoted": false, "remoteDeviceCommandsSent": false},
+  "documentValidation": {
+    "relativeTargetsChecked": 371,
+    "findingAnchorsChecked": 41,
+    "missing": 0
+  },
+  "scope": {
+    "apkChanged": false,
+    "backendChanged": false,
+    "tunnelChanged": false,
+    "otaPromoted": false,
+    "remoteDeviceCommandsSent": false
+  },
   "limits": [
     "Component and hook regressions use transport mocks; no live destructive API acceptance is claimed.",
     "Settings conflict detection uses observed snapshots; backend revision/CAS protection is not implemented.",
@@ -34,5 +100,29 @@
     "New frontend CI is separate from prior accepted backend/Android CI.",
     "Current Sphere browser visual acceptance remains blocked and was not bypassed.",
     "No new remote FPS, input latency, APK, OTA or fleet reliability result is claimed."
+  ],
+  "verificationCommit": "d6439d2",
+  "previousReviewRuntime": {
+    "source": "d1cfbee",
+    "observedAt": "2026-10-01T17:35:03.9331549Z",
+    "uiPort": 3025,
+    "port": 3015
+  },
+  "beforeAfterOtaRegressions": {
+    "baselineSource": "d1cfbee",
+    "beforeFailed": 6,
+    "beforeControlPassed": 1,
+    "afterPassed": 7,
+    "existingCatalogTestsPassed": 2
+  },
+  "previousPublishedCi": {
+    "head": "a1d68b315a4ca4845abd38f1c067879b13e02d73",
+    "success": 9,
+    "skipped": 1,
+    "newHeadCiVerified": false
+  },
+  "verificationEnvironmentCorrections": [
+    "DOM media-query fixture scoped away from Node suite; final complete Jest rerun passed.",
+    "Isolated Next build executed from its frontend working directory to read the original Tailwind config."
   ]
 }

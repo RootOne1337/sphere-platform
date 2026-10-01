@@ -2,7 +2,7 @@
 
 Этот журнал продолжает [замороженный аудит](WEB-FULL-CAPABILITY-AUDIT.md) исходников `1354d66`. Исходный документ и evidence сохраняют свою дату и ограничения; их статусы не переписываются задним числом.
 
-**Срез реализации 1 октября 2026, 22:35 UTC+5:** frontend source `d1cfbee`; 10 source findings исправлены (все 5 P1 и 5 P2), 31 остаётся открытым. Проверочный веб восстановлен на `3015 → UI 3025 / API 18080`. Production standalone compile и 79 suites / 629 tests passed; это не визуальная приёмка. [Allowlisted validation/runtime evidence](WEB-AUDIT-FIXES-VALIDATION.json).
+**Срез реализации 1 октября 2026, 23:14 UTC+5:** frontend source `d6439d2`; 17 source findings исправлены (все 5 P1 и 12 P2), 24 остаются открытыми. Проверочный веб установлен на `3015 → UI 3026 / API 18080`. Production standalone compile и 82 suites / 649 tests passed; это не визуальная приёмка. [Allowlisted validation/runtime evidence](WEB-AUDIT-FIXES-VALIDATION.json).
 
 ## Исходная фиксация
 
@@ -34,20 +34,20 @@
 | [F07](WEB-FULL-CAPABILITY-AUDIT.md#f07) | P2 | Source исправлен; live OPEN | Аккаунты: законопослушность не отправляется при создании |
 | [F08](WEB-FULL-CAPABILITY-AUDIT.md#f08) | P2 | Source исправлен; live OPEN | Аккаунты: debounce фактически не отменяет прошлые таймеры |
 | [F09](WEB-FULL-CAPABILITY-AUDIT.md#f09) | P2 | Source исправлен; live OPEN | Аккаунты и триггеры: ошибка списка выглядит пустым каталогом |
-| [F10](WEB-FULL-CAPABILITY-AUDIT.md#f10) | P2 | Открыто | OTA: поздний ответ фильтра может заменить новый |
-| [F11](WEB-FULL-CAPABILITY-AUDIT.md#f11) | P2 | Открыто | OTA: ошибка соседствует с ложным empty state |
-| [F12](WEB-FULL-CAPABILITY-AUDIT.md#f12) | P2 | Открыто | Сценарии: первая страница без доступа к остальным |
+| [F10](WEB-FULL-CAPABILITY-AUDIT.md#f10) | P2 | Source исправлен; live OPEN | OTA: поздний ответ фильтра может заменить новый |
+| [F11](WEB-FULL-CAPABILITY-AUDIT.md#f11) | P2 | Source исправлен; live OPEN | OTA: ошибка соседствует с ложным empty state |
+| [F12](WEB-FULL-CAPABILITY-AUDIT.md#f12) | P2 | Source исправлен; live OPEN | Сценарии: первая страница без доступа к остальным |
 | [F13](WEB-FULL-CAPABILITY-AUDIT.md#f13) | P2 | Открыто | Оркестрация: три списка обрезаны до 100 записей |
-| [F14](WEB-FULL-CAPABILITY-AUDIT.md#f14) | P2 | Открыто | Триггеры: поиск ограничен первыми 100 |
+| [F14](WEB-FULL-CAPABILITY-AUDIT.md#f14) | P2 | Source исправлен; live OPEN | Триггеры: поиск ограничен первыми 100 |
 | [F15](WEB-FULL-CAPABILITY-AUDIT.md#f15) | P2 | Открыто | Логи: выбрать устройство можно только из первой страницы |
 | [F16](WEB-FULL-CAPABILITY-AUDIT.md#f16) | P2 | Открыто | Задание: несогласованный путь к скриншотам шагов |
 | [F17](WEB-FULL-CAPABILITY-AUDIT.md#f17) | P2 | Открыто | Задание: restart теряет параметры оригинала |
 | [F18](WEB-FULL-CAPABILITY-AUDIT.md#f18) | P2 | Source исправлен; live OPEN | Задание: ошибки Stop/Cancel/Restart не показаны |
 | [F19](WEB-FULL-CAPABILITY-AUDIT.md#f19) | P2 | Открыто | Обнаружение: текст противоречит auto-register |
 | [F20](WEB-FULL-CAPABILITY-AUDIT.md#f20) | P2 | Открыто | Обнаружение: заголовок результата использует новый CIDR |
-| [F21](WEB-FULL-CAPABILITY-AUDIT.md#f21) | P2 | Открыто | Мобильное меню: offscreen ссылки остаются активными |
-| [F22](WEB-FULL-CAPABILITY-AUDIT.md#f22) | P2 | Открыто | Общий DialogContent: нет ограничения высоты по умолчанию |
-| [F23](WEB-FULL-CAPABILITY-AUDIT.md#f23) | P2 | Открыто | Command palette: частичная навигация и нет restore focus |
+| [F21](WEB-FULL-CAPABILITY-AUDIT.md#f21) | P2 | Source исправлен; live OPEN | Мобильное меню: offscreen ссылки остаются активными |
+| [F22](WEB-FULL-CAPABILITY-AUDIT.md#f22) | P2 | Source исправлен; live OPEN | Общий DialogContent: нет ограничения высоты по умолчанию |
+| [F23](WEB-FULL-CAPABILITY-AUDIT.md#f23) | P2 | Source исправлен; live OPEN | Command palette: частичная навигация и нет restore focus |
 | [F24](WEB-FULL-CAPABILITY-AUDIT.md#f24) | P2 | Открыто | Legacy /fleet: настоящая кнопка без действия |
 | [F25](WEB-FULL-CAPABILITY-AUDIT.md#f25) | P2 | Открыто | Группы: редактирование и состав не раскрыты |
 | [F26](WEB-FULL-CAPABILITY-AUDIT.md#f26) | P3 | Открыто | Локации: backend география/иерархия не доступны в форме |
@@ -121,7 +121,7 @@
 - Дополнительно подтверждена ошибка подписи: `!is_active && total_triggers > 0` не доказывает сбой выполнения. Карточка переименована в «Неактивных со срабатываниями»; выдуманный счётчик ошибок удалён.
 - `frontend/__tests__/event-triggers/read-evidence.test.tsx`: 2/2 regressions passed, 1 октября 2026; failed-read без cached actions/empty/zero, server total 201 при одной полученной записи и disabled ≠ failed. Hooks списка заменены fixtures; F14 полнота pagination/поиска остаётся открыта.
 
-## Общая проверка и установленный review runtime
+## Первый набор: общая проверка и установленный review runtime
 
 - **Source:** `d1cfbeea89a6854c722e0750653b4794b536e316`. Шесть atomic implementation commits идут после отдельной фиксации аудита `80fb365`. Новых regressions 47; frozen audit source/evidence не переписаны.
 - **Tests:** полный frontend Jest, 79/79 suites, 629/629 tests, 0 failed / 0 skipped; TypeScript `--noEmit` и `git diff --check` passed. Transport mocks не объявляются реальными операциями устройств.
@@ -131,3 +131,59 @@
 - **Observability:** новый Next получил прежний server-only session secret и auth API/Prometheus/Grafana upstreams; секреты в evidence не публикуются. Доступность upstream ports подтверждена, authenticated browser/Grafana workflow этим batch не принят.
 - **Limits:** browser URL policy по-прежнему блокирует fresh Sphere visual walkthrough; обход не выполнялся. Public/runtime metrics не доказывают Android FPS, стабильность связи или выполнение новых задач. APK/backend/tunnel/OTA этим batch не изменялись; PR остаётся draft.
 - **Next:** F10/F11 OTA ownership/empty semantics, затем F12–F15 полнота каталогов, F17 безопасный повтор с сохранением контекста и F21–F23 модальные окна/навигация. F34–F36 требуют отдельных native/browser/fleet performance gates.
+
+## Второй набор исправлений полного веб-аудита
+
+**Source:** `d6439d2`; первый установленный срез `d1cfbee` выше сохранён как история. Совокупно 17 source findings исправлены, 24 открыты. Новый runtime фиксируется отдельно после сборки и проверки владельца процесса.
+
+### F10/F11 — принадлежность и достоверность OTA-каталога
+
+- Commit `a0d833d`: React Query ключ включает platform/flavor; GET получает AbortSignal и отменяется при смене владельца. Поздний ответ старого фильтра не подменяет активный список.
+- Initial/cached read failure показывает unknown и retry без empty state, ложного нуля и stale Delete. Успешный пустой ответ отдельно показывает empty. Проверяется структура envelope. Доступны ручное обновление и периодическое чтение раз в 30 секунд в активной вкладке; записи не переигрываются.
+- 7 новых регрессий: на archived baseline `d1cfbee` 6 failed / 1 control passed; после исправления 7 passed плюс 2 существующих catalog-contract tests. Проверены A/B late result, failed filter, cached refresh failure/retry, malformed envelope и unmount abort. API transport mock; реальная публикация/удаление APK не выполнялись.
+- F33 адресный rollout/recovery UI остаётся открытым. Регистрация release по-прежнему не означает загрузку APK, установку или подтверждение обновления устройств.
+
+### F12 — доступ ко всему каталогу сценариев
+
+- Commit `779ffc4`: page/per_page=50 и server query доступны из страницы; поиск задерживается на 300 ms и сбрасывает page на 1. Пока запрос меняется, прежние action rows скрыты. GET отменяется при смене page/query; поздний ответ не подменяет новый каталог.
+- Показаны total и доступные страницы; при ошибке страницы нет действий от предыдущей. DAG-инспектор и ссылки редактора сохранены, page change закрывает прежний inline inspector.
+- 4 новых component regressions с настоящим query hook и mock transport: 51 запись, последняя через page 2; server search последней с page reset; failed page/retry; late page result после поиска. Связанные scripts/modal/hooks: 21 passed.
+- Другие script pickers и архив/rollback workflow этим изменением не объявляются завершёнными: F27 остаётся открытым.
+
+### F14 — страницы триггеров и ясная область поиска
+
+- Commit `b8da88f`: server page/per_page=100 сохранены вместе с total, можно перейти к 101-й записи и открыть редактирование. GET отменяется при смене page/filter. Смена активности возвращает page на 1.
+- Текстовый поиск явно ограничен текущей страницей; empty copy говорит «на этой странице». Он не выдаётся за неподдерживаемый backend global search. Pagination остаётся доступна при нуле локальных совпадений.
+- 3 новых real-hook/mock-transport regressions: 101 запись, открытие последней; local search и переход к следующей странице; failed page/retry без stale actions. Связанные tests/hooks: 17 passed.
+- Pipeline options в форме и полнота каталогов оркестрации остаются отдельным F13, не закрываются этим результатом.
+
+### F21 — мобильное меню как настоящий модальный workflow
+
+- Commit `b02560c`; общий каталог навигации извлечён в `09a22e3`. Закрытое мобильное меню не монтирует ссылки. Breakpoint MatchMedia выбирает mobile modal либо обычный desktop aside.
+- Использован уже установленный Radix Dialog: modal focus containment, скрытие фона от accessibility tree, Escape и возврат к фактическому opener. Desktop collapse preference не скрывает mobile labels; переход к desktop закрывает mobile state.
+- 4 новых regressions плюс 3 существующих: closed links отсутствуют, Shift-Tab/Tab остаются внутри, Escape возвращает фокус, mobile labels при collapsed preference, breakpoint reconciliation. Реальный Radix в jsdom, не browser/assistive-technology acceptance.
+
+### F22 — размеры общих диалогов
+
+- Commit `1c4e0a8`: default content получает max-height `calc(100dvh - 2rem)`, горизонтальный отступ, overflow-y и overscroll containment; reduced motion выключает анимацию content. Явные overrides вызывающего компонента сохраняются.
+- Низкий viewport больше не предполагает фиксированный доступный размер. CSS проверяется production compile; JSDOM не объявляется проверкой геометрии. Новые CSS-mirroring tests не добавлялись.
+- Живая приёмка mobile keyboard, resize, длинных форм и анимаций остаётся OPEN по URL policy.
+
+### F23 — единая навигация поиска и восстановление фокуса
+
+- Commit `09a22e3`: sidebar и command palette используют единый `navigationCatalog.ts`, все 22 раздела доступны из поиска. Старые названия быстрых переходов и shortcuts сохранены; cmdk имеет осмысленный accessible label.
+- Command palette использует Radix modal containment и возврат фокуса. Escape из appearance возвращает к поиску, следующий Escape закрывает palette. Убран minimum-height, который мог превышать маленький viewport.
+- 2 новых regressions плюс существующие: все 22 destination проверены по действительному shared catalog; фон скрыт, input получает фокус, opener получает его обратно. Все 12 navigation tests passed до общего прогона.
+- `d6439d2` ограничивает matchMedia fixture DOM-средой: серверный observability suite работает без window. Исправление проверочного окружения не меняет runtime/API policy.
+
+Ожидаемый keyboard/modal контракт сверён 1 октября 2026 с [официальной документацией Radix Dialog](https://www.radix-ui.com/primitives/docs/components/dialog) и [W3C APG Modal Dialog](https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/). Эти источники объясняют выбор primitive и критерии; они не являются доказательством визуальной приёмки Sphere.
+
+## Финальная проверка двух наборов и установка
+
+- **Source/build:** `d6439d26640900f2a43690a0917d210812e3142c`. 12 atomic implementation commits и отдельный test-environment correction следуют за audit commit `80fb365`. Frozen main report/evidence сохранены без изменений.
+- **Tests:** 82/82 suites, 649/649 tests, 0 failures / 0 skips; 67 новых regressions относительно 582-test baseline. TypeScript `--noEmit` и diff check passed. Первый полный rerun выявил отсутствие matchMedia в jsdom, затем DOM fixture в Node suite; обе причины проверочного окружения устранены, финальный полный прогон включает server suite и logout.
+- **Compile:** production Next.js 15.5.26, исходный standalone config, isolated Git archive, API `/api/v1`, WS origin fallback, SHA в browser chunks. 44 существующих lint warnings остаются. Первая изолированная попытка из workspace root не прочитала Tailwind config; повтор из archived frontend прошёл. Dynamic-height/width/scroll containment правила найдены в compiled CSS — это artifact verification, не измерение browser geometry.
+- **Installed, 23:14:38 UTC+5:** relay3015 → standalone3026 / API18080; owned Next PID45528 / relay PID10268, Ready 205 ms, API revision `8d64ca4`. Заменён только проверенный relay2192; Next33052 сохранён для rollback. Server-only Prometheus/Grafana/auth config сохранён; секреты не публикуются. Public frontend, APK, tunnel, OTA и удалённые устройства не изменялись.
+- **CI:** предыдущий published docs head `a1d68b3` завершил 9 checks success / preview deploy skipped; это первый 629-test batch. Новый source/документация требуют собственного CI, он фиксируется отдельно. Результаты предыдущего head не подменяют проверку нового.
+- **Acceptance:** 17 source fixes / 24 OPEN, все live gates остаются OPEN до проверки. URL policy браузера не обходилась. Нет нового утверждения о remote FPS/latency, APK OTA, fleet uptime или результате новых Android скриптов.
+- **Дальше:** F13/F15 полный доступ к оркестрации и выбору устройств логов; F16/F17 согласованные screenshots/retry; F19/F20 discovery ownership; F24–F33 более глубокие формы/workflows; F34–F36 отдельные browser/native/fleet performance и XPath gates.
