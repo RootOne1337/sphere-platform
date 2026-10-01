@@ -10,6 +10,7 @@ import asyncio
 import time
 import uuid
 from datetime import timedelta
+from enum import Enum
 
 import structlog
 from sqlalchemy import or_, select, update
@@ -86,20 +87,40 @@ async def recover_expired(sessions, *, org_id: uuid.UUID | None = None) -> None:
             await db.commit()
 
 
-async def renew_lease(sessions, ownership: Ownership) -> bool:
+class LeaseRenewal(Enum):
+    RENEWED = "renewed"
+    FINISHED = "finished"
+    LOST = "lost"
+
+
+async def _renew_lease_result(sessions, ownership: Ownership) -> LeaseRenewal:
     async with sessions() as db:
         if ownership.org_id is not None:
             await bind_tenant_context(db, str(ownership.org_id))
         run = await db.get(PipelineRun, ownership.run_id, with_for_update=True)
         now = await database_now(db)
         if (run is None or run.execution_owner != ownership.owner
-                or run.execution_generation != ownership.generation
-                or run.execution_lease_until is None or run.execution_lease_until <= now
+                or run.execution_generation != ownership.generation):
+            return LeaseRenewal.LOST
+        # The result can commit before the runner exits its SQL session. That
+        # owner's durable terminal boundary needs no lease renewal, but it is
+        # not lease loss and must not cancel successful session cleanup.
+        # An external cancellation of in-flight work still fences the worker.
+        if (run.execution_phase != "in_flight" and run.status in (
+                PipelineRunStatus.COMPLETED, PipelineRunStatus.FAILED,
+                PipelineRunStatus.CANCELLED, PipelineRunStatus.TIMED_OUT)):
+            return LeaseRenewal.FINISHED
+        if (run.execution_lease_until is None or run.execution_lease_until <= now
                 or run.status not in (PipelineRunStatus.RUNNING, PipelineRunStatus.PAUSED)):
-            return False
+            return LeaseRenewal.LOST
         run.execution_lease_until = now + timedelta(seconds=LEASE_SECONDS)
         await db.commit()
-        return True
+        return LeaseRenewal.RENEWED
+
+
+async def renew_lease(sessions, ownership: Ownership) -> bool:
+    """Only a live, current owner can renew; terminal records remain false."""
+    return await _renew_lease_result(sessions, ownership) is LeaseRenewal.RENEWED
 
 
 class OwnedPipelineRunner:
@@ -112,8 +133,11 @@ class OwnedPipelineRunner:
         while True:
             await asyncio.sleep(HEARTBEAT_SECONDS)
             try:
-                if await asyncio.wait_for(renew_lease(self.sessions, ownership), HEARTBEAT_TIMEOUT_SECONDS):
+                result = await asyncio.wait_for(_renew_lease_result(self.sessions, ownership), HEARTBEAT_TIMEOUT_SECONDS)
+                if result is LeaseRenewal.RENEWED:
                     continue
+                if result is LeaseRenewal.FINISHED:
+                    return
             except Exception as exc:
                 logger.warning("pipeline.lease_renewal_failed", run_id=str(ownership.run_id),
                                error_type=type(exc).__name__)

@@ -436,6 +436,85 @@ async def test_heartbeat_renews_live_owner_and_cannot_renew_expired_generation(w
         await cleanup(other)
 
 
+@pytest.mark.parametrize("outcome", ["success", "failure"])
+async def test_heartbeat_after_terminal_commit_does_not_cancel_session_cleanup(world, monkeypatch, outcome):
+    """Force the committed-result/session-close race without a sleep-based assertion."""
+    from backend.services.orchestrator.pipeline_recovery import OwnedPipelineRunner
+
+    run = await seed(world)
+    committed, release_cleanup = asyncio.Event(), asyncio.Event()
+    original_heartbeat = OwnedPipelineRunner._heartbeat
+
+    @asynccontextmanager
+    async def sessions():
+        async with world.sessions() as db:
+            commit = db.commit
+
+            async def gated_commit():
+                terminal = any(isinstance(row, PipelineRun) and row.id == run.id
+                               and row.status in (PipelineRunStatus.COMPLETED, PipelineRunStatus.FAILED)
+                               and row.execution_phase == "ready" for row in db.identity_map.values())
+                await commit()
+                if terminal:
+                    committed.set()
+                    await release_cleanup.wait()
+
+            db.commit = gated_commit
+            yield db
+
+    async def heartbeat_after_commit(self, ownership, worker):
+        await committed.wait()
+        try:
+            await original_heartbeat(self, ownership, worker)
+        finally:
+            release_cleanup.set()
+
+    async def handler(**kwargs):
+        return StepResult(status=outcome)
+
+    monkeypatch.setattr("backend.services.orchestrator.pipeline_executor.AsyncSessionLocal", sessions)
+    monkeypatch.setattr("backend.services.orchestrator.pipeline_recovery.HEARTBEAT_SECONDS", 0)
+    monkeypatch.setattr(OwnedPipelineRunner, "_heartbeat", heartbeat_after_commit)
+    monkeypatch.setattr(StepHandlerRegistry, "execute", handler)
+    worker = asyncio.create_task(PipelineExecutor()._execute_run(run.id))
+    try:
+        await asyncio.wait_for(worker, 5)
+        async with world.sessions() as db:
+            current = await db.get(PipelineRun, run.id)
+            expected = PipelineRunStatus.COMPLETED if outcome == "success" else PipelineRunStatus.FAILED
+            assert current.status == expected
+            assert current.execution_owner is None and current.execution_lease_until is None
+            assert len(current.step_logs) == 1
+    finally:
+        release_cleanup.set()
+        worker.cancel()
+        await asyncio.gather(worker, return_exceptions=True)
+
+
+@pytest.mark.parametrize("lost", ["foreign_owner", "generation_changed", "cancelled_in_flight"])
+async def test_terminal_status_does_not_exempt_a_fenced_worker_from_heartbeat_cancellation(world, monkeypatch, lost):
+    from unittest.mock import Mock
+
+    from backend.services.orchestrator.pipeline_ownership import Ownership
+    from backend.services.orchestrator.pipeline_recovery import OwnedPipelineRunner
+
+    run = await seed(world)
+    owner = uuid.uuid4()
+    async with world.sessions() as db:
+        current = await db.get(PipelineRun, run.id)
+        current.execution_owner = uuid.uuid4() if lost == "foreign_owner" else owner
+        current.execution_generation = 2 if lost == "generation_changed" else 1
+        current.execution_phase = "in_flight" if lost == "cancelled_in_flight" else "ready"
+        current.status = PipelineRunStatus.CANCELLED if lost == "cancelled_in_flight" else PipelineRunStatus.COMPLETED
+        current.execution_lease_until = datetime.now(timezone.utc) + timedelta(seconds=60)
+        await db.commit()
+    monkeypatch.setattr("backend.services.orchestrator.pipeline_recovery.HEARTBEAT_SECONDS", 0)
+    worker = Mock()
+    runner = OwnedPipelineRunner(uuid.uuid4(), world.sessions)
+    await asyncio.wait_for(runner._heartbeat(Ownership(run.id, owner, 1, org_id=world.org_a.id), worker), 3)
+    worker.cancel.assert_called_once()
+
+
 async def test_recovery_reuses_persisted_nested_run(world, monkeypatch):
     child = await seed(world, status=PipelineRunStatus.QUEUED)
     parent = await seed(world, kind="sub_pipeline", params={"pipeline_id": str(child.pipeline_id)})
@@ -555,6 +634,7 @@ async def test_shutdown_drains_then_releases_coroutines_without_losing_native_ch
 
 @pytest.mark.parametrize("database_error", [False, True, "timeout"])
 async def test_failed_heartbeat_stops_owner_without_fabricating_failed_outcome(world, monkeypatch, database_error):
+    from backend.services.orchestrator.pipeline_recovery import LeaseRenewal
     run = await seed(world, kind="action")
     monkeypatch.setattr("backend.services.orchestrator.pipeline_executor.AsyncSessionLocal", isolated_sessions(world))
     monkeypatch.setattr("backend.services.orchestrator.pipeline_recovery.HEARTBEAT_SECONDS", 0.02)
@@ -569,9 +649,9 @@ async def test_failed_heartbeat_stops_owner_without_fabricating_failed_outcome(w
             await asyncio.Event().wait()
         if database_error:
             raise ConnectionError("isolated lease renewal failure")
-        return False
+        return LeaseRenewal.LOST
     monkeypatch.setattr(StepHandlerRegistry, "execute", handler)
-    monkeypatch.setattr("backend.services.orchestrator.pipeline_recovery.renew_lease", cannot_renew)
+    monkeypatch.setattr("backend.services.orchestrator.pipeline_recovery._renew_lease_result", cannot_renew)
     worker = asyncio.create_task(PipelineExecutor()._execute_run(run.id))
     fresh = PipelineExecutor()
     try:
