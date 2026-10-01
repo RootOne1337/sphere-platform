@@ -161,6 +161,24 @@ async def create_task(
 
 # ── Get one ───────────────────────────────────────────────────────────────────
 
+@router.post(
+    "/{task_id}/rerun",
+    response_model=TaskDetailResponse,
+    status_code=201,
+    summary="New independent execution with the original script version and inputs",
+    responses={409: {"description": "Source active, context unavailable or duplicate execution"}},
+)
+async def rerun_task(
+    task_id: uuid.UUID,
+    current_user: User = require_permission("script:execute"),
+    svc: TaskService = Depends(get_task_service),
+    db: AsyncSession = Depends(get_db),
+) -> TaskDetailResponse:
+    task = await svc.rerun_task(task_id, current_user.org_id)
+    await db.commit()
+    task = await svc._get_task(task.id, current_user.org_id)
+    return TaskDetailResponse.model_validate(task)
+
 @router.get(
     "/{task_id}",
     response_model=TaskDetailResponse,

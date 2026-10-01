@@ -193,6 +193,7 @@ class TaskService:
         wave_index: int | None = None,
         script_version_id: uuid.UUID | None = None,
         task_id: uuid.UUID | None = None,
+        input_params: dict | None = None,
     ) -> Task:
         script = await self._get_script(script_id, org_id)
         version_id = script_version_id or script.current_version_id
@@ -227,7 +228,8 @@ class TaskService:
                 detail=f"Task already queued/running for device (task_id={duplicate.id})",
             )
 
-        input_params: dict = {"priority": priority}
+        input_params = copy.deepcopy(input_params) if input_params is not None else {}
+        input_params["priority"] = priority
         if webhook_url:
             input_params["webhook_url"] = webhook_url
         if account_id:
@@ -256,6 +258,37 @@ class TaskService:
             device_id=str(device_id),
             priority=priority,
         )
+        return task
+
+    async def rerun_task(self, task_id: uuid.UUID, org_id: uuid.UUID) -> Task:
+        """Queue an independent execution of the pinned source, never latest DAG.
+
+        Reuses the create path's device lock and active-task conflict check.
+        Batch/wave, results and cancellation receipts belong to the old run.
+        Dispatch is committed intent; no transport publication occurs here.
+        """
+        original = await self._get_task(task_id, org_id, for_update=True)
+        if original.status not in (TaskStatus.COMPLETED, TaskStatus.FAILED,
+                                   TaskStatus.TIMEOUT, TaskStatus.CANCELLED):
+            raise HTTPException(status_code=409, detail="Only terminal tasks can be rerun")
+        if not original.script_version_id:
+            raise HTTPException(status_code=409, detail="Original script version is unknown; rerun is unavailable")
+        params = original.input_params or {}
+        account_id = None
+        if params.get("account_id"):
+            try:
+                account_id = uuid.UUID(str(params["account_id"]))
+            except (ValueError, TypeError, AttributeError):
+                raise HTTPException(status_code=409, detail="Original account context is invalid") from None
+        task = await self.create_task(
+            script_id=original.script_id, device_id=original.device_id,
+            org_id=org_id, priority=original.priority,
+            script_version_id=original.script_version_id,
+            account_id=account_id, input_params=params,
+        )
+        task.timeout_seconds = original.timeout_seconds
+        logger.info("task.rerun_created", source_task_id=str(original.id), task_id=str(task.id),
+                    script_version_id=str(task.script_version_id))
         return task
 
     # ── Dispatch ──────────────────────────────────────────────────────────────
