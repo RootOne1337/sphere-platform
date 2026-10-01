@@ -2,7 +2,7 @@
 
 Этот журнал продолжает [замороженный аудит](WEB-FULL-CAPABILITY-AUDIT.md) исходников `1354d66`. Исходный документ и evidence сохраняют свою дату и ограничения; их статусы не переписываются задним числом.
 
-**Срез реализации 1 октября 2026, 23:14 UTC+5:** frontend source `d6439d2`; 17 source findings исправлены (все 5 P1 и 12 P2), 24 остаются открытыми. Проверочный веб установлен на `3015 → UI 3026 / API 18080`. Production standalone compile и 82 suites / 649 tests passed; это не визуальная приёмка. [Allowlisted validation/runtime evidence](WEB-AUDIT-FIXES-VALIDATION.json).
+**Срез реализации 1 октября 2026, 23:50 UTC+5:** frontend source `55b07d9`; 21 source finding исправлено (все 5 P1 и 16 P2), 20 остаются открытыми. Проверочный веб установлен на `3015 → UI 3027 / API 18080`. Production standalone compile и 87 suites / 685 tests passed; это не визуальная приёмка. [Allowlisted validation/runtime evidence](WEB-AUDIT-FIXES-VALIDATION.json).
 
 ## Исходная фиксация
 
@@ -39,7 +39,7 @@
 | [F12](WEB-FULL-CAPABILITY-AUDIT.md#f12) | P2 | Source исправлен; live OPEN | Сценарии: первая страница без доступа к остальным |
 | [F13](WEB-FULL-CAPABILITY-AUDIT.md#f13) | P2 | Открыто | Оркестрация: три списка обрезаны до 100 записей |
 | [F14](WEB-FULL-CAPABILITY-AUDIT.md#f14) | P2 | Source исправлен; live OPEN | Триггеры: поиск ограничен первыми 100 |
-| [F15](WEB-FULL-CAPABILITY-AUDIT.md#f15) | P2 | Открыто | Логи: выбрать устройство можно только из первой страницы |
+| [F15](WEB-FULL-CAPABILITY-AUDIT.md#f15) | P2 | Source исправлен; live OPEN | Логи: выбрать устройство можно только из первой страницы |
 | [F16](WEB-FULL-CAPABILITY-AUDIT.md#f16) | P2 | Открыто | Задание: несогласованный путь к скриншотам шагов |
 | [F17](WEB-FULL-CAPABILITY-AUDIT.md#f17) | P2 | Открыто | Задание: restart теряет параметры оригинала |
 | [F18](WEB-FULL-CAPABILITY-AUDIT.md#f18) | P2 | Source исправлен; live OPEN | Задание: ошибки Stop/Cancel/Restart не показаны |
@@ -53,9 +53,9 @@
 | [F26](WEB-FULL-CAPABILITY-AUDIT.md#f26) | P3 | Открыто | Локации: backend география/иерархия не доступны в форме |
 | [F27](WEB-FULL-CAPABILITY-AUDIT.md#f27) | P2 | Открыто | Сценарии: архив/rollback есть в backend, нет workflow |
 | [F28](WEB-FULL-CAPABILITY-AUDIT.md#f28) | P2 | Открыто | Pipeline: отсутствует полноценный detail/edit workflow |
-| [F29](WEB-FULL-CAPABILITY-AUDIT.md#f29) | P2 | Открыто | Расписания: нет доступа к истории срабатываний |
-| [F30](WEB-FULL-CAPABILITY-AUDIT.md#f30) | P2 | Открыто | Расписание one-shot: ISO offset подаётся в datetime-local |
-| [F31](WEB-FULL-CAPABILITY-AUDIT.md#f31) | P2 | Открыто | VPN → Logs теряет контекст устройства |
+| [F29](WEB-FULL-CAPABILITY-AUDIT.md#f29) | P2 | Source исправлен; live OPEN | Расписания: нет доступа к истории срабатываний |
+| [F30](WEB-FULL-CAPABILITY-AUDIT.md#f30) | P2 | Source исправлен; live OPEN | Расписание one-shot: ISO offset подаётся в datetime-local |
+| [F31](WEB-FULL-CAPABILITY-AUDIT.md#f31) | P2 | Source исправлен; live OPEN | VPN → Logs теряет контекст устройства |
 | [F32](WEB-FULL-CAPABILITY-AUDIT.md#f32) | P2 | Открыто | VPN: mutate без отображения ошибок/результатов |
 | [F33](WEB-FULL-CAPABILITY-AUDIT.md#f33) | P2 | Открыто | OTA: recovery и адресный rollout не доступны оператору |
 | [F34](WEB-FULL-CAPABILITY-AUDIT.md#f34) | P2 | Открыто | Матричный режим использует полноценный H.264 для каждого окна |
@@ -178,7 +178,7 @@
 
 Ожидаемый keyboard/modal контракт сверён 1 октября 2026 с [официальной документацией Radix Dialog](https://www.radix-ui.com/primitives/docs/components/dialog) и [W3C APG Modal Dialog](https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/). Эти источники объясняют выбор primitive и критерии; они не являются доказательством визуальной приёмки Sphere.
 
-## Финальная проверка двух наборов и установка
+## Историческая проверка двух первых наборов и установка, 23:14
 
 - **Source/build:** `d6439d26640900f2a43690a0917d210812e3142c`. 12 atomic implementation commits и отдельный test-environment correction следуют за audit commit `80fb365`. Frozen main report/evidence сохранены без изменений.
 - **Tests:** 82/82 suites, 649/649 tests, 0 failures / 0 skips; 67 новых regressions относительно 582-test baseline. TypeScript `--noEmit` и diff check passed. Первый полный rerun выявил отсутствие matchMedia в jsdom, затем DOM fixture в Node suite; обе причины проверочного окружения устранены, финальный полный прогон включает server suite и logout.
@@ -187,3 +187,57 @@
 - **CI:** предыдущий published docs head `a1d68b3` завершил 9 checks success / preview deploy skipped; это первый 629-test batch. Новый source/документация требуют собственного CI, он фиксируется отдельно. Результаты предыдущего head не подменяют проверку нового.
 - **Acceptance:** 17 source fixes / 24 OPEN, все live gates остаются OPEN до проверки. URL policy браузера не обходилась. Нет нового утверждения о remote FPS/latency, APK OTA, fleet uptime или результате новых Android скриптов.
 - **Дальше:** F13/F15 полный доступ к оркестрации и выбору устройств логов; F16/F17 согласованные screenshots/retry; F19/F20 discovery ownership; F24–F33 более глубокие формы/workflows; F34–F36 отдельные browser/native/fleet performance и XPath gates.
+
+## Третий набор: источники логов и расписания, 23:50 UTC+5
+
+### F15/F31 — точный источник журнала
+
+- Commit `cf7ff66`. VPN Logs ведёт в `/logs?device_id=...` с encoded ID фактического peer, а не в общий аудит без device filter.
+- Каталог источников читается страницами по 100. Server search с debounce 300 ms работает по name, serial, model и полному UUID — ровно возможности Device API. Можно открыть 101-е устройство; поиск/страницы не меняют уже выбранный источник.
+- Прямая ссылка работает вне первой страницы и при ошибке каталога. Отдельный owned device snapshot сообщает имя; при отсутствии карточки остаётся точный ID. Выбор обновляет URL без прокрутки.
+- Каждый log viewer принадлежит одному ID. Смена источника отменяет GET и создаёт новый reader; late GET/delete не заменяет другой источник. Ответ с чужим `device_id` отклоняется. Clear требует успешного read, подтверждения и блокирует повторные действия; его receipt не объявляет работу агента.
+- 7 new log regressions: before 7 failed на `8582557`, after 7 passed. Дополнительный VPN link regression проверяет exact encoded ID. Связанные 38 tests passed; реальный Query cache/renderer и mock API transport. Existing log tests сохранены и расширены параметрами провайдера.
+- Backend `/logs/{device_id}` возвращает ограниченный архив ранее загруженных строк, не живой Logcat. GET для search/lookup не устанавливает APK и не посылает команды устройству. Большой архив/retention/event-loop cost сервера этим frontend batch не оптимизировались.
+
+### F30 — абсолютное время разового запуска
+
+- Commit `16fcac3`. ISO offset нормализуется в UTC для `datetime-local`; поле и подсказка явно говорят UTC. Сохраняется тот же момент, а не wall time часового пояса браузера. Backend `timezone` применяется к CRON, `one_shot_at` — к абсолютному запуску.
+- Если поле не менялось, отправляется исходное aware значение API, включая sub-millisecond precision. Новая дата/время валидируются как календарный UTC instant; минуты/секунды/fraction дают корректный ISO с `Z` без добавления лишних секунд. Malformed исходник запрещает Save до явного исправления.
+- 3 before component failures на `cf7ff66`; 4 after form regressions и 13 utility cases: offsets, секунды/миллисекунды, DST dates с явно UTC трактовкой, неверный календарь, неправильные часы/precision/naive API input. Связанные 23 tests passed. Native browser datepicker/локализация — отдельный OPEN gate.
+- Контракт поля сверён 1 октября с [HTML Standard: datetime-local](https://html.spec.whatwg.org/multipage/input.html#local-date-and-time-state-(type=datetime-local)) и [схемой сервера](../../../backend/schemas/schedule.py). HTML поле само не несёт time zone; внешняя документация подтверждает выбор формата, не работу Sphere вживую.
+
+### F29 — история срабатываний
+
+- Commit `1e1faec`. Из строки расписания открывается shared Radix dialog с `GET /schedules/{id}/executions`, page/per_page=50, total и переходом к остальным страницам.
+- Показаны плановое/фактическое время UTC, raw/reported status, устройства, созданные/успешные/ошибочные задачи, IDs execution и task/pipeline batch, skip reason, finished time. Не сообщённые значения не заменены выдуманным успехом; batch IDs не превращены в ссылки на неподдерживаемые фильтры.
+- Проверяется owner `schedule_id`, страница, типы времени и счётчиков. Failed first read/refresh не показывают false empty либо старый подтверждённый report. Есть изолированный retry/manual refresh и 30 s refresh открытого окна. Закрытие/смена расписания отменяет GET; новая цель начинает page 1.
+- 6 new regressions, включая переход из настоящей страницы, page 2, failed read/retry, cached read failure, wrong-owner payload и late response после закрытия. Связанные 11 tests passed. API transport заменён; fire-now/POST и Android execution не выполнялись.
+- Счётчики backend не являются независимым доказательством завершения работы Android. Финальное принятие выполнения сценария остаётся отдельной cross-layer задачей.
+
+### Дополнительные подтверждённые границы Schedule API
+
+- Commit `55b07d9`. Create не принимает пустой manual target: минимум один подтверждённый ID. Подсказка объясняет, что пустой выбор не означает весь парк.
+- Create/Edit interval принимают только целые 60..86400 секунд, как [CreateScheduleRequest/UpdateScheduleRequest](../../../backend/schemas/schedule.py); HTML min/max/step и `canSubmit` согласованы.
+- 5 before failures на `1e1faec` → 5 passed: отсутствие цели, явные device_ids, обе inclusive границы, дробь/59/86401 и снятие единственной цели. Этот дополнительный guard не переписывает frozen F01–F41 и не закрывает другие недостатки orchestration forms.
+
+## Текущая проверка и установка третьего набора
+
+- Source/compiled stamp `55b07d91004b895481c6fd515d332e5af68375be`; full frontend **87 suites / 685 tests**, 0 failures/skips. **36 новых regressions** в третьем наборе, **103 всего** относительно 582-test baseline. TypeScript noEmit и diff check passed.
+- Original production Next.js 15.5.26 standalone config, isolated Git archive, same-origin API и WS fallback; compiled SHA проверен. 44 существующих lint warnings остаются; build gates не отключались.
+- Installed **1 октября 2026, 23:50:20 UTC+5**, loopback 3015 → UI3027 / API18080. Owned Next PID42560, relay PID18164; Ready231ms. Relay10268 проверен по PID/start/command/listener и заменён; старый Next45528 сохранён для rollback. Backend revision `8d64ca4` остался прежним.
+- Секреты не печатались и не публиковались. Public UI, APK, туннели, OTA и команды Android этим набором не изменены. Это ревью веба, не fleet rollout.
+- Предыдущий published head `8582557`: 9 GitHub checks success, preview deploy skipped, включая frontend/backend/Android/Alembic. Новый published head требует собственного CI. Старые зелёные checks не подменяют этот результат.
+- 21 source fix / 20 OPEN по frozen audit; browser visual acceptance OPEN по URL policy. Нового свидетельства о stream FPS/latency, OTA или uptime парка нет.
+- Следующие приоритеты: F13 orchestration catalog paging; F16/F17 screenshots/restart context; F19/F20 discovery ownership; F24–F28 формы/редакторы; F32/F33 command outcomes/OTA recovery; F34–F36 streams/XPath; F37 export/filter scope; F38–F41 validation/access/acceptance.
+
+## Ручная приёмка установленного веба
+
+Эти шаги ещё не приняты агентом; автоматизация браузера для Sphere заблокирована URL policy. Они относятся к установленной сборке `55b07d9`, не к замороженному audit baseline.
+
+1. Открыть [Системные логи](http://127.0.0.1:3015/logs), проверить source SHA в шапке. Поиск устройства, переход к следующей странице и выбор меняют источник только по явному выбору; открыть скопированную ссылку в новой вкладке и сопоставить тот же device ID.
+2. На VPN peer нажать Logs и сопоставить ID в URL с ID peer. История пользователя /audit и архив агента /logs — разные данные.
+3. В [Оркестрации](http://127.0.0.1:3015/orchestration) → Schedules открыть «История срабатываний», посмотреть detail row и страницы. Это GET: не нажимать fire-now для проверки верстки.
+4. Открыть one-shot edit и сравнить исходное время API с UTC полем; Cancel завершает проверку без записи. Проверить keyboard/scroll/focus длинного dialog и небольшого viewport.
+5. Создать черновик расписания: без target Save отключён; интервалы 59/дробь/86401 не отправляются. Cancel закрывает черновик; реальный запуск/сохранение проверяются отдельным согласованным canary.
+
+Операторские destructive actions, API permissions, responsive geometry, browser focus и реальные execution results остаются отдельными live gates. Source tests/build не отмечают эти пункты завершёнными.

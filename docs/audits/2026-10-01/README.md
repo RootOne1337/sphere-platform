@@ -16,6 +16,6 @@ Source: `1354d66660041ba17afb64399d567ca29dd91866`. Режим замороже�
 
 Текущее продолжение: [журнал исправлений и статусы F01–F41](WEB-AUDIT-REMEDIATION.md). Исторический аудит остаётся неизменным.
 
-В двух implementation batches, последний source `d6439d2`, исправлены 17 source findings, включая все 5 P1; 24 остаются открытыми.
-82 suites / 649 tests и production standalone compile passed. Review UI установлен
-на 3015 → 3026 в 23:14 UTC+5; compiled build SHA проверен, browser visual acceptance открыт. [Fix validation](WEB-AUDIT-FIXES-VALIDATION.json).
+В трёх implementation batches, последний source `55b07d9`, исправлено 21 source finding, включая все 5 P1; 20 остаются открытыми.
+87 suites / 685 tests и production standalone compile passed. Review UI установлен
+на 3015 → 3027 в 23:50 UTC+5; compiled build SHA проверен, browser visual acceptance открыт. [Fix validation](WEB-AUDIT-FIXES-VALIDATION.json).

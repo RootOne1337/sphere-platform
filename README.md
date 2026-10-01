@@ -16,11 +16,11 @@
 </div>
 
 > [!NOTE]
-> **Текущий срез: 1 октября 2026, 23:14 UTC+5.** После отдельной фиксации полного
-> веб-аудита исправлены 17 source findings, включая все 5 P1; frontend **d6439d2**:
-> **82 suites / 649 tests**, types и production standalone compile passed.
-> Проверочный веб восстановлен: **3015 → UI 3026 / API 18080**, API **8d64ca4**.
-> Визуальная приёмка ещё открыта; public frontend не заменён, 24 finding остаётся.
+> **Текущий срез: 1 октября 2026, 23:50 UTC+5.** После отдельной фиксации полного
+> веб-аудита исправлено 21 source finding, включая все 5 P1; frontend **55b07d9**:
+> **87 suites / 685 tests**, types и production standalone compile passed.
+> Проверочный веб восстановлен: **3015 → UI 3027 / API 18080**, API **8d64ca4**.
+> Визуальная приёмка ещё открыта; public frontend не заменён, 20 findings остаются.
 > [Журнал исправлений / evidence](docs/audits/2026-10-01/WEB-AUDIT-REMEDIATION.md).
 >
 > **APK-кандидат 1.2.40 / 10240** ранее установлен

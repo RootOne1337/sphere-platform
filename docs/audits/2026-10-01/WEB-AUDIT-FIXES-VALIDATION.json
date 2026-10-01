@@ -1,7 +1,7 @@
 {
-  "observedAt": "2026-10-01T18:14:38.2022937+00:00",
+  "observedAt": "2026-10-01T18:50:20.9307352+00:00",
   "timezone": "Asia/Yekaterinburg",
-  "source": "d6439d26640900f2a43690a0917d210812e3142c",
+  "source": "55b07d91004b895481c6fd515d332e5af68375be",
   "frozenAuditSource": "1354d66660041ba17afb64399d567ca29dd91866",
   "auditCommitBeforeProductEdits": "80fb365",
   "implementationCommits": [
@@ -16,7 +16,11 @@
     "b8da88f",
     "1c4e0a8",
     "b02560c",
-    "09a22e3"
+    "09a22e3",
+    "cf7ff66",
+    "16fcac3",
+    "1e1faec",
+    "55b07d9"
   ],
   "sourceFindingsFixed": [
     "F01",
@@ -32,17 +36,21 @@
     "F11",
     "F12",
     "F14",
+    "F15",
     "F18",
     "F21",
     "F22",
-    "F23"
+    "F23",
+    "F29",
+    "F30",
+    "F31"
   ],
-  "remainingSourceFindings": 24,
-  "newRegressionTests": 67,
+  "remainingSourceFindings": 20,
+  "newRegressionTests": 103,
   "frontendTests": {
-    "suitesPassed": 82,
+    "suitesPassed": 87,
     "suitesFailed": 0,
-    "testsPassed": 649,
+    "testsPassed": 685,
     "testsFailed": 0,
     "testsSkipped": 0
   },
@@ -59,14 +67,14 @@
     "output": "standalone",
     "sameOriginApi": true,
     "sameOriginWebsocketFallback": true,
-    "buildStamp": "d6439d26640900f2a43690a0917d210812e3142c",
+    "buildStamp": "55b07d91004b895481c6fd515d332e5af68375be",
     "compiledStampVerified": true,
     "lintWarnings": 44,
     "dynamicDialogCssVerified": true
   },
   "reviewRuntime": {
     "url": "http://127.0.0.1:3015/",
-    "uiPort": 3026,
+    "uiPort": 3027,
     "apiPort": 18080,
     "backendRevision": "8d64ca453e1028f37923c877523dbfe85acaad21",
     "ownedLoopbackListenersVerified": true,
@@ -77,12 +85,12 @@
     "previousOwnedRelayReplaced": true,
     "publicFrontendReplaced": false,
     "browserVisualAcceptance": "OPEN_URL_POLICY_BLOCKED",
-    "nextPid": 45528,
-    "relayPid": 10268,
-    "previousNextPid": 33052
+    "nextPid": 42560,
+    "relayPid": 18164,
+    "previousNextPid": 45528
   },
   "documentValidation": {
-    "relativeTargetsChecked": 371,
+    "relativeTargetsChecked": 373,
     "findingAnchorsChecked": 41,
     "missing": 0
   },
@@ -99,13 +107,16 @@
     "F17 task retry context preservation remains open; unsupported API fields were not fabricated.",
     "New frontend CI is separate from prior accepted backend/Android CI.",
     "Current Sphere browser visual acceptance remains blocked and was not bypassed.",
-    "No new remote FPS, input latency, APK, OTA or fleet reliability result is claimed."
+    "No new remote FPS, input latency, APK, OTA or fleet reliability result is claimed.",
+    "Schedule execution counters are server reports, not proof that Android work is currently running.",
+    "UTC one-shot editor follows the API contract; the IANA schedule timezone applies to CRON.",
+    "Generic catalog/orchestration paging F13 and global audit export/filter F37 remain open."
   ],
-  "verificationCommit": "d6439d2",
+  "verificationCommit": "55b07d9",
   "previousReviewRuntime": {
-    "source": "d1cfbee",
-    "observedAt": "2026-10-01T17:35:03.9331549Z",
-    "uiPort": 3025,
+    "source": "d6439d2",
+    "observedAt": "2026-10-01T18:14:38.2022937+00:00",
+    "uiPort": 3026,
     "port": 3015
   },
   "beforeAfterOtaRegressions": {
@@ -116,7 +127,7 @@
     "existingCatalogTestsPassed": 2
   },
   "previousPublishedCi": {
-    "head": "a1d68b315a4ca4845abd38f1c067879b13e02d73",
+    "head": "8582557bdf9b1d324ba27a3849d1aabc2b6352c0",
     "success": 9,
     "skipped": 1,
     "newHeadCiVerified": false
@@ -124,5 +135,53 @@
   "verificationEnvironmentCorrections": [
     "DOM media-query fixture scoped away from Node suite; final complete Jest rerun passed.",
     "Isolated Next build executed from its frontend working directory to read the original Tailwind config."
+  ],
+  "previousAcceptedWebBatch": {
+    "source": "d6439d26640900f2a43690a0917d210812e3142c",
+    "observedAt": "2026-10-01T18:14:38.2022937+00:00",
+    "sourceFindingsFixed": 17,
+    "testsPassed": 649,
+    "uiPort": 3026,
+    "browserVisualAcceptance": "OPEN_URL_POLICY_BLOCKED"
+  },
+  "thirdBatch": {
+    "source": "55b07d9",
+    "regressionsAdded": 36,
+    "logSourceAndVpnLink": 8,
+    "scheduleUtc": 17,
+    "scheduleHistory": 6,
+    "scheduleRequestBoundaries": 5,
+    "beforeAfter": {
+      "logSource": {
+        "baseline": "8582557",
+        "beforeFailed": 7,
+        "afterPassed": 7
+      },
+      "scheduleUtc": {
+        "baseline": "cf7ff66",
+        "beforeFailed": 3,
+        "afterPassed": 4,
+        "utilityCases": 13
+      },
+      "scheduleBoundaries": {
+        "baseline": "1e1faec",
+        "beforeFailed": 5,
+        "afterPassed": 5
+      }
+    },
+    "relatedRegressions": {
+      "logSources": 38,
+      "scheduleUtc": 23,
+      "scheduleHistory": 11,
+      "scheduleBoundaries": 29
+    }
+  },
+  "historicalReviewRuntimes": [
+    {
+      "source": "d1cfbee",
+      "observedAt": "2026-10-01T17:35:03.9331549Z",
+      "uiPort": 3025,
+      "port": 3015
+    }
   ]
 }
