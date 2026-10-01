@@ -3,8 +3,16 @@
 **20 September update (AUD-129, source only):** stop persists cancellation in SQL.
 QUEUED can finish locally (HTTP200); ASSIGNED/RUNNING return HTTP202 and remain
 active until a terminal DAG receipt. Network failure does not discard the intent.
-This supersedes AUD-128's temporary HTTP503 contract. It is not yet installed on
-the pilot. [Evidence and rollout](../audits/2026-09-20/DURABLE-CANCELLATION.md).
+This supersedes AUD-128's temporary HTTP503 contract. At that dated source review
+it was not yet installed on the pilot. [Historical evidence and rollout](../audits/2026-09-20/DURABLE-CANCELLATION.md).
+
+**2 October clarification:** backend `5fcf18a` is now installed on the pilot;
+the historical rollout limits below do not identify today's deployment.
+[Current revisions and mixed APK versions](../operations/CURRENT-STATE.md)
+remain separate from physical cancellation acceptance. The
+[current Task API](../api-reference.md#tasks--tasks) distinguishes HTTP200
+local QUEUED cancellation, HTTP202 pending device cancellation and independent
+context-preserving rerun; none certifies a remote device outcome by itself.
 
 The management WebSocket uses two identities for a DAG control:
 

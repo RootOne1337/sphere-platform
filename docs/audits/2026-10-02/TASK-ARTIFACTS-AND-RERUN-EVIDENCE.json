@@ -140,7 +140,7 @@
   "newHeadCiComplete": false,
   "applicationSourceCi": {
     "source": "5fcf18a87f9a2ab198b1d145eae485218871bc01",
-    "observedAt": "2026-10-01T20:47:14.228592+00:00",
+    "observedAt": "2026-10-01T20:53:36.366388+00:00",
     "backendRunUrl": "https://github.com/RootOne1337/sphere-platform/actions/runs/36921814744",
     "backendJobConclusion": "failure",
     "fullBackendPassed": 2165,
@@ -159,7 +159,7 @@
   },
   "verificationTestCommit": "3fe5eac",
   "documentValidation": {
-    "relativeTargetsChecked": 424,
+    "relativeTargetsChecked": 439,
     "findingAnchorsChecked": 41,
     "missing": 0
   }

@@ -9,8 +9,9 @@
 ---
 
 The [generated endpoint catalog](api-endpoints.md) and [OpenAPI snapshot](openapi.json)
-reflect the registered HTTP contracts and are checked in CI. Tasks/Batches below
-were reconciled with the audit branch on 7 September 2026. Other manual sections
+reflect the registered HTTP contracts and are checked in CI. The Tasks section
+was reconciled with application source `5fcf18a` on 2 October 2026; Batches retain
+their 7 September review. Other manual sections
 still need component review; a listed contract does not establish runtime or
 security correctness. See the [audit report](audits/2026-09-05/AUDIT-REPORT.md).
 
@@ -1618,8 +1619,8 @@ this guarantee. See [AUD-43–47 and remaining work](audits/2026-09-05/AUDIT-REP
 
 ## Tasks — `/tasks`
 
-Verified against the task router/schema on 7 September 2026. Reads require
-`script:read`; create/cancel/stop require `script:execute`. All paths below are
+Verified against the task router/schema on 2 October 2026, source `5fcf18a`. Reads require
+`script:read`; create/cancel/stop/rerun require `script:execute`. All paths below are
 under `/api/v1` and apply the caller's organization boundary.
 
 ### GET /tasks
@@ -1628,6 +1629,10 @@ Filters: `device_id`, `script_id`, `batch_id` (UUIDs) and `status` (`queued`,
 `assigned`, `running`, `completed`, `failed`, `timeout`, `cancelled`).
 `page` defaults to 1; `per_page` defaults to 50 and is limited to **200** here.
 Response contains `items`, `total`, `page`, `per_page`, `pages`.
+Optional `search` (up to 200 characters), `sort_by` (`created_at`, `status`,
+`script_name`, `priority`), `sort_dir` (`asc`, `desc`) and `active_only` are
+server-side filters/order. `include_counts=true` adds status counts over the
+full filtered tenant history before pagination; counts are server reports.
 
 ### POST /tasks
 
@@ -1641,25 +1646,65 @@ creation does not acknowledge physical device execution.
 Returns task identity, lifecycle timestamps, result, error and input parameters.
 Related read routes are `/{id}/logs` (stored node logs), `/{id}/progress`
 (Redis progress), `/{id}/live-logs` (Redis node entries) and `/{id}/screenshots`
-(screenshot links or stored keys when URL generation fails).
+(a structured manifest described below). A Redis progress snapshot does not
+prove current physical execution; stored result fields retain their reported scope.
+
+### POST /tasks/{id}/rerun
+
+No request body is needed. For a terminal owned task, returns 201 with a new
+independent queued task using its recorded `script_version_id`, `device_id`,
+priority, timeout and deep-copied input parameters. Active tasks, unknown legacy
+versions and conflicting active work return 409. Script/version/device and any
+explicit account context are revalidated against the caller's organization.
+
+Old batch/wave membership, results and lifecycle timestamps are not copied.
+This does not restore external Android/account state or confirm execution.
+The Sphere web client disables automatic mutation retry after an uncertain response. Reconcile
+the new task before making another explicit request; a later request after its
+completion can create another execution. [Detailed contract and evidence](audits/2026-10-02/TASK-ARTIFACTS-AND-RERUN.md).
+
+### GET /tasks/{id}/screenshots
+
+Returns `{ "task_id": "uuid", "screenshots": [...] }`. Each deduplicated entry
+has `key`, an authenticated relative content `url` or null, and
+`unavailable_reason` or null. Unsafe/foreign reported keys have no URL.
+This replaces the former string-array response; external consumers must adapt.
+An empty manifest means no recorded server keys, not that Android has no image.
+
+### GET /tasks/{id}/screenshots/content?key=...
+
+Rechecks task ownership, task/device namespace and key membership in the stored
+result before reading private storage. Returns JPEG/PNG bytes, maximum 5 MiB,
+with `Cache-Control: private, no-store` and `X-Content-Type-Options: nosniff`.
+It does not redirect clients to MinIO or expose storage credentials.
+
+Absent tasks/keys/objects return 404; invalid raster content returns 422;
+unconfigured or unavailable storage returns 503. Configure the optional
+[server storage read account](configuration.md#private-task-screenshot-reads).
+Pilot reads remain disabled. Android DAG screenshot upload is still open (N01):
+its local file path is not a stored object key.
 
 ### DELETE /tasks/{id}
 
-Cancels QUEUED/ASSIGNED tasks; returns 204 after commit. RUNNING or terminal
-states return 409; unknown/foreign IDs return 404. The row is locked/refreshed
-before validation and queue effects; `finished_at` is recorded in UTC.
+Accepts cancellation of QUEUED/ASSIGNED tasks; returns 204 after the SQL intent
+commit. QUEUED can become CANCELLED locally; ASSIGNED remains active until a
+terminal device result. RUNNING or terminal states return 409; unknown/foreign
+IDs return 404. The row is locked/refreshed before validation. Do not infer a
+physical stop from the empty HTTP response.
 
 ### POST /tasks/{id}/stop
 
-Accepts QUEUED/ASSIGNED/RUNNING; returns 200 with `status: stopped` and `task_id`
-after the SQL cancellation commit. Terminal state returns 409. This response
-is a server decision, not a physical stop acknowledgement: transport/Redis/commit
-failures and in-flight ASSIGNED work still need reconciliation. The RUNNING
-control has a distinct command ID and explicit task target; see the
+Accepts QUEUED/ASSIGNED/RUNNING. QUEUED cancellation returns 200 with
+`status: stopped`; ASSIGNED/RUNNING returns 202 with `status: cancelling` after
+persisting the cancellation request. Both include `task_id`; terminal source
+states return 409. Delivery is retried by the existing durable dispatcher.
+ASSIGNED/RUNNING finish only after a terminal DAG result, not a control ACK.
+The control has a distinct command ID and explicit task target; see the
 [control contract](security/task-control-protocol.md).
 
 The router has no POST `/{id}/cancel` or `/{id}/retry` endpoint. Submitting a
-new task is new execution and requires reconciling any earlier unknown outcome.
+new task or using `/{id}/rerun` is new execution and requires reconciling any
+earlier unknown outcome.
 
 ---
 
