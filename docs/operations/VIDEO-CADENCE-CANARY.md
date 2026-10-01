@@ -8,7 +8,19 @@
 [APK/video audit](../audits/2026-09-30/ANDROID-INSPECTION-AND-VIDEO-MODES.md) ·
 [Android guide](../android-agent.md)
 
-## Актуальный follow-up: planar input и статичный экран
+## Актуальный follow-up: lifecycle ownership, APK 1.2.40
+
+Configured APK 10240 установлен адресными OTA PH010/PH025. Новый codec callback
+fence и release-before-consumer подтверждены 13 regression tests; полные debug
+suites 783/flavor,1 skipped. Native PH010 — 299 pictures/10 s; remote PH025
+first picture 9.844 s, source 5 Hz,4 pictures в startup-окне и21 в следующем.
+Свежий post-encoding heartbeat получен; следующий read содержит тот же snapshot.
+Code 8d64ca4 прошёл CI всех слоёв и установлен как API; UI 8f615c6 compiled на 3015.
+[Audit, артефакт, OTA, recovery и оставшиеся gates](../audits/2026-10-01/CALLBACK-LIFECYCLE-CANARY.md) ·
+[JSON evidence](../audits/2026-10-01/CALLBACK-LIFECYCLE-CANARY-EVIDENCE.json).
+Ни browser draw/input latency, ни remote smoothness или mass rollout не приняты.
+
+## Предыдущий follow-up: planar input и статичный экран
 
 APK **1.2.39 / 10239**, source `8a66afe`, установлен адресным OTA на PH010 и
 PH025. GPU/Surface control ниже сохраняется как история измерений. Новый debug

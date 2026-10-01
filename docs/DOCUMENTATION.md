@@ -2,7 +2,7 @@
 
 [Каталог](README.md) · [Readiness](operations/READINESS.md) · [Contributing](../CONTRIBUTING.md)
 
-**Последняя навигационная/фактическая сверка: 28 сентября 2026.** Для текущих
+**Последняя сверка входных документов и cross-layer canary: 1 октября 2026.** Для текущих
 версий и границ live-подтверждения используйте [каноническое состояние](operations/CURRENT-STATE.md).
 
 ## Где искать текущий ответ
@@ -53,6 +53,17 @@ README — вход в проект, а не дублирующий журнал
    конфигурации оставляйте приватными.
 5. Проверьте relative links/anchors, названия команд, YAML форм и отображение
    Markdown. Каталог `docs/assets/` содержит только публичные статические ресурсы.
+
+### Сверка 1 октября: runtime, OTA и callbacks
+
+Обновлены README, каталог, Android guide, CURRENT-STATE, Readiness, pilot/Fleet32
+указатели и codec/video canary guides. Новые [cross-layer audit и evidence](audits/2026-10-01/CALLBACK-LIFECYCLE-CANARY.md)
+разделяют code CI 8d64ca4, installed UI 8f615c6/API 8d64ca4, APK 68155c1/10240,
+адресные terminal receipts и finite native/recovery measurements.
+Предыдущие данные 10239 не выданы за повторный decode/CPU test 10240.
+Relative links/anchors и JSON сверяются перед публикацией. Визуальная browser
+review текущей сборки blocked URL policy; она не объявляется пройденной.
+Эта сверка не является повторной построчной аттестацией всех архивных документов.
 
 ## Охват проверки оформления, 21 сентября 2026
 

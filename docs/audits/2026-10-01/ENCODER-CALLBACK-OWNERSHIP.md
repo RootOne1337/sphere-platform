@@ -52,6 +52,24 @@ exception подписчика и единственное recovery notification
 OTA readback и runtime проверка записываются отдельно; обычный debug assemble
 не объявляется установленной версией.
 
+## Подписанный canary и native readback
+
+Configured source **68155c1**, **1.2.40-dev / 10240**, прежний pilot signer/package,
+8465471 bytes, SHA256
+`c612fba1e4a537ab1a0d9951e520bbd4063c3548308a4ebc31b72b59fa735a70`.
+Обе полные configured debug suites 783 также прошли и обе APK собраны.
+Адресные OTA PH010/PH025 completed, installed 10240, process-restart recovery
+и свежие online versions подтверждены. Normal/global OTA не продвигалась.
+Android source tree совпадает с принятым 8d64ca4:
+[Android CI 36864314903](https://github.com/RootOne1337/sphere-platform/actions/runs/36864314903)
+passed variants/tests/signed release smoke. Release smoke не является подписью
+этого pilot artifact production key.
+
+В finite native trial PH010 — 299 pictures/10 s; remote PH025 остаётся 5 Hz и
+имеет длинные startup/gaps. Post-encoding snapshot зафиксировал zero encoder
+errors/input drops, но поздний snapshot старый: нули не относятся ко всему trial.
+[Полная методика, receipts и JSON](CALLBACK-LIFECYCLE-CANARY.md).
+
 ## Открытые границы
 
 - Эти source regressions не доказывают, что callbacks были причиной низкого FPS

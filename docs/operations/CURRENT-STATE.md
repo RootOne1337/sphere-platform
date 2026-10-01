@@ -7,9 +7,60 @@
 [Главная](../../README.md) · [Каталог документации](../README.md) · [Readiness](READINESS.md) · [Fleet32 gates](../audits/2026-09-20/FLEET32-PREFLIGHT.md) · [PR #19](https://github.com/RootOne1337/sphere-platform/pull/19)
 
 > [!IMPORTANT]
-> **Текущий loopback runtime, 1 октября:** `3015 → UI 3022 / API 18080`, frontend/API **`b9a3f29`**. Compiled UI переключён в **15:44:19 UTC+5**, Next PID **21016** / relay PID **2080**, прежний Next 3021 / PID 45944 сохранён для rollback. В одиночном просмотре tap/swipe разрешён по последнему кадру текущего OPEN socket после 10 s без изменений; first-frame/error/reconnect gates сохраняются. Backend заменён отдельно в **16:01:53** после required CI, build/readiness подтверждены; database head, соседние containers, public UI, OTA catalog/artifacts и tunnels не менялись. [Static input contract](STATIC-STREAM-INPUT.md), [allowlisted runtime/OTA/capture/decode evidence](../audits/2026-10-01/PH010-PH025-PLANAR-CAPTURE-EVIDENCE.json). **Browser visual QA заблокирована политикой URL CUA**, обход не выполнялся; native decoded PNG не является browser screenshot или draw-FPS benchmark.
+> **Последний установленный loopback runtime, 1 октября:** `3015 → UI 3023 / API 18080`, frontend **8f615c6**, backend **8d64ca4**. UI установлен в **17:28:52 UTC+5**, API в **18:04:04**; build/readiness healthy подтверждены. Предыдущий Next 3022 сохранён для rollback. Database head и соседние containers/public UI/tunnels при backend rollout не менялись. Это проверочный веб [3015/devices](http://127.0.0.1:3015/devices), не развёртывание public frontend. [Датированный cross-layer audit и runtime/OTA evidence](../audits/2026-10-01/CALLBACK-LIFECYCLE-CANARY.md).
 
-**Текущий APK canary:** `1.2.39-dev / 10239`, source **8a66afe**, planar=true /
+**Текущий APK canary:** **1.2.40-dev / 10240**, source **68155c1**, planar=true /
+GPU=false, **8465471 bytes**, SHA256
+`c612fba1e4a537ab1a0d9951e520bbd4063c3548308a4ebc31b72b59fa735a70`.
+Прежний pilot signer/package подтверждён. Обе configured debug flavors: **783 tests
+каждый, 782 passed / 1 skipped / 0 failures / 0 errors**, обе собраны. По одному
+адресному OTA на PH010 и remote PH025: completed / installed 10240 /
+recovered_after_process_restart=true; свежие online versions подтверждены.
+Normal/global OTA и GitHub latest aliases не продвигались; default flags false.
+Это debug canary, не production release и не обновление всего парка.
+
+**Исправленные cross-layer дефекты:** [web diagnostics ownership/freshness](../audits/2026-10-01/STREAM-DIAGNOSTIC-OWNERSHIP.md),
+[terminal heartbeat cleanup/fencing](../audits/2026-10-01/PIPELINE-TERMINAL-HEARTBEAT.md),
+[codec callback ownership/output release](../audits/2026-10-01/ENCODER-CALLBACK-OWNERSHIP.md).
+Каждый имеет before/after regression proof. Ни один не объявляется единственной
+причиной низкого FPS удалённых устройств.
+
+**Последний finite native video trial, 10240:** PH010 **299 pictures / 10 s**,
+first picture **0.860 s**, native 960×540/~60 Hz. PH025 first picture **9.844 s**,
+**4 pictures в startup-окне 3..13 s**, затем **21 в 13..23 s**, display **5 Hz**.
+Post-encoding heartbeat около 25 s: local capture 60 / render 30 / encode 29,
+remote capture 4 / render 5 / encode 5; recorded input drops / WS rejects / encoder errors
+0. На 40 s тот же snapshot уже старше 18–20 s, поэтому нули не относятся ко всему
+trial. Remote arrival gaps 3–5 s близки producer PTS gaps; upstream timestamp
+rejections пока не учтены raw counters, loss целых pictures не исключён.
+[Allowlisted evidence](../audits/2026-10-01/CALLBACK-LIFECYCLE-CANARY-EVIDENCE.json).
+Browser draw FPS, quality и input-to-visible latency не измерены; текущая browser
+review blocked URL policy. Предыдущий PyAV decode 462/462 и CPU snapshot относятся
+к 10239 и сохранены ниже, не повторялись на 10240.
+
+**Code acceptance 8d64ca4:** [Backend 36864314898](https://github.com/RootOne1337/sphere-platform/actions/runs/36864314898)
+success, **2140 passed / 15 skipped**; OpenAPI, RLS, Alembic, lint/types, security,
+production bootstrap, metrics replacement, Redis pressure/restart passed.
+[Frontend 36864314913](https://github.com/RootOne1337/sphere-platform/actions/runs/36864314913)
+и [Android 36864314903](https://github.com/RootOne1337/sphere-platform/actions/runs/36864314903)
+success. Frontend локально **73 suites / 582 tests**, isolated compile passed;
+source tree установленной UI 8f615c6 и APK 68155c1 совпадает с соответствующим tree
+8d64ca4. Preview guard success / deployment skipped. Failed pipeline race и
+промежуточный RLS test-hook failure сохранены в audit, runtime policy не ослаблена.
+
+**Recovery после API rollout:** **18:05:42** — 19 records / 13 online / 6 offline,
+PH010/PH025 online 10240, launcher и not_streaming. PH028/10232 кратко потерял WS
+(code 1005) и восстановил heartbeat в 18:05:46. Три GET-only среза
+**18:10:41 / 18:10:51 / 18:11:01** — **14 online / 5 offline**, прежний online set.
+Это finite recovery evidence, не uptime SLA или подтверждение всех ожидаемых 23.
+Закрыты только собственные viewers; global stop отсутствует.
+
+### Предыдущий срез 1 октября: b9a3f29 / APK10239
+
+> [!IMPORTANT]
+> **Исторический loopback runtime, 1 октября:** `3015 → UI 3022 / API 18080`, frontend/API **`b9a3f29`**. Compiled UI переключён в **15:44:19 UTC+5**, Next PID **21016** / relay PID **2080**, прежний Next 3021 / PID 45944 сохранён для rollback. В одиночном просмотре tap/swipe разрешён по последнему кадру текущего OPEN socket после 10 s без изменений; first-frame/error/reconnect gates сохраняются. Backend заменён отдельно в **16:01:53** после required CI, build/readiness подтверждены; database head, соседние containers, public UI, OTA catalog/artifacts и tunnels не менялись. [Static input contract](STATIC-STREAM-INPUT.md), [allowlisted runtime/OTA/capture/decode evidence](../audits/2026-10-01/PH010-PH025-PLANAR-CAPTURE-EVIDENCE.json). **Browser visual QA заблокирована политикой URL CUA**, обход не выполнялся; native decoded PNG не является browser screenshot или draw-FPS benchmark.
+
+**Предыдущий APK canary:** `1.2.39-dev / 10239`, source **8a66afe**, planar=true /
 GPU=false, 8464127 bytes, SHA256
 `c9f4a5ef9652a2bb2b14765e4c91fa929d4e1b59e7645703be99ed64f8dcca07`.
 Подписан прежним pilot key; обе configured debug flavors: **770 tests каждый,
@@ -18,7 +69,7 @@ OTA PH010 и remote PH025: completed / installed 10239 / recovered-after-restart
 свежие online versions подтверждены. Normal/global OTA и GitHub latest APK aliases
 не продвигались, default planar/GPU flags false. Это canary, не production release.
 
-**Новые реальные video measurements:** PH010 — **300 и 299 pictures / 10 s**
+**Предыдущие реальные video measurements:** PH010 — **300 и 299 pictures / 10 s**
 в независимых native capture/wire trials. PyAV 19.0.0 декодировал **462 pictures**
 без ошибок, все native **960×540**. [Методика и собственный decoded sample](CODEC-INPUT-CANARY.md).
 PH025 — **19 и 17 pictures / 10 s**; его дисплей всё ещё сообщает **5 Hz**.

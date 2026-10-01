@@ -8,6 +8,25 @@ draw/input-to-visible acceptance ещё открыты.
 [Synthetic measurements](../audits/2026-10-01/PH010-CODEC-INPUT-EVIDENCE.json) ·
 [Real capture / OTA / decode evidence](../audits/2026-10-01/PH010-PH025-PLANAR-CAPTURE-EVIDENCE.json)
 
+## Последний lifecycle follow-up: APK 1.2.40
+
+Подписанный configured source 68155c1 установлен адресными OTA на PH010/PH025:
+completed, installed 10240 и process-restart recovery подтверждены. Исправлены
+stale codec callbacks и возврат native output до внешнего consumer.
+Все13 regressions и 783 tests каждой configured debug flavor прошли (1 skipped).
+Backend8d64ca4/UI 8f615c6 реально установлены; полный CI трёх слоёв success.
+
+PH010 — 299 pictures/10 s, first picture 0.860 s, source ~60 Hz/native 960×540.
+PH025 всё ещё 5 Hz: first picture 9.844 s, startup-окно 3..13 s содержит 4 pictures,
+следующее 13..23 s — 21. Post-encoding heartbeat получен, однако поздний read
+содержит тот же отчёт возрастом 18–20 s. Recorded drops/errors 0 не описывают весь
+trial. Source timestamp rejections до raw counter пока не наблюдаемы отдельно.
+Повторный PyAV decode/CPU benchmark в этом прогоне не выполнялся.
+[Cross-layer audit, runtime, OTA и численные данные](../audits/2026-10-01/CALLBACK-LIFECYCLE-CANARY.md) ·
+[Allowlisted JSON](../audits/2026-10-01/CALLBACK-LIFECYCLE-CANARY-EVIDENCE.json).
+
+Следующие разделы сохраняют предыдущие controls/10239 measurements и их даты.
+
 ## Что изменилось в диагнозе
 
 На PH010 / APK 1.2.38 программный `OMX.google.h264.encoder` ранее давал около

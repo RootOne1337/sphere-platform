@@ -3,7 +3,18 @@
 **Навигация обновлена: 1 октября 2026. Исторические live-снимки ниже сохранены по датам.**
 
 > [!IMPORTANT]
-> Канонические source/runtime сведения, текущая версия APK в исходниках, последний записанный remote canary, ограничения диагностики и следующий тест 20–30 устройств находятся в [CURRENT-STATE.md](CURRENT-STATE.md). Этот файл — журнал readiness snapshots, не реальное время; перед rollout перечитайте live API, installed artifact hashes, deployed image IDs и receipts. Последний записанный preview switch 1 октября **04:19:15 UTC+5**: UI `c547f5d` на `3015 → UI 3021 / API 18080`, backend `85c8014`; старый Next 3020 сохранён. [Android navigation](ANDROID-NAVIGATION.md): 567 frontend tests/compile passed, один Back receipt remote PH025 подтверждён. Browser review blocked. Адресный GPU canary APK 1.2.38 установлен на PH010/PH025; FPS/quality/input-to-visible latency не приняты. [Native controls и открытые gates](VIDEO-CADENCE-CANARY.md#native-540p-и-независимый-android-control-1-октября).
+> Канонические source/runtime сведения находятся в [CURRENT-STATE.md](CURRENT-STATE.md).
+> Этот файл — журнал readiness snapshots, не реальное время. Последний записанный
+> runtime 1 октября: **3015 → UI 3023 / API 18080**, UI 8f615c6 / backend 8d64ca4.
+> UI установлен 17:28:52 UTC+5, backend 18:04:04; build/readiness confirmed.
+> APK 1.2.40/10240 установлен адресным OTA PH010/PH025 с terminal receipts и
+> process-restart recovery. Code CI 8d64ca4: backend 2140 passed / 15 skipped,
+> frontend 582 passed; configured APK 783 tests/flavor, 1 skipped.
+> [Cross-layer audit, runtime, OTA и native evidence](../audits/2026-10-01/CALLBACK-LIFECYCLE-CANARY.md).
+> Latest finite fleet recovery: 14 online / 5 offline после краткого PH028 disconnect.
+> Remote PH025 — 5 Hz/long startup/gaps, browser quality/input latency, Android 14+
+> recovery, CPU budget, production OTA и 20–30-device combined test остаются OPEN.
+> Browser review blocked URL policy; PR остаётся draft.
 
 **Историческая отметка 30 сентября, 20:49–21:41 UTC+5:** frontend `4024ccf` /
 backend `85c8014`, browser WEB 4024ccf8 / API 85c8014e. Новый backend прошёл

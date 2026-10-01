@@ -1,12 +1,24 @@
 # Локальный стенд для совместного тестирования
 
-> **Документационный указатель, 28 сентября 2026:** фактические текущие версии
+> **Документационный указатель, 1 октября 2026:** фактические текущие версии
 > исходников, последний записанный remote canary и границы live-проверки собраны
 > в [каноническом состоянии](CURRENT-STATE.md). Ниже сохранён исторический pilot
 > ledger: каждая версия, hostname, container digest, OTA catalog и device count
 > относится к своему записанному времени и не является текущей конфигурацией.
 > Внешний tunnel hostname удалён из этого журнала, так как Quick Tunnel URL
 > эфемерен; активный runtime endpoint 28 сентября не перечитывался.
+
+## Последняя установленная контрольная точка — 1 октября 2026
+
+Проверочный веб: **3015 → UI 3023 / API 18080**, frontend 8f615c6 установлен
+17:28:52 UTC+5, backend 8d64ca4 — 18:04:04. Public Docker frontend этим rollout
+не заменялся. Configured pilot APK 1.2.40/10240 (source 68155c1) установлен
+адресными OTA PH010 и remote PH025: completed/install/process-restart recovery.
+Latest GET-only snapshots 18:10:41–18:11:01: 14 online / 5 offline, прежний online set;
+краткий PH028/10232 disconnect после API restart сохранён в отчёте.
+Remote source 5 Hz/startup/gaps и browser input latency остаются открытыми.
+[Artifact SHA, CI, runtime и ограничения](../audits/2026-10-01/CALLBACK-LIFECYCLE-CANARY.md) ·
+[Каноническое состояние](CURRENT-STATE.md).
 
 ## Live-корреляция: 26 сентября, 05:59 Asia/Yekaterinburg / 00:59 UTC
 

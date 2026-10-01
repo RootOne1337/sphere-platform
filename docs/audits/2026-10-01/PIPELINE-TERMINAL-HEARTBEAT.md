@@ -44,6 +44,12 @@ Android-команду и не утверждает, что Android прекра
   запретом LOST. Таймаут не увеличен; RLS policy и runtime права не ослаблены.
   Локальный повтор recovery + cancel-intent + admission + RLS: **71 passed**,
   с настоящей non-owner PostgreSQL role и повторной tenant binding после commit.
+- Полный повтор code head **8d64ca4**:
+  [Backend CI 36864314898](https://github.com/RootOne1337/sphere-platform/actions/runs/36864314898)
+  **success, 2140 passed / 15 skipped**; runtime RLS, OpenAPI, Alembic,
+  lint/types, production bootstrap и Redis pressure/restart также прошли.
+  Backend установлен в **18:04:04 UTC+5**, build/readiness подтверждены;
+  схема БД сохранена. [Rollout и finite fleet recovery](CALLBACK-LIFECYCLE-CANARY.md).
 - Это исправление оркестратора; оно не доказывает причину remote video gaps.
   Установка текущего кода в runtime и полный CI фиксируются отдельно в
   [CURRENT-STATE](../../operations/CURRENT-STATE.md).

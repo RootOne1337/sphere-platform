@@ -1,36 +1,33 @@
 # Android Agent
 
-> **Состояние на 1 октября 2026:** исходники задают Android `1.2.39 / 10239`,
-> APK source `8a66afe`. Настроенный debug **planar-input** canary с прежним
-> pilot signer установлен адресным OTA на PH010 и удалённый PH025: completed,
-> recovery-after-process-restart и свежий reported code 10239 подтверждены.
-> SHA256: `c9f4a5ef9652a2bb2b14765e4c91fa929d4e1b59e7645703be99ed64f8dcca07`.
-> Normal/global OTA и GitHub latest aliases не менялись. Default planar и GPU
-> flags — false; canary использует planar=true / GPU=false только в debug.
-> Настоящий захват 960×540 на PH010 дал **300 и 299 pictures / 10 s**;
-> независимый PyAV decoder прочитал 462 кадра без ошибок и изменения размеров.
-> PH025 дал **19 и 17 pictures / 10 s**, display mode всё ещё **5 Hz**.
-> Это finite capture/wire evidence, не browser draw/remote smoothness/latency SLA.
-> [Planar evidence](audits/2026-10-01/PH010-PH025-PLANAR-CAPTURE-EVIDENCE.json) ·
-> [Методика и цена CPU conversion](operations/CODEC-INPUT-CANARY.md).
-> Обе configured debug flavors: **770 tests каждый, 769 passed / 1 skipped /
-> 0 failures / 0 errors**, обе APK собраны. Backend/Frontend/Android CI code
-> head `b9a3f29` success. Это не fleet rollout и не production-signed release.
-> См. [video canary и gates](operations/VIDEO-CADENCE-CANARY.md). Подробная проверка релизного контура:
-> [Android release-readiness audit](audits/2026-09-28/ANDROID-RELEASE-READINESS.md). См.
-> [каноническое состояние и границы доказательств](operations/CURRENT-STATE.md)
-> и [canary evidence](audits/2026-09-27/TUNA-REMOTE-STREAM-CANARY.md).
+> **Состояние на 1 октября 2026:** source **1.2.40 / 10240**, APK source 68155c1.
+> Configured debug planar=true/GPU=false, прежний pilot signer/package.
+> SHA256 `c612fba1e4a537ab1a0d9951e520bbd4063c3548308a4ebc31b72b59fa735a70`.
+> Один addressed OTA PH010 и remote PH025 completed, installed 10240 и
+> recovered_after_process_restart=true; свежая online version подтверждена.
+> Configured Dev/Enterprise: **783 tests каждый, 782 passed / 1 skipped**,
+> zero failures/errors, обе собраны. Code CI 8d64ca4 success всех трёх слоёв.
+> Default planar/GPU=false, normal/global OTA и GitHub latest aliases не
+> продвигались. Это pilot canary, не production-signed release или fleet rollout.
+> [Codec lifecycle fix](audits/2026-10-01/ENCODER-CALLBACK-OWNERSHIP.md) ·
+> [Artifact/OTA/native evidence](audits/2026-10-01/CALLBACK-LIFECYCLE-CANARY.md) ·
+> [Текущее состояние](operations/CURRENT-STATE.md).
 
-> **Web follow-up:** compiled UI/API `b9a3f29` на 3015 сохраняет Android
-> Back/Home/Recents/Menu через существующий root-dependent command contract.
-> Новый single-device tap/swipe разрешён по последнему кадру текущего OPEN
-> socket даже после 10 секунд без изменения экрана. Error/timeout/reconnect
-> и отсутствие нового draw блокируют ввод; fresh PNG остаётся отдельным gate.
-> Frontend 73 suites / 576 tests passed. Новая APK для этого UI исправления
-> не нужна. Ранее native PH025/10238 Back receipt подтверждён за 1672 ms;
-> это не измерение задержки видеокадра или нового static-input browser теста.
-> [Static-input contract](operations/STATIC-STREAM-INPUT.md) ·
-> [Navigation acceptance](operations/ANDROID-NAVIGATION.md).
+> **Последний native trial 10240:** PH010 — 299 pictures/10 s, native 960×540;
+> PH025 — 5 Hz, first picture 9.844 s, startup-окно 4 pictures/10 s, следующее 21/10 s.
+> Свежий post-encoding heartbeat получен; поздний read содержит старый snapshot.
+> Browser draw/input latency и Android 14+ projection recovery ещё не приняты.
+> Независимый decode 462/462 относится к предыдущей 10239, не к новому APK.
+> [Методика и ограничения](operations/CODEC-INPUT-CANARY.md) ·
+> [Release gates](audits/2026-09-28/ANDROID-RELEASE-READINESS.md).
+
+> **Web follow-up:** UI 8f615c6 на 3015 привязывает APK diagnostics к device/auth
+> session, ограничивает polls и обновляет snapshot age между ответами. Сохраняет
+> [static-screen input](operations/STATIC-STREAM-INPUT.md) и
+> [Back/Home/Recents/Menu](operations/ANDROID-NAVIGATION.md) через существующий
+> root-dependent command contract. Frontend **73 suites / 582 tests**.
+> Browser visual review blocked URL policy; native receipt не является
+> измерением input-to-visible latency.
 
 ### Исторический pilot snapshot — 14 сентября 2026
 

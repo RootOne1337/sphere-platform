@@ -38,3 +38,15 @@ response, recovery после poll failure и существующие first-fra
 
 Это подтверждение React/transport-контракта. Оно не является визуальным browser QA,
 измерением draw FPS или input-to-visible latency удалённого эмулятора.
+
+## Установленный runtime
+
+Compiled UI **8f615c6** установлен **17:28:52 UTC+5** на
+`3015 → UI 3023 / API 18080`; предыдущий Next 3022 сохранён.
+Его frontend source tree совпадает с code head **8d64ca4**:
+[Frontend CI 36864314913](https://github.com/RootOne1337/sphere-platform/actions/runs/36864314913)
+tests/types/build passed. API 8d64ca4 установлен отдельно в 18:04:04.
+Native canary подтверждает пользу отдельного возраста: на 40 s diagnostics
+содержал тот же post-encoding heartbeat, что на 25 s, хотя viewer принимал новые
+pictures. Browser visual review blocked URL policy и не обходилась.
+[Runtime/OTA/native evidence и ограничения](CALLBACK-LIFECYCLE-CANARY.md).

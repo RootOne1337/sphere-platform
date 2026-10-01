@@ -16,21 +16,18 @@
 </div>
 
 > [!NOTE]
-> **Текущий срез: 1 октября 2026.** Кандидат исходников PR #19 задаёт Android
-> `1.2.39 / 10239`. Настроенный planar-input canary установлен адресным OTA
-> на PH010 и удалённый PH025. Настоящий захват 960×540 на PH010 дал **30 и
-> 29,9 pictures/s** в двух десятисекундных окнах; независимый декодер прочитал
-> 462 кадра без ошибок. На PH025 получены **1,9 и 1,7 pictures/s**, дисплей
-> сообщает 5 Hz: удалённая плавность остаётся открытой.
-> [Измерения и ограничения](docs/audits/2026-10-01/PH010-PH025-PLANAR-CAPTURE-EVIDENCE.json).
-> Проверочный веб **3015**, UI/API **b9a3f29**: возраст статичного кадра больше
-> 10 секунд теперь сохраняет tap/swipe в одиночном просмотре; reconnect/error
-> и отсутствие кадра текущей сессии блокируют ввод. Browser FPS, чёткость при
-> движении и input-to-visible latency ещё требуют отдельной приёмки.
-> Новый APK ещё не production-подписан, публичный PR frontend не развёрнут,
-> массовая OTA не опубликована, приёмка парка 20–30 устройств не проведена.
-> Версии APK, подпись, runtime,
-> логи и границы доказательств собраны в [актуальном состоянии](docs/operations/CURRENT-STATE.md).
+> **Текущий срез: 1 октября 2026.** APK-кандидат **1.2.40 / 10240** установлен
+> адресным OTA на PH010 и удалённый PH025: установка и восстановление после
+> перезапуска процесса подтверждены. Исправлены codec callback ownership,
+> web diagnostics freshness и terminal heartbeat fencing с before/after tests.
+> Принятый code head **8d64ca4**: backend **2140 passed / 15 skipped**, frontend
+> **582 passed**, configured APK **783 tests на flavor / 1 skipped**.
+> Проверочный веб **3015 → UI 3023 / API 18080**, UI 8f615c6 / API 8d64ca4 реально
+> установлены. PH010 дал **299 pictures / 10 s**; PH025 всё ещё сообщает **5 Hz**,
+> first picture 9.844 s и длинные gaps: remote smoothness/latency не приняты.
+> Normal/global OTA, production signer и приёмка 20–30 устройств остаются открытыми.
+> [Audit, версии, receipts и ограничения](docs/audits/2026-10-01/CALLBACK-LIFECYCLE-CANARY.md) ·
+> [Каноническое текущее состояние](docs/operations/CURRENT-STATE.md).
 
 ---
 
