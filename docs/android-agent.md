@@ -1,29 +1,36 @@
 # Android Agent
 
-> **Состояние на 1 октября 2026:** исходники задают Android `1.2.38 / 10238`,
-> source `2bed596`. Настроенный debug GPU canary с прежним pilot signer
-> установлен адресными OTA на PH010 и удалённый PH025: completed + reported
-> code 10238. Normal/global OTA и GitHub latest aliases не менялись; default
-> GPU path остаётся false. Native 960×540 на PH010 дал 113 pictures / 20 s
-> (5.65/s), прежний upscale 1280×720 — 68 / 20 s (3.4/s). Android screenrecord
-> без Sphere video transport дал 47 frames / 7.845 s (5.991 FPS); отдельный
-> контроль подтвердил отрисовку сцены около 60 FPS при encode около 6 FPS.
-> На PH025 дисплей всё ещё 5 Hz, новый motion launch вернул timeout: packets
-> поступили, но FPS benchmark и live input в этом прогоне не приняты.
-> [Sanitized evidence](audits/2026-10-01/PH010-PH025-NATIVE-SIZE-EVIDENCE.json).
-> Android configured tests: 746 каждый flavor, 745 passed / 1 skipped;
-> GitHub Backend/Frontend/Android source `2bed596` success. Это не fleet rollout,
-> не smooth-video/quality/latency acceptance и не production-signed release.
+> **Состояние на 1 октября 2026:** исходники задают Android `1.2.39 / 10239`,
+> APK source `8a66afe`. Настроенный debug **planar-input** canary с прежним
+> pilot signer установлен адресным OTA на PH010 и удалённый PH025: completed,
+> recovery-after-process-restart и свежий reported code 10239 подтверждены.
+> SHA256: `c9f4a5ef9652a2bb2b14765e4c91fa929d4e1b59e7645703be99ed64f8dcca07`.
+> Normal/global OTA и GitHub latest aliases не менялись. Default planar и GPU
+> flags — false; canary использует planar=true / GPU=false только в debug.
+> Настоящий захват 960×540 на PH010 дал **300 и 299 pictures / 10 s**;
+> независимый PyAV decoder прочитал 462 кадра без ошибок и изменения размеров.
+> PH025 дал **19 и 17 pictures / 10 s**, display mode всё ещё **5 Hz**.
+> Это finite capture/wire evidence, не browser draw/remote smoothness/latency SLA.
+> [Planar evidence](audits/2026-10-01/PH010-PH025-PLANAR-CAPTURE-EVIDENCE.json) ·
+> [Методика и цена CPU conversion](operations/CODEC-INPUT-CANARY.md).
+> Обе configured debug flavors: **770 tests каждый, 769 passed / 1 skipped /
+> 0 failures / 0 errors**, обе APK собраны. Backend/Frontend/Android CI code
+> head `b9a3f29` success. Это не fleet rollout и не production-signed release.
 > См. [video canary и gates](operations/VIDEO-CADENCE-CANARY.md). Подробная проверка релизного контура:
 > [Android release-readiness audit](audits/2026-09-28/ANDROID-RELEASE-READINESS.md). См.
 > [каноническое состояние и границы доказательств](operations/CURRENT-STATE.md)
 > и [canary evidence](audits/2026-09-27/TUNA-REMOTE-STREAM-CANARY.md).
 
-> **Web navigation follow-up:** UI `c547f5d` на 3015 добавляет Android
+> **Web follow-up:** compiled UI/API `b9a3f29` на 3015 сохраняет Android
 > Back/Home/Recents/Menu через существующий root-dependent command contract.
-> Новая APK для панели не нужна. Native PH025/10238 Back receipt и возврат
-> launcher подтверждены; round trip 1672 ms не является задержкой видеокадра.
-> [Контракт и границы приёмки](operations/ANDROID-NAVIGATION.md).
+> Новый single-device tap/swipe разрешён по последнему кадру текущего OPEN
+> socket даже после 10 секунд без изменения экрана. Error/timeout/reconnect
+> и отсутствие нового draw блокируют ввод; fresh PNG остаётся отдельным gate.
+> Frontend 73 suites / 576 tests passed. Новая APK для этого UI исправления
+> не нужна. Ранее native PH025/10238 Back receipt подтверждён за 1672 ms;
+> это не измерение задержки видеокадра или нового static-input browser теста.
+> [Static-input contract](operations/STATIC-STREAM-INPUT.md) ·
+> [Navigation acceptance](operations/ANDROID-NAVIGATION.md).
 
 ### Исторический pilot snapshot — 14 сентября 2026
 

@@ -1,4 +1,4 @@
-# Одиночный видеопоток: GPU canary и критерии приёмки
+# Одиночный видеопоток: capture canaries и критерии приёмки
 
 **Дата:** 1 октября 2026, Asia/Yekaterinburg.<br />
 **Scope:** один явно выбранный Android, отдельный APK и собственный viewer;
@@ -8,7 +8,29 @@
 [APK/video audit](../audits/2026-09-30/ANDROID-INSPECTION-AND-VIDEO-MODES.md) ·
 [Android guide](../android-agent.md)
 
-## Что меняется
+## Актуальный follow-up: planar input и статичный экран
+
+APK **1.2.39 / 10239**, source `8a66afe`, установлен адресным OTA на PH010 и
+PH025. GPU/Surface control ниже сохраняется как история измерений. Новый debug
+canary использует RGBA ImageReader → reused I420 ByteBuffer → тот же Google AVC;
+wire protocol и WebCodecs decoder не заменены. PH010: **30 и 29,9 pictures/s**
+в двух настоящих десятисекундных capture/wire окнах, 462 pictures независимо
+декодированы без ошибок. PH025: **1,9 / 1,7 pictures/s**, reported source **5 Hz**,
+паузы 3–4 s в arrival имеют близкие producer PTS gaps. Это не подтверждение
+удалённого профиля 10–15 FPS и не полная локализация источника пропусков.
+
+[Методика, conversion CPU и дальнейшие gates](CODEC-INPUT-CANARY.md) ·
+[Allowlisted capture/OTA/decode evidence](../audits/2026-10-01/PH010-PH025-PLANAR-CAPTURE-EVIDENCE.json).
+
+Compiled single-device UI **b9a3f29** на **3015** сохраняет новый tap/swipe,
+когда изображение текущего OPEN socket старше 10 s. Banner age не становится
+video disconnect: первым условием остаётся успешный draw текущей сессии.
+Error/transport timeout/decoder recovery/reconnect блокируют действия; held
+gesture отменяется, новое действие не повторяется автоматически.
+[Контракт и 576 frontend regressions](STATIC-STREAM-INPUT.md).
+Browser visual/input-to-visible acceptance нового исправления пока открыта.
+
+## GPU canary: исходная переменная эксперимента
 
 Существующий путь CPU: VirtualDisplay → RGBA ImageReader → Bitmap copy →
 Canvas → encoder Surface. Новый canary: VirtualDisplay → SurfaceTexture

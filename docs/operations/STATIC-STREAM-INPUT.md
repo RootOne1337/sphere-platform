@@ -43,8 +43,12 @@ close/error/denied/timeout; новый socket без нового draw; silent s
 до release; first-frame gate даже с ping; отдельный fresh PNG gate.
 Сохраняются прежние rotation/pointer ownership, decoder/reconnect и navigation tests.
 Полная frontend suite: **73 suites / 576 tests passed**, type-check и targeted
-ESLint в существующем legacy config profile прошли. Compiled runtime записывается
-в CURRENT-STATE отдельно; green source tests ещё не означают установленный UI.
+ESLint в существующем legacy config profile прошли. GitHub frontend tests/types/
+build source **b9a3f29** прошёл. В **15:44:19 UTC+5** isolated compiled UI реально
+переключён: **3015 → UI 3022 / API 18080**, Next PID 21016 / relay PID 2080;
+listener ownership и build readback проверены, прежний Next 3021 сохранён для
+rollback. API обновлён до b9a3f29 в 16:01:53; это отдельный rollout диагностики.
+[Канонический runtime ledger](CURRENT-STATE.md).
 
 CUA browser review ранее заблокирована политикой URL. Обход не выполнялся;
 source tests и listener/build readback не являются browser visual acceptance.

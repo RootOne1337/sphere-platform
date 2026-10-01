@@ -1,10 +1,12 @@
-# Android codec input: измерения и следующий canary
+# Android codec input: synthetic control и настоящий capture canary
 
-**Дата:** 1 октября 2026, Asia/Yekaterinburg. **Статус:** native diagnostic принят;
-полный capture → encoder → wire → browser путь ещё не принят.
+**Дата:** 1 октября 2026, Asia/Yekaterinburg. **Статус:** finite PH010 capture →
+encoder → wire и независимый decode проверены; remote smoothness и browser
+draw/input-to-visible acceptance ещё открыты.
 
 [Текущее состояние](CURRENT-STATE.md) · [Video cadence](VIDEO-CADENCE-CANARY.md) ·
-[Данные измерений](../audits/2026-10-01/PH010-CODEC-INPUT-EVIDENCE.json)
+[Synthetic measurements](../audits/2026-10-01/PH010-CODEC-INPUT-EVIDENCE.json) ·
+[Real capture / OTA / decode evidence](../audits/2026-10-01/PH010-PH025-PLANAR-CAPTURE-EVIDENCE.json)
 
 ## Что изменилось в диагнозе
 
@@ -82,7 +84,7 @@ thread, bounded collections, finite input/drain. API 28 `app_process` требу
 поправки завершились JSON error и **не являются FPS measurements**. Ошибка JSON
 означает неуспех диагностики даже при нулевом process exit code.
 
-## Исправление, которое следует проверять
+## Установленное исправление: debug 1.2.39 / 10239
 
 **Source candidate 1.2.39 / 10239:** путь реализован под
 `SPHERE_STREAM_PLANAR_INPUT=true`, только debug artifact; одновременно включать
@@ -102,11 +104,68 @@ Planar timestamps берутся из Image producer, повторные/неп�
 runtime должны быть обновлены для отображения нового поля; существующий AVC wire
 protocol и decoder менять для самого видеопути не требуется.
 
-До configured artifact build: **43 targeted Android tests**, включая 13 conversion,
-6 codec-input ownership и 20 capture lifecycle, пройдены; 20 backend diagnostic/
-metric tests, frontend 567 tests и type-check пройдены. Эти tests не исполняют
-реальный MediaProjection/OMX и не закрывают FPS/quality acceptance. Полная configured
-APK сборка обеих flavors и установка на canary — следующий этап.
+APK source **8a66afe**, **8464127 bytes**, SHA256
+`c9f4a5ef9652a2bb2b14765e4c91fa929d4e1b59e7645703be99ed64f8dcca07`,
+прежние pilot package/certificate и v2 signature. Обе configured debug flavors
+собраны: **770 tests каждый / 769 passed / 1 skipped / 0 failures / 0 errors**.
+43 targeted conversion/codec-input/lifecycle tests и 20 backend diagnostics/metrics
+tests прошли. На PH010 и PH025 один адресный grant каждый завершился **completed**,
+installed 10239 / recovery-after-process-restart; свежая online version подтверждена.
+Глобальный OTA канал и GitHub latest aliases не продвигались.
+
+### Настоящий capture → wire, 1 октября
+
+Каждый trial запускает одну private debug Activity с auto-finish через 30 s на
+подтверждённом idle launcher; собственный metadata viewer конечен. Input events,
+settings/reboot и global stop отсутствуют. PH010 repeat сохраняет только собственную
+тестовую сцену для independent decode. Observer shell в первых trials отмечен явно;
+во втором PH025 и PH010 decode-repeat его во время видео нет.
+
+| Trial | Pictures за окно 3..13 s | Первый picture | RGBA → I420 mean | Codec input queue mean |
+| --- | ---: | ---: | ---: | ---: |
+| PH010, real motion | 300 / 10 s = **30/s** | 0.766 s | 20.754–22.088 ms | 0.133–0.325 ms |
+| PH010, independent decode repeat | 299 / 10 s = **29.9/s** | 0.625 s | 20.956–21.434 ms | 0.125–0.169 ms |
+| PH025, один CPU observer | 19 / 10 s = **1.9/s** | 6.109 s | 10.797–15.438 ms | 0.891–1.754 ms |
+| PH025, без observer shell | 17 / 10 s = **1.7/s** | см. evidence | 5.281–9.347 ms | 0.365–1.581 ms |
+
+Remote 3..13 s windows включают startup до первого picture; steady-state profile
+не присваивается. Второй PH025 trial имеет gap **3937 ms arrival / 3943 ms PTS**;
+другие 3–4 s gaps также близки. Relative arrival-minus-PTS variation во втором
+trial −2..13 ms; это не абсолютная latency. Пропуски возникают до receiver,
+но PTS gaps не изолируют compositor, capture, codec-input admission или loss
+целых pictures в transport. Source display readback: PH010 ~60 Hz, PH025 **5 Hz**.
+Оператор сообщил выбор 10 FPS в LDPlayer; применение этого лимита не подтверждено.
+
+Один PH010 CPU snapshot: APK **80% одного ядра**, codec **12%**, two-core basis
+200%; APK также рисует private pattern. Planar path переносит CPU работу из
+Surface/codec consumer в APK conversion. Это не бюджет idle APK, не sustained
+load profile и не capacity guarantee для десятков одновременно выбранных машин.
+
+Независимый **PyAV 19.0.0** прочитал **462/462 wire pictures**, все **960×540**,
+ошибок decode нет. SHA256 собственного bitstream записан в evidence; raw video
+не опубликовано. Один decoded frame проверен визуально: тестовый текст, cyan bar,
+yellow marker и тонкие линии различимы. Это отдельный sample, не browser screenshot,
+не motion-quality/latency acceptance.
+
+![Один независимо декодированный кадр собственной сцены PH010](../audits/2026-10-01/PH010-PLANAR-PATTERN.png)
+
+### Согласованный API/UI и границы новых counters
+
+Compiled UI **b9a3f29** реально переключён на **3015 → UI 3022** в 15:44:19 UTC+5;
+backend **b9a3f29** заменён в 16:01:53 после всех required CI checks. Readiness/build
+подтверждены; database head, соседние containers, OTA catalog и artifacts не менялись.
+Новый optional `encoder_input_drops_total` дошёл от PH025 до API и уже доступен
+в UI diagnostics; absent у старого APK по-прежнему unknown. Последующий 33 s trial
+получил 49 pictures, но три API reads вернули один ранний heartbeat: captured=1,
+rendered=0, encoded=0. Его input_drops=0 **не доказывает** отсутствие поздних skips.
+Нужен свежий post-encoding snapshot в следующем фазово согласованном trial.
+
+Static-frame input defect исправлен отдельно в single-device UI. Возраст кадра
+>10 s не блокирует новый tap/swipe по кадру текущего OPEN socket. Disconnect,
+error, decoder recovery и новая session без draw блокируют ввод.
+[Контракт и tests](STATIC-STREAM-INPUT.md).
+
+### Следующие gates
 
 1. Canary RGBA ImageReader → переиспользуемый I420 buffer → тот же AVC encoder.
    Native resolution, один real input timestamp на кадр, raw drop при отсутствии
@@ -114,9 +173,10 @@ APK сборка обеих flavors и установка на canary — сле
 2. Валидация channel order, row/pixel stride, последней строки без padding,
    BT.601 limited-range conversion, 2×2 chroma, input buffer bounds. Lifecycle:
    stop/restart, stale callback, configure failure, input exhaustion.
-3. Измерить **настоящий** RGBA conversion, Android source cadence и wire pictures
-   на движущемся экране. Отдельно проверить quality, receive/draw и input-to-visible
-   latency, затем remote/reconnect. Synthetic 30 FPS не закрывает эти пункты.
+3. Подтвердить applied source limit на remote, свежий post-encoding heartbeat,
+   long-running CPU/RAM/queue profile и reconnect. Проверить browser receive/draw,
+   static-input восстановление, motion quality и input-to-visible latency отдельно.
+   Finite PH010 30/s не закрывает remote performance и fleet capacity.
 4. Default capture и normal/global OTA сохраняются до acceptance. Canary flag не
    должен попадать в release artifact без отдельного подтверждённого этапа.
 
@@ -128,3 +188,6 @@ APK сборка обеих flavors и установка на canary — сле
 Проверены 1 октября 2026. Это API contracts; числа выше получены с устройства.
 Probe и build helper написаны в Sphere, распространяются под [MIT проекта](../../LICENSE).
 Код сторонних codec implementations не копировался, новая runtime dependency не добавлена.
+Независимый PyAV установлен только в private diagnostic tool directory, product
+requirements/lockfiles не менялись. [Официальный parse/decode пример](https://pyav.org/docs/stable/cookbook/basics.html)
+проверен 1 октября 2026; PNG показывает собственную Sphere canary scene.

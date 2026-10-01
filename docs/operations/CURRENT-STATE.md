@@ -7,7 +7,51 @@
 [Главная](../../README.md) · [Каталог документации](../README.md) · [Readiness](READINESS.md) · [Fleet32 gates](../audits/2026-09-20/FLEET32-PREFLIGHT.md) · [PR #19](https://github.com/RootOne1337/sphere-platform/pull/19)
 
 > [!IMPORTANT]
-> **Текущий loopback runtime, 1 октября:** `3015 → UI 3021 / API 18080`, frontend **`c547f5d`**, API **`85c8014`**. В **04:19:15 UTC+5** переключён compiled Git archive с Android Back/Home/Recents/Menu в карточке и отдельном одиночном потоке. Next PID **45944** / relay PID **28872**, loopback ownership и API build JSON подтверждены. Прежний Next 3020 / PID 28988 сохранён для rollback; заменён только принадлежавший preview relay PID 7156. Backend/public UI/APK/tunnels этим UI switch не заменены. **Browser visual QA заблокирована политикой URL CUA**; обход не выполнялся, нового screenshot или browser FPS benchmark нет. [Navigation contract и native proof](ANDROID-NAVIGATION.md), [allowlisted runtime/control evidence](../audits/2026-10-01/NAVIGATION-INPUT-CONTROLS.json).
+> **Текущий loopback runtime, 1 октября:** `3015 → UI 3022 / API 18080`, frontend/API **`b9a3f29`**. Compiled UI переключён в **15:44:19 UTC+5**, Next PID **21016** / relay PID **2080**, прежний Next 3021 / PID 45944 сохранён для rollback. В одиночном просмотре tap/swipe разрешён по последнему кадру текущего OPEN socket после 10 s без изменений; first-frame/error/reconnect gates сохраняются. Backend заменён отдельно в **16:01:53** после required CI, build/readiness подтверждены; database head, соседние containers, public UI, OTA catalog/artifacts и tunnels не менялись. [Static input contract](STATIC-STREAM-INPUT.md), [allowlisted runtime/OTA/capture/decode evidence](../audits/2026-10-01/PH010-PH025-PLANAR-CAPTURE-EVIDENCE.json). **Browser visual QA заблокирована политикой URL CUA**, обход не выполнялся; native decoded PNG не является browser screenshot или draw-FPS benchmark.
+
+**Текущий APK canary:** `1.2.39-dev / 10239`, source **8a66afe**, planar=true /
+GPU=false, 8464127 bytes, SHA256
+`c9f4a5ef9652a2bb2b14765e4c91fa929d4e1b59e7645703be99ed64f8dcca07`.
+Подписан прежним pilot key; обе configured debug flavors: **770 tests каждый,
+769 passed / 1 skipped / 0 failures / 0 errors**, обе собраны. По одному адресному
+OTA PH010 и remote PH025: completed / installed 10239 / recovered-after-restart,
+свежие online versions подтверждены. Normal/global OTA и GitHub latest APK aliases
+не продвигались, default planar/GPU flags false. Это canary, не production release.
+
+**Новые реальные video measurements:** PH010 — **300 и 299 pictures / 10 s**
+в независимых native capture/wire trials. PyAV 19.0.0 декодировал **462 pictures**
+без ошибок, все native **960×540**. [Методика и собственный decoded sample](CODEC-INPUT-CANARY.md).
+PH025 — **19 и 17 pictures / 10 s**; его дисплей всё ещё сообщает **5 Hz**.
+Remote 3..13 s measurement windows включают startup. Arrival gaps 3–4 s близки
+producer PTS gaps: это сужает диагноз, но не изолирует capture/codec input/loss
+целых pictures. Не измерены browser draw FPS и абсолютная input-to-visible latency.
+Local APK CPU sample ~80% одного ядра, включая pattern + RGBA conversion, codec12%;
+плавный finite PH010 stream не доказывает лёгкий runtime для десятков viewers.
+
+**Code acceptance b9a3f29:** [Backend 36850795071](https://github.com/RootOne1337/sphere-platform/actions/runs/36850795071)
+success, **2135 passed / 15 skipped / 0 failures / 0 errors**, OpenAPI check,
+Redis pressure/restart, production-image bootstrap, lint/types, configured security,
+RLS и Alembic single-head passed. [Frontend 36850795102](https://github.com/RootOne1337/sphere-platform/actions/runs/36850795102)
+и [Android 36850795212](https://github.com/RootOne1337/sphere-platform/actions/runs/36850795212)
+success. Frontend local **73 suites / 576 tests**, types/targeted legacy lint и
+isolated compile passed. Preview guard success / deployment skipped: это не
+публичный production deployment. Ранее Backend 8a66afe остановился только на stale
+generated OpenAPI после успешных tests; schema regenerated в **3639a97**, failed
+run сохраняется как counterexample.
+
+**Диагностика после backend rollout:** `encoder_input_drops_total` реально дошёл
+от PH025 до API. В конечном 33 s trial три API reads ещё содержали один ранний
+heartbeat, encoded=0, хотя viewer позже получил 49 pictures. Нулевой early input
+drop counter не закрывает late-drop gate; post-encoding heartbeat остаётся нужен.
+Датированный final readback в evidence: **19 records / 14 online / 5 offline**,
+PH010/PH025 online10239, not_streaming, launcher resumed; закрыт только собственный
+viewer, global stop отсутствует. Это конечный readback, не обещание uptime всех23.
+
+### Предыдущие runtime/validation slices
+
+UI c547f5d был переключён в 04:19:15: `3015 → UI 3021 / API 18080`, API85c8014,
+Next45944 / relay28872. Android Back/Home/Recents/Menu подтверждены source tests;
+прежний Next3020 сохранён для rollback. Этот UI/API slice заменён текущим выше.
 
 Предыдущий UI `4c79ef6` с независимыми receive/draw FPS compiled и переключён в
 01:52:06 UTC+5. В 03:35 обнаружено отсутствие прежних Next/relay listeners и
@@ -24,7 +68,7 @@ PostgreSQL details и hide/restore selection. Тогда старые Next PID �
 14 online / 5 offline / 0 connecting. Это конечные проверки, не uptime SLA,
 не новая stream/scripts/OTA acceptance. Ниже сохранены версии и даты прежних этапов.
 
-## Состояние на дату проверки
+## История диагноза и предыдущих проверок
 
 **Уточнение диагноза, 1 октября 05:32 UTC+5:** standalone native control на PH010
 с тем же Google AVC и 960×540 сравнил графический Surface input с прямым planar
@@ -98,7 +142,8 @@ Encoder target 30 не устраняет source limit. Владелец так�
 Android Back/Home/Recents navigation в активной карточке. Source `c547f5d` добавляет
 эти кнопки и Menu через acknowledged SHELL, без новой APK. Первое frame/current
 WS gate, pending lock, abort/late callback и unknown без автоповтора покрыты
-регрессиями; pointer input на stale video остаётся заблокированным. Native
+регрессиями; в той версии pointer input на stale video был заблокированным
+(исправлено для single-device в b9a3f29, см. актуальный блок выше). Native
 PH025 / 10238: подтверждён foreground finite private Activity, одна Back-команда
 дала successful receipt за **1672 ms**, read-only dump подтвердил возврат launcher.
 Это не native acceptance всех клавиш и не browser input-to-visible measurement.
