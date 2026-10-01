@@ -4,7 +4,7 @@ Generated from `backend.main.app.openapi()` by `scripts/export_api_docs.py`.
 Regenerate with `python -m scripts.export_api_docs`; verify with `--check`.
 The exporter does not run startup hooks or send HTTP requests.
 
-**169 HTTP operations across 132 paths.**
+**171 HTTP operations across 134 paths.**
 
 Full parameters, request bodies, response schemas and declared security schemes:
 [OpenAPI JSON](openapi.json). Manual explanations:
@@ -162,7 +162,9 @@ for tested behavior and remaining limits.
 | `GET` | `/api/v1/tasks/{task_id}/live-logs` | tasks | 200, 422 | Live node execution log entries (from Redis, for running tasks) |
 | `GET` | `/api/v1/tasks/{task_id}/logs` | tasks | 200, 422 | Логи выполнения задачи (per-node) |
 | `GET` | `/api/v1/tasks/{task_id}/progress` | tasks | 200, 422 | Live-прогресс выполнения задачи (из Redis кэша) |
-| `GET` | `/api/v1/tasks/{task_id}/screenshots` | tasks | 200, 422 | Presigned URLs к скриншотам задачи (TTL 1 час) |
+| `POST` | `/api/v1/tasks/{task_id}/rerun` | tasks | 201, 409, 422 | New independent execution with the original script version and inputs |
+| `GET` | `/api/v1/tasks/{task_id}/screenshots` | tasks | 200, 422 | Authorized task screenshot manifest; content requires the same session |
+| `GET` | `/api/v1/tasks/{task_id}/screenshots/content` | tasks | 200, 404, 422, 503 | Read a reported task screenshot through the authorized API |
 | `POST` | `/api/v1/tasks/{task_id}/stop` | tasks | 200, 202, 422 | Принудительно остановить задачу (QUEUED/ASSIGNED/RUNNING) |
 | `GET` | `/api/v1/updates/` | updates | 200, 422 | List Releases |
 | `POST` | `/api/v1/updates/` | updates | 201, 422 | Create Release |

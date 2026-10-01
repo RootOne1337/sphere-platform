@@ -7458,6 +7458,57 @@
         }
       }
     },
+    "/api/v1/tasks/{task_id}/rerun": {
+      "post": {
+        "tags": [
+          "tasks"
+        ],
+        "summary": "New independent execution with the original script version and inputs",
+        "operationId": "rerun_task_api_v1_tasks__task_id__rerun_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Task Id"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskDetailResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Source active, context unavailable or duplicate execution"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/tasks/{task_id}": {
       "get": {
         "tags": [
@@ -7703,7 +7754,7 @@
         "tags": [
           "tasks"
         ],
-        "summary": "Presigned URLs к скриншотам задачи (TTL 1 час)",
+        "summary": "Authorized task screenshot manifest; content requires the same session",
         "operationId": "get_task_screenshots_api_v1_tasks__task_id__screenshots_get",
         "security": [
           {
@@ -7728,11 +7779,72 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "title": "Response Get Task Screenshots Api V1 Tasks  Task Id  Screenshots Get"
+                  "$ref": "#/components/schemas/TaskScreenshotManifest"
                 }
               }
             }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tasks/{task_id}/screenshots/content": {
+      "get": {
+        "tags": [
+          "tasks"
+        ],
+        "summary": "Read a reported task screenshot through the authorized API",
+        "operationId": "get_task_screenshot_content_api_v1_tasks__task_id__screenshots_content_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Task Id"
+            }
+          },
+          {
+            "name": "key",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 1024,
+              "title": "Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "image/jpeg": {},
+              "image/png": {}
+            }
+          },
+          "404": {
+            "description": "Task or reported object not found"
+          },
+          "503": {
+            "description": "Screenshot storage unavailable"
           },
           "422": {
             "description": "Validation Error",
@@ -17431,6 +17543,63 @@
           "updated_at"
         ],
         "title": "TaskResponse"
+      },
+      "TaskScreenshotManifest": {
+        "properties": {
+          "task_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Task Id"
+          },
+          "screenshots": {
+            "items": {
+              "$ref": "#/components/schemas/TaskScreenshotReference"
+            },
+            "type": "array",
+            "title": "Screenshots"
+          }
+        },
+        "type": "object",
+        "required": [
+          "task_id",
+          "screenshots"
+        ],
+        "title": "TaskScreenshotManifest"
+      },
+      "TaskScreenshotReference": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          },
+          "unavailable_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unavailable Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key"
+        ],
+        "title": "TaskScreenshotReference"
       },
       "TaskStatus": {
         "type": "string",

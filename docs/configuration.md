@@ -305,3 +305,22 @@ The default remains sphere; a configured alternative no longer fails on a missin
 hardcoded sphere role. Both fresh initialization and restart retaining database
 contents are tested. Existing clusters do not re-run init.sql, and changing the
 environment does not rename database roles. [Startup and partial-init limits](operations/STARTUP.md).
+
+## Private task screenshot reads
+
+Since application source `5fcf18a` (2 October 2026), task images are read through
+the authenticated Task API. Browsers receive Blob images from their API session;
+they do not need a public MinIO endpoint or storage credentials.
+
+Configure `SCREENSHOT_STORAGE_ENDPOINT` as host:port, the server-only
+`SCREENSHOT_STORAGE_ACCESS_KEY` / `SCREENSHOT_STORAGE_SECRET_KEY`,
+`SCREENSHOT_STORAGE_SECURE` (default true), and `SCREENSHOT_STORAGE_REGION`
+(default us-east-1). Use a bucket-scoped read account for `sphere-screenshots`.
+The full Compose overlay forwards these optional settings. Restart backend
+workers after changing them. Empty configuration disables reads with HTTP503,
+without preventing task execution, login or manifest reads.
+
+This does not enable Android DAG artifact uploads. The current action returns
+an Android-local path; that file is not a server screenshot until an upload is
+accepted and its key is recorded. The pilot's storage read configuration is
+currently disabled. [Task contracts, tests and remaining upload work](audits/2026-10-02/TASK-ARTIFACTS-AND-RERUN.md).

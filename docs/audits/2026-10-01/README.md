@@ -16,6 +16,4 @@ Source: `1354d66660041ba17afb64399d567ca29dd91866`. Режим замороже�
 
 Текущее продолжение: [журнал исправлений и статусы F01–F41](WEB-AUDIT-REMEDIATION.md). Исторический аудит остаётся неизменным.
 
-В четырёх implementation batches и дополнении terminal outcomes, последний source `7f30d9d`, исправлено 22 source findings, включая все 5 P1; 19 остаются открытыми.
-89 suites / 705 tests и production standalone compile passed. Review UI установлен
-на 3015 → 3029, 2 октября в 00:36 UTC+5; compiled build SHA проверен, browser visual acceptance открыт. [Fix validation](WEB-AUDIT-FIXES-VALIDATION.json).
+Последний installed source **5fcf18a**: 24 source findings исправлено, 17 открыты; 91 suites / 718 frontend tests, types/production build passed. API и review UI3015/3030 установлены 2 октября в 01:27/01:28 UTC+5. [F16/F17 contracts/evidence](../2026-10-02/TASK-ARTIFACTS-AND-RERUN.md) · [Fix validation](WEB-AUDIT-FIXES-VALIDATION.json). Android screenshot upload N01 и browser visual acceptance открыты.

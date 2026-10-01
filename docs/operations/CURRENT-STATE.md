@@ -7,27 +7,42 @@
 [Главная](../../README.md) · [Каталог документации](../README.md) · [Readiness](READINESS.md) · [Fleet32 gates](../audits/2026-09-20/FLEET32-PREFLIGHT.md) · [PR #19](https://github.com/RootOne1337/sphere-platform/pull/19)
 
 > [!IMPORTANT]
-> **Последний установленный loopback runtime, 2 октября, 00:36:17 UTC+5:** `3015 → standalone UI 3029 / API 18080`, frontend **7f30d9d**, backend **8d64ca4**. Веб на 3015 обновлён после проверки владельца предыдущего relay; новый Next/relay принадлежат этой сборке, health/build через relay соответствует API. Compiled SHA проверен. Заменён только проверенный relay предыдущей установки; прежний Next сохранён для rollback, посторонние процессы не останавливались. Это проверочный веб [3015/devices](http://127.0.0.1:3015/devices), public frontend не заменён. [Исправления по полному аудиту](../audits/2026-10-01/WEB-AUDIT-REMEDIATION.md) · [Validation/runtime evidence](../audits/2026-10-01/WEB-AUDIT-FIXES-VALIDATION.json).
+> **Установлено 2 октября 2026, 01:28:45 UTC+5:** `3015 → standalone UI3030/API18080`, frontend и backend **5fcf18a**. Readiness/build SHA, owned listeners и авторизованный API проверены. Предыдущий Next7416/UI3029 и backend image8d64ca4 сохранены; заменён только owned relay и backend. Это проверочный веб [3015/tasks](http://127.0.0.1:3015/tasks); public frontend не заменён. [Журнал](../audits/2026-10-01/WEB-AUDIT-REMEDIATION.md) · [Точные receipts](../audits/2026-10-02/TASK-ARTIFACTS-AND-RERUN-EVIDENCE.json).
 
-**Новые frontend batches:** 22 source findings исправлено, включая все 5 P1 полного
-аудита: безопасная загрузка DAG, подтверждённый settings baseline и сохранение
-dirty draft, правдивые отчёты шагов и различение ошибок API. Исправлены очистка
-локаций, account payload/debounce, read failures каталогов и command receipts.
-OTA reads привязаны к platform/flavor, сценарии доступны через server search/page,
-триггеры — через paging. Mobile navigation и command palette используют modal
-focus containment; все 22 раздела доступны из общего каталога. Общие dialogs
-ограничены dynamic viewport и прокручиваются. Источники логов доступны через
-server search/page, VPN Logs сохраняет device ID; история расписаний раскрывает
-серверные execution reports, one-shot time сохраняется в явном UTC. Границы
-интервала и обязательная manual цель согласованы со Schedule API. 123 новых regressions; 44
-существующих lint warnings не скрыты.
-**89 suites / 705 tests**, type-check и production standalone compile passed на
-source **7f30d9d**; visual/browser acceptance остаётся OPEN по URL policy. Оркестрация сохраняет page/total/серверные фильтры, выбор конвейера
-в формах не сбрасывается при навигации; агрегаты обозначены областью страницы.
-[Доказательства F13](../audits/2026-10-02/ORCHESTRATION-CATALOG-PAGING.md). API,
-APK и OTA этим batch не менялись; 19 findings остаются открытыми. Это локальные
-регрессии/сборка; предыдущий published head 868f523 имеет 9 success checks / preview
-deploy skipped. Новый GitHub CI учитывается отдельно.
+**24 source findings исправлено**, включая все 5 P1; **17 исходных остаются открытыми**.
+F16 теперь использует manifest и private image route; F17 создаёт отдельный queued
+повтор с исходной версией, deep-copied inputs и timeout. Старые batch/wave/results
+не переносятся, HTTP201 не подтверждает Android execution. UI показывает version,
+receipt и новый ID; screenshot reads имеют loading/error/retry/ownership cleanup.
+[Контракт и проверки F16/F17](../audits/2026-10-02/TASK-ARTIFACTS-AND-RERUN.md).
+
+**91 suites / 718 frontend tests**, types и original production standalone compile
+passed; **136 новых frontend regressions** с начала remediation. 44 существующих
+lint warnings и Windows trace-copy ограничения сохранены. Backend task/script/storage
+suite: **92 passed**, PostgreSQL concurrency/cancellation: **13 passed**, отдельный
+реальный MinIO HTTP test: **1 passed**. Эти числа имеют разные области и не суммируются
+в доказательство полного product E2E. Новый CI учитывается по собственному SHA.
+
+**GitHub CI application source5fcf18a:** [backend run36921814744](https://github.com/RootOne1337/sphere-platform/actions/runs/36921814744)
+выполнил **2165 tests / 16 skipped**, coverage78%; job затем упал на stale generated
+OpenAPI. Экспорт исправлен до **171 HTTP operations / 134 paths**, local `--check`
+passed. Redis/Alembic следующие шаги этого run не были приняты. Frontend и Android
+CI того же source passed; новый verification head имеет собственные checks.
+
+**Открытый follow-up N01:** APK DAG screenshot сохраняет Android-local path без
+загрузки в storage. Read configuration на pilot пока выключена; наличие файла
+Android не изображается как серверный snapshot. Полный Android→storage→browser
+путь и реальный rerun result ещё не приняты. Свежая визуальная проверка Sphere
+остаётся `OPEN_URL_POLICY_BLOCKED`, запрет не обходился.
+
+**Live API срез 01:30:49 UTC+5:** login passed, owned task manifest200,
+unknown task rerun404; каталог19, reported online14/offline5. Версии APK смешаны;
+10240 не установлен повсеместно. APK/OTA/tunnels этим batch не изменялись.
+Моментальный срез не является новым результатом soak/FPS/latency. Предыдущие
+исправления каталогов/навигации/settings остаются в исходниках; [F13 proof](../audits/2026-10-02/ORCHESTRATION-CATALOG-PAGING.md).
+
+**Предыдущая установка 2 октября, 00:36 UTC+5:** UI7f30d9d/3029, API8d64ca4;
+89 suites / 705 tests. Это исторический срез, заменён текущей установкой выше.
 
 **Предыдущая установка 1 октября:** UI 8f615c6 на 3023 / relay3015 установлен
 в 17:28:52, backend 8d64ca4 — в 18:04:04. На срезе 22:19 прежние 3015/3023

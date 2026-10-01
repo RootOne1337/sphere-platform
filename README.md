@@ -16,12 +16,14 @@
 </div>
 
 > [!NOTE]
-> **Текущий срез: 2 октября 2026, 00:36 UTC+5.** После отдельной фиксации полного
-> веб-аудита исправлено 22 source findings, включая все 5 P1; frontend **7f30d9d**:
-> **89 suites / 705 tests**, types и production standalone compile passed.
-> Проверочный веб восстановлен: **3015 → UI 3029 / API 18080**, API **8d64ca4**.
-> Визуальная приёмка ещё открыта; public frontend не заменён, 19 findings остаются.
-> [Журнал исправлений / evidence](docs/audits/2026-10-01/WEB-AUDIT-REMEDIATION.md).
+> **Текущий срез: 2 октября 2026, 01:30 UTC+5.** После фиксации полного
+> аудита исправлено **24 source findings**; **91 suites / 718 frontend tests**,
+> types и production compile passed. Проверочный веб **3015 → UI3030/API18080**;
+> frontend/backend **5fcf18a**, readiness/build и авторизованный API проверены.
+> Исходная версия/входы повтора сохранены; private screenshot read исправлен.
+> Android artifact upload N01, visual acceptance и 17 исходных findings открыты;
+> public frontend не заменён. [Журнал](docs/audits/2026-10-01/WEB-AUDIT-REMEDIATION.md) ·
+> [Task contracts/evidence](docs/audits/2026-10-02/TASK-ARTIFACTS-AND-RERUN.md).
 >
 > **APK-кандидат 1.2.40 / 10240** ранее установлен
 > адресным OTA на PH010 и удалённый PH025: установка и восстановление после

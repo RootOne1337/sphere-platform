@@ -2,7 +2,7 @@
 
 Этот журнал продолжает [замороженный аудит](WEB-FULL-CAPABILITY-AUDIT.md) исходников `1354d66`. Исходный документ и evidence сохраняют свою дату и ограничения; их статусы не переписываются задним числом.
 
-**Срез реализации 2 октября 2026, 00:36 UTC+5:** frontend source `7f30d9d`; 22 source findings исправлено (все 5 P1 и 17 P2), 19 остаются открытыми. Проверочный веб установлен на `3015 → UI 3029 / API 18080`. Production standalone compile и 89 suites / 705 tests passed; это не визуальная приёмка. [Allowlisted validation/runtime evidence](WEB-AUDIT-FIXES-VALIDATION.json).
+**Срез реализации 2 октября 2026, 01:30 UTC+5:** UI/API source `5fcf18a`; 24 source findings исправлено (5 P1 и 19 P2), 17 исходных остаются открытыми. `3015 → UI3030/API18080`, 91 suites / 718 tests и production standalone compile passed. F16 read contract и F17 pinned rerun исправлены; Android artifact upload N01 и visual acceptance остаются открытыми. [Validation](WEB-AUDIT-FIXES-VALIDATION.json) · [Task evidence](../2026-10-02/TASK-ARTIFACTS-AND-RERUN.md).
 
 ## Исходная фиксация
 
@@ -40,8 +40,8 @@
 | [F13](WEB-FULL-CAPABILITY-AUDIT.md#f13) | P2 | Source исправлен; live OPEN | Оркестрация: три списка обрезаны до 100 записей |
 | [F14](WEB-FULL-CAPABILITY-AUDIT.md#f14) | P2 | Source исправлен; live OPEN | Триггеры: поиск ограничен первыми 100 |
 | [F15](WEB-FULL-CAPABILITY-AUDIT.md#f15) | P2 | Source исправлен; live OPEN | Логи: выбрать устройство можно только из первой страницы |
-| [F16](WEB-FULL-CAPABILITY-AUDIT.md#f16) | P2 | Открыто | Задание: несогласованный путь к скриншотам шагов |
-| [F17](WEB-FULL-CAPABILITY-AUDIT.md#f17) | P2 | Открыто | Задание: restart теряет параметры оригинала |
+| [F16](WEB-FULL-CAPABILITY-AUDIT.md#f16) | P2 | Source исправлен; live OPEN | Задание: несогласованный путь к скриншотам шагов |
+| [F17](WEB-FULL-CAPABILITY-AUDIT.md#f17) | P2 | Source исправлен; live OPEN | Задание: restart теряет параметры оригинала |
 | [F18](WEB-FULL-CAPABILITY-AUDIT.md#f18) | P2 | Source исправлен; live OPEN | Задание: ошибки Stop/Cancel/Restart не показаны |
 | [F19](WEB-FULL-CAPABILITY-AUDIT.md#f19) | P2 | Открыто | Обнаружение: текст противоречит auto-register |
 | [F20](WEB-FULL-CAPABILITY-AUDIT.md#f20) | P2 | Открыто | Обнаружение: заголовок результата использует новый CIDR |
@@ -232,7 +232,7 @@
 
 ## Ручная приёмка установленного веба
 
-Эти шаги ещё не приняты агентом; автоматизация браузера для Sphere заблокирована URL policy. Для текущей установки используйте `7f30d9d`; исторические source/runtime результаты ниже не являются новой визуальной приёмкой.
+Эти шаги ещё не приняты агентом; автоматизация браузера для Sphere заблокирована URL policy. Для текущей установки используйте `5fcf18a`; исторические source/runtime результаты ниже не являются новой визуальной приёмкой.
 
 1. Открыть [Системные логи](http://127.0.0.1:3015/logs), проверить source SHA в шапке. Поиск устройства, переход к следующей странице и выбор меняют источник только по явному выбору; открыть скопированную ссылку в новой вкладке и сопоставить тот же device ID.
 2. На VPN peer нажать Logs и сопоставить ID в URL с ID peer. История пользователя /audit и архив агента /logs — разные данные.
@@ -262,3 +262,15 @@
 - **22 source findings исправлено, 19 OPEN**; browser visual acceptance OPEN по прежнему URL policy. Текстовый поиск ограничен текущей страницей, что явно подписано. Глобальный свободный поиск, snapshot export, backend-wide аналитика не реализованы этим frontend batch. Полнота script pickers остаётся F27.
 - Published `868f523`: 9 checks success, preview deploy skipped. Новый source/docs head требует собственного CI. Это отдельный результат от live API permissions/controls и выполнения Android сценариев.
 - Следующий приоритет: F16/F17 screenshot/restart context; F19/F20 discovery ownership; F24–F28 workflows; F32/F33 outcomes/OTA; F34–F36 video/XPath; F37–F41 export/access/acceptance. Остальные замечания не объявлены устранёнными.
+
+
+## Batch: F16/F17 — 2 октября 2026, 01:30 UTC+5
+
+- `4f141d8`: серверный повтор pinned версии, глубокая копия входов/таймаута, проверки владения/контекста и конфликтов; real PostgreSQL concurrency.
+- `7df0fc4`: manifest и private screenshot content вместо stub/raw keys; bounded JPEG/PNG reads и ошибки storage; dedicated credentials configuration.
+- `5fcf18a`: UI использует оба API; lazy authorized Blob, React error/retry/cleanup, task receipts и version semantics.
+- Проверки: 14 before failures на чистом 9b1f0e1; 92 backend units, 13 PostgreSQL, 1 real MinIO; 91 frontend suites / 718 tests; types/build passed, 44 прежних warnings.
+- CI `5fcf18a`: 2165 backend tests passed / 16 skipped, coverage78%; job остановился на stale generated API docs. OpenAPI и endpoint catalog обновлены штатным exporter, local `--check` passed. Следующий published head требует собственного CI; failed run сохранён как доказательство пропуска. Отдельный commit `3fe5eac` усиливает проверку глобального mutation retry без изменения application code.
+- API установлен 01:27:36, UI3015/3030 — 01:28:45 UTC+5; API/UI SHA совпадают. На 01:30:49 — catalog19, reported online14/offline5; это моментальный срез. Public frontend/APK/OTA/tunnels не заменены.
+- Follow-up N01: Android screenshot action сохраняет локальный файл без загрузки; pilot storage read пока выключен. [Полный контракт, ограничения и приёмка](../2026-10-02/TASK-ARTIFACTS-AND-RERUN.md).
+- Далее: N01 Android artifacts; F19/F20 discovery; F24–F28 формы/workflows; F32/F33 command/OTA outcomes; F34–F36 video/XPath; F37–F41 export/access/live acceptance. PR19 не закрыт.
