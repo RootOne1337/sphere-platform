@@ -28,7 +28,7 @@
 | [F03](WEB-FULL-CAPABILITY-AUDIT.md#f03) | P1 | Source исправлен; live OPEN | Редактор: разрешена запись после провала загрузки DAG |
 | [F04](WEB-FULL-CAPABILITY-AUDIT.md#f04) | P1 | Source исправлен; live OPEN | Настройки pipeline: можно сохранить неподтверждённые defaults |
 | [F05](WEB-FULL-CAPABILITY-AUDIT.md#f05) | P1 | Source исправлен; live OPEN | Настройки pipeline: несохранённая форма сбрасывается |
-| [F06](WEB-FULL-CAPABILITY-AUDIT.md#f06) | P2 | Открыто | Локации: очистка текста не передаётся серверу |
+| [F06](WEB-FULL-CAPABILITY-AUDIT.md#f06) | P2 | Source исправлен; live OPEN | Локации: очистка текста не передаётся серверу |
 | [F07](WEB-FULL-CAPABILITY-AUDIT.md#f07) | P2 | Открыто | Аккаунты: законопослушность не отправляется при создании |
 | [F08](WEB-FULL-CAPABILITY-AUDIT.md#f08) | P2 | Открыто | Аккаунты: debounce фактически не отменяет прошлые таймеры |
 | [F09](WEB-FULL-CAPABILITY-AUDIT.md#f09) | P2 | Открыто | Аккаунты и триггеры: ошибка списка выглядит пустым каталогом |
@@ -89,9 +89,16 @@
 
 ### F01/F02/F18 — правдивые отчёты задания и результаты команд
 
+- Commit реализации: `d53a8d7`.
 - Удалён фиктивный Pass Rate и вычисление циклов по отношению счётчиков. UI показывает фактические success/failure в полученных отчётах, явно ограничивая вывод этим набором. Отсутствующие счётчики не становятся нулевыми; число исполненных шагов не подписывается как число успешных.
 - 404, 401, 403 и transport failure разделены. После ошибки фонового чтения предыдущий снимок виден с временем подтверждения, команды заблокированы, доступен retry. Ответ другого task ID отвергается query hook. Смена ID изолирует локальные ошибки/receipt и отменяет старый GET.
 - Ошибки Stop/Cancel/Restart отображаются, failed restart не оставляет необработанный rejected promise. Успешная остановка означает принятие запроса, а не завершение Android-работы. Ответ создания нового задания содержит ссылку на полученный ID; успешное выполнение не выдумывается.
 - Ошибка журнала не выглядит пустой историей. Fallback из task.result помечен как снимок; ошибки live progress/live journal показываются отдельно.
 - `frontend/__tests__/tasks/detail-outcomes.test.tsx`: 16/16 component regressions passed, 1 октября 2026; реальный React Query с mock transport. Проверены HTTP classes/retry, wrong owner, mixed/empty/terminal reports, stale command lock, три failed actions/retry, create receipt, log errors/fallback и late GET при смене task.
 - F17 остаётся открытым: текущий CreateTaskRequest не принимает произвольный input_params или pinned script_version_id. Этот batch не маскирует потерю контекста добавлением несуществующих полей в запрос. Backend, APK и установленный веб не заменены; свежая визуальная приёмка открыта.
+
+### F06 — явная очистка текстовых полей локации
+
+- PUT редактирования отправляет пустые строки description/address после явной очистки; `undefined` больше не исключает эти поля из JSON. Create workflow сохраняет прежнюю семантику необязательных полей.
+- Контракт проверен по `backend/services/location_service.py`: сервис применяет переданные non-None значения, включая пустую строку. Backend изменять не требуется.
+- `frontend/__tests__/locations/edit-clear.test.tsx`: 1/1 component regression passed, 1 октября 2026: заполненная локация → очистка/whitespace → точный PUT → подтверждённые empty labels после GET. Настоящие Query hooks, transport mock; live acceptance ещё не выполнен.

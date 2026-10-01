@@ -81,7 +81,7 @@ export default function LocationsPage() {
 
   const handleUpdate = async () => {
     try {
-      await updateLocation.mutateAsync({ id: editDialog.id, name: editName.trim(), description: editDescription.trim() || undefined, color: editColor, address: editAddress.trim() || undefined });
+      await updateLocation.mutateAsync({ id: editDialog.id, name: editName.trim(), description: editDescription.trim(), color: editColor, address: editAddress.trim() });
       setEditDialog({ open: false, id: '' });
     } catch {
       // Keep the edit dialog open and show the mutation error.
