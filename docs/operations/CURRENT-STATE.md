@@ -26,6 +26,18 @@ PostgreSQL details и hide/restore selection. Тогда старые Next PID �
 
 ## Состояние на дату проверки
 
+**Уточнение диагноза, 1 октября 05:32 UTC+5:** standalone native control на PH010
+с тем же Google AVC и 960×540 сравнил графический Surface input с прямым planar
+YUV. Surface: **8 pictures / 1.2 s (6.67/s)**, input-to-output callback 418–488 ms;
+planar: **36 / 1.2 s (30/s)**, 1.29–2.46 ms. Переключение Surface CBR → VBR и
+AVC → VP8 не ускорило input. Во всех окончательных controls drain завершён,
+inflight = 0. Это уточняет прежний CPU вывод: ограничение проявляется в graphics
+input path, а не в чистом AVC encode синтетического YUV. Реальный RGBA conversion,
+capture/wire/browser FPS, читаемость и remote input latency ещё не приняты.
+Новый APK этим probe не устанавливался; normal OTA и default capture не менялись.
+[Методика, ограничения и следующий canary](CODEC-INPUT-CANARY.md),
+[allowlisted evidence](../audits/2026-10-01/PH010-CODEC-INPUT-EVIDENCE.json).
+
 **Новый сравнительный срез 1 октября:** одинаковый GPU APK 1.2.36 на local
 PH010 (~60 Hz display) дал 65 pictures / 20 s, remote PH025 (5 Hz) — 44/20 s.
 Оба ниже acceptance: host FPS limit не единственная причина. Source 1.2.37

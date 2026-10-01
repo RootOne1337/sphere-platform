@@ -284,6 +284,13 @@ limit; thread-level причины и альтернативы ещё требу
 
 ### Следующая проверка кодека и условия изменения
 
+**Этапы runtime capabilities и isolated input выполнены 1 октября 05:32 UTC+5.**
+Surface AVC/VBR/VP8 дают 6.67 pictures/s; тот же AVC с planar YUV — 30 pictures/s
+на короткой synthetic scene, без реального RGBA conversion/capture/transport.
+Это уточняет гипотезу CPU limit: сначала проверять graphics input path.
+[Методика, численные результаты и acceptance ограничения](CODEC-INPUT-CANARY.md).
+Ни VP8 transport, ни global default по этому control не продвигались.
+
 1. Получить фактические `MediaCodecList`/capabilities на canary: MIME, input Surface,
    native-size support, bitrate modes и complexity range. Прочитанный vendor XML
    объявляет Google AVC/VP8/VP9; XML не доказывает complete runtime inventory или
