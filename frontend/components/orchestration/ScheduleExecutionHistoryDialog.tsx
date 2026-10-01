@@ -16,7 +16,7 @@ interface Execution {
 }
 interface ExecutionPage { items: Execution[]; total: number; page: number; per_page: number }
 const PAGE_SIZE = 50;
-const statusLabels: Record<string, string> = { triggered: 'Сработало', skipped: 'Пропущено', completed: 'Завершено' };
+const statusLabels: Record<string, string> = { triggered: 'Сработало', skipped: 'Пропущено', completed: 'Завершено', partial: 'Частичный результат', failed: 'Задачи завершились с ошибками' };
 
 function validatePage(value: unknown, scheduleId: string, page: number): ExecutionPage {
   if (!value || typeof value !== 'object') throw new Error('Некорректная история срабатываний.');
@@ -70,7 +70,7 @@ function ExecutionHistory({ scheduleId }: { scheduleId: string }) {
           <thead className="sticky top-0 bg-muted"><tr>{['Плановое / фактическое время', 'Статус', 'Устройства', 'Создано задач', 'Успешно / ошибки', 'Сведения'].map(title => <th key={title} scope="col" className="px-3 py-3 font-medium">{title}</th>)}</tr></thead>
           <tbody className="divide-y divide-border">{history.data.items.map(execution => <tr key={execution.id}>
             <td className="px-3 py-3 text-xs tabular-nums"><time dateTime={execution.fire_time}>{timestamp(execution.fire_time)}</time><br /><time dateTime={execution.actual_time} className="text-muted-foreground">{timestamp(execution.actual_time)}</time></td>
-            <td className="px-3 py-3"><Badge variant={execution.status === 'completed' ? 'success' : execution.status === 'skipped' ? 'warning' : 'secondary'}>{statusLabels[execution.status] ?? execution.status}</Badge></td>
+            <td className="px-3 py-3"><Badge variant={execution.status === 'completed' ? 'success' : execution.status === 'failed' ? 'destructive' : ['skipped', 'partial'].includes(execution.status) ? 'warning' : 'secondary'}>{statusLabels[execution.status] ?? execution.status}</Badge></td>
             <td className="px-3 py-3 tabular-nums">{execution.devices_targeted}</td>
             <td className="px-3 py-3 tabular-nums">{execution.tasks_created}</td>
             <td className="px-3 py-3 tabular-nums">{execution.tasks_succeeded} / {execution.tasks_failed}</td>

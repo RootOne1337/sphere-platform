@@ -82,3 +82,14 @@ it('cancels a closed history read and ignores its late response after opening an
   await act(async () => resolve(envelope(1, [execution('late-first-owner')])));
   expect(screen.queryByText('late-first-owner')).not.toBeInTheDocument();
 });
+
+test.each([
+  ['partial', 'Частичный результат', 1, 1],
+  ['failed', 'Задачи завершились с ошибками', 0, 2],
+])('shows the server terminal outcome %s with its actual task counts', async (status, label, succeeded, failed) => {
+  jest.mocked(api.get).mockResolvedValue(envelope(1, [{ ...execution('terminal'), status, tasks_created: 2, tasks_succeeded: succeeded, tasks_failed: failed }]) as never);
+  render(<ScheduleExecutionHistoryDialog schedule={schedule} onClose={jest.fn()} />, { wrapper: createWrapper() });
+  expect(await screen.findByText(label)).toBeInTheDocument();
+  expect(screen.getByText(`${succeeded} / ${failed}`)).toBeInTheDocument();
+  expect(screen.queryByText('Завершено')).not.toBeInTheDocument();
+});
