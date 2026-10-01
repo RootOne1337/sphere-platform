@@ -8,82 +8,10 @@ import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { cn } from "@/src/shared/lib/utils";
 import { useUIStore } from "@/src/shared/store/useUIStore";
 import { Button } from "@/src/shared/ui/button";
-import {
-    Activity,
-    Code2,
-    FileText,
-    FolderOpen,
-    Gamepad2,
-    GitBranch,
-    History,
-    LayoutDashboard,
-    ListTodo,
-    LogOut,
-    MapPin,
-    Monitor,
-    Radar,
-    RefreshCw,
-    ScrollText,
-    Settings,
-    Settings2,
-    ToggleRight,
-    Users,
-    UserCog,
-    Webhook,
-    Wifi,
-    X,
-    Zap,
-} from "lucide-react";
+import { LogOut, Settings, X } from "lucide-react";
+import { SPHERE_NAV_GROUPS } from "./navigationCatalog";
 
-const NAV_GROUPS = [
-    {
-        label: "Обзор",
-        items: [
-            { href: "/dashboard", label: "Главная", icon: LayoutDashboard },
-            { href: "/monitoring", label: "Инфраструктура", icon: Activity },
-        ],
-    },
-    {
-        label: "Устройства",
-        items: [
-            { href: "/devices", label: "Парк устройств", icon: Monitor },
-            { href: "/stream", label: "Видеопоток", icon: Monitor },
-            { href: "/discovery", label: "Обнаружение", icon: Radar },
-            { href: "/groups", label: "Группы", icon: FolderOpen },
-            { href: "/locations", label: "Локации", icon: MapPin },
-        ],
-    },
-    {
-        label: "Автоматизация",
-        items: [
-            { href: "/tasks", label: "Задания", icon: ListTodo },
-            { href: "/orchestration", label: "Оркестрация", icon: GitBranch },
-            { href: "/pipeline-settings", label: "Пайплайны", icon: Settings2 },
-            { href: "/accounts", label: "Игровые аккаунты", icon: Gamepad2 },
-            { href: "/scripts", label: "Скрипты", icon: Code2 },
-        ],
-    },
-    {
-        label: "События и сеть",
-        items: [
-            { href: "/events", label: "События устройств", icon: Zap },
-            { href: "/event-triggers", label: "Триггеры событий", icon: ToggleRight },
-            { href: "/sessions", label: "Сессии", icon: History },
-            { href: "/vpn", label: "Туннели и VPN", icon: Wifi },
-            { href: "/webhooks", label: "Вебхуки", icon: Webhook },
-        ],
-    },
-    {
-        label: "Администрирование",
-        items: [
-            { href: "/users", label: "Пользователи", icon: Users },
-            { href: "/audit", label: "Журнал аудита", icon: ScrollText },
-            { href: "/logs", label: "Системные логи", icon: FileText },
-            { href: "/updates", label: "Обновления", icon: RefreshCw },
-            { href: "/settings", label: "Конфигурация", icon: UserCog },
-        ],
-    },
-];
+
 
 interface NOCSidebarProps {
     onOpenAppearance?: () => void;
@@ -110,6 +38,10 @@ export function NOCSidebar({ onOpenAppearance, isMobileOpen = false, onMobileClo
         breakpoint.addEventListener('change', reconcile);
         return () => breakpoint.removeEventListener('change', reconcile);
     }, []);
+
+    useEffect(() => {
+        if (isDesktop && isMobileOpen) onMobileClose?.();
+    }, [isDesktop, isMobileOpen, onMobileClose]);
 
     const showLabels = !isDesktop || isExpanded;
 
@@ -151,7 +83,7 @@ export function NOCSidebar({ onOpenAppearance, isMobileOpen = false, onMobileClo
                 </div>
 
                 <nav aria-label="Основная навигация" className="custom-scrollbar flex-1 space-y-5 overflow-x-hidden overflow-y-auto px-3 py-5">
-                    {NAV_GROUPS.map(({ label: groupLabel, items }) => (
+                    {SPHERE_NAV_GROUPS.map(({ label: groupLabel, items }) => (
                         <div key={groupLabel} role="group" aria-label={groupLabel} className="space-y-1">
                             {showLabels && <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">{groupLabel}</p>}
                             {items.map(({ href, label, icon: Icon }) => {

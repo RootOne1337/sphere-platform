@@ -1,6 +1,8 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { GlobalCommandPalette } from '@/src/features/navigation/GlobalCommandPalette';
 import { useCommandPaletteStore } from '@/src/features/navigation/commandPaletteStore';
+import { SPHERE_NAV_GROUPS } from '@/src/features/navigation/navigationCatalog';
+import userEvent from '@testing-library/user-event';
 
 const mockPush = jest.fn();
 jest.mock('next/navigation', () => ({ useRouter: () => ({ push: mockPush }) }));
@@ -62,5 +64,30 @@ describe('GlobalCommandPalette', () => {
     await act(async () => useCommandPaletteStore.getState().open());
     fireEvent.click(await screen.findByRole('option', { name: 'Открыть конструктор скриптов' }));
     expect(mockPush).toHaveBeenLastCalledWith('/scripts/builder');
+  });
+
+  it('exposes every sidebar route and sends each option to its canonical destination', async () => {
+    render(<GlobalCommandPalette />);
+    const items = SPHERE_NAV_GROUPS.flatMap(group => group.items);
+    expect(items).toHaveLength(22);
+    for (const { href, label } of items) {
+      await act(async () => useCommandPaletteStore.getState().open());
+      const name = href === '/devices' ? 'Реестр устройств' : href === '/dashboard' ? 'Обзор парка' : label;
+      fireEvent.click(await screen.findByRole('option', { name }));
+      expect(mockPush).toHaveBeenLastCalledWith(href);
+      expect(useCommandPaletteStore.getState().isOpen).toBe(false);
+    }
+  });
+
+  it('isolates background controls and restores the actual opener on close', async () => {
+    render(<><button onClick={() => useCommandPaletteStore.getState().open()}>Открыть поиск</button><GlobalCommandPalette /></>);
+    const opener = screen.getByRole('button', { name: 'Открыть поиск' });
+    await userEvent.click(opener);
+    const dialog = await screen.findByRole('dialog', { name: 'Поиск и команды Sphere' });
+    expect(opener.closest('[aria-hidden="true"]')).not.toBeNull();
+    await waitFor(() => expect(screen.getByRole('combobox', { name: 'Поиск по разделам и командам' })).toHaveFocus());
+    fireEvent.keyDown(dialog, { key: 'Escape' });
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    await waitFor(() => expect(opener).toHaveFocus());
   });
 });

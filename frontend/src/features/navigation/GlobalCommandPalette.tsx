@@ -3,9 +3,11 @@
 import * as React from "react";
 import { Command } from "cmdk";
 import { useRouter } from "next/navigation";
-import { Activity, ArrowLeft, Code2, Monitor, PaintBucket, Search, ScrollText, Wifi } from "lucide-react";
+import { ArrowLeft, Code2, PaintBucket, Search, Wifi } from "lucide-react";
 import { useCommandPaletteStore } from "./commandPaletteStore";
 import { ThemeSwitcherModal } from "@/src/features/settings/ThemeSwitcherModal";
+import * as DialogPrimitive from "@radix-ui/react-dialog";
+import { SPHERE_NAV_GROUPS } from "./navigationCatalog";
 
 const ITEM_CLASS = "mb-1 flex min-h-10 cursor-pointer items-center rounded-lg px-3 text-sm text-foreground transition-colors hover:bg-muted aria-selected:bg-primary/10 aria-selected:text-primary motion-reduce:transition-none";
 const GROUP_CLASS = "px-2 py-1 text-xs font-medium text-muted-foreground [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-2 [&_[cmdk-group-heading]]:font-semibold";
@@ -16,6 +18,7 @@ export function GlobalCommandPalette() {
     const [activeMenu, setActiveMenu] = React.useState<"main" | "themes">("main");
     const mainPanelRef = React.useRef<HTMLDivElement>(null);
     const themesPanelRef = React.useRef<HTMLDivElement>(null);
+    const returnFocusRef = React.useRef<HTMLElement | null>(null);
 
     React.useEffect(() => {
         if (!isOpen) return;
@@ -27,14 +30,6 @@ export function GlobalCommandPalette() {
     }, [activeMenu, isOpen]);
 
     const handleDialogKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
-        if (event.key === "Escape") {
-            event.preventDefault();
-            event.stopPropagation();
-            if (activeMenu === "themes") setActiveMenu("main");
-            else close();
-            return;
-        }
-
         if (event.key !== "Tab") return;
         const panel = activeMenu === "main" ? mainPanelRef.current : themesPanelRef.current;
         const focusable = panel?.querySelectorAll<HTMLElement>("input:not([disabled]), button:not([disabled]), [role='option']:not([aria-disabled='true'])");
@@ -72,17 +67,37 @@ export function GlobalCommandPalette() {
     if (!isOpen) return null;
 
     return (
+      <DialogPrimitive.Root open={isOpen} onOpenChange={(open) => { if (!open) close(); }}>
+       <DialogPrimitive.Portal>
         <div className="fixed inset-0 z-[100] flex items-start justify-center px-3 pt-[min(16vh,160px)] sm:px-6" data-testid="command-palette-overlay">
             <button type="button" aria-label="Закрыть поиск" className="absolute inset-0 cursor-default bg-slate-950/35 backdrop-blur-sm" onClick={close} />
-            <div role="dialog" aria-modal="true" aria-label="Поиск и команды Sphere" onKeyDown={handleDialogKeyDown} className="relative z-10 h-[min(520px,75dvh)] min-h-[360px] w-full max-w-2xl overflow-hidden rounded-2xl border border-border bg-card shadow-2xl shadow-slate-950/20">
+            <DialogPrimitive.Content
+                asChild
+                aria-modal="true"
+                aria-describedby={undefined}
+                onEscapeKeyDown={(event) => {
+                    event.preventDefault();
+                    if (activeMenu === 'themes') setActiveMenu('main');
+                    else close();
+                }}
+                onOpenAutoFocus={() => {
+                    returnFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+                }}
+                onCloseAutoFocus={(event) => {
+                    event.preventDefault();
+                    if (returnFocusRef.current?.isConnected) returnFocusRef.current.focus();
+                }}
+            >
+            <div role="dialog" aria-modal="true" aria-label="Поиск и команды Sphere" onKeyDown={handleDialogKeyDown} className="relative z-10 h-[min(520px,75dvh)] min-h-0 w-full max-w-2xl overflow-hidden rounded-2xl border border-border bg-card shadow-2xl shadow-slate-950/20">
+                <DialogPrimitive.Title className="sr-only">Поиск и команды Sphere</DialogPrimitive.Title>
                 <div ref={mainPanelRef} aria-hidden={activeMenu !== "main"} inert={activeMenu !== "main"} className={`absolute inset-0 transition-transform duration-200 motion-reduce:transition-none ${activeMenu === "main" ? "translate-x-0" : "-translate-x-full"}`}>
                     <Command
+                        label="Поиск по разделам и командам"
                         className="flex h-full w-full flex-col"
                     >
                         <div className="flex h-14 shrink-0 items-center border-b border-border px-4">
                             <Search className="mr-3 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
                             <Command.Input
-                                autoFocus={activeMenu === "main"}
                                 aria-label="Поиск по разделам и командам"
                                 className="h-full w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
                                 placeholder="Перейти к разделу или найти действие…"
@@ -95,17 +110,15 @@ export function GlobalCommandPalette() {
                                 Ничего не найдено. Попробуйте изменить запрос.
                             </Command.Empty>
 
-                            <Command.Group heading="Навигация" className={GROUP_CLASS}>
-                                <Command.Item onSelect={() => { router.push("/dashboard"); close(); }} className={ITEM_CLASS}>
-                                    <Activity className="mr-3 h-4 w-4" aria-hidden="true" />Обзор парка
-                                </Command.Item>
-                                <Command.Item onSelect={() => { router.push("/devices"); close(); }} className={ITEM_CLASS}>
-                                    <Monitor className="mr-3 h-4 w-4" aria-hidden="true" />Реестр устройств
-                                </Command.Item>
-                                <Command.Item onSelect={() => { router.push("/audit"); close(); }} className={ITEM_CLASS}>
-                                    <ScrollText className="mr-3 h-4 w-4" aria-hidden="true" />Журнал аудита
-                                </Command.Item>
-                            </Command.Group>
+                            {SPHERE_NAV_GROUPS.map((group) => (
+                                <Command.Group key={group.label} heading={group.label} className={GROUP_CLASS}>
+                                    {group.items.map(({ href, label, icon: Icon }) => (
+                                        <Command.Item key={href} value={href} keywords={[label, group.label, href, href === '/devices' ? 'Реестр устройств' : href === '/dashboard' ? 'Обзор парка' : '']} onSelect={() => { router.push(href); close(); }} className={ITEM_CLASS}>
+                                            <Icon className="mr-3 h-4 w-4" aria-hidden="true" />{href === '/devices' ? 'Реестр устройств' : href === '/dashboard' ? 'Обзор парка' : label}
+                                        </Command.Item>
+                                    ))}
+                                </Command.Group>
+                            ))}
 
                             <Command.Group heading="Настройки интерфейса" className={`${GROUP_CLASS} mt-2`}>
                                 <Command.Item onSelect={() => setActiveMenu("themes")} className={ITEM_CLASS}>
@@ -135,6 +148,9 @@ export function GlobalCommandPalette() {
                     <ThemeSwitcherModal onClose={close} />
                 </div>
             </div>
+            </DialogPrimitive.Content>
         </div>
+       </DialogPrimitive.Portal>
+      </DialogPrimitive.Root>
     );
 }
