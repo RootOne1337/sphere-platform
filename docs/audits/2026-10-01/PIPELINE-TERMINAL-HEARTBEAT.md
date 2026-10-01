@@ -38,6 +38,12 @@ Android-команду и не утверждает, что Android прекра
   foreign owner, replacement generation и cancelled in-flight worker от fencing.
 - Изолированный PostgreSQL: recovery + cancel-intent + admission — **58 passed**.
   Ruff и mypy исправленного модуля прошли. Тестовая БД отделена от работающего pilot.
+- Полный CI 68155c1: **2139 passed / 15 skipped / 1 failed**. Единственный failure
+  — RLS test, который наблюдал прежний bool renewal hook вместо нового внутреннего
+  результата heartbeat. Test hook обновлён, с явной проверкой двух RENEWED и
+  запретом LOST. Таймаут не увеличен; RLS policy и runtime права не ослаблены.
+  Локальный повтор recovery + cancel-intent + admission + RLS: **71 passed**,
+  с настоящей non-owner PostgreSQL role и повторной tenant binding после commit.
 - Это исправление оркестратора; оно не доказывает причину remote video gaps.
   Установка текущего кода в runtime и полный CI фиксируются отдельно в
   [CURRENT-STATE](../../operations/CURRENT-STATE.md).

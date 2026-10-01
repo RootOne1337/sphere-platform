@@ -17,7 +17,11 @@ from backend.models.pipeline import Pipeline, PipelineRun, PipelineRunStatus
 from backend.models.task import Task, TaskStatus
 from backend.services.orchestrator.pipeline_executor import PipelineExecutor
 from backend.services.orchestrator.pipeline_ownership import Ownership
-from backend.services.orchestrator.pipeline_recovery import renew_lease
+from backend.services.orchestrator.pipeline_recovery import (
+    LeaseRenewal,
+    _renew_lease_result,
+    renew_lease,
+)
 from backend.services.orchestrator.pipeline_tenants import discover_work, tenant_sessions
 from tests.production.test_pipeline_admission import cleanup, held_executor, seed_runs, wait_until
 from tests.production.test_pipeline_recovery import seed
@@ -179,11 +183,11 @@ async def test_heartbeat_and_child_admission_rebind_runtime_context_after_commit
     renewals = []
 
     async def record_renew(sessions, ownership):
-        result = await renew_lease(sessions, ownership)
+        result = await _renew_lease_result(sessions, ownership)
         renewals.append(result)
         return result
 
-    monkeypatch.setattr("backend.services.orchestrator.pipeline_recovery.renew_lease", record_renew)
+    monkeypatch.setattr("backend.services.orchestrator.pipeline_recovery._renew_lease_result", record_renew)
     executor = PipelineExecutor()
     try:
         await executor._poll_and_dispatch()
@@ -195,7 +199,8 @@ async def test_heartbeat_and_child_admission_rebind_runtime_context_after_commit
             (await db.get(Task, child_id)).status = TaskStatus.COMPLETED
             await db.commit()
         await asyncio.wait_for(asyncio.gather(*executor._tasks), 5)
-        assert all(renewals)
+        assert renewals[:2] == [LeaseRenewal.RENEWED, LeaseRenewal.RENEWED]
+        assert all(result in (LeaseRenewal.RENEWED, LeaseRenewal.FINISHED) for result in renewals)
         async with r.world.sessions() as db:
             row = await db.get(PipelineRun, run.id)
             assert row.status == PipelineRunStatus.COMPLETED and row.execution_owner is None
