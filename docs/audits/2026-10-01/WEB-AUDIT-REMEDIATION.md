@@ -29,9 +29,9 @@
 | [F04](WEB-FULL-CAPABILITY-AUDIT.md#f04) | P1 | Source исправлен; live OPEN | Настройки pipeline: можно сохранить неподтверждённые defaults |
 | [F05](WEB-FULL-CAPABILITY-AUDIT.md#f05) | P1 | Source исправлен; live OPEN | Настройки pipeline: несохранённая форма сбрасывается |
 | [F06](WEB-FULL-CAPABILITY-AUDIT.md#f06) | P2 | Source исправлен; live OPEN | Локации: очистка текста не передаётся серверу |
-| [F07](WEB-FULL-CAPABILITY-AUDIT.md#f07) | P2 | Открыто | Аккаунты: законопослушность не отправляется при создании |
-| [F08](WEB-FULL-CAPABILITY-AUDIT.md#f08) | P2 | Открыто | Аккаунты: debounce фактически не отменяет прошлые таймеры |
-| [F09](WEB-FULL-CAPABILITY-AUDIT.md#f09) | P2 | Открыто | Аккаунты и триггеры: ошибка списка выглядит пустым каталогом |
+| [F07](WEB-FULL-CAPABILITY-AUDIT.md#f07) | P2 | Source исправлен; live OPEN | Аккаунты: законопослушность не отправляется при создании |
+| [F08](WEB-FULL-CAPABILITY-AUDIT.md#f08) | P2 | Source исправлен; live OPEN | Аккаунты: debounce фактически не отменяет прошлые таймеры |
+| [F09](WEB-FULL-CAPABILITY-AUDIT.md#f09) | P2 | Аккаунты исправлены; триггеры OPEN | Аккаунты и триггеры: ошибка списка выглядит пустым каталогом |
 | [F10](WEB-FULL-CAPABILITY-AUDIT.md#f10) | P2 | Открыто | OTA: поздний ответ фильтра может заменить новый |
 | [F11](WEB-FULL-CAPABILITY-AUDIT.md#f11) | P2 | Открыто | OTA: ошибка соседствует с ложным empty state |
 | [F12](WEB-FULL-CAPABILITY-AUDIT.md#f12) | P2 | Открыто | Сценарии: первая страница без доступа к остальным |
@@ -99,6 +99,14 @@
 
 ### F06 — явная очистка текстовых полей локации
 
+- Commit реализации: `de2f9df`.
 - PUT редактирования отправляет пустые строки description/address после явной очистки; `undefined` больше не исключает эти поля из JSON. Create workflow сохраняет прежнюю семантику необязательных полей.
 - Контракт проверен по `backend/services/location_service.py`: сервис применяет переданные non-None значения, включая пустую строку. Backend изменять не требуется.
 - `frontend/__tests__/locations/edit-clear.test.tsx`: 1/1 component regression passed, 1 октября 2026: заполненная локация → очистка/whitespace → точный PUT → подтверждённые empty labels после GET. Настоящие Query hooks, transport mock; live acceptance ещё не выполнен.
+
+### F07/F08 и первая часть F09 — создание и поиск аккаунтов
+
+- Законопослушность включена в typed Create payload; 0/100 не теряются, пустое поле не превращается в placeholder 100. UI и handler блокируют нецелые и выходящие за 0–100 значения, согласованные с backend schema.
+- Поиск использует общий useDebounce с cleanup таймера; быстрый ввод отправляет последнюю строку после 300 мс, новая строка возвращает pagination на первую страницу. При unmount таймер не обновляет страницу.
+- Ошибка списка аккаунтов показывает явное состояние неизвестности и retry, без ложного empty state/нулевого количества записей и stale row actions. Create остаётся отдельным workflow.
+- `frontend/__tests__/accounts/form-search.test.tsx`: 9/9 regressions passed, 1 октября 2026. Create использует настоящий mutation hook с mock POST; список заменён query fixture, debounce настоящий. Полная transport/визуальная проверка каталога не заявляется.
