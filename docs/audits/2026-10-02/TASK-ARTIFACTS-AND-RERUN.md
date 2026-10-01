@@ -116,7 +116,7 @@ Follow-up **N01**: screenshot action автономного DAG сейчас д�
 
 До её реализации нельзя считать «любой screenshot из сценария доступен в вебе» подтверждённым. Интерфейс теперь отличает локальный path от серверного объекта. Это отдельный пробел; он не объясняет автоматически FPS/туннель или уже работающий capture видеопотока.
 
-Следующая приёмка: настоящий APK screenshot на одном удалённом Android → зафиксированный ключ и checksum → HTTP image read → видимый снимок браузера → повторное открытие/удаление по retention. Затем конечный повтор безвредного сценария с pinned version и custom context, с подтверждённым Android result. Массовый прогон 20–30 устройств и закрытие PR19 ещё открыты.
+Следующая приёмка: настоящий APK screenshot на одном удалённом Android → зафиксированный ключ и checksum → HTTP image read → видимый снимок браузера → повторное открытие/удаление по retention. Конечный variable-only повтор pinned version подтверждён отдельным PH025 canary ниже; custom account/timeout и offline replay на Android ещё не приняты. Массовый прогон 20–30 устройств и закрытие PR19 ещё открыты.
 
 ## Официальные основания
 
@@ -124,3 +124,7 @@ Follow-up **N01**: screenshot action автономного DAG сейчас д�
 - [FastAPI: прямой Response и явный media type](https://fastapi.tiangolo.com/advanced/custom-response/).
 
 Новые библиотеки и UI assets не добавлялись. MinIO SDK уже является dependency проекта; его лицензия и авторство сохраняются. Этот batch не меняет AdminCN attribution и лицензии существующего дизайн-референса.
+
+## Runtime и Android follow-up — 2 октября 04:51 UTC+5
+
+Native review процессы исчезли после ранее записанной установки; причина не установлена. Review [3015](http://127.0.0.1:3015/) восстановлен в Docker: UI0f4530c / API5fcf18a, оба healthy, login/API/Prometheus/Grafana/events WS и restart passed. Все 14 прежних контейнеров сохранены. На remote PH025/10240 два variable-only задания completed/success; rerun исполнил pinned v1 после изменения latest v2. N01 upload, browser visual, массовые сценарии и video latency остаются открытыми. [Подробности и receipts](../2026-10-02/REVIEW-RUNTIME-AND-REMOTE-RERUN.md).

@@ -7,7 +7,10 @@
 [Главная](../../README.md) · [Каталог документации](../README.md) · [Readiness](READINESS.md) · [Fleet32 gates](../audits/2026-09-20/FLEET32-PREFLIGHT.md) · [PR #19](https://github.com/RootOne1337/sphere-platform/pull/19)
 
 > [!IMPORTANT]
-> **Установлено 2 октября 2026, 01:28:45 UTC+5:** `3015 → standalone UI3030/API18080`, frontend и backend **5fcf18a**. Readiness/build SHA, owned listeners и авторизованный API проверены. Предыдущий Next7416/UI3029 и backend image8d64ca4 сохранены; заменён только owned relay и backend. Это проверочный веб [3015/tasks](http://127.0.0.1:3015/tasks); public frontend не заменён. [Журнал](../audits/2026-10-01/WEB-AUDIT-REMEDIATION.md) · [Точные receipts](../audits/2026-10-02/TASK-ARTIFACTS-AND-RERUN-EVIDENCE.json).
+> **Работающий review, 2 октября 04:51 UTC+5:** [3015](http://127.0.0.1:3015/) теперь в отдельном Docker project. UI **0f4530c**, API **5fcf18a**. Login, static asset/build stamp, Prometheus, Grafana session/health и events WS проверены до и после restart обоих review контейнеров. Все 14 прежних контейнеров сохранили IDs/images/StartedAt. Native UI3030/relay3015 исчезли; причина не доказана. [Runtime и Android canary](../audits/2026-10-02/REVIEW-RUNTIME-AND-REMOTE-RERUN.md).
+
+> [!IMPORTANT]
+> **Историческая native установка 2 октября 2026, 01:28:45 UTC+5:** `3015 → standalone UI3030/API18080`, frontend и backend **5fcf18a**. Readiness/build SHA, owned listeners и авторизованный API проверены. Предыдущий Next7416/UI3029 и backend image8d64ca4 сохранены; заменён только owned relay и backend. Это проверочный веб [3015/tasks](http://127.0.0.1:3015/tasks); public frontend не заменён. [Журнал](../audits/2026-10-01/WEB-AUDIT-REMEDIATION.md) · [Точные receipts](../audits/2026-10-02/TASK-ARTIFACTS-AND-RERUN-EVIDENCE.json).
 
 **24 source findings исправлено**, включая все 5 P1; **17 исходных остаются открытыми**.
 F16 теперь использует manifest и private image route; F17 создаёт отдельный queued
@@ -26,13 +29,13 @@ suite: **92 passed**, PostgreSQL concurrency/cancellation: **13 passed**, отд
 **GitHub CI application source5fcf18a:** [backend run36921814744](https://github.com/RootOne1337/sphere-platform/actions/runs/36921814744)
 выполнил **2165 tests / 16 skipped**, coverage78%; job затем упал на stale generated
 OpenAPI. Экспорт исправлен до **171 HTTP operations / 134 paths**, local `--check`
-passed. Redis/Alembic следующие шаги этого run не были приняты. Frontend и Android
+passed. Redis/Alembic следующие шаги этого run не были приняты. Verification head **77e96a4** отдельно завершился success по backend/frontend/Android; [полные jobs](https://github.com/RootOne1337/sphere-platform/actions/runs/36924906048) прошли после обновления OpenAPI. Frontend и Android
 CI того же source passed; новый verification head имеет собственные checks.
 
 **Открытый follow-up N01:** APK DAG screenshot сохраняет Android-local path без
 загрузки в storage. Read configuration на pilot пока выключена; наличие файла
 Android не изображается как серверный snapshot. Полный Android→storage→browser
-путь и реальный rerun result ещё не приняты. Свежая визуальная проверка Sphere
+путь ещё не принят. Конечный variable-only pinned rerun подтверждён на remote PH025/10240: оба задания completed/success; после изменения latest v2 APK повторно исполнил v1. Это не приёмка произвольных скриптов или всего парка. Свежая визуальная проверка Sphere
 остаётся `OPEN_URL_POLICY_BLOCKED`, запрет не обходился.
 
 **Live API срез 01:30:49 UTC+5:** login passed, owned task manifest200,

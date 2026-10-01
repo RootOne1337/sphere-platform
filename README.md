@@ -16,10 +16,12 @@
 </div>
 
 > [!NOTE]
-> **Текущий срез: 2 октября 2026, 01:30 UTC+5.** После фиксации полного
+> **Текущий срез: 2 октября 2026, 04:51 UTC+5.** После фиксации полного
 > аудита исправлено **24 source findings**; **91 suites / 718 frontend tests**,
-> types и production compile passed. Проверочный веб **3015 → UI3030/API18080**;
-> frontend/backend **5fcf18a**, readiness/build и авторизованный API проверены.
+> types и production compile passed. Проверочный веб **3015 в Docker**, UI **0f4530c**, backend **5fcf18a**;
+> login/API, Prometheus/Grafana, events WS и restart проверены. На remote PH025
+> подтверждён pinned rerun по двум настоящим Android results.
+> [Runtime evidence](docs/audits/2026-10-02/REVIEW-RUNTIME-AND-REMOTE-RERUN.md).
 > Исходная версия/входы повтора сохранены; private screenshot read исправлен.
 > Android artifact upload N01, visual acceptance и 17 исходных findings открыты;
 > public frontend не заменён. [Журнал](docs/audits/2026-10-01/WEB-AUDIT-REMEDIATION.md) ·

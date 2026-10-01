@@ -17,3 +17,7 @@ Source: `1354d66660041ba17afb64399d567ca29dd91866`. Режим замороже�
 Текущее продолжение: [журнал исправлений и статусы F01–F41](WEB-AUDIT-REMEDIATION.md). Исторический аудит остаётся неизменным.
 
 Последний installed source **5fcf18a**: 24 source findings исправлено, 17 открыты; 91 suites / 718 frontend tests, types/production build passed. API и review UI3015/3030 установлены 2 октября в 01:27/01:28 UTC+5. [F16/F17 contracts/evidence](../2026-10-02/TASK-ARTIFACTS-AND-RERUN.md) · [Fix validation](WEB-AUDIT-FIXES-VALIDATION.json). Android screenshot upload N01 и browser visual acceptance открыты.
+
+## Runtime и Android follow-up — 2 октября 04:51 UTC+5
+
+Native review процессы исчезли после ранее записанной установки; причина не установлена. Review [3015](http://127.0.0.1:3015/) восстановлен в Docker: UI0f4530c / API5fcf18a, оба healthy, login/API/Prometheus/Grafana/events WS и restart passed. Все 14 прежних контейнеров сохранены. На remote PH025/10240 два variable-only задания completed/success; rerun исполнил pinned v1 после изменения latest v2. N01 upload, browser visual, массовые сценарии и video latency остаются открытыми. [Подробности и receipts](../2026-10-02/REVIEW-RUNTIME-AND-REMOTE-RERUN.md).

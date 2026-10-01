@@ -99,10 +99,11 @@
     "browserVisualAcceptance": "OPEN_URL_POLICY_BLOCKED",
     "nextPid": 772,
     "relayPid": 13680,
-    "previousNextPid": 7416
+    "previousNextPid": 7416,
+    "historicalNativeSnapshot": true
   },
   "documentValidation": {
-    "relativeTargetsChecked": 439,
+    "relativeTargetsChecked": 453,
     "findingAnchorsChecked": 41,
     "missing": 0
   },
@@ -432,5 +433,22 @@
     "declaredHttpPaths": 134,
     "finalVerificationHeadCiComplete": false
   },
-  "verificationTestCommit": "3fe5eac"
+  "verificationTestCommit": "3fe5eac",
+  "latestRuntimeEvidence": "../2026-10-02/REVIEW-RUNTIME-AND-REMOTE-RERUN-EVIDENCE.json",
+  "remoteRerunFiniteAcceptance": {
+    "device": "auto-ph-025",
+    "agentVersion": "1.2.40-dev",
+    "originalStatus": "completed",
+    "rerunStatus": "completed",
+    "pinnedVersionConfirmedByAndroidOutput": true,
+    "scope": "two variable-only tasks; no UI/account/shell changes"
+  },
+  "completedVerificationCi": {
+    "source": "77e96a4166f33ddb0f04523d139ffb51f3b2b69a",
+    "backendRun": 36924906048,
+    "frontendRun": 36924906017,
+    "androidRun": 36924905908,
+    "conclusions": "success",
+    "packagingHeadChecksSeparate": true
+  }
 }

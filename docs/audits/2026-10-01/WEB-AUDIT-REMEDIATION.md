@@ -274,3 +274,7 @@
 - API установлен 01:27:36, UI3015/3030 — 01:28:45 UTC+5; API/UI SHA совпадают. На 01:30:49 — catalog19, reported online14/offline5; это моментальный срез. Public frontend/APK/OTA/tunnels не заменены.
 - Follow-up N01: Android screenshot action сохраняет локальный файл без загрузки; pilot storage read пока выключен. [Полный контракт, ограничения и приёмка](../2026-10-02/TASK-ARTIFACTS-AND-RERUN.md).
 - Далее: N01 Android artifacts; F19/F20 discovery; F24–F28 формы/workflows; F32/F33 command/OTA outcomes; F34–F36 video/XPath; F37–F41 export/access/live acceptance. PR19 не закрыт.
+
+## Runtime и Android follow-up — 2 октября 04:51 UTC+5
+
+Native review процессы исчезли после ранее записанной установки; причина не установлена. Review [3015](http://127.0.0.1:3015/) восстановлен в Docker: UI0f4530c / API5fcf18a, оба healthy, login/API/Prometheus/Grafana/events WS и restart passed. Все 14 прежних контейнеров сохранены. На remote PH025/10240 два variable-only задания completed/success; rerun исполнил pinned v1 после изменения latest v2. N01 upload, browser visual, массовые сценарии и video latency остаются открытыми. [Подробности и receipts](../2026-10-02/REVIEW-RUNTIME-AND-REMOTE-RERUN.md).

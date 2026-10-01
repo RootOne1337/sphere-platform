@@ -162,5 +162,7 @@
     "relativeTargetsChecked": 439,
     "findingAnchorsChecked": 41,
     "missing": 0
-  }
+  },
+  "historicalSnapshotBeforeDockerAndRemoteCanary": true,
+  "latestFollowupEvidence": "REVIEW-RUNTIME-AND-REMOTE-RERUN-EVIDENCE.json"
 }
