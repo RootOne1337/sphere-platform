@@ -46,8 +46,8 @@ interface ScriptsResponse {
 export function useScripts(params?: { query?: string; page?: number; per_page?: number }) {
   return useQuery<ScriptsResponse>({
     queryKey: ['scripts', params],
-    queryFn: async () => {
-      const { data } = await api.get('/scripts', { params });
+    queryFn: async ({ signal }) => {
+      const { data } = await api.get('/scripts', { params, signal });
       // Обратная совместимость: бекенд может вернуть массив или {items}
       if (Array.isArray(data)) return { items: data, total: data.length, page: 1, per_page: data.length };
       return data;

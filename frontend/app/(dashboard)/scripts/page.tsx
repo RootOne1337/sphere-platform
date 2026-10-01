@@ -5,14 +5,21 @@ import Link from 'next/link';
 import { ArrowRight, Braces, Code2, Play, Plus, RefreshCw, Workflow } from 'lucide-react';
 import { useScript, useScripts, type Script } from '@/lib/hooks/useScripts';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { RunScriptModal } from '@/components/sphere/RunScriptModal';
 import { PageFrame, PageHeading } from '@/src/shared/ui/page-layout';
+import { CatalogPagination } from '@/src/shared/ui/catalog-pagination';
+import { useDebounce } from '@/lib/hooks/useDebounce';
 import { formatScriptStepCount, getCurrentScriptVersion, getScriptStepCount, redactScriptDag } from '@/src/features/scripts/scriptPresentation';
 
 export default function ScriptsPage() {
-  const { data: scriptsData, isLoading, isError, refetch } = useScripts();
+  const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
+  const query = useDebounce(search.trim(), 300);
+  const searching = search.trim() !== query;
+  const { data: scriptsData, isLoading, isError, isFetching, refetch } = useScripts({ query: query || undefined, page, per_page: 50 });
   const scripts = scriptsData?.items ?? [];
   const [runTarget, setRunTarget] = useState<{ id: string; name: string } | null>(null);
   const [inspectedScriptId, setInspectedScriptId] = useState<string | null>(null);
@@ -26,12 +33,20 @@ export default function ScriptsPage() {
         actions={<Button asChild><Link href="/scripts/builder"><Plus className="mr-2 h-4 w-4" aria-hidden="true" />Новый сценарий</Link></Button>}
       />
 
-      {isError ? (
+      <div className="flex flex-wrap items-center gap-3">
+        <Input aria-label="Поиск сценариев во всём каталоге" placeholder="Найти сценарий по имени…" className="sm:max-w-md" value={search} onChange={(event) => { setSearch(event.target.value); setPage(1); setInspectedScriptId(null); }} />
+        <Button variant="outline" disabled={isFetching || searching} onClick={() => { void refetch(); }}>Обновить сценарии</Button>
+        <span className="text-xs text-muted-foreground">Поиск выполняется на сервере по всему каталогу</span>
+      </div>
+
+      {searching ? (
+        <p role="status" className="text-sm text-muted-foreground">Обновляем поиск…</p>
+      ) : isError ? (
         <Card><CardContent className="flex flex-col gap-3 p-6 sm:flex-row sm:items-center sm:justify-between"><div><p className="font-medium">Не удалось загрузить сценарии</p><p className="mt-1 text-sm text-muted-foreground">Проверьте доступ к API и повторите запрос.</p></div><Button type="button" variant="outline" onClick={() => { void refetch(); }}><RefreshCw className="mr-2 h-4 w-4" aria-hidden="true" />Повторить</Button></CardContent></Card>
       ) : isLoading ? (
         <div className="space-y-3" aria-label="Загрузка сценариев" aria-busy="true">{Array.from({ length: 4 }, (_, index) => <div key={index} className="h-24 animate-pulse rounded-xl border border-border bg-card motion-reduce:animate-none" />)}</div>
       ) : scripts.length === 0 ? (
-        <Card><CardContent className="flex min-h-64 flex-col items-center justify-center p-8 text-center"><span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary"><Workflow className="h-6 w-6" aria-hidden="true" /></span><p className="mt-4 font-semibold">Сценариев пока нет</p><p className="mt-1 max-w-md text-sm text-muted-foreground">Создайте первый сценарий и добавьте шаги в редакторе.</p><Button asChild className="mt-5"><Link href="/scripts/builder"><Plus className="mr-2 h-4 w-4" aria-hidden="true" />Создать сценарий</Link></Button></CardContent></Card>
+        <Card><CardContent className="flex min-h-64 flex-col items-center justify-center p-8 text-center"><span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary"><Workflow className="h-6 w-6" aria-hidden="true" /></span><p className="mt-4 font-semibold">{query ? 'По вашему запросу сценарии не найдены' : page > 1 ? 'На этой странице сценариев нет' : 'Сценариев пока нет'}</p><p className="mt-1 max-w-md text-sm text-muted-foreground">{query ? 'Измените запрос: поиск охватывает весь каталог.' : page > 1 ? 'Вернитесь на предыдущую страницу или обновите каталог.' : 'Создайте первый сценарий и добавьте шаги в редакторе.'}</p><Button asChild className="mt-5"><Link href="/scripts/builder"><Plus className="mr-2 h-4 w-4" aria-hidden="true" />Создать сценарий</Link></Button></CardContent></Card>
       ) : (
         <section aria-label="Список сценариев" className="space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground"><span>Показано {scripts.length}{scriptsData?.total != null && scriptsData.total !== scripts.length ? ` из ${scriptsData.total}` : ''}</span><span>Структура сценария хранится в версиях backend</span></div>
@@ -68,6 +83,8 @@ export default function ScriptsPage() {
           ))}
         </section>
       )}
+
+      {!isError && !isLoading && !searching && scriptsData && <CatalogPagination page={page} perPage={50} total={scriptsData.total} busy={isFetching} label="сценарии" onPageChange={(next) => { setPage(next); setInspectedScriptId(null); }} />}
 
       {runTarget && <RunScriptModal scriptId={runTarget.id} scriptName={runTarget.name} open onClose={() => setRunTarget(null)} />}
     </PageFrame>

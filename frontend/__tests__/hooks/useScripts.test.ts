@@ -118,6 +118,7 @@ describe('useScripts', () => {
     await waitFor(() => expect(mockApi.get).toHaveBeenCalled());
     expect(mockApi.get).toHaveBeenCalledWith('/scripts', {
       params: { query: 'авториз' },
+      signal: expect.any(AbortSignal),
     });
   });
 });
