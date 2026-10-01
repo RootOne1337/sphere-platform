@@ -49,6 +49,21 @@ pauses, не изолированный codec CPU benchmark. Unknown launch не
 [Allowlisted evidence](../audits/2026-10-01/PH010-PH025-NATIVE-SIZE-EVIDENCE.json).
 [Workload, ограничения и command RTT](VIDEO-CADENCE-CANARY.md#сравнение-той-же-gpu-сборки-и-измерение-стадий-1-октября).
 
+**Native codec CPU control, 04:52 UTC+5:** PH010 / 10238, одна finite private
+motion Activity с подтверждённым foreground, native 960×540 / target 30 / 1.5 Mbit/s.
+В десяти последовательных секундных окнах получено **63 pictures / 10 s (6.3/s)**;
+selected codec — `OMX.google.h264.encoder`. Три bounded `top` snapshots показывают
+`media.codec` **92/96/100% одного ядра** при двух logical CPUs (total basis 200%),
+APK **8%**, включая отрисовку private canary в том же процессе; temporary su
+permission broadcast самого observer также расходует CPU.
+Surface swap means **154.67–160.91 ms**, texture/draw means ниже 1 ms.
+Это согласуется с узким местом Android software encoding/consumer path, но не
+является профилем каждого codec thread, доказательством universal CPU budget или
+отсутствия remote network delay. Spans arrival/PTS **9.781/9.778 s** не показывают
+рост backlog в этом окне и не измеряют абсолютную latency. Собственный viewer
+закрыт; позже подтверждены launcher и `not_streaming`, global stop не отправлялся.
+[Allowlisted CPU/wire evidence](../audits/2026-10-01/PH010-CODEC-CPU-EVIDENCE.json).
+
 **Validation source `2bed596`:** настроенный APK `1.2.38-dev/10238`, SHA256
 `15c2392be0d8c6e845a84234302d1ccde4b04ed41d3f8b97c38fd76f73c00381`,
 8459015 bytes, прежний pilot package/certificate. Обе configured debug flavors:
@@ -91,6 +106,20 @@ device: PH010 `true` 437/250 ms, `input` без аргументов 500/500 ms;
 `true` требует разделить доставку, очередь, Android выполнение и receipt. Двух
 samples недостаточно для p95/SLO; 1672 ms Back не объявляется постоянным ping.
 Остаются отдельные Android capture/encoding и input-to-visible latency gates.
+
+**Redis CI counterexample / source `eda41c7`:** navigation frontend/Android CI
+`c547f5d` прошли, backend test-suite step прошёл, но последующий isolated AOF/write
+probe получил `OOMKilled` при 2 GiB. Source ceiling повышен до 3 GiB при прежних
+512 MiB dataset/eviction/persistence. 8 Compose regressions и unchanged native
+workload на том же immutable Redis 7.2.16 config прошли локально. GitHub Linux
+[run 36791986031](https://github.com/RootOne1337/sphere-platform/actions/runs/36791986031)
+тоже прошёл: **2145 tests / 0 failures / 0 errors / 15 skipped**, unchanged
+Redis AOF/BGSAVE/write/restart probe successful, kernel peak **1599836160 B**,
+6532 keys и marker сохранились, own container удалён, `OOMKilled=false`.
+Frontend/Android CI этого code head тоже success. Installed pilot Redis остаётся 1536 MiB, не
+перезапускался/не resized. Это отдельный memory risk; его связь с текущим video/
+input latency не установлена. [Срез и границы](REDIS-MEMORY.md#новый-counterexample-1-октября-2026),
+[allowlisted evidence](../audits/2026-10-01/REDIS-AOF-HEADROOM-EVIDENCE.json).
 
 ### Одиночный поток: картинка подтверждена, плавность остаётся открытой, 1 октября
 

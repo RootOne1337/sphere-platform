@@ -9,10 +9,10 @@
 </div>
 
 > [!NOTE]
-> **Срез навигации: 30 сентября 2026.** Канонические source/runtime факты,
+> **Срез навигации: 1 октября 2026.** Канонические source/runtime факты,
 > версии Android, ограничения диагностики и будущий этап 20–30 устройств собраны
-> в [актуальном состоянии](operations/CURRENT-STATE.md). Runtime не перечитывался
-> этим документационным проходом; старые аудиты сохраняют собственные даты и
+> в [актуальном состоянии](operations/CURRENT-STATE.md). Каталог не выполняет
+> автоматическую проверку runtime; старые аудиты сохраняют собственные даты и
 > версии и не должны читаться как текущий deploy. [Правила актуальности](DOCUMENTATION.md).
 
 ## 🧭 Выберите задачу
@@ -94,7 +94,7 @@
 | Frontend `9924eb1` | [AUD-138](audits/2026-09-20/DECODER-RECOVERY.md): decoder bounds/recovery и два живых потока после restart |
 | Первый IDR и восстановление | [AUD-140 / F32-29](audits/2026-09-20/STREAM-FIRST-FRAME.md) · [AUD-142 / F32-31](audits/2026-09-20/ANDROID-KEYFRAME-STARTUP.md): browser retry, отложенный Android keyframe до старта encoder, backend forwarding regression; удалённая приёмка ещё OPEN |
 | Standalone-сборка frontend | [AUD-141 / F32-30](audits/2026-09-20/FRONTEND-STANDALONE.md): Linux CI build/root-entrypoint passed; отдельный frontend Docker image не проверен; Windows trace warning remains |
-| Redis budget | [AUD-143](audits/2026-09-20/REDIS-PERSISTENCE-HEADROOM.md): 1536 MiB воспроизвёл OOM; три 2048 MiB probes прошли с peak 1.49–2.00 GiB; 32-stream/live rollout open |
+| Redis budget | [Текущий бюджет и evidence](operations/REDIS-MEMORY.md): после нового OOM на 2 GiB source ceiling 3 GiB прошёл same-image Desktop и GitHub Linux pressure/restart; installed pilot 1536 MiB и fleet capacity проверяются отдельно. [AUD-143](audits/2026-09-20/REDIS-PERSISTENCE-HEADROOM.md) сохранён как история |
 | OTA transfer | [AUD-144 / F32-33](audits/2026-09-20/OTA-TRANSPORT-RETRY.md): local before/after regression and bounded retry; 1.2.10/10210 is historical and was not a published OTA catalog entry |
 | Clone binding and reconnect | [AUD-145 / F32-34](audits/2026-09-20/CLONE-BINDING-V2.md) · [AUD-162](audits/2026-09-24/REMOTE-RECONNECT-INCIDENT.md) · [Android-only clone plan](architecture/ANDROID-EMULATOR-GOLDEN-IMAGE.md): local 1.2.15 debug candidate contains terminal refresh and duplicate-start recovery; OTA rollout, remote identity and 3-clone acceptance remain open |
 | Первый кадр на Android | [AUD-161](audits/2026-09-23/ANDROID-INITIAL-FRAME-RACE.md): воспроизведено отбрасывание раннего ImageReader callback; source fix и 621 тест на flavor прошли, удалённый canary ещё не принят |

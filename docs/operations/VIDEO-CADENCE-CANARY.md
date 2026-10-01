@@ -255,6 +255,56 @@ restart/application нового лимита не подтверждены. 10 
    и input-to-visible latency. Только затем менять default capture path и
    normal OTA; fleet snapshot demand и single-device video принимаются отдельно.
 
+## Native CPU control, 1 октября 04:52 UTC+5
+
+На локальном PH010 / 10238 подтверждён idle launcher и отсутствие стрима, затем
+один раз запущена собственная debug Activity с движением и возвратом через 30 s.
+Foreground подтверждён до измерений и в конце CPU sample серии. Собственный
+wire viewer получил **63 реальных pictures за 10 s**, секундные окна —
+`6, 6, 7, 6, 6, 7, 6, 7, 6, 6`. Native geometry 960×540, target 30 FPS,
+1.5 Mbit/s; codec `OMX.google.h264.encoder`. Четыре stage окна: swap means
+154.67–160.91 ms, texture/draw means <1 ms.
+
+Три кратких `top -b -n 2 -d 1 -m 20` snapshots показывают media.codec
+92/96/100% **одного ядра**, при total basis 200% для двух guest CPUs. APK — 8%,
+SurfaceFlinger — 4–8%; private canary рисуется внутри того же APK процесса,
+поэтому 8% не отделяет capture/управление от test UI. Собственные su permission broadcasts observer тоже
+расходовали CPU. Это не доказательство, что production idle APK постоянно
+расходует 8%, и не isolated codec microbenchmark. Сопоставление с Android
+screenrecord control и swap wait усиливает гипотезу software encoding/consumer
+limit; thread-level причины и альтернативы ещё требуют проверки.
+
+За то же окно spans arrival и presentation timestamps — 9.781/9.778 s:
+нарастающего backlog не видно, но это **не абсолютная transport latency**.
+`stream-diagnostics` во время ранней серии вернул старый `not_streaming` snapshot;
+он не используется как синхронная per-frame telemetry. После окончания viewer
+и finite Activity отдельным read-only snapshot подтверждены `not_streaming`
+и launcher. Ни кликов, ни global stop, ни новых device settings не отправляли.
+[Allowlisted evidence](../audits/2026-10-01/PH010-CODEC-CPU-EVIDENCE.json).
+
+### Следующая проверка кодека и условия изменения
+
+1. Получить фактические `MediaCodecList`/capabilities на canary: MIME, input Surface,
+   native-size support, bitrate modes и complexity range. Прочитанный vendor XML
+   объявляет Google AVC/VP8/VP9; XML не доказывает complete runtime inventory или
+   успешный configure. Hardware acceleration нельзя приписывать host GPU без
+   доступного Android encoder.
+2. Если AVC поддерживает более быстрый complexity mode, сравнить его в отдельном
+   canary при **том же native разрешении** и читаемости. Android описывает меньшую
+   complexity как возможную экономию времени, но это capability конкретного codec,
+   не универсальный переключатель для всех MediaCodec implementations:
+   [официальный EncoderCapabilities](https://developer.android.com/reference/android/media/MediaCodecInfo.EncoderCapabilities).
+3. Если подходящего AVC mode нет, сначала измерить доступный альтернативный
+   software codec на устройстве. Лишь после реального выигрыша и decoder
+   acceptance менять negotiated wire format. VP8/VP9 нельзя отправить в существующий
+   H.264 parser и назвать работающим fallback; нужны явный MIME, codec configuration,
+   version/capability handshake, recovery и regressions. В этом проходе такой
+   fallback **не реализован и не принят**.
+4. Сравнить control profile **10–15 stable source pictures/s** и input-to-visible
+   latency; прежний higher target 20–30 сохраняется отдельно для подходящей source.
+   Дублирование кадров, уменьшение native resolution без выбора оператора или
+   обещание FPS по одному `KEY_FRAME_RATE` не закрывают этот gate.
+
 ## Приёмка
 
 | Gate | Что требуется | Что не является доказательством |

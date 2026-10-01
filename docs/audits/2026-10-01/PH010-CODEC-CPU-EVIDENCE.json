@@ -1,0 +1,167 @@
+{
+  "schema_version": 1,
+  "observed_at": "2026-09-30T23:52:28.953255+00:00",
+  "scope": "finite local Android motion/capture/encode control",
+  "source": "2bed596",
+  "apk_version_code": 10238,
+  "device": "PH010 (operator-confirmed local)",
+  "configuration": {
+    "native_size": [
+      960,
+      540
+    ],
+    "target_fps": 30,
+    "bitrate_bps": 1500000,
+    "selected_codec": "OMX.google.h264.encoder",
+    "gpu_capture_flag": true
+  },
+  "workload": {
+    "one_private_activity_launch": true,
+    "fresh_foreground_confirmed": true,
+    "input_events_sent": 0,
+    "finite_activity_deadline_seconds": 30
+  },
+  "wire": {
+    "window_start_seconds": 3,
+    "window_duration_seconds": 10,
+    "pictures": 63,
+    "pictures_per_second": 6.3,
+    "one_second_windows": [
+      {
+        "from_seconds": 3,
+        "pictures": 6
+      },
+      {
+        "from_seconds": 4,
+        "pictures": 6
+      },
+      {
+        "from_seconds": 5,
+        "pictures": 7
+      },
+      {
+        "from_seconds": 6,
+        "pictures": 6
+      },
+      {
+        "from_seconds": 7,
+        "pictures": 6
+      },
+      {
+        "from_seconds": 8,
+        "pictures": 7
+      },
+      {
+        "from_seconds": 9,
+        "pictures": 6
+      },
+      {
+        "from_seconds": 10,
+        "pictures": 7
+      },
+      {
+        "from_seconds": 11,
+        "pictures": 6
+      },
+      {
+        "from_seconds": 12,
+        "pictures": 6
+      }
+    ],
+    "arrival_span_seconds": 9.781,
+    "presentation_timestamp_span_seconds": 9.778,
+    "encoded_pixels_saved": false,
+    "browser_fps_verified": false
+  },
+  "cpu": {
+    "logical_cpus": 2,
+    "top_total_percent_basis": 200,
+    "bounded_samples": [
+      {
+        "observation_from_seconds": 2.031,
+        "observation_to_seconds": 3.578,
+        "top_percent_one_core_basis": {
+          "codec_service": 92.0,
+          "sphere_debug_apk": 8.0,
+          "surfaceflinger": 8.0
+        }
+      },
+      {
+        "observation_from_seconds": 5.578,
+        "observation_to_seconds": 7.078,
+        "top_percent_one_core_basis": {
+          "codec_service": 96.0,
+          "sphere_debug_apk": 8.0,
+          "surfaceflinger": 4.0
+        }
+      },
+      {
+        "observation_from_seconds": 9.078,
+        "observation_to_seconds": 10.562,
+        "top_percent_one_core_basis": {
+          "codec_service": 100.0,
+          "sphere_debug_apk": 8.0,
+          "surfaceflinger": 4.0
+        }
+      }
+    ],
+    "observer_note": "top invoked through su; its temporary permission broadcast consumes CPU; APK process also renders the private motion View; not an idle/no-observer or isolated capture CPU test"
+  },
+  "gpu_stage_windows": [
+    {
+      "window_ms": 5051.0,
+      "texture_n": 33.0,
+      "texture_mean_ms": 0.89,
+      "draw_n": 31.0,
+      "draw_mean_ms": 0.5,
+      "swap_n": 31.0,
+      "swap_mean_ms": 158.89,
+      "swap_max_ms": 216.27
+    },
+    {
+      "window_ms": 5145.0,
+      "texture_n": 33.0,
+      "texture_mean_ms": 0.76,
+      "draw_n": 33.0,
+      "draw_mean_ms": 0.36,
+      "swap_n": 33.0,
+      "swap_mean_ms": 154.67,
+      "swap_max_ms": 187.06
+    },
+    {
+      "window_ms": 5023.0,
+      "texture_n": 31.0,
+      "texture_mean_ms": 0.59,
+      "draw_n": 31.0,
+      "draw_mean_ms": 0.38,
+      "swap_n": 31.0,
+      "swap_mean_ms": 160.91,
+      "swap_max_ms": 191.68
+    },
+    {
+      "window_ms": 5012.0,
+      "texture_n": 32.0,
+      "texture_mean_ms": 0.62,
+      "draw_n": 32.0,
+      "draw_mean_ms": 0.31,
+      "swap_n": 32.0,
+      "swap_mean_ms": 155.6,
+      "swap_max_ms": 168.32
+    }
+  ],
+  "cleanup": {
+    "owned_viewer_closed": true,
+    "global_stop_sent": false,
+    "later_readback_at": "2026-09-30T23:55:45.489935+00:00",
+    "later_stream_state": "not_streaming",
+    "private_activity_returned_to_launcher": true
+  },
+  "declared_codec_note": "XML declares Google AVC/VP8/VP9; not an exhaustive runtime MediaCodecList/capability acceptance",
+  "limits": [
+    "software codec service near one-core saturation is consistent with Android capture/encode bottleneck, not proof of every wait origin",
+    "three bounded CPU snapshots are not p95 or idle resource budget",
+    "matched arrival and presentation spans do not measure absolute network latency or input-to-visible latency",
+    "source frame-rate target and XML capability limits are not attained native FPS",
+    "different host/emulator/codec implementations require separate acceptance"
+  ]
+}

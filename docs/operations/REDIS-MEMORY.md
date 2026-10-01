@@ -102,10 +102,28 @@ everysec/RDB schedules и workload probe сохранены. Это правил
 с параллельной записью и restart прошли; 6531 ключ/marker сохранились,
 `OOMKilled=false`, own container/anonymous volume удалены. Docker Desktop kernel
 reported peak **975,912,960 B** (`memory.max_usage_in_bytes`), source/runtime при
-этом тесте не менялись. Это **другой kernel/environment**, его peak не заменяет
-GitHub Linux measurements и не доказывает запас для всех клиентов/32 streams.
-Новая CI probe на source ceiling 3 GiB остаётся обязательной; старый failure не
-стирается повторным запуском. Installed Redis этим source commit не обновляется.
+этом тесте не менялись. Его cached image был **7.2.12**, тогда как failing CI —
+**7.2.16**; такой control сам по себе не закрывает даже image identity gate.
+
+Поэтому выполнен отдельный control на том же immutable 7.2.16 image config,
+который упал в CI: config digest `dba89ec3…`, amd64 OCI manifest `84bab713…`.
+Docker Desktop containerd reports manifest/index as image ID, classic CI Docker
+— config digest; identity сверена по config внутри amd64 manifest, а не по
+несопоставимым `.Id`. При 3 GiB unchanged workload снова прошёл все persistence,
+write/restart gates, сохранил marker/6531 ключ; `OOMKilled=false`, own container
+удалён. Kernel peak **1,493,553,152 B**, то есть около 1424.36 MiB. Это **другой
+kernel/IO/host environment**, его peak не заменяет GitHub Linux measurements и
+не доказывает запас для всех клиентов/32 streams. [Allowlisted evidence](../audits/2026-10-01/REDIS-AOF-HEADROOM-EVIDENCE.json).
+
+Новый head отдельно прошёл GitHub Linux gate: [run 36791986031](https://github.com/RootOne1337/sphere-platform/actions/runs/36791986031),
+source `eda41c7`, тот же image config. Unit/real-service suite: **2145 tests,
+0 failures, 0 errors, 15 skipped**; неизменённый Redis pressure/restart probe
+passed, `OOMKilled=false`, own container удалён. Kernel `memory.peak` —
+**1599836160 B**, 6532 keys и marker survived restart. Это отдельное CI evidence;
+local kernel/IO peak не переносится на CI. Исходный OOM не стирается успешным
+повтором. Read-only installed pilot limit — **1610612736 B**
+(1536 MiB), прежний container start сохранён. Installed Redis этим source commit
+не перезапускался и не менял limit.
 
 ## Открытые ограничения
 
@@ -113,8 +131,10 @@ GitHub Linux measurements и не доказывает запас для все�
   допускает удаление управляющих ключей; SQL intents не делают все Redis-ключи
   восстановимыми. Нужна проверка назначения ключей и политики по их смыслу.
 - Slow PubSub consumers, суммарные buffers 32 streams и reconnect storm в этом
-  probe не моделируются. Их budgets и latency остаются gate для Fleet32; новый
-  2048 MiB probe прошёл, но measured peak достиг лимита.
+  probe не моделируются. Их budgets и latency остаются gate для Fleet32; старый
+  2048 MiB pass достиг лимита и позже получил OOM counterexample. Новый source
+  ceiling 3072 MiB прошёл указанный CI workload; installed rollout и fleet/slow
+  consumer нагрузка требуют отдельной проверки.
 - Graceful restart не доказывает отсутствие потери последней секунды AOF при
   аварийном отключении питания и не является backup/restore-проверкой всего проекта.
 - Отдельный preview template не входит в исправленные runtime combinations:
