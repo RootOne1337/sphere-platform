@@ -9850,6 +9850,19 @@
               }
             ],
             "title": "Capture Throttle Drops Total"
+          },
+          "encoder_input_drops_total": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 9007199254740992.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Encoder Input Drops Total"
           }
         },
         "type": "object",
