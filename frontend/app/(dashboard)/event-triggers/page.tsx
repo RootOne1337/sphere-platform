@@ -48,6 +48,7 @@ import {
 } from '@/lib/hooks/useEventTriggers';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
+import { CatalogPagination } from '@/src/shared/ui/catalog-pagination';
 
 // ── Типы пайплайнов (для выпадающего списка) ─────────────────────────
 
@@ -87,14 +88,16 @@ function timeAgo(dateStr: string | null) {
 
 export default function EventTriggersPage() {
   const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
   const [filterActive, setFilterActive] = useState<string>('__all__');
   const [createOpen, setCreateOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<EventTrigger | null>(null);
 
   const params = useMemo(() => ({
+    page,
     per_page: 100,
     is_active: filterActive === 'true' ? true : filterActive === 'false' ? false : undefined,
-  }), [filterActive]);
+  }), [filterActive, page]);
 
   const { data, isLoading, isError, isFetching, refetch } = useEventTriggers(params);
   const { data: pipelines = [] } = usePipelineOptions();
@@ -143,13 +146,14 @@ export default function EventTriggersPage() {
             <div className="relative w-full sm:w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
               <Input
-                placeholder="Поиск триггеров..."
+                placeholder="Поиск на этой странице…"
+                aria-label="Поиск триггеров на текущей странице"
                 className="pl-9 h-9 bg-black/50 border-border font-mono text-xs focus-visible:ring-primary/50"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
-            <Select value={filterActive} onValueChange={setFilterActive}>
+            <Select value={filterActive} onValueChange={(value) => { setFilterActive(value); setPage(1); }}>
               <SelectTrigger className="h-9 w-[140px] text-xs font-mono">
                 <SelectValue placeholder="Все" />
               </SelectTrigger>
@@ -214,7 +218,7 @@ export default function EventTriggersPage() {
                 <tr>
                   <td colSpan={9} className="px-4 py-12 text-center text-muted-foreground">
                     <Zap className="w-8 h-8 mx-auto mb-2 opacity-30" />
-                    {search ? 'Ничего не найдено' : 'Нет триггеров. Создайте первый!'}
+                    {search ? 'Ничего не найдено на этой странице' : page > 1 ? 'На этой странице триггеров нет' : 'Нет триггеров. Создайте первый!'}
                   </td>
                 </tr>
               )}
@@ -303,6 +307,11 @@ export default function EventTriggersPage() {
             </tbody>
           </table>
         </div>
+      </div>
+
+      <div className="space-y-2 px-6 pb-5">
+        <p className="text-xs text-muted-foreground">Текстовый поиск действует на текущую страницу. Для остальных записей используйте страницы; фильтр активности применяется сервером ко всему каталогу.</p>
+        {!isLoading && !isError && data && <CatalogPagination page={page} perPage={100} total={data.total} busy={isFetching} label="триггеры" onPageChange={setPage} />}
       </div>
 
       {/* ── Диалог создания ─────────────────────────────────────── */}
