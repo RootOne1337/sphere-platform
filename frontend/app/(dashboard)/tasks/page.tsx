@@ -88,9 +88,12 @@ export default function TaskEnginePage() {
   const handleRetry = (task: Task, e: React.MouseEvent) => {
     e.stopPropagation();
     retryTask.mutate(
-      { script_id: task.script_id, device_id: task.device_id, priority: task.priority },
+      task.id,
       {
-        onSuccess: () => toast.success(`Задача "${taskName(task)}" перезапущена`),
+        onSuccess: (created) => toast.success(`Новое задание принято: ${created?.id ?? 'ID не получен'}`, {
+          description: 'Исходная версия и входы сохранены. Выполнение ещё не подтверждено.',
+          ...(typeof created?.id === 'string' ? { action: { label: 'Открыть', onClick: () => router.push(`/tasks/${created.id}`) } } : {}),
+        }),
         onError: () => toast.error('Ошибка перезапуска'),
       },
     );

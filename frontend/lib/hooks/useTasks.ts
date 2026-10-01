@@ -107,6 +107,30 @@ export interface TaskProgress {
   started_at: number | null;
 }
 
+export interface TaskScreenshotReference {
+  key: string;
+  url: string | null;
+  unavailable_reason: string | null;
+}
+
+export function useTaskScreenshots(taskId: string, enabled: boolean) {
+  return useQuery<{ task_id: string; screenshots: TaskScreenshotReference[] }>({
+    queryKey: ['tasks', taskId, 'screenshots'], enabled: enabled && !!taskId, retry: false,
+    queryFn: async ({ signal }) => {
+      const { data } = await api.get(`/tasks/${taskId}/screenshots`, { signal });
+      if (!data || data.task_id !== taskId || !Array.isArray(data.screenshots)) throw new Error('Некорректный манифест снимков задания');
+      for (const entry of data.screenshots) {
+        if (!entry || typeof entry.key !== 'string'
+          || !(entry.url === null || entry.url === `/tasks/${taskId}/screenshots/content?key=${encodeURIComponent(entry.key)}`)
+          || !(entry.unavailable_reason === null || typeof entry.unavailable_reason === 'string')) {
+          throw new Error('Некорректная ссылка на снимок задания');
+        }
+      }
+      return data;
+    },
+  });
+}
+
 export function useTaskProgress(taskId: string, enabled: boolean) {
   return useQuery<TaskProgress>({
     queryKey: ['tasks', taskId, 'progress'],
@@ -173,19 +197,13 @@ export function useStopTask() {
   });
 }
 
-/**
- * Повторный запуск задачи — создаёт новый таск с теми же параметрами.
- * Принимает оригинальную задачу, извлекает script_id, device_id, priority.
- */
+/** The server owns the original pinned version, inputs and execution checks. */
 export function useRetryTask() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (original: Pick<Task, 'script_id' | 'device_id' | 'priority'>) => {
-      const { data } = await api.post('/tasks', {
-        script_id: original.script_id,
-        device_id: original.device_id,
-        priority: original.priority,
-      });
+    retry: false,
+    mutationFn: async (taskId: string) => {
+      const { data } = await api.post(`/tasks/${taskId}/rerun`);
       return data;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['tasks'] }),

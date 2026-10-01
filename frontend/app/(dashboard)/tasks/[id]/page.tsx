@@ -7,13 +7,14 @@ import {
   useCancelTask,
   useStopTask,
   useTaskProgress,
-  useCreateTask,
+  useRetryTask,
   useTaskLiveLogs,
   type NodeExecutionLog,
   type LiveLogEntry,
 } from '@/lib/hooks/useTasks';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { TaskScreenshot } from '@/components/tasks/TaskScreenshot';
 import Link from 'next/link';
 import { executionStatusLabel, isCancellationPending } from '@/lib/task-status';
 import { getApiErrorMessage } from '@/lib/apiError';
@@ -93,7 +94,7 @@ function OwnedTaskDetail({ id }: { id: string }) {
   const logsQuery = useTaskLogs(id);
   const cancelTask = useCancelTask();
   const stopTask = useStopTask();
-  const createTask = useCreateTask();
+  const createTask = useRetryTask();
   const [receipt, setReceipt] = useState<string | null>(null);
   const [newTaskId, setNewTaskId] = useState<string | null>(null);
   const writesPending = cancelTask.isPending || stopTask.isPending || createTask.isPending;
@@ -245,16 +246,12 @@ function OwnedTaskDetail({ id }: { id: string }) {
             {['completed', 'failed', 'cancelled', 'timeout'].includes(task.status) && (
               <Button
                 variant="default"
-                disabled={!canAct}
+                disabled={!canAct || !task.script_version_id}
                 className="gap-2 bg-emerald-600 hover:bg-emerald-500 text-white shadow-[0_0_20px_rgba(16,185,129,0.2)] hover:shadow-[0_0_30px_rgba(16,185,129,0.4)] transition-all"
                 onClick={() => {
-                  if (!canAct) return;
+                  if (!canAct || !task.script_version_id) return;
                   beginAction();
-                  createTask.mutate({
-                      script_id: task.script_id,
-                      device_id: task.device_id,
-                      priority: task.priority,
-                    }, { onSuccess: (data) => {
+                  createTask.mutate(task.id, { onSuccess: (data) => {
                       setReceipt('Сервер принял запрос нового задания. Результат выполнения ещё не подтверждён.');
                       setNewTaskId(typeof data?.id === 'string' ? data.id : null);
                     } });
@@ -269,6 +266,10 @@ function OwnedTaskDetail({ id }: { id: string }) {
       </div>
 
       {/* ── Quick Info Grid ────────────────────────────────────────────────────── */}
+      {!isActive && <p className="text-sm text-muted-foreground">
+        Повтор создаёт отдельное задание с исходной версией скрипта, входными параметрами и таймаутом.
+        Привязка к старому пакету и его результаты не переносятся. Версия: <span className="font-mono break-all">{task.script_version_id ?? 'неизвестна — повтор недоступен'}</span>.
+      </p>}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
         <InfoCard icon={ActivitySquare} label="Priority" value={String(task.priority)} />
         <InfoCard icon={MonitorSmartphone} label="Устройство" value={task.device_name || task.device_id} isMono />
@@ -297,6 +298,8 @@ function OwnedTaskDetail({ id }: { id: string }) {
           </div>
         </div>
       )}
+      {typeof result?.final_screenshot_key === 'string' && result.final_screenshot_key &&
+        <TaskScreenshot taskId={id} screenshotKey={result.final_screenshot_key} label="Итоговый снимок задания" />}
 
       {/* Error Banner */}
       {task.error_message && (
@@ -385,7 +388,7 @@ function OwnedTaskDetail({ id }: { id: string }) {
                     <div className="absolute left-[20px] top-6 bottom-6 w-px bg-gradient-to-b from-transparent via-border to-transparent" />
                     <div className="space-y-4">
                       {logs.map((log, i) => (
-                        <LogEntry key={i} log={log} isFailed={log.node_id === failedNode} />
+                        <LogEntry key={i} taskId={id} log={log} isFailed={log.node_id === failedNode} />
                       ))}
                     </div>
                   </div>
@@ -516,7 +519,7 @@ function LiveLogTimeline({ entries }: { entries: LiveLogEntry[] }) {
   );
 }
 
-function LogEntry({ log, isFailed }: { log: NodeExecutionLog; isFailed: boolean }) {
+function LogEntry({ taskId, log, isFailed }: { taskId: string; log: NodeExecutionLog; isFailed: boolean }) {
   const icon = ACTION_ICONS[log.action_type] ?? '⚙️';
   const dotColor = log.success
     ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)] border-emerald-950'
@@ -581,22 +584,10 @@ function LogEntry({ log, isFailed }: { log: NodeExecutionLog; isFailed: boolean 
           </details>
         )}
 
-        {log.screenshot_key && (
-          <div className="mt-3 inline-block">
-            <div className="relative group/img overflow-hidden rounded-lg border border-white/10 shadow-lg cursor-zoom-in">
-              <img
-                src={`/api/files/${log.screenshot_key}`}
-                alt="Execution Screenshot"
-                className="max-h-64 object-contain bg-black/50 transition-transform duration-500 group-hover/img:scale-105"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = 'none';
-                  (e.target as HTMLImageElement).parentElement!.innerHTML = '<span class="text-xs text-muted-foreground p-4 block bg-black/50">Screenshot unavailable</span>';
-                }}
-              />
-              <div className="absolute inset-0 bg-cyan-500/0 group-hover/img:bg-cyan-500/10 transition-colors" />
-            </div>
-          </div>
-        )}
+        {log.screenshot_key && <TaskScreenshot taskId={taskId} screenshotKey={log.screenshot_key} />}
+        {log.action_type === 'screenshot' && !log.screenshot_key && <p className="mt-3 text-xs text-muted-foreground">
+          Файл снимка не получен сервером. Локальный путь Android в отчёте не является ссылкой на изображение.
+        </p>}
       </div>
     </div>
   );

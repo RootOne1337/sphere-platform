@@ -24,6 +24,14 @@ function report(node_id: string, success: boolean): NodeExecutionLog {
     screenshot_key: null, error: success ? null : 'Element missing', output: null };
 }
 
+it('offers an authenticated screenshot read rather than guessing a public files path', async () => {
+  current = task({ status: 'completed' });
+  readLogs = async () => ({ data: [{ ...report('capture', true), screenshot_key: 'tasks/task-a/device/capture/123.jpg' }] });
+  await openPage();
+  expect(await screen.findByRole('button', { name: 'Открыть снимок шага' })).toBeEnabled();
+  expect(screen.queryByRole('img')).not.toBeInTheDocument();
+});
+
 function deferred<T>() {
   let resolve!: (value: T) => void;
   let reject!: (error: unknown) => void;
@@ -154,6 +162,15 @@ it('links the server-created task receipt and does not claim execution completed
   await userEvent.click(await screen.findByRole('button', { name: 'Restart Task' }));
   expect(await screen.findByRole('status')).toHaveTextContent('Результат выполнения ещё не подтверждён');
   expect(screen.getByRole('link', { name: 'Открыть новое задание' })).toHaveAttribute('href', '/tasks/task-new');
+  expect(api.post).toHaveBeenCalledWith('/tasks/task-a/rerun');
+});
+
+it('disables a legacy rerun when the original version is not recorded', async () => {
+  current = task({ status: 'failed', script_version_id: null });
+  await openPage();
+  expect(await screen.findByRole('button', { name: 'Restart Task' })).toBeDisabled();
+  expect(screen.getByText('неизвестна — повтор недоступен')).toBeInTheDocument();
+  expect(api.post).not.toHaveBeenCalled();
 });
 
 it('reports failed log reads without a fictional empty timeline and can recover', async () => {
