@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
 import { Button } from '@/src/shared/ui/button';
@@ -256,7 +256,7 @@ export default function OrchestrationPage() {
                 ? ((completedRuns.length / runs.length) * 100).toFixed(1)
                 : '—',
         };
-    }, [runs, schedules, pipelinesQuery.data, runsQuery.data, schedulesQuery.data, pipelinesQuery.isSuccess, runsQuery.isSuccess, schedulesQuery.isSuccess]);
+    }, [runs, schedules, pipelinesQuery.data, schedulesQuery.data, pipelinesQuery.isSuccess, runsQuery.isSuccess, schedulesQuery.isSuccess]);
 
     const TABS: { key: TabKey; label: string; count: number | string }[] = [
         { key: 'pipelines', label: 'Pipelines', count: pipelinesQuery.isSuccess ? pipelinesQuery.data.total : '—' },
