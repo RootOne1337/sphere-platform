@@ -1,7 +1,7 @@
 {
-  "observedAt": "2026-10-01T18:50:20.9307352+00:00",
+  "observedAt": "2026-10-01T19:03:15.5222533+00:00",
   "timezone": "Asia/Yekaterinburg",
-  "source": "55b07d91004b895481c6fd515d332e5af68375be",
+  "source": "c3bf0e5c3105dcd80becfb86c743a363d0b2d23c",
   "frozenAuditSource": "1354d66660041ba17afb64399d567ca29dd91866",
   "auditCommitBeforeProductEdits": "80fb365",
   "implementationCommits": [
@@ -20,7 +20,8 @@
     "cf7ff66",
     "16fcac3",
     "1e1faec",
-    "55b07d9"
+    "55b07d9",
+    "c3bf0e5"
   ],
   "sourceFindingsFixed": [
     "F01",
@@ -46,11 +47,11 @@
     "F31"
   ],
   "remainingSourceFindings": 20,
-  "newRegressionTests": 103,
+  "newRegressionTests": 105,
   "frontendTests": {
     "suitesPassed": 87,
     "suitesFailed": 0,
-    "testsPassed": 685,
+    "testsPassed": 687,
     "testsFailed": 0,
     "testsSkipped": 0
   },
@@ -67,14 +68,14 @@
     "output": "standalone",
     "sameOriginApi": true,
     "sameOriginWebsocketFallback": true,
-    "buildStamp": "55b07d91004b895481c6fd515d332e5af68375be",
+    "buildStamp": "c3bf0e5c3105dcd80becfb86c743a363d0b2d23c",
     "compiledStampVerified": true,
     "lintWarnings": 44,
     "dynamicDialogCssVerified": true
   },
   "reviewRuntime": {
     "url": "http://127.0.0.1:3015/",
-    "uiPort": 3027,
+    "uiPort": 3028,
     "apiPort": 18080,
     "backendRevision": "8d64ca453e1028f37923c877523dbfe85acaad21",
     "ownedLoopbackListenersVerified": true,
@@ -85,9 +86,9 @@
     "previousOwnedRelayReplaced": true,
     "publicFrontendReplaced": false,
     "browserVisualAcceptance": "OPEN_URL_POLICY_BLOCKED",
-    "nextPid": 42560,
-    "relayPid": 18164,
-    "previousNextPid": 45528
+    "nextPid": 47416,
+    "relayPid": 23052,
+    "previousNextPid": 42560
   },
   "documentValidation": {
     "relativeTargetsChecked": 373,
@@ -112,11 +113,11 @@
     "UTC one-shot editor follows the API contract; the IANA schedule timezone applies to CRON.",
     "Generic catalog/orchestration paging F13 and global audit export/filter F37 remain open."
   ],
-  "verificationCommit": "55b07d9",
+  "verificationCommit": "c3bf0e5",
   "previousReviewRuntime": {
-    "source": "d6439d2",
-    "observedAt": "2026-10-01T18:14:38.2022937+00:00",
-    "uiPort": 3026,
+    "source": "55b07d9",
+    "observedAt": "2026-10-01T18:50:20.9307352+00:00",
+    "uiPort": 3027,
     "port": 3015
   },
   "beforeAfterOtaRegressions": {
@@ -182,6 +183,23 @@
       "observedAt": "2026-10-01T17:35:03.9331549Z",
       "uiPort": 3025,
       "port": 3015
+    },
+    {
+      "source": "d6439d2",
+      "observedAt": "2026-10-01T18:14:38.2022937+00:00",
+      "uiPort": 3026,
+      "port": 3015
     }
-  ]
+  ],
+  "scheduleOutcomeFollowup": {
+    "source": "c3bf0e5",
+    "newRegressions": 2,
+    "reportedTerminalStates": [
+      "partial",
+      "failed"
+    ],
+    "fullTestsPassed": 687,
+    "installedAt": "2026-10-01T19:03:15.5222533+00:00",
+    "browserVisualAcceptance": "OPEN_URL_POLICY_BLOCKED"
+  }
 }

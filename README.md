@@ -16,10 +16,10 @@
 </div>
 
 > [!NOTE]
-> **Текущий срез: 1 октября 2026, 23:50 UTC+5.** После отдельной фиксации полного
-> веб-аудита исправлено 21 source finding, включая все 5 P1; frontend **55b07d9**:
-> **87 suites / 685 tests**, types и production standalone compile passed.
-> Проверочный веб восстановлен: **3015 → UI 3027 / API 18080**, API **8d64ca4**.
+> **Текущий срез: 2 октября 2026, 00:03 UTC+5.** После отдельной фиксации полного
+> веб-аудита исправлено 21 source finding, включая все 5 P1; frontend **c3bf0e5**:
+> **87 suites / 687 tests**, types и production standalone compile passed.
+> Проверочный веб восстановлен: **3015 → UI 3028 / API 18080**, API **8d64ca4**.
 > Визуальная приёмка ещё открыта; public frontend не заменён, 20 findings остаются.
 > [Журнал исправлений / evidence](docs/audits/2026-10-01/WEB-AUDIT-REMEDIATION.md).
 >

@@ -2,7 +2,7 @@
 
 Этот журнал продолжает [замороженный аудит](WEB-FULL-CAPABILITY-AUDIT.md) исходников `1354d66`. Исходный документ и evidence сохраняют свою дату и ограничения; их статусы не переписываются задним числом.
 
-**Срез реализации 1 октября 2026, 23:50 UTC+5:** frontend source `55b07d9`; 21 source finding исправлено (все 5 P1 и 16 P2), 20 остаются открытыми. Проверочный веб установлен на `3015 → UI 3027 / API 18080`. Production standalone compile и 87 suites / 685 tests passed; это не визуальная приёмка. [Allowlisted validation/runtime evidence](WEB-AUDIT-FIXES-VALIDATION.json).
+**Срез реализации 2 октября 2026, 00:03 UTC+5:** frontend source `c3bf0e5`; 21 source finding исправлено (все 5 P1 и 16 P2), 20 остаются открытыми. Проверочный веб установлен на `3015 → UI 3028 / API 18080`. Production standalone compile и 87 suites / 687 tests passed; это не визуальная приёмка. [Allowlisted validation/runtime evidence](WEB-AUDIT-FIXES-VALIDATION.json).
 
 ## Исходная фиксация
 
@@ -241,3 +241,12 @@
 5. Создать черновик расписания: без target Save отключён; интервалы 59/дробь/86401 не отправляются. Cancel закрывает черновик; реальный запуск/сохранение проверяются отдельным согласованным canary.
 
 Операторские destructive actions, API permissions, responsive geometry, browser focus и реальные execution results остаются отдельными live gates. Source tests/build не отмечают эти пункты завершёнными.
+
+## Дополнение истории расписаний и актуальная установка, 2 октября
+
+- Проверка полного `ScheduleExecutionStatus` выявила ещё `partial` и `failed`. Commit `c3bf0e5` добавляет явные подписи «Частичный результат» / «Задачи завершились с ошибками» и warning/destructive severity; raw unknown status сохраняется для будущего API.
+- Два дополнительных regression cases сопоставляют terminal status с фактическими succeeded/failed counters; они не называют их успехом. Финальный полный прогон: **87 suites / 687 tests**, 0 failed/skipped; **105 новых regressions** относительно 582, включая 38 в продолжении логов/расписаний. Types/diff check passed.
+- Production standalone compiled из Git `c3bf0e5c3105dcd80becfb86c743a363d0b2d23c`, первоначальный Next15.5.26 config; 44 lint warnings. Browser chunks содержат source stamp; dynamic dialog CSS проверен. Fresh browser acceptance остаётся OPEN по URL policy.
+- Installed **2 октября 2026, 00:03:15 UTC+5**, 3015 → UI3028/API18080. Next PID47416, relay PID23052; прежний owned relay18164 заменён после проверки PID/start/command/listener, Next42560 сохранён. API8d64ca4, server-only auth/observability config и внешние tunnel/OTA не заменялись.
+- Source fix count остаётся 21/41; F29 дополнен, остальные 20 OPEN. Ранее установленный `55b07d9` и его 685-test результат выше остаются историческими фактами.
+- Frontend CI published `19cd53b` success ([run36910704364](https://github.com/RootOne1337/sphere-platform/actions/runs/36910704364)); это промежуточный 685-test head. Итоговый head после дополнительного source/docs commit требует собственного CI; его результат фиксируется отдельно.
