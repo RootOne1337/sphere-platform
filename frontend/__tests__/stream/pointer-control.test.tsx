@@ -59,8 +59,8 @@ beforeEach(() => {
   });
 });
 
-function readyGestureFixture() {
-  const view = render(<DeviceStream deviceId="gesture-remote" fit="contain" />);
+function readyGestureFixture(enableStaticInput = false) {
+  const view = render(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput={enableStaticInput} />);
   act(() => jest.advanceTimersByTime(0));
   const socket = MockSocket.instances[0];
   socket.readyState = MockSocket.OPEN;
@@ -76,8 +76,70 @@ function readyGestureFixture() {
     .filter(({ type }) => type === 'click' || type === 'swipe');
   const down = (pointerId: number, clientX = 50) => fireEvent.pointerDown(canvas, { clientX, clientY: 50, pointerId, button: 0 });
   const up = (pointerId: number, clientX = 50) => fireEvent.pointerUp(canvas, { clientX, clientY: 50, pointerId, button: 0 });
-  return { canvas, socket, commands, down, up };
+  return { ...view, canvas, socket, commands, down, up };
 }
+
+it('single-device static input accepts a new tap and swipe without inventing a fresh picture', () => {
+  const { canvas, commands, down, up } = readyGestureFixture(true);
+  act(() => jest.advanceTimersByTime(10_000));
+  expect(canvas).toHaveAttribute('aria-disabled', 'false');
+  expect(canvas).toHaveAttribute('aria-label', 'Экран устройства: управление по последнему кадру');
+  down(1); up(1);
+  down(2); up(2, 65);
+  expect(commands()).toEqual([
+    { type: 'click', x: 640, y: 360 },
+    { type: 'swipe', x1: 640, y1: 360, x2: 832, y2: 360, duration_ms: 154 },
+  ]);
+});
+
+it('static input cancels the held gesture at expiry and allows a distinct new gesture', () => {
+  const { commands, down, up } = readyGestureFixture(true);
+  down(1);
+  act(() => jest.advanceTimersByTime(10_000));
+  up(1);
+  expect(commands()).toHaveLength(0);
+  down(2); up(2);
+  expect(commands()).toEqual([{ type: 'click', x: 640, y: 360 }]);
+});
+
+it.each(['close', 'error', 'denied', 'timeout'])('static %s still blocks pointer input', reason => {
+  const { canvas, socket, commands, down, up } = readyGestureFixture(true);
+  act(() => jest.advanceTimersByTime(10_000));
+  act(() => {
+    if (reason === 'close') socket.onclose?.({ code: 1006 });
+    else if (reason === 'error') socket.onerror?.();
+    else if (reason === 'timeout') jest.advanceTimersByTime(20_000);
+    else socket.onmessage?.({ data: JSON.stringify({ type: 'error', error: 'stream_control_denied' }) });
+  });
+  down(1); up(1);
+  expect(commands()).toHaveLength(0);
+  expect(canvas).toHaveAttribute('aria-disabled', 'true');
+});
+
+it('static mode cannot use the old socket picture after reconnect until a new picture is drawn', () => {
+  const { socket, canvas, commands, down, up } = readyGestureFixture(true);
+  act(() => socket.onclose?.({ code: 1006 }));
+  act(() => jest.advanceTimersByTime(1500));
+  const recovered = MockSocket.instances[1];
+  recovered.readyState = MockSocket.OPEN;
+  act(() => recovered.onopen?.(new Event('open')));
+  act(() => jest.advanceTimersByTime(10_000));
+  down(1); up(1);
+  expect(commands()).toHaveLength(0);
+  expect(canvas).toHaveAttribute('aria-disabled', 'true');
+  act(() => mockRenderFrame?.({ displayWidth: 1280, displayHeight: 720 } as VideoFrame));
+  down(2); up(2);
+  expect(commands()).toEqual([{ type: 'click', x: 640, y: 360 }]);
+});
+
+it('an OPEN socket is checked again at release even before a close callback rerenders', () => {
+  const { socket, commands, down, up } = readyGestureFixture(true);
+  act(() => jest.advanceTimersByTime(10_000));
+  down(1);
+  socket.readyState = MockSocket.CLOSED;
+  up(1);
+  expect(commands()).toHaveLength(0);
+});
 
 it('cancels a captured gesture when the decoded frame changes dimensions', () => {
   const { commands, down, up } = readyGestureFixture();

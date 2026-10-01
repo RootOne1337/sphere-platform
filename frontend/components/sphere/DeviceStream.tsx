@@ -13,6 +13,8 @@ interface DeviceStreamProps {
   enableDiagnostics?: boolean;
   enableScreenshot?: boolean;
   enableNavigation?: boolean;
+  /** Single-device control only; frame age alone does not invalidate geometry. */
+  enableStaticInput?: boolean;
   fit?: 'contain' | 'cover' | 'fill';
   onFrameDimensions?: (dimensions: StreamFrameDimensions) => void;
 }
@@ -69,6 +71,7 @@ export function DeviceStream({
   enableDiagnostics = false,
   enableScreenshot = false,
   enableNavigation = false,
+  enableStaticInput = false,
   fit,
   onFrameDimensions,
 }: DeviceStreamProps) {
@@ -90,9 +93,14 @@ export function DeviceStream({
   const [agentDiagnostics, setAgentDiagnostics] = useState<StreamDiagnosticResponse | null>(null);
   const [diagnosticsError, setDiagnosticsError] = useState<string | null>(null);
   const [browserStats, setBrowserStats] = useState<StreamDecoderStats | null>(null);
-  const canInteract = connection === 'live' && hasRenderedFrame && !streamError;
-  // Keys need no picture coordinates. A static image may age while the
-  // transport remains healthy; allow navigation, but keep pointer input gated.
+  const currentFrameOwned = hasRenderedFrame && !streamError
+    && wsRef.current?.readyState === WebSocket.OPEN
+    && renderedSocketRef.current === wsRef.current;
+  const canInteract = currentFrameOwned && (connection === 'live'
+    || (enableStaticInput && connection === 'stale'));
+  const canSaveFrame = currentFrameOwned && connection === 'live';
+  // Age is not a disconnect: an idle ImageReader can retain its last picture.
+  // A new socket/decoder still needs its own first frame before accepting input.
   const canNavigate = hasRenderedFrame && !streamError
     && (connection === 'live' || connection === 'stale')
     && renderedSocketRef.current === wsRef.current;
@@ -379,7 +387,8 @@ export function DeviceStream({
   // ── pointer down — begin drag / tap ─────────────────────────────────────
   const handlePointerDown = useCallback(
     (e: React.PointerEvent<HTMLCanvasElement>) => {
-      if (!canInteract) {
+      if (!canInteract || wsRef.current?.readyState !== WebSocket.OPEN
+        || renderedSocketRef.current !== wsRef.current) {
         dragRef.current = null;
         return;
       }
@@ -401,7 +410,8 @@ export function DeviceStream({
       const start = dragRef.current;
       if (!start || e.pointerId !== start.pointerId) return;
       dragRef.current = null;
-      if (!canInteract || e.button !== 0
+      if (!canInteract || wsRef.current?.readyState !== WebSocket.OPEN
+        || renderedSocketRef.current !== wsRef.current || e.button !== 0
         || e.currentTarget.width !== start.frameWidth
         || e.currentTarget.height !== start.frameHeight) return;
 
@@ -433,7 +443,7 @@ export function DeviceStream({
 
   const saveFrame = useCallback(() => {
     const canvas = canvasRef.current;
-    if (!canInteract || !canvas || canvas.width < 1 || canvas.height < 1) return;
+    if (!canSaveFrame || !canvas || canvas.width < 1 || canvas.height < 1) return;
     setScreenshotError(null);
     try {
       canvas.toBlob((blob) => {
@@ -450,7 +460,7 @@ export function DeviceStream({
     } catch {
       setScreenshotError('Не удалось сохранить декодированный кадр.');
     }
-  }, [canInteract, deviceId]);
+  }, [canSaveFrame, deviceId]);
 
   return (
     <div className={fit ? 'flex h-full w-full min-h-0 min-w-0 flex-col' : 'min-w-0'}>
@@ -461,7 +471,9 @@ export function DeviceStream({
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerCancel}
       onLostPointerCapture={handlePointerCancel}
-      aria-label={canInteract ? 'Экран устройства: свежий видеопоток' : 'Экран устройства: управление доступно после получения свежего видеокадра'}
+      aria-label={canInteract
+        ? connection === 'stale' ? 'Экран устройства: управление по последнему кадру' : 'Экран устройства: свежий видеопоток'
+        : 'Экран устройства: управление доступно после получения свежего видеокадра'}
       aria-disabled={!canInteract}
       className={`${canInteract ? 'cursor-crosshair' : 'pointer-events-none cursor-not-allowed'} rounded border border-gray-700 bg-black touch-none`}
       style={{
@@ -472,7 +484,7 @@ export function DeviceStream({
       }}
     />
     {enableScreenshot && <div className="absolute bottom-2 left-2 z-20 max-w-[calc(100%-1rem)]">
-      <button type="button" disabled={!canInteract} onClick={saveFrame} className="rounded-lg border border-white/20 bg-black/80 px-3 py-2 text-xs text-white disabled:cursor-not-allowed disabled:opacity-50">Сохранить свежий кадр PNG</button>
+      <button type="button" disabled={!canSaveFrame} onClick={saveFrame} className="rounded-lg border border-white/20 bg-black/80 px-3 py-2 text-xs text-white disabled:cursor-not-allowed disabled:opacity-50">Сохранить свежий кадр PNG</button>
       {screenshotError && <p role="alert" className="mt-1 rounded bg-black/90 p-2 text-xs text-red-200">{screenshotError}</p>}
     </div>}
     {(connection !== 'live' || streamError) && (
@@ -494,7 +506,9 @@ export function DeviceStream({
           />
           <span className="truncate">
             {streamError ?? (
-              connection === 'stale' ? 'Нет новых видеокадров более 10 секунд · показан последний кадр' :
+              connection === 'stale' ? canInteract
+                ? 'Экран не обновлялся более 10 секунд · управление по последнему кадру'
+                : 'Нет новых видеокадров более 10 секунд · показан последний кадр' :
               connection === 'retrying' ? 'Переподключение · показан последний кадр' :
               connection === 'unavailable' ? 'Стрим недоступен · показан последний кадр' :
               'Ожидание нового кадра · показан последний кадр'

@@ -101,8 +101,8 @@ it('keeps raw capture skips unknown for an older agent instead of displaying zer
   expect(screen.getByText('Encoded FPS drops: 50')).toBeInTheDocument();
 });
 
-it('reports a missing first frame even when WebSocket pings keep the connection open', () => {
-  render(<DeviceStream deviceId="device-no-frame" />);
+it('static-input mode still requires a first frame even when WebSocket pings keep the connection open', () => {
+  const { container } = render(<DeviceStream deviceId="device-no-frame" enableStaticInput />);
   act(() => jest.advanceTimersByTime(0));
 
   const socket = Socket.instances[0];
@@ -115,6 +115,21 @@ it('reports a missing first frame even when WebSocket pings keep the connection 
   act(() => jest.advanceTimersByTime(1));
 
   expect(screen.getByText('Первый видеокадр не получен за 10 секунд')).toBeInTheDocument();
+  expect(container.querySelector('canvas')).toHaveAttribute('aria-disabled', 'true');
+});
+
+it('allowing control on a static picture does not relabel a stale PNG export as fresh', () => {
+  const { container } = render(<DeviceStream deviceId="device-static-png" enableScreenshot enableStaticInput />);
+  act(() => jest.advanceTimersByTime(0));
+  const socket = Socket.instances[0];
+  socket.readyState = Socket.OPEN;
+  act(() => socket.onopen?.());
+  act(() => mockFrameCallback?.({ displayWidth: 960, displayHeight: 540 } as VideoFrame));
+  const button = screen.getByRole('button', { name: 'Сохранить свежий кадр PNG' });
+  expect(button).toBeEnabled();
+  act(() => jest.advanceTimersByTime(10_000));
+  expect(container.querySelector('canvas')).toHaveAttribute('aria-disabled', 'false');
+  expect(button).toBeDisabled();
 });
 
 it('applies the requested fit mode to the actual canvas surface', () => {
