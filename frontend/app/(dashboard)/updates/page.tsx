@@ -1,6 +1,8 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
+import { getApiErrorMessage } from '@/lib/apiError';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -44,29 +46,22 @@ interface ReleasesResponse {
 // ── Hooks ─────────────────────────────────────────────────────────────────────
 
 function useReleases(platform?: string, flavor?: string) {
-  const [data, setData] = useState<ReleasesResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchReleases = async () => {
-    setLoading(true);
-    setError(null);
-    try {
+  return useQuery<ReleasesResponse>({
+    queryKey: ['ota-releases', platform ?? 'all', flavor ?? 'all'],
+    queryFn: async ({ signal }) => {
       const params = new URLSearchParams();
       if (platform) params.set('platform', platform);
       if (flavor) params.set('flavor', flavor);
-      const { data } = await api.get(`/updates/?${params}`);
-      setData(data);
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Failed to load');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => { fetchReleases(); }, [platform, flavor]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  return { data, loading, error, refetch: fetchReleases };
+      const { data } = await api.get<ReleasesResponse>(`/updates/?${params}`, { signal });
+      if (!Array.isArray(data?.releases) || !Number.isInteger(data.total) || data.total < 0) {
+        throw new Error('Invalid release catalog response');
+      }
+      return data;
+    },
+    // Reconcile catalog changes while the operator watches; never replay writes.
+    refetchInterval: 30_000,
+    refetchIntervalInBackground: false,
+  });
 }
 
 // ── Create Release Form ───────────────────────────────────────────────────────
@@ -210,12 +205,12 @@ function CreateReleaseDialog({ onCreated }: { onCreated: () => void }) {
 export default function UpdatesPage() {
   const [platformFilter, setPlatformFilter] = useState<string>('all');
   const [flavorFilter, setFlavorFilter] = useState<string>('all');
-  const { data, loading, error, refetch } = useReleases(
+  const { data, isPending, isFetching, isError, error, refetch } = useReleases(
     platformFilter === 'all' ? undefined : platformFilter,
     flavorFilter === 'all' ? undefined : flavorFilter,
   );
 
-  const releases = data?.releases ?? [];
+  const releases = isError ? [] : data?.releases ?? [];
 
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this release?')) return;
@@ -230,14 +225,19 @@ export default function UpdatesPage() {
   return (
     <div className="flex flex-col gap-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold">OTA Updates</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
             Manage the releases offered by agents&apos; scheduled update checks
           </p>
         </div>
-        <CreateReleaseDialog onCreated={refetch} />
+        <div className="flex flex-wrap items-center gap-2">
+          <Button variant="outline" disabled={isFetching} onClick={() => { void refetch(); }}>
+            Обновить релизы
+          </Button>
+          <CreateReleaseDialog onCreated={() => { void refetch(); }} />
+        </div>
       </div>
 
       <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 px-4 py-3 text-sm text-muted-foreground">
@@ -249,7 +249,7 @@ export default function UpdatesPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex gap-3 items-center">
+      <div className="flex flex-wrap gap-3 items-center">
         <Select value={platformFilter} onValueChange={setPlatformFilter}>
           <SelectTrigger className="w-[180px]" aria-label="Platform filter">
             <SelectValue />
@@ -262,7 +262,7 @@ export default function UpdatesPage() {
           </SelectContent>
         </Select>
         <Select value={flavorFilter} onValueChange={setFlavorFilter}>
-          <SelectTrigger className="w-[160px]">
+          <SelectTrigger className="w-[160px]" aria-label="Flavor filter">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -271,13 +271,23 @@ export default function UpdatesPage() {
             <SelectItem value="dev">dev</SelectItem>
           </SelectContent>
         </Select>
-        <Badge variant="outline">{releases.length} release{releases.length !== 1 ? 's' : ''}</Badge>
+        <Badge variant="outline">
+          {isError || isPending ? 'Количество релизов неизвестно' : `${data?.total ?? 0} release${data?.total !== 1 ? 's' : ''}`}
+        </Badge>
       </div>
 
       {/* Content */}
-      {loading && <div className="text-muted-foreground">Loading releases…</div>}
-      {error && <div className="text-destructive">Error: {error}</div>}
-      {!loading && releases.length === 0 && (
+      {isPending && !isError && <div role="status" className="text-muted-foreground">Loading releases…</div>}
+      {isError && (
+        <div role="alert" className="rounded-lg border border-destructive/30 p-4">
+          <p className="text-destructive">Не удалось загрузить релизы. Актуальный каталог неизвестен.</p>
+          <p className="mt-1 text-sm text-muted-foreground">{getApiErrorMessage(error, 'Проверьте подключение и права доступа, затем повторите запрос.')}</p>
+          <Button variant="outline" className="mt-3" disabled={isFetching} onClick={() => { void refetch(); }}>
+            Повторить загрузку релизов
+          </Button>
+        </div>
+      )}
+      {!isPending && !isError && releases.length === 0 && (
         <div className="rounded-lg border border-dashed p-12 text-center text-muted-foreground">
           No releases yet. Create one with &ldquo;+ New Release&rdquo;.
         </div>
@@ -316,6 +326,7 @@ export default function UpdatesPage() {
                 variant="ghost"
                 size="sm"
                 className="text-destructive hover:text-destructive shrink-0"
+                disabled={isFetching}
                 onClick={() => handleDelete(release.id)}
               >
                 Delete

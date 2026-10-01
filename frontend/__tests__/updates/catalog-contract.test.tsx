@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import UpdatesPage from '@/app/(dashboard)/updates/page';
 import { api } from '@/lib/api';
+import { createWrapper } from '../helpers';
 
 jest.mock('@/lib/api', () => ({ api: { get: jest.fn(), post: jest.fn(), delete: jest.fn() } }));
 jest.mock('@/lib/hooks/useDevices', () => ({ useDevices: () => ({
@@ -15,7 +16,7 @@ it('describes catalog-wide periodic delivery without offering a broken direct pu
     created_at: '2026-09-24T00:00:00Z',
   }], total: 1 } });
 
-  render(<UpdatesPage />);
+  render(<UpdatesPage />, { wrapper: createWrapper() });
   expect(await screen.findByText('v1.2.15-dev')).toBeInTheDocument();
   expect(screen.getByText(/all agents of that flavor/i)).toBeInTheDocument();
   expect(screen.queryByRole('button', { name: 'PH006' })).not.toBeInTheDocument();
@@ -30,8 +31,8 @@ it('shows canary releases in the default catalog view without implying normal ag
     created_at: '2026-09-26T18:07:01Z',
   }], total: 1 } });
 
-  render(<UpdatesPage />);
+  render(<UpdatesPage />, { wrapper: createWrapper() });
   expect(await screen.findByText('v1.2.28-dev')).toBeInTheDocument();
   expect(screen.getByText(/normal Android agents do not poll this channel/i)).toBeInTheDocument();
-  expect(api.get).toHaveBeenCalledWith('/updates/?');
+  expect(api.get).toHaveBeenCalledWith('/updates/?', { signal: expect.any(AbortSignal) });
 });
