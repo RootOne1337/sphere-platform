@@ -57,6 +57,17 @@ class TaskDetailResponse(TaskResponse):
     model_config = ConfigDict(from_attributes=True)
 
 
+class TaskScreenshotReference(BaseModel):
+    key: str
+    url: str | None = None
+    unavailable_reason: str | None = None
+
+
+class TaskScreenshotManifest(BaseModel):
+    task_id: uuid.UUID
+    screenshots: list[TaskScreenshotReference]
+
+
 # ── Пагинация ─────────────────────────────────────────────────────────────────
 
 class TaskListResponse(BaseModel):

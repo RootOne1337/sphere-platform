@@ -6,7 +6,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from backend.services.screenshot_storage import BUCKET, ScreenshotStorage
+from backend.services.screenshot_storage import BUCKET, MAX_SCREENSHOT_BYTES, ScreenshotStorage
 
 
 @pytest.fixture
@@ -74,3 +74,36 @@ class TestDeleteScreenshot:
         key = "tasks/t/d/n/old.jpg"
         await storage.delete_screenshot(key)
         minio.remove_object.assert_called_once_with(BUCKET, key)
+
+
+@pytest.mark.parametrize("data,mime", [(b"\xff\xd8\xffimage", "image/jpeg"),
+                                      (b"\x89PNG\r\n\x1a\nimage", "image/png")])
+async def test_private_read_detects_raster_type_and_closes_response(storage, minio, data, mime):
+    response = MagicMock()
+    response.read.return_value = data
+    minio.get_object.return_value = response
+    assert await storage.read_screenshot("tasks/owned.jpg") == (data, mime)
+    response.read.assert_called_once_with(MAX_SCREENSHOT_BYTES + 1)
+    response.close.assert_called_once()
+    response.release_conn.assert_called_once()
+
+
+@pytest.mark.parametrize("data", [b"<html>not an image</html>", b"x" * (MAX_SCREENSHOT_BYTES + 1)], ids=["html", "oversized"])
+async def test_rejected_content_still_releases_connection(storage, minio, data):
+    response = MagicMock()
+    response.read.return_value = data
+    minio.get_object.return_value = response
+    with pytest.raises(ValueError):
+        await storage.read_screenshot("tasks/owned.jpg")
+    response.close.assert_called_once()
+    response.release_conn.assert_called_once()
+
+
+async def test_failed_read_still_releases_connection(storage, minio):
+    response = MagicMock()
+    response.read.side_effect = TimeoutError("read stalled")
+    minio.get_object.return_value = response
+    with pytest.raises(TimeoutError):
+        await storage.read_screenshot("tasks/owned.jpg")
+    response.close.assert_called_once()
+    response.release_conn.assert_called_once()

@@ -35,6 +35,13 @@ class Settings(BaseSettings):
     # Kept out of Settings repr; provision through the deployment secret store.
     ACCOUNT_CREDENTIAL_KEYS: SecretStr = SecretStr("")
 
+    # Private task artifacts: no public MinIO address or credentials reach browsers.
+    SCREENSHOT_STORAGE_ENDPOINT: str = ""
+    SCREENSHOT_STORAGE_ACCESS_KEY: SecretStr = SecretStr("")
+    SCREENSHOT_STORAGE_SECRET_KEY: SecretStr = SecretStr("")
+    SCREENSHOT_STORAGE_SECURE: bool = True
+    SCREENSHOT_STORAGE_REGION: str = "us-east-1"
+
     # VPN
     WG_ROUTER_URL: str = "http://localhost:8001"
     WG_ROUTER_API_KEY: str = ""

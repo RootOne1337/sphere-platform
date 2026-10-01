@@ -8,9 +8,11 @@ from __future__ import annotations
 
 import uuid
 from typing import Literal
+from urllib.parse import quote
 
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
+from minio.error import S3Error
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -26,13 +28,21 @@ from backend.schemas.task import (
     TaskDetailResponse,
     TaskListResponse,
     TaskResponse,
+    TaskScreenshotManifest,
+    TaskScreenshotReference,
 )
 from backend.schemas.task_results import NodeExecutionLog
 from backend.services.device_status_cache import DeviceStatusCache
 from backend.services.task_queue import TaskQueue
+from backend.services.task_screenshots import (
+    get_screenshot_storage,
+    owned_screenshot_key,
+    task_screenshot_keys,
+)
 from backend.services.task_service import TaskService, start_dispatcher
 
 logger = structlog.get_logger()
+_SCREENSHOT_URL_SAFE = "~()*!'"  # Match browser encodeURIComponent for object keys.
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
 
@@ -268,36 +278,58 @@ async def get_task_live_logs(
 
 @router.get(
     "/{task_id}/screenshots",
-    summary="Presigned URLs к скриншотам задачи (TTL 1 час)",
+    response_model=TaskScreenshotManifest,
+    summary="Authorized task screenshot manifest; content requires the same session",
 )
 async def get_task_screenshots(
     task_id: uuid.UUID,
     current_user: User = require_permission("script:read"),
     svc: TaskService = Depends(get_task_service),
-) -> dict:
+) -> TaskScreenshotManifest:
     task = await svc._get_task(task_id, current_user.org_id)
+    return TaskScreenshotManifest(task_id=task_id, screenshots=[
+        TaskScreenshotReference(
+            key=key,
+            url=f"/tasks/{task_id}/screenshots/content?key={quote(key, safe=_SCREENSHOT_URL_SAFE)}" if owned_screenshot_key(task, key) else None,
+            unavailable_reason=None if owned_screenshot_key(task, key) else "Stored key does not belong to this task",
+        ) for key in task_screenshot_keys(task)
+    ])
 
-    screenshot_keys: list[str] = []
-    if task.result:
-        # Собрать ключи из node_logs
-        for log in task.result.get("node_logs", []):
-            if log.get("screenshot_key"):
-                screenshot_keys.append(log["screenshot_key"])
-        if task.result.get("final_screenshot_key"):
-            screenshot_keys.append(task.result["final_screenshot_key"])
 
-    if not screenshot_keys:
-        return {"screenshots": []}
-
+@router.get(
+    "/{task_id}/screenshots/content", response_class=Response,
+    summary="Read a reported task screenshot through the authorized API",
+    responses={200: {"content": {"image/jpeg": {}, "image/png": {}}},
+               404: {"description": "Task or reported object not found"},
+               503: {"description": "Screenshot storage unavailable"}},
+)
+async def get_task_screenshot_content(
+    task_id: uuid.UUID,
+    key: str = Query(..., min_length=1, max_length=1024),
+    current_user: User = require_permission("script:read"),
+    svc: TaskService = Depends(get_task_service),
+) -> Response:
+    task = await svc._get_task(task_id, current_user.org_id)
+    if not owned_screenshot_key(task, key) or key not in task_screenshot_keys(task):
+        raise HTTPException(404, "Task screenshot not found")
     try:
-        from backend.services.screenshot_storage import ScreenshotStorage
-        storage = ScreenshotStorage.__new__(ScreenshotStorage)  # stub без minio
-        urls = [await storage.get_presigned_url(k) for k in screenshot_keys]
-    except Exception:
-        # MinIO может быть недоступен — возвращать ключи
-        urls = screenshot_keys
-
-    return {"screenshots": urls}
+        storage = get_screenshot_storage()
+        image, content_type = await storage.read_screenshot(key)
+    except HTTPException:
+        raise
+    except S3Error as error:
+        if error.code in ("NoSuchKey", "NoSuchObject"):
+            raise HTTPException(404, "Screenshot object is missing or expired") from None
+        logger.warning("task.screenshot_storage_failed", task_id=str(task_id), error_type=type(error).__name__)
+        raise HTTPException(503, "Screenshot storage is unavailable") from None
+    except ValueError as error:
+        raise HTTPException(422, str(error)) from None
+    except Exception as error:
+        logger.warning("task.screenshot_storage_failed", task_id=str(task_id), error_type=type(error).__name__)
+        raise HTTPException(503, "Screenshot storage is unavailable") from None
+    return Response(image, media_type=content_type, headers={
+        "Cache-Control": "private, no-store", "X-Content-Type-Options": "nosniff",
+    })
 
 
 # ── Cancel ────────────────────────────────────────────────────────────────────
