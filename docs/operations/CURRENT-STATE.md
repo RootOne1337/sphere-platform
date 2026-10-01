@@ -7,7 +7,21 @@
 [Главная](../../README.md) · [Каталог документации](../README.md) · [Readiness](READINESS.md) · [Fleet32 gates](../audits/2026-09-20/FLEET32-PREFLIGHT.md) · [PR #19](https://github.com/RootOne1337/sphere-platform/pull/19)
 
 > [!IMPORTANT]
-> **Последний установленный loopback runtime, 1 октября:** `3015 → UI 3023 / API 18080`, frontend **8f615c6**, backend **8d64ca4**. UI установлен в **17:28:52 UTC+5**, API в **18:04:04**; build/readiness healthy подтверждены. Предыдущий Next 3022 сохранён для rollback. Database head и соседние containers/public UI/tunnels при backend rollout не менялись. Это проверочный веб [3015/devices](http://127.0.0.1:3015/devices), не развёртывание public frontend. [Датированный cross-layer audit и runtime/OTA evidence](../audits/2026-10-01/CALLBACK-LIFECYCLE-CANARY.md).
+> **Последний установленный loopback runtime, 1 октября, 22:35:03 UTC+5:** `3015 → standalone UI 3025 / API 18080`, frontend **d1cfbee**, backend **8d64ca4**. Веб на 3015 восстановлен после подтверждённого отсутствия listener; новый Next/relay принадлежат этой сборке, health/build через relay соответствует API. Compiled SHA проверен. Заменён только проверенный relay предыдущей установки; прежний Next сохранён для rollback, посторонние процессы не останавливались. Это проверочный веб [3015/devices](http://127.0.0.1:3015/devices), public frontend не заменён. [Исправления по полному аудиту](../audits/2026-10-01/WEB-AUDIT-REMEDIATION.md) · [Validation/runtime evidence](../audits/2026-10-01/WEB-AUDIT-FIXES-VALIDATION.json).
+
+**Новый frontend batch:** 10 source findings исправлены, включая все 5 P1 полного
+аудита: безопасная загрузка DAG, подтверждённый settings baseline и сохранение
+dirty draft, правдивые отчёты шагов и различение ошибок API. Исправлены очистка
+локаций, account payload/debounce, read failures каталогов и command receipts.
+**79 suites / 629 tests**, type-check и production standalone compile passed на
+source **d1cfbee**; visual/browser acceptance остаётся OPEN по URL policy. API,
+APK и OTA этим batch не менялись; 31 finding остаётся открытым. Это локальные
+регрессии/сборка, новый GitHub CI учитывается отдельно.
+
+**Предыдущая установка 1 октября:** UI 8f615c6 на 3023 / relay3015 установлен
+в 17:28:52, backend 8d64ca4 — в 18:04:04. На срезе 22:19 прежние 3015/3023
+не слушали порт; причина завершения этих процессов этим batch не установлена.
+[Исторический cross-layer audit и OTA evidence](../audits/2026-10-01/CALLBACK-LIFECYCLE-CANARY.md).
 
 **Текущий APK canary:** **1.2.40-dev / 10240**, source **68155c1**, planar=true /
 GPU=false, **8465471 bytes**, SHA256

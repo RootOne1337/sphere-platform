@@ -10,8 +10,12 @@ Source: `1354d66660041ba17afb64399d567ca29dd91866`. Режим: документ
 - 9/9 изолированных source-contract доказательств; это не E2E.
 - Свежий Prometheus screenshot; Sphere screenshots — только historical. Полный current visual walkthrough заблокирован browser URL policy.
 
-Первыми разбирать [F03](WEB-FULL-CAPABILITY-AUDIT.md#f03), [F04](WEB-FULL-CAPABILITY-AUDIT.md#f04), [F05](WEB-FULL-CAPABILITY-AUDIT.md#f05): запись после failed load и потеря dirty draft; затем [F01](WEB-FULL-CAPABILITY-AUDIT.md#f01)/[F02](WEB-FULL-CAPABILITY-AUDIT.md#f02): достоверность результатов. Исправления сейчас не выполнялись.
+Исходные приоритеты аудита: [F03](WEB-FULL-CAPABILITY-AUDIT.md#f03), [F04](WEB-FULL-CAPABILITY-AUDIT.md#f04), [F05](WEB-FULL-CAPABILITY-AUDIT.md#f05): запись после failed load и потеря dirty draft; затем [F01](WEB-FULL-CAPABILITY-AUDIT.md#f01)/[F02](WEB-FULL-CAPABILITY-AUDIT.md#f02): достоверность результатов. В рамках замороженного аудита исправления не выполнялись.
 
 [Evidence JSON](WEB-FULL-CAPABILITY-AUDIT-EVIDENCE.json) фиксирует источники/хэши/статусы/ограничения. Каталоги структурные, не заявления о принятии всех controls.
 
 Текущее продолжение: [журнал исправлений и статусы F01–F41](WEB-AUDIT-REMEDIATION.md). Исторический аудит остаётся неизменным.
+
+В implementation batch `d1cfbee` исправлены 10 source findings, включая все 5 P1;
+79 suites / 629 tests и production standalone compile passed. Review UI восстановлен
+на 3015 → 3025 в 22:35 UTC+5; compiled build SHA проверен, browser visual acceptance открыт. [Fix validation](WEB-AUDIT-FIXES-VALIDATION.json).

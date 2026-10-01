@@ -16,14 +16,20 @@
 </div>
 
 > [!NOTE]
-> **Текущий срез: 1 октября 2026.** APK-кандидат **1.2.40 / 10240** установлен
+> **Текущий срез: 1 октября 2026, 22:35 UTC+5.** После отдельной фиксации полного
+> веб-аудита исправлены 10 source findings, включая все 5 P1; frontend **d1cfbee**:
+> **79 suites / 629 tests**, types и production standalone compile passed.
+> Проверочный веб восстановлен: **3015 → UI 3025 / API 18080**, API **8d64ca4**.
+> Визуальная приёмка ещё открыта; public frontend не заменён, 31 finding остаётся.
+> [Журнал исправлений / evidence](docs/audits/2026-10-01/WEB-AUDIT-REMEDIATION.md).
+>
+> **APK-кандидат 1.2.40 / 10240** ранее установлен
 > адресным OTA на PH010 и удалённый PH025: установка и восстановление после
 > перезапуска процесса подтверждены. Исправлены codec callback ownership,
 > web diagnostics freshness и terminal heartbeat fencing с before/after tests.
-> Принятый code head **8d64ca4**: backend **2140 passed / 15 skipped**, frontend
-> **582 passed**, configured APK **783 tests на flavor / 1 skipped**.
-> Проверочный веб **3015 → UI 3023 / API 18080**, UI 8f615c6 / API 8d64ca4 реально
-> установлены. PH010 дал **299 pictures / 10 s**; PH025 всё ещё сообщает **5 Hz**,
+> Предыдущий принятый cross-layer code head **8d64ca4**: backend **2140 passed / 15 skipped**,
+> configured APK **783 tests на flavor / 1 skipped**.
+> В предыдущем finite trial PH010 дал **299 pictures / 10 s**; PH025 сообщал **5 Hz**,
 > first picture 9.844 s и длинные gaps: remote smoothness/latency не приняты.
 > Normal/global OTA, production signer и приёмка 20–30 устройств остаются открытыми.
 > [Audit, версии, receipts и ограничения](docs/audits/2026-10-01/CALLBACK-LIFECYCLE-CANARY.md) ·

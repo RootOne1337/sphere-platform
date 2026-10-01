@@ -2,6 +2,8 @@
 
 Этот журнал продолжает [замороженный аудит](WEB-FULL-CAPABILITY-AUDIT.md) исходников `1354d66`. Исходный документ и evidence сохраняют свою дату и ограничения; их статусы не переписываются задним числом.
 
+**Срез реализации 1 октября 2026, 22:35 UTC+5:** frontend source `d1cfbee`; 10 source findings исправлены (все 5 P1 и 5 P2), 31 остаётся открытым. Проверочный веб восстановлен на `3015 → UI 3025 / API 18080`. Production standalone compile и 79 suites / 629 tests passed; это не визуальная приёмка. [Allowlisted validation/runtime evidence](WEB-AUDIT-FIXES-VALIDATION.json).
+
 ## Исходная фиксация
 
 - Аудит: 29 маршрутов, 169 REST-операций, 151 схема / 1112 свойств, 565 деклараций контролов и 41 содержимое Dialog.
@@ -106,6 +108,7 @@
 
 ### F07/F08 и первая часть F09 — создание и поиск аккаунтов
 
+- Commit реализации: `6ad3018`.
 - Законопослушность включена в typed Create payload; 0/100 не теряются, пустое поле не превращается в placeholder 100. UI и handler блокируют нецелые и выходящие за 0–100 значения, согласованные с backend schema.
 - Поиск использует общий useDebounce с cleanup таймера; быстрый ввод отправляет последнюю строку после 300 мс, новая строка возвращает pagination на первую страницу. При unmount таймер не обновляет страницу.
 - Ошибка списка аккаунтов показывает явное состояние неизвестности и retry, без ложного empty state/нулевого количества записей и stale row actions. Create остаётся отдельным workflow.
@@ -113,6 +116,18 @@
 
 ### F09 — триггеры и корректный смысл агрегатов
 
+- Commit реализации: `d1cfbee`.
 - Read failure триггеров показывает retry и unknown metrics; stale rows и empty state не выдаются за актуальный каталог. Total берётся из API envelope, локальные агрегаты помечены как относящиеся к полученной странице.
 - Дополнительно подтверждена ошибка подписи: `!is_active && total_triggers > 0` не доказывает сбой выполнения. Карточка переименована в «Неактивных со срабатываниями»; выдуманный счётчик ошибок удалён.
 - `frontend/__tests__/event-triggers/read-evidence.test.tsx`: 2/2 regressions passed, 1 октября 2026; failed-read без cached actions/empty/zero, server total 201 при одной полученной записи и disabled ≠ failed. Hooks списка заменены fixtures; F14 полнота pagination/поиска остаётся открыта.
+
+## Общая проверка и установленный review runtime
+
+- **Source:** `d1cfbeea89a6854c722e0750653b4794b536e316`. Шесть atomic implementation commits идут после отдельной фиксации аудита `80fb365`. Новых regressions 47; frozen audit source/evidence не переписаны.
+- **Tests:** полный frontend Jest, 79/79 suites, 629/629 tests, 0 failed / 0 skipped; TypeScript `--noEmit` и `git diff --check` passed. Transport mocks не объявляются реальными операциями устройств.
+- **Compile:** отдельный git archive того же source, Next.js 15.5.26 production build passed с исходным `output: standalone`; стандартный config не ослаблялся. WS использует origin браузера, API — `/api/v1`. Финальная сборка содержит `NEXT_PUBLIC_BUILD_SHA=d1cfbeea89a6854c722e0750653b4794b536e316`; наличие метки проверено в собранных chunks. Существующие 44 lint warnings не скрыты; zero-warning acceptance не заявляется.
+- **Installed:** в 22:19 UTC+5 старый 3015/3023 не имел listener; backend 18080 оставался доступен. Первое восстановление на 3024 выполнено в 22:25:21. Финальная сборка с SHA переключена в **22:35:03** на **3015 → standalone UI 3025 / API 18080**: Next PID 33052 / relay PID 2192. Owned loopback listeners подтверждены, Next сообщил Ready, health/build через relay соответствует backend `8d64ca4`. Заменён только проверенный relay PID 15620; предыдущий Next PID 8800 сохранён для rollback, Next 3016 и посторонние процессы не останавливались. Это local review deployment, public frontend не заменён.
+- **Documents:** 371 relative target и 41 finding anchor проверены, missing 0. Числа тестов сверены с raw Jest receipt; 10 исправленных findings и 31 открытый согласованы с ledger. Frozen audit source/evidence оставлены без изменений относительно commit `80fb365`.
+- **Observability:** новый Next получил прежний server-only session secret и auth API/Prometheus/Grafana upstreams; секреты в evidence не публикуются. Доступность upstream ports подтверждена, authenticated browser/Grafana workflow этим batch не принят.
+- **Limits:** browser URL policy по-прежнему блокирует fresh Sphere visual walkthrough; обход не выполнялся. Public/runtime metrics не доказывают Android FPS, стабильность связи или выполнение новых задач. APK/backend/tunnel/OTA этим batch не изменялись; PR остаётся draft.
+- **Next:** F10/F11 OTA ownership/empty semantics, затем F12–F15 полнота каталогов, F17 безопасный повтор с сохранением контекста и F21–F23 модальные окна/навигация. F34–F36 требуют отдельных native/browser/fleet performance gates.
