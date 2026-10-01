@@ -3,7 +3,8 @@ import { DeviceStream } from '@/components/sphere/DeviceStream';
 import { api } from '@/lib/api';
 
 jest.mock('@/lib/api', () => ({ api: { get: jest.fn() } }));
-jest.mock('@/lib/store', () => ({ useAuthStore: () => ({ accessToken: 'fixture-token' }) }));
+let mockAccessToken: string | null = 'fixture-token';
+jest.mock('@/lib/store', () => ({ useAuthStore: () => ({ accessToken: mockAccessToken }) }));
 
 let mockStats: Record<string, number | null>;
 let mockFrameCallback: ((frame: VideoFrame) => void) | null = null;
@@ -32,6 +33,7 @@ class Socket {
 
 beforeEach(() => {
   jest.useFakeTimers();
+  mockAccessToken = 'fixture-token';
   Socket.instances = [];
   mockFrameCallback = null;
   mockStats = {
@@ -80,11 +82,11 @@ it('shows agent and browser stages only when operator opens diagnostics', async 
   expect(screen.getByText('Отрисовка FPS (1 с): 18')).toBeInTheDocument();
   expect(screen.getByText('Local WS rejected: 1')).toBeInTheDocument();
   expect(screen.getByText(/7 пакетов · 4096 байт/)).toBeInTheDocument();
-  expect(screen.getByText('Последний пакет: 0 сек назад')).toBeInTheDocument();
-  expect(screen.getByText('Последний canvas frame: 0 сек назад')).toBeInTheDocument();
+  expect(screen.getByText('Последний пакет: 1 сек назад')).toBeInTheDocument();
+  expect(screen.getByText('Последний canvas frame: 1 сек назад')).toBeInTheDocument();
   expect(screen.getByText('IDR/delta: 1/4')).toBeInTheDocument();
   expect(screen.getByText('Decoded output: 4')).toBeInTheDocument();
-  expect(api.get).toHaveBeenCalledWith('/devices/device-1/stream-diagnostics');
+  expect(api.get).toHaveBeenCalledWith('/devices/device-1/stream-diagnostics', { signal: expect.any(AbortSignal) });
 });
 
 it('keeps raw capture skips unknown for an older agent instead of displaying zero', async () => {
@@ -99,6 +101,82 @@ it('keeps raw capture skips unknown for an older agent instead of displaying zer
   fireEvent.click(screen.getByRole('button', { name: 'Диагностика' }));
   expect(await screen.findByText('Raw capture FPS skips: —')).toBeInTheDocument();
   expect(screen.getByText('Encoded FPS drops: 50')).toBeInTheDocument();
+});
+
+it('does not show a previous device snapshot while the new device request is pending', async () => {
+  const view = render(<DeviceStream deviceId="device-first" enableDiagnostics />);
+  act(() => jest.advanceTimersByTime(0));
+  fireEvent.click(screen.getByRole('button', { name: 'Диагностика' }));
+  expect(await screen.findByText('Capture FPS: 15')).toBeInTheDocument();
+  (api.get as jest.Mock).mockImplementation(() => new Promise(() => {}));
+  view.rerender(<DeviceStream deviceId="device-next" enableDiagnostics />);
+  expect(screen.queryByText('Capture FPS: 15')).not.toBeInTheDocument();
+  expect(screen.queryByText(/Local WS rejected: 1/)).not.toBeInTheDocument();
+  expect(screen.getByText(/Отчёт APK: загрузка/)).toBeInTheDocument();
+});
+
+it('does not start overlapping polls when the previous diagnostics request has not settled', () => {
+  (api.get as jest.Mock).mockImplementation(() => new Promise(() => {}));
+  render(<DeviceStream deviceId="device-slow" enableDiagnostics />);
+  act(() => jest.advanceTimersByTime(0));
+  fireEvent.click(screen.getByRole('button', { name: 'Диагностика' }));
+  act(() => jest.advanceTimersByTime(45_000));
+  expect(api.get).toHaveBeenCalledTimes(1);
+});
+
+it('ages the received APK snapshot between HTTP polls instead of freezing its freshness', async () => {
+  render(<DeviceStream deviceId="device-aging" enableDiagnostics />);
+  act(() => jest.advanceTimersByTime(0));
+  fireEvent.click(screen.getByRole('button', { name: 'Диагностика' }));
+  await act(async () => {});
+  expect(screen.getByText(/snapshot 4 сек назад/)).toBeInTheDocument();
+  act(() => jest.advanceTimersByTime(11_000));
+  expect(screen.getByText(/snapshot 15 сек назад/)).toBeInTheDocument();
+  expect(api.get).toHaveBeenCalledTimes(1);
+});
+
+it('invalidates the APK report and aborts its poll when the authentication session changes', async () => {
+  const view = render(<DeviceStream deviceId="device-session" enableDiagnostics />);
+  act(() => jest.advanceTimersByTime(0));
+  fireEvent.click(screen.getByRole('button', { name: 'Диагностика' }));
+  await act(async () => {});
+  expect(screen.getByText('Capture FPS: 15')).toBeInTheDocument();
+  const previousSignal = (api.get as jest.Mock).mock.calls[0][1].signal as AbortSignal;
+  (api.get as jest.Mock).mockImplementation(() => new Promise(() => {}));
+  mockAccessToken = 'replacement-fixture-token';
+  view.rerender(<DeviceStream deviceId="device-session" enableDiagnostics />);
+  expect(previousSignal.aborted).toBe(true);
+  expect(screen.queryByText('Capture FPS: 15')).not.toBeInTheDocument();
+  expect(api.get).toHaveBeenCalledTimes(2);
+});
+
+it('ignores a late old-device response even when the transport does not honor abort', async () => {
+  let resolveOld!: (value: unknown) => void;
+  (api.get as jest.Mock).mockImplementationOnce(() => new Promise((resolve) => { resolveOld = resolve; }));
+  const view = render(<DeviceStream deviceId="device-old-pending" enableDiagnostics />);
+  act(() => jest.advanceTimersByTime(0));
+  fireEvent.click(screen.getByRole('button', { name: 'Диагностика' }));
+  view.rerender(<DeviceStream deviceId="device-current" enableDiagnostics />);
+  await act(async () => {});
+  expect(screen.getByText('Capture FPS: 15')).toBeInTheDocument();
+  await act(async () => resolveOld({ data: { state: 'active_report', age_seconds: 0,
+    diagnostics: { telemetry: { capture_fps: 999 } } } }));
+  expect(screen.queryByText('Capture FPS: 999')).not.toBeInTheDocument();
+  expect(screen.getByText('Capture FPS: 15')).toBeInTheDocument();
+});
+
+it('retries a failed poll and replaces the failure message with the next successful report', async () => {
+  render(<DeviceStream deviceId="device-retry" enableDiagnostics />);
+  act(() => jest.advanceTimersByTime(0));
+  fireEvent.click(screen.getByRole('button', { name: 'Диагностика' }));
+  await act(async () => {});
+  (api.get as jest.Mock).mockRejectedValueOnce(new Error('fixture transport failure'));
+  await act(async () => jest.advanceTimersByTime(15_000));
+  expect(screen.getByText('Не удалось получить телеметрию устройства')).toBeInTheDocument();
+  await act(async () => jest.advanceTimersByTime(15_000));
+  expect(screen.queryByText('Не удалось получить телеметрию устройства')).not.toBeInTheDocument();
+  expect(screen.getByText('Capture FPS: 15')).toBeInTheDocument();
+  expect(api.get).toHaveBeenCalledTimes(3);
 });
 
 it('static-input mode still requires a first frame even when WebSocket pings keep the connection open', () => {

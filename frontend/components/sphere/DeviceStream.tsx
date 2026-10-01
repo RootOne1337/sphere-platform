@@ -90,7 +90,15 @@ export function DeviceStream({
   const [streamError, setStreamError] = useState<string | null>(null);
   const [screenshotError, setScreenshotError] = useState<string | null>(null);
   const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
-  const [agentDiagnostics, setAgentDiagnostics] = useState<StreamDiagnosticResponse | null>(null);
+  const [agentReport, setAgentReport] = useState<{
+    deviceId: string; accessToken: string | null; data: StreamDiagnosticResponse; receivedAtMs: number;
+  } | null>(null);
+  const [diagnosticNowMs, setDiagnosticNowMs] = useState(0);
+  // A prior device/auth response must never be rendered under the new selection.
+  const agentDiagnostics = agentReport?.deviceId === deviceId && agentReport.accessToken === accessToken
+    ? agentReport.data : null;
+  const diagnosticAgeSeconds = agentDiagnostics?.age_seconds != null && agentReport
+    ? agentDiagnostics.age_seconds + Math.max(0, diagnosticNowMs - agentReport.receivedAtMs) / 1000 : null;
   const [diagnosticsError, setDiagnosticsError] = useState<string | null>(null);
   const [browserStats, setBrowserStats] = useState<StreamDecoderStats | null>(null);
   const currentFrameOwned = hasRenderedFrame && !streamError
@@ -319,31 +327,46 @@ export function DeviceStream({
   useEffect(() => {
     if (!enableDiagnostics || !diagnosticsOpen) return;
     let active = true;
+    let inFlight = false;
+    const controller = new AbortController();
+    setAgentReport(null);
+    setDiagnosticsError(null);
     const refreshAgent = async () => {
+      if (inFlight) return;
+      inFlight = true;
       try {
         const { data } = await api.get<StreamDiagnosticResponse>(
           `/devices/${deviceId}/stream-diagnostics`,
+          { signal: controller.signal },
         );
         if (active) {
-          setAgentDiagnostics(data);
+          const receivedAtMs = performance.now();
+          setAgentReport({ deviceId, accessToken, data, receivedAtMs });
+          setDiagnosticNowMs(receivedAtMs);
           setDiagnosticsError(null);
         }
       } catch {
         if (active) setDiagnosticsError('Не удалось получить телеметрию устройства');
+      } finally {
+        inFlight = false;
       }
     };
     void refreshAgent();
     const agentTimer = window.setInterval(() => void refreshAgent(), 15_000);
     const browserTimer = window.setInterval(() => {
-      if (active) setBrowserStats(decoderRef.current?.stats ?? null);
+      if (active) {
+        setBrowserStats(decoderRef.current?.stats ?? null);
+        setDiagnosticNowMs(performance.now());
+      }
     }, 1000);
     setBrowserStats(decoderRef.current?.stats ?? null);
     return () => {
       active = false;
+      controller.abort();
       window.clearInterval(agentTimer);
       window.clearInterval(browserTimer);
     };
-  }, [deviceId, diagnosticsOpen, enableDiagnostics]);
+  }, [deviceId, accessToken, diagnosticsOpen, enableDiagnostics]);
 
   // ── coordinate helpers ───────────────────────────────────────────────────
   const toCanvasCoords = useCallback(
@@ -548,7 +571,7 @@ export function DeviceStream({
             {diagnosticsError ? <div className="text-red-300">{diagnosticsError}</div> : (
               <>
                 <div>Отчёт APK: {agentDiagnostics?.state === 'active_report' ? 'захват активен' : agentDiagnostics?.state ?? 'загрузка…'}
-                  {agentDiagnostics?.age_seconds != null && ` · snapshot ${Math.floor(agentDiagnostics.age_seconds)} сек назад`}
+                  {diagnosticAgeSeconds != null && ` · snapshot ${Math.floor(diagnosticAgeSeconds)} сек назад`}
                 </div>
                 <div>Последний Android heartbeat: {formatIsoTimestampAgo(agentDiagnostics?.last_heartbeat)}</div>
                 {agentDiagnostics?.diagnostics ? (() => {
