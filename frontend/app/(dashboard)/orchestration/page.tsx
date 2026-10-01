@@ -1830,7 +1830,7 @@ function EditScheduleDialog({ schedule, open, onOpenChange, pipelines }: {
 
     const canSubmit = name.trim().length > 0 && (
         (triggerType === 'cron' && cronExpression.trim()) ||
-        (triggerType === 'interval' && intervalSeconds > 0) ||
+        (triggerType === 'interval' && Number.isInteger(intervalSeconds) && intervalSeconds >= 60 && intervalSeconds <= 86400) ||
         (triggerType === 'one_shot' && isValidUtcDateTimeInput(oneShotAt))
     ) && (
         (targetType === 'pipeline' && pipelineId) ||
@@ -1908,10 +1908,13 @@ function EditScheduleDialog({ schedule, open, onOpenChange, pipelines }: {
                             <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Интервал (секунды) *</Label>
                             <Input
                                 type="number"
+                                aria-label="Интервал запуска в секундах"
                                 value={intervalSeconds}
                                 onChange={e => setIntervalSeconds(Number(e.target.value))}
                                 className="h-9 bg-black/30 border-border font-mono text-xs"
-                                min={10}
+                                min={60}
+                                max={86400}
+                                step={1}
                             />
                         </div>
                     )}
@@ -2084,12 +2087,12 @@ function CreateScheduleDialog({ open, onOpenChange, pipelines }: { open: boolean
 
     const canSubmit = name.trim().length > 0 && (
         (triggerType === 'cron' && cronExpression.trim()) ||
-        (triggerType === 'interval' && intervalSeconds > 0) ||
+        (triggerType === 'interval' && Number.isInteger(intervalSeconds) && intervalSeconds >= 60 && intervalSeconds <= 86400) ||
         (triggerType === 'one_shot' && isValidUtcDateTimeInput(oneShotAt))
     ) && (
         (targetType === 'pipeline' && pipelineId) ||
         (targetType === 'script' && scriptId)
-    );
+    ) && targetDeviceIds.length > 0;
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -2162,10 +2165,13 @@ function CreateScheduleDialog({ open, onOpenChange, pipelines }: { open: boolean
                             <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Интервал (секунды) *</Label>
                             <Input
                                 type="number"
+                                aria-label="Интервал запуска в секундах"
                                 value={intervalSeconds}
                                 onChange={e => setIntervalSeconds(Number(e.target.value))}
                                 className="h-9 bg-black/30 border-border font-mono text-xs"
-                                min={10}
+                                min={60}
+                                max={86400}
+                                step={1}
                             />
                         </div>
                     )}
@@ -2258,6 +2264,7 @@ function CreateScheduleDialog({ open, onOpenChange, pipelines }: { open: boolean
                     <div className="space-y-1.5">
                         <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Целевые устройства</Label>
                         <DeviceSelector value={targetDeviceIds} onChange={setTargetDeviceIds} />
+                        {!targetDeviceIds.length && <p role="status" className="text-xs text-muted-foreground">Выберите минимум одно устройство для запуска. Пустой выбор не означает весь парк.</p>}
                     </div>
                 </div>
 

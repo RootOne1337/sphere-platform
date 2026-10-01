@@ -5,7 +5,7 @@ import { createWrapper } from '../helpers';
 
 jest.mock('@/lib/api', () => ({ api: { get: jest.fn(), post: jest.fn(), patch: jest.fn(), delete: jest.fn() } }));
 jest.mock('@/lib/hooks/useScripts', () => ({ useScripts: () => ({ data: { items: [] } }) }));
-jest.mock('@/components/sphere/DeviceSelector', () => ({ DeviceSelector: () => null }));
+jest.mock('@/components/sphere/DeviceSelector', () => ({ DeviceSelector: ({ onChange }: { onChange: (ids: string[]) => void }) => <button onClick={() => onChange(['device-1'])}>Выбрать тестовую цель</button> }));
 jest.mock('sonner', () => ({ toast: { success: jest.fn(), error: jest.fn() } }));
 const schedule = { id: 'schedule-1', name: 'One shot canary', description: null, cron_expression: null, interval_seconds: null,
   one_shot_at: '2026-10-20T13:45:26.123456+05:00', timezone: 'Asia/Yekaterinburg', target_type: 'pipeline', pipeline_id: 'pipeline-1',
@@ -46,6 +46,7 @@ it('creates one-shot schedules with the same UTC contract and does not submit an
   fireEvent.click(await screen.findByText('Schedules'));
   fireEvent.click(await screen.findByRole('button', { name: 'Новое расписание' }));
   const dialog = screen.getByRole('dialog');
+  fireEvent.click(within(dialog).getByRole('button', { name: 'Выбрать тестовую цель' }));
   fireEvent.change(within(dialog).getByPlaceholderText('Ежечасный health-check'), { target: { value: 'New canary' } });
   fireEvent.click(within(dialog).getByRole('button', { name: /one.shot/i }));
   const pipeline = within(dialog).getAllByRole('combobox').find(el => el.textContent?.includes('Выбери pipeline'))!;
