@@ -96,7 +96,7 @@ export default function EventTriggersPage() {
     is_active: filterActive === 'true' ? true : filterActive === 'false' ? false : undefined,
   }), [filterActive]);
 
-  const { data, isLoading, refetch } = useEventTriggers(params);
+  const { data, isLoading, isError, isFetching, refetch } = useEventTriggers(params);
   const { data: pipelines = [] } = usePipelineOptions();
   const toggleMut = useToggleEventTrigger();
   const deleteMut = useDeleteEventTrigger();
@@ -131,7 +131,7 @@ export default function EventTriggersPage() {
                 Event Triggers
               </h1>
               <Badge variant="outline" className="ml-2 text-[9px]">
-                {triggers.length}
+                {isError || isLoading ? '—' : data?.total ?? triggers.length}
               </Badge>
             </div>
             <p className="text-xs text-muted-foreground font-mono max-w-2xl">
@@ -159,7 +159,7 @@ export default function EventTriggersPage() {
                 <SelectItem value="false">Неактивные</SelectItem>
               </SelectContent>
             </Select>
-            <Button variant="outline" size="sm" className="h-9" onClick={() => refetch()}>
+            <Button variant="outline" size="sm" className="h-9" disabled={isFetching} onClick={() => refetch()}>
               <RefreshCw className="w-3.5 h-3.5 mr-1" /> Обновить
             </Button>
             <Button size="sm" className="h-9 font-mono text-xs uppercase tracking-wider" onClick={() => setCreateOpen(true)}>
@@ -172,10 +172,10 @@ export default function EventTriggersPage() {
       {/* ── STATS ──────────────────────────────────────────────────── */}
       <div className="px-6 pt-5">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
-          <StatCard label="Всего триггеров" value={triggers.length} icon={<Zap className="w-7 h-7 text-primary/30" strokeWidth={1} />} />
-          <StatCard label="Активных" value={triggers.filter(t => t.is_active).length} icon={<Activity className="w-7 h-7 text-success/30" strokeWidth={1} />} />
-          <StatCard label="Сработало (всего)" value={triggers.reduce((s, t) => s + t.total_triggers, 0)} icon={<GitBranch className="w-7 h-7 text-primary/30" strokeWidth={1} />} />
-          <StatCard label="С ошибками" value={triggers.filter(t => !t.is_active && t.total_triggers > 0).length} icon={<ShieldAlert className="w-7 h-7 text-destructive/30" strokeWidth={1} />} />
+          <StatCard label="Всего по фильтру API" value={isError || isLoading ? '—' : data?.total ?? triggers.length} icon={<Zap className="w-7 h-7 text-primary/30" strokeWidth={1} />} />
+          <StatCard label="Активных на странице" value={isError || isLoading ? '—' : triggers.filter(t => t.is_active).length} icon={<Activity className="w-7 h-7 text-success/30" strokeWidth={1} />} />
+          <StatCard label="Срабатываний на странице" value={isError || isLoading ? '—' : triggers.reduce((s, t) => s + t.total_triggers, 0)} icon={<GitBranch className="w-7 h-7 text-primary/30" strokeWidth={1} />} />
+          <StatCard label="Неактивных со срабатываниями" value={isError || isLoading ? '—' : triggers.filter(t => !t.is_active && t.total_triggers > 0).length} icon={<ShieldAlert className="w-7 h-7 text-muted-foreground/30" strokeWidth={1} />} />
         </div>
       </div>
 
@@ -197,6 +197,12 @@ export default function EventTriggersPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-[#222]/50 font-mono text-xs text-foreground/80">
+              {isError && <tr><td colSpan={9} className="px-4 py-8 text-center">
+                <div role="alert" className="space-y-3">
+                  <p>Не удалось загрузить триггеры. Состояние каталога не подтверждено.</p>
+                  <Button variant="outline" disabled={isFetching} onClick={() => void refetch()}>Повторить загрузку триггеров</Button>
+                </div>
+              </td></tr>}
               {isLoading && (
                 <tr>
                   <td colSpan={9} className="px-4 py-8 text-center text-muted-foreground">
@@ -204,7 +210,7 @@ export default function EventTriggersPage() {
                   </td>
                 </tr>
               )}
-              {!isLoading && filtered.length === 0 && (
+              {!isLoading && !isError && filtered.length === 0 && (
                 <tr>
                   <td colSpan={9} className="px-4 py-12 text-center text-muted-foreground">
                     <Zap className="w-8 h-8 mx-auto mb-2 opacity-30" />
@@ -212,7 +218,7 @@ export default function EventTriggersPage() {
                   </td>
                 </tr>
               )}
-              {filtered.map((t) => (
+              {!isError && filtered.map((t) => (
                 <tr key={t.id} className="hover:bg-muted transition-colors group">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
@@ -323,7 +329,7 @@ export default function EventTriggersPage() {
 
 // ── Stat Card ────────────────────────────────────────────────────────
 
-function StatCard({ label, value, icon }: { label: string; value: number; icon: React.ReactNode }) {
+function StatCard({ label, value, icon }: { label: string; value: number | string; icon: React.ReactNode }) {
   return (
     <div className="border border-border bg-muted rounded-sm p-4 flex items-center justify-between">
       <div>

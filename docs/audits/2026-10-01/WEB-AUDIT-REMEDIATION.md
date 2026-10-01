@@ -31,7 +31,7 @@
 | [F06](WEB-FULL-CAPABILITY-AUDIT.md#f06) | P2 | Source исправлен; live OPEN | Локации: очистка текста не передаётся серверу |
 | [F07](WEB-FULL-CAPABILITY-AUDIT.md#f07) | P2 | Source исправлен; live OPEN | Аккаунты: законопослушность не отправляется при создании |
 | [F08](WEB-FULL-CAPABILITY-AUDIT.md#f08) | P2 | Source исправлен; live OPEN | Аккаунты: debounce фактически не отменяет прошлые таймеры |
-| [F09](WEB-FULL-CAPABILITY-AUDIT.md#f09) | P2 | Аккаунты исправлены; триггеры OPEN | Аккаунты и триггеры: ошибка списка выглядит пустым каталогом |
+| [F09](WEB-FULL-CAPABILITY-AUDIT.md#f09) | P2 | Source исправлен; live OPEN | Аккаунты и триггеры: ошибка списка выглядит пустым каталогом |
 | [F10](WEB-FULL-CAPABILITY-AUDIT.md#f10) | P2 | Открыто | OTA: поздний ответ фильтра может заменить новый |
 | [F11](WEB-FULL-CAPABILITY-AUDIT.md#f11) | P2 | Открыто | OTA: ошибка соседствует с ложным empty state |
 | [F12](WEB-FULL-CAPABILITY-AUDIT.md#f12) | P2 | Открыто | Сценарии: первая страница без доступа к остальным |
@@ -110,3 +110,9 @@
 - Поиск использует общий useDebounce с cleanup таймера; быстрый ввод отправляет последнюю строку после 300 мс, новая строка возвращает pagination на первую страницу. При unmount таймер не обновляет страницу.
 - Ошибка списка аккаунтов показывает явное состояние неизвестности и retry, без ложного empty state/нулевого количества записей и stale row actions. Create остаётся отдельным workflow.
 - `frontend/__tests__/accounts/form-search.test.tsx`: 9/9 regressions passed, 1 октября 2026. Create использует настоящий mutation hook с mock POST; список заменён query fixture, debounce настоящий. Полная transport/визуальная проверка каталога не заявляется.
+
+### F09 — триггеры и корректный смысл агрегатов
+
+- Read failure триггеров показывает retry и unknown metrics; stale rows и empty state не выдаются за актуальный каталог. Total берётся из API envelope, локальные агрегаты помечены как относящиеся к полученной странице.
+- Дополнительно подтверждена ошибка подписи: `!is_active && total_triggers > 0` не доказывает сбой выполнения. Карточка переименована в «Неактивных со срабатываниями»; выдуманный счётчик ошибок удалён.
+- `frontend/__tests__/event-triggers/read-evidence.test.tsx`: 2/2 regressions passed, 1 октября 2026; failed-read без cached actions/empty/zero, server total 201 при одной полученной записи и disabled ≠ failed. Hooks списка заменены fixtures; F14 полнота pagination/поиска остаётся открыта.
