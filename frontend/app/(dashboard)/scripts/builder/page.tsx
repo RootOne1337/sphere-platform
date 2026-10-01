@@ -1,5 +1,5 @@
 'use client';
-import { useState, useCallback, useEffect, Suspense } from 'react';
+import { useState, useCallback, useEffect, useRef, Suspense } from 'react';
 import {
   ReactFlow,
   Background,
@@ -60,6 +60,10 @@ function getDefaultData(type: string): Record<string, unknown> {
 }
 
 function importDag(dag: DagExport): { nodes: Node[]; edges: Edge[] } {
+  if (!dag || typeof dag !== 'object' || !dag.nodes || Array.isArray(dag.nodes)
+    || typeof dag.entry_node !== 'string' || !dag.nodes[dag.entry_node]) {
+    throw new Error('Сервер не вернул корректный граф сценария. Запись заблокирована.');
+  }
   const nodes: Node[] = [];
   const edges: Edge[] = [];
   const ids = Object.keys(dag.nodes);
@@ -219,10 +223,8 @@ function NodeSidebar({ node, onUpdate, onClose }: NodeSidebarProps) {
 }
 
 /* ── Builder Inner ─────────────────────────────────────────────── */
-function BuilderInner() {
+function BuilderInner({ editId }: { editId: string | null }) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const editId = searchParams.get('id');
 
   const [nodes, setNodes, onNodesChange] = useNodesState(INITIAL_NODES);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
@@ -230,31 +232,43 @@ function BuilderInner() {
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
-  const [loaded, setLoaded] = useState(!editId);
+  const [loadState, setLoadState] = useState<'loading' | 'ready' | 'error'>(editId ? 'loading' : 'ready');
+  const [loadError, setLoadError] = useState('');
+  const [loadAttempt, setLoadAttempt] = useState(0);
+  const mounted = useRef(true);
+  const saveInFlight = useRef(false);
+
+  useEffect(() => {
+    mounted.current = true;
+    return () => { mounted.current = false; };
+  }, []);
 
   // Load existing script
   useEffect(() => {
     if (!editId) return;
     let cancelled = false;
+    const controller = new AbortController();
+    setLoadState('loading');
+    setLoadError('');
     (async () => {
       try {
-        const { data } = await api.get(`/scripts/${editId}?include_dag=true`);
+        const { data } = await api.get(`/scripts/${editId}?include_dag=true`, { signal: controller.signal });
         if (cancelled) return;
-        setScriptName(data.name ?? 'UNTITLED_SCRIPT');
+        if (data.id !== editId) throw new Error('Ответ относится к другому сценарию. Запись заблокирована.');
         const dag = data.current_version?.dag ?? data.dag;
-        if (dag) {
-          const { nodes: imported, edges: importedEdges } = importDag(dag);
-          setNodes(imported);
-          setEdges(importedEdges);
-        }
-      } catch {
-        setErrors(['[ERR] Failed to pull script payload from server']);
-      } finally {
-        if (!cancelled) setLoaded(true);
+        const { nodes: imported, edges: importedEdges } = importDag(dag);
+        setScriptName(data.name ?? 'UNTITLED_SCRIPT');
+        setNodes(imported);
+        setEdges(importedEdges);
+        setLoadState('ready');
+      } catch (error) {
+        if (cancelled) return;
+        setLoadError(error instanceof Error ? error.message : 'Не удалось загрузить сценарий.');
+        setLoadState('error');
       }
     })();
-    return () => { cancelled = true; };
-  }, [editId, setNodes, setEdges]);
+    return () => { cancelled = true; controller.abort(); };
+  }, [editId, loadAttempt, setNodes, setEdges]);
 
   const onConnect = useCallback(
     (params: Connection) => setEdges((eds) => addEdge(params, eds)),
@@ -287,6 +301,7 @@ function BuilderInner() {
   );
 
   const handleSave = async () => {
+    if (loadState !== 'ready' || saveInFlight.current) return;
     try {
       const dag = exportDag(nodes, edges);
       const validationErrors = validateDag(dag);
@@ -295,21 +310,39 @@ function BuilderInner() {
         return;
       }
       setErrors([]);
+      saveInFlight.current = true;
       setSaving(true);
       if (editId) {
         await api.put(`/scripts/${editId}`, { name: scriptName, dag });
       } else {
         await api.post('/scripts', { name: scriptName, dag });
       }
-      router.push('/scripts');
+      if (mounted.current) router.push('/scripts');
     } catch (e: unknown) {
-      setErrors([(e as Error).message]);
+      if (mounted.current) setErrors([(e as Error).message]);
     } finally {
-      setSaving(false);
+      saveInFlight.current = false;
+      if (mounted.current) setSaving(false);
     }
   };
 
-  if (!loaded) {
+  if (loadState === 'error') {
+    return (
+      <div className="mx-auto flex min-h-[50vh] max-w-xl items-center p-6">
+        <div role="alert" className="w-full space-y-4 rounded-xl border border-destructive/30 bg-card p-6">
+          <h1 className="text-lg font-semibold">Сценарий не загружен</h1>
+          <p className="break-words text-sm text-muted-foreground">{loadError}</p>
+          <p className="text-sm">Редактирование и сохранение недоступны до успешной загрузки исходного графа.</p>
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={() => setLoadAttempt((attempt) => attempt + 1)}>Повторить загрузку</Button>
+            <Button variant="outline" onClick={() => router.push('/scripts')}>К каталогу сценариев</Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (loadState === 'loading') {
     return (
       <div className="flex items-center justify-center h-screen bg-card">
         <div className="flex flex-col items-center">
@@ -347,7 +380,7 @@ function BuilderInner() {
             ))}
           </div>
 
-          <Button variant="noc" onClick={handleSave} disabled={saving} className="h-8 px-6">
+          <Button variant="noc" onClick={handleSave} disabled={saving || loadState !== 'ready'} className="h-8 px-6">
             {saving ? 'COMMITING...' : editId ? 'UPDATE DAG' : 'DEPLOY DAG'}
             <Save className="w-3.5 h-3.5 ml-2" />
           </Button>
@@ -403,6 +436,12 @@ function BuilderInner() {
   );
 }
 
+function OwnedBuilder() {
+  const editId = useSearchParams().get('id');
+  // A new resource owns its graph, errors and in-flight load independently.
+  return <BuilderInner key={editId ?? 'new-script'} editId={editId} />;
+}
+
 export default function ScriptBuilderPage() {
   return (
     <Suspense fallback={
@@ -410,7 +449,7 @@ export default function ScriptBuilderPage() {
         <Fingerprint className="w-8 h-8 text-primary animate-pulse" />
       </div>
     }>
-      <BuilderInner />
+      <OwnedBuilder />
     </Suspense>
   );
 }

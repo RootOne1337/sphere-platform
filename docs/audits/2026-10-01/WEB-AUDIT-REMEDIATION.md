@@ -25,7 +25,7 @@
 |---|---|---|---|
 | [F01](WEB-FULL-CAPABILITY-AUDIT.md#f01) | P1 | Открыто | Задание: недостоверный Pass Rate |
 | [F02](WEB-FULL-CAPABILITY-AUDIT.md#f02) | P1 | Открыто | Задание: ошибка API подменяется отсутствием записи |
-| [F03](WEB-FULL-CAPABILITY-AUDIT.md#f03) | P1 | Открыто | Редактор: разрешена запись после провала загрузки DAG |
+| [F03](WEB-FULL-CAPABILITY-AUDIT.md#f03) | P1 | Source исправлен; live OPEN | Редактор: разрешена запись после провала загрузки DAG |
 | [F04](WEB-FULL-CAPABILITY-AUDIT.md#f04) | P1 | Открыто | Настройки pipeline: можно сохранить неподтверждённые defaults |
 | [F05](WEB-FULL-CAPABILITY-AUDIT.md#f05) | P1 | Открыто | Настройки pipeline: несохранённая форма сбрасывается |
 | [F06](WEB-FULL-CAPABILITY-AUDIT.md#f06) | P2 | Открыто | Локации: очистка текста не передаётся серверу |
@@ -67,4 +67,11 @@
 
 ## Доказательства следующего этапа
 
-Исправления ещё не выполнены на момент начальной фиксации. Здесь будут source commits, regression results, проверенный build и отдельно установленная версия/визуальная приёмка.
+Начальная фиксация аудита: commit `80fb365`, до любых изменений приложения. Дальнейшие результаты перечислены ниже; «source исправлен» не означает installed/live acceptance.
+
+### F03 — безопасная загрузка DAG
+
+- Существующий сценарий доступен для редактирования только после успешного чтения именно его ID и корректного графа. Ошибка API, отсутствующий DAG, неверный entry и ответ другого ресурса оставляют отдельный error/retry экран без Save.
+- Смена ID создаёт отдельного владельца graph/error/save состояния; предыдущий GET отменяется, поздний ответ игнорируется. Завершение старого Save не перенаправляет новый редактор. New-script workflow сохранён.
+- `frontend/__tests__/scripts/builder-load.test.tsx`: 8/8 component regressions passed, 1 октября 2026. Проверены failed-read→retry→original PUT, malformed/wrong target, late response, target failure, создание нового графа и поздний save. ReactFlow/Monaco заменены тестовыми renderers; real Canvas/браузер не принят.
+- Изменений APK/backend/runtime не требуется и этим batch не выполнялось. Conditional/version-safe concurrent PUT остаётся отдельной задачей; новый UI не объявляет атомарную защиту от чужого одновременного редактирования.
