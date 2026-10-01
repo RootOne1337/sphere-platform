@@ -23,8 +23,8 @@
 
 | ID | Приоритет | Статус после аудита | Предмет |
 |---|---|---|---|
-| [F01](WEB-FULL-CAPABILITY-AUDIT.md#f01) | P1 | Открыто | Задание: недостоверный Pass Rate |
-| [F02](WEB-FULL-CAPABILITY-AUDIT.md#f02) | P1 | Открыто | Задание: ошибка API подменяется отсутствием записи |
+| [F01](WEB-FULL-CAPABILITY-AUDIT.md#f01) | P1 | Source исправлен; live OPEN | Задание: недостоверный Pass Rate |
+| [F02](WEB-FULL-CAPABILITY-AUDIT.md#f02) | P1 | Source исправлен; live OPEN | Задание: ошибка API подменяется отсутствием записи |
 | [F03](WEB-FULL-CAPABILITY-AUDIT.md#f03) | P1 | Source исправлен; live OPEN | Редактор: разрешена запись после провала загрузки DAG |
 | [F04](WEB-FULL-CAPABILITY-AUDIT.md#f04) | P1 | Source исправлен; live OPEN | Настройки pipeline: можно сохранить неподтверждённые defaults |
 | [F05](WEB-FULL-CAPABILITY-AUDIT.md#f05) | P1 | Source исправлен; live OPEN | Настройки pipeline: несохранённая форма сбрасывается |
@@ -40,7 +40,7 @@
 | [F15](WEB-FULL-CAPABILITY-AUDIT.md#f15) | P2 | Открыто | Логи: выбрать устройство можно только из первой страницы |
 | [F16](WEB-FULL-CAPABILITY-AUDIT.md#f16) | P2 | Открыто | Задание: несогласованный путь к скриншотам шагов |
 | [F17](WEB-FULL-CAPABILITY-AUDIT.md#f17) | P2 | Открыто | Задание: restart теряет параметры оригинала |
-| [F18](WEB-FULL-CAPABILITY-AUDIT.md#f18) | P2 | Открыто | Задание: ошибки Stop/Cancel/Restart не показаны |
+| [F18](WEB-FULL-CAPABILITY-AUDIT.md#f18) | P2 | Source исправлен; live OPEN | Задание: ошибки Stop/Cancel/Restart не показаны |
 | [F19](WEB-FULL-CAPABILITY-AUDIT.md#f19) | P2 | Открыто | Обнаружение: текст противоречит auto-register |
 | [F20](WEB-FULL-CAPABILITY-AUDIT.md#f20) | P2 | Открыто | Обнаружение: заголовок результата использует новый CIDR |
 | [F21](WEB-FULL-CAPABILITY-AUDIT.md#f21) | P2 | Открыто | Мобильное меню: offscreen ссылки остаются активными |
@@ -79,9 +79,19 @@
 
 ### F04/F05 — подтверждённые настройки и сохранение намерения оператора
 
+- Commit реализации: `062ef47`.
 - После провала первого GET нет редактируемых defaults или активных переключателей. Повтор восстанавливает реальные значения API. Ошибка фонового чтения сохраняет предыдущий снимок и черновик, но блокирует запись до успешного восстановления.
 - Серверный baseline отделён от dirty-полей. Toggle и refetch не сбрасывают несохранённые правки; PATCH содержит только изменённые поля. Явные empty/null, `false` и `0` сохраняют свою семантику. Поле очищается из черновика только после подтверждения равного значения сервером.
 - При обнаруженном изменении редактируемого поля на сервере Save блокируется. Оператор явно принимает серверные значения либо оставляет свои правки, после чего отдельно сохраняет. Неизменённые поля берутся из свежего снимка и не попадают в PATCH.
 - Pending read/write блокирует конкурирующие действия формы. Перед mutation отменяется предыдущий GET; его поздний ответ не заменяет подтверждённый receipt. Ошибки validation показывают безопасный текст и сохраняют черновик для retry.
 - `frontend/__tests__/pipeline-settings/settings-write.test.tsx`: 11/11 regressions passed, 1 октября 2026; настоящие React Query hooks/cache, API transport заменён тестовым. Проверены 401/500, retry, dirty toggle/refetch, конфликт/отмена правок, offline/stale, 422, partial/null/false/zero payload, pending write и late GET.
 - Backend PATCH остаётся без revision/CAS precondition: конфликт определяется по полученным снимкам, атомарная защита между последним GET и записью не заявляется. Runtime/APK/backend этим batch не заменяются; визуальная приёмка ещё открыта.
+
+### F01/F02/F18 — правдивые отчёты задания и результаты команд
+
+- Удалён фиктивный Pass Rate и вычисление циклов по отношению счётчиков. UI показывает фактические success/failure в полученных отчётах, явно ограничивая вывод этим набором. Отсутствующие счётчики не становятся нулевыми; число исполненных шагов не подписывается как число успешных.
+- 404, 401, 403 и transport failure разделены. После ошибки фонового чтения предыдущий снимок виден с временем подтверждения, команды заблокированы, доступен retry. Ответ другого task ID отвергается query hook. Смена ID изолирует локальные ошибки/receipt и отменяет старый GET.
+- Ошибки Stop/Cancel/Restart отображаются, failed restart не оставляет необработанный rejected promise. Успешная остановка означает принятие запроса, а не завершение Android-работы. Ответ создания нового задания содержит ссылку на полученный ID; успешное выполнение не выдумывается.
+- Ошибка журнала не выглядит пустой историей. Fallback из task.result помечен как снимок; ошибки live progress/live journal показываются отдельно.
+- `frontend/__tests__/tasks/detail-outcomes.test.tsx`: 16/16 component regressions passed, 1 октября 2026; реальный React Query с mock transport. Проверены HTTP classes/retry, wrong owner, mixed/empty/terminal reports, stale command lock, три failed actions/retry, create receipt, log errors/fallback и late GET при смене task.
+- F17 остаётся открытым: текущий CreateTaskRequest не принимает произвольный input_params или pinned script_version_id. Этот batch не маскирует потерю контекста добавлением несуществующих полей в запрос. Backend, APK и установленный веб не заменены; свежая визуальная приёмка открыта.

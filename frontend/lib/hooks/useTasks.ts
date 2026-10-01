@@ -75,8 +75,9 @@ export function useTasks(params: {
 export function useTask(taskId: string) {
   return useQuery<TaskDetail>({
     queryKey: ['tasks', taskId],
-    queryFn: async () => {
-      const { data } = await api.get(`/tasks/${taskId}`);
+    queryFn: async ({ signal }) => {
+      const { data } = await api.get(`/tasks/${taskId}`, { signal });
+      if (!data || data.id !== taskId) throw new Error('Ответ API относится к другому заданию');
       return data;
     },
     enabled: !!taskId,
@@ -87,8 +88,9 @@ export function useTask(taskId: string) {
 export function useTaskLogs(taskId: string) {
   return useQuery<NodeExecutionLog[]>({
     queryKey: ['tasks', taskId, 'logs'],
-    queryFn: async () => {
-      const { data } = await api.get(`/tasks/${taskId}/logs`);
+    queryFn: async ({ signal }) => {
+      const { data } = await api.get(`/tasks/${taskId}/logs`, { signal });
+      if (!Array.isArray(data)) throw new Error('Некорректный ответ журнала задания');
       return data;
     },
     enabled: !!taskId,
@@ -108,8 +110,8 @@ export interface TaskProgress {
 export function useTaskProgress(taskId: string, enabled: boolean) {
   return useQuery<TaskProgress>({
     queryKey: ['tasks', taskId, 'progress'],
-    queryFn: async () => {
-      const { data } = await api.get(`/tasks/${taskId}/progress`);
+    queryFn: async ({ signal }) => {
+      const { data } = await api.get(`/tasks/${taskId}/progress`, { signal });
       return data;
     },
     enabled: enabled && !!taskId,
@@ -126,8 +128,8 @@ export interface LiveLogEntry {
 export function useTaskLiveLogs(taskId: string, enabled: boolean) {
   return useQuery<LiveLogEntry[]>({
     queryKey: ['tasks', taskId, 'live-logs'],
-    queryFn: async () => {
-      const { data } = await api.get(`/tasks/${taskId}/live-logs`);
+    queryFn: async ({ signal }) => {
+      const { data } = await api.get(`/tasks/${taskId}/live-logs`, { signal });
       return data;
     },
     enabled: enabled && !!taskId,
