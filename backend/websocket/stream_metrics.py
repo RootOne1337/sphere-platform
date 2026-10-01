@@ -15,6 +15,7 @@ from backend.metrics import (
     stream_encoder_bytes_session,
     stream_encoder_errors_session,
     stream_encoder_frames_session,
+    stream_encoder_input_drops_session,
     stream_fps,
     stream_frame_throttle_drops_session,
     stream_keyframe_ratio,
@@ -73,6 +74,7 @@ class StreamMetrics:
             ("encoder_errors_total", stream_encoder_errors_session),
             ("frame_throttle_drops_total", stream_frame_throttle_drops_session),
             ("capture_throttle_drops_total", stream_capture_throttle_drops_session),
+            ("encoder_input_drops_total", stream_encoder_input_drops_session),
         )
         for field, metric in optional_metric_fields:
             value = getattr(telemetry, field)

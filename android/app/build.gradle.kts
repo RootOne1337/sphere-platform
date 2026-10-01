@@ -65,6 +65,12 @@ val releaseArtifactRequested = requestedAndroidTasks.any { taskName ->
 require(System.getenv("SPHERE_STREAM_GPU_BRIDGE") != "true" || !releaseArtifactRequested) {
     "GPU bridge is a debug canary; native acceptance is required before release builds"
 }
+require(System.getenv("SPHERE_STREAM_PLANAR_INPUT") != "true" || !releaseArtifactRequested) {
+    "Planar input is a debug canary; full native and browser acceptance is required before release builds"
+}
+require(System.getenv("SPHERE_STREAM_PLANAR_INPUT") != "true" || System.getenv("SPHERE_STREAM_GPU_BRIDGE") != "true") {
+    "Select only one experimental capture path"
+}
 if (releaseArtifactRequested) {
     val signingEnvironment = mapOf(
         "SPHERE_KEYSTORE_PATH" to System.getenv("SPHERE_KEYSTORE_PATH"),
@@ -108,6 +114,7 @@ android {
         buildConfigField("String", "GIT_SHA", "\"${System.getenv("GIT_SHA") ?: "local"}\"")
         // Canary-only until native EGL/codec cadence and cleanup are accepted.
         buildConfigField("boolean", "STREAM_GPU_BRIDGE", (System.getenv("SPHERE_STREAM_GPU_BRIDGE") == "true").toString())
+        buildConfigField("boolean", "STREAM_PLANAR_INPUT", (System.getenv("SPHERE_STREAM_PLANAR_INPUT") == "true").toString())
         buildConfigField("String", "BUILD_TIME", "\"${System.currentTimeMillis()}\"")
         buildConfigField("String", "DEFAULT_FALLBACK_SERVER_URL", "\"${System.getenv("SPHERE_FALLBACK_SERVER_URL") ?: ""}\"")
         buildConfigField("String", "CONFIG_MIRROR_URLS", javaString(System.getenv("SPHERE_CONFIG_MIRROR_URLS") ?: ""))

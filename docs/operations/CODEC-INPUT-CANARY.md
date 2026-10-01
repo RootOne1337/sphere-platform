@@ -84,6 +84,30 @@ thread, bounded collections, finite input/drain. API 28 `app_process` требу
 
 ## Исправление, которое следует проверять
 
+**Source candidate 1.2.39 / 10239:** путь реализован под
+`SPHERE_STREAM_PLANAR_INPUT=true`, только debug artifact; одновременно включать
+GPU bridge нельзя. Default — false, release-shaped Gradle tasks с этим canary
+flag отклоняются. Вход ImageReader остаётся RGBA, native geometry сохраняется,
+буферы RGBA/I420 переиспользуются; нет Bitmap/Canvas/encoder input Surface.
+Google AVC planar capability проверяется до создания VirtualDisplay. Если такой
+codec/input недоступен, запуск возвращается к прежнему Surface path до расходования
+projection token. После runtime capture failure projection не переиспользуется
+автоматически ради смены input path.
+
+Planar timestamps берутся из Image producer, повторные/неположительные не создают
+новые pictures. Нет свободного codec input — raw skip без blocking wait;
+`encoder_input_drops_total` отличает его от FPS throttle и coded-picture loss.
+В API/Prometheus extension optional: старый агент означает unknown, а не zero;
+устаревшая gauge удаляется. UI диагностики выводит этот счётчик отдельно. API/UI
+runtime должны быть обновлены для отображения нового поля; существующий AVC wire
+protocol и decoder менять для самого видеопути не требуется.
+
+До configured artifact build: **43 targeted Android tests**, включая 13 conversion,
+6 codec-input ownership и 20 capture lifecycle, пройдены; 20 backend diagnostic/
+metric tests, frontend 567 tests и type-check пройдены. Эти tests не исполняют
+реальный MediaProjection/OMX и не закрывают FPS/quality acceptance. Полная configured
+APK сборка обеих flavors и установка на canary — следующий этап.
+
 1. Canary RGBA ImageReader → переиспользуемый I420 buffer → тот же AVC encoder.
    Native resolution, один real input timestamp на кадр, raw drop при отсутствии
    codec input buffer. Coded pictures не выбрасывать из reference chain.

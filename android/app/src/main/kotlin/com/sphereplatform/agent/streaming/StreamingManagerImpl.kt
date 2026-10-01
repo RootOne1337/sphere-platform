@@ -39,6 +39,7 @@ class StreamingManagerImpl @Inject constructor(
     private var imageReaderThread: HandlerThread? = null
     private var gpuBridge: SurfaceTextureEncoderBridge? = null
     internal var gpuBridgeEnabled = BuildConfig.STREAM_GPU_BRIDGE
+    internal var planarInputEnabled = BuildConfig.STREAM_PLANAR_INPUT
     // Image/Bitmap native storage must stay alive through the complete copy and
     // surface draw. Lifecycle methods serialize separately from codec callbacks.
     private val frameLock = Any()
@@ -97,7 +98,7 @@ class StreamingManagerImpl @Inject constructor(
 
         // Canary retains the actual source size; never upscale 540p to 720p
         // before a slow emulator encoder. Default capture remains unchanged.
-        val captureConfig = VirtualDisplayManager.createConfig(context, nativeSize = gpuBridgeEnabled)
+        val captureConfig = VirtualDisplayManager.createConfig(context, nativeSize = gpuBridgeEnabled || planarInputEnabled)
         val sourceMetrics = android.content.res.Resources.getSystem().displayMetrics
         val sourceRotation = (context.getSystemService(Context.DISPLAY_SERVICE) as? android.hardware.display.DisplayManager)
             ?.getDisplay(android.view.Display.DEFAULT_DISPLAY)?.rotation
@@ -140,11 +141,21 @@ class StreamingManagerImpl @Inject constructor(
         }
 
         // start() returns the Surface that VirtualDisplay will render into
-        val encoderSurface = enc.start()
+        var usePlanar = planarInputEnabled
+        val encoderSurface = if (usePlanar) {
+            try { enc.startPlanar(); null }
+            catch (error: Exception) {
+                // No display/projection token has been consumed. Retain the
+                // existing AVC Surface path on devices without this capability.
+                Timber.w(error, "Planar input unavailable at startup; using Surface input")
+                usePlanar = false
+                enc.start()
+            }
+        } else enc.start()
         encoder = enc
 
-        if (gpuBridgeEnabled) {
-            val bridge = SurfaceTextureEncoderBridge(encoderSurface, captureConfig.width,
+        if (gpuBridgeEnabled && !usePlanar) {
+            val bridge = SurfaceTextureEncoderBridge(checkNotNull(encoderSurface), captureConfig.width,
                 captureConfig.height, frameThrottle, qualityMonitor) { error ->
                 Timber.e(error, "GPU capture failed; stopping this session")
                 Handler(android.os.Looper.getMainLooper()).post {
@@ -184,6 +195,7 @@ class StreamingManagerImpl @Inject constructor(
 
         val thread = HandlerThread("sphere-imagereader").also { it.start() }
         imageReaderThread = thread
+        var lastPlanarTimestamp = 0L
 
         ir.setOnImageAvailableListener({ reader ->
             synchronized(frameLock) {
@@ -203,17 +215,29 @@ class StreamingManagerImpl @Inject constructor(
                     // while createDisplay() is still starting. Drain and close
                     // it, but never render it into a session that has stopped.
                     if (!streaming) return@setOnImageAvailableListener
+                    val captureTimestamp = if (usePlanar) image.timestamp else System.nanoTime()
+                    if (usePlanar) {
+                        if (captureTimestamp <= lastPlanarTimestamp) return@setOnImageAvailableListener
+                        lastPlanarTimestamp = captureTimestamp
+                    }
                     qualityMonitor.recordCapturedFrame()
                     // Budget raw pictures before CPU copy and encoder submission.
                     // Dropping a coded reference picture corrupts the downstream
                     // H.264 chain even when SPS/PPS and IDR are preserved.
-                    if (!frameThrottle.shouldRenderFrame(System.nanoTime())) {
+                    if (!frameThrottle.shouldRenderFrame(captureTimestamp)) {
                         qualityMonitor.recordCaptureThrottleDrop()
                         return@setOnImageAvailableListener // image.close() still runs.
                     }
                     val plane = image.planes[0]
                     val rowStride = plane.rowStride
                     val pixelStride = plane.pixelStride          // 4 for RGBA_8888
+                    if (usePlanar) {
+                        check(image.width == captureConfig.width && image.height == captureConfig.height)
+                        if (enc.submitPlanarFrame(plane.buffer, rowStride, pixelStride, captureTimestamp / 1000L)) {
+                            qualityMonitor.recordRenderedFrame()
+                        } else qualityMonitor.recordEncoderInputDrop()
+                        return@setOnImageAvailableListener // Always close the owned raw image below.
+                    }
                     val strideWidth = rowStride / pixelStride
 
                     // FIX: Гарантируем buffer position = 0 перед чтением.
@@ -238,7 +262,7 @@ class StreamingManagerImpl @Inject constructor(
 
                     // Only lock and draw if we are still streaming
                     if (streaming) {
-                        val canvas = encoderSurface.lockCanvas(null)
+                        val canvas = checkNotNull(encoderSurface).lockCanvas(null)
                         if (canvas != null) {
                             val src = Rect(0, 0, image.width, image.height)
                             val dst = Rect(0, 0, image.width, image.height)
@@ -285,7 +309,7 @@ class StreamingManagerImpl @Inject constructor(
         }
 
         viewerKeyFrameCoordinator.markEncoderReady { requestKeyFrameNow() }
-        Timber.i("StreamingManagerImpl: started")
+        Timber.i("StreamingManagerImpl: started input=%s", if (usePlanar) "yuv420_planar" else "surface")
     }
 
     @Synchronized

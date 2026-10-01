@@ -66,6 +66,7 @@ class StreamingCaptureLifecycleTest {
         manager = StreamingManagerImpl(RuntimeEnvironment.getApplication(), wsClient,
             frameThrottle, qualityMonitor)
         manager.gpuBridgeEnabled = false // CPU fixture is independent of canary build flags.
+        manager.planarInputEnabled = false
     }
 
     @After fun cleanup() {
@@ -299,6 +300,56 @@ class StreamingCaptureLifecycleTest {
         manager.stop()
         verify(exactly = 1) { anyConstructed<H264Encoder>().stop() }
         verify(exactly = 1) { anyConstructed<SurfaceTextureEncoderBridge>().close(any()) }
+    }
+
+    private fun planarFixture() {
+        android.content.res.Resources.getSystem().displayMetrics.apply { widthPixels=4; heightPixels=4 }
+        manager.planarInputEnabled=true
+        every { anyConstructed<H264Encoder>().startPlanar() } just Runs
+        every { anyConstructed<H264Encoder>().submitPlanarFrame(any(),any(),any(),any()) } returns true
+        every { image.timestamp } returns 1_000_000_000L
+    }
+
+    @Test fun `planar capture submits real timestamp without Bitmap or codec Surface draw`() {
+        planarFixture(); manager.start(projection); listeners.last().onImageAvailable(reader)
+        verify(exactly=1) { anyConstructed<H264Encoder>().submitPlanarFrame(any(),16,4,1_000_000L) }
+        verify(exactly=0) { anyConstructed<H264Encoder>().start() }
+        verify(exactly=0) { bitmap.copyPixelsFromBuffer(any()) }
+        verify(exactly=0) { encoderSurface.lockCanvas(any()) }
+        verify(exactly=1) { image.close() }
+        assertEquals(1L,qualityMonitor.getStats().renderedFramesTotal)
+    }
+    @Test fun `duplicate producer timestamp cannot manufacture planar pictures`() {
+        planarFixture(); manager.start(projection)
+        repeat(2) { listeners.last().onImageAvailable(reader) }
+        verify(exactly=1) { anyConstructed<H264Encoder>().submitPlanarFrame(any(),any(),any(),any()) }
+        verify(exactly=2) { image.close() }
+        assertEquals(1L,qualityMonitor.getStats().captureFramesTotal)
+    }
+    @Test fun `planar input exhaustion is a raw admission drop rather than rendered or coded picture`() {
+        planarFixture()
+        every { anyConstructed<H264Encoder>().submitPlanarFrame(any(),any(),any(),any()) } returns false
+        manager.start(projection); listeners.last().onImageAvailable(reader)
+        val stats=qualityMonitor.getStats()
+        assertEquals(1L,stats.encoderInputDropsTotal); assertEquals(0L,stats.renderedFramesTotal)
+        assertEquals(0L,stats.totalFrames); assertEquals(0L,stats.captureThrottleDropsTotal)
+        verify(exactly=1) { image.close() }
+        manager.stop(); assertEquals(0L,qualityMonitor.getStats().encoderInputDropsTotal)
+    }
+    @Test fun `obsolete planar capture callback cannot submit to a restarted codec`() {
+        planarFixture(); manager.start(projection); val previous=listeners.last()
+        manager.start(projection); previous.onImageAvailable(reader)
+        verify(exactly=0) { reader.acquireLatestImage() }
+        verify(exactly=0) { anyConstructed<H264Encoder>().submitPlanarFrame(any(),any(),any(),any()) }
+    }
+    @Test fun `unsupported planar startup falls back before consuming a projection display`() {
+        planarFixture()
+        every { anyConstructed<H264Encoder>().startPlanar() } throws IllegalArgumentException("no planar input")
+        manager.start(projection); listeners.last().onImageAvailable(reader)
+        verify(exactly=1) { anyConstructed<H264Encoder>().start() }
+        verify(exactly=1) { anyConstructed<VirtualDisplayManager>().createDisplay(any(),any()) }
+        verify(exactly=1) { bitmap.copyPixelsFromBuffer(any()) }
+        verify(exactly=0) { anyConstructed<H264Encoder>().submitPlanarFrame(any(),any(),any(),any()) }
     }
 
     private fun emitEncoded(bytes: ByteArray, metadata: H264Encoder.FrameMetadata) {

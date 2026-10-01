@@ -8,6 +8,7 @@ import android.os.Bundle
 import android.view.Surface
 import timber.log.Timber
 import java.nio.ByteBuffer
+import java.util.concurrent.ArrayBlockingQueue
 
 /**
  * Asynchronous H.264 encoder using [MediaCodec] surface input mode.
@@ -68,8 +69,15 @@ class H264Encoder(
     @Volatile var cachedPps: ByteArray? = null
         private set
 
-    private var codec: MediaCodec? = null
+    @Volatile private var codec: MediaCodec? = null
     private var inputSurface: Surface? = null
+    private val inputLock = Any()
+    @Volatile private var planarInputs: ArrayBlockingQueue<Int>? = null
+    private var planarConverter: RgbaToI420? = null
+    private var planarWindowNs = 0L
+    private var planarSamples = 0
+    private var planarConvertNs = 0L
+    private var planarQueueNs = 0L
 
     // -------------------------------------------------------------------------
     // Lifecycle
@@ -79,12 +87,19 @@ class H264Encoder(
      * Configure and start the encoder.
      * @return The [Surface] to be passed to [VirtualDisplayManager.createDisplay].
      */
-    fun start(): Surface {
+    fun start(): Surface = checkNotNull(startCodec(false))
+
+    /** Debug canary only: avoids the measured slow Google OMX graphics input. */
+    internal fun startPlanar() { startCodec(true) }
+
+    private fun startCodec(planar: Boolean): Surface? = synchronized(inputLock) {
+        check(codec == null) { "Encoder already started" }
         val mime = MediaFormat.MIMETYPE_VIDEO_AVC
         val format = MediaFormat.createVideoFormat(mime, config.width, config.height).apply {
             setInteger(
                 MediaFormat.KEY_COLOR_FORMAT,
-                MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface,
+                if (planar) MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Planar
+                else MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface,
             )
             setInteger(MediaFormat.KEY_BIT_RATE, config.bitrateBps)
             setInteger(MediaFormat.KEY_FRAME_RATE, config.fps)
@@ -113,36 +128,85 @@ class H264Encoder(
                 MediaFormat.KEY_BITRATE_MODE,
                 MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_CBR,
             )
+            if (planar) {
+                setInteger(MediaFormat.KEY_COLOR_STANDARD, MediaFormat.COLOR_STANDARD_BT601_NTSC)
+                setInteger(MediaFormat.KEY_COLOR_RANGE, MediaFormat.COLOR_RANGE_LIMITED)
+                setInteger(MediaFormat.KEY_COLOR_TRANSFER, MediaFormat.COLOR_TRANSFER_SDR_VIDEO)
+            }
         }
 
-        val c = MediaCodec.createEncoderByType(mime)
+        val c = if (planar) MediaCodec.createByCodecName("OMX.google.h264.encoder")
+            else MediaCodec.createEncoderByType(mime)
         try {
+            if (planar) {
+                require(c.codecInfo.getCapabilitiesForType(mime).colorFormats.contains(
+                    MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Planar))
+                planarConverter = RgbaToI420(config.width, config.height)
+                planarInputs = ArrayBlockingQueue(64)
+            }
             // Name is platform-selected, not an assumption about hardware. A
             // bounded startup record makes slow emulator encoders diagnosable.
-            Timber.i("H264Encoder selected codec=%s width=%d height=%d target_fps=%d bitrate_bps=%d",
-                c.name, config.width, config.height, config.fps, config.bitrateBps)
+            Timber.i("H264Encoder selected codec=%s width=%d height=%d target_fps=%d bitrate_bps=%d input=%s",
+                c.name, config.width, config.height, config.fps, config.bitrateBps,
+                if (planar) "yuv420_planar" else "surface")
             c.setCallback(encoderCallback)
             c.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
-            val surface = c.createInputSurface()
+            val surface = if (planar) null else c.createInputSurface()
             inputSurface = surface
-            c.start()
             codec = c
-            return surface
+            c.start()
+            surface
         } catch (error: Exception) {
+            codec = null; planarInputs = null; planarConverter = null
             runCatching { inputSurface?.release() }; inputSurface = null
             runCatching { c.release() }
             throw error
         }
     }
 
-    fun stop() {
+    fun stop() = synchronized(inputLock) {
         val owned = codec
         codec = null
+        planarInputs = null; planarConverter = null
+        planarWindowNs = 0L; planarSamples = 0; planarConvertNs = 0L; planarQueueNs = 0L
         runCatching { owned?.stop() }.onFailure { Timber.w(it, "H264Encoder stop error") }
         runCatching { owned?.release() }.onFailure { Timber.w(it, "H264Encoder release error") }
         runCatching { inputSurface?.release() }.onFailure { Timber.w(it, "H264Encoder input Surface release error") }
         inputSurface = null
     }
+
+    /** Nonblocking admission: skip a RAW image if the codec has no free input. */
+    internal fun submitPlanarFrame(rgba: ByteBuffer, rowStride: Int, pixelStride: Int, ptsUs: Long): Boolean =
+        synchronized(inputLock) {
+            val owned = codec ?: return@synchronized false
+            val available = planarInputs ?: return@synchronized false
+            val converter = planarConverter ?: return@synchronized false
+            require(ptsUs > 0)
+            val index = available.poll() ?: return@synchronized false
+            var queueAttempted = false
+            try {
+                val buffer = checkNotNull(owned.getInputBuffer(index))
+                val started = System.nanoTime()
+                converter.convert(rgba, rowStride, pixelStride, buffer)
+                val converted = System.nanoTime()
+                queueAttempted = true
+                owned.queueInputBuffer(index, 0, converter.outputSize, ptsUs, 0)
+                val queued = System.nanoTime()
+                if (planarWindowNs == 0L) planarWindowNs = started
+                planarSamples++; planarConvertNs += converted - started; planarQueueNs += queued - converted
+                if (queued - planarWindowNs >= 5_000_000_000L) {
+                    Timber.i("H264Encoder planar_input samples=%d convert_mean_ms=%.3f queue_mean_ms=%.3f",
+                        planarSamples, planarConvertNs / planarSamples / 1_000_000.0,
+                        planarQueueNs / planarSamples / 1_000_000.0)
+                    planarWindowNs = queued; planarSamples = 0; planarConvertNs = 0L; planarQueueNs = 0L
+                }
+                true
+            } catch (error: Exception) {
+                if (!queueAttempted) available.offer(index)
+                else onEncoderError?.invoke(error) // Do not retry an uncertain queue operation.
+                throw error
+            }
+        }
 
     fun requestKeyFrame(): Boolean {
         val activeCodec = codec ?: return false
@@ -172,7 +236,11 @@ class H264Encoder(
 
     private val encoderCallback = object : MediaCodec.Callback() {
         override fun onInputBufferAvailable(codec: MediaCodec, index: Int) {
-            // Surface encoder: input buffers not used — frames arrive via Surface
+            val available = planarInputs
+            // A stopped codec's callback cannot lend an index to a new session.
+            if (this@H264Encoder.codec === codec && available != null && !available.offer(index)) {
+                onEncoderError?.invoke(IllegalStateException("Planar input callback capacity exceeded"))
+            }
         }
 
         override fun onOutputBufferAvailable(

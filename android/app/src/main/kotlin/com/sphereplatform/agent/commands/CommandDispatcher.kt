@@ -198,6 +198,7 @@ class CommandDispatcher @Inject constructor(
                     put("encoder_errors_total", stats.encoderErrorsTotal)
                     put("frame_throttle_drops_total", stats.frameThrottleDropsTotal)
                     put("capture_throttle_drops_total", stats.captureThrottleDropsTotal)
+                    put("encoder_input_drops_total", stats.encoderInputDropsTotal)
                     put("encoder_fps", stats.currentFps)
                     put("encoded_frames_total", stats.totalFrames)
                     put("encoded_bytes_total", stats.totalEncodedBytes)

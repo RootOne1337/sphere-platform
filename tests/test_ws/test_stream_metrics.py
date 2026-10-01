@@ -15,6 +15,7 @@ from backend.metrics import (
     stream_encoder_bytes_session,
     stream_encoder_errors_session,
     stream_encoder_frames_session,
+    stream_encoder_input_drops_session,
     stream_fps,
     stream_frame_drops_total,
     stream_frame_throttle_drops_session,
@@ -183,6 +184,36 @@ def test_inactive_capture_clears_live_session_gauges():
     metrics.update_from_pong({"active": False})
 
     assert (device_id,) not in stream_fps._metrics
+
+
+def test_codec_input_skips_remain_distinct_and_old_agents_remove_the_gauge():
+    device_id = _device_id()
+    metrics = StreamMetrics(device_id)
+    try:
+        telemetry = metrics.update_from_pong(_active_stream_data_v2(encoder_input_drops_total=7))
+        assert telemetry is not None and telemetry.encoder_input_drops_total == 7
+        assert stream_encoder_input_drops_session.labels(device_id=device_id)._value.get() == 7
+        assert telemetry.frame_throttle_drops_total == 10
+        telemetry = metrics.update_from_pong(_active_stream_data_v2())
+        assert telemetry is not None and telemetry.encoder_input_drops_total is None
+        assert (device_id,) not in stream_encoder_input_drops_session._metrics
+        metrics.update_from_pong(_active_stream_data_v2(encoder_input_drops_total=0))
+        metrics.update_from_pong({"active": False})
+        assert (device_id,) not in stream_encoder_input_drops_session._metrics
+    finally:
+        metrics.cleanup()
+
+
+@pytest.mark.parametrize("value", [-1, 2**53 + 1, True, float("nan")])
+def test_invalid_codec_input_skip_counter_invalidates_the_snapshot(value):
+    device_id = _device_id()
+    metrics = StreamMetrics(device_id)
+    try:
+        metrics.update_from_pong(_active_stream_data_v2(encoder_input_drops_total=7))
+        assert metrics.update_from_pong(_active_stream_data_v2(encoder_input_drops_total=value)) is None
+        assert (device_id,) not in stream_encoder_input_drops_session._metrics
+    finally:
+        metrics.cleanup()
 
 
 def test_invalid_values_are_ignored_without_creating_sampled_metrics():

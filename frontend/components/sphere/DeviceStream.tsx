@@ -35,6 +35,7 @@ interface StreamDiagnosticResponse {
       encoder_errors_total?: number | null;
       frame_throttle_drops_total?: number | null;
       capture_throttle_drops_total?: number | null;
+      encoder_input_drops_total?: number | null;
       encoder_fps: number;
       encoded_frames_total: number;
       encoded_bytes_total: number;
@@ -552,6 +553,7 @@ export function DeviceStream({
                       <span>Surface errors: {t.render_failures_total ?? '—'}</span>
                       <span>Encoder errors: {t.encoder_errors_total ?? '—'}</span>
                       <span>Raw capture FPS skips: {t.capture_throttle_drops_total ?? '—'}</span>
+                      <span>Raw codec input skips: {t.encoder_input_drops_total ?? '—'}</span>
                       <span>Encoded FPS drops: {t.frame_throttle_drops_total ?? '—'}</span>
                     </div>
                   );
