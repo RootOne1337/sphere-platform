@@ -17,7 +17,7 @@ it('lets the server resolve the source context by task ID rather than posting a 
 it('never automatically replays an uncertain create response', async () => {
   jest.mocked(api.post).mockRejectedValue(new Error('response lost'));
   const client = createTestQueryClient();
-  client.setMutationDefaults(['tasks'], { retry: 3 });
+  client.setDefaultOptions({ queries: client.getDefaultOptions().queries, mutations: { retry: 3, retryDelay: 1 } });
   const { result } = renderHook(() => useRetryTask(), { wrapper: createWrapper(client) });
   await act(async () => { result.current.mutate('original' as never); });
   await waitFor(() => expect(result.current.isError).toBe(true));
