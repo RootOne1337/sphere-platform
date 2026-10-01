@@ -243,7 +243,7 @@ export default function VPNManagerPage() {
                     size="sm"
                     className="h-8 text-[10px] uppercase font-bold tracking-widest text-muted-foreground hover:text-foreground"
                     onClick={() => {
-                      router.push(`/audit?device_id=${tunnel.deviceId}`);
+                      router.push(`/logs?device_id=${encodeURIComponent(tunnel.deviceId)}`);
                     }}
                   >
                     <FileText className="w-3 h-3 mr-1" /> Logs

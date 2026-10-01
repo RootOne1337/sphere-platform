@@ -5,6 +5,7 @@ import { useAssignVpn, usePoolStats, useVpnKillSwitch, useVpnPeers, useVpnRotate
 import { useBulkAction, useDevices, type Device } from '@/lib/hooks/useDevices';
 
 const mockMutateAsync = jest.fn();
+const mockPush = jest.fn();
 const mockUseAssignVpn = jest.mocked(useAssignVpn);
 const mockUsePoolStats = jest.mocked(usePoolStats);
 const mockUseVpnKillSwitch = jest.mocked(useVpnKillSwitch);
@@ -13,7 +14,7 @@ const mockUseVpnRotate = jest.mocked(useVpnRotate);
 const mockUseBulkAction = jest.mocked(useBulkAction);
 const mockUseDevices = jest.mocked(useDevices);
 
-jest.mock('next/navigation', () => ({ useRouter: () => ({ push: jest.fn() }) }));
+jest.mock('next/navigation', () => ({ useRouter: () => ({ push: mockPush }) }));
 jest.mock('@/src/features/vpn/VPNMap', () => ({ VPNMap: () => null }));
 jest.mock('@/src/features/vpn/ThroughputChart', () => ({ ThroughputChart: () => null }));
 jest.mock('@/lib/hooks/useVpn', () => ({
@@ -106,4 +107,14 @@ it('renders the peer API handshake state and does not invent byte counters or la
   expect(screen.queryByText('Aggregate Throughput')).not.toBeInTheDocument();
   expect(screen.queryByText(/Global Latency/)).not.toBeInTheDocument();
   expect(screen.queryByText('0 B')).not.toBeInTheDocument();
+});
+
+it('opens the Android log viewer with the exact device ID from the peer', async () => {
+  mockUseVpnPeers.mockReturnValue({ data: [{
+    id: 'peer-1', device_id: 'device/remote?one', assigned_ip: '10.8.0.2', status: 'assigned',
+    is_active: true, last_handshake_at: null, public_key: 'test-public-key', created_at: '2026-10-01T00:00:00Z',
+  }], isLoading: false, isError: false } as never);
+  render(<VPNManagerPage />);
+  await userEvent.setup().click(screen.getByRole('button', { name: 'Logs' }));
+  expect(mockPush).toHaveBeenCalledWith('/logs?device_id=device%2Fremote%3Fone');
 });

@@ -72,8 +72,8 @@ export function useDevices(params: {
   };
   return useQuery<DevicesResponse>({
     queryKey: ['devices', params],
-    queryFn: async () => {
-      const { data } = await api.get('/devices', { params: apiParams });
+    queryFn: async ({ signal }) => {
+      const { data } = await api.get('/devices', { params: apiParams, signal });
       // The API contract names this field `per_page`; keep `page_size` as the
       // stable frontend shape used by existing device screens.
       const payload = data as DevicesResponse & { per_page?: number };

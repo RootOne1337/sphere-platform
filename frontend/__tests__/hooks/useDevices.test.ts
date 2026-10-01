@@ -71,6 +71,7 @@ describe('useDevices', () => {
 
     expect(mockApi.get).toHaveBeenCalledWith('/devices', {
       params: expect.objectContaining({ page: 1, per_page: 20, search: 'Pixel' }),
+      signal: expect.any(AbortSignal),
     });
     expect(result.current.data?.items).toHaveLength(1);
     expect(result.current.data?.items[0].name).toBe('Pixel 7');
@@ -115,6 +116,7 @@ describe('useDevices', () => {
 
     await waitFor(() => expect(mockApi.get).toHaveBeenCalled());
     expect(mockApi.get).toHaveBeenCalledWith('/devices', {
+      signal: expect.any(AbortSignal),
       params: expect.objectContaining({
         page: 2,
         per_page: 100,

@@ -5,6 +5,8 @@ import { useDevices, type Device } from '@/lib/hooks/useDevices';
 
 jest.mock('@/lib/api', () => ({ api: { get: jest.fn(), delete: jest.fn() } }));
 jest.mock('@/lib/hooks/useDevices', () => ({ useDevices: jest.fn() }));
+jest.mock('next/navigation', () => ({ useSearchParams: () => new URLSearchParams(), useRouter: () => ({ replace: jest.fn() }) }));
+jest.mock('@/lib/hooks/useDeviceSnapshot', () => ({ useDeviceSnapshot: () => ({ data: device }) }));
 jest.mock('sonner', () => ({ toast: { success: jest.fn(), error: jest.fn() } }));
 
 beforeAll(() => {
@@ -49,6 +51,8 @@ const logPayload = {
 beforeEach(() => {
   jest.mocked(useDevices).mockReturnValue({
     data: { items: [device], total: 1, page: 1, page_size: 20 },
+    isSuccess: true,
+    isFetching: false,
     isLoading: false,
     isError: false,
     refetch: jest.fn(),
