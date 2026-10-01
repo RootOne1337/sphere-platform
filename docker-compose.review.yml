@@ -48,7 +48,7 @@ services:
     pids_limit: 64
     mem_limit: 64m
     cpus: 0.5
-    tmpfs: [/tmp:rw,nosuid,nodev,size=16m,uid=101,gid=101,mode=0700]
+    tmpfs: ["/tmp:rw,nosuid,nodev,size=16m,uid=101,gid=101,mode=0700"]
     volumes:
       - ./infrastructure/nginx/review.conf:/etc/nginx/nginx.conf:ro
     ports:
