@@ -50,9 +50,11 @@ import {
 import { DeviceSelector } from '@/components/sphere/DeviceSelector';
 import { useScripts, Script } from '@/lib/hooks/useScripts';
 import { ScheduleExecutionHistoryDialog } from '@/components/orchestration/ScheduleExecutionHistoryDialog';
+import { PipelineCatalogPicker } from '@/components/orchestration/PipelineCatalogPicker';
 import { PipelineResumeControl } from '@/components/orchestration/PipelineResumeControl';
 import { isoToUtcDateTimeInput, utcDateTimeInputToIso, isValidUtcDateTimeInput } from '@/src/features/orchestration/scheduleTime';
-import { parseListItems } from '@/src/features/orchestration/listPayload';
+import { useCatalogPage, CATALOG_PER_PAGE } from '@/src/features/orchestration/useCatalogPage';
+import { CatalogPagination } from '@/src/shared/ui/catalog-pagination';
 
 // ============================================================================
 //  ТИПЫ
@@ -140,43 +142,6 @@ const EMPTY_RUNS: PipelineRun[] = [];
 const EMPTY_SCHEDULES: Schedule[] = [];
 
 // ============================================================================
-//  ХУКИ ДАННЫХ
-// ============================================================================
-
-function usePipelines() {
-    return useQuery<Pipeline[]>({
-        queryKey: ['pipelines'],
-        queryFn: async () => {
-            const { data } = await api.get('/pipelines?per_page=100');
-            return parseListItems<Pipeline>(data, 'pipelines');
-        },
-        refetchInterval: 8000,
-    });
-}
-
-function usePipelineRuns() {
-    return useQuery<PipelineRun[]>({
-        queryKey: ['pipeline-runs'],
-        queryFn: async () => {
-            const { data } = await api.get('/pipelines/runs?per_page=100');
-            return parseListItems<PipelineRun>(data, 'pipeline runs');
-        },
-        refetchInterval: 5000,
-    });
-}
-
-function useSchedules() {
-    return useQuery<Schedule[]>({
-        queryKey: ['schedules'],
-        queryFn: async () => {
-            const { data } = await api.get('/schedules?per_page=100');
-            return parseListItems<Schedule>(data, 'schedules');
-        },
-        refetchInterval: 8000,
-    });
-}
-
-// ============================================================================
 //  УТИЛИТЫ
 // ============================================================================
 
@@ -244,40 +209,59 @@ export default function OrchestrationPage() {
     const [runPipelineTarget, setRunPipelineTarget] = useState<Pipeline | null>(null);
     const [showCreateSchedule, setShowCreateSchedule] = useState(false);
     const [editingSchedule, setEditingSchedule] = useState<Schedule | null>(null);
-
-    const pipelinesQuery = usePipelines();
-    const runsQuery = usePipelineRuns();
-    const schedulesQuery = useSchedules();
-    const pipelines = pipelinesQuery.data ?? EMPTY_PIPELINES;
-    const runs = runsQuery.data ?? EMPTY_RUNS;
-    const schedules = schedulesQuery.data ?? EMPTY_SCHEDULES;
+    const [pages, setPages] = useState<Record<TabKey, number>>({ pipelines: 1, runs: 1, schedules: 1 });
+    const [filters, setFilters] = useState<Record<TabKey, string>>({ pipelines: 'all', runs: 'all', schedules: 'all' });
+    const pipelineFilter = filters.pipelines === 'all' ? {} : { is_active: filters.pipelines === 'active' };
+    const scheduleFilter = filters.schedules === 'all' ? {} : { is_active: filters.schedules === 'active' };
+    const runFilter = filters.runs === 'all' ? {} : filters.runs === 'active' ? { active_only: true } : { status: filters.runs };
+    const pipelinesQuery = useCatalogPage<Pipeline>('pipelines', pages.pipelines, pipelineFilter, { polling: tab === 'pipelines' });
+    const runsQuery = useCatalogPage<PipelineRun>('pipeline-runs', pages.runs, runFilter, { polling: tab === 'runs' });
+    const schedulesQuery = useCatalogPage<Schedule>('schedules', pages.schedules, scheduleFilter, { polling: tab === 'schedules' });
+    const pipelines = pipelinesQuery.isSuccess ? pipelinesQuery.data.items : EMPTY_PIPELINES;
+    const runs = runsQuery.isSuccess ? runsQuery.data.items : EMPTY_RUNS;
+    const schedules = schedulesQuery.isSuccess ? schedulesQuery.data.items : EMPTY_SCHEDULES;
     const pLoading = pipelinesQuery.isLoading;
     const rLoading = runsQuery.isLoading;
     const sLoading = schedulesQuery.isLoading;
+    const currentQuery = tab === 'pipelines' ? pipelinesQuery : tab === 'runs' ? runsQuery : schedulesQuery;
+    const currentLabel = tab === 'pipelines' ? 'конвейеры' : tab === 'runs' ? 'запуски конвейеров' : 'расписания';
+    const currentData = currentQuery.isSuccess ? currentQuery.data : undefined;
+    const changingPage = !!currentData && pages[tab] > Math.max(1, currentData.pages);
+
+    useEffect(() => {
+        if (currentData && changingPage) setPages(previous => ({ ...previous, [tab]: Math.max(1, currentData.pages) }));
+    }, [tab, currentData, changingPage]);
+
+    function changeTab(next: TabKey) { setSearch(''); setTab(next); }
+    function changeFilter(value: string) {
+        setSearch('');
+        setPages(previous => ({ ...previous, [tab]: 1 }));
+        setFilters(previous => ({ ...previous, [tab]: value }));
+    }
 
     // Статистика (вычисляемая)
     const stats = useMemo(() => {
-        const activeRuns = runs.filter(r => ['running', 'waiting', 'queued'].includes(r.status.toLowerCase()));
+        const activeRuns = runs.filter(r => ['running', 'waiting', 'queued', 'paused'].includes(r.status.toLowerCase()));
         const completedRuns = runs.filter(r => r.status.toLowerCase() === 'completed');
         const failedRuns = runs.filter(r => ['failed', 'timed_out'].includes(r.status.toLowerCase()));
         const activeSchedules = schedules.filter(s => s.is_active);
         return {
-            totalPipelines: pipelinesQuery.data === undefined ? '—' : pipelines.length,
-            activeRuns: runsQuery.data === undefined ? '—' : activeRuns.length,
-            completedRuns: runsQuery.data === undefined ? '—' : completedRuns.length,
-            failedRuns: runsQuery.data === undefined ? '—' : failedRuns.length,
-            totalSchedules: schedulesQuery.data === undefined ? '—' : schedules.length,
-            activeSchedules: schedulesQuery.data === undefined ? '—' : activeSchedules.length,
-            successRate: runsQuery.data === undefined ? '—' : runs.length > 0
+            totalPipelines: pipelinesQuery.isSuccess ? pipelinesQuery.data.total : '—',
+            activeRuns: runsQuery.isSuccess ? activeRuns.length : '—',
+            completedRuns: runsQuery.isSuccess ? completedRuns.length : '—',
+            failedRuns: runsQuery.isSuccess ? failedRuns.length : '—',
+            totalSchedules: schedulesQuery.isSuccess ? schedulesQuery.data.total : '—',
+            activeSchedules: schedulesQuery.isSuccess ? activeSchedules.length : '—',
+            successRate: !runsQuery.isSuccess ? '—' : runs.length > 0
                 ? ((completedRuns.length / runs.length) * 100).toFixed(1)
                 : '—',
         };
-    }, [pipelines, runs, schedules, pipelinesQuery.data, runsQuery.data, schedulesQuery.data]);
+    }, [runs, schedules, pipelinesQuery.data, runsQuery.data, schedulesQuery.data, pipelinesQuery.isSuccess, runsQuery.isSuccess, schedulesQuery.isSuccess]);
 
     const TABS: { key: TabKey; label: string; count: number | string }[] = [
-        { key: 'pipelines', label: 'Pipelines', count: pipelinesQuery.data === undefined ? '—' : pipelines.length },
-        { key: 'runs', label: 'Pipeline Runs', count: runsQuery.data === undefined ? '—' : runs.length },
-        { key: 'schedules', label: 'Schedules', count: schedulesQuery.data === undefined ? '—' : schedules.length },
+        { key: 'pipelines', label: 'Pipelines', count: pipelinesQuery.isSuccess ? pipelinesQuery.data.total : '—' },
+        { key: 'runs', label: 'Pipeline Runs', count: runsQuery.isSuccess ? runsQuery.data.total : '—' },
+        { key: 'schedules', label: 'Schedules', count: schedulesQuery.isSuccess ? schedulesQuery.data.total : '—' },
     ];
 
     return (
@@ -303,7 +287,8 @@ export default function OrchestrationPage() {
                         <div className="relative w-full sm:w-64">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
                             <Input
-                                placeholder="Поиск..."
+                                aria-label="Поиск на текущей странице"
+                                placeholder="Поиск на этой странице…"
                                 className="pl-9 h-9 bg-black/50 border-border font-mono text-xs focus-visible:ring-primary/50"
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
@@ -317,13 +302,14 @@ export default function OrchestrationPage() {
             {/* ── STATS CARDS ────────────────────────────────────────────────── */}
             <div className="px-6 pt-5">
                 <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 mb-5">
-                    <StatCard label="Pipelines" value={stats.totalPipelines} icon={<Layers className="w-7 h-7 text-primary/30" strokeWidth={1} />} />
-                    <StatCard label="Active Runs" value={stats.activeRuns} icon={<Activity className="w-7 h-7 text-primary/30" strokeWidth={1} />} accent />
-                    <StatCard label="Completed" value={stats.completedRuns} icon={<CheckCircle2 className="w-7 h-7 text-success/30" strokeWidth={1} />} />
-                    <StatCard label="Failed" value={stats.failedRuns} icon={<ShieldAlert className="w-7 h-7 text-destructive/30" strokeWidth={1} />} destructive />
-                    <StatCard label="Success Rate" value={stats.successRate === '—' ? '—' : `${stats.successRate}%`} icon={<Zap className="w-7 h-7 text-success/30" strokeWidth={1} />} />
-                    <StatCard label="Schedules Active" value={stats.totalSchedules === '—' ? '—' : `${stats.activeSchedules}/${stats.totalSchedules}`} icon={<CalendarClock className="w-7 h-7 text-primary/30" strokeWidth={1} />} />
+                    <StatCard label="Pipelines в каталоге" value={stats.totalPipelines} icon={<Layers className="w-7 h-7 text-primary/30" strokeWidth={1} />} />
+                    <StatCard label={`Активная очередь · страница ${pages.runs}`} value={stats.activeRuns} icon={<Activity className="w-7 h-7 text-primary/30" strokeWidth={1} />} accent />
+                    <StatCard label={`Завершены · страница ${pages.runs}`} value={stats.completedRuns} icon={<CheckCircle2 className="w-7 h-7 text-success/30" strokeWidth={1} />} />
+                    <StatCard label={`Ошибки · страница ${pages.runs}`} value={stats.failedRuns} icon={<ShieldAlert className="w-7 h-7 text-destructive/30" strokeWidth={1} />} destructive />
+                    <StatCard label={`Доля завершённых · страница ${pages.runs}`} value={stats.successRate === '—' ? '—' : `${stats.successRate}%`} icon={<Zap className="w-7 h-7 text-success/30" strokeWidth={1} />} />
+                    <StatCard label="Расписания в каталоге" value={stats.totalSchedules} icon={<CalendarClock className="w-7 h-7 text-primary/30" strokeWidth={1} />} />
                 </div>
+                <p className="mb-4 text-xs text-muted-foreground">Счётчики запусков и активных расписаний относятся к загруженным страницам с серверным фильтром: запуски — страница {pages.runs}, расписания — страница {pages.schedules} ({stats.activeSchedules} активных). Общие количества во вкладках — итог API с выбранным серверным фильтром.</p>
             </div>
 
             {(pipelinesQuery.isError || runsQuery.isError || schedulesQuery.isError) && (
@@ -340,7 +326,7 @@ export default function OrchestrationPage() {
                     {TABS.map(t => (
                         <button
                             key={t.key}
-                            onClick={() => setTab(t.key)}
+                            onClick={() => changeTab(t.key)}
                             className={`px-4 py-2 text-xs font-mono font-bold tracking-widest uppercase transition-colors relative
                 ${tab === t.key
                                     ? 'text-primary'
@@ -359,9 +345,22 @@ export default function OrchestrationPage() {
 
             {/* ── CONTENT ────────────────────────────────────────────────────── */}
             <div className="flex-1 overflow-auto p-6">
-                {tab === 'pipelines' && <PipelinesTab pipelines={pipelines} loading={pLoading} error={pipelinesQuery.isError} hasSnapshot={pipelinesQuery.data !== undefined} search={search} onRunPipeline={setRunPipelineTarget} />}
-                {tab === 'runs' && <RunsTab runs={runs} pipelines={pipelines} loading={rLoading} error={runsQuery.isError} hasSnapshot={runsQuery.data !== undefined} search={search} />}
-                {tab === 'schedules' && <SchedulesTab schedules={schedules} pipelines={pipelines} loading={sLoading} error={schedulesQuery.isError} hasSnapshot={schedulesQuery.data !== undefined} search={search} onCreateSchedule={() => setShowCreateSchedule(true)} onEditSchedule={setEditingSchedule} />}
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                    <label className="text-xs text-muted-foreground">Серверный фильтр
+                        <select aria-label={tab === 'runs' ? 'Серверный фильтр запусков' : tab === 'pipelines' ? 'Серверный фильтр конвейеров' : 'Серверный фильтр расписаний'} value={filters[tab]} onChange={e => changeFilter(e.target.value)} className="ml-2 rounded-md border border-border bg-card p-2 text-sm text-foreground">
+                            <option value="all">Все</option>
+                            <option value="active">{tab === 'runs' ? 'Активная очередь' : 'Активные'}</option>
+                            {tab !== 'runs' ? <option value="inactive">Неактивные</option> : ['queued', 'running', 'waiting', 'paused', 'completed', 'failed', 'cancelled', 'timed_out'].map(status => <option key={status} value={status}>{STATUS_CONFIG[status].label}</option>)}
+                        </select>
+                    </label>
+                    <Button variant="outline" size="sm" aria-label="Обновить текущий каталог" disabled={currentQuery.isFetching} onClick={() => { void currentQuery.refetch(); }}>{currentQuery.isFetching ? 'Обновляем…' : 'Обновить каталог'}</Button>
+                </div>
+                <p className="mb-3 text-xs text-muted-foreground">Текстовый поиск применяется только к текущей странице. Для других записей используйте страницы и серверный фильтр.</p>
+                {!changingPage && tab === 'pipelines' && <PipelinesTab pipelines={pipelines} loading={pLoading} error={pipelinesQuery.isError} hasSnapshot={pipelinesQuery.isSuccess} filteredByServer={filters.pipelines !== 'all'} search={search} onRunPipeline={setRunPipelineTarget} />}
+                {!changingPage && tab === 'runs' && <RunsTab runs={runs} pipelines={pipelines} loading={rLoading} error={runsQuery.isError} hasSnapshot={runsQuery.isSuccess} filteredByServer={filters.runs !== 'all'} search={search} />}
+                {!changingPage && tab === 'schedules' && <SchedulesTab schedules={schedules} pipelines={pipelines} loading={sLoading} error={schedulesQuery.isError} hasSnapshot={schedulesQuery.isSuccess} filteredByServer={filters.schedules !== 'all'} search={search} onCreateSchedule={() => setShowCreateSchedule(true)} onEditSchedule={setEditingSchedule} />}
+                {changingPage && <p role="status">Каталог изменился; загружаем доступную страницу…</p>}
+                {currentData && !changingPage && <div className="mt-4"><CatalogPagination page={pages[tab]} perPage={CATALOG_PER_PAGE} total={currentData.total} busy={currentQuery.isFetching} label={currentLabel} onPageChange={page => setPages(previous => ({ ...previous, [tab]: page }))} /></div>}
             </div>
 
             {/* ── МОДАЛКИ (controlled mode — Dialog всегда в DOM, Portal рендерится по open) ── */}
@@ -373,13 +372,11 @@ export default function OrchestrationPage() {
             <CreateScheduleDialog
                 open={showCreateSchedule}
                 onOpenChange={setShowCreateSchedule}
-                pipelines={pipelines}
             />
             <EditScheduleDialog
                 schedule={editingSchedule}
                 open={!!editingSchedule}
                 onOpenChange={(v) => { if (!v) setEditingSchedule(null); }}
-                pipelines={pipelines}
             />
         </div>
     );
@@ -397,7 +394,7 @@ function QueryFailureNotice({ source, query, onRetry }: {
             <div>
                 <p className="font-semibold text-destructive">Не удалось обновить {source}.</p>
                 <p className="mt-0.5 text-xs text-muted-foreground">
-                    {hasCachedData ? 'Показан последний успешно загруженный снимок.' : 'Данные не получены; пустой список не подтверждён.'}
+                    {hasCachedData ? 'Предыдущие данные скрыты: состояние каталога и доступность действий не подтверждены.' : 'Данные не получены; пустой список не подтверждён.'}
                 </p>
             </div>
             <Button type="button" variant="outline" size="sm" aria-label={`Повторить загрузку: ${source}`} onClick={() => { void onRetry(); }} disabled={query.isFetching}>
@@ -434,7 +431,7 @@ function StatCard({
 //  TAB: PIPELINES
 // ============================================================================
 
-function PipelinesTab({ pipelines, loading, error, hasSnapshot, search, onRunPipeline }: { pipelines: Pipeline[]; loading: boolean; error: boolean; hasSnapshot: boolean; search: string; onRunPipeline: (p: Pipeline) => void }) {
+function PipelinesTab({ pipelines, loading, error, hasSnapshot, filteredByServer, search, onRunPipeline }: { pipelines: Pipeline[]; loading: boolean; error: boolean; hasSnapshot: boolean; filteredByServer: boolean; search: string; onRunPipeline: (p: Pipeline) => void }) {
     const [expandedId, setExpandedId] = useState<string | null>(null);
 
     const filtered = useMemo(() => {
@@ -468,7 +465,7 @@ function PipelinesTab({ pipelines, loading, error, hasSnapshot, search, onRunPip
                     )}
                     {!loading && filtered.length === 0 && (
                         <tr><td colSpan={8} className="px-4 py-12 text-center text-muted-foreground">
-                            {error && !hasSnapshot ? 'Список pipelines не загружен; пустой каталог не подтверждён.' : error && pipelines.length === 0 ? 'Последний снимок пуст; обновить список не удалось.' : pipelines.length === 0 ? 'Нет pipelines. Создайте первый!' : 'Ничего не найдено'}
+                            {error && !hasSnapshot ? 'Список pipelines не загружен; пустой каталог не подтверждён.' : filteredByServer && pipelines.length === 0 ? 'По этому серверному фильтру конвейеров нет.' : pipelines.length === 0 ? 'Нет pipelines. Создайте первый!' : 'На этой странице совпадений нет.'}
                         </td></tr>
                     )}
                     {filtered.map(p => (
@@ -616,9 +613,9 @@ function PipelineRow({ pipeline: p, expanded, onToggle, onRunPipeline }: { pipel
 // ============================================================================
 
 function RunsTab({
-    runs, pipelines, loading, error, hasSnapshot, search
+    runs, pipelines, loading, error, hasSnapshot, filteredByServer, search
 }: {
-    runs: PipelineRun[]; pipelines: Pipeline[]; loading: boolean; error: boolean; hasSnapshot: boolean; search: string
+    runs: PipelineRun[]; pipelines: Pipeline[]; loading: boolean; error: boolean; hasSnapshot: boolean; filteredByServer: boolean; search: string
 }) {
     const queryClient = useQueryClient();
     const [expandedRunId, setExpandedRunId] = useState<string | null>(null);
@@ -653,9 +650,9 @@ function RunsTab({
         return sorted.filter(r =>
             r.id.toLowerCase().includes(q) ||
             r.status.toLowerCase().includes(q) ||
-            pipelineMap.get(r.pipeline_id)?.name.toLowerCase().includes(q)
+            r.pipeline_id.toLowerCase().includes(q) || r.device_id.toLowerCase().includes(q)
         );
-    }, [runs, search, pipelineMap]);
+    }, [runs, search]);
 
     return (
         <div className="rounded-sm border border-border bg-card shadow-2xl overflow-hidden">
@@ -677,7 +674,7 @@ function RunsTab({
                         <tr><td colSpan={8} className="px-4 py-12 text-center text-muted-foreground animate-pulse">Загрузка runs...</td></tr>
                     )}
                     {!loading && filtered.length === 0 && (
-                        <tr><td colSpan={8} className="px-4 py-12 text-center text-muted-foreground">{error && !hasSnapshot ? 'Список запусков не загружен; пустой результат не подтверждён.' : error && runs.length === 0 ? 'Последний снимок пуст; обновить список не удалось.' : 'Нет запусков pipeline'}</td></tr>
+                        <tr><td colSpan={8} className="px-4 py-12 text-center text-muted-foreground">{error && !hasSnapshot ? 'Список запусков не загружен; пустой результат не подтверждён.' : search ? 'На этой странице совпадений нет.' : filteredByServer ? 'По этому серверному фильтру запусков нет.' : 'Нет запусков pipeline'}</td></tr>
                     )}
                     {filtered.map(run => {
                         const pl = pipelineMap.get(run.pipeline_id);
@@ -733,7 +730,7 @@ function RunRow({
                 <td className="px-4 py-3"><StatusBadge status={run.status} /></td>
                 <td className="px-4 py-3">
                     <div className="font-bold text-foreground group-hover:text-primary transition-colors">
-                        {pipelineName || 'Unknown Pipeline'}
+                        {pipelineName || run.pipeline_id}
                     </div>
                     <div className="text-[10px] text-[#555] mt-0.5">{run.id.slice(0, 12)}...</div>
                 </td>
@@ -812,7 +809,7 @@ function RunRow({
 //  TAB: SCHEDULES
 // ============================================================================
 
-function SchedulesTab({ schedules, pipelines, loading, error, hasSnapshot, search, onCreateSchedule, onEditSchedule }: { schedules: Schedule[]; pipelines: Pipeline[]; loading: boolean; error: boolean; hasSnapshot: boolean; search: string; onCreateSchedule: () => void; onEditSchedule: (s: Schedule) => void }) {
+function SchedulesTab({ schedules, pipelines, loading, error, hasSnapshot, filteredByServer, search, onCreateSchedule, onEditSchedule }: { schedules: Schedule[]; pipelines: Pipeline[]; loading: boolean; error: boolean; hasSnapshot: boolean; filteredByServer: boolean; search: string; onCreateSchedule: () => void; onEditSchedule: (s: Schedule) => void }) {
     const queryClient = useQueryClient();
     const [historySchedule, setHistorySchedule] = useState<Schedule | null>(null);
 
@@ -873,7 +870,7 @@ function SchedulesTab({ schedules, pipelines, loading, error, hasSnapshot, searc
                     )}
                     {!loading && filtered.length === 0 && (
                         <tr><td colSpan={9} className="px-4 py-12 text-center text-muted-foreground">
-                            {error && !hasSnapshot ? 'Список расписаний не загружен; пустой каталог не подтверждён.' : error && schedules.length === 0 ? 'Последний снимок пуст; обновить список не удалось.' : schedules.length === 0 ? 'Нет расписаний. Создайте первое!' : 'Ничего не найдено'}
+                            {error && !hasSnapshot ? 'Список расписаний не загружен; пустой каталог не подтверждён.' : filteredByServer && schedules.length === 0 ? 'По этому серверному фильтру расписаний нет.' : schedules.length === 0 ? 'Нет расписаний. Создайте первое!' : 'На этой странице совпадений нет.'}
                         </td></tr>
                     )}
                     {filtered.map(s => {
@@ -1725,11 +1722,10 @@ function describeCron(cron: string): string {
 //  ДИАЛОГ: РЕДАКТИРОВАНИЕ РАСПИСАНИЯ
 // ============================================================================
 
-function EditScheduleDialog({ schedule, open, onOpenChange, pipelines }: {
+function EditScheduleDialog({ schedule, open, onOpenChange }: {
     schedule: Schedule | null;
     open: boolean;
     onOpenChange: (v: boolean) => void;
-    pipelines: Pipeline[];
 }) {
     const queryClient = useQueryClient();
     const { data: scriptsData } = useScripts();
@@ -1974,16 +1970,7 @@ function EditScheduleDialog({ schedule, open, onOpenChange, pipelines }: {
                     {targetType === 'pipeline' && (
                         <div className="space-y-1.5">
                             <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Pipeline *</Label>
-                            <select
-                                value={pipelineId}
-                                onChange={e => setPipelineId(e.target.value)}
-                                className="w-full h-9 rounded-sm border border-border bg-black/30 px-2 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
-                            >
-                                <option value="">Выбери pipeline...</option>
-                                {pipelines.map(p => (
-                                    <option key={p.id} value={p.id}>{p.name} (v{p.version})</option>
-                                ))}
-                            </select>
+                            <PipelineCatalogPicker value={pipelineId} onChange={setPipelineId} enabled={open && targetType === 'pipeline'} />
                         </div>
                     )}
                     {targetType === 'script' && (
@@ -2034,7 +2021,7 @@ function EditScheduleDialog({ schedule, open, onOpenChange, pipelines }: {
 //  ДИАЛОГ: СОЗДАНИЕ РАСПИСАНИЯ
 // ============================================================================
 
-function CreateScheduleDialog({ open, onOpenChange, pipelines }: { open: boolean; onOpenChange: (v: boolean) => void; pipelines: Pipeline[] }) {
+function CreateScheduleDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
     const queryClient = useQueryClient();
     const { data: scriptsData } = useScripts();
     const scripts = scriptsData?.items ?? [];
@@ -2230,16 +2217,7 @@ function CreateScheduleDialog({ open, onOpenChange, pipelines }: { open: boolean
                     {targetType === 'pipeline' && (
                         <div className="space-y-1.5">
                             <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Pipeline *</Label>
-                            <select
-                                value={pipelineId}
-                                onChange={e => setPipelineId(e.target.value)}
-                                className="w-full h-9 rounded-sm border border-border bg-black/30 px-2 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
-                            >
-                                <option value="">Выбери pipeline...</option>
-                                {pipelines.map(p => (
-                                    <option key={p.id} value={p.id}>{p.name} (v{p.version})</option>
-                                ))}
-                            </select>
+                            <PipelineCatalogPicker value={pipelineId} onChange={setPipelineId} enabled={open && targetType === 'pipeline'} />
                         </div>
                     )}
                     {targetType === 'script' && (

@@ -23,12 +23,12 @@ afterEach(() => jest.clearAllMocks());
 it('keeps failed sources unknown, offers an isolated retry, and only confirms an empty list after success', async () => {
   let pipelineAttempts = 0;
   jest.mocked(api.get).mockImplementation(async (url) => {
-    if (url === '/pipelines?per_page=100') {
+    if (url === '/pipelines') {
       pipelineAttempts += 1;
       if (pipelineAttempts === 1) throw new Error('network timeout');
       return { data: { items: [], total: 0, page: 1, per_page: 100, pages: 0 } } as never;
     }
-    if (url === '/pipelines/runs?per_page=100' || url === '/schedules?per_page=100') throw new Error('service unavailable');
+    if (url === '/pipelines/runs' || url === '/schedules') throw new Error('service unavailable');
     throw new Error(`Unexpected GET ${url}`);
   });
 
@@ -39,7 +39,7 @@ it('keeps failed sources unknown, offers an isolated retry, and only confirms an
   expect(screen.getAllByText('Данные не получены; пустой список не подтверждён.')).toHaveLength(3);
   expect(screen.getByText('Список pipelines не загружен; пустой каталог не подтверждён.')).toBeInTheDocument();
   expect(screen.queryByText('Нет pipelines. Создайте первый!')).not.toBeInTheDocument();
-  expect(within(screen.getByText('Schedules Active').parentElement!).getByText('—')).toBeInTheDocument();
+  expect(within(screen.getByText('Расписания в каталоге').parentElement!).getByText('—')).toBeInTheDocument();
   expect(screen.queryByText('0/—')).not.toBeInTheDocument();
 
   fireEvent.click(screen.getByRole('button', { name: 'Повторить загрузку: Конвейеры' }));

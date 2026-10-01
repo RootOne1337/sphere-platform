@@ -8,7 +8,7 @@ jest.mock('@/lib/hooks/useScripts', () => ({ useScripts: () => ({ data: { items:
 jest.mock('@/components/sphere/DeviceSelector', () => ({ DeviceSelector: ({ value, onChange }: { value: string[]; onChange: (ids: string[]) => void }) => <button onClick={() => onChange(value.length ? [] : ['device-1'])}>Переключить тестовую цель</button> }));
 beforeEach(() => {
   jest.resetAllMocks();
-  jest.mocked(api.get).mockImplementation(async url => ({ data: { items: url === '/pipelines?per_page=100' ? [{ id: 'pipeline-1', name: 'Canary', steps: [], version: 1, tags: [] }] : [], total: 0 } }) as never);
+  jest.mocked(api.get).mockImplementation(async url => ({ data: { items: url === '/pipelines' ? [{ id: 'pipeline-1', name: 'Canary', steps: [], version: 1, tags: [], is_active: true }] : [], total: url === '/pipelines' ? 1 : 0, page: 1, per_page: 100, pages: url === '/pipelines' ? 1 : 0 } }) as never);
   jest.mocked(api.post).mockResolvedValue({ data: { id: 'created' } });
 });
 async function openCreate() {

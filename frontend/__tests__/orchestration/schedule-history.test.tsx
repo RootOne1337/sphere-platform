@@ -15,7 +15,7 @@ const envelope = (page = 1, items = [execution(`execution-${page}`)], total = 51
 beforeEach(() => jest.resetAllMocks());
 
 it('opens history from the real schedule row and reports times, counters, skip reason and IDs without firing the schedule', async () => {
-  jest.mocked(api.get).mockImplementation(async (url) => url.includes('/executions') ? envelope() as never : { data: { items: url.startsWith('/schedules?') ? [{ ...schedule, target_type: 'pipeline', is_active: true, total_runs: 1, conflict_policy: 'skip' }] : [], total: 1 } } as never);
+  jest.mocked(api.get).mockImplementation(async (url) => url.includes('/executions') ? envelope() as never : { data: { items: url === '/schedules' ? [{ ...schedule, target_type: 'pipeline', is_active: true, total_runs: 1, conflict_policy: 'skip' }] : [], total: url === '/schedules' ? 1 : 0, page: 1, per_page: 100, pages: url === '/schedules' ? 1 : 0 } } as never);
   render(<OrchestrationPage />, { wrapper: createWrapper() });
   fireEvent.click(await screen.findByText('Schedules'));
   fireEvent.click(await screen.findByRole('button', { name: 'История срабатываний: Scheduled canary' }));

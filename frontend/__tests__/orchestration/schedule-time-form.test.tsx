@@ -12,7 +12,7 @@ const schedule = { id: 'schedule-1', name: 'One shot canary', description: null,
   script_id: null, conflict_policy: 'skip', is_active: true, device_ids: [], total_runs: 0, next_fire_at: null, last_fired_at: null };
 beforeEach(() => {
   jest.resetAllMocks();
-  jest.mocked(api.get).mockImplementation(async (url) => ({ data: { items: url.startsWith('/schedules?') ? [schedule] : url === '/pipelines?per_page=100' ? [{ id: 'pipeline-1', name: 'Canary', steps: [], version: 1, tags: [] }] : [], total: 1 } }) as never);
+  jest.mocked(api.get).mockImplementation(async (url) => ({ data: { items: url === '/schedules' ? [schedule] : url === '/pipelines' ? [{ id: 'pipeline-1', name: 'Canary', steps: [], version: 1, tags: [], is_active: true }] : [], total: url === '/pipelines/runs' ? 0 : 1, page: 1, per_page: 100, pages: url === '/pipelines/runs' ? 0 : 1 } }) as never);
   jest.mocked(api.patch).mockResolvedValue({ data: schedule });
   jest.mocked(api.post).mockResolvedValue({ data: schedule });
 });
@@ -59,8 +59,8 @@ it('creates one-shot schedules with the same UTC contract and does not submit an
 
 it('blocks an invalid stored instant, reports it, and permits an explicitly corrected UTC value', async () => {
   const original = jest.mocked(api.get).getMockImplementation()!;
-  jest.mocked(api.get).mockImplementation((url, config) => url.startsWith('/schedules?')
-    ? Promise.resolve({ data: { items: [{ ...schedule, one_shot_at: 'malformed-time' }], total: 1 } }) as never : original(url, config));
+  jest.mocked(api.get).mockImplementation((url, config) => url === '/schedules'
+    ? Promise.resolve({ data: { items: [{ ...schedule, one_shot_at: 'malformed-time' }], total: 1, page: 1, per_page: 100, pages: 1 } }) as never : original(url, config));
   const dialog = await openSchedule();
   expect(within(dialog).getByRole('alert')).toHaveTextContent('Дата запуска API некорректна');
   expect(within(dialog).getByRole('button', { name: 'Сохранить изменения' })).toBeDisabled();
