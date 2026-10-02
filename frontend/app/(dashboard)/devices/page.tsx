@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import { Suspense, useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { RowSelectionState } from '@tanstack/react-table';
 import { useDevices, useBulkAction, useDeleteDevice, useUpdateDevice, useBulkDeleteDevices, type Device } from '@/lib/hooks/useDevices';
 import { useBulkRevokeVpn } from '@/lib/hooks/useVpn';
@@ -48,7 +49,7 @@ function formatDeviceFailures(failures: DeviceActionFailure[], devices: Device[]
   return examples.length ? `${examples.join('; ')}${remainder}.` : '';
 }
 
-export default function DevicesPage() {
+function DevicesRegistry({ initialGroupId }: { initialGroupId: string }) {
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 300);
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
@@ -75,7 +76,7 @@ export default function DevicesPage() {
   const [selectedLocationId, setSelectedLocationId] = useState<string>('');
 
   // Фильтры по группе и локации
-  const [filterGroupId, setFilterGroupId] = useState<string>('');
+  const [filterGroupId, setFilterGroupId] = useState(initialGroupId);
   const [filterLocationId, setFilterLocationId] = useState<string>('');
 
   const liveStatusFilter = statusFilter === 'all' ? undefined : statusFilter;
@@ -430,6 +431,7 @@ export default function DevicesPage() {
                 </SelectTrigger>
               <SelectContent>
                 <SelectItem value="__all__">Все группы</SelectItem>
+                {filterGroupId && !groups?.some((group) => group.id === filterGroupId) && <SelectItem value={filterGroupId} disabled>Группа {filterGroupId}</SelectItem>}
                 {groupsLoadError && !groups?.length && <SelectItem value="__groups_unavailable" disabled>Список групп недоступен</SelectItem>}
                 {groupsLoading && <SelectItem value="__groups_loading" disabled>Загрузка групп…</SelectItem>}
                 {groups?.map((g) => (
@@ -812,4 +814,14 @@ export default function DevicesPage() {
       </Dialog>
     </div>
   );
+}
+
+function ScopedDevicesPage() {
+  const groupId = useSearchParams()?.get('group_id') ?? '';
+  // A new bookmark is a new operation scope: reset page, selection and open actions together.
+  return <DevicesRegistry key={groupId} initialGroupId={groupId} />;
+}
+
+export default function DevicesPage() {
+  return <Suspense fallback={<p role="status" className="p-6 text-sm text-muted-foreground">Загрузка реестра устройств…</p>}><ScopedDevicesPage /></Suspense>;
 }

@@ -12,6 +12,9 @@ import { useGroups, useMoveDevices } from '@/lib/hooks/useGroups';
 import { useAssignDevicesToLocation, useLocations } from '@/lib/hooks/useLocations';
 import { useGameServers } from '@/lib/hooks/usePipelineSettings';
 import type { Device } from '@/lib/hooks/useDevices';
+import { useSearchParams } from 'next/navigation';
+
+jest.mock('next/navigation', () => ({ useSearchParams: jest.fn(() => new URLSearchParams()) }));
 
 jest.mock('@/lib/hooks/useDevices', () => ({
   useDevices: jest.fn(),
@@ -93,6 +96,7 @@ const devices = [
 const bulkDeleteMutation = jest.fn<Promise<{ deleted: number }>, [string[]]>();
 
 beforeEach(() => {
+  jest.mocked(useSearchParams).mockReturnValue(new URLSearchParams() as never);
   jest.mocked(useDevices).mockReturnValue({
     data: { items: devices, total: devices.length, page: 1, page_size: 100, pages: 1, scope_total: devices.length },
     isLoading: false,
@@ -112,6 +116,24 @@ beforeEach(() => {
 });
 
 afterEach(() => jest.clearAllMocks());
+
+it('applies the bookmarked group ID to the first server request', () => {
+  const groupId = '00000000-0000-4000-8000-000000000001';
+  jest.mocked(useSearchParams).mockReturnValue(new URLSearchParams({ group_id: groupId }) as never);
+  render(<DevicesPage />);
+  expect(useDevices).toHaveBeenCalledWith(expect.objectContaining({ group_id: groupId, page: 1, page_size: 100 }));
+  expect(jest.mocked(useDevices).mock.calls.every(([params]) => params.group_id === groupId)).toBe(true);
+});
+
+it('resets page and selection when navigation changes the bookmarked group', () => {
+  jest.mocked(useSearchParams).mockReturnValue(new URLSearchParams({ group_id: 'group-a' }) as never);
+  const { rerender } = render(<DevicesPage />);
+  fireEvent.click(screen.getByRole('button', { name: 'Переключить выбор phone-online' }));
+  jest.mocked(useSearchParams).mockReturnValue(new URLSearchParams({ group_id: 'group-b' }) as never);
+  rerender(<DevicesPage />);
+  expect(useDevices).toHaveBeenLastCalledWith(expect.objectContaining({ group_id: 'group-b', page: 1 }));
+  expect(screen.getByRole('button', { name: 'Переключить выбор phone-online' })).toHaveAttribute('aria-pressed', 'false');
+});
 
 it('does not treat absent legacy metadata as a failed live-presence source', () => {
   render(<DevicesPage />);
