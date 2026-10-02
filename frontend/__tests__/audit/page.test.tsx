@@ -94,13 +94,17 @@ describe('Audit page', () => {
     }));
   });
 
-  it('applies the query DSL to normalized backend statuses', async () => {
+  it('applies global query DSL and renders the server-filtered result', async () => {
     renderPage();
     await screen.findByText('POST /devices/one/reboot');
     fireEvent.change(screen.getByRole('searchbox', { name: 'Поиск по журналу аудита' }), { target: { value: 'status:FAILED' } });
-
-    expect(screen.getByText('POST /devices/one/reboot')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Применить фильтры' }));
+    await waitFor(() => expect(api.get).toHaveBeenLastCalledWith('/audit/logs', expect.objectContaining({ params: { q: 'status:FAILED', page: 1, per_page: 100 } })));
+    expect(await screen.findByText('POST /devices/one/reboot')).toBeInTheDocument();
+    jest.mocked(api.get).mockResolvedValue({ data: { items: [], total: 0, page: 1, pages: 0 } });
     fireEvent.change(screen.getByRole('searchbox', { name: 'Поиск по журналу аудита' }), { target: { value: 'status:SUCCESS' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Применить фильтры' }));
+    await screen.findByText('По этим условиям событий нет');
     expect(screen.queryByText('POST /devices/one/reboot')).not.toBeInTheDocument();
     expect(screen.getByText('По этим условиям событий нет')).toBeInTheDocument();
   });

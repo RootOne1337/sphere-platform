@@ -3,12 +3,15 @@
 import { useMemo, useState } from 'react';
 import {
   AlertTriangle, CheckCircle2, ChevronLeft, ChevronRight, CircleHelp,
-  Download, Filter, Loader2, RefreshCw, ShieldCheck,
+  Download, Loader2, RefreshCw, ShieldCheck,
   XCircle,
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import { AuditQueryBuilder } from '@/src/features/audit/AuditQueryBuilder';
+import { AuditFiltersForm } from '@/src/features/audit/AuditFiltersForm';
+import { type AuditFilters } from '@/src/features/audit/investigation';
+import { useAuditExport } from '@/src/features/audit/useAuditExport';
+import { useAuthStore } from '@/lib/store';
 import { AuditDrawer } from '@/src/features/audit/AuditDrawer';
 import { normalizeAuditResponse, type AuditEvent, type AuditStatus } from '@/src/features/audit/types';
 import { Badge } from '@/src/shared/ui/badge';
@@ -36,11 +39,6 @@ function StatusMark({ status }: { status: AuditStatus }) {
   );
 }
 
-function safeCsvCell(value: string) {
-  const safe = /^[\s]*[=+\-@]/.test(value) ? `'${value}` : value;
-  return `"${safe.replace(/"/g, '""')}"`;
-}
-
 function formatTimestamp(value: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
@@ -51,19 +49,23 @@ function formatTimestamp(value: string) {
 }
 
 export default function AuditLogsPage() {
-  const [searchQuery, setSearchQuery] = useState('');
+  const actor = useAuthStore(state => state.user);
+  const version = useAuthStore(state => state.sessionVersion);
+  const scope = `${actor?.id}:${actor?.org_id}:${actor?.role}:${version}`;
+  return <AuditInvestigation key={scope} scope={scope} />;
+}
+
+function AuditInvestigation({ scope }: { scope: string }) {
   const [selectedEvent, setSelectedEvent] = useState<AuditEvent | null>(null);
-  const [filtersOpen, setFiltersOpen] = useState(false);
-  const [filterStatus, setFilterStatus] = useState<AuditStatus | ''>('');
-  const [filterAction, setFilterAction] = useState('');
-  const [filterUser, setFilterUser] = useState('');
+  const [filters, setFilters] = useState<AuditFilters>({});
   const [page, setPage] = useState(1);
+  const csv = useAuditExport();
 
   const auditQuery = useQuery({
-    queryKey: ['audit-logs', page],
+    queryKey: ['audit-logs', scope, filters, page],
     queryFn: async ({ signal }) => {
       const { data } = await api.get('/audit/logs', {
-        params: { page, per_page: PAGE_SIZE },
+        params: { ...filters, page, per_page: PAGE_SIZE },
         signal,
       });
       return normalizeAuditResponse(data);
@@ -76,28 +78,7 @@ export default function AuditLogsPage() {
   const total = auditQuery.data?.total ?? 0;
   const totalPages = auditQuery.data?.pages ?? 0;
 
-  const uniqueActions = useMemo(() => [...new Set(events.map((event) => event.action))].sort(), [events]);
-  const uniqueUsers = useMemo(() => [...new Set(events.map((event) => event.user))].sort(), [events]);
-  const filteredEvents = useMemo(() => {
-    let result = events;
-    if (filterStatus) result = result.filter((event) => event.status === filterStatus);
-    if (filterAction) result = result.filter((event) => event.action === filterAction);
-    if (filterUser) result = result.filter((event) => event.user === filterUser);
-    if (!searchQuery.trim()) return result;
-
-    const terms = searchQuery.toLowerCase().split(/\s+/).filter(Boolean);
-    return result.filter((event) => terms.every((term) => {
-      if (term.includes(':')) {
-        const [key, ...parts] = term.split(':');
-        const value = parts.join(':');
-        if (key === 'status') return event.status.toLowerCase() === value;
-        if (key === 'action') return event.action.toLowerCase().includes(value);
-        if (key === 'user') return event.user.toLowerCase().includes(value);
-      }
-      return [event.id, event.timestamp, event.user, event.action, event.resource, event.ip]
-        .join(' ').toLowerCase().includes(term);
-    }));
-  }, [events, searchQuery, filterStatus, filterAction, filterUser]);
+  const filteredEvents = events;
 
   const summary = useMemo(() => ({
     success: events.filter((event) => event.status === 'SUCCESS').length,
@@ -106,32 +87,9 @@ export default function AuditLogsPage() {
     unknown: events.filter((event) => event.status === 'UNKNOWN').length,
   }), [events]);
 
-  const exportCsv = () => {
-    if (!filteredEvents.length) return;
-    const rows = [
-      ['Время', 'Результат', 'Действие', 'Пользователь', 'Ресурс', 'IP', 'ID события'],
-      ...filteredEvents.map((event) => [
-        event.timestamp, event.status, event.action, event.user, event.resource, event.ip, event.id,
-      ]),
-    ];
-    const csv = `\uFEFF${rows.map((row) => row.map(safeCsvCell).join(';')).join('\r\n')}`;
-    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
-    const anchor = document.createElement('a');
-    anchor.href = url;
-    anchor.download = `sphere-audit-${new Date().toISOString().slice(0, 10)}.csv`;
-    document.body.appendChild(anchor);
-    anchor.click();
-    anchor.remove();
-    window.setTimeout(() => URL.revokeObjectURL(url), 0);
+  const applyFilters = (params: AuditFilters) => {
+    csv.cancel(); setSelectedEvent(null); setPage(1); setFilters(params);
   };
-
-  const clearFilters = () => {
-    setFilterStatus('');
-    setFilterAction('');
-    setFilterUser('');
-    setSearchQuery('');
-  };
-  const hasFilters = Boolean(filterStatus || filterAction || filterUser || searchQuery.trim());
 
   return (
     <PageFrame>
@@ -145,10 +103,10 @@ export default function AuditLogsPage() {
               {auditQuery.isFetching ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
               Обновить
             </Button>
-            <Button onClick={exportCsv} disabled={filteredEvents.length === 0}>
+            <Button onClick={() => csv.run(filters)} disabled={csv.pending || auditQuery.isFetching || auditQuery.isError || !auditQuery.data || total === 0}>
               <Download className="mr-2 h-4 w-4" />
               Экспорт CSV
-              {filteredEvents.length > 0 && <span className="ml-1 tabular-nums">({filteredEvents.length})</span>}
+
             </Button>
           </>
         )}
@@ -160,7 +118,7 @@ export default function AuditLogsPage() {
             <div><p className="text-sm font-medium text-muted-foreground">Всего событий</p><p className="mt-2 text-2xl font-semibold tabular-nums">{auditQuery.isError ? '—' : total.toLocaleString('ru-RU')}</p></div>
             <span className="rounded-xl bg-primary/10 p-2.5 text-primary"><ShieldCheck className="h-5 w-5" /></span>
           </div>
-          <p className="mt-3 text-xs text-muted-foreground">Общее число в журнале backend</p>
+          <p className="mt-3 text-xs text-muted-foreground">Все события по применённым фильтрам</p>
         </Card>
         <Card className="p-4 sm:p-5">
           <div className="flex items-start justify-between gap-3">
@@ -174,7 +132,7 @@ export default function AuditLogsPage() {
             <div><p className="text-sm font-medium text-muted-foreground">Ошибки</p><p className="mt-2 text-2xl font-semibold tabular-nums text-destructive">{auditQuery.isError ? '—' : summary.failed}</p></div>
             <span className="rounded-xl bg-destructive/10 p-2.5 text-destructive"><XCircle className="h-5 w-5" /></span>
           </div>
-          <p className="mt-3 text-xs text-muted-foreground">Согласно meta.status API</p>
+          <p className="mt-3 text-xs text-muted-foreground">На загруженной странице · meta.status API</p>
         </Card>
         <Card className="p-4 sm:p-5">
           <div className="flex items-start justify-between gap-3">
@@ -193,39 +151,14 @@ export default function AuditLogsPage() {
       </section>
 
       <Card className="overflow-visible">
-        <div className="flex flex-col gap-3 border-b border-border p-4 sm:p-5 xl:flex-row xl:items-center xl:justify-between">
-          <div className="min-w-0 flex-1"><AuditQueryBuilder value={searchQuery} onChange={setSearchQuery} /></div>
-          <div className="flex flex-wrap items-center gap-2">
-            <Button variant={filtersOpen ? 'secondary' : 'outline'} onClick={() => setFiltersOpen((open) => !open)} aria-expanded={filtersOpen}>
-              <Filter className="mr-2 h-4 w-4" />
-              Фильтры
-              {hasFilters && <span className="ml-2 h-2 w-2 rounded-full bg-primary" aria-label="Есть активные фильтры" />}
-            </Button>
-            {hasFilters && <Button variant="ghost" onClick={clearFilters}>Сбросить</Button>}
-          </div>
-        </div>
-
-        {filtersOpen && (
-          <div className="grid gap-3 border-b border-border bg-muted/30 p-4 sm:grid-cols-2 sm:p-5 xl:grid-cols-4" aria-label="Фильтры журнала">
-            <label className="grid gap-1.5 text-sm font-medium">Результат
-              <select value={filterStatus} onChange={(event) => setFilterStatus(event.target.value as AuditStatus | '')} className="h-10 rounded-lg border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                <option value="">Все результаты</option><option value="SUCCESS">Успешно</option><option value="FAILED">Ошибка</option><option value="WARNING">Предупреждение</option><option value="UNKNOWN">Не указано</option>
-              </select>
-            </label>
-            <label className="grid gap-1.5 text-sm font-medium">Действие
-              <select value={filterAction} onChange={(event) => setFilterAction(event.target.value)} className="h-10 rounded-lg border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                <option value="">Все действия</option>{filterAction && !uniqueActions.includes(filterAction) && <option value={filterAction}>{filterAction}</option>}{uniqueActions.map((action) => <option key={action} value={action}>{action}</option>)}
-              </select>
-            </label>
-            <label className="grid gap-1.5 text-sm font-medium">Пользователь
-              <select value={filterUser} onChange={(event) => setFilterUser(event.target.value)} className="h-10 rounded-lg border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                <option value="">Все пользователи</option>{filterUser && !uniqueUsers.includes(filterUser) && <option value={filterUser}>{filterUser}</option>}{uniqueUsers.map((user) => <option key={user} value={user}>{user}</option>)}
-              </select>
-            </label>
-            <div className="flex items-end text-xs leading-5 text-muted-foreground"><CircleHelp className="mr-2 h-4 w-4 shrink-0" />Фильтры и поиск применяются к загруженной странице. Стрелки ниже загружают остальные записи.</div>
-          </div>
-        )}
-
+        <AuditFiltersForm onApply={applyFilters} />
+        {Object.keys(filters).length > 0 && <div className="border-b border-border px-5 py-3 text-xs text-muted-foreground">Применены: {Object.entries(filters).map(([key, value]) => `${key}=${value}`).join(' · ')}</div>}
+        {csv.pending && <div role="status" className="flex flex-wrap items-center gap-3 border-b border-border px-5 py-3 text-sm"><Loader2 className="h-4 w-4 animate-spin" />Готовим CSV по применённым фильтрам…<Button variant="outline" size="sm" onClick={csv.cancel}>Отменить экспорт</Button></div>}
+        {csv.error && <p role="alert" className="border-b border-border px-5 py-3 text-sm text-destructive">{csv.error}</p>}
+        {csv.receipt && <div role="status" className="border-b border-border px-5 py-3 text-sm">
+          Передан браузеру CSV: {csv.receipt.rows.toLocaleString('ru-RU')} событий · {formatTimestamp(csv.receipt.observedAt)}.
+          {csv.receipt.truncated && <p className="mt-1 text-warning">Остальные события не включены: достигнут лимит 5 000. Сузьте диапазон времени или фильтры и повторите экспорт. Автоматического продолжения нет.</p>}
+        </div>}
         <div className="overflow-x-auto">
           <table className="w-full min-w-[930px] table-fixed text-left">
             <thead className="sticky top-0 z-10 border-b border-border bg-muted/80 text-xs font-semibold text-muted-foreground backdrop-blur">
@@ -259,7 +192,7 @@ export default function AuditLogsPage() {
               ))}
               {!auditQuery.isLoading && !auditQuery.isError && filteredEvents.length === 0 && (
                 <tr><td colSpan={6} className="px-5 py-16 text-center">
-                  <div className="mx-auto max-w-md"><ShieldCheck className="mx-auto mb-3 h-8 w-8 text-muted-foreground/60" /><p className="font-medium">{events.length ? 'По этим условиям событий нет' : 'В журнале пока нет событий'}</p><p className="mt-1 text-sm text-muted-foreground">{events.length ? 'Измените запрос или сбросьте фильтры.' : 'После действий в системе новые записи появятся здесь.'}</p></div>
+                  <div className="mx-auto max-w-md"><ShieldCheck className="mx-auto mb-3 h-8 w-8 text-muted-foreground/60" /><p className="font-medium">{Object.keys(filters).length ? 'По этим условиям событий нет' : 'В журнале пока нет событий'}</p><p className="mt-1 text-sm text-muted-foreground">{Object.keys(filters).length ? 'Измените запрос или сбросьте фильтры.' : 'После действий в системе новые записи появятся здесь.'}</p></div>
                 </td></tr>
               )}
             </tbody>
@@ -267,7 +200,7 @@ export default function AuditLogsPage() {
         </div>
 
         <footer className="flex flex-col gap-3 border-t border-border px-4 py-3 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between sm:px-5">
-          <p>{auditQuery.isError ? 'Данные недоступны' : `Показано ${filteredEvents.length} из ${events.length} на странице · всего ${total.toLocaleString('ru-RU')}`}</p>
+          <p>{auditQuery.isError ? 'Данные недоступны' : `Показано ${filteredEvents.length} из ${events.length} на странице · по фильтрам ${total.toLocaleString('ru-RU')}`}</p>
           <nav aria-label="Страницы журнала" className="flex items-center gap-2">
             <Button variant="outline" size="sm" aria-label="Предыдущая страница" disabled={page <= 1 || auditQuery.isFetching} onClick={() => setPage((current) => Math.max(1, current - 1))}><ChevronLeft className="h-4 w-4" /><span className="sr-only">Предыдущая</span></Button>
             <span className="min-w-24 text-center text-xs tabular-nums">Страница {totalPages === 0 ? 0 : page} из {totalPages}</span>

@@ -19,7 +19,7 @@ export function AuditQueryBuilder({ value, onChange }: AuditQueryBuilderProps) {
   };
 
   return (
-    <div className="relative w-full max-w-2xl">
+    <div className="relative w-full max-w-2xl" onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) setIsFocused(false); }}>
       <div className={`flex min-h-10 items-center rounded-lg border bg-background transition-colors ${isFocused ? 'border-ring ring-2 ring-ring/20' : 'border-input'}`}>
         <Search className="ml-3 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
         <input
@@ -28,9 +28,9 @@ export function AuditQueryBuilder({ value, onChange }: AuditQueryBuilderProps) {
           className="h-10 min-w-0 flex-1 border-0 bg-transparent px-3 text-sm outline-none placeholder:text-muted-foreground/75 focus-visible:ring-0"
           placeholder="Поиск · например status:FAILED action:LOGIN"
           value={value}
+          maxLength={500}
           onChange={(event) => onChange(event.target.value)}
           onFocus={() => setIsFocused(true)}
-          onBlur={() => window.setTimeout(() => setIsFocused(false), 120)}
           onKeyDown={(event) => { if (event.key === 'Escape') setIsFocused(false); }}
         />
         {value && <button type="button" aria-label="Очистить запрос" onClick={() => onChange('')} className="mr-2 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"><X className="h-4 w-4" /></button>}
