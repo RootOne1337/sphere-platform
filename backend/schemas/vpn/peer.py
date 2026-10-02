@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
+from typing import Literal
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 # ── Assign / Revoke ──────────────────────────────────────────────────────────
 
@@ -74,10 +75,15 @@ class VPNPoolStats(BaseModel):
 # ── Bulk rotate ───────────────────────────────────────────────────────────────
 
 class VPNBulkRotateRequest(BaseModel):
-    device_ids: list[uuid.UUID] = Field(
-        default=[], description="Пустой список = ротация всех устройств org"
-    )
-    reason: str = "scheduled_rotation"
+    model_config = ConfigDict(extra="forbid")
+    device_ids: list[uuid.UUID] = Field(min_length=1, max_length=500)
+    reason: str = Field("scheduled_rotation", min_length=1, max_length=100)
+
+    @model_validator(mode="after")
+    def require_unique_device_ids(self) -> "VPNBulkRotateRequest":
+        if len(set(self.device_ids)) != len(self.device_ids):
+            raise ValueError("device_ids must not contain duplicates")
+        return self
 
 
 class RotateDetail(BaseModel):
@@ -85,6 +91,8 @@ class RotateDetail(BaseModel):
     old_ip: str | None
     new_ip: str | None
     error: str | None
+    outcome: Literal["configured", "rejected", "unknown"]
+    revoke_confirmed: bool = False
 
 
 class VPNBulkRotateResponse(BaseModel):
@@ -92,14 +100,22 @@ class VPNBulkRotateResponse(BaseModel):
     success: int
     failed: int
     details: list[RotateDetail]
+    execution_confirmed: Literal[False] = False
 
 
 # ── Kill Switch ───────────────────────────────────────────────────────────────
 
 class KillSwitchRequest(BaseModel):
-    device_ids: list[str]
-    action: str = Field("enable", description="enable | disable")
-    method: str = Field("vpnservice", description="vpnservice (no-root) | iptables (root required)")
+    model_config = ConfigDict(extra="forbid")
+    device_ids: list[uuid.UUID] = Field(min_length=1, max_length=500)
+    action: Literal["enable", "disable"]
+    method: Literal["vpnservice", "iptables"] = "vpnservice"
+
+    @model_validator(mode="after")
+    def require_unique_device_ids(self) -> "KillSwitchRequest":
+        if len(set(self.device_ids)) != len(self.device_ids):
+            raise ValueError("device_ids must not contain duplicates")
+        return self
 
 
 class KillSwitchResponse(BaseModel):
@@ -107,3 +123,5 @@ class KillSwitchResponse(BaseModel):
     total: int
     success: int
     results: dict[str, bool]
+    outcomes: dict[str, Literal["submitted", "not_sent", "unsupported", "unknown"]]
+    execution_confirmed: Literal[False] = False

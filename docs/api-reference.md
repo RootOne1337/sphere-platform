@@ -726,84 +726,75 @@ see the [Tasks section](#tasks--tasks) for progress and live logs.
 
 ## VPN — `/vpn`
 
+Contract reviewed: 2026-10-03. Canonical schemas: [OpenAPI](openapi.json).
+Operator recovery and execution boundaries: [VPN control outcomes](operations/VPN-CONTROL-OUTCOMES.md).
+
 ### GET /vpn/peers
 
-List VPN peers for the organization.
+Returns an array of peers owned by the organization, not an `items/total` envelope.
+Fields: `id`, nullable `device_id`, nullable `assigned_ip`, `status`, `is_active`,
+`public_key`, nullable `last_handshake_at`, and `created_at`.
+`is_active` requires a recent handshake under 180 seconds. It does not prove
+Android command delivery or per-peer RX/TX traffic. Requires `vpn:read`.
 
-**Requires:** `vpn:read` permission.
+### POST /vpn/assign
 
-**Response 200:**
-```json
-{
-  "items": [
-    {
-      "id": "uuid",
-      "device_id": "uuid",
-      "device_name": "Device-001",
-      "vpn_ip": "10.100.0.5",
-      "public_key": "base64pubkey==",
-      "status": "assigned",
-      "last_handshake": "2026-02-23T09:55:00Z"
-    }
-  ],
-  "total": 142
-}
-```
+Body: `device_id` (UUID), optional `split_tunnel` (default true).
+Returns `peer_id`, `device_id`, `assigned_ip`, `public_key`, `config`, and `qr_code`.
+Configuration and QR content are sensitive; do not include them in logs.
+The response confirms a provider assignment, not Android configuration application.
+Requires `vpn:write`.
 
----
+### DELETE /vpn/revoke/{device_id}
 
-### POST /vpn/peers
+Revokes the owned peer using the durable provider lifecycle. Returns 204 only
+after the lifecycle completes. A timeout/error may retain a `REVOKING` reservation
+and requires reconciliation. Requires `vpn:write`.
 
-Provision a new VPN peer for a device.
+### POST /vpn/revoke/bulk
 
-```http
-POST /vpn/peers
+Accepts 1–500 unique UUID `device_ids`. Returns `total`, `succeeded`, `failed`,
+and per-device `results` (`device_id`, `success`, nullable `error`). Requires
+`vpn:mass_operation`; a false result is not proof that provider side effects
+never occurred.
 
-{ "device_id": "uuid" }
-```
+### POST /vpn/rotate
 
-Allocates an IP from the pool, generates WireGuard keypair, stores encrypted config.
+Accepts 1–500 unique UUID `device_ids` and optional `reason` (1–100 characters).
+Empty lists no longer mean the whole organization. Unknown fields are rejected.
+All active target devices must belong to the organization before any provider IO.
+Requires `vpn:mass_operation`.
 
-**Requires:** `vpn:write` permission.
+Returns `total`, `success`, `failed`, `execution_confirmed: false`, and `details`:
+`device_id`, nullable `old_ip/new_ip/error`, `outcome` (`configured|rejected|unknown`),
+and `revoke_confirmed`. `configured` refers to the provider operation, not the
+APK. An unknown result can follow a completed revoke and must not be blindly
+retried. A missing assigned peer is rejected without an implicit assignment.
 
----
+### POST /vpn/killswitch
 
-### DELETE /vpn/peers/{id}
+Body: 1–500 unique UUID `device_ids`, **required** `action` (`enable|disable`),
+and optional `method` (`vpnservice|iptables`, default `vpnservice`). Legacy
+`enabled` booleans and unknown fields produce 422. The whole selection is
+ownership-checked before dispatch. Requires `vpn:mass_operation`.
 
-Revoke a VPN peer and release the IP back to the pool.
-
----
+Returns `action`, `total`, `success`, boolean `results`, per-device `outcomes`
+(`submitted|not_sent|unsupported|unknown`), and `execution_confirmed: false`.
+The current legacy sender is not connected: owned requests report `unsupported`
+without dispatching. `success` counts sender acceptance, not Android execution.
 
 ### GET /vpn/pool/stats
 
-Pool utilization statistics.
-
-**Response 200:**
-```json
-{
-  "total": 65534,
-  "allocated": 142,
-  "available": 65392,
-  "utilization_pct": 0.22
-}
-```
-
----
+Returns `total_ips`, `allocated`, `free`, `active_tunnels`, `stale_handshakes`.
+Capacity/free counts refer to the platform pool; allocated/handshake counts
+refer to the caller's organization. Requires `vpn:read`.
 
 ### GET /vpn/health
 
-VPN subsystem health check.
-
-**Response 200:**
-```json
-{
-  "status": "ok",
-  "checks": {
-    "vpn_service": { "status": "ok" },
-    "wg_router": { "status": "ok", "latency_ms": 4 }
-  }
-}
-```
+The current response is a static service status (`status: ok`,
+`checks.vpn_service.status: ok`). It does not probe router reachability or
+publish latency. Do not use it as a transport readiness or SLA measurement.
+Requires `vpn:read`; measured health coverage remains a separate open finding.
 
 ---
 

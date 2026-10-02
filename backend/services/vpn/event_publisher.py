@@ -18,6 +18,7 @@ class EventPublisher:
     Sends commands to devices via WebSocket pub/sub.
     Stub until TZ-03 merge; always returns False (device appears offline).
     """
+    supports_killswitch = False
 
     async def send_command_to_device(
         self, device_id: str, command: dict

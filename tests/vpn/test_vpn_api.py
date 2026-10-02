@@ -244,59 +244,34 @@ class TestVPNPoolStatsEndpoint:
 
 
 class TestKillSwitchEndpoint:
-
     @pytest.mark.asyncio
-    async def test_enable_killswitch_returns_results(self, vpn_admin_client):
-        dev1 = str(uuid.uuid4())
-        dev2 = str(uuid.uuid4())
-        with patch(
-            "backend.services.vpn.killswitch_service.KillSwitchService.bulk_enable",
-            new_callable=AsyncMock,
-            return_value={dev1: True, dev2: False},
-        ):
-            resp = await vpn_admin_client.post(
-                "/api/v1/vpn/killswitch",
-                json={
-                    "device_ids": [dev1, dev2],
-                    "action": "enable",
-                    "method": "vpnservice",
-                },
-            )
+    async def test_unwired_killswitch_reports_unsupported(self, vpn_admin_client, test_device):
+        resp = await vpn_admin_client.post('/api/v1/vpn/killswitch', json={
+            'device_ids': [str(test_device.id)], 'action': 'enable', 'method': 'vpnservice',
+        })
         assert resp.status_code == 200
-        data = resp.json()
-        assert data["action"] == "enable"
-        assert data["total"] == 2
-        assert data["success"] == 1
+        assert resp.json()['outcomes'] == {str(test_device.id): 'unsupported'}
+        assert resp.json()['execution_confirmed'] is False
+        assert resp.json()['success'] == 0
 
     @pytest.mark.asyncio
-    async def test_disable_killswitch(self, vpn_admin_client):
-        dev1 = str(uuid.uuid4())
-        with patch(
-            "backend.services.vpn.killswitch_service.KillSwitchService.disable_killswitch",
-            new_callable=AsyncMock,
-            return_value=True,
-        ):
-            resp = await vpn_admin_client.post(
-                "/api/v1/vpn/killswitch",
-                json={"device_ids": [dev1], "action": "disable"},
-            )
+    async def test_disable_is_explicit(self, vpn_admin_client, test_device):
+        resp = await vpn_admin_client.post('/api/v1/vpn/killswitch', json={
+            'device_ids': [str(test_device.id)], 'action': 'disable',
+        })
         assert resp.status_code == 200
-        assert resp.json()["action"] == "disable"
+        assert resp.json()['action'] == 'disable'
 
     @pytest.mark.asyncio
-    async def test_unknown_action_returns_400(self, vpn_admin_client):
-        dev1 = str(uuid.uuid4())
-        resp = await vpn_admin_client.post(
-            "/api/v1/vpn/killswitch",
-            json={"device_ids": [dev1], "action": "suspend"},
-        )
-        assert resp.status_code == 400
+    async def test_unknown_action_returns_422(self, vpn_admin_client):
+        resp = await vpn_admin_client.post('/api/v1/vpn/killswitch', json={
+            'device_ids': [str(uuid.uuid4())], 'action': 'suspend',
+        })
+        assert resp.status_code == 422
 
     @pytest.mark.asyncio
     async def test_killswitch_requires_org_admin(self, vpn_manager_client):
-        dev1 = str(uuid.uuid4())
-        resp = await vpn_manager_client.post(
-            "/api/v1/vpn/killswitch",
-            json={"device_ids": [dev1], "action": "enable"},
-        )
+        resp = await vpn_manager_client.post('/api/v1/vpn/killswitch', json={
+            'device_ids': [str(uuid.uuid4())], 'action': 'enable',
+        })
         assert resp.status_code == 403

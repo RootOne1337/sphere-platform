@@ -15332,27 +15332,37 @@
         "properties": {
           "device_ids": {
             "items": {
-              "type": "string"
+              "type": "string",
+              "format": "uuid"
             },
             "type": "array",
+            "maxItems": 500,
+            "minItems": 1,
             "title": "Device Ids"
           },
           "action": {
             "type": "string",
-            "title": "Action",
-            "description": "enable | disable",
-            "default": "enable"
+            "enum": [
+              "enable",
+              "disable"
+            ],
+            "title": "Action"
           },
           "method": {
             "type": "string",
+            "enum": [
+              "vpnservice",
+              "iptables"
+            ],
             "title": "Method",
-            "description": "vpnservice (no-root) | iptables (root required)",
             "default": "vpnservice"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
-          "device_ids"
+          "device_ids",
+          "action"
         ],
         "title": "KillSwitchRequest"
       },
@@ -15376,6 +15386,28 @@
             },
             "type": "object",
             "title": "Results"
+          },
+          "outcomes": {
+            "additionalProperties": {
+              "type": "string",
+              "enum": [
+                "submitted",
+                "not_sent",
+                "unsupported",
+                "unknown"
+              ]
+            },
+            "type": "object",
+            "title": "Outcomes"
+          },
+          "execution_confirmed": {
+            "type": "boolean",
+            "enum": [
+              false
+            ],
+            "const": false,
+            "title": "Execution Confirmed",
+            "default": false
           }
         },
         "type": "object",
@@ -15383,7 +15415,8 @@
           "action",
           "total",
           "success",
-          "results"
+          "results",
+          "outcomes"
         ],
         "title": "KillSwitchResponse"
       },
@@ -16749,6 +16782,20 @@
               }
             ],
             "title": "Error"
+          },
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "configured",
+              "rejected",
+              "unknown"
+            ],
+            "title": "Outcome"
+          },
+          "revoke_confirmed": {
+            "type": "boolean",
+            "title": "Revoke Confirmed",
+            "default": false
           }
         },
         "type": "object",
@@ -16756,7 +16803,8 @@
           "device_id",
           "old_ip",
           "new_ip",
-          "error"
+          "error",
+          "outcome"
         ],
         "title": "RotateDetail"
       },
@@ -19891,17 +19939,23 @@
               "format": "uuid"
             },
             "type": "array",
-            "title": "Device Ids",
-            "description": "Пустой список = ротация всех устройств org",
-            "default": []
+            "maxItems": 500,
+            "minItems": 1,
+            "title": "Device Ids"
           },
           "reason": {
             "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
             "title": "Reason",
             "default": "scheduled_rotation"
           }
         },
+        "additionalProperties": false,
         "type": "object",
+        "required": [
+          "device_ids"
+        ],
         "title": "VPNBulkRotateRequest"
       },
       "VPNBulkRotateResponse": {
@@ -19924,6 +19978,15 @@
             },
             "type": "array",
             "title": "Details"
+          },
+          "execution_confirmed": {
+            "type": "boolean",
+            "enum": [
+              false
+            ],
+            "const": false,
+            "title": "Execution Confirmed",
+            "default": false
           }
         },
         "type": "object",

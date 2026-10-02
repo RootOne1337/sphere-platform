@@ -9,6 +9,7 @@ from __future__ import annotations
 import logging
 import uuid
 from datetime import datetime, timedelta, timezone
+from typing import Literal
 
 from cryptography.fernet import Fernet
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -18,6 +19,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.core.config import settings
 from backend.core.dependencies import require_permission
 from backend.database.engine import get_db, get_db_session
+from backend.models.device import Device
 from backend.models.vpn_peer import VPNPeer, VPNPeerStatus
 from backend.schemas.vpn import (
     KillSwitchRequest,
@@ -338,21 +340,15 @@ async def bulk_rotate(
     pool_service: VPNPoolService = Depends(get_pool_service),
 ) -> VPNBulkRotateResponse:
     device_ids: list[uuid.UUID] = list(req.device_ids)
-    if not device_ids:
-        result = await db.execute(
-            select(VPNPeer.device_id).where(
-                VPNPeer.org_id == current_user.org_id,
-                VPNPeer.status == VPNPeerStatus.ASSIGNED,
-                VPNPeer.device_id.isnot(None),
-            )
-        )
-        device_ids = [r[0] for r in result.all()]
+    await _require_owned_targets(db, device_ids, current_user.org_id)
 
     details: list[RotateDetail] = []
     success = 0
     failed = 0
 
     for dev_id in device_ids:
+        old_ip = None
+        revoke_confirmed = False
         try:
             peer = await db.scalar(
                 select(VPNPeer).where(
@@ -362,8 +358,14 @@ async def bulk_rotate(
                 )
             )
             old_ip = peer.tunnel_ip if peer else None
+            if peer is None:
+                details.append(RotateDetail(device_id=dev_id, old_ip=None, new_ip=None,
+                    error="Assigned VPN peer not found", outcome="rejected"))
+                failed += 1
+                continue
 
             await pool_service.revoke_vpn(str(dev_id), current_user.org_id)
+            revoke_confirmed = True
             assignment = await pool_service.assign_vpn(
                 str(dev_id), current_user.org_id, split_tunnel=True
             )
@@ -372,14 +374,20 @@ async def bulk_rotate(
                 old_ip=old_ip,
                 new_ip=assignment.assigned_ip,
                 error=None,
+                outcome="configured",
+                revoke_confirmed=True,
             ))
             success += 1
         except Exception as exc:
+            logger.warning("VPN rotation outcome unknown for %s in org %s (%s)",
+                           dev_id, current_user.org_id, type(exc).__name__)
             details.append(RotateDetail(
                 device_id=dev_id,
-                old_ip=None,
+                old_ip=old_ip,
                 new_ip=None,
-                error=str(exc.detail) if isinstance(exc, HTTPException) else "VPN operation unavailable; inspect operation state",
+                error="VPN operation outcome unknown; inspect operation state before retry",
+                outcome="unknown",
+                revoke_confirmed=revoke_confirmed,
             ))
             failed += 1
 
@@ -398,22 +406,42 @@ async def bulk_rotate(
 )
 async def manage_killswitch(
     req: KillSwitchRequest,
+    db: AsyncSession = Depends(get_db),
     current_user=require_permission("vpn:mass_operation"),
     ks_service: KillSwitchService = Depends(get_killswitch_service),
 ) -> KillSwitchResponse:
-    if req.action not in ("enable", "disable"):
-        raise HTTPException(status_code=400, detail=f"Unknown action: {req.action}")
-
-    if req.action == "enable":
-        results = await ks_service.bulk_enable(
-            req.device_ids, settings.WG_SERVER_ENDPOINT, req.method
-        )
-    else:
-        results = await ks_service.bulk_disable(req.device_ids)
+    await _require_owned_targets(db, req.device_ids, current_user.org_id)
+    results: dict[str, bool] = {}
+    outcomes: dict[str, Literal["submitted", "not_sent", "unsupported", "unknown"]] = {}
+    for target in req.device_ids:
+        device_id = str(target)
+        results[device_id] = False
+        if not ks_service.supported:
+            outcomes[device_id] = "unsupported"
+            continue
+        try:
+            sent = (await ks_service.enable_killswitch(device_id, settings.WG_SERVER_ENDPOINT, req.method)
+                    if req.action == "enable" else await ks_service.disable_killswitch(device_id))
+            results[device_id] = sent
+            outcomes[device_id] = "submitted" if sent else "not_sent"
+        except Exception as exc:
+            logger.warning("VPN kill switch outcome unknown for %s in org %s (%s)",
+                           device_id, current_user.org_id, type(exc).__name__)
+            outcomes[device_id] = "unknown"
 
     return KillSwitchResponse(
         action=req.action,
         total=len(req.device_ids),
         success=sum(1 for v in results.values() if v),
         results=results,
+        outcomes=outcomes,
     )
+
+
+async def _require_owned_targets(db: AsyncSession, device_ids: list[uuid.UUID], org_id: uuid.UUID) -> None:
+    """Validate the entire selection before any remote/provider side effect."""
+    owned = set((await db.scalars(select(Device.id).where(
+        Device.org_id == org_id, Device.id.in_(device_ids), Device.is_active.is_(True),
+    ))).all())
+    if owned != set(device_ids):
+        raise HTTPException(status_code=404, detail="Device not found")
