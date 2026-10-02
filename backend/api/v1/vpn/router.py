@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import logging
 import uuid
+from collections.abc import Callable
 from datetime import datetime, timedelta, timezone
 from typing import Literal
 
@@ -42,6 +43,7 @@ from backend.schemas.vpn.config import (
     AWGObfuscationParamsSchema,
 )
 from backend.services.vpn.awg_config import AWGConfigBuilder, AWGObfuscationParams
+from backend.services.vpn.deferred_pool import DeferredVPNPoolService
 from backend.services.vpn.dependencies import get_awg_config_builder, get_key_cipher
 from backend.services.vpn.event_publisher import EventPublisher
 from backend.services.vpn.ip_pool import IPPoolAllocator
@@ -62,17 +64,21 @@ def get_ip_pool() -> IPPoolAllocator:
     return IPPoolAllocator(None, subnet=settings.VPN_POOL_SUBNET)
 
 
+def get_key_cipher_factory() -> Callable[[], Fernet]:
+    return get_key_cipher
+
+
 async def get_pool_service(
     ip_pool: IPPoolAllocator = Depends(get_ip_pool),
     builder: AWGConfigBuilder = Depends(get_awg_config_builder),
-    cipher: Fernet = Depends(get_key_cipher),
+    cipher: Callable[[], Fernet] | Fernet = Depends(get_key_cipher_factory),
 ):
     # Lifecycle owns commits; keep it separate from HTTP/auth caller state.
     async with get_db_session() as db:
-        service = VPNPoolService(
-            db=db, ip_pool=ip_pool, config_builder=builder, key_cipher=cipher,
+        service = DeferredVPNPoolService(lambda: VPNPoolService(
+            db=db, ip_pool=ip_pool, config_builder=builder, key_cipher=cipher() if callable(cipher) else cipher,
             wg_router_url=settings.WG_ROUTER_URL, wg_router_api_key=settings.WG_ROUTER_API_KEY,
-        )
+        ))
         try:
             yield service
         finally:

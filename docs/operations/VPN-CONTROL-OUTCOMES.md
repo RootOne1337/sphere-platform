@@ -45,6 +45,12 @@ This replaces the old empty-list rotation of every assigned peer. Integrations
 must list their intended targets explicitly. These request validation changes
 are deliberate compatibility changes, documented in the generated OpenAPI.
 
+The router initializes the encryption cipher/provider lifecycle lazily, after
+request validation and route ownership preflight. Missing provider credentials
+must not turn an invalid empty rotation request into a misleading provider 503.
+This ordering was found during installed API acceptance (N06), not inferred
+from the mock-provider regression suite.
+
 ## Why kill switch currently reports unsupported
 
 The route's `EventPublisher` is still a no-op. The Android dispatcher supports

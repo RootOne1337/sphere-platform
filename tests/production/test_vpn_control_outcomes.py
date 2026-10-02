@@ -5,7 +5,11 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from backend.api.v1.vpn.router import get_killswitch_service, get_pool_service
+from backend.api.v1.vpn.router import (
+    get_key_cipher_factory,
+    get_killswitch_service,
+    get_pool_service,
+)
 from backend.database.engine import get_db
 from backend.database.tenant import bind_tenant_context
 from backend.main import app
@@ -161,3 +165,34 @@ async def test_ownership_preflight_with_actual_non_owner_rls_role(world, runtime
         "device_ids": [str(world.dev_a.id), str(world.dev_b.id)], "action": "enable"})
     assert response.status_code == 404
     publisher.send_command_to_device.assert_not_awaited()
+
+
+@pytest.mark.parametrize("body,expected", [({"device_ids": []}, 422), ({"device_ids": ["invalid"]}, 422)])
+async def test_missing_provider_credentials_do_not_mask_request_validation(world, body, expected):
+    from fastapi import HTTPException
+
+    calls = []
+
+    def unavailable():
+        calls.append(True)
+        raise HTTPException(503, "Provider not configured")
+
+    app.dependency_overrides[get_key_cipher_factory] = lambda: unavailable
+    response = await request(world, "rotate", body)
+    assert response.status_code == expected
+    assert not calls
+
+
+async def test_provider_credentials_are_not_loaded_for_foreign_rotation(world):
+    from fastapi import HTTPException
+
+    calls = []
+
+    def unavailable():
+        calls.append(True)
+        raise HTTPException(503, "Provider not configured")
+
+    app.dependency_overrides[get_key_cipher_factory] = lambda: unavailable
+    response = await request(world, "rotate", {"device_ids": [str(world.dev_b.id)]})
+    assert response.status_code == 404
+    assert not calls
