@@ -546,28 +546,40 @@ Authorization: Bearer <token>
 
 ## Groups — `/groups`
 
-### GET /groups
+Updated 2 October 2026. Paths below are relative to `/api/v1` and match the
+[router](../backend/api/v1/groups/router.py). Requests require the current
+organization and the listed permission; foreign group IDs return404.
 
-List all device groups in the organization.
+| Request | Permission | Result |
+|---|---|---|
+| `GET /groups` | `device:read` |200, groups with total/online counts |
+| `POST /groups` | `device:write` |201, confirmed group |
+| `PUT /groups/{group_id}` | `device:write` |200, confirmed metadata/parent |
+| `DELETE /groups/{group_id}` | `device:delete` |204; devices survive, membership is removed, children become roots |
+| `GET /devices?group_id=<UUID>` | `device:read` |200, paged members using the existing device catalog |
+| `POST /groups/{group_id}/devices/move` | `device:write` |200, `{ "moved": n }`; replaces each owned device's memberships with the path group |
+| `GET /groups/tags` | `device:read` |200, distinct normalized tags |
+| `PUT /groups/devices/{device_id}/tags` | `device:write` |204, replacement tag list |
 
-### POST /groups
-
-```http
-POST /groups
-{ "name": "Production Fleet", "description": "All production devices" }
+```json
+{ "name": "Production Fleet", "description": "All production devices", "parent_group_id": null }
 ```
 
-### GET /groups/{id}/devices
+For PUT, omission preserves an optional field; explicit `null` clears
+`parent_group_id`, `description` or `color`. A parent must belong to the same
+organization and have a valid ancestor chain. Self/descendant/corrupt ancestry
+returns400; an unknown/foreign parent returns404. Validation precedes metadata
+writes. Duplicate names or concurrent group writes return409. The client must
+refresh and explicitly retry; it must not automatically replay an uncertain write.
 
-List devices in a group (same response format as `GET /devices`).
+Group create/update/delete share a PostgreSQL transaction fence scoped to the
+organization. Other organizations proceed independently; commit/rollback releases
+the fence. This protocol covers service writes, not arbitrary direct SQL writers
+or optimistic version checks. [Hierarchy contract and tests](operations/GROUP-HIERARCHY.md).
+Group counters use persisted ONLINE status, not live heartbeat/ONLINE+BUSY totals.
 
-### POST /groups/{id}/devices
-
-Add devices to a group.
-
-```http
-{ "device_ids": ["uuid1", "uuid2"] }
-```
+The previous `GET/POST /groups/{id}/devices` examples were unsupported routes.
+`MoveDevicesRequest.group_id` is not used by this router: the path owns the target.
 
 ---
 
