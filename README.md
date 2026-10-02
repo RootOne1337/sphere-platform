@@ -16,16 +16,18 @@
 </div>
 
 > [!NOTE]
-> **Текущий срез: 2 октября 2026, 05:48 UTC+5.** После фиксации полного
-> аудита исправлено **28 source findings**; **94 suites / 753 frontend tests**,
-> types и production compile passed. Проверочный веб **3015 в Docker**, UI **eb4598b**, backend **5fcf18a**;
+> **Текущий срез: 2 октября 2026, 06:42 UTC+5.** После фиксации полного
+> аудита исправлено **28 source findings**; **95 suites / 761 frontend tests**,
+> types и production compile passed. Проверочный веб **3015 в Docker**, UI **a9240a7**, backend **933164e**;
 > login/API, Prometheus/Grafana и events WS проверены. Предыдущий restart evidence сохранён. На remote PH025
 > подтверждён pinned rerun по двум настоящим Android results.
 > [Runtime evidence](docs/audits/2026-10-02/REVIEW-RUNTIME-AND-REMOTE-RERUN.md).
 > Исходная версия/входы повтора сохранены; private screenshot read исправлен.
 > Группы: metadata editor, подтверждённое удаление и scoped members реализованы.
 > [F24/F25 evidence](docs/audits/2026-10-02/GROUP-WORKFLOWS.md).
-> Android artifact upload N01, visual acceptance, N03/N04 и 13 исходных findings открыты;
+> N04: parent clear/cycles и N05: audit после rollback исправлены и подтверждены live API.
+> [Иерархия и audit evidence](docs/audits/2026-10-02/GROUP-HIERARCHY-AND-AUDIT.md).
+> Android artifact upload N01, visual acceptance, N03 и 13 исходных findings открыты;
 > public frontend не заменён. [Журнал](docs/audits/2026-10-01/WEB-AUDIT-REMEDIATION.md) ·
 > [Task contracts/evidence](docs/audits/2026-10-02/TASK-ARTIFACTS-AND-RERUN.md).
 >

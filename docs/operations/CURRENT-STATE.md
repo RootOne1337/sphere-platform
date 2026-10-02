@@ -7,7 +7,7 @@
 [Главная](../../README.md) · [Каталог документации](../README.md) · [Readiness](READINESS.md) · [Fleet32 gates](../audits/2026-09-20/FLEET32-PREFLIGHT.md) · [PR #19](https://github.com/RootOne1337/sphere-platform/pull/19)
 
 > [!IMPORTANT]
-> **Работающий review, 2 октября 05:48 UTC+5:** [3015/groups](http://127.0.0.1:3015/groups), Docker UI **eb4598b** / API **5fcf18a**. Metadata editor, подтверждение удаления и состав группы через server-filtered registry установлены. Login/API, Prometheus, Grafana session/health, events WS и compiled artifact passed; все44 прежних containers (14running) сохранены. [Доказательства F24/F25 и новый N04](../audits/2026-10-02/GROUP-WORKFLOWS.md).
+> **Работающий review, 2 октября 06:41 UTC+5:** [3015/groups](http://127.0.0.1:3015/groups), Docker UI **a9240a7** / API **933164e**. Выбор/снятие родителя, cycle rejection и audit identity после rollback установлены. N04 и N05 подтверждены finite live API/readback. Login/API, Prometheus/Grafana/events WS и compiled artifact passed;43 остальных containers сохранены. Catalog19, online14/offline5 — конечный срез. [Installed evidence и ограничения](../audits/2026-10-02/GROUP-HIERARCHY-AND-AUDIT.md).
 
 > [!IMPORTANT]
 > **Предыдущий review, 2 октября 05:08 UTC+5:** [3015](http://127.0.0.1:3015/) теперь в отдельном Docker project. UI **d4364e5**, API **5fcf18a**. Login, static asset/build stamp, Prometheus, Grafana session/health и events WS проверены до и после restart обоих review контейнеров. Все 14 прежних контейнеров сохранили IDs/images/StartedAt. Native UI3030/relay3015 исчезли; причина не доказана. [Runtime и Android canary](../audits/2026-10-02/REVIEW-RUNTIME-AND-REMOTE-RERUN.md).
@@ -15,22 +15,9 @@
 > [!IMPORTANT]
 > **Историческая native установка 2 октября 2026, 01:28:45 UTC+5:** `3015 → standalone UI3030/API18080`, frontend и backend **5fcf18a**. Readiness/build SHA, owned listeners и авторизованный API проверены. Предыдущий Next7416/UI3029 и backend image8d64ca4 сохранены; заменён только owned relay и backend. Это проверочный веб [3015/tasks](http://127.0.0.1:3015/tasks); public frontend не заменён. [Журнал](../audits/2026-10-01/WEB-AUDIT-REMEDIATION.md) · [Точные receipts](../audits/2026-10-02/TASK-ARTIFACTS-AND-RERUN-EVIDENCE.json).
 
-**28 source findings исправлено**, включая все 5 P1; **13 исходных остаются открытыми**. F24/F25 metadata/members исправлены; parent null clear **N04 OPEN** подтверждён own-group API canary. F19/F20 и дополнительный discovery request/response contract N02 исправлены. Legacy scan ошибки пока превращаются backend в empty result: **N03 OPEN**. Android APK не требует PC Agent. [Discovery proof](../audits/2026-10-02/DISCOVERY-REQUEST-OWNERSHIP.md).
-F16 теперь использует manifest и private image route; F17 создаёт отдельный queued
-повтор с исходной версией, deep-copied inputs и timeout. Старые batch/wave/results
-не переносятся, HTTP201 не подтверждает Android execution. UI показывает version,
-receipt и новый ID; screenshot reads имеют loading/error/retry/ownership cleanup.
-[Контракт и проверки F16/F17](../audits/2026-10-02/TASK-ARTIFACTS-AND-RERUN.md).
+**28 source findings исправлено**, включая все 5 P1; **13 исходных остаются открытыми**. Дополнительные N04 (parent clearing/cycles) и N05 (audit rollback identity) исправлены в source и finite API; browser visual остаётся OPEN. N01 Android artifact upload и N03 legacy RPC errors открыты. Совокупный frontend — **95 suites / 761 tests**, **179 новых regressions** сверх582. Проверки groups — 34 HTTP/schema cases; PostgreSQL —24 cases, включая hierarchy/RLS/audit rollback, passed и внутри финального backend image. Types, Ruff/mypy, production Docker builds и image OpenAPI171 operations/134 paths passed.
 
-**94 suites / 753 frontend tests**, types и original production standalone compile
-passed; **171 новых frontend regressions** с начала remediation. Исторические 44
-lint warnings и Windows trace-copy ограничения не объявляются устранёнными;
-актуальная review-сборка выполнена в Linux Docker. Backend task/script/storage
-suite: **92 passed**, PostgreSQL concurrency/cancellation: **13 passed**, отдельный
-реальный MinIO HTTP test: **1 passed**. Эти числа имеют разные области и не суммируются
-в доказательство полного product E2E. Новый CI учитывается по собственному SHA.
-
-**Published verification heada7829df:** все backend/frontend/Android checks завершились success; [backend](https://github.com/RootOne1337/sphere-platform/actions/runs/36945074799), [frontend](https://github.com/RootOne1337/sphere-platform/actions/runs/36945074800), [Android](https://github.com/RootOne1337/sphere-platform/actions/runs/36945075012). Новые source/docs checks после push оцениваются по собственному SHA.
+**Последний published verification1767bec полностью прошёл CI:** [backend36948503334](https://github.com/RootOne1337/sphere-platform/actions/runs/36948503334), [frontend36948503393](https://github.com/RootOne1337/sphere-platform/actions/runs/36948503393), [Android36948503347](https://github.com/RootOne1337/sphere-platform/actions/runs/36948503347). Новый source/docs head проходит собственные checks; предыдущий success не переносится на него. Parent cycle contention и explicit null подтверждены тестами PostgreSQL;3 реальные refused PUT 400/404/409 читаются через `/api/v1/audit/logs` с правильным actor/status. Background audit пока best effort при DB/process crash; outbox остаётся открытым.
 
 **GitHub CI application source5fcf18a:** [backend run36921814744](https://github.com/RootOne1337/sphere-platform/actions/runs/36921814744)
 выполнил **2165 tests / 16 skipped**, coverage78%; job затем упал на stale generated

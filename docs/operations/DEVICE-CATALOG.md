@@ -20,6 +20,9 @@ live `status_counts.online` реестра, включающему busy. Это 
 Metadata/clear/409 и пустой server-filtered members canary проверены через review3015;
 non-empty move и browser UI приёмка остаются открытыми.
 [Workflow и доказательства F24/F25](../audits/2026-10-02/GROUP-WORKFLOWS.md).
+Выбор/снятие родителя доступен; иерархия не перемещает устройства. Explicit null,
+cycle rejection и сохранность memberships подтверждены finite canary.
+[Контракт](GROUP-HIERARCHY.md) · [Последняя установка и N05 audit](../audits/2026-10-02/GROUP-HIERARCHY-AND-AUDIT.md).
 
 ## Что получает браузер
 

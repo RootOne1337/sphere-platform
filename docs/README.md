@@ -15,13 +15,14 @@
 > автоматическую проверку runtime; старые аудиты сохраняют собственные даты и
 > версии и не должны читаться как текущий deploy. [Правила актуальности](DOCUMENTATION.md).
 
-Последнее изменение: [группы — F24/F25, before/after и live API evidence](audits/2026-10-02/GROUP-WORKFLOWS.md), review UIeb4598b на3015, 94 suites/753 tests. Published heada7829df полностью прошёл CI; новый head проверяется отдельно.
+Последнее изменение: [N04/N05 — иерархия групп и аудит отказов](audits/2026-10-02/GROUP-HIERARCHY-AND-AUDIT.md), review UIa9240a7 / API933164e на 3015, 95 suites/761 frontend tests,34 group HTTP и24 PostgreSQL tests. Published 1767bec полностью прошёл CI; новый head проверяется отдельно.
 
 ## 🧭 Выберите задачу
 
 | Мне нужно | Начать здесь | Дальше |
 | --- | --- | --- |
-| Проверить полный веб-аудит и текущие исправления | [Аудит всех маршрутов, меню и возможностей API — 1 октября](audits/2026-10-01/WEB-FULL-CAPABILITY-AUDIT.md) | [Журнал исправлений F01–F41](audits/2026-10-01/WEB-AUDIT-REMEDIATION.md) · [Fixes: 718 tests / installed UI](audits/2026-10-01/WEB-AUDIT-FIXES-VALIDATION.json) · [Frozen audit evidence](audits/2026-10-01/WEB-FULL-CAPABILITY-AUDIT-EVIDENCE.json) · [Проверки документа](audits/2026-10-01/AUDIT-VALIDATION.json) |
+| Проверить полный веб-аудит и текущие исправления | [Аудит всех маршрутов, меню и возможностей API — 1 октября](audits/2026-10-01/WEB-FULL-CAPABILITY-AUDIT.md) | [Журнал исправлений F01–F41](audits/2026-10-01/WEB-AUDIT-REMEDIATION.md) · [Fixes: актуальные tests / installed UI](audits/2026-10-01/WEB-AUDIT-FIXES-VALIDATION.json) · [Frozen audit evidence](audits/2026-10-01/WEB-FULL-CAPABILITY-AUDIT-EVIDENCE.json) · [Проверки документа](audits/2026-10-01/AUDIT-VALIDATION.json) |
+| Проверить иерархию групп и сохранность audit отказов | [N04/N05: исправление и live readback](audits/2026-10-02/GROUP-HIERARCHY-AND-AUDIT.md) | [Evidence](audits/2026-10-02/GROUP-HIERARCHY-AND-AUDIT-EVIDENCE.json) · [Контракт иерархии](operations/GROUP-HIERARCHY.md) |
 | Проверить discovery request/response и принадлежность результата | [F19/F20 + N02 — 2 октября](audits/2026-10-02/DISCOVERY-REQUEST-OWNERSHIP.md) | [Before/after/installed evidence](audits/2026-10-02/DISCOVERY-REQUEST-OWNERSHIP-EVIDENCE.json) · legacy errors N03 OPEN |
 | Проверить восстановление веба и реальный rerun Android | [Docker review / remote PH025 — 2 октября](audits/2026-10-02/REVIEW-RUNTIME-AND-REMOTE-RERUN.md) | [Runtime + Android receipts](audits/2026-10-02/REVIEW-RUNTIME-AND-REMOTE-RERUN-EVIDENCE.json) · browser visual OPEN |
 | Проверить снимки задания и повтор исходной версии | [Task artifacts / rerun — 2 октября](audits/2026-10-02/TASK-ARTIFACTS-AND-RERUN.md) | [Installed API/UI evidence](audits/2026-10-02/TASK-ARTIFACTS-AND-RERUN-EVIDENCE.json) · Android upload N01 открыт |

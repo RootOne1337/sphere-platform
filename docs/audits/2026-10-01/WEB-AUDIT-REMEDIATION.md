@@ -2,7 +2,7 @@
 
 Этот журнал продолжает [замороженный аудит](WEB-FULL-CAPABILITY-AUDIT.md) исходников `1354d66`. Исходный документ и evidence сохраняют свою дату и ограничения; их статусы не переписываются задним числом.
 
-**Срез реализации 2 октября 2026, 05:48 UTC+5:** Docker UIeb4598b / API5fcf18a; 28 source findings исправлено (5 P1 и 23 P2), 13 исходных OPEN. 94 suites/753 frontend tests, types/Docker production build passed. F24/F25 группы дополнены; owned empty-group API canary accepted. Дополнительные N01/N03/N04 и browser visual OPEN. [Validation](WEB-AUDIT-FIXES-VALIDATION.json) · [Groups evidence](../2026-10-02/GROUP-WORKFLOWS.md).
+**Срез реализации 2 октября 2026, 06:42 UTC+5:** Docker UI a9240a7/API933164e; 28 source findings исправлено (5 P1/23 P2), 13 исходных OPEN. 95 suites/761 frontend tests, types/build passed;34 group HTTP и24 PostgreSQL cases. N04 hierarchy и N05 rollback audit исправлены, finite live API/readback accepted. N01/N03/browser visual OPEN. [Validation](WEB-AUDIT-FIXES-VALIDATION.json) · [N04/N05 evidence](../2026-10-02/GROUP-HIERARCHY-AND-AUDIT.md).
 
 ## Исходная фиксация
 
@@ -286,3 +286,11 @@ Commit `d4364e5`: submitted scan context сохраняется вместе с 
 ## F24/F25 — 2 октября 05:48 UTC+5
 
 Commit `eb4598b` добавляет metadata editor, confirmed deletion/membership cache invalidation, URL-scoped device registry и legacy fleet redirect. Beforea7829df: 23 failed/9 controls/0 runtime errors; after32 targeted passed; full94 suites/753 tests, types/production Docker build passed. Live API подтвердил own-group create/update/GET persistence/409/filter/204 cleanup, исходные группы и memberships сохранены. Review3015 установлен; все44 прежних containers (14running) без изменений. N04 parent null clear воспроизведён и OPEN; parent editing read-only. 28/41 исправлено, 13 исходных и N01/N03/N04 OPEN. [Полный отчёт и receipts](../2026-10-02/GROUP-WORKFLOWS.md). Browser visual не принят.
+
+## N04/N05 —2 октября 06:42 UTC+5
+
+`dce2c99`/`a9240a7`: explicit null clearing, valid ancestry и nonwaiting PostgreSQL write fence, parent editor с сохранением draft/owner и подтверждением результата. Before:4 HTTP/6 PostgreSQL/8 frontend failures; controls и runtime errors отделены. После:34 group cases,10 hierarchy DB cases,8 новых frontend regressions; full95 suites/761 tests. Finite own-empty-group canary подтвердил clear/omission/reassignment, descendant400 без partial write, parent delete с сохранением child/leaf и исходных device memberships.
+
+Runtime logs выявили N05: rollback удалял ORM tenant attrs и audit failed requests терялся. `933164e` сохраняет immutable authenticated UUID snapshot.4 PostgreSQL/ASGI failures воспроизведены; после24 combined DB cases passed и в actual final image. Live audit readback подтвердил3 refused PUT 400/404/409 с правильным actor/status. Старый локальный dependency export отличался; production-image OpenAPI check matched. Первое live audit чтение использовало неподдерживаемый route; исправленный readback принят без повторения writes.
+
+Review3015 UIa9240a7/API933164e установлен; login/API/Prometheus/Grafana/events WS passed,43 остальных containers preserved.28/41 source fixes,13 исходных OPEN; дополнительные N01/N03 OPEN, N04/N05 source+finite API fixed. Outbox durability и browser visual OPEN. Published 1767bec полностью прошёл CI, новая публикация имеет собственные checks. [Полный отчёт и allowlisted evidence](../2026-10-02/GROUP-HIERARCHY-AND-AUDIT.md).

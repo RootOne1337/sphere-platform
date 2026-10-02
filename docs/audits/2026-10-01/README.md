@@ -16,7 +16,7 @@ Source: `1354d66660041ba17afb64399d567ca29dd91866`. Режим замороже�
 
 Текущее продолжение: [журнал исправлений и статусы F01–F41](WEB-AUDIT-REMEDIATION.md). Исторический аудит остаётся неизменным.
 
-Последний review UI **eb4598b**, backend **5fcf18a**: 28 source findings исправлено, 13 исходных открыты; 94 suites /753 frontend tests, types/Docker build passed. Review3015 установлен 2 октября в 05:48 UTC+5. [Группы F24/F25](../2026-10-02/GROUP-WORKFLOWS.md) · [Discovery F19/F20](../2026-10-02/DISCOVERY-REQUEST-OWNERSHIP.md) · [Validation](WEB-AUDIT-FIXES-VALIDATION.json). Дополнительные N01/N03/N04 и browser visual acceptance OPEN. Предыдущие runtime/restart/canary результаты сохраняются как датированные срезы.
+Последний review UI **a9240a7**, backend **933164e**,2 октября 06:41 UTC+5: 28 source fixes/13 исходных OPEN, 95 suites/761 frontend tests. N04 parent clearing/cycles и N05 audit после rollback исправлены; finite live API/readback passed. N01/N03 и browser visual остаются OPEN. [N04/N05 и receipts](../2026-10-02/GROUP-HIERARCHY-AND-AUDIT.md) · [Validation](WEB-AUDIT-FIXES-VALIDATION.json). Старые runtime/restart/canary results сохраняются как датированные срезы.
 
 ## Runtime и Android follow-up — 2 октября 04:51 UTC+5
 
