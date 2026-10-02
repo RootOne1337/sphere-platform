@@ -4,7 +4,7 @@ Generated from `backend.main.app.openapi()` by `scripts/export_api_docs.py`.
 Regenerate with `python -m scripts.export_api_docs`; verify with `--check`.
 The exporter does not run startup hooks or send HTTP requests.
 
-**174 HTTP operations across 137 paths.**
+**175 HTTP operations across 137 paths.**
 
 Full parameters, request bodies, response schemas and declared security schemes:
 [OpenAPI JSON](openapi.json). Manual explanations:
@@ -98,6 +98,7 @@ for tested behavior and remaining limits.
 | `GET` | `/api/v1/locations` | locations | 200 | Список локаций с количеством устройств online/total |
 | `POST` | `/api/v1/locations` | locations | 201, 422 | Создать локацию |
 | `DELETE` | `/api/v1/locations/{location_id}` | locations | 204, 422 | Удалить локацию |
+| `GET` | `/api/v1/locations/{location_id}` | locations | 200, 422 | Локация с прямыми счётчиками устройств |
 | `PUT` | `/api/v1/locations/{location_id}` | locations | 200, 422 | Обновить локацию |
 | `DELETE` | `/api/v1/locations/{location_id}/devices` | locations | 200, 422 | Убрать устройства из локации |
 | `POST` | `/api/v1/locations/{location_id}/devices` | locations | 200, 422 | Назначить устройства в локацию (аддитивно) |

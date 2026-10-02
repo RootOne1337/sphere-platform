@@ -4368,6 +4368,52 @@
       }
     },
     "/api/v1/locations/{location_id}": {
+      "get": {
+        "tags": [
+          "locations"
+        ],
+        "summary": "Локация с прямыми счётчиками устройств",
+        "operationId": "get_location_api_v1_locations__location_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "location_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Location Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LocationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
       "put": {
         "tags": [
           "locations"
@@ -4445,6 +4491,25 @@
               "format": "uuid",
               "title": "Location Id"
             }
+          },
+          {
+            "name": "expected_updated_at",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Optional timezone-aware condition from LocationResponse",
+              "title": "Expected Updated At"
+            },
+            "description": "Optional timezone-aware condition from LocationResponse"
           }
         ],
         "responses": {
@@ -12126,6 +12191,7 @@
             "title": "Parent Location Id"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "name"
@@ -15404,6 +15470,16 @@
             "format": "uuid",
             "title": "Org Id"
           },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
           "total_devices": {
             "type": "integer",
             "title": "Total Devices",
@@ -15425,7 +15501,9 @@
           "latitude",
           "longitude",
           "parent_location_id",
-          "org_id"
+          "org_id",
+          "created_at",
+          "updated_at"
         ],
         "title": "LocationResponse",
         "description": "Ответ на GET/POST/PUT location."
@@ -18929,8 +19007,21 @@
               }
             ],
             "title": "Parent Location Id"
+          },
+          "expected_updated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Updated At"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "title": "UpdateLocationRequest",
         "description": "Обновление локации (partial update)."
