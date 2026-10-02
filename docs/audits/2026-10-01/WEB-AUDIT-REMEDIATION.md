@@ -2,7 +2,7 @@
 
 Этот журнал продолжает [замороженный аудит](WEB-FULL-CAPABILITY-AUDIT.md) исходников `1354d66`. Исходный документ и evidence сохраняют свою дату и ограничения; их статусы не переписываются задним числом.
 
-**Срез реализации 2 октября 2026,17:12 UTC+5:** Docker UI67b6bef/API39baa13;30 source findings исправлено (5 P1/25 P2),11 исходных OPEN.98 suites/806 frontend tests,224 новых regressions; types/build и61 production-image PostgreSQL cases passed. F37 global search/UTC filters/capped CSV установлен и проверен на настоящем журнале5386 событий. N01/N03/browser visual/outbox OPEN. [Validation](WEB-AUDIT-FIXES-VALIDATION.json) · [F37 evidence](../2026-10-02/AUDIT-INVESTIGATION.md).
+**Срез реализации2 октября2026,18:13 UTC+5:** UI d61ab49/API8267b94;30 source findings исправлены полностью,11 OPEN, включая частичный F33.99 suites/825 frontend tests,243 regressions; production builds/types и5 новых actual PostgreSQL/Redis cases passed. Адресный remote PH01310230→10240: live send, completed receipt и post-install heartbeat confirmed. [F33 evidence](../2026-10-02/OTA-ADDRESSED-DELIVERY.md) · [Validation](WEB-AUDIT-FIXES-VALIDATION.json).
 
 ## Исходная фиксация
 
@@ -57,7 +57,7 @@
 | [F30](WEB-FULL-CAPABILITY-AUDIT.md#f30) | P2 | Source исправлен; live OPEN | Расписание one-shot: ISO offset подаётся в datetime-local |
 | [F31](WEB-FULL-CAPABILITY-AUDIT.md#f31) | P2 | Source исправлен; live OPEN | VPN → Logs теряет контекст устройства |
 | [F32](WEB-FULL-CAPABILITY-AUDIT.md#f32) | P2 | Открыто | VPN: mutate без отображения ошибок/результатов |
-| [F33](WEB-FULL-CAPABILITY-AUDIT.md#f33) | P2 | Открыто | OTA: recovery и адресный rollout не доступны оператору |
+| [F33](WEB-FULL-CAPABILITY-AUDIT.md#f33) | P2 | Частично; bulk/manifest/visual OPEN | Single-device recovery/redispatch/revoke и remote install приняты; bulk rollout и verified artifact manifest открыты |
 | [F34](WEB-FULL-CAPABILITY-AUDIT.md#f34) | P2 | Открыто | Матричный режим использует полноценный H.264 для каждого окна |
 | [F35](WEB-FULL-CAPABILITY-AUDIT.md#f35) | P2 | Открыто | XPath-инспектор на видеокарточке ещё отсутствует |
 | [F36](WEB-FULL-CAPABILITY-AUDIT.md#f36) | P2 | Открыто | Управление quality/FPS не раскрыто в single stream |
@@ -305,3 +305,10 @@ Commit `e2362eb`: native user creation form, safe field-level errors/focus, capt
 Коммиты `39baa13`/`67b6bef`: shared backend conditions для списка/CSV; validated action/status/actor/resource/aware time/AND search; UI draft отделён от applied filters; CSV5000 cap, one projection SELECT, scalar allowlist, formula protection и проверяемые headers. Before5d27624:11 UI assertions failed/0 runtime-error suites; initial PostgreSQL18 failed/6 controls. After29 новых UI/validation cases,36 focused,98 suites/806 full;61 PostgreSQL cases прошли также внутри production image. Types/mypy223 files/production Ruff0.15.2 и обе immutable Docker builds passed;44 старых frontend warnings. OpenAPI172 operations/135 paths соответствует actual image. Local old Ruff0.3.0 различался; final production check accepted.
 
 UI3015/audit установлен17:11, API39baa13 —17:09. Реальный журнал5386: event со второй страницы найден combined filters и совпал с CSV; cap5000 уникальных rows с truncation подтверждён. Login/API/Prometheus/Grafana/events WS/compiled SHA passed;19 devices,14online/5offline — finite recovery slice.43 прочих containers (13running), APK/OTA/tunnels/public UI preserved.30/41 source findings fixed,11 original OPEN; браузер и безлимитный архив/large-volume performance/outbox не приняты. Source frontend CI67b6bef passed; backend/Android выполнялись на срезе, docs head отдельный. [Контракт и allowlisted receipts](../2026-10-02/AUDIT-INVESTIGATION.md).
+
+
+## F33 — адресная доставка и remote canary, часть1
+
+Коммиты `8267b94` (backend) и `d61ab49` (UI). Grant теперь будит уже подключённый Android socket; worker повторно проверяет tenant/signed grant/command/session/deadline. Перечитывание и same-ID dispatch не продлевают разрешение; conditional revoke не удаляет заменённую команду.
+
+310 backend regressions,5 actual PostgreSQL/RLS/Redis cases на host и внутри production image,99 suites/825 frontend tests passed. Remote PH013 адресно обновился10230→10240: live send13:11:37 UTC, completed receipt13:11:59 UTC и последующий свежий heartbeat. Один grant600s, normal channel не продвигался. F33 остаётся частичным; fully-fixed count30 не увеличен. [Отчёт и ограничения](../2026-10-02/OTA-ADDRESSED-DELIVERY.md) · [Операторский workflow](../../operations/OTA-ADDRESSED-UPDATES.md).

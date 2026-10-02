@@ -1,0 +1,214 @@
+{
+  "observedAt": "2026-10-02T13:18:33.849408+00:00",
+  "backendSource": "8267b943ab39f106b91e95be543d10618ef6c1ed",
+  "frontendSource": "d61ab49f67500be8966f81c570bc7514bcb5359d",
+  "finding": "F33",
+  "findingStatus": "PARTIAL",
+  "fullyFixedSourceFindings": 30,
+  "remainingSourceFindings": 11,
+  "backendBefore": {
+    "tests": 13,
+    "failures": 13,
+    "errors": 0,
+    "skipped": 0
+  },
+  "backendAfter": {
+    "tests": 310,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "actualPostgresRedisHost": {
+    "tests": 5,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "actualPostgresRedisProductionImage": {
+    "tests": 5,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "frontendBefore": {
+    "assertionsFailed": 13,
+    "runtimeErrorSuites": 0,
+    "source": "452eb9e"
+  },
+  "frontendAfter": {
+    "suitesPassed": 99,
+    "testsPassed": 825,
+    "newWorkflowTests": 19,
+    "regressionsAbove582": 243
+  },
+  "typesPassed": true,
+  "productionMypyFiles": 224,
+  "productionRuffPassed": true,
+  "immutableBackendAndUiBuildsPassed": true,
+  "generatedHttpOperations": 173,
+  "generatedHttpPaths": 136,
+  "runtime": {
+    "observedAt": "2026-10-02T13:09:25.805068+00:00",
+    "phase": "installed",
+    "url": "http://127.0.0.1:3015",
+    "reviewSource": "d61ab49f67500be8966f81c570bc7514bcb5359d",
+    "backendSource": "8267b943ab39f106b91e95be543d10618ef6c1ed",
+    "loginPassed": true,
+    "sameOriginApiPassed": true,
+    "uiCompiledStampPassed": true,
+    "staticAssetPassed": true,
+    "unauthorizedObservabilityStatus": 401,
+    "prometheusApiPassed": true,
+    "grafanaSessionAndHealthPassed": true,
+    "wsUpgradeSnapshotAndPongPassed": true,
+    "catalogTotal": 19,
+    "reportedStatuses": {
+      "online": 14,
+      "offline": 5
+    },
+    "nodeRuntime": "v24.21.0",
+    "containers": [
+      {
+        "name": "sphere-review-20261002-review-ui-1",
+        "id": "f60410bf6af1302efe340bf888af7bf59d5f31ddf12346828a0a9313bba75d16",
+        "imageId": "sha256:70e86bc679d47a73d3060b5b7adb7ae41ff95587c66a8171218456f11dde9b01",
+        "image": "sphere-review-frontend:d61ab49f67500be8966f81c570bc7514bcb5359d",
+        "health": "healthy",
+        "startedAt": "2026-10-02T13:08:34.649659798Z",
+        "readOnly": true,
+        "restart": "unless-stopped",
+        "ports": {}
+      },
+      {
+        "name": "sphere-review-20261002-review-gateway-1",
+        "id": "37c1155966cdf9d0a92043f7db82ae6e86154a451db0e96025f6578f80ab67d1",
+        "imageId": "sha256:1d13701a5f9f3fb01aaa88cef2344d65b6b5bf6b7d9fa4cf0dca557a8d7702ba",
+        "image": "nginx:alpine",
+        "health": "healthy",
+        "startedAt": "2026-10-02T13:08:40.499193389Z",
+        "readOnly": true,
+        "restart": "unless-stopped",
+        "ports": {
+          "8080/tcp": [
+            {
+              "HostIp": "127.0.0.1",
+              "HostPort": "3015"
+            }
+          ]
+        }
+      }
+    ],
+    "remoteCommandsSent": false,
+    "browserVisualAcceptance": "OPEN_URL_POLICY_BLOCKED"
+  },
+  "actualApiParser": {
+    "actualApiSchemasAccepted": 19,
+    "installationEvidenceCounts": {
+      "none": 15,
+      "confirmed": 3,
+      "different": 1
+    },
+    "browserVisualAcceptance": false,
+    "componentLogicOnActualApiOnly": true
+  },
+  "canary": {
+    "target": "auto-ph-013",
+    "operatorNetworkClass": "remote",
+    "beforeVersionCode": 10230,
+    "artifactSha256": "c612fba1e4a537ab1a0d9951e520bbd4063c3548308a4ebc31b72b59fa735a70",
+    "durationSeconds": 600,
+    "grantWrites": 1,
+    "commandId": "fe0b73bf-9e42-4b93-ac1d-261f59b6db06",
+    "deliveryHint": "wake_published",
+    "sameIdLiveSendAndReconnect": true,
+    "terminal": {
+      "command_id": "fe0b73bf-9e42-4b93-ac1d-261f59b6db06",
+      "sha256": "c612fba1e4a537ab1a0d9951e520bbd4063c3548308a4ebc31b72b59fa735a70",
+      "version_name": "1.2.40-dev",
+      "version_code": 10240,
+      "status": "completed",
+      "failure_code": null,
+      "installed_version_code": 10240,
+      "recovered_after_process_restart": true,
+      "recorded_at": "2026-10-02T13:11:59.247893+00:00"
+    },
+    "postInstall": {
+      "observedAt": "2026-10-02T13:13:09.755409+00:00",
+      "reportedStatus": "online",
+      "reportedVersion": 10240,
+      "lastHeartbeat": "2026-10-02T13:13:00.685197Z",
+      "recoveryState": "completed",
+      "matchingTerminal": {
+        "command_id": "fe0b73bf-9e42-4b93-ac1d-261f59b6db06",
+        "sha256": "c612fba1e4a537ab1a0d9951e520bbd4063c3548308a4ebc31b72b59fa735a70",
+        "version_name": "1.2.40-dev",
+        "version_code": 10240,
+        "status": "completed",
+        "failure_code": null,
+        "installed_version_code": 10240,
+        "recovered_after_process_restart": true,
+        "recorded_at": "2026-10-02T13:11:59.247893+00:00"
+      },
+      "installedVersionHeartbeatConfirmed": true
+    }
+  },
+  "liveSendEvents": [
+    {
+      "event": "ota_recovery.live_send_attempt",
+      "timestamp": "2026-10-02T13:11:37.922312Z",
+      "command_id": "fe0b73bf-9e42-4b93-ac1d-261f59b6db06",
+      "sent": true
+    },
+    {
+      "event": "android_ws.ota_recovery_sent",
+      "timestamp": "2026-10-02T13:11:58.819523Z",
+      "grant_id": "fe0b73bf-9e42-4b93-ac1d-261f59b6db06"
+    },
+    {
+      "event": "android_ws.ota_recovery_receipt_persisted",
+      "timestamp": "2026-10-02T13:11:59.250052Z",
+      "grant_id": "fe0b73bf-9e42-4b93-ac1d-261f59b6db06",
+      "status": "completed",
+      "failure_code": null
+    }
+  ],
+  "containersPreserved": 43,
+  "inventory": {
+    "observedAt": "2026-10-02T13:13:39.521386+00:00",
+    "catalogTotal": 19,
+    "online": 14,
+    "offline": 5,
+    "onlineVersions": {
+      "10222": 5,
+      "10230": 2,
+      "10232": 2,
+      "10234": 2,
+      "10240": 3
+    },
+    "recoveryStates": {
+      "none": 15,
+      "completed": 3,
+      "failed": 1
+    }
+  },
+  "scope": {
+    "newApkBuilt": false,
+    "normalChannelPromoted": false,
+    "bulkRollout": false,
+    "singleExistingDebugCanaryInstalled": true,
+    "publicUiChanged": false,
+    "tunnelsChanged": false
+  },
+  "limits": [
+    "Verified server artifact package/flavor/signer manifest OPEN",
+    "Bulk rollout OPEN",
+    "Production signer and 20-30 device trial OPEN",
+    "No new FPS/input latency acceptance",
+    "Fresh browser visual OPEN_URL_POLICY_BLOCKED",
+    "N01/N03 and durable audit outbox OPEN"
+  ],
+  "exactHeadCi": {
+    "status": "PENDING_NEW_DOCUMENTATION_HEAD",
+    "previous452eb9eAllThreePassed": true
+  }
+}

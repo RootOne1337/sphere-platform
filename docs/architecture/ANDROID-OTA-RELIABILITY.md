@@ -1,6 +1,8 @@
 # Отказоустойчивое обновление Android-агента
 
-> **Текущая граница, 28 сентября 2026:** Android source candidate задаёт
+> **Текущая граница,2 октября2026:** адресный workflow установлен на3015, API8267b94/UI d61ab49; remote PH01310230→10240 принят по terminal receipt и свежему heartbeat. Обычный канал android/dev10209 не продвинут; debugcanary10240, verified artifact manifest/production signer и массовая приёмка OPEN. [Текущий контракт](../operations/OTA-ADDRESSED-UPDATES.md) · [Доказательства](../audits/2026-10-02/OTA-ADDRESSED-DELIVERY.md).
+>
+> **Историческая граница,28 сентября2026:** Android source candidate задаёт
 > `1.2.35/10235`, а записанный canary report описывает приватный candidate
 > `1.2.34/10234` и три server reports с этой версией. Текущий OTA catalog этим
 > проходом не читался, массовая

@@ -1,7 +1,7 @@
 {
-  "observedAt": "2026-10-02T12:14:38.305365+00:00",
+  "observedAt": "2026-10-02T13:18:33.849408+00:00",
   "timezone": "Asia/Yekaterinburg",
-  "source": "67b6bef8d9979fade856c02d3f4aa893a5af27f3",
+  "source": "d61ab49f67500be8966f81c570bc7514bcb5359d",
   "frozenAuditSource": "1354d66660041ba17afb64399d567ca29dd91866",
   "auditCommitBeforeProductEdits": "80fb365",
   "implementationCommits": [
@@ -35,7 +35,9 @@
     "933164e",
     "e2362eb",
     "39baa13",
-    "67b6bef"
+    "67b6bef",
+    "8267b94",
+    "d61ab49"
   ],
   "sourceFindingsFixed": [
     "F01",
@@ -70,11 +72,11 @@
     "F38"
   ],
   "remainingSourceFindings": 11,
-  "newRegressionTests": 224,
+  "newRegressionTests": 243,
   "frontendTests": {
-    "suitesPassed": 98,
+    "suitesPassed": 99,
     "suitesFailed": 0,
-    "testsPassed": 806,
+    "testsPassed": 825,
     "testsFailed": 0,
     "testsSkipped": 0
   },
@@ -90,24 +92,22 @@
     "isolatedGitArchive": true,
     "productionConfigPreserved": true,
     "output": "standalone",
-    "buildStamp": "67b6bef8d9979fade856c02d3f4aa893a5af27f3",
+    "buildStamp": "d61ab49f67500be8966f81c570bc7514bcb5359d",
     "compiledStampVerified": true,
     "platform": "Linux Docker",
     "lintWarnings": 44
   },
   "reviewRuntime": {
-    "observedAt": "2026-10-02T12:12:04.156004+00:00",
-    "phase": "investigation-installed",
+    "observedAt": "2026-10-02T13:09:25.805068+00:00",
+    "phase": "installed",
     "url": "http://127.0.0.1:3015",
-    "reviewSource": "67b6bef8d9979fade856c02d3f4aa893a5af27f3",
-    "backendSource": "39baa13a18a69999f4f2c9ac6fb63c1437956175",
+    "reviewSource": "d61ab49f67500be8966f81c570bc7514bcb5359d",
+    "backendSource": "8267b943ab39f106b91e95be543d10618ef6c1ed",
     "loginPassed": true,
     "sameOriginApiPassed": true,
     "uiCompiledStampPassed": true,
     "staticAssetPassed": true,
     "unauthorizedObservabilityStatus": 401,
-    "oldDiscoveryPayloadStatus": 422,
-    "oldDiscoveryMissingRequiredField": "workstation_id",
     "prometheusApiPassed": true,
     "grafanaSessionAndHealthPassed": true,
     "wsUpgradeSnapshotAndPongPassed": true,
@@ -120,22 +120,22 @@
     "containers": [
       {
         "name": "sphere-review-20261002-review-ui-1",
-        "id": "fc25350d3ae4aa2cde23c6e3b164f8f6b5ac59760495b9cfed2be6b5b96654e4",
-        "imageId": "sha256:dc2d96018a625228514a5246e865ef9f4ecf51d36c3a818c6769560dc14d3f91",
-        "image": "sphere-review-frontend:67b6bef8d9979fade856c02d3f4aa893a5af27f3",
+        "id": "f60410bf6af1302efe340bf888af7bf59d5f31ddf12346828a0a9313bba75d16",
+        "imageId": "sha256:70e86bc679d47a73d3060b5b7adb7ae41ff95587c66a8171218456f11dde9b01",
+        "image": "sphere-review-frontend:d61ab49f67500be8966f81c570bc7514bcb5359d",
         "health": "healthy",
-        "startedAt": "2026-10-02T12:11:15.194388362Z",
+        "startedAt": "2026-10-02T13:08:34.649659798Z",
         "readOnly": true,
         "restart": "unless-stopped",
         "ports": {}
       },
       {
         "name": "sphere-review-20261002-review-gateway-1",
-        "id": "126c8120a4994390986c8ca7aeafa7634ecad64116de9dc1799c40d8feb52516",
+        "id": "37c1155966cdf9d0a92043f7db82ae6e86154a451db0e96025f6578f80ab67d1",
         "imageId": "sha256:1d13701a5f9f3fb01aaa88cef2344d65b6b5bf6b7d9fa4cf0dca557a8d7702ba",
         "image": "nginx:alpine",
         "health": "healthy",
-        "startedAt": "2026-10-02T12:11:21.064092287Z",
+        "startedAt": "2026-10-02T13:08:40.499193389Z",
         "readOnly": true,
         "restart": "unless-stopped",
         "ports": {
@@ -152,7 +152,7 @@
     "browserVisualAcceptance": "OPEN_URL_POLICY_BLOCKED"
   },
   "documentValidation": {
-    "relativeTargetsChecked": 566,
+    "relativeTargetsChecked": 596,
     "findingAnchorsChecked": 41,
     "missing": [],
     "testCountsMatchRawJestReceipt": true,
@@ -164,14 +164,14 @@
     "tunnelChanged": false,
     "otaPromoted": false,
     "remoteDeviceCommandsSent": true,
-    "remoteCommandsScope": "two finite variable-only PH025 rerun canaries, separately recorded; no network scan"
+    "remoteCommandsScope": "Prior two finite variable-only PH025 reruns; one current PH013 addressed OTA grant, same-ID live/reconnect delivery",
+    "singleAddressedOtaCanaryInstalled": true
   },
   "limits": [
     "Component/hook transport is mocked; own empty-group create/update/delete and pinned variable-only Android rerun have separate finite live acceptance. No real-device deletion/move acceptance.",
     "Settings conflict detection uses observed snapshots; backend revision/CAS protection is not implemented.",
     "New frontend CI is separate from prior accepted backend/Android CI.",
     "Current Sphere browser visual acceptance remains blocked and was not bypassed.",
-    "No new remote FPS, input latency, APK, OTA or fleet reliability result is claimed.",
     "Schedule execution counters are server reports, not proof that Android work is currently running.",
     "UTC one-shot editor follows the API contract; the IANA schedule timezone applies to CRON.",
     "Orchestration text search applies to the loaded page; API has no global free-text search. Audit F37 uses shared global filters and a single capped export; continuation/large-volume performance remain separate limits.",
@@ -184,12 +184,14 @@
     "403 is covered by component and actual RLS/ASGI tests; no complete live permission matrix trial.",
     "No optimistic concurrency revision or If-Match protection for group metadata.",
     "Group online counters report the server aggregate, not a new live-presence or SLA measurement.",
-    "Only owned backend and review UI/gateway were replaced; APK, public UI, OTA, tunnels and43 other containers were preserved. No Android commands or new video trial.",
     "Fresh browser visual remains OPEN_URL_POLICY_BLOCKED",
     "Audit background persistence remains best effort; durable outbox is OPEN",
-    "N04/N05 source and finite API passed; full live permission matrix remains OPEN"
+    "N04/N05 source and finite API passed; full live permission matrix remains OPEN",
+    "Current batch installed UI/API and one existing debug10240 APK on PH013; global OTA and43 other containers preserved.",
+    "F33 PARTIAL: addressed workflow/finite remote install accepted; verified artifact manifest, bulk rollout and browser visual OPEN.",
+    "No new remote FPS/input latency or fleet reliability acceptance."
   ],
-  "verificationCommit": "5fcf18a",
+  "verificationCommit": "d61ab49f67500be8966f81c570bc7514bcb5359d",
   "previousReviewRuntime": {
     "source": "7f30d9d5282804d7b477bff665cfea256dd31aeb",
     "observedAt": "2026-10-01T19:36:17.2110128+00:00",
@@ -1089,5 +1091,69 @@
       "No new remote FPS, input latency, fleet soak, Android scripts or OTA result.",
       "ILIKE search performance on millions of events and audit durable outbox remain separate gates."
     ]
+  },
+  "partialSourceFindings": [
+    "F33"
+  ],
+  "previousAuditInvestigationRuntime": {
+    "observedAt": "2026-10-02T12:12:04.156004+00:00",
+    "phase": "investigation-installed",
+    "url": "http://127.0.0.1:3015",
+    "reviewSource": "67b6bef8d9979fade856c02d3f4aa893a5af27f3",
+    "backendSource": "39baa13a18a69999f4f2c9ac6fb63c1437956175",
+    "loginPassed": true,
+    "sameOriginApiPassed": true,
+    "uiCompiledStampPassed": true,
+    "staticAssetPassed": true,
+    "unauthorizedObservabilityStatus": 401,
+    "oldDiscoveryPayloadStatus": 422,
+    "oldDiscoveryMissingRequiredField": "workstation_id",
+    "prometheusApiPassed": true,
+    "grafanaSessionAndHealthPassed": true,
+    "wsUpgradeSnapshotAndPongPassed": true,
+    "catalogTotal": 19,
+    "reportedStatuses": {
+      "online": 14,
+      "offline": 5
+    },
+    "nodeRuntime": "v24.21.0",
+    "containers": [
+      {
+        "name": "sphere-review-20261002-review-ui-1",
+        "id": "fc25350d3ae4aa2cde23c6e3b164f8f6b5ac59760495b9cfed2be6b5b96654e4",
+        "imageId": "sha256:dc2d96018a625228514a5246e865ef9f4ecf51d36c3a818c6769560dc14d3f91",
+        "image": "sphere-review-frontend:67b6bef8d9979fade856c02d3f4aa893a5af27f3",
+        "health": "healthy",
+        "startedAt": "2026-10-02T12:11:15.194388362Z",
+        "readOnly": true,
+        "restart": "unless-stopped",
+        "ports": {}
+      },
+      {
+        "name": "sphere-review-20261002-review-gateway-1",
+        "id": "126c8120a4994390986c8ca7aeafa7634ecad64116de9dc1799c40d8feb52516",
+        "imageId": "sha256:1d13701a5f9f3fb01aaa88cef2344d65b6b5bf6b7d9fa4cf0dca557a8d7702ba",
+        "image": "nginx:alpine",
+        "health": "healthy",
+        "startedAt": "2026-10-02T12:11:21.064092287Z",
+        "readOnly": true,
+        "restart": "unless-stopped",
+        "ports": {
+          "8080/tcp": [
+            {
+              "HostIp": "127.0.0.1",
+              "HostPort": "3015"
+            }
+          ]
+        }
+      }
+    ],
+    "remoteCommandsSent": false,
+    "browserVisualAcceptance": "OPEN_URL_POLICY_BLOCKED"
+  },
+  "addressedOtaEvidence": "../2026-10-02/OTA-ADDRESSED-DELIVERY-EVIDENCE.json",
+  "currentExactHeadCi": {
+    "status": "PENDING_NEW_DOCUMENTATION_HEAD",
+    "previous452eb9eAllThreePassed": true
   }
 }

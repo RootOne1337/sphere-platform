@@ -15,13 +15,14 @@
 > автоматическую проверку runtime; старые аудиты сохраняют собственные даты и
 > версии и не должны читаться как текущий deploy. [Правила актуальности](DOCUMENTATION.md).
 
-Последнее изменение: [F37 — поиск всего audit журнала и bounded CSV](audits/2026-10-02/AUDIT-INVESTIGATION.md), review UI67b6bef/API39baa13 на3015;98 suites/806 tests и61 production-image PostgreSQL cases.30 source fixes/11 исходных OPEN. Published5d27624 полностью прошёл CI;67b6bef frontend success, backend/Android проверялись отдельно. [История пользователей](audits/2026-10-02/USER-ACCESS.md) и N04/N05 сохраняет даты.
+Последнее изменение: [F33 — адресное OTA/current-socket delivery](audits/2026-10-02/OTA-ADDRESSED-DELIVERY.md), review UI d61ab49/API8267b94 на3015. Remote PH01310230→10240 подтверждён receipt+heartbeat;99 suites/825 tests и5 новых production-image PostgreSQL/Redis cases passed.30 findings fully fixed/11 OPEN; F33 PARTIAL. [Контракт оператора](operations/OTA-ADDRESSED-UPDATES.md). Предыдущий452eb9e CI полностью passed; новый documentation head проверяется отдельно.
 
 ## 🧭 Выберите задачу
 
 | Мне нужно | Начать здесь | Дальше |
 | --- | --- | --- |
 | Проверить полный веб-аудит и текущие исправления | [Аудит всех маршрутов, меню и возможностей API — 1 октября](audits/2026-10-01/WEB-FULL-CAPABILITY-AUDIT.md) | [Журнал исправлений F01–F41](audits/2026-10-01/WEB-AUDIT-REMEDIATION.md) · [Fixes: актуальные tests / installed UI](audits/2026-10-01/WEB-AUDIT-FIXES-VALIDATION.json) · [Frozen audit evidence](audits/2026-10-01/WEB-FULL-CAPABILITY-AUDIT-EVIDENCE.json) · [Проверки документа](audits/2026-10-01/AUDIT-VALIDATION.json) |
+| Обновить одно Android-устройство и проверить receipt/heartbeat | [Адресное OTA](operations/OTA-ADDRESSED-UPDATES.md) | [F33 remote proof](audits/2026-10-02/OTA-ADDRESSED-DELIVERY.md) · [Evidence JSON](audits/2026-10-02/OTA-ADDRESSED-DELIVERY-EVIDENCE.json) |
 | Найти audit событие за первой страницей и выгрузить CSV | [F37: source/installed evidence](audits/2026-10-02/AUDIT-INVESTIGATION.md) | [Контракт и лимит5000](operations/AUDIT-INVESTIGATION.md) · [JSON receipts](audits/2026-10-02/AUDIT-INVESTIGATION-EVIDENCE.json) |
 | Проверить форму пользователя, смену роли и отключение | [F38: source/installed evidence](audits/2026-10-02/USER-ACCESS.md) | [Операторский контракт](operations/USER-ACCESS.md) · [JSON receipts](audits/2026-10-02/USER-ACCESS-EVIDENCE.json) |
 | Проверить иерархию групп и сохранность audit отказов | [N04/N05: исправление и live readback](audits/2026-10-02/GROUP-HIERARCHY-AND-AUDIT.md) | [Evidence](audits/2026-10-02/GROUP-HIERARCHY-AND-AUDIT-EVIDENCE.json) · [Контракт иерархии](operations/GROUP-HIERARCHY.md) |

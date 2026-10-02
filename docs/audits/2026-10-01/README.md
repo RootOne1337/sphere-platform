@@ -16,7 +16,7 @@ Source: `1354d66660041ba17afb64399d567ca29dd91866`. Режим замороже�
 
 Текущее продолжение: [журнал исправлений и статусы F01–F41](WEB-AUDIT-REMEDIATION.md). Исторический аудит остаётся неизменным.
 
-Последний review UI **67b6bef**, backend **39baa13**,2 октября17:12 UTC+5:30 source fixes/11 исходных OPEN,98 suites/806 tests,61 production-image PostgreSQL cases. F37 global filters/UTC/capped CSV исправлен; actual5386-event API accepted. N01/N03/browser visual/outbox OPEN. [F37 и receipts](../2026-10-02/AUDIT-INVESTIGATION.md) · [Validation](WEB-AUDIT-FIXES-VALIDATION.json). Старые runtime/restart/canary/user results сохраняют собственные даты.
+Последний review UI **d61ab49**, API **8267b94**,2 октября18:13 UTC+5:30 fully fixed/11 OPEN, F33 PARTIAL.99 suites/825 tests;310 API/WS regressions и5 actual production-image PostgreSQL/Redis cases passed. Remote PH013 адресно обновился10230→10240, receipt/heartbeat confirmed. [F33 evidence](../2026-10-02/OTA-ADDRESSED-DELIVERY.md) · [Validation](WEB-AUDIT-FIXES-VALIDATION.json). Старые trials сохраняют даты; visual/bulk/manifest/outbox OPEN.
 
 ## Runtime и Android follow-up — 2 октября 04:51 UTC+5
 
