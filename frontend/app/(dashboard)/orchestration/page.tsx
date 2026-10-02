@@ -3,6 +3,8 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
+import { useAuthStore } from '@/lib/store';
+import { PipelineDefinitionDialog } from '@/src/features/orchestration/PipelineDefinitionDialog';
 import { toast } from 'sonner';
 import { Button } from '@/src/shared/ui/button';
 import { Input } from '@/src/shared/ui/input';
@@ -207,6 +209,11 @@ export default function OrchestrationPage() {
     const [tab, setTab] = useState<TabKey>('pipelines');
     const [search, setSearch] = useState('');
     const [runPipelineTarget, setRunPipelineTarget] = useState<Pipeline | null>(null);
+    const actor = useAuthStore(s => s.user);
+    const session = useAuthStore(s => s.sessionVersion);
+    const definitionScope = `${actor?.org_id}:${actor?.id}:${actor?.role}:${session}`;
+    const canManageDefinition = Boolean(actor && ['device_manager', 'org_admin', 'org_owner', 'super_admin'].includes(actor.role));
+    const [definition, setDefinition] = useState<{ id: string; scope: string; action: 'view' | 'activation' } | null>(null);
     const [showCreateSchedule, setShowCreateSchedule] = useState(false);
     const [editingSchedule, setEditingSchedule] = useState<Schedule | null>(null);
     const [pages, setPages] = useState<Record<TabKey, number>>({ pipelines: 1, runs: 1, schedules: 1 });
@@ -356,7 +363,7 @@ export default function OrchestrationPage() {
                     <Button variant="outline" size="sm" aria-label="Обновить текущий каталог" disabled={currentQuery.isFetching} onClick={() => { void currentQuery.refetch(); }}>{currentQuery.isFetching ? 'Обновляем…' : 'Обновить каталог'}</Button>
                 </div>
                 <p className="mb-3 text-xs text-muted-foreground">Текстовый поиск применяется только к текущей странице. Для других записей используйте страницы и серверный фильтр.</p>
-                {!changingPage && tab === 'pipelines' && <PipelinesTab pipelines={pipelines} loading={pLoading} error={pipelinesQuery.isError} hasSnapshot={pipelinesQuery.isSuccess} filteredByServer={filters.pipelines !== 'all'} search={search} onRunPipeline={setRunPipelineTarget} />}
+                {!changingPage && tab === 'pipelines' && <PipelinesTab pipelines={pipelines} loading={pLoading} error={pipelinesQuery.isError} hasSnapshot={pipelinesQuery.isSuccess} filteredByServer={filters.pipelines !== 'all'} search={search} onRunPipeline={setRunPipelineTarget} canManage={canManageDefinition} onDefinition={(p, action) => { if (actor) setDefinition({ id: p.id, scope: definitionScope, action }); }} />}
                 {!changingPage && tab === 'runs' && <RunsTab runs={runs} pipelines={pipelines} loading={rLoading} error={runsQuery.isError} hasSnapshot={runsQuery.isSuccess} filteredByServer={filters.runs !== 'all'} search={search} />}
                 {!changingPage && tab === 'schedules' && <SchedulesTab schedules={schedules} pipelines={pipelines} loading={sLoading} error={schedulesQuery.isError} hasSnapshot={schedulesQuery.isSuccess} filteredByServer={filters.schedules !== 'all'} search={search} onCreateSchedule={() => setShowCreateSchedule(true)} onEditSchedule={setEditingSchedule} />}
                 {changingPage && <p role="status">Каталог изменился; загружаем доступную страницу…</p>}
@@ -364,6 +371,7 @@ export default function OrchestrationPage() {
             </div>
 
             {/* ── МОДАЛКИ (controlled mode — Dialog всегда в DOM, Portal рендерится по open) ── */}
+            {actor && definition?.scope === definitionScope && <PipelineDefinitionDialog key={`${definitionScope}:${definition.id}`} pipelineId={definition.id} orgId={actor.org_id} scope={definitionScope} canManage={canManageDefinition} initialAction={definition.action} onClose={() => setDefinition(null)} />}
             <RunPipelineDialog
                 pipeline={runPipelineTarget}
                 open={!!runPipelineTarget}
@@ -431,7 +439,7 @@ function StatCard({
 //  TAB: PIPELINES
 // ============================================================================
 
-function PipelinesTab({ pipelines, loading, error, hasSnapshot, filteredByServer, search, onRunPipeline }: { pipelines: Pipeline[]; loading: boolean; error: boolean; hasSnapshot: boolean; filteredByServer: boolean; search: string; onRunPipeline: (p: Pipeline) => void }) {
+function PipelinesTab({ pipelines, loading, error, hasSnapshot, filteredByServer, search, onRunPipeline, canManage, onDefinition }: { pipelines: Pipeline[]; loading: boolean; error: boolean; hasSnapshot: boolean; filteredByServer: boolean; search: string; onRunPipeline: (p: Pipeline) => void; canManage: boolean; onDefinition: (p: Pipeline, action: 'view' | 'activation') => void }) {
     const [expandedId, setExpandedId] = useState<string | null>(null);
 
     const filtered = useMemo(() => {
@@ -445,9 +453,9 @@ function PipelinesTab({ pipelines, loading, error, hasSnapshot, filteredByServer
     }, [pipelines, search]);
 
     return (
-        <div className="rounded-sm border border-border bg-card shadow-2xl overflow-hidden">
+        <div className="rounded-lg border border-border bg-card overflow-x-auto">
             <table className="w-full text-left whitespace-nowrap">
-                <thead className="bg-[#151515]/90 border-b border-border text-[10px] uppercase font-mono tracking-widest font-bold text-muted-foreground sticky top-0 backdrop-blur-sm z-10">
+                <thead className="bg-muted/90 border-b border-border text-[10px] uppercase font-mono tracking-widest font-bold text-muted-foreground sticky top-0 backdrop-blur-sm z-10">
                     <tr>
                         <th className="px-4 py-3 w-10"></th>
                         <th className="px-4 py-3">Название</th>
@@ -475,6 +483,8 @@ function PipelinesTab({ pipelines, loading, error, hasSnapshot, filteredByServer
                             expanded={expandedId === p.id}
                             onToggle={() => setExpandedId(expandedId === p.id ? null : p.id)}
                             onRunPipeline={() => onRunPipeline(p)}
+                            canManage={canManage}
+                            onDefinition={action => onDefinition(p, action)}
                         />
                     ))}
                 </tbody>
@@ -483,17 +493,7 @@ function PipelinesTab({ pipelines, loading, error, hasSnapshot, filteredByServer
     );
 }
 
-function PipelineRow({ pipeline: p, expanded, onToggle, onRunPipeline }: { pipeline: Pipeline; expanded: boolean; onToggle: () => void; onRunPipeline: () => void }) {
-    const queryClient = useQueryClient();
-
-    const toggleActiveMut = useMutation({
-        mutationFn: () => api.post(`/pipelines/${p.id}/toggle`),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['pipelines'] });
-            toast.success(p.is_active ? 'Pipeline деактивирован' : 'Pipeline активирован');
-        },
-        onError: () => toast.error('Ошибка переключения pipeline'),
-    });
+function PipelineRow({ pipeline: p, expanded, onToggle, onRunPipeline, canManage, onDefinition }: { pipeline: Pipeline; expanded: boolean; onToggle: () => void; onRunPipeline: () => void; canManage: boolean; onDefinition: (action: 'view' | 'activation') => void }) {
 
     return (
         <>
@@ -536,8 +536,9 @@ function PipelineRow({ pipeline: p, expanded, onToggle, onRunPipeline }: { pipel
                                 : 'text-muted-foreground hover:text-success hover:bg-success/10'
                             }
                             title={p.is_active ? 'Деактивировать' : 'Активировать'}
-                            onClick={() => toggleActiveMut.mutate()}
-                            disabled={toggleActiveMut.isPending}
+                            aria-label={p.is_active ? 'Деактивировать' : 'Активировать'}
+                            onClick={() => onDefinition('activation')}
+                            disabled={!canManage}
                         >
                             {p.is_active
                                 ? <ToggleRight className="w-4 h-4" />
@@ -547,7 +548,7 @@ function PipelineRow({ pipeline: p, expanded, onToggle, onRunPipeline }: { pipel
                         <Button variant="ghost" size="tiny" className="text-muted-foreground hover:text-success hover:bg-success/10" title="Запустить" onClick={onRunPipeline}>
                             <Play className="w-3 h-3" />
                         </Button>
-                        <Button variant="ghost" size="tiny" className="text-muted-foreground hover:text-primary hover:bg-primary/10" title="Просмотр" onClick={onToggle}>
+                        <Button variant="ghost" size="tiny" className="text-muted-foreground hover:text-primary hover:bg-primary/10" title="Определение и управление" aria-label="Определение и управление" onClick={() => onDefinition('view')}>
                             <Eye className="w-3 h-3" />
                         </Button>
                     </div>
