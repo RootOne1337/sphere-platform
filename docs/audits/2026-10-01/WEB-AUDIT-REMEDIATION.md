@@ -336,5 +336,5 @@ UI3015/audit установлен17:11, API39baa13 —17:09. Реальный ж
   соседних containers IDs/images/starttimes preserved. No new long-soak/FPS claim.
 - Input_schema semantic validation/global chain retries/runtime settings snapshot
   migration, visual/keyboard/mobile/production/fleet gates OPEN.
-- Далее: F26 forms/import/export, F32/F33 command/OTA outcomes и F34–F36 video/XPath;
+- Далее: F26 география/иерархия локаций, F32/F33 command/OTA outcomes и F34–F36 video/XPath;
   остальные замечания не объявлены устранёнными. [Контракт/receipts](../2026-10-03/PIPELINE-DEFINITION-WORKFLOW.md).
