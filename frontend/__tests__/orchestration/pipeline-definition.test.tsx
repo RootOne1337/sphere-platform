@@ -166,3 +166,7 @@ it('null clear differs from omission and JSON key order does not create a false 
   expect(canonical({ a: 1, b: 2 })).toEqual(canonical({ b: 2, a: 1 }));
   expect(validateDefinitionDraft(draft, baseline)).toEqual({});
 });
+it('metadata-only edit retains legacy steps that omit schema defaults', () => {
+  const baseline = { ...initial(), steps: [{ id: 'old', name: 'Legacy step', type: 'delay', params: { delay_ms: 1000 } }] };
+  expect(validateDefinitionDraft({ ...definitionDraft(baseline), name: 'Metadata only' }, baseline)).toEqual({ name: 'Metadata only' });
+});

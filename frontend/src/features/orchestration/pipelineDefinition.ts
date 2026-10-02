@@ -35,16 +35,21 @@ export function definitionDraft(value: PipelineDefinition): DefinitionDraft {
 export function validateDefinitionDraft(draft: DefinitionDraft, baseline: PipelineDefinition): DefinitionPatch {
   if (!draft.name.trim() || draft.name.length > 255) throw new Error('Название: от 1 до 255 символов.');
   const parsed = (text: string, label: string): unknown => { try { return JSON.parse(text); } catch { throw new Error(label + ': некорректный JSON.'); } };
-  const steps = parsed(draft.steps, 'Шаги');
-  if (!Array.isArray(steps) || steps.length < 1 || steps.length > 100 || !steps.every(record)) throw new Error('Шаги: требуется массив из 1–100 объектов.');
+  const rawSteps = parsed(draft.steps, 'Шаги');
+  if (!Array.isArray(rawSteps) || !rawSteps.every(record)) throw new Error('Шаги: требуется JSON-массив объектов.');
+  const stepsChanged = canonical(rawSteps) !== canonical(baseline.steps);
+  // Preserve legacy snapshots on metadata-only edits. Normalize omitted API
+  // defaults only when the operator actually changes the step definition.
+  const steps: Record<string, unknown>[] = stepsChanged ? rawSteps.map(step => ({ params: {}, on_success: null, on_failure: null, timeout_ms: 60000, retries: 0, ...step })) : rawSteps;
+  if (stepsChanged && (steps.length < 1 || steps.length > 100)) throw new Error('Шаги: требуется массив из 1–100 объектов.');
   const ids = new Set<string>();
-  for (const step of steps) {
+  for (const step of stepsChanged ? steps : []) {
     if (typeof step.id !== 'string' || !step.id || step.id.length > 128 || ids.has(step.id)) throw new Error('Шаги: ID должны быть непустыми и уникальными (до 128 символов).');
     ids.add(step.id);
     if (typeof step.name !== 'string' || !step.name || step.name.length > 255 || !types.has(String(step.type))
       || !record(step.params) || !integer(step.timeout_ms, 1000, 3600000) || !integer(step.retries, 0, 10)) throw new Error('Шаги: проверьте имя, тип, параметры, таймаут и повторы.');
   }
-  for (const step of steps) for (const target of [step.on_success, step.on_failure]) {
+  for (const step of stepsChanged ? steps : []) for (const target of [step.on_success, step.on_failure]) {
     if (target !== null && (typeof target !== 'string' || !ids.has(target))) throw new Error('Шаги: переход должен ссылаться на существующий ID или быть null.');
   }
   const schema = parsed(draft.input_schema, 'Входная схема');
