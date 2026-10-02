@@ -2,7 +2,7 @@
 
 Этот журнал продолжает [замороженный аудит](WEB-FULL-CAPABILITY-AUDIT.md) исходников `1354d66`. Исходный документ и evidence сохраняют свою дату и ограничения; их статусы не переписываются задним числом.
 
-**Срез реализации 2 октября 2026,23:45 UTC+5:** UI c989eaa/API d2846ef;31 source findings исправлены,10 OPEN, включая F33 PARTIAL.100 suites/846 frontend tests,264 regressions;25 real PostgreSQL cases также прошли в production image. F27 архив/версии/conditional Run установлен; собственный API canary подтвердил immutable v3 и stale409. [F27 evidence](../2026-10-02/SCRIPT-VERSION-WORKFLOW.md) · [Validation](WEB-AUDIT-FIXES-VALIDATION.json).
+**Срез реализации3 октября2026,02:33 UTC+5:** UI 5b20955/API cc28e9b;32 source findings исправлены,9 OPEN, включая F33 PARTIAL.101 suites/867 frontend tests,285 regressions;120 related actual PostgreSQL cases и35 focused cases в production image passed. F28 detail/edit/activation установлен; собственный API canary подтвердил stale409/invalid422, v2/inactive и0 runs. [F28 evidence](../2026-10-03/PIPELINE-DEFINITION-WORKFLOW.md) · [Validation](WEB-AUDIT-FIXES-VALIDATION.json).
 
 ## Исходная фиксация
 
@@ -52,7 +52,7 @@
 | [F25](WEB-FULL-CAPABILITY-AUDIT.md#f25) | P2 | Source исправлен; live OPEN | Группы: редактирование и состав не раскрыты |
 | [F26](WEB-FULL-CAPABILITY-AUDIT.md#f26) | P3 | Открыто | Локации: backend география/иерархия не доступны в форме |
 | [F27](WEB-FULL-CAPABILITY-AUDIT.md#f27) | P2 | Source исправлен; live OPEN | Сценарии: архив/rollback есть в backend, нет workflow |
-| [F28](WEB-FULL-CAPABILITY-AUDIT.md#f28) | P2 | Открыто | Pipeline: отсутствует полноценный detail/edit workflow |
+| [F28](WEB-FULL-CAPABILITY-AUDIT.md#f28) | P2 | Source исправлен; live OPEN | Pipeline: отсутствует полноценный detail/edit workflow |
 | [F29](WEB-FULL-CAPABILITY-AUDIT.md#f29) | P2 | Source исправлен; live OPEN | Расписания: нет доступа к истории срабатываний |
 | [F30](WEB-FULL-CAPABILITY-AUDIT.md#f30) | P2 | Source исправлен; live OPEN | Расписание one-shot: ISO offset подаётся в datetime-local |
 | [F31](WEB-FULL-CAPABILITY-AUDIT.md#f31) | P2 | Source исправлен; live OPEN | VPN → Logs теряет контекст устройства |
@@ -316,3 +316,25 @@ UI3015/audit установлен17:11, API39baa13 —17:09. Реальный ж
 ## F27 — 2 октября 2026,23:45 UTC+5
 
 Архивный server scope, immutable version viewer/redacted diff и conditional archive/rollback/Run установлены. 14 before PostgreSQL failures и11 UI failures воспроизведены. После25 actual DB/production-image tests и846 frontend tests passed. Свой pilot сценарий v1→v2→новая v3→архив принят; stale mutations/admissions409; исходные версии сохранены. Public UI/APK/OTA/Tuna не менялись.31 findings исправлено/10 OPEN. [Операторский контракт](../../operations/SCRIPT-VERSIONS.md) · [Report](../2026-10-02/SCRIPT-VERSION-WORKFLOW.md) · [Receipts](../2026-10-02/SCRIPT-VERSION-WORKFLOW-EVIDENCE.json). Browser visual OPEN_URL_POLICY_BLOCKED.
+
+
+## F28: определение pipeline и исправленная активация —3 октября
+
+- Baseline d6be09a:22 failed/8 passed на реальном PostgreSQL; toggle без active422
+  подтверждён installed API. Update принимал пустые/101 steps, stale/null edit,
+  runtime timeout под active run; полного owned detail/edit в UI не было.
+- cc28e9b: expected_updated_at, NOWAIT definition/admission fence, update graph
+  validation и atomic rejection runtime edit при nonterminal run. Metadata и
+  deactivation сохраняют существующие jobs; steps snapshot не переписывается.
+- d829b47 + legacy compatibility5b20955: detail/editor/confirmation/receipt, role/session ownership, dirty
+  conflict и unknown outcome без replay; actual active query исправляет кнопку.
+- 21 UI cases/full867 passed/types/build;120 related PostgreSQL,35 production-image,
+ 16 toggle/service unit; pinned Ruff0.15.2/mypy224 passed.
+- Install/API proof21:14–21:16UTC: review3015 UI/API revision matched;
+  own pipeline4ff5f7e3-f9f0-428e-97f6-cce53550df05 v2/inactive,0 runs.
+- Initial12online/7offline, затем6 samples14online/5offline в150s;13 running
+  соседних containers IDs/images/starttimes preserved. No new long-soak/FPS claim.
+- Input_schema semantic validation/global chain retries/runtime settings snapshot
+  migration, visual/keyboard/mobile/production/fleet gates OPEN.
+- Далее: F26 forms/import/export, F32/F33 command/OTA outcomes и F34–F36 video/XPath;
+  остальные замечания не объявлены устранёнными. [Контракт/receipts](../2026-10-03/PIPELINE-DEFINITION-WORKFLOW.md).

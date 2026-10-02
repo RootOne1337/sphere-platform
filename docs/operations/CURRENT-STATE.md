@@ -1,10 +1,13 @@
 # Sphere: актуальное состояние и критерии приёмки
 
-**Обновлено:** 2 октября 2026, Asia/Yekaterinburg; даты отдельных runtime/CI срезов указаны ниже.<br />
+**Обновлено:** 3 октября 2026, Asia/Yekaterinburg; даты отдельных runtime/CI срезов указаны ниже.<br />
 **Область:** исходники и документация ветки PR #19, записанные runtime-наблюдения, Android APK и готовность следующего прогона.<br />
 **Канонический документ текущего состояния:** этот файл. Исторические отчёты ниже сохраняют исходные даты и факты.
 
 [Главная](../../README.md) · [Каталог документации](../README.md) · [Readiness](READINESS.md) · [Fleet32 gates](../audits/2026-09-20/FLEET32-PREFLIGHT.md) · [PR #19](https://github.com/RootOne1337/sphere-platform/pull/19)
+
+> [!IMPORTANT]
+> **Установленный review,3 октября02:33 UTC+5:** [3015/orchestration](http://127.0.0.1:3015/orchestration), UI **5b20955** / API **cc28e9b**. F28: полный owned detail, JSON editor, explicit activation и timestamp conditions; nonterminal runs защищают runtime definition.101 suites/867 frontend tests;120 related PostgreSQL cases,35 cases также в новом production image. Собственный live pipeline v1→v2→inactive; stale409/invalid422,0 runs/Android commands. Login/API/Prometheus/Grafana/events WS passed. Initial12online/7offline; затем шесть срезов21:16:59–21:19:29UTC показали14online/5offline. Это конечное наблюдение, не SLA/FPS/soak.13 соседних работающих контейнеров сохранили ID/image/starttime. [F28 evidence](../audits/2026-10-03/PIPELINE-DEFINITION-WORKFLOW.md) · [Контракт](PIPELINE-DEFINITIONS.md). Browser visual/keyboard/mobile и production rollout OPEN. Исторические срезы ниже сохранены по датам.
 
 > [!IMPORTANT]
 > **Работающий review,2 октября23:45 UTC+5:** [3015/scripts](http://127.0.0.1:3015/scripts), UI **c989eaa** / API **d2846ef**. F27 source/test/API исправлен: доступный архив, выбранный immutable DAG/hash/diff, conditional rollback/archive и показанная версия для Run. Реальный собственный сценарий v1→v2→новая v3→архив; stale mutations/admissions409.100 suites/846 frontend tests,25 actual PostgreSQL cases также в production image passed.43 соседних контейнера сохранены; финальный срез19/online14/offline5. Browser visual, production rollout и длительная приёмка OPEN. [F27 evidence](../audits/2026-10-02/SCRIPT-VERSION-WORKFLOW.md) · [Операторский контракт](SCRIPT-VERSIONS.md).
@@ -26,7 +29,7 @@
 > [!IMPORTANT]
 > **Историческая native установка 2 октября 2026, 01:28:45 UTC+5:** `3015 → standalone UI3030/API18080`, frontend и backend **5fcf18a**. Readiness/build SHA, owned listeners и авторизованный API проверены. Предыдущий Next7416/UI3029 и backend image8d64ca4 сохранены; заменён только owned relay и backend. Это проверочный веб [3015/tasks](http://127.0.0.1:3015/tasks); public frontend не заменён. [Журнал](../audits/2026-10-01/WEB-AUDIT-REMEDIATION.md) · [Точные receipts](../audits/2026-10-02/TASK-ARTIFACTS-AND-RERUN-EVIDENCE.json).
 
-**31 source findings исправлено полностью**, включая все5 P1; **10 исходных остаются открытыми**, включая F33 PARTIAL. Совокупный frontend — **100 suites/846 tests**, **264 новых regressions** сверх582. F27:25 actual PostgreSQL tests/production image,80 script unit tests/1 skipped, Types/mypy224/Ruff0.15.2, immutable production builds и OpenAPI174 operations/137 paths passed. Browser visual, Android artifact upload N01, legacy RPC errors N03, durable audit outbox и 20–30-device acceptance OPEN. [Script contract](SCRIPT-VERSIONS.md) · [F27 receipts](../audits/2026-10-02/SCRIPT-VERSION-WORKFLOW-EVIDENCE.json). Старые срезы ниже сохранены со своими датами.
+**32 source findings исправлено полностью**, включая все5 P1; **9 исходных остаются открытыми**, включая F33 PARTIAL. Совокупный frontend — **101 suites/867 tests**, **285 новых regressions** сверх582. F27:25 actual PostgreSQL tests/production image,80 script unit tests/1 skipped, Types/mypy224/Ruff0.15.2, immutable production builds и OpenAPI174 operations/137 paths passed. Browser visual, Android artifact upload N01, legacy RPC errors N03, durable audit outbox и 20–30-device acceptance OPEN. [Script contract](SCRIPT-VERSIONS.md) · [F27 receipts](../audits/2026-10-02/SCRIPT-VERSION-WORKFLOW-EVIDENCE.json). Старые срезы ниже сохранены со своими датами.
 
 **Исторический published verification5d27624 полностью прошёл CI:** [backend37000707994](https://github.com/RootOne1337/sphere-platform/actions/runs/37000707994), [frontend37000707943](https://github.com/RootOne1337/sphere-platform/actions/runs/37000707943), [Android37000707995](https://github.com/RootOne1337/sphere-platform/actions/runs/37000707995). Source67b6bef frontend37004977091 success; backend37004977150/Android37004977161 выполнялись на срезе документа. Новый docs head требует своих checks. Предыдущие groups/null/cycles/audit rollback и user422/404/400,23 HTTP/49 RBAC proofs сохраняются с собственными датами. [User contract](USER-ACCESS.md) · [F37 live/read limits](../audits/2026-10-02/AUDIT-INVESTIGATION.md).
 
@@ -441,7 +444,7 @@ Command/stderr больше не включаются в ошибки shell об
 0 failures / 0 errors**; `assembleDevDebug` completed. Это local compiled source,
 не production-signed/настроенный OTA артефакт; установленный парк не обновлялся.
 Android `su` descendants и root timeout cleanup ещё требуют device canary.
-Source **`3148668`** завершил обязательные GitHub backend/frontend/security/
+Source **`3148678`** завершил обязательные GitHub backend/frontend/security/
 Android jobs success; preview deploy skipped. Этот CI относится к shell fix,
 а не к последующему hierarchy follow-up и не заменяет device acceptance.
 Продуктовый контракт single-device continuous/native-aspect video, fleet snapshot
@@ -1053,7 +1056,7 @@ Frontend CI следующего source `80e981e` прошёл tests/types/build
 lint/security/RLS/preview guard прошли, deploy skipped. Полностью зелёный текущий
 PR не заявляется. Public deployment не выполнен.
 
-Повторная сверка в 02:19 UTC+5: на `96ea973` Frontend tests/types/build и
+Повторная сверка в 02:33 UTC+5: на `96ea973` Frontend tests/types/build и
 production-image bootstrap тоже прошли. Backend Tests и Android ещё выполняются;
 по-прежнему нет основания объявлять все проверки завершёнными.
 

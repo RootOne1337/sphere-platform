@@ -16,9 +16,9 @@
 </div>
 
 > [!NOTE]
-> **Текущий срез: 2 октября 2026, 23:45 UTC+5.** После фиксации полного
-> аудита исправлено **31 source findings**; **100 suites /846 frontend tests**,
-> types и production compile passed. Проверочный веб **3015 в Docker**, UI **c989eaa**, backend **d2846ef**;
+> **Текущий срез: 3 октября 2026, 02:33 UTC+5.** После фиксации полного
+> аудита исправлено **32 source findings**; **101 suites /867 frontend tests**,
+> types и production compile passed. Проверочный веб **3015 в Docker**, UI **5b20955**, backend **cc28e9b**;
 > login/API, Prometheus/Grafana и events WS проверены. Предыдущий restart evidence сохранён. На remote PH025
 > подтверждён pinned rerun по двум настоящим Android results.
 > [Runtime evidence](docs/audits/2026-10-02/REVIEW-RUNTIME-AND-REMOTE-RERUN.md).
@@ -31,6 +31,7 @@
 > [User access / evidence](docs/audits/2026-10-02/USER-ACCESS.md).
 > F37: поиск всего журнала/UTC и ограниченный CSV5000 установлены; live API accepted.
 > [Audit investigation / evidence](docs/audits/2026-10-02/AUDIT-INVESTIGATION.md).
+> F28: owned detail/edit pipeline, explicit activation, timestamp conditions и защита active runs установлены;120 PostgreSQL cases и35 production-image cases passed. [Pipeline contract/proof](docs/audits/2026-10-03/PIPELINE-DEFINITION-WORKFLOW.md).
 > F27: архив, выбранный DAG/hash/diff, conditional rollback и подтверждённая версия Run установлены;25 actual PostgreSQL tests/production image passed. [Script workflow/evidence](docs/audits/2026-10-02/SCRIPT-VERSION-WORKFLOW.md).
 > F33 частично: адресное OTA доступно; remote PH013 обновился10230→10240,
 > live send/completed receipt/post-install heartbeat подтверждены. Один target; bulk

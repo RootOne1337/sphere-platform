@@ -9,19 +9,20 @@
 </div>
 
 > [!NOTE]
-> **Срез навигации: 2 октября 2026.** Канонические source/runtime факты,
+> **Срез навигации: 3 октября 2026.** Канонические source/runtime факты,
 > версии Android, ограничения диагностики и будущий этап 20–30 устройств собраны
 > в [актуальном состоянии](operations/CURRENT-STATE.md). Каталог не выполняет
 > автоматическую проверку runtime; старые аудиты сохраняют собственные даты и
 > версии и не должны читаться как текущий deploy. [Правила актуальности](DOCUMENTATION.md).
 
-Последнее изменение: [F27 — версии/архив/условный Run](audits/2026-10-02/SCRIPT-VERSION-WORKFLOW.md), review UI c989eaa/API d2846ef на3015.100 suites/846 tests и25 production-image PostgreSQL cases passed;31 findings fixed/10 OPEN. F33 PARTIAL сохраняется; новый documentation head требует своих checks. [Script contract](operations/SCRIPT-VERSIONS.md).
+Последнее изменение: [F28 — определение/редактирование/активация pipeline](audits/2026-10-03/PIPELINE-DEFINITION-WORKFLOW.md), review UI 5b20955/API cc28e9b на3015.101 suites/867 tests,120 связанных PostgreSQL cases и35 production-image cases passed;32 findings fixed/9 OPEN. F33 PARTIAL сохраняется. [Pipeline contract](operations/PIPELINE-DEFINITIONS.md). Исторические F27 receipts и собственный CI d6be09a сохранены по датам.
 
 ## 🧭 Выберите задачу
 
 | Мне нужно | Начать здесь | Дальше |
 | --- | --- | --- |
 | Проверить полный веб-аудит и текущие исправления | [Аудит всех маршрутов, меню и возможностей API — 1 октября](audits/2026-10-01/WEB-FULL-CAPABILITY-AUDIT.md) | [Журнал исправлений F01–F41](audits/2026-10-01/WEB-AUDIT-REMEDIATION.md) · [Fixes: актуальные tests / installed UI](audits/2026-10-01/WEB-AUDIT-FIXES-VALIDATION.json) · [Frozen audit evidence](audits/2026-10-01/WEB-FULL-CAPABILITY-AUDIT-EVIDENCE.json) · [Проверки документа](audits/2026-10-01/AUDIT-VALIDATION.json) |
+| Просмотреть/изменить pipeline и допуск запусков | [Определения pipeline](operations/PIPELINE-DEFINITIONS.md) | [F28 proof](audits/2026-10-03/PIPELINE-DEFINITION-WORKFLOW.md) · [Receipts](audits/2026-10-03/PIPELINE-DEFINITION-WORKFLOW-EVIDENCE.json) |
 | Просмотреть DAG версии, откатить сценарий или открыть архив | [Версии сценариев](operations/SCRIPT-VERSIONS.md) | [F27 proof](audits/2026-10-02/SCRIPT-VERSION-WORKFLOW.md) · [Receipts](audits/2026-10-02/SCRIPT-VERSION-WORKFLOW-EVIDENCE.json) |
 | Обновить одно Android-устройство и проверить receipt/heartbeat | [Адресное OTA](operations/OTA-ADDRESSED-UPDATES.md) | [F33 remote proof](audits/2026-10-02/OTA-ADDRESSED-DELIVERY.md) · [Evidence JSON](audits/2026-10-02/OTA-ADDRESSED-DELIVERY-EVIDENCE.json) |
 | Найти audit событие за первой страницей и выгрузить CSV | [F37: source/installed evidence](audits/2026-10-02/AUDIT-INVESTIGATION.md) | [Контракт и лимит5000](operations/AUDIT-INVESTIGATION.md) · [JSON receipts](audits/2026-10-02/AUDIT-INVESTIGATION-EVIDENCE.json) |

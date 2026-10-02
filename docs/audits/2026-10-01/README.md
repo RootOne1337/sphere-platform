@@ -2,7 +2,7 @@
 
 [Полный документ](WEB-FULL-CAPABILITY-AUDIT.md) — 21,190 строк, 41 замечание с source anchors и критериями закрытия.
 
-Source: `1354d66660041ba17afb64399d567ca29dd91866`. Режим замороженного аудита: документация без изменения приложения и данных.
+Source: `1354d66660041ba17afb64399d567ca29dd91867`. Режим замороженного аудита: документация без изменения приложения и данных.
 
 - 29 маршрутов / 30 page declarations; 22 sidebar sections.
 - 565 AST-контролов, 41 Dialog content declaration.
@@ -16,7 +16,13 @@ Source: `1354d66660041ba17afb64399d567ca29dd91866`. Режим замороже�
 
 Текущее продолжение: [журнал исправлений и статусы F01–F41](WEB-AUDIT-REMEDIATION.md). Исторический аудит остаётся неизменным.
 
-Последний review UI **c989eaa**, API **d2846ef**, 2 октября 23:45 UTC+5:
+Последний review UI **5b20955**, API **cc28e9b**,3 октября02:33 UTC+5:
+**32 source findings исправлено/9 OPEN**, F33 PARTIAL.101 suites/867 frontend tests;
+120 related PostgreSQL cases,35 cases также внутри production image. Собственный
+pipeline v1→v2→inactive, stale409/invalid422 и0 runs подтверждены API.
+[F28 evidence](../2026-10-03/PIPELINE-DEFINITION-WORKFLOW.md) · [Validation](WEB-AUDIT-FIXES-VALIDATION.json).
+
+Предыдущий review UI **c989eaa**, API **d2846ef**, 2 октября 23:45 UTC+5:
 **31 source findings исправлено / 10 OPEN**, F33 PARTIAL. 100 suites / 846 frontend
 tests; 25 real PostgreSQL version/admission cases также внутри production image.
 Собственный сценарий v1→v2→новая v3→архив и stale 409 подтверждены через pilot API.

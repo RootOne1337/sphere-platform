@@ -1,6 +1,15 @@
 # Эксплуатационная готовность Sphere
 
-**Навигация обновлена: 2 октября 2026. Исторические live-снимки ниже сохранены по датам.**
+**Навигация обновлена: 3 октября 2026. Исторические live-снимки ниже сохранены по датам.**
+
+> [!IMPORTANT]
+> Последний review-срез3 октября02:33UTC+5: UI **5b20955** / API **cc28e9b**,
+> [3015/orchestration](http://127.0.0.1:3015/orchestration). F28 definition/edit/activation
+> установлен и проверен finite API canary без запусков на устройствах.
+>101 frontend suites/867 tests;120 связанных PostgreSQL cases,35 production-image
+> cases. [Доказательства](../audits/2026-10-03/PIPELINE-DEFINITION-WORKFLOW.md).
+> Ниже сохранены прошлые observations; visual/keyboard/mobile, production rollout
+> и combined20–30-device acceptance остаются OPEN.
 
 > [!IMPORTANT]
 > Последний review-срез 2 октября, 18:45:43 UTC: UI **c989eaa** / API **d2846ef**,

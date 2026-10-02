@@ -952,255 +952,90 @@ X-RateLimit-Reset: 1740308400
 
 ## Pipelines — `/pipelines`
 
-> Добавлено в v4.2.0 (TZ-12)
+**Проверено 3 октября 2026, API `cc28e9b`.** Пути ниже относительны к
+`/api/v1`. [Полный операторский контракт](operations/PIPELINE-DEFINITIONS.md)
+и [generated OpenAPI](openapi.json) задают точные поля, defaults и bounds.
 
-Пайплайны объединяют скрипты, условия, задержки и HTTP-вызовы в управляемые
-цепочки с персистенцией состояния и возможностью вложенного запуска.
+| Операция | Разрешение | Результат |
+| --- | --- | --- |
+| GET /pipelines | pipeline:read | Каталог: items, total, page, per_page, pages |
+| POST /pipelines | pipeline:write | 201: созданное определение |
+| GET /pipelines/{id} | pipeline:read | 200: полное owned определение |
+| PATCH /pipelines/{id} | pipeline:write | 200: сохранённое определение |
+| DELETE /pipelines/{id} | pipeline:write | 204: мягкая деактивация |
+| POST /pipelines/{id}/toggle | pipeline:write | 200: explicit desired active state |
+| POST /pipelines/{id}/run | pipeline:execute | 201: queued PipelineRun |
+| POST /pipelines/{id}/run-batch | pipeline:execute | 201: PipelineBatch и созданные queued runs |
+| GET /pipelines/runs | pipeline:read | Пагинированный журнал запусков |
+| GET /pipelines/runs/{run_id} | pipeline:read | 200: состояние, context, step_logs, execution/child/cancel fields |
+| POST /pipelines/runs/{run_id}/pause, /resume, /cancel | pipeline:execute | 200: сохранённое состояние управления запуском |
 
-**Требуемые разрешения:** `pipeline:read`, `pipeline:write`, `pipeline:execute`.
+### Каталог и определение
 
-### GET /pipelines
+GET /pipelines принимает `is_active` boolean, `tag`, `page` (от 1) и
+`per_page` (1–200, default50). Глобального `search` и `status=draft` у этого
+каталога нет. Определение возвращает `id`, `org_id`, `name`, `description`,
+`steps`, `input_schema`, `global_timeout_ms`, `max_retries`, `version`,
+`is_active`, `tags`, `created_by_id`, `created_at`, `updated_at`.
 
-Список пайплайнов организации с пагинацией.
+Пример POST /pipelines (только создание, не запуск):
 
-```http
-GET /pipelines?status=active&page=1&per_page=50
-Authorization: Bearer <token>
-```
-
-**Query parameters:**
-
-| Param | Type | Description |
-|-------|------|-------------|
-| `status` | `draft\|active\|archived` | Фильтр по статусу |
-| `search` | string | Поиск по имени |
-| `page` | int | Номер страницы (default: 1) |
-| `per_page` | int | Элементов на странице (default: 50) |
-
-**Response 200:**
 ```json
 {
-  "items": [
-    {
-      "id": "uuid",
-      "name": "Onboarding Pipeline",
-      "description": "Автоматическая настройка устройства",
-      "status": "active",
-      "version": 3,
-      "steps": [...],
-      "created_at": "2026-02-28T10:00:00Z",
-      "updated_at": "2026-02-28T12:00:00Z"
-    }
-  ],
-  "total": 8,
-  "page": 1,
-  "per_page": 50
+  "name": "Finite delay control",
+  "description": "A single delay step",
+  "steps": [{
+    "id": "start",
+    "name": "Wait one second",
+    "type": "delay",
+    "params": { "delay_ms": 1000 },
+    "on_success": null,
+    "on_failure": null,
+    "timeout_ms": 10000,
+    "retries": 0
+  }],
+  "global_timeout_ms": 30000,
+  "input_schema": {},
+  "max_retries": 0,
+  "tags": ["control"]
 }
 ```
 
----
+Известные type: execute_script, condition, action, delay, parallel,
+wait_for_event, n8n_workflow, loop, sub_pipeline. ID уникальны; переходы
+ссылаются на существующие шаги или null. Циклы допускаются. Параметры handlers
+не получают универсальной semantic validation только от проверки schema.
 
-### POST /pipelines
+### Изменение и деактивация
 
-Создание нового пайплайна.
+PATCH отправляет только изменённые поля и optional `expected_updated_at` из
+просмотренного ответа. Description:null очищает описание; другие поля с null
+дают422. Steps ограничены1–100, теги20. Version увеличивается только при
+фактическом изменении steps. При неверном baseline, занятой записи или runtime
+edit с nonterminal runs возвращается409 без частичного сохранения.
 
-```http
-POST /pipelines
-Authorization: Bearer <token>
+POST /pipelines/{id}/toggle требует query `active=true|false`; optional
+`expected_updated_at` защищает прочитанный baseline. DELETE тоже принимает
+optional timestamp condition и только выключает новые admissions. Уже
+созданные runs не отменяются. Для существующего run нужен отдельный cancel.
 
-{
-  "name": "Onboarding Pipeline",
-  "description": "Автоматическая настройка нового устройства",
-  "steps": [
-    {
-      "id": "s1",
-      "type": "run_script",
-      "config": { "script_id": "uuid", "timeout_seconds": 300 }
-    },
-    {
-      "id": "s2",
-      "type": "condition",
-      "config": { "expression": "steps.s1.exit_code == 0", "on_true": "s3", "on_false": "s5" }
-    },
-    {
-      "id": "s3",
-      "type": "delay",
-      "config": { "seconds": 10 }
-    },
-    {
-      "id": "s4",
-      "type": "http_request",
-      "config": { "method": "POST", "url": "https://hooks.example.com/done", "body": {} }
-    },
-    {
-      "id": "s5",
-      "type": "notify",
-      "config": { "channel": "webhook", "url": "https://hooks.example.com/fail" }
-    }
-  ]
-}
-```
+### Запуски
 
-**Response 201:**
-```json
-{ "id": "uuid", "name": "Onboarding Pipeline", "status": "draft", "version": 1, ... }
-```
+POST /pipelines/{id}/run принимает `device_id` UUID и `input_params` object.
+POST /pipelines/{id}/run-batch принимает `device_ids`, `group_id`, `device_tags`,
+`input_params`, `wave_size`, `wave_delay_seconds`. 201 подтверждает созданный
+intent, а не завершение Android-действия. Steps фиксируются в run snapshot.
 
-**Requires:** `pipeline:write`
+GET /pipelines/runs принимает `pipeline_id`, `device_id`, `status`,
+`active_only`, `page`, `per_page`; состояние выполнения читается по run_id.
+Pause/resume/cancel возвращают новый сохранённый receipt, не разрешение на
+blind replay при неизвестном результате. Input_schema пока сохраняется как
+описание, без валидации входа исполнителем; глобальные max_retries пока не
+реализуют повтор всей цепочки. [Ограничения и восстановление](operations/PIPELINE-DEFINITIONS.md).
 
----
-
-### GET /pipelines/{id}
-
-Получение пайплайна по ID.
-
----
-
-### PATCH /pipelines/{id}
-
-Обновление пайплайна. Автоматически инкрементирует `version`.
-
-```http
-PATCH /pipelines/{id}
-{ "name": "Updated Name", "steps": [...] }
-```
-
-**Requires:** `pipeline:write`
-
----
-
-### DELETE /pipelines/{id}
-
-Удаление пайплайна. Returns `204 No Content`.
-
-**Requires:** `pipeline:write`
-
----
-
-### POST /pipelines/{id}/execute
-
-Запуск пайплайна на устройствах.
-
-```http
-POST /pipelines/{id}/execute
-Authorization: Bearer <token>
-
-{
-  "device_ids": ["uuid1", "uuid2"],
-  "group_id": "uuid",
-  "variables": { "env": "staging" }
-}
-```
-
-**Response 202:**
-```json
-{
-  "run_id": "uuid",
-  "pipeline_id": "uuid",
-  "status": "running",
-  "total_devices": 2,
-  "started_at": "2026-02-28T10:00:00Z"
-}
-```
-
-**Requires:** `pipeline:execute`
-
----
-
-### POST /pipelines/{id}/stop
-
-Принудительная остановка выполнения пайплайна.
-
----
-
-### POST /pipelines/{id}/clone
-
-Клонирование пайплайна (создаёт копию со всеми шагами).
-
-**Response 201:**
-```json
-{ "id": "new-uuid", "name": "Onboarding Pipeline (копия)", "status": "draft", "version": 1 }
-```
-
----
-
-### GET /pipelines/{id}/runs
-
-История запусков пайплайна.
-
-**Response 200:**
-```json
-{
-  "items": [
-    {
-      "id": "uuid",
-      "pipeline_id": "uuid",
-      "status": "completed",
-      "total_devices": 50,
-      "success_count": 48,
-      "fail_count": 2,
-      "started_at": "2026-02-28T10:00:00Z",
-      "finished_at": "2026-02-28T10:05:00Z",
-      "duration_ms": 300000
-    }
-  ],
-  "total": 12
-}
-```
-
----
-
-### GET /pipelines/{id}/runs/{run_id}
-
-Детали конкретного запуска с пошаговыми результатами.
-
----
-
-### GET /pipelines/{id}/stats
-
-Статистика запусков пайплайна (success rate, avg duration).
-
-**Response 200:**
-```json
-{
-  "total_runs": 45,
-  "success_rate": 0.96,
-  "avg_duration_ms": 180000,
-  "last_run_at": "2026-02-28T10:05:00Z"
-}
-```
-
----
-
-### POST /pipelines/{id}/validate
-
-Валидация конфигурации пайплайна без запуска.
-
-**Response 200:**
-```json
-{ "valid": true, "warnings": [] }
-```
-
-**Response 422:**
-```json
-{ "valid": false, "errors": ["Step s3 references non-existent step s99"] }
-```
-
----
-
-### Типы шагов (Step Types)
-
-| Type | Config | Description |
-|------|--------|-------------|
-| `run_script` | `script_id`, `timeout_seconds` | Запуск DAG-скрипта на устройстве |
-| `run_pipeline` | `pipeline_id` | Вложенный запуск другого пайплайна |
-| `http_request` | `method`, `url`, `headers`, `body` | HTTP-вызов внешнего API |
-| `condition` | `expression`, `on_true`, `on_false` | Условная логика (if/else) |
-| `delay` | `seconds` | Задержка между шагами |
-| `parallel` | `steps[]` | Параллельное исполнение подшагов |
-| `set_variable` | `key`, `value` | Установка переменной контекста |
-| `notify` | `channel`, `url`, `message` | Отправка уведомления (webhook/email) |
-| `approval` | `approvers[]`, `timeout_hours` | Ожидание ручного подтверждения |
+Пути `/execute`, `/stop`, `/clone`, `/{id}/stats`, `/{id}/validate` и вложенные
+`/{id}/runs` отсутствуют в текущем Pipeline API. Старые примеры этих операций
+были планом, а не реализованным контрактом; использовать их нельзя.
 
 ---
 
