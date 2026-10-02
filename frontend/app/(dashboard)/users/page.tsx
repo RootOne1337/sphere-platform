@@ -1,24 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-import { useUsers, useCreateUser, useUpdateRole, useDeactivateUser } from '@/lib/hooks/useUsers';
+import { useUsers } from '@/lib/hooks/useUsers';
+import { useAuthStore } from '@/lib/store';
+import { canReadUsers, canManageUserRole, canChangeUserRole, USER_ROLE_LABELS, USER_ROLES } from '@/src/features/users/access';
+import { CreateUserDialog, UserAccessDialog, type UserAccessAction } from '@/src/features/users/UserDialogs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { AlertTriangle, ChevronLeft, ChevronRight, Plus, ShieldCheck, Users } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, ShieldCheck, Users } from 'lucide-react';
 import { PageFrame, PageHeading } from '@/src/shared/ui/page-layout';
-
-const ROLES = ['viewer', 'script_runner', 'device_manager', 'org_admin', 'org_owner'] as const;
-const ROLE_LABELS: Record<(typeof ROLES)[number], string> = {
-  viewer: 'Наблюдатель',
-  script_runner: 'Запуск сценариев',
-  device_manager: 'Управление устройствами',
-  org_admin: 'Администратор',
-  org_owner: 'Владелец организации',
-};
 
 function formatDate(value: string | null) {
   if (!value) return 'Нет входов';
@@ -27,26 +18,25 @@ function formatDate(value: string | null) {
 }
 
 export default function UsersPage() {
+  const actor = useAuthStore(state => state.user);
+  const sessionVersion = useAuthStore(state => state.sessionVersion);
+  return <UsersManagement key={`${actor?.id}:${actor?.org_id}:${actor?.role}:${sessionVersion}`} actor={actor} scope={`${actor?.id}:${actor?.org_id}:${sessionVersion}`} />;
+}
+
+function UsersManagement({ actor, scope }: { actor: ReturnType<typeof useAuthStore.getState>['user']; scope: string }) {
   const [page, setPage] = useState(1);
-  const { data, isLoading, isError, refetch } = useUsers(page);
-  const createUser = useCreateUser();
-  const updateRole = useUpdateRole();
-  const deactivateUser = useDeactivateUser();
-  const [newEmail, setNewEmail] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [newRole, setNewRole] = useState<(typeof ROLES)[number]>('viewer');
+  const allowed = Boolean(actor && canReadUsers(actor.role));
+  const { data, isLoading, isError, refetch } = useUsers(page, 50, { enabled: allowed, scope });
   const [dialogOpen, setDialogOpen] = useState(false);
-
-  const handleCreate = async () => {
-    try {
-      await createUser.mutateAsync({ email: newEmail.trim(), password: newPassword, role: newRole });
-      setNewEmail(''); setNewPassword(''); setNewRole('viewer'); setDialogOpen(false);
-    } catch {
-      // Keep entered values so the administrator can correct the request.
-    }
-  };
-
-  const refreshAfterMutationError = () => { void refetch(); };
+  const [action, setAction] = useState<UserAccessAction | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const available = allowed && Boolean(data) && !isError;
+  const currentTarget = action ? data?.items.find(user => user.id === action.user.id) : undefined;
+  const actionAvailable = available && Boolean(action && currentTarget && currentTarget.org_id === action.user.org_id
+    && currentTarget.role === action.user.role && currentTarget.is_active === action.user.is_active
+    && actor && canManageUserRole(actor.role, currentTarget.role)
+    && (action.kind === 'role' ? canChangeUserRole(actor.role) && canManageUserRole(actor.role, action.role) : currentTarget.id !== actor.id));
+  if (!allowed) return <PageFrame><PageHeading title="Пользователи" description="Управление доступом организации." /><Card><CardContent className="space-y-2 p-6" role="alert"><p className="font-medium">Нет доступа к пользователям</p><p className="text-sm text-muted-foreground">Нужна роль администратора или владельца организации. Сервер проверяет права каждого запроса.</p></CardContent></Card></PageFrame>;
 
   return (
     <PageFrame>
@@ -55,23 +45,11 @@ export default function UsersPage() {
         title="Пользователи"
         description="Управляйте учётными записями организации, ролями и состоянием многофакторной аутентификации."
         actions={(
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild><Button><Plus className="mr-2 h-4 w-4" aria-hidden="true" />Добавить пользователя</Button></DialogTrigger>
-            <DialogContent aria-describedby={undefined}>
-              <DialogHeader><DialogTitle>Новая учётная запись</DialogTitle></DialogHeader>
-              <div className="space-y-4 pt-2">
-                <div className="space-y-2"><Label htmlFor="new-user-email">Электронная почта</Label><Input id="new-user-email" type="email" autoComplete="email" value={newEmail} onChange={(event) => setNewEmail(event.target.value)} /></div>
-                <div className="space-y-2"><Label htmlFor="new-user-password">Временный пароль</Label><Input id="new-user-password" type="password" autoComplete="new-password" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} /><p className="text-xs text-muted-foreground">Передайте пароль пользователю безопасным способом.</p></div>
-                <div className="space-y-2"><Label htmlFor="new-user-role">Роль</Label><select id="new-user-role" value={newRole} onChange={(event) => setNewRole(event.target.value as (typeof ROLES)[number])} className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">{ROLES.map((role) => <option key={role} value={role}>{ROLE_LABELS[role]}</option>)}</select></div>
-                {createUser.isError && <p role="alert" className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">Не удалось создать пользователя. Проверьте адрес, пароль и права доступа.</p>}
-                <Button onClick={() => { void handleCreate(); }} disabled={createUser.isPending || !newEmail.trim() || !newPassword} className="w-full">{createUser.isPending ? 'Создаём…' : 'Создать пользователя'}</Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+          <Button disabled={!available} onClick={() => setDialogOpen(true)}><Plus className="mr-2 h-4 w-4" aria-hidden="true" />Добавить пользователя</Button>
         )}
       />
 
-      {(updateRole.isError || deactivateUser.isError) && <div role="alert" className="flex items-center gap-2 rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive"><AlertTriangle className="h-4 w-4 shrink-0" aria-hidden="true" />Не удалось сохранить изменение доступа. Данные перечитаны с сервера.</div>}
+      {notice && <p role="status" className="rounded-xl border border-success/30 bg-success/5 p-3 text-sm">{notice}</p>}
 
       {isError ? (
         <Card><CardContent className="flex flex-col gap-3 p-6 sm:flex-row sm:items-center sm:justify-between"><div><p className="font-medium">Не удалось загрузить пользователей</p><p className="mt-1 text-sm text-muted-foreground">Проверьте доступ к API и повторите запрос.</p></div><Button type="button" variant="outline" onClick={() => { void refetch(); }}>Повторить</Button></CardContent></Card>
@@ -93,20 +71,30 @@ export default function UsersPage() {
                   {data?.items.map((user) => (
                     <tr key={user.id} className="transition-colors hover:bg-muted/30 motion-reduce:transition-none">
                       <td className="px-5 py-3.5"><p className="font-medium">{user.email}</p><p className="mt-0.5 font-mono text-[11px] text-muted-foreground">{user.id}</p></td>
-                      <td className="px-5 py-3.5"><select aria-label={`Роль пользователя ${user.email}`} value={user.role} onChange={(event) => updateRole.mutate({ userId: user.id, role: event.target.value }, { onError: refreshAfterMutationError })} disabled={updateRole.isPending || !user.is_active} className="h-9 min-w-48 rounded-lg border border-input bg-background px-2.5 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60">{ROLES.map((role) => <option key={role} value={role}>{ROLE_LABELS[role]}</option>)}</select></td>
+                      <td className="px-5 py-3.5"><select aria-label={`Роль пользователя ${user.email}`} value={user.role}
+                        onChange={(event) => { if (event.target.value !== user.role) { setNotice(null); setAction({ kind: 'role', user: { ...user }, role: event.target.value }); } }}
+                        disabled={Boolean(action) || !user.is_active || !actor || !canChangeUserRole(actor.role) || !canManageUserRole(actor.role, user.role)}
+                        className="h-9 min-w-48 rounded-lg border border-input bg-background px-2.5 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60">
+                        <option value={user.role}>{USER_ROLE_LABELS[user.role as keyof typeof USER_ROLE_LABELS] ?? user.role}</option>
+                        {USER_ROLES.filter(role => role !== user.role && actor && canManageUserRole(actor.role, role)).map(role => <option key={role} value={role}>{USER_ROLE_LABELS[role]}</option>)}
+                      </select></td>
                       <td className="px-5 py-3.5"><Badge variant={user.is_active ? 'success' : 'secondary'} className="rounded-full">{user.is_active ? 'Активен' : 'Отключён'}</Badge></td>
                       <td className="px-5 py-3.5"><Badge variant={user.mfa_enabled ? 'success' : 'outline'} className="rounded-full">{user.mfa_enabled ? 'Включена' : 'Выключена'}</Badge></td>
                       <td className="px-5 py-3.5 text-xs text-muted-foreground">{formatDate(user.last_login_at)}</td>
-                      <td className="px-5 py-3.5 text-right">{user.is_active && <Button type="button" size="sm" variant="outline" className="text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => { if (window.confirm(`Отключить пользователя ${user.email}?`)) deactivateUser.mutate(user.id, { onError: refreshAfterMutationError }); }} disabled={deactivateUser.isPending}>Отключить</Button>}</td>
+                      <td className="px-5 py-3.5 text-right">{user.is_active && <Button type="button" size="sm" variant="outline" className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                        title={user.id === actor?.id ? 'Нельзя отключить себя' : !actor || !canManageUserRole(actor.role, user.role) ? 'Нет права отключить эту роль' : undefined}
+                        onClick={() => { setNotice(null); setAction({ kind: 'deactivate', user: { ...user } }); }} disabled={Boolean(action) || user.id === actor?.id || !actor || !canManageUserRole(actor.role, user.role)}>Отключить</Button>}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
           )}
-          {data && data.pages > 1 && <div className="flex items-center justify-between gap-3 border-t border-border/70 px-5 py-3"><p className="text-xs text-muted-foreground">Страница {page} из {data.pages}</p><div className="flex items-center gap-2"><Button size="sm" variant="outline" disabled={page <= 1} onClick={() => setPage((current) => current - 1)}><ChevronLeft className="mr-1 h-4 w-4" aria-hidden="true" />Назад</Button><Button size="sm" variant="outline" disabled={page >= data.pages} onClick={() => setPage((current) => current + 1)}>Далее<ChevronRight className="ml-1 h-4 w-4" aria-hidden="true" /></Button></div></div>}
+          {data && data.pages > 1 && <div className="flex items-center justify-between gap-3 border-t border-border/70 px-5 py-3"><p className="text-xs text-muted-foreground">Страница {page} из {data.pages}</p><div className="flex items-center gap-2"><Button size="sm" variant="outline" disabled={page <= 1 || Boolean(action)} onClick={() => setPage((current) => current - 1)}><ChevronLeft className="mr-1 h-4 w-4" aria-hidden="true" />Назад</Button><Button size="sm" variant="outline" disabled={page >= data.pages || Boolean(action)} onClick={() => setPage((current) => current + 1)}>Далее<ChevronRight className="ml-1 h-4 w-4" aria-hidden="true" /></Button></div></div>}
         </Card>
       )}
+      {dialogOpen && actor && <CreateUserDialog actorRole={actor.role} orgId={actor.org_id} available={available} onClose={() => setDialogOpen(false)} onSaved={(message) => { setDialogOpen(false); setNotice(message); }} />}
+      {action && <UserAccessDialog action={action} available={actionAvailable} onClose={() => setAction(null)} onRefresh={() => { void refetch(); }} onSaved={(message) => { setAction(null); setNotice(message); }} />}
     </PageFrame>
   );
 }
