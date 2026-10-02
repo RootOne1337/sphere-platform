@@ -39,9 +39,9 @@ export function useCreateGroup() {
   const qc = useQueryClient();
   return useMutation({
     retry: false,
-    mutationFn: async (body: { name: string; description?: string; color?: string }) => {
+    mutationFn: async (body: { name: string; description?: string; color?: string; parent_group_id?: string }) => {
       const { data } = await api.post('/groups', body);
-      if (!isGroup(data) || data.name !== body.name) throw new Error('Результат создания группы не подтверждён сервером. Обновите каталог перед повторной командой.');
+      if (!isGroup(data) || data.name !== body.name || (body.parent_group_id !== undefined && data.parent_group_id !== body.parent_group_id)) throw new Error('Результат создания группы не подтверждён сервером. Обновите каталог перед повторной командой.');
       return data;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['groups'] }),

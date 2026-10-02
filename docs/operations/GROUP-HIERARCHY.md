@@ -58,6 +58,24 @@ child/device memberships после удаления родителя. Исхо�
 [PostgreSQL tests](../../tests/production/test_group_hierarchy.py),
 [service](../../backend/services/group_service.py).
 
+## Операторский путь
+
+В `/groups` форма создания/изменения позволяет выбрать родителя или «Без родительской
+группы». Собственная группа, потомки и повреждённые цепочки отсутствуют в допустимых
+вариантах. Если выбранный родитель исчез при refresh, форма сохраняет выбор и запрещает
+запись до явного исправления. Невалидная исходная связь может быть явно снята.
+
+Изменение отправляет только changed fields; снятие родителя — `parent_group_id:null`.
+Dirty draft не сбрасывается при background updates. Pending lock, ошибочный ответ,
+409 и потеря подтверждения сохраняют существующий single-flight/retry=false workflow.
+Ответ create должен подтвердить выбранного родителя; PUT — тот же ID и все переданные
+поля. Членство устройств этим выбором не меняется.
+
+8 новых [component regressions](../../frontend/__tests__/groups/group-hierarchy.test.tsx)
+на архивированных исходниках1767bec дали8 assertion failures/0 runtime errors;
+на изменении passed. Полный frontend:95 suites/761 tests, types passed. Transport
+в component tests заменён fixtures, React Query и dialog работают реально.
+
 Installed source, дата установки, finite live canary и browser acceptance записываются
 отдельно в текущем состоянии и evidence. Unit/production database tests сами по себе
 не являются доказательством установленного API или визуальной приёмки.

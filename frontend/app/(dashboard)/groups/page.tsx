@@ -73,7 +73,7 @@ export default function GroupsPage() {
           ))}
         </section>
       )}
-      {editor && <GroupEditor key={editor.group?.id ?? '__create__'} group={editor.group} available={exists(editor.group)} onClose={() => setEditor(null)} onSaved={() => { setNotice(editor.group ? 'Группа обновлена' : 'Группа создана'); setEditor(null); }} />}
+      {editor && <GroupEditor key={editor.group?.id ?? '__create__'} group={editor.group} groups={groups ?? []} available={exists(editor.group)} onClose={() => setEditor(null)} onSaved={() => { setNotice(editor.group ? 'Группа обновлена' : 'Группа создана'); setEditor(null); }} />}
       {deleting && <GroupDeleteDialog key={deleting.id} group={deleting} available={exists(deleting)} onClose={() => setDeleting(null)} onDeleted={() => { setNotice(`Группа «${deleting.name}» удалена`); setDeleting(null); }} />}
     </PageFrame>
   );
