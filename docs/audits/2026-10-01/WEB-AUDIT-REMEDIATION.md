@@ -2,7 +2,7 @@
 
 Этот журнал продолжает [замороженный аудит](WEB-FULL-CAPABILITY-AUDIT.md) исходников `1354d66`. Исходный документ и evidence сохраняют свою дату и ограничения; их статусы не переписываются задним числом.
 
-**Срез реализации 2 октября 2026, 16:18 UTC+5:** Docker UI e2362eb/API933164e; 29 source findings исправлено (5 P1/24 P2), 12 исходных OPEN. 96 suites/777 frontend tests, types/build passed;23 user HTTP и49 actual RBAC pairs. F38 user form/targeted access dialogs исправлен; finite negative user API readback passed. N04/N05 proofs сохранены; N01/N03/browser visual OPEN. [Validation](WEB-AUDIT-FIXES-VALIDATION.json) · [F38 evidence](../2026-10-02/USER-ACCESS.md).
+**Срез реализации 2 октября 2026,17:12 UTC+5:** Docker UI67b6bef/API39baa13;30 source findings исправлено (5 P1/25 P2),11 исходных OPEN.98 suites/806 frontend tests,224 новых regressions; types/build и61 production-image PostgreSQL cases passed. F37 global search/UTC filters/capped CSV установлен и проверен на настоящем журнале5386 событий. N01/N03/browser visual/outbox OPEN. [Validation](WEB-AUDIT-FIXES-VALIDATION.json) · [F37 evidence](../2026-10-02/AUDIT-INVESTIGATION.md).
 
 ## Исходная фиксация
 
@@ -61,7 +61,7 @@
 | [F34](WEB-FULL-CAPABILITY-AUDIT.md#f34) | P2 | Открыто | Матричный режим использует полноценный H.264 для каждого окна |
 | [F35](WEB-FULL-CAPABILITY-AUDIT.md#f35) | P2 | Открыто | XPath-инспектор на видеокарточке ещё отсутствует |
 | [F36](WEB-FULL-CAPABILITY-AUDIT.md#f36) | P2 | Открыто | Управление quality/FPS не раскрыто в single stream |
-| [F37](WEB-FULL-CAPABILITY-AUDIT.md#f37) | P2 | Открыто | Аудит: фильтры и CSV действуют на текущую страницу |
+| [F37](WEB-FULL-CAPABILITY-AUDIT.md#f37) | P2 | Source исправлен; live OPEN | Аудит: фильтры и CSV действуют на текущую страницу |
 | [F38](WEB-FULL-CAPABILITY-AUDIT.md#f38) | P2 | Source исправлен; live OPEN | Пользователи: форма не связывает backend validation с полями |
 | [F39](WEB-FULL-CAPABILITY-AUDIT.md#f39) | P2 | Открыто | Role-aware оболочка не закрывает UX отказов доступа |
 | [F40](WEB-FULL-CAPABILITY-AUDIT.md#f40) | P2 | Открыто | Низкая полнота текущего визуального acceptance |
@@ -298,3 +298,10 @@ Review3015 UIa9240a7/API933164e установлен; login/API/Prometheus/Grafa
 ## F38 —2 октября16:18 UTC+5
 
 Commit `e2362eb`: native user creation form, safe field-level errors/focus, captured role/deactivation dialogs, actual grant matrix, exact identity/receipt checks, active-tab abortable session-scoped catalog. Before4898577:16 assertion failures/0 runtime errors; after16 workflows+5 hook cases,23 user HTTP,49 RBAC pairs. Full96 suites/777 tests/types/lint/production Docker build passed;44 прежних warnings. UI3015 установлен16:09, API933164e сохранён. Login/API/Prometheus/Grafana/events WS/compiled SHA passed; negative user API422/404/400 и неизменность прав подтверждены.44 остальных containers,14running сохранены.29/41 source findings fixed,12 original OPEN. Browser visual и successful live user mutation OPEN; F39 общей оболочки не закрыт. Published4898577 полностью прошёл CI; новый head проверяется отдельно. [Контракт и allowlisted evidence](../2026-10-02/USER-ACCESS.md).
+
+
+## Двенадцатый batch — глобальное расследование аудита, 2 октября17:12 UTC+5
+
+Коммиты `39baa13`/`67b6bef`: shared backend conditions для списка/CSV; validated action/status/actor/resource/aware time/AND search; UI draft отделён от applied filters; CSV5000 cap, one projection SELECT, scalar allowlist, formula protection и проверяемые headers. Before5d27624:11 UI assertions failed/0 runtime-error suites; initial PostgreSQL18 failed/6 controls. After29 новых UI/validation cases,36 focused,98 suites/806 full;61 PostgreSQL cases прошли также внутри production image. Types/mypy223 files/production Ruff0.15.2 и обе immutable Docker builds passed;44 старых frontend warnings. OpenAPI172 operations/135 paths соответствует actual image. Local old Ruff0.3.0 различался; final production check accepted.
+
+UI3015/audit установлен17:11, API39baa13 —17:09. Реальный журнал5386: event со второй страницы найден combined filters и совпал с CSV; cap5000 уникальных rows с truncation подтверждён. Login/API/Prometheus/Grafana/events WS/compiled SHA passed;19 devices,14online/5offline — finite recovery slice.43 прочих containers (13running), APK/OTA/tunnels/public UI preserved.30/41 source findings fixed,11 original OPEN; браузер и безлимитный архив/large-volume performance/outbox не приняты. Source frontend CI67b6bef passed; backend/Android выполнялись на срезе, docs head отдельный. [Контракт и allowlisted receipts](../2026-10-02/AUDIT-INVESTIGATION.md).

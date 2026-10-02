@@ -15,13 +15,14 @@
 > автоматическую проверку runtime; старые аудиты сохраняют собственные даты и
 > версии и не должны читаться как текущий deploy. [Правила актуальности](DOCUMENTATION.md).
 
-Последнее изменение: [F38 — формы и адресные изменения доступа](audits/2026-10-02/USER-ACCESS.md), review UIe2362eb / API933164e на 3015,96 suites/777 frontend tests,23 user HTTP и49 RBAC pairs. Published4898577 полностью прошёл CI; новый head проверяется отдельно. N04/N05 и история сохранены в [предыдущем отчёте](audits/2026-10-02/GROUP-HIERARCHY-AND-AUDIT.md).
+Последнее изменение: [F37 — поиск всего audit журнала и bounded CSV](audits/2026-10-02/AUDIT-INVESTIGATION.md), review UI67b6bef/API39baa13 на3015;98 suites/806 tests и61 production-image PostgreSQL cases.30 source fixes/11 исходных OPEN. Published5d27624 полностью прошёл CI;67b6bef frontend success, backend/Android проверялись отдельно. [История пользователей](audits/2026-10-02/USER-ACCESS.md) и N04/N05 сохраняет даты.
 
 ## 🧭 Выберите задачу
 
 | Мне нужно | Начать здесь | Дальше |
 | --- | --- | --- |
 | Проверить полный веб-аудит и текущие исправления | [Аудит всех маршрутов, меню и возможностей API — 1 октября](audits/2026-10-01/WEB-FULL-CAPABILITY-AUDIT.md) | [Журнал исправлений F01–F41](audits/2026-10-01/WEB-AUDIT-REMEDIATION.md) · [Fixes: актуальные tests / installed UI](audits/2026-10-01/WEB-AUDIT-FIXES-VALIDATION.json) · [Frozen audit evidence](audits/2026-10-01/WEB-FULL-CAPABILITY-AUDIT-EVIDENCE.json) · [Проверки документа](audits/2026-10-01/AUDIT-VALIDATION.json) |
+| Найти audit событие за первой страницей и выгрузить CSV | [F37: source/installed evidence](audits/2026-10-02/AUDIT-INVESTIGATION.md) | [Контракт и лимит5000](operations/AUDIT-INVESTIGATION.md) · [JSON receipts](audits/2026-10-02/AUDIT-INVESTIGATION-EVIDENCE.json) |
 | Проверить форму пользователя, смену роли и отключение | [F38: source/installed evidence](audits/2026-10-02/USER-ACCESS.md) | [Операторский контракт](operations/USER-ACCESS.md) · [JSON receipts](audits/2026-10-02/USER-ACCESS-EVIDENCE.json) |
 | Проверить иерархию групп и сохранность audit отказов | [N04/N05: исправление и live readback](audits/2026-10-02/GROUP-HIERARCHY-AND-AUDIT.md) | [Evidence](audits/2026-10-02/GROUP-HIERARCHY-AND-AUDIT-EVIDENCE.json) · [Контракт иерархии](operations/GROUP-HIERARCHY.md) |
 | Проверить discovery request/response и принадлежность результата | [F19/F20 + N02 — 2 октября](audits/2026-10-02/DISCOVERY-REQUEST-OWNERSHIP.md) | [Before/after/installed evidence](audits/2026-10-02/DISCOVERY-REQUEST-OWNERSHIP-EVIDENCE.json) · legacy errors N03 OPEN |

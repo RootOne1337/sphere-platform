@@ -1767,3 +1767,8 @@ Several paginated endpoints include `{ "items": [...], "total": N, "page": N, "p
 > **v4.6.0:** `per_page` max увеличен с 200 до 5 000 для поддержки массовых
 > операций и нагрузочных тестов. Рекомендуется использовать значения ≤ 200
 > для стандартных UI-запросов.
+
+
+## Расследование журнала аудита — 2 октября2026
+
+`GET /api/v1/audit/logs` и `GET /api/v1/audit/logs/export` используют одни tenant-scoped filters: status/action/user_id/resource_type/q/from/to. Доступ `audit:read`, aware timestamps, literal search и validated bounds. CSV до5000 scalar rows; `X-Audit-Truncated` обозначает неполную выгрузку. [Полный контракт, поля и ограничения](operations/AUDIT-INVESTIGATION.md) · [Finite installed evidence](audits/2026-10-02/AUDIT-INVESTIGATION.md). Generated [OpenAPI](openapi.json) содержит параметры и typed audit page.
