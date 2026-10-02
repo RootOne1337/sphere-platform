@@ -70,6 +70,14 @@ const MOCK_HEALTH = {
 describe('useVpnPeers', () => {
   beforeEach(() => jest.clearAllMocks());
 
+  it('rejects duplicate peers instead of enabling operations from an ambiguous snapshot', async () => {
+    mockApi.get.mockResolvedValueOnce({ data: [MOCK_PEERS[0], MOCK_PEERS[0]] });
+    const { result } = renderQueryHook(() => useVpnPeers());
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    expect(result.current.data).toBeUndefined();
+    expect(mockApi.get).toHaveBeenCalledTimes(1);
+  });
+
   it('загружает список VPN-пиров', async () => {
     mockApi.get.mockResolvedValueOnce({ data: MOCK_PEERS });
 
@@ -221,7 +229,7 @@ describe('useVpnKillSwitch', () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(mockApi.post).toHaveBeenCalledWith('/vpn/killswitch', {
       device_ids: ['dev-001', 'dev-002'],
-      enabled: true,
+      action: 'enable',
     });
   });
 
@@ -235,7 +243,7 @@ describe('useVpnKillSwitch', () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(mockApi.post).toHaveBeenCalledWith('/vpn/killswitch', {
       device_ids: ['dev-001'],
-      enabled: false,
+      action: 'disable',
     });
   });
 });

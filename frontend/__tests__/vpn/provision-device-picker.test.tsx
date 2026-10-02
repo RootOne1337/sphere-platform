@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import VPNManagerPage from '@/app/(dashboard)/vpn/page';
 import { useAssignVpn, usePoolStats, useVpnKillSwitch, useVpnPeers, useVpnRotate } from '@/lib/hooks/useVpn';
 import { useBulkAction, useDevices, type Device } from '@/lib/hooks/useDevices';
+import { useAuthStore } from '@/lib/store';
 
 const mockMutateAsync = jest.fn();
 const mockPush = jest.fn();
@@ -49,10 +50,11 @@ const device: Device = {
 
 beforeEach(() => {
   jest.clearAllMocks();
+  useAuthStore.setState({ user: { id: 'admin', org_id: 'org', email: 'admin@example.org', role: 'org_admin' }, sessionVersion: 1 });
   mockUseAssignVpn.mockReturnValue({ mutateAsync: mockMutateAsync, isPending: false } as never);
   mockUsePoolStats.mockReturnValue({ data: undefined, isLoading: false } as never);
   mockUseVpnKillSwitch.mockReturnValue({ mutate: jest.fn(), isPending: false } as never);
-  mockUseVpnPeers.mockReturnValue({ data: [], isLoading: false } as never);
+  mockUseVpnPeers.mockReturnValue({ data: [], isLoading: false, refetch: jest.fn().mockResolvedValue({ isError: false }) } as never);
   mockUseVpnRotate.mockReturnValue({ mutate: jest.fn(), isPending: false } as never);
   mockUseBulkAction.mockReturnValue({ mutate: jest.fn(), isPending: false } as never);
   mockUseDevices.mockReturnValue({
@@ -65,7 +67,7 @@ beforeEach(() => {
 });
 
 it('keeps VPN provisioning open after a rejected request and does not retry implicitly', async () => {
-  mockMutateAsync.mockRejectedValue({ response: { data: { detail: 'VPN provider unavailable' } } });
+  mockMutateAsync.mockRejectedValue({ response: { status: 503, data: { detail: 'VPN provider unavailable' } } });
   const user = userEvent.setup();
   render(<VPNManagerPage />);
 
@@ -76,7 +78,7 @@ it('keeps VPN provisioning open after a rejected request and does not retry impl
 
   expect(mockMutateAsync).toHaveBeenCalledTimes(1);
   expect(mockMutateAsync).toHaveBeenCalledWith({ device_id: 'device-2' });
-  expect(await screen.findByRole('alert')).toHaveTextContent('VPN provider unavailable');
+  expect((await screen.findAllByRole('alert')).some(v => v.textContent?.includes('Результат неизвестен'))).toBe(true);
   expect(screen.getByRole('heading', { name: 'Provision VPN Node' })).toBeVisible();
   expect(mockMutateAsync).toHaveBeenCalledTimes(1);
 });

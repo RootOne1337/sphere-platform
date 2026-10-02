@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Network, Activity, Settings, Plus, Lock, Globe, RotateCcw, FileText, Wrench, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/src/shared/ui/button';
@@ -16,9 +16,10 @@ import {
 import { Label } from '@/components/ui/label';
 import { DeviceSearchSelect } from '@/components/sphere/DeviceSearchSelect';
 
-import { useVpnPeers, usePoolStats, useAssignVpn, useVpnRotate, useVpnKillSwitch } from '@/lib/hooks/useVpn';
-import { useBulkAction } from '@/lib/hooks/useDevices';
-import { getApiErrorMessage } from '@/lib/apiError';
+import { useVpnPeers, usePoolStats, useAssignVpn } from '@/lib/hooks/useVpn';
+import { useAuthStore } from '@/lib/store';
+import { VpnControlDialog, vpnActorScope } from '@/src/features/vpn/VpnControlDialog';
+import { controlFailure, type ControlOutcome, type VpnControl } from '@/src/features/vpn/controlReceipt';
 
 interface Tunnel {
   id: string;
@@ -38,6 +39,23 @@ function formatHandshake(value: string | null): string {
 
 export default function VPNManagerPage() {
   const router = useRouter();
+  const actor = useAuthStore(s => s.user); const session = useAuthStore(s => s.sessionVersion);
+  const scope = `${actor?.org_id}:${actor?.id}:${actor?.role}:${session}`;
+  const canVpn = Boolean(actor && ['org_admin', 'org_owner', 'super_admin'].includes(actor.role));
+  const canReboot = canVpn || actor?.role === 'device_manager';
+  const [operation, setOperation] = useState<{ kind: VpnControl; ids: string[]; scope: string } | null>(null);
+  const [outcomes, setOutcomes] = useState<{ scope: string; rows: ControlOutcome[] }>({ scope, rows: [] });
+  const unresolved = new Set(outcomes.scope === scope ? outcomes.rows.filter(v => v.outcome === 'unknown').map(v => v.deviceId) : []);
+  const provisionBusy = useRef(false);
+  const [provisionDone, setProvisionDone] = useState(false);
+  const [provisionNotice, setProvisionNotice] = useState<string | null>(null);
+  const [provisionScope, setProvisionScope] = useState<string | null>(null);
+  const query = useVpnPeers();
+  const fresh = !query.isLoading && !query.isError && !query.isFetching && Array.isArray(query.data);
+  const openOperation = (kind: VpnControl, ids: string[]) => {
+    if (!fresh || !ids.length || ids.length > 500 || ids.some(id => unresolved.has(id)) || (kind === 'reboot' ? !canReboot : !canVpn)) return;
+    setOperation({ kind, ids: [...new Set(ids)], scope });
+  };
   const [search, setSearch] = useState('');
 
   // Диалоги
@@ -48,12 +66,9 @@ export default function VPNManagerPage() {
   const [provisionError, setProvisionError] = useState<string | null>(null);
 
   // Используем хук вместо инлайн-запроса для единообразия и корректного кеширования
-  const { data: rawPeers = [], isLoading, isError: peersError } = useVpnPeers();
+  const { data: rawPeers = [], isLoading, isError: peersError } = query;
   const { data: poolStats, isLoading: poolStatsLoading, isError: poolStatsError } = usePoolStats();
   const assignVpn = useAssignVpn();
-  const rotateVpn = useVpnRotate();
-  const killSwitch = useVpnKillSwitch();
-  const bulkAction = useBulkAction();
 
   const peerDeviceIds = useMemo(
     () => new Set(rawPeers.flatMap((peer) => peer.device_id ? [peer.device_id] : [])),
@@ -125,6 +140,9 @@ export default function VPNManagerPage() {
       </div>
 
       <div className="p-6 flex-1 overflow-auto">
+        <p className="mb-4 rounded-lg border border-warning/40 p-3 text-sm">VPN peer на router и VPN на Android — разные этапы. Legacy kill switch transport не подключён; автоматическая доставка VPN-конфигурации в APK этой страницей не подтверждается.</p>
+        {unresolved.size > 0 && <p role="alert" className="mb-4 rounded-lg border border-destructive/40 p-3 text-sm">{unresolved.size} устройств с неизвестным результатом. Новые операции для них заблокированы в этой сессии страницы; нужна сверка состояния.</p>}
+        {outcomes.scope === scope && outcomes.rows.length > 0 && <section aria-label="Последние результаты VPN" className="mb-4 grid gap-3 md:grid-cols-2">{outcomes.rows.map(row => <article key={row.deviceId} className="rounded-lg border p-3 text-sm"><p className="break-all font-mono text-xs">{row.deviceId}</p><p>{row.outcome} · {row.detail}</p></article>)}</section>}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <Input
@@ -138,7 +156,8 @@ export default function VPNManagerPage() {
             <Button variant="outline" size="sm" className="h-9 border-border hover:bg-border" onClick={() => setPolicyDialogOpen(true)}>
               <Settings className="w-4 h-4 mr-2" /> Global Policy
             </Button>
-            <Button variant="default" size="sm" className="h-9" onClick={() => {
+            <Button variant="default" size="sm" className="h-9" disabled={!canVpn || !fresh} onClick={() => {
+              setProvisionScope(scope); setProvisionDone(false); setProvisionNotice(null);
               setProvisionDeviceId('');
               setProvisionError(null);
               setProvisionDialogOpen(true);
@@ -232,9 +251,9 @@ export default function VPNManagerPage() {
                     size="sm"
                     className="h-8 text-[10px] uppercase font-bold tracking-widest text-muted-foreground hover:text-foreground"
                     onClick={() => {
-                      bulkAction.mutate({ device_ids: [tunnel.deviceId], action: 'reboot' });
+                      openOperation('reboot', [tunnel.deviceId]);
                     }}
-                    disabled={bulkAction.isPending}
+                    disabled={!canReboot || !fresh || unresolved.has(tunnel.deviceId)}
                   >
                     <RotateCcw className="w-3 h-3 mr-1" /> Reboot
                   </Button>
@@ -297,9 +316,9 @@ export default function VPNManagerPage() {
                 className="flex-1"
                 onClick={() => {
                   const deviceIds = rawPeers.flatMap((peer) => peer.status === 'assigned' && peer.device_id ? [peer.device_id] : []);
-                  if (deviceIds.length > 0) killSwitch.mutate({ device_ids: deviceIds, enabled: true });
+                  openOperation('enable', deviceIds);
                 }}
-                disabled={killSwitch.isPending}
+                disabled={!canVpn || !fresh || !rawPeers.some(p => p.status === 'assigned' && p.device_id) || unresolved.size > 0}
               >
                 <Lock className="w-3 h-3 mr-1" /> Kill Switch ON (ALL)
               </Button>
@@ -309,9 +328,9 @@ export default function VPNManagerPage() {
                 className="flex-1"
                 onClick={() => {
                   const deviceIds = rawPeers.flatMap((peer) => peer.status === 'assigned' && peer.device_id ? [peer.device_id] : []);
-                  if (deviceIds.length > 0) killSwitch.mutate({ device_ids: deviceIds, enabled: false });
+                  openOperation('disable', deviceIds);
                 }}
-                disabled={killSwitch.isPending}
+                disabled={!canVpn || !fresh || !rawPeers.some(p => p.status === 'assigned' && p.device_id) || unresolved.size > 0}
               >
                 Kill Switch OFF
               </Button>
@@ -321,7 +340,8 @@ export default function VPNManagerPage() {
       </Dialog>
 
       {/* Диалог Provision Node — назначить VPN устройству */}
-      <Dialog open={provisionDialogOpen} onOpenChange={(open) => {
+      <Dialog open={provisionDialogOpen && provisionScope === scope} onOpenChange={(open) => {
+        if (provisionBusy.current) return;
         setProvisionDialogOpen(open);
         if (!open) {
           setProvisionDeviceId('');
@@ -341,25 +361,33 @@ export default function VPNManagerPage() {
                   setProvisionDeviceId(deviceId);
                   setProvisionError(null);
                 }}
-                disabled={assignVpn.isPending}
+                disabled={assignVpn.isPending || provisionDone}
                 excludedIds={peerDeviceIds}
                 placeholder="Выбери устройство…"
               />
             </div>
+            {provisionNotice && <p role="status" className="rounded-lg border p-3 text-sm">{provisionNotice}</p>}
             {provisionError && <p className="text-sm text-destructive" role="alert">{provisionError}</p>}
             <Button
               className="w-full"
-              disabled={!provisionDeviceId || peerDeviceIds.has(provisionDeviceId) || assignVpn.isPending}
+              disabled={!canVpn || !fresh || provisionDone || !provisionDeviceId || peerDeviceIds.has(provisionDeviceId) || assignVpn.isPending}
               onClick={async () => {
-                if (!provisionDeviceId || peerDeviceIds.has(provisionDeviceId)) return;
-                setProvisionError(null);
+                if (provisionBusy.current || provisionDone || !canVpn || !fresh || scope !== vpnActorScope() || !provisionDeviceId || peerDeviceIds.has(provisionDeviceId)) return;
+                provisionBusy.current = true; setProvisionError(null);
                 try {
-                  await assignVpn.mutateAsync({ device_id: provisionDeviceId });
-                  setProvisionDeviceId('');
-                  setProvisionDialogOpen(false);
+                  const response = await assignVpn.mutateAsync({ device_id: provisionDeviceId });
+                  if (scope !== vpnActorScope()) return;
+                  const data = response.data;
+                  if (!data || data.device_id !== provisionDeviceId || typeof data.peer_id !== 'string' || !data.peer_id || typeof data.assigned_ip !== 'string' || !data.assigned_ip || typeof data.config !== 'string' || typeof data.qr_code !== 'string') throw new Error('Invalid assignment receipt');
+                  setProvisionDone(true);
+                  setProvisionNotice(`Router assignment: ${data.peer_id}, ${data.assigned_ip}. Применение конфигурации APK и handshake ещё не подтверждены.`);
                 } catch (error) {
-                  setProvisionError(getApiErrorMessage(error, 'Не удалось назначить VPN устройству. Проверьте состояние и повторите вручную.'));
-                }
+                  if (scope !== vpnActorScope()) return;
+                  const failure = controlFailure(error);
+                  setProvisionDone(true);
+                  setProvisionError(failure.message);
+                  if (failure.unknown) setOutcomes(prev => ({ scope, rows: [...(prev.scope === scope ? prev.rows.filter(v => v.deviceId !== provisionDeviceId) : []), { deviceId: provisionDeviceId, outcome: 'unknown', detail: failure.message, retryable: false }] }));
+                } finally { provisionBusy.current = false; }
               }}
             >
               {assignVpn.isPending ? 'Provisioning…' : 'Assign VPN'}
@@ -393,10 +421,9 @@ export default function VPNManagerPage() {
                     className="flex-1"
                     onClick={() => {
                       if (!peer.device_id || peer.status !== 'assigned') return;
-                      rotateVpn.mutate({ device_ids: [peer.device_id] });
-                      setConfigureDialogOpen(null);
+                      openOperation('rotate', [peer.device_id]);
                     }}
-                    disabled={rotateVpn.isPending || !peer.device_id || peer.status !== 'assigned'}
+                    disabled={!canVpn || !fresh || !peer.device_id || peer.status !== 'assigned' || unresolved.has(peer.device_id)}
                   >
                     <RotateCcw className="w-3 h-3 mr-1" /> Rotate IP
                   </Button>
@@ -406,10 +433,9 @@ export default function VPNManagerPage() {
                     className="flex-1"
                     onClick={() => {
                       if (!peer.device_id || peer.status !== 'assigned') return;
-                      killSwitch.mutate({ device_ids: [peer.device_id], enabled: true });
-                      setConfigureDialogOpen(null);
+                      openOperation('enable', [peer.device_id]);
                     }}
-                    disabled={killSwitch.isPending || !peer.device_id || peer.status !== 'assigned'}
+                    disabled={!canVpn || !fresh || !peer.device_id || peer.status !== 'assigned' || unresolved.has(peer.device_id)}
                   >
                     <Lock className="w-3 h-3 mr-1" /> Kill Switch
                   </Button>
@@ -419,6 +445,7 @@ export default function VPNManagerPage() {
           })()}
         </DialogContent>
       </Dialog>
+      {operation?.scope === scope && <VpnControlDialog key={`${scope}:${operation.kind}:${operation.ids.join(',')}`} {...operation} fresh={fresh} reload={async () => !(await query.refetch()).isError} onClose={() => setOperation(null)} onOutcomes={rows => setOutcomes(prev => ({ scope, rows: [...(prev.scope === scope ? prev.rows.filter(v => !rows.some(r => r.deviceId === v.deviceId)) : []), ...rows] }))} />}
     </div>
   );
 }
