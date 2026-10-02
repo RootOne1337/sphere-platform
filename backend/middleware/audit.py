@@ -12,6 +12,7 @@ from starlette.background import BackgroundTask
 from starlette.requests import Request
 from starlette.responses import Response
 
+from backend.core.audit_identity import AuditIdentity
 from backend.database.engine import AsyncSessionLocal
 from backend.database.tenant import bind_tenant_context
 from backend.models.audit_log import AuditLog
@@ -85,29 +86,18 @@ async def audit_middleware(request: Request, call_next):
     response: Response = await call_next(request)
     duration_ms = int((time.time() - start) * 1000)
 
-    # Логируем только если пользователь аутентифицирован.
-    # request.state.principal устанавливается в get_current_user / get_current_principal.
-    principal = getattr(request.state, "principal", None)
-    if not principal:
+    # Never read a closed/rolled-back ORM principal or decode unverified headers.
+    # Auth dependencies capture these identifiers before the endpoint transaction.
+    identity = getattr(request.state, "audit_identity", None)
+    if not isinstance(identity, AuditIdentity):
+        if getattr(request.state, "principal", None) is not None:
+            logger.error("audit_identity_missing", action=_path_to_action(request.method, path))
         return response
-
-    # Определить user_id по типу principal (User vs APIKey).
-    # ВАЖНО: не использовать hasattr() — он вызывает SQLAlchemy дескриптор,
-    # который падает с DetachedInstanceError если сессия уже закрыта.
-    # isinstance() безопасен — использует Python type system, а не ORM атрибуты.
-    from backend.models.user import User as _UserModel
-    is_user = isinstance(principal, _UserModel)
-
-    # Читаем значения атрибутов напрямую из __dict__ (без lazy load через дескриптор).
-    # Если атрибут expired/detached — получаем None вместо исключения.
-    p_vars = vars(principal)
-    user_id = p_vars.get("id") if is_user else None
-    org_id_val = p_vars.get("org_id")
 
     # Фиксируем данные ДО возврата response (state может быть очищен)
     audit_data = {
-        "org_id": org_id_val,
-        "user_id": user_id,
+        "org_id": identity.org_id,
+        "user_id": identity.user_id,
         "ip_address": request.client.host if request.client else None,
         "user_agent": request.headers.get("user-agent"),
         "action": _path_to_action(request.method, path),

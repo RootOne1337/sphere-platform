@@ -11,6 +11,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from backend.core.audit_identity import AuditIdentity
 from backend.core.rbac import has_permission
 from backend.core.security import decode_access_token
 from backend.database.engine import get_db
@@ -48,6 +49,7 @@ async def get_current_user(
         dev_user = result.scalar_one_or_none()
         if dev_user:
             request.state.principal = dev_user
+            request.state.audit_identity = AuditIdentity(org_id=dev_user.org_id, user_id=dev_user.id)
             return dev_user
         # Если в БД нет пользователей — fallback на обычную авторизацию
 
@@ -96,6 +98,8 @@ async def get_current_user(
     # FIX-1.3: Прокидываем principal в request.state для audit middleware.
     # Без этого audit_middleware получает principal=None и не пишет логи!
     request.state.principal = user
+    # rollback expires ORM attributes before the middleware sees an error response.
+    request.state.audit_identity = AuditIdentity(org_id=user.org_id, user_id=user.id)
 
     return user
 
@@ -205,6 +209,7 @@ async def get_current_principal(
         if not key:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API key")
         request.state.principal = key
+        request.state.audit_identity = AuditIdentity(org_id=key.org_id, user_id=None)
         return key
 
     if credentials:
