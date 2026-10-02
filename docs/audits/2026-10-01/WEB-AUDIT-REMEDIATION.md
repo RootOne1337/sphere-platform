@@ -2,7 +2,7 @@
 
 Этот журнал продолжает [замороженный аудит](WEB-FULL-CAPABILITY-AUDIT.md) исходников `1354d66`. Исходный документ и evidence сохраняют свою дату и ограничения; их статусы не переписываются задним числом.
 
-**Срез реализации 2 октября 2026, 01:30 UTC+5:** UI/API source `5fcf18a`; 24 source findings исправлено (5 P1 и 19 P2), 17 исходных остаются открытыми. `3015 → UI3030/API18080`, 91 suites / 718 tests и production standalone compile passed. F16 read contract и F17 pinned rerun исправлены; Android artifact upload N01 и visual acceptance остаются открытыми. [Validation](WEB-AUDIT-FIXES-VALIDATION.json) · [Task evidence](../2026-10-02/TASK-ARTIFACTS-AND-RERUN.md).
+**Срез реализации 2 октября 2026, 05:08 UTC+5:** Docker UI `d4364e5`, API `5fcf18a`; 26 source findings исправлено (5 P1 и 21 P2), 15 исходных остаются открытыми. Review3015, 92 suites / 729 tests, types и Docker production build passed. F16 private read, F17 pinned rerun, F19/F20 discovery context исправлены. Реальный variable-only rerun на remote PH025 completed; N01 upload, N03 legacy RPC errors и browser visual OPEN. [Validation](WEB-AUDIT-FIXES-VALIDATION.json) · [Task evidence](../2026-10-02/TASK-ARTIFACTS-AND-RERUN.md) · [Discovery proof](../2026-10-02/DISCOVERY-REQUEST-OWNERSHIP.md).
 
 ## Исходная фиксация
 
@@ -43,8 +43,8 @@
 | [F16](WEB-FULL-CAPABILITY-AUDIT.md#f16) | P2 | Source исправлен; live OPEN | Задание: несогласованный путь к скриншотам шагов |
 | [F17](WEB-FULL-CAPABILITY-AUDIT.md#f17) | P2 | Source исправлен; live OPEN | Задание: restart теряет параметры оригинала |
 | [F18](WEB-FULL-CAPABILITY-AUDIT.md#f18) | P2 | Source исправлен; live OPEN | Задание: ошибки Stop/Cancel/Restart не показаны |
-| [F19](WEB-FULL-CAPABILITY-AUDIT.md#f19) | P2 | Открыто | Обнаружение: текст противоречит auto-register |
-| [F20](WEB-FULL-CAPABILITY-AUDIT.md#f20) | P2 | Открыто | Обнаружение: заголовок результата использует новый CIDR |
+| [F19](WEB-FULL-CAPABILITY-AUDIT.md#f19) | P2 | Source исправлен; live OPEN | Обнаружение: текст противоречит auto-register |
+| [F20](WEB-FULL-CAPABILITY-AUDIT.md#f20) | P2 | Source исправлен; live OPEN | Обнаружение: заголовок результата использует новый CIDR |
 | [F21](WEB-FULL-CAPABILITY-AUDIT.md#f21) | P2 | Source исправлен; live OPEN | Мобильное меню: offscreen ссылки остаются активными |
 | [F22](WEB-FULL-CAPABILITY-AUDIT.md#f22) | P2 | Source исправлен; live OPEN | Общий DialogContent: нет ограничения высоты по умолчанию |
 | [F23](WEB-FULL-CAPABILITY-AUDIT.md#f23) | P2 | Source исправлен; live OPEN | Command palette: частичная навигация и нет restore focus |
@@ -278,3 +278,7 @@
 ## Runtime и Android follow-up — 2 октября 04:51 UTC+5
 
 Native review процессы исчезли после ранее записанной установки; причина не установлена. Review [3015](http://127.0.0.1:3015/) восстановлен в Docker: UI0f4530c / API5fcf18a, оба healthy, login/API/Prometheus/Grafana/events WS и restart passed. Все 14 прежних контейнеров сохранены. На remote PH025/10240 два variable-only задания completed/success; rerun исполнил pinned v1 после изменения latest v2. N01 upload, browser visual, массовые сценарии и video latency остаются открытыми. [Подробности и receipts](../2026-10-02/REVIEW-RUNTIME-AND-REMOTE-RERUN.md).
+
+## F19/F20 — 2 октября 05:08 UTC+5
+
+Commit `d4364e5`: submitted scan context сохраняется вместе с validated response; registration copy/payload согласованы. Дополнительно исправлен N02: required workstation UUID, typed port_range/timeout и registered_id/already_registered вместо несуществующих fields. Android APK не зависит от PC Agent; ADB-режим обозначен отдельно. Before d5d3d14: 10 failed / 1 control passed / 0 runtime errors; after11 passed, full92 suites/729 tests и types/Docker build passed. Review3015 установлен; login/API/observability/events WS и compiled stamp подтверждены. Совокупно26 исправлено /15 исходных OPEN, новые N01 и N03 OPEN. N03 — backend legacy RPC failure выглядит empty scan; живой scan не запускался. [Контракт, доказательства и ограничения](../2026-10-02/DISCOVERY-REQUEST-OWNERSHIP.md).

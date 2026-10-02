@@ -16,7 +16,7 @@ Source: `1354d66660041ba17afb64399d567ca29dd91866`. Режим замороже�
 
 Текущее продолжение: [журнал исправлений и статусы F01–F41](WEB-AUDIT-REMEDIATION.md). Исторический аудит остаётся неизменным.
 
-Последний installed source **5fcf18a**: 24 source findings исправлено, 17 открыты; 91 suites / 718 frontend tests, types/production build passed. API и review UI3015/3030 установлены 2 октября в 01:27/01:28 UTC+5. [F16/F17 contracts/evidence](../2026-10-02/TASK-ARTIFACTS-AND-RERUN.md) · [Fix validation](WEB-AUDIT-FIXES-VALIDATION.json). Android screenshot upload N01 и browser visual acceptance открыты.
+Последний review UI **d4364e5**, backend **5fcf18a**: 26 source findings исправлено, 15 открыты; 92 suites / 729 frontend tests, types/Docker production build passed. [Discovery F19/F20 proof](../2026-10-02/DISCOVERY-REQUEST-OWNERSHIP.md); дополнительные N01/N03 OPEN. API установлен 2 октября в 01:27 UTC+5; native UI3015/3030 — исторический срез. Последний review3015 работает в Docker с 05:08 UTC+5, restart проверен в 05:13. [F16/F17 contracts/evidence](../2026-10-02/TASK-ARTIFACTS-AND-RERUN.md) · [Fix validation](WEB-AUDIT-FIXES-VALIDATION.json). Android screenshot upload N01 и browser visual acceptance открыты.
 
 ## Runtime и Android follow-up — 2 октября 04:51 UTC+5
 

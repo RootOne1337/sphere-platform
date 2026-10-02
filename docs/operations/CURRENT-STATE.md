@@ -7,20 +7,20 @@
 [Главная](../../README.md) · [Каталог документации](../README.md) · [Readiness](READINESS.md) · [Fleet32 gates](../audits/2026-09-20/FLEET32-PREFLIGHT.md) · [PR #19](https://github.com/RootOne1337/sphere-platform/pull/19)
 
 > [!IMPORTANT]
-> **Работающий review, 2 октября 04:51 UTC+5:** [3015](http://127.0.0.1:3015/) теперь в отдельном Docker project. UI **0f4530c**, API **5fcf18a**. Login, static asset/build stamp, Prometheus, Grafana session/health и events WS проверены до и после restart обоих review контейнеров. Все 14 прежних контейнеров сохранили IDs/images/StartedAt. Native UI3030/relay3015 исчезли; причина не доказана. [Runtime и Android canary](../audits/2026-10-02/REVIEW-RUNTIME-AND-REMOTE-RERUN.md).
+> **Работающий review, 2 октября 05:08 UTC+5:** [3015](http://127.0.0.1:3015/) теперь в отдельном Docker project. UI **d4364e5**, API **5fcf18a**. Login, static asset/build stamp, Prometheus, Grafana session/health и events WS проверены до и после restart обоих review контейнеров. Все 14 прежних контейнеров сохранили IDs/images/StartedAt. Native UI3030/relay3015 исчезли; причина не доказана. [Runtime и Android canary](../audits/2026-10-02/REVIEW-RUNTIME-AND-REMOTE-RERUN.md).
 
 > [!IMPORTANT]
 > **Историческая native установка 2 октября 2026, 01:28:45 UTC+5:** `3015 → standalone UI3030/API18080`, frontend и backend **5fcf18a**. Readiness/build SHA, owned listeners и авторизованный API проверены. Предыдущий Next7416/UI3029 и backend image8d64ca4 сохранены; заменён только owned relay и backend. Это проверочный веб [3015/tasks](http://127.0.0.1:3015/tasks); public frontend не заменён. [Журнал](../audits/2026-10-01/WEB-AUDIT-REMEDIATION.md) · [Точные receipts](../audits/2026-10-02/TASK-ARTIFACTS-AND-RERUN-EVIDENCE.json).
 
-**24 source findings исправлено**, включая все 5 P1; **17 исходных остаются открытыми**.
+**26 source findings исправлено**, включая все 5 P1; **15 исходных остаются открытыми**. F19/F20 и дополнительный discovery request/response contract N02 исправлены. Legacy scan ошибки пока превращаются backend в empty result: **N03 OPEN**. Android APK не требует PC Agent. [Discovery proof](../audits/2026-10-02/DISCOVERY-REQUEST-OWNERSHIP.md).
 F16 теперь использует manifest и private image route; F17 создаёт отдельный queued
 повтор с исходной версией, deep-copied inputs и timeout. Старые batch/wave/results
 не переносятся, HTTP201 не подтверждает Android execution. UI показывает version,
 receipt и новый ID; screenshot reads имеют loading/error/retry/ownership cleanup.
 [Контракт и проверки F16/F17](../audits/2026-10-02/TASK-ARTIFACTS-AND-RERUN.md).
 
-**91 suites / 718 frontend tests**, types и original production standalone compile
-passed; **136 новых frontend regressions** с начала remediation. 44 существующих
+**92 suites / 729 frontend tests**, types и original production standalone compile
+passed; **147 новых frontend regressions** с начала remediation. 44 существующих
 lint warnings и Windows trace-copy ограничения сохранены. Backend task/script/storage
 suite: **92 passed**, PostgreSQL concurrency/cancellation: **13 passed**, отдельный
 реальный MinIO HTTP test: **1 passed**. Эти числа имеют разные области и не суммируются
