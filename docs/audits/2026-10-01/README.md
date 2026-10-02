@@ -16,7 +16,18 @@ Source: `1354d66660041ba17afb64399d567ca29dd91866`. Режим замороже�
 
 Текущее продолжение: [журнал исправлений и статусы F01–F41](WEB-AUDIT-REMEDIATION.md). Исторический аудит остаётся неизменным.
 
-Последний review UI **d61ab49**, API **8267b94**,2 октября18:13 UTC+5:30 fully fixed/11 OPEN, F33 PARTIAL.99 suites/825 tests;310 API/WS regressions и5 actual production-image PostgreSQL/Redis cases passed. Remote PH013 адресно обновился10230→10240, receipt/heartbeat confirmed. [F33 evidence](../2026-10-02/OTA-ADDRESSED-DELIVERY.md) · [Validation](WEB-AUDIT-FIXES-VALIDATION.json). Старые trials сохраняют даты; visual/bulk/manifest/outbox OPEN.
+Последний review UI **c989eaa**, API **d2846ef**, 2 октября 23:45 UTC+5:
+**31 source findings исправлено / 10 OPEN**, F33 PARTIAL. 100 suites / 846 frontend
+tests; 25 real PostgreSQL version/admission cases также внутри production image.
+Собственный сценарий v1→v2→новая v3→архив и stale 409 подтверждены через pilot API.
+[F27 evidence](../2026-10-02/SCRIPT-VERSION-WORKFLOW.md) · [Validation](WEB-AUDIT-FIXES-VALIDATION.json).
+Source/API acceptance не закрывает visual, rollout и fleet/soak gates.
+
+Предыдущий review, 2 октября 18:13 UTC+5: UI **d61ab49**, API **8267b94**;
+30 source findings исправлено / 11 OPEN, F33 PARTIAL; 99 suites / 825 tests.
+Remote PH013 адресно обновился 10230→10240, receipt/heartbeat confirmed.
+[F33 evidence](../2026-10-02/OTA-ADDRESSED-DELIVERY.md). Старые trials сохраняют
+даты; visual/bulk/manifest/outbox OPEN.
 
 ## Runtime и Android follow-up — 2 октября 04:51 UTC+5
 

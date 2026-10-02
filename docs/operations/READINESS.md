@@ -1,11 +1,21 @@
 # Эксплуатационная готовность Sphere
 
-**Навигация обновлена: 1 октября 2026. Исторические live-снимки ниже сохранены по датам.**
+**Навигация обновлена: 2 октября 2026. Исторические live-снимки ниже сохранены по датам.**
+
+> [!IMPORTANT]
+> Последний review-срез 2 октября, 18:45:43 UTC: UI **c989eaa** / API **d2846ef**,
+> [3015/scripts](http://127.0.0.1:3015/scripts). F27: история, архив, контролируемый
+> откат и допуск Run против просмотренной версии проверены source/API/tests/build.
+> 100 frontend suites / 846 tests; 25 actual PostgreSQL cases, также внутри
+> production image. Полный CI выявил два устаревших mock fixtures; их исправление
+> **da7cf58** проверено 8 batch unit tests и получает отдельный CI.
+> [Доказательства и ограничения](../audits/2026-10-02/SCRIPT-VERSION-WORKFLOW.md).
+> Visual/keyboard, production rollout и 20–30-device combined acceptance OPEN.
 
 > [!IMPORTANT]
 > Канонические source/runtime сведения находятся в [CURRENT-STATE.md](CURRENT-STATE.md).
 > Этот файл — журнал readiness snapshots, не реальное время. Последний записанный
-> runtime 1 октября: **3015 → UI 3023 / API 18080**, UI 8f615c6 / backend 8d64ca4.
+> runtime этой исторической записи 1 октября: **3015 → UI 3023 / API 18080**, UI 8f615c6 / backend 8d64ca4.
 > UI установлен 17:28:52 UTC+5, backend 18:04:04; build/readiness confirmed.
 > APK 1.2.40/10240 установлен адресным OTA PH010/PH025 с terminal receipts и
 > process-restart recovery. Code CI 8d64ca4: backend 2140 passed / 15 skipped,

@@ -2,7 +2,7 @@
 
 Этот журнал продолжает [замороженный аудит](WEB-FULL-CAPABILITY-AUDIT.md) исходников `1354d66`. Исходный документ и evidence сохраняют свою дату и ограничения; их статусы не переписываются задним числом.
 
-**Срез реализации2 октября2026,18:13 UTC+5:** UI d61ab49/API8267b94;30 source findings исправлены полностью,11 OPEN, включая частичный F33.99 suites/825 frontend tests,243 regressions; production builds/types и5 новых actual PostgreSQL/Redis cases passed. Адресный remote PH01310230→10240: live send, completed receipt и post-install heartbeat confirmed. [F33 evidence](../2026-10-02/OTA-ADDRESSED-DELIVERY.md) · [Validation](WEB-AUDIT-FIXES-VALIDATION.json).
+**Срез реализации 2 октября 2026,23:45 UTC+5:** UI c989eaa/API d2846ef;31 source findings исправлены,10 OPEN, включая F33 PARTIAL.100 suites/846 frontend tests,264 regressions;25 real PostgreSQL cases также прошли в production image. F27 архив/версии/conditional Run установлен; собственный API canary подтвердил immutable v3 и stale409. [F27 evidence](../2026-10-02/SCRIPT-VERSION-WORKFLOW.md) · [Validation](WEB-AUDIT-FIXES-VALIDATION.json).
 
 ## Исходная фиксация
 
@@ -51,7 +51,7 @@
 | [F24](WEB-FULL-CAPABILITY-AUDIT.md#f24) | P2 | Source исправлен; live OPEN | Legacy /fleet: настоящая кнопка без действия |
 | [F25](WEB-FULL-CAPABILITY-AUDIT.md#f25) | P2 | Source исправлен; live OPEN | Группы: редактирование и состав не раскрыты |
 | [F26](WEB-FULL-CAPABILITY-AUDIT.md#f26) | P3 | Открыто | Локации: backend география/иерархия не доступны в форме |
-| [F27](WEB-FULL-CAPABILITY-AUDIT.md#f27) | P2 | Открыто | Сценарии: архив/rollback есть в backend, нет workflow |
+| [F27](WEB-FULL-CAPABILITY-AUDIT.md#f27) | P2 | Source исправлен; live OPEN | Сценарии: архив/rollback есть в backend, нет workflow |
 | [F28](WEB-FULL-CAPABILITY-AUDIT.md#f28) | P2 | Открыто | Pipeline: отсутствует полноценный detail/edit workflow |
 | [F29](WEB-FULL-CAPABILITY-AUDIT.md#f29) | P2 | Source исправлен; live OPEN | Расписания: нет доступа к истории срабатываний |
 | [F30](WEB-FULL-CAPABILITY-AUDIT.md#f30) | P2 | Source исправлен; live OPEN | Расписание one-shot: ISO offset подаётся в datetime-local |
@@ -312,3 +312,7 @@ UI3015/audit установлен17:11, API39baa13 —17:09. Реальный ж
 Коммиты `8267b94` (backend) и `d61ab49` (UI). Grant теперь будит уже подключённый Android socket; worker повторно проверяет tenant/signed grant/command/session/deadline. Перечитывание и same-ID dispatch не продлевают разрешение; conditional revoke не удаляет заменённую команду.
 
 310 backend regressions,5 actual PostgreSQL/RLS/Redis cases на host и внутри production image,99 suites/825 frontend tests passed. Remote PH013 адресно обновился10230→10240: live send13:11:37 UTC, completed receipt13:11:59 UTC и последующий свежий heartbeat. Один grant600s, normal channel не продвигался. F33 остаётся частичным; fully-fixed count30 не увеличен. [Отчёт и ограничения](../2026-10-02/OTA-ADDRESSED-DELIVERY.md) · [Операторский workflow](../../operations/OTA-ADDRESSED-UPDATES.md).
+
+## F27 — 2 октября 2026,23:45 UTC+5
+
+Архивный server scope, immutable version viewer/redacted diff и conditional archive/rollback/Run установлены. 14 before PostgreSQL failures и11 UI failures воспроизведены. После25 actual DB/production-image tests и846 frontend tests passed. Свой pilot сценарий v1→v2→новая v3→архив принят; stale mutations/admissions409; исходные версии сохранены. Public UI/APK/OTA/Tuna не менялись.31 findings исправлено/10 OPEN. [Операторский контракт](../../operations/SCRIPT-VERSIONS.md) · [Report](../2026-10-02/SCRIPT-VERSION-WORKFLOW.md) · [Receipts](../2026-10-02/SCRIPT-VERSION-WORKFLOW-EVIDENCE.json). Browser visual OPEN_URL_POLICY_BLOCKED.

@@ -15,13 +15,14 @@
 > автоматическую проверку runtime; старые аудиты сохраняют собственные даты и
 > версии и не должны читаться как текущий deploy. [Правила актуальности](DOCUMENTATION.md).
 
-Последнее изменение: [F33 — адресное OTA/current-socket delivery](audits/2026-10-02/OTA-ADDRESSED-DELIVERY.md), review UI d61ab49/API8267b94 на3015. Remote PH01310230→10240 подтверждён receipt+heartbeat;99 suites/825 tests и5 новых production-image PostgreSQL/Redis cases passed.30 findings fully fixed/11 OPEN; F33 PARTIAL. [Контракт оператора](operations/OTA-ADDRESSED-UPDATES.md). Предыдущий452eb9e CI полностью passed; новый documentation head проверяется отдельно.
+Последнее изменение: [F27 — версии/архив/условный Run](audits/2026-10-02/SCRIPT-VERSION-WORKFLOW.md), review UI c989eaa/API d2846ef на3015.100 suites/846 tests и25 production-image PostgreSQL cases passed;31 findings fixed/10 OPEN. F33 PARTIAL сохраняется; новый documentation head требует своих checks. [Script contract](operations/SCRIPT-VERSIONS.md).
 
 ## 🧭 Выберите задачу
 
 | Мне нужно | Начать здесь | Дальше |
 | --- | --- | --- |
 | Проверить полный веб-аудит и текущие исправления | [Аудит всех маршрутов, меню и возможностей API — 1 октября](audits/2026-10-01/WEB-FULL-CAPABILITY-AUDIT.md) | [Журнал исправлений F01–F41](audits/2026-10-01/WEB-AUDIT-REMEDIATION.md) · [Fixes: актуальные tests / installed UI](audits/2026-10-01/WEB-AUDIT-FIXES-VALIDATION.json) · [Frozen audit evidence](audits/2026-10-01/WEB-FULL-CAPABILITY-AUDIT-EVIDENCE.json) · [Проверки документа](audits/2026-10-01/AUDIT-VALIDATION.json) |
+| Просмотреть DAG версии, откатить сценарий или открыть архив | [Версии сценариев](operations/SCRIPT-VERSIONS.md) | [F27 proof](audits/2026-10-02/SCRIPT-VERSION-WORKFLOW.md) · [Receipts](audits/2026-10-02/SCRIPT-VERSION-WORKFLOW-EVIDENCE.json) |
 | Обновить одно Android-устройство и проверить receipt/heartbeat | [Адресное OTA](operations/OTA-ADDRESSED-UPDATES.md) | [F33 remote proof](audits/2026-10-02/OTA-ADDRESSED-DELIVERY.md) · [Evidence JSON](audits/2026-10-02/OTA-ADDRESSED-DELIVERY-EVIDENCE.json) |
 | Найти audit событие за первой страницей и выгрузить CSV | [F37: source/installed evidence](audits/2026-10-02/AUDIT-INVESTIGATION.md) | [Контракт и лимит5000](operations/AUDIT-INVESTIGATION.md) · [JSON receipts](audits/2026-10-02/AUDIT-INVESTIGATION-EVIDENCE.json) |
 | Проверить форму пользователя, смену роли и отключение | [F38: source/installed evidence](audits/2026-10-02/USER-ACCESS.md) | [Операторский контракт](operations/USER-ACCESS.md) · [JSON receipts](audits/2026-10-02/USER-ACCESS-EVIDENCE.json) |

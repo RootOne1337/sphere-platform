@@ -1,7 +1,7 @@
 {
-  "observedAt": "2026-10-02T13:18:33.849408+00:00",
+  "observedAt": "2026-10-02T18:45:43.428891+00:00",
   "timezone": "Asia/Yekaterinburg",
-  "source": "d61ab49f67500be8966f81c570bc7514bcb5359d",
+  "source": "c989eaae00fb763d3cc07699742a7c846d51c606",
   "frozenAuditSource": "1354d66660041ba17afb64399d567ca29dd91866",
   "auditCommitBeforeProductEdits": "80fb365",
   "implementationCommits": [
@@ -37,7 +37,11 @@
     "39baa13",
     "67b6bef",
     "8267b94",
-    "d61ab49"
+    "d61ab49",
+    "b8c916d",
+    "b8e2ba7",
+    "d2846ef",
+    "c989eaa"
   ],
   "sourceFindingsFixed": [
     "F01",
@@ -65,18 +69,19 @@
     "F23",
     "F24",
     "F25",
+    "F27",
     "F29",
     "F30",
     "F31",
     "F37",
     "F38"
   ],
-  "remainingSourceFindings": 11,
-  "newRegressionTests": 243,
+  "remainingSourceFindings": 10,
+  "newRegressionTests": 264,
   "frontendTests": {
-    "suitesPassed": 99,
+    "suitesPassed": 100,
     "suitesFailed": 0,
-    "testsPassed": 825,
+    "testsPassed": 846,
     "testsFailed": 0,
     "testsSkipped": 0
   },
@@ -92,17 +97,17 @@
     "isolatedGitArchive": true,
     "productionConfigPreserved": true,
     "output": "standalone",
-    "buildStamp": "d61ab49f67500be8966f81c570bc7514bcb5359d",
+    "buildStamp": "c989eaae00fb763d3cc07699742a7c846d51c606",
     "compiledStampVerified": true,
     "platform": "Linux Docker",
     "lintWarnings": 44
   },
   "reviewRuntime": {
-    "observedAt": "2026-10-02T13:09:25.805068+00:00",
-    "phase": "installed",
+    "observedAt": "2026-10-02T18:45:43.428891+00:00",
+    "phase": "final",
     "url": "http://127.0.0.1:3015",
-    "reviewSource": "d61ab49f67500be8966f81c570bc7514bcb5359d",
-    "backendSource": "8267b943ab39f106b91e95be543d10618ef6c1ed",
+    "reviewSource": "c989eaae00fb763d3cc07699742a7c846d51c606",
+    "backendSource": "d2846ef3af9d639a14938e0f6d39d38a530a4239",
     "loginPassed": true,
     "sameOriginApiPassed": true,
     "uiCompiledStampPassed": true,
@@ -120,22 +125,22 @@
     "containers": [
       {
         "name": "sphere-review-20261002-review-ui-1",
-        "id": "f60410bf6af1302efe340bf888af7bf59d5f31ddf12346828a0a9313bba75d16",
-        "imageId": "sha256:70e86bc679d47a73d3060b5b7adb7ae41ff95587c66a8171218456f11dde9b01",
-        "image": "sphere-review-frontend:d61ab49f67500be8966f81c570bc7514bcb5359d",
+        "id": "b47b89197720e7b4efcc6e2174e3e910d6e55dfd7b61e1debef05a0385302589",
+        "imageId": "sha256:0ccd1a248bc0d743f55d3ffc634cda1ad449ca67ca90a33a5d7b1262d98da7b9",
+        "image": "sphere-review-frontend:c989eaae00fb763d3cc07699742a7c846d51c606",
         "health": "healthy",
-        "startedAt": "2026-10-02T13:08:34.649659798Z",
+        "startedAt": "2026-10-02T18:45:29.107999202Z",
         "readOnly": true,
         "restart": "unless-stopped",
         "ports": {}
       },
       {
         "name": "sphere-review-20261002-review-gateway-1",
-        "id": "37c1155966cdf9d0a92043f7db82ae6e86154a451db0e96025f6578f80ab67d1",
+        "id": "7f7b559123cef62b550f516190bb7164f40462b9b0ae881cad57f84126ef9b1c",
         "imageId": "sha256:1d13701a5f9f3fb01aaa88cef2344d65b6b5bf6b7d9fa4cf0dca557a8d7702ba",
         "image": "nginx:alpine",
         "health": "healthy",
-        "startedAt": "2026-10-02T13:08:40.499193389Z",
+        "startedAt": "2026-10-02T18:45:34.936550807Z",
         "readOnly": true,
         "restart": "unless-stopped",
         "ports": {
@@ -152,11 +157,13 @@
     "browserVisualAcceptance": "OPEN_URL_POLICY_BLOCKED"
   },
   "documentValidation": {
-    "relativeTargetsChecked": 596,
+    "relativeTargetsChecked": 733,
     "findingAnchorsChecked": 41,
     "missing": [],
     "testCountsMatchRawJestReceipt": true,
-    "findingCountsMatchLedger": true
+    "findingCountsMatchLedger": true,
+    "manualScriptExampleValidatedWithActualSchemas": true,
+    "frozenAuditUnchanged": true
   },
   "scope": {
     "apkChanged": false,
@@ -191,7 +198,7 @@
     "F33 PARTIAL: addressed workflow/finite remote install accepted; verified artifact manifest, bulk rollout and browser visual OPEN.",
     "No new remote FPS/input latency or fleet reliability acceptance."
   ],
-  "verificationCommit": "d61ab49f67500be8966f81c570bc7514bcb5359d",
+  "verificationCommit": "da7cf584c37c298874aa053954ef5f3d6d5fe5da",
   "previousReviewRuntime": {
     "source": "7f30d9d5282804d7b477bff665cfea256dd31aeb",
     "observedAt": "2026-10-01T19:36:17.2110128+00:00",
@@ -213,7 +220,12 @@
   },
   "verificationEnvironmentCorrections": [
     "DOM media-query fixture scoped away from Node suite; final complete Jest rerun passed.",
-    "Isolated Next build executed from its frontend working directory to read the original Tailwind config."
+    "Isolated Next build executed from its frontend working directory to read the original Tailwind config.",
+    {
+      "source": "34561c6 (unpublished, corrected before final build)",
+      "cause": "Next internal navigation lint rejected a plain anchor; changed to Link",
+      "finalBuildPassed": true
+    }
   ],
   "previousAcceptedWebBatch": {
     "source": "d6439d26640900f2a43690a0917d210812e3142c",
@@ -473,10 +485,58 @@
     "newHeadCiComplete": false
   },
   "historicalPriorReviewRuntime": {
-    "source": "c3bf0e5c3105dcd80becfb86c743a363d0b2d23c",
-    "observedAt": "2026-10-01T19:03:15.5222533+00:00",
-    "uiPort": 3028,
-    "port": 3015
+    "observedAt": "2026-10-02T13:09:25.805068+00:00",
+    "phase": "installed",
+    "url": "http://127.0.0.1:3015",
+    "reviewSource": "d61ab49f67500be8966f81c570bc7514bcb5359d",
+    "backendSource": "8267b943ab39f106b91e95be543d10618ef6c1ed",
+    "loginPassed": true,
+    "sameOriginApiPassed": true,
+    "uiCompiledStampPassed": true,
+    "staticAssetPassed": true,
+    "unauthorizedObservabilityStatus": 401,
+    "prometheusApiPassed": true,
+    "grafanaSessionAndHealthPassed": true,
+    "wsUpgradeSnapshotAndPongPassed": true,
+    "catalogTotal": 19,
+    "reportedStatuses": {
+      "online": 14,
+      "offline": 5
+    },
+    "nodeRuntime": "v24.21.0",
+    "containers": [
+      {
+        "name": "sphere-review-20261002-review-ui-1",
+        "id": "f60410bf6af1302efe340bf888af7bf59d5f31ddf12346828a0a9313bba75d16",
+        "imageId": "sha256:70e86bc679d47a73d3060b5b7adb7ae41ff95587c66a8171218456f11dde9b01",
+        "image": "sphere-review-frontend:d61ab49f67500be8966f81c570bc7514bcb5359d",
+        "health": "healthy",
+        "startedAt": "2026-10-02T13:08:34.649659798Z",
+        "readOnly": true,
+        "restart": "unless-stopped",
+        "ports": {}
+      },
+      {
+        "name": "sphere-review-20261002-review-gateway-1",
+        "id": "37c1155966cdf9d0a92043f7db82ae6e86154a451db0e96025f6578f80ab67d1",
+        "imageId": "sha256:1d13701a5f9f3fb01aaa88cef2344d65b6b5bf6b7d9fa4cf0dca557a8d7702ba",
+        "image": "nginx:alpine",
+        "health": "healthy",
+        "startedAt": "2026-10-02T13:08:40.499193389Z",
+        "readOnly": true,
+        "restart": "unless-stopped",
+        "ports": {
+          "8080/tcp": [
+            {
+              "HostIp": "127.0.0.1",
+              "HostPort": "3015"
+            }
+          ]
+        }
+      }
+    ],
+    "remoteCommandsSent": false,
+    "browserVisualAcceptance": "OPEN_URL_POLICY_BLOCKED"
   },
   "applicationSourceCi": {
     "source": "5fcf18a87f9a2ab198b1d145eae485218871bc01",
@@ -498,7 +558,60 @@
     "finalVerificationHeadCiComplete": false
   },
   "verificationTestCommit": "3fe5eac",
-  "latestRuntimeEvidence": "docs/audits/2026-10-02/AUDIT-INVESTIGATION-EVIDENCE.json",
+  "latestRuntimeEvidence": {
+    "observedAt": "2026-10-02T18:45:43.428891+00:00",
+    "phase": "final",
+    "url": "http://127.0.0.1:3015",
+    "reviewSource": "c989eaae00fb763d3cc07699742a7c846d51c606",
+    "backendSource": "d2846ef3af9d639a14938e0f6d39d38a530a4239",
+    "loginPassed": true,
+    "sameOriginApiPassed": true,
+    "uiCompiledStampPassed": true,
+    "staticAssetPassed": true,
+    "unauthorizedObservabilityStatus": 401,
+    "prometheusApiPassed": true,
+    "grafanaSessionAndHealthPassed": true,
+    "wsUpgradeSnapshotAndPongPassed": true,
+    "catalogTotal": 19,
+    "reportedStatuses": {
+      "online": 14,
+      "offline": 5
+    },
+    "nodeRuntime": "v24.21.0",
+    "containers": [
+      {
+        "name": "sphere-review-20261002-review-ui-1",
+        "id": "b47b89197720e7b4efcc6e2174e3e910d6e55dfd7b61e1debef05a0385302589",
+        "imageId": "sha256:0ccd1a248bc0d743f55d3ffc634cda1ad449ca67ca90a33a5d7b1262d98da7b9",
+        "image": "sphere-review-frontend:c989eaae00fb763d3cc07699742a7c846d51c606",
+        "health": "healthy",
+        "startedAt": "2026-10-02T18:45:29.107999202Z",
+        "readOnly": true,
+        "restart": "unless-stopped",
+        "ports": {}
+      },
+      {
+        "name": "sphere-review-20261002-review-gateway-1",
+        "id": "7f7b559123cef62b550f516190bb7164f40462b9b0ae881cad57f84126ef9b1c",
+        "imageId": "sha256:1d13701a5f9f3fb01aaa88cef2344d65b6b5bf6b7d9fa4cf0dca557a8d7702ba",
+        "image": "nginx:alpine",
+        "health": "healthy",
+        "startedAt": "2026-10-02T18:45:34.936550807Z",
+        "readOnly": true,
+        "restart": "unless-stopped",
+        "ports": {
+          "8080/tcp": [
+            {
+              "HostIp": "127.0.0.1",
+              "HostPort": "3015"
+            }
+          ]
+        }
+      }
+    ],
+    "remoteCommandsSent": false,
+    "browserVisualAcceptance": "OPEN_URL_POLICY_BLOCKED"
+  },
   "remoteRerunFiniteAcceptance": {
     "device": "auto-ph-025",
     "agentVersion": "1.2.40-dev",
@@ -516,9 +629,9 @@
     "packagingHeadChecksSeparate": true
   },
   "historicalFullFrontendTests": {
-    "suitesPassed": 91,
+    "suitesPassed": 99,
     "suitesFailed": 0,
-    "testsPassed": 718,
+    "testsPassed": 825,
     "testsFailed": 0,
     "testsSkipped": 0
   },
@@ -565,14 +678,53 @@
     "N05": "SOURCE_AND_FINITE_API_FIXED_audit_identity_after_rollback"
   },
   "existingContainerPreservation": {
-    "onlyOwnedServicesReplaced": [
-      "sphere-pilot-20260911-backend-1",
-      "sphere-review-20261002-review-gateway-1",
-      "sphere-review-20261002-review-ui-1"
+    "count": 43,
+    "names": [
+      "sphere-observability-20260930-grafana-1",
+      "sphere-observability-20260930-prometheus-1",
+      "sphere-tuna-canary",
+      "sphere-pilot-20260911-frontend-1",
+      "sphere-pilot-20260911-cloudflare-h2-ab",
+      "sphere-pilot-20260911-serveo-ab",
+      "sphere-pilot-alt-ingress-20260926",
+      "sphere-pilot-20260911-localhost-run-1",
+      "sphere-pilot-20260911-cloudflare-quick-1",
+      "sphere-pilot-20260911-public-gateway-1",
+      "sphere-pilot-20260911-nginx-1",
+      "sphere-pilot-20260911-n8n-1",
+      "sphere-pilot-20260911-minio-1",
+      "sphere-pilot-20260911-postgres-1",
+      "sphere-pilot-20260911-redis-1",
+      "sphere-audit-20260905-redis",
+      "sphere-audit-20260905-postgres",
+      "sphere-mini-factory-factory-worker-1",
+      "sphere-mini-factory-factory-tool-worker-1",
+      "sphere-mini-factory-factoryd-1",
+      "sphere-mini-factory-mission-control-1",
+      "sphere-mini-factory-factory-storage-init-1",
+      "ruflo-nginx-1",
+      "ruflo-chat-ui-1",
+      "ruflo-mcp-bridge-1",
+      "ruflo-mongodb-1",
+      "sphere-mini-factory-tool-runtime-seed-python-1",
+      "sphere-mini-factory-tool-runtime-seed-1",
+      "sphere-mini-factory-tool-runtime-1",
+      "sphere-mini-factory-postgres-1",
+      "sphere-mini-factory-otel-collector-1",
+      "sphere-mini-factory-prometheus-1",
+      "sphere-mini-factory-jaeger-1",
+      "sphere-local-pg-20260729",
+      "sphere-tunnel",
+      "sphere-platform-nginx-1",
+      "sphere-platform-n8n-1",
+      "sphere-platform-postgres-1",
+      "sphere-platform-redis-1",
+      "sphere-platform-certbot-1",
+      "sphere-platform-minio-1",
+      "sphere-platform-frontend-1",
+      "sphere-platform-backend-1"
     ],
-    "otherContainerCount": 43,
-    "otherRunningCount": 13,
-    "preservedIdImageStartedAtRunning": true
+    "idImageStartedAtAndRunningMatched": true
   },
   "historicalGroupPredecessor": {
     "source": "d4364e5e640929eef9a9daebdb97ed81783d605c",
@@ -760,13 +912,7 @@
     "allConclusions": "success"
   },
   "newHeadCi": {
-    "source": "67b6bef8d9979fade856c02d3f4aa893a5af27f3",
-    "frontendRun": 37004977091,
-    "frontendConclusion": "success",
-    "backendRun": 37004977150,
-    "androidRun": 37004977161,
-    "backendAndAndroid": "IN_PROGRESS_AT_OBSERVATION",
-    "newDocsHead": "REQUIRES_OWN_CHECKS"
+    "state": "pending at documentation snapshot"
   },
   "historicalGroupWorkflowRuntime": {
     "observedAt": "2026-10-02T00:48:07.440145+00:00",
@@ -1153,7 +1299,330 @@
   },
   "addressedOtaEvidence": "../2026-10-02/OTA-ADDRESSED-DELIVERY-EVIDENCE.json",
   "currentExactHeadCi": {
+    "state": "pending for new documentation head; no inherited green claim"
+  },
+  "historicalCurrentExactHeadCi": {
     "status": "PENDING_NEW_DOCUMENTATION_HEAD",
     "previous452eb9eAllThreePassed": true
+  },
+  "scriptVersionWorkflow": {
+    "observedAt": "2026-10-02T18:45:43.428891+00:00",
+    "timezone": "Asia/Yekaterinburg",
+    "finding": "F27",
+    "sourceAcceptance": "FIXED",
+    "browserVisualAcceptance": "OPEN_URL_POLICY_BLOCKED",
+    "backendSource": "d2846ef3af9d639a14938e0f6d39d38a530a4239",
+    "reviewSource": "c989eaae00fb763d3cc07699742a7c846d51c606",
+    "implementationCommits": [
+      "b8c916d",
+      "b8e2ba7",
+      "d2846ef",
+      "c989eaa"
+    ],
+    "frozenAuditSource": "1354d66660041ba17afb64399d567ca29dd91866",
+    "auditDocumentCommit": "80fb365",
+    "baselineChecks": {
+      "tests": 16,
+      "passed": 2,
+      "failed": 14,
+      "errors": 0,
+      "skipped": 0
+    },
+    "baselineUiChecks": {
+      "failed": 11,
+      "passed": 0,
+      "collectionErrors": 0
+    },
+    "postgresChecks": {
+      "tests": 25,
+      "passed": 25,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "productionImagePostgresChecks": {
+      "tests": 25,
+      "passed": 25,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "unitRegressions": {
+      "passed": 80,
+      "skipped": 1
+    },
+    "frontend": {
+      "suitesPassed": 100,
+      "testsPassed": 846,
+      "newWorkflowTests": 21,
+      "relatedScriptsTestsPassed": 41,
+      "typesPassed": true,
+      "lintWarnings": 44
+    },
+    "productionRuff": {
+      "version": "0.15.2",
+      "passed": true
+    },
+    "mypy": {
+      "sourceFiles": 224,
+      "passed": true
+    },
+    "openapi": {
+      "operations": 174,
+      "paths": 137,
+      "productionDependencies": true
+    },
+    "build": {
+      "gitArchive": true,
+      "backendPassed": true,
+      "frontendPassed": true,
+      "next": "15.5.26",
+      "node": "v24.21.0",
+      "guardsPreserved": true
+    },
+    "intermediateBuildFailure": {
+      "source": "34561c6 (unpublished, corrected before final build)",
+      "cause": "Next internal navigation lint rejected a plain anchor; changed to Link",
+      "finalBuildPassed": true
+    },
+    "backendInstalled": {
+      "source": "d2846ef3af9d639a14938e0f6d39d38a530a4239",
+      "previousSource": "8267b943ab39f106b91e95be543d10618ef6c1ed",
+      "containerId": "1a5a13b41dfe4f6dcf262325580318d044f81649d579bafcb584d2c78f2450d9",
+      "imageId": "sha256:87e07f53220a769cd6b9dfbf0dcb9bfbb829725bf332eb25a920275367cf4a82",
+      "observedAt": "2026-10-02T18:39:06.584481+00:00",
+      "ready": true,
+      "healthRevisionMatched": true,
+      "routes": {
+        "/api/v1/scripts/{script_id}/versions/{version_id}": [
+          "get"
+        ],
+        "/api/v1/scripts": [
+          "get",
+          "post"
+        ]
+      },
+      "onlyBackendReplaced": true,
+      "screenshotStorageConfigured": false,
+      "apkOtaTunnelsPreserved": true,
+      "browserVerified": false
+    },
+    "reviewRuntime": {
+      "observedAt": "2026-10-02T18:45:43.428891+00:00",
+      "phase": "final",
+      "url": "http://127.0.0.1:3015",
+      "reviewSource": "c989eaae00fb763d3cc07699742a7c846d51c606",
+      "backendSource": "d2846ef3af9d639a14938e0f6d39d38a530a4239",
+      "loginPassed": true,
+      "sameOriginApiPassed": true,
+      "uiCompiledStampPassed": true,
+      "staticAssetPassed": true,
+      "unauthorizedObservabilityStatus": 401,
+      "prometheusApiPassed": true,
+      "grafanaSessionAndHealthPassed": true,
+      "wsUpgradeSnapshotAndPongPassed": true,
+      "catalogTotal": 19,
+      "reportedStatuses": {
+        "online": 14,
+        "offline": 5
+      },
+      "nodeRuntime": "v24.21.0",
+      "containers": [
+        {
+          "name": "sphere-review-20261002-review-ui-1",
+          "id": "b47b89197720e7b4efcc6e2174e3e910d6e55dfd7b61e1debef05a0385302589",
+          "imageId": "sha256:0ccd1a248bc0d743f55d3ffc634cda1ad449ca67ca90a33a5d7b1262d98da7b9",
+          "image": "sphere-review-frontend:c989eaae00fb763d3cc07699742a7c846d51c606",
+          "health": "healthy",
+          "startedAt": "2026-10-02T18:45:29.107999202Z",
+          "readOnly": true,
+          "restart": "unless-stopped",
+          "ports": {}
+        },
+        {
+          "name": "sphere-review-20261002-review-gateway-1",
+          "id": "7f7b559123cef62b550f516190bb7164f40462b9b0ae881cad57f84126ef9b1c",
+          "imageId": "sha256:1d13701a5f9f3fb01aaa88cef2344d65b6b5bf6b7d9fa4cf0dca557a8d7702ba",
+          "image": "nginx:alpine",
+          "health": "healthy",
+          "startedAt": "2026-10-02T18:45:34.936550807Z",
+          "readOnly": true,
+          "restart": "unless-stopped",
+          "ports": {
+            "8080/tcp": [
+              {
+                "HostIp": "127.0.0.1",
+                "HostPort": "3015"
+              }
+            ]
+          }
+        }
+      ],
+      "remoteCommandsSent": false,
+      "browserVisualAcceptance": "OPEN_URL_POLICY_BLOCKED"
+    },
+    "liveApiCanary": {
+      "source": "d2846ef3af9d639a14938e0f6d39d38a530a4239",
+      "observedAt": "2026-10-02T18:39:53.772602+00:00",
+      "baseUrl": "http://127.0.0.1:3015/api/v1",
+      "scriptId": "c60612fa-6188-4fac-b5b0-c6aac85c63cf",
+      "isolatedName": "F27 isolated API canary 9e8b9c37db23",
+      "orgId": "99057712-7db7-4fcb-8f07-030051c66b5e",
+      "steps": [
+        {
+          "operation": "create",
+          "status": 201,
+          "version": 1,
+          "versionId": "60eff965-9be7-429e-bd05-df3871525f8f",
+          "hash": "4ad0ec3d53ad76294c4d7ab3b4229246857edbc95d0ce7f8a9d94c3cabe12a73"
+        },
+        {
+          "operation": "owned-immutable-version-read",
+          "status": 200
+        },
+        {
+          "operation": "edit",
+          "status": 200,
+          "version": 2,
+          "versionId": "1f2fce9a-8dca-4414-8725-ac2f9ea7b474",
+          "hash": "aa27823785de6007e5ac93878c9d799436f3a890f0fddaa06b7f09dfadfaab4d"
+        },
+        {
+          "operation": "refuse-stale-rollback",
+          "status": 409
+        },
+        {
+          "operation": "rollback-creates-immutable-v3",
+          "status": 200,
+          "versionId": "e436124f-dc7a-4bd2-a35c-acea019443e9",
+          "hash": "4ad0ec3d53ad76294c4d7ab3b4229246857edbc95d0ce7f8a9d94c3cabe12a73"
+        },
+        {
+          "operation": "refuse-stale-task-admission",
+          "status": 409
+        },
+        {
+          "operation": "refuse-stale-batch-admission",
+          "status": 409
+        },
+        {
+          "operation": "refuse-stale-archive",
+          "status": 409
+        },
+        {
+          "operation": "conditional-archive",
+          "status": 204
+        },
+        {
+          "operation": "archive-search-and-original-history-retained",
+          "status": 200,
+          "versions": 3
+        }
+      ],
+      "existingScriptsChanged": false,
+      "androidCommandsSent": false,
+      "admittedTasksOrBatches": 0,
+      "finalArchived": true,
+      "browserVisualAcceptance": "OPEN_URL_POLICY_BLOCKED"
+    },
+    "existingContainerPreservation": {
+      "count": 43,
+      "names": [
+        "sphere-observability-20260930-grafana-1",
+        "sphere-observability-20260930-prometheus-1",
+        "sphere-tuna-canary",
+        "sphere-pilot-20260911-frontend-1",
+        "sphere-pilot-20260911-cloudflare-h2-ab",
+        "sphere-pilot-20260911-serveo-ab",
+        "sphere-pilot-alt-ingress-20260926",
+        "sphere-pilot-20260911-localhost-run-1",
+        "sphere-pilot-20260911-cloudflare-quick-1",
+        "sphere-pilot-20260911-public-gateway-1",
+        "sphere-pilot-20260911-nginx-1",
+        "sphere-pilot-20260911-n8n-1",
+        "sphere-pilot-20260911-minio-1",
+        "sphere-pilot-20260911-postgres-1",
+        "sphere-pilot-20260911-redis-1",
+        "sphere-audit-20260905-redis",
+        "sphere-audit-20260905-postgres",
+        "sphere-mini-factory-factory-worker-1",
+        "sphere-mini-factory-factory-tool-worker-1",
+        "sphere-mini-factory-factoryd-1",
+        "sphere-mini-factory-mission-control-1",
+        "sphere-mini-factory-factory-storage-init-1",
+        "ruflo-nginx-1",
+        "ruflo-chat-ui-1",
+        "ruflo-mcp-bridge-1",
+        "ruflo-mongodb-1",
+        "sphere-mini-factory-tool-runtime-seed-python-1",
+        "sphere-mini-factory-tool-runtime-seed-1",
+        "sphere-mini-factory-tool-runtime-1",
+        "sphere-mini-factory-postgres-1",
+        "sphere-mini-factory-otel-collector-1",
+        "sphere-mini-factory-prometheus-1",
+        "sphere-mini-factory-jaeger-1",
+        "sphere-local-pg-20260729",
+        "sphere-tunnel",
+        "sphere-platform-nginx-1",
+        "sphere-platform-n8n-1",
+        "sphere-platform-postgres-1",
+        "sphere-platform-redis-1",
+        "sphere-platform-certbot-1",
+        "sphere-platform-minio-1",
+        "sphere-platform-frontend-1",
+        "sphere-platform-backend-1"
+      ],
+      "idImageStartedAtAndRunningMatched": true
+    },
+    "scope": {
+      "publicFrontendReplaced": false,
+      "apkPublished": false,
+      "otaChanged": false,
+      "tunnelsChanged": false,
+      "existingFarmScriptsChanged": false,
+      "newAndroidExecution": false
+    },
+    "limits": [
+      "Browser visual/keyboard acceptance open",
+      "Version history metadata not paginated yet",
+      "Other Run entry points remain legacy unless they opt in to the version condition",
+      "No new Android/FPS/latency/soak/fleet-wide evidence",
+      "No archive restore API",
+      "Production rollout, F28/F32/F33 and original remaining findings remain open"
+    ],
+    "ci": {
+      "coreSource": "d2846ef3af9d639a14938e0f6d39d38a530a4239",
+      "frontendRun": 37048694110,
+      "frontendConclusion": "success",
+      "backendRun": 37048694138,
+      "androidRun": 37048694126,
+      "observedAt": "2026-10-02T18:58:40.316025+00:00",
+      "backendConclusion": "failure",
+      "backendPytest": {
+        "passed": 2268,
+        "failed": 2,
+        "skipped": 16
+      },
+      "androidConclusion": "success",
+      "fixtureFailure": {
+        "file": "tests/test_services/test_batch_service.py",
+        "cause": "Unrestricted MagicMock synthesized the new optional expected_current_version_id and selected the conditional Run branch",
+        "fix": "Use actual BatchExecutionRequest with its default None condition; production checks unchanged",
+        "commit": "da7cf58",
+        "localBatchTestsPassed": 8,
+        "localBatchTestsFailed": 0
+      },
+      "newHeadStatus": "Separate checks required after fixture and documentation commits; no inherited green claim"
+    },
+    "verificationCommit": "da7cf584c37c298874aa053954ef5f3d6d5fe5da",
+    "documentValidation": {
+      "relativeTargetsChecked": 733,
+      "findingAnchorsChecked": 41,
+      "missing": [],
+      "testCountsMatchRawJestReceipt": true,
+      "findingCountsMatchLedger": true,
+      "manualScriptExampleValidatedWithActualSchemas": true,
+      "frozenAuditUnchanged": true
+    }
   }
 }

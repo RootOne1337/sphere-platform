@@ -10,8 +10,10 @@
 
 The [generated endpoint catalog](api-endpoints.md) and [OpenAPI snapshot](openapi.json)
 reflect the registered HTTP contracts and are checked in CI. The Tasks section
-was reconciled with application source `5fcf18a` on 2 October 2026; Batches retain
-their 7 September review. Other manual sections
+was reconciled with application source `5fcf18a` on 2 October 2026. The Scripts
+section and optional task/batch version admission condition were reconciled with
+source `d2846ef` on 2 October; other Batches details retain their 7 September review.
+Other manual sections
 still need component review; a listed contract does not establish runtime or
 security correctness. See the [audit report](audits/2026-09-05/AUDIT-REPORT.md).
 
@@ -585,57 +587,82 @@ The previous `GET/POST /groups/{id}/devices` examples were unsupported routes.
 
 ## Scripts — `/scripts`
 
+Reviewed against `d2846ef` on 2 October 2026. All routes require an authenticated
+principal and enforce organization scope. Read operations require `script:read`,
+mutations `script:write`; task/batch submission checks `script:execute` separately.
+See [the operator workflow and failure contract](operations/SCRIPT-VERSIONS.md).
+
 ### GET /scripts
 
-List scripts with pagination.
+Paginated active catalog by default. Query parameters: `state=active|archived|all`,
+`query`, `page` (at least 1), `per_page` (1–200, default 50). The response contains
+`items`, `total`, `page`, `per_page` and `pages`. Each item contains script metadata,
+`is_archived`, `current_version_id` and nested `current_version` with its immutable
+DAG and SHA-256. The DAG is nested in that version, not at the script root.
+Search and pagination apply to the selected archive state and organization.
 
-**Response 200:**
-```json
-{
-  "items": [
-    {
-      "id": "uuid",
-      "name": "Auto Login",
-      "description": "Automated login script",
-      "dag": { "nodes": [...], "edges": [...] },
-      "created_at": "2026-02-23T10:00:00Z",
-      "updated_at": "2026-02-23T10:00:00Z"
-    }
-  ],
-  "total": 12,
-  "page": 1,
-  "per_page": 50
-}
-```
+### GET /scripts/{id} and immutable versions
 
----
+`GET /scripts/{id}?include_dag=false` returns metadata and all version metadata
+without DAG bodies. `GET /scripts/{id}/versions` lists the history.
+`GET /scripts/{id}/versions/{version_id}` returns one owned immutable version,
+including DAG, hash, version number, author, notes and UTC creation time.
+Foreign or missing script/version IDs return 404. History metadata is not yet
+paginated; large histories need a separate volume acceptance test.
 
 ### POST /scripts
 
-Create a new script with a DAG definition.
+Create a script and immutable v1. This minimal example uses the registered DAG
+format and performs no Android actions:
 
 ```http
 POST /scripts
 Authorization: Bearer <token>
 
 {
-  "name": "Auto Login",
-  "description": "Tab the login button and enter credentials",
+  "name": "Empty workflow",
+  "description": "Finite no-action DAG example",
   "dag": {
+    "version": "1.0",
+    "name": "Empty workflow",
+    "entry_node": "start",
     "nodes": [
-      { "id": "n1", "type": "action", "data": { "cmd": "adb shell input tap 540 960" } },
-      { "id": "n2", "type": "delay",  "data": { "ms": 500 } },
-      { "id": "n3", "type": "action", "data": { "cmd": "adb shell input text username" } }
-    ],
-    "edges": [
-      { "source": "n1", "target": "n2" },
-      { "source": "n2", "target": "n3" }
+      { "id": "start", "action": { "type": "start" }, "on_success": "end" },
+      { "id": "end", "action": { "type": "end" } }
     ]
   }
 }
 ```
 
----
+### Update, rollback and archive
+
+`PUT /scripts/{id}` accepts metadata and an optional DAG; a DAG update creates
+a new immutable version. It also accepts `expected_current_version_id`.
+
+`POST /scripts/{id}/versions/{version_id}/rollback` creates a **new** version
+with the selected historical DAG; existing versions and tasks remain unchanged.
+Opt-in body: `{"expected_current_version_id":"<current-version-uuid>"}`.
+Legacy callers may omit the body; a supplied body requires the condition.
+
+`DELETE /scripts/{id}?expected_current_version_id=<current-version-uuid>` archives
+the script and returns 204 after commit. History is retained; this does not cancel
+tasks. An archive restore endpoint is not registered. Archived update/rollback
+returns 409.
+
+Mutation paths hold a tenant-owned row lock through commit. A stale condition or
+contested row returns 409 before mutation; foreign ownership returns 404.
+Clients must refresh and reconfirm after conflict, and reconcile unknown results
+instead of automatically repeating a mutation.
+
+### Admit a task or batch against an inspected version
+
+Both `POST /tasks` and `POST /batches` accept optional
+`expected_current_version_id`. When supplied, a shared row lock protects the
+current version until admission commits; stale or archived state is refused.
+The accepted receipt contains `script_version_id`, which must match the inspected
+version. Existing admitted tasks/batches keep their pinned version after rollback.
+Callers that omit the condition preserve legacy behavior and do not receive
+optimistic stale-selection protection.
 
 ### POST /scripts/{id}/execute
 

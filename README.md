@@ -16,9 +16,9 @@
 </div>
 
 > [!NOTE]
-> **Текущий срез: 2 октября 2026, 18:13 UTC+5.** После фиксации полного
-> аудита исправлено **30 source findings**; **99 suites /825 frontend tests**,
-> types и production compile passed. Проверочный веб **3015 в Docker**, UI **d61ab49**, backend **8267b94**;
+> **Текущий срез: 2 октября 2026, 23:45 UTC+5.** После фиксации полного
+> аудита исправлено **31 source findings**; **100 suites /846 frontend tests**,
+> types и production compile passed. Проверочный веб **3015 в Docker**, UI **c989eaa**, backend **d2846ef**;
 > login/API, Prometheus/Grafana и events WS проверены. Предыдущий restart evidence сохранён. На remote PH025
 > подтверждён pinned rerun по двум настоящим Android results.
 > [Runtime evidence](docs/audits/2026-10-02/REVIEW-RUNTIME-AND-REMOTE-RERUN.md).
@@ -31,10 +31,11 @@
 > [User access / evidence](docs/audits/2026-10-02/USER-ACCESS.md).
 > F37: поиск всего журнала/UTC и ограниченный CSV5000 установлены; live API accepted.
 > [Audit investigation / evidence](docs/audits/2026-10-02/AUDIT-INVESTIGATION.md).
+> F27: архив, выбранный DAG/hash/diff, conditional rollback и подтверждённая версия Run установлены;25 actual PostgreSQL tests/production image passed. [Script workflow/evidence](docs/audits/2026-10-02/SCRIPT-VERSION-WORKFLOW.md).
 > F33 частично: адресное OTA доступно; remote PH013 обновился10230→10240,
 > live send/completed receipt/post-install heartbeat подтверждены. Один target; bulk
 > и verified artifact manifest открыты. [OTA workflow/evidence](docs/audits/2026-10-02/OTA-ADDRESSED-DELIVERY.md).
-> Android artifact upload N01, visual acceptance, N03 и11 исходных findings открыты;
+> Android artifact upload N01, visual acceptance, N03 и10 исходных findings открыты;
 > public frontend не заменён. [Журнал](docs/audits/2026-10-01/WEB-AUDIT-REMEDIATION.md) ·
 > [Task contracts/evidence](docs/audits/2026-10-02/TASK-ARTIFACTS-AND-RERUN.md).
 >
