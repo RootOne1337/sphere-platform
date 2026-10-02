@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import uuid
+from datetime import datetime
 
 import structlog
 from fastapi import APIRouter, Depends, Query
@@ -285,11 +286,12 @@ async def update_pipeline(
 )
 async def delete_pipeline(
     pipeline_id: uuid.UUID,
+    expected_updated_at: datetime | None = Query(None),
     current_user: User = require_permission("pipeline:write"),
     svc: PipelineService = Depends(get_pipeline_service),
     db: AsyncSession = Depends(get_db),
 ) -> None:
-    await svc.delete(pipeline_id, current_user.org_id)
+    await svc.delete(pipeline_id, current_user.org_id, expected_updated_at=expected_updated_at)
     await db.commit()
 
 
@@ -301,12 +303,13 @@ async def delete_pipeline(
 async def toggle_pipeline(
     pipeline_id: uuid.UUID,
     active: bool = Query(..., description="true=включить, false=выключить"),
+    expected_updated_at: datetime | None = Query(None),
     current_user: User = require_permission("pipeline:write"),
     svc: PipelineService = Depends(get_pipeline_service),
     db: AsyncSession = Depends(get_db),
 ) -> PipelineResponse:
     """Переключить is_active у pipeline. Сохраняется в БД, переживает рестарт."""
-    pipeline = await svc.toggle(pipeline_id, current_user.org_id, active)
+    pipeline = await svc.toggle(pipeline_id, current_user.org_id, active, expected_updated_at=expected_updated_at)
     await db.commit()
     await db.refresh(pipeline)
     return PipelineResponse.model_validate(pipeline)

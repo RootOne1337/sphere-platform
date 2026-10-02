@@ -6205,6 +6205,23 @@
               "format": "uuid",
               "title": "Pipeline Id"
             }
+          },
+          {
+            "name": "expected_updated_at",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Expected Updated At"
+            }
           }
         ],
         "responses": {
@@ -6258,6 +6275,23 @@
               "title": "Active"
             },
             "description": "true=включить, false=выключить"
+          },
+          {
+            "name": "expected_updated_at",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Expected Updated At"
+            }
           }
         ],
         "responses": {
@@ -16476,8 +16510,18 @@
           },
           "type": {
             "type": "string",
-            "title": "Type",
-            "description": "Тип шага: execute_script, condition, action, delay, parallel, wait_for_event, n8n_workflow, loop, sub_pipeline"
+            "enum": [
+              "execute_script",
+              "condition",
+              "action",
+              "delay",
+              "parallel",
+              "wait_for_event",
+              "n8n_workflow",
+              "loop",
+              "sub_pipeline"
+            ],
+            "title": "Type"
           },
           "params": {
             "type": "object",
@@ -18923,7 +18967,9 @@
                 "items": {
                   "$ref": "#/components/schemas/PipelineStepSchema"
                 },
-                "type": "array"
+                "type": "array",
+                "maxItems": 100,
+                "minItems": 1
               },
               {
                 "type": "null"
@@ -18985,15 +19031,30 @@
                 "items": {
                   "type": "string"
                 },
-                "type": "array"
+                "type": "array",
+                "maxItems": 20
               },
               {
                 "type": "null"
               }
             ],
             "title": "Tags"
+          },
+          "expected_updated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Updated At",
+            "description": "Optional optimistic condition from the inspected PipelineResponse"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "title": "UpdatePipelineRequest",
         "description": "Обновление pipeline (частичное)."

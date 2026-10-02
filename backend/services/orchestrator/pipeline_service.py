@@ -9,6 +9,7 @@ from typing import Any
 import structlog
 from fastapi import HTTPException
 from sqlalchemy import func, select
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.models.device import Device, device_group_members
@@ -65,17 +66,31 @@ class PipelineService:
         logger.info("pipeline.created", pipeline_id=str(pipeline.id), name=name)
         return pipeline
 
-    async def get(self, pipeline_id: uuid.UUID, org_id: uuid.UUID) -> Pipeline:
+    async def get(
+        self, pipeline_id: uuid.UUID, org_id: uuid.UUID, *, for_write: bool = False, for_run: bool = False,
+    ) -> Pipeline:
         """Получить pipeline по ID с проверкой принадлежности к организации."""
-        pipeline = await self.db.scalar(
-            select(Pipeline).where(
-                Pipeline.id == pipeline_id,
-                Pipeline.org_id == org_id,
-            )
-        )
+        query = select(Pipeline).where(Pipeline.id == pipeline_id, Pipeline.org_id == org_id)
+        if for_write or for_run:
+            # All definition writers and admissions share this fence until commit.
+            query = query.with_for_update(nowait=True, read=for_run).execution_options(populate_existing=True)
+        try:
+            pipeline = await self.db.scalar(query)
+        except DBAPIError as exc:
+            if getattr(exc.orig, "sqlstate", None) != "55P03":
+                raise
+            await self.db.rollback()
+            raise HTTPException(status_code=409, detail="Pipeline is busy; refresh before retrying") from exc
         if not pipeline:
             raise HTTPException(status_code=404, detail="Pipeline не найден")
         return pipeline
+
+    @staticmethod
+    def _check_updated(pipeline: Pipeline, expected_updated_at: datetime | None) -> None:
+        if expected_updated_at is not None and (
+            expected_updated_at.utcoffset() is None or pipeline.updated_at != expected_updated_at
+        ):
+            raise HTTPException(status_code=409, detail="Pipeline changed; refresh and confirm again")
 
     async def list_pipelines(
         self,
@@ -112,26 +127,48 @@ class PipelineService:
         self,
         pipeline_id: uuid.UUID,
         org_id: uuid.UUID,
+        *,
+        expected_updated_at: datetime | None = None,
         **fields: Any,
     ) -> Pipeline:
         """Обновить pipeline. Increment version при изменении steps."""
-        pipeline = await self.get(pipeline_id, org_id)
+        pipeline = await self.get(pipeline_id, org_id, for_write=True)
+        self._check_updated(pipeline, expected_updated_at)
+        allowed = {"name", "description", "steps", "input_schema", "global_timeout_ms", "max_retries", "is_active", "tags"}
+        if fields.keys() - allowed or any(value is None for key, value in fields.items() if key != "description"):
+            raise HTTPException(status_code=422, detail="Invalid pipeline update fields")
+        changed = {key: value for key, value in fields.items() if getattr(pipeline, key) != value}
+        if changed.keys() & {"steps", "input_schema", "global_timeout_ms", "max_retries"}:
+            active_run = await self.db.scalar(select(PipelineRun.id).where(
+                PipelineRun.org_id == org_id, PipelineRun.pipeline_id == pipeline_id,
+                PipelineRun.status.in_([PipelineRunStatus.QUEUED, PipelineRunStatus.RUNNING,
+                                       PipelineRunStatus.WAITING, PipelineRunStatus.PAUSED]),
+            ).limit(1))
+            if active_run is not None:
+                # The recovery worker still reads the template's global timeout.
+                # Until all runtime settings are snapshotted, never change them
+                # under a nonterminal run (including queued and paused runs).
+                raise HTTPException(status_code=409, detail="Pipeline has active runs; runtime definition cannot be changed")
         bump_version = False
-        for key, value in fields.items():
-            if value is not None and hasattr(pipeline, key):
-                if key == "steps":
-                    bump_version = True
-                setattr(pipeline, key, value)
+        for key, value in changed.items():
+            if key == "steps":
+                bump_version = True
+            setattr(pipeline, key, value)
         if bump_version:
             pipeline.version += 1
+        if changed:
+            pipeline.updated_at = datetime.now(timezone.utc)
         await self.db.flush()
         logger.info("pipeline.updated", pipeline_id=str(pipeline_id), version=pipeline.version)
         return pipeline
 
-    async def delete(self, pipeline_id: uuid.UUID, org_id: uuid.UUID) -> None:
+    async def delete(self, pipeline_id: uuid.UUID, org_id: uuid.UUID, *, expected_updated_at: datetime | None = None) -> None:
         """Мягкое удаление — деактивация pipeline."""
-        pipeline = await self.get(pipeline_id, org_id)
-        pipeline.is_active = False
+        pipeline = await self.get(pipeline_id, org_id, for_write=True)
+        self._check_updated(pipeline, expected_updated_at)
+        if pipeline.is_active:
+            pipeline.is_active = False
+            pipeline.updated_at = datetime.now(timezone.utc)
         await self.db.flush()
         logger.info("pipeline.deactivated", pipeline_id=str(pipeline_id))
 
@@ -140,10 +177,15 @@ class PipelineService:
         pipeline_id: uuid.UUID,
         org_id: uuid.UUID,
         active: bool,
+        *,
+        expected_updated_at: datetime | None = None,
     ) -> Pipeline:
         """Включить / выключить pipeline. Сохраняется в БД, переживает рестарт."""
-        pipeline = await self.get(pipeline_id, org_id)
-        pipeline.is_active = active
+        pipeline = await self.get(pipeline_id, org_id, for_write=True)
+        self._check_updated(pipeline, expected_updated_at)
+        if pipeline.is_active != active:
+            pipeline.is_active = active
+            pipeline.updated_at = datetime.now(timezone.utc)
         await self.db.flush()
         logger.info(
             "pipeline.toggled",
@@ -168,7 +210,7 @@ class PipelineService:
         Создаёт запись со status=QUEUED. Фактическое исполнение —
         PipelineExecutor берёт QUEUED записи из очереди.
         """
-        pipeline = await self.get(pipeline_id, org_id)
+        pipeline = await self.get(pipeline_id, org_id, for_run=True)
         if not pipeline.is_active:
             raise HTTPException(status_code=400, detail="Pipeline деактивирован")
 
@@ -218,7 +260,7 @@ class PipelineService:
         Резолвит устройства из device_ids / group_id / device_tags,
         создаёт PipelineBatch + PipelineRun для каждого устройства.
         """
-        pipeline = await self.get(pipeline_id, org_id)
+        pipeline = await self.get(pipeline_id, org_id, for_run=True)
         if not pipeline.is_active:
             raise HTTPException(status_code=400, detail="Pipeline деактивирован")
 
