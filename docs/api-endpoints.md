@@ -4,7 +4,7 @@ Generated from `backend.main.app.openapi()` by `scripts/export_api_docs.py`.
 Regenerate with `python -m scripts.export_api_docs`; verify with `--check`.
 The exporter does not run startup hooks or send HTTP requests.
 
-**173 HTTP operations across 136 paths.**
+**174 HTTP operations across 137 paths.**
 
 Full parameters, request bodies, response schemas and declared security schemes:
 [OpenAPI JSON](openapi.json). Manual explanations:
@@ -151,6 +151,7 @@ for tested behavior and remaining limits.
 | `GET` | `/api/v1/scripts/{script_id}` | scripts | 200, 422 | Получить скрипт с историей версий |
 | `PUT` | `/api/v1/scripts/{script_id}` | scripts | 200, 422 | Обновить скрипт (создаёт новую версию при изменении DAG) |
 | `GET` | `/api/v1/scripts/{script_id}/versions` | scripts | 200, 422 | История версий скрипта |
+| `GET` | `/api/v1/scripts/{script_id}/versions/{version_id}` | scripts | 200, 422 | Прочитать одну неизменяемую версию с DAG и хешем |
 | `POST` | `/api/v1/scripts/{script_id}/versions/{version_id}/rollback` | scripts | 200, 422 | Откатить скрипт к указанной версии (создаёт новую версию) |
 | `POST` | `/api/v1/streaming/{device_id}/keyframe` | streaming | 200, 422 | Request Keyframe |
 | `POST` | `/api/v1/streaming/{device_id}/start` | streaming | 200, 422 | Request Stream Start |

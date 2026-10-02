@@ -6909,6 +6909,21 @@
               "default": 50,
               "title": "Per Page"
             }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "active",
+                "archived",
+                "all"
+              ],
+              "type": "string",
+              "default": "active",
+              "title": "State"
+            }
           }
         ],
         "responses": {
@@ -7115,6 +7130,23 @@
               "format": "uuid",
               "title": "Script Id"
             }
+          },
+          {
+            "name": "expected_current_version_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Expected Current Version Id"
+            }
           }
         ],
         "responses": {
@@ -7198,6 +7230,64 @@
         }
       }
     },
+    "/api/v1/scripts/{script_id}/versions/{version_id}": {
+      "get": {
+        "tags": [
+          "scripts"
+        ],
+        "summary": "Прочитать одну неизменяемую версию с DAG и хешем",
+        "operationId": "get_version_api_v1_scripts__script_id__versions__version_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "script_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Script Id"
+            }
+          },
+          {
+            "name": "version_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Version Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScriptVersionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/scripts/{script_id}/versions/{version_id}/rollback": {
       "post": {
         "tags": [
@@ -7232,6 +7322,23 @@
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/RollbackScriptRequest"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Body"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -16442,6 +16549,21 @@
         "type": "object",
         "title": "RequestLogcatRequest"
       },
+      "RollbackScriptRequest": {
+        "properties": {
+          "expected_current_version_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Expected Current Version Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "expected_current_version_id"
+        ],
+        "title": "RollbackScriptRequest",
+        "description": "Opt-in optimistic precondition; legacy callers may omit the body."
+      },
       "RotateDetail": {
         "properties": {
           "device_id": {
@@ -19362,6 +19484,18 @@
               }
             ],
             "title": "Changelog"
+          },
+          "expected_current_version_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Current Version Id"
           }
         },
         "type": "object",
