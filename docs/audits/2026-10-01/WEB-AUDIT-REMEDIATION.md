@@ -2,7 +2,7 @@
 
 Этот журнал продолжает [замороженный аудит](WEB-FULL-CAPABILITY-AUDIT.md) исходников `1354d66`. Исходный документ и evidence сохраняют свою дату и ограничения; их статусы не переписываются задним числом.
 
-**Срез реализации 2 октября 2026, 05:08 UTC+5:** Docker UI `d4364e5`, API `5fcf18a`; 26 source findings исправлено (5 P1 и 21 P2), 15 исходных остаются открытыми. Review3015, 92 suites / 729 tests, types и Docker production build passed. F16 private read, F17 pinned rerun, F19/F20 discovery context исправлены. Реальный variable-only rerun на remote PH025 completed; N01 upload, N03 legacy RPC errors и browser visual OPEN. [Validation](WEB-AUDIT-FIXES-VALIDATION.json) · [Task evidence](../2026-10-02/TASK-ARTIFACTS-AND-RERUN.md) · [Discovery proof](../2026-10-02/DISCOVERY-REQUEST-OWNERSHIP.md).
+**Срез реализации 2 октября 2026, 05:48 UTC+5:** Docker UIeb4598b / API5fcf18a; 28 source findings исправлено (5 P1 и 23 P2), 13 исходных OPEN. 94 suites/753 frontend tests, types/Docker production build passed. F24/F25 группы дополнены; owned empty-group API canary accepted. Дополнительные N01/N03/N04 и browser visual OPEN. [Validation](WEB-AUDIT-FIXES-VALIDATION.json) · [Groups evidence](../2026-10-02/GROUP-WORKFLOWS.md).
 
 ## Исходная фиксация
 
@@ -48,8 +48,8 @@
 | [F21](WEB-FULL-CAPABILITY-AUDIT.md#f21) | P2 | Source исправлен; live OPEN | Мобильное меню: offscreen ссылки остаются активными |
 | [F22](WEB-FULL-CAPABILITY-AUDIT.md#f22) | P2 | Source исправлен; live OPEN | Общий DialogContent: нет ограничения высоты по умолчанию |
 | [F23](WEB-FULL-CAPABILITY-AUDIT.md#f23) | P2 | Source исправлен; live OPEN | Command palette: частичная навигация и нет restore focus |
-| [F24](WEB-FULL-CAPABILITY-AUDIT.md#f24) | P2 | Открыто | Legacy /fleet: настоящая кнопка без действия |
-| [F25](WEB-FULL-CAPABILITY-AUDIT.md#f25) | P2 | Открыто | Группы: редактирование и состав не раскрыты |
+| [F24](WEB-FULL-CAPABILITY-AUDIT.md#f24) | P2 | Source исправлен; live OPEN | Legacy /fleet: настоящая кнопка без действия |
+| [F25](WEB-FULL-CAPABILITY-AUDIT.md#f25) | P2 | Source исправлен; live OPEN | Группы: редактирование и состав не раскрыты |
 | [F26](WEB-FULL-CAPABILITY-AUDIT.md#f26) | P3 | Открыто | Локации: backend география/иерархия не доступны в форме |
 | [F27](WEB-FULL-CAPABILITY-AUDIT.md#f27) | P2 | Открыто | Сценарии: архив/rollback есть в backend, нет workflow |
 | [F28](WEB-FULL-CAPABILITY-AUDIT.md#f28) | P2 | Открыто | Pipeline: отсутствует полноценный detail/edit workflow |
@@ -282,3 +282,7 @@ Native review процессы исчезли после ранее записа
 ## F19/F20 — 2 октября 05:08 UTC+5
 
 Commit `d4364e5`: submitted scan context сохраняется вместе с validated response; registration copy/payload согласованы. Дополнительно исправлен N02: required workstation UUID, typed port_range/timeout и registered_id/already_registered вместо несуществующих fields. Android APK не зависит от PC Agent; ADB-режим обозначен отдельно. Before d5d3d14: 10 failed / 1 control passed / 0 runtime errors; after11 passed, full92 suites/729 tests и types/Docker build passed. Review3015 установлен; login/API/observability/events WS и compiled stamp подтверждены. Совокупно26 исправлено /15 исходных OPEN, новые N01 и N03 OPEN. N03 — backend legacy RPC failure выглядит empty scan; живой scan не запускался. [Контракт, доказательства и ограничения](../2026-10-02/DISCOVERY-REQUEST-OWNERSHIP.md).
+
+## F24/F25 — 2 октября 05:48 UTC+5
+
+Commit `eb4598b` добавляет metadata editor, confirmed deletion/membership cache invalidation, URL-scoped device registry и legacy fleet redirect. Beforea7829df: 23 failed/9 controls/0 runtime errors; after32 targeted passed; full94 suites/753 tests, types/production Docker build passed. Live API подтвердил own-group create/update/GET persistence/409/filter/204 cleanup, исходные группы и memberships сохранены. Review3015 установлен; все44 прежних containers (14running) без изменений. N04 parent null clear воспроизведён и OPEN; parent editing read-only. 28/41 исправлено, 13 исходных и N01/N03/N04 OPEN. [Полный отчёт и receipts](../2026-10-02/GROUP-WORKFLOWS.md). Browser visual не принят.
