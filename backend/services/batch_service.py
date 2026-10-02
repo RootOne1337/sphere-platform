@@ -66,6 +66,10 @@ class BatchService:
         )
         if not script:
             raise HTTPException(status_code=404, detail="Script not found")
+        if request.expected_current_version_id is not None:
+            from backend.services.script_service import ScriptService
+
+            script = await ScriptService(self.db).get_for_run(request.script_id, org_id, request.expected_current_version_id)
         if not script.current_version_id:
             raise HTTPException(status_code=400, detail="Script has no versions")
 

@@ -166,6 +166,7 @@ export function useCreateTask() {
   return useMutation({
     mutationFn: async (body: {
       script_id: string;
+      expected_current_version_id?: string;
       device_id: string;
       priority?: number;
     }) => {

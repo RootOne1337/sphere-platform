@@ -157,6 +157,7 @@ async def create_task(
         priority=body.priority,
         webhook_url=body.webhook_url,
         account_id=body.account_id,
+        expected_current_version_id=body.expected_current_version_id,
     )
     await db.commit()
     # Перезагрузить с relationships для сериализации (device_name, script_name)

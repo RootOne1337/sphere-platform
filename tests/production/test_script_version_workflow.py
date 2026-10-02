@@ -206,3 +206,34 @@ async def test_rollback_pins_next_task_and_archive_preserves_existing_task(world
         with pytest.raises(HTTPException) as archived:
             await TaskService(db).create_task(world.script.id, world.dev_b.id, world.org_a.id)
         assert archived.value.status_code == 404
+
+
+@pytest.mark.parametrize("operation", ["task", "batch"])
+@pytest.mark.parametrize("stale", [False, True])
+async def test_run_condition_pins_inspected_version_or_refuses_admission(world, operation, stale):
+    updated = await edit(world)
+    expected = str(world.version.id) if stale else updated["current_version_id"]
+    headers = world.auth(world.users["org_admin"])
+    path = "/api/v1/tasks" if operation == "task" else "/api/v1/batches"
+    body = {"script_id": str(world.script.id), "expected_current_version_id": expected}
+    if operation == "task":
+        body["device_id"] = str(world.dev_a.id)
+    else:
+        body["device_ids"] = [str(world.dev_a.id), str(world.dev_a2.id)]
+    result = await world.client.post(path, headers=headers, json=body)
+    assert result.status_code == (409 if stale else 201 if operation == "task" else 202), result.text
+    if not stale:
+        assert result.json()["script_version_id"] == expected
+
+
+async def test_run_share_lock_coexists_but_fences_version_change(world):
+    async with world.sessions() as a, world.sessions() as b, world.sessions() as writer:
+        await ScriptService(a).get_for_run(world.script.id, world.org_a.id, world.version.id)
+        await asyncio.wait_for(ScriptService(b).get_for_run(world.script.id, world.org_a.id, world.version.id), 2)
+        with pytest.raises(HTTPException) as locked:
+            await asyncio.wait_for(ScriptService(writer).archive_script(world.script.id, world.org_a.id), 2)
+        assert locked.value.status_code == 409
+        await a.commit()
+        await b.commit()
+        await ScriptService(writer).archive_script(world.script.id, world.org_a.id)
+        await writer.commit()

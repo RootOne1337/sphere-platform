@@ -42,7 +42,7 @@ class ScriptService:
     # ── Вспомогательные ─────────────────────────────────────────────────────
 
     async def _get_script(
-        self, script_id: uuid.UUID, org_id: uuid.UUID, *, for_write: bool = False
+        self, script_id: uuid.UUID, org_id: uuid.UUID, *, for_write: bool = False, for_run: bool = False
     ) -> Script:
         """Загрузить скрипт, проверить принадлежность org. 404 если не найден."""
         stmt = (
@@ -50,10 +50,10 @@ class ScriptService:
             .where(Script.id == script_id, Script.org_id == org_id)
             .options(selectinload(Script.current_version))
         )
-        if for_write:
+        if for_write or for_run:
             # Lock the parent until commit before allocating a version or archiving.
             # Refresh a previously loaded identity: READ COMMITTED must see the winner.
-            stmt = stmt.with_for_update(nowait=True).execution_options(populate_existing=True)
+            stmt = stmt.with_for_update(nowait=True, read=for_run).execution_options(populate_existing=True)
         try:
             script = await self.db.scalar(stmt)
         except DBAPIError as exc:
@@ -74,6 +74,14 @@ class ScriptService:
     def _check_active(script: Script) -> None:
         if script.is_archived:
             raise HTTPException(status_code=409, detail="Archived script cannot be changed")
+
+    async def get_for_run(self, script_id: uuid.UUID, org_id: uuid.UUID, expected: uuid.UUID) -> Script:
+        # Shared locks let independent device admissions coexist, while preventing
+        # update/archive from changing the inspected version until admission commits.
+        script = await self._get_script(script_id, org_id, for_run=True)
+        self._check_active(script)
+        self._check_current(script, expected)
+        return script
 
     async def _get_latest_version_number(self, script_id: uuid.UUID) -> int:
         """Получить максимальный номер версии для скрипта."""

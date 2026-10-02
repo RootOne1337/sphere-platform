@@ -11,6 +11,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 class BatchExecutionRequest(BaseModel):
     script_id: uuid.UUID
+    expected_current_version_id: uuid.UUID | None = None
     device_ids: list[uuid.UUID] = Field(
         min_length=1,
         max_length=1000,

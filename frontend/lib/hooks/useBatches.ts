@@ -31,6 +31,7 @@ export function useStartBatch() {
   return useMutation({
     mutationFn: async (body: {
       script_id: string;
+      expected_current_version_id?: string;
       device_ids: string[];
       wave_size?: number;
       wave_delay_ms?: number;

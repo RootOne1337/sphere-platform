@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { Loader2, Play, Users, Monitor, ListChecks } from 'lucide-react';
@@ -40,6 +40,8 @@ interface RunScriptModalProps {
   scriptName: string;
   open: boolean;
   onClose: () => void;
+  expectedVersion?: { id: string; version: number; dag_hash: string | null };
+  requireVersion?: boolean;
 }
 
 // ─── Component ──────────────────────────────────────────────────────────────
@@ -49,6 +51,8 @@ export function RunScriptModal({
   scriptName,
   open,
   onClose,
+  expectedVersion,
+  requireVersion = false,
 }: RunScriptModalProps) {
   const router = useRouter();
   const qc = useQueryClient();
@@ -67,6 +71,12 @@ export function RunScriptModal({
 
   // Result state
   const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
+  const [uncertain, setUncertain] = useState(false);
+  const busy = useRef(false);
+  const live = useRef(true);
+  useEffect(() => { live.current = true; return () => { live.current = false; }; }, []);
+  const versionUnavailable = requireVersion && (!expectedVersion?.id || !expectedVersion.dag_hash);
 
   useEffect(() => {
     const timeout = window.setTimeout(() => setDebouncedDeviceSearch(deviceSearch.trim()), 300);
@@ -118,6 +128,7 @@ export function RunScriptModal({
   // ── Submit ───────────────────────────────────────────────────────────────
 
   async function handleRun() {
+    if (busy.current || uncertain || versionUnavailable) return;
     setError(null);
     if (devicesLoading || devicesLoadError || scopeIsIncomplete) {
       setError('Список устройств неполный или недоступен. Уточните цель и повторите после загрузки полного списка.');
@@ -134,6 +145,7 @@ export function RunScriptModal({
       return;
     }
 
+    busy.current = true; setPending(true);
     try {
       if (deviceIds.length === 1) {
         // Single device → create direct task
@@ -141,7 +153,10 @@ export function RunScriptModal({
           script_id: scriptId,
           device_id: deviceIds[0],
           priority,
+          ...(expectedVersion ? { expected_current_version_id: expectedVersion.id } : {}),
         });
+        if (expectedVersion && (task?.script_version_id !== expectedVersion.id || task.script_id !== scriptId || task.device_id !== deviceIds[0])) throw new Error('Unconfirmed task receipt');
+        if (!live.current) return;
         qc.invalidateQueries({ queryKey: ['tasks'] });
         onClose();
         router.push(`/tasks/${task.id}`);
@@ -154,26 +169,40 @@ export function RunScriptModal({
           wave_delay_ms: waveDelayMs,
           priority,
           name: `${scriptName} — batch`,
+          ...(expectedVersion ? { expected_current_version_id: expectedVersion.id } : {}),
         });
+        if (expectedVersion && (batch.script_version_id !== expectedVersion.id || batch.script_id !== scriptId || batch.total !== deviceIds.length)) throw new Error('Unconfirmed batch receipt');
+        if (!live.current) return;
         qc.invalidateQueries({ queryKey: ['tasks'] });
         onClose();
         router.push(`/tasks?batch_id=${batch.id}`);
       }
     } catch (err: unknown) {
+      if (!live.current) return;
+      if (requireVersion) {
+        const status = (err as { response?: { status?: number } })?.response?.status;
+        if (status === 409) setError('Версия сценария изменилась или устройство занято. Закройте окно, обновите каталог и подтвердите запуск заново.');
+        else if (status && status >= 400 && status < 500) setError('Сервер отклонил запуск. Проверьте доступ, сценарий и выбранные устройства.');
+        else { setUncertain(true); setError('Результат запуска неизвестен. Проверьте журнал заданий перед новым запуском.'); }
+        return;
+      }
       const msg =
         (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail ??
         'Ошибка запуска скрипта';
       setError(typeof msg === 'string' ? msg : JSON.stringify(msg));
+    } finally {
+      busy.current = false;
+      if (live.current) setPending(false);
     }
   }
 
-  const isSubmitting = createTask.isPending || startBatch.isPending;
+  const isSubmitting = pending || createTask.isPending || startBatch.isPending;
   const listIsPartial = Boolean(allDevicesData && allDevicesData.items.length < allDevicesData.total);
 
   // ── Render ───────────────────────────────────────────────────────────────
 
   return (
-    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+    <Dialog open={open} onOpenChange={(v) => { if (!v && !busy.current) onClose(); }}>
       <DialogContent className="max-w-xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -186,6 +215,9 @@ export function RunScriptModal({
         </DialogHeader>
 
         <div className="space-y-5">
+          {expectedVersion && <div className="space-y-1 rounded-lg border bg-muted/30 p-3 text-sm"><p className="font-medium">Версия для запуска: v{expectedVersion.version}</p><p className="break-all font-mono text-xs">SHA-256: {expectedVersion.dag_hash ?? 'Не сообщён'}</p><p className="text-xs text-muted-foreground">Сервер проверит эту версию до создания заданий. При изменении сценария запуск будет отклонён.</p></div>}
+          {versionUnavailable && <p role="alert" className="text-sm text-destructive">Версия сценария не подтверждена. Обновите каталог перед запуском.</p>}
+          {uncertain && <a className="text-sm text-primary underline" href={`/tasks?script_id=${encodeURIComponent(scriptId)}`}>Проверить журнал заданий этого сценария</a>}
           {/* ── Target mode ─────────────────────────────────────────── */}
           <div className="space-y-2">
             <Label className="text-sm font-medium">Целевые устройства</Label>
@@ -362,7 +394,7 @@ export function RunScriptModal({
 
           {/* ── Error ────────────────────────────────────────────────── */}
           {error && (
-            <p className="text-sm text-destructive rounded border border-destructive/40 bg-destructive/10 px-3 py-2">
+            <p role="alert" className="text-sm text-destructive rounded border border-destructive/40 bg-destructive/10 px-3 py-2">
               {error}
             </p>
           )}
@@ -375,7 +407,7 @@ export function RunScriptModal({
           <Button
             onClick={handleRun}
             disabled={
-              isSubmitting ||
+              isSubmitting || uncertain || versionUnavailable ||
               (targetMode === 'group' && !selectedGroupId) ||
               (targetMode === 'select' && selectedDeviceIds.size === 0) ||
               devicesLoading ||

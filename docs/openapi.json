@@ -10806,6 +10806,18 @@
             "format": "uuid",
             "title": "Script Id"
           },
+          "expected_current_version_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Current Version Id"
+          },
           "device_ids": {
             "items": {
               "type": "string",
@@ -12482,6 +12494,18 @@
             "type": "string",
             "format": "uuid",
             "title": "Script Id"
+          },
+          "expected_current_version_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Current Version Id"
           },
           "device_id": {
             "type": "string",

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { ArrowRight, Braces, Code2, Play, Plus, RefreshCw, Workflow } from 'lucide-react';
-import { useScript, useScripts, type Script } from '@/lib/hooks/useScripts';
+import { useScript, useScripts, type Script, type ScriptVersion } from '@/lib/hooks/useScripts';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -29,7 +29,7 @@ export default function ScriptsPage() {
   const searching = search.trim() !== query;
   const { data: scriptsData, isLoading, isError, isFetching, refetch } = useScripts({ query: query || undefined, page, per_page: 50, ...(state === 'active' ? {} : { state }) });
   const scripts = scriptsData?.items ?? [];
-  const [runTarget, setRunTarget] = useState<{ id: string; name: string } | null>(null);
+  const [runTarget, setRunTarget] = useState<{ id: string; name: string; version: ScriptVersion | null; scope: string } | null>(null);
   const [inspectedScriptId, setInspectedScriptId] = useState<string | null>(null);
 
   return (
@@ -85,7 +85,7 @@ export default function ScriptsPage() {
                     <Code2 className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
                     {inspectedScriptId === script.id ? 'Скрыть DAG' : 'Посмотреть DAG'}
                   </Button>
-                  <Button type="button" size="sm" onClick={() => setRunTarget({ id: script.id, name: script.name })} disabled={script.is_archived}><Play className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />Запустить</Button>
+                  <Button type="button" size="sm" onClick={() => setRunTarget({ id: script.id, name: script.name, version: getCurrentScriptVersion(script), scope })} disabled={script.is_archived}><Play className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />Запустить</Button>
                   <Button type="button" size="sm" variant="outline" disabled={!actor} onClick={() => setWorkflow({ id: script.id, scope })}>История и управление</Button>
                   {!script.is_archived && <Button asChild size="sm" variant="outline"><Link href={`/scripts/builder?id=${encodeURIComponent(script.id)}`}>Открыть <ArrowRight className="ml-1.5 h-3.5 w-3.5" aria-hidden="true" /></Link></Button>}
                 </div>
@@ -98,7 +98,7 @@ export default function ScriptsPage() {
 
       {!isError && !isLoading && !searching && scriptsData && <CatalogPagination page={page} perPage={50} total={scriptsData.total} busy={isFetching} label="сценарии" onPageChange={(next) => { setPage(next); setInspectedScriptId(null); }} />}
 
-      {runTarget && <RunScriptModal scriptId={runTarget.id} scriptName={runTarget.name} open onClose={() => setRunTarget(null)} />}
+      {runTarget?.scope === scope && <RunScriptModal key={`${scope}:${runTarget.id}`} scriptId={runTarget.id} scriptName={runTarget.name} expectedVersion={runTarget.version ?? undefined} requireVersion open onClose={() => setRunTarget(null)} />}
       {workflow?.scope === scope && actor && <ScriptVersionsDialog key={`${scope}:${workflow.id}`} scriptId={workflow.id} orgId={actor.org_id} scope={scope} canManage={canWriteScript(actor.role)} available={!isError && !searching} onClose={() => setWorkflow(null)} />}
     </PageFrame>
   );

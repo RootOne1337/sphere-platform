@@ -11,6 +11,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 class CreateTaskRequest(BaseModel):
     script_id: uuid.UUID
+    expected_current_version_id: uuid.UUID | None = None
     device_id: uuid.UUID
     priority: int = Field(default=5, ge=1, le=10)
     account_id: uuid.UUID | None = Field(

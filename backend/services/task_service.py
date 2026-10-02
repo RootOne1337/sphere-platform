@@ -194,8 +194,14 @@ class TaskService:
         script_version_id: uuid.UUID | None = None,
         task_id: uuid.UUID | None = None,
         input_params: dict | None = None,
+        expected_current_version_id: uuid.UUID | None = None,
     ) -> Task:
-        script = await self._get_script(script_id, org_id)
+        if expected_current_version_id is not None:
+            from backend.services.script_service import ScriptService
+
+            script = await ScriptService(self.db).get_for_run(script_id, org_id, expected_current_version_id)
+        else:
+            script = await self._get_script(script_id, org_id)
         version_id = script_version_id or script.current_version_id
         if not version_id:
             raise HTTPException(status_code=400, detail="Script has no versions")

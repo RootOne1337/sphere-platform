@@ -40,7 +40,7 @@ function makeDevices(count: number) {
   }));
 }
 
-function renderModal(total: number, returnedCount = total) {
+function renderModal(total: number, returnedCount = total, versioned = false, missingVersion = false) {
   jest.mocked(useDevices).mockReturnValue({
     data: {
       items: makeDevices(returnedCount),
@@ -54,7 +54,8 @@ function renderModal(total: number, returnedCount = total) {
   } as never);
 
   return render(
-    <RunScriptModal scriptId="script-1" scriptName="Smoke script" open onClose={jest.fn()} />,
+    <RunScriptModal scriptId="script-1" scriptName="Smoke script" open onClose={jest.fn()} requireVersion={versioned}
+      expectedVersion={versioned && !missingVersion ? { id: 'version-3', version: 3, dag_hash: 'a'.repeat(64) } : undefined} />,
   );
 }
 
@@ -81,4 +82,47 @@ it('allows a complete scope at the backend batch limit', async () => {
 
   await waitFor(() => expect(mockStartBatch).toHaveBeenCalledTimes(1));
   expect(mockStartBatch.mock.calls[0][0].device_ids).toHaveLength(1000);
+});
+
+it('shows the inspected version/hash and verifies the direct task receipt', async () => {
+  mockCreateTask.mockResolvedValue({ id: 'task-1', script_id: 'script-1', device_id: 'device-1', script_version_id: 'version-3' });
+  renderModal(1, 1, true);
+  expect(screen.getByText('Версия для запуска: v3')).toBeInTheDocument();
+  expect(screen.getByText('SHA-256: ' + 'a'.repeat(64))).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Запустить на 1 уст.' }));
+  await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/tasks/task-1'));
+  expect(mockCreateTask).toHaveBeenCalledWith({ script_id: 'script-1', device_id: 'device-1', priority: 5, expected_current_version_id: 'version-3' });
+});
+
+it('carries the inspected version into the full batch admission', async () => {
+  mockStartBatch.mockResolvedValue({ id: 'batch-1', script_id: 'script-1', script_version_id: 'version-3', total: 2 });
+  renderModal(2, 2, true);
+  fireEvent.click(screen.getByRole('button', { name: 'Запустить на 2 уст.' }));
+  await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/tasks?batch_id=batch-1'));
+  expect(mockStartBatch.mock.calls[0][0].expected_current_version_id).toBe('version-3');
+});
+
+it('makes a version conflict visible and does not retry admission', async () => {
+  mockCreateTask.mockRejectedValue({ response: { status: 409 } });
+  renderModal(1, 1, true);
+  fireEvent.click(screen.getByRole('button', { name: 'Запустить на 1 уст.' }));
+  expect(await screen.findByRole('alert')).toHaveTextContent('Версия сценария изменилась');
+  expect(mockCreateTask).toHaveBeenCalledTimes(1);
+  expect(mockPush).not.toHaveBeenCalled();
+});
+
+it('blocks another admission after an unexpected version receipt', async () => {
+  mockCreateTask.mockResolvedValue({ id: 'task-1', script_id: 'script-1', device_id: 'device-1', script_version_id: 'different' });
+  renderModal(1, 1, true);
+  fireEvent.click(screen.getByRole('button', { name: 'Запустить на 1 уст.' }));
+  expect(await screen.findByRole('alert')).toHaveTextContent('Результат запуска неизвестен');
+  expect(screen.getByRole('button', { name: 'Запустить на 1 уст.' })).toBeDisabled();
+  expect(screen.getByRole('link', { name: 'Проверить журнал заданий этого сценария' })).toHaveAttribute('href', '/tasks?script_id=script-1');
+  expect(mockPush).not.toHaveBeenCalled();
+});
+
+it('requires a known immutable version when invoked from the catalog', () => {
+  renderModal(1, 1, true, true);
+  expect(screen.getByRole('alert')).toHaveTextContent('Версия сценария не подтверждена');
+  expect(screen.getByRole('button', { name: 'Запустить на 1 уст.' })).toBeDisabled();
 });
