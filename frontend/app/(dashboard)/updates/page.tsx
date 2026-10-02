@@ -22,6 +22,9 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { useAuthStore } from '@/lib/store';
+import { RecoveryDialog } from '@/src/features/updates/RecoveryDialog';
+import { isManagedAndroidRelease } from '@/src/features/updates/recovery';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -45,9 +48,9 @@ interface ReleasesResponse {
 
 // ── Hooks ─────────────────────────────────────────────────────────────────────
 
-function useReleases(platform?: string, flavor?: string) {
+function useReleases(platform?: string, flavor?: string, scope?: string) {
   return useQuery<ReleasesResponse>({
-    queryKey: ['ota-releases', platform ?? 'all', flavor ?? 'all'],
+    queryKey: ['ota-releases', scope, platform ?? 'all', flavor ?? 'all'],
     queryFn: async ({ signal }) => {
       const params = new URLSearchParams();
       if (platform) params.set('platform', platform);
@@ -203,12 +206,21 @@ function CreateReleaseDialog({ onCreated }: { onCreated: () => void }) {
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function UpdatesPage() {
+  const actor = useAuthStore(state => state.user);
+  const sessionVersion = useAuthStore(state => state.sessionVersion);
+  const scope = `${actor?.id}:${actor?.org_id}:${actor?.role}:${sessionVersion}`;
+  return <UpdatesCatalog key={scope} scope={scope} canManage={actor?.role === 'super_admin'} canReadRecovery={Boolean(actor)} />;
+}
+
+function UpdatesCatalog({ scope, canManage, canReadRecovery }: { scope: string; canManage: boolean; canReadRecovery: boolean }) {
   const [platformFilter, setPlatformFilter] = useState<string>('all');
   const [flavorFilter, setFlavorFilter] = useState<string>('all');
   const { data, isPending, isFetching, isError, error, refetch } = useReleases(
     platformFilter === 'all' ? undefined : platformFilter,
     flavorFilter === 'all' ? undefined : flavorFilter,
+    scope,
   );
+  const [recoveryRelease, setRecoveryRelease] = useState<Release | null>(null);
 
   const releases = isError ? [] : data?.releases ?? [];
 
@@ -236,7 +248,7 @@ export default function UpdatesPage() {
           <Button variant="outline" disabled={isFetching} onClick={() => { void refetch(); }}>
             Обновить релизы
           </Button>
-          <CreateReleaseDialog onCreated={() => { void refetch(); }} />
+          {canManage && <CreateReleaseDialog onCreated={() => { void refetch(); }} />}
         </div>
       </div>
 
@@ -244,8 +256,8 @@ export default function UpdatesPage() {
         Publishing a release makes it eligible for all agents of that flavor on their next
         scheduled check <strong>only when the platform also matches</strong>. Registering a
         release does not upload the APK. Android scheduling and connectivity can delay
-        delivery. This page does not target a single device or confirm installation;
-        verify the installed version before expanding a rollout.
+        delivery. Addressed OTA below uses a separate bounded permission and verifies
+        its terminal receipt and installed version before expanding a rollout.
       </div>
 
       {/* Filters */}
@@ -322,7 +334,9 @@ export default function UpdatesPage() {
                   SHA-256: {release.sha256 || '—'}
                 </div>
               </div>
-              <Button
+              <div className="flex flex-wrap justify-end gap-2">
+              {canReadRecovery && isManagedAndroidRelease(release) && <Button variant="outline" size="sm" disabled={isFetching || isError} onClick={() => setRecoveryRelease({ ...release })}>{canManage ? 'Адресное OTA' : 'Состояние OTA'}</Button>}
+              {canManage && <Button
                 variant="ghost"
                 size="sm"
                 className="text-destructive hover:text-destructive shrink-0"
@@ -330,12 +344,16 @@ export default function UpdatesPage() {
                 onClick={() => handleDelete(release.id)}
               >
                 Delete
-              </Button>
+              </Button>}
+              </div>
             </div>
 
           </div>
         ))}
       </div>
+      {recoveryRelease && <RecoveryDialog release={recoveryRelease} scope={scope} canManage={canManage}
+        available={!isError && !isFetching && Boolean(releases.find(value => value.id === recoveryRelease.id && value.sha256 === recoveryRelease.sha256 && value.version_code === recoveryRelease.version_code && value.version_name === recoveryRelease.version_name && value.download_url === recoveryRelease.download_url && value.flavor === recoveryRelease.flavor && value.platform === recoveryRelease.platform))}
+        onClose={() => setRecoveryRelease(null)} />}
     </div>
   );
 }
