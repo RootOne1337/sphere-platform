@@ -2,7 +2,7 @@
 
 Этот журнал продолжает [замороженный аудит](WEB-FULL-CAPABILITY-AUDIT.md) исходников `1354d66`. Исходный документ и evidence сохраняют свою дату и ограничения; их статусы не переписываются задним числом.
 
-**Срез реализации 2 октября 2026, 06:42 UTC+5:** Docker UI a9240a7/API933164e; 28 source findings исправлено (5 P1/23 P2), 13 исходных OPEN. 95 suites/761 frontend tests, types/build passed;34 group HTTP и24 PostgreSQL cases. N04 hierarchy и N05 rollback audit исправлены, finite live API/readback accepted. N01/N03/browser visual OPEN. [Validation](WEB-AUDIT-FIXES-VALIDATION.json) · [N04/N05 evidence](../2026-10-02/GROUP-HIERARCHY-AND-AUDIT.md).
+**Срез реализации 2 октября 2026, 16:18 UTC+5:** Docker UI e2362eb/API933164e; 29 source findings исправлено (5 P1/24 P2), 12 исходных OPEN. 96 suites/777 frontend tests, types/build passed;23 user HTTP и49 actual RBAC pairs. F38 user form/targeted access dialogs исправлен; finite negative user API readback passed. N04/N05 proofs сохранены; N01/N03/browser visual OPEN. [Validation](WEB-AUDIT-FIXES-VALIDATION.json) · [F38 evidence](../2026-10-02/USER-ACCESS.md).
 
 ## Исходная фиксация
 
@@ -62,7 +62,7 @@
 | [F35](WEB-FULL-CAPABILITY-AUDIT.md#f35) | P2 | Открыто | XPath-инспектор на видеокарточке ещё отсутствует |
 | [F36](WEB-FULL-CAPABILITY-AUDIT.md#f36) | P2 | Открыто | Управление quality/FPS не раскрыто в single stream |
 | [F37](WEB-FULL-CAPABILITY-AUDIT.md#f37) | P2 | Открыто | Аудит: фильтры и CSV действуют на текущую страницу |
-| [F38](WEB-FULL-CAPABILITY-AUDIT.md#f38) | P2 | Открыто | Пользователи: форма не связывает backend validation с полями |
+| [F38](WEB-FULL-CAPABILITY-AUDIT.md#f38) | P2 | Source исправлен; live OPEN | Пользователи: форма не связывает backend validation с полями |
 | [F39](WEB-FULL-CAPABILITY-AUDIT.md#f39) | P2 | Открыто | Role-aware оболочка не закрывает UX отказов доступа |
 | [F40](WEB-FULL-CAPABILITY-AUDIT.md#f40) | P2 | Открыто | Низкая полнота текущего визуального acceptance |
 | [F41](WEB-FULL-CAPABILITY-AUDIT.md#f41) | P2 | Открыто | Зелёный CI не покрывает перечисленные operator outcomes |
@@ -294,3 +294,7 @@ Commit `eb4598b` добавляет metadata editor, confirmed deletion/membersh
 Runtime logs выявили N05: rollback удалял ORM tenant attrs и audit failed requests терялся. `933164e` сохраняет immutable authenticated UUID snapshot.4 PostgreSQL/ASGI failures воспроизведены; после24 combined DB cases passed и в actual final image. Live audit readback подтвердил3 refused PUT 400/404/409 с правильным actor/status. Старый локальный dependency export отличался; production-image OpenAPI check matched. Первое live audit чтение использовало неподдерживаемый route; исправленный readback принят без повторения writes.
 
 Review3015 UIa9240a7/API933164e установлен; login/API/Prometheus/Grafana/events WS passed,43 остальных containers preserved.28/41 source fixes,13 исходных OPEN; дополнительные N01/N03 OPEN, N04/N05 source+finite API fixed. Outbox durability и browser visual OPEN. Published 1767bec полностью прошёл CI, новая публикация имеет собственные checks. [Полный отчёт и allowlisted evidence](../2026-10-02/GROUP-HIERARCHY-AND-AUDIT.md).
+
+## F38 —2 октября16:18 UTC+5
+
+Commit `e2362eb`: native user creation form, safe field-level errors/focus, captured role/deactivation dialogs, actual grant matrix, exact identity/receipt checks, active-tab abortable session-scoped catalog. Before4898577:16 assertion failures/0 runtime errors; after16 workflows+5 hook cases,23 user HTTP,49 RBAC pairs. Full96 suites/777 tests/types/lint/production Docker build passed;44 прежних warnings. UI3015 установлен16:09, API933164e сохранён. Login/API/Prometheus/Grafana/events WS/compiled SHA passed; negative user API422/404/400 и неизменность прав подтверждены.44 остальных containers,14running сохранены.29/41 source findings fixed,12 original OPEN. Browser visual и successful live user mutation OPEN; F39 общей оболочки не закрыт. Published4898577 полностью прошёл CI; новый head проверяется отдельно. [Контракт и allowlisted evidence](../2026-10-02/USER-ACCESS.md).

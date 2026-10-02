@@ -22,7 +22,7 @@ non-empty move и browser UI приёмка остаются открытыми.
 [Workflow и доказательства F24/F25](../audits/2026-10-02/GROUP-WORKFLOWS.md).
 Выбор/снятие родителя доступен; иерархия не перемещает устройства. Explicit null,
 cycle rejection и сохранность memberships подтверждены finite canary.
-[Контракт](GROUP-HIERARCHY.md) · [Последняя установка и N05 audit](../audits/2026-10-02/GROUP-HIERARCHY-AND-AUDIT.md).
+[Контракт](GROUP-HIERARCHY.md) · [Иерархия и N05 audit, установка06:41](../audits/2026-10-02/GROUP-HIERARCHY-AND-AUDIT.md) · [Текущая установка](CURRENT-STATE.md).
 
 ## Что получает браузер
 

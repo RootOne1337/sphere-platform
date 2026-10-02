@@ -16,9 +16,9 @@
 </div>
 
 > [!NOTE]
-> **Текущий срез: 2 октября 2026, 06:42 UTC+5.** После фиксации полного
-> аудита исправлено **28 source findings**; **95 suites / 761 frontend tests**,
-> types и production compile passed. Проверочный веб **3015 в Docker**, UI **a9240a7**, backend **933164e**;
+> **Текущий срез: 2 октября 2026, 16:18 UTC+5.** После фиксации полного
+> аудита исправлено **29 source findings**; **96 suites / 777 frontend tests**,
+> types и production compile passed. Проверочный веб **3015 в Docker**, UI **e2362eb**, backend **933164e**;
 > login/API, Prometheus/Grafana и events WS проверены. Предыдущий restart evidence сохранён. На remote PH025
 > подтверждён pinned rerun по двум настоящим Android results.
 > [Runtime evidence](docs/audits/2026-10-02/REVIEW-RUNTIME-AND-REMOTE-RERUN.md).
@@ -27,7 +27,9 @@
 > [F24/F25 evidence](docs/audits/2026-10-02/GROUP-WORKFLOWS.md).
 > N04: parent clear/cycles и N05: audit после rollback исправлены и подтверждены live API.
 > [Иерархия и audit evidence](docs/audits/2026-10-02/GROUP-HIERARCHY-AND-AUDIT.md).
-> Android artifact upload N01, visual acceptance, N03 и 13 исходных findings открыты;
+> F38: user form, ошибки полей и адресные role/deactivate dialogs установлены.
+> [User access / evidence](docs/audits/2026-10-02/USER-ACCESS.md).
+> Android artifact upload N01, visual acceptance, N03 и 12 исходных findings открыты;
 > public frontend не заменён. [Журнал](docs/audits/2026-10-01/WEB-AUDIT-REMEDIATION.md) ·
 > [Task contracts/evidence](docs/audits/2026-10-02/TASK-ARTIFACTS-AND-RERUN.md).
 >
@@ -49,7 +51,9 @@
 ## 🧭 Что такое Sphere
 
 Sphere — self-hosted платформа управления Android-устройствами и эмуляторами.
-Она объединяет **веб оператора, сервер заданий, Android APK и агент рабочей станции**.
+Она объединяет **веб оператора, сервер заданий и Android APK**. Дополнительный
+агент рабочей станции нужен только для отдельных legacy операций с эмуляторами;
+Android-подключение и исполнение APK от него не зависят.
 Сервер и устройства могут находиться в разных сетях: для подключения нужен доступный
 маршрут к вашей установке, а не физическое присутствие рядом с каждым Android.
 

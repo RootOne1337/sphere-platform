@@ -16,7 +16,7 @@ Source: `1354d66660041ba17afb64399d567ca29dd91866`. Режим замороже�
 
 Текущее продолжение: [журнал исправлений и статусы F01–F41](WEB-AUDIT-REMEDIATION.md). Исторический аудит остаётся неизменным.
 
-Последний review UI **a9240a7**, backend **933164e**,2 октября 06:41 UTC+5: 28 source fixes/13 исходных OPEN, 95 suites/761 frontend tests. N04 parent clearing/cycles и N05 audit после rollback исправлены; finite live API/readback passed. N01/N03 и browser visual остаются OPEN. [N04/N05 и receipts](../2026-10-02/GROUP-HIERARCHY-AND-AUDIT.md) · [Validation](WEB-AUDIT-FIXES-VALIDATION.json). Старые runtime/restart/canary results сохраняются как датированные срезы.
+Последний review UI **e2362eb**, backend **933164e**,2 октября16:18 UTC+5:29 source fixes/12 исходных OPEN,96 suites/777 frontend tests. F38 user form/role/deactivation dialogs исправлен, finite negative API accepted; N04/N05 proofs сохранены. N01/N03 и browser visual OPEN. [F38 и receipts](../2026-10-02/USER-ACCESS.md) · [Validation](WEB-AUDIT-FIXES-VALIDATION.json). Старые runtime/restart/canary results сохраняют собственные даты.
 
 ## Runtime и Android follow-up — 2 октября 04:51 UTC+5
 

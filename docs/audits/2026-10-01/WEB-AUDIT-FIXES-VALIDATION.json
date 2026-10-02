@@ -1,7 +1,7 @@
 {
-  "observedAt": "2026-10-02T01:43:14.016900+00:00",
+  "observedAt": "2026-10-02T11:20:12.413285+00:00",
   "timezone": "Asia/Yekaterinburg",
-  "source": "933164e2929be0223b9a918902795ade7f0a6dfa",
+  "source": "e2362eb0a9896505a1d4c78609dfcb07e83eac72",
   "frozenAuditSource": "1354d66660041ba17afb64399d567ca29dd91866",
   "auditCommitBeforeProductEdits": "80fb365",
   "implementationCommits": [
@@ -32,7 +32,8 @@
     "eb4598b",
     "dce2c99",
     "a9240a7",
-    "933164e"
+    "933164e",
+    "e2362eb"
   ],
   "sourceFindingsFixed": [
     "F01",
@@ -62,14 +63,15 @@
     "F25",
     "F29",
     "F30",
-    "F31"
+    "F31",
+    "F38"
   ],
-  "remainingSourceFindings": 13,
-  "newRegressionTests": 179,
+  "remainingSourceFindings": 12,
+  "newRegressionTests": 195,
   "frontendTests": {
-    "suitesPassed": 95,
+    "suitesPassed": 96,
     "suitesFailed": 0,
-    "testsPassed": 761,
+    "testsPassed": 777,
     "testsFailed": 0,
     "testsSkipped": 0
   },
@@ -85,15 +87,16 @@
     "isolatedGitArchive": true,
     "productionConfigPreserved": true,
     "output": "standalone",
-    "buildStamp": "a9240a7c81c47951e0029eb07cfccb6249f75bf3",
+    "buildStamp": "e2362eb0a9896505a1d4c78609dfcb07e83eac72",
     "compiledStampVerified": true,
-    "platform": "Linux Docker"
+    "platform": "Linux Docker",
+    "lintWarnings": 44
   },
   "reviewRuntime": {
-    "observedAt": "2026-10-02T01:41:13.186754+00:00",
-    "phase": "audit-fixed",
+    "observedAt": "2026-10-02T11:16:56.899748+00:00",
+    "phase": "users-installed",
     "url": "http://127.0.0.1:3015",
-    "reviewSource": "a9240a7c81c47951e0029eb07cfccb6249f75bf3",
+    "reviewSource": "e2362eb0a9896505a1d4c78609dfcb07e83eac72",
     "backendSource": "933164e2929be0223b9a918902795ade7f0a6dfa",
     "loginPassed": true,
     "sameOriginApiPassed": true,
@@ -114,22 +117,22 @@
     "containers": [
       {
         "name": "sphere-review-20261002-review-ui-1",
-        "id": "7b30bf52fecb5076bb85131a7bf72c7cc09b245c2d66fd959d3c39efe29aede8",
-        "imageId": "sha256:d211aabded2de5b26bc48c247d52eb4ce782d9385623b649e7ffd10776c1c4f9",
-        "image": "sphere-review-frontend:a9240a7c81c47951e0029eb07cfccb6249f75bf3",
+        "id": "0a9617f3ae176a0b332f9a914aa422f29a4a814807d6c2a7f5b2587da5d772e0",
+        "imageId": "sha256:cb89e21458392ded9e31e9c96052d0942c5419ac28d0c81433aee1809a713590",
+        "image": "sphere-review-frontend:e2362eb0a9896505a1d4c78609dfcb07e83eac72",
         "health": "healthy",
-        "startedAt": "2026-10-02T01:29:39.088732797Z",
+        "startedAt": "2026-10-02T11:09:45.486415843Z",
         "readOnly": true,
         "restart": "unless-stopped",
         "ports": {}
       },
       {
         "name": "sphere-review-20261002-review-gateway-1",
-        "id": "c47ddbf567396d8d21eeb056d6dc808594a1237c35bf10c98f6b039a8455c826",
+        "id": "8e300b187ed2dbdbc9a053fe808c9ff3d1d9cf1994f6993c193cd39ce0c7ea3b",
         "imageId": "sha256:1d13701a5f9f3fb01aaa88cef2344d65b6b5bf6b7d9fa4cf0dca557a8d7702ba",
         "image": "nginx:alpine",
         "health": "healthy",
-        "startedAt": "2026-10-02T01:29:44.915587064Z",
+        "startedAt": "2026-10-02T11:09:51.412115492Z",
         "readOnly": true,
         "restart": "unless-stopped",
         "ports": {
@@ -146,9 +149,9 @@
     "browserVisualAcceptance": "OPEN_URL_POLICY_BLOCKED"
   },
   "documentValidation": {
-    "relativeTargetsChecked": 524,
+    "relativeTargetsChecked": 545,
     "findingAnchorsChecked": 41,
-    "missing": 0
+    "missing": []
   },
   "scope": {
     "apkChanged": false,
@@ -488,7 +491,7 @@
     "finalVerificationHeadCiComplete": false
   },
   "verificationTestCommit": "3fe5eac",
-  "latestRuntimeEvidence": "../2026-10-02/GROUP-HIERARCHY-AND-AUDIT-EVIDENCE.json",
+  "latestRuntimeEvidence": "../2026-10-02/USER-ACCESS-EVIDENCE.json",
   "remoteRerunFiniteAcceptance": {
     "device": "auto-ph-025",
     "agentVersion": "1.2.40-dev",
@@ -546,7 +549,7 @@
     "previousNextPid": 7416,
     "historicalNativeSnapshot": true
   },
-  "latestTestCountsRawReceipt": ".local-pilot/web-audit-fixes-20261002/jest-hierarchy-full.json",
+  "latestTestCountsRawReceipt": ".local-pilot/web-audit-fixes-20261002/jest-full-users.json",
   "additionalSourceFindings": {
     "N01": "OPEN_Android_artifact_upload",
     "N02": "SOURCE_FIXED_discovery_contract",
@@ -555,15 +558,14 @@
     "N05": "SOURCE_AND_FINITE_API_FIXED_audit_identity_after_rollback"
   },
   "existingContainerPreservation": {
-    "observedAt": "2026-10-02T01:43:13.117018+00:00",
+    "observedAt": "2026-10-02T11:17:56.101493+00:00",
     "preexistingTotal": 46,
     "intendedReplacements": [
-      "sphere-review-20261002-review-gateway-1",
-      "sphere-review-20261002-review-ui-1",
-      "sphere-pilot-20260911-backend-1"
+      "review-ui",
+      "review-gateway"
     ],
-    "preservedTotal": 43,
-    "preservedRunning": 13,
+    "preservedTotal": 44,
+    "preservedRunning": 14,
     "idsImagesStartedAtRunningUnchanged": true
   },
   "historicalGroupPredecessor": {
@@ -745,108 +747,26 @@
     "evidence": "../2026-10-02/GROUP-WORKFLOWS-EVIDENCE.json"
   },
   "latestCompletedPublishedCi": {
-    "source": "1767bec9d6d74ed52fbcc76df9e7a421c05e4c24",
+    "source": "4898577eef1112280b028860247cc2795de4d4dc",
     "conclusion": "success",
     "checks": [
       {
-        "__typename": "CheckRun",
-        "completedAt": "2026-10-02T01:09:08Z",
-        "conclusion": "SUCCESS",
-        "detailsUrl": "https://github.com/RootOne1337/sphere-platform/actions/runs/36948503347/job/110655934121",
-        "name": "Android tests and signed release smoke build",
-        "startedAt": "2026-10-02T00:56:36Z",
-        "status": "COMPLETED",
-        "workflowName": "CI — Android"
+        "conclusion": "success",
+        "headSha": "4898577eef1112280b028860247cc2795de4d4dc",
+        "status": "completed",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/36952724546"
       },
       {
-        "__typename": "CheckRun",
-        "completedAt": "2026-10-02T00:58:18Z",
-        "conclusion": "SUCCESS",
-        "detailsUrl": "https://github.com/RootOne1337/sphere-platform/actions/runs/36948503334/job/110655934821",
-        "name": "Production image bootstrap",
-        "startedAt": "2026-10-02T00:56:36Z",
-        "status": "COMPLETED",
-        "workflowName": "CI — Backend"
+        "conclusion": "success",
+        "headSha": "4898577eef1112280b028860247cc2795de4d4dc",
+        "status": "completed",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/36952724480"
       },
       {
-        "__typename": "CheckRun",
-        "completedAt": "2026-10-02T00:58:23Z",
-        "conclusion": "SUCCESS",
-        "detailsUrl": "https://github.com/RootOne1337/sphere-platform/actions/runs/36948503393/job/110655934887",
-        "name": "Frontend tests, types and build",
-        "startedAt": "2026-10-02T00:56:36Z",
-        "status": "COMPLETED",
-        "workflowName": "CI — Frontend"
-      },
-      {
-        "__typename": "CheckRun",
-        "completedAt": "2026-10-02T00:56:38Z",
-        "conclusion": "SUCCESS",
-        "detailsUrl": "https://github.com/RootOne1337/sphere-platform/actions/runs/36948503337/job/110655934553",
-        "name": "guard",
-        "startedAt": "2026-10-02T00:56:36Z",
-        "status": "COMPLETED",
-        "workflowName": "Preview — Deploy"
-      },
-      {
-        "__typename": "CheckRun",
-        "completedAt": "2026-10-02T00:56:39Z",
-        "conclusion": "SKIPPED",
-        "detailsUrl": "https://github.com/RootOne1337/sphere-platform/actions/runs/36948503337/job/110655955666",
-        "name": "deploy",
-        "startedAt": "2026-10-02T00:56:39Z",
-        "status": "COMPLETED",
-        "workflowName": "Preview — Deploy"
-      },
-      {
-        "__typename": "CheckRun",
-        "completedAt": "2026-10-02T00:57:11Z",
-        "conclusion": "SUCCESS",
-        "detailsUrl": "https://github.com/RootOne1337/sphere-platform/actions/runs/36948503334/job/110655934763",
-        "name": "Lint (ruff + mypy)",
-        "startedAt": "2026-10-02T00:56:36Z",
-        "status": "COMPLETED",
-        "workflowName": "CI — Backend"
-      },
-      {
-        "__typename": "CheckRun",
-        "completedAt": "2026-10-02T00:57:09Z",
-        "conclusion": "SUCCESS",
-        "detailsUrl": "https://github.com/RootOne1337/sphere-platform/actions/runs/36948503334/job/110655934636",
-        "name": "Security (bandit + pip-audit)",
-        "startedAt": "2026-10-02T00:56:36Z",
-        "status": "COMPLETED",
-        "workflowName": "CI — Backend"
-      },
-      {
-        "__typename": "CheckRun",
-        "completedAt": "2026-10-02T00:56:44Z",
-        "conclusion": "SUCCESS",
-        "detailsUrl": "https://github.com/RootOne1337/sphere-platform/actions/runs/36948503334/job/110655934703",
-        "name": "RLS Policy Coverage",
-        "startedAt": "2026-10-02T00:56:36Z",
-        "status": "COMPLETED",
-        "workflowName": "CI — Backend"
-      },
-      {
-        "__typename": "CheckRun",
-        "completedAt": "2026-10-02T01:09:24Z",
-        "conclusion": "SUCCESS",
-        "detailsUrl": "https://github.com/RootOne1337/sphere-platform/actions/runs/36948503334/job/110655934513",
-        "name": "Tests",
-        "startedAt": "2026-10-02T00:56:36Z",
-        "status": "COMPLETED",
-        "workflowName": "CI — Backend"
-      },
-      {
-        "__typename": "CheckRun",
-        "completedAt": "2026-10-02T01:10:18Z",
-        "conclusion": "SUCCESS",
-        "detailsUrl": "https://github.com/RootOne1337/sphere-platform/actions/runs/36948503334/job/110659249434",
-        "name": "Alembic Single Head",
-        "startedAt": "2026-10-02T01:09:27Z",
-        "status": "COMPLETED",
-        "workflowName": "CI — Backend"
+        "conclusion": "success",
+        "headSha": "4898577eef1112280b028860247cc2795de4d4dc",
+        "status": "completed",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/36952724699"
       }
     ]
   },
@@ -923,5 +843,76 @@
     "browserVisual": "OPEN_URL_POLICY_BLOCKED",
     "auditDurableOutbox": "OPEN"
   },
-  "historicalLatestRuntimeEvidence": "../2026-10-02/GROUP-WORKFLOWS-EVIDENCE.json"
+  "historicalLatestRuntimeEvidence": "../2026-10-02/GROUP-WORKFLOWS-EVIDENCE.json",
+  "historicalHierarchyReviewRuntime": {
+    "observedAt": "2026-10-02T01:41:13.186754+00:00",
+    "phase": "audit-fixed",
+    "url": "http://127.0.0.1:3015",
+    "reviewSource": "a9240a7c81c47951e0029eb07cfccb6249f75bf3",
+    "backendSource": "933164e2929be0223b9a918902795ade7f0a6dfa",
+    "loginPassed": true,
+    "sameOriginApiPassed": true,
+    "uiCompiledStampPassed": true,
+    "staticAssetPassed": true,
+    "unauthorizedObservabilityStatus": 401,
+    "oldDiscoveryPayloadStatus": 422,
+    "oldDiscoveryMissingRequiredField": "workstation_id",
+    "prometheusApiPassed": true,
+    "grafanaSessionAndHealthPassed": true,
+    "wsUpgradeSnapshotAndPongPassed": true,
+    "catalogTotal": 19,
+    "reportedStatuses": {
+      "online": 14,
+      "offline": 5
+    },
+    "nodeRuntime": "v24.21.0",
+    "containers": [
+      {
+        "name": "sphere-review-20261002-review-ui-1",
+        "id": "7b30bf52fecb5076bb85131a7bf72c7cc09b245c2d66fd959d3c39efe29aede8",
+        "imageId": "sha256:d211aabded2de5b26bc48c247d52eb4ce782d9385623b649e7ffd10776c1c4f9",
+        "image": "sphere-review-frontend:a9240a7c81c47951e0029eb07cfccb6249f75bf3",
+        "health": "healthy",
+        "startedAt": "2026-10-02T01:29:39.088732797Z",
+        "readOnly": true,
+        "restart": "unless-stopped",
+        "ports": {}
+      },
+      {
+        "name": "sphere-review-20261002-review-gateway-1",
+        "id": "c47ddbf567396d8d21eeb056d6dc808594a1237c35bf10c98f6b039a8455c826",
+        "imageId": "sha256:1d13701a5f9f3fb01aaa88cef2344d65b6b5bf6b7d9fa4cf0dca557a8d7702ba",
+        "image": "nginx:alpine",
+        "health": "healthy",
+        "startedAt": "2026-10-02T01:29:44.915587064Z",
+        "readOnly": true,
+        "restart": "unless-stopped",
+        "ports": {
+          "8080/tcp": [
+            {
+              "HostIp": "127.0.0.1",
+              "HostPort": "3015"
+            }
+          ]
+        }
+      }
+    ],
+    "remoteCommandsSent": false,
+    "browserVisualAcceptance": "OPEN_URL_POLICY_BLOCKED"
+  },
+  "historicalHierarchyRuntimeEvidence": "../2026-10-02/GROUP-HIERARCHY-AND-AUDIT-EVIDENCE.json",
+  "userAccessBatch": {
+    "source": "e2362eb0a9896505a1d4c78609dfcb07e83eac72",
+    "finding": "F38",
+    "evidence": "../2026-10-02/USER-ACCESS-EVIDENCE.json",
+    "newRegressions": 16,
+    "targetedPassed": 21,
+    "userHttpPassed": 23,
+    "rbacParityPairs": 49,
+    "finiteApiNegativeReadbackPassed": true,
+    "realUserAccessChanged": false,
+    "backendChanged": false,
+    "apkOtaTunnelsChanged": false,
+    "browserVisual": "OPEN_URL_POLICY_BLOCKED"
+  }
 }
