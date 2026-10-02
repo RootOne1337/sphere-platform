@@ -117,7 +117,7 @@ it('blocks another admission after an unexpected version receipt', async () => {
   fireEvent.click(screen.getByRole('button', { name: 'Запустить на 1 уст.' }));
   expect(await screen.findByRole('alert')).toHaveTextContent('Результат запуска неизвестен');
   expect(screen.getByRole('button', { name: 'Запустить на 1 уст.' })).toBeDisabled();
-  expect(screen.getByRole('link', { name: 'Проверить журнал заданий этого сценария' })).toHaveAttribute('href', '/tasks?script_id=script-1');
+  expect(screen.getByRole('link', { name: 'Открыть журнал заданий' })).toHaveAttribute('href', '/tasks');
   expect(mockPush).not.toHaveBeenCalled();
 });
 

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Loader2, Play, Users, Monitor, ListChecks } from 'lucide-react';
 
 import { useGroups } from '@/lib/hooks/useGroups';
@@ -217,7 +218,7 @@ export function RunScriptModal({
         <div className="space-y-5">
           {expectedVersion && <div className="space-y-1 rounded-lg border bg-muted/30 p-3 text-sm"><p className="font-medium">Версия для запуска: v{expectedVersion.version}</p><p className="break-all font-mono text-xs">SHA-256: {expectedVersion.dag_hash ?? 'Не сообщён'}</p><p className="text-xs text-muted-foreground">Сервер проверит эту версию до создания заданий. При изменении сценария запуск будет отклонён.</p></div>}
           {versionUnavailable && <p role="alert" className="text-sm text-destructive">Версия сценария не подтверждена. Обновите каталог перед запуском.</p>}
-          {uncertain && <a className="text-sm text-primary underline" href={`/tasks?script_id=${encodeURIComponent(scriptId)}`}>Проверить журнал заданий этого сценария</a>}
+          {uncertain && <Link className="text-sm text-primary underline" href="/tasks">Открыть журнал заданий</Link>}
           {/* ── Target mode ─────────────────────────────────────────── */}
           <div className="space-y-2">
             <Label className="text-sm font-medium">Целевые устройства</Label>
