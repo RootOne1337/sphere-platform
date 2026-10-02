@@ -4,7 +4,7 @@ Generated from `backend.main.app.openapi()` by `scripts/export_api_docs.py`.
 Regenerate with `python -m scripts.export_api_docs`; verify with `--check`.
 The exporter does not run startup hooks or send HTTP requests.
 
-**171 HTTP operations across 134 paths.**
+**172 HTTP operations across 135 paths.**
 
 Full parameters, request bodies, response schemas and declared security schemes:
 [OpenAPI JSON](openapi.json). Manual explanations:
@@ -24,6 +24,7 @@ for tested behavior and remaining limits.
 | `GET` | `/api/v1/account-sessions/{session_id}` | account-sessions | 200, 422 | Get Session |
 | `POST` | `/api/v1/account-sessions/{session_id}/end` | account-sessions | 200, 422 | End Session |
 | `GET` | `/api/v1/audit/logs` | audit | 200, 422 | SPLIT-5: Журнал аудита |
+| `GET` | `/api/v1/audit/logs/export` | audit | 200, 422 | Bounded organization-wide audit CSV |
 | `GET` | `/api/v1/auth/api-keys` | auth | 200 | SPLIT-4: Список API ключей |
 | `POST` | `/api/v1/auth/api-keys` | auth | 201, 422 | SPLIT-4: Создать API ключ |
 | `DELETE` | `/api/v1/auth/api-keys/{key_id}` | auth | 200, 422 | SPLIT-4: Отозвать API ключ |
