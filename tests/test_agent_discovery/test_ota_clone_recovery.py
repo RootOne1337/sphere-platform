@@ -119,6 +119,64 @@ async def test_active_grant_is_delivered_on_normal_authenticated_connection(
     assert "authorization_tag" not in str(command)
 
 
+@pytest.mark.parametrize("change", ["valid", "expired", "inactive", "tampered", "revoked", "wrong_tenant", "wrong_command", "pc", "caller_url"])
+async def test_live_wake_rechecks_owned_grant_and_uses_active_socket_origin(
+    db_session, recovery_case, monkeypatch, change,
+):
+    from backend.websocket.channels import ChannelPattern
+    from backend.websocket.connection_manager import ConnectionManager
+    from backend.websocket.pubsub_router import PubSubRouter
+
+    device, grant, _ = recovery_case
+    message = {"type": "_ota_recovery_wake", "org_id": str(device.org_id), "command_id": str(grant.command_id)}
+    if change == "expired":
+        monkeypatch.setattr("backend.services.device_ota_recovery.time.time", lambda: grant.expires_at + 1)
+    elif change == "inactive":
+        device.is_active = False
+    elif change == "tampered":
+        device.meta = {"ota_recovery": {**grant.model_dump(mode="json"), "sha256": "b" * 64}}
+    elif change == "revoked":
+        device.meta = {}
+    elif change == "wrong_tenant":
+        message["org_id"] = str(uuid.uuid4())
+    elif change == "wrong_command":
+        message["command_id"] = str(uuid.uuid4())
+    elif change == "caller_url":
+        message["download_url"] = "https://untrusted.invalid/private"
+    await db_session.flush()
+    ws = AsyncMock()
+    ws.base_url = URL("wss://active-route.invalid/")
+    manager = ConnectionManager()
+    await manager.connect(ws, str(device.id), "pc" if change == "pc" else "android", str(device.org_id))
+
+    @asynccontextmanager
+    async def use_test_session():
+        yield db_session
+
+    monkeypatch.setattr("backend.database.engine.AsyncSessionLocal", use_test_session)
+    await PubSubRouter(Mock(), manager)._route_message(ChannelPattern.agent_cmd(str(device.id)), json.dumps(message))
+    if change in {"valid", "caller_url"}:
+        command = ws.send_json.await_args.args[0]
+        assert command["type"] == "OTA_UPDATE"
+        assert command["command_id"] == str(grant.command_id)
+        assert command["payload"]["download_url"] == "https://active-route.invalid/api/v1/updates/artifacts/" + grant.sha256
+        assert "authorization_tag" not in str(command) and "untrusted.invalid" not in str(command)
+    else:
+        ws.send_json.assert_not_awaited()
+
+
+async def test_prepared_ota_send_never_crosses_a_replaced_socket_session():
+    from backend.websocket.connection_manager import ConnectionManager
+
+    manager = ConnectionManager()
+    old, current = AsyncMock(), AsyncMock()
+    old_session = await manager.connect(old, "target", "android", "owner")
+    await manager.connect(current, "target", "android", "owner")
+    assert await manager.send_to_session("target", old_session, {"type": "OTA_UPDATE"}) is False
+    old.send_json.assert_not_awaited()
+    current.send_json.assert_not_awaited()
+
+
 async def test_normal_channel_persists_active_grant_before_ack(
     db_session, recovery_case, monkeypatch,
 ):

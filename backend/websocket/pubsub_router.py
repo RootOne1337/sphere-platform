@@ -128,6 +128,10 @@ class PubSubRouter:
         if channel.startswith("sphere:agent:cmd:"):
             device_id = channel.removeprefix("sphere:agent:cmd:")
             msg = json.loads(data) if isinstance(data, (bytes, str)) else data
+            if isinstance(msg, dict) and msg.get("type") == "_ota_recovery_wake":
+                from backend.services.ota_delivery import dispatch_ota_wake
+                await dispatch_ota_wake(self.manager, device_id, msg)
+                return
             await self.manager.send_to_device(device_id, msg)
 
         elif channel.startswith("sphere:org:events:"):

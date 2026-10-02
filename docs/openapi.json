@@ -8185,6 +8185,66 @@
         ]
       }
     },
+    "/api/v1/updates/recovery/{device_id}/dispatch": {
+      "post": {
+        "tags": [
+          "updates"
+        ],
+        "summary": "Dispatch Recovery",
+        "description": "Re-wake the same live grant; never create/extend permission or change its ID.",
+        "operationId": "dispatch_recovery_api_v1_updates_recovery__device_id__dispatch_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "device_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Device Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DispatchRecoveryRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Dispatch Recovery Api V1 Updates Recovery  Device Id  Dispatch Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/updates/recovery/{device_id}": {
       "get": {
         "tags": [
@@ -8255,6 +8315,23 @@
               "type": "string",
               "format": "uuid",
               "title": "Device Id"
+            }
+          },
+          {
+            "name": "command_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Command Id"
             }
           }
         ],
@@ -13744,6 +13821,20 @@
           "already_registered"
         ],
         "title": "DiscoveredDevice"
+      },
+      "DispatchRecoveryRequest": {
+        "properties": {
+          "command_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Command Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "command_id"
+        ],
+        "title": "DispatchRecoveryRequest"
       },
       "EndSessionRequest": {
         "properties": {

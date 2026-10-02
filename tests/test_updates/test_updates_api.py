@@ -184,6 +184,182 @@ def test_default_update_store_is_not_container_tmp(monkeypatch):
 
 
 class TestManagedArtifacts:
+    async def test_redispatch_keeps_command_id_deadline_and_grant(self, admin_client, db_session, updates_org, monkeypatch):
+        import time
+        import uuid
+        from unittest.mock import AsyncMock, Mock
+
+        from backend.models.device import Device
+        from backend.services.device_ota_recovery import OtaRecoveryGrant
+
+        now = int(time.time())
+        device = Device(org_id=updates_org.id, name="live-grant")
+        db_session.add(device)
+        await db_session.flush()
+        grant = OtaRecoveryGrant(command_id=uuid.uuid4(), sha256="a" * 64, version_name="candidate",
+                                 version_code=10240, created_at=now, expires_at=now + 600, issued_before=now - 1).signed(device)
+        raw = grant.model_dump(mode="json")
+        device.meta = {"ota_recovery": raw}
+        await db_session.flush()
+        publisher = Mock(send_command_live=AsyncMock(return_value=False))
+        monkeypatch.setattr("backend.websocket.pubsub_router.get_pubsub_publisher", lambda: publisher)
+        for _ in range(2):
+            response = await admin_client.post(f"/api/v1/updates/recovery/{device.id}/dispatch", json={"command_id": str(grant.command_id)})
+            assert response.status_code == 202, response.text
+            assert response.json() == {"device_id": str(device.id), "command_id": str(grant.command_id), "delivery_hint": "awaiting_connection"}
+            assert device.meta["ota_recovery"] == raw
+        assert publisher.send_command_live.await_count == 2
+
+    @pytest.mark.parametrize("change", ["expired", "tampered", "wrong_command", "foreign_device"])
+    async def test_redispatch_rejects_unowned_or_stale_grant(self, admin_client, db_session, updates_org, monkeypatch, change):
+        import time
+        import uuid
+        from unittest.mock import AsyncMock, Mock
+
+        from backend.models.device import Device
+        from backend.services.device_ota_recovery import OtaRecoveryGrant
+
+        now = int(time.time())
+        org = updates_org
+        if change == "foreign_device":
+            org = Organization(name="Other", slug=uuid.uuid4().hex)
+            db_session.add(org)
+            await db_session.flush()
+        device = Device(org_id=org.id, name="protected-grant")
+        db_session.add(device)
+        await db_session.flush()
+        grant = OtaRecoveryGrant(command_id=uuid.uuid4(), sha256="a" * 64, version_name="candidate",
+                                 version_code=10240, created_at=now - 120, expires_at=now - 60 if change == "expired" else now + 600,
+                                 issued_before=now - 121).signed(device)
+        raw = grant.model_dump(mode="json")
+        if change == "tampered":
+            raw["sha256"] = "b" * 64
+        device.meta = {"ota_recovery": raw}
+        await db_session.flush()
+        publisher = Mock(send_command_live=AsyncMock(return_value=True))
+        monkeypatch.setattr("backend.websocket.pubsub_router.get_pubsub_publisher", lambda: publisher)
+        response = await admin_client.post(f"/api/v1/updates/recovery/{device.id}/dispatch", json={
+            "command_id": str(uuid.uuid4()) if change == "wrong_command" else str(grant.command_id),
+        })
+        assert response.status_code == (404 if change == "foreign_device" else 409)
+        publisher.send_command_live.assert_not_awaited()
+        await db_session.refresh(device)
+        assert device.meta["ota_recovery"] == raw
+
+    async def test_conditional_revoke_preserves_a_replacement_grant_and_receipts(self, admin_client, db_session, updates_org):
+        import time
+        import uuid
+
+        from backend.models.device import Device
+        from backend.services.device_ota_recovery import OtaRecoveryGrant
+
+        now = int(time.time())
+        device = Device(org_id=updates_org.id, name="replacement-grant")
+        db_session.add(device)
+        await db_session.flush()
+        grant = OtaRecoveryGrant(command_id=uuid.uuid4(), sha256="a" * 64, version_name="candidate",
+                                 version_code=10240, created_at=now, expires_at=now + 600, issued_before=now - 1).signed(device)
+        history = [{"command_id": str(uuid.uuid4()), "status": "failed", "failure_code": "timeout"}]
+        device.meta = {"ota_recovery": grant.model_dump(mode="json"), "ota_recovery_receipts": history}
+        await db_session.flush()
+        stale = await admin_client.delete(f"/api/v1/updates/recovery/{device.id}?command_id={uuid.uuid4()}")
+        assert stale.status_code == 409
+        await db_session.refresh(device)
+        assert device.meta["ota_recovery"]["command_id"] == str(grant.command_id)
+        matching = await admin_client.delete(f"/api/v1/updates/recovery/{device.id}?command_id={grant.command_id}")
+        assert matching.status_code == 204
+        assert device.meta == {"ota_recovery_receipts": history}
+
+    async def test_recovery_creation_persists_before_live_wake_and_never_returns_tag(
+        self, admin_client, isolate_updates_file, db_session, updates_org, monkeypatch,
+    ):
+        from unittest.mock import AsyncMock, Mock
+
+        from backend.models.device import Device
+
+        content = b"live recovery fixture"
+        digest = hashlib.sha256(content).hexdigest()
+        artifact = isolate_updates_file.parent / "artifacts" / f"{digest}.apk"
+        artifact.parent.mkdir()
+        artifact.write_bytes(content)
+        assert (await admin_client.post("/api/v1/updates/", json={**_VALID_RELEASE,
+            "download_url": "/api/v1/updates/artifacts/" + digest, "sha256": digest})).status_code == 201
+        device = Device(org_id=updates_org.id, name="already-connected")
+        db_session.add(device)
+        await db_session.flush()
+
+        async def wake(device_id, command):
+            await db_session.refresh(device)
+            assert device_id == str(device.id)
+            assert command == {"type": "_ota_recovery_wake", "org_id": str(device.org_id),
+                               "command_id": device.meta["ota_recovery"]["command_id"]}
+            assert device.meta["ota_recovery"]["authorization_tag"]
+            return True
+
+        publisher = Mock(send_command_live=AsyncMock(side_effect=wake))
+        monkeypatch.setattr("backend.websocket.pubsub_router.get_pubsub_publisher", lambda: publisher)
+        response = await admin_client.post("/api/v1/updates/recovery", json={
+            "device_id": str(device.id), "sha256": digest, "duration_seconds": 600,
+        })
+        assert response.status_code == 201, response.text
+        publisher.send_command_live.assert_awaited_once()
+        assert response.json()["delivery_hint"] == "wake_published"
+        assert "authorization_tag" not in response.text
+
+    async def test_live_wake_failure_retains_grant_without_false_delivery(
+        self, admin_client, isolate_updates_file, db_session, updates_org, monkeypatch,
+    ):
+        from unittest.mock import AsyncMock, Mock
+
+        from backend.models.device import Device
+
+        content = b"offline recovery fixture"
+        digest = hashlib.sha256(content).hexdigest()
+        artifact = isolate_updates_file.parent / "artifacts" / f"{digest}.apk"
+        artifact.parent.mkdir()
+        artifact.write_bytes(content)
+        await admin_client.post("/api/v1/updates/", json={**_VALID_RELEASE,
+            "download_url": "/api/v1/updates/artifacts/" + digest, "sha256": digest})
+        device = Device(org_id=updates_org.id, name="offline-target")
+        db_session.add(device)
+        await db_session.flush()
+        publisher = Mock(send_command_live=AsyncMock(side_effect=ConnectionError("private transport detail")))
+        monkeypatch.setattr("backend.websocket.pubsub_router.get_pubsub_publisher", lambda: publisher)
+        response = await admin_client.post("/api/v1/updates/recovery", json={"device_id": str(device.id), "sha256": digest})
+        assert response.status_code == 201, response.text
+        assert response.json()["delivery_hint"] == "awaiting_connection"
+        assert "private transport detail" not in response.text
+        await db_session.refresh(device)
+        assert device.meta["ota_recovery"]["command_id"] == response.json()["command_id"]
+
+    @pytest.mark.parametrize("change", ["expired", "tampered"])
+    async def test_recovery_status_never_claims_stale_or_invalid_grant_is_active(
+        self, admin_client, db_session, updates_org, change,
+    ):
+        import time
+        import uuid
+
+        from backend.models.device import Device
+        from backend.services.device_ota_recovery import OtaRecoveryGrant
+
+        now = int(time.time())
+        device = Device(org_id=updates_org.id, name="stale-grant")
+        db_session.add(device)
+        await db_session.flush()
+        grant = OtaRecoveryGrant(command_id=uuid.uuid4(), sha256="a" * 64, version_name="candidate",
+                                 version_code=10240, created_at=now - 120, expires_at=now - 60,
+                                 issued_before=now - 121).signed(device)
+        raw = grant.model_dump(mode="json")
+        if change == "tampered":
+            raw["expires_at"] = now + 600
+        device.meta = {"ota_recovery": raw}
+        await db_session.flush()
+        response = await admin_client.get(f"/api/v1/updates/recovery/{device.id}")
+        assert response.status_code == 200, response.text
+        assert response.json()["state"] == ("expired" if change == "expired" else "invalid")
+        assert "authorization_tag" not in response.text
+        assert response.json()["observed_at"]
+
     async def test_canary_platform_release_is_excluded_from_regular_dev_checks_and_grant_is_targeted(
         self, admin_client, anon_client, agent_api_key, isolate_updates_file, db_session, updates_org,
     ):

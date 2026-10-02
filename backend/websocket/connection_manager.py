@@ -123,6 +123,17 @@ class ConnectionManager:
         logger.info("Agent disconnected", device_id=device_id, session=info.session_id)
         return info
 
+    def connection_snapshot(self, device_id: str) -> ConnectionInfo | None:
+        """Capture identity/origin; callers must fence sends by its session ID."""
+        return self._connections.get(device_id)
+
+    async def send_to_session(self, device_id: str, session_id: str, message: dict) -> bool:
+        """Do not deliver a prepared command to a socket that replaced its owner."""
+        current = self._connections.get(device_id)
+        if current is None or current.session_id != session_id:
+            return False
+        return await self.send_to_device(device_id, message)
+
     async def send_to_device(self, device_id: str, message: dict) -> bool:
         """Отправить JSON сообщение конкретному агенту. Returns True если отправлено."""
         info = self._connections.get(device_id)

@@ -8,6 +8,7 @@
 #  DELETE /updates/{id}  — удаление релиза                       (JWT admin)
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import json
 import os
@@ -18,10 +19,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
+import structlog
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request, Response, status
 from fastapi.responses import FileResponse, JSONResponse
 from filelock import FileLock, Timeout
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ValidationError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -31,11 +33,13 @@ from backend.database.tenant import bind_tenant_context
 from backend.models.device import Device
 from backend.services.device_ota_recovery import (
     OtaRecoveryGrant,
+    get_device_ota_grant,
     get_ota_recovery,
     ota_recovery_receipts,
 )
 
 router = APIRouter(prefix="/updates", tags=["updates"])
+logger = structlog.get_logger()
 
 # Pilot/local file store. Container overlays mount this directory persistently;
 # production deployments should use a durable object/catalog service before scaling
@@ -159,6 +163,27 @@ class CreateRecoveryRequest(BaseModel):
     duration_seconds: int = Field(default=1800, ge=60, le=3600)
 
 
+class DispatchRecoveryRequest(BaseModel):
+    command_id: uuid.UUID
+
+
+async def _publish_recovery_wake(device_id: uuid.UUID, org_id: uuid.UUID, command_id: uuid.UUID) -> str:
+    from backend.websocket.pubsub_router import get_pubsub_publisher
+
+    publisher = get_pubsub_publisher()
+    if publisher is not None:
+        try:
+            published = await asyncio.wait_for(publisher.send_command_live(str(device_id), {
+                "type": "_ota_recovery_wake", "org_id": str(org_id), "command_id": str(command_id),
+            }), timeout=3)
+            if published:
+                return "wake_published"
+        except Exception as error:
+            logger.warning("ota_recovery.wake_publish_unavailable", device_id=str(device_id),
+                           command_id=str(command_id), error_class=type(error).__name__)
+    return "awaiting_connection"
+
+
 @router.post("/recovery", status_code=201)
 async def create_recovery(
     payload: CreateRecoveryRequest, user=require_roles(["super_admin"]), db: AsyncSession = Depends(get_db),
@@ -183,7 +208,31 @@ async def create_recovery(
                              expires_at=now + payload.duration_seconds, issued_before=now - 1).signed(device)
     device.meta = {**(device.meta or {}), "ota_recovery": grant.model_dump(mode="json")}
     await db.commit()
-    return {"device_id": str(device.id), **grant.model_dump(mode="json")}
+    # Committed metadata is the source of truth. Pub/Sub only wakes a current
+    # socket; its subscriber count does not prove reception or installation.
+    delivery_hint = await _publish_recovery_wake(device.id, device.org_id, grant.command_id)
+    return {"device_id": str(device.id), **grant.model_dump(mode="json", exclude={"authorization_tag"}),
+            "delivery_hint": delivery_hint}
+
+
+@router.post("/recovery/{device_id}/dispatch", status_code=202)
+async def dispatch_recovery(
+    device_id: uuid.UUID, payload: DispatchRecoveryRequest,
+    user=require_roles(["super_admin"]), db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Re-wake the same live grant; never create/extend permission or change its ID."""
+    await bind_tenant_context(db, str(user.org_id))
+    device = await db.scalar(select(Device).where(
+        Device.id == device_id, Device.org_id == user.org_id, Device.is_active.is_(True),
+    ).with_for_update())
+    if device is None:
+        raise HTTPException(status_code=404, detail="Device not found")
+    grant = await get_device_ota_grant(db, device_id=str(device_id), org_id=str(user.org_id))
+    if grant is None or grant.command_id != payload.command_id:
+        raise HTTPException(status_code=409, detail="No matching active recovery grant; refresh status")
+    await db.commit()
+    hint = await _publish_recovery_wake(device_id, user.org_id, grant.command_id)
+    return {"device_id": str(device_id), "command_id": str(grant.command_id), "delivery_hint": hint}
 
 
 @router.get("/recovery/{device_id}")
@@ -204,11 +253,23 @@ async def get_recovery_status(
     meta = device.meta or {}
     raw_grant = meta.get("ota_recovery")
     active = None
-    if isinstance(raw_grant, dict):
-        active = {
-            key: raw_grant.get(key)
-            for key in ("command_id", "sha256", "version_name", "version_code", "created_at", "expires_at")
-        }
+    grant_state = None
+    if raw_grant is not None:
+        try:
+            grant = OtaRecoveryGrant.model_validate(raw_grant)
+            now = int(datetime.now(timezone.utc).timestamp())
+            if not grant.is_authorized(device) or not (
+                grant.created_at <= now and grant.created_at < grant.expires_at <= grant.created_at + 3600
+                and grant.issued_before <= grant.created_at
+            ):
+                grant_state = "invalid"
+            else:
+                grant_state = "expired" if now >= grant.expires_at else "active"
+                active = grant.model_dump(mode="json", include={
+                    "command_id", "sha256", "version_name", "version_code", "created_at", "expires_at",
+                })
+        except (ValidationError, TypeError, ValueError):
+            grant_state = "invalid"
     raw_result = meta.get("ota_recovery_result")
     result = None
     if isinstance(raw_result, dict):
@@ -229,25 +290,31 @@ async def get_recovery_status(
         }
         for receipt in ota_recovery_receipts(meta)
     ]
-    state = "active" if active else (result.get("status") if result else "none")
+    state = grant_state or (result.get("status") if result else "none")
     return {
         "device_id": str(device.id),
         "state": state,
         "active": active,
         "last_result": result,
         "recent_results": recent_results,
+        "observed_at": datetime.now(timezone.utc).isoformat(),
     }
 
 
 @router.delete("/recovery/{device_id}", status_code=204)
 async def revoke_recovery(
-    device_id: uuid.UUID, user=require_roles(["super_admin"]), db: AsyncSession = Depends(get_db),
+    device_id: uuid.UUID, command_id: uuid.UUID | None = Query(default=None),
+    user=require_roles(["super_admin"]), db: AsyncSession = Depends(get_db),
 ) -> Response:
     """Отключить аварийную доставку после сверки установленных копий."""
     device = await db.scalar(select(Device).where(Device.id == device_id,
                                                  Device.org_id == user.org_id).with_for_update())
     if device is None:
         raise HTTPException(status_code=404, detail="Device not found")
+    if command_id is not None:
+        raw = (device.meta or {}).get("ota_recovery")
+        if not isinstance(raw, dict) or raw.get("command_id") != str(command_id):
+            raise HTTPException(status_code=409, detail="Recovery grant changed; refresh status before revoking")
     device.meta = {k: v for k, v in (device.meta or {}).items() if k != "ota_recovery"}
     await db.commit()
     return Response(status_code=204)
