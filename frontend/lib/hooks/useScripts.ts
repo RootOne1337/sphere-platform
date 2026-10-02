@@ -43,7 +43,7 @@ interface ScriptsResponse {
 // ── Запросы (Query) ─────────────────────────────────────────────────────────
 
 /** Список скриптов с пагинацией и поиском */
-export function useScripts(params?: { query?: string; page?: number; per_page?: number }) {
+export function useScripts(params?: { query?: string; page?: number; per_page?: number; state?: 'active' | 'archived' | 'all' }) {
   return useQuery<ScriptsResponse>({
     queryKey: ['scripts', params],
     queryFn: async ({ signal }) => {

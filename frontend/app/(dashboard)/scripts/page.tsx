@@ -13,13 +13,21 @@ import { PageFrame, PageHeading } from '@/src/shared/ui/page-layout';
 import { CatalogPagination } from '@/src/shared/ui/catalog-pagination';
 import { useDebounce } from '@/lib/hooks/useDebounce';
 import { formatScriptStepCount, getCurrentScriptVersion, getScriptStepCount, redactScriptDag } from '@/src/features/scripts/scriptPresentation';
+import { ScriptVersionsDialog } from '@/src/features/scripts/ScriptVersionsDialog';
+import { canWriteScript } from '@/src/features/scripts/versionWorkflow';
+import { useAuthStore } from '@/lib/store';
 
 export default function ScriptsPage() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
+  const [state, setState] = useState<'active' | 'archived' | 'all'>('active');
+  const actor = useAuthStore(value => value.user);
+  const session = useAuthStore(value => value.sessionVersion);
+  const scope = `${actor?.org_id}:${actor?.id}:${actor?.role}:${session}`;
+  const [workflow, setWorkflow] = useState<{ id: string; scope: string } | null>(null);
   const query = useDebounce(search.trim(), 300);
   const searching = search.trim() !== query;
-  const { data: scriptsData, isLoading, isError, isFetching, refetch } = useScripts({ query: query || undefined, page, per_page: 50 });
+  const { data: scriptsData, isLoading, isError, isFetching, refetch } = useScripts({ query: query || undefined, page, per_page: 50, ...(state === 'active' ? {} : { state }) });
   const scripts = scriptsData?.items ?? [];
   const [runTarget, setRunTarget] = useState<{ id: string; name: string } | null>(null);
   const [inspectedScriptId, setInspectedScriptId] = useState<string | null>(null);
@@ -34,6 +42,9 @@ export default function ScriptsPage() {
       />
 
       <div className="flex flex-wrap items-center gap-3">
+        <div role="group" aria-label="Состояние каталога сценариев" className="flex flex-wrap gap-1 rounded-lg border p-1">
+          {(['active', 'archived', 'all'] as const).map(value => <Button key={value} size="sm" variant={state === value ? 'secondary' : 'ghost'} aria-pressed={state === value} onClick={() => { setState(value); setPage(1); setInspectedScriptId(null); }}>{value === 'active' ? 'Активные' : value === 'archived' ? 'Архив' : 'Все сценарии'}</Button>)}
+        </div>
         <Input aria-label="Поиск сценариев во всём каталоге" placeholder="Найти сценарий по имени…" className="sm:max-w-md" value={search} onChange={(event) => { setSearch(event.target.value); setPage(1); setInspectedScriptId(null); }} />
         <Button variant="outline" disabled={isFetching || searching} onClick={() => { void refetch(); }}>Обновить сценарии</Button>
         <span className="text-xs text-muted-foreground">Поиск выполняется на сервере по всему каталогу</span>
@@ -75,7 +86,8 @@ export default function ScriptsPage() {
                     {inspectedScriptId === script.id ? 'Скрыть DAG' : 'Посмотреть DAG'}
                   </Button>
                   <Button type="button" size="sm" onClick={() => setRunTarget({ id: script.id, name: script.name })} disabled={script.is_archived}><Play className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />Запустить</Button>
-                  <Button asChild size="sm" variant="outline"><Link href={`/scripts/builder?id=${encodeURIComponent(script.id)}`}>Открыть <ArrowRight className="ml-1.5 h-3.5 w-3.5" aria-hidden="true" /></Link></Button>
+                  <Button type="button" size="sm" variant="outline" disabled={!actor} onClick={() => setWorkflow({ id: script.id, scope })}>История и управление</Button>
+                  {!script.is_archived && <Button asChild size="sm" variant="outline"><Link href={`/scripts/builder?id=${encodeURIComponent(script.id)}`}>Открыть <ArrowRight className="ml-1.5 h-3.5 w-3.5" aria-hidden="true" /></Link></Button>}
                 </div>
               </CardContent>
               {inspectedScriptId === script.id && <ScriptDagInspector script={script} onClose={() => setInspectedScriptId(null)} />}
@@ -87,6 +99,7 @@ export default function ScriptsPage() {
       {!isError && !isLoading && !searching && scriptsData && <CatalogPagination page={page} perPage={50} total={scriptsData.total} busy={isFetching} label="сценарии" onPageChange={(next) => { setPage(next); setInspectedScriptId(null); }} />}
 
       {runTarget && <RunScriptModal scriptId={runTarget.id} scriptName={runTarget.name} open onClose={() => setRunTarget(null)} />}
+      {workflow?.scope === scope && actor && <ScriptVersionsDialog key={`${scope}:${workflow.id}`} scriptId={workflow.id} orgId={actor.org_id} scope={scope} canManage={canWriteScript(actor.role)} available={!isError && !searching} onClose={() => setWorkflow(null)} />}
     </PageFrame>
   );
 }
