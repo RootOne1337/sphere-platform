@@ -16,7 +16,14 @@ Source: `1354d66660041ba17afb64399d567ca29dd91867`. Режим замороже�
 
 Текущее продолжение: [журнал исправлений и статусы F01–F41](WEB-AUDIT-REMEDIATION.md). Исторический аудит остаётся неизменным.
 
-Последний review UI **5b20955**, API **cc28e9b**,3 октября02:33 UTC+5:
+Последний review: UI **8e0aeb5** / API **db6be05**, 3 октября 03:06 UTC+5.
+**33 source findings исправлено / 8 OPEN**; 102 suites / 893 frontend tests,
+40 PostgreSQL cases и 30 в production image. F26 география/иерархия, null clear,
+stale conditions и parent deletion проверены собственным конечным API canary.
+[F26 proof](../2026-10-03/LOCATION-HIERARCHY.md) · [Validation](WEB-AUDIT-FIXES-VALIDATION.json).
+Visual/rollout/fleet gates остаются открытыми.
+
+Предыдущий review UI **5b20955**, API **cc28e9b**,3 октября02:33 UTC+5:
 **32 source findings исправлено/9 OPEN**, F33 PARTIAL.101 suites/867 frontend tests;
 120 related PostgreSQL cases,35 cases также внутри production image. Собственный
 pipeline v1→v2→inactive, stale409/invalid422 и0 runs подтверждены API.

@@ -2,7 +2,12 @@
 
 Этот журнал продолжает [замороженный аудит](WEB-FULL-CAPABILITY-AUDIT.md) исходников `1354d66`. Исходный документ и evidence сохраняют свою дату и ограничения; их статусы не переписываются задним числом.
 
-**Срез реализации3 октября2026,02:33 UTC+5:** UI 5b20955/API cc28e9b;32 source findings исправлены,9 OPEN, включая F33 PARTIAL.101 suites/867 frontend tests,285 regressions;120 related actual PostgreSQL cases и35 focused cases в production image passed. F28 detail/edit/activation установлен; собственный API canary подтвердил stale409/invalid422, v2/inactive и0 runs. [F28 evidence](../2026-10-03/PIPELINE-DEFINITION-WORKFLOW.md) · [Validation](WEB-AUDIT-FIXES-VALIDATION.json).
+**Срез реализации 3 октября 2026, 03:06 UTC+5:** UI **8e0aeb5** / API **db6be05**;
+**33 source findings исправлены / 8 OPEN**, включая F33 PARTIAL. 102 suites / 893
+frontend tests; 311 regressions. 40 PostgreSQL cases, 30 в production image.
+F26: география/иерархия, nullable clear, owned edit/delete и stale conditions
+установлены. Live API canary удалён, существующие локации сохранены.
+[F26 evidence](../2026-10-03/LOCATION-HIERARCHY.md) · [Validation](WEB-AUDIT-FIXES-VALIDATION.json).
 
 ## Исходная фиксация
 
@@ -50,7 +55,7 @@
 | [F23](WEB-FULL-CAPABILITY-AUDIT.md#f23) | P2 | Source исправлен; live OPEN | Command palette: частичная навигация и нет restore focus |
 | [F24](WEB-FULL-CAPABILITY-AUDIT.md#f24) | P2 | Source исправлен; live OPEN | Legacy /fleet: настоящая кнопка без действия |
 | [F25](WEB-FULL-CAPABILITY-AUDIT.md#f25) | P2 | Source исправлен; live OPEN | Группы: редактирование и состав не раскрыты |
-| [F26](WEB-FULL-CAPABILITY-AUDIT.md#f26) | P3 | Открыто | Локации: backend география/иерархия не доступны в форме |
+| [F26](WEB-FULL-CAPABILITY-AUDIT.md#f26) | P3 | Source исправлен; live OPEN | Локации: backend география/иерархия не доступны в форме |
 | [F27](WEB-FULL-CAPABILITY-AUDIT.md#f27) | P2 | Source исправлен; live OPEN | Сценарии: архив/rollback есть в backend, нет workflow |
 | [F28](WEB-FULL-CAPABILITY-AUDIT.md#f28) | P2 | Source исправлен; live OPEN | Pipeline: отсутствует полноценный detail/edit workflow |
 | [F29](WEB-FULL-CAPABILITY-AUDIT.md#f29) | P2 | Source исправлен; live OPEN | Расписания: нет доступа к истории срабатываний |
@@ -336,5 +341,30 @@ UI3015/audit установлен17:11, API39baa13 —17:09. Реальный ж
   соседних containers IDs/images/starttimes preserved. No new long-soak/FPS claim.
 - Input_schema semantic validation/global chain retries/runtime settings snapshot
   migration, visual/keyboard/mobile/production/fleet gates OPEN.
-- Далее: F26 география/иерархия локаций, F32/F33 command/OTA outcomes и F34–F36 video/XPath;
+- Далее: F32/F33 command/OTA outcomes и F34–F36 video/XPath;
   остальные замечания не объявлены устранёнными. [Контракт/receipts](../2026-10-03/PIPELINE-DEFINITION-WORKFLOW.md).
+
+
+## F26: география и иерархия локаций — 3 октября
+
+- API `db6be05`: nullable clear, owned GET с датами и прямыми counters, tenant
+  transaction fence, cycle/ancestry validation до mutation, optional CAS PUT/DELETE.
+- UI `8e0aeb5`: parent/root/coordinate поля, paths/ID/dates, role/session scope,
+  dirty/stale preservation, receipt validation и dialog последствия удаления.
+- Baseline PostgreSQL 15 failed / 11 passed из 26; final 30 passed, related
+  location/group 40 passed; 30 также в immutable image без backend source mount.
+- Старый UI page + новые helper controls: 11 failed / 7 passed; final 26 новых
+  UI cases и весь frontend 102 suites / 893 tests passed. Types/build/lint passed;
+  44 существующих lint warnings (в body UI commit осталось историческое 45).
+- Live API: две собственные локации; valid zero/boundaries, cycle400/invalid422,
+  null clear, stale PUT/DELETE409 и parent DELETE204/child retained подтверждены.
+  Созданные объекты удалены, metadata существующих локаций не изменена.
+- Review 3015 установлен; login/API/compiled stamp/Prometheus/Grafana/events WS
+  passed. Шесть finite samples: 14 online / 5 offline; 13 persistent neighbors
+  неизменны. Собственный ephemeral image-test probe учтён отдельно.
+- [Контракт](../../operations/LOCATION-HIERARCHY.md) ·
+  [Подробное доказательство](../2026-10-03/LOCATION-HIERARCHY.md) ·
+  [Receipts](../2026-10-03/LOCATION-HIERARCHY-EVIDENCE.json).
+- OPEN: F32, F33 PARTIAL, F34–F36, F39–F41, N01/N03 и durable audit outbox.
+  Source/API fix не закрывает visual/keyboard/mobile, production rollout и
+  combined stream+scripts load. Frozen audit не изменён.

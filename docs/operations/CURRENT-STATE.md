@@ -7,7 +7,21 @@
 [Главная](../../README.md) · [Каталог документации](../README.md) · [Readiness](READINESS.md) · [Fleet32 gates](../audits/2026-09-20/FLEET32-PREFLIGHT.md) · [PR #19](https://github.com/RootOne1337/sphere-platform/pull/19)
 
 > [!IMPORTANT]
-> **Установленный review,3 октября02:33 UTC+5:** [3015/orchestration](http://127.0.0.1:3015/orchestration), UI **5b20955** / API **cc28e9b**. F28: полный owned detail, JSON editor, explicit activation и timestamp conditions; nonterminal runs защищают runtime definition.101 suites/867 frontend tests;120 related PostgreSQL cases,35 cases также в новом production image. Собственный live pipeline v1→v2→inactive; stale409/invalid422,0 runs/Android commands. Login/API/Prometheus/Grafana/events WS passed. Initial12online/7offline; затем шесть срезов21:16:59–21:19:29UTC показали14online/5offline. Это конечное наблюдение, не SLA/FPS/soak.13 соседних работающих контейнеров сохранили ID/image/starttime. [F28 evidence](../audits/2026-10-03/PIPELINE-DEFINITION-WORKFLOW.md) · [Контракт](PIPELINE-DEFINITIONS.md). Browser visual/keyboard/mobile и production rollout OPEN. Исторические срезы ниже сохранены по датам.
+> **Текущий review: 3 октября 2026, 03:06 UTC+5.**
+> [3015/locations](http://127.0.0.1:3015/locations), UI **8e0aeb5** / API **db6be05**.
+> F26: география, nullable clear, owned detail и иерархия установлены;
+> циклы и устаревшие записи/удаления отклоняются атомарно. **102 suites / 893
+> frontend tests**, **40 PostgreSQL cases**, включая **30 в новом production
+> image**. Собственный live API canary создан, проверен и удалён, без команд
+> Android. Login/API/Prometheus/Grafana/events WS passed; шесть конечных срезов
+> 22:07–22:09 UTC: **14 online / 5 offline**. Это не SLA/FPS/soak.
+> **13 постоянных соседних контейнеров** сохранили ID/image/starttime.
+> [F26 evidence](../audits/2026-10-03/LOCATION-HIERARCHY.md) ·
+> [Контракт](LOCATION-HIERARCHY.md). **33 source-fixed / 8 OPEN**;
+> visual/keyboard/mobile, public rollout и combined fleet acceptance OPEN.
+
+> [!IMPORTANT]
+> **Предыдущий review,3 октября02:33 UTC+5:** [3015/orchestration](http://127.0.0.1:3015/orchestration), UI **5b20955** / API **cc28e9b**. F28: полный owned detail, JSON editor, explicit activation и timestamp conditions; nonterminal runs защищают runtime definition.101 suites/867 frontend tests;120 related PostgreSQL cases,35 cases также в новом production image. Собственный live pipeline v1→v2→inactive; stale409/invalid422,0 runs/Android commands. Login/API/Prometheus/Grafana/events WS passed. Initial12online/7offline; затем шесть срезов21:16:59–21:19:29UTC показали14online/5offline. Это конечное наблюдение, не SLA/FPS/soak.13 соседних работающих контейнеров сохранили ID/image/starttime. [F28 evidence](../audits/2026-10-03/PIPELINE-DEFINITION-WORKFLOW.md) · [Контракт](PIPELINE-DEFINITIONS.md). Browser visual/keyboard/mobile и production rollout OPEN. Исторические срезы ниже сохранены по датам.
 
 > [!IMPORTANT]
 > **Работающий review,2 октября23:45 UTC+5:** [3015/scripts](http://127.0.0.1:3015/scripts), UI **c989eaa** / API **d2846ef**. F27 source/test/API исправлен: доступный архив, выбранный immutable DAG/hash/diff, conditional rollback/archive и показанная версия для Run. Реальный собственный сценарий v1→v2→новая v3→архив; stale mutations/admissions409.100 suites/846 frontend tests,25 actual PostgreSQL cases также в production image passed.43 соседних контейнера сохранены; финальный срез19/online14/offline5. Browser visual, production rollout и длительная приёмка OPEN. [F27 evidence](../audits/2026-10-02/SCRIPT-VERSION-WORKFLOW.md) · [Операторский контракт](SCRIPT-VERSIONS.md).
@@ -15,7 +29,7 @@
 > [!IMPORTANT]
 > **Работающий review,2 октября18:13 UTC+5:** [3015/updates](http://127.0.0.1:3015/updates), Docker UI **d61ab49** / API **8267b94**. F33 PARTIAL: адресное OTA, current-socket wake, same-ID redispatch и conditional revoke установлены. Remote PH013 обновился10230→10240; live send, completed/restart receipt и новый heartbeat подтверждены.99 suites/825 frontend tests;310 transport/API regressions и5 actual PostgreSQL/RLS/Redis cases (также внутри production image) passed. Каталог19/online14/offline5,3online10240.43 соседних контейнера сохранены. [F33 evidence](../audits/2026-10-02/OTA-ADDRESSED-DELIVERY.md) · [Операторский контракт](OTA-ADDRESSED-UPDATES.md). Bulk rollout, verified artifact manifest и browser visual OPEN.
 
-**Последний полностью успешный проверенный documentation CI:**a408b31 — [frontend37012373103](https://github.com/RootOne1337/sphere-platform/actions/runs/37012373103), [backend37012373085](https://github.com/RootOne1337/sphere-platform/actions/runs/37012373085), [Android37012373076](https://github.com/RootOne1337/sphere-platform/actions/runs/37012373076), success; backend2248 passed/16 skipped. Core d2846ef frontend/Android passed; backend2268 passed/2 failed/16 skipped из-за старой MagicMock request fixture. Test-only correction **da7cf58**:8 batch unit passed; новый documentation head требует отдельного CI. [F27 CI details](../audits/2026-10-02/SCRIPT-VERSION-WORKFLOW.md).
+**Исторический проверенный documentation CI:**a408b31 — [frontend37012373103](https://github.com/RootOne1337/sphere-platform/actions/runs/37012373103), [backend37012373085](https://github.com/RootOne1337/sphere-platform/actions/runs/37012373085), [Android37012373076](https://github.com/RootOne1337/sphere-platform/actions/runs/37012373076), success; backend2248 passed/16 skipped. Core d2846ef frontend/Android passed; backend2268 passed/2 failed/16 skipped из-за старой MagicMock request fixture. Test-only correction **da7cf58**:8 batch unit passed; новый documentation head требует отдельного CI. [F27 CI details](../audits/2026-10-02/SCRIPT-VERSION-WORKFLOW.md).
 
 > [!IMPORTANT]
 > **Предыдущий review, 2 октября17:12 UTC+5:** [3015/audit](http://127.0.0.1:3015/audit), Docker UI **67b6bef** / API **39baa13**. F37: поиск всего журнала организации, диапазон UTC и bounded CSV5000 с отменой/проверкой receipt установлены. Event за page1 и actual truncated CSV подтверждены на5386 событиях. Login/API/Prometheus/Grafana/events WS/compiled artifact passed;43 остальных containers сохранены.19 устройств,14online/5offline после backend replacement — конечный срез. [Audit investigation / receipts и ограничения](../audits/2026-10-02/AUDIT-INVESTIGATION.md).

@@ -13,7 +13,7 @@ reflect the registered HTTP contracts and are checked in CI. The Tasks section
 was reconciled with application source `5fcf18a` on 2 October 2026. The Scripts
 section and optional task/batch version admission condition were reconciled with
 source `d2846ef` on 2 October; other Batches details retain their 7 September review.
-Other manual sections
+Locations were reconciled with `db6be05` on 3 October. Other manual sections
 still need component review; a listed contract does not establish runtime or
 security correctness. See the [audit report](audits/2026-09-05/AUDIT-REPORT.md).
 
@@ -582,6 +582,50 @@ Group counters use persisted ONLINE status, not live heartbeat/ONLINE+BUSY total
 
 The previous `GET/POST /groups/{id}/devices` examples were unsupported routes.
 `MoveDevicesRequest.group_id` is not used by this router: the path owns the target.
+
+---
+
+## Locations — `/locations`
+
+Reconciled with application `db6be05` on 3 October 2026.
+[Operator contract](operations/LOCATION-HIERARCHY.md) · [F26 evidence](audits/2026-10-03/LOCATION-HIERARCHY.md).
+
+| Method | Path | Permission | Success |
+|---|---|---|---|
+| GET | `/locations` | `device:read` | 200, full organization array with direct counters |
+| GET | `/locations/{id}` | `device:read` | 200, owned detail |
+| POST | `/locations` | `device:write` | 201, created detail |
+| PUT | `/locations/{id}` | `device:write` | 200, updated detail |
+| DELETE | `/locations/{id}` | `device:delete` | 204; optional query `expected_updated_at` |
+| POST | `/locations/{id}/devices` | `device:write` | 200, additive `assigned` count |
+| DELETE | `/locations/{id}/devices` | `device:write` | 200, `removed` count |
+
+Create/update metadata: `name`, nullable `description/color/address/latitude/
+longitude/parent_location_id`. PUT preserves omitted fields; null explicitly
+clears nullable fields. Name cannot be null. Coordinates are finite decimal
+numbers within ±90/±180; zero is valid. Parent must be owned, accessible and
+acyclic. Unknown request fields return 422. Read/create/update details include
+`id/org_id/created_at/updated_at`, direct `total_devices` and `online_devices`.
+Counters use persisted online status; they do not sum descendants or prove
+current sockets. The response array has no pagination wrapper.
+
+```json
+{"name":"Floor","latitude":0,"longitude":0,"parent_location_id":null}
+```
+
+For conditional PUT, pass the inspected timezone-aware `updated_at` as body
+`expected_updated_at`. DELETE uses the same optional condition in the query,
+with normal URL encoding. A stale revision or competing tenant writer returns
+409. Old clients without the condition retain compatibility but do not get
+stale-draft protection. Missing/foreign target or parent returns 404;
+self/descendant/corrupt ancestry returns 400; invalid schema/range/date returns
+422. Rejection preserves the existing fields.
+
+Deleting a parent removes its memberships, preserves devices and promotes
+immediate children to roots; their memberships remain. The timestamp condition
+covers the target row, not an immutable preview of all child/membership changes.
+Membership requests use `{"device_ids":["<UUID>"]}`, 1–500 strings; historical
+skip behavior for invalid/missing/foreign devices is retained.
 
 ---
 

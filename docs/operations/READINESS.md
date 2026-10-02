@@ -3,7 +3,21 @@
 **Навигация обновлена: 3 октября 2026. Исторические live-снимки ниже сохранены по датам.**
 
 > [!IMPORTANT]
-> Последний review-срез3 октября02:33UTC+5: UI **5b20955** / API **cc28e9b**,
+> **Текущий review: 3 октября 2026, 03:06 UTC+5.**
+> [3015/locations](http://127.0.0.1:3015/locations), UI **8e0aeb5** / API **db6be05**.
+> F26: география, nullable clear, owned detail и иерархия установлены;
+> циклы и устаревшие записи/удаления отклоняются атомарно. **102 suites / 893
+> frontend tests**, **40 PostgreSQL cases**, включая **30 в новом production
+> image**. Собственный live API canary создан, проверен и удалён, без команд
+> Android. Login/API/Prometheus/Grafana/events WS passed; шесть конечных срезов
+> 22:07–22:09 UTC: **14 online / 5 offline**. Это не SLA/FPS/soak.
+> **13 постоянных соседних контейнеров** сохранили ID/image/starttime.
+> [F26 evidence](../audits/2026-10-03/LOCATION-HIERARCHY.md) ·
+> [Контракт](LOCATION-HIERARCHY.md). **33 source-fixed / 8 OPEN**;
+> visual/keyboard/mobile, public rollout и combined fleet acceptance OPEN.
+
+> [!IMPORTANT]
+> Предыдущий review-срез3 октября02:33UTC+5: UI **5b20955** / API **cc28e9b**,
 > [3015/orchestration](http://127.0.0.1:3015/orchestration). F28 definition/edit/activation
 > установлен и проверен finite API canary без запусков на устройствах.
 >101 frontend suites/867 tests;120 связанных PostgreSQL cases,35 production-image
