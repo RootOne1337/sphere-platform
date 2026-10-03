@@ -89,6 +89,30 @@ it('read-only viewers render a picture without dispatching taps or swipes, inclu
   expect(commands()).toEqual([]);
 });
 
+it('inspection picks a node without dispatching Android tap, swipe or onTap', () => {
+  const view = readyGestureFixture(true);
+  const onPick = jest.fn();
+  const onTap = jest.fn();
+  view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput onTap={onTap}
+    inspection={{ onPick, bounds: null }} />);
+  view.down(1); view.up(1); view.down(2); view.up(2, 65);
+  expect(onPick).toHaveBeenCalledWith(640, 360, { width: 1280, height: 720 });
+  expect(onPick).toHaveBeenCalledTimes(1);
+  expect(onTap).not.toHaveBeenCalled();
+  expect(view.commands()).toEqual([]);
+});
+
+it('a gesture started in inspection is never replayed as Android input after a mode change', () => {
+  const view = readyGestureFixture(true);
+  const onPick = jest.fn();
+  view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput inspection={{ onPick, bounds: null }} />);
+  view.down(1);
+  view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput />);
+  view.up(1);
+  expect(onPick).not.toHaveBeenCalled();
+  expect(view.commands()).toEqual([]);
+});
+
 it('revoking control cancels a gesture already held over the picture', () => {
   const view = readyGestureFixture(true);
   view.down(1);

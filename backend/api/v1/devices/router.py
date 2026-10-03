@@ -3,12 +3,13 @@
 # Авто-дискавери: main.py подключает все backend/api/v1/*/router.py автоматически.
 from __future__ import annotations
 
+import asyncio
 import logging
 import uuid
 from datetime import datetime, timezone
 from typing import Any, Literal
 
-from fastapi import APIRouter, Cookie, Depends, Header, HTTPException, Query
+from fastapi import APIRouter, Cookie, Depends, Header, HTTPException, Query, Response
 from fastapi import status as http_status
 from pydantic import BaseModel, Field
 from redis.exceptions import RedisError
@@ -36,6 +37,7 @@ from backend.schemas.devices import (
     UpdateDeviceRequest,
 )
 from backend.schemas.stream_diagnostics import StreamDiagnosticsResponse
+from backend.schemas.ui_hierarchy import UiHierarchyResponse
 from backend.services.api_key_service import APIKeyService
 from backend.services.cache_service import CacheService
 from backend.services.device_registration_service import DeviceRegistrationService
@@ -571,6 +573,71 @@ async def _request_interactive_command(
 
 class ExecuteShellRequest(BaseModel):
     command: str = Field(..., min_length=1, max_length=4096)
+
+
+@router.post("/{device_id}/ui-hierarchy", response_model=UiHierarchyResponse,
+             summary="Прочитать ограниченный снимок дерева Android UI Automator")
+async def request_ui_hierarchy(
+    device_id: uuid.UUID,
+    response: Response,
+    current_user: User = require_permission("device:write"),
+    svc: DeviceService = Depends(get_device_service),
+    redis=Depends(get_redis_binary),
+) -> UiHierarchyResponse:
+    from backend.services.ui_hierarchy import InvalidUiHierarchy, display_size, parse_hierarchy
+
+    response.headers["Cache-Control"] = "no-store"
+
+    # This uses the existing root SHELL capability, so it retains its stronger
+    # permission even though every command below is a fixed read/cleanup.
+    await svc.get_device(device_id, current_user.org_id)
+    snapshot_id = uuid.uuid4().hex
+    key = f"sphere:ui-inspection:{current_user.org_id}:{device_id}"
+    try:
+        acquired = await redis.set(key, snapshot_id, nx=True, ex=60)
+    except RedisError as exc:
+        raise HTTPException(503, "UI inspection lock unavailable") from exc
+    if not acquired:
+        raise HTTPException(429, "UI inspection already in progress")
+    path = f"/data/local/tmp/sphere-ui-{snapshot_id}.xml"
+    requested_at = datetime.now(timezone.utc)
+
+    async def shell(command: str) -> str:
+        result = await _request_interactive_command(device_id, current_user, svc, "SHELL", {"cmd": command}, 8.0)
+        receipt = result.get("result")
+        output = receipt.get("output") if isinstance(receipt, dict) else None
+        if result.get("status") != "completed" or not isinstance(output, str):
+            raise HTTPException(502, "Android UI inspection unavailable: root/UI Automator command failed")
+        return output
+
+    try:
+        async with asyncio.timeout(40):
+            before = display_size(await shell("wm size"))
+            await shell(f"uiautomator dump {path}")
+            xml = await shell(f"cat {path}")
+            after = display_size(await shell("wm size"))
+            if before != after:
+                raise HTTPException(409, "Android display geometry changed; request a new snapshot")
+            width, height, rotation, nodes = parse_hierarchy(xml, after)
+        return UiHierarchyResponse(device_id=str(device_id), snapshot_id=snapshot_id,
+                                   requested_at=requested_at, completed_at=datetime.now(timezone.utc),
+                                   width=width, height=height, rotation=rotation, nodes=nodes)
+    except InvalidUiHierarchy as exc:
+        raise HTTPException(502, str(exc)) from exc
+    except TimeoutError as exc:
+        raise HTTPException(504, "Android UI snapshot deadline exceeded; no automatic retry") from exc
+    finally:
+        # Unique UUID-owned path; do not delete any other dump. Cleanup failure
+        # is recorded without logging the potentially sensitive node text/XML.
+        try:
+            await shell(f"rm -f {path}")
+        except Exception:
+            logger.warning("ui_inspection_cleanup_unconfirmed", device_id=str(device_id), snapshot_id=snapshot_id)
+        try:
+            await redis.eval("if redis.call('get',KEYS[1]) == ARGV[1] then return redis.call('del',KEYS[1]) end return 0",
+                             1, key, snapshot_id)
+        except RedisError:
+            logger.warning("ui_inspection_lock_release_unconfirmed", device_id=str(device_id))
 
 
 @router.post(

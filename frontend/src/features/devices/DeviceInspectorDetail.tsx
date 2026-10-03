@@ -12,7 +12,7 @@ import { Badge } from '@/src/shared/ui/badge';
 import { DeviceStatusBadge } from '@/components/sphere/DeviceStatusBadge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { DeviceStream } from '@/components/sphere/DeviceStream';
+import { SingleDeviceStream } from '@/src/features/stream/SingleDeviceStream';
 import { WebTerminal } from './WebTerminal';
 import { LogcatViewer } from './LogcatViewer';
 import { RunScriptTab } from './RunScriptTab';
@@ -79,7 +79,7 @@ export function DeviceInspectorDetail({ deviceId, fullPage = false }: { deviceId
       <TabsContent value="summary" className="mt-5 space-y-5">
         {!VIEWS.some(([key]) => key === view) ? <>
           <Button variant="outline" size="sm" onClick={() => setView('summary')}>Назад к обзору</Button>
-          {view === 'stream' && canViewStream && <div className="overflow-hidden rounded-xl border border-border bg-black"><DeviceStream deviceId={deviceId} enableDiagnostics enableScreenshot enableNavigation enableStaticInput readOnly={!access.can('stream:control')} /></div>}
+          {view === 'stream' && canViewStream && <SingleDeviceStream key={deviceId} deviceId={deviceId} />}
           {view === 'terminal' && canWrite && <div className="h-[480px] min-w-0"><WebTerminal deviceId={deviceId} enabled={isReachable} /></div>}
           {view === 'logcat' && access.can('device:read') && <div className="h-[480px] min-w-0"><LogcatViewer deviceId={deviceId} enabled={isReachable} /></div>}
           {view === 'script' && canWrite && <RunScriptTab deviceId={deviceId} deviceName={device.name} isOnline={isReachable} onBack={() => setView('summary')} />}

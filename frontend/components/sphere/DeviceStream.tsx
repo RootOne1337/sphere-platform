@@ -6,6 +6,7 @@ import { useAuthStore } from '@/lib/store';
 import { api } from '@/lib/api';
 import type { StreamFrameDimensions } from '@/src/features/stream/streamAspectRatio';
 import { AndroidNavigationBar } from '@/src/features/stream/AndroidNavigationBar';
+import type { UiBounds } from '@/src/features/stream/uiHierarchy';
 
 interface DeviceStreamProps {
   deviceId: string;
@@ -19,6 +20,8 @@ interface DeviceStreamProps {
   readOnly?: boolean;
   fit?: 'contain' | 'cover' | 'fill';
   onFrameDimensions?: (dimensions: StreamFrameDimensions) => void;
+  inspection?: { onPick: (x: number, y: number, dimensions: StreamFrameDimensions) => void; bounds: UiBounds | null };
+  onInspectionInvalidated?: () => void;
 }
 
 interface StreamDiagnosticResponse {
@@ -77,13 +80,15 @@ export function DeviceStream({
   readOnly = false,
   fit,
   onFrameDimensions,
+  inspection,
+  onInspectionInvalidated,
 }: DeviceStreamProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const renderedSocketRef = useRef<WebSocket | null>(null);
   const decoderRef = useRef<H264Decoder | null>(null);
   const dragRef = useRef<{
-    x: number; y: number; pointerId: number; frameWidth: number; frameHeight: number;
+    x: number; y: number; pointerId: number; frameWidth: number; frameHeight: number; inspection: boolean;
   } | null>(null);
   const { accessToken } = useAuthStore();
   const [connection, setConnection] = useState<
@@ -107,17 +112,21 @@ export function DeviceStream({
   const currentFrameOwned = hasRenderedFrame && !streamError
     && wsRef.current?.readyState === WebSocket.OPEN
     && renderedSocketRef.current === wsRef.current;
-  const canInteract = !readOnly && currentFrameOwned && (connection === 'live'
+  const canInteract = !inspection && !readOnly && currentFrameOwned && (connection === 'live'
+    || (enableStaticInput && connection === 'stale'));
+  const canSelectElement = !!inspection && currentFrameOwned && (connection === 'live'
     || (enableStaticInput && connection === 'stale'));
   const canSaveFrame = currentFrameOwned && connection === 'live';
   // Age is not a disconnect: an idle ImageReader can retain its last picture.
   // A new socket/decoder still needs its own first frame before accepting input.
-  const canNavigate = !readOnly && hasRenderedFrame && !streamError
+  const canNavigate = !inspection && !readOnly && hasRenderedFrame && !streamError
     && (connection === 'live' || connection === 'stale')
     && renderedSocketRef.current === wsRef.current;
   const onFrameDimensionsRef = useRef(onFrameDimensions);
   const lastFrameDimensionsRef = useRef<StreamFrameDimensions | null>(null);
   onFrameDimensionsRef.current = onFrameDimensions;
+  const invalidateInspectionRef = useRef(onInspectionInvalidated);
+  invalidateInspectionRef.current = onInspectionInvalidated;
 
   useEffect(() => {
     lastFrameDimensionsRef.current = null;
@@ -155,6 +164,7 @@ export function DeviceStream({
           // Coordinates captured before rotation/resizing belong to the old
           // frame. Never combine them with a release mapped to the new frame.
           dragRef.current = null;
+          invalidateInspectionRef.current?.();
           canvas.width = frame.displayWidth;
           canvas.height = frame.displayHeight;
         }
@@ -206,6 +216,8 @@ export function DeviceStream({
       const createWs = () => {
         if (ignore) return;
         dragRef.current = null;
+        invalidateInspectionRef.current?.();
+        lastFrameDimensionsRef.current = null;
         setStreamError(null);
         const newWs = new WebSocket(wsUrl);
         newWs.binaryType = 'arraybuffer';
@@ -413,7 +425,7 @@ export function DeviceStream({
   // ── pointer down — begin drag / tap ─────────────────────────────────────
   const handlePointerDown = useCallback(
     (e: React.PointerEvent<HTMLCanvasElement>) => {
-      if (!canInteract || wsRef.current?.readyState !== WebSocket.OPEN
+      if (!(canInteract || canSelectElement) || wsRef.current?.readyState !== WebSocket.OPEN
         || renderedSocketRef.current !== wsRef.current) {
         dragRef.current = null;
         return;
@@ -424,10 +436,11 @@ export function DeviceStream({
       dragRef.current = {
         ...pt, pointerId: e.pointerId,
         frameWidth: e.currentTarget.width, frameHeight: e.currentTarget.height,
+        inspection: !!inspection,
       };
       e.currentTarget.setPointerCapture(e.pointerId);
     },
-    [canInteract, toCanvasCoords],
+    [canInteract, canSelectElement, inspection, toCanvasCoords],
   );
 
   // ── pointer up — tap or swipe ────────────────────────────────────────────
@@ -436,7 +449,7 @@ export function DeviceStream({
       const start = dragRef.current;
       if (!start || e.pointerId !== start.pointerId) return;
       dragRef.current = null;
-      if (!canInteract || wsRef.current?.readyState !== WebSocket.OPEN
+      if (!(canInteract || canSelectElement) || start.inspection !== !!inspection || wsRef.current?.readyState !== WebSocket.OPEN
         || renderedSocketRef.current !== wsRef.current || e.button !== 0
         || e.currentTarget.width !== start.frameWidth
         || e.currentTarget.height !== start.frameHeight) return;
@@ -445,6 +458,11 @@ export function DeviceStream({
       if (!pt) return;
 
       const dist = Math.hypot(pt.x - start.x, pt.y - start.y);
+
+      if (inspection) {
+        if (dist < 12) inspection.onPick(start.x, start.y, { width: start.frameWidth, height: start.frameHeight });
+        return;
+      }
 
       if (dist < 12) {
         // Tap
@@ -460,7 +478,7 @@ export function DeviceStream({
         }
       }
     },
-    [canInteract, toCanvasCoords, onTap],
+    [canInteract, canSelectElement, inspection, toCanvasCoords, onTap],
   );
 
   const handlePointerCancel = useCallback((e: React.PointerEvent<HTMLCanvasElement>) => {
@@ -498,11 +516,11 @@ export function DeviceStream({
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerCancel}
       onLostPointerCapture={handlePointerCancel}
-      aria-label={readOnly ? 'Экран устройства: только просмотр, управление запрещено для вашей роли' : canInteract
+      aria-label={inspection ? 'Экран устройства: выбор элемента без нажатия Android' : readOnly ? 'Экран устройства: только просмотр, управление запрещено для вашей роли' : canInteract
         ? connection === 'stale' ? 'Экран устройства: управление по последнему кадру' : 'Экран устройства: свежий видеопоток'
         : 'Экран устройства: управление доступно после получения свежего видеокадра'}
-      aria-disabled={!canInteract}
-      className={`${canInteract ? 'cursor-crosshair' : 'pointer-events-none cursor-not-allowed'} rounded border border-gray-700 bg-black touch-none`}
+      aria-disabled={!(canInteract || canSelectElement)}
+      className={`${canInteract || canSelectElement ? 'cursor-crosshair' : 'pointer-events-none cursor-not-allowed'} rounded border border-gray-700 bg-black touch-none`}
       style={{
         display: 'block',
         width: '100%',
@@ -510,6 +528,9 @@ export function DeviceStream({
         objectFit: fit ?? 'contain',
       }}
     />
+    {inspection?.bounds && lastFrameDimensionsRef.current && <svg aria-label="Границы выбранного элемента" className="pointer-events-none absolute inset-0 h-full w-full" viewBox={`0 0 ${lastFrameDimensionsRef.current.width} ${lastFrameDimensionsRef.current.height}`} preserveAspectRatio={fit === 'fill' ? 'none' : fit === 'cover' ? 'xMidYMid slice' : 'xMidYMid meet'}>
+      <rect x={inspection.bounds.left} y={inspection.bounds.top} width={inspection.bounds.right - inspection.bounds.left} height={inspection.bounds.bottom - inspection.bounds.top} fill="rgba(20,184,166,0.15)" stroke="#14b8a6" strokeWidth="2" vectorEffect="non-scaling-stroke" />
+    </svg>}
     {enableScreenshot && <div className="absolute bottom-2 left-2 z-20 max-w-[calc(100%-1rem)]">
       <button type="button" disabled={!canSaveFrame} onClick={saveFrame} className="rounded-lg border border-white/20 bg-black/80 px-3 py-2 text-xs text-white disabled:cursor-not-allowed disabled:opacity-50">Сохранить свежий кадр PNG</button>
       {screenshotError && <p role="alert" className="mt-1 rounded bg-black/90 p-2 text-xs text-red-200">{screenshotError}</p>}
