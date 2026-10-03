@@ -5880,5 +5880,18 @@
     "olderSnapshotsPreserved": true,
     "auditFixedCountUnchanged": 33,
     "auditOpenCountUnchanged": 8
+  },
+  "latestSessionCapabilityFollowup": {
+    "observedAt": "2026-10-03T18:54:54.919522+00:00",
+    "implementationSource": "00d5ad8b072c490662c3c8242ac3b3b47e49b1be",
+    "schemaRepairSource": "729c1da3a23b9a663ef8afd646e5479dce3875c2",
+    "uiSource": "00d5ad8b072c490662c3c8242ac3b3b47e49b1be",
+    "apiSource": "00d5ad8b072c490662c3c8242ac3b3b47e49b1be",
+    "online": 14,
+    "apkCode": 10244,
+    "frontendPassed": 982,
+    "backendImagePassed": 45,
+    "status": "F39_PARTIAL",
+    "evidence": "../2026-10-03/SESSION-CAPABILITIES-EVIDENCE.json"
   }
 }

@@ -8,7 +8,18 @@
 > Внешний tunnel hostname удалён из этого журнала, так как Quick Tunnel URL
 > эфемерен; активный runtime endpoint 28 сентября не перечитывался.
 
-## Последняя установленная контрольная точка — 1 октября 2026
+## Последняя контрольная точка — 3 октября,18:54 UTC
+
+Рабочий review UI: [3015/devices](http://127.0.0.1:3015/devices), API/UI source00d5ad8.
+14 online APK1.2.44-dev/10244;5offline вне приёмки. Capability endpoint200/no-store,
+anonymous401; fresh role enforcement/deep-link/device input source gates приняты.
+При API-recreation старые connection epochs сбросились; семь новых срезов сохранили
+cohort и новые epochs. Tuna и14 соседних контейнеров сохранены при замене API/UI.
+[Контракт и пределы](../audits/2026-10-03/SESSION-CAPABILITIES.md) ·
+[Каноническое состояние](CURRENT-STATE.md). Адрес3015 — review с реальным API;
+старый публичный frontend этим rollout не заменён. Credentials не публикуются.
+
+## Историческая установленная контрольная точка — 1 октября 2026
 
 Проверочный веб: **3015 → UI 3023 / API 18080**, frontend 8f615c6 установлен
 17:28:52 UTC+5, backend 8d64ca4 — 18:04:04. Public Docker frontend этим rollout

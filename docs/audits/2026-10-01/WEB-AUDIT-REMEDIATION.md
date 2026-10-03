@@ -2,7 +2,23 @@
 
 Этот журнал продолжает [замороженный аудит](WEB-FULL-CAPABILITY-AUDIT.md) исходников `1354d66`. Исходный документ и evidence сохраняют свою дату и ограничения; их статусы не переписываются задним числом.
 
-**Последний OTA/API/UI readback,3 октября03:17:58 UTC:** UI 77fca37/API facba9a;
+> [!IMPORTANT]
+> **Текущий API/UI: 3 октября 2026, 18:54 UTC.** Оба установлены из **00d5ad8**:
+> [рабочий веб на 3015](http://127.0.0.1:3015/devices). F39: навигация и прямые
+> ссылки проверяют серверные permissions; просмотр отделён от управления Android.
+> **105 suites / 982 frontend tests и 45 PostgreSQL/Redis cases — passed в собранных образах.**
+> Live capabilities: 200 / no-store; без аутентификации — 401. Семь срезов подтвердили
+> **14 online на APK 10244**, heartbeat <60 с и одинаковые epochs после rollout.
+> Замена API сбросила прежние epochs; это не доказательство непрерывного uptime.
+> **14 соседних сервисов, Tuna и OTA сохранены.**
+> CI 00d5ad8: 2404 backend tests passed / 16 skipped; generated API docs gate failed.
+> Документация исправлена в 729c1da; exporter check в shipped image passed.
+> Повторный CI **729c1da**: Backend, Frontend, Android и Preview — success.
+> **33 source-fixed / 8 OPEN; F32/F33/F39 PARTIAL.** Матричный транспорт всё ещё H.264.
+> XPath, FPS profiles, остальные action permissions и visual/soak остаются OPEN.
+> [Контракт и доказательства](../2026-10-03/SESSION-CAPABILITIES.md). Визуальная приёмка: OPEN_URL_POLICY_BLOCKED.
+
+**Исторический OTA/API/UI readback,3 октября03:17:58 UTC:** UI 77fca37/API facba9a;
 14 addressed installs10241 accepted, 14 online/5 offline. 12 finite samples сохранили
 cohort/connection epochs, heartbeat <30 s.104 suites/946 frontend cases,364 regressions;
 130 backend cases в immutable image,818 passed/1 skip на каждый Android flavor.
@@ -82,13 +98,13 @@ production image; N06 actual DI/live422/404 принято. VPN provider/Android
 | [F30](WEB-FULL-CAPABILITY-AUDIT.md#f30) | P2 | Source исправлен; live OPEN | Расписание one-shot: ISO offset подаётся в datetime-local |
 | [F31](WEB-FULL-CAPABILITY-AUDIT.md#f31) | P2 | Source исправлен; live OPEN | VPN → Logs теряет контекст устройства |
 | [F32](WEB-FULL-CAPABILITY-AUDIT.md#f32) | P2 | Частично; lifecycle/visual OPEN | Explicit targets/action, owned preflight, per-device receipts и no replay исправлены; kill transport unsupported, durable reconciliation/visual OPEN |
-| [F33](WEB-FULL-CAPABILITY-AUDIT.md#f33) | P2 | Частично; bulk/manifest/visual OPEN | Addressed installs14/14, metadata/receipt и APK identity guards приняты по своим gates; general bulk/manifest, next native upgrade и visual OPEN |
+| [F33](WEB-FULL-CAPABILITY-AUDIT.md#f33) | P2 | Частично; bulk/manifest/visual OPEN | Addressed installs14/14, metadata/receipt и APK identity guards приняты по своим gates; general bulk/manifest/stable promotion и visual OPEN |
 | [F34](WEB-FULL-CAPABILITY-AUDIT.md#f34) | P2 | Открыто | Матричный режим использует полноценный H.264 для каждого окна |
 | [F35](WEB-FULL-CAPABILITY-AUDIT.md#f35) | P2 | Открыто | XPath-инспектор на видеокарточке ещё отсутствует |
 | [F36](WEB-FULL-CAPABILITY-AUDIT.md#f36) | P2 | Открыто | Управление quality/FPS не раскрыто в single stream |
 | [F37](WEB-FULL-CAPABILITY-AUDIT.md#f37) | P2 | Source исправлен; live OPEN | Аудит: фильтры и CSV действуют на текущую страницу |
 | [F38](WEB-FULL-CAPABILITY-AUDIT.md#f38) | P2 | Source исправлен; live OPEN | Пользователи: форма не связывает backend validation с полями |
-| [F39](WEB-FULL-CAPABILITY-AUDIT.md#f39) | P2 | Открыто | Role-aware оболочка не закрывает UX отказов доступа |
+| [F39](WEB-FULL-CAPABILITY-AUDIT.md#f39) | P2 | Частично; all-actions/visual OPEN | Server capabilities, shell/deep links, identity retirement и device control исправлены; остальные mutation affordances OPEN |
 | [F40](WEB-FULL-CAPABILITY-AUDIT.md#f40) | P2 | Открыто | Низкая полнота текущего визуального acceptance |
 | [F41](WEB-FULL-CAPABILITY-AUDIT.md#f41) | P2 | Открыто | Зелёный CI не покрывает перечисленные operator outcomes |
 
@@ -488,3 +504,9 @@ Ruff/mypy; все 271 прошли в immutable image. Backend **37415e3 уст�
 Два отката по raw mount comparison разобраны; итоговые mounts эквивалентны.
 Browser/input/F36 OPEN; исходные 33 исправленных / 8 OPEN сохранены.
 [Отчёт](../2026-10-03/STREAM-REFERENCE-RECOVERY.md).
+
+### F39 — серверные права и просмотр без управления
+
+Implementation00d5ad8 и schema repair729c1da; установленный UI/API00d5ad8.
+[Контракт, before/after, shipped-image проверки и live readback](../2026-10-03/SESSION-CAPABILITIES.md).
+Только этот slice принят по API/JSDOM gates; full role-action UX и visual OPEN.

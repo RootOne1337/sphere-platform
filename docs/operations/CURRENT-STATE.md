@@ -7,7 +7,23 @@
 [Главная](../../README.md) · [Каталог документации](../README.md) · [Readiness](READINESS.md) · [Fleet32 gates](../audits/2026-09-20/FLEET32-PREFLIGHT.md) · [PR #19](https://github.com/RootOne1337/sphere-platform/pull/19)
 
 > [!IMPORTANT]
-> **Проверка видео и backend: 3 октября 2026, 15:53 UTC.** API **37415e3** установлен;
+> **Текущий API/UI: 3 октября 2026, 18:54 UTC.** Оба установлены из **00d5ad8**:
+> [рабочий веб на 3015](http://127.0.0.1:3015/devices). F39: навигация и прямые
+> ссылки проверяют серверные permissions; просмотр отделён от управления Android.
+> **105 suites / 982 frontend tests и 45 PostgreSQL/Redis cases — passed в собранных образах.**
+> Live capabilities: 200 / no-store; без аутентификации — 401. Семь срезов подтвердили
+> **14 online на APK 10244**, heartbeat <60 с и одинаковые epochs после rollout.
+> Замена API сбросила прежние epochs; это не доказательство непрерывного uptime.
+> **14 соседних сервисов, Tuna и OTA сохранены.**
+> CI 00d5ad8: 2404 backend tests passed / 16 skipped; generated API docs gate failed.
+> Документация исправлена в 729c1da; exporter check в shipped image passed.
+> Повторный CI **729c1da**: Backend, Frontend, Android и Preview — success.
+> **33 source-fixed / 8 OPEN; F32/F33/F39 PARTIAL.** Матричный транспорт всё ещё H.264.
+> XPath, FPS profiles, остальные action permissions и visual/soak остаются OPEN.
+> [Контракт и доказательства](../audits/2026-10-03/SESSION-CAPABILITIES.md). Визуальная приёмка: OPEN_URL_POLICY_BLOCKED.
+
+> [!IMPORTANT]
+> **Предыдущая проверка видео и backend: 3 октября 2026, 15:53 UTC.** API **37415e3** установлен;
 > UI **77fca37** и APK **1.2.44-dev / 10244** сохранены. На удалённой PH025 и
 > локальной PH010 получено по **599 H.264 кадров за 20  с: 29,95 кадра/с**.
 > Это доставка до WebSocket-получателя; отрисовка браузера и задержка ввода ещё не приняты.

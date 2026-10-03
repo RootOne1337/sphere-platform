@@ -2,7 +2,7 @@
 
 [Каталог](README.md) · [Readiness](operations/READINESS.md) · [Contributing](../CONTRIBUTING.md)
 
-**Последняя сверка входных документов и cross-layer canary: 1 октября 2026.** Для текущих
+**Последняя сверка входных документов: 3 октября 2026,18:54 UTC.** Для текущих
 версий и границ live-подтверждения используйте [каноническое состояние](operations/CURRENT-STATE.md).
 
 ## Где искать текущий ответ
@@ -112,3 +112,10 @@ GitHub API `GET /repos/RootOne1337/sphere-platform/readme?ref=codex%2Fenterprise
 циклом заданий, запуском, readiness и FAQ. Вводные Android/Web/architecture guides
 теперь явно отделяют исторические версии и проектные оценки от текущего pilot.
 Два старых якоря из ADR сохранены в архитектурном справочнике.
+
+### Сверка 3 октября: server capabilities и роли
+
+[Контракт и evidence](audits/2026-10-03/SESSION-CAPABILITIES.md) обновляют current
+state/readiness/README/catalog/pilot/Fleet32 pointers. Frozen audit не изменён;
+F39 PARTIAL,33 source-fixed/8OPEN. OpenAPI экспортируется с зависимостями shipped
+image: host Python дал иной Pydantic schema и не считается acceptance exporter.

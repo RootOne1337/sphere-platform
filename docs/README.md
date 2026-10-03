@@ -15,13 +15,19 @@
 > автоматическую проверку runtime; старые аудиты сохраняют собственные даты и
 > версии и не должны читаться как текущий deploy. [Правила актуальности](DOCUMENTATION.md).
 
-Последняя runtime-проверка: [Восстановление H.264 и измеренная доставка](audits/2026-10-03/STREAM-REFERENCE-RECOVERY.md).
-API **37415e3** установлен; UI **77fca37** и APK **10244** сохранены.
-PH025/PH010: по 599 кадров за 20  с — 29,95 кадра/с до получателя;
-отрисовка браузера и задержка ввода ещё не приняты. Прошли 230 WebSocket-тестов
-и 41 тест PostgreSQL/Redis, все 271 повторены в собранном образе; source CI прошёл.
-Семь срезов сохранили 14 online на 10244, новые даты соединений и heartbeat <60  с.
-15 соседних контейнеров и Tuna сохранены; два отката при проверке mounts разобраны.
+Последняя runtime-проверка — **3 октября, 18:54 UTC**:
+[F39: серверные права, навигация и управление экраном](audits/2026-10-03/SESSION-CAPABILITIES.md) ·
+[Evidence](audits/2026-10-03/SESSION-CAPABILITIES-EVIDENCE.json).
+**API/UI 00d5ad8** установлены на review 3015; 14 online на APK 10244.
+105 suites / 982 frontend cases и 45 API cases прошли в собранных образах.
+F39 PARTIAL: остальные действия страниц и визуальная приёмка открыты.
+
+Предыдущая проверка видео — **3 октября, 15:53 UTC**:
+[H.264 recovery и измеренная доставка](audits/2026-10-03/STREAM-REFERENCE-RECOVERY.md).
+Для прежнего API 37415e3 / UI 77fca37 на PH025/PH010 получено по 599 кадров за
+20 с — 29,95 кадра/с до получателя. Отрисовка браузера и задержка ввода ещё не приняты.
+Прошли 230 WebSocket-тестов и 41 PostgreSQL/Redis case, все 271 — в собранном образе.
+
 [Native OTA 44](audits/2026-10-03/OTA-SIGNER-COMPATIBILITY.md) ·
 [ABR proof](audits/2026-10-03/STREAM-BITRATE-RECOVERY.md) ·
 [OTA contract](operations/OTA-PUBLICATION-AND-APK-CHECKS.md).

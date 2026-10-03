@@ -1,0 +1,128 @@
+{
+  "finding": "F39",
+  "status": "PARTIAL",
+  "implementationSource": "00d5ad8b072c490662c3c8242ac3b3b47e49b1be",
+  "schemaRepairSource": "729c1da3a23b9a663ef8afd646e5479dce3875c2",
+  "observedAt": "2026-10-03T18:54:54.919522+00:00",
+  "regressionBefore": {
+    "productionUiSource": "77fca37847590bef526ae5becdf7b1986d5b15ea",
+    "assertionFailures": 2,
+    "otherPassingCases": 12,
+    "initialMappedMockResolutionFailureExcluded": true
+  },
+  "checks": {
+    "frontend": {
+      "suites": 105,
+      "passed": 982,
+      "failed": 0,
+      "nodeMajor": 24,
+      "immutableBuilderImage": true,
+      "archivedTestMountOnly": true,
+      "typecheck": true,
+      "nextBuild": true
+    },
+    "backend": {
+      "passed": 45,
+      "failed": 0,
+      "skipped": 0,
+      "realDisposablePostgresRedis": true,
+      "immutableBackendImage": true,
+      "sourceMount": false
+    },
+    "changedRuff": true,
+    "schemaMypy": true,
+    "apiExporterCheckInShippedImage": true,
+    "hostSchemaDriftExcluded": true
+  },
+  "runtime": {
+    "url": "http://127.0.0.1:3015",
+    "uiSource": "00d5ad8b072c490662c3c8242ac3b3b47e49b1be",
+    "apiSource": "00d5ad8b072c490662c3c8242ac3b3b47e49b1be",
+    "apiImageId": "sha256:e60c889d9397b4278fc7f3c62360bddac5ebe7f429f84c46273268a2bede262c",
+    "uiImageId": "sha256:5bec9d0c31065710ca7c29d7942c210821884eba9300564ba9e23c354006c416",
+    "capabilities": {
+      "status": 200,
+      "schema": 1,
+      "role": "super_admin",
+      "permissionsCount": 31,
+      "identityMatched": true,
+      "permissionMatrixMatched": true,
+      "cacheControl": "no-store",
+      "anonymousStatus": 401
+    },
+    "online": 14,
+    "catalog": 19,
+    "offlineOutsideAcceptance": 5,
+    "apkCode": 10244,
+    "samples": 7,
+    "startedAt": "2026-10-03T18:53:54.272775+00:00",
+    "finishedAt": "2026-10-03T18:54:54.919522+00:00",
+    "samePostRolloutEpochs": true,
+    "heartbeatUnder60Seconds": true,
+    "neighbourContainersPreserved": 14,
+    "tunaPreserved": true,
+    "otaCatalogPreserved": true,
+    "prometheusBackendUp": true,
+    "deviceCommandsSent": false,
+    "savedVideoBytes": 0
+  },
+  "sourceCi": {
+    "implementationRun": "https://github.com/RootOne1337/sphere-platform/actions/runs/37137596032",
+    "implementationBackendTestsPassed": 2404,
+    "implementationBackendTestsSkipped": 16,
+    "implementationWorkflowConclusion": "failure_generated_api_docs",
+    "schemaRepairRuns": [
+      {
+        "conclusion": "success",
+        "databaseId": 37145886793,
+        "name": "Preview — Deploy",
+        "status": "completed",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37145886793"
+      },
+      {
+        "conclusion": "",
+        "databaseId": 37145886835,
+        "name": "CI — Android",
+        "status": "in_progress",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37145886835"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 37145886806,
+        "name": "CI — Frontend",
+        "status": "completed",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37145886806"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 37145886832,
+        "name": "CI — Backend",
+        "status": "completed",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37145886832"
+      }
+    ],
+    "schemaRepairAllSuccess": false,
+    "observedAt": "2026-10-03T19:05:06.583289+00:00"
+  },
+  "open": [
+    "every_page_mutation_affordance_permissions",
+    "fresh_browser_keyboard_mobile_acceptance",
+    "F34_matrix_preview_transport",
+    "F35_xpath_inspector",
+    "F36_profile_quality_fps",
+    "F32_vpn_lifecycle",
+    "F33_bulk_manifest_stable_normal_promotion",
+    "20_30_device_soak"
+  ],
+  "browserAcceptance": "OPEN_URL_POLICY_BLOCKED",
+  "frozenAuditChanged": false,
+  "counts": {
+    "sourceFixed": 33,
+    "open": 8,
+    "partial": [
+      "F32",
+      "F33",
+      "F39"
+    ]
+  }
+}

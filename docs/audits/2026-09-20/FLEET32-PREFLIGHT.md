@@ -6,7 +6,11 @@
 
 [Главная](../../../README.md) · [Документация](../../README.md) · [Readiness](../../operations/READINESS.md) · [История исправлений](../2026-09-05/AUDIT-REPORT.md)
 
-> **Указатель обновлён 1 октября:** ступенчатый план и технические доказательства
+> **Новый finite readback18:54 UTC:**14 online/APK10244,UI/API00d5ad8,
+> capability/role slice;20–30/32-device admission не запускался.
+> [F39 contract/evidence](../2026-10-03/SESSION-CAPABILITIES.md).
+
+> **Указатель обновлён 3 октября:** ступенчатый план и технические доказательства
 > этого файла остаются референсом, но приёмка 20–30 устройств не запускалась.
 > Последние version/runtime факты и границы browser-canary см. в
 > [каноническом состоянии](../../operations/CURRENT-STATE.md); исторические
