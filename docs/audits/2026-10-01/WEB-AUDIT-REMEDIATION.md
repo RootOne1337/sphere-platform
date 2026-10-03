@@ -522,3 +522,14 @@ tap/swipe/keyevent/text продолжали передаваться через
 полный прогон 293 passed. Source и deploy gates фиксируются отдельно.
 [Дефект, контракт и проверки](../2026-10-04/VIEWER-AUTHORIZATION.md).
 F39 PARTIAL и исходный счётчик 33/8 сохранены.
+
+### F39 — permissions действий реестра, 4 октября
+
+На исходниках1bccb47 воспроизведены9 assertion failures из10 новых workflow cases:
+viewer видел активные device mutations, открытые подтверждения и Enter не учитывали
+полученный отзыв прав. HTTP authorization уже отклонял эти операции; обход backend
+не заявляется. Добавлены отдельные device:write/device:delete/vpn:mass_operation gates
+в toolbar/menu/confirm/submit. Source:106 suites/997 frontend и73 actual DB cases passed,
+types/Ruff passed. Build/install и browser evidence учитываются отдельно.
+[Контракт, scopes и дальнейшие разделы](../2026-10-04/DEVICE-ACTION-PERMISSIONS.md).
+F39 PARTIAL;33 source-fixed /8 незакрытых, включая3 PARTIAL, сохраняются.

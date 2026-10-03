@@ -28,6 +28,7 @@ describe('DeviceBulkDeleteButton', () => {
 
     render(
       <DeviceBulkDeleteButton
+        canDelete
         deviceIds={deviceIds}
         isPending={false}
         onDelete={onDelete}
@@ -58,6 +59,7 @@ describe('DeviceBulkDeleteButton', () => {
 
     render(
       <DeviceBulkDeleteButton
+        canDelete
         deviceIds={deviceIds}
         isPending={false}
         onDelete={onDelete}
@@ -80,6 +82,7 @@ describe('DeviceBulkDeleteButton', () => {
   it('does not issue a request when the destructive confirmation is cancelled', () => {
     render(
       <DeviceBulkDeleteButton
+        canDelete
         deviceIds={deviceIds}
         isPending={false}
         onDelete={onDelete}
@@ -99,6 +102,7 @@ describe('DeviceBulkDeleteButton', () => {
     const tooManyIds = Array.from({ length: MAX_BULK_DEVICE_OPERATION_COUNT + 1 }, (_, index) => `device-${index}`);
     render(
       <DeviceBulkDeleteButton
+        canDelete
         deviceIds={tooManyIds}
         isPending={false}
         onDelete={onDelete}
@@ -119,6 +123,7 @@ describe('DeviceBulkDeleteButton', () => {
     onDelete.mockResolvedValue({ deleted: 1 });
     render(
       <DeviceBulkDeleteButton
+        canDelete
         deviceIds={deviceIds}
         isPending={false}
         onDelete={onDelete}
@@ -142,6 +147,7 @@ describe('DeviceBulkDeleteButton', () => {
     onDelete.mockReturnValue(new Promise((resolve) => { resolveDelete = resolve; }));
     render(
       <DeviceBulkDeleteButton
+        canDelete
         deviceIds={deviceIds}
         isPending={false}
         onDelete={onDelete}

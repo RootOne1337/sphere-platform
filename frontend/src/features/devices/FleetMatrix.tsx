@@ -54,9 +54,10 @@ interface FleetMatrixProps {
     rowSelection: RowSelectionState;
     onRowSelectionChange: OnChangeFn<RowSelectionState>;
     onDeviceAction?: (deviceId: string, action: DeviceAction) => void;
+    canDeviceAction?: (action: DeviceAction) => boolean;
 }
 
-export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChange, onDeviceAction }: FleetMatrixProps) {
+export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChange, onDeviceAction, canDeviceAction }: FleetMatrixProps) {
     const { openInspector } = useInspectorStore();
     const parentRef = React.useRef<HTMLDivElement>(null);
     const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({ network: false, server_name: false, tags: false });
@@ -292,32 +293,37 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
                                 <DropdownMenuContent align="end" className="w-44 bg-card border-border">
                                     <DropdownMenuItem
                                         className="text-xs font-mono cursor-pointer"
-                                        onClick={() => onDeviceAction?.(device.id, 'rename')}
+                                        disabled={!canDeviceAction?.('rename') || !onDeviceAction}
+                                        onClick={() => { if (canDeviceAction?.('rename')) onDeviceAction?.(device.id, 'rename'); }}
                                     >
                                         <Pencil className="w-3 h-3 mr-2" /> Переименовать
                                     </DropdownMenuItem>
                                     <DropdownMenuItem
                                         className="text-xs font-mono cursor-pointer"
-                                        onClick={() => onDeviceAction?.(device.id, 'assign_group')}
+                                        disabled={!canDeviceAction?.('assign_group') || !onDeviceAction}
+                                        onClick={() => { if (canDeviceAction?.('assign_group')) onDeviceAction?.(device.id, 'assign_group'); }}
                                     >
                                         <FolderOpen className="w-3 h-3 mr-2" /> В группу
                                     </DropdownMenuItem>
                                     <DropdownMenuItem
                                         className="text-xs font-mono cursor-pointer"
-                                        onClick={() => onDeviceAction?.(device.id, 'assign_location')}
+                                        disabled={!canDeviceAction?.('assign_location') || !onDeviceAction}
+                                        onClick={() => { if (canDeviceAction?.('assign_location')) onDeviceAction?.(device.id, 'assign_location'); }}
                                     >
                                         <MapPin className="w-3 h-3 mr-2" /> В локацию
                                     </DropdownMenuItem>
                                     <DropdownMenuItem
                                         className="text-xs font-mono cursor-pointer"
-                                        onClick={() => onDeviceAction?.(device.id, 'assign_server')}
+                                        disabled={!canDeviceAction?.('assign_server') || !onDeviceAction}
+                                        onClick={() => { if (canDeviceAction?.('assign_server')) onDeviceAction?.(device.id, 'assign_server'); }}
                                     >
                                         <Server className="w-3 h-3 mr-2" /> Игровой сервер
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator className="bg-border" />
                                     <DropdownMenuItem
                                         className="text-xs font-mono cursor-pointer text-destructive focus:text-destructive"
-                                        onClick={() => onDeviceAction?.(device.id, 'delete')}
+                                        disabled={!canDeviceAction?.('delete') || !onDeviceAction}
+                                        onClick={() => { if (canDeviceAction?.('delete')) onDeviceAction?.(device.id, 'delete'); }}
                                     >
                                         <Trash2 className="w-3 h-3 mr-2" /> Удалить
                                     </DropdownMenuItem>
@@ -328,7 +334,7 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
                 },
             },
         ],
-        [clockNow, onDeviceAction, openInspector]
+        [clockNow, onDeviceAction, openInspector, canDeviceAction]
     );
 
     const table = useReactTable({

@@ -148,6 +148,46 @@ it('keeps optional access columns available through the column menu', async () =
   expect(screen.getByText('ADB linked')).toBeInTheDocument();
 });
 
+it('keeps device changes and deletion under separate menu permissions', async () => {
+  const user = userEvent.setup();
+  const onDeviceAction = jest.fn();
+  render(<FleetMatrix data={[device]} isLoading={false} rowSelection={{}} onRowSelectionChange={jest.fn()} onDeviceAction={onDeviceAction} canDeviceAction={action => action !== 'delete'} />);
+  await user.click(screen.getByRole('button', { name: 'Действия устройства PH006' }));
+  expect(screen.getByRole('menuitem', { name: 'Переименовать' })).not.toHaveAttribute('aria-disabled', 'true');
+  expect(screen.getByRole('menuitem', { name: 'Удалить' })).toHaveAttribute('aria-disabled', 'true');
+  await user.click(screen.getByRole('menuitem', { name: 'Удалить' }));
+  expect(onDeviceAction).not.toHaveBeenCalled();
+  await user.click(screen.getByRole('menuitem', { name: 'Переименовать' }));
+  expect(onDeviceAction).toHaveBeenCalledWith('device-1', 'rename');
+});
+
+it('withdraws menu commands when authority changes while the menu is open', async () => {
+  const user = userEvent.setup();
+  const onDeviceAction = jest.fn();
+  const base = { data: [device], isLoading: false, rowSelection: {}, onRowSelectionChange: jest.fn(), onDeviceAction };
+  const view = render(<FleetMatrix {...base} canDeviceAction={() => true} />);
+  await user.click(screen.getByRole('button', { name: 'Действия устройства PH006' }));
+  view.rerender(<FleetMatrix {...base} canDeviceAction={() => false} />);
+  // Replacing the memoized table cell retires its former popup. Reopening must
+  // consult the new permission decision instead of recovering old menu authority.
+  expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+  await user.click(screen.getByRole('button', { name: 'Действия устройства PH006' }));
+  for (const name of ['Переименовать', 'В группу', 'В локацию', 'Игровой сервер', 'Удалить']) {
+    expect(screen.getByRole('menuitem', { name })).toHaveAttribute('aria-disabled', 'true');
+  }
+  await user.click(screen.getByRole('menuitem', { name: 'Переименовать' }));
+  expect(onDeviceAction).not.toHaveBeenCalled();
+});
+
+it('offers no mutation in a menu without an explicit permission decision', async () => {
+  const user = userEvent.setup();
+  const onDeviceAction = jest.fn();
+  render(<FleetMatrix data={[device]} isLoading={false} rowSelection={{}} onRowSelectionChange={jest.fn()} onDeviceAction={onDeviceAction} />);
+  await user.click(screen.getByRole('button', { name: 'Действия устройства PH006' }));
+  for (const item of screen.getAllByRole('menuitem')) expect(item).toHaveAttribute('aria-disabled', 'true');
+  expect(onDeviceAction).not.toHaveBeenCalled();
+});
+
 it('shows an honest empty state when the registry has no devices', () => {
   render(
     <FleetMatrix

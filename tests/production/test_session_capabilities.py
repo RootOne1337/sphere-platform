@@ -60,3 +60,63 @@ async def test_revocation_is_visible_to_the_same_access_token(world):
     # Actual mutation guard must agree; a denied reboot cannot reach Android.
     response = await world.client.post(f"/api/v1/devices/{world.dev_a.id}/reboot", headers=headers)
     assert response.status_code == 403
+
+
+@pytest.mark.parametrize("role,operation", [
+    (role, operation)
+    for role in ("viewer", "script_runner")
+    for operation in ("rename", "server", "reboot", "single_delete", "bulk_delete", "move_group", "assign_location", "revoke_vpn")
+] + [("device_manager", "single_delete"), ("device_manager", "bulk_delete"), ("device_manager", "revoke_vpn")])
+async def test_registry_permission_denial_precedes_mutation_with_a_prior_admin_token(world, role, operation):
+    """A valid old admin JWT must agree with the newly advertised UI authority."""
+    from backend.models.device import Device
+
+    user = world.users["org_admin"]
+    headers = world.auth(user)
+    device_id = str(world.dev_a.id)
+    original_name = world.dev_a.name
+    async with world.sessions() as db:
+        await db.execute(update(User).where(User.id == user.id).values(role=role))
+        await db.commit()
+    cases = {
+        "rename": ("PUT", f"/devices/{device_id}", {"name": "Must not change"}, "device:write"),
+        "server": ("PUT", f"/devices/{device_id}", {"server_name": "Must not change"}, "device:write"),
+        "reboot": ("POST", "/devices/bulk/action", {"device_ids": [device_id], "action": "reboot"}, "device:write"),
+        "single_delete": ("DELETE", f"/devices/{device_id}", None, "device:delete"),
+        "bulk_delete": ("DELETE", "/devices/bulk", {"device_ids": [device_id]}, "device:delete"),
+        # Valid UUID destinations need not exist: permission rejection must precede domain lookup.
+        "move_group": ("POST", f"/groups/{device_id}/devices/move", {"device_ids": [device_id]}, "device:write"),
+        "assign_location": ("POST", f"/locations/{device_id}/devices", {"device_ids": [device_id]}, "device:write"),
+        "revoke_vpn": ("POST", "/vpn/revoke/bulk", {"device_ids": [device_id]}, "vpn:mass_operation"),
+    }
+    method, path, body, required = cases[operation]
+    capability = await world.client.get("/api/v1/auth/capabilities", headers=headers)
+    assert capability.status_code == 200
+    assert required not in capability.json()["permissions"]
+    response = await world.client.request(method, "/api/v1" + path, headers=headers, json=body)
+    assert response.status_code == 403, response.text
+    async with world.sessions() as db:
+        device = await db.get(Device, world.dev_a.id)
+        assert device is not None and device.is_active is True
+        assert device.name == original_name
+
+
+async def test_device_manager_update_is_allowed_without_granting_delete_or_vpn(world):
+    from backend.models.device import Device
+
+    user = world.users["org_admin"]
+    headers = world.auth(user)
+    async with world.sessions() as db:
+        await db.execute(update(User).where(User.id == user.id).values(role="device_manager"))
+        await db.commit()
+    response = await world.client.put(
+        f"/api/v1/devices/{world.dev_a.id}", headers=headers, json={"name": "Manager updated"},
+    )
+    assert response.status_code == 200, response.text
+    async with world.sessions() as db:
+        device = await db.get(Device, world.dev_a.id)
+        assert device.name == "Manager updated"
+    capability = await world.client.get("/api/v1/auth/capabilities", headers=headers)
+    assert "device:write" in capability.json()["permissions"]
+    assert "device:delete" not in capability.json()["permissions"]
+    assert "vpn:mass_operation" not in capability.json()["permissions"]

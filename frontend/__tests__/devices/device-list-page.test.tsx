@@ -13,6 +13,14 @@ import { useAssignDevicesToLocation, useLocations } from '@/lib/hooks/useLocatio
 import { useGameServers } from '@/lib/hooks/usePipelineSettings';
 import type { Device } from '@/lib/hooks/useDevices';
 import { useSearchParams } from 'next/navigation';
+import rolePermissions from '../fixtures/session-capabilities.json';
+
+// Existing registry workflow cases run under an explicitly granted server fixture.
+// Denial and revocation are exercised by action-permissions.test.tsx.
+jest.mock('@/src/features/access/Capabilities', () => ({
+  ...jest.requireActual('@/src/features/access/Capabilities'),
+  useCapabilities: () => ({ verified: true, pending: false, failed: false, role: 'org_admin', can: (permission: string) => rolePermissions.org_admin.includes(permission) }),
+}));
 
 jest.mock('next/navigation', () => ({ useSearchParams: jest.fn(() => new URLSearchParams()) }));
 

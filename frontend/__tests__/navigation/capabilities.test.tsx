@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { CapabilitiesProvider, RouteAccessBoundary, useCapabilities } from '@/src/features/access/Capabilities';
+import { CapabilitiesProvider, PermissionNotice, RouteAccessBoundary, useCapabilities } from '@/src/features/access/Capabilities';
 import { canAccessRoute } from '@/src/features/access/routeAccess';
 import { useAuthStore } from '@/lib/store';
 import { api } from '@/lib/api';
@@ -125,6 +125,27 @@ it('never infers role hierarchy and checks the most specific route', () => {
   expect(canAccessRoute('/settings', [], true)).toBe(true);
   expect(canAccessRoute('/settings', [], false)).toBe(false);
   expect(canAccessRoute('/webhooks', [], true)).toBe(true);
+});
+
+it('explains pending, denied and failed permission checks without reporting a server mutation', async () => {
+  let resolve!: (v: unknown) => void;
+  get.mockImplementationOnce(() => new Promise(r => { resolve = r; }) as never);
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+  render(<QueryClientProvider client={client}><CapabilitiesProvider><PermissionNotice permission="device:delete" action="удаление устройств" /></CapabilitiesProvider></QueryClientProvider>);
+  expect(screen.getByRole('status')).toHaveTextContent('Проверяем права');
+  await act(async () => resolve(response()));
+  await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Текущие права не разрешают удаление устройств'));
+  get.mockRejectedValueOnce(new Error('offline'));
+  await act(async () => { await client.invalidateQueries({ queryKey: ['capabilities'] }); });
+  await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Не удалось подтвердить права'));
+  expect(get.mock.calls.every(([path]) => path === '/auth/capabilities')).toBe(true);
+});
+
+it('removes the permission notice only after a verified grant arrives', async () => {
+  get.mockResolvedValue(response([...grants, 'device:write']));
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+  render(<QueryClientProvider client={client}><CapabilitiesProvider><PermissionNotice permission="device:write" action="изменение устройства" /></CapabilitiesProvider></QueryClientProvider>);
+  await waitFor(() => expect(screen.queryByRole('status')).not.toBeInTheDocument());
 });
 
 it.each(Object.keys(rolePermissions) as Array<keyof typeof rolePermissions>)('offers the correct route and action set for server role %s', role => {

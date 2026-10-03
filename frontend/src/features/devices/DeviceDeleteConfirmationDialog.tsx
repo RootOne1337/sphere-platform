@@ -18,6 +18,7 @@ interface DeviceDeleteConfirmationDialogProps {
   confirmLabel: string;
   pendingLabel: string;
   isPending: boolean;
+  canConfirm: boolean;
   errorMessage: string | null;
   onOpenChange: (open: boolean) => void;
   onConfirm: () => void;
@@ -30,6 +31,7 @@ export function DeviceDeleteConfirmationDialog({
   confirmLabel,
   pendingLabel,
   isPending,
+  canConfirm,
   errorMessage,
   onOpenChange,
   onConfirm,
@@ -49,6 +51,7 @@ export function DeviceDeleteConfirmationDialog({
           </DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
+        {!canConfirm && <p role="status" className="rounded-lg border border-border bg-muted/40 p-3 text-sm text-muted-foreground">Подтверждение недоступно. Проверьте текущие права и выбранные устройства.</p>}
         {errorMessage && (
           <p role="alert" className="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
             {errorMessage}
@@ -58,7 +61,7 @@ export function DeviceDeleteConfirmationDialog({
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
             Отмена
           </Button>
-          <Button type="button" variant="destructive" onClick={onConfirm} disabled={isPending} aria-busy={isPending}>
+          <Button type="button" variant="destructive" onClick={() => { if (canConfirm && !isPending) onConfirm(); }} disabled={!canConfirm || isPending} aria-busy={isPending}>
             {isPending ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />
             ) : (

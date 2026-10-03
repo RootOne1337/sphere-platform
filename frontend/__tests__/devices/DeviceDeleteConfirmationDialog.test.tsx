@@ -8,6 +8,7 @@ describe('DeviceDeleteConfirmationDialog', () => {
 
     render(
       <DeviceDeleteConfirmationDialog
+        canConfirm
         open
         title="Удалить PH006 из каталога?"
         description="APK останется установленным."
@@ -31,6 +32,7 @@ describe('DeviceDeleteConfirmationDialog', () => {
 
     render(
       <DeviceDeleteConfirmationDialog
+        canConfirm
         open
         title="Удалить устройства?"
         description="Удаляются записи из каталога."
@@ -52,6 +54,7 @@ describe('DeviceDeleteConfirmationDialog', () => {
   it('renders backend failure details as an accessible alert', () => {
     render(
       <DeviceDeleteConfirmationDialog
+        canConfirm
         open
         title="Удалить устройства?"
         description="Удаляются записи из каталога."

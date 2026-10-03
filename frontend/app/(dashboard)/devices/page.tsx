@@ -36,6 +36,7 @@ import {
 import { Activity, AlertTriangle, ChevronLeft, ChevronRight, Cpu, Filter, FolderOpen, LayoutGrid, List, Loader2, MapPin, Pencil, RefreshCcw, Search, Server, ShieldOff, Wifi, WifiOff } from 'lucide-react';
 import { useGameServers } from '@/lib/hooks/usePipelineSettings';
 import { toast } from 'sonner';
+import { PermissionNotice, useCapabilities } from '@/src/features/access/Capabilities';
 
 type DeviceActionFailure = { device_id: string; error: string | null };
 
@@ -50,6 +51,11 @@ function formatDeviceFailures(failures: DeviceActionFailure[], devices: Device[]
 }
 
 function DevicesRegistry({ initialGroupId }: { initialGroupId: string }) {
+  const access = useCapabilities();
+  const canWrite = access.can('device:write');
+  const canDelete = access.can('device:delete');
+  const canRevokeVpn = access.can('vpn:mass_operation');
+  const canDeviceAction = useCallback((action: DeviceAction) => action === 'delete' ? canDelete : canWrite, [canDelete, canWrite]);
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 300);
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
@@ -153,6 +159,7 @@ function DevicesRegistry({ initialGroupId }: { initialGroupId: string }) {
 
   // Обработчик действий из контекстного меню FleetMatrix (для одного устройства)
   const handleDeviceAction = useCallback((deviceId: string, action: DeviceAction) => {
+    if (!canDeviceAction(action)) return;
     const device = data?.items.find(d => d.id === deviceId);
     if (!device) return;
 
@@ -179,11 +186,11 @@ function DevicesRegistry({ initialGroupId }: { initialGroupId: string }) {
         setSingleDeleteDialog({ deviceId: device.id, deviceName: device.name });
         break;
     }
-  }, [data?.items]);
+  }, [data?.items, canDeviceAction]);
 
   const handleSingleDelete = async () => {
     const target = singleDeleteDialog;
-    if (!target || deleteDevice.isPending || singleDeleteLock.current) return;
+    if (!canDelete || !target || deleteDevice.isPending || singleDeleteLock.current) return;
 
     singleDeleteLock.current = true;
     setSingleDeleteError(null);
@@ -205,7 +212,7 @@ function DevicesRegistry({ initialGroupId }: { initialGroupId: string }) {
 
   const handleBulkReboot = async () => {
     const deviceIds = [...selectedIds];
-    if (deviceIds.length === 0 || deviceIds.length > MAX_BULK_DEVICE_OPERATION_COUNT || bulkMutation.isPending) return;
+    if (!canWrite || deviceIds.length === 0 || deviceIds.length > MAX_BULK_DEVICE_OPERATION_COUNT || bulkMutation.isPending) return;
     try {
       const result = await bulkMutation.mutateAsync({ device_ids: deviceIds, action: 'reboot' });
       const failures = result.results.filter((item) => !item.success);
@@ -228,7 +235,7 @@ function DevicesRegistry({ initialGroupId }: { initialGroupId: string }) {
 
   const handleBulkRevokeVpn = async () => {
     const deviceIds = [...selectedIds];
-    if (deviceIds.length === 0 || deviceIds.length > MAX_BULK_DEVICE_OPERATION_COUNT || bulkRevokeVpn.isPending) return;
+    if (!canRevokeVpn || deviceIds.length === 0 || deviceIds.length > MAX_BULK_DEVICE_OPERATION_COUNT || bulkRevokeVpn.isPending) return;
     setVpnRevokeError(null);
     try {
       const result = await bulkRevokeVpn.mutateAsync(deviceIds);
@@ -255,7 +262,7 @@ function DevicesRegistry({ initialGroupId }: { initialGroupId: string }) {
   };
 
   const handleRename = async () => {
-    if (!newName.trim()) return;
+    if (!canWrite || !newName.trim() || updateDevice.isPending) return;
     try {
       await updateDevice.mutateAsync({ id: renameDialog.deviceId, name: newName.trim() });
       setRenameDialog({ open: false, deviceId: '', currentName: '' });
@@ -269,7 +276,7 @@ function DevicesRegistry({ initialGroupId }: { initialGroupId: string }) {
   };
 
   const handleAssignGroup = async () => {
-    if (!selectedGroupId || selectedIds.length === 0 || exceedsBulkLimit) return;
+    if (!canWrite || !selectedGroupId || selectedIds.length === 0 || exceedsBulkLimit || moveDevices.isPending) return;
     try {
       const requestedIds = [...selectedIds];
       const result = await moveDevices.mutateAsync({ groupId: selectedGroupId, deviceIds: requestedIds });
@@ -291,7 +298,7 @@ function DevicesRegistry({ initialGroupId }: { initialGroupId: string }) {
   };
 
   const handleAssignLocation = async () => {
-    if (!selectedLocationId || selectedIds.length === 0 || exceedsBulkLimit) return;
+    if (!canWrite || !selectedLocationId || selectedIds.length === 0 || exceedsBulkLimit || assignToLocation.isPending) return;
     try {
       const requestedIds = [...selectedIds];
       const result = await assignToLocation.mutateAsync({ locationId: selectedLocationId, deviceIds: requestedIds });
@@ -307,6 +314,7 @@ function DevicesRegistry({ initialGroupId }: { initialGroupId: string }) {
   };
 
   const handleAssignServer = async () => {
+    if (!canWrite || updateDevice.isPending) return;
     try {
       await updateDevice.mutateAsync({
         id: assignServerDialog.deviceId,
@@ -496,14 +504,14 @@ function DevicesRegistry({ initialGroupId }: { initialGroupId: string }) {
               <span className="mr-1 inline-flex min-h-9 items-center rounded-md bg-primary/10 px-3 text-sm font-semibold text-primary">
                 Выбрано: {selectedIds.length}
               </span>
-              <Button variant="outline" size="sm" onClick={handleBulkReboot} disabled={bulkMutation.isPending || exceedsBulkLimit} className="h-9 rounded-md">
+              <Button variant="outline" size="sm" onClick={handleBulkReboot} disabled={!canWrite || bulkMutation.isPending || exceedsBulkLimit} className="h-9 rounded-md">
                 <RefreshCcw className={`mr-2 h-4 w-4 ${bulkMutation.isPending ? 'animate-spin motion-reduce:animate-none' : ''}`} aria-hidden="true" />
                 {bulkMutation.isPending ? 'Отправка…' : 'Перезапустить'}
               </Button>
-            <Button variant="outline" size="sm" onClick={() => setAssignGroupDialog(true)} disabled={exceedsBulkLimit || !groups?.length} className="h-9 rounded-md">
+            <Button variant="outline" size="sm" onClick={() => { if (canWrite) setAssignGroupDialog(true); }} disabled={!canWrite || exceedsBulkLimit || !groups?.length} className="h-9 rounded-md">
                 <FolderOpen className="mr-2 h-4 w-4" aria-hidden="true" /> Группа
               </Button>
-              <Button variant="outline" size="sm" onClick={() => setAssignLocationDialog(true)} disabled={exceedsBulkLimit || !locations?.length} className="h-9 rounded-md">
+              <Button variant="outline" size="sm" onClick={() => { if (canWrite) setAssignLocationDialog(true); }} disabled={!canWrite || exceedsBulkLimit || !locations?.length} className="h-9 rounded-md">
                 <MapPin className="mr-2 h-4 w-4" aria-hidden="true" /> Локация
               </Button>
               {selectedIds.length === 1 && (
@@ -511,12 +519,14 @@ function DevicesRegistry({ initialGroupId }: { initialGroupId: string }) {
                   variant="outline"
                   size="sm"
                   onClick={() => {
+                    if (!canWrite) return;
                     const device = pageItems.find((item) => item.id === selectedIds[0]);
                     if (!device) return;
                     setRenameDialog({ open: true, deviceId: device.id, currentName: device.name });
                     setNewName(device.name);
                   }}
                   className="h-9 rounded-md"
+                  disabled={!canWrite}
                 >
                   <Pencil className="mr-2 h-4 w-4" aria-hidden="true" /> Переименовать
                 </Button>
@@ -525,10 +535,11 @@ function DevicesRegistry({ initialGroupId }: { initialGroupId: string }) {
                 variant="destructive"
                 size="sm"
                 onClick={() => {
+                  if (!canRevokeVpn) return;
                   setVpnRevokeError(null);
                   setVpnRevokeConfirmationOpen(true);
                 }}
-                disabled={bulkRevokeVpn.isPending || exceedsBulkLimit}
+                disabled={!canRevokeVpn || bulkRevokeVpn.isPending || exceedsBulkLimit}
                 className="h-9 rounded-md"
               >
                 {bulkRevokeVpn.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" /> : <ShieldOff className="mr-2 h-4 w-4" aria-hidden="true" />}
@@ -537,9 +548,13 @@ function DevicesRegistry({ initialGroupId }: { initialGroupId: string }) {
               <DeviceBulkDeleteButton
                 deviceIds={selectedIds}
                 isPending={bulkDelete.isPending}
+                canDelete={canDelete}
                 onDelete={bulkDelete.mutateAsync}
                 onDeleted={() => setRowSelection({})}
               />
+              {!canWrite && <div className="basis-full"><PermissionNotice permission="device:write" action="изменение устройств и перезапуск" /></div>}
+              {canWrite && !canDelete && <div className="basis-full"><PermissionNotice permission="device:delete" action="удаление устройств" /></div>}
+              {!canRevokeVpn && <div className="basis-full"><PermissionNotice permission="vpn:mass_operation" action="массовый отзыв VPN" /></div>}
               {exceedsBulkLimit && (
                 <p role="alert" className="basis-full text-sm text-amber-700 dark:text-amber-300">
                   Массовая операция принимает до {MAX_BULK_DEVICE_OPERATION_COUNT} устройств за запрос. Уменьшите выделение.
@@ -568,6 +583,7 @@ function DevicesRegistry({ initialGroupId }: { initialGroupId: string }) {
               rowSelection={rowSelection}
               onRowSelectionChange={setRowSelection}
               onDeviceAction={handleDeviceAction}
+              canDeviceAction={canDeviceAction}
             />
           ) : (
             <MultiStreamGrid devices={pageItems} selectedIds={selectedIds} />
@@ -605,6 +621,7 @@ function DevicesRegistry({ initialGroupId }: { initialGroupId: string }) {
         confirmLabel="Убрать запись"
         pendingLabel="Удаление…"
         isPending={deleteDevice.isPending}
+        canConfirm={canDelete}
         errorMessage={singleDeleteError}
         onOpenChange={(open) => {
           if (open) return;
@@ -630,6 +647,7 @@ function DevicesRegistry({ initialGroupId }: { initialGroupId: string }) {
               Будут отозваны VPN-пиры у {selectedIds.length} устройств в текущей организации. Записи устройств, APK и приложения на Android останутся без изменений.
             </DialogDescription>
           </DialogHeader>
+          <PermissionNotice permission="vpn:mass_operation" action="массовый отзыв VPN" />
           {vpnRevokeError && (
             <p role="alert" className="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
               {vpnRevokeError} Выделение сохранено.
@@ -648,7 +666,7 @@ function DevicesRegistry({ initialGroupId }: { initialGroupId: string }) {
               type="button"
               variant="destructive"
               onClick={() => { void handleBulkRevokeVpn(); }}
-              disabled={bulkRevokeVpn.isPending || selectedIds.length === 0 || exceedsBulkLimit}
+              disabled={!canRevokeVpn || bulkRevokeVpn.isPending || selectedIds.length === 0 || exceedsBulkLimit}
               aria-busy={bulkRevokeVpn.isPending}
             >
               {bulkRevokeVpn.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" /> : <ShieldOff className="mr-2 h-4 w-4" aria-hidden="true" />}
@@ -665,6 +683,7 @@ function DevicesRegistry({ initialGroupId }: { initialGroupId: string }) {
             <DialogTitle>Переименовать устройство</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 pt-2">
+            <PermissionNotice permission="device:write" action="переименование устройства" />
             <div className="space-y-1">
               <Label>Новое имя</Label>
               <Input
@@ -674,7 +693,7 @@ function DevicesRegistry({ initialGroupId }: { initialGroupId: string }) {
                 autoFocus
               />
             </div>
-            <Button onClick={handleRename} disabled={updateDevice.isPending || !newName.trim()} className="w-full">
+            <Button onClick={handleRename} disabled={!canWrite || updateDevice.isPending || !newName.trim()} className="w-full">
               {updateDevice.isPending ? 'Сохранение…' : 'Сохранить'}
             </Button>
           </div>
@@ -688,6 +707,7 @@ function DevicesRegistry({ initialGroupId }: { initialGroupId: string }) {
             <DialogTitle>Назначить в группу</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 pt-2">
+            <PermissionNotice permission="device:write" action="назначение группы" />
             {groupsLoadError && (
               <p role="alert" className="text-sm text-destructive">
                 Не удалось обновить список групп. {groups?.length ? 'Доступны ранее загруженные значения.' : 'Назначение группы временно недоступно.'}
@@ -716,7 +736,7 @@ function DevicesRegistry({ initialGroupId }: { initialGroupId: string }) {
               </Select>
             </div>
             <p className="text-xs text-muted-foreground">{selectedIds.length} устройств будут назначены в группу</p>
-            <Button onClick={handleAssignGroup} disabled={moveDevices.isPending || !selectedGroupId || selectedIds.length === 0 || exceedsBulkLimit || !groups?.length} className="w-full">
+            <Button onClick={handleAssignGroup} disabled={!canWrite || moveDevices.isPending || !selectedGroupId || selectedIds.length === 0 || exceedsBulkLimit || !groups?.length} className="w-full">
               {moveDevices.isPending ? 'Назначение…' : 'Назначить'}
             </Button>
           </div>
@@ -730,6 +750,7 @@ function DevicesRegistry({ initialGroupId }: { initialGroupId: string }) {
             <DialogTitle>Назначить в локацию</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 pt-2">
+            <PermissionNotice permission="device:write" action="назначение локации" />
             {locationsLoadError && (
               <p role="alert" className="text-sm text-destructive">
                 Не удалось обновить список локаций. {locations?.length ? 'Доступны ранее загруженные значения.' : 'Назначение локации временно недоступно.'}
@@ -759,7 +780,7 @@ function DevicesRegistry({ initialGroupId }: { initialGroupId: string }) {
               </Select>
             </div>
             <p className="text-xs text-muted-foreground">{selectedIds.length} устройств будут добавлены в локацию (аддитивно)</p>
-            <Button onClick={handleAssignLocation} disabled={assignToLocation.isPending || !selectedLocationId || selectedIds.length === 0 || exceedsBulkLimit || !locations?.length} className="w-full">
+            <Button onClick={handleAssignLocation} disabled={!canWrite || assignToLocation.isPending || !selectedLocationId || selectedIds.length === 0 || exceedsBulkLimit || !locations?.length} className="w-full">
               {assignToLocation.isPending ? 'Назначение…' : 'Назначить'}
             </Button>
           </div>
@@ -781,6 +802,7 @@ function DevicesRegistry({ initialGroupId }: { initialGroupId: string }) {
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 pt-2">
+            <PermissionNotice permission="device:write" action="изменение привязки сервера" />
             <div className="space-y-1">
               <Label>Сервер Black Russia</Label>
               <Select value={selectedServerName || '__none__'} onValueChange={(v) => setSelectedServerName(v === '__none__' ? '' : v)}>
@@ -804,7 +826,7 @@ function DevicesRegistry({ initialGroupId }: { initialGroupId: string }) {
             )}
             <Button
               onClick={handleAssignServer}
-              disabled={updateDevice.isPending}
+              disabled={!canWrite || updateDevice.isPending}
               className="w-full"
             >
               {updateDevice.isPending ? 'Сохранение…' : 'Сохранить'}

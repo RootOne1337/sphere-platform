@@ -11,6 +11,7 @@ import { MAX_BULK_DEVICE_OPERATION_COUNT } from './constants';
 interface DeviceBulkDeleteButtonProps {
   deviceIds: string[];
   isPending: boolean;
+  canDelete: boolean;
   onDelete: (deviceIds: string[]) => Promise<{ deleted: number }>;
   onDeleted: () => void;
 }
@@ -18,6 +19,7 @@ interface DeviceBulkDeleteButtonProps {
 export function DeviceBulkDeleteButton({
   deviceIds,
   isPending,
+  canDelete,
   onDelete,
   onDeleted,
 }: DeviceBulkDeleteButtonProps) {
@@ -29,14 +31,14 @@ export function DeviceBulkDeleteButton({
   const exceedsLimit = deviceIds.length > MAX_BULK_DEVICE_OPERATION_COUNT;
 
   const openConfirmation = () => {
-    if (busy || deviceIds.length === 0 || exceedsLimit) return;
+    if (!canDelete || busy || deviceIds.length === 0 || exceedsLimit) return;
     setErrorMessage(null);
     setConfirmationOpen(true);
   };
 
   const handleDelete = async () => {
     const ids = [...deviceIds];
-    if (busy || submissionLock.current || ids.length === 0 || ids.length > MAX_BULK_DEVICE_OPERATION_COUNT) return;
+    if (!canDelete || busy || submissionLock.current || ids.length === 0 || ids.length > MAX_BULK_DEVICE_OPERATION_COUNT) return;
 
     submissionLock.current = true;
     setIsSubmitting(true);
@@ -74,10 +76,10 @@ export function DeviceBulkDeleteButton({
         variant="destructive"
         size="sm"
         onClick={openConfirmation}
-        disabled={busy || deviceIds.length === 0 || exceedsLimit}
+        disabled={!canDelete || busy || deviceIds.length === 0 || exceedsLimit}
         aria-busy={busy}
         aria-label={busy ? 'Удаление устройств' : `Удалить выбранные устройства (${deviceIds.length})`}
-        title={exceedsLimit ? `За один раз можно удалить не более ${MAX_BULK_DEVICE_OPERATION_COUNT} устройств` : 'Удалить выбранные записи из каталога'}
+        title={!canDelete ? 'Текущие права не разрешают удаление устройств' : exceedsLimit ? `За один раз можно удалить не более ${MAX_BULK_DEVICE_OPERATION_COUNT} устройств` : 'Удалить выбранные записи из каталога'}
         className="h-9"
       >
         {busy ? (
@@ -94,6 +96,7 @@ export function DeviceBulkDeleteButton({
         confirmLabel={`Убрать из каталога (${deviceIds.length})`}
         pendingLabel="Удаление…"
         isPending={busy}
+        canConfirm={canDelete && deviceIds.length > 0 && !exceedsLimit}
         errorMessage={errorMessage ? `${errorMessage} Выделение сохранено.` : null}
         onOpenChange={setConfirmationOpen}
         onConfirm={() => { void handleDelete(); }}

@@ -26,6 +26,16 @@ const DENIED: Access = {
 const Context = createContext<Access>(DENIED);
 export const useCapabilities = () => useContext(Context);
 
+export function PermissionNotice({ permission, action }: { permission: string; action: string }) {
+  const access = useCapabilities();
+  if (access.can(permission)) return null;
+  return <p role="status" className="rounded-lg border border-border bg-muted/40 p-3 text-sm text-muted-foreground">
+    {access.pending ? `Проверяем права: ${action} пока недоступно.`
+      : access.failed ? `Не удалось подтвердить права: ${action} недоступно до успешной проверки.`
+      : `Текущие права не разрешают ${action}. Обратитесь к администратору организации.`}
+  </p>;
+}
+
 export function CapabilitiesProvider({ children }: { children: ReactNode }) {
   const user = useAuthStore(state => state.user);
   const version = useAuthStore(state => state.sessionVersion);
