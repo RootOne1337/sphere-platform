@@ -4,7 +4,6 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { getApiErrorMessage } from '@/lib/apiError';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import {
   Select,
@@ -13,16 +12,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
 import { useAuthStore } from '@/lib/store';
+import { CreateReleaseDialog } from '@/src/features/updates/CreateReleaseDialog';
 import { RecoveryDialog } from '@/src/features/updates/RecoveryDialog';
 import { isManagedAndroidRelease } from '@/src/features/updates/recovery';
 
@@ -65,142 +56,6 @@ function useReleases(platform?: string, flavor?: string, scope?: string) {
     refetchInterval: 30_000,
     refetchIntervalInBackground: false,
   });
-}
-
-// ── Create Release Form ───────────────────────────────────────────────────────
-
-function CreateReleaseDialog({ onCreated }: { onCreated: () => void }) {
-  const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState({
-    platform: 'android',
-    flavor: 'enterprise',
-    version_code: '',
-    version_name: '',
-    download_url: '',
-    sha256: '',
-    mandatory: false,
-    changelog: '',
-  });
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      await api.post('/updates/', {
-          ...form,
-          version_code: parseInt(form.version_code, 10),
-        });
-      setOpen(false);
-      onCreated();
-    } catch (e: unknown) {
-      const msg = (e as any)?.response?.data?.detail ?? (e instanceof Error ? e.message : 'Error creating release');
-      alert(msg);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button>+ New Release</Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[520px]">
-        <DialogHeader>
-          <DialogTitle>Register New APK Release</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="grid gap-4 py-2">
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label>Platform</Label>
-              <Select value={form.platform} onValueChange={(v) => setForm((f) => ({ ...f, platform: v }))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="android">Android</SelectItem>
-                  <SelectItem value="android-canary">Android canary</SelectItem>
-                  <SelectItem value="pc">PC (Windows)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>Flavor</Label>
-              <Select value={form.flavor} onValueChange={(v) => setForm((f) => ({ ...f, flavor: v }))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="enterprise">enterprise</SelectItem>
-                  <SelectItem value="dev">dev</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label>Version Code</Label>
-              <Input
-                type="number"
-                required
-                placeholder="20260223"
-                value={form.version_code}
-                onChange={(e) => setForm((f) => ({ ...f, version_code: e.target.value }))}
-              />
-            </div>
-            <div>
-              <Label>Version Name</Label>
-              <Input
-                required
-                placeholder="1.5.0"
-                value={form.version_name}
-                onChange={(e) => setForm((f) => ({ ...f, version_name: e.target.value }))}
-              />
-            </div>
-          </div>
-          <div>
-            <Label>Download URL (HTTPS only)</Label>
-            <Input
-              required
-              type="url"
-              placeholder="https://storage.example.com/sphere-1.5.0.apk"
-              value={form.download_url}
-              onChange={(e) => setForm((f) => ({ ...f, download_url: e.target.value }))}
-            />
-          </div>
-          <div>
-            <Label>SHA-256 Checksum</Label>
-            <Input
-              placeholder="a3f8... (64 hex chars)"
-              value={form.sha256}
-              onChange={(e) => setForm((f) => ({ ...f, sha256: e.target.value }))}
-            />
-          </div>
-          <div>
-            <Label>Changelog (optional)</Label>
-            <Input
-              placeholder="Bug fixes, new commands, …"
-              value={form.changelog}
-              onChange={(e) => setForm((f) => ({ ...f, changelog: e.target.value }))}
-            />
-          </div>
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              id="mandatory"
-              checked={form.mandatory}
-              onChange={(e) => setForm((f) => ({ ...f, mandatory: e.target.checked }))}
-              className="h-4 w-4"
-            />
-            <Label htmlFor="mandatory">Mandatory update (force install)</Label>
-          </div>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? 'Creating…' : 'Create Release'}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
-  );
 }
 
 // ── Page ──────────────────────────────────────────────────────────────────────
@@ -248,7 +103,7 @@ function UpdatesCatalog({ scope, canManage, canReadRecovery }: { scope: string; 
           <Button variant="outline" disabled={isFetching} onClick={() => { void refetch(); }}>
             Обновить релизы
           </Button>
-          {canManage && <CreateReleaseDialog onCreated={() => { void refetch(); }} />}
+          {canManage && <CreateReleaseDialog available={!isPending && !isFetching && !isError} onCreated={() => { void refetch(); }} />}
         </div>
       </div>
 
