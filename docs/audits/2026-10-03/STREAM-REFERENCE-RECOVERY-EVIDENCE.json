@@ -1,0 +1,141 @@
+{
+  "date": "2026-10-03",
+  "timezone": "Asia/Yekaterinburg",
+  "finding": "N09",
+  "baselineSource": "09a3dae0676c6cd8127ecfaea9dd2d83f1a9224d",
+  "before": {
+    "tests": 8,
+    "failures": 8,
+    "errors": 0,
+    "skipped": 0,
+    "sha256": "6c5abd5378597a5f7b33cf45adc74572f53a5767c0d48e30628c73f5a1561418"
+  },
+  "beforeAssertionFailures": 7,
+  "beforeMissingCallbackContract": 1,
+  "afterWebSocket": {
+    "tests": 230,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "sha256": "a46ad5bedc6d123f5aa3fb717c298296f7e94e5c6bae6ba2daf649eb06c331a3"
+  },
+  "afterRealPostgresRedis": {
+    "tests": 41,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "sha256": "487e24a28a2be88bcfe5f8c1a9dfc7fc3cf8f2d1065a485f817b09f49b65cc13"
+  },
+  "baselineRuntime": {
+    "api": "facba9a4b56f9b121f028bc371d24b94a08364de",
+    "apkVersionCode": 10244,
+    "startedAt": "2026-10-03T15:23:30.081656+00:00",
+    "finishedAt": "2026-10-03T15:25:02.110736+00:00",
+    "catalogTotal": 19,
+    "online": 14,
+    "browserVerified": false,
+    "savedVideoBytes": 0,
+    "globalStopSent": false,
+    "trials": [
+      {
+        "name": "auto-ph-025",
+        "startedAt": "2026-10-03T15:23:30.085857+00:00",
+        "finishedAt": "2026-10-03T15:24:16.089918+00:00",
+        "launches": 1,
+        "motionConfirmed": true,
+        "viewerClosed": true,
+        "errors": [],
+        "measurement": {
+          "windowSeconds": 20.0,
+          "pictureFps": 29.85,
+          "wireMbps": 1.0652896,
+          "pictures": 597
+        },
+        "telemetrySnapshots": [
+          {
+            "observedAt": "2026-10-03T15:23:42.574505Z",
+            "data": {
+              "schema_version": 2,
+              "active": true,
+              "stage": "capture_encoder_ws_queue",
+              "encoder_fps": 30,
+              "encoded_frames_total": 230,
+              "encoded_bytes_total": 1151065,
+              "key_frame_ratio": 0.008695651777088642,
+              "ws_queue_attempts_total": 234,
+              "ws_queue_accepted_total": 234,
+              "ws_queue_rejected_total": 0,
+              "ws_queue_accepted_bytes_total": 1154407,
+              "capture_fps": 60,
+              "render_fps": 30,
+              "capture_frames_total": 451,
+              "rendered_frames_total": 230,
+              "capture_read_failures_total": 0,
+              "render_failures_total": 0,
+              "encoder_errors_total": 0,
+              "frame_throttle_drops_total": 0,
+              "capture_throttle_drops_total": 219,
+              "encoder_input_drops_total": 2
+            }
+          }
+        ]
+      },
+      {
+        "name": "auto-ph-010",
+        "startedAt": "2026-10-03T15:24:16.094582+00:00",
+        "finishedAt": "2026-10-03T15:25:02.099710+00:00",
+        "launches": 1,
+        "motionConfirmed": true,
+        "viewerClosed": true,
+        "errors": [],
+        "measurement": {
+          "windowSeconds": 20.0,
+          "pictureFps": 29.9,
+          "wireMbps": 1.0375484,
+          "pictures": 598
+        },
+        "telemetrySnapshots": [
+          {
+            "observedAt": "2026-10-03T15:24:46.841572Z",
+            "data": {
+              "schema_version": 2,
+              "active": true,
+              "stage": "capture_encoder_ws_queue",
+              "encoder_fps": 29,
+              "encoded_frames_total": 758,
+              "encoded_bytes_total": 3271216,
+              "key_frame_ratio": 0.0026385225355625153,
+              "ws_queue_attempts_total": 762,
+              "ws_queue_accepted_total": 762,
+              "ws_queue_rejected_total": 0,
+              "ws_queue_accepted_bytes_total": 3281950,
+              "capture_fps": 59,
+              "render_fps": 29,
+              "capture_frames_total": 1496,
+              "rendered_frames_total": 758,
+              "capture_read_failures_total": 0,
+              "render_failures_total": 0,
+              "encoder_errors_total": 0,
+              "frame_throttle_drops_total": 0,
+              "capture_throttle_drops_total": 737,
+              "encoder_input_drops_total": 0
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "candidateRuntimeInstalled": false,
+  "frozenAuditFixedCount": 33,
+  "frozenAuditOpenCount": 8,
+  "open": [
+    "browser_render_fps",
+    "input_to_photon_latency",
+    "quality_acceptance",
+    "soak",
+    "selected_preview_profile_negotiation",
+    "20_30_device_stream_scripts",
+    "stable_normal_ota_promotion"
+  ],
+  "primarySource": "https://www.rfc-editor.org/rfc/rfc6184.html#section-8.5.1"
+}

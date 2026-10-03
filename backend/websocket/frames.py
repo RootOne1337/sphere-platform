@@ -2,6 +2,7 @@
 # ВЛАДЕЛЕЦ: TZ-03 SPLIT-3. H.264 NAL unit frame types для приоритизации backpressure.
 from __future__ import annotations
 
+import re
 import time
 from enum import IntEnum
 
@@ -9,8 +10,8 @@ from enum import IntEnum
 class FrameType(IntEnum):
     """H.264 NAL unit types для приоритизации."""
     UNKNOWN = 0
-    NON_IDR = 1      # P-frame — можно дропать
-    IDR_SLICE = 5    # I-frame — ключевой, НЕЛЬЗЯ дропать
+    NON_IDR = 1      # May reference an earlier picture; never drop in isolation.
+    IDR_SLICE = 5    # Decoder refresh point, still subject to queue bounds.
     SEI = 6          # SEI metadata — можно дропать
     SPS = 7          # SPS — критично для декодера
     PPS = 8          # PPS — критично для декодера
@@ -20,6 +21,7 @@ _SPHERE_FRAME_HEADER_SIZE = 14
 _SPHERE_FRAME_VERSION = 0x01
 _ANNEX_B_START_CODE_3 = b"\x00\x00\x01"
 _ANNEX_B_START_CODE_4 = b"\x00\x00\x00\x01"
+_START_CODES = re.compile(b"\x00\x00\x00\x01|\x00\x00\x01")
 
 
 def _unwrap_sphere_frame(data: bytes) -> tuple[bytes, bool]:
@@ -83,14 +85,34 @@ def detect_first_nal_type(data: bytes) -> FrameType:
 
 
 class VideoFrame:
-    __slots__ = ("data", "nal_type", "keyframe_flag", "timestamp", "device_id")
+    __slots__ = ("data", "nal_type", "nal_types", "keyframe_flag", "timestamp", "device_id")
 
     def __init__(self, data: bytes, device_id: str) -> None:
         self.data = data
         self.device_id = device_id
         payload, self.keyframe_flag = _unwrap_sphere_frame(data)
         self.nal_type = _detect_nal_type(payload)
+        # MediaCodec outputs complete access units: a leading SEI/AUD must not
+        # hide a dependent picture or an IDR later in the same packet.
+        self.nal_types = frozenset(
+            payload[match.end()] & 0x1F
+            for match in _START_CODES.finditer(payload) if match.end() < len(payload)
+        )
         self.timestamp = time.monotonic()
+
+    @property
+    def is_keyframe(self) -> bool:
+        return FrameType.IDR_SLICE in self.nal_types
+
+    @property
+    def is_configuration(self) -> bool:
+        return bool(self.nal_types & {7, 8}) and self.nal_types <= {6, 7, 8, 9}
+
+    @property
+    def is_picture(self) -> bool:
+        # Unrecognized packets are conservatively dependent. SEI/AUD alone do
+        # not contain pictures; never mistake mixed SEI + VCL for metadata.
+        return not self.nal_types or not self.nal_types <= {6, 7, 8, 9}
 
     @property
     def is_critical(self) -> bool:

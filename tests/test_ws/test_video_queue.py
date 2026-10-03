@@ -204,8 +204,11 @@ class TestVideoStreamQueue:
         assert old_frame not in all_frames
         assert new_frame in all_frames
 
-    async def test_critical_frames_not_evicted_when_stale(self, queue):
-        """IDR/SPS/PPS фреймы НЕ дропаются даже если устарели."""
+    async def test_old_configuration_is_kept_but_old_idr_and_dependants_expire(self, queue):
+        """Configuration stays available; an old IDR is not an unlimited backlog."""
+        sps = make_sps_frame()
+        sps.timestamp = time.monotonic() - 10.0
+        await queue.put(sps)
         old_idr = make_idr_frame()
         old_idr.timestamp = time.monotonic() - 10.0  # 10s старый
         await queue.put(old_idr)
@@ -214,17 +217,17 @@ class TestVideoStreamQueue:
         new_p = make_p_frame()
         await queue.put(new_p)
 
-        # IDR должен сохраниться
+        # Preserve configuration, discard the stale reference chain.
         frames = []
         while True:
             f = await queue.get()
             if f is None:
                 break
             frames.append(f)
-        assert old_idr in frames
+        assert frames == [sps]
 
-    async def test_stale_three_byte_idr_remains_critical_under_remote_queue_delay(self, queue):
-        """A WAN-delayed Annex-B IDR must not be treated as a disposable P-frame."""
+    async def test_stale_three_byte_idr_expires_with_its_reference_chain(self, queue):
+        """Three-byte Annex-B framing gets the same latency policy as four-byte."""
         old_idr = make_wire_frame(b"\x00\x00\x01\x65" + b"\xff" * 100, keyframe=True)
         old_idr.timestamp = time.monotonic() - 10.0
         await queue.put(old_idr)
@@ -238,7 +241,8 @@ class TestVideoStreamQueue:
                 break
             frames.append(frame)
 
-        assert old_idr in frames
+        assert frames == []
+        assert await queue.put(make_idr_frame())
 
     async def test_queue_size_property(self, queue):
         assert queue.size == 0

@@ -470,3 +470,17 @@ reconciled;PH019 confirmed login429, helper исправлен на одну ope
 Full832/flavor:831pass/1skip;sourcead34 CIbackend/frontend/Androidsuccess.
 Normal/dev10209,stable/manifest/bulk/visual/soak/F36OPEN;33fixed/8OPEN сохранены.
 [Полный отчёт](../2026-10-03/OTA-SIGNER-COMPATIBILITY.md).
+
+## N09 — H.264 reference recovery и measured delivery,3 октября
+
+На API facba9a /APK10244 до N09: PH025597pictures/20s=29.85fps,
+PH010598/20s=29.90fps; один самозавершающийся motion canary на устройство.
+Это wire delivery, не browser rendered FPS или input latency.
+
+Воспроизведены семь assertion failures старой queue и один missing callback
+contract. Picture loss теперь fence-ит chain до fresh IDR; deadline проверяется
+на dequeue, mixed SEI/VCL классифицируется целиком. Recovery control вынесен
+из queue/Redis reader, ограничен одной task/устройство и shared cooldown1s.
+230WS cases +41 real PostgreSQL/Redis cases passed, changed-file Ruff/mypy passed.
+Runtime adoption/браузер/F36 пока OPEN; исходный count33/8 не пересчитан.
+[Отчёт](../2026-10-03/STREAM-REFERENCE-RECOVERY.md).

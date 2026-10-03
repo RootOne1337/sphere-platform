@@ -45,6 +45,7 @@ class VideoStreamBridge:
         self._pending_stops: set[str] = set()
         self._publish_queues: dict[str, VideoStreamQueue] = {}
         self._publish_tasks: dict[str, asyncio.Task] = {}
+        self._keyframe_tasks: dict[str, asyncio.Task] = {}
         self.transport = VideoTransport(redis, self.receive_frame, self.send_control) if redis is not None else None
 
     async def send_control(self, device_id: str, command: dict) -> bool:
@@ -64,7 +65,7 @@ class VideoStreamBridge:
             if old_stop:
                 old_stop.cancel()
             self._pending_stops.discard(device_id)
-            queue = VideoStreamQueue(device_id)
+            queue = VideoStreamQueue(device_id, on_recovery=lambda: self._schedule_keyframe(device_id))
             task = asyncio.create_task(self._viewer_send_loop(device_id, session_id, queue, viewer_ws))
             viewers[session_id] = ViewerSession(queue, viewer_ws, task)
             record_active_viewer_delta(device_id, 1)
@@ -139,6 +140,7 @@ class VideoStreamBridge:
         if queue is None:
             queue = self._publish_queues[device_id] = VideoStreamQueue(
                 device_id, queue_stage="agent_to_redis",
+                on_recovery=lambda: self._schedule_keyframe(device_id),
             )
             self._publish_tasks[device_id] = asyncio.create_task(self._publish_loop(device_id, queue))
         await queue.put(VideoFrame(frame_data, device_id))
@@ -167,6 +169,9 @@ class VideoStreamBridge:
                                 await transport.stop_if_unused(device_id)
                                 unused_since = time.monotonic()
                 except (RedisError, TimeoutError):
+                    # An uncertain publication is a possible reference gap on
+                    # every worker, even if the local queue itself did not drop.
+                    await queue.invalidate()
                     record_redis_publish_failure(device_id)
                     if time.monotonic() - last_error_log >= 30:
                         logger.warning("stream_frame_transport_unavailable", device_id=device_id)
@@ -182,6 +187,27 @@ class VideoStreamBridge:
         frame = VideoFrame(frame_data, device_id)
         for viewer in tuple(self._viewers.get(device_id, {}).values()):
             await viewer.queue.put(frame)
+
+    def _schedule_keyframe(self, device_id: str) -> None:
+        if self._closed or device_id in self._keyframe_tasks:
+            return
+        task = asyncio.create_task(self._recover_reference_chain(device_id))
+        self._keyframe_tasks[device_id] = task
+
+    async def _recover_reference_chain(self, device_id: str) -> None:
+        try:
+            await self.send_control(device_id, {"type": "request_keyframe"})
+        except Exception:
+            logger.debug("stream_queue_keyframe_unavailable", device_id=device_id)
+        finally:
+            # Share the cooldown across all viewers and the publisher queue.
+            # Keep one owned task, rather than a persistent per-device timer map.
+            # close() may cancel it; the nested finally still removes ownership.
+            try:
+                await asyncio.sleep(1)
+            finally:
+                if self._keyframe_tasks.get(device_id) is asyncio.current_task():
+                    self._keyframe_tasks.pop(device_id, None)
 
     async def _viewer_send_loop(self, device_id, session_id, queue, viewer_ws) -> None:
         try:
@@ -238,11 +264,13 @@ class VideoStreamBridge:
             await self.unregister_viewer(device)
         if self.transport:
             await self.transport.close()
-        tasks = [*viewer_tasks, *self._delayed_stop_tasks.values(), *self._publish_tasks.values()]
+        tasks = [*viewer_tasks, *self._delayed_stop_tasks.values(), *self._publish_tasks.values(),
+                 *self._keyframe_tasks.values()]
         for task in tasks:
             task.cancel()
         await asyncio.gather(*tasks, return_exceptions=True)
         self._publish_queues.clear()
+        self._keyframe_tasks.clear()
         if self.transport:
             for device in devices:
                 try:
