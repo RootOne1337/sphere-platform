@@ -23,10 +23,13 @@
 > transport и unknown outcome не изображаются успешным выполнением Android.
 > [F32 contract/proof](docs/audits/2026-10-03/VPN-CONTROL-OUTCOMES.md).
 > **33 source-fixed /8 OPEN**, F32/F33 PARTIAL. Finite online14→11→12;
-> latest inventory01:53UTC:14online,3 на1.2.40-dev,11 на старых APK.
-> Наличие исправлений в коде не означает обновление всего парка.
+> После11 адресных установок все14 online сообщают1.2.40-dev;5offline вне приёмки.
+> 12 конечных срезов:тот же cohort,heartbeat<30s;connected_since до/после совпал.
+> [Rollout receipts](docs/audits/2026-10-03/OWNED-PILOT-OTA-ROLLOUT.md).
 > [OTA workflow](docs/operations/OTA-ADDRESSED-UPDATES.md).
-> Новая VPN-интеграция не добавляется. Public frontend/APK/OTA/Tuna не менялись.
+> Новая VPN-интеграция не добавляется. Public frontend/Tuna не менялись.
+> Normal OTA android/dev10209 и stable/general manifest promotion остаются OPEN.
+> Code head6d5f280 CI прошёл:backend2351passed/16skipped,frontend иAndroid.
 > Browser visual, rollout и20–30-device stream+scripts acceptance OPEN.
 > [Журнал F01–F41](docs/audits/2026-10-01/WEB-AUDIT-REMEDIATION.md) ·
 > [Каноническое состояние, версии и предыдущие trials](docs/operations/CURRENT-STATE.md).

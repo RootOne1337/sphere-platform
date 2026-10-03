@@ -2,7 +2,13 @@
 
 Этот журнал продолжает [замороженный аудит](WEB-FULL-CAPABILITY-AUDIT.md) исходников `1354d66`. Исходный документ и evidence сохраняют свою дату и ограничения; их статусы не переписываются задним числом.
 
-**Срез F32, 3 октября2026:** UI **a2c4f02** / API **8cd5cf0**;
+**Последний fleet readback,3 октября2026:**11 адресных installs подтверждены;
+все14online на10240,5offline вне приёмки.12 finite readbacks и epoch comparison
+не выявили reconnect; это не длительный soak. Code6d5f280 CI passed,
+backend2351/16skipped.33source-fixed/8OPEN, F32/F33 PARTIAL.
+[Rollout proof](../2026-10-03/OWNED-PILOT-OTA-ROLLOUT.md).
+
+**Предыдущий F32 fleet срез, 3 октября2026:** UI **a2c4f02** / API **8cd5cf0**;
 **33 source findings исправлены / 8 OPEN**, F32/F33 PARTIAL. **103 suites /916
 frontend tests** в Node24;334 regressions.159 related backend cases также в
 production image; N06 actual DI/live422/404 принято. VPN provider/Android VPN
@@ -391,3 +397,13 @@ catalog01:53UTC14online/5offline и3latest/11old. F32/F33 не закрыты; n
 channel/artifact/delivery/receipt/heartbeat и continued reconnect evidence.
 [Полный отчёт](../2026-10-03/VPN-CONTROL-OUTCOMES.md) ·
 [Контракт](../../operations/VPN-CONTROL-OUTCOMES.md).
+
+## F33 — совместимость и controlled addressed wave,3 октября
+
+Live channel/android-dev остаётся10209, canary-dev10240; текущий Worker поэтому
+не предлагает10240 старым версиям.11oldonline не имели active10240 grants.
+Exact installed SHA/package/signer проверены; PH02810232→10240, затем10 targets
+последовательно.11completed receipts/post-install heartbeats, grant auto-clear;
+14online теперь10240.12 finite samples и unchanged connected_since до/после,
+но длительная стабильность/normal promotion/general manifest/bulk UX OPEN.
+[Квитанции, исходные каналы и ограничения](../2026-10-03/OWNED-PILOT-OTA-ROLLOUT.md).

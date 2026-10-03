@@ -15,7 +15,7 @@
 > автоматическую проверку runtime; старые аудиты сохраняют собственные даты и
 > версии и не должны читаться как текущий deploy. [Правила актуальности](DOCUMENTATION.md).
 
-Последнее изменение: [F32 — VPN control outcomes](audits/2026-10-03/VPN-CONTROL-OUTCOMES.md), review UI **a2c4f02** / API **8cd5cf0** на [3015/vpn](http://127.0.0.1:3015/vpn). **103 suites /916 Node24 tests**,159 production-image backend cases; **33 source-fixed /8 OPEN**, F32/F33 PARTIAL. [Операторский контракт](operations/VPN-CONTROL-OUTCOMES.md). Finite reconnect и3latest/11old online APK не объявлены стабильностью либо полной доставкой обновления. Visual/public rollout/combined fleet gates OPEN.
+Последний live follow-up: [11 адресных установок и post-install heartbeat](audits/2026-10-03/OWNED-PILOT-OTA-ROLLOUT.md), все14online теперь1.2.40-dev;5offline вне приёмки. UI **a2c4f02** /API **8cd5cf0**, [3015/updates](http://127.0.0.1:3015/updates). **103suites/916 Node24 tests**, code head6d5f280 CI passed, backend2351/16skipped. **33source-fixed/8OPEN**, F32/F33 PARTIAL. Normal/dev10209, general manifest, stable/bulk/visual/soak gates OPEN. [VPN outcomes](operations/VPN-CONTROL-OUTCOMES.md) · [F32 proof](audits/2026-10-03/VPN-CONTROL-OUTCOMES.md).
 
 ## 🧭 Выберите задачу
 

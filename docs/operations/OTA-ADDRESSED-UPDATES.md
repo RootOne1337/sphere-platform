@@ -1,6 +1,6 @@
 # Адресное обновление Android: действия и проверка результата
 
-**Актуально:** 2 октября 2026,18:13 UTC+5. UI `d61ab49`, API `8267b94`.
+**Последний live readback:3 октября2026.** UI `a2c4f02`,API `8cd5cf0`;11 адресных установок подтверждены,14online на10240,5offline вне приёмки. [Rollout proof](../audits/2026-10-03/OWNED-PILOT-OTA-ROLLOUT.md). Normal/dev остаётся10209;10240 debug candidate не продвинут в global channel. Предыдущая установка2октября18:13UTC+5:UI `d61ab49`,API `8267b94`.
 
 [Текущее состояние](CURRENT-STATE.md) · [Доказательства F33](../audits/2026-10-02/OTA-ADDRESSED-DELIVERY.md) ·
 [HTTP contracts](../api-endpoints.md) · [Архитектура OTA](../architecture/ANDROID-OTA-RELIABILITY.md)
@@ -93,3 +93,9 @@ F33 закрыт частично: single-device workflow реализован �
 install proof. Bulk rollout, verified package/flavor/signer manifest, visual
 browser acceptance и20–30-device trial остаются открытыми. На срезе18:13 UTC+5
 каталог19/online14/offline5; всего3online устройства сообщили10240.
+
+3 октября для PH028 и10 следующих targets package/signer совместимость доказана
+по exact installed APK digests и подписанным локальным baseline files. Это
+ручная цепочка для этих устройств, а не появление general manifest в каталоге.
+Все11 получили completed10240 и post-result heartbeat; разрешения auto-cleared.
+[Новые квитанции и finite connection observations](../audits/2026-10-03/OWNED-PILOT-OTA-ROLLOUT.md).

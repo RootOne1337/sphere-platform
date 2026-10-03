@@ -16,7 +16,12 @@ Source: `1354d66660041ba17afb64399d567ca29dd91867`. Режим замороже�
 
 Текущее продолжение: [журнал исправлений и статусы F01–F41](WEB-AUDIT-REMEDIATION.md). Исторический аудит остаётся неизменным.
 
-Последний review: UI **a2c4f02** / API **8cd5cf0**, F32,3 октября2026.
+Последний fleet follow-up3октября:11 addressed updates10240 confirmed;
+14online now10240,5offline outside acceptance.12finite heartbeat readbacks и
+unchanged connection epochs; не long soak. Code6d5f280 CI passed,
+backend2351/16skipped. [Rollout proof](../2026-10-03/OWNED-PILOT-OTA-ROLLOUT.md).
+
+Последняя UI/API установка: UI **a2c4f02** / API **8cd5cf0**, F32,3 октября2026.
 **33 source-fixed /8 OPEN**, F32/F33 PARTIAL;103suites/916 frontend tests в
 Node24,159 related backend cases также в immutable image. Targets/receipts и
 N06 deferred provider init подтверждены tests/live API. Finite online14→11→12;

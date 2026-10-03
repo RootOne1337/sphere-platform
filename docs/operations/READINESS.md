@@ -3,7 +3,20 @@
 **Навигация обновлена: 3 октября 2026. Исторические live-снимки ниже сохранены по датам.**
 
 > [!IMPORTANT]
-> **Последняя установленная версия: F32, 3 октября2026.**
+> **Последний live OTA readback,3 октября2026:** [3015/updates](http://127.0.0.1:3015/updates).
+> Проверено и адресно обновлено **11 устройств до1.2.40-dev/10240**;
+> exact install receipts и новый heartbeat получены для каждого.
+> **Все14 online теперь10240**,5offline вне приёмки.12 конечных срезов
+> 02:20:43–02:23:29UTC: тот же cohort, heartbeat<30s;
+> отдельные connected_since до/после не изменились. Это не длительный soak.
+> APK package/signer проверены по exact installed-file hashes; данные не очищались.
+> Normal android/dev всё ещё10209; general manifest/bulk workflow и stable release OPEN.
+> Source **6d5f280 CI passed**: frontend/Android/backend, **2351 passed/16skipped**.
+> UI **a2c4f02**,API **8cd5cf0**; новый docs head имеет собственный CI.
+> [Полный rollout/receipts](../audits/2026-10-03/OWNED-PILOT-OTA-ROLLOUT.md).
+
+> [!IMPORTANT]
+> **Последняя версия UI/API, F32; предыдущий fleet readback,3 октября2026.**
 > [3015/vpn](http://127.0.0.1:3015/vpn), UI **a2c4f02** / API **8cd5cf0**.
 > VPN controls: explicit targets/action, owned preflight, подтверждение и
 > результаты по устройствам; unknown не replay. No-op kill-switch честно
