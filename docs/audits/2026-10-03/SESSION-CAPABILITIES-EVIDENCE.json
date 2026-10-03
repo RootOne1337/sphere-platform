@@ -80,11 +80,11 @@
         "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37145886793"
       },
       {
-        "conclusion": "",
-        "databaseId": 37145886835,
-        "name": "CI — Android",
-        "status": "in_progress",
-        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37145886835"
+        "conclusion": "success",
+        "databaseId": 37145886832,
+        "name": "CI — Backend",
+        "status": "completed",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37145886832"
       },
       {
         "conclusion": "success",
@@ -95,14 +95,14 @@
       },
       {
         "conclusion": "success",
-        "databaseId": 37145886832,
-        "name": "CI — Backend",
+        "databaseId": 37145886835,
+        "name": "CI — Android",
         "status": "completed",
-        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37145886832"
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37145886835"
       }
     ],
-    "schemaRepairAllSuccess": false,
-    "observedAt": "2026-10-03T19:05:06.583289+00:00"
+    "schemaRepairAllSuccess": true,
+    "observedAt": "2026-10-03T19:11:08.618434+00:00"
   },
   "open": [
     "every_page_mutation_affordance_permissions",

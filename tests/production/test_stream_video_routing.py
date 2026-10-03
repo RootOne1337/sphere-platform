@@ -4,12 +4,16 @@ import asyncio
 import importlib
 import os
 from contextlib import asynccontextmanager
+from datetime import datetime, timedelta
 from unittest.mock import AsyncMock, patch
 
 import pytest
 from fastapi import WebSocketDisconnect
 from redis.asyncio import Redis
+from sqlalchemy import update
 
+from backend.models.device import Device
+from backend.models.user import User
 from backend.websocket.connection_manager import ConnectionManager
 from backend.websocket.pubsub_router import PubSubPublisher, PubSubRouter
 from backend.websocket.stream_bridge import init_stream_bridge
@@ -289,6 +293,165 @@ async def test_browser_controls_route_to_owner_with_permissions(world, role, exp
                 else:
                     await until(lambda: any(m.get("error") == "stream_control_denied" for m in viewer.messages))
                     assert not any(c["type"] == "touch_tap" for c in commands)
+            finally:
+                viewer.incoming.put_nowait(None)
+                await asyncio.wait_for(task, 3)
+
+
+@pytest.mark.parametrize("message,command_type", [
+    ({"type": "click", "x": 123, "y": 456}, "touch_tap"),
+    ({"type": "swipe", "x1": 1, "y1": 2, "x2": 3, "y2": 4}, "touch_swipe"),
+    ({"type": "keyevent", "code": 3}, "keyevent"),
+    ({"type": "text", "text": "test"}, "text"),
+])
+@pytest.mark.parametrize("use_runtime_role", [False, True], ids=["owner-db", "restricted-rls-db"])
+async def test_open_viewer_rechecks_control_after_database_role_change(world, runtime_db, message, command_type, use_runtime_role):
+    module = importlib.import_module("backend.api.ws.stream.router")
+    user = world.users["org_admin"]
+    device = str(world.dev_a.id)
+    viewer = Viewer(world.auth(user)["Authorization"].split()[1])
+    async with workers(world) as (bridges, commands):
+        sessions = runtime_db.sessions if use_runtime_role else world.sessions
+        with patch.object(module, "AsyncSessionLocal", sessions), patch.object(module, "get_stream_bridge", return_value=bridges[1]):
+            task = asyncio.create_task(module.stream_viewer_ws(viewer, device))
+            try:
+                await until(lambda: any(c["type"] == "viewer_connected" for c in commands))
+                viewer.incoming.put_nowait(message)
+                await until(lambda: any(c["type"] == command_type for c in commands))
+                async with world.sessions() as db:
+                    await db.execute(update(User).where(User.id == user.id).values(role="viewer"))
+                    await db.commit()
+                viewer.incoming.put_nowait(message)
+                await until(lambda: any(m.get("error") == "stream_control_denied" for m in viewer.messages)
+                            or sum(c["type"] == command_type for c in commands) > 1)
+                assert sum(c["type"] == command_type for c in commands) == 1
+                assert any(m.get("error") == "stream_control_denied" for m in viewer.messages)
+                # The same socket may still view pictures; an explicit fresh
+                # server grant can restore control without trusting the old JWT role.
+                assert viewer.closed is None
+                async with world.sessions() as db:
+                    await db.execute(update(User).where(User.id == user.id).values(role="org_admin"))
+                    await db.commit()
+                viewer.incoming.put_nowait(message)
+                await until(lambda: sum(c["type"] == command_type for c in commands) == 2)
+            finally:
+                viewer.incoming.put_nowait(None)
+                await asyncio.wait_for(task, 3)
+
+
+@pytest.mark.parametrize("change,expected_code", [
+    ("inactive", 4001), ("user_moved", 4001), ("revoked_token", 4001),
+    ("device_moved", 4004), ("expired_token", 4001), ("read_permission_removed", 4003),
+])
+async def test_open_viewer_cannot_control_after_identity_or_ownership_revocation(world, monkeypatch, change, expected_code):
+    from backend.core.security import decode_access_token
+    from backend.services.cache_service import CacheService
+
+    module = importlib.import_module("backend.api.ws.stream.router")
+    user = world.users["org_admin"]
+    device = str(world.dev_a.id)
+    token = world.auth(user)["Authorization"].split()[1]
+    viewer = Viewer(token)
+    async with workers(world) as (bridges, commands):
+        with patch.object(module, "AsyncSessionLocal", world.sessions), patch.object(module, "get_stream_bridge", return_value=bridges[1]):
+            task = asyncio.create_task(module.stream_viewer_ws(viewer, device))
+            try:
+                await until(lambda: any(c["type"] == "viewer_connected" for c in commands))
+                if change == "revoked_token":
+                    await CacheService().blacklist_token(decode_access_token(token)["jti"], 60)
+                elif change == "expired_token":
+                    # Advance only the verifier clock after the real JWT was
+                    # admitted. Keep its actual signature/claims/Redis checks.
+                    class ExpiredClock(datetime):
+                        @classmethod
+                        def now(cls, tz=None):
+                            return datetime.now(tz) + timedelta(hours=2)
+
+                    monkeypatch.setattr("jwt.api_jwt.datetime", ExpiredClock)
+                else:
+                    async with world.sessions() as db:
+                        if change == "device_moved":
+                            await db.execute(update(Device).where(Device.id == world.dev_a.id).values(org_id=world.org_b.id))
+                        else:
+                            values = {
+                                "inactive": {"is_active": False},
+                                "read_permission_removed": {"role": "api_user"},
+                                "user_moved": {"org_id": world.org_b.id},
+                            }[change]
+                            await db.execute(update(User).where(User.id == user.id).values(**values))
+                        await db.commit()
+                viewer.incoming.put_nowait({"type": "click", "x": 1, "y": 2})
+                await until(lambda: viewer.closed is not None or any(c["type"] == "touch_tap" for c in commands))
+                assert not any(c["type"] == "touch_tap" for c in commands)
+                assert viewer.closed[0] == expected_code
+                await asyncio.wait_for(task, 3)
+                assert device not in bridges[1]._viewers
+            finally:
+                viewer.incoming.put_nowait(None)
+                await asyncio.wait_for(task, 3)
+
+
+async def test_passive_viewer_loses_video_access_when_account_is_disabled(world, monkeypatch):
+    module = importlib.import_module("backend.api.ws.stream.router")
+    monkeypatch.setattr(module, "VIEWER_AUTH_RECHECK_SECONDS", 0.05, raising=False)
+    user = world.users["org_admin"]
+    device = str(world.dev_a.id)
+    viewer = Viewer(world.auth(user)["Authorization"].split()[1])
+
+    async def unacknowledged_close(code=1000, reason=""):
+        viewer.closed = (code, reason)
+
+    # Closing ASGI output alone need not unblock an uncooperative peer's
+    # pending receive. The route must retire both its sender and receiver.
+    viewer.close = unacknowledged_close
+    async with workers(world) as (bridges, commands):
+        with patch.object(module, "AsyncSessionLocal", world.sessions), patch.object(module, "get_stream_bridge", return_value=bridges[1]):
+            task = asyncio.create_task(module.stream_viewer_ws(viewer, device))
+            try:
+                await until(lambda: any(c["type"] == "viewer_connected" for c in commands))
+                async with world.sessions() as db:
+                    await db.execute(update(User).where(User.id == user.id).values(is_active=False))
+                    await db.commit()
+                await until(lambda: viewer.closed is not None, timeout=2)
+                assert viewer.closed[0] == 4001
+                await asyncio.wait_for(task, 3)
+                assert device not in bridges[1]._viewers
+            finally:
+                viewer.incoming.put_nowait(None)
+                await asyncio.wait_for(task, 3)
+
+
+@pytest.mark.parametrize("outage", ["sql", "redis", "deadline"])
+async def test_viewer_authorization_outage_never_dispatches_or_replays_input(world, monkeypatch, outage):
+    from redis.exceptions import ConnectionError as RedisConnectionError
+
+    from backend.services.cache_service import CacheService
+
+    module = importlib.import_module("backend.api.ws.stream.router")
+    device = str(world.dev_a.id)
+    viewer = Viewer(world.auth(world.users["org_admin"])["Authorization"].split()[1])
+    async with workers(world) as (bridges, commands):
+        with patch.object(module, "AsyncSessionLocal", world.sessions), patch.object(module, "get_stream_bridge", return_value=bridges[1]):
+            task = asyncio.create_task(module.stream_viewer_ws(viewer, device))
+            try:
+                await until(lambda: any(c["type"] == "viewer_connected" for c in commands))
+                if outage == "sql":
+                    unavailable = AsyncMock(side_effect=ConnectionError("isolated database outage"))
+                    monkeypatch.setattr(module, "_authenticate_viewer", unavailable)
+                elif outage == "redis":
+                    monkeypatch.setattr(CacheService, "is_token_blacklisted", AsyncMock(side_effect=RedisConnectionError()))
+                else:
+                    async def stalled_check(*_args):
+                        await asyncio.Event().wait()
+
+                    monkeypatch.setattr(CacheService, "is_token_blacklisted", stalled_check)
+                    monkeypatch.setattr(module, "VIEWER_AUTH_TIMEOUT_SECONDS", 0.03)
+                viewer.incoming.put_nowait({"type": "text", "text": "must-not-run"})
+                await until(lambda: viewer.closed is not None)
+                assert viewer.closed == (1013, "stream_auth_unavailable")
+                assert not any(c["type"] == "text" for c in commands)
+                await asyncio.wait_for(task, 3)
+                assert device not in bridges[1]._viewers
             finally:
                 viewer.incoming.put_nowait(None)
                 await asyncio.wait_for(task, 3)

@@ -510,3 +510,12 @@ Browser/input/F36 OPEN; исходные 33 исправленных / 8 OPEN с
 Implementation00d5ad8 и schema repair729c1da; установленный UI/API00d5ad8.
 [Контракт, before/after, shipped-image проверки и live readback](../2026-10-03/SESSION-CAPABILITIES.md).
 Только этот slice принят по API/JSDOM gates; full role-action UX и visual OPEN.
+
+## N10 — отзыв прав открытого WebSocket, 4 октября
+
+Четыре провала на API source 00d5ad8: после committed смены org_admin → viewer
+tap/swipe/keyevent/text продолжали передаваться через Redis. Fresh input guard,
+периодический отзыв просмотра и очистка sender/receiver реализованы; первый
+полный прогон 293 passed. Source и deploy gates фиксируются отдельно.
+[Дефект, контракт и проверки](../2026-10-04/VIEWER-AUTHORIZATION.md).
+F39 PARTIAL и исходный счётчик 33/8 сохранены.

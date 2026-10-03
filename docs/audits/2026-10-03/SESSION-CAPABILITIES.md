@@ -36,8 +36,9 @@
 - Query key включает sessionVersion/org/user/role. Чужой или malformed ответ
   отвергается. После failed refresh cached grants не используются. Опрос 60 с,
   freshness bound 90 с; focus-refetch поддержан общим QueryClient. Это не мгновенный
-  push отзыва: сервер проверяет права каждого запроса немедленно, UX сверяет их
-  при следующем capability read.
+  push отзыва: HTTP guards проверяют актуальные права, UX сверяет их при следующем
+  capability read. Последующий [N10-аудит](../2026-10-04/VIEWER-AUTHORIZATION.md)
+  выявил отдельное кеширование управления в уже открытом WebSocket на 00d5ad8.
 - Изменение серверной роли синхронизирует user store, после чего существующий
   session provider заменяет private QueryClient. Старые role-scoped данные не
   продолжают служить административным формам. Unmount очищает persistent
@@ -97,7 +98,7 @@ API/JSDOM/wire results не подменяют её; обход policy альт�
   Source Frontend/Android/Preview passed. Repair 729c1da экспортировал71 added/1 removed
   строки с зависимостями shipped image; image exporter check passed. Host Pydantic
   schema отличался; его export не опубликован как финальный контракт.
-- Повторный CI **729c1da** ещё выполняется; полный success не заявляется.
+- Повторный CI **729c1da**: Backend, Frontend, Android и Preview — success.
 - Runtime/helpers и их failed setup attempts хранятся приватно. Syntax/import/header
   case fixes в readback harness не являются application fixes; считаются только
   завершённые checks. [Публичное evidence](SESSION-CAPABILITIES-EVIDENCE.json).
