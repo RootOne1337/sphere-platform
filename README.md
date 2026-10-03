@@ -16,21 +16,20 @@
 </div>
 
 > [!NOTE]
-> **Текущий review, 3 октября2026:** [3015/vpn](http://127.0.0.1:3015/vpn),
-> UI **a2c4f02** / API **8cd5cf0**. **103 suites /916 frontend tests в Node24**,
-> 159 related backend cases в production image, types/build/static/schema passed.
-> VPN controls показывают targets, подтверждения и результаты; unsupported
-> transport и unknown outcome не изображаются успешным выполнением Android.
-> [F32 contract/proof](docs/audits/2026-10-03/VPN-CONTROL-OUTCOMES.md).
-> **33 source-fixed /8 OPEN**, F32/F33 PARTIAL. Finite online14→11→12;
-> После11 адресных установок все14 online сообщают1.2.40-dev;5offline вне приёмки.
-> 12 конечных срезов:тот же cohort,heartbeat<30s;connected_since до/после совпал.
-> [Rollout receipts](docs/audits/2026-10-03/OWNED-PILOT-OTA-ROLLOUT.md).
-> [OTA workflow](docs/operations/OTA-ADDRESSED-UPDATES.md).
-> Новая VPN-интеграция не добавляется. Public frontend/Tuna не менялись.
-> Normal OTA android/dev10209 и stable/general manifest promotion остаются OPEN.
-> Code head6d5f280 CI прошёл:backend2351passed/16skipped,frontend иAndroid.
-> Browser visual, rollout и20–30-device stream+scripts acceptance OPEN.
+> **Текущий review, 3 октября 2026:** [3015/updates](http://127.0.0.1:3015/updates),
+> UI **77fca37** / API **facba9a**. Публикация OTA проверяет metadata/duplicates,
+> веб сохраняет unknown и сверяет exact receipt; APK **1.2.41-dev/10241** проверяет
+> package/version/SDK/current signer перед установкой.
+> **14 адресных установок подтверждены receipt и новым heartbeat; все 14 online
+> на 10241**, пять offline вне приёмки. 12 конечных срезов03:14:44–03:16:35 UTC:
+> cohort/connected_since без изменений, heartbeat <30 s. [Отчёт и доказательства](docs/audits/2026-10-03/OTA-RELEASE-IDENTITY.md).
+> **104 suites /946 frontend tests** в Node 24, 130 related backend cases в
+> immutable API image, 818 passed / 1 skip на каждый Android flavor. Full backend:
+> 2381 passed / 16 skipped; **5bb36ca CI passed: backend, frontend и Android**.
+> **33 source-fixed /8 OPEN**, F32/F33 PARTIAL. Normal android/dev10209,
+> stable/general manifest, browser/soak и 20–30-device stream+scripts gates OPEN.
+> Новый native guard 10241 ещё требует будущего live upgrade canary.
+> [OTA contract](docs/operations/OTA-PUBLICATION-AND-APK-CHECKS.md) ·
 > [Журнал F01–F41](docs/audits/2026-10-01/WEB-AUDIT-REMEDIATION.md) ·
 > [Каноническое состояние, версии и предыдущие trials](docs/operations/CURRENT-STATE.md).
 

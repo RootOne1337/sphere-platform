@@ -48,7 +48,7 @@ terminal receipt и новый heartbeat с установленной верс�
 совместимость и область предложения; смена любого поля сбрасывает подтверждение.
 
 При ожидании ответа нельзя отправить второй POST или закрыть окно. Успех означает
-HTTP201 и совпадение всех полей намерения, UUID релиза и даты в ответе. Ошибочный
+HTTP 201 и совпадение всех полей намерения, UUID релиза и даты в ответе. Ошибочный
 ответ, timeout,409 и сетевой сбой сохраняют неопределённость; автоматического POST
 retry нет. «Сверить результат с каталогом» делает только GET и принимает ровно одну
 запись с точным совпадением. Отсутствие записи либо другой файл с тем же versionCode
@@ -70,12 +70,16 @@ packageName, versionCode и versionName предложения, поддержи
 более новая версия относительно установленного пакета. `force` не разрешает
 downgrade или повтор той же версии.
 
-На Android26–27 используется `GET_SIGNATURES`, на28+ — `GET_SIGNING_CERTIFICATES`.
+На Android 26–27 используется `GET_SIGNATURES`, на28+ — `GET_SIGNING_CERTIFICATES`.
 Непустой набор **текущих** сертификатов должен совпадать полностью, включая все
 подписи для multi-signer APK. Перестановка подписей не меняет идентичность.
 Поддержка ротации ключей здесь намеренно закрыта: общий предок не доказывает
 совместимость двух потомков; promotion с новым ключом требует отдельной проверенной
 политики. Android installer остаётся окончательной проверкой подписи и установки.
+Это более строгая политика нашего OTA: Android рекомендует учитывать историю
+подписи одиночного signer при поддержке ротации. `apkContentsSigners` возвращает
+только текущие подписи; здесь это осознанное ограничение, а не общая рекомендация
+для всех Android-приложений. Документация API повторно проверена 3 октября 2026.
 См. [PackageManager](https://developer.android.com/reference/android/content/pm/PackageManager)
 и [SigningInfo](https://developer.android.com/reference/android/content/pm/SigningInfo).
 
@@ -96,8 +100,22 @@ downgrade или повтор той же версии.
 не входит в backoff loop для неизменяемого несовместимого файла; следующая обычная
 проверка каталога остаётся по расписанию. Для сетевых сбоев retry сохранён.
 
-`OtaApkVerifierTest` исполняет production verifier с metadata Android26 и28.
+`OtaApkVerifierTest` исполняет production verifier с metadata Android 26 и 28.
 `OtaUpdateServiceRecoveryTest` доказывает, что файл с верной SHA-256, но не APK,
 не доходит до installer. Остальные транспортные тесты явно подменяют только
 archive-validation boundary, поскольку их bytes синтетические. Это не доказательство
 нативной установки или ротации: для них нужны отдельные live canaries.
+
+## Датированная приёмка3 октября
+
+UI 77fca37/API facba9a установлены на [3015/updates](http://127.0.0.1:3015/updates).
+1.2.41-dev опубликован в android-canary/dev и адресно установлен на 14 online
+целях; exact receipts и post-install heartbeat приняты для каждой. Пять offline
+вне этой волны. [Отчёт, tests и ограничения](../audits/2026-10-03/OTA-RELEASE-IDENTITY.md) ·
+[Evidence JSON](../audits/2026-10-03/OTA-RELEASE-IDENTITY-EVIDENCE.json).
+
+10240 installer исполнял upgrade до 10241. Live проверка нового10241 guard
+перед следующим upgrade ещё OPEN. Normal/android-dev10209 не изменён;
+finite14-device observation не является stable/global promotion или FPS/soak proof.
+Полный backend CI2381 passed/16 skipped завершил tests, но остановился на stale
+OpenAPI; generated schema repair 5bb36ca прошёл exportercheck в shipped image.

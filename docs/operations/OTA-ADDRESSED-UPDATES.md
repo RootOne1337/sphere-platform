@@ -1,6 +1,12 @@
 # Адресное обновление Android: действия и проверка результата
 
-**Последний live readback:3 октября2026.** UI `a2c4f02`,API `8cd5cf0`;11 адресных установок подтверждены,14online на10240,5offline вне приёмки. [Rollout proof](../audits/2026-10-03/OWNED-PILOT-OTA-ROLLOUT.md). Normal/dev остаётся10209;10240 debug candidate не продвинут в global channel. Предыдущая установка2октября18:13UTC+5:UI `d61ab49`,API `8267b94`.
+**Последний live readback:3 октября2026,03:17:58 UTC.** UI `77fca37`,API
+`facba9a`; 14 адресных установок1.2.41-dev/10241 подтверждены exact receipts и
+новым heartbeat; 14 online10241,5 offline вне приёмки. 12 finite срезов сохранили
+cohort/epochs, heartbeat <30 s. [Новый отчёт](../audits/2026-10-03/OTA-RELEASE-IDENTITY.md).
+Normal/dev10209, debugcanary не продвинут в global; general manifest/bulk/stable
+и next-upgrade native guard acceptance OPEN. [Publication/APK checks](OTA-PUBLICATION-AND-APK-CHECKS.md).
+Предыдущая10240 волна сохранена в [отдельном отчёте](../audits/2026-10-03/OWNED-PILOT-OTA-ROLLOUT.md).
 
 [Текущее состояние](CURRENT-STATE.md) · [Доказательства F33](../audits/2026-10-02/OTA-ADDRESSED-DELIVERY.md) ·
 [HTTP contracts](../api-endpoints.md) · [Архитектура OTA](../architecture/ANDROID-OTA-RELIABILITY.md)
@@ -24,23 +30,26 @@ production-сборка review, подключённая к настоящему
 3. Сверьте package, flavor и сертификат с установленным приложением. Каталог
    **пока не предоставляет проверенный manifest этих полей**. UI явно просит
    подтвердить совместимость; это действие оператора, а не автоматическая проверка.
+   APK10241 дополнительно проверяет файл непосредственно перед обоими installer
+   paths; старые клиенты могут не иметь guard. Отчёт10240→10241 не доказывает
+   живую работу нового guard. [Точный контракт/коды](OTA-PUBLICATION-AND-APK-CHECKS.md).
 4. Сверьте сообщённую версию, состояние связи и heartbeat. Версия не ниже целевой
    блокирует повторную установку/downgrade в этом workflow. Неизвестная версия
    требует проверки совместимости; её отсутствие не подменяется нулём.
-5. Выберите срок10/30/60 минут и выдайте разрешение. Срок ограничен сервером60–3600s.
+5. Выберите срок10/30/60 минут и выдайте разрешение. Срок ограничен сервером60–3600 s.
 
 ## Что означает ответ
 
 | Сигнал | Что действительно подтверждено |
 | --- | --- |
-| HTTP201 | Подписанное разрешение сохранено для одного device/hash/version/deadline |
+| HTTP 201 | Подписанное разрешение сохранено для одного device/hash/version/deadline |
 | `wake_published` | Redis сообщил наличие подписчика; установка ещё не подтверждена |
 | `awaiting_connection` | Нет доступного live signal; сохранённое разрешение остаётся до срока |
 | active | Сервер проверил подпись/срок разрешения; ждём терминальный результат Android |
 | expired | Срок разрешения истёк; старое разрешение не действует |
 | invalid | Метаданные разрешения не прошли проверку; запись в UI блокируется |
 | completed receipt | Android сообщил завершение конкретной команды и установленную версию |
-| «Установка и heartbeat подтверждены» | Совпали hash/version receipt, сообщённая версия устройства, online/busy и heartbeat после receipt не старше60s |
+| «Установка и heartbeat подтверждены» | Совпали hash/version receipt, сообщённая версия устройства, online/busy и heartbeat после receipt не старше60 s |
 
 Старая receipt другого APK не подтверждает выбранный релиз. После ошибки чтения
 cached rows не становятся актуальным состоянием. Ошибка записи означает
@@ -72,8 +81,8 @@ replacement socket не получает ранее подготовленную
 Внутренний `_ota_recovery_wake` не пересылается Android и не даёт новых прав.
 APK получает существующий `OTA_UPDATE`. URL managed APK строится из origin
 аутентифицированного socket; HTTP origin оператора и Redis payload не выбирают
-маршрут скачивания. TTL команды — min180s/остаток разрешения. Publish и
-worker read/send ограничены отдельными3s deadlines.
+маршрут скачивания. TTL команды — min180 s/остаток разрешения. Publish и
+worker read/send ограничены отдельными3 s deadlines.
 
 Если Redis/worker недоступен, grant остаётся в PostgreSQL. Уже существующий
 reconnect recovery path продолжает работать; silent grant loss не изображается
@@ -91,8 +100,8 @@ heartbeat13:12:00.359 UTC. Использован существующий pilot
 
 F33 закрыт частично: single-device workflow реализован и имеет конечный remote
 install proof. Bulk rollout, verified package/flavor/signer manifest, visual
-browser acceptance и20–30-device trial остаются открытыми. На срезе18:13 UTC+5
-каталог19/online14/offline5; всего3online устройства сообщили10240.
+browser acceptance и 20–30-device trial остаются открытыми. На срезе18:13 UTC+5
+каталог19/online14/offline5; всего3 online устройства сообщили10240.
 
 3 октября для PH028 и10 следующих targets package/signer совместимость доказана
 по exact installed APK digests и подписанным локальным baseline files. Это

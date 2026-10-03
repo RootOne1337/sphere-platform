@@ -16,12 +16,20 @@ Source: `1354d66660041ba17afb64399d567ca29dd91867`. Режим замороже�
 
 Текущее продолжение: [журнал исправлений и статусы F01–F41](WEB-AUDIT-REMEDIATION.md). Исторический аудит остаётся неизменным.
 
-Последний fleet follow-up3октября:11 addressed updates10240 confirmed;
+Последний OTA/API/UI follow-up,3 октября03:17:58 UTC: UI **77fca37** /API
+**facba9a**; 14 addressed installs10241 с exact receipt/post-install heartbeat.
+14 online на 10241,5 offline вне приёмки;12 finite samples, unchanged epochs и
+heartbeat <30 s.104 suites/946 frontend tests, 130 backend в immutable image,
+818 passed/1 skip на каждый Android flavor. Backend 2381/16 skipped; schema repair
+**5bb36ca backend/frontend/Android CI passed**, schema check passed.33 source-fixed/8 OPEN, F32/F33 PARTIAL.
+[Новый отчёт](../2026-10-03/OTA-RELEASE-IDENTITY.md) · [Validation](WEB-AUDIT-FIXES-VALIDATION.json).
+
+Предыдущий fleet follow-up3октября:11 addressed updates10240 confirmed;
 14online now10240,5offline outside acceptance.12finite heartbeat readbacks и
 unchanged connection epochs; не long soak. Code6d5f280 CI passed,
 backend2351/16skipped. [Rollout proof](../2026-10-03/OWNED-PILOT-OTA-ROLLOUT.md).
 
-Последняя UI/API установка: UI **a2c4f02** / API **8cd5cf0**, F32,3 октября2026.
+Предыдущая UI/API установка: UI **a2c4f02** / API **8cd5cf0**, F32,3 октября2026.
 **33 source-fixed /8 OPEN**, F32/F33 PARTIAL;103suites/916 frontend tests в
 Node24,159 related backend cases также в immutable image. Targets/receipts и
 N06 deferred provider init подтверждены tests/live API. Finite online14→11→12;

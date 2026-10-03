@@ -1,6 +1,15 @@
 # Отказоустойчивое обновление Android-агента
 
-> **Latest finite acceptance,3 октября2026:** API8cd5cf0/UIa2c4f02;11 addressed installs10240 confirmed by exact receipts/post-install heartbeats;14online now10240,5offline outside acceptance. Normal android/dev remains10209, candidate debug, general manifest/stable/bulk/soak OPEN. [Rollout receipts](../audits/2026-10-03/OWNED-PILOT-OTA-ROLLOUT.md).
+> **Latest finite acceptance,3 октября2026,03:17:58 UTC:** API facba9a/UI 77fca37;
+>14 addressed installs10241 confirmed,14online10241/5 offline. 12 read-only samples:
+> same cohort/epochs,heartbeat <30 s. Publication strict metadata/active duplicate 409;
+> APK10241 checks package/version/SDK/current signer.10240 installer executed this
+> wave;10241 next-upgrade native acceptance stillOPEN. Normal android/dev10209,
+> debugcanary, generic manifest/stable/bulk/visual/soak OPEN.
+> [Report](../audits/2026-10-03/OTA-RELEASE-IDENTITY.md) ·
+> [Contract](../operations/OTA-PUBLICATION-AND-APK-CHECKS.md).
+
+> **Previous finite acceptance10240,3 октября2026:** API8cd5cf0/UIa2c4f02;11 addressed installs10240 confirmed by exact receipts/post-install heartbeats;14online now10240,5offline outside acceptance. Normal android/dev remains10209, candidate debug, general manifest/stable/bulk/soak OPEN. [Rollout receipts](../audits/2026-10-03/OWNED-PILOT-OTA-ROLLOUT.md).
 
 > **Предыдущая граница,2 октября2026:** адресный workflow установлен на3015, API8267b94/UI d61ab49; remote PH01310230→10240 принят по terminal receipt и свежему heartbeat. Обычный канал android/dev10209 не продвинут; debugcanary10240, verified artifact manifest/production signer и массовая приёмка OPEN. [Текущий контракт](../operations/OTA-ADDRESSED-UPDATES.md) · [Доказательства](../audits/2026-10-02/OTA-ADDRESSED-DELIVERY.md).
 >

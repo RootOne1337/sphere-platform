@@ -3,7 +3,26 @@
 **Навигация обновлена: 3 октября 2026. Исторические live-снимки ниже сохранены по датам.**
 
 > [!IMPORTANT]
-> **Последний live OTA readback,3 октября2026:** [3015/updates](http://127.0.0.1:3015/updates).
+> **Последний OTA/API/UI readback, 3 октября 2026,03:17:58 UTC:**
+> [3015/updates](http://127.0.0.1:3015/updates), UI **77fca37** / API **facba9a**.
+> APK **1.2.41-dev/10241** опубликован в canary и адресно установлен на 14 целях;
+> для каждой exact terminal receipt +новый heartbeat. Все14 online на 10241,
+> пять offline вне приёмки. 12 finite срезов03:14:44–03:16:35 UTC сохранили
+> cohort/connected_since, heartbeat <30 s. Это короткая проверка после обновления.
+> Backend strict publication/duplicate 409 и APK identity guard добавлены;
+> веб проверяет поля/receipt и выполняет read-only reconciliation неизвестного исхода.
+> **104 suites /946 frontend tests**, 130 cases в immutable API image,
+> 818 passed / 1 skip на каждый Android flavor. Full backend 2381 passed/16 skipped;
+> facba9a остановился на staleOpenAPI; repair **5bb36ca прошёл backend,
+> frontend и Android CI**, включая schema check. Новый docs head имеет свои checks. Новый guard 10241 требует live next-upgrade canary.
+> Login/API/Prometheus/Grafana/events WS прошли;13 соседних сервисов сохранены.
+> Normal android/dev10209, production signer/stable/general manifest/bulk,
+> browser/soak и stream+scripts20–30-device gates OPEN. **33 source-fixed/8 OPEN**,
+> F32/F33 PARTIAL. [Новый отчёт](../audits/2026-10-03/OTA-RELEASE-IDENTITY.md) ·
+> [Контракт](OTA-PUBLICATION-AND-APK-CHECKS.md).
+
+> [!IMPORTANT]
+> **Предыдущий live OTA readback10240,3 октября2026:** [3015/updates](http://127.0.0.1:3015/updates).
 > Проверено и адресно обновлено **11 устройств до1.2.40-dev/10240**;
 > exact install receipts и новый heartbeat получены для каждого.
 > **Все14 online теперь10240**,5offline вне приёмки.12 конечных срезов
@@ -16,7 +35,7 @@
 > [Полный rollout/receipts](../audits/2026-10-03/OWNED-PILOT-OTA-ROLLOUT.md).
 
 > [!IMPORTANT]
-> **Последняя версия UI/API, F32; предыдущий fleet readback,3 октября2026.**
+> **Предыдущая версия UI/API, F32; fleet readback,3 октября2026.**
 > [3015/vpn](http://127.0.0.1:3015/vpn), UI **a2c4f02** / API **8cd5cf0**.
 > VPN controls: explicit targets/action, owned preflight, подтверждение и
 > результаты по устройствам; unknown не replay. No-op kill-switch честно

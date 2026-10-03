@@ -2,7 +2,14 @@
 
 Этот журнал продолжает [замороженный аудит](WEB-FULL-CAPABILITY-AUDIT.md) исходников `1354d66`. Исходный документ и evidence сохраняют свою дату и ограничения; их статусы не переписываются задним числом.
 
-**Последний fleet readback,3 октября2026:**11 адресных installs подтверждены;
+**Последний OTA/API/UI readback,3 октября03:17:58 UTC:** UI 77fca37/API facba9a;
+14 addressed installs10241 accepted, 14 online/5 offline. 12 finite samples сохранили
+cohort/connection epochs, heartbeat <30 s.104 suites/946 frontend cases,364 regressions;
+130 backend cases в immutable image,818 passed/1 skip на каждый Android flavor.
+Backend 2381 passed/16 skipped; **5bb36ca backend/frontend/Android CI passed** после schema repair.
+33 source-fixed/8 OPEN, F32/F33 PARTIAL. [Новый отчёт](../2026-10-03/OTA-RELEASE-IDENTITY.md).
+
+**Предыдущий fleet readback10240,3 октября2026:**11 адресных installs подтверждены;
 все14online на10240,5offline вне приёмки.12 finite readbacks и epoch comparison
 не выявили reconnect; это не длительный soak. Code6d5f280 CI passed,
 backend2351/16skipped.33source-fixed/8OPEN, F32/F33 PARTIAL.
@@ -69,7 +76,7 @@ production image; N06 actual DI/live422/404 принято. VPN provider/Android
 | [F30](WEB-FULL-CAPABILITY-AUDIT.md#f30) | P2 | Source исправлен; live OPEN | Расписание one-shot: ISO offset подаётся в datetime-local |
 | [F31](WEB-FULL-CAPABILITY-AUDIT.md#f31) | P2 | Source исправлен; live OPEN | VPN → Logs теряет контекст устройства |
 | [F32](WEB-FULL-CAPABILITY-AUDIT.md#f32) | P2 | Частично; lifecycle/visual OPEN | Explicit targets/action, owned preflight, per-device receipts и no replay исправлены; kill transport unsupported, durable reconciliation/visual OPEN |
-| [F33](WEB-FULL-CAPABILITY-AUDIT.md#f33) | P2 | Частично; bulk/manifest/visual OPEN | Single-device recovery/redispatch/revoke и remote install приняты; bulk rollout и verified artifact manifest открыты |
+| [F33](WEB-FULL-CAPABILITY-AUDIT.md#f33) | P2 | Частично; bulk/manifest/visual OPEN | Addressed installs14/14, metadata/receipt и APK identity guards приняты по своим gates; general bulk/manifest, next native upgrade и visual OPEN |
 | [F34](WEB-FULL-CAPABILITY-AUDIT.md#f34) | P2 | Открыто | Матричный режим использует полноценный H.264 для каждого окна |
 | [F35](WEB-FULL-CAPABILITY-AUDIT.md#f35) | P2 | Открыто | XPath-инспектор на видеокарточке ещё отсутствует |
 | [F36](WEB-FULL-CAPABILITY-AUDIT.md#f36) | P2 | Открыто | Управление quality/FPS не раскрыто в single stream |
@@ -407,3 +414,23 @@ Exact installed SHA/package/signer проверены; PH02810232→10240, за�
 14online теперь10240.12 finite samples и unchanged connected_since до/после,
 но длительная стабильность/normal promotion/general manifest/bulk UX OPEN.
 [Квитанции, исходные каналы и ограничения](../2026-10-03/OWNED-PILOT-OTA-ROLLOUT.md).
+
+## F33 — публикация, APK identity и 14 установок10241,3 октября
+
+73bfa9a: malformed metadata/duplicate 409 под FileLock и conflicting latest 503.
+77fca37: validated publication modal, reset consent, exact201, retained unknown и
+GET-only reconciliation. facba9a: package/version/minSdk/current signer guard,
+bounded rejection codes, worker не retry immutable incompatible APK.
+5bb36ca: generatedOpenAPI обновлён после CI failure; 175 operations/137 paths.
+
+130 backend cases на PostgreSQL/в immutable API image;104 suites/946 frontend
+tests,364 cases выше582 baseline;818 passed/1 skip на каждый Android flavor.
+Full GitHub backend 2381 passed/16 skipped до отдельного staleOpenAPI отказа.
+На live API пять invalid/duplicate POST отказали без изменения каталога.
+Canary10241 опубликован managed, normal/dev10209 не продвинут; PH028 и 13 targets
+подтверждены по exact terminal receipts/post-install heartbeat. 12 конечных
+readbacks:14online10241, unchanged epochs, heartbeat <30 s.13 соседних сервисов
+сохранены. Старый10240 installer выполнил эту волну; новый10241 native guard
+ещё требует следующего live upgrade. F33 остаётся PARTIAL, fixed-count33 не увеличен.
+[Отчёт](../2026-10-03/OTA-RELEASE-IDENTITY.md) ·
+[Контракт](../../operations/OTA-PUBLICATION-AND-APK-CHECKS.md).

@@ -15,7 +15,16 @@
 > автоматическую проверку runtime; старые аудиты сохраняют собственные даты и
 > версии и не должны читаться как текущий deploy. [Правила актуальности](DOCUMENTATION.md).
 
-Последний live follow-up: [11 адресных установок и post-install heartbeat](audits/2026-10-03/OWNED-PILOT-OTA-ROLLOUT.md), все14online теперь1.2.40-dev;5offline вне приёмки. UI **a2c4f02** /API **8cd5cf0**, [3015/updates](http://127.0.0.1:3015/updates). **103suites/916 Node24 tests**, code head6d5f280 CI passed, backend2351/16skipped. **33source-fixed/8OPEN**, F32/F33 PARTIAL. Normal/dev10209, general manifest, stable/bulk/visual/soak gates OPEN. [VPN outcomes](operations/VPN-CONTROL-OUTCOMES.md) · [F32 proof](audits/2026-10-03/VPN-CONTROL-OUTCOMES.md).
+Последний live follow-up: [OTA publication/APK identity и 14 установок10241](audits/2026-10-03/OTA-RELEASE-IDENTITY.md).
+Все14 online теперь1.2.41-dev,5 offline вне приёмки;12 finite readbacks сохранили
+cohort/connection epochs, heartbeat <30 s. UI **77fca37** /API **facba9a**,
+[3015/updates](http://127.0.0.1:3015/updates). **104 suites/946 Node 24 tests**,
+130 related backend cases в immutable image,818 passed/1 skip на каждый Android
+flavor. Full backend 2381 passed/16 skipped; OpenAPI repair 5bb36ca check passed,
+его backend/frontend/Android CI прошёл; новый docs head проверяется отдельно. **33 source-fixed/8 OPEN**, F32/F33 PARTIAL. Normal/dev10209,
+stable/general manifest/bulk/visual/soak gates OPEN.
+[Контракт публикации и APK](operations/OTA-PUBLICATION-AND-APK-CHECKS.md) ·
+[Предыдущая10240 волна](audits/2026-10-03/OWNED-PILOT-OTA-ROLLOUT.md).
 
 ## 🧭 Выберите задачу
 
@@ -25,6 +34,7 @@
 | Создать площадку, задать координаты или изменить иерархию | [Контракт локаций](operations/LOCATION-HIERARCHY.md) | [F26 proof](audits/2026-10-03/LOCATION-HIERARCHY.md) · [Receipts](audits/2026-10-03/LOCATION-HIERARCHY-EVIDENCE.json) |
 | Просмотреть/изменить pipeline и допуск запусков | [Определения pipeline](operations/PIPELINE-DEFINITIONS.md) | [F28 proof](audits/2026-10-03/PIPELINE-DEFINITION-WORKFLOW.md) · [Receipts](audits/2026-10-03/PIPELINE-DEFINITION-WORKFLOW-EVIDENCE.json) |
 | Просмотреть DAG версии, откатить сценарий или открыть архив | [Версии сценариев](operations/SCRIPT-VERSIONS.md) | [F27 proof](audits/2026-10-02/SCRIPT-VERSION-WORKFLOW.md) · [Receipts](audits/2026-10-02/SCRIPT-VERSION-WORKFLOW-EVIDENCE.json) |
+| Опубликовать OTA и проверить package/signature перед install | [Publication/APK contract](operations/OTA-PUBLICATION-AND-APK-CHECKS.md) | [1.2.41 proof](audits/2026-10-03/OTA-RELEASE-IDENTITY.md) · [JSON receipts](audits/2026-10-03/OTA-RELEASE-IDENTITY-EVIDENCE.json) |
 | Обновить одно Android-устройство и проверить receipt/heartbeat | [Адресное OTA](operations/OTA-ADDRESSED-UPDATES.md) | [F33 remote proof](audits/2026-10-02/OTA-ADDRESSED-DELIVERY.md) · [Evidence JSON](audits/2026-10-02/OTA-ADDRESSED-DELIVERY-EVIDENCE.json) |
 | Найти audit событие за первой страницей и выгрузить CSV | [F37: source/installed evidence](audits/2026-10-02/AUDIT-INVESTIGATION.md) | [Контракт и лимит5000](operations/AUDIT-INVESTIGATION.md) · [JSON receipts](audits/2026-10-02/AUDIT-INVESTIGATION-EVIDENCE.json) |
 | Проверить форму пользователя, смену роли и отключение | [F38: source/installed evidence](audits/2026-10-02/USER-ACCESS.md) | [Операторский контракт](operations/USER-ACCESS.md) · [JSON receipts](audits/2026-10-02/USER-ACCESS-EVIDENCE.json) |

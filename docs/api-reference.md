@@ -13,7 +13,10 @@ reflect the registered HTTP contracts and are checked in CI. The Tasks section
 was reconciled with application source `5fcf18a` on 2 October 2026. The Scripts
 section and optional task/batch version admission condition were reconciled with
 source `d2846ef` on 2 October; other Batches details retain their 7 September review.
-Locations were reconciled with `db6be05` on 3 October. Other manual sections
+Locations were reconciled with `db6be05` on 3 October. OTA publication was
+reconciled with `facba9a` on 3 October: [metadata/receipt and Android APK checks](operations/OTA-PUBLICATION-AND-APK-CHECKS.md).
+The generated snapshot was synchronized in `5bb36ca`; 175 HTTP operations across 137 paths.
+Other manual sections
 still need component review; a listed contract does not establish runtime or
 security correctness. See the [audit report](audits/2026-09-05/AUDIT-REPORT.md).
 
@@ -210,7 +213,7 @@ GET /config/agent
 }
 ```
 
-Конфигурация загружается из `agent-config/environments/{env}.json` и кэшируется в Redis (TTL 300s).
+Конфигурация загружается из `agent-config/environments/{env}.json` и кэшируется в Redis (TTL 300 s).
 
 ---
 
@@ -1045,7 +1048,7 @@ wait_for_event, n8n_workflow, loop, sub_pipeline. ID уникальны; пер�
 
 PATCH отправляет только изменённые поля и optional `expected_updated_at` из
 просмотренного ответа. Description:null очищает описание; другие поля с null
-дают422. Steps ограничены1–100, теги20. Version увеличивается только при
+дают422. Steps ограничены1–100, теги 20. Version увеличивается только при
 фактическом изменении steps. При неверном baseline, занятой записи или runtime
 edit с nonterminal runs возвращается409 без частичного сохранения.
 

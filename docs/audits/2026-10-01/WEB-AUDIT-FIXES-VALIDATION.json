@@ -1,7 +1,7 @@
 {
-  "observedAt": "2026-10-03T02:26:56.694957+00:00",
+  "observedAt": "2026-10-03T03:17:58.138904+00:00",
   "timezone": "Asia/Yekaterinburg",
-  "source": "6d5f280e478ca58d3d38a572c0a73f2404683cd3",
+  "source": "facba9a4b56f9b121f028bc371d24b94a08364de",
   "frozenAuditSource": "1354d66660041ba17afb64399d567ca29dd91866",
   "auditCommitBeforeProductEdits": "80fb365",
   "implementationCommits": [
@@ -46,7 +46,11 @@
     "d829b47",
     "5b20955",
     "db6be05e6fdc679cad10754347aebe18ce93921f",
-    "8e0aeb52755943390705bcd549ddf792643bc9ad"
+    "8e0aeb52755943390705bcd549ddf792643bc9ad",
+    "73bfa9af33fbf0453676136f78dc26810affc8b8",
+    "77fca37847590bef526ae5becdf7b1986d5b15ea",
+    "facba9a4b56f9b121f028bc371d24b94a08364de",
+    "5bb36caa8663da097738d5ea8b8e339cbee42b2c"
   ],
   "sourceFindingsFixed": [
     "F01",
@@ -84,11 +88,11 @@
     "F38"
   ],
   "remainingSourceFindings": 8,
-  "newRegressionTests": 334,
+  "newRegressionTests": 364,
   "frontendTests": {
-    "suitesPassed": 103,
+    "suitesPassed": 104,
     "suitesFailed": 0,
-    "testsPassed": 916,
+    "testsPassed": 946,
     "testsFailed": 0,
     "testsSkipped": 0
   },
@@ -104,17 +108,17 @@
     "isolatedGitArchive": true,
     "productionConfigPreserved": true,
     "output": "standalone",
-    "buildStamp": "a2c4f02972d090b0707dc3f7ae48e803810a35be",
+    "buildStamp": "77fca37847590bef526ae5becdf7b1986d5b15ea",
     "compiledStampVerified": true,
     "platform": "Linux Docker",
     "lintWarnings": 44
   },
   "reviewRuntime": {
-    "observedAt": "2026-10-02T22:59:14.693104+00:00",
-    "phase": "vpn-controls-repaired-installed",
+    "observedAt": "2026-10-03T03:17:58.138904+00:00",
+    "phase": "post-identity-wave",
     "url": "http://127.0.0.1:3015",
-    "reviewSource": "a2c4f02972d090b0707dc3f7ae48e803810a35be",
-    "backendSource": "8cd5cf023d27b59b39d8a4b2aa65f4d7dc3070a3",
+    "reviewSource": "77fca37847590bef526ae5becdf7b1986d5b15ea",
+    "backendSource": "facba9a4b56f9b121f028bc371d24b94a08364de",
     "loginPassed": true,
     "sameOriginApiPassed": true,
     "uiCompiledStampPassed": true,
@@ -132,22 +136,22 @@
     "containers": [
       {
         "name": "sphere-review-20261002-review-ui-1",
-        "id": "10b83cb47e60c209f62bcd15b7f99f004c02f96441650c1a62a07487dc553936",
-        "imageId": "sha256:f14a1150b508f0ca914b836f0622b8160324fda55ec16e6e65625aae9b47a393",
-        "image": "sphere-review-frontend:a2c4f02972d090b0707dc3f7ae48e803810a35be",
+        "id": "b842a01b6187ebfe800a797654c3ec5672146206035c1d274e8f6169269b79ed",
+        "imageId": "sha256:264aaa341c32e37153e4c19eff0c3db418cf3b066c834a76d4794b79a704c6fa",
+        "image": "sphere-review-frontend:77fca37847590bef526ae5becdf7b1986d5b15ea",
         "health": "healthy",
-        "startedAt": "2026-10-02T22:50:29.170344608Z",
+        "startedAt": "2026-10-03T03:00:14.649785176Z",
         "readOnly": true,
         "restart": "unless-stopped",
         "ports": {}
       },
       {
         "name": "sphere-review-20261002-review-gateway-1",
-        "id": "b12b6ad94937ed90da37f77a1bebde7c1a0af98955af1440d29b9c3382429d67",
+        "id": "83fa3baddd2d4fa5c8d5ccad3879b6dd3ba0b1f02353375d8844c442b92d2d2f",
         "imageId": "sha256:1d13701a5f9f3fb01aaa88cef2344d65b6b5bf6b7d9fa4cf0dca557a8d7702ba",
         "image": "nginx:alpine",
         "health": "healthy",
-        "startedAt": "2026-10-02T22:50:35.08514485Z",
+        "startedAt": "2026-10-03T03:00:20.5550634Z",
         "readOnly": true,
         "restart": "unless-stopped",
         "ports": {
@@ -164,24 +168,26 @@
     "browserVisualAcceptance": "OPEN_URL_POLICY_BLOCKED"
   },
   "documentValidation": {
-    "documentsChecked": 17,
-    "relativeTargetsChecked": 663,
+    "observedAt": "2026-10-03T03:34:10.229861+00:00",
+    "documentsChecked": 19,
+    "relativeTargetsChecked": 696,
     "findingAnchorsChecked": 41,
     "missing": [],
     "testCountsMatchRawLog": true,
     "findingCountsMatchLedger": true,
-    "frozenAuditUnchanged": true
+    "frozenAuditUnchanged": true,
+    "currentVersionClaimsMatchReceipts": true,
+    "historical10240SnapshotPreserved": true
   },
   "scope": {
     "backendChanged": true,
     "reviewUiChanged": true,
     "publicFrontendChanged": false,
-    "apkSourceChanged": false,
+    "apkSourceChanged": true,
     "normalOtaPromoted": false,
-    "addressedOtaDevicesUpdated": 11,
+    "addressedOtaDevicesUpdated": 14,
     "tunnelsChanged": false,
     "commandTypes": [
-      "REQUEST_LOGS",
       "SHELL(read-only)",
       "OTA_UPDATE"
     ],
@@ -189,20 +195,18 @@
     "dataCleared": false
   },
   "limits": [
-    "F32 PARTIAL: no accepted live Android kill-switch, durable unknown journal or browser/keyboard/mobile walkthrough.",
-    "Only the mounted page/actor scope retains unknown guards; full reload or another browser does not.",
-    "Rotation is a two-stage provider lifecycle, not exactly-once, an atomic cross-device transition or a peer revision fence.",
-    "Fresh browser acceptance remains OPEN_URL_POLICY_BLOCKED; no bypass or invented screenshots.",
-    "Finite online drift 14->11->12 is not an uptime SLA, draw-FPS or input-latency measurement.",
-    "Old APK watchdog logs do not prove the current APK has the same defect; Android clock/timezone was not verified.",
-    "F33 PARTIAL, F34-F36, F39-F41, N01/N03 and durable audit outbox remain open.",
-    "Only fourteen connected owned pilot devices; five offline are not accepted or updated by these receipts.",
-    "Manual exact-file package/signer compatibility proof is not a general verified artifact manifest API.",
-    "Normal android/dev remains10209; candidate10240 is android-canary/dev, no global promotion.",
-    "APK remains a debug planar canary; not a production-signed stable release.",
-    "Finite heartbeat/epoch observations are not SLA, long soak, remote FPS/input latency or combined stream+scripts acceptance.",
-    "Browser visual/keyboard/mobile remains OPEN_URL_POLICY_BLOCKED; no bypass.",
-    "F32/F33 PARTIAL, N01/N03/outbox and F34-F36/F39-F41 remain open."
+    "Five offline catalog records were not updated or accepted; fourteen online owned pilot devices only.",
+    "Normal android/dev remains10209;10241 is android-canary/dev. No normal/global promotion.",
+    "Debug planar=true/GPU=false pilot artifact, not a production-signed stable release.",
+    "The10240->10241 installs used the10240 installer. The new10241 native guard still requires a future live upgrade canary.",
+    "Exact current signer set is required; signing-key rotation intentionally unsupported by this guard.",
+    "Manual baseline hash/package/signer preflight is not a generic verified artifact manifest API or upload UI.",
+    "Release uniqueness is only for the active catalog; deletion/republication is not immutable history.",
+    "Web unknown outcome is retained only in the mounted page/session; reload and cross-tab durable reconciliation open.",
+    "Finite heartbeat/epoch samples are not long soak, SLA, remote FPS/input latency or combined stream+scripts acceptance.",
+    "Browser visual/keyboard/mobile remains OPEN_URL_POLICY_BLOCKED; no bypass or invented screenshots.",
+    "F32/F33 PARTIAL, F34-F36/F39-F41, N01/N03 and durable audit outbox remain open.",
+    "facba9a backend workflow failed on stale OpenAPI after2381 tests; schema-only repair5bb36ca subsequently passed all three CI workflows."
   ],
   "verificationCommit": "8e0aeb52755943390705bcd549ddf792643bc9ad",
   "previousReviewRuntime": {
@@ -564,7 +568,7 @@
     "finalVerificationHeadCiComplete": false
   },
   "verificationTestCommit": "3fe5eac",
-  "latestRuntimeEvidence": "docs/audits/2026-10-03/OWNED-PILOT-OTA-ROLLOUT-EVIDENCE.json",
+  "latestRuntimeEvidence": "docs/audits/2026-10-03/OTA-RELEASE-IDENTITY-EVIDENCE.json",
   "remoteRerunFiniteAcceptance": {
     "device": "auto-ph-025",
     "agentVersion": "1.2.40-dev",
@@ -622,7 +626,7 @@
     "previousNextPid": 7416,
     "historicalNativeSnapshot": true
   },
-  "latestTestCountsRawReceipt": ".local-pilot/web-audit-fixes-20261002/audit-final-full-jest.json",
+  "latestTestCountsRawReceipt": ".local-pilot/web-audit-fixes-20261003/ota-publication-node24-receipt.json",
   "additionalSourceFindings": {
     "N01": "OPEN_Android_artifact_upload",
     "N02": "SOURCE_FIXED_discovery_contract",
@@ -890,7 +894,8 @@
     }
   },
   "newHeadCi": {
-    "state": "pending at documentation snapshot"
+    "state": "documentation-only head will have its own checks; no inherited exact-head claim",
+    "completedCodeAndSchemaHead": "5bb36caa8663da097738d5ea8b8e339cbee42b2c"
   },
   "historicalGroupWorkflowRuntime": {
     "observedAt": "2026-10-02T00:48:07.440145+00:00",
@@ -1278,36 +1283,50 @@
   },
   "addressedOtaEvidence": "../2026-10-02/OTA-ADDRESSED-DELIVERY-EVIDENCE.json",
   "currentExactHeadCi": {
-    "source": "6d5f280e478ca58d3d38a572c0a73f2404683cd3",
-    "observedAt": "2026-10-03T02:22:33.000702+00:00",
+    "source": "5bb36caa8663da097738d5ea8b8e339cbee42b2c",
+    "observedAt": "2026-10-03T03:32:51.501739+00:00",
     "allThreeWorkflowsSucceeded": true,
+    "runs": [
+      {
+        "conclusion": "success",
+        "databaseId": 37092694029,
+        "headSha": "5bb36caa8663da097738d5ea8b8e339cbee42b2c",
+        "status": "completed",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37092694029",
+        "workflowName": "Preview — Deploy"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 37092694000,
+        "headSha": "5bb36caa8663da097738d5ea8b8e339cbee42b2c",
+        "status": "completed",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37092694000",
+        "workflowName": "CI — Frontend"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 37092694003,
+        "headSha": "5bb36caa8663da097738d5ea8b8e339cbee42b2c",
+        "status": "completed",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37092694003",
+        "workflowName": "CI — Backend"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 37092694001,
+        "headSha": "5bb36caa8663da097738d5ea8b8e339cbee42b2c",
+        "status": "completed",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37092694001",
+        "workflowName": "CI — Android"
+      }
+    ],
     "backendTests": {
-      "passed": 2351,
+      "passed": 2381,
       "skipped": 16
     },
-    "runs": {
-      "frontend": {
-        "conclusion": "success",
-        "headSha": "6d5f280e478ca58d3d38a572c0a73f2404683cd3",
-        "status": "completed",
-        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37088605294",
-        "runId": 37088605294
-      },
-      "backend": {
-        "conclusion": "success",
-        "headSha": "6d5f280e478ca58d3d38a572c0a73f2404683cd3",
-        "status": "completed",
-        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37088605285",
-        "runId": 37088605285
-      },
-      "android": {
-        "conclusion": "success",
-        "headSha": "6d5f280e478ca58d3d38a572c0a73f2404683cd3",
-        "status": "completed",
-        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37088605275",
-        "runId": 37088605275
-      }
-    }
+    "backendSummary": "=========== 2381 passed, 16 skipped, 1 warning in 538.52s (0:08:58) ============",
+    "generatedOpenapiCheckPassed": true,
+    "previewSuccessIsDeploymentProof": false
   },
   "historicalCurrentExactHeadCi": {
     "status": "PENDING_NEW_DOCUMENTATION_HEAD",
@@ -5486,5 +5505,366 @@
       "owned-pilot-rollout-epochs-after.json": "068669ee21a131ce9a592b95992ef0ebfd508fac8d45a80b73ead9279faf01f0",
       "vpn-controls-final-ci.json": "827f8c96a7b65f3c4400dad86ac180d4fcaaf054ba2ec49b3a516bf5da650991"
     }
+  },
+  "priorOta10240Snapshot": {
+    "source": "6d5f280e478ca58d3d38a572c0a73f2404683cd3",
+    "observedAt": "2026-10-03T02:26:56.694957+00:00",
+    "frontendTests": {
+      "suitesPassed": 103,
+      "suitesFailed": 0,
+      "testsPassed": 916,
+      "testsFailed": 0,
+      "testsSkipped": 0
+    },
+    "compile": {
+      "nextVersion": "15.5.26",
+      "nodeRuntime": "v24.21.0",
+      "mode": "production",
+      "exit": 0,
+      "isolatedGitArchive": true,
+      "productionConfigPreserved": true,
+      "output": "standalone",
+      "buildStamp": "a2c4f02972d090b0707dc3f7ae48e803810a35be",
+      "compiledStampVerified": true,
+      "platform": "Linux Docker",
+      "lintWarnings": 44
+    },
+    "reviewRuntime": {
+      "observedAt": "2026-10-02T22:59:14.693104+00:00",
+      "phase": "vpn-controls-repaired-installed",
+      "url": "http://127.0.0.1:3015",
+      "reviewSource": "a2c4f02972d090b0707dc3f7ae48e803810a35be",
+      "backendSource": "8cd5cf023d27b59b39d8a4b2aa65f4d7dc3070a3",
+      "loginPassed": true,
+      "sameOriginApiPassed": true,
+      "uiCompiledStampPassed": true,
+      "staticAssetPassed": true,
+      "unauthorizedObservabilityStatus": 401,
+      "prometheusApiPassed": true,
+      "grafanaSessionAndHealthPassed": true,
+      "wsUpgradeSnapshotAndPongPassed": true,
+      "catalogTotal": 19,
+      "reportedStatuses": {
+        "online": 14,
+        "offline": 5
+      },
+      "nodeRuntime": "v24.21.0",
+      "containers": [
+        {
+          "name": "sphere-review-20261002-review-ui-1",
+          "id": "10b83cb47e60c209f62bcd15b7f99f004c02f96441650c1a62a07487dc553936",
+          "imageId": "sha256:f14a1150b508f0ca914b836f0622b8160324fda55ec16e6e65625aae9b47a393",
+          "image": "sphere-review-frontend:a2c4f02972d090b0707dc3f7ae48e803810a35be",
+          "health": "healthy",
+          "startedAt": "2026-10-02T22:50:29.170344608Z",
+          "readOnly": true,
+          "restart": "unless-stopped",
+          "ports": {}
+        },
+        {
+          "name": "sphere-review-20261002-review-gateway-1",
+          "id": "b12b6ad94937ed90da37f77a1bebde7c1a0af98955af1440d29b9c3382429d67",
+          "imageId": "sha256:1d13701a5f9f3fb01aaa88cef2344d65b6b5bf6b7d9fa4cf0dca557a8d7702ba",
+          "image": "nginx:alpine",
+          "health": "healthy",
+          "startedAt": "2026-10-02T22:50:35.08514485Z",
+          "readOnly": true,
+          "restart": "unless-stopped",
+          "ports": {
+            "8080/tcp": [
+              {
+                "HostIp": "127.0.0.1",
+                "HostPort": "3015"
+              }
+            ]
+          }
+        }
+      ],
+      "remoteCommandsSent": false,
+      "browserVisualAcceptance": "OPEN_URL_POLICY_BLOCKED"
+    },
+    "currentExactHeadCi": {
+      "source": "6d5f280e478ca58d3d38a572c0a73f2404683cd3",
+      "observedAt": "2026-10-03T02:22:33.000702+00:00",
+      "allThreeWorkflowsSucceeded": true,
+      "backendTests": {
+        "passed": 2351,
+        "skipped": 16
+      },
+      "runs": {
+        "frontend": {
+          "conclusion": "success",
+          "headSha": "6d5f280e478ca58d3d38a572c0a73f2404683cd3",
+          "status": "completed",
+          "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37088605294",
+          "runId": 37088605294
+        },
+        "backend": {
+          "conclusion": "success",
+          "headSha": "6d5f280e478ca58d3d38a572c0a73f2404683cd3",
+          "status": "completed",
+          "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37088605285",
+          "runId": 37088605285
+        },
+        "android": {
+          "conclusion": "success",
+          "headSha": "6d5f280e478ca58d3d38a572c0a73f2404683cd3",
+          "status": "completed",
+          "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37088605275",
+          "runId": 37088605275
+        }
+      }
+    },
+    "scope": {
+      "backendChanged": true,
+      "reviewUiChanged": true,
+      "publicFrontendChanged": false,
+      "apkSourceChanged": false,
+      "normalOtaPromoted": false,
+      "addressedOtaDevicesUpdated": 11,
+      "tunnelsChanged": false,
+      "commandTypes": [
+        "REQUEST_LOGS",
+        "SHELL(read-only)",
+        "OTA_UPDATE"
+      ],
+      "hostAdbUsed": false,
+      "dataCleared": false
+    },
+    "limits": [
+      "F32 PARTIAL: no accepted live Android kill-switch, durable unknown journal or browser/keyboard/mobile walkthrough.",
+      "Only the mounted page/actor scope retains unknown guards; full reload or another browser does not.",
+      "Rotation is a two-stage provider lifecycle, not exactly-once, an atomic cross-device transition or a peer revision fence.",
+      "Fresh browser acceptance remains OPEN_URL_POLICY_BLOCKED; no bypass or invented screenshots.",
+      "Finite online drift 14->11->12 is not an uptime SLA, draw-FPS or input-latency measurement.",
+      "Old APK watchdog logs do not prove the current APK has the same defect; Android clock/timezone was not verified.",
+      "F33 PARTIAL, F34-F36, F39-F41, N01/N03 and durable audit outbox remain open.",
+      "Only fourteen connected owned pilot devices; five offline are not accepted or updated by these receipts.",
+      "Manual exact-file package/signer compatibility proof is not a general verified artifact manifest API.",
+      "Normal android/dev remains10209; candidate10240 is android-canary/dev, no global promotion.",
+      "APK remains a debug planar canary; not a production-signed stable release.",
+      "Finite heartbeat/epoch observations are not SLA, long soak, remote FPS/input latency or combined stream+scripts acceptance.",
+      "Browser visual/keyboard/mobile remains OPEN_URL_POLICY_BLOCKED; no bypass.",
+      "F32/F33 PARTIAL, N01/N03/outbox and F34-F36/F39-F41 remain open."
+    ],
+    "latestRuntimeEvidence": "docs/audits/2026-10-03/OWNED-PILOT-OTA-ROLLOUT-EVIDENCE.json",
+    "documentValidation": {
+      "documentsChecked": 17,
+      "relativeTargetsChecked": 663,
+      "findingAnchorsChecked": 41,
+      "missing": [],
+      "testCountsMatchRawLog": true,
+      "findingCountsMatchLedger": true,
+      "frozenAuditUnchanged": true
+    }
+  },
+  "otaReleaseIdentity": {
+    "source": "facba9a4b56f9b121f028bc371d24b94a08364de",
+    "observedAt": "2026-10-03T03:17:58.138904+00:00",
+    "reviewSource": "77fca37847590bef526ae5becdf7b1986d5b15ea",
+    "status": "PARTIAL",
+    "rollout": {
+      "completedDevices": 14,
+      "canaryStartedAt": "2026-10-03T03:06:10.517748+00:00",
+      "waveStartedAt": "2026-10-03T03:08:18.407805+00:00",
+      "finishedAt": "2026-10-03T03:11:26.057006+00:00",
+      "sequential": true,
+      "automaticRetry": false,
+      "dataCleared": false,
+      "hostAdbUsed": false,
+      "catalogTotal": 19,
+      "onlineVersions": {
+        "1.2.41-dev": 14
+      },
+      "offlineOutsideAcceptance": 5
+    },
+    "limits": [
+      "Five offline catalog records were not updated or accepted; fourteen online owned pilot devices only.",
+      "Normal android/dev remains10209;10241 is android-canary/dev. No normal/global promotion.",
+      "Debug planar=true/GPU=false pilot artifact, not a production-signed stable release.",
+      "The10240->10241 installs used the10240 installer. The new10241 native guard still requires a future live upgrade canary.",
+      "Exact current signer set is required; signing-key rotation intentionally unsupported by this guard.",
+      "Manual baseline hash/package/signer preflight is not a generic verified artifact manifest API or upload UI.",
+      "Release uniqueness is only for the active catalog; deletion/republication is not immutable history.",
+      "Web unknown outcome is retained only in the mounted page/session; reload and cross-tab durable reconciliation open.",
+      "Finite heartbeat/epoch samples are not long soak, SLA, remote FPS/input latency or combined stream+scripts acceptance.",
+      "Browser visual/keyboard/mobile remains OPEN_URL_POLICY_BLOCKED; no bypass or invented screenshots.",
+      "F32/F33 PARTIAL, F34-F36/F39-F41, N01/N03 and durable audit outbox remain open.",
+      "facba9a backend workflow failed on stale OpenAPI after2381 tests; schema-only repair5bb36ca subsequently passed all three CI workflows."
+    ],
+    "documentValidation": {
+      "observedAt": "2026-10-03T03:34:10.229861+00:00",
+      "documentsChecked": 19,
+      "relativeTargetsChecked": 696,
+      "findingAnchorsChecked": 41,
+      "missing": [],
+      "testCountsMatchRawLog": true,
+      "findingCountsMatchLedger": true,
+      "frozenAuditUnchanged": true,
+      "currentVersionClaimsMatchReceipts": true,
+      "historical10240SnapshotPreserved": true
+    },
+    "evidence": "docs/audits/2026-10-03/OTA-RELEASE-IDENTITY-EVIDENCE.json",
+    "validation": {
+      "frontendPassed": 946,
+      "frontendSuites": 104,
+      "backendImagePassed": 130,
+      "android": {
+        "dev": {
+          "tests": 819,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 1
+        },
+        "enterprise": {
+          "tests": 819,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 1
+        }
+      },
+      "openapi": {
+        "source": "facba9a4b56f9b121f028bc371d24b94a08364de",
+        "network": "none",
+        "backendSourceMount": false,
+        "startupHooksRun": false,
+        "httpRequestsSent": false,
+        "beforeExit": 1,
+        "generatedExit": 0,
+        "afterExit": 0,
+        "paths": 137,
+        "operations": 175
+      }
+    },
+    "completedSchemaRepairCi": {
+      "source": "5bb36caa8663da097738d5ea8b8e339cbee42b2c",
+      "observedAt": "2026-10-03T03:32:51.501739+00:00",
+      "allThreeWorkflowsSucceeded": true,
+      "runs": [
+        {
+          "conclusion": "success",
+          "databaseId": 37092694029,
+          "headSha": "5bb36caa8663da097738d5ea8b8e339cbee42b2c",
+          "status": "completed",
+          "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37092694029",
+          "workflowName": "Preview — Deploy"
+        },
+        {
+          "conclusion": "success",
+          "databaseId": 37092694000,
+          "headSha": "5bb36caa8663da097738d5ea8b8e339cbee42b2c",
+          "status": "completed",
+          "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37092694000",
+          "workflowName": "CI — Frontend"
+        },
+        {
+          "conclusion": "success",
+          "databaseId": 37092694003,
+          "headSha": "5bb36caa8663da097738d5ea8b8e339cbee42b2c",
+          "status": "completed",
+          "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37092694003",
+          "workflowName": "CI — Backend"
+        },
+        {
+          "conclusion": "success",
+          "databaseId": 37092694001,
+          "headSha": "5bb36caa8663da097738d5ea8b8e339cbee42b2c",
+          "status": "completed",
+          "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37092694001",
+          "workflowName": "CI — Android"
+        }
+      ],
+      "backendTests": {
+        "passed": 2381,
+        "skipped": 16
+      },
+      "backendSummary": "=========== 2381 passed, 16 skipped, 1 warning in 538.52s (0:08:58) ============",
+      "generatedOpenapiCheckPassed": true,
+      "previewSuccessIsDeploymentProof": false
+    },
+    "readOnlyFollowup": {
+      "observedAt": "2026-10-03T03:31:16.217239+00:00",
+      "referenceObservedAt": "2026-10-03T03:14:44.809763+00:00",
+      "comparisonSeconds": 991.407476,
+      "catalogTotal": 19,
+      "onlineCount": 14,
+      "allOn10241": true,
+      "sameReportedEpochs": true,
+      "sameOnlineCohort": true,
+      "maxHeartbeatAgeSeconds": 29.030753,
+      "releaseCount": 22,
+      "normalDevVersionCode": 10209,
+      "canaryDevVersionCode": 10241,
+      "deviceCommandsSent": false,
+      "reportedEpochs": {
+        "4815b950-e5cf-4686-9d46-42d0df8d41f7": "2026-10-03T03:06:17.273835Z",
+        "b410464a-5f26-4803-a756-7840cc17b128": "2026-10-03T03:08:24.674930Z",
+        "d088c147-7ada-4b29-9e79-f991b20fcf91": "2026-10-03T03:08:33.983739Z",
+        "75c29a32-2867-4b60-947c-003e712e538f": "2026-10-03T03:08:45.782777Z",
+        "c37e687a-ee83-466d-846f-3f4b36047fa7": "2026-10-03T03:09:24.531790Z",
+        "bafef86f-3ab4-469b-ae0c-cf2771b55813": "2026-10-03T03:09:34.543197Z",
+        "1dd7e59c-b68f-406a-93cd-5f4e34fdea90": "2026-10-03T03:09:44.722735Z",
+        "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93": "2026-10-03T03:10:22.093449Z",
+        "930a6505-b7ec-4eee-93fe-9aaa66517871": "2026-10-03T03:10:31.174141Z",
+        "673d5774-24b1-4b57-8dfb-90c46f627ce3": "2026-10-03T03:10:41.056458Z",
+        "6d830af5-b7cc-44b4-b7f5-5e0275aceb3b": "2026-10-03T03:10:51.124692Z",
+        "8c187cfa-e5ea-4939-a137-07619437953d": "2026-10-03T03:11:00.981362Z",
+        "414ce0e9-4b93-4f96-b9ca-ee675f53835e": "2026-10-03T03:11:13.937010Z",
+        "5df4805e-fe64-4d39-960c-19ceab206cd6": "2026-10-03T03:11:25.187422Z"
+      },
+      "isContinuousUptimeProof": false
+    }
+  },
+  "preSchemaRepairCi": {
+    "source": "facba9a4b56f9b121f028bc371d24b94a08364de",
+    "observedAt": "2026-10-03T03:16:51.154104+00:00",
+    "allThreeWorkflowsSucceeded": false,
+    "backendTests": {
+      "passed": 2381,
+      "skipped": 16
+    },
+    "runs": [
+      {
+        "conclusion": "success",
+        "databaseId": 37091604204,
+        "headSha": "facba9a4b56f9b121f028bc371d24b94a08364de",
+        "status": "completed",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37091604204",
+        "workflowName": "Preview — Deploy"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 37091604163,
+        "headSha": "facba9a4b56f9b121f028bc371d24b94a08364de",
+        "status": "completed",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37091604163",
+        "workflowName": "CI — Frontend"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 37091604171,
+        "headSha": "facba9a4b56f9b121f028bc371d24b94a08364de",
+        "status": "completed",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37091604171",
+        "workflowName": "CI — Android"
+      },
+      {
+        "conclusion": "failure",
+        "databaseId": 37091604170,
+        "headSha": "facba9a4b56f9b121f028bc371d24b94a08364de",
+        "status": "completed",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37091604170",
+        "workflowName": "CI — Backend"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 37091600688,
+        "headSha": "facba9a4b56f9b121f028bc371d24b94a08364de",
+        "status": "completed",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37091600688",
+        "workflowName": "CI — Android"
+      }
+    ],
+    "failure": "Generated OpenAPI stale; schema-only repair5bb36ca; its own CI pending."
   }
 }
