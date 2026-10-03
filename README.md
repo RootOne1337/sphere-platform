@@ -16,23 +16,20 @@
 </div>
 
 > [!IMPORTANT]
-> **Текущая установка: API 37bb436 / UI 00d5ad8**, review [3015](http://127.0.0.1:3015/devices).
-> Срез: **3 октября, 19:33 UTC / 4 октября, 00:33 UTC+5**. N10 закрывает кеширование
-> управления у открытого WebSocket: свежая проверка перед вводом и периодический
-> отзыв просмотра. **4 regression failures → 294 passed в собранном API-образе**;
-> frontend прежнего этапа: 105 suites / 982 passed, source не изменён.
-> Source CI 37bb436: Backend, Frontend, Android и Preview — success.
-> Первый минутный readback после замены API **не прошёл**: в конце 11 online,
-> stale heartbeat и смена epochs. Повторный срез 19:32:39–19:33:40 прошёл:
-> **14 online APK 10244**, heartbeat <60 с, одинаковые новые epochs.
-> Вокруг restart наблюдались 1012/502, позже SSL/Socket failures; точная причина
-> и provider mapping не установлены. Это не приёмка непрерывного uptime.
-> Живые PH025/PH010: binary pictures и keepalive после проверки прав получены;
-> неподвижный экран, browser render FPS и input latency этим probe не измерены.
-> **15 соседних сервисов, UI, Tuna, mounts и OTA сохранены.** Новый APK не нужен.
-> **33 source-fixed / 8 OPEN; F32/F33/F39 PARTIAL.** Matrix JPEG, XPath, FPS profiles,
-> остальные action permissions, browser/soak и receipt reconciliation остаются OPEN.
-> [Дефект, проверки и runtime](docs/audits/2026-10-04/VIEWER-AUTHORIZATION.md). Browser acceptance: OPEN_URL_POLICY_BLOCKED.
+> **Текущая установка: API 37bb436 / UI 81d065a**, review [3015](http://127.0.0.1:3015/devices).
+> Срез: **4 октября 2026, 01:20 UTC+5**. F39: реестр отдельно проверяет права изменения,
+> удаления и массового отзыва VPN; меню, открытые подтверждения и Enter блокируются
+> после получения отзыва права. **9 воспроизведённых отказов → 106 наборов / 997 тестов**
+> прошли в собранном веб-образе; **73 проверки PostgreSQL/Redis** прошли и в неизменённом API-образе.
+> Source CI на момент среза: Frontend, Preview и Android — success; Backend ещё выполняется.
+> Семь срезов после замены только UI: **14 online APK 10244**, heartbeat <60 с,
+> даты соединений совпадают со срезом до установки. **15 соседних сервисов, API,
+> Tuna и OTA сохранены.** Новые APK, команды удаления, перезапуска и VPN не отправлялись.
+> Предыдущий отчёт N10 сохраняет неудачное первое окно (11 online) и восстановление;
+> точная причина его SSL/Socket переподключений остаётся неизвестной.
+> **33 source-fixed / 8 незакрытых, включая F32/F33/F39 PARTIAL.** Другие формы,
+> Matrix JPEG, XPath, FPS/latency, browser/soak и OTA receipt reconciliation открыты.
+> [Отчёт и границы](docs/audits/2026-10-04/DEVICE-ACTION-PERMISSIONS.md) · Browser: OPEN_URL_POLICY_BLOCKED.
 
 > [!IMPORTANT]
 > **Предыдущая проверка видео и backend: 3 октября 2026, 15:53 UTC.** API **37415e3** установлен;

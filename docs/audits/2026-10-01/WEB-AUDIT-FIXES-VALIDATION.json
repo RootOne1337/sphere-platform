@@ -5904,5 +5904,16 @@
     "recoveredCohort": 14,
     "status": "N10_INSTALLED_F39_PARTIAL",
     "evidence": "../2026-10-04/VIEWER-AUTHORIZATION-EVIDENCE.json"
+  },
+  "latestRegistryPermissionFollowup": {
+    "observedAt": "2026-10-03T20:20:20.421166+00:00",
+    "uiSource": "81d065a90919c1ad60312f81cb4f821e034ad501",
+    "apiSource": "37bb436ae5fb9f27eda6c7549bb46a83bf3df510",
+    "frontendImagePassed": 997,
+    "apiImagePassed": 73,
+    "beforeFailures": 9,
+    "cohort": 14,
+    "status": "F39_PARTIAL_INSTALLED_REGISTRY",
+    "evidence": "../2026-10-04/DEVICE-ACTION-PERMISSIONS-EVIDENCE.json"
   }
 }

@@ -15,14 +15,13 @@
 > автоматическую проверку runtime; старые аудиты сохраняют собственные даты и
 > версии и не должны читаться как текущий deploy. [Правила актуальности](DOCUMENTATION.md).
 
-Последняя runtime-проверка — **3 октября, 19:33 UTC / 4 октября, 00:33 UTC+5**:
-[N10: отзыв доступа открытого WebSocket](audits/2026-10-04/VIEWER-AUTHORIZATION.md) ·
-[Evidence](audits/2026-10-04/VIEWER-AUTHORIZATION-EVIDENCE.json).
-**API 37bb436 / UI 00d5ad8** на review 3015; 14 online на APK 10244 после
-неудачного первого recovery window. 294 API cases прошли в собранном образе;
-все четыре source CI зелёные. F39 PARTIAL и browser acceptance OPEN.
-Предыдущий [F39 capability этап](audits/2026-10-03/SESSION-CAPABILITIES.md) сохраняет дату.
-Следующая работа: [F34 preview-only capture/transport](audits/2026-10-04/MATRIX-PREVIEW-PLAN.md), проект ещё не реализован.
+Последняя runtime-проверка — **4 октября 2026, 01:20 UTC+5**:
+[F39: permissions действий реестра](audits/2026-10-04/DEVICE-ACTION-PERMISSIONS.md) ·
+[Evidence](audits/2026-10-04/DEVICE-ACTION-PERMISSIONS-EVIDENCE.json).
+API 37bb436 / UI 81d065a на 3015; 997 frontend / 73 API проверки в образах,
+14 online APK 10244, даты соединений сохранены. Остальные формы и визуальная приёмка OPEN.
+Предыдущий [N10 rollout](audits/2026-10-04/VIEWER-AUTHORIZATION.md) сохраняет failed first window.
+Следующий [F34 transport](audits/2026-10-04/MATRIX-PREVIEW-PLAN.md) ещё не реализован.
 
 Предыдущая проверка видео — **3 октября, 15:53 UTC**:
 [H.264 recovery и измеренная доставка](audits/2026-10-03/STREAM-REFERENCE-RECOVERY.md).
