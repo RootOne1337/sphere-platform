@@ -32,6 +32,15 @@ def recovery_failure_code(error: object) -> str | None:
     if not isinstance(error, str) or not error:
         return None
     value = error[:2048].lower()
+    # Explicit Android pre-install rejection codes survive the receipt boundary
+    # without copying arbitrary exception text or credentials into metadata.
+    for code in (
+        "ota_metadata_invalid", "ota_archive_unreadable", "ota_package_mismatch",
+        "ota_version_mismatch", "ota_version_not_newer", "ota_sdk_unsupported",
+        "ota_installed_package_unavailable", "ota_signer_unavailable", "ota_signer_mismatch",
+    ):
+        if re.search(r"\b" + code + r"\b", value):
+            return code
     match = re.search(r"ota download failed: (\d{3})\b", value)
     if match:
         return "download_http_" + match.group(1)

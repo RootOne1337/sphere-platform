@@ -31,6 +31,15 @@ from backend.services.device_ota_recovery import OtaRecoveryGrant, get_ota_recov
     ("Permission denied /private/path", "permission_denied"),
     ("create install session failed", "package_install_failure"),
     ("arbitrary credential never copied", "unclassified"),
+    ("ota_package_mismatch", "ota_package_mismatch"),
+    ("ota_version_mismatch", "ota_version_mismatch"),
+    ("ota_signer_mismatch", "ota_signer_mismatch"),
+    ("ota_signer_unavailable", "ota_signer_unavailable"),
+    ("ota_archive_unreadable", "ota_archive_unreadable"),
+    ("ota_version_not_newer", "ota_version_not_newer"),
+    ("ota_sdk_unsupported", "ota_sdk_unsupported"),
+    ("ota_metadata_invalid", "ota_metadata_invalid"),
+    ("ota_installed_package_unavailable", "ota_installed_package_unavailable"),
 ])
 def test_recovery_diagnostics_never_emit_agent_error_text(error, expected):
     from backend.services.device_ota_recovery import recovery_failure_code

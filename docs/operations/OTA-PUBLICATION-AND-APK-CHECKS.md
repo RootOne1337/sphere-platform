@@ -60,3 +60,44 @@ durable reconciliation между вкладками и после reload ост
 Форма не объявляет package/signature manifest проверенным и не подменяет результат
 установки записью каталога. `release-publication.test.tsx` проверяет эти переходы
 в JSDOM; визуальная, mobile и keyboard приёмка от этого не считаются выполненными.
+
+## Android 1.2.41: проверка перед установкой
+
+Оба пути (`pm install` через root и `PackageInstaller`) проходят один общий guard
+после скачивания и SHA-256, до побочного эффекта установки. `PackageManager` читает
+метаданные **самого файла**, затем установленного приложения. Проверяются точный
+packageName, versionCode и versionName предложения, поддерживаемый minSdk и строго
+более новая версия относительно установленного пакета. `force` не разрешает
+downgrade или повтор той же версии.
+
+На Android26–27 используется `GET_SIGNATURES`, на28+ — `GET_SIGNING_CERTIFICATES`.
+Непустой набор **текущих** сертификатов должен совпадать полностью, включая все
+подписи для multi-signer APK. Перестановка подписей не меняет идентичность.
+Поддержка ротации ключей здесь намеренно закрыта: общий предок не доказывает
+совместимость двух потомков; promotion с новым ключом требует отдельной проверенной
+политики. Android installer остаётся окончательной проверкой подписи и установки.
+См. [PackageManager](https://developer.android.com/reference/android/content/pm/PackageManager)
+и [SigningInfo](https://developer.android.com/reference/android/content/pm/SigningInfo).
+
+| Код | Причина до установки |
+| --- | --- |
+| `ota_metadata_invalid` | Неположительный versionCode, пустое имя или неверный digest |
+| `ota_archive_unreadable` | Android не прочитал APK или его application metadata |
+| `ota_package_mismatch` | Файл относится к другому приложению |
+| `ota_version_mismatch` | Версия файла расходится с предложением сервера |
+| `ota_sdk_unsupported` | Требуемый Android новее установленного |
+| `ota_installed_package_unavailable` | Установленный пакет не найден |
+| `ota_version_not_newer` | Версия файла равна установленной или старее неё |
+| `ota_signer_unavailable` | Android не предоставил подписи |
+| `ota_signer_mismatch` | Не совпал набор текущих сертификатов |
+
+Адресные terminal receipts сохраняют только эти разрешённые коды, без произвольного
+текста исключения. Скачанный файл удаляется также при отказе. Периодический worker
+не входит в backoff loop для неизменяемого несовместимого файла; следующая обычная
+проверка каталога остаётся по расписанию. Для сетевых сбоев retry сохранён.
+
+`OtaApkVerifierTest` исполняет production verifier с metadata Android26 и28.
+`OtaUpdateServiceRecoveryTest` доказывает, что файл с верной SHA-256, но не APK,
+не доходит до installer. Остальные транспортные тесты явно подменяют только
+archive-validation boundary, поскольку их bytes синтетические. Это не доказательство
+нативной установки или ротации: для них нужны отдельные live canaries.

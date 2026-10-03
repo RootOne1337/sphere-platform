@@ -60,7 +60,7 @@ class OtaUpdateServiceRecoveryTest {
             version_code = BuildConfig.VERSION_CODE + 1,
         )
 
-    private fun service(client: OkHttpClient, install: (File) -> Unit = {
+    private fun service(client: OkHttpClient, verifyArchive: Boolean = false, install: (File) -> Unit = {
         assertArrayEquals(bytes, it.readBytes())
         installs.incrementAndGet()
     }): OtaUpdateService {
@@ -72,6 +72,9 @@ class OtaUpdateServiceRecoveryTest {
             recordPrivateCalls = true,
         )
         coEvery { ota["install"](any<File>(), any<Int>()) } coAnswers { install(firstArg()) }
+        // Transport tests use synthetic bytes. Archive policy is exercised by
+        // OtaApkVerifierTest and the unstubbed rejection regression below.
+        if (!verifyArchive) every { ota["verifyApkCompatibility"](any<File>(), any<OtaUpdatePayload>()) } returns Unit
         return ota
     }
 
@@ -94,6 +97,15 @@ class OtaUpdateServiceRecoveryTest {
             override fun timeout() = Timeout.NONE
             override fun close() = Unit
         }.buffer()
+    }
+
+    @Test fun `digest matching non APK is rejected before either installer can run`() = runBlocking {
+        val ota = service(client({ bytes.toResponseBody() }), verifyArchive = true)
+        val error = runCatching { ota.performUpdate(payload()) }.exceptionOrNull()
+        assertNotNull("A matching checksum does not prove this is our Android package", error)
+        assertEquals("ota_archive_unreadable", error?.message)
+        assertEquals(0, installs.get())
+        assertTrue("Rejected input must leave no staging file", dir.listFiles().isNullOrEmpty())
     }
 
     @Test fun `OTA accepts signed primary artifact while management uses fallback`() = runBlocking {
@@ -234,6 +246,7 @@ class OtaUpdateServiceRecoveryTest {
             ),
             recordPrivateCalls = true,
         )
+        every { ota["verifyApkCompatibility"](any<File>(), any<OtaUpdatePayload>()) } returns Unit
         coEvery { ota["install"](any<File>(), any<Int>()) } coAnswers {
             installStarted.complete(firstArg())
             releaseInstaller.await()

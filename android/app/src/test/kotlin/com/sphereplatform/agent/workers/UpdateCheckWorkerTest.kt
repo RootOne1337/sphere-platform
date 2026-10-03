@@ -5,6 +5,7 @@ import androidx.work.ListenableWorker.Result
 import androidx.work.WorkerParameters
 import com.sphereplatform.agent.BuildConfig
 import com.sphereplatform.agent.ota.OtaUpdateService
+import com.sphereplatform.agent.ota.OtaArtifactRejectedException
 import com.sphereplatform.agent.ota.OtaUserActionRequiredException
 import com.sphereplatform.agent.provisioning.InstanceRegistrationGuard
 import com.sphereplatform.agent.store.AuthTokenStore
@@ -62,6 +63,13 @@ class UpdateCheckWorkerTest {
         {"update_available":true,"version_code":$versionCode,"version_name":"next",
         "download_url":"https://management.test/update.apk","sha256":"${"a".repeat(64)}"}
     """.trimIndent()
+
+    @Test fun `incompatible immutable artifact stops retries but not future scheduled checks`() = runTest {
+        body = release()
+        coEvery { ota.performUpdate(any()) } throws OtaArtifactRejectedException("ota_package_mismatch")
+        assertEquals(Result.success(), worker().doWork())
+        coVerify(exactly = 1) { ota.performUpdate(any()) }
+    }
 
     @Test fun `transient server failure requests backoff instead of next six hour period`() = runTest {
         code = 503

@@ -14,6 +14,7 @@ import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.sphereplatform.agent.BuildConfig
 import com.sphereplatform.agent.ota.OtaUpdatePayload
+import com.sphereplatform.agent.ota.OtaArtifactRejectedException
 import com.sphereplatform.agent.ota.OtaUpdateService
 import com.sphereplatform.agent.ota.OtaUserActionRequiredException
 import com.sphereplatform.agent.provisioning.InstanceRegistrationGuard
@@ -194,6 +195,11 @@ class UpdateCheckWorker @AssistedInject constructor(
             Result.success()
         } catch (e: CancellationException) {
             throw e
+        } catch (e: OtaArtifactRejectedException) {
+            // Immutable incompatible input cannot be repaired by downloading it
+            // again. Keep the next scheduled catalog check, without a retry loop.
+            Timber.e("UpdateCheckWorker: artifact rejected (%s)", e.failureCode)
+            Result.success()
         } catch (e: OtaUserActionRequiredException) {
             // The receiver already persisted/upload-queued the exact OS status.
             // Do not retry into repeated installer prompts while Android awaits approval.

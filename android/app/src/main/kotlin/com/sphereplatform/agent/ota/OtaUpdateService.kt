@@ -40,7 +40,8 @@ import javax.inject.Singleton
  * Порядок:
  * 1. Скачать APK с SSRF-защитой (HTTPS origin одного из сохранённых маршрутов управления)
  * 2. Проверить SHA-256
- * 3. Установить через root (pm install) или PackageInstaller (fallback)
+ * 3. Сверить реальный пакет, версию, Android SDK и текущую подпись с установленным APK
+ * 4. Установить через root (pm install) или PackageInstaller (fallback)
  * 4. Удалить APK после установки
  *
  * # Безопасность
@@ -92,12 +93,17 @@ class OtaUpdateService @Inject constructor(
             // Enforce clone rebind at the credential-use boundary as well as at
             // the periodic catalog check; command-triggered updates share this path.
             instanceRegistrationGuard.ensureRegistered()
+            if (payload.version_code <= 0 || payload.version.isBlank()
+                || !payload.sha256.matches(Regex("[a-f0-9]{64}"))) {
+                throw OtaArtifactRejectedException("ota_metadata_invalid")
+            }
             Timber.i("OTA: starting update → version=${payload.version}")
             check(apkDir.isDirectory || apkDir.mkdirs()) { "Cannot create OTA staging directory" }
             val apkFile = File.createTempFile("update_", ".apk", apkDir)
             try {
                 downloadApk(payload, apkFile)
                 verifyChecksum(apkFile, payload.sha256)
+                verifyApkCompatibility(apkFile, payload)
                 currentCoroutineContext().ensureActive()
                 install(apkFile, payload.version_code)
             } finally {
@@ -106,6 +112,11 @@ class OtaUpdateService @Inject constructor(
                 else Timber.d("OTA: APK deleted")
             }
         }
+    }
+
+    private fun verifyApkCompatibility(apk: File, payload: OtaUpdatePayload) {
+        OtaApkVerifier(context).verify(apk, payload)
+        Timber.i("OTA: package, version, SDK and current signer verified")
     }
 
     private suspend fun downloadApk(payload: OtaUpdatePayload, dest: File) = coroutineScope {
