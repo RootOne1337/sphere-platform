@@ -963,6 +963,33 @@
         ]
       }
     },
+    "/api/v1/auth/capabilities": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Capabilities",
+        "description": "Read the database-backed role, never a role supplied by the browser/JWT.",
+        "operationId": "capabilities_api_v1_auth_capabilities_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionCapabilities"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/auth/mfa/setup": {
       "post": {
         "tags": [
@@ -17650,6 +17677,48 @@
         ],
         "title": "ServerListResponse",
         "description": "Список всех серверов."
+      },
+      "SessionCapabilities": {
+        "properties": {
+          "schema_version": {
+            "type": "integer",
+            "enum": [
+              1
+            ],
+            "const": 1,
+            "title": "Schema Version",
+            "default": 1
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          },
+          "org_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Org Id"
+          },
+          "role": {
+            "type": "string",
+            "title": "Role"
+          },
+          "permissions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Permissions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id",
+          "org_id",
+          "role",
+          "permissions"
+        ],
+        "title": "SessionCapabilities"
       },
       "SessionStatsResponse": {
         "properties": {
