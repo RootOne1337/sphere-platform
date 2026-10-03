@@ -8,7 +8,15 @@
 > Внешний tunnel hostname удалён из этого журнала, так как Quick Tunnel URL
 > эфемерен; активный runtime endpoint 28 сентября не перечитывался.
 
-## Последняя контрольная точка — 3 октября,18:54 UTC
+## Последняя контрольная точка — 3 октября,19:33 UTC / 4 октября,00:33 UTC+5
+
+Review [3015/devices](http://127.0.0.1:3015/devices): API 37bb436 / UI 00d5ad8.
+N10 image gate 294 passed; повторный finite gate 14 online APK 10244 принят,
+первый gate с 11 online сохранён как неудачный. 15 соседних сервисов, UI, Tuna,
+mounts и OTA catalog сохранены. APK не менялся, public frontend не заменён.
+[Контракт и ограничения](../audits/2026-10-04/VIEWER-AUTHORIZATION.md).
+
+## Предыдущая контрольная точка — 3 октября,18:54 UTC
 
 Рабочий review UI: [3015/devices](http://127.0.0.1:3015/devices), API/UI source00d5ad8.
 14 online APK1.2.44-dev/10244;5offline вне приёмки. Capability endpoint200/no-store,

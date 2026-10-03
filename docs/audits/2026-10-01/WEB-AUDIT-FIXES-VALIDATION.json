@@ -5893,5 +5893,16 @@
     "backendImagePassed": 45,
     "status": "F39_PARTIAL",
     "evidence": "../2026-10-03/SESSION-CAPABILITIES-EVIDENCE.json"
+  },
+  "latestViewerAuthorizationFollowup": {
+    "observedAt": "2026-10-03T19:33:40.278550+00:00",
+    "apiSource": "37bb436ae5fb9f27eda6c7549bb46a83bf3df510",
+    "uiSource": "00d5ad8b072c490662c3c8242ac3b3b47e49b1be",
+    "imagePassed": 294,
+    "beforeFailures": 4,
+    "initialCohortGate": "FAILED",
+    "recoveredCohort": 14,
+    "status": "N10_INSTALLED_F39_PARTIAL",
+    "evidence": "../2026-10-04/VIEWER-AUTHORIZATION-EVIDENCE.json"
   }
 }

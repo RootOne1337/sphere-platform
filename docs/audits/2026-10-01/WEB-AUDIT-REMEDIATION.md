@@ -3,20 +3,23 @@
 Этот журнал продолжает [замороженный аудит](WEB-FULL-CAPABILITY-AUDIT.md) исходников `1354d66`. Исходный документ и evidence сохраняют свою дату и ограничения; их статусы не переписываются задним числом.
 
 > [!IMPORTANT]
-> **Текущий API/UI: 3 октября 2026, 18:54 UTC.** Оба установлены из **00d5ad8**:
-> [рабочий веб на 3015](http://127.0.0.1:3015/devices). F39: навигация и прямые
-> ссылки проверяют серверные permissions; просмотр отделён от управления Android.
-> **105 suites / 982 frontend tests и 45 PostgreSQL/Redis cases — passed в собранных образах.**
-> Live capabilities: 200 / no-store; без аутентификации — 401. Семь срезов подтвердили
-> **14 online на APK 10244**, heartbeat <60 с и одинаковые epochs после rollout.
-> Замена API сбросила прежние epochs; это не доказательство непрерывного uptime.
-> **14 соседних сервисов, Tuna и OTA сохранены.**
-> CI 00d5ad8: 2404 backend tests passed / 16 skipped; generated API docs gate failed.
-> Документация исправлена в 729c1da; exporter check в shipped image passed.
-> Повторный CI **729c1da**: Backend, Frontend, Android и Preview — success.
-> **33 source-fixed / 8 OPEN; F32/F33/F39 PARTIAL.** Матричный транспорт всё ещё H.264.
-> XPath, FPS profiles, остальные action permissions и visual/soak остаются OPEN.
-> [Контракт и доказательства](../2026-10-03/SESSION-CAPABILITIES.md). Визуальная приёмка: OPEN_URL_POLICY_BLOCKED.
+> **Текущая установка: API 37bb436 / UI 00d5ad8**, review [3015](http://127.0.0.1:3015/devices).
+> Срез: **3 октября, 19:33 UTC / 4 октября, 00:33 UTC+5**. N10 закрывает кеширование
+> управления у открытого WebSocket: свежая проверка перед вводом и периодический
+> отзыв просмотра. **4 regression failures → 294 passed в собранном API-образе**;
+> frontend прежнего этапа: 105 suites / 982 passed, source не изменён.
+> Source CI 37bb436: Backend, Frontend, Android и Preview — success.
+> Первый минутный readback после замены API **не прошёл**: в конце 11 online,
+> stale heartbeat и смена epochs. Повторный срез 19:32:39–19:33:40 прошёл:
+> **14 online APK 10244**, heartbeat <60 с, одинаковые новые epochs.
+> Вокруг restart наблюдались 1012/502, позже SSL/Socket failures; точная причина
+> и provider mapping не установлены. Это не приёмка непрерывного uptime.
+> Живые PH025/PH010: binary pictures и keepalive после проверки прав получены;
+> неподвижный экран, browser render FPS и input latency этим probe не измерены.
+> **15 соседних сервисов, UI, Tuna, mounts и OTA сохранены.** Новый APK не нужен.
+> **33 source-fixed / 8 OPEN; F32/F33/F39 PARTIAL.** Matrix JPEG, XPath, FPS profiles,
+> остальные action permissions, browser/soak и receipt reconciliation остаются OPEN.
+> [Дефект, проверки и runtime](../2026-10-04/VIEWER-AUTHORIZATION.md). Browser acceptance: OPEN_URL_POLICY_BLOCKED.
 
 **Исторический OTA/API/UI readback,3 октября03:17:58 UTC:** UI 77fca37/API facba9a;
 14 addressed installs10241 accepted, 14 online/5 offline. 12 finite samples сохранили

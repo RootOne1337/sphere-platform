@@ -57,8 +57,8 @@ blacklist JWT, истечение подписанного JWT, passive revoke �
 выдача управления, а также injected SQL/Redis failure и bounded authorization timeout.
 Fault injection не объявляется остановкой живых production SQL/Redis.
 
-Изменение не требует APK или frontend rebuild. Runtime до отдельного deploy
-остаётся API/UI `00d5ad8`; source passing не является deployed acceptance.
+Изменение не требует APK или frontend rebuild. Установка и её границы описаны ниже;
+source passing и live acceptance учитываются отдельно.
 
 ## Незакрытые работы
 
@@ -66,3 +66,34 @@ F39 остаётся PARTIAL: права всех остальных action affo
 приёмка открыты. F34 preview transport, F35 XPath, F36 quality/FPS profiles и
 20–30-device stream+scripts soak остаются отдельными этапами. Для этой работы
 визуальная приёмка 3015 остаётся OPEN_URL_POLICY_BLOCKED.
+
+
+## Собранный образ и runtime
+
+API **37bb436** установлен 3 октября в 19:24:32 UTC / 4 октября в 00:24:32 UTC+5.
+В immutable image повторены **294 теста, 0 failures/errors/skips**; backend source
+не подменялся mount. Веб остаётся **00d5ad8**; ранее принятые 982 frontend cases
+не выдаются за новый прогон. Backend/Frontend/Android/Preview CI 37bb436 — success.
+
+Первый readback 19:25:14–19:26:15 не прошёл cohort/heartbeat/epochs gate: в конце
+было 11 online. Он сохранён в evidence. Последующий readback 19:32:39–19:33:40
+подтвердил те же 14 APK 10244, свежие heartbeat и одинаковые новые epochs.
+Наблюдались 1012/502 около рестарта, затем SSL/Socket failures и переподключения
+на route_slot 1. Номер route не является provider identity: его порядок зависит
+от сохранённых маршрутов клиента. Причина этих повторных обрывов не установлена.
+В первом окне не было viewer sessions: новый viewer permission path тогда не
+выполнялся. Это ограничивает гипотезу о нём, но не доказывает причину сетевого сбоя.
+
+Живой protocol probe PH025/PH010 длился по 12,5 с. Получены соответственно 15/2
+H.264 pictures и keepalive после periodic authorization. Ввод не отправлялся;
+автоматически отправлены capture controls start_stream/viewer_connected.
+Кадры не сохранялись и не декодировались браузером. Тест неподвижного экрана
+не устанавливает achievable FPS и не заменяет прежний motion trial 29,95 delivery FPS.
+
+API build/readiness, capability 200/no-store, anonymous 401 и Prometheus up=1
+подтверждены. Только API заменён; 15 соседних containers, UI, Tuna, volumes/mounts
+и hash OTA catalog сохранены. Повторные старые unrecognized OTA receipts обнаружены
+в логах; их reconciliation этим исправлением не закрыт.
+
+[Публичные доказательства](VIEWER-AUTHORIZATION-EVIDENCE.json) ·
+[Следующий этап F34](MATRIX-PREVIEW-PLAN.md). Полные логи/helpers остаются приватными.

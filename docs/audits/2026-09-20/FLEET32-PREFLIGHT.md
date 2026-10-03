@@ -6,9 +6,10 @@
 
 [Главная](../../../README.md) · [Документация](../../README.md) · [Readiness](../../operations/READINESS.md) · [История исправлений](../2026-09-05/AUDIT-REPORT.md)
 
-> **Новый finite readback18:54 UTC:**14 online/APK10244,UI/API00d5ad8,
-> capability/role slice;20–30/32-device admission не запускался.
-> [F39 contract/evidence](../2026-10-03/SESSION-CAPABILITIES.md).
+> **Последний finite readback: 3 октября,19:33 UTC / 4 октября,00:33 UTC+5.**
+> API 37bb436 / UI 00d5ad8; 14 online APK 10244 после неудачного первого окна.
+> 20–30/32-device admission не запускался.
+> [N10: контракт и пределы](../2026-10-04/VIEWER-AUTHORIZATION.md).
 
 > **Указатель обновлён 3 октября:** ступенчатый план и технические доказательства
 > этого файла остаются референсом, но приёмка 20–30 устройств не запускалась.

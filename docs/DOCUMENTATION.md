@@ -2,7 +2,7 @@
 
 [Каталог](README.md) · [Readiness](operations/READINESS.md) · [Contributing](../CONTRIBUTING.md)
 
-**Последняя сверка входных документов: 3 октября 2026,18:54 UTC.** Для текущих
+**Последняя сверка входных документов: 3 октября 2026,19:33 UTC / 4 октября,00:33 UTC+5.** Для текущих
 версий и границ live-подтверждения используйте [каноническое состояние](operations/CURRENT-STATE.md).
 
 ## Где искать текущий ответ
@@ -119,3 +119,12 @@ GitHub API `GET /repos/RootOne1337/sphere-platform/readme?ref=codex%2Fenterprise
 state/readiness/README/catalog/pilot/Fleet32 pointers. Frozen audit не изменён;
 F39 PARTIAL,33 source-fixed/8OPEN. OpenAPI экспортируется с зависимостями shipped
 image: host Python дал иной Pydantic schema и не считается acceptance exporter.
+
+
+### Сверка N10: открытый viewer и восстановление после установки
+
+Current state/readiness/README/catalog/pilot/Fleet32 обновлены до API 37bb436 / UI
+00d5ad8. [N10 evidence](audits/2026-10-04/VIEWER-AUTHORIZATION-EVIDENCE.json) сохраняет
+как неудачный первый cohort gate, так и принятый повторный. F39 PARTIAL, frozen audit
+и исходные counts сохранены. [F34 план](audits/2026-10-04/MATRIX-PREVIEW-PLAN.md) —
+проект будущего native/server/UI transport, а не установленная возможность.

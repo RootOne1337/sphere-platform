@@ -15,12 +15,14 @@
 > автоматическую проверку runtime; старые аудиты сохраняют собственные даты и
 > версии и не должны читаться как текущий deploy. [Правила актуальности](DOCUMENTATION.md).
 
-Последняя runtime-проверка — **3 октября, 18:54 UTC**:
-[F39: серверные права, навигация и управление экраном](audits/2026-10-03/SESSION-CAPABILITIES.md) ·
-[Evidence](audits/2026-10-03/SESSION-CAPABILITIES-EVIDENCE.json).
-**API/UI 00d5ad8** установлены на review 3015; 14 online на APK 10244.
-105 suites / 982 frontend cases и 45 API cases прошли в собранных образах.
-F39 PARTIAL: остальные действия страниц и визуальная приёмка открыты.
+Последняя runtime-проверка — **3 октября, 19:33 UTC / 4 октября, 00:33 UTC+5**:
+[N10: отзыв доступа открытого WebSocket](audits/2026-10-04/VIEWER-AUTHORIZATION.md) ·
+[Evidence](audits/2026-10-04/VIEWER-AUTHORIZATION-EVIDENCE.json).
+**API 37bb436 / UI 00d5ad8** на review 3015; 14 online на APK 10244 после
+неудачного первого recovery window. 294 API cases прошли в собранном образе;
+все четыре source CI зелёные. F39 PARTIAL и browser acceptance OPEN.
+Предыдущий [F39 capability этап](audits/2026-10-03/SESSION-CAPABILITIES.md) сохраняет дату.
+Следующая работа: [F34 preview-only capture/transport](audits/2026-10-04/MATRIX-PREVIEW-PLAN.md), проект ещё не реализован.
 
 Предыдущая проверка видео — **3 октября, 15:53 UTC**:
 [H.264 recovery и измеренная доставка](audits/2026-10-03/STREAM-REFERENCE-RECOVERY.md).
