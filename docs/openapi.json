@@ -8564,7 +8564,7 @@
           "updates"
         ],
         "summary": "Get Latest",
-        "description": "Возвращает информацию о последнем релизе для данной платформы/флейвора.\nЕсли версия на устройстве >= последней → update_available=false.\nАутентификация — X-API-Key (агент) или JWT.",
+        "description": "Возвращает информацию о последнем релизе для данной платформы/флейвора.\nЕсли версия на устройстве >= последней → update_available=false.\nАутентификация — X-API-Key с ключом или JWT агента.",
         "operationId": "get_latest_api_v1_updates_latest_get",
         "parameters": [
           {
@@ -12294,11 +12294,20 @@
         "properties": {
           "platform": {
             "type": "string",
+            "enum": [
+              "android",
+              "android-canary",
+              "pc"
+            ],
             "title": "Platform",
             "default": "android"
           },
           "flavor": {
             "type": "string",
+            "enum": [
+              "enterprise",
+              "dev"
+            ],
             "title": "Flavor",
             "default": "enterprise"
           },
@@ -12310,14 +12319,19 @@
           },
           "version_name": {
             "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
             "title": "Version Name"
           },
           "download_url": {
             "type": "string",
+            "maxLength": 4096,
+            "minLength": 1,
             "title": "Download Url"
           },
           "sha256": {
             "type": "string",
+            "pattern": "^[a-f0-9]{64}$",
             "title": "Sha256"
           },
           "mandatory": {
@@ -12328,7 +12342,8 @@
           "changelog": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "string",
+                "maxLength": 16384
               },
               {
                 "type": "null"
@@ -12337,6 +12352,7 @@
             "title": "Changelog"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "version_code",
