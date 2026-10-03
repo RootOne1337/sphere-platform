@@ -455,3 +455,18 @@ Rotation/unknown/malformed остаются fail-closed.10 targeted cases:6pass/
 [ABR report](../2026-10-03/STREAM-BITRATE-RECOVERY.md) ·
 [Signer report/evidence](../2026-10-03/OTA-SIGNER-COMPATIBILITY.md).
 33 source-fixed/8OPEN, F33 PARTIAL/F36 OPEN сохранены.
+
+## N08 native result и14online10244,3 октября
+
+PH028 штатный43→44:exact completed receipt/new heartbeat/grant auto-clear;
+последующий installed hash совпал.13 других целей со старым guard41 получили
+scoped root recovery, exact hash и новый heartbeat каждое. Всего14online10244;
+12finite samples сохранили cohort/epochs и heartbeat<60s.16контейнеров сохранены.
+
+Две остановки preflight до installer:PH014 original stderr unavailable/readonly
+reconciled;PH019 confirmed login429, helper исправлен на одну operator session,
+лимиты сохранены. Installerunknown не повторялся. Native fallback branch
+не доказан пустым boundedlogtail; новая политика/flags приняты по install receipt.
+Full832/flavor:831pass/1skip;sourcead34 CIbackend/frontend/Androidsuccess.
+Normal/dev10209,stable/manifest/bulk/visual/soak/F36OPEN;33fixed/8OPEN сохранены.
+[Полный отчёт](../2026-10-03/OTA-SIGNER-COMPATIBILITY.md).

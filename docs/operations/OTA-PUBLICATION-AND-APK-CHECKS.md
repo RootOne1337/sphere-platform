@@ -124,3 +124,20 @@ Native исправленного10243 guard ещё OPEN; scoped recovery не �
 finite14-device observation не является stable/global promotion или FPS/soak proof.
 Полный backend CI2381 passed/16 skipped завершил tests, но остановился на stale
 OpenAPI; generated schema repair 5bb36ca прошёл exportercheck в shipped image.
+
+## Native signer compatibility и текущий canary10244,3 октября
+
+Guard10241 реальный отказ→candidate43 совместимость→normal addressed43→44
+с exact completed receipt/heartbeat/installed hash.13 других целей получили
+scoped root recovery из-за старого блокирующего guard, а не обычные OTA receipts.
+Теперь14online10244,5offline вне приёмки;12samples это короткая проверка.
+Нормальный периодический android/dev остаётся10209;candidate44 managedcanary.
+[Проверки, crypto/format boundary и recovery evidence](../audits/2026-10-03/OTA-SIGNER-COMPATIBILITY.md).
+
+Recovery применим только к online/root-capable owned устройству с заранее
+проверенными package/cert/hash и сохранённым intent. OS installer остаётся
+окончательной проверкой; отсутствие API reply сверяется только readonly
+installed hash/version/new heartbeat. Нельзя повторять installer при unknown,
+очищать данные или считать recovery обычным OTA. Offline/force-stopped APK и
+устройство без нужных Android permissions не объявляются всегда обновляемыми.
+Это pilot recovery evidence, не готовый массовый operator UI/general manifest.

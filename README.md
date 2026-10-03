@@ -16,22 +16,23 @@
 </div>
 
 > [!NOTE]
-> **Текущий review, 3 октября 2026:** [3015/updates](http://127.0.0.1:3015/updates),
-> UI **77fca37** / API **facba9a**. Публикация OTA проверяет metadata/duplicates,
-> веб сохраняет unknown и сверяет exact receipt; APK **1.2.41-dev/10241** проверяет
-> package/version/SDK/current signer перед установкой.
-> **14 адресных установок подтверждены receipt и новым heartbeat; все 14 online
-> на 10241**, пять offline вне приёмки. 12 конечных срезов03:14:44–03:16:35 UTC:
-> cohort/connected_since без изменений, heartbeat <30 s. [Отчёт и доказательства](docs/audits/2026-10-03/OTA-RELEASE-IDENTITY.md).
-> **104 suites /946 frontend tests** в Node 24, 130 related backend cases в
-> immutable API image, 818 passed / 1 skip на каждый Android flavor. Full backend:
-> 2381 passed / 16 skipped; **5bb36ca CI passed: backend, frontend и Android**.
-> **33 source-fixed /8 OPEN**, F32/F33 PARTIAL. Normal android/dev10209,
-> stable/general manifest, browser/soak и 20–30-device stream+scripts gates OPEN.
-> Новый native guard 10241 ещё требует будущего live upgrade canary.
-> [OTA contract](docs/operations/OTA-PUBLICATION-AND-APK-CHECKS.md) ·
-> [Журнал F01–F41](docs/audits/2026-10-01/WEB-AUDIT-REMEDIATION.md) ·
-> [Каноническое состояние, версии и предыдущие trials](docs/operations/CURRENT-STATE.md).
+> **Проверка APK: 3 октября 2026, 15:01 UTC (20:01 UTC+5).**
+> **Все 14 доступных устройств работают с 1.2.44-dev / 10244**;
+> пять офлайн-устройств остаются вне этой приёмки.
+> Исправлен отказ `ota_signer_unavailable` в guard 10241. На удалённой PH028
+> адресное OTA 43→44 подтверждено квитанцией, новым heartbeat и SHA установленного
+> файла. Остальные 13 устройств получили разовую установку через root APK;
+> данные и идентификаторы сохранены.
+> 12 контрольных срезов сохранили весь cohort и серверные даты подключения;
+> heartbeat моложе 60 секунд. Все 16 прежних контейнеров сохранены.
+> APK source **ad34c12**: **831 passed / 1 skipped** на каждый Android flavor;
+> его backend/frontend/Android CI прошли. UI **77fca37** / API **facba9a**:
+> [3015/updates](http://127.0.0.1:3015/updates). Canary 44 опубликован в managed
+> каталоге; normal android/dev остаётся 10209.
+> Stable/normal promotion, verified manifest, measured FPS/input latency и soak
+> остаются OPEN. **33 source-fixed / 8 OPEN**, F32/F33 PARTIAL.
+> Browser visual: OPEN_URL_POLICY_BLOCKED.
+> [Native/rollout report](docs/audits/2026-10-03/OTA-SIGNER-COMPATIBILITY.md) · [ABR proof](docs/audits/2026-10-03/STREAM-BITRATE-RECOVERY.md).
 
 ---
 

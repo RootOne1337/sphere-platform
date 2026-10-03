@@ -7,7 +7,26 @@
 [Главная](../../README.md) · [Каталог документации](../README.md) · [Readiness](READINESS.md) · [Fleet32 gates](../audits/2026-09-20/FLEET32-PREFLIGHT.md) · [PR #19](https://github.com/RootOne1337/sphere-platform/pull/19)
 
 > [!IMPORTANT]
-> **Последний OTA/API/UI readback, 3 октября 2026,03:17:58 UTC:**
+> **Проверка APK: 3 октября 2026, 15:01 UTC (20:01 UTC+5).**
+> **Все 14 доступных устройств работают с 1.2.44-dev / 10244**;
+> пять офлайн-устройств остаются вне этой приёмки.
+> Исправлен отказ `ota_signer_unavailable` в guard 10241. На удалённой PH028
+> адресное OTA 43→44 подтверждено квитанцией, новым heartbeat и SHA установленного
+> файла. Остальные 13 устройств получили разовую установку через root APK;
+> данные и идентификаторы сохранены.
+> 12 контрольных срезов сохранили весь cohort и серверные даты подключения;
+> heartbeat моложе 60 секунд. Все 16 прежних контейнеров сохранены.
+> APK source **ad34c12**: **831 passed / 1 skipped** на каждый Android flavor;
+> его backend/frontend/Android CI прошли. UI **77fca37** / API **facba9a**:
+> [3015/updates](http://127.0.0.1:3015/updates). Canary 44 опубликован в managed
+> каталоге; normal android/dev остаётся 10209.
+> Stable/normal promotion, verified manifest, measured FPS/input latency и soak
+> остаются OPEN. **33 source-fixed / 8 OPEN**, F32/F33 PARTIAL.
+> Browser visual: OPEN_URL_POLICY_BLOCKED.
+> [Native/rollout report](../audits/2026-10-03/OTA-SIGNER-COMPATIBILITY.md) · [ABR proof](../audits/2026-10-03/STREAM-BITRATE-RECOVERY.md).
+
+> [!IMPORTANT]
+> **Предыдущий OTA/API/UI readback, 3 октября 2026,03:17:58 UTC:**
 > [3015/updates](http://127.0.0.1:3015/updates), UI **77fca37** / API **facba9a**.
 > APK **1.2.41-dev/10241** опубликован в canary и адресно установлен на 14 целях;
 > для каждой exact terminal receipt +новый heartbeat. Все14 online на 10241,

@@ -80,3 +80,11 @@ trace. Подтверждения плавности или enterprise acceptanc
 из10241. Normal android/dev10209 пока не продвигается. F33 PARTIAL и F36 OPEN;
 реестр остаётся **33 source-fixed /8 OPEN**, поскольку полный profile negotiation
 и measured requested/accepted/rendered contract ещё не реализован.
+
+## Доставка ABR fix: финальный readback3 октября
+
+10242 собран/опубликован, но guard10241 отказал наPH028;0 установок42.
+N08 исправил совместимость signature metadata. После scoped recovery и одного
+успешного штатного43→44 OTA все14online получили10244 с этим ABR fix.
+Это доставка исправленного алгоритма, не measured native bitrate/FPS acceptance.
+[Полный native/rollout evidence](OTA-SIGNER-COMPATIBILITY.md).

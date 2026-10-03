@@ -15,16 +15,14 @@
 > автоматическую проверку runtime; старые аудиты сохраняют собственные даты и
 > версии и не должны читаться как текущий deploy. [Правила актуальности](DOCUMENTATION.md).
 
-Последний live follow-up: [OTA publication/APK identity и 14 установок10241](audits/2026-10-03/OTA-RELEASE-IDENTITY.md).
-Все14 online теперь1.2.41-dev,5 offline вне приёмки;12 finite readbacks сохранили
-cohort/connection epochs, heartbeat <30 s. UI **77fca37** /API **facba9a**,
-[3015/updates](http://127.0.0.1:3015/updates). **104 suites/946 Node 24 tests**,
-130 related backend cases в immutable image,818 passed/1 skip на каждый Android
-flavor. Full backend 2381 passed/16 skipped; OpenAPI repair 5bb36ca check passed,
-его backend/frontend/Android CI прошёл; новый docs head проверяется отдельно. **33 source-fixed/8 OPEN**, F32/F33 PARTIAL. Normal/dev10209,
-stable/general manifest/bulk/visual/soak gates OPEN.
-[Контракт публикации и APK](operations/OTA-PUBLICATION-AND-APK-CHECKS.md) ·
-[Предыдущая10240 волна](audits/2026-10-03/OWNED-PILOT-OTA-ROLLOUT.md).
+Последний live follow-up: [Native OTA compatibility и14 online10244](audits/2026-10-03/OTA-SIGNER-COMPATIBILITY.md).
+PH028 штатный43→44 принят по exact receipt/new heartbeat/installed hash;
+13 other targets получили scoped root recovery, данные сохранены.12 finite samples,
+14 online10244/5 offline,16containers preserved. UI77fca37/API facba9a сохраняются.
+APK source ad34c12:831 pass/1 skip на flavor; backend/frontend/Android CI passed.
+[ABR before/after и пределы](audits/2026-10-03/STREAM-BITRATE-RECOVERY.md) ·
+[OTA contract](operations/OTA-PUBLICATION-AND-APK-CHECKS.md).
+Normal/dev10209,stable/manifest/bulk/visual/soak/F36 gates OPEN;33 fixed / 8 OPEN.
 
 ## 🧭 Выберите задачу
 
