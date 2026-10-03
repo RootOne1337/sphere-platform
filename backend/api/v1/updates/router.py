@@ -17,13 +17,14 @@ import tempfile
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Optional
+from typing import Literal, Optional
+from urllib.parse import urlsplit
 
 import structlog
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request, Response, status
 from fastapi.responses import FileResponse, JSONResponse
 from filelock import FileLock, Timeout
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -115,6 +116,18 @@ def _append_release(release: dict) -> None:
     try:
         with FileLock(f"{_UPDATES_PATH}.lock", timeout=_CATALOG_LOCK_TIMEOUT_SECONDS):
             releases = _load_releases()
+            # Keep version identity immutable inside the same cross-worker lock
+            # as persistence. A prior read/check outside this lock can race.
+            if any(
+                existing.get("platform") == release["platform"]
+                and existing.get("flavor") == release["flavor"]
+                and existing.get("version_code") == release["version_code"]
+                for existing in releases
+            ):
+                raise HTTPException(
+                    status_code=409,
+                    detail="Release version already exists in this channel; refresh catalog",
+                )
             releases.append(release)
             _save_releases(releases)
     except Timeout as exc:
@@ -145,14 +158,58 @@ def _remove_release(release_id: str) -> bool:
 # ── Schemas ───────────────────────────────────────────────────────────────────
 
 class CreateReleaseRequest(BaseModel):
-    platform: str = "android"
-    flavor: str = "enterprise"           # enterprise | dev
-    version_code: int = Field(ge=1, le=2_147_483_647)
-    version_name: str
-    download_url: str                    # must be https://
-    sha256: str                          # SHA-256 of APK
-    mandatory: bool = False
-    changelog: Optional[str] = None
+    model_config = ConfigDict(extra="forbid")
+
+    platform: Literal["android", "android-canary", "pc"] = "android"
+    flavor: Literal["enterprise", "dev"] = "enterprise"
+    version_code: int = Field(strict=True, ge=1, le=2_147_483_647)
+    version_name: str = Field(min_length=1, max_length=128)
+    download_url: str = Field(min_length=1, max_length=4096)
+    sha256: str = Field(pattern=r"^[a-f0-9]{64}$")
+    mandatory: bool = Field(default=False, strict=True)
+    changelog: Optional[str] = Field(default=None, max_length=16_384)
+
+    @field_validator("version_name")
+    @classmethod
+    def nonblank_version_name(cls, value: str) -> str:
+        if not value.strip() or any(ord(char) < 32 for char in value):
+            raise ValueError("version_name must be nonblank without control characters")
+        return value
+
+    @field_validator("download_url")
+    @classmethod
+    def valid_download_url(cls, value: str) -> str:
+        if re.fullmatch(re.escape(_ARTIFACT_PREFIX) + r"[a-f0-9]{64}", value):
+            return value
+        try:
+            parsed = urlsplit(value)
+            # Accessing .port also validates the numeric range. Do not normalize
+            # the URL: doing so could change a CDN's signed query parameters.
+            port = parsed.port
+            valid = (parsed.scheme == "https" and bool(parsed.hostname)
+                     and parsed.username is None and parsed.password is None
+                     and not parsed.fragment and (port is None or port > 0)
+                     and not any(char.isspace() or ord(char) < 32 for char in value)
+                     and "\\" not in value)
+        except ValueError:
+            valid = False
+        if not valid:
+            raise ValueError("download_url must use HTTPS without credentials or fragment, or a managed artifact path")
+        return value
+
+
+def _latest_release(matching: list[dict]) -> dict:
+    """Do not pick an arbitrary file from a conflicting historical catalog."""
+    latest = max(matching, key=lambda release: release.get("version_code", 0))
+    identity_fields = ("version_name", "download_url", "sha256", "mandatory", "changelog")
+    identity = tuple(latest.get(field) for field in identity_fields)
+    if any(
+        release.get("version_code", 0) == latest.get("version_code", 0)
+        and tuple(release.get(field) for field in identity_fields) != identity
+        for release in matching
+    ):
+        raise HTTPException(status_code=503, detail="OTA release channel is ambiguous")
+    return latest
 
 
 class CreateRecoveryRequest(BaseModel):
@@ -334,7 +391,7 @@ async def get_latest(
     """
     Возвращает информацию о последнем релизе для данной платформы/флейвора.
     Если версия на устройстве >= последней → update_available=false.
-    Аутентификация — X-API-Key (агент) или JWT.
+    Аутентификация — X-API-Key с ключом или JWT агента.
     """
     if not x_api_key:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="X-API-Key required")
@@ -356,7 +413,7 @@ async def get_latest(
     if not matching:
         return JSONResponse({"update_available": False})
 
-    latest = max(matching, key=lambda r: r.get("version_code", 0))
+    latest = _latest_release(matching)
     latest_code = latest.get("version_code", 0)
 
     if latest_code <= version_code:

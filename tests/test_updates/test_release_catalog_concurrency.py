@@ -52,12 +52,15 @@ def _mutate_release_process(
         else:
             response = asyncio.run(updates_module.delete_release(release_id or ""))
         result_queue.put((version_code, response.status_code))
+    except updates_module.HTTPException as exc:
+        result_queue.put((version_code, exc.status_code))
     except BaseException as exc:  # propagate child failures to the parent assertion
         result_queue.put((version_code, repr(exc)))
 
 
-def test_parallel_release_publications_preserve_both_entries(tmp_path):
-    """Concurrent API writes from separate server workers must not lose a release."""
+@pytest.mark.parametrize("versions, expected_statuses", [((501, 502), [201, 201]), ((501, 501), [201, 409])])
+def test_parallel_release_publications_serialize_version_identity(tmp_path, versions, expected_statuses):
+    """Distinct versions survive; a duplicate version has exactly one winner."""
     context = multiprocessing.get_context("spawn")
     catalog_path = tmp_path / "releases.json"
     start_event = context.Event()
@@ -68,7 +71,7 @@ def test_parallel_release_publications_preserve_both_entries(tmp_path):
             target=_mutate_release_process,
             args=(str(catalog_path), start_event, ready_queue, result_queue, version_code),
         )
-        for version_code in (501, 502)
+        for version_code in versions
     ]
 
     try:
@@ -82,9 +85,10 @@ def test_parallel_release_publications_preserve_both_entries(tmp_path):
             assert not worker.is_alive(), "release worker did not exit"
             assert worker.exitcode == 0
 
-        assert sorted(result for _, result in results) == [201, 201]
+        assert sorted(result for _, result in results) == expected_statuses
         releases = json.loads(catalog_path.read_text(encoding="utf-8"))
-        assert {release["version_code"] for release in releases} == {501, 502}
+        assert {release["version_code"] for release in releases} == set(versions)
+        assert len(releases) == len(set(versions))
     finally:
         start_event.set()
         for worker in workers:

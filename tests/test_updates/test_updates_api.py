@@ -555,7 +555,8 @@ class TestSSRFGuard:
         payload = {**_VALID_RELEASE, "download_url": "http://192.168.1.100/evil.apk"}
         resp = await admin_client.post("/api/v1/updates/", json=payload)
         assert resp.status_code == 422
-        assert "HTTPS" in resp.json()["detail"]
+        assert any("HTTPS" in issue["msg"] and issue["loc"] == ["body", "download_url"]
+                   for issue in resp.json()["detail"])
 
     async def test_internal_ip_http_url_rejected(self, admin_client):
         """SSRF via IMDS endpoint must be blocked."""
