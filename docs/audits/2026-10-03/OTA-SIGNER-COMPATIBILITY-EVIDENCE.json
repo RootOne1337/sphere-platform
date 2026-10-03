@@ -103,10 +103,908 @@
   },
   "fallback_policy_sha256": "c5a171d6be595a512087538c57737aeaf707843513559806cc9813351ec20d34",
   "prepared_version_code": 10243,
-  "full_build_at_source_commit": "pending",
+  "full_build_at_source_commit": "passed832cases_per_flavor_831passed_1skip",
   "native_fixed_guard_acceptance": false,
   "normal_channel_promoted": false,
   "host_adb_used": false,
   "source_fixed_count": 33,
-  "open_count": 8
+  "open_count": 8,
+  "fixed_source_commit": "aa37ab739e1d32c6c1c2b367c6caa4b21d417816",
+  "full_build_10243": {
+    "source_commit": "aa37ab739e1d32c6c1c2b367c6caa4b21d417816",
+    "file": "SphereAgent-pilot-candidate-1.2.43-dev-aa37ab7.apk",
+    "sha256": "83075d7bfe0b94de640ee4b4819ee2a8eac185baa551fd6df7c662ffed6aef0e",
+    "bytes": 8471199,
+    "package": "com.sphereplatform.agent.pilot.debug",
+    "version_name": "1.2.43-dev",
+    "version_code": 10243,
+    "certificate_sha256": "3ab40797d26e4f52f9e440afc6fe69f197caef71a5a27c63c86735bb1801871f",
+    "signer_matches_local_pilot_baseline": true,
+    "tests": {
+      "dev": {
+        "tests": 832,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 1
+      },
+      "enterprise": {
+        "tests": 832,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 1
+      }
+    },
+    "signed_discovery_manifest_version": 27,
+    "baked_management_urls": [],
+    "gpu_bridge_enabled": false,
+    "planar_input_enabled": true,
+    "debug_video_probe": true,
+    "installed": false,
+    "published_to_ota": false,
+    "built_at": "2026-10-03T14:21:42.790457+00:00"
+  },
+  "root_recovery_10243": {
+    "startedAt": "2026-10-03T14:23:15.150391+00:00",
+    "deviceId": "4815b950-e5cf-4686-9d46-42d0df8d41f7",
+    "name": "auto-ph-028",
+    "beforeVersionCode": 10241,
+    "targetVersionCode": 10243,
+    "artifactSha256": "83075d7bfe0b94de640ee4b4819ee2a8eac185baa551fd6df7c662ffed6aef0e",
+    "packageAndSignerVerifiedByExactBaselineHash": true,
+    "normalOtaAcceptance": false,
+    "hostAdbUsed": false,
+    "dataCleared": false,
+    "automaticInstallRetry": false,
+    "status": "recovery_install_and_exact_hash_and_fresh_heartbeat",
+    "downloadReadbacks": [
+      {
+        "observedAt": "2026-10-03T14:23:18.917617+00:00",
+        "attempt": 1,
+        "downloadReportedError": false,
+        "exactHashMatches": true
+      }
+    ],
+    "temporaryDeviceCredentialExpiresAt": "2026-10-03T14:25:16.219474+00:00",
+    "temporaryDeviceCredentialRevoked": true,
+    "installIntentRecordedAt": "2026-10-03T14:23:19.630576+00:00",
+    "installerAttempts": 1,
+    "installerReplyExceptionType": "HTTPError",
+    "lastReadback": {
+      "observedAt": "2026-10-03T14:23:49.670847+00:00",
+      "status": "online",
+      "versionCode": 10243,
+      "lastHeartbeat": "2026-10-03T14:23:23.697115Z"
+    },
+    "postInstallHeartbeat": "2026-10-03T14:23:23.697115Z",
+    "acceptedAt": "2026-10-03T14:23:50.294686+00:00",
+    "ownedTemporaryFileRemoved": true,
+    "finishedAt": "2026-10-03T14:23:50.558213+00:00"
+  },
+  "root_recovery_raw_intent_sha256": "49ffa258a10c5bbcfed32708363800ae159d90bcb2f5e0f339ce3dbbe5484afc",
+  "finite_after_recovery": {
+    "phase": "after-canary",
+    "started_at": "2026-10-03T14:24:45.608481+00:00",
+    "device_commands": false,
+    "samples": [
+      {
+        "observed_at": "2026-10-03T14:24:45.633597+00:00",
+        "catalog_total": 19,
+        "online": [
+          {
+            "id": "1dd7e59c-b68f-406a-93cd-5f4e34fdea90",
+            "name": "auto-ph-017",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:41.121520Z",
+            "connected_since": "2026-10-03T06:06:15.061533Z",
+            "heartbeat_age_seconds": 4.512077
+          },
+          {
+            "id": "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93",
+            "name": "auto-ph-016",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:16.640026Z",
+            "connected_since": "2026-10-03T06:05:20.543437Z",
+            "heartbeat_age_seconds": 28.993571
+          },
+          {
+            "id": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+            "name": "auto-ph-011",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:34.402884Z",
+            "connected_since": "2026-10-03T06:04:38.356504Z",
+            "heartbeat_age_seconds": 11.230713
+          },
+          {
+            "id": "4815b950-e5cf-4686-9d46-42d0df8d41f7",
+            "name": "auto-ph-028",
+            "version_code": 10243,
+            "last_heartbeat": "2026-10-03T14:24:23.672225Z",
+            "connected_since": "2026-10-03T14:23:23.697115Z",
+            "heartbeat_age_seconds": 21.961372
+          },
+          {
+            "id": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+            "name": "auto-ph-010",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:33.863256Z",
+            "connected_since": "2026-10-03T06:04:37.784996Z",
+            "heartbeat_age_seconds": 11.770341
+          },
+          {
+            "id": "673d5774-24b1-4b57-8dfb-90c46f627ce3",
+            "name": "auto-ph-014",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:18.619360Z",
+            "connected_since": "2026-10-03T06:05:22.509267Z",
+            "heartbeat_age_seconds": 27.014237
+          },
+          {
+            "id": "6d830af5-b7cc-44b4-b7f5-5e0275aceb3b",
+            "name": "auto-ph-013",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:17.710078Z",
+            "connected_since": "2026-10-03T06:06:21.648851Z",
+            "heartbeat_age_seconds": 27.923519
+          },
+          {
+            "id": "75c29a32-2867-4b60-947c-003e712e538f",
+            "name": "auto-ph-020",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:17.683204Z",
+            "connected_since": "2026-10-03T06:05:21.592086Z",
+            "heartbeat_age_seconds": 27.950393
+          },
+          {
+            "id": "8c187cfa-e5ea-4939-a137-07619437953d",
+            "name": "auto-ph-012",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:27.528605Z",
+            "connected_since": "2026-10-03T06:07:01.311487Z",
+            "heartbeat_age_seconds": 18.104992
+          },
+          {
+            "id": "930a6505-b7ec-4eee-93fe-9aaa66517871",
+            "name": "auto-ph-015",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:40.919120Z",
+            "connected_since": "2026-10-03T06:05:14.917495Z",
+            "heartbeat_age_seconds": 4.714477
+          },
+          {
+            "id": "b410464a-5f26-4803-a756-7840cc17b128",
+            "name": "auto-ph-025",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:43.192447Z",
+            "connected_since": "2026-10-03T06:05:17.064361Z",
+            "heartbeat_age_seconds": 2.44115
+          },
+          {
+            "id": "bafef86f-3ab4-469b-ae0c-cf2771b55813",
+            "name": "auto-ph-018",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:31.000371Z",
+            "connected_since": "2026-10-03T06:06:34.914779Z",
+            "heartbeat_age_seconds": 14.633226
+          },
+          {
+            "id": "c37e687a-ee83-466d-846f-3f4b36047fa7",
+            "name": "auto-ph-019",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:20.994135Z",
+            "connected_since": "2026-10-03T06:06:24.927717Z",
+            "heartbeat_age_seconds": 24.639462
+          },
+          {
+            "id": "d088c147-7ada-4b29-9e79-f991b20fcf91",
+            "name": "auto-ph-022",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:27.528324Z",
+            "connected_since": "2026-10-03T06:05:31.416115Z",
+            "heartbeat_age_seconds": 18.105273
+          }
+        ]
+      },
+      {
+        "observed_at": "2026-10-03T14:24:55.651413+00:00",
+        "catalog_total": 19,
+        "online": [
+          {
+            "id": "1dd7e59c-b68f-406a-93cd-5f4e34fdea90",
+            "name": "auto-ph-017",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:41.121520Z",
+            "connected_since": "2026-10-03T06:06:15.061533Z",
+            "heartbeat_age_seconds": 14.529893
+          },
+          {
+            "id": "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93",
+            "name": "auto-ph-016",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:46.638815Z",
+            "connected_since": "2026-10-03T06:05:20.543437Z",
+            "heartbeat_age_seconds": 9.012598
+          },
+          {
+            "id": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+            "name": "auto-ph-011",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:34.402884Z",
+            "connected_since": "2026-10-03T06:04:38.356504Z",
+            "heartbeat_age_seconds": 21.248529
+          },
+          {
+            "id": "4815b950-e5cf-4686-9d46-42d0df8d41f7",
+            "name": "auto-ph-028",
+            "version_code": 10243,
+            "last_heartbeat": "2026-10-03T14:24:53.671979Z",
+            "connected_since": "2026-10-03T14:23:23.697115Z",
+            "heartbeat_age_seconds": 1.979434
+          },
+          {
+            "id": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+            "name": "auto-ph-010",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:33.863256Z",
+            "connected_since": "2026-10-03T06:04:37.784996Z",
+            "heartbeat_age_seconds": 21.788157
+          },
+          {
+            "id": "673d5774-24b1-4b57-8dfb-90c46f627ce3",
+            "name": "auto-ph-014",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:48.617220Z",
+            "connected_since": "2026-10-03T06:05:22.509267Z",
+            "heartbeat_age_seconds": 7.034193
+          },
+          {
+            "id": "6d830af5-b7cc-44b4-b7f5-5e0275aceb3b",
+            "name": "auto-ph-013",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:47.827383Z",
+            "connected_since": "2026-10-03T06:06:21.648851Z",
+            "heartbeat_age_seconds": 7.82403
+          },
+          {
+            "id": "75c29a32-2867-4b60-947c-003e712e538f",
+            "name": "auto-ph-020",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:47.827501Z",
+            "connected_since": "2026-10-03T06:05:21.592086Z",
+            "heartbeat_age_seconds": 7.823912
+          },
+          {
+            "id": "8c187cfa-e5ea-4939-a137-07619437953d",
+            "name": "auto-ph-012",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:27.528605Z",
+            "connected_since": "2026-10-03T06:07:01.311487Z",
+            "heartbeat_age_seconds": 28.122808
+          },
+          {
+            "id": "930a6505-b7ec-4eee-93fe-9aaa66517871",
+            "name": "auto-ph-015",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:40.919120Z",
+            "connected_since": "2026-10-03T06:05:14.917495Z",
+            "heartbeat_age_seconds": 14.732293
+          },
+          {
+            "id": "b410464a-5f26-4803-a756-7840cc17b128",
+            "name": "auto-ph-025",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:43.192447Z",
+            "connected_since": "2026-10-03T06:05:17.064361Z",
+            "heartbeat_age_seconds": 12.458966
+          },
+          {
+            "id": "bafef86f-3ab4-469b-ae0c-cf2771b55813",
+            "name": "auto-ph-018",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:31.000371Z",
+            "connected_since": "2026-10-03T06:06:34.914779Z",
+            "heartbeat_age_seconds": 24.651042
+          },
+          {
+            "id": "c37e687a-ee83-466d-846f-3f4b36047fa7",
+            "name": "auto-ph-019",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:51.111662Z",
+            "connected_since": "2026-10-03T06:06:24.927717Z",
+            "heartbeat_age_seconds": 4.539751
+          },
+          {
+            "id": "d088c147-7ada-4b29-9e79-f991b20fcf91",
+            "name": "auto-ph-022",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:27.528324Z",
+            "connected_since": "2026-10-03T06:05:31.416115Z",
+            "heartbeat_age_seconds": 28.123089
+          }
+        ]
+      },
+      {
+        "observed_at": "2026-10-03T14:25:05.680267+00:00",
+        "catalog_total": 19,
+        "online": [
+          {
+            "id": "1dd7e59c-b68f-406a-93cd-5f4e34fdea90",
+            "name": "auto-ph-017",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:41.121520Z",
+            "connected_since": "2026-10-03T06:06:15.061533Z",
+            "heartbeat_age_seconds": 24.558747
+          },
+          {
+            "id": "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93",
+            "name": "auto-ph-016",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:46.638815Z",
+            "connected_since": "2026-10-03T06:05:20.543437Z",
+            "heartbeat_age_seconds": 19.041452
+          },
+          {
+            "id": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+            "name": "auto-ph-011",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:25:04.403049Z",
+            "connected_since": "2026-10-03T06:04:38.356504Z",
+            "heartbeat_age_seconds": 1.277218
+          },
+          {
+            "id": "4815b950-e5cf-4686-9d46-42d0df8d41f7",
+            "name": "auto-ph-028",
+            "version_code": 10243,
+            "last_heartbeat": "2026-10-03T14:24:53.671979Z",
+            "connected_since": "2026-10-03T14:23:23.697115Z",
+            "heartbeat_age_seconds": 12.008288
+          },
+          {
+            "id": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+            "name": "auto-ph-010",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:25:03.870174Z",
+            "connected_since": "2026-10-03T06:04:37.784996Z",
+            "heartbeat_age_seconds": 1.810093
+          },
+          {
+            "id": "673d5774-24b1-4b57-8dfb-90c46f627ce3",
+            "name": "auto-ph-014",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:48.617220Z",
+            "connected_since": "2026-10-03T06:05:22.509267Z",
+            "heartbeat_age_seconds": 17.063047
+          },
+          {
+            "id": "6d830af5-b7cc-44b4-b7f5-5e0275aceb3b",
+            "name": "auto-ph-013",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:47.827383Z",
+            "connected_since": "2026-10-03T06:06:21.648851Z",
+            "heartbeat_age_seconds": 17.852884
+          },
+          {
+            "id": "75c29a32-2867-4b60-947c-003e712e538f",
+            "name": "auto-ph-020",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:47.827501Z",
+            "connected_since": "2026-10-03T06:05:21.592086Z",
+            "heartbeat_age_seconds": 17.852766
+          },
+          {
+            "id": "8c187cfa-e5ea-4939-a137-07619437953d",
+            "name": "auto-ph-012",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:57.407313Z",
+            "connected_since": "2026-10-03T06:07:01.311487Z",
+            "heartbeat_age_seconds": 8.272954
+          },
+          {
+            "id": "930a6505-b7ec-4eee-93fe-9aaa66517871",
+            "name": "auto-ph-015",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:40.919120Z",
+            "connected_since": "2026-10-03T06:05:14.917495Z",
+            "heartbeat_age_seconds": 24.761147
+          },
+          {
+            "id": "b410464a-5f26-4803-a756-7840cc17b128",
+            "name": "auto-ph-025",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:43.192447Z",
+            "connected_since": "2026-10-03T06:05:17.064361Z",
+            "heartbeat_age_seconds": 22.48782
+          },
+          {
+            "id": "bafef86f-3ab4-469b-ae0c-cf2771b55813",
+            "name": "auto-ph-018",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:25:01.003514Z",
+            "connected_since": "2026-10-03T06:06:34.914779Z",
+            "heartbeat_age_seconds": 4.676753
+          },
+          {
+            "id": "c37e687a-ee83-466d-846f-3f4b36047fa7",
+            "name": "auto-ph-019",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:51.111662Z",
+            "connected_since": "2026-10-03T06:06:24.927717Z",
+            "heartbeat_age_seconds": 14.568605
+          },
+          {
+            "id": "d088c147-7ada-4b29-9e79-f991b20fcf91",
+            "name": "auto-ph-022",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:57.488373Z",
+            "connected_since": "2026-10-03T06:05:31.416115Z",
+            "heartbeat_age_seconds": 8.191894
+          }
+        ]
+      },
+      {
+        "observed_at": "2026-10-03T14:25:15.706153+00:00",
+        "catalog_total": 19,
+        "online": [
+          {
+            "id": "1dd7e59c-b68f-406a-93cd-5f4e34fdea90",
+            "name": "auto-ph-017",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:25:11.117945Z",
+            "connected_since": "2026-10-03T06:06:15.061533Z",
+            "heartbeat_age_seconds": 4.588208
+          },
+          {
+            "id": "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93",
+            "name": "auto-ph-016",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:46.638815Z",
+            "connected_since": "2026-10-03T06:05:20.543437Z",
+            "heartbeat_age_seconds": 29.067338
+          },
+          {
+            "id": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+            "name": "auto-ph-011",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:25:04.403049Z",
+            "connected_since": "2026-10-03T06:04:38.356504Z",
+            "heartbeat_age_seconds": 11.303104
+          },
+          {
+            "id": "4815b950-e5cf-4686-9d46-42d0df8d41f7",
+            "name": "auto-ph-028",
+            "version_code": 10243,
+            "last_heartbeat": "2026-10-03T14:24:53.671979Z",
+            "connected_since": "2026-10-03T14:23:23.697115Z",
+            "heartbeat_age_seconds": 22.034174
+          },
+          {
+            "id": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+            "name": "auto-ph-010",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:25:03.870174Z",
+            "connected_since": "2026-10-03T06:04:37.784996Z",
+            "heartbeat_age_seconds": 11.835979
+          },
+          {
+            "id": "673d5774-24b1-4b57-8dfb-90c46f627ce3",
+            "name": "auto-ph-014",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:48.617220Z",
+            "connected_since": "2026-10-03T06:05:22.509267Z",
+            "heartbeat_age_seconds": 27.088933
+          },
+          {
+            "id": "6d830af5-b7cc-44b4-b7f5-5e0275aceb3b",
+            "name": "auto-ph-013",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:47.827383Z",
+            "connected_since": "2026-10-03T06:06:21.648851Z",
+            "heartbeat_age_seconds": 27.87877
+          },
+          {
+            "id": "75c29a32-2867-4b60-947c-003e712e538f",
+            "name": "auto-ph-020",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:47.827501Z",
+            "connected_since": "2026-10-03T06:05:21.592086Z",
+            "heartbeat_age_seconds": 27.878652
+          },
+          {
+            "id": "8c187cfa-e5ea-4939-a137-07619437953d",
+            "name": "auto-ph-012",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:57.407313Z",
+            "connected_since": "2026-10-03T06:07:01.311487Z",
+            "heartbeat_age_seconds": 18.29884
+          },
+          {
+            "id": "930a6505-b7ec-4eee-93fe-9aaa66517871",
+            "name": "auto-ph-015",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:25:10.917440Z",
+            "connected_since": "2026-10-03T06:05:14.917495Z",
+            "heartbeat_age_seconds": 4.788713
+          },
+          {
+            "id": "b410464a-5f26-4803-a756-7840cc17b128",
+            "name": "auto-ph-025",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:25:13.191593Z",
+            "connected_since": "2026-10-03T06:05:17.064361Z",
+            "heartbeat_age_seconds": 2.51456
+          },
+          {
+            "id": "bafef86f-3ab4-469b-ae0c-cf2771b55813",
+            "name": "auto-ph-018",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:25:01.003514Z",
+            "connected_since": "2026-10-03T06:06:34.914779Z",
+            "heartbeat_age_seconds": 14.702639
+          },
+          {
+            "id": "c37e687a-ee83-466d-846f-3f4b36047fa7",
+            "name": "auto-ph-019",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:51.111662Z",
+            "connected_since": "2026-10-03T06:06:24.927717Z",
+            "heartbeat_age_seconds": 24.594491
+          },
+          {
+            "id": "d088c147-7ada-4b29-9e79-f991b20fcf91",
+            "name": "auto-ph-022",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:57.488373Z",
+            "connected_since": "2026-10-03T06:05:31.416115Z",
+            "heartbeat_age_seconds": 18.21778
+          }
+        ]
+      },
+      {
+        "observed_at": "2026-10-03T14:25:25.730433+00:00",
+        "catalog_total": 19,
+        "online": [
+          {
+            "id": "1dd7e59c-b68f-406a-93cd-5f4e34fdea90",
+            "name": "auto-ph-017",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:25:11.117945Z",
+            "connected_since": "2026-10-03T06:06:15.061533Z",
+            "heartbeat_age_seconds": 14.612488
+          },
+          {
+            "id": "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93",
+            "name": "auto-ph-016",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:25:16.635201Z",
+            "connected_since": "2026-10-03T06:05:20.543437Z",
+            "heartbeat_age_seconds": 9.095232
+          },
+          {
+            "id": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+            "name": "auto-ph-011",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:25:04.403049Z",
+            "connected_since": "2026-10-03T06:04:38.356504Z",
+            "heartbeat_age_seconds": 21.327384
+          },
+          {
+            "id": "4815b950-e5cf-4686-9d46-42d0df8d41f7",
+            "name": "auto-ph-028",
+            "version_code": 10243,
+            "last_heartbeat": "2026-10-03T14:25:23.669962Z",
+            "connected_since": "2026-10-03T14:23:23.697115Z",
+            "heartbeat_age_seconds": 2.060471
+          },
+          {
+            "id": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+            "name": "auto-ph-010",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:25:03.870174Z",
+            "connected_since": "2026-10-03T06:04:37.784996Z",
+            "heartbeat_age_seconds": 21.860259
+          },
+          {
+            "id": "673d5774-24b1-4b57-8dfb-90c46f627ce3",
+            "name": "auto-ph-014",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:25:18.615519Z",
+            "connected_since": "2026-10-03T06:05:22.509267Z",
+            "heartbeat_age_seconds": 7.114914
+          },
+          {
+            "id": "6d830af5-b7cc-44b4-b7f5-5e0275aceb3b",
+            "name": "auto-ph-013",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:25:17.705791Z",
+            "connected_since": "2026-10-03T06:06:21.648851Z",
+            "heartbeat_age_seconds": 8.024642
+          },
+          {
+            "id": "75c29a32-2867-4b60-947c-003e712e538f",
+            "name": "auto-ph-020",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:25:17.669724Z",
+            "connected_since": "2026-10-03T06:05:21.592086Z",
+            "heartbeat_age_seconds": 8.060709
+          },
+          {
+            "id": "8c187cfa-e5ea-4939-a137-07619437953d",
+            "name": "auto-ph-012",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:57.407313Z",
+            "connected_since": "2026-10-03T06:07:01.311487Z",
+            "heartbeat_age_seconds": 28.32312
+          },
+          {
+            "id": "930a6505-b7ec-4eee-93fe-9aaa66517871",
+            "name": "auto-ph-015",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:25:10.917440Z",
+            "connected_since": "2026-10-03T06:05:14.917495Z",
+            "heartbeat_age_seconds": 14.812993
+          },
+          {
+            "id": "b410464a-5f26-4803-a756-7840cc17b128",
+            "name": "auto-ph-025",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:25:13.191593Z",
+            "connected_since": "2026-10-03T06:05:17.064361Z",
+            "heartbeat_age_seconds": 12.53884
+          },
+          {
+            "id": "bafef86f-3ab4-469b-ae0c-cf2771b55813",
+            "name": "auto-ph-018",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:25:01.003514Z",
+            "connected_since": "2026-10-03T06:06:34.914779Z",
+            "heartbeat_age_seconds": 24.726919
+          },
+          {
+            "id": "c37e687a-ee83-466d-846f-3f4b36047fa7",
+            "name": "auto-ph-019",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:25:20.991691Z",
+            "connected_since": "2026-10-03T06:06:24.927717Z",
+            "heartbeat_age_seconds": 4.738742
+          },
+          {
+            "id": "d088c147-7ada-4b29-9e79-f991b20fcf91",
+            "name": "auto-ph-022",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:57.488373Z",
+            "connected_since": "2026-10-03T06:05:31.416115Z",
+            "heartbeat_age_seconds": 28.24206
+          }
+        ]
+      },
+      {
+        "observed_at": "2026-10-03T14:25:35.755574+00:00",
+        "catalog_total": 19,
+        "online": [
+          {
+            "id": "1dd7e59c-b68f-406a-93cd-5f4e34fdea90",
+            "name": "auto-ph-017",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:25:11.117945Z",
+            "connected_since": "2026-10-03T06:06:15.061533Z",
+            "heartbeat_age_seconds": 24.637629
+          },
+          {
+            "id": "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93",
+            "name": "auto-ph-016",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:25:16.635201Z",
+            "connected_since": "2026-10-03T06:05:20.543437Z",
+            "heartbeat_age_seconds": 19.120373
+          },
+          {
+            "id": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+            "name": "auto-ph-011",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:25:34.398036Z",
+            "connected_since": "2026-10-03T06:04:38.356504Z",
+            "heartbeat_age_seconds": 1.357538
+          },
+          {
+            "id": "4815b950-e5cf-4686-9d46-42d0df8d41f7",
+            "name": "auto-ph-028",
+            "version_code": 10243,
+            "last_heartbeat": "2026-10-03T14:25:23.669962Z",
+            "connected_since": "2026-10-03T14:23:23.697115Z",
+            "heartbeat_age_seconds": 12.085612
+          },
+          {
+            "id": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+            "name": "auto-ph-010",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:25:33.869738Z",
+            "connected_since": "2026-10-03T06:04:37.784996Z",
+            "heartbeat_age_seconds": 1.885836
+          },
+          {
+            "id": "673d5774-24b1-4b57-8dfb-90c46f627ce3",
+            "name": "auto-ph-014",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:25:18.615519Z",
+            "connected_since": "2026-10-03T06:05:22.509267Z",
+            "heartbeat_age_seconds": 17.140055
+          },
+          {
+            "id": "6d830af5-b7cc-44b4-b7f5-5e0275aceb3b",
+            "name": "auto-ph-013",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:25:17.705791Z",
+            "connected_since": "2026-10-03T06:06:21.648851Z",
+            "heartbeat_age_seconds": 18.049783
+          },
+          {
+            "id": "75c29a32-2867-4b60-947c-003e712e538f",
+            "name": "auto-ph-020",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:25:17.669724Z",
+            "connected_since": "2026-10-03T06:05:21.592086Z",
+            "heartbeat_age_seconds": 18.08585
+          },
+          {
+            "id": "8c187cfa-e5ea-4939-a137-07619437953d",
+            "name": "auto-ph-012",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:25:27.407218Z",
+            "connected_since": "2026-10-03T06:07:01.311487Z",
+            "heartbeat_age_seconds": 8.348356
+          },
+          {
+            "id": "930a6505-b7ec-4eee-93fe-9aaa66517871",
+            "name": "auto-ph-015",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:25:10.917440Z",
+            "connected_since": "2026-10-03T06:05:14.917495Z",
+            "heartbeat_age_seconds": 24.838134
+          },
+          {
+            "id": "b410464a-5f26-4803-a756-7840cc17b128",
+            "name": "auto-ph-025",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:25:13.191593Z",
+            "connected_since": "2026-10-03T06:05:17.064361Z",
+            "heartbeat_age_seconds": 22.563981
+          },
+          {
+            "id": "bafef86f-3ab4-469b-ae0c-cf2771b55813",
+            "name": "auto-ph-018",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:25:30.999090Z",
+            "connected_since": "2026-10-03T06:06:34.914779Z",
+            "heartbeat_age_seconds": 4.756484
+          },
+          {
+            "id": "c37e687a-ee83-466d-846f-3f4b36047fa7",
+            "name": "auto-ph-019",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:25:20.991691Z",
+            "connected_since": "2026-10-03T06:06:24.927717Z",
+            "heartbeat_age_seconds": 14.763883
+          },
+          {
+            "id": "d088c147-7ada-4b29-9e79-f991b20fcf91",
+            "name": "auto-ph-022",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:25:27.486681Z",
+            "connected_since": "2026-10-03T06:05:31.416115Z",
+            "heartbeat_age_seconds": 8.268893
+          }
+        ]
+      }
+    ],
+    "containers": [
+      {
+        "name": "sphere-pilot-20260911-backend-1",
+        "id": "bbf609a90ff89db865ffd5b238864d311a8a89d432ed5e409eeccb361663a694",
+        "image": "sha256:9e65ff07fe884391ccf4d67ebc8f83cbcf6d2aecb59f75987e9caf136c927d8a",
+        "started_at": "2026-10-03T03:01:16.261396201Z"
+      },
+      {
+        "name": "sphere-review-20261002-review-gateway-1",
+        "id": "83fa3baddd2d4fa5c8d5ccad3879b6dd3ba0b1f02353375d8844c442b92d2d2f",
+        "image": "sha256:1d13701a5f9f3fb01aaa88cef2344d65b6b5bf6b7d9fa4cf0dca557a8d7702ba",
+        "started_at": "2026-10-03T03:00:20.5550634Z"
+      },
+      {
+        "name": "sphere-review-20261002-review-ui-1",
+        "id": "b842a01b6187ebfe800a797654c3ec5672146206035c1d274e8f6169269b79ed",
+        "image": "sha256:264aaa341c32e37153e4c19eff0c3db418cf3b066c834a76d4794b79a704c6fa",
+        "started_at": "2026-10-03T03:00:14.649785176Z"
+      },
+      {
+        "name": "sphere-observability-20260930-grafana-1",
+        "id": "198ba01bcc9626208cc501fbb33f714ddd763c2e3fefeb3ff02ec180dbd24484",
+        "image": "sha256:b28bae15e219c998fb0e0424ed724930cc61b1f61fb404d47c862f9a23f9e572",
+        "started_at": "2026-09-30T14:04:47.940246857Z"
+      },
+      {
+        "name": "sphere-observability-20260930-prometheus-1",
+        "id": "3a8c35855670495381ee011ad9e0dc3d6dbc60f5c00c175e02eecbde55c3499d",
+        "image": "sha256:efd719c99d83b060d9daefdcf00360461adf279f45ef5391f8d111892118753e",
+        "started_at": "2026-09-30T03:28:16.688738513Z"
+      },
+      {
+        "name": "sphere-tuna-canary",
+        "id": "207cb00d1dbe327aebbaa7d4d60108c074e14e9a6aaf99df9ad502fa151cc5f0",
+        "image": "sha256:bb214af134a42d8c6266ae3d9bf0e67b2c60db0dcbfa111ae8ef68b9ce956449",
+        "started_at": "2026-09-27T20:49:07.63456204Z"
+      },
+      {
+        "name": "sphere-pilot-20260911-frontend-1",
+        "id": "424083add045e31d5618bb5c9ab3d4457ab2f36918532f4d33e4ff68eeae3527",
+        "image": "sha256:1d452dfa6ae83c2fb501e4891c15b819184b6160ab5d88804362b242645b709f",
+        "started_at": "2026-09-27T18:41:20.481313948Z"
+      },
+      {
+        "name": "sphere-pilot-20260911-cloudflare-quick-1",
+        "id": "97f31cf1c7738dbf96387224f7452ad227e663c0c5d158f61c2f4f8e9f3887cf",
+        "image": "sha256:b269e8abd07a5bf6f3f4be65d5050b2174eca89c56a0241a8ff32a16aec454e4",
+        "started_at": "2026-09-28T11:13:37.802948889Z"
+      },
+      {
+        "name": "sphere-pilot-20260911-public-gateway-1",
+        "id": "ec2a4b7110ca60a0a89d41df105e3dee656666fff6090098d3756579ac972a2e",
+        "image": "sha256:1d13701a5f9f3fb01aaa88cef2344d65b6b5bf6b7d9fa4cf0dca557a8d7702ba",
+        "started_at": "2026-09-21T19:06:46.139788532Z"
+      },
+      {
+        "name": "sphere-pilot-20260911-nginx-1",
+        "id": "879a728d94aacf998fa4e2a8d1abaff46d04ad003c5fbf322f4f058d90b15816",
+        "image": "sha256:1d13701a5f9f3fb01aaa88cef2344d65b6b5bf6b7d9fa4cf0dca557a8d7702ba",
+        "started_at": "2026-09-21T19:06:46.141880185Z"
+      },
+      {
+        "name": "sphere-pilot-20260911-n8n-1",
+        "id": "0bf7b0be08bb44223480628e492dca644ee3a7300b3c44ccb07b8aa66f5984a6",
+        "image": "sha256:e01ebe6ac2014a4dcffe439e14211df1c15e6312f93ca8a985a128ab7feb2f08",
+        "started_at": "2026-09-21T19:06:46.145972335Z"
+      },
+      {
+        "name": "sphere-pilot-20260911-minio-1",
+        "id": "6ed531e885818664cd32fe806c2993fd7a9c0b8d456969bfd1cbee517f05904d",
+        "image": "sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e",
+        "started_at": "2026-09-21T19:06:46.148254072Z"
+      },
+      {
+        "name": "sphere-pilot-20260911-postgres-1",
+        "id": "c2b5b99bcf18bda3332079ecc2e4bb4bd6f5622e8c1cb9d3233ad092d2819048",
+        "image": "sha256:5fe8ca7fc662071188c30271cb870d1ce9a6ec4578c934b064697ae77a9241e1",
+        "started_at": "2026-09-21T19:06:46.152449884Z"
+      },
+      {
+        "name": "sphere-pilot-20260911-redis-1",
+        "id": "7d8866e37758ae3fc71225199852726f6f366e8b09af41a3c5d060fcb9b380ec",
+        "image": "sha256:65748f2ea686cb0e37a008cbe7024324db1d84abf57e917e1c2ec92b5e50f602",
+        "started_at": "2026-09-21T19:06:46.115238685Z"
+      },
+      {
+        "name": "sphere-audit-20260905-redis",
+        "id": "88d26791554bbabf4cc990ebfabbf8887297e5c0dae910b33af10484f0e10a1f",
+        "image": "sha256:65748f2ea686cb0e37a008cbe7024324db1d84abf57e917e1c2ec92b5e50f602",
+        "started_at": "2026-09-21T19:53:31.71289706Z"
+      },
+      {
+        "name": "sphere-audit-20260905-postgres",
+        "id": "26a49b0298fc4feb6ad879ed6ef15ac41daa25ad972f06a13e1064d39625e022",
+        "image": "sha256:5fe8ca7fc662071188c30271cb870d1ce9a6ec4578c934b064697ae77a9241e1",
+        "started_at": "2026-09-21T19:53:31.422753888Z"
+      }
+    ],
+    "previous_containers_preserved": true,
+    "target_stream_diagnostics": {
+      "device_id": "4815b950-e5cf-4686-9d46-42d0df8d41f7",
+      "state": "not_streaming",
+      "agent_status": "online",
+      "last_heartbeat": "2026-10-03T14:25:23.669962Z",
+      "age_seconds": null,
+      "diagnostics": null
+    },
+    "normal_android_dev_latest": 10209,
+    "finished_at": "2026-10-03T14:25:35.796574+00:00"
+  },
+  "ordinary_native_ota_acceptance_after_fix": false,
+  "prepared_follow_up_version_code": 10244
 }

@@ -73,3 +73,29 @@ package/certificate/SHA; этот recovery не будет считаться у
 F33 остаётся PARTIAL, F36 OPEN; count33 source-fixed /8 OPEN не меняется.
 FPS, click latency, browser/mobile/keyboard и длительный stream+scripts soak
 этими тестами не приняты. Frozen audit не изменён.
+
+## Scoped recovery10243: выполнен,14:23 UTC
+
+Source aa37ab7: full build832 cases/flavor,831passed/1skip,0failures/errors.
+APK43 SHA256 `83075d7bfe0b94de640ee4b4819ee2a8eac185baa551fd6df7c662ffed6aef0e`.
+Cert/package совпадают с установленным41. Managed canary publication/readback
+14:22:46 UTC, normal channel не изменён.
+
+На PH028 использован существующий Android root SHELL, без hostADB/PC agent.
+Временный120s device-role credential получен на backend и отозван сразу после
+скачивания. Ключ подписи остался на backend; operator JWT на устройство не
+передавался. Artifact exact SHA проверен до единственной `pm install -r`.
+Installer HTTP reply потерян при замене приложения: это не terminal OTA receipt.
+Результат принят отдельно по exact installed-file SHA и новому heartbeat
+14:23:23.697115 UTC. Device ID и данные сохранены, собственный временный файл удалён.
+
+Шесть конечных срезов после recovery:14online,PH02810243/13others10241,
+heartbeat<60s, connection epochs между срезами неизменны; все16 контейнеров
+сохранены. Это короткое наблюдение, не длительный soak. Нормальная OTA приёмка
+нового guard всё ещё OPEN; **recovery не подменяет этот gate**.
+
+Для его проверки подготовлен follow-up candidate **1.2.44/10244**. Functional
+код относительно43 не меняется; новая монотонная версия нужна для настоящего
+43→44 install, поскольку тот же versionCode guard намеренно отклоняет.
+Candidate остаётся android-canary/dev, normal/stable не продвигается.
+Следующая операция — один addressed43→44; остальные13 устройств ждут результата.
