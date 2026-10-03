@@ -102,7 +102,7 @@ UI **81d065a** установлен **4 октября 2026, 01:19 UTC+5**, пр
 Семь срезов сохранили 14 online APK 10244, heartbeat <60 с и даты соединений до установки.
 15 соседних контейнеров, API/Tuna и SHA каталога OTA сохранены. Подтверждены login HTTP 200,
 capabilities 200/no-store с ожидаемыми identity/permissions, anonymous 401 и Prometheus up=1.
-Source CI на момент среза: Frontend, Preview и Android — success; Backend ещё выполняется.
+Source CI **81d065a**: Frontend, Preview, Android и Backend — success. Первое наблюдение и завершение CI записаны отдельно в evidence.
 
 Это проверка API, JSDOM и образов. Визуальная приёмка остаётся OPEN_URL_POLICY_BLOCKED;
 отрисовка, мобильная верстка, клавиатурная навигация и остальные страницы не приняты.

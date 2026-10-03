@@ -97,5 +97,35 @@
       "F39"
     ]
   },
-  "sourceCiObservedAt": "2026-10-03T20:28:32.978591+00:00"
+  "sourceCiObservedAt": "2026-10-03T20:28:32.978591+00:00",
+  "sourceCiCompletion": {
+    "observedAt": "2026-10-03T20:33:16.831571+00:00",
+    "source": "81d065a90919c1ad60312f81cb4f821e034ad501",
+    "runs": [
+      {
+        "conclusion": "success",
+        "name": "Preview — Deploy",
+        "status": "completed",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37150775039"
+      },
+      {
+        "conclusion": "success",
+        "name": "CI — Frontend",
+        "status": "completed",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37150775036"
+      },
+      {
+        "conclusion": "success",
+        "name": "CI — Android",
+        "status": "completed",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37150775108"
+      },
+      {
+        "conclusion": "success",
+        "name": "CI — Backend",
+        "status": "completed",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37150775061"
+      }
+    ]
+  }
 }
