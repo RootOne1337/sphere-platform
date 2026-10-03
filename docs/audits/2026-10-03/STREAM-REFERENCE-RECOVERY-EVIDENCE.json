@@ -125,7 +125,7 @@
       }
     ]
   },
-  "candidateRuntimeInstalled": false,
+  "candidateRuntimeInstalled": true,
   "frozenAuditFixedCount": 33,
   "frozenAuditOpenCount": 8,
   "open": [
@@ -137,5 +137,119 @@
     "20_30_device_stream_scripts",
     "stable_normal_ota_promotion"
   ],
-  "primarySource": "https://www.rfc-editor.org/rfc/rfc6184.html#section-8.5.1"
+  "primarySource": "https://www.rfc-editor.org/rfc/rfc6184.html#section-8.5.1",
+  "candidateSource": "37415e3aa96c9271771d8adf804d13687bfba6df",
+  "runtimeReceipt": {
+    "source": "37415e3aa96c9271771d8adf804d13687bfba6df",
+    "previousSource": "facba9a4b56f9b121f028bc371d24b94a08364de",
+    "observedAt": "2026-10-03T15:47:56.242886+00:00",
+    "containerId": "fd6dfccf1ec9237d98f0fbc498f59d27333f26ddeaeaba16876ce91c2fa08485",
+    "imageId": "sha256:842c17003f240a3762092c10b1806becdc1daab5e4d46fb3934d108eba26368e",
+    "ready": true,
+    "buildRevisionMatched": true,
+    "preservedContainers": 15,
+    "tunaPreserved": true,
+    "uiPreserved": true,
+    "apkChanged": false,
+    "otaCatalogPreserved": true,
+    "mountsPreserved": true,
+    "browserVerified": false
+  },
+  "immutableImageTests": {
+    "tests": 271,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "archivedTests": true,
+    "backendSourceMount": false
+  },
+  "deploymentReconciliation": {
+    "rawInspectMountRepresentationRollbacks": 2,
+    "bothRollbackExits": 0,
+    "secondDifference": "Grafana mount list order only; ID/image/StartedAt unchanged",
+    "firstDifference": "Docker Desktop host C-drive representation and mount list order",
+    "preflightStoppedBeforeThirdDeploy": "unchanged named Tuna config bind outside workspace",
+    "all16MountSetsCanonicalCompared": true,
+    "ownedEffectiveConfigContentVerified": true,
+    "onlyBackendReplaced": true
+  },
+  "sourceCI": [
+    {
+      "conclusion": "success",
+      "databaseId": 37134010193,
+      "headSha": "37415e3aa96c9271771d8adf804d13687bfba6df",
+      "name": "Preview \u2014 Deploy",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37134010193"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 37134010200,
+      "headSha": "37415e3aa96c9271771d8adf804d13687bfba6df",
+      "name": "CI \u2014 Frontend",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37134010200"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 37134010184,
+      "headSha": "37415e3aa96c9271771d8adf804d13687bfba6df",
+      "name": "CI \u2014 Android",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37134010184"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 37134010189,
+      "headSha": "37415e3aa96c9271771d8adf804d13687bfba6df",
+      "name": "CI \u2014 Backend",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37134010189"
+    }
+  ],
+  "postDeploy": {
+    "startedAt": "2026-10-03T15:49:52.509461+00:00",
+    "finishedAt": "2026-10-03T15:51:24.540439+00:00",
+    "trials": [
+      {
+        "name": "auto-ph-025",
+        "launches": 1,
+        "motionConfirmed": true,
+        "measurement": {
+          "windowSeconds": 20.0,
+          "pictureFps": 29.95,
+          "wireMbps": 1.0997203999999998,
+          "pictures": 599
+        },
+        "errors": [],
+        "viewerClosed": true
+      },
+      {
+        "name": "auto-ph-010",
+        "launches": 1,
+        "motionConfirmed": true,
+        "measurement": {
+          "windowSeconds": 20.0,
+          "pictureFps": 29.95,
+          "wireMbps": 1.1043372,
+          "pictures": 599
+        },
+        "errors": [],
+        "viewerClosed": true
+      }
+    ]
+  },
+  "finiteRecovery": {
+    "startedAt": "2026-10-03T15:52:56.720357+00:00",
+    "finishedAt": "2026-10-03T15:53:57.247698+00:00",
+    "samples": 7,
+    "online": 14,
+    "apkVersionCode": 10244,
+    "heartbeatAgeUnder60Seconds": true,
+    "sameEpochsWithinSamples": true,
+    "epochsResetDuringBackendRecreation": true,
+    "prometheusBackendUp": true,
+    "monitoringMetricsReadable": true,
+    "neighboursPreserved": 15
+  }
 }

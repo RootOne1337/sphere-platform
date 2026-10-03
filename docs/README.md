@@ -15,14 +15,18 @@
 > автоматическую проверку runtime; старые аудиты сохраняют собственные даты и
 > версии и не должны читаться как текущий deploy. [Правила актуальности](DOCUMENTATION.md).
 
-Последний live follow-up: [Native OTA compatibility и14 online10244](audits/2026-10-03/OTA-SIGNER-COMPATIBILITY.md).
-PH028 штатный43→44 принят по exact receipt/new heartbeat/installed hash;
-13 other targets получили scoped root recovery, данные сохранены.12 finite samples,
-14 online10244/5 offline,16containers preserved. UI77fca37/API facba9a сохраняются.
-APK source ad34c12:831 pass/1 skip на flavor; backend/frontend/Android CI passed.
-[ABR before/after и пределы](audits/2026-10-03/STREAM-BITRATE-RECOVERY.md) ·
+Последняя runtime-проверка: [Восстановление H.264 и измеренная доставка](audits/2026-10-03/STREAM-REFERENCE-RECOVERY.md).
+API **37415e3** установлен; UI **77fca37** и APK **10244** сохранены.
+PH025/PH010: по 599 кадров за 20  с — 29,95 кадра/с до получателя;
+отрисовка браузера и задержка ввода ещё не приняты. Прошли 230 WebSocket-тестов
+и 41 тест PostgreSQL/Redis, все 271 повторены в собранном образе; source CI прошёл.
+Семь срезов сохранили 14 online на 10244, новые даты соединений и heartbeat <60  с.
+15 соседних контейнеров и Tuna сохранены; два отката при проверке mounts разобраны.
+[Native OTA 44](audits/2026-10-03/OTA-SIGNER-COMPATIBILITY.md) ·
+[ABR proof](audits/2026-10-03/STREAM-BITRATE-RECOVERY.md) ·
 [OTA contract](operations/OTA-PUBLICATION-AND-APK-CHECKS.md).
-Normal/dev10209,stable/manifest/bulk/visual/soak/F36 gates OPEN;33 fixed / 8 OPEN.
+Normal/dev 10209; stable/manifest/bulk/visual/soak/F36 OPEN. Исходный аудит: 33/8.
+
 
 ## 🧭 Выберите задачу
 

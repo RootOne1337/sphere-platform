@@ -5866,5 +5866,19 @@
       }
     ],
     "failure": "Generated OpenAPI stale; schema-only repair5bb36ca; its own CI pending."
+  },
+  "latestStreamRuntimeFollowup": {
+    "source": "37415e3aa96c9271771d8adf804d13687bfba6df",
+    "observedAt": "2026-10-03T15:53:57.247698+00:00",
+    "evidence": "docs/audits/2026-10-03/STREAM-REFERENCE-RECOVERY-EVIDENCE.json",
+    "immutableImageTests": 271,
+    "online": 14,
+    "apkVersionCode": 10244,
+    "deliveryFps": 29.95,
+    "browserVerified": false,
+    "inputLatencyAccepted": false,
+    "olderSnapshotsPreserved": true,
+    "auditFixedCountUnchanged": 33,
+    "auditOpenCountUnchanged": 8
   }
 }

@@ -471,16 +471,20 @@ Full832/flavor:831pass/1skip;sourcead34 CIbackend/frontend/Androidsuccess.
 Normal/dev10209,stable/manifest/bulk/visual/soak/F36OPEN;33fixed/8OPEN сохранены.
 [Полный отчёт](../2026-10-03/OTA-SIGNER-COMPATIBILITY.md).
 
-## N09 — H.264 reference recovery и measured delivery,3 октября
+## N09 — восстановление H.264 и измеренная доставка, 3 октября
 
-На API facba9a /APK10244 до N09: PH025597pictures/20s=29.85fps,
-PH010598/20s=29.90fps; один самозавершающийся motion canary на устройство.
-Это wire delivery, не browser rendered FPS или input latency.
+До N09 на API facba9a / APK 10244: PH025 — 597 кадров за 20  с (29,85 кадра/с),
+PH010 — 598 (29,90). По одному самозавершающемуся тесту движения на устройство.
+Это доставка по WebSocket, не browser rendered FPS или задержка ввода.
 
-Воспроизведены семь assertion failures старой queue и один missing callback
-contract. Picture loss теперь fence-ит chain до fresh IDR; deadline проверяется
-на dequeue, mixed SEI/VCL классифицируется целиком. Recovery control вынесен
-из queue/Redis reader, ограничен одной task/устройство и shared cooldown1s.
-230WS cases +41 real PostgreSQL/Redis cases passed, changed-file Ruff/mypy passed.
-Runtime adoption/браузер/F36 пока OPEN; исходный count33/8 не пересчитан.
+Воспроизведены семь assertion failures старой очереди; ещё один case проверяет
+новый recovery callback. После потери кадра зависимая цепочка отбрасывается до
+нового IDR. Deadline проверяется при выдаче; mixed SEI/VCL учитывается целиком.
+Запросы recovery выполняются отдельно от Redis reader, объединены по устройству
+и ограничены одной task и интервалом 1  с. Прошли 230 WS и 41 PostgreSQL/Redis case,
+Ruff/mypy; все 271 прошли в immutable image. Backend **37415e3 установлен**.
+Повторный тест: PH025/PH010 по 599 кадров за 20  с (29,95). Семь срезов сохранили
+14 online на 10244 и новые даты соединений; UI/Tuna/15 соседних сервисов сохранены.
+Два отката по raw mount comparison разобраны; итоговые mounts эквивалентны.
+Browser/input/F36 OPEN; исходные 33 исправленных / 8 OPEN сохранены.
 [Отчёт](../2026-10-03/STREAM-REFERENCE-RECOVERY.md).

@@ -22,8 +22,8 @@ debug `StreamCadenceProbeActivity`. Он рисует движущуюся по�
 
 | Устройство | Окно движения | Доставленные picture access units | Средняя доставка | Средние wire bytes ×8 |
 |---|---:|---:|---:|---:|
-| PH025, удалённое | 20 с | 597 | 29,85 кадра/с | 1,065 Мбит/с |
-| PH010, локальное | 20 с | 598 | 29,90 кадра/с | 1,038 Мбит/с |
+| PH025, удалённое | 20   с | 597 | 29,85 кадра/с | 1,065 Мбит/с |
+| PH010, локальное | 20   с | 598 | 29,90 кадра/с | 1,038 Мбит/с |
 
 В свежих heartbeat APK сообщал capture 59–60, submission 29–30, encoder 29–30
 кадров/с, 0 read/render/encoder errors и 0 локальных WS rejection. Это отдельные
@@ -60,16 +60,16 @@ assertion failures. Восьмой case остановился на отсутс
 
 ## Исправленный контракт
 
-1. Picture gap переводит только затронутую очередь в ожидание нового IDR.
+1. Потеря кадра переводит только затронутую очередь в ожидание нового IDR.
 2. Удаляется зависимая buffered chain; SPS/PPS могут пройти во время recovery.
 3. Более новые delta pictures не выдаются до настоящего IDR. Один wire flag
    или ведущий SEI не заменяет проверку содержащихся NAL types.
 4. Deadline проверяется и на `get`, включая IDR. Configuration не истекает
-   как picture. Count50 / bytes8MiB остаются жёсткими ограничениями.
+   как picture. Count 50 / bytes 8MiB остаются жёсткими ограничениями.
 5. Оба участка — agent→Redis и Redis→viewer — используют этот контракт.
-6. Неизвестный исход Redis publication тоже fence-ит дальнейшую chain.
+6. При неизвестном исходе Redis publication зависимая цепочка также блокируется.
 7. Запрос нового keyframe планируется отдельно от queue lock/Redis reader.
-   На устройство действует общий cooldown1с и не более одной owned task;
+   На устройство действует общий cooldown 1  с и не более одной owned task;
    task удаляется после completion/cancellation, учитывается в shutdown.
 8. Медленный зритель не удаляет кадры из очереди другого зрителя. Запрос IDR
    общий для encoder; конфигурация и права viewer не меняются.
@@ -79,13 +79,13 @@ assertion failures. Восьмой case остановился на отсутс
 
 Стратегия намеренно консервативная: reference pictures не классифицируются
 на безопасно пропускаемые temporal layers. После congestion возможна короткая
-пауза до нового IDR. Нельзя обещать его выдачу за1с только из cooldown: codec
+пауза до нового IDR. Нельзя обещать его выдачу за 1  с только из cooldown: codec
 может не выполнить запрос; следующий delta позволяет повторить recovery.
 Queue deadline не является пределом уже выполняющегося socket write.
 
 ## Проверки и дальнейшая приёмка
 
-**230 WebSocket cases прошли**, включая11 новых queue/bridge cases. Проверены
+**230 WebSocket cases прошли**, включая 11 новых queue/bridge cases. Проверены
 count/bytes bound, reference gap, idle dequeue deadline, mixed SEI+VCL,
 configuration during recovery, uncertain publication, coalesced request,
 shutdown ownership и изоляция медленного viewer. Два прежних теста требовали
@@ -103,10 +103,45 @@ healthy viewer получает исходную цепочку, slow viewer п�
   queue recoveries и stale drops; текущий visual gate OPEN_URL_POLICY_BLOCKED.
 - Измерить input acceptance→Android execution→видимый кадр с корреляцией,
   а не вычитать timestamp разных часов без синхронизации.
-- Согласовать requested/accepted encoder profile: сервер пока передаёт2M,
-  APK создаёт default1.5M; отдельный preview profile ещё не реализован.
+- Согласовать requested/accepted encoder profile: сервер пока передаёт 2 Мбит/с,
+  APK создаёт default 1.5M; отдельный preview profile ещё не реализован.
 - Принять image quality, recovery/soak и simultaneous stream+scripts20–30.
 - Stable signer/normal OTA promotion и пять offline targets вне этой приёмки.
+
+## Установленный runtime и повторный тест
+
+**Backend 37415e3 установлен 2026-10-03T15:47:56.242886+00:00** из git-archive image
+`sha256:842c17003f240a3762092c10b1806becdc1daab5e4d46fb3934d108eba26368e`. Exact health revision/readiness совпали. Внутри этого
+immutable image 271 cases passed; tests взяты из того же archive, backend source
+не подмонтирован. UI 77fca37, APK 10244, Tuna, OTA catalog и15 соседних контейнеров
+сохранены. Кандидат принят после двух автоматических rollback старого backend:
+raw Docker inspect различался формой C-drive bind и порядком mount arrays.
+На втором сравнении разница была только в порядке mounts неизменного Grafana.
+Перед следующим deploy отдельно сверены фактическое содержимое owned config,
+нормализованные mounts всех16 сервисов, ID/image/StartedAt соседей. Один preflight
+остановился до mutation на прежнем Tuna config bind вне workspace; этот заранее
+существовавший именованный путь включён в точную read-only сверку. Данные volume,
+режимы RO/RW и destination не менялись. Первоначальные receipts не перезаписаны.
+
+Повторено ровно по одному finite motion trial:
+
+| Устройство | Access units /20  с | Delivery FPS | Wire Мбит/с |
+|---|---:|---:|---:|
+| PH025 |599|29,95|1,100|
+| PH010 |599|29,95|1,104|
+
+Разница с исходным29,85/29,90 не объявляется значимым приростом от N09: это
+короткие измерения без forced congestion. Исправление предотвращает broken
+reference chains; его fault acceptance — отдельный multi-worker regression.
+Никакие видео/скриншоты этого прогона не сохранены; renderer не проверен.
+
+**7 контрольных срезов 2026-10-03T15:52:56.720357+00:00–2026-10-03T15:53:57.247698+00:00** сохранили
+все14 online10244, heartbeat<60  с и новые connection epochs. Restart backend
+естественно сбросил прежние epochs; непрерывный uptime через deploy не заявляется.
+Monitoring API читается; Prometheus `up{job="sphere-backend"}=1` подтверждён.
+5 offline/production signer/normal OTA/браузер/input latency/soak/F36 остаются
+OPEN. Source GitHub CI status записан с конкретными run IDs в Evidence;
+Backend, frontend и Android source checks прошли. Docs head имеет собственные checks.
 
 ## Первичный источник
 
