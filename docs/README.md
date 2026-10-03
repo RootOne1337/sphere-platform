@@ -15,13 +15,14 @@
 > автоматическую проверку runtime; старые аудиты сохраняют собственные даты и
 > версии и не должны читаться как текущий deploy. [Правила актуальности](DOCUMENTATION.md).
 
-Последняя runtime-проверка — **4 октября 2026, 01:20 UTC+5**:
-[F39: permissions действий реестра](audits/2026-10-04/DEVICE-ACTION-PERMISSIONS.md) ·
-[Evidence](audits/2026-10-04/DEVICE-ACTION-PERMISSIONS-EVIDENCE.json).
-API 37bb436 / UI 81d065a на 3015; 997 frontend / 73 API проверки в образах,
+Последняя runtime-проверка — **4 октября 2026, 02:04 UTC+5**:
+[F39: формы групп и локаций](audits/2026-10-04/ORGANIZATION-ACTION-PERMISSIONS.md) ·
+[Evidence](audits/2026-10-04/ORGANIZATION-ACTION-PERMISSIONS-EVIDENCE.json).
+API **37bb436** / UI **922f479** на 3015; 1013 frontend / 89 API проверок в образах.
 14 online APK 10244, даты соединений сохранены. Остальные формы и визуальная приёмка OPEN.
-Предыдущий [N10 rollout](audits/2026-10-04/VIEWER-AUTHORIZATION.md) сохраняет failed first window.
-Следующий [F34 transport](audits/2026-10-04/MATRIX-PREVIEW-PLAN.md) ещё не реализован.
+Предыдущие [registry permissions](audits/2026-10-04/DEVICE-ACTION-PERMISSIONS.md) и
+[N10 rollout](audits/2026-10-04/VIEWER-AUTHORIZATION.md) сохранены как датированная история.
+[JPEG Matrix план](audits/2026-10-04/MATRIX-PREVIEW-PLAN.md) ещё не реализован.
 
 Предыдущая проверка видео — **3 октября, 15:53 UTC**:
 [H.264 recovery и измеренная доставка](audits/2026-10-03/STREAM-REFERENCE-RECOVERY.md).

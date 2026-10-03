@@ -81,7 +81,7 @@ before проверяет 10 workflow cases. Intermediate mock/async/fixture о�
 
 | Раздел | Незавершённая работа |
 |---|---|
-| Группы / локации | [Create/edit/delete source checks](ORGANIZATION-ACTION-PERMISSIONS.md) выполнены; image/install и visual учитываются отдельно. Назначения через реестр проверены в этом отчёте; полный member lifecycle остаётся отдельным сценарием |
+| Группы / локации | [Create/edit/delete](ORGANIZATION-ACTION-PERMISSIONS.md) приняты по API/JSDOM/image и установлены в UI922f479; visual OPEN. Назначения через реестр проверены в этом отчёте; полный member lifecycle остаётся отдельным сценарием |
 | Скрипты / задачи | Execute отдельно от write/read; отзыв права на открытом Run/rollback/archive |
 | Оркестрация / расписания | Write отдельно от execute и schedule:write; submission guards |
 | Аккаунты / события / сессии | Mutation affordances и открытые формы при отзыве права |

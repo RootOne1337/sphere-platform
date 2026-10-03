@@ -88,9 +88,9 @@ manager cases создают и изменяют группу/локацию ч�
 ## Установка и границы приёмки
 
 Source проверки не заменяют production build, проверку собранного образа и rollout.
-На момент этого source-отчёта review UI остаётся **81d065a**, API **37bb436**;
-APK/Tuna/OTA не обновляются для этого исправления. Установка нового UI и её
-результат должны быть записаны отдельным срезом после завершения image checks.
+До установки этого этапа review UI был **81d065a**, API **37bb436**.
+APK/Tuna/OTA не обновляются для этого исправления. Новый UI и его результат
+зафиксированы отдельным срезом в разделе ниже после завершения image checks.
 
 Fresh browser acceptance остаётся **OPEN_URL_POLICY_BLOCKED**. Остальные формы,
 экономичная JPEG-матрица, XPath, качество/latency видео, OTA reconciliation и
@@ -100,3 +100,29 @@ Fresh browser acceptance остаётся **OPEN_URL_POLICY_BLOCKED**. Оста�
 [Текущее состояние](../../operations/CURRENT-STATE.md) ·
 [История исправлений](../2026-10-01/WEB-AUDIT-REMEDIATION.md) ·
 [Readiness](../../operations/READINESS.md).
+
+
+## Приёмка установленного UI
+
+UI **922f479** установлен **4 октября 2026, 02:03 UTC+5**; проверка завершена **4 октября 2026, 02:04 UTC+5**.
+Production standalone образ собран из git archive. В builder повторены 107 наборов /
+1013 тестов; подключались только архивные tests, исходники приложения не подменялись.
+89 связанных проверок прошли и в существующем API **37bb436**, без backend source mount.
+
+Семь срезов сохранили те же 14 online APK 10244, heartbeat <60 с и даты соединений
+до установки. 15 соседних контейнеров, API/Tuna и каталог OTA сохранены.
+Подтверждены capabilities 200/no-store с ожидаемыми identity/permissions, anonymous 401,
+readiness и Prometheus up=1. CI исходников 922f479: Preview — success; Frontend — success; Android — success; Backend — success.
+
+Живое API подтвердило одну owned группу и пустой каталог локаций; метаданные
+до/после установки совпадают. Живые операции create/edit/delete не отправлялись;
+карточка локации в этом runtime не открывалась из-за пустого каталога.
+Положительные/отрицательные записи проверены в disposable PostgreSQL/Redis.
+
+Это API/JSDOM/image acceptance. Визуальная приёмка остаётся OPEN_URL_POLICY_BLOCKED.
+Конечные срезы не доказывают непрерывный uptime; прежний неудачный N10 gate сохранён.
+[Публичное evidence](ORGANIZATION-ACTION-PERMISSIONS-EVIDENCE.json).
+
+Сверены 12 изменённых документов, 817 относительных ссылок/якорей и два JSON.
+`git diff --check` прошёл, исходный frozen audit сохранён. OpenAPI остаётся
+176 операций / 138 путей; каталог API не заменяет приёмку всех операций.

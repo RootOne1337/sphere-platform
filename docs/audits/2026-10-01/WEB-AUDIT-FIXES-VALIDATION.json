@@ -5915,5 +5915,16 @@
     "cohort": 14,
     "status": "F39_PARTIAL_INSTALLED_REGISTRY",
     "evidence": "../2026-10-04/DEVICE-ACTION-PERMISSIONS-EVIDENCE.json"
+  },
+  "latestOrganizationPermissionFollowup": {
+    "observedAt": "2026-10-03T21:04:49.352982+00:00",
+    "uiSource": "922f479d29d5eee833e8b66ddfc4aea2401e0e9d",
+    "apiSource": "37bb436ae5fb9f27eda6c7549bb46a83bf3df510",
+    "frontendImagePassed": 1013,
+    "apiImagePassed": 89,
+    "beforeFailures": 16,
+    "cohort": 14,
+    "status": "F39_PARTIAL_INSTALLED_GROUP_LOCATION_FORMS",
+    "evidence": "../2026-10-04/ORGANIZATION-ACTION-PERMISSIONS-EVIDENCE.json"
   }
 }
