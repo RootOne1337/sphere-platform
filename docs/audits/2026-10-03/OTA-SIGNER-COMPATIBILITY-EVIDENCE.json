@@ -1,0 +1,112 @@
+{
+  "finding": "N08",
+  "related_finding": "F33",
+  "source_baseline": "b39676e3e9aa416e396ce2b3d51d21f9b37141c2",
+  "native_10241_to_10242": {
+    "startedAt": "2026-10-03T13:46:05.231032+00:00",
+    "targetVersionCode": 10242,
+    "artifactSha256": "f99d166f6b6e33ff29e4723d7d3751faa88d8651e5688404f037e7480e843f78",
+    "sequential": true,
+    "automaticRetry": false,
+    "normalChannelPromoted": false,
+    "hostAdbUsed": false,
+    "dataCleared": false,
+    "preflightDevices": 1,
+    "outcomes": [
+      {
+        "deviceId": "4815b950-e5cf-4686-9d46-42d0df8d41f7",
+        "name": "auto-ph-028",
+        "beforeVersionCode": 10241,
+        "intentRecordedAt": "2026-10-03T13:46:05.231032+00:00",
+        "status": "terminal_failed",
+        "attempts": 1,
+        "commandId": "84ef644a-0282-4e21-9d12-105a56b34cbc",
+        "deliveryHint": "wake_published",
+        "grantCreatedAt": 1791035165,
+        "lastReadback": {
+          "observedAt": "2026-10-03T13:46:05.322472+00:00",
+          "state": "active",
+          "versionCode": 10241,
+          "deviceStatus": "online"
+        },
+        "terminalReceipt": {
+          "command_id": "84ef644a-0282-4e21-9d12-105a56b34cbc",
+          "sha256": "f99d166f6b6e33ff29e4723d7d3751faa88d8651e5688404f037e7480e843f78",
+          "version_name": "1.2.42-dev",
+          "version_code": 10242,
+          "status": "failed",
+          "failure_code": "ota_signer_unavailable",
+          "installed_version_code": null,
+          "recovered_after_process_restart": false,
+          "recorded_at": "2026-10-03T13:46:07.612815+00:00"
+        },
+        "stoppedRemainingTargets": true
+      }
+    ],
+    "finishedAt": "2026-10-03T13:46:10.382250+00:00",
+    "completedDevices": 0,
+    "catalogTotal": 19,
+    "onlineVersions": {
+      "1.2.41-dev": 14
+    },
+    "releaseCatalogUnchanged": true
+  },
+  "before_tests": {
+    "observed_at": "2026-10-03T14:01:57.098346+00:00",
+    "phase": "before-repaired",
+    "exit_code": 1,
+    "tests": {
+      "Dev": {
+        "tests": 10,
+        "failures": 4,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    "source_head": "b39676e3e9aa416e396ce2b3d51d21f9b37141c2",
+    "verifier_sha256": "01f3f142235117ba9abcabc694828873d4f10dc4e14a9400e52e433dd67efefe",
+    "log_sha256": "3b7e609c9db2aa97456b33fc32a1fa160fc500dbabbfda50b08adb32284fb6c8",
+    "network_mode": "Gradle offline",
+    "device_commands": false,
+    "native_codec_acceptance": false
+  },
+  "after_tests": {
+    "observed_at": "2026-10-03T14:10:17.026864+00:00",
+    "phase": "after",
+    "exit_code": 0,
+    "tests": {
+      "Dev": {
+        "tests": 10,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    "source_head": "b39676e3e9aa416e396ce2b3d51d21f9b37141c2",
+    "verifier_sha256": "950914104b93c46afd3ad9ecc85d944a134814c68032d1592df582f88406ab9e",
+    "log_sha256": "b9bf261887c359473c0cb9e6dc998f2bc25b62489d7db2cd53742c533b742f53",
+    "network_mode": "Gradle offline",
+    "device_commands": false,
+    "native_codec_acceptance": false
+  },
+  "initial_compilation_attempt_excluded_from_test_proof": true,
+  "sdk": 28,
+  "candidate_signer_matches_installed_baseline": true,
+  "candidate_and_installed_signing_info_null_attribution": "not yet established by native instrumentation",
+  "local_format_probe": {
+    "archives": [
+      10241,
+      10242
+    ],
+    "accepted": true,
+    "cryptographic_verification": false
+  },
+  "fallback_policy_sha256": "c5a171d6be595a512087538c57737aeaf707843513559806cc9813351ec20d34",
+  "prepared_version_code": 10243,
+  "full_build_at_source_commit": "pending",
+  "native_fixed_guard_acceptance": false,
+  "normal_channel_promoted": false,
+  "host_adb_used": false,
+  "source_fixed_count": 33,
+  "open_count": 8
+}

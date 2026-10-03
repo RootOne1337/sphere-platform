@@ -440,3 +440,18 @@ readbacks:14online10241, unchanged epochs, heartbeat <30 s.13 соседних �
 ещё требует следующего live upgrade. F33 остаётся PARTIAL, fixed-count33 не увеличен.
 [Отчёт](../2026-10-03/OTA-RELEASE-IDENTITY.md) ·
 [Контракт](../../operations/OTA-PUBLICATION-AND-APK-CHECKS.md).
+
+## N07/N08 — ABR recovery и native OTA canary,3 октября
+
+ABR b39676e:6 воспроизведённых failures→15passed;10242 full build821passed/1skip
+на flavor, GitHub source checks passed. Managed canary10242 опубликован,
+но PH02810241→10242 отказал `ota_signer_unavailable`:0 установок, rollout остановлен.
+Сертификат/installed exact hash проверены. Native guard10241 пока не принят.
+
+N08 candidate10243: modern current signer authoritative; missing SigningInfo
+может использовать legacy лишь для bounded v2-only candidate/installed archives.
+Rotation/unknown/malformed остаются fail-closed.10 targeted cases:6pass/4fail
+до изменения→10pass после. Full build/native next-upgrade ещё OPEN.
+[ABR report](../2026-10-03/STREAM-BITRATE-RECOVERY.md) ·
+[Signer report/evidence](../2026-10-03/OTA-SIGNER-COMPATIBILITY.md).
+33 source-fixed/8OPEN, F33 PARTIAL/F36 OPEN сохранены.

@@ -30,7 +30,8 @@ class OtaApkVerifierTest {
     private val payload = OtaUpdatePayload("https://management.test/update.apk", "next", "a".repeat(64), 101)
     private lateinit var installed: PackageInfo
     private lateinit var candidate: PackageInfo
-    private val flags get() = if (Build.VERSION.SDK_INT >= 28) PackageManager.GET_SIGNING_CERTIFICATES
+    private val flags get() = if (Build.VERSION.SDK_INT >= 28)
+                                 PackageManager.GET_SIGNING_CERTIFICATES or PackageManager.GET_SIGNATURES
                               else PackageManager.GET_SIGNATURES
 
     @Before fun setup() {

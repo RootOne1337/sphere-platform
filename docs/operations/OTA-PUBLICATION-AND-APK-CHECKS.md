@@ -61,7 +61,7 @@ durable reconciliation между вкладками и после reload ост
 установки записью каталога. `release-publication.test.tsx` проверяет эти переходы
 в JSDOM; визуальная, mobile и keyboard приёмка от этого не считаются выполненными.
 
-## Android 1.2.41: проверка перед установкой
+## Android 1.2.41 и кандидат1.2.43: проверка перед установкой
 
 Оба пути (`pm install` через root и `PackageInstaller`) проходят один общий guard
 после скачивания и SHA-256, до побочного эффекта установки. `PackageManager` читает
@@ -70,7 +70,12 @@ packageName, versionCode и versionName предложения, поддержи
 более новая версия относительно установленного пакета. `force` не разрешает
 downgrade или повтор той же версии.
 
-На Android 26–27 используется `GET_SIGNATURES`, на28+ — `GET_SIGNING_CERTIFICATES`.
+На Android26–27 используется GET_SIGNATURES. Guard10241 на28+ запрашивает
+только GET_SIGNING_CERTIFICATES; live PH02810241→10242 отказал signer_unavailable.
+Кандидат10243 запрашивает оба флага: современный current ответ authoritative,
+missing SigningInfo допускает legacy лишь после bounded v2-only format gate
+отдельно для candidate/installed файла. V3/rotation/unknown и malformed files
+этим fallback не допускаются. [Подробное доказательство N08](../audits/2026-10-03/OTA-SIGNER-COMPATIBILITY.md).
 Непустой набор **текущих** сертификатов должен совпадать полностью, включая все
 подписи для multi-signer APK. Перестановка подписей не меняет идентичность.
 Поддержка ротации ключей здесь намеренно закрыта: общий предок не доказывает
@@ -114,8 +119,8 @@ UI 77fca37/API facba9a установлены на [3015/updates](http://127.0.0
 вне этой волны. [Отчёт, tests и ограничения](../audits/2026-10-03/OTA-RELEASE-IDENTITY.md) ·
 [Evidence JSON](../audits/2026-10-03/OTA-RELEASE-IDENTITY-EVIDENCE.json).
 
-10240 installer исполнял upgrade до 10241. Live проверка нового10241 guard
-перед следующим upgrade ещё OPEN. Normal/android-dev10209 не изменён;
+10240 installer исполнял upgrade до 10241. Live10241→10242 canary получен: terminal failed signer_unavailable,0 установок.
+Native исправленного10243 guard ещё OPEN; scoped recovery не заменяет normal OTA proof. Normal/android-dev10209 не изменён;
 finite14-device observation не является stable/global promotion или FPS/soak proof.
 Полный backend CI2381 passed/16 skipped завершил tests, но остановился на stale
 OpenAPI; generated schema repair 5bb36ca прошёл exportercheck в shipped image.
