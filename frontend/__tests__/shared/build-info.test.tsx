@@ -3,6 +3,12 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { formatBuildRevision, hasBuildRevisionMismatch } from '@/src/shared/buildInfo';
 import { BuildProvenance } from '@/src/shared/ui/BuildProvenance';
 
+jest.mock('@/src/shared/buildInfo', () => ({
+  ...jest.requireActual('@/src/shared/buildInfo'),
+  FRONTEND_BUILD_SHA: '7c4d9cb6e9876543210abcdef1234567890abcde',
+  FRONTEND_BUILD_REVISION: '7c4d9cb6',
+}));
+
 const originalFetch = global.fetch;
 
 afterEach(() => {
@@ -38,7 +44,8 @@ describe('build provenance', () => {
     render(<QueryClientProvider client={client}><BuildProvenance /></QueryClientProvider>);
 
     await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('API 7c4d9cb6'));
-    expect(screen.getByRole('status')).toHaveTextContent('WEB unknown');
+    expect(screen.getByRole('status')).toHaveTextContent('WEB 7c4d9cb6');
+    expect(screen.getByRole('status')).not.toHaveTextContent('MISMATCH');
     expect(fetchMock).toHaveBeenCalledWith('/api/v1/health/build', expect.objectContaining({ cache: 'no-store' }));
     client.clear();
   });
@@ -53,10 +60,26 @@ describe('build provenance', () => {
     render(<QueryClientProvider client={client}><BuildProvenance /></QueryClientProvider>);
 
     const stamp = await screen.findByRole('status');
-    await waitFor(() => expect(stamp).toHaveTextContent('W:unknown A:7c4d9cb6'));
+    await waitFor(() => expect(stamp).toHaveTextContent('W:7c4d9cb6 A:7c4d9cb6'));
     expect(stamp).toHaveClass('flex');
     expect(stamp).not.toHaveClass('hidden');
     expect(stamp).toHaveAttribute('title', expect.stringContaining('Backend commit: 7c4d9cb6'));
+    client.clear();
+  });
+
+  it('warns when known frontend and backend revisions differ', async () => {
+    mockFetch(async () => ({
+      ok: true,
+      json: async () => ({ service: 'backend-api', revision: 'c51f4c3a1234567890abcdef1234567890abcdef' }),
+    } as Response));
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(<QueryClientProvider client={client}><BuildProvenance /></QueryClientProvider>);
+
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('API c51f4c3a'));
+    expect(screen.getByRole('status')).toHaveTextContent('WEB 7c4d9cb6');
+    expect(screen.getByRole('status')).toHaveTextContent('MISMATCH');
+    expect(screen.getByRole('status')).toHaveAttribute('aria-label', expect.stringContaining('revisions mismatch'));
+    expect(screen.getByRole('status')).toHaveAttribute('title', expect.stringContaining('different commits'));
     client.clear();
   });
 
