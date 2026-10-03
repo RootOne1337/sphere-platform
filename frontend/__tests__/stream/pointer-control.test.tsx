@@ -59,8 +59,8 @@ beforeEach(() => {
   });
 });
 
-function readyGestureFixture(enableStaticInput = false) {
-  const view = render(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput={enableStaticInput} />);
+function readyGestureFixture(enableStaticInput = false, readOnly = false) {
+  const view = render(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput={enableStaticInput} readOnly={readOnly} />);
   act(() => jest.advanceTimersByTime(0));
   const socket = MockSocket.instances[0];
   socket.readyState = MockSocket.OPEN;
@@ -78,6 +78,24 @@ function readyGestureFixture(enableStaticInput = false) {
   const up = (pointerId: number, clientX = 50) => fireEvent.pointerUp(canvas, { clientX, clientY: 50, pointerId, button: 0 });
   return { ...view, canvas, socket, commands, down, up };
 }
+
+it('read-only viewers render a picture without dispatching taps or swipes, including static frames', () => {
+  const { canvas, commands, down, up } = readyGestureFixture(true, true);
+  expect(canvas.width).toBe(1280);
+  expect(canvas).toHaveAttribute('aria-disabled', 'true');
+  down(1); up(1); down(2); up(2, 65);
+  act(() => jest.advanceTimersByTime(10_000));
+  down(3); up(3);
+  expect(commands()).toEqual([]);
+});
+
+it('revoking control cancels a gesture already held over the picture', () => {
+  const view = readyGestureFixture(true);
+  view.down(1);
+  view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput readOnly />);
+  view.up(1);
+  expect(view.commands()).toEqual([]);
+});
 
 it('single-device static input accepts a new tap and swipe without inventing a fresh picture', () => {
   const { canvas, commands, down, up } = readyGestureFixture(true);

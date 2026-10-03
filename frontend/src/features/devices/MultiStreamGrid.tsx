@@ -136,7 +136,7 @@ export function MultiStreamGrid({ devices, selectedIds, onClose }: MultiStreamGr
                         >
                             {broadcastActive && reachable ? (
                                 /* Реальный видео-стрим через WebSocket H.264 */
-                                <DeviceStream deviceId={device.id} fit={objectFit} />
+                                <DeviceStream readOnly deviceId={device.id} fit={objectFit} />
                             ) : reachable ? (
                                 /* Онлайн, но стрим не включён — показываем готовность */
                                 <div className="flex flex-col items-center justify-center text-muted-foreground gap-2">

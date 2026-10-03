@@ -8,11 +8,14 @@ import { useCommandPaletteStore } from "./commandPaletteStore";
 import { ThemeSwitcherModal } from "@/src/features/settings/ThemeSwitcherModal";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { SPHERE_NAV_GROUPS } from "./navigationCatalog";
+import { useCapabilities } from '@/src/features/access/Capabilities';
 
 const ITEM_CLASS = "mb-1 flex min-h-10 cursor-pointer items-center rounded-lg px-3 text-sm text-foreground transition-colors hover:bg-muted aria-selected:bg-primary/10 aria-selected:text-primary motion-reduce:transition-none";
 const GROUP_CLASS = "px-2 py-1 text-xs font-medium text-muted-foreground [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-2 [&_[cmdk-group-heading]]:font-semibold";
 
 export function GlobalCommandPalette() {
+    const access = useCapabilities();
+    const groups = SPHERE_NAV_GROUPS.map(group => ({ ...group, items: group.items.filter(item => access.canAccessRoute(item.href)) })).filter(group => group.items.length > 0);
     const router = useRouter();
     const { isOpen, toggle, close } = useCommandPaletteStore();
     const [activeMenu, setActiveMenu] = React.useState<"main" | "themes">("main");
@@ -110,7 +113,7 @@ export function GlobalCommandPalette() {
                                 Ничего не найдено. Попробуйте изменить запрос.
                             </Command.Empty>
 
-                            {SPHERE_NAV_GROUPS.map((group) => (
+                            {groups.map((group) => (
                                 <Command.Group key={group.label} heading={group.label} className={GROUP_CLASS}>
                                     {group.items.map(({ href, label, icon: Icon }) => (
                                         <Command.Item key={href} value={href} keywords={[label, group.label, href, href === '/devices' ? 'Реестр устройств' : href === '/dashboard' ? 'Обзор парка' : '']} onSelect={() => { router.push(href); close(); }} className={ITEM_CLASS}>
@@ -127,12 +130,12 @@ export function GlobalCommandPalette() {
                             </Command.Group>
 
                             <Command.Group heading="Быстрые действия" className={`${GROUP_CLASS} mt-2`}>
-                                <Command.Item onSelect={() => { router.push("/vpn"); close(); }} className={ITEM_CLASS}>
+                                {access.canAccessRoute('/vpn') && <Command.Item onSelect={() => { router.push("/vpn"); close(); }} className={ITEM_CLASS}>
                                     <Wifi className="mr-3 h-4 w-4" aria-hidden="true" />Открыть мониторинг VPN
-                                </Command.Item>
-                                <Command.Item onSelect={() => { router.push("/scripts/builder"); close(); }} className={ITEM_CLASS}>
+                                </Command.Item>}
+                                {access.canAccessRoute('/scripts/builder') && <Command.Item onSelect={() => { router.push("/scripts/builder"); close(); }} className={ITEM_CLASS}>
                                     <Code2 className="mr-3 h-4 w-4" aria-hidden="true" />Открыть конструктор скриптов
-                                </Command.Item>
+                                </Command.Item>}
                             </Command.Group>
                         </Command.List>
                         <div className="flex h-10 shrink-0 items-center justify-between border-t border-border px-4 text-[11px] text-muted-foreground">

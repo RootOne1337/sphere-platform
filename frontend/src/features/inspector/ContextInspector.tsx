@@ -6,6 +6,7 @@ import * as Dialog from '@radix-ui/react-dialog';
 import { X } from 'lucide-react';
 import { useInspectorStore } from './inspectorStore';
 import { DeviceInspectorDetail } from '@/src/features/devices/DeviceInspectorDetail';
+import { RouteAccessBoundary } from '@/src/features/access/Capabilities';
 
 export function ContextInspector() {
   const { isOpen, contentType, contentId, closeInspector } = useInspectorStore();
@@ -38,7 +39,7 @@ export function ContextInspector() {
         }}>
         <header className="flex items-start justify-between gap-4 border-b border-border p-4 sm:px-6"><div className="min-w-0"><Dialog.Title className="font-semibold">{contentType === 'device' ? 'Устройство' : contentType === 'task' ? 'Задание' : contentType === 'script' ? 'Скрипт' : 'Инспектор'}</Dialog.Title><Dialog.Description className="mt-1 break-all font-mono text-xs text-muted-foreground">{contentId || 'Выберите запись'}</Dialog.Description></div><Dialog.Close aria-label="Закрыть инспектор" className="shrink-0 rounded-lg p-2 text-muted-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"><X className="h-4 w-4" aria-hidden /></Dialog.Close></header>
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6">
-          {contentType === 'device' && contentId ? <DeviceInspectorDetail key={contentId} deviceId={contentId} /> : <p className="text-sm text-muted-foreground">Данные этой панели пока недоступны.</p>}
+          {contentType === 'device' && contentId ? <RouteAccessBoundary pathname="/devices"><DeviceInspectorDetail key={contentId} deviceId={contentId} /></RouteAccessBoundary> : <p className="text-sm text-muted-foreground">Данные этой панели пока недоступны.</p>}
         </div>
       </Dialog.Content>
     </Dialog.Portal>

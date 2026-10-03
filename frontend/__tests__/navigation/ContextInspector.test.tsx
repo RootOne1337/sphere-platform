@@ -3,6 +3,7 @@ import { ContextInspector } from '@/src/features/inspector/ContextInspector';
 import { useInspectorStore } from '@/src/features/inspector/inspectorStore';
 
 jest.mock('@/src/features/devices/DeviceInspectorDetail', () => ({ DeviceInspectorDetail: () => null }));
+jest.mock('@/src/features/access/Capabilities', () => ({ RouteAccessBoundary: ({ children }: { children: React.ReactNode }) => children }));
 let mockPath = '/devices';
 jest.mock('next/navigation', () => ({ usePathname: () => mockPath }));
 

@@ -18,6 +18,7 @@ import { LogcatViewer } from './LogcatViewer';
 import { RunScriptTab } from './RunScriptTab';
 import { DEVICE_COMMAND_TIMEOUT } from './interactiveResult';
 import { DeviceDiagnosticsPanel, DeviceHistoryPanel, DeviceSavedLogsPanel, Metric, utcTime } from './DeviceOperationsPanels';
+import { useCapabilities } from '@/src/features/access/Capabilities';
 
 type View = 'summary' | 'tasks' | 'events' | 'diagnostics' | 'logs' | 'stream' | 'terminal' | 'logcat' | 'script';
 const VIEWS = [['summary', 'Обзор'], ['tasks', 'Задачи'], ['events', 'События'], ['diagnostics', 'Видео'], ['logs', 'Логи APK']] as const;
@@ -34,6 +35,9 @@ function elapsed(value: unknown): string {
 }
 
 export function DeviceInspectorDetail({ deviceId, fullPage = false }: { deviceId: string; fullPage?: boolean }) {
+  const access = useCapabilities();
+  const canWrite = access.can('device:write');
+  const canViewStream = access.can('stream:read');
   const query = useDeviceSnapshot(deviceId);
   const device = query.data;
   const [view, setView] = useState<View>('summary');
@@ -43,7 +47,7 @@ export function DeviceInspectorDetail({ deviceId, fullPage = false }: { deviceId
   const isReachable = !!device && query.isFetchedAfterMount && !query.isError && Date.now() - query.dataUpdatedAt <= 45_000 && ['online', 'busy'].includes(device.status);
 
   const reboot = async () => {
-    if (!isReachable || commandLock.current) return;
+    if (!canWrite || !isReachable || commandLock.current) return;
     commandLock.current = true;
     setRebootPending(true);
     try {
@@ -75,10 +79,10 @@ export function DeviceInspectorDetail({ deviceId, fullPage = false }: { deviceId
       <TabsContent value="summary" className="mt-5 space-y-5">
         {!VIEWS.some(([key]) => key === view) ? <>
           <Button variant="outline" size="sm" onClick={() => setView('summary')}>Назад к обзору</Button>
-          {view === 'stream' && <div className="overflow-hidden rounded-xl border border-border bg-black"><DeviceStream deviceId={deviceId} enableDiagnostics enableScreenshot enableNavigation enableStaticInput /></div>}
-          {view === 'terminal' && <div className="h-[480px] min-w-0"><WebTerminal deviceId={deviceId} enabled={isReachable} /></div>}
-          {view === 'logcat' && <div className="h-[480px] min-w-0"><LogcatViewer deviceId={deviceId} enabled={isReachable} /></div>}
-          {view === 'script' && <RunScriptTab deviceId={deviceId} deviceName={device.name} isOnline={isReachable} onBack={() => setView('summary')} />}
+          {view === 'stream' && canViewStream && <div className="overflow-hidden rounded-xl border border-border bg-black"><DeviceStream deviceId={deviceId} enableDiagnostics enableScreenshot enableNavigation enableStaticInput readOnly={!access.can('stream:control')} /></div>}
+          {view === 'terminal' && canWrite && <div className="h-[480px] min-w-0"><WebTerminal deviceId={deviceId} enabled={isReachable} /></div>}
+          {view === 'logcat' && access.can('device:read') && <div className="h-[480px] min-w-0"><LogcatViewer deviceId={deviceId} enabled={isReachable} /></div>}
+          {view === 'script' && canWrite && <RunScriptTab deviceId={deviceId} deviceName={device.name} isOnline={isReachable} onBack={() => setView('summary')} />}
         </> : <>
           <dl className={`grid grid-cols-2 gap-3 ${fullPage ? 'lg:grid-cols-4' : ''}`}>
             <Metric label="Sphere Agent" value={device.agent_version ? `${device.agent_version}${device.agent_version_code ? ` / ${device.agent_version_code}` : ''}` : 'Версия не сообщена'} />
@@ -93,13 +97,14 @@ export function DeviceInspectorDetail({ deviceId, fullPage = false }: { deviceId
           <section aria-label="Управление устройством" className="space-y-3 rounded-xl border border-border p-4">
             <h4 className="text-sm font-semibold">Управление устройством</h4>
             <p className="text-xs text-muted-foreground">Статус heartbeat не гарантирует видеокадр или исполнение команды. Результат проверяется отдельно.</p>
+            {!canWrite && <p role="status" className="text-xs text-muted-foreground">Роль не разрешает терминал, shell-скрипты и перезагрузку. Просмотр доступен согласно правам API.</p>}
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-              <Button variant="outline" disabled={!isReachable} onClick={() => setView('stream')}><MonitorPlay className="mr-2 h-4 w-4" aria-hidden />Видеопоток</Button>
-              <Button variant="outline" disabled={!isReachable} onClick={() => setView('terminal')}><Terminal className="mr-2 h-4 w-4" aria-hidden />Терминал</Button>
-              <Button variant="outline" disabled={!isReachable} onClick={() => setView('logcat')}><FileText className="mr-2 h-4 w-4" aria-hidden />Logcat</Button>
-              <Button variant="outline" disabled={!isReachable} onClick={() => setView('script')}><Code2 className="mr-2 h-4 w-4" aria-hidden />Shell-скрипт</Button>
-              <Button variant="outline" disabled={!isReachable} onClick={() => setView('stream')}><Camera className="mr-2 h-4 w-4" aria-hidden />Снимок кадра</Button>
-              <Button variant="outline" disabled={!isReachable || rebootPending} onClick={() => setRebootOpen(true)}><RefreshCw className="mr-2 h-4 w-4" aria-hidden />Перезагрузка</Button>
+              <Button variant="outline" disabled={!isReachable || !canViewStream} onClick={() => setView('stream')}><MonitorPlay className="mr-2 h-4 w-4" aria-hidden />Видеопоток</Button>
+              <Button variant="outline" disabled={!isReachable || !canWrite} onClick={() => setView('terminal')}><Terminal className="mr-2 h-4 w-4" aria-hidden />Терминал</Button>
+              <Button variant="outline" disabled={!isReachable || !access.can('device:read')} onClick={() => setView('logcat')}><FileText className="mr-2 h-4 w-4" aria-hidden />Logcat</Button>
+              <Button variant="outline" disabled={!isReachable || !canWrite} onClick={() => setView('script')}><Code2 className="mr-2 h-4 w-4" aria-hidden />Shell-скрипт</Button>
+              <Button variant="outline" disabled={!isReachable || !canViewStream} onClick={() => setView('stream')}><Camera className="mr-2 h-4 w-4" aria-hidden />Снимок кадра</Button>
+              <Button variant="outline" disabled={!canWrite || !isReachable || rebootPending} onClick={() => setRebootOpen(true)}><RefreshCw className="mr-2 h-4 w-4" aria-hidden />Перезагрузка</Button>
             </div>
             {!isReachable && <p className="text-xs text-muted-foreground">Живые команды недоступны при этом состоянии. Сохранённые задачи, события и логи можно проверить во вкладках.</p>}
           </section>
@@ -120,6 +125,6 @@ export function DeviceInspectorDetail({ deviceId, fullPage = false }: { deviceId
       <TabsContent value="diagnostics" className="mt-5"><DeviceDiagnosticsPanel deviceId={deviceId} /></TabsContent>
       <TabsContent value="logs" className="mt-5"><DeviceSavedLogsPanel deviceId={deviceId} /></TabsContent>
     </Tabs>
-    <Dialog open={rebootOpen} onOpenChange={(open) => { if (!rebootPending) setRebootOpen(open); }}><DialogContent className="w-[calc(100%-2rem)] rounded-xl"><DialogHeader><DialogTitle>Перезагрузить «{device.name}»?</DialogTitle><DialogDescription>Android временно потеряет связь и остановит текущую работу. Принятие команды не подтверждает завершение перезагрузки.</DialogDescription></DialogHeader><DialogFooter><Button variant="outline" disabled={rebootPending} onClick={() => setRebootOpen(false)}>Отмена</Button><Button variant="destructive" disabled={!isReachable || rebootPending} onClick={() => { void reboot(); }}>{rebootPending ? 'Ожидаем ответ…' : 'Подтвердить перезагрузку'}</Button></DialogFooter></DialogContent></Dialog>
+    <Dialog open={rebootOpen} onOpenChange={(open) => { if (!rebootPending) setRebootOpen(open); }}><DialogContent className="w-[calc(100%-2rem)] rounded-xl"><DialogHeader><DialogTitle>Перезагрузить «{device.name}»?</DialogTitle><DialogDescription>Android временно потеряет связь и остановит текущую работу. Принятие команды не подтверждает завершение перезагрузки.</DialogDescription></DialogHeader><DialogFooter><Button variant="outline" disabled={rebootPending} onClick={() => setRebootOpen(false)}>Отмена</Button><Button variant="destructive" disabled={!canWrite || !isReachable || rebootPending} onClick={() => { void reboot(); }}>{rebootPending ? 'Ожидаем ответ…' : 'Подтвердить перезагрузку'}</Button></DialogFooter></DialogContent></Dialog>
   </div>;
 }

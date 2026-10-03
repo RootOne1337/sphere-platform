@@ -207,3 +207,26 @@ it('does not restore a cookie session after an explicit logout and remount', asy
   expect(refreshRequests).toHaveLength(0);
   expect(useAuthStore.getState().user).toBeNull();
 });
+
+it('refreshes expired access for a capability-only read and retries it once under the same session', async () => {
+  identify('a');
+  let count = 0;
+  api.defaults.adapter = async config => {
+    count++;
+    if (config.headers.Authorization !== 'Bearer rotated-a') throw unauthorized(config);
+    return response(config, { permissions: ['device:read'] });
+  };
+  const pending = api.get('/auth/capabilities');
+  await waitFor(() => expect(refreshRequests).toHaveLength(1));
+  refreshReply.resolve({ ...tokens('a'), access_token: 'rotated-a' });
+  expect((await pending).data).toEqual({ permissions: ['device:read'] });
+  expect(count).toBe(2);
+  expect(refreshRequests).toHaveLength(1);
+});
+
+it.each(['/auth/me', '/auth/login', '/auth/logout', '/auth/mfa/setup'])('does not replay any other auth operation %s', async path => {
+  identify('a');
+  api.defaults.adapter = async config => { throw unauthorized(config); };
+  await expect(api.get(path)).rejects.toBeInstanceOf(AxiosError);
+  expect(refreshRequests).toHaveLength(0);
+});

@@ -15,6 +15,8 @@ interface DeviceStreamProps {
   enableNavigation?: boolean;
   /** Single-device control only; frame age alone does not invalidate geometry. */
   enableStaticInput?: boolean;
+  /** Viewing a stream never implies authority to inject Android input. */
+  readOnly?: boolean;
   fit?: 'contain' | 'cover' | 'fill';
   onFrameDimensions?: (dimensions: StreamFrameDimensions) => void;
 }
@@ -72,6 +74,7 @@ export function DeviceStream({
   enableScreenshot = false,
   enableNavigation = false,
   enableStaticInput = false,
+  readOnly = false,
   fit,
   onFrameDimensions,
 }: DeviceStreamProps) {
@@ -104,12 +107,12 @@ export function DeviceStream({
   const currentFrameOwned = hasRenderedFrame && !streamError
     && wsRef.current?.readyState === WebSocket.OPEN
     && renderedSocketRef.current === wsRef.current;
-  const canInteract = currentFrameOwned && (connection === 'live'
+  const canInteract = !readOnly && currentFrameOwned && (connection === 'live'
     || (enableStaticInput && connection === 'stale'));
   const canSaveFrame = currentFrameOwned && connection === 'live';
   // Age is not a disconnect: an idle ImageReader can retain its last picture.
   // A new socket/decoder still needs its own first frame before accepting input.
-  const canNavigate = hasRenderedFrame && !streamError
+  const canNavigate = !readOnly && hasRenderedFrame && !streamError
     && (connection === 'live' || connection === 'stale')
     && renderedSocketRef.current === wsRef.current;
   const onFrameDimensionsRef = useRef(onFrameDimensions);
@@ -487,6 +490,7 @@ export function DeviceStream({
 
   return (
     <div className={fit ? 'flex h-full w-full min-h-0 min-w-0 flex-col' : 'min-w-0'}>
+    {readOnly && enableNavigation && <p role="status" className="border-b border-border bg-muted px-3 py-2 text-xs text-muted-foreground">Только просмотр · роль не разрешает клики, жесты и навигацию Android.</p>}
     <div className={fit ? `relative w-full min-h-0 min-w-0 flex-1${enableNavigation ? '' : ' h-full'}` : 'relative'}>
     <canvas
       ref={canvasRef}
@@ -494,7 +498,7 @@ export function DeviceStream({
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerCancel}
       onLostPointerCapture={handlePointerCancel}
-      aria-label={canInteract
+      aria-label={readOnly ? 'Экран устройства: только просмотр, управление запрещено для вашей роли' : canInteract
         ? connection === 'stale' ? 'Экран устройства: управление по последнему кадру' : 'Экран устройства: свежий видеопоток'
         : 'Экран устройства: управление доступно после получения свежего видеокадра'}
       aria-disabled={!canInteract}
@@ -576,7 +580,7 @@ export function DeviceStream({
                 <div>Последний Android heartbeat: {formatIsoTimestampAgo(agentDiagnostics?.last_heartbeat)}</div>
                 {agentDiagnostics?.diagnostics ? (() => {
                   const t = agentDiagnostics.diagnostics.telemetry;
-                  return (
+  return (
                     <div className="mt-1 grid grid-cols-2 gap-x-3">
                       <span>Capture FPS: {t.capture_fps ?? '—'}</span>
                       <span>Surface FPS: {t.render_fps ?? '—'}</span>

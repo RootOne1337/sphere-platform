@@ -7,6 +7,9 @@ import { DeviceHistoryPanel, validateDeviceHistory, validateDeviceDiagnostics, v
 import { validateDeviceSnapshot } from '@/lib/hooks/useDeviceSnapshot';
 import { toast } from 'sonner';
 
+let mockCan = (_permission: string) => true;
+jest.mock('@/src/features/access/Capabilities', () => ({ useCapabilities: () => ({ can: (permission: string) => mockCan(permission) }) }));
+
 jest.mock('@/lib/api', () => ({ api: { get: jest.fn(), post: jest.fn() } }));
 jest.mock('sonner', () => ({ toast: { success: jest.fn(), error: jest.fn() } }));
 jest.mock('@/components/sphere/DeviceStream', () => ({ DeviceStream: () => <div>Fixture stream</div> }));
@@ -16,7 +19,8 @@ jest.mock('@/src/features/devices/RunScriptTab', () => ({ RunScriptTab: () => nu
 const mockGet = api.get as jest.Mock;
 const mockPost = api.post as jest.Mock;
 const device = { id: 'dev-1', name: 'Remote A', status: 'busy', agent_version: '1.2.34', agent_version_code: 10234, last_seen: '2026-09-30T01:02:03Z' };
-beforeEach(() => { jest.clearAllMocks(); mockGet.mockResolvedValue({ data: device }); });
+beforeEach(() => {
+  mockCan = () => true; jest.clearAllMocks(); mockGet.mockResolvedValue({ data: device }); });
 
 it('fetches by ID, permits a busy agent and distinguishes contact from missing heartbeat', async () => {
   render(<DeviceInspectorDetail deviceId="dev-1" />, { wrapper: createWrapper() });
@@ -109,4 +113,17 @@ it('validates device identity and separates missing metadata from zero counters'
   expect(() => validateDeviceDiagnostics({ device_id: 'other', state: 'active_report' }, 'dev-1')).toThrow();
   expect(() => validateDeviceLogs({ device_id: 'other', lines: [] }, 'dev-1')).toThrow();
   expect(validateDeviceSnapshot({ ...device, status: 'future_status', battery_level: 0 }, 'dev-1')).toMatchObject({ status: 'unknown', battery_level: 0 });
+});
+
+
+it('keeps a viewer card readable while disabling root mutations and reboot', async () => {
+  mockCan = permission => permission === 'device:read' || permission === 'stream:read';
+  render(<DeviceInspectorDetail deviceId="dev-1" />, { wrapper: createWrapper() });
+  await screen.findByText('Remote A');
+  expect(screen.getByRole('button', { name: 'Видеопоток' })).toBeEnabled();
+  for (const name of ['Перезагрузка', 'Терминал', 'Shell-скрипт']) {
+    expect(screen.getByRole('button', { name })).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name }));
+  }
+  expect(mockPost).not.toHaveBeenCalled();
 });

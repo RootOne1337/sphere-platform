@@ -27,7 +27,13 @@ api.interceptors.response.use(
     const original = error.config as SessionRequest | undefined;
     if (!original) throw error;
     assertSession(original._sessionVersion!);
-    if (error.response?.status !== 401 || original._retry || original.url?.includes('/auth/')) throw error;
+    // Capability polling is an ordinary idempotent protected read. It must be
+    // able to rotate expired access, even when no private feature is mounted.
+    // Login, logout, MFA and every other auth operation remain non-replayed.
+    const capabilityRead = original.method?.toLowerCase() === 'get'
+      && original.url?.split('?')[0] === '/auth/capabilities';
+    if (error.response?.status !== 401 || original._retry
+      || (original.url?.includes('/auth/') && !capabilityRead)) throw error;
     original._retry = true;
     const current = useAuthStore.getState().accessToken;
     // Another request may already have rotated this same session's token.

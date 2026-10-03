@@ -373,6 +373,7 @@ export default function FleetStreamPage() {
                   >
                     {isActive && reachable ? (
                       <DeviceStream
+                        readOnly
                         deviceId={device.id}
                         fit="contain"
                         enableDiagnostics

@@ -5,6 +5,10 @@ import { SPHERE_NAV_GROUPS } from '@/src/features/navigation/navigationCatalog';
 import userEvent from '@testing-library/user-event';
 
 const mockPush = jest.fn();
+let mockCanAccessRoute = (_path: string) => true;
+jest.mock('@/src/features/access/Capabilities', () => ({
+  useCapabilities: () => ({ canAccessRoute: (path: string) => mockCanAccessRoute(path) }),
+}), { virtual: true });
 jest.mock('next/navigation', () => ({ useRouter: () => ({ push: mockPush }) }));
 
 describe('GlobalCommandPalette', () => {
@@ -18,8 +22,21 @@ describe('GlobalCommandPalette', () => {
   });
 
   beforeEach(() => {
+    mockCanAccessRoute = () => true;
     useCommandPaletteStore.getState().close();
     mockPush.mockReset();
+  });
+
+  it('removes denied routes and quick actions while preserving appearance settings', async () => {
+    mockCanAccessRoute = path => path === '/devices' || path === '/settings';
+    render(<GlobalCommandPalette />);
+    await act(async () => useCommandPaletteStore.getState().open());
+    expect(screen.queryByRole('option', { name: 'Пользователи' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('option', { name: 'Открыть мониторинг VPN' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('option', { name: 'Открыть конструктор скриптов' })).not.toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Тема и плотность интерфейса' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('option', { name: 'Реестр устройств' }));
+    expect(mockPush).toHaveBeenLastCalledWith('/devices');
   });
 
   it('opens from the keyboard shortcut, navigates, then closes', async () => {

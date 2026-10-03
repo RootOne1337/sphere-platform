@@ -10,6 +10,7 @@ import { useUIStore } from "@/src/shared/store/useUIStore";
 import { Button } from "@/src/shared/ui/button";
 import { LogOut, Settings, X } from "lucide-react";
 import { SPHERE_NAV_GROUPS } from "./navigationCatalog";
+import { useCapabilities } from '@/src/features/access/Capabilities';
 
 
 
@@ -20,6 +21,8 @@ interface NOCSidebarProps {
 }
 
 export function NOCSidebar({ onOpenAppearance, isMobileOpen = false, onMobileClose }: NOCSidebarProps) {
+    const access = useCapabilities();
+    const groups = SPHERE_NAV_GROUPS.map(group => ({ ...group, items: group.items.filter(item => access.canAccessRoute(item.href)) })).filter(group => group.items.length > 0);
     const pathname = usePathname();
     const router = useRouter();
     const [isExpanded, setIsExpanded] = useState(true);
@@ -66,7 +69,7 @@ export function NOCSidebar({ onOpenAppearance, isMobileOpen = false, onMobileClo
             >
                 {!isDesktop && <DialogPrimitive.Title className="sr-only">Меню навигации Sphere</DialogPrimitive.Title>}
                 <div className={cn("flex h-[76px] shrink-0 items-center border-b border-border", showLabels ? "justify-between px-5" : "justify-center px-3")}>
-                    <Link href="/dashboard" onClick={handleNavClick} aria-label="Sphere — главная" className="flex min-w-0 items-center gap-3 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                    <Link href={access.canAccessRoute('/dashboard') ? '/dashboard' : '/settings'} onClick={handleNavClick} aria-label="Sphere — главная" className="flex min-w-0 items-center gap-3 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-base font-bold text-primary-foreground shadow-sm">S</span>
                         {showLabels && (
                             <span className="min-w-0">
@@ -83,7 +86,7 @@ export function NOCSidebar({ onOpenAppearance, isMobileOpen = false, onMobileClo
                 </div>
 
                 <nav aria-label="Основная навигация" className="custom-scrollbar flex-1 space-y-5 overflow-x-hidden overflow-y-auto px-3 py-5">
-                    {SPHERE_NAV_GROUPS.map(({ label: groupLabel, items }) => (
+                    {groups.map(({ label: groupLabel, items }) => (
                         <div key={groupLabel} role="group" aria-label={groupLabel} className="space-y-1">
                             {showLabels && <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">{groupLabel}</p>}
                             {items.map(({ href, label, icon: Icon }) => {

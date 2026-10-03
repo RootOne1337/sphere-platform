@@ -23,6 +23,10 @@ jest.mock('next/navigation', () => ({
 }));
 
 jest.mock('@/lib/store', () => ({ signOut: jest.fn() }));
+let mockCanAccessRoute = (_path: string) => true;
+jest.mock('@/src/features/access/Capabilities', () => ({
+  useCapabilities: () => ({ canAccessRoute: (path: string) => mockCanAccessRoute(path) }),
+}), { virtual: true });
 
 const EXPECTED_ROUTES = [
   '/dashboard', '/monitoring', '/devices', '/stream', '/discovery', '/groups', '/locations',
@@ -31,7 +35,16 @@ const EXPECTED_ROUTES = [
   '/users', '/audit', '/logs', '/updates', '/settings',
 ];
 
+it('filters administrative links and empty groups using current server capabilities', () => {
+  mockCanAccessRoute = path => path === '/devices' || path === '/settings';
+  render(<NOCSidebar />);
+  expect(screen.queryByRole('link', { name: 'Пользователи' })).not.toBeInTheDocument();
+  expect(screen.queryByRole('group', { name: 'Автоматизация' })).not.toBeInTheDocument();
+  expect(screen.getByRole('link', { name: 'Парк устройств' })).toBeInTheDocument();
+});
+
 beforeEach(() => {
+  mockCanAccessRoute = () => true;
   jest.clearAllMocks();
   mockPathname = '/devices/device-123';
   useUIStore.setState({ sidebarExpanded: true });

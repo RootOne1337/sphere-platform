@@ -15,6 +15,7 @@ import { useThemeStore } from '@/src/shared/store/themeStore';
 import { Button } from '@/src/shared/ui/button';
 import { BuildProvenance } from '@/src/shared/ui/BuildProvenance';
 import { FleetConnectionStatus } from '@/src/shared/ui/FleetConnectionStatus';
+import { CapabilitiesProvider, RouteAccessBoundary } from '@/src/features/access/Capabilities';
 
 const ROUTE_TITLES: Record<string, string> = {
   '/dashboard': 'Обзор парка',
@@ -49,6 +50,10 @@ function currentRouteTitle(pathname: string) {
 }
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  return <CapabilitiesProvider><DashboardShell>{children}</DashboardShell></CapabilitiesProvider>;
+}
+
+function DashboardShell({ children }: { children: React.ReactNode }) {
   const fleetConnection = useFleetEvents();
 
   const pathname = usePathname();
@@ -160,7 +165,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         <main id="main-content" tabIndex={-1} className="custom-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain bg-background focus:outline-none">
           <div key={pathname} className="workspace-route-enter min-h-full">
-            {children}
+            <RouteAccessBoundary pathname={pathname}>{children}</RouteAccessBoundary>
           </div>
         </main>
       </div>

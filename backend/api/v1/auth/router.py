@@ -17,7 +17,7 @@ from backend.core.exceptions import (
     InvalidTokenError,
     TooManyAttemptsError,
 )
-from backend.core.rbac import has_permission
+from backend.core.rbac import PERMISSIONS, has_permission
 from backend.core.security import decode_expired_access_token
 from backend.database.engine import get_db
 from backend.models.user import User
@@ -33,6 +33,7 @@ from backend.schemas.auth import (
     TokenResponse,
     UserResponse,
 )
+from backend.schemas.capabilities import SessionCapabilities
 from backend.services.auth_service import AuthService
 from backend.services.cache_service import CacheService
 from backend.services.mfa_service import MFAService
@@ -258,6 +259,16 @@ async def logout(
 async def me(current_user: User = Depends(get_current_user)):
     """Получить профиль текущего аутентифицированного пользователя."""
     return current_user
+
+
+@router.get("/capabilities", response_model=SessionCapabilities)
+async def capabilities(response: Response, current_user: User = Depends(get_current_user)):
+    """Read the database-backed role, never a role supplied by the browser/JWT."""
+    response.headers["Cache-Control"] = "no-store"
+    return SessionCapabilities(
+        user_id=current_user.id, org_id=current_user.org_id, role=current_user.role,
+        permissions=sorted(name for name in PERMISSIONS if has_permission(current_user.role, name)),
+    )
 
 
 # ── MFA Setup (SPLIT-2) ───────────────────────────────────────────────────────
