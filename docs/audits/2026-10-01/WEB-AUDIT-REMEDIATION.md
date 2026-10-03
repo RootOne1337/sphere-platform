@@ -542,3 +542,14 @@ Review UI **81d065a** установлен 4 октября, 01:19 UTC+5. API **
 Визуальная приёмка остаётся OPEN_URL_POLICY_BLOCKED; это не непрерывный uptime
 и не закрытие остальных разделов F39.
 [Ревизии, времена и evidence](../2026-10-04/DEVICE-ACTION-PERMISSIONS-EVIDENCE.json).
+
+### F39 — формы групп и локаций, 4 октября
+
+На архиве приложения 6635805 воспроизведены 16 assertion failures без runtime errors:
+группы не проверяли action permissions, локации полагались на локальную роль.
+Открытые формы не учитывали полученный отзыв прав. Исправлены opening/button/submit
+guards, Enter, независимое право удаления и permission notices; серверные guards
+и рабочие Android роли не меняются. Source: 107 наборов / 1013 frontend tests,
+types и 89 связанных PostgreSQL/Redis cases прошли. Build/install и browser
+учитываются отдельно; F39 PARTIAL и исходные 33/8 сохраняются.
+[Контракт и границы](../2026-10-04/ORGANIZATION-ACTION-PERMISSIONS.md).

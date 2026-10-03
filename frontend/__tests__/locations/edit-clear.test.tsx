@@ -5,6 +5,13 @@ import { api } from '@/lib/api';
 import { createWrapper } from '../helpers';
 import { useAuthStore } from '@/lib/store';
 
+import rolePermissions from '../fixtures/session-capabilities.json';
+
+jest.mock('@/src/features/access/Capabilities', () => ({ ...jest.requireActual('@/src/features/access/Capabilities'),
+  // Notice/provider rendering has separate real-provider tests; this fixture isolates the workflow authority.
+  PermissionNotice: () => null,
+  useCapabilities: () => ({ verified: true, pending: false, failed: false, can: (permission: string) => ((rolePermissions[useAuthStore.getState().user?.role as keyof typeof rolePermissions] ?? []) as readonly string[]).includes(permission) }),
+}));
 jest.mock('@/lib/api', () => ({ api: { get: jest.fn(), put: jest.fn() } }));
 
 it('sends explicit null when clearing an existing location and shows the confirmed empty values', async () => {

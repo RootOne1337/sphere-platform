@@ -6,6 +6,13 @@ import { createTestQueryClient, createWrapper } from '../helpers';
 import { emptyLocationDraft, locationDraft, parentChoices, validateLocationDraft, verifyLocationReceipt } from '@/src/features/locations/locationContract';
 import type { Location } from '@/lib/hooks/useLocations';
 
+import rolePermissions from '../fixtures/session-capabilities.json';
+
+jest.mock('@/src/features/access/Capabilities', () => ({ ...jest.requireActual('@/src/features/access/Capabilities'),
+  // Notice/provider rendering has separate real-provider tests; this fixture isolates the workflow authority.
+  PermissionNotice: () => null,
+  useCapabilities: () => ({ verified: true, pending: false, failed: false, can: (permission: string) => ((rolePermissions[useAuthStore.getState().user?.role as keyof typeof rolePermissions] ?? []) as readonly string[]).includes(permission) }),
+}));
 jest.mock('@/lib/api', () => ({ api: { get: jest.fn(), post: jest.fn(), put: jest.fn(), delete: jest.fn() } }));
 const org = '22222222-2222-4222-8222-222222222222';
 const id = '11111111-1111-4111-8111-111111111111';

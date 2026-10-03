@@ -3,6 +3,13 @@ import GroupsPage from '@/app/(dashboard)/groups/page';
 import { api } from '@/lib/api';
 import { createTestQueryClient, createWrapper } from '../helpers';
 
+import rolePermissions from '../fixtures/session-capabilities.json';
+
+jest.mock('@/src/features/access/Capabilities', () => ({ ...jest.requireActual('@/src/features/access/Capabilities'),
+  // Notice/provider rendering has separate real-provider tests; this fixture isolates the workflow authority.
+  PermissionNotice: () => null,
+  useCapabilities: () => ({ verified: true, pending: false, failed: false, can: (permission: string) => rolePermissions.org_admin.includes(permission) }),
+}));
 jest.mock('@/lib/api', () => ({ api: { get: jest.fn(), post: jest.fn(), put: jest.fn(), delete: jest.fn() } }));
 const root = { id: 'root', org_id: 'org', name: 'Root', description: null, color: null,
   parent_group_id: null, total_devices: 0, online_devices: 0 };

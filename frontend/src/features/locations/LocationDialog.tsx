@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { emptyLocationDraft, locationDraft, locationFailure, locationPath, parentChoices, parseLocation, validateLocationDraft, verifyLocationReceipt, type LocationDraft } from './locationContract';
+import { PermissionNotice } from '@/src/features/access/Capabilities';
 
 export function LocationDialog({ id, mode, orgId, scope, catalog, catalogFresh, canWrite, canDelete, reloadCatalog, onClose }: {
   id?: string; mode: 'create' | 'edit' | 'delete'; orgId: string; scope: string; catalog: Location[]; catalogFresh: boolean;
@@ -74,6 +75,7 @@ export function LocationDialog({ id, mode, orgId, scope, catalog, catalogFresh, 
   return <Dialog open onOpenChange={open => { if (!open) close(); }}>
     <DialogContent className="sm:max-w-2xl" onEscapeKeyDown={event => { if (busy.current || dirty) event.preventDefault(); if (dirty && !busy.current) setDiscard('close'); }} onPointerDownOutside={event => { if (busy.current || dirty) event.preventDefault(); }}>
       <DialogHeader><DialogTitle>{title}</DialogTitle><DialogDescription>Ручные координаты и иерархия организации. Счётчики относятся к прямым назначениям устройств; геолокация автоматически не определяется.</DialogDescription></DialogHeader>
+      <PermissionNotice permission={mode === 'delete' ? 'device:delete' : 'device:write'} action={mode === 'delete' ? 'удаление локации' : mode === 'create' ? 'создание локации' : 'изменение локации'} />
       <div className="flex flex-wrap items-center justify-between gap-2"><p className="break-all font-mono text-xs text-muted-foreground">{id ?? 'Новая локация'}</p><Button variant="outline" disabled={pending || detail.isFetching} onClick={() => { if (dirty) setDiscard('reload'); else void refresh(); }}>Перечитать состояние</Button></div>
       {id && !baseline && !detail.isError && <p role="status">Загрузка локации…</p>}
       {detail.isError && <p role="alert">Не удалось получить достоверную карточку локации. Изменения заблокированы.</p>}

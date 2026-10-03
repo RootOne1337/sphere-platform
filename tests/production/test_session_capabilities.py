@@ -120,3 +120,71 @@ async def test_device_manager_update_is_allowed_without_granting_delete_or_vpn(w
     assert "device:write" in capability.json()["permissions"]
     assert "device:delete" not in capability.json()["permissions"]
     assert "vpn:mass_operation" not in capability.json()["permissions"]
+
+
+@pytest.mark.parametrize("entity,role,operation", [
+    (entity, role, operation)
+    for entity in ("groups", "locations")
+    for role in ("viewer", "script_runner")
+    for operation in ("create", "update", "delete")
+] + [(entity, "device_manager", "delete") for entity in ("groups", "locations")])
+async def test_organization_catalog_mutations_match_revoked_capabilities(world, entity, role, operation):
+    """An already-issued admin JWT cannot change owned metadata after DB downgrade."""
+    import uuid
+
+    from sqlalchemy import select
+
+    from backend.models.device_group import DeviceGroup
+    from backend.models.location import Location
+
+    model = DeviceGroup if entity == "groups" else Location
+    user = world.users["org_admin"]
+    headers = world.auth(user)
+    created = await world.client.post(f"/api/v1/{entity}", headers=headers, json={"name": "Permission baseline"})
+    assert created.status_code == 201, created.text
+    owner_id = uuid.UUID(created.json()["id"])
+    async with world.sessions() as db:
+        await db.execute(update(User).where(User.id == user.id).values(role=role))
+        await db.commit()
+    permission = "device:delete" if operation == "delete" else "device:write"
+    capability = await world.client.get("/api/v1/auth/capabilities", headers=headers)
+    assert capability.status_code == 200 and permission not in capability.json()["permissions"]
+    method, path, body = {
+        "create": ("POST", f"/{entity}", {"name": "Forbidden catalog write"}),
+        "update": ("PUT", f"/{entity}/{owner_id}", {"name": "Forbidden catalog write"}),
+        "delete": ("DELETE", f"/{entity}/{owner_id}", None),
+    }[operation]
+    response = await world.client.request(method, "/api/v1" + path, headers=headers, json=body)
+    assert response.status_code == 403, response.text
+    async with world.sessions() as db:
+        record = await db.get(model, owner_id)
+        assert record is not None and record.name == "Permission baseline"
+        assert await db.scalar(select(model.id).where(model.org_id == user.org_id, model.name == "Forbidden catalog write")) is None
+
+
+@pytest.mark.parametrize("entity", ["groups", "locations"])
+async def test_manager_can_create_and_edit_owned_catalog_without_delete_authority(world, entity):
+    import uuid
+
+    from backend.models.device_group import DeviceGroup
+    from backend.models.location import Location
+
+    model = DeviceGroup if entity == "groups" else Location
+    user = world.users["org_admin"]
+    headers = world.auth(user)
+    async with world.sessions() as db:
+        await db.execute(update(User).where(User.id == user.id).values(role="device_manager"))
+        await db.commit()
+    created = await world.client.post(f"/api/v1/{entity}", headers=headers, json={"name": "Manager catalog"})
+    assert created.status_code == 201, created.text
+    owner_id = uuid.UUID(created.json()["id"])
+    patch = {"name": "Manager updated"}
+    if entity == "locations":
+        patch["expected_updated_at"] = created.json()["updated_at"]
+    edited = await world.client.put(f"/api/v1/{entity}/{owner_id}", headers=headers, json=patch)
+    assert edited.status_code == 200 and edited.json()["name"] == "Manager updated", edited.text
+    denied = await world.client.delete(f"/api/v1/{entity}/{owner_id}", headers=headers)
+    assert denied.status_code == 403, denied.text
+    async with world.sessions() as db:
+        record = await db.get(model, owner_id)
+        assert record is not None and record.name == "Manager updated"
