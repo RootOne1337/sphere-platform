@@ -3,7 +3,23 @@
 **Навигация обновлена: 3 октября 2026. Исторические live-снимки ниже сохранены по датам.**
 
 > [!IMPORTANT]
-> **Текущий review: 3 октября 2026, 03:06 UTC+5.**
+> **Последняя установленная версия: F32, 3 октября2026.**
+> [3015/vpn](http://127.0.0.1:3015/vpn), UI **a2c4f02** / API **8cd5cf0**.
+> VPN controls: explicit targets/action, owned preflight, подтверждение и
+> результаты по устройствам; unknown не replay. No-op kill-switch честно
+> сообщает unsupported. N06 deferred provider initialization исправлен и принят
+> live422/404. **103 suites / 916 frontend tests в Node24**, **159 backend cases
+> в immutable API image**, mypy225 / OpenAPI175 operations passed.
+> Login/API/Prometheus/Grafana/events WS прошли22:59UTC2октября;
+> **13 постоянных соседних сервисов** сохранены. Finite online14→11→12;
+> стабильность этим этапом не принята. Сверка01:53UTC3октября:19 устройств,
+> online14, **только3 на1.2.40-dev;11 online на старых APK**.
+> [Отчёт/receipts](../audits/2026-10-03/VPN-CONTROL-OUTCOMES.md) ·
+> [Контракт](VPN-CONTROL-OUTCOMES.md). **33 source-fixed / 8 OPEN**;
+> F32/F33 PARTIAL, browser/rollout/combined fleet acceptance OPEN.
+
+> [!IMPORTANT]
+> **Предыдущий review: 3 октября 2026, 03:06 UTC+5.**
 > [3015/locations](http://127.0.0.1:3015/locations), UI **8e0aeb5** / API **db6be05**.
 > F26: география, nullable clear, owned detail и иерархия установлены;
 > циклы и устаревшие записи/удаления отклоняются атомарно. **102 suites / 893

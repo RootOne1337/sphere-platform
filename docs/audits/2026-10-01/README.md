@@ -16,7 +16,14 @@ Source: `1354d66660041ba17afb64399d567ca29dd91867`. Режим замороже�
 
 Текущее продолжение: [журнал исправлений и статусы F01–F41](WEB-AUDIT-REMEDIATION.md). Исторический аудит остаётся неизменным.
 
-Последний review: UI **8e0aeb5** / API **db6be05**, 3 октября 03:06 UTC+5.
+Последний review: UI **a2c4f02** / API **8cd5cf0**, F32,3 октября2026.
+**33 source-fixed /8 OPEN**, F32/F33 PARTIAL;103suites/916 frontend tests в
+Node24,159 related backend cases также в immutable image. Targets/receipts и
+N06 deferred provider init подтверждены tests/live API. Finite online14→11→12;
+current inventory14online,3latest/11old. [F32 proof](../2026-10-03/VPN-CONTROL-OUTCOMES.md) ·
+[Validation](WEB-AUDIT-FIXES-VALIDATION.json). Browser/rollout/fleet OPEN.
+
+Предыдущий review: UI **8e0aeb5** / API **db6be05**, 3 октября 03:06 UTC+5.
 **33 source findings исправлено / 8 OPEN**; 102 suites / 893 frontend tests,
 40 PostgreSQL cases и 30 в production image. F26 география/иерархия, null clear,
 stale conditions и parent deletion проверены собственным конечным API canary.

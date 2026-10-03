@@ -7,7 +7,23 @@
 [Главная](../../README.md) · [Каталог документации](../README.md) · [Readiness](READINESS.md) · [Fleet32 gates](../audits/2026-09-20/FLEET32-PREFLIGHT.md) · [PR #19](https://github.com/RootOne1337/sphere-platform/pull/19)
 
 > [!IMPORTANT]
-> **Текущий review: 3 октября 2026, 03:06 UTC+5.**
+> **Последняя установленная версия: F32, 3 октября2026.**
+> [3015/vpn](http://127.0.0.1:3015/vpn), UI **a2c4f02** / API **8cd5cf0**.
+> VPN controls: explicit targets/action, owned preflight, подтверждение и
+> результаты по устройствам; unknown не replay. No-op kill-switch честно
+> сообщает unsupported. N06 deferred provider initialization исправлен и принят
+> live422/404. **103 suites / 916 frontend tests в Node24**, **159 backend cases
+> в immutable API image**, mypy225 / OpenAPI175 operations passed.
+> Login/API/Prometheus/Grafana/events WS прошли22:59UTC2октября;
+> **13 постоянных соседних сервисов** сохранены. Finite online14→11→12;
+> стабильность этим этапом не принята. Сверка01:53UTC3октября:19 устройств,
+> online14, **только3 на1.2.40-dev;11 online на старых APK**.
+> [Отчёт/receipts](../audits/2026-10-03/VPN-CONTROL-OUTCOMES.md) ·
+> [Контракт](VPN-CONTROL-OUTCOMES.md). **33 source-fixed / 8 OPEN**;
+> F32/F33 PARTIAL, browser/rollout/combined fleet acceptance OPEN.
+
+> [!IMPORTANT]
+> **Предыдущий review: 3 октября 2026, 03:06 UTC+5.**
 > [3015/locations](http://127.0.0.1:3015/locations), UI **8e0aeb5** / API **db6be05**.
 > F26: география, nullable clear, owned detail и иерархия установлены;
 > циклы и устаревшие записи/удаления отклоняются атомарно. **102 suites / 893
@@ -43,7 +59,7 @@
 > [!IMPORTANT]
 > **Историческая native установка 2 октября 2026, 01:28:45 UTC+5:** `3015 → standalone UI3030/API18080`, frontend и backend **5fcf18a**. Readiness/build SHA, owned listeners и авторизованный API проверены. Предыдущий Next7416/UI3029 и backend image8d64ca4 сохранены; заменён только owned relay и backend. Это проверочный веб [3015/tasks](http://127.0.0.1:3015/tasks); public frontend не заменён. [Журнал](../audits/2026-10-01/WEB-AUDIT-REMEDIATION.md) · [Точные receipts](../audits/2026-10-02/TASK-ARTIFACTS-AND-RERUN-EVIDENCE.json).
 
-**32 source findings исправлено полностью**, включая все5 P1; **9 исходных остаются открытыми**, включая F33 PARTIAL. Совокупный frontend — **101 suites/867 tests**, **285 новых regressions** сверх582. F27:25 actual PostgreSQL tests/production image,80 script unit tests/1 skipped, Types/mypy224/Ruff0.15.2, immutable production builds и OpenAPI174 operations/137 paths passed. Browser visual, Android artifact upload N01, legacy RPC errors N03, durable audit outbox и 20–30-device acceptance OPEN. [Script contract](SCRIPT-VERSIONS.md) · [F27 receipts](../audits/2026-10-02/SCRIPT-VERSION-WORKFLOW-EVIDENCE.json). Старые срезы ниже сохранены со своими датами.
+**Исторический F28 source/test срез: 32 source findings исправлено полностью**, включая все5 P1; **9 исходных остаются открытыми**, включая F33 PARTIAL. Совокупный frontend — **101 suites/867 tests**, **285 новых regressions** сверх582. F27:25 actual PostgreSQL tests/production image,80 script unit tests/1 skipped, Types/mypy224/Ruff0.15.2, immutable production builds и OpenAPI174 operations/137 paths passed. Browser visual, Android artifact upload N01, legacy RPC errors N03, durable audit outbox и 20–30-device acceptance OPEN. [Script contract](SCRIPT-VERSIONS.md) · [F27 receipts](../audits/2026-10-02/SCRIPT-VERSION-WORKFLOW-EVIDENCE.json). Старые срезы ниже сохранены со своими датами.
 
 **Исторический published verification5d27624 полностью прошёл CI:** [backend37000707994](https://github.com/RootOne1337/sphere-platform/actions/runs/37000707994), [frontend37000707943](https://github.com/RootOne1337/sphere-platform/actions/runs/37000707943), [Android37000707995](https://github.com/RootOne1337/sphere-platform/actions/runs/37000707995). Source67b6bef frontend37004977091 success; backend37004977150/Android37004977161 выполнялись на срезе документа. Новый docs head требует своих checks. Предыдущие groups/null/cycles/audit rollback и user422/404/400,23 HTTP/49 RBAC proofs сохраняются с собственными датами. [User contract](USER-ACCESS.md) · [F37 live/read limits](../audits/2026-10-02/AUDIT-INVESTIGATION.md).
 

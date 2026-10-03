@@ -2,12 +2,13 @@
 
 Этот журнал продолжает [замороженный аудит](WEB-FULL-CAPABILITY-AUDIT.md) исходников `1354d66`. Исходный документ и evidence сохраняют свою дату и ограничения; их статусы не переписываются задним числом.
 
-**Срез реализации 3 октября 2026, 03:06 UTC+5:** UI **8e0aeb5** / API **db6be05**;
-**33 source findings исправлены / 8 OPEN**, включая F33 PARTIAL. 102 suites / 893
-frontend tests; 311 regressions. 40 PostgreSQL cases, 30 в production image.
-F26: география/иерархия, nullable clear, owned edit/delete и stale conditions
-установлены. Live API canary удалён, существующие локации сохранены.
-[F26 evidence](../2026-10-03/LOCATION-HIERARCHY.md) · [Validation](WEB-AUDIT-FIXES-VALIDATION.json).
+**Срез F32, 3 октября2026:** UI **a2c4f02** / API **8cd5cf0**;
+**33 source findings исправлены / 8 OPEN**, F32/F33 PARTIAL. **103 suites /916
+frontend tests** в Node24;334 regressions.159 related backend cases также в
+production image; N06 actual DI/live422/404 принято. VPN provider/Android VPN
+действия не выполнялись. Finite online14→11→12;01:53UTC только3 из14 online
+на1.2.40-dev. [F32 evidence](../2026-10-03/VPN-CONTROL-OUTCOMES.md) ·
+[Validation](WEB-AUDIT-FIXES-VALIDATION.json).
 
 ## Исходная фиксация
 
@@ -61,7 +62,7 @@ F26: география/иерархия, nullable clear, owned edit/delete и s
 | [F29](WEB-FULL-CAPABILITY-AUDIT.md#f29) | P2 | Source исправлен; live OPEN | Расписания: нет доступа к истории срабатываний |
 | [F30](WEB-FULL-CAPABILITY-AUDIT.md#f30) | P2 | Source исправлен; live OPEN | Расписание one-shot: ISO offset подаётся в datetime-local |
 | [F31](WEB-FULL-CAPABILITY-AUDIT.md#f31) | P2 | Source исправлен; live OPEN | VPN → Logs теряет контекст устройства |
-| [F32](WEB-FULL-CAPABILITY-AUDIT.md#f32) | P2 | Открыто | VPN: mutate без отображения ошибок/результатов |
+| [F32](WEB-FULL-CAPABILITY-AUDIT.md#f32) | P2 | Частично; lifecycle/visual OPEN | Explicit targets/action, owned preflight, per-device receipts и no replay исправлены; kill transport unsupported, durable reconciliation/visual OPEN |
 | [F33](WEB-FULL-CAPABILITY-AUDIT.md#f33) | P2 | Частично; bulk/manifest/visual OPEN | Single-device recovery/redispatch/revoke и remote install приняты; bulk rollout и verified artifact manifest открыты |
 | [F34](WEB-FULL-CAPABILITY-AUDIT.md#f34) | P2 | Открыто | Матричный режим использует полноценный H.264 для каждого окна |
 | [F35](WEB-FULL-CAPABILITY-AUDIT.md#f35) | P2 | Открыто | XPath-инспектор на видеокарточке ещё отсутствует |
@@ -368,3 +369,25 @@ UI3015/audit установлен17:11, API39baa13 —17:09. Реальный ж
 - OPEN: F32, F33 PARTIAL, F34–F36, F39–F41, N01/N03 и durable audit outbox.
   Source/API fix не закрывает visual/keyboard/mobile, production rollout и
   combined stream+scripts load. Frozen audit не изменён.
+
+## F32 — VPN targets/outcomes; N06 dependency ordering
+
+API3461bf6→8cd5cf0 и UIa2c4f02 установлены на3015/vpn. Legacy enabled:false
+больше не превращается в enable; empty rotate не global. Entire owned preflight
+выполняется до provider/sender; результаты отдельно configured/rejected/unknown
+и submitted/not_sent/unsupported/unknown. Android execution не выдумывается.
+Pending/scope/duplicate guards и retained receipts проверены21 новыми UI cases.
+
+Backend baseline17:15 failures/2controls; final21 focused/159related и159 в
+immutable image passed. Live empty422/duplicate422/missing404 подтверждены после
+N06: первоначальный cipher dependency возвращал503 раньше body validation.
+Node24 first suite913passed/2failed из-за build env fixture; test-only3ac818f
+исправил fixture, добавил mismatch check. Итог103suites/916passed, types/build/lint
+passed с44 прежними warnings. Production frontend междуa2c4f02/3ac818f не менялся.
+
+13 neighbors сохранены; no mutating Android/VPN commands. Отдельно выполнены2
+read-only REQUEST_LOGS наPH028/PH011:1.2.32-dev. Online finite14→11→12; latest
+catalog01:53UTC14online/5offline и3latest/11old. F32/F33 не закрыты; next priority
+channel/artifact/delivery/receipt/heartbeat и continued reconnect evidence.
+[Полный отчёт](../2026-10-03/VPN-CONTROL-OUTCOMES.md) ·
+[Контракт](../../operations/VPN-CONTROL-OUTCOMES.md).

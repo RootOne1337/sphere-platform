@@ -16,42 +16,20 @@
 </div>
 
 > [!NOTE]
-> **Текущий срез: 3 октября 2026, 03:06 UTC+5.** После фиксации полного
-> аудита исправлено **33 source findings**; **102 suites / 893 frontend tests**,
-> types и production compile passed. Проверочный веб **3015 в Docker**, UI **8e0aeb5**, backend **db6be05**;
-> login/API, Prometheus/Grafana и events WS проверены. Предыдущий restart evidence сохранён. На remote PH025
-> подтверждён pinned rerun по двум настоящим Android results.
-> [Runtime evidence](docs/audits/2026-10-02/REVIEW-RUNTIME-AND-REMOTE-RERUN.md).
-> Исходная версия/входы повтора сохранены; private screenshot read исправлен.
-> Группы: metadata editor, подтверждённое удаление и scoped members реализованы.
-> [F24/F25 evidence](docs/audits/2026-10-02/GROUP-WORKFLOWS.md).
-> N04: parent clear/cycles и N05: audit после rollback исправлены и подтверждены live API.
-> [Иерархия и audit evidence](docs/audits/2026-10-02/GROUP-HIERARCHY-AND-AUDIT.md).
-> F38: user form, ошибки полей и адресные role/deactivate dialogs установлены.
-> [User access / evidence](docs/audits/2026-10-02/USER-ACCESS.md).
-> F37: поиск всего журнала/UTC и ограниченный CSV5000 установлены; live API accepted.
-> [Audit investigation / evidence](docs/audits/2026-10-02/AUDIT-INVESTIGATION.md).
-> F26: география/иерархия локаций, controlled clear/edit/delete установлены; 40 PostgreSQL cases и 30 production-image cases passed. [Контракт и receipts](docs/audits/2026-10-03/LOCATION-HIERARCHY.md). Шесть конечных readbacks: 14 online / 5 offline; public rollout и visual остаются OPEN.
-> F28: owned detail/edit pipeline, explicit activation, timestamp conditions и защита active runs установлены;120 PostgreSQL cases и35 production-image cases passed. [Pipeline contract/proof](docs/audits/2026-10-03/PIPELINE-DEFINITION-WORKFLOW.md).
-> F27: архив, выбранный DAG/hash/diff, conditional rollback и подтверждённая версия Run установлены;25 actual PostgreSQL tests/production image passed. [Script workflow/evidence](docs/audits/2026-10-02/SCRIPT-VERSION-WORKFLOW.md).
-> F33 частично: адресное OTA доступно; remote PH013 обновился10230→10240,
-> live send/completed receipt/post-install heartbeat подтверждены. Один target; bulk
-> и verified artifact manifest открыты. [OTA workflow/evidence](docs/audits/2026-10-02/OTA-ADDRESSED-DELIVERY.md).
-> Android artifact upload N01, visual acceptance, N03 и 8 исходных findings открыты;
-> public frontend не заменён. [Журнал](docs/audits/2026-10-01/WEB-AUDIT-REMEDIATION.md) ·
-> [Task contracts/evidence](docs/audits/2026-10-02/TASK-ARTIFACTS-AND-RERUN.md).
->
-> **APK-кандидат 1.2.40 / 10240** ранее установлен
-> адресным OTA на PH010 и удалённый PH025: установка и восстановление после
-> перезапуска процесса подтверждены. Исправлены codec callback ownership,
-> web diagnostics freshness и terminal heartbeat fencing с before/after tests.
-> Предыдущий принятый cross-layer code head **8d64ca4**: backend **2140 passed / 15 skipped**,
-> configured APK **783 tests на flavor / 1 skipped**.
-> В предыдущем finite trial PH010 дал **299 pictures / 10 s**; PH025 сообщал **5 Hz**,
-> first picture 9.844 s и длинные gaps: remote smoothness/latency не приняты.
-> Normal/global OTA, production signer и приёмка 20–30 устройств остаются открытыми.
-> [Audit, версии, receipts и ограничения](docs/audits/2026-10-01/CALLBACK-LIFECYCLE-CANARY.md) ·
-> [Каноническое текущее состояние](docs/operations/CURRENT-STATE.md).
+> **Текущий review, 3 октября2026:** [3015/vpn](http://127.0.0.1:3015/vpn),
+> UI **a2c4f02** / API **8cd5cf0**. **103 suites /916 frontend tests в Node24**,
+> 159 related backend cases в production image, types/build/static/schema passed.
+> VPN controls показывают targets, подтверждения и результаты; unsupported
+> transport и unknown outcome не изображаются успешным выполнением Android.
+> [F32 contract/proof](docs/audits/2026-10-03/VPN-CONTROL-OUTCOMES.md).
+> **33 source-fixed /8 OPEN**, F32/F33 PARTIAL. Finite online14→11→12;
+> latest inventory01:53UTC:14online,3 на1.2.40-dev,11 на старых APK.
+> Наличие исправлений в коде не означает обновление всего парка.
+> [OTA workflow](docs/operations/OTA-ADDRESSED-UPDATES.md).
+> Новая VPN-интеграция не добавляется. Public frontend/APK/OTA/Tuna не менялись.
+> Browser visual, rollout и20–30-device stream+scripts acceptance OPEN.
+> [Журнал F01–F41](docs/audits/2026-10-01/WEB-AUDIT-REMEDIATION.md) ·
+> [Каноническое состояние, версии и предыдущие trials](docs/operations/CURRENT-STATE.md).
 
 ---
 

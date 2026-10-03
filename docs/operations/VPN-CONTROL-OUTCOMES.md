@@ -122,6 +122,7 @@ prove a live Android kill switch or VPN migration.
 The legacy `_tabs` components are not mounted by the main VPN page and are not
 accepted as the new workflow. The original F32 finding remains partial until
 the complete browser/keyboard/mobile acceptance and the remaining lifecycle
-work are reviewed. See [remediation ledger](../audits/2026-10-01/WEB-AUDIT-REMEDIATION.md),
+work are reviewed. See [dated installed evidence](../audits/2026-10-03/VPN-CONTROL-OUTCOMES.md),
+[remediation ledger](../audits/2026-10-01/WEB-AUDIT-REMEDIATION.md),
 [current state](CURRENT-STATE.md), [readiness](READINESS.md), and
 [API reference](../api-reference.md).

@@ -15,7 +15,7 @@
 > автоматическую проверку runtime; старые аудиты сохраняют собственные даты и
 > версии и не должны читаться как текущий deploy. [Правила актуальности](DOCUMENTATION.md).
 
-Последнее изменение: [F26 — география и иерархия локаций](audits/2026-10-03/LOCATION-HIERARCHY.md), review UI **8e0aeb5** / API **db6be05** на [3015/locations](http://127.0.0.1:3015/locations). **102 suites / 893 tests**, 40 PostgreSQL cases и 30 production-image cases passed; **33 source-fixed / 8 OPEN**, F33 PARTIAL. [Контракт локаций](operations/LOCATION-HIERARCHY.md). Source/API и finite runtime доказательства не закрывают visual, public rollout и combined fleet gates.
+Последнее изменение: [F32 — VPN control outcomes](audits/2026-10-03/VPN-CONTROL-OUTCOMES.md), review UI **a2c4f02** / API **8cd5cf0** на [3015/vpn](http://127.0.0.1:3015/vpn). **103 suites /916 Node24 tests**,159 production-image backend cases; **33 source-fixed /8 OPEN**, F32/F33 PARTIAL. [Операторский контракт](operations/VPN-CONTROL-OUTCOMES.md). Finite reconnect и3latest/11old online APK не объявлены стабильностью либо полной доставкой обновления. Visual/public rollout/combined fleet gates OPEN.
 
 ## 🧭 Выберите задачу
 
@@ -101,7 +101,7 @@
 | Задачи | [Task control protocol](security/task-control-protocol.md) · [Durable cancellation](audits/2026-09-20/DURABLE-CANCELLATION.md) |
 | Оркестрация | [Pipeline recovery](audits/2026-09-20/PIPELINE-RECOVERY.md) · [Batch recovery](audits/2026-09-20/BATCH-RECOVERY.md) · [Nested waiting](audits/2026-09-20/PIPELINE-NESTED-WAIT.md) |
 | Identity / credentials | [User bootstrap](security/user-auth-bootstrap.md) · [Device bootstrap](security/device-credential-bootstrap.md) · [Device refresh](security/device-refresh-recovery.md) · [Account credentials](security/account-credentials.md) |
-| VPN | [Реестр ограничений F32-11/12/21](audits/2026-09-20/FLEET32-PREFLIGHT.md) · [VPN intents](audits/2026-09-05/VPN-LEASE-DESIGN.md) · [Runbook](runbooks/02-vpn-incident.md) |
+| VPN | [Control outcomes](operations/VPN-CONTROL-OUTCOMES.md) · [F32 evidence](audits/2026-10-03/VPN-CONTROL-OUTCOMES.md) · [Реестр ограничений F32-11/12/21](audits/2026-09-20/FLEET32-PREFLIGHT.md) · [VPN intents](audits/2026-09-05/VPN-LEASE-DESIGN.md) · [Runbook](runbooks/02-vpn-incident.md) |
 
 ## 🔬 Что подтверждено проверкой
 
