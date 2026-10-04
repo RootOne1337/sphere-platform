@@ -9,7 +9,7 @@
 </div>
 
 > [!NOTE]
-> **Срез навигации: 4 октября 2026.** Канонические source/runtime факты,
+> **Срез навигации: 5 октября 2026.** Канонические source/runtime факты,
 > версии Android, ограничения диагностики и будущий этап 20–30 устройств собраны
 > в [актуальном состоянии](operations/CURRENT-STATE.md). Каталог не выполняет
 > автоматическую проверку runtime; старые аудиты сохраняют собственные даты и
@@ -19,9 +19,13 @@
 API/UI c1a6e79.** [Аудит диска, ОЗУ, сборки и RPC](audits/2026-10-04/HOST-RESOURCE-PRESSURE-AND-RPC-DIAGNOSTICS.md) ·
 [Эксплуатационная процедура](operations/HOST-RESOURCES.md).
 
-**5 октября — продолжающееся заполнение диска:** [15 срезов / -2,071 GiB free / protected scopes](audits/2026-10-05/HOST-DISK-GROWTH.md).
-Source watcher `6180faf` / 44 tests; приложение c1a6e79 сохранено. Причина роста OPEN,
-APK retention 6 вместо 5 отдельно записана; полные восьмичасовые окна не завершены.
+**5 октября — текущая работа с ресурсами:**
+[ETW writer / exact VSS / 51 owned image / 10,938 GiB guest reclaim](audits/2026-10-05/DISK-WRITER-ATTRIBUTION.md) ·
+[APK logger source fix / 1680 passed, 2 skipped / installed canary OPEN](audits/2026-10-05/APK-LOG-RETENTION.md).
+Source recorder `1402612` / projection `9a9256f`, 8 Windows tests; API/UI c1a6e79,
+Android10244 сохранены. AdGuard update объясняет отдельный короткий скачок,
+но полная историческая атрибуция, VHD compaction и RAM soak ещё открыты.
+[Предыдущие объёмные срезы](audits/2026-10-05/HOST-DISK-GROWTH.md) сохранены как история.
 
 **Дополнительная инвентаризация, 17:50 UTC:** [размер Sphere / обход C: / package cleanup](audits/2026-10-04/HOST-DISK-INVENTORY-AND-CLEANUP.md).
 Workspace 8 GiB, tracked files 22 MiB; shared Docker VHD 219 GiB отдельно.

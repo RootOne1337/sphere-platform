@@ -298,6 +298,43 @@ Admin окно COMPLETE. Allocated VSS display вырос13,9→14,1ГБ; free -
 не доказывают; здесь есть отдельные реальные квитанции.
 [Регрессии](../../tests/test_pilot_storage_allocation.py).
 
+### Ограниченная запись процесса и файла, 5 октября
+
+[`collect_disk_writer.ps1`](../../scripts/pilot/collect_disk_writer.ps1) связывает
+kernel FileIO/DiskIO с samples free C:, available RAM и exact VSS byte counters.
+Фактическое продолжение запущено отдельным elevated child; обычная tool-сессия
+по-прежнему не administrator. Проверять права по receipt, не по запуску UI Codex.
+
+```powershell
+& 'C:\Users\dimas\Documents\ChatGPT\sphere-platform\scripts\pilot\collect_disk_writer.ps1' -DurationSeconds 600 -IntervalSeconds 10 -StopAfterDropMiB 128
+```
+
+Один custom SystemCollector: 128×1024KiB memory circular payload; maximum1800s,
+metadata sample128KiB / total8MiB, disk headroom20GiB и available RAM4GiB.
+WPR проверяет чужую запись до старта и работает только с собственным instance.
+Stop сохраняет compressed ETL без symbol downloads. Payload bound не ограничивает
+размер native rundown/temp при сохранении. Нет постоянной службы или autostart.
+
+Не экспортировать всю ETL в CSV без оценки места: реальный 18,7MB trace породил
+552MB CSV, и запись наблюдателя сама вызвала free-drop. Проверенный разбор использует
+Microsoft TraceEvent3.2.8 (MIT); logical writes, DiskIO transfer, growth и VSS
+allocation учитываются отдельно. EventsLost0 не доказывает полноту circular начала.
+Raw ETL/process commandlines/private paths остаются локально; публикуются sanitized
+числа и SHA. [Фактическая запись и observer effects](../audits/2026-10-05/DISK-WRITER-ATTRIBUTION.md).
+
+R09 обновлён: logger source `ae90715`, версия кандидата10245; ordinary5×2MiB,
+encoded queue≤4MiB и truncation/drop counter. **1680 passed /2 skipped**.
+Установленная версия всё ещё10244; [runtime canary открыт](../audits/2026-10-05/APK-LOG-RETENTION.md).
+Предыдущее описание шести файлов выше — датированный defect старого APK.
+
+Адресная очистка51 owned images дала +10,938GiB в guest, без compaction VHD.
+Daemon configured GC enabled/20GB не является quota всех Docker objects;
+default builder shared с другими проектами. Для следующих builds сохранять
+current/rollback и все running/stopped dependencies; cleanup списка по точным IDs
+и checked ownership. Volumes, dangling unknown images и общий cache не удалять
+по одному имени `sphere-*`. Persistent-data backups и physical reclaim остаются
+отдельным maintenance gate.
+
 После перезапуска приложения прежние disk/RAM processes отсутствовали,
 последние сохранённые срезы19:35 UTC. Восьмичасовая приёмка прервана, а не
 успешно завершена. Отдельные30-минутные продолжения запущены19:41:48/19:45:11 UTC;

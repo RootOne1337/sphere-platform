@@ -6,7 +6,21 @@
 
 [Главная](../../README.md) · [Каталог документации](../README.md) · [Readiness](READINESS.md) · [Fleet32 gates](../audits/2026-09-20/FLEET32-PREFLIGHT.md) · [PR #19](https://github.com/RootOne1337/sphere-platform/pull/19)
 
-**Текущий этап ресурсов, 5 октября / 20:15 UTC 4 октября:** системное окно
+**Последний этап ресурсов, 5 октября / 21:42 UTC 4 октября:** 51 старый owned image
+удалён после проверки tags/commit/container references; все 46 identities/epochs
+сохранены. Внутри Docker освобождено 10,938 GiB, images 237→186; VHDX остаётся
+218,61 GiB. API/UI `c1a6e79`, 14 online10244 на срезе после очистки.
+Exact VSS и finite ETW подтверждают отдельные writers; краткий free-drop совпал
+с обновлением AdGuard. Полная историческая атрибуция / RAM soak / compaction OPEN.
+Recorder `1402612`, bounded projection `9a9256f`, 8 Windows cases passed.
+[Writer evidence и пределы](../audits/2026-10-05/DISK-WRITER-ATTRIBUTION.md).
+
+**Android R09:** `ae90715` исправляет disk quota/rotation/startup и bounded queue;
+`e75d365` — source-кандидат 1.2.45-dev /10245, 1680 passed /2 skipped.
+APK10245 ещё не собран/опубликован/установлен; **SOURCE_FIXED / INSTALLED_CANARY_OPEN**.
+[Контракт и проверки](../audits/2026-10-05/APK-LOG-RETENTION.md).
+
+**Исторический ресурсный срез, 5 октября / 20:15 UTC 4 октября:** системное окно
 COMPLETE — 31 срез, все 62 native queries успешны. Allocated VSS вырос 13,9 → 14,1 ГБ
 по округлённому display; free C: -264,719 MiB за 30 минут. Рост VSS подтверждён,
 но предыдущие -6,459 GiB не атрибутированы целиком; writer UNDETERMINED. Короткие

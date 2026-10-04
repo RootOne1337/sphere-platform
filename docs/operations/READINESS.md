@@ -2,7 +2,17 @@
 
 **Навигация обновлена: 5 октября 2026. Исторические live-снимки ниже сохранены по датам.**
 
-**Ресурсный срез, 5 октября / 20:15 UTC:** системное окно COMPLETE — 31 срез,
+**Последний ресурсный срез, 5 октября / 21:42 UTC 4 октября:** адресно удалён
+51 старый owned image; внутри Docker +10,938 GiB, все 46 контейнеров сохранены.
+VHDX218,61 GiB физически не сжат. API/UI c1a6e79 / online APK10244 сохранены.
+Bounded ETW / exact VSS: 8 Windows tests и реальные elevated traces;
+AdGuard update сопоставлен с одним free-drop, полная историческая причина OPEN.
+APK logger source fixed: 1680 passed /2 skipped, source10245; installed canary OPEN.
+[Writer и очистка](../audits/2026-10-05/DISK-WRITER-ATTRIBUTION.md) ·
+[APK retention](../audits/2026-10-05/APK-LOG-RETENTION.md).
+Это не VHD compaction, RAM soak, приёмка GUI или Fleet32 admission.
+
+**Исторический ресурсный срез, 5 октября / 20:15 UTC:** системное окно COMPLETE — 31 срез,
 62 успешных native queries. Allocated VSS 13,9 → 14,1 ГБ по округлённому display;
 free C: -264,719 MiB за 30 минут. Рост VSS подтверждён; прежние -6,459 GiB не
 атрибутированы целиком, writer UNDETERMINED. Короткие disk/RAM окна завершены;
