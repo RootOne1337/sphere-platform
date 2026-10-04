@@ -4,7 +4,7 @@ Generated from `backend.main.app.openapi()` by `scripts/export_api_docs.py`.
 Regenerate with `python -m scripts.export_api_docs`; verify with `--check`.
 The exporter does not run startup hooks or send HTTP requests.
 
-**177 HTTP operations across 139 paths.**
+**178 HTTP operations across 140 paths.**
 
 Full parameters, request bodies, response schemas and declared security schemes:
 [OpenAPI JSON](openapi.json). Manual explanations:
@@ -63,6 +63,7 @@ for tested behavior and remaining limits.
 | `POST` | `/api/v1/devices/{device_id}/logcat` | devices | 200, 422 | Запросить logcat устройства |
 | `POST` | `/api/v1/devices/{device_id}/reboot` | devices | 200, 422 | Перезагрузить устройство через агент |
 | `GET` | `/api/v1/devices/{device_id}/screenshot` | devices | 200, 422 | Запросить скриншот устройства (TZ-03 stub) |
+| `POST` | `/api/v1/devices/{device_id}/screenshot/native` | devices | 200, 422 | Получить исходный PNG экрана через APK, без видеоперекодирования |
 | `POST` | `/api/v1/devices/{device_id}/shell` | devices | 200, 422 | Выполнить команду shell на устройстве |
 | `GET` | `/api/v1/devices/{device_id}/status` | devices | 200, 422 | DB данные + live Redis статус устройства |
 | `GET` | `/api/v1/devices/{device_id}/stream-diagnostics` | devices | 200, 422 | Последний подтверждённый heartbeat-отчёт о стадиях Android-стрима |

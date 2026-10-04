@@ -646,6 +646,63 @@ async def request_ui_hierarchy(
             logger.warning("ui_inspection_lock_release_unconfirmed", extra={"device_id": str(device_id)})
 
 
+@router.post("/{device_id}/screenshot/native", response_class=Response,
+             responses={200: {"content": {"image/png": {}}}},
+             summary="Получить исходный PNG экрана через APK, без видеоперекодирования")
+async def request_native_screenshot(
+    device_id: uuid.UUID,
+    current_user: User = require_permission("device:write"),
+    svc: DeviceService = Depends(get_device_service),
+    redis=Depends(get_redis_binary),
+) -> Response:
+    from backend.services.native_screenshot import InvalidScreenshot, capture_png
+    from backend.services.ui_hierarchy import InvalidUiHierarchy
+
+    await svc.get_device(device_id, current_user.org_id)
+    if redis is None:
+        raise HTTPException(503, "Screenshot lock unavailable")
+    snapshot_id = uuid.uuid4().hex
+    key = f"sphere:native-screenshot:{current_user.org_id}:{device_id}"
+    try:
+        acquired = await redis.set(key, snapshot_id, nx=True, ex=120)
+    except RedisError as exc:
+        raise HTTPException(503, "Screenshot lock unavailable") from exc
+    if not acquired:
+        raise HTTPException(429, "Screenshot capture already in progress")
+
+    async def shell(command: str) -> str:
+        result = await _request_interactive_command(device_id, current_user, svc, "SHELL", {"cmd": command}, 8.0)
+        receipt = result.get("result")
+        output = receipt.get("output") if isinstance(receipt, dict) else None
+        if result.get("status") != "completed" or not isinstance(output, str):
+            raise HTTPException(502, "Original screenshot unavailable: Android root command failed")
+        return output
+
+    requested_at = datetime.now(timezone.utc)
+    try:
+        screenshot = await capture_png(shell, snapshot_id)
+        return Response(screenshot.data, media_type="image/png", headers={
+            "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff",
+            "Content-Disposition": f'attachment; filename="sphere-{device_id}-{snapshot_id}.png"',
+            "X-Screenshot-Device-Id": str(device_id), "X-Screenshot-Id": snapshot_id,
+            "X-Screenshot-SHA256": screenshot.sha256,
+            "X-Screenshot-Width": str(screenshot.width), "X-Screenshot-Height": str(screenshot.height),
+            "X-Screenshot-Requested-At": requested_at.isoformat(),
+            "X-Screenshot-Completed-At": datetime.now(timezone.utc).isoformat(),
+            "X-Screenshot-Cleanup-Confirmed": str(screenshot.cleanup_confirmed).lower(),
+        })
+    except (InvalidScreenshot, InvalidUiHierarchy) as exc:
+        raise HTTPException(502, str(exc)) from exc
+    except TimeoutError as exc:
+        raise HTTPException(504, "Original screenshot deadline exceeded; no automatic retry") from exc
+    finally:
+        try:
+            await redis.eval("if redis.call('get',KEYS[1]) == ARGV[1] then return redis.call('del',KEYS[1]) end return 0",
+                             1, key, snapshot_id)
+        except RedisError:
+            logger.warning("native_screenshot_lock_release_unconfirmed", extra={"device_id": str(device_id)})
+
+
 @router.post(
     "/{device_id}/shell",
     summary="Выполнить команду shell на устройстве",

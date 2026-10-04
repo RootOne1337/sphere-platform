@@ -17,10 +17,11 @@ import { WebTerminal } from './WebTerminal';
 import { LogcatViewer } from './LogcatViewer';
 import { RunScriptTab } from './RunScriptTab';
 import { DEVICE_COMMAND_TIMEOUT } from './interactiveResult';
+import { NativeScreenshotPanel } from './NativeScreenshotPanel';
 import { DeviceDiagnosticsPanel, DeviceHistoryPanel, DeviceSavedLogsPanel, Metric, utcTime } from './DeviceOperationsPanels';
 import { useCapabilities } from '@/src/features/access/Capabilities';
 
-type View = 'summary' | 'tasks' | 'events' | 'diagnostics' | 'logs' | 'stream' | 'terminal' | 'logcat' | 'script';
+type View = 'summary' | 'tasks' | 'events' | 'diagnostics' | 'logs' | 'stream' | 'terminal' | 'logcat' | 'script' | 'screenshot';
 const VIEWS = [['summary', 'Обзор'], ['tasks', 'Задачи'], ['events', 'События'], ['diagnostics', 'Видео'], ['logs', 'Логи APK']] as const;
 
 function reportedNumber(value: unknown, suffix: string, max = Infinity): string {
@@ -83,6 +84,7 @@ export function DeviceInspectorDetail({ deviceId, fullPage = false }: { deviceId
           {view === 'terminal' && canWrite && <div className="h-[480px] min-w-0"><WebTerminal deviceId={deviceId} enabled={isReachable} /></div>}
           {view === 'logcat' && access.can('device:read') && <div className="h-[480px] min-w-0"><LogcatViewer deviceId={deviceId} enabled={isReachable} /></div>}
           {view === 'script' && canWrite && <RunScriptTab deviceId={deviceId} deviceName={device.name} isOnline={isReachable} onBack={() => setView('summary')} />}
+          {view === 'screenshot' && canWrite && <NativeScreenshotPanel key={deviceId} deviceId={deviceId} enabled={isReachable} />}
         </> : <>
           <dl className={`grid grid-cols-2 gap-3 ${fullPage ? 'lg:grid-cols-4' : ''}`}>
             <Metric label="Sphere Agent" value={device.agent_version ? `${device.agent_version}${device.agent_version_code ? ` / ${device.agent_version_code}` : ''}` : 'Версия не сообщена'} />
@@ -103,7 +105,7 @@ export function DeviceInspectorDetail({ deviceId, fullPage = false }: { deviceId
               <Button variant="outline" disabled={!isReachable || !canWrite} onClick={() => setView('terminal')}><Terminal className="mr-2 h-4 w-4" aria-hidden />Терминал</Button>
               <Button variant="outline" disabled={!isReachable || !access.can('device:read')} onClick={() => setView('logcat')}><FileText className="mr-2 h-4 w-4" aria-hidden />Logcat</Button>
               <Button variant="outline" disabled={!isReachable || !canWrite} onClick={() => setView('script')}><Code2 className="mr-2 h-4 w-4" aria-hidden />Shell-скрипт</Button>
-              <Button variant="outline" disabled={!isReachable || !canViewStream} onClick={() => setView('stream')}><Camera className="mr-2 h-4 w-4" aria-hidden />Снимок кадра</Button>
+              <Button variant="outline" disabled={!isReachable || !canWrite} onClick={() => setView('screenshot')}><Camera className="mr-2 h-4 w-4" aria-hidden />Снимок экрана</Button>
               <Button variant="outline" disabled={!canWrite || !isReachable || rebootPending} onClick={() => setRebootOpen(true)}><RefreshCw className="mr-2 h-4 w-4" aria-hidden />Перезагрузка</Button>
             </div>
             {!isReachable && <p className="text-xs text-muted-foreground">Живые команды недоступны при этом состоянии. Сохранённые задачи, события и логи можно проверить во вкладках.</p>}
