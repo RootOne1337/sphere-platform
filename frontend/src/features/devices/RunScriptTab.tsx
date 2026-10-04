@@ -1,11 +1,13 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { api } from "@/lib/api";
 import { Button } from "@/src/shared/ui/button";
 import { Badge } from "@/src/shared/ui/badge";
 import { Play, Loader2, Copy, Trash2, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
+import { DEVICE_COMMAND_TIMEOUT, interactiveResult } from './interactiveResult';
+import { getApiErrorMessage } from '@/lib/apiError';
 
 interface RunScriptTabProps {
     deviceId: string;
@@ -27,39 +29,51 @@ export function RunScriptTab({ deviceId, deviceName, isOnline, onBack }: RunScri
     const [isRunning, setIsRunning] = useState(false);
     const [results, setResults] = useState<ScriptResult[]>([]);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
+    const commandLock = useRef(false);
+    const mounted = useRef(true);
+    const available = useRef(isOnline);
+    const activeRequest = useRef<AbortController | null>(null);
+    available.current = isOnline;
+    useEffect(() => {
+        mounted.current = true;
+        return () => { mounted.current = false; activeRequest.current?.abort(); };
+    }, []);
 
     const executeScript = async () => {
-        if (!script.trim() || isRunning || !isOnline) return;
+        if (!script.trim() || commandLock.current || !isOnline) return;
+        const commands = script.split("\n").filter((line) => line.trim() !== "" && !line.trim().startsWith("#"));
+        if (!commands.length) { toast.error('Нет команд для исполнения'); return; }
+        commandLock.current = true;
 
         setIsRunning(true);
         const startTime = Date.now();
 
         try {
             // Разбиваем многострочный скрипт на команды и выполняем последовательно
-            const commands = script.split("\n").filter((line) => line.trim() !== "" && !line.trim().startsWith("#"));
 
             let fullOutput = "";
             let hasError = false;
 
             for (const cmd of commands) {
                 try {
+                    if (!mounted.current || !available.current) throw new Error('Исполнение остановлено: устройство недоступно или панель закрыта.');
+                    const controller = new AbortController();
+                    activeRequest.current = controller;
                     const { data } = await api.post(`/devices/${deviceId}/shell`, {
                         command: cmd.trim(),
-                    });
+                    }, { signal: controller.signal, timeout: DEVICE_COMMAND_TIMEOUT.shell });
 
-                    if (data.output) {
-                        fullOutput += `$ ${cmd.trim()}\n${data.output}\n`;
-                    } else if (data.error) {
-                        fullOutput += `$ ${cmd.trim()}\nERROR: ${data.error}\n`;
-                        hasError = true;
-                    }
-                } catch (err: any) {
-                    const errMsg = err.response?.data?.detail || err.message || "Неизвестная ошибка";
+                    const output = interactiveResult(data, 'output');
+                    fullOutput += `$ ${cmd.trim()}\n${output}\n`;
+                } catch (err) {
+                    const errMsg = getApiErrorMessage(err, err instanceof Error ? err.message : 'Результат не подтверждён');
                     fullOutput += `$ ${cmd.trim()}\nFATAL: ${errMsg}\n`;
                     hasError = true;
                     break;
                 }
             }
+
+            if (!mounted.current) return;
 
             const duration = Date.now() - startTime;
 
@@ -71,7 +85,7 @@ export function RunScriptTab({ deviceId, deviceName, isOnline, onBack }: RunScri
                 duration,
             };
 
-            setResults((prev) => [result, ...prev]);
+            setResults((prev) => [result, ...prev].slice(0, 20));
 
             if (hasError) {
                 toast.error("Скрипт завершился с ошибкой", {
@@ -83,13 +97,15 @@ export function RunScriptTab({ deviceId, deviceName, isOnline, onBack }: RunScri
                 });
             }
         } finally {
-            setIsRunning(false);
+            commandLock.current = false;
+            activeRequest.current = null;
+            if (mounted.current) setIsRunning(false);
         }
     };
 
-    const copyOutput = (text: string) => {
-        navigator.clipboard.writeText(text);
-        toast.success("Скопировано в буфер обмена");
+    const copyOutput = async (text: string) => {
+        try { await navigator.clipboard.writeText(text); toast.success("Скопировано в буфер обмена"); }
+        catch { toast.error('Не удалось скопировать результат'); }
     };
 
     const clearResults = () => {
@@ -119,42 +135,44 @@ export function RunScriptTab({ deviceId, deviceName, isOnline, onBack }: RunScri
     };
 
     return (
-        <div className="flex flex-col h-full animate-in fade-in slide-in-from-right-2 duration-200">
+        <div className="flex h-full min-h-0 flex-col animate-in fade-in duration-200 motion-reduce:animate-none">
             {/* Заголовок */}
             <div className="flex items-center gap-2 mb-4 shrink-0">
                 <Button variant="ghost" size="sm" onClick={onBack} className="px-2 hover:bg-border">
                     <ArrowLeft className="w-4 h-4 mr-2" /> назад
                 </Button>
-                <div className="flex-1">
-                    <h3 className="text-sm font-bold text-foreground font-mono truncate">{deviceName} / script</h3>
+                <div className="min-w-0 flex-1">
+                    <h3 className="truncate text-sm font-semibold">{deviceName} · команды Android</h3>
                 </div>
             </div>
 
             {/* Редактор скрипта */}
-            <div className="shrink-0 border border-border rounded-sm overflow-hidden bg-background">
-                <div className="flex items-center justify-between px-3 py-1.5 bg-muted border-b border-border">
+            <p className="mb-3 text-xs leading-relaxed text-muted-foreground">Команды выполняются по одной через APK, до 30 секунд на ответ. При ошибке следующие команды не отправляются. Закрытие панели отменяет ожидание, но не отменяет уже полученную Android команду.</p>
+            <div className="shrink-0 overflow-hidden rounded-xl border border-border bg-card">
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-muted/30 px-3 py-2">
                     <div className="flex items-center gap-2">
-                        <div className={`w-2 h-2 rounded-full ${isOnline ? "bg-success animate-pulse" : "bg-muted-foreground"}`} />
-                        <span className="text-[10px] font-mono font-bold tracking-widest uppercase text-foreground">
-                            Script Editor
+                        <div className={`h-2 w-2 rounded-full ${isOnline ? "bg-success" : "bg-muted-foreground"}`} />
+                        <span className="text-xs font-medium">
+                            Редактор shell-команд
                         </span>
                     </div>
-                    <Badge variant="outline" className="text-[8px] px-1 py-0 h-3 border-[#444] text-muted-foreground">
+                    <Badge variant="outline" className="text-xs font-normal text-muted-foreground">
                         Ctrl+Enter — запуск
                     </Badge>
                 </div>
                 <textarea
+                    aria-label="Команды shell: по одной на строку"
                     ref={textareaRef}
                     value={script}
                     onChange={(e) => setScript(e.target.value)}
                     onKeyDown={handleKeyDown}
                     placeholder={"# Введите команды (по одной на строку)\nls -la /sdcard/\ngetprop ro.build.version.release\ndf -h"}
-                    className="w-full h-32 bg-[#0a0a0a] text-green-400 font-mono text-xs p-3 resize-none outline-none focus:ring-1 focus:ring-primary/50 placeholder:text-muted-foreground/30"
+                    className="h-40 w-full resize-y bg-background p-3 font-mono text-sm leading-relaxed text-foreground outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring disabled:opacity-60"
                     disabled={isRunning || !isOnline}
                     spellCheck={false}
                 />
-                <div className="flex items-center justify-between px-3 py-1.5 bg-muted border-t border-border">
-                    <span className="text-[9px] text-muted-foreground font-mono">
+                <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border bg-muted/30 px-3 py-2">
+                    <span className="text-xs text-muted-foreground">
                         {script.split("\n").filter((l) => l.trim() && !l.trim().startsWith("#")).length} команд
                     </span>
                     <div className="flex items-center gap-2">
@@ -163,7 +181,7 @@ export function RunScriptTab({ deviceId, deviceName, isOnline, onBack }: RunScri
                                 variant="ghost"
                                 size="sm"
                                 onClick={clearResults}
-                                className="h-6 px-2 text-[10px] text-muted-foreground hover:text-destructive"
+                                className="text-muted-foreground hover:text-destructive"
                             >
                                 <Trash2 className="w-3 h-3 mr-1" /> Очистить
                             </Button>
@@ -172,7 +190,6 @@ export function RunScriptTab({ deviceId, deviceName, isOnline, onBack }: RunScri
                             size="sm"
                             onClick={executeScript}
                             disabled={!script.trim() || isRunning || !isOnline}
-                            className="h-6 px-3 text-[10px] font-mono bg-success/20 text-success border border-success/30 hover:bg-success/30 disabled:opacity-40"
                         >
                             {isRunning ? (
                                 <>
@@ -180,7 +197,7 @@ export function RunScriptTab({ deviceId, deviceName, isOnline, onBack }: RunScri
                                 </>
                             ) : (
                                 <>
-                                    <Play className="w-3 h-3 mr-1" /> Execute
+                                    <Play className="mr-2 h-4 w-4" /> Выполнить
                                 </>
                             )}
                         </Button>
@@ -189,44 +206,43 @@ export function RunScriptTab({ deviceId, deviceName, isOnline, onBack }: RunScri
             </div>
 
             {/* Результаты выполнения */}
-            <div className="flex-1 overflow-y-auto custom-scrollbar mt-3 space-y-2">
+            <div aria-live="polite" className="mt-3 min-h-0 flex-1 space-y-3 overflow-y-auto">
                 {!isOnline && (
-                    <div className="flex items-center justify-center p-4 text-destructive text-xs font-mono bg-destructive/5 rounded-sm border border-destructive/20">
-                        Устройство оффлайн — выполнение команд невозможно
+                    <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-4 text-sm text-destructive">
+                        Нет свежего подтверждения доступности — команды заблокированы.
                     </div>
                 )}
 
                 {results.length === 0 && isOnline && (
-                    <div className="flex flex-col items-center justify-center py-8 text-muted-foreground/50">
+                    <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
                         <Play className="w-6 h-6 mb-2" />
-                        <span className="text-xs font-mono">Введите скрипт и нажмите Execute</span>
+                        <span className="text-sm">Введите команды и нажмите «Выполнить»</span>
                     </div>
                 )}
 
                 {results.map((result, idx) => (
                     <div
                         key={idx}
-                        className={`border rounded-sm overflow-hidden ${result.error ? "border-destructive/30 bg-destructive/5" : "border-border bg-muted/30"
+                        className={`overflow-hidden rounded-xl border ${result.error ? "border-destructive/30 bg-destructive/5" : "border-border bg-card"
                             }`}
                     >
-                        <div className="flex items-center justify-between px-2 py-1 bg-muted/50 border-b border-border">
+                        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-muted/30 px-3 py-2">
                             <div className="flex items-center gap-2">
                                 <div className={`w-1.5 h-1.5 rounded-full ${result.error ? "bg-destructive" : "bg-success"}`} />
-                                <span className="text-[9px] font-mono text-muted-foreground">
-                                    {result.timestamp.toLocaleTimeString()} • {result.duration}ms
+                                <span className="text-xs text-muted-foreground">
+                                    {result.error ? 'Результат не подтверждён' : 'Получен результат'} · {result.timestamp.toISOString().slice(11, 19)} UTC · {result.duration} ms
                                 </span>
                             </div>
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-5 w-5 hover:bg-border"
                                 onClick={() => copyOutput(result.output || result.error || "")}
                                 title="Копировать вывод"
                             >
                                 <Copy className="w-3 h-3" />
                             </Button>
                         </div>
-                        <pre className="px-2 py-1.5 text-[10px] font-mono leading-tight text-gray-300 whitespace-pre-wrap break-all max-h-48 overflow-y-auto custom-scrollbar">
+                        <pre className="max-h-64 overflow-y-auto whitespace-pre-wrap break-all p-3 font-mono text-xs leading-relaxed text-foreground">
                             {result.output || result.error}
                         </pre>
                     </div>

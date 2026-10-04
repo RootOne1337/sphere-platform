@@ -1,0 +1,4 @@
+{
+  "server_url": "https://sphere-primary.example.internal",
+  "fallback_server_url": "https://sphere-secondary.example.internal"
+}

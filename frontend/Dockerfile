@@ -2,19 +2,21 @@
 # TZ-10 Web Frontend (Next.js 15)
 # Детальная реализация: TZ-10 SPLIT-1 (Setup + Auth)
 
-FROM node:20-alpine AS base
+FROM node:24-alpine AS base
 
 WORKDIR /app
 
 # Зависимости
 FROM base AS deps
 COPY package.json package-lock.json* ./
-RUN npm ci --only=production
+RUN npm ci --omit=dev --no-audit --no-fund
 
 # Builder
 FROM base AS builder
+ARG BUILD_SHA=unknown
+ENV NEXT_PUBLIC_BUILD_SHA=${BUILD_SHA}
 COPY package.json package-lock.json* ./
-RUN npm ci
+RUN npm ci --no-audit --no-fund
 COPY . .
 RUN npm run build
 

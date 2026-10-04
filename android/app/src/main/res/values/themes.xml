@@ -1,7 +1,7 @@
 <resources>
 
     <!-- Main app theme — Material 3 dark enterprise -->
-    <style name="Theme.SphereAgent" parent="Theme.Material3.DayNight.NoActionBar">
+    <style name="Theme.SphereAgent.Base" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="colorPrimary">@color/brand_primary</item>
         <item name="colorOnPrimary">@color/brand_on_primary</item>
         <item name="colorPrimaryContainer">@color/brand_primary_container</item>
@@ -18,8 +18,10 @@
         <item name="android:statusBarColor">@color/brand_background</item>
         <item name="android:navigationBarColor">@color/brand_background</item>
         <item name="android:windowLightStatusBar">false</item>
-        <item name="android:windowLightNavigationBar">false</item>
     </style>
+
+    <!-- The qualified values-v27 variant inherits the same base style. -->
+    <style name="Theme.SphereAgent" parent="Theme.SphereAgent.Base" />
 
     <!-- Transparent Activity theme for ScreenCaptureRequestActivity.
          Must extend an AppCompat/Material3 descendant — plain platform

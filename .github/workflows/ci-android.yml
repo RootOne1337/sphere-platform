@@ -2,33 +2,70 @@ name: CI — Android
 
 on:
   push:
-    paths: ["android/**"]
+    paths:
+      - "android/**"
+      - ".github/workflows/ci-android.yml"
+      - ".github/workflows/release.yml"
   pull_request:
     branches: [main]
-    paths: ["android/**"]
+    paths:
+      - "android/**"
+      - ".github/workflows/ci-android.yml"
+      - ".github/workflows/release.yml"
+
+permissions:
+  contents: read
 
 jobs:
   build:
-    name: Build APK
+    name: Android tests and signed release smoke build
     runs-on: ubuntu-latest
+    timeout-minutes: 40
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
         with:
           java-version: "17"
           distribution: temurin
-      - uses: gradle/actions/setup-gradle@v3
+      - uses: gradle/actions/setup-gradle@v6
 
-      - name: Build debug APK
+      - name: Create a disposable CI-only signing key
+        env:
+          CI_KEY_PASSWORD: ci-only-${{ github.run_id }}-${{ github.run_attempt }}
+        run: |
+          keytool -genkeypair -noprompt \
+            -keystore "$RUNNER_TEMP/sphere-ci-signing.jks" \
+            -storepass "$CI_KEY_PASSWORD" \
+            -keypass "$CI_KEY_PASSWORD" \
+            -alias sphere-ci \
+            -dname "CN=Sphere CI Only, OU=Non-production, O=Sphere, C=US" \
+            -keyalg RSA -keysize 2048 -validity 2
+
+      - name: Test all variants and build signed release smoke APKs
         working-directory: android
-        run: ./gradlew assembleDebug
+        env:
+          SPHERE_KEYSTORE_PATH: ${{ runner.temp }}/sphere-ci-signing.jks
+          SPHERE_KEYSTORE_PASSWORD: ci-only-${{ github.run_id }}-${{ github.run_attempt }}
+          SPHERE_KEY_ALIAS: sphere-ci
+          SPHERE_KEY_PASSWORD: ci-only-${{ github.run_id }}-${{ github.run_attempt }}
+        run: ./gradlew test lint assembleDebug assembleDevRelease assembleEnterpriseRelease
 
-      - name: Run unit tests
-        working-directory: android
-        run: ./gradlew test
+      - name: Verify release smoke APK signatures
+        shell: bash
+        run: |
+          set -euo pipefail
+          apksigner="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner -print | sort -V | tail -n 1)"
+          test -n "$apksigner"
+          "$apksigner" verify --verbose android/app/build/outputs/apk/dev/release/app-dev-release.apk
+          "$apksigner" verify --verbose android/app/build/outputs/apk/enterprise/release/app-enterprise-release.apk
 
-      - name: Upload APK artifact
-        uses: actions/upload-artifact@v4
+      - name: Upload debug-only APKs and unit-test reports
+        if: always()
+        uses: actions/upload-artifact@v6
         with:
-          name: debug-apk
-          path: android/app/build/outputs/apk/**/*.apk
+          name: android-ci-diagnostics-${{ github.sha }}
+          path: |
+            android/app/build/outputs/apk/*/debug/*.apk
+            android/app/build/test-results/test*/**/*.xml
+          if-no-files-found: warn
+          retention-days: 14

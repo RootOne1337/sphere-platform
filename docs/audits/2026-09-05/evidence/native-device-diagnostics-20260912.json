@@ -1,0 +1,46 @@
+{
+  "finding": "AUD-98",
+  "before": {
+    "verified_at": "2026-09-12T18:21:43.749639+00:00",
+    "status": 200,
+    "duration_seconds": 0.562,
+    "request_id": "cf33d0da",
+    "characters": 58,
+    "lines": 2,
+    "contains_sphere_component": false,
+    "contains_error_response": false
+  },
+  "after": {
+    "verified_at": "2026-09-12T18:25:46.972074+00:00",
+    "status": 200,
+    "duration_seconds": 0.531,
+    "request_id": "37b24147",
+    "characters": 13073,
+    "lines": 100,
+    "contains_sphere_component": true,
+    "contains_error_response": false
+  },
+  "request": {
+    "lines": 100,
+    "mode": "sphere"
+  },
+  "native_apk": "0f1410e",
+  "native_package": "com.sphereplatform.agent.pilot.debug",
+  "native_api": 28,
+  "apk_reinstalled": false,
+  "backend_image_id": "sha256:66e9fffd2feb3072e353224073bfc5aef4079f6b0aa1636a6d91d65b7225642c",
+  "packaged_source_sha256": {
+    "backend/api/v1/devices/router.py": "45af67070f5245bf2b55ecc772fb0131ad0e9e7364052c9c01e1124379156e79"
+  },
+  "tests_before": {
+    "failed": 3,
+    "passed": 14
+  },
+  "tests_after": {
+    "passed": 17,
+    "seconds": 8.06,
+    "warnings": 1
+  },
+  "private_log_text_published": false,
+  "browser_ui_acceptance": false
+}

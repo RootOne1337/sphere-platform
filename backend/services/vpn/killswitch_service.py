@@ -1,7 +1,7 @@
 ﻿# backend/services/vpn/killswitch_service.py  TZ-06 SPLIT-4
 from __future__ import annotations
 
-from backend.services.vpn.event_publisher import EventPublisher
+from backend.services.vpn.event_publisher import CommandPublisher
 
 
 class KillSwitchService:
@@ -10,8 +10,14 @@ class KillSwitchService:
     The actual iptables / VpnService logic executes on the Android agent.
     """
 
-    def __init__(self, publisher: EventPublisher) -> None:
+    def __init__(self, publisher: CommandPublisher) -> None:
         self.publisher = publisher
+
+    @property
+    def supported(self) -> bool:
+        # The generic pub/sub boolean (including offline queueing) does not
+        # establish compatibility with this legacy VPN command envelope.
+        return getattr(self.publisher, "supports_killswitch", False) is True
 
     async def enable_killswitch(
         self,
@@ -19,7 +25,7 @@ class KillSwitchService:
         vpn_endpoint: str,
         method: str = "vpnservice",
     ) -> bool:
-        """Send enable command to device. Returns True if device received it."""
+        """Submit an enable envelope; a boolean is not an Android execution receipt."""
         return await self.publisher.send_command_to_device(
             device_id,
             {
@@ -31,7 +37,7 @@ class KillSwitchService:
         )
 
     async def disable_killswitch(self, device_id: str) -> bool:
-        """Send disable command. Returns True if device received it."""
+        """Submit a disable envelope; a boolean is not an Android execution receipt."""
         return await self.publisher.send_command_to_device(
             device_id,
             {

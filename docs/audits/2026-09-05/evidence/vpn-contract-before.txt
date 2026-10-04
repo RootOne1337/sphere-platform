@@ -1,0 +1,27 @@
+FF                                                                       [100%]
+================================== FAILURES ===================================
+______ test_vpn_assignment_rejects_foreign_device_before_any_allocation _______
+tests\production\test_vpn_contract.py:31: in test_vpn_assignment_rejects_foreign_device_before_any_allocation
+    with pytest.raises(HTTPException) as error:
+E   Failed: DID NOT RAISE <class 'fastapi.exceptions.HTTPException'>
+_________ test_idempotent_assignment_keeps_the_original_preshared_key _________
+tests\production\test_vpn_contract.py:44: in test_idempotent_assignment_keeps_the_original_preshared_key
+    assert first_psk in repeated.config.splitlines()
+E   AssertionError: assert 'PresharedKey = slQoJxO7fXCcSxBx+h1b3NPIVL8NayelNw+j/xH7oiE=' in ['[Interface]', 'PrivateKey = kHrJx4FGFAHCL3vp3WsS1OhYcwLBr6SXcq6Qr0gX4mY=', 'Address = 10.200.0.2/32', 'DNS = 1.1.1.1, 8.8.8.8', 'Jc = 121', 'Jmin = 45', ...]
+E    +  where ['[Interface]', 'PrivateKey = kHrJx4FGFAHCL3vp3WsS1OhYcwLBr6SXcq6Qr0gX4mY=', 'Address = 10.200.0.2/32', 'DNS = 1.1.1.1, 8.8.8.8', 'Jc = 121', 'Jmin = 45', ...] = <built-in method splitlines of str object at 0x0000022F6B3D2BB0>()
+E    +    where <built-in method splitlines of str object at 0x0000022F6B3D2BB0> = '[Interface]\nPrivateKey = kHrJx4FGFAHCL3vp3WsS1OhYcwLBr6SXcq6Qr0gX4mY=\nAddress = 10.200.0.2/32\nDNS = 1.1.1.1, 8.8.8...n[Peer]\nPublicKey = audit-server-public-key\nAllowedIPs = 0.0.0.0/0\nEndpoint = 127.0.0.1:9\nPersistentKeepalive = 25'.splitlines
+E    +      where '[Interface]\nPrivateKey = kHrJx4FGFAHCL3vp3WsS1OhYcwLBr6SXcq6Qr0gX4mY=\nAddress = 10.200.0.2/32\nDNS = 1.1.1.1, 8.8.8...n[Peer]\nPublicKey = audit-server-public-key\nAllowedIPs = 0.0.0.0/0\nEndpoint = 127.0.0.1:9\nPersistentKeepalive = 25' = VPNAssignment(peer_id='865daeaf-4085-41ef-82ef-21e28624a9bb', device_id='391fa2af-07b8-4cd7-9b3c-5eb441f0544e', assign...A0B6A0B6A0B6A0B6A0B6A0B6A0ehz/BemO/ZdsI3MeAAAAAElFTkSuQmCC', public_key='Oy4vOXlPsiloMaUEKTMpvkALxNeXmYCxkdNdM/Ehmi4=').config
+============================== warnings summary ===============================
+.venv-audit\Lib\site-packages\pydantic\fields.py:754: 484 warnings
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\pydantic\fields.py:754: PydanticDeprecatedSince20: Using extra keyword arguments on `Field` is deprecated and will be removed. Use `json_schema_extra` instead. (Extra keys: 'deprecated'). Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.6/migration/
+    warn(
+
+backend\api\v1\game_accounts\router.py:94
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\api\v1\game_accounts\router.py:94: DeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+    sort_dir: str = Query("desc", regex="^(asc|desc)$", description="Направление сортировки"),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/production/test_vpn_contract.py::test_vpn_assignment_rejects_foreign_device_before_any_allocation
+FAILED tests/production/test_vpn_contract.py::test_idempotent_assignment_keeps_the_original_preshared_key
+2 failed, 485 warnings in 0.88s

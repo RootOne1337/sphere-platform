@@ -15,14 +15,17 @@ import java.util.Locale
  * Устанавливается в [com.sphereplatform.agent.SphereApp.attachBaseContext]
  * (до инициализации Hilt), чтобы ловить краши при создании DI-графа.
  *
- * Файл: `/data/data/<pkg>/files/sphere_crash.log` — доступен через
- * `ldconsole pull` или `adb pull`.
+ * Файл: `/data/data/<pkg>/files/sphere_crash.log`. Он остаётся доступен
+ * локально через `ldconsole pull` / `adb pull` и загружается следующим успешным
+ * циклом [com.sphereplatform.agent.workers.LogUploadWorker].
  */
 object CrashHandler {
 
     private const val CRASH_LOG_FILE = "sphere_crash.log"
     /** Максимальный размер файла крашей — обрезаем начало при переполнении. */
     private const val MAX_FILE_SIZE = 256 * 1024L // 256 KB
+
+    internal fun crashLogFile(context: Context): File = File(context.filesDir, CRASH_LOG_FILE)
 
     /**
      * Устанавливает Thread.UncaughtExceptionHandler.
@@ -46,7 +49,7 @@ object CrashHandler {
      */
     private fun writeCrashLog(context: Context, thread: Thread, throwable: Throwable) {
         try {
-            val crashFile = File(context.filesDir, CRASH_LOG_FILE)
+            val crashFile = crashLogFile(context)
 
             // Формируем запись
             val timestamp = SimpleDateFormat(

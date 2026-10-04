@@ -1,117 +1,74 @@
 'use client';
 
-import { useMemo } from 'react';
+import { Activity, CircleHelp, ShieldCheck, WifiOff } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
-interface VPNMapProps {
-    tunnels: any[];
+export interface VpnTopologyPeer {
+  id: string;
+  deviceId: string;
+  endpoint: string | null;
+  status: string;
+  active: boolean;
+  lastHandshakeAt: string | null;
 }
 
-// Simple seeded pseudo-random for deterministic rendering
-function seededRandom(seed: number) {
-    let s = seed;
-    return () => {
-        s = (s * 16807 + 0) % 2147483647;
-        return (s - 1) / 2147483646;
-    };
+function formatUtc(value: string | null): string {
+  if (!value) return 'No handshake reported';
+  const date = new Date(value);
+  return Number.isNaN(date.valueOf()) ? 'Invalid timestamp' : `${date.toISOString().replace('T', ' ').slice(0, 19)} UTC`;
 }
 
-export function VPNMap({ tunnels }: VPNMapProps) {
-    const arcs = useMemo(() => {
-        const rng = seededRandom(42);
-        return Array.from({ length: 8 }).map((_, i) => {
-            const startX = 400 + (rng() * 50 - 25);
-            const startY = 150 + (rng() * 30 - 15);
-            const endX = rng() * 800;
-            const endY = rng() * 400;
+/** A truthful peer snapshot: the API has no geo coordinates or latency telemetry. */
+export function VPNMap({ tunnels }: { tunnels: VpnTopologyPeer[] }) {
+  const activeCount = tunnels.filter((peer) => peer.active).length;
+  const nonActiveCount = tunnels.length - activeCount;
 
-            const cx = (startX + endX) / 2;
-            const cy = (startY + endY) / 2 - 100;
-
-            return {
-                id: i,
-                d: `M ${startX} ${startY} Q ${cx} ${cy} ${endX} ${endY}`,
-                opacity: rng() * 0.5 + 0.2,
-                active: rng() > 0.3
-            };
-        });
-    }, []);
-
-    const dots = useMemo(() => {
-        const rng = seededRandom(123);
-        return Array.from({ length: 150 }).map((_, i) => ({
-            cx: rng() * 800,
-            cy: rng() * 400,
-            r: rng() * 1.5 + 0.5,
-            opacity: rng() * 0.5 + 0.1,
-        }));
-    }, []);
-
-    return (
-        <div className="relative w-full h-[350px] bg-card rounded-sm overflow-hidden border border-border">
-
-            {/* Decorative Grid Background */}
-            <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
-
-            {/* SVG Map Container */}
-            <svg viewBox="0 0 800 400" className="w-full h-full opacity-60">
-                <defs>
-                    <radialGradient id="masterNode" cx="50%" cy="50%" r="50%">
-                        <stop offset="0%" stopColor="#22c55e" stopOpacity="1" />
-                        <stop offset="100%" stopColor="#22c55e" stopOpacity="0" />
-                    </radialGradient>
-                </defs>
-
-                {/* Abstract World Map Dotted Pattern (simplified) */}
-                {dots.map((dot, i) => (
-                    <circle
-                        key={`dot-${i}`}
-                        cx={dot.cx}
-                        cy={dot.cy}
-                        r={dot.r}
-                        fill="#333"
-                        opacity={dot.opacity}
-                    />
-                ))}
-
-                {/* Animated Arcs */}
-                {arcs.map(arc => (
-                    <g key={`arc-${arc.id}`}>
-                        <path
-                            d={arc.d}
-                            fill="none"
-                            stroke={arc.active ? "#22c55e" : "#ef4444"}
-                            strokeWidth={1.5}
-                            opacity={arc.opacity}
-                            className={arc.active ? "animate-pulse" : ""}
-                            strokeDasharray="4 4"
-                        />
-                        <circle
-                            cx={arc.d.split(' ')[arc.d.split(' ').length - 2]}
-                            cy={arc.d.split(' ')[arc.d.split(' ').length - 1]}
-                            r={3}
-                            fill={arc.active ? "#22c55e" : "#ef4444"}
-                        />
-                    </g>
-                ))}
-
-                {/* Master Server Node (Center) */}
-                <circle cx="400" cy="150" r="15" fill="url(#masterNode)" className="animate-pulse" />
-                <circle cx="400" cy="150" r="4" fill="#22c55e" />
-
-                <text x="415" y="154" fill="#fff" fontSize="10" fontFamily="monospace" opacity="0.8">FRAMEWORK-MASTER [FRA-1]</text>
-            </svg>
-
-            {/* Overlay Stats */}
-            <div className="absolute bottom-4 left-4 flex gap-4 pointer-events-none">
-                <div className="bg-black/80 border border-border px-3 py-2 rounded-sm backdrop-blur-md">
-                    <div className="text-[9px] uppercase font-bold tracking-widest text-muted-foreground">Active Tunnels</div>
-                    <div className="text-xl font-mono text-primary animate-pulse">{arcs.filter(a => a.active).length}</div>
-                </div>
-                <div className="bg-black/80 border border-border px-3 py-2 rounded-sm backdrop-blur-md">
-                    <div className="text-[9px] uppercase font-bold tracking-widest text-[#555]">Global Latency</div>
-                    <div className="text-xl font-mono text-foreground">{'< 45ms'}</div>
-                </div>
-            </div>
+  return (
+    <section className="rounded-sm border border-border bg-card p-4" aria-label="VPN peer snapshot">
+      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
+            <Activity className="h-4 w-4 text-primary" aria-hidden="true" />
+            Peer snapshot
+          </h3>
+          <p className="mt-1 text-xs text-muted-foreground">Состояние из последнего ответа `/vpn/peers`</p>
         </div>
-    );
+        <div className="flex gap-2 text-xs">
+          <Badge variant="outline" className="border-success/50 text-success">Recent handshake · {activeCount}</Badge>
+          <Badge variant="outline" className="border-border text-muted-foreground">No recent handshake · {nonActiveCount}</Badge>
+        </div>
+      </div>
+
+      {tunnels.length === 0 ? (
+        <div className="flex min-h-40 flex-col items-center justify-center gap-2 rounded border border-dashed border-border text-center">
+          <CircleHelp className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
+          <p className="text-sm text-foreground">Нет VPN peers с привязанными устройствами</p>
+          <p className="text-xs text-muted-foreground">Свободные адреса пула не считаются устройствами.</p>
+        </div>
+      ) : (
+        <>
+          <ul className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+            {tunnels.slice(0, 6).map((peer) => (
+              <li key={peer.id} className="min-w-0 rounded border border-border bg-muted/30 p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="truncate font-mono text-xs text-foreground">Device {peer.deviceId.slice(0, 8)}</span>
+                  {peer.active
+                    ? <ShieldCheck className="h-4 w-4 shrink-0 text-success" aria-label="Recent handshake" />
+                    : <WifiOff className="h-4 w-4 shrink-0 text-muted-foreground" aria-label="No recent handshake" />}
+                </div>
+                <p className="mt-2 truncate font-mono text-xs text-primary">{peer.endpoint ?? 'Address unavailable'}</p>
+                <div className="mt-2 flex items-center justify-between gap-2 text-[10px] text-muted-foreground">
+                  <span className="uppercase">{peer.status}</span>
+                  <time dateTime={peer.lastHandshakeAt ?? undefined} className="truncate">{formatUtc(peer.lastHandshakeAt)}</time>
+                </div>
+              </li>
+            ))}
+          </ul>
+          {tunnels.length > 6 && (
+            <p className="mt-3 text-xs text-muted-foreground">Показаны 6 из {tunnels.length}; полный список ниже.</p>
+          )}
+        </>
+      )}
+    </section>
+  );
 }

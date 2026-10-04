@@ -1,0 +1,53 @@
+{
+  "before": {
+    "tests": 14,
+    "failures": 9,
+    "cases": [
+      {
+        "test": "stale catalog response cannot trigger a same version reinstall",
+        "failure": "java.lang.AssertionError: Verification failed: call 1 of 1: OtaUpdateService(#2).performUpdate(any(), any())) should not be called"
+      },
+      {
+        "test": "malformed successful body is not mistaken for no update",
+        "failure": "java.lang.AssertionError: expected:<Retry> but was:<Success {mOutputData=Data {}}>"
+      },
+      {
+        "test": "transient server failure requests backoff instead of next six hour period",
+        "failure": "java.lang.AssertionError: expected:<Retry> but was:<Success {mOutputData=Data {}}>"
+      },
+      {
+        "test": "worker cancellation during install is propagated to WorkManager",
+        "failure": "java.lang.AssertionError: Cancellation was swallowed"
+      },
+      {
+        "test": "rate limiting requests backoff",
+        "failure": "java.lang.AssertionError: expected:<Retry> but was:<Success {mOutputData=Data {}}>"
+      },
+      {
+        "test": "stale lower version cannot trigger a downgrade",
+        "failure": "java.lang.AssertionError: Verification failed: call 1 of 1: OtaUpdateService(#41).performUpdate(any(), any())) should not be called"
+      },
+      {
+        "test": "refresh completing after route recovery uses current management address",
+        "failure": "org.junit.ComparisonFailure: expected:<[recovered].test> but was:<[management].test>"
+      },
+      {
+        "test": "token refresh exception participates in retry policy",
+        "failure": "java.io.IOException: refresh connection reset"
+      },
+      {
+        "test": "expired credential response retries fresh credential acquisition",
+        "failure": "java.lang.AssertionError: expected:<Retry> but was:<Success {mOutputData=Data {}}>"
+      }
+    ]
+  },
+  "after_full": {
+    "tests": 547,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "suites": 40,
+    "seconds": 122.047
+  },
+  "production_worker_cases": 14
+}

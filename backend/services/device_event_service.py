@@ -6,10 +6,12 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime, timezone
+from typing import Any
 
 import structlog
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import InstrumentedAttribute
 
 from backend.models.device_event import DeviceEvent, EventSeverity
 from backend.schemas.device_events import (
@@ -163,7 +165,7 @@ class DeviceEventService:
             )
 
         # Сортировка (белый список)
-        sort_columns = {
+        sort_columns: dict[str, InstrumentedAttribute[Any]] = {
             "occurred_at": DeviceEvent.occurred_at,
             "created_at": DeviceEvent.created_at,
             "event_type": DeviceEvent.event_type,

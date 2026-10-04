@@ -1,12 +1,10 @@
 # backend/main.py — СОЗДАЁТСЯ В TZ-00, РЕДАКТИРОВАТЬ ЗАПРЕЩЕНО ВСЕМ ЭТАПАМ
 # Каждый новый этап создаёт ТОЛЬКО backend/api/v1/<NAME>/router.py — он подключится автоматически
 import importlib
-import json
 from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI
-from starlette_exporter import PrometheusMiddleware as _StarlettePrometheus
 from starlette_exporter import handle_metrics
 
 import backend.core.logging_config  # noqa: F401 — TZ-11 SPLIT-4: module-level structlog init
@@ -31,21 +29,17 @@ async def lifespan(app: FastAPI):
     import backend.tasks.task_heartbeat_watchdog  # noqa: F401 — watchdog зависших задач (TZ-04)
     from backend.core.lifespan_registry import run_all_shutdown, run_all_startup
 
-    await run_all_startup()
-
     # F-02: fail-fast if backend DB user is a PostgreSQL superuser (bypasses RLS)
     from backend.core.startup_checks import check_db_role_not_superuser
     await check_db_role_not_superuser()
 
-    # PROC-4: экспорт OpenAPI schema для TZ-10 (frontend типы через openapi-typescript)
-    Path("openapi.json").write_text(
-        json.dumps(app.openapi(), indent=2, ensure_ascii=False),
-        encoding="utf-8",
-    )
-
-    yield   # приложение работает
-
-    await run_all_shutdown()
+    # The API schema is available via /openapi.json. Runtime workers must not
+    # write build artifacts into the read-only application directory.
+    try:
+        await run_all_startup()
+        yield
+    finally:
+        await run_all_shutdown()
 
 
 app = FastAPI(
@@ -63,8 +57,8 @@ setup_cors(app)
 # Порядок (add_middleware в Starlette применяется в обратном порядке LIFO):
 #   1) RequestIdMiddleware  — самый внешний (запускается первым)
 #   2) PrometheusMiddleware — timing после request_id
-#   3) StarlettePrometheus  — exposition
-app.add_middleware(_StarlettePrometheus, app_name="sphere", group_paths=True)
+# Exposition uses starlette_exporter's fresh multiprocess registry. Do not add
+# its second HTTP middleware: unmatched raw paths would create unbounded labels.
 app.add_middleware(PrometheusMiddleware)
 app.add_middleware(RequestIdMiddleware)
 app.add_route("/metrics", handle_metrics)

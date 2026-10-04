@@ -1,0 +1,37 @@
+{
+  "observed_at": "2026-10-03T03:52:12.647047+00:00",
+  "baseline_head": "eafeb3312c6dc359f67cec0550113e4003bc88eb",
+  "finding": "N07",
+  "related_finding": "F36",
+  "before": {
+    "tests": 15,
+    "passed": 9,
+    "failures": 6,
+    "errors": 0,
+    "skipped": 0,
+    "controller_sha256": "7008fe8c1634c3266e1586101b0d7d452914914d6e62aa7231e33210717c3852",
+    "log_sha256": "15813d6ad0ad6389caa0bc34586d45bcec7e7bab58d1a3a5e24c4a609c775d72"
+  },
+  "after": {
+    "tests": 15,
+    "passed": 15,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "controller_sha256": "426c57aefdab51d9deef4b36709e337ec9f713c4ed964426854fae40b356cf19",
+    "log_sha256": "40753a648b170e4ab5efab0b013ad0768a1bb03c3833b1d4c546982963ac2c15"
+  },
+  "prepared_version_code": 10242,
+  "local_queue_admission_is_remote_delivery_proof": false,
+  "controller_target_is_measured_bitrate": false,
+  "native_codec_acceptance": false,
+  "candidate_published_at_initial_commit": false,
+  "device_install_sent_at_initial_commit": false,
+  "f36_closed": false,
+  "source_fixed_count": 33,
+  "open_count": 8,
+  "fixed_source_commit": "b39676e3e9aa416e396ce2b3d51d21f9b37141c2",
+  "delivered_via_version_code": 10244,
+  "delivered_online_devices": 14,
+  "native_delivery_evidence": "OTA-SIGNER-COMPATIBILITY-EVIDENCE.json"
+}

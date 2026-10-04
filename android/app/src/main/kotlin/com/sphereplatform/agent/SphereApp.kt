@@ -1,15 +1,19 @@
 package com.sphereplatform.agent
 
 import android.app.Application
+import android.content.Context
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import com.sphereplatform.agent.BuildConfig
+import com.sphereplatform.agent.logging.CrashHandler
 import com.sphereplatform.agent.logging.FileLoggingTree
 import com.sphereplatform.agent.root.RootAutoStart
 import com.sphereplatform.agent.service.ServiceWatchdog
+import com.sphereplatform.agent.service.BootRecoveryJobService
 import com.sphereplatform.agent.workers.KeepAliveWorker
 import com.sphereplatform.agent.workers.LogUploadWorker
 import com.sphereplatform.agent.workers.UpdateCheckWorker
+import com.sphereplatform.agent.workers.UpdateCheckScheduler
 import dagger.hilt.android.HiltAndroidApp
 import timber.log.Timber
 import javax.inject.Inject
@@ -27,6 +31,16 @@ class SphereApp : Application(), Configuration.Provider {
     @Inject
     lateinit var fileLoggingTree: FileLoggingTree
 
+    @Inject
+    lateinit var updateCheckScheduler: UpdateCheckScheduler
+
+    override fun attachBaseContext(base: Context) {
+        super.attachBaseContext(base)
+        // Install before onCreate/Hilt/WorkManager so startup crashes are persisted
+        // and can be uploaded by the next process start.
+        CrashHandler.install(this)
+    }
+
     override fun onCreate() {
         super.onCreate()
         // Always plant file tree first so logs are never lost
@@ -35,21 +49,23 @@ class SphereApp : Application(), Configuration.Provider {
             Timber.plant(Timber.DebugTree())
         }
 
-        // ── ROOT: снятие ВСЕХ системных ограничений на рутованных устройствах ─────
-        // На LDPlayer / Android 9 с root: снимает Stopped State, whitelist battery,
-        // разрешает фоновую работу, включает BootReceiver. Идемпотентно.
-        // Без root — тихо пропускается.
+        // Persist this independent boot path BEFORE optional WorkManager setup.
+        // A vendor may filter BOOT_COMPLETED, including WorkManager's receiver.
+        BootRecoveryJobService.schedule(this)
+
+        // Optional package-scoped root recovery for owner-managed rooted devices.
+        // Standard Android boot/job recovery remains the normal lifecycle path.
         Thread { RootAutoStart.configure(this) }.start()
 
         // Schedule background workers (KEEP policy — idempotent)
         LogUploadWorker.schedule(this)
         UpdateCheckWorker.schedule(this)
+        updateCheckScheduler.scheduleImmediate()
 
         // ── КРИТИЧНО: KeepAliveWorker планируется БЕЗУСЛОВНО ───────────────────
-        // WorkManager PeriodicWork (15 мин) хранится в SQLite и использует системный
-        // JobScheduler с setPersisted(true). Это ЕДИНСТВЕННЫЙ механизм Android,
-        // который переживает reboot И не зависит от Stopped State.
-        // После первого запуска APK — агент гарантированно стартует при каждом boot.
+        // WorkManager хранит своё расписание в SQLite, но его JobScheduler jobs
+        // не persisted: после reboot их восстанавливает RescheduleReceiver.
+        // Native BootRecoveryJobService выше закрывает зависимость от broadcast.
         // Пятислойная защита: BootReceiver + AlarmManager + KeepAliveWorker + START_STICKY + AutoEnrollment
         KeepAliveWorker.schedule(this)
 

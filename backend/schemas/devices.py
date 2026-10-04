@@ -152,6 +152,9 @@ class DeviceResponse(BaseModel):
     adb_connected: bool = False
     vpn_active: bool | None = None
     last_heartbeat: datetime | None = None
+    connected_since: datetime | None = None
+    agent_version: str | None = None
+    agent_version_code: int | None = None
 
     model_config = ConfigDict(from_attributes=False)
 
@@ -164,9 +167,25 @@ class DeviceStatusResponse(DeviceResponse):
 
 # ── List ──────────────────────────────────────────────────────────────────────
 
+class DeviceStatusCounts(BaseModel):
+    """Live status counts over the full server-filtered inventory scope."""
+
+    online: int = Field(default=0, ge=0, description="Reachable devices, including busy")
+    busy: int = Field(default=0, ge=0, description="Subset of online devices executing work")
+    connecting: int = Field(default=0, ge=0)
+    offline: int = Field(default=0, ge=0)
+    issues: int = Field(default=0, ge=0, description="Error, maintenance, or unknown state")
+
+
 class DeviceListResponse(BaseModel):
     items: list[DeviceResponse]
     total: int
     page: int
     per_page: int
     pages: int
+    # Counts are for the complete DB-filtered scope before live_status filtering.
+    # Values are computed from the same Redis MGET used to enrich the current page.
+    scope_total: int = Field(default=0, ge=0)
+    status_counts: DeviceStatusCounts = Field(default_factory=DeviceStatusCounts)
+    presence_available: bool = True
+    as_of: datetime | None = None

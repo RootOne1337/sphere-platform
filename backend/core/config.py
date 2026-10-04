@@ -1,5 +1,5 @@
 # backend/core/config.py
-from pydantic import Field, field_validator
+from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -30,6 +30,17 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = "HS256"
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     JWT_REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+
+    # Independent Fernet keys, newest first. Empty disables credential use/writes.
+    # Kept out of Settings repr; provision through the deployment secret store.
+    ACCOUNT_CREDENTIAL_KEYS: SecretStr = SecretStr("")
+
+    # Private task artifacts: no public MinIO address or credentials reach browsers.
+    SCREENSHOT_STORAGE_ENDPOINT: str = ""
+    SCREENSHOT_STORAGE_ACCESS_KEY: SecretStr = SecretStr("")
+    SCREENSHOT_STORAGE_SECRET_KEY: SecretStr = SecretStr("")
+    SCREENSHOT_STORAGE_SECURE: bool = True
+    SCREENSHOT_STORAGE_REGION: str = "us-east-1"
 
     # VPN
     WG_ROUTER_URL: str = "http://localhost:8001"

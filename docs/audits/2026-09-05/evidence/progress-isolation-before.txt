@@ -1,0 +1,114 @@
+FFFFFFFFFFFF.                                                            [100%]
+================================== FAILURES ===================================
+__________ test_live_data_cannot_be_read_by_another_tenant[progress] __________
+tests\production\test_progress_isolation.py:47: in test_live_data_cannot_be_read_by_another_tenant
+    assert response.status_code == 404, response.text
+E   AssertionError: {"nodes_done":0,"total_nodes":0,"current_node":"private-node","progress":0,"cycles":0,"started_at":null}
+E   assert 200 == 404
+E    +  where 200 = <Response [200 OK]>.status_code
+_________ test_live_data_cannot_be_read_by_another_tenant[live-logs] __________
+tests\production\test_progress_isolation.py:47: in test_live_data_cannot_be_read_by_another_tenant
+    assert response.status_code == 404, response.text
+E   AssertionError: [{"node_id":"private-node"}]
+E   assert 200 == 404
+E    +  where 200 = <Response [200 OK]>.status_code
+_____ test_progress_cannot_poison_unowned_or_terminal_task[other_device] ______
+tests\production\test_progress_isolation.py:64: in test_progress_cannot_poison_unowned_or_terminal_task
+    assert not await w.redis.exists(f"task_progress:{task_id}")
+E   assert not 1
+_______ test_progress_cannot_poison_unowned_or_terminal_task[other_org] _______
+tests\production\test_progress_isolation.py:64: in test_progress_cannot_poison_unowned_or_terminal_task
+    assert not await w.redis.exists(f"task_progress:{task_id}")
+E   assert not 1
+_____ test_progress_cannot_poison_unowned_or_terminal_task[unknown_task] ______
+tests\production\test_progress_isolation.py:64: in test_progress_cannot_poison_unowned_or_terminal_task
+    assert not await w.redis.exists(f"task_progress:{task_id}")
+E   assert not 1
+_____ test_progress_cannot_poison_unowned_or_terminal_task[terminal_task] _____
+tests\production\test_progress_isolation.py:64: in test_progress_cannot_poison_unowned_or_terminal_task
+    assert not await w.redis.exists(f"task_progress:{task_id}")
+E   assert not 1
+_________ test_malformed_progress_does_not_disconnect_agent[invalid0] _________
+..\..\..\AppData\Roaming\uv\python\cpython-3.12.12-windows-x86_64-none\Lib\unittest\mock.py:2429: in assert_not_awaited
+    raise AssertionError(msg)
+E   AssertionError: Expected task_progress to not have been awaited. Awaited 1 times.
+
+During handling of the above exception, another exception occurred:
+tests\production\test_progress_isolation.py:79: in test_malformed_progress_does_not_disconnect_agent
+    progress_dependencies.task_progress.assert_not_awaited()
+E   AssertionError: Expected task_progress to not have been awaited. Awaited 1 times.
+E   
+E   pytest introspection follows:
+E   
+E   Kwargs:
+E   assert {'device_id':... 'not-a-uuid'} == {}
+E     
+E     Left contains 4 more items:
+E     {'device_id': '47f78c56-fad7-44f3-9021-5e4f1de0b26b',
+E      'org_id': '184bebff-1e63-4366-9fa1-dc38e903b8b7',
+E      'progress': 50,
+E      'task_id': 'not-a-uuid'}
+E     Use -v to get more diff
+_________ test_malformed_progress_does_not_disconnect_agent[invalid1] _________
+tests\production\test_progress_isolation.py:77: in test_malformed_progress_does_not_disconnect_agent
+    await handle_task_progress(str(w.dev_a.id), str(w.org_a.id), msg)
+backend\api\ws\android\router.py:145: in handle_task_progress
+    progress = min(int(nodes_done / max(total_nodes, 1) * 100), 100)
+E   TypeError: unsupported operand type(s) for /: 'str' and 'int'
+_________ test_malformed_progress_does_not_disconnect_agent[invalid2] _________
+tests\production\test_progress_isolation.py:78: in test_malformed_progress_does_not_disconnect_agent
+    assert not await w.redis.exists(f"task_progress:{task.id}")
+E   assert not 1
+_________ test_malformed_progress_does_not_disconnect_agent[invalid3] _________
+tests\production\test_progress_isolation.py:78: in test_malformed_progress_does_not_disconnect_agent
+    assert not await w.redis.exists(f"task_progress:{task.id}")
+E   assert not 1
+_________ test_malformed_progress_does_not_disconnect_agent[invalid4] _________
+tests\production\test_progress_isolation.py:78: in test_malformed_progress_does_not_disconnect_agent
+    assert not await w.redis.exists(f"task_progress:{task.id}")
+E   assert not 1
+_________ test_malformed_progress_does_not_disconnect_agent[invalid5] _________
+..\..\..\AppData\Roaming\uv\python\cpython-3.12.12-windows-x86_64-none\Lib\unittest\mock.py:2429: in assert_not_awaited
+    raise AssertionError(msg)
+E   AssertionError: Expected task_progress to not have been awaited. Awaited 1 times.
+
+During handling of the above exception, another exception occurred:
+tests\production\test_progress_isolation.py:79: in test_malformed_progress_does_not_disconnect_agent
+    progress_dependencies.task_progress.assert_not_awaited()
+E   AssertionError: Expected task_progress to not have been awaited. Awaited 1 times.
+E   
+E   pytest introspection follows:
+E   
+E   Kwargs:
+E   assert {'device_id':...a95c38973fb8'} == {}
+E     
+E     Left contains 4 more items:
+E     {'device_id': '63f86db5-2e3f-4cfb-81cc-a90509f0898e',
+E      'org_id': '703e5c31-ed4a-463e-9330-d0bd10d04fec',
+E      'progress': 50,
+E      'task_id': '68b52d9f-dfb5-40a4-9fd9-a95c38973fb8'}
+E     Use -v to get more diff
+============================== warnings summary ===============================
+.venv-audit\Lib\site-packages\pydantic\fields.py:754: 484 warnings
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\pydantic\fields.py:754: PydanticDeprecatedSince20: Using extra keyword arguments on `Field` is deprecated and will be removed. Use `json_schema_extra` instead. (Extra keys: 'deprecated'). Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.6/migration/
+    warn(
+
+backend\api\v1\game_accounts\router.py:94
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\api\v1\game_accounts\router.py:94: DeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+    sort_dir: str = Query("desc", regex="^(asc|desc)$", description="Направление сортировки"),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/production/test_progress_isolation.py::test_live_data_cannot_be_read_by_another_tenant[progress]
+FAILED tests/production/test_progress_isolation.py::test_live_data_cannot_be_read_by_another_tenant[live-logs]
+FAILED tests/production/test_progress_isolation.py::test_progress_cannot_poison_unowned_or_terminal_task[other_device]
+FAILED tests/production/test_progress_isolation.py::test_progress_cannot_poison_unowned_or_terminal_task[other_org]
+FAILED tests/production/test_progress_isolation.py::test_progress_cannot_poison_unowned_or_terminal_task[unknown_task]
+FAILED tests/production/test_progress_isolation.py::test_progress_cannot_poison_unowned_or_terminal_task[terminal_task]
+FAILED tests/production/test_progress_isolation.py::test_malformed_progress_does_not_disconnect_agent[invalid0]
+FAILED tests/production/test_progress_isolation.py::test_malformed_progress_does_not_disconnect_agent[invalid1]
+FAILED tests/production/test_progress_isolation.py::test_malformed_progress_does_not_disconnect_agent[invalid2]
+FAILED tests/production/test_progress_isolation.py::test_malformed_progress_does_not_disconnect_agent[invalid3]
+FAILED tests/production/test_progress_isolation.py::test_malformed_progress_does_not_disconnect_agent[invalid4]
+FAILED tests/production/test_progress_isolation.py::test_malformed_progress_does_not_disconnect_agent[invalid5]
+12 failed, 1 passed, 485 warnings in 2.27s

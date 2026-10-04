@@ -1,0 +1,56 @@
+Source: https://github.com/RootOne1337/sphere-platform/actions/runs/34282838423/attempts/1
+Head: d828a62843991f89e833df1c034e455876446c98
+Excerpt: new JWT regressions and the complete failure/summary block.
+
+Tests	Unit and real-service regression tests	2026-09-08T21:52:59.1937794Z tests/production/test_jwt_tenant_runtime.py::test_valid_jwt_binds_tenant_before_user_lookup[org_admin] PASSED [ 30%]
+Tests	Unit and real-service regression tests	2026-09-08T21:52:59.3924425Z tests/production/test_jwt_tenant_runtime.py::test_valid_jwt_binds_tenant_before_user_lookup[foreign] PASSED [ 31%]
+Tests	Unit and real-service regression tests	2026-09-08T21:52:59.6788251Z tests/production/test_jwt_tenant_runtime.py::test_runtime_jwt_device_update_and_audit_share_tenant_boundary[own] PASSED [ 31%]
+Tests	Unit and real-service regression tests	2026-09-08T21:52:59.9660171Z tests/production/test_jwt_tenant_runtime.py::test_runtime_jwt_device_update_and_audit_share_tenant_boundary[foreign_device] PASSED [ 31%]
+Tests	Unit and real-service regression tests	2026-09-08T21:53:00.2228909Z tests/production/test_jwt_tenant_runtime.py::test_runtime_jwt_device_update_and_audit_share_tenant_boundary[viewer] PASSED [ 31%]
+Tests	Unit and real-service regression tests	2026-09-08T21:53:00.4412413Z tests/production/test_jwt_tenant_runtime.py::test_concurrent_jwt_requests_reuse_one_connection_without_tenant_bleed PASSED [ 31%]
+Tests	Unit and real-service regression tests	2026-09-08T21:53:00.7631924Z tests/production/test_jwt_tenant_runtime.py::test_existing_token_cannot_keep_old_tenant_or_privileges[owner-control-moved] PASSED [ 31%]
+Tests	Unit and real-service regression tests	2026-09-08T21:53:01.0880466Z tests/production/test_jwt_tenant_runtime.py::test_existing_token_cannot_keep_old_tenant_or_privileges[owner-control-disabled] PASSED [ 31%]
+Tests	Unit and real-service regression tests	2026-09-08T21:53:01.4251329Z tests/production/test_jwt_tenant_runtime.py::test_existing_token_cannot_keep_old_tenant_or_privileges[owner-control-downgraded] PASSED [ 31%]
+Tests	Unit and real-service regression tests	2026-09-08T21:53:02.0194315Z tests/production/test_jwt_tenant_runtime.py::test_existing_token_cannot_keep_old_tenant_or_privileges[runtime-role-moved] PASSED [ 31%]
+Tests	Unit and real-service regression tests	2026-09-08T21:53:02.2941944Z tests/production/test_jwt_tenant_runtime.py::test_existing_token_cannot_keep_old_tenant_or_privileges[runtime-role-disabled] PASSED [ 31%]
+Tests	Unit and real-service regression tests	2026-09-08T21:53:02.6076659Z tests/production/test_jwt_tenant_runtime.py::test_existing_token_cannot_keep_old_tenant_or_privileges[runtime-role-downgraded] PASSED [ 31%]
+Tests	Unit and real-service regression tests	2026-09-08T21:53:02.7136543Z tests/production/test_jwt_tenant_runtime.py::test_invalid_user_claims_are_401_even_when_database_bypasses_rls[org_id-None] PASSED [ 31%]
+Tests	Unit and real-service regression tests	2026-09-08T21:53:02.8228543Z tests/production/test_jwt_tenant_runtime.py::test_invalid_user_claims_are_401_even_when_database_bypasses_rls[org_id-] PASSED [ 32%]
+Tests	Unit and real-service regression tests	2026-09-08T21:53:02.9262381Z tests/production/test_jwt_tenant_runtime.py::test_invalid_user_claims_are_401_even_when_database_bypasses_rls[org_id-invalid] PASSED [ 32%]
+Tests	Unit and real-service regression tests	2026-09-08T21:53:03.0293354Z tests/production/test_jwt_tenant_runtime.py::test_invalid_user_claims_are_401_even_when_database_bypasses_rls[org_id-value3] PASSED [ 32%]
+Tests	Unit and real-service regression tests	2026-09-08T21:53:03.1232820Z tests/production/test_jwt_tenant_runtime.py::test_invalid_user_claims_are_401_even_when_database_bypasses_rls[sub-invalid] PASSED [ 32%]
+Tests	Unit and real-service regression tests	2026-09-08T21:53:03.2150840Z tests/production/test_jwt_tenant_runtime.py::test_invalid_user_claims_are_401_even_when_database_bypasses_rls[sub-] PASSED [ 32%]
+Tests	Unit and real-service regression tests	2026-09-08T21:53:03.3142885Z tests/production/test_jwt_tenant_runtime.py::test_invalid_user_claims_are_401_even_when_database_bypasses_rls[type-refresh] PASSED [ 32%]
+Tests	Unit and real-service regression tests	2026-09-08T21:53:03.4106058Z tests/production/test_jwt_tenant_runtime.py::test_invalid_user_claims_are_401_even_when_database_bypasses_rls[type-device_access] PASSED [ 32%]
+Tests	Unit and real-service regression tests	2026-09-08T21:53:03.5428812Z tests/production/test_jwt_tenant_runtime.py::test_signed_token_for_another_org_cannot_load_user_on_owner_connection PASSED [ 32%]
+Tests	Unit and real-service regression tests	2026-09-08T21:53:03.7542143Z tests/production/test_jwt_tenant_runtime.py::test_unknown_user_with_valid_uuid_is_unauthorized PASSED [ 32%]
+
+Tests	Unit and real-service regression tests	2026-09-08T21:54:28.9494229Z =================================== FAILURES ===================================
+Tests	Unit and real-service regression tests	2026-09-08T21:54:28.9494877Z ___________ TestDagPerformance.test_500_nodes_validates_under_100ms ____________
+Tests	Unit and real-service regression tests	2026-09-08T21:54:28.9495161Z tests/test_scripts/test_dag_schema.py:279: in test_500_nodes_validates_under_100ms
+Tests	Unit and real-service regression tests	2026-09-08T21:54:28.9495446Z     assert elapsed_ms < 100, f"Validation took {elapsed_ms:.1f}ms (limit: 100ms)"
+Tests	Unit and real-service regression tests	2026-09-08T21:54:28.9495688Z E   AssertionError: Validation took 363.2ms (limit: 100ms)
+Tests	Unit and real-service regression tests	2026-09-08T21:54:28.9495869Z E   assert 363.2238989999905 < 100
+Tests	Unit and real-service regression tests	2026-09-08T21:54:28.9496039Z =============================== warnings summary ===============================
+Tests	Unit and real-service regression tests	2026-09-08T21:54:28.9496230Z backend/api/v1/game_accounts/router.py:95
+Tests	Unit and real-service regression tests	2026-09-08T21:54:28.9496649Z   /home/runner/work/sphere-platform/sphere-platform/backend/api/v1/game_accounts/router.py:95: FastAPIDeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+Tests	Unit and real-service regression tests	2026-09-08T21:54:28.9497417Z     sort_dir: str = Query("desc", regex="^(asc|desc)$", description="Направление сортировки"),
+Tests	Unit and real-service regression tests	2026-09-08T21:54:28.9497747Z
+Tests	Unit and real-service regression tests	2026-09-08T21:54:28.9498008Z tests/test_updates/test_updates_api.py::TestSSRFGuard::test_http_url_rejected_at_creation
+Tests	Unit and real-service regression tests	2026-09-08T21:54:28.9498323Z tests/test_updates/test_updates_api.py::TestSSRFGuard::test_internal_ip_http_url_rejected
+Tests	Unit and real-service regression tests	2026-09-08T21:54:28.9498618Z tests/test_updates/test_updates_api.py::TestSSRFGuard::test_file_scheme_rejected
+Tests	Unit and real-service regression tests	2026-09-08T21:54:28.9499144Z   /opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/fastapi/routing.py:328: StarletteDeprecationWarning: 'HTTP_422_UNPROCESSABLE_ENTITY' is deprecated. Use 'HTTP_422_UNPROCESSABLE_CONTENT' instead.
+Tests	Unit and real-service regression tests	2026-09-08T21:54:28.9499637Z     return await dependant.call(**values)
+Tests	Unit and real-service regression tests	2026-09-08T21:54:28.9499740Z
+Tests	Unit and real-service regression tests	2026-09-08T21:54:28.9499878Z -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+Tests	Unit and real-service regression tests	2026-09-08T21:54:28.9500181Z - generated xml file: /home/runner/work/sphere-platform/sphere-platform/test-results.xml -
+Tests	Unit and real-service regression tests	2026-09-08T21:54:28.9500453Z ================================ tests coverage ================================
+Tests	Unit and real-service regression tests	2026-09-08T21:54:28.9500689Z _______________ coverage: platform linux, python 3.12.14-final-0 _______________
+Tests	Unit and real-service regression tests	2026-09-08T21:54:28.9500839Z
+Tests	Unit and real-service regression tests	2026-09-08T21:54:28.9500899Z Coverage XML written to file coverage.xml
+Tests	Unit and real-service regression tests	2026-09-08T21:54:28.9501089Z Required test coverage of 65% reached. Total coverage: 67.95%
+Tests	Unit and real-service regression tests	2026-09-08T21:54:28.9501300Z =========================== short test summary info ============================
+Tests	Unit and real-service regression tests	2026-09-08T21:54:28.9501682Z FAILED tests/test_scripts/test_dag_schema.py::TestDagPerformance::test_500_nodes_validates_under_100ms - AssertionError: Validation took 363.2ms (limit: 100ms)
+Tests	Unit and real-service regression tests	2026-09-08T21:54:28.9502034Z assert 363.2238989999905 < 100
+Tests	Unit and real-service regression tests	2026-09-08T21:54:28.9502212Z ============ 1 failed, 1213 passed, 4 warnings in 137.07s (0:02:17) ============
+Tests	Unit and real-service regression tests	2026-09-08T21:54:30.5742355Z ##[error]Process completed with exit code 1.

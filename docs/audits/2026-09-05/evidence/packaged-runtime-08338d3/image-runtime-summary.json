@@ -1,0 +1,12 @@
+{
+  "image_id": "sha256:29d8eb137c0248a3481e253ef29c50c8f2dc22224667b32f53c1be88d40bf86f",
+  "network_internal": true,
+  "host_ports": [],
+  "api_listener": false,
+  "source_mount": false,
+  "environment": "development",
+  "scenario": "fresh migrations, CLI bootstrap, real app lifespan/ASGI login/registration/visibility, repeat in new processes",
+  "apk_installed": false,
+  "containers_removed": true,
+  "exit_code": 0
+}

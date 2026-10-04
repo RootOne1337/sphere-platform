@@ -1,0 +1,38 @@
+FFFF                                                                     [100%]
+================================== FAILURES ===================================
+_ test_admin_cli_rejects_credentials_that_login_cannot_accept_before_writing[email] _
+tests\production\test_pilot_enrollment_bootstrap.py:166: in test_admin_cli_rejects_credentials_that_login_cannot_accept_before_writing
+    assert result.returncode != 0
+E   AssertionError: assert 0 != 0
+E    +  where 0 = CompletedProcess(args=['C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.venv-audit\\dependency-upgrade\\Script..., returncode=0, stdout='Created user: invalid-pilot-fa6fa2f9f8d74437852620c9a9765958@sphere.local\nDone.\n', stderr='').returncode
+_ test_admin_cli_rejects_credentials_that_login_cannot_accept_before_writing[password] _
+tests\production\test_pilot_enrollment_bootstrap.py:166: in test_admin_cli_rejects_credentials_that_login_cannot_accept_before_writing
+    assert result.returncode != 0
+E   AssertionError: assert 0 != 0
+E    +  where 0 = CompletedProcess(args=['C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.venv-audit\\dependency-upgrade\\Script...], returncode=0, stdout='Created user: invalid-pilot-38a912c2dd7b490cbb3987459232ce4d@example.org\nDone.\n', stderr='').returncode
+___ test_default_bootstrap_email_can_pass_the_real_login_schema[powershell] ___
+tests\deployment\test_bootstrap_launchers.py:107: in test_default_bootstrap_email_can_pass_the_real_login_schema
+    assert LoginRequest(email=calls[0]["email"], password=calls[0]["password"])
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   pydantic_core._pydantic_core.ValidationError: 1 validation error for LoginRequest
+E   email
+E     value is not a valid email address: The part after the @-sign is a special-use or reserved name that cannot be used with email. [type=value_error, input_value='admin@sphere.local', input_type=str]
+______ test_default_bootstrap_email_can_pass_the_real_login_schema[bash] ______
+tests\deployment\test_bootstrap_launchers.py:107: in test_default_bootstrap_email_can_pass_the_real_login_schema
+    assert LoginRequest(email=calls[0]["email"], password=calls[0]["password"])
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   pydantic_core._pydantic_core.ValidationError: 1 validation error for LoginRequest
+E   email
+E     value is not a valid email address: The part after the @-sign is a special-use or reserved name that cannot be used with email. [type=value_error, input_value='admin@sphere.local', input_type=str]
+============================== warnings summary ===============================
+backend\api\v1\game_accounts\router.py:95
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\api\v1\game_accounts\router.py:95: FastAPIDeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+    sort_dir: str = Query("desc", regex="^(asc|desc)$", description="����������� ����������"),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/production/test_pilot_enrollment_bootstrap.py::test_admin_cli_rejects_credentials_that_login_cannot_accept_before_writing[email]
+FAILED tests/production/test_pilot_enrollment_bootstrap.py::test_admin_cli_rejects_credentials_that_login_cannot_accept_before_writing[password]
+FAILED tests/deployment/test_bootstrap_launchers.py::test_default_bootstrap_email_can_pass_the_real_login_schema[powershell]
+FAILED tests/deployment/test_bootstrap_launchers.py::test_default_bootstrap_email_can_pass_the_real_login_schema[bash]
+4 failed, 19 deselected, 1 warning in 3.48s

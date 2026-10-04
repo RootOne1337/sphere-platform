@@ -1,0 +1,103 @@
+{
+  "finding": "AUD-131 / F32-02 pipeline ownership and checkpoint recovery",
+  "before_source": "7290f1e29fcab09c1feb1affaf240f8fb928df63",
+  "before_sql": {
+    "tests": 5,
+    "failures": 5,
+    "errors": 0,
+    "skipped": 0,
+    "seconds": 3.351
+  },
+  "before_lifecycle": {
+    "tests": 1,
+    "failures": 1,
+    "errors": 0,
+    "skipped": 0,
+    "seconds": 0.246
+  },
+  "after_related_backend": {
+    "tests": 120,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "seconds": 50.0
+  },
+  "after_full_backend_except_explicit_load_profiles": {
+    "tests": 1848,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "seconds": 463.503
+  },
+  "os_kill_final_receipt_after_process_death": {
+    "tests": 1,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "seconds": 3.699
+  },
+  "frontend": {
+    "numTotalTests": 234,
+    "numPassedTests": 234,
+    "numFailedTests": 0,
+    "numTotalTestSuites": 29,
+    "success": true
+  },
+  "source_checks": {
+    "targeted_ruff": "passed",
+    "targeted_mypy_modules": 6,
+    "targeted_mypy": "passed",
+    "frontend_tsc": "passed",
+    "generated_openapi": "updated"
+  },
+  "regression_contract": {
+    "recovery_cases": 31,
+    "worker_death": "Separate owned OS process killed after durable child creation; fresh executor reuses one task ID",
+    "lease_expiry_in_os_kill_test": "SQL deadline forced into the past after process death; not a 30-second timing claim",
+    "sql_lock_expiry": "Actual pg_sleep lock wait beyond one-second lease fences writes and rejects renewal",
+    "checkpoint_loss": "Injected coroutine loss after receipt and after checkpoint commit",
+    "heartbeat_faults": [
+      "False renewal",
+      "ConnectionError",
+      "bounded timeout"
+    ],
+    "generation_fences": [
+      "two recovery executors",
+      "late old result",
+      "stale scheduled generation with same process owner"
+    ],
+    "safety": [
+      "unknown action/n8n/parallel/loop effect requires review",
+      "child timeout retains identity",
+      "foreign tenant or wrong device child is not replaced",
+      "pause/resume cannot duplicate an active step",
+      "last completed step is not replayable after pause",
+      "global and step deadlines preserved"
+    ],
+    "shutdown": "hook + admission stop + bounded drain/coroutine cancellation; child remains durable",
+    "migration": "legacy active/resumed rows marked unknown; upgrade/downgrade/re-upgrade in rolled-back disposable schema"
+  },
+  "intermediate_test_corrections": {
+    "first_expanded_run": "15 passed / 1 failed: elapsed delay legitimately skipped handler; stale-result probe changed to pure condition",
+    "heartbeat_probe": "110 passed / 2 failed: fault fired before step entry; synchronized injection after handler entry",
+    "prior_focused": "112 passed then 118 passed; superseded by 120-case final focused run",
+    "os_kill_synchronization": "Receipt is now written only after confirmed worker death; targeted final case repeated successfully"
+  },
+  "limits": [
+    "Source only; no pilot/APK deployment",
+    "Child results are fixture SQL receipts, not native Android execution",
+    "Real PostgreSQL; heartbeat network error and delayed responses are controlled injection",
+    "Nested parent capacity, cluster/device admission and durable batch waves remain open",
+    "No exactly-once guarantee for arbitrary external effects; unknown requires review",
+    "No mixed-version backend rollout; migration marks legacy work conservatively",
+    "No 32-device or eight-hour acceptance; heartbeat resource cost not benchmarked at fleet scale"
+  ],
+  "installed_unchanged": {
+    "backend": "85fb1ea",
+    "frontend": "03b161e",
+    "apk": "1.2.7/10207"
+  },
+  "verified_source": "f16279deff6e7369d89b31b8d174aae8877156ac",
+  "ci_archive": "docs/audits/2026-09-05/evidence/ci-f16279d-summary.json",
+  "ci_scope": "All four workflows succeeded; draft preview deployment was skipped. No pilot rollout."
+}

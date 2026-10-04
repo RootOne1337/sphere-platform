@@ -10,6 +10,7 @@ from __future__ import annotations
 import hashlib
 import os
 import time
+import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
@@ -21,6 +22,18 @@ from starlette.responses import Response
 
 from backend.core.dependencies import require_permission
 from backend.database.engine import get_db
+from backend.models.device import Device
+
+
+async def _owned_device(db: AsyncSession, device_id: str, principal) -> Device:
+    try:
+        device = await db.get(Device, uuid.UUID(device_id))
+    except ValueError:
+        device = None
+    if (not device or not device.is_active or device.org_id != principal.org_id
+            or getattr(principal, "device_id", device.id) != device.id):
+        raise HTTPException(status_code=404, detail="Device not found")
+    return device
 
 router = APIRouter(prefix="/logs", tags=["logs"])
 
@@ -68,7 +81,8 @@ def _get_device_id_from_header(
 @router.post("/upload")
 async def upload_logs(
     request: Request,
-    device_id: str = Query(..., description="Device ID"),
+    device_id: str | None = Query(default=None, description="Device ID (legacy clients)"),
+    x_device_id: str | None = Header(default=None, alias="X-Device-Id"),
     x_api_key: Optional[str] = Header(default=None, alias="X-API-Key"),
     db: AsyncSession = Depends(get_db),
 ) -> Response:
@@ -80,11 +94,14 @@ async def upload_logs(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="X-API-Key required")
 
     # Verify API key belongs to this device
-    from backend.services.api_key_service import APIKeyService
-    api_key_svc = APIKeyService(db)
-    key_obj = await api_key_svc.authenticate(x_api_key)
-    if not key_obj:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API key")
+    from backend.api.ws.android.router import authenticate_ws_token
+    principal = await authenticate_ws_token(x_api_key, db)
+    if device_id and x_device_id and device_id != x_device_id:
+        raise HTTPException(status_code=400, detail="Conflicting device identifiers")
+    device_id = x_device_id or device_id
+    if not device_id:
+        raise HTTPException(status_code=400, detail="X-Device-Id required")
+    device_id = str((await _owned_device(db, device_id, principal)).id)
 
     # Read body with size limit
     body = await request.body()
@@ -102,11 +119,13 @@ async def upload_logs(
     if log_file.exists() and log_file.stat().st_size > _MAX_LOG_SIZE_BYTES:
         log_file.unlink(missing_ok=True)
 
-    log_file.write_bytes(
-        log_file.read_bytes() + separator.encode() + body
-        if log_file.exists()
-        else separator.encode() + body
-    )
+    # Append once: concurrent uploads must not replace each other's data, and
+    # uploading 512 KiB must not read/rewrite the whole 50 MiB file.
+    from starlette.concurrency import run_in_threadpool
+    def append_entry():
+        with log_file.open("ab") as stream:
+            stream.write(separator.encode() + body)
+    await run_in_threadpool(append_entry)
     _clean_old_logs(device_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
@@ -120,11 +139,13 @@ async def get_device_logs(
     date: Optional[str] = Query(default=None, description="Date filter YYYY-MM-DD (default: today)"),
     search: Optional[str] = Query(default=None, description="Filter lines containing this text"),
     _principal=require_permission("device:read"),
+    db: AsyncSession = Depends(get_db),
 ) -> JSONResponse:
     """
     Возвращает последние N строк логов для устройства.
     Поддерживает фильтрацию по дате и поиск подстроки.
     """
+    await _owned_device(db, device_id, _principal)
     device_dir = _device_log_path(device_id)
     if not device_dir.exists():
         return JSONResponse({"device_id": device_id, "lines": [], "total": 0})
@@ -162,9 +183,11 @@ async def get_device_logs(
 async def delete_device_logs(
     device_id: str,
     _user=require_permission("device:delete"),
+    db: AsyncSession = Depends(get_db),
 ) -> Response:
     """Удаляет все логи для устройства. Только для администраторов."""
     import shutil
+    await _owned_device(db, device_id, _user)
     device_dir = _device_log_path(device_id)
     if device_dir.exists():
         shutil.rmtree(device_dir, ignore_errors=True)

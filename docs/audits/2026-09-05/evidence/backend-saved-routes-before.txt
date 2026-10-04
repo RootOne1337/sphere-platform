@@ -1,0 +1,37 @@
+.F                                                                       [100%]
+================================== FAILURES ===================================
+_ test_public_discovery_advertises_optional_same_installation_fallback[https://secondary.invalid] _
+
+agent_runtime = namespace(db=namespace(engine=<sqlalchemy.ext.asyncio.engine.AsyncEngine object at 0x0000015E43AC3950>, sessions=async...00'>), path=WindowsPath('C:/Users/dimas/AppData/Local/Temp/pytest-of-dimas/pytest-76/test_public_discovery_advertis1'))
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000015E43BBF830>
+fallback = 'https://secondary.invalid'
+
+    @pytest.mark.parametrize("fallback", [None, "https://secondary.invalid"])
+    async def test_public_discovery_advertises_optional_same_installation_fallback(agent_runtime, monkeypatch, fallback):
+        from backend.api.v1.config import router as config_router
+
+        monkeypatch.setattr(config_router.settings, "AGENT_CONFIG_CACHE_TTL", 0)
+        config = {"server_url": "https://primary.invalid"}
+        if fallback is not None:
+            config["fallback_server_url"] = fallback
+        monkeypatch.setattr(config_router, "_load_agent_config_from_file", lambda: config)
+        result = await agent_runtime.world.client.get("/api/v1/config/agent")
+        assert result.status_code == 200
+        assert result.json()["server_url"] == "https://primary.invalid"
+>       assert result.json().get("fallback_server_url") == fallback
+E       AssertionError: assert None == 'https://secondary.invalid'
+E        +  where None = <built-in method get of dict object at 0x0000015E43F76880>('fallback_server_url')
+E        +    where <built-in method get of dict object at 0x0000015E43F76880> = {'config_poll_interval_seconds': 86400, 'config_version': 1, 'enrollment_allowed': False, 'enrollment_api_key': None, ...}.get
+E        +      where {'config_poll_interval_seconds': 86400, 'config_version': 1, 'enrollment_allowed': False, 'enrollment_api_key': None, ...} = json()
+E        +        where json = <Response [200 OK]>.json
+
+tests\production\test_agent_tenant_runtime.py:167: AssertionError
+============================== warnings summary ===============================
+backend\api\v1\game_accounts\router.py:95
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\api\v1\game_accounts\router.py:95: FastAPIDeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+    sort_dir: str = Query("desc", regex="^(asc|desc)$", description="Направление сортировки"),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/production/test_agent_tenant_runtime.py::test_public_discovery_advertises_optional_same_installation_fallback[https://secondary.invalid]
+1 failed, 1 passed, 26 deselected, 1 warning in 0.90s

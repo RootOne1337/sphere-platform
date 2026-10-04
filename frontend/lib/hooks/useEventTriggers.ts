@@ -67,8 +67,8 @@ const QUERY_KEY = 'event-triggers';
 export function useEventTriggers(params: EventTriggerParams = {}) {
   return useQuery<EventTriggerListResponse>({
     queryKey: [QUERY_KEY, params],
-    queryFn: async () => {
-      const { data } = await api.get('/event-triggers', { params });
+    queryFn: async ({ signal }) => {
+      const { data } = await api.get('/event-triggers', { params, signal });
       return data;
     },
     staleTime: 10_000,

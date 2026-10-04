@@ -11,12 +11,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.dependencies import _is_dev_skip_auth
 from backend.database.engine import AsyncSessionLocal
-from backend.websocket.connection_manager import get_connection_manager
 from backend.websocket.stream_bridge import get_stream_bridge
 
 logger = structlog.get_logger()
 
 router = APIRouter(tags=["streaming"])
+
+VIEWER_AUTH_RECHECK_SECONDS = 10.0
+VIEWER_AUTH_TIMEOUT_SECONDS = 2.0
 
 
 async def _authenticate_viewer(token: str, db: AsyncSession):
@@ -44,22 +46,30 @@ async def _authenticate_viewer(token: str, db: AsyncSession):
     import jwt as pyjwt
 
     from backend.core.security import decode_access_token
+    from backend.database.tenant import bind_tenant_context
     from backend.models.user import User
     from backend.services.cache_service import CacheService
 
     try:
         payload = decode_access_token(token)
+        if payload.get("type") != "access":
+            raise pyjwt.InvalidTokenError("Expected a user access token")
+        user_id = uuid.UUID(payload["sub"])
+        org_id = uuid.UUID(payload["org_id"])
     except pyjwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token expired")
     except pyjwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid token")
+    except (KeyError, ValueError, TypeError, AttributeError):
+        raise HTTPException(status_code=401, detail="Invalid identity claims")
 
     cache = CacheService()
     if await cache.is_token_blacklisted(payload["jti"]):
         raise HTTPException(status_code=401, detail="Token revoked")
 
-    user = await db.get(User, uuid.UUID(payload["sub"]))
-    if not user or not user.is_active:
+    await bind_tenant_context(db, str(org_id))
+    user = await db.get(User, user_id)
+    if not user or not user.is_active or user.org_id != org_id:
         raise HTTPException(status_code=401, detail="User inactive")
     return user
 
@@ -124,7 +134,12 @@ async def stream_viewer_ws(
                 return
 
             # Extract needed values before DB session closes
+            from backend.core.rbac import has_permission
+            if not has_permission(user.role, "stream:read"):
+                await ws.close(code=4003, reason="stream_access_denied")
+                return
             user_id_str = str(user.id)
+            org_id_str = str(user.org_id)
     except Exception:
         await ws.close(code=1011, reason="auth_error")
         return
@@ -135,12 +150,14 @@ async def stream_viewer_ws(
         await ws.close(code=1013, reason="stream_bridge_unavailable")
         return
 
-    manager = get_connection_manager()
-
     # Unique session for this viewer
     session_id = secrets.token_hex(8)
 
-    await bridge.register_viewer(device_id, ws, session_id)
+    try:
+        await bridge.register_viewer(device_id, ws, session_id)
+    except Exception:
+        await ws.close(code=1013, reason="stream_transport_unavailable")
+        return
     logger.info(
         "Stream viewer connected",
         device_id=device_id,
@@ -149,36 +166,94 @@ async def stream_viewer_ws(
     )
 
     # Notify agent → triggers SPS/PPS replay + I-frame request
-    await manager.send_to_device(device_id, {
-        "type": "viewer_connected",
-        "session_id": session_id,
-    })
+    async def send_control(command: dict) -> None:
+        try:
+            sent = await bridge.send_control(device_id, command)
+        except Exception:
+            sent = False
+        if not sent:
+            await ws.send_json({"type": "error", "error": "stream_control_unavailable"})
 
-    # FIX-KEEPALIVE: Периодический ping каждые 10 секунд — предотвращает
-    # закрытие WS Cloudflare tunnel'ом при отсутствии upstream трафика.
-    # Cloudflare Quick Tunnel агрессивно дропает idle WS (замечено через ~5-25 сек).
+    auth_stopped = asyncio.Event()
+
+    async def current_control_permission() -> bool | None:
+        """Fresh identity/ownership for input; no DB session is held while streaming."""
+        try:
+            async with asyncio.timeout(VIEWER_AUTH_TIMEOUT_SECONDS), AsyncSessionLocal() as db:
+                current_user = await _authenticate_viewer(token, db)
+                if str(current_user.id) != user_id_str or str(current_user.org_id) != org_id_str:
+                    raise HTTPException(401, "Viewer identity changed")
+                current_device = await db.get(Device, device_uuid)
+                if not current_device or str(current_device.org_id) != org_id_str:
+                    raise HTTPException(404, "Device ownership changed")
+                if not has_permission(current_user.role, "stream:read"):
+                    raise HTTPException(403, "Viewer access revoked")
+                return has_permission(current_user.role, "stream:control")
+        except HTTPException as exc:
+            code, reason = {
+                401: (4001, "invalid_token"),
+                403: (4003, "stream_access_denied"),
+                404: (4004, "device_not_found"),
+            }.get(exc.status_code, (1013, "stream_auth_unavailable"))
+        except Exception as exc:
+            code, reason = 1013, "stream_auth_unavailable"
+            logger.warning("stream_viewer_auth_unavailable", device_id=device_id,
+                           session_id=session_id, error_type=type(exc).__name__)
+        # Retire the sender before closing. A client that never acknowledges
+        # close must not retain video or keep the route's receiver alive.
+        try:
+            await bridge.unregister_viewer(device_id, session_id)
+            await ws.close(code=code, reason=reason)
+        finally:
+            auth_stopped.set()
+        return None
+
+    # Reuse the existing ten-second keepalive cadence for passive-view access
+    # checks. Video bytes never wait on these SQL/Redis reads. Input validates
+    # immediately before dispatch instead of caching the handshake's grant.
     async def _viewer_ping_loop() -> None:
         try:
             while True:
-                await asyncio.sleep(10)
+                await asyncio.sleep(VIEWER_AUTH_RECHECK_SECONDS)
                 try:
+                    if await current_control_permission() is None:
+                        break
                     await ws.send_json({"type": "ping"})
                 except Exception:
+                    auth_stopped.set()
                     break
         except asyncio.CancelledError:
             pass
 
     ping_task = asyncio.create_task(_viewer_ping_loop())
+    stop_task = asyncio.create_task(auth_stopped.wait())
 
     try:
+        await send_control({"type": "viewer_connected", "session_id": session_id})
         while True:
-            data = await ws.receive_json()
+            receive_task = asyncio.create_task(ws.receive_json())
+            try:
+                done, _ = await asyncio.wait((receive_task, stop_task), return_when=asyncio.FIRST_COMPLETED)
+                if stop_task in done:
+                    break
+                data = await receive_task
+            finally:
+                if not receive_task.done():
+                    receive_task.cancel()
+                await asyncio.gather(receive_task, return_exceptions=True)
+            if data.get("type") in {"click", "swipe", "keyevent", "text"}:
+                can_control = await current_control_permission()
+                if can_control is None:
+                    break
+                if not can_control:
+                    await ws.send_json({"type": "error", "error": "stream_control_denied"})
+                    continue
             match data.get("type"):
                 case "click":
                     # Forward tap coordinates to agent — coordinate mapping done client-side
                     x = int(data.get("x", 0))
                     y = int(data.get("y", 0))
-                    await manager.send_to_device(device_id, {
+                    await send_control({
                         "type": "touch_tap",
                         "x": x,
                         "y": y,
@@ -190,7 +265,7 @@ async def stream_viewer_ws(
                     x2 = int(data.get("x2", 0))
                     y2 = int(data.get("y2", 0))
                     duration_ms = int(data.get("duration_ms", 300))
-                    await manager.send_to_device(device_id, {
+                    await send_control({
                         "type": "touch_swipe",
                         "x1": x1, "y1": y1,
                         "x2": x2, "y2": y2,
@@ -198,17 +273,17 @@ async def stream_viewer_ws(
                         "session_id": session_id,
                     })
                 case "request_keyframe":
-                    await manager.send_to_device(device_id, {
+                    await send_control({
                         "type": "request_keyframe",
                     })
                 case "keyevent":
-                    await manager.send_to_device(device_id, {
+                    await send_control({
                         "type": "keyevent",
                         "code": int(data.get("code", 0)),
                         "session_id": session_id,
                     })
                 case "text":
-                    await manager.send_to_device(device_id, {
+                    await send_control({
                         "type": "text",
                         "text": str(data.get("text", "")),
                         "session_id": session_id,
@@ -238,7 +313,9 @@ async def stream_viewer_ws(
         )
     finally:
         ping_task.cancel()
-        await bridge.unregister_viewer(device_id)
+        stop_task.cancel()
+        await asyncio.gather(ping_task, stop_task, return_exceptions=True)
+        await bridge.unregister_viewer(device_id, session_id)
         logger.info(
             "Stream viewer disconnected",
             device_id=device_id,

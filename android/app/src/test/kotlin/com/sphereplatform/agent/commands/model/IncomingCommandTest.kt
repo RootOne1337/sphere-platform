@@ -19,6 +19,11 @@ import org.junit.Test
  *  - Невалидные входные данные
  */
 class IncomingCommandTest {
+    @Test fun commandAckContainsServerRoutingDiscriminator() {
+        val encoded = Json.encodeToString(CommandAck("audit-command", "completed"))
+        val obj = Json.parseToJsonElement(encoded) as JsonObject
+        assertEquals(kotlinx.serialization.json.JsonPrimitive("command_result"), obj["type"])
+    }
 
     private val json = Json { ignoreUnknownKeys = true }
 

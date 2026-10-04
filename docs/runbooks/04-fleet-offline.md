@@ -1,329 +1,147 @@
-# Runbook 04 — Mass Device Disconnect (Fleet Offline)
-
-**Severity:** P2  
-**Maintainer:** Backend Team / Operations  
-**Last Updated:** 2026-01-01  
-
----
-
-## Overview
-
-This runbook covers scenarios where a large number (or all) of Android devices
-simultaneously drop their WebSocket connections to the backend, causing the fleet
-to appear offline in the dashboard.
-
-This is a P2 (not P1) because devices continue running autonomously on their last
-known state, but remote management is unavailable until reconnected.
-
----
-
-## Symptoms
-
-- Dashboard shows most/all devices as `status: offline`
-- Grafana alert: **FleetOfflineRate > 80%** fires
-- WebSocket connection metrics drop to near zero
-- Backend logs: repeated `WebSocket connection closed code=1006` or `1011` at high rate
-- Redis Pub/Sub channels `ws:device:*` empty after a brief period
-
----
-
-## Architecture Reference
-
-```
-Android Device
-│  WebSocket Client (OkHttp3)
-│  Reconnect backoff: 1s → 5s → 15s → 60s → 5min
-│
-└─► nginx (WSS reverse proxy)
-      └─► Backend ConnectionManager
-            ├─ In-memory connection registry
-            ├─ Redis PubSub (cross-instance fan-out)
-            └─ Heartbeat: 30s ping / 90s timeout
-```
-
-Devices automatically attempt reconnection when the WebSocket is closed. Under
-normal circumstances, **all devices should auto-reconnect within 5 minutes**
-without manual intervention, once the backend is healthy.
-
----
-
-## Common Root Causes
-
-| Cause | Detection |
-|-------|-----------|
-| Backend restarted / deployed | Recent deployment in CI/CD logs |
-| nginx restarted (proxy drop) | `docker compose logs nginx` |
-| Redis failure (PubSub broken) | `docker compose ps redis` |
-| Server-side network change | `ip addr` / routing table |
-| Host firewall rule change | `iptables -L` |
-| SSL certificate expired | `openssl s_client -connect host:443` |
-| Backend OOM restart | dmesg OOM, container exit code 137 |
-
----
-
-## Diagnosis
-
-### Step 1 — Check backend and infrastructure
-
-Follow [Runbook 01](01-backend-outage.md) Step 1–5 first. If backend is down,
-fix it and devices will reconnect automatically.
-
-### Step 2 — Check nginx WebSocket proxy
-
-```bash
-# nginx health
-docker compose ps nginx
-docker compose logs --tail=50 nginx | grep -E "(error|warn|crit)"
-
-# Test WebSocket upgrade directly through nginx
-# Replace localhost with your host
-curl -v --no-buffer \
-  -H "Connection: Upgrade" \
-  -H "Upgrade: websocket" \
-  -H "Sec-WebSocket-Version: 13" \
-  -H "Sec-WebSocket-Key: $(openssl rand -base64 16)" \
-  "https://your-domain/ws"
-# Expect: 101 Switching Protocols
-```
-
-Key nginx WebSocket config (should be in `infrastructure/nginx/conf.d/`):
-
-```nginx
-location /ws {
-    proxy_pass http://backend:8000;
-    proxy_http_version 1.1;
-    proxy_set_header Upgrade $http_upgrade;
-    proxy_set_header Connection "upgrade";
-    proxy_read_timeout 3600s;    # must be > heartbeat timeout
-    proxy_send_timeout 3600s;
-}
-```
-
-If `proxy_read_timeout` is missing or too short (< 90s default), nginx will
-drop idle WebSocket connections.
-
-### Step 3 — Check Redis PubSub
-
-```bash
-docker compose exec redis redis-cli
-
-# Check if any device channels are active
-> PUBSUB CHANNELS ws:device:*
-> PUBSUB CHANNELS ws:broadcast:*
-
-# Check Redis memory
-> INFO memory
-```
-
-### Step 4 — Check SSL certificate
-
-```bash
-# Certificate expiry
-echo | openssl s_client -connect your-domain.com:443 2>/dev/null | \
-  openssl x509 -noout -dates
-```
-
-### Step 5 — Measure reconnect rate
-
-```bash
-# Are devices reconnecting?
-watch -n5 'docker compose logs --no-log-prefix backend --since=30s | \
-  grep -c "WebSocket.*connected"'
-
-# Count currently active WebSocket connections
-docker compose exec redis redis-cli KEYS "ws:conn:*" | wc -l
-```
-
-### Step 6 — Check ConnectionManager state
-
-```bash
-# Active connection count from backend metrics
-curl -s http://localhost:8000/metrics | grep "ws_connections_active"
-
-# Connection events in last 5 min
-docker compose logs --no-log-prefix backend --since=5m | \
-  jq 'select(.event | contains("socket") or contains("connect"))' | \
-  jq -c '{time: .timestamp, event: .event, device: .device_id}' | tail -30
-```
-
----
-
-## Remediation
-
-### Scenario A — Natural reconnect (infrastructure recovered)
-
-After fixing the root cause (backend, nginx, Redis), devices reconnect on their
-own backoff timer. No manual action needed.
-
-**Expected timeline:**
-- Within 30 seconds: devices that were in the 1s/5s backoff bucket
-- Within 5 minutes: all devices with normal backoff schedule
-
-Monitor:
-```bash
-# Watch connection count rise
-watch -n5 'curl -s http://localhost:8000/metrics | grep ws_connections_active'
-```
-
-### Scenario B — nginx proxy timeout too short
-
-```nginx
-# infrastructure/nginx/conf.d/sphere.conf
-location /ws {
-    proxy_pass http://backend:8000;
-    proxy_http_version 1.1;
-    proxy_set_header Upgrade $http_upgrade;
-    proxy_set_header Connection "upgrade";
-    proxy_read_timeout  3600s;     # ADD or increase
-    proxy_send_timeout  3600s;     # ADD or increase
-    proxy_connect_timeout 10s;
-}
-```
-
-```bash
-docker compose exec nginx nginx -t   # validate config
-docker compose exec nginx nginx -s reload  # reload without drop
-```
-
-### Scenario C — Devices stuck in reconnect backoff (5-minute waits)
-
-If devices had many consecutive failures, they may be in the 300-second backoff tier.
-Options:
-
-**Option 1 — Wait it out** (recommended if fleet is large, affects network bandwidth)
-
-All devices will reconnect within 5 minutes. Monitor via Grafana.
-
-**Option 2 — Reboot devices (last resort)**
-
-```bash
-# Broadcast reboot to all offline devices (if some are still reachable via ADB)
-# This resets the reconnect backoff
-adb devices | tail -n +2 | awk '{print $1}' | while read serial; do
-  echo "Rebooting $serial"
-  adb -s $serial reboot &
-done
-```
-
-**Option 3 — Use PC Agent to trigger reconnect**
-
-If PC Agent has a LAN path to devices, send a `restart_agent` command through
-the PC Agent → device ADB bridge.
-
-### Scenario D — Redis PubSub broken (cross-instance fan-out failing)
-
-Symptoms: connections appear in metrics, but commands sent to device from UI
-get no response.
-
-```bash
-# Restart Redis (all volatile state, connections must re-register)
-docker compose restart redis
-
-# Then restart backend (clears in-memory registry, forces device re-registration)
-docker compose restart backend
-```
-
-> **Note:** Restarting Redis clears VPN IP assignments from volatile keys.
-> VPN assignments must be re-applied from the database.
-> Backend runs reconciliation on startup — this is automatic.
-
-### Scenario E — SSL certificate expired
-
-```bash
-# Renew with Certbot
-certbot renew --force-renewal
-
-# OR update manually
-cp /path/to/new_cert.pem infrastructure/nginx/certs/cert.pem
-cp /path/to/new_key.pem  infrastructure/nginx/certs/key.pem
-
-# Reload nginx (no connection drop)
-docker compose exec nginx nginx -s reload
-```
-
-Devices will reconnect automatically once SSL is valid.
-
----
-
-## Preventing Future Mass Disconnects
-
-### Deployment best practice
-
-Use rolling restart to avoid simultaneous connection drops:
-
-```bash
-# Instead of docker compose restart backend:
-
-# Build new image
-docker compose build backend
-
-# Scale up temporarily (if running multiple replicas)
-docker compose up -d --scale backend=2
-
-# Wait for new instance healthy
-sleep 30
-
-# Scale back to 1 (old instance removed)
-docker compose up -d --scale backend=1
-```
-
-### nginx keepalive for backend upstream
-
-```nginx
-upstream backend {
-    server backend:8000;
-    keepalive 32;
-}
-```
-
-### Heartbeat configuration
-
-Backend heartbeat interval (default 30s) must be less than `proxy_read_timeout`.
-Configure in `.env`:
-
-```
-WS_HEARTBEAT_INTERVAL=30
-WS_CONNECTION_TIMEOUT=90
-```
-
----
-
-## Recovery Verification
-
-Run this checklist after mass disconnect recovery:
-
-```bash
-# 1. Connections rising
-curl -s http://localhost:8000/metrics | grep ws_connections_active
-
-# 2. Device statuses updating
-curl -H "Authorization: Bearer $TOKEN" \
-  "http://localhost:8000/api/v1/devices?status=online" | jq '.total'
-
-# 3. No error spike in logs
-docker compose logs --no-log-prefix backend --since=5m | \
-  jq 'select(.level == "error")' | wc -l
-
-# 4. VPN re-established for connected devices
-curl -H "Authorization: Bearer $TOKEN" \
-  "http://localhost:8000/api/v1/vpn/pool-stats"
-```
-
----
-
-## Post-Incident
-
-1. Record how many devices were affected and for how long.
-2. Identify the root cause from logs/metrics.
-3. Measure auto-reconnect time (target: < 5 minutes for 90% of fleet).
-4. If reconnect time was > 10 minutes for any device, investigate the specific
-   device's backoff state and Android power-saving settings.
-5. Update monitoring if the alert fired too late or thresholds were wrong.
-
----
-
-## Related Runbooks
-
-- [01-backend-outage.md](01-backend-outage.md) — Backend failure → mass disconnect
-- [02-vpn-incident.md](02-vpn-incident.md) — VPN reconnect after devices return online
-- [03-database-failure.md](03-database-failure.md) — DB recovery → backend restart → device reconnect
+# 04 — Массово пропали устройства
+
+**Обновлено 10 сентября 2026.** Потеря управления большим парком — эксплуатационный P0.
+[APK contract](../android-agent.md) · [Backend](01-backend-outage.md) ·
+[Связь и failover](../operations/READINESS.md)
+
+## Разделить симптомы
+
+Для APK после AUD-72 открытый TCP/WS ещё не означает подключённое устройство.
+Проверьте, что каждый backend worker/ingress возвращает `auth_ok` с тем же device ID
+и числовой версией `1` до команд. Если после обновления APK reconnect повторяется
+примерно после 20-секундного handshake, проверьте версии backend: сначала обновляются
+все workers, затем APK. Не очищайте identity как способ исправить несовместимый
+handshake. [Контракт и ограничения](../architecture/ANDROID-CONNECTION-PROTOCOL.md).
+
+Offline в UI, нет Redis presence, WS закрыт, auth отклонён и APK process остановлен
+— разные состояния. Продолжение локального DAG возможно, но не гарантировано для
+любого действия/OS/process death. Прежнее обещание «весь парк вернётся за пять минут»
+не имело измеренного основания и удалено.
+
+1. Зафиксируйте время, долю затронутых устройств, их станции, APK версии и последнюю
+   успешную команду/heartbeat. Общая станция/route/build помогает локализовать сбой.
+2. Проверьте backend readiness и proxy. Не отправляйте reconnect/reenroll всему парку
+   одновременно, пока сервер ещё восстанавливается.
+3. Для одного устройства определите сохранённый server URL, device ID, состояние
+   сервиса и category последнего отказа. Credentials не включайте в evidence.
+4. Сопоставьте WS close codes: 4001/4003/4004 связаны с auth/device lookup, 4008 —
+   heartbeat; network/handshake failure отдельно. Коды помогают локализации, но
+   проверка actual server logs определяет причину.
+5. Проверьте источник CONFIG_URL и доступность текущего endpoint отдельно. GitHub
+   outage сам по себе не требует нового enrollment, если сохранённый адрес работает.
+
+## Текущие сроки и ограничения
+
+APK retry после AUD-67 имеет jitter: первое окно 1–2 s, cap 15–30 s; clean server
+close тоже проходит через delay. Circuit cooldown — 60 s после десяти network
+failures. Handshake timeout — 20 s. Это policy windows, а не SLA восстановления.
+Backend application heartbeat задан 30 s и проверяет age >45 s на цикле; Android
+watchdog использует 90 s без application ping. Нельзя считать номинальный threshold
+точным wall-clock временем обнаружения. Старые APK имеют другую reconnect policy.
+
+ConfigWatchdog: первая проверка через 5 s, затем 120 s connected / 60 s disconnected.
+После AUD-73 запрос имеет 10 s HTTP deadline; повторные сигналы используют активную
+проверку, stop отменяет её. На старом APK device JWT ошибочно попадал в `X-API-Key`
+config-запроса и давал `401`. Проверьте версию APK и публичный `GET /api/v1/config/agent`
+без credentials; не подставляйте JWT как API-ключ и не очищайте identity устройства.
+После AUD-74 discovery сохраняет пару кандидатов, не заменяя активный маршрут
+и не прерывая подтверждённый WS. Переключение принимается по `auth_ok` нужного
+устройства. Отсутствующий/null fallback в ответе сохраняет прежний резерв.
+[Точный контракт discovery](../architecture/ANDROID-DISCOVERY-RECOVERY.md).
+Enterprise CONFIG_URL может быть пуст: уже сохранённые маршруты продолжают
+перебираться без discovery. При старте сервиса route-only MDM/локальный файл
+может добавить резерв без повторной регистрации. Проверяйте фактическую пару,
+доступность обоих адресов и их общую identity/SQL систему. [Настройка](../architecture/ANDROID-SAVED-ROUTES.md).
+Durable config version/rollback и реальные fleet drills остаются открытыми.
+
+## Вернуть парк без потери идентичности
+
+Восстановите readiness/маршрут, наблюдайте одну станцию и одну задачу, затем
+постепенно расширяйте проверку. Сохраняйте device identity и journal; reinstall,
+clear data, массовое удаление Redis keys или выдача новых IDs не являются обычным
+reconnect recovery. При broken refresh rotation нужно сохранить evidence lost
+response/expiry, а не скрыть проблему повторной регистрацией.
+
+Если UI показывает offline после реального pong, сверяйте presence/fencing и
+fleet events. Если задача закончилась локально без server result, сверяйте журнал,
+result receipt и ACK. Не повторяйте физическое действие только из-за таймаута UI.
+
+## Критерии завершения
+
+Зафиксированы фактические device recovery p50/p95/p99 и число невосстановившихся;
+одинаковые device IDs, отсутствие повторного действия, проверенные terminal/unknown
+outcomes и наблюдаемый backlog. После инцидента добавить regression и обновить
+capacity/recovery budget. Реальный изолированный fleet drill ещё требуется.
+
+
+## Потерянный ответ обновления credentials
+
+Новый APK сохраняет UUID операции до refresh. При network/commit-response loss
+он повторяет исходный token/UUID и получает того же преемника; не стирайте app data.
+Это требует migration `20260910_device_refresh_retry` и нового кода на всех workers.
+[Recovery contract](../security/device-refresh-recovery.md) описывает диагностику
+legacy clients, expiry и re-enrollment. Вечно просроченный token и потерянный раньше
+введения протокола response этим механизмом не восстанавливаются.
+
+При отказе основного адреса AUD-74 выполняет refresh через выбранный резерв,
+сохраняя UUID неопределённой операции и исходный refresh token. Потеря ответа
+после SQL commit и повтор через другой origin проверены внутри ASGI процесса.
+Если резерв ведёт в другую установку или там не применены migration/ключи/ACK
+протокол, он не является рабочим recovery route. При отказе обоих адресов APK
+продолжает ограниченный по backoff перебор, сохраняя identity; автоматический
+re-enrollment как способ восстановить этот сценарий не выполняется.
+
+## APK не вышел на связь после фоновой регистрации
+
+Для APK до AUD-75 проверьте сочетание bootstrap key, отсутствующего server UUID
+и раннего запуска сервиса: marker `enrolled=true` мог появиться без регистрации,
+а WS loop удерживал прежний локальный ID. Новый APK вызывает registration из обоих
+workers и перечитывает сохранённый ID перед каждым WS; marker сам по себе не
+доказывает готовность соединения. После отказа запуска уже выданные credentials
+сохраняются, повторяется activation, без повторной регистрации.
+
+Сопоставьте HTTP registration outcome, device ID и последующий target-bound ACK;
+не включайте ключи в evidence. 408/429/5xx/network failure оставляют retry, постоянный
+4xx завершает одноразовую работу failure. Периодический worker вернётся на следующем
+допущенном ОС тике; `success` тика при ошибке не означает успешного enrollment.
+[Полный контракт и непроверенные OS/response-loss сценарии](../architecture/ANDROID-BACKGROUND-ENROLLMENT.md).
+
+## Registration долго не отпускает worker
+
+После AUD-76 HTTP registration имеет бюджет 10 s, отменяется при stop и не ждёт
+error body для известного non-2xx status. `Registration HTTP timed out` или
+transport IOException оставляет retry; это не подтверждение rollback на сервере.
+Late cancelled response не должен менять identity или запускать сервис.
+
+Отдельно различайте очередь enrollment mutex, ожидание Android network constraints,
+fingerprint/keystore IO и HTTP. У первых этапов нет общего 10-секундного срока.
+Не очищайте данные при неизвестном server commit: сохраните время/device/build и
+HTTP outcome для расследования. [Границы и воспроизведения](../architecture/ANDROID-BACKGROUND-ENROLLMENT.md).
+
+## Registration ответил, но credentials не сохранились
+
+После AUD-77 `Cannot persist registration` означает неуспех локального commit;
+`Registration state changed` — отклонение ответа после изменения credentials или
+маршрутов. Запрос запуска worker не должен следовать после этой ошибки. Сохраните
+время, device/build, причину IOException и предшествующее действие оператора.
+Не добавляйте токены или response body в диагностические логи.
+
+Локальный rollback не отзывает выданную сервером пару. При re-enrollment старый
+token/UUID в памяти не доказывает пригодность refresh; автоматический worker shortcut
+пока не решает этот случай. Не очищайте app data и не переустанавливайте APK ради
+маскировки неизвестного исхода. [Контракт и открытые сценарии](../architecture/ANDROID-BACKGROUND-ENROLLMENT.md).
+
+## Если новые устройства получают 401 сразу после запуска
+
+Найдите `enrollment_bootstrap_unavailable` и поле `reason` в backend logs.
+`BootstrapOrganizationMissing` означает, что выбранная bootstrap org не создана;
+`EnrollmentConfigurationError` — неверный/missing config; `EnrollmentKeyConflict`
+— ключ отозван, истёк, принадлежит другой org или не имеет `device:register`.
+Проверьте выбранный env/config и `SPHERE_BOOTSTRAP_ORG_SLUG`, затем выполните
+явный enrollment CLI по [startup contract](../operations/STARTUP.md).
+Не публикуйте raw key, его hash или config в incident report.
+
+`enrollment_bootstrap_ready` содержит key ID/org ID; сравните org с оператором.
+Успешный HTTP readiness при warning не означает готовую регистрацию. Старые
+credentials не реактивируются и devices не переносятся автоматически. Эти события
+есть у development hook; production provisioning выполняется явно через CLI.

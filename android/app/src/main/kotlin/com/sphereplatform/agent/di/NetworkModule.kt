@@ -2,6 +2,7 @@ package com.sphereplatform.agent.di
 
 import com.sphereplatform.agent.store.AuthTokenStore
 import com.sphereplatform.agent.ws.SphereWebSocketClient
+import com.sphereplatform.agent.provisioning.InstanceRegistrationGuard
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -20,5 +21,6 @@ object NetworkModule {
         httpClient: OkHttpClient,
         authStore: AuthTokenStore,
         json: Json,
-    ): SphereWebSocketClient = SphereWebSocketClient(httpClient, authStore, json)
+        instanceGuard: InstanceRegistrationGuard,
+    ): SphereWebSocketClient = SphereWebSocketClient(httpClient, authStore, json) { instanceGuard.ensureRegistered() }
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useCallback } from "react";
+import { useDebounce } from '@/lib/hooks/useDebounce';
 import {
   useGameAccounts,
   useAccountStats,
@@ -15,7 +16,7 @@ import {
   type AccountStatus,
   type GameAccountParams,
 } from "@/lib/hooks/useGameAccounts";
-import { useDevices } from "@/lib/hooks/useDevices";
+import { DeviceSearchSelect } from "@/components/sphere/DeviceSearchSelect";
 import { Button } from "@/src/shared/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/src/shared/ui/badge";
@@ -121,7 +122,7 @@ function copyToClipboard(text: string) {
 export default function AccountsPage() {
   // Фильтры и пагинация
   const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 300);
   const [filterGame, setFilterGame] = useState("__all__");
   const [filterStatus, setFilterStatus] = useState("__all__");
   const [filterServer, setFilterServer] = useState("__all__");
@@ -144,11 +145,7 @@ export default function AccountsPage() {
   const handleSearchChange = useCallback(
     (val: string) => {
       setSearch(val);
-      const timer = setTimeout(() => {
-        setDebouncedSearch(val);
-        setPage(1);
-      }, 300);
-      return () => clearTimeout(timer);
+      setPage(1);
     },
     [],
   );
@@ -169,9 +166,8 @@ export default function AccountsPage() {
   );
 
   // Данные
-  const { data, isLoading, refetch } = useGameAccounts(params);
+  const { data, isLoading, isError, isFetching, refetch } = useGameAccounts(params);
   const { data: stats } = useAccountStats();
-  const { data: devicesData } = useDevices({ page: 1, page_size: 5000 });
   const { data: serversData } = useServers();
   const serversList = serversData?.servers ?? [];
 
@@ -210,11 +206,11 @@ export default function AccountsPage() {
             Game Accounts
           </h1>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Управление игровыми аккаунтами · {total} записей
+            Управление игровыми аккаунтами · {isError || isLoading ? 'число записей не подтверждено' : `${total} записей`}
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => refetch()}>
+          <Button variant="outline" size="sm" disabled={isFetching} onClick={() => refetch()}>
             <RefreshCw className="w-3.5 h-3.5 mr-1" />
             Обновить
           </Button>
@@ -302,7 +298,6 @@ export default function AccountsPage() {
               setFilterStatus("__all__");
               setFilterServer("__all__");
               setSearch("");
-              setDebouncedSearch("");
               setPage(1);
             }}
           >
@@ -345,7 +340,14 @@ export default function AccountsPage() {
               </tr>
             </thead>
             <tbody>
-              {isLoading ? (
+              {isError ? (
+                <tr><td colSpan={24} className="px-3 py-8 text-center">
+                  <div role="alert" className="space-y-3 text-sm">
+                    <p>Не удалось загрузить аккаунты. Состояние каталога не подтверждено.</p>
+                    <Button variant="outline" disabled={isFetching} onClick={() => void refetch()}>Повторить загрузку аккаунтов</Button>
+                  </div>
+                </td></tr>
+              ) : isLoading ? (
                 <tr>
                   <td colSpan={24} className="px-3 py-12 text-center text-muted-foreground">
                     <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-2" />
@@ -570,16 +572,16 @@ export default function AccountsPage() {
         </div>
 
         {/* Пагинация */}
-        {pages > 1 && (
+        {!isError && pages > 1 && (
           <div className="flex items-center justify-between px-3 py-2 border-t border-border bg-muted/30">
             <span className="text-xs text-muted-foreground">
               Стр. {page} из {pages} · {total} записей
             </span>
             <div className="flex gap-1">
-              <Button variant="outline" size="sm" className="h-7" disabled={page <= 1} onClick={() => setPage(page - 1)}>
+              <Button variant="outline" size="sm" className="h-7" aria-label="Предыдущая страница аккаунтов" disabled={page <= 1} onClick={() => setPage(page - 1)}>
                 <ChevronLeft className="w-3 h-3" />
               </Button>
-              <Button variant="outline" size="sm" className="h-7" disabled={page >= pages} onClick={() => setPage(page + 1)}>
+              <Button variant="outline" size="sm" className="h-7" aria-label="Следующая страница аккаунтов" disabled={page >= pages} onClick={() => setPage(page + 1)}>
                 <ChevronRight className="w-3 h-3" />
               </Button>
             </div>
@@ -605,7 +607,6 @@ export default function AccountsPage() {
         }}
         isLoading={updateMut.isPending}
         servers={serversList}
-        devices={devicesData?.items ?? []}
       />
 
       <ImportDialog
@@ -618,7 +619,6 @@ export default function AccountsPage() {
 
       <AssignDialog
         account={assignAccount}
-        devices={devicesData?.items ?? []}
         onClose={() => setAssignAccount(null)}
         onAssign={(deviceId) => {
           if (assignAccount) { assignMut.mutate({ id: assignAccount.id, device_id: deviceId }, { onSuccess: () => setAssignAccount(null) }); }
@@ -713,7 +713,7 @@ function CreateAccountDialog({
 }: {
   open: boolean;
   onClose: () => void;
-  onCreate: (data: { game: string; login: string; password: string; server_name?: string; nickname?: string; gender?: string; level?: number; target_level?: number; balance_rub?: number; balance_bc?: number; meta?: Record<string, unknown> }) => void;
+  onCreate: (data: { game: string; login: string; password: string; server_name?: string; nickname?: string; gender?: string; level?: number; target_level?: number; balance_rub?: number; balance_bc?: number; lawfulness?: number; meta?: Record<string, unknown> }) => void;
   isLoading: boolean;
   servers: Array<{ id: number; name: string }>;
 }) {
@@ -728,13 +728,16 @@ function CreateAccountDialog({
   const [balanceRub, setBalanceRub] = useState("");
   const [balanceBc, setBalanceBc] = useState("");
   const [lawfulness, setLawfulness] = useState("");
+  const lawfulnessValid = lawfulness.trim() === '' || (Number.isInteger(Number(lawfulness)) && Number(lawfulness) >= 0 && Number(lawfulness) <= 100);
 
   const handleSubmit = () => {
+    if (!game.trim() || !login.trim() || !password || isLoading || !lawfulnessValid) return;
     const data: {
       game: string; login: string; password: string;
       server_name?: string; nickname?: string; gender?: string;
       level?: number; target_level?: number;
       balance_rub?: number; balance_bc?: number;
+      lawfulness?: number;
     } = {
       game: game.trim(),
       login: login.trim(),
@@ -747,6 +750,7 @@ function CreateAccountDialog({
     if (targetLevel) data.target_level = parseInt(targetLevel);
     if (balanceRub) data.balance_rub = parseFloat(balanceRub);
     if (balanceBc) data.balance_bc = parseFloat(balanceBc);
+    if (lawfulness.trim() !== '') data.lawfulness = Number(lawfulness);
     onCreate(data);
   };
 
@@ -829,7 +833,8 @@ function CreateAccountDialog({
             </div>
             <div className="grid gap-1.5">
               <Label className="text-xs font-mono flex items-center gap-1"><Scale className="w-3 h-3" /> Закон (0-100)</Label>
-              <Input type="number" value={lawfulness} onChange={(e) => setLawfulness(e.target.value)} placeholder="100" min={0} max={100} className="text-xs font-mono" />
+              <Input aria-label="Законопослушность" aria-invalid={!lawfulnessValid} type="number" value={lawfulness} onChange={(e) => setLawfulness(e.target.value)} placeholder="100" min={0} max={100} step={1} className="text-xs font-mono" />
+              {!lawfulnessValid && <p role="alert" className="text-xs text-destructive">Введите целое число от 0 до 100.</p>}
             </div>
           </div>
 
@@ -847,7 +852,7 @@ function CreateAccountDialog({
         </div>
         <DialogFooter>
           <Button variant="outline" size="sm" onClick={handleClose}>Отмена</Button>
-          <Button size="sm" onClick={handleSubmit} disabled={!game.trim() || !login.trim() || !password || isLoading}>
+          <Button size="sm" onClick={handleSubmit} disabled={!game.trim() || !login.trim() || !password || isLoading || !lawfulnessValid}>
             {isLoading ? <RefreshCw className="w-3.5 h-3.5 animate-spin mr-1" /> : <Plus className="w-3.5 h-3.5 mr-1" />}
             Создать
           </Button>
@@ -867,14 +872,12 @@ function EditAccountDialog({
   onSave,
   isLoading,
   servers,
-  devices,
 }: {
   account: GameAccount | null;
   onClose: () => void;
   onSave: (data: Record<string, unknown>) => void;
   isLoading: boolean;
   servers: Array<{ id: number; name: string }>;
-  devices: Array<{ id: string; name: string; status: string }>;
 }) {
   const [login, setLogin] = useState("");
   const [password, setPassword] = useState("");
@@ -1176,13 +1179,11 @@ function ImportDialog({
 
 function AssignDialog({
   account,
-  devices,
   onClose,
   onAssign,
   isLoading,
 }: {
   account: GameAccount | null;
-  devices: Array<{ id: string; name: string; status: string }>;
   onClose: () => void;
   onAssign: (deviceId: string) => void;
   isLoading: boolean;
@@ -1202,26 +1203,12 @@ function AssignDialog({
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-3 py-2">
-          <Select value={deviceId} onValueChange={setDeviceId}>
-            <SelectTrigger className="text-xs font-mono">
-              <SelectValue placeholder="Выберите устройство (эмулятор)..." />
-            </SelectTrigger>
-            <SelectContent>
-              {devices.map((d) => (
-                <SelectItem key={d.id} value={d.id}>
-                  <span className="flex items-center gap-1.5">
-                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${d.status === "online" ? "bg-emerald-400" : d.status === "offline" ? "bg-red-400" : "bg-gray-400"}`} />
-                    <Monitor className="w-3 h-3" />
-                    {d.name}
-                    <span className="text-muted-foreground/60 text-[9px] ml-1">({d.status})</span>
-                  </span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {devices.length === 0 && (
-            <p className="text-xs text-muted-foreground">Нет зарегистрированных устройств</p>
-          )}
+          <DeviceSearchSelect
+            value={deviceId}
+            onChange={setDeviceId}
+            disabled={isLoading}
+            placeholder="Выберите устройство (эмулятор)…"
+          />
         </div>
         <DialogFooter>
           <Button variant="outline" size="sm" onClick={() => { setDeviceId(""); onClose(); }}>Отмена</Button>

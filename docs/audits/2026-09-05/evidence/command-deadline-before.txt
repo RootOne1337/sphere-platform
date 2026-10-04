@@ -1,0 +1,41 @@
+.FF                                                                      [100%]
+================================== FAILURES ===================================
+_____________ test_intermediate_ack_does_not_finish_command_wait ______________
+tests\production\test_pubsub_deadline.py:39: in test_intermediate_ack_does_not_finish_command_wait
+    assert result == {"status": "completed", "result": {"ok": True}}
+E   AssertionError: assert {'status': 'received'} == {'result': {'...: 'completed'}
+E     
+E     Differing items:
+E     {'status': 'received'} != {'status': 'completed'}
+E     Right contains 1 more item:
+E     {'result': {'ok': True}}
+E     Use -v to get more diff
+_________________ test_deadline_also_bounds_command_delivery __________________
+tests\production\test_pubsub_deadline.py:48: in stalled_delivery
+    await asyncio.sleep(10)
+..\..\..\AppData\Roaming\uv\python\cpython-3.12.12-windows-x86_64-none\Lib\asyncio\tasks.py:665: in sleep
+    return await future
+E   asyncio.exceptions.CancelledError
+
+The above exception was the direct cause of the following exception:
+tests\production\test_pubsub_deadline.py:52: in test_deadline_also_bounds_command_delivery
+    await asyncio.wait_for(publisher.send_command_wait_result(str(uuid.uuid4()), {}, timeout=0.03), 0.5)
+..\..\..\AppData\Roaming\uv\python\cpython-3.12.12-windows-x86_64-none\Lib\asyncio\tasks.py:519: in wait_for
+    async with timeouts.timeout(timeout):
+..\..\..\AppData\Roaming\uv\python\cpython-3.12.12-windows-x86_64-none\Lib\asyncio\timeouts.py:115: in __aexit__
+    raise TimeoutError from exc_val
+E   TimeoutError
+============================== warnings summary ===============================
+.venv-audit\Lib\site-packages\pydantic\fields.py:754: 484 warnings
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\pydantic\fields.py:754: PydanticDeprecatedSince20: Using extra keyword arguments on `Field` is deprecated and will be removed. Use `json_schema_extra` instead. (Extra keys: 'deprecated'). Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.6/migration/
+    warn(
+
+backend\api\v1\game_accounts\router.py:94
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\api\v1\game_accounts\router.py:94: DeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+    sort_dir: str = Query("desc", regex="^(asc|desc)$", description="Направление сортировки"),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/production/test_pubsub_deadline.py::test_intermediate_ack_does_not_finish_command_wait
+FAILED tests/production/test_pubsub_deadline.py::test_deadline_also_bounds_command_delivery
+2 failed, 1 passed, 485 warnings in 1.29s

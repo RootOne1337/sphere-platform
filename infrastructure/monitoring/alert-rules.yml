@@ -129,3 +129,73 @@ groups:
         annotations:
           summary: "Низкий FPS стрима ({{ $value }} fps) у device {{ $labels.device_id }}"
           description: "FPS ниже 15 — возможны проблемы с NetworkCodec или нагрузкой CPU устройства"
+
+      - alert: AndroidCaptureStalled
+        expr: sphere_stream_capture_fps == 0 and on (device_id) sphere_stream_fps == 0
+        for: 1m
+        labels:
+          severity: warning
+          team: android
+        annotations:
+          summary: "Android не выдаёт кадры для device {{ $labels.device_id }}"
+          description: "Активная stream-сессия сообщает нулевые capture и encoder FPS; проверьте MediaProjection и ImageReader."
+
+      - alert: AndroidEncoderStalledAfterCapture
+        expr: sphere_stream_capture_fps > 0 and on (device_id) sphere_stream_fps == 0
+        for: 30s
+        labels:
+          severity: warning
+          team: android
+        annotations:
+          summary: "Encoder остановился после захвата у device {{ $labels.device_id }}"
+          description: "ImageReader получает кадры, но MediaCodec не выдаёт picture frames. Проверьте render-to-surface и codec callbacks."
+
+      - alert: AndroidRenderStalledAfterCapture
+        expr: sphere_stream_capture_fps > 0 and on (device_id) sphere_stream_render_fps == 0
+        for: 30s
+        labels:
+          severity: warning
+          team: android
+        annotations:
+          summary: "Нет кадров на encoder surface у device {{ $labels.device_id }}"
+          description: "ImageReader получает кадры, но render-to-surface не подтверждает posted frame. Проверьте canvas/surface errors."
+
+      - alert: AndroidFrameQueueRejecting
+        expr: |
+          sphere_stream_ws_queue_attempts_session >= 100
+          and on (device_id)
+          100 * sphere_stream_ws_queue_rejected_session
+            / sphere_stream_ws_queue_attempts_session > 1
+        for: 1m
+        labels:
+          severity: info
+          team: android
+        annotations:
+          summary: "APK WebSocket queue теряет кадры у device {{ $labels.device_id }}"
+          description: "Более 1% накопленных попыток отправки отклонено локальной очередью OkHttp; это не server-receipt metric."
+
+      - alert: StreamBackendIngressNotForwarded
+        expr: |
+          sum by (device_id) (rate(sphere_stream_backend_ingress_frames_total[1m])) > 0
+          and on (device_id)
+          sum by (device_id) (rate(sphere_stream_redis_publish_calls_total[1m])) == 0
+        for: 30s
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "Backend получил кадры, но не публикует их в Redis: {{ $labels.device_id }}"
+          description: "Сравните Redis transport errors и очередь agent_to_redis; источник уже дошёл до Android WebSocket ingress."
+
+      - alert: StreamViewerHasNoFrames
+        expr: |
+          sum by (device_id) (sphere_stream_active_viewers) > 0
+          and on (device_id)
+          sum by (device_id) (rate(sphere_stream_viewer_send_frames_total[1m])) == 0
+        for: 30s
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "Viewer подключён, но backend не отправляет кадры: {{ $labels.device_id }}"
+          description: "Сверьте backend ingress, Redis publish/subscribers и device capture counters. Метрика означает завершение ASGI send_bytes, а не browser decode."

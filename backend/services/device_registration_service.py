@@ -2,14 +2,22 @@
 # ВЛАДЕЛЕЦ: TZ-12 Agent Discovery. Автоматическая регистрация устройств.
 from __future__ import annotations
 
+import base64
+import hashlib
+import hmac
 import uuid
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
-from sqlalchemy import select
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.kdf.hkdf import HKDF
+from fastapi import HTTPException
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.config import settings
 from backend.core.security import create_access_token, create_refresh_token
+from backend.database.credential_lookup import bind_credential_tenant
 from backend.models.device import Device, DeviceStatus
 from backend.schemas.device_register import DeviceRegisterRequest, DeviceRegisterResponse
 
@@ -39,7 +47,54 @@ class DeviceRegistrationService:
         4. Генерируем JWT для агента (sub = device_id, role = "device")
         """
         # Поиск по fingerprint (идемпотентность)
+        # Serialize enrollment for one organization to avoid duplicate fingerprints.
+        from backend.models.organization import Organization
+
+        await self.db.scalar(
+            select(Organization).where(Organization.id == org_id).with_for_update()
+        )
         existing = await self._find_by_fingerprint(org_id, data.fingerprint)
+
+        # Старый APK копирует fingerprint вместе с /data. The first v2 binding
+        # atomically upgrades that legacy card; subsequent copies get a scoped
+        # identity by (template, binding version, binding). The organization lock
+        # serializes the migration and clone creation across backend processes.
+        source_device_id = None
+        if data.instance_binding and existing:
+            meta = dict(existing.meta or {})
+            binding = meta.get("instance_binding")
+            try:
+                stored_version = int(meta.get("instance_binding_version", 1 if binding else 0))
+            except (TypeError, ValueError):
+                stored_version = 1 if binding else 0
+            requested_version = data.instance_binding_version or 1
+            if not binding:
+                existing.meta = {
+                    **meta,
+                    "instance_binding": data.instance_binding,
+                    "instance_binding_version": requested_version,
+                }
+            elif requested_version > stored_version:
+                # One upgraded copy retains the old device row. Organization
+                # locking makes this a single winner; later copies are split below.
+                existing.meta = {
+                    **meta,
+                    "instance_binding": data.instance_binding,
+                    "instance_binding_version": requested_version,
+                }
+            elif requested_version < stored_version:
+                raise HTTPException(
+                    status_code=409,
+                    detail="device_instance_binding_upgrade_required",
+                )
+            elif binding != data.instance_binding:
+                source_device_id = str(existing.id)
+                scoped = hashlib.sha256(
+                    ("sphere-instance-v2\0" + data.fingerprint + "\0" +
+                     str(requested_version) + "\0" + data.instance_binding).encode()
+                ).hexdigest()
+                data = data.model_copy(update={"fingerprint": scoped})
+                existing = await self._find_by_fingerprint(org_id, scoped)
 
         if existing:
             # Re-enrollment: обновляем метаданные
@@ -49,6 +104,8 @@ class DeviceRegistrationService:
 
         # Новая регистрация
         device = await self._create_device(org_id, data)
+        if source_device_id:
+            device.meta = {**device.meta, "clone_source_device_id": source_device_id}
         await self.db.flush()
         return self._build_response(device, is_new=True)
 
@@ -61,7 +118,7 @@ class DeviceRegistrationService:
         stmt = select(Device).where(
             Device.org_id == org_id,
             Device.meta["fingerprint"].as_string() == fingerprint,
-        )
+        ).with_for_update().execution_options(populate_existing=True)
         result = await self.db.execute(stmt)
         return result.scalar_one_or_none()
 
@@ -77,7 +134,11 @@ class DeviceRegistrationService:
             "type": data.device_type,
             "fingerprint": data.fingerprint,
             "auto_registered": True,
+            "instance_binding": data.instance_binding,
+            "clone_source_device_id": None,
         }
+        if data.instance_binding:
+            meta["instance_binding_version"] = data.instance_binding_version or 1
         if data.workstation_id:
             meta["workstation_id"] = data.workstation_id
         if data.instance_index is not None:
@@ -117,10 +178,78 @@ class DeviceRegistrationService:
             meta["location"] = data.location
         # Обновляем мета
         meta["last_re_enrollment"] = True
+        if data.instance_binding:
+            meta["instance_binding"] = data.instance_binding
+            meta["instance_binding_version"] = data.instance_binding_version or 1
         device.meta = meta
         device.is_active = True
 
-    def _build_response(self, device: Device, is_new: bool) -> DeviceRegisterResponse:
+    async def refresh_device_token(
+        self, raw_token: str, request_id: uuid.UUID | None = None,
+    ) -> DeviceRegisterResponse:
+        from fastapi import HTTPException
+
+        token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
+        org_id = await bind_credential_tenant(self.db, "device_refresh", token_hash)
+        if org_id is None:
+            raise HTTPException(status_code=401, detail="Invalid device refresh token")
+        device = await self.db.scalar(
+            select(Device)
+            .where(
+                Device.org_id == org_id,
+                or_(Device.refresh_token_hash == token_hash,
+                    Device.refresh_previous_token_hash == token_hash),
+                Device.is_active.is_(True),
+                Device.refresh_token_expires_at > datetime.now(timezone.utc),
+            )
+            .with_for_update()
+            .execution_options(populate_existing=True)
+        )
+        # Recheck time after any row-lock wait, not just at statement construction.
+        if (device is None or device.refresh_token_expires_at is None
+                or device.refresh_token_expires_at <= datetime.now(timezone.utc)):
+            raise HTTPException(status_code=401, detail="Invalid device refresh token")
+        key_hash = hashlib.sha256(request_id.bytes).hexdigest() if request_id else None
+        successor = self._refresh_successor(raw_token, device, request_id) if request_id else None
+        if device.refresh_token_hash == token_hash:
+            result = self._build_response(device, is_new=False, refresh_token=successor)
+            if request_id:
+                device.refresh_previous_token_hash = token_hash
+                device.refresh_rotation_key_hash = key_hash
+        else:
+            # One unconsumed successor only. Missing/different intents, re-enrollment
+            # or a newer rotation cannot recover or resurrect a prior credential.
+            if (successor is None or device.refresh_rotation_key_hash != key_hash
+                    or not hmac.compare_digest(
+                        hashlib.sha256(successor.encode()).hexdigest(), device.refresh_token_hash or "",
+                    )):
+                raise HTTPException(status_code=401, detail="Invalid device refresh token")
+            result = self._token_response(device, successor, is_new=False)
+        await self.db.commit()
+        return result
+
+    @staticmethod
+    def _refresh_successor(raw_token: str, device: Device, request_id: uuid.UUID) -> str:
+        # Purpose-separated HKDF-SHA256 with fixed-size UUID fields. Recovery needs
+        # the original high-entropy bearer AND the client's persisted operation ID.
+        # SQL stores hashes only; no server encryption key or plaintext reply cache.
+        info = b"sphere/device-refresh/v1\0" + device.org_id.bytes + device.id.bytes
+        digest = HKDF(algorithm=hashes.SHA256(), length=32, salt=request_id.bytes, info=info).derive(raw_token.encode())
+        return base64.urlsafe_b64encode(digest).decode().rstrip("=")
+
+    def _build_response(
+        self, device: Device, is_new: bool, refresh_token: str | None = None,
+    ) -> DeviceRegisterResponse:
+        refresh_token = refresh_token or create_refresh_token()
+        device.refresh_token_hash = hashlib.sha256(refresh_token.encode()).hexdigest()
+        device.refresh_token_expires_at = datetime.now(timezone.utc) + timedelta(
+            days=settings.JWT_REFRESH_TOKEN_EXPIRE_DAYS
+        )
+        device.refresh_previous_token_hash = None
+        device.refresh_rotation_key_hash = None
+        return self._token_response(device, refresh_token, is_new)
+
+    def _token_response(self, device: Device, refresh_token: str, is_new: bool) -> DeviceRegisterResponse:
         """Сформировать ответ с JWT токенами для агента."""
         # JWT: sub = device_id, role = "device" (специальная роль для агентов)
         access_token, _ = create_access_token(
@@ -128,13 +257,13 @@ class DeviceRegistrationService:
             org_id=str(device.org_id),
             role="device",
         )
-        refresh_token = create_refresh_token()
-
         # server_url из единого источника: Settings.SERVER_PUBLIC_URL
         server_url = settings.SERVER_PUBLIC_URL.rstrip("/")
 
         return DeviceRegisterResponse(
             device_id=device.id,
+            instance_binding=(device.meta or {}).get("instance_binding"),
+            instance_binding_version=(device.meta or {}).get("instance_binding_version"),
             name=device.name,
             access_token=access_token,
             refresh_token=refresh_token,

@@ -1,0 +1,171 @@
+{
+  "run_id": "night-20260920-001",
+  "outcome": "failed",
+  "eight_hour_passed": false,
+  "backend": "eacf692",
+  "frontend": "03b161e",
+  "apk_version_code": 10207,
+  "started_at": "2026-09-19T22:04:03.757754+00:00",
+  "finished_at": "2026-09-20T01:37:31.883542+00:00",
+  "elapsed_seconds": 12808.125,
+  "planned_seconds": 28800,
+  "failure_detail": {
+    "type": "TimeoutError",
+    "frames": [
+      {
+        "file": "android_soak.py",
+        "function": "run",
+        "line": 466
+      },
+      {
+        "file": "android_soak.py",
+        "function": "cycle",
+        "line": 398
+      },
+      {
+        "file": "android_soak.py",
+        "function": "open_viewer",
+        "line": 383
+      },
+      {
+        "file": "timeouts.py",
+        "function": "__aexit__",
+        "line": 115
+      }
+    ],
+    "errno": null,
+    "winerror": null
+  },
+  "cycles_passed": 106,
+  "batch_tasks_verified": 212,
+  "pipeline_native_tasks_verified": 11,
+  "native_tasks_total": 223,
+  "successful_node_receipts": 2899,
+  "pipeline_controls_verified": 22,
+  "pipeline_completed": 11,
+  "pipeline_cancelled_before_native": 11,
+  "commands_verified": 2130,
+  "main_viewers_verified": 212,
+  "overlap_viewers_verified": 52,
+  "samples": 426,
+  "reconciliation_at": "2026-09-20T01:48:17.972617+00:00",
+  "saved_receipts_match_fresh_api": true,
+  "batch_cardinality_matches": true,
+  "active_tasks": 0,
+  "active_pipelines": 0,
+  "devices": [
+    {
+      "device_id": "85f2f935-7739-400e-9389-0d71227e8f0a",
+      "pid": "2182",
+      "pid_unchanged": true,
+      "expected_version_installed": true,
+      "crash_buffer_unchanged": true,
+      "terminal_crash_bytes_unchanged": true,
+      "terminal_crash_raw_sha256": "21cb8fca861543a2b141b00f4b52c162b178e5586d7f03d4243f3e3795f240b1",
+      "api_status": "online",
+      "projection_active_at_observation": false
+    },
+    {
+      "device_id": "ba1346c1-1581-452f-adee-451d36622aaf",
+      "pid": "2187",
+      "pid_unchanged": true,
+      "expected_version_installed": true,
+      "crash_buffer_unchanged": true,
+      "terminal_crash_bytes_unchanged": true,
+      "terminal_crash_raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "api_status": "online",
+      "projection_active_at_observation": false
+    }
+  ],
+  "memory": {
+    "85f2f935-7739-400e-9389-0d71227e8f0a": {
+      "observed_pids": [
+        "2182"
+      ],
+      "memory_pss_kib_by_phase": {
+        "after_viewer_close": {
+          "count": 106,
+          "min": 49360,
+          "max": 57234,
+          "p50": 52504,
+          "p95": 54877
+        },
+        "stream": {
+          "count": 106,
+          "min": 52795,
+          "max": 60085,
+          "p50": 56733,
+          "p95": 59615
+        },
+        "baseline": {
+          "count": 1,
+          "min": 49499,
+          "max": 49499,
+          "p50": 49499,
+          "p95": 49499
+        }
+      },
+      "projection_active_after_own_viewers_closed": 2
+    },
+    "ba1346c1-1581-452f-adee-451d36622aaf": {
+      "observed_pids": [
+        "2187"
+      ],
+      "memory_pss_kib_by_phase": {
+        "after_viewer_close": {
+          "count": 106,
+          "min": 49401,
+          "max": 56280,
+          "p50": 51928,
+          "p95": 54112
+        },
+        "stream": {
+          "count": 106,
+          "min": 53369,
+          "max": 59366,
+          "p50": 56856,
+          "p95": 59131
+        },
+        "baseline": {
+          "count": 1,
+          "min": 49561,
+          "max": 49561,
+          "p50": 49561,
+          "p95": 49561
+        }
+      },
+      "projection_active_after_own_viewers_closed": 0
+    }
+  },
+  "command_seconds": {
+    "count": 2130,
+    "min": 0.406,
+    "max": 0.906,
+    "p50": 0.438,
+    "p95": 0.594
+  },
+  "first_frame_seconds": {
+    "count": 212,
+    "min": 0.312,
+    "max": 1.0,
+    "p50": 0.766,
+    "p95": 0.875
+  },
+  "backend_events": 3299,
+  "backend_task_completed": 223,
+  "false_missing_task_warnings": 0,
+  "observed_agent_disconnects": 1,
+  "agent_disconnect_at": "2026-09-19T23:55:30.132532Z",
+  "agent_reconnected_at": "2026-09-19T23:55:32.638763Z",
+  "disconnect_scope": "same APK PID; successful reconnect; source of transport interruption not established",
+  "backend_log_sha256": "87f5a7c110c8f60b60a0674cf322cb9c1bc59998a5a6cd83c3f413ac5332decb",
+  "incomplete_event_lines": 0,
+  "limitations": [
+    "Two rooted Android 9 emulators, no fleet capacity claim.",
+    "Failed at video readiness during cycle 107 before admitting new batch.",
+    "Old media.codec SIGABRT unchanged, not a new Sphere crash.",
+    "First-frame timing is not video-decoding or end-to-end latency proof.",
+    "Two projection-active observations after own viewers closed require correlation with external viewers; not classified as leak.",
+    "No backend/APK deployment or duplicate run during observation."
+  ]
+}

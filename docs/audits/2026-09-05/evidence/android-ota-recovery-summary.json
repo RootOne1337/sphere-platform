@@ -1,0 +1,83 @@
+{
+  "baseline_commit": "5c6d3af5acd1001cb98c7fd9dc08a2aeb11bfa42",
+  "before": {
+    "phase": "before",
+    "exit": 1,
+    "suites": 1,
+    "tests": 9,
+    "failures": 5,
+    "errors": 0,
+    "skipped": 0,
+    "failed_cases": [
+      {
+        "name": "service startup removes APKs left by process replacement but preserves other files",
+        "message": "java.lang.AssertionError: Successful self-replacement left the old APK"
+      },
+      {
+        "name": "cancellation closes a real in flight HTTP download and removes its file",
+        "message": "kotlinx.coroutines.TimeoutCancellationException: Timed out waiting for 1500 ms"
+      },
+      {
+        "name": "overlapping requests cannot overwrite or remove an APK being installed",
+        "message": "java.io.FileNotFoundException: shared files/ota/update_next.apk removed by overlapping attempt"
+      },
+      {
+        "name": "version label cannot select the staging path",
+        "message": "java.lang.IllegalStateException: Path traversal detected in OTA filename"
+      },
+      {
+        "name": "interrupted body removes partial file and a subsequent attempt can install",
+        "message": "java.lang.AssertionError: Partial APK survives a failed download"
+      }
+    ]
+  },
+  "after_targeted": {
+    "phase": "after",
+    "exit": 0,
+    "suites": 1,
+    "tests": 9,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "failed_cases": []
+  },
+  "after_full": {
+    "phase": "full",
+    "exit": 0,
+    "suites": 41,
+    "tests": 556,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "failed_cases": []
+  },
+  "scope": "Production OtaUpdateService, real OkHttp/files/hash; only Android installer boundary stubbed. Cancellation uses a real loopback TCP socket.",
+  "baseline_interpretation": "Four failing operational recovery scenarios; the fifth is a new contract test that version labels no longer select a staging path, not an additional vulnerability.",
+  "native_before": {
+    "at": "2026-09-13T14:54:49.468817+00:00",
+    "phase": "before",
+    "version_code": 10203,
+    "device": "ba1346c1-1581-452f-adee-451d36622aaf",
+    "command_id": "6f10f298-62d2-4bf1-9c6c-cd8a03a58273",
+    "fixture_declared_bytes": 1048576,
+    "fixture_sent_bytes": 65536,
+    "files_before": "total 8188\n-rw------- 1 u0_a72 u0_a72 8383485 2026-09-13 15:07 update_1.2.3-dev.apk",
+    "adb_install_commands": 0,
+    "app_launch_commands": 0,
+    "manual_permission_actions": 0,
+    "transport": "existing APK WebSocket -> real management HTTPS ingress -> isolated truncated-body fixture",
+    "temporary_route": "/api/v1/updates/audit-fault-a55fd211eb2f4ef4a9f8f126adb8d55e",
+    "gateway_config_sha256_before": "7694340dfecef00626b4094e1b58d9837e94737d88cf5096dd8fe2c5b7acb271",
+    "failure_logged": [
+      "2026-09-13T16:54:55.057 E/?: [6f10f298-62d2-4bf1-9c6c-cd8a03a58273] Failed"
+    ],
+    "fixture_request_observed": true,
+    "elapsed_seconds": 3.39,
+    "files_after": "total 8188\n-rw------- 1 u0_a72 u0_a72 8383485 2026-09-13 15:07 update_1.2.3-dev.apk\n-rw------- 1 u0_a72 u0_a72       0 2026-09-13 16:54 update_AUD107-before.apk",
+    "same_apk_process": true,
+    "both_devices_answered": true,
+    "expected_behavior_observed": true,
+    "gateway_config_restored": true,
+    "fixture_container_removed": true
+  }
+}

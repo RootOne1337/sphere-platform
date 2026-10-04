@@ -1,0 +1,58 @@
+FFFF                                                                     [100%]
+================================== FAILURES ===================================
+_ test_initialized_bash_passes_compose_files_as_distinct_arguments[build_images-False] _
+tests\deployment\test_full_deploy_compose_arguments.py:61: in test_initialized_bash_passes_compose_files_as_distinct_arguments
+    assert result.returncode == 0, result.stdout + result.stderr + "\nargv: " + repr(recorded)
+E   AssertionError:
+E     \x1b[0;36m\x1b[1m\u2550\u2550\u2550 \u0428\u0430\u0433 3/8 \u2014 \u0421\u0431\u043e\u0440\u043a\u0430 Docker-\u043e\u0431\u0440\u0430\u0437\u043e\u0432 \u2550\u2550\u2550\x1b[0m
+E     \x1b[0;32m[\u2713]\x1b[0m \u0421\u0431\u043e\u0440\u043a\u0430 \u043e\u0431\u0440\u0430\u0437\u043e\u0432 (\u043f\u0435\u0440\u0432\u044b\u0439 \u0440\u0430\u0437 \u043c\u043e\u0436\u0435\u0442 \u0437\u0430\u043d\u044f\u0442\u044c 3-5 \u043c\u0438\u043d\u0443\u0442)...
+E     Compose file options were not passed as distinct arguments
+E
+E     argv: [['compose', '-f docker-compose.yml -f docker-compose.full.yml', 'build', '--parallel']]
+E   assert 64 == 0
+E    +  where 64 = CompletedProcess(args=['C:\\Program Files\\Git\\bin\\bash.exe', 'C:/Users/dimas/AppData/Local/Temp/pytest-of-dimas/pyt...����� (������ ��� ����� ������ 3-5 �����)...\nCompose file options were not passed as distinct arguments\n', stderr='').returncode
+_ test_initialized_bash_passes_compose_files_as_distinct_arguments[build_images-True] _
+tests\deployment\test_full_deploy_compose_arguments.py:61: in test_initialized_bash_passes_compose_files_as_distinct_arguments
+    assert result.returncode == 0, result.stdout + result.stderr + "\nargv: " + repr(recorded)
+E   AssertionError:
+E     \x1b[0;36m\x1b[1m\u2550\u2550\u2550 \u0428\u0430\u0433 3/8 \u2014 \u0421\u0431\u043e\u0440\u043a\u0430 Docker-\u043e\u0431\u0440\u0430\u0437\u043e\u0432 \u2550\u2550\u2550\x1b[0m
+E     \x1b[0;32m[\u2713]\x1b[0m \u0421\u0431\u043e\u0440\u043a\u0430 \u043e\u0431\u0440\u0430\u0437\u043e\u0432 (\u043f\u0435\u0440\u0432\u044b\u0439 \u0440\u0430\u0437 \u043c\u043e\u0436\u0435\u0442 \u0437\u0430\u043d\u044f\u0442\u044c 3-5 \u043c\u0438\u043d\u0443\u0442)...
+E     Compose file options were not passed as distinct arguments
+E
+E     argv: [['compose', '-f docker-compose.yml -f docker-compose.production.yml', 'build', '--parallel']]
+E   assert 64 == 0
+E    +  where 64 = CompletedProcess(args=['C:\\Program Files\\Git\\bin\\bash.exe', 'C:/Users/dimas/AppData/Local/Temp/pytest-of-dimas/pyt...����� (������ ��� ����� ������ 3-5 �����)...\nCompose file options were not passed as distinct arguments\n', stderr='').returncode
+_ test_initialized_bash_passes_compose_files_as_distinct_arguments[seed_data-False] _
+tests\deployment\test_full_deploy_compose_arguments.py:61: in test_initialized_bash_passes_compose_files_as_distinct_arguments
+    assert result.returncode == 0, result.stdout + result.stderr + "\nargv: " + repr(recorded)
+E   AssertionError:
+E     \x1b[0;36m\x1b[1m\u2550\u2550\u2550 \u0428\u0430\u0433 7/8 \u2014 \u0418\u043d\u0438\u0446\u0438\u0430\u043b\u0438\u0437\u0430\u0446\u0438\u044f \u0434\u0430\u043d\u043d\u044b\u0445 \u2550\u2550\u2550\x1b[0m
+E     \x1b[0;32m[\u2713]\x1b[0m \u0421\u043e\u0437\u0434\u0430\u043d\u0438\u0435 \u0430\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440\u0430 (pilot@example.org)...
+E     Compose file options were not passed as distinct arguments
+E
+E     argv: [['compose', '-f docker-compose.yml -f docker-compose.full.yml', 'exec', '-T', '-e', 'ADMIN_EMAIL', '-e', 'ADMIN_PASSWORD', 'backend', 'python', 'scripts/create_admin.py']]
+E   assert 1 == 0
+E    +  where 1 = CompletedProcess(args=['C:\\Program Files\\Git\\bin\\bash.exe', 'C:/Users/dimas/AppData/Local/Temp/pytest-of-dimas/pyt...������ �������������� (pilot@example.org)...\nCompose file options were not passed as distinct arguments\n', stderr='').returncode
+_ test_initialized_bash_passes_compose_files_as_distinct_arguments[seed_data-True] _
+tests\deployment\test_full_deploy_compose_arguments.py:61: in test_initialized_bash_passes_compose_files_as_distinct_arguments
+    assert result.returncode == 0, result.stdout + result.stderr + "\nargv: " + repr(recorded)
+E   AssertionError:
+E     \x1b[0;36m\x1b[1m\u2550\u2550\u2550 \u0428\u0430\u0433 7/8 \u2014 \u0418\u043d\u0438\u0446\u0438\u0430\u043b\u0438\u0437\u0430\u0446\u0438\u044f \u0434\u0430\u043d\u043d\u044b\u0445 \u2550\u2550\u2550\x1b[0m
+E     \x1b[0;32m[\u2713]\x1b[0m \u0421\u043e\u0437\u0434\u0430\u043d\u0438\u0435 \u0430\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440\u0430 (pilot@example.org)...
+E     Compose file options were not passed as distinct arguments
+E
+E     argv: [['compose', '-f docker-compose.yml -f docker-compose.production.yml', 'exec', '-T', '-e', 'ADMIN_EMAIL', '-e', 'ADMIN_PASSWORD', 'backend', 'python', 'scripts/create_admin.py']]
+E   assert 1 == 0
+E    +  where 1 = CompletedProcess(args=['C:\\Program Files\\Git\\bin\\bash.exe', 'C:/Users/dimas/AppData/Local/Temp/pytest-of-dimas/pyt...������ �������������� (pilot@example.org)...\nCompose file options were not passed as distinct arguments\n', stderr='').returncode
+============================== warnings summary ===============================
+backend\api\v1\game_accounts\router.py:95
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\api\v1\game_accounts\router.py:95: FastAPIDeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+    sort_dir: str = Query("desc", regex="^(asc|desc)$", description="����������� ����������"),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/deployment/test_full_deploy_compose_arguments.py::test_initialized_bash_passes_compose_files_as_distinct_arguments[build_images-False]
+FAILED tests/deployment/test_full_deploy_compose_arguments.py::test_initialized_bash_passes_compose_files_as_distinct_arguments[build_images-True]
+FAILED tests/deployment/test_full_deploy_compose_arguments.py::test_initialized_bash_passes_compose_files_as_distinct_arguments[seed_data-False]
+FAILED tests/deployment/test_full_deploy_compose_arguments.py::test_initialized_bash_passes_compose_files_as_distinct_arguments[seed_data-True]
+4 failed, 1 warning in 2.50s

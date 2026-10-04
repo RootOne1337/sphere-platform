@@ -1,0 +1,34 @@
+FF...FF...                                                               [100%]
+================================== FAILURES ===================================
+_ test_unattended_bootstrap_preserves_existing_credentials[powershell-existing0-False] _
+tests\deployment\test_bootstrap_existing_env.py:94: in test_unattended_bootstrap_preserves_existing_credentials
+    assert generated is None, "Existing installation was shadowed by newly generated credentials"
+E   AssertionError: Existing installation was shadowed by newly generated credentials
+E   assert ['scripts/generate_secrets.py', '--output', '.env.local'] is None
+_ test_unattended_bootstrap_preserves_existing_credentials[powershell-existing1-True] _
+tests\deployment\test_bootstrap_existing_env.py:94: in test_unattended_bootstrap_preserves_existing_credentials
+    assert generated is None, "Existing installation was shadowed by newly generated credentials"
+E   AssertionError: Existing installation was shadowed by newly generated credentials
+E   assert ['scripts/generate_secrets.py', '--output', '.env.local'] is None
+_ test_unattended_bootstrap_preserves_existing_credentials[bash-existing0-False] _
+tests\deployment\test_bootstrap_existing_env.py:94: in test_unattended_bootstrap_preserves_existing_credentials
+    assert generated is None, "Existing installation was shadowed by newly generated credentials"
+E   AssertionError: Existing installation was shadowed by newly generated credentials
+E   assert ['scripts/generate_secrets.py', '--output', '.env.local'] is None
+_ test_unattended_bootstrap_preserves_existing_credentials[bash-existing1-True] _
+tests\deployment\test_bootstrap_existing_env.py:94: in test_unattended_bootstrap_preserves_existing_credentials
+    assert generated is None, "Existing installation was shadowed by newly generated credentials"
+E   AssertionError: Existing installation was shadowed by newly generated credentials
+E   assert ['scripts/generate_secrets.py', '--output', '.env.local'] is None
+============================== warnings summary ===============================
+backend\api\v1\game_accounts\router.py:95
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\api\v1\game_accounts\router.py:95: FastAPIDeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+    sort_dir: str = Query("desc", regex="^(asc|desc)$", description="Направление сортировки"),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/deployment/test_bootstrap_existing_env.py::test_unattended_bootstrap_preserves_existing_credentials[powershell-existing0-False]
+FAILED tests/deployment/test_bootstrap_existing_env.py::test_unattended_bootstrap_preserves_existing_credentials[powershell-existing1-True]
+FAILED tests/deployment/test_bootstrap_existing_env.py::test_unattended_bootstrap_preserves_existing_credentials[bash-existing0-False]
+FAILED tests/deployment/test_bootstrap_existing_env.py::test_unattended_bootstrap_preserves_existing_credentials[bash-existing1-True]
+4 failed, 6 passed, 1 warning in 6.38s

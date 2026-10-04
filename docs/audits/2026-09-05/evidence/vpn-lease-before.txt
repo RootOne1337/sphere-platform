@@ -1,0 +1,50 @@
+FFFFF                                                                    [100%]
+================================== FAILURES ===================================
+____________ test_two_tenants_cannot_reserve_the_same_vpn_address _____________
+tests\production\test_vpn_durable_leases.py:66: in test_two_tenants_cannot_reserve_the_same_vpn_address
+    assert a.assigned_ip != b.assigned_ip
+E   AssertionError: assert '10.246.99.1' != '10.246.99.1'
+E    +  where '10.246.99.1' = VPNAssignment(peer_id='ced48e69-9421-4c9d-bfec-f69cbba232c2', device_id='19b74359-1c96-4345-bf5b-123cfa1b407b', assign...iWHjSwMYpr6UEDG6O4lh40sPFf1PoXgxLFaNbtijYAAAAASUVORK5CYII=', public_key='r72byhFlbXE4JC1Xi9GvbpaCXIDqzVeIq4Ruj0KfsFg=').assigned_ip
+E    +  and   '10.246.99.1' = VPNAssignment(peer_id='30b3dc15-4600-42ab-af3e-978c6027d985', device_id='0171e56c-5b77-4298-81a7-1a143999df3c', assign...ktO+hgY5TQsoMONkYJLTvoYON/Ueu/8eYTwXSceggAAAAASUVORK5CYII=', public_key='c8JP6i3bi+pzv2GRnTo5+c1WYQx4Q3wBjK1ALMXCIhk=').assigned_ip
+______ test_router_can_observe_committed_provisioning_intent_before_post ______
+tests\production\test_vpn_durable_leases.py:82: in test_router_can_observe_committed_provisioning_intent_before_post
+    assert observed == [(assignment.public_key, assignment.assigned_ip)], "Provider effects require a durable SQL intent"
+E   AssertionError: Provider effects require a durable SQL intent
+E   assert [] == [('FxI178iDTK...0.245.232.1')]
+E     
+E     Right contains one more item: ('FxI178iDTKy5IBdwutKEG9eOPqpgntSqxMWr4CQku0A=', '10.245.232.1')
+E     Use -v to get more diff
+_____ test_applied_post_with_lost_response_retains_address_after_rollback _____
+tests\production\test_vpn_durable_leases.py:97: in test_applied_post_with_lost_response_retains_address_after_rollback
+    assert retained is not None, "Lost response must leave a durable reservation"
+E   AssertionError: Lost response must leave a durable reservation
+E   assert None is not None
+_____________ test_failed_intent_commit_prevents_router_mutation ______________
+tests\production\test_vpn_durable_leases.py:111: in test_failed_intent_commit_prevents_router_mutation
+    assert h.requests == [], "A rejected SQL intent must never reach the router"
+E   AssertionError: A rejected SQL intent must never reach the router
+E   assert [<Request('PO....1:9/peers')>] == []
+E     
+E     Left contains one more item: <Request('POST', 'http://127.0.0.1:9/peers')>
+E     Use -v to get more diff
+____________ test_failed_final_commit_retains_provisioning_intent _____________
+tests\production\test_vpn_durable_leases.py:127: in test_failed_final_commit_retains_provisioning_intent
+    assert retained is not None
+E   assert None is not None
+============================== warnings summary ===============================
+.venv-audit\Lib\site-packages\pydantic\fields.py:754: 484 warnings
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\pydantic\fields.py:754: PydanticDeprecatedSince20: Using extra keyword arguments on `Field` is deprecated and will be removed. Use `json_schema_extra` instead. (Extra keys: 'deprecated'). Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.6/migration/
+    warn(
+
+backend\api\v1\game_accounts\router.py:94
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\api\v1\game_accounts\router.py:94: DeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+    sort_dir: str = Query("desc", regex="^(asc|desc)$", description="Направление сортировки"),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/production/test_vpn_durable_leases.py::test_two_tenants_cannot_reserve_the_same_vpn_address
+FAILED tests/production/test_vpn_durable_leases.py::test_router_can_observe_committed_provisioning_intent_before_post
+FAILED tests/production/test_vpn_durable_leases.py::test_applied_post_with_lost_response_retains_address_after_rollback
+FAILED tests/production/test_vpn_durable_leases.py::test_failed_intent_commit_prevents_router_mutation
+FAILED tests/production/test_vpn_durable_leases.py::test_failed_final_commit_retains_provisioning_intent
+5 failed, 485 warnings in 1.66s

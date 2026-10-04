@@ -1,0 +1,12 @@
+{
+  "source": "frontend/lib/h264-decoder.ts",
+  "scope": "Actual TS decoder with a stalled VideoDecoder double; not a browser benchmark",
+  "pending_without_sps_pps": 2048,
+  "pending_payload_bytes": 2097152,
+  "submitted_to_stalled_decoder": 1000,
+  "source_timestamp_us": 12345000,
+  "submitted_timestamp_us": 999999000,
+  "decode_error_propagated": true,
+  "source_working_copy_sha256": "2eeb4721e7a94007481870cb8709c47b2a3268edb8565c7b2ef7fe3b51ea9f09",
+  "source_git_blob_sha256": "4b7a6bb6a155c01fe6f2ee360420da94f63ebff9ae615f5c4f698a5faae67bd4"
+}

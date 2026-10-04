@@ -1,0 +1,48 @@
+{
+  "source": "3e442d1 before current audit edits",
+  "windows_probe": {
+    "at": "2026-09-14T12:16:30.596280+00:00",
+    "source": "3e442d1",
+    "operation": "real Windows reader denies delete sharing",
+    "failure": {
+      "type": "PermissionError",
+      "frames": [
+        {
+          "file": "probe_windows_snapshot.py",
+          "function": "<module>",
+          "line": 26
+        },
+        {
+          "file": "android_soak.py",
+          "function": "write_json",
+          "line": 58
+        },
+        {
+          "file": "pathlib.py",
+          "function": "replace",
+          "line": 1376
+        }
+      ],
+      "errno": 13,
+      "winerror": 5
+    },
+    "old_json_intact": true,
+    "after_reader_close_succeeds": true,
+    "scope": "Reproduces this local failure path; does not prove the original night OS cause."
+  },
+  "atomic_json_before": {
+    "tests": "3",
+    "failures": "2",
+    "errors": "0",
+    "skipped": "0",
+    "time": "0.362"
+  },
+  "atomic_json_after": {
+    "tests": "18",
+    "failures": "0",
+    "errors": "0",
+    "skipped": "0",
+    "time": "0.618"
+  },
+  "atomic_json_lint": "passed"
+}

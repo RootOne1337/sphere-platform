@@ -4,6 +4,7 @@ import android.content.SharedPreferences
 import androidx.security.crypto.EncryptedSharedPreferences
 import io.mockk.*
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
@@ -52,6 +53,7 @@ class AuthTokenStoreTest {
                 this@mockk
             }
             every { apply() } just Runs
+            every { commit() } returns true
         }
         prefs = mockk(relaxed = true) {
             every { edit() } returns editor
@@ -154,23 +156,24 @@ class AuthTokenStoreTest {
     }
 
     @Test
-    fun `getFreshToken с истекающим токеном отправляет refresh запрос`() = runTest {
+    fun `getFreshToken с истекающим токеном отправляет refresh запрос`() = runBlocking {
         storage["access_token"] = "old-token"
         storage["refresh_token"] = "refresh-xyz"
         storage["access_token_expires_at"] = System.currentTimeMillis() + 60_000L // +1 мин (< 5 мин)
         storage["server_url"] = server.url("").toString().trimEnd('/')
 
         server.enqueue(MockResponse()
-            .setBody("""{"access_token":"new-token","expires_in":900}""")
+            .setBody("""{"access_token":"new-token","refresh_token":"rotated-refresh","expires_in":900}""")
             .setResponseCode(200))
 
         val result = store.getFreshToken()
-        // При успешном refresh → новый токен; при ошибке → old-token (failsafe)
-        assertTrue("Должен вернуть токен", result == "new-token" || result == "old-token")
+        assertEquals("new-token", result)
+        assertEquals("rotated-refresh", storage["refresh_token"])
+        assertEquals("/api/v1/devices/refresh", server.takeRequest().path)
     }
 
     @Test
-    fun `getFreshToken при ошибке HTTP → текущий token`() = runTest {
+    fun `getFreshToken при ошибке HTTP → текущий token`() = runBlocking {
         storage["access_token"] = "old-token"
         storage["refresh_token"] = "refresh-xyz"
         storage["access_token_expires_at"] = System.currentTimeMillis() + 60_000L
@@ -180,6 +183,66 @@ class AuthTokenStoreTest {
 
         val result = store.getFreshToken()
         assertEquals("old-token", result)
+    }
+
+    @Test
+    fun `unauthorized refresh clears credentials for automatic re-enrollment`() = runBlocking {
+        val deviceId = "64547be6-3db5-4470-9e29-293eaee35168"
+        storage["access_token"] = "rejected-access"
+        storage["refresh_token"] = "rejected-refresh"
+        storage["access_token_expires_at"] = System.currentTimeMillis() + 60_000L
+        storage["server_url"] = server.url("").toString().trimEnd('/')
+        storage["device_id"] = deviceId
+        storage["instance_binding"] = "a".repeat(64)
+        storage["refresh_rotation_id"] = "f4e13f77-a3d7-4aed-b414-2135668a8fd7"
+        server.enqueue(MockResponse().setResponseCode(401))
+
+        assertNull("HTTP 401 must not return the rejected access token", store.getFreshToken())
+        assertNull("HTTP 401 must not retry rejected credentials", store.getFreshToken())
+        assertNull("HTTP 401 must clear access credentials", storage["access_token"])
+        assertNull("HTTP 401 must clear refresh credentials", storage["refresh_token"])
+        assertNull("HTTP 401 must clear the rejected rotation request", storage["refresh_rotation_id"])
+        assertEquals("management route is retained for recovery", server.url("").toString().trimEnd('/'),
+            storage["server_url"])
+        assertEquals("device identity is retained for re-enrollment", deviceId, store.getDeviceId())
+        assertEquals("clone binding is retained for re-enrollment", "a".repeat(64), store.getInstanceBinding())
+        assertEquals("/api/v1/devices/refresh", server.takeRequest().path)
+        assertNull("HTTP 401 must not submit another refresh request",
+            server.takeRequest(100, java.util.concurrent.TimeUnit.MILLISECONDS))
+    }
+
+    @Test
+    fun `forbidden refresh preserves credentials for policy or ingress investigation`() = runBlocking {
+        storage["access_token"] = "existing-access"
+        storage["refresh_token"] = "existing-refresh"
+        storage["access_token_expires_at"] = System.currentTimeMillis() + 60_000L
+        storage["server_url"] = server.url("").toString().trimEnd('/')
+        server.enqueue(MockResponse().setResponseCode(403))
+
+        assertEquals("403 is not treated as an invalid refresh token", "existing-access", store.getFreshToken())
+        assertEquals("existing-refresh", storage["refresh_token"])
+        assertEquals("existing-access", storage["access_token"])
+        assertEquals("/api/v1/devices/refresh", server.takeRequest().path)
+        assertNull(server.takeRequest(100, java.util.concurrent.TimeUnit.MILLISECONDS))
+    }
+
+    @Test
+    fun `terminal refresh denial never falls back to rejected token when clearing cannot persist`() = runBlocking {
+        val rejectedRefreshToken = "rejected-refresh"
+        storage["access_token"] = "rejected-access"
+        storage["refresh_token"] = rejectedRefreshToken
+        storage["access_token_expires_at"] = System.currentTimeMillis() + 60_000L
+        storage["server_url"] = server.url("").toString().trimEnd('/')
+        server.enqueue(MockResponse().setResponseCode(401))
+        every { editor.commit() } returns true andThen false
+
+        assertNull(store.getFreshToken())
+        assertNull("clearing failure must fail closed, never return the rejected access token", store.getFreshToken())
+        assertEquals("only the refresh intent and terminal denial are sent", "/api/v1/devices/refresh",
+            server.takeRequest().path)
+        assertNull("rejected refresh credential is not reused in this process", storage["refresh_token"])
+        verify(exactly = 2) { editor.commit() }
+        assertNull(server.takeRequest(100, java.util.concurrent.TimeUnit.MILLISECONDS))
     }
 
     // ── clearTokenCache ──────────────────────────────────────────────────────

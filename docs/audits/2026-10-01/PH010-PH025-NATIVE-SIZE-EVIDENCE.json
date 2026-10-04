@@ -1,0 +1,488 @@
+{
+  "timezone": "Asia/Yekaterinburg",
+  "source_date": "2026-10-01",
+  "artifact": {
+    "source_commit": "2bed59630b9d029412ec93f316bad8a67f5e3858",
+    "file": "SphereAgent-pilot-candidate-1.2.38-dev-2bed596.apk",
+    "sha256": "15c2392be0d8c6e845a84234302d1ccde4b04ed41d3f8b97c38fd76f73c00381",
+    "bytes": 8459015,
+    "package": "com.sphereplatform.agent.pilot.debug",
+    "version_name": "1.2.38-dev",
+    "version_code": 10238,
+    "certificate_sha256": "3ab40797d26e4f52f9e440afc6fe69f197caef71a5a27c63c86735bb1801871f",
+    "signed_discovery_manifest_version": 27,
+    "gpu_bridge_enabled": true,
+    "debug_video_probe": true,
+    "tests": {
+      "dev": {
+        "tests": 746,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 1
+      },
+      "enterprise": {
+        "tests": 746,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 1
+      }
+    }
+  },
+  "artifact_distribution": "android-canary only; normal/global OTA and GitHub latest aliases unchanged",
+  "local": {
+    "observed_at_utc": "2026-09-30T22:24:21.467139+00:00",
+    "device": "auto-ph-010",
+    "version": "1.2.38-dev",
+    "ota": {
+      "state": "installed_version_heartbeat_confirmed",
+      "command_ids": 1,
+      "global_channel_changed": false,
+      "confirmation_at_utc": "2026-09-30T22:23:30.850719+00:00",
+      "reported_version_code": 10238
+    },
+    "wire": {
+      "elapsed_seconds": 52.0,
+      "packets": 181,
+      "bytes": 1080958,
+      "motion_confirmed": true,
+      "launch_count": 1,
+      "gpu_marker_found": true,
+      "gpu_fallback_found": false,
+      "errors": [],
+      "canary_viewer_closed": true,
+      "global_stop_sent": false,
+      "saved_video_bytes": 0
+    },
+    "motion": {
+      "launch_state": "observing_motion",
+      "measurement_valid": true,
+      "pictures": 113,
+      "interval_seconds": 20.0,
+      "windows": [
+        {
+          "from_seconds": 10,
+          "pictures": 2,
+          "bytes": 11496
+        },
+        {
+          "from_seconds": 11,
+          "pictures": 6,
+          "bytes": 25694
+        },
+        {
+          "from_seconds": 12,
+          "pictures": 5,
+          "bytes": 20419
+        },
+        {
+          "from_seconds": 13,
+          "pictures": 6,
+          "bytes": 22648
+        },
+        {
+          "from_seconds": 14,
+          "pictures": 6,
+          "bytes": 49488
+        },
+        {
+          "from_seconds": 15,
+          "pictures": 5,
+          "bytes": 25488
+        },
+        {
+          "from_seconds": 16,
+          "pictures": 6,
+          "bytes": 26903
+        },
+        {
+          "from_seconds": 17,
+          "pictures": 6,
+          "bytes": 24863
+        },
+        {
+          "from_seconds": 18,
+          "pictures": 6,
+          "bytes": 27214
+        },
+        {
+          "from_seconds": 19,
+          "pictures": 6,
+          "bytes": 50374
+        },
+        {
+          "from_seconds": 20,
+          "pictures": 5,
+          "bytes": 23343
+        },
+        {
+          "from_seconds": 21,
+          "pictures": 6,
+          "bytes": 25137
+        },
+        {
+          "from_seconds": 22,
+          "pictures": 5,
+          "bytes": 24322
+        },
+        {
+          "from_seconds": 23,
+          "pictures": 6,
+          "bytes": 22111
+        },
+        {
+          "from_seconds": 24,
+          "pictures": 6,
+          "bytes": 47776
+        },
+        {
+          "from_seconds": 25,
+          "pictures": 5,
+          "bytes": 27549
+        },
+        {
+          "from_seconds": 26,
+          "pictures": 6,
+          "bytes": 30541
+        },
+        {
+          "from_seconds": 27,
+          "pictures": 6,
+          "bytes": 27759
+        },
+        {
+          "from_seconds": 28,
+          "pictures": 5,
+          "bytes": 24202
+        },
+        {
+          "from_seconds": 29,
+          "pictures": 6,
+          "bytes": 27073
+        }
+      ],
+      "launch_error": null
+    },
+    "mean_motion_picture_rate": 5.65,
+    "selected_codec": "OMX.google.h264.encoder",
+    "encoder_width": 960,
+    "encoder_height": 540,
+    "initial_bitrate_bps": 1500000,
+    "target_fps": 30,
+    "gpu_stage_windows": [
+      {
+        "window_ms": 7663,
+        "texture_n": 6,
+        "texture_mean_ms": 5.58,
+        "texture_max_ms": 24.18,
+        "draw_n": 5,
+        "draw_mean_ms": 4.09,
+        "draw_max_ms": 9.92,
+        "swap_n": 5,
+        "swap_mean_ms": 78.0,
+        "swap_max_ms": 196.63,
+        "duration_cap_ms": 60000
+      },
+      {
+        "window_ms": 5150,
+        "texture_n": 28,
+        "texture_mean_ms": 0.56,
+        "texture_max_ms": 2.89,
+        "draw_n": 28,
+        "draw_mean_ms": 0.46,
+        "draw_max_ms": 2.34,
+        "swap_n": 28,
+        "swap_mean_ms": 180.1,
+        "swap_max_ms": 277.9,
+        "duration_cap_ms": 60000
+      },
+      {
+        "window_ms": 5119,
+        "texture_n": 30,
+        "texture_mean_ms": 0.45,
+        "texture_max_ms": 1.26,
+        "draw_n": 30,
+        "draw_mean_ms": 0.4,
+        "draw_max_ms": 2.2,
+        "swap_n": 30,
+        "swap_mean_ms": 169.62,
+        "swap_max_ms": 183.51,
+        "duration_cap_ms": 60000
+      },
+      {
+        "window_ms": 5154,
+        "texture_n": 29,
+        "texture_mean_ms": 0.56,
+        "texture_max_ms": 2.22,
+        "draw_n": 29,
+        "draw_mean_ms": 0.42,
+        "draw_max_ms": 1.97,
+        "swap_n": 29,
+        "swap_mean_ms": 176.55,
+        "swap_max_ms": 237.91,
+        "duration_cap_ms": 60000
+      },
+      {
+        "window_ms": 5196,
+        "texture_n": 29,
+        "texture_mean_ms": 0.52,
+        "texture_max_ms": 3.2,
+        "draw_n": 29,
+        "draw_mean_ms": 0.35,
+        "draw_max_ms": 1.04,
+        "swap_n": 29,
+        "swap_mean_ms": 178.13,
+        "swap_max_ms": 206.59,
+        "duration_cap_ms": 60000
+      },
+      {
+        "window_ms": 5160,
+        "texture_n": 29,
+        "texture_mean_ms": 0.67,
+        "texture_max_ms": 3.7,
+        "draw_n": 29,
+        "draw_mean_ms": 0.54,
+        "draw_max_ms": 3.51,
+        "swap_n": 29,
+        "swap_mean_ms": 176.48,
+        "swap_max_ms": 218.6,
+        "duration_cap_ms": 60000
+      }
+    ],
+    "input": {
+      "attempted": true,
+      "stream_point": {
+        "x": 384,
+        "y": 216
+      },
+      "private_view_touch_receipts": [
+        {
+          "x": 384,
+          "y": 192
+        }
+      ],
+      "coordinate_domain": "touch receipts are local View coordinates; status/content inset is not physical Y; no input-to-visible latency measured"
+    },
+    "browser_verified": false
+  },
+  "remote": {
+    "observed_at_utc": "2026-09-30T22:46:36.248141+00:00",
+    "device": "auto-ph-025",
+    "version": "1.2.38-dev",
+    "ota": {
+      "state": "installed_version_heartbeat_confirmed",
+      "command_ids": 1,
+      "global_channel_changed": false,
+      "confirmation_at_utc": "2026-09-30T22:45:35.094641+00:00",
+      "reported_version_code": 10238
+    },
+    "wire": {
+      "elapsed_seconds": 52.0,
+      "packets": 81,
+      "bytes": 470417,
+      "motion_confirmed": false,
+      "launch_count": 1,
+      "gpu_marker_found": true,
+      "gpu_fallback_found": false,
+      "errors": [],
+      "canary_viewer_closed": true,
+      "global_stop_sent": false,
+      "saved_video_bytes": 0
+    },
+    "motion": {
+      "launch_state": "launch_not_confirmed_no_retry",
+      "measurement_valid": false,
+      "pictures": null,
+      "interval_seconds": null,
+      "windows": [],
+      "launch_error": "Root command result unavailable: execution_read_timeout"
+    },
+    "mean_motion_picture_rate": null,
+    "selected_codec": "OMX.google.h264.encoder",
+    "encoder_width": 960,
+    "encoder_height": 540,
+    "initial_bitrate_bps": 1500000,
+    "target_fps": 30,
+    "gpu_stage_windows": [
+      {
+        "window_ms": 5198,
+        "texture_n": 6,
+        "texture_mean_ms": 1.67,
+        "texture_max_ms": 6.3,
+        "draw_n": 6,
+        "draw_mean_ms": 511.56,
+        "draw_max_ms": 3064.61,
+        "swap_n": 6,
+        "swap_mean_ms": 19.45,
+        "swap_max_ms": 95.93,
+        "duration_cap_ms": 60000
+      },
+      {
+        "window_ms": 5198,
+        "texture_n": 16,
+        "texture_mean_ms": 0.99,
+        "texture_max_ms": 4.06,
+        "draw_n": 14,
+        "draw_mean_ms": 31.17,
+        "draw_max_ms": 429.74,
+        "swap_n": 14,
+        "swap_mean_ms": 1.18,
+        "swap_max_ms": 5.17,
+        "duration_cap_ms": 60000
+      },
+      {
+        "window_ms": 5001,
+        "texture_n": 12,
+        "texture_mean_ms": 95.67,
+        "texture_max_ms": 1126.49,
+        "draw_n": 11,
+        "draw_mean_ms": 94.6,
+        "draw_max_ms": 941.94,
+        "swap_n": 11,
+        "swap_mean_ms": 2.26,
+        "swap_max_ms": 13.99,
+        "duration_cap_ms": 60000
+      },
+      {
+        "window_ms": 5134,
+        "texture_n": 12,
+        "texture_mean_ms": 1.57,
+        "texture_max_ms": 9.35,
+        "draw_n": 12,
+        "draw_mean_ms": 113.31,
+        "draw_max_ms": 997.94,
+        "swap_n": 12,
+        "swap_mean_ms": 14.07,
+        "swap_max_ms": 146.86,
+        "duration_cap_ms": 60000
+      },
+      {
+        "window_ms": 5337,
+        "texture_n": 16,
+        "texture_mean_ms": 1.02,
+        "texture_max_ms": 6.0,
+        "draw_n": 14,
+        "draw_mean_ms": 29.6,
+        "draw_max_ms": 404.44,
+        "swap_n": 14,
+        "swap_mean_ms": 1.49,
+        "swap_max_ms": 9.9,
+        "duration_cap_ms": 60000
+      },
+      {
+        "window_ms": 5408,
+        "texture_n": 15,
+        "texture_mean_ms": 0.76,
+        "texture_max_ms": 1.0,
+        "draw_n": 14,
+        "draw_mean_ms": 155.8,
+        "draw_max_ms": 1279.21,
+        "swap_n": 14,
+        "swap_mean_ms": 1.32,
+        "swap_max_ms": 4.27,
+        "duration_cap_ms": 60000
+      }
+    ],
+    "input": {
+      "attempted": false,
+      "stream_point": null,
+      "private_view_touch_receipts": [],
+      "coordinate_domain": "touch receipts are local View coordinates; status/content inset is not physical Y; no input-to-visible latency measured"
+    },
+    "browser_verified": false
+  },
+  "remote_read_only_reconciliation": {
+    "at_utc": "2026-09-30T22:50:11.169445+00:00",
+    "reported_version_code": 10238,
+    "status": "online",
+    "stream_state": "not_streaming",
+    "platform_display_fps_tokens": [
+      "5.0",
+      "5.0",
+      "5.0",
+      "5.0"
+    ],
+    "private_activity_resumed": false,
+    "launch_repeated": false,
+    "limitation": "After the finite window, no private activity was resumed. This cannot retrospectively confirm when the timed-out launch became visible."
+  },
+  "android_native_control": {
+    "observed_at_utc": "2026-09-30T22:37:46.681869+00:00",
+    "device": "auto-ph-010",
+    "no_apk_stream_active": true,
+    "command_parameters": {
+      "time_limit_seconds": 8,
+      "width": 960,
+      "height": 540,
+      "bitrate_bps": 1500000
+    },
+    "initial_command_result": "execution_read_timeout after 5.203 s; not replayed",
+    "reconciliation": "finalized MP4 moov read, pidof screenrecord returned exit 1 after completion",
+    "container_metadata": {
+      "width": 960.0,
+      "height": 540.0,
+      "media_timescale": 90000,
+      "media_duration_seconds": 7.845044,
+      "video_samples": 47,
+      "mean_fps": 5.991
+    },
+    "video_payload_read": false,
+    "owned_file_removed": true,
+    "second_control": {
+      "observed_at_utc": "2026-09-30T22:42:54.042470+00:00",
+      "nominal_record_seconds": 3,
+      "reported_encoded_frames": 18,
+      "command_round_trip_seconds": 3.735,
+      "platform_display_report": "960x540 @60.00fps",
+      "draw_windows": [
+        {
+          "recording": false,
+          "frames": 195,
+          "observation_interval_seconds": 3.265
+        },
+        {
+          "recording": true,
+          "frames": 240,
+          "observation_interval_seconds": 4.016
+        }
+      ],
+      "draw_limitations": "cumulative process gfxinfo delta over a finite foreground canary; command/observation intervals include API round trip and are not exact render timestamps",
+      "owned_file_removed": true,
+      "video_payload_read": false
+    }
+  },
+  "operator_fps_followup": {
+    "reported_previous_host_limit": 5,
+    "reported_selected_host_limit": 10,
+    "readback_at_utc": "2026-09-30T23:00:55.690050+00:00",
+    "device": "auto-ph-025",
+    "reported_version_code": 10238,
+    "status": "online",
+    "platform_display_fps_tokens": [5, 5, 5, 5],
+    "restart_confirmed": false,
+    "limitation": "Operator confirmed the prior 5 FPS setting and selected 10; the later Android readback still reports 5 Hz. Application of the new host limit is not established."
+  },
+  "preview_restore": {
+    "source": "4c79ef61b70097268c5d251d9b090cdc5859c052",
+    "observedAt": "2026-09-30T22:35:34.8311415+00:00",
+    "state": "api_ready_ui_listener_owned",
+    "previousListenersAbsent": true,
+    "port": 3015,
+    "uiPort": 3020,
+    "apiRevision": "85c8014e3ad9e86ff3139cc679618698f79b9aaa",
+    "ready": true,
+    "browserVerified": false,
+    "existingProcessesTerminated": false
+  },
+  "limitations": [
+    "20–30 FPS and quality acceptance failed/not measured; no duplication used to inflate picture count.",
+    "Surface swap wait includes driver, conversion and codec consumer backpressure; it is not isolated codec CPU time.",
+    "Native screenrecord has no Sphere video backend, tunnel or browser in its recording path; this rules out transport as the sole cause of this local low-FPS control, not all remote latency problems.",
+    "Operator confirmed prior remote host limit 5 FPS and selected 10; later Android display readback still reports 5 Hz, restart/application not confirmed.",
+    "Remote 10238 motion launch timed out. The 81 packets/470417 bytes and GPU stages are real, but no motion FPS/input acceptance is assigned to that trial.",
+    "Not a simultaneous or repeated controlled statistical A/B; workloads are finite private motion trials on the same named device.",
+    "Old codec startup/timing lines preceding current 960x540 startup excluded from this evidence.",
+    "Local View touch event confirms delivery to the private canary, not native Y accuracy or physical end-to-end latency.",
+    "No new browser visual screenshot/draw/legibility validation: CUA URL policy block was not bypassed.",
+    "Preview process disappearance cause remains unknown; API and tunnels were available. Restored UI is pinned previously compiled source, not current Android-only head."
+  ]
+}

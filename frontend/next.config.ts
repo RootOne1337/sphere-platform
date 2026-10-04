@@ -2,6 +2,9 @@ import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   output: 'standalone',
+  // Корень артефакта должен совпадать с приложением, даже если над checkout
+  // лежит посторонний package-lock.json.
+  outputFileTracingRoot: process.cwd(),
   typedRoutes: false,
   async rewrites() {
     // Прокси только в dev-окружении — в production используется NEXT_PUBLIC_API_BASE_URL

@@ -21,6 +21,12 @@ class UpdateScriptRequest(BaseModel):
     description: str | None = Field(None, max_length=2000)
     dag: dict | None = None         # None = только метаданные, без новой версии
     changelog: str | None = Field(None, max_length=1000)
+    expected_current_version_id: uuid.UUID | None = None
+
+
+class RollbackScriptRequest(BaseModel):
+    """Opt-in optimistic precondition; legacy callers may omit the body."""
+    expected_current_version_id: uuid.UUID
 
 
 # ── Ответы ───────────────────────────────────────────────────────────────────

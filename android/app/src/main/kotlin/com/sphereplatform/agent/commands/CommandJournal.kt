@@ -1,0 +1,264 @@
+package com.sphereplatform.agent.commands
+
+import androidx.security.crypto.EncryptedSharedPreferences
+import kotlinx.serialization.json.*
+import timber.log.Timber
+import javax.inject.Inject
+import javax.inject.Singleton
+
+/** Bounded encrypted pending results plus indexed receipts retained for seven days after ACK.
+ * A recovered running receipt has an unknown outcome and must never be rerun.
+ * DAG results and OTA recovery receipts await an explicit server result_ack.
+ */
+@Singleton
+class CommandJournal @Inject constructor(
+    private val prefs: EncryptedSharedPreferences,
+    private val receipts: CommandReceiptStore,
+) {
+    companion object {
+        private const val KEY = "command_journal_v1"
+        private const val MAX_ENTRIES = 512
+        private const val MAX_BYTES = 1024 * 1024
+        private const val MAX_RESULT_BYTES = 64 * 1024
+    }
+
+    sealed class Claim {
+        object Started : Claim()
+        data class Existing(val response: JsonObject) : Claim()
+    }
+
+    private val active = mutableSetOf<String>()
+    // A corrupt journal fails closed. Silently resetting it would repeat actions.
+    private val records = prefs.getString(KEY, null)?.let {
+        Json.parseToJsonElement(it).jsonObject.toMutableMap()
+    } ?: mutableMapOf<String, JsonElement>()
+
+    @Synchronized fun claim(
+        id: String,
+        acknowledgeWhenQueued: Boolean = false,
+        otaTargetVersionCode: Int? = null,
+    ): Claim {
+        migrateOtaReceiptMarkers()
+        migrateAcknowledged()
+        receipts.prune(System.currentTimeMillis())
+        val existing = records[id]?.jsonObject
+        if (existing != null) {
+            existing["response"]?.let { return Claim.Existing(it.jsonObject) }
+            if (id in active) return Claim.Existing(response(id, "running"))
+            return Claim.Existing(complete(id, "failed", "execution_outcome_unknown_after_restart", null))
+        }
+        receipts.find(id)?.let { return Claim.Existing(response(id, it)) }
+        check(active.isEmpty()) { "device_execution_busy" }
+        val now = System.currentTimeMillis()
+        require(otaTargetVersionCode == null || (acknowledgeWhenQueued && otaTargetVersionCode > 0)) {
+            "invalid_ota_target_version_code"
+        }
+        val next = records.toMutableMap()
+        check(next.size < MAX_ENTRIES) { "command_journal_capacity_exhausted" }
+        next[id] = buildJsonObject {
+            put("created_at", now)
+            if (acknowledgeWhenQueued) put("acknowledge_when_queued", true)
+            otaTargetVersionCode?.let { put("ota_target_version_code", it) }
+        }
+        persist(next, reserveResult = true) // Confirm durable receipt before any device action.
+        active.add(id)
+        return Claim.Started
+    }
+
+    @Synchronized fun complete(id: String, status: String, error: String?, result: JsonObject?): JsonObject {
+        val entry = records[id]?.jsonObject ?: error("command_receipt_missing")
+        entry["response"]?.let { return it.jsonObject }
+        val isOtaRecoveryReceipt = entry["acknowledge_when_queued"]?.jsonPrimitive?.booleanOrNull == true
+        var payload = response(id, status, error, result, isOtaRecoveryReceipt)
+        if (payload.toString().toByteArray(Charsets.UTF_8).size > MAX_RESULT_BYTES) {
+            payload = response(id, status, error?.take(512), buildJsonObject {
+                put("success", status == "completed")
+                put("result_truncated", true)
+                if (result?.get("cancelled")?.jsonPrimitive?.booleanOrNull == true) put("cancelled", true)
+            }, isOtaRecoveryReceipt)
+        }
+        val next = records.toMutableMap()
+        next[id] = buildJsonObject {
+            put("created_at", entry.getValue("created_at"))
+            entry["acknowledge_when_queued"]?.let { put("acknowledge_when_queued", it) }
+            put("response", payload)
+            put("acknowledged", false)
+        }
+        persist(next)
+        active.remove(id)
+        return payload
+    }
+
+    /** Persist the fence before acknowledging cancel. Null means execution must
+     * still reach its cooperative stop boundary; a returned receipt is terminal.
+     * Never label a process-interrupted execution as definitely stopped.
+     */
+    @Synchronized fun requestCancellation(id: String): JsonObject? {
+        migrateAcknowledged()
+        val existing = records[id]?.jsonObject
+        existing?.get("response")?.let { return it.jsonObject }
+        receipts.find(id)?.let { return response(id, it) }
+        if (existing == null) {
+            check(records.size < MAX_ENTRIES) { "command_journal_capacity_exhausted" }
+            val next = records.toMutableMap()
+            next[id] = buildJsonObject { put("created_at", System.currentTimeMillis()) }
+            persist(next, reserveResult = true)
+            return complete(id, "failed", "cancelled_by_user", buildJsonObject {
+                put("success", false); put("cancelled", true); put("cancelled_before_start", true)
+            })
+        }
+        if (id !in active) return complete(id, "failed", "execution_outcome_unknown_after_restart", null)
+        val next = records.toMutableMap()
+        next[id] = JsonObject(existing + ("cancel_requested" to JsonPrimitive(true)))
+        persist(next, reserveResult = true)
+        return null
+    }
+
+    @Synchronized fun isCancellationRequested(id: String): Boolean =
+        records[id]?.jsonObject?.get("cancel_requested")?.jsonPrimitive?.booleanOrNull == true
+
+    /**
+     * A successful package replacement terminates this process before it can
+     * persist/queue OTA's terminal ACK. A new process can prove success from
+     * the monotonic versionCode recorded before installation started.
+     */
+    @Synchronized fun reconcileCompletedOtaInstalls(installedVersionCode: Int) {
+        if (installedVersionCode <= 0) return
+        records.toList().forEach { (id, value) ->
+            val entry = value.jsonObject
+            val targetVersionCode = entry["ota_target_version_code"]?.jsonPrimitive?.intOrNull
+            if (entry["response"] == null &&
+                entry["acknowledge_when_queued"]?.jsonPrimitive?.booleanOrNull == true &&
+                targetVersionCode != null && installedVersionCode >= targetVersionCode
+            ) {
+                complete(id, "completed", error = null, result = buildJsonObject {
+                    put("success", true)
+                    put("installed_version_code", installedVersionCode)
+                    put("target_version_code", targetVersionCode)
+                    put("recovered_after_process_restart", true)
+                })
+            }
+        }
+    }
+
+    @Synchronized fun pending(): List<JsonObject> {
+        migrateOtaReceiptMarkers()
+        migrateAcknowledged()
+        importLegacyResults()
+        records.keys.toList().filter { it !in active && records[it]?.jsonObject?.get("response") == null }
+            .forEach { complete(it, "failed", "execution_outcome_unknown_after_restart", null) }
+        return records.values.mapNotNull { value ->
+        val entry = value.jsonObject
+        if (entry["acknowledged"]?.jsonPrimitive?.booleanOrNull == true) null
+        else entry["response"]?.jsonObject
+        }
+    }
+
+    private fun importLegacyResults() {
+        val remaining = prefs.getStringSet("pending_dag_results", emptySet())?.toMutableSet() ?: return
+        for (raw in remaining.toList()) {
+            try {
+                val old = Json.parseToJsonElement(raw).jsonObject
+                val id = old.getValue("command_id").jsonPrimitive.content
+                val result = old.getValue("result").jsonObject
+                val next = records.toMutableMap()
+                if (id !in next && receipts.find(id) == null) {
+                    if (next.size >= MAX_ENTRIES) break
+                    val status = if (result["success"]?.jsonPrimitive?.booleanOrNull == true) "completed" else "failed"
+                    var payload = response(id, status, result = result)
+                    if (payload.toString().toByteArray(Charsets.UTF_8).size > MAX_RESULT_BYTES) {
+                        payload = response(id, status, result = buildJsonObject { put("result_truncated", true) })
+                    }
+                    next[id] = buildJsonObject {
+                        put("created_at", System.currentTimeMillis())
+                        put("response", payload)
+                        put("acknowledged", false)
+                    }
+                }
+                val migrated = remaining - raw
+                persist(next, legacyRemaining = migrated)
+                remaining.remove(raw)
+            } catch (e: Exception) {
+                // Historical code truncated raw JSON. Keep malformed records for
+                // diagnosis rather than silently treating an invalid result as success.
+                Timber.w(e, "Cannot migrate a legacy DAG result")
+            }
+        }
+    }
+
+    @Synchronized fun acknowledge(id: String) {
+        migrateAcknowledged()
+        val entry = records[id]?.jsonObject ?: return
+        val terminal = entry["response"]?.jsonObject ?: return
+        receipts.record(listOf(CommandReceiptStore.Receipt(
+            id, terminal.getValue("status").jsonPrimitive.content, System.currentTimeMillis(),
+        )))
+        val next = records.toMutableMap()
+        next.remove(id)
+        persist(next)
+    }
+
+    private fun migrateAcknowledged() {
+        val acknowledged = records.filterValues {
+            it.jsonObject["acknowledged"]?.jsonPrimitive?.booleanOrNull == true
+        }
+        if (acknowledged.isEmpty()) return
+        val now = System.currentTimeMillis()
+        receipts.record(acknowledged.map { (id, entry) ->
+            CommandReceiptStore.Receipt(id,
+                entry.jsonObject.getValue("response").jsonObject.getValue("status").jsonPrimitive.content, now)
+        })
+        // A crash/write failure between these commits leaves both copies, never neither.
+        persist(records.filterKeys { it !in acknowledged }.toMutableMap())
+    }
+
+    /** Older builds retired a recovery result when it entered the socket queue.
+     * If such a result remains after a failed queue attempt, mark it before replay
+     * so the backend can distinguish it from a DAG result with the same UUID.
+     */
+    private fun migrateOtaReceiptMarkers() {
+        val next = records.toMutableMap()
+        var changed = false
+        for ((id, raw) in records) {
+            val entry = raw.jsonObject
+            if (entry["acknowledge_when_queued"]?.jsonPrimitive?.booleanOrNull != true) continue
+            val response = entry["response"]?.jsonObject ?: continue
+            if (response["ota_recovery_receipt"]?.jsonPrimitive?.booleanOrNull == true) continue
+            next[id] = JsonObject(entry + ("response" to JsonObject(
+                response + ("ota_recovery_receipt" to JsonPrimitive(true)),
+            )))
+            changed = true
+        }
+        if (changed) persist(next)
+    }
+
+    private fun persist(next: MutableMap<String, JsonElement>, reserveResult: Boolean = false,
+                        legacyRemaining: Set<String>? = null) {
+        val encoded = JsonObject(next).toString()
+        // Reserve enough room to persist a terminal result for every active DAG.
+        check(encoded.toByteArray(Charsets.UTF_8).size <= MAX_BYTES - if (reserveResult) MAX_RESULT_BYTES else 0) {
+            "command_journal_capacity_exhausted"
+        }
+        val editor = prefs.edit().putString(KEY, encoded)
+        legacyRemaining?.let { editor.putStringSet("pending_dag_results", it) }
+        check(editor.commit()) { "command_journal_write_failed" }
+        records.clear()
+        records.putAll(next)
+    }
+
+    private fun response(
+        id: String,
+        status: String,
+        error: String? = null,
+        result: JsonObject? = null,
+        otaRecoveryReceipt: Boolean = false,
+    ) =
+        buildJsonObject {
+            put("type", "command_result")
+            put("command_id", id)
+            put("status", status)
+            if (otaRecoveryReceipt) put("ota_recovery_receipt", true)
+            error?.let { put("error", it) }
+            result?.let { put("result", it) }
+        }
+}

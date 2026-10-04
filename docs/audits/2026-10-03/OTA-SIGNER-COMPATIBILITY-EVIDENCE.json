@@ -1,0 +1,3340 @@
+{
+  "finding": "N08",
+  "related_finding": "F33",
+  "source_baseline": "b39676e3e9aa416e396ce2b3d51d21f9b37141c2",
+  "native_10241_to_10242": {
+    "startedAt": "2026-10-03T13:46:05.231032+00:00",
+    "targetVersionCode": 10242,
+    "artifactSha256": "f99d166f6b6e33ff29e4723d7d3751faa88d8651e5688404f037e7480e843f78",
+    "sequential": true,
+    "automaticRetry": false,
+    "normalChannelPromoted": false,
+    "hostAdbUsed": false,
+    "dataCleared": false,
+    "preflightDevices": 1,
+    "outcomes": [
+      {
+        "deviceId": "4815b950-e5cf-4686-9d46-42d0df8d41f7",
+        "name": "auto-ph-028",
+        "beforeVersionCode": 10241,
+        "intentRecordedAt": "2026-10-03T13:46:05.231032+00:00",
+        "status": "terminal_failed",
+        "attempts": 1,
+        "commandId": "84ef644a-0282-4e21-9d12-105a56b34cbc",
+        "deliveryHint": "wake_published",
+        "grantCreatedAt": 1791035165,
+        "lastReadback": {
+          "observedAt": "2026-10-03T13:46:05.322472+00:00",
+          "state": "active",
+          "versionCode": 10241,
+          "deviceStatus": "online"
+        },
+        "terminalReceipt": {
+          "command_id": "84ef644a-0282-4e21-9d12-105a56b34cbc",
+          "sha256": "f99d166f6b6e33ff29e4723d7d3751faa88d8651e5688404f037e7480e843f78",
+          "version_name": "1.2.42-dev",
+          "version_code": 10242,
+          "status": "failed",
+          "failure_code": "ota_signer_unavailable",
+          "installed_version_code": null,
+          "recovered_after_process_restart": false,
+          "recorded_at": "2026-10-03T13:46:07.612815+00:00"
+        },
+        "stoppedRemainingTargets": true
+      }
+    ],
+    "finishedAt": "2026-10-03T13:46:10.382250+00:00",
+    "completedDevices": 0,
+    "catalogTotal": 19,
+    "onlineVersions": {
+      "1.2.41-dev": 14
+    },
+    "releaseCatalogUnchanged": true
+  },
+  "before_tests": {
+    "observed_at": "2026-10-03T14:01:57.098346+00:00",
+    "phase": "before-repaired",
+    "exit_code": 1,
+    "tests": {
+      "Dev": {
+        "tests": 10,
+        "failures": 4,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    "source_head": "b39676e3e9aa416e396ce2b3d51d21f9b37141c2",
+    "verifier_sha256": "01f3f142235117ba9abcabc694828873d4f10dc4e14a9400e52e433dd67efefe",
+    "log_sha256": "3b7e609c9db2aa97456b33fc32a1fa160fc500dbabbfda50b08adb32284fb6c8",
+    "network_mode": "Gradle offline",
+    "device_commands": false,
+    "native_codec_acceptance": false
+  },
+  "after_tests": {
+    "observed_at": "2026-10-03T14:10:17.026864+00:00",
+    "phase": "after",
+    "exit_code": 0,
+    "tests": {
+      "Dev": {
+        "tests": 10,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    "source_head": "b39676e3e9aa416e396ce2b3d51d21f9b37141c2",
+    "verifier_sha256": "950914104b93c46afd3ad9ecc85d944a134814c68032d1592df582f88406ab9e",
+    "log_sha256": "b9bf261887c359473c0cb9e6dc998f2bc25b62489d7db2cd53742c533b742f53",
+    "network_mode": "Gradle offline",
+    "device_commands": false,
+    "native_codec_acceptance": false
+  },
+  "initial_compilation_attempt_excluded_from_test_proof": true,
+  "sdk": 28,
+  "candidate_signer_matches_installed_baseline": true,
+  "candidate_and_installed_signing_info_null_attribution": "not yet established by native instrumentation",
+  "local_format_probe": {
+    "archives": [
+      10241,
+      10242
+    ],
+    "accepted": true,
+    "cryptographic_verification": false
+  },
+  "fallback_policy_sha256": "c5a171d6be595a512087538c57737aeaf707843513559806cc9813351ec20d34",
+  "prepared_version_code": 10243,
+  "full_build_at_source_commit": "passed832cases_per_flavor_831passed_1skip",
+  "native_fixed_guard_acceptance": true,
+  "normal_channel_promoted": false,
+  "host_adb_used": false,
+  "source_fixed_count": 33,
+  "open_count": 8,
+  "fixed_source_commit": "aa37ab739e1d32c6c1c2b367c6caa4b21d417816",
+  "full_build_10243": {
+    "source_commit": "aa37ab739e1d32c6c1c2b367c6caa4b21d417816",
+    "file": "SphereAgent-pilot-candidate-1.2.43-dev-aa37ab7.apk",
+    "sha256": "83075d7bfe0b94de640ee4b4819ee2a8eac185baa551fd6df7c662ffed6aef0e",
+    "bytes": 8471199,
+    "package": "com.sphereplatform.agent.pilot.debug",
+    "version_name": "1.2.43-dev",
+    "version_code": 10243,
+    "certificate_sha256": "3ab40797d26e4f52f9e440afc6fe69f197caef71a5a27c63c86735bb1801871f",
+    "signer_matches_local_pilot_baseline": true,
+    "tests": {
+      "dev": {
+        "tests": 832,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 1
+      },
+      "enterprise": {
+        "tests": 832,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 1
+      }
+    },
+    "signed_discovery_manifest_version": 27,
+    "baked_management_urls": [],
+    "gpu_bridge_enabled": false,
+    "planar_input_enabled": true,
+    "debug_video_probe": true,
+    "installed": false,
+    "published_to_ota": false,
+    "built_at": "2026-10-03T14:21:42.790457+00:00"
+  },
+  "root_recovery_10243": {
+    "startedAt": "2026-10-03T14:23:15.150391+00:00",
+    "deviceId": "4815b950-e5cf-4686-9d46-42d0df8d41f7",
+    "name": "auto-ph-028",
+    "beforeVersionCode": 10241,
+    "targetVersionCode": 10243,
+    "artifactSha256": "83075d7bfe0b94de640ee4b4819ee2a8eac185baa551fd6df7c662ffed6aef0e",
+    "packageAndSignerVerifiedByExactBaselineHash": true,
+    "normalOtaAcceptance": false,
+    "hostAdbUsed": false,
+    "dataCleared": false,
+    "automaticInstallRetry": false,
+    "status": "recovery_install_and_exact_hash_and_fresh_heartbeat",
+    "downloadReadbacks": [
+      {
+        "observedAt": "2026-10-03T14:23:18.917617+00:00",
+        "attempt": 1,
+        "downloadReportedError": false,
+        "exactHashMatches": true
+      }
+    ],
+    "temporaryDeviceCredentialExpiresAt": "2026-10-03T14:25:16.219474+00:00",
+    "temporaryDeviceCredentialRevoked": true,
+    "installIntentRecordedAt": "2026-10-03T14:23:19.630576+00:00",
+    "installerAttempts": 1,
+    "installerReplyExceptionType": "HTTPError",
+    "lastReadback": {
+      "observedAt": "2026-10-03T14:23:49.670847+00:00",
+      "status": "online",
+      "versionCode": 10243,
+      "lastHeartbeat": "2026-10-03T14:23:23.697115Z"
+    },
+    "postInstallHeartbeat": "2026-10-03T14:23:23.697115Z",
+    "acceptedAt": "2026-10-03T14:23:50.294686+00:00",
+    "ownedTemporaryFileRemoved": true,
+    "finishedAt": "2026-10-03T14:23:50.558213+00:00"
+  },
+  "root_recovery_raw_intent_sha256": "49ffa258a10c5bbcfed32708363800ae159d90bcb2f5e0f339ce3dbbe5484afc",
+  "finite_after_recovery": {
+    "phase": "after-canary",
+    "started_at": "2026-10-03T14:24:45.608481+00:00",
+    "device_commands": false,
+    "samples": [
+      {
+        "observed_at": "2026-10-03T14:24:45.633597+00:00",
+        "catalog_total": 19,
+        "online": [
+          {
+            "id": "1dd7e59c-b68f-406a-93cd-5f4e34fdea90",
+            "name": "auto-ph-017",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:41.121520Z",
+            "connected_since": "2026-10-03T06:06:15.061533Z",
+            "heartbeat_age_seconds": 4.512077
+          },
+          {
+            "id": "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93",
+            "name": "auto-ph-016",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:16.640026Z",
+            "connected_since": "2026-10-03T06:05:20.543437Z",
+            "heartbeat_age_seconds": 28.993571
+          },
+          {
+            "id": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+            "name": "auto-ph-011",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:34.402884Z",
+            "connected_since": "2026-10-03T06:04:38.356504Z",
+            "heartbeat_age_seconds": 11.230713
+          },
+          {
+            "id": "4815b950-e5cf-4686-9d46-42d0df8d41f7",
+            "name": "auto-ph-028",
+            "version_code": 10243,
+            "last_heartbeat": "2026-10-03T14:24:23.672225Z",
+            "connected_since": "2026-10-03T14:23:23.697115Z",
+            "heartbeat_age_seconds": 21.961372
+          },
+          {
+            "id": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+            "name": "auto-ph-010",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:33.863256Z",
+            "connected_since": "2026-10-03T06:04:37.784996Z",
+            "heartbeat_age_seconds": 11.770341
+          },
+          {
+            "id": "673d5774-24b1-4b57-8dfb-90c46f627ce3",
+            "name": "auto-ph-014",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:18.619360Z",
+            "connected_since": "2026-10-03T06:05:22.509267Z",
+            "heartbeat_age_seconds": 27.014237
+          },
+          {
+            "id": "6d830af5-b7cc-44b4-b7f5-5e0275aceb3b",
+            "name": "auto-ph-013",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:17.710078Z",
+            "connected_since": "2026-10-03T06:06:21.648851Z",
+            "heartbeat_age_seconds": 27.923519
+          },
+          {
+            "id": "75c29a32-2867-4b60-947c-003e712e538f",
+            "name": "auto-ph-020",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:17.683204Z",
+            "connected_since": "2026-10-03T06:05:21.592086Z",
+            "heartbeat_age_seconds": 27.950393
+          },
+          {
+            "id": "8c187cfa-e5ea-4939-a137-07619437953d",
+            "name": "auto-ph-012",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:27.528605Z",
+            "connected_since": "2026-10-03T06:07:01.311487Z",
+            "heartbeat_age_seconds": 18.104992
+          },
+          {
+            "id": "930a6505-b7ec-4eee-93fe-9aaa66517871",
+            "name": "auto-ph-015",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:40.919120Z",
+            "connected_since": "2026-10-03T06:05:14.917495Z",
+            "heartbeat_age_seconds": 4.714477
+          },
+          {
+            "id": "b410464a-5f26-4803-a756-7840cc17b128",
+            "name": "auto-ph-025",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:43.192447Z",
+            "connected_since": "2026-10-03T06:05:17.064361Z",
+            "heartbeat_age_seconds": 2.44115
+          },
+          {
+            "id": "bafef86f-3ab4-469b-ae0c-cf2771b55813",
+            "name": "auto-ph-018",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:31.000371Z",
+            "connected_since": "2026-10-03T06:06:34.914779Z",
+            "heartbeat_age_seconds": 14.633226
+          },
+          {
+            "id": "c37e687a-ee83-466d-846f-3f4b36047fa7",
+            "name": "auto-ph-019",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:20.994135Z",
+            "connected_since": "2026-10-03T06:06:24.927717Z",
+            "heartbeat_age_seconds": 24.639462
+          },
+          {
+            "id": "d088c147-7ada-4b29-9e79-f991b20fcf91",
+            "name": "auto-ph-022",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:27.528324Z",
+            "connected_since": "2026-10-03T06:05:31.416115Z",
+            "heartbeat_age_seconds": 18.105273
+          }
+        ]
+      },
+      {
+        "observed_at": "2026-10-03T14:24:55.651413+00:00",
+        "catalog_total": 19,
+        "online": [
+          {
+            "id": "1dd7e59c-b68f-406a-93cd-5f4e34fdea90",
+            "name": "auto-ph-017",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:41.121520Z",
+            "connected_since": "2026-10-03T06:06:15.061533Z",
+            "heartbeat_age_seconds": 14.529893
+          },
+          {
+            "id": "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93",
+            "name": "auto-ph-016",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:46.638815Z",
+            "connected_since": "2026-10-03T06:05:20.543437Z",
+            "heartbeat_age_seconds": 9.012598
+          },
+          {
+            "id": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+            "name": "auto-ph-011",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:34.402884Z",
+            "connected_since": "2026-10-03T06:04:38.356504Z",
+            "heartbeat_age_seconds": 21.248529
+          },
+          {
+            "id": "4815b950-e5cf-4686-9d46-42d0df8d41f7",
+            "name": "auto-ph-028",
+            "version_code": 10243,
+            "last_heartbeat": "2026-10-03T14:24:53.671979Z",
+            "connected_since": "2026-10-03T14:23:23.697115Z",
+            "heartbeat_age_seconds": 1.979434
+          },
+          {
+            "id": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+            "name": "auto-ph-010",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:33.863256Z",
+            "connected_since": "2026-10-03T06:04:37.784996Z",
+            "heartbeat_age_seconds": 21.788157
+          },
+          {
+            "id": "673d5774-24b1-4b57-8dfb-90c46f627ce3",
+            "name": "auto-ph-014",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:48.617220Z",
+            "connected_since": "2026-10-03T06:05:22.509267Z",
+            "heartbeat_age_seconds": 7.034193
+          },
+          {
+            "id": "6d830af5-b7cc-44b4-b7f5-5e0275aceb3b",
+            "name": "auto-ph-013",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:47.827383Z",
+            "connected_since": "2026-10-03T06:06:21.648851Z",
+            "heartbeat_age_seconds": 7.82403
+          },
+          {
+            "id": "75c29a32-2867-4b60-947c-003e712e538f",
+            "name": "auto-ph-020",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:47.827501Z",
+            "connected_since": "2026-10-03T06:05:21.592086Z",
+            "heartbeat_age_seconds": 7.823912
+          },
+          {
+            "id": "8c187cfa-e5ea-4939-a137-07619437953d",
+            "name": "auto-ph-012",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:27.528605Z",
+            "connected_since": "2026-10-03T06:07:01.311487Z",
+            "heartbeat_age_seconds": 28.122808
+          },
+          {
+            "id": "930a6505-b7ec-4eee-93fe-9aaa66517871",
+            "name": "auto-ph-015",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:40.919120Z",
+            "connected_since": "2026-10-03T06:05:14.917495Z",
+            "heartbeat_age_seconds": 14.732293
+          },
+          {
+            "id": "b410464a-5f26-4803-a756-7840cc17b128",
+            "name": "auto-ph-025",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:43.192447Z",
+            "connected_since": "2026-10-03T06:05:17.064361Z",
+            "heartbeat_age_seconds": 12.458966
+          },
+          {
+            "id": "bafef86f-3ab4-469b-ae0c-cf2771b55813",
+            "name": "auto-ph-018",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:31.000371Z",
+            "connected_since": "2026-10-03T06:06:34.914779Z",
+            "heartbeat_age_seconds": 24.651042
+          },
+          {
+            "id": "c37e687a-ee83-466d-846f-3f4b36047fa7",
+            "name": "auto-ph-019",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:51.111662Z",
+            "connected_since": "2026-10-03T06:06:24.927717Z",
+            "heartbeat_age_seconds": 4.539751
+          },
+          {
+            "id": "d088c147-7ada-4b29-9e79-f991b20fcf91",
+            "name": "auto-ph-022",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:27.528324Z",
+            "connected_since": "2026-10-03T06:05:31.416115Z",
+            "heartbeat_age_seconds": 28.123089
+          }
+        ]
+      },
+      {
+        "observed_at": "2026-10-03T14:25:05.680267+00:00",
+        "catalog_total": 19,
+        "online": [
+          {
+            "id": "1dd7e59c-b68f-406a-93cd-5f4e34fdea90",
+            "name": "auto-ph-017",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:41.121520Z",
+            "connected_since": "2026-10-03T06:06:15.061533Z",
+            "heartbeat_age_seconds": 24.558747
+          },
+          {
+            "id": "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93",
+            "name": "auto-ph-016",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:46.638815Z",
+            "connected_since": "2026-10-03T06:05:20.543437Z",
+            "heartbeat_age_seconds": 19.041452
+          },
+          {
+            "id": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+            "name": "auto-ph-011",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:25:04.403049Z",
+            "connected_since": "2026-10-03T06:04:38.356504Z",
+            "heartbeat_age_seconds": 1.277218
+          },
+          {
+            "id": "4815b950-e5cf-4686-9d46-42d0df8d41f7",
+            "name": "auto-ph-028",
+            "version_code": 10243,
+            "last_heartbeat": "2026-10-03T14:24:53.671979Z",
+            "connected_since": "2026-10-03T14:23:23.697115Z",
+            "heartbeat_age_seconds": 12.008288
+          },
+          {
+            "id": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+            "name": "auto-ph-010",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:25:03.870174Z",
+            "connected_since": "2026-10-03T06:04:37.784996Z",
+            "heartbeat_age_seconds": 1.810093
+          },
+          {
+            "id": "673d5774-24b1-4b57-8dfb-90c46f627ce3",
+            "name": "auto-ph-014",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:48.617220Z",
+            "connected_since": "2026-10-03T06:05:22.509267Z",
+            "heartbeat_age_seconds": 17.063047
+          },
+          {
+            "id": "6d830af5-b7cc-44b4-b7f5-5e0275aceb3b",
+            "name": "auto-ph-013",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:47.827383Z",
+            "connected_since": "2026-10-03T06:06:21.648851Z",
+            "heartbeat_age_seconds": 17.852884
+          },
+          {
+            "id": "75c29a32-2867-4b60-947c-003e712e538f",
+            "name": "auto-ph-020",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:47.827501Z",
+            "connected_since": "2026-10-03T06:05:21.592086Z",
+            "heartbeat_age_seconds": 17.852766
+          },
+          {
+            "id": "8c187cfa-e5ea-4939-a137-07619437953d",
+            "name": "auto-ph-012",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:57.407313Z",
+            "connected_since": "2026-10-03T06:07:01.311487Z",
+            "heartbeat_age_seconds": 8.272954
+          },
+          {
+            "id": "930a6505-b7ec-4eee-93fe-9aaa66517871",
+            "name": "auto-ph-015",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:40.919120Z",
+            "connected_since": "2026-10-03T06:05:14.917495Z",
+            "heartbeat_age_seconds": 24.761147
+          },
+          {
+            "id": "b410464a-5f26-4803-a756-7840cc17b128",
+            "name": "auto-ph-025",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:43.192447Z",
+            "connected_since": "2026-10-03T06:05:17.064361Z",
+            "heartbeat_age_seconds": 22.48782
+          },
+          {
+            "id": "bafef86f-3ab4-469b-ae0c-cf2771b55813",
+            "name": "auto-ph-018",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:25:01.003514Z",
+            "connected_since": "2026-10-03T06:06:34.914779Z",
+            "heartbeat_age_seconds": 4.676753
+          },
+          {
+            "id": "c37e687a-ee83-466d-846f-3f4b36047fa7",
+            "name": "auto-ph-019",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:51.111662Z",
+            "connected_since": "2026-10-03T06:06:24.927717Z",
+            "heartbeat_age_seconds": 14.568605
+          },
+          {
+            "id": "d088c147-7ada-4b29-9e79-f991b20fcf91",
+            "name": "auto-ph-022",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:57.488373Z",
+            "connected_since": "2026-10-03T06:05:31.416115Z",
+            "heartbeat_age_seconds": 8.191894
+          }
+        ]
+      },
+      {
+        "observed_at": "2026-10-03T14:25:15.706153+00:00",
+        "catalog_total": 19,
+        "online": [
+          {
+            "id": "1dd7e59c-b68f-406a-93cd-5f4e34fdea90",
+            "name": "auto-ph-017",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:25:11.117945Z",
+            "connected_since": "2026-10-03T06:06:15.061533Z",
+            "heartbeat_age_seconds": 4.588208
+          },
+          {
+            "id": "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93",
+            "name": "auto-ph-016",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:46.638815Z",
+            "connected_since": "2026-10-03T06:05:20.543437Z",
+            "heartbeat_age_seconds": 29.067338
+          },
+          {
+            "id": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+            "name": "auto-ph-011",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:25:04.403049Z",
+            "connected_since": "2026-10-03T06:04:38.356504Z",
+            "heartbeat_age_seconds": 11.303104
+          },
+          {
+            "id": "4815b950-e5cf-4686-9d46-42d0df8d41f7",
+            "name": "auto-ph-028",
+            "version_code": 10243,
+            "last_heartbeat": "2026-10-03T14:24:53.671979Z",
+            "connected_since": "2026-10-03T14:23:23.697115Z",
+            "heartbeat_age_seconds": 22.034174
+          },
+          {
+            "id": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+            "name": "auto-ph-010",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:25:03.870174Z",
+            "connected_since": "2026-10-03T06:04:37.784996Z",
+            "heartbeat_age_seconds": 11.835979
+          },
+          {
+            "id": "673d5774-24b1-4b57-8dfb-90c46f627ce3",
+            "name": "auto-ph-014",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:48.617220Z",
+            "connected_since": "2026-10-03T06:05:22.509267Z",
+            "heartbeat_age_seconds": 27.088933
+          },
+          {
+            "id": "6d830af5-b7cc-44b4-b7f5-5e0275aceb3b",
+            "name": "auto-ph-013",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:47.827383Z",
+            "connected_since": "2026-10-03T06:06:21.648851Z",
+            "heartbeat_age_seconds": 27.87877
+          },
+          {
+            "id": "75c29a32-2867-4b60-947c-003e712e538f",
+            "name": "auto-ph-020",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:47.827501Z",
+            "connected_since": "2026-10-03T06:05:21.592086Z",
+            "heartbeat_age_seconds": 27.878652
+          },
+          {
+            "id": "8c187cfa-e5ea-4939-a137-07619437953d",
+            "name": "auto-ph-012",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:57.407313Z",
+            "connected_since": "2026-10-03T06:07:01.311487Z",
+            "heartbeat_age_seconds": 18.29884
+          },
+          {
+            "id": "930a6505-b7ec-4eee-93fe-9aaa66517871",
+            "name": "auto-ph-015",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:25:10.917440Z",
+            "connected_since": "2026-10-03T06:05:14.917495Z",
+            "heartbeat_age_seconds": 4.788713
+          },
+          {
+            "id": "b410464a-5f26-4803-a756-7840cc17b128",
+            "name": "auto-ph-025",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:25:13.191593Z",
+            "connected_since": "2026-10-03T06:05:17.064361Z",
+            "heartbeat_age_seconds": 2.51456
+          },
+          {
+            "id": "bafef86f-3ab4-469b-ae0c-cf2771b55813",
+            "name": "auto-ph-018",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:25:01.003514Z",
+            "connected_since": "2026-10-03T06:06:34.914779Z",
+            "heartbeat_age_seconds": 14.702639
+          },
+          {
+            "id": "c37e687a-ee83-466d-846f-3f4b36047fa7",
+            "name": "auto-ph-019",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:51.111662Z",
+            "connected_since": "2026-10-03T06:06:24.927717Z",
+            "heartbeat_age_seconds": 24.594491
+          },
+          {
+            "id": "d088c147-7ada-4b29-9e79-f991b20fcf91",
+            "name": "auto-ph-022",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:57.488373Z",
+            "connected_since": "2026-10-03T06:05:31.416115Z",
+            "heartbeat_age_seconds": 18.21778
+          }
+        ]
+      },
+      {
+        "observed_at": "2026-10-03T14:25:25.730433+00:00",
+        "catalog_total": 19,
+        "online": [
+          {
+            "id": "1dd7e59c-b68f-406a-93cd-5f4e34fdea90",
+            "name": "auto-ph-017",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:25:11.117945Z",
+            "connected_since": "2026-10-03T06:06:15.061533Z",
+            "heartbeat_age_seconds": 14.612488
+          },
+          {
+            "id": "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93",
+            "name": "auto-ph-016",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:25:16.635201Z",
+            "connected_since": "2026-10-03T06:05:20.543437Z",
+            "heartbeat_age_seconds": 9.095232
+          },
+          {
+            "id": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+            "name": "auto-ph-011",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:25:04.403049Z",
+            "connected_since": "2026-10-03T06:04:38.356504Z",
+            "heartbeat_age_seconds": 21.327384
+          },
+          {
+            "id": "4815b950-e5cf-4686-9d46-42d0df8d41f7",
+            "name": "auto-ph-028",
+            "version_code": 10243,
+            "last_heartbeat": "2026-10-03T14:25:23.669962Z",
+            "connected_since": "2026-10-03T14:23:23.697115Z",
+            "heartbeat_age_seconds": 2.060471
+          },
+          {
+            "id": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+            "name": "auto-ph-010",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:25:03.870174Z",
+            "connected_since": "2026-10-03T06:04:37.784996Z",
+            "heartbeat_age_seconds": 21.860259
+          },
+          {
+            "id": "673d5774-24b1-4b57-8dfb-90c46f627ce3",
+            "name": "auto-ph-014",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:25:18.615519Z",
+            "connected_since": "2026-10-03T06:05:22.509267Z",
+            "heartbeat_age_seconds": 7.114914
+          },
+          {
+            "id": "6d830af5-b7cc-44b4-b7f5-5e0275aceb3b",
+            "name": "auto-ph-013",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:25:17.705791Z",
+            "connected_since": "2026-10-03T06:06:21.648851Z",
+            "heartbeat_age_seconds": 8.024642
+          },
+          {
+            "id": "75c29a32-2867-4b60-947c-003e712e538f",
+            "name": "auto-ph-020",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:25:17.669724Z",
+            "connected_since": "2026-10-03T06:05:21.592086Z",
+            "heartbeat_age_seconds": 8.060709
+          },
+          {
+            "id": "8c187cfa-e5ea-4939-a137-07619437953d",
+            "name": "auto-ph-012",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:57.407313Z",
+            "connected_since": "2026-10-03T06:07:01.311487Z",
+            "heartbeat_age_seconds": 28.32312
+          },
+          {
+            "id": "930a6505-b7ec-4eee-93fe-9aaa66517871",
+            "name": "auto-ph-015",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:25:10.917440Z",
+            "connected_since": "2026-10-03T06:05:14.917495Z",
+            "heartbeat_age_seconds": 14.812993
+          },
+          {
+            "id": "b410464a-5f26-4803-a756-7840cc17b128",
+            "name": "auto-ph-025",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:25:13.191593Z",
+            "connected_since": "2026-10-03T06:05:17.064361Z",
+            "heartbeat_age_seconds": 12.53884
+          },
+          {
+            "id": "bafef86f-3ab4-469b-ae0c-cf2771b55813",
+            "name": "auto-ph-018",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:25:01.003514Z",
+            "connected_since": "2026-10-03T06:06:34.914779Z",
+            "heartbeat_age_seconds": 24.726919
+          },
+          {
+            "id": "c37e687a-ee83-466d-846f-3f4b36047fa7",
+            "name": "auto-ph-019",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:25:20.991691Z",
+            "connected_since": "2026-10-03T06:06:24.927717Z",
+            "heartbeat_age_seconds": 4.738742
+          },
+          {
+            "id": "d088c147-7ada-4b29-9e79-f991b20fcf91",
+            "name": "auto-ph-022",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:24:57.488373Z",
+            "connected_since": "2026-10-03T06:05:31.416115Z",
+            "heartbeat_age_seconds": 28.24206
+          }
+        ]
+      },
+      {
+        "observed_at": "2026-10-03T14:25:35.755574+00:00",
+        "catalog_total": 19,
+        "online": [
+          {
+            "id": "1dd7e59c-b68f-406a-93cd-5f4e34fdea90",
+            "name": "auto-ph-017",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:25:11.117945Z",
+            "connected_since": "2026-10-03T06:06:15.061533Z",
+            "heartbeat_age_seconds": 24.637629
+          },
+          {
+            "id": "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93",
+            "name": "auto-ph-016",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:25:16.635201Z",
+            "connected_since": "2026-10-03T06:05:20.543437Z",
+            "heartbeat_age_seconds": 19.120373
+          },
+          {
+            "id": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+            "name": "auto-ph-011",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:25:34.398036Z",
+            "connected_since": "2026-10-03T06:04:38.356504Z",
+            "heartbeat_age_seconds": 1.357538
+          },
+          {
+            "id": "4815b950-e5cf-4686-9d46-42d0df8d41f7",
+            "name": "auto-ph-028",
+            "version_code": 10243,
+            "last_heartbeat": "2026-10-03T14:25:23.669962Z",
+            "connected_since": "2026-10-03T14:23:23.697115Z",
+            "heartbeat_age_seconds": 12.085612
+          },
+          {
+            "id": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+            "name": "auto-ph-010",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:25:33.869738Z",
+            "connected_since": "2026-10-03T06:04:37.784996Z",
+            "heartbeat_age_seconds": 1.885836
+          },
+          {
+            "id": "673d5774-24b1-4b57-8dfb-90c46f627ce3",
+            "name": "auto-ph-014",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:25:18.615519Z",
+            "connected_since": "2026-10-03T06:05:22.509267Z",
+            "heartbeat_age_seconds": 17.140055
+          },
+          {
+            "id": "6d830af5-b7cc-44b4-b7f5-5e0275aceb3b",
+            "name": "auto-ph-013",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:25:17.705791Z",
+            "connected_since": "2026-10-03T06:06:21.648851Z",
+            "heartbeat_age_seconds": 18.049783
+          },
+          {
+            "id": "75c29a32-2867-4b60-947c-003e712e538f",
+            "name": "auto-ph-020",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:25:17.669724Z",
+            "connected_since": "2026-10-03T06:05:21.592086Z",
+            "heartbeat_age_seconds": 18.08585
+          },
+          {
+            "id": "8c187cfa-e5ea-4939-a137-07619437953d",
+            "name": "auto-ph-012",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:25:27.407218Z",
+            "connected_since": "2026-10-03T06:07:01.311487Z",
+            "heartbeat_age_seconds": 8.348356
+          },
+          {
+            "id": "930a6505-b7ec-4eee-93fe-9aaa66517871",
+            "name": "auto-ph-015",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:25:10.917440Z",
+            "connected_since": "2026-10-03T06:05:14.917495Z",
+            "heartbeat_age_seconds": 24.838134
+          },
+          {
+            "id": "b410464a-5f26-4803-a756-7840cc17b128",
+            "name": "auto-ph-025",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:25:13.191593Z",
+            "connected_since": "2026-10-03T06:05:17.064361Z",
+            "heartbeat_age_seconds": 22.563981
+          },
+          {
+            "id": "bafef86f-3ab4-469b-ae0c-cf2771b55813",
+            "name": "auto-ph-018",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:25:30.999090Z",
+            "connected_since": "2026-10-03T06:06:34.914779Z",
+            "heartbeat_age_seconds": 4.756484
+          },
+          {
+            "id": "c37e687a-ee83-466d-846f-3f4b36047fa7",
+            "name": "auto-ph-019",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:25:20.991691Z",
+            "connected_since": "2026-10-03T06:06:24.927717Z",
+            "heartbeat_age_seconds": 14.763883
+          },
+          {
+            "id": "d088c147-7ada-4b29-9e79-f991b20fcf91",
+            "name": "auto-ph-022",
+            "version_code": 10241,
+            "last_heartbeat": "2026-10-03T14:25:27.486681Z",
+            "connected_since": "2026-10-03T06:05:31.416115Z",
+            "heartbeat_age_seconds": 8.268893
+          }
+        ]
+      }
+    ],
+    "containers": [
+      {
+        "name": "sphere-pilot-20260911-backend-1",
+        "id": "bbf609a90ff89db865ffd5b238864d311a8a89d432ed5e409eeccb361663a694",
+        "image": "sha256:9e65ff07fe884391ccf4d67ebc8f83cbcf6d2aecb59f75987e9caf136c927d8a",
+        "started_at": "2026-10-03T03:01:16.261396201Z"
+      },
+      {
+        "name": "sphere-review-20261002-review-gateway-1",
+        "id": "83fa3baddd2d4fa5c8d5ccad3879b6dd3ba0b1f02353375d8844c442b92d2d2f",
+        "image": "sha256:1d13701a5f9f3fb01aaa88cef2344d65b6b5bf6b7d9fa4cf0dca557a8d7702ba",
+        "started_at": "2026-10-03T03:00:20.5550634Z"
+      },
+      {
+        "name": "sphere-review-20261002-review-ui-1",
+        "id": "b842a01b6187ebfe800a797654c3ec5672146206035c1d274e8f6169269b79ed",
+        "image": "sha256:264aaa341c32e37153e4c19eff0c3db418cf3b066c834a76d4794b79a704c6fa",
+        "started_at": "2026-10-03T03:00:14.649785176Z"
+      },
+      {
+        "name": "sphere-observability-20260930-grafana-1",
+        "id": "198ba01bcc9626208cc501fbb33f714ddd763c2e3fefeb3ff02ec180dbd24484",
+        "image": "sha256:b28bae15e219c998fb0e0424ed724930cc61b1f61fb404d47c862f9a23f9e572",
+        "started_at": "2026-09-30T14:04:47.940246857Z"
+      },
+      {
+        "name": "sphere-observability-20260930-prometheus-1",
+        "id": "3a8c35855670495381ee011ad9e0dc3d6dbc60f5c00c175e02eecbde55c3499d",
+        "image": "sha256:efd719c99d83b060d9daefdcf00360461adf279f45ef5391f8d111892118753e",
+        "started_at": "2026-09-30T03:28:16.688738513Z"
+      },
+      {
+        "name": "sphere-tuna-canary",
+        "id": "207cb00d1dbe327aebbaa7d4d60108c074e14e9a6aaf99df9ad502fa151cc5f0",
+        "image": "sha256:bb214af134a42d8c6266ae3d9bf0e67b2c60db0dcbfa111ae8ef68b9ce956449",
+        "started_at": "2026-09-27T20:49:07.63456204Z"
+      },
+      {
+        "name": "sphere-pilot-20260911-frontend-1",
+        "id": "424083add045e31d5618bb5c9ab3d4457ab2f36918532f4d33e4ff68eeae3527",
+        "image": "sha256:1d452dfa6ae83c2fb501e4891c15b819184b6160ab5d88804362b242645b709f",
+        "started_at": "2026-09-27T18:41:20.481313948Z"
+      },
+      {
+        "name": "sphere-pilot-20260911-cloudflare-quick-1",
+        "id": "97f31cf1c7738dbf96387224f7452ad227e663c0c5d158f61c2f4f8e9f3887cf",
+        "image": "sha256:b269e8abd07a5bf6f3f4be65d5050b2174eca89c56a0241a8ff32a16aec454e4",
+        "started_at": "2026-09-28T11:13:37.802948889Z"
+      },
+      {
+        "name": "sphere-pilot-20260911-public-gateway-1",
+        "id": "ec2a4b7110ca60a0a89d41df105e3dee656666fff6090098d3756579ac972a2e",
+        "image": "sha256:1d13701a5f9f3fb01aaa88cef2344d65b6b5bf6b7d9fa4cf0dca557a8d7702ba",
+        "started_at": "2026-09-21T19:06:46.139788532Z"
+      },
+      {
+        "name": "sphere-pilot-20260911-nginx-1",
+        "id": "879a728d94aacf998fa4e2a8d1abaff46d04ad003c5fbf322f4f058d90b15816",
+        "image": "sha256:1d13701a5f9f3fb01aaa88cef2344d65b6b5bf6b7d9fa4cf0dca557a8d7702ba",
+        "started_at": "2026-09-21T19:06:46.141880185Z"
+      },
+      {
+        "name": "sphere-pilot-20260911-n8n-1",
+        "id": "0bf7b0be08bb44223480628e492dca644ee3a7300b3c44ccb07b8aa66f5984a6",
+        "image": "sha256:e01ebe6ac2014a4dcffe439e14211df1c15e6312f93ca8a985a128ab7feb2f08",
+        "started_at": "2026-09-21T19:06:46.145972335Z"
+      },
+      {
+        "name": "sphere-pilot-20260911-minio-1",
+        "id": "6ed531e885818664cd32fe806c2993fd7a9c0b8d456969bfd1cbee517f05904d",
+        "image": "sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e",
+        "started_at": "2026-09-21T19:06:46.148254072Z"
+      },
+      {
+        "name": "sphere-pilot-20260911-postgres-1",
+        "id": "c2b5b99bcf18bda3332079ecc2e4bb4bd6f5622e8c1cb9d3233ad092d2819048",
+        "image": "sha256:5fe8ca7fc662071188c30271cb870d1ce9a6ec4578c934b064697ae77a9241e1",
+        "started_at": "2026-09-21T19:06:46.152449884Z"
+      },
+      {
+        "name": "sphere-pilot-20260911-redis-1",
+        "id": "7d8866e37758ae3fc71225199852726f6f366e8b09af41a3c5d060fcb9b380ec",
+        "image": "sha256:65748f2ea686cb0e37a008cbe7024324db1d84abf57e917e1c2ec92b5e50f602",
+        "started_at": "2026-09-21T19:06:46.115238685Z"
+      },
+      {
+        "name": "sphere-audit-20260905-redis",
+        "id": "88d26791554bbabf4cc990ebfabbf8887297e5c0dae910b33af10484f0e10a1f",
+        "image": "sha256:65748f2ea686cb0e37a008cbe7024324db1d84abf57e917e1c2ec92b5e50f602",
+        "started_at": "2026-09-21T19:53:31.71289706Z"
+      },
+      {
+        "name": "sphere-audit-20260905-postgres",
+        "id": "26a49b0298fc4feb6ad879ed6ef15ac41daa25ad972f06a13e1064d39625e022",
+        "image": "sha256:5fe8ca7fc662071188c30271cb870d1ce9a6ec4578c934b064697ae77a9241e1",
+        "started_at": "2026-09-21T19:53:31.422753888Z"
+      }
+    ],
+    "previous_containers_preserved": true,
+    "target_stream_diagnostics": {
+      "device_id": "4815b950-e5cf-4686-9d46-42d0df8d41f7",
+      "state": "not_streaming",
+      "agent_status": "online",
+      "last_heartbeat": "2026-10-03T14:25:23.669962Z",
+      "age_seconds": null,
+      "diagnostics": null
+    },
+    "normal_android_dev_latest": 10209,
+    "finished_at": "2026-10-03T14:25:35.796574+00:00"
+  },
+  "ordinary_native_ota_acceptance_after_fix": true,
+  "prepared_follow_up_version_code": 10244,
+  "full_build_10244": {
+    "source_commit": "ad34c12509ecf69236d4a3ccc5e1fa9b9c4e28bb",
+    "file": "SphereAgent-pilot-candidate-1.2.44-dev-ad34c12.apk",
+    "sha256": "9659468fa74f43a430cd04d2482ec38a6b342bc2aeb46e33db2c61fcfb87b1a9",
+    "bytes": 8471203,
+    "package": "com.sphereplatform.agent.pilot.debug",
+    "version_name": "1.2.44-dev",
+    "version_code": 10244,
+    "certificate_sha256": "3ab40797d26e4f52f9e440afc6fe69f197caef71a5a27c63c86735bb1801871f",
+    "signer_matches_local_pilot_baseline": true,
+    "tests": {
+      "dev": {
+        "tests": 832,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 1
+      },
+      "enterprise": {
+        "tests": 832,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 1
+      }
+    },
+    "signed_discovery_manifest_version": 27,
+    "baked_management_urls": [],
+    "gpu_bridge_enabled": false,
+    "planar_input_enabled": true,
+    "debug_video_probe": true,
+    "installed": false,
+    "published_to_ota": false,
+    "built_at": "2026-10-03T14:32:11.157508+00:00"
+  },
+  "native_10243_to_10244": {
+    "startedAt": "2026-10-03T14:33:29.272095+00:00",
+    "targetVersionCode": 10244,
+    "artifactSha256": "9659468fa74f43a430cd04d2482ec38a6b342bc2aeb46e33db2c61fcfb87b1a9",
+    "sequential": true,
+    "automaticRetry": false,
+    "normalChannelPromoted": false,
+    "hostAdbUsed": false,
+    "dataCleared": false,
+    "preflightDevices": 1,
+    "outcomes": [
+      {
+        "deviceId": "4815b950-e5cf-4686-9d46-42d0df8d41f7",
+        "name": "auto-ph-028",
+        "beforeVersionCode": 10243,
+        "intentRecordedAt": "2026-10-03T14:33:29.272614+00:00",
+        "status": "completed_and_heartbeat",
+        "attempts": 1,
+        "commandId": "e8f806f7-3331-4649-b279-2491c203363f",
+        "deliveryHint": "wake_published",
+        "grantCreatedAt": 1791038009,
+        "lastReadback": {
+          "observedAt": "2026-10-03T14:33:34.425460+00:00",
+          "state": "active",
+          "versionCode": 10243,
+          "deviceStatus": "offline"
+        },
+        "terminalReceipt": {
+          "command_id": "e8f806f7-3331-4649-b279-2491c203363f",
+          "sha256": "9659468fa74f43a430cd04d2482ec38a6b342bc2aeb46e33db2c61fcfb87b1a9",
+          "version_name": "1.2.44-dev",
+          "version_code": 10244,
+          "status": "completed",
+          "failure_code": null,
+          "installed_version_code": 10244,
+          "recovered_after_process_restart": true,
+          "recorded_at": "2026-10-03T14:33:34.803615+00:00"
+        },
+        "postInstallHeartbeat": "2026-10-03T14:33:35.538610Z",
+        "grantAutoCleared": true,
+        "acceptedAt": "2026-10-03T14:33:39.462406+00:00"
+      }
+    ],
+    "finishedAt": "2026-10-03T14:33:39.486893+00:00",
+    "completedDevices": 1,
+    "catalogTotal": 19,
+    "onlineVersions": {
+      "1.2.44-dev": 1,
+      "1.2.41-dev": 13
+    },
+    "releaseCatalogUnchanged": true
+  },
+  "native_installed_hash": {
+    "observedAt": "2026-10-03T14:55:28.210446+00:00",
+    "deviceId": "4815b950-e5cf-4686-9d46-42d0df8d41f7",
+    "name": "auto-ph-028",
+    "versionCode": 10244,
+    "installedSha256": "9659468fa74f43a430cd04d2482ec38a6b342bc2aeb46e33db2c61fcfb87b1a9",
+    "normalOtaCommandId": "e8f806f7-3331-4649-b279-2491c203363f",
+    "readOnlyAndroidCommands": 2,
+    "hostAdbUsed": false
+  },
+  "bounded_log_readback": {
+    "observedAt": "2026-10-03T14:34:47.428257+00:00",
+    "deviceId": "4815b950-e5cf-4686-9d46-42d0df8d41f7",
+    "readOnlyAndroidCommands": 1,
+    "status": "online",
+    "boundedSignerDiagnostics": [],
+    "ordinaryNativeOtaCompleted": true,
+    "rawLogsPublished": false
+  },
+  "source_ci": {
+    "observedAt": "2026-10-03T14:47:20.860262+00:00",
+    "sourceCommit": "ad34c12509ecf69236d4a3ccc5e1fa9b9c4e28bb",
+    "runs": [
+      {
+        "conclusion": "success",
+        "databaseId": 37129606863,
+        "headSha": "ad34c12509ecf69236d4a3ccc5e1fa9b9c4e28bb",
+        "name": "Preview \u2014 Deploy",
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 37129606890,
+        "headSha": "ad34c12509ecf69236d4a3ccc5e1fa9b9c4e28bb",
+        "name": "CI \u2014 Frontend",
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 37129606894,
+        "headSha": "ad34c12509ecf69236d4a3ccc5e1fa9b9c4e28bb",
+        "name": "CI \u2014 Android",
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 37129606933,
+        "headSha": "ad34c12509ecf69236d4a3ccc5e1fa9b9c4e28bb",
+        "name": "CI \u2014 Backend",
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 37129603363,
+        "headSha": "ad34c12509ecf69236d4a3ccc5e1fa9b9c4e28bb",
+        "name": "CI \u2014 Android",
+        "status": "completed"
+      }
+    ],
+    "previousPushAndroidDependencyResolutionFailure": {
+      "runId": 37128983904,
+      "category": "AGP8.7.3 repository resolution before compilation",
+      "source": "aa37ab739e1d32c6c1c2b367c6caa4b21d417816"
+    },
+    "docsHeadIsSeparate": true
+  },
+  "owned_root_recovery_phases": [
+    {
+      "startedAt": "2026-10-03T14:36:57.608236+00:00",
+      "targets": 13,
+      "outcomes": [
+        {
+          "deviceId": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+          "name": "auto-ph-010",
+          "status": "recovery_install_and_exact_hash_and_fresh_heartbeat",
+          "exitCode": 0,
+          "postInstallHeartbeat": "2026-10-03T14:37:16.980451Z",
+          "exactHashChecked": true,
+          "temporaryCredentialRevoked": true,
+          "temporaryFileRemoved": true
+        },
+        {
+          "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+          "name": "auto-ph-011",
+          "status": "recovery_install_and_exact_hash_and_fresh_heartbeat",
+          "exitCode": 0,
+          "postInstallHeartbeat": "2026-10-03T14:38:06.234296Z",
+          "exactHashChecked": true,
+          "temporaryCredentialRevoked": true,
+          "temporaryFileRemoved": true
+        },
+        {
+          "deviceId": "8c187cfa-e5ea-4939-a137-07619437953d",
+          "name": "auto-ph-012",
+          "status": "recovery_install_and_exact_hash_and_fresh_heartbeat",
+          "exitCode": 0,
+          "postInstallHeartbeat": "2026-10-03T14:38:42.979703Z",
+          "exactHashChecked": true,
+          "temporaryCredentialRevoked": true,
+          "temporaryFileRemoved": true
+        },
+        {
+          "deviceId": "6d830af5-b7cc-44b4-b7f5-5e0275aceb3b",
+          "name": "auto-ph-013",
+          "status": "recovery_install_and_exact_hash_and_fresh_heartbeat",
+          "exitCode": 0,
+          "postInstallHeartbeat": "2026-10-03T14:39:20.771599Z",
+          "exactHashChecked": true,
+          "temporaryCredentialRevoked": true,
+          "temporaryFileRemoved": true
+        },
+        {
+          "deviceId": "673d5774-24b1-4b57-8dfb-90c46f627ce3",
+          "name": "auto-ph-014",
+          "status": "preflight_stopped",
+          "exitCode": 1,
+          "postInstallHeartbeat": null,
+          "exactHashChecked": false,
+          "temporaryCredentialRevoked": null,
+          "temporaryFileRemoved": null,
+          "remainingTargetsStopped": true
+        }
+      ],
+      "sequential": true,
+      "installerAutoRetry": false,
+      "normalOtaAcceptanceForTheseTargets": false,
+      "completed": 4,
+      "finishedAt": "2026-10-03T14:39:47.543368+00:00"
+    },
+    {
+      "startedAt": "2026-10-03T14:44:41.801988+00:00",
+      "targetCount": 9,
+      "excludedPreviouslyCompleted": [
+        "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+        "5df4805e-fe64-4d39-960c-19ceab206cd6",
+        "6d830af5-b7cc-44b4-b7f5-5e0275aceb3b",
+        "8c187cfa-e5ea-4939-a137-07619437953d"
+      ],
+      "readOnlyReconciliationSha256": "a8a931a370f5ea054a521c0345bbd8c916336ac5ea08deff29eac1ef1d534e99",
+      "automaticInstallerRetry": false,
+      "outcomes": [
+        {
+          "deviceId": "673d5774-24b1-4b57-8dfb-90c46f627ce3",
+          "name": "auto-ph-014",
+          "status": "recovery_install_and_exact_hash_and_fresh_heartbeat",
+          "exitCode": 0,
+          "postInstallHeartbeat": "2026-10-03T14:44:52.263712Z",
+          "exactHashChecked": true,
+          "temporaryCredentialRevoked": true,
+          "temporaryFileRemoved": true
+        },
+        {
+          "deviceId": "930a6505-b7ec-4eee-93fe-9aaa66517871",
+          "name": "auto-ph-015",
+          "status": "recovery_install_and_exact_hash_and_fresh_heartbeat",
+          "exitCode": 0,
+          "postInstallHeartbeat": "2026-10-03T14:45:29.950789Z",
+          "exactHashChecked": true,
+          "temporaryCredentialRevoked": true,
+          "temporaryFileRemoved": true
+        },
+        {
+          "deviceId": "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93",
+          "name": "auto-ph-016",
+          "status": "recovery_install_and_exact_hash_and_fresh_heartbeat",
+          "exitCode": 0,
+          "postInstallHeartbeat": "2026-10-03T14:46:05.581336Z",
+          "exactHashChecked": true,
+          "temporaryCredentialRevoked": true,
+          "temporaryFileRemoved": true
+        },
+        {
+          "deviceId": "1dd7e59c-b68f-406a-93cd-5f4e34fdea90",
+          "name": "auto-ph-017",
+          "status": "recovery_install_and_exact_hash_and_fresh_heartbeat",
+          "exitCode": 0,
+          "postInstallHeartbeat": "2026-10-03T14:46:44.113295Z",
+          "exactHashChecked": true,
+          "temporaryCredentialRevoked": true,
+          "temporaryFileRemoved": true
+        },
+        {
+          "deviceId": "bafef86f-3ab4-469b-ae0c-cf2771b55813",
+          "name": "auto-ph-018",
+          "status": "recovery_install_and_exact_hash_and_fresh_heartbeat",
+          "exitCode": 0,
+          "postInstallHeartbeat": "2026-10-03T14:47:20.812806Z",
+          "exactHashChecked": true,
+          "temporaryCredentialRevoked": true,
+          "temporaryFileRemoved": true
+        },
+        {
+          "deviceId": "c37e687a-ee83-466d-846f-3f4b36047fa7",
+          "name": "auto-ph-019",
+          "status": "preflight_stopped",
+          "exitCode": 1,
+          "postInstallHeartbeat": null,
+          "exactHashChecked": false,
+          "temporaryCredentialRevoked": null,
+          "temporaryFileRemoved": null,
+          "remainingTargetsStopped": true
+        }
+      ],
+      "completed": 5,
+      "finishedAt": "2026-10-03T14:47:47.885290+00:00"
+    },
+    {
+      "startedAt": "2026-10-03T14:53:37.704817+00:00",
+      "targetCount": 4,
+      "excludedPreviouslyCompleted": [
+        "1dd7e59c-b68f-406a-93cd-5f4e34fdea90",
+        "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93",
+        "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+        "5df4805e-fe64-4d39-960c-19ceab206cd6",
+        "673d5774-24b1-4b57-8dfb-90c46f627ce3",
+        "6d830af5-b7cc-44b4-b7f5-5e0275aceb3b",
+        "8c187cfa-e5ea-4939-a137-07619437953d",
+        "930a6505-b7ec-4eee-93fe-9aaa66517871",
+        "bafef86f-3ab4-469b-ae0c-cf2771b55813"
+      ],
+      "operatorLoginCount": 1,
+      "rateLimitPolicyUnchanged": true,
+      "automaticInstallerRetry": false,
+      "outcomes": [
+        {
+          "deviceId": "c37e687a-ee83-466d-846f-3f4b36047fa7",
+          "name": "auto-ph-019",
+          "status": "recovery_install_and_exact_hash_and_fresh_heartbeat",
+          "exitCode": 0,
+          "postInstallHeartbeat": "2026-10-03T14:53:47.407951Z",
+          "exactHashChecked": true,
+          "temporaryCredentialRevoked": true,
+          "temporaryFileRemoved": true
+        },
+        {
+          "deviceId": "75c29a32-2867-4b60-947c-003e712e538f",
+          "name": "auto-ph-020",
+          "status": "recovery_install_and_exact_hash_and_fresh_heartbeat",
+          "exitCode": 0,
+          "postInstallHeartbeat": "2026-10-03T14:54:24.215780Z",
+          "exactHashChecked": true,
+          "temporaryCredentialRevoked": true,
+          "temporaryFileRemoved": true
+        },
+        {
+          "deviceId": "d088c147-7ada-4b29-9e79-f991b20fcf91",
+          "name": "auto-ph-022",
+          "status": "recovery_install_and_exact_hash_and_fresh_heartbeat",
+          "exitCode": 0,
+          "postInstallHeartbeat": "2026-10-03T14:55:00.390793Z",
+          "exactHashChecked": true,
+          "temporaryCredentialRevoked": true,
+          "temporaryFileRemoved": true
+        },
+        {
+          "deviceId": "b410464a-5f26-4803-a756-7840cc17b128",
+          "name": "auto-ph-025",
+          "status": "recovery_install_and_exact_hash_and_fresh_heartbeat",
+          "exitCode": 0,
+          "postInstallHeartbeat": "2026-10-03T14:55:42.680562Z",
+          "exactHashChecked": true,
+          "temporaryCredentialRevoked": true,
+          "temporaryFileRemoved": true
+        }
+      ],
+      "completed": 4,
+      "finishedAt": "2026-10-03T14:56:09.483880+00:00"
+    }
+  ],
+  "owned_root_recovery_receipts": [
+    {
+      "startedAt": "2026-10-03T14:36:59.451703+00:00",
+      "deviceId": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+      "name": "auto-ph-010",
+      "beforeVersionCode": 10241,
+      "targetVersionCode": 10244,
+      "artifactSha256": "9659468fa74f43a430cd04d2482ec38a6b342bc2aeb46e33db2c61fcfb87b1a9",
+      "packageAndSignerVerifiedByExactBaselineHash": true,
+      "normalOtaAcceptance": false,
+      "hostAdbUsed": false,
+      "dataCleared": false,
+      "automaticInstallRetry": false,
+      "status": "recovery_install_and_exact_hash_and_fresh_heartbeat",
+      "downloadReadbacks": [
+        {
+          "observedAt": "2026-10-03T14:37:04.486026+00:00",
+          "attempt": 1,
+          "downloadReportedError": true,
+          "exactHashMatches": false
+        },
+        {
+          "observedAt": "2026-10-03T14:37:08.012065+00:00",
+          "attempt": 2,
+          "downloadReportedError": true,
+          "exactHashMatches": false
+        },
+        {
+          "observedAt": "2026-10-03T14:37:11.543597+00:00",
+          "attempt": 3,
+          "downloadReportedError": false,
+          "exactHashMatches": true
+        }
+      ],
+      "temporaryDeviceCredentialExpiresAt": "2026-10-03T14:39:00.704771+00:00",
+      "temporaryDeviceCredentialRevoked": true,
+      "installIntentRecordedAt": "2026-10-03T14:37:12.215226+00:00",
+      "installerAttempts": 1,
+      "installerReplyExceptionType": "HTTPError",
+      "lastReadback": {
+        "observedAt": "2026-10-03T14:37:42.251624+00:00",
+        "status": "online",
+        "versionCode": 10244,
+        "lastHeartbeat": "2026-10-03T14:37:16.980451Z"
+      },
+      "postInstallHeartbeat": "2026-10-03T14:37:16.980451Z",
+      "acceptedAt": "2026-10-03T14:37:43.224307+00:00",
+      "ownedTemporaryFileRemoved": true,
+      "finishedAt": "2026-10-03T14:37:43.728509+00:00"
+    },
+    {
+      "startedAt": "2026-10-03T14:37:45.910533+00:00",
+      "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+      "name": "auto-ph-011",
+      "beforeVersionCode": 10241,
+      "targetVersionCode": 10244,
+      "artifactSha256": "9659468fa74f43a430cd04d2482ec38a6b342bc2aeb46e33db2c61fcfb87b1a9",
+      "packageAndSignerVerifiedByExactBaselineHash": true,
+      "normalOtaAcceptance": false,
+      "hostAdbUsed": false,
+      "dataCleared": false,
+      "automaticInstallRetry": false,
+      "status": "recovery_install_and_exact_hash_and_fresh_heartbeat",
+      "downloadReadbacks": [
+        {
+          "observedAt": "2026-10-03T14:37:50.935313+00:00",
+          "attempt": 1,
+          "downloadReportedError": true,
+          "exactHashMatches": false
+        },
+        {
+          "observedAt": "2026-10-03T14:37:54.718938+00:00",
+          "attempt": 2,
+          "downloadReportedError": true,
+          "exactHashMatches": false
+        },
+        {
+          "observedAt": "2026-10-03T14:37:58.241363+00:00",
+          "attempt": 3,
+          "downloadReportedError": true,
+          "exactHashMatches": false
+        },
+        {
+          "observedAt": "2026-10-03T14:38:00.755524+00:00",
+          "attempt": 4,
+          "downloadReportedError": false,
+          "exactHashMatches": true
+        }
+      ],
+      "temporaryDeviceCredentialExpiresAt": "2026-10-03T14:39:47.044469+00:00",
+      "temporaryDeviceCredentialRevoked": true,
+      "installIntentRecordedAt": "2026-10-03T14:38:01.389317+00:00",
+      "installerAttempts": 1,
+      "installerReplyExceptionType": "HTTPError",
+      "lastReadback": {
+        "observedAt": "2026-10-03T14:38:31.431389+00:00",
+        "status": "online",
+        "versionCode": 10244,
+        "lastHeartbeat": "2026-10-03T14:38:06.234296Z"
+      },
+      "postInstallHeartbeat": "2026-10-03T14:38:06.234296Z",
+      "acceptedAt": "2026-10-03T14:38:32.499904+00:00",
+      "ownedTemporaryFileRemoved": true,
+      "finishedAt": "2026-10-03T14:38:33.002253+00:00"
+    },
+    {
+      "startedAt": "2026-10-03T14:38:34.568132+00:00",
+      "deviceId": "8c187cfa-e5ea-4939-a137-07619437953d",
+      "name": "auto-ph-012",
+      "beforeVersionCode": 10241,
+      "targetVersionCode": 10244,
+      "artifactSha256": "9659468fa74f43a430cd04d2482ec38a6b342bc2aeb46e33db2c61fcfb87b1a9",
+      "packageAndSignerVerifiedByExactBaselineHash": true,
+      "normalOtaAcceptance": false,
+      "hostAdbUsed": false,
+      "dataCleared": false,
+      "automaticInstallRetry": false,
+      "status": "recovery_install_and_exact_hash_and_fresh_heartbeat",
+      "downloadReadbacks": [
+        {
+          "observedAt": "2026-10-03T14:38:38.429635+00:00",
+          "attempt": 1,
+          "downloadReportedError": false,
+          "exactHashMatches": true
+        }
+      ],
+      "temporaryDeviceCredentialExpiresAt": "2026-10-03T14:40:35.621301+00:00",
+      "temporaryDeviceCredentialRevoked": true,
+      "installIntentRecordedAt": "2026-10-03T14:38:39.062236+00:00",
+      "installerAttempts": 1,
+      "installerReplyExceptionType": "HTTPError",
+      "lastReadback": {
+        "observedAt": "2026-10-03T14:39:09.102460+00:00",
+        "status": "online",
+        "versionCode": 10244,
+        "lastHeartbeat": "2026-10-03T14:38:42.979703Z"
+      },
+      "postInstallHeartbeat": "2026-10-03T14:38:42.979703Z",
+      "acceptedAt": "2026-10-03T14:39:09.748807+00:00",
+      "ownedTemporaryFileRemoved": true,
+      "finishedAt": "2026-10-03T14:39:10.009132+00:00"
+    },
+    {
+      "startedAt": "2026-10-03T14:39:11.820588+00:00",
+      "deviceId": "6d830af5-b7cc-44b4-b7f5-5e0275aceb3b",
+      "name": "auto-ph-013",
+      "beforeVersionCode": 10241,
+      "targetVersionCode": 10244,
+      "artifactSha256": "9659468fa74f43a430cd04d2482ec38a6b342bc2aeb46e33db2c61fcfb87b1a9",
+      "packageAndSignerVerifiedByExactBaselineHash": true,
+      "normalOtaAcceptance": false,
+      "hostAdbUsed": false,
+      "dataCleared": false,
+      "automaticInstallRetry": false,
+      "status": "recovery_install_and_exact_hash_and_fresh_heartbeat",
+      "downloadReadbacks": [
+        {
+          "observedAt": "2026-10-03T14:39:15.632387+00:00",
+          "attempt": 1,
+          "downloadReportedError": false,
+          "exactHashMatches": true
+        }
+      ],
+      "temporaryDeviceCredentialExpiresAt": "2026-10-03T14:41:12.950775+00:00",
+      "temporaryDeviceCredentialRevoked": true,
+      "installIntentRecordedAt": "2026-10-03T14:39:16.270115+00:00",
+      "installerAttempts": 1,
+      "installerReplyExceptionType": "HTTPError",
+      "lastReadback": {
+        "observedAt": "2026-10-03T14:39:46.309671+00:00",
+        "status": "online",
+        "versionCode": 10244,
+        "lastHeartbeat": "2026-10-03T14:39:20.771599Z"
+      },
+      "postInstallHeartbeat": "2026-10-03T14:39:20.771599Z",
+      "acceptedAt": "2026-10-03T14:39:46.913466+00:00",
+      "ownedTemporaryFileRemoved": true,
+      "finishedAt": "2026-10-03T14:39:47.170130+00:00"
+    },
+    {
+      "startedAt": "2026-10-03T14:44:43.138865+00:00",
+      "deviceId": "673d5774-24b1-4b57-8dfb-90c46f627ce3",
+      "name": "auto-ph-014",
+      "beforeVersionCode": 10241,
+      "targetVersionCode": 10244,
+      "artifactSha256": "9659468fa74f43a430cd04d2482ec38a6b342bc2aeb46e33db2c61fcfb87b1a9",
+      "packageAndSignerVerifiedByExactBaselineHash": true,
+      "normalOtaAcceptance": false,
+      "hostAdbUsed": false,
+      "dataCleared": false,
+      "automaticInstallRetry": false,
+      "status": "recovery_install_and_exact_hash_and_fresh_heartbeat",
+      "downloadReadbacks": [
+        {
+          "observedAt": "2026-10-03T14:44:46.711538+00:00",
+          "attempt": 1,
+          "downloadReportedError": false,
+          "exactHashMatches": true
+        }
+      ],
+      "temporaryDeviceCredentialExpiresAt": "2026-10-03T14:46:44.157338+00:00",
+      "temporaryDeviceCredentialRevoked": true,
+      "installIntentRecordedAt": "2026-10-03T14:44:47.365446+00:00",
+      "installerAttempts": 1,
+      "installerReplyExceptionType": "HTTPError",
+      "lastReadback": {
+        "observedAt": "2026-10-03T14:45:17.394489+00:00",
+        "status": "online",
+        "versionCode": 10244,
+        "lastHeartbeat": "2026-10-03T14:44:52.263712Z"
+      },
+      "postInstallHeartbeat": "2026-10-03T14:44:52.263712Z",
+      "acceptedAt": "2026-10-03T14:45:18.023551+00:00",
+      "ownedTemporaryFileRemoved": true,
+      "finishedAt": "2026-10-03T14:45:18.293025+00:00"
+    },
+    {
+      "startedAt": "2026-10-03T14:45:19.848017+00:00",
+      "deviceId": "930a6505-b7ec-4eee-93fe-9aaa66517871",
+      "name": "auto-ph-015",
+      "beforeVersionCode": 10241,
+      "targetVersionCode": 10244,
+      "artifactSha256": "9659468fa74f43a430cd04d2482ec38a6b342bc2aeb46e33db2c61fcfb87b1a9",
+      "packageAndSignerVerifiedByExactBaselineHash": true,
+      "normalOtaAcceptance": false,
+      "hostAdbUsed": false,
+      "dataCleared": false,
+      "automaticInstallRetry": false,
+      "status": "recovery_install_and_exact_hash_and_fresh_heartbeat",
+      "downloadReadbacks": [
+        {
+          "observedAt": "2026-10-03T14:45:24.628485+00:00",
+          "attempt": 1,
+          "downloadReportedError": false,
+          "exactHashMatches": true
+        }
+      ],
+      "temporaryDeviceCredentialExpiresAt": "2026-10-03T14:47:21.053958+00:00",
+      "temporaryDeviceCredentialRevoked": true,
+      "installIntentRecordedAt": "2026-10-03T14:45:25.296618+00:00",
+      "installerAttempts": 1,
+      "installerReplyExceptionType": "HTTPError",
+      "lastReadback": {
+        "observedAt": "2026-10-03T14:45:55.338322+00:00",
+        "status": "online",
+        "versionCode": 10244,
+        "lastHeartbeat": "2026-10-03T14:45:29.950789Z"
+      },
+      "postInstallHeartbeat": "2026-10-03T14:45:29.950789Z",
+      "acceptedAt": "2026-10-03T14:45:55.962268+00:00",
+      "ownedTemporaryFileRemoved": true,
+      "finishedAt": "2026-10-03T14:45:56.253134+00:00"
+    },
+    {
+      "startedAt": "2026-10-03T14:45:57.829815+00:00",
+      "deviceId": "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93",
+      "name": "auto-ph-016",
+      "beforeVersionCode": 10241,
+      "targetVersionCode": 10244,
+      "artifactSha256": "9659468fa74f43a430cd04d2482ec38a6b342bc2aeb46e33db2c61fcfb87b1a9",
+      "packageAndSignerVerifiedByExactBaselineHash": true,
+      "normalOtaAcceptance": false,
+      "hostAdbUsed": false,
+      "dataCleared": false,
+      "automaticInstallRetry": false,
+      "status": "recovery_install_and_exact_hash_and_fresh_heartbeat",
+      "downloadReadbacks": [
+        {
+          "observedAt": "2026-10-03T14:46:01.110102+00:00",
+          "attempt": 1,
+          "downloadReportedError": false,
+          "exactHashMatches": true
+        }
+      ],
+      "temporaryDeviceCredentialExpiresAt": "2026-10-03T14:47:58.852130+00:00",
+      "temporaryDeviceCredentialRevoked": true,
+      "installIntentRecordedAt": "2026-10-03T14:46:01.735995+00:00",
+      "installerAttempts": 1,
+      "installerReplyExceptionType": "HTTPError",
+      "lastReadback": {
+        "observedAt": "2026-10-03T14:46:31.776799+00:00",
+        "status": "online",
+        "versionCode": 10244,
+        "lastHeartbeat": "2026-10-03T14:46:05.581336Z"
+      },
+      "postInstallHeartbeat": "2026-10-03T14:46:05.581336Z",
+      "acceptedAt": "2026-10-03T14:46:32.392429+00:00",
+      "ownedTemporaryFileRemoved": true,
+      "finishedAt": "2026-10-03T14:46:32.662587+00:00"
+    },
+    {
+      "startedAt": "2026-10-03T14:46:34.330551+00:00",
+      "deviceId": "1dd7e59c-b68f-406a-93cd-5f4e34fdea90",
+      "name": "auto-ph-017",
+      "beforeVersionCode": 10241,
+      "targetVersionCode": 10244,
+      "artifactSha256": "9659468fa74f43a430cd04d2482ec38a6b342bc2aeb46e33db2c61fcfb87b1a9",
+      "packageAndSignerVerifiedByExactBaselineHash": true,
+      "normalOtaAcceptance": false,
+      "hostAdbUsed": false,
+      "dataCleared": false,
+      "automaticInstallRetry": false,
+      "status": "recovery_install_and_exact_hash_and_fresh_heartbeat",
+      "downloadReadbacks": [
+        {
+          "observedAt": "2026-10-03T14:46:39.327775+00:00",
+          "attempt": 1,
+          "downloadReportedError": false,
+          "exactHashMatches": true
+        }
+      ],
+      "temporaryDeviceCredentialExpiresAt": "2026-10-03T14:48:35.419220+00:00",
+      "temporaryDeviceCredentialRevoked": true,
+      "installIntentRecordedAt": "2026-10-03T14:46:39.989902+00:00",
+      "installerAttempts": 1,
+      "installerReplyExceptionType": "HTTPError",
+      "lastReadback": {
+        "observedAt": "2026-10-03T14:47:10.025810+00:00",
+        "status": "online",
+        "versionCode": 10244,
+        "lastHeartbeat": "2026-10-03T14:46:44.113295Z"
+      },
+      "postInstallHeartbeat": "2026-10-03T14:46:44.113295Z",
+      "acceptedAt": "2026-10-03T14:47:10.643931+00:00",
+      "ownedTemporaryFileRemoved": true,
+      "finishedAt": "2026-10-03T14:47:10.906559+00:00"
+    },
+    {
+      "startedAt": "2026-10-03T14:47:12.497880+00:00",
+      "deviceId": "bafef86f-3ab4-469b-ae0c-cf2771b55813",
+      "name": "auto-ph-018",
+      "beforeVersionCode": 10241,
+      "targetVersionCode": 10244,
+      "artifactSha256": "9659468fa74f43a430cd04d2482ec38a6b342bc2aeb46e33db2c61fcfb87b1a9",
+      "packageAndSignerVerifiedByExactBaselineHash": true,
+      "normalOtaAcceptance": false,
+      "hostAdbUsed": false,
+      "dataCleared": false,
+      "automaticInstallRetry": false,
+      "status": "recovery_install_and_exact_hash_and_fresh_heartbeat",
+      "downloadReadbacks": [
+        {
+          "observedAt": "2026-10-03T14:47:15.967272+00:00",
+          "attempt": 1,
+          "downloadReportedError": false,
+          "exactHashMatches": true
+        }
+      ],
+      "temporaryDeviceCredentialExpiresAt": "2026-10-03T14:49:13.693651+00:00",
+      "temporaryDeviceCredentialRevoked": true,
+      "installIntentRecordedAt": "2026-10-03T14:47:16.606833+00:00",
+      "installerAttempts": 1,
+      "installerReplyExceptionType": "HTTPError",
+      "lastReadback": {
+        "observedAt": "2026-10-03T14:47:46.646478+00:00",
+        "status": "online",
+        "versionCode": 10244,
+        "lastHeartbeat": "2026-10-03T14:47:20.812806Z"
+      },
+      "postInstallHeartbeat": "2026-10-03T14:47:20.812806Z",
+      "acceptedAt": "2026-10-03T14:47:47.232916+00:00",
+      "ownedTemporaryFileRemoved": true,
+      "finishedAt": "2026-10-03T14:47:47.514489+00:00"
+    },
+    {
+      "startedAt": "2026-10-03T14:53:39.413429+00:00",
+      "deviceId": "c37e687a-ee83-466d-846f-3f4b36047fa7",
+      "name": "auto-ph-019",
+      "beforeVersionCode": 10241,
+      "targetVersionCode": 10244,
+      "artifactSha256": "9659468fa74f43a430cd04d2482ec38a6b342bc2aeb46e33db2c61fcfb87b1a9",
+      "packageAndSignerVerifiedByExactBaselineHash": true,
+      "normalOtaAcceptance": false,
+      "hostAdbUsed": false,
+      "dataCleared": false,
+      "automaticInstallRetry": false,
+      "status": "recovery_install_and_exact_hash_and_fresh_heartbeat",
+      "downloadReadbacks": [
+        {
+          "observedAt": "2026-10-03T14:53:42.850816+00:00",
+          "attempt": 1,
+          "downloadReportedError": false,
+          "exactHashMatches": true
+        }
+      ],
+      "temporaryDeviceCredentialExpiresAt": "2026-10-03T14:55:40.444582+00:00",
+      "temporaryDeviceCredentialRevoked": true,
+      "installIntentRecordedAt": "2026-10-03T14:53:43.544376+00:00",
+      "installerAttempts": 1,
+      "installerReplyExceptionType": "HTTPError",
+      "lastReadback": {
+        "observedAt": "2026-10-03T14:54:13.585382+00:00",
+        "status": "online",
+        "versionCode": 10244,
+        "lastHeartbeat": "2026-10-03T14:53:47.407951Z"
+      },
+      "postInstallHeartbeat": "2026-10-03T14:53:47.407951Z",
+      "acceptedAt": "2026-10-03T14:54:14.166472+00:00",
+      "ownedTemporaryFileRemoved": true,
+      "finishedAt": "2026-10-03T14:54:14.420721+00:00"
+    },
+    {
+      "startedAt": "2026-10-03T14:54:16.071954+00:00",
+      "deviceId": "75c29a32-2867-4b60-947c-003e712e538f",
+      "name": "auto-ph-020",
+      "beforeVersionCode": 10241,
+      "targetVersionCode": 10244,
+      "artifactSha256": "9659468fa74f43a430cd04d2482ec38a6b342bc2aeb46e33db2c61fcfb87b1a9",
+      "packageAndSignerVerifiedByExactBaselineHash": true,
+      "normalOtaAcceptance": false,
+      "hostAdbUsed": false,
+      "dataCleared": false,
+      "automaticInstallRetry": false,
+      "status": "recovery_install_and_exact_hash_and_fresh_heartbeat",
+      "downloadReadbacks": [
+        {
+          "observedAt": "2026-10-03T14:54:19.537576+00:00",
+          "attempt": 1,
+          "downloadReportedError": false,
+          "exactHashMatches": true
+        }
+      ],
+      "temporaryDeviceCredentialExpiresAt": "2026-10-03T14:56:17.107228+00:00",
+      "temporaryDeviceCredentialRevoked": true,
+      "installIntentRecordedAt": "2026-10-03T14:54:20.178925+00:00",
+      "installerAttempts": 1,
+      "installerReplyExceptionType": "HTTPError",
+      "lastReadback": {
+        "observedAt": "2026-10-03T14:54:50.220520+00:00",
+        "status": "online",
+        "versionCode": 10244,
+        "lastHeartbeat": "2026-10-03T14:54:24.215780Z"
+      },
+      "postInstallHeartbeat": "2026-10-03T14:54:24.215780Z",
+      "acceptedAt": "2026-10-03T14:54:50.838482+00:00",
+      "ownedTemporaryFileRemoved": true,
+      "finishedAt": "2026-10-03T14:54:51.109329+00:00"
+    },
+    {
+      "startedAt": "2026-10-03T14:54:52.445011+00:00",
+      "deviceId": "d088c147-7ada-4b29-9e79-f991b20fcf91",
+      "name": "auto-ph-022",
+      "beforeVersionCode": 10241,
+      "targetVersionCode": 10244,
+      "artifactSha256": "9659468fa74f43a430cd04d2482ec38a6b342bc2aeb46e33db2c61fcfb87b1a9",
+      "packageAndSignerVerifiedByExactBaselineHash": true,
+      "normalOtaAcceptance": false,
+      "hostAdbUsed": false,
+      "dataCleared": false,
+      "automaticInstallRetry": false,
+      "status": "recovery_install_and_exact_hash_and_fresh_heartbeat",
+      "downloadReadbacks": [
+        {
+          "observedAt": "2026-10-03T14:54:55.887219+00:00",
+          "attempt": 1,
+          "downloadReportedError": false,
+          "exactHashMatches": true
+        }
+      ],
+      "temporaryDeviceCredentialExpiresAt": "2026-10-03T14:56:53.623957+00:00",
+      "temporaryDeviceCredentialRevoked": true,
+      "installIntentRecordedAt": "2026-10-03T14:54:56.518182+00:00",
+      "installerAttempts": 1,
+      "installerReplyExceptionType": "HTTPError",
+      "lastReadback": {
+        "observedAt": "2026-10-03T14:55:26.548452+00:00",
+        "status": "online",
+        "versionCode": 10244,
+        "lastHeartbeat": "2026-10-03T14:55:00.390793Z"
+      },
+      "postInstallHeartbeat": "2026-10-03T14:55:00.390793Z",
+      "acceptedAt": "2026-10-03T14:55:27.180021+00:00",
+      "ownedTemporaryFileRemoved": true,
+      "finishedAt": "2026-10-03T14:55:27.562782+00:00"
+    },
+    {
+      "startedAt": "2026-10-03T14:55:28.958238+00:00",
+      "deviceId": "b410464a-5f26-4803-a756-7840cc17b128",
+      "name": "auto-ph-025",
+      "beforeVersionCode": 10241,
+      "targetVersionCode": 10244,
+      "artifactSha256": "9659468fa74f43a430cd04d2482ec38a6b342bc2aeb46e33db2c61fcfb87b1a9",
+      "packageAndSignerVerifiedByExactBaselineHash": true,
+      "normalOtaAcceptance": false,
+      "hostAdbUsed": false,
+      "dataCleared": false,
+      "automaticInstallRetry": false,
+      "status": "recovery_install_and_exact_hash_and_fresh_heartbeat",
+      "downloadReadbacks": [
+        {
+          "observedAt": "2026-10-03T14:55:34.883405+00:00",
+          "attempt": 1,
+          "downloadReportedError": true,
+          "exactHashMatches": false
+        },
+        {
+          "observedAt": "2026-10-03T14:55:37.887839+00:00",
+          "attempt": 2,
+          "downloadReportedError": false,
+          "exactHashMatches": true
+        }
+      ],
+      "temporaryDeviceCredentialExpiresAt": "2026-10-03T14:57:30.200239+00:00",
+      "temporaryDeviceCredentialRevoked": true,
+      "installIntentRecordedAt": "2026-10-03T14:55:38.547846+00:00",
+      "installerAttempts": 1,
+      "installerReplyExceptionType": "HTTPError",
+      "lastReadback": {
+        "observedAt": "2026-10-03T14:56:08.590328+00:00",
+        "status": "online",
+        "versionCode": 10244,
+        "lastHeartbeat": "2026-10-03T14:55:42.680562Z"
+      },
+      "postInstallHeartbeat": "2026-10-03T14:55:42.680562Z",
+      "acceptedAt": "2026-10-03T14:56:09.193737+00:00",
+      "ownedTemporaryFileRemoved": true,
+      "finishedAt": "2026-10-03T14:56:09.454110+00:00"
+    }
+  ],
+  "finite_after_complete_wave": {
+    "startedAt": "2026-10-03T14:59:13.085750+00:00",
+    "expectedCount": 14,
+    "samples": [
+      {
+        "observedAt": "2026-10-03T14:59:13.108173+00:00",
+        "total": 19,
+        "online": [
+          {
+            "id": "1dd7e59c-b68f-406a-93cd-5f4e34fdea90",
+            "name": "auto-ph-017",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:58:44.067295Z",
+            "heartbeatAgeSeconds": 29.040878,
+            "connectedSince": "2026-10-03T14:46:44.113295Z"
+          },
+          {
+            "id": "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93",
+            "name": "auto-ph-016",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:05.514643Z",
+            "heartbeatAgeSeconds": 7.59353,
+            "connectedSince": "2026-10-03T14:46:05.581336Z"
+          },
+          {
+            "id": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+            "name": "auto-ph-011",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:06.134681Z",
+            "heartbeatAgeSeconds": 6.973492,
+            "connectedSince": "2026-10-03T14:38:06.234296Z"
+          },
+          {
+            "id": "4815b950-e5cf-4686-9d46-42d0df8d41f7",
+            "name": "auto-ph-028",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:05.451127Z",
+            "heartbeatAgeSeconds": 7.657046,
+            "connectedSince": "2026-10-03T14:33:35.538610Z"
+          },
+          {
+            "id": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+            "name": "auto-ph-010",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:58:46.909926Z",
+            "heartbeatAgeSeconds": 26.198247,
+            "connectedSince": "2026-10-03T14:37:16.980451Z"
+          },
+          {
+            "id": "673d5774-24b1-4b57-8dfb-90c46f627ce3",
+            "name": "auto-ph-014",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:58:51.742604Z",
+            "heartbeatAgeSeconds": 21.365569,
+            "connectedSince": "2026-10-03T14:44:52.263712Z"
+          },
+          {
+            "id": "6d830af5-b7cc-44b4-b7f5-5e0275aceb3b",
+            "name": "auto-ph-013",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:58:50.686903Z",
+            "heartbeatAgeSeconds": 22.42127,
+            "connectedSince": "2026-10-03T14:39:20.771599Z"
+          },
+          {
+            "id": "75c29a32-2867-4b60-947c-003e712e538f",
+            "name": "auto-ph-020",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:58:54.190996Z",
+            "heartbeatAgeSeconds": 18.917177,
+            "connectedSince": "2026-10-03T14:54:24.215780Z"
+          },
+          {
+            "id": "8c187cfa-e5ea-4939-a137-07619437953d",
+            "name": "auto-ph-012",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:12.896513Z",
+            "heartbeatAgeSeconds": 0.21166,
+            "connectedSince": "2026-10-03T14:38:42.979703Z"
+          },
+          {
+            "id": "930a6505-b7ec-4eee-93fe-9aaa66517871",
+            "name": "auto-ph-015",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:58:59.901102Z",
+            "heartbeatAgeSeconds": 13.207071,
+            "connectedSince": "2026-10-03T14:45:29.950789Z"
+          },
+          {
+            "id": "b410464a-5f26-4803-a756-7840cc17b128",
+            "name": "auto-ph-025",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:12.648652Z",
+            "heartbeatAgeSeconds": 0.459521,
+            "connectedSince": "2026-10-03T14:55:42.680562Z"
+          },
+          {
+            "id": "bafef86f-3ab4-469b-ae0c-cf2771b55813",
+            "name": "auto-ph-018",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:58:50.765126Z",
+            "heartbeatAgeSeconds": 22.343047,
+            "connectedSince": "2026-10-03T14:47:20.812806Z"
+          },
+          {
+            "id": "c37e687a-ee83-466d-846f-3f4b36047fa7",
+            "name": "auto-ph-019",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:58:47.414656Z",
+            "heartbeatAgeSeconds": 25.693517,
+            "connectedSince": "2026-10-03T14:53:47.407951Z"
+          },
+          {
+            "id": "d088c147-7ada-4b29-9e79-f991b20fcf91",
+            "name": "auto-ph-022",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:00.349159Z",
+            "heartbeatAgeSeconds": 12.759014,
+            "connectedSince": "2026-10-03T14:55:00.390793Z"
+          }
+        ]
+      },
+      {
+        "observedAt": "2026-10-03T14:59:23.130817+00:00",
+        "total": 19,
+        "online": [
+          {
+            "id": "1dd7e59c-b68f-406a-93cd-5f4e34fdea90",
+            "name": "auto-ph-017",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:14.088696Z",
+            "heartbeatAgeSeconds": 9.042121,
+            "connectedSince": "2026-10-03T14:46:44.113295Z"
+          },
+          {
+            "id": "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93",
+            "name": "auto-ph-016",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:05.514643Z",
+            "heartbeatAgeSeconds": 17.616174,
+            "connectedSince": "2026-10-03T14:46:05.581336Z"
+          },
+          {
+            "id": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+            "name": "auto-ph-011",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:06.134681Z",
+            "heartbeatAgeSeconds": 16.996136,
+            "connectedSince": "2026-10-03T14:38:06.234296Z"
+          },
+          {
+            "id": "4815b950-e5cf-4686-9d46-42d0df8d41f7",
+            "name": "auto-ph-028",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:05.451127Z",
+            "heartbeatAgeSeconds": 17.67969,
+            "connectedSince": "2026-10-03T14:33:35.538610Z"
+          },
+          {
+            "id": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+            "name": "auto-ph-010",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:16.910438Z",
+            "heartbeatAgeSeconds": 6.220379,
+            "connectedSince": "2026-10-03T14:37:16.980451Z"
+          },
+          {
+            "id": "673d5774-24b1-4b57-8dfb-90c46f627ce3",
+            "name": "auto-ph-014",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:21.742795Z",
+            "heartbeatAgeSeconds": 1.388022,
+            "connectedSince": "2026-10-03T14:44:52.263712Z"
+          },
+          {
+            "id": "6d830af5-b7cc-44b4-b7f5-5e0275aceb3b",
+            "name": "auto-ph-013",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:20.687509Z",
+            "heartbeatAgeSeconds": 2.443308,
+            "connectedSince": "2026-10-03T14:39:20.771599Z"
+          },
+          {
+            "id": "75c29a32-2867-4b60-947c-003e712e538f",
+            "name": "auto-ph-020",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:58:54.190996Z",
+            "heartbeatAgeSeconds": 28.939821,
+            "connectedSince": "2026-10-03T14:54:24.215780Z"
+          },
+          {
+            "id": "8c187cfa-e5ea-4939-a137-07619437953d",
+            "name": "auto-ph-012",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:12.896513Z",
+            "heartbeatAgeSeconds": 10.234304,
+            "connectedSince": "2026-10-03T14:38:42.979703Z"
+          },
+          {
+            "id": "930a6505-b7ec-4eee-93fe-9aaa66517871",
+            "name": "auto-ph-015",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:58:59.901102Z",
+            "heartbeatAgeSeconds": 23.229715,
+            "connectedSince": "2026-10-03T14:45:29.950789Z"
+          },
+          {
+            "id": "b410464a-5f26-4803-a756-7840cc17b128",
+            "name": "auto-ph-025",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:12.648652Z",
+            "heartbeatAgeSeconds": 10.482165,
+            "connectedSince": "2026-10-03T14:55:42.680562Z"
+          },
+          {
+            "id": "bafef86f-3ab4-469b-ae0c-cf2771b55813",
+            "name": "auto-ph-018",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:20.767127Z",
+            "heartbeatAgeSeconds": 2.36369,
+            "connectedSince": "2026-10-03T14:47:20.812806Z"
+          },
+          {
+            "id": "c37e687a-ee83-466d-846f-3f4b36047fa7",
+            "name": "auto-ph-019",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:17.384528Z",
+            "heartbeatAgeSeconds": 5.746289,
+            "connectedSince": "2026-10-03T14:53:47.407951Z"
+          },
+          {
+            "id": "d088c147-7ada-4b29-9e79-f991b20fcf91",
+            "name": "auto-ph-022",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:00.349159Z",
+            "heartbeatAgeSeconds": 22.781658,
+            "connectedSince": "2026-10-03T14:55:00.390793Z"
+          }
+        ]
+      },
+      {
+        "observedAt": "2026-10-03T14:59:33.154381+00:00",
+        "total": 19,
+        "online": [
+          {
+            "id": "1dd7e59c-b68f-406a-93cd-5f4e34fdea90",
+            "name": "auto-ph-017",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:14.088696Z",
+            "heartbeatAgeSeconds": 19.065685,
+            "connectedSince": "2026-10-03T14:46:44.113295Z"
+          },
+          {
+            "id": "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93",
+            "name": "auto-ph-016",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:05.514643Z",
+            "heartbeatAgeSeconds": 27.639738,
+            "connectedSince": "2026-10-03T14:46:05.581336Z"
+          },
+          {
+            "id": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+            "name": "auto-ph-011",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:06.134681Z",
+            "heartbeatAgeSeconds": 27.0197,
+            "connectedSince": "2026-10-03T14:38:06.234296Z"
+          },
+          {
+            "id": "4815b950-e5cf-4686-9d46-42d0df8d41f7",
+            "name": "auto-ph-028",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:05.451127Z",
+            "heartbeatAgeSeconds": 27.703254,
+            "connectedSince": "2026-10-03T14:33:35.538610Z"
+          },
+          {
+            "id": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+            "name": "auto-ph-010",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:16.910438Z",
+            "heartbeatAgeSeconds": 16.243943,
+            "connectedSince": "2026-10-03T14:37:16.980451Z"
+          },
+          {
+            "id": "673d5774-24b1-4b57-8dfb-90c46f627ce3",
+            "name": "auto-ph-014",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:21.742795Z",
+            "heartbeatAgeSeconds": 11.411586,
+            "connectedSince": "2026-10-03T14:44:52.263712Z"
+          },
+          {
+            "id": "6d830af5-b7cc-44b4-b7f5-5e0275aceb3b",
+            "name": "auto-ph-013",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:20.687509Z",
+            "heartbeatAgeSeconds": 12.466872,
+            "connectedSince": "2026-10-03T14:39:20.771599Z"
+          },
+          {
+            "id": "75c29a32-2867-4b60-947c-003e712e538f",
+            "name": "auto-ph-020",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:24.188191Z",
+            "heartbeatAgeSeconds": 8.96619,
+            "connectedSince": "2026-10-03T14:54:24.215780Z"
+          },
+          {
+            "id": "8c187cfa-e5ea-4939-a137-07619437953d",
+            "name": "auto-ph-012",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:12.896513Z",
+            "heartbeatAgeSeconds": 20.257868,
+            "connectedSince": "2026-10-03T14:38:42.979703Z"
+          },
+          {
+            "id": "930a6505-b7ec-4eee-93fe-9aaa66517871",
+            "name": "auto-ph-015",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:29.900556Z",
+            "heartbeatAgeSeconds": 3.253825,
+            "connectedSince": "2026-10-03T14:45:29.950789Z"
+          },
+          {
+            "id": "b410464a-5f26-4803-a756-7840cc17b128",
+            "name": "auto-ph-025",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:12.648652Z",
+            "heartbeatAgeSeconds": 20.505729,
+            "connectedSince": "2026-10-03T14:55:42.680562Z"
+          },
+          {
+            "id": "bafef86f-3ab4-469b-ae0c-cf2771b55813",
+            "name": "auto-ph-018",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:20.767127Z",
+            "heartbeatAgeSeconds": 12.387254,
+            "connectedSince": "2026-10-03T14:47:20.812806Z"
+          },
+          {
+            "id": "c37e687a-ee83-466d-846f-3f4b36047fa7",
+            "name": "auto-ph-019",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:17.384528Z",
+            "heartbeatAgeSeconds": 15.769853,
+            "connectedSince": "2026-10-03T14:53:47.407951Z"
+          },
+          {
+            "id": "d088c147-7ada-4b29-9e79-f991b20fcf91",
+            "name": "auto-ph-022",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:30.347285Z",
+            "heartbeatAgeSeconds": 2.807096,
+            "connectedSince": "2026-10-03T14:55:00.390793Z"
+          }
+        ]
+      },
+      {
+        "observedAt": "2026-10-03T14:59:43.175903+00:00",
+        "total": 19,
+        "online": [
+          {
+            "id": "1dd7e59c-b68f-406a-93cd-5f4e34fdea90",
+            "name": "auto-ph-017",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:14.088696Z",
+            "heartbeatAgeSeconds": 29.087207,
+            "connectedSince": "2026-10-03T14:46:44.113295Z"
+          },
+          {
+            "id": "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93",
+            "name": "auto-ph-016",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:35.515604Z",
+            "heartbeatAgeSeconds": 7.660299,
+            "connectedSince": "2026-10-03T14:46:05.581336Z"
+          },
+          {
+            "id": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+            "name": "auto-ph-011",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:36.132475Z",
+            "heartbeatAgeSeconds": 7.043428,
+            "connectedSince": "2026-10-03T14:38:06.234296Z"
+          },
+          {
+            "id": "4815b950-e5cf-4686-9d46-42d0df8d41f7",
+            "name": "auto-ph-028",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:35.448342Z",
+            "heartbeatAgeSeconds": 7.727561,
+            "connectedSince": "2026-10-03T14:33:35.538610Z"
+          },
+          {
+            "id": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+            "name": "auto-ph-010",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:16.910438Z",
+            "heartbeatAgeSeconds": 26.265465,
+            "connectedSince": "2026-10-03T14:37:16.980451Z"
+          },
+          {
+            "id": "673d5774-24b1-4b57-8dfb-90c46f627ce3",
+            "name": "auto-ph-014",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:21.742795Z",
+            "heartbeatAgeSeconds": 21.433108,
+            "connectedSince": "2026-10-03T14:44:52.263712Z"
+          },
+          {
+            "id": "6d830af5-b7cc-44b4-b7f5-5e0275aceb3b",
+            "name": "auto-ph-013",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:20.687509Z",
+            "heartbeatAgeSeconds": 22.488394,
+            "connectedSince": "2026-10-03T14:39:20.771599Z"
+          },
+          {
+            "id": "75c29a32-2867-4b60-947c-003e712e538f",
+            "name": "auto-ph-020",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:24.188191Z",
+            "heartbeatAgeSeconds": 18.987712,
+            "connectedSince": "2026-10-03T14:54:24.215780Z"
+          },
+          {
+            "id": "8c187cfa-e5ea-4939-a137-07619437953d",
+            "name": "auto-ph-012",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:42.940056Z",
+            "heartbeatAgeSeconds": 0.235847,
+            "connectedSince": "2026-10-03T14:38:42.979703Z"
+          },
+          {
+            "id": "930a6505-b7ec-4eee-93fe-9aaa66517871",
+            "name": "auto-ph-015",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:29.900556Z",
+            "heartbeatAgeSeconds": 13.275347,
+            "connectedSince": "2026-10-03T14:45:29.950789Z"
+          },
+          {
+            "id": "b410464a-5f26-4803-a756-7840cc17b128",
+            "name": "auto-ph-025",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:42.640625Z",
+            "heartbeatAgeSeconds": 0.535278,
+            "connectedSince": "2026-10-03T14:55:42.680562Z"
+          },
+          {
+            "id": "bafef86f-3ab4-469b-ae0c-cf2771b55813",
+            "name": "auto-ph-018",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:20.767127Z",
+            "heartbeatAgeSeconds": 22.408776,
+            "connectedSince": "2026-10-03T14:47:20.812806Z"
+          },
+          {
+            "id": "c37e687a-ee83-466d-846f-3f4b36047fa7",
+            "name": "auto-ph-019",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:17.384528Z",
+            "heartbeatAgeSeconds": 25.791375,
+            "connectedSince": "2026-10-03T14:53:47.407951Z"
+          },
+          {
+            "id": "d088c147-7ada-4b29-9e79-f991b20fcf91",
+            "name": "auto-ph-022",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:30.347285Z",
+            "heartbeatAgeSeconds": 12.828618,
+            "connectedSince": "2026-10-03T14:55:00.390793Z"
+          }
+        ]
+      },
+      {
+        "observedAt": "2026-10-03T14:59:53.198410+00:00",
+        "total": 19,
+        "online": [
+          {
+            "id": "1dd7e59c-b68f-406a-93cd-5f4e34fdea90",
+            "name": "auto-ph-017",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:44.065213Z",
+            "heartbeatAgeSeconds": 9.133197,
+            "connectedSince": "2026-10-03T14:46:44.113295Z"
+          },
+          {
+            "id": "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93",
+            "name": "auto-ph-016",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:35.515604Z",
+            "heartbeatAgeSeconds": 17.682806,
+            "connectedSince": "2026-10-03T14:46:05.581336Z"
+          },
+          {
+            "id": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+            "name": "auto-ph-011",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:36.132475Z",
+            "heartbeatAgeSeconds": 17.065935,
+            "connectedSince": "2026-10-03T14:38:06.234296Z"
+          },
+          {
+            "id": "4815b950-e5cf-4686-9d46-42d0df8d41f7",
+            "name": "auto-ph-028",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:35.448342Z",
+            "heartbeatAgeSeconds": 17.750068,
+            "connectedSince": "2026-10-03T14:33:35.538610Z"
+          },
+          {
+            "id": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+            "name": "auto-ph-010",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:46.908895Z",
+            "heartbeatAgeSeconds": 6.289515,
+            "connectedSince": "2026-10-03T14:37:16.980451Z"
+          },
+          {
+            "id": "673d5774-24b1-4b57-8dfb-90c46f627ce3",
+            "name": "auto-ph-014",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:51.739826Z",
+            "heartbeatAgeSeconds": 1.458584,
+            "connectedSince": "2026-10-03T14:44:52.263712Z"
+          },
+          {
+            "id": "6d830af5-b7cc-44b4-b7f5-5e0275aceb3b",
+            "name": "auto-ph-013",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:50.683306Z",
+            "heartbeatAgeSeconds": 2.515104,
+            "connectedSince": "2026-10-03T14:39:20.771599Z"
+          },
+          {
+            "id": "75c29a32-2867-4b60-947c-003e712e538f",
+            "name": "auto-ph-020",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:24.188191Z",
+            "heartbeatAgeSeconds": 29.010219,
+            "connectedSince": "2026-10-03T14:54:24.215780Z"
+          },
+          {
+            "id": "8c187cfa-e5ea-4939-a137-07619437953d",
+            "name": "auto-ph-012",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:42.940056Z",
+            "heartbeatAgeSeconds": 10.258354,
+            "connectedSince": "2026-10-03T14:38:42.979703Z"
+          },
+          {
+            "id": "930a6505-b7ec-4eee-93fe-9aaa66517871",
+            "name": "auto-ph-015",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:29.900556Z",
+            "heartbeatAgeSeconds": 23.297854,
+            "connectedSince": "2026-10-03T14:45:29.950789Z"
+          },
+          {
+            "id": "b410464a-5f26-4803-a756-7840cc17b128",
+            "name": "auto-ph-025",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:42.640625Z",
+            "heartbeatAgeSeconds": 10.557785,
+            "connectedSince": "2026-10-03T14:55:42.680562Z"
+          },
+          {
+            "id": "bafef86f-3ab4-469b-ae0c-cf2771b55813",
+            "name": "auto-ph-018",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:50.782399Z",
+            "heartbeatAgeSeconds": 2.416011,
+            "connectedSince": "2026-10-03T14:47:20.812806Z"
+          },
+          {
+            "id": "c37e687a-ee83-466d-846f-3f4b36047fa7",
+            "name": "auto-ph-019",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:47.379572Z",
+            "heartbeatAgeSeconds": 5.818838,
+            "connectedSince": "2026-10-03T14:53:47.407951Z"
+          },
+          {
+            "id": "d088c147-7ada-4b29-9e79-f991b20fcf91",
+            "name": "auto-ph-022",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:30.347285Z",
+            "heartbeatAgeSeconds": 22.851125,
+            "connectedSince": "2026-10-03T14:55:00.390793Z"
+          }
+        ]
+      },
+      {
+        "observedAt": "2026-10-03T15:00:03.222465+00:00",
+        "total": 19,
+        "online": [
+          {
+            "id": "1dd7e59c-b68f-406a-93cd-5f4e34fdea90",
+            "name": "auto-ph-017",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:44.065213Z",
+            "heartbeatAgeSeconds": 19.157252,
+            "connectedSince": "2026-10-03T14:46:44.113295Z"
+          },
+          {
+            "id": "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93",
+            "name": "auto-ph-016",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:35.515604Z",
+            "heartbeatAgeSeconds": 27.706861,
+            "connectedSince": "2026-10-03T14:46:05.581336Z"
+          },
+          {
+            "id": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+            "name": "auto-ph-011",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:36.132475Z",
+            "heartbeatAgeSeconds": 27.08999,
+            "connectedSince": "2026-10-03T14:38:06.234296Z"
+          },
+          {
+            "id": "4815b950-e5cf-4686-9d46-42d0df8d41f7",
+            "name": "auto-ph-028",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:35.448342Z",
+            "heartbeatAgeSeconds": 27.774123,
+            "connectedSince": "2026-10-03T14:33:35.538610Z"
+          },
+          {
+            "id": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+            "name": "auto-ph-010",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:46.908895Z",
+            "heartbeatAgeSeconds": 16.31357,
+            "connectedSince": "2026-10-03T14:37:16.980451Z"
+          },
+          {
+            "id": "673d5774-24b1-4b57-8dfb-90c46f627ce3",
+            "name": "auto-ph-014",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:51.739826Z",
+            "heartbeatAgeSeconds": 11.482639,
+            "connectedSince": "2026-10-03T14:44:52.263712Z"
+          },
+          {
+            "id": "6d830af5-b7cc-44b4-b7f5-5e0275aceb3b",
+            "name": "auto-ph-013",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:50.683306Z",
+            "heartbeatAgeSeconds": 12.539159,
+            "connectedSince": "2026-10-03T14:39:20.771599Z"
+          },
+          {
+            "id": "75c29a32-2867-4b60-947c-003e712e538f",
+            "name": "auto-ph-020",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:54.186921Z",
+            "heartbeatAgeSeconds": 9.035544,
+            "connectedSince": "2026-10-03T14:54:24.215780Z"
+          },
+          {
+            "id": "8c187cfa-e5ea-4939-a137-07619437953d",
+            "name": "auto-ph-012",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:42.940056Z",
+            "heartbeatAgeSeconds": 20.282409,
+            "connectedSince": "2026-10-03T14:38:42.979703Z"
+          },
+          {
+            "id": "930a6505-b7ec-4eee-93fe-9aaa66517871",
+            "name": "auto-ph-015",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:59.898958Z",
+            "heartbeatAgeSeconds": 3.323507,
+            "connectedSince": "2026-10-03T14:45:29.950789Z"
+          },
+          {
+            "id": "b410464a-5f26-4803-a756-7840cc17b128",
+            "name": "auto-ph-025",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:42.640625Z",
+            "heartbeatAgeSeconds": 20.58184,
+            "connectedSince": "2026-10-03T14:55:42.680562Z"
+          },
+          {
+            "id": "bafef86f-3ab4-469b-ae0c-cf2771b55813",
+            "name": "auto-ph-018",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:50.782399Z",
+            "heartbeatAgeSeconds": 12.440066,
+            "connectedSince": "2026-10-03T14:47:20.812806Z"
+          },
+          {
+            "id": "c37e687a-ee83-466d-846f-3f4b36047fa7",
+            "name": "auto-ph-019",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:47.379572Z",
+            "heartbeatAgeSeconds": 15.842893,
+            "connectedSince": "2026-10-03T14:53:47.407951Z"
+          },
+          {
+            "id": "d088c147-7ada-4b29-9e79-f991b20fcf91",
+            "name": "auto-ph-022",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:00.345153Z",
+            "heartbeatAgeSeconds": 2.877312,
+            "connectedSince": "2026-10-03T14:55:00.390793Z"
+          }
+        ]
+      },
+      {
+        "observedAt": "2026-10-03T15:00:13.245859+00:00",
+        "total": 19,
+        "online": [
+          {
+            "id": "1dd7e59c-b68f-406a-93cd-5f4e34fdea90",
+            "name": "auto-ph-017",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:44.065213Z",
+            "heartbeatAgeSeconds": 29.180646,
+            "connectedSince": "2026-10-03T14:46:44.113295Z"
+          },
+          {
+            "id": "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93",
+            "name": "auto-ph-016",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:05.510720Z",
+            "heartbeatAgeSeconds": 7.735139,
+            "connectedSince": "2026-10-03T14:46:05.581336Z"
+          },
+          {
+            "id": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+            "name": "auto-ph-011",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:06.132302Z",
+            "heartbeatAgeSeconds": 7.113557,
+            "connectedSince": "2026-10-03T14:38:06.234296Z"
+          },
+          {
+            "id": "4815b950-e5cf-4686-9d46-42d0df8d41f7",
+            "name": "auto-ph-028",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:05.445116Z",
+            "heartbeatAgeSeconds": 7.800743,
+            "connectedSince": "2026-10-03T14:33:35.538610Z"
+          },
+          {
+            "id": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+            "name": "auto-ph-010",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:46.908895Z",
+            "heartbeatAgeSeconds": 26.336964,
+            "connectedSince": "2026-10-03T14:37:16.980451Z"
+          },
+          {
+            "id": "673d5774-24b1-4b57-8dfb-90c46f627ce3",
+            "name": "auto-ph-014",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:51.739826Z",
+            "heartbeatAgeSeconds": 21.506033,
+            "connectedSince": "2026-10-03T14:44:52.263712Z"
+          },
+          {
+            "id": "6d830af5-b7cc-44b4-b7f5-5e0275aceb3b",
+            "name": "auto-ph-013",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:50.683306Z",
+            "heartbeatAgeSeconds": 22.562553,
+            "connectedSince": "2026-10-03T14:39:20.771599Z"
+          },
+          {
+            "id": "75c29a32-2867-4b60-947c-003e712e538f",
+            "name": "auto-ph-020",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:54.186921Z",
+            "heartbeatAgeSeconds": 19.058938,
+            "connectedSince": "2026-10-03T14:54:24.215780Z"
+          },
+          {
+            "id": "8c187cfa-e5ea-4939-a137-07619437953d",
+            "name": "auto-ph-012",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:12.892719Z",
+            "heartbeatAgeSeconds": 0.35314,
+            "connectedSince": "2026-10-03T14:38:42.979703Z"
+          },
+          {
+            "id": "930a6505-b7ec-4eee-93fe-9aaa66517871",
+            "name": "auto-ph-015",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:59.898958Z",
+            "heartbeatAgeSeconds": 13.346901,
+            "connectedSince": "2026-10-03T14:45:29.950789Z"
+          },
+          {
+            "id": "b410464a-5f26-4803-a756-7840cc17b128",
+            "name": "auto-ph-025",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:12.639543Z",
+            "heartbeatAgeSeconds": 0.606316,
+            "connectedSince": "2026-10-03T14:55:42.680562Z"
+          },
+          {
+            "id": "bafef86f-3ab4-469b-ae0c-cf2771b55813",
+            "name": "auto-ph-018",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:50.782399Z",
+            "heartbeatAgeSeconds": 22.46346,
+            "connectedSince": "2026-10-03T14:47:20.812806Z"
+          },
+          {
+            "id": "c37e687a-ee83-466d-846f-3f4b36047fa7",
+            "name": "auto-ph-019",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:47.379572Z",
+            "heartbeatAgeSeconds": 25.866287,
+            "connectedSince": "2026-10-03T14:53:47.407951Z"
+          },
+          {
+            "id": "d088c147-7ada-4b29-9e79-f991b20fcf91",
+            "name": "auto-ph-022",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:00.345153Z",
+            "heartbeatAgeSeconds": 12.900706,
+            "connectedSince": "2026-10-03T14:55:00.390793Z"
+          }
+        ]
+      },
+      {
+        "observedAt": "2026-10-03T15:00:23.271090+00:00",
+        "total": 19,
+        "online": [
+          {
+            "id": "1dd7e59c-b68f-406a-93cd-5f4e34fdea90",
+            "name": "auto-ph-017",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:14.063919Z",
+            "heartbeatAgeSeconds": 9.207171,
+            "connectedSince": "2026-10-03T14:46:44.113295Z"
+          },
+          {
+            "id": "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93",
+            "name": "auto-ph-016",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:05.510720Z",
+            "heartbeatAgeSeconds": 17.76037,
+            "connectedSince": "2026-10-03T14:46:05.581336Z"
+          },
+          {
+            "id": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+            "name": "auto-ph-011",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:06.132302Z",
+            "heartbeatAgeSeconds": 17.138788,
+            "connectedSince": "2026-10-03T14:38:06.234296Z"
+          },
+          {
+            "id": "4815b950-e5cf-4686-9d46-42d0df8d41f7",
+            "name": "auto-ph-028",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:05.445116Z",
+            "heartbeatAgeSeconds": 17.825974,
+            "connectedSince": "2026-10-03T14:33:35.538610Z"
+          },
+          {
+            "id": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+            "name": "auto-ph-010",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:16.905650Z",
+            "heartbeatAgeSeconds": 6.36544,
+            "connectedSince": "2026-10-03T14:37:16.980451Z"
+          },
+          {
+            "id": "673d5774-24b1-4b57-8dfb-90c46f627ce3",
+            "name": "auto-ph-014",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:21.742810Z",
+            "heartbeatAgeSeconds": 1.52828,
+            "connectedSince": "2026-10-03T14:44:52.263712Z"
+          },
+          {
+            "id": "6d830af5-b7cc-44b4-b7f5-5e0275aceb3b",
+            "name": "auto-ph-013",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:20.684621Z",
+            "heartbeatAgeSeconds": 2.586469,
+            "connectedSince": "2026-10-03T14:39:20.771599Z"
+          },
+          {
+            "id": "75c29a32-2867-4b60-947c-003e712e538f",
+            "name": "auto-ph-020",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:54.186921Z",
+            "heartbeatAgeSeconds": 29.084169,
+            "connectedSince": "2026-10-03T14:54:24.215780Z"
+          },
+          {
+            "id": "8c187cfa-e5ea-4939-a137-07619437953d",
+            "name": "auto-ph-012",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:12.892719Z",
+            "heartbeatAgeSeconds": 10.378371,
+            "connectedSince": "2026-10-03T14:38:42.979703Z"
+          },
+          {
+            "id": "930a6505-b7ec-4eee-93fe-9aaa66517871",
+            "name": "auto-ph-015",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T14:59:59.898958Z",
+            "heartbeatAgeSeconds": 23.372132,
+            "connectedSince": "2026-10-03T14:45:29.950789Z"
+          },
+          {
+            "id": "b410464a-5f26-4803-a756-7840cc17b128",
+            "name": "auto-ph-025",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:12.639543Z",
+            "heartbeatAgeSeconds": 10.631547,
+            "connectedSince": "2026-10-03T14:55:42.680562Z"
+          },
+          {
+            "id": "bafef86f-3ab4-469b-ae0c-cf2771b55813",
+            "name": "auto-ph-018",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:20.761124Z",
+            "heartbeatAgeSeconds": 2.509966,
+            "connectedSince": "2026-10-03T14:47:20.812806Z"
+          },
+          {
+            "id": "c37e687a-ee83-466d-846f-3f4b36047fa7",
+            "name": "auto-ph-019",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:17.379102Z",
+            "heartbeatAgeSeconds": 5.891988,
+            "connectedSince": "2026-10-03T14:53:47.407951Z"
+          },
+          {
+            "id": "d088c147-7ada-4b29-9e79-f991b20fcf91",
+            "name": "auto-ph-022",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:00.345153Z",
+            "heartbeatAgeSeconds": 22.925937,
+            "connectedSince": "2026-10-03T14:55:00.390793Z"
+          }
+        ]
+      },
+      {
+        "observedAt": "2026-10-03T15:00:33.293708+00:00",
+        "total": 19,
+        "online": [
+          {
+            "id": "1dd7e59c-b68f-406a-93cd-5f4e34fdea90",
+            "name": "auto-ph-017",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:14.063919Z",
+            "heartbeatAgeSeconds": 19.229789,
+            "connectedSince": "2026-10-03T14:46:44.113295Z"
+          },
+          {
+            "id": "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93",
+            "name": "auto-ph-016",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:05.510720Z",
+            "heartbeatAgeSeconds": 27.782988,
+            "connectedSince": "2026-10-03T14:46:05.581336Z"
+          },
+          {
+            "id": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+            "name": "auto-ph-011",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:06.132302Z",
+            "heartbeatAgeSeconds": 27.161406,
+            "connectedSince": "2026-10-03T14:38:06.234296Z"
+          },
+          {
+            "id": "4815b950-e5cf-4686-9d46-42d0df8d41f7",
+            "name": "auto-ph-028",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:05.445116Z",
+            "heartbeatAgeSeconds": 27.848592,
+            "connectedSince": "2026-10-03T14:33:35.538610Z"
+          },
+          {
+            "id": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+            "name": "auto-ph-010",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:16.905650Z",
+            "heartbeatAgeSeconds": 16.388058,
+            "connectedSince": "2026-10-03T14:37:16.980451Z"
+          },
+          {
+            "id": "673d5774-24b1-4b57-8dfb-90c46f627ce3",
+            "name": "auto-ph-014",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:21.742810Z",
+            "heartbeatAgeSeconds": 11.550898,
+            "connectedSince": "2026-10-03T14:44:52.263712Z"
+          },
+          {
+            "id": "6d830af5-b7cc-44b4-b7f5-5e0275aceb3b",
+            "name": "auto-ph-013",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:20.684621Z",
+            "heartbeatAgeSeconds": 12.609087,
+            "connectedSince": "2026-10-03T14:39:20.771599Z"
+          },
+          {
+            "id": "75c29a32-2867-4b60-947c-003e712e538f",
+            "name": "auto-ph-020",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:24.184515Z",
+            "heartbeatAgeSeconds": 9.109193,
+            "connectedSince": "2026-10-03T14:54:24.215780Z"
+          },
+          {
+            "id": "8c187cfa-e5ea-4939-a137-07619437953d",
+            "name": "auto-ph-012",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:12.892719Z",
+            "heartbeatAgeSeconds": 20.400989,
+            "connectedSince": "2026-10-03T14:38:42.979703Z"
+          },
+          {
+            "id": "930a6505-b7ec-4eee-93fe-9aaa66517871",
+            "name": "auto-ph-015",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:29.894970Z",
+            "heartbeatAgeSeconds": 3.398738,
+            "connectedSince": "2026-10-03T14:45:29.950789Z"
+          },
+          {
+            "id": "b410464a-5f26-4803-a756-7840cc17b128",
+            "name": "auto-ph-025",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:12.639543Z",
+            "heartbeatAgeSeconds": 20.654165,
+            "connectedSince": "2026-10-03T14:55:42.680562Z"
+          },
+          {
+            "id": "bafef86f-3ab4-469b-ae0c-cf2771b55813",
+            "name": "auto-ph-018",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:20.761124Z",
+            "heartbeatAgeSeconds": 12.532584,
+            "connectedSince": "2026-10-03T14:47:20.812806Z"
+          },
+          {
+            "id": "c37e687a-ee83-466d-846f-3f4b36047fa7",
+            "name": "auto-ph-019",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:17.379102Z",
+            "heartbeatAgeSeconds": 15.914606,
+            "connectedSince": "2026-10-03T14:53:47.407951Z"
+          },
+          {
+            "id": "d088c147-7ada-4b29-9e79-f991b20fcf91",
+            "name": "auto-ph-022",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:30.403976Z",
+            "heartbeatAgeSeconds": 2.889732,
+            "connectedSince": "2026-10-03T14:55:00.390793Z"
+          }
+        ]
+      },
+      {
+        "observedAt": "2026-10-03T15:00:43.317317+00:00",
+        "total": 19,
+        "online": [
+          {
+            "id": "1dd7e59c-b68f-406a-93cd-5f4e34fdea90",
+            "name": "auto-ph-017",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:14.063919Z",
+            "heartbeatAgeSeconds": 29.253398,
+            "connectedSince": "2026-10-03T14:46:44.113295Z"
+          },
+          {
+            "id": "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93",
+            "name": "auto-ph-016",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:35.510473Z",
+            "heartbeatAgeSeconds": 7.806844,
+            "connectedSince": "2026-10-03T14:46:05.581336Z"
+          },
+          {
+            "id": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+            "name": "auto-ph-011",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:36.128790Z",
+            "heartbeatAgeSeconds": 7.188527,
+            "connectedSince": "2026-10-03T14:38:06.234296Z"
+          },
+          {
+            "id": "4815b950-e5cf-4686-9d46-42d0df8d41f7",
+            "name": "auto-ph-028",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:35.447000Z",
+            "heartbeatAgeSeconds": 7.870317,
+            "connectedSince": "2026-10-03T14:33:35.538610Z"
+          },
+          {
+            "id": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+            "name": "auto-ph-010",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:16.905650Z",
+            "heartbeatAgeSeconds": 26.411667,
+            "connectedSince": "2026-10-03T14:37:16.980451Z"
+          },
+          {
+            "id": "673d5774-24b1-4b57-8dfb-90c46f627ce3",
+            "name": "auto-ph-014",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:21.742810Z",
+            "heartbeatAgeSeconds": 21.574507,
+            "connectedSince": "2026-10-03T14:44:52.263712Z"
+          },
+          {
+            "id": "6d830af5-b7cc-44b4-b7f5-5e0275aceb3b",
+            "name": "auto-ph-013",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:20.684621Z",
+            "heartbeatAgeSeconds": 22.632696,
+            "connectedSince": "2026-10-03T14:39:20.771599Z"
+          },
+          {
+            "id": "75c29a32-2867-4b60-947c-003e712e538f",
+            "name": "auto-ph-020",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:24.184515Z",
+            "heartbeatAgeSeconds": 19.132802,
+            "connectedSince": "2026-10-03T14:54:24.215780Z"
+          },
+          {
+            "id": "8c187cfa-e5ea-4939-a137-07619437953d",
+            "name": "auto-ph-012",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:42.891508Z",
+            "heartbeatAgeSeconds": 0.425809,
+            "connectedSince": "2026-10-03T14:38:42.979703Z"
+          },
+          {
+            "id": "930a6505-b7ec-4eee-93fe-9aaa66517871",
+            "name": "auto-ph-015",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:29.894970Z",
+            "heartbeatAgeSeconds": 13.422347,
+            "connectedSince": "2026-10-03T14:45:29.950789Z"
+          },
+          {
+            "id": "b410464a-5f26-4803-a756-7840cc17b128",
+            "name": "auto-ph-025",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:42.638216Z",
+            "heartbeatAgeSeconds": 0.679101,
+            "connectedSince": "2026-10-03T14:55:42.680562Z"
+          },
+          {
+            "id": "bafef86f-3ab4-469b-ae0c-cf2771b55813",
+            "name": "auto-ph-018",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:20.761124Z",
+            "heartbeatAgeSeconds": 22.556193,
+            "connectedSince": "2026-10-03T14:47:20.812806Z"
+          },
+          {
+            "id": "c37e687a-ee83-466d-846f-3f4b36047fa7",
+            "name": "auto-ph-019",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:17.379102Z",
+            "heartbeatAgeSeconds": 25.938215,
+            "connectedSince": "2026-10-03T14:53:47.407951Z"
+          },
+          {
+            "id": "d088c147-7ada-4b29-9e79-f991b20fcf91",
+            "name": "auto-ph-022",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:30.403976Z",
+            "heartbeatAgeSeconds": 12.913341,
+            "connectedSince": "2026-10-03T14:55:00.390793Z"
+          }
+        ]
+      },
+      {
+        "observedAt": "2026-10-03T15:00:53.340570+00:00",
+        "total": 19,
+        "online": [
+          {
+            "id": "1dd7e59c-b68f-406a-93cd-5f4e34fdea90",
+            "name": "auto-ph-017",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:44.062585Z",
+            "heartbeatAgeSeconds": 9.277985,
+            "connectedSince": "2026-10-03T14:46:44.113295Z"
+          },
+          {
+            "id": "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93",
+            "name": "auto-ph-016",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:35.510473Z",
+            "heartbeatAgeSeconds": 17.830097,
+            "connectedSince": "2026-10-03T14:46:05.581336Z"
+          },
+          {
+            "id": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+            "name": "auto-ph-011",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:36.128790Z",
+            "heartbeatAgeSeconds": 17.21178,
+            "connectedSince": "2026-10-03T14:38:06.234296Z"
+          },
+          {
+            "id": "4815b950-e5cf-4686-9d46-42d0df8d41f7",
+            "name": "auto-ph-028",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:35.447000Z",
+            "heartbeatAgeSeconds": 17.89357,
+            "connectedSince": "2026-10-03T14:33:35.538610Z"
+          },
+          {
+            "id": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+            "name": "auto-ph-010",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:46.904983Z",
+            "heartbeatAgeSeconds": 6.435587,
+            "connectedSince": "2026-10-03T14:37:16.980451Z"
+          },
+          {
+            "id": "673d5774-24b1-4b57-8dfb-90c46f627ce3",
+            "name": "auto-ph-014",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:51.736906Z",
+            "heartbeatAgeSeconds": 1.603664,
+            "connectedSince": "2026-10-03T14:44:52.263712Z"
+          },
+          {
+            "id": "6d830af5-b7cc-44b4-b7f5-5e0275aceb3b",
+            "name": "auto-ph-013",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:50.682889Z",
+            "heartbeatAgeSeconds": 2.657681,
+            "connectedSince": "2026-10-03T14:39:20.771599Z"
+          },
+          {
+            "id": "75c29a32-2867-4b60-947c-003e712e538f",
+            "name": "auto-ph-020",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:24.184515Z",
+            "heartbeatAgeSeconds": 29.156055,
+            "connectedSince": "2026-10-03T14:54:24.215780Z"
+          },
+          {
+            "id": "8c187cfa-e5ea-4939-a137-07619437953d",
+            "name": "auto-ph-012",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:42.891508Z",
+            "heartbeatAgeSeconds": 10.449062,
+            "connectedSince": "2026-10-03T14:38:42.979703Z"
+          },
+          {
+            "id": "930a6505-b7ec-4eee-93fe-9aaa66517871",
+            "name": "auto-ph-015",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:29.894970Z",
+            "heartbeatAgeSeconds": 23.4456,
+            "connectedSince": "2026-10-03T14:45:29.950789Z"
+          },
+          {
+            "id": "b410464a-5f26-4803-a756-7840cc17b128",
+            "name": "auto-ph-025",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:42.638216Z",
+            "heartbeatAgeSeconds": 10.702354,
+            "connectedSince": "2026-10-03T14:55:42.680562Z"
+          },
+          {
+            "id": "bafef86f-3ab4-469b-ae0c-cf2771b55813",
+            "name": "auto-ph-018",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:50.758435Z",
+            "heartbeatAgeSeconds": 2.582135,
+            "connectedSince": "2026-10-03T14:47:20.812806Z"
+          },
+          {
+            "id": "c37e687a-ee83-466d-846f-3f4b36047fa7",
+            "name": "auto-ph-019",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:47.377556Z",
+            "heartbeatAgeSeconds": 5.963014,
+            "connectedSince": "2026-10-03T14:53:47.407951Z"
+          },
+          {
+            "id": "d088c147-7ada-4b29-9e79-f991b20fcf91",
+            "name": "auto-ph-022",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:30.403976Z",
+            "heartbeatAgeSeconds": 22.936594,
+            "connectedSince": "2026-10-03T14:55:00.390793Z"
+          }
+        ]
+      },
+      {
+        "observedAt": "2026-10-03T15:01:03.364635+00:00",
+        "total": 19,
+        "online": [
+          {
+            "id": "1dd7e59c-b68f-406a-93cd-5f4e34fdea90",
+            "name": "auto-ph-017",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:44.062585Z",
+            "heartbeatAgeSeconds": 19.30205,
+            "connectedSince": "2026-10-03T14:46:44.113295Z"
+          },
+          {
+            "id": "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93",
+            "name": "auto-ph-016",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:35.510473Z",
+            "heartbeatAgeSeconds": 27.854162,
+            "connectedSince": "2026-10-03T14:46:05.581336Z"
+          },
+          {
+            "id": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+            "name": "auto-ph-011",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:36.128790Z",
+            "heartbeatAgeSeconds": 27.235845,
+            "connectedSince": "2026-10-03T14:38:06.234296Z"
+          },
+          {
+            "id": "4815b950-e5cf-4686-9d46-42d0df8d41f7",
+            "name": "auto-ph-028",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:35.447000Z",
+            "heartbeatAgeSeconds": 27.917635,
+            "connectedSince": "2026-10-03T14:33:35.538610Z"
+          },
+          {
+            "id": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+            "name": "auto-ph-010",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:46.904983Z",
+            "heartbeatAgeSeconds": 16.459652,
+            "connectedSince": "2026-10-03T14:37:16.980451Z"
+          },
+          {
+            "id": "673d5774-24b1-4b57-8dfb-90c46f627ce3",
+            "name": "auto-ph-014",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:51.736906Z",
+            "heartbeatAgeSeconds": 11.627729,
+            "connectedSince": "2026-10-03T14:44:52.263712Z"
+          },
+          {
+            "id": "6d830af5-b7cc-44b4-b7f5-5e0275aceb3b",
+            "name": "auto-ph-013",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:50.682889Z",
+            "heartbeatAgeSeconds": 12.681746,
+            "connectedSince": "2026-10-03T14:39:20.771599Z"
+          },
+          {
+            "id": "75c29a32-2867-4b60-947c-003e712e538f",
+            "name": "auto-ph-020",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:54.183599Z",
+            "heartbeatAgeSeconds": 9.181036,
+            "connectedSince": "2026-10-03T14:54:24.215780Z"
+          },
+          {
+            "id": "8c187cfa-e5ea-4939-a137-07619437953d",
+            "name": "auto-ph-012",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:42.891508Z",
+            "heartbeatAgeSeconds": 20.473127,
+            "connectedSince": "2026-10-03T14:38:42.979703Z"
+          },
+          {
+            "id": "930a6505-b7ec-4eee-93fe-9aaa66517871",
+            "name": "auto-ph-015",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:59.895284Z",
+            "heartbeatAgeSeconds": 3.469351,
+            "connectedSince": "2026-10-03T14:45:29.950789Z"
+          },
+          {
+            "id": "b410464a-5f26-4803-a756-7840cc17b128",
+            "name": "auto-ph-025",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:42.638216Z",
+            "heartbeatAgeSeconds": 20.726419,
+            "connectedSince": "2026-10-03T14:55:42.680562Z"
+          },
+          {
+            "id": "bafef86f-3ab4-469b-ae0c-cf2771b55813",
+            "name": "auto-ph-018",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:50.758435Z",
+            "heartbeatAgeSeconds": 12.6062,
+            "connectedSince": "2026-10-03T14:47:20.812806Z"
+          },
+          {
+            "id": "c37e687a-ee83-466d-846f-3f4b36047fa7",
+            "name": "auto-ph-019",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:00:47.377556Z",
+            "heartbeatAgeSeconds": 15.987079,
+            "connectedSince": "2026-10-03T14:53:47.407951Z"
+          },
+          {
+            "id": "d088c147-7ada-4b29-9e79-f991b20fcf91",
+            "name": "auto-ph-022",
+            "versionCode": 10244,
+            "lastHeartbeat": "2026-10-03T15:01:00.344560Z",
+            "heartbeatAgeSeconds": 3.020075,
+            "connectedSince": "2026-10-03T14:55:00.390793Z"
+          }
+        ]
+      }
+    ],
+    "deviceCommands": false,
+    "normalOtaReceipts": 1,
+    "scopedRecoveryInstalls": 14,
+    "containersPreserved": true,
+    "normalAndroidDevLatest": 10209,
+    "finishedAt": "2026-10-03T15:01:04.005342+00:00",
+    "status": "finite14_online10244_accepted",
+    "offlineOutsideAcceptance": 5
+  },
+  "preflight_014_reconciliation": {
+    "observedAt": "2026-10-03T14:43:27.424559+00:00",
+    "deviceId": "673d5774-24b1-4b57-8dfb-90c46f627ce3",
+    "name": "auto-ph-014",
+    "status": "online",
+    "versionCode": 10241,
+    "lastHeartbeat": "2026-10-03T14:43:18.573428Z",
+    "activeGrant": null,
+    "previousInstallerSent": false,
+    "originalSubprocessStderrPreserved": false,
+    "rootRecoveryIntentFileAbsent": true,
+    "readOnlyAndroidCommands": 2,
+    "packagePathCount": 1,
+    "installedSha256": "5222d948a1a9f81e575955cc300f24dba41296b88d4993ef8acb033c323c6532",
+    "matchesBaseline10241": true
+  },
+  "preflight_019_failure": {
+    "phase": "operator_login",
+    "http_status": 429,
+    "installer_sent": false,
+    "resolution": "One operator session shared only over local private stdin; no rate-limit policy change"
+  },
+  "active_online_version_code": 10244,
+  "online_count": 14,
+  "offline_count": 5,
+  "native_missing_modern_fallback_observed_in_logs": false,
+  "full_stable_release_acceptance": false
+}

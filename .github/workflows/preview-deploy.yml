@@ -94,7 +94,8 @@ jobs:
       - name: Build & push backend
         uses: docker/build-push-action@v6
         with:
-          context:    backend
+          context:    .
+          file:       backend/Dockerfile
           push:       true
           tags:       ghcr.io/${{ github.repository_owner }}/sphere-platform-backend:pr-${{ github.event.pull_request.number }}
           cache-from: type=registry,ref=ghcr.io/${{ github.repository_owner }}/sphere-platform-backend:buildcache
@@ -109,6 +110,7 @@ jobs:
           tags:       ghcr.io/${{ github.repository_owner }}/sphere-platform-frontend:pr-${{ github.event.pull_request.number }}
           cache-from: type=registry,ref=ghcr.io/${{ github.repository_owner }}/sphere-platform-frontend:buildcache
           cache-to:   type=registry,ref=ghcr.io/${{ github.repository_owner }}/sphere-platform-frontend:buildcache,mode=max
+          build-args: BUILD_SHA=${{ github.sha }}
 
       - name: Deploy preview environment
         uses: appleboy/ssh-action@v1

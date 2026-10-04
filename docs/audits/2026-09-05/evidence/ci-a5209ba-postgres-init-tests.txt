@@ -1,0 +1,7 @@
+PostgreSQL init/restart job 103379614098, head a5209ba1fc578a63a3d3885c8009f3ea5e5352ee, attempt 1, artifact 10277643786
+Two cases separate from pytest and existing image 4 + 1.
+
+test_configured_user_initializes_and_restarts_with_owned_n8n_and_extensions (__main__.PostgresInitializationTests.test_configured_user_initializes_and_restarts_with_owned_n8n_and_extensions) ... ok
+test_default_user_initializes_and_restarts_with_owned_n8n_and_extensions (__main__.PostgresInitializationTests.test_default_user_initializes_and_restarts_with_owned_n8n_and_extensions) ... ok
+Ran 2 tests in 7.063s
+OK

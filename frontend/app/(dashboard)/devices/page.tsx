@@ -1,19 +1,28 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { Suspense, useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { RowSelectionState } from '@tanstack/react-table';
-import { useDevices, useBulkAction, useDeleteDevice, useUpdateDevice, useBulkDeleteDevices } from '@/lib/hooks/useDevices';
+import { useDevices, useBulkAction, useDeleteDevice, useUpdateDevice, useBulkDeleteDevices, type Device } from '@/lib/hooks/useDevices';
+import { useBulkRevokeVpn } from '@/lib/hooks/useVpn';
+import { getApiErrorMessage } from '@/lib/apiError';
 import { useDebounce } from '@/lib/hooks/useDebounce';
+import { countDeviceStatuses, filterDevicesByStatus, type DeviceStatusFilter } from '@/src/features/devices/deviceListFilters';
 import { useGroups, useMoveDevices } from '@/lib/hooks/useGroups';
-import { useLocations, useAssignDevicesToLocation, useRemoveDevicesFromLocation } from '@/lib/hooks/useLocations';
+import { useLocations, useAssignDevicesToLocation } from '@/lib/hooks/useLocations';
 import { FleetMatrix, type DeviceAction } from '@/src/features/devices/FleetMatrix';
 import { MultiStreamGrid } from '@/src/features/devices/MultiStreamGrid';
+import { DeviceBulkDeleteButton } from '@/src/features/devices/DeviceBulkDeleteButton';
+import { DeviceDeleteConfirmationDialog } from '@/src/features/devices/DeviceDeleteConfirmationDialog';
+import { MAX_BULK_DEVICE_OPERATION_COUNT } from '@/src/features/devices/constants';
 import { Button } from '@/src/shared/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
@@ -24,17 +33,44 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Cpu, RefreshCcw, ShieldOff, LayoutGrid, List, Trash2, Pencil, MapPin, FolderOpen, Filter, Server } from 'lucide-react';
+import { Activity, AlertTriangle, ChevronLeft, ChevronRight, Cpu, Filter, FolderOpen, LayoutGrid, List, Loader2, MapPin, Pencil, RefreshCcw, Search, Server, ShieldOff, Wifi, WifiOff } from 'lucide-react';
 import { useGameServers } from '@/lib/hooks/usePipelineSettings';
+import { toast } from 'sonner';
+import { PermissionNotice, useCapabilities } from '@/src/features/access/Capabilities';
 
-export default function DevicesPage() {
+type DeviceActionFailure = { device_id: string; error: string | null };
+
+function formatDeviceFailures(failures: DeviceActionFailure[], devices: Device[]): string {
+  const examples = failures.slice(0, 3).map((failure) => {
+    const label = devices.find((device) => device.id === failure.device_id)?.name ?? failure.device_id.slice(0, 8);
+    const reason = failure.error?.replace(/\s+/g, ' ').slice(0, 160) || 'причина не указана';
+    return `${label}: ${reason}`;
+  });
+  const remainder = failures.length > examples.length ? `; и ещё ${failures.length - examples.length}` : '';
+  return examples.length ? `${examples.join('; ')}${remainder}.` : '';
+}
+
+function DevicesRegistry({ initialGroupId }: { initialGroupId: string }) {
+  const access = useCapabilities();
+  const canWrite = access.can('device:write');
+  const canDelete = access.can('device:delete');
+  const canRevokeVpn = access.can('vpn:mass_operation');
+  const canDeviceAction = useCallback((action: DeviceAction) => action === 'delete' ? canDelete : canWrite, [canDelete, canWrite]);
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 300);
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
+  const [statusFilter, setStatusFilter] = useState<DeviceStatusFilter>('all');
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(100);
 
   // Диалоги
   const [renameDialog, setRenameDialog] = useState<{ open: boolean; deviceId: string; currentName: string }>({ open: false, deviceId: '', currentName: '' });
+  const [singleDeleteDialog, setSingleDeleteDialog] = useState<{ deviceId: string; deviceName: string } | null>(null);
+  const [singleDeleteError, setSingleDeleteError] = useState<string | null>(null);
+  const singleDeleteLock = useRef(false);
+  const [vpnRevokeConfirmationOpen, setVpnRevokeConfirmationOpen] = useState(false);
+  const [vpnRevokeError, setVpnRevokeError] = useState<string | null>(null);
   const [newName, setNewName] = useState('');
   const [assignGroupDialog, setAssignGroupDialog] = useState(false);
   const [assignLocationDialog, setAssignLocationDialog] = useState(false);
@@ -46,43 +82,84 @@ export default function DevicesPage() {
   const [selectedLocationId, setSelectedLocationId] = useState<string>('');
 
   // Фильтры по группе и локации
-  const [filterGroupId, setFilterGroupId] = useState<string>('');
+  const [filterGroupId, setFilterGroupId] = useState(initialGroupId);
   const [filterLocationId, setFilterLocationId] = useState<string>('');
 
-  // Backend поддерживает до 5000 — запрашиваем все устройства одной страницей
-  const { data, isLoading, refetch } = useDevices({
-    page: 1,
-    page_size: 5000,
+  const liveStatusFilter = statusFilter === 'all' ? undefined : statusFilter;
+  const queryGroupId = filterGroupId && filterGroupId !== '__all__' ? filterGroupId : undefined;
+  const queryLocationId = filterLocationId && filterLocationId !== '__all__' ? filterLocationId : undefined;
+
+  // Keep network payloads bounded. Live counts and status filtering are computed
+  // by the API over the complete matching scope; only one page is serialized.
+  const { data, isLoading, isFetching, isError: devicesLoadError, error: devicesError, refetch } = useDevices({
+    page,
+    page_size: pageSize,
+    live_status: liveStatusFilter,
+    group_id: queryGroupId,
+    location_id: queryLocationId,
     search: debouncedSearch || undefined,
   });
   const bulkMutation = useBulkAction();
   const deleteDevice = useDeleteDevice();
   const bulkDelete = useBulkDeleteDevices();
+  const bulkRevokeVpn = useBulkRevokeVpn();
   const updateDevice = useUpdateDevice();
-  const { data: groups } = useGroups();
-  const { data: locations } = useLocations();
+  const { data: groups, isLoading: groupsLoading, isError: groupsLoadError, refetch: refetchGroups } = useGroups();
+  const { data: locations, isLoading: locationsLoading, isError: locationsLoadError, refetch: refetchLocations } = useLocations();
   const moveDevices = useMoveDevices();
   const assignToLocation = useAssignDevicesToLocation();
   const { data: gameServers } = useGameServers();
 
-  // Клиентская фильтрация по группе и локации
-  const filteredItems = useMemo(() => {
-    let items = data?.items ?? [];
-    if (filterGroupId && filterGroupId !== '__all__') {
-      items = items.filter(
-        (d) => d.group_id === filterGroupId || d.group_ids?.includes(filterGroupId),
-      );
-    }
-    if (filterLocationId && filterLocationId !== '__all__') {
-      items = items.filter((d) => d.location_ids?.includes(filterLocationId));
-    }
-    return items;
-  }, [data?.items, filterGroupId, filterLocationId]);
+  const pageItems = useMemo(
+    () => filterDevicesByStatus(data?.items ?? [], statusFilter),
+    [data?.items, statusFilter],
+  );
 
-  const selectedIds = Object.keys(rowSelection).filter(Boolean);
+  const visibleDeviceIds = useMemo(() => new Set(pageItems.map((device) => device.id)), [pageItems]);
+  const selectedIds = Object.entries(rowSelection)
+    .filter(([deviceId, selected]) => selected && visibleDeviceIds.has(deviceId))
+    .map(([deviceId]) => deviceId);
+
+  // Selection is scoped to the currently visible result set. A filter/search change
+  // must not leave hidden devices queued for a destructive or operational action.
+  useEffect(() => {
+    setRowSelection((current) => {
+      const next = Object.fromEntries(
+        Object.entries(current).filter(([deviceId, selected]) => selected && visibleDeviceIds.has(deviceId)),
+      );
+      return Object.keys(next).length === Object.keys(current).length ? current : next;
+    });
+  }, [visibleDeviceIds]);
+
+  const exceedsBulkLimit = selectedIds.length > MAX_BULK_DEVICE_OPERATION_COUNT;
+
+  const statusCounts = useMemo(
+    () => data?.status_counts ?? countDeviceStatuses(pageItems),
+    [data?.status_counts, pageItems],
+  );
+
+  useEffect(() => {
+    if (data?.pages && page > data.pages) setPage(data.pages);
+  }, [data?.pages, page]);
+
+  const resetPage = () => {
+    setPage(1);
+    setRowSelection({});
+  };
+  const pageStart = data && data.total > 0 ? (data.page - 1) * data.page_size + 1 : 0;
+  const pageEnd = data ? Math.min(data.page * data.page_size, data.total) : 0;
+  const scopeTotal = data?.scope_total ?? data?.total ?? 0;
+  const hasSnapshot = data !== undefined;
+  const presenceLabel = data?.presence_available === true ? 'доступен'
+    : data?.presence_available === false ? 'недоступен' : 'состояние не сообщено API';
+  const offlineNote = data?.presence_available === true ? 'нет активного live presence'
+    : data?.presence_available === false ? 'источник live presence недоступен' : 'по статусам ответа API';
+  const validSnapshotTime = data?.as_of && Number.isFinite(Date.parse(data.as_of))
+    ? new Date(data.as_of).toLocaleString('ru-RU', { timeZone: 'UTC', hour12: false }) + ' UTC' : 'без отметки времени';
 
   // Обработчик действий из контекстного меню FleetMatrix (для одного устройства)
   const handleDeviceAction = useCallback((deviceId: string, action: DeviceAction) => {
+    if (!canDeviceAction(action)) return;
     const device = data?.items.find(d => d.id === deviceId);
     if (!device) return;
 
@@ -105,217 +182,499 @@ export default function DevicesPage() {
         setSelectedServerName(device.server_name ?? '');
         break;
       case 'delete':
-        if (confirm(`Удалить устройство "${device.name}"? Это действие необратимо.`)) {
-          deleteDevice.mutate(deviceId);
-        }
+        setSingleDeleteError(null);
+        setSingleDeleteDialog({ deviceId: device.id, deviceName: device.name });
         break;
     }
-  }, [data?.items, deleteDevice]);
+  }, [data?.items, canDeviceAction]);
 
-  const handleBulkReboot = () => {
-    bulkMutation.mutate({ device_ids: selectedIds, action: 'reboot' });
-    setRowSelection({});
+  const handleSingleDelete = async () => {
+    const target = singleDeleteDialog;
+    if (!canDelete || !target || deleteDevice.isPending || singleDeleteLock.current) return;
+
+    singleDeleteLock.current = true;
+    setSingleDeleteError(null);
+    try {
+      await deleteDevice.mutateAsync(target.deviceId);
+      setSingleDeleteDialog(null);
+      toast.success(`Устройство «${target.deviceName}» убрано из активного каталога`);
+    } catch (error) {
+      const message = getApiErrorMessage(
+        error,
+        'Проверьте права доступа и соединение с сервером. Запись не подтверждена как удалённая.',
+      );
+      setSingleDeleteError(message);
+      toast.error('Не удалось удалить устройство', { description: message });
+    } finally {
+      singleDeleteLock.current = false;
+    }
   };
 
-  const handleBulkRevokeVpn = () => {
-    bulkMutation.mutate({ device_ids: selectedIds, action: 'vpn_revoke' });
-    setRowSelection({});
+  const handleBulkReboot = async () => {
+    const deviceIds = [...selectedIds];
+    if (!canWrite || deviceIds.length === 0 || deviceIds.length > MAX_BULK_DEVICE_OPERATION_COUNT || bulkMutation.isPending) return;
+    try {
+      const result = await bulkMutation.mutateAsync({ device_ids: deviceIds, action: 'reboot' });
+      const failures = result.results.filter((item) => !item.success);
+      const failedIds = failures.map((item) => item.device_id);
+      if (failedIds.length === 0) {
+        setRowSelection({});
+        toast.success(`Команду перезапуска подтвердили ${result.succeeded} устройств`);
+      } else {
+        setRowSelection(Object.fromEntries(failedIds.map((deviceId) => [deviceId, true])));
+        toast.warning(`Не подтверждены команды: ${failedIds.length} из ${result.total}`, {
+          description: `${formatDeviceFailures(failures, data?.items ?? [])} Выделение оставлено только на устройствах с ошибкой.`,
+        });
+      }
+    } catch (error) {
+      toast.error('Не удалось отправить команды перезапуска', {
+        description: getApiErrorMessage(error, 'Проверьте связь с сервером. Выделение сохранено.'),
+      });
+    }
   };
 
-  const handleBulkDelete = () => {
-    if (!confirm(`Удалить ${selectedIds.length} устройств? Это действие необратимо.`)) return;
-    bulkDelete.mutate(selectedIds);
-    setRowSelection({});
+  const handleBulkRevokeVpn = async () => {
+    const deviceIds = [...selectedIds];
+    if (!canRevokeVpn || deviceIds.length === 0 || deviceIds.length > MAX_BULK_DEVICE_OPERATION_COUNT || bulkRevokeVpn.isPending) return;
+    setVpnRevokeError(null);
+    try {
+      const result = await bulkRevokeVpn.mutateAsync(deviceIds);
+      const failures = result.results.filter((item) => !item.success);
+      const failedIds = failures.map((item) => item.device_id);
+      if (failedIds.length === 0) {
+        setRowSelection({});
+        setVpnRevokeConfirmationOpen(false);
+        toast.success(`VPN отозван у ${result.succeeded} устройств`);
+      } else {
+        setRowSelection(Object.fromEntries(failedIds.map((deviceId) => [deviceId, true])));
+        setVpnRevokeConfirmationOpen(false);
+        toast.warning(`Не отозван VPN у ${failedIds.length} из ${result.total} устройств`, {
+          description: `${formatDeviceFailures(failures, data?.items ?? [])} Выделение оставлено только на устройствах с ошибкой.`,
+        });
+      }
+    } catch (error) {
+      const message = getApiErrorMessage(error, 'Проверьте права доступа и соединение с сервером. Выделение сохранено.');
+      setVpnRevokeError(message);
+      toast.error('Не удалось выполнить отзыв VPN', {
+        description: message,
+      });
+    }
   };
 
   const handleRename = async () => {
-    if (!newName.trim()) return;
-    await updateDevice.mutateAsync({ id: renameDialog.deviceId, name: newName.trim() });
-    setRenameDialog({ open: false, deviceId: '', currentName: '' });
-    setNewName('');
+    if (!canWrite || !newName.trim() || updateDevice.isPending) return;
+    try {
+      await updateDevice.mutateAsync({ id: renameDialog.deviceId, name: newName.trim() });
+      setRenameDialog({ open: false, deviceId: '', currentName: '' });
+      setNewName('');
+      toast.success('Устройство переименовано');
+    } catch (error) {
+      toast.error('Не удалось переименовать устройство', {
+        description: getApiErrorMessage(error, 'Проверьте права доступа и повторите попытку.'),
+      });
+    }
   };
 
   const handleAssignGroup = async () => {
-    if (!selectedGroupId) return;
-    await moveDevices.mutateAsync({ groupId: selectedGroupId, deviceIds: selectedIds });
-    setAssignGroupDialog(false);
-    setSelectedGroupId('');
-    setRowSelection({});
+    if (!canWrite || !selectedGroupId || selectedIds.length === 0 || exceedsBulkLimit || moveDevices.isPending) return;
+    try {
+      const requestedIds = [...selectedIds];
+      const result = await moveDevices.mutateAsync({ groupId: selectedGroupId, deviceIds: requestedIds });
+      if (result.moved === requestedIds.length) {
+        setAssignGroupDialog(false);
+        setSelectedGroupId('');
+        setRowSelection({});
+        toast.success(`В группу назначено устройств: ${result.moved}`);
+      } else {
+        toast.warning('Группа назначена частично', {
+          description: `Сервер обработал ${result.moved} из ${requestedIds.length} устройств. Выделение сохранено для проверки.`,
+        });
+      }
+    } catch (error) {
+      toast.error('Не удалось назначить группу', {
+        description: getApiErrorMessage(error, 'Проверьте связь и доступ к группе.'),
+      });
+    }
   };
 
   const handleAssignLocation = async () => {
-    if (!selectedLocationId) return;
-    await assignToLocation.mutateAsync({ locationId: selectedLocationId, deviceIds: selectedIds });
-    setAssignLocationDialog(false);
-    setSelectedLocationId('');
-    setRowSelection({});
+    if (!canWrite || !selectedLocationId || selectedIds.length === 0 || exceedsBulkLimit || assignToLocation.isPending) return;
+    try {
+      const requestedIds = [...selectedIds];
+      const result = await assignToLocation.mutateAsync({ locationId: selectedLocationId, deviceIds: requestedIds });
+      setAssignLocationDialog(false);
+      setSelectedLocationId('');
+      setRowSelection({});
+      toast.success(`Добавлено новых привязок к локации: ${result.assigned}`);
+    } catch (error) {
+      toast.error('Не удалось назначить локацию', {
+        description: getApiErrorMessage(error, 'Проверьте связь и доступ к локации.'),
+      });
+    }
+  };
+
+  const handleAssignServer = async () => {
+    if (!canWrite || updateDevice.isPending) return;
+    try {
+      await updateDevice.mutateAsync({
+        id: assignServerDialog.deviceId,
+        server_name: selectedServerName || null,
+      });
+      setAssignServerDialog({ open: false, deviceId: '', currentServer: null });
+      toast.success('Игровой сервер обновлён');
+    } catch (error) {
+      toast.error('Не удалось обновить игровой сервер', {
+        description: getApiErrorMessage(error, 'Проверьте права доступа и повторите попытку.'),
+      });
+    }
   };
 
   return (
-    <div className="flex flex-col h-full p-6 space-y-4">
-      {/* Header Area */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between shrink-0 gap-4">
-        <div>
-          <h1 className="text-xl font-bold font-mono tracking-widest text-primary flex items-center gap-2 uppercase">
-            <Cpu className="w-5 h-5 text-primary" />
-            Fleet_Matrix
-          </h1>
-          <p className="text-[11px] text-muted-foreground mt-1 uppercase tracking-wider font-mono">
-            {data?.total ?? 0} Global Endpoints Registered
-            {filteredItems.length !== (data?.items?.length ?? 0) && ` • ${filteredItems.length} отфильтровано`}
-          </p>
+    <div className="mx-auto flex min-h-full w-full max-w-[1720px] flex-col gap-5 p-4 md:h-full md:min-h-0 md:p-6 xl:p-8">
+      <header className="shrink-0 space-y-5">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="min-w-0">
+            <p className="mb-1 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.13em] text-primary"><span className="h-2 w-2 rounded-full bg-primary" aria-hidden="true" />Управление парком</p>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+              <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">Устройства</h1>
+              <span className="rounded-full border border-border bg-card px-2.5 py-1 text-xs font-medium text-muted-foreground">Fleet Matrix</span>
+            </div>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {data ? `Показано ${pageStart}–${pageEnd} из ${data.total}; в области фильтров ${scopeTotal} устройств.` : devicesLoadError ? 'Реестр сейчас недоступен.' : 'Загрузка реестра…'}
+              {' '}Live-статусы и счётчики берутся из API.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <div role="group" aria-label="Режим отображения устройств" className="inline-flex rounded-lg border border-border bg-background p-1">
+              <Button
+                type="button"
+                variant={viewMode === 'table' ? 'secondary' : 'ghost'}
+                size="icon"
+                aria-label="Табличный вид"
+                aria-pressed={viewMode === 'table'}
+                title="Табличный вид"
+                onClick={() => setViewMode('table')}
+                className="h-9 w-9 rounded-md"
+              >
+                <List className="h-4 w-4" aria-hidden="true" />
+              </Button>
+              <Button
+                type="button"
+                variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
+                size="icon"
+                aria-label="Сетка видеопотоков"
+                aria-pressed={viewMode === 'grid'}
+                title="Сетка видеопотоков"
+                onClick={() => setViewMode('grid')}
+                className="h-9 w-9 rounded-md"
+              >
+                <LayoutGrid className="h-4 w-4" aria-hidden="true" />
+              </Button>
+            </div>
+            <Button
+              variant="outline"
+              onClick={() => { void refetch(); }}
+              disabled={isFetching}
+              className="h-11 rounded-lg px-4"
+              aria-live="polite"
+            >
+              <RefreshCcw className={`mr-2 h-4 w-4 ${isFetching ? 'animate-spin motion-reduce:animate-none' : ''}`} aria-hidden="true" />
+              {isFetching ? 'Обновление…' : 'Обновить список'}
+            </Button>
+          </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <section aria-label="Состояние устройств" className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 xl:grid-cols-6">
+          {[
+            { filter: 'all' as const, label: 'В области', value: hasSnapshot ? scopeTotal : '—', note: 'поиск, группа и локация', icon: Cpu, tone: 'text-primary' },
+            { filter: 'online' as const, label: 'В сети', value: hasSnapshot ? statusCounts.online : '—', note: 'online + busy по API', icon: Wifi, tone: 'text-emerald-700 dark:text-emerald-400' },
+            { filter: 'busy' as const, label: 'В работе', value: hasSnapshot ? statusCounts.busy : '—', note: 'подмножество статуса «В сети»', icon: Activity, tone: 'text-primary' },
+            { filter: 'connecting' as const, label: 'Подключаются', value: hasSnapshot ? statusCounts.connecting : '—', note: 'ждут первый heartbeat', icon: Loader2, tone: 'text-amber-700 dark:text-amber-400' },
+            { filter: 'offline' as const, label: 'Не в сети', value: hasSnapshot ? statusCounts.offline : '—', note: offlineNote, icon: WifiOff, tone: 'text-muted-foreground' },
+            { filter: 'attention' as const, label: 'Требуют внимания', value: hasSnapshot ? statusCounts.issues : '—', note: 'ошибка, неизвестно или обслуживание', icon: AlertTriangle, tone: 'text-amber-700 dark:text-amber-400' },
+          ].map(({ filter, label, value, note, icon: Icon, tone }) => (
+            <button
+              key={label}
+              type="button"
+              aria-pressed={statusFilter === filter}
+              onClick={() => {
+                setStatusFilter((current) => current === filter && filter !== 'all' ? 'all' : filter);
+                resetPage();
+              }}
+              className={`rounded-xl border bg-card p-3 text-left transition-all duration-150 hover:border-primary/40 hover:bg-accent/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none sm:p-4 ${statusFilter === filter ? 'border-primary/50 ring-1 ring-primary/30' : 'border-border'}`}
+            >
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm font-medium text-muted-foreground">{label}</p>
+                <Icon className={`h-4 w-4 ${tone}`} aria-hidden="true" />
+              </div>
+              <p className={`mt-2 text-xl font-semibold tabular-nums sm:mt-3 sm:text-2xl ${tone}`} aria-live="polite">{value}</p>
+              <p className="mt-1 hidden text-xs text-muted-foreground sm:block">{note}</p>
+            </button>
+          ))}
+        </section>
+        {data && !data.status_counts && <p role="status" className="rounded-lg border border-amber-500/25 bg-amber-500/5 px-4 py-3 text-sm text-muted-foreground">
+          Статусы рассчитаны по загруженной странице ({pageItems.length} строк). API не передал сводку всей области.
+        </p>}
+      </header>
 
-          {/* View Toggles */}
-          <div className="flex items-center p-1 bg-muted border border-border rounded-sm mr-2 select-none">
-            <div
-              onClick={() => setViewMode('table')}
-              className={`p-1.5 rounded-sm cursor-pointer transition-colors ${viewMode === 'table' ? 'bg-primary/20 text-primary' : 'text-muted-foreground hover:text-foreground'}`}
-              title="Data Grid View"
-            >
-              <List className="w-4 h-4" />
+      <section aria-label="Устройства и операции" className="flex min-h-[28rem] flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm md:min-h-0">
+        <div className="shrink-0 space-y-3 border-b border-border p-4">
+          <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
+            <div className="relative min-w-0 flex-1 xl:max-w-xl">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+              <Input
+                aria-label="Поиск устройств"
+                placeholder="Поиск по имени, модели или идентификатору"
+                value={search}
+                onChange={(e) => { setSearch(e.target.value); resetPage(); }}
+                className="h-11 rounded-lg bg-background pl-9 font-sans text-sm placeholder:text-muted-foreground/70"
+              />
             </div>
-            <div
-              onClick={() => setViewMode('grid')}
-              className={`p-1.5 rounded-sm cursor-pointer transition-colors ${viewMode === 'grid' ? 'bg-primary/20 text-primary' : 'text-muted-foreground hover:text-foreground'}`}
-              title="Multi-Stream Grid (Select devices to monitor)"
-            >
-              <LayoutGrid className="w-4 h-4" />
+
+            <div className="grid grid-cols-2 gap-2 xl:ml-auto">
+              <Select value={filterGroupId || '__all__'} onValueChange={(value) => { setFilterGroupId(value === '__all__' ? '' : value); resetPage(); }}>
+                <SelectTrigger aria-label="Фильтр по группе" className="h-11 w-full rounded-lg bg-background sm:w-[190px]">
+                  <SelectValue placeholder="Все группы" />
+                </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all__">Все группы</SelectItem>
+                {filterGroupId && !groups?.some((group) => group.id === filterGroupId) && <SelectItem value={filterGroupId} disabled>Группа {filterGroupId}</SelectItem>}
+                {groupsLoadError && !groups?.length && <SelectItem value="__groups_unavailable" disabled>Список групп недоступен</SelectItem>}
+                {groupsLoading && <SelectItem value="__groups_loading" disabled>Загрузка групп…</SelectItem>}
+                {groups?.map((g) => (
+                    <SelectItem key={g.id} value={g.id}>
+                      <span className="flex items-center gap-2">
+                        {g.color && <span className="h-2 w-2 rounded-full" style={{ backgroundColor: g.color }} />}
+                        {g.name}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={filterLocationId || '__all__'} onValueChange={(value) => { setFilterLocationId(value === '__all__' ? '' : value); resetPage(); }}>
+                <SelectTrigger aria-label="Фильтр по локации" className="h-11 w-full rounded-lg bg-background sm:w-[190px]">
+                  <SelectValue placeholder="Все локации" />
+                </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all__">Все локации</SelectItem>
+                {locationsLoadError && !locations?.length && <SelectItem value="__locations_unavailable" disabled>Список локаций недоступен</SelectItem>}
+                {locationsLoading && <SelectItem value="__locations_loading" disabled>Загрузка локаций…</SelectItem>}
+                {locations?.map((l) => (
+                    <SelectItem key={l.id} value={l.id}>
+                      <span className="flex items-center gap-2">
+                        {l.color && <span className="h-2 w-2 rounded-full" style={{ backgroundColor: l.color }} />}
+                        {l.name}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {(filterGroupId && filterGroupId !== '__all__' || filterLocationId && filterLocationId !== '__all__') && (
+                <Button
+                  variant="ghost"
+                  onClick={() => { setFilterGroupId(''); setFilterLocationId(''); resetPage(); }}
+                  className="col-span-2 h-11 rounded-lg px-3 text-sm"
+                >
+                  <Filter className="mr-2 h-4 w-4" aria-hidden="true" /> Сбросить фильтры
+                </Button>
+              )}
             </div>
           </div>
 
-          <Input
-            placeholder="[ SEARCH IDENTIFIER ]"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full sm:w-[250px] lg:w-[300px] h-9 bg-card border-border font-mono text-xs rounded-sm focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary placeholder:text-[#555]"
-          />
-
-          {/* Фильтры: группа + локация */}
-          <Select value={filterGroupId} onValueChange={setFilterGroupId}>
-            <SelectTrigger className="h-9 w-[160px] bg-card border-border font-mono text-xs rounded-sm">
-              <SelectValue placeholder="Все группы" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="__all__">Все группы</SelectItem>
-              {groups?.map((g) => (
-                <SelectItem key={g.id} value={g.id}>
-                  <span className="flex items-center gap-2">
-                    {g.color && <span className="w-2 h-2 rounded-full" style={{ backgroundColor: g.color }} />}
-                    {g.name}
-                  </span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={filterLocationId} onValueChange={setFilterLocationId}>
-            <SelectTrigger className="h-9 w-[160px] bg-card border-border font-mono text-xs rounded-sm">
-              <SelectValue placeholder="Все локации" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="__all__">Все локации</SelectItem>
-              {locations?.map((l) => (
-                <SelectItem key={l.id} value={l.id}>
-                  <span className="flex items-center gap-2">
-                    {l.color && <span className="w-2 h-2 rounded-full" style={{ backgroundColor: l.color }} />}
-                    {l.name}
-                  </span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {(filterGroupId && filterGroupId !== '__all__' || filterLocationId && filterLocationId !== '__all__') && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => { setFilterGroupId('__all__'); setFilterLocationId('__all__'); }}
-              className="h-9 text-xs font-mono text-muted-foreground hover:text-foreground"
-            >
-              <Filter className="w-3 h-3 mr-1" /> Сброс
-            </Button>
+          {devicesLoadError && (
+            <div role="alert" className="flex flex-col gap-3 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex min-w-0 items-start gap-2">
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" aria-hidden="true" />
+                <div>
+                  <p className="font-medium text-foreground">Не удалось загрузить актуальный список устройств</p>
+                  <p className="mt-1 break-words text-muted-foreground">
+                    {getApiErrorMessage(devicesError, 'Проверьте доступность сервера и повторите запрос.')}
+                    {data ? ' Показаны последние полученные данные.' : ''}
+                  </p>
+                </div>
+              </div>
+              <Button variant="outline" size="sm" onClick={() => { void refetch(); }} disabled={isFetching} className="shrink-0">
+                {isFetching ? 'Повтор…' : 'Повторить'}
+              </Button>
+            </div>
           )}
           {selectedIds.length > 0 && viewMode === 'table' && (
-            <div className="flex items-center gap-2 border-l border-border pl-2 ml-2">
-              <span className="text-[10px] text-warning font-mono mr-1">
-                {selectedIds.length} SEL
+            <div className="flex flex-wrap items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 p-3" aria-live="polite">
+              <span className="mr-1 inline-flex min-h-9 items-center rounded-md bg-primary/10 px-3 text-sm font-semibold text-primary">
+                Выбрано: {selectedIds.length}
               </span>
-              <Button variant="outline" size="sm" onClick={handleBulkReboot} className="h-9 hover:border-warning hover:text-warning" title="Reboot Selected">
-                <RefreshCcw className="w-3.5 h-3.5 mr-1.5" />
-                RBT
+              <Button variant="outline" size="sm" onClick={handleBulkReboot} disabled={!canWrite || bulkMutation.isPending || exceedsBulkLimit} className="h-9 rounded-md">
+                <RefreshCcw className={`mr-2 h-4 w-4 ${bulkMutation.isPending ? 'animate-spin motion-reduce:animate-none' : ''}`} aria-hidden="true" />
+                {bulkMutation.isPending ? 'Отправка…' : 'Перезапустить'}
               </Button>
-              <Button variant="outline" size="sm" onClick={() => setAssignGroupDialog(true)} className="h-9 hover:border-primary hover:text-primary" title="Assign to Group">
-                <FolderOpen className="w-3.5 h-3.5 mr-1.5" />
-                GRP
+            <Button variant="outline" size="sm" onClick={() => { if (canWrite) setAssignGroupDialog(true); }} disabled={!canWrite || exceedsBulkLimit || !groups?.length} className="h-9 rounded-md">
+                <FolderOpen className="mr-2 h-4 w-4" aria-hidden="true" /> Группа
               </Button>
-              <Button variant="outline" size="sm" onClick={() => setAssignLocationDialog(true)} className="h-9 hover:border-primary hover:text-primary" title="Assign to Location">
-                <MapPin className="w-3.5 h-3.5 mr-1.5" />
-                LOC
+              <Button variant="outline" size="sm" onClick={() => { if (canWrite) setAssignLocationDialog(true); }} disabled={!canWrite || exceedsBulkLimit || !locations?.length} className="h-9 rounded-md">
+                <MapPin className="mr-2 h-4 w-4" aria-hidden="true" /> Локация
               </Button>
               {selectedIds.length === 1 && (
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => {
-                    const d = data?.items.find(d => d.id === selectedIds[0]);
-                    if (d) {
-                      setRenameDialog({ open: true, deviceId: d.id, currentName: d.name });
-                      setNewName(d.name);
-                    }
+                    if (!canWrite) return;
+                    const device = pageItems.find((item) => item.id === selectedIds[0]);
+                    if (!device) return;
+                    setRenameDialog({ open: true, deviceId: device.id, currentName: device.name });
+                    setNewName(device.name);
                   }}
-                  className="h-9 hover:border-primary hover:text-primary"
-                  title="Rename Device"
+                  className="h-9 rounded-md"
+                  disabled={!canWrite}
                 >
-                  <Pencil className="w-3.5 h-3.5 mr-1.5" />
-                  REN
+                  <Pencil className="mr-2 h-4 w-4" aria-hidden="true" /> Переименовать
                 </Button>
               )}
               <Button
                 variant="destructive"
                 size="sm"
-                onClick={handleBulkRevokeVpn}
-                className="h-9"
-                title="Revoke VPN"
+                onClick={() => {
+                  if (!canRevokeVpn) return;
+                  setVpnRevokeError(null);
+                  setVpnRevokeConfirmationOpen(true);
+                }}
+                disabled={!canRevokeVpn || bulkRevokeVpn.isPending || exceedsBulkLimit}
+                className="h-9 rounded-md"
               >
-                <ShieldOff className="w-3.5 h-3.5 mr-1.5" />
-                NO_VPN
+                {bulkRevokeVpn.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" /> : <ShieldOff className="mr-2 h-4 w-4" aria-hidden="true" />}
+                {bulkRevokeVpn.isPending ? 'Отзываем VPN…' : 'Отозвать VPN'}
               </Button>
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={handleBulkDelete}
-                className="h-9"
-                title="Delete Selected"
-              >
-                <Trash2 className="w-3.5 h-3.5 mr-1.5" />
-                DEL
-              </Button>
+              <DeviceBulkDeleteButton
+                deviceIds={selectedIds}
+                isPending={bulkDelete.isPending}
+                canDelete={canDelete}
+                onDelete={bulkDelete.mutateAsync}
+                onDeleted={() => setRowSelection({})}
+              />
+              {!canWrite && <div className="basis-full"><PermissionNotice permission="device:write" action="изменение устройств и перезапуск" /></div>}
+              {canWrite && !canDelete && <div className="basis-full"><PermissionNotice permission="device:delete" action="удаление устройств" /></div>}
+              {!canRevokeVpn && <div className="basis-full"><PermissionNotice permission="vpn:mass_operation" action="массовый отзыв VPN" /></div>}
+              {exceedsBulkLimit && (
+                <p role="alert" className="basis-full text-sm text-amber-700 dark:text-amber-300">
+                  Массовая операция принимает до {MAX_BULK_DEVICE_OPERATION_COUNT} устройств за запрос. Уменьшите выделение.
+                </p>
+              )}
             </div>
           )}
-          <Button variant="noc" onClick={() => refetch()} className="ml-2 h-9">
-            SYNC
-          </Button>
         </div>
-      </div>
 
-      {/* Main Content Area */}
-      <div className="flex-1 overflow-hidden flex flex-col pt-2">
-        {viewMode === 'table' ? (
-          <FleetMatrix
-            data={filteredItems}
-            isLoading={isLoading}
-            rowSelection={rowSelection}
-            onRowSelectionChange={setRowSelection}
-            onDeviceAction={handleDeviceAction}
-          />
-        ) : (
-          <MultiStreamGrid
-            devices={filteredItems}
-            selectedIds={selectedIds}
-          />
-        )}
-      </div>
+        <div className="flex min-h-0 flex-1 flex-col p-3 md:p-4">
+          {!data && devicesLoadError ? (
+            <div className="flex min-h-64 flex-1 flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-destructive/40 bg-destructive/5 p-6 text-center">
+              <AlertTriangle className="h-8 w-8 text-destructive" aria-hidden="true" />
+              <div>
+                <h2 className="font-semibold text-foreground">Реестр временно недоступен</h2>
+                <p className="mt-1 max-w-md text-sm text-muted-foreground">Данные устройств не получены; пустой список не означает, что устройств нет.</p>
+              </div>
+              <Button variant="outline" onClick={() => { void refetch(); }} disabled={isFetching}>
+                {isFetching ? 'Повтор…' : 'Повторить загрузку'}
+              </Button>
+            </div>
+          ) : viewMode === 'table' ? (
+            <FleetMatrix
+              data={pageItems}
+              isLoading={isLoading}
+              rowSelection={rowSelection}
+              onRowSelectionChange={setRowSelection}
+              onDeviceAction={handleDeviceAction}
+              canDeviceAction={canDeviceAction}
+            />
+          ) : (
+            <MultiStreamGrid devices={pageItems} selectedIds={selectedIds} />
+          )}
+          <nav aria-label="Страницы реестра устройств" className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-3">
+            <p className="text-xs text-muted-foreground" aria-live="polite">
+              {data ? `Страница ${data.page} из ${Math.max(1, data.pages)} · ${pageItems.length} строк · live presence ${presenceLabel} · срез API ${validSnapshotTime} · обновление каждые 30 с` : 'Пагинация появится после загрузки данных'}
+            </p>
+            <div className="flex items-center gap-2">
+              <label htmlFor="device-page-size" className="text-xs text-muted-foreground">Строк на странице</label>
+              <select
+                id="device-page-size"
+                value={pageSize}
+                onChange={(event) => { setPageSize(Number(event.target.value)); resetPage(); }}
+                className="h-9 rounded-md border border-border bg-background px-2 text-sm text-foreground"
+              >
+                {[50, 100, 200].map((size) => <option key={size} value={size}>{size}</option>)}
+              </select>
+              <Button variant="outline" size="sm" onClick={() => { setPage((current) => Math.max(1, current - 1)); setRowSelection({}); }} disabled={!data || data.page <= 1 || isFetching} aria-label="Предыдущая страница">
+                <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => { setPage((current) => current + 1); setRowSelection({}); }} disabled={!data || data.page >= data.pages || isFetching} aria-label="Следующая страница">
+                <ChevronRight className="h-4 w-4" aria-hidden="true" />
+              </Button>
+            </div>
+          </nav>
+        </div>
+      </section>
+
+      {/* Диалог удаления одной записи */}
+      <DeviceDeleteConfirmationDialog
+        open={singleDeleteDialog !== null}
+        title={singleDeleteDialog ? `Убрать «${singleDeleteDialog.deviceName}» из активного каталога?` : 'Убрать устройство из активного каталога?'}
+        description="История задач и событий сохранится. Refresh-доступ устройства будет отозван; приложение и данные Android не затрагиваются."
+        confirmLabel="Убрать запись"
+        pendingLabel="Удаление…"
+        isPending={deleteDevice.isPending}
+        canConfirm={canDelete}
+        errorMessage={singleDeleteError}
+        onOpenChange={(open) => {
+          if (open) return;
+          setSingleDeleteDialog(null);
+          setSingleDeleteError(null);
+        }}
+        onConfirm={() => { void handleSingleDelete(); }}
+      />
+
+      <Dialog
+        open={vpnRevokeConfirmationOpen}
+        onOpenChange={(open) => {
+          if (!bulkRevokeVpn.isPending) setVpnRevokeConfirmationOpen(open);
+        }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ShieldOff className="h-5 w-5 text-destructive" aria-hidden="true" />
+              Отозвать VPN у выбранных устройств?
+            </DialogTitle>
+            <DialogDescription>
+              Будут отозваны VPN-пиры у {selectedIds.length} устройств в текущей организации. Записи устройств, APK и приложения на Android останутся без изменений.
+            </DialogDescription>
+          </DialogHeader>
+          <PermissionNotice permission="vpn:mass_operation" action="массовый отзыв VPN" />
+          {vpnRevokeError && (
+            <p role="alert" className="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
+              {vpnRevokeError} Выделение сохранено.
+            </p>
+          )}
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setVpnRevokeConfirmationOpen(false)}
+              disabled={bulkRevokeVpn.isPending}
+            >
+              Отмена
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() => { void handleBulkRevokeVpn(); }}
+              disabled={!canRevokeVpn || bulkRevokeVpn.isPending || selectedIds.length === 0 || exceedsBulkLimit}
+              aria-busy={bulkRevokeVpn.isPending}
+            >
+              {bulkRevokeVpn.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" /> : <ShieldOff className="mr-2 h-4 w-4" aria-hidden="true" />}
+              {bulkRevokeVpn.isPending ? 'Отзываем VPN…' : `Отозвать VPN (${selectedIds.length})`}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Диалог переименования */}
       <Dialog open={renameDialog.open} onOpenChange={(open) => { if (!open) setRenameDialog({ open: false, deviceId: '', currentName: '' }); }}>
@@ -324,6 +683,7 @@ export default function DevicesPage() {
             <DialogTitle>Переименовать устройство</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 pt-2">
+            <PermissionNotice permission="device:write" action="переименование устройства" />
             <div className="space-y-1">
               <Label>Новое имя</Label>
               <Input
@@ -333,7 +693,7 @@ export default function DevicesPage() {
                 autoFocus
               />
             </div>
-            <Button onClick={handleRename} disabled={updateDevice.isPending || !newName.trim()} className="w-full">
+            <Button onClick={handleRename} disabled={!canWrite || updateDevice.isPending || !newName.trim()} className="w-full">
               {updateDevice.isPending ? 'Сохранение…' : 'Сохранить'}
             </Button>
           </div>
@@ -347,13 +707,23 @@ export default function DevicesPage() {
             <DialogTitle>Назначить в группу</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 pt-2">
+            <PermissionNotice permission="device:write" action="назначение группы" />
+            {groupsLoadError && (
+              <p role="alert" className="text-sm text-destructive">
+                Не удалось обновить список групп. {groups?.length ? 'Доступны ранее загруженные значения.' : 'Назначение группы временно недоступно.'}
+                {' '}<button type="button" className="underline underline-offset-2" onClick={() => { void refetchGroups(); }}>Повторить</button>
+              </p>
+            )}
             <div className="space-y-1">
-              <Label>Группа</Label>
+              <Label htmlFor="fleet-bulk-group">Группа</Label>
               <Select value={selectedGroupId} onValueChange={setSelectedGroupId}>
-                <SelectTrigger>
+                <SelectTrigger id="fleet-bulk-group">
                   <SelectValue placeholder="Выбери группу" />
                 </SelectTrigger>
                 <SelectContent>
+                  {groupsLoading && <SelectItem value="__groups_loading" disabled>Загрузка групп…</SelectItem>}
+                  {groupsLoadError && !groups?.length && <SelectItem value="__groups_unavailable" disabled>Список групп недоступен</SelectItem>}
+                  {!groupsLoading && !groupsLoadError && !groups?.length && <SelectItem value="__groups_empty" disabled>Групп пока нет</SelectItem>}
                   {groups?.map((g) => (
                     <SelectItem key={g.id} value={g.id}>
                       <span className="flex items-center gap-2">
@@ -366,7 +736,7 @@ export default function DevicesPage() {
               </Select>
             </div>
             <p className="text-xs text-muted-foreground">{selectedIds.length} устройств будут назначены в группу</p>
-            <Button onClick={handleAssignGroup} disabled={moveDevices.isPending || !selectedGroupId} className="w-full">
+            <Button onClick={handleAssignGroup} disabled={!canWrite || moveDevices.isPending || !selectedGroupId || selectedIds.length === 0 || exceedsBulkLimit || !groups?.length} className="w-full">
               {moveDevices.isPending ? 'Назначение…' : 'Назначить'}
             </Button>
           </div>
@@ -380,13 +750,23 @@ export default function DevicesPage() {
             <DialogTitle>Назначить в локацию</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 pt-2">
+            <PermissionNotice permission="device:write" action="назначение локации" />
+            {locationsLoadError && (
+              <p role="alert" className="text-sm text-destructive">
+                Не удалось обновить список локаций. {locations?.length ? 'Доступны ранее загруженные значения.' : 'Назначение локации временно недоступно.'}
+                {' '}<button type="button" className="underline underline-offset-2" onClick={() => { void refetchLocations(); }}>Повторить</button>
+              </p>
+            )}
             <div className="space-y-1">
-              <Label>Локация</Label>
+              <Label htmlFor="fleet-bulk-location">Локация</Label>
               <Select value={selectedLocationId} onValueChange={setSelectedLocationId}>
-                <SelectTrigger>
+                <SelectTrigger id="fleet-bulk-location">
                   <SelectValue placeholder="Выбери локацию" />
                 </SelectTrigger>
                 <SelectContent>
+                  {locationsLoading && <SelectItem value="__locations_loading" disabled>Загрузка локаций…</SelectItem>}
+                  {locationsLoadError && !locations?.length && <SelectItem value="__locations_unavailable" disabled>Список локаций недоступен</SelectItem>}
+                  {!locationsLoading && !locationsLoadError && !locations?.length && <SelectItem value="__locations_empty" disabled>Локаций пока нет</SelectItem>}
                   {locations?.map((l) => (
                     <SelectItem key={l.id} value={l.id}>
                       <span className="flex items-center gap-2">
@@ -400,7 +780,7 @@ export default function DevicesPage() {
               </Select>
             </div>
             <p className="text-xs text-muted-foreground">{selectedIds.length} устройств будут добавлены в локацию (аддитивно)</p>
-            <Button onClick={handleAssignLocation} disabled={assignToLocation.isPending || !selectedLocationId} className="w-full">
+            <Button onClick={handleAssignLocation} disabled={!canWrite || assignToLocation.isPending || !selectedLocationId || selectedIds.length === 0 || exceedsBulkLimit || !locations?.length} className="w-full">
               {assignToLocation.isPending ? 'Назначение…' : 'Назначить'}
             </Button>
           </div>
@@ -422,6 +802,7 @@ export default function DevicesPage() {
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 pt-2">
+            <PermissionNotice permission="device:write" action="изменение привязки сервера" />
             <div className="space-y-1">
               <Label>Сервер Black Russia</Label>
               <Select value={selectedServerName || '__none__'} onValueChange={(v) => setSelectedServerName(v === '__none__' ? '' : v)}>
@@ -444,14 +825,8 @@ export default function DevicesPage() {
               </p>
             )}
             <Button
-              onClick={async () => {
-                await updateDevice.mutateAsync({
-                  id: assignServerDialog.deviceId,
-                  server_name: selectedServerName || null,
-                });
-                setAssignServerDialog({ open: false, deviceId: '', currentServer: null });
-              }}
-              disabled={updateDevice.isPending}
+              onClick={handleAssignServer}
+              disabled={!canWrite || updateDevice.isPending}
               className="w-full"
             >
               {updateDevice.isPending ? 'Сохранение…' : 'Сохранить'}
@@ -461,4 +836,14 @@ export default function DevicesPage() {
       </Dialog>
     </div>
   );
+}
+
+function ScopedDevicesPage() {
+  const groupId = useSearchParams()?.get('group_id') ?? '';
+  // A new bookmark is a new operation scope: reset page, selection and open actions together.
+  return <DevicesRegistry key={groupId} initialGroupId={groupId} />;
+}
+
+export default function DevicesPage() {
+  return <Suspense fallback={<p role="status" className="p-6 text-sm text-muted-foreground">Загрузка реестра устройств…</p>}><ScopedDevicesPage /></Suspense>;
 }

@@ -14,7 +14,7 @@ interface ThemeState {
 export const useThemeStore = create<ThemeState>()(
     persist(
         (set) => ({
-            theme: 'neo-dark',
+            theme: 'light-corporate',
             density: 'cozy',
             setTheme: (theme) => set({ theme }),
             setDensity: (density) => set({ density }),

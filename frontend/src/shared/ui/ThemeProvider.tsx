@@ -65,40 +65,42 @@ const THEMES: Record<ThemeType, Record<string, string>> = {
         '--destructive': '350 80% 60%',
     },
     'light-corporate': {
-        '--background': '210 40% 98%', // Slate 50 - Very light blue-gray background
-        '--foreground': '222 47% 11%', // Slate 900 - Deep crisp text
-        '--card': '0 0% 100%', // Pure White for cards
-        '--card-foreground': '222 47% 11%',
+        '--background': '210 24% 97%',
+        '--foreground': '222 36% 14%',
+        '--card': '0 0% 100%',
+        '--card-foreground': '222 36% 14%',
         '--popover': '0 0% 100%',
         '--popover-foreground': '222 47% 11%',
-        '--primary': '221 83% 53%', // Rich corporate blue
-        '--primary-foreground': '210 40% 98%',
-        '--secondary': '214 32% 91%', // Slate 200 - subtle contrast for sidebar/hover
-        '--secondary-foreground': '222 47% 11%',
-        '--muted': '214 32% 91%', // Slate 200 - stronger than background for inputs/badges
-        '--muted-foreground': '215 16% 47%', // Slate 500 - legible gray text
-        '--border': '214 32% 80%', // Slate 300 - Visible but subtle borders
-        '--input': '214 32% 91%', // Slate 200 input backgrounds
-        '--ring': '221 83% 53%', // Link outline ring to primary
-        '--success': '142 70% 35%',
-        '--warning': '38 92% 45%', // Darker warning for light theme
+        '--primary': '160 74% 34%',
+        '--primary-foreground': '0 0% 100%',
+        '--secondary': '210 20% 94%',
+        '--secondary-foreground': '222 36% 14%',
+        '--muted': '210 20% 94%',
+        '--muted-foreground': '215 16% 42%',
+        '--accent': '160 42% 94%',
+        '--accent-foreground': '160 78% 24%',
+        '--border': '214 22% 88%',
+        '--input': '214 22% 88%',
+        '--ring': '160 74% 34%',
+        '--success': '152 62% 32%',
+        '--warning': '38 92% 42%',
         '--destructive': '0 84% 50%',
     }
 };
 
 const DENSITIES: Record<DensityType, Record<string, string>> = {
     'compact': {
-        '--radius': '0.125rem', // Sharpest
+        '--radius': '0.375rem',
         '--spacing-base': '0.75', // Scaled down everything 
         '--font-size-base': '85%',
     },
     'cozy': {
-        '--radius': '0.25rem', // Standard
+        '--radius': '0.625rem',
         '--spacing-base': '1',
         '--font-size-base': '100%',
     },
     'spacious': {
-        '--radius': '0.5rem', // Round
+        '--radius': '0.875rem',
         '--spacing-base': '1.25',
         '--font-size-base': '115%',
     }

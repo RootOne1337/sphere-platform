@@ -1,0 +1,101 @@
+{
+  "head": "0f257fecedd757c5216c9399b462aeb2759dcff7",
+  "checked_at": "2026-09-16T00:16:48.127330+00:00",
+  "runs": [
+    {
+      "conclusion": "success",
+      "databaseId": 35013032509,
+      "headSha": "0f257fecedd757c5216c9399b462aeb2759dcff7",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/35013032509",
+      "workflowName": "Preview \u2014 Deploy",
+      "jobs": [
+        {
+          "name": "guard",
+          "conclusion": "success"
+        },
+        {
+          "name": "deploy",
+          "conclusion": "skipped"
+        }
+      ]
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 35013032505,
+      "headSha": "0f257fecedd757c5216c9399b462aeb2759dcff7",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/35013032505",
+      "workflowName": "CI \u2014 Android",
+      "jobs": [
+        {
+          "name": "Build APK",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 35013032424,
+      "headSha": "0f257fecedd757c5216c9399b462aeb2759dcff7",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/35013032424",
+      "workflowName": "CI \u2014 Frontend",
+      "jobs": [
+        {
+          "name": "Frontend tests, types and build",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 35013032497,
+      "headSha": "0f257fecedd757c5216c9399b462aeb2759dcff7",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/35013032497",
+      "workflowName": "CI \u2014 Backend",
+      "jobs": [
+        {
+          "name": "Security (bandit + pip-audit)",
+          "conclusion": "success"
+        },
+        {
+          "name": "RLS Policy Coverage",
+          "conclusion": "success"
+        },
+        {
+          "name": "Tests",
+          "conclusion": "success"
+        },
+        {
+          "name": "Lint (ruff + mypy)",
+          "conclusion": "success"
+        },
+        {
+          "name": "Production image bootstrap",
+          "conclusion": "success"
+        },
+        {
+          "name": "Alembic Single Head",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 35013027354,
+      "headSha": "0f257fecedd757c5216c9399b462aeb2759dcff7",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/35013027354",
+      "workflowName": "CI \u2014 Android",
+      "jobs": [
+        {
+          "name": "Build APK",
+          "conclusion": "success"
+        }
+      ]
+    }
+  ],
+  "note": "Workflow/job conclusions from GitHub. No inferred JUnit count; preview deploy may be intentionally skipped."
+}

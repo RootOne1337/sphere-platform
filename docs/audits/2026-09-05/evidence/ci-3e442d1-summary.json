@@ -1,0 +1,87 @@
+{
+  "head": "3e442d19c6a37a0be62ea8793ea1ce412383c9b5",
+  "checked_at": "2026-09-14T12:11:10.468124+00:00",
+  "runs": [
+    {
+      "conclusion": "success",
+      "databaseId": 34802324810,
+      "headSha": "3e442d19c6a37a0be62ea8793ea1ce412383c9b5",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/34802324810",
+      "workflowName": "Preview \u2014 Deploy",
+      "jobs": [
+        {
+          "name": "guard",
+          "conclusion": "success"
+        },
+        {
+          "name": "deploy",
+          "conclusion": "skipped"
+        }
+      ]
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 34802324786,
+      "headSha": "3e442d19c6a37a0be62ea8793ea1ce412383c9b5",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/34802324786",
+      "workflowName": "CI \u2014 Frontend",
+      "jobs": [
+        {
+          "name": "Frontend tests, types and build",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 34802324783,
+      "headSha": "3e442d19c6a37a0be62ea8793ea1ce412383c9b5",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/34802324783",
+      "workflowName": "CI \u2014 Android",
+      "jobs": [
+        {
+          "name": "Build APK",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 34802324784,
+      "headSha": "3e442d19c6a37a0be62ea8793ea1ce412383c9b5",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/34802324784",
+      "workflowName": "CI \u2014 Backend",
+      "jobs": [
+        {
+          "name": "RLS Policy Coverage",
+          "conclusion": "success"
+        },
+        {
+          "name": "Tests",
+          "conclusion": "success"
+        },
+        {
+          "name": "Security (bandit + pip-audit)",
+          "conclusion": "success"
+        },
+        {
+          "name": "Lint (ruff + mypy)",
+          "conclusion": "success"
+        },
+        {
+          "name": "Production image bootstrap",
+          "conclusion": "success"
+        },
+        {
+          "name": "Alembic Single Head",
+          "conclusion": "success"
+        }
+      ]
+    }
+  ],
+  "note": "Workflow/job conclusions from GitHub. No inferred JUnit count; preview deploy may be intentionally skipped."
+}

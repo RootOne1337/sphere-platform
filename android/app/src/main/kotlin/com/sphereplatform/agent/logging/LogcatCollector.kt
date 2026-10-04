@@ -1,25 +1,32 @@
 package com.sphereplatform.agent.logging
 
 import timber.log.Timber
+import java.io.IOException
+import java.io.InputStream
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicReference
 import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * LogcatCollector — захват системного logcat по требованию.
+ * LogcatCollector — bounded best-effort capture of the logcat output visible to this app UID.
  *
  * Используется:
  *  - командой REQUEST_LOGS / UPLOAD_LOGCAT из CommandHandler
  *  - LogUploadWorker для периодического сбора системных событий
  *
- * Требует разрешения READ_LOGS (android:protectionLevel="signature|privileged"),
- * которое на debug/enterprise-signed APK разрешается через adb:
- *   adb shell pm grant com.sphereplatform.agent android.permission.READ_LOGS
- * На Enterprise MDM-устройствах предоставляется через managed config / DPC.
+ * `READ_LOGS` is signature/privileged and is not grantable to an ordinary APK.
+ * Unfiltered logcat therefore does not promise access to other apps or system
+ * crash buffers. This collector retains only a bounded tail to avoid loading an
+ * arbitrarily large command output into the agent process.
  */
 @Singleton
 class LogcatCollector @Inject constructor() {
 
     companion object {
+        internal const val MAX_OUTPUT_BYTES = 2 * 1024 * 1024
+        private const val PROCESS_TIMEOUT_SECONDS = 10L
+
         private val SPHERE_TAGS = listOf(
             "SphereAgent", "SphereWS", "DagRunner", "OtaUpdate",
             "VpnManager", "CmdHandler", "LogUploadW", "UpdateCheckW",
@@ -52,11 +59,27 @@ class LogcatCollector @Inject constructor() {
             .start()
         // FIX H5: Лимит на чтение logcat — защита от OOM на слабых эмуляторах.
         // 5000 строк × ~200 байт = ~1MB. Ограничиваем 2MB.
-        val output = process.inputStream.bufferedReader(Charsets.UTF_8).use {
-            it.readText().take(2 * 1024 * 1024)
+        val output = AtomicReference<ByteArray?>()
+        val readFailure = AtomicReference<Exception?>()
+        val reader = Thread({
+            try {
+                output.set(process.inputStream.use { it.readBoundedTail(MAX_OUTPUT_BYTES) })
+            } catch (error: Exception) {
+                readFailure.set(error)
+            }
+        }, "sphere-logcat-reader").apply {
+            isDaemon = true
+            start()
         }
-        process.waitFor()
-        output
+        if (!process.waitFor(PROCESS_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
+            process.destroyForcibly()
+            reader.join(1_000)
+            throw IOException("logcat command timed out")
+        }
+        reader.join(1_000)
+        if (reader.isAlive) throw IOException("logcat output reader did not finish")
+        readFailure.get()?.let { throw IOException("Could not read logcat output", it) }
+        String(output.get() ?: ByteArray(0), Charsets.UTF_8)
     }.getOrElse { e ->
         val msg = "LogcatCollector: failed to read logcat — ${e.message}"
         Timber.w(e, msg)
@@ -68,8 +91,27 @@ class LogcatCollector @Inject constructor() {
      */
     fun collectSphereOnly(lines: Int = 1000): String = collect(lines, SPHERE_TAGS)
 
-    /**
-     * Полный системный logcat (для диагностики взаимодействия ОС/агент).
-     */
+    /** Requests unfiltered logcat; visibility still depends on Android UID privileges. */
     fun collectSystemFull(lines: Int = 2000): String = collect(lines, tags = null)
+}
+
+/** Reads to EOF while retaining only the newest [maxBytes] bytes. */
+internal fun InputStream.readBoundedTail(maxBytes: Int): ByteArray {
+    require(maxBytes > 0)
+    val ring = ByteArray(maxBytes)
+    val chunk = ByteArray(minOf(8 * 1024, maxBytes))
+    var position = 0
+    var total = 0L
+    while (true) {
+        val read = read(chunk)
+        if (read < 0) break
+        if (read == 0) continue
+        for (index in 0 until read) {
+            ring[position] = chunk[index]
+            position = (position + 1) % maxBytes
+        }
+        total += read
+    }
+    if (total < maxBytes) return ring.copyOf(total.toInt())
+    return ByteArray(maxBytes) { index -> ring[(position + index) % maxBytes] }
 }

@@ -1,0 +1,58 @@
+{
+  "started_at": "2026-09-12T18:00:09.599495+00:00",
+  "scoped_postgres": "c2b5b99bcf18bda3332079ecc2e4bb4bd6f5622e8c1cb9d3233ad092d2819048",
+  "before_version": 8,
+  "events": [
+    {
+      "event": "isolated_postgres_paused",
+      "utc": "2026-09-12T18:00:09.833338+00:00"
+    },
+    {
+      "event": "publisher_refused_unready_route",
+      "utc": "2026-09-12T18:00:20.754176+00:00",
+      "status": {
+        "status": "error",
+        "error_type": "ReadTimeout",
+        "reason": "ReadTimeout",
+        "checked_at": 1789236020,
+        "last_success_at": 1789235954,
+        "duration_seconds": 8.609,
+        "scope": "RootOne1337/sphere-agent-config:codex/pilot-bootstrap-20260911:pilots/sphere-pilot-20260911/discovery.json:ce58a96d-fd02-4f7c-ac86-111c4f7fa37e:pilot-20260911-v1",
+        "compose_project": "sphere-pilot-20260911",
+        "compose_service": "cloudflare-quick"
+      },
+      "signed_mirror_and_journal_unchanged": true
+    },
+    {
+      "event": "isolated_postgres_restored",
+      "utc": "2026-09-12T18:00:20.989073+00:00"
+    },
+    {
+      "event": "scheduled_recovery",
+      "utc": "2026-09-12T18:01:16.294281+00:00",
+      "status": {
+        "status": "ok",
+        "action": "unchanged",
+        "config_version": 8,
+        "server_url": "https://reach-further-loads-ran.trycloudflare.com",
+        "expires_at": 1791827415,
+        "mirror_verified": true,
+        "desired_route_pending": false,
+        "checked_at": 1789236074,
+        "last_success_at": 1789236074,
+        "duration_seconds": 1.765,
+        "scope": "RootOne1337/sphere-agent-config:codex/pilot-bootstrap-20260911:pilots/sphere-pilot-20260911/discovery.json:ce58a96d-fd02-4f7c-ac86-111c4f7fa37e:pilot-20260911-v1",
+        "compose_project": "sphere-pilot-20260911",
+        "compose_service": "cloudflare-quick"
+      },
+      "real_shell": {
+        "http_status": 200,
+        "expected_output": true
+      },
+      "same_pid": true,
+      "new_registrations": 0,
+      "identity_and_signed_cache_preserved": true
+    }
+  ],
+  "passed": true
+}

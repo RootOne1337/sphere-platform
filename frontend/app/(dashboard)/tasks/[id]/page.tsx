@@ -7,14 +7,17 @@ import {
   useCancelTask,
   useStopTask,
   useTaskProgress,
-  useCreateTask,
+  useRetryTask,
   useTaskLiveLogs,
   type NodeExecutionLog,
   type LiveLogEntry,
 } from '@/lib/hooks/useTasks';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { TaskScreenshot } from '@/components/tasks/TaskScreenshot';
 import Link from 'next/link';
+import { executionStatusLabel, isCancellationPending } from '@/lib/task-status';
+import { getApiErrorMessage } from '@/lib/apiError';
 import {
   Play,
   Square,
@@ -59,19 +62,58 @@ const ACTION_ICONS: Record<string, string> = {
 // Main Component
 export default function TaskDetailPage({ params }: Props) {
   const { id } = use(params);
-  const { data: task, isLoading } = useTask(id);
-  const { data: logsFromApi } = useTaskLogs(id);
+  return <OwnedTaskDetail key={id} id={id} />;
+}
+
+function httpStatus(error: unknown): number | undefined {
+  return (error as { response?: { status?: number } } | null)?.response?.status;
+}
+
+function taskReadTitle(error: unknown): string {
+  switch (httpStatus(error)) {
+    case 404: return 'Задание не найдено';
+    case 401: return 'Требуется вход в систему';
+    case 403: return 'Нет доступа к заданию';
+    default: return 'Не удалось загрузить задание';
+  }
+}
+
+function reportedLogs(value: unknown): NodeExecutionLog[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  return value.filter((log): log is NodeExecutionLog => log !== null && typeof log === 'object'
+    && typeof log.node_id === 'string' && typeof log.action_type === 'string' && typeof log.success === 'boolean');
+}
+
+function reportedCount(value: unknown): number | undefined {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : undefined;
+}
+
+function OwnedTaskDetail({ id }: { id: string }) {
+  const taskQuery = useTask(id);
+  const { data: task, isLoading } = taskQuery;
+  const logsQuery = useTaskLogs(id);
   const cancelTask = useCancelTask();
   const stopTask = useStopTask();
-  const createTask = useCreateTask();
-  const [restarting, setRestarting] = useState(false);
+  const createTask = useRetryTask();
+  const [receipt, setReceipt] = useState<string | null>(null);
+  const [newTaskId, setNewTaskId] = useState<string | null>(null);
+  const writesPending = cancelTask.isPending || stopTask.isPending || createTask.isPending;
+  const canAct = taskQuery.isSuccess && !taskQuery.isFetching && !writesPending;
+  const actionError = stopTask.error ?? cancelTask.error ?? createTask.error;
+  const beginAction = () => {
+    stopTask.reset(); cancelTask.reset(); createTask.reset(); setReceipt(null); setNewTaskId(null);
+  };
 
   const isActive = task ? ['queued', 'assigned', 'running'].includes(task.status) : false;
-  const { data: liveProgress } = useTaskProgress(id, isActive);
-  const { data: liveLogs } = useTaskLiveLogs(id, isActive);
+  const progressQuery = useTaskProgress(id, isActive && taskQuery.isSuccess);
+  const liveLogsQuery = useTaskLiveLogs(id, isActive && taskQuery.isSuccess);
+  const { data: liveProgress } = progressQuery;
+  const { data: liveLogs } = liveLogsQuery;
 
-  const resultNodeLogs = (task?.result as Record<string, unknown> | null)?.node_logs as NodeExecutionLog[] | undefined;
-  const logs = (logsFromApi && logsFromApi.length > 0) ? logsFromApi : resultNodeLogs ?? logsFromApi;
+  const resultNodeLogs = reportedLogs(task?.result?.node_logs);
+  const logs = reportedLogs(logsQuery.data) ?? resultNodeLogs;
+  const successfulReports = logs?.filter((log) => log.success).length ?? 0;
+  const failedReports = logs?.filter((log) => !log.success).length ?? 0;
 
   if (isLoading) {
     return (
@@ -89,7 +131,9 @@ export default function TaskDetailPage({ params }: Props) {
       <div className="p-8 flex items-center justify-center min-h-[50vh]">
         <div className="flex flex-col items-center gap-4 text-muted-foreground bg-card p-8 rounded-xl border border-border">
           <XCircle className="w-12 h-12 text-muted-foreground/50" />
-          <p className="font-mono">Task not found</p>
+          <h1 className="font-semibold" role="alert">{taskReadTitle(taskQuery.error)}</h1>
+          <p className="text-sm text-center">{httpStatus(taskQuery.error) === 404 ? 'API подтвердил отсутствие записи.' : 'Данные задания не получены; команды недоступны.'}</p>
+          <Button onClick={() => void taskQuery.refetch()} disabled={taskQuery.isFetching}>Повторить загрузку задания</Button>
           <Button asChild variant="outline" className="mt-4"><Link href="/tasks">Return to Terminal</Link></Button>
         </div>
       </div>
@@ -99,9 +143,9 @@ export default function TaskDetailPage({ params }: Props) {
   const statusCfg = STATUS_CONFIG[task.status] ?? STATUS_CONFIG.queued;
   const result = task.result as Record<string, unknown> | null;
 
-  const nodesExecuted = liveProgress?.nodes_done ?? (result?.nodes_executed as number) ?? logs?.length ?? 0;
-  const totalNodes = liveProgress?.total_nodes ?? (result?.total_nodes as number) ?? (result?.node_logs as unknown[])?.length ?? 0;
-  const cycles = liveProgress?.cycles ?? (totalNodes > 0 ? Math.floor(nodesExecuted / totalNodes) : 0);
+  const nodesExecuted = reportedCount(liveProgress?.nodes_done) ?? reportedCount(result?.nodes_executed);
+  const totalNodes = reportedCount(liveProgress?.total_nodes) ?? reportedCount(result?.total_nodes);
+  const cycles = reportedCount(liveProgress?.cycles) ?? reportedCount(result?.cycles);
   const currentNode = liveProgress?.current_node ?? '';
   const failedNode = result?.failed_node as string | undefined;
 
@@ -113,6 +157,18 @@ export default function TaskDetailPage({ params }: Props) {
 
   return (
     <div className="p-6 space-y-6 max-w-7xl mx-auto animate-in fade-in duration-500">
+      {taskQuery.isError && <div role="alert" className="space-y-3 rounded-xl border border-destructive/30 bg-card p-4">
+        <h2 className="font-semibold">{taskReadTitle(taskQuery.error)}</h2>
+        <p className="text-sm">Показан предыдущий снимок задания. Команды заблокированы до успешного чтения.</p>
+        <p className="text-xs text-muted-foreground">Последнее подтверждение: {new Date(taskQuery.dataUpdatedAt).toLocaleString()}</p>
+        <Button variant="outline" onClick={() => void taskQuery.refetch()} disabled={taskQuery.isFetching}>Повторить загрузку задания</Button>
+      </div>}
+      {actionError && <div role="alert" className="rounded-xl border border-destructive/30 p-4 text-sm">
+        {getApiErrorMessage(actionError, 'Команда не выполнена. Проверьте связь и права доступа, затем повторите действие.')}
+      </div>}
+      {receipt && <div role="status" className="rounded-xl border border-border bg-card p-4 text-sm">
+        {receipt}{newTaskId && <Link href={`/tasks/${newTaskId}`} className="ml-2 underline">Открыть новое задание</Link>}
+      </div>}
       {/* ── Header Area ────────────────────────────────────────────────────────── */}
       <div className="relative rounded-2xl overflow-hidden border border-border bg-card/50 backdrop-blur-xl">
         {/* Dynamic ambient background based on status */}
@@ -144,7 +200,7 @@ export default function TaskDetailPage({ params }: Props) {
                       <span className="relative inline-flex rounded-full h-2 w-2 bg-current" />
                     </span>
                   )}
-                  {statusCfg.label}
+                  {isCancellationPending(task) ? executionStatusLabel(task) : statusCfg.label}
                 </span>
               </h1>
             </div>
@@ -158,47 +214,51 @@ export default function TaskDetailPage({ params }: Props) {
             {task.status === 'running' && (
               <Button
                 variant="destructive"
-                onClick={() => stopTask.mutate(task.id)}
-                disabled={stopTask.isPending}
+                onClick={() => {
+                  if (!canAct || isCancellationPending(task)) return;
+                  beginAction();
+                  stopTask.mutate(task.id, { onSuccess: () => setReceipt('Запрос остановки принят. Окончательный статус ожидается от устройства.') });
+                }}
+                disabled={!canAct || isCancellationPending(task)}
                 className="gap-2 shadow-[0_0_20px_rgba(239,68,68,0.3)] hover:shadow-[0_0_30px_rgba(239,68,68,0.5)] transition-all bg-red-600/90 hover:bg-red-500 text-white"
               >
                 <Square className="w-4 h-4 fill-current" />
-                {stopTask.isPending ? 'Halting...' : 'Force Stop'}
+                {isCancellationPending(task) ? 'Awaiting device result' : stopTask.isPending ? 'Requesting stop...' : 'Force Stop'}
               </Button>
             )}
 
             {['queued', 'assigned'].includes(task.status) && (
               <Button
                 variant="destructive"
-                onClick={() => cancelTask.mutate(task.id)}
-                disabled={cancelTask.isPending}
+                onClick={() => {
+                  if (!canAct || isCancellationPending(task)) return;
+                  beginAction();
+                  cancelTask.mutate(task.id, { onSuccess: () => setReceipt('Запрос отмены принят. Итоговый статус будет подтверждён сервером и устройством.') });
+                }}
+                disabled={!canAct || isCancellationPending(task)}
                 className="gap-2 bg-red-950 text-red-400 hover:bg-red-900/80 border border-red-900/50"
               >
                 <Ban className="w-4 h-4" />
-                {cancelTask.isPending ? 'Aborting...' : 'Cancel Task'}
+                {isCancellationPending(task) ? 'Awaiting device result' : cancelTask.isPending ? 'Requesting stop...' : 'Cancel Task'}
               </Button>
             )}
 
             {['completed', 'failed', 'cancelled', 'timeout'].includes(task.status) && (
               <Button
                 variant="default"
-                disabled={restarting}
+                disabled={!canAct || !task.script_version_id}
                 className="gap-2 bg-emerald-600 hover:bg-emerald-500 text-white shadow-[0_0_20px_rgba(16,185,129,0.2)] hover:shadow-[0_0_30px_rgba(16,185,129,0.4)] transition-all"
-                onClick={async () => {
-                  setRestarting(true);
-                  try {
-                    await createTask.mutateAsync({
-                      script_id: task.script_id,
-                      device_id: task.device_id,
-                      priority: task.priority,
-                    });
-                  } finally {
-                    setRestarting(false);
-                  }
+                onClick={() => {
+                  if (!canAct || !task.script_version_id) return;
+                  beginAction();
+                  createTask.mutate(task.id, { onSuccess: (data) => {
+                      setReceipt('Сервер принял запрос нового задания. Результат выполнения ещё не подтверждён.');
+                      setNewTaskId(typeof data?.id === 'string' ? data.id : null);
+                    } });
                 }}
               >
-                <RotateCcw className={`w-4 h-4 ${restarting ? 'animate-spin' : ''}`} />
-                {restarting ? 'Deploying...' : 'Restart Task'}
+                <RotateCcw className={`w-4 h-4 ${createTask.isPending ? 'animate-spin' : ''}`} />
+                {createTask.isPending ? 'Deploying...' : 'Restart Task'}
               </Button>
             )}
           </div>
@@ -206,6 +266,10 @@ export default function TaskDetailPage({ params }: Props) {
       </div>
 
       {/* ── Quick Info Grid ────────────────────────────────────────────────────── */}
+      {!isActive && <p className="text-sm text-muted-foreground">
+        Повтор создаёт отдельное задание с исходной версией скрипта, входными параметрами и таймаутом.
+        Привязка к старому пакету и его результаты не переносятся. Версия: <span className="font-mono break-all">{task.script_version_id ?? 'неизвестна — повтор недоступен'}</span>.
+      </p>}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
         <InfoCard icon={ActivitySquare} label="Priority" value={String(task.priority)} />
         <InfoCard icon={MonitorSmartphone} label="Устройство" value={task.device_name || task.device_id} isMono />
@@ -234,6 +298,8 @@ export default function TaskDetailPage({ params }: Props) {
           </div>
         </div>
       )}
+      {typeof result?.final_screenshot_key === 'string' && result.final_screenshot_key &&
+        <TaskScreenshot taskId={id} screenshotKey={result.final_screenshot_key} label="Итоговый снимок задания" />}
 
       {/* Error Banner */}
       {task.error_message && (
@@ -269,11 +335,13 @@ export default function TaskDetailPage({ params }: Props) {
               </div>
 
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                <MetricCard label="Nodes Executed" value={String(nodesExecuted)} accent="cyan" />
-                <MetricCard label="Cycles" value={String(cycles)} accent="blue" />
-                <MetricCard label="Total Nodes" value={String(totalNodes)} accent="purple" />
-                <MetricCard label="Pass Rate" value={(nodesExecuted > 0 ? '100%' : '0%')} accent="green" /> {/* Approximated for UI aesthetics */}
+                <MetricCard label="Nodes Executed" value={nodesExecuted == null ? '—' : String(nodesExecuted)} accent="cyan" />
+                <MetricCard label="Cycles" value={cycles == null ? '—' : String(cycles)} accent="blue" />
+                <MetricCard label="Total Nodes" value={totalNodes == null ? '—' : String(totalNodes)} accent="purple" />
+                <MetricCard label="Успешные отчёты" value={logs?.length ? `${successfulReports}/${logs.length}` : 'Нет отчётов'} accent="green" />
               </div>
+              <p className="text-xs text-muted-foreground">Успешность относится к полученным отчётам шагов; полнота выполнения по ним не подтверждается.</p>
+              {progressQuery.isError && <p role="alert" className="mt-2 text-sm text-amber-300">Не удалось обновить прогресс; показаны последние полученные значения.</p>}
 
               {currentNode && (
                 <div className="flex items-center gap-3 bg-black/40 border border-cyan-500/20 rounded-xl px-5 py-3 backdrop-blur-md">
@@ -298,24 +366,29 @@ export default function TaskDetailPage({ params }: Props) {
                   <h2 className="text-base font-semibold">Execution Timeline</h2>
                 </div>
                 <div className="flex items-center gap-3 text-sm font-mono">
-                  {nodesExecuted > 0 && <span className="text-green-400">{nodesExecuted} passed</span>}
-                  {totalNodes > 0 && <span className="text-muted-foreground ml-2">Total: {totalNodes}</span>}
-                  {cycles > 0 && <span className="text-blue-400 ml-2">Cycles: {cycles}</span>}
+                  {!!logs?.length && <span>{successfulReports} успешных · {failedReports} ошибок · {logs.length} получено</span>}
+                  {totalNodes != null && <span className="text-muted-foreground ml-2">Total: {totalNodes}</span>}
+                  {cycles != null && <span className="text-blue-400 ml-2">Cycles: {cycles}</span>}
                 </div>
               </div>
 
               <div className="p-6">
-                {(!logs || logs.length === 0) ? (
+                {logsQuery.isError && <div role="alert" className="mb-4 space-y-2 text-sm text-destructive">
+                  <p>Не удалось обновить отчёты шагов.{logs?.length ? ' Показаны ранее полученные данные.' : ' Отсутствие отчётов не подтверждено.'}</p>
+                  <Button variant="outline" onClick={() => void logsQuery.refetch()} disabled={logsQuery.isFetching}>Повторить загрузку отчётов</Button>
+                </div>}
+                {logsQuery.data == null && resultNodeLogs && <p className="mb-3 text-xs text-muted-foreground">Источник: последний снимок результата задания.</p>}
+                {(!logs || logs.length === 0) ? (!logsQuery.isError && (
                   <div className="py-12 flex flex-col items-center justify-center text-muted-foreground border border-dashed border-border rounded-xl">
                     <ActivitySquare className="w-10 h-10 opacity-20 mb-3" />
-                    <p className="text-sm">No node execution data available.</p>
+                    <p className="text-sm">{logsQuery.isLoading ? 'Загрузка отчётов шагов…' : 'No node execution data available.'}</p>
                   </div>
-                ) : (
+                )) : (
                   <div className="relative">
                     <div className="absolute left-[20px] top-6 bottom-6 w-px bg-gradient-to-b from-transparent via-border to-transparent" />
                     <div className="space-y-4">
                       {logs.map((log, i) => (
-                        <LogEntry key={i} log={log} isFailed={log.node_id === failedNode} />
+                        <LogEntry key={i} taskId={id} log={log} isFailed={log.node_id === failedNode} />
                       ))}
                     </div>
                   </div>
@@ -357,10 +430,13 @@ export default function TaskDetailPage({ params }: Props) {
                 </Badge>
               </div>
               <div className="flex-1 overflow-auto p-4 custom-scrollbar">
+                {liveLogsQuery.isError && <p role="alert" className="mb-3 text-sm text-destructive">Live-журнал не обновлён; показан предыдущий снимок.</p>}
                 <LiveLogTimeline entries={liveLogs} />
               </div>
             </div>
           )}
+          {isActive && !liveLogs && liveLogsQuery.isError && <p role="alert" className="rounded-xl border border-destructive/30 p-4 text-sm">Не удалось загрузить live-журнал.</p>}
+          {isActive && logsQuery.isError && <p role="alert" className="rounded-xl border border-destructive/30 p-4 text-sm">Отчёты шагов не обновлены; успешность выполнения не подтверждена.</p>}
         </div>
 
       </div>
@@ -443,7 +519,7 @@ function LiveLogTimeline({ entries }: { entries: LiveLogEntry[] }) {
   );
 }
 
-function LogEntry({ log, isFailed }: { log: NodeExecutionLog; isFailed: boolean }) {
+function LogEntry({ taskId, log, isFailed }: { taskId: string; log: NodeExecutionLog; isFailed: boolean }) {
   const icon = ACTION_ICONS[log.action_type] ?? '⚙️';
   const dotColor = log.success
     ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)] border-emerald-950'
@@ -508,22 +584,10 @@ function LogEntry({ log, isFailed }: { log: NodeExecutionLog; isFailed: boolean 
           </details>
         )}
 
-        {log.screenshot_key && (
-          <div className="mt-3 inline-block">
-            <div className="relative group/img overflow-hidden rounded-lg border border-white/10 shadow-lg cursor-zoom-in">
-              <img
-                src={`/api/files/${log.screenshot_key}`}
-                alt="Execution Screenshot"
-                className="max-h-64 object-contain bg-black/50 transition-transform duration-500 group-hover/img:scale-105"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = 'none';
-                  (e.target as HTMLImageElement).parentElement!.innerHTML = '<span class="text-xs text-muted-foreground p-4 block bg-black/50">Screenshot unavailable</span>';
-                }}
-              />
-              <div className="absolute inset-0 bg-cyan-500/0 group-hover/img:bg-cyan-500/10 transition-colors" />
-            </div>
-          </div>
-        )}
+        {log.screenshot_key && <TaskScreenshot taskId={taskId} screenshotKey={log.screenshot_key} />}
+        {log.action_type === 'screenshot' && !log.screenshot_key && <p className="mt-3 text-xs text-muted-foreground">
+          Файл снимка не получен сервером. Локальный путь Android в отчёте не является ссылкой на изображение.
+        </p>}
       </div>
     </div>
   );

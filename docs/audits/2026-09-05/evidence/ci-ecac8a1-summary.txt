@@ -1,0 +1,15 @@
+Historical CI head: ecac8a121906be5cff8d7a63bffdfac798298915
+Run: https://github.com/RootOne1337/sphere-platform/actions/runs/34027302696
+
+mypy diagnostics (fixed in 31077b3):
+2026-09-06T10:24:07.8308752Z backend/websocket/heartbeat.py:108: error: Unsupported operand types for <= ("int" and "None")  [operator]
+2026-09-06T10:24:07.8310153Z backend/websocket/heartbeat.py:108: note: Right operand is of type "Any | None"
+2026-09-06T10:24:07.8311388Z backend/websocket/heartbeat.py:108: error: Unsupported operand types for >= ("int" and "None")  [operator]
+2026-09-06T10:24:07.8312595Z backend/websocket/heartbeat.py:108: note: Left operand is of type "Any | None"
+2026-09-06T10:24:07.8314015Z backend/websocket/heartbeat.py:109: error: Unsupported operand types for - ("float" and "None")  [operator]
+2026-09-06T10:24:07.8315261Z backend/websocket/heartbeat.py:109: note: Right operand is of type "Any | None"
+2026-09-06T10:24:08.1559314Z Found 3 errors in 1 file (checked 201 source files)
+
+Tests job reported success despite below-threshold output (rounding fixed in 1335a72):
+2026-09-06T10:25:50.3632878Z FAIL Required test coverage of 65% not reached. Total coverage: 64.98%
+2026-09-06T10:25:50.3633312Z ================= 913 passed, 488 warnings in 66.97s (0:01:06) =================

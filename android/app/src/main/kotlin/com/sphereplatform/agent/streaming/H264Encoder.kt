@@ -8,6 +8,7 @@ import android.os.Bundle
 import android.view.Surface
 import timber.log.Timber
 import java.nio.ByteBuffer
+import java.util.concurrent.ArrayBlockingQueue
 
 /**
  * Asynchronous H.264 encoder using [MediaCodec] surface input mode.
@@ -56,6 +57,7 @@ class H264Encoder(
         val isKeyFrame: Boolean,
         val presentationTimeUs: Long,
         val sizeBytes: Int,
+        val isCodecConfig: Boolean = false,
     )
 
     // -------------------------------------------------------------------------
@@ -67,7 +69,16 @@ class H264Encoder(
     @Volatile var cachedPps: ByteArray? = null
         private set
 
-    private var codec: MediaCodec? = null
+    @Volatile private var codec: MediaCodec? = null
+    private var inputSurface: Surface? = null
+    private val inputLock = Any()
+    @Volatile private var planarInputs: ArrayBlockingQueue<Int>? = null
+    private var planarConverter: RgbaToI420? = null
+    private var planarWindowNs = 0L
+    private var planarSamples = 0
+    private var planarConvertNs = 0L
+    private var planarQueueNs = 0L
+    private var callbackErrorReported = false
 
     // -------------------------------------------------------------------------
     // Lifecycle
@@ -77,12 +88,19 @@ class H264Encoder(
      * Configure and start the encoder.
      * @return The [Surface] to be passed to [VirtualDisplayManager.createDisplay].
      */
-    fun start(): Surface {
+    fun start(): Surface = checkNotNull(startCodec(false))
+
+    /** Debug canary only: avoids the measured slow Google OMX graphics input. */
+    internal fun startPlanar() { startCodec(true) }
+
+    private fun startCodec(planar: Boolean): Surface? = synchronized(inputLock) {
+        check(codec == null) { "Encoder already started" }
         val mime = MediaFormat.MIMETYPE_VIDEO_AVC
         val format = MediaFormat.createVideoFormat(mime, config.width, config.height).apply {
             setInteger(
                 MediaFormat.KEY_COLOR_FORMAT,
-                MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface,
+                if (planar) MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Planar
+                else MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface,
             )
             setInteger(MediaFormat.KEY_BIT_RATE, config.bitrateBps)
             setInteger(MediaFormat.KEY_FRAME_RATE, config.fps)
@@ -111,32 +129,103 @@ class H264Encoder(
                 MediaFormat.KEY_BITRATE_MODE,
                 MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_CBR,
             )
+            if (planar) {
+                setInteger(MediaFormat.KEY_COLOR_STANDARD, MediaFormat.COLOR_STANDARD_BT601_NTSC)
+                setInteger(MediaFormat.KEY_COLOR_RANGE, MediaFormat.COLOR_RANGE_LIMITED)
+                setInteger(MediaFormat.KEY_COLOR_TRANSFER, MediaFormat.COLOR_TRANSFER_SDR_VIDEO)
+            }
         }
 
-        val c = MediaCodec.createEncoderByType(mime)
-        c.setCallback(encoderCallback)
-        c.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
-        val inputSurface = c.createInputSurface()
-        c.start()
-        codec = c
-        return inputSurface
-    }
-
-    fun stop() {
+        val c = if (planar) MediaCodec.createByCodecName("OMX.google.h264.encoder")
+            else MediaCodec.createEncoderByType(mime)
         try {
-            codec?.stop()
-            codec?.release()
-        } catch (e: Exception) {
-            Timber.e(e, "H264Encoder.stop() error")
-        } finally {
-            codec = null
+            if (planar) {
+                require(c.codecInfo.getCapabilitiesForType(mime).colorFormats.contains(
+                    MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Planar))
+                planarConverter = RgbaToI420(config.width, config.height)
+                planarInputs = ArrayBlockingQueue(64)
+            }
+            // Name is platform-selected, not an assumption about hardware. A
+            // bounded startup record makes slow emulator encoders diagnosable.
+            Timber.i("H264Encoder selected codec=%s width=%d height=%d target_fps=%d bitrate_bps=%d input=%s",
+                c.name, config.width, config.height, config.fps, config.bitrateBps,
+                if (planar) "yuv420_planar" else "surface")
+            c.setCallback(encoderCallback)
+            c.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
+            val surface = if (planar) null else c.createInputSurface()
+            inputSurface = surface
+            callbackErrorReported = false
+            cachedSps = null; cachedPps = null
+            codec = c
+            c.start()
+            surface
+        } catch (error: Exception) {
+            codec = null; planarInputs = null; planarConverter = null
+            runCatching { inputSurface?.release() }; inputSurface = null
+            runCatching { c.release() }
+            throw error
         }
     }
 
-    fun requestKeyFrame() {
-        codec?.setParameters(Bundle().apply {
-            putInt(MediaCodec.PARAMETER_KEY_REQUEST_SYNC_FRAME, 0)
-        })
+    fun stop() = synchronized(inputLock) {
+        val owned = codec
+        codec = null
+        cachedSps = null; cachedPps = null
+        planarInputs = null; planarConverter = null
+        planarWindowNs = 0L; planarSamples = 0; planarConvertNs = 0L; planarQueueNs = 0L
+        runCatching { owned?.stop() }.onFailure { Timber.w(it, "H264Encoder stop error") }
+        runCatching { owned?.release() }.onFailure { Timber.w(it, "H264Encoder release error") }
+        runCatching { inputSurface?.release() }.onFailure { Timber.w(it, "H264Encoder input Surface release error") }
+        inputSurface = null
+    }
+
+    /** Nonblocking admission: skip a RAW image if the codec has no free input. */
+    internal fun submitPlanarFrame(rgba: ByteBuffer, rowStride: Int, pixelStride: Int, ptsUs: Long): Boolean =
+        synchronized(inputLock) {
+            val owned = codec ?: return@synchronized false
+            val available = planarInputs ?: return@synchronized false
+            val converter = planarConverter ?: return@synchronized false
+            require(ptsUs > 0)
+            val index = available.poll() ?: return@synchronized false
+            var queueAttempted = false
+            try {
+                val buffer = checkNotNull(owned.getInputBuffer(index))
+                val started = System.nanoTime()
+                converter.convert(rgba, rowStride, pixelStride, buffer)
+                val converted = System.nanoTime()
+                queueAttempted = true
+                owned.queueInputBuffer(index, 0, converter.outputSize, ptsUs, 0)
+                val queued = System.nanoTime()
+                if (planarWindowNs == 0L) planarWindowNs = started
+                planarSamples++; planarConvertNs += converted - started; planarQueueNs += queued - converted
+                if (queued - planarWindowNs >= 5_000_000_000L) {
+                    Timber.i("H264Encoder planar_input samples=%d convert_mean_ms=%.3f queue_mean_ms=%.3f",
+                        planarSamples, planarConvertNs / planarSamples / 1_000_000.0,
+                        planarQueueNs / planarSamples / 1_000_000.0)
+                    planarWindowNs = queued; planarSamples = 0; planarConvertNs = 0L; planarQueueNs = 0L
+                }
+                true
+            } catch (error: Exception) {
+                if (!queueAttempted) available.offer(index)
+                else onEncoderError?.invoke(error) // Do not retry an uncertain queue operation.
+                throw error
+            }
+        }
+
+    fun requestKeyFrame(): Boolean {
+        val activeCodec = codec ?: return false
+        return try {
+            activeCodec.setParameters(Bundle().apply {
+                putInt(MediaCodec.PARAMETER_KEY_REQUEST_SYNC_FRAME, 0)
+            })
+            true
+        } catch (error: IllegalStateException) {
+            Timber.w(error, "H264Encoder: sync-frame request rejected by codec state")
+            false
+        } catch (error: IllegalArgumentException) {
+            Timber.w(error, "H264Encoder: sync-frame request rejected by codec")
+            false
+        }
     }
 
     fun adjustBitrate(newBitrateBps: Int) {
@@ -151,7 +240,11 @@ class H264Encoder(
 
     private val encoderCallback = object : MediaCodec.Callback() {
         override fun onInputBufferAvailable(codec: MediaCodec, index: Int) {
-            // Surface encoder: input buffers not used — frames arrive via Surface
+            val available = planarInputs
+            // A stopped codec's callback cannot lend an index to a new session.
+            if (this@H264Encoder.codec === codec && available != null && !available.offer(index)) {
+                onEncoderError?.invoke(IllegalStateException("Planar input callback capacity exceeded"))
+            }
         }
 
         override fun onOutputBufferAvailable(
@@ -159,73 +252,65 @@ class H264Encoder(
             index: Int,
             info: MediaCodec.BufferInfo,
         ) {
-            // Codec config (SPS/PPS) — cache and release, do not forward as a frame
-            if (info.flags and MediaCodec.BUFFER_FLAG_CODEC_CONFIG != 0) {
-                codec.getOutputBuffer(index)?.let { buf ->
-                    handleCodecConfig(buf, info)
+            val packets = try {
+                synchronized(inputLock) {
+                    // stop() owns release; queued callbacks from that codec do
+                    // not own any native buffer in the replacement session.
+                    if (this@H264Encoder.codec !== codec) return
+                    var failure: Exception? = null
+                    var copied = emptyList<Pair<ByteArray, FrameMetadata>>()
+                    try {
+                        if (info.size > 0) {
+                            codec.getOutputBuffer(index)?.let { buffer ->
+                                val data = ByteArray(info.size)
+                                buffer.position(info.offset)
+                                buffer.get(data)
+                                val isConfig = info.flags and MediaCodec.BUFFER_FLAG_CODEC_CONFIG != 0
+                                copied = if (isConfig) splitNalUnits(data).map { nal ->
+                                    nal to FrameMetadata(true, info.presentationTimeUs, nal.size, true)
+                                } else listOf(data to FrameMetadata(
+                                    info.flags and MediaCodec.BUFFER_FLAG_KEY_FRAME != 0,
+                                    info.presentationTimeUs, info.size))
+                            }
+                        }
+                    } catch (error: Exception) {
+                        failure = error
+                    } finally {
+                        // Return the buffer BEFORE calling a consumer, which
+                        // may synchronously stop the encoder or throw. Native
+                        // read/release is serialized against stop(), while the
+                        // external callback never runs under this lock.
+                        try { codec.releaseOutputBuffer(index, false) }
+                        catch (error: Exception) {
+                            if (failure == null) failure = error else failure.addSuppressed(error)
+                        }
+                    }
+                    failure?.let { throw it }
+                    for ((nal, metadata) in copied) {
+                        if (metadata.isCodecConfig) when (findFirstNalType(nal)) {
+                            7 -> cachedSps = nal
+                            8 -> cachedPps = nal
+                        }
+                    }
+                    copied
                 }
-                codec.releaseOutputBuffer(index, false)
+            } catch (error: Exception) {
+                reportCallbackError(codec, error)
                 return
             }
-
-            if (info.size == 0) {
-                codec.releaseOutputBuffer(index, false)
-                return
+            for ((data, metadata) in packets) {
+                if (this@H264Encoder.codec !== codec) return
+                try { onFrameReady(data, metadata) }
+                catch (error: Exception) { reportCallbackError(codec, error); return }
             }
-
-            val buffer = codec.getOutputBuffer(index) ?: run {
-                codec.releaseOutputBuffer(index, false)
-                return
-            }
-
-            val isKeyFrame = info.flags and MediaCodec.BUFFER_FLAG_KEY_FRAME != 0
-            val data = ByteArray(info.size)
-            buffer.position(info.offset)
-            buffer.get(data)
-
-            onFrameReady(
-                data,
-                FrameMetadata(
-                    isKeyFrame = isKeyFrame,
-                    presentationTimeUs = info.presentationTimeUs,
-                    sizeBytes = info.size,
-                ),
-            )
-            codec.releaseOutputBuffer(index, false)
         }
 
         override fun onError(codec: MediaCodec, e: MediaCodec.CodecException) {
-            Timber.e(e, "H264Encoder MediaCodec error — attempting restart")
-            restartEncoder()
+            reportCallbackError(codec, e)
         }
 
         override fun onOutputFormatChanged(codec: MediaCodec, format: MediaFormat) {
-            Timber.i("Encoder output format changed: $format")
-        }
-    }
-
-    private fun handleCodecConfig(buffer: ByteBuffer, info: MediaCodec.BufferInfo) {
-        val data = ByteArray(info.size)
-        buffer.position(info.offset)
-        buffer.get(data)
-        
-        // Split the buffer into individual NAL units
-        val nals = splitNalUnits(data)
-        for (nal in nals) {
-            val nalType = findFirstNalType(nal)
-            when (nalType) {
-                7 -> cachedSps = nal
-                8 -> cachedPps = nal
-            }
-            // Send SPS/PPS immediately so the frontend gets them even if onViewerConnected was called too early
-            onFrameReady(
-                nal,
-                FrameMetadata(
-                    isKeyFrame = true,
-                    presentationTimeUs = info.presentationTimeUs,
-                    sizeBytes = nal.size,
-                )
-            )
+            if (this@H264Encoder.codec === codec) Timber.i("Encoder output format changed: $format")
         }
     }
 
@@ -265,10 +350,16 @@ class H264Encoder(
         return -1
     }
 
-    private fun restartEncoder() {
-        // FIX AUDIT-1.4: Уведомляем подписчика (StreamingManagerImpl) о фатальной ошибке.
-        // Прямой restart из onError callback вызовет deadlock (re-entrant MediaCodec).
-        Timber.w("H264Encoder: ошибка кодека — уведомляем StreamingManager")
-        onEncoderError?.invoke(RuntimeException("MediaCodec fatal error"))
+    private fun reportCallbackError(owned: MediaCodec, error: Exception) {
+        val consumer = synchronized(inputLock) {
+            if (codec !== owned || callbackErrorReported) return
+            callbackErrorReported = true
+            onEncoderError
+        }
+        Timber.e(error, "H264Encoder: active codec callback failed")
+        // The manager schedules recovery asynchronously. A faulty subscriber
+        // cannot turn a contained codec failure into an uncaught Looper error.
+        try { consumer?.invoke(error) }
+        catch (subscriberError: Exception) { Timber.e(subscriberError, "H264Encoder: error subscriber failed") }
     }
 }

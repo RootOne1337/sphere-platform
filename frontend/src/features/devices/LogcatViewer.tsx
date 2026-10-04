@@ -1,90 +1,44 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect } from "react";
-import { api } from "@/lib/api";
-import { Button } from "@/src/shared/ui/button";
-import { RefreshCcw, FileText, AlertCircle } from "lucide-react";
-import { Badge } from "@/src/shared/ui/badge";
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { api } from '@/lib/api';
+import { getApiErrorMessage } from '@/lib/apiError';
+import { Button } from '@/src/shared/ui/button';
+import { DEVICE_COMMAND_TIMEOUT, interactiveResult } from './interactiveResult';
 
-interface LogcatViewerProps {
-    deviceId: string;
-}
-
-export function LogcatViewer({ deviceId }: LogcatViewerProps) {
-    const [logcat, setLogcat] = useState<string>("");
-    const [isLoading, setIsLoading] = useState<boolean>(false);
-    const [error, setError] = useState<string | null>(null);
-
-    const fetchLogcat = async () => {
-        setIsLoading(true);
-        setError(null);
-        try {
-            const { data } = await api.post(`/devices/${deviceId}/logcat`, {
-                lines: 500,
-                mode: "sphere",
-            });
-            if (data.logcat) {
-                setLogcat(data.logcat);
-            } else if (data.error) {
-                setError(data.error);
-            }
-        } catch (err: any) {
-            setError(err.response?.data?.detail || err.message || "Failed to fetch logcat");
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        fetchLogcat();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [deviceId]);
-
-    return (
-        <div className="flex flex-col h-full border border-border rounded-sm overflow-hidden bg-background animate-in fade-in zoom-in-95 duration-200">
-            {/* Header */}
-            <div className="flex items-center justify-between px-3 py-1.5 bg-muted border-b border-border">
-                <div className="flex items-center gap-2">
-                    <FileText className="w-3.5 h-3.5 text-primary" />
-                    <span className="text-[10px] font-mono font-bold tracking-widest uppercase text-primary">System Logcat</span>
-                    <Badge variant="outline" className="text-[8px] px-1 py-0 h-3 border-[#444] text-muted-foreground ml-2">500 LINES</Badge>
-                </div>
-                <div className="flex items-center gap-2">
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 hover:bg-border text-muted-foreground hover:text-white"
-                        onClick={fetchLogcat}
-                        disabled={isLoading}
-                        title="Refresh Logs"
-                    >
-                        <RefreshCcw className={`w-3 h-3 ${isLoading ? "animate-spin text-primary" : ""}`} />
-                    </Button>
-                </div>
-            </div>
-
-            {/* Content Container */}
-            <div className="flex-1 relative overflow-auto custom-scrollbar p-2">
-                {error ? (
-                    <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-3">
-                        <AlertCircle className="w-8 h-8 text-destructive opacity-80" />
-                        <span className="text-sm font-mono text-destructive">{error}</span>
-                        <Button variant="outline" size="sm" onClick={fetchLogcat} className="mt-2 bg-muted border-border">
-                            Retry
-                        </Button>
-                    </div>
-                ) : (
-                    <pre className="text-[11px] font-mono leading-tight text-gray-300 whitespace-pre-wrap break-all">
-                        {isLoading && !logcat ? (
-                            <span className="text-muted-foreground animate-pulse">Requesting logs from agent...</span>
-                        ) : logcat ? (
-                            logcat
-                        ) : (
-                            <span className="text-muted-foreground">No logs available.</span>
-                        )}
-                    </pre>
-                )}
-            </div>
-        </div>
-    );
+export function LogcatViewer({ deviceId, enabled = true }: { deviceId: string; enabled?: boolean }) {
+  const [content, setContent] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [updatedAt, setUpdatedAt] = useState<string | null>(null);
+  const active = useRef<AbortController | null>(null);
+  const enabledRef = useRef(enabled);
+  enabledRef.current = enabled;
+  const fetchLogs = useCallback(async () => {
+    if (!enabledRef.current || active.current) return;
+    const controller = new AbortController(); active.current = controller;
+    setLoading(true); setError(null);
+    try {
+      const { data } = await api.post(`/devices/${encodeURIComponent(deviceId)}/logcat`, { lines: 500, mode: 'sphere' }, { signal: controller.signal, timeout: DEVICE_COMMAND_TIMEOUT.logs });
+      const logs = interactiveResult(data, 'logcat');
+      if (!controller.signal.aborted) { setContent(logs); setUpdatedAt(new Date().toISOString()); }
+    } catch (error) {
+      if (!controller.signal.aborted) setError(getApiErrorMessage(error, error instanceof Error ? error.message : 'Не удалось запросить логи APK.'));
+    } finally {
+      if (!controller.signal.aborted) { setLoading(false); active.current = null; }
+    }
+  }, [deviceId]);
+  useEffect(() => {
+    setContent(null); setUpdatedAt(null); setError(null); setLoading(false);
+    void fetchLogs();
+    return () => { active.current?.abort(); active.current = null; };
+  }, [fetchLogs]);
+  return <section aria-label="Логи по запросу к APK" className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-border bg-card">
+    <header className="space-y-2 border-b border-border bg-muted/30 p-3"><div className="flex flex-wrap items-center justify-between gap-2"><h4 className="text-sm font-semibold">Логи Sphere · запрос к APK</h4><Button variant="outline" size="sm" disabled={!enabled || loading} onClick={() => { void fetchLogs(); }}>Запросить снова</Button></div><p className="text-xs text-muted-foreground">До 500 последних строк. Это разовый ответ агента, не непрерывная трансляция системного Logcat.</p>{updatedAt && <p className="text-xs text-muted-foreground">Ответ получен: {updatedAt}</p>}</header>
+    <div className="min-h-0 flex-1 space-y-3 overflow-auto p-3">
+      {error && <p role="alert" className="rounded-lg border border-destructive/30 p-3 text-sm text-destructive">{error}{content !== null ? ' Показан предыдущий ответ.' : ''}</p>}
+      {loading && <p role="status" className="text-sm text-muted-foreground">Запрос к Android-агенту…</p>}
+      {content !== null && <pre aria-label="Ответ логов APK" className="whitespace-pre-wrap break-all font-mono text-xs leading-relaxed">{content || 'APK вернул пустой журнал.'}</pre>}
+    </div>
+  </section>;
 }

@@ -11,11 +11,13 @@ from __future__ import annotations
 import hashlib
 import json
 import uuid
+from typing import Literal
 
 import structlog
 from fastapi import HTTPException
 from pydantic import ValidationError
 from sqlalchemy import func, or_, select
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -40,16 +42,45 @@ class ScriptService:
     # ── Вспомогательные ─────────────────────────────────────────────────────
 
     async def _get_script(
-        self, script_id: uuid.UUID, org_id: uuid.UUID
+        self, script_id: uuid.UUID, org_id: uuid.UUID, *, for_write: bool = False, for_run: bool = False
     ) -> Script:
         """Загрузить скрипт, проверить принадлежность org. 404 если не найден."""
-        script = await self.db.scalar(
+        stmt = (
             select(Script)
             .where(Script.id == script_id, Script.org_id == org_id)
             .options(selectinload(Script.current_version))
         )
+        if for_write or for_run:
+            # Lock the parent until commit before allocating a version or archiving.
+            # Refresh a previously loaded identity: READ COMMITTED must see the winner.
+            stmt = stmt.with_for_update(nowait=True, read=for_run).execution_options(populate_existing=True)
+        try:
+            script = await self.db.scalar(stmt)
+        except DBAPIError as exc:
+            if getattr(exc.orig, "sqlstate", None) != "55P03":
+                raise
+            await self.db.rollback()
+            raise HTTPException(status_code=409, detail="Script is being changed; refresh before retrying") from exc
         if not script:
             raise HTTPException(status_code=404, detail="Script not found")
+        return script
+
+    @staticmethod
+    def _check_current(script: Script, expected_current_version_id: uuid.UUID | None) -> None:
+        if expected_current_version_id is not None and script.current_version_id != expected_current_version_id:
+            raise HTTPException(status_code=409, detail="Current script version changed; refresh before retrying")
+
+    @staticmethod
+    def _check_active(script: Script) -> None:
+        if script.is_archived:
+            raise HTTPException(status_code=409, detail="Archived script cannot be changed")
+
+    async def get_for_run(self, script_id: uuid.UUID, org_id: uuid.UUID, expected: uuid.UUID) -> Script:
+        # Shared locks let independent device admissions coexist, while preventing
+        # update/archive from changing the inspected version until admission commits.
+        script = await self._get_script(script_id, org_id, for_run=True)
+        self._check_active(script)
+        self._check_current(script, expected)
         return script
 
     async def _get_latest_version_number(self, script_id: uuid.UUID) -> int:
@@ -118,7 +149,9 @@ class ScriptService:
         user_id: uuid.UUID,
         data: UpdateScriptRequest,
     ) -> Script:
-        script = await self._get_script(script_id, org_id)
+        script = await self._get_script(script_id, org_id, for_write=True)
+        self._check_current(script, data.expected_current_version_id)
+        self._check_active(script)
 
         if data.name is not None:
             script.name = data.name
@@ -181,12 +214,15 @@ class ScriptService:
         query: str | None = None,
         page: int = 1,
         per_page: int = 50,
+        state: Literal["active", "archived", "all"] = "active",
     ) -> tuple[list[Script], int]:
         stmt = (
             select(Script)
-            .where(Script.org_id == org_id, Script.is_archived.is_(False))
+            .where(Script.org_id == org_id)
             .options(selectinload(Script.current_version))
         )
+        if state != "all":
+            stmt = stmt.where(Script.is_archived.is_(state == "archived"))
 
         if query:
             stmt = stmt.where(
@@ -205,7 +241,7 @@ class ScriptService:
         items = list(
             (
                 await self.db.execute(
-                    stmt.order_by(Script.updated_at.desc())
+                    stmt.order_by(Script.updated_at.desc(), Script.id)
                     .offset((page - 1) * per_page)
                     .limit(per_page)
                 )
@@ -215,10 +251,12 @@ class ScriptService:
         return items, count
 
     async def archive_script(
-        self, script_id: uuid.UUID, org_id: uuid.UUID
+        self, script_id: uuid.UUID, org_id: uuid.UUID,
+        expected_current_version_id: uuid.UUID | None = None,
     ) -> None:
         """Soft-delete через is_archived=True."""
-        script = await self._get_script(script_id, org_id)
+        script = await self._get_script(script_id, org_id, for_write=True)
+        self._check_current(script, expected_current_version_id)
         script.is_archived = True
         logger.info("script.archived", script_id=str(script_id))
 
@@ -239,19 +277,31 @@ class ScriptService:
         )
         return versions
 
+    async def get_version(
+        self, script_id: uuid.UUID, version_id: uuid.UUID, org_id: uuid.UUID,
+    ) -> ScriptVersion:
+        await self._get_script(script_id, org_id)
+        version = await self.db.scalar(select(ScriptVersion).where(
+            ScriptVersion.id == version_id, ScriptVersion.script_id == script_id,
+            ScriptVersion.org_id == org_id,
+        ))
+        if version is None:
+            raise HTTPException(status_code=404, detail="Version not found")
+        return version
+
     async def rollback_to_version(
         self,
         script_id: uuid.UUID,
         version_id: uuid.UUID,
         org_id: uuid.UUID,
         user_id: uuid.UUID,
+        expected_current_version_id: uuid.UUID | None = None,
     ) -> Script:
         """Откатить скрипт к более ранней версии (создаёт новую)."""
-        script = await self._get_script(script_id, org_id)
-        old_version = await self.db.get(ScriptVersion, version_id)
-
-        if not old_version or old_version.script_id != script_id:
-            raise HTTPException(status_code=404, detail="Version not found")
+        script = await self._get_script(script_id, org_id, for_write=True)
+        self._check_current(script, expected_current_version_id)
+        self._check_active(script)
+        old_version = await self.get_version(script_id, version_id, org_id)
 
         last_num = await self._get_latest_version_number(script_id)
         rollback_version = ScriptVersion(

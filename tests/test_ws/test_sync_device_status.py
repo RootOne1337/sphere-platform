@@ -135,3 +135,51 @@ class TestSyncDeviceStatusFull:
             await sync_device_status_to_db()
 
         mock_db.rollback.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_persists_transient_connecting_as_offline_without_rolling_back(self):
+        connecting_id = str(uuid.uuid4())
+        online_id = str(uuid.uuid4())
+        mock_redis = AsyncMock()
+
+        async def _scan(*args, **kwargs):
+            yield f"device:status:{connecting_id}"
+            yield f"device:status:{online_id}"
+
+        mock_redis.scan_iter = _scan
+
+        import msgpack
+
+        from backend.schemas.device_status import DeviceLiveStatus
+
+        mock_redis.mget = AsyncMock(return_value=[
+            msgpack.packb(
+                DeviceLiveStatus(device_id=connecting_id, status="connecting").model_dump(mode="json"),
+                use_bin_type=True,
+            ),
+            msgpack.packb(
+                DeviceLiveStatus(device_id=online_id, status="online").model_dump(mode="json"),
+                use_bin_type=True,
+            ),
+        ])
+
+        mock_db = AsyncMock()
+        mock_db.__aenter__ = AsyncMock(return_value=mock_db)
+        mock_db.__aexit__ = AsyncMock(return_value=False)
+        mock_execute_result = MagicMock()
+        mock_execute_result.scalars.return_value.all.return_value = []
+        mock_db.execute = AsyncMock(return_value=mock_execute_result)
+        mock_db.commit = AsyncMock()
+        mock_db.rollback = AsyncMock()
+
+        with patch("backend.database.redis_client.redis_binary", mock_redis), \
+             patch("backend.database.engine.AsyncSessionLocal", MagicMock(return_value=mock_db)):
+            await sync_device_status_to_db()
+
+        status_updates = [
+            call.args[0].compile().params["last_status"]
+            for call in mock_db.execute.await_args_list[:2]
+        ]
+        assert status_updates == ["offline", "online"]
+        mock_db.commit.assert_awaited_once()
+        mock_db.rollback.assert_not_awaited()
