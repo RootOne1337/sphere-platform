@@ -47,6 +47,8 @@ async def test_returns_original_png_hash_geometry_owner_and_cleanup(world, scree
     assert response.headers["x-screenshot-sha256"] == hashlib.sha256(response.content).hexdigest()
     assert response.headers["x-screenshot-android-sha256"] == response.headers["x-screenshot-sha256"]
     assert response.headers["x-screenshot-cleanup-confirmed"] == "true"
+    assert response.headers["x-screenshot-elapsed-ms"].isdigit()
+    assert "x-screenshot-failed-phase" not in response.headers
     assert len(screenshot_transport.send_command_wait_result.await_args_list) == 8
     assert await world.redis.get(f"sphere:native-screenshot:{world.org_a.id}:{world.dev_a.id}") is None
 
@@ -70,13 +72,15 @@ async def test_busy_capture_preserves_other_owner(world, screenshot_transport):
         await world.redis.delete(key)
 
 
-@pytest.mark.parametrize("failure", ["partial", "failed", "offline", "cleanup", "android-hash"])
+@pytest.mark.parametrize("failure", ["partial", "failed", "offline", "cleanup", "android-hash", "timeout"])
 async def test_never_serves_partial_png_or_hides_original_errors(world, screenshot_transport, failure):
     original = screenshot_transport.send_command_wait_result.side_effect
     async def reply(device, command, **options):
         cmd = command["payload"]["cmd"]
         if failure == "offline":
             raise HTTPException(503, "Device command channel unavailable")
+        if cmd.startswith("sha256sum ") and failure == "timeout":
+            raise HTTPException(504, "Command timeout after 8.0s")
         if cmd.startswith("base64 ") and failure == "partial":
             return {"status": "completed", "result": {"output": "AAAA"}}
         if cmd.startswith("sha256sum ") and failure == "android-hash":
@@ -88,9 +92,12 @@ async def test_never_serves_partial_png_or_hides_original_errors(world, screensh
         return await original(device, command, **options)
     screenshot_transport.send_command_wait_result.side_effect = reply
     response = await world.client.post(f"/api/v1/devices/{world.dev_a.id}/screenshot/native", headers=world.auth(world.users["org_admin"]))
-    assert response.status_code == (200 if failure == "cleanup" else 503 if failure == "offline" else 502), response.text
+    assert response.status_code == (200 if failure == "cleanup" else 503 if failure == "offline" else 504 if failure == "timeout" else 502), response.text
+    assert len(response.headers["x-screenshot-id"]) == 32
+    assert response.headers["x-screenshot-elapsed-ms"].isdigit()
     if failure == "cleanup":
         assert response.content == png_fixture() and response.headers["x-screenshot-cleanup-confirmed"] == "false"
     else:
         assert not response.content.startswith(b"\x89PNG") and "private failure" not in response.text
+        assert response.headers["x-screenshot-failed-phase"] == {"partial": "chunk_read", "failed": "capture", "offline": "display_before", "android-hash": "validate_png", "timeout": "android_digest"}[failure]
     assert await world.redis.get(f"sphere:native-screenshot:{world.org_a.id}:{world.dev_a.id}") is None

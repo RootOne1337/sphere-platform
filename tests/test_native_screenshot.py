@@ -11,6 +11,7 @@ from backend.services.native_screenshot import (
     MAX_PNG_BYTES,
     PNG_SIGNATURE,
     READ_CHUNK_BYTES,
+    CaptureTrace,
     InvalidScreenshot,
     capture_png,
     decode_chunk,
@@ -68,13 +69,17 @@ async def test_chunking_keeps_exact_bytes_and_uuid_owned_cleanup():
             return base64.encodebytes(data[index * READ_CHUNK_BYTES:(index + 1) * READ_CHUNK_BYTES]).decode()
         return ""
 
-    result = await capture_png(shell, snapshot_id)
+    trace = CaptureTrace()
+    result = await capture_png(shell, snapshot_id, trace=trace)
     assert result.data == data and result.sha256 == hashlib.sha256(data).hexdigest()
     assert (result.width, result.height) == (2, 1) and result.cleanup_confirmed
     prefix = "/data/local/tmp/sphere-shot-" + snapshot_id
     assert commands[-1] == f"rm -f {prefix}.png {prefix}.part"
     assert len([c for c in commands if c.startswith("base64 ")]) == 2
     assert not any(char in "".join(commands) for char in "|;&$`(){}\\<>!#~\n\r")
+    assert trace.phase == "complete" and trace.rpc_count == trace.completed_rpcs == 10
+    assert trace.cleanup_confirmed and not trace.cleanup_failed and trace.failure_phase is None
+    assert set(trace.phase_elapsed_ms) == {"display_before", "capture", "file_size", "android_digest", "chunk_copy", "chunk_read", "display_after", "cleanup"}
 
 
 @pytest.mark.parametrize("failure", ["missing", "syntax", "wrong-path", "oversized", "changed-bytes"])
@@ -123,3 +128,40 @@ async def test_invalid_owner_cannot_form_a_shell_path():
     with pytest.raises(ValueError):
         await capture_png(shell, "../../other")
     shell.assert_not_awaited()
+
+
+async def test_trace_preserves_main_failure_when_cleanup_fails_and_context_does_not_leak():
+    import structlog
+
+    trace = CaptureTrace()
+    owner = uuid.uuid4().hex
+    contexts = []
+
+    async def shell(command):
+        contexts.append(dict(structlog.contextvars.get_contextvars()))
+        if command == "wm size":
+            return "Physical size: 2x1"
+        raise RuntimeError("private command payload and error must not enter metadata")
+
+    before = dict(structlog.contextvars.get_contextvars())
+    with pytest.raises(RuntimeError):
+        await capture_png(shell, owner, trace=trace)
+    assert trace.failure_phase == trace.phase == "capture" and trace.failure_rpc_index == 2
+    assert trace.rpc_count == 3 and trace.completed_rpcs == 1
+    assert trace.cleanup_failed and not trace.cleanup_confirmed
+    assert [item["screenshot_phase"] for item in contexts] == ["display_before", "capture", "cleanup"]
+    assert all(item["screenshot_id"] == owner for item in contexts)
+    assert dict(structlog.contextvars.get_contextvars()) == before
+    assert "private" not in repr(trace)
+
+
+async def test_invalid_transferred_chunk_reports_read_phase_and_confirmed_cleanup():
+    data = png_fixture()
+    owner = uuid.uuid4().hex
+    trace = CaptureTrace()
+    shell = AsyncMock(side_effect=["Physical size: 2x1", "", str(len(data)),
+        hashlib.sha256(data).hexdigest() + f"  /data/local/tmp/sphere-shot-{owner}.png", "", "AAAA", ""])
+    with pytest.raises(InvalidScreenshot):
+        await capture_png(shell, owner, trace=trace)
+    assert trace.failure_phase == "chunk_read" and trace.failure_rpc_index is None
+    assert trace.cleanup_confirmed and trace.rpc_count == trace.completed_rpcs == 7

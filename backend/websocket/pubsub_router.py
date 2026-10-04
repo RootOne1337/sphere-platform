@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import asyncio
 import json
+import re
 import secrets
+import time
 
 import structlog
 from fastapi import HTTPException
@@ -14,6 +16,7 @@ from backend.websocket.channels import ChannelPattern
 from backend.websocket.connection_manager import ConnectionManager, get_connection_manager
 
 logger = structlog.get_logger()
+INTERACTIVE_COMMAND_ID = re.compile(r"interactive_[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}")
 
 
 class PubSubRouter:
@@ -132,7 +135,13 @@ class PubSubRouter:
                 from backend.services.ota_delivery import dispatch_ota_wake
                 await dispatch_ota_wake(self.manager, device_id, msg)
                 return
-            await self.manager.send_to_device(device_id, msg)
+            started = time.monotonic()
+            delivered = await self.manager.send_to_device(device_id, msg)
+            command_id = msg.get("command_id") if isinstance(msg, dict) else None
+            if isinstance(command_id, str) and INTERACTIVE_COMMAND_ID.fullmatch(command_id):
+                logger.info("interactive_rpc.forwarded", command_id=command_id,
+                            device_id=device_id, socket_send_completed=delivered,
+                            elapsed_ms=max(0, int((time.monotonic() - started) * 1000)))
 
         elif channel.startswith("sphere:org:events:"):
             org_id = channel.removeprefix("sphere:org:events:")
@@ -241,6 +250,16 @@ class PubSubPublisher:
 
         # Подписаться ДО публикации во избежание race condition
         ps = self.redis.pubsub()
+        started = time.monotonic()
+        phase, outcome = "subscribe", "error"
+        published = False
+        progress_count = 0
+        first_progress_ms: int | None = None
+        last_progress: str | None = None
+        # Only server-created interactive UUIDs enter this diagnostic stream.
+        # Never log command payload, outputs, remote error text or result data.
+        diagnostic = isinstance(command_id, str) and INTERACTIVE_COMMAND_ID.fullmatch(command_id) is not None
+        cleanup_outcome = "closed"
         try:
             async with asyncio.timeout(timeout):
                 await ps.subscribe(result_channel)
@@ -249,6 +268,7 @@ class PubSubPublisher:
                 async for message in ps.listen():
                     if message["type"] == "subscribe":
                         break
+                phase = "publish"
                 if live_only:
                     success, was_queued = await self.send_command_live(device_id, command), False
                 else:
@@ -260,17 +280,47 @@ class PubSubPublisher:
                         503,
                         f"Device '{device_id}' is offline — command queued for delivery on reconnect",
                     )
+                published = True
+                phase = "await_result"
                 async for msg in ps.listen():
                     if msg["type"] == "message":
                         result = json.loads(msg["data"])
+                        if result.get("status") in {"received", "running"}:
+                            progress_count = min(progress_count + 1, 1000)
+                            last_progress = result["status"]
+                            if first_progress_ms is None:
+                                first_progress_ms = max(0, int((time.monotonic() - started) * 1000))
                         if accept_progress or result.get("status") not in {"received", "running"}:
+                            state = result.get("status")
+                            outcome = state if state in {"completed", "failed", "received", "running"} else "invalid_result"
                             return result
+                outcome = "no_response"
         except asyncio.TimeoutError:
+            outcome = "timeout"
             raise HTTPException(504, f"Command timeout after {timeout}s")
+        except HTTPException as exc:
+            outcome = "unavailable" if exc.status_code == 503 else "http_error"
+            raise
+        except asyncio.CancelledError:
+            outcome = "cancelled"
+            raise
         finally:
             # Closing the dedicated connection drops its subscriptions without
             # an extra round trip that could hang during a network outage.
-            await ps.aclose()
+            elapsed_ms = max(0, int((time.monotonic() - started) * 1000))
+            try:
+                async with asyncio.timeout(2):
+                    await ps.aclose()
+            except Exception:
+                # A failed connection close must not replace a completed result
+                # or the original 503/504. No automatic command resend follows.
+                cleanup_outcome = "unconfirmed"
+            if diagnostic:
+                logger.info("interactive_rpc.finished", command_id=command_id,
+                            device_id=device_id, outcome=outcome, wait_phase=phase,
+                            published=published, live_only=live_only, elapsed_ms=elapsed_ms,
+                            progress_count=progress_count, first_progress_ms=first_progress_ms,
+                            last_progress=last_progress, subscription_cleanup=cleanup_outcome)
 
         raise HTTPException(504, "No response received")
 

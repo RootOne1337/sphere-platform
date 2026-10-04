@@ -11,6 +11,36 @@ import { utcTime } from './DeviceOperationsPanels';
 type Screenshot = { url: string; filename: string; width: number; height: number; bytes: number;
   sha256: string; capturedAt: string; cleanupConfirmed: boolean };
 
+const capturePhases: Record<string, string> = {
+  display_before: 'геометрия до съёмки', capture: 'съёмка Android', file_size: 'размер файла',
+  android_digest: 'контрольная сумма Android', chunk_copy: 'подготовка блока', chunk_read: 'передача блока',
+  display_after: 'геометрия после съёмки', validate_png: 'проверка PNG',
+};
+
+export function nativeCaptureError(failure: unknown): string {
+  const fallback = 'Исходный снимок не получен.';
+  if (typeof failure !== 'object' || failure === null) return fallback;
+  const candidate = failure as { response?: { data?: unknown; headers?: Record<string, unknown> } };
+  let data = candidate.response?.data;
+  // Axios keeps error bodies as ArrayBuffer for this binary endpoint too.
+  // Decode only a small JSON body; never show arbitrary binary/command data.
+  if (data instanceof ArrayBuffer || Object.prototype.toString.call(data) === '[object ArrayBuffer]') {
+    const binary = data as ArrayBuffer;
+    if (!Number.isInteger(binary.byteLength) || binary.byteLength > 16 * 1024) data = undefined;
+    else { try { data = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(binary)); } catch { data = undefined; } }
+  }
+  const detail = typeof data === 'object' && data !== null ? (data as { detail?: unknown }).detail : undefined;
+  const message = typeof detail === 'string' && detail.trim() && detail.length <= 512 ? detail : fallback;
+  const headers = candidate.response?.headers;
+  const id = headers?.['x-screenshot-id'], phase = headers?.['x-screenshot-failed-phase'];
+  if (typeof id !== 'string' || !/^[a-f0-9]{32}$/.test(id)
+    || typeof phase !== 'string' || !Object.hasOwn(capturePhases, phase)) return message;
+  const elapsed = headers?.['x-screenshot-elapsed-ms'];
+  const timing = typeof elapsed === 'string' && /^\d{1,6}$/.test(elapsed) ? ` · ${Number(elapsed).toLocaleString('ru-RU')} мс` : '';
+  const cleanup = headers?.['x-screenshot-cleanup-confirmed'] === 'false' ? ' Удаление временных файлов не подтверждено.' : '';
+  return `${message} Этап: ${capturePhases[phase]}${timing}. Запрос: ${id}.${cleanup}`;
+}
+
 export async function verifyNativeScreenshot(data: ArrayBuffer, headers: Record<string, unknown>, deviceId: string) {
   const bytes = new Uint8Array(data);
   if (bytes.length < 57 || bytes.length > 5 * 1024 * 1024
@@ -71,8 +101,9 @@ export function NativeScreenshotPanel({ deviceId, enabled }: { deviceId: string;
       if (session.url) URL.revokeObjectURL(session.url);
       session.url = url; setImage({ ...metadata, url });
     } catch (failure) {
-      if (!session.disposed && sessionRef.current === session) setError(getApiErrorMessage(failure,
-        failure instanceof Error ? failure.message : 'Исходный снимок не получен.'));
+      if (!session.disposed && sessionRef.current === session) setError(
+        candidateHasResponse(failure) ? nativeCaptureError(failure) : getApiErrorMessage(failure,
+          failure instanceof Error ? failure.message : 'Исходный снимок не получен.'));
     } finally {
       if (!session.disposed && sessionRef.current === session) { session.controller = null; setPending(false); }
     }
@@ -84,4 +115,8 @@ export function NativeScreenshotPanel({ deviceId, enabled }: { deviceId: string;
     {error && <p role="alert" className="break-words rounded-lg border border-destructive/30 p-3 text-sm text-destructive">{error} Автоповтора нет.{image ? ' Ниже предыдущий успешно полученный снимок.' : ''}</p>}
     {image && <><div className="overflow-hidden rounded-xl border border-border bg-muted/30"><img src={image.url} width={image.width} height={image.height} alt="Исходный снимок выбранного Android-устройства" className="mx-auto max-h-[72vh] max-w-full object-contain" /></div><dl className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2"><div><dt className="text-muted-foreground">Файл</dt><dd>{image.width} × {image.height} · {image.bytes.toLocaleString('ru-RU')} байт</dd></div><div><dt className="text-muted-foreground">Завершение запроса</dt><dd>{utcTime(image.capturedAt)}</dd></div><div className="min-w-0 sm:col-span-2"><dt className="text-muted-foreground">SHA-256 совпал: Android → сервер → браузер</dt><dd className="break-all font-mono text-xs">{image.sha256}</dd></div></dl>{!image.cleanupConfirmed && <p role="alert" className="text-sm text-amber-700 dark:text-amber-400">PNG получен, но удаление временных файлов на Android не подтверждено.</p>}<Button asChild variant="outline"><a href={image.url} download={image.filename}><Download className="mr-2 h-4 w-4" aria-hidden />Скачать исходный PNG</a></Button></>}
   </section>;
+}
+
+function candidateHasResponse(value: unknown): boolean {
+  return typeof value === 'object' && value !== null && 'response' in value;
 }

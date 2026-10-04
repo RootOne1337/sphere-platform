@@ -655,7 +655,9 @@ async def request_native_screenshot(
     svc: DeviceService = Depends(get_device_service),
     redis=Depends(get_redis_binary),
 ) -> Response:
-    from backend.services.native_screenshot import InvalidScreenshot, capture_png
+    import structlog
+
+    from backend.services.native_screenshot import CaptureTrace, InvalidScreenshot, capture_png
     from backend.services.ui_hierarchy import InvalidUiHierarchy
 
     await svc.get_device(device_id, current_user.org_id)
@@ -679,9 +681,22 @@ async def request_native_screenshot(
         return output
 
     requested_at = datetime.now(timezone.utc)
+    trace = CaptureTrace()
+    response_status = 500
+
+    def trace_headers() -> dict[str, str]:
+        headers = {"X-Screenshot-Id": snapshot_id, "X-Screenshot-Elapsed-Ms": str(trace.elapsed_ms),
+                   "X-Screenshot-Cleanup-Confirmed": str(trace.cleanup_confirmed).lower(),
+                   "Cache-Control": "no-store"}
+        if trace.failure_phase is not None:
+            headers["X-Screenshot-Failed-Phase"] = trace.failure_phase
+        return headers
+
     try:
-        screenshot = await capture_png(shell, snapshot_id)
+        screenshot = await capture_png(shell, snapshot_id, trace=trace)
+        response_status = 200
         return Response(screenshot.data, media_type="image/png", headers={
+            **trace_headers(),
             "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff",
             "Content-Disposition": f'attachment; filename="sphere-{device_id}-{snapshot_id}.png"',
             "X-Screenshot-Device-Id": str(device_id), "X-Screenshot-Id": snapshot_id,
@@ -693,10 +708,24 @@ async def request_native_screenshot(
             "X-Screenshot-Cleanup-Confirmed": str(screenshot.cleanup_confirmed).lower(),
         })
     except (InvalidScreenshot, InvalidUiHierarchy) as exc:
-        raise HTTPException(502, str(exc)) from exc
+        response_status = 502
+        raise HTTPException(502, str(exc), headers=trace_headers()) from exc
     except TimeoutError as exc:
-        raise HTTPException(504, "Original screenshot deadline exceeded; no automatic retry") from exc
+        response_status = 504
+        raise HTTPException(504, "Original screenshot deadline exceeded; no automatic retry", headers=trace_headers()) from exc
+    except HTTPException as exc:
+        response_status = exc.status_code
+        raise HTTPException(exc.status_code, exc.detail, headers={**(exc.headers or {}), **trace_headers()}) from exc
+    except asyncio.CancelledError:
+        response_status = 499
+        raise
     finally:
+        structlog.get_logger(__name__).info("native_screenshot.finished",
+            device_id=str(device_id), snapshot_id=snapshot_id, http_status=response_status,
+            elapsed_ms=trace.elapsed_ms, phase=trace.phase, failed_phase=trace.failure_phase,
+            failed_rpc_index=trace.failure_rpc_index, rpc_count=trace.rpc_count,
+            completed_rpcs=trace.completed_rpcs, phase_elapsed_ms=trace.phase_elapsed_ms,
+            cleanup_confirmed=trace.cleanup_confirmed, cleanup_failed=trace.cleanup_failed)
         try:
             await redis.eval("if redis.call('get',KEYS[1]) == ARGV[1] then return redis.call('del',KEYS[1]) end return 0",
                              1, key, snapshot_id)

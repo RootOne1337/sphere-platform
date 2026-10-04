@@ -1,6 +1,7 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
+import { TextDecoder, TextEncoder } from 'util';
 import { api } from '@/lib/api';
-import { NativeScreenshotPanel, verifyNativeScreenshot } from '@/src/features/devices/NativeScreenshotPanel';
+import { NativeScreenshotPanel, nativeCaptureError, verifyNativeScreenshot } from '@/src/features/devices/NativeScreenshotPanel';
 
 let token = 'fixture-token';
 jest.mock('@/lib/store', () => ({ useAuthStore: () => ({ accessToken: token }) }));
@@ -22,6 +23,7 @@ function png() {
 beforeEach(() => {
   jest.clearAllMocks(); token = 'fixture-token';
   Object.defineProperty(global, 'crypto', { configurable: true, value: { subtle: { digest: jest.fn().mockResolvedValue(new ArrayBuffer(32)) } } });
+  Object.defineProperty(global, 'TextDecoder', { configurable: true, value: TextDecoder });
   URL.createObjectURL = jest.fn().mockReturnValue('blob:verified-fixture');
   URL.revokeObjectURL = jest.fn();
   jest.mocked(api.post).mockResolvedValue({ data: png(), headers });
@@ -93,4 +95,33 @@ it('rejects empty, oversized and non-PNG responses before creating a browser fil
   for (const value of [new ArrayBuffer(0), new ArrayBuffer(5 * 1024 * 1024 + 1), new ArrayBuffer(80)]) {
     await expect(verifyNativeScreenshot(value, headers, 'remote')).rejects.toThrow();
   }
+});
+it('shows binary-endpoint error detail, failed phase and correlation ID without offering retry/download', async () => {
+  const data = new TextEncoder().encode(JSON.stringify({ detail: 'Command timeout after 8.0s' })).buffer;
+  jest.mocked(api.post).mockRejectedValueOnce({ response: { data, headers: {
+    'x-screenshot-id': 'a'.repeat(32), 'x-screenshot-failed-phase': 'chunk_read',
+    'x-screenshot-elapsed-ms': '8001', 'x-screenshot-cleanup-confirmed': 'false',
+  } } });
+  render(<NativeScreenshotPanel deviceId="remote" enabled />);
+  fireEvent.click(screen.getByRole('button', { name: 'Получить снимок' }));
+  const error = await screen.findByRole('alert');
+  expect(error).toHaveTextContent('Command timeout after 8.0s');
+  expect(error).toHaveTextContent('передача блока');
+  expect(error).toHaveTextContent('a'.repeat(32));
+  expect(error).toHaveTextContent('Удаление временных файлов не подтверждено');
+  expect(api.post).toHaveBeenCalledTimes(1);
+  expect(screen.queryByRole('link')).not.toBeInTheDocument();
+});
+it.each([
+  { data: new ArrayBuffer(16 * 1024 + 1), headers: {} },
+  { data: new ArrayBuffer(10), headers: {} },
+  { data: { detail: 'x'.repeat(513) }, headers: {} },
+])('keeps malformed or oversized binary errors bounded', response => {
+  expect(nativeCaptureError({ response })).toBe('Исходный снимок не получен.');
+});
+it('does not expose malformed IDs or arbitrary phase strings from headers', () => {
+  const text = nativeCaptureError({ response: { data: { detail: 'Unavailable' }, headers: {
+    'x-screenshot-id': '../private-token', 'x-screenshot-failed-phase': '<script>private</script>',
+  } } });
+  expect(text).toBe('Unavailable');
 });
