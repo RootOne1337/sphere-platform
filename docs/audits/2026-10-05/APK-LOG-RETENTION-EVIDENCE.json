@@ -1,0 +1,117 @@
+{
+  "observedAt": "2026-10-04T21:34:36.490476+00:00",
+  "sourceFix": "ae90715",
+  "versionCommit": "e75d365",
+  "candidate": {
+    "name": "1.2.45-dev",
+    "code": 10245,
+    "built": false,
+    "published": false,
+    "installed": false
+  },
+  "runtime": {
+    "at": "2026-10-04T20:55:39.707132+00:00",
+    "online": 14,
+    "versionCode": 10244,
+    "targets": [
+      {
+        "name": "auto-ph-010",
+        "versionCode": 10244,
+        "eligible": true,
+        "installedSha256": "9659468fa74f43a430cd04d2482ec38a6b342bc2aeb46e33db2c61fcfb87b1a9"
+      },
+      {
+        "name": "auto-ph-025",
+        "versionCode": 10244,
+        "eligible": true,
+        "installedSha256": "9659468fa74f43a430cd04d2482ec38a6b342bc2aeb46e33db2c61fcfb87b1a9"
+      }
+    ],
+    "commands": 6,
+    "hostAdbUsed": false
+  },
+  "limits": {
+    "ordinaryFiles": 5,
+    "ordinaryFileBytes": 2097152,
+    "entryBytes": 16384,
+    "queuedEntries": 256,
+    "queuedPayloadBytes": 4194304,
+    "droppedCounterScope": "process"
+  },
+  "validation": {
+    "before": {
+      "exit": 1,
+      "elapsedSeconds": 75.06,
+      "suites": 1,
+      "cases": 18,
+      "failures": 6,
+      "errors": 0,
+      "skipped": 0,
+      "receiptSha256": "6dcaca4d88b0ab75a2ee46916f0ab3684ba6bc3b311178a958980ee082bac232"
+    },
+    "after": {
+      "exit": 0,
+      "elapsedSeconds": 31.69,
+      "suites": 1,
+      "cases": 20,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "receiptSha256": "1ef01bab4b5318e655e60b0dc91c829a3698291ac212931447660371d8655a7a"
+    },
+    "full": {
+      "exit": 0,
+      "elapsedSeconds": 241.77,
+      "suites": 136,
+      "cases": 1682,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 2,
+      "receiptSha256": "60e86f9a5369d459e8f572a00d8acd2941748e01f67f07708f4042fa291323fe"
+    }
+  },
+  "sourceWorkflows": [
+    {
+      "conclusion": "success",
+      "databaseId": 37234340548,
+      "headSha": "e75d365d29f8ecd3e4d39bbb2ac70b61abb2c883",
+      "name": "CI \u2014 Frontend",
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 37234340525,
+      "headSha": "e75d365d29f8ecd3e4d39bbb2ac70b61abb2c883",
+      "name": "Preview \u2014 Deploy",
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 37234340545,
+      "headSha": "e75d365d29f8ecd3e4d39bbb2ac70b61abb2c883",
+      "name": "CI \u2014 Android",
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 37234340472,
+      "headSha": "e75d365d29f8ecd3e4d39bbb2ac70b61abb2c883",
+      "name": "CI \u2014 Backend",
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 37234335628,
+      "headSha": "e75d365d29f8ecd3e4d39bbb2ac70b61abb2c883",
+      "name": "CI \u2014 Android",
+      "status": "completed"
+    }
+  ],
+  "readiness": "SOURCE_FIXED / INSTALLED_CANARY_OPEN",
+  "deferredReason": "Urgent Windows disk-writer attribution; no heavy APK builds during observation",
+  "limitations": [
+    "Not proof of Android RSS or all-process file allocation",
+    "Does not attribute hundreds of GB on Windows",
+    "Two full-suite skipped cases remain unverified"
+  ]
+}
