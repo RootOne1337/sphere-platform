@@ -1,10 +1,17 @@
 # Sphere: актуальное состояние и критерии приёмки
 
-**Обновлено:** 4 октября 2026, Asia/Yekaterinburg; даты отдельных runtime/CI срезов указаны ниже.<br />
+**Обновлено:** 5 октября 2026, Asia/Yekaterinburg; даты отдельных runtime/CI срезов указаны ниже.<br />
 **Область:** исходники и документация ветки PR #19, записанные runtime-наблюдения, Android APK и готовность следующего прогона.<br />
 **Канонический документ текущего состояния:** этот файл. Исторические отчёты ниже сохраняют исходные даты и факты.
 
 [Главная](../../README.md) · [Каталог документации](../README.md) · [Readiness](READINESS.md) · [Fleet32 gates](../audits/2026-09-20/FLEET32-PREFLIGHT.md) · [PR #19](https://github.com/RootOne1337/sphere-platform/pull/19)
+
+**Текущий этап ресурсов, 5 октября / 19:31 UTC 4 октября:** bounded disk watcher `6180faf`
+работает;15 срезов подтверждают -2,071 GiB free C:, workspace +2,347 MiB в полных
+срезах, Docker VHD без роста.44 diagnostic/guard cases прошли; runtime `c1a6e79`
+и APK 10244 сохранены. Protected VSS allocation требует admin readback, writer
+UNDETERMINED; R09 — APK log count 6 при лимите 5.
+[Наблюдения, RAM и пределы](../audits/2026-10-05/HOST-DISK-GROWTH.md).
 
 **Дополнительный срез диска, 4 октября / 17:50 UTC:** рабочая папка — 7,996 GiB,
 отслеживаемые файлы — 22,08 MiB; shared Docker VHD — 218,61 GiB вне workspace.

@@ -143,6 +143,10 @@ Windows metadata API используют extended paths для локальны
 Candidate set содержит до 2000 крупнейших файлов ≥1 MiB на root, его смена
 не является доказательством создания/удаления файла. Logical totals не
 дедуплицируют hard links; allocation отдельных VHD измеряется отдельно.
+Windows `allocatedBytes` в этой утилите — результат `GetCompressedFileSizeW`:
+для sparse/compressed файлов он отличается от длины, для обычных файлов API
+возвращает длину. Это не полная бухгалтерия cluster rounding, NTFS metadata
+и защищённых областей тома. [Контракт Microsoft](https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-getcompressedfilesizew).
 
 Рост Docker VHD требует следующего сравнения Linux image/cache/volume/log
 sizes. Рост LDPlayer image требует следующего измерения каталогов внутри
@@ -253,3 +257,12 @@ Offline compaction — отдельная процедура обслужива�
   место до/после, backup и восстановление API/Tuna/fleet.
 - Global/per-device server log quota и sweeper; исключение роста списка labels,
   подписок и очередей при многократном подключении/отключении.
+
+## Продолжение 5 октября
+
+[Наблюдение роста диска](../audits/2026-10-05/HOST-DISK-GROWTH.md) фиксирует
+-2,071 GiB C: free без сопоставимого роста workspace/Docker VHD в15срезах.
+Protected VSS allocation и writer trace OPEN; размер файла не заменяет размер
+всех областей тома. Продолжаются конечные восьмичасовые окна.
+R09: native APK logs фактически 6обычных файлов при configured 5; исправление
+ротации ещё не выпущено и не объясняет гигабайтовую потерю свободного места.

@@ -1,6 +1,11 @@
 # Эксплуатационная готовность Sphere
 
-**Навигация обновлена: 4 октября 2026. Исторические live-снимки ниже сохранены по датам.**
+**Навигация обновлена: 5 октября 2026. Исторические live-снимки ниже сохранены по датам.**
+
+**Новый ресурсный срез, 5 октября:** free C: -2,071 GiB за 69 мин, при малом
+workspace growth и неизменном Docker VHD. Writer UNDETERMINED; protected Windows
+scope не прочитан из текущей unelevated сессии.44 tests/scanner fix не закрывают
+RAM soak, Fleet32 и R09 log retention. [Факты и открытая атрибуция](../audits/2026-10-05/HOST-DISK-GROWTH.md).
 
 **Диск / 17:50 UTC:** рабочая папка Sphere 7,996 GiB; shared Docker VHD 218,61 GiB
 вне неё. Package cleanup дал +4,726 GiB, guard C: free41,431 GiB; все46 контейнеров

@@ -1,0 +1,830 @@
+{
+  "observedAt": "2026-10-04T19:32:50.727541+00:00",
+  "clientDate": "2026-10-05",
+  "timezone": "Asia/Yekaterinburg",
+  "source": "6180faf59b4f3100123b202fdbaac22add13ccff",
+  "installedApiAndReviewUi": "c1a6e79",
+  "androidVersionCode": 10244,
+  "conclusion": "HOST_DISK_FREE_DECLINE_CONFIRMED_WRITER_UNDETERMINED",
+  "windowComplete": false,
+  "cleanupPerformedThisStage": false,
+  "runtimeRestarted": false,
+  "collector": {
+    "launchBefore": "2026-10-04T18:15:55.782311+00:00",
+    "launchAfter": "2026-10-04T18:15:55.789667+00:00",
+    "launcherPid": 27100,
+    "hidden": true,
+    "source": "6180faf59b4f3100123b202fdbaac22add13ccff",
+    "sourceSha256": "237c8519ccd79a697ca033d16d358a3eb7e8f0e8ebb346931a2189ce947d8d29",
+    "samples": 97,
+    "intervalSeconds": 300,
+    "rootIntervalSeconds": 900,
+    "maximumReportBytes": 16777216,
+    "maximumTemporaryBytes": 1048576,
+    "registeredService": false,
+    "autostart": false,
+    "deviceCommandsSent": false,
+    "targetMutationsPerformed": false,
+    "status": "RUNNING_FIRST_SAMPLE_VERIFIED",
+    "verificationAt": "2026-10-04T19:27:46.472953+00:00",
+    "process": {
+      "pid": 33340,
+      "startUtc": "2026-10-04T18:15:55.8036235Z",
+      "moduleIdentityMatched": true,
+      "privateBytes": 15196160,
+      "workingSetBytes": 22421504,
+      "cpuSeconds": 251.65625
+    },
+    "firstSampleAt": "2026-10-04T18:16:45.948870+00:00",
+    "firstSampleBytes": 56683,
+    "rootScopes": {
+      "sphere-platform": {
+        "state": "complete",
+        "errors": 0,
+        "entriesSeen": 288866,
+        "logicalBytesSeen": 8587610507
+      },
+      "Temp": {
+        "state": "partial_access",
+        "errors": 1,
+        "entriesSeen": 3792,
+        "logicalBytesSeen": 975759390
+      },
+      "sessions": {
+        "state": "complete",
+        "errors": 0,
+        "entriesSeen": 162,
+        "logicalBytesSeen": 3829689147
+      },
+      "npm-cache": {
+        "state": "complete",
+        "errors": 0,
+        "entriesSeen": 263833,
+        "logicalBytesSeen": 4629391474
+      }
+    }
+  },
+  "diskWindow": {
+    "samples": 15,
+    "from": "2026-10-04T18:16:45.948870+00:00",
+    "to": "2026-10-04T19:25:55.899124+00:00",
+    "freeBefore": 44431917056,
+    "freeAfter": 42207911936,
+    "freeDelta": -2224005120,
+    "fileChanges": [
+      {
+        "at": "2026-10-04T18:20:55.888488+00:00",
+        "scope": "Other file",
+        "event": "size_changed",
+        "logicalDeltaBytes": 352256,
+        "allocatedDeltaBytes": 352256
+      },
+      {
+        "at": "2026-10-04T18:20:55.888488+00:00",
+        "scope": "Chat session",
+        "event": "size_changed",
+        "logicalDeltaBytes": 249603,
+        "allocatedDeltaBytes": 249603
+      },
+      {
+        "at": "2026-10-04T18:31:50.119395+00:00",
+        "scope": "Other file",
+        "event": "size_changed",
+        "logicalDeltaBytes": 40960,
+        "allocatedDeltaBytes": 40960
+      }
+    ],
+    "rootSamples": [
+      {
+        "at": "2026-10-04T18:16:45.948870+00:00",
+        "scopes": [
+          {
+            "name": "sphere-platform",
+            "state": "complete",
+            "bytes": 8587610507,
+            "errors": 0,
+            "errorTypes": []
+          },
+          {
+            "name": "Temp",
+            "state": "partial_access",
+            "bytes": 975759390,
+            "errors": 1,
+            "errorTypes": [
+              "PermissionError"
+            ]
+          },
+          {
+            "name": "sessions",
+            "state": "complete",
+            "bytes": 3829689147,
+            "errors": 0,
+            "errorTypes": []
+          },
+          {
+            "name": "npm-cache",
+            "state": "complete",
+            "bytes": 4629391474,
+            "errors": 0,
+            "errorTypes": []
+          }
+        ],
+        "changes": []
+      },
+      {
+        "at": "2026-10-04T18:31:50.119395+00:00",
+        "scopes": [
+          {
+            "name": "sphere-platform",
+            "state": "complete",
+            "bytes": 8588264531,
+            "errors": 0,
+            "errorTypes": []
+          },
+          {
+            "name": "Temp",
+            "state": "partial_access",
+            "bytes": 975759390,
+            "errors": 1,
+            "errorTypes": [
+              "PermissionError"
+            ]
+          },
+          {
+            "name": "sessions",
+            "state": "complete",
+            "bytes": 3829809136,
+            "errors": 0,
+            "errorTypes": []
+          },
+          {
+            "name": "npm-cache",
+            "state": "complete",
+            "bytes": 4629391474,
+            "errors": 0,
+            "errorTypes": []
+          }
+        ],
+        "changes": [
+          {
+            "root": "sphere-platform",
+            "logicalDeltaBytes": 654024,
+            "changedDirectories": [
+              {
+                "path": ".local-pilot/resource-recovery-20261004",
+                "logicalDeltaBytes": 650931
+              },
+              {
+                "path": ".local-pilot/disk-growth-20261004",
+                "logicalDeltaBytes": 3093
+              }
+            ]
+          },
+          {
+            "root": "sessions",
+            "logicalDeltaBytes": 119989,
+            "changedDirectories": [
+              {
+                "path": "2026/09",
+                "logicalDeltaBytes": 119989
+              }
+            ]
+          },
+          {
+            "root": "npm-cache",
+            "logicalDeltaBytes": 0,
+            "changedDirectories": []
+          }
+        ]
+      },
+      {
+        "at": "2026-10-04T18:46:45.814807+00:00",
+        "scopes": [
+          {
+            "name": "sphere-platform",
+            "state": "complete",
+            "bytes": 8588838071,
+            "errors": 0,
+            "errorTypes": []
+          },
+          {
+            "name": "Temp",
+            "state": "partial_access",
+            "bytes": 975759390,
+            "errors": 1,
+            "errorTypes": [
+              "PermissionError"
+            ]
+          },
+          {
+            "name": "sessions",
+            "state": "complete",
+            "bytes": 3829809136,
+            "errors": 0,
+            "errorTypes": []
+          },
+          {
+            "name": "npm-cache",
+            "state": "complete",
+            "bytes": 4629391474,
+            "errors": 0,
+            "errorTypes": []
+          }
+        ],
+        "changes": [
+          {
+            "root": "sphere-platform",
+            "logicalDeltaBytes": 573540,
+            "changedDirectories": [
+              {
+                "path": ".local-pilot/resource-recovery-20261004",
+                "logicalDeltaBytes": 573540
+              }
+            ]
+          },
+          {
+            "root": "sessions",
+            "logicalDeltaBytes": 0,
+            "changedDirectories": []
+          },
+          {
+            "root": "npm-cache",
+            "logicalDeltaBytes": 0,
+            "changedDirectories": []
+          }
+        ]
+      },
+      {
+        "at": "2026-10-04T19:01:45.210809+00:00",
+        "scopes": [
+          {
+            "name": "sphere-platform",
+            "state": "complete",
+            "bytes": 8589494100,
+            "errors": 0,
+            "errorTypes": []
+          },
+          {
+            "name": "Temp",
+            "state": "partial_access",
+            "bytes": 975759390,
+            "errors": 1,
+            "errorTypes": [
+              "PermissionError"
+            ]
+          },
+          {
+            "name": "sessions",
+            "state": "complete",
+            "bytes": 3829809136,
+            "errors": 0,
+            "errorTypes": []
+          },
+          {
+            "name": "npm-cache",
+            "state": "complete",
+            "bytes": 4629391474,
+            "errors": 0,
+            "errorTypes": []
+          }
+        ],
+        "changes": [
+          {
+            "root": "sphere-platform",
+            "logicalDeltaBytes": 656029,
+            "changedDirectories": [
+              {
+                "path": ".local-pilot/resource-recovery-20261004",
+                "logicalDeltaBytes": 656029
+              }
+            ]
+          },
+          {
+            "root": "sessions",
+            "logicalDeltaBytes": 0,
+            "changedDirectories": []
+          },
+          {
+            "root": "npm-cache",
+            "logicalDeltaBytes": 0,
+            "changedDirectories": []
+          }
+        ]
+      },
+      {
+        "at": "2026-10-04T19:16:50.668820+00:00",
+        "scopes": [
+          {
+            "name": "sphere-platform",
+            "state": "complete",
+            "bytes": 8590072046,
+            "errors": 0,
+            "errorTypes": []
+          },
+          {
+            "name": "Temp",
+            "state": "partial_access",
+            "bytes": 975759390,
+            "errors": 1,
+            "errorTypes": [
+              "PermissionError"
+            ]
+          },
+          {
+            "name": "sessions",
+            "state": "complete",
+            "bytes": 3829809136,
+            "errors": 0,
+            "errorTypes": []
+          },
+          {
+            "name": "npm-cache",
+            "state": "complete",
+            "bytes": 4629391474,
+            "errors": 0,
+            "errorTypes": []
+          }
+        ],
+        "changes": [
+          {
+            "root": "sphere-platform",
+            "logicalDeltaBytes": 577946,
+            "changedDirectories": [
+              {
+                "path": ".local-pilot/resource-recovery-20261004",
+                "logicalDeltaBytes": 577947
+              },
+              {
+                "path": ".local-pilot/station-network",
+                "logicalDeltaBytes": -1
+              }
+            ]
+          },
+          {
+            "root": "sessions",
+            "logicalDeltaBytes": 0,
+            "changedDirectories": []
+          },
+          {
+            "root": "npm-cache",
+            "logicalDeltaBytes": 0,
+            "changedDirectories": []
+          }
+        ]
+      }
+    ]
+  },
+  "ramWindow": {
+    "samples": 57,
+    "from": "2026-10-04T17:32:56.826123+00:00",
+    "to": "2026-10-04T19:24:56.832449+00:00",
+    "lastBootSame": true,
+    "freeBefore": 43644616704,
+    "freeAfter": 42203512832,
+    "ramAvailableBefore": 20114542592,
+    "ramAvailableAfter": 21179318272,
+    "commitBefore": 51696529408,
+    "commitAfter": 55944769536,
+    "largestMatchedProcessDeltas": [
+      {
+        "name": "Telegram",
+        "privateBefore": 1176317952,
+        "privateAfter": 1522823168,
+        "privateDelta": 346505216,
+        "epochMatched": true
+      },
+      {
+        "name": "ChatGPT",
+        "privateBefore": 708108288,
+        "privateAfter": 925032448,
+        "privateDelta": 216924160,
+        "epochMatched": true
+      },
+      {
+        "name": "ChatGPT",
+        "privateBefore": 438427648,
+        "privateAfter": 503717888,
+        "privateDelta": 65290240,
+        "epochMatched": true
+      },
+      {
+        "name": "com.docker.backend",
+        "privateBefore": 210153472,
+        "privateAfter": 274763776,
+        "privateDelta": 64610304,
+        "epochMatched": true
+      },
+      {
+        "name": "Spotify",
+        "privateBefore": 288468992,
+        "privateAfter": 346308608,
+        "privateDelta": 57839616,
+        "epochMatched": true
+      },
+      {
+        "name": "parsecd",
+        "privateBefore": 183369728,
+        "privateAfter": 216104960,
+        "privateDelta": 32735232,
+        "epochMatched": true
+      },
+      {
+        "name": "browser",
+        "privateBefore": 52838400,
+        "privateAfter": 79372288,
+        "privateDelta": 26533888,
+        "epochMatched": true
+      },
+      {
+        "name": "browser",
+        "privateBefore": 179212288,
+        "privateAfter": 202784768,
+        "privateDelta": 23572480,
+        "epochMatched": true
+      },
+      {
+        "name": "browser",
+        "privateBefore": 802631680,
+        "privateAfter": 825806848,
+        "privateDelta": 23175168,
+        "epochMatched": true
+      },
+      {
+        "name": "browser",
+        "privateBefore": 413048832,
+        "privateAfter": 432599040,
+        "privateDelta": 19550208,
+        "epochMatched": true
+      },
+      {
+        "name": "browser",
+        "privateBefore": 551501824,
+        "privateAfter": 566382592,
+        "privateDelta": 14880768,
+        "epochMatched": true
+      },
+      {
+        "name": "Spotify",
+        "privateBefore": 259366912,
+        "privateAfter": 273436672,
+        "privateDelta": 14069760,
+        "epochMatched": true
+      }
+    ],
+    "keys": [
+      "observedAt",
+      "system",
+      "freeDiskBytes",
+      "deviceCommandsSent",
+      "mutationsPerformed",
+      "availableRamBytes",
+      "totalRamBytes",
+      "committedBytes",
+      "commitLimitBytes",
+      "sample",
+      "findings",
+      "lastBoot",
+      "poolNonpagedBytes",
+      "poolPagedBytes",
+      "processes",
+      "containers",
+      "linuxMemory"
+    ]
+  },
+  "containerMemory": {
+    "windowFrom": "2026-10-04T17:32:56.826123+00:00",
+    "windowTo": "2026-10-04T19:24:56.832449+00:00",
+    "containerDisplayValuesRounded": true,
+    "containers": [
+      {
+        "name": "sphere-review-20261002-review-ui-1",
+        "sameContainerId": true,
+        "beforeBytesApprox": 73977037,
+        "afterBytesApprox": 80163635,
+        "deltaBytesApprox": 6186598
+      },
+      {
+        "name": "sphere-pilot-20260911-backend-1",
+        "sameContainerId": true,
+        "beforeBytesApprox": 617925837,
+        "afterBytesApprox": 624217293,
+        "deltaBytesApprox": 6291456
+      },
+      {
+        "name": "sphere-review-20261002-review-gateway-1",
+        "sameContainerId": true,
+        "beforeBytesApprox": 3833594,
+        "afterBytesApprox": 3822060,
+        "deltaBytesApprox": -11534
+      },
+      {
+        "name": "sphere-observability-20260930-grafana-1",
+        "sameContainerId": true,
+        "beforeBytesApprox": 390489702,
+        "afterBytesApprox": 390489702,
+        "deltaBytesApprox": 0
+      },
+      {
+        "name": "sphere-observability-20260930-prometheus-1",
+        "sameContainerId": true,
+        "beforeBytesApprox": 57598280,
+        "afterBytesApprox": 60125348,
+        "deltaBytesApprox": 2527068
+      },
+      {
+        "name": "sphere-tuna-canary",
+        "sameContainerId": true,
+        "beforeBytesApprox": 24368906,
+        "afterBytesApprox": 25794970,
+        "deltaBytesApprox": 1426063
+      },
+      {
+        "name": "sphere-pilot-20260911-frontend-1",
+        "sameContainerId": true,
+        "beforeBytesApprox": 108737331,
+        "afterBytesApprox": 108003328,
+        "deltaBytesApprox": -734003
+      },
+      {
+        "name": "sphere-pilot-20260911-cloudflare-quick-1",
+        "sameContainerId": true,
+        "beforeBytesApprox": 67014492,
+        "afterBytesApprox": 67066921,
+        "deltaBytesApprox": 52429
+      },
+      {
+        "name": "sphere-pilot-20260911-public-gateway-1",
+        "sameContainerId": true,
+        "beforeBytesApprox": 36469473,
+        "afterBytesApprox": 36563845,
+        "deltaBytesApprox": 94372
+      },
+      {
+        "name": "sphere-pilot-20260911-nginx-1",
+        "sameContainerId": true,
+        "beforeBytesApprox": 42687529,
+        "afterBytesApprox": 42687529,
+        "deltaBytesApprox": 0
+      },
+      {
+        "name": "sphere-pilot-20260911-n8n-1",
+        "sameContainerId": true,
+        "beforeBytesApprox": 204577178,
+        "afterBytesApprox": 210134630,
+        "deltaBytesApprox": 5557453
+      },
+      {
+        "name": "sphere-pilot-20260911-minio-1",
+        "sameContainerId": true,
+        "beforeBytesApprox": 124151398,
+        "afterBytesApprox": 125933978,
+        "deltaBytesApprox": 1782579
+      },
+      {
+        "name": "sphere-pilot-20260911-postgres-1",
+        "sameContainerId": true,
+        "beforeBytesApprox": 143759770,
+        "afterBytesApprox": 147954074,
+        "deltaBytesApprox": 4194304
+      },
+      {
+        "name": "sphere-pilot-20260911-redis-1",
+        "sameContainerId": true,
+        "beforeBytesApprox": 16357786,
+        "afterBytesApprox": 16315843,
+        "deltaBytesApprox": -41943
+      },
+      {
+        "name": "sphere-audit-20260905-redis",
+        "sameContainerId": true,
+        "beforeBytesApprox": 8495563,
+        "afterBytesApprox": 9022996,
+        "deltaBytesApprox": 527434
+      },
+      {
+        "name": "sphere-audit-20260905-postgres",
+        "sameContainerId": true,
+        "beforeBytesApprox": 60072919,
+        "afterBytesApprox": 60072919,
+        "deltaBytesApprox": 0
+      },
+      {
+        "name": "sphere-tunnel",
+        "sameContainerId": true,
+        "beforeBytesApprox": 4636803,
+        "afterBytesApprox": 4632609,
+        "deltaBytesApprox": -4194
+      }
+    ],
+    "linuxBefore": {
+      "MemTotal": 24773992448,
+      "MemAvailable": 21486727168,
+      "Buffers": 1192747008,
+      "Cached": 4925841408,
+      "SwapTotal": 6442450944,
+      "SwapFree": 6398177280,
+      "AnonPages": 2137395200
+    },
+    "linuxAfter": {
+      "MemTotal": 24773992448,
+      "MemAvailable": 21463752704,
+      "Buffers": 1237929984,
+      "Cached": 4946104320,
+      "SwapTotal": 6442450944,
+      "SwapFree": 6396342272,
+      "AnonPages": 2215657472
+    }
+  },
+  "dockerVhd": {
+    "logicalBefore": 234731077632,
+    "logicalAfter": 234731077632,
+    "storageApiBefore": 234731077632,
+    "storageApiAfter": 234731077632,
+    "identityUnchanged": true
+  },
+  "wholeVolumeFollowup": {
+    "state": "complete_accessible_scope",
+    "startedAt": "2026-10-04T19:27:17.637927+00:00",
+    "finishedAt": "2026-10-04T19:30:00.290891+00:00",
+    "durationSeconds": 162.656,
+    "files": 5029835,
+    "directories": 814352,
+    "logicalBytesSeen": 936363664284,
+    "errors": 123,
+    "skippedReparse": 6142,
+    "hardLinksDeduplicated": false,
+    "sparseCompressedAllocationMeasuredPerFile": false,
+    "coverage": "Accessible files only; reparse points excluded; logical sizes can duplicate hardlinks and exceed allocation",
+    "mutationsPerformed": false,
+    "fileContentsRead": false
+  },
+  "wholeVolumeComparison": {
+    "beforeFinishedAt": "2026-10-04T17:45:24.877792+00:00",
+    "afterFinishedAt": "2026-10-04T19:30:00.290891+00:00",
+    "logicalDelta": -5043181260,
+    "fileDelta": -9134,
+    "errorsBefore": 123,
+    "errorsAfter": 123,
+    "nestedAreasNotAdditive": true
+  },
+  "protectedVolumeProbes": [
+    {
+      "command": [
+        "vssadmin.exe",
+        "list",
+        "shadowstorage"
+      ],
+      "exitCode": 2,
+      "readOnly": true,
+      "outcome": "ADMINISTRATOR_REQUIRED"
+    },
+    {
+      "command": [
+        "fsutil.exe",
+        "volume",
+        "diskfree",
+        "C:"
+      ],
+      "exitCode": 1,
+      "readOnly": true,
+      "outcome": "ACCESS_DENIED"
+    },
+    {
+      "command": [
+        "fsutil.exe",
+        "usn",
+        "queryjournal",
+        "C:"
+      ],
+      "exitCode": 0,
+      "readOnly": true,
+      "outcome": "USN_MAXIMUM_32_MIB_ALLOCATION_DELTA_8_MIB"
+    }
+  ],
+  "backendDeviceLogs": {
+    "scope": "recursive device logs",
+    "fileCount": 14,
+    "logicalBytes": 8112062,
+    "largestFileBytes": [
+      588852,
+      588334,
+      588325,
+      588325,
+      588148
+    ],
+    "fileContentsRead": false,
+    "observedAt": "2026-10-04T19:27:46.676785+00:00"
+  },
+  "androidStorage": {
+    "cohort": [
+      "PH010 local",
+      "PH025 remote"
+    ],
+    "packageKiB": [
+      11456,
+      12272
+    ],
+    "sphereLogDirectoryKiB": [
+      10616,
+      11432
+    ],
+    "tmpKiB": [
+      285624,
+      52
+    ],
+    "regularSphereLogsPerDevice": [
+      6,
+      6
+    ],
+    "configuredFileCount": 5,
+    "retentionBugFixed": false,
+    "scope": "Two devices only; not full fleet"
+  },
+  "validation": {
+    "startedAt": "2026-10-04T19:28:23.833928+00:00",
+    "finishedAt": "2026-10-04T19:28:30.080998+00:00",
+    "testsPassed": 44,
+    "pytestExitCode": 0,
+    "ruffExitCode": 0,
+    "longPathFilesystemTestExecuted": true,
+    "source": "6180faf59b4f3100123b202fdbaac22add13ccff",
+    "note": "Initial missing JWT fixture prevented collection; rerun uses test-only env without changing runtime credentials."
+  },
+  "privateArtifacts": [
+    {
+      "path": ".local-pilot/disk-growth-20261004/watch-start-receipt-longpaths.json",
+      "sha256": "a939abc545314a35811c4eac77c473b5e624cfe7a0ebc9ded6efdb7510d2f197",
+      "contentsNotCommitted": true
+    },
+    {
+      "path": ".local-pilot/disk-growth-20261004/owned-watcher-replaced.json",
+      "sha256": "03067264dff9bc7a3dc9185124ca14cdb709a1afc7d44bcde38b4b168197dbc6",
+      "contentsNotCommitted": true
+    },
+    {
+      "path": ".local-pilot/disk-growth-20261004/watch-analysis-interim.json",
+      "sha256": "601f4f92b2529a76a3dec9c25b2ab5f788396e539444e78ebedf576ea218206c",
+      "contentsNotCommitted": true
+    },
+    {
+      "path": ".local-pilot/disk-growth-20261004/ram-analysis-interim.json",
+      "sha256": "03d636cd9fb22c8cd3f9d4c0c39807f956b2402954b5dad5e5a622134dd995e9",
+      "contentsNotCommitted": true
+    },
+    {
+      "path": ".local-pilot/disk-growth-20261004/container-memory-interim.json",
+      "sha256": "7d0b61b95971afcc9216052922fee9fe3405469bd0fcaec4ad024906ff026dfe",
+      "contentsNotCommitted": true
+    },
+    {
+      "path": ".local-pilot/disk-growth-20261004/private-broad-comparison.json",
+      "sha256": "fa236b2cb5cd49542063d564998fa1d63d0a5bd7aa8222c1c268dc7c175296b9",
+      "contentsNotCommitted": true
+    },
+    {
+      "path": ".local-pilot/disk-growth-20261004/broad-followup/private-disk-inventory.json",
+      "sha256": "929ab0e19cc1026e9f67b1d586e97372e4bf09346d582dd269c75bece1479182",
+      "contentsNotCommitted": true
+    },
+    {
+      "path": ".local-pilot/disk-growth-20261004/backend-log-directory-recursive-metadata.json",
+      "sha256": "abb0e9b927f8e4a8100acd0a7ebb781dbfe9397c8fba6d5541f5d07ee6c85a49",
+      "contentsNotCommitted": true
+    },
+    {
+      "path": ".local-pilot/disk-growth-20261004/private-android-storage.json",
+      "sha256": "394ba717a85f0794ed02a458205fa9c764a03a41b0d20eddd823e0bbb06e07f9",
+      "contentsNotCommitted": true
+    },
+    {
+      "path": ".local-pilot/disk-growth-20261004/private-android-storage-fixed.json",
+      "sha256": "e33c0ad2c9b43ff8a97065573740e8a6a6e96fd2ef25f5f430452f5d2f145e51",
+      "contentsNotCommitted": true
+    },
+    {
+      "path": ".local-pilot/disk-growth-20261004/private-android-storage-pilot-package.json",
+      "sha256": "a4627bfdc48fde73ee022e417e24e916f7d1c0bf8f7a7e73d377168b93c47ad3",
+      "contentsNotCommitted": true
+    },
+    {
+      "path": ".local-pilot/disk-growth-20261004/private-android-log-file-metadata.json",
+      "sha256": "c9867b028b2e5a45d2dd0085a5faf7346e9bbd20d43774c53fe9d91c9245a514",
+      "contentsNotCommitted": true
+    },
+    {
+      "path": ".local-pilot/disk-growth-20261004/private-protected-volume-probes.json",
+      "sha256": "b6942ebf5fe6b425ff14b2576954948eb5cec8b5500f441b65373ecd628dcbb0",
+      "contentsNotCommitted": true
+    },
+    {
+      "path": ".local-pilot/disk-growth-20261004/targeted-validation.json",
+      "sha256": "abd1c61a293d1f749963f5786d77a1a99f58ac755cad048704cb76110339f9bb",
+      "contentsNotCommitted": true
+    },
+    {
+      "path": ".local-pilot/disk-growth-20261004/long-path-probe.json",
+      "sha256": "c9b43a810ff9c20540d29b0e397ffcc2e3ac8af3d1418cded69771779cafe055",
+      "contentsNotCommitted": true
+    }
+  ]
+}

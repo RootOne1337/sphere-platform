@@ -19,6 +19,10 @@
 API/UI c1a6e79.** [Аудит диска, ОЗУ, сборки и RPC](audits/2026-10-04/HOST-RESOURCE-PRESSURE-AND-RPC-DIAGNOSTICS.md) ·
 [Эксплуатационная процедура](operations/HOST-RESOURCES.md).
 
+**5 октября — продолжающееся заполнение диска:** [15 срезов / -2,071 GiB free / protected scopes](audits/2026-10-05/HOST-DISK-GROWTH.md).
+Source watcher `6180faf` / 44 tests; приложение c1a6e79 сохранено. Причина роста OPEN,
+APK retention 6 вместо 5 отдельно записана; полные восьмичасовые окна не завершены.
+
 **Дополнительная инвентаризация, 17:50 UTC:** [размер Sphere / обход C: / package cleanup](audits/2026-10-04/HOST-DISK-INVENTORY-AND-CLEANUP.md).
 Workspace 8 GiB, tracked files 22 MiB; shared Docker VHD 219 GiB отдельно.
 На C: free 41,43 GiB после дополнительной очистки; 46 контейнеров сохранены,
@@ -32,7 +36,7 @@ Workspace 8 GiB, tracked files 22 MiB; shared Docker VHD 219 GiB отдельн�
 APK 10244, Tuna и OTA сохранены. Исходный реестр: 34 исправлено / 7 незакрытых;
 визуальная приёмка, FPS/задержка, длительная нагрузка и Fleet32 admission открыты.
 
-**Исторический follow-up: 4 октября 2026, 10:06 UTC+5. API/UI9716348**, APK10244 unchanged.
+**Исторический follow-up: 4 октября 2026, 10:06 UTC+5. API/UI9716348**, APK 10244 unchanged.
 [Native PNG, управление и manual Android profile](audits/2026-10-04/DEVICE-CONTROL-AND-NATIVE-CAPTURE.md).
 1117 frontend / 140 API cases в образах, schema178/140. PH025/PH010 original PNG accepted;
 Android/server/file hashes matched. 14online в конечном UI readback; первый remote504
@@ -45,7 +49,7 @@ full visual/latency/load/soak OPEN; original ledger34/7 не изменён.
 API **9274e50** / UI **84750e3** на 3015; 110 suites / 1043 frontend и 108 API cases
 в образах. Вход в инспектор загружает дерево; выбор, атрибуты, подсветка и активное
 автообновление покрыты 8 pointer workflow tests. PH010 45 / PH025 49 реальных узлов.
-После UI rollout 14 online APK10244 и прежние даты соединений во всех 7 срезах;
+После UI rollout 14 online APK 10244 и прежние даты соединений во всех 7 срезах;
 API/Tuna/OTA и 15 соседей сохранены. Предыдущее API окно FAILED 14→13/PH015
 не скрыто. **34 source-fixed / 7 незакрытых, включая 3 PARTIAL**; browser/soak OPEN.
 
