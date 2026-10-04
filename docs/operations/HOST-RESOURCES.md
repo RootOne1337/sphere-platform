@@ -266,3 +266,34 @@ Protected VSS allocation и writer trace OPEN; размер файла не за
 всех областей тома. Продолжаются конечные восьмичасовые окна.
 R09: native APK logs фактически 6обычных файлов при configured 5; исправление
 ротации ещё не выпущено и не объясняет гигабайтовую потерю свободного места.
+
+### Однократный запуск системных замеров
+
+Если фактический terminal token не administrator, запуск UI приложения от
+администратора сам по себе не считается подтверждением прав инструмента.
+`vssadmin` / `fsutil volume diskfree` отказали текущей сессии и после перезапуска.
+Для отдельного конечного окна открыть PowerShell **от имени администратора**:
+
+```powershell
+& 'C:\Users\dimas\Documents\ChatGPT\sphere-platform\scripts\pilot\collect_storage_allocation.ps1'
+```
+
+[Сборщик](../../scripts/pilot/collect_storage_allocation.ps1) выполняет только
+`vssadmin list shadowstorage /for=C:` и `fsutil volume diskfree C:` и пишет свои
+JSON в новый `.local-pilot/admin-storage-*`. Нет cleanup, service/autostart,
+смены прав, рестартов или операций с Android. Окно PowerShell оставить открытым;
+его можно свернуть. По умолчанию 31 срез / 60s, плановое окно 30 минут.
+CLI ограничен одним часом, sample128KiB / reports4MiB и early stop при free<512MiB;
+native query имеет timeout10s и до2s на завершение собственного child.
+Final sample может закончиться после планового времени из-за query timeout.
+Unknown/nonzero exit/truncation сохраняются, не означают нулевой расход.
+
+Синтаксис проверен Windows PowerShell; реальные отрицательные запуски
+подтвердили rejection без admin и при недопустимом/избыточном окне до создания
+output. Эти проверки **не являются выполнением privileged probes**.
+[Регрессии](../../tests/test_pilot_storage_allocation.py).
+
+После перезапуска приложения прежние disk/RAM processes отсутствовали,
+последние сохранённые срезы19:35 UTC. Восьмичасовая приёмка прервана, а не
+успешно завершена. Отдельные30-минутные продолжения запущены19:41:48/19:45:11 UTC;
+первые полные срезы подтверждены. Разрыв не входит в continuous uptime/soak.
