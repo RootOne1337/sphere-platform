@@ -1,7 +1,8 @@
 """Exercise Windows parser/native WPR validation and reject unsafe launches."""
-from pathlib import Path
+
 import platform
 import subprocess
+from pathlib import Path
 
 import pytest
 
