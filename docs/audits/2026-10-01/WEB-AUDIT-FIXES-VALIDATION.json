@@ -5994,5 +5994,30 @@
     "ledgerSourceFixed": 34,
     "ledgerUnclosed": 7,
     "evidence": "../2026-10-04/DEVICE-CONTROL-AND-NATIVE-CAPTURE-EVIDENCE.json"
+  },
+  "latestHostResourceAndRpcFollowup": {
+    "observedAt": "2026-10-04T17:21:31.433003+00:00",
+    "apiSource": "c1a6e79a75221c45a71160a21bc91c48b22ef5ae",
+    "uiSource": "c1a6e79a75221c45a71160a21bc91c48b22ef5ae",
+    "frontendImageCases": 1122,
+    "frontendImageSuites": 113,
+    "apiImageCases": 186,
+    "resourceGuardCases": 18,
+    "sourceCiWorkflowsPassed": 4,
+    "mypyFiles": 229,
+    "schemaOperations": 178,
+    "schemaPaths": 140,
+    "lastBoot": "2026-10-04T16:39:32.500000Z",
+    "initialFleetGate": "FAILED_COHORT_AND_EPOCHS_11_TO_14",
+    "recoveryFleetGate": "PASSED_FINITE_14_ONLINE_AND_EPOCHS",
+    "firstRemotePngStatus": 504,
+    "firstRemoteFailedPhase": "display_before",
+    "separateRemoteRecoveryStatus": 200,
+    "longTermRamLeak": "UNDETERMINED",
+    "vhdCompactionPerformed": false,
+    "browserVerified": false,
+    "ledgerSourceFixed": 34,
+    "ledgerUnclosed": 7,
+    "evidence": "../2026-10-04/HOST-RESOURCE-PRESSURE-AND-RPC-DIAGNOSTICS-EVIDENCE.json"
   }
 }

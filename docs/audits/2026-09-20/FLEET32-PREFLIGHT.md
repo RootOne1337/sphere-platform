@@ -6,7 +6,15 @@
 
 [Главная](../../../README.md) · [Документация](../../README.md) · [Readiness](../../operations/READINESS.md) · [История исправлений](../2026-09-05/AUDIT-REPORT.md)
 
-> **Последняя конечная проверка: 4 октября 2026, 10:06 UTC+5.**
+> **Последняя установка: 4 октября 2026,17:14 UTC; API/UI c1a6e79.**
+> Host disk exhaustion/build-cache defect исправлены; RAM long-term root cause OPEN.
+> Первый fleet gate FAILED: 11→14/epochs, второй14 online APK 10244 / epochs passed;
+> это не sustained admission. RemotePNG 504 сохранён рядом с recoveryPNG 200.
+> SourceCI4passed, 1122 frontend / 186 API / 18 guard cases. APK/Tuna/OTA unchanged.
+> NO-GO для 20–30/32-device stream+scripts/fault/soak сохраняется.
+> [Доказательства и ресурсы](../2026-10-04/HOST-RESOURCE-PRESSURE-AND-RPC-DIAGNOSTICS.md).
+
+> **Историческая конечная проверка: 4 октября 2026, 10:06 UTC+5.**
 > API/UI9716348, 7 срезов14online10244/epochs, actual remote/local native PNG matched.
 > Первый remote504/семь code1005 disconnects сохранены; стабильность не принята.
 > 20–30/32-device stream+scripts/fault, FPS/input latency и soak OPEN; NO-GO сохранён.

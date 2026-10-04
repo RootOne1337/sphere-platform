@@ -15,7 +15,18 @@
 > автоматическую проверку runtime; старые аудиты сохраняют собственные даты и
 > версии и не должны читаться как текущий deploy. [Правила актуальности](DOCUMENTATION.md).
 
-**Последний follow-up: 4 октября 2026, 10:06 UTC+5. API/UI9716348**, APK10244 unchanged.
+**Последняя проверка: 4 октября 2026, после перезагрузки ПК и установки в 17:14 UTC.
+API/UI c1a6e79.** [Аудит диска, ОЗУ, сборки и RPC](audits/2026-10-04/HOST-RESOURCE-PRESSURE-AND-RPC-DIAGNOSTICS.md) ·
+[Эксплуатационная процедура](operations/HOST-RESOURCES.md).
+В образах прошли 113 наборов / 1122 frontend-теста и 186 API-проверок; отдельно
+18 проверок допуска сборки. Все четыре source CI прошли. Исправлены повторные
+слои зависимостей; выполнена адресная очистка. Сжатие VHD и длительная утечка ОЗУ
+ещё не приняты. Remote 504 сохранён рядом с отдельным успешным PNG 200;
+первое окно связи FAILED: 11→14, последующее сохранило 14 online / даты подключений.
+APK 10244, Tuna и OTA сохранены. Исходный реестр: 34 исправлено / 7 незакрытых;
+визуальная приёмка, FPS/задержка, длительная нагрузка и Fleet32 admission открыты.
+
+**Исторический follow-up: 4 октября 2026, 10:06 UTC+5. API/UI9716348**, APK10244 unchanged.
 [Native PNG, управление и manual Android profile](audits/2026-10-04/DEVICE-CONTROL-AND-NATIVE-CAPTURE.md).
 1117 frontend / 140 API cases в образах, schema178/140. PH025/PH010 original PNG accepted;
 Android/server/file hashes matched. 14online в конечном UI readback; первый remote504

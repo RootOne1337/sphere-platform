@@ -15,10 +15,20 @@ section and optional task/batch version admission condition were reconciled with
 source `d2846ef` on 2 October; other Batches details retain their 7 September review.
 Locations were reconciled with `db6be05` on 3 October. OTA publication was
 reconciled with `facba9a` on 3 October: [metadata/receipt and Android APK checks](operations/OTA-PUBLICATION-AND-APK-CHECKS.md).
-The current snapshot was exported using packaged API5e80137 dependencies and rechecked against shipped API9716348 on 4 October: **178 HTTP operations across 140 paths**. Earlier snapshots retain their dated reports.
+The current snapshot was exported using packaged API5e80137 dependencies and rechecked against shipped API c1a6e79 on 4 October: **178 HTTP operations across 140 paths**. Earlier snapshots retain their dated reports.
 Other manual sections
 still need component review; a listed contract does not establish runtime or
 security correctness. See the [audit report](audits/2026-09-05/AUDIT-REPORT.md).
+
+## Native capture failure diagnostics
+
+API c1a6e79 on 4 October adds bounded `X-Screenshot-Id`, `X-Screenshot-Elapsed-Ms`,
+`X-Screenshot-Failed-Phase` when applicable and `X-Screenshot-Cleanup-Confirmed`
+to native capture 502/503/504. Metadata-only `native_screenshot.finished`,
+`interactive_rpc.forwarded` and `interactive_rpc.finished` correlate actual
+socket write, RPC outcome/progress and cleanup. A socket write does not prove
+Android completion; cleanup failure does not replace the original response.
+There is no automatic root-command replay. [Actual success/failure evidence](audits/2026-10-04/HOST-RESOURCE-PRESSURE-AND-RPC-DIAGNOSTICS.md).
 
 ## Original Android PNG
 

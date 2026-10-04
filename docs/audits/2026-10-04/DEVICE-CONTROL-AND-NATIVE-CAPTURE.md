@@ -1,7 +1,12 @@
 # Выбранное Android-устройство: управление, исходный PNG и системный профиль
 
+> **Отчёт сохраняет утреннюю установку9716348 и исходные успехи/отказы.**
+> Вечерний API/UIc1a6e79 после PC reboot, trace native capture, новый remote504
+> и recovery200, размеры диска/RAM и исправление build-cache описаны отдельно:
+> [host/RPC follow-up](HOST-RESOURCE-PRESSURE-AND-RPC-DIAGNOSTICS.md). Старые PNG hashes/timings не переписаны.
+
 **Дата:** 4 октября 2026, Asia/Yekaterinburg (UTC+5).
-**Установленные API и review UI:** `9716348018e60647dc749774acb00422d0f2cd08`.
+**Исторические API и review UI этого отчёта:** `9716348018e60647dc749774acb00422d0f2cd08`.
 **APK:** существующий `1.2.44-dev / 10244`; новый APK в этом этапе не выпускался.
 **Review:** [3015/devices](http://127.0.0.1:3015/devices) → выбранное устройство.
 
