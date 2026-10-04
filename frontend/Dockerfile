@@ -11,14 +11,20 @@ FROM base AS deps
 COPY package.json package-lock.json* ./
 RUN npm ci --omit=dev --no-audit --no-fund
 
+# Reuse dependency layers across source revisions. The revision must not enter
+# npm ci's cache key; otherwise each reviewed commit installs another full copy.
+FROM base AS build-deps
+COPY package.json package-lock.json* ./
+RUN npm ci --no-audit --no-fund && npm cache clean --force
+
 # Builder
-FROM base AS builder
+FROM build-deps AS builder
+COPY . .
 ARG BUILD_SHA=unknown
 ENV NEXT_PUBLIC_BUILD_SHA=${BUILD_SHA}
-COPY package.json package-lock.json* ./
-RUN npm ci --no-audit --no-fund
-COPY . .
-RUN npm run build
+# Keep generated types/standalone output, but do not retain incremental build
+# caches in every exported verification image.
+RUN npm run build && rm -rf /app/.next/cache
 
 # Runner (минимальный образ)
 FROM base AS runner

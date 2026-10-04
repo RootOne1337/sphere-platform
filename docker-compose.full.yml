@@ -4,8 +4,13 @@
 # Включает всё из docker-compose.yml + добавляет backend и frontend.
 # Запуск: docker compose -f docker-compose.yml -f docker-compose.full.yml up -d
 
+x-bounded-logs: &bounded-logs
+  driver: json-file
+  options: {max-size: "20m", max-file: "5"}
+
 services:
   backend:
+    logging: *bounded-logs
     tmpfs:
       - /tmp/sphere-metrics:rw,nosuid,nodev,noexec,size=128m,uid=1001,gid=1001,mode=0700
     build:
@@ -89,6 +94,7 @@ services:
           memory: 512M
 
   frontend:
+    logging: *bounded-logs
     build:
       context: ./frontend
       dockerfile: Dockerfile
