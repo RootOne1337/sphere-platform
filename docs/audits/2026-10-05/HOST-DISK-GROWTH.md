@@ -13,7 +13,7 @@ Android — существующий `1.2.44-dev / 10244`. Приложения 
 
 ## Подтверждённый результат
 
-Свободное место на C: **продолжает уменьшаться**. В 15 срезах за 69 минут оно
+На первоначальном 69-минутном окне свободное место на C: **продолжало уменьшаться**. В 15 срезах за 69 минут оно
 снизилось с **44 431 917 056 до 42 207 911 936 байт**, то есть на
 **2 224 005 120 байт / 2,071 GiB**. Это измерение тома, а не вывод по красной полосе
 Проводника. Владелец этого снижения **не установлен**; утечка Sphere не доказана.
@@ -63,11 +63,10 @@ Android — существующий `1.2.44-dev / 10244`. Приложения 
 - CIM `Win32_ShadowStorage` / `Win32_ShadowCopy` завершились ошибкой инициализации;
   это unknown, не «теневых копий нет».
 
-Размер теневого хранилища не измерен. Никакие shadow copies, USN, pagefile,
-hibernation и restore points не удалялись и не перенастраивались. Запрошен
-read-only вывод `vssadmin list shadowstorage /for=C:` и `fsutil volume diskfree C:`
-из PowerShell администратора. Наличие shadow storage само по себе ещё не доказывает
-причину: для атрибуции нужны два сопоставимых среза его размера и free space.
+На этом первоначальном срезе размер теневого хранилища не был измерен. Последующие
+успешные системные замеры описаны ниже. Shadow copies, USN, pagefile, hibernation
+и restore points не удалялись и не перенастраивались. Наличие shadow storage само
+по себе не доказывает причину снижения free space.
 
 ## Ограниченный сборщик продолжает работу
 
@@ -148,11 +147,113 @@ sparse-size growth, replacement, quotas и low-disk stops; Ruff/diff прохо�
 переменной окружения 44 cases прошли. Runtime credentials не менялись.
 Тяжёлая пересборка API/UI/APK для CLI диагностики не требуется и не выполнялась.
 
-Восьмичасовые окна ещё **RUNNING**, не объявлены завершёнными. Raw reports содержат
+На первоначальном срезе восьмичасовые окна были **RUNNING**. После перезапуска
+приложения процессы отсутствовали; сохранённые срезы заканчиваются в 19:34:56
+(RAM) / 19:35:55 (disk). Окна **INTERRUPTED**, не completed/accepted. Raw reports содержат
 частные пути и не публикуются; public evidence содержит агрегаты, ограничения и
 SHA-256 датированных файлов. Hash активного status не выдаётся за неизменную квитанцию.
 
-Следующий шаг — прочитать protected allocation/VSS с необходимыми правами,
-сопоставить рост и writer trace, затем исправлять конкретный источник. До этого
-не делать global prune, не удалять VHD/guest images/Windows system files. Прежние
-34 source-fixed / 7 unclosed web gates и Fleet32 NO-GO сохраняются.
+## Системный readback после запуска пользователем
+
+**Итоговый срез 20:15:59 UTC:** пользователь запустил
+[read-only сборщик](../../../scripts/pilot/collect_storage_allocation.ps1) в своей
+PowerShell администратора. Его `administrator=true`; token инструментального
+терминала остаётся `false`. Это разные фактически проверенные процессы.
+Положительный путь подтверждён реальными отчётами, а не только синтаксисом/tests.
+Системное окно **COMPLETE: 31 срез / 19:45:20–20:15:20 UTC**. Все 62 native
+queries завершились exit0 без truncation. Сборщик сохранил 85 612 байт отчётов
+и завершился самостоятельно. Это завершение конечного окна, не eight-hour acceptance.
+
+| Системная величина | Фактическое наблюдение | Ограничение |
+|---|---:|---|
+| Размер C: | 1 023 141 736 448 байт | Exact `fsutil` result |
+| Всего reserved | 3 600 093 184 байта | Не приплюсовывать к VSS как доказанно независимый расход |
+| Reserved storage для тома | 3 560 218 624 байта | Часть предыдущего значения, не дополнительный расход |
+| Free первого / последнего sample | 37 504 024 576 / 37 226 446 848 байт | -277 577 728 байт / 264,719 MiB за 30 минут |
+| VSS used display | 13,5 → 13,7 ГБ | Округлённый вывод, не exact delta в байтах |
+| VSS allocated display | 13,9 → 14,1 ГБ | Рост подтверждён; точный byte delta не измерен |
+| VSS maximum display | 19,1 ГБ | Настроенный максимум, не текущий занятый объём |
+
+Во всех прочитанных `fsutil` samples соблюдается **total = used + free + reserved**.
+Точные VSS `UsedSpace/AllocatedSpace` в байтах пока не получены: CIM по-прежнему
+возвращает initialization failure в инструментальном процессе. Контракт этих
+счётчиков описан в [Win32_ShadowStorage](https://learn.microsoft.com/en-us/previous-versions/windows/desktop/vsswmi/win32-shadowstorage).
+
+### Предыдущий резкий скачок и событие VSS
+
+Полное сохранившееся старое disk window содержит **17 samples / 18:16:45–19:35:55**:
+free44 431 917 056 → 37 496 315 904 байта, **-6 935 601 152 байта / 6,459 GiB**.
+Между samples14/15, **19:25:55–19:31:45**, потеря составила **4 706 394 112 байт /
+4,383 GiB**. В complete root scans18:16:45–19:31:45 workspace вырос лишь на
+3 499 811 байт, session logs на617 833, npm-cache не вырос. Temp PARTIAL не используется
+для subtraction. Длина/storage API наблюдаемых Docker/LDPlayer VHD не выросла;
+mtime свидетельствует о записях, не даёт их block allocation или writer attribution.
+
+Windows Application содержит **VSS event8231 / 18:28:06.5657675UTC**: инициировано
+создание shadow-copy set, requester `taskhostw.exe`. **Event8224 / 18:31:09UTC** —
+остановка VSS по idle timeout. Event8231 не является отдельным доказательством
+успешного создания или размера snapshot. Запросы volsnap/System Restore за17:30–19:40
+не вернули matching events; это ограниченный запрос, не отсутствие VSS.
+
+**Рост allocated VSS подтверждён, writer UNDETERMINED.** В последующем интервале
+**20:00:20–20:01:20 UTC** display allocated вырос13,9→14,1ГБ одновременно с падением
+free на236 511 232байта. Это реальный дополнительный потребитель места, а не вывод
+только из наличия shadow copies. Exact VSS delta не получена; атрибуция всего
+предыдущего снижения6,459GiB остаётся открытой.
+
+Его copy-on-write механизм сохраняет
+старые блоки при перезаписи исходного тома: размер исходного VHD может оставаться
+тем же, а shadow storage расти. Это объясняет возможное расхождение logical-file
+inventory и free space, но baseline VSS до гигабайтового скачка отсутствует.
+Причина этого конкретного скачка **не доказана**.
+[Механизм Microsoft](https://learn.microsoft.com/en-us/windows-server/storage/file-server/volume-shadow-copy-service).
+
+### RAM: kernel pools и диагностическая нагрузка
+
+Все62 сохранившихся старых RAM samples17:32:56–19:34:56 относятся к одной boot epoch.
+Commit вырос на4 628 553 728байт, paged pool на1 759 911 936, nonpaged pool на724 037 632.
+Available RAM при этом выросла на976 785 408байт. Backend в том же container epoch:
+589,3 → 596,8MiB (+7,5MiB по округлённому display).
+
+Крупный pool growth совпадает с полными обходами5млн файлов. Между19:26:56 и19:30:56,
+во время второго обхода19:27–19:30, paged pool вырос на219 389 952байта. Нагрузка
+не idle/controlled; нет pool-tag/driver attribution, поэтому ни Windows driver,
+ни APK/backend не объявлены источником RAM leak. Новые полные обходы C: в этом
+продолжении не запускались. Для доказательства kernel leak требуются tag/epoch
+измерения и проверка освобождения, как описывает
+[Microsoft](https://learn.microsoft.com/en-us/windows-hardware/drivers/debugger/finding-a-kernel-mode-memory-leak).
+
+Отдельные конечные продолжения: disk31samples/60s запущен19:41:48, первый complete
+root sample19:42:37; RAM16samples/120s — первый подтверждён19:45:11. Они не склеиваются
+со старым окном в continuous eight-hour acceptance. Первый RAM запуск не нашёл
+`scripts` module; ошибка сохранена, запуск исправлен явным workspace PYTHONPATH,
+после чего реальные process/container/memory samples появились.
+
+Оба коротких продолжения завершены: disk **31 срез / 19:42:37–20:12:37**,
+RAM **16 срезов / 19:45:11–20:15:11**. Полные root scans показывают workspace
++1 335 206 байт, chat sessions +13 976 105 байт, npm-cache 0; Temp остаётся PARTIAL.
+В 31 named-file срезе длина наблюдаемых Docker/LDPlayer дисков не менялась;
+pagefile/hiberfile storage API по-прежнему unknown из-за sharing violation.
+
+За короткое RAM окно available -96 325 632 байта, commit +62 607 360, paged pool
++25 624 576, nonpaged +8 187 904. В конце доступно **20 420 149 248 байт / 19,018 GiB**
+RAM; free C: **37 226 446 848 байт / 34,670 GiB** на последнем native sample.
+Backend container display 597,1 → 597,7 MiB; review UI 76,86 → 76,95 MiB в тех же
+container epochs. Это observational window, не proof отсутствия долгосрочной утечки.
+
+Runtime readback20:05:15 подтвердил healthy API/review UI `c1a6e79`, прежние ID/start
+и ограниченные LogConfig. Первый probe использовал неверное имя UI container;
+отказ сохранён, точное имя затем получено из Docker inventory. Runtime не менялся.
+
+**48 локальных diagnostic tests**: прежние44 +4 реальных PowerShell rejection cases.
+CI для533756f прошёл backend/frontend/Android/preview; deploy skipped. Это исходники
+и build checks, не host leak/Fleet32 приёмка. Source системного сборщика `a305076`
+опубликован; его backend/frontend/Android/preview workflows также SUCCESS
+на readback20:13:09. Installed API/UI `c1a6e79` и APK10244 сохранены.
+
+Продолжение ничего не удаляет и не меняет VSS/драйверы/pagefile/сервисы. Следующий
+критерий — получить точные VSS byte counters и при повторном росте сопоставить
+их с ограниченной writer/pool-tag трассировкой. Native allocated VSS growth уже
+подтверждён, но прежние 6,459 GiB не приписаны ему целиком. Изменение VSS retention
+или offline VHD compaction — отдельное обслуживание с проверкой сохраняемых данных. Прежние34 source-fixed /
+7 unclosed web gates, R04/R05/R06/R07/R09 и Fleet32 NO-GO сохраняются.

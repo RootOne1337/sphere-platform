@@ -25,7 +25,7 @@
     "autostart": false,
     "deviceCommandsSent": false,
     "targetMutationsPerformed": false,
-    "status": "RUNNING_FIRST_SAMPLE_VERIFIED",
+    "status": "INTERRUPTED_PROCESS_ABSENCE_OBSERVED",
     "verificationAt": "2026-10-04T19:27:46.472953+00:00",
     "process": {
       "pid": 33340,
@@ -62,7 +62,8 @@
         "entriesSeen": 263833,
         "logicalBytesSeen": 4629391474
       }
-    }
+    },
+    "statusAtOriginalObservation": "RUNNING_FIRST_SAMPLE_VERIFIED"
   },
   "diskWindow": {
     "samples": 15,
@@ -826,5 +827,945 @@
       "sha256": "c9b43a810ff9c20540d29b0e397ffcc2e3ac8af3d1418cded69771779cafe055",
       "contentsNotCommitted": true
     }
-  ]
+  ],
+  "followUp": {
+    "observedAt": "2026-10-04T20:15:59.329239+00:00",
+    "previousDiskWindow": {
+      "samples": 17,
+      "from": "2026-10-04T18:16:45.948870+00:00",
+      "to": "2026-10-04T19:35:55.894300+00:00",
+      "freeBeforeBytes": 44431917056,
+      "freeAfterBytes": 37496315904,
+      "freeDeltaBytes": -6935601152,
+      "largestInterval": {
+        "from": "2026-10-04T19:25:55.899124+00:00",
+        "to": "2026-10-04T19:31:45.558612+00:00",
+        "freeDeltaBytes": -4706394112
+      },
+      "completeRootChanges": [
+        {
+          "scope": "workspace",
+          "completeAtBothEnds": true,
+          "logicalDeltaBytes": 3499811,
+          "from": "2026-10-04T18:16:45.948870+00:00",
+          "to": "2026-10-04T19:31:45.558612+00:00"
+        },
+        {
+          "scope": "Temp",
+          "completeAtBothEnds": false,
+          "logicalDeltaBytes": null,
+          "from": "2026-10-04T18:16:45.948870+00:00",
+          "to": "2026-10-04T19:31:45.558612+00:00"
+        },
+        {
+          "scope": "chat sessions",
+          "completeAtBothEnds": true,
+          "logicalDeltaBytes": 617833,
+          "from": "2026-10-04T18:16:45.948870+00:00",
+          "to": "2026-10-04T19:31:45.558612+00:00"
+        },
+        {
+          "scope": "npm cache",
+          "completeAtBothEnds": true,
+          "logicalDeltaBytes": 0,
+          "from": "2026-10-04T18:16:45.948870+00:00",
+          "to": "2026-10-04T19:31:45.558612+00:00"
+        }
+      ],
+      "eightHourWindowCompleted": false
+    },
+    "diskContinuation": {
+      "samples": 31,
+      "from": "2026-10-04T19:42:37.659144+00:00",
+      "to": "2026-10-04T20:12:37.271537+00:00",
+      "freeDeltaBytes": -264237056,
+      "status": {
+        "state": "complete",
+        "samplesWritten": 31,
+        "pid": 17088,
+        "maximumSampleBytes": 1048576,
+        "maximumReportBytes": 16777216,
+        "fileContentsRead": false,
+        "targetMutationsPerformed": false,
+        "watcherOutputExcludedFromRootScan": true,
+        "reportBytes": 1177595,
+        "lastSampleAt": "2026-10-04T20:12:37.271537+00:00",
+        "finishedAt": "2026-10-04T20:12:37.276102+00:00"
+      },
+      "completeRootChanges": [
+        {
+          "scope": "workspace",
+          "completeAtBothEnds": true,
+          "logicalDeltaBytes": 1335206,
+          "from": "2026-10-04T19:42:37.659144+00:00",
+          "to": "2026-10-04T20:12:37.271537+00:00"
+        },
+        {
+          "scope": "Temp",
+          "completeAtBothEnds": false,
+          "logicalDeltaBytes": null,
+          "from": "2026-10-04T19:42:37.659144+00:00",
+          "to": "2026-10-04T20:12:37.271537+00:00"
+        },
+        {
+          "scope": "chat sessions",
+          "completeAtBothEnds": true,
+          "logicalDeltaBytes": 13976105,
+          "from": "2026-10-04T19:42:37.659144+00:00",
+          "to": "2026-10-04T20:12:37.271537+00:00"
+        },
+        {
+          "scope": "npm cache",
+          "completeAtBothEnds": true,
+          "logicalDeltaBytes": 0,
+          "from": "2026-10-04T19:42:37.659144+00:00",
+          "to": "2026-10-04T20:12:37.271537+00:00"
+        }
+      ],
+      "observedLargeFiles": [
+        {
+          "scope": "Docker VHD",
+          "samples": 31,
+          "logicalBytesFirst": 234731077632,
+          "logicalBytesLast": 234731077632,
+          "logicalBytesUnchangedInAllSamples": true,
+          "storageApiSizeAvailableInAllSamples": true,
+          "storageApiSizeFirst": 234731077632,
+          "storageApiSizeLast": 234731077632
+        },
+        {
+          "scope": "Windows system file",
+          "samples": 31,
+          "logicalBytesFirst": 44485144576,
+          "logicalBytesLast": 44485144576,
+          "logicalBytesUnchangedInAllSamples": true,
+          "storageApiSizeAvailableInAllSamples": false,
+          "storageApiSizeFirst": null,
+          "storageApiSizeLast": null
+        },
+        {
+          "scope": "Windows system file",
+          "samples": 31,
+          "logicalBytesFirst": 20267294720,
+          "logicalBytesLast": 20267294720,
+          "logicalBytesUnchangedInAllSamples": true,
+          "storageApiSizeAvailableInAllSamples": false,
+          "storageApiSizeFirst": null,
+          "storageApiSizeLast": null
+        },
+        {
+          "scope": "Observed local LDPlayer disk",
+          "samples": 31,
+          "logicalBytesFirst": 12709658624,
+          "logicalBytesLast": 12709658624,
+          "logicalBytesUnchangedInAllSamples": true,
+          "storageApiSizeAvailableInAllSamples": true,
+          "storageApiSizeFirst": 12709658624,
+          "storageApiSizeLast": 12709658624
+        },
+        {
+          "scope": "Observed local LDPlayer disk",
+          "samples": 31,
+          "logicalBytesFirst": 9272950784,
+          "logicalBytesLast": 9272950784,
+          "logicalBytesUnchangedInAllSamples": true,
+          "storageApiSizeAvailableInAllSamples": true,
+          "storageApiSizeFirst": 9272950784,
+          "storageApiSizeLast": 9272950784
+        },
+        {
+          "scope": "Observed local LDPlayer disk",
+          "samples": 31,
+          "logicalBytesFirst": 9239199744,
+          "logicalBytesLast": 9239199744,
+          "logicalBytesUnchangedInAllSamples": true,
+          "storageApiSizeAvailableInAllSamples": true,
+          "storageApiSizeFirst": 9239199744,
+          "storageApiSizeLast": 9239199744
+        },
+        {
+          "scope": "Observed local LDPlayer disk",
+          "samples": 31,
+          "logicalBytesFirst": 6768754688,
+          "logicalBytesLast": 6768754688,
+          "logicalBytesUnchangedInAllSamples": true,
+          "storageApiSizeAvailableInAllSamples": true,
+          "storageApiSizeFirst": 6768754688,
+          "storageApiSizeLast": 6768754688
+        },
+        {
+          "scope": "Observed local LDPlayer disk",
+          "samples": 31,
+          "logicalBytesFirst": 1865482240,
+          "logicalBytesLast": 1865482240,
+          "logicalBytesUnchangedInAllSamples": true,
+          "storageApiSizeAvailableInAllSamples": true,
+          "storageApiSizeFirst": 1865482240,
+          "storageApiSizeLast": 1865482240
+        },
+        {
+          "scope": "Observed local LDPlayer disk",
+          "samples": 31,
+          "logicalBytesFirst": 1023737856,
+          "logicalBytesLast": 1023737856,
+          "logicalBytesUnchangedInAllSamples": true,
+          "storageApiSizeAvailableInAllSamples": true,
+          "storageApiSizeFirst": 1023737856,
+          "storageApiSizeLast": 1023737856
+        }
+      ]
+    },
+    "administratorCollector": {
+      "status": {
+        "lastSampleAt": "2026-10-04T20:15:20.4232720Z",
+        "reportBytes": 85612,
+        "startUtc": "2026-10-04T19:45:20.2386642Z",
+        "systemChangesPerformed": false,
+        "finishedAt": "2026-10-04T20:15:20.4671296Z",
+        "samplesLimit": 31,
+        "state": "complete",
+        "intervalSeconds": 60,
+        "pid": 11352,
+        "administrator": true,
+        "samplesWritten": 31
+      },
+      "samplesParsed": 31,
+      "allNativeQueriesSucceededWithoutTruncation": true,
+      "series": [
+        {
+          "observedAt": "2026-10-04T19:45:20.5609607Z",
+          "sample": 0,
+          "freeBytes": 37504024576,
+          "totalBytes": 1023141736448,
+          "usedBytes": 982037618688,
+          "reservedBytes": 3600093184,
+          "reservedStorageBytes": 3560218624,
+          "vssUsedDisplay": "13,5 ГБ (1%)",
+          "vssAllocatedDisplay": "13,9 ГБ (1%)",
+          "vssMaximumDisplay": "19,1 ГБ (1%)",
+          "vssValuesAreRoundedDisplayOnly": true
+        },
+        {
+          "observedAt": "2026-10-04T19:46:20.3537376Z",
+          "sample": 1,
+          "freeBytes": 37501341696,
+          "totalBytes": 1023141736448,
+          "usedBytes": 982040301568,
+          "reservedBytes": 3600093184,
+          "reservedStorageBytes": 3560218624,
+          "vssUsedDisplay": "13,5 ГБ (1%)",
+          "vssAllocatedDisplay": "13,9 ГБ (1%)",
+          "vssMaximumDisplay": "19,1 ГБ (1%)",
+          "vssValuesAreRoundedDisplayOnly": true
+        },
+        {
+          "observedAt": "2026-10-04T19:47:20.3542223Z",
+          "sample": 2,
+          "freeBytes": 37501313024,
+          "totalBytes": 1023141736448,
+          "usedBytes": 982040330240,
+          "reservedBytes": 3600093184,
+          "reservedStorageBytes": 3560218624,
+          "vssUsedDisplay": "13,5 ГБ (1%)",
+          "vssAllocatedDisplay": "13,9 ГБ (1%)",
+          "vssMaximumDisplay": "19,1 ГБ (1%)",
+          "vssValuesAreRoundedDisplayOnly": true
+        },
+        {
+          "observedAt": "2026-10-04T19:48:20.3546482Z",
+          "sample": 3,
+          "freeBytes": 37505662976,
+          "totalBytes": 1023141736448,
+          "usedBytes": 982035980288,
+          "reservedBytes": 3600093184,
+          "reservedStorageBytes": 3560218624,
+          "vssUsedDisplay": "13,5 ГБ (1%)",
+          "vssAllocatedDisplay": "13,9 ГБ (1%)",
+          "vssMaximumDisplay": "19,1 ГБ (1%)",
+          "vssValuesAreRoundedDisplayOnly": true
+        },
+        {
+          "observedAt": "2026-10-04T19:49:20.3551115Z",
+          "sample": 4,
+          "freeBytes": 37506793472,
+          "totalBytes": 1023141736448,
+          "usedBytes": 982034849792,
+          "reservedBytes": 3600093184,
+          "reservedStorageBytes": 3560218624,
+          "vssUsedDisplay": "13,6 ГБ (1%)",
+          "vssAllocatedDisplay": "13,9 ГБ (1%)",
+          "vssMaximumDisplay": "19,1 ГБ (1%)",
+          "vssValuesAreRoundedDisplayOnly": true
+        },
+        {
+          "observedAt": "2026-10-04T19:50:20.3620682Z",
+          "sample": 5,
+          "freeBytes": 37505634304,
+          "totalBytes": 1023141736448,
+          "usedBytes": 982036008960,
+          "reservedBytes": 3600093184,
+          "reservedStorageBytes": 3560218624,
+          "vssUsedDisplay": "13,6 ГБ (1%)",
+          "vssAllocatedDisplay": "13,9 ГБ (1%)",
+          "vssMaximumDisplay": "19,1 ГБ (1%)",
+          "vssValuesAreRoundedDisplayOnly": true
+        },
+        {
+          "observedAt": "2026-10-04T19:51:20.3551254Z",
+          "sample": 6,
+          "freeBytes": 37508657152,
+          "totalBytes": 1023141736448,
+          "usedBytes": 982032986112,
+          "reservedBytes": 3600093184,
+          "reservedStorageBytes": 3560218624,
+          "vssUsedDisplay": "13,6 ГБ (1%)",
+          "vssAllocatedDisplay": "13,9 ГБ (1%)",
+          "vssMaximumDisplay": "19,1 ГБ (1%)",
+          "vssValuesAreRoundedDisplayOnly": true
+        },
+        {
+          "observedAt": "2026-10-04T19:52:20.3568246Z",
+          "sample": 7,
+          "freeBytes": 37482283008,
+          "totalBytes": 1023141736448,
+          "usedBytes": 982059360256,
+          "reservedBytes": 3600093184,
+          "reservedStorageBytes": 3560218624,
+          "vssUsedDisplay": "13,6 ГБ (1%)",
+          "vssAllocatedDisplay": "13,9 ГБ (1%)",
+          "vssMaximumDisplay": "19,1 ГБ (1%)",
+          "vssValuesAreRoundedDisplayOnly": true
+        },
+        {
+          "observedAt": "2026-10-04T19:53:20.3629081Z",
+          "sample": 8,
+          "freeBytes": 37481631744,
+          "totalBytes": 1023141736448,
+          "usedBytes": 982060011520,
+          "reservedBytes": 3600093184,
+          "reservedStorageBytes": 3560218624,
+          "vssUsedDisplay": "13,6 ГБ (1%)",
+          "vssAllocatedDisplay": "13,9 ГБ (1%)",
+          "vssMaximumDisplay": "19,1 ГБ (1%)",
+          "vssValuesAreRoundedDisplayOnly": true
+        },
+        {
+          "observedAt": "2026-10-04T19:54:20.3738921Z",
+          "sample": 9,
+          "freeBytes": 37478215680,
+          "totalBytes": 1023141736448,
+          "usedBytes": 982063427584,
+          "reservedBytes": 3600093184,
+          "reservedStorageBytes": 3560218624,
+          "vssUsedDisplay": "13,6 ГБ (1%)",
+          "vssAllocatedDisplay": "13,9 ГБ (1%)",
+          "vssMaximumDisplay": "19,1 ГБ (1%)",
+          "vssValuesAreRoundedDisplayOnly": true
+        },
+        {
+          "observedAt": "2026-10-04T19:55:20.3776123Z",
+          "sample": 10,
+          "freeBytes": 37478170624,
+          "totalBytes": 1023141736448,
+          "usedBytes": 982063472640,
+          "reservedBytes": 3600093184,
+          "reservedStorageBytes": 3560218624,
+          "vssUsedDisplay": "13,6 ГБ (1%)",
+          "vssAllocatedDisplay": "13,9 ГБ (1%)",
+          "vssMaximumDisplay": "19,1 ГБ (1%)",
+          "vssValuesAreRoundedDisplayOnly": true
+        },
+        {
+          "observedAt": "2026-10-04T19:56:20.3843950Z",
+          "sample": 11,
+          "freeBytes": 37478105088,
+          "totalBytes": 1023141736448,
+          "usedBytes": 982063538176,
+          "reservedBytes": 3600093184,
+          "reservedStorageBytes": 3560218624,
+          "vssUsedDisplay": "13,6 ГБ (1%)",
+          "vssAllocatedDisplay": "13,9 ГБ (1%)",
+          "vssMaximumDisplay": "19,1 ГБ (1%)",
+          "vssValuesAreRoundedDisplayOnly": true
+        },
+        {
+          "observedAt": "2026-10-04T19:57:20.3849456Z",
+          "sample": 12,
+          "freeBytes": 37477842944,
+          "totalBytes": 1023141736448,
+          "usedBytes": 982063800320,
+          "reservedBytes": 3600093184,
+          "reservedStorageBytes": 3560218624,
+          "vssUsedDisplay": "13,6 ГБ (1%)",
+          "vssAllocatedDisplay": "13,9 ГБ (1%)",
+          "vssMaximumDisplay": "19,1 ГБ (1%)",
+          "vssValuesAreRoundedDisplayOnly": true
+        },
+        {
+          "observedAt": "2026-10-04T19:58:20.3915783Z",
+          "sample": 13,
+          "freeBytes": 37470523392,
+          "totalBytes": 1023141736448,
+          "usedBytes": 982071119872,
+          "reservedBytes": 3600093184,
+          "reservedStorageBytes": 3560218624,
+          "vssUsedDisplay": "13,6 ГБ (1%)",
+          "vssAllocatedDisplay": "13,9 ГБ (1%)",
+          "vssMaximumDisplay": "19,1 ГБ (1%)",
+          "vssValuesAreRoundedDisplayOnly": true
+        },
+        {
+          "observedAt": "2026-10-04T19:59:20.3987447Z",
+          "sample": 14,
+          "freeBytes": 37470527488,
+          "totalBytes": 1023141736448,
+          "usedBytes": 982071115776,
+          "reservedBytes": 3600093184,
+          "reservedStorageBytes": 3560218624,
+          "vssUsedDisplay": "13,6 ГБ (1%)",
+          "vssAllocatedDisplay": "13,9 ГБ (1%)",
+          "vssMaximumDisplay": "19,1 ГБ (1%)",
+          "vssValuesAreRoundedDisplayOnly": true
+        },
+        {
+          "observedAt": "2026-10-04T20:00:20.3993718Z",
+          "sample": 15,
+          "freeBytes": 37470478336,
+          "totalBytes": 1023141736448,
+          "usedBytes": 982071164928,
+          "reservedBytes": 3600093184,
+          "reservedStorageBytes": 3560218624,
+          "vssUsedDisplay": "13,6 ГБ (1%)",
+          "vssAllocatedDisplay": "13,9 ГБ (1%)",
+          "vssMaximumDisplay": "19,1 ГБ (1%)",
+          "vssValuesAreRoundedDisplayOnly": true
+        },
+        {
+          "observedAt": "2026-10-04T20:01:20.4016809Z",
+          "sample": 16,
+          "freeBytes": 37233967104,
+          "totalBytes": 1023141736448,
+          "usedBytes": 982307676160,
+          "reservedBytes": 3600093184,
+          "reservedStorageBytes": 3560218624,
+          "vssUsedDisplay": "13,6 ГБ (1%)",
+          "vssAllocatedDisplay": "14,1 ГБ (1%)",
+          "vssMaximumDisplay": "19,1 ГБ (1%)",
+          "vssValuesAreRoundedDisplayOnly": true
+        },
+        {
+          "observedAt": "2026-10-04T20:02:20.4006913Z",
+          "sample": 17,
+          "freeBytes": 37244928000,
+          "totalBytes": 1023141736448,
+          "usedBytes": 982296715264,
+          "reservedBytes": 3600093184,
+          "reservedStorageBytes": 3560218624,
+          "vssUsedDisplay": "13,6 ГБ (1%)",
+          "vssAllocatedDisplay": "14,1 ГБ (1%)",
+          "vssMaximumDisplay": "19,1 ГБ (1%)",
+          "vssValuesAreRoundedDisplayOnly": true
+        },
+        {
+          "observedAt": "2026-10-04T20:03:20.4010614Z",
+          "sample": 18,
+          "freeBytes": 37244059648,
+          "totalBytes": 1023141736448,
+          "usedBytes": 982297583616,
+          "reservedBytes": 3600093184,
+          "reservedStorageBytes": 3560218624,
+          "vssUsedDisplay": "13,6 ГБ (1%)",
+          "vssAllocatedDisplay": "14,1 ГБ (1%)",
+          "vssMaximumDisplay": "19,1 ГБ (1%)",
+          "vssValuesAreRoundedDisplayOnly": true
+        },
+        {
+          "observedAt": "2026-10-04T20:04:20.4020116Z",
+          "sample": 19,
+          "freeBytes": 37243756544,
+          "totalBytes": 1023141736448,
+          "usedBytes": 982297886720,
+          "reservedBytes": 3600093184,
+          "reservedStorageBytes": 3560218624,
+          "vssUsedDisplay": "13,6 ГБ (1%)",
+          "vssAllocatedDisplay": "14,1 ГБ (1%)",
+          "vssMaximumDisplay": "19,1 ГБ (1%)",
+          "vssValuesAreRoundedDisplayOnly": true
+        },
+        {
+          "observedAt": "2026-10-04T20:05:20.4037405Z",
+          "sample": 20,
+          "freeBytes": 37242884096,
+          "totalBytes": 1023141736448,
+          "usedBytes": 982298759168,
+          "reservedBytes": 3600093184,
+          "reservedStorageBytes": 3560218624,
+          "vssUsedDisplay": "13,7 ГБ (1%)",
+          "vssAllocatedDisplay": "14,1 ГБ (1%)",
+          "vssMaximumDisplay": "19,1 ГБ (1%)",
+          "vssValuesAreRoundedDisplayOnly": true
+        },
+        {
+          "observedAt": "2026-10-04T20:06:20.4037282Z",
+          "sample": 21,
+          "freeBytes": 37241135104,
+          "totalBytes": 1023141736448,
+          "usedBytes": 982300508160,
+          "reservedBytes": 3600093184,
+          "reservedStorageBytes": 3560218624,
+          "vssUsedDisplay": "13,7 ГБ (1%)",
+          "vssAllocatedDisplay": "14,1 ГБ (1%)",
+          "vssMaximumDisplay": "19,1 ГБ (1%)",
+          "vssValuesAreRoundedDisplayOnly": true
+        },
+        {
+          "observedAt": "2026-10-04T20:07:20.4062855Z",
+          "sample": 22,
+          "freeBytes": 37249495040,
+          "totalBytes": 1023141736448,
+          "usedBytes": 982292148224,
+          "reservedBytes": 3600093184,
+          "reservedStorageBytes": 3560218624,
+          "vssUsedDisplay": "13,7 ГБ (1%)",
+          "vssAllocatedDisplay": "14,1 ГБ (1%)",
+          "vssMaximumDisplay": "19,1 ГБ (1%)",
+          "vssValuesAreRoundedDisplayOnly": true
+        },
+        {
+          "observedAt": "2026-10-04T20:08:20.4049292Z",
+          "sample": 23,
+          "freeBytes": 37246603264,
+          "totalBytes": 1023141736448,
+          "usedBytes": 982295040000,
+          "reservedBytes": 3600093184,
+          "reservedStorageBytes": 3560218624,
+          "vssUsedDisplay": "13,7 ГБ (1%)",
+          "vssAllocatedDisplay": "14,1 ГБ (1%)",
+          "vssMaximumDisplay": "19,1 ГБ (1%)",
+          "vssValuesAreRoundedDisplayOnly": true
+        },
+        {
+          "observedAt": "2026-10-04T20:09:20.4057067Z",
+          "sample": 24,
+          "freeBytes": 37245624320,
+          "totalBytes": 1023141736448,
+          "usedBytes": 982296018944,
+          "reservedBytes": 3600093184,
+          "reservedStorageBytes": 3560218624,
+          "vssUsedDisplay": "13,7 ГБ (1%)",
+          "vssAllocatedDisplay": "14,1 ГБ (1%)",
+          "vssMaximumDisplay": "19,1 ГБ (1%)",
+          "vssValuesAreRoundedDisplayOnly": true
+        },
+        {
+          "observedAt": "2026-10-04T20:10:20.4181125Z",
+          "sample": 25,
+          "freeBytes": 37242630144,
+          "totalBytes": 1023141736448,
+          "usedBytes": 982299013120,
+          "reservedBytes": 3600093184,
+          "reservedStorageBytes": 3560218624,
+          "vssUsedDisplay": "13,7 ГБ (1%)",
+          "vssAllocatedDisplay": "14,1 ГБ (1%)",
+          "vssMaximumDisplay": "19,1 ГБ (1%)",
+          "vssValuesAreRoundedDisplayOnly": true
+        },
+        {
+          "observedAt": "2026-10-04T20:11:20.4249518Z",
+          "sample": 26,
+          "freeBytes": 37234040832,
+          "totalBytes": 1023141736448,
+          "usedBytes": 982307602432,
+          "reservedBytes": 3600093184,
+          "reservedStorageBytes": 3560218624,
+          "vssUsedDisplay": "13,7 ГБ (1%)",
+          "vssAllocatedDisplay": "14,1 ГБ (1%)",
+          "vssMaximumDisplay": "19,1 ГБ (1%)",
+          "vssValuesAreRoundedDisplayOnly": true
+        },
+        {
+          "observedAt": "2026-10-04T20:12:20.4207578Z",
+          "sample": 27,
+          "freeBytes": 37231083520,
+          "totalBytes": 1023141736448,
+          "usedBytes": 982310559744,
+          "reservedBytes": 3600093184,
+          "reservedStorageBytes": 3560218624,
+          "vssUsedDisplay": "13,7 ГБ (1%)",
+          "vssAllocatedDisplay": "14,1 ГБ (1%)",
+          "vssMaximumDisplay": "19,1 ГБ (1%)",
+          "vssValuesAreRoundedDisplayOnly": true
+        },
+        {
+          "observedAt": "2026-10-04T20:13:20.4251844Z",
+          "sample": 28,
+          "freeBytes": 37229035520,
+          "totalBytes": 1023141736448,
+          "usedBytes": 982312607744,
+          "reservedBytes": 3600093184,
+          "reservedStorageBytes": 3560218624,
+          "vssUsedDisplay": "13,7 ГБ (1%)",
+          "vssAllocatedDisplay": "14,1 ГБ (1%)",
+          "vssMaximumDisplay": "19,1 ГБ (1%)",
+          "vssValuesAreRoundedDisplayOnly": true
+        },
+        {
+          "observedAt": "2026-10-04T20:14:20.4208999Z",
+          "sample": 29,
+          "freeBytes": 37227225088,
+          "totalBytes": 1023141736448,
+          "usedBytes": 982314418176,
+          "reservedBytes": 3600093184,
+          "reservedStorageBytes": 3560218624,
+          "vssUsedDisplay": "13,7 ГБ (1%)",
+          "vssAllocatedDisplay": "14,1 ГБ (1%)",
+          "vssMaximumDisplay": "19,1 ГБ (1%)",
+          "vssValuesAreRoundedDisplayOnly": true
+        },
+        {
+          "observedAt": "2026-10-04T20:15:20.4232720Z",
+          "sample": 30,
+          "freeBytes": 37226446848,
+          "totalBytes": 1023141736448,
+          "usedBytes": 982315196416,
+          "reservedBytes": 3600093184,
+          "reservedStorageBytes": 3560218624,
+          "vssUsedDisplay": "13,7 ГБ (1%)",
+          "vssAllocatedDisplay": "14,1 ГБ (1%)",
+          "vssMaximumDisplay": "19,1 ГБ (1%)",
+          "vssValuesAreRoundedDisplayOnly": true
+        }
+      ],
+      "freeDeltaBytes": -277577728,
+      "exactVssBytes": null,
+      "preDeclineVssBaselineAvailable": false,
+      "coincidentAllocationInterval": {
+        "from": "2026-10-04T20:00:20.3993718Z",
+        "to": "2026-10-04T20:01:20.4016809Z",
+        "allocatedDisplayBefore": "13,9 ГБ (1%)",
+        "allocatedDisplayAfter": "14,1 ГБ (1%)",
+        "freeDeltaBytes": -236511232,
+        "causalWriterTraceCaptured": false
+      }
+    },
+    "ramPreviousWindow": {
+      "samples": 62,
+      "from": "2026-10-04T17:32:56.826123+00:00",
+      "to": "2026-10-04T19:34:56.834607+00:00",
+      "sameBoot": true,
+      "before": {
+        "availableRamBytes": 20114542592,
+        "committedBytes": 51696529408,
+        "poolPagedBytes": 2325778432,
+        "poolNonpagedBytes": 2082156544
+      },
+      "after": {
+        "availableRamBytes": 21091328000,
+        "committedBytes": 56325083136,
+        "poolPagedBytes": 4085690368,
+        "poolNonpagedBytes": 2806194176
+      },
+      "deltaBytes": {
+        "availableRamBytes": 976785408,
+        "committedBytes": 4628553728,
+        "poolPagedBytes": 1759911936,
+        "poolNonpagedBytes": 724037632
+      },
+      "controlledIdleLoad": false,
+      "linuxAnonDeltaBytes": 71786496,
+      "backendContainerDisplay": {
+        "name": "sphere-pilot-20260911-backend-1",
+        "identity": "ec6723322cc9",
+        "beforeDisplay": "589.3MiB / 2GiB",
+        "afterDisplay": "596.8MiB / 2GiB"
+      },
+      "reviewUiContainerDisplay": {
+        "name": "sphere-review-20261002-review-ui-1",
+        "identity": "a331484c6ef3",
+        "beforeDisplay": "70.55MiB / 768MiB",
+        "afterDisplay": "77.59MiB / 768MiB"
+      }
+    },
+    "ramContinuation": {
+      "samples": 16,
+      "from": "2026-10-04T19:45:11.593207+00:00",
+      "to": "2026-10-04T20:15:11.605667+00:00",
+      "sameBoot": true,
+      "before": {
+        "availableRamBytes": 20516474880,
+        "committedBytes": 55797944320,
+        "poolPagedBytes": 4097568768,
+        "poolNonpagedBytes": 2798747648
+      },
+      "after": {
+        "availableRamBytes": 20420149248,
+        "committedBytes": 55860551680,
+        "poolPagedBytes": 4123193344,
+        "poolNonpagedBytes": 2806935552
+      },
+      "deltaBytes": {
+        "availableRamBytes": -96325632,
+        "committedBytes": 62607360,
+        "poolPagedBytes": 25624576,
+        "poolNonpagedBytes": 8187904
+      },
+      "controlledIdleLoad": false,
+      "linuxAnonDeltaBytes": 17584128,
+      "backendContainerDisplay": {
+        "name": "sphere-pilot-20260911-backend-1",
+        "identity": "ec6723322cc9",
+        "beforeDisplay": "597.1MiB / 2GiB",
+        "afterDisplay": "597.7MiB / 2GiB"
+      },
+      "reviewUiContainerDisplay": {
+        "name": "sphere-review-20261002-review-ui-1",
+        "identity": "a331484c6ef3",
+        "beforeDisplay": "76.86MiB / 768MiB",
+        "afterDisplay": "76.95MiB / 768MiB"
+      }
+    },
+    "events": [
+      {
+        "atUtc": "2026-10-04T18:31:09.6810768Z",
+        "id": 8224,
+        "provider": "VSS"
+      },
+      {
+        "atUtc": "2026-10-04T18:28:06.5657675Z",
+        "id": 8231,
+        "provider": "VSS"
+      }
+    ],
+    "writerAttribution": "UNDETERMINED",
+    "systemChangesPerformed": false,
+    "references": [
+      {
+        "path": ".local-pilot/disk-growth-20261004/private-vss-events.json",
+        "sha256": "f563c151376c66739cbc11ad0b00829877f367f19971635c256a8808920c3175"
+      },
+      {
+        "path": ".local-pilot/disk-growth-20261004/observer-process-absence.json",
+        "sha256": "cae5a12355e7191c4d00e02cb50827550fbe468677759915edf4a3824a13160b"
+      },
+      {
+        "path": ".local-pilot/disk-growth-20261004/post-restart-verification.json",
+        "sha256": "5454f4d2865474b630a0599aec26b8f9046f52fe1e093c8aebf9ddfc3bf0ed22"
+      },
+      {
+        "path": ".local-pilot/disk-growth-20261004/post-restart-ram-receipt-corrected.json",
+        "sha256": "be26e59cb7c1a29ca59ad39b7ed735b124d0ad27f89c95b65b62b3ec39d4d300"
+      },
+      {
+        "path": ".local-pilot/disk-growth-20261004/post-restart-ram-launch-failure.json",
+        "sha256": "14b105fd1fdac78be9e6c91b1a227f908898dc2a81f3a8d967dfbe9a5a68591e"
+      },
+      {
+        "path": ".local-pilot/disk-growth-20261004/bounded-window-longpaths/sample-014.json",
+        "sha256": "c93aec8f90e6136665b7ce9b2e7b0b8ad2c951e540f3222799bb6a0af0be3558"
+      },
+      {
+        "path": ".local-pilot/disk-growth-20261004/bounded-window-longpaths/sample-015.json",
+        "sha256": "8fb7b5b838b2b48df47db289dd72374081c366a66204df12f6aca25310180130"
+      },
+      {
+        "path": ".local-pilot/disk-growth-20261004/bounded-window-longpaths/sample-016.json",
+        "sha256": "bba3c2903c95dd9aa63ccc676fe0da6f1ef85f267e9f39de5990f01624b3b7d2"
+      },
+      {
+        "path": ".local-pilot/disk-growth-20261004/post-restart-disk-window/sample-000.json",
+        "sha256": "8329dfbc67179e3339182ec8d841b9043a098cccfca8a5ecea5b62f475db52e7"
+      },
+      {
+        "path": ".local-pilot/resource-recovery-20261004/overnight-window-bounded/sample-061.json",
+        "sha256": "cd77cdfcc5ca5174597f8cdf632a599cb0145af62761aa54417a8a58843540da"
+      },
+      {
+        "path": ".local-pilot/admin-storage-20261004T194520-648979d8aa244df58355b08fd0040590/sample-000.json",
+        "sha256": "cd61ec949ac11bd629d116264c6d23f16242e51cdd3e17854fb2eb80e450dbe5"
+      },
+      {
+        "path": ".local-pilot/admin-storage-20261004T194520-648979d8aa244df58355b08fd0040590/sample-015.json",
+        "sha256": "1c671113e59afeaacf5bd55db322b4aa0a098bfe0cf982e71297d16c426fd9c6"
+      },
+      {
+        "path": ".local-pilot/admin-storage-20261004T194520-648979d8aa244df58355b08fd0040590/sample-016.json",
+        "sha256": "e4bcc6ac7c4f53e993d6bd101e34acfb6491f6eeec50bb56964bba4f434c0af5"
+      },
+      {
+        "path": ".local-pilot/admin-storage-20261004T194520-648979d8aa244df58355b08fd0040590/sample-030.json",
+        "sha256": "e2e84cc047317225ec25550c14fdedb3fe35e22f1cba5fb80f199ba4d9e4dc94"
+      },
+      {
+        "path": ".local-pilot/disk-growth-20261004/post-restart-ram-window/sample-000.json",
+        "sha256": "13ba31fc902e41e9339c2267fe328893e023674073600d6a799ebd7d8198eebc"
+      },
+      {
+        "path": ".local-pilot/disk-growth-20261004/post-restart-ram-window/sample-015.json",
+        "sha256": "8d23c6ee25a57fe81484131491d378362de9cd705a748c76ae7ddcfa49ab9be4"
+      },
+      {
+        "path": ".local-pilot/disk-growth-20261004/ci-533756f-complete.json",
+        "sha256": "1ed18066db3883fd0de36d1fd6018a78ab63f422b07d112a1623f51a3155910a"
+      },
+      {
+        "path": ".local-pilot/disk-growth-20261004/ci-a305076.json",
+        "sha256": "8bfa5d6bf3d048a94b088e4ebecd52d631c0974962d0742bbb4fe0b534135aa4"
+      },
+      {
+        "path": ".local-pilot/disk-growth-20261004/runtime-readback-follow-up.json",
+        "sha256": "092f1bef4f44e576a7597aa72765d56a134adbd10031a492a23d776d7928eb04"
+      },
+      {
+        "path": ".local-pilot/disk-growth-20261004/runtime-readback-follow-up-initial.json",
+        "sha256": "bdf0f5e1405e884d8c43a76f71236b79d3c302cc458be9a662cb4de8c8ed3a2f"
+      },
+      {
+        "path": ".local-pilot/disk-growth-20261004/admin-follow-up-analysis.json",
+        "sha256": "79b739ffa72e739e1f8456b9e40ce7446771f67a8a4d03b1a7bbe5bf99dfbd98"
+      }
+    ],
+    "collectorSource": "a3050760e181ce15ee39efa4b94f35ad607ad1e0",
+    "eightHourWindowsAccepted": false,
+    "finding": "VSS_ALLOCATION_GROWTH_CONFIRMED_PRIOR_DECLINE_NOT_FULLY_ATTRIBUTED",
+    "event8231": {
+      "meaning": "Snapshot set creation initiated; successful completion not independently proven",
+      "requesterProcess": "taskhostw.exe",
+      "exactVssBaselineBeforeLargeDeclineAvailable": false
+    },
+    "vssReference": "https://learn.microsoft.com/en-us/windows-server/storage/file-server/volume-shadow-copy-service",
+    "kernelMemoryAttribution": "UNDETERMINED; growth overlaps full file inventories; no pool tags captured",
+    "localDiagnosticTests": 48,
+    "sourceCi": [
+      {
+        "observedAt": "2026-10-04T20:03:05.508431+00:00",
+        "source": "533756f1611bdbacd3eca5a4a8fd88f9868f8a5f",
+        "runs": [
+          {
+            "conclusion": "success",
+            "databaseId": 37228849426,
+            "headSha": "533756f1611bdbacd3eca5a4a8fd88f9868f8a5f",
+            "status": "completed",
+            "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37228849426",
+            "workflowName": "CI — Android"
+          },
+          {
+            "conclusion": "success",
+            "databaseId": 37228849436,
+            "headSha": "533756f1611bdbacd3eca5a4a8fd88f9868f8a5f",
+            "status": "completed",
+            "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37228849436",
+            "workflowName": "CI — Backend"
+          },
+          {
+            "conclusion": "success",
+            "databaseId": 37228849597,
+            "headSha": "533756f1611bdbacd3eca5a4a8fd88f9868f8a5f",
+            "status": "completed",
+            "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37228849597",
+            "workflowName": "Preview — Deploy"
+          },
+          {
+            "conclusion": "success",
+            "databaseId": 37228849461,
+            "headSha": "533756f1611bdbacd3eca5a4a8fd88f9868f8a5f",
+            "status": "completed",
+            "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37228849461",
+            "workflowName": "CI — Frontend"
+          }
+        ]
+      },
+      {
+        "observedAt": "2026-10-04T20:13:09.075033+00:00",
+        "source": "a3050760e181ce15ee39efa4b94f35ad607ad1e0",
+        "runs": [
+          {
+            "conclusion": "success",
+            "databaseId": 37230173230,
+            "headSha": "a3050760e181ce15ee39efa4b94f35ad607ad1e0",
+            "status": "completed",
+            "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37230173230",
+            "workflowName": "Preview — Deploy"
+          },
+          {
+            "conclusion": "success",
+            "databaseId": 37230173291,
+            "headSha": "a3050760e181ce15ee39efa4b94f35ad607ad1e0",
+            "status": "completed",
+            "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37230173291",
+            "workflowName": "CI — Frontend"
+          },
+          {
+            "conclusion": "success",
+            "databaseId": 37230173304,
+            "headSha": "a3050760e181ce15ee39efa4b94f35ad607ad1e0",
+            "status": "completed",
+            "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37230173304",
+            "workflowName": "CI — Backend"
+          },
+          {
+            "conclusion": "success",
+            "databaseId": 37230173258,
+            "headSha": "a3050760e181ce15ee39efa4b94f35ad607ad1e0",
+            "status": "completed",
+            "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37230173258",
+            "workflowName": "CI — Android"
+          }
+        ]
+      }
+    ],
+    "runtimeReadback": {
+      "observedAt": "2026-10-04T20:05:15.914316+00:00",
+      "containerMutationsPerformed": false,
+      "containers": [
+        {
+          "name": "sphere-pilot-20260911-backend-1",
+          "id": "ec6723322cc9aec8560a3b06a37c6d22d4b602ad3b3f855892a189476c6394f0",
+          "image": "sha256:32b1173d05fa7e301e09481a92ca49f1e78e2a66dd6cad546f2b2d6323b7c0f5",
+          "startedAt": "2026-10-04T17:14:27.069979728Z",
+          "running": true,
+          "health": "healthy",
+          "revision": "c1a6e79a75221c45a71160a21bc91c48b22ef5ae",
+          "logConfig": {
+            "Type": "json-file",
+            "Config": {
+              "max-file": "5",
+              "max-size": "20m"
+            }
+          }
+        },
+        {
+          "name": "sphere-review-20261002-review-ui-1",
+          "id": "a331484c6ef3e6433d9cbce1ef5f86fec452d8bd64009cd40217e20bf195b21b",
+          "image": "sha256:730240135af0e4a0bd5d1713c1ddd8c93f23c7e3af60f14b705d680bea2958b8",
+          "startedAt": "2026-10-04T17:14:38.934801162Z",
+          "running": true,
+          "health": "healthy",
+          "revision": "c1a6e79a75221c45a71160a21bc91c48b22ef5ae",
+          "logConfig": {
+            "Type": "json-file",
+            "Config": {
+              "max-file": "3",
+              "max-size": "5m"
+            }
+          }
+        },
+        {
+          "name": "sphere-review-20261002-review-gateway-1",
+          "id": "83fa3baddd2d4fa5c8d5ccad3879b6dd3ba0b1f02353375d8844c442b92d2d2f",
+          "image": "sha256:1d13701a5f9f3fb01aaa88cef2344d65b6b5bf6b7d9fa4cf0dca557a8d7702ba",
+          "startedAt": "2026-10-04T16:42:04.005124091Z",
+          "running": true,
+          "health": "healthy",
+          "revision": null,
+          "logConfig": {
+            "Type": "json-file",
+            "Config": {
+              "max-file": "3",
+              "max-size": "5m"
+            }
+          }
+        }
+      ]
+    }
+  }
 }

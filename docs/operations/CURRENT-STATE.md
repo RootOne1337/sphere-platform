@@ -6,11 +6,13 @@
 
 [Главная](../../README.md) · [Каталог документации](../README.md) · [Readiness](READINESS.md) · [Fleet32 gates](../audits/2026-09-20/FLEET32-PREFLIGHT.md) · [PR #19](https://github.com/RootOne1337/sphere-platform/pull/19)
 
-**Текущий этап ресурсов, 5 октября / 19:31 UTC 4 октября:** bounded disk watcher `6180faf`
-работает;15 срезов подтверждают -2,071 GiB free C:, workspace +2,347 MiB в полных
-срезах, Docker VHD без роста.44 diagnostic/guard cases прошли; runtime `c1a6e79`
-и APK 10244 сохранены. Protected VSS allocation требует admin readback, writer
-UNDETERMINED; R09 — APK log count 6 при лимите 5.
+**Текущий этап ресурсов, 5 октября / 20:15 UTC 4 октября:** системное окно
+COMPLETE — 31 срез, все 62 native queries успешны. Allocated VSS вырос 13,9 → 14,1 ГБ
+по округлённому display; free C: -264,719 MiB за 30 минут. Рост VSS подтверждён,
+но предыдущие -6,459 GiB не атрибутированы целиком; writer UNDETERMINED. Короткие
+disk/RAM продолжения завершены, восьмичасовые окна прерваны после перезапуска.
+C: free 34,670 GiB, available RAM 19,018 GiB. 48 diagnostic cases и CI сборщика
+`a305076` прошли; runtime `c1a6e79`, APK10244 и R09 log retention OPEN сохранены.
 [Наблюдения, RAM и пределы](../audits/2026-10-05/HOST-DISK-GROWTH.md).
 
 **Дополнительный срез диска, 4 октября / 17:50 UTC:** рабочая папка — 7,996 GiB,
