@@ -27,6 +27,11 @@ Android10244 сохранены. AdGuard update объясняет отдель�
 но полная историческая атрибуция, VHD compaction и RAM soak ещё открыты.
 [Предыдущие объёмные срезы](audits/2026-10-05/HOST-DISK-GROWTH.md) сохранены как история.
 
+**22:52 UTC follow-up:** [VSS+1,969GiB /net free−2,033GiB, shadow inventory и retention review](audits/2026-10-05/VSS-RETENTION-REVIEW.md).
+Read-only image planner14 tests /actual0 additional candidates. После одобрения
+22:58 UTC VSS quota8GiB применена, обе system copies удалены Windows;
+free C:+17,205GiB. Runtime/46 containers сохранены, VHD не сжат.
+
 **Дополнительная инвентаризация, 17:50 UTC:** [размер Sphere / обход C: / package cleanup](audits/2026-10-04/HOST-DISK-INVENTORY-AND-CLEANUP.md).
 Workspace 8 GiB, tracked files 22 MiB; shared Docker VHD 219 GiB отдельно.
 На C: free 41,43 GiB после дополнительной очистки; 46 контейнеров сохранены,

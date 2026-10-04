@@ -12,6 +12,14 @@ APK logger source fixed: 1680 passed /2 skipped, source10245; installed canary O
 [APK retention](../audits/2026-10-05/APK-LOG-RETENTION.md).
 Это не VHD compaction, RAM soak, приёмка GUI или Fleet32 admission.
 
+22:52 UTC: текущий free-drop2,033GiB почти совпал с VSS allocation+1,969GiB;
+отдельная ETW запись показывает Docker VHD writes в окне+224MiB VSS allocation.
+[Retained copies и вариант уменьшения квоты](../audits/2026-10-05/VSS-RETENTION-REVIEW.md).
+После одобрения22:58 UTC quota8GiB применена, обе copies удалены Windows;
+free C:+17,205GiB, API ready/14 online,46 identities/epochs сохранены.
+VHD не сжат, VSS не отключён. Read-only retention planner
+`c89594a`:14 tests /actual0 additional candidates; scheduled cleanup не добавлен.
+
 **Исторический ресурсный срез, 5 октября / 20:15 UTC:** системное окно COMPLETE — 31 срез,
 62 успешных native queries. Allocated VSS 13,9 → 14,1 ГБ по округлённому display;
 free C: -264,719 MiB за 30 минут. Рост VSS подтверждён; прежние -6,459 GiB не

@@ -20,6 +20,15 @@ Recorder `1402612`, bounded projection `9a9256f`, 8 Windows cases passed.
 APK10245 ещё не собран/опубликован/установлен; **SOURCE_FIXED / INSTALLED_CANARY_OPEN**.
 [Контракт и проверки](../audits/2026-10-05/APK-LOG-RETENTION.md).
 
+**Продолжение22:52 UTC:** net C: free −2,033GiB с21:38 UTC, exact VSS allocation
++1,969GiB. Новый short trace: Docker VHD writes /VSS +224MiB. Две persistent copies,
+allocation17,205GiB /max19,057GiB до изменения.
+Source `c89594a`, read-only image plan: 14 tests, actual0 candidates /46 containers.
+[VSS evidence и конкретный вариант8GiB](../audits/2026-10-05/VSS-RETENTION-REVIEW.md).
+**22:58 UTC после одобрения:** max8GiB принят, обе прежние copies удалены Windows;
+free C: вырос на17,205GiB до58,976GiB. 22:59 UTC API ready/14 online10244;
+все46 container identities/epochs сохранены. VHD не сжимался, VSS не отключался.
+
 **Исторический ресурсный срез, 5 октября / 20:15 UTC 4 октября:** системное окно
 COMPLETE — 31 срез, все 62 native queries успешны. Allocated VSS вырос 13,9 → 14,1 ГБ
 по округлённому display; free C: -264,719 MiB за 30 минут. Рост VSS подтверждён,

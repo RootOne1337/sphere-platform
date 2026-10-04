@@ -1,5 +1,5 @@
 {
-  "observedAt": "2026-10-04T22:48:09.797794+00:00",
+  "observedAt": "2026-10-04T23:01:40.810250+00:00",
   "source": {
     "recorder": "1402612",
     "projection": "9a9256f",
@@ -211,6 +211,42 @@
     "container-memory-current.jsonl": {
       "bytes": 4534,
       "sha256": "11a67c70f70bbb24d746b4c8d1133d99ed810f202338e4b5dfc8b96cab030b11"
+    },
+    "continuation-traceevent.tsv": {
+      "bytes": 43606,
+      "sha256": "7bdeb83c960694e461dc399c30334efa0c61278cd7c8d28972e4c8098b2f38b4"
+    },
+    "continuation-traceevent.tsv.disk.tsv": {
+      "bytes": 14666,
+      "sha256": "3ae14b7632e9a73d66c629ad5303966f73aa64d6d7fae4d399007391cc82edb5"
+    },
+    "continuation-traceevent.log": {
+      "bytes": 181,
+      "sha256": "b964171e6c1207c7c5909d06fdc235ab35ae1384a310df174d866e59598a3686"
+    },
+    "continuation-analysis-private.json": {
+      "bytes": 7083,
+      "sha256": "305f13d231f1596465ef57feb35ba0752b7d82346288ea3c747a5737ac21524c"
+    },
+    "vss-inventory-private.json": {
+      "bytes": 2683,
+      "sha256": "ce9b6c4b704f881064dd8b60d1508639342829aecfb3a278b1edf981acf45dc4"
+    },
+    "image-retention-tests.xml": {
+      "bytes": 2304,
+      "sha256": "323efe8a47fd1a90a7397220311a2018644b5433152950138d1ce1e7f21fbb0b"
+    },
+    "image-retention-tests.log": {
+      "bytes": 249,
+      "sha256": "981f6fcbbc0c5ab5e9e7e891fb1e8b052dc7e239e962a118194bd512a1382e22"
+    },
+    "vss-limit-application-private.json": {
+      "bytes": 2866,
+      "sha256": "14f064d72c3f4ab315e76cc504836e8065d21f29ff1626d2668cd4b4cff2f758"
+    },
+    "vss-postchange-live.json": {
+      "bytes": 389,
+      "sha256": "0625f7d4e99747ac884f1505ea261770089ce2fc156f86edaca7bdc8d47bf583"
     }
   },
   "open": [
@@ -272,6 +308,102 @@
     "source": "9a9256f",
     "durationSeconds": 600,
     "startedUtc": "2026-10-04T22:42:19.0077478Z",
-    "stateAtDocumentation": "recording"
+    "stateAtDocumentation": "complete",
+    "state": "complete",
+    "reason": "free_drop_trigger",
+    "samples": 10,
+    "firstUtc": "2026-10-04T22:42:22.2985897Z",
+    "lastUtc": "2026-10-04T22:43:50.3270238Z",
+    "freeStartBytes": 45844234240,
+    "freeEndBytes": 45607428096,
+    "freeDeltaBytes": -236806144,
+    "vssUsedDeltaBytes": 287535104,
+    "vssAllocatedDeltaBytes": 234881024,
+    "traceBytes": 36790868,
+    "traceSha256": "c1bd3ae9bb58cfac3f9cf92834769b8bb5b3dacd6ea80dcc1263a2b702befb79",
+    "parserSummary": "diskWriteEvents=17938 diskWriteBytes=642455552\nwriteEvents=71404 bytes=352240451 lostEvents=0 firstWriteUtc=2026-10-04T22:42:20.6092334Z lastWriteUtc=2026-10-04T22:43:50.1431105Z\n",
+    "dockerVhdLogicalWriteBytes": 249688064
+  },
+  "vssLatest": {
+    "observedAt": "2026-10-04T22:52:24.4594334Z",
+    "administrator": true,
+    "shadowCopyCount": 2,
+    "restorePointCount": 1,
+    "providerName": "Microsoft Software Shadow Copy provider 1.0",
+    "usedBytes": 18135015424,
+    "allocatedBytes": 18473967616,
+    "maxBytes": 20461912064,
+    "freeCBytes": 44864716800,
+    "comparisonStartUtc": "2026-10-04T21:38:30.5597979Z",
+    "freeDeltaBytes": -2182967296,
+    "allocatedDeltaBytes": 2113929216,
+    "quotaChangePerformed": true,
+    "proposedMaxBytes": 8589934592,
+    "approvalPending": false,
+    "allHistoricalLossAttributed": false
+  },
+  "imageRetentionPlanner": {
+    "source": "c89594a",
+    "cases": 14,
+    "passed": 14,
+    "ruffPassed": true,
+    "observedAt": "2026-10-04T22:52:29.967364+00:00",
+    "candidates": 0,
+    "containers": 46,
+    "deletionPerformed": false,
+    "scheduledTaskCreated": false,
+    "nativeInspectBatch": 32,
+    "reportMaxBytes": 2097152,
+    "receiptSha256": "8671523c3eaa02f2cf5920924e22d9876d2def8779aed409c5fd0e173f24c2fa"
+  },
+  "vssApplication": {
+    "startedUtc": "2026-10-04T22:58:31.3285405Z",
+    "finishedUtc": "2026-10-04T22:58:31.4341203Z",
+    "administrator": true,
+    "targetMaxBytes": 8589934592,
+    "authorizedByOperator": true,
+    "commandExecuted": true,
+    "dockerRestarted": false,
+    "systemRestoreDisabled": false,
+    "fallbackDeletionUsed": false,
+    "nativeState": "returned",
+    "nativeExit": 0,
+    "targetVerified": true,
+    "before": {
+      "observedAt": "2026-10-04T22:58:31.3109235Z",
+      "freeCBytes": 44851392512,
+      "usedBytes": 18151464960,
+      "allocatedBytes": 18473967616,
+      "maxBytes": 20461912064,
+      "shadowCopyCount": 2
+    },
+    "after": {
+      "observedAt": "2026-10-04T22:58:31.4300184Z",
+      "freeCBytes": 63325396992,
+      "usedBytes": 0,
+      "allocatedBytes": 0,
+      "maxBytes": 8589934592,
+      "shadowCopyCount": 0
+    },
+    "observedFreeGainBytes": 18474004480,
+    "postChangeLive": {
+      "observedAt": "2026-10-04T22:59:21.440432+00:00",
+      "apiBuild": {
+        "status": "ready",
+        "checks": {
+          "postgres": "ok",
+          "redis": "ok"
+        }
+      },
+      "catalogCount": 19,
+      "online": 14,
+      "onlineVersionCodes": [
+        10244
+      ],
+      "containers": 46,
+      "allContainerIdentitiesAndEpochsPreserved": true,
+      "androidCommandsSent": 0,
+      "dockerRestarted": false
+    }
   }
 }

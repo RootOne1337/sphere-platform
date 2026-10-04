@@ -183,9 +183,15 @@ sample cutoff — 429 511 985 bytes; DiskIO transfers — 172 638 208 bytes,
 первого volume sample. Stop/rundown после cutoff исключён из этого итога.
 Logical writes CRX не равны net allocated growth расширения.
 
-Продолжение с `9a9256f` запущено 22:42:19 UTC с пределом 600s / шагом 10s;
-реальный status подтверждает administrator=true и traceStarted=true. Его
-результат публикуется после завершения, а не принимается по факту запуска.
+Продолжение с `9a9256f` /пределом600s, шагом10s завершилось раньше:
+22:42:22–22:43:50 UTC, 10 samples, `free_drop_trigger`. Free −236 806 144bytes,
+VSS allocation +234 881 024bytes; typed trace показывает записи Docker VHDX.
+В более длинном сравнении до22:52 UTC free −2,033GiB и VSS allocation +1,969GiB.
+Это подтверждённая большая часть текущего allocation growth; всю прошлую историю
+не подменяет. [Точные срезы, два shadow copies и retention review](VSS-RETENTION-REVIEW.md).
+После одобрения22:58 UTC max8GiB принят; Windows удалила обе copies,
+free C:+17,205GiB. API ready/14 online10244,46 container epochs сохранены.
+Это actual Windows reclaim через VSS retention, а не physical VHD compaction.
 
 ### Проверка действующих ограничений
 

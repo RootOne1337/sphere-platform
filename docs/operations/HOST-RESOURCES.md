@@ -335,6 +335,22 @@ current/rollback и все running/stopped dependencies; cleanup списка п
 по одному имени `sphere-*`. Persistent-data backups и physical reclaim остаются
 отдельным maintenance gate.
 
+Read-only image plan теперь воспроизводится
+[`plan_owned_image_retention.py`](../../scripts/pilot/plan_owned_image_retention.py),
+source `c89594a`;14 tests и actual0 additional candidates после cleanup.
+Только четыре explicitly owned repositories, all-tags Git proof, current source,
+два rollback versions, все running/stopped dependencies; repeat epoch guard.
+Нет native remove/prune/restart, ни recurring task.
+
+Сопоставление exact VSS22:52 UTC: C: free−2,033GiB /allocation+1,969GiB;
+перезаписи большого VHD могут сохранять старые блоки в VSS. Две persistent copies,
+max19,057GiB. [Измерения и вариант C:→C:8GiB](../audits/2026-10-05/VSS-RETENTION-REVIEW.md).
+Снижение quota может удалить restore history и требует прямого согласия;
+не заменять это action отключением VSS, общим delete или live VHD compaction.
+На данном ПК оператор одобрил вариант;22:58 UTC quota8GiB применена,
+обе прежние copies удалены Windows, наблюдаемый free gain17,205GiB.
+Native exit0/max readback и postchange API/fleet сохранены в linked evidence.
+
 После перезапуска приложения прежние disk/RAM processes отсутствовали,
 последние сохранённые срезы19:35 UTC. Восьмичасовая приёмка прервана, а не
 успешно завершена. Отдельные30-минутные продолжения запущены19:41:48/19:45:11 UTC;

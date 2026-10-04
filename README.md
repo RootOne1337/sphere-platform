@@ -21,6 +21,10 @@ VHDX остаётся 218,61 GiB: физическое сжатие не вып�
 ограниченная ETW-запись подтвердили рост shadow allocation; отдельно поймано
 обновление AdGuard в браузере. Полная историческая атрибуция и RAM soak открыты.
 [Числа, трасса и границы очистки](docs/audits/2026-10-05/DISK-WRITER-ATTRIBUTION.md).
+Свежие два среза: free C:−2,033GiB /VSS allocation+1,969GiB; найдены две
+теневые копии. [Подтверждённый рост и вариант retention](docs/audits/2026-10-05/VSS-RETENTION-REVIEW.md).
+**После одобрения22:58 UTC:** квота VSS8GiB применена, Windows удалила обе
+старые копии; свободное C: **+17,205GiB, около59GiB**. API/14 online и46 контейнеров сохранены.
 APK logger исправлен в source, **1680 passed / 2 skipped**, кандидат 10245;
 устройства и OTA пока на 10244. [R09 и приёмка кандидата](docs/audits/2026-10-05/APK-LOG-RETENTION.md).
 
