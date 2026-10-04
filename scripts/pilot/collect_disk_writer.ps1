@@ -67,6 +67,19 @@ function Save-Status {
     if (Test-Path -LiteralPath $path) { [IO.File]::Replace(($path + '.tmp'), $path, (Join-Path $output 'status.previous.json')) }
     else { [IO.File]::Move(($path + '.tmp'), $path) }
 }
+function Convert-VssSnapshot([object]$Storage) {
+    # CIM references otherwise serialize their entire class/property graph,
+    # inflating every sample. Retain only stable IDs and exact byte counters.
+    $volume = $Storage.Volume.CimInstanceProperties['DeviceID'].Value
+    $diffVolume = $Storage.DiffVolume.CimInstanceProperties['DeviceID'].Value
+    if (-not $volume -or -not $diffVolume -or $null -eq $Storage.UsedSpace -or
+        $null -eq $Storage.AllocatedSpace -or $null -eq $Storage.MaxSpace) {
+        throw 'Incomplete VSS observation; do not substitute zero.'
+    }
+    return [pscustomobject]@{ Volume=[string]$volume; DiffVolume=[string]$diffVolume;
+        UsedSpace=[long]$Storage.UsedSpace; AllocatedSpace=[long]$Storage.AllocatedSpace;
+        MaxSpace=[long]$Storage.MaxSpace }
+}
 $status = @{ state='preflight'; pid=$PID; instance=$instance; startUtc=[DateTime]::UtcNow.ToString('o');
     durationSeconds=$DurationSeconds; intervalSeconds=$IntervalSeconds; samplesWritten=0; reportBytes=0;
     bufferPayloadMiB=128; administrator=$true; fileMode=$false; reportDirectory=$output;
@@ -104,7 +117,7 @@ try {
             Sort-Object IOWriteBytesPersec -Descending | Select-Object -First 32 |
             Select-Object Name, IDProcess, IOWriteBytesPersec, IOWriteOperationsPersec, PrivateBytes)
         $vss = $null; $vssError = $null
-        try { $vss = @(Get-CimInstance Win32_ShadowStorage -OperationTimeoutSec 5 | Select-Object Volume, DiffVolume, UsedSpace, AllocatedSpace, MaxSpace) }
+        try { $vss = @(Get-CimInstance Win32_ShadowStorage -OperationTimeoutSec 5 | ForEach-Object { Convert-VssSnapshot $_ }) }
         catch { $vssError = $_.Exception.GetType().Name }
         $record = @{ observedAt=[DateTime]::UtcNow.ToString('o'); sample=$status.samplesWritten;
             freeDiskBytes=$free; availableRamBytes=([long]$os.FreePhysicalMemory * 1024);

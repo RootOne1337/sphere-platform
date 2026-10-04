@@ -70,3 +70,27 @@ if ((Get-Content -LiteralPath (Join-Path $output 'status.previous.json') | Conve
     result = subprocess.run(["powershell.exe", "-NoProfile", "-NonInteractive", "-File", str(helper),
                              str(SCRIPT), str(tmp_path)], capture_output=True, text=True, timeout=15)
     assert result.returncode == 0, result.stderr
+
+
+def test_vss_projection_is_small_and_missing_counters_remain_unknown(tmp_path):
+    command = r"""
+$tokens = $null; $errors = $null
+$ast = [Management.Automation.Language.Parser]::ParseFile($args[0], [ref]$tokens, [ref]$errors)
+if ($errors.Count) { throw 'Parse failure' }
+$function = $ast.Find({param($n) $n -is [Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -eq 'Convert-VssSnapshot'}, $true)
+Invoke-Expression $function.Extent.Text
+$ref = [pscustomobject]@{CimInstanceProperties=@{DeviceID=[pscustomobject]@{Value='volume-id'}};UnusedGraph=('x'*100000)}
+$storage = [pscustomobject]@{Volume=$ref;DiffVolume=$ref;UsedSpace=15382704128L;AllocatedSpace=15890276352L;MaxSpace=20461912064L}
+$result = Convert-VssSnapshot $storage
+$json = $result | ConvertTo-Json -Compress
+if ($json.Length -gt 1024 -or $result.UsedSpace -ne 15382704128L -or $result.Volume -ne 'volume-id') { throw 'Invalid bounded projection' }
+$storage.UsedSpace = $null
+$rejected = $false
+try { Convert-VssSnapshot $storage } catch { $rejected = $true }
+if (-not $rejected) { throw 'Missing counter was not rejected' }
+"""
+    helper = tmp_path / "invoke-vss.ps1"
+    helper.write_text(command, encoding="utf-8")
+    result = subprocess.run(["powershell.exe", "-NoProfile", "-NonInteractive", "-File", str(helper),
+                             str(SCRIPT)], capture_output=True, text=True, timeout=15)
+    assert result.returncode == 0, result.stderr
