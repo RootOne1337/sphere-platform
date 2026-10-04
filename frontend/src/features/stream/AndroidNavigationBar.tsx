@@ -24,9 +24,12 @@ const EDIT_KEYS = [
 ] as const;
 function textCommand(text: string): string | null {
   // The installed root `input text` path cannot type arbitrary Unicode.
-  // Reject unsupported input rather than claiming successful corrupted text.
-  if (!text || text.length > 1024 || /[^\x20-\x7e]/.test(text) || text.includes('%s')) return null;
-  return `input text '${text.replace(/ /g, '%s').replace(/'/g, "'\\''")}'`;
+  // APK shell() rejects these characters even inside POSIX quotes. An
+  // apostrophe would need a backslash escape, which that contract also rejects.
+  // Reject locally instead of treating a mocked HTTP response as compatibility.
+  if (!text || text.length > 1024 || /[^\x20-\x7e]/.test(text)
+    || /[;|&$`(){}\\<>!#~']/.test(text) || text.includes('%s')) return null;
+  return `input text '${text.replace(/ /g, '%s')}'`;
 }
 type Receipt = { state: 'idle' } | { state: 'sending'; label: string }
   | { state: 'confirmed'; label: string; elapsedMs: number }
@@ -106,7 +109,8 @@ export function AndroidNavigationBar({ deviceId, available, isAvailable, extende
         <p className="text-xs leading-relaxed text-muted-foreground">Выберите поле на экране Android. Копировать/вырезать/вставить работают с выделением и буфером Android; буфер браузера отдельный. Колесо над видео выполняет короткий свайп; Ctrl + колесо оставляет масштабирование браузера.</p>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">{EDIT_KEYS.map(key => <Button key={key.code} type="button" variant="outline" size="sm" disabled={!available || pending} onClick={() => { void sendKey(key); }}>{key.label}</Button>)}</div>
         <label className="block space-y-2 text-xs font-medium"><span>Текст для Android</span><textarea aria-label="Текст для Android" value={draft} disabled={!available || pending} maxLength={1024} onChange={event => setDraft(event.target.value)} rows={2} className="block w-full resize-y rounded-lg border border-input bg-background p-3 text-sm disabled:opacity-50" /></label>
-        <p className="text-xs leading-relaxed text-muted-foreground">Текущий APK поддерживает здесь печатный ASCII, до 1024 символов. Кириллица, emoji, переносы строк и буквальная последовательность %s требуют нового Android input adapter; они не отправляются с искажением.</p>
+        <p className="text-xs leading-relaxed text-muted-foreground">До 1024 символов ASCII в пределах ограничений установленного APK. Кириллица, emoji, переносы строк, апостроф, служебные символы shell и буквальная последовательность %s не отправляются. Для них требуется отдельный Android-канал ввода текста.</p>
+        {draft && !textCommand(draft) && <p role="alert" className="text-xs text-destructive">Текст содержит символы, которые текущий Android-канал не поддерживает. Команда не отправлена.</p>}
         <Button type="button" disabled={!available || pending || !textCommand(draft)} onClick={() => { const command = textCommand(draft); if (command) void sendCommand(command, 'Ввод текста', true); }}>Ввести текст</Button>
       </div>
     </details>}

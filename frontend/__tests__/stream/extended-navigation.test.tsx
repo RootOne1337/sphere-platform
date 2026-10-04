@@ -12,17 +12,19 @@ it.each([['Backspace', 67], ['Delete', 112], ['Enter', 66], ['Tab', 61], ['Ко�
   expect(api.post).toHaveBeenCalledWith('/devices/remote/shell', { command: `input keyevent ${code}` }, expect.any(Object));
   expect(await screen.findByRole('status')).toHaveTextContent('выполнение подтверждено');
 });
-it('sends the explicit text draft once with POSIX quoting, without exposing its value in the receipt', async () => {
-  open(); fireEvent.change(screen.getByLabelText('Текст для Android'), { target: { value: "hello ' $() & world" } });
+it('sends a draft supported by the installed APK, without exposing its value in the receipt', async () => {
+  open(); fireEvent.change(screen.getByLabelText('Текст для Android'), { target: { value: 'hello world@2026: "ok"' } });
   fireEvent.click(screen.getByRole('button', { name: 'Ввести текст' }));
-  expect(api.post).toHaveBeenCalledWith('/devices/remote/shell', { command: "input text 'hello%s'\\''%s$()%s&%sworld'" }, expect.any(Object));
-  expect(await screen.findByRole('status')).not.toHaveTextContent("hello '");
+  expect(api.post).toHaveBeenCalledWith('/devices/remote/shell', { command: 'input text \'hello%sworld@2026:%s"ok"\'' }, expect.any(Object));
+  expect(await screen.findByRole('status')).not.toHaveTextContent('hello world');
   expect(screen.getByLabelText('Текст для Android')).toHaveValue('');
 });
-it.each(['Привет', 'emoji🙂', 'two\nlines', 'literal%s', 'x'.repeat(1025)])('does not silently corrupt unsupported text', value => {
+it.each(['Привет', 'emoji🙂', 'two\nlines', 'literal%s', 'x'.repeat(1025),
+  ...Array.from(";|&$`(){}\\<>!#~'").map(char => `prefix${char}suffix`), '\t', '\u007f'])('does not silently corrupt or send APK-rejected text', value => {
   open(); fireEvent.change(screen.getByLabelText('Текст для Android'), { target: { value } });
   expect(screen.getByRole('button', { name: 'Ввести текст' })).toBeDisabled();
   expect(api.post).not.toHaveBeenCalled();
+  expect(screen.getByRole('alert')).toHaveTextContent('Команда не отправлена');
 });
 it('keeps the draft after unknown completion and does not retry automatically', async () => {
   jest.mocked(api.post).mockRejectedValueOnce(new Error('timeout'));
