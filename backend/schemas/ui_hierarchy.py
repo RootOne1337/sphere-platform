@@ -31,4 +31,5 @@ class UiHierarchyResponse(BaseModel):
     width: int = Field(ge=1, le=16384)
     height: int = Field(ge=1, le=16384)
     rotation: int = Field(ge=0, le=3)
+    temporary_file_cleanup_confirmed: bool = False
     nodes: list[UiHierarchyNode] = Field(max_length=4096)

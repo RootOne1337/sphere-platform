@@ -2,7 +2,7 @@ import { checkedHierarchy, frameBounds, hitTestHierarchy, matchesFrame, type UiH
 
 const fixture = (): UiHierarchySnapshot => ({ device_id: 'remote', snapshot_id: 'a'.repeat(32),
   requested_at: '2026-10-03T21:00:00Z', completed_at: '2026-10-03T21:00:02Z', source: 'android_uiautomator_root',
-  width: 960, height: 540, rotation: 1, nodes: [
+  width: 960, height: 540, rotation: 1, temporary_file_cleanup_confirmed: true, nodes: [
     { id: 0, parent_id: null, depth: 0, xpath: '/hierarchy/node[1]', attributes: { class: 'root' }, bounds: { left: 0, top: 0, right: 960, bottom: 540 } },
     { id: 1, parent_id: 0, depth: 1, xpath: '/hierarchy/node[1]/node[1]', attributes: { text: '<script>plain text</script>' }, bounds: { left: 100, top: 100, right: 200, bottom: 150 } },
   ] });

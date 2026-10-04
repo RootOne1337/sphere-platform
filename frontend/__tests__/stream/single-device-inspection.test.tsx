@@ -15,7 +15,7 @@ jest.mock('@/components/sphere/DeviceStream', () => ({ DeviceStream: (props: Rec
   return <button onClick={() => props.onFrameDimensions({ width: 960, height: 540 })}>Fixture frame</button>;
 } }));
 const snapshot = (deviceId = 'remote') => ({ device_id: deviceId, snapshot_id: 'a'.repeat(32), source: 'android_uiautomator_root',
-  requested_at: '2026-10-03T21:00:00Z', completed_at: '2026-10-03T21:00:02Z', width: 960, height: 540, rotation: 1,
+  requested_at: '2026-10-03T21:00:00Z', completed_at: '2026-10-03T21:00:02Z', width: 960, height: 540, rotation: 1, temporary_file_cleanup_confirmed: true,
   nodes: [{ id: 0, parent_id: null, depth: 0, xpath: '/hierarchy/node[1]',
     bounds: { left: 100, top: 100, right: 200, bottom: 150 }, attributes: { text: '<script>safe plain text</script>', 'resource-id': 'pkg:id/ok', clickable: 'true', enabled: 'true', custom: 'retained' } }] });
 beforeEach(() => { jest.clearAllMocks(); mockPermission = true; mockToken = 'fixture-token'; });
@@ -96,4 +96,11 @@ it('expires the tree after 30 seconds without polling Android or retaining a cli
     expect(screen.queryByText('/hierarchy/node[1]')).not.toBeInTheDocument();
     expect(api.post).toHaveBeenCalledTimes(1);
   } finally { jest.useRealTimers(); }
+});
+
+it('shows a valid tree with a distinct warning when Android cleanup is unconfirmed', async () => {
+  jest.mocked(api.post).mockResolvedValue({ data: { ...snapshot(), temporary_file_cleanup_confirmed: false } });
+  open(); fireEvent.click(screen.getByRole('button', { name: 'Обновить дерево' }));
+  await screen.findByText(/1 элементов/);
+  expect(screen.getByText(/Удаление временного файла дерева не подтверждено/)).toBeInTheDocument();
 });

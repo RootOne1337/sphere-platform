@@ -8,6 +8,7 @@ export interface UiHierarchyNode {
 export interface UiHierarchySnapshot {
   device_id: string; snapshot_id: string; requested_at: string; completed_at: string;
   source: 'android_uiautomator_root'; width: number; height: number; rotation: number;
+  temporary_file_cleanup_confirmed: boolean;
   nodes: UiHierarchyNode[];
 }
 
@@ -16,6 +17,7 @@ export function checkedHierarchy(value: unknown, deviceId: string): UiHierarchyS
   const data = value as UiHierarchySnapshot;
   if (data.device_id !== deviceId || !/^[a-f0-9]{32}$/.test(data.snapshot_id ?? '')
     || data.source !== 'android_uiautomator_root'
+    || typeof data.temporary_file_cleanup_confirmed !== 'boolean'
     || !Number.isInteger(data.width) || data.width < 1 || data.width > 16384
     || !Number.isInteger(data.height) || data.height < 1 || data.height > 16384
     || !Number.isInteger(data.rotation) || data.rotation < 0 || data.rotation > 3

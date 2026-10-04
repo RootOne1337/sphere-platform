@@ -591,6 +591,8 @@ async def request_ui_hierarchy(
     # This uses the existing root SHELL capability, so it retains its stronger
     # permission even though every command below is a fixed read/cleanup.
     await svc.get_device(device_id, current_user.org_id)
+    if redis is None:
+        raise HTTPException(503, "UI inspection lock unavailable")
     snapshot_id = uuid.uuid4().hex
     key = f"sphere:ui-inspection:{current_user.org_id}:{device_id}"
     try:
@@ -601,6 +603,7 @@ async def request_ui_hierarchy(
         raise HTTPException(429, "UI inspection already in progress")
     path = f"/data/local/tmp/sphere-ui-{snapshot_id}.xml"
     requested_at = datetime.now(timezone.utc)
+    snapshot: UiHierarchyResponse | None = None
 
     async def shell(command: str) -> str:
         result = await _request_interactive_command(device_id, current_user, svc, "SHELL", {"cmd": command}, 8.0)
@@ -619,9 +622,10 @@ async def request_ui_hierarchy(
             if before != after:
                 raise HTTPException(409, "Android display geometry changed; request a new snapshot")
             width, height, rotation, nodes = parse_hierarchy(xml, after)
-        return UiHierarchyResponse(device_id=str(device_id), snapshot_id=snapshot_id,
-                                   requested_at=requested_at, completed_at=datetime.now(timezone.utc),
-                                   width=width, height=height, rotation=rotation, nodes=nodes)
+        snapshot = UiHierarchyResponse(device_id=str(device_id), snapshot_id=snapshot_id,
+                                       requested_at=requested_at, completed_at=datetime.now(timezone.utc),
+                                       width=width, height=height, rotation=rotation, nodes=nodes)
+        return snapshot
     except InvalidUiHierarchy as exc:
         raise HTTPException(502, str(exc)) from exc
     except TimeoutError as exc:
@@ -631,13 +635,15 @@ async def request_ui_hierarchy(
         # is recorded without logging the potentially sensitive node text/XML.
         try:
             await shell(f"rm -f {path}")
+            if snapshot is not None:
+                snapshot.temporary_file_cleanup_confirmed = True
         except Exception:
-            logger.warning("ui_inspection_cleanup_unconfirmed", device_id=str(device_id), snapshot_id=snapshot_id)
+            logger.warning("ui_inspection_cleanup_unconfirmed", extra={"device_id": str(device_id), "snapshot_id": snapshot_id})
         try:
             await redis.eval("if redis.call('get',KEYS[1]) == ARGV[1] then return redis.call('del',KEYS[1]) end return 0",
                              1, key, snapshot_id)
         except RedisError:
-            logger.warning("ui_inspection_lock_release_unconfirmed", device_id=str(device_id))
+            logger.warning("ui_inspection_lock_release_unconfirmed", extra={"device_id": str(device_id)})
 
 
 @router.post(

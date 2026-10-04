@@ -98,6 +98,7 @@ export function SingleDeviceStream({ deviceId }: { deviceId: string }) {
         {pending ? <p role="status" className="text-sm">Ожидаем полный снимок, до 50 секунд. Повтор не отправляется автоматически.</p>
           : !snapshot ? <p role="status" className="text-sm text-muted-foreground">Нажмите «Обновить дерево» после появления видеокадра.</p>
             : <div className="space-y-2 text-xs text-muted-foreground"><p>{snapshot.width} × {snapshot.height} · поворот {snapshot.rotation * 90}° · {snapshot.nodes.length} элементов</p><p>Получено: {new Date(snapshot.completed_at).toLocaleTimeString('ru-RU')} · {Math.floor(age / 1000)} с назад</p>
+              {!snapshot.temporary_file_cleanup_confirmed && <p role="status" className="text-amber-600 dark:text-amber-400">Удаление временного файла дерева не подтверждено. Проверьте связь и логи APK.</p>}
               {!valid && <p role="status" className="text-amber-600 dark:text-amber-400">{matchesFrame(snapshot, frame) ? 'Снимок устарел. Обновите дерево.' : 'Геометрия дерева не совпадает с видео. Обновите дерево после поворота.'}</p>}
               {snapshot.nodes.length === 0 && <p>Android не предоставил элементов для текущего окна.</p>}
             </div>}

@@ -36,6 +36,7 @@ async def test_complete_owned_snapshot_fixed_commands_cleanup_and_no_input(world
     assert response.headers["cache-control"] == "no-store"
     data = response.json()
     assert data["device_id"] == str(world.dev_a.id)
+    assert data["temporary_file_cleanup_confirmed"] is True
     assert (data["width"], data["height"], data["rotation"]) == (960, 540, 1)
     assert data["nodes"][0]["attributes"]["text"] == "OK"
     commands = [call.args[1] for call in hierarchy_transport.send_command_wait_result.await_args_list]
@@ -62,6 +63,28 @@ async def test_one_dump_per_device_and_preserves_other_request_lock(world, hiera
         hierarchy_transport.send_command_wait_result.assert_not_awaited()
     finally:
         await world.redis.delete(key)
+
+
+async def test_offline_read_and_cleanup_preserve_original_503_instead_of_logging_500(world, hierarchy_transport):
+    hierarchy_transport.send_command_wait_result.side_effect = HTTPException(503, "Device command channel unavailable")
+    response = await world.client.post(f"/api/v1/devices/{world.dev_a.id}/ui-hierarchy", headers=world.auth(world.users["org_admin"]))
+    assert response.status_code == 503, response.text
+    assert "command channel" in response.json()["detail"]
+    assert hierarchy_transport.send_command_wait_result.await_count == 2
+    assert await world.redis.get(f"sphere:ui-inspection:{world.org_a.id}:{world.dev_a.id}") is None
+
+
+async def test_valid_tree_reports_unconfirmed_cleanup_without_losing_snapshot(world, hierarchy_transport):
+    original = hierarchy_transport.send_command_wait_result.side_effect
+    async def reply(device, command, **options):
+        if command["payload"]["cmd"].startswith("rm -f "):
+            raise HTTPException(503, "Device command channel unavailable")
+        return await original(device, command, **options)
+    hierarchy_transport.send_command_wait_result.side_effect = reply
+    response = await world.client.post(f"/api/v1/devices/{world.dev_a.id}/ui-hierarchy", headers=world.auth(world.users["org_admin"]))
+    assert response.status_code == 200, response.text
+    assert response.json()["nodes"][0]["attributes"]["text"] == "OK"
+    assert response.json()["temporary_file_cleanup_confirmed"] is False
 
 
 @pytest.mark.parametrize("failure", ["unsupported", "partial", "size-change", "timeout", "malformed-receipt"])
