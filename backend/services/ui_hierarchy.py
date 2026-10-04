@@ -37,7 +37,7 @@ def parse_hierarchy(xml: str, size: tuple[int, int]) -> tuple[int, int, int, lis
         raise InvalidUiHierarchy("ui_dump_byte_budget_exceeded")
     if re.search(r"<!\s*(?:DOCTYPE|ENTITY)", xml, re.IGNORECASE):
         raise InvalidUiHierarchy("ui_dump_entities_forbidden")
-    parser = ET.XMLPullParser(events=("start", "end"))
+    parser: ET.XMLPullParser = ET.XMLPullParser(events=("start", "end"))
     stack: list[tuple[int | None, str, int]] = []
     nodes: list[UiHierarchyNode] = []
     rotation = None
@@ -47,7 +47,10 @@ def parse_hierarchy(xml: str, size: tuple[int, int]) -> tuple[int, int, int, lis
         # an arbitrarily nested tree. The byte ceiling applies before parsing.
         for offset in range(0, len(xml), 2048):
             parser.feed(xml[offset:offset + 2048])
-            for event, node in parser.read_events():
+            for parsed_event in parser.read_events():
+                if len(parsed_event) != 2:
+                    raise InvalidUiHierarchy("ui_dump_structure_invalid")
+                event, node = parsed_event
                 # ElementTree's event type also permits namespace payloads.
                 # This parser requests only element events; reject any other
                 # payload before accessing the node or accepting a snapshot.
