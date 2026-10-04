@@ -21,9 +21,10 @@ API/UI c1a6e79.** [Аудит диска, ОЗУ, сборки и RPC](audits/20
 
 **5 октября — текущая работа с ресурсами:**
 [ETW writer / exact VSS / 51 owned image / 10,938 GiB guest reclaim](audits/2026-10-05/DISK-WRITER-ATTRIBUTION.md) ·
-[APK logger source fix / 1680 passed, 2 skipped / installed canary OPEN](audits/2026-10-05/APK-LOG-RETENTION.md).
+[APK10245 local+remote startup canary / 1680 passed, 2 skipped / long soak OPEN](audits/2026-10-05/APK-LOG-RETENTION.md).
 Source recorder `1402612` / projection `9a9256f`, 8 Windows tests; API/UI c1a6e79,
-Android10244 сохранены. AdGuard update объясняет отдельный короткий скачок,
+Позднее PH010/PH025 адресно обновлены10245,12 online остаются10244; startup quota доказана.
+AdGuard update объясняет отдельный короткий скачок,
 но полная историческая атрибуция, VHD compaction и RAM soak ещё открыты.
 [Предыдущие объёмные срезы](audits/2026-10-05/HOST-DISK-GROWTH.md) сохранены как история.
 

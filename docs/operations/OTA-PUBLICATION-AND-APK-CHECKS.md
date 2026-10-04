@@ -141,3 +141,27 @@ installed hash/version/new heartbeat. Нельзя повторять installer 
 очищать данные или считать recovery обычным OTA. Offline/force-stopped APK и
 устройство без нужных Android permissions не объявляются всегда обновляемыми.
 Это pilot recovery evidence, не готовый массовый operator UI/general manifest.
+
+## Logger canary 10245, 5 октября / 23:18 UTC 4 октября
+
+Artifact `bdfebea` / 1.2.45-dev 10245 подписан тем же pilot certificate и размещён
+immutable hash в `android-canary/dev`. PH010 local и PH025 remote получили ровно
+одну адресную scoped recovery grant каждый; completed native receipts, свежий
+heartbeat, installed APK SHA и automatic grant cleanup подтверждены.
+Без host ADB/PC Agent, data wipe и automatic installer replay.
+
+Оба устройства сами исправили прежние 6 обычных файлов до 5 и ≤2 MiB.
+Это startup/local+remote candidate acceptance; не доказательство normal periodic
+OTA и не stable/general release. Normal/android-dev 10209 сохраняется;
+12 online ещё на 10244. Полный suite: 1680 passed / 2 skipped, source: 4 CI success;
+live saturation/retention/RAM soak и следующий fleet rollout ещё отдельные gates.
+[Artifact, квоты и датированные receipts](../audits/2026-10-05/APK-LOG-RETENTION.md) ·
+[Sanitized evidence](../audits/2026-10-05/APK-LOG-RETENTION-EVIDENCE.json).
+
+Для ручного canary используется конкретный локальный файл
+`.local-pilot/apk/SphereAgent-pilot-candidate-1.2.45-dev-bdfebea.apk`.
+Проверка `aapt dump badging` 23:32 UTC показала, что прежний alias
+`LATEST-SphereAgent-pilot.apk` всё ещё 1.2.9-dev 10209 — last promoted baseline,
+а не текущий canary. Не использовать это имя как доказательство freshness.
+Alias/normal catalog не переключались этим этапом; продвижение должно сохранять
+соответствие artifact/metadata/catalog/installed proof.

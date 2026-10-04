@@ -17,7 +17,13 @@ Recorder `1402612`, bounded projection `9a9256f`, 8 Windows cases passed.
 
 **Android R09:** `ae90715` исправляет disk quota/rotation/startup и bounded queue;
 `e75d365` — source-кандидат 1.2.45-dev /10245, 1680 passed /2 skipped.
-APK10245 ещё не собран/опубликован/установлен; **SOURCE_FIXED / INSTALLED_CANARY_OPEN**.
+Artifact `bdfebea` собран23:14 UTC и опубликован `android-canary/dev`.
+PH010 local/PH025 remote адресно обновлены23:18 UTC через scoped root recovery:
+completed receipts, fresh heartbeat и native installed SHA совпали; quota6→5,
+каждый≤2MiB.2 online10245 /12 online10244; normal/android-dev10209 не менялся.
+11 коротких срезов сохраняют14 IDs/epochs, API ready и46 containers.
+**SOURCE_FIXED / STARTUP_CANARY_VERIFIED / LONG_RETENTION_SOAK_OPEN**;
+normal/stable promotion и live saturation ещё не приняты. Source `bdfebea`: все4 CI success.
 [Контракт и проверки](../audits/2026-10-05/APK-LOG-RETENTION.md).
 
 **Продолжение22:52 UTC:** net C: free −2,033GiB с21:38 UTC, exact VSS allocation

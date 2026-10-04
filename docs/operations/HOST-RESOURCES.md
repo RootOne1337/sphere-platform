@@ -324,7 +324,8 @@ Raw ETL/process commandlines/private paths остаются локально; п
 
 R09 обновлён: logger source `ae90715`, версия кандидата10245; ordinary5×2MiB,
 encoded queue≤4MiB и truncation/drop counter. **1680 passed /2 skipped**.
-Установленная версия всё ещё10244; [runtime canary открыт](../audits/2026-10-05/APK-LOG-RETENTION.md).
+PH010 local/PH025 remote уже10245: exact installed hash/receipt и startup quota6→5
+подтверждены;12 других online ещё10244. Normal OTA/stable promotion и long soak OPEN; [runtime evidence](../audits/2026-10-05/APK-LOG-RETENTION.md).
 Предыдущее описание шести файлов выше — датированный defect старого APK.
 
 Адресная очистка51 owned images дала +10,938GiB в guest, без compaction VHD.

@@ -404,6 +404,29 @@
       "allContainerIdentitiesAndEpochsPreserved": true,
       "androidCommandsSent": 0,
       "dockerRestarted": false
+    },
+    "firstFollowup": {
+      "observedAt": "2026-10-04T23:04:43.3549979Z",
+      "freeCBytes": 63322935296,
+      "usedBytes": 0,
+      "allocatedBytes": 0,
+      "maxBytes": 8589934592,
+      "shadowCopyCount": 0,
+      "restorePointCount": 0,
+      "nativeQueryErrors": 0,
+      "freeDeltaVersusImmediateAfterBytes": -2461696,
+      "notLongSoak": true,
+      "receiptSha256": "c28f7dc6b00a214f2c5d4023978bf9c6cd1555082ea70f48c29d22ae4ed867c3"
     }
+  },
+  "vhdWindowsFootprint": {
+    "observedAt": "2026-10-04T23:30:15.9657489Z",
+    "fileBytes": 234731077632,
+    "allocatedBytes": 234731077632,
+    "attributes": "Archive",
+    "freeCBytes": 63245205504,
+    "compressionPerformed": false,
+    "method": "GetCompressedFileSizeW",
+    "receiptSha256": "076c2d11e18322f3361174698ac347ac8ed0692a5b181f8dc87d715276cc154a"
   }
 }

@@ -25,8 +25,10 @@ VHDX остаётся 218,61 GiB: физическое сжатие не вып�
 теневые копии. [Подтверждённый рост и вариант retention](docs/audits/2026-10-05/VSS-RETENTION-REVIEW.md).
 **После одобрения22:58 UTC:** квота VSS8GiB применена, Windows удалила обе
 старые копии; свободное C: **+17,205GiB, около59GiB**. API/14 online и46 контейнеров сохранены.
-APK logger исправлен в source, **1680 passed / 2 skipped**, кандидат 10245;
-устройства и OTA пока на 10244. [R09 и приёмка кандидата](docs/audits/2026-10-05/APK-LOG-RETENTION.md).
+APK **1.2.45-dev /10245 собран, подписан и адресно установлен на PH010/PH025**:
+exact hash/receipts/heartbeat, native logs6→5 и≤2MiB подтверждены на local+remote.
+12 online ещё10244; normal/android-dev10209 не менялся. **1680 passed /2 skipped**;
+длительный retention/RAM soak открыт. [R09 и приёмка кандидата](docs/audits/2026-10-05/APK-LOG-RETENTION.md).
 
 **Диск, 4 октября 2026 / 17:50 UTC:** рабочая папка Sphere — 8 GiB, отслеживаемые
 файлы — 22 MiB; Docker VHD вне папки — 219 GiB и используется несколькими проектами.

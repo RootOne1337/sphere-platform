@@ -7,7 +7,10 @@
 VHDX218,61 GiB физически не сжат. API/UI c1a6e79 / online APK10244 сохранены.
 Bounded ETW / exact VSS: 8 Windows tests и реальные elevated traces;
 AdGuard update сопоставлен с одним free-drop, полная историческая причина OPEN.
-APK logger source fixed: 1680 passed /2 skipped, source10245; installed canary OPEN.
+APK10245 `bdfebea` собран и адресно установлен на PH010 local/PH025 remote;
+exact package hash/receipts/heartbeat и quota6→5 /≤2MiB подтверждены.
+1680 passed /2 skipped; все4 source CI success.11 finite samples с14 IDs/epochs;
+long retention/RAM soak, normal OTA и stable promotion OPEN.12 online ещё10244.
 [Writer и очистка](../audits/2026-10-05/DISK-WRITER-ATTRIBUTION.md) ·
 [APK retention](../audits/2026-10-05/APK-LOG-RETENTION.md).
 Это не VHD compaction, RAM soak, приёмка GUI или Fleet32 admission.

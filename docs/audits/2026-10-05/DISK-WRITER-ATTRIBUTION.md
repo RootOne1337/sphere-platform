@@ -226,6 +226,24 @@ API/UI/Tuna/fleet. Сжатие нельзя выполнять на mounted/wri
 не являются production retention policy. Нет обещания вернуть218,6 GiB целиком.
 
 R04 long RAM soak, R05 offline VHD compaction, R06 backend RSS series,
-R07 server global log quota/sweeper и R09 installed APK canary открыты.
+R07 server global log quota/sweeper открыты. R09 startup canary уже подтверждён
+на PH010/PH02510245; [long retention soak и normal promotion открыты](APK-LOG-RETENTION.md).
 Прошлые−6,459 GiB free и21-day+66,8GB не полностью атрибутированы этой трассой.
 **Fleet32 NO-GO /34 source-fixed,7 unclosed web gates** остаются без изменения.
+
+## Windows allocated footprint отдельно от guest reclaim
+
+23:30:15 UTC native `GetCompressedFileSizeW` и file attributes проверены read-only:
+VHD file length=234 731 077 632bytes, returned disk storage=234 731 077 632bytes;
+attribute Archive, без SparseFile/Compressed.218,61GiB не является только sparse
+logical maximum. Метод возвращает stored bytes, учитывая compressed/sparse case;
+filesystem metadata и VSS allocation считаются отдельно.
+[Microsoft API contract](https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-getcompressedfilesizew).
+
+На последнем local-drive inventory доступен толькоC: с59GiB free; полную
+дополнительную копию219GiB туда разместить нельзя. R05 до offline compaction
+требует проверенного backup и достаточного внешнего destination либо отдельно
+проверенного восстановления persistent data/owned images. Полный VM backup
+Docker требует остановленного Desktop; volumes не включаются в image backup.
+Мы не делали live copy/compact, reset Desktop или общее удаление чужих images.
+[Docker backup boundary](https://docs.docker.com/desktop/settings-and-maintenance/backup-and-restore/).

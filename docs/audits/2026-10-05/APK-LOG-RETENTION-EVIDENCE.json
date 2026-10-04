@@ -1,13 +1,24 @@
 {
-  "observedAt": "2026-10-04T21:34:36.490476+00:00",
+  "observedAt": "2026-10-04T23:33:48.795196+00:00",
   "sourceFix": "ae90715",
   "versionCommit": "e75d365",
   "candidate": {
     "name": "1.2.45-dev",
     "code": 10245,
-    "built": false,
-    "published": false,
-    "installed": false
+    "built": true,
+    "published": true,
+    "installed": true,
+    "installedDevices": 2,
+    "source": "bdfebeac48869e11bd0d650f71c1ad146ae59d2a",
+    "sha256": "f2a5c1532340e6014500d08480ae02f61d7b8f58224150fe0c4d0424642f39eb",
+    "bytes": 8473519,
+    "package": "com.sphereplatform.agent.pilot.debug",
+    "certificateSha256": "3ab40797d26e4f52f9e440afc6fe69f197caef71a5a27c63c86735bb1801871f",
+    "signerMatchesBaseline": true,
+    "builtAt": "2026-10-04T23:14:07.537189+00:00",
+    "normalChannelPromoted": false,
+    "channel": "android-canary/dev",
+    "installationPath": "addressed scoped root recovery"
   },
   "runtime": {
     "at": "2026-10-04T20:55:39.707132+00:00",
@@ -75,43 +86,236 @@
       "conclusion": "success",
       "databaseId": 37234340548,
       "headSha": "e75d365d29f8ecd3e4d39bbb2ac70b61abb2c883",
-      "name": "CI \u2014 Frontend",
+      "name": "CI — Frontend",
       "status": "completed"
     },
     {
       "conclusion": "success",
       "databaseId": 37234340525,
       "headSha": "e75d365d29f8ecd3e4d39bbb2ac70b61abb2c883",
-      "name": "Preview \u2014 Deploy",
+      "name": "Preview — Deploy",
       "status": "completed"
     },
     {
       "conclusion": "success",
       "databaseId": 37234340545,
       "headSha": "e75d365d29f8ecd3e4d39bbb2ac70b61abb2c883",
-      "name": "CI \u2014 Android",
+      "name": "CI — Android",
       "status": "completed"
     },
     {
       "conclusion": "success",
       "databaseId": 37234340472,
       "headSha": "e75d365d29f8ecd3e4d39bbb2ac70b61abb2c883",
-      "name": "CI \u2014 Backend",
+      "name": "CI — Backend",
       "status": "completed"
     },
     {
       "conclusion": "success",
       "databaseId": 37234335628,
       "headSha": "e75d365d29f8ecd3e4d39bbb2ac70b61abb2c883",
-      "name": "CI \u2014 Android",
+      "name": "CI — Android",
       "status": "completed"
     }
   ],
-  "readiness": "SOURCE_FIXED / INSTALLED_CANARY_OPEN",
-  "deferredReason": "Urgent Windows disk-writer attribution; no heavy APK builds during observation",
+  "readiness": "SOURCE_FIXED / STARTUP_CANARY_VERIFIED / LONG_RETENTION_SOAK_OPEN",
   "limitations": [
     "Not proof of Android RSS or all-process file allocation",
     "Does not attribute hundreds of GB on Windows",
     "Two full-suite skipped cases remain unverified"
-  ]
+  ],
+  "artifactWorkflows": [
+    {
+      "conclusion": "success",
+      "databaseId": 37242583710,
+      "name": "Preview — Deploy",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37242583710"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 37242583740,
+      "name": "CI — Frontend",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37242583740"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 37242583704,
+      "name": "CI — Android",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37242583704"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 37242583774,
+      "name": "CI — Backend",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37242583774"
+    }
+  ],
+  "installedCanary": {
+    "observedAt": "2026-10-04T23:19:48.027861+00:00",
+    "onlineVersions": {
+      "10244": 12,
+      "10245": 2
+    },
+    "readOnlyAndroidCommands": 6,
+    "dataCleared": false,
+    "hostAdbUsed": false,
+    "automaticRetry": false,
+    "targets": [
+      {
+        "name": "auto-ph-010",
+        "location": "local",
+        "versionCode": 10245,
+        "heartbeat": "2026-10-04T23:19:34.236520Z",
+        "packageHashMatchesCandidate": true,
+        "installedSha256": "f2a5c1532340e6014500d08480ae02f61d7b8f58224150fe0c4d0424642f39eb",
+        "grantCleared": true,
+        "beforeOrdinaryCount": 6,
+        "beforeMaxBytes": 2097284,
+        "ordinaryCount": 5,
+        "ordinaryMaxBytes": 2097152,
+        "ordinaryTotalBytes": 8761622,
+        "sidecarBytes": 26320,
+        "healthCounterReceived": true,
+        "lastHealthCounter": "dropped_entries_total=0 counter_scope=process",
+        "logQueryTotal": 5000,
+        "lastLogUploadAt": "2026-10-04T23:19:45.289672+00:00"
+      },
+      {
+        "name": "auto-ph-025",
+        "location": "remote",
+        "versionCode": 10245,
+        "heartbeat": "2026-10-04T23:19:43.023940Z",
+        "packageHashMatchesCandidate": true,
+        "installedSha256": "f2a5c1532340e6014500d08480ae02f61d7b8f58224150fe0c4d0424642f39eb",
+        "grantCleared": true,
+        "beforeOrdinaryCount": 6,
+        "beforeMaxBytes": 2101247,
+        "ordinaryCount": 5,
+        "ordinaryMaxBytes": 2097152,
+        "ordinaryTotalBytes": 9560342,
+        "sidecarBytes": 61449,
+        "healthCounterReceived": false,
+        "lastHealthCounter": null,
+        "logQueryTotal": 5000,
+        "lastLogUploadAt": "2026-10-04T23:17:03.410803+00:00"
+      }
+    ],
+    "installReceiptsSha256": {
+      "local": "281bdafc68b8735ad189684b7baff7b19e2ad497acbf690b7a737b531c48d3f6",
+      "remote": "ee6dee5673cedf3a3f42354e132b4c4e8674756b693621c6dfd68922d8c74e66"
+    },
+    "verificationSha256": "2f247f0b95e5244f2684cb69c604c10db6f6a1c6026c989c507d75164c53728c"
+  },
+  "installedFollowup": {
+    "observedAt": "2026-10-04T23:32:03.576065+00:00",
+    "targets": [
+      {
+        "name": "auto-ph-010",
+        "location": "local",
+        "versionCode": 10245,
+        "heartbeat": "2026-10-04T23:31:34.194158Z",
+        "packageHashMatchesCandidate": true,
+        "installedSha256": "f2a5c1532340e6014500d08480ae02f61d7b8f58224150fe0c4d0424642f39eb",
+        "grantCleared": true,
+        "beforeOrdinaryCount": 6,
+        "beforeMaxBytes": 2097284,
+        "ordinaryCount": 5,
+        "ordinaryMaxBytes": 2097152,
+        "ordinaryTotalBytes": 8763712,
+        "sidecarBytes": 26320,
+        "healthCounterReceived": true,
+        "lastHealthCounter": "dropped_entries_total=0 counter_scope=process",
+        "logQueryTotal": 5000,
+        "lastLogUploadAt": "2026-10-04T23:19:45.289672+00:00"
+      },
+      {
+        "name": "auto-ph-025",
+        "location": "remote",
+        "versionCode": 10245,
+        "heartbeat": "2026-10-04T23:31:42.991438Z",
+        "packageHashMatchesCandidate": true,
+        "installedSha256": "f2a5c1532340e6014500d08480ae02f61d7b8f58224150fe0c4d0424642f39eb",
+        "grantCleared": true,
+        "beforeOrdinaryCount": 6,
+        "beforeMaxBytes": 2101247,
+        "ordinaryCount": 5,
+        "ordinaryMaxBytes": 2097152,
+        "ordinaryTotalBytes": 9562761,
+        "sidecarBytes": 61449,
+        "healthCounterReceived": false,
+        "lastHealthCounter": null,
+        "logQueryTotal": 5000,
+        "lastLogUploadAt": "2026-10-04T23:17:03.410803+00:00"
+      }
+    ],
+    "verificationSha256": "811ee5b0b6bd9ec641b733fb66024c74826aed2df513dd73556ffb270b4e667f",
+    "readOnlyAndroidCommands": 6
+  },
+  "diagnosticUploads": {
+    "observedAt": "2026-10-04T23:32:51.446101+00:00",
+    "postInstallConfirmedTargets": 2,
+    "targets": [
+      {
+        "readBytes": 1048576,
+        "dailyFileBytes": 1480837,
+        "completeHealthFooterSeen": true,
+        "lastUploadAt": "2026-10-04T23:19:45.289672+00:00",
+        "payloadBytes": 59355,
+        "droppedEntries": 0,
+        "name": "auto-ph-010",
+        "postInstallConfirmed": true
+      },
+      {
+        "readBytes": 1048576,
+        "dailyFileBytes": 1705519,
+        "completeHealthFooterSeen": true,
+        "lastUploadAt": "2026-10-04T23:32:04.100039+00:00",
+        "payloadBytes": 65453,
+        "droppedEntries": 0,
+        "name": "auto-ph-025",
+        "postInstallConfirmed": true
+      }
+    ],
+    "receiptSha256": "0fc51ca103aa0ae8066c5684f8f0f38593453b04763bc8a6f829c578d3fe21d5"
+  },
+  "finiteObservation": {
+    "startedAt": "2026-10-04T23:21:42.922768+00:00",
+    "finishedAt": "2026-10-04T23:26:51.311582+00:00",
+    "samples": 11,
+    "intervalSeconds": 30,
+    "all14IdsAndEpochsPreserved": true,
+    "allHeartbeatsUnder60Seconds": true,
+    "allResourceGuardsPassed": true,
+    "all46ContainerIdentitiesAndEpochsPreserved": true,
+    "receiptSha256": "0a77e924eba2104888ab8c2cc794c3fde67557c46966a73790549075740d4fe4",
+    "notLongSoak": true,
+    "firstResources": {
+      "observedAt": "2026-10-04T23:21:42.973767+00:00",
+      "system": "Windows",
+      "freeDiskBytes": 63240568832,
+      "deviceCommandsSent": false,
+      "mutationsPerformed": false,
+      "availableRamBytes": 17232576512,
+      "totalRamBytes": 50668236800,
+      "committedBytes": 66812002304,
+      "commitLimitBytes": 95153381376,
+      "findings": []
+    },
+    "lastResources": {
+      "observedAt": "2026-10-04T23:26:50.201288+00:00",
+      "system": "Windows",
+      "freeDiskBytes": 63250595840,
+      "deviceCommandsSent": false,
+      "mutationsPerformed": false,
+      "availableRamBytes": 17083682816,
+      "totalRamBytes": 50668236800,
+      "committedBytes": 66732929024,
+      "commitLimitBytes": 95153381376,
+      "findings": []
+    }
+  }
 }

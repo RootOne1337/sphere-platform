@@ -126,3 +126,12 @@ Logical sizes не называются reclaimable physical bytes.
 Прочие shared images/cache пока не получили ownership proof для удаления.
 Global prune и изменение общего Docker GC budget этим этапом не выполнялись.
 VHD physical compaction, global server log quota и long RAM soak OPEN.
+
+## Первый follow-up после resize
+
+23:04:43 UTC, через6min после действия: Max8 589 934 592bytes сохранён,
+Used/Allocated0, shadow copies0, restore points0, native query errors0.
+Free C:63 322 935 296bytes, изменение−2 461 696bytes /−2,348MiB относительно
+immediate after. Это один короткий follow-up, не обещание отсутствия дальнейших
+writes/VSS points. Следующая APK build выполнялась отдельно после этой проверки
+и завершилась с прошедшим disk/RAM guard; её записи не относятся к clean ETW окну.
