@@ -18,10 +18,11 @@ import { LogcatViewer } from './LogcatViewer';
 import { RunScriptTab } from './RunScriptTab';
 import { DEVICE_COMMAND_TIMEOUT } from './interactiveResult';
 import { NativeScreenshotPanel } from './NativeScreenshotPanel';
+import { AndroidProfilePanel } from './AndroidProfilePanel';
 import { DeviceDiagnosticsPanel, DeviceHistoryPanel, DeviceSavedLogsPanel, Metric, utcTime } from './DeviceOperationsPanels';
 import { useCapabilities } from '@/src/features/access/Capabilities';
 
-type View = 'summary' | 'tasks' | 'events' | 'diagnostics' | 'logs' | 'stream' | 'terminal' | 'logcat' | 'script' | 'screenshot';
+type View = 'summary' | 'tasks' | 'events' | 'diagnostics' | 'logs' | 'stream' | 'terminal' | 'logcat' | 'script' | 'screenshot' | 'profile';
 const VIEWS = [['summary', 'Обзор'], ['tasks', 'Задачи'], ['events', 'События'], ['diagnostics', 'Видео'], ['logs', 'Логи APK']] as const;
 
 function reportedNumber(value: unknown, suffix: string, max = Infinity): string {
@@ -85,6 +86,7 @@ export function DeviceInspectorDetail({ deviceId, fullPage = false }: { deviceId
           {view === 'logcat' && access.can('device:read') && <div className="h-[480px] min-w-0"><LogcatViewer deviceId={deviceId} enabled={isReachable} /></div>}
           {view === 'script' && canWrite && <RunScriptTab deviceId={deviceId} deviceName={device.name} isOnline={isReachable} onBack={() => setView('summary')} />}
           {view === 'screenshot' && canWrite && <NativeScreenshotPanel key={deviceId} deviceId={deviceId} enabled={isReachable} />}
+          {view === 'profile' && canWrite && <AndroidProfilePanel key={deviceId} deviceId={deviceId} enabled={isReachable} />}
         </> : <>
           <dl className={`grid grid-cols-2 gap-3 ${fullPage ? 'lg:grid-cols-4' : ''}`}>
             <Metric label="Sphere Agent" value={device.agent_version ? `${device.agent_version}${device.agent_version_code ? ` / ${device.agent_version_code}` : ''}` : 'Версия не сообщена'} />
@@ -110,7 +112,7 @@ export function DeviceInspectorDetail({ deviceId, fullPage = false }: { deviceId
             </div>
             {!isReachable && <p className="text-xs text-muted-foreground">Живые команды недоступны при этом состоянии. Сохранённые задачи, события и логи можно проверить во вкладках.</p>}
           </section>
-          <section className="space-y-3 rounded-xl border border-border p-4"><h4 className="text-sm font-semibold">Идентификация и доступ</h4><dl className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <section className="space-y-3 rounded-xl border border-border p-4"><div className="flex flex-wrap items-center justify-between gap-3"><h4 className="text-sm font-semibold">Идентификация и доступ</h4><Button variant="outline" disabled={!canWrite || !isReachable} onClick={() => setView('profile')}>Системный профиль Android</Button></div><dl className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <Metric label="ID Sphere" value={<span className="break-all font-mono text-xs">{device.id}</span>} />
             <Metric label={device.android_id ? 'Android ID' : 'Серийный идентификатор'} value={<span className="break-all font-mono text-xs">{device.android_id || device.serial || 'Не сообщён'}</span>} />
             <Metric label="ADB (дополнительный канал)" value={typeof device.adb_connected === 'boolean' ? device.adb_connected ? 'Подключён' : 'Не подключён' : 'Не сообщено'} />
