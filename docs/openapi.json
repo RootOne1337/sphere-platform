@@ -2752,6 +2752,54 @@
         }
       }
     },
+    "/api/v1/devices/{device_id}/ui-hierarchy": {
+      "post": {
+        "tags": [
+          "devices"
+        ],
+        "summary": "Прочитать ограниченный снимок дерева Android UI Automator",
+        "operationId": "request_ui_hierarchy_api_v1_devices__device_id__ui_hierarchy_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "device_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Device Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UiHierarchyResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/devices/{device_id}/shell": {
       "post": {
         "tags": [
@@ -18540,6 +18588,162 @@
           "access_token"
         ],
         "title": "TokenResponse"
+      },
+      "UiBounds": {
+        "properties": {
+          "left": {
+            "type": "integer",
+            "title": "Left"
+          },
+          "top": {
+            "type": "integer",
+            "title": "Top"
+          },
+          "right": {
+            "type": "integer",
+            "title": "Right"
+          },
+          "bottom": {
+            "type": "integer",
+            "title": "Bottom"
+          }
+        },
+        "type": "object",
+        "required": [
+          "left",
+          "top",
+          "right",
+          "bottom"
+        ],
+        "title": "UiBounds"
+      },
+      "UiHierarchyNode": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "parent_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Id"
+          },
+          "depth": {
+            "type": "integer",
+            "title": "Depth"
+          },
+          "xpath": {
+            "type": "string",
+            "title": "Xpath"
+          },
+          "attributes": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Attributes"
+          },
+          "bounds": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UiBounds"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "parent_id",
+          "depth",
+          "xpath",
+          "attributes",
+          "bounds"
+        ],
+        "title": "UiHierarchyNode"
+      },
+      "UiHierarchyResponse": {
+        "properties": {
+          "device_id": {
+            "type": "string",
+            "title": "Device Id"
+          },
+          "snapshot_id": {
+            "type": "string",
+            "title": "Snapshot Id"
+          },
+          "requested_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Requested At"
+          },
+          "completed_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Completed At"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "android_uiautomator_root"
+            ],
+            "const": "android_uiautomator_root",
+            "title": "Source",
+            "default": "android_uiautomator_root"
+          },
+          "width": {
+            "type": "integer",
+            "maximum": 16384.0,
+            "minimum": 1.0,
+            "title": "Width"
+          },
+          "height": {
+            "type": "integer",
+            "maximum": 16384.0,
+            "minimum": 1.0,
+            "title": "Height"
+          },
+          "rotation": {
+            "type": "integer",
+            "maximum": 3.0,
+            "minimum": 0.0,
+            "title": "Rotation"
+          },
+          "temporary_file_cleanup_confirmed": {
+            "type": "boolean",
+            "title": "Temporary File Cleanup Confirmed",
+            "default": false
+          },
+          "nodes": {
+            "items": {
+              "$ref": "#/components/schemas/UiHierarchyNode"
+            },
+            "type": "array",
+            "maxItems": 4096,
+            "title": "Nodes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "device_id",
+          "snapshot_id",
+          "requested_at",
+          "completed_at",
+          "width",
+          "height",
+          "rotation",
+          "nodes"
+        ],
+        "title": "UiHierarchyResponse"
       },
       "UpdateDeviceRequest": {
         "properties": {

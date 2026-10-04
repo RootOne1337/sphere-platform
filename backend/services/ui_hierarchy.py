@@ -48,6 +48,11 @@ def parse_hierarchy(xml: str, size: tuple[int, int]) -> tuple[int, int, int, lis
         for offset in range(0, len(xml), 2048):
             parser.feed(xml[offset:offset + 2048])
             for event, node in parser.read_events():
+                # ElementTree's event type also permits namespace payloads.
+                # This parser requests only element events; reject any other
+                # payload before accessing the node or accepting a snapshot.
+                if not isinstance(node, ET.Element):
+                    raise InvalidUiHierarchy("ui_dump_structure_invalid")
                 if event == "end":
                     stack.pop()
                     node.clear()
