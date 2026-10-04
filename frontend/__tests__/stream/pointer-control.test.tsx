@@ -79,6 +79,37 @@ function readyGestureFixture(enableStaticInput = false, readOnly = false) {
   return { ...view, canvas, socket, commands, down, up };
 }
 
+function readyWheel() {
+  const view = readyGestureFixture(true);
+  view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput enableNavigation />);
+  const wheel = (deltaY = 80, options: Record<string, unknown> = {}) => fireEvent.wheel(view.canvas, { clientX: 50, clientY: 50, deltaY, ...options });
+  return { ...view, wheel };
+}
+
+it('maps downward and upward wheel movements to bounded swipes at native video coordinates', () => {
+  const view = readyWheel();
+  // Native non-passive handler cancels page scrolling on an accepted gesture.
+  expect(view.wheel(80, { cancelable: true })).toBe(false);
+  expect(view.commands()).toEqual([{ type: 'swipe', x1: 640, y1: 440, x2: 640, y2: 280, duration_ms: 180 }]);
+  act(() => jest.advanceTimersByTime(250)); view.wheel(-80);
+  expect(view.commands()[1]).toEqual({ type: 'swipe', x1: 640, y1: 280, x2: 640, y2: 440, duration_ms: 180 });
+});
+it('bounds horizontal wheel gestures and throttles a wheel burst without deferred replay', () => {
+  const view = readyWheel(); view.wheel(0, { deltaX: 1000 }); view.wheel(80);
+  expect(view.commands()).toHaveLength(1);
+  expect(view.commands()[0]).toEqual({ type: 'swipe', x1: 760, y1: 360, x2: 520, y2: 360, duration_ms: 180 });
+  act(() => jest.advanceTimersByTime(500)); expect(view.commands()).toHaveLength(1);
+});
+it.each(['inspection', 'readonly', 'closed', 'zoom', 'letterbox', 'pressure'])('does not inject wheel gestures for %s', reason => {
+  const view = readyWheel();
+  if (reason === 'inspection') view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput enableNavigation inspection={{ onPick: jest.fn(), bounds: null }} />);
+  if (reason === 'readonly') view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput enableNavigation readOnly />);
+  if (reason === 'closed') view.socket.readyState = MockSocket.CLOSED;
+  if (reason === 'pressure') Object.assign(view.socket, { bufferedAmount: 65_537 });
+  view.wheel(80, reason === 'zoom' ? { ctrlKey: true } : reason === 'letterbox' ? { clientY: 0 } : {});
+  expect(view.commands()).toHaveLength(0);
+});
+
 it('read-only viewers render a picture without dispatching taps or swipes, including static frames', () => {
   const { canvas, commands, down, up } = readyGestureFixture(true, true);
   expect(canvas.width).toBe(1280);

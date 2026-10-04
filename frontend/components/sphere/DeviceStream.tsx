@@ -86,6 +86,7 @@ export function DeviceStream({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const renderedSocketRef = useRef<WebSocket | null>(null);
+  const lastWheelAt = useRef(-Infinity);
   const decoderRef = useRef<H264Decoder | null>(null);
   const dragRef = useRef<{
     x: number; y: number; pointerId: number; frameWidth: number; frameHeight: number; inspection: boolean;
@@ -485,6 +486,42 @@ export function DeviceStream({
     if (e.pointerId === dragRef.current?.pointerId) dragRef.current = null;
   }, []);
 
+  const handleWheel = useCallback((e: WheelEvent) => {
+    // Wheel control belongs to the selected-device view. Never intercept
+    // browser zoom, inspection, a retained old socket frame or a held drag.
+    const socket = wsRef.current;
+    const canvas = canvasRef.current;
+    if (!enableNavigation || !canInteract || !canvas || !socket || socket.readyState !== WebSocket.OPEN
+      || renderedSocketRef.current !== socket || socket.bufferedAmount > 64 * 1024 || dragRef.current || e.ctrlKey || e.metaKey) return;
+    const point = toCanvasCoords(e.clientX, e.clientY);
+    if (!point || !Number.isFinite(e.deltaX) || !Number.isFinite(e.deltaY)) return;
+    const horizontal = Math.abs(e.deltaX) > Math.abs(e.deltaY);
+    const delta = horizontal ? e.deltaX : e.deltaY;
+    if (!delta) return;
+    e.preventDefault();
+    const at = performance.now();
+    if (at - lastWheelAt.current < 250) return;
+    lastWheelAt.current = at;
+    const size = horizontal ? canvas.width : canvas.height;
+    const normalized = Math.abs(delta) * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? size : 1);
+    const distance = Math.min(size * 0.25, 240, Math.max(40, normalized * 2));
+    const direction = Math.sign(delta);
+    const clamp = (value: number) => Math.round(Math.max(0, Math.min(size - 1, value)));
+    const position = horizontal ? point.x : point.y;
+    const from = clamp(position + direction * distance / 2);
+    const to = clamp(position - direction * distance / 2);
+    if (from === to) return;
+    socket.send(JSON.stringify({ type: 'swipe', x1: horizontal ? from : point.x, y1: horizontal ? point.y : from,
+      x2: horizontal ? to : point.x, y2: horizontal ? point.y : to, duration_ms: 180 }));
+  }, [canInteract, enableNavigation, toCanvasCoords]);
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    // React delegates wheel events passively in modern browsers. A native
+    // non-passive listener is required to prevent scrolling the surrounding page.
+    canvas?.addEventListener('wheel', handleWheel, { passive: false });
+    return () => canvas?.removeEventListener('wheel', handleWheel);
+  }, [handleWheel]);
+
   const saveFrame = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canSaveFrame || !canvas || canvas.width < 1 || canvas.height < 1) return;
@@ -653,7 +690,7 @@ export function DeviceStream({
       </div>
     )}
     </div>
-    {enableNavigation && <AndroidNavigationBar key={deviceId} deviceId={deviceId}
+    {enableNavigation && <AndroidNavigationBar key={deviceId} deviceId={deviceId} extended
       available={canNavigate && wsRef.current?.readyState === WebSocket.OPEN}
       isAvailable={() => canNavigate && wsRef.current?.readyState === WebSocket.OPEN} />}
     </div>
