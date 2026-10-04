@@ -1,5 +1,19 @@
 # Android Agent
 
+> **Текущее наблюдение: 4 октября 2026, 05:55 UTC+5.** 14 доступных Android на
+> **1.2.44-dev / 10244**, APK source ad34c12; 5 offline вне приёмки. Canary44 managed,
+> normal/android-dev10209; stable promotion не принят. APK в этом этапе не менялся.
+> API 9274e50 / UI 84750e3: root UI Automator/XPath через существующий APK SHELL;
+> PH010 45 / PH025 49 узлов, 960×540, cleanup confirmed. Автоматическое чтение только
+> в активном видимом инспекторе, 5 с после ответа, один запрос; при ошибке пауза.
+> Полный сервер UIAutomator2 и nonroot путь пока не встроены. Canvas/game может
+> раскрывать лишь поверхность. Нет host ADB/PC Agent; выбор не отправляет tap.
+> Дерево/video независимы; lease 30 с с начала запроса; raw XML не публикуется в лог.
+> UI readback сохранил 14 online/epochs в 7 срезах; ранее API gate 14→13/PH015 FAILED.
+> [Контракт и пределы](audits/2026-10-04/UI-HIERARCHY-INSPECTOR.md) ·
+> [APK44 native rollout](audits/2026-10-03/OTA-SIGNER-COMPATIBILITY.md) ·
+> [Каноническое состояние](operations/CURRENT-STATE.md). Browser/latency/soak OPEN.
+
 > **Состояние на 1 октября 2026:** source **1.2.40 / 10240**, APK source 68155c1.
 > Configured debug planar=true/GPU=false, прежний pilot signer/package.
 > SHA256 `c612fba1e4a537ab1a0d9951e520bbd4063c3548308a4ebc31b72b59fa735a70`.

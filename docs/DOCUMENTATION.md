@@ -2,8 +2,16 @@
 
 [Каталог](README.md) · [Readiness](operations/READINESS.md) · [Contributing](../CONTRIBUTING.md)
 
-**Последняя сверка входных документов: 4 октября 2026, 02:04 UTC+5.** Для текущих
+**Последняя сверка входных документов: 4 октября 2026, 05:55 UTC+5.** Для текущих
 версий и границ live-подтверждения используйте [каноническое состояние](operations/CURRENT-STATE.md).
+
+Последний follow-up: API **9274e50** / UI **84750e3**, [F35 XPath-инспектор](audits/2026-10-04/UI-HIERARCHY-INSPECTOR.md).
+1043 frontend и 108 API cases приняты в образах; PH010/PH025 actual root trees.
+Пользовательский отказ входа/выбора воспроизведён и исправлен; 8 pointer workflows.
+Original ledger: 34 source-fixed / 7 незакрытых. Browser/native UA2/nonroot/soak OPEN.
+Прежние 500/504 и FAILED API fleet window 14→13 сохранены рядом с успехами;
+последний UI readback сохранил 14 online и epochs в 7 срезах. Это не uptime SLA.
+Generated OpenAPI: 177 operations / 139 paths; shipped API9274 schema check passed.
 
 ## Где искать текущий ответ
 

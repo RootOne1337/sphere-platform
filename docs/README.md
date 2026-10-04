@@ -9,13 +9,23 @@
 </div>
 
 > [!NOTE]
-> **Срез навигации: 3 октября 2026.** Канонические source/runtime факты,
+> **Срез навигации: 4 октября 2026.** Канонические source/runtime факты,
 > версии Android, ограничения диагностики и будущий этап 20–30 устройств собраны
 > в [актуальном состоянии](operations/CURRENT-STATE.md). Каталог не выполняет
 > автоматическую проверку runtime; старые аудиты сохраняют собственные даты и
 > версии и не должны читаться как текущий deploy. [Правила актуальности](DOCUMENTATION.md).
 
-Последняя runtime-проверка — **4 октября 2026, 02:04 UTC+5**:
+Последняя runtime-проверка — **4 октября 2026, 05:55 UTC+5**:
+[F35 XPath: контракт и live Android](audits/2026-10-04/UI-HIERARCHY-INSPECTOR.md) ·
+[Evidence](audits/2026-10-04/UI-HIERARCHY-INSPECTOR-EVIDENCE.json).
+API **9274e50** / UI **84750e3** на 3015; 110 suites / 1043 frontend и 108 API cases
+в образах. Вход в инспектор загружает дерево; выбор, атрибуты, подсветка и активное
+автообновление покрыты 8 pointer workflow tests. PH010 45 / PH025 49 реальных узлов.
+После UI rollout 14 online APK10244 и прежние даты соединений во всех 7 срезах;
+API/Tuna/OTA и 15 соседей сохранены. Предыдущее API окно FAILED 14→13/PH015
+не скрыто. **34 source-fixed / 7 незакрытых, включая 3 PARTIAL**; browser/soak OPEN.
+
+Предыдущая runtime-проверка — **4 октября 2026, 02:04 UTC+5**:
 [F39: формы групп и локаций](audits/2026-10-04/ORGANIZATION-ACTION-PERMISSIONS.md) ·
 [Evidence](audits/2026-10-04/ORGANIZATION-ACTION-PERMISSIONS-EVIDENCE.json).
 API **37bb436** / UI **922f479** на 3015; 1013 frontend / 89 API проверок в образах.
@@ -41,6 +51,7 @@ Normal/dev 10209; stable/manifest/bulk/visual/soak/F36 OPEN. Исходный а
 | Мне нужно | Начать здесь | Дальше |
 | --- | --- | --- |
 | Проверить полный веб-аудит и текущие исправления | [Аудит всех маршрутов, меню и возможностей API — 1 октября](audits/2026-10-01/WEB-FULL-CAPABILITY-AUDIT.md) | [Журнал исправлений F01–F41](audits/2026-10-01/WEB-AUDIT-REMEDIATION.md) · [Fixes: актуальные tests / installed UI](audits/2026-10-01/WEB-AUDIT-FIXES-VALIDATION.json) · [Frozen audit evidence](audits/2026-10-01/WEB-FULL-CAPABILITY-AUDIT-EVIDENCE.json) · [Проверки документа](audits/2026-10-01/AUDIT-VALIDATION.json) |
+| Выбрать UI-элемент рядом с видео устройства | [XPath-инспектор](audits/2026-10-04/UI-HIERARCHY-INSPECTOR.md) | Actual root APK/tree, limits, errors и [evidence](audits/2026-10-04/UI-HIERARCHY-INSPECTOR-EVIDENCE.json); nonroot/visual gate OPEN |
 | Создать площадку, задать координаты или изменить иерархию | [Контракт локаций](operations/LOCATION-HIERARCHY.md) | [F26 proof](audits/2026-10-03/LOCATION-HIERARCHY.md) · [Receipts](audits/2026-10-03/LOCATION-HIERARCHY-EVIDENCE.json) |
 | Просмотреть/изменить pipeline и допуск запусков | [Определения pipeline](operations/PIPELINE-DEFINITIONS.md) | [F28 proof](audits/2026-10-03/PIPELINE-DEFINITION-WORKFLOW.md) · [Receipts](audits/2026-10-03/PIPELINE-DEFINITION-WORKFLOW-EVIDENCE.json) |
 | Просмотреть DAG версии, откатить сценарий или открыть архив | [Версии сценариев](operations/SCRIPT-VERSIONS.md) | [F27 proof](audits/2026-10-02/SCRIPT-VERSION-WORKFLOW.md) · [Receipts](audits/2026-10-02/SCRIPT-VERSION-WORKFLOW-EVIDENCE.json) |

@@ -15,10 +15,30 @@ section and optional task/batch version admission condition were reconciled with
 source `d2846ef` on 2 October; other Batches details retain their 7 September review.
 Locations were reconciled with `db6be05` on 3 October. OTA publication was
 reconciled with `facba9a` on 3 October: [metadata/receipt and Android APK checks](operations/OTA-PUBLICATION-AND-APK-CHECKS.md).
-The generated snapshot was synchronized in `5bb36ca`; 175 HTTP operations across 137 paths.
+The current snapshot was exported from API `35ef83f` and rechecked against the shipped `9274e50` image on 4 October: **177 HTTP operations across 139 paths**. Earlier snapshots retain their dated reports.
 Other manual sections
 still need component review; a listed contract does not establish runtime or
 security correctness. See the [audit report](audits/2026-09-05/AUDIT-REPORT.md).
+
+## Android UI hierarchy snapshot
+
+`POST /api/v1/devices/{device_id}/ui-hierarchy`, no request body, requires
+`device:write` and tenant-owned device. It uses existing APK root SHELL to issue
+five separate fixed read/UUID-cleanup commands; it accepts no user shell/XML/XPath.
+Success is `UiHierarchyResponse`: native width/height/rotation, source,
+device/snapshot identity, requested/completed timestamps, cleanup flag and bounded
+nodes with parent/depth/positional XPath/full returned attributes/bounds.
+Successful response is `Cache-Control: no-store`. Root/UI Automator is required;
+Canvas pixels and unsupported nonroot devices do not become inspectable nodes.
+
+Runtime outcomes include409 geometry change,429 concurrent inspection,
+502 failed/invalid dump or receipt,503 unavailable transport/lock,504 deadline.
+The server has40s read budget; each RPC8s, separate best-effort UUID cleanup.
+No background polling/automatic retry/offline replay. Cleanup failure preserves
+the original error or returns a valid snapshot with cleanup flag false.
+Read-only refers to UI state: a UUID-owned temporary dump is created and deleted.
+Tree and video are independent, with a conservative30s UI lease from request start.
+See [full contract, tests and actual local/remote Android proof](audits/2026-10-04/UI-HIERARCHY-INSPECTOR.md).
 
 ## Authentication
 

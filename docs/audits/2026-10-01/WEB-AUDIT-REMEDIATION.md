@@ -3,7 +3,26 @@
 Этот журнал продолжает [замороженный аудит](WEB-FULL-CAPABILITY-AUDIT.md) исходников `1354d66`. Исходный документ и evidence сохраняют свою дату и ограничения; их статусы не переписываются задним числом.
 
 > [!IMPORTANT]
-> **Текущая установка: API 37bb436 / UI 922f479**, review [3015](http://127.0.0.1:3015/devices).
+> **Текущая установка: API 9274e50 / UI 84750e3**, [review 3015](http://127.0.0.1:3015/devices).
+> **4 октября 2026, 05:55 UTC+5:** исправлен пользовательский отказ XPath:
+> вход в режим сам читает дерево после текущего кадра, клик во время загрузки
+> сохраняется. Подсветка, все возвращённые атрибуты, XPath/JSON и список узлов;
+> автообновление через 5 с после ответа, только в видимом инспекторе, при ошибке — пауза.
+> **5 воспроизведённых отказов → 8 интеграционных pointer cases; 110 наборов /
+> 1043 frontend-теста; 108 API/XML/PostgreSQL/Redis проверок** прошли в образах.
+> На API получены настоящие деревья: PH010 — 45, удалённый PH025 — 49 узлов,
+> 960×540, cleanup подтверждён. APK 1.2.44-dev / 10244 в этом этапе не менялся.
+> Используется root UI Automator; полный встроенный сервер UIAutomator2 не добавлен.
+> После замены UI: 7 срезов сохранили 14 online и даты соединений; API/Tuna/OTA
+> и 15 соседей сохранены. Прежний API gate **FAILED (14→13, PH015)** остаётся в evidence;
+> последующее восстановление не доказывает непрерывную стабильность. Это не soak/SLA.
+> **34 source-fixed / 7 незакрытых, включая 3 PARTIAL.** F35 visual и nonroot path,
+> Matrix preview, качество/задержка, другие формы, durable outcomes и нагрузка OPEN.
+> CI каждого source и пределы браузерной приёмки записаны отдельно.
+> [Контракт и доказательства](../2026-10-04/UI-HIERARCHY-INSPECTOR.md) · Browser: OPEN_URL_POLICY_BLOCKED.
+
+> [!IMPORTANT]
+> **Предыдущая установка: API 37bb436 / UI 922f479**, review [3015](http://127.0.0.1:3015/devices).
 > Проверено **4 октября 2026, 02:04 UTC+5**. F39: группы и локации используют проверенные сервером
 > права записи и удаления; открытые формы и Enter учитывают полученный отзыв доступа.
 > **16 воспроизведённых отказов → 107 наборов / 1013 тестов** в собранном веб-образе;
@@ -101,7 +120,7 @@ production image; N06 actual DI/live422/404 принято. VPN provider/Android
 | [F32](WEB-FULL-CAPABILITY-AUDIT.md#f32) | P2 | Частично; lifecycle/visual OPEN | Explicit targets/action, owned preflight, per-device receipts и no replay исправлены; kill transport unsupported, durable reconciliation/visual OPEN |
 | [F33](WEB-FULL-CAPABILITY-AUDIT.md#f33) | P2 | Частично; bulk/manifest/visual OPEN | Addressed installs14/14, metadata/receipt и APK identity guards приняты по своим gates; general bulk/manifest/stable promotion и visual OPEN |
 | [F34](WEB-FULL-CAPABILITY-AUDIT.md#f34) | P2 | Открыто | Матричный режим использует полноценный H.264 для каждого окна |
-| [F35](WEB-FULL-CAPABILITY-AUDIT.md#f35) | P2 | Открыто | XPath-инспектор на видеокарточке ещё отсутствует |
+| [F35](WEB-FULL-CAPABILITY-AUDIT.md#f35) | P2 | Source исправлен; live Android API принят, visual OPEN | [XPath рядом с видео; root APK, bounded tree](../2026-10-04/UI-HIERARCHY-INSPECTOR.md) |
 | [F36](WEB-FULL-CAPABILITY-AUDIT.md#f36) | P2 | Открыто | Управление quality/FPS не раскрыто в single stream |
 | [F37](WEB-FULL-CAPABILITY-AUDIT.md#f37) | P2 | Source исправлен; live OPEN | Аудит: фильтры и CSV действуют на текущую страницу |
 | [F38](WEB-FULL-CAPABILITY-AUDIT.md#f38) | P2 | Source исправлен; live OPEN | Пользователи: форма не связывает backend validation с полями |
@@ -561,3 +580,21 @@ types и 89 связанных PostgreSQL/Redis cases прошли. Build/instal
 прежние даты соединений и 15 соседних сервисов сохранены. Каталоги API:
 одна группа и ноль локаций, метаданные не изменились. Живые мутации не отправлялись.
 [Runtime evidence](../2026-10-04/ORGANIZATION-ACTION-PERMISSIONS-EVIDENCE.json).
+
+## F35 — UI Automator / XPath, 4 октября 2026
+
+API 9274e50 / UI 84750e3 установлены на 3015. Первоначальная ручная модель
+35ef83f не загрузила дерево при входе и теряла первый клик: пользовательский
+отказ воспроизведён пятью assertions. Теперь загрузка начинается после текущего
+кадра, pending pick сохранён, выбор/атрибуты/подсветка обновляются; список узлов
+и miss/error feedback доступны. Автообновление: 5 с после ответа, один запрос,
+только активная видимая страница, пауза после ошибки. 8 integrated pointer cases,
+152 stream cases, 1043 frontend tests / 110 suites в image passed.
+Root APK44: PH010 45 / PH025 49 узлов. 108 API image cases; shipped mypy 2.3.1:
+228 файлов; OpenAPI 177 операций / 139 путей. Первые 500/504 и CI schema/type
+failures сохранены. API gate 00:29–00:30 UTC FAILED: PH015 выпал, причина неизвестна.
+Последний UI readback 00:54–00:55 UTC: 14 online и прежние даты соединений во всех
+семи срезах; 15 соседей/API/Tuna/OTA сохранены. Это не непрерывный uptime.
+34 source-fixed / 7 незакрытых: F32/F33/F39 PARTIAL; F34/F36/F40/F41 OPEN.
+F35 browser highlighting, полноценный встроенный UA2 и nonroot path не приняты.
+[Контракт и полный evidence](../2026-10-04/UI-HIERARCHY-INSPECTOR.md).

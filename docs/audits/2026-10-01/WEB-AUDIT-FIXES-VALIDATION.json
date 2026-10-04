@@ -5926,5 +5926,46 @@
     "cohort": 14,
     "status": "F39_PARTIAL_INSTALLED_GROUP_LOCATION_FORMS",
     "evidence": "../2026-10-04/ORGANIZATION-ACTION-PERMISSIONS-EVIDENCE.json"
+  },
+  "latestUiHierarchyFollowup": {
+    "observedAt": "2026-10-04T00:55:18.652149+00:00",
+    "source": "9274e507ab59b60f911af239d6b0fc71eaae28f3",
+    "status": "source_fixed_installed_live_android_api_accepted_visual_open",
+    "frontendImagePassed": 1043,
+    "apiImagePassed": 108,
+    "localNodes": 45,
+    "remoteNodes": 49,
+    "rootRequired": true,
+    "firstHttp500Repaired": true,
+    "firstRemote504Preserved": true,
+    "online": 14,
+    "apkCode": 10244,
+    "postRolloutEpochsStable": true,
+    "baselineEpochsPreserved": true,
+    "browserVerified": false,
+    "currentSourceFixed": 34,
+    "currentUnclosed": 7,
+    "partial": [
+      "F32",
+      "F33",
+      "F39"
+    ],
+    "open": [
+      "F34",
+      "F36",
+      "F40",
+      "F41"
+    ],
+    "evidence": "../2026-10-04/UI-HIERARCHY-INSPECTOR-EVIDENCE.json",
+    "olderSnapshotsPreserved": true,
+    "uiSource": "84750e3731dfbe18dfe81b5c1b62dc13c8bf7ea9",
+    "imageMypyFiles": 228,
+    "imageMypyVersion": "2.3.1",
+    "frontendImageSuites": 110,
+    "integratedPointerCases": 8,
+    "beforeUiFailures": 5,
+    "baselineEpochsScope": "latest UI-only rollout, not the preceding API restart",
+    "earlierApiFleetGate": "FAILED_COHORT_AND_EPOCHS: 14 to 13, PH015",
+    "userVisualAcceptance": "Operator passed: click highlight and sidebar attributes. Full visual/keyboard/mobile audit OPEN."
   }
 }

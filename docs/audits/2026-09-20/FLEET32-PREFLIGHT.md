@@ -6,7 +6,15 @@
 
 [Главная](../../../README.md) · [Документация](../../README.md) · [Readiness](../../operations/READINESS.md) · [История исправлений](../2026-09-05/AUDIT-REPORT.md)
 
-> **Последняя конечная проверка: 4 октября 2026, 02:04 UTC+5.**
+> **Последняя конечная проверка: 4 октября 2026, 05:55 UTC+5.**
+> API 9274e50 / UI 84750e3: после UI rollout те же 14 online APK10244/epochs в 7 срезах.
+> PH010/PH025 real UI Automator trees приняты; исправлен вход/выбор инспектора.
+> Предыдущий API gate FAILED 14→13/PH015 сохранён. Причина обрыва неизвестна.
+> F35 source gap исправлен; visual/native UA2/nonroot OPEN. 34 source-fixed/7 незакрытых.
+> 20–30/32-device stream+scripts/fault, browser FPS/input latency и soak не приняты;
+> решение **NO-GO** сохранено. [XPath контракт/evidence](../2026-10-04/UI-HIERARCHY-INSPECTOR.md).
+
+> **Предыдущая конечная проверка: 4 октября 2026, 02:04 UTC+5.**
 > API **37bb436** / UI **922f479**; 14 online APK 10244, прежние даты соединений сохранены.
 > 20–30/32-device admission не запускался.
 > [Формы групп/локаций: контракт и пределы](../2026-10-04/ORGANIZATION-ACTION-PERMISSIONS.md).
