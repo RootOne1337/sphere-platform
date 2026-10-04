@@ -101,6 +101,60 @@ raw files: `.local-pilot/resource-recovery-20261004/overnight-monitor-receipt.js
 и `overnight-window-bounded`. Останавливать только после сверки PID+UTC start
 ticks+command identity по receipt; не массовым завершением Python/WSL/Docker.
 
+## Как локализовать постепенный рост диска
+
+[`disk_growth`](../../scripts/pilot/disk_growth.py) — отдельная утилита для
+конечных metadata observations. Она не чистит файлы, не перезапускает Docker
+и не отправляет команды Android. Снимок содержит C: free, длину и физическое
+размещение явно указанных файлов, сравнение полных доступных сумм каталогов
+и ограниченный список изменившихся крупных файлов.
+
+```powershell
+python -m scripts.pilot.disk_growth `
+  --root . `
+  --file "$env:LOCALAPPDATA\Docker\wsl\disk\docker_data.vhdx" `
+  --output-dir .local-pilot/disk-growth-run `
+  --samples 97 --interval 300 --roots-every 3 --max-total-mib 16
+```
+
+Каталог результата должен быть новым. `--root` и `--file` можно повторить для
+Temp, каталога runtime logs и конкретных дисков LDPlayer. Roots не должны
+перекрываться. По умолчанию 97 срезов с интервалом 5 минут — плановое окно
+8 часов; directory scan выполняется каждые 15 минут, named files — каждый срез.
+Один root ограничен 500 000 entries / 60 сек; не более 12 roots / 100 named files.
+Сборщик останавливается при C: free ниже 512 MiB, превышении report quota или
+ошибке записи. Это конечный процесс, без service/autostart.
+Выход `0` — завершено плановое окно; low-disk/error остановка возвращает `2`.
+
+JSON samples ограничены 1 MiB каждый / 16 MiB суммарно при указанной конфигурации;
+atomic temporary sample может кратковременно занять ещё до 1 MiB. Status —
+отдельный небольшой JSON. Output самого сборщика исключён из directory scan,
+но входит в реальное потребление места тома. Самопроизвольной очистки старых
+наблюдений нет: завершённые окна обслуживаются отдельно.
+
+**Raw samples содержат частные локальные пути. Не загружать их в публичный Git.**
+Содержимое наблюдаемых файлов не читается. Reparse points не обходятся;
+права доступа не повышаются. Missing/access/budget failures сохраняются явно;
+partial scans не вычитаются из complete scans как доказательство роста.
+Candidate set содержит до 2000 крупнейших файлов ≥1 MiB на root, его смена
+не является доказательством создания/удаления файла. Logical totals не
+дедуплицируют hard links; allocation отдельных VHD измеряется отдельно.
+
+Рост Docker VHD требует следующего сравнения Linux image/cache/volume/log
+sizes. Рост LDPlayer image требует следующего измерения каталогов внутри
+Android через разрешённый APK RPC. Read-only metadata указывает файл,
+**но не PID программы, выполнившей запись**. Счётчики process I/O также нельзя
+считать уникальным расходом диска: повторные записи, сеть и device I/O отличаются
+от роста размещённых байтов. Для подтверждения writer использовать конечный,
+отфильтрованный OS file-I/O trace, например
+[Microsoft Process Monitor](https://learn.microsoft.com/en-us/sysinternals/downloads/procmon),
+после локализации пути. Не оставлять глобальную трассировку без лимитов:
+сам trace способен создавать большие файлы.
+
+[Регрессии диагностики](../../tests/test_pilot_disk_growth.py) проверяют sparse growth,
+unknown allocation, replacement, доступ/partial scopes, candidate semantics,
+storage/low-disk stops и расчёт delta по совпадающим концам измерения.
+
 ## Политика сборочных артефактов
 
 Frontend Dockerfile выделяет `build-deps` до `BUILD_SHA`. Зависимости меняются
