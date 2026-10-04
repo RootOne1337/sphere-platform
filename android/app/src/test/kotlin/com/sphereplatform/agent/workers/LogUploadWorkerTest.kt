@@ -211,6 +211,16 @@ class LogUploadWorkerTest {
         )
     }
 
+    @Test fun `queue overflow count reaches authenticated diagnostics even with oversized logcat`() = runTest {
+        prepareUploadCredentials()
+        every { loggingTree.getDroppedEntryCount() } returns 744L
+        every { logcatCollector.collectSphereOnly(lines = 300) } returns "x".repeat(600 * 1024)
+        assertEquals(Result.success(), worker().doWork())
+        val body = Buffer().also { requests.single().body!!.writeTo(it) }.readByteArray()
+        assertTrue(body.size <= 480 * 1024)
+        assertTrue(body.toString(Charsets.UTF_8).contains("dropped_entries_total=744 counter_scope=process"))
+    }
+
     private fun prepareUploadCredentials(routes: List<String> = listOf("https://management.test")) {
         every { auth.getToken() } returns "access-token"
         every { auth.getServerUrl() } returns "https://management.test"

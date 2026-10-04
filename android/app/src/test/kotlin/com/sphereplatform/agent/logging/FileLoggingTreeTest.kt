@@ -10,6 +10,8 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.io.File
+import java.nio.ByteBuffer
+import java.nio.charset.CodingErrorAction
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
@@ -18,10 +20,11 @@ class FileLoggingTreeTest {
     @get:Rule val temporary = TemporaryFolder()
     private lateinit var tree: FileLoggingTree
     private lateinit var directory: File
+    private lateinit var context: Context
 
     @Before
     fun setUp() {
-        val context = mockk<Context>()
+        context = mockk<Context>()
         every { context.filesDir } returns temporary.root
         tree = FileLoggingTree(context)
         directory = File(temporary.root, "sphere_logs")
@@ -42,6 +45,125 @@ class FileLoggingTreeTest {
             writeText(content, Charsets.UTF_8)
             assertTrue(setLastModified(timestamp))
         }
+
+    private fun current(file: File) {
+        FileLoggingTree::class.java.getDeclaredField("currentFile").apply { isAccessible = true }
+            .set(tree, file)
+    }
+
+    private fun write(entry: String) {
+        FileLoggingTree::class.java.getDeclaredMethod("writeEntry", String::class.java)
+            .apply { isAccessible = true }.invoke(tree, entry)
+    }
+
+    @Test
+    fun `rotation includes the new file in the five file quota`() {
+        stopWriter()
+        val old = (1..5).map { fixture("quota-$it", "old-$it\n", it.toLong()) }
+        old.last().writeBytes(ByteArray(2 * 1024 * 1024) { 'x'.code.toByte() })
+        current(old.last())
+        write("AFTER_ROTATION\n")
+        assertEquals(5, tree.getLogFiles().size)
+        assertFalse(old.first().exists())
+        assertTrue(tree.readRecentLogs().endsWith("AFTER_ROTATION\n"))
+    }
+
+    @Test
+    fun `UTF-8 append rotates before exceeding the byte limit`() {
+        stopWriter()
+        val active = fixture("nearly-full", "x".repeat(2 * 1024 * 1024 - 4))
+        current(active)
+        write("Я🚗NEWEST\n")
+        assertTrue(tree.getLogFiles().all { it.length() <= 2 * 1024 * 1024 })
+        assertEquals((2 * 1024 * 1024 - 4).toLong(), active.length())
+        assertTrue(tree.readRecentLogs().endsWith("Я🚗NEWEST\n"))
+    }
+
+    @Test
+    fun `full files cannot be reused during rapid consecutive rotations`() {
+        stopWriter()
+        val names = mutableSetOf<String>()
+        repeat(8) { index ->
+            val active = FileLoggingTree::class.java.getDeclaredField("currentFile")
+                .apply { isAccessible = true }.get(tree) as File
+            active.writeBytes(ByteArray(2 * 1024 * 1024) { 'x'.code.toByte() })
+            write("rotation-$index\n")
+            val next = FileLoggingTree::class.java.getDeclaredField("currentFile")
+                .apply { isAccessible = true }.get(tree) as File
+            assertTrue("Every rotation must create a distinct file", names.add(next.name))
+            assertEquals("rotation-$index\n", next.readText())
+            assertTrue(tree.getLogFiles().size <= 5)
+        }
+    }
+
+    @Test
+    fun `startup repairs excess old files and preserves unrelated files and sidecar`() {
+        stopWriter()
+        tree.getLogFiles().forEach { assertTrue(it.delete()) }
+        val old = (1..8).map { fixture("startup-$it", "record-$it\n", it.toLong()) }
+        val sidecar = File(directory, "ws_lifecycle.log").apply { writeText("incident\n") }
+        val unrelated = File(directory, "operator-notes.txt").apply { writeText("keep me") }
+        val matchingDirectory = File(directory, "sphere_directory.log").apply { mkdir() }
+        File(matchingDirectory, "keep.txt").writeText("unrelated directory")
+        tree = FileLoggingTree(context)
+        assertEquals(5, tree.getLogFiles().size)
+        assertTrue(tree.getLogFiles().all { it.isFile })
+        assertFalse(old[2].exists())
+        assertTrue(old[3].exists())
+        assertEquals("incident\n", sidecar.readText())
+        assertEquals("keep me", unrelated.readText())
+        assertTrue(File(matchingDirectory, "keep.txt").isFile)
+    }
+
+    @Test
+    fun `oversized legacy file is capped on startup without damaging UTF-8 tail`() {
+        stopWriter()
+        tree.getLogFiles().forEach { assertTrue(it.delete()) }
+        fixture("oversized", "Я漢🚗".repeat(300000) + "LAST_INCIDENT\n")
+        tree = FileLoggingTree(context)
+        assertTrue(tree.getLogFiles().all { it.length() <= 2 * 1024 * 1024 })
+        assertTrue(tree.readRecentLogs().endsWith("LAST_INCIDENT\n"))
+        assertFalse(tree.readRecentLogs().contains('\uFFFD'))
+    }
+
+    @Test
+    fun `oversized queued entry is bounded UTF-8 and records truncation`() {
+        tree.i("Я漢🚗".repeat(300000))
+        tree.i("AFTER_OVERSIZED\n")
+        awaitMarker("AFTER_OVERSIZED")
+        val bytes = tree.getLogFiles().flatMap { it.readBytes().toList() }.toByteArray()
+        assertTrue("A single log call must not consume megabytes", bytes.size < 17 * 1024)
+        val text = Charsets.UTF_8.newDecoder().onMalformedInput(CodingErrorAction.REPORT)
+            .decode(ByteBuffer.wrap(bytes)).toString()
+        assertTrue(text.contains("[log entry truncated]"))
+        assertTrue(text.contains("AFTER_OVERSIZED"))
+    }
+
+    @Test
+    fun `blocked writer retains newest evidence within a four MiB queue budget`() {
+        stopWriter()
+        repeat(1000) { tree.i("queued-$it " + "Я🚗".repeat(4000)) }
+        val queue = FileLoggingTree::class.java.getDeclaredField("queue")
+            .apply { isAccessible = true }.get(tree) as java.util.concurrent.LinkedBlockingQueue<*>
+        val entries = queue.toList().map { it as ByteArray }
+        assertEquals(256, entries.size)
+        assertTrue(entries.sumOf { it.size } <= 4 * 1024 * 1024)
+        assertTrue(entries.last().toString(Charsets.UTF_8).contains("queued-999"))
+        assertFalse(entries.first().toString(Charsets.UTF_8).contains("queued-0 "))
+        assertEquals(744L, tree.getDroppedEntryCount())
+    }
+
+    @Test
+    fun `huge throwable is explicitly truncated and does not fill a log file`() {
+        val method = FileLoggingTree::class.java.getDeclaredMethod(
+            "log", Int::class.javaPrimitiveType, String::class.java, String::class.java, Throwable::class.java,
+        ).apply { isAccessible = true }
+        method.invoke(tree, android.util.Log.ERROR, "test", "THROWABLE", RuntimeException("Я🚗".repeat(300000)))
+        tree.i("AFTER_THROWABLE")
+        awaitMarker("AFTER_THROWABLE")
+        assertTrue(tree.getLogFiles().sumOf { it.length() } < 17 * 1024)
+        assertTrue(tree.readRecentLogs().contains("[log entry truncated]"))
+    }
 
     @Test
     fun `empty directory and unrelated files return empty logs`() {

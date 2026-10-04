@@ -182,6 +182,8 @@ class LogUploadWorker @AssistedInject constructor(
                 append(priorityLifecycleLogs)
                 append("\n=== RECENT SPHERE CRASH ===\n")
                 append(crashSnapshot?.text ?: "No persisted uncaught crash record")
+                append("\n=== FILE LOGGER HEALTH ===\n")
+                append("dropped_entries_total=${loggingTree.getDroppedEntryCount()} counter_scope=process\n")
             })
 
             val body = logs.toRequestBody("text/plain; charset=utf-8".toMediaType())

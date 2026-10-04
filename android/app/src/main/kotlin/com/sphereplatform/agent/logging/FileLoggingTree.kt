@@ -5,12 +5,15 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import timber.log.Timber
 import java.io.File
 import java.io.IOException
+import java.io.PrintWriter
 import java.io.RandomAccessFile
+import java.io.Writer
 import java.nio.ByteBuffer
 import java.nio.charset.CodingErrorAction
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.UUID
 import java.util.concurrent.LinkedBlockingQueue
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -34,7 +37,10 @@ class FileLoggingTree @Inject constructor(
     companion object {
         private const val MAX_FILE_SIZE = 2 * 1024 * 1024L   // 2 MB
         private const val MAX_FILE_COUNT = 5
-        private const val MAX_QUEUE_SIZE = 4096
+        // Count AND bytes are bounded: at most 4 MiB of encoded queued payload.
+        private const val MAX_QUEUE_SIZE = 256
+        private const val MAX_ENTRY_BYTES = 16 * 1024
+        private const val TRUNCATED_ENTRY = "\n[log entry truncated]\n"
         private const val MAX_READ_BYTES = 256 * 1024
         private const val MAX_WS_LIFECYCLE_FILE_BYTES = 64 * 1024
         private const val RETAIN_WS_LIFECYCLE_FILE_BYTES = 32 * 1024
@@ -58,9 +64,16 @@ class FileLoggingTree @Inject constructor(
     private val dateFormat = ThreadLocal.withInitial {
         SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS", Locale.US)
     }
-    private val queue = LinkedBlockingQueue<String>(MAX_QUEUE_SIZE)
+    private val queue = LinkedBlockingQueue<ByteArray>(MAX_QUEUE_SIZE)
+    @Volatile private var droppedEntries = 0L
+    private var fileSequence = 0L
+    private val fileOrder = compareBy<File> { it.lastModified() }.thenBy { it.name }
 
-    @Volatile private var currentFile: File = resolveCurrentFile()
+    @Volatile private var currentFile: File = runCatching { resolveCurrentFile() }.getOrElse {
+        // Logging must not prevent app startup on a full/unwritable filesystem.
+        System.err.println("FileLoggingTree startup error: ${it.javaClass.simpleName}")
+        File(logDir, "$LOG_PREFIX${UUID.randomUUID()}$LOG_EXT")
+    }
 
     private val writerThread = Thread({
         while (!Thread.currentThread().isInterrupted) {
@@ -82,20 +95,37 @@ class FileLoggingTree @Inject constructor(
     override fun log(priority: Int, tag: String?, message: String, t: Throwable?) {
         val level = priorityChar(priority)
         val ts = dateFormat.get()!!.format(Date())
-        val tagPart = if (tag != null) "$tag" else "?"
+        val tagPart = tag ?: "?"
+        val trace = t?.let {
+            BoundedLogWriter(MAX_ENTRY_BYTES).also { writer ->
+                PrintWriter(writer).use { printer -> it.printStackTrace(printer) }
+            }
+        }
         val entry = buildString {
-            append("$ts $level/$tagPart: $message")
-            if (t != null) append("\n${t.stackTraceToString()}")
+            append("$ts $level/${tagPart.take(512)}: ")
+            append(message.take(MAX_ENTRY_BYTES))
+            if (trace != null) append('\n').append(trace.text)
             append('\n')
         }
-        // Offer (non-blocking): drop if queue is full to avoid blocking app
-        queue.offer(entry)
+        val encoded = boundedEntry(entry, message.length > MAX_ENTRY_BYTES ||
+            tagPart.length > 512 || trace?.truncated == true)
+        // Never wait for disk I/O. Prefer the newest diagnostic evidence on
+        // overflow; serializing producers prevents their eviction/offers racing.
+        synchronized(queue) {
+            if (!queue.offer(encoded)) {
+                if (queue.poll() != null) droppedEntries++
+                queue.offer(encoded)
+            }
+        }
     }
+
+    /** Overflow is observable; a saturated logger is not a lossless event journal. */
+    fun getDroppedEntryCount(): Long = droppedEntries
 
     /** UTF-8 byte budget across all files, capped at 256 KiB; newest content last. */
     @Synchronized
     fun readRecentLogs(maxBytes: Int = 64 * 1024): String {
-        val files = logFiles().sortedBy { it.lastModified() }
+        val files = logFiles().sortedWith(fileOrder)
         val chunks = mutableListOf<String>()
         var remaining = maxBytes.coerceIn(0, MAX_READ_BYTES)
         for (file in files.reversed()) {
@@ -157,19 +187,66 @@ class FileLoggingTree @Inject constructor(
     }
 
     /** All log files, sorted oldest-first. */
-    fun getLogFiles(): List<File> = logFiles().sortedBy { it.lastModified() }
+    fun getLogFiles(): List<File> = logFiles().sortedWith(fileOrder)
 
     // ── Private helpers ──────────────────────────────────────────────────────
 
     @Synchronized
     private fun writeEntry(entry: String) {
+        writeEntry(boundedEntry(entry))
+    }
+
+    @Synchronized
+    private fun writeEntry(entry: ByteArray) {
         // Persist the sparse incident signal first so a failure in the noisy
         // rolling file does not discard the only reconnect evidence as well.
-        if (entry.contains("ws_lifecycle ")) appendWebSocketLifecycleEntry(entry)
-        if (currentFile.length() >= MAX_FILE_SIZE) {
+        val text = entry.toString(Charsets.UTF_8)
+        if (text.contains("ws_lifecycle ")) appendWebSocketLifecycleEntry(text)
+        // Retry failed pruning before allocating another file. Files that cannot
+        // be removed must not turn a disk error into unbounded new-file creation.
+        pruneOldFiles(currentFile)
+        if (!currentFile.isFile || currentFile.length() + entry.size > MAX_FILE_SIZE) {
             rotate()
         }
-        currentFile.appendText(entry, Charsets.UTF_8)
+        currentFile.appendBytes(entry)
+    }
+
+    private fun boundedEntry(text: String, truncated: Boolean = false): ByteArray {
+        // Limit chars before encoding too; one huge log call must not allocate
+        // a second equally huge UTF-8 buffer just to decide it is oversized.
+        val bytes = text.take(MAX_ENTRY_BYTES).toByteArray(Charsets.UTF_8)
+        if (!truncated && text.length <= MAX_ENTRY_BYTES && bytes.size <= MAX_ENTRY_BYTES) return bytes
+        val suffix = TRUNCATED_ENTRY.toByteArray(Charsets.UTF_8)
+        val prefix = decodeUtf8(bytes, minOf(bytes.size, MAX_ENTRY_BYTES - suffix.size))
+        return prefix.toByteArray(Charsets.UTF_8) + suffix
+    }
+
+    private fun decodeUtf8(bytes: ByteArray, count: Int = bytes.size): String =
+        Charsets.UTF_8.newDecoder()
+            .onMalformedInput(CodingErrorAction.IGNORE)
+            .onUnmappableCharacter(CodingErrorAction.IGNORE)
+            .decode(ByteBuffer.wrap(bytes, 0, count)).toString()
+
+    private class BoundedLogWriter(private val limit: Int) : Writer() {
+        private val buffer = StringBuilder()
+        var truncated = false
+            private set
+        val text: String get() = buffer.toString()
+
+        override fun write(chars: CharArray, offset: Int, length: Int) {
+            val count = minOf(length, limit - buffer.length)
+            if (count > 0) buffer.append(chars, offset, count)
+            if (count < length) truncated = true
+        }
+
+        override fun write(text: String, offset: Int, length: Int) {
+            val count = minOf(length, limit - buffer.length)
+            if (count > 0) buffer.append(text, offset, offset + count)
+            if (count < length) truncated = true
+        }
+
+        override fun flush() = Unit
+        override fun close() = Unit
     }
 
     private fun appendWebSocketLifecycleEntry(entry: String) {
@@ -208,30 +285,55 @@ class FileLoggingTree @Inject constructor(
 
     private fun rotate() {
         currentFile = newLogFile()
-        pruneOldFiles()
+        pruneOldFiles(currentFile)
     }
 
-    private fun pruneOldFiles() {
-        val files = logFiles().sortedBy { it.lastModified() }
+    private fun pruneOldFiles(active: File) {
+        val files = logFiles().sortedWith(fileOrder)
         if (files.size > MAX_FILE_COUNT) {
-            files.take(files.size - MAX_FILE_COUNT).forEach { it.delete() }
+            files.filter { it != active }.take(files.size - MAX_FILE_COUNT).forEach {
+                if (!it.delete() && it.exists()) throw IOException("Cannot prune owned log file")
+            }
         }
     }
 
     private fun logFiles(): List<File> =
-        logDir.listFiles { f -> f.name.startsWith(LOG_PREFIX) && f.name.endsWith(LOG_EXT) }
+        logDir.listFiles { f -> f.isFile && f.name.startsWith(LOG_PREFIX) && f.name.endsWith(LOG_EXT) }
             ?.toList() ?: emptyList()
 
     private fun resolveCurrentFile(): File {
-        val existing = logFiles()
-            .filter { it.length() < MAX_FILE_SIZE }
-            .maxByOrNull { it.lastModified() }
-        return existing ?: newLogFile()
+        val newest = logFiles().maxWithOrNull(fileOrder)
+        val active = newest?.takeIf { it.length() < MAX_FILE_SIZE } ?: newLogFile()
+        // Bound migration I/O to retained files rather than every historical log.
+        pruneOldFiles(active)
+        // Migrate files produced by older versions, retaining newest valid UTF-8
+        // bytes with a bounded buffer rather than reading an oversized whole file.
+        for (file in logFiles()) {
+            if (file.length() <= MAX_FILE_SIZE) continue
+            val timestamp = file.lastModified()
+            RandomAccessFile(file, "rw").use { stream ->
+                val bytes = ByteArray(MAX_FILE_SIZE.toInt())
+                stream.seek(stream.length() - bytes.size)
+                stream.readFully(bytes)
+                val tail = decodeUtf8(bytes).toByteArray(Charsets.UTF_8)
+                stream.seek(0)
+                stream.write(tail)
+                stream.setLength(tail.size.toLong())
+            }
+            // Repair must not make an old file newer than the latest incident.
+            file.setLastModified(timestamp)
+        }
+        return active
     }
 
     private fun newLogFile(): File {
-        val ts = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
-        return File(logDir, "$LOG_PREFIX${ts}$LOG_EXT")
+        val ts = SimpleDateFormat("yyyyMMdd_HHmmss_SSS", Locale.US).format(Date())
+        while (true) {
+            val file = File(logDir, "$LOG_PREFIX${ts}_${(fileSequence++).toString().padStart(6, '0')}$LOG_EXT")
+            // Atomic creation establishes uniqueness and makes quota pruning see
+            // the new file before its first append, even within the same millisecond.
+            if (file.createNewFile()) return file
+        }
     }
 
     private fun priorityChar(priority: Int): Char = when (priority) {
