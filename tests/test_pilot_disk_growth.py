@@ -1,4 +1,6 @@
 import json
+import os
+import platform
 import stat
 import sys
 from types import SimpleNamespace
@@ -6,6 +8,61 @@ from types import SimpleNamespace
 import pytest
 
 from scripts.pilot import disk_growth as watch
+
+
+@pytest.mark.parametrize(('original', 'native'), [
+    (r'C:\scope\file.bin', r'\\?\C:\scope\file.bin'),
+    (r'\\server\share\file.bin', r'\\?\UNC\server\share\file.bin'),
+    (r'\\?\C:\scope\file.bin', r'\\?\C:\scope\file.bin'),
+])
+def test_windows_extended_paths_preserve_local_and_unc_identity(monkeypatch, original, native):
+    monkeypatch.setattr(watch.platform, 'system', lambda: 'Windows')
+    assert watch.native_path(original) == native
+    assert str(watch.display_path(native)) == original.removeprefix('\\\\?\\')
+
+
+@pytest.mark.skipif(platform.system() != 'Windows', reason='Windows long-path filesystem regression')
+def test_scan_and_allocation_include_files_beyond_windows_legacy_path_limit(tmp_path):
+    directories = []
+    directory = tmp_path
+    file = None
+    try:
+        for number in range(5):
+            directory = directory / (str(number) + 'x' * 50)
+            os.mkdir(watch.native_path(directory))
+            directories.append(directory)
+        file = directory / 'payload.bin'
+        assert len(str(file)) > 260
+        with open(watch.native_path(file), 'wb') as handle:
+            handle.write(b'long path payload')
+        report, _ = watch.scan_root(tmp_path, excluded=tmp_path / 'out')
+        assert report['state'] == 'complete' and report['errors'] == 0
+        assert report['logicalBytesSeen'] == 17 and report['filesSeen'] == 1
+        measured = watch.file_state(file)
+        assert measured['state'] == 'measured' and measured['logicalBytes'] == 17
+        assert measured['allocatedBytes'] is not None and measured['allocationError'] is None
+    finally:
+        if file is not None:
+            assert tmp_path in file.parents
+            if os.path.exists(watch.native_path(file)):
+                os.unlink(watch.native_path(file))
+        for directory in reversed(directories):
+            assert tmp_path in directory.parents
+            os.rmdir(watch.native_path(directory))
+
+
+def test_access_errors_have_bounded_path_evidence_and_remain_partial(tmp_path, monkeypatch):
+    denied = tmp_path / 'locked'
+    denied.mkdir()
+    original = watch.os.scandir
+    def fail_locked(path):
+        if str(watch.display_path(path)) == str(denied):
+            raise PermissionError('denied')
+        return original(path)
+    monkeypatch.setattr(watch.os, 'scandir', fail_locked)
+    report, _ = watch.scan_root(tmp_path, excluded=tmp_path / 'out')
+    assert report['state'] == 'partial_access'
+    assert report['errorSamples'] == [{'path': 'locked', 'type': 'PermissionError'}]
 
 
 def test_sparse_growth_with_unchanged_logical_length_is_detected():

@@ -25,6 +25,23 @@ MIB = 1024 ** 2
 MAX_SAMPLE_BYTES = MIB
 
 
+def native_path(path: Path | str) -> str:
+    """Use extended absolute Windows paths, including UNC, for metadata APIs."""
+    text = str(path)
+    if platform.system() != 'Windows' or text.startswith('\\\\?\\'):
+        return text
+    if text.startswith('\\\\'):
+        return '\\\\?\\UNC\\' + text[2:]
+    return '\\\\?\\' + text
+
+
+def display_path(path: str) -> Path:
+    """Keep report keys comparable to ordinary absolute watch-root paths."""
+    if path.startswith('\\\\?\\UNC\\'):
+        return Path('\\\\' + path[8:])
+    return Path(path.removeprefix('\\\\?\\'))
+
+
 def reparse(info: os.stat_result) -> bool:
     return stat.S_ISLNK(info.st_mode) or bool(
         getattr(info, "st_file_attributes", 0) & 0x400)
@@ -41,7 +58,7 @@ def allocation(path: Path, info: os.stat_result) -> tuple[int | None, str | None
     measure.restype = ctypes.c_uint32
     high = ctypes.c_uint32()
     ctypes.set_last_error(0)
-    low = measure(str(path), ctypes.byref(high))
+    low = measure(native_path(path), ctypes.byref(high))
     error = ctypes.get_last_error()
     if low == 0xFFFFFFFF and error:
         return None, f"win32_{error}"
@@ -50,7 +67,7 @@ def allocation(path: Path, info: os.stat_result) -> tuple[int | None, str | None
 
 def file_state(path: Path) -> dict:
     try:
-        info = path.stat(follow_symlinks=False)
+        info = os.stat(native_path(path), follow_symlinks=False)
         if reparse(info) or not stat.S_ISREG(info.st_mode):
             return {"state": "unavailable", "error": "not_regular_or_reparse"}
         allocated, error = allocation(path, info)
@@ -69,9 +86,10 @@ def scan_root(root: Path, *, excluded: Path, max_entries: int = 500000,
     totals: dict[str, int] = defaultdict(int)
     candidates: list[tuple[int, str, int]] = []
     files = entries_seen = errors = skipped = logical = 0
+    error_samples = []
     status = "complete"
     try:
-        info = root.stat(follow_symlinks=False)
+        info = os.stat(native_path(root), follow_symlinks=False)
         if reparse(info) or not stat.S_ISDIR(info.st_mode):
             raise ValueError("root_not_directory_or_reparse")
     except (OSError, ValueError) as error:
@@ -83,13 +101,13 @@ def scan_root(root: Path, *, excluded: Path, max_entries: int = 500000,
             break
         directory = stack.pop()
         try:
-            with os.scandir(directory) as entries:
+            with os.scandir(native_path(directory)) as entries:
                 for entry in entries:
                     if entries_seen >= max_entries or time.monotonic() - started >= seconds:
                         status = "partial_budget"
                         break
                     entries_seen += 1
-                    path = Path(entry.path)
+                    path = display_path(entry.path)
                     if path == excluded or excluded in path.parents:
                         skipped += 1
                         continue
@@ -113,14 +131,19 @@ def scan_root(root: Path, *, excluded: Path, max_entries: int = 500000,
                                     heapq.heappush(candidates, item)
                                 elif item > candidates[0]:
                                     heapq.heapreplace(candidates, item)
-                    except OSError:
+                    except OSError as error:
                         errors += 1
-        except OSError:
+                        if len(error_samples) < 10:
+                            error_samples.append({'path': str(path.relative_to(root)), 'type': type(error).__name__})
+        except OSError as error:
             errors += 1
+            if len(error_samples) < 10:
+                error_samples.append({'path': str(directory.relative_to(root)), 'type': type(error).__name__})
     if errors and status == "complete":
         status = "partial_access"
     report = {"state": status, "logicalBytesSeen": logical, "filesSeen": files,
               "entriesSeen": entries_seen, "errors": errors, "skipped": skipped,
+              "errorSamples": error_samples,
               "scanSeconds": round(time.monotonic() - started, 3),
               "hardLinksDeduplicated": False, "candidateLimit": candidate_limit,
               "candidateScope": "largest files >=1MiB; candidate membership is not a creation/deletion event",

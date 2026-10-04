@@ -136,6 +136,10 @@ atomic temporary sample может кратковременно занять е�
 Содержимое наблюдаемых файлов не читается. Reparse points не обходятся;
 права доступа не повышаются. Missing/access/budget failures сохраняются явно;
 partial scans не вычитаются из complete scans как доказательство роста.
+Windows metadata API используют extended paths для локальных и UNC-каталогов:
+файл с путём длиннее 260 символов должен попадать в измерение. До десяти
+первых ошибок обхода сохраняются как относительный путь и тип ошибки,
+чтобы partial scope можно было расследовать без чтения содержимого файлов.
 Candidate set содержит до 2000 крупнейших файлов ≥1 MiB на root, его смена
 не является доказательством создания/удаления файла. Logical totals не
 дедуплицируют hard links; allocation отдельных VHD измеряется отдельно.
@@ -153,6 +157,7 @@ Android через разрешённый APK RPC. Read-only metadata указы
 
 [Регрессии диагностики](../../tests/test_pilot_disk_growth.py) проверяют sparse growth,
 unknown allocation, replacement, доступ/partial scopes, candidate semantics,
+реальный Windows long-path scan/allocation и преобразование UNC-путей,
 storage/low-disk stops и расчёт delta по совпадающим концам измерения.
 
 ## Политика сборочных артефактов
