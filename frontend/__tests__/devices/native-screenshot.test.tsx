@@ -9,7 +9,7 @@ jest.mock('@/src/features/devices/DeviceOperationsPanels', () => ({ utcTime: (va
 const hash = '0'.repeat(64);
 const headers = {
   'content-type': 'image/png', 'x-screenshot-device-id': 'remote', 'x-screenshot-id': 'a'.repeat(32),
-  'x-screenshot-sha256': hash, 'x-screenshot-width': '2', 'x-screenshot-height': '1',
+  'x-screenshot-sha256': hash, 'x-screenshot-android-sha256': hash, 'x-screenshot-width': '2', 'x-screenshot-height': '1',
   'x-screenshot-requested-at': '2026-10-04T00:00:00Z', 'x-screenshot-completed-at': '2026-10-04T00:00:01Z',
   'x-screenshot-cleanup-confirmed': 'true',
 };
@@ -41,6 +41,7 @@ it('requests no capture on mount and downloads the verified original bytes witho
 it.each([
   { 'x-screenshot-device-id': 'other' }, { 'content-type': 'image/jpeg' },
   { 'x-screenshot-sha256': 'f'.repeat(64) }, { 'x-screenshot-width': '3' },
+  { 'x-screenshot-android-sha256': undefined }, { 'x-screenshot-android-sha256': 'f'.repeat(64) },
   { 'x-screenshot-completed-at': 'invalid' }, { 'x-screenshot-cleanup-confirmed': undefined },
 ])('rejects wrong target, changed bytes and incomplete evidence without offering download', async mismatch => {
   jest.mocked(api.post).mockResolvedValueOnce({ data: png(), headers: { ...headers, ...mismatch } });
@@ -75,6 +76,18 @@ it('cannot capture when device freshness/permission disables the panel', () => {
   render(<NativeScreenshotPanel deviceId="remote" enabled={false} />);
   fireEvent.click(screen.getByRole('button', { name: 'Получить снимок' }));
   expect(api.post).not.toHaveBeenCalled();
+});
+it('aborts capture and discards a late file when device freshness is lost', async () => {
+  let finish!: (value: unknown) => void;
+  jest.mocked(api.post).mockImplementationOnce(() => new Promise(r => { finish = r; }) as never);
+  const view = render(<NativeScreenshotPanel deviceId="remote" enabled />);
+  fireEvent.click(screen.getByRole('button', { name: 'Получить снимок' }));
+  const signal = jest.mocked(api.post).mock.calls[0][2]?.signal as AbortSignal;
+  view.rerender(<NativeScreenshotPanel deviceId="remote" enabled={false} />);
+  expect(signal.aborted).toBe(true);
+  await act(async () => { finish({ data: png(), headers }); });
+  expect(URL.createObjectURL).not.toHaveBeenCalled();
+  expect(screen.queryByRole('link')).not.toBeInTheDocument();
 });
 it('rejects empty, oversized and non-PNG responses before creating a browser file', async () => {
   for (const value of [new ArrayBuffer(0), new ArrayBuffer(5 * 1024 * 1024 + 1), new ArrayBuffer(80)]) {

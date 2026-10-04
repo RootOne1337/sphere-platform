@@ -19,6 +19,25 @@ const snapshot = (deviceId = 'remote') => ({ device_id: deviceId, snapshot_id: '
   nodes: [{ id: 0, parent_id: null, depth: 0, xpath: '/hierarchy/node[1]',
     bounds: { left: 100, top: 100, right: 200, bottom: 150 }, attributes: { text: '<script>safe plain text</script>', 'resource-id': 'pkg:id/ok', clickable: 'true', enabled: 'true', custom: 'retained' } }] });
 beforeEach(() => { jest.clearAllMocks(); mockPermission = true; mockToken = 'fixture-token'; });
+it('exposes original capture below a selected stream without issuing a capture on mount', () => {
+  render(<SingleDeviceStream deviceId="remote" captureEnabled />);
+  expect(screen.getByText('Исходный PNG для пиксельных эталонов')).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Получить снимок', hidden: true })).toBeEnabled();
+  expect(api.post).not.toHaveBeenCalled();
+});
+it('keeps native capture disabled without confirmed reachability, independently of a video frame', () => {
+  render(<SingleDeviceStream deviceId="remote" />);
+  fireEvent.click(screen.getByText('Fixture frame'));
+  expect(screen.getByRole('button', { name: 'Получить снимок', hidden: true })).toBeDisabled();
+  expect(api.post).not.toHaveBeenCalled();
+});
+it('removes native capture when device-write permission is revoked', () => {
+  const view = render(<SingleDeviceStream deviceId="remote" captureEnabled />);
+  mockPermission = false;
+  view.rerender(<SingleDeviceStream deviceId="remote" captureEnabled />);
+  expect(screen.queryByRole('button', { name: 'Получить снимок', hidden: true })).not.toBeInTheDocument();
+  expect(api.post).not.toHaveBeenCalled();
+});
 function open() {
   const view = render(<SingleDeviceStream deviceId="remote" />);
   fireEvent.click(screen.getByText('Fixture frame'));

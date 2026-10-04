@@ -9,12 +9,13 @@ import { getApiErrorMessage } from '@/lib/apiError';
 import { useAuthStore } from '@/lib/store';
 import { useCapabilities, PermissionNotice } from '@/src/features/access/Capabilities';
 import { Button } from '@/src/shared/ui/button';
+import { NativeScreenshotPanel } from '@/src/features/devices/NativeScreenshotPanel';
 import type { StreamFrameDimensions } from './streamAspectRatio';
 import { checkedHierarchy, frameBounds, hitTestHierarchy, matchesFrame, type UiHierarchyNode, type UiHierarchySnapshot } from './uiHierarchy';
 
 const SNAPSHOT_LIFETIME_MS = 30_000;
 
-export function SingleDeviceStream({ deviceId }: { deviceId: string }) {
+export function SingleDeviceStream({ deviceId, captureEnabled = false }: { deviceId: string; captureEnabled?: boolean }) {
   const access = useCapabilities();
   const { accessToken } = useAuthStore();
   const canInspect = access.can('device:write');
@@ -178,5 +179,9 @@ export function SingleDeviceStream({ deviceId }: { deviceId: string }) {
         </div> : valid && snapshot.nodes.length > 0 && <p className="text-sm text-muted-foreground">Выберите элемент на изображении. Если границы не найдены, Android не раскрыл элемент в этой точке.</p>}
       </aside>}
     </div>
+    {canInspect && <details className="rounded-xl border border-border bg-card p-3">
+      <summary className="cursor-pointer text-sm font-semibold">Исходный PNG для пиксельных эталонов</summary>
+      <div className="mt-3"><NativeScreenshotPanel key={deviceId} deviceId={deviceId} enabled={captureEnabled} /></div>
+    </details>}
   </section>;
 }

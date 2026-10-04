@@ -9,6 +9,7 @@ import asyncio
 import base64
 import binascii
 import hashlib
+import re
 import struct
 import uuid
 import zlib
@@ -106,6 +107,11 @@ async def capture_png(shell: Callable[[str], Awaitable[str]], snapshot_id: str) 
             size = int(size_output[0])
             if not 57 <= size <= MAX_PNG_BYTES:
                 raise InvalidScreenshot("Original screenshot exceeds the 5 MiB limit or is empty")
+            digest_output = await shell(f"sha256sum {path}")
+            digest = (re.fullmatch(r"([a-f0-9]{64})[ \t]+\*?" + re.escape(path), digest_output.strip())
+                      if isinstance(digest_output, str) and len(digest_output) <= 512 else None)
+            if digest is None:
+                raise InvalidScreenshot("Android did not confirm the original PNG checksum")
             data = bytearray()
             for index in range((size + READ_CHUNK_BYTES - 1) // READ_CHUNK_BYTES):
                 await shell(f"dd if={path} of={chunk_path} bs={READ_CHUNK_BYTES} skip={index} count=1")
@@ -114,10 +120,13 @@ async def capture_png(shell: Callable[[str], Awaitable[str]], snapshot_id: str) 
             if display_size(await shell("wm size")) != before:
                 raise InvalidScreenshot("Android display size changed during capture")
             raw = bytes(data)
+            sha256 = hashlib.sha256(raw).hexdigest()
+            if sha256 != digest.group(1):
+                raise InvalidScreenshot("Original PNG changed during transfer")
             width, height = png_geometry(raw)
             if (width, height) not in (before, before[::-1]):
                 raise InvalidScreenshot("Original PNG does not match the Android display size")
-            screenshot = NativeScreenshot(raw, width, height, hashlib.sha256(raw).hexdigest())
+            screenshot = NativeScreenshot(raw, width, height, sha256)
             return screenshot
     finally:
         # One fixed cleanup command; installed SHELL allows multiple file args.

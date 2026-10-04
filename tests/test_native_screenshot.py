@@ -60,6 +60,8 @@ async def test_chunking_keeps_exact_bytes_and_uuid_owned_cleanup():
             return "Physical size: 1x2"
         if command.startswith("wc -c "):
             return str(len(data)) + " native-file"
+        if command.startswith("sha256sum "):
+            return hashlib.sha256(data).hexdigest() + "  " + command.removeprefix("sha256sum ")
         if command.startswith("dd "):
             index = int(command.split("skip=")[1].split()[0])
         if command.startswith("base64 "):
@@ -73,6 +75,33 @@ async def test_chunking_keeps_exact_bytes_and_uuid_owned_cleanup():
     assert commands[-1] == f"rm -f {prefix}.png {prefix}.part"
     assert len([c for c in commands if c.startswith("base64 ")]) == 2
     assert not any(char in "".join(commands) for char in "|;&$`(){}\\<>!#~\n\r")
+
+
+@pytest.mark.parametrize("failure", ["missing", "syntax", "wrong-path", "oversized", "changed-bytes"])
+async def test_android_checksum_is_required_and_must_match_transferred_file(failure):
+    data = png_fixture()
+    owner = uuid.uuid4().hex
+    path = f"/data/local/tmp/sphere-shot-{owner}.png"
+    commands = []
+
+    async def shell(command):
+        commands.append(command)
+        if command == "wm size":
+            return "Physical size: 2x1"
+        if command.startswith("wc -c "):
+            return str(len(data))
+        if command.startswith("sha256sum "):
+            return {"missing": "", "syntax": "not-a-digest", "wrong-path": hashlib.sha256(data).hexdigest() + "  /other.png",
+                    "oversized": "a" * 513, "changed-bytes": "f" * 64 + "  " + path}[failure]
+        if command.startswith("base64 "):
+            return base64.b64encode(data).decode()
+        return ""
+
+    with pytest.raises(InvalidScreenshot, match="checksum|changed"):
+        await capture_png(shell, owner)
+    assert commands[-1] == f"rm -f {path} /data/local/tmp/sphere-shot-{owner}.part"
+    if failure != "changed-bytes":
+        assert not any(command.startswith("dd ") for command in commands)
 
 
 async def test_capture_failure_preserved_even_when_cleanup_also_fails():

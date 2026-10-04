@@ -203,7 +203,7 @@ it('allowing control on a static picture does not relabel a stale PNG export as 
   socket.readyState = Socket.OPEN;
   act(() => socket.onopen?.());
   act(() => mockFrameCallback?.({ displayWidth: 960, displayHeight: 540 } as VideoFrame));
-  const button = screen.getByRole('button', { name: 'Сохранить свежий кадр PNG' });
+  const button = screen.getByRole('button', { name: 'Сохранить кадр видео (PNG)' });
   expect(button).toBeEnabled();
   act(() => jest.advanceTimersByTime(10_000));
   expect(container.querySelector('canvas')).toHaveAttribute('aria-disabled', 'false');
@@ -247,7 +247,7 @@ it('exports only a freshly rendered canvas frame and sends no screenshot API com
   const download = jest.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
   render(<DeviceStream deviceId="device-png" enableScreenshot />);
   act(() => jest.advanceTimersByTime(0));
-  const button = screen.getByRole('button', { name: 'Сохранить свежий кадр PNG' });
+  const button = screen.getByRole('button', { name: 'Сохранить кадр видео (PNG)' });
   expect(button).toBeDisabled();
   const socket = Socket.instances[0]; socket.readyState = Socket.OPEN;
   act(() => socket.onopen?.());
@@ -269,6 +269,6 @@ it('does not claim a rendered picture when drawing the decoder output fails', ()
   const socket = Socket.instances[0]; socket.readyState = Socket.OPEN;
   act(() => socket.onopen?.());
   expect(() => act(() => mockFrameCallback?.({ displayWidth: 1920, displayHeight: 1080 } as VideoFrame))).toThrow('canvas failure');
-  expect(screen.getByRole('button', { name: 'Сохранить свежий кадр PNG' })).toBeDisabled();
+  expect(screen.getByRole('button', { name: 'Сохранить кадр видео (PNG)' })).toBeDisabled();
   expect(screen.getByText('Ожидание видеокадра…')).toBeInTheDocument();
 });

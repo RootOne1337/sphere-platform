@@ -25,6 +25,8 @@ def screenshot_transport(world):
             output = "Physical size: 2x1"
         elif cmd.startswith("wc -c "):
             output = str(len(data))
+        elif cmd.startswith("sha256sum "):
+            output = hashlib.sha256(data).hexdigest() + "  " + cmd.removeprefix("sha256sum ")
         elif cmd.startswith("base64 "):
             output = base64.b64encode(data).decode()
         return {"status": "completed", "result": {"output": output}}
@@ -43,8 +45,9 @@ async def test_returns_original_png_hash_geometry_owner_and_cleanup(world, scree
     assert response.headers["cache-control"] == "no-store"
     assert response.headers["x-screenshot-device-id"] == str(world.dev_a.id)
     assert response.headers["x-screenshot-sha256"] == hashlib.sha256(response.content).hexdigest()
+    assert response.headers["x-screenshot-android-sha256"] == response.headers["x-screenshot-sha256"]
     assert response.headers["x-screenshot-cleanup-confirmed"] == "true"
-    assert len(screenshot_transport.send_command_wait_result.await_args_list) == 7
+    assert len(screenshot_transport.send_command_wait_result.await_args_list) == 8
     assert await world.redis.get(f"sphere:native-screenshot:{world.org_a.id}:{world.dev_a.id}") is None
 
 
@@ -67,7 +70,7 @@ async def test_busy_capture_preserves_other_owner(world, screenshot_transport):
         await world.redis.delete(key)
 
 
-@pytest.mark.parametrize("failure", ["partial", "failed", "offline", "cleanup"])
+@pytest.mark.parametrize("failure", ["partial", "failed", "offline", "cleanup", "android-hash"])
 async def test_never_serves_partial_png_or_hides_original_errors(world, screenshot_transport, failure):
     original = screenshot_transport.send_command_wait_result.side_effect
     async def reply(device, command, **options):
@@ -76,6 +79,8 @@ async def test_never_serves_partial_png_or_hides_original_errors(world, screensh
             raise HTTPException(503, "Device command channel unavailable")
         if cmd.startswith("base64 ") and failure == "partial":
             return {"status": "completed", "result": {"output": "AAAA"}}
+        if cmd.startswith("sha256sum ") and failure == "android-hash":
+            return {"status": "completed", "result": {"output": "f" * 64 + "  " + cmd.removeprefix("sha256sum ")}}
         if cmd.startswith("screencap ") and failure == "failed":
             return {"status": "failed", "error": "private failure"}
         if cmd.startswith("rm -f ") and failure == "cleanup":

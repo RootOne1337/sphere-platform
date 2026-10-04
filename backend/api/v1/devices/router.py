@@ -686,6 +686,7 @@ async def request_native_screenshot(
             "Content-Disposition": f'attachment; filename="sphere-{device_id}-{snapshot_id}.png"',
             "X-Screenshot-Device-Id": str(device_id), "X-Screenshot-Id": snapshot_id,
             "X-Screenshot-SHA256": screenshot.sha256,
+            "X-Screenshot-Android-SHA256": screenshot.sha256,
             "X-Screenshot-Width": str(screenshot.width), "X-Screenshot-Height": str(screenshot.height),
             "X-Screenshot-Requested-At": requested_at.isoformat(),
             "X-Screenshot-Completed-At": datetime.now(timezone.utc).isoformat(),
