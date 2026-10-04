@@ -6,7 +6,13 @@
 
 [Главная](../../../README.md) · [Документация](../../README.md) · [Readiness](../../operations/READINESS.md) · [История исправлений](../2026-09-05/AUDIT-REPORT.md)
 
-> **Последняя конечная проверка: 4 октября 2026, 05:55 UTC+5.**
+> **Последняя конечная проверка: 4 октября 2026, 10:06 UTC+5.**
+> API/UI9716348, 7 срезов14online10244/epochs, actual remote/local native PNG matched.
+> Первый remote504/семь code1005 disconnects сохранены; стабильность не принята.
+> 20–30/32-device stream+scripts/fault, FPS/input latency и soak OPEN; NO-GO сохранён.
+> [Контракт и scope последнего canary](../2026-10-04/DEVICE-CONTROL-AND-NATIVE-CAPTURE.md).
+
+> **Историческая конечная проверка: 4 октября 2026, 05:55 UTC+5.**
 > API 9274e50 / UI 84750e3: после UI rollout те же 14 online APK10244/epochs в 7 срезах.
 > PH010/PH025 real UI Automator trees приняты; исправлен вход/выбор инспектора.
 > Предыдущий API gate FAILED 14→13/PH015 сохранён. Причина обрыва неизвестна.

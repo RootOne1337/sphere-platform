@@ -1,6 +1,13 @@
 # Android Agent
 
-> **Текущее наблюдение: 4 октября 2026, 05:55 UTC+5.** 14 доступных Android на
+**Последний follow-up: 4 октября 2026, 10:06 UTC+5. API/UI9716348**, APK10244 unchanged.
+[Native PNG, управление и manual Android profile](audits/2026-10-04/DEVICE-CONTROL-AND-NATIVE-CAPTURE.md).
+1117 frontend / 140 API cases в образах, schema178/140. PH025/PH010 original PNG accepted;
+Android/server/file hashes matched. 14online в конечном UI readback; первый remote504
+и seven code1005 disconnects сохранены. Human native download/keyboard, UA2/nonroot,
+full visual/latency/load/soak OPEN; original ledger34/7 не изменён.
+
+> **Историческое наблюдение этапа XPath: 4 октября 2026, 05:55 UTC+5.** 14 доступных Android на
 > **1.2.44-dev / 10244**, APK source ad34c12; 5 offline вне приёмки. Canary44 managed,
 > normal/android-dev10209; stable promotion не принят. APK в этом этапе не менялся.
 > API 9274e50 / UI 84750e3: root UI Automator/XPath через существующий APK SHELL;

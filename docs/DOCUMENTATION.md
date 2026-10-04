@@ -2,16 +2,23 @@
 
 [Каталог](README.md) · [Readiness](operations/READINESS.md) · [Contributing](../CONTRIBUTING.md)
 
-**Последняя сверка входных документов: 4 октября 2026, 05:55 UTC+5.** Для текущих
+**Последняя сверка входных документов: 4 октября 2026, 10:06 UTC+5.** Для текущих
 версий и границ live-подтверждения используйте [каноническое состояние](operations/CURRENT-STATE.md).
 
-Последний follow-up: API **9274e50** / UI **84750e3**, [F35 XPath-инспектор](audits/2026-10-04/UI-HIERARCHY-INSPECTOR.md).
+**Последний follow-up: 4 октября 2026, 10:06 UTC+5. API/UI9716348**, APK10244 unchanged.
+[Native PNG, управление и manual Android profile](audits/2026-10-04/DEVICE-CONTROL-AND-NATIVE-CAPTURE.md).
+1117 frontend / 140 API cases в образах, schema178/140. PH025/PH010 original PNG accepted;
+Android/server/file hashes matched. 14online в конечном UI readback; первый remote504
+и seven code1005 disconnects сохранены. Human native download/keyboard, UA2/nonroot,
+full visual/latency/load/soak OPEN; original ledger34/7 не изменён.
+
+Исторический follow-up: API **9274e50** / UI **84750e3**, [F35 XPath-инспектор](audits/2026-10-04/UI-HIERARCHY-INSPECTOR.md).
 1043 frontend и 108 API cases приняты в образах; PH010/PH025 actual root trees.
 Пользовательский отказ входа/выбора воспроизведён и исправлен; 8 pointer workflows.
 Original ledger: 34 source-fixed / 7 незакрытых. Browser/native UA2/nonroot/soak OPEN.
 Прежние 500/504 и FAILED API fleet window 14→13 сохранены рядом с успехами;
 последний UI readback сохранил 14 online и epochs в 7 срезах. Это не uptime SLA.
-Generated OpenAPI: 177 operations / 139 paths; shipped API9274 schema check passed.
+Historical OpenAPI: 177 operations / 139 paths; shipped API9274 schema check passed.
 
 ## Где искать текущий ответ
 

@@ -30,10 +30,10 @@ class RootCommandOutcomeUnknownException(
  * Один `su` процесс + DataOutputStream вместо fork+exec на каждую команду.
  * Экономия ~99% CPU: команды пишутся в stdin (<1ms), а не fork/exec (50–150ms).
  *
- * ## TypeText (enterprise)
- * - Все символы кроме алфавитно-цифровых и базового ASCII экранируются
- * - Механизм clipboard-paste для текстов со спецсимволами (>ASCII126 или содержащих кавычки)
- * - `clear_first` — select all + delete перед вводом
+ * ## TypeText
+ * Использует root `input text` с кодированием пробелов и shell-кавычек.
+ * ClipboardManager/IME bridge здесь не реализован; Unicode и emoji нельзя
+ * считать поддержанными только по успешному завершению команды.
  *
  * ## FindElement (uiautomator dump)
  * - Парсит XML дамп UI дерева через Android XmlPullParser (simple) или javax.xml.xpath (xpath)
@@ -202,16 +202,10 @@ class AdbActionExecutor @Inject constructor(
     }
 
     /**
-     * Вводит текст безопасно через clipboard + paste.
-     *
-     * `input text` в Android интерпретирует текст через shell, что делает
-     * прямую передачу спецсимволов (`"`, `'`, `$`, `&`, и т.д.) опасной
-     * и ненадёжной. Вместо этого:
-     *   1. Помещаем текст в системный буфер обмена через ClipboardManager
-     *   2. Эмулируем Ctrl+V (KEYCODE_PASTE = 279)
-     *
-     * Это устраняет: shell injection, проблемы с кодировкой UTF-8, emoji,
-     * HTML-символы и все прочие спецсимволы одновременно.
+     * Вводит текст через root `input text`, без clipboard-paste адаптера.
+     * Пробелы кодируются как %s, одинарные кавычки — для shell. Возможность
+     * ввода зависит от key character map Android; Unicode/emoji требуют
+     * отдельного IME или Accessibility ACTION_SET_TEXT адаптера.
      */
     suspend fun typeText(text: String) = withContext(Dispatchers.IO) {
         // 'input text' is the most reliable method for emulators (no clipboard app needed).

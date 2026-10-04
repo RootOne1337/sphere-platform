@@ -1,7 +1,7 @@
 # F35 — XPath-инспектор выбранного Android-устройства
 
 **Дата:** 4 октября 2026, Asia/Yekaterinburg (UTC+5).
-**Установлено:** API `9274e50`, UI `84750e3`, APK `1.2.44-dev / 10244`.
+**Историческая установка этого этапа:** API `9274e50`, UI `84750e3`, APK `1.2.44-dev / 10244`.
 **Review:** [3015/devices](http://127.0.0.1:3015/devices) → карточка устройства → «Видеопоток» → «XPath-инспектор».
 
 [Текущее состояние](../../operations/CURRENT-STATE.md) ·
@@ -10,6 +10,8 @@
 [Реестр исправлений](../2026-10-01/WEB-AUDIT-REMEDIATION.md) ·
 [Машинные доказательства](UI-HIERARCHY-INSPECTOR-EVIDENCE.json) ·
 [PR #19](https://github.com/RootOne1337/sphere-platform/pull/19)
+
+Текущий follow-up: [native PNG, controls, system profile и новые runtime receipts](DEVICE-CONTROL-AND-NATIVE-CAPTURE.md); historical stage facts ниже сохранены.
 
 ## Результат и границы приёмки
 

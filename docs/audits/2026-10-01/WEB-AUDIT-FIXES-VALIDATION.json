@@ -5967,5 +5967,32 @@
     "baselineEpochsScope": "latest UI-only rollout, not the preceding API restart",
     "earlierApiFleetGate": "FAILED_COHORT_AND_EPOCHS: 14 to 13, PH015",
     "userVisualAcceptance": "Operator passed: click highlight and sidebar attributes. Full visual/keyboard/mobile audit OPEN."
+  },
+  "latestNativeCaptureFollowup": {
+    "observedAt": "2026-10-04T05:06:52.233411+00:00",
+    "apiSource": "9716348018e60647dc749774acb00422d0f2cd08",
+    "uiSource": "9716348018e60647dc749774acb00422d0f2cd08",
+    "frontendImageCases": 1117,
+    "frontendImageSuites": 113,
+    "apiImageCases": 140,
+    "mypyFiles": 229,
+    "schemaOperations": 178,
+    "schemaPaths": 140,
+    "nativeOriginalPngAccepted": [
+      "PH025",
+      "PH010"
+    ],
+    "androidServerFileHashMatched": true,
+    "profileNativeReplies": 14,
+    "profileActualParserCases": 30,
+    "cohort": 14,
+    "firstRemote504Preserved": true,
+    "simultaneousDisconnectCount": 7,
+    "rootCause": "UNDETERMINED",
+    "humanCurrentNativeDownloadAccepted": false,
+    "browserVerified": false,
+    "ledgerSourceFixed": 34,
+    "ledgerUnclosed": 7,
+    "evidence": "../2026-10-04/DEVICE-CONTROL-AND-NATIVE-CAPTURE-EVIDENCE.json"
   }
 }

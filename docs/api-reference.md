@@ -15,10 +15,28 @@ section and optional task/batch version admission condition were reconciled with
 source `d2846ef` on 2 October; other Batches details retain their 7 September review.
 Locations were reconciled with `db6be05` on 3 October. OTA publication was
 reconciled with `facba9a` on 3 October: [metadata/receipt and Android APK checks](operations/OTA-PUBLICATION-AND-APK-CHECKS.md).
-The current snapshot was exported from API `35ef83f` and rechecked against the shipped `9274e50` image on 4 October: **177 HTTP operations across 139 paths**. Earlier snapshots retain their dated reports.
+The current snapshot was exported using packaged API5e80137 dependencies and rechecked against shipped API9716348 on 4 October: **178 HTTP operations across 140 paths**. Earlier snapshots retain their dated reports.
 Other manual sections
 still need component review; a listed contract does not establish runtime or
 security correctness. See the [audit report](audits/2026-09-05/AUDIT-REPORT.md).
+
+## Original Android PNG
+
+`POST /api/v1/devices/{device_id}/screenshot/native`, manual root APK capture,
+requires `device:write` and tenant-owned device. No user shell/path is accepted.
+The existing GET screenshot stub is not this contract. Success returns exact
+native `image/png`, `no-store`, `nosniff`, attachment, plus `X-Screenshot-Device-Id`,
+`Id`, `SHA256`, `Android-SHA256`, `Width`, `Height`, `Requested-At`, `Completed-At`,
+`Cleanup-Confirmed` (all prefixed `X-Screenshot-`). The Android-file digest must
+match assembled bytes before success; browser checks its own SHA-256 before download.
+No video/canvas/re-encoding/resize or DPI metadata rewrite is used.
+
+Bounded PNG5MiB, chunks128KiB, read deadline80s, per-RPC8s, separate cleanup;
+per-organization/device lock120s. 429 concurrent capture,502 invalid/partial/hash
+mismatch,503 unavailable channel/lock,504 timeout. No automatic/offline replay.
+Cleanup=false can accompany a valid file. Captures are scoped private temporary
+files; this endpoint does not close the N01 durable DAG artifact-upload gate.
+[Contract, actual PH025/PH010 byte proof and preserved failures](audits/2026-10-04/DEVICE-CONTROL-AND-NATIVE-CAPTURE.md).
 
 ## Android UI hierarchy snapshot
 

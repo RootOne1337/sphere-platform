@@ -7,7 +7,20 @@
 [Главная](../../README.md) · [Каталог документации](../README.md) · [Readiness](READINESS.md) · [Fleet32 gates](../audits/2026-09-20/FLEET32-PREFLIGHT.md) · [PR #19](https://github.com/RootOne1337/sphere-platform/pull/19)
 
 > [!IMPORTANT]
-> **Текущая установка: API 9274e50 / UI 84750e3**, [review 3015](http://127.0.0.1:3015/devices).
+> **Текущая установка: API / UI 9716348**, [review 3015](http://127.0.0.1:3015/devices).
+> **4 октября 2026, 10:06 UTC+5:** исходный PNG доступен из обзора и под одиночным видео;
+> Android/server/browser SHA-256, без ресайза/перекодирования. PH025/PH010 actual PNG
+> 960×540 прошли полное декодирование. Сохранение H.264-кадра подписано отдельно.
+> Добавлен manual Android profile; 7 native reads, проверенные bounded TS-парсеры.
+> Wheel и key/text controls покрыты тестами; live keyboard/wheel result OPEN.
+> **113 suites / 1117 frontend; 140 API cases; mypy229, schema178/140, CI4 passed.**
+> Последние 7 срезов: 14 online10244, epochs после API restart сохранены; это не soak/SLA.
+> Первый remote PNG504 и семь simultaneous code1005 disconnects сохранены; причина OPEN.
+> APK/Tuna/OTA не менялись. 5 offline вне приёмки; **34 source-fixed / 7 незакрытых**.
+> [Контракт, исходные файлы, тайминги и пределы](../audits/2026-10-04/DEVICE-CONTROL-AND-NATIVE-CAPTURE.md). Browser visual OPEN_URL_POLICY_BLOCKED.
+
+> [!IMPORTANT]
+> **Историческая установка этапа XPath: API 9274e50 / UI 84750e3**, [review 3015](http://127.0.0.1:3015/devices).
 > **4 октября 2026, 05:55 UTC+5:** исправлен пользовательский отказ XPath:
 > вход в режим сам читает дерево после текущего кадра, клик во время загрузки
 > сохраняется. Подсветка, все возвращённые атрибуты, XPath/JSON и список узлов;

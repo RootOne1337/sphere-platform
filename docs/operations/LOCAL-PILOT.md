@@ -8,7 +8,20 @@
 > Внешний tunnel hostname удалён из этого журнала, так как Quick Tunnel URL
 > эфемерен; активный runtime endpoint 28 сентября не перечитывался.
 
-## Последняя контрольная точка — 4 октября 2026, 05:55 UTC+5
+## Последняя контрольная точка — 4 октября 2026, 10:06 UTC+5
+
+Review [3015/devices](http://127.0.0.1:3015/devices), API/UI **9716348**.
+Карточка → Видеопоток → «Исходный PNG для пиксельных эталонов»; отдельный
+native capture, SHA-256 Android/server/browser. Также обзор → «Снимок экрана»
+и «Идентификация и доступ» → manual system profile. Видео-frame PNG подписан отдельно.
+113 suites / 1117 frontend, 140 API cases, types/build/mypy229/schema178/140 прошли.
+PH025/PH010: actual PNG960×540 и SHA matched, полное pixel decode.
+7 срезов 05:05:51–05:06:52 UTC: 14online10244/epochs, 15 соседей/API/Tuna/OTA сохранены.
+Первый remote PNG504 и 7 code1005 disconnects сохранены; причина не установлена.
+APK не менялся; новый human native download, wheel/edit, UA2/nonroot, visual/load/soak OPEN.
+[Подробный контракт и evidence](../audits/2026-10-04/DEVICE-CONTROL-AND-NATIVE-CAPTURE.md).
+
+## Историческая контрольная точка — 4 октября 2026, 05:55 UTC+5
 
 Review [3015/devices](http://127.0.0.1:3015/devices), API **9274e50** / UI **84750e3**.
 Выбранная карточка → Видеопоток → XPath-инспектор. Дерево загружается автоматически

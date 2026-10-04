@@ -15,7 +15,14 @@
 > автоматическую проверку runtime; старые аудиты сохраняют собственные даты и
 > версии и не должны читаться как текущий deploy. [Правила актуальности](DOCUMENTATION.md).
 
-Последняя runtime-проверка — **4 октября 2026, 05:55 UTC+5**:
+**Последний follow-up: 4 октября 2026, 10:06 UTC+5. API/UI9716348**, APK10244 unchanged.
+[Native PNG, управление и manual Android profile](audits/2026-10-04/DEVICE-CONTROL-AND-NATIVE-CAPTURE.md).
+1117 frontend / 140 API cases в образах, schema178/140. PH025/PH010 original PNG accepted;
+Android/server/file hashes matched. 14online в конечном UI readback; первый remote504
+и seven code1005 disconnects сохранены. Human native download/keyboard, UA2/nonroot,
+full visual/latency/load/soak OPEN; original ledger34/7 не изменён.
+
+Историческая runtime-проверка этапа XPath — **4 октября 2026, 05:55 UTC+5**:
 [F35 XPath: контракт и live Android](audits/2026-10-04/UI-HIERARCHY-INSPECTOR.md) ·
 [Evidence](audits/2026-10-04/UI-HIERARCHY-INSPECTOR-EVIDENCE.json).
 API **9274e50** / UI **84750e3** на 3015; 110 suites / 1043 frontend и 108 API cases
