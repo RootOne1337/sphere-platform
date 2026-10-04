@@ -18,6 +18,12 @@
 **Последняя проверка: 4 октября 2026, после перезагрузки ПК и установки в 17:14 UTC.
 API/UI c1a6e79.** [Аудит диска, ОЗУ, сборки и RPC](audits/2026-10-04/HOST-RESOURCE-PRESSURE-AND-RPC-DIAGNOSTICS.md) ·
 [Эксплуатационная процедура](operations/HOST-RESOURCES.md).
+
+**Дополнительная инвентаризация, 17:50 UTC:** [размер Sphere / обход C: / package cleanup](audits/2026-10-04/HOST-DISK-INVENTORY-AND-CLEANUP.md).
+Workspace 8 GiB, tracked files 22 MiB; shared Docker VHD 219 GiB отдельно.
+На C: free 41,43 GiB после дополнительной очистки; 46 контейнеров сохранены,
+14 online10244. [Sanitized receipts](audits/2026-10-04/HOST-DISK-INVENTORY-AND-CLEANUP-EVIDENCE.json).
+
 В образах прошли 113 наборов / 1122 frontend-теста и 186 API-проверок; отдельно
 18 проверок допуска сборки. Все четыре source CI прошли. Исправлены повторные
 слои зависимостей; выполнена адресная очистка. Сжатие VHD и длительная утечка ОЗУ

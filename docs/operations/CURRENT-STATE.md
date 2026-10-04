@@ -6,6 +6,16 @@
 
 [Главная](../../README.md) · [Каталог документации](../README.md) · [Readiness](READINESS.md) · [Fleet32 gates](../audits/2026-09-20/FLEET32-PREFLIGHT.md) · [PR #19](https://github.com/RootOne1337/sphere-platform/pull/19)
 
+**Дополнительный срез диска, 4 октября / 17:50 UTC:** рабочая папка — 7,996 GiB,
+отслеживаемые файлы — 22,08 MiB; shared Docker VHD — 218,61 GiB вне workspace.
+Обход проверил метаданные 5 038 969 доступных файлов C:. Штатная очистка download
+caches npm/pip дала наблюдаемые +4,726 GiB; C: free 41,431 GiB при guard.
+Все 46 container identities/image/start сохранены; API c1a6e79, 14 online10244.
+Никаких рестартов / Android команд. Оставшиеся Next caches 0,819 GiB не удалены:
+автоматическая проверка отклонила действие. VHD compaction и причина отдельного
+доочисточного снижения free space остаются открыты.
+[Измерения и доказательства](../audits/2026-10-04/HOST-DISK-INVENTORY-AND-CLEANUP.md).
+
 > [!IMPORTANT]
 > **Текущая установка: API / UI c1a6e79**, [веб на 3015](http://127.0.0.1:3015/devices).
 > **4 октября 2026, после перезагрузки ПК в 16:39 UTC.** Исправлен повторный

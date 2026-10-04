@@ -13,6 +13,11 @@
 [Readiness](../../operations/READINESS.md) ·
 [PR19](https://github.com/RootOne1337/sphere-platform/pull/19).
 
+**Позднейший disk follow-up / 17:50 UTC:** отдельно измерена вся рабочая папка
+Sphere (7,996 GiB), доступная область C: и выполнена штатная очистка npm/pip.
+[Карта потребителей, +4,726 GiB и сохранность runtime](HOST-DISK-INVENTORY-AND-CLEANUP.md).
+Числа предыдущего инцидента ниже сохраняют собственные времена измерений.
+
 ## Вывод и предел доказательства
 
 Установлен сильный дефицит **диска Windows** и накопление **build artifacts**:

@@ -7,6 +7,11 @@
 [Предварительная проверка](../../scripts/pilot/resource_guard.py) ·
 [Её регрессионные проверки](../../tests/test_pilot_resource_guard.py).
 
+**Последняя инвентаризация C: / 4 октября, 17:50 UTC:**
+[размер workspace, крупные потребители, package cleanup и allocation](../audits/2026-10-04/HOST-DISK-INVENTORY-AND-CLEANUP.md).
+Workspace 7,996 GiB / tracked22,08 MiB; shared Docker VHD218,61 GiB отдельно.
+После штатной очистки npm/pip — C: free41,43 GiB; runtime сохранён.
+
 ## Что проверять перед сборкой
 
 Из корня проекта, имея Python 3.11+:
@@ -129,6 +134,24 @@ standalone output, static files, runtime dependencies и generated types ост�
 ошибку проекта: тома могут содержать БД, ключи и чужие приложения.
 
 ## Логи и данные
+
+### Общие download caches хоста
+
+Сначала измерить точный каталог и проверить `npm config get cache` / `pip cache dir`.
+Download cache не равен установленным `node_modules`, virtualenv или каталогу
+исходников. При адресном обслуживании использовать штатный `npm cache clean`
+с `--force` и явным `--cache`, либо `pip cache purge` с явным `--cache-dir`.
+После очистки следующая установка может снова скачивать зависимости.
+`npm cache clean` не удаляет все `_npx` installations: CLI/MCP могут исполняться
+оттуда. Их нельзя считать теми же одноразовыми archives или молча удалять вместе.
+Не применять рекурсивное удаление всего AppData/Temp/Users или среды инструментов.
+
+4 октября эти операции дали наблюдаемую прибавку4,726 GiB, а все46 контейнеров
+сохранили ID/image/start. Два других Next cache directories0,819 GiB остались:
+их удаление отклонила автоматическая проверка. Отклонённый запуск не является
+очисткой; данные и границы действия сохранены в отдельном disk follow-up.
+
+### Operational retention
 
 Core compose теперь задаёт `json-file`, `max-size: 20m`, `max-file: 5` на сервис.
 Это потолок порядка 100 MB текущих stdout/stderr-файлов, не лимит всех данных.

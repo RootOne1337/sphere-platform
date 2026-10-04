@@ -2,6 +2,11 @@
 
 **Навигация обновлена: 4 октября 2026. Исторические live-снимки ниже сохранены по датам.**
 
+**Диск / 17:50 UTC:** рабочая папка Sphere 7,996 GiB; shared Docker VHD 218,61 GiB
+вне неё. Package cleanup дал +4,726 GiB, guard C: free41,431 GiB; все46 контейнеров
+сохранены, 14 online10244. Это не RAM soak / VHD compaction / Fleet32 admission.
+[Полный доступный обход и ограничения](../audits/2026-10-04/HOST-DISK-INVENTORY-AND-CLEANUP.md).
+
 > [!IMPORTANT]
 > **Текущая установка: API / UI c1a6e79**, [веб на 3015](http://127.0.0.1:3015/devices).
 > **4 октября 2026, после перезагрузки ПК в 16:39 UTC.** Исправлен повторный
