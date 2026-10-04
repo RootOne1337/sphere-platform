@@ -28,11 +28,10 @@ function open() {
 async function loaded() {
   jest.mocked(api.post).mockResolvedValue({ data: snapshot() });
   const view = open();
-  fireEvent.click(screen.getByRole('button', { name: 'Обновить дерево' }));
   await screen.findByText(/1 элементов/);
   return view;
 }
-it('reads only on explicit request, reveals all attributes and scales highlight after a pick', async () => {
+it('loads on inspection entry, reveals all attributes and scales highlight after a pick', async () => {
   await loaded();
   expect(api.post).toHaveBeenCalledTimes(1);
   expect(api.post).toHaveBeenCalledWith('/devices/remote/ui-hierarchy', undefined, expect.objectContaining({ timeout: 50_000 }));
@@ -57,7 +56,6 @@ it.each(['device', 'token', 'permission', 'socket'])('retires an in-flight tree 
   let resolve: (value: unknown) => void = () => {};
   jest.mocked(api.post).mockImplementation(() => new Promise(r => { resolve = r; }) as never);
   const view = open();
-  fireEvent.click(screen.getByRole('button', { name: 'Обновить дерево' }));
   const signal = jest.mocked(api.post).mock.calls[0][2]?.signal;
   if (reason === 'device') view.rerender(<SingleDeviceStream deviceId="other" />);
   else if (reason === 'socket') act(() => mockStreamProps.onInspectionInvalidated());
@@ -68,7 +66,7 @@ it.each(['device', 'token', 'permission', 'socket'])('retires an in-flight tree 
 });
 it('failure and wrong-device receipt stay errors, with an explicit operator retry', async () => {
   jest.mocked(api.post).mockResolvedValue({ data: snapshot('other') });
-  open(); fireEvent.click(screen.getByRole('button', { name: 'Обновить дерево' }));
+  open();
   expect(await screen.findByRole('alert')).toHaveTextContent(/Дерево не принадлежит/);
   expect(api.post).toHaveBeenCalledTimes(1);
   jest.mocked(api.post).mockResolvedValue({ data: snapshot() });
@@ -88,6 +86,7 @@ it('expires the tree after 30 seconds without polling Android or retaining a cli
   jest.useFakeTimers();
   try {
     await loaded();
+    fireEvent.click(screen.getByRole('button', { name: 'Автообновление: включено' }));
     act(() => mockStreamProps.inspection.onPick(120, 120, { width: 960, height: 540 }));
     expect(mockStreamProps.inspection.bounds).not.toBeNull();
     act(() => jest.advanceTimersByTime(31_000));
@@ -100,7 +99,7 @@ it('expires the tree after 30 seconds without polling Android or retaining a cli
 
 it('shows a valid tree with a distinct warning when Android cleanup is unconfirmed', async () => {
   jest.mocked(api.post).mockResolvedValue({ data: { ...snapshot(), temporary_file_cleanup_confirmed: false } });
-  open(); fireEvent.click(screen.getByRole('button', { name: 'Обновить дерево' }));
+  open();
   await screen.findByText(/1 элементов/);
   expect(screen.getByText(/Удаление временного файла дерева не подтверждено/)).toBeInTheDocument();
 });
