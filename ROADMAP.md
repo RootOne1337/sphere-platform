@@ -6,8 +6,8 @@
 EP-001–009 приняты,41 пункт сохраняют открытые критерии.
 [Последний пакет ресурсной истории](docs/audits/2026-10-05/ENTERPRISE-CONTAINER-RESOURCE-HISTORY.md).
 EP-009: принята история cgroup CPU/RAM; host/RSS остаются отдельными scope.
-EP-010 продолжается: [Stage A freshness counts установлен](docs/audits/2026-10-05/ENTERPRISE-LIVE-COVERAGE-NEXT.md),
-coverage tunnels/fleet и независимый producer ещё открыты. Затем реестр/настройки и Studio/recording/trace по dependencies.
+EP-010 продолжается: [Stage A expiry и Stage B Android clock/ownership установлены](docs/audits/2026-10-05/ENTERPRISE-ANDROID-VPN-OBSERVATION.md).
+[Coverage tunnels/fleet и независимый producer](docs/audits/2026-10-05/ENTERPRISE-LIVE-COVERAGE-NEXT.md) ещё открыты. Затем реестр/настройки и Studio/recording/trace по dependencies.
 Планируемый пользовательский stream+script тест20–30 эмуляторов — отдельный
 живой этап; целевой F32-план32 ниже не считается выполненным по 14 online.
 Будущие VPN-адаптеры/AI и универсальные project databases не входят в текущую

@@ -1,9 +1,11 @@
 # EP-010 — live coverage and event delivery review
 
 **5 October 2026. Initial source reviewed:** `cb5b3f91640c86622060e6e3adea76c6d73a6093`.
-**Current status:** Stage A installed with API source `66714f26`; API schema synchronized
-in documentation-only commit `ffdcd36`. EP-010 remains OPEN. The runtime receipt
-below records the partial change; the immutable
+**Current status:** Stage B clock/ownership foundation installed with API source
+`d656b579`; preserved UI `cb5b3f91`. Stage A and schema repair receipts below remain
+historical. [Stage B checks and actual runtime](ENTERPRISE-ANDROID-VPN-OBSERVATION.md)
+include independently timed Android reports, 444+35 exact-image tests and green
+source CI (2722 passed / 30 skipped). EP-010 remains OPEN. The immutable
 [50-item backlog](ENTERPRISE-PRODUCT-BACKLOG.json) is retained.
 Current acceptance remains **9 accepted / 41 with open criteria**.
 [Installed resource histories](ENTERPRISE-CONTAINER-RESOURCE-HISTORY.md) ·

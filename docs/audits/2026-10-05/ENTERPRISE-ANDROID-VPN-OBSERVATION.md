@@ -1,12 +1,14 @@
 # EP-010 Stage B foundation: independently timed Android VPN observations
 
 **Date:** 5 October 2026, Asia/Yekaterinburg.
-**Implementation status:** source implemented; committed image/runtime receipt must
-be recorded separately below. EP-010 remains OPEN; acceptance remains **9/41**.
+**Implementation status:** source `d656b579` installed at 16:11:09 UTC;
+independent clock and atomic ownership foundation verified below.
+EP-010 remains OPEN; acceptance remains **9/41**.
 
 [Current state](../../operations/CURRENT-STATE.md) ·
 [Delivery and coverage contract](ENTERPRISE-LIVE-COVERAGE-NEXT.md) ·
-[Installed Stage A evidence](ENTERPRISE-LIVE-COVERAGE-EVIDENCE.json).
+[Installed Stage A evidence](ENTERPRISE-LIVE-COVERAGE-EVIDENCE.json) ·
+[Stage B frozen evidence](ENTERPRISE-ANDROID-VPN-OBSERVATION-EVIDENCE.json).
 
 ## Concrete defects and reproduction
 
@@ -85,8 +87,8 @@ non-agent status writers are outside this ownership change.
 ## Checks and boundaries
 
 Initial related source run: **282 passed / 0 skipped**. Changed-file Ruff and mypy
-over **231 files** passed. Expanded source tests, exact production dependencies,
-generated OpenAPI and runtime verification must be recorded with final outcomes.
+over **231 files** passed. Expanded source tests and exact-image checks are
+recorded separately so a local dependency run is not presented as image proof.
 
 Expanded source run: **444 passed / 0 skipped** across device status, WebSocket,
 main device API and VPN suites. It includes 31 observation/ownership cases and
@@ -102,14 +104,102 @@ removed afterwards. It proves Redis transaction behavior for these cases, not
 PostgreSQL RLS, Android VPN traffic or fleet load.
 
 New opt-in production regressions repeat both races against isolated real Redis
-through the existing guarded PostgreSQL/Redis fixture. Those tests must not be
-reported as executed merely because the disposable probe passed.
+through the existing guarded PostgreSQL/Redis fixture. Both subsequently passed
+in source CI; the disposable probe alone was not used as their execution proof.
 
 No migration, APK release, VPN rotation/provision/revoke, script execution, public
 IP probe or tunnel replacement belongs to this slice. The independent fleet
 producer, separate tenant coverage endpoint, infrastructure tunnel observations,
 coverage UI and mixed stream/script load remain OPEN. Windows disk/RAM writer
 attribution remains unresolved.
+
+## Committed image and live receipt — 5 October 2026
+
+API source **`d656b579a77a2997ea7012c9aad7fb3425e07edd`** was built from a
+bounded committed Git archive. Installed image:
+**`sha256:deea9072fb3e86efd16e2b4a65a8944492ba0821fd3bfa5db31e5443c2dd6455`**.
+Only the backend was replaced at **16:11:09 UTC / 21:11:09 UTC+5**. All **45**
+neighboring container identities, image IDs, start epochs, mounts and log
+configuration were compared before/after and preserved. Backend mounts and log
+rotation were preserved; readiness and the build endpoint confirmed the source.
+Rollback remains the previously installed Stage A API `66714f26`.
+
+The same image, without a backend source mount and with network disabled, passed:
+
+- **444** device-status, WebSocket, device-API and VPN tests; no failures/skips.
+- **35** resource, multiprocess and registry-lifecycle tests; no failures/skips.
+- mypy over **231 files** and Ruff for backend plus the **five changed test files**.
+- Generated API documentation `--check` with shipped FastAPI **0.136.3** and
+  Pydantic **2.9.2**; no application lifespan or services were started for this.
+
+First read-only harness attempts hit unwritable tool caches; corrected flags use
+`--no-cache`/`/tmp/mypy`. A full-tests Ruff attempt in the packaged context also
+hit import classification differences because extra repository scripts were not
+packaged. The exact-image Ruff receipt therefore names its narrower scope;
+subsequent source CI passed full repository lint. These harness retries are
+retained privately and are not counted as product regressions or additional tests.
+
+Six read-only samples at **16:20:04–16:20:19 UTC** each returned **19 registered,
+14 online, 5 offline, 0 connecting**. All 14 online agents provided independently
+fresh explicit **false** managed-VPN reports; five offline devices remained
+**unknown**, not false. Across the samples fresh report ages were **0.333–29.749 s**.
+Bulk status verified current/reporting session equality and online/busy presence.
+This validates live receipt/projection compatibility; it does not prove Android
+VPN traffic, a live stale-report fault injection, uninterrupted uptime or SLA.
+
+Existing resource history remained `cpu=ready`, `memory=ready`,
+`memoryLimit=ready`; `cpuQuota=empty` stayed distinct from zero. HTTP history and
+readiness responded. The private HTTP session was closed with **204**; its
+subsequent authorized read returned **401**. No human browser session was logged
+out, and no Android command, APK reinstall, OTA or tunnel change was performed.
+
+### Source CI and browser compatibility
+
+For **this exact API source**, [backend CI](https://github.com/RootOne1337/sphere-platform/actions/runs/37338164228),
+[frontend CI](https://github.com/RootOne1337/sphere-platform/actions/runs/37338164232)
+and [Android CI](https://github.com/RootOne1337/sphere-platform/actions/runs/37338164321)
+all completed successfully. Backend unit/real-service step: **2722 passed,
+30 skipped, one warning; coverage 79.78%**. Both new replacement races explicitly
+passed in the real-service fixture. Image bootstrap, full lint/mypy, security,
+RLS inventory, OpenAPI verification, Redis memory/persistence acceptance and
+Alembic single-head jobs passed. Skipped tests are not presented as passing.
+The earlier Stage A stale-schema CI failure remains in its historical receipt;
+this green run resolves the schema check for `d656b579`, not retroactively.
+Later documentation-only head CI must be evaluated on its own.
+
+Actual in-app browser `/monitoring` and `/devices` were inspected at the normal
+**724×884** viewport with no new viewport override. The build label reported
+**W:cb5b3f91 A:d656b579** and explicitly disclosed different revisions. Existing
+resource panels appeared in DOM, the registry showed **14/19 online**, and no
+warn/error entries were returned by the bounded console read. Document width
+matched viewport width; the dense registry uses a contained horizontal viewport.
+These three native JPEG captures show the visible viewport, not a complete page
+or newly designed VPN coverage UI:
+
+- [Monitoring after API replacement](assets/android-vpn-observation/monitoring-live.jpg)
+- [Real registry](assets/android-vpn-observation/devices-live.jpg)
+- [Monitoring final view](assets/android-vpn-observation/monitoring-viewport.jpg)
+
+The existing registry access chip is **assignment** (`vpn_assigned`), not the new
+Android service observation. This slice does not relabel it or claim that the new
+state/timestamp is already exposed as a dedicated UI panel. That richer coverage
+presentation and fleet producer remain part of open EP-010 work.
+
+### Portable evidence verification
+
+The [manifest](ENTERPRISE-ANDROID-VPN-OBSERVATION-EVIDENCE.json) pins 12 Git blobs,
+the exact image, 14 receipt/XML files, three capture hashes, unchanged 9/41 ledger,
+real Redis proof, source CI and the finite live observations. Run:
+
+```powershell
+python -m scripts.audit.validate_android_vpn_observation
+```
+
+The [checker](../../../scripts/audit/validate_android_vpn_observation.py) verifies
+frozen artifact integrity and contracts. It performs no live HTTP call, service
+restart or device action and cannot certify current health or close EP-010.
+The current entry/report link check covered **12 documents, 774 local links and
+19 anchors**; all resolved. Historical evidence manifests remain unchanged.
 
 ## Implementation references
 

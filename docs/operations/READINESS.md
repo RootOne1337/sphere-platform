@@ -2,7 +2,16 @@
 
 **Навигация обновлена: 5 октября 2026. Исторические live-снимки ниже сохранены по датам.**
 
-**5 октября, 20:31 UTC+5 — частичный EP-010 Stage A установлен:** backend `66714f26`,
+**5 октября, 21:11 UTC+5 — установлен EP-010 Stage B foundation:** API `d656b579`,
+UI `cb5b3f91` сохранён. VPN-отчёт Android имеет независимое серверное время и
+владельца сеанса; атомарная запись защищена от запоздавшего старого подключения.
+После 120 с отчёт не считается свежим. Живое окно16:20 UTC:14 свежих false и5
+unknown при14 online/5 offline из19. Это не проверка VPN-трафика или SLA.
+Exact image444+35 tests; source CI backend2722 passed/30 skipped, frontend и
+Android прошли. Сохранены45 соседей. **9 принято/41 открыто**, EP-010 ещё OPEN.
+[Результат, ограничения и следующие критерии](../audits/2026-10-05/ENTERPRISE-ANDROID-VPN-OBSERVATION.md) · [Pinned evidence](../audits/2026-10-05/ENTERPRISE-ANDROID-VPN-OBSERVATION-EVIDENCE.json).
+
+**Историческая установка Stage A — 5 октября, 20:31 UTC+5:** backend `66714f26`,
 UI `cb5b3f91` сохранён. Список peers и pool counts теперь одинаково исключают
 устаревший/future handshake, неназначенные и непривязанные peers; добавлено время
 SQL-среза. Exact image: 99 VPN + 27 resource tests, mypy 231/Ruff прошли; сохранены
