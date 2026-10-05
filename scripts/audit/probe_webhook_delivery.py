@@ -66,8 +66,14 @@ async def probe() -> dict:
             ).hexdigest() for r in requests)
             assert events[-1]["outcome"] == outcome
             assert events[-1]["event"] == ("webhook.delivered" if outcome == "delivered" else "webhook.delivery_failed")
+            # httpx/AnyIO can also call sleep(0) to yield to its transport. Those
+            # scheduling checkpoints are not callback retry/backoff delays.
+            delays = [call.args[0] for call in sleep.await_args_list if call.args[0] > 0]
+            expected = [7] if statuses[0] == 429 else [5, 30, 120][:len(statuses) - 1]
+            assert delays == expected
             receipts.append({"case": name, "httpStatuses": statuses, "attempts": len(requests),
-                             "retryDelaysSeconds": [call.args[0] for call in sleep.await_args_list],
+                             "retryDelaysSeconds": delays,
+                             "transportZeroYields": sum(call.args[0] == 0 for call in sleep.await_args_list),
                              "signatureValid": True, "stableDeliveryId": True, "events": events})
     finally:
         server.shutdown()

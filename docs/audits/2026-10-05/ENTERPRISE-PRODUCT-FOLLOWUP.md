@@ -47,6 +47,8 @@ webhook + batch service + n8n API. Ruff и mypy целевого backend-фай�
 429→204, 503→204, исчерпание четырёх 503. Задержки только записываются и пропускаются,
 поэтому этот probe не измеряет 155 секунд wall-clock retry. Нет внешних получателей,
 DB/task/Android команд; receiver закрывается. Runtime receipt добавляется после установки.
+httpx/AnyIO `sleep(0)` scheduling checkpoints считаются отдельно от положительных
+callback retry delays; они не означают дополнительные HTTP попытки.
 
 ## EP-007: Grafana auth proxy и привязка Sphere session
 
