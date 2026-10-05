@@ -14,14 +14,29 @@ from typing import Any
 import structlog
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.core.dependencies import require_permission
+from backend.core.dependencies import get_tenant_db, require_permission
+from backend.core.rbac import has_permission
 from backend.database.redis_client import get_redis
+from backend.schemas.fleet_coverage import FleetCoverageResponse
+from backend.services.fleet_coverage import read_fleet_coverage
 from backend.services.health_service import ComponentHealth, HealthService, get_health_service
 
 logger = structlog.get_logger()
 
 router = APIRouter(prefix="/monitoring", tags=["monitoring"])
+
+
+@router.get("/fleet-coverage", response_model=FleetCoverageResponse,
+            summary="Tenant inventory, presence and independently timed VPN coverage")
+async def get_fleet_coverage(
+    current_user=require_permission("device:read"),
+    db: AsyncSession = Depends(get_tenant_db),
+    redis_conn=Depends(get_redis),
+) -> FleetCoverageResponse:
+    return await read_fleet_coverage(db, redis_conn, current_user.org_id,
+                                    vpn_allowed=has_permission(current_user.role, "vpn:read"))
 
 
 class AlertAnnotations(BaseModel):

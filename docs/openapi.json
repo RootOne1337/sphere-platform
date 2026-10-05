@@ -4986,6 +4986,32 @@
         }
       }
     },
+    "/api/v1/monitoring/fleet-coverage": {
+      "get": {
+        "tags": [
+          "monitoring"
+        ],
+        "summary": "Tenant inventory, presence and independently timed VPN coverage",
+        "operationId": "get_fleet_coverage_api_v1_monitoring_fleet_coverage_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FleetCoverageResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/monitoring/alerts": {
       "post": {
         "tags": [
@@ -11617,6 +11643,74 @@
         ],
         "title": "ComponentHealth"
       },
+      "CoverageSignal": {
+        "properties": {
+          "state": {
+            "type": "string",
+            "enum": [
+              "ready",
+              "unavailable",
+              "forbidden",
+              "limited",
+              "unmeasured"
+            ],
+            "title": "State"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "observed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Observed At"
+          },
+          "counts": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "integer"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Counts",
+            "description": "Null when the source was not measured; measured zero remains zero"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason",
+            "default": ""
+          },
+          "max_age_seconds": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Age Seconds"
+          }
+        },
+        "type": "object",
+        "required": [
+          "state",
+          "source"
+        ],
+        "title": "CoverageSignal"
+      },
       "CreateAPIKeyRequest": {
         "properties": {
           "name": {
@@ -14549,6 +14643,73 @@
           "command"
         ],
         "title": "ExecuteShellRequest"
+      },
+      "FleetCoverageResponse": {
+        "properties": {
+          "schema_version": {
+            "type": "integer",
+            "enum": [
+              1
+            ],
+            "const": 1,
+            "title": "Schema Version",
+            "default": 1
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "current-tenant-active-inventory"
+            ],
+            "const": "current-tenant-active-inventory",
+            "title": "Scope",
+            "default": "current-tenant-active-inventory"
+          },
+          "org_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Org Id"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "max_inventory_devices": {
+            "type": "integer",
+            "title": "Max Inventory Devices"
+          },
+          "inventory": {
+            "$ref": "#/components/schemas/CoverageSignal"
+          },
+          "presence": {
+            "$ref": "#/components/schemas/CoverageSignal"
+          },
+          "android_vpn": {
+            "$ref": "#/components/schemas/CoverageSignal"
+          },
+          "vpn_assignment": {
+            "$ref": "#/components/schemas/CoverageSignal"
+          },
+          "handshakes": {
+            "$ref": "#/components/schemas/CoverageSignal"
+          },
+          "transport_tunnels": {
+            "$ref": "#/components/schemas/CoverageSignal"
+          }
+        },
+        "type": "object",
+        "required": [
+          "org_id",
+          "generated_at",
+          "max_inventory_devices",
+          "inventory",
+          "presence",
+          "android_vpn",
+          "vpn_assignment",
+          "handshakes",
+          "transport_tunnels"
+        ],
+        "title": "FleetCoverageResponse"
       },
       "FleetStatusResponse": {
         "properties": {

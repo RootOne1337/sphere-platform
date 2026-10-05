@@ -4,7 +4,7 @@ Generated from `backend.main.app.openapi()` by `scripts/export_api_docs.py`.
 Regenerate with `python -m scripts.export_api_docs`; verify with `--check`.
 The exporter does not run startup hooks or send HTTP requests.
 
-**178 HTTP operations across 140 paths.**
+**179 HTTP operations across 141 paths.**
 
 Full parameters, request bodies, response schemas and declared security schemes:
 [OpenAPI JSON](openapi.json). Manual explanations:
@@ -109,6 +109,7 @@ for tested behavior and remaining limits.
 | `DELETE` | `/api/v1/logs/{device_id}` | logs | 200, 422 | Delete Device Logs |
 | `GET` | `/api/v1/logs/{device_id}` | logs | 200, 422 | Get Device Logs |
 | `POST` | `/api/v1/monitoring/alerts` | monitoring | 200, 422 | Receive Alerts |
+| `GET` | `/api/v1/monitoring/fleet-coverage` | monitoring | 200 | Tenant inventory, presence and independently timed VPN coverage |
 | `GET` | `/api/v1/monitoring/metrics` | monitoring | 200 | Агрегированные метрики инфраструктуры |
 | `GET` | `/api/v1/monitoring/nodes` | monitoring | 200 | Топология кластера (список нод) |
 | `POST` | `/api/v1/n8n/tasks` | n8n | 201, 422 | Create task from n8n (supports webhook callback) |

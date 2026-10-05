@@ -70,6 +70,7 @@ describe('useFleetEvents', () => {
 
     act(() => jest.advanceTimersByTime(500));
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['devices'] }, { cancelRefetch: false });
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['fleet-coverage'] }, { cancelRefetch: false });
   });
 
   function mount(onEvent?: (event: unknown) => void) {
@@ -104,7 +105,7 @@ describe('useFleetEvents', () => {
     const next = TestWebSocket.instances[1];
     act(() => { next.open(); next.message({ type: 'snapshot', data: {} }); jest.advanceTimersByTime(500); });
     expect(view.result.current.state).toBe('live');
-    for (const root of ['devices', 'dashboard', 'tasks', 'pipeline-runs', 'device-events']) {
+    for (const root of ['devices', 'dashboard', 'tasks', 'pipeline-runs', 'device-events', 'fleet-coverage']) {
       expect(view.invalidate).toHaveBeenCalledWith({ queryKey: [root] }, { cancelRefetch: false });
     }
   });

@@ -31,14 +31,14 @@ const HANDSHAKE_TIMEOUT_MS = 15_000;
 const REFRESH_BATCH_MS = 500;
 const LIVE_QUERY_ROOTS = [
   'devices', 'tasks', 'dashboard', 'device-events', 'vpn', 'batches',
-  'pipeline-runs', 'orchestration-status', 'account-sessions', 'game-accounts', 'device-inspector',
+  'pipeline-runs', 'orchestration-status', 'account-sessions', 'game-accounts', 'device-inspector', 'fleet-coverage',
 ];
 
 function eventQueryRoots(type: string): string[] {
-  if (type.startsWith('device.')) return ['devices', 'dashboard', 'device-events'];
-  if (type.startsWith('task.')) return ['tasks', 'devices', 'dashboard', 'batches', 'pipeline-runs', 'orchestration-status', 'device-events'];
+  if (type.startsWith('device.')) return ['devices', 'dashboard', 'device-events', 'fleet-coverage'];
+  if (type.startsWith('task.')) return ['tasks', 'devices', 'dashboard', 'batches', 'pipeline-runs', 'orchestration-status', 'device-events', 'fleet-coverage'];
   if (type.startsWith('command.')) return ['device-inspector', 'device-events'];
-  if (type.startsWith('vpn.')) return ['vpn', 'devices', 'device-events'];
+  if (type.startsWith('vpn.')) return ['vpn', 'devices', 'device-events', 'fleet-coverage'];
   if (type.startsWith('account.') || type.startsWith('session.')) return ['game-accounts', 'account-sessions', 'device-events'];
   if (type.startsWith('stream.') || type === 'game.crashed' || type === 'alert.triggered') return ['devices', 'device-events'];
   return [];

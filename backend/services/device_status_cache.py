@@ -241,7 +241,7 @@ class DeviceStatusCache:
     # ── Bulk (MGET — single Redis round-trip) ────────────────────────────────
 
     async def bulk_get_status(
-        self, device_ids: list[str]
+        self, device_ids: list[str], *, as_of: datetime | None = None
     ) -> dict[str, DeviceLiveStatus | None]:
         """O(1) RTT — fetch N statuses with a single MGET."""
         if not device_ids:
@@ -250,7 +250,7 @@ class DeviceStatusCache:
             return {did: None for did in device_ids}
         keys = [self._key(did) for did in device_ids]
         values = await self.redis.mget(*keys)
-        as_of = datetime.now(timezone.utc)
+        as_of = as_of or datetime.now(timezone.utc)
         result: dict[str, DeviceLiveStatus | None] = {}
         for device_id, raw in zip(device_ids, values):
             if raw is not None:
