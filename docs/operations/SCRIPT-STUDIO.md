@@ -67,4 +67,4 @@ Read/check требуют свежего `script:read`, write — `script:write`
 
 Нет новой зависимости или внешнего CDN для source editor. Используются
 существующие React Flow / React / lucide / UI primitives; оригинальная attribution
-React Flow сохранена. [Лицензии frontend](../design/THIRD-PARTY-NOTICES.md).
+React Flow сохранена. [Лицензии frontend](../design/previews/admincn-sphere-2026-09-28/THIRD-PARTY-NOTICES.md).

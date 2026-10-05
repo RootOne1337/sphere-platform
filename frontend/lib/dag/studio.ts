@@ -1,4 +1,5 @@
 import { ACTION_TYPES, importDag, validateDag, type DagExport } from './export';
+import type { Node, Edge } from '@xyflow/react';
 
 export const SOURCE_LIMIT = 512 * 1024;
 export const HISTORY_LIMIT = 20;
@@ -81,6 +82,25 @@ const templates: Partial<Record<ActionType, Record<string, unknown>>> = {
 };
 export function defaultAction(type: ActionType) {
   return JSON.parse(JSON.stringify({ type, ...templates[type] })) as DagExport['nodes'][number]['action'];
+}
+/** Bounded breadth-first layout. Cycles remain explicit back edges and never
+ * recurse. Canvas placement is not part of the executable/hash contract. */
+export function arrangeNodes(nodes: Node[], edges: Edge[], entry: string): Node[] {
+  const adjacency = new Map<string, string[]>();
+  for (const edge of edges) adjacency.set(edge.source, [...(adjacency.get(edge.source) ?? []), edge.target]);
+  const levels = new Map<string, number>([[entry, 0]]);
+  const queue = [entry];
+  for (let index = 0; index < queue.length; index++) {
+    for (const target of adjacency.get(queue[index]) ?? []) if (!levels.has(target)) {
+      levels.set(target, (levels.get(queue[index]) ?? 0) + 1); queue.push(target);
+    }
+  }
+  const columns = new Map<number, number>();
+  return nodes.map(node => {
+    const level = levels.get(node.id) ?? levels.size;
+    const column = columns.get(level) ?? 0; columns.set(level, column + 1);
+    return { ...node, position: { x: column * 240, y: level * 140 } };
+  });
 }
 /** Insert after the selected linear step, or immediately before an existing end.
  * Branch insertion requires choosing a linear step, never silently rewires a condition.

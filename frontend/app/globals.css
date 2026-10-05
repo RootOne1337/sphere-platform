@@ -147,3 +147,11 @@ html {
 .light-mode .border-emerald-500 { border-color: #75e0a7; }
 .light-mode .border-blue-500,
 .light-mode .border-cyan-500 { border-color: #84caff; }
+
+/* Script Studio keeps graph controls legible in both operator themes. */
+.sphere-studio-flow .react-flow__controls { border: 1px solid hsl(var(--border)); border-radius: .5rem; overflow: hidden; box-shadow: none; }
+.sphere-studio-flow .react-flow__controls-button { width: 30px; height: 30px; background: hsl(var(--card)); color: hsl(var(--foreground)); border-bottom-color: hsl(var(--border)); }
+.sphere-studio-flow .react-flow__controls-button:hover { background: hsl(var(--muted)); }
+.sphere-studio-flow .react-flow__controls-button svg { fill: currentColor; }
+.sphere-studio-flow .react-flow__minimap { background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: .5rem; }
+.sphere-studio-flow .react-flow__minimap-mask { fill: hsl(var(--muted)); fill-opacity: .5; }

@@ -8,7 +8,7 @@ import { isAxiosError } from 'axios';
 import { ArrowLeft, Save, Check, Code2, Workflow, Undo2, Redo2, Download, Upload, Plus, Play, Search } from 'lucide-react';
 import { nodeTypes } from '@/lib/dag/nodeTypes';
 import { exportDag, importDag, ACTION_TYPES, type DagMetadata } from '@/lib/dag/export';
-import { ACTION_LABELS, boundedSource, byteLength, draftKey, formatDag, initialDag, insertAction, parseSource, pushHistory, readDraft, SOURCE_LIMIT, writeDraft, type StudioDocument } from '@/lib/dag/studio';
+import { ACTION_LABELS, arrangeNodes, boundedSource, byteLength, draftKey, formatDag, initialDag, insertAction, parseSource, pushHistory, readDraft, SOURCE_LIMIT, writeDraft, type StudioDocument } from '@/lib/dag/studio';
 import { Button } from '@/src/shared/ui/button';
 import { Input } from '@/components/ui/input';
 import { api } from '@/lib/api';
@@ -33,7 +33,7 @@ function BuilderInner({ editId, storageKey }: { editId: string | null; storageKe
   const queryClient = useQueryClient();
   const access = useCapabilities();
   const accessRef = useRef(access); accessRef.current = access;
-  const [nodes, setNodes, onNodesChange] = useNodesState(importedInitial.nodes);
+  const [nodes, setNodes, onNodesChange] = useNodesState(arrangeNodes(importedInitial.nodes, importedInitial.edges, initialDag.entry_node));
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>(importedInitial.edges);
   const [metadata, setMetadata] = useState<DagMetadata>(importedInitial.metadata);
   const [document, setDocument] = useState<StudioDocument>({ name: 'Новый сценарий', source: formatDag(initialDag) });
@@ -84,7 +84,7 @@ function BuilderInner({ editId, storageKey }: { editId: string | null; storageKe
 
   function syncGraph(next: StudioDocument) {
     const imported = importDag(parseSource(next.source));
-    setNodes(imported.nodes.map(node => ({ ...node, position: nodes.find(old => old.id === node.id)?.position ?? node.position })));
+    setNodes(arrangeNodes(imported.nodes, imported.edges, imported.metadata.entry_node));
     setEdges(imported.edges); setMetadata(imported.metadata); setCanvasError('');
   }
   function remember() { const before = documentRef.current; setHistory(old => pushHistory(old, before)); setFuture([]); }
@@ -124,7 +124,7 @@ function BuilderInner({ editId, storageKey }: { editId: string | null; storageKe
         if (typeof versionId !== 'string' || !versionId) throw new Error('Не получена версия сценария. Запись заблокирована.');
         if (data.is_archived) throw new Error('Архивный сценарий доступен только для чтения в каталоге.');
         const loadedDocument = { name: data.name ?? 'Без названия', source: formatDag(exportDag(imported.nodes, imported.edges, imported.metadata)) };
-        setNodes(imported.nodes); setEdges(imported.edges); setMetadata(imported.metadata);
+        setNodes(arrangeNodes(imported.nodes, imported.edges, imported.metadata.entry_node)); setEdges(imported.edges); setMetadata(imported.metadata);
         setDocument(loadedDocument); setBaseDocument(loadedDocument);
         setExpectedVersion({ id: versionId, version: data.current_version?.version ?? 0, dag_hash: data.current_version?.dag_hash ?? null });
         loaded.current = true; setHistory([]); setFuture([]); setLoadState('ready');
@@ -285,6 +285,7 @@ function BuilderInner({ editId, storageKey }: { editId: string | null; storageKe
         <Button size="sm" variant="outline" disabled={!writable || nodePending} onClick={() => fileInput.current?.click()}><Upload className="mr-2 size-4" />Импорт JSON</Button>
         <input ref={fileInput} type="file" accept=".json,application/json" className="hidden" aria-label="Файл сценария" onChange={event => { void importFile(event.target.files?.[0]); event.target.value = ''; }} />
         <Button size="sm" variant="outline" onClick={exportFile}><Download className="mr-2 size-4" />Экспорт</Button>
+        {mode === 'graph' && <Button size="sm" variant="ghost" disabled={Boolean(busy) || nodePending} onClick={() => { setNodes(arrangeNodes(nodes, edges, metadata.entry_node)); window.requestAnimationFrame(() => { if (live.current) void canvas.current?.fitView({ padding: 0.2 }); }); }}>Упорядочить</Button>}
         <div className="hidden flex-1 lg:block" />
         <Button size="sm" variant="outline" disabled={Boolean(busy) || nodePending || Boolean(canvasError)} onClick={() => void checkOrSave('check')}><Check className="mr-2 size-4" />{busy === 'check' ? 'Проверяем…' : 'Проверить на сервере'}</Button>
         <Button size="sm" disabled={!writable || nodePending || Boolean(canvasError)} onClick={() => void checkOrSave('save')}><Save className="mr-2 size-4" />{busy === 'save' ? 'Сохраняем…' : editId ? 'Сохранить версию' : 'Создать сценарий'}</Button>
@@ -315,7 +316,7 @@ function BuilderInner({ editId, storageKey }: { editId: string | null; storageKe
           <p className="mt-2 text-xs text-muted-foreground">Неверный JSON остаётся здесь. «Граф» применяет исходник атомарно. Сохранение проверяет текущий текст, а не прежний граф.</p>
         </div> : <ReactFlow nodes={nodes} edges={edges} onNodesChange={writable && !nodePending ? onNodesChange : undefined} onEdgesChange={writable && !nodePending ? onEdgesChange : undefined}
           onConnect={onConnect} onNodeClick={(_, node) => selectNode(node)} nodeTypes={nodeTypes} fitView nodesDraggable={writable && !nodePending} nodesConnectable={writable && !nodePending} deleteKeyCode={writable && !nodePending ? ['Backspace', 'Delete'] : null}
-          onInit={instance => { canvas.current = instance; }} className="sphere-studio-flow"><Background gap={24} /><Controls /><MiniMap pannable zoomable /></ReactFlow>}
+          onInit={instance => { canvas.current = instance; }} className="sphere-studio-flow"><Background gap={24} /><Controls /><MiniMap className="!hidden xl:!block" style={{ width: 120, height: 80 }} pannable zoomable /></ReactFlow>}
       </div>
       <aside aria-label="Параметры шага" className="flex min-h-0 shrink-0 flex-col border-t bg-card lg:w-[340px] lg:border-l lg:border-t-0 xl:w-[380px]">
         <div className="border-b p-4"><h2 className="text-sm font-semibold">{selectedNode ? ACTION_LABELS[(selectedNode.data.action as { type: typeof ACTION_TYPES[number] }).type] : 'Параметры и проверка'}</h2>

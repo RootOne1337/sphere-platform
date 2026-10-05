@@ -1,6 +1,7 @@
 import { TextEncoder } from 'node:util';
 import { ACTION_TYPES } from '@/lib/dag/export';
-import { initialDag, formatDag, parseSource, byteLength, boundedSource, SOURCE_LIMIT, DRAFT_TTL, readDraft, writeDraft, draftKey, pushHistory, insertAction, defaultAction } from '@/lib/dag/studio';
+import { initialDag, formatDag, parseSource, byteLength, boundedSource, SOURCE_LIMIT, DRAFT_TTL, readDraft, writeDraft, draftKey, pushHistory, insertAction, defaultAction, arrangeNodes } from '@/lib/dag/studio';
+import { importDag } from '@/lib/dag/export';
 Object.assign(globalThis, { TextEncoder });
 const source = formatDag(initialDag);
 const document = { name: 'Сценарий', source };
@@ -8,6 +9,19 @@ it('enforces a byte limit including multibyte Russian source without truncation'
   expect(byteLength('я')).toBe(2);
   expect(() => boundedSource('я'.repeat(SOURCE_LIMIT / 2 + 1))).toThrow('512 KiB');
   expect(boundedSource('a'.repeat(SOURCE_LIMIT))).toHaveLength(SOURCE_LIMIT);
+});
+it('lays out execution order rather than source array order, and terminates for cycles', () => {
+  const dag = insertAction(initialDag, 'sleep', 'wait');
+  const imported = importDag(dag);
+  const layout = arrangeNodes(imported.nodes, imported.edges, dag.entry_node);
+  expect(layout.find(node => node.id === 'start-1')!.position.y).toBeLessThan(layout.find(node => node.id === 'wait')!.position.y);
+  expect(layout.find(node => node.id === 'wait')!.position.y).toBeLessThan(layout.find(node => node.id === 'end-1')!.position.y);
+  expect(new Set(layout.map(node => JSON.stringify(node.position))).size).toBe(3);
+  expect(arrangeNodes(imported.nodes, [...imported.edges, { id: 'loop', source: 'end-1', target: 'wait' }], dag.entry_node)).toHaveLength(3);
+  expect(imported.nodes[0].position).toEqual({ x: 200, y: 50 });
+});
+it('rejects excessive encoded draft overhead before writing an unrecoverable envelope', () => {
+  expect(() => writeDraft({ ...document, source: '\\'.repeat(SOURCE_LIMIT) }, 'a')).toThrow('JSON-кодирования');
 });
 it('rejects invalid source instead of substituting a previous graph', () => {
   expect(() => parseSource('{ broken')).toThrow('Некорректный JSON');
