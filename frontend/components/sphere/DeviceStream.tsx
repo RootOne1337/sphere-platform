@@ -21,6 +21,8 @@ interface DeviceStreamProps {
   enableStaticInput?: boolean;
   /** Viewing a stream never implies authority to inject Android input. */
   readOnly?: boolean;
+  /** Explain temporary execution locks separately from role restrictions. */
+  readOnlyReason?: string;
   fit?: 'contain' | 'cover' | 'fill';
   onFrameDimensions?: (dimensions: StreamFrameDimensions) => void;
   inspection?: { onPick: (x: number, y: number, dimensions: StreamFrameDimensions) => void; bounds: UiBounds | null };
@@ -82,6 +84,7 @@ export function DeviceStream({
   enableNavigation = false,
   enableStaticInput = false,
   readOnly = false,
+  readOnlyReason,
   fit,
   onFrameDimensions,
   inspection,
@@ -553,7 +556,7 @@ export function DeviceStream({
 
   return (
     <div className={fit ? 'flex h-full w-full min-h-0 min-w-0 flex-col' : 'min-w-0'}>
-    {readOnly && enableNavigation && <p role="status" className="border-b border-border bg-muted px-3 py-2 text-xs text-muted-foreground">Только просмотр · роль не разрешает клики, жесты и навигацию Android.</p>}
+    {readOnly && enableNavigation && <p role="status" className="border-b border-border bg-muted px-3 py-2 text-xs text-muted-foreground">Только просмотр · {readOnlyReason ?? 'роль не разрешает клики, жесты и навигацию Android.'}</p>}
     <div className={fit ? `relative w-full min-h-0 min-w-0 flex-1${enableNavigation ? '' : ' h-full'}` : 'relative'}>
     <canvas
       ref={canvasRef}
@@ -561,7 +564,7 @@ export function DeviceStream({
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerCancel}
       onLostPointerCapture={handlePointerCancel}
-      aria-label={inspection ? 'Экран устройства: выбор элемента без нажатия Android' : readOnly ? 'Экран устройства: только просмотр, управление запрещено для вашей роли' : canInteract
+      aria-label={inspection ? 'Экран устройства: выбор элемента без нажатия Android' : readOnly ? readOnlyReason ? `Экран устройства: только просмотр. ${readOnlyReason}` : 'Экран устройства: только просмотр, управление запрещено для вашей роли' : canInteract
         ? connection === 'stale' ? 'Экран устройства: управление по последнему кадру' : 'Экран устройства: свежий видеопоток'
         : 'Экран устройства: управление доступно после получения свежего видеокадра'}
       aria-disabled={!(canInteract || canSelectElement)}

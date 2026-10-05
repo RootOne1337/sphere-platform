@@ -46,6 +46,28 @@ function openStream(enableNavigation = true) {
 }
 function frame() { act(() => mockRenderFrame?.({ displayWidth: 960, displayHeight: 540 } as VideoFrame)); }
 
+it('retains the role restriction explanation when no execution lock reason is provided', () => {
+  const { container } = render(<DeviceStream deviceId="role-limited" enableNavigation readOnly />);
+  expect(screen.getByText('Только просмотр · роль не разрешает клики, жесты и навигацию Android.')).toBeInTheDocument();
+  expect(container.querySelector('canvas')).toHaveAttribute('aria-label', 'Экран устройства: только просмотр, управление запрещено для вашей роли');
+  expect(screen.getByRole('button', { name: 'Назад' })).toBeDisabled();
+});
+
+it('explains a runtime execution lock truthfully while still blocking input even after a live frame', () => {
+  const { container, rerender, socket } = openStream();
+  frame();
+  const reason = 'Управление временно заблокировано на время проверки задания или при неподтверждённом результате.';
+  rerender(<DeviceStream deviceId="remote" enableNavigation fit="contain" readOnly readOnlyReason={reason} />);
+  expect(screen.getByText(`Только просмотр · ${reason}`)).toBeInTheDocument();
+  expect(screen.queryByText(/роль не разрешает/)).not.toBeInTheDocument();
+  expect(container.querySelector('canvas')).toHaveAttribute('aria-label', `Экран устройства: только просмотр. ${reason}`);
+  expect(container.querySelector('canvas')).toHaveAttribute('aria-disabled', 'true');
+  expect(screen.getByRole('button', { name: 'Назад' })).toBeDisabled();
+  fireEvent.click(screen.getByRole('button', { name: 'Назад' }));
+  expect(api.post).not.toHaveBeenCalled();
+  expect(socket.send.mock.calls.map(([message]) => JSON.parse(message as string)).filter(({ type }) => type === 'keyevent')).toHaveLength(0);
+});
+
 it('the fleet default does not show navigation or send commands', () => {
   render(<DeviceStream deviceId="fleet-tile" />);
   expect(screen.queryByRole('region', { name: 'Навигация Android' })).not.toBeInTheDocument();

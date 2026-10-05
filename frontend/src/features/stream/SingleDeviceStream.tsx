@@ -149,7 +149,9 @@ export function SingleDeviceStream({ deviceId, captureEnabled = false, onControl
       <div className="min-w-0 overflow-hidden rounded-xl border border-border bg-black">
         <DeviceStream deviceId={deviceId} enableDiagnostics enableScreenshot enableNavigation enableStaticInput
           onControlSent={onControlSent}
-          readOnly={controlDisabled || !access.can('stream:control')} onFrameDimensions={onFrame} onInspectionInvalidated={invalidateFrame}
+          readOnly={controlDisabled || !access.can('stream:control')}
+          readOnlyReason={controlDisabled ? 'Управление временно заблокировано на время проверки задания или при неподтверждённом результате.' : undefined}
+          onFrameDimensions={onFrame} onInspectionInvalidated={invalidateFrame}
           inspection={inspect ? { onPick: pick, bounds: highlight } : undefined} />
       </div>
       {inspect && <aside className={`min-w-0 space-y-4 rounded-xl border border-border bg-card p-4 ${compact ? 'max-h-[480px] overflow-auto' : ''}`} aria-label="Элемент Android">

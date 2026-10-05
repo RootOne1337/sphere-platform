@@ -19,6 +19,19 @@ const snapshot = (deviceId = 'remote') => ({ device_id: deviceId, snapshot_id: '
   nodes: [{ id: 0, parent_id: null, depth: 0, xpath: '/hierarchy/node[1]',
     bounds: { left: 100, top: 100, right: 200, bottom: 150 }, attributes: { text: '<script>safe plain text</script>', 'resource-id': 'pkg:id/ok', clickable: 'true', enabled: 'true', custom: 'retained' } }] });
 beforeEach(() => { jest.clearAllMocks(); mockPermission = true; mockToken = 'fixture-token'; });
+it('passes an execution lock reason separately from the role restriction and removes it after the lock clears', () => {
+  const view = render(<SingleDeviceStream deviceId="remote" controlDisabled />);
+  expect(mockStreamProps.readOnly).toBe(true);
+  expect(mockStreamProps.readOnlyReason).toBe('Управление временно заблокировано на время проверки задания или при неподтверждённом результате.');
+  view.rerender(<SingleDeviceStream deviceId="remote" />);
+  expect(mockStreamProps.readOnly).toBe(false);
+  expect(mockStreamProps.readOnlyReason).toBeUndefined();
+  mockPermission = false;
+  view.rerender(<SingleDeviceStream deviceId="remote" />);
+  expect(mockStreamProps.readOnly).toBe(true);
+  expect(mockStreamProps.readOnlyReason).toBeUndefined();
+  expect(api.post).not.toHaveBeenCalled();
+});
 it('exposes original capture below a selected stream without issuing a capture on mount', () => {
   render(<SingleDeviceStream deviceId="remote" captureEnabled />);
   expect(screen.getByText('Исходный PNG для пиксельных эталонов')).toBeInTheDocument();

@@ -9,12 +9,13 @@ const taskId = 'b47cb4f2-7a92-46f2-8290-851635fe7890';
 let mockTask: Record<string, unknown> | undefined;
 let mockProgress: Record<string, unknown> | undefined;
 let mockLogs: Record<string, unknown>[];
+let mockRetainProgressWhenDisabled = false;
 const mockDevice = { id: deviceId, name: 'PH025', model: 'LDPlayer', status: 'online', agent_version: '1.2.45', android_version: '9' };
 jest.mock('@/lib/hooks/useDevices', () => ({ useDevices: () => ({ data: { items: [mockDevice], total: 1, pages: 1 }, isLoading: false, isError: false, isFetching: false, refetch: jest.fn() }) }));
 jest.mock('@/lib/hooks/useDebounce', () => ({ useDebounce: (value: unknown) => value }));
 jest.mock('@/lib/hooks/useTasks', () => ({
   useTask: () => ({ data: mockTask, isError: false }),
-  useTaskProgress: (_id: unknown, enabled: boolean) => ({ data: enabled ? mockProgress : undefined }),
+  useTaskProgress: (_id: unknown, enabled: boolean) => ({ data: enabled || mockRetainProgressWhenDisabled ? mockProgress : undefined }),
   useTaskLogs: () => ({ data: mockLogs, isError: false }),
   useStopTask: () => ({ isPending: false, mutate: jest.fn() }),
 }));
@@ -28,7 +29,7 @@ jest.mock('@/src/features/stream/SingleDeviceStream', () => ({ SingleDeviceStrea
 </section> }));
 
 beforeEach(() => {
-  jest.clearAllMocks(); mockTask = undefined; mockProgress = undefined; mockLogs = [];
+  jest.clearAllMocks(); mockTask = undefined; mockProgress = undefined; mockLogs = []; mockRetainProgressWhenDisabled = false;
   Object.defineProperty(globalThis.crypto, 'randomUUID', { configurable: true, value: () => '00000000-0000-4000-8000-000000000001' });
 });
 const version = { id: versionId, version: 1, dag_hash: 'a'.repeat(64) };
@@ -75,6 +76,22 @@ it('does not highlight progress or logs for a task whose device ownership differ
   expect(screen.queryByText(/foreign-node/)).not.toBeInTheDocument();
   expect(onExecution.mock.calls.every(([last, logs]) => last === null && logs.length === 0)).toBe(true);
   expect(screen.getByRole('button', { name: 'Записать тестовый клик' })).toBeDisabled();
+});
+
+it('summarizes a completed canary using received final reports instead of an outdated partial progress cache', async () => {
+  mockTask = { id: taskId, script_id: scriptId, device_id: deviceId, script_version_id: versionId, status: 'completed' };
+  mockProgress = { current_node: 'wait', nodes_done: 2, total_nodes: 3 };
+  // TanStack retains cached data when an active-only progress query disables.
+  mockRetainProgressWhenDisabled = true;
+  mockLogs = ['start', 'wait', 'end'].map(node_id => ({ node_id, success: true, action_type: node_id === 'wait' ? 'sleep' : node_id, duration_ms: node_id === 'wait' ? 4002 : 0 }));
+  jest.mocked(api.post).mockResolvedValue({ data: { id: taskId, script_id: scriptId, device_id: deviceId, script_version_id: versionId } });
+  openDevice();
+  fireEvent.click(screen.getByRole('button', { name: 'Проверить на PH025' }));
+  await screen.findByRole('link', { name: taskId });
+  expect(screen.getByText('completed · отчёты шагов: 3')).toBeInTheDocument();
+  expect(screen.queryByText(/2\/3 шагов/)).not.toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Записать тестовый клик' })).toBeEnabled();
+  expect(api.post).toHaveBeenCalledTimes(1);
 });
 
 it('inserts reviewed recorded actions only when the user explicitly transfers the stopped recording to the graph', () => {
