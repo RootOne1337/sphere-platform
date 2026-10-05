@@ -298,7 +298,7 @@ function BuilderInner({ editId, storageKey }: { editId: string | null; storageKe
     {draft && <div className="flex shrink-0 flex-wrap items-center gap-2 border-b bg-amber-500/10 px-4 py-2 text-sm"><span>Найден локальный черновик этого сценария.</span>
       <Button size="sm" variant="outline" disabled={!writable} onClick={() => { try { changeDocument(draft); setMode('source'); setNodePending(false); setSelectedId(null); setDraft(null); } catch (error) { setErrors(errorMessage(error)); } }}>Восстановить черновик</Button>
       <Button size="sm" variant="ghost" onClick={() => { try { if (storageKey) localStorage.removeItem(storageKey); setDraft(null); } catch (error) { setStorageStatus(errorMessage(error)); } }}>Удалить черновик</Button></div>}
-    <div className="flex min-h-0 min-w-0 flex-1 flex-col lg:flex-row">
+    <div className="flex min-h-0 min-w-0 flex-col lg:flex-1 lg:flex-row">
       <aside aria-label="Каталог действий" className="flex max-h-64 shrink-0 flex-col border-b bg-card lg:max-h-none lg:w-60 lg:border-b-0 lg:border-r">
         <div className="space-y-2 p-3"><h2 className="text-sm font-semibold">Действия <span className="text-muted-foreground">{ACTION_TYPES.length}</span></h2>
           <div className="relative"><Search className="absolute left-2 top-3 size-4 text-muted-foreground" /><Input className="pl-8" aria-label="Поиск действия" value={search} onChange={event => setSearch(event.target.value)} /></div>
@@ -308,7 +308,7 @@ function BuilderInner({ editId, storageKey }: { editId: string | null; storageKe
           <Plus className="size-3 shrink-0" /><span className="min-w-0"><span className="block text-xs font-medium">{ACTION_LABELS[type]}</span><span className="block font-mono text-[11px] text-muted-foreground">{type}</span></span></button>)}
           {!available.length && <p className="p-2 text-sm text-muted-foreground">Действия не найдены.</p>}</div>
       </aside>
-      <div className="relative min-h-[380px] min-w-0 flex-1 lg:min-h-0">
+      <div className="relative h-[380px] min-w-0 flex-none lg:h-auto lg:min-h-0 lg:flex-1">
         {mode === 'source' ? <div className="flex h-full min-h-[380px] flex-col p-4 lg:min-h-0">
           <label htmlFor="studio-source" className="mb-2 text-sm font-medium">Исходник DAG 1.0 · {byteLength(document.source).toLocaleString('ru-RU')} байт / 512 KiB</label>
           <textarea id="studio-source" spellCheck={false} className="min-h-[280px] flex-1 resize-none rounded-lg border bg-card p-3 font-mono text-xs leading-5 outline-none focus:ring-2 focus:ring-ring" value={document.source} readOnly={!writable}
