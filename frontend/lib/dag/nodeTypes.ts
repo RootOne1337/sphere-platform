@@ -7,6 +7,7 @@ import { ConditionNode } from '@/components/sphere/dag/ConditionNode';
 import { StartNode } from '@/components/sphere/dag/StartNode';
 import { EndNode } from '@/components/sphere/dag/EndNode';
 import { ScreenshotNode } from '@/components/sphere/dag/ScreenshotNode';
+import { ActionNode } from '@/components/sphere/dag/ActionNode';
 
 export const nodeTypes: NodeTypes = {
   Tap: TapNode,
@@ -17,14 +18,12 @@ export const nodeTypes: NodeTypes = {
   Start: StartNode,
   End: EndNode,
   Screenshot: ScreenshotNode,
+  Action: ActionNode,
 };
 
-export type DagNodeData =
-  | { type: 'Tap'; x: number; y: number; description?: string }
-  | { type: 'Swipe'; x1: number; y1: number; x2: number; y2: number; duration_ms: number }
-  | { type: 'Sleep'; duration_ms: number }
-  | { type: 'Lua'; code: string }
-  | { type: 'Condition'; condition_expr: string }
-  | { type: 'Screenshot'; save_to_results: boolean }
-  | { type: 'Start' }
-  | { type: 'End' };
+export interface DagNodeData extends Record<string, unknown> {
+  type: string;
+  action: Record<string, unknown> & { type: string };
+  retry?: number;
+  timeout_ms?: number;
+}

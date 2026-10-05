@@ -14,7 +14,7 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { nodeTypes } from '@/lib/dag/nodeTypes';
-import { exportDag, validateDag, type DagExport } from '@/lib/dag/export';
+import { exportDag, importDag, validateDag, type DagMetadata } from '@/lib/dag/export';
 import { Button } from '@/src/shared/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -22,21 +22,23 @@ import { api } from '@/lib/api';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { X, Save, Plus, ArrowLeft, Settings2, PlayCircle, MousePointer2, Smartphone, TerminalSquare, Eye, Fingerprint, GripHorizontal } from 'lucide-react';
 import Editor from '@monaco-editor/react';
+import { isAxiosError } from 'axios';
 
 const INITIAL_NODES: Node[] = [
   {
     id: 'start-1',
     type: 'Start',
     position: { x: 200, y: 50 },
-    data: { type: 'Start' },
+    data: { type: 'Start', action: { type: 'start' } },
   },
   {
     id: 'end-1',
     type: 'End',
     position: { x: 200, y: 400 },
-    data: { type: 'End' },
+    data: { type: 'End', action: { type: 'end' } },
   },
 ];
+const INITIAL_EDGES: Edge[] = [{ id: 'start-end', source: 'start-1', target: 'end-1' }];
 
 const NODE_TYPES_LIST = [
   { type: 'Tap', icon: <MousePointer2 className="w-4 h-4" /> },
@@ -49,45 +51,14 @@ const NODE_TYPES_LIST = [
 
 function getDefaultData(type: string): Record<string, unknown> {
   const defaults: Record<string, Record<string, unknown>> = {
-    Tap: { type: 'Tap', x: 540, y: 960 },
-    Swipe: { type: 'Swipe', x1: 100, y1: 500, x2: 900, y2: 500, duration_ms: 300 },
-    Sleep: { type: 'Sleep', duration_ms: 1000 },
-    Lua: { type: 'Lua', code: '-- write Lua code here\nreturn true' },
-    Condition: { type: 'Condition', condition_expr: 'ctx["prev"] == true' },
-    Screenshot: { type: 'Screenshot', save_to_results: true },
+    Tap: { type: 'tap', x: 540, y: 960 },
+    Swipe: { type: 'swipe', x1: 100, y1: 500, x2: 900, y2: 500, duration_ms: 300 },
+    Sleep: { type: 'sleep', ms: 1000 },
+    Lua: { type: 'lua', code: '-- write Lua code here\nreturn true' },
+    Condition: { type: 'condition', code: 'return ctx["prev"] == true' },
+    Screenshot: { type: 'screenshot' },
   };
-  return defaults[type] ?? { type };
-}
-
-function importDag(dag: DagExport): { nodes: Node[]; edges: Edge[] } {
-  if (!dag || typeof dag !== 'object' || !dag.nodes || Array.isArray(dag.nodes)
-    || typeof dag.entry_node !== 'string' || !dag.nodes[dag.entry_node]) {
-    throw new Error('Сервер не вернул корректный граф сценария. Запись заблокирована.');
-  }
-  const nodes: Node[] = [];
-  const edges: Edge[] = [];
-  const ids = Object.keys(dag.nodes);
-
-  ids.forEach((id, index) => {
-    const raw = dag.nodes[id];
-    const { type, links, ...rest } = raw;
-    nodes.push({
-      id,
-      type,
-      position: { x: 200, y: 50 + index * 120 },
-      data: { type, ...rest },
-    });
-    for (const [handle, targetId] of Object.entries(links)) {
-      edges.push({
-        id: `e-${id}-${targetId}-${handle}`,
-        source: id,
-        target: targetId,
-        sourceHandle: handle === 'next' ? null : handle,
-      });
-    }
-  });
-
-  return { nodes, edges };
+  return { type, action: defaults[type], retry: 0, timeout_ms: 30_000 };
 }
 
 /* ── Node Property Sidebar ─────────────────────────────────────────────── */
@@ -98,11 +69,11 @@ interface NodeSidebarProps {
 }
 
 function NodeSidebar({ node, onUpdate, onClose }: NodeSidebarProps) {
-  const d = node.data as Record<string, unknown>;
-  const nodeType = d.type as string;
+  const d = node.data.action as Record<string, unknown>;
+  const nodeType = node.type;
 
   const set = (key: string, value: unknown) => {
-    onUpdate(node.id, { ...d, [key]: value });
+    onUpdate(node.id, { ...node.data, action: { ...d, [key]: value } });
   };
 
   const numField = (label: string, key: string) => (
@@ -163,7 +134,7 @@ function NodeSidebar({ node, onUpdate, onClose }: NodeSidebarProps) {
 
         {nodeType === 'Sleep' && (
           <div className="space-y-4">
-            {numField('Wait Duration (ms)', 'duration_ms')}
+            {numField('Длительность паузы (мс)', 'ms')}
             <p className="text-[10px] text-[#555] font-mono leading-relaxed mt-2 px-1">
               Pauses script execution for the specified milliseconds. Useful for waiting out animations or network payload loads.
             </p>
@@ -194,29 +165,47 @@ function NodeSidebar({ node, onUpdate, onClose }: NodeSidebarProps) {
           </div>
         )}
 
-        {nodeType === 'Condition' && (
+        {nodeType === 'Condition' && !d.check && (
           <div className="space-y-1.5">
-            <Label className="text-[10px] uppercase font-bold tracking-widest text-[#555]">Eval Expression</Label>
+            <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Lua-код условия (return true / false)</Label>
             <Input
-              value={String(d.condition_expr ?? '')}
-              onChange={(e) => set('condition_expr', e.target.value)}
+              value={String(d.code ?? '')}
+              onChange={(e) => set('code', e.target.value)}
               className="h-8 text-xs font-mono bg-muted border-border focus-visible:border-primary rounded-sm text-cyan-300"
-              placeholder="e.g. ctx['prev'] == true"
+              placeholder="return ctx['prev'] == true"
             />
           </div>
         )}
 
         {nodeType === 'Screenshot' && (
-          <div className="flex justify-between items-center bg-muted p-3 border border-border rounded-sm">
-            <Label className="text-[10px] uppercase font-bold tracking-widest text-foreground">Retain Artifacts</Label>
-            <input
-              type="checkbox"
-              checked={Boolean(d.save_to_results)}
-              onChange={(e) => set('save_to_results', e.target.checked)}
-              className="w-4 h-4 bg-transparent border-[#555] checked:bg-primary rounded-sm"
+          <div className="space-y-1.5">
+            <Label className="text-xs">Переменная результата (необязательно)</Label>
+            <Input
+              value={String(d.save_to ?? '')}
+              onChange={(e) => {
+                const action = { ...d };
+                if (e.target.value) action.save_to = e.target.value;
+                else delete action.save_to;
+                onUpdate(node.id, { ...node.data, action });
+              }}
             />
           </div>
         )}
+        <div className="grid grid-cols-2 gap-3">
+          <label className="space-y-1 text-xs">Повторы
+            <Input type="number" min={0} max={5} value={Number(node.data.retry ?? 0)}
+              onChange={(e) => onUpdate(node.id, { ...node.data, retry: Number(e.target.value) })} />
+          </label>
+          <label className="space-y-1 text-xs">Таймаут (мс)
+            <Input type="number" min={100} max={3600000} value={Number(node.data.timeout_ms ?? 30000)}
+              onChange={(e) => onUpdate(node.id, { ...node.data, timeout_ms: Number(e.target.value) })} />
+          </label>
+        </div>
+        <details className="rounded-lg border border-border p-3 text-xs" open={nodeType === 'Action' || Boolean(d.check)}>
+          <summary className="cursor-pointer font-medium">Все параметры: {String(d.type)}</summary>
+          <p className="mt-2 text-muted-foreground">Параметры сохраняются целиком. Переходы редактируются связями на графе.</p>
+          <pre className="mt-2 max-h-80 overflow-auto whitespace-pre-wrap break-all font-mono">{JSON.stringify(d, null, 2)}</pre>
+        </details>
       </div>
     </div>
   );
@@ -227,7 +216,9 @@ function BuilderInner({ editId }: { editId: string | null }) {
   const router = useRouter();
 
   const [nodes, setNodes, onNodesChange] = useNodesState(INITIAL_NODES);
-  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>(INITIAL_EDGES);
+  const [metadata, setMetadata] = useState<DagMetadata | undefined>();
+  const [expectedVersionId, setExpectedVersionId] = useState<string | null>(null);
   const [scriptName, setScriptName] = useState('NOC_SCRIPT_DEF');
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
@@ -256,10 +247,15 @@ function BuilderInner({ editId }: { editId: string | null }) {
         if (cancelled) return;
         if (data.id !== editId) throw new Error('Ответ относится к другому сценарию. Запись заблокирована.');
         const dag = data.current_version?.dag ?? data.dag;
-        const { nodes: imported, edges: importedEdges } = importDag(dag);
+        const { nodes: imported, edges: importedEdges, metadata: importedMetadata } = importDag(dag);
+        const versionId = data.current_version_id ?? data.current_version?.id;
+        if (typeof versionId !== 'string' || !versionId) throw new Error('Не получена версия сценария. Запись заблокирована.');
+        if (data.is_archived) throw new Error('Архивный сценарий доступен только для чтения в каталоге.');
         setScriptName(data.name ?? 'UNTITLED_SCRIPT');
         setNodes(imported);
         setEdges(importedEdges);
+        setMetadata(importedMetadata);
+        setExpectedVersionId(versionId);
         setLoadState('ready');
       } catch (error) {
         if (cancelled) return;
@@ -271,14 +267,21 @@ function BuilderInner({ editId }: { editId: string | null }) {
   }, [editId, loadAttempt, setNodes, setEdges]);
 
   const onConnect = useCallback(
-    (params: Connection) => setEdges((eds) => addEdge(params, eds)),
+    (params: Connection) => setEdges((eds) => {
+      const handle = params.sourceHandle ?? null;
+      if (eds.some((edge) => edge.source === params.source && (edge.sourceHandle ?? null) === handle)) {
+        setErrors(['Этот выход уже соединён. Сначала удалите существующую связь.']);
+        return eds;
+      }
+      return addEdge(params, eds);
+    }),
     [setEdges],
   );
 
   const addNode = useCallback(
     (type: string) => {
       const newNode: Node = {
-        id: `${type.toLowerCase()}-${Date.now().toString().slice(-6)}`,
+        id: `${type.toLowerCase()}-${crypto.randomUUID()}`,
         type,
         position: { x: window.innerWidth / 2, y: window.innerHeight / 2 - 100 },
         data: getDefaultData(type),
@@ -303,7 +306,7 @@ function BuilderInner({ editId }: { editId: string | null }) {
   const handleSave = async () => {
     if (loadState !== 'ready' || saveInFlight.current) return;
     try {
-      const dag = exportDag(nodes, edges);
+      const dag = exportDag(nodes, edges, metadata);
       const validationErrors = validateDag(dag);
       if (validationErrors.length > 0) {
         setErrors(validationErrors);
@@ -313,13 +316,16 @@ function BuilderInner({ editId }: { editId: string | null }) {
       saveInFlight.current = true;
       setSaving(true);
       if (editId) {
-        await api.put(`/scripts/${editId}`, { name: scriptName, dag });
+        if (!expectedVersionId) throw new Error('Версия сценария неизвестна. Обновите страницу.');
+        await api.put(`/scripts/${editId}`, { name: scriptName, dag, expected_current_version_id: expectedVersionId });
       } else {
         await api.post('/scripts', { name: scriptName, dag });
       }
       if (mounted.current) router.push('/scripts');
     } catch (e: unknown) {
-      if (mounted.current) setErrors([(e as Error).message]);
+      if (mounted.current) setErrors([isAxiosError(e) && e.response?.status === 409
+        ? 'Версия сценария изменилась или он архивирован. Сохранение отклонено. Скопируйте нужные изменения и заново откройте актуальную версию из каталога.'
+        : e instanceof Error ? e.message : 'Не удалось сохранить сценарий.']);
     } finally {
       saveInFlight.current = false;
       if (mounted.current) setSaving(false);
@@ -381,7 +387,7 @@ function BuilderInner({ editId }: { editId: string | null }) {
           </div>
 
           <Button variant="noc" onClick={handleSave} disabled={saving || loadState !== 'ready'} className="h-8 px-6">
-            {saving ? 'COMMITING...' : editId ? 'UPDATE DAG' : 'DEPLOY DAG'}
+            {saving ? 'Сохраняем…' : editId ? 'Сохранить версию' : 'Создать сценарий'}
             <Save className="w-3.5 h-3.5 ml-2" />
           </Button>
         </div>

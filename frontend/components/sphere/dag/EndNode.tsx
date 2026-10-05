@@ -1,5 +1,6 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import { Square } from 'lucide-react';
+import { ActionRoutes } from './ActionRoutes';
 
 export function EndNode({ selected }: NodeProps) {
   return (
@@ -11,6 +12,7 @@ export function EndNode({ selected }: NodeProps) {
       <Handle type="target" position={Position.Top} />
       <Square className="w-5 h-5 text-red-400 fill-red-400" />
       <span className="text-xs text-red-300 mt-0.5">End</span>
+      <ActionRoutes />
     </div>
   );
 }

@@ -1,8 +1,9 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import { Camera } from 'lucide-react';
+import { ActionRoutes } from './ActionRoutes';
 
 export function ScreenshotNode({ data, selected }: NodeProps) {
-  const d = data as { save_to_results?: boolean };
+  const d = data.action as { save_to?: string };
   return (
     <div
       className={`rounded-lg border-2 p-3 bg-teal-950 min-w-28 text-center ${
@@ -15,9 +16,9 @@ export function ScreenshotNode({ data, selected }: NodeProps) {
         <span className="text-sm font-medium text-teal-200">Screenshot</span>
       </div>
       <p className="text-xs text-teal-500">
-        {d.save_to_results ? 'save to results' : 'discard'}
+        {d.save_to ? `→ ${d.save_to}` : 'Результат шага'}
       </p>
-      <Handle type="source" position={Position.Bottom} />
+      <ActionRoutes />
     </div>
   );
 }

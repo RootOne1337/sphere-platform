@@ -26,11 +26,11 @@ jest.mock('@xyflow/react', () => {
 });
 
 function payload(id = 'script-a', name = 'Original graph') {
-  return { data: { id, name, current_version: { dag: {
-    entry_node: `${id}-start`, nodes: {
-      [`${id}-start`]: { type: 'Start', links: { next: `${id}-end` } },
-      [`${id}-end`]: { type: 'End', links: {} },
-    },
+  return { data: { id, name, current_version_id: `${id}-version`, current_version: { dag: {
+    version: '1.0', timeout_ms: 1800000, entry_node: `${id}-start`, nodes: [
+      { id: `${id}-start`, action: { type: 'start' }, on_success: `${id}-end`, on_failure: null, retry: 0, timeout_ms: 30000 },
+      { id: `${id}-end`, action: { type: 'end' }, on_success: null, on_failure: null, retry: 0, timeout_ms: 30000 },
+    ],
   } } } };
 }
 
@@ -48,13 +48,13 @@ it('keeps a failed existing-script read out of the editor and only saves its ori
   render(<ScriptBuilderPage />);
   expect(await screen.findByRole('alert')).toHaveTextContent('network timeout');
   expect(screen.queryByTestId('graph')).not.toBeInTheDocument();
-  expect(screen.queryByRole('button', { name: 'UPDATE DAG' })).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Сохранить версию' })).not.toBeInTheDocument();
   expect(api.put).not.toHaveBeenCalled();
   fireEvent.click(screen.getByRole('button', { name: 'Повторить загрузку' }));
   expect(await screen.findByText('script-a-start')).toBeInTheDocument();
-  fireEvent.click(screen.getByRole('button', { name: 'UPDATE DAG' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Сохранить версию' }));
   await waitFor(() => expect(api.put).toHaveBeenCalledWith('/scripts/script-a', {
-    name: 'Original graph', dag: payload().data.current_version.dag,
+    name: 'Original graph', dag: payload().data.current_version.dag, expected_current_version_id: 'script-a-version',
   }));
   expect(api.post).not.toHaveBeenCalled();
 });
@@ -63,6 +63,8 @@ it.each([
   ['missing DAG', { data: { id: 'script-a', name: 'No graph' } }],
   ['wrong resource', payload('script-b')],
   ['invalid entry', { data: { id: 'script-a', current_version: { dag: { entry_node: 'missing', nodes: {} } } } }],
+  ['missing version', { data: { ...payload().data, current_version_id: null } }],
+  ['archived script', { data: { ...payload().data, is_archived: true } }],
 ])('does not turn %s into the initial editable template', async (_, response) => {
   jest.mocked(api.get).mockResolvedValue(response as never);
   render(<ScriptBuilderPage />);
@@ -84,7 +86,7 @@ it('aborts and ignores the previous resource read when the selected script chang
   await act(async () => old.resolve(payload()));
   expect(screen.queryByText('script-a-start')).not.toBeInTheDocument();
   expect(screen.getByDisplayValue('B graph')).toBeInTheDocument();
-  fireEvent.click(screen.getByRole('button', { name: 'UPDATE DAG' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Сохранить версию' }));
   await waitFor(() => expect(api.put).toHaveBeenCalledWith('/scripts/script-b', expect.objectContaining({ name: 'B graph' })));
 });
 
@@ -104,7 +106,7 @@ it('keeps new-script creation independent of the existing-resource loader', asyn
   jest.mocked(api.post).mockResolvedValue({ data: {} } as never);
   render(<ScriptBuilderPage />);
   expect(screen.getByText('start-1')).toBeInTheDocument();
-  fireEvent.click(screen.getByRole('button', { name: 'DEPLOY DAG' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Создать сценарий' }));
   await waitFor(() => expect(api.post).toHaveBeenCalledWith('/scripts', expect.objectContaining({ dag: expect.any(Object) })));
   expect(api.get).not.toHaveBeenCalled();
   expect(api.put).not.toHaveBeenCalled();
@@ -116,10 +118,22 @@ it('does not navigate the next editor when the previous save completes', async (
   jest.mocked(api.put).mockReturnValue(save.promise as never);
   const view = render(<ScriptBuilderPage />);
   await screen.findByText('script-a-start');
-  fireEvent.click(screen.getByRole('button', { name: 'UPDATE DAG' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Сохранить версию' }));
   mockEditId = 'script-b';
   view.rerender(<ScriptBuilderPage />);
   await screen.findByText('script-b-start');
   await act(async () => save.resolve({ data: {} }));
+  expect(mockPush).not.toHaveBeenCalled();
+});
+
+it('surfaces version conflicts without retrying or navigating away from the graph', async () => {
+  jest.mocked(api.get).mockResolvedValue(payload() as never);
+  jest.mocked(api.put).mockRejectedValue({ isAxiosError: true, response: { status: 409 } });
+  render(<ScriptBuilderPage />);
+  await screen.findByText('script-a-start');
+  fireEvent.click(screen.getByRole('button', { name: 'Сохранить версию' }));
+  expect(await screen.findByText(/Сохранение отклонено/)).toBeInTheDocument();
+  expect(api.put).toHaveBeenCalledTimes(1);
+  expect(screen.getByTestId('graph')).toBeInTheDocument();
   expect(mockPush).not.toHaveBeenCalled();
 });

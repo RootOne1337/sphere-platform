@@ -22,7 +22,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 os.environ.setdefault("JWT_SECRET_KEY", "audit-only-not-a-production-secret")
 
-from backend.schemas.dag import DAGScript  # noqa: E402
+from backend.schemas.dag import VALID_ACTION_TYPES, DAGScript  # noqa: E402
 from backend.services.webhook_service import WebhookService  # noqa: E402
 
 
@@ -46,6 +46,10 @@ async def probe() -> dict:
         ],
     }
     DAGScript.model_validate(canonical)
+    fixture = DAGScript.model_validate(exported["canonicalFixture"]).model_dump()
+    roundtrip = DAGScript.model_validate(exported["roundtrip"]).model_dump()
+    if fixture != roundtrip or set(exported["actionTypes"]) != VALID_ACTION_TYPES:
+        raise AssertionError("Builder roundtrip or action catalogue differs from backend contract")
     client = MagicMock()
     client.post = AsyncMock(return_value=MagicMock(status_code=403))
     manager = MagicMock()
@@ -60,6 +64,8 @@ async def probe() -> dict:
         "schemaVersion": 1, "readOnly": True, "networkWasMocked": True,
         "canonicalControlAccepted": True, "builder": {
             **exported, "backendAccepted": backend_accepted, "backendErrors": errors,
+            "canonicalRoundtripAccepted": True, "roundtripPreserved": fixture == roundtrip,
+            "actionCatalogueMatchesBackend": True,
         },
         "legacyWebhook": {"receiverStatus": 403, "infoEvents": calls, "calls": client.post.call_count},
         "sourceSha256": {name: hashlib.sha256((ROOT / name).read_bytes()).hexdigest() for name in sources},
