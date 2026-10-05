@@ -1,7 +1,7 @@
 import type { Node, Edge } from '@xyflow/react';
 
 /** Local worker only. No executable DAG edits, no worker survives the request. */
-export async function layoutWorkflow(nodes: Node[], edges: Edge[], signal: AbortSignal): Promise<Node[]> {
+export async function layoutWorkflow(nodes: Node[], edges: Edge[], signal: AbortSignal, direction: 'RIGHT' | 'DOWN' = 'RIGHT'): Promise<Node[]> {
   if (nodes.length > 500) throw new Error('Раскладка ограничена 500 шагами.');
   const { default: ELK } = await import('elkjs/lib/elk-api');
   if (signal.aborted) throw new Error('Раскладка отменена.');
@@ -16,7 +16,7 @@ export async function layoutWorkflow(nodes: Node[], edges: Edge[], signal: Abort
       timer = setTimeout(() => reject(new Error('ELK не завершил раскладку за 10 секунд. Граф сохранён.')), 10000);
     });
     const graph = await Promise.race([elk.layout({ id: 'root', layoutOptions: {
-      'elk.algorithm': 'layered', 'elk.direction': 'RIGHT', 'elk.spacing.nodeNode': '64',
+      'elk.algorithm': 'layered', 'elk.direction': direction, 'elk.spacing.nodeNode': '64',
       'elk.layered.spacing.nodeNodeBetweenLayers': '90', 'elk.layered.crossingMinimization.strategy': 'LAYER_SWEEP',
     }, children: nodes.map(node => ({ id: node.id, width: 256, height: 132 })),
     edges: edges.map(edge => ({ id: edge.id, sources: [edge.source], targets: [edge.target] })) }), cancelled]);

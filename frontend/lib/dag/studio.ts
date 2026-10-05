@@ -85,7 +85,7 @@ export function defaultAction(type: ActionType) {
 }
 /** Bounded breadth-first layout. Cycles remain explicit back edges and never
  * recurse. Canvas placement is not part of the executable/hash contract. */
-export function arrangeNodes(nodes: Node[], edges: Edge[], entry: string): Node[] {
+export function arrangeNodes(nodes: Node[], edges: Edge[], entry: string, direction: 'RIGHT' | 'DOWN' = 'RIGHT'): Node[] {
   const adjacency = new Map<string, string[]>();
   for (const edge of edges) adjacency.set(edge.source, [...(adjacency.get(edge.source) ?? []), edge.target]);
   const levels = new Map<string, number>([[entry, 0]]);
@@ -99,7 +99,7 @@ export function arrangeNodes(nodes: Node[], edges: Edge[], entry: string): Node[
   return nodes.map(node => {
     const level = levels.get(node.id) ?? levels.size;
     const column = columns.get(level) ?? 0; columns.set(level, column + 1);
-    return { ...node, position: { x: level * 346, y: column * 210 } };
+    return { ...node, position: direction === 'DOWN' ? { x: column * 346, y: level * 210 } : { x: level * 346, y: column * 210 } };
   });
 }
 /** Insert after the selected linear step, or immediately before an existing end.

@@ -38,7 +38,8 @@ function BuilderInner({ editId, storageKey }: { editId: string | null; storageKe
   const queryClient = useQueryClient();
   const access = useCapabilities();
   const accessRef = useRef(access); accessRef.current = access;
-  const [nodes, setNodes, onNodesChange] = useNodesState(arrangeNodes(importedInitial.nodes, importedInitial.edges, initialDag.entry_node));
+  const [direction, setDirection] = useState<'RIGHT' | 'DOWN'>('DOWN');
+  const [nodes, setNodes, onNodesChange] = useNodesState(arrangeNodes(importedInitial.nodes, importedInitial.edges, initialDag.entry_node, 'DOWN'));
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>(importedInitial.edges);
   const [metadata, setMetadata] = useState<DagMetadata>(importedInitial.metadata);
   const [document, setDocument] = useState<StudioDocument>({ name: 'Новый сценарий', source: formatDag(initialDag) });
@@ -98,7 +99,7 @@ function BuilderInner({ editId, storageKey }: { editId: string | null; storageKe
 
   function syncGraph(next: StudioDocument) {
     const imported = importDag(parseSource(next.source));
-    setNodes(arrangeNodes(imported.nodes, imported.edges, imported.metadata.entry_node));
+    setNodes(arrangeNodes(imported.nodes, imported.edges, imported.metadata.entry_node, direction));
     setEdges(imported.edges); setMetadata(imported.metadata); setCanvasError('');
   }
   function remember() { const before = documentRef.current; setHistory(old => pushHistory(old, before)); setFuture([]); }
@@ -139,7 +140,7 @@ function BuilderInner({ editId, storageKey }: { editId: string | null; storageKe
         if (typeof versionId !== 'string' || !versionId) throw new Error('Не получена версия сценария. Запись заблокирована.');
         if (data.is_archived) throw new Error('Архивный сценарий доступен только для чтения в каталоге.');
         const loadedDocument = { name: data.name ?? 'Без названия', source: formatDag(exportDag(imported.nodes, imported.edges, imported.metadata)) };
-        setNodes(arrangeNodes(imported.nodes, imported.edges, imported.metadata.entry_node)); setEdges(imported.edges); setMetadata(imported.metadata);
+        setNodes(arrangeNodes(imported.nodes, imported.edges, imported.metadata.entry_node, direction)); setEdges(imported.edges); setMetadata(imported.metadata);
         setDocument(loadedDocument); setBaseDocument(loadedDocument);
         setExpectedVersion({ id: versionId, version: data.current_version?.version ?? 0, dag_hash: data.current_version?.dag_hash ?? null });
         loaded.current = true; setHistory([]); setFuture([]); setLoadState('ready');
@@ -200,7 +201,7 @@ function BuilderInner({ editId, storageKey }: { editId: string | null; storageKe
       const graph = insertAction(parseSource(document.source), type, id, selectedId ?? undefined);
       changeDocument({ ...document, source: formatDag(graph) }, true);
       setSelectedId(id); setNodeSource(JSON.stringify(graph.nodes.find(node => node.id === id), null, 2)); setMode('graph');
-      window.requestAnimationFrame(() => { if (live.current) void canvas.current?.fitView({ padding: 0.2 }); });
+      window.requestAnimationFrame(() => { if (live.current) void canvas.current?.fitView({ nodes: [{ id }], padding: 0.15, minZoom: 0.85, maxZoom: 1 }); });
     } catch (error) { setErrors(errorMessage(error)); }
   }
   function applyNode() {
@@ -275,8 +276,8 @@ function BuilderInner({ editId, storageKey }: { editId: string | null; storageKe
     const controller = new AbortController(); layoutRequest.current = controller;
     const original = documentRef.current.source;
     setLayoutBusy(true);
-    try { const next = await layoutWorkflow(nodes, edges, controller.signal);
-      if (live.current && documentRef.current.source === original) { setNodes(next); window.requestAnimationFrame(() => { if (live.current) void canvas.current?.fitView({ padding: 0.25, maxZoom: 1 }); }); }
+    try { const next = await layoutWorkflow(nodes, edges, controller.signal, direction);
+      if (live.current && documentRef.current.source === original) { setNodes(next); window.requestAnimationFrame(() => { if (live.current) void canvas.current?.fitView({ padding: 0.1, minZoom: 0.65, maxZoom: 1 }); }); }
     } catch (reason) { if (live.current && !controller.signal.aborted) setErrors(errorMessage(reason)); }
     finally { if (live.current) setLayoutBusy(false); layoutRequest.current = null; }
   }
@@ -307,7 +308,7 @@ function BuilderInner({ editId, storageKey }: { editId: string | null; storageKe
   const currentReceipt = receipt?.fingerprint === fingerprint ? receipt.result : null;
   const available = ACTION_TYPES.filter(type => `${type} ${ACTION_LABELS[type]}`.toLocaleLowerCase().includes(search.toLocaleLowerCase()));
   const canRun = !dirty && editId && expectedVersion?.dag_hash && access.can('script:execute');
-  const paintedNodes: Node[] = nodes.map(node => ({ ...node, data: { ...node.data,
+  const paintedNodes: Node[] = nodes.map(node => ({ ...node, data: { ...node.data, layoutDirection: direction,
     execution: execution.logs.findLast(log => log.node_id === node.id)?.success === true ? 'success'
       : execution.logs.findLast(log => log.node_id === node.id)?.success === false ? 'failed'
       : execution.last === node.id ? 'reported' : null } }));
@@ -334,6 +335,7 @@ function BuilderInner({ editId, storageKey }: { editId: string | null; storageKe
           <Button variant="ghost" size="icon" aria-label="Отменить изменение" disabled={!writable || !history.length} onClick={() => restoreHistory('undo')}><Undo2 className="size-4" /></Button><Button variant="ghost" size="icon" aria-label="Повторить изменение" disabled={!writable || !future.length} onClick={() => restoreHistory('redo')}><Redo2 className="size-4" /></Button>
           <span className="mx-1 h-5 border-l" /><Button size="sm" variant="ghost" disabled={!writable || nodePending} onClick={() => fileInput.current?.click()}><Upload className="mr-1.5 size-3.5" />Импорт JSON</Button><input ref={fileInput} type="file" accept=".json,application/json" className="hidden" aria-label="Файл сценария" onChange={event => { void importFile(event.target.files?.[0]); event.target.value = ''; }} /><Button size="sm" variant="ghost" onClick={exportFile}><Download className="mr-1.5 size-3.5" />Экспорт</Button>
           {mode === 'graph' && <Button size="sm" variant="ghost" disabled={Boolean(busy) || nodePending || layoutBusy} onClick={() => void arrange()} title="Раскладка ELK в локальном worker"><LayoutGrid className="mr-1.5 size-3.5" />{layoutBusy ? 'Раскладываем…' : 'Упорядочить'}</Button>}
+          {mode === 'graph' && <select aria-label="Направление схемы" value={direction} disabled={layoutBusy || nodePending || Boolean(busy)} className="h-8 rounded-lg border bg-card px-2 text-xs" onChange={event => { const next = event.target.value === 'RIGHT' ? 'RIGHT' : 'DOWN'; setDirection(next); setNodes(arrangeNodes(nodes, edges, metadata.entry_node, next)); window.requestAnimationFrame(() => { if (live.current) void canvas.current?.fitView({ padding: 0.1, minZoom: 0.65, maxZoom: 1 }); }); }}><option value="DOWN">Сверху вниз</option><option value="RIGHT">Слева направо</option></select>}
         </div>
         <div className="flex flex-wrap gap-2"><Button size="sm" variant={workspace === 'device' ? 'secondary' : 'outline'} aria-pressed={workspace === 'device'} onClick={() => { if (workspace === 'device' && workbenchGuard.current && !workbenchGuard.current()) return; setWorkspace(workspace === 'device' ? 'design' : 'device'); }}><Monitor className="mr-2 size-3.5" />{workspace === 'device' ? 'Закрыть устройство' : 'Устройство · запись · проверка'}</Button><Button size="sm" variant="outline" disabled={!canRun || Boolean(busy)} onClick={() => setRunOpen(true)} title="Запуск сохранённой неизменённой версии на выбранных целях"><Play className="mr-2 size-3.5" />Запустить версию</Button></div>
       </div>
@@ -342,7 +344,7 @@ function BuilderInner({ editId, storageKey }: { editId: string | null; storageKe
     {(errors || canvasError) && <div role="alert" className="max-h-28 shrink-0 overflow-auto whitespace-pre-wrap border-b border-destructive/30 bg-destructive/5 p-3 text-xs text-destructive">{errors || canvasError}</div>}
     {currentReceipt && <div role="status" className="shrink-0 border-b bg-emerald-500/10 px-4 py-2 text-xs">Структура, переходы и безопасность Lua проверены · {currentReceipt.node_count} шагов <span className="font-mono" title={currentReceipt.dag_hash}>· SHA256 {currentReceipt.dag_hash.slice(0, 12)}</span>. Выполнение на Android не проверялось.</div>}
     {draft && <div className="flex shrink-0 flex-wrap items-center gap-2 border-b bg-amber-500/10 px-4 py-2 text-xs"><span>Найден локальный черновик этого сценария.</span><Button size="sm" variant="outline" disabled={!writable} onClick={() => { try { changeDocument(draft); setMode('source'); setNodePending(false); setSelectedId(null); setDraft(null); } catch (error) { setErrors(errorMessage(error)); } }}>Восстановить черновик</Button><Button size="sm" variant="ghost" onClick={() => { try { if (storageKey) localStorage.removeItem(storageKey); setDraft(null); } catch (error) { setStorageStatus(errorMessage(error)); } }}>Удалить черновик</Button></div>}
-    <div className={`flex min-h-0 min-w-0 flex-col lg:flex-1 lg:flex-row ${workspace === 'device' ? 'studio-device-workspace' : ''}`}>
+    <div className={`flex min-h-0 min-w-0 flex-col lg:flex-1 ${workspace === 'device' ? 'studio-device-workspace lg:grid lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]' : 'lg:flex-row'}`}>
       {workspace === 'design' && palette && <aside aria-label="Каталог действий" className="flex max-h-72 shrink-0 flex-col border-b bg-card lg:max-h-none lg:w-[224px] lg:border-b-0 lg:border-r">
         <div className="space-y-3 border-b p-3"><div className="flex items-center justify-between"><h2 className="text-xs font-semibold">Библиотека действий <span className="ml-1 rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">{ACTION_TYPES.length}</span></h2><Button size="icon" variant="ghost" aria-label="Скрыть библиотеку действий" className="size-7" onClick={() => setPalette(false)}><PanelLeftClose className="size-3.5" /></Button></div><div className="relative"><Search className="absolute left-2 top-2.5 size-3.5 text-muted-foreground" /><Input placeholder="Найти действие…" className="h-8 pl-7 text-xs" aria-label="Поиск действия" value={search} onChange={event => setSearch(event.target.value)} /></div></div>
         <div className="min-h-0 flex-1 overflow-auto px-2 pb-4">{ACTION_GROUPS.map((group, index) => { const types = available.filter(type => (group.types as readonly string[]).includes(type)); const Icon = [MousePointer2, ScanSearch, GitBranch, Smartphone][index]; return types.length ? <div key={group.name} className="mt-4"><h3 className="mb-2 flex items-center gap-2 px-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground"><Icon className="size-3" />{group.name}</h3>{types.map(type => <button key={type} type="button" disabled={!writable || mode !== 'graph' || nodePending} className="group flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left transition-colors hover:bg-muted disabled:opacity-40" onClick={() => addAction(type)}><span className="min-w-0 flex-1"><span className="block text-xs font-medium">{ACTION_LABELS[type]}</span><span className="block font-mono text-[9px] text-muted-foreground">{type}</span></span><Plus className="size-3 shrink-0 text-muted-foreground group-hover:text-primary" /></button>)}</div> : null; })}{!available.length && <p className="p-3 text-xs text-muted-foreground">Действия не найдены.</p>}</div>
@@ -351,7 +353,7 @@ function BuilderInner({ editId, storageKey }: { editId: string | null; storageKe
       <div className={`relative h-[440px] min-w-0 flex-none lg:h-auto lg:min-h-0 lg:flex-1 ${workspace === 'device' ? 'lg:basis-[45%]' : ''}`}>
         <div className="absolute left-3 top-3 z-10 flex gap-1 rounded-lg border bg-card/95 p-1 shadow-sm">{workspace === 'design' && !palette && <Button variant="ghost" size="icon" className="size-7" aria-label="Показать библиотеку действий" onClick={() => setPalette(true)}><PanelLeftOpen className="size-3.5" /></Button>}<Button size="sm" variant="ghost" className="h-7 text-[11px]" onClick={() => void canvas.current?.fitView({ padding: 0.25, maxZoom: 1 })}><Maximize2 className="mr-1.5 size-3" />Весь граф</Button><span className="flex items-center px-2 text-[10px] text-muted-foreground">{nodes.length} шагов · {edges.length} связей</span></div>
         {mode === 'source' ? <div className="flex h-full min-h-[440px] flex-col bg-muted/20 p-4 pt-14 lg:min-h-0"><label htmlFor="studio-source" className="mb-2 text-xs font-medium">Исходник DAG 1.0 · {byteLength(document.source).toLocaleString('ru-RU')} байт / 512 KiB</label><textarea id="studio-source" spellCheck={false} className="min-h-[280px] flex-1 resize-none rounded-xl border bg-card p-4 font-mono text-xs leading-6 outline-none focus:ring-2 focus:ring-ring" value={document.source} readOnly={!writable} onChange={event => { try { changeDocument({ ...document, source: event.target.value }); } catch (error) { setErrors(errorMessage(error)); } }} /><p className="mt-2 text-[11px] text-muted-foreground">JSON и граф — один сценарий. Некорректный текст сохраняется для исправления, публикация блокируется.</p></div>
-          : <ReactFlow nodes={paintedNodes} edges={paintedEdges} onNodesChange={writable && !nodePending ? onNodesChange : undefined} onEdgesChange={writable && !nodePending ? onEdgesChange : undefined} onConnect={onConnect} onNodeClick={(_, node) => selectNode(node)} nodeTypes={nodeTypes} fitView fitViewOptions={{ padding: 0.3, maxZoom: 1 }} minZoom={0.15} maxZoom={1.8} nodesDraggable={writable && !nodePending} nodesConnectable={writable && !nodePending} deleteKeyCode={writable && !nodePending ? ['Backspace', 'Delete'] : null} onInit={instance => { canvas.current = instance; }} className="sphere-studio-flow"><Background gap={24} color="hsl(var(--border))" /><Controls /><MiniMap className="!hidden xl:!block" style={{ width: 130, height: 85 }} pannable zoomable nodeColor="hsl(var(--primary) / .5)" /></ReactFlow>}
+          : <ReactFlow nodes={paintedNodes} edges={paintedEdges} onNodesChange={writable && !nodePending ? onNodesChange : undefined} onEdgesChange={writable && !nodePending ? onEdgesChange : undefined} onConnect={onConnect} onNodeClick={(_, node) => selectNode(node)} nodeTypes={nodeTypes} fitView fitViewOptions={{ padding: 0.1, minZoom: 0.65, maxZoom: 1 }} minZoom={0.15} maxZoom={1.8} nodesDraggable={writable && !nodePending} nodesConnectable={writable && !nodePending} deleteKeyCode={writable && !nodePending ? ['Backspace', 'Delete'] : null} onInit={instance => { canvas.current = instance; }} className="sphere-studio-flow"><Background gap={24} color="hsl(var(--border))" /><Controls /><MiniMap className="!hidden xl:!block" style={{ width: 130, height: 85 }} pannable zoomable nodeColor="hsl(var(--primary) / .5)" /></ReactFlow>}
       </div>
       {workspace === 'device' ? <div className="min-h-0 min-w-0 border-t lg:flex-[1.2] lg:border-l lg:border-t-0"><DeviceWorkbench scriptId={editId} version={expectedVersion} name={document.name} canRun={Boolean(canRun)} canEdit={writable && !nodePending} onInsert={insertRecorded} onExecution={executionChanged} registerCloseGuard={registerWorkbenchGuard} /></div>
         : <aside aria-label="Параметры шага" className="flex min-h-0 shrink-0 flex-col border-t bg-card lg:w-[310px] lg:border-l lg:border-t-0 2xl:w-[350px]">
