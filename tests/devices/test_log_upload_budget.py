@@ -9,8 +9,9 @@ from contextvars import ContextVar
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
+import httpx
 import pytest
-from fastapi import HTTPException
+from fastapi import FastAPI, HTTPException
 from starlette.requests import Request
 
 from backend.services import device_log_upload as upload
@@ -277,6 +278,35 @@ async def test_auth_or_identity_rejection_precedes_body_and_creates_no_file(rout
         await call_route(fixture, request, **kwargs)
     assert caught.value.status_code == expected and state.calls == 0
     assert not list(fixture.path.rglob('*'))
+
+
+@pytest.mark.asyncio
+async def test_asgi_route_serializes_rejection_and_keeps_last_successful_journal(route_fixture):
+    fixture = route_fixture
+    app = FastAPI()
+    app.include_router(fixture.router.router, prefix='/api/v1')
+
+    async def database():
+        yield object()
+
+    app.dependency_overrides[fixture.router.get_db] = database
+    headers = {'X-API-Key': 'isolated-fixture-token', 'X-Device-Id': fixture.device_id}
+    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url='http://fixture.local') as client:
+        response = await client.post('/api/v1/logs/upload', headers=headers, content=b'last good entry')
+        assert response.status_code == 204 and response.content == b''
+        files = list(fixture.path.rglob('*.log'))
+        assert len(files) == 1
+        original = files[0].read_bytes()
+        produced = []
+
+        async def excessive_body():
+            for index in range(128):
+                produced.append(index)
+                yield b'x' * 65536
+
+        rejected = await client.post('/api/v1/logs/upload', headers=headers, content=excessive_body())
+        assert rejected.status_code == 413 and rejected.json()['detail'] == 'Log body exceeds 512 KB limit'
+        assert len(produced) == 9 and files[0].read_bytes() == original
 
 
 @pytest.mark.asyncio

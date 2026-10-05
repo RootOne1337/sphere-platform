@@ -119,3 +119,8 @@ Working-tree probe той же 8 MiB fixture: объявленная oversized l
 readonly application mount; это отдельная генерация, не проверка нового packaged image.
 Сравнение полного JSON с `12915dd` подтвердило: меняются только четыре upload responses
 400/408/413/503. Новый образ обязан отдельно пройти `export_api_docs --check`.
+
+Дополнительный ASGI transport case проверяет HTTP dispatcher, JSON ошибки и пустой
+204 response: после допустимой записи rejected chunked body останавливается на
+девятом chunk и не меняет существующий файл. Теперь **35 upload cases passed**,
+включая этот HTTP-контракт. Auth/ownership здесь по-прежнему fixture, не PostgreSQL RLS.
