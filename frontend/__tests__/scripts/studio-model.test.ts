@@ -14,8 +14,8 @@ it('lays out execution order rather than source array order, and terminates for 
   const dag = insertAction(initialDag, 'sleep', 'wait');
   const imported = importDag(dag);
   const layout = arrangeNodes(imported.nodes, imported.edges, dag.entry_node);
-  expect(layout.find(node => node.id === 'start-1')!.position.y).toBeLessThan(layout.find(node => node.id === 'wait')!.position.y);
-  expect(layout.find(node => node.id === 'wait')!.position.y).toBeLessThan(layout.find(node => node.id === 'end-1')!.position.y);
+  expect(layout.find(node => node.id === 'start-1')!.position.x).toBeLessThan(layout.find(node => node.id === 'wait')!.position.x);
+  expect(layout.find(node => node.id === 'wait')!.position.x).toBeLessThan(layout.find(node => node.id === 'end-1')!.position.x);
   expect(new Set(layout.map(node => JSON.stringify(node.position))).size).toBe(3);
   expect(arrangeNodes(imported.nodes, [...imported.edges, { id: 'loop', source: 'end-1', target: 'wait' }], dag.entry_node)).toHaveLength(3);
   expect(imported.nodes[0].position).toEqual({ x: 200, y: 50 });

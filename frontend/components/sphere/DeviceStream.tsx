@@ -7,10 +7,13 @@ import { api } from '@/lib/api';
 import type { StreamFrameDimensions } from '@/src/features/stream/streamAspectRatio';
 import { AndroidNavigationBar } from '@/src/features/stream/AndroidNavigationBar';
 import type { UiBounds } from '@/src/features/stream/uiHierarchy';
+import type { StreamInput } from '@/src/features/scripts/studio/recording';
 
 interface DeviceStreamProps {
   deviceId: string;
   onTap?: (x: number, y: number) => void;
+  /** A successful WebSocket send is not an Android execution acknowledgement. */
+  onControlSent?: (input: StreamInput) => void;
   enableDiagnostics?: boolean;
   enableScreenshot?: boolean;
   enableNavigation?: boolean;
@@ -73,6 +76,7 @@ function formatIsoTimestampAgo(timestamp: string | null | undefined): string {
 export function DeviceStream({
   deviceId,
   onTap,
+  onControlSent,
   enableDiagnostics = false,
   enableScreenshot = false,
   enableNavigation = false,
@@ -470,16 +474,18 @@ export function DeviceStream({
         onTap?.(start.x, start.y);
         if (wsRef.current?.readyState === WebSocket.OPEN) {
           wsRef.current.send(JSON.stringify({ type: 'click', x: start.x, y: start.y }));
+          onControlSent?.({ deviceId, at: performance.now(), dimensions: { width: start.frameWidth, height: start.frameHeight }, command: { type: 'click', x: start.x, y: start.y } });
         }
       } else {
         // Swipe — duration proportional to distance, min 150ms max 600ms
         const duration_ms = Math.min(600, Math.max(150, Math.round(dist * 0.8)));
         if (wsRef.current?.readyState === WebSocket.OPEN) {
           wsRef.current.send(JSON.stringify({ type: 'swipe', x1: start.x, y1: start.y, x2: pt.x, y2: pt.y, duration_ms }));
+          onControlSent?.({ deviceId, at: performance.now(), dimensions: { width: start.frameWidth, height: start.frameHeight }, command: { type: 'swipe', x1: start.x, y1: start.y, x2: pt.x, y2: pt.y, duration_ms } });
         }
       }
     },
-    [canInteract, canSelectElement, inspection, toCanvasCoords, onTap],
+    [canInteract, canSelectElement, inspection, toCanvasCoords, onTap, onControlSent, deviceId],
   );
 
   const handlePointerCancel = useCallback((e: React.PointerEvent<HTMLCanvasElement>) => {
@@ -513,7 +519,9 @@ export function DeviceStream({
     if (from === to) return;
     socket.send(JSON.stringify({ type: 'swipe', x1: horizontal ? from : point.x, y1: horizontal ? point.y : from,
       x2: horizontal ? to : point.x, y2: horizontal ? point.y : to, duration_ms: 180 }));
-  }, [canInteract, enableNavigation, toCanvasCoords]);
+    onControlSent?.({ deviceId, at, dimensions: { width: canvas.width, height: canvas.height }, command: { type: 'swipe', x1: horizontal ? from : point.x, y1: horizontal ? point.y : from,
+      x2: horizontal ? to : point.x, y2: horizontal ? point.y : to, duration_ms: 180 } });
+  }, [canInteract, enableNavigation, toCanvasCoords, onControlSent, deviceId]);
   useEffect(() => {
     const canvas = canvasRef.current;
     // React delegates wheel events passively in modern browsers. A native

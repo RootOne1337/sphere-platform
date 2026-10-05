@@ -36,3 +36,17 @@ SOFTWARE.
 ## Studio Admin
 
 Studio Admin was consulted as a visual reference only. Its source code and application assets are not copied into the working Sphere prototype; this research record includes one clearly attributed capture of the official demo. The inspected repository is [arhamkhnz/next-shadcn-admin-dashboard](https://github.com/arhamkhnz/next-shadcn-admin-dashboard), with an MIT license naming Copyright (c) 2024 Mohammed Arham Khan.
+# Script Studio additions, 2026-10-06
+
+- **React Flow**, xyflow maintainers: MIT; existing `@xyflow/react` dependency,
+  original Sphere node designs. The visible React Flow attribution is retained.
+  [Source and license](https://github.com/xyflow/xyflow).
+- **elkjs 0.12.0**, Eclipse Layout Kernel contributors / Kiel University:
+  used under the offered **EPL-2.0** license. Unmodified worker and full license
+  are copied from the locked npm package at build time into
+  `/vendor/elk/worker-0.12.0.js` and `/vendor/elk/LICENSE.md`.
+  [Project/source](https://github.com/kieler/elkjs),
+  [release package](https://registry.npmjs.org/elkjs/-/elkjs-0.12.0.tgz).
+  The ELK algorithm and worker remain separate from Sphere's original UI code.
+- No React Flow Pro template or noncommercial Rete extension is included.
+

@@ -12,10 +12,12 @@ import { Button } from '@/src/shared/ui/button';
 import { NativeScreenshotPanel } from '@/src/features/devices/NativeScreenshotPanel';
 import type { StreamFrameDimensions } from './streamAspectRatio';
 import { checkedHierarchy, frameBounds, hitTestHierarchy, matchesFrame, type UiHierarchyNode, type UiHierarchySnapshot } from './uiHierarchy';
+import type { StreamInput } from '@/src/features/scripts/studio/recording';
 
 const SNAPSHOT_LIFETIME_MS = 30_000;
 
-export function SingleDeviceStream({ deviceId, captureEnabled = false }: { deviceId: string; captureEnabled?: boolean }) {
+export function SingleDeviceStream({ deviceId, captureEnabled = false, onControlSent, onInsertSelector, controlDisabled = false, compact = false }: { deviceId: string; captureEnabled?: boolean; controlDisabled?: boolean; compact?: boolean;
+  onControlSent?: (input: StreamInput) => void; onInsertSelector?: (node: UiHierarchyNode, snapshot: UiHierarchySnapshot) => void }) {
   const access = useCapabilities();
   const { accessToken } = useAuthStore();
   const canInspect = access.can('device:write');
@@ -143,13 +145,14 @@ export function SingleDeviceStream({ deviceId, captureEnabled = false }: { devic
       </div>}
     </div>
     {!canInspect && <PermissionNotice permission="device:write" action="чтение дерева Android через root-команды" />}
-    <div className={inspect ? 'grid min-w-0 items-start gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(280px,360px)]' : 'min-w-0'}>
+    <div className={inspect ? `grid min-w-0 items-start gap-4 ${compact ? '' : 'xl:grid-cols-[minmax(0,1fr)_minmax(280px,360px)]'}` : 'min-w-0'}>
       <div className="min-w-0 overflow-hidden rounded-xl border border-border bg-black">
         <DeviceStream deviceId={deviceId} enableDiagnostics enableScreenshot enableNavigation enableStaticInput
-          readOnly={!access.can('stream:control')} onFrameDimensions={onFrame} onInspectionInvalidated={invalidateFrame}
+          onControlSent={onControlSent}
+          readOnly={controlDisabled || !access.can('stream:control')} onFrameDimensions={onFrame} onInspectionInvalidated={invalidateFrame}
           inspection={inspect ? { onPick: pick, bounds: highlight } : undefined} />
       </div>
-      {inspect && <aside className="min-w-0 space-y-4 rounded-xl border border-border bg-card p-4" aria-label="Элемент Android">
+      {inspect && <aside className={`min-w-0 space-y-4 rounded-xl border border-border bg-card p-4 ${compact ? 'max-h-[480px] overflow-auto' : ''}`} aria-label="Элемент Android">
         <div><h4 className="font-semibold">Инспектор элементов</h4><p className="mt-1 text-xs leading-relaxed text-muted-foreground">Нажмите элемент на видео: границы и все возвращённые Android атрибуты появятся здесь. Выбор не отправляет нажатие Android.</p></div>
         <p className="text-xs leading-relaxed text-muted-foreground">UI Automator через root APK. Дерево и видео независимы. Автообновление — через 5 секунд после ответа, только в активном видимом инспекторе; при ошибке оно приостанавливается. Игровой Canvas может не раскрывать внутренних элементов.</p>
         {error && <p role="alert" className="break-words rounded-lg border border-destructive/30 p-3 text-sm text-destructive">{error}</p>}
@@ -175,6 +178,7 @@ export function SingleDeviceStream({ deviceId, captureEnabled = false }: { devic
         {valid && selected ? <div className="min-w-0 space-y-3">
           <div className="flex items-center justify-between gap-2"><h5 className="text-sm font-semibold">Узел #{selected.id} · глубина {selected.depth}</h5><Button size="sm" variant="ghost" aria-label="Копировать атрибуты элемента" onClick={() => { void copy(JSON.stringify(selected, null, 2)); }}><Copy className="h-4 w-4" aria-hidden /></Button></div>
           <div className="rounded-lg bg-muted p-3"><p className="text-xs font-medium">XPath</p><code className="mt-1 block break-all text-xs">{selected.xpath}</code><Button size="sm" variant="outline" className="mt-2" onClick={() => { void copy(selected.xpath); }}>Копировать XPath</Button></div>
+          {onInsertSelector && snapshot && <Button size="sm" className="w-full" disabled={pending} onClick={() => { if (report && performance.now() - report.at < SNAPSHOT_LIFETIME_MS && matchesFrame(snapshot, frame)) onInsertSelector(selected, snapshot); }}>Добавить элемент в сценарий</Button>}
           <dl className="max-h-[min(60vh,640px)] space-y-2 overflow-auto text-xs">{Object.entries(selected.attributes).map(([key, value]) => <div key={key} className="border-b border-border pb-2"><dt className="font-medium text-muted-foreground">{key}</dt><dd className="mt-1 whitespace-pre-wrap break-all font-mono">{value || 'Пустое значение'}</dd></div>)}</dl>
         </div> : valid && snapshot.nodes.length > 0 && <p className="text-sm text-muted-foreground">Выберите элемент на изображении. Если границы не найдены, Android не раскрыл элемент в этой точке.</p>}
       </aside>}

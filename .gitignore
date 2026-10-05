@@ -120,3 +120,4 @@ test_task*.py
 test_task.py
 verify_dag.py
 reset_pw.py
+frontend/public/vendor/elk/

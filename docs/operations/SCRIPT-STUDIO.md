@@ -71,3 +71,39 @@ Read/check требуют свежего `script:read`, write — `script:write`
 Нет новой зависимости или внешнего CDN для source editor. Используются
 существующие React Flow / React / lucide / UI primitives; оригинальная attribution
 React Flow сохранена. [Лицензии frontend](../design/previews/admincn-sphere-2026-09-28/THIRD-PARTY-NOTICES.md).
+# Usability redesign, 2026-10-06
+
+The catalog now separates identity, version metadata and actions. List/card
+view, density, metadata visibility and page size persist in a bounded browser
+preference keyed by organization and user. Preferences contain no DAG source.
+The version dialog retains guarded rollback/archive and redacted source reads.
+
+Studio uses original rectangular nodes on React Flow and a locally served
+ELK 0.12.0 worker for optional automatic layout. Its worker is terminated on
+success, error, cancellation or a ten-second deadline. Node forms preserve
+unknown JSON fields; advanced JSON remains available for nested arrays/maps.
+
+Use **Устройство · запись · проверка** to select one online Android. The
+workbench reuses the single-device H.264 stream and UI Automator inspector.
+**Добавить элемент в сценарий** inserts a `tap_element` XPath action without
+executing it. **Записать жесты** captures click/swipe/wheel submissions only,
+up to 200 events in memory. Stop recording, review and explicitly insert it.
+Pauses are preserved by default, capped at 60 seconds. Coordinate actions use
+the APK 1280×720 / 720×1280 reference; rotation or layout changes can invalidate
+their intent. Prefer XPath for persistent targets. Text and navigation keys
+are not captured by this initial recorder.
+
+**Проверить на [device]** submits one task pinned to the saved, unchanged
+version. Structural validation alone does not execute Android. A network or
+unconfirmed receipt blocks duplicate retry and links to the task catalog;
+a definite 4xx rejection can be retried after correction. Input is locked
+while a task is pending or its ownership is unconfirmed. Switching/closing
+with an uninserted recording or active task asks before losing that context.
+
+Graph highlighting uses actual last-processed progress (2-second observation)
+and final node logs (success/failure); it is not a simulated active cursor.
+Video, hierarchy and progress lack a common frame identity. Frame-exact replay
+needs an additive Android/server protocol and remains open.
+
+Evidence and library licenses: [redesign audit](../audits/2026-10-06/STUDIO-REDESIGN.md).
+

@@ -99,7 +99,7 @@ export function arrangeNodes(nodes: Node[], edges: Edge[], entry: string): Node[
   return nodes.map(node => {
     const level = levels.get(node.id) ?? levels.size;
     const column = columns.get(level) ?? 0; columns.set(level, column + 1);
-    return { ...node, position: { x: column * 240, y: level * 140 } };
+    return { ...node, position: { x: level * 346, y: column * 210 } };
   });
 }
 /** Insert after the selected linear step, or immediately before an existing end.

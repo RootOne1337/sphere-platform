@@ -1,11 +1,11 @@
 'use client';
-import { useState, useEffect, useRef, Suspense } from 'react';
+import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
 import { ReactFlow, Background, Controls, MiniMap, useNodesState, useEdgesState, addEdge, type Node, type Edge, type Connection, type ReactFlowInstance } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import { isAxiosError } from 'axios';
-import { ArrowLeft, Save, Check, Code2, Workflow, Undo2, Redo2, Download, Upload, Plus, Play, Search } from 'lucide-react';
+import { ArrowLeft, Save, Check, Code2, Workflow, Undo2, Redo2, Download, Upload, Plus, Play, Search, Monitor, Settings2, PanelLeftClose, PanelLeftOpen, ScanSearch, MousePointer2, GitBranch, Smartphone, Maximize2, LayoutGrid } from 'lucide-react';
 import { nodeTypes } from '@/lib/dag/nodeTypes';
 import { exportDag, importDag, ACTION_TYPES, type DagMetadata } from '@/lib/dag/export';
 import { ACTION_LABELS, arrangeNodes, boundedSource, byteLength, draftKey, formatDag, initialDag, insertAction, parseSource, pushHistory, readDraft, SOURCE_LIMIT, writeDraft, type StudioDocument } from '@/lib/dag/studio';
@@ -15,6 +15,11 @@ import { api } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
 import { useCapabilities } from '@/src/features/access/Capabilities';
 import { RunScriptModal } from '@/components/sphere/RunScriptModal';
+import { NodeInspector } from '@/src/features/scripts/studio/NodeInspector';
+import { DeviceWorkbench } from '@/src/features/scripts/studio/DeviceWorkbench';
+import { ACTION_GROUPS } from '@/src/features/scripts/studio/presentation';
+import { layoutWorkflow } from '@/src/features/scripts/studio/layout';
+import type { DagNode } from '@/lib/dag/export';
 
 interface ValidationReceipt { schema_version: 1; dag_hash: string; node_count: number; scope: 'structure-routes-lua-safety'; device_execution_verified: false }
 const importedInitial = importDag(initialDag);
@@ -58,6 +63,15 @@ function BuilderInner({ editId, storageKey }: { editId: string | null; storageKe
   const [localSave, setLocalSave] = useState(false);
   const [storageStatus, setStorageStatus] = useState('');
   const [runOpen, setRunOpen] = useState(false);
+  const [workspace, setWorkspace] = useState<'design' | 'device'>('design');
+  const [palette, setPalette] = useState(true);
+  const [inspectorTab, setInspectorTab] = useState<'step' | 'scenario'>('step');
+  const [layoutBusy, setLayoutBusy] = useState(false);
+  const [execution, setExecution] = useState<{ last: string | null; logs: { node_id: string; success: boolean }[] }>({ last: null, logs: [] });
+  const executionChanged = useCallback((last: string | null, logs: { node_id: string; success: boolean }[]) => setExecution({ last, logs }), []);
+  const layoutRequest = useRef<AbortController | null>(null);
+  const workbenchGuard = useRef<(() => boolean) | null>(null);
+  const registerWorkbenchGuard = useCallback((guard: (() => boolean) | null) => { workbenchGuard.current = guard; }, []);
   const request = useRef<AbortController | null>(null);
   const loaded = useRef(false);
   const canvas = useRef<ReactFlowInstance | null>(null);
@@ -72,7 +86,7 @@ function BuilderInner({ editId, storageKey }: { editId: string | null; storageKe
   const writable = canWrite && !busy && loadState === 'ready';
   const selectedNode = nodes.find(node => node.id === selectedId);
 
-  useEffect(() => { live.current = true; return () => { live.current = false; request.current?.abort(); }; }, []);
+  useEffect(() => { live.current = true; return () => { live.current = false; request.current?.abort(); layoutRequest.current?.abort(); }; }, []);
   useEffect(() => {
     if (!canRead && busy) request.current?.abort();
   }, [canRead, busy]);
@@ -96,6 +110,7 @@ function BuilderInner({ editId, storageKey }: { editId: string | null; storageKe
   function selectNode(node: Node) {
     if (nodePending) { setErrors('Примените или отмените параметры текущего шага перед выбором другого.'); return; }
     setSelectedId(node.id);
+    setInspectorTab('step');
     try { setNodeSource(JSON.stringify(exportDag(nodes, edges, metadata).nodes.find(item => item.id === node.id), null, 2)); }
     catch (error) { setErrors(errorMessage(error)); }
   }
@@ -255,6 +270,33 @@ function BuilderInner({ editId, storageKey }: { editId: string | null; storageKe
   function leave() {
     if (!dirty || window.confirm('Есть несохранённые изменения. Выйти из редактора?')) router.push('/scripts');
   }
+  async function arrange() {
+    if (layoutBusy) return;
+    const controller = new AbortController(); layoutRequest.current = controller;
+    const original = documentRef.current.source;
+    setLayoutBusy(true);
+    try { const next = await layoutWorkflow(nodes, edges, controller.signal);
+      if (live.current && documentRef.current.source === original) { setNodes(next); window.requestAnimationFrame(() => { if (live.current) void canvas.current?.fitView({ padding: 0.25, maxZoom: 1 }); }); }
+    } catch (reason) { if (live.current && !controller.signal.aborted) setErrors(errorMessage(reason)); }
+    finally { if (live.current) setLayoutBusy(false); layoutRequest.current = null; }
+  }
+  function insertRecorded(actions: DagNode['action'][]): boolean {
+    try {
+      if (!writable || nodePending) throw new Error('Сначала примените параметры шага.');
+      let graph = parseSource(documentRef.current.source);
+      if (graph.nodes.length + actions.length > 500) throw new Error('Запись превышает лимит 500 шагов. Граф не изменён.');
+      let selected = selectedId ?? undefined;
+      for (const action of actions) {
+        const id = `step_${crypto.randomUUID().replaceAll('-', '').slice(0, 12)}`;
+        graph = insertAction(graph, action.type as typeof ACTION_TYPES[number], id, selected);
+        graph.nodes.find(node => node.id === id)!.action = structuredClone(action);
+        selected = id;
+      }
+      changeDocument({ ...documentRef.current, source: formatDag(graph) }, true); setSelectedId(selected ?? null);
+      setNodeSource(JSON.stringify(graph.nodes.find(node => node.id === selected), null, 2)); setMode('graph');
+      return true;
+    } catch (reason) { setErrors(errorMessage(reason)); return false; }
+  }
   if (!canRead) return <div role="status" className="p-6">{access.pending ? 'Проверяем права доступа к сценариям…' : 'Не подтверждено право чтения сценариев.'}</div>;
   if (loadState === 'loading') return <div role="status" className="p-6">Загружаем исходник и версию сценария…</div>;
   if (loadState === 'error') return <div className="mx-auto max-w-xl p-6"><div role="alert" className="space-y-4 rounded-xl border bg-card p-6">
@@ -265,88 +307,73 @@ function BuilderInner({ editId, storageKey }: { editId: string | null; storageKe
   const currentReceipt = receipt?.fingerprint === fingerprint ? receipt.result : null;
   const available = ACTION_TYPES.filter(type => `${type} ${ACTION_LABELS[type]}`.toLocaleLowerCase().includes(search.toLocaleLowerCase()));
   const canRun = !dirty && editId && expectedVersion?.dag_hash && access.can('script:execute');
-  return <section aria-label="Script Studio" className="flex min-h-[600px] min-w-0 flex-col bg-background lg:h-[calc(100dvh-4rem)] lg:min-h-0">
-    <header className="shrink-0 space-y-3 border-b p-4">
-      <div className="flex flex-wrap items-center gap-3">
-        <Button variant="outline" size="icon" aria-label="К каталогу сценариев" onClick={leave}><ArrowLeft className="size-4" /></Button>
-        <div className="min-w-0 flex-1"><p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Автоматизация / Script Studio</p>
-          <label className="sr-only" htmlFor="studio-name">Название сценария</label>
-          <Input id="studio-name" className="mt-1 max-w-md font-semibold" maxLength={255} value={document.name} disabled={!writable}
-            onChange={event => changeDocument({ ...document, name: event.target.value })} /></div>
-        <span className="rounded-full border px-3 py-1 text-xs">{editId ? 'Новая версия существующего' : 'Новый сценарий'} · {dirty ? 'Есть изменения' : 'Без изменений'}</span>
-      </div>
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="flex rounded-lg border p-1" role="group" aria-label="Представление сценария">
-          <Button size="sm" variant={mode === 'graph' ? 'secondary' : 'ghost'} aria-pressed={mode === 'graph'} onClick={() => switchMode('graph')}><Workflow className="mr-2 size-4" />Граф</Button>
-          <Button size="sm" variant={mode === 'source' ? 'secondary' : 'ghost'} aria-pressed={mode === 'source'} onClick={() => switchMode('source')}><Code2 className="mr-2 size-4" />JSON</Button>
+  const paintedNodes: Node[] = nodes.map(node => ({ ...node, data: { ...node.data,
+    execution: execution.logs.findLast(log => log.node_id === node.id)?.success === true ? 'success'
+      : execution.logs.findLast(log => log.node_id === node.id)?.success === false ? 'failed'
+      : execution.last === node.id ? 'reported' : null } }));
+  const paintedEdges: Edge[] = edges.map(edge => ({ ...edge, type: 'smoothstep',
+    markerEnd: { type: 'arrowclosed' as const, width: 16, height: 16 },
+    style: { strokeWidth: 1.7, stroke: edge.sourceHandle === 'failure' ? '#f43f5e' : edge.sourceHandle === 'false_branch' ? '#d97706' : edge.sourceHandle === 'true_branch' ? '#10b981' : 'hsl(var(--primary))' },
+    label: edge.sourceHandle === 'failure' ? 'Ошибка' : edge.sourceHandle === 'true_branch' ? 'Да' : edge.sourceHandle === 'false_branch' ? 'Нет' : undefined,
+    labelStyle: { fontSize: 10, fill: 'hsl(var(--foreground))' }, labelBgStyle: { fill: 'hsl(var(--card))', fillOpacity: 1 }, labelBgPadding: [6, 4] as [number, number], labelBgBorderRadius: 5,
+  }));
+  return <section aria-label="Script Studio" className="studio-workspace flex min-h-[600px] min-w-0 flex-col bg-background lg:h-[calc(100dvh-4rem)] lg:min-h-0">
+    <header className="shrink-0 border-b bg-card">
+      <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+        <div className="flex min-w-0 flex-1 items-center gap-3"><Button variant="ghost" size="icon" aria-label="К каталогу сценариев" onClick={leave}><ArrowLeft className="size-4" /></Button>
+          <div className="min-w-0 flex-1"><div className="mb-1 flex items-center gap-2 text-[10px] font-medium uppercase tracking-[.14em] text-muted-foreground"><Workflow className="size-3 text-primary" />Script Studio <span className="rounded border px-1.5 py-0.5 tracking-normal">DAG 1.0</span></div>
+            <label className="sr-only" htmlFor="studio-name">Название сценария</label><Input id="studio-name" value={document.name} maxLength={255} readOnly={!writable} className="h-8 max-w-xl border-transparent bg-transparent px-0 text-lg font-semibold shadow-none hover:border-border focus:px-2" onChange={event => changeDocument({ ...document, name: event.target.value })} /></div>
         </div>
-        <Button variant="outline" size="icon" aria-label="Отменить изменение" disabled={!writable || !history.length} onClick={() => restoreHistory('undo')}><Undo2 className="size-4" /></Button>
-        <Button variant="outline" size="icon" aria-label="Повторить изменение" disabled={!writable || !future.length} onClick={() => restoreHistory('redo')}><Redo2 className="size-4" /></Button>
-        <Button size="sm" variant="outline" disabled={!writable || nodePending} onClick={() => fileInput.current?.click()}><Upload className="mr-2 size-4" />Импорт JSON</Button>
-        <input ref={fileInput} type="file" accept=".json,application/json" className="hidden" aria-label="Файл сценария" onChange={event => { void importFile(event.target.files?.[0]); event.target.value = ''; }} />
-        <Button size="sm" variant="outline" onClick={exportFile}><Download className="mr-2 size-4" />Экспорт</Button>
-        {mode === 'graph' && <Button size="sm" variant="ghost" disabled={Boolean(busy) || nodePending} onClick={() => { setNodes(arrangeNodes(nodes, edges, metadata.entry_node)); window.requestAnimationFrame(() => { if (live.current) void canvas.current?.fitView({ padding: 0.2 }); }); }}>Упорядочить</Button>}
-        <div className="hidden flex-1 lg:block" />
-        <Button size="sm" variant="outline" disabled={Boolean(busy) || nodePending || Boolean(canvasError)} onClick={() => void checkOrSave('check')}><Check className="mr-2 size-4" />{busy === 'check' ? 'Проверяем…' : 'Проверить на сервере'}</Button>
-        <Button size="sm" disabled={!writable || nodePending || Boolean(canvasError)} onClick={() => void checkOrSave('save')}><Save className="mr-2 size-4" />{busy === 'save' ? 'Сохраняем…' : editId ? 'Сохранить версию' : 'Создать сценарий'}</Button>
-        <Button size="sm" variant="outline" disabled={!canRun || Boolean(busy)} onClick={() => setRunOpen(true)} title="Запуск доступен для сохранённой неизменённой версии"><Play className="mr-2 size-4" />Запустить версию</Button>
+        <div className="flex flex-wrap items-center gap-2"><span className={`rounded-full border px-2.5 py-1 text-[11px] ${dirty ? 'border-amber-500/30 bg-amber-500/5 text-amber-600 dark:text-amber-400' : 'text-muted-foreground'}`}>{dirty ? 'Есть изменения' : expectedVersion ? `Версия ${expectedVersion.version}` : 'Новый сценарий'}</span>
+          <Button size="sm" variant="outline" disabled={Boolean(busy) || nodePending || Boolean(canvasError)} onClick={() => void checkOrSave('check')}><Check className="mr-2 size-3.5" />{busy === 'check' ? 'Проверяем…' : 'Проверить на сервере'}</Button>
+          <Button size="sm" disabled={!writable || nodePending || Boolean(canvasError)} onClick={() => void checkOrSave('save')}><Save className="mr-2 size-3.5" />{busy === 'save' ? 'Сохраняем…' : editId ? 'Сохранить версию' : 'Создать сценарий'}</Button>
+        </div>
       </div>
-      {!canWrite && <p role="status" className="text-sm text-muted-foreground">Исходник доступен для чтения и проверки. Права записи не подтверждены.</p>}
+      <div className="flex flex-wrap items-center justify-between gap-2 border-t px-4 py-2">
+        <div className="flex flex-wrap items-center gap-1.5"><div className="flex gap-1 rounded-lg bg-muted p-1" role="group" aria-label="Представление сценария"><Button size="sm" variant={mode === 'graph' ? 'secondary' : 'ghost'} aria-pressed={mode === 'graph'} onClick={() => switchMode('graph')}><Workflow className="mr-1.5 size-3.5" />Граф</Button><Button size="sm" variant={mode === 'source' ? 'secondary' : 'ghost'} aria-pressed={mode === 'source'} onClick={() => switchMode('source')}><Code2 className="mr-1.5 size-3.5" />JSON</Button></div>
+          <Button variant="ghost" size="icon" aria-label="Отменить изменение" disabled={!writable || !history.length} onClick={() => restoreHistory('undo')}><Undo2 className="size-4" /></Button><Button variant="ghost" size="icon" aria-label="Повторить изменение" disabled={!writable || !future.length} onClick={() => restoreHistory('redo')}><Redo2 className="size-4" /></Button>
+          <span className="mx-1 h-5 border-l" /><Button size="sm" variant="ghost" disabled={!writable || nodePending} onClick={() => fileInput.current?.click()}><Upload className="mr-1.5 size-3.5" />Импорт JSON</Button><input ref={fileInput} type="file" accept=".json,application/json" className="hidden" aria-label="Файл сценария" onChange={event => { void importFile(event.target.files?.[0]); event.target.value = ''; }} /><Button size="sm" variant="ghost" onClick={exportFile}><Download className="mr-1.5 size-3.5" />Экспорт</Button>
+          {mode === 'graph' && <Button size="sm" variant="ghost" disabled={Boolean(busy) || nodePending || layoutBusy} onClick={() => void arrange()} title="Раскладка ELK в локальном worker"><LayoutGrid className="mr-1.5 size-3.5" />{layoutBusy ? 'Раскладываем…' : 'Упорядочить'}</Button>}
+        </div>
+        <div className="flex flex-wrap gap-2"><Button size="sm" variant={workspace === 'device' ? 'secondary' : 'outline'} aria-pressed={workspace === 'device'} onClick={() => { if (workspace === 'device' && workbenchGuard.current && !workbenchGuard.current()) return; setWorkspace(workspace === 'device' ? 'design' : 'device'); }}><Monitor className="mr-2 size-3.5" />{workspace === 'device' ? 'Закрыть устройство' : 'Устройство · запись · проверка'}</Button><Button size="sm" variant="outline" disabled={!canRun || Boolean(busy)} onClick={() => setRunOpen(true)} title="Запуск сохранённой неизменённой версии на выбранных целях"><Play className="mr-2 size-3.5" />Запустить версию</Button></div>
+      </div>
+      {!canWrite && <p role="status" className="px-4 pb-2 text-xs text-muted-foreground">Исходник доступен для чтения и проверки. Права записи не подтверждены.</p>}
     </header>
-    {(errors || canvasError) && <div role="alert" className="max-h-36 shrink-0 overflow-auto whitespace-pre-wrap border-b border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">{errors || canvasError}</div>}
-    {currentReceipt && <div role="status" className="shrink-0 border-b bg-emerald-500/10 px-4 py-2 text-sm">Структура, переходы и безопасность Lua проверены · {currentReceipt.node_count} шагов <span className="font-mono" title={currentReceipt.dag_hash}>· SHA256 {currentReceipt.dag_hash.slice(0, 12)}</span>. Выполнение на Android не проверялось.</div>}
-    {draft && <div className="flex shrink-0 flex-wrap items-center gap-2 border-b bg-amber-500/10 px-4 py-2 text-sm"><span>Найден локальный черновик этого сценария.</span>
-      <Button size="sm" variant="outline" disabled={!writable} onClick={() => { try { changeDocument(draft); setMode('source'); setNodePending(false); setSelectedId(null); setDraft(null); } catch (error) { setErrors(errorMessage(error)); } }}>Восстановить черновик</Button>
-      <Button size="sm" variant="ghost" onClick={() => { try { if (storageKey) localStorage.removeItem(storageKey); setDraft(null); } catch (error) { setStorageStatus(errorMessage(error)); } }}>Удалить черновик</Button></div>}
-    <div className="flex min-h-0 min-w-0 flex-col lg:flex-1 lg:flex-row">
-      <aside aria-label="Каталог действий" className="flex max-h-64 shrink-0 flex-col border-b bg-card lg:max-h-none lg:w-60 lg:border-b-0 lg:border-r">
-        <div className="space-y-2 p-3"><h2 className="text-sm font-semibold">Действия <span className="text-muted-foreground">{ACTION_TYPES.length}</span></h2>
-          <div className="relative"><Search className="absolute left-2 top-3 size-4 text-muted-foreground" /><Input className="pl-8" aria-label="Поиск действия" value={search} onChange={event => setSearch(event.target.value)} /></div>
-          <p className="text-xs text-muted-foreground">Добавление после выбранного шага или перед завершением. Шаблоны требуют настройки под устройство.</p></div>
-        <div className="min-h-0 flex-1 overflow-auto px-2 pb-3">{available.map(type => <button key={type} type="button" disabled={!writable || mode !== 'graph' || nodePending}
-          className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left hover:bg-muted disabled:opacity-40" onClick={() => addAction(type)}>
-          <Plus className="size-3 shrink-0" /><span className="min-w-0"><span className="block text-xs font-medium">{ACTION_LABELS[type]}</span><span className="block font-mono text-[11px] text-muted-foreground">{type}</span></span></button>)}
-          {!available.length && <p className="p-2 text-sm text-muted-foreground">Действия не найдены.</p>}</div>
-      </aside>
-      <div className="relative h-[380px] min-w-0 flex-none lg:h-auto lg:min-h-0 lg:flex-1">
-        {mode === 'source' ? <div className="flex h-full min-h-[380px] flex-col p-4 lg:min-h-0">
-          <label htmlFor="studio-source" className="mb-2 text-sm font-medium">Исходник DAG 1.0 · {byteLength(document.source).toLocaleString('ru-RU')} байт / 512 KiB</label>
-          <textarea id="studio-source" spellCheck={false} className="min-h-[280px] flex-1 resize-none rounded-lg border bg-card p-3 font-mono text-xs leading-5 outline-none focus:ring-2 focus:ring-ring" value={document.source} readOnly={!writable}
-            onChange={event => { try { changeDocument({ ...document, source: event.target.value }); } catch (error) { setErrors(errorMessage(error)); } }} />
-          <p className="mt-2 text-xs text-muted-foreground">Неверный JSON остаётся здесь. «Граф» применяет исходник атомарно. Сохранение проверяет текущий текст, а не прежний граф.</p>
-        </div> : <ReactFlow nodes={nodes} edges={edges} onNodesChange={writable && !nodePending ? onNodesChange : undefined} onEdgesChange={writable && !nodePending ? onEdgesChange : undefined}
-          onConnect={onConnect} onNodeClick={(_, node) => selectNode(node)} nodeTypes={nodeTypes} fitView nodesDraggable={writable && !nodePending} nodesConnectable={writable && !nodePending} deleteKeyCode={writable && !nodePending ? ['Backspace', 'Delete'] : null}
-          onInit={instance => { canvas.current = instance; }} className="sphere-studio-flow"><Background gap={24} /><Controls /><MiniMap className="!hidden xl:!block" style={{ width: 120, height: 80 }} pannable zoomable /></ReactFlow>}
+    {(errors || canvasError) && <div role="alert" className="max-h-28 shrink-0 overflow-auto whitespace-pre-wrap border-b border-destructive/30 bg-destructive/5 p-3 text-xs text-destructive">{errors || canvasError}</div>}
+    {currentReceipt && <div role="status" className="shrink-0 border-b bg-emerald-500/10 px-4 py-2 text-xs">Структура, переходы и безопасность Lua проверены · {currentReceipt.node_count} шагов <span className="font-mono" title={currentReceipt.dag_hash}>· SHA256 {currentReceipt.dag_hash.slice(0, 12)}</span>. Выполнение на Android не проверялось.</div>}
+    {draft && <div className="flex shrink-0 flex-wrap items-center gap-2 border-b bg-amber-500/10 px-4 py-2 text-xs"><span>Найден локальный черновик этого сценария.</span><Button size="sm" variant="outline" disabled={!writable} onClick={() => { try { changeDocument(draft); setMode('source'); setNodePending(false); setSelectedId(null); setDraft(null); } catch (error) { setErrors(errorMessage(error)); } }}>Восстановить черновик</Button><Button size="sm" variant="ghost" onClick={() => { try { if (storageKey) localStorage.removeItem(storageKey); setDraft(null); } catch (error) { setStorageStatus(errorMessage(error)); } }}>Удалить черновик</Button></div>}
+    <div className={`flex min-h-0 min-w-0 flex-col lg:flex-1 lg:flex-row ${workspace === 'device' ? 'studio-device-workspace' : ''}`}>
+      {workspace === 'design' && palette && <aside aria-label="Каталог действий" className="flex max-h-72 shrink-0 flex-col border-b bg-card lg:max-h-none lg:w-[224px] lg:border-b-0 lg:border-r">
+        <div className="space-y-3 border-b p-3"><div className="flex items-center justify-between"><h2 className="text-xs font-semibold">Библиотека действий <span className="ml-1 rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">{ACTION_TYPES.length}</span></h2><Button size="icon" variant="ghost" aria-label="Скрыть библиотеку действий" className="size-7" onClick={() => setPalette(false)}><PanelLeftClose className="size-3.5" /></Button></div><div className="relative"><Search className="absolute left-2 top-2.5 size-3.5 text-muted-foreground" /><Input placeholder="Найти действие…" className="h-8 pl-7 text-xs" aria-label="Поиск действия" value={search} onChange={event => setSearch(event.target.value)} /></div></div>
+        <div className="min-h-0 flex-1 overflow-auto px-2 pb-4">{ACTION_GROUPS.map((group, index) => { const types = available.filter(type => (group.types as readonly string[]).includes(type)); const Icon = [MousePointer2, ScanSearch, GitBranch, Smartphone][index]; return types.length ? <div key={group.name} className="mt-4"><h3 className="mb-2 flex items-center gap-2 px-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground"><Icon className="size-3" />{group.name}</h3>{types.map(type => <button key={type} type="button" disabled={!writable || mode !== 'graph' || nodePending} className="group flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left transition-colors hover:bg-muted disabled:opacity-40" onClick={() => addAction(type)}><span className="min-w-0 flex-1"><span className="block text-xs font-medium">{ACTION_LABELS[type]}</span><span className="block font-mono text-[9px] text-muted-foreground">{type}</span></span><Plus className="size-3 shrink-0 text-muted-foreground group-hover:text-primary" /></button>)}</div> : null; })}{!available.length && <p className="p-3 text-xs text-muted-foreground">Действия не найдены.</p>}</div>
+        <p className="border-t px-3 py-2 text-[10px] leading-4 text-muted-foreground">Новый шаг добавляется после выбранного линейного шага. Настройте параметры перед запуском.</p>
+      </aside>}
+      <div className={`relative h-[440px] min-w-0 flex-none lg:h-auto lg:min-h-0 lg:flex-1 ${workspace === 'device' ? 'lg:basis-[45%]' : ''}`}>
+        <div className="absolute left-3 top-3 z-10 flex gap-1 rounded-lg border bg-card/95 p-1 shadow-sm">{workspace === 'design' && !palette && <Button variant="ghost" size="icon" className="size-7" aria-label="Показать библиотеку действий" onClick={() => setPalette(true)}><PanelLeftOpen className="size-3.5" /></Button>}<Button size="sm" variant="ghost" className="h-7 text-[11px]" onClick={() => void canvas.current?.fitView({ padding: 0.25, maxZoom: 1 })}><Maximize2 className="mr-1.5 size-3" />Весь граф</Button><span className="flex items-center px-2 text-[10px] text-muted-foreground">{nodes.length} шагов · {edges.length} связей</span></div>
+        {mode === 'source' ? <div className="flex h-full min-h-[440px] flex-col bg-muted/20 p-4 pt-14 lg:min-h-0"><label htmlFor="studio-source" className="mb-2 text-xs font-medium">Исходник DAG 1.0 · {byteLength(document.source).toLocaleString('ru-RU')} байт / 512 KiB</label><textarea id="studio-source" spellCheck={false} className="min-h-[280px] flex-1 resize-none rounded-xl border bg-card p-4 font-mono text-xs leading-6 outline-none focus:ring-2 focus:ring-ring" value={document.source} readOnly={!writable} onChange={event => { try { changeDocument({ ...document, source: event.target.value }); } catch (error) { setErrors(errorMessage(error)); } }} /><p className="mt-2 text-[11px] text-muted-foreground">JSON и граф — один сценарий. Некорректный текст сохраняется для исправления, публикация блокируется.</p></div>
+          : <ReactFlow nodes={paintedNodes} edges={paintedEdges} onNodesChange={writable && !nodePending ? onNodesChange : undefined} onEdgesChange={writable && !nodePending ? onEdgesChange : undefined} onConnect={onConnect} onNodeClick={(_, node) => selectNode(node)} nodeTypes={nodeTypes} fitView fitViewOptions={{ padding: 0.3, maxZoom: 1 }} minZoom={0.15} maxZoom={1.8} nodesDraggable={writable && !nodePending} nodesConnectable={writable && !nodePending} deleteKeyCode={writable && !nodePending ? ['Backspace', 'Delete'] : null} onInit={instance => { canvas.current = instance; }} className="sphere-studio-flow"><Background gap={24} color="hsl(var(--border))" /><Controls /><MiniMap className="!hidden xl:!block" style={{ width: 130, height: 85 }} pannable zoomable nodeColor="hsl(var(--primary) / .5)" /></ReactFlow>}
       </div>
-      <aside aria-label="Параметры шага" className="flex min-h-0 shrink-0 flex-col border-t bg-card lg:w-[340px] lg:border-l lg:border-t-0 xl:w-[380px]">
-        <div className="border-b p-4"><h2 className="text-sm font-semibold">{selectedNode ? ACTION_LABELS[(selectedNode.data.action as { type: typeof ACTION_TYPES[number] }).type] : 'Параметры и проверка'}</h2>
-          <p className="mt-1 break-all font-mono text-xs text-muted-foreground">{selectedId ?? 'Выберите шаг на графе'}</p></div>
-        <div className="min-h-0 flex-1 space-y-4 overflow-auto p-4">
-          {selectedNode && mode === 'graph' ? <>
-            <label htmlFor="studio-node" className="block text-xs font-medium">Шаг JSON: action, переходы, retry, timeout_ms</label>
-            <textarea id="studio-node" spellCheck={false} className="h-72 w-full resize-y rounded-lg border bg-background p-3 font-mono text-xs leading-5 focus:outline-none focus:ring-2 focus:ring-ring" value={nodeSource} readOnly={!writable}
-              onChange={event => { try { setNodeSource(boundedSource(event.target.value)); setNodePending(true); setReceipt(null); } catch (error) { setErrors(errorMessage(error)); } }} />
-            <div className="flex flex-wrap gap-2"><Button size="sm" disabled={!writable || !nodePending} onClick={applyNode}>Применить параметры</Button>
-              <Button size="sm" variant="outline" disabled={!nodePending || Boolean(busy)} onClick={() => { setNodePending(false); setNodeSource(JSON.stringify(parseSource(document.source).nodes.find(node => node.id === selectedId), null, 2)); setErrors(''); }}>Отменить параметры</Button></div>
-            <p className="text-xs text-muted-foreground">ID ссылок: {nodes.map(node => node.id).join(', ')}. В condition используются action.on_true и action.on_false. Повторы могут повторить побочные эффекты.</p>
-          </> : <div className="space-y-3 text-sm text-muted-foreground"><p>Граф и исходник описывают один сценарий. Здесь можно редактировать все параметры каждого шага, включая вложенные селекторы и HTTP-заголовки.</p>
-            <p>Проверка сервера не гарантирует наличие элементов, root-доступ, разрешения и поддержку действий конкретной установленной версией APK.</p>
-            <p>Запись с устройства и replay ещё не подключены. Запуск выполняет только сохранённую версию через обычное задание.</p></div>}
-          <details className="rounded-lg border p-3 text-xs"><summary className="cursor-pointer font-medium">Границы и безопасность исполнения</summary><p className="mt-2 text-muted-foreground">shell, HTTP, Lua, очистка данных и действия ввода могут менять устройство. Добавление и серверная проверка не исполняют их. Таймаут графа ограничивает циклы; retry требует идемпотентных действий.</p></details>
-          <label className="flex items-start gap-2 text-xs"><input type="checkbox" checked={localSave} disabled={!writable || !storageKey} onChange={event => setLocalSave(event.target.checked)} /><span>Сохранять полный исходник на этом ПК<br /><span className="text-muted-foreground">Один черновик на пользователя, до 512 KiB, срок восстановления 7 дней. Может содержать приватный текст и код. Параметры шага сначала примените.</span></span></label>
-          {storageStatus && <p role="status" className="text-xs text-muted-foreground">{storageStatus}</p>}
-          {storageKey && <Button size="sm" variant="ghost" disabled={Boolean(busy)} onClick={() => { try { localStorage.removeItem(storageKey); setLocalSave(false); setDraft(null); setStorageStatus('Локальный черновик удалён.'); } catch (error) { setStorageStatus(errorMessage(error)); } }}>Очистить локальный черновик</Button>}
-        </div>
-      </aside>
+      {workspace === 'device' ? <div className="min-h-0 min-w-0 border-t lg:flex-[1.2] lg:border-l lg:border-t-0"><DeviceWorkbench scriptId={editId} version={expectedVersion} name={document.name} canRun={Boolean(canRun)} canEdit={writable && !nodePending} onInsert={insertRecorded} onExecution={executionChanged} registerCloseGuard={registerWorkbenchGuard} /></div>
+        : <aside aria-label="Параметры шага" className="flex min-h-0 shrink-0 flex-col border-t bg-card lg:w-[310px] lg:border-l lg:border-t-0 2xl:w-[350px]">
+          <div className="flex gap-1 border-b p-2" role="group" aria-label="Настройки Studio"><Button size="sm" variant={inspectorTab === 'step' ? 'secondary' : 'ghost'} className="flex-1" onClick={() => setInspectorTab('step')}>Шаг</Button><Button size="sm" variant={inspectorTab === 'scenario' ? 'secondary' : 'ghost'} className="flex-1" onClick={() => setInspectorTab('scenario')}><Settings2 className="mr-2 size-3.5" />Сценарий</Button></div>
+          <div className="min-h-0 flex-1 space-y-4 overflow-auto p-4">
+            {inspectorTab === 'step' ? selectedNode && mode === 'graph' ? <><div><h2 className="text-sm font-semibold">{ACTION_LABELS[(selectedNode.data.action as { type: typeof ACTION_TYPES[number] }).type]}</h2><p className="mt-1 break-all font-mono text-[10px] text-muted-foreground">{selectedId}</p></div><NodeInspector key={selectedId} source={nodeSource} nodes={nodes} writable={writable} pending={nodePending} onChange={value => { try { setNodeSource(boundedSource(value)); setNodePending(true); setReceipt(null); } catch (reason) { setErrors(errorMessage(reason)); } }} apply={applyNode} cancel={() => { setNodePending(false); setNodeSource(JSON.stringify(parseSource(document.source).nodes.find(node => node.id === selectedId), null, 2)); setErrors(''); }} /></>
+              : <div className="space-y-5"><div className="rounded-xl border border-dashed bg-muted/20 px-4 py-6 text-center"><MousePointer2 className="mx-auto mb-3 size-6 text-muted-foreground" /><h2 className="text-sm font-semibold">Выберите шаг</h2><p className="mt-2 text-xs leading-5 text-muted-foreground">Параметры действия, переходы и ограничения появятся здесь.</p></div><ol className="space-y-4 text-xs"><li className="flex gap-3"><span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 font-mono text-primary">1</span><div className="leading-5"><strong>Соберите сценарий</strong><p className="text-muted-foreground">Добавьте действия из библиотеки или импортируйте JSON.</p></div></li><li className="flex gap-3"><span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 font-mono text-primary">2</span><div className="leading-5"><strong>Выберите Android</strong><p className="text-muted-foreground">Откройте живое устройство, запишите жесты или добавьте XPath.</p></div></li><li className="flex gap-3"><span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 font-mono text-primary">3</span><div className="leading-5"><strong>Проверьте и сохраните</strong><p className="text-muted-foreground">Структура проверяется сервером. Работу на Android подтвердит отдельное задание.</p></div></li></ol><Button size="sm" variant="outline" className="w-full" onClick={() => setWorkspace('device')}><Monitor className="mr-2 size-3.5" />Выбрать устройство</Button></div>
+              : <div className="space-y-5"><div><h2 className="text-sm font-semibold">Настройки сценария</h2><p className="mt-1 text-xs text-muted-foreground">Общие параметры и восстановление работы</p></div>
+                <label className="block space-y-2 text-xs font-medium">Таймаут всего сценария, мс<Input type="number" min={1000} max={86400000} value={metadata.timeout_ms ?? 1800000} readOnly={!writable || nodePending || mode !== 'graph'} onChange={event => { try { const dag = parseSource(document.source); dag.timeout_ms = Number(event.target.value); changeDocument({ ...document, source: formatDag(dag) }, true); } catch (reason) { setErrors(errorMessage(reason)); } }} /></label>
+                <label className="block space-y-2 text-xs font-medium">Описание<textarea className="min-h-24 w-full rounded-md border bg-background p-2 text-xs leading-5" maxLength={2000} value={metadata.description ?? ''} readOnly={!writable || nodePending || mode !== 'graph'} onChange={event => { try { const dag = parseSource(document.source); dag.description = event.target.value; changeDocument({ ...document, source: formatDag(dag) }, true); } catch (reason) { setErrors(errorMessage(reason)); } }} /></label>
+                <dl className="space-y-3 rounded-xl border bg-muted/20 p-3 text-xs"><div><dt className="text-muted-foreground">Вход в сценарий</dt><dd className="mt-1 break-all font-mono">{metadata.entry_node}</dd></div><div><dt className="text-muted-foreground">Версия</dt><dd className="mt-1">{expectedVersion ? `v${expectedVersion.version}` : 'Ещё не опубликован'}</dd></div>{expectedVersion?.dag_hash && <div><dt className="text-muted-foreground">Базовый SHA-256</dt><dd className="mt-1 break-all font-mono text-[10px]">{expectedVersion.dag_hash}</dd></div>}</dl>
+                <label className="flex items-start gap-2 text-xs leading-5"><input type="checkbox" checked={localSave} disabled={!writable || !storageKey} onChange={event => setLocalSave(event.target.checked)} /><span>Сохранять полный исходник на этом ПК<span className="block text-muted-foreground">До 512 KiB, восстановление 7 дней. Может содержать приватный текст и код; неприменённые параметры не сохраняются.</span></span></label>{storageStatus && <p role="status" className="text-xs text-muted-foreground">{storageStatus}</p>}{storageKey && <Button size="sm" variant="outline" disabled={Boolean(busy)} onClick={() => { try { localStorage.removeItem(storageKey); setLocalSave(false); setDraft(null); setStorageStatus('Локальный черновик удалён.'); } catch (error) { setStorageStatus(errorMessage(error)); } }}>Очистить локальный черновик</Button>}
+                <details className="rounded-xl border p-3 text-xs"><summary className="cursor-pointer font-semibold">Исполнение и ограничения</summary><p className="mt-2 leading-5 text-muted-foreground">Shell, HTTP, Lua и действия ввода могут менять Android. Серверная проверка их не исполняет. Циклы ограничены таймаутом; retry требует идемпотентных действий. Видео и дерево UI Automator имеют независимые снимки, без покадровой синхронизации.</p></details>
+              </div>}
+          </div>
+        </aside>}
     </div>
-    <footer className="flex shrink-0 flex-wrap items-center gap-x-4 gap-y-1 border-t bg-card px-4 py-2 text-xs text-muted-foreground">
-      <span>DAG 1.0 · {nodes.length} шагов · {edges.length} связей {mode === 'source' ? '(последний применённый граф)' : ''}</span>
-      <span>Undo {history.length}/{20} · до 2 MiB на стек</span><span>{expectedVersion ? `Базовая версия ${expectedVersion.version || expectedVersion.id.slice(0, 8)}` : 'Ещё не опубликован'}</span>
-      <span>{nodePending ? 'Есть неприменённые параметры' : currentReceipt ? 'Проверка относится к текущему исходнику' : 'Текущий исходник не проверен сервером'}</span>
-    </footer>
+    <footer className="flex shrink-0 flex-wrap items-center justify-between gap-x-4 gap-y-1 border-t bg-card px-4 py-2 text-[10px] text-muted-foreground"><span>DAG 1.0 · {nodes.length} шагов · {edges.length} связей {mode === 'source' ? '(последний применённый граф)' : ''}</span><span>Undo {history.length}/20 · {nodePending ? 'Параметры не применены' : currentReceipt ? 'Исходник проверен сервером' : 'Проверка структуры не выполнена'}</span></footer>
     {runOpen && editId && expectedVersion && <RunScriptModal open scriptId={editId} scriptName={document.name} expectedVersion={expectedVersion} requireVersion initialTargetMode="select" onClose={() => setRunOpen(false)} />}
   </section>;
 }
+
 function OwnedBuilder() {
   const editId = useSearchParams().get('id');
   const user = useAuthStore(state => state.user);

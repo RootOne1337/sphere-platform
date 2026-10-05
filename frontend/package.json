@@ -4,6 +4,8 @@
   "private": true,
   "description": "Sphere Platform Web Frontend — TZ-10",
   "scripts": {
+    "predev": "node scripts/prepare-elk-worker.mjs",
+    "prebuild": "node scripts/prepare-elk-worker.mjs",
     "dev": "next dev -p 3000",
     "build": "next build",
     "start": "next start -p 3000",
@@ -36,6 +38,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
+    "elkjs": "0.12.0",
     "jwt-decode": "^4.0.0",
     "lucide-react": "^0.469.0",
     "next": "15.5.26",
