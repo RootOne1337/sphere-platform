@@ -63,6 +63,8 @@ Whitelist фактически был `172.27.0.1` — gateway для прежн
 Новая сеть вместо удаления занятой сети сохраняет возможность rollback.
 Для новой установки обязательны имя/непересекающаяся подсеть, проверка владельца
 адреса и совместное применение frontend/Grafana конфигурации.
+Динамическая выдача адресов ограничена отдельным pool, исключающим proxy IP;
+это предотвращает конфликт при запуске Grafana/Prometheus раньше frontend.
 Нет широкого CIDR whitelist, anonymous login или Editor permission.
 Контракт проверен по [официальной документации Grafana](https://grafana.com/docs/grafana/latest/setup-grafana/configure-access/configure-authentication/auth-proxy/)
 5 октября 2026; подробная инструкция — [OBSERVABILITY](../../operations/OBSERVABILITY.md).

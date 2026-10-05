@@ -89,6 +89,7 @@ networks:
     ipam:
       config:
         - subnet: ${OBS_TOOLS_SUBNET:?Set a non-overlapping IPv4 subnet for stable proxy addresses}
+          ip_range: ${OBS_TOOLS_DYNAMIC_RANGE:?Set a dynamic pool excluding the reserved proxy IPv4}
   backend:
     external: true
     name: ${OBS_BACKEND_NETWORK:?Set existing backend Docker network}

@@ -214,6 +214,7 @@ OBS_GRAFANA_ADMIN_PASSWORD_FILE=<абсолютный private file>
 OBS_GRAFANA_PROXY_WHITELIST=<точный адрес доверенного Next/proxy>
 OBS_TOOLS_NETWORK=<стабильное имя private Docker-сети наблюдаемости>
 OBS_TOOLS_SUBNET=<непересекающаяся IPv4 подсеть этой сети>
+OBS_TOOLS_DYNAMIC_RANGE=<динамический pool внутри подсети, исключающий static proxy IP>
 ```
 
 В backend network должен существовать DNS alias `backend`, порт 8000. Настройте
@@ -226,7 +227,9 @@ peer address; он может отличаться при переносе с Do
 Он задаёт `review-ui` статический IPv4 из **того же** `OBS_GRAFANA_PROXY_WHITELIST`:
 одно значение без CIDR/списка. Адрес должен входить в `OBS_TOOLS_SUBNET`, не быть
 gateway и не принадлежать другому контейнеру. Это предохраняет от смены peer IP
-после пересборки frontend. Подсеть выбирается по inventory существующих сетей,
+после пересборки frontend. Dynamic pool `OBS_TOOLS_DYNAMIC_RANGE` должен лежать
+внутри subnet и исключать static proxy IP: тогда Grafana/Prometheus не займут
+его при иной очередности запуска. Подсеть выбирается по inventory существующих сетей,
 а не копируется из чужой установки. Если существующая сеть создавалась без
 явного IPAM, создайте отдельную сеть с новым именем; не удаляйте занятую сеть.
 При переносе согласованно обновите Grafana и frontend, затем проверьте реальный peer.
