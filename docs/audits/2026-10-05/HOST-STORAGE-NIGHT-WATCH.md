@@ -1,8 +1,39 @@
 # Конечное ночное наблюдение диска и ОЗУ
 
 **Дата:** 5 октября 2026, Asia/Yekaterinburg.<br />
-**Source:** `02b5084`; API/UI остаются `c1a6e79`.<br />
+**Source recorder:** `02b5084`; API/UI на старте окна `c1a6e79`.<br />
 **Статус:** RUNNING / HISTORICAL_ATTRIBUTION_OPEN / LONG_RAM_SOAK_OPEN.
+
+## Промежуточный срез 5 октября06:50 UTC /11:50 UTC+5
+
+**Окно ещё не завершено:** прочитаны207 срезов от23:58:34 UTC до06:50:34 UTC,
+предполагаемое завершение07:58:34 UTC. Новые
+[санитизированные counters](HOST-STORAGE-NIGHT-INTERIM-EVIDENCE.json) сохраняют
+первую/последнюю точку и hashes canonical private samples отдельно от initial evidence.
+Raw paths/processes остаются локальными; итог8h не подменяется этим промежуточным отчётом.
+
+| Независимое измерение | Факт этого окна | Ограничение вывода |
+| --- | --- | --- |
+| C: free | 63 238 893 568→60 924 485 632B, net−2 314 407 936B /около2,16GiB | Писатель ещё не определён |
+| Docker shared VHD allocated/logical | Оба234 731 077 632B на первой и последней точках | Нет прироста самого файла; запись внутри VHD возможна |
+| Exact VSS allocated | 207/207 measured, min=max0B | Этот конкретный net drop не объяснён ростом VSS; исторические окна отличаются |
+| Pagefile logical | Оба44 485 144 576B | allocated-size read недоступен из-за sharing; не выдаётся за0 |
+| Windows available RAM | 17 396 490 240→12 562 857 984B | Это host physical RAM, не память одного приложения |
+| Windows committed bytes | 65 264 529 408→71 351 828 480B | Это commit, не working set и не доказанная утечка Sphere |
+
+Крупнейший двухминутный расход **06:22:34 UTC: −1 897 357 312B /около1,77GiB**;
+следующий−559 411 200B в02:18 UTC. Это точные интервалы следующей атрибуции,
+а не непрерывная равномерная запись. Из97 named files прирост Docker VHD не найден;
+inventory не исчерпывает весь C:. Проверка метаданных top-level Temp/Codex/C:
+не обнаружила одного свежего файла такого размера; это ограниченный read-only check,
+а не полный disk scan или отрицательное доказательство отсутствия записи.
+
+Boot epoch одинаков. В окно попали сборки и адресные backend/UI/monitoring restarts
+из [второго продуктового пакета](ENTERPRISE-PRODUCT-FOLLOWUP.md): API `51ccaa36`,
+UI `6b7de0cc`, topology `52403b4`. Поэтому окно нельзя объявить контролируемым
+steady-state memory soak. Recorder не чистил файлы, не отправлял Android команды
+и продолжает работу. Дисковая/RAM проблема остаётся открытой; квота VSS уже
+ограничивает прежний механизм, но не объясняет этот новый расход.
 
 [Текущее состояние](../../operations/CURRENT-STATE.md) ·
 [Процедура](../../operations/HOST-RESOURCES.md) ·

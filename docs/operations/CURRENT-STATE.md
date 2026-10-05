@@ -26,6 +26,13 @@ Source CI конечного документа проверяется отде�
 [Доказательства](../audits/2026-10-05/ENTERPRISE-PRODUCT-FOLLOWUP-EVIDENCE.json) ·
 [Живой monitoring](http://127.0.0.1:3015/monitoring).
 
+**Ресурсы06:50 UTC /11:50 UTC+5:** recorder207 срезов, C: net−2,16GiB за6h52m;
+Docker VHD allocated не вырос, exact VSS0 во всех207 срезах. Максимальный
+двухминутный drop1,77GiB в06:22 UTC пока writer UNDETERMINED. Это новое окно,
+не прежний VSS growth; host RAM/commit тоже сохранены отдельно. Recorder RUNNING
+до07:58 UTC, причина и RAM leak acceptance OPEN.
+[Промежуточные доказательства и пределы](../audits/2026-10-05/HOST-STORAGE-NIGHT-WATCH.md).
+
 **Исторический срез: 5 октября, 07:33 UTC+5 — первый пакет на 3015:**
 UI **`6ff6bc2`**, API **`c1a6e79a`**. Исправлены EP-001…EP-005: F5 preferences,
 canonical export/import графа, модель устройства в реестре/picker/потоках,

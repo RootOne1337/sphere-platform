@@ -32,6 +32,10 @@ Guard rollbacks и краткое падение online count сохранены
 [Журнал и ограничения](audits/2026-10-05/ENTERPRISE-PRODUCT-FOLLOWUP.md) ·
 [Source/runtime/HTTP/визуальные доказательства](audits/2026-10-05/ENTERPRISE-PRODUCT-FOLLOWUP-EVIDENCE.json).
 
+**Ресурсы11:50 UTC+5:** [207 срезов /C:−2,16GiB /VHD без роста /exact VSS0](audits/2026-10-05/HOST-STORAGE-NIGHT-WATCH.md).
+Крупный drop1,77GiB за2min ещё не атрибутирован; recorder RUNNING до12:58 UTC+5,
+не объявляется исправленная утечка.
+
 **Исторический срез: 5 октября, 07:33 UTC+5 — первый пакет:** UI `6ff6bc2`
 на [3015](http://127.0.0.1:3015/devices), API `c1a6e79a` сохранён. Пять подтверждённых
 дефектов и отдельный cache-дефект исправлены; 1185 tests/types/build и browser/API
