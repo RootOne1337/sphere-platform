@@ -2,7 +2,33 @@
 
 **Дата:** 5 октября 2026, Asia/Yekaterinburg.<br />
 **Source recorder:** `02b5084`; API/UI на старте окна `c1a6e79`.<br />
-**Статус:** RUNNING / HISTORICAL_ATTRIBUTION_OPEN / LONG_RAM_SOAK_OPEN.
+**Статус:** COMPLETE / HISTORICAL_ATTRIBUTION_OPEN / LONG_RAM_SOAK_OPEN.
+
+## Итог конечного окна: 5 октября 12:58 UTC+5
+
+Сборщик штатно завершился в07:58:42 UTC. Сохранены **241/241** samples за8 часов
+в одной boot epoch; bounded JSONL8 350 664B, raw SHA-256 записан в
+[final evidence](HOST-STORAGE-NIGHT-FINAL-EVIDENCE.json). Исходный и промежуточный
+отчёты ниже сохраняются как исторические, больше не обозначают текущий running state.
+
+| Измерение | Начало→конец | Что установлено |
+| --- | --- | --- |
+| C: свободно | 63 238 893 568→60 926 562 304B | Net−2 312 331 264B, около2,154GiB |
+| Shared Docker VHD allocated/logical | 234 731 077 632→234 731 077 632B | Сам файл не увеличился; внутренние записи не исключены |
+| VSS allocated | 241 успешный замер, min=max0B | Новое net loss этого окна не объясняется VSS allocation |
+| Pagefile logical | 44 485 144 576→44 485 144 576B | Не вырос logical size; allocated read недоступен |
+| Host available physical RAM | 17 396 490 240→11 606 102 016B | Уменьшилась примерно на5,39GiB; причина не атрибутирована |
+| Windows commit | 65 264 529 408→71 771 127 808B | Вырос примерно на6,06GiB; это не объём физической RAM |
+| Paged / nonpaged kernel pools | 3 838 062 592→3 667 431 424B /2 863 079 424→2 826 838 016B | На крайних точках роста этих pools нет |
+
+Максимальный двухминутный free-space drop−1 897 357 312B отмечен06:22:34 UTC;
+это границы sampling interval, не точное время или PID записи. Named inventory
+не покрывает все файлы. Внутри окна выполнялись сборки и перезапуски сервисов:
+контролируемый idle leak soak из этого эксперимента не получается.
+Состояние исторической причины **UNDETERMINED**, исправление утечки диска/ОЗУ
+не заявлено. Сборщик ничего не удалял, не уплотнял VHD и не запускал команды Android.
+Следующее действие при повторении — короткий существующий WPR capture вокруг
+drop с process/file attribution, а не бесконечное создание новых полных scans.
 
 ## Промежуточный срез 5 октября06:50 UTC /11:50 UTC+5
 
