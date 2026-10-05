@@ -41,6 +41,10 @@ API network. Observability overlay дополнительно сохраняет
 1. Сохранить прежние immutable compose command, images, start times и volume/log config.
 2. Проверить rendered compose: static address совпадает с gateway env,
    исключён из dynamic pool; сети UI/gateway и API boundary соответствуют контракту.
+   Read-only validator: `python scripts/pilot/review_gateway_preflight.py <private-compose-config.json>`.
+   Вход — результат `docker compose config --format json` в локальном private
+   файле; не публиковать его, поскольку environment может содержать credentials.
+   Validator проверяет bounds/boundaries и не создаёт resources, не проверяет live health.
 3. Выполнить `nginx -t` на конфигурации, отрендеренной тем же gateway image.
    Не подставлять все env variables без whitelist.
 4. Обновить только owned review UI/gateway, сохранив остальную инфраструктуру.
