@@ -1,0 +1,8 @@
+{
+  "source": "5405d465fa456f78e16f5f691fabb2a909cef4f3",
+  "imageId": "sha256:c0ea8669bb3f2c1fd8072bff9ac060b4b483e07d903f23aafb599c564619a1e6",
+  "network": "none",
+  "applicationSourceMounted": false,
+  "exit": 0,
+  "scope": "backend and seven relevant test files; full repository lint remains in CI"
+}

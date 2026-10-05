@@ -8,7 +8,11 @@ EP-001–009 приняты,41 пункт сохраняют открытые к
 EP-009: принята история cgroup CPU/RAM; host/RSS остаются отдельными scope.
 EP-010 продолжается: [tenant coverage UI/API установлен](docs/audits/2026-10-05/ENTERPRISE-FLEET-COVERAGE.md),
 [clock/ownership foundation сохранён](docs/audits/2026-10-05/ENTERPRISE-ANDROID-VPN-OBSERVATION.md).
-[Независимый producer, история coverage и транспортные probes](docs/audits/2026-10-05/ENTERPRISE-LIVE-COVERAGE-NEXT.md) ещё открыты. Затем реестр/настройки и Studio/recording/trace по dependencies.
+[Независимый producer, история coverage и транспортные probes](docs/audits/2026-10-05/ENTERPRISE-LIVE-COVERAGE-NEXT.md) ещё открыты. Эксплуатационный порядок пересмотрен: сначала EP-033/047 resources,
+remote rollout/recovery и selected-device control, затем Studio и реестр по dependencies.
+[Все41 открытые работы по группам](docs/audits/2026-10-06/ENTERPRISE-PRIORITIES.md).
+[Ограниченный reader и persistent logs](docs/audits/2026-10-06/DEVICE-LOG-READ-BUDGET.md)
+установлены частично; EP-033 целиком остаётся OPEN.
 Планируемый пользовательский stream+script тест20–30 эмуляторов — отдельный
 живой этап; целевой F32-план32 ниже не считается выполненным по 14 online.
 Будущие VPN-адаптеры/AI и универсальные project databases не входят в текущую
