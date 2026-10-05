@@ -6,7 +6,22 @@
 [Текущее состояние](CURRENT-STATE.md) · [Каталог документации](../README.md) ·
 [Операционный аудит веба](../audits/2026-09-29/WEB-OPERATIONS-OBSERVABILITY-AUDIT.md)
 
-**Текущая установка5 октября19:03 UTC+5:** review UI `7c985feb`, API `51ccaa36`,
+**5 октября, 19:55 UTC+5 — EP-009 принят на живом 3015:** API/UI **`cb5b3f91`**,
+gateway config **`993d9eac`** сохранён. Реальная история CPU в использованных ядрах
+и памяти в GiB cgroup контейнера: окна 1/6/24 h, сбор/обновление 15 с, среднее CPU за 1 минуту.
+Лимит памяти 2 GiB подтверждён; CPU quota не подменяется нулём. Host/RSS сюда не
+смешиваются. 1275 frontend tests/120 suites, production Node24 build/types и 27
+tests в exact API image, mypy 231/Ruff, promtool и живые queries прошли. Браузер
+1600/390 px, обе темы и автоматическое обновление проверены. При замене каждого
+API/UI сохранены 45 соседей; Prometheus reload без replacement всех 46.
+Сохранена временная потеря 14→12→13 online; последующее конечное окно 6×3с:
+14 online /5 offline из19. Это не непрерывный SLA или устранение утечки.
+**9 закрыто / 41 открыто из 50**; следующий EP-010, host leak attribution, Studio
+и stream+script load/soak открыты.
+[Приёмка и screenshots](../audits/2026-10-05/ENTERPRISE-CONTAINER-RESOURCE-HISTORY.md) ·
+[Pinned evidence](../audits/2026-10-05/ENTERPRISE-CONTAINER-RESOURCE-EVIDENCE.json) · [Живой monitoring](http://127.0.0.1:3015/monitoring).
+
+**Историческая установка5 октября19:03 UTC+5:** review UI `7c985feb`, API `51ccaa36`,
 gateway `993d9eac`. Реальные HTTP RPS/p95/4xx/5xx и разбор маршрутов приняты
 на3015; **8 закрыто/42 открыто** из исходных50 работ. 1235 frontend tests,
 99 тематических и14 gateway tests; production build и живой HTTP/визуальный

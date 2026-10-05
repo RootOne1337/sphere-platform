@@ -1,7 +1,10 @@
 # EP-009 — backend container CPU and memory history
 
 Date: **5 October 2026**. Implementation and acceptance are separate stages.
-Status of this first source change: **IMPLEMENTED / LIVE ACCEPTANCE PENDING**.
+Initial source status was IMPLEMENTED / LIVE ACCEPTANCE PENDING.
+Current acceptance: **ACCEPTED_FOR_EP_009**; live source `cb5b3f91640c86622060e6e3adea76c6d73a6093`,
+19:55 UTC+5 on 5 October 2026.
+[Portable evidence and ledger](ENTERPRISE-CONTAINER-RESOURCE-EVIDENCE.json).
 The immutable [50-item product backlog](ENTERPRISE-PRODUCT-BACKLOG.json) is preserved.
 EP-009 requires a named source/unit/interval, distinct process/cgroup/host scopes,
 and missing CPU/memory represented as missing measurements.
@@ -110,7 +113,7 @@ checks cover live authorization, fixed windows/query inputs, discovery ambiguity
 partial response isolation, invalid histories, gaps, stale snapshot/scrape times,
 zero versus unknown, refresh after error and readable scope/units.
 
-Live acceptance must still record exact immutable API/UI images, unchanged
+The initial acceptance gate required recording exact immutable API/UI images, unchanged
 neighbors and mounts/log budgets, validated Prometheus configuration, real query
 values/units and actual browser wide/mobile screenshots. The first source commit
 does **not** close EP-009. Passing mocked queries is insufficient to demonstrate
@@ -132,3 +135,91 @@ defines cumulative `cpuacct.usage` nanoseconds. The
 is historical documentation; runtime controller values and Docker limits were
 checked directly for this host. No third-party implementation was copied or
 vendored and no new dependency was added.
+
+## Accepted runtime, 5 October 2026
+
+The immutable API and UI source is **`cb5b3f91640c86622060e6e3adea76c6d73a6093`**.
+API image **`sha256:83b35df688e46bcbf4ae4ab6fa90a05bb2481c817e8b1a41295e66022b3eaa62`**;
+UI image **`sha256:a626b0d87a408b60bcb4e576f20351cbc08b9d2304e7a291f6bac656b8397f82`**.
+Both are archived committed source. API and UI replacements each retained the
+other **45 containers**, mounts and rotation budgets. Prometheus accepted the
+configuration through promtool and SIGHUP; **all 46 container identities/start
+epochs** were retained at that stage. Existing retention 14d/2GB, ports, Grafana,
+database, Android APK, OTA and tunnels remain unchanged. These are recorded
+finite observations; neither replacement nor monitoring establishes zero downtime.
+
+Actual controller comparison: cgroup **v1**, memory 616726528 bytes, kernel
+before 615804928 / after 616857600 bytes, limit 2147483648 bytes. There were **10**
+resource samples (four availability, three read timestamps, three values), no
+PID labels or duplicate values. Quota was unmeasured, matching the actual unlimited
+quota source. It did not appear as zero or as an inferred host core count.
+
+At 14:47:41 UTC, real Prometheus queries for 1/6/24h returned **ready** CPU,
+memory and memory limit; quota was **empty**. Latest CPU 0.033853669 used cores,
+memory 0.559791565 GiB, limit 2 GiB. Requests took 15/16/31 ms in that specific trial;
+this is not a latency SLA. Only 1–5 new points existed per series in that initial
+window. No old history was backfilled. Returned 401 without auth, rejected uncontrolled
+query with 400, and existing HTTP RPS stayed ready. A separate own-session logout 204
+made the next resource request return 401; the human browser session was preserved.
+
+The rollout record retains **14→12→13 online** around API replacement/recovery.
+The later finite check contains six samples three seconds apart, all **14 online /
+5 offline of 19**. That final recovery does not erase the transient loss, prove
+unchanged connection epochs or establish sustained WAN stability. No device
+commands were sent in this package. Fleet/load/soak remain separate open gates.
+
+Validation: **120 suites / 1275 frontend tests** on local Node 25.1.0 with mocked
+upstreams; TypeScript check and actual production build on Node 24 passed. Exact
+API image: **27 tests**, network none/no application-source mounts, mypy **231
+files**, Ruff passed. Real Prometheus queries and controller comparison are the
+additional runtime acceptance, not claims made from mocks. Source CI is tracked
+at its exact revision separately from later documentation-only commits.
+
+Browser: 1600×1000 and 390×844, light/dark themes, all three windows, actual
+resource values and absent quota. Page width matched viewport; mobile refresh
+control was 40×40. The displayed resource snapshot advanced during a 62-second
+observation without pressing refresh. Original dark theme and default viewport
+were restored. No warning/error appeared in the bounded console read. This is
+finite visual acceptance, not browser heap/GPU soak.
+
+### Actual browser captures
+
+![Live wide resource panels](assets/container-resources/wide-dark-final-live.jpg)
+
+[Light theme](assets/container-resources/wide-light-live.jpg) ·
+[Mobile CPU](assets/container-resources/mobile-cpu-live.jpg) ·
+[Mobile memory](assets/container-resources/mobile-memory-live.jpg).
+
+### Ledger and next work
+
+Run the frozen-artifact integrity check from the repository root:
+
+```powershell
+python -m scripts.audit.validate_resource_history
+```
+
+The [checker](../../../scripts/audit/validate_resource_history.py) checks recorded
+Git blobs, previous ledger, public receipts and JPEG dimensions/hashes. It neither
+reruns tests nor rechecks current live health. Text hashes normalize CRLF to LF.
+
+EP-001–009 are accepted against their individual criteria: **9 accepted / 41
+items with open criteria** out of 50. The original backlog remains immutable and
+all original source-time states remain OPEN; the overlay evidence records later
+acceptance. This closes cgroup resource-history criteria only. Windows host/RSS
+history, disk/RAM writer attribution, EP-010 fleet/tunnel coverage, Studio/recording/
+trace and mixed stream/script load/soak remain open. A container history panel is
+not a declaration of enterprise platform readiness or a resolved memory leak.
+
+### CI and documentation integrity
+
+At source `cb5b3f91640c86622060e6e3adea76c6d73a6093`, the
+[backend workflow](https://github.com/RootOne1337/sphere-platform/actions/runs/37327272456),
+[frontend workflow](https://github.com/RootOne1337/sphere-platform/actions/runs/37327272244), and
+[Android tests / signed release smoke build](https://github.com/RootOne1337/sphere-platform/actions/runs/37327272251)
+completed successfully. The deployment job was skipped; local installation above
+is verified independently. These results do not attest to a later Git revision
+or declare a new APK installed on the fleet.
+
+The current ten documentation entry points were checked: 697 local links and
+19 anchors resolved. Frozen EP-007, EP-008 and EP-009 integrity checks passed;
+the older ledgers retain their original 7/43 and 8/42 counts.

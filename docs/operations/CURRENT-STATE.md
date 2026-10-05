@@ -6,7 +6,22 @@
 
 [Главная](../../README.md) · [Каталог документации](../README.md) · [Readiness](READINESS.md) · [Fleet32 gates](../audits/2026-09-20/FLEET32-PREFLIGHT.md) · [PR #19](https://github.com/RootOne1337/sphere-platform/pull/19)
 
-**5 октября, 19:03 UTC+5 — HTTP-метрики и исправление маршрута review UI приняты на 3015:**
+**5 октября, 19:55 UTC+5 — EP-009 принят на живом 3015:** API/UI **`cb5b3f91`**,
+gateway config **`993d9eac`** сохранён. Реальная история CPU в использованных ядрах
+и памяти в GiB cgroup контейнера: окна 1/6/24 h, сбор/обновление 15 с, среднее CPU за 1 минуту.
+Лимит памяти 2 GiB подтверждён; CPU quota не подменяется нулём. Host/RSS сюда не
+смешиваются. 1275 frontend tests/120 suites, production Node24 build/types и 27
+tests в exact API image, mypy 231/Ruff, promtool и живые queries прошли. Браузер
+1600/390 px, обе темы и автоматическое обновление проверены. При замене каждого
+API/UI сохранены 45 соседей; Prometheus reload без replacement всех 46.
+Сохранена временная потеря 14→12→13 online; последующее конечное окно 6×3с:
+14 online /5 offline из19. Это не непрерывный SLA или устранение утечки.
+**9 закрыто / 41 открыто из 50**; следующий EP-010, host leak attribution, Studio
+и stream+script load/soak открыты.
+[Приёмка и screenshots](../audits/2026-10-05/ENTERPRISE-CONTAINER-RESOURCE-HISTORY.md) ·
+[Pinned evidence](../audits/2026-10-05/ENTERPRISE-CONTAINER-RESOURCE-EVIDENCE.json) · [Живой monitoring](http://127.0.0.1:3015/monitoring).
+
+**Исторический срез: 5 октября, 19:03 UTC+5 — HTTP-метрики и исправление маршрута review UI приняты на 3015:**
 UI **`7c985feb`**, API **`51ccaa36`**, gateway config **`993d9eac`**;
 read-only preflight **`00ed391f`**. Реальные RPS/p95/4xx/5xx, история 1/6/24 h,
 top-30 маршрутов с поиском и деталями установлены и проверены HTTP/браузером.

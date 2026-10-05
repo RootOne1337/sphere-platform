@@ -3,10 +3,10 @@
 **Навигация обновлена5 октября 2026; F32-план ниже сохраняет порядок21 сентября.** [Главная](README.md) · [Полный реестр](docs/audits/2026-09-20/FLEET32-PREFLIGHT.md) · [Установленный pilot](docs/operations/LOCAL-PILOT.md)
 
 **Текущий продуктовый план:** [50 работ с зависимостями и приёмкой](docs/audits/2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json),
-EP-001–008 приняты,42 пункта сохраняют открытые критерии.
-[Последний пакет HTTP-метрик](docs/audits/2026-10-05/ENTERPRISE-HTTP-METRICS.md).
-Далее EP-009: раздельная история CPU/RAM process/cgroup/host; EP-010: coverage
-tunnels/fleet. Затем реестр/настройки и Studio/recording/trace по dependencies.
+EP-001–009 приняты,41 пункт сохраняют открытые критерии.
+[Последний пакет ресурсной истории](docs/audits/2026-10-05/ENTERPRISE-CONTAINER-RESOURCE-HISTORY.md).
+EP-009: принята история cgroup CPU/RAM; host/RSS остаются отдельными scope.
+Далее EP-010: coverage tunnels/fleet. Затем реестр/настройки и Studio/recording/trace по dependencies.
 Планируемый пользовательский stream+script тест20–30 эмуляторов — отдельный
 живой этап; целевой F32-план32 ниже не считается выполненным по 14 online.
 Будущие VPN-адаптеры/AI и универсальные project databases не входят в текущую

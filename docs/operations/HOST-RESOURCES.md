@@ -1,5 +1,19 @@
 # Ресурсы хоста: диск, Windows commit, WSL и контейнеры
 
+**5 октября, 19:55 UTC+5 — EP-009 принят на живом 3015:** API/UI **`cb5b3f91`**,
+gateway config **`993d9eac`** сохранён. Реальная история CPU в использованных ядрах
+и памяти в GiB cgroup контейнера: окна 1/6/24 h, сбор/обновление 15 с, среднее CPU за 1 минуту.
+Лимит памяти 2 GiB подтверждён; CPU quota не подменяется нулём. Host/RSS сюда не
+смешиваются. 1275 frontend tests/120 suites, production Node24 build/types и 27
+tests в exact API image, mypy 231/Ruff, promtool и живые queries прошли. Браузер
+1600/390 px, обе темы и автоматическое обновление проверены. При замене каждого
+API/UI сохранены 45 соседей; Prometheus reload без replacement всех 46.
+Сохранена временная потеря 14→12→13 online; последующее конечное окно 6×3с:
+14 online /5 offline из19. Это не непрерывный SLA или устранение утечки.
+**9 закрыто / 41 открыто из 50**; следующий EP-010, host leak attribution, Studio
+и stream+script load/soak открыты.
+[Ресурсная история и границы](../audits/2026-10-05/ENTERPRISE-CONTAINER-RESOURCE-HISTORY.md).
+
 **Проверено:** 4 октября 2026. Источник правил сборки: `c1a6e79`.
 
 **Дополнение5 октября, итог12:58 UTC+5:** finite8h recorder `02b5084` завершился
