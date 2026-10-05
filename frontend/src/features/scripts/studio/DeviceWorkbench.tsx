@@ -19,7 +19,7 @@ import { actionLabel } from './presentation';
 interface Version { id: string; version: number; dag_hash: string | null }
 interface Props { scriptId: string | null; version: Version | null; name: string; canRun: boolean; canEdit: boolean;
   onInsert: (actions: DagNode['action'][]) => boolean; onExecution: (lastCompleted: string | null, logs: { node_id: string; success: boolean }[]) => void;
-  registerCloseGuard?: (guard: (() => boolean) | null) => void }
+  registerCloseGuard?: (guard: ((silent?: boolean) => boolean) | null) => void }
 const terminal = new Set(['completed', 'failed', 'cancelled', 'timeout', 'timed_out']);
 
 export function DeviceWorkbench(props: Props) {
@@ -28,7 +28,7 @@ export function DeviceWorkbench(props: Props) {
   const query = useDebounce(search.trim(), 300);
   const { data, isLoading, isError, isFetching, refetch } = useDevices({ page, page_size: 25, search: query || undefined });
   const [device, setDevice] = useState<Device | null>(null);
-  const closeGuard = useRef<(() => boolean) | null>(null);
+  const closeGuard = useRef<((silent?: boolean) => boolean) | null>(null);
   return <section aria-label="Рабочее устройство" className="flex h-full min-h-0 min-w-0 flex-col bg-card">
     <header className="flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3"><div><h2 className="flex items-center gap-2 text-sm font-semibold"><Monitor className="size-4 text-primary" />Лаборатория устройства</h2><p className="mt-1 text-xs text-muted-foreground">Живое видео · запись жестов · XPath · проверка версии</p></div>
       {device && <Button size="sm" variant="outline" onClick={() => { if (!closeGuard.current || closeGuard.current()) setDevice(null); }}>Сменить устройство</Button>}</header>
@@ -64,9 +64,15 @@ function OwnedWorkbench({ device, scriptId, version, name, canRun, canEdit, onIn
   const progress = useTaskProgress(taskId, active && ownsTask);
   const logs = useTaskLogs(taskId);
   const stop = useStopTask();
-  useEffect(() => { registerCloseGuard?.(() => entries.length || active || runPending
-    ? window.confirm('Закрыть устройство? Невставленная запись будет потеряна. Созданное задание продолжит работу; его можно открыть в разделе заданий.') : true);
-    return () => registerCloseGuard?.(null); }, [entries.length, active, runPending, registerCloseGuard]);
+  useEffect(() => { registerCloseGuard?.((silent = false) => {
+    const guarded = Boolean(entries.length || active || runPending || uncertain);
+    if (silent) return !guarded;
+    if (uncertain) {
+      setError('Результат запуска неизвестен. Проверьте журнал заданий: переключение устройства заблокировано, чтобы не создать повторное выполнение.');
+      return false;
+    }
+    return guarded ? window.confirm('Закрыть устройство? Невставленная запись будет потеряна. Созданное задание продолжит работу; его можно открыть в разделе заданий.') : true;
+  }); return () => registerCloseGuard?.(null); }, [entries.length, active, runPending, uncertain, registerCloseGuard]);
   useEffect(() => { live.current = true; return () => { live.current = false; onExecution(null, []); }; }, [onExecution]);
   useEffect(() => { if (!canEdit || !access.can('stream:control')) setRecording(false); }, [canEdit, access]);
   useEffect(() => {
@@ -91,13 +97,13 @@ function OwnedWorkbench({ device, scriptId, version, name, canRun, canEdit, onIn
     finally { runningRequest.current = false; if (live.current) setRunPending(false); }
   }
   return <div className="space-y-4">
-    <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-muted/30 p-3"><div><p className="text-sm font-semibold">{device.name}</p><p className="mt-1 text-xs text-muted-foreground">Android {device.android_version ?? '—'} · Agent {device.agent_version ?? '—'}</p></div><Link href={`/devices/${device.id}`} className="flex items-center gap-1 text-xs text-primary">Карточка <ExternalLink className="size-3" /></Link></div>
-    <div className="flex flex-wrap gap-2"><Button size="sm" variant={recording ? 'destructive' : 'outline'} disabled={!canEdit || active || runPending || !access.can('stream:control')} onClick={() => setRecording(!recording)}>{recording ? <Square className="mr-2 size-3" /> : <Circle className="mr-2 size-3 text-rose-500" />}{recording ? 'Остановить запись' : 'Записать жесты'}</Button>
-      <Button size="sm" disabled={!canRun || active || runPending || recording || uncertain} onClick={() => void run()}><Play className="mr-2 size-3" />{runPending ? 'Создаём задание…' : `Проверить на ${device.name}`}</Button>
+    <div className="flex flex-wrap items-start justify-between gap-3 rounded-xl border bg-muted/30 p-3"><div className="min-w-0 flex-1 basis-48"><p className="break-words text-sm font-semibold [overflow-wrap:anywhere]">{device.name}</p><p className="mt-1 break-words text-xs text-muted-foreground [overflow-wrap:anywhere]">Android {device.android_version ?? '—'} · Agent {device.agent_version ?? '—'}</p></div><Link href={`/devices/${device.id}`} className="flex shrink-0 items-center gap-1 text-xs text-primary">Карточка <ExternalLink className="size-3" /></Link></div>
+    <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap"><Button size="sm" className="h-auto min-h-8 min-w-0 whitespace-normal" variant={recording ? 'destructive' : 'outline'} disabled={!canEdit || active || runPending || uncertain || !access.can('stream:control')} onClick={() => setRecording(!recording)}>{recording ? <Square className="mr-2 size-3 shrink-0" /> : <Circle className="mr-2 size-3 shrink-0 text-rose-500" />}{recording ? 'Остановить запись' : 'Записать жесты'}</Button>
+      <Button size="sm" className="h-auto min-h-8 min-w-0 whitespace-normal" disabled={!canRun || active || runPending || recording || uncertain} onClick={() => void run()}><Play className="mr-2 size-3 shrink-0" /><span className="min-w-0 break-words [overflow-wrap:anywhere]">{runPending ? 'Создаём задание…' : `Проверить на ${device.name}`}</span></Button>
       {active && <Button size="sm" variant="outline" disabled={stop.isPending || !access.can('script:execute')} onClick={() => stop.mutate(taskId, { onError: reason => setError(getApiErrorMessage(reason, 'Остановка не подтверждена.')) })}>Остановить задание</Button>}</div>
     {error && <p role="alert" className="rounded-lg border border-destructive/30 p-3 text-xs text-destructive">{error} {uncertain && <Link href="/tasks" className="underline">Открыть задания</Link>}</p>}
     {!canRun && <p className="text-xs text-muted-foreground">Для проверки сохраните сценарий и откройте его неизменённую версию. Запуск всегда создаёт одно реальное задание на выбранном Android.</p>}
-    <SingleDeviceStream deviceId={device.id} captureEnabled compact controlDisabled={active || runPending} onControlSent={sent} onInsertSelector={canEdit && !active ? (node, snapshot) => {
+    <SingleDeviceStream deviceId={device.id} captureEnabled compact controlDisabled={active || runPending || uncertain} onControlSent={sent} onInsertSelector={canEdit && !active && !runPending && !uncertain ? (node, snapshot) => {
       if (snapshot.device_id !== device.id) return;
       onInsert([{ type: 'tap_element', selector: node.xpath, strategy: 'xpath', timeout_ms: 5000 }]);
     } : undefined} />

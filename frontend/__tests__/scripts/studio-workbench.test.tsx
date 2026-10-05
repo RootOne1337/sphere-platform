@@ -32,9 +32,9 @@ beforeEach(() => {
   Object.defineProperty(globalThis.crypto, 'randomUUID', { configurable: true, value: () => '00000000-0000-4000-8000-000000000001' });
 });
 const version = { id: versionId, version: 1, dag_hash: 'a'.repeat(64) };
-function openDevice() {
+function openDevice(registerCloseGuard?: (guard: ((silent?: boolean) => boolean) | null) => void) {
   const onInsert = jest.fn().mockReturnValue(true), onExecution = jest.fn();
-  const view = render(<DeviceWorkbench scriptId={scriptId} version={version} name="Canary" canRun canEdit onInsert={onInsert} onExecution={onExecution} />);
+  const view = render(<DeviceWorkbench scriptId={scriptId} version={version} name="Canary" canRun canEdit onInsert={onInsert} onExecution={onExecution} registerCloseGuard={registerCloseGuard} />);
   fireEvent.click(screen.getByRole('button', { name: /PH025.*LDPlayer/ }));
   return { ...view, onInsert, onExecution };
 }
@@ -106,6 +106,61 @@ it('keeps a transport timeout uncertain rather than permitting a potentially dup
   await screen.findByRole('link', { name: 'Открыть задания' });
   expect(screen.getByRole('button', { name: 'Проверить на PH025' })).toBeDisabled();
   expect(api.post).toHaveBeenCalledTimes(1);
+});
+
+it('cannot bypass an unknown creation outcome by switching and reselecting the same emulator', async () => {
+  const confirm = jest.spyOn(window, 'confirm').mockReturnValue(true);
+  jest.mocked(api.post).mockRejectedValue(new Error('Response lost after server commit'));
+  openDevice();
+  fireEvent.click(screen.getByRole('button', { name: 'Проверить на PH025' }));
+  await screen.findByRole('link', { name: 'Открыть задания' });
+  fireEvent.click(screen.getByRole('button', { name: 'Сменить устройство' }));
+  expect(screen.queryByRole('button', { name: /PH025.*LDPlayer/ })).not.toBeInTheDocument();
+  expect(screen.getByRole('region', { name: 'Поток выбранного Android' })).toBeInTheDocument();
+  expect(screen.getByRole('alert')).toHaveTextContent('переключение устройства заблокировано');
+  expect(screen.getByRole('button', { name: 'Проверить на PH025' })).toBeDisabled();
+  expect(screen.getByRole('button', { name: 'Записать жесты' })).toBeDisabled();
+  expect(screen.getByRole('button', { name: 'Записать тестовый клик' })).toBeDisabled();
+  expect(confirm).not.toHaveBeenCalled(); // A confirmation must not erase uncertainty.
+  expect(api.post).toHaveBeenCalledTimes(1);
+  confirm.mockRestore();
+});
+
+it('exposes a silent unload guard without dialogs or state changes for an unknown outcome', async () => {
+  const confirm = jest.spyOn(window, 'confirm').mockReturnValue(false);
+  let guard: ((silent?: boolean) => boolean) | null = null;
+  const registered = jest.fn((next: typeof guard) => { guard = next; });
+  jest.mocked(api.post).mockRejectedValue(new Error('Transport timeout'));
+  openDevice(registered);
+  fireEvent.click(screen.getByRole('button', { name: 'Проверить на PH025' }));
+  await screen.findByRole('link', { name: 'Открыть задания' });
+  const before = screen.getByRole('alert').textContent;
+  expect(registered).toHaveBeenCalledWith(expect.any(Function));
+  expect(guard!(true)).toBe(false);
+  expect(guard!(true)).toBe(false);
+  expect(screen.getByRole('alert').textContent).toBe(before);
+  expect(confirm).not.toHaveBeenCalled();
+  expect(api.post).toHaveBeenCalledTimes(1);
+  confirm.mockRestore();
+});
+
+it('exposes the same side-effect-free unload guard for a pending request and an uninserted recording', async () => {
+  const confirm = jest.spyOn(window, 'confirm').mockReturnValue(false);
+  let guard: ((silent?: boolean) => boolean) | null = null;
+  openDevice(next => { guard = next; });
+  expect(guard!(true)).toBe(true);
+  fireEvent.click(screen.getByRole('button', { name: 'Записать жесты' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Записать тестовый клик' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Остановить запись' }));
+  expect(guard!(true)).toBe(false);
+  fireEvent.click(screen.getByRole('button', { name: 'Очистить запись' }));
+  expect(guard!(true)).toBe(true);
+  jest.mocked(api.post).mockReturnValue(new Promise(() => {}));
+  fireEvent.click(screen.getByRole('button', { name: 'Проверить на PH025' }));
+  expect(guard!(true)).toBe(false);
+  expect(confirm).not.toHaveBeenCalled();
+  expect(api.post).toHaveBeenCalledTimes(1);
+  confirm.mockRestore();
 });
 
 it('requires confirmation before changing a device with an untransferred recording and respects cancellation', () => {

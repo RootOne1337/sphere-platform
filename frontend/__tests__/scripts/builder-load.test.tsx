@@ -18,6 +18,12 @@ let mockSessionVersion = 0;
 jest.mock('@/src/features/access/Capabilities', () => ({ useCapabilities: () => ({ pending: false, can: (permission: string) => permission === 'script:read' || mockCanWrite }) }));
 jest.mock('@/lib/store', () => ({ useAuthStore: (select: (state: unknown) => unknown) => select({ user: { id: 'operator', org_id: 'org-a' }, sessionVersion: mockSessionVersion }) }));
 jest.mock('@/components/sphere/RunScriptModal', () => ({ RunScriptModal: () => null }));
+const mockWorkbenchGuard = jest.fn(() => true);
+jest.mock('@/src/features/scripts/studio/DeviceWorkbench', () => ({ DeviceWorkbench: ({ registerCloseGuard }: { registerCloseGuard: (guard: ((silent?: boolean) => boolean) | null) => void }) => {
+  const React = jest.requireActual('react');
+  React.useEffect(() => { registerCloseGuard(mockWorkbenchGuard); return () => registerCloseGuard(null); }, [registerCloseGuard]);
+  return <div>Owned workbench</div>;
+} }));
 jest.mock('@/lib/dag/nodeTypes', () => ({ nodeTypes: {} }));
 jest.mock('@monaco-editor/react', () => ({ __esModule: true, default: () => null }));
 jest.mock('@xyflow/react/dist/style.css', () => ({}));
@@ -49,7 +55,7 @@ function deferred<T>() {
   return { promise, resolve };
 }
 
-beforeEach(() => { jest.clearAllMocks(); mockEditId = 'script-a'; mockCanWrite = true; mockSessionVersion = 0; localStorage.clear(); });
+beforeEach(() => { jest.clearAllMocks(); mockWorkbenchGuard.mockReturnValue(true); mockEditId = 'script-a'; mockCanWrite = true; mockSessionVersion = 0; localStorage.clear(); });
 
 it('keeps a failed existing-script read out of the editor and only saves its original graph after explicit retry', async () => {
   jest.mocked(api.get).mockRejectedValueOnce(new Error('network timeout')).mockResolvedValueOnce(payload() as never);
@@ -196,4 +202,46 @@ it('restores a local draft explicitly without any API write', async () => {
   fireEvent.click(screen.getByRole('button', { name: 'Восстановить черновик' }));
   expect(screen.getByLabelText(/Исходник DAG/)).toHaveValue('{ fix me'); expect(screen.getByLabelText('Название сценария')).toHaveValue('Recovered');
   expect(api.put).not.toHaveBeenCalled(); expect(api.post).not.toHaveBeenCalled();
+});
+
+
+it('blocks a repeated create after an unknown response while retaining export and source', async () => {
+  mockEditId = null;
+  jest.mocked(api.post).mockRejectedValueOnce(new Error('response lost after commit'));
+  render(<ScriptBuilderPage />);
+  fireEvent.click(screen.getByRole('button', { name: 'Создать сценарий' }));
+  expect(await screen.findByRole('alert')).toHaveTextContent('Результат сохранения неизвестен');
+  expect(screen.getByRole('button', { name: 'Создать сценарий' })).toBeDisabled();
+  fireEvent.click(screen.getByRole('button', { name: 'Создать сценарий' }));
+  expect(api.post).toHaveBeenCalledTimes(1);
+  expect(mockPush).not.toHaveBeenCalled();
+  expect(screen.getByRole('button', { name: 'Экспорт' })).toBeEnabled();
+  fireEvent.click(screen.getByRole('button', { name: 'JSON' }));
+  expect(JSON.parse((screen.getByLabelText(/Исходник DAG 1.0/) as HTMLTextAreaElement).value).nodes[0]).toMatchObject({ id: 'start-1', action: { type: 'start' } });
+});
+
+it('keeps creation retry available after a definite API validation rejection', async () => {
+  mockEditId = null;
+  jest.mocked(api.post).mockRejectedValueOnce({ isAxiosError: true, response: { status: 422, data: { detail: 'invalid action parameter' } } });
+  render(<ScriptBuilderPage />);
+  fireEvent.click(screen.getByRole('button', { name: 'Создать сценарий' }));
+  expect(await screen.findByRole('alert')).toHaveTextContent('invalid action parameter');
+  expect(screen.getByRole('button', { name: 'Создать сценарий' })).toBeEnabled();
+  expect(api.post).toHaveBeenCalledTimes(1);
+});
+
+it('honors owned-workbench guard on save, editor exit and native page unload', async () => {
+  jest.mocked(api.get).mockResolvedValue(payload() as never);
+  render(<ScriptBuilderPage />);
+  expect(await screen.findByText('script-a-start')).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Устройство · запись · проверка' }));
+  expect(screen.getByText('Owned workbench')).toBeInTheDocument();
+  mockWorkbenchGuard.mockReturnValue(false);
+  fireEvent.click(screen.getByRole('button', { name: 'Сохранить версию' }));
+  fireEvent.click(screen.getByRole('button', { name: 'К каталогу сценариев' }));
+  expect(api.put).not.toHaveBeenCalled(); expect(mockPush).not.toHaveBeenCalled();
+  const unload = new Event('beforeunload', { cancelable: true });
+  window.dispatchEvent(unload);
+  expect(unload.defaultPrevented).toBe(true);
+  expect(mockWorkbenchGuard).toHaveBeenLastCalledWith(true);
 });

@@ -15,6 +15,9 @@ const checkParams: Record<string, Record<string, unknown>> = {
   text_contains: { selector: '', strategy: 'xpath', text: '' }, variable_equals: { key: '', value: '' },
   variable_contains: { key: '', value: '' }, http_status: { node_id: '', value: 200 },
 };
+function parametersFor(type: string, check: string) {
+  return type === 'assert' && check === 'text_contains' ? { selector: '', strategy: 'xpath', value: '' } : checkParams[check];
+}
 export function NodeInspector({ source, onChange, nodes, writable, pending, apply, cancel }: {
   source: string; onChange: (source: string) => void; nodes: { id: string }[]; writable: boolean; pending: boolean; apply: () => void; cancel: () => void;
 }) {
@@ -30,8 +33,7 @@ export function NodeInspector({ source, onChange, nodes, writable, pending, appl
       record = record[key] as Record<string, unknown>;
     }
     record[path.at(-1)!] = value;
-    if (path.join('.') === 'action.check') next.action.params = next.action.type === 'assert' && value === 'text_contains'
-      ? { selector: '', strategy: 'xpath', value: '' } : structuredClone(checkParams[String(value)] ?? {});
+    if (path.join('.') === 'action.check') next.action.params = structuredClone(parametersFor(next.action.type, String(value)) ?? {});
     onChange(JSON.stringify(next, null, 2));
   }
   const inputStyle = 'h-9 w-full rounded-md border border-input bg-background px-2 text-xs outline-none focus:ring-2 focus:ring-ring';
@@ -48,7 +50,16 @@ export function NodeInspector({ source, onChange, nodes, writable, pending, appl
     </label>;
   }
   const template = node && ACTION_TYPES.includes(node.action.type as typeof ACTION_TYPES[number]) ? defaultAction(node.action.type as typeof ACTION_TYPES[number]) : {};
-  const fields = node ? { ...template, ...node.action } : {};
+  const fields: Record<string, unknown> = node ? { ...template, ...node.action } : {};
+  if (node && ['assert', 'condition'].includes(node.action.type)) {
+    const parameterTemplate = parametersFor(node.action.type, String(fields.check));
+    const supplied = node.action.params;
+    if (parameterTemplate && (supplied === undefined || supplied !== null && typeof supplied === 'object' && !Array.isArray(supplied))) {
+      // Form defaults follow the imported check. They are display-only until a
+      // particular field is edited; unknown values and exact JSON types win.
+      fields.params = { ...parameterTemplate, ...(supplied as Record<string, unknown> | undefined) };
+    }
+  }
   return <div className="space-y-4">
     <div role="group" aria-label="Редактор параметров" className="flex gap-1 rounded-lg bg-muted p-1"><Button size="sm" variant={tab === 'fields' ? 'secondary' : 'ghost'} className="flex-1" onClick={() => setTab('fields')}><SlidersHorizontal className="mr-2 size-3" />Параметры</Button><Button size="sm" variant={tab === 'json' ? 'secondary' : 'ghost'} className="flex-1" onClick={() => setTab('json')}>JSON шага</Button></div>
     {tab === 'fields' && node ? <>

@@ -52,6 +52,7 @@ function BuilderInner({ editId, storageKey }: { editId: string | null; storageKe
   const [errors, setErrors] = useState('');
   const [receipt, setReceipt] = useState<{ fingerprint: string; result: ValidationReceipt } | null>(null);
   const [busy, setBusy] = useState<'check' | 'save' | null>(null);
+  const [saveUncertain, setSaveUncertain] = useState(false);
   const [loadState, setLoadState] = useState<'loading' | 'ready' | 'error'>(editId ? 'loading' : 'ready');
   const [loadError, setLoadError] = useState('');
   const [loadAttempt, setLoadAttempt] = useState(0);
@@ -71,8 +72,8 @@ function BuilderInner({ editId, storageKey }: { editId: string | null; storageKe
   const [execution, setExecution] = useState<{ last: string | null; logs: { node_id: string; success: boolean }[] }>({ last: null, logs: [] });
   const executionChanged = useCallback((last: string | null, logs: { node_id: string; success: boolean }[]) => setExecution({ last, logs }), []);
   const layoutRequest = useRef<AbortController | null>(null);
-  const workbenchGuard = useRef<(() => boolean) | null>(null);
-  const registerWorkbenchGuard = useCallback((guard: (() => boolean) | null) => { workbenchGuard.current = guard; }, []);
+  const workbenchGuard = useRef<((silent?: boolean) => boolean) | null>(null);
+  const registerWorkbenchGuard = useCallback((guard: ((silent?: boolean) => boolean) | null) => { workbenchGuard.current = guard; }, []);
   const request = useRef<AbortController | null>(null);
   const loaded = useRef(false);
   const canvas = useRef<ReactFlowInstance | null>(null);
@@ -92,7 +93,7 @@ function BuilderInner({ editId, storageKey }: { editId: string | null; storageKe
     if (!canRead && busy) request.current?.abort();
   }, [canRead, busy]);
   useEffect(() => {
-    const before = (event: BeforeUnloadEvent) => { if (dirty) event.preventDefault(); };
+    const before = (event: BeforeUnloadEvent) => { if (dirty || workbenchGuard.current?.(true) === false) event.preventDefault(); };
     window.addEventListener('beforeunload', before);
     return () => window.removeEventListener('beforeunload', before);
   }, [dirty]);
@@ -222,9 +223,12 @@ function BuilderInner({ editId, storageKey }: { editId: string | null; storageKe
   }
   async function checkOrSave(operation: 'check' | 'save') {
     if (inFlight.current || loadState !== 'ready' || !accessRef.current.can(operation === 'save' ? 'script:write' : 'script:read')) return;
+    if (operation === 'save' && saveUncertain) return;
+    if (operation === 'save' && workbenchGuard.current && !workbenchGuard.current()) return;
     const submitted = documentRef.current;
     const sentFingerprint = JSON.stringify(submitted);
     const controller = new AbortController(); request.current = controller;
+    let saveSubmitted = false;
     try {
       const dag = getDraftDag();
       inFlight.current = true; setBusy(operation); setErrors('');
@@ -237,13 +241,22 @@ function BuilderInner({ editId, storageKey }: { editId: string | null; storageKe
       } else {
         if (editId) {
           if (!expectedVersion?.id) throw new Error('Версия неизвестна. Откройте актуальный сценарий из каталога.');
+          saveSubmitted = true;
           await api.put(`/scripts/${editId}`, { name: submitted.name.trim(), dag, expected_current_version_id: expectedVersion.id }, { signal: controller.signal });
-        } else await api.post('/scripts', { name: submitted.name.trim(), dag }, { signal: controller.signal });
+        } else {
+          saveSubmitted = true;
+          await api.post('/scripts', { name: submitted.name.trim(), dag }, { signal: controller.signal });
+        }
         if (!live.current || controller.signal.aborted || !accessRef.current.can('script:write')) return;
         await queryClient.invalidateQueries({ queryKey: ['scripts'] });
         if (live.current) { setBaseDocument(submitted); router.push('/scripts'); }
       }
-    } catch (error) { if (live.current && !controller.signal.aborted) setErrors(errorMessage(error)); }
+    } catch (error) { if (live.current && !controller.signal.aborted) {
+      if (operation === 'save' && saveSubmitted && !(isAxiosError(error) && error.response && error.response.status >= 400 && error.response.status < 500)) {
+        setSaveUncertain(true);
+        setErrors('Результат сохранения неизвестен: сервер мог принять запрос. Повтор заблокирован в этом редакторе. Экспортируйте исходник и проверьте каталог и историю версий перед новым сохранением.');
+      } else setErrors(errorMessage(error));
+    } }
     finally { inFlight.current = false; if (live.current) setBusy(null); }
   }
   async function importFile(file: File | undefined) {
@@ -269,6 +282,7 @@ function BuilderInner({ editId, storageKey }: { editId: string | null; storageKe
     } catch (error) { setErrors(errorMessage(error)); }
   }
   function leave() {
+    if (workbenchGuard.current && !workbenchGuard.current()) return;
     if (!dirty || window.confirm('Есть несохранённые изменения. Выйти из редактора?')) router.push('/scripts');
   }
   async function arrange() {
@@ -327,7 +341,7 @@ function BuilderInner({ editId, storageKey }: { editId: string | null; storageKe
         </div>
         <div className="flex flex-wrap items-center gap-2"><span className={`rounded-full border px-2.5 py-1 text-[11px] ${dirty ? 'border-amber-500/30 bg-amber-500/5 text-amber-600 dark:text-amber-400' : 'text-muted-foreground'}`}>{dirty ? 'Есть изменения' : expectedVersion ? `Версия ${expectedVersion.version}` : 'Новый сценарий'}</span>
           <Button size="sm" variant="outline" disabled={Boolean(busy) || nodePending || Boolean(canvasError)} onClick={() => void checkOrSave('check')}><Check className="mr-2 size-3.5" />{busy === 'check' ? 'Проверяем…' : 'Проверить на сервере'}</Button>
-          <Button size="sm" disabled={!writable || nodePending || Boolean(canvasError)} onClick={() => void checkOrSave('save')}><Save className="mr-2 size-3.5" />{busy === 'save' ? 'Сохраняем…' : editId ? 'Сохранить версию' : 'Создать сценарий'}</Button>
+          <Button size="sm" disabled={!writable || nodePending || Boolean(canvasError) || saveUncertain} onClick={() => void checkOrSave('save')}><Save className="mr-2 size-3.5" />{busy === 'save' ? 'Сохраняем…' : editId ? 'Сохранить версию' : 'Создать сценарий'}</Button>
         </div>
       </div>
       <div className="flex flex-wrap items-center justify-between gap-2 border-t px-4 py-2">

@@ -136,6 +136,31 @@ describe('structured Studio parameters match the APK action vocabulary', () => {
     expect(latest().action.params).toMatchObject({ selector: '//*[@text="Settings"]' });
     expect(node.action).not.toHaveProperty('params');
   });
+  it('loads a variable assertion without params using key/value fields without silently materializing defaults', () => {
+    const { node, changed, latest } = renderNode({ type: 'assert', check: 'variable_equals' });
+    expect(screen.getByLabelText(/Имя переменной/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Значение/)).toBeInTheDocument();
+    expect(screen.queryByLabelText(/Селектор элемента/)).not.toBeInTheDocument();
+    expect(changed).not.toHaveBeenCalled();
+    fireEvent.change(screen.getByLabelText(/Имя переменной/), { target: { value: 'score' } });
+    expect(latest().action.params).toEqual({ key: 'score' });
+    expect(node.action).not.toHaveProperty('params');
+  });
+  it('fills only display gaps for the imported check while preserving custom strategy and exact supplied value types', () => {
+    const existing = { strategy: 'vendor-strategy', key: 'counter', value: 0, custom: [false, null, '02'] };
+    const { changed, latest } = renderNode({ type: 'assert', check: 'variable_equals', params: existing });
+    expect(screen.getByLabelText(/Значение/)).toHaveAttribute('type', 'number');
+    expect(within(screen.getByLabelText(/Стратегия поиска/)).getByRole('option', { name: 'vendor-strategy' })).toBeInTheDocument();
+    expect(changed).not.toHaveBeenCalled();
+    fireEvent.change(screen.getByLabelText(/Повторы|retry/), { target: { value: '2' } });
+    expect(latest().action.params).toEqual(existing);
+  });
+  it('displays the missing assert text_contains value without offering the condition text field', () => {
+    const { changed } = renderNode({ type: 'assert', check: 'text_contains', params: { selector: 'Settings', strategy: 'text' } });
+    expect(screen.getByLabelText(/Значение/)).toBeInTheDocument();
+    expect(screen.queryByLabelText(/^Текст text/)).not.toBeInTheDocument();
+    expect(changed).not.toHaveBeenCalled();
+  });
   it('changes assertion parameter shape explicitly when switching from an element check to a variable check', () => {
     const { latest } = renderNode({ type: 'assert', check: 'element_exists', params: { selector: 'Settings', strategy: 'text', timeout_ms: 5000 } });
     fireEvent.change(screen.getByLabelText(/Тип проверки/), { target: { value: 'variable_equals' } });
