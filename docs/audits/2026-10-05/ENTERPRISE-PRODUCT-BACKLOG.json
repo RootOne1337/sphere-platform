@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "source": "c3937a1abf55eca73662bdc720699eb29b6653a6",
-  "createdAt": "2026-10-05T01:40:01.607990+00:00",
+  "createdAt": "2026-10-05T01:42:57.352525+00:00",
   "scope": "analysis only; all listed work remains OPEN",
   "countsByKind": {
     "CONFIRMED_DEFECT": 6,
@@ -1187,7 +1187,8 @@
       "acceptance": [
         "Installed SHA/manifest/capability visible с датой.",
         "Docs генерацияв pinned runtime, с проверенной версией генератора.",
-        "Evidence immutable; новый результат отдельнымclosure receipt."
+        "Evidence immutable; новый результат отдельнымclosure receipt.",
+        "Default-branch dependency alerts сопоставлены с PR lock и installed SBOM; другие 142 alerts пока не приняты."
       ],
       "dependencies": []
     },

@@ -591,6 +591,26 @@ ReactFlow 12.10.1, Monaco React 4.7.0/Monaco 0.57.0, Query 5.90.21, Table 8.21.3
 Это установленные версии, не заявление о «самых новых» пакетах всего рынка.
 AdminCN stack migration и обновления dependencies должны иметь compatibility/build/runtime gates отдельно от визуального переноса.
 
+### 15.1 Dependency alerts: default branch и проверяемая ветка
+
+При push GitHub сообщил 147 открытых Dependabot alerts на default branch.
+Read-only GitHub API подтвердил 5 critical, 65 high, 64 medium и 13 low alerts.
+Это число alerts, включая повторения по manifest, не число уникальных уязвимостей и не замер заражения runtime.
+Пять critical alerts проверены по advisory ranges и текущему package-lock:
+
+| Alert | Manifest / пакет | Уязвимый диапазон по GitHub | Текущий lock | Вывод по lock ветки |
+|---|---|---|---|---|
+| [208](https://github.com/RootOne1337/sphere-platform/security/dependabot/208) | package-lock / next | >=10.0.0, <15.5.24 | 15.5.26 | За пределами указанного диапазона |
+| [207](https://github.com/RootOne1337/sphere-platform/security/dependabot/207) | package.json / next | >=10.0.0, <15.5.24 | 15.5.26 resolved | За пределами указанного диапазона |
+| [206](https://github.com/RootOne1337/sphere-platform/security/dependabot/206) | package-lock / next | >=13.4.0, <15.5.24 | 15.5.26 | За пределами указанного диапазона |
+| [205](https://github.com/RootOne1337/sphere-platform/security/dependabot/205) | package.json / next | >=13.4.0, <15.5.24 | 15.5.26 resolved | За пределами указанного диапазона |
+| [53](https://github.com/RootOne1337/sphere-platform/security/dependabot/53) | package-lock / handlebars | >=4.0.0, <=4.7.8 | 4.7.9 | За пределами указанного диапазона |
+
+Это подтверждает исправленные версии в проверенной ветке для этих пяти alerts, а не отсутствие всех dependency рисков.
+Остальные 142 alerts не сопоставлены полностью с PR/runtime в этом окне; такая сверка остаётся release gate EP-049.
+Installed package receipt/SBOM нужно проверять отдельно от lock и build badge.
+Alerts не закрывались вручную, зависимости не обновлялись, default branch не менялась.
+
 Официальные материалы, проверенные для этой архитектуры:
 
 - [ReactFlow save/restore](https://reactflow.dev/examples/interaction/save-and-restore) — механизм canvas state не задаёт server execution schema.
@@ -1190,6 +1210,7 @@ Reproducible probes выполняют только чистый DAG export/vali
   1. Installed SHA/manifest/capability visible с датой.
   2. Docs генерацияв pinned runtime, с проверенной версией генератора.
   3. Evidence immutable; новый результат отдельнымclosure receipt.
+  4. Default-branch dependency alerts сопоставлены с PR lock и installed SBOM; другие 142 alerts пока не приняты.
 
 ### EP-050. Alert delivery иsynthetic Android SLI
 

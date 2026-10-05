@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "createdAt": "2026-10-05T01:40:01.607990+00:00",
+  "createdAt": "2026-10-05T01:42:57.352525+00:00",
   "source": "c3937a1abf55eca73662bdc720699eb29b6653a6",
   "runtimeBadge": "c1a6e79a",
   "scope": "read-only product audit; no product implementation/deploy",
@@ -9154,6 +9154,30 @@
     "themeAfterReload": "light selected/pressed",
     "themeRestored": "dark"
   },
+  "dependencyAlertEvidence": {
+    "scope": "GitHub default branch; read-only API",
+    "openAlerts": 147,
+    "severities": {
+      "critical": 5,
+      "high": 65,
+      "medium": 64,
+      "low": 13
+    },
+    "criticalLockTriage": {
+      "alertNumbers": [
+        208,
+        207,
+        206,
+        205,
+        53
+      ],
+      "next": "15.5.26",
+      "handlebars": "4.7.9",
+      "outsideAdvisoryRanges": true,
+      "installedPackageReceiptVerified": false
+    },
+    "remaining142FullyTriaged": false
+  },
   "metricEvidence": [
     {
       "expression": "up{job=\"sphere-backend\"}",
@@ -9242,7 +9266,7 @@
     "no VPN integration"
   ],
   "validation": {
-    "documentLineCount": 13625,
+    "documentLineCount": 13646,
     "productDefectsUnfixed": true
   }
 }
