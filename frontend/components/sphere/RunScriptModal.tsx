@@ -43,6 +43,7 @@ interface RunScriptModalProps {
   onClose: () => void;
   expectedVersion?: { id: string; version: number; dag_hash: string | null };
   requireVersion?: boolean;
+  initialTargetMode?: TargetMode;
 }
 
 // ─── Component ──────────────────────────────────────────────────────────────
@@ -54,12 +55,13 @@ export function RunScriptModal({
   onClose,
   expectedVersion,
   requireVersion = false,
+  initialTargetMode = 'all',
 }: RunScriptModalProps) {
   const router = useRouter();
   const qc = useQueryClient();
 
   // Target selection state
-  const [targetMode, setTargetMode] = useState<TargetMode>('all');
+  const [targetMode, setTargetMode] = useState<TargetMode>(initialTargetMode);
   const [selectedGroupId, setSelectedGroupId] = useState<string>('');
   const [selectedDeviceIds, setSelectedDeviceIds] = useState<Set<string>>(new Set());
   const [deviceSearch, setDeviceSearch] = useState('');
