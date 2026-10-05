@@ -14,6 +14,7 @@ jest.mock('@/src/features/inspector/inspectorStore', () => ({
   useInspectorStore: () => ({ openInspector: jest.fn() }),
 }));
 
+beforeEach(() => window.localStorage.clear());
 afterEach(() => jest.useRealTimers());
 
 const device = {
@@ -63,7 +64,7 @@ it('does not present generated ping or history as measurements', () => {
 it('shows explicit fallbacks for metadata the Android agent has not reported', () => {
   const { container } = render(
     <FleetMatrix
-      data={[{ ...device, model: null, android_version: null, agent_version: null } as Device]}
+      data={[{ ...device, model: null, device_model: null, android_version: null, agent_version: null } as Device]}
       isLoading={false}
       rowSelection={{}}
       onRowSelectionChange={jest.fn()}
@@ -146,6 +147,50 @@ it('keeps optional access columns available through the column menu', async () =
   await user.click(screen.getByRole('button', { name: 'Настроить видимые колонки' }));
   await user.click(await screen.findByRole('menuitemcheckbox', { name: 'Доступ' }));
   expect(screen.getByText('ADB linked')).toBeInTheDocument();
+});
+
+it('uses the canonical API model and falls back only for legacy responses', () => {
+  const base = { isLoading: false, rowSelection: {}, onRowSelectionChange: jest.fn() };
+  const view = render(<FleetMatrix {...base} data={[{ ...device, device_model: 'Canonical model', model: 'Legacy model' }]} />);
+  expect(screen.getByText('Canonical model')).toBeInTheDocument();
+  expect(screen.queryByText('Legacy model')).not.toBeInTheDocument();
+  view.rerender(<FleetMatrix {...base} data={[{ ...device, device_model: null, model: 'Legacy model' }]} />);
+  expect(screen.getByText('Legacy model')).toBeInTheDocument();
+});
+
+it('restores columns and sorting after remount without restoring selected devices', async () => {
+  const user = userEvent.setup();
+  const props = { data: [device], isLoading: false, rowSelection: {}, onRowSelectionChange: jest.fn() };
+  const view = render(<FleetMatrix {...props} />);
+  await user.click(screen.getByRole('button', { name: 'Настроить видимые колонки' }));
+  await user.click(await screen.findByRole('menuitemcheckbox', { name: 'Доступ' }));
+  await user.keyboard('{Escape}');
+  await user.click(screen.getByRole('button', { name: 'Сортировать по Устройство' }));
+  view.unmount();
+  render(<FleetMatrix {...props} />);
+  expect(screen.getByText('ADB linked')).toBeInTheDocument();
+  expect(screen.getByRole('columnheader', { name: /Устройство/ })).toHaveAttribute('aria-sort', 'ascending');
+  expect(props.onRowSelectionChange).not.toHaveBeenCalled();
+  const stored = window.localStorage.getItem('sphere.fleet.table.v1');
+  expect(stored).not.toContain(device.id);
+  expect(stored).not.toContain(device.name);
+});
+
+it('offers reported CPU/RAM and Android ID columns while distinguishing zero from missing measurements', async () => {
+  const user = userEvent.setup();
+  const props = { isLoading: false, rowSelection: {}, onRowSelectionChange: jest.fn() };
+  const view = render(<FleetMatrix {...props} data={[{ ...device, cpu_usage: 0, ram_usage_mb: 0 }]} />);
+  for (const name of ['CPU Android', 'RAM Android', 'Android ID']) {
+    await user.click(screen.getByRole('button', { name: 'Настроить видимые колонки' }));
+    await user.click(await screen.findByRole('menuitemcheckbox', { name }));
+    await user.keyboard('{Escape}');
+  }
+  expect(screen.getByText('0.0%')).toBeInTheDocument();
+  expect(screen.getByText('0 MiB')).toBeInTheDocument();
+  expect(screen.getByText('android-1')).toBeInTheDocument();
+  view.rerender(<FleetMatrix {...props} data={[{ ...device, cpu_usage: null, ram_usage_mb: Number.NaN }]} />);
+  expect(screen.getAllByText('Не сообщено')).toHaveLength(2);
+  expect(screen.queryByText('0 MiB')).not.toBeInTheDocument();
 });
 
 it('keeps device changes and deletion under separate menu permissions', async () => {

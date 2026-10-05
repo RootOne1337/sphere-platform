@@ -7,13 +7,12 @@ import {
     flexRender,
     getCoreRowModel,
     getSortedRowModel,
-    SortingState,
     useReactTable,
     RowSelectionState,
-    VisibilityState,
     OnChangeFn,
 } from "@tanstack/react-table";
 import { Device } from "@/lib/hooks/useDevices";
+import { useFleetTablePreferences } from './fleetTablePreferences';
 import { DeviceStatusBadge } from "@/components/sphere/DeviceStatusBadge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/src/shared/ui/badge";
@@ -60,8 +59,7 @@ interface FleetMatrixProps {
 export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChange, onDeviceAction, canDeviceAction }: FleetMatrixProps) {
     const { openInspector } = useInspectorStore();
     const parentRef = React.useRef<HTMLDivElement>(null);
-    const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({ network: false, server_name: false, tags: false });
-    const [sorting, setSorting] = React.useState<SortingState>([]);
+    const { columnVisibility, setColumnVisibility, sorting, setSorting, reset, storageUnavailable } = useFleetTablePreferences();
     const [clockNow, setClockNow] = React.useState(() => Date.now());
 
     React.useEffect(() => {
@@ -99,10 +97,11 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
             {
                 accessorKey: "name",
                 header: "Устройство",
+                enableHiding: false,
                 size: 190,
                 cell: ({ row }) => {
                     const device = row.original;
-                    const metadata = device.model?.trim() || "Модель не сообщена";
+                    const metadata = device.device_model?.trim() || device.model?.trim() || "Модель не сообщена";
                     return (
                         <div className="flex h-full flex-col justify-center pr-4">
                             <button
@@ -168,7 +167,7 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
                 size: 76,
                 cell: ({ row }) => {
                     const lvl = row.original.battery_level;
-                    if (lvl === null) return <span className="text-muted-foreground">—</span>;
+                    if (typeof lvl !== 'number' || !Number.isFinite(lvl) || lvl < 0 || lvl > 100) return <span className="text-muted-foreground">—</span>;
                     const isLow = lvl < 20;
 
                     return (
@@ -269,6 +268,34 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
                 },
             },
             {
+                accessorKey: 'android_id',
+                header: 'Android ID',
+                size: 220,
+                cell: ({ row }) => <span className="break-all font-mono text-xs" title={row.original.android_id}>{row.original.android_id || 'Не сообщён'}</span>,
+            },
+            {
+                accessorKey: 'cpu_usage',
+                header: 'CPU Android',
+                size: 120,
+                cell: ({ row }) => {
+                    const value = row.original.cpu_usage;
+                    return <span className="font-mono text-xs" title="Последний отчёт агента: загрузка CPU Android, не процесса APK">
+                        {typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 100 ? `${value.toFixed(1)}%` : 'Не сообщено'}
+                    </span>;
+                },
+            },
+            {
+                accessorKey: 'ram_usage_mb',
+                header: 'RAM Android',
+                size: 145,
+                cell: ({ row }) => {
+                    const value = row.original.ram_usage_mb;
+                    return <span className="font-mono text-xs" title="Последний отчёт агента: занятая память Android, не RSS/PSS процесса APK">
+                        {typeof value === 'number' && Number.isFinite(value) && value >= 0 ? `${Math.round(value)} MiB` : 'Не сообщено'}
+                    </span>;
+                },
+            },
+            {
                 id: "actions",
                 size: 48,
                 enableHiding: false,
@@ -346,6 +373,7 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
         onSortingChange: setSorting,
         getCoreRowModel: getCoreRowModel(),
         getSortedRowModel: getSortedRowModel(),
+        autoResetPageIndex: false, // Pagination belongs to the registry API, not this virtualized table.
         getRowId: (row) => row.id,
     });
 
@@ -424,7 +452,7 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-40 bg-card border-border">
-                            <DropdownMenuLabel className="text-xs text-muted-foreground">Видимые колонки</DropdownMenuLabel>
+                            <DropdownMenuLabel className="text-xs text-muted-foreground">Колонки · на этом браузере</DropdownMenuLabel>
                             <DropdownMenuSeparator className="bg-border" />
                             {table
                                 .getAllColumns()
@@ -441,6 +469,9 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
                                         </DropdownMenuCheckboxItem>
                                     );
                                 })}
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={reset}>Сбросить вид и сортировку</DropdownMenuItem>
+                            {storageUnavailable && <p role="status" className="max-w-56 p-2 text-xs text-warning">Хранилище браузера недоступно. Настройки действуют до перезагрузки.</p>}
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </div>
