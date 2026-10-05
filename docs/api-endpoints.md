@@ -105,7 +105,7 @@ for tested behavior and remaining limits.
 | `PUT` | `/api/v1/locations/{location_id}` | locations | 200, 422 | Обновить локацию |
 | `DELETE` | `/api/v1/locations/{location_id}/devices` | locations | 200, 422 | Убрать устройства из локации |
 | `POST` | `/api/v1/locations/{location_id}/devices` | locations | 200, 422 | Назначить устройства в локацию (аддитивно) |
-| `POST` | `/api/v1/logs/upload` | logs | 200, 422 | Upload Logs |
+| `POST` | `/api/v1/logs/upload` | logs | 200, 400, 408, 413, 422, 503 | Upload Logs |
 | `DELETE` | `/api/v1/logs/{device_id}` | logs | 200, 422 | Delete Device Logs |
 | `GET` | `/api/v1/logs/{device_id}` | logs | 200, 422 | Get Device Logs |
 | `POST` | `/api/v1/monitoring/alerts` | monitoring | 200, 422 | Receive Alerts |

@@ -30,6 +30,15 @@ from backend.services.device_log_reader import (
     read_log_tail_async,
     validate_date,
 )
+from backend.services.device_log_upload import (
+    MAX_BODY_BYTES,
+    LogUploadBusy,
+    LogUploadInvalidBody,
+    LogUploadTimeout,
+    LogUploadTooLarge,
+    LogUploadUnavailable,
+    receive_and_store_log,
+)
 
 
 async def _owned_device(db: AsyncSession, device_id: str, principal) -> Device:
@@ -48,7 +57,6 @@ router = APIRouter(prefix="/logs", tags=["logs"])
 # В production заменяется на путь из env-переменной SPHERE_LOGS_DIR
 _LOGS_DIR = Path(os.environ.get("SPHERE_LOGS_DIR", "/tmp/sphere_device_logs"))  # nosec B108
 _MAX_LOG_SIZE_BYTES = 50 * 1024 * 1024   # 50 MB per device
-_MAX_ENTRY_BYTES = 512 * 1024             # 512 KB per upload
 _LOG_TTL_DAYS = 30                        # rotate logs older than N days
 
 
@@ -85,7 +93,12 @@ def _get_device_id_from_header(
 
 # ── Upload (called by LogUploadWorker on the Android agent) ──────────────────
 
-@router.post("/upload")
+@router.post("/upload", responses={
+    400: {"description": "Invalid or incomplete log body"},
+    408: {"description": "Log body receive deadline exceeded"},
+    413: {"description": "Log body exceeds 512 KiB"},
+    503: {"description": "Upload capacity is busy or log storage unavailable"},
+})
 async def upload_logs(
     request: Request,
     device_id: str | None = Query(default=None, description="Device ID (legacy clients)"),
@@ -110,30 +123,30 @@ async def upload_logs(
         raise HTTPException(status_code=400, detail="X-Device-Id required")
     device_id = str((await _owned_device(db, device_id, principal)).id)
 
-    # Read body with size limit
-    body = await request.body()
-    if len(body) > _MAX_ENTRY_BYTES:
-        raise HTTPException(
-            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-            detail=f"Log body exceeds {_MAX_ENTRY_BYTES // 1024} KB limit",
-        )
-
-    upload_ts = datetime.now(timezone.utc).isoformat()
-    separator = f"\n--- Uploaded at {upload_ts} ---\n"
-
-    log_file = _get_log_file(device_id)
-    # Rotate if file exceeds max size
-    if log_file.exists() and log_file.stat().st_size > _MAX_LOG_SIZE_BYTES:
-        log_file.unlink(missing_ok=True)
-
-    # Append once: concurrent uploads must not replace each other's data, and
-    # uploading 512 KiB must not read/rewrite the whole 50 MiB file.
-    from starlette.concurrency import run_in_threadpool
-    def append_entry():
+    def append_entry(body: bytes) -> None:
+        upload_ts = datetime.now(timezone.utc).isoformat()
+        separator = f"\n--- Uploaded at {upload_ts} ---\n"
+        log_file = _get_log_file(device_id)
+        # Rotation and cleanup share the writer thread, never the HTTP event loop.
+        # Global quotas and cross-worker rotation locking remain separate work.
+        if log_file.exists() and log_file.stat().st_size > _MAX_LOG_SIZE_BYTES:
+            log_file.unlink(missing_ok=True)
         with log_file.open("ab") as stream:
             stream.write(separator.encode() + body)
-    await run_in_threadpool(append_entry)
-    _clean_old_logs(device_id)
+        _clean_old_logs(device_id)
+
+    try:
+        await receive_and_store_log(request, append_entry)
+    except LogUploadTooLarge as exc:
+        raise HTTPException(status_code=413, detail=f"Log body exceeds {MAX_BODY_BYTES // 1024} KB limit") from exc
+    except LogUploadInvalidBody as exc:
+        raise HTTPException(status_code=400, detail="Invalid or incomplete log body") from exc
+    except LogUploadTimeout as exc:
+        raise HTTPException(status_code=408, detail="Log body receive deadline exceeded") from exc
+    except LogUploadBusy as exc:
+        raise HTTPException(status_code=503, detail="Log upload capacity is busy", headers={"Retry-After": "1"}) from exc
+    except LogUploadUnavailable as exc:
+        raise HTTPException(status_code=503, detail="Log storage is unavailable", headers={"Retry-After": "1"}) from exc
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
