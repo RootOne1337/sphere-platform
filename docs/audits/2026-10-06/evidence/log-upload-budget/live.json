@@ -1,0 +1,87 @@
+{
+  "source": "76596c394f5332bd0131a9fde7e3476ba7c00d52",
+  "observedAt": "2026-10-05T20:42:53.618844+00:00",
+  "targetName": "auto-ph-025",
+  "checks": [
+    {
+      "kind": "bounded-log-read",
+      "status": 200,
+      "returnedLines": 1000,
+      "read": {
+        "schema_version": 1,
+        "scope": "recent-file-tail",
+        "date": null,
+        "truncated": true,
+        "reasons": [
+          "line_limit"
+        ],
+        "bytes_scanned": 196608,
+        "scan_byte_limit": 2097152,
+        "response_lines_bytes": 136492,
+        "response_byte_limit": 524288,
+        "max_line_bytes": 16384,
+        "omitted_oversized_lines": 0,
+        "files_scanned": 1,
+        "files_available": 1,
+        "max_files": 3,
+        "concurrent_reads_per_worker": 4
+      }
+    },
+    {
+      "kind": "declared-oversize",
+      "sentBytes": 524289,
+      "status": 413,
+      "identity": "operator-jwt-in-X-API-Key",
+      "agentAuthenticationProven": false
+    },
+    {
+      "kind": "chunked-oversize",
+      "sentBytes": 524289,
+      "status": 413,
+      "identity": "operator-jwt-in-X-API-Key",
+      "agentAuthenticationProven": false
+    }
+  ],
+  "ready": true,
+  "fleetStatusCounts": {
+    "online": 14,
+    "busy": 0,
+    "connecting": 0,
+    "offline": 5,
+    "issues": 0
+  },
+  "receivedUploads": {
+    "beforeHttpChecks": {
+      "observedAt": "2026-10-05T20:42:52.987602+00:00",
+      "files": 14,
+      "bytes": 3939295,
+      "originalPrefixesVerified": 14,
+      "originalPrefixBytes": 3614902,
+      "appendedBytes": 324393,
+      "filesReceivingAfterInstallation": 5,
+      "latestUpload": "2026-10-05T20:42:43.489929+00:00",
+      "rawTailReadBudgetBytes": 917504,
+      "rawLogsPublished": false
+    },
+    "afterHttpChecks": {
+      "observedAt": "2026-10-05T20:42:53.509736+00:00",
+      "files": 14,
+      "bytes": 3939295,
+      "originalPrefixesVerified": 14,
+      "originalPrefixBytes": 3614902,
+      "appendedBytes": 324393,
+      "filesReceivingAfterInstallation": 5,
+      "latestUpload": "2026-10-05T20:42:43.489929+00:00",
+      "rawTailReadBudgetBytes": 917504,
+      "rawLogsPublished": false
+    }
+  },
+  "ownLogout": 204,
+  "revokedRead": 401,
+  "rejectedFixtureAbsentFromTail": true,
+  "deviceCommandsSent": false,
+  "logsDeleted": false,
+  "syntheticSuccessfulUploadsSent": false,
+  "diskWriterIdentified": false,
+  "continuousUptimeClaimed": false
+}

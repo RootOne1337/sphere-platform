@@ -1,6 +1,25 @@
 # Review gateway: стабильный приватный маршрут UI
 
-**6 октября, 00:55 UTC+5 — установлены ограниченное чтение и постоянное хранение логов:**
+**6 октября, 01:37 UTC+5 — ограничен приём загружаемых APK-журналов:**
+Установленный API `76596c39`, UI `5405d465` на [3015/logs](http://127.0.0.1:3015/logs).
+Body больше 512 KiB отвергается до полного buffering; total ASGI intake deadline 60 s.
+Четыре uploads на worker включают приём и filesystem writer; весь FS lifecycle
+в отдельном executor. 8 MiB fixture: declared oversize 0 receive, unknown length
+9 вместо 128 chunks; Python traced peak около 8 MiB → 0,506 MiB для unknown case.
+Это не общий RSS limit или установленная причина расхода Windows C:.
+В packaged image прошли 537 device/status/WS/VPN cases, включая 35 новых upload,
+и 35 resource cases: **572 passed**; mypy/scoped Ruff/OpenAPI check прошли.
+Сохранены 14 original-byte prefixes / 3614902 bytes и 45 соседних контейнеров.
+В 01:42 UTC+5 после переключения подтверждены новые uploads в пяти файлах;
+живые declared/chunked oversize POST вернули 413, PH025 GET — 1000 строк.
+В браузере проверены непустой журнал, поиск, refresh и границы данных.
+Online 14 / offline 5 из 19 — конечный срез, не SLA; UI/APK/OTA/туннели сохранены.
+Source CI пока не принят целиком; последующий docs head проверяется отдельно.
+**9 принято / 41 открыто**, EP-033 OPEN: общие квоты, независимая очистка,
+rotation/delete concurrency, backup/restore и leak/load gates остаются.
+[Контракт и результат](../audits/2026-10-06/DEVICE-LOG-UPLOAD-BUDGET.md) · [Pinned evidence](../audits/2026-10-06/DEVICE-LOG-UPLOAD-EVIDENCE.json) · [Приоритеты](../audits/2026-10-06/ENTERPRISE-PRIORITIES.md).
+
+**Историческая установка 6 октября, 00:55 UTC+5 — ограниченное чтение и постоянное хранение логов:**
 API `9889c9ac`, UI `5405d465` на [3015/logs](http://127.0.0.1:3015/logs).
 Предел чтения — 2 MiB, JSON-массива строк — 512 KiB; четыре операции на worker
 без растущей очереди. Файловый I/O вынесен из event loop. На одинаковом архиве

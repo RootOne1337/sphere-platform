@@ -37,10 +37,26 @@ fallback `/tmp/sphere_device_logs`; это не production storage policy.
 mount/path**, чтобы не потерять поступившие после переключения строки. Возвращение
 к `/tmp` без обратного переноса не является безопасным rollback.
 
+## Установленный upload budget
+
+Backend `76596c39`, 6 октября 2026, 01:37 UTC+5: body принимается инкрементально,
+не через полный `Request.body()` cache. Declared oversize отвергается до receive;
+unknown/false length — на первом превышающем chunk. Предел принятого body 512 KiB,
+общий ASGI intake deadline 60 s, четыре операции intake + writer на HTTP worker.
+Mkdir/stat/rotation/append/cleanup выполняются в отдельном fixed executor.
+Отмена HTTP во время writer не освобождает admission до фактического окончания I/O.
+4 workers допускают до 16 загрузок, не общий лимит 4 на весь сервер.
+400/408/413/503 не означают сохранение полного batch; successful upload остаётся 204.
+Retry-After при busy/storage error — 1 s; успешный ответ не является fsync guarantee.
+APK 480 KiB batch limit совместим, обновление APK для этого контракта не требуется.
+
+[Контракт, shipped-image проверки и live receipts](../audits/2026-10-06/DEVICE-LOG-UPLOAD-BUDGET.md).
+
 ## Открытые ограничения
 
-Текущая upload policy ограничивает body после buffering, вращает дневной файл после
-50 MiB и удаляет старые файлы только при новом upload. Это не глобальный per-org/disk
+Текущая upload policy проверяет размер дневного файла перед append: если он уже
+превысил 50 MiB, файл удаляется; append может превысить этот размер до следующей
+загрузки. Старые файлы удаляются только при новом upload. Это не глобальный per-org/disk
 budget или независимый retention sweeper. Concurrency rotation, forecast/drop
 counters, multi-replica shared storage и backup/restore приёмка ещё открыты.
 EP-033 остаётся OPEN. Необъяснённое уменьшение свободного Windows C: этим не закрыто.

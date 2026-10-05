@@ -1,6 +1,6 @@
 # Приоритеты оставшихся работ и следующий подтверждённый дефект
 
-**Дата:** 6 октября 2026, Asia/Yekaterinburg. **Baseline reader:** `32c97b8`; **установленные API/UI:** `9889c9ac` / `5405d465`.
+**Дата:** 6 октября 2026, Asia/Yekaterinburg. **Baseline reader:** `32c97b8`; **установленные API/UI:** `76596c39` / `5405d465`.
 **Приёмка:** 9 принято / 41 с открытыми критериями из исходных 50 работ.
 Это пересортировка эксплуатационного порядка, а не изменение immutable baseline,
 первоначальных P1/P2 или критериев приёмки. Пункты имеют разный размер: 41 не означает
@@ -54,6 +54,18 @@ Storage-коммит `9889c9ac` добавил постоянный том и п
 две неудачные попытки и rollback описаны, поздний срез 11 online вместо 14 сохранён.
 Global org/disk quota, независимый sweeper и forecast/drop counters остаются
 открытыми. EP-033 целиком не принимается только по этому исправлению.
+
+## EP-033, часть B: intake и writer установлены
+
+[Ограниченный upload](DEVICE-LOG-UPLOAD-BUDGET.md) установлен в backend `76596c39`:
+512 KiB инкрементального приёма, 60 s total ASGI deadline, четыре uploads на worker
+с фиксированным writer executor. Oversize не буферизуется целиком; FS lifecycle
+вынесен из event loop. Exact image прошёл 572 tests, mypy/Ruff/OpenAPI check.
+14 исходных prefixes сохранены; 45 соседних контейнеров не заменены. Live declared
+и chunked requests вернули 413, новые upload separators появились в пяти файлах.
+Срез 14 online / 5 offline не доказывает непрерывную стабильность.
+Следующие gates EP-033: общие квоты, независимая очистка, rotation/delete concurrency,
+restore и leak/load acceptance. Общий счёт **9 / 41** не меняется; host writer неизвестен.
 
 ## Эксплуатационная безопасность и ресурсы
 

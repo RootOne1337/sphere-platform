@@ -13,6 +13,9 @@ remote rollout/recovery и selected-device control, затем Studio и рее�
 [Все41 открытые работы по группам](docs/audits/2026-10-06/ENTERPRISE-PRIORITIES.md).
 [Ограниченный reader и persistent logs](docs/audits/2026-10-06/DEVICE-LOG-READ-BUDGET.md)
 установлены частично; EP-033 целиком остаётся OPEN.
+[Upload intake и writer budget](docs/audits/2026-10-06/DEVICE-LOG-UPLOAD-BUDGET.md)
+установлены в API `76596c39`; ресурсы следующего этапа — общие квоты, независимая
+очистка, rotation/delete consistency и leak/load proof. Счёт 9 / 41 не изменён.
 Планируемый пользовательский stream+script тест20–30 эмуляторов — отдельный
 живой этап; целевой F32-план32 ниже не считается выполненным по 14 online.
 Будущие VPN-адаптеры/AI и универсальные project databases не входят в текущую
