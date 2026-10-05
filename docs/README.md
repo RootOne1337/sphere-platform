@@ -22,7 +22,17 @@
 Исходники `c3937a1`, установленный на этапе аудита UI/API `c1a6e79a`; исходный аудит — только анализ.
 Каталог API и элементов управления не заменяет живую проверку Android и 500–1000 устройств.
 
-**5 октября, 07:33 UTC+5 — первый пакет исправлений установлен:** UI `6ff6bc2`
+**5 октября, 08:19 UTC+5 — текущий второй пакет установлен и проверен:**
+API `51ccaa36`, UI `6b7de0cc`, topology `52403b4`; [живой monitoring3015](http://127.0.0.1:3015/monitoring).
+EP-006: ошибки HTTP callback корректно классифицированы, реальные HTTP retries/HMAC проверены.
+EP-007: встроенный dashboard Grafana с реальными данными и immediate logout revoke.
+1196 frontend tests/types/build, 70 целевых API image checks, mypy229/Ruff/schema прошли.
+Guard rollbacks и краткое падение online count сохранены; конечный срез14 online/5 offline.
+**7 закрыто /43 открыто из50**. APK/туннели/DB/public18080 сохранены; storage soak RUNNING.
+[Журнал и ограничения](audits/2026-10-05/ENTERPRISE-PRODUCT-FOLLOWUP.md) ·
+[Source/runtime/HTTP/визуальные доказательства](audits/2026-10-05/ENTERPRISE-PRODUCT-FOLLOWUP-EVIDENCE.json).
+
+**Исторический срез: 5 октября, 07:33 UTC+5 — первый пакет:** UI `6ff6bc2`
 на [3015](http://127.0.0.1:3015/devices), API `c1a6e79a` сохранён. Пять подтверждённых
 дефектов и отдельный cache-дефект исправлены; 1185 tests/types/build и browser/API
 приёмка записаны в [журнале реализации](audits/2026-10-05/ENTERPRISE-PRODUCT-IMPLEMENTATION.md)

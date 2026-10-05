@@ -6,7 +6,27 @@
 
 [Главная](../../README.md) · [Каталог документации](../README.md) · [Readiness](READINESS.md) · [Fleet32 gates](../audits/2026-09-20/FLEET32-PREFLIGHT.md) · [PR #19](https://github.com/RootOne1337/sphere-platform/pull/19)
 
-**5 октября, 07:33 UTC+5 — первый пакет продуктового аудита установлен на 3015:**
+**5 октября, 08:19 UTC+5 — второй пакет продуктового аудита принят на 3015:**
+API **`51ccaa36`**, review UI **`6b7de0cc`**, network topology **`52403b4`**.
+EP-006: 403 больше не записывается как delivered; 429/5xx имеют конечный retry,
+коррелируемые результаты и стабильный HMAC/delivery ID. Реальный loopback HTTP
+canary выполнен внутри установленного backend: пять случаев, receiver закрыт.
+EP-007: Grafana получила постоянный private proxy IP вне dynamic pool; браузер
+показывает `sphere-collection` с реальными графиками. Viewer/query/read-only
+границы проверены; logout немедленно отзывает ещё действующую ticket cookie.
+**116 suites / 1196 frontend tests**, TypeScript/build, **70 целевых API tests
+в production image**, mypy229/Ruff/OpenAPI прошли. Внедрение включало guard
+rollback и пять backend recreations; парк восстановился до14 online/5 offline
+к03:19:27 UTC. Это конечная приёмка, не zero downtime или многодневный SLA.
+Публичный UI18080, APK, DB и туннели сохранены. **7 закрыто / 43 открыто из50**;
+RPS/p95/resource history, Studio/recording/trace и load/soak остаются открытыми.
+Source CI конечного документа проверяется отдельно; старый Codecov upload failure
+сохранён. Storage recorder ещё RUNNING до12:58 UTC+5; дисковая/RAM проблема не закрыта.
+[Изменения, установка и границы](../audits/2026-10-05/ENTERPRISE-PRODUCT-FOLLOWUP.md) ·
+[Доказательства](../audits/2026-10-05/ENTERPRISE-PRODUCT-FOLLOWUP-EVIDENCE.json) ·
+[Живой monitoring](http://127.0.0.1:3015/monitoring).
+
+**Исторический срез: 5 октября, 07:33 UTC+5 — первый пакет на 3015:**
 UI **`6ff6bc2`**, API **`c1a6e79a`**. Исправлены EP-001…EP-005: F5 preferences,
 canonical export/import графа, модель устройства в реестре/picker/потоках,
 реальное число шагов в orchestration picker. Live-запись выявила и закрыла отдельный

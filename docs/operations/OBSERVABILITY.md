@@ -1,10 +1,16 @@
 # Prometheus и Grafana внутри Sphere
 
-**Дата:** 30 сентября 2026, Asia/Yekaterinburg. **Область:** первый рабочий этап
+**Создано:** 30 сентября 2026; **обновлено:** 5 октября 2026, Asia/Yekaterinburg. **Область:** первый рабочий этап
 серверной истории и встроенной Grafana. Это не приёмка всего парка Android.
 
 [Текущее состояние](CURRENT-STATE.md) · [Каталог документации](../README.md) ·
 [Операционный аудит веба](../audits/2026-09-29/WEB-OPERATIONS-OBSERVABILITY-AUDIT.md)
+
+**Текущая установка5 октября08:19 UTC+5:** review UI `6b7de0cc`, API `51ccaa36`,
+topology `52403b4` на3015. Встроенный `sphere-collection`/Viewer/query и отзыв
+ticket после logout проверены HTTP и в браузере. Static proxy IP `172.29.0.3`,
+private subnet `172.29.0.0/24`, dynamic pool `172.29.0.128/25`; whitelist exact.
+RPS/p95/resource history ещё не подключены. [Приёмка и ограничения](../audits/2026-10-05/ENTERPRISE-PRODUCT-FOLLOWUP.md).
 
 > Принятый runtime 30 сентября, UI follow-up 22:21–22:29 UTC+5: backend `85c8014`, frontend
 > `3132afc`, маршрут `3015 → UI 3018 / API 18080`. Dependency update не меняет
