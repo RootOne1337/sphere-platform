@@ -137,11 +137,16 @@ Wire protocol snapshot/ping/pong проверен по `backend/api/ws/events/ro
 восстановления без изменения Android или server transport.
 
 Кнопка «Открыть Grafana здесь» получает через `POST /api/observability/session`
-подписанную HttpOnly cookie с `SameSite=Strict`, path `/observability/grafana`,
-TTL 90 s. Она не содержит access token. Пока iframe открыт, Sphere заново
-проверяет профиль каждую минуту. При отказе iframe убирается. **Серверное
-отзывание доступа для уже выданной cookie ограничено TTL 90 s**; мгновенный
-отзыв такой cookie не реализован. Смена/выход из аккаунта скрывает iframe в UI.
+AES-256-GCM HttpOnly cookie с `SameSite=Strict`, path `/observability/grafana`,
+TTL 90 s. Исходный access token внутри ticket зашифрован; Grafana его не получает.
+Ключ производный от server-only session secret с отдельным назначением, nonce
+случайный для каждого ticket. Прокси перед каждым upstream запросом проверяет
+этот token через Sphere `auth/me`: logout blacklist, текущую роль super_admin и
+тот же user ID. Cookie не является самостоятельным разрешением; отказ/недоступность
+Sphere закрывает доступ. Уже отправленный ответ этим не отзывается.
+Пока iframe открыт, UI обновляет cookie каждую минуту; отказ скрывает iframe.
+Смена/выход из аккаунта также скрывает iframe. Cookie старого формата после обновления
+не принимается: повторно откройте Grafana из Sphere. Публичный HTTPS требует Secure.
 
 Next route `/observability/grafana/[[...path]]` принимает GET/HEAD и два точных
 POST endpoints чтения: `api/ds/query` для графиков и
@@ -207,6 +212,8 @@ password file и `OBSERVABILITY_SESSION_SECRET` (не менее 32 случай
 OBS_BACKEND_NETWORK=<существующая Docker-сеть backend>
 OBS_GRAFANA_ADMIN_PASSWORD_FILE=<абсолютный private file>
 OBS_GRAFANA_PROXY_WHITELIST=<точный адрес доверенного Next/proxy>
+OBS_TOOLS_NETWORK=<стабильное имя private Docker-сети наблюдаемости>
+OBS_TOOLS_SUBNET=<непересекающаяся IPv4 подсеть этой сети>
 ```
 
 В backend network должен существовать DNS alias `backend`, порт 8000. Настройте
@@ -214,6 +221,15 @@ target явно при иной топологии. На текущем pilot э
 `sphere-pilot-20260911_backend-net`. Адрес whitelist определяется по реальному
 peer address; он может отличаться при переносе с Docker Desktop на VPS.
 Не расширяйте whitelist до всего Интернета ради устранения `invalid-ip`.
+Для Docker review используйте overlay
+[`docker-compose.review-observability.yml`](../../infrastructure/monitoring/docker-compose.review-observability.yml).
+Он задаёт `review-ui` статический IPv4 из **того же** `OBS_GRAFANA_PROXY_WHITELIST`:
+одно значение без CIDR/списка. Адрес должен входить в `OBS_TOOLS_SUBNET`, не быть
+gateway и не принадлежать другому контейнеру. Это предохраняет от смены peer IP
+после пересборки frontend. Подсеть выбирается по inventory существующих сетей,
+а не копируется из чужой установки. Если существующая сеть создавалась без
+явного IPAM, создайте отдельную сеть с новым именем; не удаляйте занятую сеть.
+При переносе согласованно обновите Grafana и frontend, затем проверьте реальный peer.
 
 ```powershell
 docker compose --env-file <private-env> -p sphere-observability -f infrastructure/monitoring/docker-compose.observability.yml config --quiet
@@ -225,6 +241,17 @@ preview AUTH API — `http://127.0.0.1:18080/api/v1/`, Prometheus —
 `http://127.0.0.1:19090/`, Grafana — `http://127.0.0.1:13000/`.
 Для Docker frontend используйте доступные ему service origins и точный trusted
 proxy address. Не переносите localhost values внутрь контейнера вслепую.
+Для review передайте base compose первым, overlay — вторым, private credentials
+через отдельный env/overlay, исключённый из Git. Например:
+
+```powershell
+docker compose --env-file <private-review-env> -f docker-compose.review.yml -f infrastructure/monitoring/docker-compose.review-observability.yml config --quiet
+```
+
+Для private origins используются `http://prometheus:9090`, `http://grafana:3000`
+и `http://review-gateway:8080/api/v1/` только в сетях, где есть эти aliases.
+Auth rejection Grafana (401/403 или redirect в login) теперь возвращает 503
+с объяснением конфигурации, вместо перехода на вводящий в заблуждение Welcome.
 На публичном HTTPS **обязательно** `OBSERVABILITY_SECURE_COOKIE=true`.
 Reverse proxy должен передавать `/api/observability/*` и
 `/observability/grafana/*` в Next, а `/api/v1/*` — в backend. Публичный rollout
@@ -236,6 +263,10 @@ Reverse proxy должен передавать `/api/observability/*` и
 health, источник dashboard `sphere-prometheus`, provisioned UID
 `sphere-collection`, native роль Viewer, запрет save, авторизацию Sphere и
 историю в iframe. Live receipts фиксируются в CURRENT-STATE с build SHA.
+Источник auth-proxy контракта: [официальная документация Grafana](https://grafana.com/docs/grafana/latest/setup-grafana/configure-access/configure-authentication/auth-proxy/)
+(проверена 5 октября 2026): whitelist ограничивает peer IP, forwarded Authorization
+удаляется, upstream Viewer создаётся сервером. Настройки чужого примера Editor
+в Sphere не применяются.
 
 Multi-worker профиль прошёл image acceptance и развёрнут в pilot 30 сентября
 18:09 UTC+5 (`1ac06ac`); см. [runtime receipt](CURRENT-STATE.md).

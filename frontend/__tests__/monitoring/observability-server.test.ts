@@ -91,15 +91,19 @@ async function sessionCookie() {
 function grafanaRequest(cookie: string, method = 'GET', body?: string) {
     return new Request('http://sphere.test/observability/grafana/api/ds/query', { method, headers: { cookie, authorization: 'Bearer must-not-forward', 'X-WEBAUTH-USER': 'evil-admin' }, body });
 }
+function grafanaResponse(response: Response) {
+    mockFetch.mockImplementation(async (url: URL) => url.hostname === 'backend.test' ? ok(admin) : response);
+}
 
 describe('Read-only Grafana bridge', () => {
     const featurePath = ['apis', 'features.grafana.app', 'v0alpha1', 'namespaces', 'default', 'ofrep', 'v1', 'evaluate', 'flags'];
     it('reads Grafana boot feature flags with a fixed context, never a browser-selected identity', async () => {
         const cookie = await sessionCookie();
-        mockFetch.mockClear().mockResolvedValueOnce(ok({ flags: [{ key: 'test', value: true }] }));
+        mockFetch.mockClear();
+        grafanaResponse(ok({ flags: [{ key: 'test', value: true }] }));
         const response = await proxyGrafana(grafanaRequest(cookie, 'POST', JSON.stringify({ context: { targetingKey: 'other-org', userId: 'admin', email: 'private@example.test' } })), featurePath);
         expect(response.status).toBe(200);
-        const [url, options] = mockFetch.mock.calls[0];
+        const [url, options] = mockFetch.mock.calls.at(-1)!;
         expect(url.pathname).toBe('/observability/grafana/' + featurePath.join('/'));
         expect(options.body).toBe(JSON.stringify({ context: { targetingKey: 'default' } }));
         expect(options.headers).toEqual({ 'X-WEBAUTH-USER': 'sphere-observer', Accept: '*/*', 'Content-Type': 'application/json' });
@@ -156,7 +160,7 @@ describe('Read-only Grafana bridge', () => {
     });
     it('replaces browser identity headers and suppresses upstream cookies', async () => {
         const cookie = await sessionCookie();
-        mockFetch.mockResolvedValueOnce(new Response('<html>Grafana</html>', { headers: { 'content-type': 'text/html', 'set-cookie': 'upstream-admin=secret' } }));
+        grafanaResponse(new Response('<html>Grafana</html>', { headers: { 'content-type': 'text/html', 'set-cookie': 'upstream-admin=secret' } }));
         const response = await proxyGrafana(grafanaRequest(cookie), ['d', 'sphere-collection']);
         expect(response.status).toBe(200);
         expect(response.headers.get('set-cookie')).toBeNull();
@@ -166,7 +170,7 @@ describe('Read-only Grafana bridge', () => {
     });
     it('allows bounded dashboard reads but rejects long ranges and excessive query counts', async () => {
         const cookie = await sessionCookie();
-        mockFetch.mockResolvedValueOnce(ok({ results: {} }));
+        grafanaResponse(ok({ results: {} }));
         const valid = { from: '0', to: '3600000', queries: [{ refId: 'A' }] };
         expect((await proxyGrafana(grafanaRequest(cookie, 'POST', JSON.stringify(valid)), ['api', 'ds', 'query'])).status).toBe(200);
         expect((await proxyGrafana(grafanaRequest(cookie, 'POST', JSON.stringify({ ...valid, to: '86400001' })), ['api', 'ds', 'query'])).status).toBe(400);
@@ -176,7 +180,63 @@ describe('Read-only Grafana bridge', () => {
         const cookie = await sessionCookie();
         expect((await proxyGrafana(grafanaRequest(cookie), ['..', 'api'])).status).toBe(400);
         expect((await proxyGrafana(grafanaRequest(cookie), ['api', 'datasources', 'proxy', '1'])).status).toBe(403);
-        mockFetch.mockResolvedValueOnce(new Response(null, { status: 302, headers: { location: 'http://evil.test/' } }));
+        grafanaResponse(new Response(null, { status: 302, headers: { location: 'http://evil.test/' } }));
         expect((await proxyGrafana(grafanaRequest(cookie), [])).status).toBe(503);
+    });
+    it.each([401, 403])('rechecks a Sphere token after minting and stops revoked/changed role %s', async status => {
+        const cookie = await sessionCookie();
+        mockFetch.mockClear().mockResolvedValue(new Response(null, { status }));
+        expect((await proxyGrafana(grafanaRequest(cookie), ['api', 'user'])).status).toBe(status);
+        expect(mockFetch).toHaveBeenCalledTimes(1);
+        const [url, options] = mockFetch.mock.calls[0];
+        expect(url.hostname).toBe('backend.test');
+        expect(options.headers.Authorization).toBe('Bearer valid-token');
+    });
+    it.each([{ id: admin.id, role: 'viewer' }, { id: 'changed-user', role: 'super_admin' }])('does not grant access after a role or identity change', async profile => {
+        const cookie = await sessionCookie();
+        mockFetch.mockClear().mockResolvedValue(ok(profile));
+        expect((await proxyGrafana(grafanaRequest(cookie), ['api', 'user'])).status).toBe(profile.role === 'viewer' ? 403 : 401);
+        expect(mockFetch).toHaveBeenCalledTimes(1);
+    });
+    it('fails closed on Sphere outage, without contacting Grafana or using a cached role', async () => {
+        const cookie = await sessionCookie();
+        mockFetch.mockClear().mockRejectedValue(new Error('auth offline'));
+        expect((await proxyGrafana(grafanaRequest(cookie), ['api', 'user'])).status).toBe(503);
+        expect(mockFetch).toHaveBeenCalledTimes(1);
+    });
+    it('encrypts the original token, authenticates the ciphertext and isolates key rotation', async () => {
+        const first = await sessionCookie();
+        const second = await sessionCookie();
+        expect(first).not.toBe(second);
+        expect(first).not.toContain('valid-token');
+        expect(first).not.toContain(Buffer.from('valid-token').toString('base64url'));
+        const fields = first.split('.');
+        fields[2] = (fields[2][0] === 'A' ? 'B' : 'A') + fields[2].slice(1);
+        mockFetch.mockClear();
+        expect((await proxyGrafana(grafanaRequest(fields.join('.')), [])).status).toBe(401);
+        process.env.OBSERVABILITY_SESSION_SECRET = 'a-different-test-only-key-at-least-32-characters';
+        expect((await proxyGrafana(grafanaRequest(first), [])).status).toBe(401);
+        expect(mockFetch).not.toHaveBeenCalled();
+    });
+    it('bounds browser cookies and rejects oversized tokens before minting', async () => {
+        expect((await createGrafanaSession(request('', 'a'.repeat(2042)))).status).toBe(400);
+        mockFetch.mockClear();
+        expect((await proxyGrafana(grafanaRequest('sphere_observability=' + 'x'.repeat(4097)), [])).status).toBe(401);
+        expect(mockFetch).not.toHaveBeenCalled();
+    });
+    it.each([401, 403, 302])('does not disguise upstream auth failure %s as the Welcome page', async status => {
+        const cookie = await sessionCookie();
+        grafanaResponse(new Response(null, { status, headers: status === 302 ? { location: '/observability/grafana/login?redirectTo=dashboard' } : {} }));
+        const response = await proxyGrafana(grafanaRequest(cookie), ['d', 'sphere-collection']);
+        expect(response.status).toBe(503);
+        expect(response.headers.get('location')).toBeNull();
+        expect((await response.json()).detail).toMatch(/Grafana/);
+    });
+    it('rewrites safe dashboard redirects while keeping the Grafana subpath', async () => {
+        const cookie = await sessionCookie();
+        grafanaResponse(new Response(null, { status: 302, headers: { location: '/observability/grafana/d/sphere-collection/canonical-slug?orgId=1' } }));
+        const response = await proxyGrafana(grafanaRequest(cookie), ['d', 'sphere-collection']);
+        expect(response.status).toBe(302);
+        expect(response.headers.get('location')).toBe('/observability/grafana/d/sphere-collection/canonical-slug?orgId=1');
     });
 });

@@ -85,6 +85,10 @@ volumes:
   grafana-data:
 networks:
   tools:
+    name: ${OBS_TOOLS_NETWORK:?Set the stable observability network name}
+    ipam:
+      config:
+        - subnet: ${OBS_TOOLS_SUBNET:?Set a non-overlapping IPv4 subnet for stable proxy addresses}
   backend:
     external: true
     name: ${OBS_BACKEND_NETWORK:?Set existing backend Docker network}

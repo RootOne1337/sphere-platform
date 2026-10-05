@@ -47,3 +47,39 @@ webhook + batch service + n8n API. Ruff и mypy целевого backend-фай�
 429→204, 503→204, исчерпание четырёх 503. Задержки только записываются и пропускаются,
 поэтому этот probe не измеряет 155 секунд wall-clock retry. Нет внешних получателей,
 DB/task/Android команд; receiver закрывается. Runtime receipt добавляется после установки.
+
+## EP-007: Grafana auth proxy и привязка Sphere session
+
+Статус: **SOURCE_FIXED / REGRESSION_VERIFIED; live приёмка ещё не выполнена**.
+
+В 02:53 UTC браузер на UI `6ff6bc2` снова показал Welcome. Grafana log того же
+запроса содержит `auth-proxy.invalid-ip`, HTTP 302, peer `172.27.0.3`.
+Whitelist фактически был `172.27.0.1` — gateway для прежнего host preview.
+Следовательно, этот срез доказывает rejection текущего Docker frontend;
+он не доказывает исчезновение UID или проблему Prometheus datasource.
+
+Согласованный compose overlay задаёт review-ui постоянный IPv4 в private tools
+сети с явно указанным IPAM subnet. Grafana принимает только **этот** адрес.
+Новая сеть вместо удаления занятой сети сохраняет возможность rollback.
+Для новой установки обязательны имя/непересекающаяся подсеть, проверка владельца
+адреса и совместное применение frontend/Grafana конфигурации.
+Нет широкого CIDR whitelist, anonymous login или Editor permission.
+Контракт проверен по [официальной документации Grafana](https://grafana.com/docs/grafana/latest/setup-grafana/configure-access/configure-authentication/auth-proxy/)
+5 октября 2026; подробная инструкция — [OBSERVABILITY](../../operations/OBSERVABILITY.md).
+
+Cookie теперь AEAD ticket AES-256-GCM: random nonce, отдельный derived key,
+проверка целостности/формата/90-секундного срока, HttpOnly/SameSite/path/Secure.
+Зашифрованный исходный Sphere token никогда не передаётся Grafana. Перед каждым
+upstream запросом проверяются auth/me, blacklist и актуальная роль super_admin;
+тот же user ID обязателен. Fail-closed при недоступной авторизации. Это устраняет
+прежнее окно доступа до конца TTL после logout/понижения роли. Уже переданные
+данные/ответ нельзя отозвать задним числом. Cookie старого формата отвергается;
+повторное открытие iframe выдаёт новый ticket.
+
+Upstream 401/403/login redirect больше не скрывается переходом в Welcome:
+прокси выдаёт явную ошибку 503 конфигурации Grafana, без upstream cookies.
+60 frontend tests (server bridge + panel lifecycle) проходят, TypeScript проходит.
+Проверены tampering, random nonce, key rotation, oversized cookie/token, revoked
+token, current role/identity change, auth outage, safe/unsafe redirects, read-only
+mutation/feature endpoint allowlist. Живые dashboard/Viewer/query/logout receipts
+и screenshot будут записаны отдельно после установки.

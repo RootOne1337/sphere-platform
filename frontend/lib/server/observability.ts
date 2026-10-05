@@ -1,5 +1,5 @@
 // Server-only integration. No credentials or upstream URLs are sent to the client.
-import { createHmac, timingSafeEqual } from 'node:crypto';
+import { createCipheriv, createDecipheriv, createHmac, randomBytes } from 'node:crypto';
 import type { HistoryWindow, ObservationSeries, ObservabilitySnapshot } from '@/src/features/monitoring/observabilityTypes';
 
 export const GRAFANA_PREFIX = '/observability/grafana';
@@ -138,37 +138,56 @@ function sessionSecret() {
     if (secret.length < 32) throw new ObservationError(503, 'Защищённая сессия Grafana не настроена.');
     return secret;
 }
-function signature(payload: string) { return createHmac('sha256', sessionSecret()).update(payload).digest('base64url'); }
+function sessionKey() { return createHmac('sha256', sessionSecret()).update('sphere:grafana:session:v2').digest(); }
+function sealSession(session: { id: string; authorization: string; exp: number }) {
+    const nonce = randomBytes(12);
+    const cipher = createCipheriv('aes-256-gcm', sessionKey(), nonce);
+    cipher.setAAD(Buffer.from(COOKIE));
+    const payload = Buffer.concat([cipher.update(JSON.stringify(session), 'utf8'), cipher.final()]);
+    return ['v2', nonce.toString('base64url'), payload.toString('base64url'), cipher.getAuthTag().toString('base64url')].join('.');
+}
 
 export async function createGrafanaSession(request: Request): Promise<Response> {
     try {
         const id = await verifyAdmin(request);
         configuredUrl('OBSERVABILITY_GRAFANA_URL');
-        const payload = Buffer.from(JSON.stringify({ id, exp: Math.floor(Date.now() / 1000) + TTL_SECONDS })).toString('base64url');
+        const authorization = request.headers.get('authorization') ?? '';
+        // Leave room for AEAD overhead under the browser's 4 KiB cookie limit.
+        if (authorization.length > 2048) throw new ObservationError(400, 'Сессия Sphere слишком большая для встраивания Grafana.');
+        const payload = sealSession({ id, authorization, exp: Math.floor(Date.now() / 1000) + TTL_SECONDS });
         const secure = process.env.OBSERVABILITY_SECURE_COOKIE === 'true' ? '; Secure' : '';
         return Response.json({ expiresIn: TTL_SECONDS }, { headers: {
             'Cache-Control': 'no-store',
-            'Set-Cookie': `${COOKIE}=${payload}.${signature(payload)}; HttpOnly; SameSite=Strict; Path=${GRAFANA_PREFIX}; Max-Age=${TTL_SECONDS}${secure}`,
+            'Set-Cookie': `${COOKIE}=${payload}; HttpOnly; SameSite=Strict; Path=${GRAFANA_PREFIX}; Max-Age=${TTL_SECONDS}${secure}`,
         } });
     } catch (error) { return errorResponse(error); }
 }
 
 function verifyGrafanaCookie(request: Request) {
     const value = request.headers.get('cookie')?.split(';').map(part => part.trim()).find(part => part.startsWith(`${COOKIE}=`))?.slice(COOKIE.length + 1) ?? '';
-    if (value.length > 2048) throw new ObservationError(401, 'Сессия Grafana истекла. Откройте её из Sphere.');
-    const [payload, supplied, extra] = value.split('.');
-    if (!payload || !supplied || extra) throw new ObservationError(401, 'Сессия Grafana истекла. Откройте её из Sphere.');
-    const expected = Buffer.from(signature(payload));
-    const actual = Buffer.from(supplied);
-    if (actual.length !== expected.length || !timingSafeEqual(actual, expected)) throw new ObservationError(401, 'Недействительная сессия Grafana.');
+    if (value.length > 4096) throw new ObservationError(401, 'Сессия Grafana истекла. Откройте её из Sphere.');
+    const [version, nonce, payload, tag, extra] = value.split('.');
+    if (version !== 'v2' || !nonce || !payload || !tag || extra !== undefined) throw new ObservationError(401, 'Сессия Grafana истекла. Откройте её из Sphere.');
     let session;
-    try { session = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8')); } catch { throw new ObservationError(401, 'Недействительная сессия Grafana.'); }
-    if (typeof session.id !== 'string' || !session.id || !Number.isInteger(session.exp) || session.exp <= Date.now() / 1000 || session.exp > Date.now() / 1000 + TTL_SECONDS + 1) throw new ObservationError(401, 'Сессия Grafana истекла.');
+    try {
+        const parts = [nonce, payload, tag].map(part => {
+            const bytes = Buffer.from(part, 'base64url');
+            if (bytes.toString('base64url') !== part) throw new Error('noncanonical encoding');
+            return bytes;
+        });
+        if (parts[0].length !== 12 || parts[2].length !== 16) throw new Error('invalid AEAD fields');
+        const decipher = createDecipheriv('aes-256-gcm', sessionKey(), parts[0]);
+        decipher.setAAD(Buffer.from(COOKIE));
+        decipher.setAuthTag(parts[2]);
+        session = object(JSON.parse(Buffer.concat([decipher.update(parts[1]), decipher.final()]).toString('utf8')));
+    } catch { throw new ObservationError(401, 'Недействительная сессия Grafana.'); }
+    if (typeof session.id !== 'string' || !session.id || typeof session.authorization !== 'string' || !/^Bearer [A-Za-z0-9._~-]{1,2041}$/.test(session.authorization) || !Number.isInteger(session.exp) || Number(session.exp) <= Date.now() / 1000 || Number(session.exp) > Date.now() / 1000 + TTL_SECONDS + 1) throw new ObservationError(401, 'Сессия Grafana истекла.');
+    return { id: session.id, authorization: session.authorization };
 }
 
 export async function proxyGrafana(request: Request, path: string[]): Promise<Response> {
     try {
-        verifyGrafanaCookie(request);
+        const session = verifyGrafanaCookie(request);
         if (path.some(part => !part || part === '.' || part === '..' || /[\\/%\x00-\x20]/.test(part))) throw new ObservationError(400, 'Недопустимый путь.');
         const route = path.join('/');
         if (route.startsWith('api/datasources/proxy/') || /api\/datasources\/uid\/[^/]+\/resources/.test(route)) throw new ObservationError(403, 'Используйте запросы dashboard через защищённый endpoint.');
@@ -200,10 +219,18 @@ export async function proxyGrafana(request: Request, path: string[]): Promise<Re
             // browser user/org attributes or use them to select feature targeting.
             body = JSON.stringify({ context: { targetingKey: 'default' } });
         }
+        // A valid cookie is only a transport ticket, never an independent role.
+        // Recheck the original Sphere token's revocation and current user role.
+        const id = await verifyAdmin(new Request(request.url, { headers: { Authorization: session.authorization } }));
+        if (id !== session.id) throw new ObservationError(401, 'Сессия Sphere изменилась.');
         const upstream = configuredUrl('OBSERVABILITY_GRAFANA_URL');
         upstream.pathname = `${GRAFANA_PREFIX}/${route}`;
         upstream.search = new URL(request.url).search;
         const result = await fetch(upstream, { method: request.method, headers, body, cache: 'no-store', redirect: 'manual', signal: AbortSignal.timeout(10000) });
+        if (result.status === 401 || result.status === 403) {
+            await result.body?.cancel();
+            throw new ObservationError(503, 'Grafana отклонила доступ серверного прокси. Проверьте auth proxy и роль Viewer.');
+        }
         const responseHeaders = new Headers({ 'Cache-Control': 'private, no-store', 'X-Content-Type-Options': 'nosniff', 'Content-Security-Policy': "frame-ancestors 'self'" });
         const type = result.headers.get('content-type');
         if (type) responseHeaders.set('Content-Type', type);
@@ -211,6 +238,10 @@ export async function proxyGrafana(request: Request, path: string[]): Promise<Re
         if (location) {
             const redirect = new URL(location, upstream);
             if (redirect.origin !== upstream.origin || !redirect.pathname.startsWith(`${GRAFANA_PREFIX}/`)) throw new Error('unsafe redirect');
+            if (redirect.pathname === `${GRAFANA_PREFIX}/login` || redirect.pathname.startsWith(`${GRAFANA_PREFIX}/login/`)) {
+                await result.body?.cancel();
+                throw new ObservationError(503, 'Grafana требует вход вместо доверенного прокси. Проверьте адрес auth proxy.');
+            }
             responseHeaders.set('Location', `${redirect.pathname}${redirect.search}`);
         }
         return new Response(request.method === 'HEAD' || [204, 304].includes(result.status) ? null : result.body, { status: result.status, headers: responseHeaders });
