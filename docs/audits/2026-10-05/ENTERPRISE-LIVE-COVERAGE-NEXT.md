@@ -99,13 +99,18 @@ outlive the observation that justified it. This is a source-proven expiry gap,
 not a claim that current production peers are actually miscounted. A clock-boundary
 SQL reproduction and the corrected count must precede runtime acceptance.
 
-### C4 — Android applied state has no independent observation timestamp
+### C4 — Android applied state had no independent observation timestamp (Stage B foundation)
 
 [DeviceLiveStatus](../../../backend/schemas/device_status.py) carries nullable
 `vpn_active` and `last_heartbeat`. [HeartbeatManager](../../../backend/websocket/heartbeat.py)
 updates the VPN field only when it is present in a pong. A later pong can refresh
 the heartbeat without supplying a new VPN observation. Consequently a fresh
 heartbeat does not, by itself, prove a fresh VPN-applied observation.
+
+The [Stage B foundation](ENTERPRISE-ANDROID-VPN-OBSERVATION.md) adds independent
+server receipt time, current-session ownership and read-time expiry. Its source
+checks and runtime acceptance are recorded separately; broader coverage remains
+open. The following paragraph describes the initially reviewed gap.
 
 [handle_telemetry](../../../backend/api/ws/android/router.py) can also update
 `vpn_active`; it does not establish a separate VPN observation epoch. The next

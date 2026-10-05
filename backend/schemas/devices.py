@@ -11,6 +11,8 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from backend.schemas.device_status import VPN_OBSERVATION_MAX_AGE_SECONDS
+
 # Whitelist: только безопасные символы.
 # Блокирует shell injection: ; && | ` $ > < etc.
 SERIAL_PATTERN = re.compile(r"^[a-zA-Z0-9:_.\-]{1,100}$")
@@ -150,7 +152,10 @@ class DeviceResponse(BaseModel):
     ram_usage_mb: int | None = None
     screen_on: bool | None = None
     adb_connected: bool = False
-    vpn_active: bool | None = None
+    vpn_active: bool | None = Field(default=None, description="Fresh current-session Android managed-VPN service report; null when unconfirmed, not proof of traffic/IP")
+    vpn_observed_at: datetime | None = Field(default=None, description="Server receipt time of the last explicit Android VPN report, independent of heartbeat")
+    vpn_observation_state: Literal["fresh", "stale", "unknown"] = Field(default="unknown", description="Read-time receipt freshness and ownership; legacy/unowned/disconnected reports are unknown")
+    vpn_observation_max_age_seconds: int = VPN_OBSERVATION_MAX_AGE_SECONDS
     last_heartbeat: datetime | None = None
     connected_since: datetime | None = None
     agent_version: str | None = None

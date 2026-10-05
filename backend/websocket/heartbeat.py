@@ -9,13 +9,11 @@ from datetime import datetime, timezone
 
 import structlog
 from fastapi import WebSocket, WebSocketDisconnect
-from pydantic import ValidationError
 
 from backend.metrics import (
     android_ws_keepalive_ack_rtt_seconds,
     android_ws_keepalive_ack_total,
 )
-from backend.schemas.device_status import DeviceLiveStatus
 from backend.services.device_status_cache import DeviceStatusCache
 
 logger = structlog.get_logger()
@@ -66,7 +64,7 @@ def _bounded_previous_ws_failure(value: object) -> dict | None:
     ):
         number = value.get(key)
         if number is not None:
-            if type(number) is not int or not lower <= number <= upper:
+            if not isinstance(number, int) or isinstance(number, bool) or not lower <= number <= upper:
                 return None
             result[key] = number
     for key in ("error_type", "cause_type"):
@@ -206,31 +204,11 @@ class HeartbeatManager:
         first_pong_persisted = False
         status_update_persisted = False
         try:
-            current = await self.status_cache.get_status(self.device_id)
-            if current and self._session_id and current.ws_session_id not in (None, self._session_id):
-                return False  # A replaced socket must not overwrite known newer presence.
-            if current is None:
-                # Presence is disposable: an authenticated live socket can rebuild
-                # it after eviction/restart. Durable task state remains in PostgreSQL.
-                current = DeviceLiveStatus(device_id=self.device_id, status="online")
             heartbeat_at = datetime.now(timezone.utc)
-            if (
-                current.connected_since is None
-                or current.status not in ("online", "busy")
-                or (self._session_id and current.ws_session_id != self._session_id)
-            ):
-                # The first accepted pong is the start of a confirmed connection;
-                # an authenticated WebSocket that never answers stays "connecting".
-                current.connected_since = heartbeat_at
-            current.status = "busy" if current.status == "busy" else "online"
-            if self._session_id:
-                current.ws_session_id = self._session_id
-            current.last_heartbeat = heartbeat_at
-            try:
-                current = DeviceLiveStatus.model_validate(current.model_dump() | status_update)
-            except ValidationError:
-                logger.warning("Invalid pong telemetry ignored", device_id=self.device_id)
-            status_update_persisted = await self.status_cache.set_status(self.device_id, current)
+            status_update_persisted = await self.status_cache.merge_agent_status(
+                self.device_id, status_update, session_id=self._session_id,
+                heartbeat_at=heartbeat_at,
+            )
             if status_update_persisted and not self._first_pong_persisted:
                 self._first_pong_persisted = True
                 first_pong_persisted = True
@@ -238,6 +216,9 @@ class HeartbeatManager:
             # A Redis outage must not change transport liveness. Retry the cache
             # update on the next pong without accumulating an in-memory queue.
             logger.warning("Heartbeat presence update failed", device_id=self.device_id, error=str(exc))
+
+        if not status_update_persisted:
+            return False  # A rejected old owner must not replace stream diagnostics either.
 
         if first_pong_persisted:
             logger.info(

@@ -134,8 +134,8 @@ class TestHeartbeatManager:
             DeviceLiveStatus(device_id="dev-1", status="connecting"),
         )
         heartbeat = HeartbeatManager(ws, "dev-1", fake_cache)
-        set_status = AsyncMock(side_effect=[ConnectionError("isolated Redis write loss"), True])
-        monkeypatch.setattr(fake_cache, "set_status", set_status)
+        merge_status = AsyncMock(side_effect=[ConnectionError("isolated Redis write loss"), True])
+        monkeypatch.setattr(fake_cache, "merge_agent_status", merge_status)
 
         records = []
         monkeypatch.setattr(
@@ -153,7 +153,7 @@ class TestHeartbeatManager:
 
         assert await heartbeat.handle_pong(pong) is False
         assert await heartbeat.handle_pong(pong) is True
-        assert set_status.await_count == 2
+        assert merge_status.await_count == 2
         assert sum(event == "android_ws.previous_failure" for event, _ in records) == 1
 
     async def test_replaced_session_pong_does_not_confirm_online(self, ws, fake_cache):
@@ -185,10 +185,11 @@ class TestHeartbeatManager:
         assert status is not None
         assert status.battery == 85
 
-    async def test_pong_updates_cpu_usage(self, heartbeat, fake_cache):
+    async def test_pong_updates_cpu_usage(self, ws, fake_cache):
+        heartbeat = HeartbeatManager(ws, "dev-1", fake_cache, session_id="telemetry-session")
         await fake_cache.set_status(
             "dev-1",
-            DeviceLiveStatus(device_id="dev-1", status="online"),
+            DeviceLiveStatus(device_id="dev-1", status="online", ws_session_id="telemetry-session"),
         )
         await heartbeat.handle_pong({
             "type": "pong",
@@ -204,6 +205,7 @@ class TestHeartbeatManager:
         assert status.ram_usage_mb == 1024
         assert status.screen_on is True
         assert status.vpn_active is False
+        assert status.vpn_observation_state == "fresh"
 
     async def test_pong_updates_agent_build_metadata(self, heartbeat, fake_cache):
         await fake_cache.set_status(

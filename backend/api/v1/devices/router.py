@@ -212,6 +212,9 @@ async def list_devices(
             device.screen_on = live.screen_on
             device.adb_connected = live.adb_connected
             device.vpn_active = live.vpn_active
+            device.vpn_observed_at = live.vpn_observed_at
+            device.vpn_observation_state = live.vpn_observation_state
+            device.vpn_observation_max_age_seconds = live.vpn_observation_max_age_seconds
             device.last_heartbeat = live.last_heartbeat
             device.connected_since = live.connected_since
             device.agent_version = live.agent_version
@@ -388,6 +391,9 @@ async def get_device(
         device.screen_on = live.screen_on
         device.adb_connected = live.adb_connected
         device.vpn_active = live.vpn_active
+        device.vpn_observed_at = live.vpn_observed_at
+        device.vpn_observation_state = live.vpn_observation_state
+        device.vpn_observation_max_age_seconds = live.vpn_observation_max_age_seconds
         device.last_heartbeat = live.last_heartbeat
         device.connected_since = live.connected_since
         device.agent_version = live.agent_version

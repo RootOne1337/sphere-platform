@@ -275,18 +275,22 @@ class TestHandleTelemetry:
         assert updated.ram_usage_mb == 1024
 
     async def test_updates_screen_on_and_vpn(self, status_cache):
-        initial = DeviceLiveStatus(device_id=DEVICE_ID, status="online")
+        from datetime import datetime, timezone
+
+        initial = DeviceLiveStatus(device_id=DEVICE_ID, status="online", ws_session_id="telemetry-session", last_heartbeat=datetime.now(timezone.utc))
         await status_cache.set_status(DEVICE_ID, initial)
 
         await handle_telemetry(
             DEVICE_ID,
             {"type": "telemetry", "screen_on": True, "vpn_active": True},
             status_cache,
+            session_id="telemetry-session",
         )
 
         updated = await status_cache.get_status(DEVICE_ID)
         assert updated.screen_on is True
         assert updated.vpn_active is True
+        assert updated.vpn_observation_state == "fresh"
 
     async def test_no_cache_entry_is_noop(self, status_cache):
         """Missing status entry → no exception raised, no entry created."""

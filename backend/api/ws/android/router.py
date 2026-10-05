@@ -137,11 +137,12 @@ async def handle_agent_message(
     msg: dict,
     manager: ConnectionManager,
     status_cache: DeviceStatusCache,
+    session_id: str | None = None,
 ) -> None:
     """Обработать входящее текстовое сообщение от Android агента."""
     msg_type = msg.get("type")
     if msg_type == "telemetry":
-        await handle_telemetry(device_id, msg, status_cache)
+        await handle_telemetry(device_id, msg, status_cache, session_id=session_id)
     elif msg_type == "task_progress":
         await handle_task_progress(device_id, org_id, msg)
     elif msg_type == "command_result":
@@ -156,21 +157,14 @@ async def handle_telemetry(
     device_id: str,
     msg: dict,
     status_cache: DeviceStatusCache,
+    *, session_id: str | None = None,
 ) -> None:
     """Обновить статус устройства из телеметрии."""
-    current = await status_cache.get_status(device_id)
-    if current:
-        if "battery" in msg:
-            current.battery = msg["battery"]
-        if "cpu" in msg:
-            current.cpu_usage = msg["cpu"]
-        if "ram_mb" in msg:
-            current.ram_usage_mb = msg["ram_mb"]
-        if "screen_on" in msg:
-            current.screen_on = msg["screen_on"]
-        if "vpn_active" in msg:
-            current.vpn_active = msg["vpn_active"]
-        await status_cache.set_status(device_id, current)
+    updates = {target: msg[source] for source, target in {
+        "battery": "battery", "cpu": "cpu_usage", "ram_mb": "ram_usage_mb",
+        "screen_on": "screen_on", "vpn_active": "vpn_active",
+    }.items() if source in msg}
+    await status_cache.merge_agent_status(device_id, updates, session_id=session_id)
 
 
 class TaskProgressMessage(BaseModel):
@@ -883,7 +877,7 @@ async def android_agent_ws(
                         case "keepalive_ack":
                             heartbeat.note_transport_activity(msg)
                         case "telemetry":
-                            await handle_telemetry(device_id, msg, status_cache)
+                            await handle_telemetry(device_id, msg, status_cache, session_id=session_id)
                         case "task_progress":
                             await handle_task_progress(device_id, org_id_str, msg)
                         case "command_result":

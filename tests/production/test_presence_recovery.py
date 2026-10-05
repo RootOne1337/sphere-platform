@@ -58,11 +58,66 @@ async def test_redis_outage_does_not_kill_heartbeat_and_next_pong_recovers(world
     device_id = str(world.dev_a.id)
     heartbeat = HeartbeatManager(AsyncMock(), device_id, presence_cache)
     previous = heartbeat._last_agent_response
-    with patch.object(presence_cache.redis, "get", AsyncMock(side_effect=ConnectionError("isolated Redis outage"))):
-        await heartbeat.handle_pong({"type": "pong", "ts": time.time()})
+    with patch.object(presence_cache.redis, "pipeline", side_effect=ConnectionError("isolated Redis outage")):
+        assert await heartbeat.handle_pong({"type": "pong", "ts": time.time()}) is False
     assert heartbeat._last_agent_response >= previous
     await heartbeat.handle_pong({"type": "pong", "ts": time.time()})
     assert (await presence_cache.get_status(device_id)).status == "online"
+
+
+@pytest.mark.parametrize("kind", ["pong", "telemetry"])
+async def test_old_observation_cannot_overwrite_replacement_in_real_redis(world, presence_cache, kind):
+    from backend.api.ws.android.router import handle_telemetry
+
+    device_id = str(world.dev_a.id)
+    await presence_cache.set_status(device_id, DeviceLiveStatus(
+        device_id=device_id, status="online", ws_session_id="old", battery=75,
+    ))
+    redis = Redis.from_url(os.environ["REDIS_URL"], decode_responses=False)
+    replacement = DeviceStatusCache(redis)
+    original_pipeline = presence_cache.redis.pipeline
+    replaced = False
+
+    class ReplaceBeforeExecute:
+        def __init__(self, pipe):
+            self.pipe = pipe
+
+        async def __aenter__(self):
+            await self.pipe.__aenter__()
+            return self
+
+        async def __aexit__(self, *args):
+            return await self.pipe.__aexit__(*args)
+
+        def __getattr__(self, name):
+            attribute = getattr(self.pipe, name)
+            if name != "execute":
+                return attribute
+
+            async def execute():
+                nonlocal replaced
+                if not replaced:
+                    replaced = True
+                    await replacement.set_status(device_id, DeviceLiveStatus(
+                        device_id=device_id, status="connecting", ws_session_id="replacement",
+                    ))
+                return await attribute()
+
+            return execute
+
+    try:
+        with patch.object(presence_cache.redis, "pipeline", side_effect=lambda **kwargs: ReplaceBeforeExecute(original_pipeline(**kwargs))):
+            if kind == "pong":
+                heartbeat = HeartbeatManager(AsyncMock(), device_id, presence_cache, session_id="old")
+                assert await heartbeat.handle_pong({"vpn_active": True, "battery": 1}) is False
+            else:
+                await handle_telemetry(device_id, {"vpn_active": True, "battery": 1}, presence_cache, session_id="old")
+        current = await presence_cache.get_status(device_id)
+        assert replaced and current.ws_session_id == "replacement"
+        assert current.status == "connecting" and current.battery is None
+        assert current.vpn_active is None
+    finally:
+        await redis.aclose()
 
 
 @pytest.mark.parametrize("timestamp", [None, "malformed", {}, 10**400])

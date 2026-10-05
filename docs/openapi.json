@@ -13129,6 +13129,46 @@
             ],
             "title": "Vpn Active"
           },
+          "vpn_observed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vpn Observed At",
+            "description": "Server receipt time of an explicit Android VPN report; independent of heartbeat"
+          },
+          "vpn_observed_session_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vpn Observed Session Id"
+          },
+          "vpn_observation_state": {
+            "type": "string",
+            "enum": [
+              "fresh",
+              "stale",
+              "unknown"
+            ],
+            "title": "Vpn Observation State",
+            "default": "unknown"
+          },
+          "vpn_observation_max_age_seconds": {
+            "type": "integer",
+            "title": "Vpn Observation Max Age Seconds",
+            "default": 120
+          },
           "android_version": {
             "anyOf": [
               {
@@ -13650,7 +13690,37 @@
                 "type": "null"
               }
             ],
-            "title": "Vpn Active"
+            "title": "Vpn Active",
+            "description": "Fresh current-session Android managed-VPN service report; null when unconfirmed, not proof of traffic/IP"
+          },
+          "vpn_observed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vpn Observed At",
+            "description": "Server receipt time of the last explicit Android VPN report, independent of heartbeat"
+          },
+          "vpn_observation_state": {
+            "type": "string",
+            "enum": [
+              "fresh",
+              "stale",
+              "unknown"
+            ],
+            "title": "Vpn Observation State",
+            "description": "Read-time receipt freshness and ownership; legacy/unowned/disconnected reports are unknown",
+            "default": "unknown"
+          },
+          "vpn_observation_max_age_seconds": {
+            "type": "integer",
+            "title": "Vpn Observation Max Age Seconds",
+            "default": 120
           },
           "last_heartbeat": {
             "anyOf": [
@@ -13961,7 +14031,37 @@
                 "type": "null"
               }
             ],
-            "title": "Vpn Active"
+            "title": "Vpn Active",
+            "description": "Fresh current-session Android managed-VPN service report; null when unconfirmed, not proof of traffic/IP"
+          },
+          "vpn_observed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vpn Observed At",
+            "description": "Server receipt time of the last explicit Android VPN report, independent of heartbeat"
+          },
+          "vpn_observation_state": {
+            "type": "string",
+            "enum": [
+              "fresh",
+              "stale",
+              "unknown"
+            ],
+            "title": "Vpn Observation State",
+            "description": "Read-time receipt freshness and ownership; legacy/unowned/disconnected reports are unknown",
+            "default": "unknown"
+          },
+          "vpn_observation_max_age_seconds": {
+            "type": "integer",
+            "title": "Vpn Observation Max Age Seconds",
+            "default": 120
           },
           "last_heartbeat": {
             "anyOf": [
