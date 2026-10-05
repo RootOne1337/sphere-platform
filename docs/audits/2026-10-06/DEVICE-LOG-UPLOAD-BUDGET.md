@@ -109,3 +109,13 @@ Working-tree probe той же 8 MiB fixture: объявленная oversized l
 без receive; без длины — после девятого chunk (589824 bytes переданы ASGI), вместо
 128 chunks / 8388608 bytes. Body cache отсутствует. Этот provisional результат
 не выдаётся за exact-source build; повтор после commit будет сохранён отдельно.
+
+### Исправление генерации схемы
+
+Первый exporter в локальной среде с Pydantic 2.6 внёс посторонние изменения в `$ref`
+и Literal schemas. Это было обнаружено до установки: схема перегенерирована с
+зависимостями установленного production image `9889c9ac` и Git-архивом нового backend.
+`backend/requirements.txt` между sources совпадает. Экспортер работал без сети и с
+readonly application mount; это отдельная генерация, не проверка нового packaged image.
+Сравнение полного JSON с `12915dd` подтвердило: меняются только четыре upload responses
+400/408/413/503. Новый образ обязан отдельно пройти `export_api_docs --check`.
