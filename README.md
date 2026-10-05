@@ -15,6 +15,14 @@
 
 </div>
 
+**5 октября / новое конечное наблюдение:** `02b5084` добавляет лёгкий8h recorder
+C:/VSS/allocated VHD/RAM/commit/Docker без полного обхода и без удаления данных.
+Запуск04:58→примерно12:58 UTC+5,241 срез, report budget16MiB; native первый sample
+и elevated process проверены. Дополнительно cache795→768, guest+1,068GiB;
+46 containers/67 volumes сохранены, VHD physical size не изменился.
+**68 diagnostic tests passed**, длительная приёмка ещё RUNNING.
+[Методика, факты и открытые причины](docs/audits/2026-10-05/HOST-STORAGE-NIGHT-WATCH.md).
+
 **Ресурсы, 5 октября / замеры UTC 4 октября:** удалён 51 проверенный старый образ
 Sphere, освобождено **10,938 GiB внутри Docker**; все 46 контейнеров сохранены.
 VHDX остаётся 218,61 GiB: физическое сжатие не выполнялось. Exact VSS counters и

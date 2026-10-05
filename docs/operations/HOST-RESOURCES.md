@@ -298,6 +298,32 @@ Admin окно COMPLETE. Allocated VSS display вырос13,9→14,1ГБ; free -
 не доказывают; здесь есть отдельные реальные квитанции.
 [Регрессии](../../tests/test_pilot_storage_allocation.py).
 
+### Лёгкое конечное ночное наблюдение, 5 октября
+
+[`host_storage_watch.py`](../../scripts/pilot/host_storage_watch.py) source `02b5084`
+добавляет8h/241samples/120s exact C:/VSS/allocated named-file/RAM/commit/pools.
+Docker guest/stats/container epochs измеряются каждые16min и в последнем sample.
+Report budget16MiB, sample128KiB; нет directory walks, automatic cleanup или
+autostart. Требуется отдельный elevated Windows process; запуск с обычным token
+отказывает до создания output. Watched paths должны быть absolute и distinct.
+
+```powershell
+# Из корня workspace, в elevated shell; новый direct child .local-pilot обязателен.
+& '.venv-audit\Scripts\python.exe' -X utf8 -m scripts.pilot.host_storage_watch --output-dir '.local-pilot\host-storage-night-unique' --watch-file 'C:\Users\dimas\AppData\Local\Docker\wsl\disk\docker_data.vhdx'
+```
+
+На этом ПК процесс уже запущен04:58 UTC+5, due примерно12:58. Не создавать дубликат
+до завершения/проверенного отказа. Точный каталог, SHA/acceptance и результаты
+дополнительного cache cleanup сохранены в
+[ночном отчёте](../audits/2026-10-05/HOST-STORAGE-NIGHT-WATCH.md).
+`unavailable` не считать нулём, отсутствие Docker cycle — не stale success;
+RAM deltas сопоставлять только при той же известной boot epoch. После reboot
+или missing PID `running` в последнем status не означает живой recorder.
+
+Завершение наблюдения само по себе не разрешает compaction/delete/restart.
+При новом необъяснённом free-drop короткая ETW ниже даёт file/PID evidence;
+process IO rates ночного recorder включают network/non-file и не заменяют её.
+
 ### Ограниченная запись процесса и файла, 5 октября
 
 [`collect_disk_writer.ps1`](../../scripts/pilot/collect_disk_writer.ps1) связывает

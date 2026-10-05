@@ -2,6 +2,16 @@
 
 **Навигация обновлена: 5 октября 2026. Исторические live-снимки ниже сохранены по датам.**
 
+**Текущее наблюдение04:58→примерно12:58 UTC+5:** новый finite recorder `02b5084`,
+8h /241samples /16MiB metadata, exact VSS + named-file allocated size + RAM/commit,
+без directory walks/cleanup/autostart. Elevated process/первый sample проверены;
+**RUNNING, не long-soak acceptance**.68 diagnostic tests/Ruff pilot scope passed.
+Адресный old cache prune дополнительно дал1,068GiB guest, records795→768,
+46 containers/67 volumes сохранены; physical VHD size прежний.
+[Границы проверки и следующий drop](../audits/2026-10-05/HOST-STORAGE-NIGHT-WATCH.md).
+R04/R05/R06/R07/R09 и прежние34 source-fixed /7 unclosed web gates не закрываются
+самим запуском наблюдения. Разработка продолжается независимо от его окончания.
+
 **Последний ресурсный срез, 5 октября / 21:42 UTC 4 октября:** адресно удалён
 51 старый owned image; внутри Docker +10,938 GiB, все 46 контейнеров сохранены.
 VHDX218,61 GiB физически не сжат. API/UI c1a6e79 / online APK10244 сохранены.

@@ -20,6 +20,7 @@ API/UI c1a6e79.** [Аудит диска, ОЗУ, сборки и RPC](audits/20
 [Эксплуатационная процедура](operations/HOST-RESOURCES.md).
 
 **5 октября — текущая работа с ресурсами:**
+[Конечный8h disk/VSS/RAM recorder /16MiB / source02b5084 /68 tests / RUNNING](audits/2026-10-05/HOST-STORAGE-NIGHT-WATCH.md) ·
 [ETW writer / exact VSS / 51 owned image / 10,938 GiB guest reclaim](audits/2026-10-05/DISK-WRITER-ATTRIBUTION.md) ·
 [APK10245 local+remote startup canary / 1680 passed, 2 skipped / long soak OPEN](audits/2026-10-05/APK-LOG-RETENTION.md).
 Source recorder `1402612` / projection `9a9256f`, 8 Windows tests; API/UI c1a6e79,

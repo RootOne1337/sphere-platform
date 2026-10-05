@@ -6,6 +6,16 @@
 
 [Главная](../../README.md) · [Каталог документации](../README.md) · [Readiness](READINESS.md) · [Fleet32 gates](../audits/2026-09-20/FLEET32-PREFLIGHT.md) · [PR #19](https://github.com/RootOne1337/sphere-platform/pull/19)
 
+**Новое окно, 5 октября04:58 UTC+5:** source `02b5084`, hidden elevated8h recorder
+с точными C:/VSS/allocated named-file/RAM/commit/pool counters; Docker каждые16min.
+241 samples/120s,16MiB report budget, без полных directory walks и service/device
+mutations. Первый native sample/PID/hash проверены, итоговая приёмка RUNNING;
+due примерно12:58 UTC+5.67 volumes/46 container epochs сохранены после адресного
+cache prune:795→768 records, guest+1,068GiB. Windows VHD остаётся218,61GiB.
+68 diagnostic tests и Ruff pilot scope passed. API ready;14 online /2×10245,
+12×10244; installed API/UI c1a6e79. Историческая причина и long RAM soak OPEN.
+[Полный контракт и evidence](../audits/2026-10-05/HOST-STORAGE-NIGHT-WATCH.md).
+
 **Последний этап ресурсов, 5 октября / 21:42 UTC 4 октября:** 51 старый owned image
 удалён после проверки tags/commit/container references; все 46 identities/epochs
 сохранены. Внутри Docker освобождено 10,938 GiB, images 237→186; VHDX остаётся
