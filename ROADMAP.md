@@ -1,13 +1,14 @@
 # 🗺️ Куда движется Sphere
 
-**Навигация обновлена5 октября 2026; F32-план ниже сохраняет порядок21 сентября.** [Главная](README.md) · [Полный реестр](docs/audits/2026-09-20/FLEET32-PREFLIGHT.md) · [Установленный pilot](docs/operations/LOCAL-PILOT.md)
+**Навигация обновлена 6 октября 2026; F32-план ниже сохраняет порядок21 сентября.** [Главная](README.md) · [Полный реестр](docs/audits/2026-09-20/FLEET32-PREFLIGHT.md) · [Установленный pilot](docs/operations/LOCAL-PILOT.md)
 
 **Текущий продуктовый план:** [50 работ с зависимостями и приёмкой](docs/audits/2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json),
 EP-001–009 приняты,41 пункт сохраняют открытые критерии.
 [Последний пакет ресурсной истории](docs/audits/2026-10-05/ENTERPRISE-CONTAINER-RESOURCE-HISTORY.md).
 EP-009: принята история cgroup CPU/RAM; host/RSS остаются отдельными scope.
-EP-010 продолжается: [Stage A expiry и Stage B Android clock/ownership установлены](docs/audits/2026-10-05/ENTERPRISE-ANDROID-VPN-OBSERVATION.md).
-[Coverage tunnels/fleet и независимый producer](docs/audits/2026-10-05/ENTERPRISE-LIVE-COVERAGE-NEXT.md) ещё открыты. Затем реестр/настройки и Studio/recording/trace по dependencies.
+EP-010 продолжается: [tenant coverage UI/API установлен](docs/audits/2026-10-05/ENTERPRISE-FLEET-COVERAGE.md),
+[clock/ownership foundation сохранён](docs/audits/2026-10-05/ENTERPRISE-ANDROID-VPN-OBSERVATION.md).
+[Независимый producer, история coverage и транспортные probes](docs/audits/2026-10-05/ENTERPRISE-LIVE-COVERAGE-NEXT.md) ещё открыты. Затем реестр/настройки и Studio/recording/trace по dependencies.
 Планируемый пользовательский stream+script тест20–30 эмуляторов — отдельный
 живой этап; целевой F32-план32 ниже не считается выполненным по 14 online.
 Будущие VPN-адаптеры/AI и универсальные project databases не входят в текущую

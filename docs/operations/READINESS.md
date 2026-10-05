@@ -2,13 +2,27 @@
 
 **Навигация обновлена: 5 октября 2026. Исторические live-снимки ниже сохранены по датам.**
 
-**5 октября, 21:11 UTC+5 — установлен EP-010 Stage B foundation:** API `d656b579`,
+**6 октября, 00:00 UTC+5 — установлена tenant-сводка EP-010 Stage B:**
+API `7fef9c53`, веб `9ad0a69e` на [3015/monitoring](http://127.0.0.1:3015/monitoring).
+Шесть отдельных источников: активный парк, связь, VPN-отчёт Android, назначения,
+сохранённые handshakes и неподключённые проверки публичного транспорта.
+Живое окно 19:00 UTC: 19 устройств, 14 online + 5 unknown; 14 VPN inactive + 5 unknown.
+Первая установка выявила text/binary Redis mismatch; отдельный фикс и регрессия
+подтвердили исправление. 476 + 35 exact-image tests, 1298 frontend tests, Node24
+build/types, scoped Ruff и OpenAPI прошли. Сохранены 45 соседей; APK/OTA не менялись.
+CI исходников API `7fef9c53`: backend 2754 passed / 30 skipped; frontend, Android
+и остальные gates прошли. CI последующего docs-коммита проверяется отдельно.
+**9 принято / 41 открыто**, EP-010 OPEN: независимый producer, транспортные probes
+и нагрузочный прогон ещё не приняты. [Доказательства и ограничения](../audits/2026-10-05/ENTERPRISE-FLEET-COVERAGE.md) ·
+[Pinned receipts](../audits/2026-10-05/ENTERPRISE-FLEET-COVERAGE-EVIDENCE.json).
+
+**Историческая установка foundation — 5 октября, 21:11 UTC+5:** API `d656b579`,
 UI `cb5b3f91` сохранён. VPN-отчёт Android имеет независимое серверное время и
 владельца сеанса; атомарная запись защищена от запоздавшего старого подключения.
 После 120 с отчёт не считается свежим. Живое окно16:20 UTC:14 свежих false и5
 unknown при14 online/5 offline из19. Это не проверка VPN-трафика или SLA.
 Exact image444+35 tests; source CI backend2722 passed/30 skipped, frontend и
-Android прошли. Сохранены45 соседей. **9 принято/41 открыто**, EP-010 ещё OPEN.
+Android прошли. Сохранены 45 соседей. **9 принято/41 открыто**, EP-010 ещё OPEN.
 [Результат, ограничения и следующие критерии](../audits/2026-10-05/ENTERPRISE-ANDROID-VPN-OBSERVATION.md) · [Pinned evidence](../audits/2026-10-05/ENTERPRISE-ANDROID-VPN-OBSERVATION-EVIDENCE.json).
 
 **Историческая установка Stage A — 5 октября, 20:31 UTC+5:** backend `66714f26`,

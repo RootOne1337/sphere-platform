@@ -1,11 +1,12 @@
 # EP-010 — live coverage and event delivery review
 
 **5 October 2026. Initial source reviewed:** `cb5b3f91640c86622060e6e3adea76c6d73a6093`.
-**Current status:** Stage B clock/ownership foundation installed with API source
-`d656b579`; preserved UI `cb5b3f91`. Stage A and schema repair receipts below remain
-historical. [Stage B checks and actual runtime](ENTERPRISE-ANDROID-VPN-OBSERVATION.md)
-include independently timed Android reports, 444+35 exact-image tests and green
-source CI (2722 passed / 30 skipped). EP-010 remains OPEN. The immutable
+**Current status:** tenant coverage API/UI installed with API `7fef9c53` and
+UI `9ad0a69e`. [Corrected runtime and coverage cards](ENTERPRISE-FLEET-COVERAGE.md)
+record 476+35 corrected-image tests, 1298 UI tests and actual 19-device reads.
+[Stage B clock/ownership foundation](ENTERPRISE-ANDROID-VPN-OBSERVATION.md) and
+Stage A/schema receipts remain historical. EP-010 is OPEN: request-time coverage
+is not the independent producer or public transport probes. The immutable
 [50-item backlog](ENTERPRISE-PRODUCT-BACKLOG.json) is retained.
 Current acceptance remains **9 accepted / 41 with open criteria**.
 [Installed resource histories](ENTERPRISE-CONTAINER-RESOURCE-HISTORY.md) ·
@@ -24,6 +25,7 @@ does not make a controller reading or a scrape arrive sooner.
 | Device registry | REST plus fleet-event reconciliation | 30 s fallback; 15 s staleTime | Reads inventory/presence for the filtered tenant scope |
 | Dashboard fleet | REST plus related fleet events | 15 s fallback | Tenant fleet data, not platform-wide Prometheus inventory |
 | HTTP and container-resource history | Prometheus scrape plus authorized browser snapshot | 15 s scrape and 15 s visible-page refresh | Values can lag by roughly both intervals plus transport/query time |
+| Tenant fleet/VPN coverage | REST plus device/task/VPN events | 15 s visible-page fallback; 45 s UI expiry | Bounded request-time SQL/Redis counts; no independent producer or public tunnel probe |
 | Infrastructure health / current counters | REST probes | 10 s | Probe availability is separate from data-plane health |
 | VPN peers / health | REST plus VPN events | 30 s fallback | Assignment, Android application and handshake are distinct facts |
 | VPN pool summary | REST plus VPN events | 60 s fallback | Retained-handshake expiry corrected in Stage A; router and Android coverage still incomplete |
@@ -53,7 +55,7 @@ when user, organization, role or session version changes.
 The existing [event-hook tests](../../../frontend/__tests__/hooks/useFleetEvents.test.tsx)
 exercise coalescing, initial/reconnected reconciliation, watchdog recovery,
 background deferral and cleanup. They are included in the previously recorded
-1275-test source run; no new end-to-end replay or latency SLA is claimed here.
+1275-test historical source run and the new 1298-test UI run; no end-to-end replay or latency SLA is claimed here.
 
 ## Source-proven gaps
 
@@ -87,6 +89,10 @@ an Android VPN, public tunnel or route is active.
 
 ### C3 — pool active count lacked timestamp expiry (corrected in Stage A)
 
+The paragraphs below retain the initial defect rationale. The current count
+requires assigned/bound/recent evidence, as recorded in
+[Stage A and subsequent foundation](ENTERPRISE-ANDROID-VPN-OBSERVATION.md).
+
 At the initially reviewed source, [vpn/router.py](../../../backend/api/v1/vpn/router.py), `pool_stats`, counted
 `VPNPeer.is_active == True` within the organization. Its active-count query does
 not also require ASSIGNED state, a bound device or a sufficiently recent handshake.
@@ -103,11 +109,11 @@ SQL reproduction and the corrected count must precede runtime acceptance.
 
 ### C4 — Android applied state had no independent observation timestamp (Stage B foundation)
 
-[DeviceLiveStatus](../../../backend/schemas/device_status.py) carries nullable
+At the initially reviewed source, [DeviceLiveStatus](../../../backend/schemas/device_status.py) carried nullable
 `vpn_active` and `last_heartbeat`. [HeartbeatManager](../../../backend/websocket/heartbeat.py)
-updates the VPN field only when it is present in a pong. A later pong can refresh
+updated the VPN field only when it was present in a pong. A later pong could refresh
 the heartbeat without supplying a new VPN observation. Consequently a fresh
-heartbeat does not, by itself, prove a fresh VPN-applied observation.
+heartbeat did not, by itself, prove a fresh VPN-applied observation.
 
 The [Stage B foundation](ENTERPRISE-ANDROID-VPN-OBSERVATION.md) adds independent
 server receipt time, current-session ownership and read-time expiry. Its source
@@ -150,6 +156,13 @@ unrelated heartbeat to a retained VPN flag.
     its exact ownership/storage budget requires verification before selection.
 
 ## Staged implementation and evidence
+
+The sequence below is the original plan, not a list of entirely unstarted work.
+Stage A and the Stage B clock/ownership foundation are installed. The new
+[tenant contract, UI and corrected runtime](ENTERPRISE-FLEET-COVERAGE.md) implement
+the request-time portion of B/D and freeze its bounded evidence. Stage C, actual
+transport probes, dedicated production-role/failure and load acceptance remain
+open; this partial implementation does not close the whole EP-010 criterion.
 
 **Stage A:** reproduce the stale pool count using isolated SQL with fixed time,
 two organizations and fresh/stale/absent/future timestamps. Correct its advertised
