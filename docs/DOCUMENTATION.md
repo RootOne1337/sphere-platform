@@ -2,8 +2,17 @@
 
 [Каталог](README.md) · [Readiness](operations/READINESS.md) · [Contributing](../CONTRIBUTING.md)
 
-**Последняя сверка входных документов: 5 октября 2026, ресурсная приёмка14:55 UTC.** Для текущих
+**Последняя сверка входных документов: 5 октября 2026, 15:43 UTC.** Для текущих
 версий и границ live-подтверждения используйте [каноническое состояние](operations/CURRENT-STATE.md).
+
+**5 октября, 20:31 UTC+5 — частичный EP-010 Stage A установлен:** backend `66714f26`,
+UI `cb5b3f91` сохранён. Список peers и pool counts теперь одинаково исключают
+устаревший/future handshake, неназначенные и непривязанные peers; добавлено время
+SQL-среза. Exact image: 99 VPN + 27 resource tests, mypy 231/Ruff прошли; сохранены
+45 соседних контейнеров. Живой текущий VPN-каталог пуст: нули не доказывают работу
+VPN на Android. Последующее окно 6×3 с: 14 online из 19, без утверждения SLA.
+**9 принято / 41 открыто**: весь EP-010 ещё открыт.
+[События, polling и оставшиеся источники](audits/2026-10-05/ENTERPRISE-LIVE-COVERAGE-NEXT.md) · [Image/runtime evidence](audits/2026-10-05/ENTERPRISE-LIVE-COVERAGE-EVIDENCE.json).
 
 **5 октября, 19:55 UTC+5 — EP-009 принят на живом 3015:** API/UI **`cb5b3f91`**,
 gateway config **`993d9eac`** сохранён. Реальная история CPU в использованных ядрах

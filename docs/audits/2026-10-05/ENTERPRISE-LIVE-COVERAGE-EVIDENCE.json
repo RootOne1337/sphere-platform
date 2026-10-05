@@ -1,0 +1,155 @@
+{
+  "schemaVersion": 1,
+  "status": "PARTIAL_EP_010_STAGE_A_INSTALLED",
+  "observedAt": "2026-10-05T15:42:17.203282+00:00",
+  "source": "66714f26a657e3600d10ee87bafa8ab3ed769294",
+  "uiSourcePreserved": "cb5b3f91640c86622060e6e3adea76c6d73a6093",
+  "criterionClosed": false,
+  "ledger": {
+    "accepted": 9,
+    "open": 41,
+    "immutableBaselineRetained": true
+  },
+  "image": {
+    "source": "66714f26a657e3600d10ee87bafa8ab3ed769294",
+    "imageId": "sha256:c8b1ffab5837f127772564f0a90e6b58e730b2e3dbc90ec3945fd3673801e40e",
+    "image": "sphere-pilot-20260911-backend:66714f26a657e3600d10ee87bafa8ab3ed769294",
+    "exit": 0,
+    "gitArchive": true
+  },
+  "beforeRegression": {
+    "tests": 13,
+    "failed": 9,
+    "errors": 0,
+    "SQLite": true
+  },
+  "sourceHashes": [
+    {
+      "file": "backend/api/v1/vpn/router.py",
+      "sha256": "211fca4384c31a00e379c2beb47ff93c74b0d9745ad4778a01f85e73b1b97d9b"
+    },
+    {
+      "file": "backend/schemas/vpn/peer.py",
+      "sha256": "76f22b0929d94bcdadef5ebe69b69cf8fa680b0c14ff89c098449afb4ca4aa80"
+    },
+    {
+      "file": "tests/vpn/test_pool_observation_freshness.py",
+      "sha256": "86b3967d85adac8ce24d3a04457b2e93276da44b442aeb595a72222592833778"
+    },
+    {
+      "file": "docs/audits/2026-10-05/ENTERPRISE-LIVE-COVERAGE-NEXT.md",
+      "sha256": "df87c766aae8256503316051517e2326c069932c131a32bf75579158706cbdfd"
+    },
+    {
+      "file": "backend/monitoring/container_resources.py",
+      "sha256": "bc6fd1fd908cddcf9f2db82cb0bca636db4268b41625627055961f1df36f2f4a"
+    },
+    {
+      "file": "backend/monitoring/resource_exposition.py",
+      "sha256": "bbee215d2cfa54b8571175c6de5d26a1ad30847e952e73ec09888555991f76a0"
+    }
+  ],
+  "receipts": [
+    {
+      "file": "evidence/live-coverage/api-installed.json",
+      "sha256": "5f935e2fa14d5f4e32e97153e38778238d3d8fee41bbccc593bbc929dc8593bd"
+    },
+    {
+      "file": "evidence/live-coverage/vpn-live.json",
+      "sha256": "380ccf79bf0734165e8cc803dba83993cb3da8d84b16a2973876e76e9dd09173"
+    },
+    {
+      "file": "evidence/live-coverage/final-check.json",
+      "sha256": "b445b42aa362a1f72bcf28499c90ce76943743091762fdf172790d893e6d5f21"
+    },
+    {
+      "file": "evidence/live-coverage/vpn-image-tests.json",
+      "sha256": "fc4c5091db644db0e5edd10cf1c7bf58aa4c5a3efd2abf19c035672ae5aefcdb"
+    },
+    {
+      "file": "evidence/live-coverage/resource-image-tests.json",
+      "sha256": "2c5f4941c78ec714be8f60682957481249e669ec8ce763f805f9cd04ef5c2f2c"
+    },
+    {
+      "file": "evidence/live-coverage/mypy.json",
+      "sha256": "f42279b1d654d37e84e01fb2d1930802ed523e53daac88b510fc0a8cc36ed04d"
+    },
+    {
+      "file": "evidence/live-coverage/ruff.json",
+      "sha256": "f42279b1d654d37e84e01fb2d1930802ed523e53daac88b510fc0a8cc36ed04d"
+    },
+    {
+      "file": "evidence/live-coverage/vpn-suite-final.json",
+      "sha256": "9151265e58e43f3e823d85d6ade8bca43ac868f8dcbd7ad92bd1a3dc84405584"
+    },
+    {
+      "file": "evidence/live-coverage/vpn-image-tests.xml",
+      "sha256": "f87cb76d1c03f8caf1161ab579e1b39678d3bfea95bffbe5711f649e142b0cc6"
+    },
+    {
+      "file": "evidence/live-coverage/resource-image-tests.xml",
+      "sha256": "e3962f5ef394d04fcbdec9df642d37da7968f851a0198de91c791a059a4d2425"
+    },
+    {
+      "file": "evidence/live-coverage/api-schema-export.json",
+      "sha256": "ed8d8c787fa188b4479d6a60b0160dc3decaa3ea36fffb027a06e029899214fd"
+    }
+  ],
+  "screenshots": [
+    {
+      "file": "assets/live-coverage/resources-after-api.jpg",
+      "sha256": "e70b7606930b9bcfb01d886fe6c1aa1c712a7887a8ae59fd6e0c72012332b727",
+      "width": 724,
+      "height": 884,
+      "realBrowserCapture": true
+    },
+    {
+      "file": "assets/live-coverage/vpn-empty-live.jpg",
+      "sha256": "ac2cfcfb1046d95cbac1322d9b26d03ca474bd4c502040c32478b43622006224",
+      "width": 724,
+      "height": 884,
+      "realBrowserCapture": true
+    }
+  ],
+  "remaining": [
+    "independent fleet metric producer",
+    "infrastructure tunnel observation",
+    "Android VPN observation timestamp and session ownership",
+    "full EP-010 UI/producer/end-to-end acceptance",
+    "Windows disk/RAM writer attribution"
+  ],
+  "sourceCi": [
+    {
+      "workflow": "backend",
+      "conclusion": "failure",
+      "headSha": "66714f26a657e3600d10ee87bafa8ab3ed769294",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37332463875",
+      "failedStep": "Verify generated HTTP API documentation",
+      "unitTests": {
+        "passed": 2685,
+        "skipped": 30,
+        "coveragePercent": 79.7
+      }
+    },
+    {
+      "workflow": "frontend",
+      "conclusion": "success",
+      "headSha": "66714f26a657e3600d10ee87bafa8ab3ed769294",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37332463878"
+    },
+    {
+      "workflow": "android",
+      "conclusion": "success",
+      "headSha": "66714f26a657e3600d10ee87bafa8ab3ed769294",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37332463726"
+    }
+  ],
+  "previousEvidence": "ENTERPRISE-CONTAINER-RESOURCE-EVIDENCE.json",
+  "previousEvidenceSha256": "a68e408255053b447885e359208c1c19755cd9e5b1add36fbb1f030d8054d487",
+  "textHashFormat": "UTF-8 with CRLF normalized to LF",
+  "documentationRepairCommit": "ffdcd3631ea4f693660b971c858d9aa3043f7ba0",
+  "subsequentCiAccepted": false
+}

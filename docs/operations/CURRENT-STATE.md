@@ -6,6 +6,22 @@
 
 [Главная](../../README.md) · [Каталог документации](../README.md) · [Readiness](READINESS.md) · [Fleet32 gates](../audits/2026-09-20/FLEET32-PREFLIGHT.md) · [PR #19](https://github.com/RootOne1337/sphere-platform/pull/19)
 
+**5 октября, 20:31 UTC+5 — частичный EP-010 Stage A установлен:** backend `66714f26`,
+UI `cb5b3f91` сохранён. Список peers и pool counts теперь одинаково исключают
+устаревший/future handshake, неназначенные и непривязанные peers; добавлено время
+SQL-среза. Exact image: 99 VPN + 27 resource tests, mypy 231/Ruff прошли; сохранены
+45 соседних контейнеров. Живой текущий VPN-каталог пуст: нули не доказывают работу
+VPN на Android. Последующее окно 6×3 с: 14 online из 19, без утверждения SLA.
+**9 принято / 41 открыто**: весь EP-010 ещё открыт.
+[События, polling и оставшиеся источники](../audits/2026-10-05/ENTERPRISE-LIVE-COVERAGE-NEXT.md) · [Image/runtime evidence](../audits/2026-10-05/ENTERPRISE-LIVE-COVERAGE-EVIDENCE.json).
+
+**20:43 UTC+5 — уточнение CI и схемы:** source `66714f26`: backend test step
+2685 passed /30 skipped, coverage 79.70%; bootstrap/lint/security/RLS прошли.
+Workflow остановлен следующим шагом проверки устаревшего OpenAPI. Frontend и
+Android CI этого source прошли. Схема синхронизирована отдельным docs-коммитом
+`ffdcd36`; exact-image exporter `--check` прошёл. Полный CI нового head ещё не
+принят. Этот docs-only коммит не меняет установленные API/UI revisions.
+
 **5 октября, 19:55 UTC+5 — EP-009 принят на живом 3015:** API/UI **`cb5b3f91`**,
 gateway config **`993d9eac`** сохранён. Реальная история CPU в использованных ядрах
 и памяти в GiB cgroup контейнера: окна 1/6/24 h, сбор/обновление 15 с, среднее CPU за 1 минуту.

@@ -1,0 +1,10 @@
+{
+  "exit": 0,
+  "tests": 99,
+  "failed": 0,
+  "errors": 0,
+  "skipped": 0,
+  "SQLite": true,
+  "PostgreSQLRuntimeProven": false,
+  "routerAndAndroidContactedByNewTests": false
+}

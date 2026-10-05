@@ -1,9 +1,10 @@
 # EP-010 — live coverage and event delivery review
 
-**5 October 2026. Source reviewed:** `cb5b3f91640c86622060e6e3adea76c6d73a6093`.
-**Status:** source investigation and implementation contract; EP-010 remains OPEN.
-This review changes neither runtime behavior nor the immutable
-[50-item backlog](ENTERPRISE-PRODUCT-BACKLOG.json).
+**5 October 2026. Initial source reviewed:** `cb5b3f91640c86622060e6e3adea76c6d73a6093`.
+**Current status:** Stage A installed with API source `66714f26`; API schema synchronized
+in documentation-only commit `ffdcd36`. EP-010 remains OPEN. The runtime receipt
+below records the partial change; the immutable
+[50-item backlog](ENTERPRISE-PRODUCT-BACKLOG.json) is retained.
 Current acceptance remains **9 accepted / 41 with open criteria**.
 [Installed resource histories](ENTERPRISE-CONTAINER-RESOURCE-HISTORY.md) ·
 [Current runtime](../../operations/CURRENT-STATE.md).
@@ -23,7 +24,7 @@ does not make a controller reading or a scrape arrive sooner.
 | HTTP and container-resource history | Prometheus scrape plus authorized browser snapshot | 15 s scrape and 15 s visible-page refresh | Values can lag by roughly both intervals plus transport/query time |
 | Infrastructure health / current counters | REST probes | 10 s | Probe availability is separate from data-plane health |
 | VPN peers / health | REST plus VPN events | 30 s fallback | Assignment, Android application and handshake are distinct facts |
-| VPN pool summary | REST plus VPN events | 60 s fallback | Current counter semantics require further correction |
+| VPN pool summary | REST plus VPN events | 60 s fallback | Retained-handshake expiry corrected in Stage A; router and Android coverage still incomplete |
 | Device events / aggregate event stats | REST plus fleet events | 15 s / 60 s | Journal reads are separate from the transient notification channel |
 
 Sources: [fleet hook](../../../frontend/lib/hooks/useFleetEvents.ts),
@@ -82,9 +83,9 @@ the number of assigned peers would conceal the missing signal rather than fix it
 The infrastructure network counters cover backend interfaces; they do not prove
 an Android VPN, public tunnel or route is active.
 
-### C3 — pool active count lacks timestamp expiry
+### C3 — pool active count lacked timestamp expiry (corrected in Stage A)
 
-[vpn/router.py](../../../backend/api/v1/vpn/router.py), `pool_stats`, counts
+At the initially reviewed source, [vpn/router.py](../../../backend/api/v1/vpn/router.py), `pool_stats`, counted
 `VPNPeer.is_active == True` within the organization. Its active-count query does
 not also require ASSIGNED state, a bound device or a sufficiently recent handshake.
 The [public schema](../../../backend/schemas/vpn/peer.py) describes this value as
@@ -202,3 +203,64 @@ Source implementation is a partial EP-010 slice. Runtime installation and image
 checks must be recorded separately; the currently accepted EP-009 runtime does
 not acquire this change merely because the working source was edited. C1, C2,
 C4, the independent producer and end-to-end coverage acceptance remain open.
+
+## Stage A runtime receipt
+
+API source **`66714f26a657e3600d10ee87bafa8ab3ed769294`** was installed at
+15:26:41 UTC. Image **`sha256:c8b1ffab5837f127772564f0a90e6b58e730b2e3dbc90ec3945fd3673801e40e`**
+was built from committed Git archive. Exact-image checks passed: 99 VPN tests,
+27 resource/multiprocess tests, mypy 231 files and Ruff. Containers used network
+none and no application-source mounts; VPN tests remain SQLite/FakeRedis tests.
+
+Only the backend container was replaced. All 45 neighbors, their start epochs,
+mounts and log rotation settings were preserved. The UI source remains
+`cb5b3f91640c86622060e6e3adea76c6d73a6093`; its different revision is intentionally
+visible in the build badge. Prometheus, Grafana, APK/OTA, databases and tunnels
+were not replaced. The API response change is additive for this installed UI.
+
+Actual PostgreSQL-backed tenant reads returned an empty peer catalog and zero
+assignment/active/stale counts with a valid UTC observation and threshold 180.
+Peer flags and aggregate count agreed. This validates the deployed read path for
+empty inventory; it does not demonstrate production stale peers, PostgreSQL RLS
+or an operational Android VPN. No router read or device command was sent.
+
+The before/after rollout samples were 14 online / 5 offline of 19. A later finite
+six-sample window, three seconds apart, retained the same counts. Connection
+epochs and uninterrupted uptime were not measured. HTTP/resource panels remained
+available in API checks and the actual browser; the existing absent-quota state
+remained unknown. Own-session logout returned 204 and a subsequent resource read
+returned 401. The operator's browser session was preserved.
+
+[Portable partial evidence](ENTERPRISE-LIVE-COVERAGE-EVIDENCE.json) ·
+[Actual empty VPN catalog](assets/live-coverage/vpn-empty-live.jpg) ·
+[Resource panels after API replacement](assets/live-coverage/resources-after-api.jpg).
+
+EP-010 remains OPEN and the acceptance overlay remains 9/41. Its remaining
+producer/freshness semantics are listed above; the staged implementation is not
+a declaration of platform readiness or a new VPN protocol release.
+
+## Source CI and documentation repair
+
+At source `66714f26`, the backend unit/real-service test step passed **2685 tests,
+30 skipped**, with **79.70% coverage**. Production-image bootstrap, four-worker
+replacement, PostgreSQL restart, lint, security and RLS policy checks also passed.
+The workflow subsequently failed `scripts.export_api_docs --check`: the new
+additive VPN response fields were missing from the committed OpenAPI. Redis
+memory acceptance and the downstream Alembic job were skipped after that failure;
+this workflow is not recorded as successful.
+
+Documentation-only commit `ffdcd36` regenerates the two output documents from
+the actual installed production image. Only `docs/openapi.json` changes; the HTTP
+endpoint catalog remains identical. The exact-image exporter check now passes
+without network, lifespan startup or backend source mounts, with its shipped
+FastAPI 0.136.3 / Pydantic 2.9.2. The public
+[export receipt](evidence/live-coverage/api-schema-export.json) records that
+dependency boundary. The subsequent full CI run must finish independently;
+neither this repair nor artifact verification proves all checks are green.
+
+Recheck the frozen artifact set with
+`python -m scripts.audit.validate_live_coverage` using the
+[integrity checker](../../../scripts/audit/validate_live_coverage.py).
+It checks source/image associations, test XML, rollout receipts, screenshot
+hashes and the unchanged 9/41 ledger. It does not contact the running API,
+rerun tests, certify ongoing health or close EP-010.
