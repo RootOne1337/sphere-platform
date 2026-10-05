@@ -6,6 +6,19 @@
 
 [Главная](../../README.md) · [Каталог документации](../README.md) · [Readiness](READINESS.md) · [Fleet32 gates](../audits/2026-09-20/FLEET32-PREFLIGHT.md) · [PR #19](https://github.com/RootOne1337/sphere-platform/pull/19)
 
+**5 октября — новый продуктовый аудит, без изменения приложения:**
+проверены 22 раздела меню в установленном UI/API `c1a6e79a`, исходники `c3937a1`.
+Шесть подтверждённых дефектов: сброс колонок после F5, несовместимые экспорт и импорт
+графа сценария, поле модели устройства, пустое число узлов в выборе сценария
+и неверная отметка HTTP 403 как доставки legacy webhook.
+Grafana показывает Welcome вместо dashboard; причина пока OPEN.
+План из 50 работ различает дефекты, ограничения возможностей, дизайн и будущие адаптеры.
+Каталог включает 32 типа действий, 178 HTTP operations, 161 schema и 672 объявления
+элементов управления; это не утверждение об исполнении всех действий.
+Исправления приложения и новая установка на этом этапе не выполнялись.
+[Аудит, доказательства и критерии](../audits/2026-10-05/ENTERPRISE-PRODUCT-AUDIT.md) ·
+[План с зависимостями](../audits/2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json).
+
 **Новое окно, 5 октября04:58 UTC+5:** source `02b5084`, hidden elevated8h recorder
 с точными C:/VSS/allocated named-file/RAM/commit/pool counters; Docker каждые16min.
 241 samples/120s,16MiB report budget, без полных directory walks и service/device
