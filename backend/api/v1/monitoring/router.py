@@ -18,7 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.dependencies import get_tenant_db, require_permission
 from backend.core.rbac import has_permission
-from backend.database.redis_client import get_redis
+from backend.database.redis_client import get_redis, get_redis_binary
 from backend.schemas.fleet_coverage import FleetCoverageResponse
 from backend.services.fleet_coverage import read_fleet_coverage
 from backend.services.health_service import ComponentHealth, HealthService, get_health_service
@@ -33,7 +33,7 @@ router = APIRouter(prefix="/monitoring", tags=["monitoring"])
 async def get_fleet_coverage(
     current_user=require_permission("device:read"),
     db: AsyncSession = Depends(get_tenant_db),
-    redis_conn=Depends(get_redis),
+    redis_conn=Depends(get_redis_binary),
 ) -> FleetCoverageResponse:
     return await read_fleet_coverage(db, redis_conn, current_user.org_id,
                                     vpn_allowed=has_permission(current_user.role, "vpn:read"))

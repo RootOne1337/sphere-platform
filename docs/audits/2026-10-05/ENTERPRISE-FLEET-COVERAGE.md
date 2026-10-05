@@ -90,7 +90,8 @@ counts remain independently available where permitted.
 
 Inventory and peer reads each have a three-second asynchronous timeout and
 SAVEPOINT. Redis reads have a two-second aggregate timeout with MGET chunks of
-500 IDs and no SCAN. A failed later chunk discards all partial counts. Recoverable
+500 IDs and no SCAN. The route uses the existing binary Redis client because
+device statuses are MessagePack, not UTF-8 text. A failed later chunk discards all partial counts. Recoverable
 peer source failure does not hide valid inventory or Android evidence.
 
 Failure of authentication, tenant setup or an unrecoverable database connection
@@ -138,6 +139,13 @@ Local test libraries differ from production dependency versions. Candidate-image
 checks and source CI are separately recorded; one must not stand in for the other.
 Generated OpenAPI/catalog use the installed dependency family without starting
 application lifespan or contacting production services.
+
+The first live rollout exposed a dependency wiring error: the new route injected
+the text Redis client, causing UnicodeDecodeError on real MessagePack records.
+The UI correctly displayed unavailable sources. A separate correction injects
+the binary client and adds a regression with both clients sharing one Redis
+fixture. The initial rollout is not recorded as successful fleet coverage;
+only the corrected source and rechecked runtime can supply final evidence.
 
 ## Outstanding criteria
 

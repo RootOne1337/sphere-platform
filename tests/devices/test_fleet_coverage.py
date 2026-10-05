@@ -7,9 +7,10 @@ from unittest.mock import AsyncMock, patch
 
 import msgpack
 import pytest
+from fakeredis import FakeServer
 from fakeredis.aioredis import FakeRedis
 
-from backend.database.redis_client import get_redis
+from backend.database.redis_client import get_redis, get_redis_binary
 from backend.main import app
 from backend.models import Device
 from backend.models.vpn_peer import VPNPeer, VPNPeerStatus
@@ -29,7 +30,7 @@ async def install_live(device_id, *, state='online', flag=True, age=0, heartbeat
         vpn_observed_at=NOW - timedelta(seconds=age) if age is not None else None,
         vpn_observed_session_id=reporter,
     ))
-    app.dependency_overrides[get_redis] = lambda: redis
+    app.dependency_overrides[get_redis_binary] = lambda: redis
     return redis
 
 
@@ -80,7 +81,7 @@ async def test_independent_clocks_partition_android_reports(
 @pytest.mark.parametrize('kind', ['missing', 'malformed', 'wrong-device'])
 async def test_unobserved_presence_is_unknown_not_offline(device_client, sample_device, kind):
     redis = FakeRedis(decode_responses=False)
-    app.dependency_overrides[get_redis] = lambda: redis
+    app.dependency_overrides[get_redis_binary] = lambda: redis
     if kind == 'malformed':
         await redis.set('device:status:' + str(sample_device.id), b'not-msgpack')
     if kind == 'wrong-device':
@@ -101,7 +102,7 @@ async def test_redis_failure_preserves_sql_but_has_no_presence_numbers(device_cl
     redis = None if redis_kind == 'absent' else AsyncMock()
     if redis is not None:
         redis.mget.side_effect = ConnectionError('private upstream must not appear in response')
-    app.dependency_overrides[get_redis] = lambda: redis
+    app.dependency_overrides[get_redis_binary] = lambda: redis
     data = await read(device_client)
     assert data['inventory']['counts']['total'] == 1
     assert data['presence']['state'] == data['android_vpn']['state'] == 'unavailable'
@@ -169,7 +170,7 @@ async def test_inventory_budget_retains_exact_sql_total_without_reading_redis(
     db_session.add(Device(org_id=device_org.id, name='second'))
     await db_session.flush()
     redis = AsyncMock()
-    app.dependency_overrides[get_redis] = lambda: redis
+    app.dependency_overrides[get_redis_binary] = lambda: redis
     with patch('backend.services.fleet_coverage.MAX_INVENTORY_DEVICES', 1):
         data = await read(device_client)
     assert data['inventory']['counts'] == {'total': 2}
@@ -186,7 +187,7 @@ async def test_later_redis_chunk_failure_discards_partial_counts(
     await db_session.flush()
     redis = AsyncMock()
     redis.mget.side_effect = [[None], ConnectionError('private endpoint')]
-    app.dependency_overrides[get_redis] = lambda: redis
+    app.dependency_overrides[get_redis_binary] = lambda: redis
     with patch('backend.services.fleet_coverage.REDIS_BATCH_SIZE', 1):
         data = await read(device_client)
     assert redis.mget.await_count == 2
@@ -246,3 +247,26 @@ async def test_peers_cannot_cross_tenant_or_disabled_inventory(device_client, de
     assert data['vpn_assignment']['counts']['assigned'] == 1
     assert data['vpn_assignment']['counts']['outside_active_inventory'] == 1
     assert sum(data['handshakes']['counts'].values()) == 0
+
+
+async def test_route_uses_binary_client_when_text_and_binary_clients_coexist(device_client, sample_device):
+    server = FakeServer()
+    binary = FakeRedis(server=server, decode_responses=False)
+    text = FakeRedis(server=server, decode_responses=True)
+    cache = DeviceStatusCache(binary)
+    await cache.set_status(str(sample_device.id), DeviceLiveStatus(
+        device_id=str(sample_device.id), status='online', ws_session_id='owner', last_heartbeat=NOW,
+        vpn_active=False, vpn_observed_at=NOW, vpn_observed_session_id='owner',
+    ))
+    app.dependency_overrides[get_redis] = lambda: text
+    app.dependency_overrides[get_redis_binary] = lambda: binary
+    try:
+        with pytest.raises(UnicodeDecodeError):
+            await text.mget('device:status:' + str(sample_device.id))
+        data = await read(device_client)
+        assert data['presence']['state'] == data['android_vpn']['state'] == 'ready'
+        assert data['presence']['counts']['online'] == 1
+        assert data['android_vpn']['counts']['inactive'] == 1
+    finally:
+        await text.aclose()
+        await binary.aclose()
