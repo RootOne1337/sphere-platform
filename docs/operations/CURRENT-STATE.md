@@ -6,7 +6,39 @@
 
 [Главная](../../README.md) · [Каталог документации](../README.md) · [Readiness](READINESS.md) · [Fleet32 gates](../audits/2026-09-20/FLEET32-PREFLIGHT.md) · [PR #19](https://github.com/RootOne1337/sphere-platform/pull/19)
 
-**5 октября, 08:19 UTC+5 — второй пакет продуктового аудита принят на 3015:**
+**5 октября, 19:03 UTC+5 — HTTP-метрики и исправление маршрута review UI приняты на 3015:**
+UI **`7c985feb`**, API **`51ccaa36`**, gateway config **`993d9eac`**;
+read-only preflight **`00ed391f`**. Реальные RPS/p95/4xx/5xx, история 1/6/24 h,
+top-30 маршрутов с поиском и деталями установлены и проверены HTTP/браузером.
+p95 — histogram estimate до заголовков ответа; это не stream/input latency.
+Empty/stale/error/partial не подменяются нулём. Встроенная Grafana повторно
+проверена с Viewer/query и отзывом собственной сессии после logout.
+**118 suites /1235 frontend tests**, затем **99 тематических tests** на финальном
+UI, types/changed-file lint/build и **14 gateway preflight tests** прошли.
+Браузер: 1600/390 px, две темы, поиск/детали; кнопка обновления40×40 px.
+Guard сохранил одну неудачную UI-установку/rollback. Логи доказали неправильный
+upstream192.168.0.1 при пропавшем DNS alias; теперь UI зарезервирован172.30.0.3
+в отдельном internal subnet. Replacement canary: 23 probes,200/502, конечный200;
+gateway не перезапускался. Zero downtime не заявляется. При установке сохранены
+остальные44 контейнера; API/APK/DB/tunnels/public18080 не менялись этим пакетом.
+Срез19:00:36 UTC+5:14 online /5 offline из19; это не fleet/Android SLA.
+**8 закрыто /42 открыто из50**. Следующие приоритеты: EP-009 CPU/RAM history,
+EP-010 tunnel/fleet coverage; Studio/recording/trace и load/soak открыты.
+[Приёмка и реальные screenshots](../audits/2026-10-05/ENTERPRISE-HTTP-METRICS.md) ·
+[Pinned evidence](../audits/2026-10-05/ENTERPRISE-HTTP-METRICS-EVIDENCE.json) ·
+[HTTP contract](HTTP-METRICS.md) · [Review gateway](REVIEW-GATEWAY.md) ·
+[Живой monitoring](http://127.0.0.1:3015/monitoring).
+
+**Ресурсы, конечный срез12:58 UTC+5:** recorder COMPLETE,241/241 samples за8 h.
+C:−2,154GiB; Docker VHD allocated234731077632 B стабилен, exact VSS allocated0
+во всех241 срезах; pagefile logical стабилен. Available physical RAM−5,39GiB,
+Windows commit+6,06GiB; эти показатели не смешиваются. Writer UNDETERMINED,
+RAM leak acceptance OPEN; окно включало сборки/перезапуск API и не является idle
+контрольным опытом. Сборщик завершён, новые бесконечные обходы не запущены.
+[Отчёт](../audits/2026-10-05/HOST-STORAGE-NIGHT-WATCH.md) ·
+[Конечные доказательства](../audits/2026-10-05/HOST-STORAGE-NIGHT-FINAL-EVIDENCE.json).
+
+**Исторический срез: 5 октября, 08:19 UTC+5 — второй пакет продуктового аудита принят на 3015:**
 API **`51ccaa36`**, review UI **`6b7de0cc`**, network topology **`52403b4`**.
 EP-006: 403 больше не записывается как delivered; 429/5xx имеют конечный retry,
 коррелируемые результаты и стабильный HMAC/delivery ID. Реальный loopback HTTP
@@ -26,7 +58,7 @@ Source CI конечного документа проверяется отде�
 [Доказательства](../audits/2026-10-05/ENTERPRISE-PRODUCT-FOLLOWUP-EVIDENCE.json) ·
 [Живой monitoring](http://127.0.0.1:3015/monitoring).
 
-**Ресурсы06:50 UTC /11:50 UTC+5:** recorder207 срезов, C: net−2,16GiB за6h52m;
+**Исторические ресурсы06:50 UTC /11:50 UTC+5:** recorder207 срезов, C: net−2,16GiB за6h52m;
 Docker VHD allocated не вырос, exact VSS0 во всех207 срезах. Максимальный
 двухминутный drop1,77GiB в06:22 UTC пока writer UNDETERMINED. Это новое окно,
 не прежний VSS growth; host RAM/commit тоже сохранены отдельно. Recorder RUNNING
@@ -60,7 +92,7 @@ Grafana показывает Welcome вместо dashboard; причина по
 [Аудит, доказательства и критерии](../audits/2026-10-05/ENTERPRISE-PRODUCT-AUDIT.md) ·
 [План с зависимостями](../audits/2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json).
 
-**Новое окно, 5 октября04:58 UTC+5:** source `02b5084`, hidden elevated8h recorder
+**Исторический запуск окна, 5 октября04:58 UTC+5:** source `02b5084`, hidden elevated8h recorder
 с точными C:/VSS/allocated named-file/RAM/commit/pool counters; Docker каждые16min.
 241 samples/120s,16MiB report budget, без полных directory walks и service/device
 mutations. Первый native sample/PID/hash проверены, итоговая приёмка RUNNING;

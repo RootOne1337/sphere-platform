@@ -10,7 +10,8 @@ scrape_configs:
     static_configs:
       - targets: [backend:8000]
     # Production HTTP/pool counters aggregate workers. Retain them for inspection;
-    # RPS/p95/fleet dashboards and alerts still need their own acceptance.
+    # Sphere HTTP panels were accepted separately; fleet/resource panels and
+    # HTTP alerts still need their own acceptance. Native Grafana remains collection-only.
     # High-cardinality per-device samples are not collected in this first stage.
     metric_relabel_configs:
       - source_labels: [__name__]

@@ -4,6 +4,12 @@
 [HTTP metrics acceptance](../audits/2026-10-05/ENTERPRISE-HTTP-METRICS.md) ·
 [Текущее состояние](CURRENT-STATE.md)
 
+**Принятая установка5 октября13:56 UTC:** config `993d9eac`, UI image/source
+`7c985feb`; preflight/tests `00ed391f`. Сохранены остальные44 контейнера.
+Контрольная замена UI:23 probes200/502, конечный200; gateway не перезапускался,
+ошибочные upstream после исправления указывают только172.30.0.3.
+HTTP/Grafana повторно приняты14:00–14:03 UTC; zero downtime не заявляется.
+
 Во время пересоздания review UI на3015 Nginx получил для временно отсутствующего
 `review-ui` адрес192.168.0.1. Логи13:48:55–13:49:02 UTC фиксируют timeout while
 connecting к192.168.0.1:3000 для `/login` и `/api/observability/http`; последовал

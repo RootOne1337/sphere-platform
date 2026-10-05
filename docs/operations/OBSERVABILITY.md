@@ -6,7 +6,15 @@
 [Текущее состояние](CURRENT-STATE.md) · [Каталог документации](../README.md) ·
 [Операционный аудит веба](../audits/2026-09-29/WEB-OPERATIONS-OBSERVABILITY-AUDIT.md)
 
-**Текущая установка5 октября08:19 UTC+5:** review UI `6b7de0cc`, API `51ccaa36`,
+**Текущая установка5 октября19:03 UTC+5:** review UI `7c985feb`, API `51ccaa36`,
+gateway `993d9eac`. Реальные HTTP RPS/p95/4xx/5xx и разбор маршрутов приняты
+на3015; **8 закрыто/42 открыто** из исходных50 работ. 1235 frontend tests,
+99 тематических и14 gateway tests; production build и живой HTTP/визуальный
+контроль прошли. История CPU/RAM, active tunnels и fleet series остаются открыты.
+[HTTP contract](HTTP-METRICS.md) · [Приёмка и доказательства](../audits/2026-10-05/ENTERPRISE-HTTP-METRICS.md) ·
+[Review gateway](REVIEW-GATEWAY.md).
+
+**Историческая установка5 октября08:19 UTC+5:** review UI `6b7de0cc`, API `51ccaa36`,
 topology `52403b4` на3015. Встроенный `sphere-collection`/Viewer/query и отзыв
 ticket после logout проверены HTTP и в браузере. Static proxy IP `172.29.0.3`,
 private subnet `172.29.0.0/24`, dynamic pool `172.29.0.128/25`; whitelist exact.
@@ -41,10 +49,17 @@ Prometheus, цели сбора, активные алерты и Grafana в т�
 Gunicorn worker без multiprocess directory и отдавал registry выбранного worker.
 Backend `85c8014` использует общий multiprocess registry; exact image и
 live rollout записаны в [CURRENT-STATE](CURRENT-STATE.md).
-**Панели общих RPS, p95, CPU и количества устройств пока не подключены.**
-Сырые HTTP/pool метрики сохраняются для исследования; prepared dashboard и
-веб-показатели не строят по ним общие KPI или алерты. Высококардинальные
-device series не собираются этим профилем.
+**HTTP-панели Sphere подключены отдельным блоком с5 октября19:03 UTC+5.**
+RPS/4xx/5xx имеют единицу запрос/с и скользящее окно5min; p95 — histogram estimate
+до response headers в секундах. История1/6/24h имеет шаг15/30/60s. Существующие
+worker counters суммируются после `rate`, labels маршрутов нормализованы producer.
+Новые панели не измеряют stream/input latency; прямая авторизация и данные
+проверяются endpoint `/api/observability/http`. Пустой/error/stale/partial сигнал
+не заменяется0; top30 table и выбранные детали используют текущий срез.
+Native Grafana `sphere-collection` сохраняет прежние5 панелей качества сбора;
+его HTTP/CPU/fleet schema не обновлялась. **CPU/RAM history, количество устройств
+в Prometheus и HTTP alerts пока не подключены.** Высококардинальные device series
+не собираются этим профилем.
 
 Исторический deployed monitoring API отдельно отдавал 12/8 точек истории без
 `observedAt`, фиксированные worker/edge cards и нулевое число туннелей. Новый

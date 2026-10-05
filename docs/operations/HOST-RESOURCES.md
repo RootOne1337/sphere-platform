@@ -2,6 +2,11 @@
 
 **Проверено:** 4 октября 2026. Источник правил сборки: `c1a6e79`.
 
+**Дополнение5 октября, итог12:58 UTC+5:** finite8h recorder `02b5084` завершился
+241/241 срезами. C:−2,154GiB; Docker VHD allocated/pagefile logical стабильны,
+exact VSS allocated0. Physical RAM/Windows commit измерены отдельно; writer
+UNDETERMINED, утечка не объявляется исправленной. [Конечный отчёт](../audits/2026-10-05/HOST-STORAGE-NIGHT-WATCH.md).
+
 [Текущее состояние](CURRENT-STATE.md) · [Readiness](READINESS.md) ·
 [Аудит инцидента и измерения](../audits/2026-10-04/HOST-RESOURCE-PRESSURE-AND-RPC-DIAGNOSTICS.md) ·
 [Предварительная проверка](../../scripts/pilot/resource_guard.py) ·

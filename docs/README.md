@@ -22,7 +22,19 @@
 Исходники `c3937a1`, установленный на этапе аудита UI/API `c1a6e79a`; исходный аудит — только анализ.
 Каталог API и элементов управления не заменяет живую проверку Android и 500–1000 устройств.
 
-**5 октября, 08:19 UTC+5 — текущий второй пакет установлен и проверен:**
+**5 октября, 19:03 UTC+5 — текущий пакет HTTP-метрик установлен и проверен:**
+UI `7c985feb`, API `51ccaa36`, gateway `993d9eac`; [живой monitoring3015](http://127.0.0.1:3015/monitoring).
+EP-008: RPS/p95/4xx/5xx и разбор маршрутов с реальными данными, bounded queries,
+проверкой freshness и отдельными partial/error/empty состояниями. DNS race review
+gateway исправлен; mobile refresh40×40 px. 1235 frontend tests,99 тематических,
+14 gateway tests/types/lint/build; конечные HTTP/Grafana/browser проверки прошли.
+**8 закрыто /42 открыто из50**; CPU/RAM history, tunnels/fleet и Studio ещё открыты.
+Короткий502 при замене UI сохранён; zero downtime не заявляется.
+[Приёмка и screenshots](audits/2026-10-05/ENTERPRISE-HTTP-METRICS.md) ·
+[Source/runtime evidence](audits/2026-10-05/ENTERPRISE-HTTP-METRICS-EVIDENCE.json) ·
+[HTTP contract](operations/HTTP-METRICS.md) · [Gateway procedure](operations/REVIEW-GATEWAY.md).
+
+**Исторический срез: 5 октября, 08:19 UTC+5 — второй пакет установлен и проверен:**
 API `51ccaa36`, UI `6b7de0cc`, topology `52403b4`; [живой monitoring3015](http://127.0.0.1:3015/monitoring).
 EP-006: ошибки HTTP callback корректно классифицированы, реальные HTTP retries/HMAC проверены.
 EP-007: встроенный dashboard Grafana с реальными данными и immediate logout revoke.
@@ -32,8 +44,9 @@ Guard rollbacks и краткое падение online count сохранены
 [Журнал и ограничения](audits/2026-10-05/ENTERPRISE-PRODUCT-FOLLOWUP.md) ·
 [Source/runtime/HTTP/визуальные доказательства](audits/2026-10-05/ENTERPRISE-PRODUCT-FOLLOWUP-EVIDENCE.json).
 
-**Ресурсы11:50 UTC+5:** [207 срезов /C:−2,16GiB /VHD без роста /exact VSS0](audits/2026-10-05/HOST-STORAGE-NIGHT-WATCH.md).
-Крупный drop1,77GiB за2min ещё не атрибутирован; recorder RUNNING до12:58 UTC+5,
+**Ресурсы12:58 UTC+5:** [recorder COMPLETE /241 срезов /C:−2,154GiB /VHD без роста /exact VSS0](audits/2026-10-05/HOST-STORAGE-NIGHT-WATCH.md).
+Крупный drop1,77GiB за2min ещё не атрибутирован; physical RAM/Windows commit
+измерены отдельно. [Конечный manifest](audits/2026-10-05/HOST-STORAGE-NIGHT-FINAL-EVIDENCE.json);
 не объявляется исправленная утечка.
 
 **Исторический срез: 5 октября, 07:33 UTC+5 — первый пакет:** UI `6ff6bc2`
@@ -48,7 +61,7 @@ API/UI c1a6e79.** [Аудит диска, ОЗУ, сборки и RPC](audits/20
 [Эксплуатационная процедура](operations/HOST-RESOURCES.md).
 
 **5 октября — текущая работа с ресурсами:**
-[Конечный8h disk/VSS/RAM recorder /16MiB / source02b5084 /68 tests / RUNNING](audits/2026-10-05/HOST-STORAGE-NIGHT-WATCH.md) ·
+[Конечный8h disk/VSS/RAM recorder /16MiB / source02b5084 /68 tests / COMPLETE](audits/2026-10-05/HOST-STORAGE-NIGHT-WATCH.md) ·
 [ETW writer / exact VSS / 51 owned image / 10,938 GiB guest reclaim](audits/2026-10-05/DISK-WRITER-ATTRIBUTION.md) ·
 [APK10245 local+remote startup canary / 1680 passed, 2 skipped / long soak OPEN](audits/2026-10-05/APK-LOG-RETENTION.md).
 Source recorder `1402612` / projection `9a9256f`, 8 Windows tests; API/UI c1a6e79,

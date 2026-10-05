@@ -15,12 +15,20 @@
 
 </div>
 
-**5 октября / новое конечное наблюдение:** `02b5084` добавляет лёгкий8h recorder
+**5 октября, 19:03 UTC+5 — актуальный review:** UI `7c985feb`, API `51ccaa36`,
+gateway `993d9eac`; [живой веб3015](http://127.0.0.1:3015/monitoring).
+Реальные HTTP RPS/p95/ошибки и разбор маршрутов установлены, Grafana повторно
+проверена. 1235 frontend tests,99 тематических,14 gateway tests/types/lint/build
+прошли. **8 закрыто /42 открыто из50** продуктового аудита; это не общая готовность
+платформы. [Приёмка, версии и screenshots](docs/audits/2026-10-05/ENTERPRISE-HTTP-METRICS.md).
+
+**5 октября / завершённое наблюдение:** `02b5084` добавляет лёгкий8h recorder
 C:/VSS/allocated VHD/RAM/commit/Docker без полного обхода и без удаления данных.
 Запуск04:58→примерно12:58 UTC+5,241 срез, report budget16MiB; native первый sample
 и elevated process проверены. Дополнительно cache795→768, guest+1,068GiB;
 46 containers/67 volumes сохранены, VHD physical size не изменился.
-**68 diagnostic tests passed**, длительная приёмка ещё RUNNING.
+**68 diagnostic tests passed**; recorder COMPLETE,241/241 срезов. C:−2,154GiB,
+VHD allocated не вырос, exact VSS0; writer attribution и RAM leak acceptance OPEN.
 [Методика, факты и открытые причины](docs/audits/2026-10-05/HOST-STORAGE-NIGHT-WATCH.md).
 
 **Ресурсы, 5 октября / замеры UTC 4 октября:** удалён 51 проверенный старый образ
@@ -45,7 +53,7 @@ exact hash/receipts/heartbeat, native logs6→5 и≤2MiB подтвержден
 [Полный доступный обход C: и границы очистки](docs/audits/2026-10-04/HOST-DISK-INVENTORY-AND-CLEANUP.md).
 
 > [!IMPORTANT]
-> **Текущая установка: API / UI c1a6e79**, [веб на 3015](http://127.0.0.1:3015/devices).
+> **Историческая установка: API / UI c1a6e79**, [веб на 3015](http://127.0.0.1:3015/devices).
 > **4 октября 2026, после перезагрузки ПК в 16:39 UTC.** Исправлен повторный
 > запуск npm ci при изменении SHA; переиспользование зависимостей доказано двумя сборками.
 > Адресно очищены 8,21 GiB старых кэшей Next, 19 контекстов и 53 неиспользуемых

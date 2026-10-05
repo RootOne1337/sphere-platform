@@ -2,15 +2,25 @@
 
 **Навигация обновлена: 5 октября 2026. Исторические live-снимки ниже сохранены по датам.**
 
-**Текущее наблюдение04:58→примерно12:58 UTC+5:** новый finite recorder `02b5084`,
+**5 октября19:03 UTC+5 — приёмка HTTP-панелей:** UI `7c985feb`, API `51ccaa36`,
+gateway `993d9eac` на3015. EP-008 закрыт; **8 закрыто/42 открыто** продуктового
+плана. 1235 frontend tests,99 тематических,14 gateway tests/types/lint/build,
+реальные HTTP/Grafana/browser проверки прошли. Replacement canary содержал502;
+zero downtime не заявляется. История CPU/RAM, tunnels/fleet, Studio и общий
+stream+script load/soak остаются открыты. Исходные F32/ресурсные gates этим
+пакетом не закрываются. [Приёмка и границы](../audits/2026-10-05/ENTERPRISE-HTTP-METRICS.md).
+
+**Завершённое наблюдение04:58→12:58 UTC+5:** finite recorder `02b5084`,
 8h /241samples /16MiB metadata, exact VSS + named-file allocated size + RAM/commit,
 без directory walks/cleanup/autostart. Elevated process/первый sample проверены;
-**RUNNING, не long-soak acceptance**.68 diagnostic tests/Ruff pilot scope passed.
+**COMPLETE,241/241 срезов; не RAM leak acceptance**.68 diagnostic tests/Ruff pilot scope passed.
+C:−2,154GiB при стабильном VHD allocated и exact VSS0. Исторический writer не
+определён; физическая RAM и Windows commit сохранены раздельно.
 Адресный old cache prune дополнительно дал1,068GiB guest, records795→768,
 46 containers/67 volumes сохранены; physical VHD size прежний.
 [Границы проверки и следующий drop](../audits/2026-10-05/HOST-STORAGE-NIGHT-WATCH.md).
 R04/R05/R06/R07/R09 и прежние34 source-fixed /7 unclosed web gates не закрываются
-самим запуском наблюдения. Разработка продолжается независимо от его окончания.
+самим завершением наблюдения. Разработка продолжается; атрибуция расхода открыта.
 
 **Последний ресурсный срез, 5 октября / 21:42 UTC 4 октября:** адресно удалён
 51 старый owned image; внутри Docker +10,938 GiB, все 46 контейнеров сохранены.
@@ -47,7 +57,7 @@ free C: -264,719 MiB за 30 минут. Рост VSS подтверждён; п
 [Полный доступный обход и ограничения](../audits/2026-10-04/HOST-DISK-INVENTORY-AND-CLEANUP.md).
 
 > [!IMPORTANT]
-> **Текущая установка: API / UI c1a6e79**, [веб на 3015](http://127.0.0.1:3015/devices).
+> **Историческая установка: API / UI c1a6e79**, [веб на 3015](http://127.0.0.1:3015/devices).
 > **4 октября 2026, после перезагрузки ПК в 16:39 UTC.** Исправлен повторный
 > запуск npm ci при изменении SHA; переиспользование зависимостей доказано двумя сборками.
 > Адресно очищены 8,21 GiB старых кэшей Next, 19 контекстов и 53 неиспользуемых

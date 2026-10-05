@@ -2,10 +2,19 @@
 
 [Каталог](README.md) · [Readiness](operations/READINESS.md) · [Contributing](../CONTRIBUTING.md)
 
-**Последняя сверка входных документов: 4 октября 2026, после rollout 17:14 UTC.** Для текущих
+**Последняя сверка входных документов: 5 октября 2026, HTTP/Grafana-приёмка14:03 UTC.** Для текущих
 версий и границ live-подтверждения используйте [каноническое состояние](operations/CURRENT-STATE.md).
 
-**Последняя проверка: 4 октября 2026, после перезагрузки ПК и установки в 17:14 UTC.
+**Текущая проверка5 октября:** review UI `7c985feb` / API `51ccaa36`, gateway
+`993d9eac`. EP-008 принят; product ledger8 закрыто/42 открыто отдельно от F32
+и ресурсных gates. [HTTP-приёмка](audits/2026-10-05/ENTERPRISE-HTTP-METRICS.md)
+связывает tests/build/install/rollback/live HTTP с пятью reviewed screenshots
+и pinned git blobs. Checker проверяет integrity записанных артефактов, не live
+health. [Resource recorder](audits/2026-10-05/HOST-STORAGE-NIGHT-WATCH.md) COMPLETE,
+241 срез; writer attribution/RAM acceptance OPEN. Source CI нового head требует
+отдельного результата; старые зелёные CI не переносятся на него автоматически.
+
+**Историческая проверка: 4 октября 2026, после перезагрузки ПК и установки в 17:14 UTC.
 API/UI c1a6e79.** [Аудит диска, ОЗУ, сборки и RPC](audits/2026-10-04/HOST-RESOURCE-PRESSURE-AND-RPC-DIAGNOSTICS.md) ·
 [Эксплуатационная процедура](operations/HOST-RESOURCES.md).
 В образах прошли 113 наборов / 1122 frontend-теста и 186 API-проверок; отдельно
