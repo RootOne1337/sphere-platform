@@ -30,7 +30,26 @@ interface LogsResponse {
   device_id: string;
   lines: string[];
   total: number;
+  read?: LogReadScope;
 }
+
+interface LogReadScope {
+  truncated: boolean;
+  reasons: string[];
+  bytes_scanned: number;
+  scan_byte_limit: number;
+  omitted_oversized_lines: number;
+  files_scanned: number;
+  files_available: number;
+}
+
+const READ_REASONS: Record<string, string> = {
+  file_limit: 'выбраны три последних дневных файла',
+  line_limit: 'достигнут лимит строк',
+  scan_byte_limit: 'достигнут лимит чтения',
+  response_byte_limit: 'достигнут лимит ответа',
+  oversized_line: 'слишком длинные строки пропущены целиком',
+};
 
 const LEVELS: LogLevel[] = ['ALL', 'V', 'D', 'I', 'W', 'E', 'A'];
 const LEVEL_LABELS: Record<LogLevel, string> = {
@@ -70,10 +89,30 @@ function validateLogsResponse(data: unknown, expectedDevice: string): LogsRespon
     throw new Error('Backend вернул некорректный список строк логов.');
   }
   if (payload.device_id !== expectedDevice) throw new Error('Backend вернул логи другого устройства.');
+  if (payload.lines.length > 1000 || new Blob([JSON.stringify(payload.lines)]).size > 512 * 1024) {
+    throw new Error('Backend превысил допустимый размер журнала.');
+  }
+  let read: LogReadScope | undefined;
+  if (payload.read !== undefined) {
+    const scope = payload.read as LogReadScope & Record<string, unknown>;
+    const integer = (value: unknown, max: number) => typeof value === 'number' && Number.isSafeInteger(value) && value >= 0 && value <= max;
+    if (!scope || typeof scope !== 'object' || scope.schema_version !== 1 || scope.scope !== 'recent-file-tail'
+      || typeof scope.truncated !== 'boolean' || !Array.isArray(scope.reasons)
+      || scope.reasons.length > 5 || !scope.reasons.every((reason) => typeof reason === 'string' && Object.hasOwn(READ_REASONS, reason))
+      || scope.truncated !== (scope.reasons.length > 0)
+      || scope.scan_byte_limit !== 2 * 1024 * 1024 || !integer(scope.bytes_scanned, scope.scan_byte_limit)
+      || scope.response_byte_limit !== 512 * 1024 || !integer(scope.response_lines_bytes, scope.response_byte_limit)
+      || !integer(scope.files_scanned, 3) || !integer(scope.files_available, 128) || scope.files_scanned > scope.files_available
+      || !integer(scope.omitted_oversized_lines, scope.bytes_scanned)) {
+      throw new Error('Backend вернул некорректные границы чтения журнала.');
+    }
+    if (payload.total !== payload.lines.length) throw new Error('Backend вернул противоречивое число строк журнала.');
+    read = scope;
+  }
   const total = typeof payload.total === 'number' && Number.isFinite(payload.total) && payload.total >= 0
     ? Math.trunc(payload.total)
     : payload.lines.length;
-  return { device_id: payload.device_id, lines: payload.lines, total };
+  return { device_id: payload.device_id, lines: payload.lines, total, read };
 }
 
 function errorMessage(error: unknown) {
@@ -128,6 +167,7 @@ function LogViewer({ selectedDevice }: { selectedDevice: string }) {
   const [autoRefresh, setAutoRefresh] = useState(false);
   const [totalLines, setTotalLines] = useState(0);
   const [lastUpdatedAt, setLastUpdatedAt] = useState(0);
+  const [readScope, setReadScope] = useState<LogReadScope | undefined>();
   const [clearOpen, setClearOpen] = useState(false);
   const [clearPending, setClearPending] = useState(false);
   const [clearError, setClearError] = useState<string | null>(null);
@@ -152,6 +192,7 @@ function LogViewer({ selectedDevice }: { selectedDevice: string }) {
       const payload = validateLogsResponse(response.data, deviceId);
       setLines(payload.lines.map(parseLine));
       setTotalLines(payload.total);
+      setReadScope(payload.read);
       setLastUpdatedAt(Date.now());
       if (scrollToBottom) {
         window.requestAnimationFrame(() => {
@@ -179,6 +220,7 @@ function LogViewer({ selectedDevice }: { selectedDevice: string }) {
       activeRequest.current?.abort();
       setLines([]);
       setTotalLines(0);
+      setReadScope(undefined);
       setError(null);
     }
   }, [selectedDevice, fetchLogs]);
@@ -207,6 +249,7 @@ function LogViewer({ selectedDevice }: { selectedDevice: string }) {
       await api.delete(`/logs/${encodeURIComponent(selectedDevice)}`);
       setLines([]);
       setTotalLines(0);
+      setReadScope(undefined);
       setLastUpdatedAt(Date.now());
       setClearOpen(false);
       toast.success(`Логи устройства ${selectedDeviceInfo?.name ?? selectedDevice} удалены`);
@@ -225,7 +268,7 @@ function LogViewer({ selectedDevice }: { selectedDevice: string }) {
         <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">Sphere / Диагностика</p>
           <h1 className="mt-2 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">Системные логи</h1>
-          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">Строки логов агента, уже полученные backend от устройства. Поиск выполняется на сервере с задержкой, чтобы не отправлять запрос на каждый символ.</p>
+          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">Полученные сервером логи агента. Показываем последние строки; поиск проверяет ограниченный хвост последних дневных файлов, без команды Android.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Button variant={autoRefresh ? 'secondary' : 'outline'} size="sm" onClick={() => setAutoRefresh((current) => !current)} disabled={!selectedDevice || clearPending} aria-pressed={autoRefresh}>
@@ -251,7 +294,7 @@ function LogViewer({ selectedDevice }: { selectedDevice: string }) {
 
           <label className="relative block min-w-0 flex-1">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
-            <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Поиск в логах" aria-label="Поиск в логах" disabled={!selectedDevice || clearPending} className="h-9 rounded-lg pl-9" />
+            <Input value={search} onChange={(event) => setSearch(event.target.value)} maxLength={512} placeholder="Поиск в последних логах" aria-label="Поиск в логах" disabled={!selectedDevice || clearPending} className="h-9 rounded-lg pl-9" />
           </label>
 
           <Badge variant="outline" className="w-fit shrink-0 rounded-full px-2.5 normal-case tracking-normal">
@@ -269,6 +312,15 @@ function LogViewer({ selectedDevice }: { selectedDevice: string }) {
         </div>
 
         <CardContent className="p-3 sm:p-4">
+          {!error && lastUpdatedAt > 0 && <div role="status" className={`mb-3 rounded-lg border p-3 text-xs leading-relaxed ${readScope?.truncated ? 'border-amber-300/60 bg-amber-500/5 text-foreground' : 'border-border bg-muted/30 text-muted-foreground'}`}>
+            {readScope ? <>
+              <p className="font-medium">{readScope.truncated ? 'Показана часть журнала' : readScope.files_available === 0 ? 'Полученных файлов пока нет' : 'Выбранные файлы проверены полностью'}</p>
+              <p>Проверено {(readScope.bytes_scanned / 1024).toLocaleString('ru-RU', { maximumFractionDigits: 0 })} КиБ из лимита {readScope.scan_byte_limit / 1024 / 1024} МиБ · файлов {readScope.files_scanned} из {readScope.files_available}.</p>
+              {readScope.reasons.length > 0 && <p>{readScope.reasons.map((reason) => READ_REASONS[reason]).join('; ')}.</p>}
+              {readScope.omitted_oversized_lines > 0 && <p>Пропущено длинных строк: {readScope.omitted_oversized_lines}.</p>}
+              <p>Отсутствие совпадений здесь не означает их отсутствие в более старых логах.</p>
+            </> : <p>Сервер не сообщил границы чтения. Полнота поиска по архиву не подтверждена.</p>}
+          </div>}
           <div ref={containerRef} aria-label="Строки системного журнала" aria-live="polite" className="max-h-[65vh] min-h-[320px] overflow-auto rounded-lg border border-slate-800 bg-slate-950 p-3 font-mono text-[11px] leading-5 sm:p-4 sm:text-xs">
             {search.trim() !== debouncedSearch ? (
               <p role="status" className="py-8 text-center font-sans text-sm text-slate-400">Применяем поиск в журнале…</p>
@@ -282,7 +334,7 @@ function LogViewer({ selectedDevice }: { selectedDevice: string }) {
             ) : !selectedDevice ? (
               <p className="py-8 text-center font-sans text-sm text-slate-400">Выберите устройство, чтобы просмотреть логи.</p>
             ) : visibleLines.length === 0 ? (
-              <div className="py-8 text-center font-sans text-sm text-slate-400">{lines.length === 0 ? 'Для этого устройства пока нет полученных логов.' : 'Нет строк, подходящих под выбранный фильтр.'}</div>
+              <div className="py-8 text-center font-sans text-sm text-slate-400">{lines.length === 0 ? readScope ? 'В проверенной части журнала нет строк.' : 'Для этого устройства пока нет полученных логов.' : 'Нет строк, подходящих под выбранный фильтр.'}</div>
             ) : (
               <div className="space-y-0.5">
                 {visibleLines.map((entry, index) => (

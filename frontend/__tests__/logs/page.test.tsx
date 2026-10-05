@@ -48,6 +48,12 @@ const logPayload = {
   total: 3,
 };
 
+const readScope = {
+  schema_version: 1, scope: 'recent-file-tail', truncated: true, reasons: ['scan_byte_limit'],
+  bytes_scanned: 2097152, scan_byte_limit: 2097152, response_lines_bytes: 100,
+  response_byte_limit: 524288, files_scanned: 1, files_available: 3, omitted_oversized_lines: 0,
+};
+
 beforeEach(() => {
   jest.mocked(useDevices).mockReturnValue({
     data: { items: [device], total: 1, page: 1, page_size: 20 },
@@ -67,6 +73,47 @@ afterEach(() => {
 });
 
 describe('Logs page', () => {
+  it('shows bounded search scope and partial reasons without claiming whole-archive absence', async () => {
+    jest.mocked(api.get).mockResolvedValue({ data: { ...logPayload, read: readScope } });
+    render(<LogsPage />);
+    expect(await screen.findByText('Показана часть журнала')).toBeInTheDocument();
+    expect(screen.getByText('достигнут лимит чтения.')).toBeInTheDocument();
+    expect(screen.getByText(/Отсутствие совпадений здесь не означает/)).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Поиск в логах' })).toHaveAttribute('maxlength', '512');
+  });
+
+  it('reports missing legacy read metadata without inventing completeness', async () => {
+    render(<LogsPage />);
+    expect(await screen.findByText(/Сервер не сообщил границы чтения/)).toBeInTheDocument();
+  });
+
+  it('does not describe an empty limited search as no received device logs', async () => {
+    jest.mocked(api.get).mockResolvedValue({ data: { device_id: device.id, lines: [], total: 0, read: readScope } });
+    render(<LogsPage />);
+    expect(await screen.findByText('В проверенной части журнала нет строк.')).toBeInTheDocument();
+    expect(screen.queryByText('Для этого устройства пока нет полученных логов.')).not.toBeInTheDocument();
+  });
+
+  it.each([
+    { ...readScope, bytes_scanned: 2097153 },
+    { ...readScope, reasons: ['all_healthy'] },
+    { ...readScope, truncated: false },
+    { ...readScope, files_scanned: 4 },
+    { ...readScope, response_lines_bytes: 524289 },
+  ])('rejects malformed read coverage instead of showing trusted counts', async (read) => {
+    jest.mocked(api.get).mockResolvedValue({ data: { ...logPayload, read } });
+    render(<LogsPage />);
+    expect(await screen.findByRole('alert')).toHaveTextContent('некорректные границы чтения');
+    expect(screen.queryByText('connected through relay')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Очистить логи' })).toBeDisabled();
+  });
+
+  it('rejects oversized legacy response even without server read metadata', async () => {
+    jest.mocked(api.get).mockResolvedValue({ data: { device_id: device.id, lines: ['x'.repeat(524288)], total: 1 } });
+    render(<LogsPage />);
+    expect(await screen.findByRole('alert')).toHaveTextContent('превысил допустимый размер');
+  });
+
   it('loads and displays actual backend log lines and selected device', async () => {
     render(<LogsPage />);
 

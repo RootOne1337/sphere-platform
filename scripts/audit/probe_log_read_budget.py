@@ -14,6 +14,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
+
 async def probe() -> dict:
     from backend.api.v1.logs import router as log_router
 
@@ -55,9 +56,15 @@ async def probe() -> dict:
             payload = json.loads(response.body)
             assert payload['total'] == 1000 and len(payload['lines']) == 1000
             assert all(line == row.decode().rstrip('\n') for line in payload['lines'])
+            root = Path(__file__).resolve().parents[2]
+            paths = ['backend/api/v1/logs/router.py', 'backend/services/device_log_reader.py']
+            hashes = {name: hashlib.sha256((root / name).read_bytes().replace(b'\r\n', b'\n')).hexdigest()
+                      for name in paths if (root / name).exists()}
             return {
                 "observedAt": datetime.now(timezone.utc).isoformat(),
                 "source": subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(),
+                "workingTreeModified": subprocess.run(['git', 'diff', '--quiet', 'HEAD', '--', *paths], cwd=root).returncode != 0,
+                "workingFileHashes": hashes,
                 "fixtureBytes": per_file * 3, "files": 3, "requestedLines": 1000,
                 "returnedLines": len(payload['lines']), "pythonTracedPeakBytes": peak,
                 "wholeFileReadBytes": sum(whole_file_reads),

@@ -4890,16 +4890,17 @@
             "schema": {
               "anyOf": [
                 {
-                  "type": "string"
+                  "type": "string",
+                  "maxLength": 10
                 },
                 {
                   "type": "null"
                 }
               ],
-              "description": "Date filter YYYY-MM-DD (default: today)",
+              "description": "UTC date YYYY-MM-DD; default: recent three daily files",
               "title": "Date"
             },
-            "description": "Date filter YYYY-MM-DD (default: today)"
+            "description": "UTC date YYYY-MM-DD; default: recent three daily files"
           },
           {
             "name": "search",
@@ -4908,16 +4909,17 @@
             "schema": {
               "anyOf": [
                 {
-                  "type": "string"
+                  "type": "string",
+                  "maxLength": 512
                 },
                 {
                   "type": "null"
                 }
               ],
-              "description": "Filter lines containing this text",
+              "description": "Substring search within the bounded recent-file tail",
               "title": "Search"
             },
-            "description": "Filter lines containing this text"
+            "description": "Substring search within the bounded recent-file tail"
           }
         ],
         "responses": {
@@ -4925,7 +4927,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceLogsResponse"
+                }
               }
             }
           },
@@ -13353,6 +13357,176 @@
           "device_id"
         ],
         "title": "DeviceLiveStatus"
+      },
+      "DeviceLogReadScope": {
+        "properties": {
+          "schema_version": {
+            "type": "integer",
+            "enum": [
+              1
+            ],
+            "const": 1,
+            "title": "Schema Version"
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "recent-file-tail"
+            ],
+            "const": "recent-file-tail",
+            "title": "Scope"
+          },
+          "date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date"
+          },
+          "truncated": {
+            "type": "boolean",
+            "title": "Truncated"
+          },
+          "reasons": {
+            "items": {
+              "type": "string",
+              "enum": [
+                "file_limit",
+                "line_limit",
+                "scan_byte_limit",
+                "response_byte_limit",
+                "oversized_line"
+              ]
+            },
+            "type": "array",
+            "title": "Reasons"
+          },
+          "bytes_scanned": {
+            "type": "integer",
+            "maximum": 2097152.0,
+            "minimum": 0.0,
+            "title": "Bytes Scanned"
+          },
+          "scan_byte_limit": {
+            "type": "integer",
+            "enum": [
+              2097152
+            ],
+            "const": 2097152,
+            "title": "Scan Byte Limit"
+          },
+          "response_lines_bytes": {
+            "type": "integer",
+            "maximum": 524288.0,
+            "minimum": 2.0,
+            "title": "Response Lines Bytes"
+          },
+          "response_byte_limit": {
+            "type": "integer",
+            "enum": [
+              524288
+            ],
+            "const": 524288,
+            "title": "Response Byte Limit"
+          },
+          "max_line_bytes": {
+            "type": "integer",
+            "enum": [
+              16384
+            ],
+            "const": 16384,
+            "title": "Max Line Bytes"
+          },
+          "omitted_oversized_lines": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Omitted Oversized Lines"
+          },
+          "files_scanned": {
+            "type": "integer",
+            "maximum": 3.0,
+            "minimum": 0.0,
+            "title": "Files Scanned"
+          },
+          "files_available": {
+            "type": "integer",
+            "maximum": 128.0,
+            "minimum": 0.0,
+            "title": "Files Available"
+          },
+          "max_files": {
+            "type": "integer",
+            "enum": [
+              3
+            ],
+            "const": 3,
+            "title": "Max Files"
+          },
+          "concurrent_reads_per_worker": {
+            "type": "integer",
+            "enum": [
+              4
+            ],
+            "const": 4,
+            "title": "Concurrent Reads Per Worker"
+          }
+        },
+        "type": "object",
+        "required": [
+          "schema_version",
+          "scope",
+          "date",
+          "truncated",
+          "reasons",
+          "bytes_scanned",
+          "scan_byte_limit",
+          "response_lines_bytes",
+          "response_byte_limit",
+          "max_line_bytes",
+          "omitted_oversized_lines",
+          "files_scanned",
+          "files_available",
+          "max_files",
+          "concurrent_reads_per_worker"
+        ],
+        "title": "DeviceLogReadScope"
+      },
+      "DeviceLogsResponse": {
+        "properties": {
+          "device_id": {
+            "type": "string",
+            "title": "Device Id"
+          },
+          "lines": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 10000,
+            "title": "Lines"
+          },
+          "total": {
+            "type": "integer",
+            "maximum": 10000.0,
+            "minimum": 0.0,
+            "title": "Total"
+          },
+          "read": {
+            "$ref": "#/components/schemas/DeviceLogReadScope"
+          }
+        },
+        "type": "object",
+        "required": [
+          "device_id",
+          "lines",
+          "total",
+          "read"
+        ],
+        "title": "DeviceLogsResponse"
       },
       "DeviceRegisterRequest": {
         "properties": {

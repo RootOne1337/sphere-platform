@@ -23,6 +23,13 @@ from starlette.responses import Response
 from backend.core.dependencies import require_permission
 from backend.database.engine import get_db
 from backend.models.device import Device
+from backend.schemas.device_logs import DeviceLogsResponse
+from backend.services.device_log_reader import (
+    LogReadBusy,
+    LogReadUnavailable,
+    read_log_tail_async,
+    validate_date,
+)
 
 
 async def _owned_device(db: AsyncSession, device_id: str, principal) -> Device:
@@ -132,12 +139,12 @@ async def upload_logs(
 
 # ── Get logs for a device ─────────────────────────────────────────────────────
 
-@router.get("/{device_id}")
+@router.get("/{device_id}", response_model=DeviceLogsResponse)
 async def get_device_logs(
     device_id: str,
     lines: int = Query(default=500, ge=1, le=10000, description="Max lines to return"),
-    date: Optional[str] = Query(default=None, description="Date filter YYYY-MM-DD (default: today)"),
-    search: Optional[str] = Query(default=None, description="Filter lines containing this text"),
+    date: Optional[str] = Query(default=None, max_length=10, description="UTC date YYYY-MM-DD; default: recent three daily files"),
+    search: Optional[str] = Query(default=None, max_length=512, description="Substring search within the bounded recent-file tail"),
     _principal=require_permission("device:read"),
     db: AsyncSession = Depends(get_db),
 ) -> JSONResponse:
@@ -146,35 +153,17 @@ async def get_device_logs(
     Поддерживает фильтрацию по дате и поиск подстроки.
     """
     await _owned_device(db, device_id, _principal)
-    device_dir = _device_log_path(device_id)
-    if not device_dir.exists():
-        return JSONResponse({"device_id": device_id, "lines": [], "total": 0})
-
-    # Выбираем файлы
-    if date:
-        target_files = sorted(device_dir.glob(f"agent_{date}*.log"))
-    else:
-        target_files = sorted(device_dir.glob("agent_*.log"), reverse=True)[:3]
-
-    all_lines: list[str] = []
-    for f in reversed(target_files):
-        try:
-            text = f.read_text(errors="replace")
-            all_lines.extend(text.splitlines())
-        except OSError:
-            pass
-
-    # Apply search filter
-    if search:
-        all_lines = [ln for ln in all_lines if search.lower() in ln.lower()]
-
-    # Return last N lines
-    result_lines = all_lines[-lines:]
-    return JSONResponse({
-        "device_id": device_id,
-        "lines": result_lines,
-        "total": len(result_lines),
-    })
+    try:
+        validate_date(date)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail="Date must use YYYY-MM-DD") from exc
+    try:
+        payload = await read_log_tail_async(_device_log_path(device_id), lines=lines, date=date, search=search)
+    except LogReadBusy as exc:
+        raise HTTPException(status_code=503, detail="Log read capacity is busy", headers={"Retry-After": "1"}) from exc
+    except LogReadUnavailable as exc:
+        raise HTTPException(status_code=503, detail="Log source is unavailable") from exc
+    return JSONResponse({"device_id": device_id, **payload})
 
 
 # ── Delete (admin only) ───────────────────────────────────────────────────────
