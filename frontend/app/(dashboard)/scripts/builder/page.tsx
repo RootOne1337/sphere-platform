@@ -23,6 +23,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { X, Save, Plus, ArrowLeft, Settings2, PlayCircle, MousePointer2, Smartphone, TerminalSquare, Eye, Fingerprint, GripHorizontal } from 'lucide-react';
 import Editor from '@monaco-editor/react';
 import { isAxiosError } from 'axios';
+import { useQueryClient } from '@tanstack/react-query';
 
 const INITIAL_NODES: Node[] = [
   {
@@ -214,6 +215,7 @@ function NodeSidebar({ node, onUpdate, onClose }: NodeSidebarProps) {
 /* ── Builder Inner ─────────────────────────────────────────────── */
 function BuilderInner({ editId }: { editId: string | null }) {
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   const [nodes, setNodes, onNodesChange] = useNodesState(INITIAL_NODES);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>(INITIAL_EDGES);
@@ -321,6 +323,9 @@ function BuilderInner({ editId }: { editId: string | null }) {
       } else {
         await api.post('/scripts', { name: scriptName, dag });
       }
+      // The destination may still have a fresh cached catalog from before this
+      // write. Mark all script projections stale before navigating back.
+      await queryClient.invalidateQueries({ queryKey: ['scripts'] });
       if (mounted.current) router.push('/scripts');
     } catch (e: unknown) {
       if (mounted.current) setErrors([isAxiosError(e) && e.response?.status === 409

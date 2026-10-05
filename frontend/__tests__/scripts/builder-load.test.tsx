@@ -4,6 +4,8 @@ import { api } from '@/lib/api';
 
 let mockEditId: string | null = 'script-a';
 const mockPush = jest.fn();
+const mockInvalidate = jest.fn().mockResolvedValue(undefined);
+jest.mock('@tanstack/react-query', () => ({ useQueryClient: () => ({ invalidateQueries: mockInvalidate }) }));
 jest.mock('next/navigation', () => ({
   useRouter: () => ({ push: mockPush }),
   useSearchParams: () => new URLSearchParams(mockEditId ? { id: mockEditId } : {}),
@@ -57,6 +59,7 @@ it('keeps a failed existing-script read out of the editor and only saves its ori
     name: 'Original graph', dag: payload().data.current_version.dag, expected_current_version_id: 'script-a-version',
   }));
   expect(api.post).not.toHaveBeenCalled();
+  expect(mockInvalidate).toHaveBeenCalledWith({ queryKey: ['scripts'] });
 });
 
 it.each([
@@ -110,6 +113,7 @@ it('keeps new-script creation independent of the existing-resource loader', asyn
   await waitFor(() => expect(api.post).toHaveBeenCalledWith('/scripts', expect.objectContaining({ dag: expect.any(Object) })));
   expect(api.get).not.toHaveBeenCalled();
   expect(api.put).not.toHaveBeenCalled();
+  expect(mockInvalidate).toHaveBeenCalledWith({ queryKey: ['scripts'] });
 });
 
 it('does not navigate the next editor when the previous save completes', async () => {
@@ -134,6 +138,7 @@ it('surfaces version conflicts without retrying or navigating away from the grap
   fireEvent.click(screen.getByRole('button', { name: 'Сохранить версию' }));
   expect(await screen.findByText(/Сохранение отклонено/)).toBeInTheDocument();
   expect(api.put).toHaveBeenCalledTimes(1);
+  expect(mockInvalidate).not.toHaveBeenCalled();
   expect(screen.getByTestId('graph')).toBeInTheDocument();
   expect(mockPush).not.toHaveBeenCalled();
 });
