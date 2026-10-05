@@ -109,3 +109,16 @@ python -m scripts.audit.probe_log_read_budget --expect-bounded --output .local-p
 
 Probe записывает source SHA, working-tree flag/hashes и очищает временные files
 до сохранения receipt. Незакоммиченная проверка не выдаётся за exact-source build.
+
+## Найденный при установке storage gap
+
+Срез 5 октября 19:46 UTC / 6 октября 00:46 UTC+5: в установленном backend
+`5405d465` отсутствует `SPHERE_LOGS_DIR` и перекрывающий mount. Семь новых файлов
+общим размером454385 bytes находятся в `/tmp/sphere_device_logs`, в writable layer.
+Recreate этого контейнера не сохраняет полученную историю. Это отдельный доказанный
+дефект долговечности, а не доказанная причина уменьшения свободного Windows C:.
+
+[Контракт хранения и безопасного переноса](../../operations/DEVICE-LOG-STORAGE.md)
+добавляет named volume в full/production/local-pilot Compose и non-root ownership
+в image. Установка с переносом/проверкой hashes записывается отдельным receipt;
+само изменение Compose не считается успешной миграцией существующей истории.

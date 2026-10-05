@@ -76,7 +76,7 @@ def test_pilot_runs_built_images_with_real_auth_and_healthchecks(pilot):
     assert backend["environment"]["SERVER_PUBLIC_URL"] == "http://10.0.2.2:18080"
     assert backend["build"]["dockerfile"] == "backend/Dockerfile"
     assert {mount["target"] for mount in backend["volumes"]} == {
-        "/app/agent-config", "/app/backend/updates",
+        "/app/agent-config", "/app/backend/updates", "/var/lib/sphere/device-logs",
     }
     config_mount = next(mount for mount in backend["volumes"] if mount["target"] == "/app/agent-config")
     ota_mount = next(mount for mount in backend["volumes"] if mount["target"] == "/app/backend/updates")
@@ -99,6 +99,15 @@ def test_pilot_persists_ota_catalog_and_artifacts(pilot):
     assert update_mounts[0]["source"] == "ota_data"
     assert update_mounts[0]["target"] == "/app/backend/updates"
     assert not update_mounts[0].get("read_only", False)
+
+
+def test_pilot_persists_uploaded_device_logs(pilot):
+    backend = pilot["services"]["backend"]
+    path = backend["environment"]["SPHERE_LOGS_DIR"]
+    assert path == "/var/lib/sphere/device-logs"
+    mounts = [mount for mount in backend["volumes"] if mount["target"] == path]
+    assert len(mounts) == 1 and mounts[0]["source"] == "device_logs"
+    assert mounts[0]["type"] == "volume" and not mounts[0].get("read_only", False)
 
 
 @pytest.mark.parametrize("profile,tunnel", [

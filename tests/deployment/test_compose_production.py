@@ -58,10 +58,13 @@ def test_production_application_uses_image_defaults_without_source_mounts(produc
     if service == "backend":
         assert configuration["environment"]["SPHERE_UPDATES_PATH"] == "/app/backend/updates/releases.json"
         mounts = configuration.get("volumes", [])
-        assert len(mounts) == 1, mounts
-        assert mounts[0]["type"] == "volume"
-        assert mounts[0]["source"] == "ota_data"
-        assert mounts[0]["target"] == "/app/backend/updates"
+        assert len(mounts) == 2, mounts
+        assert all(mount["type"] == "volume" for mount in mounts)
+        assert {(mount["source"], mount["target"]) for mount in mounts} == {
+            ("ota_data", "/app/backend/updates"),
+            ("device_logs", "/var/lib/sphere/device-logs"),
+        }
+        assert configuration["environment"]["SPHERE_LOGS_DIR"] == "/var/lib/sphere/device-logs"
     else:
         assert not configuration.get("volumes"), {service: configuration.get("volumes")}
     assert configuration.get("user") not in {"0", "root"}

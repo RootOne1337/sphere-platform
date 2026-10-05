@@ -16,6 +16,7 @@ services:
     volumes: !override
       - ./.local-pilot/agent-config:/app/agent-config:ro
       - ota_data:/app/backend/updates
+      - device_logs:/var/lib/sphere/device-logs
     command: !reset null
     user: !reset null
     environment:
@@ -25,6 +26,7 @@ services:
       AGENT_CONFIG_ENV: development
       CORS_EXTRA_ORIGINS: ${PILOT_BROWSER_URL:?Set browser gateway URL}
       SPHERE_UPDATES_PATH: /app/backend/updates/releases.json
+      SPHERE_LOGS_DIR: /var/lib/sphere/device-logs
     restart: unless-stopped
   frontend:
     image: ${PILOT_IMAGE_PREFIX}-frontend:${PILOT_REVISION}
