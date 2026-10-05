@@ -8,6 +8,18 @@ const mockOnChange = jest.fn();
 
 jest.mock('@/lib/hooks/useDevices', () => ({ useDevices: jest.fn() }));
 
+it('shows canonical model metadata in the single-device picker without changing its selected ID', async () => {
+  const canonical = { ...devices[0], device_model: 'Canonical emulator', model: 'Legacy emulator' };
+  setDeviceQuery([canonical]);
+  const user = userEvent.setup();
+  render(<DeviceSearchSelect value="" onChange={mockOnChange} />);
+  await user.click(screen.getByRole('combobox'));
+  expect(screen.getByText('Canonical emulator')).toBeInTheDocument();
+  expect(screen.queryByText('Legacy emulator')).not.toBeInTheDocument();
+  await user.click(screen.getByRole('option', { name: /Canonical emulator/ }));
+  expect(mockOnChange).toHaveBeenCalledWith(canonical.id);
+});
+
 beforeAll(() => {
   class ResizeObserverMock implements ResizeObserver {
     observe() {}

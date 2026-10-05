@@ -90,6 +90,22 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
+it('displays and sorts page-local stream cards by the canonical model instead of legacy metadata', () => {
+  mockDevices = [
+    { ...mockDevices[0], device_model: 'Zulu canonical', model: 'Alpha legacy' },
+    { ...mockDevices[1], device_model: 'Alpha canonical', model: 'Zulu legacy' },
+  ];
+  render(<FleetStreamPage />);
+  fireEvent.click(screen.getByRole('button', { name: 'Модель' }));
+  expect(screen.getAllByRole('button', { name: /Начать просмотр/ }).map(button => button.getAttribute('aria-label')))
+    .toEqual(['Начать просмотр Agent B', 'Начать просмотр Agent A']);
+  expect(screen.getAllByText('Alpha canonical')).toHaveLength(2);
+  expect(screen.getAllByText('Zulu canonical')).toHaveLength(2);
+  expect(screen.queryByText('Alpha legacy')).not.toBeInTheDocument();
+  expect(screen.queryByText('Zulu legacy')).not.toBeInTheDocument();
+  expect(screen.queryByText('Live a')).not.toBeInTheDocument();
+});
+
 it('shows heartbeat age and separates fresh telemetry from missing or stale heartbeat', () => {
   const now = Date.parse('2026-09-29T12:00:00.000Z');
   jest.spyOn(Date, 'now').mockReturnValue(now);

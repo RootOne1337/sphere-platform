@@ -13,6 +13,7 @@ import {
 import { DeviceStatusBadge } from '@/components/sphere/DeviceStatusBadge';
 import { useDebounce } from '@/lib/hooks/useDebounce';
 import { useDevices, type Device } from '@/lib/hooks/useDevices';
+import { getReportedDeviceModel } from '@/src/features/devices/devicePresentation';
 
 const DEVICE_LOOKUP_PAGE_SIZE = 100;
 const EMPTY_DEVICES: Device[] = [];
@@ -87,7 +88,12 @@ export function DeviceSearchSelect({
             <SelectItem key={device.id} value={device.id}>
               <span className="flex items-center gap-2">
                 <Monitor className="w-3 h-3 shrink-0" aria-hidden="true" />
-                <span className="truncate">{device.name}</span>
+                <span className="min-w-0">
+                  <span className="block truncate">{device.name}</span>
+                  <span className="block truncate text-xs text-muted-foreground">
+                    {getReportedDeviceModel(device) ?? 'Модель не сообщена'}
+                  </span>
+                </span>
                 <DeviceStatusBadge status={device.status} />
               </span>
             </SelectItem>

@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/select';
 import { DeviceStatusBadge } from '@/components/sphere/DeviceStatusBadge';
 import { Search, Monitor, FolderOpen, MapPin } from 'lucide-react';
+import { getReportedDeviceModel } from '@/src/features/devices/devicePresentation';
 
 type SelectionMode = 'all' | 'group' | 'location' | 'manual';
 const MAX_DEVICE_SELECTOR_SCOPE = 5000;
@@ -136,7 +137,7 @@ export function DeviceSelector({ value, onChange, mode: externalMode, onModeChan
       const q = search.toLowerCase();
       list = list.filter(d =>
         d.name.toLowerCase().includes(q) ||
-        d.model?.toLowerCase().includes(q) ||
+        getReportedDeviceModel(d)?.toLowerCase().includes(q) ||
         d.android_id?.toLowerCase().includes(q) ||
         d.id.toLowerCase().includes(q)
       );
@@ -302,7 +303,12 @@ export function DeviceSelector({ value, onChange, mode: externalMode, onModeChan
                   className="h-3.5 w-3.5"
                 />
                 <Monitor className="w-3 h-3 text-muted-foreground shrink-0" />
-                <span className="font-mono truncate flex-1">{d.name}</span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate font-mono">{d.name}</span>
+                  <span className="block truncate text-muted-foreground" title={getReportedDeviceModel(d) ?? undefined}>
+                    {getReportedDeviceModel(d) ?? 'Модель не сообщена'}
+                  </span>
+                </span>
                 <DeviceStatusBadge status={d.status} />
               </label>
             ))}

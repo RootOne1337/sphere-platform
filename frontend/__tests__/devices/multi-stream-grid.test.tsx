@@ -58,6 +58,17 @@ const makeDevice = (id: string, status: Device['status'], last_heartbeat: string
 describe('MultiStreamGrid', () => {
   afterEach(() => jest.restoreAllMocks());
 
+  it('shows the canonical model and explicitly marks absent model metadata in the grid HUD', () => {
+    render(<MultiStreamGrid devices={[
+      { ...makeDevice('canonical', 'online', null), device_model: 'Canonical emulator', model: 'Legacy emulator' },
+      { ...makeDevice('unknown', 'online', null), device_model: '  ', model: null },
+    ]} />);
+    expect(screen.getByText('Canonical emulator')).toBeInTheDocument();
+    expect(screen.queryByText('Legacy emulator')).not.toBeInTheDocument();
+    expect(screen.getByText('Модель не сообщена')).toBeInTheDocument();
+    expect(screen.queryByTestId('stream-canonical')).not.toBeInTheDocument();
+  });
+
   it('streams selected devices and stops the live viewers from its stop button', () => {
     const onClose = jest.fn();
     render(

@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Play, Pause, X, MonitorPlay, Activity, Cpu } from 'lucide-react';
 import { Device } from '@/lib/hooks/useDevices';
 import { isDeviceReachable } from '@/src/features/devices/deviceListFilters';
+import { getReportedDeviceModel } from './devicePresentation';
 import { Badge } from '@/src/shared/ui/badge';
 import { Button } from '@/src/shared/ui/button';
 import { useStreamStore, GRID_SIZE_OPTIONS, gridColumns, gridLabel } from '@/src/shared/store/useStreamStore';
@@ -164,7 +165,7 @@ export function MultiStreamGrid({ devices, selectedIds, onClose }: MultiStreamGr
 
                         {/* Bottom Telemetry Bar */}
                         <div className="h-6 shrink-0 bg-card border-t border-border px-2 flex items-center justify-between">
-                            <span className="text-[9px] font-mono text-muted-foreground font-bold tracking-widest truncate">{device.model || 'GENERIC'}</span>
+                            <span className="text-[9px] font-mono text-muted-foreground font-bold tracking-widest truncate">{getReportedDeviceModel(device) ?? 'Модель не сообщена'}</span>
 
                             {showStats && reachable && (
                                 <div className="flex items-center gap-3">

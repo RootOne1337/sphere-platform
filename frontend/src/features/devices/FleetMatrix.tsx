@@ -13,6 +13,7 @@ import {
 } from "@tanstack/react-table";
 import { Device } from "@/lib/hooks/useDevices";
 import { useFleetTablePreferences } from './fleetTablePreferences';
+import { getReportedDeviceModel } from './devicePresentation';
 import { DeviceStatusBadge } from "@/components/sphere/DeviceStatusBadge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/src/shared/ui/badge";
@@ -101,7 +102,7 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
                 size: 190,
                 cell: ({ row }) => {
                     const device = row.original;
-                    const metadata = device.device_model?.trim() || device.model?.trim() || "Модель не сообщена";
+                    const metadata = getReportedDeviceModel(device) ?? "Модель не сообщена";
                     return (
                         <div className="flex h-full flex-col justify-center pr-4">
                             <button

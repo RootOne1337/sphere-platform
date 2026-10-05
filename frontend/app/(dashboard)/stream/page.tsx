@@ -7,6 +7,7 @@ import { useDevices, type Device } from '@/lib/hooks/useDevices';
 import { useDebounce } from '@/lib/hooks/useDebounce';
 import { useGroups } from '@/lib/hooks/useGroups';
 import { useLocations } from '@/lib/hooks/useLocations';
+import { getReportedDeviceModel } from '@/src/features/devices/devicePresentation';
 import {
   isDeviceReachable,
   type DeviceStatusFilter,
@@ -102,7 +103,7 @@ export default function FleetStreamPage() {
         case 'status':
           return (a.status || '').localeCompare(b.status || '');
         case 'model':
-          return (a.model || '').localeCompare(b.model || '');
+          return (getReportedDeviceModel(a) ?? '').localeCompare(getReportedDeviceModel(b) ?? '');
         case 'last_seen': {
           const left = a.last_seen ? Date.parse(a.last_seen) : Number.NaN;
           const right = b.last_seen ? Date.parse(b.last_seen) : Number.NaN;
@@ -359,7 +360,7 @@ export default function FleetStreamPage() {
                   <div className="flex min-h-12 items-center justify-between gap-2 border-b border-border px-3 py-2">
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium text-foreground" title={device.name}>{device.name || 'Без имени'}</p>
-                      <p className="truncate text-[11px] text-muted-foreground" title={device.android_id}>{device.android_id || device.model || 'Android-устройство'}</p>
+                      <p className="truncate text-[11px] text-muted-foreground" title={device.android_id}>{device.android_id || getReportedDeviceModel(device) || 'Android-устройство'}</p>
                     </div>
                     <span className={`shrink-0 text-[11px] font-medium ${STATUS_TONES[device.status]}`}>
                       {STATUS_LABELS[device.status]}
@@ -391,7 +392,7 @@ export default function FleetStreamPage() {
                     <div className="min-w-0">
                       <span className="flex min-w-0 items-center gap-1.5 truncate text-[11px] text-muted-foreground">
                         {reachable ? <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-400" aria-hidden="true" /> : <Activity className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />}
-                        <span className="truncate">{device.model || device.android_version || 'Android'}</span>
+                        <span className="truncate">{getReportedDeviceModel(device) ?? 'Модель не сообщена'}</span>
                       </span>
                       <span
                         aria-label={`Последний heartbeat: ${heartbeat.label}`}

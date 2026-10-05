@@ -21,6 +21,7 @@ import { NativeScreenshotPanel } from './NativeScreenshotPanel';
 import { AndroidProfilePanel } from './AndroidProfilePanel';
 import { DeviceDiagnosticsPanel, DeviceHistoryPanel, DeviceSavedLogsPanel, Metric, utcTime } from './DeviceOperationsPanels';
 import { useCapabilities } from '@/src/features/access/Capabilities';
+import { getReportedDeviceModel } from './devicePresentation';
 
 type View = 'summary' | 'tasks' | 'events' | 'diagnostics' | 'logs' | 'stream' | 'terminal' | 'logcat' | 'script' | 'screenshot' | 'profile';
 const VIEWS = [['summary', 'Обзор'], ['tasks', 'Задачи'], ['events', 'События'], ['diagnostics', 'Видео'], ['logs', 'Логи APK']] as const;
@@ -71,7 +72,7 @@ export function DeviceInspectorDetail({ deviceId, fullPage = false }: { deviceId
 
   return <div className="min-w-0 space-y-5">
     <header className="space-y-3">
-      <div className="flex flex-wrap items-start justify-between gap-3"><div className="min-w-0"><h3 className="break-words text-xl font-semibold tracking-tight">{device.name}</h3><p className="mt-1 text-sm text-muted-foreground">{device.device_model || device.model || 'Модель не сообщена'} · Android {device.android_version || 'не сообщён'}</p></div><DeviceStatusBadge status={device.status} /></div>
+      <div className="flex flex-wrap items-start justify-between gap-3"><div className="min-w-0"><h3 className="break-words text-xl font-semibold tracking-tight">{device.name}</h3><p className="mt-1 text-sm text-muted-foreground">{getReportedDeviceModel(device) ?? 'Модель не сообщена'} · Android {device.android_version || 'не сообщён'}</p></div><DeviceStatusBadge status={device.status} /></div>
       <div className="flex flex-wrap items-center gap-2"><Button variant="outline" size="sm" disabled={query.isFetching} onClick={() => { void query.refetch(); }}><RefreshCw className="mr-2 h-4 w-4" aria-hidden />Обновить карточку</Button>{!fullPage && <Button asChild variant="ghost" size="sm"><Link href={`/devices/${encodeURIComponent(deviceId)}`}><ExternalLink className="mr-2 h-4 w-4" aria-hidden />Полная карточка</Link></Button>}</div>
       <p className="text-xs text-muted-foreground">Запрос API: {utcTime(new Date(query.dataUpdatedAt).toISOString())} · опрос каждые 15 секунд.</p>
       {query.isError && <p role="alert" className="rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">Обновление карточки не удалось. Показан сохранённый ответ; управление заблокировано до успешной проверки.</p>}

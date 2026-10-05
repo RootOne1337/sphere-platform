@@ -150,6 +150,22 @@ it('sends manual search to the API before selection is enabled for the result se
   expect(screen.getByRole('button', { name: 'Выбрать все' })).toBeEnabled();
 });
 
+it('displays and searches the canonical model while debounced manual search is pending', async () => {
+  jest.useFakeTimers();
+  const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+  const canonical = { ...devices[0], device_model: '  Canonical emulator  ', model: 'Legacy emulator' };
+  setDeviceQuery([canonical, devices[1]]);
+  render(<DeviceSelector value={[]} onChange={mockOnChange} />);
+
+  expect(screen.getByText('Canonical emulator')).toBeInTheDocument();
+  expect(screen.queryByText('Legacy emulator')).not.toBeInTheDocument();
+  await user.type(screen.getByPlaceholderText('Имя, serial, модель или UUID…'), 'Canonical');
+  expect(screen.getByText('Device 1')).toBeInTheDocument();
+  expect(screen.queryByText('Device 2')).not.toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Выбрать все' })).toBeDisabled();
+  expect(mockOnChange).not.toHaveBeenCalled();
+});
+
 it('fails closed on catalog errors and offers an explicit retry', async () => {
   const refetch = jest.fn();
   mockUseDevices.mockReturnValue({
