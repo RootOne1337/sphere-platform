@@ -19,10 +19,17 @@
 [22 раздела в браузере, шесть подтверждённых дефектов, ограничение Grafana и 50 работ](audits/2026-10-05/ENTERPRISE-PRODUCT-AUDIT.md) ·
 [Evidence/источники](audits/2026-10-05/ENTERPRISE-PRODUCT-AUDIT-EVIDENCE.json) ·
 [Backlog с приёмкой](audits/2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json).
-Исходники `c3937a1`, установленный UI/API `c1a6e79a`; этап только анализа.
+Исходники `c3937a1`, установленный на этапе аудита UI/API `c1a6e79a`; исходный аудит — только анализ.
 Каталог API и элементов управления не заменяет живую проверку Android и 500–1000 устройств.
 
-**Последняя установка веба и API: 4 октября 2026, после перезагрузки ПК, в 17:14 UTC.
+**5 октября, 07:33 UTC+5 — первый пакет исправлений установлен:** UI `6ff6bc2`
+на [3015](http://127.0.0.1:3015/devices), API `c1a6e79a` сохранён. Пять подтверждённых
+дефектов и отдельный cache-дефект исправлены; 1185 tests/types/build и browser/API
+приёмка записаны в [журнале реализации](audits/2026-10-05/ENTERPRISE-PRODUCT-IMPLEMENTATION.md)
+и [evidence](audits/2026-10-05/ENTERPRISE-PRODUCT-IMPLEMENTATION-EVIDENCE.json).
+Исходный план из 50 работ целиком не закрыт; 45 сохраняют открытые критерии.
+
+**Предыдущая совместная установка веба и API: 4 октября 2026, после перезагрузки ПК, в 17:14 UTC.
 API/UI c1a6e79.** [Аудит диска, ОЗУ, сборки и RPC](audits/2026-10-04/HOST-RESOURCE-PRESSURE-AND-RPC-DIAGNOSTICS.md) ·
 [Эксплуатационная процедура](operations/HOST-RESOURCES.md).
 
