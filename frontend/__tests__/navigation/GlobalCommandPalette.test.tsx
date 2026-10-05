@@ -6,9 +6,11 @@ import userEvent from '@testing-library/user-event';
 
 const mockPush = jest.fn();
 let mockCanAccessRoute = (_path: string) => true;
+// Keep this real module's identity consistent with suites that import it
+// without a mock; virtual mocks are only for modules absent from the project.
 jest.mock('@/src/features/access/Capabilities', () => ({
   useCapabilities: () => ({ canAccessRoute: (path: string) => mockCanAccessRoute(path) }),
-}), { virtual: true });
+}));
 jest.mock('next/navigation', () => ({ useRouter: () => ({ push: mockPush }) }));
 
 describe('GlobalCommandPalette', () => {

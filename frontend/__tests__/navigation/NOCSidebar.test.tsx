@@ -24,9 +24,11 @@ jest.mock('next/navigation', () => ({
 
 jest.mock('@/lib/store', () => ({ signOut: jest.fn() }));
 let mockCanAccessRoute = (_path: string) => true;
+// Capabilities is a real mapped module. A virtual ID would diverge from an
+// earlier real import (for example the logout suite) in Jest's shared resolver.
 jest.mock('@/src/features/access/Capabilities', () => ({
   useCapabilities: () => ({ canAccessRoute: (path: string) => mockCanAccessRoute(path) }),
-}), { virtual: true });
+}));
 
 const EXPECTED_ROUTES = [
   '/dashboard', '/monitoring', '/devices', '/stream', '/discovery', '/groups', '/locations',
