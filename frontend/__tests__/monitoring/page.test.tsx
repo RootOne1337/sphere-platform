@@ -142,7 +142,7 @@ describe('Infrastructure Monitoring page failure states', () => {
     render(<QueryClientProvider client={client}><MonitoringPage /></QueryClientProvider>);
 
     expect(await screen.findByText('Проверки прошли · метрики частично недоступны')).toBeInTheDocument();
-    expect(screen.getByText(/Проверки сервисов и покрытие метрик — разные сигналы\./).parentElement).toHaveTextContent('история CPU, история памяти');
+    expect(screen.getByText(/Проверки сервисов и покрытие метрик — разные сигналы\./).parentElement).toHaveTextContent('активные туннели');
     expect(screen.getAllByText('HEALTHY').length).toBeGreaterThan(0);
     expect(screen.getByText('300 B')).toBeInTheDocument();
     expect(screen.getByText('Активные туннели').parentElement).toHaveTextContent('Не измеряется');

@@ -98,16 +98,14 @@ export function formatBytesPerSecond(bytesPerSecond: number | null | undefined):
 
 export type HealthSummary = { label: string; tone: 'healthy' | 'warning' | 'critical' | 'unknown' | 'loading' };
 
-/** Missing fields are a coverage gap, not a zero-valued measurement. */
+/** Coverage of current REST probes. History has its own Prometheus states. */
 export function getMonitoringTelemetryGaps(metrics: MonitoringMetrics | undefined): string[] {
     if (!metrics) return ['метрики ещё не получены'];
 
     const gaps: string[] = [];
     if (!metrics.observedAt || !Number.isFinite(Date.parse(metrics.observedAt))) gaps.push('время замера');
     if (metrics.cpu?.linuxLoad1mPerCpu == null) gaps.push('нагрузка CPU');
-    if (!metrics.cpu?.history?.length) gaps.push('история CPU');
     if (metrics.ram?.currentBytes == null) gaps.push('память контейнера');
-    if (!metrics.ram?.history?.length) gaps.push('история памяти');
     if (metrics.redis?.status == null || metrics.redis.status === 'UNKNOWN') gaps.push('статус Redis');
     if (metrics.redis?.ops == null) gaps.push('операции Redis');
     if (metrics.redis?.memory == null) gaps.push('память Redis');

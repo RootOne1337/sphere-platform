@@ -10,6 +10,7 @@ import { Button } from '@/src/shared/ui/button';
 import { Card, CardContent } from '@/src/shared/ui/card';
 import { HistoryChart } from './HistoryChart';
 import { HttpMetricsPanel } from './HttpMetricsPanel';
+import { ResourceMetricsPanel } from './ResourceMetricsPanel';
 export { HistoryChart } from './HistoryChart';
 import type { HistoryWindow, ObservabilitySnapshot } from './observabilityTypes';
 
@@ -96,7 +97,7 @@ export function ObservabilityPanel() {
                 <Button variant="outline" size="sm" onClick={() => setShowGrafana(value => !value)} aria-expanded={showGrafana} aria-controls="embedded-grafana"><ChartNoAxesCombined className="mr-2 h-4 w-4" />{showGrafana ? 'Скрыть Grafana' : 'Открыть Grafana здесь'}</Button>
             </div>
         </div>
-        <div className="flex items-start gap-3 rounded-xl border border-amber-300/70 bg-amber-50/60 p-4 text-sm text-amber-950 dark:border-amber-900 dark:bg-amber-950/20 dark:text-amber-200"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" /><p><strong>Покрытие метрик ограничено.</strong> Здесь показаны доступность и качество сбора Prometheus. Нагрузка HTTP, p95 и классы ошибок показаны отдельным блоком ниже. История CPU и памяти и размер парка пока не входят в эти панели. Доступность /metrics не доказывает исправность стрима или сценария Android.</p></div>
+        <div className="flex items-start gap-3 rounded-xl border border-amber-300/70 bg-amber-50/60 p-4 text-sm text-amber-950 dark:border-amber-900 dark:bg-amber-950/20 dark:text-amber-200"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" /><p><strong>Границы измерений.</strong> Здесь показаны доступность и качество сбора Prometheus. Нагрузка HTTP и история CPU и памяти контейнера показаны отдельными блоками ниже. Расход Windows-хоста, RSS отдельных процессов и размер парка в эти панели не входят. Доступность /metrics не доказывает исправность стрима или сценария Android.</p></div>
         {observation.isError && <div role="alert" className="rounded-lg border border-rose-300 bg-rose-50 p-4 text-sm text-rose-950 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-200">{errorLabel(observation.error)} Последние графики скрыты, чтобы старый срез не выглядел текущим.</div>}
         {!observation.isError && delayed && <p role="alert" className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950 dark:border-amber-900 dark:bg-amber-950/20 dark:text-amber-200">Срез Prometheus задерживается или его время некорректно. Графики скрыты до следующего актуального ответа; обновление выполняется автоматически.</p>}
         {observation.isLoading && <p role="status" className="text-sm text-muted-foreground">Подключаемся к Prometheus…</p>}
@@ -117,6 +118,7 @@ export function ObservabilityPanel() {
             </CardContent></Card>
         </>}
         <HttpMetricsPanel window={window} now={now} />
+        <ResourceMetricsPanel window={window} now={now} />
         {showGrafana && <Card id="embedded-grafana" className="overflow-hidden rounded-xl">
             <div className="flex items-center justify-between gap-3 border-b p-4"><div><h3 className="font-medium">Grafana · серверная история</h3><p className="mt-1 text-xs text-muted-foreground">Режим просмотра · максимум 24 часа на запрос · сессия подтверждается Sphere каждую минуту</p></div><Button variant="ghost" size="icon" aria-label="Закрыть Grafana" onClick={() => setShowGrafana(false)}><X className="h-4 w-4" /></Button></div>
             {grafanaError ? <p role="alert" className="p-4 text-sm text-rose-700 dark:text-rose-400">{grafanaError}</p> : !grafanaReady ? <p role="status" className="p-4 text-sm text-muted-foreground">Проверяем доступ к Grafana…</p> : <iframe title="Grafana — наблюдаемость Sphere" className="h-[680px] w-full border-0" src="/observability/grafana/d/sphere-collection/sphere-metrics-collection?orgId=1&kiosk&from=now-1h&to=now&refresh=30s" sandbox="allow-scripts allow-same-origin allow-forms allow-downloads" referrerPolicy="same-origin" />}

@@ -7,9 +7,8 @@ import sys
 import time
 from pathlib import Path
 
-from starlette_exporter import handle_metrics
-
 from backend import metrics
+from backend.monitoring.resource_exposition import handle_metrics
 
 root = Path(sys.argv[1])
 index = int(sys.argv[2])

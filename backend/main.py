@@ -5,12 +5,12 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI
-from starlette_exporter import handle_metrics
 
 import backend.core.logging_config  # noqa: F401 — TZ-11 SPLIT-4: module-level structlog init
 from backend.core.cors import setup_cors
 from backend.middleware.metrics import PrometheusMiddleware
 from backend.middleware.request_id import RequestIdMiddleware
+from backend.monitoring.resource_exposition import handle_metrics
 
 
 @asynccontextmanager

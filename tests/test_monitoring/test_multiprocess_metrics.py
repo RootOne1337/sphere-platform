@@ -78,6 +78,12 @@ def test_four_workers_aggregate_retire_and_replace(tmp_path):
             assert 'device_id=' not in body
             assert "sphere_stream_fps" not in body
             assert "process_cpu_seconds_total" not in body
+            # Container resources are read at scrape time once, never multiplied
+            # by the four worker registries. Windows has no cgroup: availability=0.
+            resource_samples = [(key, number) for key, number in samples(body).items()
+                                if key[0] == "sphere_container_resource_available"]
+            assert len(resource_samples) == 4
+            assert all("pid" not in dict(key[1]) for key, _ in resource_samples)
         # Bounded mmap: 4 process files per worker, despite 4,000 device IDs.
         files = list(directory.glob("*.db"))
         assert len(files) <= 16

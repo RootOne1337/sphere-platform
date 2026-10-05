@@ -43,7 +43,7 @@ describe('monitoring status presentation', () => {
     };
 
     expect(getMonitoringTelemetryGaps(metrics)).toEqual([
-      'время замера', 'история CPU', 'история памяти', 'операции Redis', 'память Redis', 'клиенты Redis', 'активные туннели',
+      'время замера', 'операции Redis', 'память Redis', 'клиенты Redis', 'активные туннели',
     ]);
     expect(summarizeMonitoringHealth([node('HEALTHY')], { telemetryIncomplete: true })).toEqual({
       label: 'HEALTH CHECKS PASS · TELEMETRY DEGRADED',

@@ -1,4 +1,5 @@
 jest.mock('@/src/features/monitoring/HttpMetricsPanel', () => ({ HttpMetricsPanel: () => null }));
+jest.mock('@/src/features/monitoring/ResourceMetricsPanel', () => ({ ResourceMetricsPanel: () => null }));
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { api } from '@/lib/api';
@@ -44,7 +45,7 @@ it('shows genuine zero/down readings, unknown history and panel coverage separat
     await screen.findByText('Сбор работает');
     expect(screen.getByText('Недоступен')).toBeInTheDocument();
     expect(screen.getAllByText('Нет измерения')).toHaveLength(3);
-    expect(screen.getByText(/История CPU и памяти/)).toBeInTheDocument();
+    expect(screen.getByText(/история CPU и памяти контейнера/)).toBeInTheDocument();
     expect(screen.getByText(/Активных алертов по подключённым правилам нет/)).toBeInTheDocument();
 });
 it('preserves visual gaps instead of joining missing samples', () => {
