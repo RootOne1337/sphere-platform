@@ -51,6 +51,7 @@ import {
 } from 'lucide-react';
 import { DeviceSelector } from '@/components/sphere/DeviceSelector';
 import { useScripts, Script } from '@/lib/hooks/useScripts';
+import { formatScriptStepCount, getScriptStepCount } from '@/src/features/scripts/scriptPresentation';
 import { ScheduleExecutionHistoryDialog } from '@/components/orchestration/ScheduleExecutionHistoryDialog';
 import { PipelineCatalogPicker } from '@/components/orchestration/PipelineCatalogPicker';
 import { PipelineResumeControl } from '@/components/orchestration/PipelineResumeControl';
@@ -1342,7 +1343,7 @@ function CreatePipelineButton() {
                                                 <option value="">Выбери скрипт...</option>
                                                 {scripts.filter(s => !s.is_archived).map(s => (
                                                     <option key={s.id} value={s.id}>
-                                                        {s.name} ({s.node_count} нод)
+                                                        {s.name} ({formatScriptStepCount(getScriptStepCount(s))})
                                                     </option>
                                                 ))}
                                             </select>
@@ -1986,7 +1987,7 @@ function EditScheduleDialog({ schedule, open, onOpenChange }: {
                                 <option value="">Выбери скрипт...</option>
                                 {scripts.filter(s => !s.is_archived).map(s => (
                                     <option key={s.id} value={s.id}>
-                                        {s.name} ({s.node_count} нод)
+                                        {s.name} ({formatScriptStepCount(getScriptStepCount(s))})
                                     </option>
                                 ))}
                             </select>
@@ -2233,7 +2234,7 @@ function CreateScheduleDialog({ open, onOpenChange }: { open: boolean; onOpenCha
                                 <option value="">Выбери скрипт...</option>
                                 {scripts.filter(s => !s.is_archived).map(s => (
                                     <option key={s.id} value={s.id}>
-                                        {s.name} ({s.node_count} нод)
+                                        {s.name} ({formatScriptStepCount(getScriptStepCount(s))})
                                     </option>
                                 ))}
                             </select>
