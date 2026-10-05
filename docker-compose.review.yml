@@ -32,14 +32,21 @@ services:
       timeout: 5s
       retries: 6
       start_period: 15s
-    networks: [review]
+    networks:
+      review:
+        ipv4_address: ${SPHERE_REVIEW_UI_IP:-172.30.0.3}
     logging:
       driver: json-file
       options: {max-size: 5m, max-file: "3"}
 
   review-gateway:
     image: nginx:alpine
-    entrypoint: [nginx, -g, "daemon off;"]
+    entrypoint:
+      - /bin/sh
+      - -ec
+      - "envsubst '$$SPHERE_REVIEW_UI_IP' < /etc/nginx/nginx.conf.template > /tmp/nginx.conf; exec nginx -c /tmp/nginx.conf -g 'daemon off;'"
+    environment:
+      SPHERE_REVIEW_UI_IP: ${SPHERE_REVIEW_UI_IP:-172.30.0.3}
     user: "101:101"
     restart: unless-stopped
     read_only: true
@@ -50,7 +57,7 @@ services:
     cpus: 0.5
     tmpfs: ["/tmp:rw,nosuid,nodev,size=16m,uid=101,gid=101,mode=0700"]
     volumes:
-      - ./infrastructure/nginx/review.conf:/etc/nginx/nginx.conf:ro
+      - ./infrastructure/nginx/review.conf:/etc/nginx/nginx.conf.template:ro
     ports:
       - "127.0.0.1:${SPHERE_REVIEW_PORT:-3015}:8080"
     healthcheck:
@@ -68,6 +75,13 @@ services:
 
 networks:
   review:
+    name: ${SPHERE_REVIEW_NETWORK:-sphere-review-stable_ui}
+    internal: true
+    ipam:
+      config:
+        - subnet: ${SPHERE_REVIEW_SUBNET:-172.30.0.0/24}
+          ip_range: ${SPHERE_REVIEW_DYNAMIC_RANGE:-172.30.0.128/25}
+          gateway: ${SPHERE_REVIEW_NETWORK_GATEWAY:-172.30.0.1}
   existing-api:
     external: true
     name: ${SPHERE_REVIEW_API_NETWORK:?Set the existing backend network}

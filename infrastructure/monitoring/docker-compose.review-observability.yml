@@ -4,7 +4,8 @@
 services:
   review-ui:
     networks:
-      review: {}
+      review:
+        ipv4_address: ${SPHERE_REVIEW_UI_IP:-172.30.0.3}
       tools:
         ipv4_address: ${OBS_GRAFANA_PROXY_WHITELIST:?Set one reserved IPv4 proxy address}
 
