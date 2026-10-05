@@ -1,0 +1,204 @@
+# EP-010 — live coverage and event delivery review
+
+**5 October 2026. Source reviewed:** `cb5b3f91640c86622060e6e3adea76c6d73a6093`.
+**Status:** source investigation and implementation contract; EP-010 remains OPEN.
+This review changes neither runtime behavior nor the immutable
+[50-item backlog](ENTERPRISE-PRODUCT-BACKLOG.json).
+Current acceptance remains **9 accepted / 41 with open criteria**.
+[Installed resource histories](ENTERPRISE-CONTAINER-RESOURCE-HISTORY.md) ·
+[Current runtime](../../operations/CURRENT-STATE.md).
+
+## What updates by itself today
+
+The product uses two different delivery mechanisms. A fleet event tells the browser
+that authoritative state may have changed. The browser then rereads the relevant
+mounted REST queries. Prometheus values are sampled histories; a WebSocket event
+does not make a controller reading or a scrape arrive sooner.
+
+| Surface | Current mechanism | Interval / trigger | Boundary |
+|---|---|---|---|
+| Device presence / tasks | One authenticated fleet WebSocket in the dashboard shell | Relevant events coalesced for 500 ms | Marks related caches stale; only active queries refetch |
+| Device registry | REST plus fleet-event reconciliation | 30 s fallback; 15 s staleTime | Reads inventory/presence for the filtered tenant scope |
+| Dashboard fleet | REST plus related fleet events | 15 s fallback | Tenant fleet data, not platform-wide Prometheus inventory |
+| HTTP and container-resource history | Prometheus scrape plus authorized browser snapshot | 15 s scrape and 15 s visible-page refresh | Values can lag by roughly both intervals plus transport/query time |
+| Infrastructure health / current counters | REST probes | 10 s | Probe availability is separate from data-plane health |
+| VPN peers / health | REST plus VPN events | 30 s fallback | Assignment, Android application and handshake are distinct facts |
+| VPN pool summary | REST plus VPN events | 60 s fallback | Current counter semantics require further correction |
+| Device events / aggregate event stats | REST plus fleet events | 15 s / 60 s | Journal reads are separate from the transient notification channel |
+
+Sources: [fleet hook](../../../frontend/lib/hooks/useFleetEvents.ts),
+[dashboard shell](../../../frontend/app/(dashboard)/layout.tsx),
+[device queries](../../../frontend/lib/hooks/useDevices.ts),
+[shared intervals](../../../frontend/lib/queryPollIntervals.ts),
+[monitoring page](../../../frontend/app/(dashboard)/monitoring/page.tsx),
+[VPN queries](../../../frontend/lib/hooks/useVpn.ts),
+[event queries](../../../frontend/lib/hooks/useDeviceEvents.ts).
+
+The current event hook has one bounded set of query roots, not an event queue that
+grows with every notification. A burst of progress events coalesces per root;
+in-flight reads are not repeatedly cancelled. Inactive cached pages become stale
+without starting a read for every hidden page. Hidden-tab invalidations are deferred;
+on return, authoritative data is reconciled. Normal query interval work is not
+configured to run in the background.
+
+Socket TCP-open alone is not marked live. A server snapshot/pong confirms the
+authenticated feed. Handshake timeout is 15 s; heartbeat is 20 s with a 10 s
+response timeout. Reconnection backs off with jitter to a 30 s maximum. An auth
+rejection does not retry until the token changes. Session query clients are retired
+when user, organization, role or session version changes.
+
+The existing [event-hook tests](../../../frontend/__tests__/hooks/useFleetEvents.test.tsx)
+exercise coalescing, initial/reconnected reconciliation, watchdog recovery,
+background deferral and cleanup. They are included in the previously recorded
+1275-test source run; no new end-to-end replay or latency SLA is claimed here.
+
+## Source-proven gaps
+
+### C1 — fleet Prometheus gauges have no producer
+
+[backend/metrics.py](../../../backend/metrics.py) declares
+`sphere_devices_total{org_id}` and `sphere_devices_online{org_id}` with `livemax`.
+A repository-wide search for the names finds only those declarations, with no
+`labels(...).set(...)` producer. This explains the empty metric vectors recorded
+in the original backlog. Choosing `livemax` alone does not create a measurement
+or keep an observation fresh.
+
+The [device-list route](../../../backend/api/v1/devices/router.py) already provides
+tenant-filtered `scope_total`, status counts, `presence_available` and `as_of`.
+It uses a small SQL inventory projection and one Redis MGET for the selected scope.
+It does not load all ORM device relationships to count the fleet, but the count
+work is still O(N) in that scope. Redis read failure reports unknown presence;
+an old database status does not become proof of current online state.
+
+This is a usable REST source. It is not yet an independent bounded Prometheus
+producer. Updating process-local gauges only when a browser opens the page would
+make platform coverage depend on operator activity and leave stale values behind.
+
+### C2 — the infrastructure tunnel field is explicitly unmeasured
+
+[monitoring/router.py](../../../backend/api/v1/monitoring/router.py) returns
+`network.activeTunnels = None`. The UI correctly shows a coverage gap. Substituting
+the number of assigned peers would conceal the missing signal rather than fix it.
+The infrastructure network counters cover backend interfaces; they do not prove
+an Android VPN, public tunnel or route is active.
+
+### C3 — pool active count lacks timestamp expiry
+
+[vpn/router.py](../../../backend/api/v1/vpn/router.py), `pool_stats`, counts
+`VPNPeer.is_active == True` within the organization. Its active-count query does
+not also require ASSIGNED state, a bound device or a sufficiently recent handshake.
+The [public schema](../../../backend/schemas/vpn/peer.py) describes this value as
+handshakes younger than three minutes. The query therefore does not enforce the
+documented freshness condition.
+
+[VPNHealthMonitor](../../../backend/services/vpn/health_monitor.py) deliberately
+preserves prior state when the router observation is unavailable or malformed.
+That preservation protects ownership; it also means an `is_active=True` flag can
+outlive the observation that justified it. This is a source-proven expiry gap,
+not a claim that current production peers are actually miscounted. A clock-boundary
+SQL reproduction and the corrected count must precede runtime acceptance.
+
+### C4 — Android applied state has no independent observation timestamp
+
+[DeviceLiveStatus](../../../backend/schemas/device_status.py) carries nullable
+`vpn_active` and `last_heartbeat`. [HeartbeatManager](../../../backend/websocket/heartbeat.py)
+updates the VPN field only when it is present in a pong. A later pong can refresh
+the heartbeat without supplying a new VPN observation. Consequently a fresh
+heartbeat does not, by itself, prove a fresh VPN-applied observation.
+
+[handle_telemetry](../../../backend/api/ws/android/router.py) can also update
+`vpn_active`; it does not establish a separate VPN observation epoch. The next
+contract needs an independent VPN-observed timestamp, current-session ownership
+and an explicit unknown state for old APKs. It must not assign the time of an
+unrelated heartbeat to a retained VPN flag.
+
+## Required semantics before implementation acceptance
+
+1. **Inventory:** active registered devices in an explicitly named tenant/filter
+   scope; counted SQL source and collection time.
+2. **Presence:** current Redis observation, online and busy separately, connecting,
+   offline, issues and unknown coverage. Failed reads cannot become zero online.
+3. **VPN assignment:** ASSIGNED, PROVISIONING, REVOKING, FREE and ERROR SQL states
+   counted separately; holding an address is not applied Android connectivity.
+4. **Android applied:** current-session, independently timestamped observation;
+   true, false and unknown are separate. Expired or absent reports stay unknown.
+5. **Handshake:** latest validated router observation and handshake age; no/future/
+   expired timestamp is distinct from a recent handshake. Router read failure is
+   explicit and must not authorize destructive reconciliation.
+6. **Transport tunnels:** Cloudflare/Tuna availability, Android VPN state and
+   WebSocket presence have different owners and must not share one ambiguous count.
+7. **Producer ownership:** one authoritative snapshot, never the sum of duplicate
+   whole-fleet gauges from each API worker. Worker replacement and failed updates
+   must not retain an accepted-looking old snapshot without freshness metadata.
+8. **Access:** tenant REST counts require current tenant authorization; platform
+   metrics require their existing administrative scope. No user-selected arbitrary
+   PromQL, controller path or upstream URL. Labels must remain bounded.
+9. **Delivery:** tenant changes invalidate only relevant query roots. Recovery
+   rereads state because current Redis PubSub has no replay cursor. A notification
+   is a hint to reread; it is not a transaction receipt or guaranteed durable log.
+10. **Load:** the producer must run without an open browser, have a bounded timeout,
+    no unbounded SCAN/ORM serialization and no new per-event disk history. A shared
+    service-side sampler is preferable to repeating a whole-fleet read per viewer;
+    its exact ownership/storage budget requires verification before selection.
+
+## Staged implementation and evidence
+
+**Stage A:** reproduce the stale pool count using isolated SQL with fixed time,
+two organizations and fresh/stale/absent/future timestamps. Correct its advertised
+read semantics without assigning, revoking or reconnecting a VPN.
+
+**Stage B:** add the tenant coverage contract with separate assignment / Android /
+handshake counts and source availability/time. Verify empty inventory and genuine
+zero, old APKs, malformed Redis entries, cross-tenant rows, partial source failures,
+current-session replacement and time-boundary behavior.
+
+**Stage C:** design and test the authoritative fleet metric producer, including
+multi-worker startup, retirement and source outage. Decide bounded cardinality and
+collector ownership from real inventory size. Do not simply populate the legacy
+gauges inside a page request.
+
+**Stage D:** add the monitoring coverage UI with source/unit/scope/timestamps,
+drilldowns and unknown states. Test visible-page refresh, session changes and
+recovery. Review real wide/mobile layouts in both themes.
+
+**Stage E:** freeze source, production image and collection configuration, run
+appropriate checks, install with rollback, compare independent source values and
+record real browser behavior. Retain failures and transient fleet observations.
+Only then update the acceptance overlay; the original audit remains immutable.
+
+This review does not replace event transport, provision VPN protocols, change an
+APK, run scripts on devices or claim the 20–30-device mixed-load gate. Windows
+disk/RAM writer attribution remains open. The next package must preserve existing
+resource-history and HTTP metrics and avoid expanding unrelated telemetry claims.
+
+## Stage A implementation — 5 October 2026
+
+The isolated SQL reproduction contains 13 cases: age 0, 179, exactly 180 and 600
+seconds; no timestamp; a future timestamp; a false retained flag; FREE, PROVISIONING,
+REVOKING and ERROR states; an unbound assignment; and another organization's peer.
+Before the fix **9 failed / 4 passed**, with no collection/setup errors.
+
+The pool active count now requires an organization-owned ASSIGNED peer bound to a
+device, `is_active=True` and a recorded handshake in `(now - 180 seconds, now]`.
+The stale count uses `<= now - 180 seconds` for bound ASSIGNED peers; absent/future
+handshakes do not become recent observations. The peer-list active flag uses the
+same conditions. SQL allocation/capacity semantics and all VPN commands remain
+unchanged. The pool response adds UTC `observed_at` and the exact handshake-age
+threshold without removing existing fields. Allocation / active / stale tenant
+counts are collected in one SQL statement, preventing three separate database
+snapshots and reducing repeated query work. Global subnet capacity remains a
+separate observation and is not relabeled tenant capacity.
+
+After the fix the 13 regression cases and related API/health tests passed:
+**42 passed / 0 failed / 0 skipped**. The full local VPN suite then passed
+**99 / 0 failed / 0 skipped**. These runs use the canonical SQLite in-memory
+adapter and FakeRedis; they are not proof of PostgreSQL RLS, router availability
+or an Android-applied tunnel. No router request or Android command is sent by the
+new cases. The [regression tests](../../../tests/vpn/test_pool_observation_freshness.py)
+also compare the peer list and aggregate result rather than accepting contradictory
+active labels.
+
+Source implementation is a partial EP-010 slice. Runtime installation and image
+checks must be recorded separately; the currently accepted EP-009 runtime does
+not acquire this change merely because the working source was edited. C1, C2,
+C4, the independent producer and end-to-end coverage acceptance remain open.

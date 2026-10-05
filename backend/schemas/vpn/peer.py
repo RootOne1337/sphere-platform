@@ -68,8 +68,10 @@ class VPNPoolStats(BaseModel):
     total_ips: int = Field(..., description="Общая ёмкость платформенной подсети")
     allocated: int = Field(..., description="Удерживаемые IP текущей организации, включая незавершённые операции")
     free: int = Field(..., description="Свободно глобально по подтверждённым PostgreSQL reservations")
-    active_tunnels: int = Field(..., description="Туннели с handshake < 3 мин")
-    stale_handshakes: int = Field(..., description="Туннели с handshake > 3 мин")
+    active_tunnels: int = Field(..., description="Назначенные устройствам peers: is_active и сохранённый handshake возрастом < 3 мин; не текущая проверка роутера/Android")
+    stale_handshakes: int = Field(..., description="Назначенные устройствам peers с сохранённым handshake возрастом >= 3 мин; отсутствие handshake не включается в этот счётчик")
+    observed_at: datetime | None = Field(None, description="UTC время среза SQL-счётчиков; отсутствие в старой версии не означает свежий замер")
+    handshake_max_age_seconds: int = Field(180, description="Максимальный возраст сохранённого handshake для active_tunnels, строго меньше этого значения")
 
 
 # ── Bulk rotate ───────────────────────────────────────────────────────────────

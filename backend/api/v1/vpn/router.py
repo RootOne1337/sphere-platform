@@ -46,6 +46,7 @@ from backend.services.vpn.awg_config import AWGConfigBuilder, AWGObfuscationPara
 from backend.services.vpn.deferred_pool import DeferredVPNPoolService
 from backend.services.vpn.dependencies import get_awg_config_builder, get_key_cipher
 from backend.services.vpn.event_publisher import EventPublisher
+from backend.services.vpn.health_monitor import VPNHealthMonitor
 from backend.services.vpn.ip_pool import IPPoolAllocator
 from backend.services.vpn.killswitch_service import KillSwitchService
 from backend.services.vpn.pool_service import VPNPoolService
@@ -273,20 +274,33 @@ async def list_peers(
         query = query.where(VPNPeer.device_id == uuid.UUID(device_id))
 
     result = await db.execute(query)
-    stale_threshold = datetime.now(timezone.utc) - timedelta(seconds=180)
+    observed_at = datetime.now(timezone.utc)
     return [
         VPNPeerResponse(
             id=p.id,
             device_id=p.device_id,
             assigned_ip=p.tunnel_ip,
             status=p.status.value if isinstance(p.status, VPNPeerStatus) else p.status,
-            is_active=bool(p.is_active and p.last_handshake_at and p.last_handshake_at > stale_threshold),
+            is_active=_has_recent_handshake(p, observed_at),
             public_key=p.public_key,
             last_handshake_at=p.last_handshake_at,
             created_at=p.created_at,
         )
         for p in result.scalars().all()
     ]
+
+
+def _has_recent_handshake(peer: VPNPeer, observed_at: datetime) -> bool:
+    """Read semantics match pool counts; this is not a live router/Android probe."""
+    if (not peer.is_active or peer.status != VPNPeerStatus.ASSIGNED
+            or peer.device_id is None or peer.last_handshake_at is None):
+        return False
+    # PostgreSQL returns an aware timestamptz; SQLite's test adapter drops tzinfo.
+    handshake = peer.last_handshake_at
+    if handshake.tzinfo is None:
+        handshake = handshake.replace(tzinfo=timezone.utc)
+    age = (observed_at - handshake).total_seconds()
+    return 0 <= age < VPNHealthMonitor.STALE_HANDSHAKE_THRESHOLD
 
 
 @router.get(
@@ -300,37 +314,37 @@ async def pool_stats(
     ip_pool: IPPoolAllocator = Depends(get_ip_pool),
 ) -> VPNPoolStats:
     org_id = current_user.org_id
+    observed_at = datetime.now(timezone.utc)
+    stale_threshold = observed_at - timedelta(seconds=VPNHealthMonitor.STALE_HANDSHAKE_THRESHOLD)
     total, free = await ip_pool.capacity(db)
 
-    allocated = await db.scalar(
-        select(func.count(VPNPeer.id)).where(
-            VPNPeer.org_id == org_id,
+    # A retained is_active flag survives an unavailable router observation.
+    # Expire the advertised recent-handshake count at read time, independently
+    # of whether another health-loop cycle completed. Assignment is not activity.
+    # One SQL statement keeps these tenant counts in the same database snapshot.
+    counts = (await db.execute(select(
+        func.count(VPNPeer.id).filter(
             VPNPeer.status != VPNPeerStatus.FREE,
-        )
-    ) or 0
-
-    active = await db.scalar(
-        select(func.count(VPNPeer.id)).where(
-            VPNPeer.org_id == org_id,
-            VPNPeer.is_active == True,  # noqa: E712
-        )
-    ) or 0
-
-    stale_threshold = datetime.now(timezone.utc) - timedelta(seconds=180)
-    stale = await db.scalar(
-        select(func.count(VPNPeer.id)).where(
-            VPNPeer.org_id == org_id,
-            VPNPeer.status == VPNPeerStatus.ASSIGNED,
-            VPNPeer.last_handshake_at < stale_threshold,
-        )
-    ) or 0
+        ).label("allocated"),
+        func.count(VPNPeer.id).filter(
+            VPNPeer.status == VPNPeerStatus.ASSIGNED, VPNPeer.device_id.is_not(None),
+            VPNPeer.is_active.is_(True), VPNPeer.last_handshake_at > stale_threshold,
+            VPNPeer.last_handshake_at <= observed_at,
+        ).label("active"),
+        func.count(VPNPeer.id).filter(
+            VPNPeer.status == VPNPeerStatus.ASSIGNED, VPNPeer.device_id.is_not(None),
+            VPNPeer.last_handshake_at <= stale_threshold,
+        ).label("stale"),
+    ).where(VPNPeer.org_id == org_id))).one()
 
     return VPNPoolStats(
         total_ips=total,
-        allocated=allocated,
+        allocated=counts.allocated,
         free=free,
-        active_tunnels=active,
-        stale_handshakes=stale,
+        active_tunnels=counts.active,
+        stale_handshakes=counts.stale,
+        observed_at=observed_at,
+        handshake_max_age_seconds=VPNHealthMonitor.STALE_HANDSHAKE_THRESHOLD,
     )
 
 
