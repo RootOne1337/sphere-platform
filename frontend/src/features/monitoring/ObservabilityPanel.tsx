@@ -8,47 +8,14 @@ import { API_POLL_INTERVALS } from '@/lib/queryPollIntervals';
 import { useAuthStore } from '@/lib/store';
 import { Button } from '@/src/shared/ui/button';
 import { Card, CardContent } from '@/src/shared/ui/card';
-import type { HistoryWindow, ObservationSeries, ObservabilitySnapshot } from './observabilityTypes';
+import { HistoryChart } from './HistoryChart';
+import { HttpMetricsPanel } from './HttpMetricsPanel';
+export { HistoryChart } from './HistoryChart';
+import type { HistoryWindow, ObservabilitySnapshot } from './observabilityTypes';
 
 function errorLabel(error: unknown) {
     const candidate = error as { response?: { data?: { detail?: unknown } } };
     return typeof candidate?.response?.data?.detail === 'string' ? candidate.response.data.detail : 'Не удалось получить данные наблюдаемости. Проверьте подключение сервисов.';
-}
-
-export function HistoryChart({ title, series, unit, step, availability = false }: {
-    title: string; series: ObservationSeries[]; unit: string; step: number; availability?: boolean;
-}) {
-    const points = series.flatMap(item => item.points);
-    const valid = points.filter((point): point is { at: number; value: number } => point.value !== null && Number.isFinite(point.value));
-    const maximum = availability ? 1 : Math.max(...valid.map(point => point.value), 0.001);
-    const first = Math.min(...points.map(point => point.at));
-    const last = Math.max(...points.map(point => point.at));
-    const latest = series[0]?.points.at(-1)?.value;
-    const paths = series.map(item => {
-        let previous = 0;
-        return item.points.map(point => {
-            if (point.value === null) { previous = 0; return ''; }
-            const command = previous && point.at - previous <= step * 1500 ? 'L' : 'M';
-            previous = point.at;
-            return `${command}${((point.at - first) / Math.max(last - first, 1) * 460 + 10).toFixed(1)},${(120 - Math.max(0, point.value) / maximum * 105).toFixed(1)}`;
-        }).join(' ');
-    });
-    const format = (value: number) => availability ? value === 1 ? 'Доступен' : 'Недоступен' : `${value.toLocaleString('ru-RU', { maximumFractionDigits: 3 })}${unit ? ` ${unit}` : ''}`;
-    return <Card className="min-w-0 rounded-xl border-border/80">
-        <CardContent className="p-4">
-            <h3 className="text-sm font-medium">{title}</h3>
-            <p className="mt-2 text-xl font-semibold tabular-nums">{latest == null ? 'Нет измерения' : format(latest)}</p>
-            {valid.length > 1 ? <>
-                <svg viewBox="0 0 480 140" className="mt-3 h-28 w-full text-primary" role="img" aria-label={`${title}: ${valid.length} измерений; пропуски не соединены`}>
-                    {[15, 67, 120].map(y => <line key={y} x1="10" x2="470" y1={y} y2={y} className="stroke-border" strokeDasharray="3 4" />)}
-                    {paths.map((path, index) => <path key={index} d={path} fill="none" stroke="currentColor" strokeWidth="2" />)}
-                </svg>
-                <div className="flex justify-between gap-3 text-[11px] text-muted-foreground">
-                    <span>{new Date(first).toLocaleTimeString('ru-RU')}</span><span>{new Date(last).toLocaleTimeString('ru-RU')}</span>
-                </div>
-            </> : <p className="flex min-h-36 items-center text-xs text-muted-foreground">{valid.length ? 'История накапливается с момента запуска Prometheus.' : 'Измерения ещё не поступили. Пустой ряд не означает ноль.'}</p>}
-        </CardContent>
-    </Card>;
 }
 
 export function ObservabilityPanel() {
@@ -129,7 +96,7 @@ export function ObservabilityPanel() {
                 <Button variant="outline" size="sm" onClick={() => setShowGrafana(value => !value)} aria-expanded={showGrafana} aria-controls="embedded-grafana"><ChartNoAxesCombined className="mr-2 h-4 w-4" />{showGrafana ? 'Скрыть Grafana' : 'Открыть Grafana здесь'}</Button>
             </div>
         </div>
-        <div className="flex items-start gap-3 rounded-xl border border-amber-300/70 bg-amber-50/60 p-4 text-sm text-amber-950 dark:border-amber-900 dark:bg-amber-950/20 dark:text-amber-200"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" /><p><strong>Покрытие метрик ограничено.</strong> Здесь показаны доступность и качество сбора Prometheus. Общие RPS, p95, CPU и размер парка здесь пока не показаны: соответствующие панели не подключены. Доступность /metrics не доказывает исправность стрима или сценария Android.</p></div>
+        <div className="flex items-start gap-3 rounded-xl border border-amber-300/70 bg-amber-50/60 p-4 text-sm text-amber-950 dark:border-amber-900 dark:bg-amber-950/20 dark:text-amber-200"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" /><p><strong>Покрытие метрик ограничено.</strong> Здесь показаны доступность и качество сбора Prometheus. Нагрузка HTTP, p95 и классы ошибок показаны отдельным блоком ниже. История CPU и памяти и размер парка пока не входят в эти панели. Доступность /metrics не доказывает исправность стрима или сценария Android.</p></div>
         {observation.isError && <div role="alert" className="rounded-lg border border-rose-300 bg-rose-50 p-4 text-sm text-rose-950 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-200">{errorLabel(observation.error)} Последние графики скрыты, чтобы старый срез не выглядел текущим.</div>}
         {!observation.isError && delayed && <p role="alert" className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950 dark:border-amber-900 dark:bg-amber-950/20 dark:text-amber-200">Срез Prometheus задерживается или его время некорректно. Графики скрыты до следующего актуального ответа; обновление выполняется автоматически.</p>}
         {observation.isLoading && <p role="status" className="text-sm text-muted-foreground">Подключаемся к Prometheus…</p>}
@@ -149,6 +116,7 @@ export function ObservabilityPanel() {
                 {data.alerts.length ? <ul className="space-y-2">{data.alerts.map(alert => <li key={`${alert.name}-${alert.since}`} className="rounded-lg border border-amber-300 p-3 text-sm"><strong>{alert.name}</strong> · {alert.state === 'firing' ? 'Срабатывает' : 'Ожидает порога'}<p className="mt-1 text-muted-foreground">{alert.summary}</p></li>)}</ul> : <p className="text-xs text-muted-foreground">Активных алертов по подключённым правилам нет. Сейчас правило проверяет потерю /metrics; оно не покрывает всю платформу.</p>}
             </CardContent></Card>
         </>}
+        <HttpMetricsPanel window={window} now={now} />
         {showGrafana && <Card id="embedded-grafana" className="overflow-hidden rounded-xl">
             <div className="flex items-center justify-between gap-3 border-b p-4"><div><h3 className="font-medium">Grafana · серверная история</h3><p className="mt-1 text-xs text-muted-foreground">Режим просмотра · максимум 24 часа на запрос · сессия подтверждается Sphere каждую минуту</p></div><Button variant="ghost" size="icon" aria-label="Закрыть Grafana" onClick={() => setShowGrafana(false)}><X className="h-4 w-4" /></Button></div>
             {grafanaError ? <p role="alert" className="p-4 text-sm text-rose-700 dark:text-rose-400">{grafanaError}</p> : !grafanaReady ? <p role="status" className="p-4 text-sm text-muted-foreground">Проверяем доступ к Grafana…</p> : <iframe title="Grafana — наблюдаемость Sphere" className="h-[680px] w-full border-0" src="/observability/grafana/d/sphere-collection/sphere-metrics-collection?orgId=1&kiosk&from=now-1h&to=now&refresh=30s" sandbox="allow-scripts allow-same-origin allow-forms allow-downloads" referrerPolicy="same-origin" />}

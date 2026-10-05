@@ -65,7 +65,7 @@ async function readJson(response: Response): Promise<unknown> {
     catch { throw new Error('invalid upstream JSON'); }
 }
 
-async function verifyAdmin(request: Request): Promise<string> {
+export async function verifyAdmin(request: Request): Promise<string> {
     const authorization = request.headers.get('authorization') ?? '';
     if (!/^Bearer [A-Za-z0-9._~-]{1,8192}$/.test(authorization)) throw new ObservationError(401, 'Требуется вход в Sphere.');
     const response = await fetch(new URL('auth/me', configuredUrl('OBSERVABILITY_AUTH_API_URL')), {
@@ -78,11 +78,15 @@ async function verifyAdmin(request: Request): Promise<string> {
     return profile.id;
 }
 
-async function prometheus(path: string, params?: Record<string, string>) {
+export class PartialPrometheusError extends Error {}
+
+export async function prometheus(path: string, params?: Record<string, string>) {
     const url = new URL(path, configuredUrl('OBSERVABILITY_PROMETHEUS_URL'));
     Object.entries(params ?? {}).forEach(([key, value]) => url.searchParams.set(key, value));
     const result = object(await readJson(await fetch(url, { cache: 'no-store', redirect: 'error', signal: AbortSignal.timeout(5000) })));
-    if (result.status !== 'success' || ['warnings', 'infos'].some(key => result[key] !== undefined && (!Array.isArray(result[key]) || result[key].length > 0))) throw new Error('invalid or partial prometheus result');
+    if (result.status !== 'success') throw new Error('invalid prometheus result');
+    if (['warnings', 'infos'].some(key => result[key] !== undefined && (!Array.isArray(result[key]) || result[key].some((item: unknown) => typeof item !== 'string')))) throw new Error('invalid annotations');
+    if (['warnings', 'infos'].some(key => Array.isArray(result[key]) && result[key].length > 0)) throw new PartialPrometheusError('partial prometheus result');
     return object(result.data);
 }
 
