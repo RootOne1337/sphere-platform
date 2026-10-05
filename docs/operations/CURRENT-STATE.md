@@ -6,7 +6,36 @@
 
 [Главная](../../README.md) · [Каталог документации](../README.md) · [Readiness](READINESS.md) · [Fleet32 gates](../audits/2026-09-20/FLEET32-PREFLIGHT.md) · [PR #19](https://github.com/RootOne1337/sphere-platform/pull/19)
 
-**6 октября, 01:37 UTC+5 — ограничен приём загружаемых APK-журналов:**
+**6 октября, 02:35 UTC+5 — установлен Script Studio, этап A:**
+API **`c2b91e32`**, UI **`952b5e2f`** на [3015/scripts/builder](http://127.0.0.1:3015/scripts/builder).
+Граф ↔ JSON, каталог 32 действий и все JSON-параметры узла, import/export,
+bounded undo/redo и явный local draft; серверная проверка draft без создания
+script/version/task или Android command. Scope — structure/routes/Lua safety,
+не runtime validation всех полей, selectors и capabilities APK.
+Через настоящий браузер создан и повторно открыт canary, выбран только remote
+PH025 / APK 1.2.45-dev: start → sleep 2000 ms → end, **completed, 3/3 reports**,
+v1 и SHA256 совпали. Export/import дал тот же DAG/hash; task для сценария один.
+В exact API image **631 tests passed**; frontend **1353 / 122 suites**, Node24
+production build/types, packaged mypy/scoped Ruff/OpenAPI прошли. Native browser
+проверил обе темы и ширины 1280/390 px; нулевая высота mobile canvas исправлена.
+При каждом переключении сохранены 45 соседних контейнеров и постоянный logs volume.
+API restart дал временный presence 0/19, затем 14/5; последняя UI-установка 14/5.
+Это конечные срезы, не zero downtime или SLA. API/UI разные revisions вследствие
+двух frontend-only fixes; backend tree тот же. APK/OTA/туннели сохранены.
+Source CI snapshot (точное время в evidence): frontend/Android и backend
+lint/security/bootstrap/RLS прошли; backend Tests — 1 failed / 2842 passed / 30 skipped
+в sleep-based проверке heartbeat. Test-only follow-up `2dbe82e`: 47 реальных
+PostgreSQL/Redis recovery/admission tests прошли, normal/delayed renewal проверены;
+source CI `2dbe82e` завершился успешно: **2844 passed / 30 skipped / 0 failed**,
+coverage 80,20%; backend/frontend/Android/preview guard прошли. Последующий docs
+head имеет отдельный CI; runtime images от этих test/docs изменений не меняются.
+**9 принято / 41 открыто**. Recorder, conflict diff, versioned capability schema,
+trace/replay/debug и общие resource/release/load gates ещё открыты.
+[Результат и acceptance](../audits/2026-10-06/SCRIPT-STUDIO-FOUNDATION.md) ·
+[Evidence](../audits/2026-10-06/SCRIPT-STUDIO-EVIDENCE.json) ·
+[Инструкция Studio](SCRIPT-STUDIO.md) · [Приоритеты](../audits/2026-10-06/ENTERPRISE-PRIORITIES.md).
+
+**Историческая установка 6 октября, 01:37 UTC+5 — ограничен приём загружаемых APK-журналов:**
 Установленный API `76596c39`, UI `5405d465` на [3015/logs](http://127.0.0.1:3015/logs).
 Body больше 512 KiB отвергается до полного buffering; total ASGI intake deadline 60 s.
 Четыре uploads на worker включают приём и filesystem writer; весь FS lifecycle

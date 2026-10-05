@@ -1,6 +1,6 @@
 # Приоритеты оставшихся работ и следующий подтверждённый дефект
 
-**Дата:** 6 октября 2026, Asia/Yekaterinburg. **Baseline reader:** `32c97b8`; **установленные API/UI:** `76596c39` / `5405d465`.
+**Дата:** 6 октября 2026, Asia/Yekaterinburg. **Baseline reader:** `32c97b8`; **установленные API/UI:** `c2b91e32` / `952b5e2f`.
 **Приёмка:** 9 принято / 41 с открытыми критериями из исходных 50 работ.
 Это пересортировка эксплуатационного порядка, а не изменение immutable baseline,
 первоначальных P1/P2 или критериев приёмки. Пункты имеют разный размер: 41 не означает
@@ -9,6 +9,27 @@
 [Текущее состояние](../../operations/CURRENT-STATE.md) ·
 [Исходные 50 требований](../2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json) ·
 [Последний установленный мониторинг](../2026-10-05/ENTERPRISE-FLEET-COVERAGE.md).
+
+## Конструктор по запросу пользователя: этап A установлен
+
+Рабочий [Script Studio на 3015](http://127.0.0.1:3015/scripts/builder): граф ↔ JSON,
+32 action templates, полный JSON параметров узла, bounded undo/draft/import/export,
+серверная draft validation и запуск сохранённой версии с явным выбором устройств.
+Реальный start/sleep 2000 ms/end canary сохранён, повторно открыт и выполнен только
+на remote PH025: completed, 3/3 reports, v1/hash совпали. Exact API image 631 tests;
+frontend 1353 tests / 122 suites, production build/types и native themes/390px layout
+проверены. Счёт **9 / 41** сохраняется: EP-014…020 ещё имеют открытые критерии.
+
+Далее: EP-015 version-conflict diff и защита dirty navigation; EP-016 versioned
+action schemas/limits/effects и APK preflight; EP-017 live picker; затем recorder
+EP-018 и настоящий trace/replay/debug EP-019/020. Эти зависимости не заменяют
+resource/release gates ниже. Один sleep-canary не доказывает все runtime actions,
+автономную миссию, uptime, исправление утечки или нагрузку 20–30/500/1000 устройств.
+Offline inventory подтвердил 32 API/UI types и 33 Android handlers (`loop` не
+публикуется); четыре неверно параметризованных known actions проходят только
+структурную schema. Это конкретные основания EP-016, не live exception proof.
+[Результат и все ограничения](SCRIPT-STUDIO-FOUNDATION.md) ·
+[Инструкция](../../operations/SCRIPT-STUDIO.md) · [Pinned evidence](SCRIPT-STUDIO-EVIDENCE.json).
 
 ## Почему не продолжать только добавлять метрики
 

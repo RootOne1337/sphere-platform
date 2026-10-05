@@ -15,7 +15,9 @@ section and optional task/batch version admission condition were reconciled with
 source `d2846ef` on 2 October; other Batches details retain their 7 September review.
 Locations were reconciled with `db6be05` on 3 October. OTA publication was
 reconciled with `facba9a` on 3 October: [metadata/receipt and Android APK checks](operations/OTA-PUBLICATION-AND-APK-CHECKS.md).
-The current snapshot was exported using packaged API5e80137 dependencies and rechecked against shipped API c1a6e79 on 4 October: **178 HTTP operations across 140 paths**. Earlier snapshots retain their dated reports.
+The generated snapshot includes draft validation for Script Studio (6 October 2026,
+source `c2b91e32`). See the [endpoint catalog](api-endpoints.md) for current operation/path
+counts. Earlier finite schema proofs retain their dated source revisions.
 Other manual sections
 still need component review; a listed contract does not establish runtime or
 security correctness. See the [audit report](audits/2026-09-05/AUDIT-REPORT.md).
@@ -682,10 +684,26 @@ skip behavior for invalid/missing/foreign devices is retained.
 
 ## Scripts — `/scripts`
 
-Reviewed against `d2846ef` on 2 October 2026. All routes require an authenticated
-principal and enforce organization scope. Read operations require `script:read`,
-mutations `script:write`; task/batch submission checks `script:execute` separately.
+Existing version workflows were reviewed against `d2846ef` on 2 October 2026;
+draft validation was added in `561d08a` and installed from `c2b91e32` on 6 October.
+All routes require an authenticated principal and enforce organization scope.
+Read operations require `script:read`, mutations `script:write`; task/batch submission
+checks `script:execute` separately.
 See [the operator workflow and failure contract](operations/SCRIPT-VERSIONS.md).
+
+### POST /scripts/validate — проверка черновика
+
+`POST /api/v1/scripts/validate`, право `script:read`, тело `{ "dag": <DAG 1.0> }`.
+После обычной проверки пользователя/организации сервер нормализует DAG тем же
+`DAGScript`, что create/update, проверяет уникальные ID, маршруты, достижимость и
+Lua safety. Возвращает `schema_version=1`, `dag`, `dag_hash` (SHA256), `node_count`,
+`action_types`, `scope=structure-routes-lua-safety`, `device_execution_verified=false`.
+Ошибки DAG дают 422 с location/type/message без исходных input/context.
+Проверка не создаёт сценарий, версию, task или команду Android; доступность селектора,
+разрешения APK, побочные эффекты и совместимость runtime этим ответом не проверены.
+Сохранение использует существующие create/update и optimistic guard
+`expected_current_version_id`; 409 требует разрешения конфликта оператором.
+[Аудит и этапы Studio](audits/2026-10-06/SCRIPT-STUDIO-FOUNDATION.md).
 
 ### GET /scripts
 
@@ -1720,17 +1738,3 @@ Several paginated endpoints include `{ "items": [...], "total": N, "page": N, "p
 ## Расследование журнала аудита — 2 октября2026
 
 `GET /api/v1/audit/logs` и `GET /api/v1/audit/logs/export` используют одни tenant-scoped filters: status/action/user_id/resource_type/q/from/to. Доступ `audit:read`, aware timestamps, literal search и validated bounds. CSV до5000 scalar rows; `X-Audit-Truncated` обозначает неполную выгрузку. [Полный контракт, поля и ограничения](operations/AUDIT-INVESTIGATION.md) · [Finite installed evidence](audits/2026-10-02/AUDIT-INVESTIGATION.md). Generated [OpenAPI](openapi.json) содержит параметры и typed audit page.
-# Проверка черновика Script Studio (6 октября 2026)
-
-`POST /api/v1/scripts/validate`, право `script:read`, тело `{ "dag": <DAG 1.0> }`.
-После обычной проверки пользователя/организации сервер нормализует DAG тем же
-`DAGScript`, что create/update, проверяет уникальные ID, маршруты, достижимость и
-Lua safety. Возвращает `schema_version=1`, `dag`, `dag_hash` (SHA256), `node_count`,
-`action_types`, `scope=structure-routes-lua-safety`, `device_execution_verified=false`.
-Ошибки DAG дают 422 с location/type/message без исходных input/context.
-Проверка не создаёт сценарий, версию, task или команду Android; доступность селектора,
-разрешения APK, побочные эффекты и совместимость runtime этим ответом не проверены.
-Сохранение использует существующие create/update и optimistic guard
-`expected_current_version_id`; 409 требует разрешения конфликта оператором.
-[Аудит и этапы Studio](audits/2026-10-06/SCRIPT-STUDIO-FOUNDATION.md).
-

@@ -15,7 +15,15 @@
 
 </div>
 
-**6 октября, 01:37 UTC+5 — ограничен приём загружаемых APK-журналов:**
+**6 октября — установлен рабочий Script Studio:** API `c2b91e32`, UI `952b5e2f` на
+[3015/scripts/builder](http://127.0.0.1:3015/scripts/builder). Граф ↔ JSON, 32 действия,
+bounded drafts/history, import/export, серверная проверка и адресный запуск версии.
+Remote PH025 canary завершил 3/3 шага; 631 exact-image backend и 1353 frontend tests
+прошли. Recorder/replay и capability schema ещё открыты; общий счёт **9 / 41**.
+[Результат и доказательства](docs/audits/2026-10-06/SCRIPT-STUDIO-FOUNDATION.md) ·
+[Инструкция](docs/operations/SCRIPT-STUDIO.md) · [Текущее состояние](docs/operations/CURRENT-STATE.md).
+
+**Историческая установка 6 октября, 01:37 UTC+5 — ограничен приём загружаемых APK-журналов:**
 Установленный API `76596c39`, UI `5405d465` на [3015/logs](http://127.0.0.1:3015/logs).
 Body больше 512 KiB отвергается до полного buffering; total ASGI intake deadline 60 s.
 Четыре uploads на worker включают приём и filesystem writer; весь FS lifecycle

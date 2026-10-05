@@ -1,0 +1,18 @@
+{
+  "source": "952b5e2f6ed6bde8a4bcbbbdff28be24f302b15c",
+  "runtime": "Node.js 24",
+  "execution": "local Jest; not tests inside production UI image",
+  "rawReportSha256": "ff6295c5bbd0d6e3977b44993d9cbb15a753fa85d90eecdc9edb557f5e068b4b",
+  "numFailedTestSuites": 0,
+  "numFailedTests": 0,
+  "numPassedTestSuites": 122,
+  "numPassedTests": 1353,
+  "numPendingTestSuites": 0,
+  "numPendingTests": 0,
+  "numRuntimeErrorTestSuites": 0,
+  "numTotalTestSuites": 122,
+  "numTotalTests": 1353,
+  "startTime": 1791236036704,
+  "success": true,
+  "wasInterrupted": false
+}
