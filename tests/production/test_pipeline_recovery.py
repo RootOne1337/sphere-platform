@@ -402,13 +402,30 @@ async def test_pending_child_timeout_never_releases_identity_or_launches_retry(w
         assert children[0].status == TaskStatus.QUEUED
 
 
-async def test_heartbeat_renews_live_owner_and_cannot_renew_expired_generation(world, monkeypatch):
+@pytest.mark.parametrize("renewal_delay", [0.0, 0.25], ids=["normal", "delayed-first-renewal"])
+async def test_heartbeat_renews_live_owner_and_cannot_renew_expired_generation(world, monkeypatch, renewal_delay):
+    from backend.services.orchestrator import pipeline_recovery
     from backend.services.orchestrator.pipeline_ownership import Ownership
-    from backend.services.orchestrator.pipeline_recovery import renew_lease
+    from backend.services.orchestrator.pipeline_recovery import LeaseRenewal, renew_lease
     run = await seed(world)
     monkeypatch.setattr("backend.services.orchestrator.pipeline_executor.AsyncSessionLocal", isolated_sessions(world))
     monkeypatch.setattr("backend.services.orchestrator.pipeline_recovery.HEARTBEAT_SECONDS", 0.05)
     entered, release = asyncio.Event(), asyncio.Event()
+    initial_read, renewed = asyncio.Event(), asyncio.Event()
+    original_renewal = pipeline_recovery._renew_lease_result
+
+    async def observed_renewal(sessions, ownership):
+        # Capture the initial lease before the first real renewal. On a busy CI
+        # runner 160 ms is not proof that a PostgreSQL commit has completed.
+        await initial_read.wait()
+        if not renewed.is_set():
+            await asyncio.sleep(renewal_delay)
+        result = await original_renewal(sessions, ownership)
+        if result is LeaseRenewal.RENEWED:
+            renewed.set()
+        return result
+
+    monkeypatch.setattr(pipeline_recovery, "_renew_lease_result", observed_renewal)
     async def handler(**kwargs):
         entered.set()
         await release.wait()
@@ -420,11 +437,14 @@ async def test_heartbeat_renews_live_owner_and_cannot_renew_expired_generation(w
         await asyncio.wait_for(entered.wait(), 3)
         async with world.sessions() as db:
             initial = await db.get(PipelineRun, run.id)
-        await asyncio.sleep(0.16)
+        initial_read.set()
+        await asyncio.wait_for(renewed.wait(), 3)
         await other._poll_and_dispatch(org_id=world.org_a.id)
         async with world.sessions() as db:
             current = await db.get(PipelineRun, run.id)
             assert current.execution_lease_until > initial.execution_lease_until
+            assert current.execution_owner == initial.execution_owner
+            assert current.execution_generation == initial.execution_generation
         assert not other._tasks
         release.set()
         await asyncio.wait_for(worker, 3)
