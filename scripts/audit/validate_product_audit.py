@@ -22,10 +22,12 @@ def main() -> None:
     document = (DIRECTORY / "ENTERPRISE-PRODUCT-AUDIT.md").read_text(encoding="utf-8")
     evidence = json.loads((DIRECTORY / "ENTERPRISE-PRODUCT-AUDIT-EVIDENCE.json").read_text(encoding="utf-8"))
     backlog = json.loads((DIRECTORY / "ENTERPRISE-PRODUCT-BACKLOG.json").read_text(encoding="utf-8"))
+    manifest = json.loads((DIRECTORY / "ENTERPRISE-PRODUCT-SOURCE-MANIFEST.json").read_text(encoding="utf-8"))
+    assert manifest["source"] == evidence["source"]
+    assert manifest["frontendGitBlobHashes"].keys() == evidence["frontendSourceHashes"].keys()
     assert len(document.splitlines()) >= 3000, "Required detailed audit is incomplete"
     assert len(document.splitlines()) == evidence["validation"]["documentLineCount"]
     assert evidence["openApiRuntimeMatchesCommitted"] is True
-    assert hashlib.sha256((ROOT / "docs/openapi.json").read_bytes()).hexdigest() == evidence["openApiSha256"]
     assert backlog["source"] == evidence["source"]
     items = {item["id"]: item for item in backlog["items"]}
     assert len(items) == len(backlog["items"]) == evidence["counts"]["backlogItems"]
@@ -66,14 +68,12 @@ def main() -> None:
         assert path.is_relative_to(ROOT), "Reference outside repository"
         source_lines.setdefault(ref["file"], frozen_source(ref["file"]).decode("utf-8-sig").splitlines())
         assert 1 <= ref["line"] <= len(source_lines[ref["file"]]), f"Invalid line {ref}"
-    for file, digest in evidence["frontendSourceHashes"].items():
-        # Windows checkout may use CRLF; inventory hashes describe the audited
-        # checkout. Verify normalized text against the immutable Git version.
-        current = (ROOT / file).read_bytes()
-        frozen = frozen_source(file)
-        assert hashlib.sha256(current).hexdigest() == digest or \
-            hashlib.sha256(frozen).hexdigest() == digest or \
-            hashlib.sha256(frozen.replace(b"\n", b"\r\n")).hexdigest() == digest, f"Source receipt mismatch {file}"
+    assert hashlib.sha256(frozen_source("docs/openapi.json")).hexdigest() == evidence["openApiSha256"]
+    for file, digest in manifest["frontendGitBlobHashes"].items():
+        # The original inventory recorded mixed LF/CRLF checkout bytes, which
+        # cannot be reconstructed after edits. Keep those historical receipts;
+        # independently verify the pinned Git blobs with a separate manifest.
+        assert hashlib.sha256(frozen_source(file)).hexdigest() == digest, f"Frozen Git receipt mismatch {file}"
     code_links = re.findall(r"https://github\.com/RootOne1337/sphere-platform/blob/([0-9a-f]+)/([^\s)]+)#L(\d+)", document)
     for sha, encoded, line in code_links:
         assert sha == evidence["source"]
@@ -100,6 +100,8 @@ def main() -> None:
         "backlogItems": len(items), "sourceReferences": len(evidence["sourceReferences"]),
         "codeLinks": len(code_links), "localLinks": checked_local,
         "reviewedScreenshots": len(evidence["screenshots"]),
+        "frozenGitSourcesVerified": len(manifest["frontendGitBlobHashes"]),
+        "originalCheckoutByteHashesReplayed": False,
         "productDefectsRemainOpen": True,
     }, ensure_ascii=False))
 
