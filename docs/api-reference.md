@@ -1720,3 +1720,17 @@ Several paginated endpoints include `{ "items": [...], "total": N, "page": N, "p
 ## Расследование журнала аудита — 2 октября2026
 
 `GET /api/v1/audit/logs` и `GET /api/v1/audit/logs/export` используют одни tenant-scoped filters: status/action/user_id/resource_type/q/from/to. Доступ `audit:read`, aware timestamps, literal search и validated bounds. CSV до5000 scalar rows; `X-Audit-Truncated` обозначает неполную выгрузку. [Полный контракт, поля и ограничения](operations/AUDIT-INVESTIGATION.md) · [Finite installed evidence](audits/2026-10-02/AUDIT-INVESTIGATION.md). Generated [OpenAPI](openapi.json) содержит параметры и typed audit page.
+# Проверка черновика Script Studio (6 октября 2026)
+
+`POST /api/v1/scripts/validate`, право `script:read`, тело `{ "dag": <DAG 1.0> }`.
+После обычной проверки пользователя/организации сервер нормализует DAG тем же
+`DAGScript`, что create/update, проверяет уникальные ID, маршруты, достижимость и
+Lua safety. Возвращает `schema_version=1`, `dag`, `dag_hash` (SHA256), `node_count`,
+`action_types`, `scope=structure-routes-lua-safety`, `device_execution_verified=false`.
+Ошибки DAG дают 422 с location/type/message без исходных input/context.
+Проверка не создаёт сценарий, версию, task или команду Android; доступность селектора,
+разрешения APK, побочные эффекты и совместимость runtime этим ответом не проверены.
+Сохранение использует существующие create/update и optimistic guard
+`expected_current_version_id`; 409 требует разрешения конфликта оператором.
+[Аудит и этапы Studio](audits/2026-10-06/SCRIPT-STUDIO-FOUNDATION.md).
+

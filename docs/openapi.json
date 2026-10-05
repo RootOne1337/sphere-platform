@@ -7254,6 +7254,45 @@
         }
       }
     },
+    "/api/v1/scripts/validate": {
+      "post": {
+        "tags": [
+          "scripts"
+        ],
+        "summary": "Проверить черновик без сохранения и выполнения",
+        "operationId": "validate_script_draft_api_v1_scripts_validate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ValidateScriptRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScriptValidationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid DAG structure, references or Lua safety"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/scripts/{script_id}": {
       "get": {
         "tags": [
@@ -18119,6 +18158,64 @@
         ],
         "title": "ScriptResponse"
       },
+      "ScriptValidationResponse": {
+        "properties": {
+          "schema_version": {
+            "type": "integer",
+            "enum": [
+              1
+            ],
+            "const": 1,
+            "title": "Schema Version",
+            "default": 1
+          },
+          "dag": {
+            "type": "object",
+            "title": "Dag"
+          },
+          "dag_hash": {
+            "type": "string",
+            "title": "Dag Hash"
+          },
+          "node_count": {
+            "type": "integer",
+            "title": "Node Count"
+          },
+          "action_types": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Action Types"
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "structure-routes-lua-safety"
+            ],
+            "const": "structure-routes-lua-safety",
+            "title": "Scope",
+            "default": "structure-routes-lua-safety"
+          },
+          "device_execution_verified": {
+            "type": "boolean",
+            "enum": [
+              false
+            ],
+            "const": false,
+            "title": "Device Execution Verified",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "dag",
+          "dag_hash",
+          "node_count",
+          "action_types"
+        ],
+        "title": "ScriptValidationResponse"
+      },
       "ScriptVersionResponse": {
         "properties": {
           "id": {
@@ -20906,6 +21003,20 @@
           "stale_handshakes"
         ],
         "title": "VPNPoolStats"
+      },
+      "ValidateScriptRequest": {
+        "properties": {
+          "dag": {
+            "type": "object",
+            "title": "Dag"
+          }
+        },
+        "type": "object",
+        "required": [
+          "dag"
+        ],
+        "title": "ValidateScriptRequest",
+        "description": "Draft validation never creates a script, version or device command."
       },
       "ValidationError": {
         "properties": {

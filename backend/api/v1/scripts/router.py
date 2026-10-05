@@ -6,7 +6,7 @@ from __future__ import annotations
 import uuid
 from typing import Literal
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.dependencies import require_permission
@@ -19,8 +19,10 @@ from backend.schemas.script import (
     ScriptDetailResponse,
     ScriptListResponse,
     ScriptResponse,
+    ScriptValidationResponse,
     ScriptVersionResponse,
     UpdateScriptRequest,
+    ValidateScriptRequest,
 )
 from backend.services.script_service import ScriptService, _compute_dag_hash
 
@@ -104,6 +106,31 @@ async def create_script(
     await db.refresh(script)
     await db.refresh(script, attribute_names=["current_version"])
     return _to_script_response(script)
+
+
+@router.post("/validate", response_model=ScriptValidationResponse,
+    summary="Проверить черновик без сохранения и выполнения",
+    responses={422: {"description": "Invalid DAG structure, references or Lua safety"}})
+async def validate_script_draft(
+    body: ValidateScriptRequest,
+    current_user: User = require_permission("script:read"),
+) -> ScriptValidationResponse:
+    # Pure validation after ordinary identity/RBAC reads: no ScriptService,
+    # database mutation or task/device admission.
+    # Reuse the same normalizer as create/update, but never reflect input payloads
+    # in errors (a draft can contain private text, headers or code).
+    from pydantic import ValidationError
+
+    from backend.schemas.dag import DAGScript
+
+    try:
+        dag = DAGScript.model_validate(body.dag).model_dump()
+    except ValidationError as exc:
+        details = [{"loc": row["loc"], "type": row["type"], "msg": row["msg"][:512]}
+                   for row in exc.errors(include_input=False, include_context=False)]
+        raise HTTPException(status_code=422, detail=details) from exc
+    return ScriptValidationResponse(dag=dag, dag_hash=_compute_dag_hash(dag),
+        node_count=len(dag["nodes"]), action_types=sorted({node["action"]["type"] for node in dag["nodes"]}))
 
 
 # ── Get one ───────────────────────────────────────────────────────────────────

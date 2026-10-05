@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -27,6 +28,21 @@ class UpdateScriptRequest(BaseModel):
 class RollbackScriptRequest(BaseModel):
     """Opt-in optimistic precondition; legacy callers may omit the body."""
     expected_current_version_id: uuid.UUID
+
+
+class ValidateScriptRequest(BaseModel):
+    """Draft validation never creates a script, version or device command."""
+    dag: dict
+
+
+class ScriptValidationResponse(BaseModel):
+    schema_version: Literal[1] = 1
+    dag: dict
+    dag_hash: str
+    node_count: int
+    action_types: list[str]
+    scope: Literal["structure-routes-lua-safety"] = "structure-routes-lua-safety"
+    device_execution_verified: Literal[False] = False
 
 
 # ── Ответы ───────────────────────────────────────────────────────────────────
