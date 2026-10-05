@@ -20423,12 +20423,31 @@
           "active_tunnels": {
             "type": "integer",
             "title": "Active Tunnels",
-            "description": "Туннели с handshake < 3 мин"
+            "description": "Назначенные устройствам peers: is_active и сохранённый handshake возрастом < 3 мин; не текущая проверка роутера/Android"
           },
           "stale_handshakes": {
             "type": "integer",
             "title": "Stale Handshakes",
-            "description": "Туннели с handshake > 3 мин"
+            "description": "Назначенные устройствам peers с сохранённым handshake возрастом >= 3 мин; отсутствие handshake не включается в этот счётчик"
+          },
+          "observed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Observed At",
+            "description": "UTC время среза SQL-счётчиков; отсутствие в старой версии не означает свежий замер"
+          },
+          "handshake_max_age_seconds": {
+            "type": "integer",
+            "title": "Handshake Max Age Seconds",
+            "description": "Максимальный возраст сохранённого handshake для active_tunnels, строго меньше этого значения",
+            "default": 180
           }
         },
         "type": "object",
