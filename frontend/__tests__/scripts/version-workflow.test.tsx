@@ -3,9 +3,11 @@ import ScriptsPage from '@/app/(dashboard)/scripts/page';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
 import { createWrapper } from '../helpers';
+import { useCapabilities } from '@/src/features/access/Capabilities';
 
 jest.mock('@/lib/api', () => ({ api: { get: jest.fn(), post: jest.fn(), delete: jest.fn() } }));
 jest.mock('@/components/sphere/RunScriptModal', () => ({ RunScriptModal: () => null }));
+jest.mock('@/src/features/access/Capabilities', () => ({ useCapabilities: jest.fn() }));
 const id = '11111111-1111-4111-8111-111111111111';
 const org = '22222222-2222-4222-8222-222222222222';
 const oldId = '33333333-3333-4333-8333-333333333333';
@@ -23,6 +25,11 @@ function initial() { return { id, org_id: org, name: 'Canary scenario', descript
 beforeEach(() => {
   jest.resetAllMocks(); script = initial();
   useAuthStore.setState({ accessToken: 'test', sessionVersion: 0, user: { id: 'actor', org_id: org, email: 'a@example.org', role: 'org_admin' } });
+  jest.mocked(useCapabilities).mockImplementation(() => ({
+    verified: true, pending: false, failed: false, role: useAuthStore.getState().user?.role ?? null,
+    can: permission => permission !== 'script:write' || useAuthStore.getState().user?.role !== 'viewer',
+    canAccessRoute: () => true, retry: jest.fn(),
+  }));
   jest.mocked(api.get).mockImplementation(async url => {
     if (url === '/scripts') return { data: { items: [script], total: 1, page: 1, per_page: 50 } } as never;
     if (url === '/scripts/' + id) return { data: { ...script, versions: script.versions.map(v => ({ ...v, dag: null })) } } as never;

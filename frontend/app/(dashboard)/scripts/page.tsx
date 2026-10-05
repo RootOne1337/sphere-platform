@@ -15,7 +15,7 @@ import { CatalogPagination } from '@/src/shared/ui/catalog-pagination';
 import { useDebounce } from '@/lib/hooks/useDebounce';
 import { formatScriptStepCount, getCurrentScriptVersion, getScriptStepCount, redactScriptDag } from '@/src/features/scripts/scriptPresentation';
 import { ScriptVersionsDialog } from '@/src/features/scripts/ScriptVersionsDialog';
-import { canWriteScript } from '@/src/features/scripts/versionWorkflow';
+import { useCapabilities } from '@/src/features/access/Capabilities';
 import { useAuthStore } from '@/lib/store';
 
 type CatalogPreferences = {
@@ -44,8 +44,17 @@ function readPreferences(key: string): CatalogPreferences {
   } catch { return { ...DEFAULT_PREFERENCES }; }
 }
 const dateTime = (value: string) => Number.isFinite(Date.parse(value)) ? new Date(value).toLocaleString('ru-RU') : 'Не сообщается';
+function scriptCountNoun(count: number | null): string {
+  if (count == null) return 'сценариев';
+  const mod10 = count % 10, mod100 = count % 100;
+  return mod10 === 1 && mod100 !== 11 ? 'сценарий'
+    : mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14) ? 'сценария' : 'сценариев';
+}
 
 export default function ScriptsPage() {
+  const access = useCapabilities();
+  const canWrite = access.can('script:write');
+  const canExecute = access.can('script:execute');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [state, setState] = useState<'active' | 'archived' | 'all'>('active');
@@ -76,6 +85,7 @@ export default function ScriptsPage() {
   const scripts = scriptsData?.items ?? [];
   const [runTarget, setRunTarget] = useState<{ id: string; name: string; version: ScriptVersion | null; scope: string } | null>(null);
   const [inspectedScriptId, setInspectedScriptId] = useState<{ id: string; scope: string } | null>(null);
+  useEffect(() => { if (!canExecute) setRunTarget(null); }, [canExecute]);
   const publishedOnPage = scripts.filter(script => getCurrentScriptVersion(script) != null).length;
 
   return (
@@ -84,11 +94,11 @@ export default function ScriptsPage() {
         eyebrow="Автоматизация / библиотека"
         title="Сценарии"
         description="Версии, исходный код и запуск Android-автоматизации — в одном рабочем пространстве."
-        actions={<><Button variant="outline" onClick={() => setSettingsOpen(true)}><Settings2 className="mr-2 h-4 w-4" aria-hidden="true" />Настроить каталог</Button><Button asChild><Link href="/scripts/builder"><Plus className="mr-2 h-4 w-4" aria-hidden="true" />Новый сценарий</Link></Button></>}
+        actions={<><Button variant="outline" onClick={() => setSettingsOpen(true)}><Settings2 className="mr-2 h-4 w-4" aria-hidden="true" />Настроить каталог</Button>{canWrite ? <Button asChild><Link href="/scripts/builder"><Plus className="mr-2 h-4 w-4" aria-hidden="true" />Новый сценарий</Link></Button> : <Button disabled title={access.pending ? 'Проверяем права записи' : 'Право создавать сценарии не подтверждено'}><Plus className="mr-2 h-4 w-4" aria-hidden="true" />Новый сценарий</Button>}</>}
       />
 
       <section aria-label="Сводка каталога" className="grid grid-cols-2 gap-3">
-        <div className="flex min-w-0 items-center gap-3 rounded-xl border bg-card p-3 sm:p-4"><span className="hidden rounded-lg bg-primary/10 p-2.5 text-primary sm:block"><Workflow className="h-5 w-5" aria-hidden="true" /></span><div className="min-w-0"><p className="text-xs text-muted-foreground">В выбранном каталоге · API</p><p className="mt-1 text-xl font-semibold tabular-nums">{isError || searching || isLoading ? '—' : scriptsData?.total ?? '—'} <span className="text-xs font-normal text-muted-foreground">сценариев</span></p></div></div>
+        <div className="flex min-w-0 items-center gap-3 rounded-xl border bg-card p-3 sm:p-4"><span className="hidden rounded-lg bg-primary/10 p-2.5 text-primary sm:block"><Workflow className="h-5 w-5" aria-hidden="true" /></span><div className="min-w-0"><p className="text-xs text-muted-foreground">В выбранном каталоге · API</p><p className="mt-1 text-xl font-semibold tabular-nums">{isError || searching || isLoading ? '—' : scriptsData?.total ?? '—'} <span className="text-xs font-normal text-muted-foreground">{scriptCountNoun(isError || searching || isLoading ? null : scriptsData?.total ?? null)}</span></p></div></div>
         <div className="flex min-w-0 items-center gap-3 rounded-xl border bg-card p-3 sm:p-4"><span className="hidden rounded-lg bg-muted p-2.5 text-muted-foreground sm:block"><GitBranch className="h-5 w-5" aria-hidden="true" /></span><div className="min-w-0"><p className="text-xs text-muted-foreground">Опубликовано · эта страница</p><p className="mt-1 text-xl font-semibold tabular-nums">{isError || searching || isLoading ? '—' : publishedOnPage} <span className="text-xs font-normal text-muted-foreground">из {isError || searching || isLoading ? '—' : scripts.length}</span></p></div></div>
       </section>
 
@@ -118,7 +128,7 @@ export default function ScriptsPage() {
       ) : isLoading ? (
         <div className="space-y-3" aria-label="Загрузка сценариев" aria-busy="true">{Array.from({ length: 4 }, (_, index) => <div key={index} className="h-24 animate-pulse rounded-xl border border-border bg-card motion-reduce:animate-none" />)}</div>
       ) : scripts.length === 0 ? (
-        <Card><CardContent className="flex min-h-64 flex-col items-center justify-center p-8 text-center"><span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary"><Workflow className="h-6 w-6" aria-hidden="true" /></span><p className="mt-4 font-semibold">{query ? 'По вашему запросу сценарии не найдены' : page > 1 ? 'На этой странице сценариев нет' : 'Сценариев пока нет'}</p><p className="mt-1 max-w-md text-sm text-muted-foreground">{query ? 'Измените запрос: поиск охватывает весь каталог.' : page > 1 ? 'Вернитесь на предыдущую страницу или обновите каталог.' : 'Создайте первый сценарий и добавьте шаги в редакторе.'}</p><Button asChild className="mt-5"><Link href="/scripts/builder"><Plus className="mr-2 h-4 w-4" aria-hidden="true" />Создать сценарий</Link></Button></CardContent></Card>
+        <Card><CardContent className="flex min-h-64 flex-col items-center justify-center p-8 text-center"><span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary"><Workflow className="h-6 w-6" aria-hidden="true" /></span><p className="mt-4 font-semibold">{query ? 'По вашему запросу сценарии не найдены' : page > 1 ? 'На этой странице сценариев нет' : 'Сценариев пока нет'}</p><p className="mt-1 max-w-md text-sm text-muted-foreground">{query ? 'Измените запрос: поиск охватывает весь каталог.' : page > 1 ? 'Вернитесь на предыдущую страницу или обновите каталог.' : canWrite ? 'Создайте первый сценарий и добавьте шаги в редакторе.' : 'В выбранном каталоге нет сценариев. Для создания требуется право записи.'}</p>{canWrite && <Button asChild className="mt-5"><Link href="/scripts/builder"><Plus className="mr-2 h-4 w-4" aria-hidden="true" />Создать сценарий</Link></Button>}</CardContent></Card>
       ) : (
         <section aria-label="Список сценариев" className="space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground"><span>Показано {scripts.length}{scriptsData?.total != null && scriptsData.total !== scripts.length ? ` из ${scriptsData.total}` : ''}</span><span>Версии и хеши из API · даты в часовом поясе браузера</span></div>
@@ -144,7 +154,7 @@ export default function ScriptsPage() {
                 </div>
                 <div className="flex flex-wrap items-center gap-2 border-t border-border/60 pt-3">
                   {!script.is_archived && <Button asChild size="sm" variant="outline"><Link href={`/scripts/builder?id=${encodeURIComponent(script.id)}`}>Открыть <ArrowRight className="ml-1.5 h-3.5 w-3.5" aria-hidden="true" /></Link></Button>}
-                  <Button type="button" size="sm" onClick={() => setRunTarget({ id: script.id, name: script.name, version: getCurrentScriptVersion(script), scope })} disabled={script.is_archived || !getCurrentScriptVersion(script) || !actor} title={!getCurrentScriptVersion(script) ? 'Для запуска требуется опубликованная версия из API' : undefined}><Play className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />Запустить</Button>
+                  <Button type="button" size="sm" onClick={() => { if (canExecute) setRunTarget({ id: script.id, name: script.name, version: getCurrentScriptVersion(script), scope }); }} disabled={script.is_archived || !getCurrentScriptVersion(script) || !actor || !canExecute} title={!canExecute ? access.pending ? 'Проверяем права запуска' : 'Право запускать сценарии не подтверждено' : !getCurrentScriptVersion(script) ? 'Для запуска требуется опубликованная версия из API' : undefined}><Play className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />Запустить</Button>
                   <Button
                     type="button"
                     size="sm"
@@ -167,8 +177,8 @@ export default function ScriptsPage() {
 
       {!isError && !isLoading && !searching && scriptsData && <CatalogPagination page={page} perPage={preferences.perPage} total={scriptsData.total} busy={isFetching} label="сценарии" onPageChange={(next) => { setPage(next); setInspectedScriptId(null); }} />}
 
-      {runTarget?.scope === scope && <RunScriptModal key={`${scope}:${runTarget.id}`} scriptId={runTarget.id} scriptName={runTarget.name} expectedVersion={runTarget.version ?? undefined} requireVersion initialTargetMode="select" open onClose={() => setRunTarget(null)} />}
-      {workflow?.scope === scope && actor && <ScriptVersionsDialog key={`${scope}:${workflow.id}`} scriptId={workflow.id} orgId={actor.org_id} scope={scope} canManage={canWriteScript(actor.role)} available={!isError && !searching} onClose={() => setWorkflow(null)} />}
+      {canExecute && runTarget?.scope === scope && <RunScriptModal key={`${scope}:${runTarget.id}`} scriptId={runTarget.id} scriptName={runTarget.name} expectedVersion={runTarget.version ?? undefined} requireVersion initialTargetMode="select" open onClose={() => setRunTarget(null)} />}
+      {workflow?.scope === scope && actor && <ScriptVersionsDialog key={`${scope}:${workflow.id}`} scriptId={workflow.id} orgId={actor.org_id} scope={scope} canManage={canWrite} available={!isError && !searching} onClose={() => setWorkflow(null)} />}
       <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}><DialogContent className="sm:max-w-lg"><DialogHeader><DialogTitle>Настройки каталога сценариев</DialogTitle><DialogDescription>Компоновка и детализация списка. Настройки сохраняются в этом браузере отдельно для пользователя и организации.</DialogDescription></DialogHeader><div className="space-y-5">
         <fieldset className="space-y-2"><legend className="text-sm font-medium">Плотность</legend><div className="grid grid-cols-2 gap-2">{(['comfortable', 'compact'] as const).map(value => <Button key={value} variant={preferences.density === value ? 'secondary' : 'outline'} aria-pressed={preferences.density === value} onClick={() => updatePreferences({ density: value })}>{value === 'comfortable' ? 'Обычная' : 'Компактная'}</Button>)}</div></fieldset>
         <label className="block space-y-2 text-sm font-medium">Сценариев на странице<select aria-label="Сценариев на странице" className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm" value={preferences.perPage} onChange={event => updatePreferences({ perPage: Number(event.target.value) as CatalogPreferences['perPage'] })}>{[25, 50, 100].map(value => <option key={value} value={value}>{value}</option>)}</select></label>

@@ -35,6 +35,8 @@ import { Badge } from '@/components/ui/badge';
 
 type TargetMode = 'all' | 'group' | 'select';
 const MAX_BATCH_TARGETS = 1000;
+const MAX_BATCH_NAME_CODEPOINTS = 255;
+const BATCH_NAME_SUFFIX = ' — batch';
 
 interface RunScriptModalProps {
   scriptId: string;
@@ -171,7 +173,9 @@ export function RunScriptModal({
           wave_size: waveSize,
           wave_delay_ms: waveDelayMs,
           priority,
-          name: `${scriptName} — batch`,
+          // Pydantic limits Unicode characters, not UTF-16 code units. Preserve
+          // complete characters and reserve room for the generated suffix.
+          name: `${Array.from(scriptName).slice(0, MAX_BATCH_NAME_CODEPOINTS - Array.from(BATCH_NAME_SUFFIX).length).join('')}${BATCH_NAME_SUFFIX}`,
           ...(expectedVersion ? { expected_current_version_id: expectedVersion.id } : {}),
         });
         if (expectedVersion && (batch.script_version_id !== expectedVersion.id || batch.script_id !== scriptId || batch.total !== deviceIds.length)) throw new Error('Unconfirmed batch receipt');
@@ -208,9 +212,9 @@ export function RunScriptModal({
     <Dialog open={open} onOpenChange={(v) => { if (!v && !busy.current) onClose(); }}>
       <DialogContent className="max-w-xl">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Play className="w-4 h-4 text-green-500" />
-            Запустить: {scriptName}
+          <DialogTitle className="flex min-w-0 items-start gap-2">
+            <Play className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
+            <span className="min-w-0 break-words leading-6 [overflow-wrap:anywhere]">Запустить: {scriptName}</span>
           </DialogTitle>
           <DialogDescription>
             Выберите полный набор устройств. Массовый запуск ограничен сервером максимумом в {MAX_BATCH_TARGETS} целей.
@@ -234,6 +238,7 @@ export function RunScriptModal({
               ).map(({ value, label, Icon }) => (
                 <button
                   key={value}
+                  aria-pressed={targetMode === value}
                   onClick={() => {
                     setTargetMode(value);
                     setSelectedDeviceIds(new Set());

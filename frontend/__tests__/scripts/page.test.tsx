@@ -3,9 +3,16 @@ import ScriptsPage from '@/app/(dashboard)/scripts/page';
 import { useScript, useScripts } from '@/lib/hooks/useScripts';
 import { useAuthStore } from '@/lib/store';
 import { RunScriptModal } from '@/components/sphere/RunScriptModal';
+import { useCapabilities } from '@/src/features/access/Capabilities';
 
 jest.mock('@/lib/hooks/useScripts', () => ({ useScript: jest.fn(), useScripts: jest.fn() }));
 jest.mock('@/components/sphere/RunScriptModal', () => ({ RunScriptModal: jest.fn(({ open }: { open: boolean }) => open ? <div role="dialog">Запуск текущей версии</div> : null) }));
+jest.mock('@/src/features/access/Capabilities', () => ({ useCapabilities: jest.fn() }));
+const grantedAccess = {
+  verified: true, pending: false, failed: false, role: 'org_admin',
+  can: (permission: string) => ['script:read', 'script:write', 'script:execute'].includes(permission),
+  canAccessRoute: () => true, retry: jest.fn(),
+};
 
 const script = {
   id: 'script-1',
@@ -25,6 +32,7 @@ beforeEach(() => {
   jest.clearAllMocks();
   localStorage.clear();
   useAuthStore.setState({ user: null, sessionVersion: 0 });
+  jest.mocked(useCapabilities).mockReturnValue(grantedAccess);
   jest.mocked(useScripts).mockReturnValue({
     data: { items: [script], total: 1, page: 1, per_page: 20 },
     isLoading: false,
@@ -154,4 +162,43 @@ it('changes backend page size and resets page selection rather than sorting a pa
   fireEvent.click(screen.getByRole('button', { name: 'Настроить каталог' }));
   fireEvent.change(screen.getByRole('combobox', { name: 'Сценариев на странице' }), { target: { value: '100' } });
   expect(useScripts).toHaveBeenLastCalledWith({ query: undefined, page: 1, per_page: 100 });
+});
+
+it.each([
+  { pending: true, failed: false, role: null },
+  { pending: false, failed: true, role: 'org_admin' },
+  { pending: false, failed: false, role: 'viewer' },
+])('keeps catalog mutations disabled until write/execute capabilities are verified (%j)', denied => {
+  useAuthStore.setState({ user: actor });
+  jest.mocked(useCapabilities).mockReturnValue({ ...grantedAccess, ...denied, verified: false, can: permission => permission === 'script:read' });
+  render(<ScriptsPage />);
+  expect(screen.getByRole('button', { name: 'Новый сценарий' })).toBeDisabled();
+  expect(screen.getByRole('button', { name: 'Запустить' })).toBeDisabled();
+  expect(screen.getByRole('link', { name: 'Открыть' })).toHaveAttribute('href', '/scripts/builder?id=script-1');
+  fireEvent.click(screen.getByRole('button', { name: 'Посмотреть DAG' }));
+  expect(screen.getByText('DAG сценария · только чтение')).toBeInTheDocument();
+  expect(RunScriptModal).not.toHaveBeenCalled();
+});
+
+it('allows an execution-only operator to launch while withholding creation', () => {
+  useAuthStore.setState({ user: { ...actor, role: 'script_runner' } });
+  jest.mocked(useCapabilities).mockReturnValue({ ...grantedAccess, role: 'script_runner', can: permission => permission !== 'script:write' });
+  render(<ScriptsPage />);
+  expect(screen.getByRole('button', { name: 'Новый сценарий' })).toBeDisabled();
+  expect(screen.getByRole('button', { name: 'Запустить' })).toBeEnabled();
+  fireEvent.click(screen.getByRole('button', { name: 'Запустить' }));
+  expect(screen.getByRole('dialog')).toBeInTheDocument();
+});
+
+it('retires an open run when verified execution permission expires without changing identity', () => {
+  useAuthStore.setState({ user: actor });
+  const view = render(<ScriptsPage />);
+  fireEvent.click(screen.getByRole('button', { name: 'Запустить' }));
+  expect(screen.getByRole('dialog')).toBeInTheDocument();
+  jest.mocked(useCapabilities).mockReturnValue({ ...grantedAccess, verified: false, failed: true, can: () => false });
+  view.rerender(<ScriptsPage />);
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  jest.mocked(useCapabilities).mockReturnValue(grantedAccess);
+  view.rerender(<ScriptsPage />);
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 });

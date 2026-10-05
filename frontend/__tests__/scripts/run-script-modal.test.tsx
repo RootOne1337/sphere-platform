@@ -40,7 +40,7 @@ function makeDevices(count: number) {
   }));
 }
 
-function renderModal(total: number, returnedCount = total, versioned = false, missingVersion = false) {
+function renderModal(total: number, returnedCount = total, versioned = false, missingVersion = false, scriptName = 'Smoke script', initialTargetMode: 'all' | 'group' | 'select' = 'all') {
   jest.mocked(useDevices).mockReturnValue({
     data: {
       items: makeDevices(returnedCount),
@@ -54,7 +54,7 @@ function renderModal(total: number, returnedCount = total, versioned = false, mi
   } as never);
 
   return render(
-    <RunScriptModal scriptId="script-1" scriptName="Smoke script" open onClose={jest.fn()} requireVersion={versioned}
+    <RunScriptModal scriptId="script-1" scriptName={scriptName} open onClose={jest.fn()} requireVersion={versioned} initialTargetMode={initialTargetMode}
       expectedVersion={versioned && !missingVersion ? { id: 'version-3', version: 3, dag_hash: 'a'.repeat(64) } : undefined} />,
   );
 }
@@ -125,4 +125,41 @@ it('requires a known immutable version when invoked from the catalog', () => {
   renderModal(1, 1, true, true);
   expect(screen.getByRole('alert')).toHaveTextContent('Версия сценария не подтверждена');
   expect(screen.getByRole('button', { name: 'Запустить на 1 уст.' })).toBeDisabled();
+});
+
+it('preserves an API-length unbroken title while admitting the selected published version by identifiers', async () => {
+  const longName = 'AndroidScenario'.repeat(17); // 255 characters: the CreateScriptRequest name limit.
+  expect(longName).toHaveLength(255);
+  mockCreateTask.mockResolvedValue({ id: 'task-long-name', script_id: 'script-1', device_id: 'device-1', script_version_id: 'version-3' });
+  renderModal(1, 1, true, false, longName);
+  expect(screen.getByRole('heading', { name: `Запустить: ${longName}` })).toBeInTheDocument();
+  expect(screen.getByText('Версия для запуска: v3')).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Запустить на 1 уст.' }));
+  await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/tasks/task-long-name'));
+  expect(mockCreateTask).toHaveBeenCalledWith({ script_id: 'script-1', device_id: 'device-1', priority: 5, expected_current_version_id: 'version-3' });
+});
+
+it('keeps generated batch names within the backend Unicode codepoint limit without changing targets or version', async () => {
+  const unicodeName = '🚀'.repeat(255);
+  mockStartBatch.mockResolvedValue({ id: 'batch-long-name', script_id: 'script-1', script_version_id: 'version-3', total: 2 });
+  renderModal(2, 2, true, false, unicodeName);
+  fireEvent.click(screen.getByRole('button', { name: 'Запустить на 2 уст.' }));
+  await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/tasks?batch_id=batch-long-name'));
+  const request = mockStartBatch.mock.calls[0][0];
+  expect(Array.from(request.name)).toHaveLength(255);
+  expect(request.name).toBe('🚀'.repeat(247) + ' — batch');
+  expect(request).toMatchObject({ device_ids: ['device-1', 'device-2'], script_id: 'script-1', expected_current_version_id: 'version-3' });
+});
+
+it('makes explicit target selection observable and keeps it empty until the operator chooses a device', async () => {
+  mockCreateTask.mockResolvedValue({ id: 'task-selected', script_id: 'script-1', device_id: 'device-2', script_version_id: 'version-3' });
+  renderModal(2, 2, true, false, 'Explicit selection', 'select');
+  expect(screen.getByRole('button', { name: 'Выбрать' })).toHaveAttribute('aria-pressed', 'true');
+  expect(screen.getByRole('button', { name: 'Все устройства' })).toHaveAttribute('aria-pressed', 'false');
+  expect(screen.getByRole('button', { name: 'Запустить' })).toBeDisabled();
+  fireEvent.click(screen.getAllByRole('checkbox')[1]);
+  fireEvent.click(screen.getByRole('button', { name: 'Запустить на 1 уст.' }));
+  await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/tasks/task-selected'));
+  expect(mockCreateTask).toHaveBeenCalledWith({ script_id: 'script-1', device_id: 'device-2', priority: 5, expected_current_version_id: 'version-3' });
+  expect(mockStartBatch).not.toHaveBeenCalled();
 });
