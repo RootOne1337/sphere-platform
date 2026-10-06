@@ -332,3 +332,28 @@ it('cancels a queued panel refit when leaving the graph before its canvas has se
   expect(screen.queryByTestId('graph')).not.toBeInTheDocument();
   expect(mockFitView).not.toHaveBeenCalled();
 });
+
+it('retains unapplied node parameters until explicit cancellation instead of losing them through undo or redo', async () => {
+  jest.mocked(api.get).mockResolvedValue(payload() as never);
+  render(<ScriptBuilderPage />); await screen.findByText('script-a-start');
+  fireEvent.change(screen.getByLabelText('Название сценария'), { target: { value: 'First edit' } });
+  fireEvent.change(screen.getByLabelText('Название сценария'), { target: { value: 'Second edit' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Отменить изменение' }));
+  expect(screen.getByLabelText('Название сценария')).toHaveValue('First edit');
+  fireEvent.click(screen.getByRole('button', { name: 'Граф' }));
+  fireEvent.click(screen.getByRole('button', { name: 'script-a-start' }));
+  fireEvent.click(screen.getByRole('button', { name: 'JSON шага' }));
+  const pending = JSON.stringify({ ...payload().data.current_version.dag.nodes[0], retry: 2 });
+  fireEvent.change(screen.getByLabelText('Шаг JSON: action, переходы, retry, timeout_ms'), { target: { value: pending } });
+  const undo = screen.getByRole('button', { name: 'Отменить изменение' });
+  const redo = screen.getByRole('button', { name: 'Повторить изменение' });
+  expect(undo).toBeDisabled(); expect(redo).toBeDisabled();
+  fireEvent.click(undo); fireEvent.click(redo);
+  expect(screen.getByLabelText('Шаг JSON: action, переходы, retry, timeout_ms')).toHaveValue(pending);
+  expect(screen.getByLabelText('Название сценария')).toHaveValue('First edit');
+  expect(api.put).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole('button', { name: 'Отменить параметры' }));
+  expect(undo).toBeEnabled(); expect(redo).toBeEnabled();
+  fireEvent.click(redo);
+  expect(screen.getByLabelText('Название сценария')).toHaveValue('Second edit');
+});
