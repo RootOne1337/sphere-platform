@@ -41,7 +41,8 @@ Android smoke success. Preview deploy skipped; следующий head пров�
 [Next standalone: реальные HTTP страницы/JS/CSS перед установкой](audits/2026-10-06/FRONTEND-STANDALONE-ADMISSION.md) ·
 [scrcpy5.0: pinned source, control-only adapter и безопасный held touch](audits/2026-10-06/CONTINUOUS-INPUT-INTEGRATION.md).
 18 bounded HTTP tests passed после уточнения streamed Next redirect;
-новый hosted artifact probe ещё требует исполнения.
+[hosted sourcee7f3ffb](audits/2026-10-06/FRONTEND-STANDALONE-EVIDENCE.json):
+1686/133 +types/build, standalone26pages/73assets passed. Browser/runtime open.
 Continuous capability не включена; client/server/APK изменения и canary обязательны.
 
 **6 октября — связи Studio, упорядоченная selector queue и следующий input protocol:**

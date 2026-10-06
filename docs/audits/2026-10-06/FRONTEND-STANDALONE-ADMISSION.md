@@ -1,7 +1,7 @@
 # Проверка упакованного frontend перед установкой
 
 Дата: **6 октября2026, UTC**. PR [#19](https://github.com/RootOne1337/sphere-platform/pull/19).
-Статус: source fix / новый hosted probe ещё должен исполниться.
+Статус: **hosted frontend source accepted наe7f3ffb; installed/browser/runtime open**.
 
 ## Доказательство пробела
 
@@ -85,4 +85,20 @@ Probe теперь распознаёт только framework meta с expected 
 неверный RSC destination/status и external meta rejected. Receipt пишет фактический
 redirect kind; это не browser hydration proof. Assets staged contents-to-contents,
 чтобы существующая target directory не превращала public/static в nested copy.
-18 local cases прошли; новый exact-head hosted probe должен подтвердить результат.
+18 local cases прошли; последующий exact-head hosted result указан ниже.
+
+## Принятый hosted artifact receipt
+
+Head **e7f3ffbe547e7cf81b1b33feb9a10bd9d3ceeb31**,
+[run37514629812](https://github.com/RootOne1337/sphere-platform/actions/runs/37514629812),
+6 октября18:54:29Z: **success**.1686frontend tests /133 suites,18 HTTP contract
+cases, стандартные fresh types, Next build и standalone probe passed.
+Missing traced root manifest warning count0. **26 concrete pages /73 client assets**
+проверены; root200 признан по typed Next Flight redirect на/dashboard.
+[Machine-readable receipt](FRONTEND-STANDALONE-EVIDENCE.json).
+
+Никакой installed UI/API/APK этим результатом не обновлён. Browser hydration,
+layout, real data/actions, dynamic detail routes и Android execution не проверены.
+Backend/Android этого нового head ещё выполнялись в момент frontend receipt;
+их последний полный source receipt517d73b указан отдельно. После документационного
+коммита новый HEAD не называется этим же выполненным кодом без ссылки на exact SHA.

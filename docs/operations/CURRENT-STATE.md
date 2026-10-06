@@ -4,6 +4,16 @@
 **Область:** исходники и документация ветки PR #19, записанные runtime-наблюдения, Android APK и готовность следующего прогона.<br />
 **Канонический документ текущего состояния:** этот файл. Исторические отчёты ниже сохраняют исходные даты и факты.
 
+**6 октября,18:54 UTC — frontend sourcee7f3ffb полностью проверен:**1686/133,
+18 HTTP contract tests, fresh types/build и **standalone26pages/73assets passed**.
+Root200 содержит проверенный Next Flight redirect на/dashboard; warning missing
+root manifest отсутствует. [Exact receipt](../audits/2026-10-06/FRONTEND-STANDALONE-EVIDENCE.json).
+Это hosted artifact admission, не browser hydration/visual/runtime acceptance.
+Fresh backend/Android workflow этого head ещё выполнялся на момент receipt;
+последний полный backend/Android source517d73b приведён ниже. После docs-only
+коммита результаты остаются привязаны к проверенному SHA, не к новому HEAD.
+Installed UI/API/APK сохранены; host repair gate и **9 accepted/41open** не изменены.
+
 **6 октября — полный hosted CI Studio source517d73b принят:** backend
 **3015 passed /37 skipped**, coverage80.35%; lint/mypy/security/bootstrap/RLS/
 Alembic success. Frontend **1686 tests /133 suites**, types/build/standalone
@@ -19,8 +29,9 @@ root redirect, добавлен standalone HTTP probe страниц и их cli
 ссылаются на старый generated validator удалённой page и не приняты.
 Fresh head44af412 прошёл1686/133, types/build; первый HTTP probe потребовал
 только307/308 и отказал на штатном Next root200. Ожидание исправлено: exact
-meta/RSC redirect to/dashboard,18 local cases passed. Новый hosted probe ещё
-не принят. [Основание, failed run и границы](../audits/2026-10-06/FRONTEND-STANDALONE-ADMISSION.md).
+meta/RSC redirect to/dashboard,18 local cases passed. Subsequent e7f3ffb hosted
+probe accepted отдельно, см. верхний receipt.
+[Основание, failed run и границы](../audits/2026-10-06/FRONTEND-STANDALONE-ADMISSION.md).
 [Continuous input audit](../audits/2026-10-06/CONTINUOUS-INPUT-INTEGRATION.md):
 scrcpy5.0 исследован на pinned commit, direct binary protocol/version/reset
 constraints описаны; upstream не встроен, DOWN/MOVE/UP пока не включены.
